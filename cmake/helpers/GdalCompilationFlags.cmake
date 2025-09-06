@@ -127,6 +127,7 @@ else ()
       detect_and_set_cxx_warning_flag(thread-safety-analysis)
   endif()
   detect_and_set_cxx_warning_flag(inconsistent-missing-destructor-override)
+  detect_and_set_c_and_cxx_warning_flag(cast-function-type)
 
   # Not sure about the minimum version, but clang 12 complains about \file, @cond Doxygen_Suppress, etc.
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER_EQUAL 18.0.0)

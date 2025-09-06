@@ -20,6 +20,12 @@ enum MOPEN_PERM MopenPerm(
  return m->fileAccessMode;
 }
 
+static size_t CsfWriteSwappedAdapter(const void *buf, size_t size, size_t n, FILE  *f)
+{
+    /* CsfWriteSwapped does modify the content of buf ! */
+    return CsfWriteSwapped((void*)buf, size, n, f);
+}
+
 /* open an existing CSF file
  * Mopen opens a CSF file. It allocates space for
  * the MAP runtime-structure, reads the header file
@@ -42,18 +48,18 @@ MAP  *Mopen(
 {
  MAP *m;
  UINT4 s; /* swap detection field */
- 
+
  if (! CsfIsBootedCsfKernel())
  	CsfBootCsfKernel();
- 
+
  m = (MAP *)CSF_MALLOC(sizeof(MAP));
- 
+
  if (m == NULL)
  {
  	M_ERROR(NOCORE);
  	goto error_mapMalloc;
  }
- 
+
  m->fileName = (char *)CSF_MALLOC(strlen(fileName)+1);
  if (m->fileName == NULL)
  {
@@ -61,7 +67,7 @@ MAP  *Mopen(
  	goto error_fnameMalloc;
  }
  (void)strcpy(m->fileName,fileName);
- 
+
  /* check file mode validation */
  if ( IS_BAD_ACCESS_MODE(mode))
  {
@@ -69,8 +75,8 @@ MAP  *Mopen(
  	goto error_notOpen;
  }
  m->fileAccessMode = mode;
- 
- 
+
+
  /*  check if file can be opened or exists */
  m->fp = fopen(fileName, openModes[mode-1]);
  if (m->fp == NULL)
@@ -103,19 +109,19 @@ MAP  *Mopen(
         M_ERROR(NOT_CSF);
         goto error_open;
     }
-	m->write = CsfWriteSwapped;
+	m->write = CsfWriteSwappedAdapter;
 	m->read  = CsfReadSwapped;
  }
  else {
 #ifdef DEBUG
-	m->read  = (CSF_READ_FUNC)CsfReadPlain;
-	m->write = (CSF_READ_FUNC)CsfWritePlain;
+	m->read  = CsfReadPlain;
+	m->write = CsfWritePlain;
 #else
-	m->read  = (CSF_READ_FUNC)fread;
-	m->write = (CSF_READ_FUNC)fwrite;
+	m->read  = fread;
+	m->write = fwrite;
 #endif
  }
- 
+
  (void)csf_fseek(m->fp, ADDR_MAIN_HEADER, SEEK_SET);
  m->read((void *)&(m->main.signature), sizeof(char), CSF_SIG_SPACE,m->fp);
  m->read((void *)&(m->main.version),   sizeof(UINT2),(size_t)1,m->fp);
@@ -126,7 +132,7 @@ MAP  *Mopen(
  m->read((void *)&(m->main.byteOrder), sizeof(UINT4),(size_t)1,m->fp);
  /*                                             14+CSF_SIG_SPACE
   */
- 
+
  (void)csf_fseek(m->fp, ADDR_SECOND_HEADER, SEEK_SET);
  m->read((void *)&(m->raster.valueScale), sizeof(UINT2),(size_t)1,m->fp);
  m->read((void *)&(m->raster.cellRepr), sizeof(UINT2),(size_t)1,m->fp);
@@ -154,7 +160,7 @@ MAP  *Mopen(
  m->read((void *)&(m->raster.angle), sizeof(REAL8),(size_t)1,m->fp);
 
 
- /*  check signature C.S.F.file	
+ /*  check signature C.S.F.file
   */
  if(strncmp(m->main.signature,CSF_SIG,CSF_SIZE_SIG)!=0)
  {
@@ -166,8 +172,8 @@ MAP  *Mopen(
  POSTCOND(m->main.byteOrder == ORD_OK);
  /*  restore byteOrder C.S.F.file (Intel or Motorola)  */
  m->main.byteOrder=s;
- 
- /*  check version C.S.F.file	
+
+ /*  check version C.S.F.file
   */
  if (m->main.version != CSF_VERSION_1
     && (m->main.version != CSF_VERSION_2))
@@ -175,7 +181,7 @@ MAP  *Mopen(
  	M_ERROR(BAD_VERSION);
  	goto error_open;
  }
- 
+
  if (m->main.version == CSF_VERSION_1)
  	m->raster.angle = 0.0;
 
@@ -219,29 +225,29 @@ MAP  *Mopen(
  }
 
  CsfFinishMapInit(m);
- 
+
  CsfRegisterMap(m);
- 
+
  /* install cell value converters: (app2file,file2app)
   */
  m->app2file = CsfDummyConversion;
  m->file2app = CsfDummyConversion;
  m->appCR    = m->raster.cellRepr;
- 
+
  if (IsMV(m,&(m->raster.minVal)) ||
      IsMV(m,&(m->raster.maxVal))   )
  	m->minMaxStatus = MM_WRONGVALUE;
  else
  	m->minMaxStatus = MM_KEEPTRACK;
- 
+
  return(m);
- 
+
  error_open:
  PRECOND(m->fp != NULL);
  (void)fclose(m->fp);
- error_notOpen: 
+ error_notOpen:
  CSF_FREE(m->fileName);
- error_fnameMalloc: 
+ error_fnameMalloc:
  CSF_FREE(m);
 error_mapMalloc:
 	 return(NULL);

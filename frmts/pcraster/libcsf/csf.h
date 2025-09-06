@@ -12,7 +12,7 @@
 
 #ifdef __cplusplus
  extern "C" {
-#endif 
+#endif
 
 
 
@@ -35,9 +35,9 @@ typedef REAL8 CSF_VAR_TYPE;
 /* values for CSF_MAIN_HEADER.mapType :  */
 #define T_RASTER 1
 
-/* CSF_FADDR can hold any location in the file 
- * CSF_FADDR is always an offset from the begin 
- * (0) of the file                                
+/* CSF_FADDR can hold any location in the file
+ * CSF_FADDR is always an offset from the begin
+ * (0) of the file
  */
 typedef UINT4 CSF_FADDR32;
 #ifdef _WIN32
@@ -100,7 +100,7 @@ typedef struct CSF_RASTER_HEADER
    UINT4    nrRows;
    UINT4    nrCols;
 
-  /* CSF version 1 problem: X and Y cellsize 
+  /* CSF version 1 problem: X and Y cellsize
    * could differ, no longer the case
    * even though cellSizeX and cellSizeY
    * are stored separate, they should be equal
@@ -115,7 +115,7 @@ typedef struct CSF_RASTER_HEADER
    REAL8    angle;
 
   /* remainder is not part of
-   * file header 
+   * file header
    */
   /* cosine and sine of
    * the angle are computed
@@ -145,7 +145,7 @@ enum MOPEN_PERM {
 /****************************************************************/
 
 /* values for errolist  */
-/* happens frequently 
+/* happens frequently
  * assure 0 value
  * bogs on mingw
  * # if NOERROR != 0
@@ -189,7 +189,7 @@ typedef void (*CSF_CONV_FUNC)(size_t, void *);
 /* conversion function for reading
  * and writing
  */
-typedef size_t (*CSF_WRITE_FUNC)(void *buf, size_t size, size_t n, FILE  *f);
+typedef size_t (*CSF_WRITE_FUNC)(const void *buf, size_t size, size_t n, FILE  *f);
 typedef size_t (*CSF_READ_FUNC)(void *buf, size_t size, size_t n, FILE *f);
 
 typedef struct MAP
@@ -218,11 +218,11 @@ typedef CSF_RASTER_HEADER CSF_RASTER_LOCATION_ATTRIBUTES;
 /*                  */
 /************************************************************/
 
-MAP *Rcreate(const char *fileName, 
-         size_t nrRows, size_t nrCols, 
-         CSF_CR cellRepr, CSF_VS dataType, 
+MAP *Rcreate(const char *fileName,
+         size_t nrRows, size_t nrCols,
+         CSF_CR cellRepr, CSF_VS dataType,
          CSF_PT projection, REAL8 xUL, REAL8 yUL, REAL8 angle, REAL8 cellSize);
-MAP  *Rdup(const char *toFile , const MAP *from, 
+MAP  *Rdup(const char *toFile , const MAP *from,
            CSF_CR cellRepr, CSF_VS dataType);
 void *Rmalloc(const MAP *m, size_t nrOfCells);
 int RuseAs(MAP *m, CSF_CR useType);
@@ -283,13 +283,13 @@ REAL8  RgetYUL(const MAP *map);
 REAL8  RputXUL(MAP *map, REAL8 xUL);
 REAL8  RputYUL(MAP *map, REAL8 yUL);
 
-/* old names: 
+/* old names:
  */
 #define RgetX0 RgetXUL
 #define RgetY0 RgetYUL
 #define RputX0 RputXUL
 #define RputY0 RputYUL
- 
+
 
 REAL8  RgetAngle(const MAP *map);
 REAL8  RputAngle(MAP *map, REAL8 Angle);
@@ -311,7 +311,7 @@ CSF_PT MputProjection(MAP *map, CSF_PT p);
 void   SetMV(const MAP *m, void *cell);
 void   SetMVcellRepr(CSF_CR cellRepr, void *cell);
 void   SetMemMV(void *dest,size_t nrElements,CSF_CR type);
-/* historical error, implemented twice 
+/* historical error, implemented twice
  *  SetArrayMV => SetMemMV
  */
 
@@ -337,17 +337,17 @@ int MputColourPalette(MAP *m, UINT2 *pal, size_t nrTupels);
 int MputGreyPalette(MAP *m, UINT2 *pal, size_t nrTupels);
 
 int Rcoords2RowCol( const MAP *m,
-  double x,   double y,  
+  double x,   double y,
   double *row, double *col);
 void RasterCoords2RowCol( const CSF_RASTER_LOCATION_ATTRIBUTES *m,
-  double x,   double y,  
+  double x,   double y,
   double *row, double *col);
 int RasterCoords2RowColChecked( const CSF_RASTER_LOCATION_ATTRIBUTES *m,
-  double x,   double y,  
+  double x,   double y,
   double *row, double *col);
 
 int RgetRowCol(const MAP *m,
-  double x,   double y,  
+  double x,   double y,
   size_t *row, size_t *col);
 
 const char *RstrCellRepr(CSF_CR cr);
@@ -355,12 +355,12 @@ const char *RstrValueScale(CSF_VS vs);
 const char *MstrProjection(CSF_PT p);
 int   RgetValueScaleVersion(const MAP *m);
 
-void RcomputeExtend(REAL8 *xUL, REAL8 *yUL, size_t *nrRows, size_t *nrCols, 
+void RcomputeExtend(REAL8 *xUL, REAL8 *yUL, size_t *nrRows, size_t *nrCols,
  double x_1, double y_1, double x_2, double y_2, CSF_PT projection, REAL8 cellSize, double rounding);
 
 #ifdef __cplusplus
  }
-#endif 
+#endif
 
 /* INCLUDED_CSF */
-#endif 
+#endif

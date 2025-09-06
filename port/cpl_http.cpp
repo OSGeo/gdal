@@ -35,6 +35,9 @@
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
+#ifdef HAVE_WFLAG_CAST_FUNCTION_TYPE
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
 #endif
 
 #ifdef HAVE_CURL

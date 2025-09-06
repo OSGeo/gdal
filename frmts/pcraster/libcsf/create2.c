@@ -1,34 +1,34 @@
-#include "csf.h" 
-#include "csfimpl.h" 
+#include "csf.h"
+#include "csfimpl.h"
 
 #include <errno.h>
 #include <string.h>
 
 /* M_PI */
-#include <math.h> 
+#include <math.h>
 #ifndef M_PI
 # define M_PI        ((double)3.14159265358979323846)
 #endif
 
-/* 
+/*
  * Create a new CSF-Raster-file
  * The Rcreate function
  * creates a new CSF-Raster-file of nrRows by nrCols where each
  * cell is of type cellRepr. If the file already exists its
  * contents is destroyed. The value of
  * the pixels is undefined. MinMaxStatus is MM_KEEPTRACK. The
- * access mode is M_READ_WRITE. 
+ * access mode is M_READ_WRITE.
  * It is not
  * known if a file is created after a NOSPACE message.
  * Returns
  * if the file is created successfully, Rcreate returns
  * a map handle. In case of an error Rcreate returns NULL.
  *
- * Merrno 
+ * Merrno
  * NOCORE, BAD_CELLREPR, BAD_PROJECTION, OPENFAILED, NOSPACE.
  * CONFL_CELLREPR and BAD_VALUESCALE will generate a failed assertion in DEBUG mode.
  *
- * Example:  
+ * Example:
  * .so examples/create2.tr
  *
  */
@@ -41,13 +41,13 @@ MAP *Rcreate(
 	                        */
 	CSF_VS dataType,      /* a.k.a. the value scale.
 	                       */
-	CSF_PT projection,     /* 
+	CSF_PT projection,     /*
 	                        */
 	REAL8 xUL,              /* x co-ordinate of upper left */
 	REAL8 yUL,              /* y co-ordinate of upper left */
 	REAL8 angle,           /* counter clockwise rotation angle
 	                        * of the grid top compared to the
-	                        * x-axis in radians. Legal value are 
+	                        * x-axis in radians. Legal value are
 	                        * between -0.5 pi and 0.5 pi
 	                        */
 	REAL8 cellSize)        /* cell size of pixel */
@@ -83,15 +83,15 @@ MAP *Rcreate(
 	}
 
 	switch(dataType) {
-	 case VS_BOOLEAN: 
-	 case VS_LDD: 
+	 case VS_BOOLEAN:
+	 case VS_LDD:
 	 	if (cellRepr != CR_UINT1)
 		{
 			PROG_ERROR(CONFL_CELLREPR);
 			goto error_notOpen;
 		}
 		break;
-	case VS_NOMINAL: 
+	case VS_NOMINAL:
 	case VS_ORDINAL:
 	 	if (IS_REAL(cellRepr))
 		{
@@ -129,7 +129,7 @@ MAP *Rcreate(
 
 	newMap->fp = fopen (fileName, S_CREATE);
 	if(newMap->fp == NULL)
-	{	
+	{
 	   /* we should analyse the errno parameter
 	    * here to get the reason
 	    */
@@ -137,7 +137,7 @@ MAP *Rcreate(
 		goto error_notOpen;
 	}
 	/*
-	   fflush(newMap->fp); WHY? 
+	   fflush(newMap->fp); WHY?
 	 */
 
 	(void)memset(&(newMap->main),0, sizeof(CSF_MAIN_HEADER));
@@ -157,11 +157,11 @@ MAP *Rcreate(
 	newMap->main.byteOrder= ORD_OK;
 
 #ifdef DEBUG
-	newMap->read  = (CSF_READ_FUNC)CsfReadPlain;
-	newMap->write = (CSF_READ_FUNC)CsfWritePlain;
+	newMap->read  = CsfReadPlain;
+	newMap->write = CsfWritePlain;
 #else
-	newMap->read  = (CSF_READ_FUNC)fread;
-	newMap->write = (CSF_READ_FUNC)fwrite;
+	newMap->read  = fread;
+	newMap->write = fwrite;
 #endif
 
 	newMap->raster.valueScale = dataType;
@@ -177,7 +177,7 @@ MAP *Rcreate(
 	newMap->raster.angle = angle;
 	CsfFinishMapInit(newMap);
 
-	/*  set types to value cellRepr 
+	/*  set types to value cellRepr
 	newMap->types[STORED_AS]= (UINT1)newMap->raster.cellRepr;
 	newMap->types[READ_AS]  = (UINT1)newMap->raster.cellRepr;
 	*/
@@ -211,9 +211,9 @@ MAP *Rcreate(
 	CsfRegisterMap(newMap);
 
 	return(newMap);
-error_open: 
+error_open:
 	(void)fclose(newMap->fp);
-error_notOpen: 
+error_notOpen:
 	CSF_FREE(newMap->fileName);
 errorNameAlloc:
         CSF_FREE(newMap);
