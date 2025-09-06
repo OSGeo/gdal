@@ -43,7 +43,7 @@ class OGRXLSLayer final : public OGRLayer,
   public:
     OGRXLSLayer(OGRXLSDataSource *poDSIn, const char *pszSheetname,
                 int iSheetIn, int nRowsIn, unsigned short nColsIn);
-    virtual ~OGRXLSLayer();
+    ~OGRXLSLayer() override;
 
     virtual void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXLSLayer)
@@ -88,7 +88,7 @@ class OGRXLSDataSource final : public GDALDataset
 #endif
   public:
     OGRXLSDataSource();
-    virtual ~OGRXLSDataSource();
+    ~OGRXLSDataSource() override;
 
     int Open(const char *pszFilename, int bUpdate);
 

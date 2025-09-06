@@ -33,10 +33,6 @@ class CADWrapperRasterBand : public GDALProxyRasterBand
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
-
-    virtual ~CADWrapperRasterBand()
-    {
-    }
 };
 
 GDALRasterBand *

@@ -85,7 +85,7 @@ class WMSMiniDriver_MRF : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_MRF();
-    virtual ~WMSMiniDriver_MRF();
+    ~WMSMiniDriver_MRF() override;
 
     virtual CPLErr Initialize(CPLXMLNode *config,
                               char **papszOpenOptions) override;

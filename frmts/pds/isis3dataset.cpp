@@ -187,7 +187,7 @@ class ISIS3Dataset final : public RawDataset
 
   public:
     ISIS3Dataset();
-    virtual ~ISIS3Dataset();
+    ~ISIS3Dataset() override;
 
     virtual int CloseDependentDatasets() override;
 
@@ -247,10 +247,6 @@ class ISISTiledBand final : public GDALPamRasterBand
                   GIntBig nFirstTileOffset, GIntBig nXTileOffset,
                   GIntBig nYTileOffset, int bNativeOrder);
 
-    virtual ~ISISTiledBand()
-    {
-    }
-
     bool IsValid() const
     {
         return m_bValid;
@@ -290,10 +286,6 @@ class ISIS3RawRasterBand final : public RawRasterBand
                        vsi_l_offset l_nImgOffset, int l_nPixelOffset,
                        int l_nLineOffset, GDALDataType l_eDataType,
                        int l_bNativeOrder);
-
-    virtual ~ISIS3RawRasterBand()
-    {
-    }
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
@@ -388,7 +380,7 @@ class ISISMaskBand final : public GDALRasterBand
 
   public:
     explicit ISISMaskBand(GDALRasterBand *poBaseBand);
-    ~ISISMaskBand();
+    ~ISISMaskBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
 };

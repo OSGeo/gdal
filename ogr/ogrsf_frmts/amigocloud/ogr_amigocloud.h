@@ -100,7 +100,7 @@ class OGRAmigoCloudLayer CPL_NON_FINAL : public OGRLayer
 
   public:
     explicit OGRAmigoCloudLayer(OGRAmigoCloudDataSource *poDS);
-    virtual ~OGRAmigoCloudLayer();
+    ~OGRAmigoCloudLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
@@ -149,7 +149,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
 
   public:
     OGRAmigoCloudTableLayer(OGRAmigoCloudDataSource *poDS, const char *pszName);
-    virtual ~OGRAmigoCloudTableLayer();
+    ~OGRAmigoCloudTableLayer() override;
 
     const char *GetName() const override
     {
@@ -224,7 +224,7 @@ class OGRAmigoCloudResultLayer final : public OGRAmigoCloudLayer
   public:
     OGRAmigoCloudResultLayer(OGRAmigoCloudDataSource *poDS,
                              const char *pszRawStatement);
-    virtual ~OGRAmigoCloudResultLayer();
+    ~OGRAmigoCloudResultLayer() override;
 
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
     virtual OGRFeature *GetNextRawFeature() override;
@@ -256,7 +256,7 @@ class OGRAmigoCloudDataSource final : public GDALDataset
 
   public:
     OGRAmigoCloudDataSource();
-    virtual ~OGRAmigoCloudDataSource();
+    ~OGRAmigoCloudDataSource() override;
 
     int Open(const char *pszFilename, char **papszOpenOptions, int bUpdate);
 

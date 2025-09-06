@@ -120,7 +120,7 @@ class WCSDataset CPL_NON_FINAL : public GDALPamDataset
 
   public:
     WCSDataset(int version, const char *cache_dir);
-    virtual ~WCSDataset();
+    ~WCSDataset() override;
 
     static WCSDataset *CreateFromMetadata(const std::string &,
                                           const std::string &);

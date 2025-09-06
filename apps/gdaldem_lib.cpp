@@ -1860,7 +1860,7 @@ class GDALColorReliefDataset : public GDALDataset
     GDALColorReliefDataset(GDALDatasetH hSrcDS, GDALRasterBandH hSrcBand,
                            const char *pszColorFilename,
                            ColorSelectionMode eColorSelectionMode, int bAlpha);
-    ~GDALColorReliefDataset();
+    ~GDALColorReliefDataset() override;
 
     bool InitOK() const
     {
@@ -2457,7 +2457,7 @@ template <class T> class GDALGeneric3x3Dataset final : public GDALDataset
             pfnAlg_multisample,
         std::unique_ptr<AlgorithmParameters> pAlgData, bool bComputeAtEdges,
         bool bTakeReferenceIn);
-    ~GDALGeneric3x3Dataset();
+    ~GDALGeneric3x3Dataset() override;
 
     bool InitOK() const
     {

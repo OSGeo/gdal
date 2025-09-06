@@ -243,7 +243,7 @@ class GTADataset final : public GDALPamDataset
 
   public:
     GTADataset();
-    ~GTADataset();
+    ~GTADataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 
@@ -283,7 +283,7 @@ class GTARasterBand final : public GDALPamRasterBand
 
   public:
     GTARasterBand(GTADataset *, int);
-    ~GTARasterBand();
+    ~GTARasterBand() override;
 
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IWriteBlock(int, int, void *) override;

@@ -23,7 +23,7 @@ namespace gdal
 /**
  * Class to support evaluation of a mathematical expression
  */
-class MathExpression
+class MathExpression /* non final */
 {
   public:
     virtual ~MathExpression();
@@ -111,7 +111,7 @@ class ExprtkExpression : public MathExpression
   public:
     explicit ExprtkExpression(std::string_view osExpression);
 
-    virtual ~ExprtkExpression();
+    ~ExprtkExpression() override;
 
     void RegisterVariable(std::string_view osVariable,
                           double *pdfLocation) override;
@@ -143,7 +143,7 @@ class MuParserExpression : public MathExpression
   public:
     explicit MuParserExpression(std::string_view osExpression);
 
-    virtual ~MuParserExpression();
+    ~MuParserExpression() override;
 
     void RegisterVariable(std::string_view osVariable,
                           double *pdfLocation) override;

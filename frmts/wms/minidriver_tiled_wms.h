@@ -20,7 +20,7 @@ class WMSMiniDriver_TiledWMS : public WMSMiniDriver
 
   public:
     WMSMiniDriver_TiledWMS();
-    virtual ~WMSMiniDriver_TiledWMS();
+    ~WMSMiniDriver_TiledWMS() override;
 
     virtual CPLErr Initialize(CPLXMLNode *config,
                               char **papszOpenOptions) override;

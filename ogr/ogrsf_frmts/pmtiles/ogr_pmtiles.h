@@ -243,7 +243,7 @@ class OGRPMTilesVectorLayer final
                           double dfMaxX, double dfMaxY,
                           OGRwkbGeometryType eGeomType, int nZoomLevel,
                           bool bZoomLevelFromSpatialFilter);
-    ~OGRPMTilesVectorLayer();
+    ~OGRPMTilesVectorLayer() override;
 
     void ResetReading() override;
 

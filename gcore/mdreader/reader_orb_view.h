@@ -32,7 +32,7 @@ class GDALMDReaderOrbView : public GDALMDReaderBase
 {
   public:
     GDALMDReaderOrbView(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderOrbView();
+    ~GDALMDReaderOrbView() override;
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;
 

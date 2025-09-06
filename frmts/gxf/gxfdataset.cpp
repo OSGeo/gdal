@@ -35,7 +35,7 @@ class GXFDataset final : public GDALPamDataset
 
   public:
     GXFDataset();
-    ~GXFDataset();
+    ~GXFDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 

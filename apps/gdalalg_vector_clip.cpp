@@ -85,7 +85,7 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         m_poFeatureDefn->Reference();
     }
 
-    ~GDALVectorClipAlgorithmLayer()
+    ~GDALVectorClipAlgorithmLayer() override
     {
         m_poFeatureDefn->Release();
     }

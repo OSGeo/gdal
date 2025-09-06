@@ -61,7 +61,7 @@ class GDALECWCompressor final : public CNCSFile
 
   public:
     GDALECWCompressor();
-    virtual ~GDALECWCompressor();
+    ~GDALECWCompressor() override;
     virtual CNCSError WriteReadLine(UINT32 nNextLine,
                                     void **ppInputArray) override;
 #if ECWSDK_VERSION >= 50
@@ -1536,7 +1536,7 @@ class ECWWriteDataset final : public GDALDataset
   public:
     ECWWriteDataset(const char *, int, int, int, GDALDataType,
                     char **papszOptions, int);
-    ~ECWWriteDataset();
+    ~ECWWriteDataset() override;
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
@@ -1577,7 +1577,7 @@ class ECWWriteRasterBand final : public GDALRasterBand
 
   public:
     ECWWriteRasterBand(ECWWriteDataset *, int);
-    ~ECWWriteRasterBand();
+    ~ECWWriteRasterBand() override;
 
     virtual CPLErr SetColorInterpretation(GDALColorInterp eInterpIn) override
     {

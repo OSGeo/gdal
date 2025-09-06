@@ -315,7 +315,7 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
 
   public:
     explicit OGRMSSQLSpatialLayer(OGRMSSQLSpatialDataSource *);
-    virtual ~OGRMSSQLSpatialLayer();
+    ~OGRMSSQLSpatialLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
@@ -431,7 +431,7 @@ class OGRMSSQLSpatialTableLayer final : public OGRMSSQLSpatialLayer
 
   public:
     explicit OGRMSSQLSpatialTableLayer(OGRMSSQLSpatialDataSource *);
-    virtual ~OGRMSSQLSpatialTableLayer();
+    ~OGRMSSQLSpatialTableLayer() override;
 
     CPLErr Initialize(const char *pszSchema, const char *pszTableName,
                       const char *pszGeomCol, int nCoordDimension, int nSRId,
@@ -540,7 +540,7 @@ class OGRMSSQLSpatialSelectLayer final : public OGRMSSQLSpatialLayer
 
   public:
     OGRMSSQLSpatialSelectLayer(OGRMSSQLSpatialDataSource *, CPLODBCStatement *);
-    virtual ~OGRMSSQLSpatialSelectLayer();
+    ~OGRMSSQLSpatialSelectLayer() override;
 
     virtual GIntBig GetFeatureCount(int) override;
 
@@ -598,7 +598,7 @@ class OGRMSSQLSpatialDataSource final : public GDALDataset
     MSSQLVer sMSSQLVersion;
 
     OGRMSSQLSpatialDataSource();
-    virtual ~OGRMSSQLSpatialDataSource();
+    ~OGRMSSQLSpatialDataSource() override;
 
     const char *GetCatalog()
     {

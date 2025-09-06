@@ -64,7 +64,7 @@ class GDALEEDAIDataset final : public GDALEEDABaseDataset
 
   public:
     GDALEEDAIDataset();
-    virtual ~GDALEEDAIDataset();
+    ~GDALEEDAIDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
@@ -110,7 +110,7 @@ class GDALEEDAIRasterBand final : public GDALRasterBand
 
   public:
     GDALEEDAIRasterBand(GDALEEDAIDataset *poDSIn, GDALDataType eDT);
-    virtual ~GDALEEDAIRasterBand();
+    ~GDALEEDAIRasterBand() override;
 
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,

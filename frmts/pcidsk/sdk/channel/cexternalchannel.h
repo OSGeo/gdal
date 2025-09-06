@@ -40,7 +40,7 @@ namespace PCIDSK
             int channelnum,
             CPCIDSKFile *file,
             eChanType pixel_type );
-        virtual ~CExternalChannel();
+        ~CExternalChannel() override;
 
         virtual eChanType GetType() const override;
         virtual int GetBlockWidth() const override;

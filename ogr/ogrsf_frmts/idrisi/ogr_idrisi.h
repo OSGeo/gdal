@@ -50,7 +50,7 @@ class OGRIdrisiLayer final : public OGRLayer,
     OGRIdrisiLayer(const char *pszFilename, const char *pszLayerName,
                    VSILFILE *fp, OGRwkbGeometryType eGeomType,
                    const char *pszWTKString);
-    virtual ~OGRIdrisiLayer();
+    ~OGRIdrisiLayer() override;
 
     virtual void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRIdrisiLayer)
@@ -80,7 +80,7 @@ class OGRIdrisiDataSource final : public GDALDataset
 
   public:
     OGRIdrisiDataSource();
-    virtual ~OGRIdrisiDataSource();
+    ~OGRIdrisiDataSource() override;
 
     int Open(const char *pszFilename);
 

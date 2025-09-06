@@ -59,7 +59,7 @@ class OGRODBCLayer CPL_NON_FINAL : public OGRLayer
 
   public:
     OGRODBCLayer();
-    virtual ~OGRODBCLayer();
+    ~OGRODBCLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();
@@ -97,7 +97,7 @@ class OGRODBCTableLayer final : public OGRODBCLayer
 
   public:
     explicit OGRODBCTableLayer(OGRODBCDataSource *, int);
-    virtual ~OGRODBCTableLayer();
+    ~OGRODBCTableLayer() override;
 
     CPLErr Initialize(const char *pszTableName, const char *pszGeomCol);
 
@@ -146,7 +146,7 @@ class OGRODBCSelectLayer final : public OGRODBCLayer
 
   public:
     OGRODBCSelectLayer(OGRODBCDataSource *, CPLODBCStatement *);
-    virtual ~OGRODBCSelectLayer();
+    ~OGRODBCSelectLayer() override;
 
     virtual void ResetReading() override;
     virtual GIntBig GetFeatureCount(int) override;
@@ -191,7 +191,7 @@ class OGRODBCDataSource final : public GDALDataset
 
   public:
     OGRODBCDataSource();
-    virtual ~OGRODBCDataSource();
+    ~OGRODBCDataSource() override;
 
     int Open(GDALOpenInfo *poOpenInfo);
     int OpenTable(const char *pszTableName, const char *pszGeomCol);

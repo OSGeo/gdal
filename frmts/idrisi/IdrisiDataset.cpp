@@ -395,7 +395,7 @@ class IdrisiDataset final : public GDALPamDataset
 
   public:
     IdrisiDataset();
-    virtual ~IdrisiDataset();
+    ~IdrisiDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
@@ -430,7 +430,7 @@ class IdrisiRasterBand final : public GDALPamRasterBand
 
   public:
     IdrisiRasterBand(IdrisiDataset *poDS, int nBand, GDALDataType eDataType);
-    virtual ~IdrisiRasterBand();
+    ~IdrisiRasterBand() override;
 
     virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
     virtual double GetMinimum(int *pbSuccess = nullptr) override;

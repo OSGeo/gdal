@@ -29,10 +29,6 @@ class GTiffRGBABand final : public GTiffRasterBand
   public:
     GTiffRGBABand(GTiffDataset *, int);
 
-    virtual ~GTiffRGBABand()
-    {
-    }
-
     bool IsBaseGTiffClass() const override
     {
         return false;

@@ -341,7 +341,7 @@ class VSIADLSWriteHandle final : public VSIAppendWriteHandle
   public:
     VSIADLSWriteHandle(VSIADLSFSHandler *poFS, const char *pszFilename,
                        VSIAzureBlobHandleHelper *poHandleHelper);
-    virtual ~VSIADLSWriteHandle();
+    ~VSIADLSWriteHandle() override;
 
     bool CreateFile(CSLConstList papszOptions);
 };

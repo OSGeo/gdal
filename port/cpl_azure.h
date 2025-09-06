@@ -63,7 +63,7 @@ class VSIAzureBlobHandleHelper final : public IVSIS3LikeHandleHelper
         const std::string &osStorageAccount, const std::string &osStorageKey,
         const std::string &osSAS, const std::string &osAccessToken,
         bool bFromManagedIdentities);
-    ~VSIAzureBlobHandleHelper();
+    ~VSIAzureBlobHandleHelper() override;
 
     static VSIAzureBlobHandleHelper *
     BuildFromURI(const char *pszURI, const char *pszFSPrefix,

@@ -18,7 +18,7 @@ class WMSMiniDriver_VirtualEarth : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_VirtualEarth();
-    virtual ~WMSMiniDriver_VirtualEarth();
+    ~WMSMiniDriver_VirtualEarth() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,

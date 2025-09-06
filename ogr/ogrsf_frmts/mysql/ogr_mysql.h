@@ -119,7 +119,7 @@ class OGRMySQLLayer CPL_NON_FINAL : public OGRLayer
 
   public:
     explicit OGRMySQLLayer(OGRMySQLDataSource *poDSIn);
-    virtual ~OGRMySQLLayer();
+    ~OGRMySQLLayer() override;
 
     virtual void ResetReading() override;
 
@@ -166,7 +166,7 @@ class OGRMySQLTableLayer final : public OGRMySQLLayer
   public:
     OGRMySQLTableLayer(OGRMySQLDataSource *, const char *pszName, int bUpdate,
                        int nSRSId = -2);
-    virtual ~OGRMySQLTableLayer();
+    ~OGRMySQLTableLayer() override;
 
     OGRErr Initialize(const char *pszTableName);
 
@@ -214,7 +214,7 @@ class OGRMySQLResultLayer final : public OGRMySQLLayer
   public:
     OGRMySQLResultLayer(OGRMySQLDataSource *, const char *pszRawStatement,
                         MYSQL_RES *hResultSetIn);
-    virtual ~OGRMySQLResultLayer();
+    ~OGRMySQLResultLayer() override;
 
     OGRFeatureDefn *ReadResultDefinition();
 
@@ -253,7 +253,7 @@ class OGRMySQLDataSource final : public GDALDataset
 
   public:
     OGRMySQLDataSource();
-    virtual ~OGRMySQLDataSource();
+    ~OGRMySQLDataSource() override;
 
     MYSQL *GetConn()
     {

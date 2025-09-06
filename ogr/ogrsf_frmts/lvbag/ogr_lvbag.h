@@ -118,7 +118,7 @@ class OGRLVBAGLayer final : public OGRAbstractProxiedLayer,
   public:
     explicit OGRLVBAGLayer(const char *pszFilename, OGRLayerPool *poPoolIn,
                            char **papszOpenOptions);
-    ~OGRLVBAGLayer();
+    ~OGRLVBAGLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;

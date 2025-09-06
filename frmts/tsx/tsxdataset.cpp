@@ -86,7 +86,7 @@ class TSXDataset final : public GDALPamDataset
 
   public:
     TSXDataset();
-    virtual ~TSXDataset();
+    ~TSXDataset() override;
 
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
@@ -116,7 +116,7 @@ class TSXRasterBand final : public GDALPamRasterBand
   public:
     TSXRasterBand(TSXDataset *poDSIn, GDALDataType eDataType,
                   ePolarization ePol, GDALDataset *poBand);
-    virtual ~TSXRasterBand();
+    ~TSXRasterBand() override;
 
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
                               void *pImage) override;

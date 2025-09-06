@@ -60,7 +60,7 @@ class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator,
             *poCT, /* must NOT be NULL, ownership acquired by OGRWarpedLayer */
         OGRCoordinateTransformation *
             poReversedCT /* may be NULL, ownership acquired by OGRWarpedLayer */);
-    virtual ~OGRWarpedLayer();
+    ~OGRWarpedLayer() override;
 
     void TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,

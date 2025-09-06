@@ -129,7 +129,7 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
 
   public:
     JP2OPJLikeDataset();
-    virtual ~JP2OPJLikeDataset();
+    ~JP2OPJLikeDataset() override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -205,7 +205,7 @@ class JP2OPJLikeRasterBand final : public GDALPamRasterBand
                          GDALDataType eDataTypeIn, int nBits,
                          int bPromoteTo8BitIn, int nBlockXSizeIn,
                          int nBlockYSizeIn);
-    virtual ~JP2OPJLikeRasterBand();
+    ~JP2OPJLikeRasterBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,

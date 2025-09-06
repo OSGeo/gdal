@@ -72,7 +72,7 @@ class OGRCARTOLayer CPL_NON_FINAL : public OGRLayer
 
   public:
     explicit OGRCARTOLayer(OGRCARTODataSource *poDS);
-    virtual ~OGRCARTOLayer();
+    ~OGRCARTOLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
@@ -137,7 +137,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
 
   public:
     OGRCARTOTableLayer(OGRCARTODataSource *poDS, const char *pszName);
-    virtual ~OGRCARTOTableLayer();
+    ~OGRCARTOTableLayer() override;
 
     const char *GetName() const override
     {
@@ -231,7 +231,7 @@ class OGRCARTOResultLayer final : public OGRCARTOLayer
 
   public:
     OGRCARTOResultLayer(OGRCARTODataSource *poDS, const char *pszRawStatement);
-    virtual ~OGRCARTOResultLayer();
+    ~OGRCARTOResultLayer() override;
 
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
     virtual OGRFeature *GetNextRawFeature() override;
@@ -269,7 +269,7 @@ class OGRCARTODataSource final : public GDALDataset
 
   public:
     OGRCARTODataSource();
-    virtual ~OGRCARTODataSource();
+    ~OGRCARTODataSource() override;
 
     int Open(const char *pszFilename, char **papszOpenOptions, int bUpdate);
 

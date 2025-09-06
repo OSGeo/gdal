@@ -33,7 +33,7 @@ class OGRKMLLayer final : public OGRLayer
   public:
     OGRKMLLayer(const char *pszName_, const OGRSpatialReference *poSRS,
                 bool bWriter, OGRwkbGeometryType eType, OGRKMLDataSource *poDS);
-    ~OGRKMLLayer();
+    ~OGRKMLLayer() override;
 
     //
     // OGRLayer Interface
@@ -92,7 +92,7 @@ class OGRKMLDataSource final : public GDALDataset
 {
   public:
     OGRKMLDataSource();
-    ~OGRKMLDataSource();
+    ~OGRKMLDataSource() override;
 
     int Open(const char *pszName, int bTestOpen);
 

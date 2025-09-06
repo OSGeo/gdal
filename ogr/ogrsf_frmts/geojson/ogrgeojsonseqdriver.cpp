@@ -43,7 +43,7 @@ class OGRGeoJSONSeqDataSource final : public GDALDataset
 
   public:
     OGRGeoJSONSeqDataSource();
-    ~OGRGeoJSONSeqDataSource();
+    ~OGRGeoJSONSeqDataSource() override;
 
     int GetLayerCount() const override
     {
@@ -100,7 +100,7 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
                        CSLConstList papszOptions,
                        std::unique_ptr<OGRCoordinateTransformation> &&poCT);
 
-    ~OGRGeoJSONSeqLayer();
+    ~OGRGeoJSONSeqLayer() override;
 
     bool Init(bool bLooseIdentification, bool bEstablishLayerDefn);
 

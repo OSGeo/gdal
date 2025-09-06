@@ -41,7 +41,7 @@ namespace PCIDSK
             CPCIDSKFile *file,
             uint64 image_offset,
             eChanType pixel_type );
-        virtual ~CBandInterleavedChannel();
+        ~CBandInterleavedChannel() override;
 
         virtual int ReadBlock( int block_index, void *buffer,
             int xoff=-1, int yoff=-1,

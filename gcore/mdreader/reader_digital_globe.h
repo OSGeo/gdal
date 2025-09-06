@@ -41,7 +41,7 @@ class GDALMDReaderDigitalGlobe : public GDALMDReaderBase
 {
   public:
     GDALMDReaderDigitalGlobe(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderDigitalGlobe();
+    ~GDALMDReaderDigitalGlobe() override;
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;
 

@@ -38,7 +38,7 @@ class TILDataset final : public GDALPamDataset
 
   public:
     TILDataset();
-    virtual ~TILDataset();
+    ~TILDataset() override;
 
     virtual char **GetFileList(void) override;
 
@@ -60,10 +60,6 @@ class TILRasterBand final : public GDALPamRasterBand
 
   public:
     TILRasterBand(TILDataset *, int, VRTSourcedRasterBand *);
-
-    virtual ~TILRasterBand()
-    {
-    }
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,

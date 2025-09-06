@@ -40,7 +40,7 @@ class OGRS57Layer final : public OGRLayer
   public:
     OGRS57Layer(OGRS57DataSource *poDS, OGRFeatureDefn *,
                 int nFeatureCount = -1, int nOBJL = -1);
-    virtual ~OGRS57Layer();
+    ~OGRS57Layer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -87,7 +87,7 @@ class OGRS57DataSource final : public GDALDataset
 
   public:
     explicit OGRS57DataSource(char **papszOpenOptions = nullptr);
-    ~OGRS57DataSource();
+    ~OGRS57DataSource() override;
 
     void SetOptionList(char **);
     const char *GetOption(const char *);

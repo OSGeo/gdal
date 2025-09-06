@@ -707,7 +707,7 @@ class HDF4SDSArray final : public GDALPamMDArray
         return ar;
     }
 
-    ~HDF4SDSArray();
+    ~HDF4SDSArray() override;
 
     void SetGlobalAttributes(
         const std::vector<std::shared_ptr<GDALAttribute>> &attrs)

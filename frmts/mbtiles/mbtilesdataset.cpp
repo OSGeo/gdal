@@ -100,7 +100,7 @@ class MBTilesDataset final : public GDALPamDataset,
   public:
     MBTilesDataset();
 
-    virtual ~MBTilesDataset();
+    ~MBTilesDataset() override;
 
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
@@ -258,7 +258,7 @@ class MBTilesVectorLayer final : public OGRLayer
                        double dfMaxX, double dfMaxY,
                        OGRwkbGeometryType eGeomType,
                        bool bZoomLevelFromSpatialFilter);
-    ~MBTilesVectorLayer();
+    ~MBTilesVectorLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;

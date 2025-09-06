@@ -47,7 +47,7 @@ class OGRVFKLayer : public OGRLayer
   public:
     OGRVFKLayer(const char *, OGRSpatialReference *, OGRwkbGeometryType,
                 OGRVFKDataSource *);
-    ~OGRVFKLayer();
+    ~OGRVFKLayer() override;
 
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig) override;
@@ -84,7 +84,7 @@ class OGRVFKDataSource : public GDALDataset
 
   public:
     OGRVFKDataSource();
-    ~OGRVFKDataSource();
+    ~OGRVFKDataSource() override;
 
     int Open(GDALOpenInfo *poOpenInfo);
 

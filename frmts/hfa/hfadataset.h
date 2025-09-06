@@ -66,7 +66,7 @@ class HFADataset final : public GDALPamDataset
 
   public:
     HFADataset();
-    virtual ~HFADataset();
+    ~HFADataset() override;
 
     static int Identify(GDALOpenInfo *);
     static CPLErr Rename(const char *pszNewName, const char *pszOldName);
@@ -142,7 +142,7 @@ class HFARasterBand final : public GDALPamRasterBand
 
   public:
     HFARasterBand(HFADataset *, int, int);
-    virtual ~HFARasterBand();
+    ~HFARasterBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
@@ -236,7 +236,7 @@ class HFARasterAttributeTable final : public GDALRasterAttributeTable
 
   public:
     HFARasterAttributeTable(HFARasterBand *poBand, const char *pszName);
-    virtual ~HFARasterAttributeTable();
+    ~HFARasterAttributeTable() override;
 
     GDALRasterAttributeTable *Clone() const override;
 

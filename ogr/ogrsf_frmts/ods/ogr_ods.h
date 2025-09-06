@@ -44,7 +44,7 @@ class OGRODSLayer final : public OGRMemLayer
   public:
     OGRODSLayer(OGRODSDataSource *poDSIn, const char *pszName,
                 bool bUpdateIn = FALSE);
-    ~OGRODSLayer();
+    ~OGRODSLayer() override;
 
     void SetUpdated(bool bUpdatedIn = true);
 
@@ -228,7 +228,7 @@ class OGRODSDataSource final : public GDALDataset
 
   public:
     explicit OGRODSDataSource(CSLConstList papszOpenOptionsIn);
-    virtual ~OGRODSDataSource();
+    ~OGRODSDataSource() override;
     CPLErr Close() override;
 
     int Open(const char *pszFilename, VSILFILE *fpContentIn,

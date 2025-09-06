@@ -148,7 +148,7 @@ class TerragenDataset final : public GDALPamDataset
 
   public:
     TerragenDataset();
-    virtual ~TerragenDataset();
+    ~TerragenDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
@@ -200,7 +200,7 @@ class TerragenRasterBand final : public GDALPamRasterBand
   public:
     explicit TerragenRasterBand(TerragenDataset *);
 
-    virtual ~TerragenRasterBand()
+    ~TerragenRasterBand() override
     {
         if (m_pvLine != nullptr)
             CPLFree(m_pvLine);

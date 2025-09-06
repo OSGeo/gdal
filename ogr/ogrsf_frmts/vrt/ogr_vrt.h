@@ -137,7 +137,7 @@ class OGRVRTLayer final : public OGRLayer
 
   public:
     explicit OGRVRTLayer(OGRVRTDataSource *poDSIn);
-    virtual ~OGRVRTLayer();
+    ~OGRVRTLayer() override;
 
     bool FastInitialize(CPLXMLNode *psLTree, const char *pszVRTDirectory,
                         int bUpdate);
@@ -233,7 +233,7 @@ class OGRVRTDataSource final : public GDALDataset
 
   public:
     explicit OGRVRTDataSource(GDALDriver *poDriver);
-    virtual ~OGRVRTDataSource();
+    ~OGRVRTDataSource() override;
 
     virtual int CloseDependentDatasets() override;
 

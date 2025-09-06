@@ -39,7 +39,7 @@ typedef enum
 GPKGTileFormat GDALGPKGMBTilesGetTileFormat(const char *pszTF);
 const char *GDALMBTilesGetTileFormatName(GPKGTileFormat);
 
-class GDALGPKGMBTilesLikePseudoDataset
+class GDALGPKGMBTilesLikePseudoDataset /* non final */
 {
     friend class GDALGPKGMBTilesLikeRasterBand;
 
@@ -141,7 +141,7 @@ class GDALGPKGMBTilesLikePseudoDataset
     virtual int GetRowFromIntoTopConvention(int nRow) = 0;
 };
 
-class GDALGPKGMBTilesLikeRasterBand : public GDALPamRasterBand
+class GDALGPKGMBTilesLikeRasterBand /* non final*/ : public GDALPamRasterBand
 {
     GDALGPKGMBTilesLikeRasterBand(const GDALGPKGMBTilesLikeRasterBand &) =
         delete;

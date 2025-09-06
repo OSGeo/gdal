@@ -116,7 +116,7 @@ class RS2Dataset final : public GDALPamDataset
 
   public:
     RS2Dataset();
-    virtual ~RS2Dataset();
+    ~RS2Dataset() override;
 
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
@@ -158,7 +158,7 @@ class RS2RasterBand final : public GDALPamRasterBand
     RS2RasterBand(RS2Dataset *poDSIn, GDALDataType eDataTypeIn,
                   const char *pszPole, GDALDataset *poBandFile,
                   bool bTwoBandComplex = false);
-    virtual ~RS2RasterBand();
+    ~RS2RasterBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
 
@@ -315,7 +315,7 @@ class RS2CalibRasterBand final : public GDALPamRasterBand
     RS2CalibRasterBand(RS2Dataset *poDataset, const char *pszPolarization,
                        GDALDataType eType, GDALDataset *poBandDataset,
                        eCalibration eCalib, const char *pszLUT);
-    ~RS2CalibRasterBand();
+    ~RS2CalibRasterBand() override;
 
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
 };

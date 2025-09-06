@@ -35,7 +35,7 @@ class GSCDataset final : public RawDataset
 
   public:
     GSCDataset() = default;
-    ~GSCDataset();
+    ~GSCDataset() override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 

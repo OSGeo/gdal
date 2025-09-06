@@ -202,7 +202,7 @@ class OGRSQLiteLayer CPL_NON_FINAL : public OGRLayer,
     explicit OGRSQLiteLayer(OGRSQLiteDataSource *poDSIn);
 
   public:
-    virtual ~OGRSQLiteLayer();
+    ~OGRSQLiteLayer() override;
 
     void Finalize();
 
@@ -353,7 +353,7 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
 
   public:
     explicit OGRSQLiteTableLayer(OGRSQLiteDataSource *);
-    virtual ~OGRSQLiteTableLayer();
+    ~OGRSQLiteTableLayer() override;
 
     CPLErr Initialize(const char *pszTableName, bool bIsTable,
                       bool bIsVirtualShapeIn, bool bDeferredCreation,
@@ -491,7 +491,7 @@ class OGRSQLiteViewLayer final : public OGRSQLiteLayer
 
   public:
     explicit OGRSQLiteViewLayer(OGRSQLiteDataSource *);
-    virtual ~OGRSQLiteViewLayer();
+    ~OGRSQLiteViewLayer() override;
 
     const char *GetName() const override
     {
@@ -552,7 +552,7 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
                          sqlite3_stmt *, bool bUseStatementForGetNextFeature,
                          bool bEmptyLayer, bool bAllowMultipleGeomFields,
                          bool bCanReopenBaseDS);
-    virtual ~OGRSQLiteSelectLayer();
+    ~OGRSQLiteSelectLayer() override;
 
     virtual void ResetReading() override;
 
@@ -730,7 +730,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
   public:
     OGRSQLiteDataSource();
-    virtual ~OGRSQLiteDataSource();
+    ~OGRSQLiteDataSource() override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
     bool Create(const char *, char **papszOptions);
@@ -892,7 +892,7 @@ class RL2RasterBand final : public GDALPamRasterBand
                   bool bHasNoDataIn, double dfNoDataValueIn);
     explicit RL2RasterBand(const RL2RasterBand *poOther);
 
-    virtual ~RL2RasterBand();
+    ~RL2RasterBand() override;
 
   protected:
     virtual CPLErr IReadBlock(int, int, void *) override;

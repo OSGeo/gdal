@@ -29,10 +29,6 @@ class GTiffSplitBand final : public GTiffRasterBand
   public:
     GTiffSplitBand(GTiffDataset *, int);
 
-    virtual ~GTiffSplitBand()
-    {
-    }
-
     bool IsBaseGTiffClass() const override
     {
         return false;

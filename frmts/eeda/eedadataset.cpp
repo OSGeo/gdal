@@ -75,7 +75,7 @@ class GDALEEDADataset final : public GDALEEDABaseDataset
 
   public:
     GDALEEDADataset();
-    virtual ~GDALEEDADataset();
+    ~GDALEEDADataset() override;
 
     int GetLayerCount() const override
     {
@@ -124,7 +124,7 @@ class GDALEEDALayer final : public OGRLayer
     GDALEEDALayer(GDALEEDADataset *poDS, const CPLString &osCollection,
                   const CPLString &osCollectionName, json_object *poAsset,
                   json_object *poLayerConf);
-    virtual ~GDALEEDALayer();
+    ~GDALEEDALayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;

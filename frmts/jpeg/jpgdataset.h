@@ -239,7 +239,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
 
   public:
     JPGDatasetCommon();
-    virtual ~JPGDatasetCommon();
+    ~JPGDatasetCommon() override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType, int, BANDMAP_TYPE,
@@ -334,7 +334,7 @@ class JPGDataset final : public JPGDatasetCommon
 
   public:
     JPGDataset();
-    virtual ~JPGDataset();
+    ~JPGDataset() override;
 
     static JPGDatasetCommon *Open(JPGDatasetOpenArgs *psArgs);
     static GDALDataset *CreateCopy(const char *pszFilename,
@@ -376,10 +376,6 @@ class JPGRasterBand final : public GDALPamRasterBand
   public:
     JPGRasterBand(JPGDatasetCommon *, int);
 
-    virtual ~JPGRasterBand()
-    {
-    }
-
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual GDALColorInterp GetColorInterpretation() override;
 
@@ -411,10 +407,6 @@ class JPGMaskBand final : public GDALRasterBand
 
   public:
     explicit JPGMaskBand(JPGDatasetCommon *poDS);
-
-    virtual ~JPGMaskBand()
-    {
-    }
 };
 
 /************************************************************************/

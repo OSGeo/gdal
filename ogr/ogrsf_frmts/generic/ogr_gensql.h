@@ -104,7 +104,7 @@ class OGRGenSQLResultsLayer final : public OGRLayer
                           std::unique_ptr<swq_select> &&pSelectInfo,
                           const OGRGeometry *poSpatFilter, const char *pszWHERE,
                           const char *pszDialect);
-    virtual ~OGRGenSQLResultsLayer();
+    ~OGRGenSQLResultsLayer() override;
 
     virtual OGRGeometry *GetSpatialFilter() override;
 

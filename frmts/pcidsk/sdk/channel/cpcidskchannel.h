@@ -40,7 +40,7 @@ namespace PCIDSK
         CPCIDSKChannel( PCIDSKBuffer &image_header, uint64 ih_offset,
             CPCIDSKFile *file, eChanType pixel_type,
             int channel_number );
-        virtual   ~CPCIDSKChannel();
+        ~CPCIDSKChannel() override;
 
         virtual int GetBlockWidth() const override { return block_width; }
         virtual int GetBlockHeight() const override { return block_height; }

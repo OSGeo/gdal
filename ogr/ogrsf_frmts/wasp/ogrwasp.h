@@ -135,7 +135,7 @@ class OGRWAsPLayer final : public OGRLayer,
     OGRWAsPLayer(GDALDataset *poDS, const char *pszName, VSILFILE *hFile,
                  OGRSpatialReference *poSpatialRef);
 
-    virtual ~OGRWAsPLayer();
+    ~OGRWAsPLayer() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -183,7 +183,7 @@ class OGRWAsPDataSource final : public GDALDataset
   public:
     /** @note takes ownership of hFile (i.e. responsibility for closing) */
     OGRWAsPDataSource(const char *pszName, VSILFILE *hFile);
-    virtual ~OGRWAsPDataSource();
+    ~OGRWAsPDataSource() override;
 
     int GetLayerCount() const override
     {

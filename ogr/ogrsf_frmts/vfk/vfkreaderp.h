@@ -56,7 +56,7 @@ class VFKReader : public IVFKReader
 
   public:
     explicit VFKReader(const GDALOpenInfo *);
-    virtual ~VFKReader();
+    ~VFKReader() override;
 
     const char *GetFilename() const override
     {
@@ -129,7 +129,7 @@ class VFKReaderSQLite : public VFKReader
 
   public:
     explicit VFKReaderSQLite(const GDALOpenInfo *);
-    virtual ~VFKReaderSQLite();
+    ~VFKReaderSQLite() override;
 
     bool IsSpatial() const override
     {

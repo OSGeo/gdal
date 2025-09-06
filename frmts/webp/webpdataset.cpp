@@ -44,7 +44,7 @@ class WEBPDataset final : public GDALPamDataset
 
   public:
     WEBPDataset();
-    virtual ~WEBPDataset();
+    ~WEBPDataset() override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType, int, BANDMAP_TYPE,

@@ -75,7 +75,7 @@ class JP2UserBox final : public CNCSJP2Box
   public:
     JP2UserBox();
 
-    virtual ~JP2UserBox();
+    ~JP2UserBox() override;
 
 #if ECWSDK_VERSION >= 55
     CNCSError Parse(NCS::SDK::CFileBase &JP2File,
@@ -442,7 +442,7 @@ class ECWAsyncReader final : public GDALAsyncReader
 
   public:
     ECWAsyncReader();
-    virtual ~ECWAsyncReader();
+    ~ECWAsyncReader() override;
     virtual GDALAsyncStatusType
     GetNextUpdatedRegion(double dfTimeout, int *pnXBufOff, int *pnYBufOff,
                          int *pnXBufSize, int *pnYBufSize) override;
@@ -572,7 +572,7 @@ class CPL_DLL ECWDataset final : public GDALJP2AbstractDataset
 
   public:
     explicit ECWDataset(int bIsJPEG2000);
-    ~ECWDataset();
+    ~ECWDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *, int bIsJPEG2000);
     static GDALDataset *OpenJPEG2000(GDALOpenInfo *);
@@ -667,7 +667,7 @@ class ECWRasterBand final : public GDALPamRasterBand
 
   public:
     ECWRasterBand(ECWDataset *, int, int iOverview, char **papszOpenOptions);
-    ~ECWRasterBand();
+    ~ECWRasterBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
 

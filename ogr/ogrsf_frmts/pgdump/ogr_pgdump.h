@@ -143,7 +143,7 @@ class OGRPGDumpLayer final : public OGRLayer
     OGRPGDumpLayer(OGRPGDumpDataSource *poDS, const char *pszSchemaName,
                    const char *pszLayerName, const char *pszFIDColumn,
                    int bWriteAsHexIn, int bCreateTable, bool bSkipConflicts);
-    virtual ~OGRPGDumpLayer();
+    ~OGRPGDumpLayer() override;
 
     using OGRLayer::GetLayerDefn;
 
@@ -270,7 +270,7 @@ class OGRPGDumpDataSource final : public GDALDataset
 
   public:
     OGRPGDumpDataSource(const char *pszName, char **papszOptions);
-    virtual ~OGRPGDumpDataSource();
+    ~OGRPGDumpDataSource() override;
 
     bool Log(const char *pszStr, bool bAddSemiColumn = true);
 

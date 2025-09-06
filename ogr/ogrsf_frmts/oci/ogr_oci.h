@@ -80,7 +80,7 @@ typedef struct
 /************************************************************************/
 /*                            OGROCISession                             */
 /************************************************************************/
-class CPL_DLL OGROCISession
+class CPL_DLL OGROCISession final
 {
   public:
     OCIEnv *hEnv;
@@ -99,7 +99,7 @@ class CPL_DLL OGROCISession
 
   public:
     OGROCISession();
-    virtual ~OGROCISession();
+    ~OGROCISession();
 
     int EstablishSession(const char *pszUserid, const char *pszPassword,
                          const char *pszDatabase);
@@ -126,11 +126,11 @@ OGROCISession CPL_DLL *OGRGetOCISession(const char *pszUserid,
 /************************************************************************/
 /*                           OGROCIStatement                            */
 /************************************************************************/
-class CPL_DLL OGROCIStatement
+class CPL_DLL OGROCIStatement final
 {
   public:
     explicit OGROCIStatement(OGROCISession *);
-    virtual ~OGROCIStatement();
+    ~OGROCIStatement();
 
     OCIStmt *GetStatement()
     {
@@ -180,7 +180,7 @@ class CPL_DLL OGROCIStatement
 /************************************************************************/
 /*                           OGROCIStringBuf                            */
 /************************************************************************/
-class OGROCIStringBuf
+class OGROCIStringBuf final
 {
     char *pszString;
     int nLen;
@@ -261,7 +261,7 @@ class OGROCILayer CPL_NON_FINAL : public OGRLayer
 
   public:
     explicit OGROCILayer(OGROCIDataSource *poDSIn);
-    virtual ~OGROCILayer();
+    ~OGROCILayer() override;
 
     virtual int FindFieldIndex(const char *pszFieldName,
                                int bExactMatch) override
@@ -328,7 +328,7 @@ class OGROCIWritableLayer CPL_NON_FINAL : public OGROCILayer
     void ParseDIMINFO(const char *, double *, double *, double *);
 
     explicit OGROCIWritableLayer(OGROCIDataSource *poDSIn);
-    virtual ~OGROCIWritableLayer();
+    ~OGROCIWritableLayer() override;
 
   public:
     const OGRSpatialReference *GetSpatialRef() const override
@@ -397,7 +397,7 @@ class OGROCILoaderLayer final : public OGROCIWritableLayer
     OGROCILoaderLayer(OGROCIDataSource *, const char *pszName,
                       const char *pszGeomCol, int nSRID,
                       const char *pszLoaderFile);
-    virtual ~OGROCILoaderLayer();
+    ~OGROCILoaderLayer() override;
 
     virtual void ResetReading() override;
     virtual GIntBig GetFeatureCount(int) override;
@@ -483,7 +483,7 @@ class OGROCITableLayer final : public OGROCIWritableLayer
     OGROCITableLayer(OGROCIDataSource *, const char *pszName,
                      OGRwkbGeometryType eGType, int nSRID, int bUpdate,
                      int bNew);
-    virtual ~OGROCITableLayer();
+    ~OGROCITableLayer() override;
 
     virtual void ResetReading() override;
     virtual GIntBig GetFeatureCount(int) override;
@@ -527,7 +527,7 @@ class OGROCISelectLayer final : public OGROCILayer
   public:
     OGROCISelectLayer(OGROCIDataSource *, const char *pszName,
                       OGROCIStatement *poStatement);
-    ~OGROCISelectLayer();
+    ~OGROCISelectLayer() override;
 };
 
 /************************************************************************/
@@ -554,7 +554,7 @@ class OGROCIDataSource final : public GDALDataset
 
   public:
     OGROCIDataSource();
-    virtual ~OGROCIDataSource();
+    ~OGROCIDataSource() override;
 
     OGROCISession *GetSession()
     {

@@ -70,7 +70,7 @@ class GRIBDataset final : public GDALPamDataset
 
   public:
     GRIBDataset();
-    ~GRIBDataset();
+    ~GRIBDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -138,7 +138,7 @@ class GRIBRasterBand final : public GDALPamRasterBand
 
   public:
     GRIBRasterBand(GRIBDataset *, int, inventoryType *);
-    virtual ~GRIBRasterBand();
+    ~GRIBRasterBand() override;
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual const char *GetDescription() const override;
 
@@ -198,11 +198,9 @@ namespace grib
 {
 
 // Thin layer to manage allocation and deallocation.
-class InventoryWrapper
+class InventoryWrapper /* non final */
 {
   public:
-    InventoryWrapper() = default;
-
     virtual ~InventoryWrapper();
 
     // Modifying the contents pointed to by the return is allowed.
@@ -229,6 +227,8 @@ class InventoryWrapper
     }
 
   protected:
+    InventoryWrapper() = default;
+
     inventoryType *inv_ = nullptr;
     uInt4 inv_len_ = 0;
     int num_messages_ = 0;

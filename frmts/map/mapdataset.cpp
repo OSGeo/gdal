@@ -39,7 +39,7 @@ class MAPDataset final : public GDALDataset
 
   public:
     MAPDataset();
-    virtual ~MAPDataset();
+    ~MAPDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
@@ -75,10 +75,6 @@ class MAPWrapperRasterBand final : public GDALProxyRasterBand
         this->poBaseBand = poBaseBandIn;
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    }
-
-    ~MAPWrapperRasterBand()
-    {
     }
 };
 

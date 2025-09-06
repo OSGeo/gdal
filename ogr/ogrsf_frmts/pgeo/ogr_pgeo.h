@@ -64,7 +64,7 @@ class OGRPGeoLayer CPL_NON_FINAL : public OGRLayer
 
   public:
     OGRPGeoLayer();
-    virtual ~OGRPGeoLayer();
+    ~OGRPGeoLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();
@@ -102,7 +102,7 @@ class OGRPGeoTableLayer final : public OGRPGeoLayer
 
   public:
     explicit OGRPGeoTableLayer(OGRPGeoDataSource *, int);
-    virtual ~OGRPGeoTableLayer();
+    ~OGRPGeoTableLayer() override;
 
     CPLErr Initialize(const char *pszTableName, const char *pszGeomCol,
                       int nShapeType, double dfExtentLeft, double dfExtentRight,
@@ -146,7 +146,7 @@ class OGRPGeoSelectLayer final : public OGRPGeoLayer
 
   public:
     OGRPGeoSelectLayer(OGRPGeoDataSource *, CPLODBCStatement *);
-    virtual ~OGRPGeoSelectLayer();
+    ~OGRPGeoSelectLayer() override;
 
     virtual void ResetReading() override;
     virtual GIntBig GetFeatureCount(int) override;
@@ -186,7 +186,7 @@ class OGRPGeoDataSource final : public GDALDataset
 
   public:
     OGRPGeoDataSource();
-    virtual ~OGRPGeoDataSource();
+    ~OGRPGeoDataSource() override;
 
     int Open(GDALOpenInfo *poOpenInfo);
     int OpenTable(const char *pszTableName, const char *pszGeomCol,

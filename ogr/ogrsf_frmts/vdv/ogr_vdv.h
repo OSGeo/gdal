@@ -38,7 +38,7 @@ class OGRIDFDataSource final : public GDALDataset
 
   public:
     explicit OGRIDFDataSource(const char *pszFilename, VSILFILE *fpL);
-    virtual ~OGRIDFDataSource();
+    ~OGRIDFDataSource() override;
 
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;
@@ -67,7 +67,7 @@ class OGRVDVLayer final : public OGRLayer
   public:
     OGRVDVLayer(GDALDataset *poDS, const CPLString &osTableName, VSILFILE *fpL,
                 bool bOwnFP, bool bRecodeFromLatin1, vsi_l_offset nStartOffset);
-    virtual ~OGRVDVLayer();
+    ~OGRVDVLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
@@ -156,7 +156,7 @@ class OGRVDVWriterLayer final : public OGRLayer
                       OGRVDV452Table *poVDV452Table = nullptr,
                       const CPLString &osVDV452Lang = "",
                       bool bProfileStrict = false);
-    virtual ~OGRVDVWriterLayer();
+    ~OGRVDVWriterLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
@@ -204,7 +204,7 @@ class OGRVDVDataSource final : public GDALDataset
   public:
     OGRVDVDataSource(const char *pszFilename, VSILFILE *fpL, bool bUpdate,
                      bool bSingleFile, bool bNew);
-    virtual ~OGRVDVDataSource();
+    ~OGRVDVDataSource() override;
 
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;

@@ -26,7 +26,7 @@ class KEAMaskBand final : public GDALRasterBand
   public:
     KEAMaskBand(GDALRasterBand *pParent, kealib::KEAImageIO *pImageIO,
                 LockedRefCount *pRefCount);
-    ~KEAMaskBand();
+    ~KEAMaskBand() override;
 
     virtual bool IsMaskBand() const override
     {

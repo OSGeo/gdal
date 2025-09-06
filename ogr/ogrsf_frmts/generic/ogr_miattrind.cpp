@@ -28,7 +28,7 @@
 
 class OGRMILayerAttrIndex;
 
-class OGRMIAttrIndex : public OGRAttrIndex
+class OGRMIAttrIndex final : public OGRAttrIndex
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMIAttrIndex)
 
@@ -41,7 +41,7 @@ class OGRMIAttrIndex : public OGRAttrIndex
     int iField;
 
     OGRMIAttrIndex(OGRMILayerAttrIndex *, int iIndex, int iField);
-    ~OGRMIAttrIndex();
+    ~OGRMIAttrIndex() override;
 
     GByte *BuildKey(OGRField *psKey);
     GIntBig GetFirstMatch(OGRField *psKey) override;
@@ -81,7 +81,7 @@ class OGRMILayerAttrIndex final : public OGRLayerAttrIndex
     int bUnlinkINDFile;
 
     OGRMILayerAttrIndex();
-    virtual ~OGRMILayerAttrIndex();
+    ~OGRMILayerAttrIndex() override;
 
     /* base class virtual methods */
     OGRErr Initialize(const char *pszIndexPath, OGRLayer *) override;

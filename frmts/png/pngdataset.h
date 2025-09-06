@@ -126,7 +126,7 @@ class PNGDataset final : public GDALPamDataset
 
   public:
     PNGDataset();
-    virtual ~PNGDataset();
+    ~PNGDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
@@ -200,10 +200,6 @@ class PNGRasterBand final : public GDALPamRasterBand
 
   public:
     PNGRasterBand(PNGDataset *, int);
-
-    virtual ~PNGRasterBand()
-    {
-    }
 
     virtual CPLErr IReadBlock(int, int, void *) override;
 

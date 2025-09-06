@@ -278,7 +278,7 @@ class LevellerDataset final : public GDALPamDataset
 
   public:
     LevellerDataset();
-    virtual ~LevellerDataset();
+    ~LevellerDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -386,7 +386,7 @@ class LevellerRasterBand final : public GDALPamRasterBand
 
   public:
     explicit LevellerRasterBand(LevellerDataset *);
-    virtual ~LevellerRasterBand();
+    ~LevellerRasterBand() override;
 
     bool Init();
 

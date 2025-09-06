@@ -98,7 +98,7 @@ class PLMosaicDataset final : public GDALPamDataset
 
   public:
     PLMosaicDataset();
-    virtual ~PLMosaicDataset();
+    ~PLMosaicDataset() override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);

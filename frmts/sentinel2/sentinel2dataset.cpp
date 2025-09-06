@@ -197,7 +197,7 @@ class SENTINEL2Dataset final : public VRTDataset
 
   public:
     SENTINEL2Dataset(int nXSize, int nYSize);
-    virtual ~SENTINEL2Dataset();
+    ~SENTINEL2Dataset() override;
 
     virtual char **GetFileList() override;
 

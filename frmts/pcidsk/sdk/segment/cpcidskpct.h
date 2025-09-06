@@ -33,7 +33,7 @@ namespace PCIDSK
     public:
         CPCIDSK_PCT( PCIDSKFile *file, int segment,const char *segment_pointer);
 
-        virtual     ~CPCIDSK_PCT();
+        ~CPCIDSK_PCT() override;
 
         virtual void ReadPCT( unsigned char pct[768] ) override;
         virtual void WritePCT( unsigned char pct[768] ) override;

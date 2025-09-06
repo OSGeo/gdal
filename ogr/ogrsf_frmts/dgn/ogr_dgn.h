@@ -53,7 +53,7 @@ class OGRDGNLayer final : public OGRLayer
   public:
     OGRDGNLayer(OGRDGNDataSource *poDS, const char *pszName, DGNHandle hDGN,
                 int bUpdate);
-    virtual ~OGRDGNLayer();
+    ~OGRDGNLayer() override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
@@ -98,7 +98,7 @@ class OGRDGNDataSource final : public GDALDataset
 
   public:
     OGRDGNDataSource();
-    ~OGRDGNDataSource();
+    ~OGRDGNDataSource() override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
     void PreCreate(CSLConstList);

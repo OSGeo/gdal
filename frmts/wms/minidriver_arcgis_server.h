@@ -18,7 +18,7 @@ class WMSMiniDriver_AGS : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_AGS();
-    virtual ~WMSMiniDriver_AGS();
+    ~WMSMiniDriver_AGS() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,

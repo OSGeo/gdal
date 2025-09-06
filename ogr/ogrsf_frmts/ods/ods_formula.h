@@ -184,7 +184,7 @@ class ods_formula_parse_context
     ods_formula_node *poRoot;
 };
 
-class IODSCellEvaluator
+class IODSCellEvaluator /* non final */
 {
   public:
     virtual int EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,

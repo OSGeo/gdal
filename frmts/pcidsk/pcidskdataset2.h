@@ -55,7 +55,7 @@ class PCIDSK2Dataset final : public GDALPamDataset
 
   public:
     PCIDSK2Dataset();
-    virtual ~PCIDSK2Dataset();
+    ~PCIDSK2Dataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *LLOpen(const char *pszFilename, PCIDSK::PCIDSKFile *,
@@ -129,7 +129,7 @@ class PCIDSK2Band final : public GDALPamRasterBand
     PCIDSK2Band(PCIDSK::PCIDSKFile *poFileIn,
                 PCIDSK::PCIDSKChannel *poChannelIn);
     explicit PCIDSK2Band(PCIDSK::PCIDSKChannel *);
-    virtual ~PCIDSK2Band();
+    ~PCIDSK2Band() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
@@ -180,7 +180,7 @@ class OGRPCIDSKLayer final : public OGRLayer,
   public:
     OGRPCIDSKLayer(GDALDataset *poDS, PCIDSK::PCIDSKSegment *,
                    PCIDSK::PCIDSKVectorSegment *, bool bUpdate);
-    virtual ~OGRPCIDSKLayer();
+    ~OGRPCIDSKLayer() override;
 
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRPCIDSKLayer)

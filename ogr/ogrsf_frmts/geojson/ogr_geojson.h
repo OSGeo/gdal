@@ -61,7 +61,7 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     OGRGeoJSONLayer(const char *pszName, OGRSpatialReference *poSRS,
                     OGRwkbGeometryType eGType, OGRGeoJSONDataSource *poDS,
                     OGRGeoJSONReader *poReader);
-    virtual ~OGRGeoJSONLayer();
+    ~OGRGeoJSONLayer() override;
 
     //
     // OGRLayer Interface
@@ -169,7 +169,7 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
                          CSLConstList papszOptions, bool bWriteFC_BBOXIn,
                          OGRCoordinateTransformation *poCT,
                          OGRGeoJSONDataSource *poDS);
-    ~OGRGeoJSONWriteLayer();
+    ~OGRGeoJSONWriteLayer() override;
 
     //
     // OGRLayer Interface
@@ -242,7 +242,7 @@ class OGRGeoJSONDataSource final : public GDALDataset
 {
   public:
     OGRGeoJSONDataSource();
-    virtual ~OGRGeoJSONDataSource();
+    ~OGRGeoJSONDataSource() override;
 
     int Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType,
              const char *pszJSonFlavor);

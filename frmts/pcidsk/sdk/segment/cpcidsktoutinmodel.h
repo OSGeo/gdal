@@ -18,12 +18,12 @@
 namespace PCIDSK {
     class PCIDSKFile;
 
-    class CPCIDSKToutinModelSegment : public PCIDSKToutinSegment,
+    class CPCIDSKToutinModelSegment final: public PCIDSKToutinSegment,
                                       public CPCIDSKEphemerisSegment
     {
     public:
         CPCIDSKToutinModelSegment(PCIDSKFile *file, int segment,const char *segment_pointer);
-        ~CPCIDSKToutinModelSegment();
+        ~CPCIDSKToutinModelSegment() override;
 
         SRITInfo_t GetInfo() const override;
         void SetInfo(const SRITInfo_t& poInfo) override;

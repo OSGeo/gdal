@@ -922,7 +922,7 @@ class VSIChunkedWriteHandle final : public VSIVirtualHandle
     VSIChunkedWriteHandle(IVSIS3LikeFSHandler *poFS, const char *pszFilename,
                           IVSIS3LikeHandleHelper *poS3HandleHelper,
                           CSLConstList papszOptions);
-    virtual ~VSIChunkedWriteHandle();
+    ~VSIChunkedWriteHandle() override;
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;
@@ -976,7 +976,7 @@ class VSIAppendWriteHandle CPL_NON_FINAL : public VSIVirtualHandle
     VSIAppendWriteHandle(VSICurlFilesystemHandlerBase *poFS,
                          const char *pszFSPrefix, const char *pszFilename,
                          int nChunkSize);
-    virtual ~VSIAppendWriteHandle();
+    ~VSIAppendWriteHandle() override;
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;

@@ -60,7 +60,7 @@ class RCMDataset final : public GDALPamDataset
 
   public:
     RCMDataset() = default;
-    virtual ~RCMDataset();
+    ~RCMDataset() override;
 
     virtual int GetGCPCount() override;
 
@@ -155,7 +155,7 @@ class RCMRasterBand final : public GDALPamRasterBand
                   const char *pszPole, GDALDataset *poBandFile,
                   bool bTwoBandComplex, bool isOneFilePerPol, bool isNITF);
 
-    virtual ~RCMRasterBand();
+    ~RCMRasterBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
 
@@ -204,7 +204,7 @@ class RCMCalibRasterBand final : public GDALPamRasterBand
                        GDALDataType eType, GDALDataset *poBandDataset,
                        eCalibration eCalib, const char *pszLUT,
                        const char *pszNoiseLevels, GDALDataType eOriginalType);
-    ~RCMCalibRasterBand();
+    ~RCMCalibRasterBand() override;
 
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
 };

@@ -44,7 +44,7 @@ class GTiffJPEGOverviewDS final : public GDALDataset
   public:
     GTiffJPEGOverviewDS(GTiffDataset *poParentDS, int nOverviewLevel,
                         const void *pJPEGTable, int nJPEGTableSize);
-    virtual ~GTiffJPEGOverviewDS();
+    ~GTiffJPEGOverviewDS() override;
 
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,

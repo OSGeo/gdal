@@ -297,7 +297,7 @@ class USGSDEMDataset final : public GDALPamDataset
 
   public:
     USGSDEMDataset();
-    ~USGSDEMDataset();
+    ~USGSDEMDataset() override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);

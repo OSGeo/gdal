@@ -83,7 +83,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
 
   public:
     MEMDataset();
-    virtual ~MEMDataset();
+    ~MEMDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     const OGRSpatialReference *GetSpatialRefRasterOnly() const override;
@@ -191,7 +191,7 @@ class CPL_DLL MEMRasterBand CPL_NON_FINAL : public GDALPamRasterBand
                   GDALDataType eType, GSpacing nPixelOffset,
                   GSpacing nLineOffset, int bAssumeOwnership,
                   const char *pszPixelType = nullptr);
-    virtual ~MEMRasterBand();
+    ~MEMRasterBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
@@ -262,7 +262,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     OGRMemLayer(const char *pszName, const OGRSpatialReference *poSRS,
                 OGRwkbGeometryType eGeomType);
     explicit OGRMemLayer(const OGRFeatureDefn &oFeatureDefn);
-    virtual ~OGRMemLayer();
+    ~OGRMemLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;

@@ -37,7 +37,7 @@ class GNMDatabaseNetwork : public GNMGenericNetwork
 {
   public:
     GNMDatabaseNetwork();
-    virtual ~GNMDatabaseNetwork();
+    ~GNMDatabaseNetwork() override;
     virtual CPLErr Open(GDALOpenInfo *poOpenInfo) override;
     virtual OGRErr DeleteLayer(int) override;
     virtual CPLErr Create(const char *pszFilename,

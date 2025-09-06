@@ -2980,7 +2980,7 @@ GDALDataset *JPGDatasetCommon::OpenRawThermalImage()
     {
         CPLDebug("JPEG", "Raw thermal image");
 
-        class JPEGRawDataset : public RawDataset
+        class JPEGRawDataset final : public RawDataset
         {
           public:
             JPEGRawDataset(int nXSizeIn, int nYSizeIn)
@@ -2994,7 +2994,10 @@ GDALDataset *JPGDatasetCommon::OpenRawThermalImage()
                 return GDALPamDataset::Close();
             }
 
-            ~JPEGRawDataset() = default;
+            ~JPEGRawDataset() override
+            {
+                JPEGRawDataset::Close();
+            }
 
             void SetBand(int nBand, std::unique_ptr<GDALRasterBand> &&poBand)
             {

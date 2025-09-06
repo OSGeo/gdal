@@ -163,7 +163,7 @@ class OGRElasticLayer final : public OGRLayer
                     const char *pszESSearch = nullptr);
     OGRElasticLayer(const char *pszLayerName,
                     OGRElasticLayer *poReferenceLayer);
-    virtual ~OGRElasticLayer();
+    ~OGRElasticLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
@@ -335,7 +335,7 @@ class OGRElasticDataSource final : public GDALDataset
 
   public:
     OGRElasticDataSource();
-    virtual ~OGRElasticDataSource();
+    ~OGRElasticDataSource() override;
 
     bool m_bOverwrite;
     int m_nBulkUpload;

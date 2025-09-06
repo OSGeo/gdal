@@ -258,7 +258,7 @@ class netCDFRasterBand final : public GDALPamRasterBand
                      const int *panBandZLev = nullptr,
                      const int *panBandZPos = nullptr,
                      const int *paDimIds = nullptr);
-    virtual ~netCDFRasterBand();
+    ~netCDFRasterBand() override;
 
     virtual double GetNoDataValue(int *) override;
     virtual int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr) override;

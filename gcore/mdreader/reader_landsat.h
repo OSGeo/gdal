@@ -36,7 +36,7 @@ class GDALMDReaderLandsat : public GDALMDReaderBase
 {
   public:
     GDALMDReaderLandsat(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderLandsat();
+    ~GDALMDReaderLandsat() override;
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;
 

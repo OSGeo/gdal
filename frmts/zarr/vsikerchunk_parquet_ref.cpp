@@ -62,7 +62,7 @@ class VSIKerchunkParquetRefFileSystem final : public VSIFilesystemHandler
         IsFileSystemInstantiated() = true;
     }
 
-    ~VSIKerchunkParquetRefFileSystem();
+    ~VSIKerchunkParquetRefFileSystem() override;
 
     static bool &IsFileSystemInstantiated()
     {

@@ -25,7 +25,7 @@ class KEAOverview final : public KEARasterBand
     KEAOverview(KEADataset *pDataset, int nSrcBand, GDALAccess eAccess,
                 kealib::KEAImageIO *pImageIO, LockedRefCount *pRefCount,
                 int nOverviewIndex, uint64_t nXSize, uint64_t nYSize);
-    ~KEAOverview();
+    ~KEAOverview() override;
 
     // virtual methods for RATs - not implemented for overviews
     GDALRasterAttributeTable *GetDefaultRAT() override;

@@ -52,7 +52,7 @@ class OGRIDBLayer CPL_NON_FINAL : public OGRLayer
 
   public:
     OGRIDBLayer();
-    virtual ~OGRIDBLayer();
+    ~OGRIDBLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();
@@ -92,7 +92,7 @@ class OGRIDBTableLayer final : public OGRIDBLayer
 
   public:
     explicit OGRIDBTableLayer(OGRIDBDataSource *);
-    virtual ~OGRIDBTableLayer();
+    ~OGRIDBTableLayer() override;
 
     CPLErr Initialize(const char *pszTableName, const char *pszGeomCol,
                       int bUpdate);
@@ -130,7 +130,7 @@ class OGRIDBSelectLayer final : public OGRIDBLayer
 
   public:
     OGRIDBSelectLayer(OGRIDBDataSource *, ITCursor *);
-    virtual ~OGRIDBSelectLayer();
+    ~OGRIDBSelectLayer() override;
 
     virtual void ResetReading() override;
     virtual GIntBig GetFeatureCount(int) override;
@@ -157,7 +157,7 @@ class OGRIDBDataSource final : public GDALDataset
 
   public:
     OGRIDBDataSource();
-    virtual ~OGRIDBDataSource();
+    ~OGRIDBDataSource() override;
 
     int Open(const char *, int bUpdate, int bTestOpen);
     int OpenTable(const char *pszTableName, const char *pszGeomCol,

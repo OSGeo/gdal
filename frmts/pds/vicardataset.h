@@ -98,7 +98,7 @@ class VICARDataset final : public RawDataset
 
   public:
     VICARDataset();
-    virtual ~VICARDataset();
+    ~VICARDataset() override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;

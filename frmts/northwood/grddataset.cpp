@@ -77,7 +77,7 @@ class NWT_GRDDataset final : public GDALPamDataset
 
   public:
     NWT_GRDDataset();
-    ~NWT_GRDDataset();
+    ~NWT_GRDDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);

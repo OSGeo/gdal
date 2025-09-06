@@ -264,7 +264,7 @@ class COASPDataset final : public GDALDataset
     {
     }
 
-    ~COASPDataset();
+    ~COASPDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *poOpenInfo);

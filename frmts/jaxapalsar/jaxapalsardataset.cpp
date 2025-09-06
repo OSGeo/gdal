@@ -172,7 +172,7 @@ class PALSARJaxaDataset final : public GDALPamDataset
 
   public:
     PALSARJaxaDataset();
-    ~PALSARJaxaDataset();
+    ~PALSARJaxaDataset() override;
 
     int GetGCPCount() override;
     const GDAL_GCP *GetGCPs() override;
@@ -213,7 +213,7 @@ class PALSARJaxaRasterBand final : public GDALRasterBand
 
   public:
     PALSARJaxaRasterBand(PALSARJaxaDataset *poDS, int nBand, VSILFILE *fp);
-    ~PALSARJaxaRasterBand();
+    ~PALSARJaxaRasterBand() override;
 
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
 };

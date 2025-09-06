@@ -17,7 +17,7 @@ class WMSMiniDriver_IIP : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_IIP();
-    virtual ~WMSMiniDriver_IIP();
+    ~WMSMiniDriver_IIP() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,

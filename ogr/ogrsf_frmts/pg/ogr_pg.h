@@ -221,7 +221,7 @@ class OGRPGLayer CPL_NON_FINAL : public OGRLayer
 
   public:
     OGRPGLayer();
-    virtual ~OGRPGLayer();
+    ~OGRPGLayer() override;
 
     virtual void ResetReading() override;
 
@@ -354,7 +354,7 @@ class OGRPGTableLayer final : public OGRPGLayer
                     const char *pszTableName, const char *pszSchemaName,
                     const char *pszDescriptionIn, const char *pszGeomColForced,
                     int bUpdate);
-    virtual ~OGRPGTableLayer();
+    ~OGRPGTableLayer() override;
 
     void SetGeometryInformation(PGGeomColumnDesc *pasDesc, int nGeomFieldCount);
 
@@ -522,7 +522,7 @@ class OGRPGResultLayer final : public OGRPGLayer
   public:
     OGRPGResultLayer(OGRPGDataSource *, const char *pszRawStatement,
                      PGresult *hInitialResult);
-    virtual ~OGRPGResultLayer();
+    ~OGRPGResultLayer() override;
 
     virtual void ResetReading() override;
     virtual GIntBig GetFeatureCount(int) override;
@@ -646,7 +646,7 @@ class OGRPGDataSource final : public GDALDataset
 
   public:
     OGRPGDataSource();
-    virtual ~OGRPGDataSource();
+    ~OGRPGDataSource() override;
 
     PGconn *GetPGConn()
     {

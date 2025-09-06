@@ -27,7 +27,7 @@ class CPL_DLL OGRLayerDecorator : virtual public OGRLayer
 
   public:
     OGRLayerDecorator(OGRLayer *poDecoratedLayer, int bTakeOwnership);
-    virtual ~OGRLayerDecorator();
+    ~OGRLayerDecorator() override;
 
     virtual OGRGeometry *GetSpatialFilter() override;
     virtual OGRErr ISetSpatialFilter(int iGeomField,

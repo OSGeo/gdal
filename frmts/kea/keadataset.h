@@ -29,7 +29,7 @@ class KEADataset final : public GDALDataset
   public:
     // constructor/destructor
     KEADataset(H5::H5File *keaImgH5File, GDALAccess eAccess);
-    ~KEADataset();
+    ~KEADataset() override;
 
     // static methods that handle open and creation
     // the driver class has pointers to these

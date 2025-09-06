@@ -1946,7 +1946,7 @@ class KmlSingleDocRasterDataset final : public GDALDataset
 
   public:
     KmlSingleDocRasterDataset();
-    virtual ~KmlSingleDocRasterDataset();
+    ~KmlSingleDocRasterDataset() override;
 
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {

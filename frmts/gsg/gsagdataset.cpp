@@ -50,7 +50,7 @@ class GSAGDataset final : public GDALPamDataset
 
   public:
     explicit GSAGDataset(const char *pszEOL = "\x0D\x0A");
-    ~GSAGDataset();
+    ~GSAGDataset() override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -100,7 +100,7 @@ class GSAGRasterBand final : public GDALPamRasterBand
 
   public:
     GSAGRasterBand(GSAGDataset *, int, vsi_l_offset);
-    ~GSAGRasterBand();
+    ~GSAGRasterBand() override;
 
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IWriteBlock(int, int, void *) override;

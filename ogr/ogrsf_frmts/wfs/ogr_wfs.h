@@ -131,7 +131,7 @@ class OGRWFSLayer final : public OGRLayer
                 int bAxisOrderAlreadyInverted, const char *pszBaseURL,
                 const char *pszName, const char *pszNS, const char *pszNSVal);
 
-    virtual ~OGRWFSLayer();
+    ~OGRWFSLayer() override;
 
     OGRWFSLayer *Clone();
 
@@ -280,7 +280,7 @@ class OGRWFSJoinLayer final : public OGRLayer
   public:
     static OGRWFSJoinLayer *Build(OGRWFSDataSource *poDS,
                                   const swq_select *psSelectInfo);
-    virtual ~OGRWFSJoinLayer();
+    ~OGRWFSJoinLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
@@ -380,7 +380,7 @@ class OGRWFSDataSource final : public GDALDataset
 
   public:
     OGRWFSDataSource();
-    virtual ~OGRWFSDataSource();
+    ~OGRWFSDataSource() override;
 
     int Open(const char *pszFilename, int bUpdate,
              CSLConstList papszOpenOptions);

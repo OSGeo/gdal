@@ -33,7 +33,7 @@ class CEOSDataset final : public GDALPamDataset
 
   public:
     CEOSDataset();
-    ~CEOSDataset();
+    ~CEOSDataset() override;
     static GDALDataset *Open(GDALOpenInfo *);
 };
 

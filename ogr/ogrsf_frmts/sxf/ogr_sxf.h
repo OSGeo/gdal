@@ -68,7 +68,7 @@ class OGRSXFLayer final : public OGRLayer
     OGRSXFLayer(VSILFILE *fp, CPLMutex **hIOMutex, GByte nID,
                 const char *pszLayerName, int nVer,
                 const SXFMapDescription &sxfMapDesc);
-    virtual ~OGRSXFLayer();
+    ~OGRSXFLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
@@ -130,7 +130,7 @@ class OGRSXFDataSource final : public GDALDataset
 
   public:
     OGRSXFDataSource();
-    virtual ~OGRSXFDataSource();
+    ~OGRSXFDataSource() override;
 
     int Open(const char *pszFilename, bool bUpdate,
              const char *const *papszOpenOpts = nullptr);

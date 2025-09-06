@@ -117,7 +117,7 @@ public:
                    BlockLayerInfo * psBlockLayer,
                    TileLayerInfo * psTileLayer);
 
-    virtual             ~BlockTileLayer(void);
+    ~BlockTileLayer() override;
 
     void                Sync(void);
 

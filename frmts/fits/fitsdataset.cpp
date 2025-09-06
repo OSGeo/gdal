@@ -83,7 +83,7 @@ class FITSDataset final : public GDALPamDataset
 
   public:
     FITSDataset();  // Others should not call this constructor explicitly
-    ~FITSDataset();
+    ~FITSDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
@@ -138,7 +138,7 @@ class FITSRasterBand final : public GDALPamRasterBand
 
   public:
     FITSRasterBand(FITSDataset *, int);
-    virtual ~FITSRasterBand();
+    ~FITSRasterBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
@@ -202,7 +202,7 @@ class FITSLayer final : public OGRLayer,
 
   public:
     FITSLayer(FITSDataset *poDS, int hduNum, const char *pszExtName);
-    ~FITSLayer();
+    ~FITSLayer() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {

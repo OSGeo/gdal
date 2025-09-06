@@ -33,7 +33,7 @@ namespace PCIDSK
     public:
         CPCIDSK_TEX( PCIDSKFile *file, int segment,const char *segment_pointer);
 
-        virtual     ~CPCIDSK_TEX();
+        ~CPCIDSK_TEX() override;
 
         // PCIDSK_TEX
 

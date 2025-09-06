@@ -292,7 +292,7 @@ class RMFDataset final : public GDALDataset
 
   public:
     RMFDataset();
-    virtual ~RMFDataset();
+    ~RMFDataset() override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -365,7 +365,7 @@ class RMFRasterBand final : public GDALRasterBand
 
   public:
     RMFRasterBand(RMFDataset *, int, GDALDataType);
-    virtual ~RMFRasterBand();
+    ~RMFRasterBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;

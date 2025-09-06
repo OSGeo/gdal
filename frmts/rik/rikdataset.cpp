@@ -119,7 +119,7 @@ class RIKDataset final : public GDALPamDataset
 
   public:
     RIKDataset();
-    ~RIKDataset();
+    ~RIKDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);

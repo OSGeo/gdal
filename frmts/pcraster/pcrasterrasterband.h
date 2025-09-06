@@ -55,7 +55,7 @@ class PCRasterRasterBand final : public GDALPamRasterBand
 
   public:
     explicit PCRasterRasterBand(PCRasterDataset *dataset);
-    /* virtual */ ~PCRasterRasterBand();
+    ~PCRasterRasterBand() override;
 
     //----------------------------------------------------------------------------
     // MANIPULATORS

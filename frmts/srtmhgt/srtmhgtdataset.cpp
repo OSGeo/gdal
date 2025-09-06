@@ -45,7 +45,7 @@ class SRTMHGTDataset final : public GDALPamDataset
 
   public:
     SRTMHGTDataset();
-    virtual ~SRTMHGTDataset();
+    ~SRTMHGTDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;

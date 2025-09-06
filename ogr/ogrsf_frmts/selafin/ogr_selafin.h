@@ -84,7 +84,7 @@ class OGRSelafinLayer final : public OGRLayer
                     const OGRSpatialReference *poSpatialRefP,
                     Selafin::Header *poHeaderP, int nStepNumberP,
                     SelafinTypeDef eTypeP);
-    ~OGRSelafinLayer();
+    ~OGRSelafinLayer() override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -145,7 +145,7 @@ class OGRSelafinDataSource final : public GDALDataset
 
   public:
     OGRSelafinDataSource();
-    virtual ~OGRSelafinDataSource();
+    ~OGRSelafinDataSource() override;
     int Open(const char *pszFilename, int bUpdate, int bCreate);
     int OpenTable(const char *pszFilename);
 

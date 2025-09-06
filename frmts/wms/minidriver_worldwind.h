@@ -18,7 +18,7 @@ class WMSMiniDriver_WorldWind : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_WorldWind();
-    virtual ~WMSMiniDriver_WorldWind();
+    ~WMSMiniDriver_WorldWind() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,

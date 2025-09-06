@@ -74,7 +74,7 @@ class KmlSuperOverlayReadDataset final : public GDALDataset
 
   public:
     KmlSuperOverlayReadDataset();
-    virtual ~KmlSuperOverlayReadDataset();
+    ~KmlSuperOverlayReadDataset() override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(const char *pszFilename,
