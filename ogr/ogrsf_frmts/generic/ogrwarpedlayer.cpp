@@ -25,14 +25,13 @@ OGRWarpedLayer::OGRWarpedLayer(OGRLayer *poDecoratedLayer, int iGeomField,
                                OGRCoordinateTransformation *poCT,
                                OGRCoordinateTransformation *poReversedCT)
     : OGRLayerDecorator(poDecoratedLayer, bTakeOwnership),
-      m_poFeatureDefn(nullptr), m_iGeomField(iGeomField), m_poCT(poCT),
-      m_poReversedCT(poReversedCT),
+      m_poFeatureDefn(poDecoratedLayer->GetLayerDefn()->Clone()),
+      m_iGeomField(iGeomField), m_poCT(poCT), m_poReversedCT(poReversedCT),
       m_poSRS(const_cast<OGRSpatialReference *>(m_poCT->GetTargetCS()))
 {
     CPLAssert(poCT != nullptr);
     SetDescription(poDecoratedLayer->GetDescription());
 
-    m_poFeatureDefn = m_poDecoratedLayer->GetLayerDefn()->Clone();
     m_poFeatureDefn->Reference();
     if (m_poFeatureDefn->GetGeomFieldCount() > 0)
         m_poFeatureDefn->GetGeomFieldDefn(m_iGeomField)->SetSpatialRef(m_poSRS);

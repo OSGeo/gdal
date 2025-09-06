@@ -30,7 +30,7 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     CPL_DISALLOW_COPY_ASSIGN(OGRMutexedLayer)
 
   protected:
-    CPLMutex *m_hMutex;
+    CPLMutex *m_hMutex = nullptr;
 
   public:
     /* The construction of the object isn't protected by the mutex */

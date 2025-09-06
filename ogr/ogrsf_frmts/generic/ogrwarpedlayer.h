@@ -36,12 +36,12 @@ class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator,
     CPL_DISALLOW_COPY_ASSIGN(OGRWarpedLayer)
 
   protected:
-    OGRFeatureDefn *m_poFeatureDefn;
-    int m_iGeomField;
+    OGRFeatureDefn *m_poFeatureDefn = nullptr;
+    int m_iGeomField = 0;
 
-    OGRCoordinateTransformation *m_poCT;
-    OGRCoordinateTransformation *m_poReversedCT; /* may be NULL */
-    OGRSpatialReference *m_poSRS;
+    OGRCoordinateTransformation *m_poCT = nullptr;
+    OGRCoordinateTransformation *m_poReversedCT = nullptr; /* may be NULL */
+    OGRSpatialReference *m_poSRS = nullptr;
 
     OGREnvelope sStaticEnvelope{};
 

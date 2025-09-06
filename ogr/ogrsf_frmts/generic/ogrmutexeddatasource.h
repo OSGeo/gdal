@@ -32,10 +32,10 @@ class CPL_DLL OGRMutexedDataSource : public GDALDataset
     CPL_DISALLOW_COPY_ASSIGN(OGRMutexedDataSource)
 
   protected:
-    GDALDataset *m_poBaseDataSource;
-    int m_bHasOwnership;
-    CPLMutex *m_hGlobalMutex;
-    int m_bWrapLayersInMutexedLayer;
+    GDALDataset *m_poBaseDataSource = nullptr;
+    int m_bHasOwnership = false;
+    CPLMutex *m_hGlobalMutex = nullptr;
+    int m_bWrapLayersInMutexedLayer = false;
     std::map<OGRLayer *, OGRMutexedLayer *> m_oMapLayers{};
     std::map<OGRMutexedLayer *, OGRLayer *> m_oReverseMapLayers{};
 

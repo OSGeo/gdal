@@ -1532,25 +1532,25 @@ class CPL_DLL GDALRasterBlock
 {
     friend class GDALAbstractBandBlockCache;
 
-    GDALDataType eType;
+    GDALDataType eType = GDT_Unknown;
 
-    bool bDirty;
-    volatile int nLockCount;
+    bool bDirty = false;
+    volatile int nLockCount = 0;
 
-    int nXOff;
-    int nYOff;
+    int nXOff = 0;
+    int nYOff = 0;
 
-    int nXSize;
-    int nYSize;
+    int nXSize = 0;
+    int nYSize = 0;
 
-    void *pData;
+    void *pData = nullptr;
 
-    GDALRasterBand *poBand;
+    GDALRasterBand *poBand = nullptr;
 
-    GDALRasterBlock *poNext;
-    GDALRasterBlock *poPrevious;
+    GDALRasterBlock *poNext = nullptr;
+    GDALRasterBlock *poPrevious = nullptr;
 
-    bool bMustDetach;
+    bool bMustDetach = false;
 
     CPL_INTERNAL void Detach_unlocked(void);
     CPL_INTERNAL void Touch_unlocked(void);
@@ -4728,13 +4728,13 @@ bool GDALMDRasterIOFromBand(GDALRasterBand *poBand, GDALRWFlag eRWFlag,
 //! @cond Doxygen_Suppress
 class CPL_DLL GDALMDArrayRegularlySpaced : public GDALMDArray
 {
-    double m_dfStart;
-    double m_dfIncrement;
-    double m_dfOffsetInIncrement;
-    GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Float64);
-    std::vector<std::shared_ptr<GDALDimension>> m_dims;
+    double m_dfStart = 0;
+    double m_dfIncrement = 0;
+    double m_dfOffsetInIncrement = 0;
+    const GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Float64);
+    const std::vector<std::shared_ptr<GDALDimension>> m_dims;
     std::vector<std::shared_ptr<GDALAttribute>> m_attributes{};
-    std::string m_osEmptyFilename{};
+    const std::string m_osEmptyFilename{};
 
   protected:
     bool IRead(const GUInt64 *, const size_t *, const GInt64 *,
