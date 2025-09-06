@@ -58,11 +58,7 @@ set(GDAL_PYTHON_CSOURCES
     -threads
     -relativeimport
     -outdir
-    ${CMAKE_CURRENT_BINARY_DIR}/osgeo
-    OUTPUT
-    ${GDAL_PYTHON_PYSOURCES}
-    ${GDAL_PYTHON_CSOURCES}
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/modify_cpp_files.cmake)
+    ${CMAKE_CURRENT_BINARY_DIR}/osgeo)
 
   # gdal_array_wrap.cpp when NumPy exist
   if (Python_NumPy_FOUND)
@@ -75,6 +71,7 @@ set(GDAL_PYTHON_CSOURCES
         -I${PROJECT_SOURCE_DIR}/swig/include/python/docs ${SWIG_PY3_DEPRECATED} -threads -relativeimport -outdir
         ${CMAKE_CURRENT_BINARY_DIR}/osgeo ${SWIG_DEFINES} -I${PROJECT_SOURCE_DIR}/gdal -c++ -python -o ${ARRAY_OUTPUT}
         ${ARRAY_INPUT}
+      COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} "-DFILE=${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_array.py" -P ${PROJECT_SOURCE_DIR}/swig/python/modify_cpp_files.cmake
       DEPENDS ${ARRAY_INPUT}
               ${PROJECT_SOURCE_DIR}/swig/include/python/typemaps_python.i
               ${CMAKE_CURRENT_SOURCE_DIR}/modify_cpp_files.cmake
@@ -107,13 +104,6 @@ set(GDAL_PYTHON_CSOURCES
         DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/gdal_fsspec.py")
       list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_fsspec.py")
   endif()
-
-  foreach(_file IN ITEMS ${GDAL_PYTHON_CSOURCES})
-      add_custom_command(
-        OUTPUT ${_file}
-        APPEND
-        COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} "-DFILE=${_file}" -P ${CMAKE_CURRENT_SOURCE_DIR}/modify_cpp_files.cmake)
-  endforeach()
 
 add_custom_target(python_generated_files
   DEPENDS ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES}
