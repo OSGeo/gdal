@@ -1460,238 +1460,241 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
     if (!GDALGetDriverByName("ESRI Shapefile"))
     {
         GTEST_SKIP() << "ESRI Shapefile driver missing";
-        return;
     }
-
-    std::string file(data_ + SEP + "poly.shp");
-    GDALDatasetUniquePtr poDS(GDALDataset::Open(file.c_str(), GDAL_OF_VECTOR));
-    ASSERT_TRUE(poDS != nullptr);
-
+    else
     {
-        GIntBig nExpectedFID = 0;
-        for (const auto &oFeatureLayerPair : poDS->GetFeatures())
-        {
-            ASSERT_EQ(oFeatureLayerPair.feature->GetFID(), nExpectedFID);
-            nExpectedFID++;
-            ASSERT_EQ(oFeatureLayerPair.layer, poDS->GetLayer(0));
-        }
-        ASSERT_EQ(nExpectedFID, 10);
-    }
+        std::string file(data_ + SEP + "poly.shp");
+        GDALDatasetUniquePtr poDS(
+            GDALDataset::Open(file.c_str(), GDAL_OF_VECTOR));
+        ASSERT_TRUE(poDS != nullptr);
 
-    ASSERT_EQ(poDS->GetLayers().size(), 1U);
-    ASSERT_EQ(poDS->GetLayers()[0], poDS->GetLayer(0));
-    ASSERT_EQ(poDS->GetLayers()[static_cast<size_t>(0)], poDS->GetLayer(0));
-    ASSERT_EQ(poDS->GetLayers()["poly"], poDS->GetLayer(0));
-
-    for (auto poLayer : poDS->GetLayers())
-    {
-        GIntBig nExpectedFID = 0;
-        for (const auto &poFeature : poLayer)
         {
-            ASSERT_EQ(poFeature->GetFID(), nExpectedFID);
-            nExpectedFID++;
-        }
-        ASSERT_EQ(nExpectedFID, 10);
-
-        nExpectedFID = 0;
-        for (const auto &oFeatureLayerPair : poDS->GetFeatures())
-        {
-            ASSERT_EQ(oFeatureLayerPair.feature->GetFID(), nExpectedFID);
-            nExpectedFID++;
-            ASSERT_EQ(oFeatureLayerPair.layer, poLayer);
-        }
-        ASSERT_EQ(nExpectedFID, 10);
-
-        nExpectedFID = 0;
-        OGR_FOR_EACH_FEATURE_BEGIN(hFeat, reinterpret_cast<OGRLayerH>(poLayer))
-        {
-            if (nExpectedFID == 0)
+            GIntBig nExpectedFID = 0;
+            for (const auto &oFeatureLayerPair : poDS->GetFeatures())
             {
-                nExpectedFID = 1;
-                continue;
+                ASSERT_EQ(oFeatureLayerPair.feature->GetFID(), nExpectedFID);
+                nExpectedFID++;
+                ASSERT_EQ(oFeatureLayerPair.layer, poDS->GetLayer(0));
             }
-            ASSERT_EQ(OGR_F_GetFID(hFeat), nExpectedFID);
-            nExpectedFID++;
-            if (nExpectedFID == 5)
-                break;
+            ASSERT_EQ(nExpectedFID, 10);
         }
-        OGR_FOR_EACH_FEATURE_END(hFeat)
-        ASSERT_EQ(nExpectedFID, 5);
 
-        auto oIter = poLayer->begin();
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-        // Only one feature iterator can be active at a time
-        auto oIter2 = poLayer->begin();
-        CPLPopErrorHandler();
-        ASSERT_TRUE(!(oIter2 != poLayer->end()));
-        ASSERT_TRUE(oIter != poLayer->end());
-    }
+        ASSERT_EQ(poDS->GetLayers().size(), 1U);
+        ASSERT_EQ(poDS->GetLayers()[0], poDS->GetLayer(0));
+        ASSERT_EQ(poDS->GetLayers()[static_cast<size_t>(0)], poDS->GetLayer(0));
+        ASSERT_EQ(poDS->GetLayers()["poly"], poDS->GetLayer(0));
 
-    poDS.reset(GetGDALDriverManager()->GetDriverByName("MEM")->Create(
-        "", 0, 0, 0, GDT_Unknown, nullptr));
-    int nCountLayers = 0;
-    for (auto poLayer : poDS->GetLayers())
-    {
-        CPL_IGNORE_RET_VAL(poLayer);
-        nCountLayers++;
-    }
-    ASSERT_EQ(nCountLayers, 0);
-
-    poDS->CreateLayer("foo");
-    poDS->CreateLayer("bar", nullptr);
-    for (auto poLayer : poDS->GetLayers())
-    {
-        if (nCountLayers == 0)
+        for (auto poLayer : poDS->GetLayers())
         {
-            EXPECT_STREQ(poLayer->GetName(), "foo")
-                << "layer " << poLayer->GetName();
+            GIntBig nExpectedFID = 0;
+            for (const auto &poFeature : poLayer)
+            {
+                ASSERT_EQ(poFeature->GetFID(), nExpectedFID);
+                nExpectedFID++;
+            }
+            ASSERT_EQ(nExpectedFID, 10);
+
+            nExpectedFID = 0;
+            for (const auto &oFeatureLayerPair : poDS->GetFeatures())
+            {
+                ASSERT_EQ(oFeatureLayerPair.feature->GetFID(), nExpectedFID);
+                nExpectedFID++;
+                ASSERT_EQ(oFeatureLayerPair.layer, poLayer);
+            }
+            ASSERT_EQ(nExpectedFID, 10);
+
+            nExpectedFID = 0;
+            OGR_FOR_EACH_FEATURE_BEGIN(hFeat,
+                                       reinterpret_cast<OGRLayerH>(poLayer))
+            {
+                if (nExpectedFID == 0)
+                {
+                    nExpectedFID = 1;
+                    continue;
+                }
+                ASSERT_EQ(OGR_F_GetFID(hFeat), nExpectedFID);
+                nExpectedFID++;
+                if (nExpectedFID == 5)
+                    break;
+            }
+            OGR_FOR_EACH_FEATURE_END(hFeat)
+            ASSERT_EQ(nExpectedFID, 5);
+
+            auto oIter = poLayer->begin();
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            // Only one feature iterator can be active at a time
+            auto oIter2 = poLayer->begin();
+            CPLPopErrorHandler();
+            ASSERT_TRUE(!(oIter2 != poLayer->end()));
+            ASSERT_TRUE(oIter != poLayer->end());
         }
-        else if (nCountLayers == 1)
+
+        poDS.reset(GetGDALDriverManager()->GetDriverByName("MEM")->Create(
+            "", 0, 0, 0, GDT_Unknown, nullptr));
+        int nCountLayers = 0;
+        for (auto poLayer : poDS->GetLayers())
         {
-            EXPECT_STREQ(poLayer->GetName(), "bar")
-                << "layer " << poLayer->GetName();
+            CPL_IGNORE_RET_VAL(poLayer);
+            nCountLayers++;
         }
-        nCountLayers++;
-    }
-    ASSERT_EQ(nCountLayers, 2);
+        ASSERT_EQ(nCountLayers, 0);
 
-    auto layers = poDS->GetLayers();
-    {
-        // std::copy requires a InputIterator
-        std::vector<OGRLayer *> oTarget;
-        oTarget.resize(2);
-        std::copy(layers.begin(), layers.end(), oTarget.begin());
-        ASSERT_EQ(oTarget[0], layers[0]);
-        ASSERT_EQ(oTarget[1], layers[1]);
-
-        // but in practice not necessarily uses the postincrement iterator.
-        oTarget.clear();
-        oTarget.resize(2);
-        auto input_iterator = layers.begin();
-        auto output_iterator = oTarget.begin();
-        while (input_iterator != layers.end())
+        poDS->CreateLayer("foo");
+        poDS->CreateLayer("bar", nullptr);
+        for (auto poLayer : poDS->GetLayers())
         {
-            *output_iterator++ = *input_iterator++;
+            if (nCountLayers == 0)
+            {
+                EXPECT_STREQ(poLayer->GetName(), "foo")
+                    << "layer " << poLayer->GetName();
+            }
+            else if (nCountLayers == 1)
+            {
+                EXPECT_STREQ(poLayer->GetName(), "bar")
+                    << "layer " << poLayer->GetName();
+            }
+            nCountLayers++;
         }
-        ASSERT_EQ(oTarget[0], layers[0]);
-        ASSERT_EQ(oTarget[1], layers[1]);
-    }
+        ASSERT_EQ(nCountLayers, 2);
 
-    // Test copy constructor
-    {
-        GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
-        ++srcIter;
-        GDALDataset::Layers::Iterator newIter(srcIter);
-        srcIter = layers.begin();  // avoid Coverity Scan warning
-        ASSERT_EQ(*newIter, layers[1]);
-    }
-
-    // Test assignment operator
-    {
-        GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
-        ++srcIter;
-        GDALDataset::Layers::Iterator newIter;
-        newIter = srcIter;
-        srcIter = layers.begin();  // avoid Coverity Scan warning
-        ASSERT_EQ(*newIter, layers[1]);
-    }
-
-    // Test move constructor
-    {
-        GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
-        ++srcIter;
-        GDALDataset::Layers::Iterator newIter(std::move(srcIter));
-        ASSERT_EQ(*newIter, layers[1]);
-    }
-
-    // Test move assignment operator
-    {
-        GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
-        ++srcIter;
-        GDALDataset::Layers::Iterator newIter;
-        newIter = std::move(srcIter);
-        ASSERT_EQ(*newIter, layers[1]);
-    }
-
-    const GDALDataset *poConstDS = poDS.get();
-    ASSERT_EQ(poConstDS->GetLayers().size(), 2U);
-    ASSERT_EQ(poConstDS->GetLayers()[0], poConstDS->GetLayer(0));
-    ASSERT_EQ(poConstDS->GetLayers()[static_cast<size_t>(0)],
-              poConstDS->GetLayer(0));
-    ASSERT_EQ(poConstDS->GetLayers()["foo"], poConstDS->GetLayer(0));
-    nCountLayers = 0;
-    for (auto &&poLayer : poDS->GetLayers())
-    {
-        if (nCountLayers == 0)
+        auto layers = poDS->GetLayers();
         {
-            EXPECT_STREQ(poLayer->GetName(), "foo")
-                << "layer " << poLayer->GetName();
+            // std::copy requires a InputIterator
+            std::vector<OGRLayer *> oTarget;
+            oTarget.resize(2);
+            std::copy(layers.begin(), layers.end(), oTarget.begin());
+            ASSERT_EQ(oTarget[0], layers[0]);
+            ASSERT_EQ(oTarget[1], layers[1]);
+
+            // but in practice not necessarily uses the postincrement iterator.
+            oTarget.clear();
+            oTarget.resize(2);
+            auto input_iterator = layers.begin();
+            auto output_iterator = oTarget.begin();
+            while (input_iterator != layers.end())
+            {
+                *output_iterator++ = *input_iterator++;
+            }
+            ASSERT_EQ(oTarget[0], layers[0]);
+            ASSERT_EQ(oTarget[1], layers[1]);
         }
-        else if (nCountLayers == 1)
+
+        // Test copy constructor
         {
-            EXPECT_STREQ(poLayer->GetName(), "bar")
-                << "layer " << poLayer->GetName();
+            GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
+            ++srcIter;
+            GDALDataset::Layers::Iterator newIter(srcIter);
+            srcIter = layers.begin();  // avoid Coverity Scan warning
+            ASSERT_EQ(*newIter, layers[1]);
         }
-        nCountLayers++;
-    }
-    ASSERT_EQ(nCountLayers, 2);
 
-    auto constLayers = poConstDS->GetLayers();
-    {
-        // std::copy requires a InputIterator
-        std::vector<const OGRLayer *> oTarget;
-        oTarget.resize(2);
-        std::copy(constLayers.begin(), constLayers.end(), oTarget.begin());
-        ASSERT_EQ(oTarget[0], constLayers[0]);
-        ASSERT_EQ(oTarget[1], constLayers[1]);
-
-        // but in practice not necessarily uses the postincrement iterator.
-        oTarget.clear();
-        oTarget.resize(2);
-        auto input_iterator = constLayers.begin();
-        auto output_iterator = oTarget.begin();
-        while (input_iterator != constLayers.end())
+        // Test assignment operator
         {
-            *output_iterator++ = *input_iterator++;
+            GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
+            ++srcIter;
+            GDALDataset::Layers::Iterator newIter;
+            newIter = srcIter;
+            srcIter = layers.begin();  // avoid Coverity Scan warning
+            ASSERT_EQ(*newIter, layers[1]);
         }
-        ASSERT_EQ(oTarget[0], constLayers[0]);
-        ASSERT_EQ(oTarget[1], constLayers[1]);
-    }
 
-    // Test copy constructor
-    {
-        auto srcIter(poConstDS->GetLayers().begin());
-        ++srcIter;
-        auto newIter(srcIter);
-        srcIter = constLayers.begin();  // avoid Coverity Scan warning
-        ASSERT_EQ(*newIter, constLayers[1]);
-    }
+        // Test move constructor
+        {
+            GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
+            ++srcIter;
+            GDALDataset::Layers::Iterator newIter(std::move(srcIter));
+            ASSERT_EQ(*newIter, layers[1]);
+        }
 
-    // Test assignment operator
-    {
-        auto srcIter(poConstDS->GetLayers().begin());
-        ++srcIter;
-        GDALDataset::ConstLayers::Iterator newIter;
-        newIter = srcIter;
-        srcIter = constLayers.begin();  // avoid Coverity Scan warning
-        ASSERT_EQ(*newIter, constLayers[1]);
-    }
+        // Test move assignment operator
+        {
+            GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
+            ++srcIter;
+            GDALDataset::Layers::Iterator newIter;
+            newIter = std::move(srcIter);
+            ASSERT_EQ(*newIter, layers[1]);
+        }
 
-    // Test move constructor
-    {
-        auto srcIter(poConstDS->GetLayers().begin());
-        ++srcIter;
-        auto newIter(std::move(srcIter));
-        ASSERT_EQ(*newIter, constLayers[1]);
-    }
+        const GDALDataset *poConstDS = poDS.get();
+        ASSERT_EQ(poConstDS->GetLayers().size(), 2U);
+        ASSERT_EQ(poConstDS->GetLayers()[0], poConstDS->GetLayer(0));
+        ASSERT_EQ(poConstDS->GetLayers()[static_cast<size_t>(0)],
+                  poConstDS->GetLayer(0));
+        ASSERT_EQ(poConstDS->GetLayers()["foo"], poConstDS->GetLayer(0));
+        nCountLayers = 0;
+        for (auto &&poLayer : poDS->GetLayers())
+        {
+            if (nCountLayers == 0)
+            {
+                EXPECT_STREQ(poLayer->GetName(), "foo")
+                    << "layer " << poLayer->GetName();
+            }
+            else if (nCountLayers == 1)
+            {
+                EXPECT_STREQ(poLayer->GetName(), "bar")
+                    << "layer " << poLayer->GetName();
+            }
+            nCountLayers++;
+        }
+        ASSERT_EQ(nCountLayers, 2);
 
-    // Test move assignment operator
-    {
-        auto srcIter(poConstDS->GetLayers().begin());
-        ++srcIter;
-        GDALDataset::ConstLayers::Iterator newIter;
-        newIter = std::move(srcIter);
-        ASSERT_EQ(*newIter, constLayers[1]);
+        auto constLayers = poConstDS->GetLayers();
+        {
+            // std::copy requires a InputIterator
+            std::vector<const OGRLayer *> oTarget;
+            oTarget.resize(2);
+            std::copy(constLayers.begin(), constLayers.end(), oTarget.begin());
+            ASSERT_EQ(oTarget[0], constLayers[0]);
+            ASSERT_EQ(oTarget[1], constLayers[1]);
+
+            // but in practice not necessarily uses the postincrement iterator.
+            oTarget.clear();
+            oTarget.resize(2);
+            auto input_iterator = constLayers.begin();
+            auto output_iterator = oTarget.begin();
+            while (input_iterator != constLayers.end())
+            {
+                *output_iterator++ = *input_iterator++;
+            }
+            ASSERT_EQ(oTarget[0], constLayers[0]);
+            ASSERT_EQ(oTarget[1], constLayers[1]);
+        }
+
+        // Test copy constructor
+        {
+            auto srcIter(poConstDS->GetLayers().begin());
+            ++srcIter;
+            auto newIter(srcIter);
+            srcIter = constLayers.begin();  // avoid Coverity Scan warning
+            ASSERT_EQ(*newIter, constLayers[1]);
+        }
+
+        // Test assignment operator
+        {
+            auto srcIter(poConstDS->GetLayers().begin());
+            ++srcIter;
+            GDALDataset::ConstLayers::Iterator newIter;
+            newIter = srcIter;
+            srcIter = constLayers.begin();  // avoid Coverity Scan warning
+            ASSERT_EQ(*newIter, constLayers[1]);
+        }
+
+        // Test move constructor
+        {
+            auto srcIter(poConstDS->GetLayers().begin());
+            ++srcIter;
+            auto newIter(std::move(srcIter));
+            ASSERT_EQ(*newIter, constLayers[1]);
+        }
+
+        // Test move assignment operator
+        {
+            auto srcIter(poConstDS->GetLayers().begin());
+            ++srcIter;
+            GDALDataset::ConstLayers::Iterator newIter;
+            newIter = std::move(srcIter);
+            ASSERT_EQ(*newIter, constLayers[1]);
+        }
     }
 }
 

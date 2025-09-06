@@ -1350,32 +1350,36 @@ static CPLString GetFilterForJoin(swq_expr_node *poExpr, OGRFeature *poSrcFeat,
             {
                 CPLAssert(poExpr->field_index <
                           poSrcFDefn->GetFieldCount() + SPECIAL_FIELD_COUNT);
+                CPLString osRes;
                 switch (SpecialFieldTypes[poExpr->field_index -
                                           poSrcFDefn->GetFieldCount()])
                 {
                     case SWQ_INTEGER:
                     case SWQ_INTEGER64:
-                        return CPLString().Printf(
+                        osRes = CPLString().Printf(
                             CPL_FRMT_GIB, poSrcFeat->GetFieldAsInteger64(
                                               poExpr->field_index));
                         break;
+
                     case SWQ_FLOAT:
-                        return CPLString().Printf(
+                        osRes = CPLString().Printf(
                             "%.17g",
                             poSrcFeat->GetFieldAsDouble(poExpr->field_index));
                         break;
+
                     default:
                     {
                         char *pszEscaped = CPLEscapeString(
                             poSrcFeat->GetFieldAsString(poExpr->field_index),
                             -1, CPLES_SQL);
-                        CPLString osRes = "'";
+                        osRes = "'";
                         osRes += pszEscaped;
                         osRes += "'";
                         CPLFree(pszEscaped);
-                        return osRes;
+                        break;
                     }
                 }
+                return osRes;
             }
             else
             {
@@ -1930,8 +1934,6 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
             return poFeature.release();
         }
     }
-
-    return nullptr;
 }
 
 /************************************************************************/

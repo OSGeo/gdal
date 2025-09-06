@@ -3711,9 +3711,6 @@ OGRSQLiteDataSource::ICreateLayer(const char *pszLayerNameIn,
         /* Only if linked against SpatiaLite and the datasource was created as a
          * SpatiaLite DB */
         if (m_bIsSpatiaLiteDB && IsSpatialiteLoaded())
-#else
-        if (0)
-#endif
         {
             if (pszSI != nullptr && EQUAL(pszSI, "IMMEDIATE"))
             {
@@ -3724,6 +3721,7 @@ OGRSQLiteDataSource::ICreateLayer(const char *pszLayerNameIn,
                 bDeferredSpatialIndexCreation = true;
             }
         }
+#endif
     }
     else if (m_bHaveGeometryColumns)
     {

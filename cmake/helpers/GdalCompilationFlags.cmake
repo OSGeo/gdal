@@ -128,6 +128,7 @@ else ()
   endif()
   detect_and_set_cxx_warning_flag(inconsistent-missing-destructor-override)
   detect_and_set_c_and_cxx_warning_flag(cast-function-type)
+  detect_and_set_c_and_cxx_warning_flag(unreachable-code-aggressive)
 
   check_c_compiler_flag(-Wdouble-promotion HAVE_WFLAG_DOUBLE_PROMOTION)
   if (HAVE_WFLAG_DOUBLE_PROMOTION)

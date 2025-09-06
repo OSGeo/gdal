@@ -59,40 +59,42 @@ TEST(testmultithreadedwriting, test)
     if (poDriver == nullptr)
     {
         GTEST_SKIP() << "ENVI driver missing";
-        return;
     }
-    GDALDataset *poDS =
-        poDriver->Create("/vsimem/test_ref", 100, 2000, 1, GDT_Byte, nullptr);
-    GDALClose(poDS);
-
-    int counter = 0;
-    const int nloops = bEndlessLoop ? 2 * 1000 * 1000 * 1000 : 1;
-    for (int i = 0; i < nloops; ++i)
+    else
     {
-        ++i;
-        if ((i % 20) == 0)
-            printf("%d\n", counter);
+        GDALDataset *poDS = poDriver->Create("/vsimem/test_ref", 100, 2000, 1,
+                                             GDT_Byte, nullptr);
+        GDALClose(poDS);
 
-        hThread1 = CPLCreateJoinableThread(thread_func, &one);
-        hThread2 = CPLCreateJoinableThread(thread_func, &two);
+        int counter = 0;
+        const int nloops = bEndlessLoop ? 2 * 1000 * 1000 * 1000 : 1;
+        for (int i = 0; i < nloops; ++i)
+        {
+            ++i;
+            if ((i % 20) == 0)
+                printf("%d\n", counter);
 
-        CPLJoinThread(hThread1);
-        CPLJoinThread(hThread2);
+            hThread1 = CPLCreateJoinableThread(thread_func, &one);
+            hThread2 = CPLCreateJoinableThread(thread_func, &two);
 
-        GDALDataset *poDSRef =
-            (GDALDataset *)GDALOpen("/vsimem/test1", GA_ReadOnly);
-        const int cs =
-            GDALChecksumImage(poDSRef->GetRasterBand(1), 0, 0, 100, 2000);
-        EXPECT_EQ(cs, 29689);
-        GDALClose(poDSRef);
+            CPLJoinThread(hThread1);
+            CPLJoinThread(hThread2);
 
-        poDriver->Delete("/vsimem/test1");
-        poDriver->Delete("/vsimem/test2");
+            GDALDataset *poDSRef =
+                (GDALDataset *)GDALOpen("/vsimem/test1", GA_ReadOnly);
+            const int cs =
+                GDALChecksumImage(poDSRef->GetRasterBand(1), 0, 0, 100, 2000);
+            EXPECT_EQ(cs, 29689);
+            GDALClose(poDSRef);
+
+            poDriver->Delete("/vsimem/test1");
+            poDriver->Delete("/vsimem/test2");
+        }
+
+        poDriver->Delete("/vsimem/test_ref");
+
+        GDALDestroyDriverManager();
     }
-
-    poDriver->Delete("/vsimem/test_ref");
-
-    GDALDestroyDriverManager();
 }
 
 }  // namespace

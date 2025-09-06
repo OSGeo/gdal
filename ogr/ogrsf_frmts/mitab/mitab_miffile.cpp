@@ -1290,7 +1290,6 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
                                      "line: '%s'",
                                      pszLine);
                             return nullptr;
-                            break;
                     }
                 }
             }

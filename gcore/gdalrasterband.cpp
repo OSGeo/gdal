@@ -3013,7 +3013,6 @@ double GDALRasterBand::GetMinimum(int *pbSuccess)
 
         case GDT_Int8:
             return -128;
-            break;
 
         case GDT_UInt16:
             return 0;

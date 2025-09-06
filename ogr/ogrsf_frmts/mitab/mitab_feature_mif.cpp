@@ -665,7 +665,6 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                         return -1;
                     }
                     nNumPoints = atoi(pszLine);
-                    break;
                 }
                 else
                 {
@@ -679,7 +678,6 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                     bMultiple = TRUE;
                     nNumSec = atoi(papszToken[2]);
                     nNumPoints = atoi(papszToken[3]);
-                    break;
                 }
                 else
                 {
@@ -690,7 +688,6 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             default:
                 CSLDestroy(papszToken);
                 return -1;
-                break;
         }
 
         if (bMultiple)

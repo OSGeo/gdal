@@ -278,8 +278,6 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 
         return poOGRFeature;
     }
-
-    return nullptr;
 }
 
 /************************************************************************/

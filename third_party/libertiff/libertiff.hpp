@@ -818,7 +818,7 @@ inline std::vector<T> readTagAsVectorInternal(const ReadContext &rc,
             {
                 if LIBERTIFF_CONSTEXPR (sizeof(tag.count) > sizeof(size_t))
                 {
-                    if (tag.count > std::numeric_limits<size_t>::max())
+                    if (tag.count > std::numeric_limits<size_t>::max() - 1)
                     {
                         ok = false;
                         return {};

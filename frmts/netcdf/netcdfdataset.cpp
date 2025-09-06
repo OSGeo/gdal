@@ -10974,7 +10974,6 @@ static CPLErr NCDFPutAttr(int nCdfId, int nVarId, const char *pszAttrName,
                 if (papszValues)
                     CSLDestroy(papszValues);
                 return CE_Failure;
-                break;
         }
     }
 
@@ -11431,7 +11430,6 @@ static CPLErr NCDFPut1DVar(int nCdfId, int nVarId, const char *pszValue)
                             if (papszValues)
                                 CSLDestroy(papszValues);
                             return CE_Failure;
-                            break;
                     }
                 }
                 break;

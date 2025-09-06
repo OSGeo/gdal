@@ -3885,11 +3885,7 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
                 poPoint->setM(dfM);
                 return poPoint;
             }
-            else
-            {
-                return new OGRPoint(dfX, dfY);
-            }
-            break;
+            return new OGRPoint(dfX, dfY);
         }
 
         case SHPT_MULTIPOINTZM:
@@ -3956,8 +3952,6 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
             }
 
             return poMP;
-            // cppcheck-suppress duplicateBreak
-            break;
         }
 
         case SHPT_ARCZ:
@@ -4082,12 +4076,8 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
                 }
             }
 
-            if (poMLS)
-                return poMLS;
-            else
-                return poLS;
-
-            break;
+            return poMLS ? static_cast<OGRGeometry *>(poMLS)
+                         : static_cast<OGRGeometry *>(poLS);
         }
 
         case SHPT_POLYGONZ:
@@ -4292,8 +4282,6 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
 
             delete[] papoRings;
             return poRet;
-            // cppcheck-suppress duplicateBreak
-            break;
         }
 
         case SHPT_MULTIPATCHM:
@@ -4386,8 +4374,6 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
             VSIFree(padfXYZ);
 
             return poRet;
-            // cppcheck-suppress duplicateBreak
-            break;
         }
 
         default:

@@ -2118,7 +2118,6 @@ OGRErr OGRShapeLayer::CreateField(const OGRFieldDefn *poFieldDefn,
                      OGRFieldDefn::GetFieldTypeName(oModFieldDefn.GetType()));
 
             return OGRERR_FAILURE;
-            break;
     }
 
     oModFieldDefn.SetWidth(nWidth);
