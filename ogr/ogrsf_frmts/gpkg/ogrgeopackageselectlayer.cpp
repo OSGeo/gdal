@@ -29,6 +29,7 @@ OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer(
 
     BuildFeatureDefn("SELECT", hStmtIn);
 
+    m_bEOF = bEmptyLayer;
     if (bUseStatementForGetNextFeature)
     {
         m_poQueryStatement = hStmtIn;
