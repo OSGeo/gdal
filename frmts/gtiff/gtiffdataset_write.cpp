@@ -7798,7 +7798,8 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     CPLString osHiddenStructuralMD;
     const char *pszInterleave =
         CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "PIXEL");
-    if (bCopySrcOverviews)
+    if (bCopySrcOverviews &&
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "TILED", "NO")))
     {
         osHiddenStructuralMD += "LAYOUT=IFDS_BEFORE_DATA\n";
         osHiddenStructuralMD += "BLOCK_ORDER=ROW_MAJOR\n";
