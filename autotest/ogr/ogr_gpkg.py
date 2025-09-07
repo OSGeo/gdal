@@ -8229,6 +8229,13 @@ def test_ogr_gpkg_arrow_stream_numpy(tmp_vsimem):
     ds = None
 
     ds = ogr.Open(filename)
+
+    with ds.ExecuteSQL("SELECT * FROM test WHERE 0=1") as sql_lyr:
+        stream = sql_lyr.GetArrowStream()
+        array = stream.GetNextRecordBatch()
+        assert array is None
+        del stream
+
     lyr = ds.GetLayer(0)
     stream = lyr.GetArrowStream()
     array = stream.GetNextRecordBatch()
