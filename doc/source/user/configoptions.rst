@@ -709,6 +709,15 @@ Networking options
       no longer cached. This can help when dealing with resources that can be
       modified during execution of GDAL-related code.
 
+-  .. config:: GDAL_HTTP_PATH_VERBATIM
+      :choices: YES, NO
+      :default: NO
+      :since: 3.12
+
+      When set to YES, sequences of ``/../`` or ``/./`` that may exist in the
+      URL's path part are kept unchanged. Otherwise, by default, they are squashed,
+      according to RFC 3986 section 5.2.4.
+
 -  .. config:: GDAL_HTTP_HEADER_FILE
       :choices: <filename>
       :since: 2.3
