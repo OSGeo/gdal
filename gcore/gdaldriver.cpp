@@ -2842,6 +2842,41 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriverEx(
 }
 
 /************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *GDALDriver::GetMetadataItem(const char *pszName,
+                                        const char *pszDomain)
+{
+    if (pszDomain == nullptr || pszDomain[0] == '\0')
+    {
+        if (EQUAL(pszName, GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST))
+        {
+            const char *pszVal = GDALMajorObject::GetMetadataItem(pszName, "");
+            if (pszVal)
+                return pszVal;
+            if (GetMetadataItem(GDAL_DCAP_RASTER))
+            {
+                auto poDM = GetGDALDriverManager();
+                auto poGTiffDrv = poDM->GetDriverByName("GTiff");
+                if (poGTiffDrv)
+                {
+                    const char *pszXML =
+                        poGTiffDrv->GetMetadataItem(pszName, "");
+                    if (pszXML)
+                    {
+                        CPLString osXML(pszXML);
+                        osXML.replaceAll("<Value>INTERNAL</Value>", "");
+                        return CPLSPrintf("%s", osXML.c_str());
+                    }
+                }
+            }
+        }
+    }
+    return GDALMajorObject::GetMetadataItem(pszName, pszDomain);
+}
+
+/************************************************************************/
 /*                          SetMetadataItem()                           */
 /************************************************************************/
 

@@ -1065,7 +1065,7 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
 
 class GDALAVIFDriver final : public GDALDriver
 {
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bMetadataInitialized = false;
     void InitMetadata();
 

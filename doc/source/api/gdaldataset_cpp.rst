@@ -41,3 +41,11 @@ GDALRelationship class
 .. doxygenclass:: GDALRelationship
    :project: api
    :members:
+
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+     GetMetadataItem
+     CREATIONOPTIONLIST

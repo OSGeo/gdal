@@ -431,7 +431,7 @@ class GDALJPGDriver final : public GDALDriver
                                 const char *pszDomain = "") override;
 
   private:
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bMetadataInitialized = false;
     void InitializeMetadata();
 };

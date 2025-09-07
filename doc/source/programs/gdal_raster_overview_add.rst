@@ -100,6 +100,20 @@ most supported file formats with one of several downsampling algorithms.
     Maximum width or height of the smallest overview level. Only taken into
     account if explicit levels are not specified. Defaults to 256.
 
+.. option:: --co <NAME>=<VALUE>
+
+    .. versionadded:: 3.12
+
+    Overview creation options. May be repeated.
+
+    Many formats have one or more optional creation options that can be
+    used to control particulars about the created overviews. Options available
+    can be obtained by looking at the ``OverviewCreationOptionList`` returned
+    by ``gdal --format <FORMAT-NAME>``.
+
+    Most formats will support external overviews in a GeoTIFF file in a
+    side-car file of extension ``.ovr``. You can consult the
+    :ref:`overview creation options for GeoTIFF <raster.gtiff-overview-creation-options>`.
 
 Examples
 --------
@@ -123,7 +137,7 @@ Examples
 
    .. code-block:: bash
 
-       gdal raster overview add --external --levels=2,4,8,16 --config COMPRESS_OVERVIEW=DEFLATE erdas.img
+       gdal raster overview add --external --levels=2,4,8,16 --co COMPRESS=YES erdas.img
 
 .. example::
    :title: Create an external JPEG-compressed GeoTIFF overview file from a 3-band RGB dataset
@@ -133,8 +147,8 @@ Examples
 
    .. code-block:: bash
 
-       gdal raster overview add --config COMPRESS_OVERVIEW=JPEG --config PHOTOMETRIC_OVERVIEW=YCBCR
-                --config INTERLEAVE_OVERVIEW=PIXEL rgb_dataset.ext 2 4 8 16
+       gdal raster overview add --co OVERVIEW=JPEG --co PHOTOMETRIC=YCBCR \
+                                --co INTERLEAVE=PIXEL rgb_dataset.ext 2 4 8 16
 
 .. example::
    :title: Create overviews for a specific subdataset

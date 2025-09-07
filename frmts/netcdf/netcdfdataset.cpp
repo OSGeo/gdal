@@ -10272,7 +10272,7 @@ class GDALnetCDFDriver final : public GDALDriver
     }
 
   private:
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bInitialized = false;
 
     void InitializeDCAPVirtualIO()

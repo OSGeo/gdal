@@ -1402,7 +1402,7 @@ static GDALDataset *COGCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
 class GDALCOGDriver final : public GDALDriver
 {
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bInitialized = false;
 
     bool bHasLZW = false;
@@ -1659,6 +1659,9 @@ void GDALRegister_COG()
                               "Cloud optimized GeoTIFF generator");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/cog.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "tif tiff");
+    poDriver->SetMetadataItem(GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST,
+                              "<OverviewCreationOptionList>"
+                              "</OverviewCreationOptionList>");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONDATATYPES,

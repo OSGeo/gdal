@@ -2880,7 +2880,7 @@ static void GDALDeregister_GRIB(GDALDriver *)
 
 class GDALGRIBDriver : public GDALDriver
 {
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bHasFullInitMetadata = false;
     void InitializeMetadata();
 

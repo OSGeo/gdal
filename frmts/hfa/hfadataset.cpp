@@ -2665,7 +2665,7 @@ CPLErr HFARasterBand::BuildOverviews(const char *pszResampling,
         CPLCalloc(sizeof(void *), nReqOverviews));
 
     const bool bRegenerate =
-        CPLTestBool(CSLFetchNameValueDef(papszOptions, "REGENERATE", "YES"));
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "@REGENERATE", "YES"));
 
     // Loop over overview levels requested.
     for (int iOverview = 0; iOverview < nReqOverviews; iOverview++)
@@ -5221,6 +5221,13 @@ void GDALRegister_HFA()
         "   <Option name='DISABLEPESTRING' type='boolean' description='Disable "
         "use of ArcGIS PE String' default='NO'/>"
         "</CreationOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST,
+        "<OverviewCreationOptionList>"
+        "   <Option name='COMPRESSED' alias='COMPRESS' type='boolean' "
+        "description='compress blocks'/>"
+        "</OverviewCreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 

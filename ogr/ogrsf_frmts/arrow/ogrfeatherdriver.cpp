@@ -322,7 +322,7 @@ static GDALDataset *OGRFeatherDriverCreate(const char *pszName, int nXSize,
 
 class OGRFeatherDriver final : public GDALDriver
 {
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bMetadataInitialized = false;
     void InitMetadata();
 

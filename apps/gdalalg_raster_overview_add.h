@@ -38,6 +38,7 @@ class GDALRasterOverviewAlgorithmAdd final : public GDALAlgorithm
     std::vector<GDALArgDatasetValue> m_overviewSources{};
     std::vector<std::string> m_openOptions{};
     std::vector<std::string> m_inputFormats{};
+    std::vector<std::string> m_creationOptions{};
     std::string m_resampling{};
     std::vector<int> m_levels{};
     int m_minSize = 256;

@@ -2998,6 +2998,9 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     GDALDriver();
     ~GDALDriver() override;
 
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain = "") override;
+
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
 
