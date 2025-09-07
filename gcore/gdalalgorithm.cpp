@@ -2502,7 +2502,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         if ((arg == outputArg || !outputArg) && update)
             flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
 
-        const auto readOnlyArg = algForOutput->GetArg(GDAL_ARG_NAME_READ_ONLY);
+        const auto readOnlyArg = GetArg(GDAL_ARG_NAME_READ_ONLY);
         const bool readOnly =
             (readOnlyArg && readOnlyArg->GetType() == GAAT_BOOLEAN &&
              readOnlyArg->Get<bool>());

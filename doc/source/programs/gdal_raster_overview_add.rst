@@ -23,13 +23,24 @@ Description
 :program:`gdal raster overview add` can be used to build or rebuild overview images for
 most supported file formats with one of several downsampling algorithms.
 
+Starting with GDAL 3.12, :program:`gdal raster overview add` can be used as a
+step of a pipeline. In that case virtual overviews are generated at the output
+of the step, and can potentially be materialized in the final write step, when
+writing a GeoTIFF file with the COPY_SRC_OVERVIEWS creation option, or when writing
+to a COG (Cloud Optimized GeoTIFF) file.
+
+Options
++++++++
+
 .. option:: --dataset <DATASET>
 
-    Dataset name, to be updated in-place by default (unless :option:`--external` is specified). Required.
+    Dataset name, to be updated in-place by default (unless :option:`--external` is specified).
+    Required for standalone execution, implicit when run as a pipeline step
 
 .. option:: --external
 
     Create external ``.ovr`` overviews as GeoTIFF files.
+    Not available when run as a pipeline step.
 
 .. option::  --overview-src <INPUT>
 
@@ -165,3 +176,10 @@ Examples
    .. code-block:: bash
 
        gdal raster overview add --overview-src ovr_25k.tif --overview-src ovr_50k.tif --overview-src ovr_100k.tif --dataset my.tif
+
+.. example::
+   :title: Create a COG file with non power-of-two overview levels.
+
+   .. code-block:: bash
+
+       gdal pipeline read input.tif ! reproject --dst-crs=EPSG:4326 ! add overview --levels 16,64,128 ! write output.tif --format=COG

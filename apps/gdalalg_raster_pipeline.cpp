@@ -24,6 +24,7 @@
 #include "gdalalg_raster_info.h"
 #include "gdalalg_raster_mosaic.h"
 #include "gdalalg_raster_nodata_to_alpha.h"
+#include "gdalalg_raster_overview.h"
 #include "gdalalg_raster_pansharpen.h"
 #include "gdalalg_raster_proximity.h"
 #include "gdalalg_raster_reclassify.h"
@@ -190,6 +191,7 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALRasterFillNodataAlgorithm>();
     registry.Register<GDALRasterHillshadeAlgorithm>();
     registry.Register<GDALRasterMosaicAlgorithm>();
+    registry.Register<GDALRasterOverviewAlgorithm>();
     registry.Register<GDALRasterPansharpenAlgorithm>();
     registry.Register<GDALRasterProximityAlgorithm>();
     registry.Register<GDALRasterReclassifyAlgorithm>();

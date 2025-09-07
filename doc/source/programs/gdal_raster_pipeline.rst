@@ -104,6 +104,12 @@ Details for options can be found in :ref:`gdal_raster_hillshade`.
 
 Details for options can be found in :ref:`gdal_raster_nodata_to_alpha`.
 
+* overview
+
+.. program-output:: gdal raster pipeline --help-doc=overview
+
+Details for options can be found in :ref:`gdal_raster_overview`.
+
 * pansharpen
 
 .. program-output:: gdal raster pipeline --help-doc=pansharpen

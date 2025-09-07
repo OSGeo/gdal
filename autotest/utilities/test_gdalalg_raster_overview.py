@@ -165,9 +165,13 @@ def test_gdalalg_overview_external_rrd(tmp_vsimem):
     tmp_filename = str(tmp_vsimem / "tmp.tif")
     gdal.Translate(tmp_filename, "../gcore/data/byte.tif")
 
-    add = get_overview_add_alg()
     try:
-        add.ParseRunAndFinalize([tmp_filename, "--levels=2", "--co", "LOCATION=RRD"])
+        gdal.Run(
+            get_overview_add_alg(),
+            input=tmp_filename,
+            levels=[2],
+            creation_option={"LOCATION": "RRD"},
+        )
     except Exception:
         if (
             "This build does not support creating .aux overviews"
@@ -468,3 +472,22 @@ def test_gdalalg_overview_add_complete():
     ).split(" ")
     assert "NONE" in out
     assert "LZW" in out
+
+
+###############################################################################
+
+
+def test_gdalalg_overview_add_in_pipeline(tmp_vsimem):
+
+    src_ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
+
+    with gdal.Run(
+        "pipeline",
+        input=src_ds,
+        pipeline="read ! overview add --levels 2 ! write --format stream streamed_dataset",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).GetOverviewCount() == 1
+        assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1192
+
+    assert src_ds.GetRasterBand(1).GetOverviewCount() == 0
