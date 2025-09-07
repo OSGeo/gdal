@@ -5,7 +5,7 @@
  *           holds all the necessary metadata to correctly interpret and
  *           access the associated raw data.
  * Author:   Abel Pau
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2025, Xavier Pons
  *
@@ -163,8 +163,8 @@ MMRRel::GetValueFromSectionKeyPriorToREL(const CPLString &osPriorRelName,
 }
 
 // Used when the MMRREL is already constructed.
-CPLString MMRRel::GetValueFromSectionKeyFromREL(const CPLString osSection,
-                                                const CPLString osKey)
+CPLString MMRRel::GetValueFromSectionKeyFromREL(const CPLString &osSection,
+                                                const CPLString &osKey)
 {
     if (!GetRELFile())
     {
@@ -306,7 +306,7 @@ bool MMRRel::GetMetadataValueDirectly(const CPLString &osRELFile,
 {
     osValue = GetValueFromSectionKeyPriorToREL(osRELFile, osSection, osKey);
 
-    if (osValue.compare(m_szImprobableRELChain) != 0)
+    if (osValue != m_szImprobableRELChain)
         return true;  // Found
 
     osValue = "";
@@ -316,10 +316,6 @@ bool MMRRel::GetMetadataValueDirectly(const CPLString &osRELFile,
 bool MMRRel::SameFile(const CPLString &osFile1, const CPLString &osFile2)
 {
     if (EQUAL(osFile1, osFile2))
-        return true;
-
-    // Just to be sure:
-    if (osFile1.compare(osFile2) == 0)
         return true;
 
     // Just to be more sure:
@@ -673,7 +669,7 @@ int MMRRel::IdentifySubdataSetFile(const CPLString &osFileName)
     return GDAL_IDENTIFY_TRUE;
 }
 
-int MMRRel::IdentifyFile(GDALOpenInfo *poOpenInfo)
+int MMRRel::IdentifyFile(const GDALOpenInfo *poOpenInfo)
 {
     // IMG files are shared for many drivers.
     // Identify will mark it as unknown.
@@ -686,8 +682,8 @@ int MMRRel::IdentifyFile(GDALOpenInfo *poOpenInfo)
         return GDAL_IDENTIFY_FALSE;
 
     // In fact, the file has to end with I.rel (pszExtRasterREL)
-    CPLString osFileName = poOpenInfo->pszFilename;
-    if (!cpl::ends_with(osFileName, pszExtRasterREL))
+    if (!cpl::ends_with(std::string_view(poOpenInfo->pszFilename),
+                        pszExtRasterREL))
         return GDAL_IDENTIFY_FALSE;
 
     // Some versions of REL files are not allowed.
@@ -718,13 +714,13 @@ bool MMRRel::GetMetadataValue(const CPLString &osMainSection,
 
     addExcludedSectionKey(osAttributeDataName, osKey);
     osValue = GetValueFromSectionKeyFromREL(osAttributeDataName, osKey);
-    if (osValue.compare(m_szImprobableRELChain) != 0)
+    if (osValue != m_szImprobableRELChain)
         return true;  // Found
 
     // If the value is not found then searches in [pszMainSection]
     addExcludedSectionKey(osSubSubSection, osKey);
     osValue = GetValueFromSectionKeyFromREL(osSubSubSection, osKey);
-    if (osValue.compare(m_szImprobableRELChain) == 0)
+    if (osValue == m_szImprobableRELChain)
     {
         osValue = "";
         return false;  // Key not found
@@ -747,13 +743,13 @@ bool MMRRel::GetMetadataValue(const CPLString &osMainSection,
 
     addExcludedSectionKey(osAttributeDataName, osKey);
     osValue = GetValueFromSectionKeyFromREL(osAttributeDataName, osKey);
-    if (osValue.compare(m_szImprobableRELChain) != 0)
+    if (osValue != m_szImprobableRELChain)
         return true;  // Found
 
     // If the value is not found then searches in [pszMainSection]
     addExcludedSectionKey(osMainSection, osKey);
     osValue = GetValueFromSectionKeyFromREL(osMainSection, osKey);
-    if (osValue.compare(m_szImprobableRELChain) == 0)
+    if (osValue == m_szImprobableRELChain)
     {
         osValue = "";
         return false;  // Key not found
@@ -769,7 +765,7 @@ bool MMRRel::GetMetadataValue(const CPLString &osSection,
 
     addExcludedSectionKey(osSection, osKey);
     osValue = GetValueFromSectionKeyFromREL(osSection, osKey);
-    if (osValue.compare(m_szImprobableRELChain) == 0)
+    if (osValue == m_szImprobableRELChain)
     {
         osValue = "";
         return false;  // Key not found

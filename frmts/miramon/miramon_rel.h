@@ -53,8 +53,8 @@ class MMRRel
     GetValueFromSectionKeyPriorToREL(const CPLString &osPriorRelName,
                                      const CPLString &osSection,
                                      const CPLString &osKey);
-    CPLString GetValueFromSectionKeyFromREL(const CPLString osSection,
-                                            const CPLString osKey);
+    CPLString GetValueFromSectionKeyFromREL(const CPLString &osSection,
+                                            const CPLString &osKey);
     static CPLString GetValueFromSectionKey(VSILFILE *pf,
                                             const CPLString &osSection,
                                             const CPLString &osKey);
@@ -81,7 +81,7 @@ class MMRRel
     int GetColumnsNumberFromREL();
     int GetRowsNumberFromREL();
     static int IdentifySubdataSetFile(const CPLString &osFileName);
-    static int IdentifyFile(GDALOpenInfo *poOpenInfo);
+    static int IdentifyFile(const GDALOpenInfo *poOpenInfo);
 
     bool IsValid() const
     {
