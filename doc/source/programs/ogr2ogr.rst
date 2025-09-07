@@ -458,7 +458,7 @@ output coordinate system or even reprojecting the features during translation.
     :cpp:func:`OGRGeometryFactory::removeLowerDimensionSubGeoms`, on geometries
     to ensure they are valid regarding the rules of the Simple Features specification.
 
-    .. versionadded: 3.1 (requires GEOS)
+    .. versionadded:: 3.1 (requires GEOS)
 
 .. option:: -skipinvalid
 
@@ -467,7 +467,7 @@ output coordinate system or even reprojecting the features during translation.
     If they are not, the feature is skipped. This check is done after all other
     geometry operations.
 
-    .. versionadded: 3.10 (requires GEOS)
+    .. versionadded:: 3.10 (requires GEOS)
 
 .. option:: -fieldTypeToString All|<type1>[,<type2>]...
 
@@ -504,7 +504,7 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -dateTimeTo {UTC|UTC(+|-)<HH>|UTC(+|-)<HH>:<MM>}
 
-    .. versionadded: 3.7
+    .. versionadded:: 3.7
 
     Converts date time values from the timezone specified in the source value
     to the target timezone expressed with :option:`-dateTimeTo`.
