@@ -36,11 +36,11 @@ TEST_F(test_gdal_minmax_element, uint8)
         std::vector<T> v{max_v, nodata, min_v};
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, true, nodata);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, false, 0);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min =
@@ -197,11 +197,11 @@ TEST_F(test_gdal_minmax_element, int8)
         std::vector<T> v{max_v, nodata, min_v};
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, true, nodata);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, false, 0);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min =
@@ -263,11 +263,11 @@ TEST_F(test_gdal_minmax_element, uint16)
         std::vector<T> v{max_v, nodata, min_v};
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, true, nodata);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, false, 0);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min =
@@ -329,11 +329,11 @@ TEST_F(test_gdal_minmax_element, int16)
         std::vector<T> v{max_v, nodata, min_v};
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, true, nodata);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, false, 0);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min =
@@ -395,11 +395,11 @@ TEST_F(test_gdal_minmax_element, uint32)
         std::vector<T> v{max_v, nodata, min_v};
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, true, nodata);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, false, 0);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min =
@@ -461,11 +461,11 @@ TEST_F(test_gdal_minmax_element, int32)
         std::vector<T> v{max_v, nodata, min_v};
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, true, nodata);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, false, 0);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min =
@@ -527,11 +527,11 @@ TEST_F(test_gdal_minmax_element, uint64)
         std::vector<T> v{max_v, static_cast<T>(nodata), min_v};
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, true, nodata);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, false, 0);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min =
@@ -594,11 +594,11 @@ TEST_F(test_gdal_minmax_element, int64)
         std::vector<T> v{max_v, static_cast<T>(nodata), min_v};
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, true, nodata);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, false, 0);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min =
@@ -667,11 +667,11 @@ TEST_F(test_gdal_minmax_element, float16)
         std::vector<T> v{max_v, nodata, min_v};
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, true, nodata);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, false, 0);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min =
@@ -795,11 +795,11 @@ TEST_F(test_gdal_minmax_element, float32)
         std::vector<T> v{max_v, nodata, min_v};
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, true, nodata);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, false, 0);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min =
@@ -915,11 +915,11 @@ TEST_F(test_gdal_minmax_element, float64)
         std::vector<T> v{max_v, nodata, min_v};
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, true, nodata);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min = gdal::min_element(v.data(), 0, eDT, false, 0);
-            EXPECT_EQ(idx_min, 0);
+            EXPECT_EQ(idx_min, 0U);
         }
         {
             auto idx_min =
@@ -1019,7 +1019,7 @@ TEST_F(test_gdal_minmax_element, unsupported)
         CPLErrorReset();
         auto [idx_min, idx_max] =
             gdal::minmax_element(v, 1, GDT_CFloat32, false, 0);
-        EXPECT_EQ(idx_min, 0);
+        EXPECT_EQ(idx_min, 0U);
         EXPECT_EQ(idx_max, 0);
         EXPECT_EQ(CPLGetLastErrorNo(), CPLE_NotSupported);
     }

@@ -466,7 +466,7 @@ TEST_F(test_cpl, CSLTokenizeString2)
         {
             oMap[name] = value;
         }
-        ASSERT_EQ(oMap.size(), 2);
+        ASSERT_EQ(oMap.size(), 2U);
         EXPECT_EQ(oMap["foo"], "bar");
         EXPECT_EQ(oMap["bar"], "baz");
     }

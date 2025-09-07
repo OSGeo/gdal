@@ -258,7 +258,7 @@ TEST_F(test_ms_square, fudge_test_2)
     {
         Square::Segments segments(
             square.segments(1.0, -std::numeric_limits<double>::infinity()));
-        EXPECT_EQ(segments.size(), 1);
+        EXPECT_EQ(segments.size(), 1U);
         EXPECT_NEAR(segments[0].first.x, 0.0, 0.001);
         EXPECT_NEAR(segments[0].first.y, 1.0, 0.001);
         EXPECT_NEAR(segments[0].second.x, 0.0, 0.001);
@@ -267,7 +267,7 @@ TEST_F(test_ms_square, fudge_test_2)
     {
         Square::Segments segments(
             square.segments(0.0, -std::numeric_limits<double>::infinity()));
-        EXPECT_EQ(segments.size(), 0);
+        EXPECT_EQ(segments.size(), 0U);
     }
 }
 

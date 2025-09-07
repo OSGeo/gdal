@@ -2568,7 +2568,8 @@ TEST_F(test_ogr, feature_defn_fields_iterator)
         OGRFieldDefn oFieldDefn("field2", OFTString);
         oFDefn.AddFieldDefn(&oFieldDefn);
     }
-    EXPECT_EQ(oFDefn.GetFields().size(), oFDefn.GetFieldCount());
+    EXPECT_EQ(oFDefn.GetFields().size(),
+              static_cast<size_t>(oFDefn.GetFieldCount()));
     int i = 0;
     for (const auto *poFieldDefn : oFDefn.GetFields())
     {
@@ -2591,7 +2592,8 @@ TEST_F(test_ogr, feature_defn_geomfields_iterator)
         OGRGeomFieldDefn oGeomFieldDefn("field2", wkbUnknown);
         oFDefn.AddGeomFieldDefn(&oGeomFieldDefn);
     }
-    EXPECT_EQ(oFDefn.GetGeomFields().size(), oFDefn.GetGeomFieldCount());
+    EXPECT_EQ(oFDefn.GetGeomFields().size(),
+              static_cast<size_t>(oFDefn.GetGeomFieldCount()));
     int i = 0;
     for (const auto *poGeomFieldDefn : oFDefn.GetGeomFields())
     {
@@ -2698,7 +2700,7 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
         OGRFeature::FromHandle(OGR_L_GetNextFeature(hLayer)));
     auto hFeature = OGRFeature::ToHandle(poFeature.get());
     ASSERT_TRUE(hFeature);
-    ASSERT_GT(queryLog.size(), 1);
+    ASSERT_GT(queryLog.size(), 1U);
 
     QueryLogEntry entry{queryLog.back()};
     ASSERT_EQ(entry.sql.find("SELECT", 0), 0);
