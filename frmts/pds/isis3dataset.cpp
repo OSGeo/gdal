@@ -2393,103 +2393,119 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     std::vector<std::string> aosWavelengthsUnit;
     std::vector<double> adfBandwidth;
     std::vector<std::string> aosBandwidthUnit;
-    const auto oBandBin = poDS->m_oJSonLabel.GetObj("IsisCube/BandBin");
-    if (oBandBin.IsValid() && oBandBin.GetType() == CPLJSONObject::Type::Object)
+    const auto oIsisCube = poDS->m_oJSonLabel.GetObj("IsisCube");
+    if (oIsisCube.GetType() == CPLJSONObject::Type::Object)
     {
-        for (const auto &child : oBandBin.GetChildren())
+        for (const auto &oChildIsisCube : oIsisCube.GetChildren())
         {
-            if (CPLString(child.GetName()).ifind("name") != std::string::npos)
+            if (oChildIsisCube.GetType() == CPLJSONObject::Type::Object &&
+                oChildIsisCube.GetString("_type") == "group" &&
+                (oChildIsisCube.GetName() == "BandBin" ||
+                 oChildIsisCube.GetString("_container_name") == "BandBin"))
             {
-                // Use "name" in priority
-                if (EQUAL(child.GetName().c_str(), "name"))
+                for (const auto &child : oChildIsisCube.GetChildren())
                 {
-                    aosBandNames.clear();
-                }
-                else if (!aosBandNames.empty())
-                {
-                    continue;
-                }
-
-                if (child.GetType() == CPLJSONObject::Type::String &&
-                    nBands == 1)
-                {
-                    aosBandNames.push_back(child.ToString());
-                }
-                else if (child.GetType() == CPLJSONObject::Type::Array)
-                {
-                    auto oArray = child.ToArray();
-                    if (oArray.Size() == nBands)
+                    if (CPLString(child.GetName()).ifind("name") !=
+                        std::string::npos)
                     {
-                        for (int i = 0; i < nBands; i++)
+                        // Use "name" in priority
+                        if (EQUAL(child.GetName().c_str(), "name"))
                         {
-                            if (oArray[i].GetType() ==
-                                CPLJSONObject::Type::String)
+                            aosBandNames.clear();
+                        }
+                        else if (!aosBandNames.empty())
+                        {
+                            continue;
+                        }
+
+                        if (child.GetType() == CPLJSONObject::Type::String &&
+                            nBands == 1)
+                        {
+                            aosBandNames.push_back(child.ToString());
+                        }
+                        else if (child.GetType() == CPLJSONObject::Type::Array)
+                        {
+                            auto oArray = child.ToArray();
+                            if (oArray.Size() == nBands)
                             {
-                                aosBandNames.push_back(oArray[i].ToString());
-                            }
-                            else
-                            {
-                                aosBandNames.clear();
-                                break;
+                                for (int i = 0; i < nBands; i++)
+                                {
+                                    if (oArray[i].GetType() ==
+                                        CPLJSONObject::Type::String)
+                                    {
+                                        aosBandNames.push_back(
+                                            oArray[i].ToString());
+                                    }
+                                    else
+                                    {
+                                        aosBandNames.clear();
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            }
-            else if (EQUAL(child.GetName().c_str(), "BandSuffixUnit") &&
-                     child.GetType() == CPLJSONObject::Type::Array)
-            {
-                auto oArray = child.ToArray();
-                if (oArray.Size() == nBands)
-                {
-                    for (int i = 0; i < nBands; i++)
+                    else if (EQUAL(child.GetName().c_str(), "BandSuffixUnit") &&
+                             child.GetType() == CPLJSONObject::Type::Array)
                     {
-                        if (oArray[i].GetType() == CPLJSONObject::Type::String)
+                        auto oArray = child.ToArray();
+                        if (oArray.Size() == nBands)
                         {
-                            aosBandUnits.push_back(oArray[i].ToString());
-                        }
-                        else
-                        {
-                            aosBandUnits.clear();
-                            break;
+                            for (int i = 0; i < nBands; i++)
+                            {
+                                if (oArray[i].GetType() ==
+                                    CPLJSONObject::Type::String)
+                                {
+                                    aosBandUnits.push_back(
+                                        oArray[i].ToString());
+                                }
+                                else
+                                {
+                                    aosBandUnits.clear();
+                                    break;
+                                }
+                            }
                         }
                     }
+                    else if (EQUAL(child.GetName().c_str(), "BandBinCenter") ||
+                             EQUAL(child.GetName().c_str(), "Center"))
+                    {
+                        GetValueAndUnits(child, adfWavelengths,
+                                         aosWavelengthsUnit, nBands);
+                    }
+                    else if (EQUAL(child.GetName().c_str(), "BandBinUnit") &&
+                             child.GetType() == CPLJSONObject::Type::String)
+                    {
+                        CPLString unit(child.ToString());
+                        if (STARTS_WITH_CI(unit, "micromet") ||
+                            EQUAL(unit, "um") ||
+                            STARTS_WITH_CI(unit, "nanomet") ||
+                            EQUAL(unit, "nm"))
+                        {
+                            aosWavelengthsUnit.push_back(child.ToString());
+                        }
+                    }
+                    else if (EQUAL(child.GetName().c_str(), "Width"))
+                    {
+                        GetValueAndUnits(child, adfBandwidth, aosBandwidthUnit,
+                                         nBands);
+                    }
                 }
-            }
-            else if (EQUAL(child.GetName().c_str(), "BandBinCenter") ||
-                     EQUAL(child.GetName().c_str(), "Center"))
-            {
-                GetValueAndUnits(child, adfWavelengths, aosWavelengthsUnit,
-                                 nBands);
-            }
-            else if (EQUAL(child.GetName().c_str(), "BandBinUnit") &&
-                     child.GetType() == CPLJSONObject::Type::String)
-            {
-                CPLString unit(child.ToString());
-                if (STARTS_WITH_CI(unit, "micromet") || EQUAL(unit, "um") ||
-                    STARTS_WITH_CI(unit, "nanomet") || EQUAL(unit, "nm"))
-                {
-                    aosWavelengthsUnit.push_back(child.ToString());
-                }
-            }
-            else if (EQUAL(child.GetName().c_str(), "Width"))
-            {
-                GetValueAndUnits(child, adfBandwidth, aosBandwidthUnit, nBands);
-            }
-        }
 
-        if (!adfWavelengths.empty() && aosWavelengthsUnit.size() == 1)
-        {
-            for (int i = 1; i < nBands; i++)
-            {
-                aosWavelengthsUnit.push_back(aosWavelengthsUnit[0]);
-            }
-        }
-        if (!adfBandwidth.empty() && aosBandwidthUnit.size() == 1)
-        {
-            for (int i = 1; i < nBands; i++)
-            {
-                aosBandwidthUnit.push_back(aosBandwidthUnit[0]);
+                if (!adfWavelengths.empty() && aosWavelengthsUnit.size() == 1)
+                {
+                    for (int i = 1; i < nBands; i++)
+                    {
+                        aosWavelengthsUnit.push_back(aosWavelengthsUnit[0]);
+                    }
+                }
+                if (!adfBandwidth.empty() && aosBandwidthUnit.size() == 1)
+                {
+                    for (int i = 1; i < nBands; i++)
+                    {
+                        aosBandwidthUnit.push_back(aosBandwidthUnit[0]);
+                    }
+                }
             }
         }
     }
@@ -3164,11 +3180,12 @@ void ISIS3Dataset::BuildLabel()
     // Deal with History object
     BuildHistory();
 
-    oLabel.Delete("History");
+    oLabel.Delete("History_IsisCube");
     if (!m_osHistory.empty())
     {
         CPLJSONObject oHistory;
         oHistory.Add("_type", "object");
+        oHistory.Add("_container_name", "History");
         oHistory.Add("Name", "IsisCube");
         if (m_osExternalFilename.empty())
             oHistory.Add("StartByte", pszHISTORY_STARTBYTE_PLACEHOLDER);
@@ -3181,7 +3198,7 @@ void ISIS3Dataset::BuildLabel()
             osFilename += ".History.IsisCube";
             oHistory.Add("^History", osFilename);
         }
-        oLabel.Add("History", oHistory);
+        oLabel.Add("History_IsisCube", oHistory);
     }
 
     // Deal with other objects that have StartByte & Bytes
@@ -3198,7 +3215,7 @@ void ISIS3Dataset::BuildLabel()
         for (CPLJSONObject &oObj : oLabel.GetChildren())
         {
             CPLString osKey = oObj.GetName();
-            if (osKey == "History")
+            if (osKey == "History_IsisCube")
             {
                 continue;
             }
@@ -3345,7 +3362,7 @@ void ISIS3Dataset::BuildHistory()
             osSrcFilename = oFilename.ToString();
         }
         CPLString osHistoryFilename(osSrcFilename);
-        CPLJSONObject oHistory = m_oSrcJSonLabel["History"];
+        CPLJSONObject oHistory = m_oSrcJSonLabel["History_IsisCube"];
         if (oHistory.GetType() == CPLJSONObject::Type::Object)
         {
             CPLJSONObject oHistoryFilename = oHistory["^History"];

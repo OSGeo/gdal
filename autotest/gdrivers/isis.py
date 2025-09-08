@@ -1408,70 +1408,70 @@ End_Object
 # Test history
 
 
-def test_isis_27():
+@pytest.mark.parametrize("src_location", ["LABEL", "EXTERNAL"])
+@pytest.mark.parametrize("dst_location", ["LABEL", "EXTERNAL"])
+def test_isis_27(tmp_vsimem, src_location, dst_location):
 
-    for src_location in ["LABEL", "EXTERNAL"]:
-        for dst_location in ["LABEL", "EXTERNAL"]:
-            gdal.GetDriverByName("ISIS3").Create(
-                "/vsimem/out.lbl", 1, 1, options=["DATA_LOCATION=" + src_location]
-            )
-            gdal.Translate(
-                "/vsimem/out2.lbl",
-                "/vsimem/out.lbl",
-                format="ISIS3",
-                creationOptions=["DATA_LOCATION=" + dst_location],
-            )
+    gdal.GetDriverByName("ISIS3").Create(
+        tmp_vsimem / "out.lbl", 1, 1, options=["DATA_LOCATION=" + src_location]
+    )
+    gdal.Translate(
+        tmp_vsimem / "out2.lbl",
+        tmp_vsimem / "out.lbl",
+        format="ISIS3",
+        creationOptions=["DATA_LOCATION=" + dst_location],
+    )
 
-            f = gdal.VSIFOpenL("/vsimem/out2.lbl", "rb")
-            content = None
-            if f is not None:
-                content = gdal.VSIFReadL(1, 100000, f).decode("ASCII")
-                gdal.VSIFCloseL(f)
+    f = gdal.VSIFOpenL(tmp_vsimem / "out2.lbl", "rb")
+    content = None
+    if f is not None:
+        content = gdal.VSIFReadL(1, 100000, f).decode("ASCII")
+        gdal.VSIFCloseL(f)
 
-            ds = gdal.Open("/vsimem/out2.lbl")
-            lbl = ds.GetMetadata_List("json:ISIS3")[0]
-            lbl = json.loads(lbl)
-            offset = lbl["History"]["StartByte"] - 1
-            size = lbl["History"]["Bytes"]
+    ds = gdal.Open(tmp_vsimem / "out2.lbl")
+    lbl = ds.GetMetadata_List("json:ISIS3")[0]
+    lbl = json.loads(lbl)
+    offset = lbl["History_IsisCube"]["StartByte"] - 1
+    size = lbl["History_IsisCube"]["Bytes"]
 
-            if dst_location == "EXTERNAL":
-                assert lbl["Label"]["Bytes"] < 65536
+    if dst_location == "EXTERNAL":
+        assert lbl["Label"]["Bytes"] < 65536
 
-                history_filename = lbl["History"]["^History"]
-                if history_filename != "out2.History.IsisCube":
-                    print(src_location)
-                    print(dst_location)
-                    pytest.fail(content)
+        history_filename = lbl["History_IsisCube"]["^History"]
+        if history_filename != "out2.History.IsisCube":
+            print(src_location)
+            print(dst_location)
+            pytest.fail(content)
 
-                f = gdal.VSIFOpenL("/vsimem/" + history_filename, "rb")
-                history = None
-                if f is not None:
-                    history = gdal.VSIFReadL(1, 100000, f).decode("ASCII")
-                    gdal.VSIFCloseL(f)
+        f = gdal.VSIFOpenL(tmp_vsimem / history_filename, "rb")
+        history = None
+        if f is not None:
+            history = gdal.VSIFReadL(1, 100000, f).decode("ASCII")
+            gdal.VSIFCloseL(f)
 
-                if offset != 0 or size != len(history):
-                    print(src_location)
-                    print(dst_location)
-                    pytest.fail(content)
-            else:
-                assert lbl["Label"]["Bytes"] >= 65536
-                if offset + size != len(content):
-                    print(src_location)
-                    pytest.fail(dst_location)
-                history = content[offset:]
+        if offset != 0 or size != len(history):
+            print(src_location)
+            print(dst_location)
+            pytest.fail(content)
+    else:
+        assert lbl["Label"]["Bytes"] >= 65536
+        if offset + size != len(content):
+            print(src_location, offset + size, len(content))
+            pytest.fail(dst_location)
+        history = content[offset:]
 
-            if (
-                not history.startswith("Object = ")
-                or "FROM = out.lbl" not in history
-                or "TO   = out2.lbl" not in history
-                or "TO = out.lbl" not in history
-            ):
-                print(src_location)
-                print(dst_location)
-                pytest.fail(content)
+    if (
+        not history.startswith("Object = ")
+        or "FROM = out.lbl" not in history
+        or "TO   = out2.lbl" not in history
+        or "TO = out.lbl" not in history
+    ):
+        print(src_location)
+        print(dst_location)
+        pytest.fail(content)
 
-            gdal.GetDriverByName("ISIS3").Delete("/vsimem/out.lbl")
-            gdal.GetDriverByName("ISIS3").Delete("/vsimem/out2.lbl")
+
+def test_isis_27_bis():
 
     # Test GDAL_HISTORY
     gdal.GetDriverByName("ISIS3").Create(
