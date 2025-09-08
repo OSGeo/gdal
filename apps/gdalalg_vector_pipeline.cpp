@@ -24,6 +24,7 @@
 #include "gdalalg_vector_geom.h"
 #include "gdalalg_vector_info.h"
 #include "gdalalg_vector_make_valid.h"
+#include "gdalalg_vector_partition.h"
 #include "gdalalg_vector_reproject.h"
 #include "gdalalg_vector_segmentize.h"
 #include "gdalalg_vector_select.h"
@@ -159,6 +160,7 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALVectorFilterAlgorithm>();
     registry.Register<GDALVectorGeomAlgorithm>();
     registry.Register<GDALVectorMakeValidAlgorithm>();
+    registry.Register<GDALVectorPartitionAlgorithm>();
     registry.Register<GDALVectorSegmentizeAlgorithm>();
 
     registry.Register<GDALVectorSelectAlgorithm>(
