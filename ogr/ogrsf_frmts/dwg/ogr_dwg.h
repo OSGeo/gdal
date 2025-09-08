@@ -65,7 +65,7 @@ class OGRDWGBlocksLayer final : public OGRLayer
 
   public:
     explicit OGRDWGBlocksLayer(OGRDWGDataSource *poDS);
-    ~OGRDWGBlocksLayer();
+    ~OGRDWGBlocksLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -129,7 +129,7 @@ class OGRDWGLayer final : public OGRLayer
 
   public:
     explicit OGRDWGLayer(OGRDWGDataSource *poDS);
-    ~OGRDWGLayer();
+    ~OGRDWGLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -181,7 +181,7 @@ class OGRDWGDataSource final : public GDALDataset
 
   public:
     OGRDWGDataSource();
-    ~OGRDWGDataSource();
+    ~OGRDWGDataSource() override;
 
     OdDbDatabasePtr GetDB()
     {

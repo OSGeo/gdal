@@ -380,15 +380,15 @@ CPLErr CPL_STDCALL GDALComputeProximity(GDALRasterBandH hSrcBand,
         // Final post processing of distances.
         for (int i = 0; i < nXSize; i++)
         {
-            if (pafProximity[i] < 0.0)
+            if (pafProximity[i] < 0.0f)
                 pafProximity[i] = fNoDataValue;
-            else if (pafProximity[i] > 0.0)
+            else if (pafProximity[i] > 0.0f)
             {
                 if (bFixedBufVal)
                     pafProximity[i] = static_cast<float>(dfFixedBufVal);
                 else
                     pafProximity[i] =
-                        static_cast<float>(pafProximity[i] * dfDistMult);
+                        pafProximity[i] * static_cast<float>(dfDistMult);
             }
         }
 
@@ -567,8 +567,10 @@ static CPLErr ProcessProximityLine(GInt32 *panSrcScanline, int *panNearX,
             dfNearDistSq <= dfMaxDist * dfMaxDist &&
             (pafProximity[iPixel] < 0 ||
              dfNearDistSq < static_cast<double>(pafProximity[iPixel]) *
-                                pafProximity[iPixel]))
+                                static_cast<double>(pafProximity[iPixel])))
+        {
             pafProximity[iPixel] = static_cast<float>(sqrt(dfNearDistSq));
+        }
     }
 
     return CE_None;

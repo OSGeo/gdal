@@ -220,7 +220,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
                   const std::string &osPrjFilename, bool bUpdate,
                   OGRwkbGeometryType eReqType,
                   CSLConstList papszCreateOptions = nullptr);
-    virtual ~OGRShapeLayer();
+    ~OGRShapeLayer() override;
 
     GDALDataset *GetDataset() override;
 
@@ -323,7 +323,7 @@ class OGRShapeDataSource final : public GDALDataset
 
   public:
     OGRShapeDataSource();
-    virtual ~OGRShapeDataSource();
+    ~OGRShapeDataSource() override;
 
     OGRLayerPool *GetPool() const
     {

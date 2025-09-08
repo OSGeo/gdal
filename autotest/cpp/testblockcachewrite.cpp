@@ -53,7 +53,7 @@ class MyRasterBand : public GDALRasterBand
     }
 };
 
-class MyDataset : public GDALDataset
+class MyDataset final : public GDALDataset
 {
   public:
     MyDataset()
@@ -64,7 +64,7 @@ class MyDataset : public GDALDataset
         SetBand(1, new MyRasterBand());
     }
 
-    ~MyDataset()
+    ~MyDataset() override
     {
         FlushCache(true);
     }

@@ -40,7 +40,7 @@ class MMRRasterBand final : public GDALPamRasterBand
         delete;  // I don't want to construct a MMRRasterBand from another MMRRasterBand (effc++)
     MMRRasterBand &operator=(const MMRRasterBand &) =
         delete;  // I don't want to assign a MMRRasterBand to another MMRRasterBand (effc++)
-    ~MMRRasterBand();
+    ~MMRRasterBand() override;
 
     CPLErr IReadBlock(int, int, void *) override;
     GDALColorInterp GetColorInterpretation() override;

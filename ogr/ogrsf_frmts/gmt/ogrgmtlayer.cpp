@@ -1038,9 +1038,6 @@ OGRErr OGRGmtLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
         case OFTDateTime:
             poFeatureDefn->AddFieldDefn(poField);
             return OGRERR_NONE;
-            break;
-
-            break;
 
         default:
             if (!bApproxOK)

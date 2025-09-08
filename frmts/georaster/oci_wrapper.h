@@ -247,14 +247,14 @@ class OWStatement;
 //  ---------------------------------------------------------------------------
 //  OWSPool, OCISessionPool
 //  ---------------------------------------------------------------------------
-class OWSessionPool
+class OWSessionPool final
 {
     friend class OWConnection;
 
   public:
     OWSessionPool(const char *pszUserIn, const char *pszPasswordIn,
                   const char *pszServerIn);
-    virtual ~OWSessionPool();
+    ~OWSessionPool();
 
   private:
     OCIEnv *hEnv = nullptr;
@@ -312,7 +312,7 @@ class OWSessionPool
 //  OWConnection
 //  ---------------------------------------------------------------------------
 
-class OWConnection
+class OWConnection final
 {
     friend class OWStatement;
 
@@ -322,7 +322,7 @@ class OWConnection
     OWConnection(OWSessionPool *hPool, const char *pszUserIn,
                  const char *pszPasswordIn, const char *pszServerIn);
     explicit OWConnection(OCIExtProcContext *poWithContext);
-    virtual ~OWConnection();
+    ~OWConnection();
 
   private:
     OCIEnv *hEnv = nullptr;
@@ -457,12 +457,12 @@ class OWConnection
 /*                           OWStatement                                   */
 /***************************************************************************/
 
-class OWStatement
+class OWStatement final
 {
 
   public:
     OWStatement(OWConnection *poConnect, const char *pszStatement);
-    virtual ~OWStatement();
+    ~OWStatement();
 
   private:
     OWConnection *poConnection = nullptr;

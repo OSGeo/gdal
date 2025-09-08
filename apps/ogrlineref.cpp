@@ -1663,13 +1663,13 @@ MAIN_START(argc, argv)
             GDALClose(poPkDS);
             if (GDALClose(poODS) != CE_None)
                 eErr = CE_Failure;
+            break;
 
 #else   // HAVE_GEOS
             fprintf(stderr,
                     _("GEOS support not enabled or incompatible version.\n"));
             exit(1);
 #endif  // HAVE_GEOS
-            break;
         }
         case op_get_pos:
         {
@@ -1732,13 +1732,13 @@ MAIN_START(argc, argv)
                                psOptions.bDisplayProgress, psOptions.bQuiet);
 
             GDALClose(poPartsDS);
+            break;
 
 #else   // HAVE_GEOS
             fprintf(stderr,
                     "GEOS support not enabled or incompatible version.\n");
             exit(1);
 #endif  // HAVE_GEOS
-            break;
         }
         case op_get_coord:
         {

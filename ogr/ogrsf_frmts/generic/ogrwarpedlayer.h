@@ -30,18 +30,18 @@
 /*                           OGRWarpedLayer                             */
 /************************************************************************/
 
-class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator,
-                               public OGRLayerWithTranslateFeature
+class CPL_DLL OGRWarpedLayer final : public OGRLayerDecorator,
+                                     public OGRLayerWithTranslateFeature
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRWarpedLayer)
 
   protected:
-    OGRFeatureDefn *m_poFeatureDefn;
-    int m_iGeomField;
+    OGRFeatureDefn *m_poFeatureDefn = nullptr;
+    int m_iGeomField = 0;
 
-    OGRCoordinateTransformation *m_poCT;
-    OGRCoordinateTransformation *m_poReversedCT; /* may be NULL */
-    OGRSpatialReference *m_poSRS;
+    OGRCoordinateTransformation *m_poCT = nullptr;
+    OGRCoordinateTransformation *m_poReversedCT = nullptr; /* may be NULL */
+    OGRSpatialReference *m_poSRS = nullptr;
 
     OGREnvelope sStaticEnvelope{};
 
@@ -60,7 +60,7 @@ class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator,
             *poCT, /* must NOT be NULL, ownership acquired by OGRWarpedLayer */
         OGRCoordinateTransformation *
             poReversedCT /* may be NULL, ownership acquired by OGRWarpedLayer */);
-    virtual ~OGRWarpedLayer();
+    ~OGRWarpedLayer() override;
 
     void TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
@@ -71,26 +71,26 @@ class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator,
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *) override;
 
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr IUpsertFeature(OGRFeature *poFeature) override;
+    OGRFeature *GetNextFeature() override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr IUpsertFeature(OGRFeature *poFeature) override;
     OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                           const int *panUpdatedFieldsIdx,
                           int nUpdatedGeomFieldsCount,
                           const int *panUpdatedGeomFieldsIdx,
                           bool bUpdateStyleString) override;
 
-    virtual const OGRFeatureDefn *GetLayerDefn() const override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual const OGRSpatialReference *GetSpatialRef() const override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce = true) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce = true) override;
 
-    virtual int TestCapability(const char *) const override;
+    int TestCapability(const char *) const override;
 
     virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
                                 CSLConstList papszOptions = nullptr) override;

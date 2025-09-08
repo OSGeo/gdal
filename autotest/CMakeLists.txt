@@ -145,13 +145,13 @@ int main(int argc, char **argv) {
     status = PyConfig_SetBytesString(&config, &config.program_name, argv[0]);
     if (PyStatus_Exception(status)) {
         PyConfig_Clear(&config);
-        Py_ExitStatusException(status);
+        if (argc >= 0) Py_ExitStatusException(status);
         return 1;
     }
     status = Py_InitializeFromConfig(&config);
     if (PyStatus_Exception(status)) {
         PyConfig_Clear(&config);
-        Py_ExitStatusException(status);
+        if (argc >= 0) Py_ExitStatusException(status);
         return 1;
     }
     PyConfig_Clear(&config);

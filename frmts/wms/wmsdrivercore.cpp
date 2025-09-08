@@ -107,7 +107,7 @@ int WMSDriverIdentify(GDALOpenInfo *poOpenInfo)
 /*                    OGRWMSDriverGetSubdatasetInfo()                   */
 /************************************************************************/
 
-struct WMSDriverSubdatasetInfo : public GDALSubdatasetInfo
+struct WMSDriverSubdatasetInfo final : public GDALSubdatasetInfo
 {
   public:
     explicit WMSDriverSubdatasetInfo(const std::string &fileName)

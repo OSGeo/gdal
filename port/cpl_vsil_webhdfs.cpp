@@ -194,7 +194,7 @@ class VSIWebHDFSWriteHandle final : public VSIAppendWriteHandle
 
   public:
     VSIWebHDFSWriteHandle(VSIWebHDFSFSHandler *poFS, const char *pszFilename);
-    virtual ~VSIWebHDFSWriteHandle();
+    ~VSIWebHDFSWriteHandle() override;
 };
 
 /************************************************************************/

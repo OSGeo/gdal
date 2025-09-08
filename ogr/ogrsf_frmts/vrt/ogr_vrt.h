@@ -137,7 +137,7 @@ class OGRVRTLayer final : public OGRLayer
 
   public:
     explicit OGRVRTLayer(OGRVRTDataSource *poDSIn);
-    virtual ~OGRVRTLayer();
+    ~OGRVRTLayer() override;
 
     bool FastInitialize(CPLXMLNode *psLTree, const char *pszVRTDirectory,
                         int bUpdate);
@@ -154,42 +154,42 @@ class OGRVRTLayer final : public OGRLayer
     /*      FullInitialize() if not already done                            */
     /* -------------------------------------------------------------------- */
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRErr SetNextByIndex(GIntBig nIndex) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual GIntBig GetFeatureCount(int) override;
+    GIntBig GetFeatureCount(int) override;
 
-    virtual OGRErr SetAttributeFilter(const char *) override;
+    OGRErr SetAttributeFilter(const char *) override;
 
     int TestCapability(const char *) const override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce = TRUE) override;
 
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *poGeomIn) override;
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(GIntBig nFID) override;
 
-    virtual OGRErr SyncToDisk() override;
+    OGRErr SyncToDisk() override;
 
     const char *GetFIDColumn() const override;
 
-    virtual OGRErr StartTransaction() override;
-    virtual OGRErr CommitTransaction() override;
-    virtual OGRErr RollbackTransaction() override;
+    OGRErr StartTransaction() override;
+    OGRErr CommitTransaction() override;
+    OGRErr RollbackTransaction() override;
 
-    virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
+    OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 
     GDALDataset *GetSrcDataset();
 };
@@ -233,9 +233,9 @@ class OGRVRTDataSource final : public GDALDataset
 
   public:
     explicit OGRVRTDataSource(GDALDriver *poDriver);
-    virtual ~OGRVRTDataSource();
+    ~OGRVRTDataSource() override;
 
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
     OGRLayer *InstantiateLayer(CPLXMLNode *psLTree, const char *pszVRTDirectory,
                                int bUpdate, int nRecLevel = 0);
@@ -255,7 +255,7 @@ class OGRVRTDataSource final : public GDALDataset
 
     int TestCapability(const char *) const override;
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
     // Anti-recursion mechanism for standard Open.
     void SetCallLevel(int nCallLevelIn)

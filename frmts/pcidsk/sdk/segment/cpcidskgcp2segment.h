@@ -16,12 +16,12 @@
 #include "segment/cpcidsksegment.h"
 
 namespace PCIDSK {
-    class CPCIDSKGCP2Segment : virtual public PCIDSKGCPSegment,
+    class CPCIDSKGCP2Segment final: virtual public PCIDSKGCPSegment,
                                public CPCIDSKSegment
     {
     public:
         CPCIDSKGCP2Segment(PCIDSKFile *file, int segment,const char *segment_pointer);
-        ~CPCIDSKGCP2Segment();
+        ~CPCIDSKGCP2Segment() override;
 
         // Return all GCPs in the segment
         std::vector<PCIDSK::GCP> const& GetGCPs(void) const override;

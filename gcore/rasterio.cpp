@@ -5546,9 +5546,9 @@ CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
                                                nThisLines, eDT, 0, 0, nullptr);
             }
 
-            if (eErr == CE_None &&
-                !pfnProgress((iY + nThisLines) / static_cast<float>(nYSize),
-                             nullptr, pProgressData))
+            if (eErr == CE_None && !pfnProgress(double(iY + nThisLines) /
+                                                    static_cast<double>(nYSize),
+                                                nullptr, pProgressData))
             {
                 eErr = CE_Failure;
                 CPLError(CE_Failure, CPLE_UserInterrupt,

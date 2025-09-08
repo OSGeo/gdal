@@ -3326,7 +3326,7 @@ class CPL_DLL GDALGlobalAlgorithmRegistry final : public GDALAlgorithmRegistry
     Node m_root{};
 
     GDALGlobalAlgorithmRegistry();
-    ~GDALGlobalAlgorithmRegistry();
+    ~GDALGlobalAlgorithmRegistry() override;
 
     const Node *GetNodeFromPath(const std::vector<std::string> &path) const;
 };

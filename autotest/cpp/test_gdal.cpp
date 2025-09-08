@@ -548,7 +548,7 @@ class FakeBand : public GDALRasterBand
     }
 };
 
-class DatasetWithErrorInFlushCache : public GDALDataset
+class DatasetWithErrorInFlushCache final : public GDALDataset
 {
     bool bHasFlushCache;
 
@@ -557,7 +557,7 @@ class DatasetWithErrorInFlushCache : public GDALDataset
     {
     }
 
-    ~DatasetWithErrorInFlushCache()
+    ~DatasetWithErrorInFlushCache() override
     {
         FlushCache(true);
     }

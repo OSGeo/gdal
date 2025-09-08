@@ -29,14 +29,14 @@ class GTiffSplitBitmapBand final : public GTiffBitmapBand
 
   public:
     GTiffSplitBitmapBand(GTiffDataset *, int);
-    virtual ~GTiffSplitBitmapBand();
+    ~GTiffSplitBitmapBand() override;
 
     virtual int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
                                        int nYSize, int nMaskFlagStop,
                                        double *pdfDataPct) override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 };
 
 #endif  // GTIFFSPLITBITMAPBAND_H_INCLUDED

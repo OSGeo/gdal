@@ -88,7 +88,7 @@ class OGRMapMLReaderLayer final
 
   public:
     OGRMapMLReaderLayer(OGRMapMLReaderDataset *poDS, const char *pszLayerName);
-    ~OGRMapMLReaderLayer();
+    ~OGRMapMLReaderLayer() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -175,7 +175,7 @@ class OGRMapMLWriterLayer final : public OGRLayer
   public:
     OGRMapMLWriterLayer(OGRMapMLWriterDataset *poDS, const char *pszLayerName,
                         std::unique_ptr<OGRCoordinateTransformation> &&poCT);
-    ~OGRMapMLWriterLayer();
+    ~OGRMapMLWriterLayer() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {

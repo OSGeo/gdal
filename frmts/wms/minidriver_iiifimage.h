@@ -14,16 +14,16 @@
 #ifndef MINIDRIVER_IIIFImage_H_INCLUDED
 #define MINIDRIVER_IIIFImage_H_INCLUDED
 
-class WMSMiniDriver_IIIFImage : public WMSMiniDriver
+class WMSMiniDriver_IIIFImage final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_IIIFImage();
-    virtual ~WMSMiniDriver_IIIFImage();
+    ~WMSMiniDriver_IIIFImage() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,
                               char **papszOpenOptions) override;
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
     virtual CPLErr
     TiledImageRequest(WMSHTTPRequest &request,
                       const GDALWMSImageRequestInfo &iri,

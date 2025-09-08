@@ -53,7 +53,7 @@ class OGRESRIFeatureServiceLayer final : public OGRLayer
 
   public:
     explicit OGRESRIFeatureServiceLayer(OGRESRIFeatureServiceDataset *poDS);
-    virtual ~OGRESRIFeatureServiceLayer();
+    ~OGRESRIFeatureServiceLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;

@@ -85,7 +85,7 @@ struct GNMStdVertex
  * @since GDAL 2.1
  */
 
-class CPL_DLL GNMGraph
+class CPL_DLL GNMGraph /* non final */
 {
   public:
     GNMGraph();

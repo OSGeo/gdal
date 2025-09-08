@@ -98,23 +98,22 @@ class PLMosaicDataset final : public GDALPamDataset
 
   public:
     PLMosaicDataset();
-    virtual ~PLMosaicDataset();
+    ~PLMosaicDataset() override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);
 
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, BANDMAP_TYPE panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount,
+                     BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     GDALDataset *GetMetaTile(int tile_x, int tile_y);
 };
@@ -133,20 +132,20 @@ class PLMosaicRasterBand final : public GDALRasterBand
     PLMosaicRasterBand(PLMosaicDataset *poDS, int nBand,
                        GDALDataType eDataType);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpace,
+                     GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 
-    virtual GDALColorInterp GetColorInterpretation() override;
+    GDALColorInterp GetColorInterpretation() override;
 
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int iOvrLevel) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int iOvrLevel) override;
 };
 
 /************************************************************************/

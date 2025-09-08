@@ -45,10 +45,10 @@ class SRTMHGTDataset final : public GDALPamDataset
 
   public:
     SRTMHGTDataset();
-    virtual ~SRTMHGTDataset();
+    ~SRTMHGTDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -75,15 +75,15 @@ class SRTMHGTRasterBand final : public GDALPamRasterBand
   public:
     SRTMHGTRasterBand(SRTMHGTDataset *, int, GDALDataType);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff,
                                void *pImage) override;
 
-    virtual GDALColorInterp GetColorInterpretation() override;
+    GDALColorInterp GetColorInterpretation() override;
 
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
 
-    virtual const char *GetUnitType() override;
+    const char *GetUnitType() override;
 };
 
 /************************************************************************/

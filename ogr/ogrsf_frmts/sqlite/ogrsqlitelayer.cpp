@@ -3015,10 +3015,8 @@ int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
             {
                 if (poGeometry->IsMeasured())
                     return OGRSplitePointXYM;
-                else
-                    return OGRSplitePointXY;
             }
-            break;
+            return OGRSplitePointXY;
 
         case wkbLineString:
         case wkbLinearRing:
@@ -3038,11 +3036,9 @@ int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
                 if (poGeometry->IsMeasured())
                     return (bUseComprGeom) ? OGRSpliteComprLineStringXYM
                                            : OGRSpliteLineStringXYM;
-                else
-                    return (bUseComprGeom) ? OGRSpliteComprLineStringXY
-                                           : OGRSpliteLineStringXY;
             }
-            break;
+            return (bUseComprGeom) ? OGRSpliteComprLineStringXY
+                                   : OGRSpliteLineStringXY;
 
         case wkbPolygon:
             if (bSpatialite2D == true)
@@ -3061,11 +3057,9 @@ int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
                 if (poGeometry->IsMeasured())
                     return (bUseComprGeom) ? OGRSpliteComprPolygonXYM
                                            : OGRSplitePolygonXYM;
-                else
-                    return (bUseComprGeom) ? OGRSpliteComprPolygonXY
-                                           : OGRSplitePolygonXY;
             }
-            break;
+            return (bUseComprGeom) ? OGRSpliteComprPolygonXY
+                                   : OGRSplitePolygonXY;
 
         default:
             break;
@@ -3092,10 +3086,8 @@ int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
             {
                 if (poGeometry->IsMeasured())
                     return OGRSpliteMultiPointXYM;
-                else
-                    return OGRSpliteMultiPointXY;
             }
-            break;
+            return OGRSpliteMultiPointXY;
 
         case wkbMultiLineString:
             if (bSpatialite2D == true)
@@ -3117,12 +3109,10 @@ int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
                     return /*(bUseComprGeom) ? OGRSpliteComprMultiLineStringXYM
                               :*/
                         OGRSpliteMultiLineStringXYM;
-                else
-                    return /*(bUseComprGeom) ? OGRSpliteComprMultiLineStringXY
-                              :*/
-                        OGRSpliteMultiLineStringXY;
             }
-            break;
+            return /*(bUseComprGeom) ? OGRSpliteComprMultiLineStringXY
+                              :*/
+                OGRSpliteMultiLineStringXY;
 
         case wkbMultiPolygon:
             if (bSpatialite2D == true)
@@ -3142,11 +3132,9 @@ int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
                 if (poGeometry->IsMeasured())
                     return /*(bUseComprGeom) ? OGRSpliteComprMultiPolygonXYM :*/
                         OGRSpliteMultiPolygonXYM;
-                else
-                    return /*(bUseComprGeom) ? OGRSpliteComprMultiPolygonXY :*/
-                        OGRSpliteMultiPolygonXY;
             }
-            break;
+            return /*(bUseComprGeom) ? OGRSpliteComprMultiPolygonXY :*/
+                OGRSpliteMultiPolygonXY;
 
         case wkbGeometryCollection:
             if (bSpatialite2D == true)
@@ -3168,12 +3156,10 @@ int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
                     return /*(bUseComprGeom) ?
                               OGRSpliteComprGeometryCollectionXYM :*/
                         OGRSpliteGeometryCollectionXYM;
-                else
-                    return /*(bUseComprGeom) ?
-                              OGRSpliteComprGeometryCollectionXY :*/
-                        OGRSpliteGeometryCollectionXY;
             }
-            break;
+            return /*(bUseComprGeom) ?
+                              OGRSpliteComprGeometryCollectionXY :*/
+                OGRSpliteGeometryCollectionXY;
 
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "Unexpected geometry type");

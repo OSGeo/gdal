@@ -35,7 +35,7 @@ class MerisL2FlagBand final : public GDALPamRasterBand
   public:
     MerisL2FlagBand(GDALDataset *, int, VSILFILE *, vsi_l_offset, int);
     ~MerisL2FlagBand() override;
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 
   private:
     vsi_l_offset nImgOffset;
@@ -157,13 +157,13 @@ class EnvisatDataset final : public RawDataset
 
   public:
     EnvisatDataset();
-    virtual ~EnvisatDataset();
+    ~EnvisatDataset() override;
 
-    virtual int GetGCPCount() override;
+    int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
-    virtual const GDAL_GCP *GetGCPs() override;
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain) override;
+    const GDAL_GCP *GetGCPs() override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };

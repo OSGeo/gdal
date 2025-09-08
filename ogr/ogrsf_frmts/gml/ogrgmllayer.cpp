@@ -576,8 +576,6 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         // Got the desired feature.
         return poOGRFeature;
     }
-
-    return nullptr;
 }
 
 /************************************************************************/

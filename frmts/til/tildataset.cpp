@@ -34,13 +34,13 @@ class TILDataset final : public GDALPamDataset
     char **papszMetadataFiles;
 
   protected:
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
   public:
     TILDataset();
-    virtual ~TILDataset();
+    ~TILDataset() override;
 
-    virtual char **GetFileList(void) override;
+    char **GetFileList(void) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *poOpenInfo);
@@ -61,15 +61,10 @@ class TILRasterBand final : public GDALPamRasterBand
   public:
     TILRasterBand(TILDataset *, int, VRTSourcedRasterBand *);
 
-    virtual ~TILRasterBand()
-    {
-    }
-
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/

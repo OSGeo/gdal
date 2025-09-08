@@ -372,7 +372,6 @@ OGRFeature *netCDFLayer::buildSGeometryFeature(size_t featureInd)
             break;
         default:
             throw nccfdriver::SG_Exception_BadFeature();
-            break;
     }
 
     const auto wkb = m_simpleGeometryReader->serializeToWKB(featureInd);

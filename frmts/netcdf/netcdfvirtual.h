@@ -26,7 +26,7 @@ class netCDFDataset;
 namespace nccfdriver
 {
 // Exceptions
-class SG_Exception_NVOOB : public SG_Exception
+class SG_Exception_NVOOB final : public SG_Exception
 {
   public:
     explicit SG_Exception_NVOOB(const char *dsname)
@@ -36,7 +36,7 @@ class SG_Exception_NVOOB : public SG_Exception
     }
 };
 
-class SG_Exception_DupName : public SG_Exception
+class SG_Exception_DupName final : public SG_Exception
 {
   public:
     SG_Exception_DupName(const char *keyn, const char *dsname)
@@ -46,7 +46,7 @@ class SG_Exception_DupName : public SG_Exception
     }
 };
 
-class SG_Exception_BadMapping : public SG_Exception
+class SG_Exception_BadMapping final : public SG_Exception
 {
   public:
     SG_Exception_BadMapping(const char *key, const char *where)
@@ -56,7 +56,7 @@ class SG_Exception_BadMapping : public SG_Exception
     }
 };
 
-class SG_Exception_VWrite_Failure : public SG_Exception
+class SG_Exception_VWrite_Failure final : public SG_Exception
 {
   public:
     SG_Exception_VWrite_Failure(const char *where, const char *type)
@@ -71,7 +71,7 @@ class SG_Exception_VWrite_Failure : public SG_Exception
  * Contains attribute name and data.
  * Central to derived types are reimplementations of vsync
  */
-class netCDFVAttribute
+class netCDFVAttribute /* non final */
 {
   public:
     /* vsync(...)
@@ -87,7 +87,7 @@ class netCDFVAttribute
 };
 
 template <class VClass, nc_type ntype>
-class netCDFVGeneralAttribute : public netCDFVAttribute
+class netCDFVGeneralAttribute final : public netCDFVAttribute
 {
     std::string name;
     VClass value;
@@ -112,7 +112,7 @@ class netCDFVGeneralAttribute : public netCDFVAttribute
  * -
  * Attribute that has a text string value
  */
-class netCDFVTextAttribute : public netCDFVAttribute
+class netCDFVTextAttribute final : public netCDFVAttribute
 {
     std::string name;
     std::string value;
@@ -135,7 +135,7 @@ typedef netCDFVGeneralAttribute<float, NC_FLOAT> netCDFVFloatAttribute;
  * -
  * Contains the real dim id, real dimension name, and dimension length
  */
-class netCDFVDimension
+class netCDFVDimension final
 {
     friend class netCDFVID;
 
@@ -194,7 +194,7 @@ class netCDFVDimension
  * -
  * Contains the variable name, variable type, etc.
  */
-class netCDFVVariable
+class netCDFVVariable final
 {
     friend class netCDFVID;
 
@@ -274,7 +274,7 @@ class netCDFVVariable
  * netCDFVID should take real IDs, not real ones. However, the big advantages of
  * using netCDFVID (such as quick dim resizing) are no longer are available.
  */
-class netCDFVID
+class netCDFVID final
 {
     netCDFDataset *m_poDS = nullptr;
     int &ncid;  // ncid REF. which tracks ncID changes that may be made upstream

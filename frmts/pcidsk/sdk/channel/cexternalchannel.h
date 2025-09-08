@@ -30,7 +30,7 @@ namespace PCIDSK
 /*                           CExternalChannel                           */
 /************************************************************************/
 
-    class CExternalChannel : public CPCIDSKChannel
+    class CExternalChannel final: public CPCIDSKChannel
     {
     public:
         CExternalChannel( PCIDSKBuffer &image_header,
@@ -40,15 +40,15 @@ namespace PCIDSK
             int channelnum,
             CPCIDSKFile *file,
             eChanType pixel_type );
-        virtual ~CExternalChannel();
+        ~CExternalChannel() override;
 
-        virtual eChanType GetType() const override;
-        virtual int GetBlockWidth() const override;
-        virtual int GetBlockHeight() const override;
+        eChanType GetType() const override;
+        int GetBlockWidth() const override;
+        int GetBlockHeight() const override;
         virtual int ReadBlock( int block_index, void *buffer,
             int xoff=-1, int yoff=-1,
             int xsize=-1, int ysize=-1 ) override;
-        virtual int WriteBlock( int block_index, void *buffer ) override;
+        int WriteBlock( int block_index, void *buffer ) override;
 
         virtual void GetEChanInfo( std::string &filename, int &echannel,
                                    int &exoff, int &eyoff,

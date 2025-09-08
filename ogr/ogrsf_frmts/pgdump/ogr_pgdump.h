@@ -143,7 +143,7 @@ class OGRPGDumpLayer final : public OGRLayer
     OGRPGDumpLayer(OGRPGDumpDataSource *poDS, const char *pszSchemaName,
                    const char *pszLayerName, const char *pszFIDColumn,
                    int bWriteAsHexIn, int bCreateTable, bool bSkipConflicts);
-    virtual ~OGRPGDumpLayer();
+    ~OGRPGDumpLayer() override;
 
     using OGRLayer::GetLayerDefn;
 
@@ -157,13 +157,13 @@ class OGRPGDumpLayer final : public OGRLayer
         return m_pszFIDColumn ? m_pszFIDColumn : "";
     }
 
-    virtual void ResetReading() override
+    void ResetReading() override
     {
     }
 
     int TestCapability(const char *) const override;
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateFeatureViaInsert(OGRFeature *poFeature);
     OGRErr CreateFeatureViaCopy(OGRFeature *poFeature);
 
@@ -172,12 +172,11 @@ class OGRPGDumpLayer final : public OGRLayer
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
 
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual CPLErr SetMetadata(char **papszMD,
-                               const char *pszDomain = "") override;
-    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
-                                   const char *pszDomain = "") override;
+    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
+    CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                           const char *pszDomain = "") override;
 
     GDALDataset *GetDataset() override;
 
@@ -270,7 +269,7 @@ class OGRPGDumpDataSource final : public GDALDataset
 
   public:
     OGRPGDumpDataSource(const char *pszName, char **papszOptions);
-    virtual ~OGRPGDumpDataSource();
+    ~OGRPGDumpDataSource() override;
 
     bool Log(const char *pszStr, bool bAddSemiColumn = true);
 

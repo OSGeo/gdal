@@ -144,7 +144,7 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     OGRFeature *GetFeatureExplicitFID(GIntBig nFID);
     OGRFeature *GetFeatureByIndex(GIntBig nFID);
 
-    virtual std::string GetDriverUCName() const override
+    std::string GetDriverUCName() const override
     {
         return "PARQUET";
     }
@@ -299,7 +299,7 @@ class OGRParquetDataset final : public OGRArrowDataset
   public:
     explicit OGRParquetDataset(
         const std::shared_ptr<arrow::MemoryPool> &poMemoryPool);
-    ~OGRParquetDataset();
+    ~OGRParquetDataset() override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,
@@ -341,20 +341,20 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
     //! Whether to write "geo" footer metadata;
     bool m_bWriteGeoMetadata = true;
 
-    virtual bool IsFileWriterCreated() const override
+    bool IsFileWriterCreated() const override
     {
         return m_poFileWriter != nullptr;
     }
 
-    virtual void CreateWriter() override;
-    virtual bool CloseFileWriter() override;
+    void CreateWriter() override;
+    bool CloseFileWriter() override;
 
-    virtual void CreateSchema() override;
-    virtual void PerformStepsBeforeFinalFlushGroup() override;
+    void CreateSchema() override;
+    void PerformStepsBeforeFinalFlushGroup() override;
 
-    virtual bool FlushGroup() override;
+    bool FlushGroup() override;
 
-    virtual std::string GetDriverUCName() const override
+    std::string GetDriverUCName() const override
     {
         return "PARQUET";
     }
@@ -364,9 +364,9 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
 
     virtual void FixupWKBGeometryBeforeWriting(GByte *pabyWKB,
                                                size_t nLen) override;
-    virtual void FixupGeometryBeforeWriting(OGRGeometry *poGeom) override;
+    void FixupGeometryBeforeWriting(OGRGeometry *poGeom) override;
 
-    virtual bool IsSRSRequired() const override
+    bool IsSRSRequired() const override
     {
         return false;
     }

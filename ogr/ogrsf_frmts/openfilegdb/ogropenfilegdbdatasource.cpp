@@ -1351,11 +1351,11 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
     OGROpenFileGDBSimpleSQLLayer(OGRLayer *poBaseLayer, FileGDBIterator *poIter,
                                  int nColumns, const swq_col_def *pasColDefs,
                                  GIntBig nOffset, GIntBig nLimit);
-    virtual ~OGROpenFileGDBSimpleSQLLayer();
+    ~OGROpenFileGDBSimpleSQLLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -1369,19 +1369,19 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
         return poBaseLayer->GetFIDColumn();
     }
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override
     {
         return poBaseLayer->GetExtent(iGeomField, psExtent, bForce);
     }
 
-    virtual OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
-                                bool bForce) override
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                        bool bForce) override
     {
         return poBaseLayer->GetExtent3D(iGeomField, psExtent, bForce);
     }
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    GIntBig GetFeatureCount(int bForce) override;
 };
 
 /***********************************************************************/

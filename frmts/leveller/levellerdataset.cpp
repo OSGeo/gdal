@@ -278,7 +278,7 @@ class LevellerDataset final : public GDALPamDataset
 
   public:
     LevellerDataset();
-    virtual ~LevellerDataset();
+    ~LevellerDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -286,9 +286,9 @@ class LevellerDataset final : public GDALPamDataset
                                int nBandsIn, GDALDataType eType,
                                char **papszOptions);
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -386,18 +386,18 @@ class LevellerRasterBand final : public GDALPamRasterBand
 
   public:
     explicit LevellerRasterBand(LevellerDataset *);
-    virtual ~LevellerRasterBand();
+    ~LevellerRasterBand() override;
 
     bool Init();
 
     // Geomeasure support.
-    virtual const char *GetUnitType() override;
-    virtual double GetScale(int *pbSuccess = nullptr) override;
-    virtual double GetOffset(int *pbSuccess = nullptr) override;
+    const char *GetUnitType() override;
+    double GetScale(int *pbSuccess = nullptr) override;
+    double GetOffset(int *pbSuccess = nullptr) override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
-    virtual CPLErr SetUnitType(const char *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr SetUnitType(const char *) override;
 };
 
 /************************************************************************/

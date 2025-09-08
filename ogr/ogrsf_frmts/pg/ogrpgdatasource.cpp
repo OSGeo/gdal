@@ -2850,24 +2850,24 @@ class OGRPGNoResetResultLayer final : public OGRPGLayer
   public:
     OGRPGNoResetResultLayer(OGRPGDataSource *poDSIn, PGresult *hResultIn);
 
-    virtual ~OGRPGNoResetResultLayer();
+    ~OGRPGNoResetResultLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
 
     int TestCapability(const char *) const override
     {
         return FALSE;
     }
 
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual CPLString GetFromClauseForGetExtent() override
+    CPLString GetFromClauseForGetExtent() override
     {
         CPLAssert(false);
         return "";
     }
 
-    virtual void ResolveSRID(const OGRPGGeomFieldDefn *poGFldDefn) override
+    void ResolveSRID(const OGRPGGeomFieldDefn *poGFldDefn) override
     {
         poGFldDefn->nSRSId = -1;
     }
@@ -2946,12 +2946,12 @@ class OGRPGMemLayerWrapper final : public OGRLayer
 
     ~OGRPGMemLayerWrapper() override;
 
-    virtual void ResetReading() override
+    void ResetReading() override
     {
         poMemLayer->ResetReading();
     }
 
-    virtual OGRFeature *GetNextFeature() override
+    OGRFeature *GetNextFeature() override
     {
         return poMemLayer->GetNextFeature();
     }

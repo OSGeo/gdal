@@ -193,44 +193,44 @@ class OGRNGWLayer final : public OGRLayer
                          OGRSpatialReference *poSpatialRef,
                          OGRwkbGeometryType eGType, const std::string &osKeyIn,
                          const std::string &osDescIn);
-    virtual ~OGRNGWLayer();
+    ~OGRNGWLayer() override;
 
     bool Delete();
-    virtual OGRErr Rename(const char *pszNewName) override;
+    OGRErr Rename(const char *pszNewName) override;
     std::string GetResourceId() const;
 
     /* OGRLayer */
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
     using OGRLayer::GetLayerDefn;
     const OGRFeatureDefn *GetLayerDefn() const override;
     int TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr DeleteField(int iField) override;
-    virtual OGRErr ReorderFields(int *panMap) override;
+    OGRErr DeleteField(int iField) override;
+    OGRErr ReorderFields(int *panMap) override;
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                                   int nFlags) override;
 
-    virtual OGRErr SyncToDisk() override;
+    OGRErr SyncToDisk() override;
 
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(GIntBig nFID) override;
     OGRErr DeleteFeatures(const std::vector<GIntBig> &vFeaturesID);
     bool DeleteAllFeatures();
 
-    virtual CPLErr SetMetadata(char **papszMetadata,
-                               const char *pszDomain = "") override;
-    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
-                                   const char *pszDomain = "") override;
+    CPLErr SetMetadata(char **papszMetadata,
+                       const char *pszDomain = "") override;
+    CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                           const char *pszDomain = "") override;
 
-    virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
-    virtual OGRErr SetAttributeFilter(const char *pszQuery) override;
+    OGRErr SetIgnoredFields(CSLConstList papszFields) override;
+    OGRErr SetAttributeFilter(const char *pszQuery) override;
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *poGeom) override;
 
@@ -241,8 +241,8 @@ class OGRNGWLayer final : public OGRLayer
     static std::string TranslateSQLToFilter(swq_expr_node *poNode);
 
   protected:
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
   private:
     void Fill(const CPLJSONObject &oRootObject);
@@ -299,7 +299,7 @@ class OGRNGWDataset final : public GDALDataset
 
   public:
     OGRNGWDataset();
-    virtual ~OGRNGWDataset();
+    ~OGRNGWDataset() override;
 
     bool Open(const char *pszFilename, char **papszOpenOptionsIn,
               bool bUpdateIn, int nOpenFlagsIn);
@@ -318,25 +318,23 @@ class OGRNGWDataset final : public GDALDataset
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;
-    virtual OGRErr DeleteLayer(int) override;
-    virtual CPLErr SetMetadata(char **papszMetadata,
-                               const char *pszDomain = "") override;
-    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
-                                   const char *pszDomain = "") override;
-    virtual CPLErr FlushCache(bool bAtClosing) override;
-    virtual OGRLayer *ExecuteSQL(const char *pszStatement,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
+    OGRErr DeleteLayer(int) override;
+    CPLErr SetMetadata(char **papszMetadata,
+                       const char *pszDomain = "") override;
+    CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                           const char *pszDomain = "") override;
+    CPLErr FlushCache(bool bAtClosing) override;
+    OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, BANDMAP_TYPE panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount,
+                     BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
     std::vector<std::string>
     GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
     const OGRFieldDomain *

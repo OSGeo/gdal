@@ -28,7 +28,7 @@ class SysTileDir;
 /**
  * Class used by the block directory for accessing file information.
  */
-class PCIDSK_DLL CPCIDSKBlockFile : public BlockFile
+class PCIDSK_DLL CPCIDSKBlockFile final: public BlockFile
 {
 protected:
     CPCIDSKFile *       mpoFile;
@@ -42,20 +42,20 @@ public:
 
     SysTileDir *        CreateTileDir(void);
 
-    virtual std::string GetFilename(void) const override;
+    std::string GetFilename(void) const override;
 
-    virtual bool        GetUpdatable(void) const override;
+    bool        GetUpdatable(void) const override;
 
-    virtual uint32      GetWidth(void) const override;
-    virtual uint32      GetHeight(void) const override;
+    uint32      GetWidth(void) const override;
+    uint32      GetHeight(void) const override;
 
-    virtual uint32      GetChannels(void) const override;
+    uint32      GetChannels(void) const override;
 
-    virtual std::string GetFileOptions(void) const override;
+    std::string GetFileOptions(void) const override;
 
-    virtual uint64      GetImageFileSize(void) const override;
+    uint64      GetImageFileSize(void) const override;
 
-    virtual bool        IsValidFileOffset(uint64 nOffset) const override;
+    bool        IsValidFileOffset(uint64 nOffset) const override;
 
     virtual bool        IsCorruptedSegment(uint16 nSegment,
                                            uint64 nOffset, uint64 nSize) const override;
@@ -64,7 +64,7 @@ public:
                                       const std::string & oDesc,
                                       uint64 nExtendSize) override;
 
-    virtual uint64      GetSegmentSize(uint16 nSegment) override;
+    uint64      GetSegmentSize(uint16 nSegment) override;
 
     virtual void        WriteToSegment(uint16 nSegment, const void * pData,
                                        uint64 nOffset, uint64 nSize) override;

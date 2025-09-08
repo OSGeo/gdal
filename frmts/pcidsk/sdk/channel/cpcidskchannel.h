@@ -32,7 +32,7 @@ namespace PCIDSK
 /* inheritance to attempt to avoid the fragile base class problem and   */
 /* then implement the Imagery I/O functions.                            */
 /************************************************************************/
-    class PCIDSK_DLL CPCIDSKChannel : public PCIDSKChannel
+    class PCIDSK_DLL CPCIDSKChannel /* non final */: public PCIDSKChannel
     {
         friend class PCIDSKFile;
 
@@ -40,15 +40,15 @@ namespace PCIDSK
         CPCIDSKChannel( PCIDSKBuffer &image_header, uint64 ih_offset,
             CPCIDSKFile *file, eChanType pixel_type,
             int channel_number );
-        virtual   ~CPCIDSKChannel();
+        ~CPCIDSKChannel() override;
 
-        virtual int GetBlockWidth() const override { return block_width; }
-        virtual int GetBlockHeight() const override { return block_height; }
-        virtual int GetBlockCount() const override;
+        int GetBlockWidth() const override { return block_width; }
+        int GetBlockHeight() const override { return block_height; }
+        int GetBlockCount() const override;
 
-        virtual int GetWidth() const override { return width; }
-        virtual int GetHeight() const override { return height; }
-        virtual eChanType GetType() const override { return pixel_type; }
+        int GetWidth() const override { return width; }
+        int GetHeight() const override { return height; }
+        eChanType GetType() const override { return pixel_type; }
 
         int       GetOverviewCount() override;
         PCIDSKChannel  *GetOverview( int i ) override;
@@ -70,13 +70,13 @@ namespace PCIDSK
         std::vector<std::string> GetMetadataKeys() const override
             { return metadata.GetMetadataKeys(); }
 
-        virtual void Synchronize() override {}
+        void Synchronize() override {}
 
         std::string GetDescription() override;
         void SetDescription( const std::string &description ) override;
 
-        virtual std::vector<std::string> GetHistoryEntries() const override;
-        virtual void SetHistoryEntries( const std::vector<std::string> &entries ) override;
+        std::vector<std::string> GetHistoryEntries() const override;
+        void SetHistoryEntries( const std::vector<std::string> &entries ) override;
         virtual void PushHistory(const std::string &app,
                                  const std::string &message) override;
 

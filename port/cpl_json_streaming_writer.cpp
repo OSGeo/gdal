@@ -270,7 +270,7 @@ void CPLJSonStreamingWriter::Add(GFloat16 hfVal, int nPrecision)
     {
         char szFormatting[10];
         snprintf(szFormatting, sizeof(szFormatting), "%%.%dg", nPrecision);
-        Serialize(CPLSPrintf(szFormatting, float(hfVal)));
+        Serialize(CPLSPrintf(szFormatting, double(hfVal)));
     }
 }
 
@@ -290,7 +290,7 @@ void CPLJSonStreamingWriter::Add(float fVal, int nPrecision)
     {
         char szFormatting[10];
         snprintf(szFormatting, sizeof(szFormatting), "%%.%dg", nPrecision);
-        Serialize(CPLSPrintf(szFormatting, fVal));
+        Serialize(CPLSPrintf(szFormatting, static_cast<double>(fVal)));
     }
 }
 

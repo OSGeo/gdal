@@ -45,12 +45,12 @@ class OGREDIGEOLayer final : public OGRLayer,
   public:
     OGREDIGEOLayer(OGREDIGEODataSource *poDS, const char *pszName,
                    OGRwkbGeometryType eType, OGRSpatialReference *poSRS);
-    virtual ~OGREDIGEOLayer();
+    ~OGREDIGEOLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGREDIGEOLayer)
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
+    GIntBig GetFeatureCount(int bForce) override;
 
     OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -227,7 +227,7 @@ class OGREDIGEODataSource final : public GDALDataset
 
   public:
     OGREDIGEODataSource();
-    virtual ~OGREDIGEODataSource();
+    ~OGREDIGEODataSource() override;
 
     int Open(const char *pszFilename);
 

@@ -131,7 +131,7 @@ const char *const *HFAGetUnitMap();
 /*                               HFABand                                */
 /************************************************************************/
 
-class HFABand
+class HFABand final
 {
     int nBlocks;
 
@@ -215,7 +215,7 @@ class HFABand
 /*      have a subclass, and are just handled generically with this     */
 /*      class.                                                          */
 /************************************************************************/
-class HFAEntry
+class HFAEntry final
 {
     bool bDirty;
     GUInt32 nFilePos;
@@ -266,7 +266,7 @@ class HFAEntry
                          const char *pszTypeName,
                          HFAEntry *poParent) CPL_WARN_UNUSED_RESULT;
 
-    virtual ~HFAEntry();
+    ~HFAEntry();
 
     static HFAEntry *BuildEntryFromMIFObject(HFAEntry *poContainer,
                                              const char *pszMIFObjectPath)
@@ -345,7 +345,7 @@ class HFAEntry
 /*      A field in a HFAType in the dictionary.                         */
 /************************************************************************/
 
-class HFAField
+class HFAField final
 {
   public:
     int nBytes;

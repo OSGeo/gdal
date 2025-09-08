@@ -81,7 +81,7 @@ class OGRDGNV8Layer final : public OGRLayer
 
   public:
     OGRDGNV8Layer(OGRDGNV8DataSource *poDS, OdDgModelPtr pModel);
-    virtual ~OGRDGNV8Layer();
+    ~OGRDGNV8Layer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -122,7 +122,7 @@ class OGRDGNV8DataSource final : public GDALDataset
 
   public:
     explicit OGRDGNV8DataSource(OGRDGNV8Services *poServices);
-    ~OGRDGNV8DataSource();
+    ~OGRDGNV8DataSource() override;
 
     int Open(const char *, bool bUpdate);
     bool PreCreate(const char *, char **);
@@ -139,10 +139,10 @@ class OGRDGNV8DataSource final : public GDALDataset
     const OGRLayer *GetLayer(int) const override;
 
     int TestCapability(const char *) const override;
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 

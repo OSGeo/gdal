@@ -322,7 +322,7 @@ class PythonPluginLayer final : public OGRLayer
 
   public:
     explicit PythonPluginLayer(PyObject *poLayer);
-    ~PythonPluginLayer();
+    ~PythonPluginLayer() override;
 
     const char *GetName() const override;
     void ResetReading() override;
@@ -1418,7 +1418,7 @@ class PythonPluginDataset final : public GDALDataset
 
   public:
     PythonPluginDataset(GDALOpenInfo *poOpenInfo, PyObject *poDataset);
-    ~PythonPluginDataset();
+    ~PythonPluginDataset() override;
 
     int GetLayerCount() const override;
     OGRLayer *GetLayer(int) const override;
@@ -1554,7 +1554,7 @@ char **PythonPluginDataset::GetMetadata(const char *pszDomain)
 /*                          PythonPluginDriver                          */
 /************************************************************************/
 
-class PythonPluginDriver : public GDALDriver
+class PythonPluginDriver final : public GDALDriver
 {
     CPLMutex *m_hMutex = nullptr;
     CPLString m_osFilename;
@@ -1574,7 +1574,7 @@ class PythonPluginDriver : public GDALDriver
   public:
     PythonPluginDriver(const char *pszFilename, const char *pszPluginName,
                        char **papszMD);
-    ~PythonPluginDriver();
+    ~PythonPluginDriver() override;
 };
 
 /************************************************************************/

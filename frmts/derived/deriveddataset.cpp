@@ -18,7 +18,7 @@ class DerivedDataset final : public VRTDataset
   public:
     DerivedDataset(int nXSize, int nYSize);
 
-    ~DerivedDataset();
+    ~DerivedDataset() override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);

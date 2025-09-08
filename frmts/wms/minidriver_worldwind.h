@@ -14,11 +14,11 @@
 #ifndef MINIDRIVER_WORLDWIND_H_INCLUDED
 #define MINIDRIVER_WORLDWIND_H_INCLUDED
 
-class WMSMiniDriver_WorldWind : public WMSMiniDriver
+class WMSMiniDriver_WorldWind final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_WorldWind();
-    virtual ~WMSMiniDriver_WorldWind();
+    ~WMSMiniDriver_WorldWind() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,

@@ -36,7 +36,7 @@ class OGRCADLayer final : public OGRLayer
   public:
     OGRCADLayer(GDALDataset *poDS, CADLayer &poCADLayer,
                 OGRSpatialReference *poSR, int nEncoding);
-    ~OGRCADLayer();
+    ~OGRCADLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -76,7 +76,7 @@ class GDALCADDataset final : public GDALDataset
 
   public:
     GDALCADDataset();
-    virtual ~GDALCADDataset();
+    ~GDALCADDataset() override;
 
     int Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
              long nSubRasterLayer = -1, long nSubRasterFID = -1);
@@ -88,13 +88,13 @@ class GDALCADDataset final : public GDALDataset
 
     const OGRLayer *GetLayer(int) const override;
     int TestCapability(const char *) const override;
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual int GetGCPCount() override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
-    virtual const GDAL_GCP *GetGCPs() override;
-    virtual int CloseDependentDatasets() override;
+    const GDAL_GCP *GetGCPs() override;
+    int CloseDependentDatasets() override;
 
   protected:
     const std::string GetPrjFilePath() const;

@@ -420,7 +420,8 @@ static void EXIFPrintData(char *pszData, GUInt16 type, GUInt32 count,
             const float *fp = reinterpret_cast<const float *>(data);
             for (; count > 0; count--)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep, *fp);
+                CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep,
+                            static_cast<double>(*fp));
                 fp++;
                 sep = " ";
                 if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)

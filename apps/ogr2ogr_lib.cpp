@@ -806,15 +806,15 @@ class OGRSplitListFieldLayer : public OGRLayer
 
   public:
     OGRSplitListFieldLayer(OGRLayer *poSrcLayer, int nMaxSplitListSubFields);
-    virtual ~OGRSplitListFieldLayer();
+    ~OGRSplitListFieldLayer() override;
 
     bool BuildLayerDefn(GDALProgressFunc pfnProgress, void *pProgressArg);
 
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetNextFeature() override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
     const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual void ResetReading() override
+    void ResetReading() override
     {
         poSrcLayer->ResetReading();
     }
@@ -824,7 +824,7 @@ class OGRSplitListFieldLayer : public OGRLayer
         return FALSE;
     }
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override
+    GIntBig GetFeatureCount(int bForce = TRUE) override
     {
         return poSrcLayer->GetFeatureCount(bForce);
     }
@@ -834,12 +834,12 @@ class OGRSplitListFieldLayer : public OGRLayer
         return poSrcLayer->GetSpatialRef();
     }
 
-    virtual OGRGeometry *GetSpatialFilter() override
+    OGRGeometry *GetSpatialFilter() override
     {
         return poSrcLayer->GetSpatialFilter();
     }
 
-    virtual OGRStyleTable *GetStyleTable() override
+    OGRStyleTable *GetStyleTable() override
     {
         return poSrcLayer->GetStyleTable();
     }
@@ -850,7 +850,7 @@ class OGRSplitListFieldLayer : public OGRLayer
         return poSrcLayer->SetSpatialFilter(iGeom, poGeom);
     }
 
-    virtual OGRErr SetAttributeFilter(const char *pszFilter) override
+    OGRErr SetAttributeFilter(const char *pszFilter) override
     {
         return poSrcLayer->SetAttributeFilter(pszFilter);
     }
@@ -1162,7 +1162,7 @@ const OGRFeatureDefn *OGRSplitListFieldLayer::GetLayerDefn() const
 /*      Apply GCP Transform to points                                   */
 /************************************************************************/
 
-class GCPCoordTransformation : public OGRCoordinateTransformation
+class GCPCoordTransformation final : public OGRCoordinateTransformation
 {
     GCPCoordTransformation(const GCPCoordTransformation &other)
         : hTransformArg(GDALCloneTransformer(other.hTransformArg)),
@@ -1209,12 +1209,12 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
 
     ~GCPCoordTransformation() override;
 
-    virtual const OGRSpatialReference *GetSourceCS() const override
+    const OGRSpatialReference *GetSourceCS() const override
     {
         return poSRS;
     }
 
-    virtual const OGRSpatialReference *GetTargetCS() const override
+    const OGRSpatialReference *GetTargetCS() const override
     {
         return poSRS;
     }
@@ -1234,7 +1234,7 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
                                     pabSuccess);
     }
 
-    virtual OGRCoordinateTransformation *GetInverse() const override
+    OGRCoordinateTransformation *GetInverse() const override
     {
         static std::once_flag flag;
         std::call_once(flag,
@@ -1262,7 +1262,7 @@ GCPCoordTransformation::~GCPCoordTransformation()
 /*                            CompositeCT                               */
 /************************************************************************/
 
-class CompositeCT : public OGRCoordinateTransformation
+class CompositeCT final : public OGRCoordinateTransformation
 {
     OGRCoordinateTransformation *const poCT1;
     const bool bOwnCT1;
@@ -1295,21 +1295,21 @@ class CompositeCT : public OGRCoordinateTransformation
         return new CompositeCT(*this);
     }
 
-    virtual const OGRSpatialReference *GetSourceCS() const override
+    const OGRSpatialReference *GetSourceCS() const override
     {
         return poCT1   ? poCT1->GetSourceCS()
                : poCT2 ? poCT2->GetSourceCS()
                        : nullptr;
     }
 
-    virtual const OGRSpatialReference *GetTargetCS() const override
+    const OGRSpatialReference *GetTargetCS() const override
     {
         return poCT2   ? poCT2->GetTargetCS()
                : poCT1 ? poCT1->GetTargetCS()
                        : nullptr;
     }
 
-    virtual bool GetEmitErrors() const override
+    bool GetEmitErrors() const override
     {
         if (poCT1)
             return poCT1->GetEmitErrors();
@@ -1318,7 +1318,7 @@ class CompositeCT : public OGRCoordinateTransformation
         return true;
     }
 
-    virtual void SetEmitErrors(bool bEmitErrors) override
+    void SetEmitErrors(bool bEmitErrors) override
     {
         if (poCT1)
             poCT1->SetEmitErrors(bEmitErrors);
@@ -1366,7 +1366,7 @@ class CompositeCT : public OGRCoordinateTransformation
         return nResult;
     }
 
-    virtual OGRCoordinateTransformation *GetInverse() const override
+    OGRCoordinateTransformation *GetInverse() const override
     {
         if (!poCT1 && !poCT2)
             return nullptr;
@@ -1440,17 +1440,17 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
 
     ~AxisMappingCoordinateTransformation() override;
 
-    virtual OGRCoordinateTransformation *Clone() const override
+    OGRCoordinateTransformation *Clone() const override
     {
         return new AxisMappingCoordinateTransformation(*this);
     }
 
-    virtual const OGRSpatialReference *GetSourceCS() const override
+    const OGRSpatialReference *GetSourceCS() const override
     {
         return nullptr;
     }
 
-    virtual const OGRSpatialReference *GetTargetCS() const override
+    const OGRSpatialReference *GetTargetCS() const override
     {
         return nullptr;
     }
@@ -1482,7 +1482,7 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         return true;
     }
 
-    virtual OGRCoordinateTransformation *GetInverse() const override
+    OGRCoordinateTransformation *GetInverse() const override
     {
         return new AxisMappingCoordinateTransformation(bSwapXY);
     }
@@ -1612,7 +1612,7 @@ static bool IsFieldType(const char *pszArg)
     return GetFieldType(pszArg, &iSubType) >= 0 && iSubType >= 0;
 }
 
-class GDALVectorTranslateWrappedDataset : public GDALDataset
+class GDALVectorTranslateWrappedDataset final : public GDALDataset
 {
     std::unique_ptr<GDALDriver> m_poDriverToFree{};
     GDALDataset *m_poBase = nullptr;
@@ -1635,18 +1635,17 @@ class GDALVectorTranslateWrappedDataset : public GDALDataset
     }
 
     OGRLayer *GetLayer(int nIdx) const override;
-    virtual OGRLayer *GetLayerByName(const char *pszName) override;
+    OGRLayer *GetLayerByName(const char *pszName) override;
 
-    virtual OGRLayer *ExecuteSQL(const char *pszStatement,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
-    virtual void ReleaseResultSet(OGRLayer *poResultsSet) override;
+    OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+    void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
     static std::unique_ptr<GDALVectorTranslateWrappedDataset>
     New(GDALDataset *poBase, OGRSpatialReference *poOutputSRS, bool bTransform);
 };
 
-class GDALVectorTranslateWrappedLayer : public OGRLayerDecorator
+class GDALVectorTranslateWrappedLayer final : public OGRLayerDecorator
 {
     std::vector<std::unique_ptr<OGRCoordinateTransformation>> m_apoCT{};
     OGRFeatureDefn *m_poFDefn = nullptr;
@@ -1658,15 +1657,15 @@ class GDALVectorTranslateWrappedLayer : public OGRLayerDecorator
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorTranslateWrappedLayer)
 
   public:
-    virtual ~GDALVectorTranslateWrappedLayer();
+    ~GDALVectorTranslateWrappedLayer() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFDefn;
     }
 
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetNextFeature() override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
 
     static std::unique_ptr<GDALVectorTranslateWrappedLayer>
     New(OGRLayer *poBaseLayer, bool bOwnBaseLayer,

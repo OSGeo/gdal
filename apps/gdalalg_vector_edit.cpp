@@ -136,7 +136,7 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         }
     }
 
-    ~GDALVectorEditAlgorithmLayer()
+    ~GDALVectorEditAlgorithmLayer() override
     {
         m_poFeatureDefn->Release();
         if (m_poSRS)

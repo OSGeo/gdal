@@ -33,12 +33,12 @@ namespace PCIDSK
 /*      options.                                                        */
 /************************************************************************/
 
-    class CPCIDSKSegment : virtual public PCIDSKSegment
+    class CPCIDSKSegment /* non final */: virtual public PCIDSKSegment
     {
     public:
         CPCIDSKSegment( PCIDSKFile *file, int segment,
             const char *segment_pointer );
-        virtual ~CPCIDSKSegment();
+        ~CPCIDSKSegment() override;
 
         void        LoadSegmentPointer( const char *segment_pointer ) override final;
         void        LoadSegmentHeader();
@@ -65,14 +65,14 @@ namespace PCIDSK
         void        SetMetadataValue( const std::string &key, const std::string &value ) override;
         std::vector<std::string> GetMetadataKeys() const override;
 
-        virtual void Synchronize() override {}
+        void Synchronize() override {}
 
         std::vector<std::string> GetHistoryEntries() const override;
         void SetHistoryEntries( const std::vector<std::string> &entries ) override;
         void PushHistory(const std::string &app,
                          const std::string &message) override;
 
-        virtual std::string ConsistencyCheck() override { return ""; }
+        std::string ConsistencyCheck() override { return ""; }
 
     protected:
         PCIDSKFile *file;

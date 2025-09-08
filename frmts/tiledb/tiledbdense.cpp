@@ -43,12 +43,12 @@ class TileDBRasterBand final : public GDALPamRasterBand
   public:
     TileDBRasterBand(TileDBRasterDataset *, int,
                      const std::string &osAttr = TILEDB_VALUES);
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing, GSpacing,
-                             GDALRasterIOExtraArg *psExtraArg) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing, GSpacing,
+                     GDALRasterIOExtraArg *psExtraArg) override;
+    GDALColorInterp GetColorInterpretation() override;
 
     double GetNoDataValue(int *pbHasNoData) override;
     CPLErr SetNoDataValue(double dfNoData) override;

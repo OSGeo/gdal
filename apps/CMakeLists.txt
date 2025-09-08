@@ -137,7 +137,7 @@ endif()
 add_dependencies(appslib generate_gdal_version_h)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:appslib>)
 gdal_standard_includes(appslib)
-target_compile_options(appslib PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
+target_compile_options(appslib PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX} ${WFLAG_DOUBLE_PROMOTION})
 target_include_directories(
   appslib PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 if (HAVE_ATOMIC_UINT64_T_WITH_ATOMIC)
@@ -235,7 +235,7 @@ if (BUILD_APPS)
 
   add_library(utils_common OBJECT gdalargumentparser.cpp)
   gdal_standard_includes(utils_common)
-  target_compile_options(utils_common PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST})
+  target_compile_options(utils_common PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_DOUBLE_PROMOTION})
   add_dependencies(utils_common generate_gdal_version_h)
 
   set(APPS_TARGETS

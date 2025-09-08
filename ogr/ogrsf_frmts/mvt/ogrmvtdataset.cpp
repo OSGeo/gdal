@@ -134,7 +134,7 @@ class OGRMVTLayerBase CPL_NON_FINAL
                     const CPLJSONArray &oAttributesFromTileStats);
 
   public:
-    virtual ~OGRMVTLayerBase();
+    ~OGRMVTLayerBase() override;
 
     OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -190,7 +190,7 @@ class OGRMVTLayer final : public OGRMVTLayerBase
                                const GByte *pabyDataGeometryEnd);
     void SanitizeClippedGeometry(OGRGeometry *&poGeom);
 
-    virtual OGRFeature *GetNextRawFeature() override;
+    OGRFeature *GetNextRawFeature() override;
 
   public:
     OGRMVTLayer(OGRMVTDataset *poDS, const char *pszLayerName,
@@ -198,11 +198,11 @@ class OGRMVTLayer final : public OGRMVTLayerBase
                 const CPLJSONObject &oFields,
                 const CPLJSONArray &oAttributesFromTileStats,
                 OGRwkbGeometryType eGeomType);
-    virtual ~OGRMVTLayer();
+    ~OGRMVTLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    GIntBig GetFeatureCount(int bForce) override;
 
     GDALDataset *GetDataset() override;
 };
@@ -232,7 +232,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
     int m_nFilterMaxX = 0;
     int m_nFilterMaxY = 0;
 
-    virtual OGRFeature *GetNextRawFeature() override;
+    OGRFeature *GetNextRawFeature() override;
     OGRFeature *CreateFeatureFrom(OGRFeature *poSrcFeature);
     void ReadNewSubDir();
     void OpenTile();
@@ -245,18 +245,18 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
                          const CPLJSONArray &oAttributesFromTileStats,
                          bool bJsonField, OGRwkbGeometryType eGeomType,
                          const OGREnvelope *psExtent);
-    virtual ~OGRMVTDirectoryLayer();
+    ~OGRMVTDirectoryLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    GIntBig GetFeatureCount(int bForce) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
 
     int TestCapability(const char *) const override;
 
@@ -296,7 +296,7 @@ class OGRMVTDataset final : public GDALDataset
 
   public:
     explicit OGRMVTDataset(GByte *pabyData);
-    virtual ~OGRMVTDataset();
+    ~OGRMVTDataset() override;
 
     int GetLayerCount() const override
     {
@@ -3452,7 +3452,7 @@ class OGRMVTWriterDataset final : public GDALDataset
 
   public:
     OGRMVTWriterDataset();
-    ~OGRMVTWriterDataset();
+    ~OGRMVTWriterDataset() override;
 
     CPLErr Close() override;
 
@@ -3494,7 +3494,7 @@ class OGRMVTWriterLayer final : public OGRLayer
   public:
     OGRMVTWriterLayer(OGRMVTWriterDataset *poDS, const char *pszLayerName,
                       OGRSpatialReference *poSRS);
-    ~OGRMVTWriterLayer();
+    ~OGRMVTWriterLayer() override;
 
     void ResetReading() override
     {

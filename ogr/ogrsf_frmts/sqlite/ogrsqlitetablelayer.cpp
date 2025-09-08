@@ -1407,58 +1407,56 @@ CPLString OGRSQLiteFieldDefnToSQliteFieldDefn(const OGRFieldDefn *poFieldDefn,
     switch (poFieldDefn->GetType())
     {
         case OFTInteger:
+        {
             if (poFieldDefn->GetSubType() == OFSTBoolean)
                 return "INTEGER_BOOLEAN";
             else if (poFieldDefn->GetSubType() == OFSTInt16)
                 return "INTEGER_INT16";
-            else
-                return "INTEGER";
-            break;
+            return "INTEGER";
+        }
         case OFTInteger64:
             return "BIGINT";
         case OFTReal:
+        {
             if (bSQLiteDialectInternalUse &&
                 poFieldDefn->GetSubType() == OFSTFloat32)
                 return "FLOAT_FLOAT32";
-            else
-                return "FLOAT";
-            break;
+            return "FLOAT";
+        }
         case OFTBinary:
             return "BLOB";
-            break;
+
         case OFTString:
         {
             if (poFieldDefn->GetWidth() > 0)
                 return CPLSPrintf("VARCHAR(%d)", poFieldDefn->GetWidth());
-            else
-                return "VARCHAR";
-            break;
+            return "VARCHAR";
         }
         case OFTDateTime:
             return "TIMESTAMP";
-            break;
+
         case OFTDate:
             return "DATE";
-            break;
+
         case OFTTime:
             return "TIME";
-            break;
+
         case OFTIntegerList:
             return "JSONINTEGERLIST";
-            break;
+
         case OFTInteger64List:
             return "JSONINTEGER64LIST";
-            break;
+
         case OFTRealList:
             return "JSONREALLIST";
-            break;
+
         case OFTStringList:
             return "JSONSTRINGLIST";
-            break;
+
         default:
-            return "VARCHAR";
             break;
     }
+    return "VARCHAR";
 }
 
 /************************************************************************/

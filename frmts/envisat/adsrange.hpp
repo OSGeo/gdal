@@ -133,7 +133,7 @@ class ADSRange
  *  to a set of MDS records should be selected.
  */
 
-class ADSRangeLastAfter : public ADSRange
+class ADSRangeLastAfter final : public ADSRange
 {
 
   public:

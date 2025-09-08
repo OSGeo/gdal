@@ -83,7 +83,7 @@ class FITSDataset final : public GDALPamDataset
 
   public:
     FITSDataset();  // Others should not call this constructor explicitly
-    ~FITSDataset();
+    ~FITSDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
@@ -93,8 +93,8 @@ class FITSDataset final : public GDALPamDataset
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     char **GetMetadata(const char *papszDomain = nullptr) override;
 
     int GetLayerCount() const override
@@ -138,19 +138,19 @@ class FITSRasterBand final : public GDALPamRasterBand
 
   public:
     FITSRasterBand(FITSDataset *, int);
-    virtual ~FITSRasterBand();
+    ~FITSRasterBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
-    virtual double GetNoDataValue(int *) override final;
-    virtual CPLErr SetNoDataValue(double) override final;
-    virtual CPLErr DeleteNoDataValue() override final;
+    double GetNoDataValue(int *) override final;
+    CPLErr SetNoDataValue(double) override final;
+    CPLErr DeleteNoDataValue() override final;
 
-    virtual double GetOffset(int *pbSuccess = nullptr) override final;
-    virtual CPLErr SetOffset(double dfNewValue) override final;
-    virtual double GetScale(int *pbSuccess = nullptr) override final;
-    virtual CPLErr SetScale(double dfNewValue) override final;
+    double GetOffset(int *pbSuccess = nullptr) override final;
+    CPLErr SetOffset(double dfNewValue) override final;
+    double GetScale(int *pbSuccess = nullptr) override final;
+    CPLErr SetScale(double dfNewValue) override final;
 };
 
 /************************************************************************/
@@ -202,7 +202,7 @@ class FITSLayer final : public OGRLayer,
 
   public:
     FITSLayer(FITSDataset *poDS, int hduNum, const char *pszExtName);
-    ~FITSLayer();
+    ~FITSLayer() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {

@@ -5152,17 +5152,17 @@ class CutlineTransformer : public OGRCoordinateTransformation
     {
     }
 
-    virtual const OGRSpatialReference *GetSourceCS() const override
+    const OGRSpatialReference *GetSourceCS() const override
     {
         return nullptr;
     }
 
-    virtual const OGRSpatialReference *GetTargetCS() const override
+    const OGRSpatialReference *GetTargetCS() const override
     {
         return nullptr;
     }
 
-    virtual ~CutlineTransformer() override;
+    ~CutlineTransformer() override;
 
     virtual int Transform(size_t nCount, double *x, double *y, double *z,
                           double * /* t */, int *pabSuccess) override
@@ -5174,13 +5174,13 @@ class CutlineTransformer : public OGRCoordinateTransformation
                                        pabSuccess);
     }
 
-    virtual OGRCoordinateTransformation *Clone() const override
+    OGRCoordinateTransformation *Clone() const override
     {
         return new CutlineTransformer(
             GDALCloneTransformer(hSrcImageTransformer));
     }
 
-    virtual OGRCoordinateTransformation *GetInverse() const override
+    OGRCoordinateTransformation *GetInverse() const override
     {
         return nullptr;
     }

@@ -28,7 +28,7 @@ class BlockTileLayer;
  *
  * @see BlockDir
  */
-class PCIDSK_DLL BlockTileDir : public BlockDir
+class PCIDSK_DLL BlockTileDir /* non final*/: public BlockDir
 {
 public:
 #pragma pack(push, 1)
@@ -73,7 +73,7 @@ protected:
     /// The free block layer info.
     BlockLayerInfo      msFreeBlockLayer{};
 
-    virtual uint32      GetNewBlockCount(void) const override;
+    uint32      GetNewBlockCount(void) const override;
 
     void                SwapBlockLayer(BlockLayerInfo * psBlockLayer);
     void                SwapTileLayer(TileLayerInfo * psTileLayer);
@@ -83,7 +83,7 @@ public:
     BlockTileDir(BlockFile * poFile, uint16 nSegment);
     BlockTileDir(BlockFile * poFile, uint16 nSegment, uint16 nVersion);
 
-    virtual             ~BlockTileDir(void);
+    ~BlockTileDir() override;
 
     BlockTileLayer *    GetTileLayer(uint32 iLayer);
 };

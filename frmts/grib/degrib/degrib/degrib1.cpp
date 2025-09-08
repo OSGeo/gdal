@@ -283,7 +283,7 @@ static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
          break;
       case ATHENS:
          return &parm_table_athens[0];
-         break;
+
       case NORWAY:
          if (pdsMeta->mstrVersion == 128) {
             return &parm_table_norway128[0];
@@ -291,7 +291,7 @@ static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
          break;
       case CMC:
          return &parm_table_cmc[0];
-         break;
+
    }
    if (pdsMeta->mstrVersion > 3) {
       CPLError( CE_Warning, CPLE_AppDefined, "GRIB: Don't understand the parameter table, since center %d-%d used\n"

@@ -104,27 +104,27 @@ class OGRGenSQLResultsLayer final : public OGRLayer
                           std::unique_ptr<swq_select> &&pSelectInfo,
                           const OGRGeometry *poSpatFilter, const char *pszWHERE,
                           const char *pszDialect);
-    virtual ~OGRGenSQLResultsLayer();
+    ~OGRGenSQLResultsLayer() override;
 
-    virtual OGRGeometry *GetSpatialFilter() override;
+    OGRGeometry *GetSpatialFilter() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     int TestCapability(const char *) const override;
 
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *) override;
-    virtual OGRErr SetAttributeFilter(const char *) override;
+    OGRErr SetAttributeFilter(const char *) override;
 
     bool GetArrowStream(struct ArrowArrayStream *out_stream,
                         CSLConstList papszOptions = nullptr) override;

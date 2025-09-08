@@ -25,16 +25,16 @@ namespace PCIDSK
     /*                            CPCIDSK_BLUT                               */
     /************************************************************************/
 
-    class CPCIDSK_BLUT : virtual public CPCIDSKSegment,
+    class CPCIDSK_BLUT final: virtual public CPCIDSKSegment,
                         public PCIDSK_BLUT
     {
     public:
         CPCIDSK_BLUT( PCIDSKFile *file, int segment, const char *segment_pointer);
 
-        virtual     ~CPCIDSK_BLUT();
+        ~CPCIDSK_BLUT() override;
 
-        virtual void ReadBLUT( std::vector<BLUTEntry>& vBLUT ) override;
-        virtual void WriteBLUT( const std::vector<BLUTEntry>& vBLUT ) override;
+        void ReadBLUT( std::vector<BLUTEntry>& vBLUT ) override;
+        void WriteBLUT( const std::vector<BLUTEntry>& vBLUT ) override;
     };
 } // end namespace PCIDSK
 

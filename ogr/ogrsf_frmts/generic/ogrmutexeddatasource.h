@@ -27,15 +27,15 @@
  *  Note that the constructors and destructors are not explicitly protected
  *  by the mutex.
  */
-class CPL_DLL OGRMutexedDataSource : public GDALDataset
+class CPL_DLL OGRMutexedDataSource final : public GDALDataset
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMutexedDataSource)
 
   protected:
-    GDALDataset *m_poBaseDataSource;
-    int m_bHasOwnership;
-    CPLMutex *m_hGlobalMutex;
-    int m_bWrapLayersInMutexedLayer;
+    GDALDataset *m_poBaseDataSource = nullptr;
+    int m_bHasOwnership = false;
+    CPLMutex *m_hGlobalMutex = nullptr;
+    int m_bWrapLayersInMutexedLayer = false;
     std::map<OGRLayer *, OGRMutexedLayer *> m_oMapLayers{};
     std::map<OGRMutexedLayer *, OGRLayer *> m_oReverseMapLayers{};
 
@@ -47,7 +47,7 @@ class CPL_DLL OGRMutexedDataSource : public GDALDataset
                          CPLMutex *hMutexIn, int bWrapLayersInMutexedLayer);
 
     /* The destruction of the object isn't protected by the mutex */
-    virtual ~OGRMutexedDataSource() override;
+    ~OGRMutexedDataSource() override;
 
     GDALDataset *GetBaseDataSource()
     {
@@ -57,9 +57,9 @@ class CPL_DLL OGRMutexedDataSource : public GDALDataset
     int GetLayerCount() const override;
     using GDALDataset::GetLayer;
     const OGRLayer *GetLayer(int) const override;
-    virtual OGRLayer *GetLayerByName(const char *) override;
-    virtual OGRErr DeleteLayer(int) override;
-    virtual bool IsLayerPrivate(int iLayer) const override;
+    OGRLayer *GetLayerByName(const char *) override;
+    OGRErr DeleteLayer(int) override;
+    bool IsLayerPrivate(int iLayer) const override;
 
     int TestCapability(const char *) const override;
 
@@ -69,29 +69,28 @@ class CPL_DLL OGRMutexedDataSource : public GDALDataset
     virtual OGRLayer *CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                                 char **papszOptions = nullptr) override;
 
-    virtual OGRStyleTable *GetStyleTable() override;
-    virtual void SetStyleTableDirectly(OGRStyleTable *poStyleTable) override;
+    OGRStyleTable *GetStyleTable() override;
+    void SetStyleTableDirectly(OGRStyleTable *poStyleTable) override;
 
-    virtual void SetStyleTable(OGRStyleTable *poStyleTable) override;
+    void SetStyleTable(OGRStyleTable *poStyleTable) override;
 
-    virtual OGRLayer *ExecuteSQL(const char *pszStatement,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
-    virtual void ReleaseResultSet(OGRLayer *poResultsSet) override;
+    OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+    void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
-    virtual OGRErr StartTransaction(int bForce = FALSE) override;
-    virtual OGRErr CommitTransaction() override;
-    virtual OGRErr RollbackTransaction() override;
+    OGRErr StartTransaction(int bForce = FALSE) override;
+    OGRErr CommitTransaction() override;
+    OGRErr RollbackTransaction() override;
 
-    virtual char **GetMetadata(const char *pszDomain = "") override;
-    virtual CPLErr SetMetadata(char **papszMetadata,
-                               const char *pszDomain = "") override;
+    char **GetMetadata(const char *pszDomain = "") override;
+    CPLErr SetMetadata(char **papszMetadata,
+                       const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
-    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
-                                   const char *pszDomain = "") override;
+    CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                           const char *pszDomain = "") override;
 
     virtual std::vector<std::string>
     GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
@@ -111,7 +110,7 @@ class CPL_DLL OGRMutexedDataSource : public GDALDataset
     const GDALRelationship *
     GetRelationship(const std::string &name) const override;
 
-    virtual std::shared_ptr<GDALGroup> GetRootGroup() const override;
+    std::shared_ptr<GDALGroup> GetRootGroup() const override;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

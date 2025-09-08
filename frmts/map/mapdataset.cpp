@@ -39,16 +39,16 @@ class MAPDataset final : public GDALDataset
 
   public:
     MAPDataset();
-    virtual ~MAPDataset();
+    ~MAPDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual int GetGCPCount() override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
-    virtual const GDAL_GCP *GetGCPs() override;
-    virtual char **GetFileList() override;
+    const GDAL_GCP *GetGCPs() override;
+    char **GetFileList() override;
 
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *poOpenInfo);
@@ -75,10 +75,6 @@ class MAPWrapperRasterBand final : public GDALProxyRasterBand
         this->poBaseBand = poBaseBandIn;
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    }
-
-    ~MAPWrapperRasterBand()
-    {
     }
 };
 

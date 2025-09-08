@@ -972,21 +972,17 @@ OGRHanaTableLayer::GetColumnTypeInfo(const OGRFieldDefn &field) const
                 else if (field.GetSubType() == OFSTInt16)
                     return {"SMALLINT", QGRHanaDataTypes::SmallInt,
                             field.GetWidth(), 0};
-                else
-                    return {"INTEGER", QGRHanaDataTypes::Integer,
-                            field.GetWidth(), 0};
             }
-            break;
+            return {"INTEGER", QGRHanaDataTypes::Integer, field.GetWidth(), 0};
+
         case OFTInteger64:
             if (preservePrecision_ && field.GetWidth() > 20)
             {
                 return {"DECIMAL", QGRHanaDataTypes::Decimal, field.GetWidth(),
                         0};
             }
-            else
-                return {"BIGINT", QGRHanaDataTypes::BigInt, field.GetWidth(),
-                        0};
-            break;
+            return {"BIGINT", QGRHanaDataTypes::BigInt, field.GetWidth(), 0};
+
         case OFTReal:
             if (preservePrecision_ && field.GetWidth() != 0)
             {
@@ -998,10 +994,9 @@ OGRHanaTableLayer::GetColumnTypeInfo(const OGRFieldDefn &field) const
                 if (field.GetSubType() == OFSTFloat32)
                     return {"REAL", QGRHanaDataTypes::Real, field.GetWidth(),
                             field.GetPrecision()};
-                else
-                    return {"DOUBLE", QGRHanaDataTypes::Double,
-                            field.GetWidth(), field.GetPrecision()};
             }
+            return {"DOUBLE", QGRHanaDataTypes::Double, field.GetWidth(),
+                    field.GetPrecision()};
         case OFTString:
             if (field.GetWidth() == 0 || !preservePrecision_)
             {
@@ -1013,16 +1008,14 @@ OGRHanaTableLayer::GetColumnTypeInfo(const OGRFieldDefn &field) const
                 if (field.GetWidth() >= 1 && field.GetWidth() <= 5000)
                     return {"NVARCHAR", QGRHanaDataTypes::WLongVarChar,
                             field.GetWidth(), 0};
-                else
-                    return {"NCLOB", QGRHanaDataTypes::WLongVarChar, 0, 0};
             }
+            return {"NCLOB", QGRHanaDataTypes::WLongVarChar, 0, 0};
         case OFTBinary:
             if (field.GetWidth() >= 1 && field.GetWidth() <= 5000)
                 return {"VARBINARY", QGRHanaDataTypes::VarBinary,
                         field.GetWidth(), 0};
-            else
-                return {"BLOB", QGRHanaDataTypes::LongVarBinary,
-                        field.GetWidth(), 0};
+            return {"BLOB", QGRHanaDataTypes::LongVarBinary, field.GetWidth(),
+                    0};
         case OFTDate:
             return {"DATE", QGRHanaDataTypes::TypeDate, field.GetWidth(), 0};
         case OFTTime:
@@ -1034,17 +1027,13 @@ OGRHanaTableLayer::GetColumnTypeInfo(const OGRFieldDefn &field) const
             if (field.GetSubType() == OGRFieldSubType::OFSTInt16)
                 return {"ARRAY", QGRHanaDataTypes::SmallInt, field.GetWidth(),
                         0};
-            else
-                return {"ARRAY", QGRHanaDataTypes::Integer, field.GetWidth(),
-                        0};
+            return {"ARRAY", QGRHanaDataTypes::Integer, field.GetWidth(), 0};
         case OFTInteger64List:
             return {"ARRAY", QGRHanaDataTypes::BigInt, field.GetWidth(), 0};
         case OFTRealList:
             if (field.GetSubType() == OGRFieldSubType::OFSTFloat32)
                 return {"ARRAY", QGRHanaDataTypes::Real, field.GetWidth(), 0};
-            else
-                return {"ARRAY", QGRHanaDataTypes::Double, field.GetWidth(), 0};
-            break;
+            return {"ARRAY", QGRHanaDataTypes::Double, field.GetWidth(), 0};
         case OFTStringList:
             return {"ARRAY", QGRHanaDataTypes::WVarChar, 512, 0};
         default:

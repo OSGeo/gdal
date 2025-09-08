@@ -258,32 +258,31 @@ class netCDFRasterBand final : public GDALPamRasterBand
                      const int *panBandZLev = nullptr,
                      const int *panBandZPos = nullptr,
                      const int *paDimIds = nullptr);
-    virtual ~netCDFRasterBand();
+    ~netCDFRasterBand() override;
 
-    virtual double GetNoDataValue(int *) override;
-    virtual int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr) override;
-    virtual uint64_t GetNoDataValueAsUInt64(int *pbSuccess = nullptr) override;
-    virtual CPLErr SetNoDataValue(double) override;
-    virtual CPLErr SetNoDataValueAsInt64(int64_t nNoData) override;
-    virtual CPLErr SetNoDataValueAsUInt64(uint64_t nNoData) override;
+    double GetNoDataValue(int *) override;
+    int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr) override;
+    uint64_t GetNoDataValueAsUInt64(int *pbSuccess = nullptr) override;
+    CPLErr SetNoDataValue(double) override;
+    CPLErr SetNoDataValueAsInt64(int64_t nNoData) override;
+    CPLErr SetNoDataValueAsUInt64(uint64_t nNoData) override;
     // virtual CPLErr DeleteNoDataValue();
-    virtual double GetOffset(int *) override;
-    virtual CPLErr SetOffset(double) override;
-    virtual double GetScale(int *) override;
-    virtual CPLErr SetScale(double) override;
-    virtual const char *GetUnitType() override;
-    virtual CPLErr SetUnitType(const char *) override;
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    double GetOffset(int *) override;
+    CPLErr SetOffset(double) override;
+    double GetScale(int *) override;
+    CPLErr SetScale(double) override;
+    const char *GetUnitType() override;
+    CPLErr SetUnitType(const char *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
     char **GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 
-    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
-                                   const char *pszDomain = "") override;
-    virtual CPLErr SetMetadata(char **papszMD,
-                               const char *pszDomain = "") override;
+    CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                           const char *pszDomain = "") override;
+    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
 };
 
 /************************************************************************/
@@ -10975,7 +10974,6 @@ static CPLErr NCDFPutAttr(int nCdfId, int nVarId, const char *pszAttrName,
                 if (papszValues)
                     CSLDestroy(papszValues);
                 return CE_Failure;
-                break;
         }
     }
 
@@ -11432,7 +11430,6 @@ static CPLErr NCDFPut1DVar(int nCdfId, int nVarId, const char *pszValue)
                             if (papszValues)
                                 CSLDestroy(papszValues);
                             return CE_Failure;
-                            break;
                     }
                 }
                 break;

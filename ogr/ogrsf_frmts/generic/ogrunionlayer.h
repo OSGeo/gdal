@@ -36,7 +36,7 @@ class CPL_DLL OGRUnionLayerGeomFieldDefn final : public OGRGeomFieldDefn
     explicit OGRUnionLayerGeomFieldDefn(const OGRGeomFieldDefn *poSrc);
     explicit OGRUnionLayerGeomFieldDefn(
         const OGRUnionLayerGeomFieldDefn *poSrc);
-    ~OGRUnionLayerGeomFieldDefn();
+    ~OGRUnionLayerGeomFieldDefn() override;
 };
 
 /************************************************************************/
@@ -141,7 +141,7 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
                                ownership depending on bTakeLayerOwnership */
         int bTakeLayerOwnership);
 
-    virtual ~OGRUnionLayer();
+    ~OGRUnionLayer() override;
 
     /* All the following non virtual methods must be called just after the
      * constructor */
@@ -163,16 +163,16 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
 
     OGRwkbGeometryType GetGeomType() const override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr IUpsertFeature(OGRFeature *poFeature) override;
+    OGRErr IUpsertFeature(OGRFeature *poFeature) override;
 
     OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                           const int *panUpdatedFieldsIdx,
@@ -184,21 +184,21 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
 
     const OGRSpatialReference *GetSpatialRef() const override;
 
-    virtual GIntBig GetFeatureCount(int) override;
+    GIntBig GetFeatureCount(int) override;
 
-    virtual OGRErr SetAttributeFilter(const char *) override;
+    OGRErr SetAttributeFilter(const char *) override;
 
     int TestCapability(const char *) const override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *) override;
 
-    virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
+    OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 
-    virtual OGRErr SyncToDisk() override;
+    OGRErr SyncToDisk() override;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

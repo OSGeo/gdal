@@ -2569,7 +2569,7 @@ GDALRasterBand::SetNoDataValueAsString(const char *pszNoData,
         const float fVal = CPLStrtof(pszNoData, &endptr);
         if (endptr == pszNoData + strlen(pszNoData))
         {
-            return SetNoDataValue(fVal);
+            return SetNoDataValue(double(fVal));
         }
     }
     else
@@ -3013,7 +3013,6 @@ double GDALRasterBand::GetMinimum(int *pbSuccess)
 
         case GDT_Int8:
             return -128;
-            break;
 
         case GDT_UInt16:
             return 0;
@@ -4385,7 +4384,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                              ARE_REAL_EQUAL(fValue,
                                             sNoDataValues.fNoDataValue)))
                             continue;
-                        dfValue = fValue;
+                        dfValue = double(fValue);
                         break;
                     }
                     case GDT_Float64:
@@ -4429,9 +4428,9 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                     case GDT_CFloat32:
                     {
                         const double dfReal =
-                            static_cast<float *>(pData)[iOffset * 2];
-                        const double dfImag =
-                            static_cast<float *>(pData)[iOffset * 2 + 1];
+                            double(static_cast<float *>(pData)[iOffset * 2]);
+                        const double dfImag = double(
+                            static_cast<float *>(pData)[iOffset * 2 + 1]);
                         if (std::isnan(dfReal) || std::isnan(dfImag))
                             continue;
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
@@ -4656,7 +4655,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                                  ARE_REAL_EQUAL(fValue,
                                                 sNoDataValues.fNoDataValue)))
                                 continue;
-                            dfValue = fValue;
+                            dfValue = double(fValue);
                             break;
                         }
                         case GDT_Float64:
@@ -4695,10 +4694,10 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                         }
                         case GDT_CFloat32:
                         {
-                            double dfReal =
-                                static_cast<float *>(pData)[iOffset * 2];
-                            double dfImag =
-                                static_cast<float *>(pData)[iOffset * 2 + 1];
+                            double dfReal = double(
+                                static_cast<float *>(pData)[iOffset * 2]);
+                            double dfImag = double(
+                                static_cast<float *>(pData)[iOffset * 2 + 1]);
                             if (std::isnan(dfReal) || std::isnan(dfImag))
                                 continue;
                             dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
@@ -6387,7 +6386,7 @@ static inline double GetPixelValue(GDALDataType eDataType, bool bSignedByte,
                 bValid = false;
                 return 0.0;
             }
-            dfValue = fValue;
+            dfValue = double(fValue);
             return dfValue;
         }
         case GDT_Float64:
@@ -6413,7 +6412,7 @@ static inline double GetPixelValue(GDALDataType eDataType, bool bSignedByte,
             }
             break;
         case GDT_CFloat32:
-            dfValue = static_cast<const float *>(pData)[iOffset * 2];
+            dfValue = double(static_cast<const float *>(pData)[iOffset * 2]);
             if (std::isnan(dfValue))
             {
                 bValid = false;
@@ -9826,7 +9825,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
     }
 
   public:
-    ~GDALMDArrayFromRasterBand()
+    ~GDALMDArrayFromRasterBand() override
     {
         m_poDS->ReleaseRef();
     }
@@ -9927,7 +9926,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
                                     static_cast<GUInt64>(nBlockXSize)};
     }
 
-    class MDIAsAttribute : public GDALAttribute
+    class MDIAsAttribute final : public GDALAttribute
     {
         std::vector<std::shared_ptr<GDALDimension>> m_dims{};
         const GDALExtendedDataType m_dt = GDALExtendedDataType::CreateString();

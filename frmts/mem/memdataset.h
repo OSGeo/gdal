@@ -83,39 +83,37 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
 
   public:
     MEMDataset();
-    virtual ~MEMDataset();
+    ~MEMDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     const OGRSpatialReference *GetSpatialRefRasterOnly() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
-    virtual void *GetInternalHandle(const char *) override;
+    void *GetInternalHandle(const char *) override;
 
-    virtual int GetGCPCount() override;
+    int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    const GDAL_GCP *GetGCPs() override;
     CPLErr SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
                    const OGRSpatialReference *poSRS) override;
     virtual CPLErr AddBand(GDALDataType eType,
                            char **papszOptions = nullptr) override;
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, BANDMAP_TYPE panBandMap,
-                             GSpacing nPixelSpaceBuf, GSpacing nLineSpaceBuf,
-                             GSpacing nBandSpaceBuf,
-                             GDALRasterIOExtraArg *psExtraArg) override;
-    virtual CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
-                                   const int *panOverviewList, int nListBands,
-                                   const int *panBandList,
-                                   GDALProgressFunc pfnProgress,
-                                   void *pProgressData,
-                                   CSLConstList papszOptions) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount,
+                     BANDMAP_TYPE panBandMap, GSpacing nPixelSpaceBuf,
+                     GSpacing nLineSpaceBuf, GSpacing nBandSpaceBuf,
+                     GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
+                           const int *panOverviewList, int nListBands,
+                           const int *panBandList, GDALProgressFunc pfnProgress,
+                           void *pProgressData,
+                           CSLConstList papszOptions) override;
 
-    virtual CPLErr CreateMaskBand(int nFlagsIn) override;
+    CPLErr CreateMaskBand(int nFlagsIn) override;
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
@@ -191,21 +189,21 @@ class CPL_DLL MEMRasterBand CPL_NON_FINAL : public GDALPamRasterBand
                   GDALDataType eType, GSpacing nPixelOffset,
                   GSpacing nLineOffset, int bAssumeOwnership,
                   const char *pszPixelType = nullptr);
-    virtual ~MEMRasterBand();
+    ~MEMRasterBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpaceBuf, GSpacing nLineSpaceBuf,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpaceBuf,
+                     GSpacing nLineSpaceBuf,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int) override;
 
-    virtual CPLErr CreateMaskBand(int nFlagsIn) override;
-    virtual bool IsMaskBand() const override;
+    CPLErr CreateMaskBand(int nFlagsIn) override;
+    bool IsMaskBand() const override;
 
     // Allow access to MEM driver's private internal memory buffer.
     GByte *GetData() const
@@ -262,11 +260,11 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     OGRMemLayer(const char *pszName, const OGRSpatialReference *poSRS,
                 OGRwkbGeometryType eGeomType);
     explicit OGRMemLayer(const OGRFeatureDefn &oFeatureDefn);
-    virtual ~OGRMemLayer();
+    ~OGRMemLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRErr SetNextByIndex(GIntBig nIndex) override;
 
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
@@ -277,7 +275,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
                           int nUpdatedGeomFieldsCount,
                           const int *panUpdatedGeomFieldsIdx,
                           bool bUpdateStyleString) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(GIntBig nFID) override;
 
     using OGRLayer::GetLayerDefn;
 
@@ -290,8 +288,8 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr DeleteField(int iField) override;
-    virtual OGRErr ReorderFields(int *panMap) override;
+    OGRErr DeleteField(int iField) override;
+    OGRErr ReorderFields(int *panMap) override;
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                                   int nFlags) override;
     virtual OGRErr

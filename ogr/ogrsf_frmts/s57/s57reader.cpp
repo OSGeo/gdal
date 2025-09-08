@@ -3258,7 +3258,6 @@ bool S57Reader::ApplyUpdates(DDFModule *poUpdateModule)
                     default:
                         // CPLAssert( false );
                         return false;
-                        break;
                 }
             }
             else

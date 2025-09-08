@@ -460,7 +460,7 @@ class CPL_DLL GDALWarpKernel
     /*! @endcond */
 
     GDALWarpKernel();
-    virtual ~GDALWarpKernel();
+    ~GDALWarpKernel();
 
     CPLErr Validate();
     CPLErr PerformWarp();

@@ -413,14 +413,14 @@ class OGRPGeoSingleFeatureLayer final : public OGRLayer
 
   public:
     OGRPGeoSingleFeatureLayer(const char *pszLayerName, const char *pszVal);
-    virtual ~OGRPGeoSingleFeatureLayer();
+    ~OGRPGeoSingleFeatureLayer() override;
 
-    virtual void ResetReading() override
+    void ResetReading() override
     {
         iNextShapeId = 0;
     }
 
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {

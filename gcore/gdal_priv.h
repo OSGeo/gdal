@@ -1528,29 +1528,29 @@ using GDALDatasetUniquePtr =
  *
  * And the global block manager that manages a least-recently-used list of
  * blocks from various datasets/bands */
-class CPL_DLL GDALRasterBlock
+class CPL_DLL GDALRasterBlock final
 {
     friend class GDALAbstractBandBlockCache;
 
-    GDALDataType eType;
+    GDALDataType eType = GDT_Unknown;
 
-    bool bDirty;
-    volatile int nLockCount;
+    bool bDirty = false;
+    volatile int nLockCount = 0;
 
-    int nXOff;
-    int nYOff;
+    int nXOff = 0;
+    int nYOff = 0;
 
-    int nXSize;
-    int nYSize;
+    int nXSize = 0;
+    int nYSize = 0;
 
-    void *pData;
+    void *pData = nullptr;
 
-    GDALRasterBand *poBand;
+    GDALRasterBand *poBand = nullptr;
 
-    GDALRasterBlock *poNext;
-    GDALRasterBlock *poPrevious;
+    GDALRasterBlock *poNext = nullptr;
+    GDALRasterBlock *poPrevious = nullptr;
 
-    bool bMustDetach;
+    bool bMustDetach = false;
 
     CPL_INTERNAL void Detach_unlocked(void);
     CPL_INTERNAL void Touch_unlocked(void);
@@ -1560,7 +1560,7 @@ class CPL_DLL GDALRasterBlock
   public:
     GDALRasterBlock(GDALRasterBand *, int, int);
     GDALRasterBlock(int nXOffIn, int nYOffIn); /* only for lookup purpose */
-    virtual ~GDALRasterBlock();
+    ~GDALRasterBlock();
 
     CPLErr Internalize(void);
     void Touch(void);
@@ -2815,7 +2815,7 @@ template <typename... Args> inline GDALComputedRasterBand mean(Args &&...args)
 /*                         GDALAllValidMaskBand                         */
 /* ******************************************************************** */
 
-class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
+class CPL_DLL GDALAllValidMaskBand final : public GDALRasterBand
 {
   protected:
     CPLErr IReadBlock(int, int, void *) override;
@@ -2857,7 +2857,7 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 /*                         GDALNoDataMaskBand                           */
 /* ******************************************************************** */
 
-class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
+class CPL_DLL GDALNoDataMaskBand final : public GDALRasterBand
 {
     friend class GDALRasterBand;
     double m_dfNoDataValue = 0;
@@ -2898,7 +2898,7 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
 /*                  GDALNoDataValuesMaskBand                            */
 /* ******************************************************************** */
 
-class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
+class CPL_DLL GDALNoDataValuesMaskBand final : public GDALRasterBand
 {
     double *padfNodataValues;
 
@@ -2929,7 +2929,7 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
 /*                         GDALRescaledAlphaBand                        */
 /* ******************************************************************** */
 
-class GDALRescaledAlphaBand : public GDALRasterBand
+class GDALRescaledAlphaBand final : public GDALRasterBand
 {
     GDALRasterBand *poParent;
     void *pTemp;
@@ -3301,7 +3301,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
  */
 // clang-format on
 
-class GDALPluginDriverProxy : public GDALDriver
+class GDALPluginDriverProxy final : public GDALDriver
 {
     const std::string m_osPluginFileName;
     std::string m_osPluginFullPath{};
@@ -3370,7 +3370,7 @@ class GDALPluginDriverProxy : public GDALDriver
  * this class.
  */
 
-class CPL_DLL GDALDriverManager : public GDALMajorObject
+class CPL_DLL GDALDriverManager final : public GDALMajorObject
 {
     int nDrivers = 0;
     GDALDriver **papoDrivers = nullptr;
@@ -3413,7 +3413,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
 
   public:
     GDALDriverManager();
-    ~GDALDriverManager();
+    ~GDALDriverManager() override;
 
     int GetDriverCount(void) const;
     GDALDriver *GetDriver(int);
@@ -3920,7 +3920,7 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     //! @endcond
 
   public:
-    virtual ~GDALGroup();
+    ~GDALGroup() override;
 
     /** Return the name of the group.
      *
@@ -4305,7 +4305,7 @@ class CPL_DLL GDALAttribute : virtual public GDALAbstractMDArray
 
   public:
     //! @cond Doxygen_Suppress
-    ~GDALAttribute();
+    ~GDALAttribute() override;
     //! @endcond
 
     std::vector<GUInt64> GetDimensionsSize() const;
@@ -4729,15 +4729,15 @@ bool GDALMDRasterIOFromBand(GDALRasterBand *poBand, GDALRWFlag eRWFlag,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-class CPL_DLL GDALMDArrayRegularlySpaced : public GDALMDArray
+class CPL_DLL GDALMDArrayRegularlySpaced final : public GDALMDArray
 {
-    double m_dfStart;
-    double m_dfIncrement;
-    double m_dfOffsetInIncrement;
-    GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Float64);
-    std::vector<std::shared_ptr<GDALDimension>> m_dims;
+    double m_dfStart = 0;
+    double m_dfIncrement = 0;
+    double m_dfOffsetInIncrement = 0;
+    const GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Float64);
+    const std::vector<std::shared_ptr<GDALDimension>> m_dims;
     std::vector<std::shared_ptr<GDALAttribute>> m_attributes{};
-    std::string m_osEmptyFilename{};
+    const std::string m_osEmptyFilename{};
 
   protected:
     bool IRead(const GUInt64 *, const size_t *, const GInt64 *,
@@ -5510,8 +5510,9 @@ inline bool ARE_REAL_EQUAL(double dfVal1, double dfVal2, int ulp = 2)
 {
     using std::abs;
     return dfVal1 == dfVal2 || /* Should cover infinity */
-           abs(dfVal1 - dfVal2) < std::numeric_limits<float>::epsilon() *
-                                      abs(dfVal1 + dfVal2) * ulp;
+           abs(dfVal1 - dfVal2) <
+               static_cast<double>(std::numeric_limits<float>::epsilon()) *
+                   abs(dfVal1 + dfVal2) * ulp;
 }
 
 double GDALAdjustNoDataCloseToFloatMax(double dfVal);

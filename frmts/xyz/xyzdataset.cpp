@@ -67,9 +67,9 @@ class XYZDataset final : public GDALPamDataset
 
   public:
     XYZDataset();
-    virtual ~XYZDataset();
+    ~XYZDataset() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -95,10 +95,10 @@ class XYZRasterBand final : public GDALPamRasterBand
   public:
     XYZRasterBand(XYZDataset *, int, GDALDataType);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual double GetMinimum(int *pbSuccess = nullptr) override;
-    virtual double GetMaximum(int *pbSuccess = nullptr) override;
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    double GetMinimum(int *pbSuccess = nullptr) override;
+    double GetMaximum(int *pbSuccess = nullptr) override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
 };
 
 /************************************************************************/

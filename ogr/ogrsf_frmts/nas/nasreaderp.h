@@ -71,7 +71,7 @@ class NASHandler final : public DefaultHandler
 
   public:
     explicit NASHandler(NASReader *poReader);
-    virtual ~NASHandler();
+    ~NASHandler() override;
 
     void startElement(const XMLCh *const uri, const XMLCh *const localname,
                       const XMLCh *const qname,
@@ -163,7 +163,7 @@ class NASReader final : public IGMLReader
 
   public:
     NASReader();
-    virtual ~NASReader();
+    ~NASReader() override;
 
     bool IsClassListLocked() const override
     {
@@ -243,12 +243,12 @@ class NASReader final : public IGMLReader
     void DealWithAttributes(const char *pszElement, int nLenName,
                             const Attributes &attrs);
 
-    virtual const char *GetGlobalSRSName() override
+    const char *GetGlobalSRSName() override
     {
         return nullptr;
     }
 
-    virtual bool CanUseGlobalSRSName() override
+    bool CanUseGlobalSRSName() override
     {
         return false;
     }

@@ -2980,7 +2980,7 @@ GDALDataset *JPGDatasetCommon::OpenRawThermalImage()
     {
         CPLDebug("JPEG", "Raw thermal image");
 
-        class JPEGRawDataset : public RawDataset
+        class JPEGRawDataset final : public RawDataset
         {
           public:
             JPEGRawDataset(int nXSizeIn, int nYSizeIn)
@@ -2994,7 +2994,10 @@ GDALDataset *JPGDatasetCommon::OpenRawThermalImage()
                 return GDALPamDataset::Close();
             }
 
-            ~JPEGRawDataset() = default;
+            ~JPEGRawDataset() override
+            {
+                JPEGRawDataset::Close();
+            }
 
             void SetBand(int nBand, std::unique_ptr<GDALRasterBand> &&poBand)
             {
@@ -4836,10 +4839,24 @@ GDALDataset *JPGDataset::CreateCopyStage2(
 
     jpeg_start_compress(&sCInfo, TRUE);
 
+    struct Adapter
+    {
+        static void my_jpeg_write_m_header_adapter(void *cinfo, int marker,
+                                                   unsigned int datalen)
+        {
+            jpeg_write_m_header(static_cast<jpeg_compress_struct *>(cinfo),
+                                marker, datalen);
+        }
+
+        static void my_jpeg_write_m_byte_adapter(void *cinfo, int val)
+        {
+            jpeg_write_m_byte(static_cast<jpeg_compress_struct *>(cinfo), val);
+        }
+    };
+
     JPGAddEXIF(eWorkDT, poSrcDS, papszOptions, &sCInfo,
-               reinterpret_cast<my_jpeg_write_m_header>(jpeg_write_m_header),
-               reinterpret_cast<my_jpeg_write_m_byte>(jpeg_write_m_byte),
-               CreateCopy);
+               Adapter::my_jpeg_write_m_header_adapter,
+               Adapter::my_jpeg_write_m_byte_adapter, CreateCopy);
 
     // Add comment if available.
     const char *pszComment = CSLFetchNameValue(papszOptions, "COMMENT");
@@ -4856,10 +4873,9 @@ GDALDataset *JPGDataset::CreateCopyStage2(
             poSrcDS->GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE");
 
     if (pszICCProfile != nullptr)
-        JPGAddICCProfile(
-            &sCInfo, pszICCProfile,
-            reinterpret_cast<my_jpeg_write_m_header>(jpeg_write_m_header),
-            reinterpret_cast<my_jpeg_write_m_byte>(jpeg_write_m_byte));
+        JPGAddICCProfile(&sCInfo, pszICCProfile,
+                         Adapter::my_jpeg_write_m_header_adapter,
+                         Adapter::my_jpeg_write_m_byte_adapter);
 
     // Loop over image, copying image data.
     const int nWorkDTSize = GDALGetDataTypeSizeBytes(eWorkDT);

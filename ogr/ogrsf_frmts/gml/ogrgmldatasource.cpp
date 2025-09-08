@@ -3191,17 +3191,17 @@ class OGRGMLSingleFeatureLayer final : public OGRLayer
   public:
     explicit OGRGMLSingleFeatureLayer(int nVal);
 
-    virtual ~OGRGMLSingleFeatureLayer()
+    ~OGRGMLSingleFeatureLayer() override
     {
         poFeatureDefn->Release();
     }
 
-    virtual void ResetReading() override
+    void ResetReading() override
     {
         iNextShapeId = 0;
     }
 
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {

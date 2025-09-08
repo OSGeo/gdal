@@ -129,7 +129,7 @@ class ProxiedSQLLayer final : public OGRProxiedLayer
         SetDescription(osName.c_str());
     }
 
-    ~ProxiedSQLLayer()
+    ~ProxiedSQLLayer() override
     {
         if (m_poLayerDefn)
             m_poLayerDefn->Release();

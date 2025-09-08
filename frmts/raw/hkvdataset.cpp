@@ -49,14 +49,10 @@ HKVRasterBand::~HKVRasterBand() = default;
 /*                      HKV Spheroids                                   */
 /************************************************************************/
 
-class HKVSpheroidList : public SpheroidList
+class HKVSpheroidList final : public SpheroidList
 {
   public:
     HKVSpheroidList();
-
-    ~HKVSpheroidList()
-    {
-    }
 };
 
 HKVSpheroidList ::HKVSpheroidList()

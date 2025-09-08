@@ -25,16 +25,16 @@ namespace PCIDSK
     /*                            CPCIDSK_BPCT                               */
     /************************************************************************/
 
-    class CPCIDSK_BPCT : virtual public CPCIDSKSegment,
+    class CPCIDSK_BPCT final: virtual public CPCIDSKSegment,
                         public PCIDSK_BPCT
     {
     public:
         CPCIDSK_BPCT( PCIDSKFile *file, int segment, const char *segment_pointer);
 
-        virtual     ~CPCIDSK_BPCT();
+        ~CPCIDSK_BPCT() override;
 
-        virtual void ReadBPCT( std::vector<BPCTEntry>& vBPCT ) override;
-        virtual void WriteBPCT( const std::vector<BPCTEntry>& vBPCT ) override;
+        void ReadBPCT( std::vector<BPCTEntry>& vBPCT ) override;
+        void WriteBPCT( const std::vector<BPCTEntry>& vBPCT ) override;
     };
 } // end namespace PCIDSK
 
