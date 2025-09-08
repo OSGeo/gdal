@@ -505,7 +505,8 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_VRT()
 
 {
-    if (GDALGetDriverByName("VRT") != nullptr)
+    auto poDM = GetGDALDriverManager();
+    if (poDM->GetDriverByName("VRT") != nullptr)
         return;
 
     static std::once_flag flag;
@@ -543,6 +544,26 @@ void GDALRegister_VRT()
         "   <Option name='BLOCKXSIZE' type='int' description='Block width'/>\n"
         "   <Option name='BLOCKYSIZE' type='int' description='Block height'/>\n"
         "</CreationOptionList>\n");
+
+    auto poGTiffDrv = poDM->GetDriverByName("GTiff");
+    if (poGTiffDrv)
+    {
+        const char *pszGTiffOvrCO =
+            poGTiffDrv->GetMetadataItem(GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST);
+        if (pszGTiffOvrCO &&
+            STARTS_WITH(pszGTiffOvrCO, "<OverviewCreationOptionList>"))
+        {
+            std::string ocoList =
+                "<OverviewCreationOptionList>"
+                "   <Option name='VIRTUAL' type='boolean' "
+                "default='NO' "
+                "description='Whether virtual overviews rather than "
+                "materialized external GeoTIFF .ovr should be created'/>";
+            ocoList += (pszGTiffOvrCO + strlen("<OverviewCreationOptionList>"));
+            poDriver->SetMetadataItem(GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST,
+                                      ocoList.c_str());
+        }
+    }
 
     poDriver->pfnCreateCopy = VRTCreateCopy;
     poDriver->pfnCreate = VRTDataset::Create;
@@ -605,7 +626,7 @@ void GDALRegister_VRT()
     poDriver->AddSourceParser("KernelFilteredSource", VRTParseFilterSources);
     poDriver->AddSourceParser("ArraySource", VRTParseArraySource);
 
-    GetGDALDriverManager()->RegisterDriver(poDriver);
+    poDM->RegisterDriver(poDriver);
 }
 
 /*! @endcond */

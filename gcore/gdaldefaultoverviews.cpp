@@ -1143,10 +1143,13 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
         }
         else
         {
+            CPLStringList aosOptions(papszOptions);
+            aosOptions.SetNameValue("LOCATION", nullptr);
+            aosOptions.SetNameValue("USE_RRD", nullptr);
             eErr = HFAAuxBuildOverviews(
                 osOvrFilename, poDS, &poODS, nBands, panBandList, nNewOverviews,
                 panNewOverviewList, pszResampling, GDALScaledProgress,
-                pScaledProgress, papszOptions);
+                pScaledProgress, aosOptions.List());
         }
 
         // HFAAuxBuildOverviews doesn't actually generate overviews

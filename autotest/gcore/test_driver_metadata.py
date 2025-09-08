@@ -126,12 +126,12 @@ def get_schema_openoptionslist():
     )
 
 
-def get_schema_creationoptionslist_xml():
+def get_schema_creationoptionslist_xml(root_element="CreationOptionList"):
 
     from lxml import etree
 
     return etree.XML(
-        r"""
+        rf"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="Value">
     <xs:complexType>
@@ -189,7 +189,7 @@ def get_schema_creationoptionslist_xml():
       <xs:attribute type="xs:string" name="alt_config_option" use="optional"/>
     </xs:complexType>
   </xs:element>
-  <xs:element name="CreationOptionList">
+  <xs:element name="{root_element}">
     <xs:complexType>
       <xs:sequence>
         <xs:element ref="Option" maxOccurs="unbounded" minOccurs="0"/>
@@ -456,6 +456,31 @@ def test_metadata_creationoptionslist(driver_name):
 
     driver = gdal.GetDriverByName(driver_name)
     creationoptionslist_xml = driver.GetMetadataItem("DMD_CREATIONOPTIONLIST")
+
+    if creationoptionslist_xml is not None and len(creationoptionslist_xml) > 0:
+        # do not fail
+        try:
+            parser = etree.XMLParser(schema=schema)
+            etree.fromstring(creationoptionslist_xml, parser)
+        except Exception:
+            print(creationoptionslist_xml)
+            raise
+
+
+@pytest.mark.parametrize("driver_name", all_driver_names)
+def test_metadata_overview_creationoptionslist(driver_name):
+    """Test if DMD_CREATIONOPTIONLIST metadataitem is present and can be parsed"""
+
+    from lxml import etree
+
+    schema = etree.XMLSchema(
+        get_schema_creationoptionslist_xml("OverviewCreationOptionList")
+    )
+
+    driver = gdal.GetDriverByName(driver_name)
+    creationoptionslist_xml = driver.GetMetadataItem(
+        gdal.DMD_OVERVIEW_CREATIONOPTIONLIST
+    )
 
     if creationoptionslist_xml is not None and len(creationoptionslist_xml) > 0:
         # do not fail

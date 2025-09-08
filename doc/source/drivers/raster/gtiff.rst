@@ -123,12 +123,221 @@ as read only, the creation of overviews will be done in an external .ovr
 file. Overview are only updated on request with the BuildOverviews()
 method.
 
-The block size (tile width and height) used for overviews (internal or
-external) can be specified by setting the GDAL_TIFF_OVR_BLOCKSIZE
-environment variable to a power-of-two value between 64 and 4096. The
-default is 128, or starting with GDAL 3.1 to use the same block size
-as the full-resolution dataset if possible (i.e. block height and width
-are equal, a power-of-two, and between 64 and 4096).
+Several overview creation options are available. They can be provided through
+:cpp:func:`GDALDataset::BuildOverviews`, :cpp:func:`GDALDataset::AddOverviews`
+or with the ``--creation-option`` argument of :ref:`gdal_raster_overview_add`.
+
+Most of them can also be specified as configuration options by adding an ``_OVERVIEW``
+suffix to the option name, but this is now considered a legacy behavior.
+
+.. _raster.gtiff-overview-creation-options:
+
+-  .. oco:: LOCATION
+      :choices: INTERNAL, EXTERNAL, RRD
+
+      Set the location of the overview.
+
+      - LOCATION=INTERNAL: only when the dataset to update is a (Geo)TIFF file.
+
+      - LOCATION=EXTERNAL: implied when using option ``--external`` of
+        :ref:`gdal_raster_overview_add`
+
+      - LOCATION=RRD: place the overviews in an associated .aux file
+        suitable for direct use with Imagine or ArcGIS, as well as GDAL
+        applications. Note that none of the below options apply when RRD
+        is selected.
+
+-  .. oco:: COMPRESS
+      :choices: JPEG, LZW, PACKBITS, DEFLATE, CCITTRLE, CCITTFAX3, CCITTFAX4, LZMA, ZSTD, LERC, LERC_DEFLATE, LERC_ZSTD, WEBP, JXL, NONE
+
+      Set the compression to use. By default, ``NONE``, unless the dataset
+      to update is a (Geo)TIFF file, in which case the compression method
+      of its full resolution layer will be used.
+
+      * ``JPEG`` should generally only be used with Byte data (8 bit per channel).
+        Better compression for RGB images can be obtained by using the PHOTOMETRIC=YCBCR
+        colorspace with a 4:2:2 subsampling of the Y,Cb,Cr components.
+
+      * ``CCITTFAX3``, ``CCITTFAX4`` or ``CCITRLE`` compression should only be used with 1bit (NBITS=1) data
+
+      * ``LZW``, ``DEFLATE`` and ``ZSTD`` compressions can be used with the PREDICTOR creation option.
+
+      * ``ZSTD``: available for GDAL builds (or libtiff when using external libtiff) against libzstd.
+
+      * ``LERC`` and ``LERC_DEFLATE`` available for GDAL builds (or libtiff when using external liblerc) against liblerc.
+
+      * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
+
+      * ``JXL`` is for JPEG-XL, and is only available when using internal libtiff and building GDAL against
+        https://github.com/libjxl/libjxl . Supported data types are ``Byte``,
+        ``UInt16`` and ``Float32`` only.
+
+-  .. oco:: BLOCKSIZE
+      :choices: <integer>
+
+      Sets tile width and height. Must be divisible by 16 and a power-of-two
+      value between 64 and 4096. By default, the block size of the full
+      resolution layer (if tiled) is used, otherwise it defaults to 128.
+      This can also be set with the GDAL_TIFF_OVR_BLOCKSIZE configuration option.
+
+-  .. oco:: NUM_THREADS
+      :choices: <integer>, NUM_CPUS
+      :default: 1
+
+      Enable multi-threaded compression by specifying the number of worker
+      threads. Worthwhile for slow compression algorithms such as DEFLATE or LZMA.
+      Will be ignored for JPEG. Default is compression in the main thread.
+
+-  .. oco:: PREDICTOR
+      :choices: 1, 2, 3
+      :default: 1
+
+      Set the predictor for LZW, DEFLATE and ZSTD
+      compression. The default is 1 (no predictor), 2 is horizontal
+      differencing and 3 is floating point prediction.
+      PREDICTOR=2 is only supported for 8, 16, 32 and 64 bit samples.
+      PREDICTOR=3 is only supported for 16, 32 and 64 bit floating-point data.
+
+-  .. oco:: JPEG_QUALITY
+      :choices: 1-100
+      :default: 75
+
+      Set the JPEG quality when using JPEG compression.
+
+      Low values result in higher compression ratios, but poorer image quality
+      with strong blocking artifacts.
+      Values above 95 are not meaningfully better quality but can be
+      substantially larger.
+
+-  .. oco:: JPEGTABLESMODE
+      :choices: 0, 1, 2, 3
+      :default: 1
+
+      Configure how and where
+      JPEG quantization and Huffman tables are written in the TIFF
+      JpegTables tag and strip/tile.
+
+      -  0: JpegTables is not written. Each strip/tile contains its own
+         quantization tables and use optimized Huffman coding.
+      -  1: JpegTables is written with only the quantization tables. Each
+         strip/tile refers to those quantized tables and use optimized
+         Huffman coding. This is generally the optimal choice for smallest
+         file size, and consequently is the default.
+      -  2: JpegTables is written with only the default Huffman tables.
+         Each strip/tile refers to those Huffman tables (thus no optimized
+         Huffman coding) and contains its own quantization tables
+         (identical). This option has no anticipated practical value.
+      -  3: JpegTables is written with the quantization and default Huffman
+         tables. Each strip/tile refers to those tables (thus no optimized
+         Huffman coding). This option could perhaps with some data be more
+         efficient than 1, but this should only occur in rare
+         circumstances.
+
+-  .. oco:: INTERLEAVE
+      :choices: BAND, PIXEL
+
+      Control whether pixel or band interleaving is used.
+
+-  .. oco:: PHOTOMETRIC
+      :choices: MINISBLACK, MINISWHITE, RGB, CMYK, YCBCR, CIELAB, ICCLAB, ITULAB
+
+      Set the photometric interpretation tag. Default is MINISBLACK, but if
+      the input image has 3 or 4 bands of Byte type, then RGB will be
+      selected. You can override default photometric using this option.
+
+-  .. oco:: ALPHA
+      :choices: YES, NON-PREMULTIPLIED, PREMULTIPLIED, UNSPECIFIED
+
+      The first "extrasample" is marked as being alpha if there are any extra
+      samples. This is necessary if you want to produce a greyscale TIFF
+      file with an alpha band (for instance). YES is an alias
+      for NON-PREMULTIPLIED alpha.
+
+-  .. oco:: ZLEVEL
+      :choices: Integer between 1 and 9 (or 12 when libdeflate is used)
+      :default: 6
+      :since: 3.4.1
+
+      Deflate compression level, for COMPRESS=DEFLATE or LERC_DEFLATE.
+
+-  .. oco:: ZSTD_LEVEL
+      :choices: Integer between 1 and 22
+      :default: 9
+      :since: 3.4.1
+
+      ZSTD compression level, for COMPRESS=ZSTD or LERC_ZSTD.
+
+-  .. oco:: WEBP_LEVEL
+      :choices: Integer between 0 and 100
+      :default: 75
+
+      WEBP quality level of overviews, either internal or external.
+
+-  .. oco:: WEBP_LOSSLESS
+      :choices: YES, NO
+      :default: NO
+      :since: 3.6
+
+      Whether WEBP compression is lossless or not.
+
+-  .. oco:: MAX_Z_ERROR
+      :default: 0 (lossless)
+      :since: 3.4.1
+
+      Maximum error threshold on values for LERC/LERC_DEFLATE/LERC_ZSTD compression.
+
+-  .. oco:: JXL_LOSSLESS
+      :choices: YES, NO
+      :default: YES
+
+      Set whether JPEG-XL compression should be lossless
+      (YES) or lossy (NO). For lossy compression, the underlying data
+      should be either gray, gray+alpha, rgb or rgb+alpha. For lossy compression,
+      the pixel data should span the whole range of the underlying pixel type (i.e.
+      0-255 for Byte, 0-65535 for UInt16)
+
+-  .. oco:: JXL_EFFORT
+      :choices: [1-9]
+      :default: 5
+
+      Level of effort for JPEG-XL compression.
+      The higher, the smaller file and slower compression time.
+
+-  .. oco:: JXL_DISTANCE
+      :choices: [0.01-25]
+      :default: 1.0
+
+      (Only applies when JXL_LOSSLESS=NO)
+      Distance level for lossy JPEG-XL compression.
+      It is specified in multiples of a just-noticeable difference.
+      (cf `butteraugli <https://github.com/google/butteraugli>`__ for the definition
+      of the distance)
+      That is, 0 is mathematically lossless, 1 should be visually lossless, and
+      higher distances yield denser and denser files with lower and lower fidelity.
+      The recommended range is [0.5,3].
+
+-  .. oco:: JXL_ALPHA_DISTANCE
+      :choices: -1,0,[0.01-25]
+      :default: -1
+
+      (Only applies when JXL_LOSSLESS=NO)
+      Requires libjxl > 0.8.1.
+      Distance level for alpha channel for lossy JPEG-XL compression.
+      It is specified in multiples of a just-noticeable difference.
+      (cf `butteraugli <https://github.com/google/butteraugli>`__ for the definition
+      of the distance)
+      That is, 0 is mathematically lossless, 1 should be visually lossless, and
+      higher distances yield denser and denser files with lower and lower fidelity.
+      For lossy compression, the recommended range is [0.5,3].
+      The default value is the special value -1.0, which means to use the same
+      distance value as non-alpha channel (ie JXL_DISTANCE).
+
+-  .. oco:: SPARSE_OK
+      :choices: ON, OFF
+      :default: OFF
+
+      When set to ON, blocks whose pixels are all at nodata (or 0 if no nodata is defined)
+
 
 Overviews and nodata masks
 --------------------------
@@ -159,7 +368,7 @@ For the remaining configuration, behavior is less obvious:
    overviews of the internal nodata mask is not currently supported by
    the driver.
 
-Practical note: for a command line point of view, BuildOverview() in
+Practical note: for a command line point of view, BuildOverviews() in
 update mode means "gdaladdo the.tiff" (without -ro). Whereas
 BuildOverviews() in read-only mode means "gdaladdo -ro the.tiff".
 
@@ -1074,7 +1283,7 @@ the default behavior of the GTiff driver.
       :default: 9
       :since: 3.4.1
 
-      ZSTD compression level of overviews, for COMPRESS_OVERVIEW=DEFLATE or LERC_ZSTD, either internal or external.
+      ZSTD compression level of overviews, for COMPRESS_OVERVIEW=ZSTD or LERC_ZSTD, either internal or external.
 
 -  .. config:: MAX_Z_ERROR_OVERVIEW
       :default: 0 (lossless)

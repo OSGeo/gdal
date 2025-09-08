@@ -2502,7 +2502,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         if ((arg == outputArg || !outputArg) && update)
             flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
 
-        const auto readOnlyArg = algForOutput->GetArg(GDAL_ARG_NAME_READ_ONLY);
+        const auto readOnlyArg = GetArg(GDAL_ARG_NAME_READ_ONLY);
         const bool readOnly =
             (readOnlyArg && readOnlyArg->GetType() == GAAT_BOOLEAN &&
              readOnlyArg->Get<bool>());
@@ -5453,6 +5453,13 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
             osRet += " <COMMAND>";
             if (hasNonPositionals)
                 osRet += " [OPTIONS]";
+            if (usageOptions.isPipelineStep)
+            {
+                const size_t nLenFirstLine = osRet.size();
+                osRet += '\n';
+                osRet.append(nLenFirstLine, '-');
+                osRet += '\n';
+            }
             osRet += "\nwhere <COMMAND> is one of:\n";
         }
         else
@@ -5460,6 +5467,13 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
             osRet += " <SUBCOMMAND>";
             if (hasNonPositionals)
                 osRet += " [OPTIONS]";
+            if (usageOptions.isPipelineStep)
+            {
+                const size_t nLenFirstLine = osRet.size();
+                osRet += '\n';
+                osRet.append(nLenFirstLine, '-');
+                osRet += '\n';
+            }
             osRet += "\nwhere <SUBCOMMAND> is one of:\n";
         }
         size_t maxNameLen = 0;

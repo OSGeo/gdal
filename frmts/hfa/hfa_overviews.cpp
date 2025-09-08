@@ -93,7 +93,7 @@ CPLErr HFAAuxBuildOverviews(const char *pszOvrFilename, GDALDataset *poParentDS,
     // it would use the base layer from the .aux file as the source
     // data, and that is fake (all invalid tiles).
     CPLStringList aosOptions(papszOptions);
-    aosOptions.SetNameValue("REGENERATE", "NO");
+    aosOptions.SetNameValue("@REGENERATE", "NO");
 
     CPLErr eErr = (*ppoODS)->BuildOverviews(
         pszResampling, nNewOverviews, panNewOverviewList, nBands, panBandList,

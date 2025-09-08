@@ -4053,7 +4053,9 @@ def test_tiff_write_96(other_options=[], nbands=1, nbits=8):
     ds = gdaltest.tiff_drv.CreateCopy(
         "tmp/tiff_write_96_dst.tif",
         src_ds,
-        options=["COPY_SRC_OVERVIEWS=YES"] + other_options + ["NBITS=" + str(nbits)],
+        options=["COPY_SRC_OVERVIEWS=YES", "TILED=YES"]
+        + other_options
+        + ["NBITS=" + str(nbits)],
     )
     ds = None
     src_ds = None

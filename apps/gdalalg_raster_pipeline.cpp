@@ -24,6 +24,7 @@
 #include "gdalalg_raster_info.h"
 #include "gdalalg_raster_mosaic.h"
 #include "gdalalg_raster_nodata_to_alpha.h"
+#include "gdalalg_raster_overview.h"
 #include "gdalalg_raster_pansharpen.h"
 #include "gdalalg_raster_proximity.h"
 #include "gdalalg_raster_reclassify.h"
@@ -60,6 +61,8 @@
 #ifndef _
 #define _(x) (x)
 #endif
+
+GDALRasterAlgorithmStepRegistry::~GDALRasterAlgorithmStepRegistry() = default;
 
 /************************************************************************/
 /*  GDALRasterPipelineStepAlgorithm::GDALRasterPipelineStepAlgorithm()  */
@@ -122,7 +125,8 @@ void GDALRasterPipelineStepAlgorithm::SetOutputVRTCompatible(bool b)
 
 GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     bool openForMixedRasterVector)
-    : GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>(
+    : GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm,
+                                    GDALRasterAlgorithmStepRegistry>(
           NAME, DESCRIPTION, HELP_URL,
           ConstructorOptions()
               .SetAddDefaultArguments(false)
@@ -149,7 +153,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
 
 /* static */
 void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
-    GDALAlgorithmRegistry &registry, bool forMixedPipeline)
+    GDALRasterAlgorithmStepRegistry &registry, bool forMixedPipeline)
 {
     GDALAlgorithmRegistry::AlgInfo algInfo;
 
@@ -160,61 +164,48 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
                                 : std::string(name);
     };
 
-    algInfo.m_name = addSuffixIfNeeded(GDALRasterReadAlgorithm::NAME);
-    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
-    { return std::make_unique<GDALRasterReadAlgorithm>(); };
-    registry.Register(algInfo);
+    registry.Register<GDALRasterReadAlgorithm>(
+        addSuffixIfNeeded(GDALRasterReadAlgorithm::NAME));
 
     registry.Register<GDALRasterCalcAlgorithm>();
 
-    algInfo.m_name = addSuffixIfNeeded(GDALRasterWriteAlgorithm::NAME);
-    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
-    { return std::make_unique<GDALRasterWriteAlgorithm>(); };
-    registry.Register(algInfo);
+    registry.Register<GDALRasterWriteAlgorithm>(
+        addSuffixIfNeeded(GDALRasterWriteAlgorithm::NAME));
 
-    algInfo.m_name = addSuffixIfNeeded(GDALRasterInfoAlgorithm::NAME);
-    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
-    { return std::make_unique<GDALRasterInfoAlgorithm>(); };
-    registry.Register(algInfo);
+    registry.Register<GDALRasterInfoAlgorithm>(
+        addSuffixIfNeeded(GDALRasterInfoAlgorithm::NAME));
 
     registry.Register<GDALRasterAspectAlgorithm>();
 
-    algInfo.m_name = addSuffixIfNeeded(GDALRasterClipAlgorithm::NAME);
-    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
-    { return std::make_unique<GDALRasterClipAlgorithm>(); };
-    registry.Register(algInfo);
+    registry.Register<GDALRasterClipAlgorithm>(
+        addSuffixIfNeeded(GDALRasterClipAlgorithm::NAME));
 
     registry.Register<GDALRasterColorMapAlgorithm>();
     registry.Register<GDALRasterColorMergeAlgorithm>();
     registry.Register<GDALRasterCompareAlgorithm>();
 
-    algInfo.m_name = addSuffixIfNeeded(GDALRasterEditAlgorithm::NAME);
-    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
-    { return std::make_unique<GDALRasterEditAlgorithm>(); };
-    registry.Register(algInfo);
+    registry.Register<GDALRasterEditAlgorithm>(
+        addSuffixIfNeeded(GDALRasterEditAlgorithm::NAME));
 
     registry.Register<GDALRasterNoDataToAlphaAlgorithm>();
     registry.Register<GDALRasterFillNodataAlgorithm>();
     registry.Register<GDALRasterHillshadeAlgorithm>();
     registry.Register<GDALRasterMosaicAlgorithm>();
+    registry.Register<GDALRasterOverviewAlgorithm>();
     registry.Register<GDALRasterPansharpenAlgorithm>();
     registry.Register<GDALRasterProximityAlgorithm>();
     registry.Register<GDALRasterReclassifyAlgorithm>();
 
-    algInfo.m_name = addSuffixIfNeeded(GDALRasterReprojectAlgorithm::NAME);
-    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
-    { return std::make_unique<GDALRasterReprojectAlgorithm>(); };
-    registry.Register(algInfo);
+    registry.Register<GDALRasterReprojectAlgorithm>(
+        addSuffixIfNeeded(GDALRasterReprojectAlgorithm::NAME));
 
     registry.Register<GDALRasterResizeAlgorithm>();
     registry.Register<GDALRasterRGBToPaletteAlgorithm>();
     registry.Register<GDALRasterRoughnessAlgorithm>();
     registry.Register<GDALRasterScaleAlgorithm>();
 
-    algInfo.m_name = addSuffixIfNeeded(GDALRasterSelectAlgorithm::NAME);
-    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
-    { return std::make_unique<GDALRasterSelectAlgorithm>(); };
-    registry.Register(algInfo);
+    registry.Register<GDALRasterSelectAlgorithm>(
+        addSuffixIfNeeded(GDALRasterSelectAlgorithm::NAME));
 
     registry.Register<GDALRasterSetTypeAlgorithm>();
     registry.Register<GDALRasterSieveAlgorithm>();

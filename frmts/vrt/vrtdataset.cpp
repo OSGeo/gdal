@@ -3059,7 +3059,9 @@ CPLErr VRTDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                                    void *pProgressData,
                                    CSLConstList papszOptions)
 {
-    if (CPLTestBool(CPLGetConfigOption("VRT_VIRTUAL_OVERVIEWS", "NO")))
+    if (CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "VIRTUAL",
+            CPLGetConfigOption("VRT_VIRTUAL_OVERVIEWS", "NO"))))
     {
         SetNeedsFlush();
         if (nOverviews == 0 ||

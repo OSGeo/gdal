@@ -97,18 +97,19 @@ def test_gdalalg_overview_reuse_resampling_and_levels(tmp_vsimem):
     assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1152
 
 
-def test_gdalalg_overview_in_plae(tmp_vsimem):
+def test_gdalalg_overview_in_place(tmp_vsimem):
 
     tmp_filename = str(tmp_vsimem / "tmp.tif")
     gdal.Translate(tmp_filename, "../gcore/data/byte.tif")
 
     add = get_overview_add_alg()
-    assert add.ParseRunAndFinalize([tmp_filename, "--levels=2"])
+    assert add.ParseRunAndFinalize([tmp_filename, "--levels=2", "--co", "BLOCKSIZE=64"])
 
     assert gdal.VSIStatL(tmp_filename + ".ovr") is None
 
     with gdal.Open(tmp_filename) as ds:
         assert ds.GetRasterBand(1).GetOverviewCount() == 1
+        assert ds.GetRasterBand(1).GetOverview(0).GetBlockSize() == [64, 64]
 
 
 def test_gdalalg_overview_external(tmp_vsimem):
@@ -128,6 +129,60 @@ def test_gdalalg_overview_external(tmp_vsimem):
     assert delete.ParseRunAndFinalize([tmp_filename, "--external"])
 
     assert gdal.VSIStatL(tmp_filename + ".ovr") is None
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_overview_external_incompatible(tmp_vsimem):
+
+    tmp_filename = str(tmp_vsimem / "tmp.gpkg")
+    gdal.Translate(tmp_filename, "../gcore/data/byte.tif")
+
+    add = get_overview_add_alg()
+    with pytest.raises(
+        Exception, match="Driver GPKG does not support external overviews"
+    ):
+        assert add.ParseRunAndFinalize([tmp_filename, "--levels=2", "--external"])
+
+
+@pytest.mark.require_driver("PNG")
+def test_gdalalg_overview_external_other_format(tmp_vsimem):
+
+    tmp_filename = str(tmp_vsimem / "tmp.png")
+    gdal.Translate(tmp_filename, "../gcore/data/byte.tif")
+
+    add = get_overview_add_alg()
+    assert add.ParseRunAndFinalize([tmp_filename, "--external", "--levels=2"])
+
+    assert gdal.VSIStatL(tmp_filename + ".ovr") is not None
+
+    with gdal.Open(tmp_filename) as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() == 1
+
+
+@pytest.mark.require_driver("HFA")
+def test_gdalalg_overview_external_rrd(tmp_vsimem):
+
+    tmp_filename = str(tmp_vsimem / "tmp.tif")
+    gdal.Translate(tmp_filename, "../gcore/data/byte.tif")
+
+    try:
+        gdal.Run(
+            get_overview_add_alg(),
+            input=tmp_filename,
+            levels=[2],
+            creation_option={"LOCATION": "RRD"},
+        )
+    except Exception:
+        if (
+            "This build does not support creating .aux overviews"
+            in gdal.GetLastErrorMsg()
+        ):
+            pytest.skip(gdal.GetLastErrorMsg())
+
+    assert gdal.VSIStatL(tmp_vsimem / "tmp.aux") is not None
+
+    with gdal.Open(tmp_filename) as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() == 1
 
 
 def test_gdalalg_overview_delete():
@@ -393,3 +448,46 @@ def test_gdalalg_overview_add_from_dataset_bad_gt(tmp_vsimem):
             overview_src=ovr_ds,
             dataset=out_ds,
         )
+
+
+###############################################################################
+
+
+def test_gdalalg_overview_add_complete():
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster overview add ../gcore/data/byte.tif --co"
+    ).split(" ")
+    assert "LOCATION=" in out
+    assert "COMPRESS=" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster overview add ../gcore/data/byte.tif --co COMPRESS="
+    ).split(" ")
+    assert "NONE" in out
+    assert "LZW" in out
+
+
+###############################################################################
+
+
+def test_gdalalg_overview_add_in_pipeline(tmp_vsimem):
+
+    src_ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
+
+    with gdal.Run(
+        "pipeline",
+        input=src_ds,
+        pipeline="read ! overview add --levels 2 ! write --format stream streamed_dataset",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).GetOverviewCount() == 1
+        assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1192
+
+    assert src_ds.GetRasterBand(1).GetOverviewCount() == 0

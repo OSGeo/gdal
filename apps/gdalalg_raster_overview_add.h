@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_OVERVIEW_ADD_INCLUDED
 #define GDALALG_RASTER_OVERVIEW_ADD_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_raster_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,7 +21,8 @@
 /*                    GDALRasterOverviewAlgorithmAdd                    */
 /************************************************************************/
 
-class GDALRasterOverviewAlgorithmAdd final : public GDALAlgorithm
+class GDALRasterOverviewAlgorithmAdd /* non final */
+    : public GDALRasterPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "add";
@@ -29,19 +30,33 @@ class GDALRasterOverviewAlgorithmAdd final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_overview_add.html";
 
-    GDALRasterOverviewAlgorithmAdd();
+    explicit GDALRasterOverviewAlgorithmAdd(bool standaloneStep = false);
 
   private:
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc, void *) override;
 
-    GDALArgDatasetValue m_dataset{};
     std::vector<GDALArgDatasetValue> m_overviewSources{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
     std::string m_resampling{};
     std::vector<int> m_levels{};
     int m_minSize = 256;
     bool m_readOnly = false;
+};
+
+/************************************************************************/
+/*                 GDALRasterOverviewAlgorithmAddStandalone             */
+/************************************************************************/
+
+class GDALRasterOverviewAlgorithmAddStandalone final
+    : public GDALRasterOverviewAlgorithmAdd
+{
+  public:
+    GDALRasterOverviewAlgorithmAddStandalone()
+        : GDALRasterOverviewAlgorithmAdd(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALRasterOverviewAlgorithmAddStandalone() override;
 };
 
 //! @endcond

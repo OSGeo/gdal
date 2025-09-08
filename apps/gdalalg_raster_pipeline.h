@@ -22,6 +22,8 @@
 /*                GDALRasterPipelineStepAlgorithm                       */
 /************************************************************************/
 
+class GDALRasterAlgorithmStepRegistry;
+
 class GDALRasterPipelineStepAlgorithm /* non final */
     : public GDALPipelineStepAlgorithm
 {
@@ -40,7 +42,8 @@ class GDALRasterPipelineStepAlgorithm /* non final */
                                     const ConstructorOptions &options);
 
     friend class GDALRasterPipelineAlgorithm;
-    friend class GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>;
+    friend class GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm,
+                                               GDALRasterAlgorithmStepRegistry>;
     friend class GDALRasterMosaicStackCommonAlgorithm;
 
     int GetInputType() const override
@@ -82,6 +85,34 @@ class GDALRasterPipelineNonNativelyStreamingAlgorithm /* non-final */
 };
 
 /************************************************************************/
+/*                      GDALRasterAlgorithmStepRegistry                 */
+/************************************************************************/
+
+class GDALRasterAlgorithmStepRegistry : public virtual GDALAlgorithmRegistry
+{
+  public:
+    GDALRasterAlgorithmStepRegistry() = default;
+    ~GDALRasterAlgorithmStepRegistry() override;
+
+    /** Register the algorithm of type MyAlgorithm.
+     */
+    template <class MyAlgorithm>
+    bool Register(const std::string &name = std::string())
+    {
+        static_assert(
+            std::is_base_of_v<GDALRasterPipelineStepAlgorithm, MyAlgorithm>,
+            "Algorithm is not a GDALRasterPipelineStepAlgorithm");
+
+        AlgInfo info;
+        info.m_name = name.empty() ? MyAlgorithm::NAME : name;
+        info.m_aliases = MyAlgorithm::GetAliasesStatic();
+        info.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
+        { return std::make_unique<MyAlgorithm>(); };
+        return GDALAlgorithmRegistry::Register(info);
+    }
+};
+
+/************************************************************************/
 /*                     GDALRasterPipelineAlgorithm                      */
 /************************************************************************/
 
@@ -94,7 +125,8 @@ class GDALRasterPipelineNonNativelyStreamingAlgorithm /* non-final */
 #endif
 
 class GDALRasterPipelineAlgorithm final
-    : public GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>
+    : public GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm,
+                                           GDALRasterAlgorithmStepRegistry>
 {
   public:
     static constexpr const char *NAME = "pipeline";
@@ -122,7 +154,7 @@ class GDALRasterPipelineAlgorithm final
     std::string GetUsageForCLI(bool shortUsage,
                                const UsageOptions &usageOptions) const override;
 
-    static void RegisterAlgorithms(GDALAlgorithmRegistry &registry,
+    static void RegisterAlgorithms(GDALRasterAlgorithmStepRegistry &registry,
                                    bool forMixedPipeline);
 };
 

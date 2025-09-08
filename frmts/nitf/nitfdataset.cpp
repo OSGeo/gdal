@@ -7163,7 +7163,7 @@ static const char *const apszFieldsBLOCKA[] = {
 
 class NITFDriver final : public GDALDriver
 {
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bCreationOptionListInitialized = false;
     void InitCreationOptionList();
 

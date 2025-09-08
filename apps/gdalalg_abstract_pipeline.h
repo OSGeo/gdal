@@ -51,7 +51,7 @@ class GDALPipelineStepRunContext
 /*                    GDALAbstractPipelineAlgorithm                     */
 /************************************************************************/
 
-template <class StepAlgorithm>
+template <class StepAlgorithm, class StepRegistry>
 class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
 {
   public:
@@ -99,7 +99,7 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
     }
 
     std::string m_pipeline{};
-    GDALAlgorithmRegistry m_stepRegistry{};
+    StepRegistry m_stepRegistry{};
     std::vector<std::unique_ptr<StepAlgorithm>> m_steps{};
     std::unique_ptr<StepAlgorithm> m_stepOnWhichHelpIsRequested{};
 
@@ -120,6 +120,8 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
 /************************************************************************/
 /*                     GDALPipelineStepAlgorithm                        */
 /************************************************************************/
+
+class GDALAlgorithmStepRegistry;
 
 class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 {
@@ -253,7 +255,8 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
                               const ConstructorOptions &);
 
     friend class GDALPipelineAlgorithm;
-    friend class GDALAbstractPipelineAlgorithm<GDALPipelineStepAlgorithm>;
+    friend class GDALAbstractPipelineAlgorithm<GDALPipelineStepAlgorithm,
+                                               GDALAlgorithmStepRegistry>;
 
     virtual bool CanBeFirstStep() const
     {
@@ -330,9 +333,9 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 /*          GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep()      */
 /************************************************************************/
 
-template <class StepAlgorithm>
-bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::CheckFirstAndLastStep(
-    const std::vector<StepAlgorithm *> &steps) const
+template <class StepAlgorithm, class StepRegistry>
+bool GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::
+    CheckFirstAndLastStep(const std::vector<StepAlgorithm *> &steps) const
 {
     if (!steps.front()->CanBeFirstStep())
     {
@@ -419,9 +422,9 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::CheckFirstAndLastStep(
 /*              GDALAbstractPipelineAlgorithm::GetStepAlg()             */
 /************************************************************************/
 
-template <class StepAlgorithm>
+template <class StepAlgorithm, class StepRegistry>
 std::unique_ptr<StepAlgorithm>
-GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetStepAlg(
+GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::GetStepAlg(
     const std::string &name) const
 {
     auto alg = m_stepRegistry.Instantiate(name);
@@ -433,9 +436,9 @@ GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetStepAlg(
 /*         GDALAbstractPipelineAlgorithm::GetAutoComplete()             */
 /************************************************************************/
 
-template <class StepAlgorithm>
+template <class StepAlgorithm, class StepRegistry>
 std::vector<std::string>
-GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetAutoComplete(
+GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::GetAutoComplete(
     std::vector<std::string> &args, bool lastWordIsComplete,
     bool /* showAllOptions*/)
 {
@@ -589,8 +592,8 @@ GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetAutoComplete(
 /*            GDALAbstractPipelineAlgorithm::SaveGDALGFile()            */
 /************************************************************************/
 
-template <class StepAlgorithm>
-bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::SaveGDALGFile(
+template <class StepAlgorithm, class StepRegistry>
+bool GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::SaveGDALGFile(
     const std::string &outFilename, std::string &outString) const
 {
     std::string osCommandLine;
@@ -649,8 +652,8 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::SaveGDALGFile(
 /*              GDALAbstractPipelineAlgorithm::RunStep()                */
 /************************************************************************/
 
-template <class StepAlgorithm>
-bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
+template <class StepAlgorithm, class StepRegistry>
+bool GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::RunStep(
     GDALPipelineStepRunContext &ctxt)
 {
     if (m_stepOnWhichHelpIsRequested)
@@ -956,8 +959,8 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
 /*               GDALAbstractPipelineAlgorithm::Finalize()              */
 /************************************************************************/
 
-template <class StepAlgorithm>
-bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::Finalize()
+template <class StepAlgorithm, class StepRegistry>
+bool GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::Finalize()
 {
     bool ret = GDALAlgorithm::Finalize();
     for (auto &step : m_steps)
@@ -971,8 +974,10 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::Finalize()
 /*             GDALAbstractPipelineAlgorithm::GetUsageAsJSON()          */
 /************************************************************************/
 
-template <class StepAlgorithm>
-std::string GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetUsageAsJSON() const
+template <class StepAlgorithm, class StepRegistry>
+std::string
+GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::GetUsageAsJSON()
+    const
 {
     CPLJSONDocument oDoc;
     CPL_IGNORE_RET_VAL(oDoc.LoadMemory(GDALAlgorithm::GetUsageAsJSON()));
