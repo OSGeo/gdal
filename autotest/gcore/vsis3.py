@@ -6588,6 +6588,48 @@ def test_vsis3_AWS_S3SESSION_TOKEN(aws_test_config, webserver_port):
 
 
 ###############################################################################
+# Test PATH_VERBATIM
+
+
+def test_vsis3_PATH_VERBATIM(aws_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET", "/test_vsis3_PATH_VERBATIM/test.bin", 200, {"Connection": "close"}, "a"
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.VSIStatL("/vsis3/test_vsis3_PATH_VERBATIM/./test.bin").size == 1
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET", "/test_vsis3_PATH_VERBATIM/test2.bin", 200, {"Connection": "close"}, "ab"
+    )
+    with webserver.install_http_handler(handler):
+        assert (
+            gdal.VSIStatL(
+                "/vsis3/test_vsis3_PATH_VERBATIM/a/b/../../c/../test2.bin"
+            ).size
+            == 2
+        )
+
+    with gdal.config_option("GDAL_HTTP_PATH_VERBATIM", "YES"):
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/test_vsis3_PATH_VERBATIM/./test3.bin",
+            200,
+            {"Connection": "close"},
+            "abc",
+        )
+        with webserver.install_http_handler(handler):
+            assert (
+                gdal.VSIStatL("/vsis3/test_vsis3_PATH_VERBATIM/./test3.bin").size == 3
+            )
+
+
+###############################################################################
 # Nominal cases (require valid credentials)
 
 
