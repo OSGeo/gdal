@@ -310,6 +310,7 @@ nitpick_ignore_regex = [
     (".*", "classPythonPluginLayer"),
     (".*", "classPythonPluginDriver"),
     (".*", "classGDALSubsetGroup"),
+    (".*", "structOGRwkbExportOptions"),  # only emitted by Windows CI
     # FIXME We ignore everything python related for now...
     ("py:.*", ".*"),
     # TODO: To examine
