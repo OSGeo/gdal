@@ -93,6 +93,7 @@ Raster commands
    gdal_raster_fill_nodata
    gdal_raster_hillshade
    gdal_raster_index
+   gdal_raster_materialize
    gdal_raster_mosaic
    gdal_raster_nodata_to_alpha
    gdal_raster_overview
@@ -144,6 +145,7 @@ Raster commands
     - :ref:`gdal_raster_fill_nodata`: Fill raster regions by interpolation from edges.
     - :ref:`gdal_raster_hillshade`: Generate a shaded relief map
     - :ref:`gdal_raster_index`: Create a vector index of raster datasets
+    - :ref:`gdal_raster_materialize`: Materialize a piped dataset on disk to increase the efficiency of the following steps
     - :ref:`gdal_raster_mosaic`: Build a mosaic, either virtual (VRT) or materialized.
     - :ref:`gdal_raster_nodata_to_alpha`: Replace nodata value(s) with an alpha band
     - :ref:`gdal_raster_overview`: Manage overviews of a raster dataset
@@ -198,6 +200,7 @@ Vector commands
    gdal_vector_index
    gdal_vector_layer_algebra
    gdal_vector_make_valid
+   gdal_vector_materialize
    gdal_vector_partition
    gdal_vector_pipeline
    gdal_vector_rasterize
@@ -230,6 +233,7 @@ Vector commands
     - :ref:`gdal_vector_index`: Create a vector index of vector datasets
     - :ref:`gdal_vector_layer_algebra`: Perform algebraic operation between 2 layers.
     - :ref:`gdal_vector_make_valid`: Fix validity of geometries of a vector dataset
+    - :ref:`gdal_vector_materialize`: Materialize a piped dataset on disk to increase the efficiency of the following steps
     - :ref:`gdal_vector_partition`: Partition a vector dataset into multiple files
     - :ref:`gdal_vector_rasterize`: Burns vector geometries into a raster
     - :ref:`gdal_vector_reproject`: Reproject a vector dataset

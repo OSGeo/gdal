@@ -4075,6 +4075,26 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
                 return false;
             }
 
+            const auto allowedFormats =
+                arg.GetMetadataItem(GAAMDI_ALLOWED_FORMATS);
+            if (allowedFormats && !allowedFormats->empty() &&
+                std::find(allowedFormats->begin(), allowedFormats->end(),
+                          val) != allowedFormats->end())
+            {
+                return true;
+            }
+
+            const auto excludedFormats =
+                arg.GetMetadataItem(GAAMDI_EXCLUDED_FORMATS);
+            if (excludedFormats && !excludedFormats->empty() &&
+                std::find(excludedFormats->begin(), excludedFormats->end(),
+                          val) != excludedFormats->end())
+            {
+                ReportError(CE_Failure, CPLE_NotSupported,
+                            "%s output is not supported.", val.c_str());
+                return false;
+            }
+
             auto hDriver = GDALGetDriverByName(val.c_str());
             if (!hDriver)
             {
@@ -4185,6 +4205,8 @@ std::vector<std::string> GDALAlgorithm::FormatAutoCompleteFunction(
     std::vector<std::string> res;
     auto poDM = GetGDALDriverManager();
     const auto vrtCompatible = arg.GetMetadataItem(GAAMDI_VRT_COMPATIBLE);
+    const auto allowedFormats = arg.GetMetadataItem(GAAMDI_ALLOWED_FORMATS);
+    const auto excludedFormats = arg.GetMetadataItem(GAAMDI_EXCLUDED_FORMATS);
     const auto caps = arg.GetMetadataItem(GAAMDI_REQUIRED_CAPABILITIES);
     for (int i = 0; i < poDM->GetDriverCount(); ++i)
     {
@@ -4195,6 +4217,19 @@ std::vector<std::string> GDALAlgorithm::FormatAutoCompleteFunction(
             EQUAL(poDriver->GetDescription(), "VRT"))
         {
             // do nothing
+        }
+        else if (allowedFormats && !allowedFormats->empty() &&
+                 std::find(allowedFormats->begin(), allowedFormats->end(),
+                           poDriver->GetDescription()) != allowedFormats->end())
+        {
+            res.push_back(poDriver->GetDescription());
+        }
+        else if (excludedFormats && !excludedFormats->empty() &&
+                 std::find(excludedFormats->begin(), excludedFormats->end(),
+                           poDriver->GetDescription()) !=
+                     excludedFormats->end())
+        {
+            continue;
         }
         else if (caps)
         {

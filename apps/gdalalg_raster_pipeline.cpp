@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_raster_pipeline.h"
+#include "gdalalg_materialize.h"
 #include "gdalalg_raster_read.h"
 #include "gdalalg_raster_calc.h"
 #include "gdalalg_raster_aspect.h"
@@ -189,6 +190,10 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALRasterNoDataToAlphaAlgorithm>();
     registry.Register<GDALRasterFillNodataAlgorithm>();
     registry.Register<GDALRasterHillshadeAlgorithm>();
+
+    registry.Register<GDALMaterializeRasterAlgorithm>(
+        addSuffixIfNeeded(GDALMaterializeRasterAlgorithm::NAME));
+
     registry.Register<GDALRasterMosaicAlgorithm>();
     registry.Register<GDALRasterOverviewAlgorithm>();
     registry.Register<GDALRasterPansharpenAlgorithm>();

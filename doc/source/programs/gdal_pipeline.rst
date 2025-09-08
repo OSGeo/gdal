@@ -18,6 +18,12 @@ Description
 :program:`gdal pipeline` execute a pipeline, taking a raster or input dataset,
 execute steps and finally writing a raster or vector dataset.
 
+Most steps proceed in on-demand evaluation of raster blocks or features,
+unless otherwise stated in their documentation, without "materializing" the
+resulting dataset of the operation of each step. It may be desirable sometimes
+for performance purposes to proceed to materializing an intermediate dataset
+to disk using :ref:`gdal_raster_materialize` or :ref:`gdal_vector_materialize`.
+
 Synopsis
 --------
 

@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_vector_pipeline.h"
+#include "gdalalg_materialize.h"
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_buffer.h"
 #include "gdalalg_vector_check_coverage.h"
@@ -153,6 +154,9 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
         addSuffixIfNeeded(GDALVectorEditAlgorithm::NAME));
 
     registry.Register<GDALVectorExplodeCollectionsAlgorithm>();
+
+    registry.Register<GDALMaterializeVectorAlgorithm>(
+        addSuffixIfNeeded(GDALMaterializeVectorAlgorithm::NAME));
 
     registry.Register<GDALVectorReprojectAlgorithm>(
         addSuffixIfNeeded(GDALVectorReprojectAlgorithm::NAME));

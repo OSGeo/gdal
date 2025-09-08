@@ -321,6 +321,12 @@ constexpr const char *GAAMDI_REQUIRED_CAPABILITIES = "required_capabilities";
 /** Argument metadata item that applies to "output-format" argument */
 constexpr const char *GAAMDI_VRT_COMPATIBLE = "vrt_compatible";
 
+/** Argument metadata item that applies to "output-format" argument */
+constexpr const char *GAAMDI_ALLOWED_FORMATS = "allowed_formats";
+
+/** Argument metadata item that applies to "output-format" argument */
+constexpr const char *GAAMDI_EXCLUDED_FORMATS = "excluded_formats";
+
 /** Name of the argument for an input dataset. */
 constexpr const char *GDAL_ARG_NAME_INPUT = "input";
 

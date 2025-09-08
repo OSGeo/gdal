@@ -37,6 +37,7 @@ target_sources(appslib PRIVATE
   gdalalg_dataset_copy.cpp
   gdalalg_dataset_rename.cpp
   gdalalg_dataset_delete.cpp
+  gdalalg_materialize.cpp
   gdalalg_mdim.cpp
   gdalalg_mdim_info.cpp
   gdalalg_mdim_convert.cpp
