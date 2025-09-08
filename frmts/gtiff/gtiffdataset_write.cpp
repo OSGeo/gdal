@@ -4683,17 +4683,19 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             else
             {
                 fDistance = GTiffGetJXLDistance(papszCreationOptions);
-                AppendMetadataItem(&psRoot, &psTail, "JXL_DISTANCE",
-                                   CPLSPrintf("%f", fDistance), 0, nullptr,
-                                   "IMAGE_STRUCTURE");
+                AppendMetadataItem(
+                    &psRoot, &psTail, "JXL_DISTANCE",
+                    CPLSPrintf("%f", static_cast<double>(fDistance)), 0,
+                    nullptr, "IMAGE_STRUCTURE");
             }
             const float fAlphaDistance =
                 GTiffGetJXLAlphaDistance(papszCreationOptions);
             if (fAlphaDistance >= 0.0f && fAlphaDistance != fDistance)
             {
-                AppendMetadataItem(&psRoot, &psTail, "JXL_ALPHA_DISTANCE",
-                                   CPLSPrintf("%f", fAlphaDistance), 0, nullptr,
-                                   "IMAGE_STRUCTURE");
+                AppendMetadataItem(
+                    &psRoot, &psTail, "JXL_ALPHA_DISTANCE",
+                    CPLSPrintf("%f", static_cast<double>(fAlphaDistance)), 0,
+                    nullptr, "IMAGE_STRUCTURE");
             }
             AppendMetadataItem(
                 &psRoot, &psTail, "JXL_EFFORT",
@@ -4966,7 +4968,7 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
                 if (j == 2)
                 {
                     // Last term of xyY color must be 1.0.
-                    if (v != 1.0)
+                    if (v != 1.0f)
                     {
                         bOutputCHR = false;
                         break;
@@ -5011,7 +5013,7 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
                     if (j == 2)
                     {
                         // Last term of xyY color must be 1.0.
-                        if (v != 1.0)
+                        if (v != 1.0f)
                         {
                             bOutputWhitepoint = false;
                             break;
@@ -6308,8 +6310,10 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_LOSSYNESS,
                      l_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_EFFORT, l_nJXLEffort);
-        TIFFSetField(l_hTIFF, TIFFTAG_JXL_DISTANCE, l_fJXLDistance);
-        TIFFSetField(l_hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE, l_fJXLAlphaDistance);
+        TIFFSetField(l_hTIFF, TIFFTAG_JXL_DISTANCE,
+                     static_cast<double>(l_fJXLDistance));
+        TIFFSetField(l_hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE,
+                     static_cast<double>(l_fJXLAlphaDistance));
     }
 #endif
     if (l_nCompression == COMPRESSION_WEBP)
@@ -8435,9 +8439,10 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_LOSSYNESS,
                      poDS->m_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_EFFORT, poDS->m_nJXLEffort);
-        TIFFSetField(l_hTIFF, TIFFTAG_JXL_DISTANCE, poDS->m_fJXLDistance);
+        TIFFSetField(l_hTIFF, TIFFTAG_JXL_DISTANCE,
+                     static_cast<double>(poDS->m_fJXLDistance));
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE,
-                     poDS->m_fJXLAlphaDistance);
+                     static_cast<double>(poDS->m_fJXLAlphaDistance));
     }
 #endif
     if (l_nCompression == COMPRESSION_WEBP)
