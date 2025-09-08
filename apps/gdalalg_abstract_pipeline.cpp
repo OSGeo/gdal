@@ -1814,6 +1814,19 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         CPLAssert(poCurDS);
     }
 
+    GDALProgressFunc pfnProgress = ctxt.m_pfnProgress;
+    void *pProgressData = ctxt.m_pProgressData;
+    if (IsCalledFromCommandLine() && !m_steps.empty())
+    {
+        auto stepOutputStringArg =
+            m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
+        if (stepOutputStringArg && stepOutputStringArg->IsOutput())
+        {
+            pfnProgress = nullptr;
+            pProgressData = nullptr;
+        }
+    }
+
     for (size_t i = 0; i < m_steps.size(); ++i)
     {
         auto &step = m_steps[i];
@@ -1858,7 +1871,7 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     static_cast<double>(countPipelinesWithProgress),
                 (iCurStepWithProgress + 1) /
                     static_cast<double>(countPipelinesWithProgress),
-                ctxt.m_pfnProgress, ctxt.m_pProgressData));
+                pfnProgress, pProgressData));
             ++iCurStepWithProgress;
             stepCtxt.m_pfnProgress = pScaledData ? GDALScaledProgress : nullptr;
             stepCtxt.m_pProgressData = pScaledData.get();
@@ -1895,9 +1908,9 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         }
     }
 
-    if (ctxt.m_pfnProgress &&
+    if (pfnProgress &&
         m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_STRING) == nullptr)
-        ctxt.m_pfnProgress(1.0, "", ctxt.m_pProgressData);
+        pfnProgress(1.0, "", pProgressData);
 
     if (!m_steps.back()->m_output.empty())
     {
