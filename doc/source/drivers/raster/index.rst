@@ -85,7 +85,7 @@ Raster drivers
    heif
    hf2
    hfa
-   Idrisi
+   idrisi
    ilwis
    iris
    isce
