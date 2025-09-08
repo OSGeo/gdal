@@ -290,6 +290,7 @@ void RegisterOGRSQLite()
     poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "SQLITE OGRSQL");
+    poDriver->SetMetadataItem(GDAL_DCAP_CAN_READ_AFTER_DELETE, "YES");
 
 #ifdef HAVE_RASTERLITE2
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");

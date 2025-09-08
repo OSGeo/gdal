@@ -1012,6 +1012,21 @@ typedef enum
  */
 #define GDAL_DIM_TYPE_PARAMETRIC "PARAMETRIC"
 
+/** "Capability" set by drivers that require re-opening the dataset to be able
+ * to read its content if it has just been created previously
+ *
+ * @since GDAL 3.12
+ */
+#define GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED "DCAP_REOPEN_AFTER_WRITE_REQUIRED"
+
+/** Capability set by drivers that can read from a dataset, even if it deleted
+ * from disk after it has been opened (i.e. such drivers do not need to reopen
+ * or test the existence of the file at that point)
+ *
+ * @since GDAL 3.12
+ */
+#define GDAL_DCAP_CAN_READ_AFTER_DELETE "DCAP_CAN_READ_AFTER_DELETE"
+
 #define GDsCAddRelationship                                                    \
     "AddRelationship" /**< Dataset capability for supporting AddRelationship() \
                          (at least partially) */
