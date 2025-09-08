@@ -1516,3 +1516,35 @@ def test_ogr_miramon_SHP_decimal_figures(tmp_vsimem):
 
     f = None
     ds = None
+
+
+###############################################################################
+# read layer with accents
+
+
+def check_layer_with_accents(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out/kml_layer_to_mm.pnt")
+    src_ds = gdal.OpenEx(
+        "data/miramon_inputs/LayerWithAccents.kml",
+        gdal.OF_VECTOR,
+    )
+    gdal.VectorTranslate(
+        out_filename,
+        src_ds,
+        format="MiraMonVector",
+    )
+
+    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, "Failed to get layer"
+
+    assert (
+        lyr.GetName() == "Refugis climàtics dels municipis de Catalunya"
+    ), "Failed to read accents from layer name"
+
+    assert lyr.GetFeatureCount() == 1706
+    assert lyr.GetGeomType() == ogr.wkbPoint
+
+    ds = None
