@@ -1463,7 +1463,8 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
             {
                 const bool bIsNoDataFloat =
                     eDT == GDT_Float32 &&
-                    static_cast<float>(dfNoData) == dfNoData;
+                    static_cast<double>(static_cast<float>(dfNoData)) ==
+                        dfNoData;
                 // Find the most compact decimal representation of the nodata
                 // value that can be used to exactly represent the binary value
                 int nSignificantDigits = bIsNoDataFloat ? 8 : 18;

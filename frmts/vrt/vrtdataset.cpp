@@ -857,7 +857,7 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLString osInitialCurrentVrtFilename(currentVrtFilename);
         CPLFree(pszCurDir);
 
-#if defined(HAVE_READLINK) && defined(HAVE_LSTAT)
+#if !defined(_WIN32)
         char filenameBuffer[2048];
 
         while (true)
@@ -910,7 +910,7 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
                 return nullptr;
             }
         }
-#endif  // HAVE_READLINK && HAVE_LSTAT
+#endif  // !defined(__WIN32)
 
         if (osInitialCurrentVrtFilename == currentVrtFilename)
             pszVRTPath =
@@ -1622,11 +1622,11 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             {
                 auto poBand =
                     dynamic_cast<VRTSourcedRasterBand *>(poDS->papoBands[i]);
-                if (poBand && poBand->nSources == 1 &&
-                    poBand->papoSources[0]->IsSimpleSource())
+                if (poBand && poBand->m_papoSources.size() == 1 &&
+                    poBand->m_papoSources[0]->IsSimpleSource())
                 {
                     auto poSource = cpl::down_cast<VRTSimpleSource *>(
-                        poBand->papoSources[0]);
+                        poBand->m_papoSources[0].get());
                     poSource->m_bRelativeToVRTOri = 0;
                     poSource->m_osSourceFileNameOri = osFilename;
                 }
@@ -2166,8 +2166,8 @@ int VRTDataset::CloseDependentDatasets()
 
 bool VRTDataset::CheckCompatibleForDatasetIO() const
 {
-    int nSources = 0;
-    VRTSource **papoSources = nullptr;
+    size_t nSources = 0;
+    const std::unique_ptr<VRTSource> *papoSources = nullptr;
     CPLString osResampling;
 
     if (m_nCompatibleForDatasetIO >= 0)
@@ -2194,27 +2194,28 @@ bool VRTDataset::CheckCompatibleForDatasetIO() const
 
         if (iBand == 0)
         {
-            nSources = poBand->nSources;
-            papoSources = poBand->papoSources;
-            for (int iSource = 0; iSource < nSources; iSource++)
+            nSources = poBand->m_papoSources.size();
+            papoSources = poBand->m_papoSources.data();
+            for (auto &poSource : poBand->m_papoSources)
             {
-                if (!papoSources[iSource]->IsSimpleSource())
+                if (!poSource->IsSimpleSource())
                     return false;
 
-                const VRTSimpleSource *poSource =
-                    static_cast<const VRTSimpleSource *>(papoSources[iSource]);
-                if (poSource->GetType() != VRTSimpleSource::GetTypeStatic())
+                const VRTSimpleSource *poSimpleSource =
+                    static_cast<const VRTSimpleSource *>(poSource.get());
+                if (poSimpleSource->GetType() !=
+                    VRTSimpleSource::GetTypeStatic())
                     return false;
 
-                if (poSource->m_nBand != iBand + 1 ||
-                    poSource->m_bGetMaskBand ||
-                    (nSources > 1 && poSource->m_osSrcDSName.empty()))
+                if (poSimpleSource->m_nBand != iBand + 1 ||
+                    poSimpleSource->m_bGetMaskBand ||
+                    (nSources > 1 && poSimpleSource->m_osSrcDSName.empty()))
                 {
                     return false;
                 }
-                if (nSources == 1 && poSource->m_osSrcDSName.empty())
+                if (nSources == 1 && poSimpleSource->m_osSrcDSName.empty())
                 {
-                    if (auto poSourceBand = poSource->GetRasterBand())
+                    if (auto poSourceBand = poSimpleSource->GetRasterBand())
                     {
                         poFirstBandSourceDS = poSourceBand->GetDataset();
                     }
@@ -2223,25 +2224,26 @@ bool VRTDataset::CheckCompatibleForDatasetIO() const
                         return false;
                     }
                 }
-                osResampling = poSource->GetResampling();
+                osResampling = poSimpleSource->GetResampling();
             }
         }
-        else if (nSources != poBand->nSources)
+        else if (nSources != poBand->m_papoSources.size())
         {
             return false;
         }
         else
         {
-            for (int iSource = 0; iSource < nSources; iSource++)
+            for (size_t iSource = 0; iSource < nSources; iSource++)
             {
-                if (!poBand->papoSources[iSource]->IsSimpleSource())
+                if (!poBand->m_papoSources[iSource]->IsSimpleSource())
                     return false;
                 const VRTSimpleSource *poRefSource =
-                    static_cast<const VRTSimpleSource *>(papoSources[iSource]);
+                    static_cast<const VRTSimpleSource *>(
+                        papoSources[iSource].get());
 
                 const VRTSimpleSource *poSource =
                     static_cast<const VRTSimpleSource *>(
-                        poBand->papoSources[iSource]);
+                        poBand->m_papoSources[iSource].get());
                 if (poSource->GetType() != VRTSimpleSource::GetTypeStatic())
                     return false;
                 if (poSource->m_nBand != iBand + 1 ||
@@ -2285,11 +2287,11 @@ GDALDataset *VRTDataset::GetSingleSimpleSource()
 
     VRTSourcedRasterBand *poVRTBand =
         static_cast<VRTSourcedRasterBand *>(papoBands[0]);
-    if (poVRTBand->nSources != 1)
+    if (poVRTBand->m_papoSources.size() != 1)
         return nullptr;
 
     VRTSimpleSource *poSource =
-        static_cast<VRTSimpleSource *>(poVRTBand->papoSources[0]);
+        static_cast<VRTSimpleSource *>(poVRTBand->m_papoSources[0].get());
 
     GDALRasterBand *poBand = poSource->GetRasterBand();
     if (poBand == nullptr || poSource->GetMaskBandMainBand() != nullptr)
@@ -2348,11 +2350,11 @@ CPLErr VRTDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 
     VRTSourcedRasterBand *poVRTBand =
         static_cast<VRTSourcedRasterBand *>(papoBands[0]);
-    if (poVRTBand->nSources != 1)
+    if (poVRTBand->m_papoSources.size() != 1)
         return CE_None;
 
     VRTSimpleSource *poSource =
-        static_cast<VRTSimpleSource *>(poVRTBand->papoSources[0]);
+        static_cast<VRTSimpleSource *>(poVRTBand->m_papoSources[0].get());
 
     /* Find source window and buffer size */
     double dfReqXOff = 0.0;
@@ -2567,8 +2569,8 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
             /* Dirty little trick to initialize the buffer without doing */
             /* any real I/O */
-            const int nSavedSources = poBand->nSources;
-            poBand->nSources = 0;
+            std::vector<std::unique_ptr<VRTSource>> papoSavedSources;
+            std::swap(papoSavedSources, poBand->m_papoSources);
 
             GDALProgressFunc pfnProgressGlobal = psExtraArg->pfnProgress;
             psExtraArg->pfnProgress = nullptr;
@@ -2582,7 +2584,7 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
             psExtraArg->pfnProgress = pfnProgressGlobal;
 
-            poBand->nSources = nSavedSources;
+            std::swap(papoSavedSources, poBand->m_papoSources);
         }
 
         CPLErr eErr = CE_None;
@@ -2633,13 +2635,12 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
             auto oQueue = psThreadPool->CreateJobQueue();
             std::atomic<int> nCompletedJobs = 0;
-            for (int iSource = 0; iSource < poBand->nSources; iSource++)
+            for (auto &poSource : poBand->m_papoSources)
             {
-                auto poSource = poBand->papoSources[iSource];
                 if (!poSource->IsSimpleSource())
                     continue;
                 auto poSimpleSource =
-                    cpl::down_cast<VRTSimpleSource *>(poSource);
+                    cpl::down_cast<VRTSimpleSource *>(poSource.get());
                 if (poSimpleSource->DstWindowIntersects(dfXOff, dfYOff, dfXSize,
                                                         dfYSize))
                 {
@@ -2693,17 +2694,17 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             GDALProgressFunc pfnProgressGlobal = psExtraArg->pfnProgress;
             void *pProgressDataGlobal = psExtraArg->pProgressData;
 
-            for (int iSource = 0; eErr == CE_None && iSource < poBand->nSources;
+            const int nSources = static_cast<int>(poBand->m_papoSources.size());
+            for (int iSource = 0; eErr == CE_None && iSource < nSources;
                  iSource++)
             {
                 psExtraArg->pfnProgress = GDALScaledProgress;
                 psExtraArg->pProgressData = GDALCreateScaledProgress(
-                    1.0 * iSource / poBand->nSources,
-                    1.0 * (iSource + 1) / poBand->nSources, pfnProgressGlobal,
-                    pProgressDataGlobal);
+                    1.0 * iSource / nSources, 1.0 * (iSource + 1) / nSources,
+                    pfnProgressGlobal, pProgressDataGlobal);
 
                 VRTSimpleSource *poSource = static_cast<VRTSimpleSource *>(
-                    poBand->papoSources[iSource]);
+                    poBand->m_papoSources[iSource].get());
 
                 eErr = poSource->DatasetRasterIO(
                     poBand->GetRasterDataType(), nXOff, nYOff, nXSize, nYSize,
@@ -2763,16 +2764,14 @@ void VRTDataset::UnsetPreservedRelativeFilenames()
 
         VRTSourcedRasterBand *poBand =
             static_cast<VRTSourcedRasterBand *>(papoBands[iBand]);
-        const int nSources = poBand->nSources;
-        VRTSource **papoSources = poBand->papoSources;
-        for (int iSource = 0; iSource < nSources; iSource++)
+        for (auto &poSource : poBand->m_papoSources)
         {
-            if (!papoSources[iSource]->IsSimpleSource())
+            if (!poSource->IsSimpleSource())
                 continue;
 
-            VRTSimpleSource *poSource =
-                static_cast<VRTSimpleSource *>(papoSources[iSource]);
-            poSource->UnsetPreservedRelativeFilenames();
+            VRTSimpleSource *poSimpleSource =
+                static_cast<VRTSimpleSource *>(poSource.get());
+            poSimpleSource->UnsetPreservedRelativeFilenames();
         }
     }
 }
@@ -2791,13 +2790,13 @@ static bool CheckBandForOverview(GDALRasterBand *poBand,
 
     VRTSourcedRasterBand *poVRTBand =
         cpl::down_cast<VRTSourcedRasterBand *>(poBand);
-    if (poVRTBand->nSources != 1)
+    if (poVRTBand->m_papoSources.size() != 1)
         return false;
-    if (!poVRTBand->papoSources[0]->IsSimpleSource())
+    if (!poVRTBand->m_papoSources[0]->IsSimpleSource())
         return false;
 
     VRTSimpleSource *poSource =
-        cpl::down_cast<VRTSimpleSource *>(poVRTBand->papoSources[0]);
+        cpl::down_cast<VRTSimpleSource *>(poVRTBand->m_papoSources[0].get());
     const char *pszType = poSource->GetType();
     if (pszType != VRTSimpleSource::GetTypeStatic() &&
         pszType != VRTComplexSource::GetTypeStatic())
@@ -2875,7 +2874,7 @@ void VRTDataset::BuildVirtualOverviews()
     VRTSourcedRasterBand *l_poVRTBand =
         cpl::down_cast<VRTSourcedRasterBand *>(papoBands[0]);
     VRTSimpleSource *poSource =
-        cpl::down_cast<VRTSimpleSource *>(l_poVRTBand->papoSources[0]);
+        cpl::down_cast<VRTSimpleSource *>(l_poVRTBand->m_papoSources[0].get());
     const double dfDstToSrcXRatio =
         poSource->m_dfDstXSize / poSource->m_dfSrcXSize;
     const double dfDstToSrcYRatio =
@@ -2942,18 +2941,18 @@ void VRTDataset::BuildVirtualOverviews()
             poOvrVRTBand->m_dfNoDataValue = poVRTBand->m_dfNoDataValue;
             poOvrVRTBand->m_bHideNoDataValue = poVRTBand->m_bHideNoDataValue;
 
-            VRTSimpleSource *poSrcSource =
-                cpl::down_cast<VRTSimpleSource *>(poVRTBand->papoSources[0]);
-            VRTSimpleSource *poNewSource = nullptr;
+            VRTSimpleSource *poSrcSource = cpl::down_cast<VRTSimpleSource *>(
+                poVRTBand->m_papoSources[0].get());
+            std::unique_ptr<VRTSimpleSource> poNewSource;
             const char *pszType = poSrcSource->GetType();
             if (pszType == VRTSimpleSource::GetTypeStatic())
             {
-                poNewSource =
-                    new VRTSimpleSource(poSrcSource, dfXRatio, dfYRatio);
+                poNewSource = std::make_unique<VRTSimpleSource>(
+                    poSrcSource, dfXRatio, dfYRatio);
             }
             else if (pszType == VRTComplexSource::GetTypeStatic())
             {
-                poNewSource = new VRTComplexSource(
+                poNewSource = std::make_unique<VRTComplexSource>(
                     cpl::down_cast<VRTComplexSource *>(poSrcSource), dfXRatio,
                     dfYRatio);
             }
@@ -2970,7 +2969,7 @@ void VRTDataset::BuildVirtualOverviews()
                 auto poNewSourceBandDS = poNewSourceBand->GetDataset();
                 if (poNewSourceBandDS)
                     poNewSourceBandDS->Reference();
-                poOvrVRTBand->AddSource(poNewSource);
+                poOvrVRTBand->AddSource(std::move(poNewSource));
             }
 
             return poOvrVRTBand;
@@ -3060,7 +3059,9 @@ CPLErr VRTDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                                    void *pProgressData,
                                    CSLConstList papszOptions)
 {
-    if (CPLTestBool(CPLGetConfigOption("VRT_VIRTUAL_OVERVIEWS", "NO")))
+    if (CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "VIRTUAL",
+            CPLGetConfigOption("VRT_VIRTUAL_OVERVIEWS", "NO"))))
     {
         SetNeedsFlush();
         if (nOverviews == 0 ||
@@ -3134,14 +3135,15 @@ bool VRTDataset::GetShiftedDataset(int nXOff, int nYOff, int nXSize, int nYSize,
 
     VRTSourcedRasterBand *poVRTBand =
         static_cast<VRTSourcedRasterBand *>(papoBands[0]);
-    if (poVRTBand->nSources != 1)
+    if (poVRTBand->m_papoSources.size() != 1)
         return false;
 
     VRTSimpleSource *poSource =
-        static_cast<VRTSimpleSource *>(poVRTBand->papoSources[0]);
+        static_cast<VRTSimpleSource *>(poVRTBand->m_papoSources[0].get());
 
     GDALRasterBand *poBand = poSource->GetRasterBand();
-    if (!poBand || poSource->GetMaskBandMainBand())
+    if (!poBand || poSource->GetMaskBandMainBand() ||
+        poBand->GetRasterDataType() != poVRTBand->GetRasterDataType())
         return false;
 
     poSrcDataset = poBand->GetDataset();
@@ -3250,33 +3252,44 @@ void VRTDataset::ClearStatistics()
 }
 
 /************************************************************************/
-/*                   VRTMapSharedResources::Get()                       */
+/*                 VRTMapSharedResources::LockGuard()                   */
 /************************************************************************/
 
-GDALDataset *VRTMapSharedResources::Get(const std::string &osKey) const
+std::unique_ptr<std::lock_guard<std::mutex>>
+VRTMapSharedResources::LockGuard() const
 {
-    if (poMutex)
-        poMutex->lock();
-    auto oIter = oMap.find(osKey);
-    GDALDataset *poRet = nullptr;
-    if (oIter != oMap.end())
-        poRet = oIter->second;
-    if (poMutex)
-        poMutex->unlock();
-    return poRet;
+    std::unique_ptr<std::lock_guard<std::mutex>> poLockGuard;
+    if (m_bUseMutex)
+    {
+        poLockGuard = std::make_unique<std::lock_guard<std::mutex>>(m_oMutex);
+    }
+    return poLockGuard;
 }
 
 /************************************************************************/
 /*                   VRTMapSharedResources::Get()                       */
 /************************************************************************/
 
+GDALDataset *VRTMapSharedResources::Get(const std::string &osKey) const
+{
+    auto poLockGuard = LockGuard();
+    CPL_IGNORE_RET_VAL(poLockGuard);
+    auto oIter = m_oMap.find(osKey);
+    GDALDataset *poRet = nullptr;
+    if (oIter != m_oMap.end())
+        poRet = oIter->second;
+    return poRet;
+}
+
+/************************************************************************/
+/*                   VRTMapSharedResources::Insert()                    */
+/************************************************************************/
+
 void VRTMapSharedResources::Insert(const std::string &osKey, GDALDataset *poDS)
 {
-    if (poMutex)
-        poMutex->lock();
-    oMap[osKey] = poDS;
-    if (poMutex)
-        poMutex->unlock();
+    auto poLockGuard = LockGuard();
+    CPL_IGNORE_RET_VAL(poLockGuard);
+    m_oMap[osKey] = poDS;
 }
 
 /************************************************************************/
@@ -3285,7 +3298,7 @@ void VRTMapSharedResources::Insert(const std::string &osKey, GDALDataset *poDS)
 
 void VRTMapSharedResources::InitMutex()
 {
-    poMutex = &oMutex;
+    m_bUseMutex = true;
 }
 
 /*! @endcond */

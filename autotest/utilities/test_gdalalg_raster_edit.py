@@ -180,6 +180,24 @@ def test_gdalalg_raster_edit_metadata(tmp_vsimem):
         assert ds.GetMetadata() == {"AREA_OR_POINT": "Area", "bar": "baz"}
 
 
+def test_gdalalg_raster_edit_unset_metadata_domain(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetMetadata(['{ "key": "value" }'], "json:ISIS3")
+
+    gdal.Translate(tmp_vsimem / "my.tif", src_ds)
+
+    with gdal.Open(tmp_vsimem / "my.tif") as ds:
+        assert ds.GetMetadata("json:ISIS3")[0] == '{ "key": "value" }'
+
+    gdal.Run(
+        "raster edit", dataset=tmp_vsimem / "my.tif", unset_metadata_domain="json:ISIS3"
+    )
+
+    with gdal.Open(tmp_vsimem / "my.tif") as ds:
+        assert ds.GetMetadata("json:ISIS3") is None
+
+
 def test_gdalalg_raster_edit_stats():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 1)

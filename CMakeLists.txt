@@ -48,7 +48,7 @@ endif()
 include(Ccache)
 
 #
-if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86|AMD64)")
+if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i586|i686|x86|AMD64)")
   check_compiler_machine_option(flag SSE)
   if (NOT ${flag} STREQUAL "")
     set(HAVE_SSE_AT_COMPILE_TIME 1)

@@ -21,9 +21,6 @@
 #include <assert.h>
 #include <string.h>
 #include <cerrno>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #include "cpl_conv.h"
 #include "cpl_vsi.h"

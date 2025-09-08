@@ -301,7 +301,7 @@ OGRSelafinDataSource::~OGRSelafinDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSelafinDataSource::TestCapability(const char *pszCap)
+int OGRSelafinDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return TRUE;
@@ -317,7 +317,7 @@ int OGRSelafinDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRSelafinDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRSelafinDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;
@@ -443,7 +443,7 @@ int OGRSelafinDataSource::OpenTable(const char *pszFilename)
     }
     if (!bUpdate && strstr(pszFilename, "/vsigzip/") == nullptr &&
         strstr(pszFilename, "/vsizip/") == nullptr)
-        fp = (VSILFILE *)VSICreateBufferedReaderHandle((VSIVirtualHandle *)fp);
+        fp = VSICreateBufferedReaderHandle(fp);
 
     // Quickly check if the file is in Selafin format, before actually starting
     // to read to make it faster

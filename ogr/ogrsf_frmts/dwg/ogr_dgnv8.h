@@ -81,7 +81,7 @@ class OGRDGNV8Layer final : public OGRLayer
 
   public:
     OGRDGNV8Layer(OGRDGNV8DataSource *poDS, OdDgModelPtr pModel);
-    virtual ~OGRDGNV8Layer();
+    ~OGRDGNV8Layer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -90,12 +90,12 @@ class OGRDGNV8Layer final : public OGRLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
@@ -122,7 +122,7 @@ class OGRDGNV8DataSource final : public GDALDataset
 
   public:
     explicit OGRDGNV8DataSource(OGRDGNV8Services *poServices);
-    ~OGRDGNV8DataSource();
+    ~OGRDGNV8DataSource() override;
 
     int Open(const char *, bool bUpdate);
     bool PreCreate(const char *, char **);
@@ -131,18 +131,18 @@ class OGRDGNV8DataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return m_nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) override;
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    int TestCapability(const char *) const override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 

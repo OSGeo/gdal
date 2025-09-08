@@ -662,7 +662,7 @@ extern "C++"
     CPL_STATIC_CAST(GUInt16, (CPL_STATIC_CAST(GUInt16, x) << 8) |              \
                                  (CPL_STATIC_CAST(GUInt16, x) >> 8))
 
-#if defined(HAVE_GCC_BSWAP)
+#ifdef __GNUC__
 /** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x)                                                          \
     CPL_STATIC_CAST(GUInt32, __builtin_bswap32(CPL_STATIC_CAST(GUInt32, x)))
@@ -820,32 +820,6 @@ extern "C++"
 #define UNREFERENCED_PARAM(param) ((void)param)
 #endif /* UNREFERENCED_PARAMETER */
 #endif /* UNREFERENCED_PARAM */
-/*! @endcond */
-
-/***********************************************************************
- * Define CPL_CVSID() macro.  It can be disabled during a build by
- * defining DISABLE_CVSID in the compiler options.
- *
- * The cvsid_aw() function is just there to prevent reports of cpl_cvsid()
- * being unused.
- */
-
-/*! @cond Doxygen_Suppress */
-#ifndef DISABLE_CVSID
-#if defined(__GNUC__) && __GNUC__ >= 4
-#define CPL_CVSID(string)                                                      \
-    static const char cpl_cvsid[] __attribute__((used)) = string;
-#else
-#define CPL_CVSID(string)                                                      \
-    static const char cpl_cvsid[] = string;                                    \
-    static const char *cvsid_aw()                                              \
-    {                                                                          \
-        return (cvsid_aw() ? NULL : cpl_cvsid);                                \
-    }
-#endif
-#else
-#define CPL_CVSID(string)
-#endif
 /*! @endcond */
 
 /* We exclude mingw64 4.6 which seems to be broken regarding this */

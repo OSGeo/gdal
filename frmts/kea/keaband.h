@@ -42,7 +42,7 @@ class KEARasterBand CPL_NON_FINAL : public GDALRasterBand
     // constructor/destructor
     KEARasterBand(KEADataset *pDataset, int nSrcBand, GDALAccess eAccess,
                   kealib::KEAImageIO *pImageIO, LockedRefCount *pRefCount);
-    ~KEARasterBand();
+    ~KEARasterBand() override;
 
     // virtual methods for overview support
     int GetOverviewCount() override;
@@ -69,7 +69,7 @@ class KEARasterBand CPL_NON_FINAL : public GDALRasterBand
     CPLErr SetNoDataValueAsInt64(int64_t nNoData) override;
     CPLErr SetNoDataValueAsUInt64(uint64_t nNoData) override;
 
-    virtual CPLErr DeleteNoDataValue() override;
+    CPLErr DeleteNoDataValue() override;
 
     // histogram methods
     CPLErr GetDefaultHistogram(double *pdfMin, double *pdfMax, int *pnBuckets,
@@ -110,8 +110,8 @@ class KEARasterBand CPL_NON_FINAL : public GDALRasterBand
 
   protected:
     // methods for accessing data as blocks
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
     // updates m_papszMetadataList
     void UpdateMetadataList();

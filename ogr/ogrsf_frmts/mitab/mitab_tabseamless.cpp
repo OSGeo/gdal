@@ -236,7 +236,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
         return -1;
     }
 
-    OGRFeatureDefn *poDefn = m_poIndexTable->GetLayerDefn();
+    const OGRFeatureDefn *poDefn = m_poIndexTable->GetLayerDefn();
     if (poDefn == nullptr ||
         (m_nTableNameField = poDefn->GetFieldIndex("Table")) == -1)
     {
@@ -263,7 +263,8 @@ int TABSeamless::OpenForRead(const char *pszFname,
     }
 
     CPLAssert(m_poCurBaseTable);
-    m_poFeatureDefnRef = m_poCurBaseTable->GetLayerDefn();
+    OGRLayer *poCurBaseTable = m_poCurBaseTable;
+    m_poFeatureDefnRef = poCurBaseTable->GetLayerDefn();
     m_poFeatureDefnRef->Reference();
 
     return 0;
@@ -585,7 +586,7 @@ TABFeature *TABSeamless::GetFeatureRef(GIntBig nFeatureId)
 }
 
 /**********************************************************************
- *                   TABSeamless::GetLayerDefn()
+ *                   TABSeamless::GetLayerDefn() const
  *
  * Returns a reference to the OGRFeatureDefn that will be used to create
  * features in this dataset.
@@ -595,7 +596,7 @@ TABFeature *TABSeamless::GetFeatureRef(GIntBig nFeatureId)
  * NULL if the OGRFeatureDefn has not been initialized yet (i.e. no file
  * opened yet)
  **********************************************************************/
-OGRFeatureDefn *TABSeamless::GetLayerDefn()
+const OGRFeatureDefn *TABSeamless::GetLayerDefn() const
 {
     return m_poFeatureDefnRef;
 }
@@ -740,7 +741,7 @@ GIntBig TABSeamless::GetFeatureCount(int bForce)
  *
  * Returns NULL if the SpatialRef cannot be accessed.
  **********************************************************************/
-OGRSpatialReference *TABSeamless::GetSpatialRef()
+const OGRSpatialReference *TABSeamless::GetSpatialRef() const
 {
     if (m_poIndexTable == nullptr)
     {
@@ -777,7 +778,7 @@ OGRErr TABSeamless::ISetSpatialFilter(int /*iGeomField*/,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int TABSeamless::TestCapability(const char *pszCap)
+int TABSeamless::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

@@ -1846,11 +1846,15 @@ static pthread_once_t oTLSKeySetup = PTHREAD_ONCE_INIT;
 /*                             CPLMake_key()                            */
 /************************************************************************/
 
+static void CPLCleanupTLSListWrapper(void *papszList)
+{
+    CPLCleanupTLSList(static_cast<void **>(papszList));
+}
+
 static void CPLMake_key()
 
 {
-    if (pthread_key_create(&oTLSKey, reinterpret_cast<void (*)(void *)>(
-                                         CPLCleanupTLSList)) != 0)
+    if (pthread_key_create(&oTLSKey, CPLCleanupTLSListWrapper) != 0)
     {
         CPLError(CE_Fatal, CPLE_AppDefined, "pthread_key_create() failed!");
     }

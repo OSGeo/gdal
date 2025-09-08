@@ -54,7 +54,7 @@ class GFFDataset final : public GDALPamDataset
     // long nOffsetMantissa;
   public:
     GFFDataset();
-    ~GFFDataset();
+    ~GFFDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *poOpenInfo);

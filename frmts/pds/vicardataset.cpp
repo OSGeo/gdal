@@ -126,7 +126,7 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
                                 vsi_l_offset nFileOffset, vsi_l_offset nStride,
                                 RawRasterBand::ByteOrder eBINTByteOrder,
                                 RawRasterBand::ByteOrder eBREALByteOrder);
-    ~OGRVICARBinaryPrefixesLayer();
+    ~OGRVICARBinaryPrefixesLayer() override;
 
     bool HasError() const
     {
@@ -138,14 +138,14 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
         m_iRecord = 0;
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
     OGRFeature *GetNextFeature() override;
 
-    int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return false;
     }
@@ -463,13 +463,12 @@ class VICARRawRasterBand final : public RawRasterBand
                        int nLineOffsetIn, GDALDataType eDataTypeIn,
                        ByteOrder eByteOrderIn);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/
@@ -495,7 +494,7 @@ VICARRawRasterBand::VICARRawRasterBand(VICARDataset *poDSIn, int nBandIn,
 CPLErr VICARRawRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    VICARDataset *poGDS = reinterpret_cast<VICARDataset *>(poDS);
+    VICARDataset *poGDS = cpl::down_cast<VICARDataset *>(poDS);
     if (!poGDS->m_bIsLabelWritten)
         poGDS->WriteLabel();
     return RawRasterBand::IReadBlock(nXBlock, nYBlock, pImage);
@@ -508,7 +507,7 @@ CPLErr VICARRawRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 CPLErr VICARRawRasterBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    VICARDataset *poGDS = reinterpret_cast<VICARDataset *>(poDS);
+    VICARDataset *poGDS = cpl::down_cast<VICARDataset *>(poDS);
     if (!poGDS->m_bIsLabelWritten)
         poGDS->WriteLabel();
     return RawRasterBand::IWriteBlock(nXBlock, nYBlock, pImage);
@@ -526,7 +525,7 @@ CPLErr VICARRawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      GDALRasterIOExtraArg *psExtraArg)
 
 {
-    VICARDataset *poGDS = reinterpret_cast<VICARDataset *>(poDS);
+    VICARDataset *poGDS = cpl::down_cast<VICARDataset *>(poDS);
     if (!poGDS->m_bIsLabelWritten)
         poGDS->WriteLabel();
     return RawRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -543,8 +542,8 @@ class VICARBASICRasterBand final : public GDALPamRasterBand
   public:
     VICARBASICRasterBand(VICARDataset *poDSIn, int nBandIn, GDALDataType eType);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 };
 
 /************************************************************************/
@@ -563,7 +562,7 @@ VICARBASICRasterBand::VICARBASICRasterBand(VICARDataset *poDSIn, int nBandIn,
 
 namespace
 {
-class DecodeEncodeException : public std::exception
+class DecodeEncodeException final : public std::exception
 {
   public:
     DecodeEncodeException() = default;
@@ -917,7 +916,7 @@ CPLErr VICARBASICRasterBand::IReadBlock(int /*nXBlock*/, int nYBlock,
                                         void *pImage)
 
 {
-    VICARDataset *poGDS = reinterpret_cast<VICARDataset *>(poDS);
+    VICARDataset *poGDS = cpl::down_cast<VICARDataset *>(poDS);
 
     const int nRecord = (nBand - 1) * nRasterYSize + nYBlock;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
@@ -1046,7 +1045,7 @@ CPLErr VICARBASICRasterBand::IWriteBlock(int /*nXBlock*/, int nYBlock,
                                          void *pImage)
 
 {
-    VICARDataset *poGDS = reinterpret_cast<VICARDataset *>(poDS);
+    VICARDataset *poGDS = cpl::down_cast<VICARDataset *>(poDS);
     if (poGDS->eAccess == GA_ReadOnly)
         return CE_Failure;
     if (!poGDS->m_bIsLabelWritten)

@@ -1408,70 +1408,70 @@ End_Object
 # Test history
 
 
-def test_isis_27():
+@pytest.mark.parametrize("src_location", ["LABEL", "EXTERNAL"])
+@pytest.mark.parametrize("dst_location", ["LABEL", "EXTERNAL"])
+def test_isis_27(tmp_vsimem, src_location, dst_location):
 
-    for src_location in ["LABEL", "EXTERNAL"]:
-        for dst_location in ["LABEL", "EXTERNAL"]:
-            gdal.GetDriverByName("ISIS3").Create(
-                "/vsimem/out.lbl", 1, 1, options=["DATA_LOCATION=" + src_location]
-            )
-            gdal.Translate(
-                "/vsimem/out2.lbl",
-                "/vsimem/out.lbl",
-                format="ISIS3",
-                creationOptions=["DATA_LOCATION=" + dst_location],
-            )
+    gdal.GetDriverByName("ISIS3").Create(
+        tmp_vsimem / "out.lbl", 1, 1, options=["DATA_LOCATION=" + src_location]
+    )
+    gdal.Translate(
+        tmp_vsimem / "out2.lbl",
+        tmp_vsimem / "out.lbl",
+        format="ISIS3",
+        creationOptions=["DATA_LOCATION=" + dst_location],
+    )
 
-            f = gdal.VSIFOpenL("/vsimem/out2.lbl", "rb")
-            content = None
-            if f is not None:
-                content = gdal.VSIFReadL(1, 100000, f).decode("ASCII")
-                gdal.VSIFCloseL(f)
+    f = gdal.VSIFOpenL(tmp_vsimem / "out2.lbl", "rb")
+    content = None
+    if f is not None:
+        content = gdal.VSIFReadL(1, 100000, f).decode("ASCII")
+        gdal.VSIFCloseL(f)
 
-            ds = gdal.Open("/vsimem/out2.lbl")
-            lbl = ds.GetMetadata_List("json:ISIS3")[0]
-            lbl = json.loads(lbl)
-            offset = lbl["History"]["StartByte"] - 1
-            size = lbl["History"]["Bytes"]
+    ds = gdal.Open(tmp_vsimem / "out2.lbl")
+    lbl = ds.GetMetadata_List("json:ISIS3")[0]
+    lbl = json.loads(lbl)
+    offset = lbl["History_IsisCube"]["StartByte"] - 1
+    size = lbl["History_IsisCube"]["Bytes"]
 
-            if dst_location == "EXTERNAL":
-                assert lbl["Label"]["Bytes"] < 65536
+    if dst_location == "EXTERNAL":
+        assert lbl["Label"]["Bytes"] < 65536
 
-                history_filename = lbl["History"]["^History"]
-                if history_filename != "out2.History.IsisCube":
-                    print(src_location)
-                    print(dst_location)
-                    pytest.fail(content)
+        history_filename = lbl["History_IsisCube"]["^History"]
+        if history_filename != "out2.History.IsisCube":
+            print(src_location)
+            print(dst_location)
+            pytest.fail(content)
 
-                f = gdal.VSIFOpenL("/vsimem/" + history_filename, "rb")
-                history = None
-                if f is not None:
-                    history = gdal.VSIFReadL(1, 100000, f).decode("ASCII")
-                    gdal.VSIFCloseL(f)
+        f = gdal.VSIFOpenL(tmp_vsimem / history_filename, "rb")
+        history = None
+        if f is not None:
+            history = gdal.VSIFReadL(1, 100000, f).decode("ASCII")
+            gdal.VSIFCloseL(f)
 
-                if offset != 0 or size != len(history):
-                    print(src_location)
-                    print(dst_location)
-                    pytest.fail(content)
-            else:
-                assert lbl["Label"]["Bytes"] >= 65536
-                if offset + size != len(content):
-                    print(src_location)
-                    pytest.fail(dst_location)
-                history = content[offset:]
+        if offset != 0 or size != len(history):
+            print(src_location)
+            print(dst_location)
+            pytest.fail(content)
+    else:
+        assert lbl["Label"]["Bytes"] >= 65536
+        if offset + size != len(content):
+            print(src_location, offset + size, len(content))
+            pytest.fail(dst_location)
+        history = content[offset:]
 
-            if (
-                not history.startswith("Object = ")
-                or "FROM = out.lbl" not in history
-                or "TO   = out2.lbl" not in history
-                or "TO = out.lbl" not in history
-            ):
-                print(src_location)
-                print(dst_location)
-                pytest.fail(content)
+    if (
+        not history.startswith("Object = ")
+        or "FROM = out.lbl" not in history
+        or "TO   = out2.lbl" not in history
+        or "TO = out.lbl" not in history
+    ):
+        print(src_location)
+        print(dst_location)
+        pytest.fail(content)
 
-            gdal.GetDriverByName("ISIS3").Delete("/vsimem/out.lbl")
-            gdal.GetDriverByName("ISIS3").Delete("/vsimem/out2.lbl")
+
+def test_isis_27_bis():
 
     # Test GDAL_HISTORY
     gdal.GetDriverByName("ISIS3").Create(
@@ -1866,12 +1866,7 @@ End""",
     lbl = ds.GetMetadata_List("json:ISIS3")[0]
     assert lbl
     ds = None
-    assert gdal.VSIStatL("/vsimem/out.tif.aux.xml")
-
-    # Check that the label is in PAM, and not internal to GTiff
-    with gdaltest.config_option("GDAL_PAM_ENABLED", "NO"):
-        ds = gdal.Open("/vsimem/out.tif")
-        assert not ds.GetMetadata_List("json:ISIS3")
+    assert gdal.VSIStatL("/vsimem/out.tif.aux.xml") is None
 
     # Copy back from GeoTIFF to ISIS3
     src_ds_gtiff = gdal.Open("/vsimem/out.tif")
@@ -2048,3 +2043,203 @@ def test_isis3_oblique_cylindrical_write():
     ds = None
 
     gdal.GetDriverByName("ISIS3").Delete("/vsimem/isis_tmp.lbl")
+
+
+def test_isis_read_data(tmp_vsimem):
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "in.lbl",
+        """Object = IsisCube
+  Object = Core
+    StartByte = 1
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 1
+    End_Group
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+End_Object
+
+Object = Table
+  Name = FirstTable
+  StartByte = 1001
+  Bytes = 10
+End_Object
+
+Object = Table
+  Name = SecondTable
+  StartByte = 1
+  Bytes = 5
+  ^Table = in.bin
+End_Object
+
+Object = Table
+  Name = ThirdTable
+  StartByte = 1
+  Bytes = 5
+  ^Table = not_existing.bin
+End_Object
+
+End
+""",
+    )
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "in.bin", b"\x01\x02\x03\x04\x05")
+
+    f = gdal.VSIFOpenL(tmp_vsimem / "in.lbl", "rb+")
+    assert f
+    gdal.VSIFTruncateL(f, 1000)
+    gdal.VSIFSeekL(f, 1000, 0)
+    gdal.VSIFWriteL(b"\x01\x02\x03\x04\x05\x01\x02\x03\x04\x05", 10, 1, f)
+    gdal.VSIFCloseL(f)
+
+    with gdal.Open(tmp_vsimem / "in.lbl") as ds:
+        got = json.loads(ds.GetMetadata("json:ISIS3")[0])
+    assert "_data" in got["Table_FirstTable"]
+    del got["_filename"]
+    expected = {
+        "IsisCube": {
+            "Core": {
+                "Dimensions": {
+                    "Bands": 1,
+                    "Lines": 1,
+                    "Samples": 1,
+                    "_type": "group",
+                },
+                "Format": "BandSequential",
+                "Pixels": {
+                    "Base": 0.0,
+                    "ByteOrder": "Lsb",
+                    "Multiplier": 1.0,
+                    "Type": "UnsignedByte",
+                    "_type": "group",
+                },
+                "StartByte": 1,
+                "_type": "object",
+            },
+            "_type": "object",
+        },
+        "Table_FirstTable": {
+            "Bytes": 10,
+            "Name": "FirstTable",
+            "StartByte": 1001,
+            "_container_name": "Table",
+            "_data": "01020304050102030405",
+            "_type": "object",
+        },
+        "Table_SecondTable": {
+            "Bytes": 5,
+            "Name": "SecondTable",
+            "StartByte": 1,
+            "_container_name": "Table",
+            "^Table": "in.bin",
+            "_data": "0102030405",
+            "_type": "object",
+        },
+        "Table_ThirdTable": {
+            "Bytes": 5,
+            "Name": "ThirdTable",
+            "StartByte": 1,
+            "^Table": "not_existing.bin",
+            "_container_name": "Table",
+            "_type": "object",
+        },
+    }
+    assert got == expected
+
+    with gdal.OpenEx(
+        tmp_vsimem / "in.lbl", open_options=["INCLUDE_OFFLINE_CONTENT=NO"]
+    ) as ds:
+        got = json.loads(ds.GetMetadata("json:ISIS3")[0])
+    assert "_data" not in got["Table_FirstTable"]
+
+    with gdal.OpenEx(
+        tmp_vsimem / "in.lbl", open_options=["MAX_SIZE_OFFLINE_CONTENT=5"]
+    ) as ds:
+        with gdaltest.error_raised(
+            gdal.CE_Warning, match="Too large content reference by Table_FirstTable"
+        ):
+            got = json.loads(ds.GetMetadata("json:ISIS3")[0])
+    assert "_data" not in got["Table_FirstTable"]
+    assert "_data" in got["Table_SecondTable"]
+
+    with gdal.Open(tmp_vsimem / "in.lbl") as ds:
+        with gdaltest.error_raised(
+            gdal.CE_Warning,
+            match="which does not exist. Removing this section from the label",
+        ):
+            gdal.GetDriverByName("ISIS3").CreateCopy(tmp_vsimem / "out.lbl", ds)
+    with gdal.VSIFile(tmp_vsimem / "out.lbl", "rb") as f:
+        data = f.read()
+        assert b"_data" not in data
+
+
+def test_isis3_gdal_translate(tmp_vsimem):
+
+    isis_filename = tmp_vsimem / "in.lbl"
+    with gdal.quiet_errors():
+        gdal.Translate(isis_filename, "data/byte.tif", format="ISIS3")
+
+    gtiff_filename = tmp_vsimem / "out.tif"
+
+    gdal.Translate(
+        gtiff_filename,
+        isis_filename,
+        srcWin=[1, 2, 3, 4],
+        width=5,
+        scaleParams=[[5, 6, 7, 8]],
+    )
+    with gdal.Open(gtiff_filename) as ds:
+        j = json.loads(ds.GetMetadata("json:ISIS3")[0])
+        assert "GDALHistory" in j
+        j = j["GDALHistory"]
+        if "Program" in j:
+            del j["Program"]
+        if "ProgramPath" in j:
+            del j["ProgramPath"]
+        expected_j = {
+            "Comment": "Part of that metadata might be invalid due to a clipping operation, a "
+            "resolution change operation and a scaling operation having been performed "
+            "by GDAL tools",
+            "GdalVersion": gdal.VersionInfo("RELEASE_NAME"),
+            "ProgramArguments": "-outsize 5 0 -srcwin 1 2 3 4 -scale 5 6 7 8",
+            "_type": "object",
+        }
+        assert j == expected_j
+
+
+def test_isis3_gdalwarp(tmp_vsimem):
+
+    isis_filename = tmp_vsimem / "in.lbl"
+    with gdal.quiet_errors():
+        gdal.Translate(isis_filename, "data/byte.tif", format="ISIS3")
+
+    gtiff_filename = tmp_vsimem / "out.tif"
+
+    gdal.Warp(
+        gtiff_filename,
+        isis_filename,
+        dstSRS="EPSG:4326",
+    )
+    with gdal.Open(gtiff_filename) as ds:
+        j = json.loads(ds.GetMetadata("json:ISIS3")[0])
+        assert "GDALHistory" in j
+        j = j["GDALHistory"]
+        if "Program" in j:
+            del j["Program"]
+        if "ProgramPath" in j:
+            del j["ProgramPath"]
+        expected_j = {
+            "Comment": "Part of that metadata might be invalid due to a reprojection operation having been performed "
+            "by GDAL tools",
+            "GdalVersion": gdal.VersionInfo("RELEASE_NAME"),
+            "ProgramArguments": "-t_srs EPSG:4326",
+            "_type": "object",
+        }
+        assert j == expected_j

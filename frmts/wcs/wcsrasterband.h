@@ -34,21 +34,20 @@ class WCSRasterBand final : public GDALPamRasterBand
     int nOverviewCount;
     WCSRasterBand **papoOverviews;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
     WCSRasterBand(WCSDataset *, int nBand, int iOverview);
-    virtual ~WCSRasterBand();
+    ~WCSRasterBand() override;
 
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
 
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int) override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 #endif /* WCSRASTERBAND_H_INCLUDED */

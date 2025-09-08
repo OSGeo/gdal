@@ -19,6 +19,7 @@ import math
 import os
 import shutil
 import struct
+import sys
 
 import gdaltest
 import pytest
@@ -27,8 +28,6 @@ pytestmark = pytest.mark.skipif(
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-
-from lxml import etree
 
 from osgeo import gdal, osr
 
@@ -2040,60 +2039,6 @@ def test_warp_multi_threaded_errors(tmp_vsimem):
 ###############################################################################
 
 
-schema_optionlist = etree.XML(
-    r"""
-<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xs:element name="Value">
-    <xs:complexType>
-      <xs:simpleContent>
-        <xs:extension base="xs:string">
-          <xs:attribute type="xs:string" name="alias" use="optional"/>
-        </xs:extension>
-      </xs:simpleContent>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="Option">
-    <xs:complexType mixed="true">
-      <xs:sequence>
-        <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
-      </xs:sequence>
-      <xs:attribute name="name" use="required">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[^\s]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
-      <xs:attribute name="type" use="required">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:enumeration value="int" />
-            <xs:enumeration value="float" />
-            <xs:enumeration value="boolean" />
-            <xs:enumeration value="string-select" />
-            <xs:enumeration value="string" />
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
-      <xs:attribute type="xs:string" name="description" use="optional"/>
-      <xs:attribute type="xs:string" name="default" use="optional"/>
-      <xs:attribute type="xs:string" name="alias" use="optional"/>
-      <xs:attribute type="xs:string" name="min" use="optional"/>
-      <xs:attribute type="xs:string" name="max" use="optional"/>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="OptionList">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element ref="Option" maxOccurs="unbounded" minOccurs="0"/>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-</xs:schema>
-"""
-)
-
-
 def test_warp_validate_options():
 
     if (
@@ -2102,6 +2047,61 @@ def test_warp_validate_options():
         or gdaltest.is_travis_branch("build-windows-minimum")
     ):
         pytest.skip("Crashes for unknown reason")
+
+    from lxml import etree
+
+    schema_optionlist = etree.XML(
+        r"""
+    <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+        <xs:element name="Value">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="xs:string">
+              <xs:attribute type="xs:string" name="alias" use="optional"/>
+            </xs:extension>
+          </xs:simpleContent>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="Option">
+        <xs:complexType mixed="true">
+          <xs:sequence>
+            <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+          <xs:attribute name="name" use="required">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:pattern value="[^\s]*"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="type" use="required">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="int" />
+                <xs:enumeration value="float" />
+                <xs:enumeration value="boolean" />
+                <xs:enumeration value="string-select" />
+                <xs:enumeration value="string" />
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute type="xs:string" name="description" use="optional"/>
+          <xs:attribute type="xs:string" name="default" use="optional"/>
+          <xs:attribute type="xs:string" name="alias" use="optional"/>
+          <xs:attribute type="xs:string" name="min" use="optional"/>
+          <xs:attribute type="xs:string" name="max" use="optional"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="OptionList">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="Option" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:schema>
+    """
+    )
 
     schema = etree.XMLSchema(schema_optionlist)
 
@@ -2112,3 +2112,83 @@ def test_warp_validate_options():
     except Exception:
         print(xml)
         raise
+
+
+###############################################################################
+# Test mode resampling with all data types
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "dt",
+    [
+        gdal.GDT_Int8,
+        gdal.GDT_Byte,
+        gdal.GDT_Int16,
+        gdal.GDT_UInt16,
+        gdal.GDT_Int32,
+        gdal.GDT_UInt32,
+        gdal.GDT_Int64,
+        gdal.GDT_UInt64,
+        gdal.GDT_Float16,
+        gdal.GDT_Float32,
+        gdal.GDT_Float64,
+        gdal.GDT_CInt16,
+        gdal.GDT_CInt32,
+        gdal.GDT_CFloat16,
+        gdal.GDT_CFloat32,
+        gdal.GDT_CFloat64,
+    ],
+)
+def test_warp_mode(dt):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 1, dt)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    dtsize = gdal.GetDataTypeSizeBytes(dt)
+    val = (
+        b"\x38"
+        if dt
+        in (
+            gdal.GDT_Float16,
+            gdal.GDT_Float32,
+            gdal.GDT_Float64,
+            gdal.GDT_CFloat16,
+            gdal.GDT_CFloat32,
+            gdal.GDT_CFloat64,
+        )
+        else b"\xFF"
+    )
+    ds.WriteRaster(1, 0, 2, 1, val * (2 * dtsize))
+
+    out_ds = gdal.Warp("", ds, options="-f MEM -r mode -ts 1 1")
+    assert out_ds.ReadRaster(0, 0, 1, 1) == val * dtsize, gdal.GetDataTypeName(dt)
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "dt",
+    [
+        gdal.GDT_Float16,
+        gdal.GDT_Float32,
+        gdal.GDT_Float64,
+        gdal.GDT_CFloat16,
+        gdal.GDT_CFloat32,
+        gdal.GDT_CFloat64,
+    ],
+)
+def test_warp_mode_nan(dt):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 5, 1, 1, dt)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    dtsize = gdal.GetDataTypeSizeBytes(dt)
+    # 3 different encodings of NaN
+    ds.WriteRaster(1, 0, 1, 1, b"\xFF" * dtsize)
+    if sys.byteorder == "little":
+        ds.WriteRaster(2, 0, 1, 1, b"\xFE" + b"\xFF" * (dtsize - 1))
+        ds.WriteRaster(3, 0, 1, 1, b"\xFD" + b"\xFF" * (dtsize - 1))
+    else:
+        ds.WriteRaster(2, 0, 1, 1, b"\xFF" * (dtsize - 1) + b"\xFE")
+        ds.WriteRaster(3, 0, 1, 1, b"\xFF" * (dtsize - 1) + b"\xFD")
+
+    out_ds = gdal.Warp("", ds, options="-f MEM -r mode -ts 1 1")
+    assert out_ds.ReadRaster(0, 0, 1, 1) == b"\xFF" * dtsize, gdal.GetDataTypeName(dt)

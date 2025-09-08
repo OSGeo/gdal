@@ -267,6 +267,22 @@ static void Fax3PrematureEOF(const char *module, TIFF *tif, uint32_t line,
         ++sp->eofReachedCount;                                                 \
     } while (0)
 
+static void Fax3TryG3WithoutEOL(const char *module, TIFF *tif, uint32_t line,
+                                uint32_t a0)
+{
+    TIFFWarningExtR(
+        tif, module,
+        "Try to decode (read) fax Group 3 data without EOL at line %" PRIu32
+        " of %s %" PRIu32 " (x %" PRIu32 "). Please check result",
+        line, isTiled(tif) ? "tile" : "strip",
+        (isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip), a0);
+}
+#define tryG3WithoutEOL(a0)                                                    \
+    do                                                                         \
+    {                                                                          \
+        Fax3TryG3WithoutEOL(module, tif, sp->line, a0);                        \
+    } while (0)
+
 #define Nop
 
 static int CheckReachedCounters(TIFF *tif, const char *module,
@@ -318,6 +334,7 @@ static int Fax3Decode1D(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
     }
     if (CheckReachedCounters(tif, module, sp))
         return (-1);
+RETRY_WITHOUT_EOL_1D:
     CACHE_STATE(tif, sp);
     thisrun = sp->curruns;
     while (occ > 0)
@@ -330,7 +347,7 @@ static int Fax3Decode1D(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
         printf("-------------------- %" PRIu32 "\n", tif->tif_row);
         fflush(stdout);
 #endif
-        SYNC_EOL(EOF1D);
+        SYNC_EOL(EOF1D, RETRY_WITHOUT_EOL_1D);
         EXPAND1D(EOF1Da);
         (*sp->fill)(buf, thisrun, pa, lastx);
         buf += sp->b.rowbytes;
@@ -370,6 +387,7 @@ static int Fax3Decode2D(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
     }
     if (CheckReachedCounters(tif, module, sp))
         return (-1);
+RETRY_WITHOUT_EOL_2D:
     CACHE_STATE(tif, sp);
     while (occ > 0)
     {
@@ -380,7 +398,7 @@ static int Fax3Decode2D(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
         printf("\nBitAcc=%08" PRIX32 ", BitsAvail = %d EOLcnt = %d", BitAcc,
                BitsAvail, EOLcnt);
 #endif
-        SYNC_EOL(EOF2D);
+        SYNC_EOL(EOF2D, RETRY_WITHOUT_EOL_2D);
         NeedBits8(1, EOF2D);
         is1D = GetBits(1); /* 1D/2D-encoding tag bit */
         ClrBits(1);

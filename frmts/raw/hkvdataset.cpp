@@ -49,14 +49,10 @@ HKVRasterBand::~HKVRasterBand() = default;
 /*                      HKV Spheroids                                   */
 /************************************************************************/
 
-class HKVSpheroidList : public SpheroidList
+class HKVSpheroidList final : public SpheroidList
 {
   public:
     HKVSpheroidList();
-
-    ~HKVSpheroidList()
-    {
-    }
 };
 
 HKVSpheroidList ::HKVSpheroidList()
@@ -457,7 +453,7 @@ void HKVDataset::ProcessGeoref(const char *pszFilename)
     /*      Try to get GCPs, in lat/longs                     .             */
     /* -------------------------------------------------------------------- */
     nGCPCount = 0;
-    pasGCPList = reinterpret_cast<GDAL_GCP *>(CPLCalloc(sizeof(GDAL_GCP), 5));
+    pasGCPList = static_cast<GDAL_GCP *>(CPLCalloc(sizeof(GDAL_GCP), 5));
 
     if (MFF2version > 1.0)
     {

@@ -309,7 +309,7 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
     if (bFoundNumThreads)
     {
-        if (GetArg("num-threads")->IsExplicitlySet())
+        if (GetArg(GDAL_ARG_NAME_NUM_THREADS)->IsExplicitlySet())
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "--num-threads argument and NUM_THREADS warp options "

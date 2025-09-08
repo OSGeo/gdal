@@ -27,6 +27,7 @@
 #include "pngdrivercore.h"
 
 #include "cpl_string.h"
+#include "cpl_vsi_virtual.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
@@ -226,7 +227,7 @@ CPLErr PNGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 GDALColorInterp PNGRasterBand::GetColorInterpretation()
 
 {
-    PNGDataset *poGDS = reinterpret_cast<PNGDataset *>(poDS);
+    PNGDataset *poGDS = cpl::down_cast<PNGDataset *>(poDS);
 
     if (poGDS->nColorType == PNG_COLOR_TYPE_GRAY)
         return GCI_GrayIndex;
@@ -265,7 +266,7 @@ GDALColorInterp PNGRasterBand::GetColorInterpretation()
 GDALColorTable *PNGRasterBand::GetColorTable()
 
 {
-    PNGDataset *poGDS = reinterpret_cast<PNGDataset *>(poDS);
+    PNGDataset *poGDS = cpl::down_cast<PNGDataset *>(poDS);
 
     if (nBand == 1)
         return poGDS->poColorTable;
@@ -1386,7 +1387,7 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
 
     if (pabyBuffer == nullptr)
     {
-        pabyBuffer = reinterpret_cast<GByte *>(VSI_MALLOC3_VERBOSE(
+        pabyBuffer = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
             nPixelOffset, GetRasterXSize(), nMaxChunkLines));
 
         if (pabyBuffer == nullptr)
@@ -1993,6 +1994,32 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
         }
     }
 
+    png_color_16 *backgroundColor = nullptr;
+    if (png_get_bKGD(poDS->hPNG, poDS->psPNGInfo, &backgroundColor) ==
+            PNG_INFO_bKGD &&
+        backgroundColor)
+    {
+        if (poDS->nColorType == PNG_COLOR_TYPE_GRAY ||
+            poDS->nColorType == PNG_COLOR_TYPE_GRAY_ALPHA)
+        {
+            poDS->SetMetadataItem("BACKGROUND_COLOR",
+                                  CPLSPrintf("%d", backgroundColor->gray));
+        }
+        else if (poDS->nColorType == PNG_COLOR_TYPE_PALETTE)
+        {
+            poDS->SetMetadataItem("BACKGROUND_COLOR",
+                                  CPLSPrintf("%d", backgroundColor->index));
+        }
+        else if (poDS->nColorType == PNG_COLOR_TYPE_RGB ||
+                 poDS->nColorType == PNG_COLOR_TYPE_RGB_ALPHA)
+        {
+            poDS->SetMetadataItem("BACKGROUND_COLOR",
+                                  CPLSPrintf("%d,%d,%d", backgroundColor->red,
+                                             backgroundColor->green,
+                                             backgroundColor->blue));
+        }
+    }
+
     // Extract any text chunks as "metadata."
     poDS->CollectMetadata();
 
@@ -2144,6 +2171,18 @@ static bool safe_png_set_tRNS(jmp_buf sSetJmpContext, png_structp png_ptr,
     return true;
 }
 
+static bool safe_png_set_bKGD(jmp_buf sSetJmpContext, png_structp png_ptr,
+                              png_infop info_ptr,
+                              png_const_color_16p background)
+{
+    if (setjmp(sSetJmpContext) != 0)
+    {
+        return false;
+    }
+    png_set_bKGD(png_ptr, info_ptr, background);
+    return true;
+}
+
 static bool safe_png_set_iCCP(jmp_buf sSetJmpContext, png_structp png_ptr,
                               png_infop info_ptr, png_const_charp name,
                               int compression_type, png_const_bytep profile,
@@ -2241,7 +2280,12 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     }
 
     // Create the dataset.
-    VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
+    auto fpImage(
+        CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME", "NO"))
+            ? VSIFileManager::GetHandler(pszFilename)
+                  ->CreateOnlyVisibleAtCloseTime(pszFilename, true, nullptr)
+            : VSIFilesystemHandler::OpenStatic(pszFilename, "wb"));
     if (fpImage == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
@@ -2309,7 +2353,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
         }
     }
 
-    png_set_write_fn(hPNG, fpImage, png_vsi_write_data, png_vsi_flush);
+    png_set_write_fn(hPNG, fpImage.get(), png_vsi_write_data, png_vsi_flush);
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
@@ -2318,7 +2362,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                            nBitDepth, nColorType, PNG_INTERLACE_NONE,
                            PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE))
     {
-        VSIFCloseL(fpImage);
+        fpImage->CancelCreation();
         png_destroy_write_struct(&hPNG, &psPNGInfo);
         return nullptr;
     }
@@ -2329,18 +2373,18 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     if (pszLevel)
     {
         const int nLevel = atoi(pszLevel);
-        if (nLevel < 1 || nLevel > 9)
+        if (nLevel < 0 || nLevel > 9)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Illegal ZLEVEL value '%s', should be 1-9.", pszLevel);
-            VSIFCloseL(fpImage);
+                     "Illegal ZLEVEL value '%s', should be 0-9.", pszLevel);
+            fpImage->CancelCreation();
             png_destroy_write_struct(&hPNG, &psPNGInfo);
             return nullptr;
         }
 
         if (!safe_png_set_compression_level(sSetJmpContext, hPNG, nLevel))
         {
-            VSIFCloseL(fpImage);
+            fpImage->CancelCreation();
             png_destroy_write_struct(&hPNG, &psPNGInfo);
             return nullptr;
         }
@@ -2363,7 +2407,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
             if (!safe_png_set_tRNS(sSetJmpContext, hPNG, psPNGInfo, nullptr, 0,
                                    &sTRNSColor))
             {
-                VSIFCloseL(fpImage);
+                fpImage->CancelCreation();
                 png_destroy_write_struct(&hPNG, &psPNGInfo);
                 return nullptr;
             }
@@ -2389,7 +2433,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                 if (!safe_png_set_tRNS(sSetJmpContext, hPNG, psPNGInfo, nullptr,
                                        0, &sTRNSColor))
                 {
-                    VSIFCloseL(fpImage);
+                    fpImage->CancelCreation();
                     png_destroy_write_struct(&hPNG, &psPNGInfo);
                     CSLDestroy(papszValues);
                     return nullptr;
@@ -2426,11 +2470,56 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                 if (!safe_png_set_tRNS(sSetJmpContext, hPNG, psPNGInfo, nullptr,
                                        0, &sTRNSColor))
                 {
-                    VSIFCloseL(fpImage);
+                    fpImage->CancelCreation();
                     png_destroy_write_struct(&hPNG, &psPNGInfo);
                     return nullptr;
                 }
             }
+        }
+    }
+
+    if (const char *pszBackgroundColor =
+            poSrcDS->GetMetadataItem("BACKGROUND_COLOR"))
+    {
+        bool ret_set_bKGD = true;
+        png_color_16 backgroundColor = {0, 0, 0, 0, 0};
+        if (nColorType == PNG_COLOR_TYPE_GRAY ||
+            nColorType == PNG_COLOR_TYPE_GRAY_ALPHA)
+        {
+            backgroundColor.gray =
+                static_cast<png_uint_16>(atoi(pszBackgroundColor));
+            ret_set_bKGD = safe_png_set_bKGD(sSetJmpContext, hPNG, psPNGInfo,
+                                             &backgroundColor);
+        }
+        else if (nColorType == PNG_COLOR_TYPE_PALETTE)
+        {
+            backgroundColor.index =
+                static_cast<png_byte>(atoi(pszBackgroundColor));
+            ret_set_bKGD = safe_png_set_bKGD(sSetJmpContext, hPNG, psPNGInfo,
+                                             &backgroundColor);
+        }
+        else if (nColorType == PNG_COLOR_TYPE_RGB ||
+                 nColorType == PNG_COLOR_TYPE_RGB_ALPHA)
+        {
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(pszBackgroundColor, " ,", 3));
+            if (aosTokens.size() == 3)
+            {
+                backgroundColor.red =
+                    static_cast<png_uint_16>(atoi(aosTokens[0]));
+                backgroundColor.green =
+                    static_cast<png_uint_16>(atoi(aosTokens[1]));
+                backgroundColor.blue =
+                    static_cast<png_uint_16>(atoi(aosTokens[2]));
+                ret_set_bKGD = safe_png_set_bKGD(sSetJmpContext, hPNG,
+                                                 psPNGInfo, &backgroundColor);
+            }
+        }
+        if (!ret_set_bKGD)
+        {
+            fpImage->CancelCreation();
+            png_destroy_write_struct(&hPNG, &psPNGInfo);
+            return nullptr;
         }
     }
 
@@ -2468,7 +2557,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                 reinterpret_cast<png_const_bytep>(pEmbedBuffer), nEmbedLen))
         {
             CPLFree(pEmbedBuffer);
-            VSIFCloseL(fpImage);
+            fpImage->CancelCreation();
             png_destroy_write_struct(&hPNG, &psPNGInfo);
             return nullptr;
         }
@@ -2615,7 +2704,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                                nEntryCount))
         {
             CPLFree(pasPNGColors);
-            VSIFCloseL(fpImage);
+            fpImage->CancelCreation();
             png_destroy_write_struct(&hPNG, &psPNGInfo);
             return nullptr;
         }
@@ -2627,7 +2716,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
         if (bFoundTrans || bHaveNoData)
         {
             unsigned char *pabyAlpha =
-                reinterpret_cast<unsigned char *>(CPLMalloc(nEntryCount));
+                static_cast<unsigned char *>(CPLMalloc(nEntryCount));
 
             for (int iColor = 0; iColor < nEntryCount; iColor++)
             {
@@ -2642,7 +2731,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                                    nEntryCount, nullptr))
             {
                 CPLFree(pabyAlpha);
-                VSIFCloseL(fpImage);
+                fpImage->CancelCreation();
                 png_destroy_write_struct(&hPNG, &psPNGInfo);
                 return nullptr;
             }
@@ -2697,7 +2786,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     // Write the PNG info.
     if (!safe_png_write_info(sSetJmpContext, hPNG, psPNGInfo))
     {
-        VSIFCloseL(fpImage);
+        fpImage->CancelCreation();
         png_destroy_write_struct(&hPNG, &psPNGInfo);
         return nullptr;
     }
@@ -2755,7 +2844,21 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     }
     png_destroy_write_struct(&hPNG, &psPNGInfo);
 
-    VSIFCloseL(fpImage);
+    if (eErr == CE_None)
+    {
+        if (fpImage->Close() != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Error at file closing of '%s': %s", pszFilename,
+                     VSIStrerror(errno));
+            eErr = CE_Failure;
+        }
+    }
+    else
+    {
+        fpImage->CancelCreation();
+        fpImage.reset();
+    }
 
     if (eErr != CE_None)
         return nullptr;
@@ -2777,7 +2880,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
         CPLPushErrorHandler(CPLQuietErrorHandler);
         GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
         PNGDataset *poDS =
-            reinterpret_cast<PNGDataset *>(PNGDataset::Open(&oOpenInfo));
+            cpl::down_cast<PNGDataset *>(PNGDataset::Open(&oOpenInfo));
         CPLPopErrorHandler();
         if (poDS)
         {
@@ -2905,7 +3008,7 @@ void GDALRegister_PNG()
 
 CPLErr PNGRasterBand::IWriteBlock(int x, int y, void *pvData)
 {
-    PNGDataset &ds = *reinterpret_cast<PNGDataset *>(poDS);
+    PNGDataset &ds = *cpl::down_cast<PNGDataset *>(poDS);
 
     // Write the block (or consolidate into multichannel block) and then write.
 
@@ -2985,7 +3088,7 @@ CPLErr PNGRasterBand::SetColorTable(GDALColorTable *poCT)
             if (err != CE_None)
                 return err;
 
-            PNGDataset &ds = *reinterpret_cast<PNGDataset *>(poDS);
+            PNGDataset &ds = *cpl::down_cast<PNGDataset *>(poDS);
             ds.m_nColorType = PNG_COLOR_TYPE_PALETTE;
             break;
             // band::IWriteBlock will emit color table as part of the header

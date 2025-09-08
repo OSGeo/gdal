@@ -625,7 +625,7 @@ OGRErr OGRMySQLTableLayer::SetAttributeFilter(const char *pszQueryIn)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMySQLTableLayer::TestCapability(const char *pszCap)
+int OGRMySQLTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))
@@ -799,7 +799,7 @@ OGRErr OGRMySQLTableLayer::ICreateFeature(OGRFeature *poFeature)
         if (pszWKT != nullptr)
         {
             const char *pszAxisOrder = "";
-            OGRSpatialReference *l_poSRS = GetSpatialRef();
+            const OGRSpatialReference *l_poSRS = GetSpatialRef();
             if (poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() && l_poSRS &&
                 l_poSRS->IsGeographic())
             {

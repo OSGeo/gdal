@@ -131,28 +131,30 @@ class OGROSMLayer final : public OGRLayer
 
   public:
     OGROSMLayer(OGROSMDataSource *m_poDS, int m_nIdxLayer, const char *pszName);
-    virtual ~OGROSMLayer();
+    ~OGROSMLayer() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
-    virtual void ResetReading() override;
-    virtual int TestCapability(const char *) override;
+    void ResetReading() override;
+    int TestCapability(const char *) const override;
 
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 
     OGRFeature *MyGetNextFeature(OGROSMLayer **ppoNewCurLayer,
                                  GDALProgressFunc pfnProgress,
                                  void *pProgressData);
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    GIntBig GetFeatureCount(int bForce) override;
 
-    virtual OGRErr SetAttributeFilter(const char *pszAttrQuery) override;
+    OGRErr SetAttributeFilter(const char *pszAttrQuery) override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     const OGREnvelope *GetSpatialFilterEnvelope();
 
@@ -561,23 +563,23 @@ class OGROSMDataSource final : public GDALDataset
 
   public:
     OGROSMDataSource();
-    virtual ~OGROSMDataSource();
+    ~OGROSMDataSource() override;
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
-    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
-    virtual void ReleaseResultSet(OGRLayer *poLayer) override;
+    OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                         OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+    void ReleaseResultSet(OGRLayer *poLayer) override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
     virtual OGRFeature *GetNextFeature(OGRLayer **ppoBelongingLayer,
                                        double *pdfProgressPct,
                                        GDALProgressFunc pfnProgress,

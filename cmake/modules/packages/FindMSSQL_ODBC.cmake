@@ -28,7 +28,7 @@ This module defines the following variables:
   MSSQL_ODBC_INCLUDE_DIRS   - where to find msodbcsql.h, etc.
   MSSQL_ODBC_LIBRARIES      - List of libraries when using MSSQL_ODBC.
   MSSQL_ODBC_FOUND          - True if MSSQL_ODBC found.
-  MSSQL_ODBC_VERSION        - Major Version (17, 13, ...). Can be a input variable too
+  MSSQL_ODBC_VERSION        - Major Version (18, 17, 13, ...). Can be a input variable too
 
 #]=======================================================================]
 
@@ -38,7 +38,7 @@ endif()
 
 if(WIN32)
     if(NOT DEFINED MSSQL_ODBC_VERSION)
-        set(MSSQL_ODBC_VERSION_CANDIDATES 17 13)
+        set(MSSQL_ODBC_VERSION_CANDIDATES 18 17 13)
         foreach(_vers IN LISTS MSSQL_ODBC_VERSION_CANDIDATES)
           set(_dir "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/${_vers}0/SDK")
           if(EXISTS "${_dir}")
@@ -67,7 +67,7 @@ if(WIN32)
     mark_as_advanced(MSSQL_ODBC_LIBRARY)
 else()
     if(NOT DEFINED MSSQL_ODBC_VERSION)
-        set(MSSQL_ODBC_VERSION_CANDIDATES 17 13)
+        set(MSSQL_ODBC_VERSION_CANDIDATES 18 17 13)
         foreach(_vers IN LISTS MSSQL_ODBC_VERSION_CANDIDATES)
           set(_dir "/opt/microsoft/msodbcsql${_vers}")
           if(EXISTS "${_dir}")

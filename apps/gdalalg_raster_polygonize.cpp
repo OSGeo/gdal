@@ -54,9 +54,9 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm(
         AddUpdateArg(&m_update);
         AddOverwriteLayerArg(&m_overwriteLayer);
         AddAppendLayerArg(&m_appendLayer);
-        AddLayerNameArg(&m_outputLayerName)
-            .AddAlias("nln")
-            .SetDefault(m_outputLayerName);
+        AddOutputLayerNameArg(&m_outputLayerName)
+            .SetDefault(m_outputLayerName)
+            .AddAlias("nln");
     }
 
     // gdal_polygonize specific options
@@ -121,7 +121,7 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             if (GetGDALDriverManager()->GetDriverByName("GPKG"))
             {
                 outputFilename =
-                    CPLGenerateTempFilenameSafe("_polygonize.gpkg");
+                    CPLGenerateTempFilenameSafe("_polygonize") + ".gpkg";
                 m_format = "GPKG";
             }
             else

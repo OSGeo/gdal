@@ -1508,6 +1508,9 @@ void OGRPGLayer::SetInitialQueryCursor()
 OGRFeature *OGRPGLayer::GetNextRawFeature()
 
 {
+    if (iNextShapeId < 0)
+        return nullptr;
+
     PGconn *hPGConn = poDS->GetPGConn();
     CPLString osCommand;
 
@@ -1604,8 +1607,9 @@ OGRErr OGRPGLayer::SetNextByIndex(GIntBig nIndex)
 
     if (nIndex < 0)
     {
+        iNextShapeId = -1;
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid index");
-        return OGRERR_FAILURE;
+        return OGRERR_NON_EXISTING_FEATURE;
     }
 
     if (nIndex == 0)
@@ -1637,9 +1641,9 @@ OGRErr OGRPGLayer::SetNextByIndex(GIntBig nIndex)
 
         CloseCursor();
 
-        iNextShapeId = 0;
+        iNextShapeId = -1;
 
-        return OGRERR_FAILURE;
+        return OGRERR_NON_EXISTING_FEATURE;
     }
 
     nResultOffset = 0;
@@ -1872,7 +1876,7 @@ OGRErr OGRPGLayer::RollbackTransaction()
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRPGLayer::GetFIDColumn()
+const char *OGRPGLayer::GetFIDColumn() const
 
 {
     GetLayerDefn();
@@ -1945,7 +1949,7 @@ OGRErr OGRPGLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
 
     CPLString osCommand;
 
-    OGRPGGeomFieldDefn *poGeomFieldDefn =
+    const OGRPGGeomFieldDefn *poGeomFieldDefn =
         poLayerDefn->GetGeomFieldDefn(iGeomField);
 
     if (TestCapability(OLCFastGetExtent3D))

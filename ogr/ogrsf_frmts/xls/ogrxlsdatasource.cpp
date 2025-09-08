@@ -54,7 +54,7 @@ OGRXLSDataSource::~OGRXLSDataSource()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRXLSDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRXLSDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

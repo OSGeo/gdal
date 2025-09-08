@@ -2396,3 +2396,13 @@ def test_ogr_libkml_create_field_bool(tmp_vsimem):
         assert f["b"]
         f = lyr.GetNextFeature()
         assert not f["b"]
+
+
+###############################################################################
+
+
+def test_ogr_libkml_creation_illegal_layer_name(tmp_vsimem):
+
+    ds = ogr.GetDriverByName("LIBKML").CreateDataSource(tmp_vsimem / "out")
+    with pytest.raises(Exception, match="Illegal character"):
+        ds.CreateLayer("illegal/with/slash")

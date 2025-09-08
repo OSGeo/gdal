@@ -59,7 +59,7 @@ class VSIGSHandleHelper final : public IVSIS3LikeHandleHelper
                       const std::string &osAccessKeyId, bool bUseHeaderFile,
                       const GOA2Manager &oManager,
                       const std::string &osUserProject);
-    ~VSIGSHandleHelper();
+    ~VSIGSHandleHelper() override;
 
     static VSIGSHandleHelper *
     BuildFromURI(const char *pszURI, const char *pszFSPrefix,
@@ -68,11 +68,10 @@ class VSIGSHandleHelper final : public IVSIS3LikeHandleHelper
 
     bool UsesHMACKey() const;
 
-    struct curl_slist *
-    GetCurlHeaders(const std::string &osVerbosVerb,
-                   const struct curl_slist *psExistingHeaders,
-                   const void *pabyDataContent = nullptr,
-                   size_t nBytesContent = 0) const override;
+    struct curl_slist *GetCurlHeaders(const std::string &osVerbosVerb,
+                                      struct curl_slist *psHeaders,
+                                      const void *pabyDataContent = nullptr,
+                                      size_t nBytesContent = 0) const override;
 
     const std::string &GetURL() const override
     {

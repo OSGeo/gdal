@@ -724,9 +724,9 @@ static bool GDALFindNamedColor(const char *pszColorName, int *pnR, int *pnG,
     {
         if (EQUAL(pszColorName, namedColor.name))
         {
-            *pnR = static_cast<int>(255.0 * namedColor.r);
-            *pnG = static_cast<int>(255.0 * namedColor.g);
-            *pnB = static_cast<int>(255.0 * namedColor.b);
+            *pnR = static_cast<int>(255.0f * namedColor.r);
+            *pnG = static_cast<int>(255.0f * namedColor.g);
+            *pnB = static_cast<int>(255.0f * namedColor.b);
             return true;
         }
     }

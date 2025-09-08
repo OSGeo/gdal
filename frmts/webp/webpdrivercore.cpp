@@ -104,9 +104,13 @@ void WEBPDriverSetCommonMetadata(GDALDriver *poDriver)
         "   <Option name='EXACT' type='int' description='preserve the exact "
         "RGB values under transparent area. off=0, on=1' default='0'/>\n"
 #endif
+        "<Option name='WORLDFILE' type='boolean' description='whether "
+        "to generate a worldfile' default='NO'/>\n"
         "</CreationOptionList>\n");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME,
+                              "YES");
 
     poDriver->pfnIdentify = WEBPDriverIdentify;
 

@@ -36,10 +36,9 @@ OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
     int nCode = 0;
     OGRDXFFeature *poFeature = new OGRDXFFeature(poFeatureDefn);
 
-    CPLString osHatchPattern;
     double dfElevation = 0.0;  // Z value to be used for EVERY point
-    /* int nFillFlag = 0; */
     OGRGeometryCollection oGC;
+    std::string osExtendedData;
 
     while ((nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) > 0)
     {
@@ -51,12 +50,15 @@ OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
                 break;
 
             case 70:
-                /* nFillFlag = atoi(szLineBuf); */
+            {
+                const int nFillFlag = atoi(szLineBuf);
+                poFeature->oStyleProperties["FillFlag"] =
+                    nFillFlag ? "Filled" : "Pattern";
                 break;
+            }
 
-            case 2:
-                osHatchPattern = szLineBuf;
-                poFeature->SetField("Text", osHatchPattern.c_str());
+            case 2:  // Hatch pattern name
+                poFeature->SetField("Text", szLineBuf);
                 break;
 
             case 91:
@@ -71,6 +73,32 @@ OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
                 }
             }
             break;
+
+            case 52:
+            {
+                poFeature->oStyleProperties["HatchPatternRotation"] = szLineBuf;
+                break;
+            }
+
+            case 41:
+            {
+                poFeature->oStyleProperties["HatchPatternScale"] = szLineBuf;
+                break;
+            }
+
+            case 1001:
+            {
+                osExtendedData = szLineBuf;
+                break;
+            }
+
+            case 1071:
+            {
+                if (osExtendedData == "HATCHBACKGROUNDCOLOR")
+                    poFeature->oStyleProperties["HatchBackgroundColor"] =
+                        szLineBuf;
+                break;
+            }
 
             default:
                 TranslateGenericProperty(poFeature, nCode, szLineBuf);

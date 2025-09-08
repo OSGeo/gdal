@@ -15,15 +15,13 @@
 #include "cpl_vax.h"
 #include "rawdataset.h"
 
+#include <cassert>
 #include <climits>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 #include <algorithm>
 #include <limits>
 #include <vector>
@@ -845,6 +843,7 @@ bool RawRasterBand::FlushCurrentLine(bool bNeedUsableBufferAfter)
 {
     if (!bLoadedScanlineDirty)
         return true;
+    assert(pLineBuffer);
 
     bLoadedScanlineDirty = false;
 

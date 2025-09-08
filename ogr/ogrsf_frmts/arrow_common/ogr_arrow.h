@@ -291,16 +291,16 @@ class OGRArrowLayer CPL_NON_FINAL
     void SanityCheckOfSetBatch() const;
 
   public:
-    virtual ~OGRArrowLayer() override;
+    ~OGRArrowLayer() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
     void ResetReading() override;
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_osFIDColumn.c_str();
     }
@@ -314,7 +314,7 @@ class OGRArrowLayer CPL_NON_FINAL
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     bool GetArrowStream(struct ArrowArrayStream *out_stream,
                         CSLConstList papszOptions = nullptr) override;
@@ -368,8 +368,9 @@ class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
     const OGRFieldDomain *
     GetFieldDomain(const std::string &name) const override;
 
-    int GetLayerCount() override;
-    OGRLayer *GetLayer(int idx) override;
+    int GetLayerCount() const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int idx) const override;
 };
 
 /************************************************************************/
@@ -507,12 +508,14 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     std::vector<std::string> GetFieldDomainNames() const;
     const OGRFieldDomain *GetFieldDomain(const std::string &name) const;
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_osFIDColumn.c_str();
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -526,7 +529,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
         return nullptr;
     }
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
     OGRErr CreateField(const OGRFieldDefn *poField,
                        int bApproxOK = TRUE) override;
     OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
@@ -606,11 +609,11 @@ class OGRGeoArrowWkbExtensionType final : public arrow::ExtensionType
         return std::make_shared<arrow::ExtensionArray>(data);
     }
 
-    static bool IsSupportedStorageType(arrow::Type::type type_id)
+    static bool IsSupportedStorageType(arrow::Type::type typeId)
     {
         // TODO: also add BINARY_VIEW if we support it some day.
-        return type_id == arrow::Type::BINARY ||
-               type_id == arrow::Type::LARGE_BINARY;
+        return typeId == arrow::Type::BINARY ||
+               typeId == arrow::Type::LARGE_BINARY;
     }
 
     static arrow::Result<std::shared_ptr<arrow::DataType>>

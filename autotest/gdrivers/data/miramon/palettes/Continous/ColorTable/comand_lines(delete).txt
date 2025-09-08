@@ -1,0 +1,11 @@
+D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\double_with_nodata.img" "D:\tmp\double_with_nodata.tiff" -if MiraMonRaster
+
+
+D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\integer_with_nodata.img" "D:\tmp\integer_with_nodata.tiff" -if MiraMonRaster
+
+
+D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\uinteger_with_nodata.img" "D:\tmp\uinteger_with_nodata.tiff" -if MiraMonRaster
+
+D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\uinteger_without_nodata.img" "D:\tmp\uinteger_without_nodata.tiff" -if MiraMonRaster
+
+

@@ -178,6 +178,10 @@ gdal_dependent_format(exr "EXR support via OpenEXR library" "GDAL_USE_OPENEXR")
 gdal_dependent_format(pcraster "PCRaster CSF 2.0 raster file driver" "GDAL_USE_LIBCSF OR GDAL_USE_LIBCSF_INTERNAL")
 gdal_dependent_format(jpegxl "JPEG-XL" "GDAL_USE_JXL")
 gdal_dependent_format(basisu_ktx2 "Basis Universal and KTX2 texture formats" "GDAL_USE_BASISU")
+if( NOT WORDS_BIGENDIAN )
+    gdal_optional_format(miramon "MiraMonRaster")
+endif()
+
 
 # ######################################################################################################################
 # driver with proprietary libraries Kakadu software SDK

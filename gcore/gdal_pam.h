@@ -140,6 +140,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     CPLErr FlushCache(bool bAtClosing) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
+    const OGRSpatialReference *GetSpatialRefRasterOnly() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &) const override;
@@ -363,7 +364,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 /** Class that serializes/deserializes metadata on multidimensional objects.
  * Currently SRS on GDALMDArray.
  */
-class CPL_DLL GDALPamMultiDim
+class CPL_DLL GDALPamMultiDim final
 {
     struct Private;
     std::unique_ptr<Private> d;
@@ -373,7 +374,7 @@ class CPL_DLL GDALPamMultiDim
 
   public:
     explicit GDALPamMultiDim(const std::string &osFilename);
-    virtual ~GDALPamMultiDim();
+    ~GDALPamMultiDim();
 
     std::shared_ptr<OGRSpatialReference>
     GetSpatialRef(const std::string &osArrayFullName,

@@ -17,23 +17,11 @@
 /*                   OGRMSSQLGeometryValidator()                        */
 /************************************************************************/
 
-OGRMSSQLGeometryValidator::OGRMSSQLGeometryValidator(OGRGeometry *poGeom,
+OGRMSSQLGeometryValidator::OGRMSSQLGeometryValidator(const OGRGeometry *poGeom,
                                                      int geomColumnType)
+    : poOriginalGeometry(poGeom), nGeomColumnType(geomColumnType),
+      bIsValid(IsValid(poGeom))
 {
-    poOriginalGeometry = poGeom;
-    poValidGeometry = nullptr;
-    nGeomColumnType = geomColumnType;
-    bIsValid = IsValid(poGeom);
-}
-
-/************************************************************************/
-/*                      ~OGRMSSQLGeometryValidator()                    */
-/************************************************************************/
-
-OGRMSSQLGeometryValidator::~OGRMSSQLGeometryValidator()
-{
-    if (poValidGeometry)
-        delete poValidGeometry;
 }
 
 /************************************************************************/
@@ -502,16 +490,11 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRGeometry *poGeom)
 
 bool OGRMSSQLGeometryValidator::ValidateGeometry(OGRGeometry *poGeom)
 {
-    if (poValidGeometry != nullptr)
-    {
-        delete poValidGeometry;
-        poValidGeometry = nullptr;
-    }
-
+    poValidGeometry.reset();
     if (!IsValid(poGeom))
     {
-        poValidGeometry = poGeom->clone();
-        MakeValid(poValidGeometry);
+        poValidGeometry.reset(poGeom->clone());
+        MakeValid(poValidGeometry.get());
         return false;
     }
     return true;
@@ -520,7 +503,7 @@ bool OGRMSSQLGeometryValidator::ValidateGeometry(OGRGeometry *poGeom)
 /************************************************************************/
 /*                      GetValidGeometryRef()                           */
 /************************************************************************/
-OGRGeometry *OGRMSSQLGeometryValidator::GetValidGeometryRef()
+const OGRGeometry *OGRMSSQLGeometryValidator::GetValidGeometryRef() const
 {
     if (bIsValid || poOriginalGeometry == nullptr)
         return poOriginalGeometry;
@@ -539,5 +522,5 @@ OGRGeometry *OGRMSSQLGeometryValidator::GetValidGeometryRef()
                  poOriginalGeometry->getGeometryName());
     }
 
-    return poValidGeometry;
+    return poValidGeometry.get();
 }

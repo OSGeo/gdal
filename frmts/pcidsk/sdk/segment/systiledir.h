@@ -29,15 +29,15 @@ namespace PCIDSK
 class BlockTileDir;
 class BlockTileLayer;
 
-class SysTileDir : virtual public CPCIDSKSegment
+class SysTileDir /* non final */: virtual public CPCIDSKSegment
 {
 public:
     SysTileDir(PCIDSKFile * poFile, int nSegment, const char *pbySegmentData);
 
-    virtual             ~SysTileDir(void);
+    ~SysTileDir() override;
 
-    virtual void        Initialize(void) override final;
-    virtual void        Synchronize(void) override final;
+    void        Initialize(void) override final;
+    void        Synchronize(void) override final;
 
     void                LoadTileDir(void);
     void                CreateTileDir(void);

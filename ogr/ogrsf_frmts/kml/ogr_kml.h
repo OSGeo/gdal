@@ -33,19 +33,19 @@ class OGRKMLLayer final : public OGRLayer
   public:
     OGRKMLLayer(const char *pszName_, const OGRSpatialReference *poSRS,
                 bool bWriter, OGRwkbGeometryType eType, OGRKMLDataSource *poDS);
-    ~OGRKMLLayer();
+    ~OGRKMLLayer() override;
 
     //
     // OGRLayer Interface
     //
-    OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField,
                        int bApproxOK = TRUE) override;
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     GIntBig GetFeatureCount(int bForce = TRUE) override;
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     GDALDataset *GetDataset() override;
 
@@ -92,20 +92,20 @@ class OGRKMLDataSource final : public GDALDataset
 {
   public:
     OGRKMLDataSource();
-    ~OGRKMLDataSource();
+    ~OGRKMLDataSource() override;
 
     int Open(const char *pszName, int bTestOpen);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers_;
     }
 
-    OGRLayer *GetLayer(int nLayer) override;
+    const OGRLayer *GetLayer(int nLayer) const override;
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     //
     // OGRKMLDataSource Interface

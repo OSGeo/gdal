@@ -22,6 +22,8 @@ IP=host.docker.internal
 (cd autotest && OGR_PG_CONNECTION_STRING="host=$IP port=25432 dbname=autotest user=docker password=docker" $PYTEST --capture=no -ra ogr/ogr_pg.py)
 (cd autotest && PGHOST="$IP" PGPORT=25432 PGUSER=docker PGPASSWORD=docker $PYTEST --capture=no -ra gdrivers/postgisraster.py)
 
+(cd autotest && $PYTEST --capture=no -ra utilities/test_gdalalg_raster_tile.py::test_gdalalg_raster_tile_fork_auto)
+
 # Generate coverage report
 lcov --directory . --capture --output-file gdal.info 2>/dev/null
 cp gdal.info gdal_filtered.info

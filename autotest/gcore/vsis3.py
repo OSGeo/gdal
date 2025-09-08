@@ -655,10 +655,6 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
         gdal.VSIFCloseL(f)
 
     if data != "foo":
-
-        if gdaltest.is_travis_branch("trusty"):
-            pytest.skip("Skipped on trusty branch, but should be investigated")
-
         pytest.fail(data)
 
     # Test region and endpoint 'redirects'
@@ -1135,8 +1131,19 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
                     <Size>456789</Size>
                      <StorageClass>DEEP_ARCHIVE</StorageClass>
                 </Contents>
+                <Contents>
+                    <Key>a_dir with_space/../is_ok</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                </Contents>
+                <Contents>
+                    <Key>a_dir with_space/../../not_ok</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                </Contents>
                 <CommonPrefixes>
                     <Prefix>a_dir with_space/subdir/</Prefix>
+                    <Prefix>a_dir with_space/../../subdir_not_ok/</Prefix>
                 </CommonPrefixes>
             </ListBucketResult>
         """
@@ -1155,16 +1162,17 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
             "/vsis3/s3_fake_bucket2/a_dir with_space/resource3 with_space.bin"
         )
     if f is None:
-
-        if gdaltest.is_travis_branch("trusty"):
-            pytest.skip("Skipped on trusty branch, but should be investigated")
-
         pytest.fail()
     gdal.VSIFCloseL(f)
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
         dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir with_space")
-    expected_dir_contents = ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    expected_dir_contents = [
+        "resource3 with_space.bin",
+        "resource4.bin",
+        "../is_ok",
+        "subdir",
+    ]
     assert dir_contents == expected_dir_contents
 
     assert (
@@ -1244,9 +1252,16 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
                 </Contents>
             </ListBucketResult>
         """,
+        expected_headers={"foo": "bar"},
+    )
+    gdal.SetPathSpecificOption(
+        "/vsis3/s3_fake_bucket2/a_dir",
+        "GDAL_HTTP_HEADERS",
+        "foo:bar",
     )
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir")
+    gdal.ClearPathSpecificOptions()
     assert dir_contents == ["test.txt"]
 
     # Test CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE=NO
@@ -1452,6 +1467,8 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
         </ListAllMyBucketsResult>
         """,
     )
+    # This one is a s3express request for directory buckets
+    handler.add("GET", "/", 403)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir("/vsis3/")
     assert dir_contents == ["."]
@@ -1475,9 +1492,25 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
         </ListAllMyBucketsResult>
         """,
     )
+    # This one is a s3express request for directory buckets
+    handler.add(
+        "GET",
+        "/",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListAllMyDirectoryBucketsResult>
+        <Buckets>
+            <Bucket>
+                <Name>mydirectorybucket</Name>
+            </Bucket>
+        </Buckets>
+        </ListAllMyDirectoryBucketsResult>
+        """,
+    )
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir("/vsis3/")
-    assert dir_contents == ["mybucket"]
+    assert dir_contents == ["mybucket", "mydirectorybucket"]
 
     # Test temporary redirect
     handler = webserver.SequentialHandler()
@@ -2014,6 +2047,8 @@ def test_vsis3_opendir_from_prefix(aws_test_config, webserver_port):
             </ListBucketResult>
         """,
     )
+    # This one is a s3express request for directory buckets
+    handler.add("GET", "/", 403)
     with webserver.install_http_handler(handler):
         d = gdal.OpenDir("/vsis3/")
         assert d is not None
@@ -6218,7 +6253,7 @@ region = eu-east-1
     )
 
     gdal.FileFromMemBuffer(
-        tmp_vsimem / "sso" / "cache" / "327c3fda87ce286848a574982ddd0b7c7487f816.json",
+        tmp_vsimem / "sso" / "cache" / "0ad374308c5a4e22f723adf10145eafad7c4031c.json",
         '{"startUrl": "https://example.com", "region": "us-east-1", "accessToken": "sso-accessToken", "expiresAt": "9999-01-01T00:00:00Z"}',
     )
 
@@ -6480,6 +6515,126 @@ def test_vsis3_MultipartUpload_unauthenticated():
         assert not gdal.MultipartUploadAbort(
             "/vsis3/test_multipartupload/test.bin", "my_upload_id"
         )
+
+
+###############################################################################
+# Test listing a directory bucket (ListObjectsV2 API)
+
+
+def test_vsis3_list_directory_bucket(aws_test_config, webserver_port):
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/mydirbucket--regionid--x-s3/?delimiter=%2F&list-type=2",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListBucketResult>
+            <Prefix></Prefix>
+            <Contents>
+                <Key>test.bin</Key>
+                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                <Size>123456</Size>
+            </Contents>
+            <NextContinuationToken>next_continuation_token</NextContinuationToken>
+        </ListBucketResult>
+        """,
+    )
+    handler.add(
+        "GET",
+        "/mydirbucket--regionid--x-s3/?continuation-token=next_continuation_token&delimiter=%2F&list-type=2",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListBucketResult>
+            <Prefix></Prefix>
+            <Contents>
+                <Key>test2.bin</Key>
+                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                <Size>123456</Size>
+            </Contents>
+        </ListBucketResult>
+        """,
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.ReadDir("/vsis3/mydirbucket--regionid--x-s3") == [
+            "test.bin",
+            "test2.bin",
+        ]
+
+
+###############################################################################
+# Test AWS_S3SESSION_TOKEN config option (for directory buckets)
+
+
+def test_vsis3_AWS_S3SESSION_TOKEN(aws_test_config, webserver_port):
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/mydirbucket--regionid--x-s3/?delimiter=%2F&list-type=2",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListBucketResult>
+            <Prefix></Prefix>
+            <Contents>
+                <Key>test.bin</Key>
+                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                <Size>123456</Size>
+            </Contents>
+        </ListBucketResult>
+        """,
+        expected_headers={"x-amz-s3session-token": "the_token"},
+    )
+    with gdal.config_option("AWS_S3SESSION_TOKEN", "the_token"):
+        with webserver.install_http_handler(handler):
+            assert gdal.ReadDir("/vsis3/mydirbucket--regionid--x-s3") == ["test.bin"]
+
+
+###############################################################################
+# Test PATH_VERBATIM
+
+
+def test_vsis3_PATH_VERBATIM(aws_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET", "/test_vsis3_PATH_VERBATIM/test.bin", 200, {"Connection": "close"}, "a"
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.VSIStatL("/vsis3/test_vsis3_PATH_VERBATIM/./test.bin").size == 1
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET", "/test_vsis3_PATH_VERBATIM/test2.bin", 200, {"Connection": "close"}, "ab"
+    )
+    with webserver.install_http_handler(handler):
+        assert (
+            gdal.VSIStatL(
+                "/vsis3/test_vsis3_PATH_VERBATIM/a/b/../../c/../test2.bin"
+            ).size
+            == 2
+        )
+
+    with gdal.config_option("GDAL_HTTP_PATH_VERBATIM", "YES"):
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/test_vsis3_PATH_VERBATIM/./test3.bin",
+            200,
+            {"Connection": "close"},
+            "abc",
+        )
+        with webserver.install_http_handler(handler):
+            assert (
+                gdal.VSIStatL("/vsis3/test_vsis3_PATH_VERBATIM/./test3.bin").size == 3
+            )
 
 
 ###############################################################################

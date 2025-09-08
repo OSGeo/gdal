@@ -59,7 +59,7 @@ CPLString OGRLIBKMLGetSanitizedNCName(const char *pszName)
     // (Approximate) validation rules for a valid NCName.
 
     // If the first character is illegal as a first character, but allowed in
-    // later positions, preprend an initial underscore
+    // later positions, prepend an initial underscore
     // (cf https://github.com/OSGeo/gdal/issues/9538)
     if (pszName[0] == '-' || pszName[0] == '.' ||
         (pszName[0] >= '0' && pszName[0] <= '9'))
@@ -994,7 +994,7 @@ void OGRLIBKMLLayer::SetStyleTable(OGRStyleTable *poStyleTable)
 
 ******************************************************************************/
 
-int OGRLIBKMLLayer::TestCapability(const char *pszCap)
+int OGRLIBKMLLayer::TestCapability(const char *pszCap) const
 {
     int result = FALSE;
 

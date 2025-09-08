@@ -29,6 +29,12 @@ typedef enum eCalibration_t
 /*** Function to test for valid LUT files ***/
 static bool IsValidXMLFile(const char *pszPath, const char *pszLut)
 {
+    if (CPLHasPathTraversal(pszLut))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Path traversal detected in %s",
+                 pszLut);
+        return false;
+    }
     /* Return true for valid xml file, false otherwise */
     char *pszLutFile =
         VSIStrdup(CPLFormFilenameSafe(pszPath, pszLut, nullptr).c_str());
@@ -106,22 +112,22 @@ class RS2Dataset final : public GDALPamDataset
     CPL_DISALLOW_COPY_ASSIGN(RS2Dataset)
 
   protected:
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
   public:
     RS2Dataset();
-    virtual ~RS2Dataset();
+    ~RS2Dataset() override;
 
-    virtual int GetGCPCount() override;
+    int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    const GDAL_GCP *GetGCPs() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
-    virtual char **GetFileList(void) override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
+    char **GetFileList(void) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -152,9 +158,9 @@ class RS2RasterBand final : public GDALPamRasterBand
     RS2RasterBand(RS2Dataset *poDSIn, GDALDataType eDataTypeIn,
                   const char *pszPole, GDALDataset *poBandFile,
                   bool bTwoBandComplex = false);
-    virtual ~RS2RasterBand();
+    ~RS2RasterBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };
@@ -309,7 +315,7 @@ class RS2CalibRasterBand final : public GDALPamRasterBand
     RS2CalibRasterBand(RS2Dataset *poDataset, const char *pszPolarization,
                        GDALDataType eType, GDALDataset *poBandDataset,
                        eCalibration eCalib, const char *pszLUT);
-    ~RS2CalibRasterBand();
+    ~RS2CalibRasterBand() override;
 
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
 };
@@ -331,8 +337,7 @@ void RS2CalibRasterBand::ReadLUT()
 
     m_nTableSize = CSLCount(papszLUTList);
 
-    m_nfTable =
-        reinterpret_cast<float *>(CPLMalloc(sizeof(float) * m_nTableSize));
+    m_nfTable = static_cast<float *>(CPLMalloc(sizeof(float) * m_nTableSize));
 
     for (int i = 0; i < m_nTableSize; i++)
     {
@@ -757,7 +762,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create the dataset.                                             */
     /* -------------------------------------------------------------------- */
-    RS2Dataset *poDS = new RS2Dataset();
+    auto poDS = std::make_unique<RS2Dataset>();
 
     poDS->psProduct = psProduct;
 
@@ -775,7 +780,6 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
             "Non-sane raster dimensions provided in product.xml. If this is "
             "a valid RADARSAT-2 scene, please contact your data provider for "
             "a corrected dataset.");
-        delete poDS;
         return nullptr;
     }
 
@@ -823,7 +827,6 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         eDataType = GDT_Byte;
     else
     {
-        delete poDS;
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "dataType=%s, bitsPerSample=%d: not a supported configuration.",
@@ -847,7 +850,8 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     CPLString osGammaLUT;
     CPLString osSigma0LUT;
 
-    char *pszPath = CPLStrdup(CPLGetPathSafe(osMDFilename).c_str());
+    std::string osPath = CPLGetPathSafe(osMDFilename);
+    ;
     const int nFLen = static_cast<int>(osMDFilename.size());
 
     CPLXMLNode *psNode = psImageAttributes->psChild;
@@ -864,19 +868,25 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
             const char *pszLUTType =
                 CPLGetXMLValue(psNode, "incidenceAngleCorrection", "");
             const char *pszLUTFile = CPLGetXMLValue(psNode, "", "");
+            if (CPLHasPathTraversal(pszLUTFile))
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Path traversal detected in %s", pszLUTFile);
+                return nullptr;
+            }
             CPLString osLUTFilePath =
-                CPLFormFilenameSafe(pszPath, pszLUTFile, nullptr);
+                CPLFormFilenameSafe(osPath.c_str(), pszLUTFile, nullptr);
 
             if (EQUAL(pszLUTType, ""))
                 continue;
             else if (EQUAL(pszLUTType, "Beta Nought") &&
-                     IsValidXMLFile(pszPath, pszLUTFile))
+                     IsValidXMLFile(osPath.c_str(), pszLUTFile))
             {
                 poDS->papszExtraFiles =
                     CSLAddString(poDS->papszExtraFiles, osLUTFilePath);
 
                 const size_t nBufLen = nFLen + 27;
-                char *pszBuf = reinterpret_cast<char *>(CPLMalloc(nBufLen));
+                char *pszBuf = static_cast<char *>(CPLMalloc(nBufLen));
                 osBeta0LUT = pszLUTFile;
                 poDS->SetMetadataItem("BETA_NOUGHT_LUT", pszLUTFile);
 
@@ -890,13 +900,13 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
                 CPLFree(pszBuf);
             }
             else if (EQUAL(pszLUTType, "Sigma Nought") &&
-                     IsValidXMLFile(pszPath, pszLUTFile))
+                     IsValidXMLFile(osPath.c_str(), pszLUTFile))
             {
                 poDS->papszExtraFiles =
                     CSLAddString(poDS->papszExtraFiles, osLUTFilePath);
 
                 const size_t nBufLen = nFLen + 27;
-                char *pszBuf = reinterpret_cast<char *>(CPLMalloc(nBufLen));
+                char *pszBuf = static_cast<char *>(CPLMalloc(nBufLen));
                 osSigma0LUT = pszLUTFile;
                 poDS->SetMetadataItem("SIGMA_NOUGHT_LUT", pszLUTFile);
 
@@ -910,13 +920,13 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
                 CPLFree(pszBuf);
             }
             else if (EQUAL(pszLUTType, "Gamma") &&
-                     IsValidXMLFile(pszPath, pszLUTFile))
+                     IsValidXMLFile(osPath.c_str(), pszLUTFile))
             {
                 poDS->papszExtraFiles =
                     CSLAddString(poDS->papszExtraFiles, osLUTFilePath);
 
                 const size_t nBufLen = nFLen + 27;
-                char *pszBuf = reinterpret_cast<char *>(CPLMalloc(nBufLen));
+                char *pszBuf = static_cast<char *>(CPLMalloc(nBufLen));
                 osGammaLUT = pszLUTFile;
                 poDS->SetMetadataItem("GAMMA_LUT", pszLUTFile);
                 snprintf(pszBuf, nBufLen, "RADARSAT_2_CALIB:GAMMA:%s",
@@ -939,31 +949,42 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         const char *pszBasename = CPLGetXMLValue(psNode, "", "");
         if (*pszBasename == '\0')
             continue;
-
+        std::string osPathImage = osPath;
+        std::string osBasename = pszBasename;
+        if (STARTS_WITH(osBasename.c_str(), "../") ||
+            STARTS_WITH(osBasename.c_str(), "..\\"))
+        {
+            osPathImage = CPLGetPathSafe(osPath.c_str());
+            osBasename = osBasename.substr(strlen("../"));
+        }
+        if (CPLHasPathTraversal(osBasename.c_str()))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Path traversal detected in %s", osBasename.c_str());
+            return nullptr;
+        }
         /* --------------------------------------------------------------------
          */
         /*      Form full filename (path of product.xml + basename). */
         /* --------------------------------------------------------------------
          */
-        char *pszFullname = CPLStrdup(
-            CPLFormFilenameSafe(pszPath, pszBasename, nullptr).c_str());
+        const std::string osFullname = CPLFormFilenameSafe(
+            osPathImage.c_str(), osBasename.c_str(), nullptr);
 
         /* --------------------------------------------------------------------
          */
         /*      Try and open the file. */
         /* --------------------------------------------------------------------
          */
-        GDALDataset *poBandFile =
-            GDALDataset::FromHandle(GDALOpen(pszFullname, GA_ReadOnly));
+        GDALDataset *poBandFile = GDALDataset::Open(
+            osFullname.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR);
         if (poBandFile == nullptr)
         {
-            CPLFree(pszFullname);
             continue;
         }
         if (poBandFile->GetRasterCount() == 0)
         {
-            GDALClose(reinterpret_cast<GDALRasterBandH>(poBandFile));
-            CPLFree(pszFullname);
+            delete poBandFile;
             continue;
         }
 
@@ -978,7 +999,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         const bool twoBandComplex = b == TWOBANDCOMPLEX;
 
         poDS->papszExtraFiles =
-            CSLAddString(poDS->papszExtraFiles, pszFullname);
+            CSLAddString(poDS->papszExtraFiles, osFullname.c_str());
 
         /* --------------------------------------------------------------------
          */
@@ -988,8 +1009,8 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         if (eCalib == None || eCalib == Uncalib)
         {
             RS2RasterBand *poBand = new RS2RasterBand(
-                poDS, eDataType, CPLGetXMLValue(psNode, "pole", ""), poBandFile,
-                twoBandComplex);
+                poDS.get(), eDataType, CPLGetXMLValue(psNode, "pole", ""),
+                poBandFile, twoBandComplex);
 
             poDS->SetBand(poDS->GetRasterCount() + 1, poBand);
         }
@@ -1012,18 +1033,17 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
                     pszLUT = osSigma0LUT;
             }
             RS2CalibRasterBand *poBand = new RS2CalibRasterBand(
-                poDS, CPLGetXMLValue(psNode, "pole", ""), eDataType, poBandFile,
-                eCalib, CPLFormFilenameSafe(pszPath, pszLUT, nullptr).c_str());
+                poDS.get(), CPLGetXMLValue(psNode, "pole", ""), eDataType,
+                poBandFile, eCalib,
+                CPLFormFilenameSafe(osPath.c_str(), pszLUT, nullptr).c_str());
             poDS->SetBand(poDS->GetRasterCount() + 1, poBand);
         }
-
-        CPLFree(pszFullname);
     }
 
     if (poDS->papszSubDatasets != nullptr && eCalib == None)
     {
         const size_t nBufLen = nFLen + 28;
-        char *pszBuf = reinterpret_cast<char *>(CPLMalloc(nBufLen));
+        char *pszBuf = static_cast<char *>(CPLMalloc(nBufLen));
         snprintf(pszBuf, nBufLen, "RADARSAT_2_CALIB:UNCALIB:%s",
                  osMDFilename.c_str());
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets,
@@ -1432,8 +1452,6 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    CPLFree(pszPath);
-
     /* -------------------------------------------------------------------- */
     /*      Collect RPC.                                                   */
     /* -------------------------------------------------------------------- */
@@ -1534,9 +1552,9 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, ":::VIRTUAL:::");
+    poDS->oOvManager.Initialize(poDS.get(), ":::VIRTUAL:::");
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/

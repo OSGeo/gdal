@@ -116,7 +116,7 @@ class CPL_DLL GDALMDReaderBase
                          const std::string &osPrefixFull);
 
   public:
-    GDALMDReaderBase(const char *pszPath, char **papszSiblingFiles);
+    GDALMDReaderBase(const char *pszPath, CSLConstList papszSiblingFiles);
     virtual ~GDALMDReaderBase();
 
     /**
@@ -214,7 +214,7 @@ class CPL_DLL GDALMDReaderManager
      * delete it.
      */
     virtual GDALMDReaderBase *GetReader(const char *pszPath,
-                                        char **papszSiblingFiles,
+                                        CSLConstList papszSiblingFiles,
                                         GUInt32 nType = MDR_ANY);
 
   protected:

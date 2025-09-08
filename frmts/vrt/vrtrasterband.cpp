@@ -613,13 +613,13 @@ CPLString VRTSerializeNoData(double dfVal, GDALDataType eDataType,
         return "6.55e4";
     }
     else if (eDataType == GDT_Float32 &&
-             dfVal == -std::numeric_limits<float>::max())
+             dfVal == -static_cast<double>(std::numeric_limits<float>::max()))
     {
         // To avoid rounding out of the range of float
         return "-3.4028234663852886e+38";
     }
     else if (eDataType == GDT_Float32 &&
-             dfVal == std::numeric_limits<float>::max())
+             dfVal == static_cast<double>(std::numeric_limits<float>::max()))
     {
         // To avoid rounding out of the range of float
         return "3.4028234663852886e+38";

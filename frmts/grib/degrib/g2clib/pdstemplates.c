@@ -19,7 +19,7 @@ static const struct pdstemplate templatespds[MAXPDSTEMP] = {
              // 4.4: Derived Fcst based on Ensemble cluster over circular
              //      area at Horiz Level/Layer at a point in time
          {4,30,1, {1,1,1,1,1,2,1,1,-4,1,-1,-4,1,-1,-4,1,1,1,1,1,1,1,-4,4,4,1,-1,4,-1,4} },
-             // 4.5: Probablility Forecast at Horiz Level/Layer
+             // 4.5: Probability Forecast at Horiz Level/Layer
              //      at a point in time
          {5,22,0, {1,1,1,1,1,2,1,1,-4,1,-1,-4,1,-1,-4,1,1,1,-1,-4,-1,-4} },
              // 4.6: Percentile Forecast at Horiz Level/Layer
@@ -31,7 +31,7 @@ static const struct pdstemplate templatespds[MAXPDSTEMP] = {
              // 4.8: Ave/Accum/etc... at Horiz Level/Layer
              //      in a time interval
          {8,29,1, {1,1,1,1,1,2,1,1,-4,1,-1,-4,1,-1,-4,2,1,1,1,1,1,1,4,1,1,1,4,1,4} },
-             // 4.9: Probablility Forecast at Horiz Level/Layer
+             // 4.9: Probability Forecast at Horiz Level/Layer
              //      in a time interval
          {9,36,1, {1,1,1,1,1,2,1,1,-4,1,-1,-4,1,-1,-4,1,1,1,-1,-4,-1,-4,2,1,1,1,1,1,1,4,1,1,1,4,1,4} },
              // 4.10: Percentile Forecast at Horiz Level/Layer
@@ -94,7 +94,7 @@ static const struct pdstemplate templatespds[MAXPDSTEMP] = {
              // 4.44: Analysis or forecast at a horizontal level or in a horizontal layer
              // at a point in time for Aerosol
          {44,21,0, {1,1,2,1,-1,-4,-1,-4,1,1,1,2,1,1,-2,1,-1,-4,1,-1,-4} },
-             // 4.45: Individual ensemble forecast, control and 
+             // 4.45: Individual ensemble forecast, control and
              // perturbed,  at a horizontal level or in a horizontal layer
              // at a point in time for Aerosol
          {45,24,0, {1,1,2,1,-1,-4,-1,-4,1,1,1,2,1,1,-4,1,-1,-4,1,-1,-4,1,1,1} },
@@ -102,7 +102,7 @@ static const struct pdstemplate templatespds[MAXPDSTEMP] = {
              // at horizontal level or in a horizontal in a continuous or
              // non-continuous time interval for Aerosol
          {46,35,1, {1,1,2,1,-1,-4,-1,-4,1,1,1,2,1,1,-4,1,-1,-4,1,-1,-4,2,1,1,1,1,1,1,4,1,1,1,4,1,4} },
-             // 4.47: Individual ensemble forecast, control and 
+             // 4.47: Individual ensemble forecast, control and
              // perturbed, at horizontal level or in a horizontal
              // in a continuous or non-continuous time interval for Aerosol
          {47,38,1, {1,1,1,2,1,-1,-4,-1,-4,1,1,2,1,1,-4,1,-1,-4,1,-1,-4,1,1,1,2,1,1,1,1,1,1,4,1,1,1,4,1,4} },
@@ -153,7 +153,7 @@ static const struct pdstemplate templatespds[MAXPDSTEMP] = {
 // PDT 4.57  (10/07/2015)
              // 4.57: Analysis or Forecast at a horizontal or in a
              // horizontal layer at a point in time for
-             // atmospheric chemical constituents based on 
+             // atmospheric chemical constituents based on
              // a distribution function
          {57,7,1, {1,1,2,2,2,2,1} },
 // PDT 4.60  (10/07/2015)
@@ -289,7 +289,6 @@ gtemplate *getpdstemplate(g2int number)
            }
            else {
              //printf("getpdstemplate: PDS Template 4.%d not defined.\n",(int)number);
-             return(0);        //NULL
            }
 
          return(0);        //NULL

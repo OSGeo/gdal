@@ -444,7 +444,8 @@ bool OGRArrowArrayHelper::FillDict(struct ArrowArray *psChild,
         {
             panOffsets[i] = nOffset;
             if (pabyNull)
-                pabyNull[i / 8] &= static_cast<uint8_t>(~(1 << (i % 8)));
+                pabyNull[i / 8] &= static_cast<uint8_t>(
+                    ~(1 << (static_cast<unsigned>(i) % 8)));
         }
         panOffsets[nCode] = nOffset;
         if (psIter->pszValue)

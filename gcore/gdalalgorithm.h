@@ -118,6 +118,9 @@ char CPL_DLL **GDALAlgorithmGetArgNames(GDALAlgorithmH);
 GDALAlgorithmArgH CPL_DLL GDALAlgorithmGetArg(GDALAlgorithmH,
                                               const char *pszArgName);
 
+GDALAlgorithmArgH CPL_DLL GDALAlgorithmGetArgNonConst(GDALAlgorithmH,
+                                                      const char *pszArgName);
+
 /************************************************************************/
 /*                      GDALAlgorithmArgH API                           */
 /************************************************************************/
@@ -158,9 +161,30 @@ bool CPL_DLL GDALAlgorithmArgIsExplicitlySet(GDALAlgorithmArgH);
 
 bool CPL_DLL GDALAlgorithmArgHasDefaultValue(GDALAlgorithmArgH);
 
+bool CPL_DLL GDALAlgorithmArgGetDefaultAsBoolean(GDALAlgorithmArgH);
+
+const char CPL_DLL *GDALAlgorithmArgGetDefaultAsString(GDALAlgorithmArgH);
+
+int CPL_DLL GDALAlgorithmArgGetDefaultAsInteger(GDALAlgorithmArgH);
+
+double CPL_DLL GDALAlgorithmArgGetDefaultAsDouble(GDALAlgorithmArgH);
+
+char CPL_DLL **GDALAlgorithmArgGetDefaultAsStringList(GDALAlgorithmArgH);
+
+const int CPL_DLL *GDALAlgorithmArgGetDefaultAsIntegerList(GDALAlgorithmArgH,
+                                                           size_t *pnCount);
+
+const double CPL_DLL *GDALAlgorithmArgGetDefaultAsDoubleList(GDALAlgorithmArgH,
+                                                             size_t *pnCount);
+
+bool CPL_DLL GDALAlgorithmArgIsHidden(GDALAlgorithmArgH);
+
 bool CPL_DLL GDALAlgorithmArgIsHiddenForCLI(GDALAlgorithmArgH);
 
-bool CPL_DLL GDALAlgorithmArgIsOnlyForCLI(GDALAlgorithmArgH);
+bool CPL_DLL GDALAlgorithmArgIsHiddenForAPI(GDALAlgorithmArgH);
+
+bool CPL_DLL GDALAlgorithmArgIsOnlyForCLI(GDALAlgorithmArgH)
+    CPL_WARN_DEPRECATED("Use GDALAlgorithmArgIsHiddenForAPI() instead");
 
 bool CPL_DLL GDALAlgorithmArgIsInput(GDALAlgorithmArgH);
 
@@ -269,6 +293,7 @@ CPL_C_END
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -299,11 +324,36 @@ constexpr const char *GAAMDI_VRT_COMPATIBLE = "vrt_compatible";
 /** Name of the argument for an input dataset. */
 constexpr const char *GDAL_ARG_NAME_INPUT = "input";
 
+/** Name of the argument for the input format. */
+constexpr const char *GDAL_ARG_NAME_INPUT_FORMAT = "input-format";
+
+/** Name of the argument for the input layer. */
+constexpr const char *GDAL_ARG_NAME_INPUT_LAYER = "input-layer";
+
+/** Name of the argument for an open option. */
+constexpr const char *GDAL_ARG_NAME_OPEN_OPTION = "open-option";
+
 /** Name of the argument for an output dataset. */
 constexpr const char *GDAL_ARG_NAME_OUTPUT = "output";
 
+/** Name of the argument for an output string. */
+constexpr const char *GDAL_ARG_NAME_OUTPUT_STRING = "output-string";
+
+/** Name of the boolean argument to request outtputing directly on stdout. */
+constexpr const char *GDAL_ARG_NAME_STDOUT = "stdout";
+
 /** Name of the argument for an output format. */
 constexpr const char *GDAL_ARG_NAME_OUTPUT_FORMAT = "output-format";
+
+/** Name of the argument for the output layer. */
+constexpr const char *GDAL_ARG_NAME_OUTPUT_LAYER = "output-layer";
+
+/** Name of the argument for a creation option. */
+constexpr const char *GDAL_ARG_NAME_CREATION_OPTION = "creation-option";
+
+/** Name of the argument for a layer creation option. */
+constexpr const char *GDAL_ARG_NAME_LAYER_CREATION_OPTION =
+    "layer-creation-option";
 
 /** Name of the argument for update. */
 constexpr const char *GDAL_ARG_NAME_UPDATE = "update";
@@ -319,6 +369,13 @@ constexpr const char *GDAL_ARG_NAME_APPEND = "append";
 
 /** Name of the argument for read-only. */
 constexpr const char *GDAL_ARG_NAME_READ_ONLY = "read-only";
+
+/** Name of the argument for number of threads (string). */
+constexpr const char *GDAL_ARG_NAME_NUM_THREADS = "num-threads";
+
+/** Name of the argument for number of threads (integer). */
+constexpr const char *GDAL_ARG_NAME_NUM_THREADS_INT_HIDDEN =
+    "num-threads-int-hidden";
 
 /** Driver must expose GDAL_DCAP_RASTER or GDAL_DCAP_MULTIDIM_RASTER.
  * This is a potential value of GetMetadataItem(GAAMDI_REQUIRED_CAPABILITIES)
@@ -439,6 +496,12 @@ class CPL_DLL GDALArgDatasetValue final
      */
     void SetFrom(const GDALArgDatasetValue &other);
 
+    /** Set that the dataset has been opened by the algorithm */
+    void SetDatasetOpenedByAlgorithm()
+    {
+        m_openedByAlgorithm = true;
+    }
+
     /** Whether the dataset has been opened by the algorithm */
     bool HasDatasetBeenOpenedByAlgorithm() const
     {
@@ -453,12 +516,6 @@ class CPL_DLL GDALArgDatasetValue final
     {
         CPLAssert(!m_ownerArg);
         m_ownerArg = arg;
-    }
-
-    /** Set that the dataset has been opened by the algorithm */
-    void SetDatasetOpenedByAlgorithm()
-    {
-        m_openedByAlgorithm = true;
     }
 
   private:
@@ -621,6 +678,12 @@ class CPL_DLL GDALAlgorithmArgDecl final
                         m_defaultValue = std::vector<std::string>{value};
                         return *this;
                     }
+                    else if constexpr (std::is_same_v<T,
+                                                      std::vector<std::string>>)
+                    {
+                        m_defaultValue = value;
+                        return *this;
+                    }
                     break;
                 }
 
@@ -629,6 +692,11 @@ class CPL_DLL GDALAlgorithmArgDecl final
                     if constexpr (std::is_same_v<T, int>)
                     {
                         m_defaultValue = std::vector<int>{value};
+                        return *this;
+                    }
+                    else if constexpr (std::is_same_v<T, std::vector<int>>)
+                    {
+                        m_defaultValue = value;
                         return *this;
                     }
                     break;
@@ -640,6 +708,11 @@ class CPL_DLL GDALAlgorithmArgDecl final
                     {
                         m_defaultValue =
                             std::vector<double>{static_cast<double>(value)};
+                        return *this;
+                    }
+                    else if constexpr (std::is_same_v<T, std::vector<double>>)
+                    {
+                        m_defaultValue = value;
                         return *this;
                     }
                     break;
@@ -820,19 +893,22 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
-    /** Declare that the argument is only for CLI usage.
+    /** Declare that the argument is hidden in the context of an API use.
+     * Said otherwise, if it is only for CLI usage.
      * For example "--help" */
-    GDALAlgorithmArgDecl &SetOnlyForCLI(bool onlyForCLI = true)
+    GDALAlgorithmArgDecl &SetHiddenForAPI(bool hiddenForAPI = true)
     {
-        m_onlyForCLI = onlyForCLI;
+        m_hiddenForAPI = hiddenForAPI;
         return *this;
     }
 
-    /** Declare that the argument is hidden. Default is no
+    /** Declare that the argument is hidden. Default is no.
+     * This is equivalent to calling SetHiddenForCLI() and SetHiddenForAPI()
      */
     GDALAlgorithmArgDecl &SetHidden()
     {
-        m_hidden = true;
+        m_hiddenForCLI = true;
+        m_hiddenForAPI = true;
         return *this;
     }
 
@@ -903,6 +979,15 @@ class CPL_DLL GDALAlgorithmArgDecl final
     GDALAlgorithmArgDecl &SetAutoOpenDataset(bool autoOpen)
     {
         m_autoOpenDataset = autoOpen;
+        return *this;
+    }
+
+    /** Declares that this argument has been created on-the-fly from user-provided
+     * argument.
+     */
+    GDALAlgorithmArgDecl &SetUserProvided()
+    {
+        m_userProvided = true;
         return *this;
     }
 
@@ -1061,7 +1146,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
      */
     inline bool IsHidden() const
     {
-        return m_hidden;
+        return m_hiddenForCLI && m_hiddenForAPI;
     }
 
     /** Return whether the argument must not be mentioned in CLI usage.
@@ -1074,10 +1159,20 @@ class CPL_DLL GDALAlgorithmArgDecl final
     }
 
     /** Return whether the argument is only for CLI usage.
-     * For example "--help" */
+     * For example "--help"
+     * This is an alias for IsHiddenForAPI()
+     */
     inline bool IsOnlyForCLI() const
+        CPL_WARN_DEPRECATED("Use IsHiddenForAPI() instead")
     {
-        return m_onlyForCLI;
+        return m_hiddenForAPI;
+    }
+
+    /** Return whether the argument is hidden for API usage
+     * For example "--help" */
+    inline bool IsHiddenForAPI() const
+    {
+        return m_hiddenForAPI;
     }
 
     /** Indicate whether the value of the argument is read-only during the
@@ -1133,6 +1228,13 @@ class CPL_DLL GDALAlgorithmArgDecl final
     bool AutoOpenDataset() const
     {
         return m_autoOpenDataset;
+    }
+
+    /** Returns whether the argument has been user-provided.
+     */
+    bool IsUserProvided() const
+    {
+        return m_userProvided;
     }
 
     /** Get user-defined metadata. */
@@ -1251,9 +1353,8 @@ class CPL_DLL GDALAlgorithmArgDecl final
     bool m_required = false;
     bool m_positional = false;
     bool m_hasDefaultValue = false;
-    bool m_hidden = false;
     bool m_hiddenForCLI = false;
-    bool m_onlyForCLI = false;
+    bool m_hiddenForAPI = false;
     bool m_isInput = true;
     bool m_isOutput = false;
     bool m_packedValuesAllowed = true;
@@ -1262,6 +1363,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     bool m_readFromFileAtSyntaxAllowed = false;
     bool m_removeSQLComments = false;
     bool m_autoOpenDataset = true;
+    bool m_userProvided = false;
     std::map<std::string, std::vector<std::string>> m_metadata{};
     std::vector<std::string> m_aliases{};
     std::vector<std::string> m_hiddenAliases{};
@@ -1494,8 +1596,15 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
 
     /** Alias for GDALAlgorithmArgDecl::IsOnlyForCLI() */
     inline bool IsOnlyForCLI() const
+        CPL_WARN_DEPRECATED("Use IsHiddenForAPI() instead")
     {
-        return m_decl.IsOnlyForCLI();
+        return m_decl.IsHiddenForAPI();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::IsHiddenForAPI() */
+    inline bool IsHiddenForAPI() const
+    {
+        return m_decl.IsHiddenForAPI();
     }
 
     /** Alias for GDALAlgorithmArgDecl::IsInput() */
@@ -1552,6 +1661,12 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     inline bool AutoOpenDataset() const
     {
         return m_decl.AutoOpenDataset();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::IsUserProvided() */
+    inline bool IsUserProvided() const
+    {
+        return m_decl.IsUserProvided();
     }
 
     /** Alias for GDALAlgorithmArgDecl::GetDatasetType() */
@@ -1830,7 +1945,7 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
      * May return false if the argument is not explicitly set or if a dataset
      * is passed by value.
      */
-    bool Serialize(std::string &serializedArg) const;
+    bool Serialize(std::string &serializedArg, bool absolutePath = false) const;
 
     //! @cond Doxygen_Suppress
     void NotifyValueSet()
@@ -2121,10 +2236,10 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
         return *this;
     }
 
-    /** Alias for GDALAlgorithmArgDecl::SetOnlyForCLI() */
-    GDALInConstructionAlgorithmArg &SetOnlyForCLI(bool onlyForCLI = true)
+    /** Alias for GDALAlgorithmArgDecl::SetHiddenForAPI() */
+    GDALInConstructionAlgorithmArg &SetHiddenForAPI(bool hiddenForAPI = true)
     {
-        m_decl.SetOnlyForCLI(onlyForCLI);
+        m_decl.SetHiddenForAPI(hiddenForAPI);
         return *this;
     }
 
@@ -2243,6 +2358,13 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     SetIsCRSArg(bool noneAllowed = false,
                 const std::vector<std::string> &specialValues =
                     std::vector<std::string>());
+
+    /** Alias for GDALAlgorithmArgDecl::SetUserProvided() */
+    GDALInConstructionAlgorithmArg &SetUserProvided()
+    {
+        m_decl.SetUserProvided();
+        return *this;
+    }
 };
 
 /************************************************************************/
@@ -2415,11 +2537,9 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Return an argument from its long name, short name or an alias */
     GDALAlgorithmArg *GetArg(const std::string &osName,
-                             bool suggestionAllowed = true)
+                             bool suggestionAllowed = false)
     {
-        return const_cast<GDALAlgorithmArg *>(
-            const_cast<const GDALAlgorithm *>(this)->GetArg(osName,
-                                                            suggestionAllowed));
+        return GetArg(osName, suggestionAllowed, /* isConst = */ false);
     }
 
     /** Return an argument from its long name, short name or an alias */
@@ -2437,7 +2557,11 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Return an argument from its long name, short name or an alias */
     const GDALAlgorithmArg *GetArg(const std::string &osName,
-                                   bool suggestionAllowed = true) const;
+                                   bool suggestionAllowed = false) const
+    {
+        return const_cast<GDALAlgorithm *>(this)->GetArg(
+            osName, suggestionAllowed, /* isConst = */ true);
+    }
 
     /** Return an argument from its long name, short name or an alias */
     const GDALAlgorithmArg &operator[](const std::string &osName) const
@@ -2618,6 +2742,7 @@ class CPL_DLL GDALAlgorithmRegistry
     {
         target->m_calledFromCommandLine = m_calledFromCommandLine;
         target->m_progressBarRequested = m_progressBarRequested;
+        target->m_quiet = m_quiet;
         if (m_specialActionRequested)
         {
             target->m_specialActionRequested = m_specialActionRequested;
@@ -2646,8 +2771,10 @@ class CPL_DLL GDALAlgorithmRegistry
         return m_calledFromCommandLine;
     }
 
-    /** Save command line in a .gdalg.json file. */
-    static bool SaveGDALG(const std::string &filename,
+    /** Save command line in a .gdalg.json file.
+     * If filename is empty, outString will contain the serialized JSON content.
+     */
+    static bool SaveGDALG(const std::string &filename, std::string &outString,
                           const std::string &commandLine);
 
     //! @cond Doxygen_Suppress
@@ -2672,7 +2799,10 @@ class CPL_DLL GDALAlgorithmRegistry
     std::string m_longDescription{};
 
     /** Whether a progress bar is requested (value of \--progress argument) */
-    bool m_progressBarRequested = false;
+    bool m_progressBarRequested = true;
+
+    /** Whether a progress bar is disabled (value of \--quiet argument) */
+    bool m_quiet = false;
 
     friend class GDALVectorPipelineAlgorithm;
     /** Whether ValidateArguments() should be skipped during ParseCommandLineArguments() */
@@ -2710,6 +2840,12 @@ class CPL_DLL GDALAlgorithmRegistry
     bool RegisterSubAlgorithm(const GDALAlgorithmRegistry::AlgInfo &info)
     {
         return m_subAlgRegistry.Register(info);
+    }
+
+    /** Allow arbitrary user arguments using long name syntax (--something) */
+    void AllowArbitraryLongNameArgs()
+    {
+        m_arbitraryLongNameArgsAllowed = true;
     }
 
     /** Add boolean argument. */
@@ -2788,10 +2924,15 @@ class CPL_DLL GDALAlgorithmRegistry
                                   GDAL_OF_MULTIDIM_RASTER,
         bool positionalAndRequired = true, const char *helpMessage = nullptr);
 
-    /** Add open option(s) argument. */
+    /** Add (input) open option(s) argument. */
     GDALInConstructionAlgorithmArg &
     AddOpenOptionsArg(std::vector<std::string> *pValue,
                       const char *helpMessage = nullptr);
+
+    /** Add output open option(s) argument. */
+    GDALInConstructionAlgorithmArg &
+    AddOutputOpenOptionsArg(std::vector<std::string> *pValue,
+                            const char *helpMessage = nullptr);
 
     /** Add input format(s) argument. */
     GDALInConstructionAlgorithmArg &
@@ -2825,6 +2966,10 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddOutputStringArg(std::string *pValue, const char *helpMessage = nullptr);
 
+    /** Add (hidden) stdout argument. */
+    GDALInConstructionAlgorithmArg &
+    AddStdoutArg(bool *pValue, const char *helpMessage = nullptr);
+
     /** Add output format argument. */
     GDALInConstructionAlgorithmArg &
     AddOutputFormatArg(std::string *pValue, bool bStreamAllowed = false,
@@ -2855,6 +3000,11 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Add (single) layer name argument. */
     GDALInConstructionAlgorithmArg &
     AddLayerNameArg(std::string *pValue, const char *helpMessage = nullptr);
+
+    /** Add (single) output layer name argument. */
+    GDALInConstructionAlgorithmArg &
+    AddOutputLayerNameArg(std::string *pValue,
+                          const char *helpMessage = nullptr);
 
     /** Add (potentially multiple) layer name(s) argument. */
     GDALInConstructionAlgorithmArg &
@@ -2908,8 +3058,8 @@ class CPL_DLL GDALAlgorithmRegistry
     AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
                             const char *helpMessage = nullptr);
 
-    /** Add \--progress argument. */
-    GDALInConstructionAlgorithmArg &AddProgressArg();
+    /** Add \--quiet (and hidden \--progress) argument. */
+    void AddProgressArg();
 
     /** Register an action that is executed by the ValidateArguments()
      * method. If the provided function returns false, validation fails.
@@ -2973,7 +3123,13 @@ class CPL_DLL GDALAlgorithmRegistry
 
     void SetPositional(GDALInConstructionAlgorithmArg *arg);
 
+    std::vector<std::string>
+    OpenOptionCompleteFunction(const std::string &currentValue) const;
+
     //! @endcond
+
+    /** Whether this argument name is the one of a well-known boolean argument */
+    static bool IsKnownOutputRelatedBooleanArgName(std::string_view osName);
 
     /** Set whether this algorithm should be reported in JSON usage. */
     void SetDisplayInJSONUsage(bool b)
@@ -3027,6 +3183,22 @@ class CPL_DLL GDALAlgorithmRegistry
     std::string m_dummyVal{};
     GDALAlgorithmArg m_dummyArg{
         GDALAlgorithmArgDecl("dummy", 0, "", GAAT_STRING), &m_dummyVal};
+
+    /** Whether arbitrary user arguments using long name syntax (--something)
+     * are allowed.
+     */
+    bool m_arbitraryLongNameArgsAllowed = false;
+
+    std::vector<std::unique_ptr<std::string>>
+        m_arbitraryLongNameArgsValuesStr{};
+    std::vector<std::unique_ptr<bool>> m_arbitraryLongNameArgsValuesBool{};
+
+    friend GDALAlgorithmArgH GDALAlgorithmGetArg(GDALAlgorithmH hAlg,
+                                                 const char *pszArgName);
+    friend GDALAlgorithmArgH
+    GDALAlgorithmGetArgNonConst(GDALAlgorithmH hAlg, const char *pszArgName);
+    GDALAlgorithmArg *GetArg(const std::string &osName, bool suggestionAllowed,
+                             bool isConst);
 
     GDALInConstructionAlgorithmArg &
     AddArg(std::unique_ptr<GDALInConstructionAlgorithmArg> arg);
@@ -3154,7 +3326,7 @@ class CPL_DLL GDALGlobalAlgorithmRegistry final : public GDALAlgorithmRegistry
     Node m_root{};
 
     GDALGlobalAlgorithmRegistry();
-    ~GDALGlobalAlgorithmRegistry();
+    ~GDALGlobalAlgorithmRegistry() override;
 
     const Node *GetNodeFromPath(const std::vector<std::string> &path) const;
 };

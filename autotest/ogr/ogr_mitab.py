@@ -3010,3 +3010,14 @@ def test_ogr_mitab_read_dbf_with_delete_column():
         f = lyr.GetNextFeature()
         assert f["id"] == 1
         assert f["str"] == "foo"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mitab_creation_illegal_layer_name(tmp_vsimem):
+
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(tmp_vsimem / "out")
+    with pytest.raises(Exception, match="Illegal character"):
+        ds.CreateLayer("illegal/with/slash")

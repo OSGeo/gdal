@@ -3006,7 +3006,7 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
     else  // --version
     {
         osVersionInfo = "GDAL " GDAL_RELEASE_NAME;
-        if (GDAL_RELEASE_NICKNAME[0])
+        if constexpr (GDAL_RELEASE_NICKNAME[0])
         {
             osVersionInfo += " \"" GDAL_RELEASE_NICKNAME "\"";
         }
@@ -4230,6 +4230,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
 
             for (const char *key :
                  {GDAL_DMD_CREATIONOPTIONLIST,
+                  GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST,
                   GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
                   GDAL_DMD_MULTIDIM_GROUP_CREATIONOPTIONLIST,
                   GDAL_DMD_MULTIDIM_DIMENSION_CREATIONOPTIONLIST,

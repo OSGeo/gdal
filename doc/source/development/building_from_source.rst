@@ -256,6 +256,13 @@ All cached entries can be viewed using ``cmake -LAH`` from a build directory.
     up the build process. This is still a bit experimental, so it is disabled by
     default. It also cannot be enabled when using the Visual Studio C++ compiler.
 
+.. option:: GDAL_ENABLE_ALGORITHMS=ON
+
+    Whether algorithms available under the :ref:`gdal <gdal_program>` entry point
+    are compiled in. Default is ON. Note that setting it to OFF will disable will
+    disable building the ogrtindex utility.
+
+
 Resource files embedding
 ++++++++++++++++++++++++
 
@@ -1392,11 +1399,11 @@ MSSQL_ODBC
 The Microsoft SQL Native ODBC driver Library (closed source/proprietary) is required
 to enable bulk copy in the :ref:`vector.mssqlspatial` driver.
 If both MSSQL_NCLI and MSSQL_ODBC are found and enabled, MSSQL_ODBC will be used.
-The library is normally found if installed in standard location, and at version 17.
+The library is normally found if installed in standard location, and at version 17+.
 
 .. option:: MSSQL_ODBC_VERSION
 
-  Major version of the Native Client, typically 17
+  Major version of the Native Client, typically 17 or 18
 
 .. option:: MSSQL_ODBC_INCLUDE_DIR
 

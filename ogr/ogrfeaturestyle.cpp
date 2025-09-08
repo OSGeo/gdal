@@ -1777,7 +1777,6 @@ GBool OGRStyleTool::Parse(const OGRStyleParamId *pasStyle,
             CSLDestroy(papszToken);
             CSLDestroy(papszToken2);
             return FALSE;
-            break;
     }
 
     ////////////////////////////////////////////////////////////////////////

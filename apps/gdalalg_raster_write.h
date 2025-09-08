@@ -31,6 +31,11 @@ class GDALRasterWriteAlgorithm final : public GDALRasterPipelineStepAlgorithm
 
     GDALRasterWriteAlgorithm();
 
+    bool CanBeLastStep() const override
+    {
+        return true;
+    }
+
     bool IsNativelyStreamingCompatible() const override
     {
         return false;

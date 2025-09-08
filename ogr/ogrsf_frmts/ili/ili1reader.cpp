@@ -669,7 +669,7 @@ void ILI1Reader::AddLayer(OGRILI1Layer *poNewLayer)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRILI1Layer *ILI1Reader::GetLayer(int iLayer)
+OGRILI1Layer *ILI1Reader::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)
@@ -693,7 +693,7 @@ OGRILI1Layer *ILI1Reader::GetLayerByName(const char *pszLayerName)
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int ILI1Reader::GetLayerCount()
+int ILI1Reader::GetLayerCount() const
 
 {
     return nLayers;

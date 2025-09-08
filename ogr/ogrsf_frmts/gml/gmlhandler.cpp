@@ -426,6 +426,7 @@ static const char *const apszGMLGeometryElements[] = {
     "BoundingBox", /* ows:BoundingBox */
     "CompositeCurve",
     "CompositeSurface",
+    "Shell", /* CityGML 3 */
     "Curve",
     "GeometryCollection", /* OGR < 1.8.0 bug... */
     "LineString",
@@ -591,39 +592,29 @@ OGRErr GMLHandler::endElement()
     switch (stateStack[nStackDepth])
     {
         case STATE_TOP:
-            return OGRERR_NONE;
             break;
         case STATE_DEFAULT:
             return endElementDefault();
-            break;
         case STATE_FEATURE:
             return endElementFeature();
-            break;
         case STATE_PROPERTY:
             return endElementAttribute();
-            break;
         case STATE_FEATUREPROPERTY:
             return endElementFeatureProperty();
-            break;
         case STATE_GEOMETRY:
             return endElementGeometry();
-            break;
         case STATE_IGNORED_FEATURE:
             return endElementIgnoredFeature();
-            break;
         case STATE_BOUNDED_BY:
             return endElementBoundedBy();
-            break;
         case STATE_BOUNDED_BY_IN_FEATURE:
             return endElementBoundedByInFeature();
-            break;
         case STATE_CITYGML_ATTRIBUTE:
             return endElementCityGMLGenericAttr();
-            break;
         default:
-            return OGRERR_NONE;
             break;
     }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -635,39 +626,26 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
     switch (stateStack[nStackDepth])
     {
         case STATE_TOP:
-            return OGRERR_NONE;
-            break;
         case STATE_DEFAULT:
-            return OGRERR_NONE;
-            break;
         case STATE_FEATURE:
-            return OGRERR_NONE;
             break;
         case STATE_PROPERTY:
             return dataHandlerAttribute(data, nLen);
-            break;
         case STATE_FEATUREPROPERTY:
-            return OGRERR_NONE;
             break;
         case STATE_GEOMETRY:
             return dataHandlerGeometry(data, nLen);
-            break;
         case STATE_IGNORED_FEATURE:
-            return OGRERR_NONE;
-            break;
         case STATE_BOUNDED_BY:
-            return OGRERR_NONE;
             break;
         case STATE_BOUNDED_BY_IN_FEATURE:
             return dataHandlerGeometry(data, nLen);
-            break;
         case STATE_CITYGML_ATTRIBUTE:
             return dataHandlerAttribute(data, nLen);
-            break;
         default:
-            return OGRERR_NONE;
             break;
     }
+    return OGRERR_NONE;
 }
 
 #define PUSH_STATE(val)                                                        \
@@ -1210,7 +1188,6 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName,
                         poClass->GetGeometryPropertyCount();
                 }
             }
-
             else
             {
                 if (!poClass->IsSchemaLocked() &&
@@ -1247,13 +1224,16 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName,
             return startElementGeometry(pszName, nLenName, attr);
         }
     }
-    else if (nLenName == 9 && strcmp(pszName, "boundedBy") == 0 &&
-             // We ignore the UseBBOX() flag for CityGML, since CityGML
-             // has elements like bldg:boundedBy, which are not a simple
-             // rectangular bbox. This is needed to read properly
-             // autotest/ogr/data/gml/citygml_lod2_713_5322.xml
-             // (this is a workaround of not being namespace aware)
-             (eAppSchemaType == APPSCHEMA_CITYGML || m_poReader->UseBBOX()))
+    else if (
+        (nLenName == 9 || nLenName == 8) &&
+        (strcmp(pszName, "boundedBy") == 0 ||
+         strcmp(pszName, "boundary") == 0) &&
+        // We ignore the UseBBOX() flag for CityGML, since CityGML
+        // has elements like bldg:boundedBy or 'boundary', which are not a simple
+        // rectangular bbox. This is needed to read properly
+        // autotest/ogr/data/gml/citygml_lod2_713_5322.xml
+        // (this is a workaround of not being namespace aware)
+        (eAppSchemaType == APPSCHEMA_CITYGML || m_poReader->UseBBOX()))
     {
         m_inBoundedByDepth = m_nDepth;
 

@@ -22,7 +22,7 @@
 #define _(x) (x)
 #endif
 
-bool GDALRasterOverviewAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALRasterOverviewAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     CPLError(CE_Failure, CPLE_AppDefined,
              "The Run() method should not be called directly on the \"gdal "
@@ -30,20 +30,28 @@ bool GDALRasterOverviewAlgorithm::RunImpl(GDALProgressFunc, void *)
     return false;
 }
 
+GDALRasterOverviewAlgorithmStandalone::
+    ~GDALRasterOverviewAlgorithmStandalone() = default;
+
 /************************************************************************/
 /*                    GDALRasterOverviewAlgorithmAdd()                  */
 /************************************************************************/
 
-GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd(
+    bool standaloneStep)
+    : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      ConstructorOptions()
+                                          .SetStandaloneStep(standaloneStep)
+                                          .SetAddDefaultArguments(false))
 {
     AddProgressArg();
+
     AddOpenOptionsArg(&m_openOptions);
-    AddArg("dataset", 0,
-           _("Dataset (to be updated in-place, unless --external)"), &m_dataset,
-           GDAL_OF_RASTER | GDAL_OF_UPDATE)
-        .SetPositional()
-        .SetRequired();
+    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER | GDAL_OF_UPDATE,
+                       /* positionalAndRequired = */ standaloneStep,
+                       _("Dataset (to be updated in-place, unless --external)"))
+        .AddAlias("dataset")
+        .SetMaxCount(1);
 
     constexpr const char *OVERVIEW_SRC_LEVELS_MUTEX = "overview-src-levels";
 
@@ -53,9 +61,12 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd()
             .SetMutualExclusionGroup(OVERVIEW_SRC_LEVELS_MUTEX);
     SetAutoCompleteFunctionForFilename(overviewSrcArg, GDAL_OF_RASTER);
 
-    AddArg("external", 0, _("Add external overviews"), &m_readOnly)
-        .AddHiddenAlias("ro")
-        .AddHiddenAlias(GDAL_ARG_NAME_READ_ONLY);
+    if (standaloneStep)
+    {
+        AddArg("external", 0, _("Add external overviews"), &m_readOnly)
+            .AddHiddenAlias("ro")
+            .AddHiddenAlias(GDAL_ARG_NAME_READ_ONLY);
+    }
 
     AddArg("resampling", 'r', _("Resampling method"), &m_resampling)
         .SetChoices("nearest", "average", "cubic", "cubicspline", "lanczos",
@@ -69,17 +80,106 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd()
            _("Maximum width or height of the smallest overview level."),
            &m_minSize)
         .SetMinValueIncluded(1);
+
+    if (standaloneStep)
+    {
+        auto &ovrCreationOptionArg =
+            AddArg(GDAL_ARG_NAME_CREATION_OPTION, 0,
+                   _("Overview creation option"), &m_creationOptions)
+                .AddAlias("co")
+                .SetMetaVar("<KEY>=<VALUE>")
+                .SetPackedValuesAllowed(false);
+        ovrCreationOptionArg.AddValidationAction(
+            [this, &ovrCreationOptionArg]()
+            { return ParseAndValidateKeyValue(ovrCreationOptionArg); });
+
+        ovrCreationOptionArg.SetAutoCompleteFunction(
+            [this](const std::string &currentValue)
+            {
+                std::vector<std::string> oRet;
+
+                const std::string osDSName = m_inputDataset.size() == 1
+                                                 ? m_inputDataset[0].GetName()
+                                                 : std::string();
+                const std::string osExt = CPLGetExtensionSafe(osDSName.c_str());
+                if (!osExt.empty())
+                {
+                    std::set<std::string> oVisitedExtensions;
+                    auto poDM = GetGDALDriverManager();
+                    for (int i = 0; i < poDM->GetDriverCount(); ++i)
+                    {
+                        auto poDriver = poDM->GetDriver(i);
+                        if (poDriver->GetMetadataItem(GDAL_DCAP_RASTER))
+                        {
+                            const char *pszExtensions =
+                                poDriver->GetMetadataItem(GDAL_DMD_EXTENSIONS);
+                            if (pszExtensions)
+                            {
+                                const CPLStringList aosExts(
+                                    CSLTokenizeString2(pszExtensions, " ", 0));
+                                for (const char *pszExt : cpl::Iterate(aosExts))
+                                {
+                                    if (EQUAL(pszExt, osExt.c_str()) &&
+                                        !cpl::contains(oVisitedExtensions,
+                                                       pszExt))
+                                    {
+                                        oVisitedExtensions.insert(pszExt);
+                                        if (AddOptionsSuggestions(
+                                                poDriver->GetMetadataItem(
+                                                    GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST),
+                                                GDAL_OF_RASTER, currentValue,
+                                                oRet))
+                                        {
+                                            return oRet;
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return oRet;
+            });
+    }
 }
 
 /************************************************************************/
-/*                GDALRasterOverviewAlgorithmAdd::RunImpl()             */
+/*                GDALRasterOverviewAlgorithmAdd::RunStep()             */
 /************************************************************************/
 
-bool GDALRasterOverviewAlgorithmAdd::RunImpl(GDALProgressFunc pfnProgress,
-                                             void *pProgressData)
+bool GDALRasterOverviewAlgorithmAdd::RunStep(GDALPipelineStepRunContext &ctxt)
 {
-    auto poDS = m_dataset.GetDatasetRef();
+    GDALProgressFunc pfnProgress = ctxt.m_pfnProgress;
+    void *pProgressData = ctxt.m_pProgressData;
+    auto poDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poDS);
+
+    CPLStringList aosOptions(m_creationOptions);
+    if (m_readOnly)
+    {
+        auto poDriver = poDS->GetDriver();
+        if (poDriver)
+        {
+            const char *pszOptionList =
+                poDriver->GetMetadataItem(GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST);
+            if (pszOptionList)
+            {
+                if (strstr(pszOptionList, "<Value>EXTERNAL</Value>") == nullptr)
+                {
+                    ReportError(CE_Failure, CPLE_NotSupported,
+                                "Driver %s does not support external overviews",
+                                poDriver->GetDescription());
+                    return false;
+                }
+                else if (aosOptions.FetchNameValue("LOCATION") == nullptr)
+                {
+                    aosOptions.SetNameValue("LOCATION", "EXTERNAL");
+                }
+            }
+        }
+    }
 
     std::string resampling = m_resampling;
     if (resampling.empty() && poDS->GetRasterCount() > 0)
@@ -150,10 +250,58 @@ bool GDALRasterOverviewAlgorithmAdd::RunImpl(GDALProgressFunc pfnProgress,
         }
     }
 
-    return levels.empty() ||
-           GDALBuildOverviews(GDALDataset::ToHandle(poDS), resampling.c_str(),
-                              static_cast<int>(levels.size()), levels.data(), 0,
-                              nullptr, pfnProgress, pProgressData) == CE_None;
+    if (!m_standaloneStep && !levels.empty())
+    {
+        auto poVRTDriver = GetGDALDriverManager()->GetDriverByName("VRT");
+        if (!poVRTDriver)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "VRT driver not available");
+            return false;
+        }
+        auto poVRTDS = std::unique_ptr<GDALDataset>(poVRTDriver->CreateCopy(
+            "", poDS, false, nullptr, nullptr, nullptr));
+        bool bRet = poVRTDS != nullptr;
+        if (bRet)
+        {
+            aosOptions.SetNameValue("VIRTUAL", "YES");
+            bRet = GDALBuildOverviewsEx(
+                       GDALDataset::ToHandle(poVRTDS.get()), resampling.c_str(),
+                       static_cast<int>(levels.size()), levels.data(), 0,
+                       nullptr, nullptr, nullptr, aosOptions.List()) == CE_None;
+            if (bRet)
+                m_outputDataset.Set(std::move(poVRTDS));
+        }
+        return bRet;
+    }
+    else
+    {
+        const auto ret =
+            levels.empty() ||
+            GDALBuildOverviewsEx(
+                GDALDataset::ToHandle(poDS), resampling.c_str(),
+                static_cast<int>(levels.size()), levels.data(), 0, nullptr,
+                pfnProgress, pProgressData, aosOptions.List()) == CE_None;
+        if (ret)
+            m_outputDataset.Set(poDS);
+        return ret;
+    }
 }
+
+/************************************************************************/
+/*                GDALRasterOverviewAlgorithmAdd::RunImpl()             */
+/************************************************************************/
+
+bool GDALRasterOverviewAlgorithmAdd::RunImpl(GDALProgressFunc pfnProgress,
+                                             void *pProgressData)
+{
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunStep(stepCtxt);
+}
+
+GDALRasterOverviewAlgorithmAddStandalone::
+    ~GDALRasterOverviewAlgorithmAddStandalone() = default;
 
 //! @endcond

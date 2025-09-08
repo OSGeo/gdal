@@ -204,21 +204,21 @@ class ECBand final : public GDALRasterBand
 
   public:
     ECBand(ECDataset *parent, int b, int level = 0);
-    virtual ~ECBand();
+    ~ECBand() override;
 
-    virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
+    CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
 
-    virtual GDALColorInterp GetColorInterpretation() override
+    GDALColorInterp GetColorInterpretation() override
     {
         return ci;
     }
 
-    virtual int GetOverviewCount() override
+    int GetOverviewCount() override
     {
         return static_cast<int>(overviews.size());
     }
 
-    virtual GDALRasterBand *GetOverview(int n) override
+    GDALRasterBand *GetOverview(int n) override
     {
         return (n >= 0 && n < GetOverviewCount()) ? overviews[n] : nullptr;
     }
@@ -823,7 +823,7 @@ ECBand::ECBand(ECDataset *parent, int b, int level)
 
 void ECBand::AddOverviews()
 {
-    auto parent = reinterpret_cast<ECDataset *>(poDS);
+    auto parent = cpl::down_cast<ECDataset *>(poDS);
     for (size_t i = 1; i < parent->resolutions.size(); i++)
     {
         ECBand *ovl = new ECBand(parent, nBand, int(i));
@@ -835,7 +835,7 @@ void ECBand::AddOverviews()
 
 CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
 {
-    auto parent = reinterpret_cast<ECDataset *>(poDS);
+    auto parent = cpl::down_cast<ECDataset *>(poDS);
     auto &buffer = parent->tilebuffer;
     auto TSZ = parent->TSZ;
     auto BSZ = parent->BSZ;

@@ -278,8 +278,6 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 
         return poOGRFeature;
     }
-
-    return nullptr;
 }
 
 /************************************************************************/
@@ -329,7 +327,7 @@ OGRErr OGRNASLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRNASLayer::TestCapability(const char *pszCap)
+int OGRNASLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastGetExtent))

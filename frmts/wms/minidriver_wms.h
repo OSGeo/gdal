@@ -21,16 +21,16 @@
  * GDALRegister_WMS()
  */
 
-class WMSMiniDriver_WMS : public WMSMiniDriver
+class WMSMiniDriver_WMS final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_WMS();
-    virtual ~WMSMiniDriver_WMS();
+    ~WMSMiniDriver_WMS() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,
                               char **papszOpenOptions) override;
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
 
     // Return error message in request.Error
     virtual CPLErr

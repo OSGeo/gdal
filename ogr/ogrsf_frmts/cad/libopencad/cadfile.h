@@ -23,7 +23,7 @@
 /**
  * @brief The abstract CAD file class
  */
-class OCAD_EXTERN CADFile
+class OCAD_EXTERN CADFile /* non final */
 {
     friend class CADTables;
     friend class CADLayer;
@@ -127,6 +127,12 @@ protected:
 protected:
     std::map<long, long> mapObjects; // object index <-> file offset
     bool bReadingUnsupportedGeometries;
+
+private:
+    CADFile(CADFile&) = delete;
+    CADFile& operator=(const CADFile&) = delete;
+    CADFile(CADFile&&) = delete;
+    CADFile& operator=(CADFile&&) = delete;
 };
 
 #endif // CADFILE_H

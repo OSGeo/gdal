@@ -16,9 +16,6 @@
 
 #include <cstddef>
 #include <cstring>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #include <algorithm>
 #include <limits>
@@ -508,8 +505,9 @@ class VSICachedFilesystemHandler final : public VSIFilesystemHandler
                                 size_t &nChunkSize, size_t &nCacheSize);
 
   public:
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList papszOptions) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
@@ -641,10 +639,9 @@ bool VSICachedFilesystemHandler::AnalyzeFilename(
 /*                               Open()                                 */
 /************************************************************************/
 
-VSIVirtualHandle *VSICachedFilesystemHandler::Open(const char *pszFilename,
-                                                   const char *pszAccess,
-                                                   bool bSetError,
-                                                   CSLConstList papszOptions)
+VSIVirtualHandleUniquePtr
+VSICachedFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
+                                 bool bSetError, CSLConstList papszOptions)
 {
     std::string osUnderlyingFilename;
     size_t nChunkSize = 0;
@@ -662,11 +659,12 @@ VSIVirtualHandle *VSICachedFilesystemHandler::Open(const char *pszFilename,
         return nullptr;
     }
 
-    auto fp = VSIFOpenEx2L(osUnderlyingFilename.c_str(), pszAccess, bSetError,
-                           papszOptions);
+    auto fp = VSIFilesystemHandler::OpenStatic(
+        osUnderlyingFilename.c_str(), pszAccess, bSetError, papszOptions);
     if (!fp)
         return nullptr;
-    return VSICreateCachedFile(fp, nChunkSize, nCacheSize);
+    return VSIVirtualHandleUniquePtr(
+        VSICreateCachedFile(fp.release(), nChunkSize, nCacheSize));
 }
 
 /************************************************************************/

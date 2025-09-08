@@ -717,6 +717,4 @@ size_t RMFDataset::DEMCompress(const GByte *pabyIn, GUInt32 nSizeIn,
         nRecordSize = 0;
         nLessCount = 0;
     }
-
-    return 0;
 }

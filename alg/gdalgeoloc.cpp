@@ -662,7 +662,7 @@ int GDALGeoLoc<Accessors>::Transform(void *pTransformArg, int bDstToSrc,
         const bool bGeolocMaxAccuracy = CPLTestBool(
             CPLGetConfigOption("GDAL_GEOLOC_USE_MAX_ACCURACY", "YES"));
 
-        // Keep those objects in this outer scope, so they are re-used, to
+        // Keep those objects in this outer scope, so they are reused, to
         // save memory allocations.
         OGRPoint oPoint;
         OGRLinearRing oRing;
@@ -734,31 +734,37 @@ int GDALGeoLoc<Accessors>::Transform(void *pTransformArg, int bDstToSrc,
             if (fBMX_1_0 != INVALID_BMXY && fBMX_0_1 != INVALID_BMXY &&
                 fBMX_1_1 != INVALID_BMXY)
             {
-                padfX[i] =
-                    (1 - (dfBMY - iBMY)) *
-                        (fBMX_0_0 + (dfBMX - iBMX) * (fBMX_1_0 - fBMX_0_0)) +
-                    (dfBMY - iBMY) *
-                        (fBMX_0_1 + (dfBMX - iBMX) * (fBMX_1_1 - fBMX_0_1));
-                padfY[i] =
-                    (1 - (dfBMY - iBMY)) *
-                        (fBMY_0_0 + (dfBMX - iBMX) * (fBMY_1_0 - fBMY_0_0)) +
-                    (dfBMY - iBMY) *
-                        (fBMY_0_1 + (dfBMX - iBMX) * (fBMY_1_1 - fBMY_0_1));
+                padfX[i] = (1 - (dfBMY - iBMY)) *
+                               (double(fBMX_0_0) +
+                                (dfBMX - iBMX) * double(fBMX_1_0 - fBMX_0_0)) +
+                           (dfBMY - iBMY) *
+                               (double(fBMX_0_1) +
+                                (dfBMX - iBMX) * double(fBMX_1_1 - fBMX_0_1));
+                padfY[i] = (1 - (dfBMY - iBMY)) *
+                               (double(fBMY_0_0) +
+                                (dfBMX - iBMX) * double(fBMY_1_0 - fBMY_0_0)) +
+                           (dfBMY - iBMY) *
+                               (double(fBMY_0_1) +
+                                (dfBMX - iBMX) * double(fBMY_1_1 - fBMY_0_1));
             }
             else if (fBMX_1_0 != INVALID_BMXY)
             {
-                padfX[i] = fBMX_0_0 + (dfBMX - iBMX) * (fBMX_1_0 - fBMX_0_0);
-                padfY[i] = fBMY_0_0 + (dfBMX - iBMX) * (fBMY_1_0 - fBMY_0_0);
+                padfX[i] = double(fBMX_0_0) +
+                           (dfBMX - iBMX) * double(fBMX_1_0 - fBMX_0_0);
+                padfY[i] = double(fBMY_0_0) +
+                           (dfBMX - iBMX) * double(fBMY_1_0 - fBMY_0_0);
             }
             else if (fBMX_0_1 != INVALID_BMXY)
             {
-                padfX[i] = fBMX_0_0 + (dfBMY - iBMY) * (fBMX_0_1 - fBMX_0_0);
-                padfY[i] = fBMY_0_0 + (dfBMY - iBMY) * (fBMY_0_1 - fBMY_0_0);
+                padfX[i] = double(fBMX_0_0) +
+                           (dfBMY - iBMY) * double(fBMX_0_1 - fBMX_0_0);
+                padfY[i] = double(fBMY_0_0) +
+                           (dfBMY - iBMY) * double(fBMY_0_1 - fBMY_0_0);
             }
             else
             {
-                padfX[i] = fBMX_0_0;
-                padfY[i] = fBMY_0_0;
+                padfX[i] = double(fBMX_0_0);
+                padfY[i] = double(fBMY_0_0);
             }
 
             const double dfGeoLocPixel =
@@ -1118,10 +1124,12 @@ bool GDALGeoLoc<Accessors>::GenerateBackMap(
             const float fX = fUpdatedBMX / fUpdatedWeight;
             const float fY = fUpdatedBMY / fUpdatedWeight;
             const double dfGeoLocPixel =
-                (fX - psTransform->dfPIXEL_OFFSET) / psTransform->dfPIXEL_STEP -
+                (double(fX) - psTransform->dfPIXEL_OFFSET) /
+                    psTransform->dfPIXEL_STEP -
                 dfGeorefConventionOffset;
             const double dfGeoLocLine =
-                (fY - psTransform->dfLINE_OFFSET) / psTransform->dfLINE_STEP -
+                (double(fY) - psTransform->dfLINE_OFFSET) /
+                    psTransform->dfLINE_STEP -
                 dfGeorefConventionOffset;
             int iXAvg = static_cast<int>(std::max(0.0, dfGeoLocPixel));
             iXAvg = std::min(iXAvg, psTransform->nGeoLocXSize - 1);
@@ -1148,7 +1156,7 @@ bool GDALGeoLoc<Accessors>::GenerateBackMap(
         }
     };
 
-    // Keep those objects in this outer scope, so they are re-used, to
+    // Keep those objects in this outer scope, so they are reused, to
     // save memory allocations.
     OGRPoint oPoint;
     OGRLinearRing oRing;
@@ -1633,7 +1641,7 @@ static void *GDALCreateSimilarGeoLocTransformer(void *hTransformArg,
 /*                  GDALCreateGeolocationMetadata()                     */
 /************************************************************************/
 
-/** Synthetize the content of a GEOLOCATION metadata domain from a
+/** Synthesize the content of a GEOLOCATION metadata domain from a
  *  geolocation dataset.
  *
  *  This is used when doing gdalwarp -to GEOLOC_ARRAY=some.tif
@@ -1737,7 +1745,7 @@ CPLStringList GDALCreateGeolocationMetadata(GDALDatasetH hBaseDS,
     }
 
     std::string osDebugMsg;
-    osDebugMsg = "Synthetized GEOLOCATION metadata for ";
+    osDebugMsg = "Synthesized GEOLOCATION metadata for ";
     osDebugMsg += bIsSource ? "source" : "target";
     osDebugMsg += ":\n";
     for (int i = 0; i < aosMD.size(); ++i)

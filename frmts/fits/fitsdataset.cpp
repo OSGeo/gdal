@@ -83,7 +83,7 @@ class FITSDataset final : public GDALPamDataset
 
   public:
     FITSDataset();  // Others should not call this constructor explicitly
-    ~FITSDataset();
+    ~FITSDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
@@ -93,22 +93,22 @@ class FITSDataset final : public GDALPamDataset
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     char **GetMetadata(const char *papszDomain = nullptr) override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 };
@@ -138,19 +138,19 @@ class FITSRasterBand final : public GDALPamRasterBand
 
   public:
     FITSRasterBand(FITSDataset *, int);
-    virtual ~FITSRasterBand();
+    ~FITSRasterBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
-    virtual double GetNoDataValue(int *) override final;
-    virtual CPLErr SetNoDataValue(double) override final;
-    virtual CPLErr DeleteNoDataValue() override final;
+    double GetNoDataValue(int *) override final;
+    CPLErr SetNoDataValue(double) override final;
+    CPLErr DeleteNoDataValue() override final;
 
-    virtual double GetOffset(int *pbSuccess = nullptr) override final;
-    virtual CPLErr SetOffset(double dfNewValue) override final;
-    virtual double GetScale(int *pbSuccess = nullptr) override final;
-    virtual CPLErr SetScale(double dfNewValue) override final;
+    double GetOffset(int *pbSuccess = nullptr) override final;
+    CPLErr SetOffset(double dfNewValue) override final;
+    double GetScale(int *pbSuccess = nullptr) override final;
+    CPLErr SetScale(double dfNewValue) override final;
 };
 
 /************************************************************************/
@@ -202,15 +202,15 @@ class FITSLayer final : public OGRLayer,
 
   public:
     FITSLayer(FITSDataset *poDS, int hduNum, const char *pszExtName);
-    ~FITSLayer();
+    ~FITSLayer() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
     void ResetReading() override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     OGRFeature *GetFeature(GIntBig) override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
@@ -877,7 +877,7 @@ OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
 /*                         TestCapability()                             */
 /************************************************************************/
 
-int FITSLayer::TestCapability(const char *pszCap)
+int FITSLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
@@ -1084,7 +1084,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
         if (eType == OFTIntegerList || eType == OFTInteger64List ||
             eType == OFTRealList)
         {
-            // First take into account the REPEAT_{FIELD_NAME} creatin option
+            // First take into account the REPEAT_{FIELD_NAME} creation option
             if (pszRepeat)
             {
                 osRepeat = pszRepeat;
@@ -2277,7 +2277,7 @@ char **FITSDataset::GetMetadata(const char *pszDomain)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *FITSDataset::GetLayer(int idx)
+const OGRLayer *FITSDataset::GetLayer(int idx) const
 {
     if (idx < 0 || idx >= GetLayerCount())
         return nullptr;
@@ -2346,7 +2346,7 @@ OGRLayer *FITSDataset::ICreateLayer(const char *pszName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int FITSDataset::TestCapability(const char *pszCap)
+int FITSDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return eAccess == GA_Update;

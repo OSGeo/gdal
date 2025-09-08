@@ -35,7 +35,7 @@ namespace PCIDSK
     public:
         MetadataSegment( PCIDSKFile *file, int segment,
                          const char *segment_pointer );
-        virtual     ~MetadataSegment();
+        ~MetadataSegment() override;
 
         void         FetchGroupMetadata( const char *group, int id,
                                     std::map<std::string,std::string> &md_set );

@@ -291,7 +291,7 @@ Examples
 
    .. code-block:: bash
 
-       gdaladdo -ro --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
+       gdaladdo -ro --config COMPRESS_OVERVIEW=YES erdas.img 2 4 8 16
 
 .. example::
    :title: Create an external JPEG-compressed GeoTIFF overview file from a 3-band RGB dataset
@@ -301,8 +301,8 @@ Examples
 
    .. code-block:: bash
 
-       gdaladdo --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR
-                --config INTERLEAVE_OVERVIEW PIXEL rgb_dataset.ext 2 4 8 16
+       gdaladdo --config COMPRESS_OVERVIEW=JPEG --config PHOTOMETRIC_OVERVIEW=YCBCR
+                --config INTERLEAVE_OVERVIEW=PIXEL rgb_dataset.ext 2 4 8 16
 
 .. example::
    :title: Create Erdas Imagine format overviews for the indicated JPEG file
@@ -310,7 +310,7 @@ Examples
 
    .. code-block:: bash
 
-       gdaladdo --config USE_RRD YES airphoto.jpg 3 9 27 81
+       gdaladdo --config USE_RRD=YES airphoto.jpg 3 9 27 81
 
 .. example::
    :title: Create overviews for a specific subdataset

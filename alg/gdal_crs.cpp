@@ -225,7 +225,7 @@ static void *GDALCreateGCPTransformerEx(int nGCPCount,
         psInfo->asGCPs[0].Y() != psInfo->asGCPs[1].Y())
     {
         // Assumes that the 2 GCPs form opposite corners of a rectangle,
-        // and synthetize a 3rd corner
+        // and synthesize a 3rd corner
         gdal::GCP newGCP;
         newGCP.X() = psInfo->asGCPs[1].X();
         newGCP.Y() = psInfo->asGCPs[0].Y();
@@ -1073,7 +1073,7 @@ static int worst_outlier(struct Control_Points *cp, double x_mean,
     for (int nI = 0; nI < cp->count; nI++)
     {
         double dfCurrentDifference = padfResiduals[nI];
-        if (fabs(dfCurrentDifference) < 1.19209290E-07F /*FLT_EPSILON*/)
+        if (fabs(dfCurrentDifference) < 1.19209290E-07 /*FLT_EPSILON*/)
         {
             dfCurrentDifference = 0.0;
         }

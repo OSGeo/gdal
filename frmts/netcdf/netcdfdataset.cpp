@@ -258,32 +258,31 @@ class netCDFRasterBand final : public GDALPamRasterBand
                      const int *panBandZLev = nullptr,
                      const int *panBandZPos = nullptr,
                      const int *paDimIds = nullptr);
-    virtual ~netCDFRasterBand();
+    ~netCDFRasterBand() override;
 
-    virtual double GetNoDataValue(int *) override;
-    virtual int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr) override;
-    virtual uint64_t GetNoDataValueAsUInt64(int *pbSuccess = nullptr) override;
-    virtual CPLErr SetNoDataValue(double) override;
-    virtual CPLErr SetNoDataValueAsInt64(int64_t nNoData) override;
-    virtual CPLErr SetNoDataValueAsUInt64(uint64_t nNoData) override;
+    double GetNoDataValue(int *) override;
+    int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr) override;
+    uint64_t GetNoDataValueAsUInt64(int *pbSuccess = nullptr) override;
+    CPLErr SetNoDataValue(double) override;
+    CPLErr SetNoDataValueAsInt64(int64_t nNoData) override;
+    CPLErr SetNoDataValueAsUInt64(uint64_t nNoData) override;
     // virtual CPLErr DeleteNoDataValue();
-    virtual double GetOffset(int *) override;
-    virtual CPLErr SetOffset(double) override;
-    virtual double GetScale(int *) override;
-    virtual CPLErr SetScale(double) override;
-    virtual const char *GetUnitType() override;
-    virtual CPLErr SetUnitType(const char *) override;
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    double GetOffset(int *) override;
+    CPLErr SetOffset(double) override;
+    double GetScale(int *) override;
+    CPLErr SetScale(double) override;
+    const char *GetUnitType() override;
+    CPLErr SetUnitType(const char *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
     char **GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 
-    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
-                                   const char *pszDomain = "") override;
-    virtual CPLErr SetMetadata(char **papszMD,
-                               const char *pszDomain = "") override;
+    CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                           const char *pszDomain = "") override;
+    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
 };
 
 /************************************************************************/
@@ -1452,7 +1451,7 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
         // but it is ok if variable has not been written to, so only print
         // debug. See bug #4484.
         if (m_bNoDataSet &&
-            !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode())
+            !cpl::down_cast<netCDFDataset *>(poDS)->GetDefineMode())
         {
             CPLDebug("GDAL_netCDF",
                      "Setting NoDataValue to %.17g (previously set to %.17g) "
@@ -1468,7 +1467,7 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
         }
 #endif
         // Make sure we are in define mode.
-        reinterpret_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
+        cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
         int status;
         if (eDataType == GDT_Byte)
@@ -1506,7 +1505,7 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
                                       1, &fNoDataValue);
         }
         else if (eDataType == GDT_UInt16 &&
-                 reinterpret_cast<netCDFDataset *>(poDS)->eFormat ==
+                 cpl::down_cast<netCDFDataset *>(poDS)->eFormat ==
                      NCDF_FORMAT_NC4)
         {
             unsigned short usNoDataValue =
@@ -1515,7 +1514,7 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
                                        1, &usNoDataValue);
         }
         else if (eDataType == GDT_UInt32 &&
-                 reinterpret_cast<netCDFDataset *>(poDS)->eFormat ==
+                 cpl::down_cast<netCDFDataset *>(poDS)->eFormat ==
                      NCDF_FORMAT_NC4)
         {
             unsigned int unNoDataValue = static_cast<unsigned int>(dfNoData);
@@ -1576,7 +1575,7 @@ CPLErr netCDFRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
         // but it is ok if variable has not been written to, so only print
         // debug. See bug #4484.
         if (m_bNoDataSetAsInt64 &&
-            !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode())
+            !cpl::down_cast<netCDFDataset *>(poDS)->GetDefineMode())
         {
             CPLDebug("GDAL_netCDF",
                      "Setting NoDataValue to " CPL_FRMT_GIB
@@ -1595,11 +1594,11 @@ CPLErr netCDFRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
         }
 #endif
         // Make sure we are in define mode.
-        reinterpret_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
+        cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
         int status;
         if (eDataType == GDT_Int64 &&
-            reinterpret_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
+            cpl::down_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
         {
             long long tmp = static_cast<long long>(nNoData);
             status = nc_put_att_longlong(cdfid, nZId, NCDF_FillValue,
@@ -1660,7 +1659,7 @@ CPLErr netCDFRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
         // but it is ok if variable has not been written to, so only print
         // debug. See bug #4484.
         if (m_bNoDataSetAsUInt64 &&
-            !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode())
+            !cpl::down_cast<netCDFDataset *>(poDS)->GetDefineMode())
         {
             CPLDebug("GDAL_netCDF",
                      "Setting NoDataValue to " CPL_FRMT_GUIB
@@ -1679,11 +1678,11 @@ CPLErr netCDFRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
         }
 #endif
         // Make sure we are in define mode.
-        reinterpret_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
+        cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
         int status;
         if (eDataType == GDT_UInt64 &&
-            reinterpret_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
+            cpl::down_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
         {
             unsigned long long tmp = static_cast<long long>(nNoData);
             status = nc_put_att_ulonglong(cdfid, nZId, NCDF_FillValue,
@@ -1950,7 +1949,7 @@ void netCDFRasterBand::CreateMetadataFromOtherVars()
     CPLAssert(!m_bCreateMetadataFromOtherVarsDone);
     m_bCreateMetadataFromOtherVarsDone = true;
 
-    netCDFDataset *l_poDS = reinterpret_cast<netCDFDataset *>(poDS);
+    netCDFDataset *l_poDS = cpl::down_cast<netCDFDataset *>(poDS);
     const int nPamFlagsBackup = l_poDS->nPamFlags;
 
     // Compute all dimensions from Band number and save in Metadata.
@@ -3834,7 +3833,9 @@ void netCDFDataset::SetProjectionFromVar(
             bGotCfGT = true;
 
             int node_offset = 0;
-            NCDFResolveAttInt(nGroupId, NC_GLOBAL, "node_offset", &node_offset);
+            const bool bUseActualRange =
+                NCDFResolveAttInt(nGroupId, NC_GLOBAL, "node_offset",
+                                  &node_offset) == CE_None;
 
             double adfActualRange[2] = {0.0, 0.0};
             double xMinMax[2] = {0.0, 0.0};
@@ -3890,7 +3891,8 @@ void netCDFDataset::SetProjectionFromVar(
                 }
             };
 
-            if (!nc_get_att_double(nGroupDimXID, nVarDimXID, "actual_range",
+            if (bUseActualRange &&
+                !nc_get_att_double(nGroupDimXID, nVarDimXID, "actual_range",
                                    adfActualRange))
             {
                 xMinMax[0] = adfActualRange[0];
@@ -3917,7 +3919,8 @@ void netCDFDataset::SetProjectionFromVar(
                 }
             }
 
-            if (!nc_get_att_double(nGroupDimYID, nVarDimYID, "actual_range",
+            if (bUseActualRange &&
+                !nc_get_att_double(nGroupDimYID, nVarDimYID, "actual_range",
                                    adfActualRange))
             {
                 yMinMax[0] = adfActualRange[0];
@@ -6610,7 +6613,7 @@ void netCDFDataset::CreateSubDatasetList(int nGroupId)
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int netCDFDataset::TestCapability(const char *pszCap)
+int netCDFDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
     {
@@ -6628,7 +6631,7 @@ int netCDFDataset::TestCapability(const char *pszCap)
 /*                            GetLayer()                                */
 /************************************************************************/
 
-OGRLayer *netCDFDataset::GetLayer(int nIdx)
+const OGRLayer *netCDFDataset::GetLayer(int nIdx) const
 {
     if (nIdx < 0 || nIdx >= this->GetLayerCount())
         return nullptr;
@@ -6667,6 +6670,14 @@ OGRLayer *netCDFDataset::ICreateLayer(const char *pszName,
     netCDFDataset *poLayerDataset = nullptr;
     if (eMultipleLayerBehavior == SEPARATE_FILES)
     {
+        if (CPLLaunderForFilenameSafe(osNetCDFLayerName.c_str(), nullptr) !=
+            osNetCDFLayerName)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Illegal characters in '%s' to form a valid filename",
+                     osNetCDFLayerName.c_str());
+            return nullptr;
+        }
         char **papszDatasetOptions = nullptr;
         papszDatasetOptions = CSLSetNameValue(
             papszDatasetOptions, "CONFIG_FILE",
@@ -8471,8 +8482,11 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     CSLDestroy(papszIgnoreVars);
 
+    const bool bListAllArrays = CPLTestBool(
+        CSLFetchNameValueDef(poDS->papszOpenOptions, "LIST_ALL_ARRAYS", "NO"));
+
     // Case where there is no raster variable
-    if (nRasterVars == 0 && !bTreatAsSubdataset)
+    if (!bListAllArrays && nRasterVars == 0 && !bTreatAsSubdataset)
     {
         poDS->GDALPamDataset::SetMetadata(poDS->papszMetadata);
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
@@ -8501,8 +8515,6 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     // We have more than one variable with 2 dimensions in the
     // file, then treat this as a subdataset container dataset.
     bool bSeveralVariablesAsBands = false;
-    const bool bListAllArrays = CPLTestBool(
-        CSLFetchNameValueDef(poDS->papszOpenOptions, "LIST_ALL_ARRAYS", "NO"));
     if (bListAllArrays || ((nRasterVars > 1) && !bTreatAsSubdataset))
     {
         if (CPLFetchBool(poOpenInfo->papszOpenOptions, "VARIABLES_AS_BANDS",
@@ -10259,7 +10271,7 @@ class GDALnetCDFDriver final : public GDALDriver
     }
 
   private:
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bInitialized = false;
 
     void InitializeDCAPVirtualIO()
@@ -10962,7 +10974,6 @@ static CPLErr NCDFPutAttr(int nCdfId, int nVarId, const char *pszAttrName,
                 if (papszValues)
                     CSLDestroy(papszValues);
                 return CE_Failure;
-                break;
         }
     }
 
@@ -11419,7 +11430,6 @@ static CPLErr NCDFPut1DVar(int nCdfId, int nVarId, const char *pszValue)
                             if (papszValues)
                                 CSLDestroy(papszValues);
                             return CE_Failure;
-                            break;
                     }
                 }
                 break;
@@ -11872,7 +11882,7 @@ static char **NCDFTokenizeArray(const char *pszValue)
     }
     else
     {
-        papszValues = reinterpret_cast<char **>(CPLCalloc(2, sizeof(char *)));
+        papszValues = static_cast<char **>(CPLCalloc(2, sizeof(char *)));
         papszValues[0] = CPLStrdup(pszValue);
         papszValues[1] = nullptr;
     }

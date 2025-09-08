@@ -78,7 +78,7 @@ OGRFeature *OGRGNMWrappedResultLayer::GetFeature(GIntBig nFID)
     return poLayer->GetFeature(nFID);
 }
 
-OGRFeatureDefn *OGRGNMWrappedResultLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRGNMWrappedResultLayer::GetLayerDefn() const
 {
     return poLayer->GetLayerDefn();
 }
@@ -88,7 +88,7 @@ GIntBig OGRGNMWrappedResultLayer::GetFeatureCount(int bForce)
     return poLayer->GetFeatureCount(bForce);
 }
 
-int OGRGNMWrappedResultLayer::TestCapability(const char *pszCap)
+int OGRGNMWrappedResultLayer::TestCapability(const char *pszCap) const
 {
     return poLayer->TestCapability(pszCap);
 }
@@ -106,17 +106,17 @@ OGRGNMWrappedResultLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
     return poLayer->CreateGeomField(poField, bApproxOK);
 }
 
-const char *OGRGNMWrappedResultLayer::GetFIDColumn()
+const char *OGRGNMWrappedResultLayer::GetFIDColumn() const
 {
     return poLayer->GetFIDColumn();
 }
 
-const char *OGRGNMWrappedResultLayer::GetGeometryColumn()
+const char *OGRGNMWrappedResultLayer::GetGeometryColumn() const
 {
     return poLayer->GetGeometryColumn();
 }
 
-OGRSpatialReference *OGRGNMWrappedResultLayer::GetSpatialRef()
+const OGRSpatialReference *OGRGNMWrappedResultLayer::GetSpatialRef() const
 {
     return poLayer->GetSpatialRef();
 }
@@ -130,7 +130,7 @@ OGRErr OGRGNMWrappedResultLayer::InsertFeature(OGRFeature *poFeature,
                       OGRERR_INVALID_HANDLE);
     // add fields from input feature
     const OGRFeatureDefn *poSrcDefn = poFeature->GetDefnRef();
-    OGRFeatureDefn *poDstFDefn = GetLayerDefn();
+    const OGRFeatureDefn *poDstFDefn = GetLayerDefn();
     if (nullptr == poSrcDefn || nullptr == poDstFDefn)
         return OGRERR_INVALID_HANDLE;
 
@@ -150,9 +150,10 @@ OGRErr OGRGNMWrappedResultLayer::InsertFeature(OGRFeature *poFeature,
             poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
         if (iDstField >= 0)
         {
-            // TODO: by now skip fields with different types. In future shoul
+            // TODO: by now skip fields with different types. In future should
             // cast types
-            OGRFieldDefn *poDstField = poDstFDefn->GetFieldDefn(iDstField);
+            const OGRFieldDefn *poDstField =
+                poDstFDefn->GetFieldDefn(iDstField);
             if (nullptr != poDstField &&
                 oFieldDefn.GetType() == poDstField->GetType())
                 anMap[iField] = iDstField;

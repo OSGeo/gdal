@@ -133,7 +133,7 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 
     // It's a seed to be able to generate a random identifier in
     // MMGenerateFileIdentifierFromMetadataFileName() function
-    srand((unsigned int)time(nullptr));
+    srand(static_cast<unsigned int>(time(nullptr)));
 
     if (OGR_GT_HasM(eType))
     {
@@ -211,7 +211,7 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                               */
 /****************************************************************************/
 
-int OGRMiraMonDataSource::TestCapability(const char *pszCap)
+int OGRMiraMonDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -226,7 +226,7 @@ int OGRMiraMonDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                                  */
 /****************************************************************************/
 
-OGRLayer *OGRMiraMonDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRMiraMonDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))

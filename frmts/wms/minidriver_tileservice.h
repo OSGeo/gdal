@@ -14,11 +14,11 @@
 #ifndef MINIDRIVER_TILESERVICE_H_INCLUDED
 #define MINIDRIVER_TILESERVICE_H_INCLUDED
 
-class WMSMiniDriver_TileService : public WMSMiniDriver
+class WMSMiniDriver_TileService final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_TileService();
-    virtual ~WMSMiniDriver_TileService();
+    ~WMSMiniDriver_TileService() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,

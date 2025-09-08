@@ -163,11 +163,10 @@ std::string CPLAWSGetHeaderVal(const struct curl_slist *psExistingHeaders,
 
 // See:
 // http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
-std::string CPLGetAWS_SIGN4_Signature(
-    const std::string &osSecretAccessKey, const std::string &osAccessToken,
-    const std::string &osRegion, const std::string &osRequestPayer,
+static std::string CPLGetAWS_SIGN4_Signature(
+    const std::string &osSecretAccessKey, const std::string &osRegion,
     const std::string &osService, const std::string &osVerb,
-    const struct curl_slist *psExistingHeaders, const std::string &osHost,
+    struct curl_slist *&psHeaders, const std::string &osHost,
     const std::string &osCanonicalURI,
     const std::string &osCanonicalQueryString,
     const std::string &osXAMZContentSHA256, bool bAddHeaderAMZContentSHA256,
@@ -189,13 +188,9 @@ std::string CPLGetAWS_SIGN4_Signature(
         oSortedMapHeaders["x-amz-content-sha256"] = osXAMZContentSHA256;
         oSortedMapHeaders["x-amz-date"] = osTimestamp;
     }
-    if (!osRequestPayer.empty())
-        oSortedMapHeaders["x-amz-request-payer"] = osRequestPayer;
-    if (!osAccessToken.empty())
-        oSortedMapHeaders["x-amz-security-token"] = osAccessToken;
     std::string osCanonicalizedHeaders(
-        IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
-            oSortedMapHeaders, psExistingHeaders, "x-amz-"));
+        IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(oSortedMapHeaders,
+                                                          psHeaders, "x-amz-"));
 
     osCanonicalRequest += osCanonicalizedHeaders + "\n";
 
@@ -282,6 +277,11 @@ std::string CPLGetAWS_SIGN4_Signature(
     CPLDebug(AWS_DEBUG_KEY, "osSignature='%s'", osSignature.c_str());
 #endif
 
+    psHeaders = curl_slist_append(
+        psHeaders, CPLSPrintf("x-amz-date: %s", osTimestamp.c_str()));
+    psHeaders =
+        curl_slist_append(psHeaders, CPLSPrintf("x-amz-content-sha256: %s",
+                                                osXAMZContentSHA256.c_str()));
     return osSignature;
 }
 
@@ -289,11 +289,10 @@ std::string CPLGetAWS_SIGN4_Signature(
 /*                CPLGetAWS_SIGN4_Authorization()                       */
 /************************************************************************/
 
-std::string CPLGetAWS_SIGN4_Authorization(
+static std::string CPLGetAWS_SIGN4_Authorization(
     const std::string &osSecretAccessKey, const std::string &osAccessKeyId,
-    const std::string &osAccessToken, const std::string &osRegion,
-    const std::string &osRequestPayer, const std::string &osService,
-    const std::string &osVerb, const struct curl_slist *psExistingHeaders,
+    const std::string &osRegion, const std::string &osService,
+    const std::string &osVerb, struct curl_slist *&psHeaders,
     const std::string &osHost, const std::string &osCanonicalURI,
     const std::string &osCanonicalQueryString,
     const std::string &osXAMZContentSHA256, bool bAddHeaderAMZContentSHA256,
@@ -301,10 +300,9 @@ std::string CPLGetAWS_SIGN4_Authorization(
 {
     std::string osSignedHeaders;
     std::string osSignature(CPLGetAWS_SIGN4_Signature(
-        osSecretAccessKey, osAccessToken, osRegion, osRequestPayer, osService,
-        osVerb, psExistingHeaders, osHost, osCanonicalURI,
-        osCanonicalQueryString, osXAMZContentSHA256, bAddHeaderAMZContentSHA256,
-        osTimestamp, osSignedHeaders));
+        osSecretAccessKey, osRegion, osService, osVerb, psHeaders, osHost,
+        osCanonicalURI, osCanonicalQueryString, osXAMZContentSHA256,
+        bAddHeaderAMZContentSHA256, osTimestamp, osSignedHeaders));
 
     std::string osYYMMDD(osTimestamp);
     osYYMMDD.resize(8);
@@ -358,18 +356,22 @@ std::string CPLGetAWS_SIGN4_Timestamp(GIntBig timestamp)
 /*                         VSIS3HandleHelper()                          */
 /************************************************************************/
 VSIS3HandleHelper::VSIS3HandleHelper(
-    const std::string &osSecretAccessKey, const std::string &osAccessKeyId,
-    const std::string &osSessionToken, const std::string &osEndpoint,
+    const std::string &osService, const std::string &osSecretAccessKey,
+    const std::string &osAccessKeyId, const std::string &osSessionToken,
+    const std::string &osS3SessionToken, const std::string &osEndpoint,
     const std::string &osRegion, const std::string &osRequestPayer,
     const std::string &osBucket, const std::string &osObjectKey, bool bUseHTTPS,
-    bool bUseVirtualHosting, AWSCredentialsSource eCredentialsSource)
+    bool bUseVirtualHosting, AWSCredentialsSource eCredentialsSource,
+    bool bIsDirectoryBucket)
     : m_osURL(BuildURL(osEndpoint, osBucket, osObjectKey, bUseHTTPS,
                        bUseVirtualHosting)),
-      m_osSecretAccessKey(osSecretAccessKey), m_osAccessKeyId(osAccessKeyId),
-      m_osSessionToken(osSessionToken), m_osEndpoint(osEndpoint),
+      m_osService(osService), m_osSecretAccessKey(osSecretAccessKey),
+      m_osAccessKeyId(osAccessKeyId), m_osSessionToken(osSessionToken),
+      m_osS3SessionToken(osS3SessionToken), m_osEndpoint(osEndpoint),
       m_osRegion(osRegion), m_osRequestPayer(osRequestPayer),
       m_osBucket(osBucket), m_osObjectKey(osObjectKey), m_bUseHTTPS(bUseHTTPS),
       m_bUseVirtualHosting(bUseVirtualHosting),
+      m_bIsDirectoryBucket(bIsDirectoryBucket),
       m_eCredentialsSource(eCredentialsSource)
 {
     VSIS3UpdateParams::UpdateHandleFromMap(this);
@@ -1185,7 +1187,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     std::string &osSourceProfile, std::string &osExternalId,
     std::string &osMFASerial, std::string &osRoleSessionName,
     std::string &osWebIdentityTokenFile, std::string &osSSOStartURL,
-    std::string &osSSOAccountID, std::string &osSSORoleName)
+    std::string &osSSOAccountID, std::string &osSSORoleName,
+    std::string &osSSOSession)
 {
     // See http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
     // If AWS_DEFAULT_PROFILE is set (obsolete, no longer documented), use it in
@@ -1245,7 +1248,6 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
         const char *pszLine;
         std::map<std::string, std::map<std::string, std::string>>
             oMapSSOSessions;
-        std::string osSSOSession;
         while ((pszLine = CPLReadLineL(fp)) != nullptr)
         {
             if (STARTS_WITH(pszLine, "[sso-session ") &&
@@ -1445,15 +1447,20 @@ static bool GetTemporaryCredentialsForRole(
     }
     std::string osCanonicalQueryString(osQueryString.substr(1));
 
+    struct curl_slist *psHeaders = nullptr;
+    if (!osSessionToken.empty())
+        psHeaders =
+            curl_slist_append(psHeaders, CPLSPrintf("X-Amz-Security-Token: %s",
+                                                    osSessionToken.c_str()));
+
     const std::string osAuthorization = CPLGetAWS_SIGN4_Authorization(
-        osSecretAccessKey, osAccessKeyId, osSessionToken, osRegion,
-        std::string(),  // m_osRequestPayer,
-        osService, osVerb,
-        nullptr,  // psExistingHeaders,
-        osHost, "/", osCanonicalQueryString,
+        osSecretAccessKey, osAccessKeyId, osRegion, osService, osVerb,
+        psHeaders, osHost, "/", osCanonicalQueryString,
         CPLGetLowerCaseHexSHA256(std::string()),
         false,  // bAddHeaderAMZContentSHA256
         osXAMZDate);
+
+    curl_slist_free_all(psHeaders);
 
     bool bRet = false;
     const bool bUseHTTPS = CPLTestBool(CPLGetConfigOption("AWS_HTTPS", "YES"));
@@ -1509,13 +1516,11 @@ static bool GetTemporaryCredentialsForRole(
 /************************************************************************/
 
 // Issue a GetRoleCredentials request
-static bool GetTemporaryCredentialsForSSO(const std::string &osSSOStartURL,
-                                          const std::string &osSSOAccountID,
-                                          const std::string &osSSORoleName,
-                                          std::string &osTempSecretAccessKey,
-                                          std::string &osTempAccessKeyId,
-                                          std::string &osTempSessionToken,
-                                          std::string &osExpirationEpochInMS)
+static bool GetTemporaryCredentialsForSSO(
+    const std::string &osSSOStartURL, const std::string &osSSOSession,
+    const std::string &osSSOAccountID, const std::string &osSSORoleName,
+    std::string &osTempSecretAccessKey, std::string &osTempAccessKeyId,
+    std::string &osTempSessionToken, std::string &osExpirationEpochInMS)
 {
     std::string osSSOFilename = GetAWSRootDirectory();
     osSSOFilename += GetDirSeparator();
@@ -1524,8 +1529,14 @@ static bool GetTemporaryCredentialsForSSO(const std::string &osSSOStartURL,
     osSSOFilename += "cache";
     osSSOFilename += GetDirSeparator();
 
+    std::string hashValue = osSSOStartURL;
+    if (!osSSOSession.empty())
+    {
+        hashValue = osSSOSession;
+    }
+
     GByte hash[CPL_SHA1_HASH_SIZE];
-    CPL_SHA1(osSSOStartURL.data(), osSSOStartURL.size(), hash);
+    CPL_SHA1(hashValue.data(), hashValue.size(), hash);
     osSSOFilename += CPLGetLowerCaseHex(hash, sizeof(hash));
     osSSOFilename += ".json";
 
@@ -1580,9 +1591,13 @@ static bool GetTemporaryCredentialsForSSO(const std::string &osSSOStartURL,
     headers += "x-amz-sso_bearer_token: " + osAccessToken;
     aosOptions.AddNameValue("HEADERS", headers.c_str());
 
+    const std::string osRegion = oRoot.GetString("region", "us-east-1");
+    const std::string osDefaultHost("portal.sso." + osRegion +
+                                    ".amazonaws.com");
+
     const bool bUseHTTPS = CPLTestBool(CPLGetConfigOption("AWS_HTTPS", "YES"));
-    const std::string osHost(CPLGetConfigOption(
-        "CPL_AWS_SSO_ENDPOINT", "portal.sso.us-east-1.amazonaws.com"));
+    const std::string osHost(
+        CPLGetConfigOption("CPL_AWS_SSO_ENDPOINT", osDefaultHost.c_str()));
 
     const std::string osURL = (bUseHTTPS ? "https://" : "http://") + osHost +
                               osResourceAndQueryString;
@@ -1714,7 +1729,7 @@ bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForSSO(
         gosGlobalAccessKeyId.clear();
         gosGlobalSessionToken.clear();
         if (GetTemporaryCredentialsForSSO(
-                gosSSOStartURL, gosSSOAccountID, gosSSORoleName,
+                gosSSOStartURL, "", gosSSOAccountID, gosSSORoleName,
                 gosGlobalSecretAccessKey, gosGlobalAccessKeyId,
                 gosGlobalSessionToken, osExpirationEpochInMS))
         {
@@ -1817,6 +1832,7 @@ bool VSIS3HandleHelper::GetConfiguration(
     std::string osSSOStartURL;
     std::string osSSOAccountID;
     std::string osSSORoleName;
+    std::string osSSOSession;
     // coverity[tainted_data]
     if (GetConfigurationFromAWSConfigFiles(
             osPathForOption,
@@ -1824,7 +1840,7 @@ bool VSIS3HandleHelper::GetConfiguration(
             osSessionToken, osRegion, osCredentials, osRoleArn, osSourceProfile,
             osExternalId, osMFASerial, osRoleSessionName,
             osWebIdentityTokenFile, osSSOStartURL, osSSOAccountID,
-            osSSORoleName))
+            osSSORoleName, osSSOSession))
     {
         if (osSecretAccessKey.empty() && !osRoleArn.empty())
         {
@@ -1851,7 +1867,8 @@ bool VSIS3HandleHelper::GetConfiguration(
                         osRegionSP, osCredentialsSP, osRoleArnSP,
                         osSourceProfileSP, osExternalIdSP, osMFASerialSP,
                         osRoleSessionNameSP, osWebIdentityTokenFile,
-                        osSSOStartURLSP, osSSOAccountIDSP, osSSORoleNameSP))
+                        osSSOStartURLSP, osSSOAccountIDSP, osSSORoleNameSP,
+                        osSSOSession))
                 {
                     if (GetConfigurationFromAssumeRoleWithWebIdentity(
                             /* bForceRefresh = */ false, osPathForOption,
@@ -1922,14 +1939,14 @@ bool VSIS3HandleHelper::GetConfiguration(
             return false;
         }
 
-        if (!osSSOStartURL.empty())
+        if (!osSSOStartURL.empty() || !osSSOSession.empty())
         {
             std::string osTempSecretAccessKey;
             std::string osTempAccessKeyId;
             std::string osTempSessionToken;
             std::string osExpirationEpochInMS;
             if (GetTemporaryCredentialsForSSO(
-                    osSSOStartURL, osSSOAccountID, osSSORoleName,
+                    osSSOStartURL, osSSOSession, osSSOAccountID, osSSORoleName,
                     osTempSecretAccessKey, osTempAccessKeyId,
                     osTempSessionToken, osExpirationEpochInMS))
             {
@@ -2094,10 +2111,6 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
     if (!osEndpoint.empty() && osEndpoint.back() == '/')
         osEndpoint.pop_back();
 
-    if (!osRegion.empty() && osEndpoint == "s3.amazonaws.com")
-    {
-        osEndpoint = "s3." + osRegion + ".amazonaws.com";
-    }
     const std::string osRequestPayer = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "AWS_REQUEST_PAYER", "");
     std::string osBucket;
@@ -2108,6 +2121,44 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
     {
         return nullptr;
     }
+
+    // Detect if this is a directory bucket
+    // Cf https://docs.aws.amazon.com/AmazonS3/latest/userguide/directory-bucket-naming-rules.html
+    std::string osZoneId;
+    constexpr const char *DIR_BUCKET_SUFFIX = "--x-s3";
+    if (osBucket.size() > strlen(DIR_BUCKET_SUFFIX) &&
+        cpl::ends_with(osBucket, DIR_BUCKET_SUFFIX))
+    {
+        const auto posEndZoneId = osBucket.size() - strlen(DIR_BUCKET_SUFFIX);
+        auto posZoneId = osBucket.rfind("--", posEndZoneId - 1);
+        if (posZoneId != std::string::npos)
+        {
+            posZoneId += strlen("--");
+            osZoneId = osBucket.substr(posZoneId, posEndZoneId - posZoneId);
+        }
+    }
+
+    std::string osService = "s3";
+
+    if (!osRegion.empty() && osEndpoint == "s3.amazonaws.com")
+    {
+        if (CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                                             "LIST_DIRECTORY_BUCKETS", "NO")))
+        {
+            osService = "s3express";
+            osEndpoint = "s3express-control." + osRegion + ".amazonaws.com";
+        }
+        else if (!osZoneId.empty())
+        {
+            osEndpoint =
+                "s3express-" + osZoneId + "." + osRegion + ".amazonaws.com";
+        }
+        else
+        {
+            osEndpoint = "s3." + osRegion + ".amazonaws.com";
+        }
+    }
+
     const bool bUseHTTPS =
         bForceHTTPS ||
         (!bForceHTTP && CPLTestBool(VSIGetPathSpecificOption(
@@ -2119,10 +2170,14 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
         VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_VIRTUAL_HOSTING",
                                  bIsValidNameForVirtualHosting ? "TRUE"
                                                                : "FALSE")));
-    return new VSIS3HandleHelper(
-        osSecretAccessKey, osAccessKeyId, osSessionToken, osEndpoint, osRegion,
-        osRequestPayer, osBucket, osObjectKey, bUseHTTPS, bUseVirtualHosting,
-        eCredentialsSource);
+    const std::string osS3SessionToken = VSIGetPathSpecificOption(
+        osPathForOption.c_str(), "AWS_S3SESSION_TOKEN", "");
+
+    return new VSIS3HandleHelper(osService, osSecretAccessKey, osAccessKeyId,
+                                 osSessionToken, osS3SessionToken, osEndpoint,
+                                 osRegion, osRequestPayer, osBucket,
+                                 osObjectKey, bUseHTTPS, bUseVirtualHosting,
+                                 eCredentialsSource, !osZoneId.empty());
 }
 
 /************************************************************************/
@@ -2250,7 +2305,7 @@ void VSIS3HandleHelper::RefreshCredentials(const std::string &osPathForOption,
 /************************************************************************/
 
 struct curl_slist *VSIS3HandleHelper::GetCurlHeaders(
-    const std::string &osVerb, const struct curl_slist *psExistingHeaders,
+    const std::string &osVerb, struct curl_slist *psHeaders,
     const void *pabyDataContent, size_t nBytesContent) const
 {
     std::string osPathForOption("/vsis3/");
@@ -2275,13 +2330,27 @@ struct curl_slist *VSIS3HandleHelper::GetCurlHeaders(
     const std::string osHost(m_bUseVirtualHosting && !m_osBucket.empty()
                                  ? std::string(m_osBucket + "." + m_osEndpoint)
                                  : m_osEndpoint);
+
+    if (!m_osSessionToken.empty())
+        psHeaders =
+            curl_slist_append(psHeaders, CPLSPrintf("X-Amz-Security-Token: %s",
+                                                    m_osSessionToken.c_str()));
+
+    if (!m_osS3SessionToken.empty())
+        psHeaders = curl_slist_append(psHeaders,
+                                      CPLSPrintf("x-amz-s3session-token: %s",
+                                                 m_osS3SessionToken.c_str()));
+
+    if (!m_osRequestPayer.empty())
+        psHeaders =
+            curl_slist_append(psHeaders, CPLSPrintf("x-amz-request-payer: %s",
+                                                    m_osRequestPayer.c_str()));
     const std::string osAuthorization =
         m_osSecretAccessKey.empty()
             ? std::string()
             : CPLGetAWS_SIGN4_Authorization(
-                  m_osSecretAccessKey, m_osAccessKeyId, m_osSessionToken,
-                  m_osRegion, m_osRequestPayer, "s3", osVerb, psExistingHeaders,
-                  osHost,
+                  m_osSecretAccessKey, m_osAccessKeyId, m_osRegion, m_osService,
+                  osVerb, psHeaders, osHost,
                   m_bUseVirtualHosting
                       ? CPLAWSURLEncode("/" + m_osObjectKey, false).c_str()
                       : CPLAWSURLEncode("/" + m_osBucket + "/" + m_osObjectKey,
@@ -2291,26 +2360,13 @@ struct curl_slist *VSIS3HandleHelper::GetCurlHeaders(
                   true,  // bAddHeaderAMZContentSHA256
                   osXAMZDate);
 
-    struct curl_slist *headers = nullptr;
-    headers = curl_slist_append(
-        headers, CPLSPrintf("x-amz-date: %s", osXAMZDate.c_str()));
-    headers =
-        curl_slist_append(headers, CPLSPrintf("x-amz-content-sha256: %s",
-                                              osXAMZContentSHA256.c_str()));
-    if (!m_osSessionToken.empty())
-        headers =
-            curl_slist_append(headers, CPLSPrintf("X-Amz-Security-Token: %s",
-                                                  m_osSessionToken.c_str()));
-    if (!m_osRequestPayer.empty())
-        headers =
-            curl_slist_append(headers, CPLSPrintf("x-amz-request-payer: %s",
-                                                  m_osRequestPayer.c_str()));
     if (!osAuthorization.empty())
     {
-        headers = curl_slist_append(
-            headers, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
+        psHeaders =
+            curl_slist_append(psHeaders, CPLSPrintf("Authorization: %s",
+                                                    osAuthorization.c_str()));
     }
-    return headers;
+    return psHeaders;
 }
 
 /************************************************************************/
@@ -2608,13 +2664,14 @@ std::string VSIS3HandleHelper::GetSignedURL(CSLConstList papszOptions)
                                  ? std::string(m_osBucket + "." + m_osEndpoint)
                                  : m_osEndpoint);
     std::string osSignedHeaders;
+
+    struct curl_slist *psHeaders = nullptr;
+    if (!m_osRequestPayer.empty())
+        psHeaders =
+            curl_slist_append(psHeaders, CPLSPrintf("x-amz-request-payer: %s",
+                                                    m_osRequestPayer.c_str()));
     const std::string osSignature = CPLGetAWS_SIGN4_Signature(
-        m_osSecretAccessKey,
-        std::string(),  // sessionToken set to empty as we include it in query
-                        // parameters
-        m_osRegion, m_osRequestPayer, "s3", osVerb,
-        nullptr, /* existing headers */
-        osHost,
+        m_osSecretAccessKey, m_osRegion, "s3", osVerb, psHeaders, osHost,
         m_bUseVirtualHosting
             ? CPLAWSURLEncode("/" + m_osObjectKey, false).c_str()
             : CPLAWSURLEncode("/" + m_osBucket + "/" + m_osObjectKey, false)
@@ -2622,6 +2679,8 @@ std::string VSIS3HandleHelper::GetSignedURL(CSLConstList papszOptions)
         osCanonicalQueryString, "UNSIGNED-PAYLOAD",
         false,  // bAddHeaderAMZContentSHA256
         osXAMZDate, osSignedHeaders);
+
+    curl_slist_free_all(psHeaders);
 
     AddQueryParameter("X-Amz-Signature", osSignature);
     return m_osURL;

@@ -810,8 +810,6 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock,
 {
     CPLString osValue;
 
-    const VFKProperty *poProperty = nullptr;
-
     const char *pszBlockName = poDataBlock->GetName();
     CPLString osCommand;
     osCommand.Printf("INSERT INTO '%s' VALUES(", pszBlockName);
@@ -819,11 +817,11 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock,
     for (int i = 0; i < poDataBlock->GetPropertyCount(); i++)
     {
         const OGRFieldType ftype = poDataBlock->GetProperty(i)->GetType();
-        poProperty = poFeature->GetProperty(i);
+        const VFKProperty *poProperty = poFeature->GetProperty(i);
         if (i > 0)
             osCommand += ",";
 
-        if (poProperty->IsNull())
+        if (!poProperty || poProperty->IsNull())
         {
             osValue.Printf("NULL");
         }
@@ -863,7 +861,8 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock,
 
     if (EQUAL(pszBlockName, "SBP") || EQUAL(pszBlockName, "SBPG"))
     {
-        poProperty = poFeature->GetProperty("PORADOVE_CISLO_BODU");
+        const VFKProperty *poProperty =
+            poFeature->GetProperty("PORADOVE_CISLO_BODU");
         if (poProperty == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,

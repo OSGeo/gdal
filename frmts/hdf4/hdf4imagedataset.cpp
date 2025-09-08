@@ -141,20 +141,20 @@ class HDF4ImageDataset final : public HDF4Dataset
 
   public:
     HDF4ImageDataset();
-    virtual ~HDF4ImageDataset();
+    ~HDF4ImageDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
                                char **papszParamList);
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
-    virtual int GetGCPCount() override;
+    int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    const GDAL_GCP *GetGCPs() override;
 };
 
 /************************************************************************/
@@ -182,19 +182,15 @@ class HDF4ImageRasterBand final : public GDALPamRasterBand
   public:
     HDF4ImageRasterBand(HDF4ImageDataset *, int, GDALDataType);
 
-    virtual ~HDF4ImageRasterBand()
-    {
-    }
-
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
-    virtual double GetNoDataValue(int *) override;
-    virtual CPLErr SetNoDataValue(double) override;
-    virtual double GetOffset(int *pbSuccess) override;
-    virtual double GetScale(int *pbSuccess) override;
-    virtual const char *GetUnitType() override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
+    double GetNoDataValue(int *) override;
+    CPLErr SetNoDataValue(double) override;
+    double GetOffset(int *pbSuccess) override;
+    double GetScale(int *pbSuccess) override;
+    const char *GetUnitType() override;
 };
 
 /************************************************************************/
@@ -266,7 +262,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                        void *pImage)
 {
     CPLAssert(nBlockXOff == 0);
-    HDF4ImageDataset *poGDS = reinterpret_cast<HDF4ImageDataset *>(poDS);
+    HDF4ImageDataset *poGDS = cpl::down_cast<HDF4ImageDataset *>(poDS);
 
     CPLMutexHolderD(&hHDF4Mutex);
 
@@ -383,7 +379,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             const int nDataTypeSize =
                 GDALGetDataTypeSizeBytes(poGDS->GetDataType(poGDS->iNumType));
-            GByte *pbBuffer = reinterpret_cast<GByte *>(CPLMalloc(
+            GByte *pbBuffer = static_cast<GByte *>(CPLMalloc(
                 nBlockXSize * nBlockYSize * poGDS->iRank * nDataTypeSize));
 
             aiStart[poGDS->iYDim] = nYOff;
@@ -544,7 +540,7 @@ CPLErr HDF4ImageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     CPLAssert(nBlockYOff >= 0);
     CPLAssert(pImage != nullptr);
 
-    HDF4ImageDataset *poGDS = reinterpret_cast<HDF4ImageDataset *>(poDS);
+    HDF4ImageDataset *poGDS = cpl::down_cast<HDF4ImageDataset *>(poDS);
     CPLAssert(poGDS != nullptr);
 
     int32 aiStart[H4_MAX_NC_DIMS] = {};
@@ -617,7 +613,7 @@ CPLErr HDF4ImageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
 GDALColorTable *HDF4ImageRasterBand::GetColorTable()
 {
-    HDF4ImageDataset *poGDS = reinterpret_cast<HDF4ImageDataset *>(poDS);
+    HDF4ImageDataset *poGDS = cpl::down_cast<HDF4ImageDataset *>(poDS);
 
     return poGDS->poColorTable;
 }
@@ -628,7 +624,7 @@ GDALColorTable *HDF4ImageRasterBand::GetColorTable()
 
 GDALColorInterp HDF4ImageRasterBand::GetColorInterpretation()
 {
-    HDF4ImageDataset *poGDS = reinterpret_cast<HDF4ImageDataset *>(poDS);
+    HDF4ImageDataset *poGDS = cpl::down_cast<HDF4ImageDataset *>(poDS);
 
     if (poGDS->iDatasetType == HDF4_SDS)
     {
@@ -1652,8 +1648,7 @@ void HDF4ImageDataset::GetSwatAttrs(int32 hSW)
 
     if (SWinqattrs(hSW, nullptr, &nStrBufSize) > 0 && nStrBufSize > 0)
     {
-        char *pszAttrList =
-            reinterpret_cast<char *>(CPLMalloc(nStrBufSize + 1));
+        char *pszAttrList = static_cast<char *>(CPLMalloc(nStrBufSize + 1));
         SWinqattrs(hSW, pszAttrList, &nStrBufSize);
 
 #ifdef DEBUG
@@ -1759,8 +1754,7 @@ void HDF4ImageDataset::GetGridAttrs(int32 hGD)
 
     if (GDinqattrs(hGD, nullptr, &nStrBufSize) > 0 && nStrBufSize > 0)
     {
-        char *pszAttrList =
-            reinterpret_cast<char *>(CPLMalloc(nStrBufSize + 1));
+        char *pszAttrList = static_cast<char *>(CPLMalloc(nStrBufSize + 1));
         GDinqattrs(hGD, pszAttrList, &nStrBufSize);
 
 #ifdef DEBUG
@@ -2013,11 +2007,11 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
     const int32 nDataFields = SWnentries(hSW, HDFE_NENTGFLD, &nStrBufSize);
     if (nDataFields < 0 || nDataFields > 1024 * 1024)
         return FALSE;
-    char *pszGeoList = reinterpret_cast<char *>(CPLMalloc(nStrBufSize + 1));
+    char *pszGeoList = static_cast<char *>(CPLMalloc(nStrBufSize + 1));
     int32 *paiRank =
-        reinterpret_cast<int32 *>(CPLMalloc(nDataFields * sizeof(int32)));
+        static_cast<int32 *>(CPLMalloc(nDataFields * sizeof(int32)));
     int32 *paiNumType =
-        reinterpret_cast<int32 *>(CPLMalloc(nDataFields * sizeof(int32)));
+        static_cast<int32 *>(CPLMalloc(nDataFields * sizeof(int32)));
 
     if (nDataFields != SWinqgeofields(hSW, pszGeoList, paiRank, paiNumType))
     {
@@ -2074,8 +2068,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
 
         snprintf(szYGeo, sizeof(szYGeo), "%s", papszDimList[iYDim]);
 
-        paiOffset = reinterpret_cast<int32 *>(CPLCalloc(2, sizeof(int32)));
-        paiIncrement = reinterpret_cast<int32 *>(CPLCalloc(2, sizeof(int32)));
+        paiOffset = static_cast<int32 *>(CPLCalloc(2, sizeof(int32)));
+        paiIncrement = static_cast<int32 *>(CPLCalloc(2, sizeof(int32)));
         paiOffset[0] = 0;
         paiOffset[1] = 0;
         paiIncrement[0] = 1;
@@ -2083,11 +2077,9 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
     }
     else
     {
-        char *pszDimMaps = reinterpret_cast<char *>(CPLMalloc(nStrBufSize + 1));
-        paiOffset =
-            reinterpret_cast<int32 *>(CPLCalloc(nDimMaps, sizeof(int32)));
-        paiIncrement =
-            reinterpret_cast<int32 *>(CPLCalloc(nDimMaps, sizeof(int32)));
+        char *pszDimMaps = static_cast<char *>(CPLMalloc(nStrBufSize + 1));
+        paiOffset = static_cast<int32 *>(CPLCalloc(nDimMaps, sizeof(int32)));
+        paiIncrement = static_cast<int32 *>(CPLCalloc(nDimMaps, sizeof(int32)));
 
         *pszDimMaps = '\0';
         if (nDimMaps != SWinqmaps(hSW, pszDimMaps, paiOffset, paiIncrement))
@@ -2654,7 +2646,7 @@ GDALDataset *HDF4ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     if (strlen(papszSubdatasetName[2]) == 1)
     {
         const size_t nLen = 2 + strlen(papszSubdatasetName[3]) + 1;
-        char *pszFilename = reinterpret_cast<char *>(CPLMalloc(nLen));
+        char *pszFilename = static_cast<char *>(CPLMalloc(nLen));
         snprintf(pszFilename, nLen, "%s:%s", papszSubdatasetName[2],
                  papszSubdatasetName[3]);
         CPLFree(papszSubdatasetName[2]);
@@ -2843,7 +2835,7 @@ GDALDataset *HDF4ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                     }
 
                     char *pszDimList =
-                        reinterpret_cast<char *>(CPLMalloc(nStrBufSize + 1));
+                        static_cast<char *>(CPLMalloc(nStrBufSize + 1));
                     if (SWfieldinfo(hSW, poDS->pszFieldName, &poDS->iRank,
                                     poDS->aiDimSizes, &poDS->iNumType,
                                     pszDimList) < 0)

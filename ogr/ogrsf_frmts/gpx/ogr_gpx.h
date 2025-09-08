@@ -123,7 +123,7 @@ class OGRGPXLayer final : public OGRLayer
     OGRGPXLayer(const char *pszFilename, const char *layerName,
                 GPXGeometryType gpxGeomType, OGRGPXDataSource *poDS,
                 bool bWriteMode, CSLConstList papszOpenOptions);
-    ~OGRGPXLayer();
+    ~OGRGPXLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -131,12 +131,12 @@ class OGRGPXLayer final : public OGRLayer
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 
@@ -204,7 +204,7 @@ class OGRGPXDataSource final : public GDALDataset
 
   public:
     OGRGPXDataSource() = default;
-    ~OGRGPXDataSource();
+    ~OGRGPXDataSource() override;
 
     int m_nLastRteId = -1;
     int m_nLastTrkId = -1;
@@ -214,18 +214,18 @@ class OGRGPXDataSource final : public GDALDataset
 
     int Create(const char *pszFilename, char **papszOptions);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     VSILFILE *GetOutputFP()
     {

@@ -81,16 +81,11 @@ class GeoParquetValidator:
                 self._check_counterclockwise(subgeom, row)
 
     def _validate(self, schema, instance):
+        from importlib.metadata import version
+
         import jsonschema
 
-        if sys.version_info >= (3, 8):
-            from importlib.metadata import version
-
-            jsonschema_version = version("jsonschema")
-        else:
-            from pkg_resources import get_distribution
-
-            jsonschema_version = get_distribution("jsonschema").version
+        jsonschema_version = version("jsonschema")
 
         def versiontuple(v):
             return tuple(map(int, (v.split("."))))
@@ -130,9 +125,7 @@ class GeoParquetValidator:
             return self._error("Parquet driver not available")
 
         try:
-            import jsonschema
-
-            jsonschema.validate
+            import jsonschema  # noqa: F401
         except ImportError:
             return self._error(
                 "jsonschema Python module not available. Try 'pip install jsonschema'"

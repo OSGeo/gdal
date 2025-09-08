@@ -44,6 +44,7 @@ class OGRSXFLayer final : public OGRLayer
     CPLString sFIDColumn_{};
     CPLMutex **m_hIOMutex;
     double m_dfCoeff;
+    bool m_bEOF = false;
     OGRFeature *GetNextRawFeature(long nFID);
 
     GUInt32 TranslateXYH(const SXFRecordDescription &certifInfo,
@@ -67,26 +68,26 @@ class OGRSXFLayer final : public OGRLayer
     OGRSXFLayer(VSILFILE *fp, CPLMutex **hIOMutex, GByte nID,
                 const char *pszLayerName, int nVer,
                 const SXFMapDescription &sxfMapDesc);
-    virtual ~OGRSXFLayer();
+    ~OGRSXFLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
-    virtual const char *GetFIDColumn() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
+    const char *GetFIDColumn() const override;
 
     GByte GetId() const
     {
@@ -129,19 +130,19 @@ class OGRSXFDataSource final : public GDALDataset
 
   public:
     OGRSXFDataSource();
-    virtual ~OGRSXFDataSource();
+    ~OGRSXFDataSource() override;
 
     int Open(const char *pszFilename, bool bUpdate,
              const char *const *papszOpenOpts = nullptr);
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     void CloseFile();
 };
 

@@ -461,7 +461,7 @@ struct json_object *json_tokener_parse_ex(struct json_tokener *tok, const char *
 			state = json_tokener_state_eatws;
 			goto redo_char;
 		}
-		break;
+
 		case json_tokener_state_null: /* aka starts with 'n' */
 		{
 			int size;
@@ -1005,7 +1005,6 @@ struct json_object *json_tokener_parse_ex(struct json_tokener *tok, const char *
 				state = json_tokener_state_eatws;
 				goto redo_char;
 			}
-			break;
 
 		case json_tokener_state_array_after_sep:
 		case json_tokener_state_array:

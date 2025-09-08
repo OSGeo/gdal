@@ -378,12 +378,12 @@ ARG WITH_PDFIUM=yes
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
   if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  wget -q https://github.com/rouault/pdfium_build_gdal_3_11/releases/download/pdfium_7047_v1/install-ubuntu2004-rev7047.tar.gz \
-  && tar -xzf install-ubuntu2004-rev7047.tar.gz \
+  wget -q https://github.com/rouault/pdfium_build_gdal_3_12/releases/download/pdfium_7391_v1/install-ubuntu2004-rev7391.tar.gz \
+  && tar -xzf install-ubuntu2004-rev7391.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev7047.tar.gz install \
+  && rm -rf install-ubuntu2004-rev7391.tar.gz install \
   && apt-get update -y \
   && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev${APT_ARCH_SUFFIX} \
   ) ; fi
@@ -394,6 +394,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends libgflags-dev${APT_ARCH_SUFFIX}
+# FIXME: restore JXL_TREEISH=main, once https://github.com/libjxl/libjxl/issues/4410 is solved
+ARG JXL_TREEISH=a4e40af31ab4dd6d6b9ce893c4425b7180012916
 RUN --mount=type=cache,id=ubuntu-full-libjxl,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && git clone https://github.com/libjxl/libjxl.git --recursive \
@@ -406,6 +408,7 @@ RUN --mount=type=cache,id=ubuntu-full-libjxl,target=$HOME/.cache \
         ccache -M 100M; \
     fi \
     && cd libjxl \
+    && git checkout ${JXL_TREEISH} \
     && mkdir build \
     && cd build \
     && cmake -G Ninja $CCACHE_PARAM -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DJPEGXL_ENABLE_JPEGLI_LIBJPEG=OFF -DBUILD_TESTING=OFF -DJPEGXL_ENABLE_TOOLS=OFF -DJPEGXL_ENABLE_BENCHMARK=OFF .. \
@@ -426,9 +429,9 @@ RUN --mount=type=cache,id=ubuntu-full-libjxl,target=$HOME/.cache \
     && rm -rf libjxl
 
 # Install Arrow C++
-ARG ARROW_VERSION=20.0.0-1
+ARG ARROW_VERSION=21.0.0-1
 # ARROW_SOVERSION to be updated in the "Build final image" section too
-ARG ARROW_SOVERSION=2000
+ARG ARROW_SOVERSION=2100
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     . /buildscripts/bh-set-envvars.sh \
@@ -444,25 +447,40 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libparquet-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-acero-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dataset-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-compute-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
     && rm apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
 
-# Manually install ADBC packages from Ubuntu 22.04 as there are no 24.04 packages at time of writing.
-RUN . /buildscripts/bh-set-envvars.sh \
-    && if test "${GCC_ARCH}" = "x86_64"; then \
-    curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-manager102_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-manager-dev_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-sqlite102_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-sqlite-dev_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-snowflake102_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-snowflake-dev_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-manager102_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-manager-dev_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-sqlite102_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-sqlite-dev_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-snowflake102_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-snowflake-dev_14-1_amd64.deb \
-    && rm -f libadbc*.deb; \
-    fi
+# Manually build ADBC packages to have support for BigQuery
+ARG ARROW_ADBC_VERSION=19
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    . /buildscripts/bh-set-envvars.sh \
+    && apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V --no-install-recommends golang libpq-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} \
+    && if test "${TARGET_ARCH:-}" != ""; then \
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -V --no-install-recommends g++-13-${GCC_ARCH}-linux-gnu; \
+    fi \
+    && curl -LO -fsS https://github.com/apache/arrow-adbc/archive/refs/tags/apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
+    && tar xzf apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
+    && rm -f apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
+    && cd arrow-adbc-apache-arrow-adbc-${ARROW_ADBC_VERSION}/c \
+    && mkdir build \
+    && cd build \
+    && export GOOS=linux \
+    && if test "${TARGET_ARCH:-}" != ""; then \
+        export GOARCH=${TARGET_ARCH:-}; \
+        export PKG_CONFIG_PATH=/usr/lib/${GCC_ARCH}-linux-gnu/pkgconfig; \
+    fi \
+    && cmake .. -G Ninja ${CMAKE_EXTRA_ARGS} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
+        -DADBC_BUILD_STATIC=OFF \
+        -DADBC_DRIVER_FLIGHTSQL=ON -DADBC_DRIVER_MANAGER=ON \
+        -DADBC_DRIVER_POSTGRESQL=ON -DADBC_DRIVER_SQLITE=ON \
+        -DADBC_DRIVER_SNOWFLAKE=ON -DADBC_DRIVER_BIGQUERY=ON || (cat CMakeCache.txt) \
+    && ninja \
+    && ninja install \
+    && DESTDIR="/build_thirdparty" ninja install \
+    && cd ../../.. \
+    && rm -rf arrow-adbc-apache-arrow-adbc-${ARROW_ADBC_VERSION}
 
 ARG WITH_DEBUG_SYMBOLS=no
 
@@ -517,7 +535,7 @@ FROM $TARGET_BASE_IMAGE AS runner
 USER root
 RUN date
 ARG JAVA_VERSION=17
-ARG ARROW_SOVERSION=2000
+ARG ARROW_SOVERSION=2100
 
 ARG TARGET_ARCH=
 # Update distro
@@ -561,7 +579,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update \
     && apt-get install -y -V libarrow${ARROW_SOVERSION} \
     && apt-get install -y -V libparquet${ARROW_SOVERSION} \
-    && apt-get install -y -V libarrow-dataset${ARROW_SOVERSION}
+    && apt-get install -y -V libarrow-dataset${ARROW_SOVERSION} \
+    && apt-get install -y -V libarrow-compute${ARROW_SOVERSION}
 
 # Manually install ADBC packages from Ubuntu 22.04 as there are no 24.04 packages at time of writing.
 RUN if test "$(uname -p)" = "x86_64"; then \
@@ -581,7 +600,7 @@ RUN if test "$(uname -p)" = "x86_64"; then \
     fi
 
 # Install libduckdb
-ARG DUCKDB_VERSION=v1.3.1
+ARG DUCKDB_VERSION=v1.3.2
 RUN if test "$(uname -p)" = "x86_64"; then \
     curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-amd64.zip \
     && unzip libduckdb-linux-amd64.zip libduckdb.so \

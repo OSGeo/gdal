@@ -250,7 +250,7 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo)
 /*                    OGRGeoPackageDriverGetSubdatasetInfo()            */
 /************************************************************************/
 
-struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
+struct OGRGeoPackageDriverSubdatasetInfo final : public GDALSubdatasetInfo
 {
   public:
     explicit OGRGeoPackageDriverSubdatasetInfo(const std::string &fileName)
@@ -418,7 +418,7 @@ static CPLErr OGRGeoPackageDriverDelete(const char *pszFilename)
 
 class GDALGPKGDriver final : public GDALDriver
 {
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bInitialized = false;
 
     void InitializeCreationOptionList();
@@ -727,6 +727,9 @@ void RegisterOGRGeoPackage()
         "  <Option name='IMMUTABLE' type='boolean' description='Whether the "
         "database should be opened in immutable mode'/>"
         "</OpenOptionList>");
+    poDriver->SetMetadataItem(GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST,
+                              "<OverviewCreationOptionList>"
+                              "</OverviewCreationOptionList>");
 
     poDriver->SetMetadataItem(
         GDAL_DS_LAYER_CREATIONOPTIONLIST,

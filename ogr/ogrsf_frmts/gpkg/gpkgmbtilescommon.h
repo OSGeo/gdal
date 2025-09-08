@@ -39,7 +39,7 @@ typedef enum
 GPKGTileFormat GDALGPKGMBTilesGetTileFormat(const char *pszTF);
 const char *GDALMBTilesGetTileFormatName(GPKGTileFormat);
 
-class GDALGPKGMBTilesLikePseudoDataset
+class GDALGPKGMBTilesLikePseudoDataset /* non final */
 {
     friend class GDALGPKGMBTilesLikeRasterBand;
 
@@ -141,7 +141,7 @@ class GDALGPKGMBTilesLikePseudoDataset
     virtual int GetRowFromIntoTopConvention(int nRow) = 0;
 };
 
-class GDALGPKGMBTilesLikeRasterBand : public GDALPamRasterBand
+class GDALGPKGMBTilesLikeRasterBand /* non final*/ : public GDALPamRasterBand
 {
     GDALGPKGMBTilesLikeRasterBand(const GDALGPKGMBTilesLikeRasterBand &) =
         delete;
@@ -159,26 +159,25 @@ class GDALGPKGMBTilesLikeRasterBand : public GDALPamRasterBand
     GDALGPKGMBTilesLikeRasterBand(GDALGPKGMBTilesLikePseudoDataset *poTPD,
                                   int nTileWidth, int nTileHeight);
 
-    virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
-                              void *pData) override;
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
     virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff,
                                void *pData) override;
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize, int nYSize,
                                int nMaskFlagStop, double *pdfDataPct) override;
 
-    virtual GDALColorTable *GetColorTable() override;
-    virtual CPLErr SetColorTable(GDALColorTable *poCT) override;
+    GDALColorTable *GetColorTable() override;
+    CPLErr SetColorTable(GDALColorTable *poCT) override;
 
     void AssignColorTable(const GDALColorTable *poCT);
 
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual CPLErr SetColorInterpretation(GDALColorInterp) override;
+    GDALColorInterp GetColorInterpretation() override;
+    CPLErr SetColorInterpretation(GDALColorInterp) override;
 
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
 
-    virtual const char *GetUnitType() override
+    const char *GetUnitType() override
     {
         return m_osUom.c_str();
     }

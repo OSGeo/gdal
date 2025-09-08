@@ -23,9 +23,6 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #include <algorithm>
 #include <limits>
@@ -423,7 +420,8 @@ static void EXIFPrintData(char *pszData, GUInt16 type, GUInt32 count,
             const float *fp = reinterpret_cast<const float *>(data);
             for (; count > 0; count--)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep, *fp);
+                CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep,
+                            static_cast<double>(*fp));
                 fp++;
                 sep = " ";
                 if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
@@ -914,7 +912,7 @@ static GByte *ParseUndefined(const char *pszVal, GUInt32 *pnLength)
     GUInt32 nSize = 0;
     bool bIsHexExcaped = true;
     const char chDEC_ZERO = '0';
-    GByte *pabyData = reinterpret_cast<GByte *>(CPLMalloc(strlen(pszVal) + 1));
+    GByte *pabyData = static_cast<GByte *>(CPLMalloc(strlen(pszVal) + 1));
 
     // Is it a hexadecimal string like "0xA 0x1E 00 0xDF..." ?
     for (size_t i = 0; pszVal[i] != '\0';)
@@ -1265,7 +1263,7 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                 tag.nLength = (tagdescArray[i].length == 0)
                                   ? nTokens
                                   : tagdescArray[i].length;
-                tag.pabyVal.reset(reinterpret_cast<GByte *>(CPLCalloc(
+                tag.pabyVal.reset(static_cast<GByte *>(CPLCalloc(
                     1, cpl::fits_on<int>(nDataTypeSize * tag.nLength))));
 
                 GUInt32 nOffset = 0;

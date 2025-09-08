@@ -842,7 +842,7 @@ int OGROCILayer::GetOrdinalPoint(int iOrdinal, int nDimension, double *pdfX,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROCILayer::TestCapability(const char *pszCap)
+int OGROCILayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))
@@ -941,7 +941,7 @@ int OGROCILayer::LookupTableSRID()
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGROCILayer::GetFIDColumn()
+const char *OGROCILayer::GetFIDColumn() const
 
 {
     if (pszFIDName != nullptr)
@@ -954,7 +954,7 @@ const char *OGROCILayer::GetFIDColumn()
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
-const char *OGROCILayer::GetGeometryColumn()
+const char *OGROCILayer::GetGeometryColumn() const
 
 {
     if (pszGeomName != nullptr)

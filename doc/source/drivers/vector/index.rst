@@ -11,7 +11,7 @@ Vector drivers
 
 .. note::
 
-    The following drivers have been removed in GDAL 3.5: AeronavFAA, BNA, HTF, OpenAir, SEGUKOOA, SEGY, SUA, XPlane
+    The following drivers have been removed in GDAL 3.5: AeronavFAA, BNA, HTF, OpenAir, REC, SEGUKOOA, SEGY, SUA, XPlane
 
     The following drivers have been removed in GDAL 3.11: Geoconcept Export, OGDI (VPF/VMAP support), SDTS, SVG, Tiger, UK. NTF
 
@@ -20,6 +20,7 @@ Vector drivers
    :hidden:
 
    adbc
+   adbc_bigquery
    aivector
    amigocloud
    arrow

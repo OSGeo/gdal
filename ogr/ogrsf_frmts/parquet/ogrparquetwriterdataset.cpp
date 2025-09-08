@@ -26,6 +26,15 @@ OGRParquetWriterDataset::OGRParquetWriterDataset(
 }
 
 /************************************************************************/
+/*                     ~OGRParquetWriterDataset()                       */
+/************************************************************************/
+
+OGRParquetWriterDataset::~OGRParquetWriterDataset()
+{
+    OGRParquetWriterDataset::Close();
+}
+
+/************************************************************************/
 /*                                Close()                               */
 /************************************************************************/
 
@@ -52,7 +61,7 @@ CPLErr OGRParquetWriterDataset::Close()
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int OGRParquetWriterDataset::GetLayerCount()
+int OGRParquetWriterDataset::GetLayerCount() const
 {
     return m_poLayer ? 1 : 0;
 }
@@ -61,7 +70,7 @@ int OGRParquetWriterDataset::GetLayerCount()
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer *OGRParquetWriterDataset::GetLayer(int idx)
+const OGRLayer *OGRParquetWriterDataset::GetLayer(int idx) const
 {
     return idx == 0 ? m_poLayer.get() : nullptr;
 }
@@ -70,7 +79,7 @@ OGRLayer *OGRParquetWriterDataset::GetLayer(int idx)
 /*                         TestCapability()                             */
 /************************************************************************/
 
-int OGRParquetWriterDataset::TestCapability(const char *pszCap)
+int OGRParquetWriterDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return m_poLayer == nullptr;

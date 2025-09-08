@@ -23,7 +23,7 @@ class OGRILI1Layer;
 /*                              ILI1Reader                              */
 /************************************************************************/
 
-class ILI1Reader : public IILI1Reader
+class ILI1Reader final : public IILI1Reader
 {
   private:
     VSILFILE *fpItf;
@@ -34,9 +34,14 @@ class ILI1Reader : public IILI1Reader
     char codeUndefined;
     char codeContinue;
 
+    ILI1Reader(ILI1Reader &) = delete;
+    ILI1Reader &operator=(const ILI1Reader &) = delete;
+    ILI1Reader(ILI1Reader &&) = delete;
+    ILI1Reader &operator=(ILI1Reader &&) = delete;
+
   public:
     ILI1Reader();
-    ~ILI1Reader();
+    ~ILI1Reader() override;
 
     int OpenFile(const char *pszFilename) override;
     int ReadModel(ImdReader *poImdReader, const char *pszModelFilename,
@@ -48,9 +53,9 @@ class ILI1Reader : public IILI1Reader
     char **ReadParseLine();
 
     void AddLayer(OGRILI1Layer *poNewLayer);
-    OGRILI1Layer *GetLayer(int) override;
+    OGRILI1Layer *GetLayer(int) const override;
     OGRILI1Layer *GetLayerByName(const char *) override;
-    int GetLayerCount() override;
+    int GetLayerCount() const override;
 
     static const char *GetLayerNameString(const char *topicname,
                                           const char *tablename);

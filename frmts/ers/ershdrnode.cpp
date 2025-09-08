@@ -15,16 +15,6 @@
 #include "ershdrnode.h"
 
 /************************************************************************/
-/*                             ERSHdrNode()                             */
-/************************************************************************/
-
-ERSHdrNode::ERSHdrNode()
-    : nItemMax(0), nItemCount(0), papszItemName(nullptr),
-      papszItemValue(nullptr), papoItemChild(nullptr)
-{
-}
-
-/************************************************************************/
 /*                            ~ERSHdrNode()                             */
 /************************************************************************/
 
@@ -57,13 +47,13 @@ void ERSHdrNode::MakeSpace()
 {
     if (nItemCount == nItemMax)
     {
-        nItemMax = (int)(nItemMax * 1.3) + 10;
-        papszItemName =
-            (char **)CPLRealloc(papszItemName, sizeof(char *) * nItemMax);
-        papszItemValue =
-            (char **)CPLRealloc(papszItemValue, sizeof(char *) * nItemMax);
-        papoItemChild =
-            (ERSHdrNode **)CPLRealloc(papoItemChild, sizeof(void *) * nItemMax);
+        nItemMax = nItemMax + nItemMax / 3 + 10;
+        papszItemName = static_cast<char **>(
+            CPLRealloc(papszItemName, sizeof(char *) * nItemMax));
+        papszItemValue = static_cast<char **>(
+            CPLRealloc(papszItemValue, sizeof(char *) * nItemMax));
+        papoItemChild = static_cast<ERSHdrNode **>(
+            CPLRealloc(papoItemChild, sizeof(ERSHdrNode *) * nItemMax));
     }
 }
 

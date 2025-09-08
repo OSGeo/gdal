@@ -19,12 +19,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
-#if HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
 
 #include <algorithm>
 #include <limits>
@@ -35,7 +30,6 @@
 
 #ifdef _WIN32
 #include <io.h>
-#include <fcntl.h>
 #endif
 
 static std::string gosStdinFilename{};
@@ -80,9 +74,9 @@ class VSIStdinFilesystemHandler final : public VSIFilesystemHandler
     VSIStdinFilesystemHandler();
     ~VSIStdinFilesystemHandler() override;
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
 
@@ -598,7 +592,7 @@ static bool ParseFilename(const char *pszFilename)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *
+VSIVirtualHandleUniquePtr
 VSIStdinFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
                                 bool /* bSetError */,
                                 CSLConstList /* papszOptions */)
@@ -616,7 +610,8 @@ VSIStdinFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
         return nullptr;
     }
 
-    return new VSIStdinHandle();
+    return VSIVirtualHandleUniquePtr(
+        std::make_unique<VSIStdinHandle>().release());
 }
 
 /************************************************************************/
@@ -645,7 +640,6 @@ int VSIStdinFilesystemHandler::Stat(const char *pszFilename,
                 return -1;
             handle->Seek(0, SEEK_END);
             pStatBuf->st_size = handle->Tell();
-            delete handle;
         }
     }
 

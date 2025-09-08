@@ -13,7 +13,7 @@
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 
 def get_convert_alg():
@@ -34,9 +34,7 @@ def test_gdalalg_vector_convert_base(tmp_vsimem):
             ds.GetLayer(0).DeleteFeature(i + 1)
 
     convert = get_convert_alg()
-    with pytest.raises(
-        Exception, match="already exists. Specify the --overwrite option"
-    ):
+    with pytest.raises(Exception, match="already exists"):
         convert.ParseRunAndFinalize(["../ogr/data/poly.shp", out_filename])
 
     with gdal.OpenEx(out_filename) as ds:
@@ -235,3 +233,76 @@ def test_gdalalg_vector_convert_overwrite_non_dataset_file(tmp_vsimem):
     convert["output-format"] = "GPKG"
     convert["overwrite"] = True
     assert convert.Run()
+
+
+def test_gdalalg_vector_convert_skip_errors(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(1 2, 3 4)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
+    lyr.CreateFeature(f)
+
+    convert = get_convert_alg()
+    convert["input"] = src_ds
+    convert["output"] = tmp_vsimem / "out.shp"
+    convert["skip-errors"] = True
+    assert convert.Run()
+
+    out_ds = convert["output"].GetDataset()
+    assert out_ds.GetLayer(0).GetFeatureCount() == 2
+
+
+def test_gdalalg_vector_convert_to_non_available_db_driver():
+
+    convert = get_convert_alg()
+    convert["input"] = "../ogr/data/poly.shp"
+    convert["output"] = "MongoDBv3:tmp/foo"
+    if gdal.GetDriverByName("MongoDBv3"):
+        with pytest.raises(
+            Exception, match="Unable to open existing output datasource"
+        ):
+            convert.Run()
+    else:
+        with pytest.raises(
+            Exception,
+            match="Filename MongoDBv3:tmp/foo starts with the connection prefix of driver MongoDBv3, which is not enabled in this GDAL build. If that filename is really intended, explicitly specify its output format",
+        ):
+            convert.Run()
+
+
+def test_gdalalg_vector_convert_output_format_not_guessed(tmp_vsimem):
+
+    convert = get_convert_alg()
+    convert["input"] = "../ogr/data/poly.shp"
+    convert["output"] = tmp_vsimem / "foo"
+    with pytest.raises(
+        Exception,
+        match="Cannot guess driver for",
+    ):
+        convert.Run()
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdalalg_vector_convert_to_stdout():
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    # Check that quiet mode is automatically turned on (no progress bar)
+    out = gdaltest.runexternal(
+        f"{gdal_path} vector convert --of=GeoJSON data/path.shp /vsistdout/"
+    )
+
+    with ogr.Open(out) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 1

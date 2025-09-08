@@ -16,7 +16,7 @@ function.
 
    Run a GDAL algorithm and return it.
 
-   .. versionadded: 3.11
+   .. versionadded:: 3.11
 
    :param alg: Path to the algorithm or algorithm instance itself. For example "raster info", or ["raster", "info"] or "raster", "info".
    :type alg: str, list[str], tuple[str], Algorithm

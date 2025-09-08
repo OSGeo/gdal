@@ -22,9 +22,6 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #include <algorithm>
 #include <array>
@@ -1462,10 +1459,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2(int nXSize, int nYSize)
     double dfY2 = m_gt[3] + nXSize * m_gt[4];
     double dfY3 = m_gt[3] + nYSize * m_gt[5];
     double dfY4 = m_gt[3] + nXSize * m_gt[4] + nYSize * m_gt[5];
-    double dfLCX = std::min(std::min(dfX1, dfX2), std::min(dfX3, dfX4));
-    double dfLCY = std::min(std::min(dfY1, dfY2), std::min(dfY3, dfY4));
-    double dfUCX = std::max(std::max(dfX1, dfX2), std::max(dfX3, dfX4));
-    double dfUCY = std::max(std::max(dfY1, dfY2), std::max(dfY3, dfY4));
+    double dfLCX = std::min({dfX1, dfX2, dfX3, dfX4});
+    double dfLCY = std::min({dfY1, dfY2, dfY3, dfY4});
+    double dfUCX = std::max({dfX1, dfX2, dfX3, dfX4});
+    double dfUCY = std::max({dfY1, dfY2, dfY3, dfY4});
     if (bNeedAxisFlip)
     {
         std::swap(dfLCX, dfLCY);
@@ -2478,10 +2475,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
         double dfY2 = m_gt[3] + nXSize * m_gt[4];
         double dfY3 = m_gt[3] + nYSize * m_gt[5];
         double dfY4 = m_gt[3] + nXSize * m_gt[4] + nYSize * m_gt[5];
-        double dfLCX = std::min(std::min(dfX1, dfX2), std::min(dfX3, dfX4));
-        double dfLCY = std::min(std::min(dfY1, dfY2), std::min(dfY3, dfY4));
-        double dfUCX = std::max(std::max(dfX1, dfX2), std::max(dfX3, dfX4));
-        double dfUCY = std::max(std::max(dfY1, dfY2), std::max(dfY3, dfY4));
+        double dfLCX = std::min({dfX1, dfX2, dfX3, dfX4});
+        double dfLCY = std::min({dfY1, dfY2, dfY3, dfY4});
+        double dfUCX = std::max({dfX1, dfX2, dfX3, dfX4});
+        double dfUCY = std::max({dfY1, dfY2, dfY3, dfY4});
         if (bNeedAxisFlip)
         {
             std::swap(dfLCX, dfLCY);

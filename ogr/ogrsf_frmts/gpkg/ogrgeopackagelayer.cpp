@@ -344,7 +344,7 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature(sqlite3_stmt *hStmt)
         poFeature->SetFID(sqlite3_column_int64(hStmt, m_iFIDCol));
         if (m_pszFidColumn == nullptr && poFeature->GetFID() == 0)
         {
-            // Miht be the case for views with joins.
+            // Might be the case for views with joins.
             poFeature->SetFID(m_iNextShapeId);
         }
     }
@@ -933,7 +933,7 @@ error:
 /*                      GetFIDColumn()                                  */
 /************************************************************************/
 
-const char *OGRGeoPackageLayer::GetFIDColumn()
+const char *OGRGeoPackageLayer::GetFIDColumn() const
 {
     if (!m_pszFidColumn)
         return "";
@@ -945,7 +945,7 @@ const char *OGRGeoPackageLayer::GetFIDColumn()
 /*                      TestCapability()                                */
 /************************************************************************/
 
-int OGRGeoPackageLayer::TestCapability(const char *pszCap)
+int OGRGeoPackageLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCIgnoreFields))
         return TRUE;

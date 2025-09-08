@@ -11,6 +11,7 @@
 #include "libertiff.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 
 constexpr const char *SNAP_TIFF_PREFIX = "SNAP_TIFF:";
@@ -246,6 +247,7 @@ GDALDataset *SNAPTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
 
         const auto *psTag =
             poDS->m_poImage->tag(LIBERTIFF_NS::TagCode::GeoTIFFTiePoints);
+        assert(psTag);
 
         for (int iBand = 1; iBand <= 2; ++iBand)
         {

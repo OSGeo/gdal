@@ -15,27 +15,24 @@ static int NrLegendEntries(MAP *m)
 	return size/CSF_LEGEND_ENTRY_SIZE;
 }
 static int CmpEntries(
-	CSF_LEGEND *e1,
-	CSF_LEGEND *e2)
+	const void *e1,
+    const void *e2)
 {
-	return (int) ((e1->nr) - (e2->nr));
+	return (int) ((((const CSF_LEGEND*)e1)->nr) - (((const CSF_LEGEND*)e2)->nr));
 }
 
 static void SortEntries(
 	CSF_LEGEND *l, /* version 2 legend */
 	size_t        nr) /* nr entries + name */
 {
-#ifndef USE_IN_PCR
-	typedef int (*QSORT_CMP)(const void *e1, const void *e2);
-#endif
 	PRECOND(nr >= 1);
-	qsort(l+1, (size_t)nr-1, sizeof(CSF_LEGEND), (QSORT_CMP)CmpEntries);
+	qsort(l+1, (size_t)nr-1, sizeof(CSF_LEGEND), CmpEntries);
 }
 
 /* get the number of legend entries
  * MgetNrLegendEntries tries to find a version 2 or version 1
  * legend. The return number can be used to allocate the appropriate
- * array for legend. 
+ * array for legend.
  * returns the number of entries in a legend plus 1 (for the name of the legend)
  * or 0 if there is no legend
  */
@@ -49,14 +46,14 @@ size_t MgetNrLegendEntries(
  * MgetLegend reads a version 2 and 1 legend.
  * Version 1 legend are converted to version 2: the first
  * array entry holds an empty string in the description field.
- * returns 
+ * returns
  * 0 if no legend is available or in case of an error,
  * nonzero otherwise
  */
 int MgetLegend(
 	MAP *m,        /* Map handle */
-	CSF_LEGEND *l) /* array large enough to hold name and all entries, 
-	                * the entries are sorted 
+	CSF_LEGEND *l) /* array large enough to hold name and all entries,
+	                * the entries are sorted
 	                * struct CSF_LEGEND is typedef'ed in csfattr.h
 	                */
 {
@@ -69,7 +66,7 @@ int MgetLegend(
         if( csf_fseek(m->fp, pos, SEEK_SET) != 0 )
                 return 0;
         if (id == ATTR_ID_LEGEND_V1)
-        { 
+        {
         	/* empty name */
         	l[0].nr       = 0;
         	l[0].descr[0] = '\0';
@@ -90,7 +87,7 @@ int MgetLegend(
  * the old one if existent.
  * See  csfattr.h for the legend structure.
  *
- * returns 
+ * returns
  * 0 in case of an error,
  * nonzero otherwise
  *
@@ -119,8 +116,8 @@ int MputLegend(
 	     if(
 		m->write(&(l[i].nr), sizeof(INT4), (size_t)1, m->fp) != 1 ||
 		m->write(
-		 CsfStringPad(l[i].descr,(size_t)CSF_LEGEND_DESCR_SIZE), 
-		 sizeof(char), (size_t)CSF_LEGEND_DESCR_SIZE, m->fp) 
+		 CsfStringPad(l[i].descr,(size_t)CSF_LEGEND_DESCR_SIZE),
+		 sizeof(char), (size_t)CSF_LEGEND_DESCR_SIZE, m->fp)
 		 != CSF_LEGEND_DESCR_SIZE )
 		 {
 		 	M_ERROR(WRITE_ERROR);

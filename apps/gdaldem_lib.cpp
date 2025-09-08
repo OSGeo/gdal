@@ -90,9 +90,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
 
 #include <algorithm>
 #include <array>
@@ -782,12 +779,12 @@ template <class T> struct Gradient<T, GradientAlg::HORN>
     static void calc(const T *afWin, double inv_ewres, double inv_nsres,
                      double &x, double &y)
     {
-        x = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
-             (afWin[2] + afWin[5] + afWin[5] + afWin[8])) *
+        x = double((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
+                   (afWin[2] + afWin[5] + afWin[5] + afWin[8])) *
             inv_ewres;
 
-        y = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
-             (afWin[0] + afWin[1] + afWin[1] + afWin[2])) *
+        y = double((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+                   (afWin[0] + afWin[1] + afWin[1] + afWin[2])) *
             inv_nsres;
     }
 };
@@ -797,8 +794,8 @@ template <class T> struct Gradient<T, GradientAlg::ZEVENBERGEN_THORNE>
     static void calc(const T *afWin, double inv_ewres, double inv_nsres,
                      double &x, double &y)
     {
-        x = (afWin[3] - afWin[5]) * inv_ewres;
-        y = (afWin[7] - afWin[1]) * inv_nsres;
+        x = double(afWin[3] - afWin[5]) * inv_ewres;
+        y = double(afWin[7] - afWin[1]) * inv_nsres;
     }
 };
 
@@ -949,12 +946,12 @@ static float GDALHillshadeIgorAlg(const T *afWin, float /*fDstNoDataValue*/,
     double slopeDegrees;
     if (alg == GradientAlg::HORN)
     {
-        const double dx = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
-                           (afWin[2] + afWin[5] + afWin[5] + afWin[8])) *
+        const double dx = double((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
+                                 (afWin[2] + afWin[5] + afWin[5] + afWin[8])) *
                           psData->inv_ewres_xscale;
 
-        const double dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
-                           (afWin[0] + afWin[1] + afWin[1] + afWin[2])) *
+        const double dy = double((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+                                 (afWin[0] + afWin[1] + afWin[1] + afWin[2])) *
                           psData->inv_nsres_yscale;
 
         const double key = (dx * dx + dy * dy);
@@ -962,8 +959,10 @@ static float GDALHillshadeIgorAlg(const T *afWin, float /*fDstNoDataValue*/,
     }
     else  // ZEVENBERGEN_THORNE
     {
-        const double dx = (afWin[3] - afWin[5]) * psData->inv_ewres_xscale;
-        const double dy = (afWin[7] - afWin[1]) * psData->inv_nsres_yscale;
+        const double dx =
+            double(afWin[3] - afWin[5]) * psData->inv_ewres_xscale;
+        const double dy =
+            double(afWin[7] - afWin[1]) * psData->inv_nsres_yscale;
         const double key = dx * dx + dy * dy;
 
         slopeDegrees = atan(sqrt(key) * psData->z_factor) * kdfRadiansToDegrees;
@@ -972,18 +971,18 @@ static float GDALHillshadeIgorAlg(const T *afWin, float /*fDstNoDataValue*/,
     double aspect;
     if (alg == GradientAlg::HORN)
     {
-        const double dx = ((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
-                           (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
+        const double dx = double((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
+                                 (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
 
-        const double dy2 = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
-                            (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
+        const double dy2 = double((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+                                  (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
 
         aspect = atan2(dy2, -dx);
     }
     else  // ZEVENBERGEN_THORNE
     {
-        const double dx = afWin[5] - afWin[3];
-        const double dy = afWin[7] - afWin[1];
+        const double dx = double(afWin[5] - afWin[3]);
+        const double dy = double(afWin[7] - afWin[1]);
         aspect = atan2(dy, -dx);
     }
 
@@ -1051,8 +1050,8 @@ static float GDALHillshadeAlg_same_res(const T *afWin,
     accY += one_minus_seven;
     accX += six_minus_two;
     accY -= six_minus_two;
-    const double x = accX;
-    const double y = accY;
+    const double x = double(accX);
+    const double y = double(accY);
 
     const double xx_plus_yy = x * x + y * y;
 
@@ -1348,12 +1347,12 @@ static float GDALSlopeHornAlg(const T *afWin, float /*fDstNoDataValue*/,
     const GDALSlopeAlgData *psData =
         static_cast<const GDALSlopeAlgData *>(pData);
 
-    const double dx = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
-                       (afWin[2] + afWin[5] + afWin[5] + afWin[8])) /
+    const double dx = double((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
+                             (afWin[2] + afWin[5] + afWin[5] + afWin[8])) /
                       psData->ewres_xscale;
 
-    const double dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
-                       (afWin[0] + afWin[1] + afWin[1] + afWin[2])) /
+    const double dy = double((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+                             (afWin[0] + afWin[1] + afWin[1] + afWin[2])) /
                       psData->nsres_yscale;
 
     const double key = (dx * dx + dy * dy);
@@ -1372,8 +1371,8 @@ static float GDALSlopeZevenbergenThorneAlg(const T *afWin,
     const GDALSlopeAlgData *psData =
         static_cast<const GDALSlopeAlgData *>(pData);
 
-    const double dx = (afWin[3] - afWin[5]) / psData->ewres_xscale;
-    const double dy = (afWin[7] - afWin[1]) / psData->nsres_yscale;
+    const double dx = double(afWin[3] - afWin[5]) / psData->ewres_xscale;
+    const double dy = double(afWin[7] - afWin[1]) / psData->nsres_yscale;
     const double key = dx * dx + dy * dy;
 
     if (psData->slopeFormat == 1)
@@ -1418,11 +1417,11 @@ static float GDALAspectAlg(const T *afWin, float fDstNoDataValue,
     const GDALAspectAlgData *psData =
         static_cast<const GDALAspectAlgData *>(pData);
 
-    const double dx = ((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
-                       (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
+    const double dx = double((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
+                             (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
 
-    const double dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
-                       (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
+    const double dy = double((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+                             (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
 
     float aspect = static_cast<float>(atan2(dy, -dx) / kdfDegreesToRadians);
 
@@ -1458,8 +1457,8 @@ static float GDALAspectZevenbergenThorneAlg(const T *afWin,
     const GDALAspectAlgData *psData =
         static_cast<const GDALAspectAlgData *>(pData);
 
-    const double dx = afWin[5] - afWin[3];
-    const double dy = afWin[7] - afWin[1];
+    const double dx = double(afWin[5] - afWin[3]);
+    const double dy = double(afWin[7] - afWin[1]);
     float aspect = static_cast<float>(atan2(dy, -dx) / kdfDegreesToRadians);
     if (dx == 0 && dy == 0)
     {
@@ -1842,7 +1841,7 @@ static GByte *GDALColorReliefPrecompute(
 
 class GDALColorReliefRasterBand;
 
-class GDALColorReliefDataset : public GDALDataset
+class GDALColorReliefDataset final : public GDALDataset
 {
     friend class GDALColorReliefRasterBand;
 
@@ -1863,7 +1862,7 @@ class GDALColorReliefDataset : public GDALDataset
     GDALColorReliefDataset(GDALDatasetH hSrcDS, GDALRasterBandH hSrcBand,
                            const char *pszColorFilename,
                            ColorSelectionMode eColorSelectionMode, int bAlpha);
-    ~GDALColorReliefDataset();
+    ~GDALColorReliefDataset() override;
 
     bool InitOK() const
     {
@@ -1887,8 +1886,8 @@ class GDALColorReliefRasterBand : public GDALRasterBand
   public:
     GDALColorReliefRasterBand(GDALColorReliefDataset *, int);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    CPLErr IReadBlock(int, int, void *) override;
+    GDALColorInterp GetColorInterpretation() override;
 };
 
 GDALColorReliefDataset::GDALColorReliefDataset(
@@ -2007,7 +2006,7 @@ CPLErr GDALColorReliefRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             for (int x = 0; x < nReqXSize; x++)
             {
                 GDALColorReliefGetRGBA(
-                    poGDS->asColorAssociation, poGDS->pafSourceBuf[j],
+                    poGDS->asColorAssociation, double(poGDS->pafSourceBuf[j]),
                     poGDS->eColorSelectionMode, &anComponents[0],
                     &anComponents[1], &anComponents[2], &anComponents[3]);
                 static_cast<GByte *>(pImage)[y * nBlockXSize + x] =
@@ -2124,7 +2123,8 @@ GDALColorRelief(GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand1,
             const auto pafSourceBufRaw = pafSourceBuf.get();
             for (int j = 0; j < nXSize; j++)
             {
-                GDALColorReliefGetRGBA(asColorAssociation, pafSourceBufRaw[j],
+                GDALColorReliefGetRGBA(asColorAssociation,
+                                       double(pafSourceBufRaw[j]),
                                        eColorSelectionMode, &nR, &nG, &nB, &nA);
                 pabyDestBuf1[j] = static_cast<GByte>(nR);
                 pabyDestBuf2[j] = static_cast<GByte>(nG);
@@ -2368,11 +2368,14 @@ static float GDALTRIAlgRiley(const T *afWin, float /*fDstNoDataValue*/,
 {
     const auto square = [](double x) { return x * x; };
 
-    return static_cast<float>(
-        std::sqrt(square(afWin[0] - afWin[4]) + square(afWin[1] - afWin[4]) +
-                  square(afWin[2] - afWin[4]) + square(afWin[3] - afWin[4]) +
-                  square(afWin[5] - afWin[4]) + square(afWin[6] - afWin[4]) +
-                  square(afWin[7] - afWin[4]) + square(afWin[8] - afWin[4])));
+    return static_cast<float>(std::sqrt(square(double(afWin[0] - afWin[4])) +
+                                        square(double(afWin[1] - afWin[4])) +
+                                        square(double(afWin[2] - afWin[4])) +
+                                        square(double(afWin[3] - afWin[4])) +
+                                        square(double(afWin[5] - afWin[4])) +
+                                        square(double(afWin[6] - afWin[4])) +
+                                        square(double(afWin[7] - afWin[4])) +
+                                        square(double(afWin[8] - afWin[4]))));
 }
 
 /************************************************************************/
@@ -2460,7 +2463,7 @@ template <class T> class GDALGeneric3x3Dataset final : public GDALDataset
             pfnAlg_multisample,
         std::unique_ptr<AlgorithmParameters> pAlgData, bool bComputeAtEdges,
         bool bTakeReferenceIn);
-    ~GDALGeneric3x3Dataset();
+    ~GDALGeneric3x3Dataset() override;
 
     bool InitOK() const
     {
@@ -2492,8 +2495,8 @@ template <class T> class GDALGeneric3x3RasterBand final : public GDALRasterBand
     GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset<T> *poDSIn,
                              GDALDataType eDstDataType);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual double GetNoDataValue(int *pbHasNoData) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    double GetNoDataValue(int *pbHasNoData) override;
 
     int GetOverviewCount() override
     {
@@ -2739,7 +2742,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
 
                 if (eDataType == GDT_Byte)
                     static_cast<GByte *>(pImage)[j] =
-                        static_cast<GByte>(fVal + 0.5);
+                        static_cast<GByte>(fVal + 0.5f);
                 else
                     static_cast<float *>(pImage)[j] = fVal;
             }
@@ -2794,7 +2797,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
 
                 if (eDataType == GDT_Byte)
                     static_cast<GByte *>(pImage)[j] =
-                        static_cast<GByte>(fVal + 0.5);
+                        static_cast<GByte>(fVal + 0.5f);
                 else
                     static_cast<float *>(pImage)[j] = fVal;
             }
@@ -2875,7 +2878,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
 
             if (eDataType == GDT_Byte)
                 static_cast<GByte *>(pImage)[j] =
-                    static_cast<GByte>(fVal + 0.5);
+                    static_cast<GByte>(fVal + 0.5f);
             else
                 static_cast<float *>(pImage)[j] = fVal;
         }
@@ -2904,7 +2907,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
             poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
         if (eDataType == GDT_Byte)
-            static_cast<GByte *>(pImage)[j] = static_cast<GByte>(fVal + 0.5);
+            static_cast<GByte *>(pImage)[j] = static_cast<GByte>(fVal + 0.5f);
         else
             static_cast<float *>(pImage)[j] = fVal;
     }
@@ -2964,7 +2967,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
             poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
         if (eDataType == GDT_Byte)
-            static_cast<GByte *>(pImage)[j] = static_cast<GByte>(fVal + 0.5);
+            static_cast<GByte *>(pImage)[j] = static_cast<GByte>(fVal + 0.5f);
         else
             static_cast<float *>(pImage)[j] = fVal;
     }
@@ -3739,6 +3742,8 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         osFormat = GetOutputDriverForRaster(pszDest);
         if (osFormat.empty())
         {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not identify driver for output %s", pszDest);
             return nullptr;
         }
     }

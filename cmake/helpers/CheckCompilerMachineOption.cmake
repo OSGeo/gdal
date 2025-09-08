@@ -31,7 +31,7 @@ function(check_compiler_machine_option outvar feature)
   endmacro()
 
   set(_FLAGS)
-  if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86|AMD64)")
+  if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i586|i686|x86|AMD64)")
     if(MSVC AND (${feature} MATCHES "SSE"))
       # SSE2 and SSE are default on
       set(_FLAGS " ")
@@ -100,7 +100,7 @@ function(check_compiler_machine_option outvar feature)
         endif()
       endif()
     endif()
-  elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(ARM|aarch64)")
+  elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(arm|ARM|aarch64)")
     if(MSVC)
       # TODO implement me
     elseif(CMAKE_CXX_COMPILER MATCHES "/(icpc|icc)$") # ICC (on Linux)

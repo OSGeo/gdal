@@ -583,8 +583,9 @@ GDALTileIndexDataset::GDALTileIndexDataset()
 static std::string GetAbsoluteFileName(const char *pszTileName,
                                        const char *pszVRTName)
 {
-    if (STARTS_WITH(pszTileName, "https://"))
-        return std::string("/vsicurl/").append(pszTileName);
+    std::string osRet = VSIURIToVSIPath(pszTileName);
+    if (osRet != pszTileName)
+        return osRet;
 
     if (CPLIsFilenameRelative(pszTileName) &&
         !STARTS_WITH(pszTileName, "<VRTDataset") &&
@@ -594,13 +595,12 @@ static std::string GetAbsoluteFileName(const char *pszTileName,
         if (oSubDSInfo && !oSubDSInfo->GetPathComponent().empty())
         {
             const std::string osPath(oSubDSInfo->GetPathComponent());
-            std::string osRet =
-                CPLIsFilenameRelative(osPath.c_str())
-                    ? oSubDSInfo->ModifyPathComponent(
-                          CPLProjectRelativeFilenameSafe(
-                              CPLGetPathSafe(pszVRTName).c_str(),
-                              osPath.c_str()))
-                    : std::string(pszTileName);
+            osRet = CPLIsFilenameRelative(osPath.c_str())
+                        ? oSubDSInfo->ModifyPathComponent(
+                              CPLProjectRelativeFilenameSafe(
+                                  CPLGetPathSafe(pszVRTName).c_str(),
+                                  osPath.c_str()))
+                        : std::string(pszTileName);
             GDALDestroySubdatasetInfo(oSubDSInfo);
             return osRet;
         }
@@ -3864,17 +3864,12 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
                              m_aoSourceDesc.begin() + i);
     }
 
-    // Truncate the array when its last elements have no dataset
-    i = m_aoSourceDesc.size();
-    while (i > 0)
-    {
-        --i;
-        if (!m_aoSourceDesc[i].poDS)
-        {
-            m_aoSourceDesc.resize(i);
-            break;
-        }
-    }
+    // Remove elements that have no dataset
+    m_aoSourceDesc.erase(std::remove_if(m_aoSourceDesc.begin(),
+                                        m_aoSourceDesc.end(),
+                                        [](const SourceDesc &desc)
+                                        { return desc.poDS == nullptr; }),
+                         m_aoSourceDesc.end());
 
     return true;
 }
@@ -4802,6 +4797,8 @@ void GDALTileIndexDataset::RasterIOJob::Func(void *pData)
     ++(*psJob->pnCompletedJobs);
 }
 
+#ifdef GDAL_ENABLE_ALGORITHMS
+
 /************************************************************************/
 /*                     GDALGTICreateAlgorithm                           */
 /************************************************************************/
@@ -5032,6 +5029,8 @@ GDALTileIndexInstantiateAlgorithm(const std::vector<std::string> &aosPath)
     }
 }
 
+#endif
+
 /************************************************************************/
 /*                         GDALRegister_GTI()                           */
 /************************************************************************/
@@ -5075,8 +5074,10 @@ void GDALRegister_GTI()
         "default='ALL_CPUS'/>"
         "</OpenOptionList>");
 
+#ifdef GDAL_ENABLE_ALGORITHMS
     poDriver->DeclareAlgorithm({"create"});
     poDriver->pfnInstantiateAlgorithm = GDALTileIndexInstantiateAlgorithm;
+#endif
 
 #ifdef BUILT_AS_PLUGIN
     // Used by gdaladdo and test_gdaladdo.py

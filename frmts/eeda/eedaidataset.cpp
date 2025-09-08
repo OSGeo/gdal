@@ -64,18 +64,17 @@ class GDALEEDAIDataset final : public GDALEEDABaseDataset
 
   public:
     GDALEEDAIDataset();
-    virtual ~GDALEEDAIDataset();
+    ~GDALEEDAIDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, BANDMAP_TYPE panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount,
+                     BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
     bool ComputeQueryStrategy();
 
@@ -110,15 +109,15 @@ class GDALEEDAIRasterBand final : public GDALRasterBand
 
   public:
     GDALEEDAIRasterBand(GDALEEDAIDataset *poDSIn, GDALDataType eDT);
-    virtual ~GDALEEDAIRasterBand();
+    ~GDALEEDAIRasterBand() override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) CPL_OVERRIDE;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpace,
+                     GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) CPL_OVERRIDE;
 
-    virtual CPLErr IReadBlock(int, int, void *) CPL_OVERRIDE;
+    CPLErr IReadBlock(int, int, void *) CPL_OVERRIDE;
     virtual int GetOverviewCount() CPL_OVERRIDE;
     virtual GDALRasterBand *GetOverview(int) CPL_OVERRIDE;
 
@@ -212,7 +211,7 @@ GDALEEDAIRasterBand::~GDALEEDAIRasterBand()
 
 int GDALEEDAIRasterBand::GetOverviewCount()
 {
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
     return static_cast<int>(poGDS->m_apoOverviewDS.size());
 }
 
@@ -222,7 +221,7 @@ int GDALEEDAIRasterBand::GetOverviewCount()
 
 GDALRasterBand *GDALEEDAIRasterBand::GetOverview(int iIndex)
 {
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
     if (iIndex >= 0 && iIndex < static_cast<int>(poGDS->m_apoOverviewDS.size()))
     {
         return poGDS->m_apoOverviewDS[iIndex]->GetRasterBand(nBand);
@@ -240,7 +239,7 @@ bool GDALEEDAIRasterBand::DecodeNPYArray(const GByte *pabyData, int nDataLen,
                                          int nXBlocks, int nYBlocks,
                                          int nReqXSize, int nReqYSize) const
 {
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
 
     // See https://docs.scipy.org/doc/numpy-1.13.0/neps/npy-format.html
     // for description of NPY array serialization format
@@ -406,7 +405,7 @@ bool GDALEEDAIRasterBand::DecodeGDALDataset(const GByte *pabyData, int nDataLen,
                                             int nYBlocks, int nReqXSize,
                                             int nReqYSize)
 {
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
 
     const CPLString osTmpFilename(VSIMemGenerateHiddenFilename("eedai"));
     VSIFCloseL(VSIFileFromMemBuffer(
@@ -520,7 +519,7 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
                                       int nXBlocks, int nYBlocks,
                                       bool bQueryAllBands, void *pBuffer)
 {
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
 
     // Build request content
     json_object *poReq = json_object_new_object();
@@ -668,7 +667,7 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
 CPLErr GDALEEDAIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                        void *pBuffer)
 {
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
 #ifdef DEBUG_VERBOSE
     CPLDebug("EEDAI", "ReadBlock x=%d y=%d band=%d level=%d", nBlockXOff,
              nBlockYOff, nBand, poGDS->m_iOvrLevel);
@@ -692,7 +691,7 @@ GUInt32 GDALEEDAIRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize,
     CPL_IGNORE_RET_VAL(nBufXSize);
     CPL_IGNORE_RET_VAL(nBufYSize);
 
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
     int nBlockXOff = nXOff / nBlockXSize;
     int nBlockYOff = nYOff / nBlockYSize;
     int nXBlocks = (nXOff + nXSize - 1) / nBlockXSize - nBlockXOff + 1;
@@ -862,7 +861,7 @@ CPLErr GDALEEDAIRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
     }
 
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
     GUInt32 nRetryFlags =
         PrefetchBlocks(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                        poGDS->m_bQueryMultipleBands);

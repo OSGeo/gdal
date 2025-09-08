@@ -18,6 +18,7 @@
 #include "ogrsf_frmts.h"
 
 #include <algorithm>
+#include <mutex>
 #include <utility>
 
 /************************************************************************/
@@ -35,7 +36,7 @@ class CPL_DLL OGRUnionLayerGeomFieldDefn final : public OGRGeomFieldDefn
     explicit OGRUnionLayerGeomFieldDefn(const OGRGeomFieldDefn *poSrc);
     explicit OGRUnionLayerGeomFieldDefn(
         const OGRUnionLayerGeomFieldDefn *poSrc);
-    ~OGRUnionLayerGeomFieldDefn();
+    ~OGRUnionLayerGeomFieldDefn() override;
 };
 
 /************************************************************************/
@@ -78,6 +79,11 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
             return poLayer;
         }
 
+        const OGRLayer *operator->() const
+        {
+            return poLayer;
+        }
+
         std::pair<OGRLayer *, bool> release()
         {
             const bool bOwnedBackup = poLayerKeeper != nullptr;
@@ -98,7 +104,7 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
 
     std::vector<Layer> m_apoSrcLayers{};
 
-    OGRFeatureDefn *poFeatureDefn = nullptr;
+    mutable OGRFeatureDefn *poFeatureDefn = nullptr;
     int nFields = 0;
     OGRFieldDefn **papoFields = nullptr;
     int nGeomFields = 0;
@@ -115,13 +121,15 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     int nNextFID = 0;
     int *panMap = nullptr;
     CPLStringList m_aosIgnoredFields{};
-    int bAttrFilterPassThroughValue = -1;
-    const OGRSpatialReference *poGlobalSRS = nullptr;
+    mutable int bAttrFilterPassThroughValue = -1;
+    mutable const OGRSpatialReference *poGlobalSRS = nullptr;
+
+    std::mutex m_oMutex{};
 
     void AutoWarpLayerIfNecessary(int iSubLayer);
     OGRFeature *TranslateFromSrcLayer(OGRFeature *poSrcFeature);
     void ApplyAttributeFilterToSrcLayer(int iSubLayer);
-    int GetAttrFilterPassThroughValue();
+    int GetAttrFilterPassThroughValue() const;
     void ConfigureActiveLayer();
     void SetSpatialFilterToSourceLayer(OGRLayer *poSrcLayer);
 
@@ -133,7 +141,7 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
                                ownership depending on bTakeLayerOwnership */
         int bTakeLayerOwnership);
 
-    virtual ~OGRUnionLayer();
+    ~OGRUnionLayer() override;
 
     /* All the following non virtual methods must be called just after the
      * constructor */
@@ -148,23 +156,23 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     void SetPreserveSrcFID(int bPreserveSrcFID);
     void SetFeatureCount(int nFeatureCount);
 
-    virtual const char *GetName() override
+    const char *GetName() const override
     {
         return osName.c_str();
     }
 
-    virtual OGRwkbGeometryType GetGeomType() override;
+    OGRwkbGeometryType GetGeomType() const override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr IUpsertFeature(OGRFeature *poFeature) override;
+    OGRErr IUpsertFeature(OGRFeature *poFeature) override;
 
     OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                           const int *panUpdatedFieldsIdx,
@@ -172,25 +180,25 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
                           const int *panUpdatedGeomFieldsIdx,
                           bool bUpdateStyleString) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
-    virtual GIntBig GetFeatureCount(int) override;
+    GIntBig GetFeatureCount(int) override;
 
-    virtual OGRErr SetAttributeFilter(const char *) override;
+    OGRErr SetAttributeFilter(const char *) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *) override;
 
-    virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
+    OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 
-    virtual OGRErr SyncToDisk() override;
+    OGRErr SyncToDisk() override;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

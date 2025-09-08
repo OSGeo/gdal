@@ -1607,7 +1607,7 @@ bool GDALPDFComposerWriter::WriteVector(const CPLXMLNode *psNode,
     OGRLayer *poLayer = poDS->GetLayerByName(pszLayer);
     if (!poLayer)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannt find layer %s", pszLayer);
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find layer %s", pszLayer);
         return false;
     }
     const bool bVisible =
@@ -1904,7 +1904,7 @@ bool GDALPDFComposerWriter::WriteVectorLabel(const CPLXMLNode *psNode,
     OGRLayer *poLayer = poDS->GetLayerByName(pszLayer);
     if (!poLayer)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannt find layer %s", pszLayer);
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find layer %s", pszLayer);
         return false;
     }
 

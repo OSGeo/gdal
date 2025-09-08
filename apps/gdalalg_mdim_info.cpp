@@ -104,11 +104,7 @@ GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()
     }
     AddArg("stats", 0, _("Read and display image statistics."), &m_stats);
 
-    AddArg("stdout", 0,
-           _("Directly output on stdout. If enabled, "
-             "output-string will be empty"),
-           &m_stdout)
-        .SetHiddenForCLI();
+    AddStdoutArg(&m_stdout);
 }
 
 /************************************************************************/
@@ -149,7 +145,7 @@ bool GDALMdimInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     char *ret = GDALMultiDimInfo(hDS, psOptions);
     GDALMultiDimInfoOptionsFree(psOptions);
     const bool bOK = ret != nullptr;
-    if (ret)
+    if (ret && !m_stdout)
     {
         m_output = ret;
     }

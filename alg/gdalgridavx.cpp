@@ -117,7 +117,7 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
         {
             if (mask & (1 << j))
             {
-                (*pdfValue) = (pafZ)[i + j];
+                (*pdfValue) = double(pafZ[i + j]);
 
                 return CE_None;
             }
@@ -155,7 +155,7 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
 
         // If the test point is close to the grid node, use the point
         // value directly as a node value to avoid singularity.
-        if (fR2 < 0.0000000000001)
+        if (fR2 < 1e-13f)
         {
             break;
         }
@@ -169,9 +169,9 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
 
     if (i != nPoints)
     {
-        (*pdfValue) = pafZ[i];
+        (*pdfValue) = double(pafZ[i]);
     }
-    else if (fDenominator == 0.0)
+    else if (fDenominator == 0.0f)
     {
         (*pdfValue) =
             static_cast<const GDALGridInverseDistanceToAPowerOptions *>(
@@ -179,7 +179,7 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
                 ->dfNoDataValue;
     }
     else
-        (*pdfValue) = fNominator / fDenominator;
+        (*pdfValue) = double(fNominator / fDenominator);
 
     return CE_None;
 }

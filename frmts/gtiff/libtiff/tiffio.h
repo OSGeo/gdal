@@ -608,7 +608,7 @@ extern int TIFFReadRGBAImageOriented(TIFF *, uint32_t, uint32_t, uint32_t *,
     extern uint64_t TIFFGetStrileByteCountWithErr(TIFF *tif, uint32_t strile,
                                                   int *pbErr);
 
-#ifdef LOGLUV_PUBLIC
+#if LOGLUV_PUBLIC
 #define U_NEU 0.210526316
 #define V_NEU 0.473684211
 #define UVSCALE 410.

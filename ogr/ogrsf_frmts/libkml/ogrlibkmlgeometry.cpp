@@ -668,7 +668,14 @@ static OGRGeometry *kml2geom_rec(const GeometryPtr &poKmlGeometry,
         case kmldom::Type_GxTrack:
         {
             GxTrackPtr poKmlGxTrack = AsGxTrack(poKmlGeometry);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
             const size_t nCoords = poKmlGxTrack->get_gx_coord_array_size();
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
             poOgrLineString = new OGRLineString();
             for (size_t i = 0; i < nCoords; i++)
             {
@@ -687,7 +694,14 @@ static OGRGeometry *kml2geom_rec(const GeometryPtr &poKmlGeometry,
         case kmldom::Type_GxMultiTrack:
         {
             GxMultiTrackPtr poKmlGxMultiTrack = AsGxMultiTrack(poKmlGeometry);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
             const size_t nGeom = poKmlGxMultiTrack->get_gx_track_array_size();
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
             poOgrMultiGeometry = new OGRMultiLineString();
             for (size_t j = 0; j < nGeom; j++)
             {

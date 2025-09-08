@@ -23,17 +23,17 @@ class CADFileStreamIO : public CADFileIO
 {
 public:
     explicit             CADFileStreamIO(const char* pszFilePath);
-    virtual             ~CADFileStreamIO();
+    ~CADFileStreamIO() override;
 
-    virtual const char* ReadLine() override;
-    virtual bool        Eof() const override;
-    virtual bool        Open(int mode) override;
-    virtual bool        Close() override;
-    virtual int         Seek(long int offset, SeekOrigin origin) override;
-    virtual long int    Tell() override;
-    virtual size_t      Read(void* ptr, size_t size) override;
-    virtual size_t      Write(void* ptr, size_t size) override;
-    virtual void        Rewind() override;
+    const char* ReadLine() override;
+    bool        Eof() const override;
+    bool        Open(int mode) override;
+    bool        Close() override;
+    int         Seek(long int offset, SeekOrigin origin) override;
+    long int    Tell() override;
+    size_t      Read(void* ptr, size_t size) override;
+    size_t      Write(void* ptr, size_t size) override;
+    void        Rewind() override;
 protected:
     std::ifstream       m_oFileStream;
 };

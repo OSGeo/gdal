@@ -18,7 +18,7 @@
 
 class OGRILI2DataSource;
 
-class IILI2Reader
+class IILI2Reader /* non final */
 {
   public:
     virtual ~IILI2Reader();
@@ -30,7 +30,7 @@ class IILI2Reader
     virtual int SaveClasses(const char *pszFilename) = 0;
 
     virtual std::vector<std::unique_ptr<OGRLayer>> &GetLayers() = 0;
-    virtual int GetLayerCount() = 0;
+    virtual int GetLayerCount() const = 0;
 };
 
 IILI2Reader *CreateILI2Reader();

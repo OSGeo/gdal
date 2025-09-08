@@ -169,7 +169,7 @@ class MrSIDProgress : public LTIProgressDelegate
     {
     }
 
-    virtual LT_STATUS setProgressStatus(float fraction) override
+    LT_STATUS setProgressStatus(float fraction) override
     {
         if (!m_f)
             return LT_STS_BadContext;
@@ -240,26 +240,25 @@ class MrSIDDataset final : public GDALJP2AbstractDataset
 
     int m_nInRasterIO = 0;  // Prevent infinite recursion in IRasterIO()
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, BANDMAP_TYPE,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, int, BANDMAP_TYPE, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
   protected:
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
-    virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
-                                   const int *, GDALProgressFunc, void *,
-                                   CSLConstList papszOptions) override;
+    CPLErr IBuildOverviews(const char *, int, const int *, int, const int *,
+                           GDALProgressFunc, void *,
+                           CSLConstList papszOptions) override;
 
   public:
     explicit MrSIDDataset(int bIsJPEG2000);
-    ~MrSIDDataset();
+    ~MrSIDDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo, int bIsJP2);
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
 #ifdef MRSID_ESDK
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
@@ -291,26 +290,25 @@ class MrSIDRasterBand final : public GDALPamRasterBand
 
   public:
     MrSIDRasterBand(MrSIDDataset *, int);
-    ~MrSIDRasterBand();
+    ~MrSIDRasterBand() override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    CPLErr IReadBlock(int, int, void *) override;
+    GDALColorInterp GetColorInterpretation() override;
     CPLErr SetColorInterpretation(GDALColorInterp eNewInterp) override;
-    virtual double GetNoDataValue(int *) override;
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int) override;
+    double GetNoDataValue(int *) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int) override;
 
     virtual CPLErr GetStatistics(int bApproxOK, int bForce, double *pdfMin,
                                  double *pdfMax, double *pdfMean,
                                  double *pdfStdDev) override;
 
 #ifdef MRSID_ESDK
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 #endif
 };
 

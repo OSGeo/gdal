@@ -183,6 +183,8 @@ Advanced options
     Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
     See :cpp:func:`GDALCreateRPCTransformerV2()` for RPC specific options.
 
+    To match the gdalwarp -rpc option, use --to METHOD=RPC
+
 .. option:: --et, --error-threshold <ERROR-THRESHOLD>
 
     Error threshold for transformation approximation, expressed as a number of

@@ -51,7 +51,7 @@ class GDALPipelineStepRunContext
 /*                    GDALAbstractPipelineAlgorithm                     */
 /************************************************************************/
 
-template <class StepAlgorithm>
+template <class StepAlgorithm, class StepRegistry>
 class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
 {
   public:
@@ -99,24 +99,29 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
     }
 
     std::string m_pipeline{};
-    GDALAlgorithmRegistry m_stepRegistry{};
+    StepRegistry m_stepRegistry{};
     std::vector<std::unique_ptr<StepAlgorithm>> m_steps{};
     std::unique_ptr<StepAlgorithm> m_stepOnWhichHelpIsRequested{};
 
     std::unique_ptr<StepAlgorithm> GetStepAlg(const std::string &name) const;
 
-    bool CheckFirstStep(const std::vector<StepAlgorithm *> &steps) const;
+    bool CheckFirstAndLastStep(const std::vector<StepAlgorithm *> &steps) const;
 
     static constexpr const char *RASTER_SUFFIX = "-raster";
     static constexpr const char *VECTOR_SUFFIX = "-vector";
 
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
+
+    bool SaveGDALGFile(const std::string &outFilename,
+                       std::string &outString) const;
 };
 
 /************************************************************************/
 /*                     GDALPipelineStepAlgorithm                        */
 /************************************************************************/
+
+class GDALAlgorithmStepRegistry;
 
 class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 {
@@ -250,9 +255,15 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
                               const ConstructorOptions &);
 
     friend class GDALPipelineAlgorithm;
-    friend class GDALAbstractPipelineAlgorithm<GDALPipelineStepAlgorithm>;
+    friend class GDALAbstractPipelineAlgorithm<GDALPipelineStepAlgorithm,
+                                               GDALAlgorithmStepRegistry>;
 
     virtual bool CanBeFirstStep() const
+    {
+        return false;
+    }
+
+    virtual bool CanBeLastStep() const
     {
         return false;
     }
@@ -260,6 +271,11 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     virtual bool IsNativelyStreamingCompatible() const
     {
         return true;
+    }
+
+    virtual bool SupportsInputMultiThreading() const
+    {
+        return false;
     }
 
     virtual bool CanHandleNextStep(GDALPipelineStepAlgorithm *) const
@@ -281,8 +297,11 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     std::vector<std::string> m_inputLayerNames{};
 
     // Output arguments
+    bool m_stdout = false;
+    std::string m_output{};
     GDALArgDatasetValue m_outputDataset{};
     std::string m_format{};
+    std::vector<std::string> m_outputOpenOptions{};
     std::vector<std::string> m_creationOptions{};
     bool m_overwrite = false;
     std::string m_outputLayerName{};
@@ -311,12 +330,12 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 };
 
 /************************************************************************/
-/*            GDALAbstractPipelineAlgorithm::CheckFirstStep()           */
+/*          GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep()      */
 /************************************************************************/
 
-template <class StepAlgorithm>
-bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::CheckFirstStep(
-    const std::vector<StepAlgorithm *> &steps) const
+template <class StepAlgorithm, class StepRegistry>
+bool GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::
+    CheckFirstAndLastStep(const std::vector<StepAlgorithm *> &steps) const
 {
     if (!steps.front()->CanBeFirstStep())
     {
@@ -356,6 +375,46 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::CheckFirstStep(
             return false;
         }
     }
+
+    if (!steps.back()->CanBeLastStep())
+    {
+        std::vector<std::string> lastStepNames{"write"};
+        for (const auto &stepName : m_stepRegistry.GetNames())
+        {
+            auto alg = GetStepAlg(stepName);
+            if (alg && alg->CanBeLastStep() && stepName != "write")
+            {
+                lastStepNames.push_back(stepName);
+            }
+        }
+
+        std::string msg = "Last step should be ";
+        for (size_t i = 0; i < lastStepNames.size(); ++i)
+        {
+            if (i == lastStepNames.size() - 1)
+                msg += " or ";
+            else if (i > 0)
+                msg += ", ";
+            msg += '\'';
+            msg += lastStepNames[i];
+            msg += '\'';
+        }
+
+        StepAlgorithm::ReportError(CE_Failure, CPLE_AppDefined, "%s",
+                                   msg.c_str());
+        return false;
+    }
+    for (size_t i = 1; i < steps.size() - 1; ++i)
+    {
+        if (steps[i]->CanBeLastStep())
+        {
+            StepAlgorithm::ReportError(CE_Failure, CPLE_AppDefined,
+                                       "Only last step can be '%s'",
+                                       steps[i]->GetName().c_str());
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -363,9 +422,9 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::CheckFirstStep(
 /*              GDALAbstractPipelineAlgorithm::GetStepAlg()             */
 /************************************************************************/
 
-template <class StepAlgorithm>
+template <class StepAlgorithm, class StepRegistry>
 std::unique_ptr<StepAlgorithm>
-GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetStepAlg(
+GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::GetStepAlg(
     const std::string &name) const
 {
     auto alg = m_stepRegistry.Instantiate(name);
@@ -377,60 +436,224 @@ GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetStepAlg(
 /*         GDALAbstractPipelineAlgorithm::GetAutoComplete()             */
 /************************************************************************/
 
-template <class StepAlgorithm>
+template <class StepAlgorithm, class StepRegistry>
 std::vector<std::string>
-GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetAutoComplete(
+GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::GetAutoComplete(
     std::vector<std::string> &args, bool lastWordIsComplete,
     bool /* showAllOptions*/)
 {
     std::vector<std::string> ret;
+    std::set<std::string> setSuggestions;
     if (args.size() <= 1)
-    {
-        if (args.empty() || args.front() != "read")
-            ret.push_back("read");
-    }
-    else if (args.back() == "!" ||
-             (args[args.size() - 2] == "!" && !GetStepAlg(args.back())))
     {
         for (const std::string &name : m_stepRegistry.GetNames())
         {
-            if (name != "read")
+            auto alg = m_stepRegistry.Instantiate(name);
+            auto stepAlg = dynamic_cast<StepAlgorithm *>(alg.get());
+            if (stepAlg && stepAlg->CanBeFirstStep())
             {
-                ret.push_back(name);
+                std::string suggestionName = CPLString(name)
+                                                 .replaceAll(RASTER_SUFFIX, "")
+                                                 .replaceAll(VECTOR_SUFFIX, "");
+                if (!cpl::contains(setSuggestions, suggestionName))
+                {
+                    if (!args.empty() && suggestionName == args[0])
+                        return {};
+                    if (args.empty() ||
+                        cpl::starts_with(suggestionName, args[0]))
+                    {
+                        setSuggestions.insert(suggestionName);
+                        ret.push_back(std::move(suggestionName));
+                    }
+                }
             }
         }
     }
     else
     {
-        std::string lastStep = "read";
+        int nDatasetType = this->GetInputType();
+        constexpr int MIXED_TYPE = GDAL_OF_RASTER | GDAL_OF_VECTOR;
+        const bool isMixedTypePipeline = nDatasetType == MIXED_TYPE;
+        std::string lastStep = args[0];
         std::vector<std::string> lastArgs;
+        bool firstStep = true;
         for (size_t i = 1; i < args.size(); ++i)
         {
+            if (firstStep && isMixedTypePipeline &&
+                nDatasetType == MIXED_TYPE && !args[i].empty() &&
+                args[i][0] != '-')
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                auto poDS = std::unique_ptr<GDALDataset>(
+                    GDALDataset::Open(args[i].c_str()));
+                if (poDS && poDS->GetLayerCount() > 0 &&
+                    poDS->GetRasterCount() == 0)
+                {
+                    nDatasetType = GDAL_OF_VECTOR;
+                }
+                else if (poDS && poDS->GetLayerCount() == 0 &&
+                         (poDS->GetRasterCount() > 0 ||
+                          poDS->GetMetadata("SUBDATASETS") != nullptr))
+                {
+                    nDatasetType = GDAL_OF_RASTER;
+                }
+            }
             lastArgs.push_back(args[i]);
             if (i + 1 < args.size() && args[i] == "!")
             {
+                firstStep = false;
                 ++i;
                 lastArgs.clear();
                 lastStep = args[i];
+                auto curAlg = GetStepAlg(lastStep);
+                if (isMixedTypePipeline && !curAlg)
+                {
+                    if (nDatasetType == GDAL_OF_RASTER)
+                        curAlg = GetStepAlg(lastStep + RASTER_SUFFIX);
+                    else if (nDatasetType == GDAL_OF_VECTOR)
+                        curAlg = GetStepAlg(lastStep + VECTOR_SUFFIX);
+                }
+                if (curAlg)
+                    nDatasetType = curAlg->GetOutputType();
             }
         }
 
-        auto curAlg = GetStepAlg(lastStep);
-        if (curAlg)
+        if (args.back() == "!" ||
+            (args[args.size() - 2] == "!" && !GetStepAlg(args.back()) &&
+             !GetStepAlg(args.back() + RASTER_SUFFIX) &&
+             !GetStepAlg(args.back() + VECTOR_SUFFIX)))
         {
-            ret = curAlg->GetAutoComplete(lastArgs, lastWordIsComplete,
-                                          /* showAllOptions = */ false);
+            for (const std::string &name : m_stepRegistry.GetNames())
+            {
+                auto alg = m_stepRegistry.Instantiate(name);
+                auto stepAlg = dynamic_cast<StepAlgorithm *>(alg.get());
+                if (stepAlg && isMixedTypePipeline &&
+                    nDatasetType != MIXED_TYPE &&
+                    stepAlg->GetInputType() != nDatasetType)
+                {
+                    continue;
+                }
+                if (stepAlg && !stepAlg->CanBeFirstStep())
+                {
+                    std::string suggestionName =
+                        CPLString(name)
+                            .replaceAll(RASTER_SUFFIX, "")
+                            .replaceAll(VECTOR_SUFFIX, "");
+                    if (!cpl::contains(setSuggestions, suggestionName))
+                    {
+                        setSuggestions.insert(suggestionName);
+                        ret.push_back(std::move(suggestionName));
+                    }
+                }
+            }
+        }
+        else
+        {
+            auto curAlg = GetStepAlg(lastStep);
+            if (isMixedTypePipeline && !curAlg)
+            {
+                if (nDatasetType == GDAL_OF_RASTER)
+                    curAlg = GetStepAlg(lastStep + RASTER_SUFFIX);
+                else if (nDatasetType == GDAL_OF_VECTOR)
+                    curAlg = GetStepAlg(lastStep + VECTOR_SUFFIX);
+                else
+                {
+                    for (const char *suffix : {RASTER_SUFFIX, VECTOR_SUFFIX})
+                    {
+                        curAlg = GetStepAlg(lastStep + suffix);
+                        if (curAlg)
+                        {
+                            for (const auto &v : curAlg->GetAutoComplete(
+                                     lastArgs, lastWordIsComplete,
+                                     /* showAllOptions = */ false))
+                            {
+                                if (!cpl::contains(setSuggestions, v))
+                                {
+                                    setSuggestions.insert(v);
+                                    ret.push_back(std::move(v));
+                                }
+                            }
+                        }
+                    }
+                    curAlg.reset();
+                }
+            }
+            if (curAlg)
+            {
+                ret = curAlg->GetAutoComplete(lastArgs, lastWordIsComplete,
+                                              /* showAllOptions = */ false);
+            }
         }
     }
     return ret;
 }
 
 /************************************************************************/
+/*            GDALAbstractPipelineAlgorithm::SaveGDALGFile()            */
+/************************************************************************/
+
+template <class StepAlgorithm, class StepRegistry>
+bool GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::SaveGDALGFile(
+    const std::string &outFilename, std::string &outString) const
+{
+    std::string osCommandLine;
+
+    for (const auto &path : GDALAlgorithm::m_callPath)
+    {
+        if (!osCommandLine.empty())
+            osCommandLine += ' ';
+        osCommandLine += path;
+    }
+
+    // Do not include the last step
+    for (size_t i = 0; i + 1 < m_steps.size(); ++i)
+    {
+        const auto &step = m_steps[i];
+        if (!step->IsNativelyStreamingCompatible())
+        {
+            GDALAlgorithm::ReportError(
+                CE_Warning, CPLE_AppDefined,
+                "Step %s is not natively streaming compatible, and "
+                "may cause significant processing time at opening",
+                step->GDALAlgorithm::GetName().c_str());
+        }
+
+        if (i > 0)
+            osCommandLine += " !";
+        for (const auto &path : step->GDALAlgorithm::m_callPath)
+        {
+            if (!osCommandLine.empty())
+                osCommandLine += ' ';
+            osCommandLine += path;
+        }
+
+        for (const auto &arg : step->GetArgs())
+        {
+            if (arg->IsExplicitlySet())
+            {
+                osCommandLine += ' ';
+                std::string strArg;
+                if (!arg->Serialize(strArg, /* absolutePath=*/false))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot serialize argument %s",
+                             arg->GetName().c_str());
+                    return false;
+                }
+                osCommandLine += strArg;
+            }
+        }
+    }
+
+    return GDALAlgorithm::SaveGDALG(outFilename, outString, osCommandLine);
+}
+
+/************************************************************************/
 /*              GDALAbstractPipelineAlgorithm::RunStep()                */
 /************************************************************************/
 
-template <class StepAlgorithm>
-bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
+template <class StepAlgorithm, class StepRegistry>
+bool GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::RunStep(
     GDALPipelineStepRunContext &ctxt)
 {
     if (m_stepOnWhichHelpIsRequested)
@@ -484,56 +707,8 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
                 }
             }
 
-            std::string osCommandLine;
-
-            for (const auto &path : GDALAlgorithm::m_callPath)
-            {
-                if (!osCommandLine.empty())
-                    osCommandLine += ' ';
-                osCommandLine += path;
-            }
-
-            // Do not include the last step
-            for (size_t i = 0; i + 1 < m_steps.size(); ++i)
-            {
-                const auto &step = m_steps[i];
-                if (!step->IsNativelyStreamingCompatible())
-                {
-                    GDALAlgorithm::ReportError(
-                        CE_Warning, CPLE_AppDefined,
-                        "Step %s is not natively streaming compatible, and "
-                        "may cause significant processing time at opening",
-                        step->GDALAlgorithm::GetName().c_str());
-                }
-
-                if (i > 0)
-                    osCommandLine += " !";
-                for (const auto &path : step->GDALAlgorithm::m_callPath)
-                {
-                    if (!osCommandLine.empty())
-                        osCommandLine += ' ';
-                    osCommandLine += path;
-                }
-
-                for (const auto &arg : step->GetArgs())
-                {
-                    if (arg->IsExplicitlySet())
-                    {
-                        osCommandLine += ' ';
-                        std::string strArg;
-                        if (!arg->Serialize(strArg))
-                        {
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                     "Cannot serialize argument %s",
-                                     arg->GetName().c_str());
-                            return false;
-                        }
-                        osCommandLine += strArg;
-                    }
-                }
-            }
-
-            return GDALAlgorithm::SaveGDALG(filename, osCommandLine);
+            std::string outStringUnused;
+            return SaveGDALGFile(filename, outStringUnused);
         }
 
         const auto outputFormatArg =
@@ -605,6 +780,54 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         }
     }
 
+    // Because of multiprocessing in gdal raster tile, make sure that all
+    // steps before it are serialized in a .gdal.json file
+    if (m_steps.size() >= 2 && m_steps.back()->SupportsInputMultiThreading() &&
+        m_steps.back()
+                ->GetArg(GDAL_ARG_NAME_NUM_THREADS_INT_HIDDEN)
+                ->template Get<int>() > 1 &&
+        !(m_steps.size() == 2 && m_steps[0]->GetName() == "read"))
+    {
+        bool ret = false;
+        auto poSrcDS = StepAlgorithm::m_inputDataset.size() == 1
+                           ? StepAlgorithm::m_inputDataset[0].GetDatasetRef()
+                           : nullptr;
+        if (poSrcDS)
+        {
+            auto poSrcDriver = poSrcDS->GetDriver();
+            if (!poSrcDriver || EQUAL(poSrcDriver->GetDescription(), "MEM"))
+            {
+                StepAlgorithm::ReportError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Cannot execute this pipeline in parallel mode due to "
+                    "input dataset being a non-materialized dataset. "
+                    "Materialize it first, or add '-j 1' to the last step "
+                    "'tile'");
+                return false;
+            }
+        }
+        std::string outString;
+        if (SaveGDALGFile(std::string(), outString))
+        {
+            const char *const apszAllowedDrivers[] = {"GDALG", nullptr};
+            auto poCurDS = GDALDataset::Open(
+                outString.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                apszAllowedDrivers);
+            if (poCurDS)
+            {
+                auto &tileAlg = m_steps.back();
+                tileAlg->m_inputDataset.clear();
+                tileAlg->m_inputDataset.resize(1);
+                tileAlg->m_inputDataset[0].Set(poCurDS);
+                tileAlg->m_inputDataset[0].SetDatasetOpenedByAlgorithm();
+                poCurDS->Release();
+                ret = tileAlg->RunStep(ctxt);
+                tileAlg->m_inputDataset[0].Close();
+            }
+        }
+        return ret;
+    }
+
     int countPipelinesWithProgress = 0;
     for (size_t i = 1; i < m_steps.size(); ++i)
     {
@@ -622,8 +845,9 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
     if (countPipelinesWithProgress == 0)
         countPipelinesWithProgress = 1;
 
+    bool ret = true;
     GDALDataset *poCurDS = nullptr;
-    int iCurPipelineWithProgress = 0;
+    int iCurStepWithProgress = 0;
     for (size_t i = 0; i < m_steps.size(); ++i)
     {
         auto &step = m_steps[i];
@@ -665,12 +889,12 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
             !step->IsNativelyStreamingCompatible())
         {
             pScaledData.reset(GDALCreateScaledProgress(
-                iCurPipelineWithProgress /
+                iCurStepWithProgress /
                     static_cast<double>(countPipelinesWithProgress),
-                (iCurPipelineWithProgress + 1) /
+                (iCurStepWithProgress + 1) /
                     static_cast<double>(countPipelinesWithProgress),
                 ctxt.m_pfnProgress, ctxt.m_pProgressData));
-            ++iCurPipelineWithProgress;
+            ++iCurStepWithProgress;
             stepCtxt.m_pfnProgress = pScaledData ? GDALScaledProgress : nullptr;
             stepCtxt.m_pProgressData = pScaledData.get();
         }
@@ -678,12 +902,21 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         {
             stepCtxt.m_poNextUsableStep = m_steps[i + 1].get();
         }
+        if (i + 1 == m_steps.size() && StepAlgorithm::m_stdout &&
+            step->GetArg(GDAL_ARG_NAME_STDOUT) != nullptr)
+        {
+            step->m_stdout = true;
+        }
         if (!step->ValidateArguments() || !step->RunStep(stepCtxt))
         {
-            return false;
+            ret = false;
+            break;
         }
         poCurDS = step->m_outputDataset.GetDatasetRef();
-        if (!poCurDS)
+        if (!poCurDS && !(i + 1 == m_steps.size() &&
+                          (!step->m_output.empty() ||
+                           step->GetArg(GDAL_ARG_NAME_STDOUT) != nullptr ||
+                           step->GetName() == "compare")))
         {
             StepAlgorithm::ReportError(
                 CE_Failure, CPLE_AppDefined,
@@ -698,23 +931,36 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         }
     }
 
-    if (ctxt.m_pfnProgress)
+    if (ctxt.m_pfnProgress &&
+        m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_STRING) == nullptr)
         ctxt.m_pfnProgress(1.0, "", ctxt.m_pProgressData);
 
-    if (!StepAlgorithm::m_outputDataset.GetDatasetRef())
+    if (!m_steps.back()->m_output.empty())
+    {
+        auto stepOutputStringArg =
+            m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
+        if (stepOutputStringArg && stepOutputStringArg->IsOutput())
+        {
+            auto outputStringArg =
+                StepAlgorithm::GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
+            if (outputStringArg && outputStringArg->GetType() == GAAT_STRING)
+                outputStringArg->Set(m_steps.back()->m_output);
+        }
+    }
+    else if (ret && !StepAlgorithm::m_outputDataset.GetDatasetRef())
     {
         StepAlgorithm::m_outputDataset.Set(poCurDS);
     }
 
-    return true;
+    return ret;
 }
 
 /************************************************************************/
 /*               GDALAbstractPipelineAlgorithm::Finalize()              */
 /************************************************************************/
 
-template <class StepAlgorithm>
-bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::Finalize()
+template <class StepAlgorithm, class StepRegistry>
+bool GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::Finalize()
 {
     bool ret = GDALAlgorithm::Finalize();
     for (auto &step : m_steps)
@@ -728,8 +974,10 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::Finalize()
 /*             GDALAbstractPipelineAlgorithm::GetUsageAsJSON()          */
 /************************************************************************/
 
-template <class StepAlgorithm>
-std::string GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetUsageAsJSON() const
+template <class StepAlgorithm, class StepRegistry>
+std::string
+GDALAbstractPipelineAlgorithm<StepAlgorithm, StepRegistry>::GetUsageAsJSON()
+    const
 {
     CPLJSONDocument oDoc;
     CPL_IGNORE_RET_VAL(oDoc.LoadMemory(GDALAlgorithm::GetUsageAsJSON()));

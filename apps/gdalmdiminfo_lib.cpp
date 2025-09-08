@@ -395,6 +395,10 @@ static void DumpAttrValue(const std::shared_ptr<GDALAttribute> &attr,
                         serializer.Add(pszStr);
                     }
                 }
+                else
+                {
+                    serializer.AddNull();
+                }
             }
             else
             {
@@ -1286,12 +1290,12 @@ char *GDALMultiDimInfo(GDALDatasetH hDataset,
     if (psOptions->bStdoutOutput)
     {
         printf("\n");
+        return VSIStrdup("ok");
     }
     else
     {
         return VSIStrdup(serializer.GetString().c_str());
     }
-    return nullptr;
 }
 
 /************************************************************************/

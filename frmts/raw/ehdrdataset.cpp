@@ -24,9 +24,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #include <limits>
 
@@ -68,7 +65,7 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
 {
     m_bValid = RawRasterBand::IsValid();
 
-    EHdrDataset *poEDS = reinterpret_cast<EHdrDataset *>(poDS);
+    EHdrDataset *poEDS = cpl::down_cast<EHdrDataset *>(poDS);
 
     if (nBits < 8)
     {
@@ -369,7 +366,7 @@ CPLErr EHdrDataset::Close()
         {
             int bNoDataSet;
             RawRasterBand *poBand =
-                reinterpret_cast<RawRasterBand *>(GetRasterBand(1));
+                cpl::down_cast<RawRasterBand *>(GetRasterBand(1));
 
             const double dfNoData = poBand->GetNoDataValue(&bNoDataSet);
             if (bNoDataSet)
@@ -1513,16 +1510,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             if (utmZone >= 1 && utmZone <= 60 && bUTM && bWGS84 &&
                 (bNorth || bSouth))
             {
-                char projCSStr[64] = {'\0'};
-                snprintf(projCSStr, sizeof(projCSStr), "WGS 84 / UTM zone %d%c",
-                         utmZone, (bNorth) ? 'N' : 'S');
-
-                poDS->m_oSRS.SetProjCS(projCSStr);
-                poDS->m_oSRS.SetWellKnownGeogCS("WGS84");
-                poDS->m_oSRS.SetUTM(utmZone, bNorth);
-                poDS->m_oSRS.SetAuthority("PROJCS", "EPSG",
-                                          (bNorth ? 32600 : 32700) + utmZone);
-                poDS->m_oSRS.AutoIdentifyEPSG();
+                poDS->m_oSRS.importFromEPSG((bNorth ? 32600 : 32700) + utmZone);
             }
             else
             {
@@ -1580,9 +1568,12 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                 if (nIndex >= 0 && nIndex < 65536)
                 {
                     const GDALColorEntry oEntry = {
-                        static_cast<short>(atoi(papszValues[1])),  // Red
-                        static_cast<short>(atoi(papszValues[2])),  // Green
-                        static_cast<short>(atoi(papszValues[3])),  // Blue
+                        static_cast<short>(
+                            std::clamp(atoi(papszValues[1]), 0, 255)),  // Red
+                        static_cast<short>(
+                            std::clamp(atoi(papszValues[2]), 0, 255)),  // Green
+                        static_cast<short>(
+                            std::clamp(atoi(papszValues[3]), 0, 255)),  // Blue
                         255};
 
                     poDS->m_poColorTable->SetColorEntry(nIndex, &oEntry);
@@ -1886,7 +1877,7 @@ CPLErr EHdrRasterBand::GetStatistics(int bApproxOK, int bForce, double *pdfMin,
     if (eErr != CE_None)
         return eErr;
 
-    EHdrDataset *poEDS = reinterpret_cast<EHdrDataset *>(poDS);
+    EHdrDataset *poEDS = cpl::down_cast<EHdrDataset *>(poDS);
 
     minmaxmeanstddev = HAS_ALL_FLAGS;
 
@@ -1925,7 +1916,7 @@ CPLErr EHdrRasterBand::SetStatistics(double dfMinIn, double dfMaxIn,
     // marks stats valid
     minmaxmeanstddev = HAS_ALL_FLAGS;
 
-    EHdrDataset *poEDS = reinterpret_cast<EHdrDataset *>(poDS);
+    EHdrDataset *poEDS = cpl::down_cast<EHdrDataset *>(poDS);
 
     if (GetMetadataItem("STATISTICS_APPROXIMATE") == nullptr)
     {
@@ -1962,7 +1953,7 @@ CPLErr EHdrRasterBand::SetColorTable(GDALColorTable *poNewCT)
     else
         m_poColorTable.reset(poNewCT->Clone());
 
-    reinterpret_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
+    cpl::down_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
 
     return CE_None;
 }
@@ -2006,7 +1997,7 @@ CPLErr EHdrRasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
     else
         m_poRAT.reset(poRAT->Clone());
 
-    reinterpret_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
+    cpl::down_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
 
     return CE_None;
 }

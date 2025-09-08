@@ -1859,7 +1859,7 @@ CADSolidObject * DWGFileR2000::getSolid(unsigned int dObjectSize,
     solid->setSize( dObjectSize );
     solid->stCed = stCommonEntityData;
 
-    solid->dfThickness = buffer.ReadBIT() ? 0.0f : buffer.ReadBITDOUBLE();
+    solid->dfThickness = buffer.ReadBIT() ? 0.0 : buffer.ReadBITDOUBLE();
 
     solid->dfElevation = buffer.ReadBITDOUBLE();
 
@@ -1903,7 +1903,7 @@ CADPointObject * DWGFileR2000::getPoint(unsigned int dObjectSize,
 
     point->vertPosition = vertPosition;
 
-    point->dfThickness = buffer.ReadBIT() ? 0.0f : buffer.ReadBITDOUBLE();
+    point->dfThickness = buffer.ReadBIT() ? 0.0 : buffer.ReadBITDOUBLE();
 
     if( buffer.ReadBIT() )
     {
@@ -2024,7 +2024,7 @@ CADLineObject * DWGFileR2000::getLine(unsigned int dObjectSize,
     line->vertStart = vertStart;
     line->vertEnd   = vertEnd;
 
-    line->dfThickness = buffer.ReadBIT() ? 0.0f : buffer.ReadBITDOUBLE();
+    line->dfThickness = buffer.ReadBIT() ? 0.0 : buffer.ReadBITDOUBLE();
 
     if( buffer.ReadBIT() )
     {
@@ -2081,7 +2081,7 @@ CADTextObject * DWGFileR2000::getText(unsigned int dObjectSize,
         text->vectExtrusion = vectExtrusion;
     }
 
-    text->dfThickness = buffer.ReadBIT() ? 0.0f : buffer.ReadBITDOUBLE();
+    text->dfThickness = buffer.ReadBIT() ? 0.0 : buffer.ReadBITDOUBLE();
 
     if( !( text->DataFlags & 0x04 ) )
         text->dfObliqueAng  = buffer.ReadRAWDOUBLE();
@@ -2145,7 +2145,7 @@ CADCircleObject * DWGFileR2000::getCircle(unsigned int dObjectSize,
     CADVector vertPosition = buffer.ReadVector();
     circle->vertPosition = vertPosition;
     circle->dfRadius     = buffer.ReadBITDOUBLE();
-    circle->dfThickness  = buffer.ReadBIT() ? 0.0f : buffer.ReadBITDOUBLE();
+    circle->dfThickness  = buffer.ReadBIT() ? 0.0 : buffer.ReadBITDOUBLE();
 
     if( buffer.ReadBIT() )
     {
@@ -2195,7 +2195,7 @@ CADPolyline2DObject * DWGFileR2000::getPolyline2D(unsigned int dObjectSize,
     polyline->dfStartWidth = buffer.ReadBITDOUBLE();
     polyline->dfEndWidth   = buffer.ReadBITDOUBLE();
 
-    polyline->dfThickness = buffer.ReadBIT() ? 0.0f : buffer.ReadBITDOUBLE();
+    polyline->dfThickness = buffer.ReadBIT() ? 0.0 : buffer.ReadBITDOUBLE();
 
     polyline->dfElevation = buffer.ReadBITDOUBLE();
 
@@ -2257,7 +2257,7 @@ CADAttribObject * DWGFileR2000::getAttributes(unsigned int dObjectSize,
         attrib->vectExtrusion = vectExtrusion;
     }
 
-    attrib->dfThickness = buffer.ReadBIT() ? 0.0f : buffer.ReadBITDOUBLE();
+    attrib->dfThickness = buffer.ReadBIT() ? 0.0 : buffer.ReadBITDOUBLE();
 
     if( !( attrib->DataFlags & 0x04 ) )
         attrib->dfObliqueAng  = buffer.ReadRAWDOUBLE();
@@ -2321,7 +2321,7 @@ CADAttdefObject * DWGFileR2000::getAttributesDefn(unsigned int dObjectSize,
         attdef->vectExtrusion = vectExtrusion;
     }
 
-    attdef->dfThickness = buffer.ReadBIT() ? 0.0f :
+    attdef->dfThickness = buffer.ReadBIT() ? 0.0 :
                           buffer.ReadBITDOUBLE();
 
     if( ( attdef->DataFlags & 0x04 ) == 0 )
@@ -2491,7 +2491,7 @@ CADArcObject * DWGFileR2000::getArc(unsigned int dObjectSize,
     CADVector vertPosition = buffer.ReadVector();
     arc->vertPosition = vertPosition;
     arc->dfRadius     = buffer.ReadBITDOUBLE();
-    arc->dfThickness  = buffer.ReadBIT() ? 0.0f : buffer.ReadBITDOUBLE();
+    arc->dfThickness  = buffer.ReadBIT() ? 0.0 : buffer.ReadBITDOUBLE();
 
     if( buffer.ReadBIT() )
     {

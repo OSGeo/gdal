@@ -26,9 +26,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #include <algorithm>
 #include <cinttypes>
@@ -1469,8 +1466,8 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                 if ((iPixel > 0 && (iPixel % 1024) == 0) ||
                     iPixel == nXSize - 1)
                 {
-                    if (VSIFWriteL(osBuf, static_cast<int>(osBuf.size()), 1,
-                                   fpImage) != 1)
+                    if (VSIFWriteL(osBuf.c_str(), osBuf.size(), 1, fpImage) !=
+                        1)
                     {
                         eErr = CE_Failure;
                         ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
@@ -1511,8 +1508,8 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                 if ((iPixel > 0 && (iPixel % 1024) == 0) ||
                     iPixel == nXSize - 1)
                 {
-                    if (VSIFWriteL(osBuf, static_cast<int>(osBuf.size()), 1,
-                                   fpImage) != 1)
+                    if (VSIFWriteL(osBuf.c_str(), osBuf.size(), 1, fpImage) !=
+                        1)
                     {
                         eErr = CE_Failure;
                         ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
@@ -1582,7 +1579,7 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
     // a fake dataset to make the caller happy.
     CPLPushErrorHandler(CPLQuietErrorHandler);
     GDALPamDataset *poDS =
-        reinterpret_cast<GDALPamDataset *>(GDALOpen(pszFilename, GA_ReadOnly));
+        cpl::down_cast<GDALPamDataset *>(GDALDataset::Open(pszFilename));
     CPLPopErrorHandler();
     if (poDS)
     {

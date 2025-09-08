@@ -584,8 +584,22 @@ for subdir in *; do
     )
 done
 cd $CUR_DIR
+rm -f $OUT/ogr_miramon_fuzzer_seed_corpus.zip
 zip -r $OUT/ogr_miramon_fuzzer_seed_corpus.zip ogr_miramon_*.tar >/dev/null
 rm ogr_miramon_*.tar
+
+echo "Building gdal_miramon_fuzzer_seed_corpus.zip"
+rm -f $OUT/gdal_miramon_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../autotest/gdrivers/data/miramon/normal
+printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $CUR_DIR/gdal_miramon_byte_2x3_6.tar
+for file in 2x3_6_categs.rel byte_2x3_6_categs.img byte_2x3_6_categsI.rel byte_2x3_6_categs_RLE.img byte_2x3_6_categs_RLEI.rel byte_2x3_6_categs_RLE_no_ind.img byte_2x3_6_categs_RLE_no_indI.rel; do
+   printf "***NEWFILE***:%s\\n" "$file" >> $CUR_DIR/gdal_miramon_byte_2x3_6.tar
+   cat $file >> $CUR_DIR/gdal_miramon_byte_2x3_6.tar
+done
+cd $CUR_DIR
+zip -r $OUT/gdal_miramon_fuzzer_seed_corpus.zip gdal_miramon_*.tar >/dev/null
+rm gdal_miramon_*.tar
 
 
 echo "Building gdal_algorithm_fuzzer_seed_corpus.zip"
@@ -650,8 +664,8 @@ x,y,z
 1,1,1
 EOF
 
-rm -f gdal_algorithm_fuzzer_seed_corpus.zip
-zip -r gdal_algorithm_fuzzer_seed_corpus.zip test*.tar >/dev/null
+rm -f $OUT/gdal_algorithm_fuzzer_seed_corpus.zip
+zip -r $OUT/gdal_algorithm_fuzzer_seed_corpus.zip test*.tar >/dev/null
 rm test*.tar
 
 echo "Copying data to $OUT"

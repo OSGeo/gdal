@@ -392,32 +392,32 @@ struct Float16
                                                                                \
     friend double operator OP(double x, Float16 y)                             \
     {                                                                          \
-        return x OP y.get();                                                   \
+        return x OP static_cast<double>(y.get());                              \
     }                                                                          \
                                                                                \
     friend float operator OP(float x, Float16 y)                               \
     {                                                                          \
-        return x OP y.get();                                                   \
+        return x OP static_cast<float>(y.get());                               \
     }                                                                          \
                                                                                \
     friend Float16 operator OP(int x, Float16 y)                               \
     {                                                                          \
-        return x OP y.get();                                                   \
+        return x OP static_cast<float>(y.get());                               \
     }                                                                          \
                                                                                \
     friend double operator OP(Float16 x, double y)                             \
     {                                                                          \
-        return x.get() OP y;                                                   \
+        return static_cast<double>(x.get()) OP y;                              \
     }                                                                          \
                                                                                \
     friend float operator OP(Float16 x, float y)                               \
     {                                                                          \
-        return x.get() OP y;                                                   \
+        return static_cast<float>(x.get()) OP y;                               \
     }                                                                          \
                                                                                \
     friend Float16 operator OP(Float16 x, int y)                               \
     {                                                                          \
-        return x.get() OP y;                                                   \
+        return static_cast<float>(x.get()) OP y;                               \
     }
 
     GDAL_DEFINE_ARITHOP(+)
@@ -438,32 +438,32 @@ struct Float16
                                                                                \
     friend bool operator OP(float x, Float16 y)                                \
     {                                                                          \
-        return x OP y.get();                                                   \
+        return x OP static_cast<float>(y.get());                               \
     }                                                                          \
                                                                                \
     friend bool operator OP(double x, Float16 y)                               \
     {                                                                          \
-        return x OP y.get();                                                   \
+        return x OP static_cast<double>(y.get());                              \
     }                                                                          \
                                                                                \
     friend bool operator OP(int x, Float16 y)                                  \
     {                                                                          \
-        return x OP y.get();                                                   \
+        return x OP static_cast<float>(y.get());                               \
     }                                                                          \
                                                                                \
     friend bool operator OP(Float16 x, float y)                                \
     {                                                                          \
-        return x.get() OP y;                                                   \
+        return static_cast<float>(x.get()) OP y;                               \
     }                                                                          \
                                                                                \
     friend bool operator OP(Float16 x, double y)                               \
     {                                                                          \
-        return x.get() OP y;                                                   \
+        return static_cast<double>(x.get()) OP y;                              \
     }                                                                          \
                                                                                \
     friend bool operator OP(Float16 x, int y)                                  \
     {                                                                          \
-        return x.get() OP y;                                                   \
+        return static_cast<float>(x.get()) OP y;                               \
     }
 
     GDAL_DEFINE_COMPARISON(==)

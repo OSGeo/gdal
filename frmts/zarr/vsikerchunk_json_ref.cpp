@@ -130,7 +130,7 @@ class VSIKerchunkJSONRefFileSystem final : public VSIFilesystemHandler
         IsFileSystemInstantiated() = true;
     }
 
-    ~VSIKerchunkJSONRefFileSystem()
+    ~VSIKerchunkJSONRefFileSystem() override
     {
         IsFileSystemInstantiated() = false;
     }
@@ -141,8 +141,9 @@ class VSIKerchunkJSONRefFileSystem final : public VSIFilesystemHandler
         return bIsFileSystemInstantiated;
     }
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList papszOptions) override;
 
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
@@ -277,7 +278,7 @@ class VSIKerchunkJSONRefParser final : public CPLJSonStreamingParser
         m_oWriter.SetPrettyFormatting(false);
     }
 
-    ~VSIKerchunkJSONRefParser()
+    ~VSIKerchunkJSONRefParser() override
     {
         // In case the parsing would be stopped, the writer may be in
         // an inconsistent state. This avoids assertion in debug mode.
@@ -1345,6 +1346,13 @@ bool VSIKerchunkRefFile::ConvertToParquetRef(const std::string &osCacheDir,
                     }
                     poDS.reset();
                 }
+                if (CPLHasPathTraversal(osArrayName.c_str()))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Path traversal detected in %s",
+                             osArrayName.c_str());
+                    return false;
+                }
                 const std::string osParqFilename = CPLFormFilenameSafe(
                     CPLFormFilenameSafe(osCacheDir.c_str(), osArrayName.c_str(),
                                         nullptr)
@@ -1521,7 +1529,7 @@ bool VSIKerchunkConvertJSONToParquet(const char *pszSrcJSONFilename,
 /*               VSIKerchunkJSONRefFileSystem::Open()                   */
 /************************************************************************/
 
-VSIVirtualHandle *
+VSIVirtualHandleUniquePtr
 VSIKerchunkJSONRefFileSystem::Open(const char *pszFilename,
                                    const char *pszAccess, bool /* bSetError */,
                                    CSLConstList /* papszOptions */)
@@ -1541,7 +1549,7 @@ VSIKerchunkJSONRefFileSystem::Open(const char *pszFilename,
         if (osParqFilename.empty())
             return nullptr;
 
-        return VSIFOpenL(
+        return VSIFilesystemHandler::OpenStatic(
             CPLFormFilenameSafe(CPLSPrintf("%s{%s}", PARQUET_REF_FS_PREFIX,
                                            osParqFilename.c_str()),
                                 osKey.c_str(), nullptr)
@@ -1556,9 +1564,9 @@ VSIKerchunkJSONRefFileSystem::Open(const char *pszFilename,
     const auto &keyInfo = oIter->second;
     if (!keyInfo.posURI)
     {
-        return VSIFileFromMemBuffer(
+        return VSIVirtualHandleUniquePtr(VSIFileFromMemBuffer(
             nullptr, const_cast<GByte *>(keyInfo.abyValue.data()),
-            keyInfo.abyValue.size(), /* bTakeOwnership = */ false);
+            keyInfo.abyValue.size(), /* bTakeOwnership = */ false));
     }
     else
     {
@@ -1575,7 +1583,7 @@ VSIKerchunkJSONRefFileSystem::Open(const char *pszFilename,
                      osPath.c_str());
         CPLConfigOptionSetter oSetter("GDAL_DISABLE_READDIR_ON_OPEN",
                                       "EMPTY_DIR", false);
-        return VSIFOpenL(osPath.c_str(), "rb");
+        return VSIFilesystemHandler::OpenStatic(osPath.c_str(), "rb");
     }
 }
 

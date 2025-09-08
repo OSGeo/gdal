@@ -43,25 +43,9 @@ void VSIKerchunkFileSystemsCleanCache()
 std::string VSIKerchunkMorphURIToVSIPath(const std::string &osURI,
                                          const std::string &osRootDirname)
 {
-    static const struct
-    {
-        const char *pszFSSpecPrefix;
-        const char *pszVSIPrefix;
-    } substitutions[] = {
-        {"s3://", "/vsis3/"},
-        {"gs://", "/vsigs/"},
-        {"http://", "/vsicurl/http://"},
-        {"https://", "/vsicurl/https://"},
-    };
-
-    for (const auto &substitution : substitutions)
-    {
-        if (STARTS_WITH(osURI.c_str(), substitution.pszFSSpecPrefix))
-        {
-            return std::string(substitution.pszVSIPrefix)
-                .append(osURI.c_str() + strlen(substitution.pszFSSpecPrefix));
-        }
-    }
+    const std::string osRet = VSIURIToVSIPath(osURI);
+    if (osRet != osURI)
+        return osRet;
 
     if (CPLIsFilenameRelative(osURI.c_str()))
     {

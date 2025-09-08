@@ -297,7 +297,7 @@ class USGSDEMDataset final : public GDALPamDataset
 
   public:
     USGSDEMDataset();
-    ~USGSDEMDataset();
+    ~USGSDEMDataset() override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -318,9 +318,9 @@ class USGSDEMRasterBand final : public GDALPamRasterBand
   public:
     explicit USGSDEMRasterBand(USGSDEMDataset *);
 
-    virtual const char *GetUnitType() override;
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    const char *GetUnitType() override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/
@@ -348,7 +348,7 @@ CPLErr USGSDEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
 {
     /* int bad = FALSE; */
-    USGSDEMDataset *poGDS = reinterpret_cast<USGSDEMDataset *>(poDS);
+    USGSDEMDataset *poGDS = cpl::down_cast<USGSDEMDataset *>(poDS);
 
     /* -------------------------------------------------------------------- */
     /*      Initialize image buffer to nodata value.                        */
@@ -370,7 +370,7 @@ CPLErr USGSDEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
     Buffer sBuffer;
     sBuffer.max_size = 32768;
-    sBuffer.buffer = reinterpret_cast<char *>(CPLMalloc(sBuffer.max_size + 1));
+    sBuffer.buffer = static_cast<char *>(CPLMalloc(sBuffer.max_size + 1));
     sBuffer.fp = poGDS->fp;
     sBuffer.buffer_size = 0;
     sBuffer.cur_index = 0;
@@ -532,7 +532,7 @@ double USGSDEMRasterBand::GetNoDataValue(int *pbSuccess)
 /************************************************************************/
 const char *USGSDEMRasterBand::GetUnitType()
 {
-    USGSDEMDataset *poGDS = reinterpret_cast<USGSDEMDataset *>(poDS);
+    USGSDEMDataset *poGDS = cpl::down_cast<USGSDEMDataset *>(poDS);
 
     return poGDS->pszUnits;
 }

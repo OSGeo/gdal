@@ -74,7 +74,7 @@ void removeTrailingZeros(std::string &s)
 void roundup(std::string &s)
 {
     // Remove a negative sign if it exists to make processing
-    // more straigtforward.
+    // more straightforward.
     bool negative(false);
     if (s[0] == '-')
     {
@@ -2301,7 +2301,8 @@ int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal, int nPrecision,
 
     CPLsnprintf(szFormatting, sizeof(szFormatting), "%%.%d%c",
                 nInitialSignificantFigures, chConversionSpecifier);
-    nSize = CPLsnprintf(pszBuffer, nBufferLen, szFormatting, fVal);
+    nSize = CPLsnprintf(pszBuffer, nBufferLen, szFormatting,
+                        static_cast<double>(fVal));
     const char *pszDot = strchr(pszBuffer, '.');
 
     // Try to avoid 0.34999999 or 0.15000001 rounding issues by
@@ -2317,7 +2318,8 @@ int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal, int nPrecision,
         {
             CPLsnprintf(szFormatting, sizeof(szFormatting), "%%.%d%c",
                         nInitialSignificantFigures - i, chConversionSpecifier);
-            nSize = CPLsnprintf(pszBuffer, nBufferLen, szFormatting, fVal);
+            nSize = CPLsnprintf(pszBuffer, nBufferLen, szFormatting,
+                                static_cast<double>(fVal));
             pszDot = strchr(pszBuffer, '.');
             if (pszDot != nullptr && strstr(pszDot, "99999") == nullptr &&
                 strstr(pszDot, "00000") == nullptr &&

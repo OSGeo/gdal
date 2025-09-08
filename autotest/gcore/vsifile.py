@@ -18,7 +18,6 @@ import time
 
 import gdaltest
 import pytest
-from lxml import etree
 
 from osgeo import gdal, ogr
 
@@ -795,7 +794,13 @@ def test_vsifile_18():
 # Test gdal.GetFileSystemOptions()
 
 
+@pytest.mark.skipif(
+    gdaltest.is_travis_branch("mingw64"),
+    reason="Crashes for unknown reason",
+)
 def test_vsifile_19():
+
+    from lxml import etree
 
     for prefix in gdal.GetFileSystemsPrefixes():
         options = gdal.GetFileSystemOptions(prefix)

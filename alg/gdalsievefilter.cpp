@@ -41,7 +41,7 @@
  * 3) Make a pass with the polygon enumerator.  For each "to be merged"
  *    polygon keep track of its largest neighbour.
  *
- * 4) Fix up remappings that would go to polygons smaller than the seive
+ * 4) Fix up remappings that would go to polygons smaller than the sieve
  *    size.  Ensure these in term map to the largest neighbour of the
  *    "to be sieved" polygons.
  *

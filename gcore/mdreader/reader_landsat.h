@@ -32,16 +32,16 @@ Common metadata (from metadata filename):
 
 */
 
-class GDALMDReaderLandsat : public GDALMDReaderBase
+class GDALMDReaderLandsat final : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderLandsat(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderLandsat();
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    GDALMDReaderLandsat(const char *pszPath, CSLConstList papszSiblingFiles);
+    ~GDALMDReaderLandsat() override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
 
   protected:
     CPLString m_osIMDSourceFilename{};

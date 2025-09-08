@@ -75,7 +75,7 @@ class OGRMySQLGeomFieldDefn final : public OGRGeomFieldDefn
     {
     }
 
-    virtual const OGRSpatialReference *GetSpatialRef() const override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
     void UnsetDataSource()
     {
@@ -119,20 +119,22 @@ class OGRMySQLLayer CPL_NON_FINAL : public OGRLayer
 
   public:
     explicit OGRMySQLLayer(OGRMySQLDataSource *poDSIn);
-    virtual ~OGRMySQLLayer();
+    ~OGRMySQLLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
 
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
 
     /* custom methods */
     virtual OGRFeature *RecordToFeature(char **papszRow, unsigned long *);
@@ -164,21 +166,21 @@ class OGRMySQLTableLayer final : public OGRMySQLLayer
   public:
     OGRMySQLTableLayer(OGRMySQLDataSource *, const char *pszName, int bUpdate,
                        int nSRSId = -2);
-    virtual ~OGRMySQLTableLayer();
+    ~OGRMySQLTableLayer() override;
 
     OGRErr Initialize(const char *pszTableName);
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
-    virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    void ResetReading() override;
+    GIntBig GetFeatureCount(int) override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    virtual OGRErr SetAttributeFilter(const char *) override;
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr SetAttributeFilter(const char *) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
@@ -193,7 +195,7 @@ class OGRMySQLTableLayer final : public OGRMySQLLayer
         bPreservePrecision = bFlag;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -212,14 +214,14 @@ class OGRMySQLResultLayer final : public OGRMySQLLayer
   public:
     OGRMySQLResultLayer(OGRMySQLDataSource *, const char *pszRawStatement,
                         MYSQL_RES *hResultSetIn);
-    virtual ~OGRMySQLResultLayer();
+    ~OGRMySQLResultLayer() override;
 
     OGRFeatureDefn *ReadResultDefinition();
 
-    virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    void ResetReading() override;
+    GIntBig GetFeatureCount(int) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -251,7 +253,7 @@ class OGRMySQLDataSource final : public GDALDataset
 
   public:
     OGRMySQLDataSource();
-    virtual ~OGRMySQLDataSource();
+    ~OGRMySQLDataSource() override;
 
     MYSQL *GetConn()
     {
@@ -271,23 +273,23 @@ class OGRMySQLDataSource final : public GDALDataset
     int Open(const char *, char **papszOpenOptions, int bUpdate);
     int OpenTable(const char *, int bUpdate);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
-    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
-    virtual void ReleaseResultSet(OGRLayer *poLayer) override;
+    OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                         OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+    void ReleaseResultSet(OGRLayer *poLayer) override;
 
     // nonstandard
 

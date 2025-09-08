@@ -554,7 +554,7 @@ OGRFeature *OGRMSSQLSpatialLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMSSQLSpatialLayer::TestCapability(CPL_UNUSED const char *pszCap)
+int OGRMSSQLSpatialLayer::TestCapability(const char *) const
 {
     return FALSE;
 }
@@ -613,7 +613,7 @@ OGRErr OGRMSSQLSpatialLayer::RollbackTransaction()
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRMSSQLSpatialLayer::GetSpatialRef()
+const OGRSpatialReference *OGRMSSQLSpatialLayer::GetSpatialRef() const
 
 {
     if (poSRS == nullptr && nSRSId > 0)
@@ -632,7 +632,7 @@ OGRSpatialReference *OGRMSSQLSpatialLayer::GetSpatialRef()
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRMSSQLSpatialLayer::GetFIDColumn()
+const char *OGRMSSQLSpatialLayer::GetFIDColumn() const
 
 {
     GetLayerDefn();
@@ -647,7 +647,7 @@ const char *OGRMSSQLSpatialLayer::GetFIDColumn()
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
-const char *OGRMSSQLSpatialLayer::GetGeometryColumn()
+const char *OGRMSSQLSpatialLayer::GetGeometryColumn() const
 
 {
     GetLayerDefn();

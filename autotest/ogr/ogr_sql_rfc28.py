@@ -1265,11 +1265,11 @@ def test_ogr_rfc28_47(data_ds):
         ogrtest.check_features_against_list(lyr, "EAS_ID", [171, 170])
 
     with data_ds.ExecuteSQL("SELECT * FROM POLY LIMIT 1") as lyr:
-        assert lyr.SetNextByIndex(1) == ogr.OGRERR_FAILURE
+        assert lyr.SetNextByIndex(1) == ogr.OGRERR_NON_EXISTING_FEATURE
         assert lyr.GetNextFeature() is None
 
     with data_ds.ExecuteSQL("SELECT * FROM POLY LIMIT 1 OFFSET 1") as lyr:
-        assert lyr.SetNextByIndex(1) == ogr.OGRERR_FAILURE
+        assert lyr.SetNextByIndex(1) == ogr.OGRERR_NON_EXISTING_FEATURE
         assert lyr.GetNextFeature() is None
 
     with data_ds.ExecuteSQL("SELECT * FROM POLY LIMIT 2 OFFSET 1") as lyr:
@@ -1286,15 +1286,15 @@ def test_ogr_rfc28_47(data_ds):
         assert lyr.GetNextFeature() is None
 
     with data_ds.ExecuteSQL("SELECT * FROM POLY LIMIT 1 OFFSET 1") as lyr:
-        assert lyr.SetNextByIndex((1 << 63) - 1) == ogr.OGRERR_FAILURE
+        assert lyr.SetNextByIndex((1 << 63) - 1) == ogr.OGRERR_NON_EXISTING_FEATURE
         assert lyr.GetNextFeature() is None
 
     with data_ds.ExecuteSQL("SELECT * FROM POLY OFFSET 1") as lyr:
-        assert lyr.SetNextByIndex((1 << 63) - 1) == ogr.OGRERR_FAILURE
+        assert lyr.SetNextByIndex((1 << 63) - 1) == ogr.OGRERR_NON_EXISTING_FEATURE
         assert lyr.GetNextFeature() is None
 
     with data_ds.ExecuteSQL("SELECT * FROM POLY") as lyr:
-        assert lyr.SetNextByIndex((1 << 63) - 1) == ogr.OGRERR_FAILURE
+        assert lyr.SetNextByIndex((1 << 63) - 1) == ogr.OGRERR_NON_EXISTING_FEATURE
         assert lyr.GetNextFeature() is None
 
 

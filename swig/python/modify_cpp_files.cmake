@@ -56,7 +56,7 @@ string(REPLACE "return resultobj;"
 # The following hack just makes SWIG_Python_DestroyModule() a no-op, which
 # will leak a bit of memory, but anyway SWIG currently can only free one single
 # SWIG module, so we had already memleaks
-# To be revisted if above mentioned SWIG issues are resolved
+# To be revisited if above mentioned SWIG issues are resolved
 string(REPLACE "if (--interpreter_counter != 0) // another sub-interpreter may still be using the swig_module's types"
                "/* Even Rouault / GDAL hack for SWIG >= 4.1 related to objects not being freed. See swig/python/modify_cpp_files.cmake for more details */\nif( 1 )"
        _CONTENTS "${_CONTENTS}")
@@ -69,4 +69,13 @@ string(REPLACE "# define SWIG_HEAPTYPES" "// Below is disabled because of https:
 string(REPLACE "#define SWIG_HEAPTYPES" "// Below is disabled because of https://github.com/swig/swig/issues/3061\n// # define SWIG_HEAPTYPES"
        _CONTENTS "${_CONTENTS}")
 
-file(WRITE ${FILE} "${_CONTENTS}")
+set(_TMP "${FILE}.tmp")
+
+# Write to a temporary file first (avoids "Permission denied" on Windows)
+file(WRITE ${_TMP} "${_CONTENTS}")
+
+# Remove the original file before rename
+file(REMOVE ${FILE})
+
+# Rename temp file back to the original name
+file(RENAME ${_TMP} ${FILE})

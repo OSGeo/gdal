@@ -85,10 +85,10 @@ class GDALWMSMetaDataset final : public GDALPamDataset
 
   public:
     GDALWMSMetaDataset();
-    virtual ~GDALWMSMetaDataset();
+    ~GDALWMSMetaDataset() override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
 
     static GDALDataset *
     AnalyzeGetCapabilities(CPLXMLNode *psXML,

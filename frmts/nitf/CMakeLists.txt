@@ -5,7 +5,7 @@ add_gdal_driver(
           rpftocdataset.cpp
           nitfrasterband.cpp
           ecrgtocdataset.cpp
-          nitffile.c
+          nitffile.cpp
           nitfimage.c
           nitfaridpcm.cpp
           rpftocfile.cpp
@@ -91,7 +91,7 @@ if (GDAL_USE_TIFF AND NOT GDAL_USE_TIFF_INTERNAL)
   gdal_target_link_libraries(gdal_NITF PRIVATE TIFF::TIFF)
 endif ()
 
-add_executable(nitfdump EXCLUDE_FROM_ALL nitfdump.c nitffile.c nitfimage.c rpftocfile.cpp nitfaridpcm.cpp mgrs.c nitfdes.c)
+add_executable(nitfdump EXCLUDE_FROM_ALL nitfdump.c nitffile.cpp nitfimage.c rpftocfile.cpp nitfaridpcm.cpp mgrs.c nitfdes.c)
 if (GDAL_USE_TIFF_INTERNAL)
   target_sources(nitfdump PRIVATE $<TARGET_OBJECTS:libtiff>)
   gdal_add_vendored_lib(nitfdump libtiff)
@@ -130,6 +130,8 @@ if (GDAL_USE_TIFF_INTERNAL)
   endif ()
   if (GDAL_USE_LERC_INTERNAL)
     target_sources(nitfdump PRIVATE $<TARGET_OBJECTS:lerc>)
+  elseif (GDAL_USE_LERC)
+    target_link_libraries(nitfdump PRIVATE LERC::LERC)
   endif ()
 elseif(GDAL_USE_TIFF AND GDAL_ENABLE_DRIVER_GTIFF)
   target_link_libraries(nitfdump PRIVATE TIFF::TIFF)

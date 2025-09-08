@@ -246,7 +246,7 @@ int OGRTABDataSource::Open(GDALOpenInfo *poOpenInfo, int bTestOpen)
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int OGRTABDataSource::GetLayerCount()
+int OGRTABDataSource::GetLayerCount() const
 
 {
     if (m_bSingleFile && !m_bSingleLayerAlreadyCreated)
@@ -259,7 +259,7 @@ int OGRTABDataSource::GetLayerCount()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRTABDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRTABDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
@@ -328,6 +328,14 @@ OGRTABDataSource::ICreateLayer(const char *pszLayerName,
 
     else
     {
+        if (CPLLaunderForFilenameSafe(pszLayerName, nullptr) != pszLayerName)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Illegal characters in '%s' to form a valid filename",
+                     pszLayerName);
+            return nullptr;
+        }
+
         if (m_bCreateMIF)
         {
             pszFullFilename = CPLStrdup(
@@ -382,9 +390,12 @@ OGRTABDataSource::ICreateLayer(const char *pszLayerName,
         poFile->SetSpatialRef(poSRSClone);
         poSRSClone->Release();
         // SetSpatialRef() has cloned the passed geometry
-        auto poGeomFieldDefn = poFile->GetLayerDefn()->GetGeomFieldDefn(0);
-        auto oTemporaryUnsealer(poGeomFieldDefn->GetTemporaryUnsealer());
-        poGeomFieldDefn->SetSpatialRef(poFile->GetSpatialRef());
+        OGRLayer *poFileAsLayer = poFile;
+        auto poGeomFieldDefn =
+            poFileAsLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+        whileUnsealing(poGeomFieldDefn)
+            ->SetSpatialRef(
+                const_cast<OGRSpatialReference *>(poFile->GetSpatialRef()));
     }
 
     // Pull out the bounds if supplied
@@ -441,7 +452,7 @@ OGRTABDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRTABDataSource::TestCapability(const char *pszCap)
+int OGRTABDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

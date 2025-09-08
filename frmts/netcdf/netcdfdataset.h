@@ -79,7 +79,7 @@
    geotransform has been found, and is within the bounds -180,360 -90,90, if YES
    assume OGC:CRS84. Default is NO.
 
-   // TODO: this unusued and a few others occur in the source that are not
+   // TODO: this unused and a few others occur in the source that are not
    documented, flush out unused opts and document the rest mdsumner@gmail.com
    GDAL_NETCDF_CONVERT_LAT_180=YES/NO convert longitude values from ]180,360] to
    [-180,180]
@@ -557,7 +557,7 @@ class netCDFDataset final : public GDALPamDataset
 
   public:
     netCDFDataset();
-    virtual ~netCDFDataset();
+    ~netCDFDataset() override;
     bool SGCommitPendingTransaction();
     void SGLogPendingTransaction();
     static std::string generateLogName();
@@ -568,22 +568,21 @@ class netCDFDataset final : public GDALPamDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual char **GetMetadataDomainList() override;
+    char **GetMetadataDomainList() override;
     char **GetMetadata(const char *) override;
 
-    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
-                                   const char *pszDomain = "") override;
-    virtual CPLErr SetMetadata(char **papszMD,
-                               const char *pszDomain = "") override;
+    CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                           const char *pszDomain = "") override;
+    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
 
-    virtual int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(this->papoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int nIdx) override;
+    const OGRLayer *GetLayer(int nIdx) const override;
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
@@ -716,7 +715,7 @@ class netCDFLayer final : public OGRLayer
   public:
     netCDFLayer(netCDFDataset *poDS, int nLayerCDFId, const char *pszName,
                 OGRwkbGeometryType eGeomType, OGRSpatialReference *poSRS);
-    virtual ~netCDFLayer();
+    ~netCDFLayer() override;
 
     bool Create(char **papszOptions,
                 const netCDFWriterConfigLayer *poLayerConfig);
@@ -754,16 +753,17 @@ class netCDFLayer final : public OGRLayer
         return m_layerSGDefn;
     }
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    GIntBig GetFeatureCount(int bForce) override;
 
-    virtual int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    using OGRLayer::GetLayerDefn;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr CreateField(const OGRFieldDefn *poFieldDefn,
                                int bApproxOK) override;
 

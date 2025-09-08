@@ -383,7 +383,7 @@ OGRFeature *OGRIDBLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBLayer::TestCapability(const char * /*pszCap*/)
+int OGRIDBLayer::TestCapability(const char * /*pszCap*/) const
 
 {
     return FALSE;
@@ -393,7 +393,7 @@ int OGRIDBLayer::TestCapability(const char * /*pszCap*/)
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRIDBLayer::GetSpatialRef()
+const OGRSpatialReference *OGRIDBLayer::GetSpatialRef() const
 
 {
     return poSRS;
@@ -403,7 +403,7 @@ OGRSpatialReference *OGRIDBLayer::GetSpatialRef()
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRIDBLayer::GetFIDColumn()
+const char *OGRIDBLayer::GetFIDColumn() const
 
 {
     if (pszFIDColumn != nullptr)
@@ -416,7 +416,7 @@ const char *OGRIDBLayer::GetFIDColumn()
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
-const char *OGRIDBLayer::GetGeometryColumn()
+const char *OGRIDBLayer::GetGeometryColumn() const
 
 {
     if (pszGeomColumn != nullptr)

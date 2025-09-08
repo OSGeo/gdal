@@ -31,16 +31,16 @@ Common metadata (from metadata filename):
     CloudCover:          Img_CloudQuantityOfAllImage
 */
 
-class GDALMDReaderALOS : public GDALMDReaderBase
+class GDALMDReaderALOS final : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderALOS(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderALOS();
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    GDALMDReaderALOS(const char *pszPath, CSLConstList papszSiblingFiles);
+    ~GDALMDReaderALOS() override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
     char **LoadRPCTxtFile();
     virtual GIntBig
     GetAcquisitionTimeFromString(const char *pszDateTime) override;

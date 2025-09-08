@@ -149,7 +149,6 @@ decisions related to the GDAL/OGR project. The current members are (@github user
 - Jukka Rahkonen       (`@jratike80 <https://github.com/jratike80>`__)
 - Kurt Schwehr         (`@schwehr <https://github.com/schwehr>`__)
 - Norman Barker        (`@normanb <https://github.com/normanb>`__)
-- Sean Gillies         (`@sgillies <https://github.com/sgillies>`__)
 - Javier Jimenez Shaw  (`@jjimenezshaw <https://github.com/jjimenezshaw>`__)
 - Dan Baston           (`@dbaston <https://github.com/dbaston>`__)
 - Michael Smith        (`@msmitherdc <https://github.com/msmitherdc>`__)
@@ -158,6 +157,7 @@ Past members:
 
 - Andrey Kiselev       (@strezen) (retired in 2019)
 - Mateusz Łoskot       (@mloskot) (retired in 2023)
+- Sean Gillies         (@sgillies) (retired in 2025)
 
 Note that discussion of proposals to the PSC take place on gdal-dev, and input
 from all subscribers is welcome. A :ref:`list of past RFC <rfclist>` is available for review.

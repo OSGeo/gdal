@@ -168,7 +168,7 @@ void OGRPDFLayer::Fill(GDALPDFArray *poArray)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPDFLayer::TestCapability(const char *pszCap)
+int OGRPDFLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))
@@ -214,7 +214,7 @@ OGRErr OGRPDFWritableLayer::ICreateFeature(OGRFeature *poFeature)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPDFWritableLayer::TestCapability(const char *pszCap)
+int OGRPDFWritableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

@@ -20,9 +20,8 @@
 #include <cstdarg>
 #include <cstddef>
 #include <cstring>
-#if HAVE_FCNTL_H
+
 #include <fcntl.h>
-#endif
 
 #include <algorithm>
 #include <limits>
@@ -2032,10 +2031,13 @@ VSILFILE *VSIFOpenL(const char *pszFilename, const char *pszAccess)
 
 #ifndef DOXYGEN_SKIP
 
-VSIVirtualHandle *VSIFilesystemHandler::Open(const char *pszFilename,
-                                             const char *pszAccess)
+VSIVirtualHandleUniquePtr
+VSIFilesystemHandler::OpenStatic(const char *pszFilename, const char *pszAccess,
+                                 bool bSetError, CSLConstList papszOptions)
 {
-    return Open(pszFilename, pszAccess, false, nullptr);
+    VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszFilename);
+
+    return poFSHandler->Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -2347,6 +2349,74 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
 }
 
 /************************************************************************/
+/*                  VSIVirtualHandleOnlyVisibleAtCloseTime()            */
+/************************************************************************/
+
+class VSIVirtualHandleOnlyVisibleAtCloseTime final : public VSIProxyFileHandle
+{
+    const std::string m_osTargetName;
+    const std::string m_osTmpName;
+    bool m_bAlreadyClosed = false;
+    bool m_bCancelCreation = false;
+
+  public:
+    VSIVirtualHandleOnlyVisibleAtCloseTime(
+        VSIVirtualHandleUniquePtr &&nativeHandle,
+        const std::string &osTargetName, const std::string &osTmpName)
+        : VSIProxyFileHandle(std::move(nativeHandle)),
+          m_osTargetName(osTargetName), m_osTmpName(osTmpName)
+    {
+    }
+
+    ~VSIVirtualHandleOnlyVisibleAtCloseTime() override
+    {
+        VSIVirtualHandleOnlyVisibleAtCloseTime::Close();
+    }
+
+    void CancelCreation() override
+    {
+        VSIProxyFileHandle::CancelCreation();
+        m_bCancelCreation = true;
+    }
+
+    int Close() override;
+};
+
+int VSIVirtualHandleOnlyVisibleAtCloseTime::Close()
+{
+    if (m_bAlreadyClosed)
+        return 0;
+    m_bAlreadyClosed = true;
+    int ret = VSIProxyFileHandle::Close();
+    if (ret != 0)
+        return ret;
+    return m_bCancelCreation
+               ? VSIUnlink(m_osTmpName.c_str())
+               : VSIRename(m_osTmpName.c_str(), m_osTargetName.c_str());
+}
+
+/************************************************************************/
+/*                       CreateOnlyVisibleAtCloseTime()                 */
+/************************************************************************/
+
+VSIVirtualHandleUniquePtr VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
+    const char *pszFilename, bool bEmulationAllowed, CSLConstList papszOptions)
+{
+    if (!bEmulationAllowed)
+        return nullptr;
+
+    const std::string tmpName = std::string(pszFilename).append(".tmp");
+    VSIVirtualHandleUniquePtr nativeHandle(
+        Open(tmpName.c_str(), "wb+", true, papszOptions));
+    if (!nativeHandle)
+        return nullptr;
+    return VSIVirtualHandleUniquePtr(
+        std::make_unique<VSIVirtualHandleOnlyVisibleAtCloseTime>(
+            std::move(nativeHandle), pszFilename, tmpName)
+            .release());
+}
+
+/************************************************************************/
 /*                            VSIDIREntry()                             */
 /************************************************************************/
 
@@ -2408,7 +2478,7 @@ struct VSIDIRGeneric : public VSIDIR
     {
     }
 
-    ~VSIDIRGeneric();
+    ~VSIDIRGeneric() override;
 
     const VSIDIREntry *NextDirEntry() override;
 
@@ -2796,13 +2866,13 @@ VSILFILE *VSIFOpenEx2L(const char *pszFilename, const char *pszAccess,
 
     VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszFilename);
 
-    VSILFILE *fp = poFSHandler->Open(pszFilename, pszAccess,
-                                     CPL_TO_BOOL(bSetError), papszOptions);
+    auto fp = poFSHandler->Open(pszFilename, pszAccess, CPL_TO_BOOL(bSetError),
+                                papszOptions);
 
     VSIDebug4("VSIFOpenEx2L(%s,%s,%d) = %p", pszFilename, pszAccess, bSetError,
-              fp);
+              fp.get());
 
-    return fp;
+    return fp.release();
 }
 
 /************************************************************************/
@@ -4344,4 +4414,56 @@ size_t VSIVirtualHandle::PRead(CPL_UNUSED void *pBuffer,
                                CPL_UNUSED vsi_l_offset nOffset) const
 {
     return 0;
+}
+
+#ifndef DOXYGEN_SKIP
+/************************************************************************/
+/*                  VSIProxyFileHandle::CancelCreation()                */
+/************************************************************************/
+
+void VSIProxyFileHandle::CancelCreation()
+{
+    m_nativeHandle->CancelCreation();
+}
+#endif
+
+/************************************************************************/
+/*                         VSIURIToVSIPath()                            */
+/************************************************************************/
+
+/** Return a VSI compatible path from a URI / URL
+ *
+ * Substitute URI / URLs starting with s3://, gs://, etc. by their VSI
+ * prefix equivalent. If no known substitution is found, the input string is
+ * returned unmodified.
+ *
+ * @since GDAL 3.12
+ */
+std::string VSIURIToVSIPath(const std::string &osURI)
+{
+    static const struct
+    {
+        const char *pszFSSpecPrefix;
+        const char *pszVSIPrefix;
+    } substitutions[] = {
+        {"s3://", "/vsis3/"},
+        {"gs://", "/vsigs/"},
+        {"gcs://", "/vsigs/"},
+        {"az://", "/vsiaz/"},
+        {"azure://", "/vsiaz/"},
+        {"http://", "/vsicurl/http://"},
+        {"https://", "/vsicurl/https://"},
+        {"file://", ""},
+    };
+
+    for (const auto &substitution : substitutions)
+    {
+        if (STARTS_WITH(osURI.c_str(), substitution.pszFSSpecPrefix))
+        {
+            return std::string(substitution.pszVSIPrefix)
+                .append(osURI.c_str() + strlen(substitution.pszFSSpecPrefix));
+        }
+    }
+
+    return osURI;
 }

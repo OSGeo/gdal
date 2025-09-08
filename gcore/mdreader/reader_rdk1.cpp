@@ -27,7 +27,7 @@
  * GDALMDReaderResursDK1()
  */
 GDALMDReaderResursDK1::GDALMDReaderResursDK1(const char *pszPath,
-                                             char **papszSiblingFiles)
+                                             CSLConstList papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles),
       m_osXMLSourceFilename(
           GDALFindAssociatedFile(pszPath, "XML", papszSiblingFiles, 0))

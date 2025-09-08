@@ -45,6 +45,18 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Transparency color
+------------------
+
+.. versionadded:: 3.12
+
+On reading, transparency color`(or index) is reported in the ``BACKGROUND_COLOR``
+dataset metadata item.
+
+On writing, the ``BACKGROUND_COLOR`` dataset metadata item is used, when present,
+to set the PNG background color. For RGB/RGBA, the 3 components must be comma
+separated: ``<red>,<green>,<blue>``.
+
 Color Profile Metadata
 ----------------------
 
@@ -78,11 +90,11 @@ The following creation options are available:
       section for details.
 
 -  .. co:: ZLEVEL=n
-      :choices: [1-9]
+      :choices: [0-9]
       :default: 6
 
       Set the amount of time to spend on compression.
-      A value of 1 is fast but does no compression, and a
+      A value of 0 is fast but does no compression, and a
       value of 9 is slow but does the best compression.
 
 -  .. co:: TITLE

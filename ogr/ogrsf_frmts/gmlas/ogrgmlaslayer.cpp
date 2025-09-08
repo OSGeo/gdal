@@ -371,7 +371,7 @@ static void SetSWEValue(OGRFeature *poFeature, const CPLString &osFieldName,
                         const char *pszValue)
 {
     int iField = poFeature->GetDefnRef()->GetFieldIndex(osFieldName);
-    OGRFieldDefn *poFieldDefn = poFeature->GetFieldDefnRef(iField);
+    const OGRFieldDefn *poFieldDefn = poFeature->GetFieldDefnRef(iField);
     OGRFieldType eType(poFieldDefn->GetType());
     OGRFieldSubType eSubType(poFieldDefn->GetSubType());
     if (eType == OFTInteger && eSubType == OFSTBoolean)
@@ -1421,7 +1421,7 @@ CPLString OGRGMLASLayer::CreateLinkForAttrToOtherLayer(
 /*                              GetLayerDefn()                          */
 /************************************************************************/
 
-OGRFeatureDefn *OGRGMLASLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRGMLASLayer::GetLayerDefn() const
 {
     if (!m_bLayerDefnFinalized && m_poDS->IsLayerInitFinished())
     {
@@ -1433,11 +1433,13 @@ OGRFeatureDefn *OGRGMLASLayer::GetLayerDefn()
         {
             if (m_poReader == nullptr)
             {
-                InitReader();
+                const_cast<OGRGMLASLayer *>(this)->InitReader();
                 // Avoid keeping too many file descriptor opened
                 if (m_fpGML != nullptr)
-                    m_poDS->PushUnusedGMLFilePointer(m_fpGML);
-                m_poReader.reset();
+                    m_poDS->PushUnusedGMLFilePointer(
+                        const_cast<std::shared_ptr<VSIVirtualHandle> &>(
+                            m_fpGML));
+                const_cast<OGRGMLASLayer *>(this)->m_poReader.reset();
             }
         }
     }

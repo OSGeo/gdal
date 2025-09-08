@@ -139,28 +139,28 @@ OGRErr OGRLayerDecorator::DeleteFeature(GIntBig nFID)
     return m_poDecoratedLayer->DeleteFeature(nFID);
 }
 
-const char *OGRLayerDecorator::GetName()
+const char *OGRLayerDecorator::GetName() const
 {
     if (!m_poDecoratedLayer)
         return GetDescription();
     return m_poDecoratedLayer->GetName();
 }
 
-OGRwkbGeometryType OGRLayerDecorator::GetGeomType()
+OGRwkbGeometryType OGRLayerDecorator::GetGeomType() const
 {
     if (!m_poDecoratedLayer)
         return wkbNone;
     return m_poDecoratedLayer->GetGeomType();
 }
 
-OGRFeatureDefn *OGRLayerDecorator::GetLayerDefn()
+const OGRFeatureDefn *OGRLayerDecorator::GetLayerDefn() const
 {
     if (!m_poDecoratedLayer)
         return nullptr;
     return m_poDecoratedLayer->GetLayerDefn();
 }
 
-OGRSpatialReference *OGRLayerDecorator::GetSpatialRef()
+const OGRSpatialReference *OGRLayerDecorator::GetSpatialRef() const
 {
     if (!m_poDecoratedLayer)
         return nullptr;
@@ -190,7 +190,7 @@ OGRErr OGRLayerDecorator::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
     return m_poDecoratedLayer->GetExtent3D(iGeomField, psExtent, bForce);
 }
 
-int OGRLayerDecorator::TestCapability(const char *pszCapability)
+int OGRLayerDecorator::TestCapability(const char *pszCapability) const
 {
     if (!m_poDecoratedLayer)
         return FALSE;
@@ -294,14 +294,14 @@ OGRErr OGRLayerDecorator::RollbackTransaction()
     return m_poDecoratedLayer->RollbackTransaction();
 }
 
-const char *OGRLayerDecorator::GetFIDColumn()
+const char *OGRLayerDecorator::GetFIDColumn() const
 {
     if (!m_poDecoratedLayer)
         return "";
     return m_poDecoratedLayer->GetFIDColumn();
 }
 
-const char *OGRLayerDecorator::GetGeometryColumn()
+const char *OGRLayerDecorator::GetGeometryColumn() const
 {
     if (!m_poDecoratedLayer)
         return "";

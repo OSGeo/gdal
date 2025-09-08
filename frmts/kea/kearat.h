@@ -18,7 +18,7 @@
 
 #include "keaband.h"
 
-class KEARasterAttributeTable : public GDALDefaultRasterAttributeTable
+class KEARasterAttributeTable final : public GDALDefaultRasterAttributeTable
 {
   private:
     kealib::KEAAttributeTable *m_poKEATable;
@@ -30,28 +30,28 @@ class KEARasterAttributeTable : public GDALDefaultRasterAttributeTable
   public:
     KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable,
                             KEARasterBand *poBand);
-    ~KEARasterAttributeTable();
+    ~KEARasterAttributeTable() override;
 
     GDALDefaultRasterAttributeTable *Clone() const override;
 
-    virtual int GetColumnCount() const override;
+    int GetColumnCount() const override;
 
-    virtual const char *GetNameOfCol(int) const override;
-    virtual GDALRATFieldUsage GetUsageOfCol(int) const override;
-    virtual GDALRATFieldType GetTypeOfCol(int) const override;
+    const char *GetNameOfCol(int) const override;
+    GDALRATFieldUsage GetUsageOfCol(int) const override;
+    GDALRATFieldType GetTypeOfCol(int) const override;
 
-    virtual int GetColOfUsage(GDALRATFieldUsage) const override;
+    int GetColOfUsage(GDALRATFieldUsage) const override;
 
-    virtual int GetRowCount() const override;
+    int GetRowCount() const override;
 
-    virtual const char *GetValueAsString(int iRow, int iField) const override;
-    virtual int GetValueAsInt(int iRow, int iField) const override;
-    virtual double GetValueAsDouble(int iRow, int iField) const override;
+    const char *GetValueAsString(int iRow, int iField) const override;
+    int GetValueAsInt(int iRow, int iField) const override;
+    double GetValueAsDouble(int iRow, int iField) const override;
 
     virtual CPLErr SetValue(int iRow, int iField,
                             const char *pszValue) override;
-    virtual CPLErr SetValue(int iRow, int iField, double dfValue) override;
-    virtual CPLErr SetValue(int iRow, int iField, int nValue) override;
+    CPLErr SetValue(int iRow, int iField, double dfValue) override;
+    CPLErr SetValue(int iRow, int iField, int nValue) override;
 
     virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
                             int iLength, double *pdfData) override;
@@ -60,8 +60,8 @@ class KEARasterAttributeTable : public GDALDefaultRasterAttributeTable
     virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
                             int iLength, char **papszStrList) override;
 
-    virtual int ChangesAreWrittenToFile() override;
-    virtual void SetRowCount(int iCount) override;
+    int ChangesAreWrittenToFile() override;
+    void SetRowCount(int iCount) override;
 
     virtual CPLErr CreateColumn(const char *pszFieldName,
                                 GDALRATFieldType eFieldType,
@@ -71,10 +71,10 @@ class KEARasterAttributeTable : public GDALDefaultRasterAttributeTable
     virtual int GetLinearBinning(double *pdfRow0Min,
                                  double *pdfBinSize) const override;
 
-    virtual CPLXMLNode *Serialize() const override;
+    CPLXMLNode *Serialize() const override;
 
-    virtual GDALRATTableType GetTableType() const override;
-    virtual CPLErr SetTableType(const GDALRATTableType eInTableType) override;
+    GDALRATTableType GetTableType() const override;
+    CPLErr SetTableType(const GDALRATTableType eInTableType) override;
 };
 
 #endif  // KEARAT_H

@@ -7,11 +7,13 @@
 %feature("autodoc");
 
 %include "gdal_docs.i"
+%include "gdal_algorithm_docs.i"
 %include "gdal_band_docs.i"
 %include "gdal_dataset_docs.i"
 %include "gdal_driver_docs.i"
 %include "gdal_mdm_docs.i"
 %include "gdal_operations_docs.i"
+%include "gdal_rat_docs.i"
 
 %init %{
   /* gdal_python.i %init code */
@@ -387,6 +389,64 @@ static void readraster_releasebuffer(CPLErr eErr,
       return _gdal.Band_UnaryOp(band, GRAUO_LOGICAL_NOT)._add_parent_references([band])
 
   LogicalNot = logical_not
+
+  def abs(band):
+      """Return the absolute value (or module for complex data type) of a raster band or a numpy array.
+
+         The resulting band is lazily evaluated.
+      """
+      band = Band._get_as_band_if_possible(band)
+      return _gdal.Band_UnaryOp(band, GRAUO_ABS)._add_parent_references([band])
+
+  Abs = abs
+
+  def sqrt(band):
+      """Return the square root of a raster band or a numpy array.
+
+         The resulting band is lazily evaluated.
+      """
+      band = Band._get_as_band_if_possible(band)
+      return _gdal.Band_UnaryOp(band, GRAUO_SQRT)._add_parent_references([band])
+
+  Sqrt = sqrt
+
+  def log10(band):
+      """Return the logarithm base 10 of a raster band or a numpy array.
+
+         The resulting band is lazily evaluated.
+      """
+      band = Band._get_as_band_if_possible(band)
+      return _gdal.Band_UnaryOp(band, GRAUO_LOG10)._add_parent_references([band])
+
+  Log10 = log10
+
+  def log(band):
+      """Return the natural logarithm of a raster band or a numpy array.
+
+         The resulting band is lazily evaluated.
+      """
+      band = Band._get_as_band_if_possible(band)
+      return _gdal.Band_UnaryOp(band, GRAUO_LOG)._add_parent_references([band])
+
+  Log = log
+
+
+  def pow(x1, x2):
+      """Raise x1 to the power of x2 between two objects, such objects being
+         a raster band a numpy array or a constant
+
+         The resulting band is lazily evaluated.
+      """
+      x1 = Band._get_as_band_if_possible(x1)
+      x2 = Band._get_as_band_if_possible(x2)
+      if isinstance(x1, Band) and isinstance(x2, Band):
+          return _gdal.Band_BinaryOpBand(x1, GRABO_POW, x2)._add_parent_references([x1, x2])
+      elif isinstance(x1, Band):
+          return _gdal.Band_BinaryOpDouble(x1, GRABO_POW, x2)._add_parent_references([x1])
+      else:
+          return _gdal.Band_BinaryOpDoubleToBand(x1, GRABO_POW, x2)._add_parent_references([x2])
+
+  Pow = pow
 
   class Window:
       def __init__(self, xoff, yoff, xsize, ysize):
@@ -2277,7 +2337,7 @@ def ReleaseResultSet(self, sql_lyr):
 %extend GDALMajorObjectShadow {
 %pythoncode %{
   def GetMetadata(self, domain=''):
-    if domain and domain[:4] == 'xml:':
+    if domain and (domain[:4] == 'xml:' or domain[:5] == 'json:'):
       return self.GetMetadata_List(domain)
     return self.GetMetadata_Dict(domain)
 %}
@@ -2286,11 +2346,57 @@ def ReleaseResultSet(self, sql_lyr):
 %extend GDALRasterAttributeTableShadow {
 %pythoncode %{
   def WriteArray(self, array, field, start=0):
+      """
+      Write a NumPy array to a single column of a RAT.
+
+      Parameters
+      ----------
+      array : np.ndarray
+          One-dimensional array of values to write
+      field : int
+          The index of the column to write (starting at 0)
+      start : int, default = 0
+          The index of the first row to write (starting at 0)
+
+      Returns
+      -------
+      int:
+          Error code, or ``gdal.CE_None`` if no error occurred.
+      """
       from osgeo import gdal_array
 
       return gdal_array.RATWriteArray(self, array, field, start)
 
   def ReadAsArray(self, field, start=0, length=None):
+      """
+      Read a single column of a RAT into a NumPy array.
+
+      Parameters
+      ----------
+      field : int
+          The index of the column to read (starting at 0)
+      start : int, default = 0
+          The index of the first row to read (starting at 0)
+      length : int, default = None
+          The number of rows to read
+
+
+      Returns
+      -------
+      np.ndarray
+
+      Examples
+      --------
+      >>> ds = gdal.Open('clc2018_v2020_20u1.tif')
+      >>> rat = ds.GetRasterBand(1).GetDefaultRAT()
+      >>> rat.ReadAsArray(0)
+      array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
+             18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+             35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 48], dtype=int32)
+      >>> rat.ReadAsArray(0, 5, 3)
+      array([6, 7, 8], dtype=int32)
+      """
+
       from osgeo import gdal_array
 
       return gdal_array.RATReadArray(self, field, start, length)
@@ -2746,10 +2852,10 @@ def Open(self, utf8_path, update=False):
        The path to open
     update : bool, default = False
        Whether to open the dataset in update mode.
-       
+
     Returns
     -------
-    Dataset, or None on error 
+    Dataset, or None on error
     """
     return OpenEx(utf8_path,
                   OF_VECTOR | (OF_UPDATE if update else 0),
@@ -5725,7 +5831,7 @@ def quiet_errors():
 def quiet_warnings():
     """Temporarily install an error handler that silences all warnings.
 
-       .. versionadded: 3.11
+       .. versionadded:: 3.11
 
        Returns
        -------
@@ -5747,12 +5853,12 @@ def quiet_warnings():
 def Run(*alg, arguments={}, progress=None, **kwargs):
     """Run a GDAL algorithm and return it.
 
-       .. versionadded: 3.11
+       .. versionadded:: 3.11
 
        This method can also be used within a context manager, in which case
        :py:meth:`osgeo.gdal.Algorithm.Finalize` will be called at the exit of the
        context manager.  An exception will be raised if the algorithm fails,
-       even if `gdal.UseExceptions()` has not been called.
+       even if :py:meth:`osgeo.gdal.UseExceptions()` has not been called.
 
        Parameters
        ----------
@@ -5772,10 +5878,10 @@ def Run(*alg, arguments={}, progress=None, **kwargs):
 
        Returns
        -------
-            An algorithm
+       Algorithm
 
-       Example
-       -------
+       Examples
+       --------
 
        >>> alg = gdal.Run(["raster", "info"], {"input": "byte.tif"})
        >>> print(alg.output()["bands"])
@@ -6123,7 +6229,7 @@ class VSIFile(BytesIO):
 
         """Instantiate an existing GDAL algorithm from its path.
 
-           .. versionadded: 3.11
+           .. versionadded:: 3.11
 
            Parameters
            ----------
@@ -6228,16 +6334,23 @@ class VSIFile(BytesIO):
         if not hasattr(self, "has_run"):
             raise RuntimeError("Algorithm.Run() must be called before")
 
-        count_output = 0
-        val = None
+        output_args = []
+        output_args_set = []
         for name in self.GetArgNames():
             arg = self.GetArg(name)
             if arg.IsOutput():
-                count_output += 1
-                if count_output == 2:
-                    raise RuntimeError("Cannot use 'output' method on this algorithm as it supports multiple output arguments. Use 'Outputs' (plural) insead")
-                val = self._get_arg_value(arg, parse_json)
-        return val
+                output_args.append(arg)
+                if arg.IsExplicitlySet():
+                    output_args_set.append(arg)
+
+        if len(output_args) == 1:
+            return self._get_arg_value(output_args[0], parse_json)
+        elif len(output_args_set) == 1:
+            return self._get_arg_value(output_args_set[0], parse_json)
+        elif len(output_args) >= 2:
+            raise RuntimeError("Cannot use 'output' method on this algorithm as it supports multiple output arguments. Use 'Outputs' (plural) instead")
+        else:
+            return None
 
 
     def Outputs(self, parse_json=True):
@@ -6335,7 +6448,7 @@ class VSIFile(BytesIO):
            >>> alg["input"] = [one_ds, two_ds]
         """
 
-        arg = self.GetArg(key.replace('_', '-'))
+        arg = self.GetArgNonConst(key.replace('_', '-'))
         if not arg:
             raise RuntimeError(f"'{key}' is not a valid argument of '{self.GetName()}'")
         if not arg.Set(value):

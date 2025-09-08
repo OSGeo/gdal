@@ -17,6 +17,8 @@
 
 #include "ogrsf_frmts.h"
 
+#include <mutex>
+
 typedef OGRLayer *(*OpenLayerFunc)(void *user_data);
 typedef void (*ReleaseLayerFunc)(OGRLayer *, void *user_data);
 typedef void (*FreeUserDataFunc)(void *user_data);
@@ -45,7 +47,7 @@ class CPL_DLL OGRAbstractProxiedLayer : public OGRLayer
 
   public:
     explicit OGRAbstractProxiedLayer(OGRLayerPool *poPool);
-    virtual ~OGRAbstractProxiedLayer();
+    ~OGRAbstractProxiedLayer() override;
 };
 
 /************************************************************************/
@@ -93,14 +95,15 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
     ReleaseLayerFunc pfnReleaseLayer;
     FreeUserDataFunc pfnFreeUserData;
     void *pUserData;
-    OGRLayer *poUnderlyingLayer;
-    OGRFeatureDefn *poFeatureDefn;
-    OGRSpatialReference *poSRS;
+    mutable OGRLayer *poUnderlyingLayer;
+    mutable OGRFeatureDefn *poFeatureDefn;
+    mutable OGRSpatialReference *poSRS;
+    mutable std::recursive_mutex m_oMutex{};
 
-    int OpenUnderlyingLayer();
+    int OpenUnderlyingLayer() const;
 
   protected:
-    virtual void CloseUnderlyingLayer() override;
+    void CloseUnderlyingLayer() override;
 
   public:
     OGRProxiedLayer(OGRLayerPool *poPool, OpenLayerFunc pfnOpenLayer,
@@ -108,50 +111,50 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
     OGRProxiedLayer(OGRLayerPool *poPool, OpenLayerFunc pfnOpenLayer,
                     ReleaseLayerFunc pfnReleaseLayer,
                     FreeUserDataFunc pfnFreeUserData, void *pUserData);
-    virtual ~OGRProxiedLayer();
+    ~OGRProxiedLayer() override;
 
     OGRLayer *GetUnderlyingLayer();
 
-    virtual OGRGeometry *GetSpatialFilter() override;
+    OGRGeometry *GetSpatialFilter() override;
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *) override;
 
-    virtual OGRErr SetAttributeFilter(const char *) override;
+    OGRErr SetAttributeFilter(const char *) override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr IUpsertFeature(OGRFeature *poFeature) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr IUpsertFeature(OGRFeature *poFeature) override;
     OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                           const int *panUpdatedFieldsIdx,
                           int nUpdatedGeomFieldsCount,
                           const int *panUpdatedGeomFieldsIdx,
                           bool bUpdateStyleString) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(GIntBig nFID) override;
 
-    virtual GDALDataset *GetDataset() override;
+    GDALDataset *GetDataset() override;
     virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
                                 CSLConstList papszOptions = nullptr) override;
 
-    virtual const char *GetName() override;
-    virtual OGRwkbGeometryType GetGeomType() override;
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const char *GetName() const override;
+    OGRwkbGeometryType GetGeomType() const override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr DeleteField(int iField) override;
-    virtual OGRErr ReorderFields(int *panMap) override;
+    OGRErr DeleteField(int iField) override;
+    OGRErr ReorderFields(int *panMap) override;
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                                   int nFlags) override;
     virtual OGRErr
@@ -159,23 +162,23 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
                        const OGRGeomFieldDefn *poNewGeomFieldDefn,
                        int nFlags) override;
 
-    virtual OGRErr SyncToDisk() override;
+    OGRErr SyncToDisk() override;
 
-    virtual OGRStyleTable *GetStyleTable() override;
-    virtual void SetStyleTableDirectly(OGRStyleTable *poStyleTable) override;
+    OGRStyleTable *GetStyleTable() override;
+    void SetStyleTableDirectly(OGRStyleTable *poStyleTable) override;
 
-    virtual void SetStyleTable(OGRStyleTable *poStyleTable) override;
+    void SetStyleTable(OGRStyleTable *poStyleTable) override;
 
-    virtual OGRErr StartTransaction() override;
-    virtual OGRErr CommitTransaction() override;
-    virtual OGRErr RollbackTransaction() override;
+    OGRErr StartTransaction() override;
+    OGRErr CommitTransaction() override;
+    OGRErr RollbackTransaction() override;
 
-    virtual const char *GetFIDColumn() override;
-    virtual const char *GetGeometryColumn() override;
+    const char *GetFIDColumn() const override;
+    const char *GetGeometryColumn() const override;
 
-    virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
+    OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 
-    virtual OGRErr Rename(const char *pszNewName) override;
+    OGRErr Rename(const char *pszNewName) override;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

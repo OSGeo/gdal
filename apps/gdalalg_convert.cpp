@@ -21,7 +21,7 @@
 /*                        GDALConvertAlgorithm                          */
 /************************************************************************/
 
-class GDALConvertAlgorithm
+class GDALConvertAlgorithm final
     : public GDALDispatcherAlgorithm<GDALRasterConvertAlgorithm,
                                      GDALVectorConvertAlgorithm>
 {
@@ -31,6 +31,11 @@ class GDALConvertAlgorithm
         "Convert a dataset (shortcut for 'gdal raster convert' or "
         "'gdal vector convert').";
     static constexpr const char *HELP_URL = "/programs/gdal_convert.html";
+
+    static std::vector<std::string> GetAliasesStatic()
+    {
+        return {GDALAlgorithmRegistry::HIDDEN_ALIAS_SEPARATOR, "translate"};
+    }
 
     GDALConvertAlgorithm()
         : GDALDispatcherAlgorithm(NAME, DESCRIPTION, HELP_URL)

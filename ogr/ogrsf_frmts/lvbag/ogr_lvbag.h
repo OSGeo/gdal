@@ -64,7 +64,7 @@ class OGRLVBAGLayer final : public OGRAbstractProxiedLayer,
 
     OGRExpatUniquePtr oParser;
 
-    bool bSchemaOnly;
+    mutable bool bSchemaOnly;
     bool bHasReadSchema;
     bool bFixInvalidData;
     bool bLegacyId;
@@ -118,14 +118,14 @@ class OGRLVBAGLayer final : public OGRAbstractProxiedLayer,
   public:
     explicit OGRLVBAGLayer(const char *pszFilename, OGRLayerPool *poPoolIn,
                            char **papszOpenOptions);
-    ~OGRLVBAGLayer();
+    ~OGRLVBAGLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -146,10 +146,10 @@ class OGRLVBAGDataSource final : public GDALDataset
 
     int Open(const char *pszFilename, char **papszOpenOptions);
 
-    int GetLayerCount() override;
-    OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 #endif  // ndef OGR_LVBAG_H_INCLUDED

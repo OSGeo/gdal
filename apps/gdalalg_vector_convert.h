@@ -29,7 +29,12 @@ class GDALVectorConvertAlgorithm final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_convert.html";
 
-    GDALVectorConvertAlgorithm();
+    static std::vector<std::string> GetAliasesStatic()
+    {
+        return {GDALAlgorithmRegistry::HIDDEN_ALIAS_SEPARATOR, "translate"};
+    }
+
+    explicit GDALVectorConvertAlgorithm(bool /* standaloneStep */ = true);
 
     void SetDataset(GDALDataset *poDS)
     {
@@ -50,6 +55,7 @@ class GDALVectorConvertAlgorithm final : public GDALAlgorithm
     std::vector<std::string> m_inputFormats{};
     GDALArgDatasetValue m_outputDataset{};
     std::vector<std::string> m_creationOptions{};
+    std::vector<std::string> m_outputOpenOptions{};
     std::vector<std::string> m_layerCreationOptions{};
     bool m_overwrite = false;
     bool m_update = false;
@@ -57,6 +63,7 @@ class GDALVectorConvertAlgorithm final : public GDALAlgorithm
     bool m_appendLayer = false;
     std::vector<std::string> m_inputLayerNames{};
     std::string m_outputLayerName{};
+    bool m_skipErrors = false;
 };
 
 //! @endcond

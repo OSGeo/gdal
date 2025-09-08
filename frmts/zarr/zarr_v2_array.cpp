@@ -77,16 +77,17 @@ ZarrV2Array::~ZarrV2Array()
 /*                                Flush()                               */
 /************************************************************************/
 
-void ZarrV2Array::Flush()
+bool ZarrV2Array::Flush()
 {
     if (!m_bValid)
-        return;
+        return true;
 
-    ZarrV2Array::FlushDirtyTile();
+    bool ret = ZarrV2Array::FlushDirtyTile();
 
     if (m_bDefinitionModified)
     {
-        Serialize();
+        if (!Serialize())
+            ret = false;
         m_bDefinitionModified = false;
     }
 
@@ -131,9 +132,12 @@ void ZarrV2Array::Flush()
         const std::string osAttrFilename =
             CPLFormFilenameSafe(CPLGetDirnameSafe(m_osFilename.c_str()).c_str(),
                                 ".zattrs", nullptr);
-        oDoc.Save(osAttrFilename);
+        if (!oDoc.Save(osAttrFilename))
+            ret = false;
         m_poSharedResource->SetZMetadataItem(osAttrFilename, oAttrs);
     }
+
+    return ret;
 }
 
 /************************************************************************/
@@ -154,7 +158,7 @@ static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject &o)
 /*                    ZarrV2Array::Serialize()                          */
 /************************************************************************/
 
-void ZarrV2Array::Serialize()
+bool ZarrV2Array::Serialize()
 {
     CPLJSONDocument oDoc;
     CPLJSONObject oRoot = oDoc.GetRoot();
@@ -254,9 +258,11 @@ void ZarrV2Array::Serialize()
         oRoot.Add("dimension_separator", m_osDimSeparator);
     }
 
-    oDoc.Save(m_osFilename);
+    bool ret = oDoc.Save(m_osFilename);
 
     m_poSharedResource->SetZMetadataItem(m_osFilename, oRoot);
+
+    return ret;
 }
 
 /************************************************************************/
@@ -435,37 +441,50 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
     osFilename = VSIFileManager::GetHandler(osFilename.c_str())
                      ->GetStreamingFilename(osFilename);
 
-    // First if we have a tile presence cache, check tile presence from it
-    if (bUseMutex)
-        m_oMutex.lock();
-    auto poTilePresenceArray = OpenTilePresenceCache(false);
-    if (poTilePresenceArray)
+    const auto CheckTilePresence =
+        [this, &osFilename, &tileIndices, &bMissingTileOut]()
     {
-        std::vector<GUInt64> anTileIdx(m_aoDims.size());
-        const std::vector<size_t> anCount(m_aoDims.size(), 1);
-        const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
-        const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
-        const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
-        for (size_t i = 0; i < m_aoDims.size(); ++i)
+        CPL_IGNORE_RET_VAL(osFilename);
+        auto poTilePresenceArray = OpenTilePresenceCache(false);
+        if (poTilePresenceArray)
         {
-            anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
+            std::vector<GUInt64> anTileIdx(m_aoDims.size());
+            const std::vector<size_t> anCount(m_aoDims.size(), 1);
+            const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
+            const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
+            const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+            for (size_t i = 0; i < m_aoDims.size(); ++i)
+            {
+                anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
+            }
+            GByte byValue = 0;
+            if (poTilePresenceArray->Read(
+                    anTileIdx.data(), anCount.data(), anArrayStep.data(),
+                    anBufferStride.data(), eByteDT, &byValue) &&
+                byValue == 0)
+            {
+                CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
+                             osFilename.c_str());
+                bMissingTileOut = true;
+                return true;
+            }
         }
-        GByte byValue = 0;
-        if (poTilePresenceArray->Read(anTileIdx.data(), anCount.data(),
-                                      anArrayStep.data(), anBufferStride.data(),
-                                      eByteDT, &byValue) &&
-            byValue == 0)
-        {
-            if (bUseMutex)
-                m_oMutex.unlock();
-            CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
-                         osFilename.c_str());
-            bMissingTileOut = true;
-            return true;
-        }
-    }
+        return false;
+    };
+
+    // First if we have a tile presence cache, check tile presence from it
+    bool bEarlyRet;
     if (bUseMutex)
-        m_oMutex.unlock();
+    {
+        std::lock_guard<std::mutex> oLock(m_oMutex);
+        bEarlyRet = CheckTilePresence();
+    }
+    else
+    {
+        bEarlyRet = CheckTilePresence();
+    }
+    if (bEarlyRet)
+        return true;
 
     VSILFILE *fp = nullptr;
     // This is the number of files returned in a S3 directory listing operation
@@ -1455,6 +1474,13 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
             std::string osDirName = m_osDirectoryName;
             while (true)
             {
+                if (CPLHasPathTraversal(osDimName.c_str()))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Path traversal detected in %s",
+                             osDimName.c_str());
+                    return false;
+                }
                 const std::string osArrayFilenameDim = CPLFormFilenameSafe(
                     CPLFormFilenameSafe(osDirName.c_str(), osDimName.c_str(),
                                         nullptr)
@@ -1953,6 +1979,13 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         const std::string gridMappingName = gridMapping.ToString();
         if (m_oMapMDArrays.find(gridMappingName) == m_oMapMDArrays.end())
         {
+            if (CPLHasPathTraversal(gridMappingName.c_str()))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Path traversal detected in %s",
+                         gridMappingName.c_str());
+                return nullptr;
+            }
             const std::string osArrayFilenameDim = CPLFormFilenameSafe(
                 CPLFormFilenameSafe(m_osDirectoryName.c_str(),
                                     gridMappingName.c_str(), nullptr)

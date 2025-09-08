@@ -284,7 +284,7 @@ def test_gdalg_generate_from_raster_pipeline(tmp_vsimem):
     pipeline = gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it",
+        match="already exists",
     ):
         pipeline.ParseRunAndFinalize(
             [
@@ -322,6 +322,16 @@ def test_gdalg_generate_from_raster_pipeline(tmp_vsimem):
         "command_line": "gdal raster pipeline read --input data/byte.tif ! reproject --dst-crs EPSG:4326",
         "type": "gdal_streamed_alg",
     }
+
+
+def test_gdalg_generate_error_due_to_mem_dataset(tmp_vsimem):
+    out_filename = str(tmp_vsimem / "test.gdalg.json")
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    with pytest.raises(Exception, match="Cannot serialize argument input"):
+        gdal.Run(
+            "raster pipeline", input=src_ds, pipeline=f"read ! write {out_filename}"
+        )
 
 
 def test_gdalg_generate_from_raster_mosaic(tmp_vsimem):
@@ -457,13 +467,13 @@ def test_gdalg_missing_command_line():
 
 def test_gdalg_alg_does_not_support_streaming():
     with pytest.raises(
-        Exception, match="Algorithm add does not support a streamed output"
+        Exception, match="Algorithm delete does not support a streamed output"
     ):
         gdal.Open(
             json.dumps(
                 {
                     "type": "gdal_streamed_alg",
-                    "command_line": "gdal raster overview add data/byte.tif",
+                    "command_line": "gdal raster overview delete data/byte.tif",
                 }
             )
         )

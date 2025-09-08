@@ -46,7 +46,7 @@ class GSBGDataset final : public GDALPamDataset
   public:
     GSBGDataset() = default;
 
-    ~GSBGDataset();
+    ~GSBGDataset() override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -95,7 +95,7 @@ class GSBGRasterBand final : public GDALPamRasterBand
 
   public:
     GSBGRasterBand(GSBGDataset *, int);
-    ~GSBGRasterBand();
+    ~GSBGRasterBand() override;
 
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IWriteBlock(int, int, void *) override;
@@ -232,7 +232,7 @@ CPLErr GSBGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0)
         return CE_Failure;
 
-    GSBGDataset *poGDS = reinterpret_cast<GSBGDataset *>(poDS);
+    GSBGDataset *poGDS = cpl::down_cast<GSBGDataset *>(poDS);
     if (VSIFSeekL(poGDS->fp,
                   GSBGDataset::nHEADER_SIZE +
                       4 * static_cast<vsi_l_offset>(nRasterXSize) *

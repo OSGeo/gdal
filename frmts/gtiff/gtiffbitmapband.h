@@ -22,7 +22,7 @@
 /* ==================================================================== */
 /************************************************************************/
 
-class GTiffBitmapBand : public GTiffOddBitsBand
+class GTiffBitmapBand /* non final */ : public GTiffOddBitsBand
 {
     friend class GTiffDataset;
 
@@ -32,10 +32,10 @@ class GTiffBitmapBand : public GTiffOddBitsBand
 
   public:
     GTiffBitmapBand(GTiffDataset *, int);
-    virtual ~GTiffBitmapBand();
+    ~GTiffBitmapBand() override;
 
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
 };
 
 #endif  // GTIFFBITMAPBAND_H_INCLUDED

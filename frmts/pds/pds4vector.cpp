@@ -519,7 +519,7 @@ OGRFeature *PDS4FixedWidthTable::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDS4FixedWidthTable::TestCapability(const char *pszCap)
+int PDS4FixedWidthTable::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCRandomRead) || EQUAL(pszCap, OLCStringsAsUTF8) ||
         EQUAL(pszCap, OLCZGeometries))
@@ -1813,7 +1813,8 @@ void PDS4DelimitedTable::GenerateVRT()
         psLayer, "SrcDataSource", CPLGetFilename(m_osFilename));
     CPLAddXMLAttributeAndValue(psSrcDataSource, "relativeToVRT", "1");
 
-    CPLCreateXMLElementAndValue(psLayer, "SrcLayer", GetName());
+    CPLCreateXMLElementAndValue(
+        psLayer, "SrcLayer", CPLGetBasenameSafe(m_osFilename.c_str()).c_str());
 
     CPLXMLNode *psLastChild = CPLCreateXMLElementAndValue(
         psLayer, "GeometryType",
@@ -1995,7 +1996,7 @@ OGRFeature *PDS4DelimitedTable::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDS4DelimitedTable::TestCapability(const char *pszCap)
+int PDS4DelimitedTable::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCRandomRead) || EQUAL(pszCap, OLCStringsAsUTF8) ||
         EQUAL(pszCap, OLCZGeometries))
@@ -2719,16 +2720,23 @@ PDS4EditableSynchronizer<T>::EditableSyncToDisk(OGRLayer *poEditableLayer,
 /* ==================================================================== */
 /************************************************************************/
 
-PDS4EditableLayer::PDS4EditableLayer(PDS4FixedWidthTable *poBaseLayer)
-    : OGREditableLayer(poBaseLayer, true,
-                       new PDS4EditableSynchronizer<PDS4FixedWidthTable>(),
-                       true)
+PDS4EditableLayer::PDS4EditableLayer(
+    std::unique_ptr<PDS4FixedWidthTable> poBaseLayer)
+    : OGREditableLayer(
+          poBaseLayer.release(), true,
+          std::make_unique<PDS4EditableSynchronizer<PDS4FixedWidthTable>>()
+              .release(),
+          true)
 {
 }
 
-PDS4EditableLayer::PDS4EditableLayer(PDS4DelimitedTable *poBaseLayer)
-    : OGREditableLayer(poBaseLayer, true,
-                       new PDS4EditableSynchronizer<PDS4DelimitedTable>(), true)
+PDS4EditableLayer::PDS4EditableLayer(
+    std::unique_ptr<PDS4DelimitedTable> poBaseLayer)
+    : OGREditableLayer(
+          poBaseLayer.release(), true,
+          std::make_unique<PDS4EditableSynchronizer<PDS4DelimitedTable>>()
+              .release(),
+          true)
 {
 }
 

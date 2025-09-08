@@ -131,7 +131,7 @@ const char *const *HFAGetUnitMap();
 /*                               HFABand                                */
 /************************************************************************/
 
-class HFABand
+class HFABand final
 {
     int nBlocks;
 
@@ -160,6 +160,8 @@ class HFABand
     void NullBlock(void *);
 
     CPLString osOverName;
+
+    CPL_DISALLOW_COPY_ASSIGN(HFABand)
 
   public:
     HFABand(HFAInfo_t *, HFAEntry *);
@@ -213,7 +215,7 @@ class HFABand
 /*      have a subclass, and are just handled generically with this     */
 /*      class.                                                          */
 /************************************************************************/
-class HFAEntry
+class HFAEntry final
 {
     bool bDirty;
     GUInt32 nFilePos;
@@ -251,6 +253,8 @@ class HFAEntry
                                          const char *pszType, int nRecLevel,
                                          int *pbErrorDetected);
 
+    CPL_DISALLOW_COPY_ASSIGN(HFAEntry)
+
   public:
     static HFAEntry *New(HFAInfo_t *psHFA, GUInt32 nPos, HFAEntry *poParent,
                          HFAEntry *poPrev) CPL_WARN_UNUSED_RESULT;
@@ -262,7 +266,7 @@ class HFAEntry
                          const char *pszTypeName,
                          HFAEntry *poParent) CPL_WARN_UNUSED_RESULT;
 
-    virtual ~HFAEntry();
+    ~HFAEntry();
 
     static HFAEntry *BuildEntryFromMIFObject(HFAEntry *poContainer,
                                              const char *pszMIFObjectPath)
@@ -341,7 +345,7 @@ class HFAEntry
 /*      A field in a HFAType in the dictionary.                         */
 /************************************************************************/
 
-class HFAField
+class HFAField final
 {
   public:
     int nBytes;
@@ -446,6 +450,8 @@ class HFADictionary
     int nTypes;
     int nTypesMax;
     HFAType **papoTypes;
+
+    CPL_DISALLOW_COPY_ASSIGN(HFADictionary)
 
   public:
     // TODO(schwehr): Make these members private.

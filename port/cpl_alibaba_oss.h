@@ -54,7 +54,7 @@ class VSIOSSHandleHelper final : public IVSIS3LikeHandleHelper
                        const std::string &osBucket,
                        const std::string &osObjectKey, bool bUseHTTPS,
                        bool bUseVirtualHosting);
-    ~VSIOSSHandleHelper();
+    ~VSIOSSHandleHelper() override;
 
     static VSIOSSHandleHelper *
     BuildFromURI(const char *pszURI, const char *pszFSPrefix,
@@ -64,11 +64,10 @@ class VSIOSSHandleHelper final : public IVSIS3LikeHandleHelper
                                 const std::string &osObjectKey, bool bUseHTTPS,
                                 bool bUseVirtualHosting);
 
-    struct curl_slist *
-    GetCurlHeaders(const std::string &osVerb,
-                   const struct curl_slist *psExistingHeaders,
-                   const void *pabyDataContent = nullptr,
-                   size_t nBytesContent = 0) const override;
+    struct curl_slist *GetCurlHeaders(const std::string &osVerb,
+                                      struct curl_slist *psHeaders,
+                                      const void *pabyDataContent = nullptr,
+                                      size_t nBytesContent = 0) const override;
 
     bool CanRestartOnError(const char *, const char *pszHeaders,
                            bool bSetError) override;

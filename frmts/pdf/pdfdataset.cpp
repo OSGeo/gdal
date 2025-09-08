@@ -72,7 +72,7 @@ static CPLMutex *hGlobalParamsMutex = nullptr;
 /*                         GDALPDFOutputDev                             */
 /************************************************************************/
 
-class GDALPDFOutputDev : public SplashOutputDev
+class GDALPDFOutputDev final : public SplashOutputDev
 {
   private:
     int bEnableVector;
@@ -115,21 +115,21 @@ class GDALPDFOutputDev : public SplashOutputDev
         bEnableBitmap = bFlag;
     }
 
-    virtual void startPage(int pageNum, GfxState *state, XRef *xrefIn) override;
+    void startPage(int pageNum, GfxState *state, XRef *xrefIn) override;
 
-    virtual void stroke(GfxState *state) override
+    void stroke(GfxState *state) override
     {
         if (bEnableVector)
             SplashOutputDev::stroke(state);
     }
 
-    virtual void fill(GfxState *state) override
+    void fill(GfxState *state) override
     {
         if (bEnableVector)
             SplashOutputDev::fill(state);
     }
 
-    virtual void eoFill(GfxState *state) override
+    void eoFill(GfxState *state) override
     {
         if (bEnableVector)
             SplashOutputDev::eoFill(state);
@@ -145,13 +145,13 @@ class GDALPDFOutputDev : public SplashOutputDev
                                       code, nBytes, u, uLen);
     }
 
-    virtual void beginTextObject(GfxState *state) override
+    void beginTextObject(GfxState *state) override
     {
         if (bEnableText)
             SplashOutputDev::beginTextObject(state);
     }
 
-    virtual void endTextObject(GfxState *state) override
+    void endTextObject(GfxState *state) override
     {
         if (bEnableText)
             SplashOutputDev::endTextObject(state);
@@ -1401,7 +1401,7 @@ const char *PDFDataset::GetOption(char **papszOpenOptionsIn,
 /*                         GDALPDFiumOCContext                          */
 /************************************************************************/
 
-class GDALPDFiumOCContext : public CPDF_OCContextInterface
+class GDALPDFiumOCContext final : public CPDF_OCContextInterface
 {
     PDFDataset *m_poDS;
     RetainPtr<CPDF_OCContext> m_DefaultOCContext;
@@ -1436,10 +1436,10 @@ class GDALPDFiumOCContext : public CPDF_OCContextInterface
 /*                      GDALPDFiumRenderDeviceDriver                    */
 /************************************************************************/
 
-class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
+class GDALPDFiumRenderDeviceDriver final : public RenderDeviceDriverIface
 {
     std::unique_ptr<RenderDeviceDriverIface> m_poParent;
-    CFX_RenderDevice *m_pDevice;
+    CFX_RenderDevice *device_;
 
     int bEnableVector;
     int bEnableText;
@@ -1452,7 +1452,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
     GDALPDFiumRenderDeviceDriver(
         std::unique_ptr<RenderDeviceDriverIface> &&poParent,
         CFX_RenderDevice *pDevice)
-        : m_poParent(std::move(poParent)), m_pDevice(pDevice),
+        : m_poParent(std::move(poParent)), device_(pDevice),
           bEnableVector(TRUE), bEnableText(TRUE), bEnableBitmap(TRUE),
           bTemporaryEnableVectorForTextStroking(FALSE)
     {
@@ -1475,27 +1475,27 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
         bEnableBitmap = bFlag;
     }
 
-    virtual DeviceType GetDeviceType() const override
+    DeviceType GetDeviceType() const override
     {
         return m_poParent->GetDeviceType();
     }
 
-    virtual int GetDeviceCaps(int caps_id) const override
+    int GetDeviceCaps(int caps_id) const override
     {
         return m_poParent->GetDeviceCaps(caps_id);
     }
 
-    virtual void SaveState() override
+    void SaveState() override
     {
         m_poParent->SaveState();
     }
 
-    virtual void RestoreState(bool bKeepSaved) override
+    void RestoreState(bool bKeepSaved) override
     {
         m_poParent->RestoreState(bKeepSaved);
     }
 
-    virtual void SetBaseClip(const FX_RECT &rect) override
+    void SetBaseClip(const FX_RECT &rect) override
     {
         m_poParent->SetBaseClip(rect);
     }
@@ -1531,7 +1531,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
                                     fill_color, stroke_color, fill_options);
     }
 
-    virtual bool FillRect(const FX_RECT &rect, uint32_t fill_color) override
+    bool FillRect(const FX_RECT &rect, uint32_t fill_color) override
     {
         return m_poParent->FillRect(rect, fill_color);
     }
@@ -1545,7 +1545,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
         return m_poParent->DrawCosmeticLine(ptMoveTo, ptLineTo, color);
     }
 
-    virtual FX_RECT GetClipBox() const override
+    FX_RECT GetClipBox() const override
     {
         return m_poParent->GetClipBox();
     }
@@ -1556,7 +1556,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
         return m_poParent->GetDIBits(std::move(bitmap), left, top);
     }
 
-    virtual RetainPtr<const CFX_DIBitmap> GetBackDrop() const override
+    RetainPtr<const CFX_DIBitmap> GetBackDrop() const override
     {
         return m_poParent->GetBackDrop();
     }
@@ -1618,7 +1618,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
             if (bTemporaryEnableVectorForTextStroking)
                 return FALSE;  // this is the default behavior of the parent
             bTemporaryEnableVectorForTextStroking = true;
-            bool bRet = m_pDevice->DrawNormalText(
+            bool bRet = device_->DrawNormalText(
                 pCharPos, pFont, font_size, mtObject2Device, color, options);
             bTemporaryEnableVectorForTextStroking = FALSE;
             return bRet;
@@ -1627,7 +1627,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
             return true;  // pretend that we did the job
     }
 
-    virtual int GetDriverType() const override
+    int GetDriverType() const override
     {
         return m_poParent->GetDriverType();
     }
@@ -1665,13 +1665,13 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
                                            left, top, alpha, blend_type);
     }
 
-    virtual void SetGroupKnockout(bool group_knockout) override
+    void SetGroupKnockout(bool group_knockout) override
     {
         m_poParent->SetGroupKnockout(group_knockout);
     }
 #endif
 #if defined _SKIA_SUPPORT_ || defined _SKIA_SUPPORT_PATHS_
-    virtual void Flush() override
+    void Flush() override
     {
         return m_poParent->Flush();
     }
@@ -1719,10 +1719,10 @@ static void myRenderPageImpl(PDFDataset *poDS, CPDF_PageRenderContext *pContext,
                              const FPDF_COLORSCHEME *color_scheme,
                              bool bNeedToRestore, CPDFSDK_PauseAdapter *pause)
 {
-    if (!pContext->m_pOptions)
-        pContext->m_pOptions = std::make_unique<CPDF_RenderOptions>();
+    if (!pContext->options_)
+        pContext->options_ = std::make_unique<CPDF_RenderOptions>();
 
-    auto &options = pContext->m_pOptions->GetOptions();
+    auto &options = pContext->options_->GetOptions();
     options.bClearType = !!(flags & FPDF_LCD_TEXT);
     options.bNoNativeText = !!(flags & FPDF_NO_NATIVETEXT);
     options.bLimitedImageCache = !!(flags & FPDF_RENDER_LIMITEDIMAGECACHE);
@@ -1733,50 +1733,50 @@ static void myRenderPageImpl(PDFDataset *poDS, CPDF_PageRenderContext *pContext,
 
     // Grayscale output
     if (flags & FPDF_GRAYSCALE)
-        pContext->m_pOptions->SetColorMode(CPDF_RenderOptions::kGray);
+        pContext->options_->SetColorMode(CPDF_RenderOptions::kGray);
 
     if (color_scheme)
     {
-        pContext->m_pOptions->SetColorMode(CPDF_RenderOptions::kForcedColor);
-        SetColorFromScheme(color_scheme, pContext->m_pOptions.get());
+        pContext->options_->SetColorMode(CPDF_RenderOptions::kForcedColor);
+        SetColorFromScheme(color_scheme, pContext->options_.get());
         options.bConvertFillToStroke = !!(flags & FPDF_CONVERT_FILL_TO_STROKE);
     }
 
     const CPDF_OCContext::UsageType usage = (flags & FPDF_PRINTING)
                                                 ? CPDF_OCContext::kPrint
                                                 : CPDF_OCContext::kView;
-    pContext->m_pOptions->SetOCContext(pdfium::MakeRetain<GDALPDFiumOCContext>(
+    pContext->options_->SetOCContext(pdfium::MakeRetain<GDALPDFiumOCContext>(
         poDS, pPage->GetDocument(), usage));
 
-    pContext->m_pDevice->SaveState();
-    pContext->m_pDevice->SetBaseClip(clipping_rect);
-    pContext->m_pDevice->SetClip_Rect(clipping_rect);
-    pContext->m_pContext = std::make_unique<CPDF_RenderContext>(
+    pContext->device_->SaveState();
+    pContext->device_->SetBaseClip(clipping_rect);
+    pContext->device_->SetClip_Rect(clipping_rect);
+    pContext->context_ = std::make_unique<CPDF_RenderContext>(
         pPage->GetDocument(), pPage->GetMutablePageResources(),
         pPage->GetPageImageCache());
 
-    pContext->m_pContext->AppendLayer(pPage, matrix);
+    pContext->context_->AppendLayer(pPage, matrix);
 
     if (flags & FPDF_ANNOT)
     {
         auto pOwnedList = std::make_unique<CPDF_AnnotList>(pPage);
         CPDF_AnnotList *pList = pOwnedList.get();
-        pContext->m_pAnnots = std::move(pOwnedList);
+        pContext->annots_ = std::move(pOwnedList);
         bool bPrinting =
-            pContext->m_pDevice->GetDeviceType() != DeviceType::kDisplay;
+            pContext->device_->GetDeviceType() != DeviceType::kDisplay;
 
         // TODO(https://crbug.com/pdfium/993) - maybe pass true here.
         const bool bShowWidget = false;
-        pList->DisplayAnnots(pContext->m_pContext.get(), bPrinting, matrix,
+        pList->DisplayAnnots(pContext->context_.get(), bPrinting, matrix,
                              bShowWidget);
     }
 
-    pContext->m_pRenderer = std::make_unique<CPDF_ProgressiveRenderer>(
-        pContext->m_pContext.get(), pContext->m_pDevice.get(),
-        pContext->m_pOptions.get());
-    pContext->m_pRenderer->Start(pause);
+    pContext->renderer_ = std::make_unique<CPDF_ProgressiveRenderer>(
+        pContext->context_.get(), pContext->device_.get(),
+        pContext->options_.get());
+    pContext->renderer_->Start(pause);
     if (bNeedToRestore)
-        pContext->m_pDevice->RestoreState(false);
+        pContext->device_->RestoreState(false);
 }
 
 static void
@@ -1792,7 +1792,7 @@ myRenderPageWithContext(PDFDataset *poDS, CPDF_PageRenderContext *pContext,
 
     const FX_RECT rect(start_x, start_y, start_x + size_x, start_y + size_y);
     myRenderPageImpl(poDS, pContext, pPage,
-                     pPage->GetDisplayMatrix(rect, rotate), rect, flags,
+                     pPage->GetDisplayMatrixForRect(rect, rotate), rect, flags,
                      color_scheme, bNeedToRestore, pause);
 }
 
@@ -1881,7 +1881,7 @@ void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page,
 
     auto pOwnedDevice = std::make_unique<MyRenderDevice>();
     auto pDevice = pOwnedDevice.get();
-    pContext->m_pDevice = std::move(pOwnedDevice);
+    pContext->device_ = std::move(pOwnedDevice);
 
     RetainPtr<CFX_DIBitmap> pBitmap(CFXDIBitmapFromFPDFBitmap(bitmap));
 
@@ -2310,7 +2310,7 @@ class PDFImageRasterBand final : public PDFRasterBand
   public:
     PDFImageRasterBand(PDFDataset *, int);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/
@@ -2609,6 +2609,9 @@ PDFDataset::~PDFDataset()
     m_poPagePdfium = nullptr;
 #endif  // ~ HAVE_PDFIUM
 
+    m_bHasLoadedLayers = true;
+    m_apoLayers.clear();
+
     /* Now do the update */
     if (poPageDictCopy)
     {
@@ -2651,8 +2654,6 @@ PDFDataset::~PDFDataset()
     }
 
     CleanupIntermediateResources();
-
-    m_apoLayers.clear();
 
     // Do that only after having destroyed Poppler objects
     m_fp.reset();

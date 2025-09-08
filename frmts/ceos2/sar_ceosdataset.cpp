@@ -147,7 +147,7 @@ class SAR_CEOSDataset final : public GDALPamDataset
     char **GetMetadata(const char *pszDomain) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
-    virtual char **GetFileList(void) override;
+    char **GetFileList(void) override;
 };
 
 /************************************************************************/

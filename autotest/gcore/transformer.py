@@ -18,7 +18,6 @@ import math
 
 import gdaltest
 import pytest
-from lxml import etree
 
 from osgeo import gdal, osr
 
@@ -1337,8 +1336,19 @@ def test_transformer_unknown_option():
 ###############################################################################
 
 
-schema_optionlist = etree.XML(
-    r"""
+def test_transformer_validate_options():
+
+    if (
+        gdaltest.is_travis_branch("mingw64")
+        or gdaltest.is_travis_branch("build-windows-conda")
+        or gdaltest.is_travis_branch("build-windows-minimum")
+    ):
+        pytest.skip("Crashes for unknown reason")
+
+    from lxml import etree
+
+    schema_optionlist = etree.XML(
+        r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="Value">
     <xs:complexType>
@@ -1388,17 +1398,7 @@ schema_optionlist = etree.XML(
   </xs:element>
 </xs:schema>
 """
-)
-
-
-def test_transformer_validate_options():
-
-    if (
-        gdaltest.is_travis_branch("mingw64")
-        or gdaltest.is_travis_branch("build-windows-conda")
-        or gdaltest.is_travis_branch("build-windows-minimum")
-    ):
-        pytest.skip("Crashes for unknown reason")
+    )
 
     schema = etree.XMLSchema(schema_optionlist)
 

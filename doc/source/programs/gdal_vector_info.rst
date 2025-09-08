@@ -23,6 +23,9 @@ Description
 :program:`gdal vector info` lists various information about a GDAL supported
 vector dataset.
 
+Starting with GDAL 3.12, :program:`gdal vector info` can be used as the last
+step of a pipeline.
+
 The following options are available:
 
 Standard options
@@ -30,9 +33,10 @@ Standard options
 
 .. option:: -f, --of, --format, --output-format json|text
 
-    Which output format to use. Default is JSON.
+    Which output format to use. Default is JSON, and starting with GDAL 3.12,
+    text when invoked from command line.
 
-.. option:: -l, --layer <LAYER>
+.. option:: -l, --layer, --input-layer <INPUT-LAYER>
 
     Name of one or more layers to inspect. If no layer names are passed and
     :option:`--sql` is not specified, then all layers will be selected.
@@ -44,9 +48,16 @@ Standard options
 
 .. option:: --features
 
-    List all features. Beware of RAM consumption on large layers when using
-    JSON output.
+    List all features by default, unless limited with :option:`--limit`.
+    Beware of RAM consumption on large layers when using JSON output.
     This option is mutually exclusive with the :option:`--summary` option.
+
+.. option:: --limit <FEATURE-COUNT>
+
+    .. versionadded:: 3.12
+
+    Limit the number of features reported per layer. When set, this implies
+    :option:`--features`.
 
 .. option:: --sql <statement>|@<filename>
 
@@ -57,6 +68,8 @@ Standard options
     DELETE, DROP TABLE, ALTER TABLE etc if the dataset is opened in update mode.
     Editing capabilities depend on the selected
     dialect with :option:`--dialect`.
+
+    This option is mutually exclusive with the :option:`--where` option.
 
 .. option:: --where <WHERE>|@<filename>
 
@@ -70,6 +83,8 @@ Standard options
     .. code-block:: console
 
         --where "\"Corner Point Identifier\" LIKE '%__00_00'"
+
+    This option is mutually exclusive with the :option:`--sql` option.
 
 .. option:: --dialect <dialect>
 

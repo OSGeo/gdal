@@ -548,7 +548,7 @@ class FakeBand : public GDALRasterBand
     }
 };
 
-class DatasetWithErrorInFlushCache : public GDALDataset
+class DatasetWithErrorInFlushCache final : public GDALDataset
 {
     bool bHasFlushCache;
 
@@ -557,7 +557,7 @@ class DatasetWithErrorInFlushCache : public GDALDataset
     {
     }
 
-    ~DatasetWithErrorInFlushCache()
+    ~DatasetWithErrorInFlushCache() override
     {
         FlushCache(true);
     }
@@ -2456,59 +2456,67 @@ TEST_F(test_gdal, TileMatrixSet)
     }
 
     {
-        auto poTMS = gdal::TileMatrixSet::parse(
-            "{"
-            "    \"type\": \"TileMatrixSetType\","
-            "    \"title\": \"CRS84 for the World\","
-            "    \"identifier\": \"WorldCRS84Quad\","
-            "    \"boundingBox\":"
-            "    {"
-            "        \"type\": \"BoundingBoxType\","
-            "        \"crs\": "
-            "\"http://www.opengis.net/def/crs/OGC/1.X/"
-            "CRS84\","  // 1.3 modified to 1.X to test
-                        // difference with supportedCRS
-            "        \"lowerCorner\": [-180, -90],"
-            "        \"upperCorner\": [180, 90]"
-            "    },"
-            "    \"supportedCRS\": "
-            "\"http://www.opengis.net/def/crs/OGC/1.3/"
-            "CRS84\","
-            "    \"wellKnownScaleSet\": "
-            "\"http://www.opengis.net/def/wkss/OGC/1.0/"
-            "GoogleCRS84Quad\","
-            "    \"tileMatrix\":"
-            "    ["
-            "        {"
-            "            \"type\": \"TileMatrixType\","
-            "            \"identifier\": \"0\","
-            "            \"scaleDenominator\": "
-            "279541132.014358,"
-            "            \"topLeftCorner\": [-180, 90],"
-            "            \"tileWidth\": 256,"
-            "            \"tileHeight\": 256,"
-            "            \"matrixWidth\": 2,"
-            "            \"matrixHeight\": 1"
-            "        },"
-            "        {"
-            "            \"type\": \"TileMatrixType\","
-            "            \"identifier\": \"1\","
-            "            \"scaleDenominator\": 100000000,"
-            "            \"topLeftCorner\": [-123, 90],"
-            "            \"tileWidth\": 128,"
-            "            \"tileHeight\": 256,"
-            "            \"matrixWidth\": 4,"
-            "            \"matrixHeight\": 2,"
-            "            \"variableMatrixWidth\": [{"
-            "               \"type\": "
-            "\"VariableMatrixWidthType\","
-            "               \"coalesce\" : 2,"
-            "               \"minTileRow\": 0,"
-            "               \"maxTileRow\": 1"
-            "            }]"
-            "        }"
-            "    ]"
-            "}");
+        const char *pszJSON =
+            "{\n"
+            "  \"type\":\"TileMatrixSetType\",\n"
+            "  \"title\":\"CRS84 for the World\",\n"
+            "  \"identifier\":\"WorldCRS84Quad\",\n"
+            "  \"boundingBox\":{\n"
+            "    \"type\":\"BoundingBoxType\",\n"
+            // 1.3 modified to 1.X to test difference with supportedCRS
+            "    \"crs\":\"http://www.opengis.net/def/crs/OGC/1.X/CRS84\",\n"
+            "    \"lowerCorner\":[\n"
+            "      -180.0,\n"
+            "      -90.0\n"
+            "    ],\n"
+            "    \"upperCorner\":[\n"
+            "      180.0,\n"
+            "      90.0\n"
+            "    ]\n"
+            "  },\n"
+            "  "
+            "\"supportedCRS\":\"http://www.opengis.net/def/crs/OGC/1.3/"
+            "CRS84\",\n"
+            "  "
+            "\"wellKnownScaleSet\":\"http://www.opengis.net/def/wkss/OGC/1.0/"
+            "GoogleCRS84Quad\",\n"
+            "  \"tileMatrix\":[\n"
+            "    {\n"
+            "      \"type\":\"TileMatrixType\",\n"
+            "      \"identifier\":\"0\",\n"
+            "      \"scaleDenominator\":279541132.01435798,\n"
+            "      \"topLeftCorner\":[\n"
+            "        -180.0,\n"
+            "        90.0\n"
+            "      ],\n"
+            "      \"tileWidth\":256,\n"
+            "      \"tileHeight\":256,\n"
+            "      \"matrixWidth\":2,\n"
+            "      \"matrixHeight\":1\n"
+            "    },\n"
+            "    {\n"
+            "      \"type\":\"TileMatrixType\",\n"
+            "      \"identifier\":\"1\",\n"
+            "      \"scaleDenominator\":100000000.0,\n"
+            "      \"topLeftCorner\":[\n"
+            "        -123.0,\n"
+            "        90.0\n"
+            "      ],\n"
+            "      \"tileWidth\":128,\n"
+            "      \"tileHeight\":256,\n"
+            "      \"matrixWidth\":4,\n"
+            "      \"matrixHeight\":2,\n"
+            "      \"variableMatrixWidth\":[\n"
+            "        {\n"
+            "          \"coalesce\":2,\n"
+            "          \"minTileRow\":0,\n"
+            "          \"maxTileRow\":1\n"
+            "        }\n"
+            "      ]\n"
+            "    }\n"
+            "  ]\n"
+            "}";
+        auto poTMS = gdal::TileMatrixSet::parse(pszJSON);
         EXPECT_TRUE(poTMS != nullptr);
         if (poTMS)
         {
@@ -2523,6 +2531,8 @@ TEST_F(test_gdal, TileMatrixSet)
             EXPECT_EQ(vmw.mCoalesce, 2);
             EXPECT_EQ(vmw.mMinTileRow, 0);
             EXPECT_EQ(vmw.mMaxTileRow, 1);
+
+            EXPECT_STREQ(poTMS->exportToTMSJsonV1().c_str(), pszJSON);
         }
     }
 
@@ -3926,7 +3936,7 @@ TEST_F(test_gdal, gtiff_ReadCompressedData)
                       20, 1, nullptr, nullptr, &nNeededSize,
                       &pszDetailedFormat),
                   CE_None);
-        EXPECT_EQ(nNeededSize, 476);
+        EXPECT_EQ(nNeededSize, 476U);
         EXPECT_TRUE(pszDetailedFormat != nullptr);
         if (pszDetailedFormat)
         {
@@ -4149,7 +4159,7 @@ TEST_F(test_gdal, jpeg_ReadCompressedData)
                       GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 361,
                       260, 3, nullptr, &pBuffer, &nSize, nullptr),
                   CE_None);
-        EXPECT_GT(nSize, 4);
+        EXPECT_GT(nSize, 4U);
         EXPECT_LT(nSize, nUpperBoundSize);
         EXPECT_NE(pBuffer, nullptr);
         if (pBuffer != nullptr && nSize >= 4 && nSize <= nUpperBoundSize)
@@ -4671,27 +4681,27 @@ TEST_F(test_gdal, ReadRaster)
         const auto expected_res = std::vector<uint8_t>{0, 0, 1, 128, 255, 255};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res, 0, 0, 2, 3, 2, 3),
                   CE_None);
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res, 0, 0, 2, 3), CE_None);
         EXPECT_EQ(res, expected_res);
 
 #if __cplusplus >= 202002L
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(std::span<uint8_t>(res)),
                   CE_None);
         EXPECT_EQ(res, expected_res);
 #endif
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data(), res.size()),
                   CE_None);
         EXPECT_EQ(res, expected_res);
@@ -4703,13 +4713,13 @@ TEST_F(test_gdal, ReadRaster)
             CE_Failure);
         CPLPopErrorHandler();
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(
             poDS->GetRasterBand(1)->ReadRaster(res.data(), 0, 0, 0, 2, 3, 2, 3),
             CE_None);
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data(), 0, 0, 0, 2, 3),
                   CE_None);
         EXPECT_EQ(res, expected_res);
@@ -4788,7 +4798,7 @@ TEST_F(test_gdal, ReadRaster)
             std::vector<int8_t>{-128, -1, 1, 127, 127, 127};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -4801,11 +4811,11 @@ TEST_F(test_gdal, ReadRaster)
             std::vector<uint16_t>{0, 0, 1, 128, 32768, 65535};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data(), res.size()),
                   CE_None);
         EXPECT_EQ(res, expected_res);
@@ -4819,7 +4829,7 @@ TEST_F(test_gdal, ReadRaster)
             std::vector<int16_t>{-32768, -1, 1, 128, 32767, 32767};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -4834,7 +4844,7 @@ TEST_F(test_gdal, ReadRaster)
             -32768, -1, 1, 128, 32767, 32767};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -4848,7 +4858,7 @@ TEST_F(test_gdal, ReadRaster)
             std::vector<uint32_t>{0, 0, 1, 128, 32768, UINT32_MAX};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -4861,7 +4871,7 @@ TEST_F(test_gdal, ReadRaster)
             std::vector<int32_t>{INT32_MIN, -1, 1, 128, 32768, INT32_MAX};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -4876,7 +4886,7 @@ TEST_F(test_gdal, ReadRaster)
             INT32_MIN, -1, 1, 128, 32768, INT32_MAX};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -4890,7 +4900,7 @@ TEST_F(test_gdal, ReadRaster)
             std::vector<uint64_t>{0, 0, 1, 128, 32768, UINT64_MAX};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -4903,7 +4913,7 @@ TEST_F(test_gdal, ReadRaster)
             std::vector<int64_t>{INT64_MIN, -1, 1, 128, 32768, INT64_MAX};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -4921,7 +4931,7 @@ TEST_F(test_gdal, ReadRaster)
                                   cpl::NumericLimits<GFloat16>::infinity()};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), static_cast<GFloat16>(0.0f));
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -4939,7 +4949,7 @@ TEST_F(test_gdal, ReadRaster)
                                cpl::NumericLimits<float>::infinity()};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0.0f);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -4957,7 +4967,7 @@ TEST_F(test_gdal, ReadRaster)
             cpl::NumericLimits<float>::infinity()};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0.0f);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -4970,7 +4980,7 @@ TEST_F(test_gdal, ReadRaster)
             std::vector<double>{-1e300, -1, 1, 128, 32768, 1e300};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -4983,7 +4993,7 @@ TEST_F(test_gdal, ReadRaster)
             std::vector<std::complex<double>>{-1e300, -1, 1, 128, 32768, 1e300};
         EXPECT_EQ(res, expected_res);
 
-        std::fill(res.begin(), res.end(), 0);
+        std::fill(res.begin(), res.end(), expected_res[2]);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }
@@ -5605,6 +5615,9 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
         EXPECT_THROW(CPL_IGNORE_RET_VAL(gdal::IfThenElse(
                          firstBand, (*poOtherDS->GetRasterBand(1)), firstBand)),
                      std::runtime_error);
+        EXPECT_THROW(CPL_IGNORE_RET_VAL(
+                         gdal::pow(firstBand, (*poOtherDS->GetRasterBand(1)))),
+                     std::runtime_error);
 #endif
     }
 
@@ -5613,11 +5626,17 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
         {
             return (0.5 + 2 / gdal::min(c, gdal::max(a, b)) + 3 * a * 2 -
                     a * (1 - b) / c - 2 * a - 3 + 4) /
-                   3;
+                       gdal::pow(3.0, a) * gdal::pow(b, 2.0) +
+                   gdal::abs(-a) + gdal::fabs(-a) + gdal::sqrt(a) +
+                   gdal::log10(a)
+#ifdef HAVE_MUPARSER
+                   + gdal::log(a) + gdal::pow(a, b)
+#endif
+                ;
         };
 
         auto formula = Calc(firstBand, secondBand, thirdBand);
-        constexpr double expectedVal = Calc(FIRST, SECOND, THIRD);
+        const double expectedVal = Calc(FIRST, SECOND, THIRD);
 
         EXPECT_EQ(formula.GetXSize(), WIDTH);
         EXPECT_EQ(formula.GetYSize(), HEIGHT);

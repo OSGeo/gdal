@@ -20,12 +20,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#if HAVE_FCNTL_H
+
 #include <fcntl.h>
-#endif
-#if HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
 
 #include <algorithm>
 #include <atomic>
@@ -118,7 +114,7 @@ constexpr const char *szHIDDEN_DIRNAME = "/vsimem/.#!HIDDEN!#.";
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIMemFile
+class VSIMemFile final
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIMemFile)
 
@@ -137,7 +133,7 @@ class VSIMemFile
     CPL_SHARED_MUTEX_TYPE m_oMutex{};
 
     VSIMemFile();
-    virtual ~VSIMemFile();
+    ~VSIMemFile();
 
     bool SetLength(vsi_l_offset nNewSize);
 };
@@ -204,12 +200,9 @@ class VSIMemFilesystemHandler final : public VSIFilesystemHandler
 
     ~VSIMemFilesystemHandler() override;
 
-    // TODO(schwehr): Fix VSIFileFromMemBuffer so that using is not needed.
-    using VSIFilesystemHandler::Open;
-
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
     int Unlink(const char *pszFilename) override;
@@ -626,10 +619,9 @@ VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
-                                                const char *pszAccess,
-                                                bool bSetError,
-                                                CSLConstList /* papszOptions */)
+VSIVirtualHandleUniquePtr
+VSIMemFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
+                              bool bSetError, CSLConstList /* papszOptions */)
 
 {
     CPLMutexHolder oHolder(&hMutex);
@@ -709,7 +701,7 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Setup the file handle on this file.                             */
     /* -------------------------------------------------------------------- */
-    VSIMemHandle *poHandle = new VSIMemHandle;
+    auto poHandle = std::make_unique<VSIMemHandle>();
 
     poHandle->poFile = poFile;
     poHandle->m_nOffset = 0;
@@ -732,7 +724,7 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
         poHandle->m_nOffset = nOffset;
     }
 
-    return poHandle;
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/

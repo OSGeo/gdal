@@ -2311,17 +2311,21 @@ GDALWarpOptions *CPL_STDCALL GDALDeserializeWarpOptions(CPLXMLNode *psTree)
                                        GDALDataType eDataType) -> double
         {
             if (eDataType == GDT_Float32 &&
-                CPLString().Printf(
-                    "%.16g", -std::numeric_limits<float>::max()) == pszValueIn)
+                CPLString().Printf("%.16g",
+                                   static_cast<double>(
+                                       std::numeric_limits<float>::lowest())) ==
+                    pszValueIn)
             {
-                return std::numeric_limits<float>::lowest();
+                return static_cast<double>(
+                    std::numeric_limits<float>::lowest());
             }
             else if (eDataType == GDT_Float32 &&
-                     CPLString().Printf("%.16g",
-                                        std::numeric_limits<float>::max()) ==
+                     CPLString().Printf(
+                         "%.16g", static_cast<double>(
+                                      std::numeric_limits<float>::max())) ==
                          pszValueIn)
             {
-                return std::numeric_limits<float>::max();
+                return static_cast<double>(std::numeric_limits<float>::max());
             }
             else
             {

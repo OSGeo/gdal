@@ -25,6 +25,7 @@ from osgeo import gdal, gdalconst
 
 pytestmark = pytest.mark.require_driver("JPEG")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -156,12 +157,9 @@ def test_jpeg_3():
 
 def test_jpeg_4():
 
-    try:
-        gdalconst.GMF_ALL_VALID
-    except AttributeError:
-        pytest.skip()
-
     ds = gdal.Open("data/jpeg/masked.jpg")
+
+    assert ds.GetMetadataDomainList() == ["IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"]
 
     refband = ds.GetRasterBand(1)
 
@@ -176,11 +174,6 @@ def test_jpeg_4():
 
 
 def test_jpeg_5():
-
-    try:
-        gdalconst.GMF_ALL_VALID
-    except AttributeError:
-        pytest.skip()
 
     ds = gdal.Open("data/jpeg/masked.jpg")
 
@@ -767,13 +760,13 @@ def test_jpeg_mask_lsb_order_issue_4351():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 15, 4, 3)
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(7, 2, 2, 1, b"\xFF" * 2)
+    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(7, 2, 2, 1, b"\xff" * 2)
     tmpfilename = "/vsimem/test_jpeg_mask_lsb_order_issue_4351.jpg"
     assert gdal.GetDriverByName("JPEG").CreateCopy(tmpfilename, src_ds)
     ds = gdal.Open(tmpfilename)
     assert (
         ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 2, 15, 1)
-        == b"\x00" * 7 + b"\xFF" * 2 + b"\x00" * 6
+        == b"\x00" * 7 + b"\xff" * 2 + b"\x00" * 6
     )
     ds = None
     gdal.GetDriverByName("JPEG").Delete(tmpfilename)
@@ -1274,6 +1267,7 @@ def test_jpeg_flir_png():
     ds = gdal.Open("data/jpeg/flir/FLIR.jpg")
     assert ds.GetMetadataDomainList() == [
         "IMAGE_STRUCTURE",
+        "",
         "FLIR",
         "SUBDATASETS",
         "DERIVED_SUBDATASETS",
@@ -1388,6 +1382,43 @@ def test_jpeg_flir_error_flir_subds():
     with gdal.quiet_errors():
         ds = gdal.Open("JPEG:data/jpeg/masked.jpg:FLIR_RAW_THERMAL_IMAGE")
         assert ds is None
+
+
+###############################################################################
+# Open JPEG image with DJI raw thermal image as raw
+
+
+def test_jpeg_dji_thermal_metadata():
+
+    ds = gdal.Open("data/jpeg/dji/DJI_M3T.JPG")
+    assert sorted(ds.GetMetadataDomainList()) == [
+        "",
+        "DERIVED_SUBDATASETS",
+        "DJI",
+        "IMAGE_STRUCTURE",
+        "SUBDATASETS",
+        "xml:XMP",
+    ]
+    assert ds.GetMetadata("DJI") == {
+        "RawThermalImageHeight": "512",
+        "RawThermalImageWidth": "640",
+    }
+    assert ds.RasterCount == 3
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 1
+
+    ds = gdal.Open(subds[0][0])
+    assert ds is not None
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+    assert ds.GetRasterBand(1).Checksum() == 50952
+
+
+def test_jpeg_dji_thermal_raw():
+
+    ds = gdal.Open('JPEG:"data/jpeg/dji/DJI_M3T.JPG":DJI_RAW_THERMAL_IMAGE')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+    assert ds.GetRasterBand(1).Checksum() == 50952
 
 
 ###############################################################################
@@ -1654,6 +1685,7 @@ def test_jpeg_read_pix4d_xmp_crs_vertcs_orthometric():
     # exiftool "-xmp<=pix4d_xmp_crs_vertcs_orthometric.xml"  pix4d_xmp_crs_vertcs_orthometric.jpg
     # where pix4d_xmp_crs_vertcs_orthometric.xml is the XMP content
     ds = gdal.Open("data/jpeg/pix4d_xmp_crs_vertcs_orthometric.jpg")
+    assert ds.GetMetadataDomainList() == ["xml:XMP", "DERIVED_SUBDATASETS"]
     srs = ds.GetSpatialRef()
     assert srs.GetAuthorityCode("GEOGCS") == "6318"
     assert srs.GetAuthorityCode("VERT_CS") == "6360"
@@ -1671,6 +1703,32 @@ def test_jpeg_read_pix4d_xmp_crs_vertcs_ellipsoidal():
     ds = gdal.Open("data/jpeg/pix4d_xmp_crs_vertcs_ellipsoidal.jpg")
     srs = ds.GetSpatialRef()
     assert srs.GetAuthorityCode(None) == "6319"
+
+
+###############################################################################
+
+
+def test_jpeg_create_copy_only_visible_at_close_time(tmp_path):
+
+    src_ds = gdal.Open("data/byte.tif")
+    out_filename = tmp_path / "tmp.jpg"
+
+    def my_callback(pct, msg, user_data):
+        if pct < 1:
+            assert gdal.VSIStatL(out_filename) is None
+        return True
+
+    drv = gdal.GetDriverByName("JPEG")
+    assert drv.GetMetadataItem(gdal.DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME) == "YES"
+    drv.CreateCopy(
+        out_filename,
+        src_ds,
+        options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"],
+        callback=my_callback,
+    )
+
+    with gdal.Open(out_filename) as ds:
+        ds.GetRasterBand(1).Checksum()
 
 
 ###############################################################################

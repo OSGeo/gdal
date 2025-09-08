@@ -56,44 +56,44 @@ static void GDALFilterLine(const float *pafLastLine, const float *pafThisLine,
 
         CPLAssert(pabyThisTMask[iX]);
 
-        double dfValSum = 0.0;
-        double dfWeightSum = 0.0;
+        float fValSum = 0.0f;
+        float fWeightSum = 0.0f;
 
         // Previous line.
         if (pafLastLine != nullptr)
         {
             if (iX > 0 && pabyLastTMask[iX - 1])
             {
-                dfValSum += pafLastLine[iX - 1];
-                dfWeightSum += 1.0;
+                fValSum += pafLastLine[iX - 1];
+                fWeightSum += 1.0f;
             }
             if (pabyLastTMask[iX])
             {
-                dfValSum += pafLastLine[iX];
-                dfWeightSum += 1.0;
+                fValSum += pafLastLine[iX];
+                fWeightSum += 1.0f;
             }
             if (iX < nXSize - 1 && pabyLastTMask[iX + 1])
             {
-                dfValSum += pafLastLine[iX + 1];
-                dfWeightSum += 1.0;
+                fValSum += pafLastLine[iX + 1];
+                fWeightSum += 1.0f;
             }
         }
 
         // Current Line.
         if (iX > 0 && pabyThisTMask[iX - 1])
         {
-            dfValSum += pafThisLine[iX - 1];
-            dfWeightSum += 1.0;
+            fValSum += pafThisLine[iX - 1];
+            fWeightSum += 1.0f;
         }
         if (pabyThisTMask[iX])
         {
-            dfValSum += pafThisLine[iX];
-            dfWeightSum += 1.0;
+            fValSum += pafThisLine[iX];
+            fWeightSum += 1.0f;
         }
         if (iX < nXSize - 1 && pabyThisTMask[iX + 1])
         {
-            dfValSum += pafThisLine[iX + 1];
-            dfWeightSum += 1.0;
+            fValSum += pafThisLine[iX + 1];
+            fWeightSum += 1.0f;
         }
 
         // Next line.
@@ -101,22 +101,22 @@ static void GDALFilterLine(const float *pafLastLine, const float *pafThisLine,
         {
             if (iX > 0 && pabyNextTMask[iX - 1])
             {
-                dfValSum += pafNextLine[iX - 1];
-                dfWeightSum += 1.0;
+                fValSum += pafNextLine[iX - 1];
+                fWeightSum += 1.0f;
             }
             if (pabyNextTMask[iX])
             {
-                dfValSum += pafNextLine[iX];
-                dfWeightSum += 1.0;
+                fValSum += pafNextLine[iX];
+                fWeightSum += 1.0f;
             }
             if (iX < nXSize - 1 && pabyNextTMask[iX + 1])
             {
-                dfValSum += pafNextLine[iX + 1];
-                dfWeightSum += 1.0;
+                fValSum += pafNextLine[iX + 1];
+                fWeightSum += 1.0f;
             }
         }
 
-        pafOutLine[iX] = static_cast<float>(dfValSum / dfWeightSum);
+        pafOutLine[iX] = fValSum / fWeightSum;
     }
 }
 
@@ -894,7 +894,7 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
                         {
                             const double dfWeight = 1.0 / adfQuadDist[iQuad];
                             dfWeightSum += dfWeight;
-                            dfValueSum += afQuadValue[iQuad] * dfWeight;
+                            dfValueSum += double(afQuadValue[iQuad]) * dfWeight;
                         }
                     }
                 }

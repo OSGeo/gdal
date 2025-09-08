@@ -14,6 +14,9 @@
 
 #include "gdalalg_vector_info.h"
 #include "gdalalg_vector_buffer.h"
+#include "gdalalg_vector_check_geometry.h"
+#include "gdalalg_vector_check_coverage.h"
+#include "gdalalg_vector_clean_coverage.h"
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_concat.h"
 #include "gdalalg_vector_convert.h"
@@ -61,8 +64,11 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
 
         AddOutputStringArg(&m_output);
 
-        RegisterSubAlgorithm<GDALVectorInfoAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorInfoAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorBufferAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorCheckCoverageAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorCheckGeometryAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorCleanCoverageAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorClipAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorConcatAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorConvertAlgorithm>();

@@ -93,13 +93,18 @@ CPL_C_END
 
 void OGR2SQLITE_Register()
 {
-#if !defined(SQLITE_HAS_NON_DEPRECATED_AUTO_EXTENSION) && defined(__GNUC__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
+#if !defined(SQLITE_HAS_NON_DEPRECATED_AUTO_EXTENSION)
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#endif
+#ifdef HAVE_WFLAG_CAST_FUNCTION_TYPE
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
 #endif
     sqlite3_auto_extension(
         reinterpret_cast<void (*)(void)>(OGR2SQLITE_static_register));
-#if !defined(SQLITE_HAS_NON_DEPRECATED_AUTO_EXTENSION) && defined(__GNUC__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 }

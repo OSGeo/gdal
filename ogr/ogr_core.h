@@ -1049,7 +1049,7 @@ int CPL_DLL OGRParseDate(const char *pszInput, OGRField *psOutput,
 #define ODsCCurveGeometries                                                    \
     "CurveGeometries" /**< Dataset capability for curve geometries support */
 #define ODsCTransactions                                                       \
-    "Transactions" /**< Dataset capability for dataset transcations */
+    "Transactions" /**< Dataset capability for dataset transactions */
 #define ODsCEmulatedTransactions                                               \
     "EmulatedTransactions" /**< Dataset capability for emulated dataset        \
                               transactions */

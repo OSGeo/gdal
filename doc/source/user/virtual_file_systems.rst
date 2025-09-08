@@ -457,6 +457,8 @@ Starting with GDAL 2.3, the :config:`CPL_VSIL_CURL_NON_CACHED` configuration opt
 
 Starting with GDAL 2.1, ``/vsicurl/`` will try to query directly redirected URLs to Amazon S3 signed URLs during their validity period, so as to minimize round-trips. This behavior can be disabled by setting the configuration option :config:`CPL_VSIL_CURL_USE_S3_REDIRECT` to ``NO``.
 
+Starting with GDAL 3.12,  the :config:`GDAL_HTTP_PATH_VERBATIM` configuration option can be set to ``YES`` so that sequences of ``/../`` or ``/./`` that may exist in the URL's path part are kept unchanged. Otherwise, by default, they are squashed, according to RFC 3986 section 5.2.4.
+
 :cpp:func:`VSIStatL` will return the size in st_size member and file nature- file or directory - in st_mode member (the later only reliable with FTP resources for now).
 
 :cpp:func:`VSIReadDir` should be able to parse the HTML directory listing returned by the most popular web servers, such as Apache and Microsoft IIS.
@@ -516,6 +518,14 @@ The following configuration options are specific to the /vsis3/ handler:
 
       Session token used for validation of temporary credentials
       (:config:`AWS_ACCESS_KEY_ID` and :config:`AWS_SECRET_ACCESS_KEY`)
+
+-  .. config:: AWS_S3SESSION_TOKEN
+      :since: 3.12
+
+      S3 Express session token (for directory buckets). Can be used by applications
+      handling themselves the CreateSession S3 Express request, in which case
+      they must supply the temporary credentials with :config:`AWS_ACCESS_KEY_ID`
+      and :config:`AWS_SECRET_ACCESS_KEY`
 
 -  .. config:: CPL_AWS_CREDENTIALS_FILE
       :choices: <filename>

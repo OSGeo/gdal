@@ -70,7 +70,6 @@ Andrey
 AndreyK
 andsize
 anMapNewAxisToOldAxis
-annd
 Antalya
 antialias
 antimeridian
@@ -99,7 +98,6 @@ Arrayname
 arrayStartIdx
 ASC
 ascii
-askin
 aspatial
 Aspatial
 assumerolewithwebidentity
@@ -270,13 +268,11 @@ bOwnMask
 bOwnSubtransformer
 bPixelIsPoint
 bpw
-branche
 Brashear
 bRelativeToReferencePath
 Bresenham
 bReversed
 Brezenham
-brighest
 Brodin
 Brotli
 Brovey
@@ -439,7 +435,6 @@ commandline
 Commandline
 CommitTransaction
 comparator
-comparible
 compilable
 ComplexSource
 compoundcurves
@@ -688,7 +683,6 @@ dialogs
 differencing
 dimensionality
 dimensioned
-dimensons
 dimN
 DINSTALL
 dir
@@ -1164,7 +1158,6 @@ getter
 getters
 GetTiledVirtualMem
 GetTileService
-gettings
 GetType
 GetView
 GetVirtualArray
@@ -1646,7 +1639,6 @@ libpython
 librarified
 librasterlite
 libregis
-librray
 libs
 libspatialite
 libsqlite
@@ -1769,6 +1761,8 @@ maxdistance
 maxheight
 maximising
 MaximumLong
+maxlat
+maxlon
 maxOccurs
 MaxSize
 maxwidth
@@ -1821,6 +1815,8 @@ minimalistic
 minimising
 Minio
 minixml
+minlat
+minlon
 minsize
 minX
 miny
@@ -2005,6 +2001,7 @@ neighbouring
 neighbours
 nEndVertex
 nEntryCount
+netBSD
 netcdf
 netCDF
 netcore
@@ -2241,7 +2238,6 @@ openjpeg
 OpenJPEG
 openlayers
 Operationen
-operationg
 opj
 optfile
 optfiles
@@ -2601,7 +2597,6 @@ Prepar
 preparse
 prepended
 prepending
-preprare
 preprocessing
 prescanning
 preserveFID
@@ -2764,6 +2759,7 @@ rasterization
 rasterize
 Rasterize
 rasterized
+rasterizes
 RasterizeOptions
 rasterizing
 rasterlite
@@ -2815,7 +2811,6 @@ referenceSystemIdentifier
 referenceSystemInfo
 referer
 Referer
-refererenced
 reflectance
 reflectances
 refSysID
@@ -3062,7 +3057,6 @@ Spatio
 spc
 specialised
 speciffed
-specificaiton
 specificities
 Specifieds
 SpectralBand

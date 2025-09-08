@@ -5,8 +5,8 @@
 
 .. _python_utilities:
 
-Utilities API
-=============
+Utilities / Algorithms API
+==========================
 
 Raster Utilities
 ----------------
@@ -17,11 +17,17 @@ Raster Utilities
 
 .. autofunction:: osgeo.gdal.BuildVRTOptions
 
-.. autofunction:: osgeo.gdal.CreatePansharpenedVRT
+.. autofunction:: osgeo.gdal.ComputeProximity
+
+.. autofunction:: osgeo.gdal.Contour
+
+.. autofunction:: osgeo.gdal.ContourOptions
 
 .. autofunction:: osgeo.gdal.ContourGenerate
 
 .. autofunction:: osgeo.gdal.ContourGenerateEx
+
+.. autofunction:: osgeo.gdal.CreatePansharpenedVRT
 
 .. autofunction:: osgeo.gdal.DEMProcessing
 
@@ -93,3 +99,25 @@ Vector Utilities
 
 .. autofunction:: osgeo.gdal.VectorTranslateOptions
 
+Algorithms
+----------
+
+.. autoclass:: osgeo.gdal.Algorithm
+   :members:
+   :exclude-members: thisown
+
+.. autoclass:: osgeo.gdal.AlgorithmArg
+   :members:
+   :exclude-members: thisown
+
+.. autofunction:: osgeo.gdal.AlgorithmArgTypeIsList
+
+.. autofunction:: osgeo.gdal.AlgorithmArgTypeName
+
+.. autoclass:: osgeo.gdal.AlgorithmRegistry
+   :members:
+   :exclude-members: thisown
+   
+.. autofunction:: osgeo.gdal.GetGlobalAlgorithmRegistry
+
+.. autofunction:: osgeo.gdal.Run

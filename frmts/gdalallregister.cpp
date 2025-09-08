@@ -313,10 +313,6 @@ void CPL_STDCALL GDALAllRegister()
     // NOTE: frmts/drivers.ini in the same directory should be kept in same
     // order as this file
 
-#ifdef FRMT_vrt
-    GDALRegister_VRT();
-#endif
-
 #ifdef FRMT_derived
     GDALRegister_Derived();
 #endif
@@ -336,6 +332,11 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_libertiff
     GDALRegister_LIBERTIFF();
+#endif
+
+    // VRT needs to be registered after GeoTIFF as it queries its metadata
+#ifdef FRMT_vrt
+    GDALRegister_VRT();
 #endif
 
 #ifdef FRMT_nitf
@@ -793,6 +794,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_rcm
     GDALRegister_RCM();
+#endif
+
+#ifdef FRMT_miramon
+    GDALRegister_MiraMon();
 #endif
 
 /* -------------------------------------------------------------------- */

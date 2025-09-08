@@ -1,0 +1,33 @@
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\alone_rel.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\alone_IrelI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\empy_img.img" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\empy_relI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\no_rowI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\no_colI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\no_zero_col_rowI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\no_bandsI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\no_bands2I.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\no_bands3I.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\no_typeI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\wrong_typeI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\wrong_band_nameI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\WrongPaletteI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\BigPaletteI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\several_errors\EmptyPaletteI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
+

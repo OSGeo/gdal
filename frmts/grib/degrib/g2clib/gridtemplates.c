@@ -176,7 +176,6 @@ gtemplate *getgridtemplate(g2int number)
            }
            else {
              printf("getgridtemplate: GDT Template 3.%d not defined.\n",(int)number);
-             return(0);        //NULL
            }
 
          return(0);        //NULL

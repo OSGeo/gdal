@@ -16,6 +16,16 @@ from C++ and Python:
 - subtraction, with ``*`` operator
 - multiplication, with ``-`` operator
 - division, with ``/`` operator
+- absolute value / module, with :cpp:func:`gdal::abs` in C++ and
+  :py:meth:`osgeo.gdal.abs` in Python
+- square root, with :cpp:func:`gdal::sqrt` in C++ and
+  :py:meth:`osgeo.gdal.sqrt` in Python
+- logarithm base 10, with :cpp:func:`gdal::log10` in C++ and
+  :py:meth:`osgeo.gdal.log10` in Python
+- natural logarithm, with :cpp:func:`gdal::log` in C++ and
+  :py:meth:`osgeo.gdal.log` in Python
+- raising to the power, with :cpp:func:`gdal::pow` in C++ and
+  :py:meth:`osgeo.gdal.pow` in Python
 - strictly greater than comparison, with ``>`` operator
 - greater or equal to comparison, with ``>=`` operator
 - strictly lesser than comparison, with ``<`` operator
@@ -41,7 +51,7 @@ Other operations are available:
   :py:meth:`osgeo.gdal.where` in Python (similar to `NumPy where <https://numpy.org/doc/stable/reference/generated/numpy.where.html>`__)
 - cast to a data type, with :cpp:func:`GDALRasterBand::AsType` in C++ and
   :py:meth:`osgeo.gdal.Band.astype` in Python
-- minimum of several bands (or constants), with :cpp:func:`gdal::min` in C++ an
+- minimum of several bands (or constants), with :cpp:func:`gdal::min` in C++ and
   :py:meth:`osgeo.gdal.minimum` in Python
 - maximum of several bands (or constants), with :cpp:func:`gdal::max` in C++ and
   :py:meth:`osgeo.gdal.maximum` in Python

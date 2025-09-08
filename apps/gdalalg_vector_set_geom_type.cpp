@@ -83,7 +83,7 @@ class GDALVectorSetGeomTypeAlgorithmLayer final
         m_poFeatureDefn->Release();
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -95,7 +95,7 @@ class GDALVectorSetGeomTypeAlgorithmLayer final
         return OGRLayer::GetFeatureCount(bForce);
     }
 
-    int TestCapability(const char *pszCap) override
+    int TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCRandomRead) || EQUAL(pszCap, OLCCurveGeometries) ||
             EQUAL(pszCap, OLCMeasuredGeometries) ||

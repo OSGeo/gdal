@@ -734,7 +734,6 @@ std::vector<unsigned char> SGeometry_Reader::serializeToWKB(size_t featureInd)
         default:
 
             throw SG_Exception_BadFeature();
-            break;
     }
 
     return ret;

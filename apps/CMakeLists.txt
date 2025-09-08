@@ -6,6 +6,28 @@ add_library(
   commonutils.h
   gdal_utils.h
   gdalargumentparser.cpp
+  gdalalg_main.cpp
+  gdalgetgdalpath.cpp
+  gdalinfo_lib.cpp
+  gdalbuildvrt_lib.cpp
+  gdal_grid_lib.cpp
+  gdal_translate_lib.cpp
+  gdal_rasterize_lib.cpp
+  gdal_contour_lib.cpp
+  gdalwarp_lib.cpp
+  commonutils.cpp
+  ogrinfo_lib.cpp
+  ogr2ogr_lib.cpp
+  gdaldem_lib.cpp
+  nearblack_lib.cpp
+  nearblack_lib_floodfill.cpp
+  gdal_footprint_lib.cpp
+  gdalmdiminfo_lib.cpp
+  gdalmdimtranslate_lib.cpp
+  gdaltindex_lib.cpp)
+
+if(GDAL_ENABLE_ALGORITHMS)
+target_sources(appslib PRIVATE
   gdalalg_clip_common.cpp
   gdalalg_convert.cpp
   gdalalg_info.cpp
@@ -14,23 +36,24 @@ add_library(
   gdalalg_dataset_copy.cpp
   gdalalg_dataset_rename.cpp
   gdalalg_dataset_delete.cpp
-  gdalalg_main.cpp
   gdalalg_mdim.cpp
   gdalalg_mdim_info.cpp
   gdalalg_mdim_convert.cpp
   gdalalg_pipeline.cpp
   gdalalg_raster.cpp
   gdalalg_raster_info.cpp
+  gdalalg_raster_as_features.cpp
   gdalalg_raster_aspect.cpp
   gdalalg_raster_calc.cpp
   gdalalg_raster_clean_collar.cpp
   gdalalg_raster_clip.cpp
   gdalalg_raster_color_map.cpp
   gdalalg_raster_color_merge.cpp
+  gdalalg_raster_compare.cpp
   gdalalg_raster_convert.cpp
   gdalalg_raster_create.cpp
-  gdalalg_raster_edit.cpp
   gdalalg_raster_contour.cpp
+  gdalalg_raster_edit.cpp
   gdalalg_raster_footprint.cpp
   gdalalg_raster_fill_nodata.cpp
   gdalalg_raster_hillshade.cpp
@@ -67,7 +90,10 @@ add_library(
   gdalalg_raster_write.cpp
   gdalalg_vector.cpp
   gdalalg_vector_info.cpp
+  gdalalg_vector_check_coverage.cpp
+  gdalalg_vector_check_geometry.cpp
   gdalalg_vector_clip.cpp
+  gdalalg_vector_clean_coverage.cpp
   gdalalg_vector_concat.cpp
   gdalalg_vector_convert.cpp
   gdalalg_vector_edit.cpp
@@ -105,34 +131,23 @@ add_library(
   gdalalg_vsi_move.cpp
   gdalalg_vsi_sozip.cpp
   gdalalg_vsi_sync.cpp
-  gdalgetgdalpath.cpp
-  gdalinfo_lib.cpp
-  gdalbuildvrt_lib.cpp
-  gdal_grid_lib.cpp
-  gdal_translate_lib.cpp
-  gdal_rasterize_lib.cpp
-  gdal_contour_lib.cpp
-  gdalwarp_lib.cpp
-  commonutils.cpp
-  ogrinfo_lib.cpp
-  ogr2ogr_lib.cpp
-  gdaldem_lib.cpp
-  nearblack_lib.cpp
-  nearblack_lib_floodfill.cpp
-  gdal_footprint_lib.cpp
-  gdalmdiminfo_lib.cpp
-  gdalmdimtranslate_lib.cpp
-  gdaltindex_lib.cpp)
+)
+endif()
+
 add_dependencies(appslib generate_gdal_version_h)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:appslib>)
 gdal_standard_includes(appslib)
-target_compile_options(appslib PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
+target_compile_options(appslib PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX} ${WFLAG_DOUBLE_PROMOTION})
 target_include_directories(
   appslib PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 if (HAVE_ATOMIC_UINT64_T_WITH_ATOMIC)
     gdal_target_link_libraries(appslib PRIVATE atomic)
 endif()
 gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
+
+if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
+  target_compile_definitions(appslib PRIVATE -DUSE_NEON_OPTIMIZATIONS)
+endif()
 
 if (NOT BUILD_SHARED_LIBS)
   target_compile_definitions(appslib PRIVATE STATIC_BUILD)
@@ -159,6 +174,16 @@ if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(appslib libjson)
 else ()
   gdal_target_link_libraries(appslib PRIVATE ${JSONC_TARGET})
+endif ()
+
+if (GDAL_USE_ZLIB_INTERNAL)
+  gdal_add_vendored_lib(appslib libz)
+else()
+  target_compile_definitions(appslib PRIVATE -DHAVE_ZLIB_H -DHAVE_ZLIB)
+  if (MSVC AND NOT ZLIB_IS_STATIC)
+    target_compile_definitions(appslib PRIVATE -DZLIB_DLL)
+  endif ()
+  gdal_target_link_libraries(appslib PRIVATE ZLIB::ZLIB)
 endif ()
 
 include(TargetPublicHeader)
@@ -199,7 +224,9 @@ if (BUILD_APPS)
     target_compile_definitions(ogrlineref PRIVATE -DHAVE_GEOS=1)
   endif ()
 
-  add_executable(ogrtindex ogrtindex.cpp)
+  if(GDAL_ENABLE_ALGORITHMS)
+    add_executable(ogrtindex ogrtindex.cpp)
+  endif()
   add_executable(nearblack nearblack_bin.cpp)
   add_executable(gdalmdiminfo gdalmdiminfo_bin.cpp)
   add_executable(gdalmdimtranslate gdalmdimtranslate_bin.cpp)
@@ -208,7 +235,7 @@ if (BUILD_APPS)
 
   add_library(utils_common OBJECT gdalargumentparser.cpp)
   gdal_standard_includes(utils_common)
-  target_compile_options(utils_common PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST})
+  target_compile_options(utils_common PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_DOUBLE_PROMOTION})
   add_dependencies(utils_common generate_gdal_version_h)
 
   set(APPS_TARGETS
@@ -229,7 +256,6 @@ if (BUILD_APPS)
       gdal_viewshed
       nearblack
       ogrlineref
-      ogrtindex
       gdalwarp
       gdal_contour
       gdallocationinfo
@@ -239,6 +265,9 @@ if (BUILD_APPS)
       gdalmdiminfo
       gdalmdimtranslate
       sozip)
+  if (GDAL_ENABLE_ALGORITHMS)
+    list(APPEND APPS_TARGETS ogrtindex)
+  endif()
   if (ENABLE_GNM)
     add_executable(gnmanalyse gnmanalyse.cpp)
     add_executable(gnmmanage gnmmanage.cpp)

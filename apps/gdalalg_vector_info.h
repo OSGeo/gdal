@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_INFO_INCLUDED
 #define GDALALG_VECTOR_INFO_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_vector_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,7 +21,8 @@
 /*                       GDALVectorInfoAlgorithm                        */
 /************************************************************************/
 
-class GDALVectorInfoAlgorithm final : public GDALAlgorithm
+class GDALVectorInfoAlgorithm /* non final */
+    : public GDALVectorPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "info";
@@ -29,34 +30,51 @@ class GDALVectorInfoAlgorithm final : public GDALAlgorithm
         "Return information on a vector dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_info.html";
 
-    GDALVectorInfoAlgorithm();
+    explicit GDALVectorInfoAlgorithm(bool standaloneStep = false);
+
+    bool CanBeLastStep() const override
+    {
+        return true;
+    }
 
     void SetDataset(GDALDataset *poDS)
     {
         auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        if (arg)
+        if (arg && poDS)
         {
-            arg->Set(poDS);
+            auto &val = arg->Get<std::vector<GDALArgDatasetValue>>();
+            val.resize(1);
+            val[0].Set(poDS);
+            arg->NotifyValueSet();
             arg->SetSkipIfAlreadySet();
         }
     }
 
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
-    std::string m_format{};
-    GDALArgDatasetValue m_dataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-    bool m_update = false;
     std::vector<std::string> m_layerNames{};
     bool m_listFeatures = false;
     bool m_summaryOnly = false;
-    bool m_stdout = false;
     std::string m_sql{};
     std::string m_where{};
     std::string m_dialect{};
-    std::string m_output{};
+    int m_limit = 0;
+};
+
+/************************************************************************/
+/*                 GDALVectorInfoAlgorithmStandalone                    */
+/************************************************************************/
+
+class GDALVectorInfoAlgorithmStandalone final : public GDALVectorInfoAlgorithm
+{
+  public:
+    GDALVectorInfoAlgorithmStandalone()
+        : GDALVectorInfoAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorInfoAlgorithmStandalone() override;
 };
 
 //! @endcond

@@ -243,9 +243,6 @@ int EnvisatFile_Open(EnvisatFile **self_ptr, const char *filename,
      * Create, and initialize the EnvisatFile structure.
      */
     self = (EnvisatFile *)CPLCalloc(sizeof(EnvisatFile), 1);
-    if (self == NULL)
-        return FAILURE;
-
     self->fp = fp;
     self->filename = CPLStrdup(filename);
     self->header_dirty = 0;

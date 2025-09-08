@@ -106,12 +106,7 @@ class GDALVSISOZIPCreateBaseAlgorithm /* non final */ : public GDALAlgorithm
                 .SetMinCharCount(1);
 
         AddOutputStringArg(&m_output);
-        AddArg("quiet", 'q', _("Quiet mode"), &m_quiet).SetOnlyForCLI();
-        AddArg("stdout", 0,
-               _("Directly output on stdout. If enabled, "
-                 "output-string will be empty"),
-               &m_stdout)
-            .SetHiddenForCLI();
+        AddStdoutArg(&m_stdout);
     }
 
   private:
@@ -127,7 +122,6 @@ class GDALVSISOZIPCreateBaseAlgorithm /* non final */ : public GDALAlgorithm
     std::string m_contentType{};
     std::string m_output{};
     bool m_stdout = false;
-    bool m_quiet = false;
 
     bool RunImpl(GDALProgressFunc, void *) override;
 
@@ -496,24 +490,15 @@ class GDALVSISOZIPValidateAlgorithm final : public GDALAlgorithm
             .SetRequired()
             .SetPositional();
         AddOutputStringArg(&m_output);
-        AddArg("quiet", 'q', _("Quiet mode"), &m_quiet)
-            .SetOnlyForCLI()
-            .SetMutualExclusionGroup("quiet-verbose");
         AddArg("verbose", 'v', _("Turn on verbose mode"), &m_verbose)
-            .SetOnlyForCLI()
-            .SetMutualExclusionGroup("quiet-verbose");
-        AddArg("stdout", 0,
-               _("Directly output on stdout. If enabled, "
-                 "output-string will be empty"),
-               &m_stdout)
-            .SetHiddenForCLI();
+            .SetHiddenForAPI();
+        AddStdoutArg(&m_stdout);
     }
 
   private:
     std::string m_zipFilename{};
     std::string m_output{};
     bool m_stdout = false;
-    bool m_quiet = false;
     bool m_verbose = false;
 
     bool RunImpl(GDALProgressFunc, void *) override;

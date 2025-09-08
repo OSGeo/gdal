@@ -44,7 +44,7 @@ class OGRODSLayer final : public OGRMemLayer
   public:
     OGRODSLayer(OGRODSDataSource *poDSIn, const char *pszName,
                 bool bUpdateIn = FALSE);
-    ~OGRODSLayer();
+    ~OGRODSLayer() override;
 
     void SetUpdated(bool bUpdatedIn = true);
 
@@ -58,37 +58,37 @@ class OGRODSLayer final : public OGRMemLayer
         bHasHeaderLine = bIn;
     }
 
-    const char *GetName() override
+    const char *GetName() const override
     {
         return OGRMemLayer::GetLayerDefn()->GetName();
     }
 
-    OGRwkbGeometryType GetGeomType() override
+    OGRwkbGeometryType GetGeomType() const override
     {
         return wkbNone;
     }
 
-    virtual OGRSpatialReference *GetSpatialRef() override
+    const OGRSpatialReference *GetSpatialRef() const override
     {
         return nullptr;
     }
 
     /* For external usage. Mess with FID */
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRFeature *GetNextFeature() override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                           const int *panUpdatedFieldsIdx,
                           int nUpdatedGeomFieldsCount,
                           const int *panUpdatedGeomFieldsIdx,
                           bool bUpdateStyleString) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(GIntBig nFID) override;
 
-    virtual GIntBig GetFeatureCount(int) override;
+    GIntBig GetFeatureCount(int) override;
 
-    virtual OGRErr SetAttributeFilter(const char *pszQuery) override;
+    OGRErr SetAttributeFilter(const char *pszQuery) override;
 
-    virtual int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     /* For internal usage, for cell resolver */
     OGRFeature *GetNextFeatureWithoutFIDHack()
@@ -111,13 +111,13 @@ class OGRODSLayer final : public OGRMemLayer
         return OGRMemLayer::CreateField(poField, bApproxOK);
     }
 
-    virtual OGRErr DeleteField(int iField) override
+    OGRErr DeleteField(int iField) override
     {
         SetUpdated();
         return OGRMemLayer::DeleteField(iField);
     }
 
-    virtual OGRErr ReorderFields(int *panMap) override
+    OGRErr ReorderFields(int *panMap) override
     {
         SetUpdated();
         return OGRMemLayer::ReorderFields(panMap);
@@ -130,7 +130,7 @@ class OGRODSLayer final : public OGRMemLayer
         return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
     }
 
-    virtual OGRErr SyncToDisk() override;
+    OGRErr SyncToDisk() override;
 
     GDALDataset *GetDataset() override;
 };
@@ -228,25 +228,25 @@ class OGRODSDataSource final : public GDALDataset
 
   public:
     explicit OGRODSDataSource(CSLConstList papszOpenOptionsIn);
-    virtual ~OGRODSDataSource();
+    ~OGRODSDataSource() override;
     CPLErr Close() override;
 
     int Open(const char *pszFilename, VSILFILE *fpContentIn,
              VSILFILE *fpSettingsIn, int bUpdatableIn);
     int Create(const char *pszName, char **papszOptions);
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    virtual OGRErr DeleteLayer(int iLayer) override;
+    OGRErr DeleteLayer(int iLayer) override;
 
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     void startElementCbk(const char *pszName, const char **ppszAttr);
     void endElementCbk(const char *pszName);

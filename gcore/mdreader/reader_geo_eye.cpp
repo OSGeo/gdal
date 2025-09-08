@@ -29,7 +29,7 @@
  * GDALMDReaderGeoEye()
  */
 GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
-                                       char **papszSiblingFiles)
+                                       CSLConstList papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
 

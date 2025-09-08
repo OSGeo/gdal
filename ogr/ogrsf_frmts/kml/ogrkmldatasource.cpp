@@ -412,7 +412,7 @@ OGRKMLDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRKMLDataSource::TestCapability(const char *pszCap)
+int OGRKMLDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -427,7 +427,7 @@ int OGRKMLDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRKMLDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRKMLDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers_)
         return nullptr;

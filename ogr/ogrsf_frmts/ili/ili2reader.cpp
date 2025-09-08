@@ -777,7 +777,7 @@ std::vector<std::unique_ptr<OGRLayer>> &ILI2Reader::GetLayers()
     return m_listLayer;
 }
 
-int ILI2Reader::GetLayerCount()
+int ILI2Reader::GetLayerCount() const
 {
     return static_cast<int>(m_listLayer.size());
 }

@@ -85,13 +85,19 @@ class OGRSQLiteFeatureDefn final : public OGRFeatureDefn
     {
         return cpl::down_cast<OGRSQLiteGeomFieldDefn *>(GetGeomFieldDefn(i));
     }
+
+    const OGRSQLiteGeomFieldDefn *myGetGeomFieldDefn(int i) const
+    {
+        return cpl::down_cast<const OGRSQLiteGeomFieldDefn *>(
+            GetGeomFieldDefn(i));
+    }
 };
 
 /************************************************************************/
 /*                       IOGRSQLiteGetSpatialWhere                      */
 /************************************************************************/
 
-class IOGRSQLiteGetSpatialWhere
+class IOGRSQLiteGetSpatialWhere /* non final */
 {
   public:
     virtual ~IOGRSQLiteGetSpatialWhere();
@@ -159,7 +165,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
 
   public:
     OGRSQLiteBaseDataSource();
-    virtual ~OGRSQLiteBaseDataSource();
+    ~OGRSQLiteBaseDataSource() override;
 
     std::string GetCurrentSavepoint() const
     {
@@ -202,17 +208,17 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     virtual std::pair<OGRLayer *, IOGRSQLiteGetSpatialWhere *>
     GetLayerWithGetSpatialWhereByName(const char *pszName) = 0;
 
-    virtual OGRErr AbortSQL() override;
+    OGRErr AbortSQL() override;
     bool SetQueryLoggerFunc(GDALQueryLoggerFunc pfnQueryLoggerFuncIn,
                             void *poQueryLoggerArgIn) override;
 
-    virtual OGRErr StartTransaction(int bForce = FALSE) override;
-    virtual OGRErr CommitTransaction() override;
-    virtual OGRErr RollbackTransaction() override;
+    OGRErr StartTransaction(int bForce = FALSE) override;
+    OGRErr CommitTransaction() override;
+    OGRErr RollbackTransaction() override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
-    virtual void *GetInternalHandle(const char *) override;
+    void *GetInternalHandle(const char *) override;
 
     OGRErr SoftStartTransaction();
     OGRErr SoftCommitTransaction();
@@ -267,7 +273,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
 /*                         IOGRSQLiteSelectLayer                        */
 /************************************************************************/
 
-class IOGRSQLiteSelectLayer
+class IOGRSQLiteSelectLayer /* non final */
 {
   public:
     virtual ~IOGRSQLiteSelectLayer();
@@ -276,15 +282,15 @@ class IOGRSQLiteSelectLayer
     virtual OGRFeatureQuery *&GetFeatureQuery() = 0;
     virtual OGRGeometry *&GetFilterGeom() = 0;
     virtual int &GetIGeomFieldFilter() = 0;
-    virtual OGRSpatialReference *GetSpatialRef() = 0;
-    virtual OGRFeatureDefn *GetLayerDefn() = 0;
+    virtual const OGRSpatialReference *GetSpatialRef() const = 0;
+    virtual const OGRFeatureDefn *GetLayerDefn() const = 0;
     virtual int InstallFilter(const OGRGeometry *) = 0;
     virtual int HasReadFeature() = 0;
     virtual void BaseResetReading() = 0;
     virtual OGRFeature *BaseGetNextFeature() = 0;
     virtual OGRErr BaseSetAttributeFilter(const char *pszQuery) = 0;
     virtual GIntBig BaseGetFeatureCount(int bForce) = 0;
-    virtual int BaseTestCapability(const char *) = 0;
+    virtual int BaseTestCapability(const char *) const = 0;
     virtual OGRErr BaseGetExtent(int iGeomField, OGREnvelope *psExtent,
                                  bool bForce) = 0;
     virtual bool ValidateGeometryFieldIndexForSetSpatialFilter(
@@ -295,7 +301,7 @@ class IOGRSQLiteSelectLayer
 /*                   OGRSQLiteSelectLayerCommonBehaviour                */
 /************************************************************************/
 
-class OGRSQLiteSelectLayerCommonBehaviour
+class OGRSQLiteSelectLayerCommonBehaviour final
 {
     OGRSQLiteBaseDataSource *m_poDS = nullptr;
     IOGRSQLiteSelectLayer *m_poLayer = nullptr;
@@ -306,7 +312,8 @@ class OGRSQLiteSelectLayerCommonBehaviour
     bool m_bAllowResetReadingEvenIfIndexAtZero = false;
     bool m_bSpatialFilterInSQL = true;
 
-    std::pair<OGRLayer *, IOGRSQLiteGetSpatialWhere *> GetBaseLayer(size_t &i);
+    std::pair<OGRLayer *, IOGRSQLiteGetSpatialWhere *>
+    GetBaseLayer(size_t &i) const;
     int BuildSQL();
 
     CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteSelectLayerCommonBehaviour)
@@ -324,7 +331,7 @@ class OGRSQLiteSelectLayerCommonBehaviour
     GIntBig GetFeatureCount(int);
     OGRErr SetSpatialFilter(int iGeomField, const OGRGeometry *);
     OGRErr SetAttributeFilter(const char *);
-    int TestCapability(const char *);
+    int TestCapability(const char *) const;
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, bool bForce);
 };
 
@@ -345,12 +352,12 @@ class OGRSQLiteSingleFeatureLayer final : public OGRLayer
   public:
     OGRSQLiteSingleFeatureLayer(const char *pszLayerName, int nVal);
     OGRSQLiteSingleFeatureLayer(const char *pszLayerName, const char *pszVal);
-    virtual ~OGRSQLiteSingleFeatureLayer();
+    ~OGRSQLiteSingleFeatureLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeatureDefn *GetLayerDefn() override;
-    virtual int TestCapability(const char *) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/

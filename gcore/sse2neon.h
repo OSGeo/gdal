@@ -8200,33 +8200,33 @@ SSE2NEON_GENERATE_AGGREGATE_EQUAL_ORDER(SSE2NEON_AGGREGATE_EQUAL_ORDER_)
 SSE2NEON_GENERATE_CMP_EQUAL_ORDERED(SSE2NEON_CMP_EQUAL_ORDERED_)
 
 #define SSE2NEON_CMPESTR_LIST                          \
-    _(CMP_UBYTE_EQUAL_ANY, cmp_byte_equal_any)         \
-    _(CMP_UWORD_EQUAL_ANY, cmp_word_equal_any)         \
-    _(CMP_SBYTE_EQUAL_ANY, cmp_byte_equal_any)         \
-    _(CMP_SWORD_EQUAL_ANY, cmp_word_equal_any)         \
-    _(CMP_UBYTE_RANGES, cmp_ubyte_ranges)              \
-    _(CMP_UWORD_RANGES, cmp_uword_ranges)              \
-    _(CMP_SBYTE_RANGES, cmp_sbyte_ranges)              \
-    _(CMP_SWORD_RANGES, cmp_sword_ranges)              \
-    _(CMP_UBYTE_EQUAL_EACH, cmp_byte_equal_each)       \
-    _(CMP_UWORD_EQUAL_EACH, cmp_word_equal_each)       \
-    _(CMP_SBYTE_EQUAL_EACH, cmp_byte_equal_each)       \
-    _(CMP_SWORD_EQUAL_EACH, cmp_word_equal_each)       \
-    _(CMP_UBYTE_EQUAL_ORDERED, cmp_byte_equal_ordered) \
-    _(CMP_UWORD_EQUAL_ORDERED, cmp_word_equal_ordered) \
-    _(CMP_SBYTE_EQUAL_ORDERED, cmp_byte_equal_ordered) \
-    _(CMP_SWORD_EQUAL_ORDERED, cmp_word_equal_ordered)
+    _SSE2NEON(CMP_UBYTE_EQUAL_ANY, cmp_byte_equal_any)         \
+    _SSE2NEON(CMP_UWORD_EQUAL_ANY, cmp_word_equal_any)         \
+    _SSE2NEON(CMP_SBYTE_EQUAL_ANY, cmp_byte_equal_any)         \
+    _SSE2NEON(CMP_SWORD_EQUAL_ANY, cmp_word_equal_any)         \
+    _SSE2NEON(CMP_UBYTE_RANGES, cmp_ubyte_ranges)              \
+    _SSE2NEON(CMP_UWORD_RANGES, cmp_uword_ranges)              \
+    _SSE2NEON(CMP_SBYTE_RANGES, cmp_sbyte_ranges)              \
+    _SSE2NEON(CMP_SWORD_RANGES, cmp_sword_ranges)              \
+    _SSE2NEON(CMP_UBYTE_EQUAL_EACH, cmp_byte_equal_each)       \
+    _SSE2NEON(CMP_UWORD_EQUAL_EACH, cmp_word_equal_each)       \
+    _SSE2NEON(CMP_SBYTE_EQUAL_EACH, cmp_byte_equal_each)       \
+    _SSE2NEON(CMP_SWORD_EQUAL_EACH, cmp_word_equal_each)       \
+    _SSE2NEON(CMP_UBYTE_EQUAL_ORDERED, cmp_byte_equal_ordered) \
+    _SSE2NEON(CMP_UWORD_EQUAL_ORDERED, cmp_word_equal_ordered) \
+    _SSE2NEON(CMP_SBYTE_EQUAL_ORDERED, cmp_byte_equal_ordered) \
+    _SSE2NEON(CMP_SWORD_EQUAL_ORDERED, cmp_word_equal_ordered)
 
 enum {
-#define _(name, func_suffix) name,
+#define _SSE2NEON(name, func_suffix) name,
     SSE2NEON_CMPESTR_LIST
-#undef _
+#undef _SSE2NEON
 };
 typedef int (*cmpestr_func_t)(__m128i a, int la, __m128i b, int lb);
 static cmpestr_func_t _sse2neon_cmpfunc_table[] = {
-#define _(name, func_suffix) _sse2neon_##func_suffix,
+#define _SSE2NEON(name, func_suffix) _sse2neon_##func_suffix,
     SSE2NEON_CMPESTR_LIST
-#undef _
+#undef _SSE2NEON
 };
 
 FORCE_INLINE int _sse2neon_sido_negative(int res, int lb, int imm8, int bound)

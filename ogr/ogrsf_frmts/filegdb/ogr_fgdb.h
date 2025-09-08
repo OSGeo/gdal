@@ -55,7 +55,7 @@ class FGdbBaseLayer CPL_NON_FINAL : public OGRLayer
 {
   protected:
     FGdbBaseLayer();
-    virtual ~FGdbBaseLayer();
+    ~FGdbBaseLayer() override;
 
     OGRFeatureDefn *m_pFeatureDefn;
     OGRSpatialReference *m_pSRS;
@@ -77,7 +77,7 @@ class FGdbBaseLayer CPL_NON_FINAL : public OGRLayer
     virtual void CloseGDBObjects();
 
   public:
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 };
 
 /************************************************************************/
@@ -92,7 +92,7 @@ class FGdbLayer final : public FGdbBaseLayer
 
     bool m_bWorkaroundCrashOnCDFWithBinaryField = false;
 
-    virtual void CloseGDBObjects() override;
+    void CloseGDBObjects() override;
 
 #ifdef EXTENT_WORKAROUND
     OGREnvelope sLayerEnvelope;
@@ -107,7 +107,7 @@ class FGdbLayer final : public FGdbBaseLayer
 
   public:
     FGdbLayer();
-    virtual ~FGdbLayer();
+    ~FGdbLayer() override;
 
     // Internal used by FGDB driver */
     bool Initialize(FGdbDataSource *pParentDataSource, Table *pTable,
@@ -115,14 +115,14 @@ class FGdbLayer final : public FGdbBaseLayer
                     const std::wstring &wstrType);
 
     // virtual const char *GetName();
-    virtual const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_strOIDFieldName.c_str();
     }
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
     Table *GetTable()
     {
@@ -139,21 +139,21 @@ class FGdbLayer final : public FGdbBaseLayer
         return m_wstrType;
     }
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
-    virtual OGRErr SetAttributeFilter(const char *pszQuery) override;
+    GIntBig GetFeatureCount(int bForce) override;
+    OGRErr SetAttributeFilter(const char *pszQuery) override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_pFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     // Access the XML directly. The 2 following methods are not currently used
     // by the driver, but can be used by external code for specific purposes.
@@ -204,16 +204,16 @@ class FGdbResultLayer final : public FGdbBaseLayer
   public:
     FGdbResultLayer(FGdbDataSource *pParentDataSource, const char *pszStatement,
                     EnumRows *pEnumRows);
-    virtual ~FGdbResultLayer();
+    ~FGdbResultLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_pFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
   protected:
     FGdbDataSource *m_pDS;
@@ -239,7 +239,7 @@ class FGdbDataSource final : public GDALDataset
   public:
     FGdbDataSource(bool bUseDriverMutex, FGdbDatabaseConnection *pConnection,
                    bool bUseOpenFileGDB);
-    virtual ~FGdbDataSource();
+    ~FGdbDataSource() override;
 
     int Open(const char *pszFSName, int bUpdate, const char *pszPublicName);
 
@@ -248,19 +248,19 @@ class FGdbDataSource final : public GDALDataset
         return m_osFSName.c_str();
     }
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_layers.size());
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
-    virtual void ReleaseResultSet(OGRLayer *poResultsSet) override;
+    OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                         OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+    void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     const OGRFieldDomain *
     GetFieldDomain(const std::string &name) const override;

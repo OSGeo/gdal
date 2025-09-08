@@ -2369,22 +2369,40 @@ def test_tiff_write_64():
 # Verify that we can write XML metadata.
 
 
-def test_tiff_write_65():
+def test_tiff_write_xml(tmp_path):
 
-    ds = gdaltest.tiff_drv.Create("tmp/tiff_write_65.tif", 10, 10)
+    ds = gdaltest.tiff_drv.Create(tmp_path / "tiff_write_xml.tif", 10, 10)
 
     doc = '<doc><test xml:attr="abc"/></doc>'
     ds.SetMetadata([doc], "xml:test")
 
     ds = None
 
-    ds = gdal.Open("tmp/tiff_write_65.tif")
+    ds = gdal.Open(tmp_path / "tiff_write_xml.tif")
     md = ds.GetMetadata("xml:test")
     ds = None
 
     assert len(md) == 1 and md[0] == doc, "did not get xml back clean"
 
-    gdaltest.tiff_drv.Delete("tmp/tiff_write_65.tif")
+
+###############################################################################
+# Verify that we can write JSON metadata.
+
+
+def test_tiff_write_json(tmp_path):
+
+    ds = gdaltest.tiff_drv.Create(tmp_path / "tiff_write_json.tif", 10, 10)
+
+    doc = '{"key":"value}'
+    ds.SetMetadata([doc], "json:test")
+
+    ds = None
+
+    ds = gdal.Open(tmp_path / "tiff_write_json.tif")
+    md = ds.GetMetadata("json:test")
+    ds = None
+
+    assert len(md) == 1 and md[0] == doc, "did not get JSON back clean"
 
 
 ###############################################################################
@@ -4035,7 +4053,9 @@ def test_tiff_write_96(other_options=[], nbands=1, nbits=8):
     ds = gdaltest.tiff_drv.CreateCopy(
         "tmp/tiff_write_96_dst.tif",
         src_ds,
-        options=["COPY_SRC_OVERVIEWS=YES"] + other_options + ["NBITS=" + str(nbits)],
+        options=["COPY_SRC_OVERVIEWS=YES", "TILED=YES"]
+        + other_options
+        + ["NBITS=" + str(nbits)],
     )
     ds = None
     src_ds = None
@@ -5348,6 +5368,41 @@ def test_tiff_write_123():
     assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_Undefined
     ds = None
     gdaltest.tiff_drv.Delete("/vsimem/tiff_write_123_rgba_to_undefined.tif")
+
+
+###############################################################################
+# Test implicit photometric interpretation
+
+
+def test_tiff_write_RGBNir(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "test_tiff_write_RGBNir.tif"
+    ds = gdaltest.tiff_drv.Create(out_filename, 1, 1, 4, gdal.GDT_Int16)
+    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)
+    ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_NIRBand)
+
+    errors = []
+
+    def handler(lvl, no, msg):
+        errors.append({"level": lvl, "number": no, "message": msg})
+
+    with gdaltest.error_handler(handler):
+        ds.Close()
+
+    assert len(errors) == 0
+
+    statBuf = gdal.VSIStatL(
+        str(out_filename) + ".aux.xml",
+        gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG,
+    )
+    assert statBuf is None, "did not expect PAM file"
+    src_ds = gdal.Open(out_filename)
+    assert src_ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+    assert src_ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert src_ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+    assert src_ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_NIRBand
 
 
 ###############################################################################
@@ -9764,28 +9819,68 @@ def test_tiff_write_jpegxl_uint16_single_band():
 
 
 ###############################################################################
-# Test JXL_ALPHA_DISTANCE option
+# Test JXL_DISTANCE option without specifying JXL_LOSSLESS=NO
 
 
-@pytest.mark.require_creation_option("GTiff", "JXL_ALPHA_DISTANCE")
-def test_tiff_write_jpegxl_alpha_distance_zero():
+@pytest.mark.require_creation_option("GTiff", "JXL")
+def test_tiff_write_jpegxl_distance_warning(tmp_vsimem):
 
     drv = gdal.GetDriverByName("GTiff")
 
     src_ds = gdal.Open("data/stefan_full_rgba.tif")
-    filename = "/vsimem/test_tiff_write_jpegxl_alpha_distance_zero.tif"
-    drv.CreateCopy(
-        filename,
-        src_ds,
-        options=["COMPRESS=JXL", "JXL_LOSSLESS=NO", "JXL_ALPHA_DISTANCE=0"],
-    )
+    filename = tmp_vsimem / "test_tiff_write_jpegxl_distance_warning.tif"
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="JXL_DISTANCE creation option is ignored, given (implicit) JXL_LOSSLESS=YES",
+    ):
+        drv.CreateCopy(
+            tmp_vsimem / "warning.jxl",
+            src_ds,
+            options=["COMPRESS=JXL", "JXL_DISTANCE=3"],
+        )
+
+    with gdaltest.error_raised(gdal.CE_None):
+        drv.CreateCopy(
+            filename,
+            src_ds,
+            options=["COMPRESS=JXL", "JXL_LOSSLESS=NO", "JXL_DISTANCE=3"],
+        )
+
+
+###############################################################################
+# Test JXL_ALPHA_DISTANCE option
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL_ALPHA_DISTANCE")
+def test_tiff_write_jpegxl_alpha_distance_zero(tmp_vsimem):
+
+    drv = gdal.GetDriverByName("GTiff")
+
+    src_ds = gdal.Open("data/stefan_full_rgba.tif")
+    filename = tmp_vsimem / "test_tiff_write_jpegxl_alpha_distance_zero.tif"
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="JXL_ALPHA_DISTANCE creation option is ignored, given (implicit) JXL_LOSSLESS=YES",
+    ):
+        drv.CreateCopy(
+            tmp_vsimem / "warning.jxl",
+            src_ds,
+            options=["COMPRESS=JXL", "JXL_ALPHA_DISTANCE=0"],
+        )
+
+    with gdaltest.error_raised(gdal.CE_None):
+        drv.CreateCopy(
+            filename,
+            src_ds,
+            options=["COMPRESS=JXL", "JXL_LOSSLESS=NO", "JXL_ALPHA_DISTANCE=0"],
+        )
     ds = gdal.Open(filename)
     assert float(ds.GetMetadataItem("JXL_ALPHA_DISTANCE", "IMAGE_STRUCTURE")) == 0
     assert ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum()
     assert ds.GetRasterBand(4).Checksum() == src_ds.GetRasterBand(4).Checksum()
     ds = None
-
-    gdal.Unlink(filename)
 
 
 ###############################################################################
@@ -9795,6 +9890,7 @@ def test_tiff_write_jpegxl_alpha_distance_zero():
 def test_tiff_write_jpegxl_five_bands_lossy(tmp_vsimem):
 
     outfilename = str(tmp_vsimem / "test_tiff_write_jpegxl_five_bands_lossy.tif")
+
     gdal.Translate(
         outfilename,
         "data/byte.tif",
@@ -10641,18 +10737,9 @@ def test_tiff_write_createcopy_alpha_not_in_last_band(options):
 ###############################################################################
 # Test JXL compression
 @pytest.mark.require_creation_option("GTiff", "JXL")
-def test_tiff_write_jpegxl_band_combinations():
-
-    tmpfilename = "/vsimem/test_tiff_write_jpegxl_band_combinations.tif"
-
-    src_ds = gdal.GetDriverByName("MEM").Create("", 64, 64, 6)
-    for b in range(6):
-        bnd = src_ds.GetRasterBand(b + 1)
-        bnd.Fill(b + 1)
-        bnd.FlushCache()
-        assert bnd.Checksum() != 0, "bnd.Fill failed"
-
-    cilists = [
+@pytest.mark.parametrize(
+    "cilist",
+    [
         [gdal.GCI_RedBand],
         [gdal.GCI_RedBand, gdal.GCI_Undefined],
         [gdal.GCI_RedBand, gdal.GCI_AlphaBand],
@@ -10687,99 +10774,85 @@ def test_tiff_write_jpegxl_band_combinations():
             gdal.GCI_Undefined,
             gdal.GCI_BlueBand,
         ],
-    ]
-
-    types = [
-        gdal.GDT_Byte,
-        gdal.GDT_UInt16,
-        gdal.GDT_Float32,
-    ]
-
-    creationOptions = [
+    ],
+)
+@pytest.mark.parametrize("dtype", [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_Float32])
+@pytest.mark.parametrize(
+    "copts",
+    [
         ["TILED=YES", "COMPRESS=JXL", "INTERLEAVE=BAND"],
         ["TILED=YES", "COMPRESS=JXL", "INTERLEAVE=PIXEL"],
-    ]
+    ],
+)
+def test_tiff_write_jpegxl_band_combinations(cilist, dtype, copts, tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "test_tiff_write_jpegxl_band_combinations.tif"
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 64, 64, 6)
+    for b in range(6):
+        bnd = src_ds.GetRasterBand(b + 1)
+        bnd.Fill(b + 1)
+        bnd.FlushCache()
 
     jpegxl_drv = gdal.GetDriverByName("JPEGXL")
 
-    for dtype in types:
-        for copts in creationOptions:
-            for cilist in cilists:
-                bandlist = [idx + 1 for idx in range(len(cilist))]
-                vrtds = gdal.Translate(
-                    "", src_ds, format="vrt", bandList=bandlist, outputType=dtype
+    bandlist = [idx + 1 for idx in range(len(cilist))]
+    vrtds = gdal.Translate(
+        "", src_ds, format="vrt", bandList=bandlist, outputType=dtype
+    )
+    for idx, ci in enumerate(cilist):
+        vrtds.GetRasterBand(idx + 1).SetColorInterpretation(ci)
+
+    ds = gdal.Translate(tmpfilename, vrtds, creationOptions=copts)
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    for idx in range(len(cilist)):
+        gdal.ErrorReset()
+        got_cs = ds.GetRasterBand(idx + 1).Checksum()
+        assert gdal.GetLastErrorMsg() == ""
+        assert got_cs == src_ds.GetRasterBand(idx + 1).Checksum(), (
+            dtype,
+            copts,
+            cilist,
+            idx,
+        )
+
+    # Check that color interpretation inside JXL data is properly encoded
+    if jpegxl_drv and "INTERLEAVE=PIXEL" in copts:
+        jxl_offset = ds.GetRasterBand(1).GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF")
+        jxl_ds = gdal.Open("/vsisubfile/%s_-1,%s" % (jxl_offset, tmpfilename))
+        assert jxl_ds
+        for idx in range(len(cilist)):
+            got_cs = jxl_ds.GetRasterBand(idx + 1).Checksum()
+            assert got_cs == src_ds.GetRasterBand(idx + 1).Checksum(), (
+                dtype,
+                copts,
+                cilist,
+                idx,
+            )
+
+        if (
+            vrtds.RasterCount >= 3
+            and vrtds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+            and vrtds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+            and vrtds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+        ):
+            assert jxl_ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+            assert (
+                jxl_ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+            )
+            assert jxl_ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+        # Check that alpha band is preserved
+        for idx in range(len(cilist)):
+            if (
+                vrtds.GetRasterBand(idx + 1).GetColorInterpretation()
+                == gdal.GCI_AlphaBand
+            ):
+                assert (
+                    jxl_ds.GetRasterBand(idx + 1).GetColorInterpretation()
+                    == gdal.GCI_AlphaBand
                 )
-                for idx, ci in enumerate(cilist):
-                    vrtds.GetRasterBand(idx + 1).SetColorInterpretation(ci)
-
-                ds = gdal.Translate(tmpfilename, vrtds, creationOptions=copts)
-                ds = None
-                # print(dtype, copts, cilist)
-                ds = gdal.Open(tmpfilename)
-                for idx in range(len(cilist)):
-                    gdal.ErrorReset()
-                    got_cs = ds.GetRasterBand(idx + 1).Checksum()
-                    assert gdal.GetLastErrorMsg() == ""
-                    assert got_cs == src_ds.GetRasterBand(idx + 1).Checksum(), (
-                        dtype,
-                        copts,
-                        cilist,
-                        idx,
-                    )
-
-                # Check that color interpretation inside JXL data is properly encoded
-                if jpegxl_drv and "INTERLEAVE=PIXEL" in copts:
-                    jxl_offset = ds.GetRasterBand(1).GetMetadataItem(
-                        "BLOCK_OFFSET_0_0", "TIFF"
-                    )
-                    jxl_ds = gdal.Open(
-                        "/vsisubfile/%s_-1,%s" % (jxl_offset, tmpfilename)
-                    )
-                    assert jxl_ds
-                    for idx in range(len(cilist)):
-                        got_cs = jxl_ds.GetRasterBand(idx + 1).Checksum()
-                        assert got_cs == src_ds.GetRasterBand(idx + 1).Checksum(), (
-                            dtype,
-                            copts,
-                            cilist,
-                            idx,
-                        )
-
-                    if (
-                        vrtds.RasterCount >= 3
-                        and vrtds.GetRasterBand(1).GetColorInterpretation()
-                        == gdal.GCI_RedBand
-                        and vrtds.GetRasterBand(2).GetColorInterpretation()
-                        == gdal.GCI_GreenBand
-                        and vrtds.GetRasterBand(3).GetColorInterpretation()
-                        == gdal.GCI_BlueBand
-                    ):
-                        assert (
-                            jxl_ds.GetRasterBand(1).GetColorInterpretation()
-                            == gdal.GCI_RedBand
-                        )
-                        assert (
-                            jxl_ds.GetRasterBand(2).GetColorInterpretation()
-                            == gdal.GCI_GreenBand
-                        )
-                        assert (
-                            jxl_ds.GetRasterBand(3).GetColorInterpretation()
-                            == gdal.GCI_BlueBand
-                        )
-                    # Check that alpha band is preserved
-                    for idx in range(len(cilist)):
-                        if (
-                            vrtds.GetRasterBand(idx + 1).GetColorInterpretation()
-                            == gdal.GCI_AlphaBand
-                        ):
-                            assert (
-                                jxl_ds.GetRasterBand(idx + 1).GetColorInterpretation()
-                                == gdal.GCI_AlphaBand
-                            )
-
-                vrtds = None
-                ds = None
-                gdal.Unlink(tmpfilename)
 
 
 ###############################################################################
@@ -12115,3 +12188,243 @@ def test_tiff_write_5_bands_interleaved_predictor_2(tmp_vsimem):
     with gdal.Open(tmp_vsimem / "test.tif") as ds:
         content = ds.ReadRaster()
         assert ref_content == content, struct.unpack("B" * 10, content)
+
+
+###############################################################################
+
+
+def test_tiff_create_copy_only_visible_at_close_time(tmp_path):
+
+    src_ds = gdal.Open("data/byte.tif")
+    out_filename = tmp_path / "tmp.tif"
+
+    def my_callback(pct, msg, user_data):
+        if pct < 1:
+            assert gdal.VSIStatL(out_filename) is None
+        return True
+
+    drv = gdal.GetDriverByName("GTIFF")
+    assert drv.GetMetadataItem(gdal.DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME) == "YES"
+    drv.CreateCopy(
+        out_filename,
+        src_ds,
+        options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"],
+        callback=my_callback,
+    )
+
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+
+
+def test_tiff_createcopy_only_visible_at_close_time_relative_path():
+
+    my_path = "tmp/test_tiff_create_only_visible_at_close_time_relative_path"
+    gdal.Mkdir(my_path, 0o755)
+
+    out_filename = my_path + "/tmp.tif"
+    try:
+        src_ds = gdal.Open("data/byte.tif")
+        ds = gdal.GetDriverByName("GTiff").CreateCopy(
+            out_filename, src_ds, options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"]
+        )
+        assert gdal.VSIStatL(out_filename) is None
+        ds.Close()
+        assert gdal.VSIStatL(out_filename) is not None
+
+        with gdal.Open(out_filename) as ds:
+            assert ds.GetRasterBand(1).Checksum() == 4672
+
+    finally:
+        gdal.Unlink(out_filename)
+        gdal.Rmdir(my_path)
+
+
+###############################################################################
+# Test operations with Windows special filenames (prefix with "\\?\")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows specific test")
+def test_tiff_createcopy_only_visible_at_close_time_win32_specific(tmp_path):
+
+    # Try prefix filenames
+    tmp_path_str = str(tmp_path)
+    if "/" not in tmp_path_str:
+        prefix_path = "\\\\?\\" + tmp_path_str
+
+        src_ds = gdal.Open("data/byte.tif")
+        out_filename = prefix_path + "\\tmp.tif"
+
+        def my_callback(pct, msg, user_data):
+            if pct < 1:
+                assert gdal.VSIStatL(out_filename) is None
+            return True
+
+        drv = gdal.GetDriverByName("GTIFF")
+        assert drv.GetMetadataItem(gdal.DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME) == "YES"
+        ds = drv.CreateCopy(
+            out_filename,
+            src_ds,
+            options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"],
+            callback=my_callback,
+        )
+        ds.Close()
+
+        with gdal.Open(out_filename) as ds:
+            assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+
+
+def test_tiff_create_suppress_on_close(tmp_path):
+
+    out_filename = tmp_path / "tmp.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(out_filename, 1, 1)
+    assert gdal.VSIStatL(out_filename) is not None
+    ds.MarkSuppressOnClose()
+    assert gdal.VSIStatL(out_filename) is not None
+    ds.Close()
+    assert gdal.VSIStatL(out_filename) is None
+
+
+###############################################################################
+
+
+def _start_directory_observer(path_to_monitor):
+    try:
+        from watchdog.events import FileSystemEventHandler
+        from watchdog.observers import Observer
+    except ModuleNotFoundError:
+        return None, None
+
+    import threading
+
+    class MyHandler(FileSystemEventHandler):
+        def __init__(self, ready_event, files_created):
+            self.ready_event = ready_event
+            self.files_created = files_created
+
+        def on_created(self, event):
+            if event.src_path.endswith(".__watchdog_ready__"):
+                self.ready_event.set()
+            elif not event.is_directory:
+                self.files_created.append(event.src_path)
+
+    watch_ready = threading.Event()
+    files_created = []
+
+    observer = Observer()
+    observer.schedule(
+        MyHandler(watch_ready, files_created), path=path_to_monitor, recursive=False
+    )
+
+    observer.start()
+
+    # Create a dummy file, and wait for its creation to be noticed, to make
+    # sure the observer thread is fully started
+    dummy_file = os.path.join(path_to_monitor, ".__watchdog_ready__")
+    with open(dummy_file, "w") as f:
+        f.write("ping")
+
+    watch_ready.wait()
+
+    os.remove(dummy_file)
+
+    return observer, files_created
+
+
+###############################################################################
+
+
+def _stop_directory_observer(observer):
+    if observer:
+        observer.stop()
+        observer.join()
+
+
+###############################################################################
+
+
+def test_tiff_create_suppress_on_close_only_visible_at_close_time(tmp_path):
+
+    observer, files_created = _start_directory_observer(tmp_path)
+
+    try:
+        out_filename = tmp_path / "tmp.tif"
+        ds = gdal.GetDriverByName("GTiff").Create(
+            out_filename, 1, 1, options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"]
+        )
+        assert gdal.VSIStatL(out_filename) is None
+        ds.MarkSuppressOnClose()
+        assert gdal.VSIStatL(out_filename) is None
+        ds.Close()
+        assert gdal.VSIStatL(out_filename) is None
+    finally:
+        _stop_directory_observer(observer)
+        if files_created is not None and sys.platform == "linux":
+            assert len(files_created) == 0
+        elif files_created is not None and sys.platform == "win32":
+            assert len(files_created) == 1 and files_created[0].endswith(".tmp_hidden")
+
+
+###############################################################################
+
+
+def test_tiff_create_suppress_on_close_only_visible_at_close_time_relative_path():
+
+    my_path = "tmp/test_tiff_create_suppress_on_close_only_visible_at_close_time_relative_path"
+    gdal.Mkdir(my_path, 0o755)
+
+    observer, files_created = _start_directory_observer(os.getcwd() + "/" + my_path)
+
+    try:
+        out_filename = my_path + "/tmp.tif"
+        ds = gdal.GetDriverByName("GTiff").Create(
+            out_filename, 1, 1, options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"]
+        )
+        assert gdal.VSIStatL(out_filename) is None
+        ds.MarkSuppressOnClose()
+        assert gdal.VSIStatL(out_filename) is None
+        ds.Close()
+        assert gdal.VSIStatL(out_filename) is None
+    finally:
+        _stop_directory_observer(observer)
+        if files_created is not None and sys.platform == "linux":
+            assert len(files_created) == 0
+        elif files_created is not None and sys.platform == "win32":
+            assert len(files_created) == 1 and files_created[0].endswith(".tmp_hidden")
+
+        gdal.RmdirRecursive(my_path)
+
+
+###############################################################################
+
+
+def test_tiff_create_only_visible_at_close_time_vsimem(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "tmp.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(
+        out_filename, 1, 1, options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"]
+    )
+    assert gdal.VSIStatL(out_filename) is None
+    ds.Close()
+    assert gdal.VSIStatL(out_filename) is not None
+
+
+###############################################################################
+
+
+def test_tiff_create_suppress_on_close_only_visible_at_close_time_vsimem(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "tmp.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(
+        out_filename, 1, 1, options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"]
+    )
+    assert gdal.VSIStatL(out_filename) is None
+    ds.MarkSuppressOnClose()
+    assert gdal.VSIStatL(out_filename) is None
+    ds.Close()
+    assert gdal.VSIStatL(out_filename) is None

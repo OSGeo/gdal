@@ -35,7 +35,7 @@ class GXFDataset final : public GDALPamDataset
 
   public:
     GXFDataset();
-    ~GXFDataset();
+    ~GXFDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 
@@ -57,7 +57,7 @@ class GXFRasterBand final : public GDALPamRasterBand
     GXFRasterBand(GXFDataset *, int);
     double GetNoDataValue(int *bGotNoDataValue) override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/

@@ -97,7 +97,7 @@ SNODASRasterBand::SNODASRasterBand(VSILFILE *fpRawIn, int nXSize, int nYSize)
 
 double SNODASRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    SNODASDataset *poGDS = reinterpret_cast<SNODASDataset *>(poDS);
+    SNODASDataset *poGDS = cpl::down_cast<SNODASDataset *>(poDS);
     if (pbSuccess)
         *pbSuccess = poGDS->bHasNoData;
 
@@ -113,7 +113,7 @@ double SNODASRasterBand::GetNoDataValue(int *pbSuccess)
 
 double SNODASRasterBand::GetMinimum(int *pbSuccess)
 {
-    SNODASDataset *poGDS = reinterpret_cast<SNODASDataset *>(poDS);
+    SNODASDataset *poGDS = cpl::down_cast<SNODASDataset *>(poDS);
     if (pbSuccess)
         *pbSuccess = poGDS->bHasMin;
 
@@ -129,7 +129,7 @@ double SNODASRasterBand::GetMinimum(int *pbSuccess)
 
 double SNODASRasterBand::GetMaximum(int *pbSuccess)
 {
-    SNODASDataset *poGDS = reinterpret_cast<SNODASDataset *>(poDS);
+    SNODASDataset *poGDS = cpl::down_cast<SNODASDataset *>(poDS);
     if (pbSuccess)
         *pbSuccess = poGDS->bHasMax;
 
@@ -415,7 +415,12 @@ GDALDataset *SNODASDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (osDataFilename.empty())
         return nullptr;
-
+    if (CPLHasPathTraversal(osDataFilename.c_str()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Path traversal detected in %s",
+                 osDataFilename.c_str());
+        return nullptr;
+    }
     if (!GDALCheckDatasetDimensions(nCols, nRows))
         return nullptr;
 

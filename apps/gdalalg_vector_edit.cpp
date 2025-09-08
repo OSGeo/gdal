@@ -136,14 +136,14 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         }
     }
 
-    ~GDALVectorEditAlgorithmLayer()
+    ~GDALVectorEditAlgorithmLayer() override
     {
         m_poFeatureDefn->Release();
         if (m_poSRS)
             m_poSRS->Release();
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -165,7 +165,7 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         apoOutFeatures.push_back(std::move(poSrcFeature));
     }
 
-    int TestCapability(const char *pszCap) override
+    int TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCStringsAsUTF8) ||
             EQUAL(pszCap, OLCCurveGeometries) || EQUAL(pszCap, OLCZGeometries))

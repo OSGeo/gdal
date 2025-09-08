@@ -17,10 +17,9 @@
 
 #include <cstring>
 
-#if HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
 
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -293,10 +292,22 @@ int VSITarReader::GotoNextFile()
                     }
                     if (m_abyBufferIdx < m_abyBufferSize)
                     {
-                        osNextFileName.assign(
+                        const char *pszFilename =
                             reinterpret_cast<const char *>(m_abyBuffer +
-                                                           nFilenameStartIdx),
-                            m_abyBufferIdx - nFilenameStartIdx);
+                                                           nFilenameStartIdx);
+                        osNextFileName.assign(
+                            pszFilename,
+                            CPLStrnlen(pszFilename,
+                                       m_abyBufferIdx - nFilenameStartIdx));
+                        if (osNextFileName.empty() || osNextFileName == "." ||
+                            osNextFileName.find("..") != std::string::npos ||
+                            osNextFileName.find("//") != std::string::npos ||
+                            osNextFileName.find("\\\\") != std::string::npos)
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Invalid filename");
+                            return false;
+                        }
                         nCurOffset = VSIFTellL(fp);
                         nCurOffset -= m_abyBufferSize;
                         nCurOffset += m_abyBufferIdx + 1;
@@ -489,24 +500,25 @@ int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset *pOffset)
 class VSITarFilesystemHandler final : public VSIArchiveFilesystemHandler
 {
   public:
-    const char *GetPrefix() override
+    const char *GetPrefix() const override
     {
         return "/vsitar";
     }
 
-    std::vector<CPLString> GetExtensions() override;
-    VSIArchiveReader *CreateReader(const char *pszTarFileName) override;
+    std::vector<CPLString> GetExtensions() const override;
+    std::unique_ptr<VSIArchiveReader>
+    CreateReader(const char *pszTarFileName) override;
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
 };
 
 /************************************************************************/
 /*                          GetExtensions()                             */
 /************************************************************************/
 
-std::vector<CPLString> VSITarFilesystemHandler::GetExtensions()
+std::vector<CPLString> VSITarFilesystemHandler::GetExtensions() const
 {
     std::vector<CPLString> oList;
     oList.push_back(".tar.gz");
@@ -519,7 +531,7 @@ std::vector<CPLString> VSITarFilesystemHandler::GetExtensions()
 /*                           CreateReader()                             */
 /************************************************************************/
 
-VSIArchiveReader *
+std::unique_ptr<VSIArchiveReader>
 VSITarFilesystemHandler::CreateReader(const char *pszTarFileName)
 {
     CPLString osTarInFileName;
@@ -532,17 +544,9 @@ VSITarFilesystemHandler::CreateReader(const char *pszTarFileName)
     else
         osTarInFileName = pszTarFileName;
 
-    VSITarReader *poReader = new VSITarReader(osTarInFileName);
-
-    if (!poReader->IsValid())
+    auto poReader = std::make_unique<VSITarReader>(osTarInFileName);
+    if (!poReader->IsValid() || !poReader->GotoFirstFile())
     {
-        delete poReader;
-        return nullptr;
-    }
-
-    if (!poReader->GotoFirstFile())
-    {
-        delete poReader;
         return nullptr;
     }
 
@@ -553,10 +557,9 @@ VSITarFilesystemHandler::CreateReader(const char *pszTarFileName)
 /*                                 Open()                               */
 /************************************************************************/
 
-VSIVirtualHandle *VSITarFilesystemHandler::Open(const char *pszFilename,
-                                                const char *pszAccess,
-                                                bool bSetError,
-                                                CSLConstList /* papszOptions */)
+VSIVirtualHandleUniquePtr
+VSITarFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
+                              bool bSetError, CSLConstList /* papszOptions */)
 {
 
     if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, '+') != nullptr)
@@ -567,15 +570,14 @@ VSIVirtualHandle *VSITarFilesystemHandler::Open(const char *pszFilename,
     }
 
     CPLString osTarInFileName;
-    char *tarFilename =
-        SplitFilename(pszFilename, osTarInFileName, true, bSetError);
+    std::unique_ptr<char, VSIFreeReleaser> tarFilename(
+        SplitFilename(pszFilename, osTarInFileName, true, bSetError));
     if (tarFilename == nullptr)
         return nullptr;
 
-    VSIArchiveReader *poReader = OpenArchiveFile(tarFilename, osTarInFileName);
+    auto poReader = OpenArchiveFile(tarFilename.get(), osTarInFileName);
     if (poReader == nullptr)
     {
-        CPLFree(tarFilename);
         return nullptr;
     }
 
@@ -588,20 +590,15 @@ VSIVirtualHandle *VSITarFilesystemHandler::Open(const char *pszFilename,
     osSubFileName += ",";
     delete pOffset;
 
-    if (VSIIsTGZ(tarFilename))
+    if (VSIIsTGZ(tarFilename.get()))
     {
         osSubFileName += "/vsigzip/";
-        osSubFileName += tarFilename;
+        osSubFileName += tarFilename.get();
     }
     else
-        osSubFileName += tarFilename;
+        osSubFileName += tarFilename.get();
 
-    delete (poReader);
-
-    CPLFree(tarFilename);
-    tarFilename = nullptr;
-
-    return reinterpret_cast<VSIVirtualHandle *>(VSIFOpenL(osSubFileName, "rb"));
+    return VSIFilesystemHandler::OpenStatic(osSubFileName, "rb");
 }
 
 //! @endcond

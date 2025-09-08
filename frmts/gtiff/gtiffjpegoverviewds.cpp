@@ -28,11 +28,7 @@ class GTiffJPEGOverviewBand final : public GDALRasterBand
   public:
     GTiffJPEGOverviewBand(GTiffJPEGOverviewDS *poDS, int nBand);
 
-    virtual ~GTiffJPEGOverviewBand()
-    {
-    }
-
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 
     GDALColorInterp GetColorInterpretation() override
     {

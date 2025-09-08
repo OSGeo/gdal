@@ -61,20 +61,20 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     OGRGeoJSONLayer(const char *pszName, OGRSpatialReference *poSRS,
                     OGRwkbGeometryType eGType, OGRGeoJSONDataSource *poDS,
                     OGRGeoJSONReader *poReader);
-    virtual ~OGRGeoJSONLayer();
+    ~OGRGeoJSONLayer() override;
 
     //
     // OGRLayer Interface
     //
-    virtual const char *GetFIDColumn() override;
-    virtual int TestCapability(const char *pszCap) override;
+    const char *GetFIDColumn() const override;
+    int TestCapability(const char *pszCap) const override;
 
-    virtual OGRErr SyncToDisk() override;
+    OGRErr SyncToDisk() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
+    GIntBig GetFeatureCount(int bForce) override;
 
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
@@ -83,20 +83,20 @@ class OGRGeoJSONLayer final : public OGRMemLayer
                           int nUpdatedGeomFieldsCount,
                           const int *panUpdatedGeomFieldsIdx,
                           bool bUpdateStyleString) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(GIntBig nFID) override;
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr DeleteField(int iField) override;
-    virtual OGRErr ReorderFields(int *panMap) override;
+    OGRErr DeleteField(int iField) override;
+    OGRErr ReorderFields(int *panMap) override;
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                                   int nFlags) override;
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce = true) override;
-    virtual OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
-                                bool bForce = true) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce = true) override;
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                        bool bForce = true) override;
 
     GDALDataset *GetDataset() override;
 
@@ -169,17 +169,19 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
                          CSLConstList papszOptions, bool bWriteFC_BBOXIn,
                          OGRCoordinateTransformation *poCT,
                          OGRGeoJSONDataSource *poDS);
-    ~OGRGeoJSONWriteLayer();
+    ~OGRGeoJSONWriteLayer() override;
 
     //
     // OGRLayer Interface
     //
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn_;
     }
 
-    OGRSpatialReference *GetSpatialRef() override
+    const OGRSpatialReference *GetSpatialRef() const override
     {
         return nullptr;
     }
@@ -195,7 +197,7 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -240,16 +242,18 @@ class OGRGeoJSONDataSource final : public GDALDataset
 {
   public:
     OGRGeoJSONDataSource();
-    virtual ~OGRGeoJSONDataSource();
+    ~OGRGeoJSONDataSource() override;
 
     int Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType,
              const char *pszJSonFlavor);
-    int GetLayerCount() override;
-    OGRLayer *GetLayer(int nLayer) override;
+    int GetLayerCount() const override;
+
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int nLayer) const override;
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     void AddLayer(OGRGeoJSONLayer *poLayer);
 
@@ -314,7 +318,7 @@ class OGRGeoJSONDataSource final : public GDALDataset
         m_bSupportsZGeometries = bSupportsZGeometries;
     }
 
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     CPLErr Close() override;
 

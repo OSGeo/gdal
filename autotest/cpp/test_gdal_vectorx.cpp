@@ -61,30 +61,30 @@ TEST_F(test_vectorx, simple_double)
     gdal::Vector2d a;
     EXPECT_EQ(0.0, a.x());
     EXPECT_EQ(0.0, a.y());
-    EXPECT_EQ(2, a.size());
+    EXPECT_EQ(2U, a.size());
     static_assert(std::is_same_v<decltype(a)::value_type, double> == true);
 
     gdal::Vector2d p2(2.1, 3.6);
     EXPECT_EQ(2.1, p2.x());
     EXPECT_EQ(3.6, p2.y());
-    EXPECT_EQ(2, p2.size());
+    EXPECT_EQ(2U, p2.size());
 
     gdal::Vector3d p3(12e-2, -13.0, 14e3);
     EXPECT_EQ(12e-2, p3.x());
     EXPECT_EQ(-13.0, p3.y());
     EXPECT_EQ(14e3, p3.z());
-    EXPECT_EQ(3, p3.size());
+    EXPECT_EQ(3U, p3.size());
 
     gdal::VectorX<double, 1> p1{2.1};
     EXPECT_EQ(2.1, p1.x());
-    EXPECT_EQ(1, p1.size());
+    EXPECT_EQ(1U, p1.size());
 
     gdal::VectorX<double, 4> p4(12.0, 13.1, -14.2, 150.0);
     EXPECT_EQ(12.0, p4.x());
     EXPECT_EQ(13.1, p4.y());
     EXPECT_EQ(-14.2, p4.z());
     EXPECT_EQ(150.0, p4[3]);
-    EXPECT_EQ(4, p4.size());
+    EXPECT_EQ(4U, p4.size());
 }
 
 TEST_F(test_vectorx, simple_float)
@@ -121,7 +121,7 @@ TEST_F(test_vectorx, array)
 TEST_F(test_vectorx, fill)
 {
     const gdal::Vector3d a = gdal::Vector3d().fill(42.0);
-    EXPECT_EQ(3, a.size());
+    EXPECT_EQ(3U, a.size());
     EXPECT_EQ(42.0, a[0]);
     EXPECT_EQ(42.0, a[1]);
     EXPECT_EQ(42.0, a[2]);
@@ -131,7 +131,7 @@ TEST_F(test_vectorx, fill_nan)
 {
     const gdal::Vector3d a =
         gdal::Vector3d().fill(std::numeric_limits<double>::quiet_NaN());
-    EXPECT_EQ(3, a.size());
+    EXPECT_EQ(3U, a.size());
     EXPECT_TRUE(std::isnan(a[0]));
     EXPECT_TRUE(std::isnan(a[1]));
     EXPECT_TRUE(std::isnan(a[2]));

@@ -135,26 +135,26 @@ class OGRWAsPLayer final : public OGRLayer,
     OGRWAsPLayer(GDALDataset *poDS, const char *pszName, VSILFILE *hFile,
                  OGRSpatialReference *poSpatialRef);
 
-    virtual ~OGRWAsPLayer();
+    ~OGRWAsPLayer() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poLayerDefn;
     }
 
-    virtual void ResetReading() override;
-    virtual int TestCapability(const char *) override;
+    void ResetReading() override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRWAsPLayer)
 
-    virtual const char *GetName() override
+    const char *GetName() const override
     {
         return sName.c_str();
     }
@@ -183,21 +183,22 @@ class OGRWAsPDataSource final : public GDALDataset
   public:
     /** @note takes ownership of hFile (i.e. responsibility for closing) */
     OGRWAsPDataSource(const char *pszName, VSILFILE *hFile);
-    virtual ~OGRWAsPDataSource();
+    ~OGRWAsPDataSource() override;
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return oLayer.get() ? 1 : 0;
     }
 
-    virtual OGRLayer *GetLayer(int) override;
-    virtual OGRLayer *GetLayerByName(const char *) override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
+    OGRLayer *GetLayerByName(const char *) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     OGRErr Load(bool bSilent = false);
 };
 

@@ -32,8 +32,8 @@ class OGRIDBLayer CPL_NON_FINAL : public OGRLayer
     ITCursor *m_poCurr;
 
     // Layer spatial reference system, and srid.
-    OGRSpatialReference *poSRS;
-    int nSRSId;
+    mutable OGRSpatialReference *poSRS;
+    mutable int nSRSId;
 
     int iNextShapeId;
 
@@ -52,25 +52,25 @@ class OGRIDBLayer CPL_NON_FINAL : public OGRLayer
 
   public:
     OGRIDBLayer();
-    virtual ~OGRIDBLayer();
+    ~OGRIDBLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual const char *GetFIDColumn() override;
-    virtual const char *GetGeometryColumn() override;
+    const char *GetFIDColumn() const override;
+    const char *GetGeometryColumn() const override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -88,31 +88,31 @@ class OGRIDBTableLayer final : public OGRIDBLayer
     void ClearQuery();
     OGRErr ResetQuery();
 
-    virtual ITCursor *GetQuery() override;
+    ITCursor *GetQuery() override;
 
   public:
     explicit OGRIDBTableLayer(OGRIDBDataSource *);
-    virtual ~OGRIDBTableLayer();
+    ~OGRIDBTableLayer() override;
 
     CPLErr Initialize(const char *pszTableName, const char *pszGeomCol,
                       int bUpdate);
 
-    virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    void ResetReading() override;
+    GIntBig GetFeatureCount(int) override;
 
-    virtual OGRErr SetAttributeFilter(const char *) override;
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr SetAttributeFilter(const char *) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
 #if 0
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 #endif
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -126,21 +126,21 @@ class OGRIDBSelectLayer final : public OGRIDBLayer
     void ClearQuery();
     OGRErr ResetQuery();
 
-    virtual ITCursor *GetQuery() override;
+    ITCursor *GetQuery() override;
 
   public:
     OGRIDBSelectLayer(OGRIDBDataSource *, ITCursor *);
-    virtual ~OGRIDBSelectLayer();
+    ~OGRIDBSelectLayer() override;
 
-    virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    void ResetReading() override;
+    GIntBig GetFeatureCount(int) override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -157,25 +157,25 @@ class OGRIDBDataSource final : public GDALDataset
 
   public:
     OGRIDBDataSource();
-    virtual ~OGRIDBDataSource();
+    ~OGRIDBDataSource() override;
 
     int Open(const char *, int bUpdate, int bTestOpen);
     int OpenTable(const char *pszTableName, const char *pszGeomCol,
                   int bUpdate);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
-    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
-    virtual void ReleaseResultSet(OGRLayer *poLayer) override;
+    OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                         OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+    void ReleaseResultSet(OGRLayer *poLayer) override;
 
     // Internal use
     ITConnection *GetConnection()

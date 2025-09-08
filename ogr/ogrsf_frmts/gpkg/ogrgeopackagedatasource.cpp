@@ -2898,8 +2898,7 @@ bool GDALGeoPackageDataset::OpenRaster(
         return false;
     }
 
-    auto poBand =
-        reinterpret_cast<GDALGeoPackageRasterBand *>(GetRasterBand(1));
+    auto poBand = cpl::down_cast<GDALGeoPackageRasterBand *>(GetRasterBand(1));
     if (!osDataNull.empty())
     {
         double dfGPKGNoDataValue = CPLAtof(osDataNull);
@@ -3036,6 +3035,19 @@ bool GDALGeoPackageDataset::OpenRaster(
 /************************************************************************/
 
 const OGRSpatialReference *GDALGeoPackageDataset::GetSpatialRef() const
+{
+    if (GetLayerCount())
+        return GDALDataset::GetSpatialRef();
+    return GetSpatialRefRasterOnly();
+}
+
+/************************************************************************/
+/*                      GetSpatialRefRasterOnly()                       */
+/************************************************************************/
+
+const OGRSpatialReference *
+GDALGeoPackageDataset::GetSpatialRefRasterOnly() const
+
 {
     return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
@@ -6427,7 +6439,7 @@ bool GDALGeoPackageDataset::RegisterZoomOtherExtension()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *GDALGeoPackageDataset::GetLayer(int iLayer)
+const OGRLayer *GDALGeoPackageDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))
@@ -7322,7 +7334,7 @@ bool GDALGeoPackageDataset::RenameRasterLayer(const char *pszLayerName,
 /*                       TestCapability()                               */
 /************************************************************************/
 
-int GDALGeoPackageDataset::TestCapability(const char *pszCap)
+int GDALGeoPackageDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||
         EQUAL(pszCap, "RenameLayer"))

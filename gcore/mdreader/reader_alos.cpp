@@ -28,7 +28,7 @@
  * GDALMDReaderALOS()
  */
 GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
-                                   char **papszSiblingFiles)
+                                   CSLConstList papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
     const CPLString osDirName = CPLGetDirnameSafe(pszPath);

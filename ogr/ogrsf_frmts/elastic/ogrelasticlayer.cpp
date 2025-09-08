@@ -1042,10 +1042,10 @@ OGRErr OGRElasticLayer::SyncToDisk()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRElasticLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRElasticLayer::GetLayerDefn() const
 {
 
-    FinalizeFeatureDefn();
+    const_cast<OGRElasticLayer *>(this)->FinalizeFeatureDefn();
 
     return m_poFeatureDefn;
 }
@@ -1054,7 +1054,7 @@ OGRFeatureDefn *OGRElasticLayer::GetLayerDefn()
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRElasticLayer::GetFIDColumn()
+const char *OGRElasticLayer::GetFIDColumn() const
 {
     GetLayerDefn();
     return m_osFID.c_str();
@@ -1131,8 +1131,9 @@ json_object *OGRElasticLayer::BuildSort()
     {
         const int nIdx =
             m_poFeatureDefn->GetFieldIndex(m_aoSortColumns[i].osColumn);
-        CPLString osFieldName(
-            nIdx == 0 ? "_uid" : BuildPathFromArray(m_aaosFieldPaths[nIdx]));
+        CPLString osFieldName(nIdx == 0
+                                  ? CPLString("_uid")
+                                  : BuildPathFromArray(m_aaosFieldPaths[nIdx]));
         if (CSLFindString(m_papszFieldsWithRawValue,
                           m_aoSortColumns[i].osColumn) >= 0)
         {
@@ -3045,7 +3046,7 @@ OGRErr OGRElasticLayer::CreateGeomField(const OGRGeomFieldDefn *poFieldIn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRElasticLayer::TestCapability(const char *pszCap)
+int OGRElasticLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;

@@ -188,23 +188,23 @@ class BAGDataset final : public GDALPamDataset
     BAGDataset();
     BAGDataset(BAGDataset *poParentDS, int nOvrFactor);
     BAGDataset(BAGDataset *poParentDS, int nXSize, int nYSize);
-    virtual ~BAGDataset();
+    ~BAGDataset() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return m_poTrackingListLayer ? 1 : 0;
     }
 
-    OGRLayer *GetLayer(int idx) override;
+    const OGRLayer *GetLayer(int idx) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *OpenForCreate(GDALOpenInfo *, int nXSizeIn,
@@ -284,17 +284,17 @@ class BAGRasterBand final : public GDALPamRasterBand
 
   public:
     BAGRasterBand(BAGDataset *, int);
-    virtual ~BAGRasterBand();
+    ~BAGRasterBand() override;
 
     bool Initialize(hid_t hDataset, const char *pszName);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
-    virtual double GetNoDataValue(int *) override;
-    virtual CPLErr SetNoDataValue(double dfNoData) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
+    double GetNoDataValue(int *) override;
+    CPLErr SetNoDataValue(double dfNoData) override;
 
-    virtual double GetMinimum(int *pbSuccess = nullptr) override;
-    virtual double GetMaximum(int *pbSuccess = nullptr) override;
+    double GetMinimum(int *pbSuccess = nullptr) override;
+    double GetMaximum(int *pbSuccess = nullptr) override;
 };
 
 /************************************************************************/
@@ -306,13 +306,12 @@ class BAGRasterBand final : public GDALPamRasterBand
 class BAGBaseBand CPL_NON_FINAL : public GDALRasterBand
 {
   protected:
+    BAGBaseBand() = default;
+
     bool m_bHasNoData = false;
     float m_fNoDataValue = std::numeric_limits<float>::quiet_NaN();
 
   public:
-    BAGBaseBand() = default;
-    ~BAGBaseBand() = default;
-
     double GetNoDataValue(int *) override;
 
     int GetOverviewCount() override;
@@ -369,7 +368,7 @@ class BAGSuperGridBand final : public BAGBaseBand
 
   public:
     BAGSuperGridBand(BAGDataset *, int, bool bHasNoData, float fNoDataValue);
-    virtual ~BAGSuperGridBand();
+    ~BAGSuperGridBand() override;
 
     CPLErr IReadBlock(int, int, void *) override;
 };
@@ -391,7 +390,7 @@ class BAGResampledBand final : public BAGBaseBand
   public:
     BAGResampledBand(BAGDataset *, int nBandIn, bool bHasNoData,
                      float fNoDataValue, bool bInitializeMinMax);
-    virtual ~BAGResampledBand();
+    ~BAGResampledBand() override;
 
     void InitializeMinMax();
 
@@ -427,7 +426,7 @@ class BAGInterpolatedBand final : public BAGBaseBand
   public:
     BAGInterpolatedBand(BAGDataset *, int nBandIn, bool bHasNoData,
                         float fNoDataValue, bool bInitializeMinMax);
-    virtual ~BAGInterpolatedBand();
+    ~BAGInterpolatedBand() override;
 
     void InitializeMinMax();
 
@@ -3499,7 +3498,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
 /*                            GetLayer()                                */
 /************************************************************************/
 
-OGRLayer *BAGDataset::GetLayer(int idx)
+const OGRLayer *BAGDataset::GetLayer(int idx) const
 {
     if (idx != 0)
         return nullptr;
@@ -3524,9 +3523,9 @@ class BAGTrackingListLayer final
 
   public:
     explicit BAGTrackingListLayer(const std::shared_ptr<GDALMDArray> &poArray);
-    ~BAGTrackingListLayer();
+    ~BAGTrackingListLayer() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -3534,7 +3533,7 @@ class BAGTrackingListLayer final
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(BAGTrackingListLayer)
 
-    int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return false;
     }

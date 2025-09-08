@@ -24,13 +24,27 @@
 
 ZarrGroupBase::~ZarrGroupBase()
 {
-    // We need to explicitly flush arrays so that the _ARRAY_DIMENSIONS
-    // is properly written. As it relies on checking if the dimensions of the
-    // array have an indexing variable, then still need to be all alive.
+    CPL_IGNORE_RET_VAL(ZarrGroupBase::Close());
+}
+
+/************************************************************************/
+/*                            Close()                                   */
+/************************************************************************/
+
+bool ZarrGroupBase::Close()
+{
+    bool ret = true;
+
+    for (auto &kv : m_oMapGroups)
+    {
+        ret = kv.second->Close() && ret;
+    }
+
     for (auto &kv : m_oMapMDArrays)
     {
-        kv.second->Flush();
+        ret = kv.second->Flush() && ret;
     }
+    return ret;
 }
 
 /************************************************************************/
@@ -95,7 +109,12 @@ bool ZarrGroupBase::DeleteGroup(const std::string &osName,
                  "Dataset not open in update mode");
         return false;
     }
-
+    if (CPLHasPathTraversal(osName.c_str()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Path traversal detected in %s",
+                 osName.c_str());
+        return false;
+    }
     GetGroupNames();
 
     auto oIterNames = std::find(m_aosGroups.begin(), m_aosGroups.end(), osName);
@@ -240,7 +259,12 @@ bool ZarrGroupBase::DeleteMDArray(const std::string &osName,
                  "Dataset not open in update mode");
         return false;
     }
-
+    if (CPLHasPathTraversal(osName.c_str()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Path traversal detected in %s",
+                 osName.c_str());
+        return false;
+    }
     GetMDArrayNames();
 
     auto oIterNames = std::find(m_aosArrays.begin(), m_aosArrays.end(), osName);

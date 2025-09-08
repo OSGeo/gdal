@@ -1123,17 +1123,14 @@ void WMSDeregister(CPL_UNUSED GDALDriver *d)
 
 // Define a minidriver factory type, create one and register it
 #define RegisterMinidriver(name)                                               \
-    class WMSMiniDriverFactory_##name : public WMSMiniDriverFactory            \
+    class WMSMiniDriverFactory_##name final : public WMSMiniDriverFactory      \
     {                                                                          \
       public:                                                                  \
         WMSMiniDriverFactory_##name()                                          \
         {                                                                      \
             m_name = CPLString(#name);                                         \
         }                                                                      \
-        virtual ~WMSMiniDriverFactory_##name()                                 \
-        {                                                                      \
-        }                                                                      \
-        virtual WMSMiniDriver *New() const override                            \
+        WMSMiniDriver *New() const override                                    \
         {                                                                      \
             return new WMSMiniDriver_##name;                                   \
         }                                                                      \

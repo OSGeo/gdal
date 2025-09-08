@@ -54,14 +54,13 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
 #include <time.h>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_minizip_unzip.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
 #include "cpl_vsi_virtual.h"

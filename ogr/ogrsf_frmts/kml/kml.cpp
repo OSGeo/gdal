@@ -399,16 +399,20 @@ void XMLCALL KML::endElement(void *pUserData, const char *pszName)
                         break;
 
                     const std::size_t nPosBegin = nPos;
+                    size_t nContentSize = 0;
 
                     // Get content
                     while (nPos < nLength && pszData[nPos] != ' ' &&
                            pszData[nPos] != '\n' && pszData[nPos] != '\r' &&
                            pszData[nPos] != '\t')
-                        nPos++;
-
-                    if (nPos - nPosBegin > 0)
                     {
-                        std::string sTmp(pszData + nPosBegin, nPos - nPosBegin);
+                        nContentSize++;
+                        nPos++;
+                    }
+
+                    if (nContentSize > 0)
+                    {
+                        std::string sTmp(pszData + nPosBegin, nContentSize);
                         poKML->poCurrent_->addContent(sTmp);
                     }
                 }

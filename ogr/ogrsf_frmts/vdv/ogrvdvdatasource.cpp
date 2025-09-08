@@ -131,8 +131,7 @@ static void OGRVDVParseAtrFrm(OGRLayer *poLayer, OGRFeatureDefn *poFeatureDefn,
 /************************************************************************/
 
 OGRIDFDataSource::OGRIDFDataSource(const char *pszFilename, VSILFILE *fpLIn)
-    : m_osFilename(pszFilename), m_fpL(fpLIn), m_bHasParsed(false),
-      m_poTmpDS(nullptr)
+    : m_osFilename(pszFilename), m_fpL(fpLIn)
 {
 }
 
@@ -162,10 +161,10 @@ OGRIDFDataSource::~OGRIDFDataSource()
 /*                                Parse()                               */
 /************************************************************************/
 
-void OGRIDFDataSource::Parse()
+std::pair<GDALDataset *, bool> OGRIDFDataSource::Parse() const
 {
-    m_bHasParsed = true;
-
+    GDALDataset *poTmpDS = nullptr;
+    bool bDestroyTmpDS = false;
     VSIStatBufL sStatBuf;
     bool bGPKG = false;
     vsi_l_offset nFileSize = 0;
@@ -204,17 +203,17 @@ void OGRIDFDataSource::Parse()
                 // Ubuntu 22.04 environment with sqlite 3.37.2
                 CPLConfigOptionSetter oSetter2("SQLITE_USE_OGR_VFS", "YES",
                                                false);
-                m_poTmpDS = poGPKGDriver->Create(osTmpFilename, 0, 0, 0,
-                                                 GDT_Unknown, nullptr);
+                poTmpDS = poGPKGDriver->Create(osTmpFilename, 0, 0, 0,
+                                               GDT_Unknown, nullptr);
             }
-            bGPKG = m_poTmpDS != nullptr;
-            m_bDestroyTmpDS = CPLTestBool(CPLGetConfigOption(
-                                  "OGR_IDF_DELETE_TEMP_DB", "YES")) &&
-                              m_poTmpDS != nullptr;
-            if (m_bDestroyTmpDS)
+            bGPKG = poTmpDS != nullptr;
+            bDestroyTmpDS = CPLTestBool(CPLGetConfigOption(
+                                "OGR_IDF_DELETE_TEMP_DB", "YES")) &&
+                            poTmpDS != nullptr;
+            if (bDestroyTmpDS)
             {
                 CPLPushErrorHandler(CPLQuietErrorHandler);
-                m_bDestroyTmpDS = VSIUnlink(osTmpFilename) != 0;
+                bDestroyTmpDS = VSIUnlink(osTmpFilename) != 0;
                 CPLPopErrorHandler();
             }
             else
@@ -225,13 +224,13 @@ void OGRIDFDataSource::Parse()
     }
 
     bool bIsMEMLayer = false;
-    if (m_poTmpDS == nullptr)
+    if (poTmpDS == nullptr)
     {
         bIsMEMLayer = true;
-        m_poTmpDS = MEMDataset::Create("", 0, 0, 0, GDT_Unknown, nullptr);
+        poTmpDS = MEMDataset::Create("", 0, 0, 0, GDT_Unknown, nullptr);
     }
 
-    m_poTmpDS->StartTransaction();
+    poTmpDS->StartTransaction();
 
     OGRLayer *poCurLayer = nullptr;
 
@@ -332,7 +331,7 @@ void OGRIDFDataSource::Parse()
                     OGRSpatialReference *poSRS =
                         new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG);
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    poCurLayer = m_poTmpDS->CreateLayer(
+                    poCurLayer = poTmpDS->CreateLayer(
                         osTablename, poSRS, iZ < 0 ? wkbPoint : wkbPoint25D,
                         apszOptions);
                     poSRS->Release();
@@ -347,7 +346,7 @@ void OGRIDFDataSource::Parse()
                     OGRSpatialReference *poSRS =
                         new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG);
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    poCurLayer = m_poTmpDS->CreateLayer(
+                    poCurLayer = poTmpDS->CreateLayer(
                         osTablename, poSRS,
                         iZ < 0 ? wkbLineString : wkbLineString25D, apszOptions);
                     poSRS->Release();
@@ -363,15 +362,15 @@ void OGRIDFDataSource::Parse()
                     OGRSpatialReference *poSRS =
                         new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG);
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    poCurLayer = m_poTmpDS->CreateLayer(
+                    poCurLayer = poTmpDS->CreateLayer(
                         osTablename, poSRS, iZ < 0 ? wkbPoint : wkbPoint25D,
                         apszOptions);
                     poSRS->Release();
                 }
                 else
                 {
-                    poCurLayer = m_poTmpDS->CreateLayer(osTablename, nullptr,
-                                                        wkbNone, apszOptions);
+                    poCurLayer = poTmpDS->CreateLayer(osTablename, nullptr,
+                                                      wkbNone, apszOptions);
                 }
                 if (poCurLayer == nullptr)
                 {
@@ -522,7 +521,7 @@ void OGRIDFDataSource::Parse()
     oMapNode.clear();
 
     // Patch Link geometries with the intermediate points of LinkCoordinate
-    OGRLayer *poLinkLyr = m_poTmpDS->GetLayerByName("Link");
+    OGRLayer *poLinkLyr = poTmpDS->GetLayerByName("Link");
     if (poLinkLyr && poLinkLyr->GetLayerDefn()->GetGeomFieldCount())
     {
         iLinkID = poLinkLyr->GetLayerDefn()->GetFieldIndex("LINK_ID");
@@ -581,26 +580,38 @@ void OGRIDFDataSource::Parse()
         }
     }
 
-    m_poTmpDS->CommitTransaction();
+    poTmpDS->CommitTransaction();
 
     if (bIsMEMLayer)
-        m_poTmpDS->ExecuteSQL("PRAGMA read_only=1", nullptr, nullptr);
+        poTmpDS->ExecuteSQL("PRAGMA read_only=1", nullptr, nullptr);
 
     std::map<GIntBig, OGRLineString *>::iterator oMapLinkCoordinateIter =
         oMapLinkCoordinate.begin();
     for (; oMapLinkCoordinateIter != oMapLinkCoordinate.end();
          ++oMapLinkCoordinateIter)
         delete oMapLinkCoordinateIter->second;
+
+    return {poTmpDS, bDestroyTmpDS};
 }
 
 /************************************************************************/
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int OGRIDFDataSource::GetLayerCount()
+int OGRIDFDataSource::GetLayerCount() const
 {
-    if (!m_bHasParsed)
-        Parse();
+    GDALDataset *poTmpDS = m_poTmpDS;
+    bool bDestroyTmpDS = m_bDestroyTmpDS;
+    {
+        std::lock_guard oLock(m_oMutex);
+        if (!m_bHasParsed)
+        {
+            m_bHasParsed = true;
+            std::tie(poTmpDS, bDestroyTmpDS) = Parse();
+        }
+    }
+    m_poTmpDS = poTmpDS;
+    m_bDestroyTmpDS = bDestroyTmpDS;
     if (m_poTmpDS == nullptr)
         return 0;
     return m_poTmpDS->GetLayerCount();
@@ -610,12 +621,11 @@ int OGRIDFDataSource::GetLayerCount()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRIDFDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRIDFDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
         return nullptr;
-    if (m_poTmpDS == nullptr)
-        return nullptr;
+    CPLAssert(m_poTmpDS);
     return m_poTmpDS->GetLayer(iLayer);
 }
 
@@ -623,7 +633,7 @@ OGRLayer *OGRIDFDataSource::GetLayer(int iLayer)
 /*                              TestCapability()                        */
 /************************************************************************/
 
-int OGRIDFDataSource::TestCapability(const char *pszCap)
+int OGRIDFDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return true;
@@ -680,10 +690,9 @@ OGRVDVDataSource::~OGRVDVDataSource()
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int OGRVDVDataSource::GetLayerCount()
+int OGRVDVDataSource::GetLayerCount() const
 {
-    if (!m_bLayersDetected)
-        DetectLayers();
+    DetectLayers();
     return m_nLayerCount;
 }
 
@@ -691,7 +700,7 @@ int OGRVDVDataSource::GetLayerCount()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRVDVDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRVDVDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
         return nullptr;
@@ -702,8 +711,13 @@ OGRLayer *OGRVDVDataSource::GetLayer(int iLayer)
 /*                         DetectLayers()                               */
 /************************************************************************/
 
-void OGRVDVDataSource::DetectLayers()
+void OGRVDVDataSource::DetectLayers() const
 {
+    std::lock_guard oLock(m_oMutex);
+
+    if (m_bLayersDetected)
+        return;
+
     m_bLayersDetected = true;
 
     char szBuffer[1 + 1024 + 1];
@@ -749,8 +763,9 @@ void OGRVDVDataSource::DetectLayers()
                 if (szBuffer[i] == '\r' || szBuffer[i] == '\n')
                 {
                     bInTableName = false;
-                    poLayer = new OGRVDVLayer(this, osTableName, m_fpL, false,
-                                              bRecodeFromLatin1, nStartOffset);
+                    poLayer = new OGRVDVLayer(
+                        const_cast<OGRVDVDataSource *>(this), osTableName,
+                        m_fpL, false, bRecodeFromLatin1, nStartOffset);
                     m_papoLayers = static_cast<OGRLayer **>(
                         CPLRealloc(m_papoLayers,
                                    sizeof(OGRLayer *) * (m_nLayerCount + 1)));
@@ -1114,7 +1129,7 @@ OGRFeature *OGRVDVLayer::GetNextFeature()
 /*                          TestCapability()                            */
 /************************************************************************/
 
-int OGRVDVLayer::TestCapability(const char *pszCap)
+int OGRVDVLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount) && m_nTotalFeatureCount > 0 &&
         m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
@@ -1588,7 +1603,7 @@ OGRErr OGRVDVWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn,
 /*                         TestCapability()                             */
 /************************************************************************/
 
-int OGRVDVWriterLayer::TestCapability(const char *pszCap)
+int OGRVDVWriterLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite))
         return m_bWritePossible;
@@ -1919,6 +1934,14 @@ OGRVDVDataSource::ICreateLayer(const char *pszLayerName,
     }
     else
     {
+        if (CPLLaunderForFilenameSafe(pszLayerName, nullptr) != pszLayerName)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Illegal characters in '%s' to form a valid filename",
+                     pszLayerName);
+            return nullptr;
+        }
+
         CPLString osExtension =
             CSLFetchNameValueDef(papszOptions, "EXTENSION", "x10");
         const CPLString osFilename =
@@ -2011,7 +2034,7 @@ void OGRVDVDataSource::SetCurrentWriterLayer(OGRVDVWriterLayer *poLayer)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVDVDataSource::TestCapability(const char *pszCap)
+int OGRVDVDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

@@ -30,16 +30,16 @@ Common metadata (from metadata filename):
 
 */
 
-class GDALMDReaderGeoEye : public GDALMDReaderBase
+class GDALMDReaderGeoEye final : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderGeoEye(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderGeoEye();
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    GDALMDReaderGeoEye(const char *pszPath, CSLConstList papszSiblingFiles);
+    ~GDALMDReaderGeoEye() override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
     virtual GIntBig
     GetAcquisitionTimeFromString(const char *pszDateTime) override;
     char **LoadRPCWktFile() const;

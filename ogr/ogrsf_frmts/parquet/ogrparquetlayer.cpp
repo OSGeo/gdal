@@ -833,7 +833,7 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
 /*                         TestCapability()                             */
 /************************************************************************/
 
-int OGRParquetLayerBase::TestCapability(const char *pszCap)
+int OGRParquetLayerBase::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCMeasuredGeometries))
         return true;
@@ -2575,7 +2575,7 @@ bool OGRParquetLayer::FastGetExtent(int iGeomField, OGREnvelope *psExtent) const
 /*                         TestCapability()                             */
 /************************************************************************/
 
-int OGRParquetLayer::TestCapability(const char *pszCap)
+int OGRParquetLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
@@ -2779,11 +2779,19 @@ bool OGRParquetLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 OGRErr OGRParquetLayer::SetNextByIndex(GIntBig nIndex)
 {
     if (nIndex < 0)
-        return OGRERR_FAILURE;
+    {
+        m_bEOF = true;
+        return OGRERR_NON_EXISTING_FEATURE;
+    }
 
     const auto metadata = m_poArrowReader->parquet_reader()->metadata();
     if (nIndex >= metadata->num_rows())
-        return OGRERR_FAILURE;
+    {
+        m_bEOF = true;
+        return OGRERR_NON_EXISTING_FEATURE;
+    }
+
+    m_bEOF = false;
 
     if (m_bSingleBatch)
     {

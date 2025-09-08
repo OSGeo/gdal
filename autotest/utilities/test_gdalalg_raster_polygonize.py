@@ -113,7 +113,7 @@ def test_gdalalg_raster_polygonize_overwrite(tmp_vsimem):
     alg["output"] = out_filename
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it or the --append option to append to it",
+        match="already exists",
     ):
         alg.Run()
     with ogr.Open(out_filename) as ds:
@@ -187,7 +187,7 @@ def test_gdalalg_raster_polygonize_layer_and_field_name():
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "foo"
+    alg["output-layer"] = "foo"
     alg["attribute-name"] = "bar"
     assert alg.Run()
     ds = alg["output"].GetDataset()

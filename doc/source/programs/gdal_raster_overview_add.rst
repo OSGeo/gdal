@@ -23,13 +23,24 @@ Description
 :program:`gdal raster overview add` can be used to build or rebuild overview images for
 most supported file formats with one of several downsampling algorithms.
 
+Starting with GDAL 3.12, :program:`gdal raster overview add` can be used as a
+step of a pipeline. In that case virtual overviews are generated at the output
+of the step, and can potentially be materialized in the final write step, when
+writing a GeoTIFF file with the COPY_SRC_OVERVIEWS creation option, or when writing
+to a COG (Cloud Optimized GeoTIFF) file.
+
+Options
++++++++
+
 .. option:: --dataset <DATASET>
 
-    Dataset name, to be updated in-place by default (unless :option:`--external` is specified). Required.
+    Dataset name, to be updated in-place by default (unless :option:`--external` is specified).
+    Required for standalone execution, implicit when run as a pipeline step
 
 .. option:: --external
 
     Create external ``.ovr`` overviews as GeoTIFF files.
+    Not available when run as a pipeline step.
 
 .. option::  --overview-src <INPUT>
 
@@ -100,6 +111,20 @@ most supported file formats with one of several downsampling algorithms.
     Maximum width or height of the smallest overview level. Only taken into
     account if explicit levels are not specified. Defaults to 256.
 
+.. option:: --co <NAME>=<VALUE>
+
+    .. versionadded:: 3.12
+
+    Overview creation options. May be repeated.
+
+    Many formats have one or more optional creation options that can be
+    used to control particulars about the created overviews. Options available
+    can be obtained by looking at the ``OverviewCreationOptionList`` returned
+    by ``gdal --format <FORMAT-NAME>``.
+
+    Most formats will support external overviews in a GeoTIFF file in a
+    side-car file of extension ``.ovr``. You can consult the
+    :ref:`overview creation options for GeoTIFF <raster.gtiff-overview-creation-options>`.
 
 Examples
 --------
@@ -123,7 +148,7 @@ Examples
 
    .. code-block:: bash
 
-       gdal raster overview add --external --levels=2,4,8,16 --config COMPRESS_OVERVIEW=DEFLATE erdas.img
+       gdal raster overview add --external --levels=2,4,8,16 --co COMPRESS=YES erdas.img
 
 .. example::
    :title: Create an external JPEG-compressed GeoTIFF overview file from a 3-band RGB dataset
@@ -133,8 +158,8 @@ Examples
 
    .. code-block:: bash
 
-       gdal raster overview add --config COMPRESS_OVERVIEW=JPEG --config PHOTOMETRIC_OVERVIEW=YCBCR
-                --config INTERLEAVE_OVERVIEW=PIXEL rgb_dataset.ext 2 4 8 16
+       gdal raster overview add --co OVERVIEW=JPEG --co PHOTOMETRIC=YCBCR \
+                                --co INTERLEAVE=PIXEL rgb_dataset.ext 2 4 8 16
 
 .. example::
    :title: Create overviews for a specific subdataset
@@ -151,3 +176,10 @@ Examples
    .. code-block:: bash
 
        gdal raster overview add --overview-src ovr_25k.tif --overview-src ovr_50k.tif --overview-src ovr_100k.tif --dataset my.tif
+
+.. example::
+   :title: Create a COG file with non power-of-two overview levels.
+
+   .. code-block:: bash
+
+       gdal pipeline read input.tif ! reproject --dst-crs=EPSG:4326 ! add overview --levels 16,64,128 ! write output.tif --format=COG

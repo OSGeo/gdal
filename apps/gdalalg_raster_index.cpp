@@ -105,6 +105,9 @@ void GDALRasterIndexAlgorithm::AddCommonOptions()
                                 { return ParseAndValidateKeyValue(arg); });
         arg.AddHiddenAlias("mo");
     }
+
+    AddArg("skip-errors", 0, _("Skip errors related to input datasets"),
+           &m_skipErrors);
 }
 
 /************************************************************************/
@@ -135,6 +138,12 @@ bool GDALRasterIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
 
     CPLStringList aosOptions;
+    aosOptions.push_back("--invoked-from-gdal-raster-index");
+
+    if (m_skipErrors)
+    {
+        aosOptions.push_back("-skip_errors");
+    }
     if (m_recursive)
     {
         aosOptions.push_back("-recursive");

@@ -39,7 +39,7 @@ class PlannedCoverageVIS_IRRecord
     int WesternColumnPlanned;
 };
 
-class PlannedCoverageHRVRecord
+class PlannedCoverageHRVRecord final
 {
   public:
     explicit PlannedCoverageHRVRecord(std::ifstream &ifile);
@@ -53,13 +53,13 @@ class PlannedCoverageHRVRecord
     int UpperWestColumnPlanned;
 };
 
-class ImageDescriptionRecord
+class ImageDescriptionRecord final
 {
     CPL_DISALLOW_COPY_ASSIGN(ImageDescriptionRecord)
 
   public:
     explicit ImageDescriptionRecord(std::ifstream &ifile);
-    virtual ~ImageDescriptionRecord();
+    ~ImageDescriptionRecord();
 
     unsigned char
         TypeOfProjection;  // 1 == Geostationary, Earth centered in grid
@@ -82,11 +82,11 @@ class RadiometricProcessingRecord
     double Cal_Offset[12];
 };
 
-class Prologue
+class Prologue final
 {
   public:
     Prologue();
-    virtual ~Prologue();
+    ~Prologue();
 
     void read(std::ifstream &ifile);
 
@@ -103,6 +103,11 @@ class Prologue
   private:
     ImageDescriptionRecord *m_idr;
     RadiometricProcessingRecord *m_rpr;
+
+    Prologue(const Prologue &) = delete;
+    Prologue &operator=(const Prologue &) = delete;
+    Prologue(Prologue &&) = delete;
+    Prologue &operator=(Prologue &&) = delete;
 };
 
 #endif  // !defined(AFX_PROLOGUE_H__777B5B86_04F4_4A01_86F6_24615DCD8446__INCLUDED_)

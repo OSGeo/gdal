@@ -1968,7 +1968,7 @@ int OGRLIBKMLDataSource::Create(const char *pszFilename, char **papszOptions)
 
 ******************************************************************************/
 
-OGRLayer *OGRLIBKMLDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRLIBKMLDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;
@@ -2270,6 +2270,14 @@ OGRLIBKMLDataSource::ICreateLayer(const char *pszLayerName,
     if (!bUpdate)
         return nullptr;
 
+    if (CPLLaunderForFilenameSafe(pszLayerName, nullptr) != pszLayerName)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Illegal characters in '%s' to form a valid filename",
+                 pszLayerName);
+        return nullptr;
+    }
+
     if ((IsKmz() || IsDir()) && EQUAL(pszLayerName, "doc"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2560,7 +2568,7 @@ void OGRLIBKMLDataSource::SetStyleTable(OGRStyleTable *poStyleTable)
 
 ******************************************************************************/
 
-int OGRLIBKMLDataSource::TestCapability(const char *pszCap)
+int OGRLIBKMLDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return bUpdate;

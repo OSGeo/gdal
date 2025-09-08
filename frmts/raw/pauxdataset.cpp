@@ -110,7 +110,7 @@ PAuxRasterBand::PAuxRasterBand(GDALDataset *poDSIn, int nBandIn,
                     nLineOffsetIn, eDataTypeIn, bNativeOrderIn,
                     RawRasterBand::OwnFP::NO)
 {
-    PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>(poDS);
+    PAuxDataset *poPDS = cpl::down_cast<PAuxDataset *>(poDS);
 
     /* -------------------------------------------------------------------- */
     /*      Does this channel have a description?                           */
@@ -178,7 +178,7 @@ double PAuxRasterBand::GetNoDataValue(int *pbSuccess)
     snprintf(szTarget, sizeof(szTarget), "METADATA_IMG_%d_NO_DATA_VALUE",
              nBand);
 
-    PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>(poDS);
+    PAuxDataset *poPDS = cpl::down_cast<PAuxDataset *>(poDS);
     const char *pszLine = CSLFetchNameValue(poPDS->papszAuxLines, szTarget);
 
     if (pbSuccess != nullptr)
@@ -340,8 +340,7 @@ void PAuxDataset::ScanForGCPs()
 
     nGCPCount = 0;
     CPLAssert(pasGCPList == nullptr);
-    pasGCPList =
-        reinterpret_cast<GDAL_GCP *>(CPLCalloc(sizeof(GDAL_GCP), MAX_GCP));
+    pasGCPList = static_cast<GDAL_GCP *>(CPLCalloc(sizeof(GDAL_GCP), MAX_GCP));
 
     /* -------------------------------------------------------------------- */
     /*      Get the GCP coordinate system.                                  */
@@ -493,6 +492,12 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         szAuxTarget[sizeof(szAuxTarget) - 1] = '\0';
 
+        if (CPLHasPathTraversal(szAuxTarget))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Path traversal detected in %s", szAuxTarget);
+            return nullptr;
+        }
         const std::string osPath(CPLGetPathSafe(poOpenInfo->pszFilename));
         osTarget = CPLFormFilenameSafe(osPath.c_str(), szAuxTarget, nullptr);
     }

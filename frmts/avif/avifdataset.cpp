@@ -66,7 +66,7 @@ class GDALAVIFDataset final : public GDALPamDataset
         memset(&m_rgb, 0, sizeof(m_rgb));
     }
 
-    ~GDALAVIFDataset();
+    ~GDALAVIFDataset() override;
 
     static GDALPamDataset *OpenStaticPAM(GDALOpenInfo *poOpenInfo);
 
@@ -82,7 +82,7 @@ class GDALAVIFDataset final : public GDALPamDataset
 
 #ifdef AVIF_HAS_OPAQUE_PROPERTIES
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     int GetGCPCount() override;
     const GDAL_GCP *GetGCPs() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
@@ -1065,7 +1065,7 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
 
 class GDALAVIFDriver final : public GDALDriver
 {
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bMetadataInitialized = false;
     void InitMetadata();
 
@@ -1248,6 +1248,7 @@ void GDALRegister_AVIF()
     if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
+#ifdef AVIF_VERSION_CHECK
     // Check libavif runtime vs compile-time versions
     const char *pszVersion = avifVersion();
     const CPLStringList aosVersionTokens(
@@ -1266,6 +1267,7 @@ void GDALRegister_AVIF()
                  "against %s. Runtime issues could occur",
                  osExpectedVersion.c_str(), avifVersion());
     }
+#endif
 
     auto poDriver = std::make_unique<GDALAVIFDriver>();
     auto poDM = GetGDALDriverManager();
