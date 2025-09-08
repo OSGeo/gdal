@@ -1150,6 +1150,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         }
     }
 
+    std::string osOverviewResampling;
     if (bGenerateOvr)
     {
         CPLDebug("COG", "Generating overviews of the imagery: start");
@@ -1157,7 +1158,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         std::vector<GDALRasterBand *> apoSrcBands;
         for (int i = 0; i < nBands; i++)
             apoSrcBands.push_back(poCurDS->GetRasterBand(i + 1));
-        const char *pszResampling = CSLFetchNameValueDef(
+        osOverviewResampling = CSLFetchNameValueDef(
             papszOptions, "OVERVIEW_RESAMPLING",
             CSLFetchNameValueDef(papszOptions, "RESAMPLING",
                                  GetResampling(poSrcDS)));
@@ -1181,8 +1182,8 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         CPLErr eErr = GTIFFBuildOverviewsEx(
             m_osTmpOverviewFilename, nBands, &apoSrcBands[0],
             static_cast<int>(asOverviewDims.size()), nullptr,
-            asOverviewDims.data(), pszResampling, aosOverviewOptions.List(),
-            GDALScaledProgress, pScaledProgress);
+            asOverviewDims.data(), osOverviewResampling.c_str(),
+            aosOverviewOptions.List(), GDALScaledProgress, pScaledProgress);
         CPLDebug("COG", "Generating overviews of the imagery: end");
 
         GDALDestroyScaledProgress(pScaledProgress);
@@ -1190,6 +1191,14 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         {
             return nullptr;
         }
+    }
+    else if (poSrcDS->GetRasterBand(1)->GetOverviewCount() > 0)
+    {
+        const char *pszResampling =
+            poSrcDS->GetRasterBand(1)->GetOverview(0)->GetMetadataItem(
+                "RESAMPLING");
+        if (pszResampling)
+            osOverviewResampling = pszResampling;
     }
 
     CPLStringList aosOptions;
@@ -1271,6 +1280,11 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     }
     else
     {
+        if (!osOverviewResampling.empty())
+        {
+            aosOptions.SetNameValue("@OVERVIEW_RESAMPLING",
+                                    osOverviewResampling.c_str());
+        }
         if (!m_osTmpOverviewFilename.empty())
         {
             aosOptions.SetNameValue("@OVERVIEW_DATASET",
