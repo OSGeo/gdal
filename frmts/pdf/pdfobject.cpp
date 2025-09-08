@@ -2570,7 +2570,7 @@ GDALPDFObject *GDALPDFDictionaryPdfium::Get(const char *pszKey)
     if (oIter != m_map.end())
         return oIter->second;
 
-    ByteString pdfiumKey(pszKey);
+    ByteStringView pdfiumKey(pszKey);
     GDALPDFObjectPdfium *poObj =
         GDALPDFObjectPdfium::Build(m_poDict->GetObjectFor(pdfiumKey));
     if (poObj)
