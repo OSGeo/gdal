@@ -28,7 +28,7 @@
  * GDALMDReaderSpot()
  */
 GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
-                                   char **papszSiblingFiles)
+                                   CSLConstList papszSiblingFiles)
     : GDALMDReaderPleiades(pszPath, papszSiblingFiles)
 {
     const std::string osDirName = CPLGetDirnameSafe(pszPath);

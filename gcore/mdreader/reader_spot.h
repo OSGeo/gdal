@@ -31,7 +31,7 @@ Common metadata (from metadata filename):
 class GDALMDReaderSpot final : public GDALMDReaderPleiades
 {
   public:
-    GDALMDReaderSpot(const char *pszPath, char **papszSiblingFiles);
+    GDALMDReaderSpot(const char *pszPath, CSLConstList papszSiblingFiles);
     ~GDALMDReaderSpot() override;
 
   protected:

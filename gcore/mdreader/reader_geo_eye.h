@@ -33,7 +33,7 @@ Common metadata (from metadata filename):
 class GDALMDReaderGeoEye final : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderGeoEye(const char *pszPath, char **papszSiblingFiles);
+    GDALMDReaderGeoEye(const char *pszPath, CSLConstList papszSiblingFiles);
     ~GDALMDReaderGeoEye() override;
     bool HasRequiredFiles() const override;
     char **GetMetadataFiles() const override;

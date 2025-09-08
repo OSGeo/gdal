@@ -32,7 +32,7 @@ Common metadata (from metadata filename):
 class CPL_DLL GDALMDReaderPleiades /* non final */ : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
+    GDALMDReaderPleiades(const char *pszPath, CSLConstList papszSiblingFiles);
     ~GDALMDReaderPleiades() override;
     bool HasRequiredFiles() const override;
     char **GetMetadataFiles() const override;

@@ -27,7 +27,7 @@
  * GDALMDReaderEROS()
  */
 GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
-                                   char **papszSiblingFiles)
+                                   CSLConstList papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
     const CPLString osBaseName = CPLGetBasenameSafe(pszPath);
