@@ -366,3 +366,5 @@ for Bosnia and Herzegovina (country code "BA"), limited to the "county" subtype.
         const bool bForcePaeth = EQUAL(pszGDAL_RASTER_TILE_PNG_FILTER, "PAETH");
 @pytest.mark.parametrize("GDAL_RASTER_TILE_PNG_FILTER", ["", "AVERAGE", "PAETH"])
         // We manually generate the PNG file using the Average or PAETH filter
+        for (const CPLXMLNode *psIter = psTreNode->psChild;
+    for (const CPLXMLNode *psIter = psTreNode->psChild;
