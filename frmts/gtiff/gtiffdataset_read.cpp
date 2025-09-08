@@ -5187,7 +5187,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             {
                 m_dfNoDataValue =
                     GDALAdjustNoDataCloseToFloatMax(m_dfNoDataValue);
-                m_dfNoDataValue = static_cast<float>(m_dfNoDataValue);
+                m_dfNoDataValue =
+                    static_cast<double>(static_cast<float>(m_dfNoDataValue));
             }
         }
     }
@@ -5285,7 +5286,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             float fVal = 0.0;
             if (TIFFGetField(m_hTIFF, pasTIFFTags[iTag].nTagVal, &fVal))
             {
-                CPLsnprintf(szWorkMDI, sizeof(szWorkMDI), "%.8g", fVal);
+                CPLsnprintf(szWorkMDI, sizeof(szWorkMDI), "%.8g",
+                            static_cast<double>(fVal));
                 m_oGTiffMDMD.SetMetadataItem(pasTIFFTags[iTag].pszTagName,
                                              szWorkMDI);
             }
@@ -6467,11 +6469,11 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
         }
         else if (EQUAL(pszName, "JXL_DISTANCE"))
         {
-            return CPLSPrintf("%f", m_fJXLDistance);
+            return CPLSPrintf("%f", static_cast<double>(m_fJXLDistance));
         }
         else if (EQUAL(pszName, "JXL_ALPHA_DISTANCE"))
         {
-            return CPLSPrintf("%f", m_fJXLAlphaDistance);
+            return CPLSPrintf("%f", static_cast<double>(m_fJXLAlphaDistance));
         }
         else if (EQUAL(pszName, "JXL_EFFORT"))
         {

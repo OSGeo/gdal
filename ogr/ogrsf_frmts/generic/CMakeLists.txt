@@ -44,7 +44,7 @@ add_library(
   ograrrowarrayhelper.cpp)
 gdal_standard_includes(ogrsf_generic)
 add_dependencies(ogrsf_generic generate_gdal_version_h)
-target_compile_options(ogrsf_generic PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
+target_compile_options(ogrsf_generic PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX} ${WFLAG_DOUBLE_PROMOTION})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogrsf_generic>)
 set_property(TARGET ogrsf_generic PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 

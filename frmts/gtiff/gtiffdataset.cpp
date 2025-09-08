@@ -981,9 +981,10 @@ void GTiffDataset::RestoreVolatileParameters(TIFF *hTIFF)
             TIFFSetField(hTIFF, TIFFTAG_JXL_LOSSYNESS,
                          m_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
             TIFFSetField(hTIFF, TIFFTAG_JXL_EFFORT, m_nJXLEffort);
-            TIFFSetField(hTIFF, TIFFTAG_JXL_DISTANCE, m_fJXLDistance);
+            TIFFSetField(hTIFF, TIFFTAG_JXL_DISTANCE,
+                         static_cast<double>(m_fJXLDistance));
             TIFFSetField(hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE,
-                         m_fJXLAlphaDistance);
+                         static_cast<double>(m_fJXLAlphaDistance));
         }
 #endif
     }
