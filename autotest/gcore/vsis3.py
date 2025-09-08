@@ -655,10 +655,6 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
         gdal.VSIFCloseL(f)
 
     if data != "foo":
-
-        if gdaltest.is_travis_branch("trusty"):
-            pytest.skip("Skipped on trusty branch, but should be investigated")
-
         pytest.fail(data)
 
     # Test region and endpoint 'redirects'
@@ -1135,8 +1131,19 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
                     <Size>456789</Size>
                      <StorageClass>DEEP_ARCHIVE</StorageClass>
                 </Contents>
+                <Contents>
+                    <Key>a_dir with_space/../is_ok</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                </Contents>
+                <Contents>
+                    <Key>a_dir with_space/../../not_ok</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                </Contents>
                 <CommonPrefixes>
                     <Prefix>a_dir with_space/subdir/</Prefix>
+                    <Prefix>a_dir with_space/../../subdir_not_ok/</Prefix>
                 </CommonPrefixes>
             </ListBucketResult>
         """
@@ -1155,16 +1162,17 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
             "/vsis3/s3_fake_bucket2/a_dir with_space/resource3 with_space.bin"
         )
     if f is None:
-
-        if gdaltest.is_travis_branch("trusty"):
-            pytest.skip("Skipped on trusty branch, but should be investigated")
-
         pytest.fail()
     gdal.VSIFCloseL(f)
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
         dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir with_space")
-    expected_dir_contents = ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    expected_dir_contents = [
+        "resource3 with_space.bin",
+        "resource4.bin",
+        "../is_ok",
+        "subdir",
+    ]
     assert dir_contents == expected_dir_contents
 
     assert (

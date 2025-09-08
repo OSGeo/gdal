@@ -6007,6 +6007,8 @@ TEST_F(test_cpl, CPLGetCurrentThreadCount)
 TEST_F(test_cpl, CPLHasPathTraversal)
 {
     EXPECT_TRUE(CPLHasPathTraversal("a/../b"));
+    EXPECT_TRUE(CPLHasPathTraversal("a/../"));
+    EXPECT_TRUE(CPLHasPathTraversal("a/.."));
     EXPECT_TRUE(CPLHasPathTraversal("a\\..\\b"));
     EXPECT_FALSE(CPLHasPathTraversal("a/b"));
     {
@@ -6015,6 +6017,28 @@ TEST_F(test_cpl, CPLHasPathTraversal)
         EXPECT_FALSE(CPLHasPathTraversal("a/../b"));
         EXPECT_FALSE(CPLHasPathTraversal("a\\..\\b"));
     }
+}
+
+TEST_F(test_cpl, CPLHasUnbalancedPathTraversal)
+{
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a"));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("."));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("./"));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a/.."));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a/../b"));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("./a/../b"));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a\\..\\b"));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a/../b/../"));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a/../b/.."));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a/b"));
+
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal(".."));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("../"));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("../b"));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../../"));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../b/../.."));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../b/../../"));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a\\..\\..\\"));
 }
 
 }  // namespace
