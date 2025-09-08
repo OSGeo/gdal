@@ -1385,6 +1385,8 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     }
 
     aosOptions.SetNameValue("@FLUSHCACHE", "YES");
+    aosOptions.SetNameValue("@SUPPRESS_ASAP",
+                            CSLFetchNameValue(papszOptions, "@SUPPRESS_ASAP"));
 
     CPLDebug("COG", "Generating final product: start");
     auto poRet =

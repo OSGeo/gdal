@@ -5963,8 +5963,10 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     VSIErrorReset();
     const bool bOnlyVisibleAtCloseTime = CPLTestBool(CSLFetchNameValueDef(
         papszParamList, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME", "NO"));
+    const bool bSuppressASAP = CPLTestBool(
+        CSLFetchNameValueDef(papszParamList, "@SUPPRESS_ASAP", "NO"));
     auto l_fpL =
-        bOnlyVisibleAtCloseTime && !bAppend
+        (bOnlyVisibleAtCloseTime || bSuppressASAP) && !bAppend
             ? VSIFileManager::GetHandler(pszFilename)
                   ->CreateOnlyVisibleAtCloseTime(pszFilename, true, nullptr)
                   .release()
@@ -5980,6 +5982,12 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                                  .c_str());
         return nullptr;
     }
+
+    if (bSuppressASAP)
+    {
+        l_fpL->CancelCreation();
+    }
+
     TIFF *l_hTIFF = VSI_TIFFOpen(pszFilename, szOpeningFlag, l_fpL);
     if (l_hTIFF == nullptr)
     {
@@ -6755,6 +6763,10 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     GTiffDataset *poDS = new GTiffDataset();
     poDS->m_hTIFF = l_hTIFF;
     poDS->m_fpL = l_fpL;
+    const bool bSuppressASAP = CPLTestBool(
+        CSLFetchNameValueDef(papszParamList, "@SUPPRESS_ASAP", "NO"));
+    if (bSuppressASAP)
+        poDS->MarkSuppressOnClose();
     if (bStreaming)
     {
         poDS->m_bStreamingOut = true;
@@ -8166,6 +8178,10 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
     GTiffDataset *poDS = new GTiffDataset();
+    const bool bSuppressASAP =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "@SUPPRESS_ASAP", "NO"));
+    if (bSuppressASAP)
+        poDS->MarkSuppressOnClose();
     poDS->SetDescription(pszFilename);
     poDS->eAccess = GA_Update;
     poDS->m_pszFilename = CPLStrdup(pszFilename);
@@ -8911,17 +8927,22 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
 
     if (eErr == CE_Failure)
     {
-        l_fpL->CancelCreation();
-        delete poDS;
-        poDS = nullptr;
-
         if (CPLTestBool(CPLGetConfigOption("GTIFF_DELETE_ON_ERROR", "YES")))
         {
+            l_fpL->CancelCreation();
+            delete poDS;
+            poDS = nullptr;
+
             if (!bStreaming)
             {
                 // Should really delete more carefully.
                 VSIUnlink(pszFilename);
             }
+        }
+        else
+        {
+            delete poDS;
+            poDS = nullptr;
         }
     }
 

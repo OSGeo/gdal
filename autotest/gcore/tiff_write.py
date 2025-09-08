@@ -12279,6 +12279,32 @@ def test_tiff_createcopy_only_visible_at_close_time_win32_specific(tmp_path):
 ###############################################################################
 
 
+def test_tiff_create_copy_SUPPRESS_ASAP(tmp_path):
+
+    src_ds = gdal.Open("data/byte.tif")
+    out_filename = tmp_path / "tmp.tif"
+
+    def my_callback(pct, msg, user_data):
+        if sys.platform != "win32":
+            assert gdal.VSIStatL(out_filename) is None
+        return True
+
+    drv = gdal.GetDriverByName("GTIFF")
+    ds = drv.CreateCopy(
+        out_filename,
+        src_ds,
+        options=["@SUPPRESS_ASAP=YES"],
+        callback=my_callback,
+    )
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds.Close()
+
+    assert gdal.VSIStatL(out_filename) is None
+
+
+###############################################################################
+
+
 def test_tiff_create_suppress_on_close(tmp_path):
 
     out_filename = tmp_path / "tmp.tif"
