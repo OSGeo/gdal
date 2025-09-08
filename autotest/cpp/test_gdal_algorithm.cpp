@@ -1186,7 +1186,7 @@ TEST_F(test_gdal_algorithm, GDALInConstructionAlgorithmArg_AddAlias)
     {
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         CPLErrorReset();
-        EXPECT_EQ(alg.GetArg("flig"), nullptr);
+        EXPECT_EQ(alg.GetArg("flig", /* suggestionAllowed = */ true), nullptr);
         EXPECT_STREQ(CPLGetLastErrorMsg(),
                      "Argument 'flig' is unknown. Do you mean 'flag'?");
     }
@@ -1194,7 +1194,7 @@ TEST_F(test_gdal_algorithm, GDALInConstructionAlgorithmArg_AddAlias)
     {
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         CPLErrorReset();
-        EXPECT_EQ(alg.GetArg("flga"), nullptr);
+        EXPECT_EQ(alg.GetArg("flga", /* suggestionAllowed = */ true), nullptr);
         EXPECT_STREQ(CPLGetLastErrorMsg(),
                      "Argument 'flga' is unknown. Do you mean 'flag'?");
     }
@@ -3876,6 +3876,26 @@ TEST_F(test_gdal_algorithm, arg_band_vector_with_input_dataset)
     }
 }
 
+TEST_F(test_gdal_algorithm, SetHidden)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        bool m_b = false;
+
+        MyAlgorithm()
+        {
+            AddArg("flag", 0, "", &m_b).SetHidden().SetCategory(GAAC_ESOTERIC);
+        }
+    };
+
+    MyAlgorithm alg;
+    EXPECT_TRUE(alg.GetArg("flag")->IsHiddenForCLI());
+    EXPECT_TRUE(alg.GetArg("flag")->IsHiddenForAPI());
+    EXPECT_TRUE(alg.GetArg("flag")->IsHidden());
+    alg.GetUsageForCLI(false);
+}
+
 TEST_F(test_gdal_algorithm, SetHiddenForCLI)
 {
     class MyAlgorithm : public MyAlgorithmWithDummyRun
@@ -3892,10 +3912,13 @@ TEST_F(test_gdal_algorithm, SetHiddenForCLI)
     };
 
     MyAlgorithm alg;
+    EXPECT_TRUE(alg.GetArg("flag")->IsHiddenForCLI());
+    EXPECT_FALSE(alg.GetArg("flag")->IsHiddenForAPI());
+    EXPECT_FALSE(alg.GetArg("flag")->IsHidden());
     alg.GetUsageForCLI(false);
 }
 
-TEST_F(test_gdal_algorithm, SetOnlyForCLI)
+TEST_F(test_gdal_algorithm, SetHiddenForAPI)
 {
     class MyAlgorithm : public MyAlgorithmWithDummyRun
     {
@@ -3905,13 +3928,16 @@ TEST_F(test_gdal_algorithm, SetOnlyForCLI)
         MyAlgorithm()
         {
             AddArg("flag", 0, "", &m_b)
-                .SetOnlyForCLI()
+                .SetHiddenForAPI()
                 .SetCategory("my category");
             m_longDescription = "long description";
         }
     };
 
     MyAlgorithm alg;
+    EXPECT_TRUE(alg.GetArg("flag")->IsHiddenForAPI());
+    EXPECT_FALSE(alg.GetArg("flag")->IsHiddenForCLI());
+    EXPECT_FALSE(alg.GetArg("flag")->IsHidden());
     alg.GetUsageForCLI(false);
 }
 
@@ -4203,13 +4229,16 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
             : GDALAlgorithm("test", "description", "http://example.com")
         {
             m_longDescription = "long description";
-            AddArg("flag", 'f', "boolean flag", &m_flag);
-            AddArg("str", 0, "str", &m_str);
-            AddArg("int", 0, "int", &m_int);
-            AddArg("double", 0, "double", &m_double);
-            AddArg("strlist", 0, "strlist", &m_strlist);
-            AddArg("doublelist", 0, "doublelist", &m_doublelist);
-            AddArg("intlist", 0, "intlist", &m_intlist);
+            AddArg("flag", 'f', "boolean flag", &m_flag).SetDefault(true);
+            AddArg("str", 0, "str", &m_str).SetDefault("default");
+            AddArg("int", 0, "int", &m_int).SetDefault(1);
+            AddArg("double", 0, "double", &m_double).SetDefault(1.5);
+            AddArg("strlist", 0, "strlist", &m_strlist)
+                .SetDefault(std::vector<std::string>{"one", "two"});
+            AddArg("doublelist", 0, "doublelist", &m_doublelist)
+                .SetDefault(std::vector<double>{1.5, 2.5});
+            AddArg("intlist", 0, "intlist", &m_intlist)
+                .SetDefault(std::vector<int>{1, 2});
             AddArg("dataset", 0, "dataset", &m_dsValue);
         }
 
@@ -4265,6 +4294,12 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
     {
         auto hArg = GDALAlgorithmGetArg(hAlg.get(), "flag");
         ASSERT_NE(hArg, nullptr);
+        EXPECT_TRUE(GDALAlgorithmArgHasDefaultValue(hArg));
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            EXPECT_EQ(GDALAlgorithmArgGetDefaultAsString(hArg), nullptr);
+        }
+        EXPECT_TRUE(GDALAlgorithmArgGetDefaultAsBoolean(hArg));
         GDALAlgorithmArgSetAsBoolean(hArg, true);
         EXPECT_TRUE(GDALAlgorithmArgGetAsBoolean(hArg));
         GDALAlgorithmArgRelease(hArg);
@@ -4272,6 +4307,11 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
     {
         auto hArg = GDALAlgorithmGetArg(hAlg.get(), "str");
         ASSERT_NE(hArg, nullptr);
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            EXPECT_EQ(GDALAlgorithmArgGetDefaultAsInteger(hArg), 0);
+        }
+        EXPECT_STREQ(GDALAlgorithmArgGetDefaultAsString(hArg), "default");
         GDALAlgorithmArgSetAsString(hArg, "foo");
         EXPECT_STREQ(GDALAlgorithmArgGetAsString(hArg), "foo");
         GDALAlgorithmArgRelease(hArg);
@@ -4279,6 +4319,11 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
     {
         auto hArg = GDALAlgorithmGetArg(hAlg.get(), "int");
         ASSERT_NE(hArg, nullptr);
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            EXPECT_EQ(GDALAlgorithmArgGetDefaultAsDouble(hArg), 0);
+        }
+        EXPECT_EQ(GDALAlgorithmArgGetDefaultAsInteger(hArg), 1);
         GDALAlgorithmArgSetAsInteger(hArg, 2);
         EXPECT_EQ(GDALAlgorithmArgGetAsInteger(hArg), 2);
         GDALAlgorithmArgRelease(hArg);
@@ -4286,6 +4331,11 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
     {
         auto hArg = GDALAlgorithmGetArg(hAlg.get(), "double");
         ASSERT_NE(hArg, nullptr);
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            EXPECT_EQ(GDALAlgorithmArgGetDefaultAsStringList(hArg), nullptr);
+        }
+        EXPECT_EQ(GDALAlgorithmArgGetDefaultAsDouble(hArg), 1.5);
         GDALAlgorithmArgSetAsDouble(hArg, 2.5);
         EXPECT_EQ(GDALAlgorithmArgGetAsDouble(hArg), 2.5);
         GDALAlgorithmArgRelease(hArg);
@@ -4293,16 +4343,52 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
     {
         auto hArg = GDALAlgorithmGetArg(hAlg.get(), "strlist");
         ASSERT_NE(hArg, nullptr);
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            size_t nCount;
+            EXPECT_EQ(GDALAlgorithmArgGetDefaultAsIntegerList(hArg, &nCount),
+                      nullptr);
+        }
+        {
+            char **ret = GDALAlgorithmArgGetDefaultAsStringList(hArg);
+            EXPECT_EQ(CSLCount(ret), 2);
+            if (CSLCount(ret) == 2)
+            {
+                EXPECT_STREQ(ret[0], "one");
+                EXPECT_STREQ(ret[1], "two");
+            }
+            CSLDestroy(ret);
+        }
         const CPLStringList list(std::vector<std::string>({"foo", "bar"}));
         GDALAlgorithmArgSetAsStringList(hArg, list.List());
         char **ret = GDALAlgorithmArgGetAsStringList(hArg);
         EXPECT_EQ(CSLCount(ret), 2);
+        if (CSLCount(ret) == 2)
+        {
+            EXPECT_STREQ(ret[0], "foo");
+            EXPECT_STREQ(ret[1], "bar");
+        }
         CSLDestroy(ret);
         GDALAlgorithmArgRelease(hArg);
     }
     {
         auto hArg = GDALAlgorithmGetArg(hAlg.get(), "intlist");
         ASSERT_NE(hArg, nullptr);
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            size_t nCount;
+            EXPECT_EQ(GDALAlgorithmArgGetDefaultAsDoubleList(hArg, &nCount),
+                      nullptr);
+        }
+        {
+            size_t nCount = 0;
+            const int *ret =
+                GDALAlgorithmArgGetDefaultAsIntegerList(hArg, &nCount);
+            ASSERT_EQ(nCount, 2);
+            ASSERT_NE(ret, nullptr);
+            EXPECT_EQ(ret[0], 1);
+            EXPECT_EQ(ret[1], 2);
+        }
         std::vector<int> vals{2, 3};
         GDALAlgorithmArgSetAsIntegerList(hArg, vals.size(), vals.data());
         size_t nCount = 0;
@@ -4316,6 +4402,19 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
     {
         auto hArg = GDALAlgorithmGetArg(hAlg.get(), "doublelist");
         ASSERT_NE(hArg, nullptr);
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            EXPECT_EQ(GDALAlgorithmArgGetDefaultAsBoolean(hArg), false);
+        }
+        {
+            size_t nCount = 0;
+            const double *ret =
+                GDALAlgorithmArgGetDefaultAsDoubleList(hArg, &nCount);
+            ASSERT_EQ(nCount, 2);
+            ASSERT_NE(ret, nullptr);
+            EXPECT_EQ(ret[0], 1.5);
+            EXPECT_EQ(ret[1], 2.5);
+        }
         std::vector<double> vals{2.5, 3.5};
         GDALAlgorithmArgSetAsDoubleList(hArg, vals.size(), vals.data());
         size_t nCount = 0;

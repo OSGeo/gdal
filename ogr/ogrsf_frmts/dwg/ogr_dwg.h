@@ -43,6 +43,9 @@ class DWGBlockDefinition
 
     OGRGeometry *poGeometry;
     std::vector<OGRFeature *> apoFeatures;
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(DWGBlockDefinition)
 };
 
 /************************************************************************/

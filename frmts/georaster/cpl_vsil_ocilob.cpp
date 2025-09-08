@@ -54,6 +54,8 @@ class VSIOCILobHandle : public VSIVirtualHandle
     GUIntBig nCurOff;
     boolean bUpdate;
 
+    CPL_DISALLOW_COPY_ASSIGN(VSIOCILobHandle)
+
   public:
     VSIOCILobHandle(OWConnection *poConnectionIn, OWStatement *poStatementIn,
                     OCILobLocator *phLocatorIn, boolean bUpdateIn);

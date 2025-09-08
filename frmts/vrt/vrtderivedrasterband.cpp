@@ -906,8 +906,10 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
                              iBuffer < anMapBufferIdxToSourceIdx.size();
                              iBuffer++)
                         {
-                            int iSource = anMapBufferIdxToSourceIdx[iBuffer];
-                            const VRTSource *poSource = papoSources[iSource];
+                            const int iSource =
+                                anMapBufferIdxToSourceIdx[iBuffer];
+                            const VRTSource *poSource =
+                                m_papoSources[iSource].get();
 
                             if (iBuffer > 0)
                             {
@@ -1057,13 +1059,12 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     {
         // Check the largest data type for all sources
         GDALDataType eAllSrcType = GDT_Unknown;
-        for (int iSource = 0; iSource < nSources; iSource++)
+        for (auto &poSource : m_papoSources)
         {
-            if (papoSources[iSource]->GetType() ==
-                VRTSimpleSource::GetTypeStatic())
+            if (poSource->GetType() == VRTSimpleSource::GetTypeStatic())
             {
                 const auto poSS =
-                    static_cast<VRTSimpleSource *>(papoSources[iSource]);
+                    static_cast<VRTSimpleSource *>(poSource.get());
                 auto l_poBand = poSS->GetRasterBand();
                 if (l_poBand)
                 {
@@ -1093,10 +1094,11 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     // If acquiring the region of interest in a single time is going
     // to consume too much RAM, split in halves, and that recursively
     // until we get below m_nAllowedRAMUsage.
-    if (m_poPrivate->m_nAllowedRAMUsage > 0 && nSources > 0 &&
+    if (m_poPrivate->m_nAllowedRAMUsage > 0 && !m_papoSources.empty() &&
         nSrcTypeSize > 0 && nBufXSize == nXSize && nBufYSize == nYSize &&
         static_cast<GIntBig>(nBufXSize) * nBufYSize >
-            m_poPrivate->m_nAllowedRAMUsage / (nSources * nSrcTypeSize))
+            m_poPrivate->m_nAllowedRAMUsage /
+                (static_cast<int>(m_papoSources.size()) * nSrcTypeSize))
     {
         CPLErr eErr = SplitRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                     pData, nBufXSize, nBufYSize, eBufType,
@@ -1157,20 +1159,22 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     const int nExtBufYSize = nBufYSize + 2 * nBufferRadius;
     int nBufferCount = 0;
 
-    std::vector<std::unique_ptr<void, VSIFreeReleaser>> apBuffers(nSources);
-    std::vector<int> anMapBufferIdxToSourceIdx(nSources);
-    bool bSkipOutputBufferInitialization = nSources > 0;
-    for (int iSource = 0; iSource < nSources; iSource++)
+    std::vector<std::unique_ptr<void, VSIFreeReleaser>> apBuffers(
+        m_papoSources.size());
+    std::vector<int> anMapBufferIdxToSourceIdx(m_papoSources.size());
+    bool bSkipOutputBufferInitialization = !m_papoSources.empty();
+    for (int iSource = 0; iSource < static_cast<int>(m_papoSources.size());
+         iSource++)
     {
         if (m_poPrivate->m_bSkipNonContributingSources &&
-            papoSources[iSource]->IsSimpleSource())
+            m_papoSources[iSource]->IsSimpleSource())
         {
             bool bError = false;
             double dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize;
             int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
             int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
             auto poSource =
-                static_cast<VRTSimpleSource *>(papoSources[iSource]);
+                static_cast<VRTSimpleSource *>(m_papoSources[iSource].get());
             if (!poSource->GetSrcDstWindow(
                     nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                     &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
@@ -1197,10 +1201,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         }
 
         bool bBufferInit = true;
-        if (papoSources[iSource]->IsSimpleSource())
+        if (m_papoSources[iSource]->IsSimpleSource())
         {
             const auto poSS =
-                static_cast<VRTSimpleSource *>(papoSources[iSource]);
+                static_cast<VRTSimpleSource *>(m_papoSources[iSource].get());
             auto l_poBand = poSS->GetRasterBand();
             if (l_poBand != nullptr && poSS->m_dfSrcXOff == 0.0 &&
                 poSS->m_dfSrcYOff == 0.0 &&
@@ -1212,7 +1216,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                 poSS->m_dfDstXOff + poSS->m_dfDstXSize == nRasterXSize &&
                 poSS->m_dfDstYOff + poSS->m_dfDstYSize == nRasterYSize)
             {
-                if (papoSources[iSource]->GetType() ==
+                if (m_papoSources[iSource]->GetType() ==
                     VRTSimpleSource::GetTypeStatic())
                     bBufferInit = false;
             }
@@ -1360,7 +1364,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     {
         const int iSource = anMapBufferIdxToSourceIdx[iBuffer];
         GByte *pabyBuffer = static_cast<GByte *>(apBuffers[iBuffer].get());
-        eErr = static_cast<VRTSource *>(papoSources[iSource])
+        eErr = static_cast<VRTSource *>(m_papoSources[iSource].get())
                    ->RasterIO(
                        eSrcType, nXOffExt, nYOffExt, nXSizeExt, nYSizeExt,
                        pabyBuffer + (static_cast<size_t>(nYShiftInBuffer) *

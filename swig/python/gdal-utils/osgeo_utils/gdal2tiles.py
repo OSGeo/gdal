@@ -32,7 +32,7 @@ import sys
 import tempfile
 import threading
 from functools import partial
-from typing import Any, List, NoReturn, Optional, Tuple
+from typing import Any, Dict, List, NoReturn, Optional, Tuple
 from uuid import uuid4
 from xml.etree import ElementTree
 
@@ -1701,7 +1701,7 @@ def count_overview_tiles(tile_job_info: "TileJobInfo") -> int:
     return tile_number
 
 
-def optparse_init() -> optparse.OptionParser:
+def optparse_init() -> Tuple[optparse.OptionParser, Dict[Any, Any]]:
     """Prepare the option parser for input (argv)"""
 
     usage = "Usage: %prog [options] input_file [output]"
@@ -1962,7 +1962,9 @@ def optparse_init() -> optparse.OptionParser:
     return p, tmsMap
 
 
-def process_args(argv: List[str], called_from_main=False) -> Tuple[str, str, Options]:
+def process_args(
+    argv: List[str], called_from_main=False
+) -> Tuple[str, str, Options, Dict[Any, Any]]:
     parser, tmsMap = optparse_init()
     options, args = parser.parse_args(args=argv)
 

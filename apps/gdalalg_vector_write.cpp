@@ -32,6 +32,9 @@ GDALVectorWriteAlgorithm::GDALVectorWriteAlgorithm()
 {
     AddVectorOutputArgs(/* hiddenForCLI = */ false,
                         /* shortNameOutputLayerAllowed=*/true);
+    AddArg("skip-errors", 0, _("Skip errors when writing features"),
+           &m_skipErrors)
+        .AddHiddenAlias("skip-failures");  // For ogr2ogr nostalgic people
 }
 
 /************************************************************************/
@@ -88,6 +91,10 @@ bool GDALVectorWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     if (pfnProgress && pfnProgress != GDALDummyProgress)
     {
         aosOptions.AddString("-progress");
+    }
+    if (m_skipErrors)
+    {
+        aosOptions.AddString("-skipfailures");
     }
 
     GDALVectorTranslateOptions *psOptions =

@@ -184,7 +184,36 @@ def test_vsigs_no_sign_request(gs_test_config):
             if gdaltest.gdalurlopen(expected_url) is None:
                 pytest.skip("cannot open URL")
             pytest.fail()
+            assert len(gdal.VSIFReadL(1, 1, f)) == 1
+
         gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test GS_NO_SIGN_REQUEST=YES with a fake Google Cloud Storage server
+
+
+def test_vsigs_no_sign_request_fake_server(webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/gs_fake_bucket_http_header_file/resource",
+        206,
+        {"Content-type": "text/plain"},
+        "Y",
+        expected_headers={"Range": "bytes=0-16383"},
+    )
+    with webserver.install_http_handler(handler):
+
+        with gdaltest.config_options({"GS_NO_SIGN_REQUEST": "YES"}, thread_local=False):
+            f = open_for_read("/vsigs/gs_fake_bucket_http_header_file/resource")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 1, f)
+            gdal.VSIFCloseL(f)
+            assert len(data) == 1
 
 
 ###############################################################################

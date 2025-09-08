@@ -10,12 +10,44 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_config.h"
+
+#if HAVE_DL_ITERATE_PHDR
+#if !defined(_GNU_SOURCE)
+#define _GNU_SOURCE
+#endif
+#include <link.h>
+
+#elif defined(__MACH__) && defined(__APPLE__)
+#include <mach-o/dyld.h>
+
+#endif
+
 #include "cpl_spawn.h"
 #include "cpl_vsi_virtual.h"
 #include "gdal.h"
 #include "gdalgetgdalpath.h"
 
 #include <cassert>
+
+/************************************************************************/
+/*                   GDALGetGDALPathDLIterateCbk()                      */
+/************************************************************************/
+
+#if HAVE_DL_ITERATE_PHDR && !defined(STATIC_BUILD)
+
+static int GDALGetGDALPathDLIterateCbk(struct dl_phdr_info *info,
+                                       size_t /*size*/, void *data)
+{
+    if (info->dlpi_name && strstr(info->dlpi_name, "/libgdal.so."))
+    {
+        *static_cast<std::string *>(data) = info->dlpi_name;
+        return 1;
+    }
+    return 0;  // continue iteration
+}
+
+#endif
 
 /************************************************************************/
 /*                         GDALGetGDALPath()                            */
@@ -61,27 +93,43 @@ std::string GDALGetGDALPath()
             !cpl::ends_with(osPath, "\\gdal.exe"))
         {
             osPath.clear();
-#if defined(__linux) && !defined(STATIC_BUILD)
-            const CPLStringList aosLines(CSLLoad("/proc/self/maps"));
-            for (const char *pszLine : aosLines)
+#if (HAVE_DL_ITERATE_PHDR || (defined(__MACH__) && defined(__APPLE__))) &&     \
+    !defined(STATIC_BUILD)
+            std::string osGDALLib;
+#if HAVE_DL_ITERATE_PHDR
+            dl_iterate_phdr(GDALGetGDALPathDLIterateCbk, &osGDALLib);
+#else
+            const uint32_t imageCount = _dyld_image_count();
+            for (uint32_t i = 0; i < imageCount; ++i)
             {
-                const char *pszLibName = strstr(pszLine, "/libgdal.so.");
-                while (pszLibName &&
-                       static_cast<size_t>(pszLibName - pszLine) > 1 &&
-                       pszLibName[-1] != ' ')
+                const char *imageName = _dyld_get_image_name(i);
+                if (imageName && strstr(imageName, "/libgdal."))
                 {
-                    --pszLibName;
+                    osGDALLib = imageName;
+                    break;
                 }
-                if (pszLibName &&
-                    static_cast<size_t>(pszLibName - pszLine) > 1 &&
-                    pszLibName[0] == '/')
+            }
+#endif
+            if (!osGDALLib.empty() && osGDALLib[0] == '/')
+            {
+                const std::string osPathOfGDALLib =
+                    CPLGetDirnameSafe(osGDALLib.c_str());
+                std::string osBinFilename = CPLFormFilenameSafe(
+                    CPLGetDirnameSafe(osPathOfGDALLib.c_str()).c_str(),
+                    "bin/gdal", nullptr);
+                VSIStatBufL sStat;
+                if (VSIStatL(osBinFilename.c_str(), &sStat) == 0)
                 {
-                    const std::string osPathOfGDALLib =
-                        CPLGetDirnameSafe(pszLibName);
-                    std::string osBinFilename = CPLFormFilenameSafe(
-                        CPLGetDirnameSafe(osPathOfGDALLib.c_str()).c_str(),
+                    // Case if osGDALLib=/usr/lib/libgdal.so.xxx
+                    osPath = std::move(osBinFilename);
+                }
+                else
+                {
+                    osBinFilename = CPLFormFilenameSafe(
+                        CPLGetDirnameSafe(
+                            CPLGetDirnameSafe(osPathOfGDALLib.c_str()).c_str())
+                            .c_str(),
                         "bin/gdal", nullptr);
-                    VSIStatBufL sStat;
                     if (VSIStatL(osBinFilename.c_str(), &sStat) == 0)
                     {
                         // Case if pszLibName=/usr/lib/libgdal.so.xxx
@@ -90,11 +138,7 @@ std::string GDALGetGDALPath()
                     else
                     {
                         osBinFilename = CPLFormFilenameSafe(
-                            CPLGetDirnameSafe(
-                                CPLGetDirnameSafe(osPathOfGDALLib.c_str())
-                                    .c_str())
-                                .c_str(),
-                            "bin/gdal", nullptr);
+                            osPathOfGDALLib.c_str(), "apps/gdal", nullptr);
                         if (VSIStatL(osBinFilename.c_str(), &sStat) == 0)
                         {
                             // Case if pszLibName=/usr/lib/yyyyy/libgdal.so.xxx
@@ -119,6 +163,10 @@ std::string GDALGetGDALPath()
         {
             CPLDebug("GDAL", "gdal binary found at '%s'", osPath.c_str());
         }
+    }
+    else
+    {
+        osPath.clear();
     }
     if (osPath.empty())
     {

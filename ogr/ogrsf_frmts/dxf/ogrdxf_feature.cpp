@@ -154,18 +154,18 @@ OGRDXFFeature::GetColor(OGRDXFDataSource *const poDS,
     }
     else
     {
-        const char *pszHidden = poDS->LookupLayerProperty(osLayer, "Hidden");
-        if (pszHidden)
-            iHidden = atoi(pszHidden);
+        auto osHidden = poDS->LookupLayerProperty(osLayer, "Hidden");
+        if (osHidden)
+            iHidden = atoi(osHidden->c_str());
 
         // Is the block feature on a frozen layer? If so, hide this feature
         if (!iHidden && poBlockFeature)
         {
             const CPLString osBlockLayer =
                 poBlockFeature->GetFieldAsString("Layer");
-            const char *pszBlockHidden =
+            auto osBlockHidden =
                 poDS->LookupLayerProperty(osBlockLayer, "Hidden");
-            if (pszBlockHidden && atoi(pszBlockHidden) == 2)
+            if (osBlockHidden && atoi(osBlockHidden->c_str()) == 2)
                 iHidden = 2;
         }
 
@@ -291,11 +291,10 @@ OGRDXFFeature::GetColor(OGRDXFDataSource *const poDS,
     // Use layer color?
     if (nColor == C_BYLAYER)
     {
-        const char *pszTrueColor =
-            poDS->LookupLayerProperty(osLayer, "TrueColor");
-        if (pszTrueColor != nullptr && *pszTrueColor)
+        auto osTrueColor = poDS->LookupLayerProperty(osLayer, "TrueColor");
+        if (osTrueColor)
         {
-            nTrueColor = atoi(pszTrueColor);
+            nTrueColor = atoi(osTrueColor->c_str());
             nColor = C_TRUECOLOR;
 
             if (poBlockFeature && osLayer != "0")
@@ -303,22 +302,22 @@ OGRDXFFeature::GetColor(OGRDXFDataSource *const poDS,
                 // Use the inherited color if we regenerate the style string
                 // again during block insertion (except when the entity is
                 // on layer 0)
-                oStyleProperties["TrueColor"] = pszTrueColor;
+                oStyleProperties["TrueColor"] = *osTrueColor;
             }
         }
         else
         {
-            const char *pszColor = poDS->LookupLayerProperty(osLayer, "Color");
-            if (pszColor != nullptr)
+            auto osColor = poDS->LookupLayerProperty(osLayer, "Color");
+            if (osColor)
             {
-                nColor = atoi(pszColor);
+                nColor = atoi(osColor->c_str());
 
                 if (poBlockFeature && osLayer != "0")
                 {
                     // Use the inherited color if we regenerate the style string
                     // again during block insertion (except when the entity is
                     // on layer 0)
-                    oStyleProperties["Color"] = pszColor;
+                    oStyleProperties["Color"] = *osColor;
                 }
             }
         }
@@ -349,6 +348,54 @@ OGRDXFFeature::GetColor(OGRDXFDataSource *const poDS,
 
     if (iHidden)
         osResult += "00";
+    else
+    {
+        int nOpacity = -1;
+
+        if (oStyleProperties.count("Transparency") > 0)
+        {
+            int nTransparency = atoi(oStyleProperties["Transparency"]);
+            if ((nTransparency & 0x02000000) != 0)
+            {
+                nOpacity = nTransparency & 0xFF;
+            }
+            else if ((nTransparency & 0x01000000) != 0)  // By block ?
+            {
+                if (poBlockFeature &&
+                    poBlockFeature->oStyleProperties.count("Transparency") > 0)
+                {
+                    nOpacity =
+                        atoi(poBlockFeature->oStyleProperties["Transparency"]) &
+                        0xFF;
+
+                    // Use the inherited transparency if we regenerate the style string
+                    // again during block insertion
+                    oStyleProperties["Transparency"] =
+                        poBlockFeature->oStyleProperties["Transparency"];
+                }
+            }
+        }
+        else
+        {
+            auto osTransparency =
+                poDS->LookupLayerProperty(osLayer, "Transparency");
+            if (osTransparency)
+            {
+                nOpacity = atoi(osTransparency->c_str()) & 0xFF;
+
+                if (poBlockFeature && osLayer != "0")
+                {
+                    // Use the inherited transparency if we regenerate the style string
+                    // again during block insertion (except when the entity is
+                    // on layer 0)
+                    oStyleProperties["Transparency"] = *osTransparency;
+                }
+            }
+        }
+
+        if (nOpacity >= 0)
+            osResult += CPLSPrintf("%02x", nOpacity & 0xFF);
+    }
 
     return osResult;
 }

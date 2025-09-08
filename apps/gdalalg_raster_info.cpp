@@ -26,10 +26,18 @@
 /*            GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm()        */
 /************************************************************************/
 
-GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool openForMixedRasterVector)
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool standaloneStep,
+                                                 bool openForMixedRasterVector)
+    : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      ConstructorOptions()
+                                          .SetStandaloneStep(standaloneStep)
+                                          .SetInputDatasetMaxCount(1)
+                                          .SetAddDefaultArguments(false)
+                                          .SetInputDatasetAlias("dataset"))
 {
-    AddOutputFormatArg(&m_format).SetDefault("json").SetChoices("json", "text");
+    AddRasterInputArgs(openForMixedRasterVector, !standaloneStep);
+
+    AddOutputFormatArg(&m_format).SetChoices("json", "text");
     AddArg("min-max", 0, _("Compute minimum and maximum value"), &m_minMax)
         .AddAlias("mm");
     AddArg("stats", 0, _("Retrieve or compute statistics, using all pixels"),
@@ -41,9 +49,6 @@ GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool openForMixedRasterVector)
         .SetMutualExclusionGroup("stats");
     AddArg("hist", 0, _("Retrieve or compute histogram"), &m_hist);
 
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
     AddArg("no-gcp", 0, _("Suppress ground control points list printing"),
            &m_noGCP)
         .SetCategory(GAAC_ADVANCED);
@@ -77,26 +82,22 @@ GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool openForMixedRasterVector)
         .SetCategory(GAAC_ESOTERIC)
         .SetMinValueIncluded(1);
 
-    AddInputDatasetArg(&m_dataset, openForMixedRasterVector
-                                       ? GDAL_OF_RASTER | GDAL_OF_VECTOR
-                                       : GDAL_OF_RASTER)
-        .AddAlias("dataset");
-
     AddOutputStringArg(&m_output);
-    AddArg("stdout", 0,
-           _("Directly output on stdout (format=text mode only). If enabled, "
-             "output-string will be empty"),
-           &m_stdout)
-        .SetHiddenForCLI();
+    AddStdoutArg(&m_stdout);
 }
 
 /************************************************************************/
-/*                  GDALRasterInfoAlgorithm::RunImpl()                  */
+/*                  GDALRasterInfoAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALRasterInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALRasterInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
-    CPLAssert(m_dataset.GetDatasetRef());
+    CPLAssert(m_inputDataset.size() == 1);
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
+
+    if (m_format.empty())
+        m_format = IsCalledFromCommandLine() ? "text" : "json";
 
     CPLStringList aosOptions;
     if (m_format == "json")
@@ -131,7 +132,7 @@ bool GDALRasterInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
         aosOptions.AddString(m_mdd.c_str());
     }
 
-    GDALDatasetH hDS = GDALDataset::ToHandle(m_dataset.GetDatasetRef());
+    GDALDatasetH hDS = GDALDataset::ToHandle(poSrcDS);
     std::unique_ptr<GDALDataset> poSubDataset;
 
     if (m_subDS > 0)
@@ -177,5 +178,8 @@ bool GDALRasterInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 
     return bOK;
 }
+
+GDALRasterInfoAlgorithmStandalone::~GDALRasterInfoAlgorithmStandalone() =
+    default;
 
 //! @endcond

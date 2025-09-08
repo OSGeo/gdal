@@ -470,7 +470,7 @@ man_pages = [
     (
         "programs/gdal_pipeline",
         "gdal-pipeline",
-        "Execute a pipeline",
+        "Process a dataset applying several steps",
         [author_evenr],
         1,
     ),
@@ -631,7 +631,7 @@ man_pages = [
     (
         "programs/gdal_raster_pipeline",
         "gdal-raster-pipeline",
-        "Process a raster dataset",
+        "Process a raster dataset applying several steps",
         [author_evenr],
         1,
     ),
@@ -783,6 +783,27 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_check_coverage",
+        "gdal-vector-check-coverage",
+        "Check polygon coverage for validity",
+        [author_dbaston],
+        1,
+    ),
+    (
+        "programs/gdal_vector_check_geometry",
+        "gdal-vector-check-geometry",
+        "Check a dataset for invalid or non-simple geometries",
+        [author_dbaston],
+        1,
+    ),
+    (
+        "programs/gdal_vector_clean_coverage",
+        "gdal-vector-clean-coverage",
+        "Remove gaps and overlaps from a polygon dataset",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector_clip",
         "gdal-vector-clip",
         "Clip a vector dataset",
@@ -806,7 +827,7 @@ man_pages = [
     (
         "programs/gdal_vector_edit",
         "gdal-vector-edit",
-        "Edit metadata of a vetor dataset",
+        "Edit metadata of a vector dataset",
         [author_evenr],
         1,
     ),
@@ -890,7 +911,7 @@ man_pages = [
     (
         "programs/gdal_vector_pipeline",
         "gdal-vector-pipeline",
-        "Process a vector dataset",
+        "Process a vector dataset applying several steps",
         [author_evenr],
         1,
     ),

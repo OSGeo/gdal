@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    Process a raster dataset.
+    Process a raster dataset applying several steps.
 
 .. Index:: gdal raster pipeline
 
@@ -192,6 +192,14 @@ Details for options can be found in :ref:`gdal_raster_unscale`.
 
 Details for options can be found in :ref:`gdal_raster_viewshed`.
 
+* info
+
+.. versionadded:: 3.12
+
+.. program-output:: gdal raster pipeline --help-doc=info
+
+Details for options can be found in :ref:`gdal_raster_info`.
+
 * write
 
 .. program-output:: gdal raster pipeline --help-doc=write
@@ -234,14 +242,14 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal raster pipeline --progress ! read in.tif ! reproject --dst-crs=EPSG:32632 ! edit --metadata AUTHOR=EvenR ! write out.tif --overwrite
+        $ gdal raster pipeline ! read in.tif ! reproject --dst-crs=EPSG:32632 ! edit --metadata AUTHOR=EvenR ! write out.tif --overwrite
 
 .. example::
    :title: Serialize the command of a reprojection of a GeoTIFF file in a GDALG file, and later read it
 
    .. code-block:: bash
 
-        $ gdal raster pipeline --progress ! read in.tif ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
+        $ gdal raster pipeline ! read in.tif ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
         $ gdal raster info in_epsg_32632.gdalg.json
 
 

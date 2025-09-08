@@ -6746,6 +6746,20 @@ def test_netcdf_LIST_ALL_ARRAYS():
     )
 
 
+def test_netcdf_LIST_ALL_ARRAYS_on_dataset_without_2D_arrays(tmp_path):
+
+    gdal.Run(
+        "mdim",
+        "convert",
+        input="data/netcdf/byte.nc",
+        output=tmp_path / "out.nc",
+        array="x",
+    )
+
+    ds = gdal.OpenEx(tmp_path / "out.nc", open_options=["LIST_ALL_ARRAYS=YES"])
+    assert len(ds.GetSubDatasets()) == 1
+
+
 ###############################################################################
 # Test use of GeoTransform attribute to avoid precision loss
 # https://github.com/OSGeo/gdal/issues/11993
@@ -6799,3 +6813,15 @@ def test_netcdf_open_y_x_other_dim_thanks_to_geolocation():
     assert ds.RasterCount == 4
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2
+
+
+###############################################################################
+# Cf https://github.com/OSGeo/gdal/issues/12865
+
+
+def test_netcdf_open_bad_x_y_actual_range():
+
+    ds = gdal.Open("data/netcdf/bad_x_y_actual_range.nc")
+    assert [x for x in ds.GetGeoTransform()] == pytest.approx(
+        [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
+    )

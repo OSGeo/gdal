@@ -4901,7 +4901,7 @@ CPLErr GDALRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
     if (!bForce)
         return CE_Warning;
 
-    const int nBuckets = 256;
+    int nBuckets = 256;
 
     bool bSignedByte = false;
     if (eDataType == GDT_Byte)
@@ -4919,17 +4919,31 @@ CPLErr GDALRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
         *pdfMin = -0.5;
         *pdfMax = 255.5;
     }
+    else if (GetRasterDataType() == GDT_Int8)
+    {
+        *pdfMin = -128 - 0.5;
+        *pdfMax = 127 + 0.5;
+    }
     else
     {
 
         const CPLErr eErr =
             GetStatistics(TRUE, TRUE, pdfMin, pdfMax, nullptr, nullptr);
-        const double dfHalfBucket = (*pdfMax - *pdfMin) / (2 * (nBuckets - 1));
-        *pdfMin -= dfHalfBucket;
-        *pdfMax += dfHalfBucket;
-
         if (eErr != CE_None)
             return eErr;
+        if (*pdfMin == *pdfMax)
+        {
+            nBuckets = 1;
+            *pdfMin -= 0.5;
+            *pdfMax += 0.5;
+        }
+        else
+        {
+            const double dfHalfBucket =
+                (*pdfMax - *pdfMin) / (2 * (nBuckets - 1));
+            *pdfMin -= dfHalfBucket;
+            *pdfMax += dfHalfBucket;
+        }
     }
 
     *ppanHistogram =
@@ -9619,9 +9633,8 @@ GDALRasterBand::WindowIterator &GDALRasterBand::WindowIterator::operator++()
 
 GDALRasterBand::WindowIteratorWrapper::WindowIteratorWrapper(
     const GDALRasterBand &band)
-    : m_nRasterXSize(band.GetDataset()->GetRasterXSize()),
-      m_nRasterYSize(band.GetDataset()->GetRasterYSize()), m_nBlockXSize(-1),
-      m_nBlockYSize(-1)
+    : m_nRasterXSize(band.GetXSize()), m_nRasterYSize(band.GetYSize()),
+      m_nBlockXSize(-1), m_nBlockYSize(-1)
 {
     band.GetBlockSize(&m_nBlockXSize, &m_nBlockYSize);
 }
@@ -9650,8 +9663,8 @@ GDALRasterBand::WindowIteratorWrapper::end() const
 \code{.cpp}
     std::vector<double> pixelValues;
     for (const auto& window : poBand->IterateWindows()) {
-        CPLErr eErr = window.ReadRaster(pixelValues, window.nXOff, window.nYOff,
-                                        window.nXSize, window.nYSize);
+        CPLErr eErr = poBand->ReadRaster(pixelValues, window.nXOff, window.nYOff,
+                                         window.nXSize, window.nYSize);
         // check eErr
     }
 \endcode
@@ -10367,14 +10380,35 @@ GDALRasterBandUnaryOp(GDALRasterBandH hBand,
                       GDALRasterAlgebraUnaryOperation eOp)
 {
     VALIDATE_POINTER1(hBand, __func__, nullptr);
+    GDALComputedRasterBand::Operation cppOp{};
     switch (eOp)
     {
         case GRAUO_LOGICAL_NOT:
+            return new GDALComputedRasterBand(
+                GDALComputedRasterBand::Operation::OP_NE,
+                *(GDALRasterBand::FromHandle(hBand)), true);
+        case GRAUO_ABS:
+            cppOp = GDALComputedRasterBand::Operation::OP_ABS;
+            break;
+        case GRAUO_SQRT:
+            cppOp = GDALComputedRasterBand::Operation::OP_SQRT;
+            break;
+        case GRAUO_LOG:
+#ifndef HAVE_MUPARSER
+            CPLError(
+                CE_Failure, CPLE_NotSupported,
+                "log(band) not available on a GDAL build without muparser");
+            return nullptr;
+#else
+            cppOp = GDALComputedRasterBand::Operation::OP_LOG;
+            break;
+#endif
+        case GRAUO_LOG10:
+            cppOp = GDALComputedRasterBand::Operation::OP_LOG10;
             break;
     }
-    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_NE,
-                                      *(GDALRasterBand::FromHandle(hBand)),
-                                      true);
+    return new GDALComputedRasterBand(cppOp,
+                                      *(GDALRasterBand::FromHandle(hBand)));
 }
 
 /************************************************************************/
@@ -10411,6 +10445,8 @@ ConvertGDALRasterAlgebraBinaryOperationToCpp(
             return GDALComputedRasterBand::Operation::OP_LOGICAL_AND;
         case GRABO_LOGICAL_OR:
             return GDALComputedRasterBand::Operation::OP_LOGICAL_OR;
+        case GRABO_POW:
+            return GDALComputedRasterBand::Operation::OP_POW;
     }
     return GDALComputedRasterBand::Operation::OP_NE;
 }
@@ -10444,6 +10480,13 @@ GDALRasterBandBinaryOpBand(GDALRasterBandH hBand,
             CE_Failure, CPLE_NotSupported,
             "Band comparison operators not available on a GDAL build without "
             "muparser");
+        return nullptr;
+    }
+    else if (eOp == GRABO_POW)
+    {
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "pow(band, band) not available on a GDAL build without muparser");
         return nullptr;
     }
 #endif
@@ -10549,6 +10592,7 @@ GDALRasterBandBinaryOpDoubleToBand(double constant,
         case GRABO_NE:
         case GRABO_LOGICAL_AND:
         case GRABO_LOGICAL_OR:
+        case GRABO_POW:
         {
             return new GDALComputedRasterBand(
                 ConvertGDALRasterAlgebraBinaryOperationToCpp(eOp), constant,
@@ -10619,6 +10663,23 @@ GDALComputedRasterBand GDALRasterBand::operator+(double constant) const
 GDALComputedRasterBand operator+(double constant, const GDALRasterBand &other)
 {
     return other + constant;
+}
+
+/************************************************************************/
+/*                           operator-()                                */
+/************************************************************************/
+
+/** Return a band whose value is the opposite value of the band for each
+ * pixel.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator-() const
+{
+    return 0 - *this;
 }
 
 /************************************************************************/
@@ -10788,7 +10849,7 @@ GDALComputedRasterBand operator/(double constant, const GDALRasterBand &other)
 #ifndef HAVE_MUPARSER
 static GDALComputedRasterBand ThrowIfNotMuparser()
 {
-    throw std::runtime_error("Band comparison operators not available on a "
+    throw std::runtime_error("Operator not available on a "
                              "GDAL build without muparser");
 }
 #endif
@@ -11895,4 +11956,200 @@ GDALComputedRasterBand mean(const GDALRasterBand &first,
     return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MEAN,
                                   first, second);
 }
+}  // namespace gdal
+
+/************************************************************************/
+/*                              gdal::abs()                             */
+/************************************************************************/
+
+namespace gdal
+{
+
+/** Return a band whose each pixel value is the absolute value (or module
+ * for complex data type) of the corresponding pixel value in the input band.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand abs(const GDALRasterBand &band)
+{
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_ABS,
+                                  band);
+}
+}  // namespace gdal
+
+/************************************************************************/
+/*                             gdal::fabs()                             */
+/************************************************************************/
+
+namespace gdal
+{
+
+/** Return a band whose each pixel value is the absolute value (or module
+ * for complex data type) of the corresponding pixel value in the input band.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand fabs(const GDALRasterBand &band)
+{
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_ABS,
+                                  band);
+}
+}  // namespace gdal
+
+/************************************************************************/
+/*                             gdal::sqrt()                             */
+/************************************************************************/
+
+namespace gdal
+{
+
+/** Return a band whose each pixel value is the square root of the
+ * corresponding pixel value in the input band.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand sqrt(const GDALRasterBand &band)
+{
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_SQRT,
+                                  band);
+}
+}  // namespace gdal
+
+/************************************************************************/
+/*                             gdal::log()                              */
+/************************************************************************/
+
+namespace gdal
+{
+
+/** Return a band whose each pixel value is the natural logarithm of the
+ * corresponding pixel value in the input band.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand log(const GDALRasterBand &band)
+{
+#ifndef HAVE_MUPARSER
+    (void)band;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_LOG,
+                                  band);
+#endif
+}
+}  // namespace gdal
+
+/************************************************************************/
+/*                             gdal::log10()                            */
+/************************************************************************/
+
+namespace gdal
+{
+
+/** Return a band whose each pixel value is the logarithm base 10 of the
+ * corresponding pixel value in the input band.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand log10(const GDALRasterBand &band)
+{
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_LOG10,
+                                  band);
+}
+}  // namespace gdal
+
+/************************************************************************/
+/*                             gdal::pow()                              */
+/************************************************************************/
+
+namespace gdal
+{
+
+#ifndef DOXYGEN_SKIP
+/** Return a band whose each pixel value is the constant raised to the power of
+ * the corresponding pixel value in the input band.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand pow(double constant, const GDALRasterBand &band)
+{
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_POW,
+                                  constant, band);
+}
+#endif
+
+}  // namespace gdal
+
+/************************************************************************/
+/*                             gdal::pow()                              */
+/************************************************************************/
+
+namespace gdal
+{
+
+/** Return a band whose each pixel value is the the corresponding pixel value
+ * in the input band raised to the power of the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand pow(const GDALRasterBand &band, double constant)
+{
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_POW,
+                                  band, constant);
+}
+}  // namespace gdal
+
+/************************************************************************/
+/*                             gdal::pow()                              */
+/************************************************************************/
+
+namespace gdal
+{
+
+#ifndef DOXYGEN_SKIP
+/** Return a band whose each pixel value is the the corresponding pixel value
+ * in the input band1 raised to the power of the corresponding pixel value
+ * in the input band2
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * @since 3.12
+ * @throw std::runtime_error if bands do not have the same dimensions.
+ */
+GDALComputedRasterBand pow(const GDALRasterBand &band1,
+                           const GDALRasterBand &band2)
+{
+#ifndef HAVE_MUPARSER
+    (void)band1;
+    (void)band2;
+    return ThrowIfNotMuparser();
+#else
+    GDALRasterBand::ThrowIfNotSameDimensions(band1, band2);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_POW,
+                                  band1, band2);
+#endif
+}
+#endif
 }  // namespace gdal

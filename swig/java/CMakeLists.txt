@@ -5,6 +5,14 @@ if (CMAKE_CXX_FLAGS)
   string(REPLACE "/WX " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
 endif ()
 
+# Do not remove -fno-strict-aliasing while SWIG generates weird code in upcast methods
+# http://trac.osgeo.org/gdal/changeset/16006
+#
+# https://swig.org//Doc4.3/Java.html#Java_compiling_dynamic
+if (NOT MSVC)
+  add_compile_options("-fno-strict-aliasing")
+endif()
+
 list(APPEND GDAL_SWIG_COMMON_INTERFACE_FILES
    ${PROJECT_SOURCE_DIR}/swig/include/java/callback.i
    ${PROJECT_SOURCE_DIR}/swig/include/java/gdalconst_java.i
@@ -229,6 +237,7 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
   set_tests_properties(java_ogrtindex PROPERTIES DEPENDS java_GDALContour)
   add_test(NAME java_OSRTest COMMAND ${JAVA_RUN} OSRTest)
   add_test(NAME java_test_ogrfielddomains COMMAND ${JAVA_RUN} test_ogrfielddomains)
+  add_test(NAME java_GDALClose COMMAND ${JAVA_RUN} GDALClose)
 
   set(JAVA_TEST_LIST
           java_GDALOverviews
@@ -248,6 +257,7 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
           java_ogrtindex
           java_OSRTest
           java_test_ogrfielddomains
+          java_GDALClose
   )
   if (OGR_ENABLE_DRIVER_CSV)
       add_test(NAME java_OGRTest COMMAND ${JAVA_RUN} OGRTest)

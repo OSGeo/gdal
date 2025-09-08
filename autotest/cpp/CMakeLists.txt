@@ -111,6 +111,9 @@ target_link_libraries(gdal_unit_test PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAM
 if(NOT MSVC AND CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(gdal_unit_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 endif()
+if (MSVC)
+   target_compile_options(gdal_unit_test PRIVATE "/bigobj")
+endif()
 gdal_standard_includes(gdal_unit_test)
 target_compile_options(gdal_unit_test PRIVATE ${GDAL_CXX_WARNING_FLAGS})
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
@@ -142,7 +145,7 @@ target_compile_definitions(gdal_unit_test PRIVATE "-DPROJ_DB_TMPDIR=\"${CMAKE_CU
 # As we don't need optimizations for that unit test, override it with -O0 for gcc-style compilers
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # -D_FORTIFY_SOURCE can't be used with -O0
-    string(REPLACE "-D_FORTIFY_SOURCE=2" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
+    string(REGEX REPLACE "(-Wp,)?-D_FORTIFY_SOURCE=2" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
     target_compile_options(gdal_unit_test PRIVATE -O0)
 endif()
 

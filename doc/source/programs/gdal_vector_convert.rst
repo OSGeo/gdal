@@ -60,6 +60,14 @@ Standard options
     Output layer name. Can only be used to rename a layer, if there is a single
     input layer.
 
+.. option:: --skip-errors
+
+    .. versionadded:: 3.12
+
+    Whether failures to write feature(s) should be ignored. Note that this option
+    sets the size of the transaction unit to one feature at a time, which may
+    cause severe slowdown when inserting into databases.
+
 Advanced options
 ++++++++++++++++
 
@@ -85,8 +93,8 @@ Examples
        $ gdal vector convert --update --output-layer=lines line.shp output.gpkg
 
 .. example::
-   :title: Append features from from file :file:`poly2.shp` to an existing layer ``poly`` of a GeoPackage, with progress bar
+   :title: Append features from from file :file:`poly2.shp` to an existing layer ``poly`` of a GeoPackage, without a progress bar
 
    .. code-block:: console
 
-       $ gdal vector convert --append --output-layer=poly --progress poly2.shp output.gpkg
+       $ gdal vector convert --quiet --append --output-layer=poly poly2.shp output.gpkg

@@ -1255,7 +1255,7 @@ CPLErr GDALWarpKernel::PerformWarp()
     if (eWorkingDataType == GDT_Int16 && eResample == GRA_NearestNeighbour)
         return GWKNearestShort(this);
 
-    if (eWorkingDataType == GDT_Int16 && eResample == GRA_NearestNeighbour)
+    if (eWorkingDataType == GDT_UInt16 && eResample == GRA_NearestNeighbour)
         return GWKNearestUnsignedShort(this);
 
     if (eWorkingDataType == GDT_Float32 && eResample == GRA_NearestNeighbour &&
@@ -8336,7 +8336,8 @@ static void GWKSumPreservingThread(void *pData)
             std::fill(adfBandDensity.begin(), adfBandDensity.end(), 0);
             std::fill(adfWeight.begin(), adfWeight.end(), 0);
             double dfDensity = 0;
-            double dfTotalWeight = 0;
+            // Just above zero to please Coveriy Scan
+            double dfTotalWeight = std::numeric_limits<double>::min();
 
             /* ====================================================================
              */

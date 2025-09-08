@@ -31,7 +31,6 @@ endif ()
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
 check_function_exists(getcwd HAVE_GETCWD)
 
-check_include_file("fcntl.h" HAVE_FCNTL_H)
 check_include_file("unistd.h" HAVE_UNISTD_H)
 check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
 check_include_file("locale.h" HAVE_LOCALE_H)
@@ -72,7 +71,6 @@ endif()
 if (MSVC)
   set(HAVE_VSNPRINTF 1)
 
-  set(HAVE_FCNTL_H 1)
   set(HAVE_UNISTD_H 0)
   set(HAVE_SYS_TYPES_H 1)
   set(HAVE_LOCALE_H 1)
@@ -149,9 +147,6 @@ else ()
         "
     HAVE_PTHREAD_ATFORK)
 
-  check_include_file("sys/stat.h" HAVE_SYS_STAT_H)
-
-  check_function_exists(readlink HAVE_READLINK)
   check_function_exists(posix_spawnp HAVE_POSIX_SPAWNP)
   check_function_exists(posix_memalign HAVE_POSIX_MEMALIGN)
   check_function_exists(vfork HAVE_VFORK)
@@ -159,7 +154,6 @@ else ()
   check_function_exists(sigaction HAVE_SIGACTION)
   check_function_exists(statvfs HAVE_STATVFS)
   check_function_exists(statvfs64 HAVE_STATVFS64)
-  check_function_exists(lstat HAVE_LSTAT)
 
   check_function_exists(getrlimit HAVE_GETRLIMIT)
   check_symbol_exists(RLIMIT_AS "sys/resource.h" HAVE_RLIMIT_AS)
@@ -169,6 +163,8 @@ else ()
   if (HAVE_SYS_RANDOM_H)
     check_symbol_exists(getrandom "sys/random.h" HAVE_GETRANDOM)
   endif()
+
+  check_function_exists(dl_iterate_phdr HAVE_DL_ITERATE_PHDR)
 
   check_function_exists(ftell64 HAVE_FTELL64)
   if (HAVE_FTELL64)
@@ -342,12 +338,6 @@ else ()
         int main() { int i; __sync_add_and_fetch(&i, 1); __sync_sub_and_fetch(&i, 1); __sync_bool_compare_and_swap(&i, 0, 1); return 0; }
     "
     HAVE_GCC_ATOMIC_BUILTINS)
-
-  check_c_source_compiles(
-    "
-        int main(int argc, char** argv) { (void)__builtin_bswap32(0); (void)__builtin_bswap64(0); return 0; }
-    "
-    HAVE_GCC_BSWAP)
 
   check_c_source_compiles(
     "

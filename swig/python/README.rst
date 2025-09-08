@@ -5,8 +5,10 @@ GDAL/OGR in Python
 This Python package and extensions are a number of tools for programming and
 manipulating the GDAL_ Geospatial Data Abstraction Library.
 Generally speaking the classes and methods mostly
-match those of the GDAL and OGR C++ classes. There is no Python specific
-reference documentation, but the https://gdal.org/api/python_bindings.html#tutorials includes Python examples.
+match those of the GDAL and OGR C++ classes.
+
+A basic starting point is the `Vector API Tutorial <https://gdal.org/tutorials/vector_api_tut.html>`__.
+For full documentation, see the `GDAL Python API <https://gdal.org/api/python/index.html>`__.
 
 The GDAL Python package is built using `SWIG <https://www.swig.org>`__.
 The GDAL project maintains these Python bindings for GDAL/OGR within
@@ -65,7 +67,7 @@ HOWTO-RELEASE for how this is created.  Because swig has been run, it
 need not be installed.
 
 
-Installation via packging systems
+Installation via packaging systems
 ---------------------------------
 
 General
@@ -144,7 +146,7 @@ Conda
 GDAL can be quite complex to build and install, particularly on Windows and MacOS.
 Pre built binaries are provided for the conda system:
 
-https://docs.conda.io/en/latest/
+https://docs.conda.io/
 
 By the conda-forge project:
 
@@ -173,7 +175,7 @@ There are five major modules that are included with the GDAL_ Python bindings.::
 API
 ~~~
 
-API documentation is available at https://gdal.org/api/python/osgeo.html
+* API documentation is available at https://gdal.org/api/python
 
 Numpy
 -----
@@ -187,33 +189,35 @@ capabilities.
 Tutorials
 ---------
 
-See https://gdal.org/api/python_bindings.html#tutorials
+* `Vector API Tutorial <https://gdal.org/tutorials/vector_api_tut.html>`__
+* `Raster API Tutorial <https://gdal.org/tutorials/raster_api_tut.html>`__
+* `Multidimensional Raster API Tutorial <https://gdal.org/tutorials/multidimensional_api_tut.html>`__
 
 Gotchas
 -------
 
 Although GDAL's and OGR's Python bindings provide a fairly "Pythonic" wrapper around the underlying C++ code, there are several ways in which the Python bindings differ from typical Python libraries.
 These differences can catch Python programmers by surprise and lead to unexpected results. These differences result from the complexity of developing a large, long-lived library while continuing to maintain
-backward compatibility. They are being addressed over time, but until they are all gone, please review this list of https://gdal.org/api/python_gotchas.html
+backward compatibility. They are being addressed over time, but until they are all gone, please review `this list of gotchas <https://gdal.org/api/python/python_gotchas.html>`__.
 
 Examples
 --------
 
 * An assortment of other samples are available in the `Python github samples directory <https://github.com/OSGeo/gdal/tree/master/swig/python/gdal-utils/osgeo_utils/samples>`__
-  with some description in the https://gdal.org/api/python_bindings.html#examples.
+  with some description in the `Sample scripts <https://gdal.org/api/python/python_samples.html>`__ documentation.
 * Several `GDAL utilities <https://github.com/OSGeo/gdal/tree/master/swig/python/gdal-utils/osgeo_utils/>`__
   are implemented in Python and can be useful examples.
 * The majority of GDAL regression tests are written in Python. They are available at
   `https://github.com/OSGeo/gdal/tree/master/autotest <https://github.com/OSGeo/gdal/tree/master/autotest>`__
+* One example of GDAL/numpy integration is found in the `val_repl.py <https://github.com/OSGeo/gdal/tree/master/swig/python/gdal-utils/osgeo_utils/samples/val_repl.py>`__ script.
 
-One example of GDAL/numpy integration is found in the `val_repl.py <https://github.com/OSGeo/gdal/tree/master/swig/python/gdal-utils/osgeo_utils/samples/val_repl.py>`__ script.
+Performance Notes
+-----------------
 
-.. note::
-   **Performance Notes**
-
-   ReadAsArray expects to make an entire copy of a raster band or dataset
-   unless the data are explicitly subsetted as part of the function call. For
-   large data, this approach is expected to be prohibitively memory intensive.
+* `ReadAsArray <https://gdal.org/api/python/raster_api.html#osgeo.gdal.Dataset.ReadAsArray>`__
+  expects to make an entire copy of a raster band or dataset
+  unless the data are explicitly subsetted as part of the function call. For
+  large data, this approach is expected to be prohibitively memory intensive.
 
 
 .. _GDAL: https://gdal.org

@@ -24,9 +24,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 #include <algorithm>
 #include <memory>
 #include <mutex>
@@ -589,7 +586,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
             if (poDS->poJ2KDataset->GetMOFlags() & GMO_PAM_CLASS)
             {
-                reinterpret_cast<GDALPamDataset *>(poDS->poJ2KDataset.get())
+                cpl::down_cast<GDALPamDataset *>(poDS->poJ2KDataset.get())
                     ->SetPamFlags(reinterpret_cast<GDALPamDataset *>(
                                       poDS->poJ2KDataset.get())
                                       ->GetPamFlags() |
@@ -716,7 +713,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
         if (poDS->poJPEGDataset->GetMOFlags() & GMO_PAM_CLASS)
         {
-            (reinterpret_cast<GDALPamDataset *>(poDS->poJPEGDataset.get()))
+            (cpl::down_cast<GDALPamDataset *>(poDS->poJPEGDataset.get()))
                 ->SetPamFlags((reinterpret_cast<GDALPamDataset *>(
                                    poDS->poJPEGDataset.get()))
                                   ->GetPamFlags() |
@@ -2637,7 +2634,7 @@ void NITFDataset::InitializeNITFTREs()
                                              CPLES_BackslashQuotable);
 
             const size_t nLineLen = strlen(szTag) + strlen(pszEscapedData) + 2;
-            char *pszLine = reinterpret_cast<char *>(CPLMalloc(nLineLen));
+            char *pszLine = static_cast<char *>(CPLMalloc(nLineLen));
             snprintf(pszLine, nLineLen, "%s=%s", szTag, pszEscapedData);
             aosList.AddString(pszLine);
             CPLFree(pszLine);
@@ -3718,7 +3715,7 @@ CPLErr NITFDataset::ScanJPEGBlocks()
     /* -------------------------------------------------------------------- */
     /*      Allocate offset array                                           */
     /* -------------------------------------------------------------------- */
-    panJPEGBlockOffset = reinterpret_cast<GIntBig *>(VSI_CALLOC_VERBOSE(
+    panJPEGBlockOffset = static_cast<GIntBig *>(VSI_CALLOC_VERBOSE(
         sizeof(GIntBig), static_cast<size_t>(psImage->nBlocksPerRow) *
                              psImage->nBlocksPerColumn));
     if (panJPEGBlockOffset == nullptr)
@@ -3849,7 +3846,7 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
              */
             /* --------------------------------------------------------------------
              */
-            panJPEGBlockOffset = reinterpret_cast<GIntBig *>(VSI_CALLOC_VERBOSE(
+            panJPEGBlockOffset = static_cast<GIntBig *>(VSI_CALLOC_VERBOSE(
                 sizeof(GIntBig), static_cast<size_t>(psImage->nBlocksPerRow) *
                                      psImage->nBlocksPerColumn));
             if (panJPEGBlockOffset == nullptr)
@@ -3898,7 +3895,7 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
     if (pabyJPEGBlock == nullptr)
     {
         /* Allocate enough memory to hold 12bit JPEG data */
-        pabyJPEGBlock = reinterpret_cast<GByte *>(VSI_CALLOC_VERBOSE(
+        pabyJPEGBlock = static_cast<GByte *>(VSI_CALLOC_VERBOSE(
             psImage->nBands, static_cast<size_t>(psImage->nBlockWidth) *
                                  psImage->nBlockHeight * 2));
         if (pabyJPEGBlock == nullptr)
@@ -4218,6 +4215,10 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
         // Empty PRECINCTS option to ask for no custom precincts
         papszJP2Options = CSLAddString(papszJP2Options, "PRECINCTS=");
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
         // See Table 2.3-3 - Target Bit Rates for Each Tile in Panchromatic
         // Image Segments of STDI-0006
         std::vector<double> adfBPP = {
@@ -4233,6 +4234,9 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
             // Lossless 5x3 wavelet
             papszJP2Options = CSLAddString(papszJP2Options, "REVERSIBLE=YES");
         }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
         std::string osQuality;
         for (double dfBPP : adfBPP)
@@ -5295,6 +5299,10 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             CPLTestBool(
                 CSLFetchNameValueDef(papszFullOptions, "J2KLRA", "YES")))
         {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
             // See Table 2.3-3 - Target Bit Rates for Each Tile in Panchromatic
             // Image Segments of STDI-0006
             std::vector<double> adfBPP = {
@@ -5306,6 +5314,9 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             {
                 adfBPP.push_back(nABPP);
             }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
             double dfQuality =
                 CPLAtof(CSLFetchNameValueDef(papszFullOptions, "QUALITY", "0"));
@@ -5954,7 +5965,7 @@ static bool NITFWriteCGMSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     // allocate space for graphic header.
     // Size of LS = 4, size of LSSH = 6, and 1 for null character
     char *pachLS =
-        reinterpret_cast<char *>(CPLCalloc(nNUMS * nCgmHdrEntrySz + 1, 1));
+        static_cast<char *>(CPLCalloc(nNUMS * nCgmHdrEntrySz + 1, 1));
 
     /* -------------------------------------------------------------------- */
     /*  Assume no extended data such as SXSHDL, SXSHD                       */
@@ -6168,7 +6179,7 @@ static bool NITFWriteTextSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     /*      segment header/data size info is blank.                         */
     /* -------------------------------------------------------------------- */
     char achNUMT[4];
-    char *pachLT = reinterpret_cast<char *>(CPLCalloc(nNUMT * 9 + 1, 1));
+    char *pachLT = static_cast<char *>(CPLCalloc(nNUMT * 9 + 1, 1));
 
     bOK &= VSIFSeekL(fpVSIL, nNumTOffset, SEEK_SET) == 0;
     bOK &= VSIFReadL(achNUMT, 3, 1, fpVSIL) == 1;

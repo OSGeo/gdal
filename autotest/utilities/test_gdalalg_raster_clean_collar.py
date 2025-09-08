@@ -56,7 +56,7 @@ def test_gdalalg_raster_clean_collar_update_output(tmp_vsimem):
     alg["output"] = out_filename
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it or the --update option to update it",
+        match="already exists",
     ):
         alg.Run()
 

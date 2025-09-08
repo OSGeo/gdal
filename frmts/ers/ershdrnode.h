@@ -1,22 +1,24 @@
 #ifndef ERSHDRNODE_H_INCLUDED
 #define ERSHDRNODE_H_INCLUDED
 
+#include "cpl_string.h"
+
 class ERSHdrNode;
 
 class ERSHdrNode
 {
-    CPLString osTempReturn;
+    CPLString osTempReturn{};
 
     void MakeSpace();
 
   public:
-    int nItemMax;
-    int nItemCount;
-    char **papszItemName;
-    char **papszItemValue;
-    ERSHdrNode **papoItemChild;
+    int nItemMax = 0;
+    int nItemCount = 0;
+    char **papszItemName = nullptr;
+    char **papszItemValue = nullptr;
+    ERSHdrNode **papoItemChild = nullptr;
 
-    ERSHdrNode();
+    ERSHdrNode() = default;
     ~ERSHdrNode();
 
     int ParseHeader(VSILFILE *fp);
@@ -32,6 +34,8 @@ class ERSHdrNode
 
   private:
     static int ReadLine(VSILFILE *, CPLString &);
+
+    CPL_DISALLOW_COPY_ASSIGN(ERSHdrNode)
 };
 
 #endif /* ERSHDRNODE_H_INCLUDED */

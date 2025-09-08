@@ -13,12 +13,16 @@
 #include "gdalalg_vector_pipeline.h"
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_buffer.h"
+#include "gdalalg_vector_check_coverage.h"
+#include "gdalalg_vector_check_geometry.h"
+#include "gdalalg_vector_clean_coverage.h"
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_concat.h"
 #include "gdalalg_vector_edit.h"
 #include "gdalalg_vector_explode_collections.h"
 #include "gdalalg_vector_filter.h"
 #include "gdalalg_vector_geom.h"
+#include "gdalalg_vector_info.h"
 #include "gdalalg_vector_make_valid.h"
 #include "gdalalg_vector_reproject.h"
 #include "gdalalg_vector_segmentize.h"
@@ -70,9 +74,12 @@ GDALVectorPipelineStepAlgorithm::GDALVectorPipelineStepAlgorithm(
     {
         m_supportsStreamedOutput = true;
 
-        AddVectorInputArgs(false);
-        AddProgressArg();
-        AddVectorOutputArgs(false, false);
+        if (m_constructorOptions.addDefaultArguments)
+        {
+            AddVectorInputArgs(false);
+            AddProgressArg();
+            AddVectorOutputArgs(false, false);
+        }
     }
 }
 
@@ -96,6 +103,9 @@ GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
         .SetPositional();
     AddVectorOutputArgs(/* hiddenForCLI = */ true,
                         /* shortNameOutputLayerAllowed=*/false);
+
+    AddOutputStringArg(&m_output).SetHiddenForCLI();
+    AddStdoutArg(&m_stdout);
 
     RegisterAlgorithms(m_stepRegistry, false);
 }
@@ -127,8 +137,16 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     { return std::make_unique<GDALVectorWriteAlgorithm>(); };
     registry.Register(algInfo);
 
+    algInfo.m_name = addSuffixIfNeeded(GDALVectorInfoAlgorithm::NAME);
+    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
+    { return std::make_unique<GDALVectorInfoAlgorithm>(); };
+    registry.Register(algInfo);
+
     registry.Register<GDALVectorBufferAlgorithm>();
+    registry.Register<GDALVectorCheckCoverageAlgorithm>();
+    registry.Register<GDALVectorCheckGeometryAlgorithm>();
     registry.Register<GDALVectorConcatAlgorithm>();
+    registry.Register<GDALVectorCleanCoverageAlgorithm>();
 
     algInfo.m_name = addSuffixIfNeeded(GDALVectorClipAlgorithm::NAME);
     algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
@@ -187,7 +205,7 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
         if (arg.find("--pipeline") == 0)
             return GDALAlgorithm::ParseCommandLineArguments(args);
 
-        // gdal vector pipeline [--progress] "read poly.gpkg ..."
+        // gdal vector pipeline [--quiet] "read poly.gpkg ..."
         if (arg.find("read ") == 0)
             return GDALAlgorithm::ParseCommandLineArguments(args);
     }
@@ -214,6 +232,12 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
         if (arg == "--progress")
         {
             m_progressBarRequested = true;
+            continue;
+        }
+        if (arg == "--quiet")
+        {
+            m_quiet = true;
+            m_progressBarRequested = false;
             continue;
         }
 
@@ -404,24 +428,28 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
     if (!CheckFirstStep(stepAlgs))
         return false;
 
-    if (steps.back().alg->GetName() != GDALVectorWriteAlgorithm::NAME)
+    if (steps.back().alg->GetName() != GDALVectorWriteAlgorithm::NAME &&
+        steps.back().alg->GetName() != GDALVectorInfoAlgorithm::NAME)
     {
         if (helpRequested)
         {
             steps.back().alg->ParseCommandLineArguments(steps.back().args);
             return false;
         }
-        ReportError(CE_Failure, CPLE_AppDefined, "Last step should be '%s'",
-                    GDALVectorWriteAlgorithm::NAME);
+        ReportError(
+            CE_Failure, CPLE_AppDefined, "Last step should be '%s' or '%s'",
+            GDALVectorWriteAlgorithm::NAME, GDALVectorInfoAlgorithm::NAME);
         return false;
     }
     for (size_t i = 0; i < steps.size() - 1; ++i)
     {
-        if (steps[i].alg->GetName() == GDALVectorWriteAlgorithm::NAME)
+        if (steps[i].alg->GetName() == GDALVectorWriteAlgorithm::NAME ||
+            steps[i].alg->GetName() == GDALVectorInfoAlgorithm::NAME)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
-                        "Only last step can be '%s'",
-                        GDALVectorWriteAlgorithm::NAME);
+                        "Only last step can be '%s' or '%s'",
+                        GDALVectorWriteAlgorithm::NAME,
+                        GDALVectorInfoAlgorithm::NAME);
             return false;
         }
     }
@@ -576,15 +604,17 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
         auto alg = GetStepAlg(name);
         assert(alg);
         if (!alg->CanBeFirstStep() && !alg->IsHidden() &&
-            name != GDALVectorWriteAlgorithm::NAME)
+            name != GDALVectorWriteAlgorithm::NAME &&
+            name != GDALVectorInfoAlgorithm::NAME)
         {
             ret += '\n';
             alg->SetCallPath({name});
             ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
         }
     }
+    for (const char *name :
+         {GDALVectorInfoAlgorithm::NAME, GDALVectorWriteAlgorithm::NAME})
     {
-        const auto name = GDALVectorWriteAlgorithm::NAME;
         ret += '\n';
         auto alg = GetStepAlg(name);
         assert(alg);
@@ -812,7 +842,7 @@ GDALVectorNonStreamingAlgorithmDataset::
 /************************************************************************/
 
 bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
-    OGRLayer &srcLayer)
+    OGRLayer &srcLayer, OGRFeatureDefn &dstDefn)
 {
     CPLStringList aosOptions;
     if (srcLayer.TestCapability(OLCStringsAsUTF8))
@@ -820,13 +850,18 @@ bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
         aosOptions.AddNameValue("ADVERTIZE_UTF8", "TRUE");
     }
 
-    OGRMemLayer *poDstLayer =
-        m_ds->CreateLayer(*srcLayer.GetLayerDefn(), aosOptions.List());
+    OGRMemLayer *poDstLayer = m_ds->CreateLayer(dstDefn, aosOptions.List());
     m_layers.push_back(poDstLayer);
 
     const bool bRet = Process(srcLayer, *poDstLayer);
     poDstLayer->SetUpdatable(false);
     return bRet;
+}
+
+bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
+    OGRLayer &srcLayer)
+{
+    return AddProcessedLayer(srcLayer, *srcLayer.GetLayerDefn());
 }
 
 /************************************************************************/

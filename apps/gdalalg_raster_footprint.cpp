@@ -228,7 +228,8 @@ bool GDALRasterFootprintAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             aosOptions.AddString("-of");
             aosOptions.AddString("GPKG");
 
-            outputFilename = CPLGenerateTempFilenameSafe("_footprint.gpkg");
+            outputFilename =
+                CPLGenerateTempFilenameSafe("_footprint") + ".gpkg";
         }
         else
         {

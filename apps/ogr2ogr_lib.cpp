@@ -2782,7 +2782,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         {
             if (aoDrivers.empty())
             {
-                if (CPLGetExtensionSafe(pszDest).empty())
+                if (CPLGetExtensionSafe(pszDest).empty() &&
+                    !psOptions->bInvokedFromGdalVectorConvert)
                 {
                     psOptions->osFormat = "ESRI Shapefile";
                 }
@@ -2873,12 +2874,15 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         /*      a directory instead. */
         /* --------------------------------------------------------------------
          */
+
+        const bool bSingleLayer =
+            (!psOptions->osSQLStatement.empty() ||
+             psOptions->aosLayers.size() == 1 ||
+             (psOptions->aosLayers.empty() && poDS->GetLayerCount() == 1));
+
         VSIStatBufL sStat;
         if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
-            psOptions->osSQLStatement.empty() &&
-            (psOptions->aosLayers.size() > 1 ||
-             (psOptions->aosLayers.empty() && poDS->GetLayerCount() > 1)) &&
-            psOptions->osNewLayerName.empty() &&
+            !bSingleLayer && psOptions->osNewLayerName.empty() &&
             EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "SHP") &&
             VSIStatL(osDestFilename, &sStat) != 0)
         {
@@ -2900,10 +2904,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             // will be created
             const char *pszCOList =
                 poDriver->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST);
-            if (pszCOList && strstr(pszCOList, "SINGLE_LAYER") &&
-                (!psOptions->osSQLStatement.empty() ||
-                 psOptions->aosLayers.size() == 1 ||
-                 (psOptions->aosLayers.empty() && poDS->GetLayerCount() == 1)))
+            if (bSingleLayer && pszCOList && strstr(pszCOList, "SINGLE_LAYER"))
             {
                 aosDSCO.SetNameValue("SINGLE_LAYER", "YES");
             }
@@ -8310,7 +8311,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
     argParser->add_argument("-unsetFid")
         .store_into(psOptions->bUnsetFid)
         .help(_("Prevent the name of the source FID column and source feature "
-                "IDs from being re-used."));
+                "IDs from being reused."));
 
     {
         auto &group = argParser->add_mutually_exclusive_group();

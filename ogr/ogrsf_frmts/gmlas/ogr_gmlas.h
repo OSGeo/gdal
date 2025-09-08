@@ -238,7 +238,7 @@ class GMLASErrorHandler : public ErrorHandler
 class GMLASXLinkResolutionConf
 {
   public:
-    /* See data/gmlasconf.xsd for docomentation of the fields */
+    /* See data/gmlasconf.xsd for documentation of the fields */
 
     typedef enum
     {

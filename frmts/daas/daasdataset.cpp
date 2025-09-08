@@ -562,7 +562,7 @@ bool GDALDAASDataset::GetAuthorization()
     if (!oDoc.LoadMemory(osAuthorizationResponse))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannont parse GetAuthorization response");
+                 "Cannot parse GetAuthorization response");
         return false;
     }
 
@@ -746,7 +746,7 @@ bool GDALDAASDataset::GetImageMetadata()
     if (!oDoc.LoadMemory(osResponse))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannont parse GetImageMetadata response");
+                 "Cannot parse GetImageMetadata response");
         return false;
     }
 
@@ -758,7 +758,7 @@ bool GDALDAASDataset::GetImageMetadata()
         if (!oProperties.IsValid())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannont find response/payload/payload/imageMetadata/"
+                     "Cannot find response/payload/payload/imageMetadata/"
                      "properties nor properties in GetImageMetadata response");
             return false;
         }
@@ -1394,7 +1394,7 @@ GDALDAASRasterBand::GDALDAASRasterBand(GDALDAASDataset *poDSIn, int nBandIn,
 
 double GDALDAASRasterBand::GetNoDataValue(int *pbHasNoData)
 {
-    GDALDAASDataset *poGDS = reinterpret_cast<GDALDAASDataset *>(poDS);
+    GDALDAASDataset *poGDS = cpl::down_cast<GDALDAASDataset *>(poDS);
     if (poGDS->m_bHasNoData)
     {
         if (pbHasNoData)
@@ -1421,7 +1421,7 @@ GDALColorInterp GDALDAASRasterBand::GetColorInterpretation()
 
 GDALRasterBand *GDALDAASRasterBand::GetMaskBand()
 {
-    GDALDAASDataset *poGDS = reinterpret_cast<GDALDAASDataset *>(poDS);
+    GDALDAASDataset *poGDS = cpl::down_cast<GDALDAASDataset *>(poDS);
     if (poGDS->m_poMaskBand)
         return poGDS->m_poMaskBand;
     return GDALRasterBand::GetMaskBand();
@@ -1433,7 +1433,7 @@ GDALRasterBand *GDALDAASRasterBand::GetMaskBand()
 
 int GDALDAASRasterBand::GetMaskFlags()
 {
-    GDALDAASDataset *poGDS = reinterpret_cast<GDALDAASDataset *>(poDS);
+    GDALDAASDataset *poGDS = cpl::down_cast<GDALDAASDataset *>(poDS);
     if (poGDS->m_poMaskBand)
         return GMF_PER_DATASET;
     return GDALRasterBand::GetMaskFlags();
@@ -1628,7 +1628,7 @@ CPLErr GDALDAASDataset::FlushCache(bool bAtClosing)
 
 int GDALDAASRasterBand::GetOverviewCount()
 {
-    GDALDAASDataset *poGDS = reinterpret_cast<GDALDAASDataset *>(poDS);
+    GDALDAASDataset *poGDS = cpl::down_cast<GDALDAASDataset *>(poDS);
     return static_cast<int>(poGDS->m_apoOverviewDS.size());
 }
 
@@ -1638,7 +1638,7 @@ int GDALDAASRasterBand::GetOverviewCount()
 
 GDALRasterBand *GDALDAASRasterBand::GetOverview(int iIndex)
 {
-    GDALDAASDataset *poGDS = reinterpret_cast<GDALDAASDataset *>(poDS);
+    GDALDAASDataset *poGDS = cpl::down_cast<GDALDAASDataset *>(poDS);
     if (iIndex >= 0 && iIndex < static_cast<int>(poGDS->m_apoOverviewDS.size()))
     {
         return poGDS->m_apoOverviewDS[iIndex]->GetRasterBand(nBand);
@@ -1668,7 +1668,7 @@ CPLErr GDALDAASRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      GSpacing nPixelSpace, GSpacing nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 {
-    GDALDAASDataset *poGDS = reinterpret_cast<GDALDAASDataset *>(poDS);
+    GDALDAASDataset *poGDS = cpl::down_cast<GDALDAASDataset *>(poDS);
 
     poGDS->m_eCurrentResampleAlg = psExtraArg->eResampleAlg;
 
@@ -1753,7 +1753,7 @@ CPLErr GDALDAASRasterBand::AdviseRead(int nXOff, int nYOff, int nXSize,
                                       GDALDataType /* eBufType */,
                                       char ** /* papszOptions */)
 {
-    GDALDAASDataset *poGDS = reinterpret_cast<GDALDAASDataset *>(poDS);
+    GDALDAASDataset *poGDS = cpl::down_cast<GDALDAASDataset *>(poDS);
     if (nXSize == nBufXSize && nYSize == nBufYSize)
     {
         poGDS->m_nXOffAdvise = nXOff;
@@ -1775,7 +1775,7 @@ GUInt32
 GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
                                    const std::vector<int> &anRequestedBands)
 {
-    GDALDAASDataset *poGDS = reinterpret_cast<GDALDAASDataset *>(poDS);
+    GDALDAASDataset *poGDS = cpl::down_cast<GDALDAASDataset *>(poDS);
 
     if (anRequestedBands.size() > 1)
     {
@@ -1966,7 +1966,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
                                      const std::vector<int> &anRequestedBands,
                                      void *pDstBuffer)
 {
-    GDALDAASDataset *poGDS = reinterpret_cast<GDALDAASDataset *>(poDS);
+    GDALDAASDataset *poGDS = cpl::down_cast<GDALDAASDataset *>(poDS);
 
     CPLAssert(!anRequestedBands.empty());
     if (pDstBuffer)

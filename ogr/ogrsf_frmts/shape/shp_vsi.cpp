@@ -40,12 +40,12 @@ static SAFile VSI_SHP_OpenInternal(const char *pszFilename,
     VSILFILE *fp = VSIFOpenExL(pszFilename, pszAccess, TRUE);
     if (fp == SHPLIB_NULLPTR)
         return SHPLIB_NULLPTR;
-    pFile = (OGRSHPDBFFile *)CPLCalloc(1, sizeof(OGRSHPDBFFile));
+    pFile = static_cast<OGRSHPDBFFile *>(CPLCalloc(1, sizeof(OGRSHPDBFFile)));
     pFile->fp = fp;
     pFile->pszFilename = CPLStrdup(pszFilename);
     pFile->bEnforce2GBLimit = bEnforce2GBLimit;
     pFile->nCurOffset = 0;
-    return (SAFile)pFile;
+    return reinterpret_cast<SAFile>(pFile);
 }
 
 /************************************************************************/
@@ -68,9 +68,9 @@ static SAOffset VSI_SHP_Read(void *p, SAOffset size, SAOffset nmemb,
                              SAFile file)
 
 {
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
-    SAOffset ret =
-        (SAOffset)VSIFReadL(p, (size_t)size, (size_t)nmemb, pFile->fp);
+    OGRSHPDBFFile *pFile = reinterpret_cast<OGRSHPDBFFile *>(file);
+    SAOffset ret = static_cast<SAOffset>(VSIFReadL(
+        p, static_cast<size_t>(size), static_cast<size_t>(nmemb), pFile->fp));
     pFile->nCurOffset += ret * size;
     return ret;
 }
@@ -81,7 +81,7 @@ static SAOffset VSI_SHP_Read(void *p, SAOffset size, SAOffset nmemb,
 
 int VSI_SHP_WriteMoreDataOK(SAFile file, SAOffset nExtraBytes)
 {
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
+    OGRSHPDBFFile *pFile = reinterpret_cast<OGRSHPDBFFile *>(file);
     if (pFile->nCurOffset + nExtraBytes > INT_MAX)
     {
         if (pFile->bEnforce2GBLimit)
@@ -112,11 +112,12 @@ static SAOffset VSI_SHP_Write(const void *p, SAOffset size, SAOffset nmemb,
                               SAFile file)
 
 {
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
+    OGRSHPDBFFile *pFile = reinterpret_cast<OGRSHPDBFFile *>(file);
     SAOffset ret;
     if (!VSI_SHP_WriteMoreDataOK(file, size * nmemb))
         return 0;
-    ret = (SAOffset)VSIFWriteL(p, (size_t)size, (size_t)nmemb, pFile->fp);
+    ret = static_cast<SAOffset>(VSIFWriteL(
+        p, static_cast<size_t>(size), static_cast<size_t>(nmemb), pFile->fp));
     pFile->nCurOffset += ret * size;
     return ret;
 }
@@ -128,12 +129,12 @@ static SAOffset VSI_SHP_Write(const void *p, SAOffset size, SAOffset nmemb,
 static SAOffset VSI_SHP_Seek(SAFile file, SAOffset offset, int whence)
 
 {
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
-    SAOffset ret = (SAOffset)VSIFSeekL(pFile->fp, (vsi_l_offset)offset, whence);
+    OGRSHPDBFFile *pFile = reinterpret_cast<OGRSHPDBFFile *>(file);
+    int ret = VSIFSeekL(pFile->fp, static_cast<vsi_l_offset>(offset), whence);
     if (whence == 0 && ret == 0)
         pFile->nCurOffset = offset;
     else
-        pFile->nCurOffset = (SAOffset)VSIFTellL(pFile->fp);
+        pFile->nCurOffset = static_cast<SAOffset>(VSIFTellL(pFile->fp));
     return ret;
 }
 
@@ -144,8 +145,8 @@ static SAOffset VSI_SHP_Seek(SAFile file, SAOffset offset, int whence)
 static SAOffset VSI_SHP_Tell(SAFile file)
 
 {
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
-    return (SAOffset)pFile->nCurOffset;
+    OGRSHPDBFFile *pFile = reinterpret_cast<OGRSHPDBFFile *>(file);
+    return static_cast<SAOffset>(pFile->nCurOffset);
 }
 
 /************************************************************************/
@@ -155,7 +156,7 @@ static SAOffset VSI_SHP_Tell(SAFile file)
 static int VSI_SHP_Flush(SAFile file)
 
 {
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
+    OGRSHPDBFFile *pFile = reinterpret_cast<OGRSHPDBFFile *>(file);
     return VSIFFlushL(pFile->fp);
 }
 
@@ -166,7 +167,7 @@ static int VSI_SHP_Flush(SAFile file)
 static int VSI_SHP_Close(SAFile file)
 
 {
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
+    OGRSHPDBFFile *pFile = reinterpret_cast<OGRSHPDBFFile *>(file);
     int ret = VSIFCloseL(pFile->fp);
     CPLFree(pFile->pszFilename);
     CPLFree(pFile);
@@ -223,7 +224,7 @@ void SASetupDefaultHooks(SAHooks *psHooks)
 
 VSILFILE *VSI_SHP_GetVSIL(SAFile file)
 {
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
+    OGRSHPDBFFile *pFile = reinterpret_cast<OGRSHPDBFFile *>(file);
     return pFile->fp;
 }
 
@@ -233,7 +234,7 @@ VSILFILE *VSI_SHP_GetVSIL(SAFile file)
 
 const char *VSI_SHP_GetFilename(SAFile file)
 {
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
+    OGRSHPDBFFile *pFile = reinterpret_cast<OGRSHPDBFFile *>(file);
     return pFile->pszFilename;
 }
 
@@ -253,15 +254,15 @@ static SAFile VSI_SHP_Open2GBLimit(const char *pszFilename,
 /*                         VSI_SHP_GetHook()                            */
 /************************************************************************/
 
-static const SAHooks sOGRHook = {
-    VSI_SHP_Open,  VSI_SHP_Read,  VSI_SHP_Write, VSI_SHP_Seek,
-    VSI_SHP_Tell,  VSI_SHP_Flush, VSI_SHP_Close, VSI_SHP_Remove,
-    VSI_SHP_Error, CPLAtof,       NULL};
+static const SAHooks sOGRHook = {VSI_SHP_Open,  VSI_SHP_Read,   VSI_SHP_Write,
+                                 VSI_SHP_Seek,  VSI_SHP_Tell,   VSI_SHP_Flush,
+                                 VSI_SHP_Close, VSI_SHP_Remove, VSI_SHP_Error,
+                                 CPLAtof,       nullptr};
 
 static const SAHooks sOGRHook2GBLimit = {
     VSI_SHP_Open2GBLimit, VSI_SHP_Read,  VSI_SHP_Write, VSI_SHP_Seek,
     VSI_SHP_Tell,         VSI_SHP_Flush, VSI_SHP_Close, VSI_SHP_Remove,
-    VSI_SHP_Error,        CPLAtof,       NULL};
+    VSI_SHP_Error,        CPLAtof,       nullptr};
 
 const SAHooks *VSI_SHP_GetHook(int b2GBLimit)
 {

@@ -331,8 +331,7 @@ void RS2CalibRasterBand::ReadLUT()
 
     m_nTableSize = CSLCount(papszLUTList);
 
-    m_nfTable =
-        reinterpret_cast<float *>(CPLMalloc(sizeof(float) * m_nTableSize));
+    m_nfTable = static_cast<float *>(CPLMalloc(sizeof(float) * m_nTableSize));
 
     for (int i = 0; i < m_nTableSize; i++)
     {
@@ -876,7 +875,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
                     CSLAddString(poDS->papszExtraFiles, osLUTFilePath);
 
                 const size_t nBufLen = nFLen + 27;
-                char *pszBuf = reinterpret_cast<char *>(CPLMalloc(nBufLen));
+                char *pszBuf = static_cast<char *>(CPLMalloc(nBufLen));
                 osBeta0LUT = pszLUTFile;
                 poDS->SetMetadataItem("BETA_NOUGHT_LUT", pszLUTFile);
 
@@ -896,7 +895,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
                     CSLAddString(poDS->papszExtraFiles, osLUTFilePath);
 
                 const size_t nBufLen = nFLen + 27;
-                char *pszBuf = reinterpret_cast<char *>(CPLMalloc(nBufLen));
+                char *pszBuf = static_cast<char *>(CPLMalloc(nBufLen));
                 osSigma0LUT = pszLUTFile;
                 poDS->SetMetadataItem("SIGMA_NOUGHT_LUT", pszLUTFile);
 
@@ -916,7 +915,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
                     CSLAddString(poDS->papszExtraFiles, osLUTFilePath);
 
                 const size_t nBufLen = nFLen + 27;
-                char *pszBuf = reinterpret_cast<char *>(CPLMalloc(nBufLen));
+                char *pszBuf = static_cast<char *>(CPLMalloc(nBufLen));
                 osGammaLUT = pszLUTFile;
                 poDS->SetMetadataItem("GAMMA_LUT", pszLUTFile);
                 snprintf(pszBuf, nBufLen, "RADARSAT_2_CALIB:GAMMA:%s",
@@ -1023,7 +1022,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (poDS->papszSubDatasets != nullptr && eCalib == None)
     {
         const size_t nBufLen = nFLen + 28;
-        char *pszBuf = reinterpret_cast<char *>(CPLMalloc(nBufLen));
+        char *pszBuf = static_cast<char *>(CPLMalloc(nBufLen));
         snprintf(pszBuf, nBufLen, "RADARSAT_2_CALIB:UNCALIB:%s",
                  osMDFilename.c_str());
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets,

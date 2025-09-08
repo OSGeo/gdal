@@ -15,6 +15,7 @@ Raster
    warp_tut
    gdal_grid_tut
    geotransforms_tut
+   raster_dtm_tut
 
 Multidimensional raster
 -----------------------

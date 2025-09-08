@@ -2146,6 +2146,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     GDALComputedRasterBand operator!() const CPL_WARN_UNUSED_RESULT;
 
+    GDALComputedRasterBand operator-() const CPL_WARN_UNUSED_RESULT;
+
     GDALComputedRasterBand AsType(GDALDataType) const CPL_WARN_UNUSED_RESULT;
 
     CPLErr ReadBlock(int nXBlockOff, int nYBlockOff,
@@ -2468,11 +2470,17 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
         OP_LOGICAL_OR,
         OP_CAST,
         OP_TERNARY,
+        OP_ABS,
+        OP_SQRT,
+        OP_LOG,
+        OP_LOG10,
+        OP_POW,
     };
 
     GDALComputedRasterBand(
         Operation op, const std::vector<const GDALRasterBand *> &bands,
         double constant = std::numeric_limits<double>::quiet_NaN());
+    GDALComputedRasterBand(Operation op, const GDALRasterBand &band);
     GDALComputedRasterBand(Operation op, double constant,
                            const GDALRasterBand &band);
     GDALComputedRasterBand(Operation op, const GDALRasterBand &band,
@@ -2531,6 +2539,28 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
 
 namespace gdal
 {
+using std::abs;
+GDALComputedRasterBand CPL_DLL abs(const GDALRasterBand &band);
+
+using std::fabs;
+GDALComputedRasterBand CPL_DLL fabs(const GDALRasterBand &band);
+
+using std::sqrt;
+GDALComputedRasterBand CPL_DLL sqrt(const GDALRasterBand &band);
+
+using std::log;
+GDALComputedRasterBand CPL_DLL log(const GDALRasterBand &band);
+
+using std::log10;
+GDALComputedRasterBand CPL_DLL log10(const GDALRasterBand &band);
+
+using std::pow;
+GDALComputedRasterBand CPL_DLL pow(const GDALRasterBand &band, double constant);
+#ifndef DOXYGEN_SKIP
+GDALComputedRasterBand CPL_DLL pow(double constant, const GDALRasterBand &band);
+GDALComputedRasterBand CPL_DLL pow(const GDALRasterBand &band1,
+                                   const GDALRasterBand &band2);
+#endif
 
 GDALComputedRasterBand CPL_DLL IfThenElse(const GDALRasterBand &condBand,
                                           const GDALRasterBand &thenBand,
@@ -3521,6 +3551,7 @@ class CPL_DLL GDALExtendedDataType
   public:
     ~GDALExtendedDataType();
 
+    GDALExtendedDataType(GDALExtendedDataType &&);
     GDALExtendedDataType(const GDALExtendedDataType &);
 
     GDALExtendedDataType &operator=(const GDALExtendedDataType &);

@@ -98,7 +98,7 @@ Standard options
    .. versionadded:: 3.12
 
    High angle for visibility. Measured up from 0 horizontal, in degree.
-   Values above the high pitch are marked out of range.
+   Input values above the high pitch are marked out of range.
    Must be greater than '--low-pitch'.
    (Not supported in cumulative mode)
 
@@ -107,8 +107,8 @@ Standard options
    .. versionadded:: 3.12
 
    Low angle for visibility. Measured up from 0 horizontal, in degree.
-   Cell values are clamped to be no lower than the intersection
-   of the angle.  Must be less than '--high-pitch'.
+   Input cell values below the pitch are are clamped to be no lower
+   than the intersection of the angle.  Must be less than '--high-pitch'.
    (Not supported in cumulative mode)
 
 .. option:: --curvature-coefficient <value>

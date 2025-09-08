@@ -28,6 +28,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "AWS_ROLE_ARN", // from cpl_aws.cpp
    "AWS_ROLE_SESSION_NAME", // from cpl_aws.cpp
    "AWS_S3_ENDPOINT", // from cpl_aws.cpp
+   "AWS_S3SESSION_TOKEN", // from cpl_aws.cpp
    "AWS_SECRET_ACCESS_KEY", // from cpl_aws.cpp
    "AWS_SESSION_TOKEN", // from cpl_aws.cpp
    "AWS_STS_ENDPOINT", // from cpl_aws.cpp
@@ -45,7 +46,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "AZURE_IMDS_OBJECT_ID", // from cpl_azure.cpp
    "AZURE_MAX_RESULTS", // from cpl_vsil_adls.cpp, cpl_vsil_az.cpp
    "AZURE_NO_SIGN_REQUEST", // from cpl_azure.cpp
-   "AZURE_SAS", // from cpl_azure.cpp, cpl_vsil_az.cpp
+   "AZURE_SAS", // from cpl_azure.cpp
    "AZURE_STORAGE_ACCESS_KEY", // from cpl_azure.cpp
    "AZURE_STORAGE_ACCESS_TOKEN", // from cpl_azure.cpp
    "AZURE_STORAGE_ACCOUNT", // from cpl_azure.cpp
@@ -376,6 +377,8 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_RASTER_TILE_EMIT_SPURIOUS_CHARS", // from gdalalg_raster_tile.cpp
    "GDAL_RASTER_TILE_HTML_PREC", // from gdalalg_raster_tile.cpp
    "GDAL_RASTER_TILE_KML_PREC", // from gdalalg_raster_tile.cpp
+   "GDAL_RASTER_TILE_PNG_FILTER", // from gdalalg_raster_tile.cpp
+   "GDAL_RASTER_TILE_USE_PNG_OPTIM", // from gdalalg_raster_tile.cpp
    "GDAL_RASTERIO_RESAMPLING", // from gdal_misc.cpp
    "GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_DROP_LOCK", // from gdalrasterblock.cpp
    "GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_RB_LOCK", // from gdalrasterblock.cpp
@@ -408,6 +411,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_USE_SSE", // from gdalgrid.cpp
    "GDAL_USE_SSSE3", // from cpl_cpu_features.cpp
    "GDAL_VALIDATE_CREATION_OPTIONS", // from gdaldataset.cpp, gdaldriver.cpp
+   "GDAL_VECTOR_CONCAT_MAX_OPENED_DATASETS", // from gdalalg_vector_concat.cpp
    "GDAL_VRT_ENABLE_PYTHON", // from vrtderivedrasterband.cpp
    "GDAL_VRT_ENABLE_RAWRASTERBAND", // from vrtdataset.cpp
    "GDAL_VRT_PYTHON_EXCLUSIVE_LOCK", // from vrtderivedrasterband.cpp

@@ -890,7 +890,7 @@ static int JXLPostEncode(TIFF *tif)
                    td->td_extrasamples == td->td_samplesperpixel - 3 &&
                    (td->td_sampleinfo[0] != EXTRASAMPLE_UNASSALPHA ||
                     !bAlphaDistanceSameAsMainChannel))))
-        {  // rgb without alpha, or differente distance for alpha vs non-alpha
+        {  // rgb without alpha, or different distance for alpha vs non-alpha
             // channels
             format.num_channels = 3;
             basic_info.num_color_channels = 3;

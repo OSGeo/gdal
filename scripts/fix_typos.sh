@@ -133,6 +133,7 @@ AUTHORIZED_LIST="$AUTHORIZED_LIST,oTe"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,ADJ_PARM,NUM_ADJ_PARM,ADJ_PARM_ID,UE_FLAG"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,ReenableTriggers,reenableTriggers"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,mitre,MITRE,Mitre"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,USE_PAETH_SSE2,PNG_PAETH,PNG_PAETH_SSE2,PNG_FILTER_PAETH,RunPaeth,costPaeth,paethBuffer,paethBufferTmp,bForcePaeth"
 
 python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES,./autotest/*,./build*/*,./doc/myvenv/*" \
     -x scripts/typos_allowlist.txt --words-white-list=$AUTHORIZED_LIST \

@@ -75,7 +75,8 @@ class GDALVectorPipelineAlgorithm final
 {
   public:
     static constexpr const char *NAME = "pipeline";
-    static constexpr const char *DESCRIPTION = "Process a vector dataset.";
+    static constexpr const char *DESCRIPTION =
+        "Process a vector dataset applying several steps.";
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_pipeline.html";
 
@@ -182,6 +183,7 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
     virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) = 0;
 
     bool AddProcessedLayer(OGRLayer &srcLayer);
+    bool AddProcessedLayer(OGRLayer &srcLayer, OGRFeatureDefn &dstDefn);
     void AddPassThroughLayer(OGRLayer &oLayer);
     int GetLayerCount() final override;
     OGRLayer *GetLayer(int idx) final override;

@@ -495,7 +495,7 @@ VICARRawRasterBand::VICARRawRasterBand(VICARDataset *poDSIn, int nBandIn,
 CPLErr VICARRawRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    VICARDataset *poGDS = reinterpret_cast<VICARDataset *>(poDS);
+    VICARDataset *poGDS = cpl::down_cast<VICARDataset *>(poDS);
     if (!poGDS->m_bIsLabelWritten)
         poGDS->WriteLabel();
     return RawRasterBand::IReadBlock(nXBlock, nYBlock, pImage);
@@ -508,7 +508,7 @@ CPLErr VICARRawRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 CPLErr VICARRawRasterBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    VICARDataset *poGDS = reinterpret_cast<VICARDataset *>(poDS);
+    VICARDataset *poGDS = cpl::down_cast<VICARDataset *>(poDS);
     if (!poGDS->m_bIsLabelWritten)
         poGDS->WriteLabel();
     return RawRasterBand::IWriteBlock(nXBlock, nYBlock, pImage);
@@ -526,7 +526,7 @@ CPLErr VICARRawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      GDALRasterIOExtraArg *psExtraArg)
 
 {
-    VICARDataset *poGDS = reinterpret_cast<VICARDataset *>(poDS);
+    VICARDataset *poGDS = cpl::down_cast<VICARDataset *>(poDS);
     if (!poGDS->m_bIsLabelWritten)
         poGDS->WriteLabel();
     return RawRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -917,7 +917,7 @@ CPLErr VICARBASICRasterBand::IReadBlock(int /*nXBlock*/, int nYBlock,
                                         void *pImage)
 
 {
-    VICARDataset *poGDS = reinterpret_cast<VICARDataset *>(poDS);
+    VICARDataset *poGDS = cpl::down_cast<VICARDataset *>(poDS);
 
     const int nRecord = (nBand - 1) * nRasterYSize + nYBlock;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
@@ -1046,7 +1046,7 @@ CPLErr VICARBASICRasterBand::IWriteBlock(int /*nXBlock*/, int nYBlock,
                                          void *pImage)
 
 {
-    VICARDataset *poGDS = reinterpret_cast<VICARDataset *>(poDS);
+    VICARDataset *poGDS = cpl::down_cast<VICARDataset *>(poDS);
     if (poGDS->eAccess == GA_ReadOnly)
         return CE_Failure;
     if (!poGDS->m_bIsLabelWritten)

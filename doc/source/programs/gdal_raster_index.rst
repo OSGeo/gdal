@@ -123,6 +123,12 @@ Standard options
     metadata.
     This option may be repeated.
 
+.. option:: --skip-errors
+
+    .. versionadded:: 3.12
+
+    Skip errors related to input datasets.
+
 Examples
 --------
 

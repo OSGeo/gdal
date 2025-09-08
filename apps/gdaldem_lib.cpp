@@ -90,9 +90,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
 
 #include <algorithm>
 #include <array>
@@ -3739,6 +3736,8 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         osFormat = GetOutputDriverForRaster(pszDest);
         if (osFormat.empty())
         {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not identify driver for output %s", pszDest);
             return nullptr;
         }
     }

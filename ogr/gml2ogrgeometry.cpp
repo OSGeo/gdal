@@ -923,7 +923,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
     // now.
 
     // We need this nRecLevel == 0 check, otherwise this could result in
-    // multiple revist of the same node, and exponential complexity.
+    // multiple revisit of the same node, and exponential complexity.
     if (nRecLevel == 0 && psNode != nullptr &&
         strcmp(psNode->pszValue, "?xml") == 0)
         psNode = psNode->psNext;
@@ -2161,6 +2161,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
     /* --------------------------------------------------------------------- */
     if (EQUAL(pszBaseGeometry, "MultiPolygon") ||
         EQUAL(pszBaseGeometry, "MultiSurface") ||
+        EQUAL(pszBaseGeometry, "Shell") ||  // CityGML 3 uses this
         EQUAL(pszBaseGeometry, "CompositeSurface"))
     {
         std::unique_ptr<OGRMultiSurface> poMS =
@@ -2268,6 +2269,8 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
                         (EQUAL(pszMemberElement, "Surface") ||
                          EQUAL(pszMemberElement, "Polygon") ||
                          EQUAL(pszMemberElement, "PolygonPatch") ||
+                         EQUAL(pszMemberElement,
+                               "Shell") ||  // CityGML 3 uses this
                          EQUAL(pszMemberElement, "CompositeSurface")))
                     {
                         auto poGeom = GML2OGRGeometry_XMLNode_Internal(
@@ -3645,7 +3648,8 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
             return std::make_unique<OGRPolyhedralSurface>();
         }
 
-        if (EQUAL(BareGMLElement(psChild->pszValue), "CompositeSurface"))
+        if (EQUAL(BareGMLElement(psChild->pszValue), "CompositeSurface") ||
+            EQUAL(BareGMLElement(psChild->pszValue), "Shell"))
         {
             auto poPS = std::make_unique<OGRPolyhedralSurface>();
 
@@ -3840,7 +3844,7 @@ OGRGeometryH OGR_G_CreateFromGMLTree(const CPLXMLNode *psTree)
  * The following GML3 elements are parsed : Surface,
  * MultiSurface, PolygonPatch, Triangle, Rectangle, Curve, MultiCurve,
  * CompositeCurve, LineStringSegment, Arc, Circle, CompositeSurface,
- * OrientableSurface, Solid, Tin, TriangulatedSurface.
+ * Shell, OrientableSurface, Solid, Tin, TriangulatedSurface.
  *
  * Arc and Circle elements are returned as curves by default. Stroking to
  * linestrings can be done with

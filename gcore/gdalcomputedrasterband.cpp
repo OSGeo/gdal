@@ -252,6 +252,42 @@ GDALComputedDataset::GDALComputedDataset(
                 m_aosOptions.SetNameValue("PixelFunctionType", "div");
             }
         }
+        else if (op == GDALComputedRasterBand::Operation::OP_LOG)
+        {
+            CPLAssert(firstBand);
+            CPLAssert(!secondBand);
+            CPLAssert(!pFirstConstant);
+            CPLAssert(!pSecondConstant);
+            m_aosOptions.SetNameValue("PixelFunctionType", "expression");
+            m_aosOptions.SetNameValue("_PIXELFN_ARG_expression",
+                                      "log(source1)");
+        }
+        else if (op == GDALComputedRasterBand::Operation::OP_POW)
+        {
+            if (firstBand && secondBand)
+            {
+                m_aosOptions.SetNameValue("PixelFunctionType", "expression");
+                m_aosOptions.SetNameValue("_PIXELFN_ARG_expression",
+                                          "source1 ^ source2");
+            }
+            else if (firstBand && pSecondConstant)
+            {
+                m_aosOptions.SetNameValue("PixelFunctionType", "pow");
+                m_aosOptions.SetNameValue(
+                    "_PIXELFN_ARG_power",
+                    CPLSPrintf("%.17g", *pSecondConstant));
+            }
+            else if (pFirstConstant && secondBand)
+            {
+                m_aosOptions.SetNameValue("PixelFunctionType", "exp");
+                m_aosOptions.SetNameValue("_PIXELFN_ARG_base",
+                                          CPLSPrintf("%.17g", *pFirstConstant));
+            }
+            else
+            {
+                CPLAssert(false);
+            }
+        }
         else
         {
             m_aosOptions.SetNameValue("PixelFunctionType",
@@ -408,8 +444,9 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand)
         {
             poSourcedRasterBand->AddSimpleSource(band);
         }
-        poSourcedRasterBand->papoSources[poSourcedRasterBand->nSources - 1]
-            ->SetName(CPLSPrintf("source%d", poSourcedRasterBand->nSources));
+        poSourcedRasterBand->m_papoSources.back()->SetName(CPLSPrintf(
+            "source%d",
+            static_cast<int>(poSourcedRasterBand->m_papoSources.size())));
     }
     if (hasAtLeastOneNDV)
     {
@@ -483,6 +520,21 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand)
             break;
         case GDALComputedRasterBand::Operation::OP_CAST:
         case GDALComputedRasterBand::Operation::OP_TERNARY:
+            break;
+        case GDALComputedRasterBand::Operation::OP_ABS:
+            ret = "mod";
+            break;
+        case GDALComputedRasterBand::Operation::OP_SQRT:
+            ret = "sqrt";
+            break;
+        case GDALComputedRasterBand::Operation::OP_LOG:
+            ret = "log";
+            break;
+        case GDALComputedRasterBand::Operation::OP_LOG10:
+            ret = "log10";
+            break;
+        case GDALComputedRasterBand::Operation::OP_POW:
+            ret = "pow";
             break;
     }
     return ret;
@@ -612,7 +664,8 @@ GDALComputedRasterBand::GDALComputedRasterBand(Operation op,
 GDALComputedRasterBand::GDALComputedRasterBand(Operation op, double constant,
                                                const GDALRasterBand &band)
 {
-    CPLAssert(op == Operation::OP_DIVIDE || IsComparisonOperator(op));
+    CPLAssert(op == Operation::OP_DIVIDE || IsComparisonOperator(op) ||
+              op == Operation::OP_POW);
 
     nRasterXSize = band.GetXSize();
     nRasterYSize = band.GetYSize();
@@ -655,6 +708,26 @@ GDALComputedRasterBand::GDALComputedRasterBand(Operation op,
     auto l_poDS = std::make_unique<GDALComputedDataset>(
         this, nRasterXSize, nRasterYSize, eDataType, nBlockXSize, nBlockYSize,
         op, &band, nullptr, nullptr, &constant);
+    m_poOwningDS.reset(l_poDS.release());
+}
+
+/************************************************************************/
+/*                       GDALComputedRasterBand()                       */
+/************************************************************************/
+
+GDALComputedRasterBand::GDALComputedRasterBand(Operation op,
+                                               const GDALRasterBand &band)
+{
+    CPLAssert(op == Operation::OP_ABS || op == Operation::OP_SQRT ||
+              op == Operation::OP_LOG || op == Operation::OP_LOG10);
+    nRasterXSize = band.GetXSize();
+    nRasterYSize = band.GetYSize();
+    eDataType =
+        band.GetRasterDataType() == GDT_Float32 ? GDT_Float32 : GDT_Float64;
+    band.GetBlockSize(&nBlockXSize, &nBlockYSize);
+    auto l_poDS = std::make_unique<GDALComputedDataset>(
+        this, nRasterXSize, nRasterYSize, eDataType, nBlockXSize, nBlockYSize,
+        op, &band, nullptr, nullptr, nullptr);
     m_poOwningDS.reset(l_poDS.release());
 }
 

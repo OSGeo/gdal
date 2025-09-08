@@ -151,21 +151,21 @@ PartialRefreshFromSourceTimestamp(GDALDataset *poDS, const char *pszResampling,
             return false;
         }
 
-        for (int i = 0; i < poVRTBand->nSources; ++i)
+        for (auto &poSource : poVRTBand->m_papoSources)
         {
-            auto poSource =
-                dynamic_cast<VRTSimpleSource *>(poVRTBand->papoSources[i]);
-            if (poSource)
+            auto poSimpleSource =
+                dynamic_cast<VRTSimpleSource *>(poSource.get());
+            if (poSimpleSource)
             {
                 VSIStatBufL sStatSource;
-                if (VSIStatL(poSource->GetSourceDatasetName().c_str(),
+                if (VSIStatL(poSimpleSource->GetSourceDatasetName().c_str(),
                              &sStatSource) == 0)
                 {
                     if (sStatSource.st_mtime > sStatOvr.st_mtime)
                     {
                         double dfXOff, dfYOff, dfXSize, dfYSize;
-                        poSource->GetDstWindow(dfXOff, dfYOff, dfXSize,
-                                               dfYSize);
+                        poSimpleSource->GetDstWindow(dfXOff, dfYOff, dfXSize,
+                                                     dfYSize);
                         constexpr double EPS = 1e-8;
                         int nXOff = static_cast<int>(dfXOff + EPS);
                         int nYOff = static_cast<int>(dfYOff + EPS);
@@ -198,7 +198,7 @@ PartialRefreshFromSourceTimestamp(GDALDataset *poDS, const char *pszResampling,
                                 static_cast<double>(nXSize) * nYSize;
                             GTISourceDesc region;
                             region.osFilename =
-                                poSource->GetSourceDatasetName();
+                                poSimpleSource->GetSourceDatasetName();
                             region.nDstXOff = nXOff;
                             region.nDstYOff = nYOff;
                             region.nDstXSize = nXSize;

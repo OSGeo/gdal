@@ -79,7 +79,7 @@ def test_gdalalg_raster_viewshed_overwrite_and_creation_option(
     alg["position"] = [621528, 4817617, 100]
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it.",
+        match="already exists",
     ):
         alg.Run()
 
@@ -247,7 +247,7 @@ def test_gdalalg_raster_mode_dem(viewshed_input):
     alg["mode"] = "DEM"
     assert alg.Run()
     ds = alg["output"].GetDataset()
-    assert ds.GetRasterBand(1).Checksum() == 45734
+    assert ds.GetRasterBand(1).Checksum() == 47060
 
 
 def test_gdalalg_raster_mode_ground(viewshed_input):

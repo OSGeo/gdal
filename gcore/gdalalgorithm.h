@@ -158,9 +158,30 @@ bool CPL_DLL GDALAlgorithmArgIsExplicitlySet(GDALAlgorithmArgH);
 
 bool CPL_DLL GDALAlgorithmArgHasDefaultValue(GDALAlgorithmArgH);
 
+bool CPL_DLL GDALAlgorithmArgGetDefaultAsBoolean(GDALAlgorithmArgH);
+
+const char CPL_DLL *GDALAlgorithmArgGetDefaultAsString(GDALAlgorithmArgH);
+
+int CPL_DLL GDALAlgorithmArgGetDefaultAsInteger(GDALAlgorithmArgH);
+
+double CPL_DLL GDALAlgorithmArgGetDefaultAsDouble(GDALAlgorithmArgH);
+
+char CPL_DLL **GDALAlgorithmArgGetDefaultAsStringList(GDALAlgorithmArgH);
+
+const int CPL_DLL *GDALAlgorithmArgGetDefaultAsIntegerList(GDALAlgorithmArgH,
+                                                           size_t *pnCount);
+
+const double CPL_DLL *GDALAlgorithmArgGetDefaultAsDoubleList(GDALAlgorithmArgH,
+                                                             size_t *pnCount);
+
+bool CPL_DLL GDALAlgorithmArgIsHidden(GDALAlgorithmArgH);
+
 bool CPL_DLL GDALAlgorithmArgIsHiddenForCLI(GDALAlgorithmArgH);
 
-bool CPL_DLL GDALAlgorithmArgIsOnlyForCLI(GDALAlgorithmArgH);
+bool CPL_DLL GDALAlgorithmArgIsHiddenForAPI(GDALAlgorithmArgH);
+
+bool CPL_DLL GDALAlgorithmArgIsOnlyForCLI(GDALAlgorithmArgH)
+    CPL_WARN_DEPRECATED("Use GDALAlgorithmArgIsHiddenForAPI() instead");
 
 bool CPL_DLL GDALAlgorithmArgIsInput(GDALAlgorithmArgH);
 
@@ -301,6 +322,12 @@ constexpr const char *GDAL_ARG_NAME_INPUT = "input";
 
 /** Name of the argument for an output dataset. */
 constexpr const char *GDAL_ARG_NAME_OUTPUT = "output";
+
+/** Name of the argument for an output string. */
+constexpr const char *GDAL_ARG_NAME_OUTPUT_STRING = "output-string";
+
+/** Name of the boolean argument to request outtputing directly on stdout. */
+constexpr const char *GDAL_ARG_NAME_STDOUT = "stdout";
 
 /** Name of the argument for an output format. */
 constexpr const char *GDAL_ARG_NAME_OUTPUT_FORMAT = "output-format";
@@ -621,6 +648,12 @@ class CPL_DLL GDALAlgorithmArgDecl final
                         m_defaultValue = std::vector<std::string>{value};
                         return *this;
                     }
+                    else if constexpr (std::is_same_v<T,
+                                                      std::vector<std::string>>)
+                    {
+                        m_defaultValue = value;
+                        return *this;
+                    }
                     break;
                 }
 
@@ -629,6 +662,11 @@ class CPL_DLL GDALAlgorithmArgDecl final
                     if constexpr (std::is_same_v<T, int>)
                     {
                         m_defaultValue = std::vector<int>{value};
+                        return *this;
+                    }
+                    else if constexpr (std::is_same_v<T, std::vector<int>>)
+                    {
+                        m_defaultValue = value;
                         return *this;
                     }
                     break;
@@ -640,6 +678,11 @@ class CPL_DLL GDALAlgorithmArgDecl final
                     {
                         m_defaultValue =
                             std::vector<double>{static_cast<double>(value)};
+                        return *this;
+                    }
+                    else if constexpr (std::is_same_v<T, std::vector<double>>)
+                    {
+                        m_defaultValue = value;
                         return *this;
                     }
                     break;
@@ -820,19 +863,22 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
-    /** Declare that the argument is only for CLI usage.
+    /** Declare that the argument is hidden in the context of an API use.
+     * Said otherwise, if it is only for CLI usage.
      * For example "--help" */
-    GDALAlgorithmArgDecl &SetOnlyForCLI(bool onlyForCLI = true)
+    GDALAlgorithmArgDecl &SetHiddenForAPI(bool hiddenForAPI = true)
     {
-        m_onlyForCLI = onlyForCLI;
+        m_hiddenForAPI = hiddenForAPI;
         return *this;
     }
 
-    /** Declare that the argument is hidden. Default is no
+    /** Declare that the argument is hidden. Default is no.
+     * This is equivalent to calling SetHiddenForCLI() and SetHiddenForAPI()
      */
     GDALAlgorithmArgDecl &SetHidden()
     {
-        m_hidden = true;
+        m_hiddenForCLI = true;
+        m_hiddenForAPI = true;
         return *this;
     }
 
@@ -1061,7 +1107,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
      */
     inline bool IsHidden() const
     {
-        return m_hidden;
+        return m_hiddenForCLI && m_hiddenForAPI;
     }
 
     /** Return whether the argument must not be mentioned in CLI usage.
@@ -1074,10 +1120,20 @@ class CPL_DLL GDALAlgorithmArgDecl final
     }
 
     /** Return whether the argument is only for CLI usage.
-     * For example "--help" */
+     * For example "--help"
+     * This is an alias for IsHiddenForAPI()
+     */
     inline bool IsOnlyForCLI() const
+        CPL_WARN_DEPRECATED("Use IsHiddenForAPI() instead")
     {
-        return m_onlyForCLI;
+        return m_hiddenForAPI;
+    }
+
+    /** Return whether the argument is hidden for API usage
+     * For example "--help" */
+    inline bool IsHiddenForAPI() const
+    {
+        return m_hiddenForAPI;
     }
 
     /** Indicate whether the value of the argument is read-only during the
@@ -1251,9 +1307,8 @@ class CPL_DLL GDALAlgorithmArgDecl final
     bool m_required = false;
     bool m_positional = false;
     bool m_hasDefaultValue = false;
-    bool m_hidden = false;
     bool m_hiddenForCLI = false;
-    bool m_onlyForCLI = false;
+    bool m_hiddenForAPI = false;
     bool m_isInput = true;
     bool m_isOutput = false;
     bool m_packedValuesAllowed = true;
@@ -1494,8 +1549,15 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
 
     /** Alias for GDALAlgorithmArgDecl::IsOnlyForCLI() */
     inline bool IsOnlyForCLI() const
+        CPL_WARN_DEPRECATED("Use IsHiddenForAPI() instead")
     {
-        return m_decl.IsOnlyForCLI();
+        return m_decl.IsHiddenForAPI();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::IsHiddenForAPI() */
+    inline bool IsHiddenForAPI() const
+    {
+        return m_decl.IsHiddenForAPI();
     }
 
     /** Alias for GDALAlgorithmArgDecl::IsInput() */
@@ -2121,10 +2183,10 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
         return *this;
     }
 
-    /** Alias for GDALAlgorithmArgDecl::SetOnlyForCLI() */
-    GDALInConstructionAlgorithmArg &SetOnlyForCLI(bool onlyForCLI = true)
+    /** Alias for GDALAlgorithmArgDecl::SetHiddenForAPI() */
+    GDALInConstructionAlgorithmArg &SetHiddenForAPI(bool hiddenForAPI = true)
     {
-        m_decl.SetOnlyForCLI(onlyForCLI);
+        m_decl.SetHiddenForAPI(hiddenForAPI);
         return *this;
     }
 
@@ -2415,7 +2477,7 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Return an argument from its long name, short name or an alias */
     GDALAlgorithmArg *GetArg(const std::string &osName,
-                             bool suggestionAllowed = true)
+                             bool suggestionAllowed = false)
     {
         return const_cast<GDALAlgorithmArg *>(
             const_cast<const GDALAlgorithm *>(this)->GetArg(osName,
@@ -2437,7 +2499,7 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Return an argument from its long name, short name or an alias */
     const GDALAlgorithmArg *GetArg(const std::string &osName,
-                                   bool suggestionAllowed = true) const;
+                                   bool suggestionAllowed = false) const;
 
     /** Return an argument from its long name, short name or an alias */
     const GDALAlgorithmArg &operator[](const std::string &osName) const
@@ -2618,6 +2680,7 @@ class CPL_DLL GDALAlgorithmRegistry
     {
         target->m_calledFromCommandLine = m_calledFromCommandLine;
         target->m_progressBarRequested = m_progressBarRequested;
+        target->m_quiet = m_quiet;
         if (m_specialActionRequested)
         {
             target->m_specialActionRequested = m_specialActionRequested;
@@ -2672,7 +2735,10 @@ class CPL_DLL GDALAlgorithmRegistry
     std::string m_longDescription{};
 
     /** Whether a progress bar is requested (value of \--progress argument) */
-    bool m_progressBarRequested = false;
+    bool m_progressBarRequested = true;
+
+    /** Whether a progress bar is disabled (value of \--quiet argument) */
+    bool m_quiet = false;
 
     friend class GDALVectorPipelineAlgorithm;
     /** Whether ValidateArguments() should be skipped during ParseCommandLineArguments() */
@@ -2825,6 +2891,10 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddOutputStringArg(std::string *pValue, const char *helpMessage = nullptr);
 
+    /** Add (hidden) stdout argument. */
+    GDALInConstructionAlgorithmArg &
+    AddStdoutArg(bool *pValue, const char *helpMessage = nullptr);
+
     /** Add output format argument. */
     GDALInConstructionAlgorithmArg &
     AddOutputFormatArg(std::string *pValue, bool bStreamAllowed = false,
@@ -2908,8 +2978,8 @@ class CPL_DLL GDALAlgorithmRegistry
     AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
                             const char *helpMessage = nullptr);
 
-    /** Add \--progress argument. */
-    GDALInConstructionAlgorithmArg &AddProgressArg();
+    /** Add \--quiet (and hidden \--progress) argument. */
+    void AddProgressArg();
 
     /** Register an action that is executed by the ValidateArguments()
      * method. If the provided function returns false, validation fails.

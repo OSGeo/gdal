@@ -743,3 +743,27 @@ def test_histogram_invalid_min_max(min, max):
         else:
             ret == [0, 0]
             assert gdal.GetLastErrorMsg() != ""
+
+
+###############################################################################
+
+
+def test_histogram_int8():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Int8)
+    ds.GetRasterBand(1).Fill(-128)
+    assert ds.GetRasterBand(1).GetDefaultHistogram() == (
+        -128.5,
+        127.5,
+        256,
+        [1] + [0] * 255,
+    )
+
+
+###############################################################################
+
+
+def test_histogram_min_equal_max():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Int16)
+    assert ds.GetRasterBand(1).GetDefaultHistogram() == (-0.5, 0.5, 1, [1])

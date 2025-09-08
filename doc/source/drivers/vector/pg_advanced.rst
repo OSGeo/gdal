@@ -125,7 +125,7 @@ a feature (i.e. usually the value of the OGC_FID column for the feature)
 inserted into a table with CreateFeature(), in non-copy mode, will be
 retrieved from the database and can be obtained with GetFID(). One
 side-effect of this new behavior is that you must be careful if you
-re-use the same feature object in a loop that makes insertions. After
+reuse the same feature object in a loop that makes insertions. After
 the first iteration, the FID will be set to a non-null value, so at the
 second iteration, CreateFeature() will try to insert the new feature
 with the FID of the previous feature, which will fail as you cannot

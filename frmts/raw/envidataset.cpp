@@ -20,9 +20,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #include <algorithm>
 #include <limits>
@@ -2100,11 +2097,42 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
 
     // Extract required values from the .hdr.
-    int nLines = atoi(poDS->m_aosHeader.FetchNameValueDef("lines", "0"));
+    const char *pszLines = poDS->m_aosHeader.FetchNameValueDef("lines", "0");
+    const auto nLines64 = std::strtoll(pszLines, nullptr, 10);
+    const int nLines = static_cast<int>(std::min<int64_t>(nLines64, INT_MAX));
+    if (nLines < nLines64)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Limiting number of lines from %s to %d due to GDAL raster "
+                 "data model limitation",
+                 pszLines, nLines);
+    }
 
-    int nSamples = atoi(poDS->m_aosHeader.FetchNameValueDef("samples", "0"));
+    const char *pszSamples =
+        poDS->m_aosHeader.FetchNameValueDef("samples", "0");
+    const auto nSamples64 = std::strtoll(pszSamples, nullptr, 10);
+    const int nSamples =
+        static_cast<int>(std::min<int64_t>(nSamples64, INT_MAX));
+    if (nSamples < nSamples64)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Cannot handle samples=%s due to GDAL raster data model limitation",
+            pszSamples);
+        return nullptr;
+    }
 
-    int nBands = atoi(poDS->m_aosHeader.FetchNameValueDef("bands", "0"));
+    const char *pszBands = poDS->m_aosHeader.FetchNameValueDef("bands", "0");
+    const auto nBands64 = std::strtoll(pszBands, nullptr, 10);
+    const int nBands = static_cast<int>(std::min<int64_t>(nBands64, INT_MAX));
+    if (nBands < nBands64)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Cannot handle bands=%s due to GDAL raster data model limitation",
+            pszBands);
+        return nullptr;
+    }
 
     // In case, there is no interleave keyword, we try to derive it from the
     // file extension.
@@ -2316,7 +2344,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         }
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nLines;
+        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nLines64;
     }
 
     const char *pszMajorFrameOffset = poDS->m_aosHeader["major_frame_offsets"];
@@ -2574,12 +2602,14 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
         for (int i = 0; i * 3 + 2 < nColorValueCount; i++)
         {
-            GDALColorEntry sEntry;
-
-            sEntry.c1 = static_cast<short>(atoi(papszClassColors[i * 3 + 0]));
-            sEntry.c2 = static_cast<short>(atoi(papszClassColors[i * 3 + 1]));
-            sEntry.c3 = static_cast<short>(atoi(papszClassColors[i * 3 + 2]));
-            sEntry.c4 = 255;
+            const GDALColorEntry sEntry = {
+                static_cast<short>(std::clamp(atoi(papszClassColors[i * 3 + 0]),
+                                              0, 255)),  // Red
+                static_cast<short>(std::clamp(atoi(papszClassColors[i * 3 + 1]),
+                                              0, 255)),  // Green
+                static_cast<short>(std::clamp(atoi(papszClassColors[i * 3 + 2]),
+                                              0, 255)),  // Blue
+                255};
             oCT.SetColorEntry(i, &sEntry);
         }
 

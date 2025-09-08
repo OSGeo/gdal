@@ -779,8 +779,10 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    const char *pszSkipOption =
-        CPLGetConfigOption("GML_SKIP_RESOLVE_ELEMS", "ALL");
+    const char *pszSkipOption = CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "SKIP_RESOLVE_ELEMS",
+        CPLGetConfigOption("GML_SKIP_RESOLVE_ELEMS", "ALL"));
+
     char **papszSkip = nullptr;
     if (EQUAL(pszSkipOption, "ALL"))
         bResolve = false;

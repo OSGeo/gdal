@@ -1084,7 +1084,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
         if (eType == OFTIntegerList || eType == OFTInteger64List ||
             eType == OFTRealList)
         {
-            // First take into account the REPEAT_{FIELD_NAME} creatin option
+            // First take into account the REPEAT_{FIELD_NAME} creation option
             if (pszRepeat)
             {
                 osRepeat = pszRepeat;

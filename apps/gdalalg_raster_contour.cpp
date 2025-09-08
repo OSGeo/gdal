@@ -141,7 +141,7 @@ bool GDALRasterContourAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             aosOptions.AddString("-of");
             aosOptions.AddString("GPKG");
 
-            outputFilename = CPLGenerateTempFilenameSafe("_contour.gpkg");
+            outputFilename = CPLGenerateTempFilenameSafe("_contour") + ".gpkg";
         }
         else
         {

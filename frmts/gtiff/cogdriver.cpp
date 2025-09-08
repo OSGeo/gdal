@@ -1366,15 +1366,14 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         aosOptions.SetNameValue("INTERLEAVE", pszInterleave);
     }
 
+    aosOptions.SetNameValue("@FLUSHCACHE", "YES");
+
     CPLDebug("COG", "Generating final product: start");
     auto poRet =
         poGTiffDrv->CreateCopy(pszFilename, poCurDS, false, aosOptions.List(),
                                GDALScaledProgress, pScaledProgress);
 
     GDALDestroyScaledProgress(pScaledProgress);
-
-    if (poRet)
-        poRet->FlushCache(false);
 
     CPLDebug("COG", "Generating final product: end");
     return poRet;
@@ -1663,6 +1662,8 @@ void GDALRegister_COG()
         "Float64 CInt16 CInt32 CFloat32 CFloat64");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME,
+                              "YES");
 
     poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");
 

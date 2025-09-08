@@ -32,20 +32,44 @@ GDALRasterClipAlgorithm::GDALRasterClipAlgorithm(bool standaloneStep)
     : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
+    constexpr const char *EXCLUSION_GROUP = "bbox-window-geometry-like";
     AddBBOXArg(&m_bbox, _("Clipping bounding box as xmin,ymin,xmax,ymax"))
-        .SetMutualExclusionGroup("bbox-geometry-like");
+        .SetMutualExclusionGroup(EXCLUSION_GROUP);
     AddArg("bbox-crs", 0, _("CRS of clipping bounding box"), &m_bboxCrs)
         .SetIsCRSArg()
         .AddHiddenAlias("bbox_srs");
+
+    AddArg("window", 0, _("Raster window as col,line,width,height in pixels"),
+           &m_window)
+        .SetRepeatedArgAllowed(false)
+        .SetMinCount(4)
+        .SetMaxCount(4)
+        .SetDisplayHintAboutRepetition(false)
+        .SetMutualExclusionGroup(EXCLUSION_GROUP)
+        .AddValidationAction(
+            [this]()
+            {
+                CPLAssert(m_window.size() == 4);
+                if (m_window[2] <= 0 || m_window[3] <= 0)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Value of 'window' should be "
+                             "col,line,width,height with "
+                             "width > 0 and height > 0");
+                    return false;
+                }
+                return true;
+            });
+
     AddArg("geometry", 0, _("Clipping geometry (WKT or GeoJSON)"), &m_geometry)
-        .SetMutualExclusionGroup("bbox-geometry-like");
+        .SetMutualExclusionGroup(EXCLUSION_GROUP);
     AddArg("geometry-crs", 0, _("CRS of clipping geometry"), &m_geometryCrs)
         .SetIsCRSArg()
         .AddHiddenAlias("geometry_srs");
     AddArg("like", 0, _("Dataset to use as a template for bounds"),
            &m_likeDataset, GDAL_OF_RASTER | GDAL_OF_VECTOR)
         .SetMetaVar("DATASET")
-        .SetMutualExclusionGroup("bbox-geometry-like");
+        .SetMutualExclusionGroup(EXCLUSION_GROUP);
     AddArg("like-sql", 0, ("SELECT statement to run on the 'like' dataset"),
            &m_likeSQL)
         .SetMetaVar("SELECT-STATEMENT")
@@ -79,6 +103,49 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
     CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
+
+    if (!m_window.empty())
+    {
+        if (m_addAlpha)
+        {
+            ReportError(CE_Failure, CPLE_NotSupported,
+                        "'alpha' argument is not supported with 'window'");
+            return false;
+        }
+
+        CPLStringList aosOptions;
+        aosOptions.AddString("-of");
+        aosOptions.AddString("VRT");
+
+        aosOptions.AddString("-srcwin");
+        aosOptions.AddString(CPLSPrintf("%d", m_window[0]));
+        aosOptions.AddString(CPLSPrintf("%d", m_window[1]));
+        aosOptions.AddString(CPLSPrintf("%d", m_window[2]));
+        aosOptions.AddString(CPLSPrintf("%d", m_window[3]));
+
+        if (!m_allowExtentOutsideSource)
+        {
+            // Unless we've specifically allowed the bounding box to extend beyond
+            // the source raster, raise an error.
+            aosOptions.AddString("-epo");
+        }
+
+        GDALTranslateOptions *psOptions =
+            GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+
+        GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
+        auto poRetDS = GDALDataset::FromHandle(
+            GDALTranslate("", hSrcDS, psOptions, nullptr));
+        GDALTranslateOptionsFree(psOptions);
+
+        const bool bOK = poRetDS != nullptr;
+        if (bOK)
+        {
+            m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
+        }
+
+        return bOK;
+    }
 
     GDALGeoTransform gt;
     if (poSrcDS->GetGeoTransform(gt) != CE_None)
@@ -185,11 +252,9 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
             poClipGeomInSrcSRS->getEnvelope(&env);
         }
 
-        if (!m_allowExtentOutsideSource &&
-            !(env.MinX >= gt[0] &&
-              env.MaxX <= gt[0] + gt[1] * poSrcDS->GetRasterXSize() &&
-              env.MaxY >= gt[3] &&
-              env.MinY <= gt[3] + gt[5] * poSrcDS->GetRasterYSize()))
+        OGREnvelope rasterEnv;
+        poSrcDS->GetExtent(&rasterEnv, nullptr);
+        if (!m_allowExtentOutsideSource && !rasterEnv.Contains(env))
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Clipping geometry is partially or totally outside the "

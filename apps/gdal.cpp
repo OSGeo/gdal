@@ -125,7 +125,7 @@ MAIN_START(argc, argv)
                             CPLFree(pszUnescaped);
                         }
                     }
-                    else if (strcmp(line.c_str(), "--END\n") == 0)
+                    else if (strcmp(line.c_str(), "END_CONFIG\n") == 0)
                     {
                         break;
                     }
@@ -149,6 +149,35 @@ MAIN_START(argc, argv)
             EQUAL(argv[argc - 1], "last_word_is_complete=true");
         if (STARTS_WITH(argv[argc - 1], "last_word_is_complete="))
             --argc;
+        else if (argc >= 2 && STARTS_WITH(argv[argc - 2], "prev=") &&
+                 STARTS_WITH(argv[argc - 1], "cur="))
+        {
+            const char *pszPrevVal = argv[argc - 2] + strlen("prev=");
+            const char *pszCurVal = argv[argc - 1] + strlen("cur=");
+            std::string osCurVal;
+            const bool bIsPrevValEqual = (strcmp(pszPrevVal, "=") == 0);
+            if (bIsPrevValEqual)
+            {
+                osCurVal = std::string("=").append(pszCurVal);
+                pszCurVal = osCurVal.c_str();
+            }
+            int iMatch = 0;
+            for (int i = 3; i < argc - 1; ++i)
+            {
+                if (bIsPrevValEqual ? (strstr(argv[i], pszCurVal) != nullptr)
+                                    : (strcmp(argv[i], pszCurVal) == 0))
+                {
+                    if (iMatch == 0)
+                        iMatch = i;
+                    else
+                        iMatch = -1;
+                }
+            }
+            if (iMatch > 0)
+                argc = iMatch + 1;
+            else
+                argc -= 2;
+        }
 
         // Process lines like "gdal completion gdal raster last_word_is_complete=true|false"
         EmitCompletion(std::move(alg),
@@ -207,7 +236,8 @@ MAIN_START(argc, argv)
     }
 
     {
-        const auto stdoutArg = alg->GetActualAlgorithm().GetArg("stdout");
+        const auto stdoutArg =
+            alg->GetActualAlgorithm().GetArg(GDAL_ARG_NAME_STDOUT);
         if (stdoutArg && stdoutArg->GetType() == GAAT_BOOLEAN)
             stdoutArg->Set(true);
     }
@@ -220,7 +250,7 @@ MAIN_START(argc, argv)
     if (alg->Run(pfnProgress, pProgressData) && alg->Finalize())
     {
         const auto outputArg =
-            alg->GetActualAlgorithm().GetArg("output-string");
+            alg->GetActualAlgorithm().GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
         if (outputArg && outputArg->GetType() == GAAT_STRING &&
             outputArg->IsOutput())
         {

@@ -1953,7 +1953,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
             }
             else
             {
-                // Whatever the datatype was previoulsy set
+                // Whatever the datatype was previously set
                 RCMCalibRasterBand *poBand = new RCMCalibRasterBand(
                     poDS.get(), pszPole, eDataType, poBandFile.release(),
                     eCalib, pszLUT, osNoiseLevelsValues.c_str(), eDataType);

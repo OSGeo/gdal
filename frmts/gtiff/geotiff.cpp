@@ -611,7 +611,7 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     // This trick
     // creates a temporary in-memory file and fetches its JPEG tables so that
     // we can directly set them, before tif_jpeg.c compute them at the first
-    // strip/tile writing, which is too late, since we have already crystalized
+    // strip/tile writing, which is too late, since we have already crystallized
     // the directory. This way we avoid a directory rewriting.
     uint16_t nBands = 0;
     if (!TIFFGetField(hTIFF, TIFFTAG_SAMPLESPERPIXEL, &nBands))
@@ -1499,6 +1499,8 @@ void GDALRegister_GTiff()
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME,
+                              "YES");
 
     poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,

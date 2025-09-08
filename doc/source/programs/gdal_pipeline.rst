@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    Execute a pipeline
+    Process a dataset applying several steps.
 
 .. Index:: gdal pipeline
 
@@ -24,7 +24,7 @@ Synopsis
 .. program-output:: gdal pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (exclamation mark) character.
-The first step must be ``read``, ``calc``, ``concat``, ``mosaic`` or ``stack``, and the last one ``write``. Each step has its
+The first step must be ``read``, ``calc``, ``concat``, ``mosaic`` or ``stack``, and the last one ``info`` or ``write``. Each step has its
 own positional or non-positional arguments. Apart from ``read``, ``calc``, ``concat``, ``mosaic``, ``stack`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
@@ -103,11 +103,11 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal pipeline --progress ! read in.tif ! footprint ! buffer 20 ! write out.gpkg --overwrite
+        $ gdal pipeline ! read in.tif ! footprint ! buffer 20 ! write out.gpkg --overwrite
 
 .. example::
    :title: Rasterize and reproject
 
    .. code-block:: bash
 
-        $ gdal pipeline --progress ! read in.gpkg ! rasterize --size 1000,1000 ! reproject --dst-crs EPSG:4326 ! write out.tif --overwrite
+        $ gdal pipeline ! read in.gpkg ! rasterize --size 1000,1000 ! reproject --dst-crs EPSG:4326 ! write out.tif --overwrite

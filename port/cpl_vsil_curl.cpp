@@ -1210,7 +1210,7 @@ retry:
     szCurlErrBuf[0] = '\0';
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf);
 
-    headers = VSICurlMergeHeaders(headers, GetCurlHeaders(osVerb, headers));
+    headers = GetCurlHeaders(osVerb, headers);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
@@ -1980,7 +1980,7 @@ retry:
     szCurlErrBuf[0] = '\0';
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf);
 
-    headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
+    headers = GetCurlHeaders("GET", headers);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
@@ -2605,7 +2605,7 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
                                    &asCurlErrors[iRequest].szCurlErrBuf[0]);
 
-        headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
+        headers = GetCurlHeaders("GET", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
         aHeaders.push_back(headers);
         curl_multi_add_handle(hMultiHandle, hCurlHandle);
@@ -2820,7 +2820,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
     char szCurlErrBuf[CURL_ERROR_SIZE + 1] = {};
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf);
 
-    headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
+    headers = GetCurlHeaders("GET", headers);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
@@ -3213,9 +3213,8 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
 
     {
         std::lock_guard<std::mutex> oLock(m_oMutex);
-        auto newHeaders =
+        headers =
             const_cast<VSICurlHandle *>(this)->GetCurlHeaders("GET", headers);
-        headers = VSICurlMergeHeaders(headers, newHeaders);
     }
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
@@ -3533,8 +3532,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
                 unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
                                            &asCurlErrors[i].szCurlErrBuf[0]);
 
-                headers = VSICurlMergeHeaders(headers,
-                                              GetCurlHeaders("GET", headers));
+                headers = GetCurlHeaders("GET", headers);
                 unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
                                            headers);
                 aHeaders.push_back(headers);
@@ -6228,24 +6226,6 @@ struct curl_slist *VSICurlSetOptions(CURL *hCurlHandle, const char *pszURL,
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FTP_USE_EPSV, 0);
 
     return headers;
-}
-
-/************************************************************************/
-/*                     VSICurlMergeHeaders()                            */
-/************************************************************************/
-
-struct curl_slist *VSICurlMergeHeaders(struct curl_slist *poDest,
-                                       struct curl_slist *poSrcToDestroy)
-{
-    struct curl_slist *iter = poSrcToDestroy;
-    while (iter != nullptr)
-    {
-        poDest = curl_slist_append(poDest, iter->data);
-        iter = iter->next;
-    }
-    if (poSrcToDestroy)
-        curl_slist_free_all(poSrcToDestroy);
-    return poDest;
 }
 
 /************************************************************************/

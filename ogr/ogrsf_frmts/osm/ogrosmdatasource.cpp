@@ -478,7 +478,7 @@ Bucket *OGROSMDataSource::AllocBucket(int iBucket)
         Bucket *psPrevBucket = GetBucket(iBucket - nRem);
         if (psPrevBucket->u.pabyBitmap == nullptr)
             psPrevBucket->u.pabyBitmap =
-                reinterpret_cast<GByte *>(VSI_CALLOC_VERBOSE(1, knPAGE_SIZE));
+                static_cast<GByte *>(VSI_CALLOC_VERBOSE(1, knPAGE_SIZE));
         GByte *pabyBitmap = psPrevBucket->u.pabyBitmap;
         Bucket *psBucket = GetBucket(iBucket);
         if (pabyBitmap != nullptr)

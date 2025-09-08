@@ -67,7 +67,10 @@ add_library(
   gdalalg_raster_write.cpp
   gdalalg_vector.cpp
   gdalalg_vector_info.cpp
+  gdalalg_vector_check_coverage.cpp
+  gdalalg_vector_check_geometry.cpp
   gdalalg_vector_clip.cpp
+  gdalalg_vector_clean_coverage.cpp
   gdalalg_vector_concat.cpp
   gdalalg_vector_convert.cpp
   gdalalg_vector_edit.cpp
@@ -134,6 +137,10 @@ if (HAVE_ATOMIC_UINT64_T_WITH_ATOMIC)
 endif()
 gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
 
+if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
+  target_compile_definitions(appslib PRIVATE -DUSE_NEON_OPTIMIZATIONS)
+endif()
+
 if (NOT BUILD_SHARED_LIBS)
   target_compile_definitions(appslib PRIVATE STATIC_BUILD)
 endif()
@@ -159,6 +166,16 @@ if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(appslib libjson)
 else ()
   gdal_target_link_libraries(appslib PRIVATE ${JSONC_TARGET})
+endif ()
+
+if (GDAL_USE_ZLIB_INTERNAL)
+  gdal_add_vendored_lib(appslib libz)
+else()
+  target_compile_definitions(appslib PRIVATE -DHAVE_ZLIB_H -DHAVE_ZLIB)
+  if (MSVC AND NOT ZLIB_IS_STATIC)
+    target_compile_definitions(appslib PRIVATE -DZLIB_DLL)
+  endif ()
+  gdal_target_link_libraries(appslib PRIVATE ZLIB::ZLIB)
 endif ()
 
 include(TargetPublicHeader)

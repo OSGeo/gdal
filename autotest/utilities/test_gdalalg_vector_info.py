@@ -51,15 +51,26 @@ def get_info_alg():
     return gdal.GetGlobalAlgorithmRegistry()["vector"]["info"]
 
 
-def test_gdalalg_vector_info_stdout():
+def test_gdalalg_vector_info_stdout_text_default_format():
     import gdaltest
     import test_cli_utilities
 
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary missing")
-    out, err = gdaltest.runexternal_out_and_err(
-        f"{gdal_path} vector info data/path.shp"
+    out, _ = gdaltest.runexternal_out_and_err(f"{gdal_path} vector info data/path.shp")
+    assert out.startswith("INFO: Open of")
+
+
+def test_gdalalg_vector_info_stdout_json():
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    out, _ = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} vector info --format json data/path.shp"
     )
     j = json.loads(out)
     assert j["layers"][0]["name"] == "path"
@@ -71,6 +82,10 @@ def test_gdalalg_vector_info_text():
     assert info.ParseRunAndFinalize(["--format=text", "data/path.shp"])
     output_string = info["output-string"]
     assert output_string.startswith("INFO: Open of")
+    assert "Layer name: path" in output_string
+    assert "Geometry: Line String" in output_string
+    assert "Feature Count: 1" in output_string
+    assert "OGRFeature" not in output_string
 
 
 def test_gdalalg_vector_info_json():
@@ -82,12 +97,31 @@ def test_gdalalg_vector_info_json():
     assert "features" not in j["layers"][0]
 
 
-def test_gdalalg_vector_info_features():
+def test_gdalalg_vector_info_features_text():
+    info = get_info_alg()
+    assert info.ParseRunAndFinalize(["--format=text", "--features", "data/path.shp"])
+    output_string = info["output-string"]
+    assert output_string.startswith("INFO: Open of")
+    assert "Layer name: path" in output_string
+    assert "Geometry: Line String" in output_string
+    assert "Feature Count: 1" in output_string
+    assert "OGRFeature" in output_string
+
+
+def test_gdalalg_vector_info_features_json():
     info = get_info_alg()
     assert info.ParseRunAndFinalize(["--features", "data/path.shp"])
     output_string = info["output-string"]
     j = json.loads(output_string)
     assert "features" in j["layers"][0]
+
+
+def test_gdalalg_vector_info_features_limit_json():
+    info = get_info_alg()
+    assert info.ParseRunAndFinalize(["--limit=2", "../ogr/data/poly.shp"])
+    output_string = info["output-string"]
+    j = json.loads(output_string)
+    assert len(j["layers"][0]["features"]) == 2
 
 
 def test_gdalalg_vector_info_sql():

@@ -69,12 +69,8 @@
 #include <cstring>
 #include <ctime>
 
-#if HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
-#if HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
+
 #include "cpl_zlib_header.h"  // to avoid warnings when including zlib.h
 
 #ifdef HAVE_LIBDEFLATE

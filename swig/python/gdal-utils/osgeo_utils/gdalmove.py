@@ -267,7 +267,7 @@ def main(argv=sys.argv):
             filename = argv[i]
 
         else:
-            print("Urecognised argument: " + argv[i])
+            print("Unrecognised argument: " + argv[i])
             return Usage()
 
         i = i + 1

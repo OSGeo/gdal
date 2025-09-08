@@ -326,11 +326,11 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
         simpack(pfld,ndpts,idrstmpl,cpack,&lcpack);
       else if (idrsnum==2 || idrsnum==3)           //  Complex Packing
         cmplxpack(pfld,ndpts,idrsnum,idrstmpl,cpack,&lcpack);
-      else if (idrsnum == 50) {         //  Sperical Harmonic Simple Packing
+      else if (idrsnum == 50) {         //  Spherical Harmonic Simple Packing
         simpack(pfld+1,ndpts-1,idrstmpl,cpack,&lcpack);
         mkieee(pfld+0,idrstmpl+4,1);  // ensure RE(0,0) value is IEEE format
       }
-      else if (idrsnum == 51) {         //  Sperical Harmonic Complex Packing
+      else if (idrsnum == 51) {         //  Spherical Harmonic Complex Packing
         getpoly(cgrib+lpos3,&JJ,&KK,&MM);
         if ( JJ!=0 && KK!=0 && MM!=0 )
            specpack(pfld,ndpts,JJ,KK,MM,idrstmpl,cpack,&lcpack);

@@ -61,7 +61,8 @@ const char GDAL_MARKER_FOR_DIR[] = ".gdal_marker_for_dir";
 
 struct VSIDIRAz : public VSIDIRS3Like
 {
-    explicit VSIDIRAz(IVSIS3LikeFSHandler *poFSIn) : VSIDIRS3Like(poFSIn)
+    VSIDIRAz(const std::string &osDirName, IVSIS3LikeFSHandler *poFSIn)
+        : VSIDIRS3Like(osDirName, poFSIn)
     {
     }
 
@@ -403,8 +404,7 @@ bool VSIDIRAz::IssueListDir()
     struct curl_slist *headers = VSICurlSetOptions(
         hCurlHandle, poHandleHelper->GetURL().c_str(), aosHTTPOptions.List());
 
-    headers = VSICurlMergeHeaders(
-        headers, poHandleHelper->GetCurlHeaders("GET", headers));
+    headers = poHandleHelper->GetCurlHeaders("GET", headers);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     CurlRequestHelper requestHelper;
@@ -653,7 +653,7 @@ class VSIAzureHandle final : public VSICurlHandle
   protected:
     virtual struct curl_slist *
     GetCurlHeaders(const std::string &osVerb,
-                   const struct curl_slist *psExistingHeaders) override;
+                   struct curl_slist *psExistingHeaders) override;
     bool CanRestartOnError(const char *, const char *, bool) override;
 
     virtual bool IsDirectoryFromExists(const char *pszVerb,
@@ -756,10 +756,11 @@ int VSIAzureFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
 
     if ((osFilename.find('/', GetFSPrefix().size()) == std::string::npos ||
          osFilename.find('/', GetFSPrefix().size()) == osFilename.size() - 1) &&
-        CPLGetConfigOption("AZURE_SAS", nullptr) != nullptr)
+        (!VSIAzureBlobHandleHelper::GetSAS(pszFilename).empty() ||
+         VSIAzureBlobHandleHelper::IsNoSignRequest(pszFilename)))
     {
         // On "/vsiaz/container", a HEAD or GET request fails to authenticate
-        // when SAS is used, so use directory listing instead.
+        // when SAS or no signing is used, so use directory listing instead.
         char **papszRet = ReadDirInternal(osFilename.c_str(), 100, nullptr);
         int nRet = papszRet ? 0 : -1;
         if (nRet == 0)
@@ -874,8 +875,7 @@ char **VSIAzureFSHandler::GetFileMetadata(const char *pszFilename,
             VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List());
 
-        headers = VSICurlMergeHeaders(
-            headers, poHandleHelper->GetCurlHeaders("GET", headers));
+        headers = poHandleHelper->GetCurlHeaders("GET", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
@@ -1082,14 +1082,12 @@ bool VSIAzureFSHandler::SetFileMetadata(const char *pszFilename,
         {
             headers = curl_slist_append(
                 headers, "Content-Type: application/xml; charset=UTF-8");
-            headers = VSICurlMergeHeaders(
-                headers, poHandleHelper->GetCurlHeaders(
-                             "PUT", headers, osXML.c_str(), osXML.size()));
+            headers = poHandleHelper->GetCurlHeaders(
+                "PUT", headers, osXML.c_str(), osXML.size());
         }
         else
         {
-            headers = VSICurlMergeHeaders(
-                headers, poHandleHelper->GetCurlHeaders("PUT", headers));
+            headers = poHandleHelper->GetCurlHeaders("PUT", headers);
         }
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
@@ -1300,8 +1298,7 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
             headers = curl_slist_append(headers, pszAppendPos);
         }
 
-        headers = VSICurlMergeHeaders(
-            headers, m_poHandleHelper->GetCurlHeaders("PUT", headers));
+        headers = m_poHandleHelper->GetCurlHeaders("PUT", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
@@ -1515,8 +1512,7 @@ int *VSIAzureFSHandler::UnlinkBatch(CSLConstList papszFiles)
             headers = curl_slist_append(
                 headers, CPLSPrintf("Content-Length: %d",
                                     static_cast<int>(osPOSTContent.size())));
-            headers = VSICurlMergeHeaders(
-                headers, poHandleHelper->GetCurlHeaders("POST", headers));
+            headers = poHandleHelper->GetCurlHeaders("POST", headers);
 
             CurlRequestHelper requestHelper;
             const long response_code = requestHelper.perform(
@@ -1755,8 +1751,7 @@ int VSIAzureFSHandler::CreateContainer(const std::string &osDirname)
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
         headers = curl_slist_append(headers, "Content-Length: 0");
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("PUT", headers));
+        headers = poS3HandleHelper->GetCurlHeaders("PUT", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
@@ -1916,8 +1911,7 @@ int VSIAzureFSHandler::DeleteContainer(const std::string &osDirname)
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
         headers = curl_slist_append(headers, "Content-Length: 0");
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("DELETE", headers));
+        headers = poS3HandleHelper->GetCurlHeaders("DELETE", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
@@ -2084,8 +2078,7 @@ int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
         headers = curl_slist_append(headers, osSourceHeader.c_str());
         headers = VSICurlSetContentTypeFromExt(headers, newpath);
         headers = curl_slist_append(headers, "Content-Length: 0");
-        headers = VSICurlMergeHeaders(
-            headers, poHandleHelper->GetCurlHeaders("PUT", headers));
+        headers = poHandleHelper->GetCurlHeaders("PUT", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
@@ -2192,9 +2185,8 @@ std::string VSIAzureFSHandler::PutBlock(
         headers = VSICurlSetCreationHeadersFromOptions(headers, papszOptions,
                                                        osFilename.c_str());
         headers = curl_slist_append(headers, osContentLength.c_str());
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("PUT", headers,
-                                                      pabyBuffer, nBufferSize));
+        headers = poS3HandleHelper->GetCurlHeaders("PUT", headers, pabyBuffer,
+                                                   nBufferSize);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -2309,9 +2301,8 @@ bool VSIAzureFSHandler::PutBlockList(
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
         headers = curl_slist_append(headers, osContentLength.c_str());
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders(
-                         "PUT", headers, osXML.c_str(), osXML.size()));
+        headers = poS3HandleHelper->GetCurlHeaders("PUT", headers,
+                                                   osXML.c_str(), osXML.size());
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -2490,7 +2481,7 @@ VSIDIR *VSIAzureFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
         return nullptr;
     }
 
-    VSIDIRAz *dir = new VSIDIRAz(this);
+    VSIDIRAz *dir = new VSIDIRAz(pszPath, this);
     dir->nRecurseDepth = nRecurseDepth;
     dir->poHandleHelper = std::move(poHandleHelper);
     dir->osBucket = std::move(osBucket);
@@ -2527,11 +2518,10 @@ VSIAzureHandle::VSIAzureHandle(VSIAzureFSHandler *poFSIn,
 /*                          GetCurlHeaders()                            */
 /************************************************************************/
 
-struct curl_slist *
-VSIAzureHandle::GetCurlHeaders(const std::string &osVerb,
-                               const struct curl_slist *psExistingHeaders)
+struct curl_slist *VSIAzureHandle::GetCurlHeaders(const std::string &osVerb,
+                                                  struct curl_slist *psHeaders)
 {
-    return m_poHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+    return m_poHandleHelper->GetCurlHeaders(osVerb, psHeaders);
 }
 
 /************************************************************************/

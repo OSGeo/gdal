@@ -1121,3 +1121,32 @@ def test_flip_code():
 
     assert gdal_array.flip_code(numpy.float32) == gdal.GDT_Float32
     assert gdal_array.flip_code(gdal.GDT_Int16) == numpy.int16
+
+
+###############################################################################
+# Test writing 0-stride array
+
+
+def test_numpy_rw_write_zero_stride():
+
+    n = 10
+    # 'ar' is just a (column) vector from 0 .. n-1
+    ar = numpy.arange(0, n, dtype=numpy.uint8).reshape(-1, 1)
+    # here, we "broadcast" it to make it square, replicating the values in every row
+    ar = numpy.broadcast_to(ar, [n, n])
+    assert ar.strides == (1, 0)
+
+    ds = gdal.GetDriverByName("MEM").Create("", n, n)
+    ds.GetRasterBand(1).WriteArray(ar)
+    assert numpy.all(ds.GetRasterBand(1).ReadAsArray() == ar)
+
+    ds = gdal.GetDriverByName("MEM").Create("", n, n)
+    ds.WriteArray(ar)
+    assert numpy.all(ds.ReadAsArray() == ar)
+
+    ar = numpy.arange(0, n, dtype=numpy.uint8).reshape(-1, 1)
+    ar = numpy.broadcast_to(ar, [2, n, n])
+    assert ar.strides == (0, 1, 0)
+    ds = gdal.GetDriverByName("MEM").Create("", n, n, 2)
+    ds.WriteArray(ar)
+    assert numpy.all(ds.ReadAsArray() == ar)

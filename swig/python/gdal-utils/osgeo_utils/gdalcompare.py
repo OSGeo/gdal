@@ -500,7 +500,7 @@ def main(argv=sys.argv):
     # Script argument parsing.
     golden_file = None
     new_file = None
-    check_sds = 0
+    check_sds = False
     options = []
 
     i = 1
@@ -510,7 +510,7 @@ def main(argv=sys.argv):
             return Usage(isError=False)
 
         elif argv[i] == "-sds":
-            check_sds = 1
+            check_sds = True
 
         elif argv[i] == "-dumpdiffs":
             options.append("DUMP_DIFFS")

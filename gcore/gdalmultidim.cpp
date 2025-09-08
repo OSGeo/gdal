@@ -2992,7 +2992,7 @@ bool GDALMDArray::SetOffset(CPL_UNUSED double dfOffset,
  *
  * This is the same as the C function GDALMDArrayGetScale().
  *
- * @note Driver implementation: this method shall be implemented if gettings
+ * @note Driver implementation: this method shall be implemented if getting
  * scale is supported.
  *
  * @param pbHasScale Pointer to a output boolean that will be set to true if
@@ -3022,7 +3022,7 @@ double GDALMDArray::GetScale(CPL_UNUSED bool *pbHasScale,
  *
  * This is the same as the C function GDALMDArrayGetOffset().
  *
- * @note Driver implementation: this method shall be implemented if gettings
+ * @note Driver implementation: this method shall be implemented if getting
  * offset is supported.
  *
  * @param pbHasOffset Pointer to a output boolean that will be set to true if
@@ -5883,7 +5883,7 @@ GDALMDArray::GetView(const std::vector<GUInt64> &indices) const
  *
  * Equivalent of GetView("['fieldName']")
  *
- * \note When operationg on a shared_ptr, use (*array)["fieldName"] syntax.
+ * \note When operating on a shared_ptr, use (*array)["fieldName"] syntax.
  */
 std::shared_ptr<GDALMDArray>
 GDALMDArray::operator[](const std::string &fieldName) const
@@ -9276,8 +9276,8 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
                  "can be exposed as classic GDALDataset");
         return nullptr;
     }
-    if (iXDim >= nDimCount ||
-        (nDimCount >= 2 && (iYDim >= nDimCount || iXDim == iYDim)))
+    if (iXDim >= nDimCount || iYDim >= nDimCount ||
+        (nDimCount >= 2 && iXDim == iYDim))
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Invalid iXDim and/or iYDim");
         return nullptr;
@@ -10016,11 +10016,11 @@ lbl_next_depth:
  *                           Such array must be a one
  *                           dimensional array, and its dimension must be one of
  *                           the dimensions of the array on which the method is
- *                           called (excluding the X and Y dimensons).
+ *                           called (excluding the X and Y dimensions).
  *                         - "attribute": name relative to *this array or full
  *                           name of a single dimension numeric array whose size
  *                           must be one of the dimensions of *this array
- *                           (excluding the X and Y dimensons).
+ *                           (excluding the X and Y dimensions).
  *                           "array" and "attribute" are mutually exclusive.
  *                         - "item_name": band metadata item name
  *                         - "item_value": (optional) String, where "%[x][.y]f",
@@ -10080,11 +10080,11 @@ lbl_next_depth:
  *                           Such array must be a one dimensional array, and its
  *                           dimension must be one of the dimensions of the
  *                           array on which the method is called
- *                           (excluding the X and Y dimensons).
+ *                           (excluding the X and Y dimensions).
  *                         - "attribute": name relative to *this array or full
  *                           name of a single dimension numeric array whose size
  *                           must be one of the dimensions of *this array
- *                           (excluding the X and Y dimensons).
+ *                           (excluding the X and Y dimensions).
  *                           "array" and "attribute" are mutually exclusive,
  *                           and one of them is required.
  *                         - "unit": (optional) unit of the values pointed in
@@ -10550,6 +10550,13 @@ GDALExtendedDataType::GDALExtendedDataType(
 /*                        GDALExtendedDataType()                        */
 /************************************************************************/
 
+/** Move constructor. */
+GDALExtendedDataType::GDALExtendedDataType(GDALExtendedDataType &&) = default;
+
+/************************************************************************/
+/*                        GDALExtendedDataType()                        */
+/************************************************************************/
+
 /** Copy constructor. */
 GDALExtendedDataType::GDALExtendedDataType(const GDALExtendedDataType &other)
     : m_osName(other.m_osName), m_eClass(other.m_eClass),
@@ -10601,22 +10608,7 @@ GDALExtendedDataType::operator=(const GDALExtendedDataType &other)
 
 /** Move assignment. */
 GDALExtendedDataType &
-GDALExtendedDataType::operator=(GDALExtendedDataType &&other)
-{
-    m_osName = std::move(other.m_osName);
-    m_eClass = other.m_eClass;
-    m_eSubType = other.m_eSubType;
-    m_eNumericDT = other.m_eNumericDT;
-    m_nSize = other.m_nSize;
-    m_nMaxStringLength = other.m_nMaxStringLength;
-    m_aoComponents = std::move(other.m_aoComponents);
-    m_poRAT = std::move(other.m_poRAT);
-    other.m_eClass = GEDTC_NUMERIC;
-    other.m_eNumericDT = GDT_Unknown;
-    other.m_nSize = 0;
-    other.m_nMaxStringLength = 0;
-    return *this;
-}
+GDALExtendedDataType::operator=(GDALExtendedDataType &&other) = default;
 
 /************************************************************************/
 /*                           Create()                                   */
@@ -11155,14 +11147,14 @@ GDALExtendedDataTypeCreateCompound(const char *pszName, size_t nTotalSize,
     std::vector<std::unique_ptr<GDALEDTComponent>> compsCpp;
     for (size_t i = 0; i < nComponents; i++)
     {
-        compsCpp.emplace_back(std::unique_ptr<GDALEDTComponent>(
-            new GDALEDTComponent(*(comps[i]->m_poImpl.get()))));
+        compsCpp.emplace_back(
+            std::make_unique<GDALEDTComponent>(*(comps[i]->m_poImpl.get())));
     }
     auto dt = GDALExtendedDataType::Create(pszName ? pszName : "", nTotalSize,
                                            std::move(compsCpp));
     if (dt.GetClass() != GEDTC_COMPOUND)
         return nullptr;
-    return new GDALExtendedDataTypeHS(new GDALExtendedDataType(dt));
+    return new GDALExtendedDataTypeHS(new GDALExtendedDataType(std::move(dt)));
 }
 
 /************************************************************************/

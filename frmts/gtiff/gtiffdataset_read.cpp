@@ -5567,10 +5567,11 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                 }
             }
 
-            bool bIsXML = false;
+            bool bIsXMLOrJSON = false;
 
-            if (STARTS_WITH_CI(pszDomain, "xml:"))
-                bIsXML = TRUE;
+            if (STARTS_WITH_CI(pszDomain, "xml:") ||
+                STARTS_WITH_CI(pszDomain, "json:"))
+                bIsXMLOrJSON = true;
 
             // Note: this un-escaping should not normally be done, as the
             // deserialization of the tree from XML also does it, so we end up
@@ -5580,7 +5581,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                 CPLUnescapeString(pszValue, nullptr, CPLES_XML);
             if (nBand == 0)
             {
-                if (bIsXML)
+                if (bIsXMLOrJSON)
                 {
                     char *apszMD[2] = {pszUnescapedValue, nullptr};
                     m_oGTiffMDMD.SetMetadata(apszMD, pszDomain);
@@ -5633,7 +5634,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     }
                     else
                     {
-                        if (bIsXML)
+                        if (bIsXMLOrJSON)
                         {
                             char *apszMD[2] = {pszUnescapedValue, nullptr};
                             poBand->m_oGTiffMDMD.SetMetadata(apszMD, pszDomain);

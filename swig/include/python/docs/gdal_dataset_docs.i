@@ -285,6 +285,77 @@ Fetch the driver used to open or create this :py:class:`Dataset`.
 
 ";
 
+%feature("docstring") GetExtent "
+Get the extent of the dataset.
+
+See :cpp:func:`GDALDataset::GetExtent`
+
+.. versionadded:: 3.12
+
+.. warning:: Check the return order of the bounds.
+
+Parameters
+----------
+srs : osr.SpatialReference, default=None
+   Optional spatial reference in which the bounds should be 
+   returned
+
+Returns
+-------
+tuple or None
+    tuple of (minx, maxx, miny, maxy) or None if the extent cannot be
+    determined in the specified spatial reference system
+
+Examples
+--------
+>>> # Get extent in native SRS (NAD27 / UTM 11N)
+>>> with gdal.Open('byte.tif') as ds:
+...     ds.GetExtent()
+(440720.0, 441920.0, 3750120.0, 3751320.0)
+
+>>> # Get extent in US National Atlas Equal Area
+>>> with gdal.Open('byte.tif') as ds:
+...     ds.GetExtent(osr.SpatialReference(epsg=9311))
+... 
+(-1621602.9829031324, -1620214.937944802, -1064263.0904900103, -1062837.1327964044)
+
+See Also
+--------
+:py:meth:`GetExtentWGS84LongLat`
+
+";
+
+%feature("docstring") GetExtentWGS84LongLat "
+
+Return the extent of the dataset in WGS84, with the x-axis representing
+longitude and the y-axis representing latitude.
+
+See :cpp:func:`GDALDataset::GetExtentWGS84LongLat`
+
+.. versionadded:: 3.12
+
+.. warning:: Check the return order of the bounds.
+
+Returns
+--------
+tuple or None
+    tuple of (minlon, maxlon, minlat, maxlat) or None if the extent cannot be
+    determined in WGS84
+
+Examples
+--------
+>>> with gdal.Open('byte.tif') as ds:
+...     ds.GetExtentWGS84LongLat()
+... 
+(-117.64204279334717, -117.6289845627537, 33.891546129503816, 33.90243533203516)
+
+See Also
+--------
+:py:meth:`GetExtent`
+
+
+";
+
 %feature("docstring")  GetFieldDomain "
 
 Get a field domain from its name.

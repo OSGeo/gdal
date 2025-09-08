@@ -305,11 +305,10 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     void AddRegion(vsi_l_offset nFileOffsetStart, size_t nSize, GByte *pData);
 
   protected:
-    virtual struct curl_slist *
-    GetCurlHeaders(const CPLString &,
-                   const struct curl_slist * /* psExistingHeaders */)
+    virtual struct curl_slist *GetCurlHeaders(const CPLString &,
+                                              struct curl_slist *psHeaders)
     {
-        return nullptr;
+        return psHeaders;
     }
 
     virtual bool StopReceivingBytesOnError()
@@ -598,7 +597,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
         osVerb = "HEAD";
     }
 
-    headers = VSICurlMergeHeaders(headers, GetCurlHeaders(osVerb, headers));
+    headers = GetCurlHeaders(osVerb, headers);
     unchecked_curl_easy_setopt(hLocalHandle, CURLOPT_HTTPHEADER, headers);
 
     // We need that otherwise OSGEO4W's libcurl issue a dummy range request
@@ -1010,7 +1009,7 @@ void VSICurlStreamingHandle::DownloadInThread()
 
     struct curl_slist *headers =
         VSICurlSetOptions(hCurlHandle, m_pszURL, m_aosHTTPOptions.List());
-    headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
+    headers = GetCurlHeaders("GET", headers);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     static bool bHasCheckVersion = false;
@@ -1805,9 +1804,8 @@ class VSIS3LikeStreamingHandle final : public VSICurlStreamingHandle
     IVSIS3LikeHandleHelper *m_poS3HandleHelper = nullptr;
 
   protected:
-    struct curl_slist *
-    GetCurlHeaders(const CPLString &osVerb,
-                   const struct curl_slist *psExistingHeaders) override;
+    struct curl_slist *GetCurlHeaders(const CPLString &osVerb,
+                                      struct curl_slist *psHeaders) override;
 
     bool StopReceivingBytesOnError() override
     {
@@ -1873,10 +1871,11 @@ VSIS3LikeStreamingHandle::~VSIS3LikeStreamingHandle()
 /*                           GetCurlHeaders()                           */
 /************************************************************************/
 
-struct curl_slist *VSIS3LikeStreamingHandle::GetCurlHeaders(
-    const CPLString &osVerb, const struct curl_slist *psExistingHeaders)
+struct curl_slist *
+VSIS3LikeStreamingHandle::GetCurlHeaders(const CPLString &osVerb,
+                                         struct curl_slist *psHeaders)
 {
-    return m_poS3HandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+    return m_poS3HandleHelper->GetCurlHeaders(osVerb, psHeaders);
 }
 
 /************************************************************************/

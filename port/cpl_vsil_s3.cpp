@@ -69,14 +69,21 @@ namespace cpl
 
 struct VSIDIRS3 : public VSIDIRS3Like
 {
-    explicit VSIDIRS3(IVSIS3LikeFSHandler *poFSIn) : VSIDIRS3Like(poFSIn)
+    bool m_bRegularListingDone = false;
+    bool m_bDirectoryBucketListingDone = false;
+    bool m_bListBucket = false;
+
+    VSIDIRS3(const std::string &osDirName, IVSIS3LikeFSHandler *poFSIn)
+        : VSIDIRS3Like(osDirName, poFSIn)
     {
     }
 
-    explicit VSIDIRS3(VSICurlFilesystemHandlerBase *poFSIn)
-        : VSIDIRS3Like(poFSIn)
+    VSIDIRS3(const std::string &osDirName, VSICurlFilesystemHandlerBase *poFSIn)
+        : VSIDIRS3Like(osDirName, poFSIn)
     {
     }
+
+    const VSIDIREntry *NextDirEntry() override;
 
     bool IssueListDir() override;
     bool
@@ -181,6 +188,9 @@ bool VSIDIRS3::AnalyseS3FileList(
         (psListBucketResult != nullptr)
             ? nullptr
             : CPLGetXMLNode(psTree, "=ListAllMyBucketsResult.Buckets");
+    if (!psListBucketResult && !psListAllMyBucketsResultBuckets)
+        psListAllMyBucketsResultBuckets =
+            CPLGetXMLNode(psTree, "=ListAllMyDirectoryBucketsResult.Buckets");
 
     bool ret = true;
 
@@ -415,6 +425,13 @@ bool VSIDIRS3::AnalyseS3FileList(
         {
             osNextMarker = CPLGetXMLValue(psListBucketResult, "NextMarker", "");
         }
+
+        // ListObjectsV2 uses NextContinuationToken instead of NextMarker
+        if (const char *pszNextContinuationToken = CPLGetXMLValue(
+                psListBucketResult, "NextContinuationToken", nullptr))
+        {
+            osNextMarker = pszNextContinuationToken;
+        }
     }
     else if (psListAllMyBucketsResultBuckets != nullptr)
     {
@@ -481,33 +498,58 @@ bool VSIDIRS3::IssueListDir()
     const std::string l_osNextMarker(osNextMarker);
     clear();
 
+    IVSIS3LikeHandleHelper *l_poHandlerHelper = poHandleHelper.get();
+
+    bool bUseV2 = false;
+    auto poS3HandleHelper =
+        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper.get());
+    if (poS3HandleHelper)
+        bUseV2 = poS3HandleHelper->IsDirectoryBucket();
+
+    std::unique_ptr<VSIS3HandleHelper> poTmpHandleHelper;
+    if (m_bRegularListingDone && m_bListBucket)
+    {
+        const char *const apszOptions[] = {"LIST_DIRECTORY_BUCKETS=YES",
+                                           nullptr};
+        poTmpHandleHelper.reset(VSIS3HandleHelper::BuildFromURI(
+            nullptr, poS3FS->GetFSPrefix().c_str(), true, apszOptions));
+        l_poHandlerHelper = poTmpHandleHelper.get();
+    }
+
+    const CPLStringList aosHTTPOptions(
+        CPLHTTPGetOptionsFromEnv(m_osDirName.c_str()));
+
     while (true)
     {
-        poHandleHelper->ResetQueryParameters();
-        const std::string osBaseURL(poHandleHelper->GetURL());
+        l_poHandlerHelper->ResetQueryParameters();
+        const std::string osBaseURL(l_poHandlerHelper->GetURL());
+        if (bUseV2)
+            l_poHandlerHelper->AddQueryParameter("list-type", "2");
 
         CURL *hCurlHandle = curl_easy_init();
 
         if (!osBucket.empty())
         {
             if (nRecurseDepth == 0)
-                poHandleHelper->AddQueryParameter("delimiter", "/");
+                l_poHandlerHelper->AddQueryParameter("delimiter", "/");
             if (!l_osNextMarker.empty())
-                poHandleHelper->AddQueryParameter("marker", l_osNextMarker);
+                l_poHandlerHelper->AddQueryParameter(
+                    bUseV2 ? "continuation-token" : "marker", l_osNextMarker);
             if (!osMaxKeys.empty())
-                poHandleHelper->AddQueryParameter("max-keys", osMaxKeys);
+                l_poHandlerHelper->AddQueryParameter("max-keys", osMaxKeys);
             if (!osObjectKey.empty())
-                poHandleHelper->AddQueryParameter(
+                l_poHandlerHelper->AddQueryParameter(
                     "prefix", osObjectKey + "/" + m_osFilterPrefix);
             else if (!m_osFilterPrefix.empty())
-                poHandleHelper->AddQueryParameter("prefix", m_osFilterPrefix);
+                l_poHandlerHelper->AddQueryParameter("prefix",
+                                                     m_osFilterPrefix);
         }
 
-        struct curl_slist *headers = VSICurlSetOptions(
-            hCurlHandle, poHandleHelper->GetURL().c_str(), nullptr);
+        struct curl_slist *headers =
+            VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
+                              aosHTTPOptions.List());
 
-        headers = VSICurlMergeHeaders(
-            headers, poHandleHelper->GetCurlHeaders("GET", headers));
+        headers = l_poHandlerHelper->GetCurlHeaders("GET", headers);
         // Disable automatic redirection
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
 
@@ -515,7 +557,7 @@ bool VSIDIRS3::IssueListDir()
 
         CurlRequestHelper requestHelper;
         const long response_code = requestHelper.perform(
-            hCurlHandle, headers, poFS, poHandleHelper.get());
+            hCurlHandle, headers, poFS, l_poHandlerHelper);
 
         NetworkStatisticsLogger::LogGET(requestHelper.sWriteFuncData.nSize);
 
@@ -523,7 +565,7 @@ bool VSIDIRS3::IssueListDir()
             requestHelper.sWriteFuncData.pBuffer == nullptr)
         {
             if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
-                poHandleHelper->CanRestartOnError(
+                l_poHandlerHelper->CanRestartOnError(
                     requestHelper.sWriteFuncData.pBuffer,
                     requestHelper.sWriteFuncHeaderData.pBuffer, true))
             {
@@ -531,10 +573,21 @@ bool VSIDIRS3::IssueListDir()
             }
             else
             {
-                CPLDebug(poS3FS->GetDebugKey(), "%s",
-                         requestHelper.sWriteFuncData.pBuffer
-                             ? requestHelper.sWriteFuncData.pBuffer
-                             : "(null)");
+                if (m_bRegularListingDone && m_bListBucket)
+                {
+                    CPLDebug(poS3FS->GetDebugKey(),
+                             "ListDirectoryBuckets failed: %s",
+                             requestHelper.sWriteFuncData.pBuffer
+                                 ? requestHelper.sWriteFuncData.pBuffer
+                                 : "(null)");
+                }
+                else
+                {
+                    CPLDebug(poS3FS->GetDebugKey(), "%s",
+                             requestHelper.sWriteFuncData.pBuffer
+                                 ? requestHelper.sWriteFuncData.pBuffer
+                                 : "(null)");
+                }
                 curl_easy_cleanup(hCurlHandle);
                 return false;
             }
@@ -553,6 +606,38 @@ bool VSIDIRS3::IssueListDir()
 
         curl_easy_cleanup(hCurlHandle);
     }
+}
+
+/************************************************************************/
+/*                           NextDirEntry()                             */
+/************************************************************************/
+
+const VSIDIREntry *VSIDIRS3::NextDirEntry()
+{
+    if (!m_bRegularListingDone)
+    {
+        const auto psRet = VSIDIRS3Like::NextDirEntry();
+        if (psRet)
+            return psRet;
+        m_bRegularListingDone = true;
+        if (!m_bListBucket)
+            return nullptr;
+        clear();
+        m_subdir.reset();
+
+        if (!IssueListDir())
+        {
+            return nullptr;
+        }
+    }
+    if (!m_bDirectoryBucketListingDone)
+    {
+        const auto psRet = VSIDIRS3Like::NextDirEntry();
+        if (psRet)
+            return psRet;
+        m_bDirectoryBucketListingDone = true;
+    }
+    return nullptr;
 }
 
 /************************************************************************/
@@ -623,7 +708,7 @@ bool VSICurlFilesystemHandlerBase::AnalyseS3FileList(
     int nMaxFiles, const std::set<std::string> &oSetIgnoredStorageClasses,
     bool &bIsTruncated)
 {
-    VSIDIRS3 oDir(this);
+    VSIDIRS3 oDir(std::string(), this);
     oDir.nMaxFiles = nMaxFiles;
     bool ret = oDir.AnalyseS3FileList(osBaseURL, pszXML,
                                       oSetIgnoredStorageClasses, bIsTruncated);
@@ -736,9 +821,8 @@ class VSIS3Handle final : public IVSIS3LikeHandle
     VSIS3HandleHelper *m_poS3HandleHelper = nullptr;
 
   protected:
-    struct curl_slist *
-    GetCurlHeaders(const std::string &osVerb,
-                   const struct curl_slist *psExistingHeaders) override;
+    struct curl_slist *GetCurlHeaders(const std::string &osVerb,
+                                      struct curl_slist *psHeaders) override;
     bool CanRestartOnError(const char *, const char *, bool) override;
 
     bool AllowAutomaticRedirection() override
@@ -931,8 +1015,7 @@ std::string IVSIS3LikeFSHandlerWithMultipartUpload::InitiateMultipartUpload(
                               aosHTTPOptions.List()));
         headers = VSICurlSetCreationHeadersFromOptions(headers, papszOptions,
                                                        osFilename.c_str());
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("POST", headers));
+        headers = poS3HandleHelper->GetCurlHeaders("POST", headers);
         headers = curl_slist_append(
             headers, "Content-Length: 0");  // Required by GCS in HTTP 1.1
 
@@ -1079,9 +1162,8 @@ std::string IVSIS3LikeFSHandlerWithMultipartUpload::UploadPart(
         struct curl_slist *headers = static_cast<struct curl_slist *>(
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions));
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("PUT", headers,
-                                                      pabyBuffer, nBufferSize));
+        headers = poS3HandleHelper->GetCurlHeaders("PUT", headers, pabyBuffer,
+                                                   nBufferSize);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1252,9 +1334,8 @@ bool VSIMultipartWriteHandle::DoSinglePartPUT()
                               m_aosHTTPOptions.List()));
         headers = VSICurlSetCreationHeadersFromOptions(
             headers, m_aosOptions.List(), m_osFilename.c_str());
-        headers = VSICurlMergeHeaders(
-            headers, m_poS3HandleHelper->GetCurlHeaders(
-                         "PUT", headers, m_pabyBuffer, m_nBufferOff));
+        headers = m_poS3HandleHelper->GetCurlHeaders(
+            "PUT", headers, m_pabyBuffer, m_nBufferOff);
         headers = curl_slist_append(headers, "Expect: 100-continue");
 
         CurlRequestHelper requestHelper;
@@ -1389,9 +1470,8 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::CompleteMultipart(
         struct curl_slist *headers = static_cast<struct curl_slist *>(
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders(
-                         "POST", headers, osXML.c_str(), osXML.size()));
+        headers = poS3HandleHelper->GetCurlHeaders("POST", headers,
+                                                   osXML.c_str(), osXML.size());
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1474,8 +1554,7 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::AbortMultipart(
         struct curl_slist *headers = static_cast<struct curl_slist *>(
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("DELETE", headers));
+        headers = poS3HandleHelper->GetCurlHeaders("DELETE", headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1602,8 +1681,7 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::AbortPendingUploads(
             struct curl_slist *headers = static_cast<struct curl_slist *>(
                 CPLHTTPSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
                                   aosHTTPOptions.List()));
-            headers = VSICurlMergeHeaders(
-                headers, poHandleHelper->GetCurlHeaders("GET", headers));
+            headers = poHandleHelper->GetCurlHeaders("GET", headers);
 
             CurlRequestHelper requestHelper;
             const long response_code = requestHelper.perform(
@@ -1934,6 +2012,9 @@ const char *VSIS3FSHandler::GetOptions()
                 "description='Access key id'/>"
                 "  <Option name='AWS_SESSION_TOKEN' type='string' "
                 "description='Session token'/>"
+                "  <Option name='AWS_S3SESSION_TOKEN' type='string' "
+                "description='S3 Express session token (for directory "
+                "buckets)'/>"
                 "  <Option name='AWS_REQUEST_PAYER' type='string' "
                 "description='Content of the x-amz-request-payer HTTP header. "
                 "Typically \"requester\" for requester-pays buckets'/>"
@@ -2225,9 +2306,8 @@ std::set<std::string> VSIS3FSHandler::DeleteObjects(const char *pszBucket,
                               aosHTTPOptions.List()));
         headers = curl_slist_append(headers, "Content-Type: application/xml");
         headers = curl_slist_append(headers, osContentMD5.c_str());
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("POST", headers, pszXML,
-                                                      strlen(pszXML)));
+        headers = poS3HandleHelper->GetCurlHeaders("POST", headers, pszXML,
+                                                   strlen(pszXML));
 
         CurlRequestHelper requestHelper;
         const long response_code = requestHelper.perform(
@@ -2350,8 +2430,7 @@ char **VSIS3FSHandler::GetFileMetadata(const char *pszFilename,
         struct curl_slist *headers = static_cast<struct curl_slist *>(
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("GET", headers));
+        headers = poS3HandleHelper->GetCurlHeaders("GET", headers);
 
         CurlRequestHelper requestHelper;
         const long response_code = requestHelper.perform(
@@ -2537,15 +2616,13 @@ bool VSIS3FSHandler::SetFileMetadata(const char *pszFilename,
             headers =
                 curl_slist_append(headers, "Content-Type: application/xml");
             headers = curl_slist_append(headers, osContentMD5.c_str());
-            headers = VSICurlMergeHeaders(
-                headers, poS3HandleHelper->GetCurlHeaders(
-                             "PUT", headers, osXML.c_str(), osXML.size()));
+            headers = poS3HandleHelper->GetCurlHeaders(
+                "PUT", headers, osXML.c_str(), osXML.size());
             NetworkStatisticsLogger::LogPUT(osXML.size());
         }
         else
         {
-            headers = VSICurlMergeHeaders(
-                headers, poS3HandleHelper->GetCurlHeaders("DELETE", headers));
+            headers = poS3HandleHelper->GetCurlHeaders("DELETE", headers);
             NetworkStatisticsLogger::LogDELETE();
         }
 
@@ -2799,8 +2876,25 @@ int IVSIS3LikeFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
         }
     }
 
-    if (VSICurlFilesystemHandlerBase::Stat(osFilename.c_str(), pStatBuf,
-                                           nFlags) == 0)
+    // We cannot stat the root directory of a S3 directory bucket, otherwise
+    // we get a 501 error.
+    bool bStatBaseObject = true;
+    if (GetFSPrefix() == "/vsis3/")
+    {
+        auto poS3HandleHelper = std::unique_ptr<VSIS3HandleHelper>(
+            VSIS3HandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
+                                            GetFSPrefix().c_str(), true));
+        if (poS3HandleHelper)
+        {
+            const bool bIsDirectoryBucket =
+                poS3HandleHelper->IsDirectoryBucket();
+            if (bIsDirectoryBucket && poS3HandleHelper->GetObjectKey().empty())
+                bStatBaseObject = false;
+        }
+    }
+
+    if (bStatBaseObject && VSICurlFilesystemHandlerBase::Stat(
+                               osFilename.c_str(), pStatBuf, nFlags) == 0)
     {
         return 0;
     }
@@ -3056,8 +3150,7 @@ int IVSIS3LikeFSHandler::CopyObject(const char *oldpath, const char *newpath,
             }
         }
         headers = VSICurlSetContentTypeFromExt(headers, newpath);
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("PUT", headers));
+        headers = poS3HandleHelper->GetCurlHeaders("PUT", headers);
 
         CurlRequestHelper requestHelper;
         const long response_code = requestHelper.perform(
@@ -3155,8 +3248,7 @@ int IVSIS3LikeFSHandler::DeleteObject(const char *pszFilename)
         struct curl_slist *headers = static_cast<struct curl_slist *>(
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("DELETE", headers));
+        headers = poS3HandleHelper->GetCurlHeaders("DELETE", headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -3316,7 +3408,7 @@ VSIDIR *IVSIS3LikeFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
         return nullptr;
     }
 
-    VSIDIRS3 *dir = new VSIDIRS3(this);
+    VSIDIRS3 *dir = new VSIDIRS3(pszPath, this);
     dir->nRecurseDepth = nRecurseDepth;
     dir->poHandleHelper = std::move(poS3HandleHelper);
     dir->osBucket = std::move(osBucket);
@@ -3327,6 +3419,9 @@ VSIDIR *IVSIS3LikeFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
     dir->m_osFilterPrefix = CSLFetchNameValueDef(papszOptions, "PREFIX", "");
     dir->m_bSynthetizeMissingDirectories = CPLTestBool(CSLFetchNameValueDef(
         papszOptions, "SYNTHETIZE_MISSING_DIRECTORIES", "NO"));
+    dir->m_bListBucket =
+        dir->osBucket.empty() &&
+        dynamic_cast<VSIS3HandleHelper *>(dir->poHandleHelper.get()) != nullptr;
     if (!dir->IssueListDir())
     {
         delete dir;
@@ -5167,11 +5262,10 @@ VSIS3Handle::~VSIS3Handle()
 /*                           GetCurlHeaders()                           */
 /************************************************************************/
 
-struct curl_slist *
-VSIS3Handle::GetCurlHeaders(const std::string &osVerb,
-                            const struct curl_slist *psExistingHeaders)
+struct curl_slist *VSIS3Handle::GetCurlHeaders(const std::string &osVerb,
+                                               struct curl_slist *psHeaders)
 {
-    return m_poS3HandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+    return m_poS3HandleHelper->GetCurlHeaders(osVerb, psHeaders);
 }
 
 /************************************************************************/

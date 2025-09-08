@@ -91,6 +91,7 @@ void CPL_DLL CPLSleep(double dfWaitInSeconds);
 const char CPL_DLL *CPLGetThreadingModel(void);
 
 int CPL_DLL CPLGetNumCPUs(void);
+int CPL_DLL CPLGetCurrentThreadCount(void);
 
 typedef struct _CPLLock CPLLock;
 

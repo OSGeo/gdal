@@ -21,9 +21,12 @@
 #include <bsoncxx/builder/basic/document.hpp>
 #include <bsoncxx/builder/basic/kvp.hpp>
 #include <bsoncxx/json.hpp>
-#include <bsoncxx/stdx/make_unique.hpp>
 #include <bsoncxx/string/to_string.hpp>
+
+#if BSONCXX_VERSION_MAJOR < 4
+#include <bsoncxx/stdx/make_unique.hpp>
 #include <bsoncxx/types/value.hpp>
+#endif
 
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>

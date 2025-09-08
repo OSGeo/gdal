@@ -272,6 +272,11 @@ class IVFKDataBlock
 
     int AddProperty(const char *, const char *);
 
+    IVFKDataBlock(IVFKDataBlock &) = delete;
+    IVFKDataBlock &operator=(const IVFKDataBlock &) = delete;
+    IVFKDataBlock(IVFKDataBlock &&) = delete;
+    IVFKDataBlock &operator=(IVFKDataBlock &&) = delete;
+
   protected:
     typedef std::vector<OGRPoint> PointList;
     typedef std::vector<PointList *> PointListArray;

@@ -13,6 +13,7 @@
 
 import os
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
@@ -94,7 +95,7 @@ def test_gdalalg_raster_index_overwrite(tmp_vsimem):
     alg["output"] = out_filename
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it or the --append option to append to it.",
+        match="already exists",
     ):
         alg.Run()
 
@@ -204,7 +205,10 @@ def test_gdalalg_raster_index_min_pixel_size(min_pixel_size, expected_count):
     alg["output-format"] = "MEM"
     alg["layer"] = "out"
     alg["min-pixel-size"] = min_pixel_size
-    assert alg.Run()
+    with gdaltest.error_raised(
+        gdal.CE_Warning if min_pixel_size == 61 else gdal.CE_None
+    ):
+        assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == expected_count
@@ -229,3 +233,46 @@ def test_gdalalg_raster_index_crs():
         f.GetGeometryRef().ExportToWkt()
         == "POLYGON ((-117.641168620797 33.9023526904272,-117.628190189534 33.9024195619211,-117.628110837847 33.8915970129623,-117.641087629972 33.8915301685907,-117.641168620797 33.9023526904272))"
     )
+
+
+def test_gdalalg_raster_error():
+
+    alg = get_alg()
+    alg["input"] = "/i/do/not/exist"
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg["layer"] = "out"
+    alg["dst-crs"] = "EPSG:4267"
+    with pytest.raises(Exception, match="Unable to open /i/do/not/exist"):
+        alg.Run()
+
+
+def test_gdalalg_raster_skip_errors_with_crs():
+
+    alg = get_alg()
+    alg["input"] = "/i/do/not/exist"
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg["layer"] = "out"
+    alg["dst-crs"] = "EPSG:4267"
+    alg["skip-errors"] = True
+    with gdaltest.error_raised(gdal.CE_Warning):
+        assert alg.Run()
+    ds = alg["output"].GetDataset()
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 0
+
+
+def test_gdalalg_raster_skip_errors_without_crs():
+
+    alg = get_alg()
+    alg["input"] = "/i/do/not/exist"
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg["layer"] = "out"
+    alg["skip-errors"] = True
+    with gdaltest.error_raised(gdal.CE_Warning):
+        assert alg.Run()
+    ds = alg["output"].GetDataset()
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 0

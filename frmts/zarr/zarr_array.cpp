@@ -868,7 +868,7 @@ bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
     std::vector<uint64_t> anIndicesMax(nDims);
 
     // Compute min and max tile indices in each dimension, and the total
-    // nomber of tiles this represents.
+    // number of tiles this represents.
     nReqTiles = 1;
     for (size_t i = 0; i < nDims; ++i)
     {

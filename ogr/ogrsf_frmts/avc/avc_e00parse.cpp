@@ -1631,16 +1631,30 @@ AVCTxt *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
          * Text Justification stuff... 2 sets of 20 int16 values.
          *------------------------------------------------------------*/
         GInt16 *pValue;
-        int numValPerLine = 7;
+        int numValPerLine;
 
-        if (psInfo->iCurItem < 3)
+        if (psInfo->iCurItem == 0 || psInfo->iCurItem == 1)
+        {
             pValue = psTxt->anJust2 + psInfo->iCurItem * 7;
-        else
-            pValue = psTxt->anJust1 + (psInfo->iCurItem - 3) * 7;
-
-        /* Last line of each set contains only 6 values instead of 7 */
-        if (psInfo->iCurItem == 2 || psInfo->iCurItem == 5)
+            numValPerLine = 7;
+        }
+        else if (psInfo->iCurItem == 2)
+        {
+            pValue = psTxt->anJust2 + psInfo->iCurItem * 7;
+            /* Last line of each set contains only 6 values instead of 7 */
             numValPerLine = 6;
+        }
+        else if (psInfo->iCurItem == 3 || psInfo->iCurItem == 4)
+        {
+            pValue = psTxt->anJust1 + (psInfo->iCurItem - 3) * 7;
+            numValPerLine = 7;
+        }
+        else /* if (psInfo->iCurItem == 5) */
+        {
+            pValue = psTxt->anJust1 + (psInfo->iCurItem - 3) * 7;
+            /* Last line of each set contains only 6 values instead of 7 */
+            numValPerLine = 6;
+        }
 
         for (i = 0;
              i < numValPerLine && nLen >= static_cast<size_t>(i) * 10 + 10; i++)

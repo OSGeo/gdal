@@ -13,6 +13,7 @@
  ****************************************************************************/
 
 #include "cpl_error.h"
+#include "cpl_vsi_virtual.h"
 #include "mrsidstream.h"
 
 using namespace LizardTech;
@@ -39,7 +40,7 @@ LTIVSIStream::~LTIVSIStream()
         (*pnRefCount)--;
         if (*pnRefCount == 0)
         {
-            VSIFCloseL((VSILFILE *)poFileHandle);
+            VSIFCloseL(poFileHandle);
             nError = errno;
             delete pnRefCount;
         }

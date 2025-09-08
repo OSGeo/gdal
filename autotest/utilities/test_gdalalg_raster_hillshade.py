@@ -156,6 +156,16 @@ def test_gdalalg_raster_hillshade_vrt_output_pipeline_from_filename():
         alg.Run()
 
 
+def test_gdalalg_raster_hillshade_unknown_format(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = os.path.join(os.getcwd(), "../gdrivers/data/n43.tif")
+    alg["output"] = tmp_vsimem / "out.shp"
+
+    with pytest.raises(RuntimeError, match="Could not identify driver"):
+        alg.Run()
+
+
 def test_gdalalg_raster_hillshade_overview():
 
     src_ds = gdal.Translate(

@@ -16,9 +16,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #include <string>
 

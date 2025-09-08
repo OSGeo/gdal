@@ -604,7 +604,27 @@ def test_multidim_getgridded():
 
 
 @gdaltest.enable_exceptions()
-def test_multidim_asclassicsubdataset_band_metadata():
+def test_multidim_asclassicdataset_single_dim():
+
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds")
+    rg = mem_ds.GetRootGroup()
+
+    dim = rg.CreateDimension("dim", None, None, 2)
+    ar = rg.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+    ar.Write(array.array("d", [10.5, 20]))
+
+    assert ar.AsClassicDataset(0, 0).ReadRaster() == array.array("d", [10.5, 20])
+
+    with pytest.raises(Exception, match="Invalid iXDim and/or iYDim"):
+        ar.AsClassicDataset(0, 1)
+
+    with pytest.raises(Exception, match="Invalid iXDim and/or iYDim"):
+        ar.AsClassicDataset(1, 0)
+
+
+@gdaltest.enable_exceptions()
+def test_multidim_asclassicdataset_band_metadata():
 
     drv = gdal.GetDriverByName("MEM")
     mem_ds = drv.CreateMultiDimensional("myds")
@@ -930,7 +950,7 @@ def test_multidim_asclassicsubdataset_band_metadata():
 
 
 @gdaltest.enable_exceptions()
-def test_multidim_asclassicsubdataset_band_imagery_metadata():
+def test_multidim_asclassicdataset_band_imagery_metadata():
 
     drv = gdal.GetDriverByName("MEM")
     mem_ds = drv.CreateMultiDimensional("myds")

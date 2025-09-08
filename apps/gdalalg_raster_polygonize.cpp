@@ -121,7 +121,7 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             if (GetGDALDriverManager()->GetDriverByName("GPKG"))
             {
                 outputFilename =
-                    CPLGenerateTempFilenameSafe("_polygonize.gpkg");
+                    CPLGenerateTempFilenameSafe("_polygonize") + ".gpkg";
                 m_format = "GPKG";
             }
             else

@@ -14,6 +14,7 @@
 #define GDALALG_VECTOR_GEOM_INCLUDED
 
 #include "gdalalg_vector_pipeline.h"
+#include "ogr_geos.h"
 
 //! @cond Doxygen_Suppress
 
@@ -183,6 +184,62 @@ class GDALVectorGeomOneToOneAlgorithmLayer /* non final */
   private:
     int m_iGeomIdx = -1;
 };
+
+#ifdef HAVE_GEOS
+
+/************************************************************************/
+/*                    GDALGeosNonStreamingAlgorithmDataset              */
+/************************************************************************/
+
+/** A GDALGeosNonStreamingAlgorithmDataset manages the work of reading features
+ *  from an input layer, converting OGR geometries into GEOS geometries,
+ *  applying a GEOS function, and writing result to an output layer. It is
+ *  appropriate only for GEOS algorithms that operate on all input geometries
+ *  at a single time.
+ */
+class GDALGeosNonStreamingAlgorithmDataset
+    : public GDALVectorNonStreamingAlgorithmDataset
+{
+  public:
+    GDALGeosNonStreamingAlgorithmDataset();
+
+    ~GDALGeosNonStreamingAlgorithmDataset() override;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALGeosNonStreamingAlgorithmDataset)
+
+    bool ConvertInputsToGeos(OGRLayer &srcLayer, OGRLayer &dstLayer,
+                             bool sameDefn);
+
+    bool ConvertOutputsFromGeos(OGRLayer &dstLayer);
+
+    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) override;
+
+    virtual bool ProcessGeos() = 0;
+
+    /// Whether the operation should fail if non-polygonal geometries are present
+    virtual bool PolygonsOnly() const = 0;
+
+    /// Whether empty result features should be excluded from the output
+    virtual bool SkipEmpty() const = 0;
+
+    void SetSourceGeometryField(int i)
+    {
+        m_sourceGeometryField = i;
+    }
+
+  protected:
+    GEOSContextHandle_t m_poGeosContext{nullptr};
+    std::vector<GEOSGeometry *> m_apoGeosInputs{};
+    GEOSGeometry *m_poGeosResultAsCollection{nullptr};
+    GEOSGeometry **m_papoGeosResults{nullptr};
+
+  private:
+    std::vector<std::unique_ptr<OGRFeature>> m_apoFeatures{};
+    unsigned int m_nGeosResultSize{0};
+    int m_sourceGeometryField{0};
+};
+
+#endif
 
 //! @endcond
 

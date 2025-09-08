@@ -145,7 +145,7 @@ static void Usage(bool bIsError, const char *pszAdditionalMsg, bool bShort,
         "   autoconnect tolerance: create topology automatically with the "
         "given double tolerance\n"
         "   delete: delete network\n"
-        "   change: modify blocking state of vertices and edges ans save them "
+        "   change: modify blocking state of vertices and edges and save them "
         "in the network"
         "   -bl gfid: block feature before the main operation. Blocking "
         "features are saved in the special layer\n"

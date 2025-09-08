@@ -74,12 +74,12 @@ ZarrV3Array::~ZarrV3Array()
 /*                                Flush()                               */
 /************************************************************************/
 
-void ZarrV3Array::Flush()
+bool ZarrV3Array::Flush()
 {
     if (!m_bValid)
-        return;
+        return true;
 
-    ZarrV3Array::FlushDirtyTile();
+    bool ret = ZarrV3Array::FlushDirtyTile();
 
     if (!m_aoDims.empty())
     {
@@ -112,16 +112,19 @@ void ZarrV3Array::Flush()
 
     if (m_bDefinitionModified)
     {
-        Serialize(oAttrs);
+        if (!Serialize(oAttrs))
+            ret = false;
         m_bDefinitionModified = false;
     }
+
+    return ret;
 }
 
 /************************************************************************/
 /*                    ZarrV3Array::Serialize()                          */
 /************************************************************************/
 
-void ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
+bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
 {
     CPLJSONDocument oDoc;
     CPLJSONObject oRoot = oDoc.GetRoot();
@@ -238,7 +241,7 @@ void ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
 
     // TODO: codecs
 
-    oDoc.Save(m_osFilename);
+    return oDoc.Save(m_osFilename);
 }
 
 /************************************************************************/
@@ -389,37 +392,50 @@ bool ZarrV3Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
     osFilename = VSIFileManager::GetHandler(osFilename.c_str())
                      ->GetStreamingFilename(osFilename);
 
-    // First if we have a tile presence cache, check tile presence from it
-    if (bUseMutex)
-        m_oMutex.lock();
-    auto poTilePresenceArray = OpenTilePresenceCache(false);
-    if (poTilePresenceArray)
+    const auto CheckTilePresence =
+        [this, &osFilename, &tileIndices, &bMissingTileOut]()
     {
-        std::vector<GUInt64> anTileIdx(m_aoDims.size());
-        const std::vector<size_t> anCount(m_aoDims.size(), 1);
-        const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
-        const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
-        const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
-        for (size_t i = 0; i < m_aoDims.size(); ++i)
+        CPL_IGNORE_RET_VAL(osFilename);
+        auto poTilePresenceArray = OpenTilePresenceCache(false);
+        if (poTilePresenceArray)
         {
-            anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
+            std::vector<GUInt64> anTileIdx(m_aoDims.size());
+            const std::vector<size_t> anCount(m_aoDims.size(), 1);
+            const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
+            const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
+            const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+            for (size_t i = 0; i < m_aoDims.size(); ++i)
+            {
+                anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
+            }
+            GByte byValue = 0;
+            if (poTilePresenceArray->Read(
+                    anTileIdx.data(), anCount.data(), anArrayStep.data(),
+                    anBufferStride.data(), eByteDT, &byValue) &&
+                byValue == 0)
+            {
+                CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
+                             osFilename.c_str());
+                bMissingTileOut = true;
+                return true;
+            }
         }
-        GByte byValue = 0;
-        if (poTilePresenceArray->Read(anTileIdx.data(), anCount.data(),
-                                      anArrayStep.data(), anBufferStride.data(),
-                                      eByteDT, &byValue) &&
-            byValue == 0)
-        {
-            if (bUseMutex)
-                m_oMutex.unlock();
-            CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
-                         osFilename.c_str());
-            bMissingTileOut = true;
-            return true;
-        }
-    }
+        return false;
+    };
+
+    // First if we have a tile presence cache, check tile presence from it
+    bool bEarlyRet;
     if (bUseMutex)
-        m_oMutex.unlock();
+    {
+        std::lock_guard<std::mutex> oLock(m_oMutex);
+        bEarlyRet = CheckTilePresence();
+    }
+    else
+    {
+        bEarlyRet = CheckTilePresence();
+    }
+    if (bEarlyRet)
+        return true;
 
     VSILFILE *fp = nullptr;
     // This is the number of files returned in a S3 directory listing operation

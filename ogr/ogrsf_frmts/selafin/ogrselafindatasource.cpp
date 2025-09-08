@@ -443,7 +443,7 @@ int OGRSelafinDataSource::OpenTable(const char *pszFilename)
     }
     if (!bUpdate && strstr(pszFilename, "/vsigzip/") == nullptr &&
         strstr(pszFilename, "/vsizip/") == nullptr)
-        fp = (VSILFILE *)VSICreateBufferedReaderHandle((VSIVirtualHandle *)fp);
+        fp = VSICreateBufferedReaderHandle(fp);
 
     // Quickly check if the file is in Selafin format, before actually starting
     // to read to make it faster

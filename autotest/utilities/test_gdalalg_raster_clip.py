@@ -169,6 +169,28 @@ def test_gdalalg_raster_clip_bbox_crs():
     )
 
 
+def test_gdalgalg_raster_clip_geometry(tmp_vsimem):
+
+    alg = get_alg()
+
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg[
+        "geometry"
+    ] = "POLYGON ((440885 3750741, 441344 3750294, 441612 3750501, 441773 3751203, 441545 3751254, 441576 3750847, 441576 3750847, 440885 3750741))"
+
+    assert alg.Run()
+
+    ds = alg["output"].GetDataset()
+    assert ds.RasterXSize == 16
+    assert ds.RasterYSize == 17
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert ds.GetGeoTransform() == pytest.approx(
+        (440840, 60.0, 0.0, 3751260, 0.0, -60.0), rel=1e-8
+    )
+
+
 def test_gdalalg_raster_clip_geometry_add_alpha():
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
@@ -313,3 +335,44 @@ def test_gdalalg_raster_clip_geometry_outside_extent(allow_bbox_outside_source):
             match="Clipping geometry is partially or totally outside the extent of the raster",
         ):
             alg.Run()
+
+
+def test_gdalalg_raster_clip_window():
+
+    alg = get_alg()
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output-format"] = "MEM"
+    alg["window"] = [1, 2, 3, 4]
+    alg.Run()
+    ds = alg["output"].GetDataset()
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 4
+    assert ds.GetRasterBand(1).Checksum() == 105
+
+
+def test_gdalalg_raster_clip_window_invalid():
+
+    alg = get_alg()
+
+    with pytest.raises(
+        Exception,
+        match="Value of 'window' should be col,line,width,height with width > 0 and height > 0",
+    ):
+        alg["window"] = [1, 2, 0, 4]
+
+    with pytest.raises(
+        Exception,
+        match="Value of 'window' should be col,line,width,height with width > 0 and height > 0",
+    ):
+        alg["window"] = [1, 2, 3, 0]
+
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output-format"] = "MEM"
+    alg["window"] = [1, 2, 3, 4]
+    alg["add-alpha"] = True
+
+    with pytest.raises(
+        Exception,
+        match="clip: 'alpha' argument is not supported with 'window'",
+    ):
+        alg.Run()
