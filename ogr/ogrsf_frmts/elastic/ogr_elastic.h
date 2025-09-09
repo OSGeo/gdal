@@ -176,7 +176,7 @@ class OGRElasticLayer final : public OGRLayer
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK) override;
 
-    virtual const char *GetName() override
+    const char *GetName() override
     {
         return m_poFeatureDefn->GetName();
     }
@@ -358,7 +358,7 @@ class OGRElasticDataSource final : public GDALDataset
         return m_osURL.c_str();
     }
 
-    virtual const char *GetName()
+    const char *GetName()
     {
         return m_pszName;
     }

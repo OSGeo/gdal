@@ -163,7 +163,7 @@ OGRSQLiteSelectLayer::~OGRSQLiteSelectLayer()
 
 void OGRSQLiteSelectLayer::ResetReading()
 {
-    return m_poBehavior->ResetReading();
+    m_poBehavior->ResetReading();
 }
 
 void OGRSQLiteSelectLayerCommonBehaviour::ResetReading()
