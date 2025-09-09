@@ -108,28 +108,55 @@ std::vector<CPLString> OGRShapeDataSource::GetLayerNames() const
 OGRShapeDataSource::~OGRShapeDataSource()
 
 {
-    std::vector<CPLString> layerNames;
-    if (!m_osTemporaryUnzipDir.empty())
-    {
-        layerNames = GetLayerNames();
-    }
-    m_apoLayers.clear();
-    m_poPool.reset();
+    OGRShapeDataSource::Close();
+}
 
-    RecompressIfNeeded(layerNames);
-    RemoveLockFile();
+/************************************************************************/
+/*                       OGRShapeDataSource::Close()                    */
+/************************************************************************/
 
-    // Free mutex & cond
-    if (m_poRefreshLockFileMutex)
+CPLErr OGRShapeDataSource::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        CPLDestroyMutex(m_poRefreshLockFileMutex);
-        m_poRefreshLockFileMutex = nullptr;
+        eErr = OGRShapeDataSource::FlushCache(true);
+
+        CPLStringList aosFileList;
+        if (IsMarkedSuppressOnClose())
+            aosFileList = GetFileList();
+
+        std::vector<CPLString> layerNames;
+        if (!m_osTemporaryUnzipDir.empty())
+        {
+            layerNames = GetLayerNames();
+        }
+        m_apoLayers.clear();
+        m_poPool.reset();
+
+        RecompressIfNeeded(layerNames);
+        RemoveLockFile();
+
+        // Free mutex & cond
+        if (m_poRefreshLockFileMutex)
+        {
+            CPLDestroyMutex(m_poRefreshLockFileMutex);
+            m_poRefreshLockFileMutex = nullptr;
+        }
+        if (m_poRefreshLockFileCond)
+        {
+            CPLDestroyCond(m_poRefreshLockFileCond);
+            m_poRefreshLockFileCond = nullptr;
+        }
+
+        if (IsMarkedSuppressOnClose())
+            poDriver->Delete(nullptr, aosFileList.List());
+
+        if (GDALDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
-    if (m_poRefreshLockFileCond)
-    {
-        CPLDestroyCond(m_poRefreshLockFileCond);
-        m_poRefreshLockFileCond = nullptr;
-    }
+
+    return eErr;
 }
 
 /************************************************************************/
