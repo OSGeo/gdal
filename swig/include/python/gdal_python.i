@@ -2066,12 +2066,22 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     def Destroy(self):
         import warnings
         warnings.warn("Destroy() is deprecated; use a context manager or Close() instead", DeprecationWarning)
-        self.Close()
+        self._invalidate_children()
+        try:
+            return _gdal.Dataset_Close(self)
+        finally:
+            self.thisown = 0
+            self.this = None
 
     def Release(self):
         import warnings
         warnings.warn("Release() is deprecated; use a context manager or Close() instead", DeprecationWarning)
-        self.Close()
+        self._invalidate_children()
+        try:
+            return _gdal.Dataset_Close(self)
+        finally:
+            self.thisown = 0
+            self.this = None
 
     def SyncToDisk(self):
         return self.FlushCache()
@@ -2176,17 +2186,23 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         reachable. If :py:meth:`Close` is never called, the dataset will
         be closed automatically during garbage collection.
 
+        It is illegal to call any method on the dataset or objects derived
+        from it (bands, layers, etc.) afterwards.
+
         In most cases, it is preferable to open or create a dataset
         using a context manager instead of calling :py:meth:`Close`
         directly.
         """
 
         self._invalidate_children()
-        try:
-            return _gdal.Dataset_Close(self, *args)
-        finally:
-            self.thisown = 0
-            self.this = None
+        if self.GetRefCount() == 1 and self.thisown:
+            try:
+                return _gdal.Dataset_Close(self, *args)
+            finally:
+                self.thisown = 0
+                self.this = None
+        else:
+            return _gdal.Dataset__RunCloseWithoutDestroying(self, *args)
 %}
 
 %feature("shadow") ExecuteSQL %{
