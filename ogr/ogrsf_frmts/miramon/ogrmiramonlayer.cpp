@@ -1138,10 +1138,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         if (phMiraMonLayer->pMMBDXP->CharSet !=
                             MM_JOC_CARAC_UTF8_DBF)
                         {
-                            // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
+                            // MiraMon encoding is "CP1252" -> Recode to UTF-8
                             char *pszString =
                                 CPLRecode(phMiraMonLayer->szStringToOperate,
-                                          CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                                          "CP1252", CPL_ENC_UTF8);
 
                             CPLStrlcpy(
                                 phMiraMonLayer->szStringToOperate, pszString,
@@ -1200,10 +1200,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         if (phMiraMonLayer->pMMBDXP->CharSet !=
                             MM_JOC_CARAC_UTF8_DBF)
                         {
-                            // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
+                            // MiraMon encoding is "CP1252" -> Recode to UTF-8
                             char *pszString =
                                 CPLRecode(phMiraMonLayer->szStringToOperate,
-                                          CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                                          "CP1252", CPL_ENC_UTF8);
 
                             CPLStrlcpy(
                                 phMiraMonLayer->szStringToOperate, pszString,
@@ -1276,10 +1276,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                 if (phMiraMonLayer->pMMBDXP->CharSet != MM_JOC_CARAC_UTF8_DBF)
                 {
-                    // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
+                    // MiraMon encoding is "CP1252" -> Recode to UTF-8
                     char *pszString =
-                        CPLRecode(phMiraMonLayer->szStringToOperate,
-                                  CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                        CPLRecode(phMiraMonLayer->szStringToOperate, "CP1252",
+                                  CPL_ENC_UTF8);
                     CPLStrlcpy(phMiraMonLayer->szStringToOperate, pszString,
                                static_cast<size_t>(
                                    phMiraMonLayer->pMMBDXP->pField[nIField]
@@ -2208,7 +2208,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
             {
                 char *pszString = CPLRecode(
                     m_poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
-                    CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+                    CPL_ENC_UTF8, "CP1252");
                 CPLStrlcpy(
                     phMiraMonLayer->pLayerDB->pFields[iField].pszFieldName,
                     pszString, MM_MAX_LON_FIELD_NAME_DBF);
@@ -2229,7 +2229,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
                     char *pszString =
                         CPLRecode(m_poFeatureDefn->GetFieldDefn(iField)
                                       ->GetAlternativeNameRef(),
-                                  CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+                                  CPL_ENC_UTF8, "CP1252");
                     CPLStrlcpy(phMiraMonLayer->pLayerDB->pFields[iField]
                                    .pszFieldDescription,
                                pszString, MM_MAX_BYTES_FIELD_DESC);
@@ -2421,9 +2421,9 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
 
                 if (phMiraMonLayer->nCharSet != MM_JOC_CARAC_UTF8_DBF)
                 {
-                    // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
-                    char *pszString = CPLRecode(
-                        papszValues[nIRecord], CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+                    // MiraMon encoding is "CP1252" -> Recode from UTF-8
+                    char *pszString = CPLRecode(papszValues[nIRecord],
+                                                CPL_ENC_UTF8, "CP1252");
                     if (MM_SecureCopyStringFieldValue(
                             &hMMFeature.pRecords[nIRecord]
                                  .pField[iField]
@@ -2670,9 +2670,9 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             {
                 if (phMiraMonLayer->nCharSet != MM_JOC_CARAC_UTF8_DBF)
                 {
-                    // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
+                    // MiraMon encoding is "CP1252" -> Recode from UTF-8
                     char *pszString =
-                        CPLRecode(pszRawValue, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+                        CPLRecode(pszRawValue, CPL_ENC_UTF8, "CP1252");
                     if (MM_SecureCopyStringFieldValue(
                             &hMMFeature.pRecords[0].pField[iField].pDinValue,
                             pszString,

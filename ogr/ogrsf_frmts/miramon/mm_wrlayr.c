@@ -5254,14 +5254,14 @@ MMWrite_ANSI_MetadataKeyDescriptor(struct MiraMonVectorMetaData *hMMMD,
     switch (hMMMD->nMMLanguage)
     {
         case MM_CAT_LANGUAGE:
-            pszString = CPLRecode(pszCat, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+            pszString = CPLRecode(pszCat, CPL_ENC_UTF8, "CP1252");
             break;
         case MM_SPA_LANGUAGE:
-            pszString = CPLRecode(pszEsp, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+            pszString = CPLRecode(pszEsp, CPL_ENC_UTF8, "CP1252");
             break;
         default:
         case MM_ENG_LANGUAGE:
-            pszString = CPLRecode(pszEng, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+            pszString = CPLRecode(pszEng, CPL_ENC_UTF8, "CP1252");
             break;
     }
     if (pszString)
