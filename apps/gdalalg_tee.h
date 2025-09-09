@@ -189,14 +189,10 @@ bool GDALTeeStepAlgorithmBase<BaseStepAlgorithm, nDatasetType>::RunStep(
                     pfnProgress, pProgressData),
                 GDALDestroyScaledProgress);
 
-        if (!(subAlg->ParseCommandLineArguments(subAlgArgs) &&
-              subAlg->Run(pScaledProgress ? GDALScaledProgress : nullptr,
-                          pScaledProgress.get()) &&
-              subAlg->Finalize()))
-        {
-            // Error message emitted by above methods
-            return false;
-        }
+        bool ret = (subAlg->ParseCommandLineArguments(subAlgArgs) &&
+                    subAlg->Run(pScaledProgress ? GDALScaledProgress : nullptr,
+                                pScaledProgress.get()) &&
+                    subAlg->Finalize());
 
         // Restore filters
         for (int i = 0; i < static_cast<int>(aosAttributeFilters.size()); ++i)
@@ -208,6 +204,9 @@ bool GDALTeeStepAlgorithmBase<BaseStepAlgorithm, nDatasetType>::RunStep(
             poLayer->SetSpatialFilter(apoSpatialFilters[i].get());
             poLayer->ResetReading();
         }
+
+        if (!ret)
+            return false;
 
         ++iTeeDS;
     }
