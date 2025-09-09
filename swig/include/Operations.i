@@ -913,6 +913,7 @@ struct SuggestedWarpOutputRes
 #else
 %newobject SuggestedWarpOutput;
 #endif
+%apply Pointer NONNULL {GDALDatasetShadow *src};
 %inline %{
 #ifdef SWIGPYTHON
   SuggestedWarpOutputRes* SuggestedWarpOutputFromOptions( GDALDatasetShadow *src,
@@ -941,6 +942,7 @@ struct SuggestedWarpOutputRes
     return res;
   }
 %}
+%clear GDALDatasetShadow *src;
 
 #ifdef SWIGPYTHON
 
