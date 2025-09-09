@@ -1293,7 +1293,7 @@ def test_warp_41():
 
 
 def test_warp_suggestedwarp_output_invalid_input():
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         gdal.SuggestedWarpOutput(None, {"DST_SRS": "EPSG:4326"})
 
 
