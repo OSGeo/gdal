@@ -301,19 +301,6 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
 
     std::string GetUsageAsJSON() const override;
 
-    ~GDALAbstractPipelineAlgorithm() override
-    {
-        // Destroy steps in the reverse order they have been constructed,
-        // as a step can create object that depends on the validity of
-        // objects of previous steps, and while cleaning them it needs those
-        // prior objects to be still alive.
-        // Typically for "gdal vector pipeline read ... ! sql ..."
-        for (auto it = std::rbegin(m_steps); it != std::rend(m_steps); it++)
-        {
-            it->reset();
-        }
-    }
-
     static constexpr const char *OPEN_NESTED_PIPELINE = "[";
     static constexpr const char *CLOSE_NESTED_PIPELINE = "]";
 
