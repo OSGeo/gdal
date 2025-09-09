@@ -94,6 +94,8 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 
     virtual int GetOutputType() const = 0;
 
+    bool Finalize() override;
+
   protected:
     struct ConstructorOptions
     {

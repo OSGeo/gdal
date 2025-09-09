@@ -394,6 +394,19 @@ bool GDALPipelineStepAlgorithm::CheckSafeForStreamOutput()
 }
 
 /************************************************************************/
+/*                 GDALPipelineStepAlgorithm::Finalize()                */
+/************************************************************************/
+
+bool GDALPipelineStepAlgorithm::Finalize()
+{
+    bool ret = GDALAlgorithm::Finalize();
+    for (auto &argValue : m_inputDataset)
+        ret = argValue.Close() && ret;
+    ret = m_outputDataset.Close() && ret;
+    return ret;
+}
+
+/************************************************************************/
 /*                      GDALAlgorithmStepRegistry                       */
 /************************************************************************/
 

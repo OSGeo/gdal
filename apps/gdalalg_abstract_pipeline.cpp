@@ -1937,7 +1937,7 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
 bool GDALAbstractPipelineAlgorithm::Finalize()
 {
-    bool ret = GDALAlgorithm::Finalize();
+    bool ret = GDALPipelineStepAlgorithm::Finalize();
     for (auto &step : m_steps)
     {
         ret = step->Finalize() && ret;
