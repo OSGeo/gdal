@@ -5395,17 +5395,21 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     {
         // Writing OVERVIEW:ASPECTES_TECNICS in polygon metadata file.
         // ArcSource=fitx_pol.arc
+        pszChaiCP1252 = CPLRecode(hMMMD->aArcFile, CPL_ENC_UTF8, "CP1252");
         VSIFPrintfL(pF, LineReturn "[%s]" LineReturn,
                     SECTION_OVVW_ASPECTES_TECNICS);
-        VSIFPrintfL(pF, "%s=\"%s\"" LineReturn, KEY_ArcSource, hMMMD->aArcFile);
+        VSIFPrintfL(pF, "%s=\"%s\"" LineReturn, KEY_ArcSource, pszChaiCP1252);
+        CPLFree(pszChaiCP1252);
     }
     else if (hMMMD->ePlainLT == MM_LayerType_Arc && hMMMD->aArcFile)
     {
+        pszChaiCP1252 = CPLRecode(hMMMD->aArcFile, CPL_ENC_UTF8, "CP1252");
         // Writing OVERVIEW:ASPECTES_TECNICS in arc metadata file.
         // Ciclat1=fitx_arc.pol
         VSIFPrintfL(pF, LineReturn "[%s]" LineReturn,
                     SECTION_OVVW_ASPECTES_TECNICS);
-        VSIFPrintfL(pF, "Ciclat1=\"%s\"" LineReturn, hMMMD->aArcFile);
+        VSIFPrintfL(pF, "Ciclat1=\"%s\"" LineReturn, pszChaiCP1252);
+        CPLFree(pszChaiCP1252);
     }
 
     // Writing EXTENT section
