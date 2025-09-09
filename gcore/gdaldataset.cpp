@@ -293,20 +293,7 @@ GDALDataset::~GDALDataset()
             CPLDebug("GDAL", "GDALClose(%s, this=%p)", GetDescription(), this);
     }
 
-    if (IsMarkedSuppressOnClose())
-    {
-        if (poDriver == nullptr ||
-            // Someone issuing Create("foo.tif") on a
-            // memory driver doesn't expect files with those names to be deleted
-            // on a file system...
-            // This is somewhat messy. Ideally there should be a way for the
-            // driver to overload the default behavior
-            (!EQUAL(poDriver->GetDescription(), "MEM") &&
-             !EQUAL(poDriver->GetDescription(), "Memory")))
-        {
-            VSIUnlink(GetDescription());
-        }
-    }
+    GDALDataset::Close();
 
     /* -------------------------------------------------------------------- */
     /*      Remove dataset from the "open" dataset list.                    */
@@ -461,10 +448,30 @@ GDALDataset::~GDALDataset()
  */
 CPLErr GDALDataset::Close()
 {
-    // Call UnregisterFromSharedDataset() before altering nOpenFlags
-    UnregisterFromSharedDataset();
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        // Call UnregisterFromSharedDataset() before altering nOpenFlags
+        UnregisterFromSharedDataset();
 
-    nOpenFlags = OPEN_FLAGS_CLOSED;
+        nOpenFlags = OPEN_FLAGS_CLOSED;
+    }
+
+    if (IsMarkedSuppressOnClose())
+    {
+        if (poDriver == nullptr ||
+            // Someone issuing Create("foo.tif") on a
+            // memory driver doesn't expect files with those names to be deleted
+            // on a file system...
+            // This is somewhat messy. Ideally there should be a way for the
+            // driver to overload the default behavior
+            (!EQUAL(poDriver->GetDescription(), "MEM") &&
+             !EQUAL(poDriver->GetDescription(), "Memory")))
+        {
+            if (VSIUnlink(GetDescription()) == 0)
+                UnMarkSuppressOnClose();
+        }
+    }
+
     return CE_None;
 }
 
