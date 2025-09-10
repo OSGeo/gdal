@@ -342,6 +342,7 @@ RUN apk add --no-cache \
         hdf5 \
         icu-libs \
         imath \
+        mimalloc2 \
         json-c \
         kealib \
         lerc \
@@ -421,5 +422,8 @@ COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_python/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
+
+# Use mimalloc allocator to improve multi-threaded performance
+ENV LD_PRELOAD=libmimalloc.so.2
 
 CMD ["/bin/bash", "-l"]
