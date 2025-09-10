@@ -4215,6 +4215,8 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 printf("  Supports: Multiple vector layers.\n"); /*ok*/
             if (CPLFetchBool(papszMD, GDAL_DCAP_FIELD_DOMAINS, false))
                 printf("  Supports: Reading field domains.\n"); /*ok*/
+            if (CPLFetchBool(papszMD, GDAL_DCAP_UPSERT, false))
+                printf("  Supports: Feature upsert.\n"); /*ok*/
             if (CSLFetchNameValue(papszMD,
                                   GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES))
                 printf("  Creation field domain types: %s\n", /*ok*/

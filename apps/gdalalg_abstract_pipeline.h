@@ -96,6 +96,16 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 
     bool Finalize() override;
 
+    // Used by GDALDispatcherAlgorithm for vector info/convert
+    GDALDataset *GetInputDatasetRef()
+    {
+        return m_inputDataset.empty() ? nullptr
+                                      : m_inputDataset[0].GetDatasetRef();
+    }
+
+    // Used by GDALDispatcherAlgorithm for vector info/convert
+    void SetInputDataset(GDALDataset *poDS);
+
   protected:
     struct ConstructorOptions
     {
@@ -264,12 +274,15 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     bool m_overwrite = false;
     std::string m_outputLayerName{};
     GDALInConstructionAlgorithmArg *m_outputFormatArg = nullptr;
+    bool m_appendRaster = false;
 
     // Output arguments (vector specific)
     std::vector<std::string> m_layerCreationOptions{};
     bool m_update = false;
     bool m_overwriteLayer = false;
     bool m_appendLayer = false;
+    bool m_upsert = false;
+    bool m_skipErrors = false;
 
     void AddRasterInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);
     void AddRasterOutputArgs(bool hiddenForCLI);

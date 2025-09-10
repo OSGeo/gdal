@@ -120,7 +120,16 @@ void GDALPipelineStepAlgorithm::AddRasterOutputArgs(bool hiddenForCLI)
         .SetHiddenForCLI(hiddenForCLI)
         .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
     AddCreationOptionsArg(&m_creationOptions).SetHiddenForCLI(hiddenForCLI);
-    AddOverwriteArg(&m_overwrite).SetHiddenForCLI(hiddenForCLI);
+    constexpr const char *MUTUAL_EXCLUSION_GROUP_OVERWRITE_APPEND =
+        "overwrite-append";
+    AddOverwriteArg(&m_overwrite)
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_OVERWRITE_APPEND);
+    AddArg(GDAL_ARG_NAME_APPEND, 0,
+           _("Append as a subdataset to existing output"), &m_appendRaster)
+        .SetDefault(false)
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_OVERWRITE_APPEND);
 }
 
 /************************************************************************/
@@ -188,7 +197,21 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
             m_constructorOptions.updateMutualExclusionGroup);
     }
     AddOverwriteLayerArg(&m_overwriteLayer).SetHiddenForCLI(hiddenForCLI);
-    AddAppendLayerArg(&m_appendLayer).SetHiddenForCLI(hiddenForCLI);
+    constexpr const char *MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT =
+        "append-upsert";
+    AddAppendLayerArg(&m_appendLayer)
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT);
+    AddArg("upsert", 0, _("Upsert features (implies 'append')"), &m_upsert)
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT)
+        .AddAction(
+            [&updateArg, this]()
+            {
+                if (m_upsert)
+                    updateArg.Set(true);
+            })
+        .SetCategory(GAAC_ADVANCED);
     if (GetName() != GDALVectorSQLAlgorithm::NAME &&
         GetName() != GDALVectorConcatAlgorithm::NAME)
     {
@@ -198,6 +221,9 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
             .AddHiddenAlias("nln")  // For ogr2ogr nostalgic people
             .SetHiddenForCLI(hiddenForCLI);
     }
+    AddArg("skip-errors", 0, _("Skip errors when writing features"),
+           &m_skipErrors)
+        .AddHiddenAlias("skip-failures");  // For ogr2ogr nostalgic people
 }
 
 /************************************************************************/
@@ -352,6 +378,23 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         stepCtxt.m_pfnProgress = pfnProgress;
         stepCtxt.m_pProgressData = pProgressData;
         return RunPreStepPipelineValidations() && RunStep(stepCtxt);
+    }
+}
+
+/************************************************************************/
+/*                          SetInputDataset()                           */
+/************************************************************************/
+
+void GDALPipelineStepAlgorithm::SetInputDataset(GDALDataset *poDS)
+{
+    auto arg = GetArg(GDAL_ARG_NAME_INPUT);
+    if (arg)
+    {
+        auto &val = arg->Get<std::vector<GDALArgDatasetValue>>();
+        val.resize(1);
+        val[0].Set(poDS);
+        arg->NotifyValueSet();
+        arg->SetSkipIfAlreadySet();
     }
 }
 

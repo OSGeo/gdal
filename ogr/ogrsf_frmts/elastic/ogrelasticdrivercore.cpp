@@ -43,6 +43,7 @@ void OGRElasticsearchDriverSetCommonMetadata(GDALDriver *poDriver)
                               "<CreationOptionList/>");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS,
                               "OGRSQL SQLITE ES");
+    poDriver->SetMetadataItem(GDAL_DCAP_UPSERT, "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DS_LAYER_CREATIONOPTIONLIST,

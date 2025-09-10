@@ -49,7 +49,9 @@ output coordinate system or even reprojecting the features during translation.
     :cpp:func:`OGRLayer::CreateFeature`.
 
     This is currently implemented only in a few drivers:
-    :ref:`vector.gpkg` and :ref:`vector.mongodbv3`.
+    :ref:`vector.gpkg`, :ref:`vector.elasticsearch` and :ref:`vector.mongodbv3`
+    (drivers that implement upsert expose the :c:macro:`GDAL_DCAP_UPSERT`
+    capability).
 
     The upsert operation uses the FID of the input feature, when it is set
     and is a "significant" (that is the FID column name is not the empty string),

@@ -56,7 +56,6 @@ class GDALVectorPartitionAlgorithm /* non final */
     std::string m_maxFileSizeStr{};
     GIntBig m_maxFileSize = 0;
     bool m_omitPartitionedFields = false;
-    bool m_skipErrors = false;
     int m_maxCacheSize = 400;
     int m_transactionSize = 65536;
     std::string m_scheme = SCHEME_HIVE;
