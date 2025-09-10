@@ -1522,29 +1522,32 @@ def test_ogr_miramon_SHP_decimal_figures(tmp_vsimem):
 # read layer with accents
 
 
-def check_layer_with_accents(tmp_vsimem):
+def test_ogr_miramon_check_layer_name_with_accents(tmp_vsimem):
 
-    out_filename = str(tmp_vsimem / "out/kml_layer_to_mm.pnt")
-    src_ds = gdal.OpenEx(
-        "data/miramon_inputs/LayerWithAccents.kml",
-        gdal.OF_VECTOR,
-    )
+    out_filename = str(tmp_vsimem / "out/mem_layer_to_mm")
+
+    layer_name = "Refugis climàtics"
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    lyr = src_ds.CreateLayer(layer_name, geom_type=ogr.wkbLineString)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (1 2,3 4)"))
+    lyr.CreateFeature(f)
+
     gdal.VectorTranslate(
         out_filename,
         src_ds,
         format="MiraMonVector",
     )
 
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.OpenEx(out_filename + "/" + layer_name + ".arc", gdal.OF_VECTOR)
 
     lyr = ds.GetLayer(0)
     assert lyr is not None, "Failed to get layer"
 
-    assert (
-        lyr.GetName() == "Refugis climàtics dels municipis de Catalunya"
-    ), "Failed to read accents from layer name"
+    assert lyr.GetName() == layer_name, "Failed to read accents from layer name"
 
-    assert lyr.GetFeatureCount() == 1706
-    assert lyr.GetGeomType() == ogr.wkbPoint
+    assert lyr.GetFeatureCount() == 1
+    assert lyr.GetGeomType() == ogr.wkbLineString
 
     ds = None
+    lyr = None
