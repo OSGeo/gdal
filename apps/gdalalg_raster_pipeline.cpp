@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_raster_pipeline.h"
+#include "gdalalg_materialize.h"
 #include "gdalalg_raster_read.h"
 #include "gdalalg_raster_calc.h"
 #include "gdalalg_raster_aspect.h"
@@ -44,6 +45,7 @@
 #include "gdalalg_raster_tri.h"
 #include "gdalalg_raster_unscale.h"
 #include "gdalalg_raster_viewshed.h"
+#include "gdalalg_tee.h"
 
 #include "cpl_conv.h"
 #include "cpl_progress.h"
@@ -125,12 +127,10 @@ void GDALRasterPipelineStepAlgorithm::SetOutputVRTCompatible(bool b)
 
 GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     bool openForMixedRasterVector)
-    : GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm,
-                                    GDALRasterAlgorithmStepRegistry>(
-          NAME, DESCRIPTION, HELP_URL,
-          ConstructorOptions()
-              .SetAddDefaultArguments(false)
-              .SetInputDatasetMaxCount(INT_MAX))
+    : GDALAbstractPipelineAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                    ConstructorOptions()
+                                        .SetAddDefaultArguments(false)
+                                        .SetInputDatasetMaxCount(INT_MAX))
 {
     m_supportsStreamedOutput = true;
 
@@ -190,6 +190,10 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALRasterNoDataToAlphaAlgorithm>();
     registry.Register<GDALRasterFillNodataAlgorithm>();
     registry.Register<GDALRasterHillshadeAlgorithm>();
+
+    registry.Register<GDALMaterializeRasterAlgorithm>(
+        addSuffixIfNeeded(GDALMaterializeRasterAlgorithm::NAME));
+
     registry.Register<GDALRasterMosaicAlgorithm>();
     registry.Register<GDALRasterOverviewAlgorithm>();
     registry.Register<GDALRasterPansharpenAlgorithm>();
@@ -216,287 +220,8 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALRasterTRIAlgorithm>();
     registry.Register<GDALRasterUnscaleAlgorithm>();
     registry.Register<GDALRasterViewshedAlgorithm>();
-}
-
-/************************************************************************/
-/*       GDALRasterPipelineAlgorithm::ParseCommandLineArguments()       */
-/************************************************************************/
-
-bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
-    const std::vector<std::string> &args)
-{
-    if (args.size() == 1 && (args[0] == "-h" || args[0] == "--help" ||
-                             args[0] == "help" || args[0] == "--json-usage"))
-    {
-        return GDALAlgorithm::ParseCommandLineArguments(args);
-    }
-    else if (args.size() == 1 && STARTS_WITH(args[0].c_str(), "--help-doc="))
-    {
-        m_helpDocCategory = args[0].substr(strlen("--help-doc="));
-        return GDALAlgorithm::ParseCommandLineArguments({"--help-doc"});
-    }
-
-    for (const auto &arg : args)
-    {
-        if (arg.find("--pipeline") == 0)
-            return GDALAlgorithm::ParseCommandLineArguments(args);
-
-        // gdal raster pipeline [--quiet] "read in.tif ..."
-        if (arg.find("read ") == 0)
-            return GDALAlgorithm::ParseCommandLineArguments(args);
-    }
-
-    if (!m_steps.empty())
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "ParseCommandLineArguments() can only be called once per "
-                    "instance.");
-        return false;
-    }
-
-    struct Step
-    {
-        std::unique_ptr<GDALRasterPipelineStepAlgorithm> alg{};
-        std::vector<std::string> args{};
-    };
-
-    std::vector<Step> steps;
-    steps.resize(1);
-
-    for (const auto &arg : args)
-    {
-        if (arg == "--progress")
-        {
-            m_progressBarRequested = true;
-            continue;
-        }
-        if (arg == "--quiet")
-        {
-            m_quiet = true;
-            m_progressBarRequested = false;
-            continue;
-        }
-
-        if (IsCalledFromCommandLine() && (arg == "-h" || arg == "--help"))
-        {
-            if (!steps.back().alg)
-                steps.pop_back();
-            if (steps.empty())
-            {
-                return GDALAlgorithm::ParseCommandLineArguments(args);
-            }
-            else
-            {
-                m_stepOnWhichHelpIsRequested = std::move(steps.back().alg);
-                return true;
-            }
-        }
-
-        auto &curStep = steps.back();
-
-        if (arg == "!" || arg == "|")
-        {
-            if (curStep.alg)
-            {
-                steps.resize(steps.size() + 1);
-            }
-        }
-#ifdef GDAL_PIPELINE_PROJ_NOSTALGIA
-        else if (arg == "+step")
-        {
-            if (curStep.alg)
-            {
-                steps.resize(steps.size() + 1);
-            }
-        }
-        else if (arg.find("+gdal=") == 0)
-        {
-            const std::string stepName = arg.substr(strlen("+gdal="));
-            curStep.alg = GetStepAlg(stepName);
-            if (!curStep.alg)
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "unknown step name: %s", stepName.c_str());
-                return false;
-            }
-        }
-#endif
-        else if (!curStep.alg)
-        {
-            std::string algName = arg;
-#ifdef GDAL_PIPELINE_PROJ_NOSTALGIA
-            if (!algName.empty() && algName[0] == '+')
-                algName = algName.substr(1);
-#endif
-            curStep.alg = GetStepAlg(algName);
-            if (!curStep.alg)
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "unknown step name: %s", algName.c_str());
-                return false;
-            }
-            curStep.alg->SetCallPath({std::move(algName)});
-        }
-        else
-        {
-            if (curStep.alg->HasSubAlgorithms())
-            {
-                auto subAlg = std::unique_ptr<GDALRasterPipelineStepAlgorithm>(
-                    cpl::down_cast<GDALRasterPipelineStepAlgorithm *>(
-                        curStep.alg->InstantiateSubAlgorithm(arg).release()));
-                if (!subAlg)
-                {
-                    ReportError(CE_Failure, CPLE_AppDefined,
-                                "'%s' is a unknown sub-algorithm of '%s'",
-                                arg.c_str(), curStep.alg->GetName().c_str());
-                    return false;
-                }
-                curStep.alg = std::move(subAlg);
-                continue;
-            }
-
-#ifdef GDAL_PIPELINE_PROJ_NOSTALGIA
-            if (!arg.empty() && arg[0] == '+' &&
-                arg.find(' ') == std::string::npos)
-            {
-                curStep.args.push_back("--" + arg.substr(1));
-                continue;
-            }
-#endif
-            curStep.args.push_back(arg);
-        }
-    }
-
-    // As we initially added a step without alg to bootstrap things, make
-    // sure to remove it if it hasn't been filled, or the user has terminated
-    // the pipeline with a '!' separator.
-    if (!steps.back().alg)
-        steps.pop_back();
-
-    // Automatically add a final write step if none in m_executionForStreamOutput
-    // mode
-    if (m_executionForStreamOutput && !steps.empty() &&
-        steps.back().alg->GetName() != GDALRasterWriteAlgorithm::NAME)
-    {
-        steps.resize(steps.size() + 1);
-        steps.back().alg = GetStepAlg(GDALRasterWriteAlgorithm::NAME);
-        steps.back().args.push_back("--output-format");
-        steps.back().args.push_back("stream");
-        steps.back().args.push_back("streamed_dataset");
-    }
-
-    bool helpRequested = false;
-    if (IsCalledFromCommandLine())
-    {
-        for (auto &step : steps)
-            step.alg->SetCalledFromCommandLine();
-
-        for (const std::string &v : args)
-        {
-            if (cpl::ends_with(v, "=?"))
-                helpRequested = true;
-        }
-    }
-
-    if (steps.size() < 2)
-    {
-        if (!steps.empty() && helpRequested)
-        {
-            steps.back().alg->ParseCommandLineArguments(steps.back().args);
-            return false;
-        }
-
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "At least 2 steps must be provided");
-        return false;
-    }
-
-    if (!steps.back().alg->CanBeLastStep())
-    {
-        if (helpRequested)
-        {
-            steps.back().alg->ParseCommandLineArguments(steps.back().args);
-            return false;
-        }
-    }
-
-    std::vector<GDALRasterPipelineStepAlgorithm *> stepAlgs;
-    for (const auto &step : steps)
-        stepAlgs.push_back(step.alg.get());
-    if (!CheckFirstAndLastStep(stepAlgs))
-        return false;  // CheckFirstAndLastStep emits an error
-
-    for (auto &step : steps)
-    {
-        step.alg->SetReferencePathForRelativePaths(
-            GetReferencePathForRelativePaths());
-    }
-
-    // Propagate input parameters set at the pipeline level to the
-    // "read" step
-    {
-        auto &step = steps.front();
-        for (auto &arg : step.alg->GetArgs())
-        {
-            if (!arg->IsHidden())
-            {
-                auto pipelineArg = GetArg(arg->GetName());
-                if (pipelineArg && pipelineArg->IsExplicitlySet() &&
-                    pipelineArg->GetType() == arg->GetType())
-                {
-                    arg->SetSkipIfAlreadySet(true);
-                    arg->SetFrom(*pipelineArg);
-                }
-            }
-        }
-    }
-
-    // Same with "write" step
-    {
-        auto &step = steps.back();
-        for (auto &arg : step.alg->GetArgs())
-        {
-            if (!arg->IsHidden())
-            {
-                auto pipelineArg = GetArg(arg->GetName());
-                if (pipelineArg && pipelineArg->IsExplicitlySet() &&
-                    pipelineArg->GetType() == arg->GetType())
-                {
-                    arg->SetSkipIfAlreadySet(true);
-                    arg->SetFrom(*pipelineArg);
-                }
-            }
-        }
-    }
-
-    // Parse each step, but without running the validation
-    for (const auto &step : steps)
-    {
-        step.alg->m_skipValidationInParseCommandLine = true;
-        if (!step.alg->ParseCommandLineArguments(step.args))
-            return false;
-    }
-
-    // Evaluate "input" argument of "read" step, together with the "output"
-    // argument of the "write" step, in case they point to the same dataset.
-    auto inputArg = steps.front().alg->GetArg(GDAL_ARG_NAME_INPUT);
-    if (inputArg && inputArg->IsExplicitlySet() &&
-        inputArg->GetType() == GAAT_DATASET_LIST &&
-        inputArg->Get<std::vector<GDALArgDatasetValue>>().size() == 1)
-    {
-        steps.front().alg->ProcessDatasetArg(inputArg, steps.back().alg.get());
-    }
-
-    for (const auto &step : steps)
-    {
-        if (!step.alg->ValidateArguments())
-            return false;
-    }
-
-    for (auto &step : steps)
-        m_steps.push_back(std::move(step.alg));
-
-    return true;
+    registry.Register<GDALTeeRasterAlgorithm>(
+        addSuffixIfNeeded(GDALTeeRasterAlgorithm::NAME));
 }
 
 /************************************************************************/
@@ -512,7 +237,6 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     if (!m_helpDocCategory.empty() && m_helpDocCategory != "main")
     {
         auto alg = GetStepAlg(m_helpDocCategory);
-        std::string ret;
         if (alg)
         {
             alg->SetCallPath({m_helpDocCategory});
@@ -570,8 +294,8 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (alg->CanBeFirstStep() && !alg->IsHidden() &&
-            name != GDALRasterReadAlgorithm::NAME)
+        if (alg->CanBeFirstStep() && !alg->CanBeMiddleStep() &&
+            !alg->IsHidden() && name != GDALRasterReadAlgorithm::NAME)
         {
             ret += '\n';
             alg->SetCallPath({name});
@@ -582,7 +306,7 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (!alg->CanBeFirstStep() && !alg->CanBeLastStep() && !alg->IsHidden())
+        if (alg->CanBeMiddleStep() && !alg->IsHidden())
         {
             ret += '\n';
             alg->SetCallPath({name});
@@ -593,8 +317,8 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (alg->CanBeLastStep() && !alg->IsHidden() &&
-            name != GDALRasterWriteAlgorithm::NAME)
+        if (alg->CanBeLastStep() && !alg->CanBeMiddleStep() &&
+            !alg->IsHidden() && name != GDALRasterWriteAlgorithm::NAME)
         {
             ret += '\n';
             alg->SetCallPath({name});

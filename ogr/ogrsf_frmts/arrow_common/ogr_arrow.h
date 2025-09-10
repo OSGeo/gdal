@@ -338,16 +338,21 @@ class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
     std::vector<std::string> m_aosDomainNames{};
     std::map<std::string, int> m_oMapDomainNameToCol{};
 
-  protected:
-    void close()
-    {
-        m_poLayer.reset();
-        m_poMemoryPool.reset();
-    }
-
   public:
     explicit OGRArrowDataset(
         const std::shared_ptr<arrow::MemoryPool> &poMemoryPool);
+
+    ~OGRArrowDataset() override
+    {
+        OGRArrowDataset::Close();
+    }
+
+    CPLErr Close() override
+    {
+        m_poLayer.reset();
+        m_poMemoryPool.reset();
+        return GDALPamDataset::Close();
+    }
 
     inline arrow::MemoryPool *GetMemoryPool() const
     {

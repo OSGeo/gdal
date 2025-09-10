@@ -1002,8 +1002,11 @@ CPLErr GDALGeoPackageDataset::Close()
                      m_osRasterTable.c_str());
         }
 
-        if (GDALGeoPackageDataset::FlushCache(true) != CE_None)
+        if (!IsMarkedSuppressOnClose() &&
+            GDALGeoPackageDataset::FlushCache(true) != CE_None)
+        {
             eErr = CE_Failure;
+        }
 
         // Destroy bands now since we don't want
         // GDALGPKGMBTilesLikeRasterBand::FlushCache() to run after dataset

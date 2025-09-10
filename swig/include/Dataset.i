@@ -283,6 +283,16 @@ public:
      return GDALClose(self);
   }
 
+#ifdef SWIGPYTHON
+  CPLErr _RunCloseWithoutDestroying() {
+     CPLErr eErr = GDALDatasetRunCloseWithoutDestroying(self);
+     if (eErr != CE_None && CPLGetLastErrorType() == CE_None ) {
+       CPLError(CE_Failure, CPLE_AppDefined, "Error occurred in GDALDatasetRunCloseWithoutDestroying()");
+     }
+     return eErr;
+  }
+#endif
+
   GDALDriverShadow* GetDriver() {
     return (GDALDriverShadow*) GDALGetDatasetDriver( self );
   }

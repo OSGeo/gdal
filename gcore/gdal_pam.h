@@ -137,6 +137,8 @@ class CPL_DLL GDALPamDataset : public GDALDataset
   public:
     ~GDALPamDataset() override;
 
+    CPLErr Close() override;
+
     CPLErr FlushCache(bool bAtClosing) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;

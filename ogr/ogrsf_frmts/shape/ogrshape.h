@@ -325,6 +325,8 @@ class OGRShapeDataSource final : public GDALDataset
     OGRShapeDataSource();
     ~OGRShapeDataSource() override;
 
+    CPLErr Close() override;
+
     OGRLayerPool *GetPool() const
     {
         return m_poPool.get();

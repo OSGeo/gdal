@@ -19,6 +19,7 @@
 #include "cpl_multiproc.h"
 
 #include "gdalalgorithm.h"
+#include "gdalalg_abstract_pipeline.h"
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 #include "ogr_spatialref.h"
@@ -1037,6 +1038,30 @@ bool GDALAlgorithmArg::RunValidationActions()
 }
 
 /************************************************************************/
+/*                 GDALAlgorithmArg::GetEscapedString()                 */
+/************************************************************************/
+
+/* static */
+std::string GDALAlgorithmArg::GetEscapedString(const std::string &s)
+{
+    if (s.find_first_of("\" \\,") != std::string::npos &&
+        !(s.size() > 4 &&
+          s[0] == GDALAbstractPipelineAlgorithm::OPEN_NESTED_PIPELINE[0] &&
+          s[1] == ' ' && s[s.size() - 2] == ' ' &&
+          s.back() == GDALAbstractPipelineAlgorithm::CLOSE_NESTED_PIPELINE[0]))
+    {
+        return std::string("\"")
+            .append(
+                CPLString(s).replaceAll('\\', "\\\\").replaceAll('"', "\\\""))
+            .append("\"");
+    }
+    else
+    {
+        return s;
+    }
+}
+
+/************************************************************************/
 /*                    GDALAlgorithmArg::Serialize()                     */
 /************************************************************************/
 
@@ -1057,24 +1082,6 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg,
         serializedArg = std::move(ret);
         return true;
     }
-
-    const auto AppendString = [&ret](const std::string &str)
-    {
-        if (str.find('"') != std::string::npos ||
-            str.find(' ') != std::string::npos ||
-            str.find('\\') != std::string::npos ||
-            str.find(',') != std::string::npos)
-        {
-            ret += '"';
-            ret +=
-                CPLString(str).replaceAll('\\', "\\\\").replaceAll('"', "\\\"");
-            ret += '"';
-        }
-        else
-        {
-            ret += str;
-        }
-    };
 
     const auto AddListValueSeparator = [this, &ret]()
     {
@@ -1113,7 +1120,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg,
         case GAAT_STRING:
         {
             const auto &val = Get<std::string>();
-            AppendString(val);
+            ret += GetEscapedString(val);
             break;
         }
         case GAAT_INTEGER:
@@ -1134,7 +1141,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg,
             {
                 return false;
             }
-            AppendString(absolutePath ? MakeAbsolutePath(str) : str);
+            ret += GetEscapedString(absolutePath ? MakeAbsolutePath(str) : str);
             break;
         }
         case GAAT_STRING_LIST:
@@ -1144,7 +1151,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg,
             {
                 if (i > 0)
                     AddListValueSeparator();
-                AppendString(vals[i]);
+                ret += GetEscapedString(vals[i]);
             }
             break;
         }
@@ -1183,7 +1190,8 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg,
                 {
                     return false;
                 }
-                AppendString(absolutePath ? MakeAbsolutePath(str) : str);
+                ret += GetEscapedString(absolutePath ? MakeAbsolutePath(str)
+                                                     : str);
             }
             break;
         }
@@ -1763,7 +1771,9 @@ bool GDALAlgorithm::ParseArgument(
         {
             const CPLStringList aosTokens(
                 arg->GetPackedValuesAllowed()
-                    ? CSLTokenizeString2(value.c_str(), ",", CSLT_HONOURSTRINGS)
+                    ? CSLTokenizeString2(value.c_str(), ",",
+                                         CSLT_HONOURSTRINGS |
+                                             CSLT_PRESERVEQUOTES)
                     : CSLAddString(nullptr, value.c_str()));
             if (!cpl::contains(inConstructionValues, arg))
             {
@@ -1863,8 +1873,9 @@ bool GDALAlgorithm::ParseArgument(
             }
             else
             {
-                const CPLStringList aosTokens(
-                    CSLTokenizeString2(value.c_str(), ",", CSLT_HONOURSTRINGS));
+                const CPLStringList aosTokens(CSLTokenizeString2(
+                    value.c_str(), ",",
+                    CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES));
                 for (const char *v : aosTokens)
                 {
                     valueVector.push_back(GDALArgDatasetValue(v));
@@ -2562,11 +2573,22 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             }
         }
 
-        auto poDS =
-            GDALDataset::Open(osDatasetName.c_str(), flags,
-                              aosAllowedDrivers.List(), aosOpenOptions.List());
+        auto oIter = m_oMapDatasetNameToDataset.find(osDatasetName.c_str());
+        auto poDS = oIter != m_oMapDatasetNameToDataset.end()
+                        ? oIter->second
+                        : GDALDataset::Open(osDatasetName.c_str(), flags,
+                                            aosAllowedDrivers.List(),
+                                            aosOpenOptions.List());
         if (poDS)
         {
+            if (oIter != m_oMapDatasetNameToDataset.end())
+            {
+                if (arg->GetType() == GAAT_DATASET)
+                    arg->Get<GDALArgDatasetValue>().Set(poDS->GetDescription());
+                poDS->Reference();
+                m_oMapDatasetNameToDataset.erase(oIter);
+            }
+
             if (assignToOutputArg)
             {
                 // Avoid opening twice the same datasource if it is both
@@ -4053,6 +4075,26 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
                 return false;
             }
 
+            const auto allowedFormats =
+                arg.GetMetadataItem(GAAMDI_ALLOWED_FORMATS);
+            if (allowedFormats && !allowedFormats->empty() &&
+                std::find(allowedFormats->begin(), allowedFormats->end(),
+                          val) != allowedFormats->end())
+            {
+                return true;
+            }
+
+            const auto excludedFormats =
+                arg.GetMetadataItem(GAAMDI_EXCLUDED_FORMATS);
+            if (excludedFormats && !excludedFormats->empty() &&
+                std::find(excludedFormats->begin(), excludedFormats->end(),
+                          val) != excludedFormats->end())
+            {
+                ReportError(CE_Failure, CPLE_NotSupported,
+                            "%s output is not supported.", val.c_str());
+                return false;
+            }
+
             auto hDriver = GDALGetDriverByName(val.c_str());
             if (!hDriver)
             {
@@ -4163,6 +4205,8 @@ std::vector<std::string> GDALAlgorithm::FormatAutoCompleteFunction(
     std::vector<std::string> res;
     auto poDM = GetGDALDriverManager();
     const auto vrtCompatible = arg.GetMetadataItem(GAAMDI_VRT_COMPATIBLE);
+    const auto allowedFormats = arg.GetMetadataItem(GAAMDI_ALLOWED_FORMATS);
+    const auto excludedFormats = arg.GetMetadataItem(GAAMDI_EXCLUDED_FORMATS);
     const auto caps = arg.GetMetadataItem(GAAMDI_REQUIRED_CAPABILITIES);
     for (int i = 0; i < poDM->GetDriverCount(); ++i)
     {
@@ -4173,6 +4217,19 @@ std::vector<std::string> GDALAlgorithm::FormatAutoCompleteFunction(
             EQUAL(poDriver->GetDescription(), "VRT"))
         {
             // do nothing
+        }
+        else if (allowedFormats && !allowedFormats->empty() &&
+                 std::find(allowedFormats->begin(), allowedFormats->end(),
+                           poDriver->GetDescription()) != allowedFormats->end())
+        {
+            res.push_back(poDriver->GetDescription());
+        }
+        else if (excludedFormats && !excludedFormats->empty() &&
+                 std::find(excludedFormats->begin(), excludedFormats->end(),
+                           poDriver->GetDescription()) !=
+                     excludedFormats->end())
+        {
+            continue;
         }
         else if (caps)
         {

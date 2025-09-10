@@ -28,7 +28,7 @@
 /*                GDALVectorPipelineStepAlgorithm                       */
 /************************************************************************/
 
-class GDALVectorAlgorithmStepRegistry;
+class GDALRasterAlgorithmStepRegistry;
 
 class GDALVectorPipelineStepAlgorithm /* non final */
     : public GDALPipelineStepAlgorithm
@@ -48,8 +48,6 @@ class GDALVectorPipelineStepAlgorithm /* non final */
                                     const ConstructorOptions &options);
 
     friend class GDALVectorPipelineAlgorithm;
-    friend class GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm,
-                                               GDALVectorAlgorithmStepRegistry>;
     friend class GDALVectorConcatAlgorithm;
 
     int GetInputType() const override
@@ -95,15 +93,7 @@ class GDALVectorAlgorithmStepRegistry : public virtual GDALAlgorithmRegistry
 /*                     GDALVectorPipelineAlgorithm                      */
 /************************************************************************/
 
-// This is an easter egg to pay tribute to PROJ pipeline syntax
-// We accept "gdal vector +gdal=pipeline +step +gdal=read +input=poly.gpkg +step +gdal=reproject +dst-crs=EPSG:32632 +step +gdal=write +output=out.gpkg +overwrite"
-// as an alternative to (recommended):
-// "gdal vector pipeline ! read poly.gpkg ! reproject--dst-crs=EPSG:32632 ! write out.gpkg --overwrite"
-#define GDAL_PIPELINE_PROJ_NOSTALGIA
-
-class GDALVectorPipelineAlgorithm final
-    : public GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm,
-                                           GDALVectorAlgorithmStepRegistry>
+class GDALVectorPipelineAlgorithm final : public GDALAbstractPipelineAlgorithm
 {
   public:
     static constexpr const char *NAME = "pipeline";
@@ -125,14 +115,41 @@ class GDALVectorPipelineAlgorithm final
 
     GDALVectorPipelineAlgorithm();
 
-    bool
-    ParseCommandLineArguments(const std::vector<std::string> &args) override;
-
     std::string GetUsageForCLI(bool shortUsage,
                                const UsageOptions &usageOptions) const override;
 
     static void RegisterAlgorithms(GDALVectorAlgorithmStepRegistry &registry,
                                    bool forMixedPipeline);
+
+    int GetInputType() const override
+    {
+        return GDAL_OF_VECTOR;
+    }
+
+    int GetOutputType() const override
+    {
+        return GDAL_OF_VECTOR;
+    }
+
+  protected:
+    GDALVectorAlgorithmStepRegistry m_stepRegistry{};
+
+    GDALAlgorithmRegistry &GetStepRegistry() override
+    {
+        return m_stepRegistry;
+    }
+
+    const GDALAlgorithmRegistry &GetStepRegistry() const override
+    {
+        return m_stepRegistry;
+    }
+
+  private:
+    std::unique_ptr<GDALAbstractPipelineAlgorithm>
+    CreateNestedPipeline() const override
+    {
+        return std::make_unique<GDALVectorPipelineAlgorithm>();
+    }
 };
 
 /************************************************************************/
@@ -171,7 +188,7 @@ class GDALVectorPipelineOutputLayer /* non final */
 /** Class that forwards GetNextFeature() calls to the source layer and
  * can be added to GDALVectorPipelineOutputDataset::AddLayer()
  */
-class GDALVectorPipelinePassthroughLayer final
+class GDALVectorPipelinePassthroughLayer /* non final */
     : public GDALVectorPipelineOutputLayer
 {
   public:
@@ -251,7 +268,6 @@ class GDALVectorPipelineOutputDataset final : public GDALDataset
 
   public:
     explicit GDALVectorPipelineOutputDataset(GDALDataset &oSrcDS);
-    ~GDALVectorPipelineOutputDataset() override;
 
     void AddLayer(OGRLayer &oSrcLayer,
                   std::unique_ptr<OGRLayerWithTranslateFeature> poNewLayer);

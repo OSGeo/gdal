@@ -1385,6 +1385,8 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     }
 
     aosOptions.SetNameValue("@FLUSHCACHE", "YES");
+    aosOptions.SetNameValue("@SUPPRESS_ASAP",
+                            CSLFetchNameValue(papszOptions, "@SUPPRESS_ASAP"));
 
     CPLDebug("COG", "Generating final product: start");
     auto poRet =
@@ -1685,6 +1687,7 @@ void GDALRegister_COG()
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME,
                               "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CAN_READ_AFTER_DELETE, "YES");
 
     poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");
 

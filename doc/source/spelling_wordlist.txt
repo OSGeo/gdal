@@ -1143,6 +1143,7 @@ GetFieldAsDateTime
 GetFieldCount
 GetFieldDefn
 GetFieldSubTypeName
+GetFileList
 GetGeomFieldCount
 GetGeomFieldDefn
 GetLayerDefn

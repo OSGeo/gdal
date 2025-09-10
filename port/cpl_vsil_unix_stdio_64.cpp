@@ -231,9 +231,11 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
     VSIUnixStdioFilesystemHandler *poFS = nullptr;
 #endif
 
+    std::string m_osFilename{};
+#if defined(__linux)
+    bool m_bUnlinkedFile = false;
     bool m_bCancelCreation = false;
-    std::string m_osFilenameToSetAtCloseTime{};
-#if !defined(__linux)
+#else
     std::string m_osTmpFilename{};
 #endif
 
@@ -266,10 +268,7 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
                  vsi_l_offset /*nOffset*/) const override;
 #endif
 
-    void CancelCreation() override
-    {
-        m_bCancelCreation = true;
-    }
+    void CancelCreation() override;
 };
 
 /************************************************************************/
@@ -319,7 +318,7 @@ int VSIUnixStdioHandle::Close()
     int ret = 0;
 
 #ifdef __linux
-    if (!m_bCancelCreation && !m_osFilenameToSetAtCloseTime.empty())
+    if (!m_bCancelCreation && !m_osFilename.empty() && m_bUnlinkedFile)
     {
         ret = fflush(fp);
         if (ret == 0)
@@ -330,9 +329,8 @@ int VSIUnixStdioHandle::Close()
             char szPath[32];
             const int fd = fileno(fp);
             snprintf(szPath, sizeof(szPath), "/proc/self/fd/%d", fd);
-            ret =
-                linkat(AT_FDCWD, szPath, AT_FDCWD,
-                       m_osFilenameToSetAtCloseTime.c_str(), AT_SYMLINK_FOLLOW);
+            ret = linkat(AT_FDCWD, szPath, AT_FDCWD, m_osFilename.c_str(),
+                         AT_SYMLINK_FOLLOW);
             if (ret != 0)
                 CPLDebug("CPL", "linkat() failed with errno=%d", errno);
         }
@@ -344,22 +342,42 @@ int VSIUnixStdioHandle::Close()
         ret = ret2;
 
 #if !defined(__linux)
-    if (!m_osFilenameToSetAtCloseTime.empty())
+    if (!m_osTmpFilename.empty() && !m_osFilename.empty())
     {
-        if (m_bCancelCreation)
-        {
-            ret = unlink(m_osFilenameToSetAtCloseTime.c_str());
-        }
-        else
-        {
-            ret = rename(m_osTmpFilename.c_str(),
-                         m_osFilenameToSetAtCloseTime.c_str());
-        }
+        ret = rename(m_osTmpFilename.c_str(), m_osFilename.c_str());
     }
 #endif
 
     fp = nullptr;
     return ret;
+}
+
+/************************************************************************/
+/*                          CancelCreation()                            */
+/************************************************************************/
+
+void VSIUnixStdioHandle::CancelCreation()
+{
+#if defined(__linux)
+    if (!m_osFilename.empty() && !m_bUnlinkedFile)
+    {
+        unlink(m_osFilename.c_str());
+        m_osFilename.clear();
+    }
+    else if (m_bUnlinkedFile)
+        m_bCancelCreation = true;
+#else
+    if (!m_osTmpFilename.empty())
+    {
+        unlink(m_osTmpFilename.c_str());
+        m_osTmpFilename.clear();
+    }
+    else if (!m_osFilename.empty())
+    {
+        unlink(m_osFilename.c_str());
+        m_osFilename.clear();
+    }
+#endif
 }
 
 /************************************************************************/
@@ -812,6 +830,7 @@ VSIUnixStdioFilesystemHandler::Open(const char *pszFilename,
         strcmp(pszAccess, "a+b") == 0 || strcmp(pszAccess, "a+") == 0;
     auto poHandle = std::make_unique<VSIUnixStdioHandle>(this, fp, bReadOnly,
                                                          bModeAppendReadWrite);
+    poHandle->m_osFilename = pszFilename;
 
     errno = nError;
 
@@ -849,8 +868,17 @@ VSIUnixStdioFilesystemHandler::CreateOnlyVisibleAtCloseTime(
                               O_TMPFILE | O_RDWR, 0666)
                        : -1;
     if (fd < 0)
+    {
+        if (bIsLinkatSupported)
+        {
+            CPLDebugOnce("VSI",
+                         "open(O_TMPFILE | O_RDWR) failed with errno=%d (%s). "
+                         "Going through emulation",
+                         errno, VSIStrerror(errno));
+        }
         return VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
             pszFilename, bEmulationAllowed, papszOptions);
+    }
 
     FILE *fp = fdopen(fd, "wb+");
     if (!fp)
@@ -861,7 +889,8 @@ VSIUnixStdioFilesystemHandler::CreateOnlyVisibleAtCloseTime(
 
     auto poHandle = std::make_unique<VSIUnixStdioHandle>(
         this, fp, /* bReadOnly = */ false, /* bModeAppendReadWrite = */ false);
-    poHandle->m_osFilenameToSetAtCloseTime = pszFilename;
+    poHandle->m_osFilename = pszFilename;
+    poHandle->m_bUnlinkedFile = true;
     return VSIVirtualHandleUniquePtr(poHandle.release());
 #else
     if (!bEmulationAllowed)
@@ -885,7 +914,7 @@ VSIUnixStdioFilesystemHandler::CreateOnlyVisibleAtCloseTime(
     auto poHandle = std::make_unique<VSIUnixStdioHandle>(
         this, fp, /* bReadOnly = */ false, /* bModeAppendReadWrite = */ false);
     poHandle->m_osTmpFilename = std::move(osTmpFilename);
-    poHandle->m_osFilenameToSetAtCloseTime = pszFilename;
+    poHandle->m_osFilename = pszFilename;
     return VSIVirtualHandleUniquePtr(poHandle.release());
 #endif
 }

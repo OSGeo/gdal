@@ -36,6 +36,11 @@ class GDALRasterWriteAlgorithm final : public GDALRasterPipelineStepAlgorithm
         return true;
     }
 
+    bool GeneratesFilesFromUserInput() const override
+    {
+        return true;
+    }
+
     bool IsNativelyStreamingCompatible() const override
     {
         return false;

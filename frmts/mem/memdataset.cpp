@@ -1412,10 +1412,13 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
     if (pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE"))
         poDS->SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
 
-    if (bPixelInterleaved)
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-    else
-        poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+    if (nXSize != 0 && nYSize != 0)
+    {
+        if (bPixelInterleaved)
+            poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        else
+            poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */

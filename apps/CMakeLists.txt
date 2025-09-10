@@ -28,6 +28,7 @@ add_library(
 
 if(GDAL_ENABLE_ALGORITHMS)
 target_sources(appslib PRIVATE
+  gdalalg_abstract_pipeline.cpp
   gdalalg_clip_common.cpp
   gdalalg_convert.cpp
   gdalalg_info.cpp
@@ -36,6 +37,7 @@ target_sources(appslib PRIVATE
   gdalalg_dataset_copy.cpp
   gdalalg_dataset_rename.cpp
   gdalalg_dataset_delete.cpp
+  gdalalg_materialize.cpp
   gdalalg_mdim.cpp
   gdalalg_mdim_info.cpp
   gdalalg_mdim_convert.cpp
@@ -88,6 +90,7 @@ target_sources(appslib PRIVATE
   gdalalg_raster_update.cpp
   gdalalg_raster_viewshed.cpp
   gdalalg_raster_write.cpp
+  gdalalg_tee.cpp
   gdalalg_vector.cpp
   gdalalg_vector_info.cpp
   gdalalg_vector_check_coverage.cpp

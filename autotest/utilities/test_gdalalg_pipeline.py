@@ -805,3 +805,246 @@ def test_gdalalg_pipeline_existing_completion(tmp_path):
         f"{gdal_path} completion gdal pipeline {pipeline_filename} --edit[0].geometry-type="
     ).split(" ")
     assert "GEOMETRY" in out
+
+
+def test_gdalalg_pipeline_nested_nominal():
+
+    with gdal.Run(
+        "pipeline",
+        pipeline="read ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! color-merge --grayscale [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] ! write --of MEM unnamed",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.RasterCount == 3
+        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+            48564,
+            51840,
+            50950,
+        ]
+
+
+def test_gdalalg_pipeline_nested_serialize_to_gdalg(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "out.gdalg.json"
+    gdal.Run(
+        "pipeline",
+        pipeline=f"read ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! color-merge --grayscale [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] ! write {out_filename}",
+    )
+
+    with gdal.VSIFile(out_filename, "rb") as f:
+        j = json.loads(f.read())
+
+    j["relative_paths_relative_to_this_file"] = False
+
+    with gdal.VSIFile(out_filename, "wb") as f:
+        f.write(json.dumps(j).encode("utf-8"))
+
+    del j["gdal_version"]
+    assert j == {
+        "command_line": "gdal pipeline read --input ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! color-merge --grayscale [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ]",
+        "relative_paths_relative_to_this_file": False,
+        "type": "gdal_streamed_alg",
+    }
+
+    if gdal.GetDriverByName("GDALG"):
+        with gdal.Open(out_filename) as ds:
+            assert ds.RasterCount == 3
+            assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+                48564,
+                51840,
+                50950,
+            ]
+
+
+def test_gdalalg_pipeline_nested_errors():
+
+    with pytest.raises(
+        Exception,
+        match="Open bracket must be placed where an input dataset is expected",
+    ):
+        gdal.Run("pipeline", pipeline="[")
+
+    with pytest.raises(Exception, match="Open bracket has no matching closing bracket"):
+        gdal.Run("pipeline", pipeline="read [")
+
+    with pytest.raises(
+        Exception, match="At least one step must be provided in an inner pipeline"
+    ):
+        gdal.Run("pipeline", pipeline="read [ ]")
+
+    with pytest.raises(
+        Exception, match="Closing bracket found without matching open bracket"
+    ):
+        gdal.Run("pipeline", pipeline="read ]")
+
+    with pytest.raises(Exception, match="Too many nested pipelines"):
+        gdal.Run("pipeline", pipeline="read [ read [ read [ foo ] ] ]")
+
+    with pytest.raises(
+        Exception, match="Last step in an inner pipeline must not be a write-like step"
+    ):
+        gdal.Run("pipeline", pipeline="read [ write foo ]")
+
+    with pytest.raises(
+        Exception, match="'write' is not allowed as an intermediate step"
+    ):
+        gdal.Run(
+            "pipeline",
+            pipeline="read [ read ../gcore/data/byte.tif ! write /vsimem/out.tif ! reproject ] ! info",
+        )
+
+    with pytest.raises(Exception, match="/i/do_not/exist.bin"):
+        gdal.Run("pipeline", pipeline="read [ read /i/do_not/exist.bin ]")
+
+    with pytest.raises(Exception, match="Cannot find coordinate operations"):
+        gdal.Run(
+            "pipeline",
+            pipeline='read [ read ../gcore/data/byte.tif ! reproject --dst-crs "+proj=longlat +a=1" ] ! info',
+        )
+
+
+def test_gdalalg_pipeline_tee_nominal_raster(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "out.tif"
+    with gdal.Run(
+        "pipeline",
+        pipeline=f"read ../gcore/data/byte.tif ! tee [ write {out_filename} ] ! write --of MEM mem_dataset",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+    gdal.Unlink(out_filename)
+
+    out2_filename = tmp_vsimem / "out2.tif"
+    with gdal.Run(
+        "pipeline",
+        pipeline=f"read ../gcore/data/byte.tif ! tee [ write {out_filename} ] [ write {out2_filename} ]",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+    with gdal.Open(out2_filename) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+def test_gdalalg_pipeline_tee_nominal_vector(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "out.shp"
+    with gdal.Run(
+        "pipeline",
+        pipeline=f"read ../ogr/data/poly.shp ! tee [ write {out_filename} ] ! write --of MEM mem_dataset",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetLayer(0).GetFeatureCount() == 10
+
+    with ogr.Open(out_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 10
+
+    out1_filename = tmp_vsimem / "out1.shp"
+    out2_filename = tmp_vsimem / "out2.shp"
+    with gdal.Run(
+        "pipeline",
+        pipeline=f'read ../ogr/data/poly.shp ! tee [ filter --where "EAS_ID = 170" ! write {out1_filename} ] [ filter --bbox=478315,4763000,481645,4764500 ! write {out2_filename} ] ! write --of MEM mem_dataset',
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetLayer(0).GetFeatureCount() == 10
+
+    with ogr.Open(out1_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 1
+
+    with ogr.Open(out2_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 4
+
+
+def test_gdalalg_pipeline_tee_gdalg(tmp_vsimem):
+
+    src_filename = os.path.join(os.getcwd(), "..", "ogr", "data", "poly.shp")
+    out_filename = tmp_vsimem / "out.shp"
+    gdalg_filename = tmp_vsimem / "out.gdalg.json"
+    with gdaltest.error_raised(gdal.CE_Warning):
+        gdal.Run(
+            "pipeline",
+            pipeline=f"read {src_filename} ! tee [ write {out_filename} ] ! write {gdalg_filename}",
+        )
+
+    assert gdal.VSIStatL(out_filename) is None
+
+    if gdal.GetDriverByName("GDALG"):
+
+        with pytest.raises(
+            Exception,
+            match="Step 'tee' not allowed in stream execution, unless the GDAL_ALGORITHM_ALLOW_WRITES_IN_STREAM configuration option is set",
+        ):
+            ogr.Open(gdalg_filename)
+
+        assert gdal.VSIStatL(out_filename) is None
+
+        with gdal.config_option("GDAL_ALGORITHM_ALLOW_WRITES_IN_STREAM", "YES"):
+            ds = ogr.Open(gdalg_filename)
+            assert ds.GetLayer(0).GetFeatureCount() == 10
+
+        assert gdal.VSIStatL(out_filename) is not None
+
+        with ogr.Open(out_filename) as ds:
+            assert ds.GetLayer(0).GetFeatureCount() == 10
+
+
+def test_gdalalg_pipeline_tee_error(tmp_vsimem):
+
+    with pytest.raises(
+        Exception, match="At least one step must be provided in an inner pipeline"
+    ):
+        gdal.Run(
+            "pipeline",
+            pipeline="read ../gcore/data/byte.tif ! tee [ ]",
+        )
+
+    with pytest.raises(Exception, match="unknown step name: invalid"):
+        gdal.Run(
+            "pipeline",
+            pipeline="read ../gcore/data/byte.tif ! tee [ invalid ]",
+        )
+
+    with pytest.raises(Exception, match="'illegal' is not a valid nested pipeline"):
+        gdal.Run(
+            "pipeline",
+            pipeline="read ../gcore/data/byte.tif ! tee illegal",
+        )
+
+    with pytest.raises(Exception, match="Another identical nested pipeline exists"):
+        gdal.Run(
+            "pipeline",
+            pipeline="read ../gcore/data/byte.tif ! tee [ write /vsimem/out.shp ] [ write /vsimem/out.shp ]",
+        )
+
+    with pytest.raises(Exception, match="No read-like step like 'read' is allowed"):
+        gdal.Run(
+            "pipeline",
+            pipeline="read ../gcore/data/byte.tif ! tee [ read /vsimem/out.shp ]",
+        )
+
+    with pytest.raises(
+        Exception,
+        match="Value of 'bbox' should be xmin,ymin,xmax,ymax with xmin <= xmax and ymin <= ymax",
+    ):
+        gdal.Run(
+            "pipeline",
+            pipeline="read ../ogr/data/poly.shp ! tee [ filter --bbox=0,1,1,0 ! write /vsimem/out.shp ]",
+        )
+
+    out_filename = tmp_vsimem / "out.tif"
+    gdal.Run(
+        "pipeline",
+        pipeline=f"read ../gcore/data/byte.tif ! tee [ write {out_filename} ]",
+    )
+
+    with pytest.raises(Exception, match="already exists"):
+        gdal.Run(
+            "pipeline",
+            pipeline=f"read ../gcore/data/byte.tif ! tee [ write {out_filename} ]",
+        )
