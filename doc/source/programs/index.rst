@@ -127,6 +127,7 @@ Raster commands
    gdal_raster_unscale
    gdal_raster_update
    gdal_raster_viewshed
+   gdal_raster_zonal_stats
 
 .. only:: html
 
@@ -178,6 +179,7 @@ Raster commands
     - :ref:`gdal_raster_unscale`: Convert scaled values of a raster dataset into unscaled values.
     - :ref:`gdal_raster_update`: Update the destination raster with the content of the input one.
     - :ref:`gdal_raster_viewshed`: Compute the viewshed of a raster dataset.
+    - :ref:`gdal_raster_zonal_stats`: Compute raster zonal statistics
 
     Pipelines:
 

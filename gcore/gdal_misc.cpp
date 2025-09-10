@@ -5851,3 +5851,51 @@ bool GDALDoesFileOrDatasetExist(const char *pszName, const char **ppszType,
 
     return false;
 }
+
+/************************************************************************/
+/*                           GDALGeoTransform::Apply                    */
+/************************************************************************/
+
+bool GDALGeoTransform::Apply(const OGREnvelope &env,
+                             GDALRasterWindow &window) const
+{
+    if (!IsAxisAligned())
+    {
+        return false;
+    }
+
+    double dfLeft, dfRight, dfTop, dfBottom;
+    Apply(env.MinX, env.MinY, &dfLeft, &dfBottom);
+    Apply(env.MaxX, env.MaxY, &dfRight, &dfTop);
+
+    dfTop = std::floor(dfTop);
+    dfBottom = std::ceil(dfBottom);
+    dfLeft = std::floor(dfLeft);
+    dfRight = std::ceil(dfRight);
+
+    window.nXOff = static_cast<int>(dfLeft);
+    window.nXSize = static_cast<int>(dfRight - dfLeft);
+    window.nYOff = static_cast<int>(dfTop);
+    window.nYSize = static_cast<int>(dfBottom - dfTop);
+
+    return true;
+}
+
+bool GDALGeoTransform::Apply(const GDALRasterWindow &window,
+                             OGREnvelope &env) const
+{
+    if (!IsAxisAligned())
+    {
+        return false;
+    }
+
+    double dfLeft = window.nXOff;
+    double dfRight = window.nXOff + window.nXSize;
+    double dfTop = window.nYOff;
+    double dfBottom = window.nYOff + window.nYSize;
+
+    Apply(dfLeft, dfBottom, &env.MinX, &env.MinY);
+    Apply(dfRight, dfTop, &env.MaxX, &env.MaxY);
+
+    return true;
+}
