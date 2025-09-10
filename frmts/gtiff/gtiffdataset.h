@@ -153,7 +153,7 @@ class GTiffDataset final : public GDALPamDataset
 
     MaskOffset *m_panMaskOffsetLsb = nullptr;
     char *m_pszVertUnit = nullptr;
-    char *m_pszFilename = nullptr;
+    std::string m_osFilename{};
     char *m_pszTmpFilename = nullptr;
     char *m_pszGeorefFilename = nullptr;
     char *m_pszXMLFilename = nullptr;
