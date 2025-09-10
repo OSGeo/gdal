@@ -34,7 +34,7 @@
 GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
 
 {
-    if (m_poRAT)
+    if (m_poRAT || m_poGDS->m_poBaseDS != nullptr)
         return m_poRAT.get();
 
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
@@ -42,10 +42,9 @@ GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
     if (poRAT)
         return poRAT;
 
-    if (!GDALCanFileAcceptSidecarFile(m_poGDS->m_pszFilename))
+    if (!GDALCanFileAcceptSidecarFile(m_poGDS->m_osFilename.c_str()))
         return nullptr;
-    const std::string osVATDBF =
-        std::string(m_poGDS->m_pszFilename) + ".vat.dbf";
+    const std::string osVATDBF = m_poGDS->m_osFilename + ".vat.dbf";
     CSLConstList papszSiblingFiles = m_poGDS->GetSiblingFiles();
     if (papszSiblingFiles &&
         // cppcheck-suppress knownConditionTrueFalse
@@ -55,9 +54,10 @@ GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
             CSLFindString(papszSiblingFiles, CPLGetFilename(osVATDBF.c_str()));
         if (iSibling >= 0)
         {
-            CPLString osFilename = m_poGDS->m_pszFilename;
-            osFilename.resize(strlen(m_poGDS->m_pszFilename) -
-                              strlen(CPLGetFilename(m_poGDS->m_pszFilename)));
+            CPLString osFilename = m_poGDS->m_osFilename;
+            osFilename.resize(
+                m_poGDS->m_osFilename.size() -
+                strlen(CPLGetFilename(m_poGDS->m_osFilename.c_str())));
             osFilename += papszSiblingFiles[iSibling];
             m_poRAT = GDALLoadVATDBF(osFilename.c_str());
         }

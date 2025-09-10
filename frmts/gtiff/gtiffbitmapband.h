@@ -35,6 +35,7 @@ class GTiffBitmapBand : public GTiffOddBitsBand
     virtual ~GTiffBitmapBand();
 
     virtual GDALColorInterp GetColorInterpretation() override;
+    CPLErr SetColorInterpretation(GDALColorInterp eInterp) override;
     virtual GDALColorTable *GetColorTable() override;
 };
 
