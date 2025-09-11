@@ -553,8 +553,6 @@ def test_heif_network_read(tmp_vsimem):
             expected_headers={"Range": "bytes=0-16383"},
         )
         handler.add("GET", "/", 404)
-        handler.add("HEAD", "/test.aux", 404)
-        handler.add("HEAD", "/test.AUX", 404)
         with gdaltest.config_option(
             "GDAL_PAM_ENABLED", "NO"
         ), webserver.install_http_handler(handler):
