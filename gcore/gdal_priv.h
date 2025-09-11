@@ -1012,7 +1012,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                            const OGRSpatialReference *poGCP_SRS);
 
     // Compatibility layer
-    const char *GetGCPProjection();
+    const char *GetGCPProjection() const;
     CPLErr SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
                    const char *pszGCPProjection);
 

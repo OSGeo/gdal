@@ -2017,7 +2017,7 @@ int CPL_STDCALL GDALGetGCPCount(GDALDatasetH hDS)
  *  It should not be altered, freed or expected to last for long.
  */
 
-const char *GDALDataset::GetGCPProjection()
+const char *GDALDataset::GetGCPProjection() const
 {
     const auto poSRS = GetGCPSpatialRef();
     if (!poSRS || !m_poPrivate)
