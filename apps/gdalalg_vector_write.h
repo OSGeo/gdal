@@ -36,6 +36,11 @@ class GDALVectorWriteAlgorithm final : public GDALVectorPipelineStepAlgorithm
         return true;
     }
 
+    bool GeneratesFilesFromUserInput() const override
+    {
+        return true;
+    }
+
     bool IsNativelyStreamingCompatible() const override
     {
         return false;
@@ -44,8 +49,6 @@ class GDALVectorWriteAlgorithm final : public GDALVectorPipelineStepAlgorithm
   private:
     friend class GDALVectorPipelineStepAlgorithm;
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
-
-    bool m_skipErrors = false;
 };
 
 //! @endcond

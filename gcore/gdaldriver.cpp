@@ -1682,26 +1682,67 @@ CPLErr GDALDriver::Delete(const char *pszFilename)
         return CE_Failure;
     }
 
-    char **papszFileList = GDALGetFileList(hDS);
+    const CPLStringList aosFileList(GDALGetFileList(hDS));
 
     GDALClose(hDS);
     hDS = nullptr;
 
-    if (CSLCount(papszFileList) == 0)
+    if (aosFileList.empty())
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unable to determine files associated with %s, "
                  "delete fails.",
                  pszFilename);
-        CSLDestroy(papszFileList);
         return CE_Failure;
+    }
+
+    return Delete(nullptr, aosFileList.List());
+}
+
+/************************************************************************/
+/*                               Delete()                               */
+/************************************************************************/
+
+/**
+ * \brief Delete a currently opened dataset
+ *
+ * The driver will attempt to delete the passed dataset in a driver specific
+ * fashion.  Full featured drivers will delete all associated files,
+ * database objects, or whatever is appropriate.  The default behavior when
+ * no driver specific behavior is provided is to attempt to delete all the
+ * files that are returned by GDALGetFileList() on the dataset handle.
+ *
+ * Note that this will generally not work on Windows systems that don't accept
+ * deleting opened files.
+ *
+ * At least one of poDS or papszFileList must not be NULL
+ *
+ * @param poDS dataset to delete, or NULL
+ * @param papszFileList File list to delete, typically obtained with
+ *                      poDS->GetFileList(), or NULL
+ *
+ * @return CE_None on success, or CE_Failure if the operation fails.
+ *
+ * @since 3.12
+ */
+
+CPLErr GDALDriver::Delete(GDALDataset *poDS, CSLConstList papszFileList)
+
+{
+    if (poDS)
+    {
+        pfnDelete = GetDeleteCallback();
+        if (pfnDelete != nullptr)
+            return pfnDelete(poDS->GetDescription());
+        else if (pfnDeleteDataSource != nullptr)
+            return pfnDeleteDataSource(this, poDS->GetDescription());
     }
 
     /* -------------------------------------------------------------------- */
     /*      Delete all files.                                               */
     /* -------------------------------------------------------------------- */
     CPLErr eErr = CE_None;
-    for (int i = 0; papszFileList[i] != nullptr; ++i)
+    for (int i = 0; papszFileList && papszFileList[i]; ++i)
     {
         if (VSIUnlink(papszFileList[i]) != 0)
         {
@@ -1710,8 +1751,6 @@ CPLErr GDALDriver::Delete(const char *pszFilename)
             eErr = CE_Failure;
         }
     }
-
-    CSLDestroy(papszFileList);
 
     return eErr;
 }

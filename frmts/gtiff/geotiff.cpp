@@ -1639,6 +1639,7 @@ void GDALRegister_GTiff()
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME,
                               "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CAN_READ_AFTER_DELETE, "YES");
 
     poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,

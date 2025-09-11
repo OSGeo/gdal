@@ -310,6 +310,7 @@ nitpick_ignore_regex = [
     (".*", "classPythonPluginLayer"),
     (".*", "classPythonPluginDriver"),
     (".*", "classGDALSubsetGroup"),
+    (".*", "structOGRwkbExportOptions"),  # only emitted by Windows CI
     # FIXME We ignore everything python related for now...
     ("py:.*", ".*"),
     # TODO: To examine
@@ -921,6 +922,13 @@ man_pages = [
         "programs/gdal_vector_layer_algebra",
         "gdal-vector-layer-algebra",
         "Perform algebraic operation between 2 layers",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_partition",
+        "gdal-vector-partition",
+        "Partition a vector dataset into multiple files",
         [author_evenr],
         1,
     ),

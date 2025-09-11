@@ -1,3 +1,138 @@
+# GDAL/OGR 3.11.4 Release Notes
+
+GDAL 3.11.4 is a bugfix release.
+
+## Build
+
+* Install missing symlinks for completions of a few missing utilities, and
+  remove ones that are no longer installed
+* CMake: fix checks for CMAKE_SYSTEM_PROCESSOR on non Windows platforms
+* Various compiler and cppcheck warning fixes
+* Add option to disable libavif version check
+
+## GDAL 3.11.4
+
+### Port
+
+* AWS: Fix aws sso cache file location and region parameter (#12064)
+* /vsis3/: retrieve path specific options in ReadDir()
+* /vsiaz/: fix ReadDir() with AZURE_NO_SIGN_REQUEST=YES
+* /vsirar/: fix Read() that can return a negative value when opening a rar made
+  of a single file with /vsirar/the.rar (#12944)
+
+### Algorithms
+
+* Warp: use UInt16 nearest neighbor warping specific code path
+* Warp: fix error when reprojecting large raster (such as WMTS with global
+  extent) (#12965)
+* Warp: avoid inserting CENTER_LONG when warping whole >=360 longitude range
+  to WebMercator (#13017)
+
+### Raster core
+
+* GDALNoDataMaskBand::IRasterIO(): fix corruption when reading from Byte band
+  and nLineSpace > nBufXSize (3.10.0 regression)
+* RAT: Fix invalid memory access in ValuesIO
+* GetDefaultHistogram(): fix error (on non Byte type) when min=max (#12851)
+* GDALMDArray::AsClassicDataset(): fix crash on 1D-array when iYDim is invalid
+  (#12855)
+* GDALAntiRecursionStruct: fix so that a std::map doesn't increase out of
+  control (#12931)
+* RasterIO/overview mode resampling: properly takes into account NaN for
+  Float16/CFloat16
+
+### Raster utilities
+
+* gdal_translate: display full synopsis in case of error (#12763)
+* gdalmdiminfo: fix crash on a null string attribute
+* gdalwarp: for TPS warping, use -wo SOURCE_EXTRA=5 by default (#12736)
+* gdal_footprint: fail if there is a simplification error and there is a single
+  input feature (#12724)
+* Make 'gdal mdim info' return 0 when there is no error (#12796)
+* gdal_viewshed: set lower bound of DEM to input raster (#12758)
+* gdal info: fix --help and 'gdal info i_do_not_exist --format=text' (#12812)
+
+### Raster drivers
+
+BT driver:
+ * Restored (was removed in 3.11.0) (qgis/QGIS#63015)
+
+COG driver:
+ * fix creation with complex data types (#12915)
+
+ENVI driver:
+ * warn/error out if samples/lines/bands are greater than INT_MAX (#12781)
+
+GTI driver:
+ * fix erroneous removal of contributing source in some cases
+
+GTiff driver:
+ * fix creating a R,G,B,Nir file without explicit PHOTOMETRIC creation option
+ * SRS reader: fix misidentification of vertical datum NAVD88 (as 'Derived
+   California Orthometric Heights of 1988 epoch 2025') with PROJ 9.7dev
+   database
+
+GTiff/COG drivers:
+ * emit warnings when using JXL_DISTANCE/JXL_ALPHA_DISTANCE without
+   JXL_LOSSLESS=NO
+
+HDF5 driver:
+ * multidim: fix reading array with non-default stride
+ * fix path issues when reading GEOLOCATION from .aux.xml (#12824)
+
+JPEGXL driver:
+ * Make 'gdal_translate non_byte.jxl byte.jxl -ot Byte' work properly
+
+KMLSuperOverlay driver:
+ * fix creating datasets using extended-length path on Windows (#12601)
+
+netCDF driver:
+ * make LIST_ALL_ARRAYS=YES work on datasets that have no 2D array (#12793)
+
+RCM driver:
+ * remove illegal calls to CPLFree() in error code path
+
+## OGR 3.11.4
+
+### Vector utilities
+
+* gdal vector concat: allow to concat more than 1000 files
+
+### Vector drivers
+
+Arrow/Parquet drivers:
+ * implement Close() and call it from destructor, so that delete on a dataset
+   properly flushes
+
+CSV driver:
+ * fix opening directory with .csv and .prj files (#12728)
+ * fix file descriptor leak in one case
+
+GML driver:
+ * takes into account JGD2024 CRS from recent Japan's Fundamental Geospatial
+   Data (FGD) (#12897)
+
+GPKG driver:
+ * fix random crash in GetNextArrowArrayAsynchronous() (#12934)
+
+MongoDB driver:
+ * add compatibility with >=mongo-cpp-driver-4
+
+OCI driver:
+ * fix varchar2 type length
+
+SQLite driver:
+ * make REGEXP behave like official extension regarding NULL handling
+
+## Python bindings
+
+* Dataset/Band.WriteArray(): fix writing of arrays with a 0-stride (#12913)
+
+## Java Bindings
+
+* restore -fno-strict-aliasing
+* avoid double free with Band.GetDataset().Close() (#12764)
+
 # GDAL/OGR 3.11.3 Release Notes
 
 GDAL 3.11.3 is a bugfix release.

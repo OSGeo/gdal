@@ -2596,10 +2596,10 @@
     <tre name="RPFIMG" location="image">
         <field name="LOCATION_SECTION_LENGTH" length="2" type="UnsignedInt_BigEndian"/>
         <field name="COMPONENT_LOCATION_OFFSET" length="4" type="UnsignedInt_BigEndian"/>
-        <field name="NUMBER_OF_COMPOMENT_LOCATION_RECORDS" length="2" type="UnsignedInt_BigEndian"/>
+        <field name="NUMBER_OF_COMPONENT_LOCATION_RECORDS" length="2" type="UnsignedInt_BigEndian"/>
         <field name="COMPONENT_LOCATION_RECORD_LENGTH" length="2" type="UnsignedInt_BigEndian"/>
         <field name="COMPONENT_AGGREGATE_LENGTH" length="4" type="UnsignedInt_BigEndian"/>
-        <loop counter="NUMBER_OF_COMPOMENT_LOCATION_RECORDS" name="CLR">
+        <loop counter="NUMBER_OF_COMPONENT_LOCATION_RECORDS" name="CLR">
             <field name="COMPONENT_ID" length="2" type="UnsignedInt_BigEndian"/>
             <field name="COMPONENT_LENGTH" length="4" type="UnsignedInt_BigEndian"/>
             <field name="COMPONENT_LOCATION" length="4" type="UnsignedInt_BigEndian"/>

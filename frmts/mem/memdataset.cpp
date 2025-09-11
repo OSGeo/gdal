@@ -1412,10 +1412,13 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
     if (pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE"))
         poDS->SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
 
-    if (bPixelInterleaved)
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-    else
-        poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+    if (nXSize != 0 && nYSize != 0)
+    {
+        if (bPixelInterleaved)
+            poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        else
+            poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */
@@ -3501,6 +3504,7 @@ void GDALRegister_MEM()
 
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS,
                               "Name Type Nullable SRS CoordinateEpoch");
+    poDriver->SetMetadataItem(GDAL_DCAP_UPSERT, "YES");
 
     // Define GDAL_NO_OPEN_FOR_MEM_DRIVER macro to undefine Open() method for
     // MEM driver.  Otherwise, bad user input can trigger easily a GDAL crash

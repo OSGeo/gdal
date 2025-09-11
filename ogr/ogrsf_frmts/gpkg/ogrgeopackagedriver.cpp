@@ -671,6 +671,7 @@ void RegisterOGRGeoPackage()
     poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CAN_READ_AFTER_DELETE, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS,
@@ -806,6 +807,7 @@ void RegisterOGRGeoPackage()
     poDriver->SetMetadataItem(GDAL_DCAP_DELETE_RELATIONSHIP, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_UPDATE_RELATIONSHIP, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_FLUSHCACHE_CONSISTENT_STATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_UPSERT, "YES");
 
     poDriver->SetMetadataItem(GDAL_DMD_RELATIONSHIP_FLAGS,
                               "ManyToMany Association");

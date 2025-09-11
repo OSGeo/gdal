@@ -20,15 +20,21 @@ perform various processing steps that accept vector and generate vector.
 
 For pipelines mixing raster and vector, consult :ref:`gdal_pipeline`.
 
+Most steps proceed in on-demand evaluation of features,
+unless otherwise stated in their documentation, without "materializing" the
+resulting dataset of the operation of each step. It may be desirable sometimes
+for performance purposes to proceed to materializing an intermediate dataset
+to disk using :ref:`gdal_vector_materialize`.
+
 Synopsis
 --------
 
 .. program-output:: gdal vector pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (exclamation mark) character.
-The first step must be ``read`` or ``concat``, and the last one ``info`` or ``write``. Each step has its
+The first step must be ``read`` or ``concat``, and the last one ``info``, ``partition`` or ``write``. Each step has its
 own positional or non-positional arguments.
-Apart from ``read``, ``concat``, ``info`` and ``write``,
+Apart from ``read``, ``concat``, ``info``, ``partition`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
@@ -78,6 +84,12 @@ Details for options can be found in :ref:`gdal_vector_filter`.
 .. program-output:: gdal vector pipeline --help-doc=make-valid
 
 Details for options can be found in :ref:`gdal_vector_make_valid`.
+
+* materialize
+
+.. program-output:: gdal vector pipeline --help-doc=materialize
+
+Details for options can be found in :ref:`gdal_vector_materialize`.
 
 * reproject
 
@@ -135,6 +147,14 @@ Details for options can be found in :ref:`gdal_vector_swap_xy`.
 
 Details for options can be found in :ref:`gdal_vector_info`.
 
+* partition
+
+.. versionadded:: 3.12
+
+.. program-output:: gdal vector pipeline --help-doc=partition
+
+Details for options can be found in :ref:`gdal_vector_partition`.
+
 * write
 
 .. program-output:: gdal vector pipeline --help-doc=write
@@ -182,7 +202,17 @@ of steps.
 
 See :ref:`gdal_pipeline_substitutions`.
 
-`
+
+Nested pipeline
+---------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdal_nested_pipeline_intro.rst
+
+See :ref:`gdal_nested_pipeline`.
+
+
 Examples
 --------
 

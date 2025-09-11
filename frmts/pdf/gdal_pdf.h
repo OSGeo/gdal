@@ -536,7 +536,8 @@ class PDFWritableVectorDataset final : public GDALDataset
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;
 
-    OGRErr SyncToDisk();
+    CPLErr Close() override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;

@@ -293,20 +293,7 @@ GDALDataset::~GDALDataset()
             CPLDebug("GDAL", "GDALClose(%s, this=%p)", GetDescription(), this);
     }
 
-    if (IsMarkedSuppressOnClose())
-    {
-        if (poDriver == nullptr ||
-            // Someone issuing Create("foo.tif") on a
-            // memory driver doesn't expect files with those names to be deleted
-            // on a file system...
-            // This is somewhat messy. Ideally there should be a way for the
-            // driver to overload the default behavior
-            (!EQUAL(poDriver->GetDescription(), "MEM") &&
-             !EQUAL(poDriver->GetDescription(), "Memory")))
-        {
-            VSIUnlink(GetDescription());
-        }
-    }
+    GDALDataset::Close();
 
     /* -------------------------------------------------------------------- */
     /*      Remove dataset from the "open" dataset list.                    */
@@ -407,6 +394,8 @@ GDALDataset::~GDALDataset()
  * If a driver implements this method, it must also call it from its
  * dataset destructor.
  *
+ * This is the equivalent of C function GDALDatasetRunCloseWithoutDestroying().
+ *
  * A typical implementation might look as the following
  * \code{.cpp}
  *
@@ -461,11 +450,62 @@ GDALDataset::~GDALDataset()
  */
 CPLErr GDALDataset::Close()
 {
-    // Call UnregisterFromSharedDataset() before altering nOpenFlags
-    UnregisterFromSharedDataset();
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        // Call UnregisterFromSharedDataset() before altering nOpenFlags
+        UnregisterFromSharedDataset();
 
-    nOpenFlags = OPEN_FLAGS_CLOSED;
+        nOpenFlags = OPEN_FLAGS_CLOSED;
+    }
+
+    if (IsMarkedSuppressOnClose())
+    {
+        if (poDriver == nullptr ||
+            // Someone issuing Create("foo.tif") on a
+            // memory driver doesn't expect files with those names to be deleted
+            // on a file system...
+            // This is somewhat messy. Ideally there should be a way for the
+            // driver to overload the default behavior
+            (!EQUAL(poDriver->GetDescription(), "MEM") &&
+             !EQUAL(poDriver->GetDescription(), "Memory")))
+        {
+            if (VSIUnlink(GetDescription()) == 0)
+                UnMarkSuppressOnClose();
+        }
+    }
+
     return CE_None;
+}
+
+/************************************************************************/
+/*                   GDALDatasetRunCloseWithoutDestroying()             */
+/************************************************************************/
+
+/** Run the Close() method, without running destruction of the object.
+ *
+ * This ensures that content that should be written to file is written and
+ * that all file descriptors are closed.
+ *
+ * Note that this is different from GDALClose() which also destroys
+ * the underlying C++ object. GDALClose() or GDALReleaseDataset() are actually
+ * the only functions that can be safely called on the dataset handle after
+ * this function has been called.
+ *
+ * Most users want to use GDALClose() or GDALReleaseDataset() rather than
+ * this function.
+ *
+ * This function is equivalent to the C++ method GDALDataset:Close()
+ *
+ * @param hDS dataset handle.
+ * @return CE_None if no error
+ *
+ * @since GDAL 3.12
+ * @see GDALClose()
+ */
+CPLErr GDALDatasetRunCloseWithoutDestroying(GDALDatasetH hDS)
+{
+    VALIDATE_POINTER1(hDS, __func__, CE_Failure);
+    return GDALDataset::FromHandle(hDS)->Close();
 }
 
 /************************************************************************/

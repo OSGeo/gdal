@@ -7094,7 +7094,7 @@ def test_nitf_read_rpfhdr_rpfimg():
         """<tre name="RPFIMG" location="image">
     <field name="LOCATION_SECTION_LENGTH" value="164" />
     <field name="COMPONENT_LOCATION_OFFSET" value="14" />
-    <field name="NUMBER_OF_COMPOMENT_LOCATION_RECORDS" value="10" />
+    <field name="NUMBER_OF_COMPONENT_LOCATION_RECORDS" value="10" />
     <field name="COMPONENT_LOCATION_RECORD_LENGTH" value="10" />
     <field name="COMPONENT_AGGREGATE_LENGTH" value="69998" />"""
         in md

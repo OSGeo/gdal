@@ -301,6 +301,8 @@ class OGRParquetDataset final : public OGRArrowDataset
         const std::shared_ptr<arrow::MemoryPool> &poMemoryPool);
     ~OGRParquetDataset() override;
 
+    CPLErr Close() override;
+
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;

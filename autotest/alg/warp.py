@@ -1293,6 +1293,11 @@ def test_warp_41():
         assert src_gt[i] == pytest.approx(vrt_gt[i], abs=1e-5)
 
 
+def test_warp_suggestedwarp_output_invalid_input():
+    with pytest.raises(Exception):
+        gdal.SuggestedWarpOutput(None, {"DST_SRS": "EPSG:4326"})
+
+
 ###############################################################################
 
 # Maximum

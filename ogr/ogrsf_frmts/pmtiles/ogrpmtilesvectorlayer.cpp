@@ -371,6 +371,10 @@ std::unique_ptr<OGRFeature> OGRPMTilesVectorLayer::GetNextSrcFeature()
             m_nX = sTile.x;
             m_nY = sTile.y;
 
+            // Do the reset before the later 'm_osTileData = *posStr', otherwise
+            // the destructor might read file content that is no longer valid
+            m_poTileDS.reset();
+
             if (sTile.offset == m_nLastTileOffset)
             {
                 // In case of run-length encoded tiles, we do not need to
@@ -391,7 +395,6 @@ std::unique_ptr<OGRFeature> OGRPMTilesVectorLayer::GetNextSrcFeature()
                 m_osTileData = *posStr;
             }
 
-            m_poTileDS.reset();
             const std::string osTmpFilename = VSIMemGenerateHiddenFilename(
                 CPLSPrintf("pmtiles_%u_%u.pbf", sTile.x, sTile.y));
             VSIFCloseL(VSIFileFromMemBuffer(

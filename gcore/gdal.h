@@ -867,6 +867,11 @@ typedef enum
 #define GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION                              \
     "DCAP_HONOR_GEOM_COORDINATE_PRECISION"
 
+/** Capability set by drivers that implements OGRLayer::UpsertTeature().
+ * @since GDLA 3.12
+ */
+#define GDAL_DCAP_UPSERT "DCAP_UPSERT"
+
 /** List of (space separated) flags indicating the features of relationships are
  * supported by the driver.
  *
@@ -1011,6 +1016,21 @@ typedef enum
  * @since GDAL 3.1
  */
 #define GDAL_DIM_TYPE_PARAMETRIC "PARAMETRIC"
+
+/** "Capability" set by drivers that require re-opening the dataset to be able
+ * to read its content if it has just been created previously
+ *
+ * @since GDAL 3.12
+ */
+#define GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED "DCAP_REOPEN_AFTER_WRITE_REQUIRED"
+
+/** Capability set by drivers that can read from a dataset, even if it deleted
+ * from disk after it has been opened (i.e. such drivers do not need to reopen
+ * or test the existence of the file at that point)
+ *
+ * @since GDAL 3.12
+ */
+#define GDAL_DCAP_CAN_READ_AFTER_DELETE "DCAP_CAN_READ_AFTER_DELETE"
 
 #define GDsCAddRelationship                                                    \
     "AddRelationship" /**< Dataset capability for supporting AddRelationship() \
@@ -1300,6 +1320,7 @@ GDALDriverH CPL_DLL CPL_STDCALL GDALGetDatasetDriver(GDALDatasetH);
 char CPL_DLL **CPL_STDCALL GDALGetFileList(GDALDatasetH);
 void CPL_DLL GDALDatasetMarkSuppressOnClose(GDALDatasetH);
 CPLErr CPL_DLL CPL_STDCALL GDALClose(GDALDatasetH);
+CPLErr CPL_DLL GDALDatasetRunCloseWithoutDestroying(GDALDatasetH hDS);
 int CPL_DLL CPL_STDCALL GDALGetRasterXSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterYSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterCount(GDALDatasetH);

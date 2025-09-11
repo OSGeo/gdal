@@ -115,6 +115,7 @@ class VSIWin32Handle final : public VSIVirtualHandle
     bool m_bWriteThrough = false;
 
     bool m_bCancelCreation = false;
+    std::string m_osFilename{};
     std::string m_osFilenameToSetAtCloseTime{};
 
     VSIWin32Handle() = default;
@@ -348,8 +349,17 @@ int VSIWin32Handle::Close()
         ret = ret2;
     hFile = nullptr;
 
-    if (m_bCancelCreation && !m_osFilenameToSetAtCloseTime.empty())
-        VSIUnlink(m_osFilenameToSetAtCloseTime.c_str());
+    if (m_bCancelCreation && m_osFilenameToSetAtCloseTime.empty())
+        ret = VSIUnlink(m_osFilename.c_str());
+    else if (m_bCancelCreation && !m_osFilenameToSetAtCloseTime.empty())
+    {
+        ret = VSIUnlink((m_osFilenameToSetAtCloseTime + ".tmp_hidden").c_str());
+        VSIStatBufL sStatBuf;
+        if (ret != 0 &&
+            VSIStatL((m_osFilenameToSetAtCloseTime + ".tmp_hidden").c_str(),
+                     &sStatBuf) != 0)
+            ret = 0;
+    }
 
     return ret;
 }
@@ -964,6 +974,7 @@ VSIWin32FilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
     auto poHandle = std::make_unique<VSIWin32Handle>();
 
     poHandle->hFile = hFile;
+    poHandle->m_osFilename = pszFilename;
     poHandle->m_bWriteThrough = bWriteThrough;
 
     if (strchr(pszAccess, 'a') != nullptr)
@@ -1207,6 +1218,7 @@ VSIWin32FilesystemHandler::CreateOnlyVisibleAtCloseTime(
 
             poHandle->hFile = hFile;
             poHandle->m_bWriteThrough = bWriteThrough;
+            poHandle->m_osFilename = pszFilename;
             poHandle->m_osFilenameToSetAtCloseTime = osFullFilename;
 
             return VSIVirtualHandleUniquePtr(poHandle.release());

@@ -567,6 +567,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libavif16 \
         libspdlog1.12 libmagic1t64 \
         libmuparser2v5 \
+        libtcmalloc-minimal4 \
         python-is-python3 \
         # for validate_geoparquet.py (cf https://github.com/OSGeo/gdal/issues/11953)
         python3-jsonschema \
@@ -650,5 +651,8 @@ RUN ldconfig
 RUN ogrinfo ADBC::memory: -oo ADBC_DRIVER=libduckdb.so -oo PRELUDE_STATEMENTS="INSTALL spatial";
 
 RUN echo "source /usr/share/bash-completion/bash_completion" >> /root/.bashrc
+
+# Set tcmalloc as the allocator to improve multi-threaded performance
+ENV LD_PRELOAD=libtcmalloc_minimal.so.4
 
 CMD ["/bin/bash", "-l"]

@@ -2950,6 +2950,17 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                                            psOptions->osNewLayerName.c_str());
         }
     }
+    else
+    {
+        if (psOptions->bUpsert &&
+            poDriver->GetMetadataItem(GDAL_DCAP_UPSERT) == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "%s driver doest not support upsert",
+                     poODS->GetDriver()->GetDescription());
+            return nullptr;
+        }
+    }
 
     // Automatically close poODS on error, if it has been created by this
     // method.

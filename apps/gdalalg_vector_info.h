@@ -37,19 +37,6 @@ class GDALVectorInfoAlgorithm /* non final */
         return true;
     }
 
-    void SetDataset(GDALDataset *poDS)
-    {
-        auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        if (arg && poDS)
-        {
-            auto &val = arg->Get<std::vector<GDALArgDatasetValue>>();
-            val.resize(1);
-            val[0].Set(poDS);
-            arg->NotifyValueSet();
-            arg->SetSkipIfAlreadySet();
-        }
-    }
-
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 

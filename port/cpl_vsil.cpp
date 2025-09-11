@@ -2388,11 +2388,21 @@ int VSIVirtualHandleOnlyVisibleAtCloseTime::Close()
         return 0;
     m_bAlreadyClosed = true;
     int ret = VSIProxyFileHandle::Close();
-    if (ret != 0)
-        return ret;
-    return m_bCancelCreation
-               ? VSIUnlink(m_osTmpName.c_str())
-               : VSIRename(m_osTmpName.c_str(), m_osTargetName.c_str());
+    if (ret == 0)
+    {
+        if (m_bCancelCreation)
+        {
+            ret = VSIUnlink(m_osTmpName.c_str());
+            VSIStatBufL sStatBuf;
+            if (ret != 0 && VSIStatL(m_osTmpName.c_str(), &sStatBuf) != 0)
+                ret = 0;
+        }
+        else
+        {
+            ret = VSIRename(m_osTmpName.c_str(), m_osTargetName.c_str());
+        }
+    }
+    return ret;
 }
 
 /************************************************************************/

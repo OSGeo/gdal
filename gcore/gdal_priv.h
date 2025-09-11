@@ -3017,6 +3017,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                            CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
     CPLErr Delete(const char *pszName);
+    CPLErr Delete(GDALDataset *poDS, CSLConstList papszFileList);
     CPLErr Rename(const char *pszNewName, const char *pszOldName);
     CPLErr CopyFiles(const char *pszNewName, const char *pszOldName);
 

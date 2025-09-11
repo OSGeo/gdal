@@ -1896,7 +1896,9 @@ def gdalurlopen(url, timeout=10):
     import http.client
 
     try:
-        handle = urllib.request.urlopen(url)
+        handle = urllib.request.urlopen(
+            urllib.request.Request(url, headers={"User-Agent": "GDAL"})
+        )
         socket.setdefaulttimeout(old_timeout)
         return handle
     except urllib.error.HTTPError as e:

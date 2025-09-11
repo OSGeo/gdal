@@ -127,6 +127,8 @@ void RegisterOGRFlatGeobuf()
     poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CAN_READ_AFTER_DELETE, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "FlatGeobuf");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "fgb");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,

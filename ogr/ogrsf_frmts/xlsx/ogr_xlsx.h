@@ -90,6 +90,8 @@ class OGRXLSXLayer final : public OGRMemLayer
         OGRMemLayer::ResetReading();
     }
 
+    int TestCapability(const char *pszCap) const override;
+
     const CPLString &GetFilename() const
     {
         return osFilename;
