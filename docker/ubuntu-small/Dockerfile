@@ -244,6 +244,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libdeflate0 \
         libzstd1 bash libpq5 libssl3 libopenjp2-7 libspatialite8 \
         libmuparser2v5 \
+        libtcmalloc-minimal4 \
     && apt-get install -y python-is-python3
 
 # Order layers starting with less frequently varying ones
@@ -267,5 +268,8 @@ COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 RUN ldconfig
 
 RUN echo "source /usr/share/bash-completion/bash_completion" >> /root/.bashrc
+
+# Set tcmalloc as the allocator to improve multi-threaded performance
+ENV LD_PRELOAD=libtcmalloc_minimal.so.4
 
 CMD ["/bin/bash", "-l"]
