@@ -918,6 +918,45 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Bands GetBands();
 
+    /** Class returned by GetBands() that act as a container for raster bands.
+     */
+    class CPL_DLL ConstBands
+    {
+      private:
+        friend class GDALDataset;
+        const GDALDataset *const m_poSelf;
+
+        CPL_INTERNAL explicit ConstBands(const GDALDataset *poSelf)
+            : m_poSelf(poSelf)
+        {
+        }
+
+        class CPL_DLL Iterator
+        {
+            struct Private;
+            std::unique_ptr<Private> m_poPrivate;
+
+          public:
+            Iterator(const GDALDataset *poDS, bool bStart);
+            ~Iterator();
+            const GDALRasterBand *operator*() const;
+            Iterator &operator++();
+            bool operator!=(const Iterator &it) const;
+        };
+
+      public:
+        const Iterator begin() const;
+
+        const Iterator end() const;
+
+        size_t size() const;
+
+        const GDALRasterBand *operator[](int iBand) const;
+        const GDALRasterBand *operator[](size_t iBand) const;
+    };
+
+    ConstBands GetBands() const;
+
     virtual CPLErr FlushCache(bool bAtClosing = false);
     virtual CPLErr DropCache();
 
