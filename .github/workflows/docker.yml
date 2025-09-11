@@ -13,9 +13,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-
 jobs:
 
   docker_builds:
@@ -27,44 +24,65 @@ jobs:
           - name: alpine-small-amd64
             image_name: alpine-small
             arch: amd64
+            gha_image: ubuntu-latest
 
           - name: alpine-normal-amd64
             image_name: alpine-small
             arch: amd64
+            gha_image: ubuntu-latest
 
           - name: ubuntu-small-amd64
             image_name: ubuntu-small
             arch: amd64
+            gha_image: ubuntu-latest
 
           - name: ubuntu-small-arm64
             image_name: ubuntu-small
             arch: arm64
+            gha_image: ubuntu-24.04-arm
 
           - name: ubuntu-full-amd64-proprietary-sdks
             image_name: ubuntu-full
             arch: amd64
+            gha_image: ubuntu-latest
 
           - name: ubuntu-full-arm64
             image_name: ubuntu-full
             arch: arm64
+            gha_image: ubuntu-24.04-arm
 
     name: ${{ matrix.name }}
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.gha_image }}
+    permissions:
+      contents: read
+      attestations: write
+      packages: write
+      id-token: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
+        with:
+          daemon-config: |
+            {
+              "debug": false,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
 
       - name: Build
         shell: bash -l {0}
         run: |
-          docker run --rm --privileged linuxkit/binfmt:v0.8
+          docker run --rm --platform linux/amd64 --privileged linuxkit/binfmt:v0.8
           cd docker/${{ matrix.image_name }}
           if test "${{ matrix.name }}" = "ubuntu-full-amd64-proprietary-sdks"; then
-            ./build.sh --platform linux/${{ matrix.arch }} --with-oracle --with-mrsid --with-ecw
+            ./build.sh --platform linux/${{ matrix.arch }} --with-multi-arch --with-oracle --with-mrsid --with-ecw
           else
-            ./build.sh --platform linux/${{ matrix.arch }}
+            ./build.sh --platform linux/${{ matrix.arch }} --with-muchi-arch
           fi
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.image_name }}-latest-${{ matrix.arch }} gdalinfo --formats
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.image_name }}-latest-${{ matrix.arch }} ogrinfo --formats
