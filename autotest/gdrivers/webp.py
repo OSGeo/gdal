@@ -12,6 +12,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+
 import gdaltest
 import pytest
 
@@ -222,3 +224,15 @@ def test_webp_world_file(tmp_vsimem):
             str(tmp_vsimem / "out.webp"),
             str(tmp_vsimem / "out.wld"),
         ]
+
+
+###############################################################################
+
+
+def test_webp_close(tmp_path):
+
+    ds = gdal.GetDriverByName("WEBP").CreateCopy(
+        tmp_path / "out.webp", gdal.Open("data/rgbsmall.tif")
+    )
+    ds.Close()
+    os.remove(tmp_path / "out.webp")
