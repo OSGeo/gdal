@@ -211,6 +211,6 @@ if (BUILD_DOCS)
                ${CMAKE_BINARY_DIR}/swig/python/osgeo/gdal_array.py
                ${CMAKE_BINARY_DIR}/swig/python/osgeo/ogr.py
                ${CMAKE_BINARY_DIR}/swig/python/osgeo/osr.py
-             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 endif ()
