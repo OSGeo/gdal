@@ -217,7 +217,7 @@ def test_vsiaz_fake_readdir():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&prefix=a_dir%20with_space%2F&restype=container",
+        "/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&maxresults=1000&prefix=a_dir%20with_space%2F&restype=container",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -238,7 +238,7 @@ def test_vsiaz_fake_readdir():
     )
     handler.add(
         "GET",
-        "/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&marker=bla&prefix=a_dir%20with_space%2F&restype=container",
+        "/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&marker=bla&maxresults=1000&prefix=a_dir%20with_space%2F&restype=container",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
