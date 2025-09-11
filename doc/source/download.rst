@@ -18,11 +18,11 @@ Source Code
 Current Release
 ...............
 
-* **2025-07-12** `gdal-3.11.3.tar.gz`_ `3.11.3 Release Notes`_ (`3.11.3 md5`_)
+* **2025-09-11** `gdal-3.11.4.tar.gz`_ `3.11.4 Release Notes`_ (`3.11.4 md5`_)
 
-.. _`3.11.3 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.11.3/NEWS.md
-.. _`gdal-3.11.3.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.11.3/gdal-3.11.3.tar.gz
-.. _`3.11.3 md5`: https://github.com/OSGeo/gdal/releases/download/v3.11.3/gdal-3.11.3.tar.gz.md5
+.. _`3.11.4 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.11.4/NEWS.md
+.. _`gdal-3.11.4.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.11.4/gdal-3.11.4.tar.gz
+.. _`3.11.4 md5`: https://github.com/OSGeo/gdal/releases/download/v3.11.4/gdal-3.11.4.tar.gz.md5
 
 Past Releases
 .............
