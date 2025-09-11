@@ -76,6 +76,21 @@ GDALColorInterp GTiffBitmapBand::GetColorInterpretation()
 }
 
 /************************************************************************/
+/*                       SetColorInterpretation()                       */
+/************************************************************************/
+
+CPLErr GTiffBitmapBand::SetColorInterpretation(GDALColorInterp eInterp)
+{
+    if (eInterp != GetColorInterpretation())
+    {
+        CPLDebug(
+            "GTiff",
+            "Setting color interpration on GTiffBitmap band is not supported");
+    }
+    return CE_None;
+}
+
+/************************************************************************/
 /*                           GetColorTable()                            */
 /************************************************************************/
 
