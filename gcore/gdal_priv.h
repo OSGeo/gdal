@@ -2005,6 +2005,13 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     //! @endcond
 
   protected:
+    GDALRasterBand();
+    explicit GDALRasterBand(int bForceCachedIO);
+
+    //! @cond Doxygen_Suppress
+    GDALRasterBand(GDALRasterBand &&) = default;
+    //! @endcond
+
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) = 0;
     virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void *pData);
 
@@ -2059,13 +2066,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     //! @endcond
 
   public:
-    GDALRasterBand();
-    explicit GDALRasterBand(int bForceCachedIO);
-
-    //! @cond Doxygen_Suppress
-    GDALRasterBand(GDALRasterBand &&) = default;
-    //! @endcond
-
     ~GDALRasterBand() override;
 
     int GetXSize() const;
