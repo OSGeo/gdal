@@ -7205,3 +7205,16 @@ def test_nitf_read_rpfhdr_rpfimg():
       </group>"""
         in md
     )
+
+
+###############################################################################
+
+
+def test_nitf_close(tmp_path):
+
+    with gdal.quiet_errors():
+        ds = gdal.GetDriverByName("NITF").CreateCopy(
+            tmp_path / "out.ntf", gdal.Open("data/byte.tif"), strict=False
+        )
+    ds.Close()
+    os.remove(tmp_path / "out.ntf")

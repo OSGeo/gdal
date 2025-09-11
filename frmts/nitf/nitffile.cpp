@@ -450,9 +450,10 @@ retry_read_header:
 /*                             NITFClose()                              */
 /************************************************************************/
 
-void NITFClose(NITFFile *psFile)
+bool NITFClose(NITFFile *psFile)
 
 {
+    bool ret = true;
     int iSegment;
 
     for (iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++)
@@ -474,7 +475,7 @@ void NITFClose(NITFFile *psFile)
 
     CPLFree(psFile->pasSegmentInfo);
     if (psFile->fp != nullptr)
-        CPL_IGNORE_RET_VAL(VSIFCloseL(psFile->fp));
+        ret = VSIFCloseL(psFile->fp) == 0;
     CPLFree(psFile->pachHeader);
     CSLDestroy(psFile->papszMetadata);
     CPLFree(psFile->pachTRE);
@@ -483,6 +484,7 @@ void NITFClose(NITFFile *psFile)
         CPLDestroyXMLNode(psFile->psNITFSpecNode);
 
     CPLFree(psFile);
+    return ret;
 }
 
 static bool NITFGotoOffset(VSILFILE *fp, GUIntBig nLocation)
