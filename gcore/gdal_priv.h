@@ -1003,7 +1003,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual GDALDriver *GetDriver(void);
     virtual char **GetFileList(void);
 
-    virtual const char *GetDriverName();
+    const char *GetDriverName() const;
 
     virtual const OGRSpatialReference *GetGCPSpatialRef() const;
     virtual int GetGCPCount();

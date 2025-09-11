@@ -5076,7 +5076,7 @@ char **GDALDataset::GetMetadataDomainList()
 /** Return driver name.
  * @return driver name.
  */
-const char *GDALDataset::GetDriverName()
+const char *GDALDataset::GetDriverName() const
 {
     if (poDriver)
         return poDriver->GetDescription();
