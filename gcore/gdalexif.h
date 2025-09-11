@@ -11,6 +11,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_conv.h"
+
 //! @cond Doxygen_Suppress
 
 typedef enum

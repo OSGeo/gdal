@@ -17,6 +17,7 @@
 #include "vrtdataset.h"
 #include "cpl_multiproc.h"
 #include "gdalpython.h"
+#include "gdalantirecursion.h"
 
 #include <algorithm>
 #include <array>

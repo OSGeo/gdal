@@ -9,10 +9,13 @@
 GDALDataset C++ API
 ================================================================================
 
-Include file
-------------
+Include files
+-------------
 
-:source_file:`gcore/gdal_priv.h`
+- :source_file:`gcore/gdal_dataset.h`
+- :source_file:`gcore/gdal_openinfo.h`
+- :source_file:`gcore/gdal_geotransform.h`
+- :source_file:`gcore/gdal_relationship.h`
 
 GDALDataset class
 -----------------

@@ -18,6 +18,7 @@
 #include "cpl_minixml.h"
 #include "gdal_priv.h"
 #include <array>
+#include <cstddef>
 #include <limits>
 #include <map>
 #include <vector>

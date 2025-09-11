@@ -12,7 +12,7 @@ GDALColorTable C++ API
 Include file
 ------------
 
-:source_file:`gcore/gdal_priv.h`
+:source_file:`gcore/gdal_colortable.h`
 
 GDALColorTable class
 --------------------

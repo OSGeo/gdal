@@ -37,6 +37,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
+#include "gdalantirecursion.h"
 #include "gdal_priv.h"
 #include "gdal_thread_pool.h"
 #include "ogr_geometry.h"

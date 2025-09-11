@@ -24,6 +24,8 @@
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 
+#include "gdal_abstractbandblockcache.h"
+
 //! @cond Doxygen_Suppress
 
 constexpr int SUBBLOCK_SIZE = 64;
