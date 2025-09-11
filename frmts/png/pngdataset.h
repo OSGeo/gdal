@@ -93,7 +93,7 @@ class PNGDataset final : public GDALPamDataset
     int nLastLineRead{-1};
     GByte *pabyBuffer{};
 
-    GDALColorTable *poColorTable{};
+    std::unique_ptr<GDALColorTable> poColorTable{};
 
     int bGeoTransformValid{};
     GDALGeoTransform m_gt{};
@@ -127,6 +127,8 @@ class PNGDataset final : public GDALPamDataset
   public:
     PNGDataset();
     ~PNGDataset() override;
+
+    CPLErr Close() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
