@@ -848,3 +848,15 @@ def test_heif_geoheif_curie_order():
         and gcp.GCPY == pytest.approx(6090000.0, abs=1e-5)
         and gcp.GCPZ == pytest.approx(0, abs=1e-5)
     )
+
+
+###############################################################################
+
+
+def test_heif_close(tmp_path):
+    if not _has_read_write_support_for("HEVC"):
+        pytest.skip("no HEVC encoding support")
+
+    ds = gdal.GetDriverByName("HEIF").CreateCopy(tmp_path / "out.heif", make_data())
+    ds.Close()
+    os.remove(tmp_path / "out.heif")
