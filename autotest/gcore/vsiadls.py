@@ -168,7 +168,7 @@ def test_vsiadls_fake_readdir():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/azure/blob/myaccount/az_fake_bucket2?directory=a_dir%20with_space&recursive=false&resource=filesystem",
+        "/azure/blob/myaccount/az_fake_bucket2?directory=a_dir%20with_space&maxresults=1000&recursive=false&resource=filesystem",
         200,
         {
             "Content-type": "application/json;charset=utf-8",
@@ -180,7 +180,7 @@ def test_vsiadls_fake_readdir():
     )
     handler.add(
         "GET",
-        "/azure/blob/myaccount/az_fake_bucket2?continuation=contmarker&directory=a_dir%20with_space&recursive=false&resource=filesystem",
+        "/azure/blob/myaccount/az_fake_bucket2?continuation=contmarker&directory=a_dir%20with_space&maxresults=1000&recursive=false&resource=filesystem",
         200,
         {"Content-type": "application/json;charset=utf-8"},
         """
