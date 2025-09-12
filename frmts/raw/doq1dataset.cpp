@@ -13,6 +13,7 @@
 
 #include "gdal_frmts.h"
 #include "cpl_string.h"
+#include "gdal_priv.h"
 #include "rawdataset.h"
 
 #include <algorithm>

@@ -10,6 +10,12 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdal_frmts.h"
+
+#ifdef PLUGIN_FILENAME
+#include "gdalplugindriverproxy.h"
+#endif
+
 #include "openjpegdrivercore.h"
 
 /* This file is to be used with openjpeg 2.1 or later */

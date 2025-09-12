@@ -20,6 +20,7 @@
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
+#include "gdal_asyncreader.h"
 
 #undef NOISY_DEBUG
 

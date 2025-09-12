@@ -12,9 +12,8 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"
+#include "gdal_frmts.h"
 #include "ogrsf_frmts.h"
-
-extern "C" void GDALRegister_NULL();
 
 /************************************************************************/
 /*                          GDALNullDataset                             */

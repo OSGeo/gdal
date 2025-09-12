@@ -14,6 +14,7 @@
 
 #include "cpl_port.h"
 #include "envidataset.h"
+#include "gdal_priv.h"
 #include "rawdataset.h"
 
 #include <climits>

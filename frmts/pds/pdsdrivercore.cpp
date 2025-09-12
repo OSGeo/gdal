@@ -10,6 +10,9 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
+
 #include "pdsdrivercore.h"
 
 #include "nasakeywordhandler.h"

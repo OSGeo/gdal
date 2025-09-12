@@ -17,6 +17,7 @@
 #include "cpl_string.h"
 #include "gdal_alg_priv.h"
 #include "gdal_frmts.h"
+#include "gdal_priv.h"
 #include "vrtexpression.h"
 
 #include <mutex>

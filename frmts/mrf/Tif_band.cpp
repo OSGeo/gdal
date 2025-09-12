@@ -49,6 +49,10 @@
  */
 
 #include "marfa.h"
+
+#include "gdal_driver.h"
+#include "gdal_drivermanager.h"
+
 NAMESPACE_MRF_START
 
 // Returns a unique filename

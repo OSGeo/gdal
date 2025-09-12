@@ -47,6 +47,9 @@
  *  Author: Lucian Plesea
  */
 
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
+
 #include "mrfdrivercore.h"
 #include "cpl_string.h"
 

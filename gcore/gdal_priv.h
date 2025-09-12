@@ -27,6 +27,8 @@
 /*      provide the real class definitions for the GDAL classes.        */
 /* -------------------------------------------------------------------- */
 
+#if !defined(GDAL_COMPILATION) &&                                              \
+    !defined(GDAL_PRIV_SKIP_OTHER_GDAL_HEADERS) && !defined(GDAL_4_0_COMPAT)
 #include "gdal.h"
 #include "gdal_frmts.h"
 #include "gdalsubdatasetinfo.h"
@@ -35,8 +37,12 @@
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
-#include "cpl_atomic_ops.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#endif
 
+#if !defined(GDAL_COMPILATION) && !defined(GDAL_PRIV_SKIP_STANDARD_HEADERS) && \
+    !defined(GDAL_4_0_COMPAT)
 #include <stdarg.h>
 
 #include <algorithm>
@@ -50,9 +56,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-#include "ogr_core.h"
-#include "ogr_feature.h"
+#endif
 
 #include "gdal_multidomainmetadata.h"
 #include "gdal_majorobject.h"

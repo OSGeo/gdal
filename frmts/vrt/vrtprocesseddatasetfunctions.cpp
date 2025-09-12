@@ -13,6 +13,7 @@
 #include "cpl_float.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_cpp_functions.h"
 #include "vrtdataset.h"
 #include "vrtexpression.h"
 

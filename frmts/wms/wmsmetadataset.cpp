@@ -12,6 +12,8 @@
 
 #include "wmsmetadataset.h"
 
+#include "gdal_openinfo.h"
+
 int VersionStringToInt(const char *version);
 
 /************************************************************************/

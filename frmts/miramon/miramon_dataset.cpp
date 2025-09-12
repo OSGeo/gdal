@@ -15,6 +15,8 @@
 #include "miramon_rasterband.h"
 #include "miramon_band.h"  // Per a MMRBand
 
+#include "gdal_frmts.h"
+
 #include "../miramon_common/mm_gdal_functions.h"  // For MMCheck_REL_FILE()
 
 /************************************************************************/

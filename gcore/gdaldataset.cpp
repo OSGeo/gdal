@@ -42,6 +42,7 @@
 #include "gdal_abstractbandblockcache.h"
 #include "gdalantirecursion.h"
 #include "gdal_dataset.h"
+#include "gdalsubdatasetinfo.h"
 
 #include "ogr_api.h"
 #include "ogr_attrind.h"

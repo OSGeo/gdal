@@ -13,23 +13,19 @@
 #include "cpl_error.h"
 #include "cpl_json.h"
 #include "cpl_http.h"
+#include "gdal_frmts.h"
 #include "gdal_priv.h"
 #include "tilematrixset.hpp"
 #include "gdal_utils.h"
 #include "ogrsf_frmts.h"
 #include "ogr_spatialref.h"
+#include "gdalplugindriverproxy.h"
 
 #include "parsexsd.h"
 
 #include <algorithm>
 #include <memory>
 #include <vector>
-
-// g++ -Wall -Wextra -std=c++11 -Wall -g -fPIC
-// frmts/ogcapi/gdalogcapidataset.cpp -shared -o gdal_OGCAPI.so -Iport -Igcore
-// -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gml -Iapps -L. -lgdal
-
-extern "C" void GDALRegister_OGCAPI();
 
 #define MEDIA_TYPE_OAPI_3_0 "application/vnd.oai.openapi+json;version=3.0"
 #define MEDIA_TYPE_OAPI_3_0_ALT "application/openapi+json;version=3.0"

@@ -14,6 +14,7 @@
 #include <limits>
 #include <map>
 
+#include "cpl_multiproc.h"
 #include "gdal_rat.h"
 #include "memdataset.h"
 

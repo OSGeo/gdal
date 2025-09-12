@@ -52,16 +52,13 @@
 #include <algorithm>
 #include <limits>
 #include "mrfdrivercore.h"
+#include "gdal_frmts.h"
 
 // LERC and QB3 only work on little endian machines
 #if defined(WORDS_BIGENDIAN)
 #undef LERC
 #undef QB3_SUPPORT
 #endif
-
-CPL_C_START
-void GDALRegister_mrf(void);
-CPL_C_END
 
 NAMESPACE_MRF_START
 
