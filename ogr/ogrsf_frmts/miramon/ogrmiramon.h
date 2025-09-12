@@ -25,6 +25,9 @@ class OGRMiraMonLayer final
     : public OGRLayer,
       public OGRGetNextFeatureThroughRaw<OGRMiraMonLayer>
 {
+    OGRMiraMonLayer(const OGRMiraMonLayer &) = delete;
+    OGRMiraMonLayer &operator=(const OGRMiraMonLayer &) = delete;
+
     GDALDataset *m_poDS;
     OGRSpatialReference *m_poSRS;
     OGRFeatureDefn *m_poFeatureDefn;
@@ -51,8 +54,8 @@ class OGRMiraMonLayer final
     VSILFILE *m_fp = nullptr;
 
     // Array of doubles used in the field features processing
-    double *padfValues;
-    GInt64 *pnInt64Values;
+    double *padfValues = nullptr;
+    GInt64 *pnInt64Values = nullptr;
 
     OGRFeature *GetNextRawFeature();
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
@@ -111,13 +114,16 @@ class OGRMiraMonLayer final
 
 class OGRMiraMonDataSource final : public GDALDataset
 {
-    std::vector<std::unique_ptr<OGRMiraMonLayer>> m_apoLayers;
+    std::vector<std::unique_ptr<OGRMiraMonLayer>> m_apoLayers = {};
     std::string m_osRootName{};
     bool m_bUpdate = false;
-    struct MiraMonVectMapInfo m_MMMap;
+    struct MiraMonVectMapInfo m_MMMap = {};
 
   public:
     OGRMiraMonDataSource();
+    OGRMiraMonDataSource(const OGRMiraMonDataSource &) = delete;
+    OGRMiraMonDataSource &operator=(const OGRMiraMonDataSource &) = delete;
+
     ~OGRMiraMonDataSource() override;
 
     bool Open(const char *pszFilename, VSILFILE *fp,
