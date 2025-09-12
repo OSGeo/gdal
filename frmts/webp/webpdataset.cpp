@@ -49,6 +49,8 @@ class WEBPDataset final : public GDALPamDataset
     WEBPDataset();
     ~WEBPDataset() override;
 
+    CPLErr Close() override;
+
     char **GetFileList() override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
@@ -173,10 +175,29 @@ WEBPDataset::WEBPDataset()
 WEBPDataset::~WEBPDataset()
 
 {
-    FlushCache(true);
-    if (fpImage)
-        VSIFCloseL(fpImage);
+    WEBPDataset::Close();
     VSIFree(pabyUncompressed);
+}
+
+/************************************************************************/
+/*                                Close()                               */
+/************************************************************************/
+
+CPLErr WEBPDataset::Close()
+{
+    CPLErr eErr = CE_None;
+
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        eErr = WEBPDataset::FlushCache(true);
+
+        if (fpImage != nullptr && VSIFCloseL(fpImage) != 0)
+            eErr = CE_Failure;
+        fpImage = nullptr;
+
+        eErr = GDAL::Combine(eErr, GDALPamDataset::Close());
+    }
+    return eErr;
 }
 
 /************************************************************************/

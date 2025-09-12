@@ -124,6 +124,8 @@ class NITFDataset final : public GDALPamDataset
 
     bool Validate();
 
+    CPLErr Close(int &bHasDroppedRef);
+
     CPL_DISALLOW_COPY_ASSIGN(NITFDataset)
 
   protected:
@@ -132,6 +134,8 @@ class NITFDataset final : public GDALPamDataset
   public:
     NITFDataset();
     ~NITFDataset() override;
+
+    CPLErr Close() override;
 
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize, GDALDataType eDT,

@@ -68,6 +68,8 @@ class GDALAVIFDataset final : public GDALPamDataset
 
     ~GDALAVIFDataset() override;
 
+    CPLErr Close() override;
+
     static GDALPamDataset *OpenStaticPAM(GDALOpenInfo *poOpenInfo);
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo)
@@ -151,11 +153,29 @@ class GDALAVIFIO
 
 GDALAVIFDataset::~GDALAVIFDataset()
 {
-    if (m_decoder)
+    GDALAVIFDataset::Close();
+}
+
+/************************************************************************/
+/*                                Close()                               */
+/************************************************************************/
+
+CPLErr GDALAVIFDataset::Close()
+{
+    CPLErr eErr = CE_None;
+
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        avifDecoderDestroy(m_decoder);
-        avifRGBImageFreePixels(&m_rgb);
+        if (m_decoder)
+        {
+            avifDecoderDestroy(m_decoder);
+            avifRGBImageFreePixels(&m_rgb);
+        }
+        m_decoder = nullptr;
+
+        eErr = GDALPamDataset::Close();
     }
+    return eErr;
 }
 
 /************************************************************************/

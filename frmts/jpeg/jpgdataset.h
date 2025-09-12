@@ -241,6 +241,8 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     JPGDatasetCommon();
     ~JPGDatasetCommon() override;
 
+    CPLErr Close() override;
+
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                      GDALDataType, int, BANDMAP_TYPE, GSpacing nPixelSpace,
                      GSpacing nLineSpace, GSpacing nBandSpace,

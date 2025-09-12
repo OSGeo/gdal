@@ -13,6 +13,7 @@
 ###############################################################################
 
 import base64
+import os
 import struct
 
 import gdaltest
@@ -785,3 +786,15 @@ def test_jpegxl_read_float16():
         21053,
         21349,
     ]
+
+
+###############################################################################
+
+
+def test_jpegxl_close(tmp_path):
+
+    ds = gdal.GetDriverByName("JPEGXL").CreateCopy(
+        tmp_path / "out.jxl", gdal.Open("data/rgbsmall.tif")
+    )
+    ds.Close()
+    os.remove(tmp_path / "out.jxl")

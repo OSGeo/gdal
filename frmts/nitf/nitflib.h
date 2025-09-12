@@ -74,7 +74,7 @@ typedef struct NITFFile
 /* -------------------------------------------------------------------- */
 NITFFile CPL_DLL *NITFOpen(const char *pszFilename, int bUpdatable);
 NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename);
-void CPL_DLL NITFClose(NITFFile *);
+bool CPL_DLL NITFClose(NITFFile *);
 
 int CPL_DLL NITFCreate(const char *pszFilename, int nPixels, int nLines,
                        int nBands, int nBitsPerSample, const char *pszPVType,
