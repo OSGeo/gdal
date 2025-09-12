@@ -85,6 +85,8 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     MEMDataset();
     ~MEMDataset() override;
 
+    CPLErr Close() override;
+
     const OGRSpatialReference *GetSpatialRef() const override;
     const OGRSpatialReference *GetSpatialRefRasterOnly() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;

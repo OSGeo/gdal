@@ -540,10 +540,33 @@ MEMDataset::MEMDataset()
 MEMDataset::~MEMDataset()
 
 {
-    const bool bSuppressOnCloseBackup = bSuppressOnClose;
-    bSuppressOnClose = true;
-    FlushCache(true);
-    bSuppressOnClose = bSuppressOnCloseBackup;
+    MEMDataset::Close();
+}
+
+/************************************************************************/
+/*                                Close()                               */
+/************************************************************************/
+
+CPLErr MEMDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        const bool bSuppressOnCloseBackup = bSuppressOnClose;
+        bSuppressOnClose = true;
+        FlushCache(true);
+        for (int i = 0; i < nBands; ++i)
+        {
+            auto poMEMBand = dynamic_cast<MEMRasterBand *>(papoBands[i]);
+            if (poMEMBand && poMEMBand->poMask)
+                poMEMBand->poMask.get()->FlushCache(true);
+        }
+        bSuppressOnClose = bSuppressOnCloseBackup;
+        m_apoOverviewDS.clear();
+        eErr = GDALDataset::Close();
+    }
+
+    return eErr;
 }
 
 #if 0
