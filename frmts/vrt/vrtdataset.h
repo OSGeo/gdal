@@ -18,9 +18,9 @@
 
 #include "cpl_hash_set.h"
 #include "cpl_minixml.h"
+#include "gdal_driver.h"
+#include "gdal_multidim.h"
 #include "gdal_pam.h"
-#include "gdal_priv.h"
-#include "gdal_rat.h"
 #include "gdal_vrt.h"
 #include "gdal_rat.h"
 
