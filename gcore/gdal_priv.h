@@ -18,7 +18,12 @@
 /**
  * \file gdal_priv.h
  *
- * C++ GDAL entry points.
+ * This file is legacy since GDAL 3.12, but will be kept at least in the whole
+ * GDAL 3.x series. Applications using the C++ API and that target only
+ * GDAL >= 3.12 should rather use the new gdal_cpp.h header, or the finer
+ * grain headers it includes.
+ *
+ * C++ GDAL entry points (legacy).
  */
 
 /* -------------------------------------------------------------------- */
@@ -58,22 +63,7 @@
 #include <vector>
 #endif
 
-#include "gdal_multidomainmetadata.h"
-#include "gdal_majorobject.h"
-#include "gdal_defaultoverviews.h"
-#include "gdal_openinfo.h"
-#include "gdal_gcp.h"
-#include "gdal_geotransform.h"
-#include "gdal_dataset.h"
-#include "gdal_rasterblock.h"
-#include "gdal_colortable.h"
-#include "gdal_rasterband.h"
-#include "gdal_maskbands.h"
-#include "gdal_driver.h"
-#include "gdal_drivermanager.h"
-#include "gdal_asyncreader.h"
-#include "gdal_multidim.h"
-#include "gdal_relationship.h"
-#include "gdal_cpp_functions.h"
+#include "gdal_raster_cpp.h"
+#include "gdal_multidim_cpp.h"
 
 #endif /* ndef GDAL_PRIV_H_INCLUDED */
