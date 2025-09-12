@@ -18,6 +18,7 @@
 #include "HdfEosDef.h"
 
 #include "cpl_string.h"
+#include "gdal_pam_multidim.h"
 
 #include <algorithm>
 #include <map>

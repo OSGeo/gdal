@@ -242,6 +242,7 @@ target_public_header(
   gdaljp2abstractdataset.h
   gdal_frmts.h
   gdal_pam.h
+  gdal_pam_multidim.h
   gdal_priv.h
   gdal_proxy.h
   gdal_rat.h

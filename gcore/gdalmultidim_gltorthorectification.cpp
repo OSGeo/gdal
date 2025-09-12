@@ -11,7 +11,7 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"
-#include "gdal_pam.h"
+#include "gdal_pam_multidim.h"
 
 #include <algorithm>
 #include <limits>
