@@ -90,6 +90,7 @@ target_sources(appslib PRIVATE
   gdalalg_raster_write.cpp
   gdalalg_vector.cpp
   gdalalg_vector_info.cpp
+  gdalalg_vector_change_field_type.cpp
   gdalalg_vector_check_coverage.cpp
   gdalalg_vector_check_geometry.cpp
   gdalalg_vector_clip.cpp

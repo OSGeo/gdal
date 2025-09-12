@@ -4490,6 +4490,123 @@ void GDALAlgorithm::SetAutoCompleteFunctionForLayerName(
 }
 
 /************************************************************************/
+/*                  GDALAlgorithm::AddFieldNameArg()                    */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddFieldNameArg(std::string *pValue, const char *helpMessage)
+{
+    return AddArg("field-name", 0, MsgOrDefault(helpMessage, _("Field name")),
+                  pValue);
+}
+
+/************************************************************************/
+/*           GDALAlgorithm::AddFieldTypeSubtypeArg()                    */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &GDALAlgorithm::AddFieldTypeSubtypeArg(
+    OGRFieldType *pTypeValue, OGRFieldSubType *pSubtypeValue,
+    std::string *pStrValue, const char *helpMessage)
+{
+    auto &arg =
+        AddArg("field-type", 0,
+               MsgOrDefault(helpMessage, _("Field type or subtype")), pStrValue)
+            .SetAutoCompleteFunction(
+                [](const std::string &currentValue)
+                {
+                    std::vector<std::string> oRet;
+                    for (int i = 0; i <= OGRFieldSubType::OFSTMaxSubType; i++)
+                    {
+                        const char *pszSubType =
+                            OGRFieldDefn::GetFieldSubTypeName(
+                                static_cast<OGRFieldSubType>(i));
+                        if (pszSubType != nullptr)
+                        {
+                            if (currentValue.empty() ||
+                                STARTS_WITH(pszSubType, currentValue.c_str()))
+                            {
+                                oRet.push_back(pszSubType);
+                            }
+                        }
+                    }
+
+                    for (int i = 0; i <= OGRFieldType::OFTMaxType; i++)
+                    {
+                        const char *pszType = OGRFieldDefn::GetFieldTypeName(
+                            static_cast<OGRFieldType>(i));
+                        if (pszType != nullptr)
+                        {
+                            if (currentValue.empty() ||
+                                STARTS_WITH(pszType, currentValue.c_str()))
+                            {
+                                oRet.push_back(pszType);
+                            }
+                        }
+                    }
+                    return oRet;
+                });
+
+    auto validationFunction =
+        [this, &arg, pTypeValue, pSubtypeValue, pStrValue]()
+    {
+        bool isValid{true};
+        *pTypeValue = OGRFieldDefn::GetFieldTypeByName(pStrValue->c_str());
+
+        // String is returned for unknown types
+        if (!EQUAL(pStrValue->c_str(), "String") && *pTypeValue == OFTString)
+        {
+            isValid = false;
+        }
+
+        *pSubtypeValue =
+            OGRFieldDefn::GetFieldSubTypeByName(pStrValue->c_str());
+
+        if (*pSubtypeValue != OFSTNone)
+        {
+            isValid = true;
+            switch (*pSubtypeValue)
+            {
+                case OFSTBoolean:
+                case OFSTInt16:
+                {
+                    *pTypeValue = OFTInteger;
+                    break;
+                }
+                case OFSTFloat32:
+                {
+                    *pTypeValue = OFTReal;
+                    break;
+                }
+                default:
+                {
+                    *pTypeValue = OFTString;
+                    break;
+                }
+            }
+        }
+
+        if (!isValid)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Invalid value for argument '%s': '%s'",
+                        arg.GetName().c_str(), pStrValue->c_str());
+        }
+
+        return isValid;
+    };
+
+    if (!pStrValue->empty())
+    {
+        arg.SetDefault(*pStrValue);
+        validationFunction();
+    }
+
+    arg.AddValidationAction(std::move(validationFunction));
+
+    return arg;
+}
+
+/************************************************************************/
 /*                  GDALAlgorithm::ValidateBandArg()                    */
 /************************************************************************/
 
