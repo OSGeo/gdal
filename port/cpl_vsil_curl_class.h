@@ -558,6 +558,12 @@ class VSICurlHandle /* non final*/ : public VSIVirtualHandle
     {
         return m_pszURL;
     }
+
+    //! Whether caching of file content and metadata should persist after file closing
+    void SetCache(bool bCache)
+    {
+        m_bCached = bCache;
+    }
 };
 
 /************************************************************************/

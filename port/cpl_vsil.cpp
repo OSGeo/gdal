@@ -2832,9 +2832,13 @@ VSILFILE *VSIFOpenExL(const char *pszFilename, const char *pszAccess,
  * delay.</li>
  * </ul>
  *
- * Options specifics to /vsis3/, /vsigs/, /vsioss/ and /vsiaz/ in "w" mode:
+ * Options specifics to /vsis3/, /vsigs/, /vsioss/ and /vsiaz/:
  * <ul>
- * <li>CHUNK_SIZE=val in MiB. (GDAL >= 3.10) Size of a block. Default is 50 MiB.
+ * <li>CACHE=YES/NO. (GDAL >= 3.10) Whether file metadata and content that is
+ * read from the network should be kept cached in memory, after file handle
+ * closing. Default is YES, unless the filename is set in CPL_VSIL_CURL_NON_CACHED.
+ * </li>
+ * <li>CHUNK_SIZE=val in MiB. (GDAL >= 3.10) For "w" mode. Size of a block. Default is 50 MiB.
  * For /vsis3/, /vsigz/, /vsioss/, it can be up to 5000 MiB.
  * For /vsiaz/, only taken into account when BLOB_TYPE=BLOCK. It can be up to 4000 MiB.
  * </li>
