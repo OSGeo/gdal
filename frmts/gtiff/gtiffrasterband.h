@@ -124,7 +124,7 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     CPLErr SetScale(double dfNewValue) override final;
     const char *GetUnitType() override final;
     CPLErr SetUnitType(const char *pszNewValue) override final;
-    CPLErr SetColorInterpretation(GDALColorInterp) override final;
+    CPLErr SetColorInterpretation(GDALColorInterp) override;
 
     char **GetMetadataDomainList() override final;
     CPLErr SetMetadata(char **, const char * = "") override final;

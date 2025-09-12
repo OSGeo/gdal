@@ -2087,7 +2087,7 @@ void GTiffDataset::Crystalize()
 
     // TODO: libtiff writes extended tags in the order they are specified
     // and not in increasing order.
-    WriteMetadata(this, m_hTIFF, true, m_eProfile, m_pszFilename,
+    WriteMetadata(this, m_hTIFF, true, m_eProfile, m_osFilename.c_str(),
                   m_papszCreationOptions);
     WriteGeoTIFFInfo();
     if (m_bNoDataSet)
@@ -2259,8 +2259,8 @@ CPLErr GTiffDataset::FlushDirectory()
         if (m_bMetadataChanged)
         {
             m_bNeedsRewrite =
-                WriteMetadata(this, m_hTIFF, true, m_eProfile, m_pszFilename,
-                              m_papszCreationOptions);
+                WriteMetadata(this, m_hTIFF, true, m_eProfile,
+                              m_osFilename.c_str(), m_papszCreationOptions);
             m_bMetadataChanged = false;
 
             if (m_bForceUnsetRPC)
@@ -2277,8 +2277,11 @@ CPLErr GTiffDataset::FlushDirectory()
                     m_bNeedsRewrite = true;
                 }
 
-                GDALWriteRPCTXTFile(m_pszFilename, nullptr);
-                GDALWriteRPBFile(m_pszFilename, nullptr);
+                if (m_poBaseDS == nullptr)
+                {
+                    GDALWriteRPCTXTFile(m_osFilename.c_str(), nullptr);
+                    GDALWriteRPBFile(m_osFilename.c_str(), nullptr);
+                }
             }
         }
 
@@ -2584,7 +2587,8 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
 
     GTiffDataset *poODS = new GTiffDataset();
     poODS->ShareLockWithParentDataset(this);
-    poODS->m_pszFilename = CPLStrdup(m_pszFilename);
+    poODS->eAccess = GA_Update;
+    poODS->m_osFilename = m_osFilename;
     const char *pszSparseOK = GetOptionValue("SPARSE_OK", "SPARSE_OK_OVERVIEW");
     if (pszSparseOK && CPLTestBool(pszSparseOK))
     {
@@ -2999,8 +3003,9 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                 }
 
                 GTiffDataset *poODS = new GTiffDataset();
+                poODS->eAccess = GA_Update;
                 poODS->ShareLockWithParentDataset(this);
-                poODS->m_pszFilename = CPLStrdup(m_pszFilename);
+                poODS->m_osFilename = m_osFilename;
                 if (poODS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF),
                                       nOverviewOffset, GA_Update) != CE_None)
                 {
@@ -3975,11 +3980,14 @@ void GTiffDataset::WriteGeoTIFFInfo()
                 TIFFSetField(m_hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix);
         }
 
-        // Do we need a world file?
-        if (CPLFetchBool(m_papszCreationOptions, "TFW", false))
-            GDALWriteWorldFile(m_pszFilename, "tfw", m_gt.data());
-        else if (CPLFetchBool(m_papszCreationOptions, "WORLDFILE", false))
-            GDALWriteWorldFile(m_pszFilename, "wld", m_gt.data());
+        if (m_poBaseDS == nullptr)
+        {
+            // Do we need a world file?
+            if (CPLFetchBool(m_papszCreationOptions, "TFW", false))
+                GDALWriteWorldFile(m_osFilename.c_str(), "tfw", m_gt.data());
+            else if (CPLFetchBool(m_papszCreationOptions, "WORLDFILE", false))
+                GDALWriteWorldFile(m_osFilename.c_str(), "wld", m_gt.data());
+        }
     }
     else if (GetGCPCount() > 0 && GetGCPCount() <= knMAX_GCP_COUNT &&
              m_eProfile != GTiffProfile::BASELINE)
@@ -4367,10 +4375,11 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     char **papszSrcMDD =
         CSLFetchNameValueMultiple(papszCreationOptions, "SRC_MDD");
 
-    if (bSrcIsGeoTIFF)
+    GTiffDataset *poSrcDSGTiff =
+        bSrcIsGeoTIFF ? cpl::down_cast<GTiffDataset *>(poSrcDS) : nullptr;
+
+    if (poSrcDSGTiff)
     {
-        GTiffDataset *poSrcDSGTiff = cpl::down_cast<GTiffDataset *>(poSrcDS);
-        assert(poSrcDSGTiff);
         WriteMDMetadata(&poSrcDSGTiff->m_oGTiffMDMD, l_hTIFF, &psRoot, &psTail,
                         0, eProfile);
     }
@@ -4426,7 +4435,8 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         }
     }
 
-    if (!bExcludeRPBandIMGFileWriting)
+    if (!bExcludeRPBandIMGFileWriting &&
+        (!poSrcDSGTiff || poSrcDSGTiff->m_poBaseDS == nullptr))
     {
         WriteRPC(poSrcDS, l_hTIFF, bSrcIsGeoTIFF, eProfile, pszTIFFFilename,
                  papszCreationOptions);
@@ -6791,7 +6801,7 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
 
     poDS->m_bCrystalized = false;
     poDS->m_nSamplesPerPixel = static_cast<uint16_t>(l_nBands);
-    poDS->m_pszFilename = CPLStrdup(pszFilename);
+    poDS->m_osFilename = pszFilename;
 
     // Don't try to load external metadata files (#6597).
     poDS->m_bIMDRPCMetadataLoaded = true;
@@ -8188,7 +8198,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         poDS->MarkSuppressOnClose();
     poDS->SetDescription(pszFilename);
     poDS->eAccess = GA_Update;
-    poDS->m_pszFilename = CPLStrdup(pszFilename);
+    poDS->m_osFilename = pszFilename;
     poDS->m_fpL = l_fpL;
     poDS->m_bIMDRPCMetadataLoaded = true;
     poDS->m_nColorTableMultiplier = nColorTableMultiplier;
@@ -9397,9 +9407,11 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
             return CE_Failure;
 
         m_poMaskDS = new GTiffDataset();
+        m_poMaskDS->eAccess = GA_Update;
         m_poMaskDS->m_poBaseDS = this;
         m_poMaskDS->m_poImageryDS = this;
         m_poMaskDS->ShareLockWithParentDataset(this);
+        m_poMaskDS->m_osFilename = m_osFilename;
         m_poMaskDS->m_bPromoteTo8Bits = CPLTestBool(
             CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
         if (m_poMaskDS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF), nOffset,
