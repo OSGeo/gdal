@@ -1299,6 +1299,26 @@ TEST_F(test_gdal, GDALDataset_GetBands)
     EXPECT_EQ(poDS->GetBands()[static_cast<size_t>(0)], poDS->GetRasterBand(1));
 }
 
+// Test GDALDataset::GetBands()
+TEST_F(test_gdal, GDALDataset_GetBands_const)
+{
+    GDALDatasetUniquePtr poDS(
+        MEMDataset::Create("", 1, 1, 3, GDT_Byte, nullptr));
+    const GDALDataset *poConstDS = poDS.get();
+    int nExpectedNumber = 1;
+    for (const auto *poBand : poConstDS->GetBands())
+    {
+        EXPECT_EQ(poBand->GetBand(), nExpectedNumber);
+        nExpectedNumber++;
+    }
+    ASSERT_EQ(nExpectedNumber, 3 + 1);
+
+    ASSERT_EQ(poConstDS->GetBands().size(), 3U);
+    EXPECT_EQ(poConstDS->GetBands()[0], poConstDS->GetRasterBand(1));
+    EXPECT_EQ(poConstDS->GetBands()[static_cast<size_t>(0)],
+              poConstDS->GetRasterBand(1));
+}
+
 TEST_F(test_gdal, GDALExtendedDataType)
 {
 #ifndef __COVERITY__

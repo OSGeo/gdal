@@ -2017,7 +2017,7 @@ int CPL_STDCALL GDALGetGCPCount(GDALDatasetH hDS)
  *  It should not be altered, freed or expected to last for long.
  */
 
-const char *GDALDataset::GetGCPProjection()
+const char *GDALDataset::GetGCPProjection() const
 {
     const auto poSRS = GetGCPSpatialRef();
     if (!poSRS || !m_poPrivate)
@@ -5076,7 +5076,7 @@ char **GDALDataset::GetMetadataDomainList()
 /** Return driver name.
  * @return driver name.
  */
-const char *GDALDataset::GetDriverName()
+const char *GDALDataset::GetDriverName() const
 {
     if (poDriver)
         return poDriver->GetDescription();
@@ -9491,7 +9491,7 @@ bool GDALDataset::Bands::Iterator::operator!=(const Iterator &it) const
 }
 
 /************************************************************************/
-/*                            GetBands()                           */
+/*                              GetBands()                              */
 /************************************************************************/
 
 /** Function that returns an iterable object over GDALRasterBand in the dataset.
@@ -9607,6 +9607,184 @@ GDALRasterBand *GDALDataset::Bands::operator[](int iBand)
 */
 
 GDALRasterBand *GDALDataset::Bands::operator[](size_t iBand)
+{
+    return m_poSelf->GetRasterBand(1 + static_cast<int>(iBand));
+}
+
+/************************************************************************/
+/*               GDALDataset::ConstBands::Iterator::Private             */
+/************************************************************************/
+
+struct GDALDataset::ConstBands::Iterator::Private
+{
+    const GDALRasterBand *m_poBand = nullptr;
+    int m_iCurBand = 0;
+    int m_nBandCount = 0;
+    const GDALDataset *m_poDS = nullptr;
+};
+
+GDALDataset::ConstBands::Iterator::Iterator(const GDALDataset *poDS,
+                                            bool bStart)
+    : m_poPrivate(new GDALDataset::ConstBands::Iterator::Private())
+{
+    m_poPrivate->m_poDS = poDS;
+    m_poPrivate->m_nBandCount = poDS->GetRasterCount();
+    if (bStart)
+    {
+        if (m_poPrivate->m_nBandCount)
+            m_poPrivate->m_poBand = poDS->GetRasterBand(1);
+    }
+    else
+    {
+        m_poPrivate->m_iCurBand = m_poPrivate->m_nBandCount;
+    }
+}
+
+GDALDataset::ConstBands::Iterator::~Iterator() = default;
+
+const GDALRasterBand *GDALDataset::ConstBands::Iterator::operator*() const
+{
+    return m_poPrivate->m_poBand;
+}
+
+GDALDataset::ConstBands::Iterator &
+GDALDataset::ConstBands::Iterator::operator++()
+{
+    m_poPrivate->m_iCurBand++;
+    if (m_poPrivate->m_iCurBand < m_poPrivate->m_nBandCount)
+    {
+        m_poPrivate->m_poBand =
+            m_poPrivate->m_poDS->GetRasterBand(1 + m_poPrivate->m_iCurBand);
+    }
+    else
+    {
+        m_poPrivate->m_poBand = nullptr;
+    }
+    return *this;
+}
+
+bool GDALDataset::ConstBands::Iterator::operator!=(const Iterator &it) const
+{
+    return m_poPrivate->m_iCurBand != it.m_poPrivate->m_iCurBand;
+}
+
+/************************************************************************/
+/*                             GetBands()                               */
+/************************************************************************/
+
+/** Function that returns an iterable object over GDALRasterBand in the dataset.
+ *
+ * This is a C++ iterator friendly version of GetRasterBand().
+ *
+ * Typical use is:
+ * \code{.cpp}
+ * for( const auto* poBand: poDS->GetConstBands() )
+ * {
+ *       std::cout << "Band  << poBand->GetDescription() << std::endl;
+ * }
+ * \endcode
+ *
+ * @see GetRasterBand()
+ *
+ * @since GDAL 3.12
+ */
+GDALDataset::ConstBands GDALDataset::GetBands() const
+{
+    return ConstBands(this);
+}
+
+/************************************************************************/
+/*                                 begin()                              */
+/************************************************************************/
+
+/**
+ \brief Return beginning of band iterator.
+
+ @since GDAL 3.12
+*/
+
+const GDALDataset::ConstBands::Iterator GDALDataset::ConstBands::begin() const
+{
+    return {m_poSelf, true};
+}
+
+/************************************************************************/
+/*                                  end()                               */
+/************************************************************************/
+
+/**
+ \brief Return end of band iterator.
+
+ @since GDAL 3.12
+*/
+
+const GDALDataset::ConstBands::Iterator GDALDataset::ConstBands::end() const
+{
+    return {m_poSelf, false};
+}
+
+/************************************************************************/
+/*                                  size()                             */
+/************************************************************************/
+
+/**
+ \brief Get the number of raster bands in this dataset.
+
+ @return raster band count.
+
+ @since GDAL 3.12
+*/
+
+size_t GDALDataset::ConstBands::size() const
+{
+    return static_cast<size_t>(m_poSelf->GetRasterCount());
+}
+
+/************************************************************************/
+/*                                operator[]()                          */
+/************************************************************************/
+/**
+ \brief Fetch a raster band by index.
+
+ The returned band remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ @warning Contrary to GDALDataset::GetRasterBand(), the indexing here is
+ consistent with the conventions of C/C++, i.e. starting at 0.
+
+ @param iBand a band index between 0 and size()-1.
+
+ @return the band, or nullptr if iBand is out of range or an error occurs.
+
+ @since GDAL 3.12
+*/
+
+const GDALRasterBand *GDALDataset::ConstBands::operator[](int iBand) const
+{
+    return m_poSelf->GetRasterBand(1 + iBand);
+}
+
+/************************************************************************/
+/*                                operator[]()                          */
+/************************************************************************/
+
+/**
+ \brief Fetch a raster band by index.
+
+ The returned band remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ @warning Contrary to GDALDataset::GetRasterBand(), the indexing here is
+ consistent with the conventions of C/C++, i.e. starting at 0.
+
+ @param iBand a band index between 0 and size()-1.
+
+ @return the band, or nullptr if iBand is out of range or an error occurs.
+
+ @since GDAL 3.12
+*/
+
+const GDALRasterBand *GDALDataset::ConstBands::operator[](size_t iBand) const
 {
     return m_poSelf->GetRasterBand(1 + static_cast<int>(iBand));
 }
