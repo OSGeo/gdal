@@ -15,8 +15,23 @@
 
 //! @cond Doxygen_Suppress
 
+#if !defined(GDAL_COMPILATION) &&                                              \
+    !defined(GDAL_PAM_SKIP_OTHER_GDAL_HEADERS) && !defined(GDAL_4_0_COMPAT)
+
 #include "cpl_minixml.h"
 #include "gdal_priv.h"
+
+#else
+
+#include "gdal_dataset.h"
+#include "gdal_multidim.h"
+#include "gdal_rasterband.h"
+#include "gdal_gcp.h"
+
+typedef struct CPLXMLNode CPLXMLNode;
+
+#endif
+
 #include <array>
 #include <cstddef>
 #include <limits>
