@@ -218,6 +218,9 @@ target_public_header(
   HEADERS
   ${CMAKE_CURRENT_BINARY_DIR}/gdal_version_full/gdal_version.h
   gdal.h
+  gdal_raster_cpp.h
+  gdal_multidim_cpp.h
+  gdal_vector_cpp.h
   gdal_multidomainmetadata.h
   gdal_majorobject.h
   gdal_defaultoverviews.h
