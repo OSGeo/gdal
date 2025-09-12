@@ -286,12 +286,12 @@ list
 
 Examples
 --------
->>> import numpy as np
+>>> np.random.seed(123)
 >>> ds = gdal.GetDriverByName('MEM').Create('', 10, 10, eType=gdal.GDT_Float32)
 >>> ds.WriteArray(np.random.normal(size=100).reshape(10, 10))
 0
 >>> ds.GetRasterBand(1).GetHistogram(min=-3.5, max=3.5, buckets=13, approx_ok=False)
-[0, 0, 3, 9, 13, 12, 25, 22, 9, 6, 0, 1, 0]  # random
+[0, 2, 1, 6, 17, 18, 13, 14, 16, 8, 5, 0, 0]
 ";
 
 %feature("docstring")  GetMaskBand "
