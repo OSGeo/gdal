@@ -27,20 +27,33 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
       m_osBandSection(osBandSectionIn)
 
 {
-    // Getting band and band file name from metadata
+    // Getting band and band file name from metadata.
     if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osBandSectionIn,
                                    KEY_NomFitxer, m_osRawBandFileName) ||
         m_osRawBandFileName.empty())
     {
-        m_osBandFileName =
-            m_pfRel->MMRGetFileNameFromRelName(m_pfRel->GetRELName());
+        // A band name may be empty only if it is the only band present
+        // in the REL file. Otherwise, inferring the band name from the
+        // REL filename is considered an error.
+        // Consequently, for a REL file containing exactly one band, if
+        // the band name is empty, it shall be inferred from the REL
+        // filename.
+        // Example: REL: testI.rel  -->  IMG: test.img
+        if (m_pfRel->GetNBands() >= 1)
+            m_osBandFileName = "";
+        else
+        {
+            m_osBandFileName =
+                m_pfRel->MMRGetFileNameFromRelName(m_pfRel->GetRELName());
+        }
+
         if (m_osBandFileName.empty())
         {
             m_nWidth = 0;
             m_nHeight = 0;
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "The REL file '%s' contains a documented \
-                band with no explicit name. Section [%s] or [%s:%s].",
+                band with no explicit or wrong name. Section [%s] or [%s:%s].",
                      m_pfRel->GetRELNameChar(), SECTION_ATTRIBUTE_DATA,
                      SECTION_ATTRIBUTE_DATA, m_osBandSection.c_str());
             return;
