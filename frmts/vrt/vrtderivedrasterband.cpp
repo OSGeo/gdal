@@ -1035,6 +1035,26 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         return CE_Failure;
     }
 
+    const std::string osFctId("VRTDerivedRasterBand::IRasterIO");
+    GDALAntiRecursionGuard oGuard(osFctId);
+    if (oGuard.GetCallDepth() >= 32)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "VRTDerivedRasterBand::IRasterIO(): Recursion detected (case 1)");
+        return CE_Failure;
+    }
+
+    GDALAntiRecursionGuard oGuard2(oGuard, poDS->GetDescription());
+    // Allow multiple recursion depths on the same dataset in case the split strategy is applied
+    if (oGuard2.GetCallDepth() > 15)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "VRTDerivedRasterBand::IRasterIO(): Recursion detected (case 2)");
+        return CE_Failure;
+    }
+
     if constexpr (sizeof(GSpacing) > sizeof(int))
     {
         if (nLineSpace > INT_MAX)
@@ -1051,6 +1071,21 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                 return CE_Failure;
             }
         }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Do we have overviews that would be appropriate to satisfy       */
+    /*      this request?                                                   */
+    /* -------------------------------------------------------------------- */
+    auto l_poDS = dynamic_cast<VRTDataset *>(poDS);
+    if (l_poDS &&
+        l_poDS->m_apoOverviews.empty() &&  // do not use virtual overviews
+        (nBufXSize < nXSize || nBufYSize < nYSize) && GetOverviewCount() > 0)
+    {
+        if (OverviewRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
+                             nBufXSize, nBufYSize, eBufType, nPixelSpace,
+                             nLineSpace, psExtraArg) == CE_None)
+            return CE_None;
     }
 
     const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
@@ -1105,18 +1140,6 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                                     nPixelSpace, nLineSpace, psExtraArg);
         if (eErr != CE_Warning)
             return eErr;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Do we have overviews that would be appropriate to satisfy       */
-    /*      this request?                                                   */
-    /* -------------------------------------------------------------------- */
-    if ((nBufXSize < nXSize || nBufYSize < nYSize) && GetOverviewCount() > 0)
-    {
-        if (OverviewRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
-                             nBufXSize, nBufYSize, eBufType, nPixelSpace,
-                             nLineSpace, psExtraArg) == CE_None)
-            return CE_None;
     }
 
     /* ---- Get pixel function for band ---- */
