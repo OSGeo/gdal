@@ -16,7 +16,7 @@
 #include "cpl_compressor.h"
 #include "cpl_json.h"
 #include "gdal_priv.h"
-#include "gdal_pam.h"
+#include "gdal_pam_multidim.h"
 #include "memmultidim.h"
 
 #include <array>
