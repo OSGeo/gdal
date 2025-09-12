@@ -12,9 +12,14 @@
  * SPDX-License-Identifier: MIT
  ******************************************************************************/
 
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
+
 #include <stdexcept>
 
 #include "postgisrasterdrivercore.h"
+
+#include "gdalsubdatasetinfo.h"
 
 /************************************************************************/
 /*                     PostGISRasterDriverIdentify()                    */

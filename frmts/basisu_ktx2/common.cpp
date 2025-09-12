@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_multiproc.h"
 #include "gdal_frmts.h"
 #include "common.h"
 #include "include_basisu_sdk.h"

@@ -10,7 +10,9 @@
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 #include "../vrt/vrtdataset.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gdal_priv.h"
 #include "derivedlist.h"
 
 class DerivedDataset final : public VRTDataset

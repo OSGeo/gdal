@@ -335,8 +335,4 @@ class CPL_DLL GDALDriver : public GDALMajorObject
 #define PLUGIN_SYMBOL_NAME(x) GDAL_driver_##x
 #endif
 
-#ifdef GDAL_COMPILATION
-#include "gdalplugindriverproxy.h"
-#endif
-
 #endif

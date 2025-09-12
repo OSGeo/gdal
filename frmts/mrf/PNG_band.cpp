@@ -57,6 +57,8 @@
 #include <cassert>
 #include <algorithm>
 
+#include "gdal_colortable.h"
+
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"

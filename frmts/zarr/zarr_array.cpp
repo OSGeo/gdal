@@ -14,6 +14,7 @@
 #include "ucs4_utf8.hpp"
 
 #include "cpl_float.h"
+#include "cpl_multiproc.h"
 
 #include "netcdf_cf_constants.h"  // for CF_UNITS, etc
 

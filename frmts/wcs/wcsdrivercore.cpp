@@ -12,6 +12,8 @@
  ****************************************************************************/
 
 #include "wcsdrivercore.h"
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
 
 /************************************************************************/
 /*                     WCSDriverIdentify()                              */

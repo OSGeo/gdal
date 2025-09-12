@@ -10,6 +10,9 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
+
 #include "pcrasterdrivercore.h"
 
 /* value for first 27 bytes of MAIN_HEADER.signature */
