@@ -51,6 +51,13 @@ the health of the project:
            :width: 240 px
            :target: https://www.safe.com
 
+    .. container:: horizontal-logo
+
+        .. image:: ../../images/sponsors/logo-google.png
+           :class: img-logos
+           :width: 240 px
+           :target: https://google.com
+
 
 
 - Bronze level:
