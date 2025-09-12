@@ -2210,11 +2210,11 @@ def test_ogr_mitab_style(tmp_vsimem):
     lyr.CreateFeature(f)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,0 0))"))
-    f.SetStyleString('BRUSH(fc:#AABBCC,id:"mapinfo-brush-1")')
+    f.SetStyleString('BRUSH(fc:#AABBCC,id:"mapinfo-brush-1");PEN(w:2px)')
     lyr.CreateFeature(f)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,0 0))"))
-    f.SetStyleString("BRUSH(fc:#AABBCC00,bc:#ddeeff00)")
+    f.SetStyleString("BRUSH(fc:#AABBCC00,bc:#ddeeff00);PEN(w:2.5pt)")
     lyr.CreateFeature(f)
     ds = None
 
@@ -2230,14 +2230,14 @@ def test_ogr_mitab_style(tmp_vsimem):
     f = lyr.GetNextFeature()
     if (
         f.GetStyleString()
-        != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0",cap:r,j:r)'
+        != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:2px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0",cap:r,j:r)'
     ):
         f.DumpReadable()
         pytest.fail()
     f = lyr.GetNextFeature()
     if (
         f.GetStyleString()
-        != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0",cap:r,j:r)'
+        != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:2.5pt,c:#000000,id:"mapinfo-pen-2,ogr-pen-0",cap:r,j:r)'
     ):
         f.DumpReadable()
         pytest.fail()
