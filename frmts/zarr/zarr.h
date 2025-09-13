@@ -366,7 +366,9 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     mutable std::map<CPLString, std::shared_ptr<ZarrDimension>>
         m_oMapDimensions{};
     mutable bool m_bDirectoryExplored = false;
+    mutable std::set<std::string> m_oSetGroupNames{};
     mutable std::vector<std::string> m_aosGroups{};
+    mutable std::set<std::string> m_oSetArrayNames{};
     mutable std::vector<std::string> m_aosArrays{};
     mutable ZarrAttributeGroup m_oAttrGroup;
     mutable bool m_bAttributesLoaded = false;
