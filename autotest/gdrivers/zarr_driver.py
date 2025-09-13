@@ -5743,3 +5743,15 @@ def test_zarr_read_imagecodecs_tiff_errors(dirname):
     with pytest.raises(Exception):
         with gdal.Open(dirname) as ds:
             ds.ReadRaster()
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_ossfuzz_444714656():
+
+    ds = gdal.OpenEx("/vsitar/data/zarr/ossfuzz_444714656.tar", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg.GetGroupNames() == ["x"]
