@@ -5343,10 +5343,10 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
     bool bWriteGeoTransform = false;
 
     // For GEOLOCATION information.
-    GDALDatasetH hDS_X = nullptr;
-    GDALRasterBandH hBand_X = nullptr;
-    GDALDatasetH hDS_Y = nullptr;
-    GDALRasterBandH hBand_Y = nullptr;
+    GDALDatasetUniquePtr poDS_X;
+    GDALDatasetUniquePtr poDS_Y;
+    GDALRasterBand *poBand_X = nullptr;
+    GDALRasterBand *poBand_Y = nullptr;
 
     OGRSpatialReference oSRS(m_oSRS);
     if (!m_oSRS.IsEmpty())
@@ -5380,35 +5380,40 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
     }
 
     // Check GEOLOCATION information.
-    char **papszGeolocationInfo = netCDFDataset::GetMetadata("GEOLOCATION");
+    CSLConstList papszGeolocationInfo =
+        netCDFDataset::GetMetadata("GEOLOCATION");
     if (papszGeolocationInfo != nullptr)
     {
         // Look for geolocation datasets.
         const char *pszDSName =
             CSLFetchNameValue(papszGeolocationInfo, "X_DATASET");
         if (pszDSName != nullptr)
-            hDS_X = GDALOpenShared(pszDSName, GA_ReadOnly);
+            poDS_X.reset(GDALDataset::Open(
+                pszDSName,
+                GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_SHARED));
         pszDSName = CSLFetchNameValue(papszGeolocationInfo, "Y_DATASET");
         if (pszDSName != nullptr)
-            hDS_Y = GDALOpenShared(pszDSName, GA_ReadOnly);
+            poDS_Y.reset(GDALDataset::Open(
+                pszDSName,
+                GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_SHARED));
 
-        if (hDS_X != nullptr && hDS_Y != nullptr)
+        if (poDS_X != nullptr && poDS_Y != nullptr)
         {
             int nBand = std::max(1, atoi(CSLFetchNameValueDef(
                                         papszGeolocationInfo, "X_BAND", "0")));
-            hBand_X = GDALGetRasterBand(hDS_X, nBand);
+            poBand_X = poDS_X->GetRasterBand(nBand);
             nBand = std::max(1, atoi(CSLFetchNameValueDef(papszGeolocationInfo,
                                                           "Y_BAND", "0")));
-            hBand_Y = GDALGetRasterBand(hDS_Y, nBand);
+            poBand_Y = poDS_Y->GetRasterBand(nBand);
 
             // If geoloc bands are found, do basic validation based on their
             // dimensions.
-            if (hBand_X != nullptr && hBand_Y != nullptr)
+            if (poBand_X != nullptr && poBand_Y != nullptr)
             {
-                int nXSize_XBand = GDALGetRasterXSize(hDS_X);
-                int nYSize_XBand = GDALGetRasterYSize(hDS_X);
-                int nXSize_YBand = GDALGetRasterXSize(hDS_Y);
-                int nYSize_YBand = GDALGetRasterYSize(hDS_Y);
+                const int nXSize_XBand = poBand_X->GetXSize();
+                const int nYSize_XBand = poBand_X->GetYSize();
+                const int nXSize_YBand = poBand_Y->GetXSize();
+                const int nYSize_YBand = poBand_Y->GetYSize();
 
                 // TODO 1D geolocation arrays not implemented.
                 if (nYSize_XBand == 1 && nYSize_YBand == 1)
@@ -5693,8 +5698,8 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
         // Write lat/lon attributes if needed.
         if (bWriteLonLat)
         {
-            int *panLatDims = nullptr;
-            int *panLonDims = nullptr;
+            int anLatDims[2] = {0, 0};
+            int anLonDims[2] = {0, 0};
             int nLatDims = -1;
             int nLonDims = -1;
 
@@ -5703,41 +5708,29 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
             {
                 // Geoloc
                 nLatDims = 2;
-                panLatDims =
-                    static_cast<int *>(CPLCalloc(nLatDims, sizeof(int)));
-                panLatDims[0] = nYDimID;
-                panLatDims[1] = nXDimID;
+                anLatDims[0] = nYDimID;
+                anLatDims[1] = nXDimID;
                 nLonDims = 2;
-                panLonDims =
-                    static_cast<int *>(CPLCalloc(nLonDims, sizeof(int)));
-                panLonDims[0] = nYDimID;
-                panLonDims[1] = nXDimID;
+                anLonDims[0] = nYDimID;
+                anLonDims[1] = nXDimID;
             }
             else if (bIsProjected)
             {
                 // Projected
                 nLatDims = 2;
-                panLatDims =
-                    static_cast<int *>(CPLCalloc(nLatDims, sizeof(int)));
-                panLatDims[0] = nYDimID;
-                panLatDims[1] = nXDimID;
+                anLatDims[0] = nYDimID;
+                anLatDims[1] = nXDimID;
                 nLonDims = 2;
-                panLonDims =
-                    static_cast<int *>(CPLCalloc(nLonDims, sizeof(int)));
-                panLonDims[0] = nYDimID;
-                panLonDims[1] = nXDimID;
+                anLonDims[0] = nYDimID;
+                anLonDims[1] = nXDimID;
             }
             else
             {
                 // Geographic
                 nLatDims = 1;
-                panLatDims =
-                    static_cast<int *>(CPLCalloc(nLatDims, sizeof(int)));
-                panLatDims[0] = nYDimID;
+                anLatDims[0] = nYDimID;
                 nLonDims = 1;
-                panLonDims =
-                    static_cast<int *>(CPLCalloc(nLonDims, sizeof(int)));
-                panLonDims[0] = nXDimID;
+                anLonDims[0] = nXDimID;
             }
 
             nc_type eLonLatType = NC_NAT;
@@ -5763,7 +5756,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                 const char *pszVarName =
                     bIsRotatedPole ? NCDF_DIMNAME_RLAT : CF_LATITUDE_VAR_NAME;
                 int status = nc_def_var(cdfid, pszVarName, eLonLatType,
-                                        nLatDims, panLatDims, &nVarLatID);
+                                        nLatDims, anLatDims, &nVarLatID);
                 CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d,%d,-,-) got id %d",
                          cdfid, pszVarName, eLonLatType, nLatDims, nVarLatID);
                 NCDF_ERR(status);
@@ -5774,7 +5767,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                 const char *pszVarName =
                     bIsRotatedPole ? NCDF_DIMNAME_RLON : CF_LONGITUDE_VAR_NAME;
                 int status = nc_def_var(cdfid, pszVarName, eLonLatType,
-                                        nLonDims, panLonDims, &nVarLonID);
+                                        nLonDims, anLonDims, &nVarLonID);
                 CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d,%d,-,-) got id %d",
                          cdfid, pszVarName, eLonLatType, nLatDims, nVarLonID);
                 NCDF_ERR(status);
@@ -5786,9 +5779,6 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                                                 nVarLatID);
             else
                 NCDFWriteLonLatVarsAttributes(this->vcdf, nVarLonID, nVarLatID);
-
-            CPLFree(panLatDims);
-            CPLFree(panLonDims);
         }
     }
 
@@ -5817,13 +5807,10 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
 
         // Get projection values.
 
-        double *padLonVal = nullptr;
-        double *padLatVal = nullptr;
-
         if (bIsProjected)
         {
-            OGRSpatialReference *poLatLonSRS = nullptr;
-            OGRCoordinateTransformation *poTransform = nullptr;
+            std::unique_ptr<OGRSpatialReference> poLatLonSRS;
+            std::unique_ptr<OGRCoordinateTransformation> poTransform;
 
             size_t startX[1];
             size_t countX[1];
@@ -5832,10 +5819,20 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
 
             CPLDebug("GDAL_netCDF", "Getting (X,Y) values");
 
-            double *padXVal =
-                static_cast<double *>(CPLMalloc(nRasterXSize * sizeof(double)));
-            double *padYVal =
-                static_cast<double *>(CPLMalloc(nRasterYSize * sizeof(double)));
+            std::unique_ptr<double, decltype(&VSIFree)> adXValKeeper(
+                static_cast<double *>(
+                    VSI_MALLOC2_VERBOSE(nRasterXSize, sizeof(double))),
+                VSIFree);
+            std::unique_ptr<double, decltype(&VSIFree)> adYValKeeper(
+                static_cast<double *>(
+                    VSI_MALLOC2_VERBOSE(nRasterYSize, sizeof(double))),
+                VSIFree);
+            double *padXVal = adXValKeeper.get();
+            double *padYVal = adYValKeeper.get();
+            if (!padXVal || !padYVal)
+            {
+                return CE_Failure;
+            }
 
             // Get Y values.
             const double dfY0 = (!bBottomUp) ? m_gt[3] :
@@ -5889,13 +5886,13 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
             // Get OGR transform if GEOLOCATION is not available.
             if (bWriteLonLat && !bHasGeoloc)
             {
-                poLatLonSRS = m_oSRS.CloneGeogCS();
+                poLatLonSRS.reset(m_oSRS.CloneGeogCS());
                 if (poLatLonSRS != nullptr)
                 {
                     poLatLonSRS->SetAxisMappingStrategy(
                         OAMS_TRADITIONAL_GIS_ORDER);
-                    poTransform =
-                        OGRCreateCoordinateTransformation(&m_oSRS, poLatLonSRS);
+                    poTransform.reset(OGRCreateCoordinateTransformation(
+                        &m_oSRS, poLatLonSRS.get()));
                 }
                 // If no OGR transform, then don't write CF lon/lat.
                 if (poTransform == nullptr)
@@ -5919,10 +5916,20 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
 
                 size_t start[] = {0, 0};
                 size_t count[] = {1, (size_t)nRasterXSize};
-                padLatVal = static_cast<double *>(
-                    CPLMalloc(nRasterXSize * sizeof(double)));
-                padLonVal = static_cast<double *>(
-                    CPLMalloc(nRasterXSize * sizeof(double)));
+                std::unique_ptr<double, decltype(&VSIFree)> adLatValKeeper(
+                    static_cast<double *>(
+                        VSI_MALLOC2_VERBOSE(nRasterXSize, sizeof(double))),
+                    VSIFree);
+                std::unique_ptr<double, decltype(&VSIFree)> adLonValKeeper(
+                    static_cast<double *>(
+                        VSI_MALLOC2_VERBOSE(nRasterXSize, sizeof(double))),
+                    VSIFree);
+                double *padLonVal = adLonValKeeper.get();
+                double *padLatVal = adLatValKeeper.get();
+                if (!padLonVal || !padLatVal)
+                {
+                    return CE_Failure;
+                }
 
                 for (int j = 0; j < nRasterYSize && bOK && status == NC_NOERR;
                      j++)
@@ -5951,14 +5958,14 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                     // Get values from geoloc arrays.
                     else
                     {
-                        CPLErr eErr = GDALRasterIO(
-                            hBand_Y, GF_Read, 0, j, nRasterXSize, 1, padLatVal,
-                            nRasterXSize, 1, GDT_Float64, 0, 0);
+                        CPLErr eErr = poBand_Y->RasterIO(
+                            GF_Read, 0, j, nRasterXSize, 1, padLatVal,
+                            nRasterXSize, 1, GDT_Float64, 0, 0, nullptr);
                         if (eErr == CE_None)
                         {
-                            eErr = GDALRasterIO(
-                                hBand_X, GF_Read, 0, j, nRasterXSize, 1,
-                                padLonVal, nRasterXSize, 1, GDT_Float64, 0, 0);
+                            eErr = poBand_X->RasterIO(
+                                GF_Read, 0, j, nRasterXSize, 1, padLonVal,
+                                nRasterXSize, 1, GDT_Float64, 0, 0, nullptr);
                         }
 
                         if (eErr == CE_None)
@@ -5992,14 +5999,6 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                     }
                 }
             }
-
-            if (poLatLonSRS != nullptr)
-                delete poLatLonSRS;
-            if (poTransform != nullptr)
-                delete poTransform;
-
-            CPLFree(padXVal);
-            CPLFree(padYVal);
         }  // Projected
 
         // If not projected/geographic and has geoloc
@@ -6024,11 +6023,21 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
             startY[0] = 0;
             countY[0] = nRasterYSize;
 
-            std::vector<double> adfXVal(nRasterXSize);
+            std::vector<double> adfXVal;
+            std::vector<double> adfYVal;
+            try
+            {
+                adfXVal.resize(nRasterXSize);
+                adfYVal.resize(nRasterYSize);
+            }
+            catch (const std::exception &)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Out of memory allocating temporary array");
+                return CE_Failure;
+            }
             for (int i = 0; i < nRasterXSize; i++)
                 adfXVal[i] = i;
-
-            std::vector<double> adfYVal(nRasterYSize);
             for (int i = 0; i < nRasterYSize; i++)
                 adfYVal[i] = bBottomUp ? nRasterYSize - 1 - i : i;
 
@@ -6047,25 +6056,36 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
 
             size_t start[] = {0, 0};
             size_t count[] = {1, (size_t)nRasterXSize};
-            padLatVal =
-                static_cast<double *>(CPLMalloc(nRasterXSize * sizeof(double)));
-            padLonVal =
-                static_cast<double *>(CPLMalloc(nRasterXSize * sizeof(double)));
+
+            std::unique_ptr<double, decltype(&VSIFree)> adLatValKeeper(
+                static_cast<double *>(
+                    VSI_MALLOC2_VERBOSE(nRasterXSize, sizeof(double))),
+                VSIFree);
+            std::unique_ptr<double, decltype(&VSIFree)> adLonValKeeper(
+                static_cast<double *>(
+                    VSI_MALLOC2_VERBOSE(nRasterXSize, sizeof(double))),
+                VSIFree);
+            double *padLonVal = adLonValKeeper.get();
+            double *padLatVal = adLatValKeeper.get();
+            if (!padLonVal || !padLatVal)
+            {
+                return CE_Failure;
+            }
 
             for (int j = 0; j < nRasterYSize && bOK && status == NC_NOERR; j++)
             {
                 start[0] = j;
 
-                CPLErr eErr = GDALRasterIO(hBand_Y, GF_Read, 0,
-                                           bBottomUp ? nRasterYSize - 1 - j : j,
-                                           nRasterXSize, 1, padLatVal,
-                                           nRasterXSize, 1, GDT_Float64, 0, 0);
+                CPLErr eErr = poBand_Y->RasterIO(
+                    GF_Read, 0, bBottomUp ? nRasterYSize - 1 - j : j,
+                    nRasterXSize, 1, padLatVal, nRasterXSize, 1, GDT_Float64, 0,
+                    0, nullptr);
                 if (eErr == CE_None)
                 {
-                    eErr = GDALRasterIO(hBand_X, GF_Read, 0,
-                                        bBottomUp ? nRasterYSize - 1 - j : j,
-                                        nRasterXSize, 1, padLonVal,
-                                        nRasterXSize, 1, GDT_Float64, 0, 0);
+                    eErr = poBand_X->RasterIO(
+                        GF_Read, 0, bBottomUp ? nRasterYSize - 1 - j : j,
+                        nRasterXSize, 1, padLonVal, nRasterXSize, 1,
+                        GDT_Float64, 0, 0, nullptr);
                 }
 
                 if (eErr == CE_None)
@@ -6108,12 +6128,16 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                                     m_gt[3] + (m_gt[5] * nRasterYSize);
             const double dfDY = m_gt[5];
 
+            std::unique_ptr<double, decltype(&VSIFree)> adLatValKeeper(nullptr,
+                                                                       VSIFree);
+            double *padLatVal = nullptr;
             // Override lat values with the ones in GEOLOCATION/Y_VALUES.
             if (netCDFDataset::GetMetadataItem("Y_VALUES", "GEOLOCATION") !=
                 nullptr)
             {
                 int nTemp = 0;
-                padLatVal = Get1DGeolocation("Y_VALUES", nTemp);
+                adLatValKeeper.reset(Get1DGeolocation("Y_VALUES", nTemp));
+                padLatVal = adLatValKeeper.get();
                 // Make sure we got the correct amount, if not fallback to GT */
                 // could add test fabs(fabs(padLatVal[0]) - fabs(dfY0)) <= 0.1))
                 if (nTemp == nRasterYSize)
@@ -6128,18 +6152,19 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                              "Got %d elements from Y_VALUES geolocation "
                              "metadata, need %d",
                              nTemp, nRasterYSize);
-                    if (padLatVal)
-                    {
-                        CPLFree(padLatVal);
-                        padLatVal = nullptr;
-                    }
+                    padLatVal = nullptr;
                 }
             }
 
             if (padLatVal == nullptr)
             {
-                padLatVal = static_cast<double *>(
-                    CPLMalloc(nRasterYSize * sizeof(double)));
+                adLatValKeeper.reset(static_cast<double *>(
+                    VSI_MALLOC2_VERBOSE(nRasterYSize, sizeof(double))));
+                padLatVal = adLatValKeeper.get();
+                if (!padLatVal)
+                {
+                    return CE_Failure;
+                }
                 for (int i = 0; i < nRasterYSize; i++)
                 {
                     // The data point is centered inside the pixel.
@@ -6157,8 +6182,15 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
             const double dfX0 = m_gt[0];
             const double dfDX = m_gt[1];
 
-            padLonVal =
-                static_cast<double *>(CPLMalloc(nRasterXSize * sizeof(double)));
+            std::unique_ptr<double, decltype(&VSIFree)> adLonValKeeper(
+                static_cast<double *>(
+                    VSI_MALLOC2_VERBOSE(nRasterXSize, sizeof(double))),
+                VSIFree);
+            double *padLonVal = adLonValKeeper.get();
+            if (!padLonVal)
+            {
+                return CE_Failure;
+            }
             for (int i = 0; i < nRasterXSize; i++)
             {
                 // The data point is centered inside the pixel.
@@ -6187,20 +6219,8 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
 
         }  // Not projected.
 
-        CPLFree(padLatVal);
-        CPLFree(padLonVal);
-
         if (pfnProgress)
             pfnProgress(1.00, nullptr, pProgressData);
-    }
-
-    if (hDS_X != nullptr)
-    {
-        GDALClose(hDS_X);
-    }
-    if (hDS_Y != nullptr)
-    {
-        GDALClose(hDS_Y);
     }
 
     return CE_None;
@@ -9507,9 +9527,9 @@ static CPLErr NCDFCopyBand(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
                            int nXSize, int nYSize, GDALProgressFunc pfnProgress,
                            void *pProgressData)
 {
-    GDALDataType eDT = poSrcBand->GetRasterDataType();
-    CPLErr eErr = CE_None;
-    T *patScanline = static_cast<T *>(CPLMalloc(nXSize * sizeof(T)));
+    const GDALDataType eDT = poSrcBand->GetRasterDataType();
+    T *patScanline = static_cast<T *>(VSI_MALLOC2_VERBOSE(nXSize, sizeof(T)));
+    CPLErr eErr = patScanline ? CE_None : CE_Failure;
 
     for (int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++)
     {
