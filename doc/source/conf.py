@@ -291,6 +291,7 @@ nitpick_ignore_regex = [
     (".*", "classGDALFootprintMaskBand"),
     (".*", "classGDALGeneric3x3Dataset"),
     (".*", "classGDALGeneric3x3RasterBand"),
+    (".*", "classGDALMDArrayFromDataset"),
     (".*", "classGDALMDArrayFromRasterBand"),
     (".*", "classGDALMDArrayMeshGrid"),
     (".*", "classGDALMDArrayResampledDatasetRasterBand"),
