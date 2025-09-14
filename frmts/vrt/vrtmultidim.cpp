@@ -143,11 +143,11 @@ VRTGroup *VRTGroup::GetRootGroup() const
 /*                       GetRootGroupSharedPtr()                        */
 /************************************************************************/
 
-std::shared_ptr<GDALGroup> VRTGroup::GetRootGroupSharedPtr() const
+std::shared_ptr<VRTGroup> VRTGroup::GetRootGroupSharedPtr() const
 {
     auto group = GetRootGroup();
     if (group)
-        return group->m_pSelf.lock();
+        return std::dynamic_pointer_cast<VRTGroup>(group->m_pSelf.lock());
     return nullptr;
 }
 
@@ -458,11 +458,12 @@ void VRTGroup::SetDirty()
 }
 
 /************************************************************************/
-/*                             CreateGroup()                            */
+/*                            CreateVRTGroup()                          */
 /************************************************************************/
 
-std::shared_ptr<GDALGroup> VRTGroup::CreateGroup(const std::string &osName,
-                                                 CSLConstList /*papszOptions*/)
+std::shared_ptr<VRTGroup>
+VRTGroup::CreateVRTGroup(const std::string &osName,
+                         CSLConstList /*papszOptions*/)
 {
     if (osName.empty())
     {
@@ -481,6 +482,16 @@ std::shared_ptr<GDALGroup> VRTGroup::CreateGroup(const std::string &osName,
     newGroup->SetRootGroupRef(GetRootGroupRef());
     m_oMapGroups[osName] = newGroup;
     return newGroup;
+}
+
+/************************************************************************/
+/*                             CreateGroup()                            */
+/************************************************************************/
+
+std::shared_ptr<GDALGroup> VRTGroup::CreateGroup(const std::string &osName,
+                                                 CSLConstList papszOptions)
+{
+    return CreateVRTGroup(osName, papszOptions);
 }
 
 /************************************************************************/
@@ -536,10 +547,10 @@ VRTGroup::CreateAttribute(const std::string &osName,
 }
 
 /************************************************************************/
-/*                            CreateMDArray()                           */
+/*                           CreateVRTMDArray()                         */
 /************************************************************************/
 
-std::shared_ptr<GDALMDArray> VRTGroup::CreateMDArray(
+std::shared_ptr<VRTMDArray> VRTGroup::CreateVRTMDArray(
     const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
     const GDALExtendedDataType &oType, CSLConstList)
@@ -575,6 +586,18 @@ std::shared_ptr<GDALMDArray> VRTGroup::CreateMDArray(
     newArray->SetSelf(newArray);
     m_oMapMDArrays[osName] = newArray;
     return newArray;
+}
+
+/************************************************************************/
+/*                            CreateMDArray()                           */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> VRTGroup::CreateMDArray(
+    const std::string &osName,
+    const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
+    const GDALExtendedDataType &oType, CSLConstList papszOptions)
+{
+    return CreateVRTMDArray(osName, aoDimensions, oType, papszOptions);
 }
 
 /************************************************************************/
