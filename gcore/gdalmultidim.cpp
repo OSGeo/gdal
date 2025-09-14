@@ -8900,6 +8900,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                         GDALExtendedDataType::CopyValue(
                             &abyTmp[0], dt, &pszTmp,
                             GDALExtendedDataType::CreateString());
+                        dt.FreeDynamicMemory(abyTmp.data());
                         if (pszTmp)
                         {
                             SetMetadataItem(
@@ -8937,6 +8938,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                             &abyTmp[0], dt, &dfVal,
                             GDALExtendedDataType::Create(GDT_Float64));
                         osVal.Printf(oItem.osDefinition.c_str(), dfVal);
+                        dt.FreeDynamicMemory(abyTmp.data());
                     }
                 }
                 else
@@ -8987,6 +8989,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                     GDALExtendedDataType::CopyValue(
                         &abyTmp[0], dt, &dfVal,
                         GDALExtendedDataType::Create(GDT_Float64));
+                    dt.FreeDynamicMemory(abyTmp.data());
                     SetMetadataItem(
                         "CENTRAL_WAVELENGTH_UM",
                         CPLSPrintf(
@@ -9009,6 +9012,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                     GDALExtendedDataType::CopyValue(
                         &abyTmp[0], dt, &dfVal,
                         GDALExtendedDataType::Create(GDT_Float64));
+                    dt.FreeDynamicMemory(abyTmp.data());
                     SetMetadataItem(
                         "FWHM_UM",
                         CPLSPrintf("%g", dfVal * aoBandImageryMetadata[j]
