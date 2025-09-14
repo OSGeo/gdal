@@ -1007,3 +1007,117 @@ def test_gdalalg_raster_calc_sum_builtin_two_bands_three_bands_fail(calc, tmp_vs
         match=r"Expression cannot operate on all bands of rasters with incompatible numbers of bands \(source B has 3 bands but expected to have 1 or 2 bands\)",
     ):
         calc.Run()
+
+
+def test_gdalalg_raster_calc_sum_builtin_convolution_sharpen(calc):
+
+    calc["input"] = "../gcore/data/byte.tif"
+    calc["calc"] = "convolution(kernel=sharpen)"
+    calc["dialect"] = "builtin"
+    calc["output-format"] = "MEM"
+    assert calc.Run()
+
+    out_ds = calc["output"].GetDataset()
+    assert out_ds.GetRasterBand(1).Checksum() == 4013
+
+
+def test_gdalalg_raster_calc_sum_builtin_convolution_sharpen_manual(calc):
+
+    calc["input"] = "../gcore/data/byte.tif"
+    calc["calc"] = "convolution(kernel=[0,-1,0,-1,5,-1,0,-1,0])"
+    calc["dialect"] = "builtin"
+    calc["output-format"] = "MEM"
+    assert calc.Run()
+
+    out_ds = calc["output"].GetDataset()
+    assert out_ds.GetRasterBand(1).Checksum() == 4013
+
+
+def test_gdalalg_raster_calc_sum_builtin_convolution_identity_manual(calc):
+
+    calc["input"] = "../gcore/data/byte.tif"
+    calc["calc"] = "convolution(kernel=[0,0,0,0,1,0,0,0,0])"
+    calc["dialect"] = "builtin"
+    calc["output-format"] = "MEM"
+    assert calc.Run()
+
+    out_ds = calc["output"].GetDataset()
+    assert out_ds.GetRasterBand(1).Checksum() == 4672
+
+
+def test_gdalalg_raster_calc_sum_builtin_error_not_even(calc):
+
+    calc["input"] = "../gcore/data/byte.tif"
+    calc["calc"] = "convolution(kernel=[0,0])"
+    calc["dialect"] = "builtin"
+    calc["output-format"] = "MEM"
+    with pytest.raises(
+        Exception,
+        match="The number of values in the 'kernel' argument of the 'convolution' function must be an odd square number",
+    ):
+        calc.Run()
+
+
+def test_gdalalg_raster_calc_sum_builtin_error_only_one_arg(calc):
+
+    calc["input"] = "../gcore/data/byte.tif"
+    calc["calc"] = "convolution(kernel=[0,0],unexpected=true)"
+    calc["dialect"] = "builtin"
+    calc["output-format"] = "MEM"
+    with pytest.raises(
+        Exception,
+        match="Only 'kernel' is supported as an argument for the 'convolution' function",
+    ):
+        calc.Run()
+
+
+def test_gdalalg_raster_calc_sum_builtin_error_not_square(calc):
+
+    calc["input"] = "../gcore/data/byte.tif"
+    calc["calc"] = "convolution(kernel=[0,0,0])"
+    calc["dialect"] = "builtin"
+    calc["output-format"] = "MEM"
+    with pytest.raises(
+        Exception,
+        match="The number of values in the 'kernel' argument of the 'convolution' function must be an odd square number",
+    ):
+        calc.Run()
+
+
+def test_gdalalg_raster_calc_sum_builtin_error_unknown(calc):
+
+    calc["input"] = "../gcore/data/byte.tif"
+    calc["calc"] = "convolution(kernel=unknown)"
+    calc["dialect"] = "builtin"
+    calc["output-format"] = "MEM"
+    with pytest.raises(
+        Exception,
+        match=r"Valid values for 'kernel' argument of the 'convolution' function are: 'box_blur', 'edge1', 'edge2', 'gaussian_blur_3x3', 'gaussian_blur_5x5', 'sharpen', 'u', 'unsharp_masking_5x5', 'v' or \[val1, val2, \.\.\., valN\]",
+    ):
+        calc.Run()
+
+
+def test_gdalalg_raster_calc_sum_builtin_error_not_single_source(calc):
+
+    calc["input"] = ["../gcore/data/byte.tif", "../gcore/data/byte.tif"]
+    calc["calc"] = "convolution(kernel=edge1)"
+    calc["dialect"] = "builtin"
+    calc["output-format"] = "MEM"
+    with pytest.raises(
+        Exception,
+        match="Only one source is supported for 'convolution' builtin function",
+    ):
+        calc.Run()
+
+
+def test_gdalalg_raster_calc_sum_builtin_error_not_single_band(calc):
+
+    calc["input"] = "../gcore/data/rgbsmall.tif"
+    calc["calc"] = "convolution(kernel=edge1)"
+    calc["dialect"] = "builtin"
+    calc["output-format"] = "MEM"
+    with pytest.raises(
+        Exception,
+        match="Only single-band source supported for 'convolution' builtin function",
+    ):
+        calc.Run()

@@ -22,13 +22,54 @@
 #include "vrtdataset.h"
 
 #include <algorithm>
+#include <limits>
+#include <map>
 #include <optional>
+#include <utility>
 
 //! @cond Doxygen_Suppress
 
 #ifndef _
 #define _(x) (x)
 #endif
+
+// clang-format off
+// Cf https://en.wikipedia.org/wiki/Kernel_(image_processing)
+static const std::map<std::string, std::pair<int, std::vector<int>>> oMapKernelNameToMatrix = {
+    { "u", { 3, {  0,  0,  0,
+                  -1,  0,  1,
+                   0,  0,  0 } } },
+    { "v", { 3, {  0, -1,  0,
+                   0,  0,  0,
+                   0,  1,  0 } } },
+    { "edge1", { 3, {  0, -1,  0,
+                      -1,  4, -1,
+                       0, -1,  0 } } },
+    { "edge2", { 3, { -1, -1, -1,
+                      -1,  8, -1,
+                      -1, -1, -1 } } },
+    { "sharpen",  { 3, { 0, -1,  0,
+                        -1,  5, -1,
+                         0, -1,  0 } } },
+    { "box_blur", { 3, { 1, 1, 1,
+                         1, 1, 1,
+                         1, 1, 1 } } },
+    { "gaussian_blur_3x3", { 3, { 1, 2, 1,
+                                  2, 4, 2,
+                                  1, 2, 1 } } },
+    { "gaussian_blur_5x5", { 5, { 1, 4,   6,  4, 1,
+                                  4, 16, 24, 16, 4,
+                                  6, 24, 36, 24, 6,
+                                  4, 16, 24, 16, 4,
+                                  1, 4,   6,  4, 1, } } },
+    { "unsharp_masking_5x5", { 5, { 1, 4,     6,  4, 1,
+                                    4, 16,   24, 16, 4,
+                                    6, 24, -476, 24, 6,
+                                    4, 16,   24, 16, 4,
+                                    1, 4,     6,  4, 1, } } },
+};
+
+// clang-format on
 
 struct GDALCalcOptions
 {
@@ -363,6 +404,177 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                      const std::map<std::string, SourceProperties> &sourceProps,
                      const std::string &fakeSourceFilename)
 {
+    if (EQUAL(expression.c_str(), "convolution") && dialect == "builtin")
+    {
+        if (sources.size() != 1)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Only one source is supported for 'convolution' builtin "
+                     "function");
+            return false;
+        }
+        const auto sourceIter = sources.begin();
+        const auto &source_name = sourceIter->first;
+        const auto &dsn = sourceIter->second;
+        auto it = sourceProps.find(source_name);
+        CPLAssert(it != sourceProps.end());
+        const auto &props = it->second;
+        if (props.nBands != 1)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Only single-band source supported for 'convolution' "
+                     "builtin function");
+            return false;
+        }
+        CPLAssert(pixelFunctionArguments.size() == 1);
+        CPLAssert(STARTS_WITH_CI(pixelFunctionArguments[0].c_str(), "kernel="));
+        const char *pszKernel =
+            CPLParseNameValue(pixelFunctionArguments[0].c_str(), nullptr);
+        int nKernelSize = 0;
+        std::vector<double> adfCoefficients;
+        if (pszKernel[0] == '[')
+        {
+            const CPLStringList aosValues(CSLTokenizeString2(
+                pszKernel, "[] ,", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+            const double dfSize = static_cast<double>(aosValues.size());
+            nKernelSize = static_cast<int>(std::floor(sqrt(dfSize) + 0.5));
+            for (const char *pszC : cpl::Iterate(aosValues))
+            {
+                adfCoefficients.push_back(CPLAtof(pszC));
+            }
+        }
+        else
+        {
+            auto oIterKnownKernel = oMapKernelNameToMatrix.find(pszKernel);
+            CPLAssert(oIterKnownKernel != oMapKernelNameToMatrix.end());
+            int nSum = 0;
+            nKernelSize = oIterKnownKernel->second.first;
+            for (const int nVal : oIterKnownKernel->second.second)
+                nSum += nVal;
+            const double dfWeight =
+                (EQUAL(pszKernel, "u") || EQUAL(pszKernel, "v"))
+                    ? 0.5
+                    : 1.0 / (static_cast<double>(nSum) +
+                             std::numeric_limits<double>::min());
+            for (const int nVal : oIterKnownKernel->second.second)
+            {
+                adfCoefficients.push_back(nVal * dfWeight);
+            }
+        }
+        CPLXMLNode *band = CPLCreateXMLNode(root, CXT_Element, "VRTRasterBand");
+        if (bandType == GDT_Unknown)
+        {
+            bandType = GDT_Float64;
+        }
+        CPLAddXMLAttributeAndValue(band, "dataType",
+                                   GDALGetDataTypeName(bandType));
+
+        std::optional<double> dstNoData;
+        bool autoSelectNoDataValue = false;
+        if (noDataText.empty())
+        {
+            autoSelectNoDataValue = true;
+        }
+        else if (noDataText != "none")
+        {
+            char *end;
+            dstNoData = CPLStrtod(noDataText.c_str(), &end);
+            if (end != noDataText.c_str() + noDataText.size())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid NoData value: %s", noDataText.c_str());
+                return false;
+            }
+        }
+
+        const std::optional<double> &srcNoData = props.noData[0];
+
+        CPLXMLNode *source =
+            CPLCreateXMLNode(band, CXT_Element, "KernelFilteredSource");
+
+        CPLXMLNode *kernel = CPLCreateXMLNode(source, CXT_Element, "Kernel");
+        CPLAddXMLAttributeAndValue(kernel, "normalized", "0");
+        CPLCreateXMLElementAndValue(kernel, "Size",
+                                    CPLSPrintf("%d", nKernelSize));
+        std::string osCoeffs;
+        for (double d : adfCoefficients)
+        {
+            if (!osCoeffs.empty())
+                osCoeffs += ' ';
+            osCoeffs += CPLSPrintf("%.17g", d);
+        }
+        CPLCreateXMLElementAndValue(kernel, "Coefs", osCoeffs.c_str());
+
+        CPLXMLNode *sourceFilename =
+            CPLCreateXMLNode(source, CXT_Element, "SourceFilename");
+        if (fakeSourceFilename.empty())
+        {
+            CPLAddXMLAttributeAndValue(sourceFilename, "relativeToVRT", "0");
+            CPLCreateXMLNode(sourceFilename, CXT_Text, dsn.c_str());
+        }
+        else
+        {
+            CPLCreateXMLNode(sourceFilename, CXT_Text,
+                             fakeSourceFilename.c_str());
+        }
+
+        CPLXMLNode *sourceBand =
+            CPLCreateXMLNode(source, CXT_Element, "SourceBand");
+        CPLCreateXMLNode(sourceBand, CXT_Text, "1");
+
+        if (srcNoData.has_value())
+        {
+            CPLXMLNode *srcNoDataNode =
+                CPLCreateXMLNode(source, CXT_Element, "NODATA");
+            std::string srcNoDataText = CPLSPrintf("%.17g", srcNoData.value());
+            CPLCreateXMLNode(srcNoDataNode, CXT_Text, srcNoDataText.c_str());
+
+            if (autoSelectNoDataValue && !dstNoData.has_value())
+            {
+                dstNoData = srcNoData;
+            }
+        }
+
+        if (fakeSourceFilename.empty())
+        {
+            CPLXMLNode *srcRect =
+                CPLCreateXMLNode(source, CXT_Element, "SrcRect");
+            CPLAddXMLAttributeAndValue(srcRect, "xOff", "0");
+            CPLAddXMLAttributeAndValue(srcRect, "yOff", "0");
+            CPLAddXMLAttributeAndValue(srcRect, "xSize",
+                                       std::to_string(props.nX).c_str());
+            CPLAddXMLAttributeAndValue(srcRect, "ySize",
+                                       std::to_string(props.nY).c_str());
+
+            CPLXMLNode *dstRect =
+                CPLCreateXMLNode(source, CXT_Element, "DstRect");
+            CPLAddXMLAttributeAndValue(dstRect, "xOff", "0");
+            CPLAddXMLAttributeAndValue(dstRect, "yOff", "0");
+            CPLAddXMLAttributeAndValue(dstRect, "xSize",
+                                       std::to_string(nXOut).c_str());
+            CPLAddXMLAttributeAndValue(dstRect, "ySize",
+                                       std::to_string(nYOut).c_str());
+        }
+
+        if (dstNoData.has_value())
+        {
+            if (!GDALIsValueExactAs(dstNoData.value(), bandType))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Band output type %s cannot represent NoData value %g",
+                         GDALGetDataTypeName(bandType), dstNoData.value());
+                return false;
+            }
+
+            CPLXMLNode *noDataNode =
+                CPLCreateXMLNode(band, CXT_Element, "NoDataValue");
+            CPLString dstNoDataText = CPLSPrintf("%.17g", dstNoData.value());
+            CPLCreateXMLNode(noDataNode, CXT_Text, dstNoDataText.c_str());
+        }
+
+        return true;
+    }
+
     int nOutBands = 1;  // By default, each expression produces a single output
                         // band. When processing the expression below, we may
                         // discover that the expression produces multiple bands,
@@ -965,6 +1177,68 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 CSLTokenizeString2(expr.c_str(), "()",
                                    CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
             const char *pszFunction = aosTokens[0];
+            if (EQUAL(pszFunction, "convolution"))
+            {
+                if (aosTokens.size() != 2)
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "'kernel' is a required argument for the "
+                                "'convolution' function");
+                    return false;
+                }
+                if (std::count_if(aosTokens[1],
+                                  aosTokens[1] + strlen(aosTokens[1]),
+                                  [](char c) { return c == '='; }) != 1)
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Only 'kernel' is supported as an argument for "
+                                "the 'convolution' function");
+                    return false;
+                }
+                const char *pszValue = CPLParseNameValue(aosTokens[1], nullptr);
+                if (pszValue[0] == '[' && pszValue[strlen(pszValue) - 1] == ']')
+                {
+                    const CPLStringList aosValues(CSLTokenizeString2(
+                        pszValue, "[] ,",
+                        CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+                    const double dfSize = static_cast<double>(aosValues.size());
+                    const int nSqrt = static_cast<int>(sqrt(dfSize) + 0.5);
+                    if (!((aosValues.size() % 2) == 1 &&
+                          nSqrt * nSqrt == aosValues.size()))
+                    {
+                        ReportError(CE_Failure, CPLE_IllegalArg,
+                                    "The number of values in the 'kernel' "
+                                    "argument of the 'convolution' function "
+                                    "must be an odd square number.");
+                        return false;
+                    }
+                }
+                else if (!cpl::contains(oMapKernelNameToMatrix, pszValue))
+                {
+                    std::string osMsg = "Valid values for 'kernel' argument of "
+                                        "the 'convolution' function are: ";
+                    bool bFirst = true;
+                    for (const auto &[key, value] : oMapKernelNameToMatrix)
+                    {
+                        CPL_IGNORE_RET_VAL(value);
+                        if (!bFirst)
+                            osMsg += ", ";
+                        bFirst = false;
+                        osMsg += '\'';
+                        osMsg += key;
+                        osMsg += '\'';
+                    }
+                    osMsg += " or [val1, val2, ..., valN]";
+                    ReportError(CE_Failure, CPLE_IllegalArg, "%s",
+                                osMsg.c_str());
+                    return false;
+                }
+                expr = pszFunction;
+                pixelFunctionArgs.emplace_back(
+                    std::vector<std::string>{aosTokens[1]});
+                continue;
+            }
+
             const auto *pair =
                 VRTDerivedRasterBand::GetPixelFunction(pszFunction);
             if (!pair)

@@ -60,6 +60,14 @@ The following options are available:
     The expression may refer to individual bands of each input (e.g., ``X[1] + 3``) or it may be applied to all bands
     of an input (``X + 3``).
 
+    Multiple calculations may be specified; output band(s) will be produced for each expression in the order they
+    are provided.
+
+    Input rasters will be converted to 64-bit floating point numbers before performing calculations.
+
+    Multiple bands
+    ++++++++++++++
+
     There are two methods by which an expression may be applied to multiple bands. In the default method, the expression is
     applied to each band individually, resulting in one output band for each input band. For example, with a three-band
     input ``X``, the expression ``--calc "X+3"`` would be expanded into ``--calc "X[1]+3" --calc "X[2]+3" --calc "X[3]+3"``.
@@ -78,16 +86,59 @@ The following options are available:
     example is the expression ``A / sum(A)``, which would produce an N-band raster where each output band contains the input band's
     fraction of the total.
 
-    Multiple calculations may be specified; output band(s) will be produced for each expression in the order they
-    are provided.
+    Builtin functions
+    +++++++++++++++++
 
-    Input rasters will be converted to 64-bit floating point numbers before performing calculations.
+    .. versionadded:: 3.12
 
-    Starting with GDAL 3.12, it is also possible to use a :ref:`VRT C++ pixel function <builtin_pixel_functions>`
+    It is also possible to use a :ref:`VRT C++ pixel function <builtin_pixel_functions>`
     (such a ``sum``, ``mean``, ``min``, ``max``) by specifying :option:`--dialect` to
     ``builtin``.
     Arguments to functions are passed within parentheses, like ``sum(k=1)``,
     ``min(propagateNoData=true)`` or ``interpolate_linear(t0=1,dt=1,t=10)``.
+
+    Convolution builtin function
+    ++++++++++++++++++++++++++++
+
+    .. versionadded:: 3.12
+
+    The special function ``convolution`` can also be used when specifying
+    :option:`--dialect` to ``builtin`` to apply a
+    `kernel (convolution matrix) <https://en.wikipedia.org/wiki/Kernel_(image_processing)>`__
+    to compute the target pixel value from a neighbourhood of the source pixel value.
+
+    This function accepts (and requires) a single argument ``kernel`` that can
+    take:
+
+    - either the name of a well-known kernel, among ``edge1``,
+      ``edge2``, ``sharpen``, ``box_blur``, ``gaussian_blur_3x3``, ``gaussian_blur_5x5``
+      or ``unsharp_masking_5x5``, corresponding to those
+      `kernels (convolution matrix) <https://en.wikipedia.org/wiki/Kernel_(image_processing)#Details>`__,
+      with the addition of:
+
+      * ``u`` corresponding to an horizontal derivative with coefficients:
+
+        .. math::
+
+            \begin{align}
+                \begin{bmatrix} 0 & 0 & 0\\ -0.5 & 0 & 0.5 \\ 0 & 0 & 0 \end{bmatrix}
+            \end{align}
+
+
+      * ``v`` corresponding to a vertical derivative with coefficients:
+
+        .. math::
+
+            \begin{align}
+                \begin{bmatrix} 0 & -0.5 & 0\\ 0 & 0 & 0 \\ 0 & 0.5 & 0 \end{bmatrix}
+            \end{align}
+
+
+    - or the values of the coefficients of the kernel as a square matrix of
+      width and height N, where N is an odd number, as
+      ``[val00, val01, ..., val0N, val10, val11, ..., val1N, ..., valN0, valN1, ..., valNN]``.
+      It is the responsibility of the user to apply any normalization weight, if needed.
+
 
 .. option:: --dialect muparser|builtin
 
@@ -184,3 +235,21 @@ Examples
    .. code-block:: bash
 
        gdal raster calc -i A=input1.tif -i B=input2.tif -o result.tif --flatten --calc=mean --dialect=builtin
+
+
+.. example::
+   :title: Compute the horizontal and vertical derivative of a single-band raster
+   :id: convolution_builtin_kernel
+
+   .. code-block:: bash
+
+       gdal raster calc --dialect=builtin "--calc=convolution(kernel=u)" "--calc=convolution(kernel=v)" in.tif uv.tif
+
+
+.. example::
+   :title: Compute a sharpen filter of a single-band raster, by manually specifying the kernel coefficients.
+   :id: convolution_manual_kernel
+
+   .. code-block:: bash
+
+       gdal raster calc --dialect=builtin "--calc=convolution(kernel=[0,-1,0,-1,5,-1,0,-1,0])" in.tif sharpen.tif
