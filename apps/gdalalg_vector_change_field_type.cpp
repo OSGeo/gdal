@@ -30,7 +30,36 @@ GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
                                       standaloneStep)
 {
     AddActiveLayerArg(&m_activeLayer);
-    AddFieldNameArg(&m_fieldName).SetRequired();
+    auto &arg = AddFieldNameArg(&m_fieldName).SetRequired();
+    arg.SetAutoCompleteFunction(
+        [this, &arg](const std::string &)
+        {
+            std::vector<std::string> ret;
+            if (!this->GetInputDatasets().empty())
+            {
+                // Input layer
+                auto poDS = this->GetInputDatasets()[0].GetDatasetRef();
+                if (poDS)
+                {
+                    OGRLayer *poLayer = nullptr;
+                    if (!m_activeLayer.empty())
+                        poLayer =
+                            const_cast<GDALDataset *>(poDS)->GetLayerByName(
+                                m_activeLayer.c_str());
+                    else
+                        poLayer = const_cast<OGRLayer *>(poDS->GetLayer(0));
+                    if (poLayer)
+                    {
+                        auto poDefn = poLayer->GetLayerDefn();
+                        const int nFieldCount = poDefn->GetFieldCount();
+                        for (int iField = 0; iField < nFieldCount; iField++)
+                            ret.push_back(
+                                poDefn->GetFieldDefn(iField)->GetNameRef());
+                    }
+                }
+                return ret;
+            }
+        });
     AddFieldTypeSubtypeArg(&m_newFieldType, &m_newFieldSubType,
                            &m_newFieldTypeSubTypeStr)
         .SetRequired();

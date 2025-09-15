@@ -4515,7 +4515,7 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddFieldTypeSubtypeArg(
                 [](const std::string &currentValue)
                 {
                     std::vector<std::string> oRet;
-                    for (int i = 0; i <= OGRFieldSubType::OFSTMaxSubType; i++)
+                    for (int i = 1; i <= OGRFieldSubType::OFSTMaxSubType; i++)
                     {
                         const char *pszSubType =
                             OGRFieldDefn::GetFieldSubTypeName(
@@ -4532,6 +4532,12 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddFieldTypeSubtypeArg(
 
                     for (int i = 0; i <= OGRFieldType::OFTMaxType; i++)
                     {
+                        // Skip deprecated
+                        if (static_cast<OGRFieldType>(i) ==
+                                OGRFieldType::OFTWideString ||
+                            static_cast<OGRFieldType>(i) ==
+                                OGRFieldType::OFTWideStringList)
+                            continue;
                         const char *pszType = OGRFieldDefn::GetFieldTypeName(
                             static_cast<OGRFieldType>(i));
                         if (pszType != nullptr)
