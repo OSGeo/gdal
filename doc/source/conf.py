@@ -849,6 +849,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_change_field_type",
+        "gdal-vector-change-field-type",
+        "Change the type of a field of a vector dataset",
+        [author_elpaso],
+        1,
+    ),
+    (
         "programs/gdal_vector_filter",
         "gdal-vector-filter",
         "Filter a vector dataset",

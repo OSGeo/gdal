@@ -34,10 +34,32 @@ GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
     AddFieldTypeSubtypeArg(&m_newFieldType, &m_newFieldSubType,
                            &m_newFieldTypeSubTypeStr)
         .SetRequired();
+    AddValidationAction(
+        [this]
+        {
+            auto mInDS = m_inputDataset[0].GetDatasetRef();
+            auto layer = m_activeLayer.empty()
+                             ? mInDS->GetLayer(0)
+                             : mInDS->GetLayerByName(m_activeLayer.c_str());
+            if (!layer)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot find layer '%s'",
+                         m_activeLayer.c_str());
+                return false;
+            }
+            if (layer->GetLayerDefn()->GetFieldIndex(m_fieldName.c_str()) < 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot find field '%s' in layer '%s'",
+                         m_fieldName.c_str(), layer->GetName());
+                return false;
+            }
+            return true;
+        });
 }
 
 /************************************************************************/
-/*                   GDALVectorChangeFieldTypeAlgorithmLayer                       */
+/*                   GDALVectorChangeFieldTypeAlgorithmLayer            */
 /************************************************************************/
 
 namespace
@@ -59,14 +81,16 @@ class GDALVectorChangeFieldTypeAlgorithmLayer final
         if (activeLayer.empty() || activeLayer == GetDescription())
         {
             m_fieldIndex = m_poFeatureDefn->GetFieldIndex(fieldName.c_str());
-            CPLAssert(-1 != m_fieldIndex);
-            auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(m_fieldIndex);
-            m_sourceFieldType = poFieldDefn->GetType();
+            if (m_fieldIndex >= 0)
+            {
+                auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(m_fieldIndex);
+                m_sourceFieldType = poFieldDefn->GetType();
 
-            // Set to OFSTNone to bypass the check that prevents changing the type
-            poFieldDefn->SetSubType(OFSTNone);
-            poFieldDefn->SetType(newFieldType);
-            poFieldDefn->SetSubType(newFieldSubType);
+                // Set to OFSTNone to bypass the check that prevents changing the type
+                poFieldDefn->SetSubType(OFSTNone);
+                poFieldDefn->SetType(newFieldType);
+                poFieldDefn->SetSubType(newFieldSubType);
+            }
         }
     }
 
@@ -84,6 +108,9 @@ class GDALVectorChangeFieldTypeAlgorithmLayer final
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
+
+        CPLAssert(m_fieldIndex >= 0);
+
         if (m_poFeatureDefn->GetFieldDefn(m_fieldIndex)->GetType() !=
             m_sourceFieldType)
         {

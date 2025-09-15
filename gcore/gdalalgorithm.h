@@ -3020,6 +3020,11 @@ class CPL_DLL GDALAlgorithmRegistry
         GDALInConstructionAlgorithmArg &layerArg,
         GDALInConstructionAlgorithmArg &datasetArg);
 
+    /** Register an auto complete function for a field name argument */
+    static void SetAutoCompleteFunctionForFieldName(
+        GDALInConstructionAlgorithmArg &fieldArg,
+        GDALInConstructionAlgorithmArg &layerArg);
+
     /** Add a field name argument */
     GDALInConstructionAlgorithmArg &
     AddFieldNameArg(std::string *pValue, const char *helpMessage = nullptr);
