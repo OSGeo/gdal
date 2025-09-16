@@ -102,13 +102,19 @@ def test_gdalalg_vector_change_field_type(
 ):
 
     src_ds = gdal.GetDriverByName("MEM").CreateDataSource("")
-    lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbNone)
+    lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbPoint)
     fld_defn = ogr.FieldDefn("value", src_type)
     fld_defn.SetSubType(src_subtype)
     lyr.CreateField(fld_defn)
 
+    # Add another field
+    fld_defn2 = ogr.FieldDefn("new_type", ogr.OFTString)
+    lyr.CreateField(fld_defn2)
+
     f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     f["value"] = src_value
+    f["new_type"] = dest_type_str
     lyr.CreateFeature(f)
 
     alg = get_change_field_type_alg()
@@ -145,6 +151,11 @@ def test_gdalalg_vector_change_field_type(
         assert out_field_defn.GetSubType() == ogr.OFSTNone
 
     assert out_f["value"] == expected_value
+    assert out_f["new_type"] == dest_type_str
+
+    # Check geometry
+    geom = out_f.GetGeometryRef()
+    assert geom is not None and geom.ExportToWkt() == "POINT (1 2)"
 
 
 def test_gdalalg_vector_change_field_type_errors():
@@ -237,6 +248,7 @@ def test_gdalalg_vector_change_field_type_errors():
 
 def test_gdalalg_change_field_type_completion(tmp_path):
 
+    out_filename = str(tmp_path / "test_gdalalg_change_field_type_completion_out.shp")
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary missing")
@@ -247,7 +259,7 @@ def test_gdalalg_change_field_type_completion(tmp_path):
     assert "Binary" in out
 
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal vector change-field-type ../ogr/data/poly.shp --field-name"
+        f"{gdal_path} completion gdal vector change-field-type --input ../ogr/data/poly.shp --output {out_filename} --field-name"
     )
     assert "EAS_ID" in out
 

@@ -145,8 +145,10 @@ class GDALVectorChangeFieldTypeAlgorithmLayer final
         {
             auto poDstFeature = std::make_unique<OGRFeature>(m_poFeatureDefn);
             std::vector<int> identityMap(m_poFeatureDefn->GetFieldCount());
-            std::fill(identityMap.begin(), identityMap.end(), -1);
-            identityMap[m_fieldIndex] = m_fieldIndex;
+            for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++)
+            {
+                identityMap[i] = i;
+            }
             const auto result{poDstFeature->SetFrom(
                 poSrcFeature.get(), identityMap.data(), false, true)};
             if (result != OGRERR_NONE)
