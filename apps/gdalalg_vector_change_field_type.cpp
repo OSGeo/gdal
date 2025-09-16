@@ -32,7 +32,7 @@ GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
     AddActiveLayerArg(&m_activeLayer);
     auto &arg = AddFieldNameArg(&m_fieldName).SetRequired();
     arg.SetAutoCompleteFunction(
-        [this, &arg](const std::string &)
+        [this](const std::string &)
         {
             std::vector<std::string> ret;
             if (!this->GetInputDatasets().empty())
