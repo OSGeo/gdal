@@ -57,8 +57,8 @@ GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
                                 poDefn->GetFieldDefn(iField)->GetNameRef());
                     }
                 }
-                return ret;
             }
+            return ret;
         });
     AddFieldTypeSubtypeArg(&m_newFieldType, &m_newFieldSubType,
                            &m_newFieldTypeSubTypeStr)
