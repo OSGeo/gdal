@@ -132,7 +132,7 @@ class GDALDAASDataset final : public GDALDataset
   public:
     GDALDAASDataset();
     GDALDAASDataset(GDALDAASDataset *poParentDS, int iOvrLevel);
-    ~GDALDAASDataset();
+    ~GDALDAASDataset() override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *OpenStatic(GDALOpenInfo *poOpenInfo);

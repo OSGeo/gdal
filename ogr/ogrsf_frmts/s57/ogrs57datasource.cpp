@@ -118,7 +118,7 @@ const char *OGRS57DataSource::GetOption(const char *pszOption)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRS57DataSource::TestCapability(const char *pszCap)
+int OGRS57DataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCZGeometries))
@@ -331,8 +331,8 @@ int OGRS57DataSource::Open(const char *pszFilename)
     {
         for (int iLayer = 0; iLayer < nLayers; iLayer++)
         {
-            papoModules[iModule]->AddFeatureDefn(
-                papoLayers[iLayer]->GetLayerDefn());
+            OGRLayer *poLayer = papoLayers[iLayer];
+            papoModules[iModule]->AddFeatureDefn(poLayer->GetLayerDefn());
         }
     }
 
@@ -343,7 +343,7 @@ int OGRS57DataSource::Open(const char *pszFilename)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRS57DataSource::GetLayer(int iLayer)
+const OGRLayer *OGRS57DataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

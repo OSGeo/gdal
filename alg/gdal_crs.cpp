@@ -1073,7 +1073,7 @@ static int worst_outlier(struct Control_Points *cp, double x_mean,
     for (int nI = 0; nI < cp->count; nI++)
     {
         double dfCurrentDifference = padfResiduals[nI];
-        if (fabs(dfCurrentDifference) < 1.19209290E-07F /*FLT_EPSILON*/)
+        if (fabs(dfCurrentDifference) < 1.19209290E-07 /*FLT_EPSILON*/)
         {
             dfCurrentDifference = 0.0;
         }

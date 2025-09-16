@@ -28,16 +28,16 @@ Common metadata (from metadata filename):
     AcquisitionDateTime:    IMG_ACQISITION_START_TIME, IMG_ACQISITION_END_TIME
 */
 
-class GDALMDReaderKompsat : public GDALMDReaderBase
+class GDALMDReaderKompsat final : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderKompsat(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderKompsat();
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    GDALMDReaderKompsat(const char *pszPath, CSLConstList papszSiblingFiles);
+    ~GDALMDReaderKompsat() override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
     char **ReadTxtToList();
     virtual GIntBig
     GetAcquisitionTimeFromString(const char *pszDateTime) override;

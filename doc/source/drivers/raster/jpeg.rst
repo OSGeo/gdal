@@ -166,7 +166,8 @@ to the JPEG file.
 The following creation options are supported:
 
 -  .. co:: WORLDFILE
-      :choices: YES
+      :choices: YES,NO
+      :default: NO
 
       Force the generation of an associated ESRI world
       file (with the extension .wld). See :ref:`World Files <raster.wld>`

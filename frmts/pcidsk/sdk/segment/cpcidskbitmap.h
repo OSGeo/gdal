@@ -28,44 +28,44 @@ namespace PCIDSK
     /*                            CPCIDSKGeoref                             */
     /************************************************************************/
 
-    class CPCIDSKBitmap : virtual public CPCIDSKSegment,
+    class CPCIDSKBitmap final: virtual public CPCIDSKSegment,
                           public PCIDSKChannel
     {
     public:
         CPCIDSKBitmap(PCIDSKFile *file,int segment,const char*segment_pointer);
-        virtual     ~CPCIDSKBitmap();
+        ~CPCIDSKBitmap() override;
 
-        virtual void Initialize() override;
+        void Initialize() override;
 
         // Channel interface
-        virtual int GetBlockWidth() const override;
-        virtual int GetBlockHeight() const override;
-        virtual int GetBlockCount() const override;
-        virtual int GetWidth() const override;
-        virtual int GetHeight() const override;
-        virtual eChanType GetType() const override;
+        int GetBlockWidth() const override;
+        int GetBlockHeight() const override;
+        int GetBlockCount() const override;
+        int GetWidth() const override;
+        int GetHeight() const override;
+        eChanType GetType() const override;
         virtual int ReadBlock( int block_index, void *buffer,
             int win_xoff=-1, int win_yoff=-1,
             int win_xsize=-1, int win_ysize=-1 ) override;
-        virtual int WriteBlock( int block_index, void *buffer ) override;
-        virtual int GetOverviewCount() override;
-        virtual PCIDSKChannel *GetOverview( int i ) override;
-        virtual bool IsOverviewValid( int i ) override;
-        virtual std::string GetOverviewResampling( int i ) override;
-        virtual void SetOverviewValidity( int i, bool validity ) override;
-        virtual std::vector<int> GetOverviewLevelMapping() const override;
+        int WriteBlock( int block_index, void *buffer ) override;
+        int GetOverviewCount() override;
+        PCIDSKChannel *GetOverview( int i ) override;
+        bool IsOverviewValid( int i ) override;
+        std::string GetOverviewResampling( int i ) override;
+        void SetOverviewValidity( int i, bool validity ) override;
+        std::vector<int> GetOverviewLevelMapping() const override;
 
-        virtual std::string GetMetadataValue( const std::string &key ) const override;
-        virtual void SetMetadataValue( const std::string &key, const std::string &value ) override;
-        virtual std::vector<std::string> GetMetadataKeys() const override;
+        std::string GetMetadataValue( const std::string &key ) const override;
+        void SetMetadataValue( const std::string &key, const std::string &value ) override;
+        std::vector<std::string> GetMetadataKeys() const override;
 
-        virtual void Synchronize() override;
+        void Synchronize() override;
 
-        virtual std::string GetDescription() override;
-        virtual void SetDescription( const std::string &description ) override;
+        std::string GetDescription() override;
+        void SetDescription( const std::string &description ) override;
 
-        virtual std::vector<std::string> GetHistoryEntries() const override;
-        virtual void SetHistoryEntries( const std::vector<std::string> &entries ) override;
+        std::vector<std::string> GetHistoryEntries() const override;
+        void SetHistoryEntries( const std::vector<std::string> &entries ) override;
         virtual void PushHistory(const std::string &app,
                                  const std::string &message) override;
 

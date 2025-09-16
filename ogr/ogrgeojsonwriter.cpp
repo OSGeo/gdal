@@ -875,7 +875,7 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
     json_object *poObjProps = json_object_new_object();
     CPLAssert(nullptr != poObjProps);
 
-    OGRFeatureDefn *poDefn = poFeature->GetDefnRef();
+    const OGRFeatureDefn *poDefn = poFeature->GetDefnRef();
 
     const int nIDField =
         !oOptions.osIDField.empty()
@@ -926,7 +926,7 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
             continue;
         }
 
-        OGRFieldDefn *poFieldDefn = poDefn->GetFieldDefn(nField);
+        const OGRFieldDefn *poFieldDefn = poDefn->GetFieldDefn(nField);
         CPLAssert(nullptr != poFieldDefn);
         const OGRFieldType eType = poFieldDefn->GetType();
         const OGRFieldSubType eSubType = poFieldDefn->GetSubType();
@@ -1574,7 +1574,7 @@ json_object *
 json_object_new_float_with_significant_figures(float fVal,
                                                int nSignificantFigures)
 {
-    json_object *jso = json_object_new_double(fVal);
+    json_object *jso = json_object_new_double(double(fVal));
     json_object_set_serializer(
         jso, OGR_json_float_with_significant_figures_to_string,
         reinterpret_cast<void *>(static_cast<uintptr_t>(nSignificantFigures)),

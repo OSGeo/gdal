@@ -532,9 +532,8 @@ void GDALRasterBlock::LeaveDisableDirtyBlockFlush()
 
 GDALRasterBlock::GDALRasterBlock(GDALRasterBand *poBandIn, int nXOffIn,
                                  int nYOffIn)
-    : eType(poBandIn->GetRasterDataType()), bDirty(false), nLockCount(0),
-      nXOff(nXOffIn), nYOff(nYOffIn), nXSize(0), nYSize(0), pData(nullptr),
-      poBand(poBandIn), poNext(nullptr), poPrevious(nullptr), bMustDetach(true)
+    : eType(poBandIn->GetRasterDataType()), nXOff(nXOffIn), nYOff(nYOffIn),
+      poBand(poBandIn), bMustDetach(true)
 {
     if (!hRBLock)
     {
@@ -566,9 +565,7 @@ GDALRasterBlock::GDALRasterBlock(GDALRasterBand *poBandIn, int nXOffIn,
  */
 
 GDALRasterBlock::GDALRasterBlock(int nXOffIn, int nYOffIn)
-    : eType(GDT_Unknown), bDirty(false), nLockCount(0), nXOff(nXOffIn),
-      nYOff(nYOffIn), nXSize(0), nYSize(0), pData(nullptr), poBand(nullptr),
-      poNext(nullptr), poPrevious(nullptr), bMustDetach(false)
+    : nXOff(nXOffIn), nYOff(nYOffIn)
 {
 }
 

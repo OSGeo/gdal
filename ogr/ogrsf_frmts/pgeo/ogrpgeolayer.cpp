@@ -334,7 +334,7 @@ OGRFeature *OGRPGeoLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGeoLayer::TestCapability(CPL_UNUSED const char *pszCap)
+int OGRPGeoLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCZGeometries))
         return true;
@@ -405,7 +405,7 @@ void OGRPGeoLayer::LookupSRID(int nSRID)
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRPGeoLayer::GetFIDColumn()
+const char *OGRPGeoLayer::GetFIDColumn() const
 
 {
     if (pszFIDColumn != nullptr)
@@ -418,7 +418,7 @@ const char *OGRPGeoLayer::GetFIDColumn()
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
-const char *OGRPGeoLayer::GetGeometryColumn()
+const char *OGRPGeoLayer::GetGeometryColumn() const
 
 {
     if (pszGeomColumn != nullptr)

@@ -74,7 +74,7 @@ class OGRPDFLayer final : public OGRMemLayer
 
     void Fill(GDALPDFArray *poArray);
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 };
@@ -98,8 +98,8 @@ class OGRPDFWritableLayer final : public OGRMemLayer
                         OGRSpatialReference *poSRS,
                         OGRwkbGeometryType eGeomType);
 
-    virtual int TestCapability(const char *) override;
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    int TestCapability(const char *) const override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     GDALDataset *GetDataset() override;
 };
@@ -408,33 +408,32 @@ class PDFDataset final : public GDALPamDataset
   public:
     PDFDataset(PDFDataset *poParentDS = nullptr, int nXSize = 0,
                int nYSize = 0);
-    virtual ~PDFDataset();
+    ~PDFDataset() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
-    virtual CPLErr SetMetadata(char **papszMetadata,
-                               const char *pszDomain = "") override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
+    CPLErr SetMetadata(char **papszMetadata,
+                       const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
-    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
-                                   const char *pszDomain = "") override;
+    CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                           const char *pszDomain = "") override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, BANDMAP_TYPE,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, int, BANDMAP_TYPE, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual int GetGCPCount() override;
+    int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    const GDAL_GCP *GetGCPs() override;
     CPLErr SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                    const OGRSpatialReference *poSRS) override;
 
@@ -442,10 +441,10 @@ class PDFDataset final : public GDALPamDataset
                       GSpacing nPixelSpace, GSpacing nLineSpace,
                       GSpacing nBandSpace, GByte *pabyData);
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRGeometry *GetGeometryFromMCID(int nMCID);
 
@@ -471,9 +470,9 @@ class PDFDataset final : public GDALPamDataset
         return Open(poOpenInfo);
     }
 
-    virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
-                                   const int *, GDALProgressFunc, void *,
-                                   CSLConstList papszOptions) override;
+    CPLErr IBuildOverviews(const char *, int, const int *, int, const int *,
+                           GDALProgressFunc, void *,
+                           CSLConstList papszOptions) override;
 
 #ifdef HAVE_PDFIUM
     static bool g_bPdfiumInit;
@@ -496,21 +495,20 @@ class PDFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
   public:
     PDFRasterBand(PDFDataset *, int, int);
-    virtual ~PDFRasterBand();
+    ~PDFRasterBand() override;
 
     virtual GDALSuggestedBlockAccessPattern
     GetSuggestedBlockAccessPattern() const override;
 
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int) override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    CPLErr IReadBlock(int, int, void *) override;
+    GDALColorInterp GetColorInterpretation() override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 #endif /* HAVE_PDF_READ_SUPPORT */
@@ -532,18 +530,19 @@ class PDFWritableVectorDataset final : public GDALDataset
 
   public:
     PDFWritableVectorDataset();
-    virtual ~PDFWritableVectorDataset();
+    ~PDFWritableVectorDataset() override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;
 
-    OGRErr SyncToDisk();
+    CPLErr Close() override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     static GDALDataset *Create(const char *pszName, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,

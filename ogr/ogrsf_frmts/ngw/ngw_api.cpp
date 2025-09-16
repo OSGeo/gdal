@@ -861,7 +861,7 @@ bool GetExtent(const std::string &osUrl, const std::string &osResourceId,
 
         if (nRetryCount >= nMaxRetries)
         {
-            return false;
+            break;
         }
 
         CPLSleep(dfRetryDelaySecs);

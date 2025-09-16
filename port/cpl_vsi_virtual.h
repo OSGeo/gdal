@@ -21,11 +21,11 @@
 #include "cpl_vsi.h"
 #include "cpl_vsi_error.h"
 #include "cpl_string.h"
-#include "cpl_multiproc.h"
 
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <string>
 
@@ -296,17 +296,17 @@ class CPL_DLL VSIFilesystemHandler
 {
 
   public:
-    virtual ~VSIFilesystemHandler()
-    {
-    }
+    virtual ~VSIFilesystemHandler() = default;
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess);
+    static VSIVirtualHandleUniquePtr
+    OpenStatic(const char *pszFilename, const char *pszAccess,
+               bool bSetError = false, CSLConstList papszOptions = nullptr);
 
-    virtual VSIVirtualHandle *Open(const char *pszFilename,
-                                   const char *pszAccess, bool bSetError,
-                                   CSLConstList papszOptions) = 0;
+    virtual VSIVirtualHandleUniquePtr
+    Open(const char *pszFilename, const char *pszAccess, bool bSetError = false,
+         CSLConstList papszOptions = nullptr) = 0;
 
-    virtual VSIVirtualHandle *
+    virtual VSIVirtualHandleUniquePtr
     CreateOnlyVisibleAtCloseTime(const char *pszFilename,
                                  bool bEmulationAllowed,
                                  CSLConstList papszOptions);
@@ -486,9 +486,14 @@ class CPL_DLL VSIFilesystemHandler
         return osFilename;
     }
 
-    virtual bool IsLocal(const char * /* pszPath */)
+    virtual bool IsLocal(const char * /* pszPath */) const
     {
         return true;
+    }
+
+    virtual bool IsArchive(const char * /* pszPath */) const
+    {
+        return false;
     }
 
     virtual bool SupportsSequentialWrite(const char * /* pszPath */,
@@ -572,25 +577,25 @@ class VSIArchiveEntryFileOffset
     virtual ~VSIArchiveEntryFileOffset();
 };
 
-typedef struct
+class VSIArchiveEntry
 {
-    char *fileName;
-    vsi_l_offset uncompressed_size;
-    VSIArchiveEntryFileOffset *file_pos;
-    int bIsDir;
-    GIntBig nModifiedTime;
-} VSIArchiveEntry;
-
-// Store list of child indices for each directory
-using DirectoryChildren = std::vector<int>;
+  public:
+    std::string fileName{};
+    vsi_l_offset uncompressed_size = 0;
+    std::unique_ptr<VSIArchiveEntryFileOffset> file_pos{};
+    bool bIsDir = false;
+    GIntBig nModifiedTime = 0;
+};
 
 class VSIArchiveContent
 {
   public:
     time_t mTime = 0;
     vsi_l_offset nFileSize = 0;
-    int nEntries = 0;
-    VSIArchiveEntry *entries = nullptr;
+    std::vector<VSIArchiveEntry> entries{};
+
+    // Store list of child indices for each directory
+    using DirectoryChildren = std::vector<int>;
 
     std::map<std::string, DirectoryChildren> dirIndex{};
 
@@ -616,26 +621,32 @@ class VSIArchiveReader
     virtual int GotoFileOffset(VSIArchiveEntryFileOffset *pOffset) = 0;
 };
 
-class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
+class VSIArchiveFilesystemHandler /* non final */ : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIArchiveFilesystemHandler)
 
+    bool FindFileInArchive(const char *archiveFilename,
+                           const char *fileInArchiveName,
+                           const VSIArchiveEntry **archiveEntry);
+
   protected:
-    CPLMutex *hMutex = nullptr;
+    mutable std::recursive_mutex oMutex{};
+
     /* We use a cache that contains the list of files contained in a VSIArchive
      * file as */
     /* unarchive.c is quite inefficient in listing them. This speeds up access
      * to VSIArchive files */
     /* containing ~1000 files like a CADRG product */
-    std::map<CPLString, VSIArchiveContent *> oFileList{};
+    std::map<CPLString, std::unique_ptr<VSIArchiveContent>> oFileList{};
 
-    virtual const char *GetPrefix() = 0;
-    virtual std::vector<CPLString> GetExtensions() = 0;
-    virtual VSIArchiveReader *CreateReader(const char *pszArchiveFileName) = 0;
+    virtual const char *GetPrefix() const = 0;
+    virtual std::vector<CPLString> GetExtensions() const = 0;
+    virtual std::unique_ptr<VSIArchiveReader>
+    CreateReader(const char *pszArchiveFileName) = 0;
 
   public:
     VSIArchiveFilesystemHandler();
-    virtual ~VSIArchiveFilesystemHandler();
+    ~VSIArchiveFilesystemHandler() override;
 
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
@@ -646,24 +657,23 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
                         VSIArchiveReader *poReader = nullptr);
     virtual char *SplitFilename(const char *pszFilename,
                                 CPLString &osFileInArchive,
-                                bool bCheckMainFileExists, bool bSetError);
-    virtual VSIArchiveReader *OpenArchiveFile(const char *archiveFilename,
-                                              const char *fileInArchiveName);
-    virtual int FindFileInArchive(const char *archiveFilename,
-                                  const char *fileInArchiveName,
-                                  const VSIArchiveEntry **archiveEntry);
+                                bool bCheckMainFileExists,
+                                bool bSetError) const;
+    virtual std::unique_ptr<VSIArchiveReader>
+    OpenArchiveFile(const char *archiveFilename, const char *fileInArchiveName);
 
-    virtual bool IsLocal(const char *pszPath) override;
+    bool IsLocal(const char *pszPath) const override;
 
-    virtual bool
-    SupportsSequentialWrite(const char * /* pszPath */,
-                            bool /* bAllowLocalTempFile */) override
+    bool IsArchive(const char *pszPath) const override;
+
+    bool SupportsSequentialWrite(const char * /* pszPath */,
+                                 bool /* bAllowLocalTempFile */) override
     {
         return false;
     }
 
-    virtual bool SupportsRandomWrite(const char * /* pszPath */,
-                                     bool /* bAllowLocalTempFile */) override
+    bool SupportsRandomWrite(const char * /* pszPath */,
+                             bool /* bAllowLocalTempFile */) override
     {
         return false;
     }

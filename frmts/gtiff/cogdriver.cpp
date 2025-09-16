@@ -80,7 +80,11 @@ static CPLString GetTmpFilename(const char *pszFilename, const char *pszExt)
 
 static const char *GetResampling(GDALDataset *poSrcDS)
 {
-    return poSrcDS->GetRasterBand(1)->GetColorTable() ? "NEAREST" : "CUBIC";
+    return poSrcDS->GetRasterBand(1)->GetColorTable() ||
+                   GDALDataTypeIsComplex(
+                       poSrcDS->GetRasterBand(1)->GetRasterDataType())
+               ? "NEAREST"
+               : "CUBIC";
 }
 
 /************************************************************************/
@@ -1146,6 +1150,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         }
     }
 
+    std::string osOverviewResampling;
     if (bGenerateOvr)
     {
         CPLDebug("COG", "Generating overviews of the imagery: start");
@@ -1153,7 +1158,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         std::vector<GDALRasterBand *> apoSrcBands;
         for (int i = 0; i < nBands; i++)
             apoSrcBands.push_back(poCurDS->GetRasterBand(i + 1));
-        const char *pszResampling = CSLFetchNameValueDef(
+        osOverviewResampling = CSLFetchNameValueDef(
             papszOptions, "OVERVIEW_RESAMPLING",
             CSLFetchNameValueDef(papszOptions, "RESAMPLING",
                                  GetResampling(poSrcDS)));
@@ -1177,8 +1182,8 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         CPLErr eErr = GTIFFBuildOverviewsEx(
             m_osTmpOverviewFilename, nBands, &apoSrcBands[0],
             static_cast<int>(asOverviewDims.size()), nullptr,
-            asOverviewDims.data(), pszResampling, aosOverviewOptions.List(),
-            GDALScaledProgress, pScaledProgress);
+            asOverviewDims.data(), osOverviewResampling.c_str(),
+            aosOverviewOptions.List(), GDALScaledProgress, pScaledProgress);
         CPLDebug("COG", "Generating overviews of the imagery: end");
 
         GDALDestroyScaledProgress(pScaledProgress);
@@ -1186,6 +1191,14 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         {
             return nullptr;
         }
+    }
+    else if (poSrcDS->GetRasterBand(1)->GetOverviewCount() > 0)
+    {
+        const char *pszResampling =
+            poSrcDS->GetRasterBand(1)->GetOverview(0)->GetMetadataItem(
+                "RESAMPLING");
+        if (pszResampling)
+            osOverviewResampling = pszResampling;
     }
 
     CPLStringList aosOptions;
@@ -1267,6 +1280,11 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     }
     else
     {
+        if (!osOverviewResampling.empty())
+        {
+            aosOptions.SetNameValue("@OVERVIEW_RESAMPLING",
+                                    osOverviewResampling.c_str());
+        }
         if (!m_osTmpOverviewFilename.empty())
         {
             aosOptions.SetNameValue("@OVERVIEW_DATASET",
@@ -1367,6 +1385,8 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     }
 
     aosOptions.SetNameValue("@FLUSHCACHE", "YES");
+    aosOptions.SetNameValue("@SUPPRESS_ASAP",
+                            CSLFetchNameValue(papszOptions, "@SUPPRESS_ASAP"));
 
     CPLDebug("COG", "Generating final product: start");
     auto poRet =
@@ -1398,7 +1418,7 @@ static GDALDataset *COGCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
 class GDALCOGDriver final : public GDALDriver
 {
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bInitialized = false;
 
     bool bHasLZW = false;
@@ -1655,6 +1675,9 @@ void GDALRegister_COG()
                               "Cloud optimized GeoTIFF generator");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/cog.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "tif tiff");
+    poDriver->SetMetadataItem(GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST,
+                              "<OverviewCreationOptionList>"
+                              "</OverviewCreationOptionList>");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONDATATYPES,
@@ -1664,6 +1687,7 @@ void GDALRegister_COG()
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME,
                               "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CAN_READ_AFTER_DELETE, "YES");
 
     poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");
 

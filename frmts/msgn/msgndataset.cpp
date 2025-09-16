@@ -64,7 +64,7 @@ class MSGNDataset final : public GDALDataset
 
   public:
     MSGNDataset();
-    ~MSGNDataset();
+    ~MSGNDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 
@@ -106,11 +106,11 @@ class MSGNRasterBand final : public GDALRasterBand
     MSGNRasterBand(MSGNDataset *, int, open_mode_type mode, int orig_band_no,
                    int band_in_file);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual double GetMinimum(int *pbSuccess = nullptr) override;
-    virtual double GetMaximum(int *pbSuccess = nullptr) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    double GetMinimum(int *pbSuccess = nullptr) override;
+    double GetMaximum(int *pbSuccess = nullptr) override;
 
-    virtual const char *GetDescription() const override
+    const char *GetDescription() const override
     {
         return band_description;
     }

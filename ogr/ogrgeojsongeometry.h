@@ -53,7 +53,7 @@ OGRwkbGeometryType CPL_DLL OGRGeoJSONGetOGRGeometryType(json_object *poObj);
 
 OGRGeometry CPL_DLL *
 OGRGeoJSONReadGeometry(json_object *poObj,
-                       OGRSpatialReference *poParentSRS = nullptr);
+                       const OGRSpatialReference *poParentSRS = nullptr);
 OGRSpatialReference CPL_DLL *OGRGeoJSONReadSpatialReference(json_object *poObj);
 
 OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw = false);

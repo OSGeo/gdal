@@ -84,11 +84,21 @@ CPLErr OGRSQLiteViewLayer::Initialize(const char *pszViewNameIn,
 /*                           GetLayerDefn()                             */
 /************************************************************************/
 
-OGRFeatureDefn *OGRSQLiteViewLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRSQLiteViewLayer::GetLayerDefn() const
 {
-    if (m_poFeatureDefn)
-        return m_poFeatureDefn;
+    if (!m_poFeatureDefn)
+    {
+        const_cast<OGRSQLiteViewLayer *>(this)->BuildLayerDefn();
+    }
+    return m_poFeatureDefn;
+}
 
+/************************************************************************/
+/*                          BuildLayerDefn()                            */
+/************************************************************************/
+
+void OGRSQLiteViewLayer::BuildLayerDefn()
+{
     EstablishFeatureDefn();
 
     if (m_poFeatureDefn == nullptr)
@@ -98,8 +108,6 @@ OGRFeatureDefn *OGRSQLiteViewLayer::GetLayerDefn()
         m_poFeatureDefn = new OGRSQLiteFeatureDefn(m_pszViewName);
         m_poFeatureDefn->Reference();
     }
-
-    return m_poFeatureDefn;
 }
 
 /************************************************************************/
@@ -130,12 +138,13 @@ OGRSQLiteLayer *OGRSQLiteViewLayer::GetUnderlyingLayer()
 /*                            GetGeomType()                             */
 /************************************************************************/
 
-OGRwkbGeometryType OGRSQLiteViewLayer::GetGeomType()
+OGRwkbGeometryType OGRSQLiteViewLayer::GetGeomType() const
 {
     if (m_poFeatureDefn)
         return m_poFeatureDefn->GetGeomType();
 
-    OGRSQLiteLayer *l_m_poUnderlyingLayer = GetUnderlyingLayer();
+    OGRSQLiteLayer *l_m_poUnderlyingLayer =
+        const_cast<OGRSQLiteViewLayer *>(this)->GetUnderlyingLayer();
     if (l_m_poUnderlyingLayer)
         return l_m_poUnderlyingLayer->GetGeomType();
 
@@ -498,7 +507,7 @@ void OGRSQLiteViewLayer::BuildWhere()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteViewLayer::TestCapability(const char *pszCap)
+int OGRSQLiteViewLayer::TestCapability(const char *pszCap) const
 
 {
     if (HasLayerDefnError())

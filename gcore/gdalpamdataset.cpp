@@ -148,18 +148,35 @@ GDALPamDataset::GDALPamDataset()
 GDALPamDataset::~GDALPamDataset()
 
 {
-    if (IsMarkedSuppressOnClose())
-    {
-        if (psPam && psPam->pszPamFilename != nullptr)
-            VSIUnlink(psPam->pszPamFilename);
-    }
-    else if (nPamFlags & GPF_DIRTY)
-    {
-        CPLDebug("GDALPamDataset", "In destructor with dirty metadata.");
-        GDALPamDataset::TrySaveXML();
-    }
+    CPL_IGNORE_RET_VAL(GDALPamDataset::Close());
 
     PamClear();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr GDALPamDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (IsMarkedSuppressOnClose())
+        {
+            if (psPam && psPam->pszPamFilename != nullptr)
+                VSIUnlink(psPam->pszPamFilename);
+        }
+        else if (nPamFlags & GPF_DIRTY)
+        {
+            CPLDebug("GDALPamDataset", "In Close() with dirty metadata.");
+            eErr = GDALPamDataset::TrySaveXML();
+        }
+
+        if (GDALDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/
@@ -1351,6 +1368,19 @@ const OGRSpatialReference *GDALPamDataset::GetSpatialRef() const
         return psPam->poSRS;
 
     return GDALDataset::GetSpatialRef();
+}
+
+/************************************************************************/
+/*                        GetSpatialRefRasterOnly()                     */
+/************************************************************************/
+
+const OGRSpatialReference *GDALPamDataset::GetSpatialRefRasterOnly() const
+
+{
+    if (psPam && psPam->poSRS)
+        return psPam->poSRS;
+
+    return GDALDataset::GetSpatialRefRasterOnly();
 }
 
 /************************************************************************/

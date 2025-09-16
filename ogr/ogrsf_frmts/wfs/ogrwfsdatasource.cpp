@@ -114,7 +114,7 @@ class OGRWFSWrappedResultLayer final : public OGRLayer
         return poLayer->GetFeature(nFID);
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poLayer->GetLayerDefn();
     }
@@ -124,7 +124,7 @@ class OGRWFSWrappedResultLayer final : public OGRLayer
         return poLayer->GetFeatureCount(bForce);
     }
 
-    int TestCapability(const char *pszCap) override
+    int TestCapability(const char *pszCap) const override
     {
         return poLayer->TestCapability(pszCap);
     }
@@ -196,7 +196,7 @@ OGRWFSDataSource::~OGRWFSDataSource()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRWFSDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRWFSDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

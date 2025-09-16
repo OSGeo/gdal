@@ -511,6 +511,15 @@ General options
 
       Location of Python shared library file, e.g. ``pythonX.Y[...].so/.dll``.
 
+-  .. config:: CPL_ENABLE_PATH_TRAVERSAL_DETECTION
+      :choices: YES, NO
+      :default: YES
+      :since: 3.12
+
+      Whether :cpp:func:`CPLHasPathTraversal` must detect ``../`` or ``..\\``
+      patterns in file paths that could cause
+      `path traversal vulnerabilities <https://en.wikipedia.org/wiki/Directory_traversal_attack>`__.
+
 
 .. _configoptions_vector:
 
@@ -699,6 +708,15 @@ Networking options
       file handle closing, all cached content related to the mentioned file(s) is
       no longer cached. This can help when dealing with resources that can be
       modified during execution of GDAL-related code.
+
+-  .. config:: GDAL_HTTP_PATH_VERBATIM
+      :choices: YES, NO
+      :default: NO
+      :since: 3.12
+
+      When set to YES, sequences of ``/../`` or ``/./`` that may exist in the
+      URL's path part are kept unchanged. Otherwise, by default, they are squashed,
+      according to RFC 3986 section 5.2.4.
 
 -  .. config:: GDAL_HTTP_HEADER_FILE
       :choices: <filename>

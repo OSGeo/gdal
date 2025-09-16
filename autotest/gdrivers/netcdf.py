@@ -2428,6 +2428,21 @@ def test_netcdf_57(tmp_path):
 
 
 ###############################################################################
+# Test one layer per file creation
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_one_layer_per_file_failure(tmp_path):
+
+    ds = ogr.GetDriverByName("netCDF").CreateDataSource(
+        tmp_path / "my_subdir",
+        options=["MULTIPLE_LAYERS=SEPARATE_FILES", "GEOMETRY_ENCODING=WKT"],
+    )
+    with pytest.raises(Exception, match="Illegal characters"):
+        ds.CreateLayer("slash/not_allowed")
+
+
+###############################################################################
 # Test one layer per group (NC4)
 
 
@@ -4099,7 +4114,7 @@ def test_flipped_axis():
     assert ft_wkt == "POLYGON ((0 0,1 0,1 1,0 0))"
 
 
-def test_arbitrary_3Daxis_order_():
+def test_arbitrary_3Daxis_order():
 
     polygon = ogr.Open("data/netcdf-sg/arbitrary_axis_order_test.nc")
     assert polygon != None

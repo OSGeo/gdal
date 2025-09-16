@@ -1086,7 +1086,7 @@ class GeometryInsertTransformer : public OGRCoordinateTransformation
         return new GeometryInsertTransformer(*this);
     }
 
-    virtual OGRCoordinateTransformation *GetInverse() const override
+    OGRCoordinateTransformation *GetInverse() const override
     {
         return nullptr;
     }
@@ -1502,7 +1502,7 @@ OGRFeature *OGRDWGLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDWGLayer::TestCapability(const char *pszCap)
+int OGRDWGLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

@@ -5,7 +5,11 @@
 /*      Necessary functions to read/write a MiraMon Vector File         */
 /* -------------------------------------------------------------------- */
 
-#include "mm_gdal_driver_structs.h"
+#ifdef MSVC
+#include "..\..\..\frmts\miramon_common\mm_gdal_driver_structs.h"
+#else
+#include "../../../frmts/miramon_common/mm_gdal_driver_structs.h"
+#endif
 CPL_C_START  // Necessary for compiling in GDAL project
 
     bool
@@ -15,6 +19,14 @@ bool MM_IsDoubleInfinite(double x);
 /* -------------------------------------------------------------------- */
 /*      Functions                                                       */
 /* -------------------------------------------------------------------- */
+// COMING FROM mm_gdal_functions.c/h but only used here
+size_t MM_DefineFirstPolygonFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp,
+                                        MM_BYTE n_perimeter_decimals,
+                                        MM_BYTE n_area_decimals_decimals);
+size_t MM_DefineFirstArcFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp,
+                                    MM_BYTE n_decimals);
+size_t MM_DefineFirstNodeFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp);
+size_t MM_DefineFirstPointFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp);
 
 // Layer functions
 int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
@@ -40,7 +52,6 @@ void MMResetFeatureRecord(struct MiraMonFeature *hMMFeature);
 void MMDestroyFeature(struct MiraMonFeature *MMFeature);
 int MMAddFeature(struct MiraMonVectLayerInfo *hMiraMonLayer,
                  struct MiraMonFeature *hMiraMonFeature);
-int MMCheckSize_t(GUInt64 nCount, GUInt64 nSize);
 int MMGetVectorVersion(struct MM_TH *pTopHeader);
 int MMInitFlush(struct MM_FLUSH_INFO *pFlush, VSILFILE *pF, GUInt64 nBlockSize,
                 char **pBuffer, MM_FILE_OFFSET DiskOffsetWhereToFlush,
@@ -95,7 +106,6 @@ int MMResizeDoublePointer(MM_COORD_TYPE **pDouble, MM_N_VERTICES_TYPE *nMax,
                           MM_N_VERTICES_TYPE nProposedMax);
 int MMResizeStringToOperateIfNeeded(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                     MM_EXT_DBF_N_FIELDS nNewSize);
-int MMIsEmptyString(const char *string);
 // Metadata functions
 
 int MMWriteVectorMetadata(struct MiraMonVectLayerInfo *hMiraMonLayer);

@@ -17,12 +17,12 @@
 namespace PCIDSK {
     class PCIDSKFile;
 
-    class CPCIDSKRPCModelSegment : virtual public PCIDSKRPCSegment,
+    class CPCIDSKRPCModelSegment final: virtual public PCIDSKRPCSegment,
                                    public CPCIDSKSegment
     {
     public:
         CPCIDSKRPCModelSegment(PCIDSKFile *file, int segment,const char *segment_pointer);
-        ~CPCIDSKRPCModelSegment();
+        ~CPCIDSKRPCModelSegment() override;
 
         // Implementation of PCIDSKRPCSegment
         // Get the X and Y RPC coefficients

@@ -59,7 +59,7 @@ const char GDAL_MARKER_FOR_DIR[] = ".gdal_marker_for_dir";
 /*                             VSIDIRAz                                 */
 /************************************************************************/
 
-struct VSIDIRAz : public VSIDIRS3Like
+struct VSIDIRAz final : public VSIDIRS3Like
 {
     VSIDIRAz(const std::string &osDirName, IVSIS3LikeFSHandler *poFSIn)
         : VSIDIRS3Like(osDirName, poFSIn)
@@ -175,6 +175,14 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
             if (strcmp(psIter->pszValue, "Blob") == 0)
             {
                 const char *pszKey = CPLGetXMLValue(psIter, "Name", nullptr);
+                if (pszKey && CPLHasUnbalancedPathTraversal(pszKey))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Ignoring blob name '%s' that has a path "
+                             "traversal pattern",
+                             pszKey);
+                    continue;
+                }
                 if (pszKey && strstr(pszKey, GDAL_MARKER_FOR_DIR) != nullptr)
                 {
                     if (nRecurseDepth < 0)
@@ -276,6 +284,14 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
                      strcmp(psIter->pszValue, "Container") == 0)
             {
                 const char *pszKey = CPLGetXMLValue(psIter, "Name", nullptr);
+                if (pszKey && CPLHasUnbalancedPathTraversal(pszKey))
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Ignoring %s '%s' that has a path traversal pattern",
+                        psIter->pszValue, pszKey);
+                    continue;
+                }
                 if (pszKey &&
                     strncmp(pszKey, osPrefix.c_str(), osPrefix.size()) == 0)
                 {
@@ -685,7 +701,7 @@ class VSIAzureWriteHandle final : public VSIAppendWriteHandle
     VSIAzureWriteHandle(VSIAzureFSHandler *poFS, const char *pszFilename,
                         VSIAzureBlobHandleHelper *poHandleHelper,
                         CSLConstList papszOptions);
-    virtual ~VSIAzureWriteHandle();
+    ~VSIAzureWriteHandle() override;
 };
 
 /************************************************************************/

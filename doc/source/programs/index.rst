@@ -77,6 +77,7 @@ Raster commands
 
    gdal_raster
    gdal_raster_info
+   gdal_raster_as_features
    gdal_raster_aspect
    gdal_raster_calc
    gdal_raster_clean_collar
@@ -84,6 +85,7 @@ Raster commands
    gdal_raster_color_map
    gdal_raster_color_merge
    gdal_raster_contour
+   gdal_raster_compare
    gdal_raster_convert
    gdal_raster_create
    gdal_raster_edit
@@ -91,6 +93,7 @@ Raster commands
    gdal_raster_fill_nodata
    gdal_raster_hillshade
    gdal_raster_index
+   gdal_raster_materialize
    gdal_raster_mosaic
    gdal_raster_nodata_to_alpha
    gdal_raster_overview
@@ -126,12 +129,14 @@ Raster commands
 
     - :ref:`gdal_raster`: Entry point for raster commands
     - :ref:`gdal_raster_info`: Get information on a raster dataset
+    - :reF:`gdal_raster_as_features`: Create features representing raster pixels
     - :ref:`gdal_raster_aspect`: Generate an aspect map.
     - :ref:`gdal_raster_calc`: Perform raster algebra
     - :ref:`gdal_raster_clean_collar`: Clean the collar of a raster dataset, removing noise
     - :ref:`gdal_raster_clip`: Clip a raster dataset
     - :ref:`gdal_raster_color_map`: Use a grayscale raster to replace the intensity of a RGB/RGBA dataset
     - :ref:`gdal_raster_color_merge`: Replace the color value of a RGB/RGBA dataset by the one of a grayscale raster
+    - :ref:`gdal_raster_compare`: Compare two raster datasets
     - :ref:`gdal_raster_convert`: Convert a raster dataset
     - :ref:`gdal_raster_contour`: Builds vector contour lines from a raster elevation model
     - :ref:`gdal_raster_create`: Create a new raster dataset
@@ -140,6 +145,7 @@ Raster commands
     - :ref:`gdal_raster_fill_nodata`: Fill raster regions by interpolation from edges.
     - :ref:`gdal_raster_hillshade`: Generate a shaded relief map
     - :ref:`gdal_raster_index`: Create a vector index of raster datasets
+    - :ref:`gdal_raster_materialize`: Materialize a piped dataset on disk to increase the efficiency of the following steps
     - :ref:`gdal_raster_mosaic`: Build a mosaic, either virtual (VRT) or materialized.
     - :ref:`gdal_raster_nodata_to_alpha`: Replace nodata value(s) with an alpha band
     - :ref:`gdal_raster_overview`: Manage overviews of a raster dataset
@@ -194,6 +200,8 @@ Vector commands
    gdal_vector_index
    gdal_vector_layer_algebra
    gdal_vector_make_valid
+   gdal_vector_materialize
+   gdal_vector_partition
    gdal_vector_pipeline
    gdal_vector_rasterize
    gdal_vector_reproject
@@ -225,6 +233,8 @@ Vector commands
     - :ref:`gdal_vector_index`: Create a vector index of vector datasets
     - :ref:`gdal_vector_layer_algebra`: Perform algebraic operation between 2 layers.
     - :ref:`gdal_vector_make_valid`: Fix validity of geometries of a vector dataset
+    - :ref:`gdal_vector_materialize`: Materialize a piped dataset on disk to increase the efficiency of the following steps
+    - :ref:`gdal_vector_partition`: Partition a vector dataset into multiple files
     - :ref:`gdal_vector_rasterize`: Burns vector geometries into a raster
     - :ref:`gdal_vector_reproject`: Reproject a vector dataset
     - :ref:`gdal_vector_segmentize`: Segmentize geometries of a vector dataset

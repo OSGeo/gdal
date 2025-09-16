@@ -77,7 +77,7 @@ class TileDBSharedResource
 /*                      TileDBAttributeHolder                           */
 /************************************************************************/
 
-class TileDBAttributeHolder
+class TileDBAttributeHolder /* non final */
 {
   private:
     mutable std::map<std::string, std::shared_ptr<GDALAttribute>>

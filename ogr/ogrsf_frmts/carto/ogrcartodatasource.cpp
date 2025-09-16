@@ -53,7 +53,7 @@ OGRCARTODataSource::~OGRCARTODataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRCARTODataSource::TestCapability(const char *pszCap)
+int OGRCARTODataSource::TestCapability(const char *pszCap) const
 
 {
     if (bReadWrite && EQUAL(pszCap, ODsCCreateLayer))
@@ -72,7 +72,7 @@ int OGRCARTODataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRCARTODataSource::GetLayer(int iLayer)
+const OGRLayer *OGRCARTODataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

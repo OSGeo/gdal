@@ -71,7 +71,7 @@ class GDALEEDABaseDataset CPL_NON_FINAL : public GDALDataset
 
   public:
     GDALEEDABaseDataset();
-    virtual ~GDALEEDABaseDataset();
+    ~GDALEEDABaseDataset() override;
 
     const CPLString &GetBaseURL() const
     {

@@ -746,7 +746,7 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPDSLayer::TestCapability(const char *pszCap)
+int OGRPDSLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount) && m_poFilterGeom == nullptr &&
@@ -799,7 +799,10 @@ OGRErr OGRPDSLayer::SetNextByIndex(GIntBig nIndex)
         return OGRLayer::SetNextByIndex(nIndex);
 
     if (nIndex < 0 || nIndex >= nRecords)
-        return OGRERR_FAILURE;
+    {
+        nNextFID = nRecords;
+        return OGRERR_NON_EXISTING_FEATURE;
+    }
 
     nNextFID = (int)nIndex;
     VSIFSeekL(fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET);

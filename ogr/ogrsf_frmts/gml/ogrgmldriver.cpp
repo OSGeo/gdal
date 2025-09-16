@@ -301,6 +301,8 @@ void RegisterOGRGML()
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CAN_READ_AFTER_DELETE, "YES");
 
     poDriver->pfnOpen = OGRGMLDriverOpen;
     poDriver->pfnIdentify = OGRGMLDriverIdentify;

@@ -37,7 +37,7 @@ Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline`.
 .. only:: html
 
    .. figure:: ../../images/programs/gdal_raster_polygonize.svg
-   
+
    Polygonization of a 3x3 raster input. The middle figure shows the default behavior,
    where separate polygons are created for pixel regions that are connected only to
    a diagonal neighbor.
@@ -73,7 +73,7 @@ Standard options
 
     Picks a particular band to polygonize. Defaults to band 1.
 
-.. option:: -l, --nln, --layer <LAYER>
+.. option:: --nln, --output-layer <OUTPUT-LAYER>
 
     Provides a name for the output vector layer. Defaults to "polygonize".
 

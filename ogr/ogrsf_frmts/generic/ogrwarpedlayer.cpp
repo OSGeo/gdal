@@ -25,12 +25,16 @@ OGRWarpedLayer::OGRWarpedLayer(OGRLayer *poDecoratedLayer, int iGeomField,
                                OGRCoordinateTransformation *poCT,
                                OGRCoordinateTransformation *poReversedCT)
     : OGRLayerDecorator(poDecoratedLayer, bTakeOwnership),
-      m_poFeatureDefn(nullptr), m_iGeomField(iGeomField), m_poCT(poCT),
-      m_poReversedCT(poReversedCT),
+      m_poFeatureDefn(poDecoratedLayer->GetLayerDefn()->Clone()),
+      m_iGeomField(iGeomField), m_poCT(poCT), m_poReversedCT(poReversedCT),
       m_poSRS(const_cast<OGRSpatialReference *>(m_poCT->GetTargetCS()))
 {
     CPLAssert(poCT != nullptr);
     SetDescription(poDecoratedLayer->GetDescription());
+
+    m_poFeatureDefn->Reference();
+    if (m_poFeatureDefn->GetGeomFieldCount() > 0)
+        m_poFeatureDefn->GetGeomFieldDefn(m_iGeomField)->SetSpatialRef(m_poSRS);
 
     if (m_poSRS != nullptr)
     {
@@ -122,7 +126,8 @@ OGRWarpedLayer::SrcFeatureToWarpedFeature(std::unique_ptr<OGRFeature> poFeature)
 {
     // This is safe to do here as they have matching attribute and geometry
     // fields
-    poFeature->SetFDefnUnsafe(GetLayerDefn());
+    OGRLayer *poThisLayer = this;
+    poFeature->SetFDefnUnsafe(poThisLayer->GetLayerDefn());
 
     OGRGeometry *poGeom = poFeature->GetGeomFieldRef(m_iGeomField);
     if (poGeom && poGeom->transform(m_poCT) != OGRERR_NONE)
@@ -260,16 +265,8 @@ OGRErr OGRWarpedLayer::IUpdateFeature(OGRFeature *poFeature,
 /*                            GetLayerDefn()                           */
 /************************************************************************/
 
-OGRFeatureDefn *OGRWarpedLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRWarpedLayer::GetLayerDefn() const
 {
-    if (m_poFeatureDefn != nullptr)
-        return m_poFeatureDefn;
-
-    m_poFeatureDefn = m_poDecoratedLayer->GetLayerDefn()->Clone();
-    m_poFeatureDefn->Reference();
-    if (m_poFeatureDefn->GetGeomFieldCount() > 0)
-        m_poFeatureDefn->GetGeomFieldDefn(m_iGeomField)->SetSpatialRef(m_poSRS);
-
     return m_poFeatureDefn;
 }
 
@@ -277,7 +274,7 @@ OGRFeatureDefn *OGRWarpedLayer::GetLayerDefn()
 /*                            GetSpatialRef()                           */
 /************************************************************************/
 
-OGRSpatialReference *OGRWarpedLayer::GetSpatialRef()
+const OGRSpatialReference *OGRWarpedLayer::GetSpatialRef() const
 {
     if (m_iGeomField == 0)
         return m_poSRS;
@@ -505,7 +502,7 @@ int OGRWarpedLayer::ReprojectEnvelope(OGREnvelope *psEnvelope,
 /*                             TestCapability()                         */
 /************************************************************************/
 
-int OGRWarpedLayer::TestCapability(const char *pszCapability)
+int OGRWarpedLayer::TestCapability(const char *pszCapability) const
 {
     if (EQUAL(pszCapability, OLCFastGetExtent) && sStaticEnvelope.IsInit())
         return TRUE;

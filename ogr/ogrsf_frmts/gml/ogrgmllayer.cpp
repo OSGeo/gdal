@@ -576,8 +576,6 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         // Got the desired feature.
         return poOGRFeature;
     }
-
-    return nullptr;
 }
 
 /************************************************************************/
@@ -1102,7 +1100,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGMLLayer::TestCapability(const char *pszCap)
+int OGRGMLLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite))

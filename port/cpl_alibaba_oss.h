@@ -54,7 +54,7 @@ class VSIOSSHandleHelper final : public IVSIS3LikeHandleHelper
                        const std::string &osBucket,
                        const std::string &osObjectKey, bool bUseHTTPS,
                        bool bUseVirtualHosting);
-    ~VSIOSSHandleHelper();
+    ~VSIOSSHandleHelper() override;
 
     static VSIOSSHandleHelper *
     BuildFromURI(const char *pszURI, const char *pszFSPrefix,

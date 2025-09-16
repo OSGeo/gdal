@@ -87,6 +87,8 @@ option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
 # produce position independent code, default is on when building a shared library
 option(GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE "Set ON to produce -fPIC code" ${BUILD_SHARED_LIBS})
 
+option(GDAL_ENABLE_ALGORITHMS "Whether to enable 'gdal' algorithms" ON)
+
 # Option to set preferred C# compiler
 option(CSHARP_MONO "Whether to force the C# compiler to be Mono" OFF)
 
@@ -480,6 +482,14 @@ if ((GDAL_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED GDAL_ENABLE_DRIVER_ADRG AND NOT
     OGR_ENABLE_DRIVER_S57 OR
     OGR_ENABLE_DRIVER_SDTS)
   add_subdirectory(frmts/iso8211)
+endif()
+
+# Build frmts/miramon_common conditionally to drivers requiring it
+if ((GDAL_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED GDAL_ENABLE_DRIVER_MIRAMON) OR
+    GDAL_ENABLE_DRIVER_MIRAMON OR
+    (OGR_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED OGR_ENABLE_DRIVER_MIRAMON) OR
+    OGR_ENABLE_DRIVER_MIRAMON)
+  add_subdirectory(frmts/miramon_common)
 endif()
 
 add_subdirectory(frmts)

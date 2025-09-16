@@ -1523,7 +1523,7 @@ bool OGRHanaDataSource::ParseArrayFunctionsExist(const char *schemaName)
 /*                               GetLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRHanaDataSource::GetLayer(int index)
+const OGRLayer *OGRHanaDataSource::GetLayer(int index) const
 {
     if (index < 0 || static_cast<std::size_t>(index) >= layers_.size())
         return nullptr;
@@ -1705,7 +1705,7 @@ OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRHanaDataSource::TestCapability(const char *capabilities)
+int OGRHanaDataSource::TestCapability(const char *capabilities) const
 {
     if (EQUAL(capabilities, ODsCCreateLayer))
         return updateMode_;

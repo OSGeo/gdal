@@ -58,12 +58,12 @@ class OGRGmtLayer final : public OGRLayer,
 
     OGRGmtLayer(GDALDataset *poDS, const char *pszFilename, VSILFILE *fp,
                 const OGRSpatialReference *poSRS, int bUpdate);
-    virtual ~OGRGmtLayer();
+    ~OGRGmtLayer() override;
 
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRGmtLayer)
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
@@ -76,7 +76,7 @@ class OGRGmtLayer final : public OGRLayer,
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override
     {
@@ -99,22 +99,22 @@ class OGRGmtDataSource final : public GDALDataset
 
   public:
     OGRGmtDataSource();
-    virtual ~OGRGmtDataSource();
+    ~OGRGmtDataSource() override;
 
     int Open(const char *pszFilename, VSILFILE *fp,
              const OGRSpatialReference *poSRS, int bUpdate);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 #endif /* ndef OGRGMT_H_INCLUDED */

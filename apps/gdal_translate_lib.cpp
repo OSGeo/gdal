@@ -89,6 +89,8 @@ struct GDALTranslateScaleParams
  */
 struct GDALTranslateOptions
 {
+    /*! Raw program arguments */
+    CPLStringList aosArgs{};
 
     /*! output format. Use the short format name. */
     std::string osFormat{};
@@ -509,21 +511,20 @@ static void ReworkArray(CPLJSONObject &container, const CPLJSONObject &obj,
     }
 }
 
-static CPLString
+static std::string
 EditISIS3MetadataForBandChange(const char *pszJSON, int nSrcBandCount,
                                const GDALTranslateOptions *psOptions)
 {
     CPLJSONDocument oJSONDocument;
-    const GByte *pabyData = reinterpret_cast<const GByte *>(pszJSON);
-    if (!oJSONDocument.LoadMemory(pabyData))
+    if (!oJSONDocument.LoadMemory(pszJSON))
     {
-        return CPLString();
+        return std::string();
     }
 
     auto oRoot = oJSONDocument.GetRoot();
     if (!oRoot.IsValid())
     {
-        return CPLString();
+        return std::string();
     }
 
     auto oBandBin = oRoot.GetObj("IsisCube/BandBin");
@@ -552,6 +553,88 @@ EditISIS3MetadataForBandChange(const char *pszJSON, int nSrcBandCount,
             }
         }
     }
+
+    return oRoot.Format(CPLJSONObject::PrettyFormat::Pretty);
+}
+
+/************************************************************************/
+/*                    EditISIS3ForMetadataChanges()                     */
+/************************************************************************/
+
+static std::string
+EditISIS3ForMetadataChanges(const char *pszJSON, bool bKeepExtent,
+                            bool bKeepResolution,
+                            const GDALTranslateOptions *psOptions)
+{
+    CPLJSONDocument oJSONDocument;
+    if (!oJSONDocument.LoadMemory(pszJSON))
+    {
+        return std::string();
+    }
+
+    auto oRoot = oJSONDocument.GetRoot();
+    if (!oRoot.IsValid())
+    {
+        return std::string();
+    }
+
+    auto oGDALHistory = oRoot.GetObj("GDALHistory");
+    if (!oGDALHistory.IsValid())
+    {
+        oGDALHistory = CPLJSONObject();
+        oRoot.Add("GDALHistory", oGDALHistory);
+    }
+    oGDALHistory["_type"] = "object";
+
+    char szFullFilename[2048] = {0};
+    if (!CPLGetExecPath(szFullFilename, sizeof(szFullFilename) - 1))
+        strcpy(szFullFilename, "unknown_program");
+    const CPLString osProgram(CPLGetBasenameSafe(szFullFilename));
+    const CPLString osPath(CPLGetPathSafe(szFullFilename));
+
+    oGDALHistory["GdalVersion"] = GDALVersionInfo("RELEASE_NAME");
+    oGDALHistory["Program"] = osProgram;
+    if (osPath != ".")
+        oGDALHistory["ProgramPath"] = osPath;
+
+    std::vector<std::string> aosOps;
+    if (!bKeepExtent)
+    {
+        aosOps.push_back("a clipping operation");
+    }
+    if (!bKeepResolution)
+    {
+        aosOps.push_back("a resolution change operation");
+    }
+    if (psOptions->bUnscale)
+    {
+        aosOps.push_back("an unscaling operation");
+    }
+    else if (!psOptions->asScaleParams.empty())
+    {
+        aosOps.push_back("a scaling operation");
+    }
+
+    std::string osArgs;
+    for (const char *pszArg : psOptions->aosArgs)
+    {
+        if (!osArgs.empty())
+            osArgs += ' ';
+        osArgs += pszArg;
+    }
+    oGDALHistory["ProgramArguments"] = osArgs;
+
+    std::string osComment = "Part of that metadata might be invalid due to ";
+    for (size_t i = 0; i < aosOps.size(); ++i)
+    {
+        if (i > 0 && i + 1 == aosOps.size())
+            osComment += " and ";
+        else if (i > 0)
+            osComment += ", ";
+        osComment += aosOps[i];
+    }
+    osComment += " having been performed by GDAL tools";
+    oGDALHistory.Add("Comment", osComment);
 
     return oRoot.Format(CPLJSONObject::PrettyFormat::Pretty);
 }
@@ -1102,11 +1185,13 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         psOptions->nOXSizePixel == 0 && psOptions->dfOXSizePct == 0.0 &&
         psOptions->nOYSizePixel == 0 && psOptions->dfOYSizePct == 0.0 &&
         psOptions->dfXRes == 0.0;
-    const bool bSpatialArrangementPreserved =
+    const bool bKeepExtent =
         psOptions->srcWin.dfXOff == 0 && psOptions->srcWin.dfYOff == 0 &&
         psOptions->srcWin.dfXSize == poSrcDS->GetRasterXSize() &&
-        psOptions->srcWin.dfYSize == poSrcDS->GetRasterYSize() &&
-        bKeepResolution;
+        psOptions->srcWin.dfYSize == poSrcDS->GetRasterYSize();
+    const bool bSpatialArrangementPreserved = bKeepExtent && bKeepResolution;
+    const bool bValuesChanged =
+        psOptions->bUnscale || !psOptions->asScaleParams.empty();
 
     if (psOptions->eOutputType == GDT_Unknown &&
         psOptions->asScaleParams.empty() && psOptions->adfExponent.empty() &&
@@ -1675,21 +1760,23 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
 
     /* ISIS3 metadata preservation */
     char **papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
-    if (papszMD_ISIS3 != nullptr)
+    if (papszMD_ISIS3 != nullptr && papszMD_ISIS3[0])
     {
+        std::string osJSON = papszMD_ISIS3[0];
         if (!bAllBandsInOrder)
         {
-            CPLString osJSON = EditISIS3MetadataForBandChange(
-                papszMD_ISIS3[0], poSrcDS->GetRasterCount(), psOptions.get());
-            if (!osJSON.empty())
-            {
-                char *apszMD[] = {&osJSON[0], nullptr};
-                poVDS->SetMetadata(apszMD, "json:ISIS3");
-            }
+            osJSON = EditISIS3MetadataForBandChange(
+                osJSON.c_str(), poSrcDS->GetRasterCount(), psOptions.get());
         }
-        else
+        if (!bSpatialArrangementPreserved || bValuesChanged)
         {
-            poVDS->SetMetadata(papszMD_ISIS3, "json:ISIS3");
+            osJSON = EditISIS3ForMetadataChanges(
+                osJSON.c_str(), bKeepExtent, bKeepResolution, psOptions.get());
+        }
+        if (!osJSON.empty())
+        {
+            char *apszMD[] = {osJSON.data(), nullptr};
+            poVDS->SetMetadata(apszMD, "json:ISIS3");
         }
     }
 
@@ -1847,9 +1934,9 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     }
 
     // Can be set to TRUE in the band loop too
-    bool bFilterOutStatsMetadata =
-        !psOptions->asScaleParams.empty() || psOptions->bUnscale ||
-        !bSpatialArrangementPreserved || psOptions->nRGBExpand != 0;
+    bool bFilterOutStatsMetadata = bValuesChanged ||
+                                   !bSpatialArrangementPreserved ||
+                                   psOptions->nRGBExpand != 0;
 
     if (static_cast<int>(psOptions->anColorInterp.size()) >
         psOptions->nBandCount)
@@ -3151,6 +3238,8 @@ GDALTranslateOptionsNew(char **papszArgv,
                         GDALTranslateOptionsForBinary *psOptionsForBinary)
 {
     auto psOptions = std::make_unique<GDALTranslateOptions>();
+
+    psOptions->aosArgs.Assign(CSLDuplicate(papszArgv), true);
 
     /* -------------------------------------------------------------------- */
     /*      Pre-processing for custom syntax that ArgumentParser does not   */

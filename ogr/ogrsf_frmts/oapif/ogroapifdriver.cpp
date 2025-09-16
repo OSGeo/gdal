@@ -116,14 +116,14 @@ class OGROAPIFDataset final : public GDALDataset
 
   public:
     OGROAPIFDataset() = default;
-    ~OGROAPIFDataset();
+    ~OGROAPIFDataset() override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int idx) override;
+    const OGRLayer *GetLayer(int idx) const override;
 
     bool Open(GDALOpenInfo *);
     const CPLJSONDocument &GetAPIDoc(std::string &osURLOut);
@@ -198,20 +198,20 @@ class OGROAPIFLayer final : public OGRLayer
                   const std::string &osActiveCRS, double dfCoordinateEpoch,
                   const CPLJSONArray &oLinks);
 
-    ~OGROAPIFLayer();
+    ~OGROAPIFLayer() override;
 
     void SetItemAssets(const CPLJSONObject &oItemAssets);
 
-    const char *GetName() override
+    const char *GetName() const override
     {
         return GetDescription();
     }
 
-    OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig) override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     GIntBig GetFeatureCount(int bForce = FALSE) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -1246,7 +1246,7 @@ bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer *OGROAPIFDataset::GetLayer(int nIndex)
+const OGRLayer *OGROAPIFDataset::GetLayer(int nIndex) const
 {
     if (nIndex < 0 || nIndex >= GetLayerCount())
         return nullptr;
@@ -1844,10 +1844,10 @@ void OGROAPIFLayer::GetSchema()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGROAPIFLayer::GetLayerDefn()
+const OGRFeatureDefn *OGROAPIFLayer::GetLayerDefn() const
 {
     if (!m_bFeatureDefnEstablished)
-        EstablishFeatureDefn();
+        const_cast<OGROAPIFLayer *>(this)->EstablishFeatureDefn();
     return m_poFeatureDefn;
 }
 
@@ -3195,7 +3195,7 @@ OGRErr OGROAPIFLayer::SetAttributeFilter(const char *pszQuery)
 /*                              TestCapability()                        */
 /************************************************************************/
 
-int OGROAPIFLayer::TestCapability(const char *pszCap)
+int OGROAPIFLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
     {

@@ -70,23 +70,23 @@ class OGRPDSLayer final : public OGRLayer,
                 const std::string &osStructureFilename, int nRecords,
                 int nStartBytes, int nRecordSize, GByte *pabyRecord,
                 bool bIsASCII);
-    virtual ~OGRPDSLayer();
+    ~OGRPDSLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRPDSLayer)
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
 
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRErr SetNextByIndex(GIntBig nIndex) override;
 };
 
 }  // namespace OGRPDS
@@ -111,16 +111,16 @@ class OGRPDSDataSource final : public GDALDataset
 
   public:
     OGRPDSDataSource();
-    virtual ~OGRPDSDataSource();
+    ~OGRPDSDataSource() override;
 
     int Open(const char *pszFilename);
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     static void CleanString(CPLString &osInput);
 };

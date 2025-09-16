@@ -180,7 +180,7 @@ class CPL_DLL OGRArrowArrayHelper
         brokenDown.tm_sec = static_cast<int>(ogrField.Date.Second);
         auto nVal =
             CPLYMDHMSToUnixTime(&brokenDown) * 1000 +
-            (static_cast<int>(ogrField.Date.Second * 1000 + 0.5) % 1000);
+            (static_cast<int>(ogrField.Date.Second * 1000 + 0.5f) % 1000);
         if (nFieldTZFlag >= OGR_TZFLAG_MIXED_TZ &&
             ogrField.Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
         {

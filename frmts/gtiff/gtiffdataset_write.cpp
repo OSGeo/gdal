@@ -108,10 +108,13 @@ static double GTiffGetLERCMaxZErrorOverview(CSLConstList papszOptions)
 }
 
 #if HAVE_JXL
-static bool GTiffGetJXLLossless(CSLConstList papszOptions)
+static bool GTiffGetJXLLossless(CSLConstList papszOptions,
+                                bool *pbIsSpecified = nullptr)
 {
-    return CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "JXL_LOSSLESS", "TRUE"));
+    const char *pszVal = CSLFetchNameValue(papszOptions, "JXL_LOSSLESS");
+    if (pbIsSpecified)
+        *pbIsSpecified = pszVal != nullptr;
+    return pszVal == nullptr || CPLTestBool(pszVal);
 }
 
 static uint32_t GTiffGetJXLEffort(CSLConstList papszOptions)
@@ -119,16 +122,22 @@ static uint32_t GTiffGetJXLEffort(CSLConstList papszOptions)
     return atoi(CSLFetchNameValueDef(papszOptions, "JXL_EFFORT", "5"));
 }
 
-static float GTiffGetJXLDistance(CSLConstList papszOptions)
+static float GTiffGetJXLDistance(CSLConstList papszOptions,
+                                 bool *pbIsSpecified = nullptr)
 {
-    return static_cast<float>(
-        CPLAtof(CSLFetchNameValueDef(papszOptions, "JXL_DISTANCE", "1.0")));
+    const char *pszVal = CSLFetchNameValue(papszOptions, "JXL_DISTANCE");
+    if (pbIsSpecified)
+        *pbIsSpecified = pszVal != nullptr;
+    return pszVal == nullptr ? 1.0f : static_cast<float>(CPLAtof(pszVal));
 }
 
-static float GTiffGetJXLAlphaDistance(CSLConstList papszOptions)
+static float GTiffGetJXLAlphaDistance(CSLConstList papszOptions,
+                                      bool *pbIsSpecified = nullptr)
 {
-    return static_cast<float>(CPLAtof(
-        CSLFetchNameValueDef(papszOptions, "JXL_ALPHA_DISTANCE", "-1.0")));
+    const char *pszVal = CSLFetchNameValue(papszOptions, "JXL_ALPHA_DISTANCE");
+    if (pbIsSpecified)
+        *pbIsSpecified = pszVal != nullptr;
+    return pszVal == nullptr ? -1.0f : static_cast<float>(CPLAtof(pszVal));
 }
 
 #endif
@@ -2479,9 +2488,12 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
                 *ppszKeyUsed = pszConfigOptionKey;
             return pszVal;
         }
-        pszVal = CPLGetConfigOption(pszConfigOptionKey, nullptr);
-        if (pszVal && ppszKeyUsed)
-            *ppszKeyUsed = pszConfigOptionKey;
+        if (pszConfigOptionKey)
+        {
+            pszVal = CPLGetConfigOption(pszConfigOptionKey, nullptr);
+            if (pszVal && ppszKeyUsed)
+                *ppszKeyUsed = pszConfigOptionKey;
+        }
         return pszVal;
     };
 
@@ -2534,6 +2546,42 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
         dfMaxZError = CPLAtof(opt);
     }
 
+    signed char nJpegTablesMode = m_nJpegTablesMode;
+    if (const char *opt =
+            GetOptionValue("JPEG_TABLESMODE", "JPEG_TABLESMODE_OVERVIEW"))
+    {
+        nJpegTablesMode = static_cast<signed char>(atoi(opt));
+    }
+
+#ifdef HAVE_JXL
+    bool bJXLLossless = m_bJXLLossless;
+    if (const char *opt =
+            GetOptionValue("JXL_LOSSLESS", "JXL_LOSSLESS_OVERVIEW"))
+    {
+        bJXLLossless = CPLTestBool(opt);
+    }
+
+    float fJXLDistance = m_fJXLDistance;
+    if (const char *opt =
+            GetOptionValue("JXL_DISTANCE", "JXL_DISTANCE_OVERVIEW"))
+    {
+        fJXLDistance = static_cast<float>(CPLAtof(opt));
+    }
+
+    float fJXLAlphaDistance = m_fJXLAlphaDistance;
+    if (const char *opt =
+            GetOptionValue("JXL_ALPHA_DISTANCE", "JXL_ALPHA_DISTANCE_OVERVIEW"))
+    {
+        fJXLAlphaDistance = static_cast<float>(CPLAtof(opt));
+    }
+
+    int nJXLEffort = m_nJXLEffort;
+    if (const char *opt = GetOptionValue("JXL_EFFORT", "JXL_EFFORT_OVERVIEW"))
+    {
+        nJXLEffort = atoi(opt);
+    }
+#endif
+
     GTiffDataset *poODS = new GTiffDataset();
     poODS->ShareLockWithParentDataset(this);
     poODS->m_pszFilename = CPLStrdup(m_pszFilename);
@@ -2554,17 +2602,17 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     poODS->m_nLZMAPreset = m_nLZMAPreset;
     poODS->m_nZSTDLevel = static_cast<signed char>(nZSTDLevel);
     poODS->m_bWebPLossless = bWebpLossless;
-    poODS->m_nJpegTablesMode = m_nJpegTablesMode;
+    poODS->m_nJpegTablesMode = nJpegTablesMode;
     poODS->m_dfMaxZError = dfMaxZError;
     poODS->m_dfMaxZErrorOverview = dfMaxZError;
     memcpy(poODS->m_anLercAddCompressionAndVersion,
            m_anLercAddCompressionAndVersion,
            sizeof(m_anLercAddCompressionAndVersion));
 #ifdef HAVE_JXL
-    poODS->m_bJXLLossless = m_bJXLLossless;
-    poODS->m_fJXLDistance = m_fJXLDistance;
-    poODS->m_fJXLAlphaDistance = m_fJXLAlphaDistance;
-    poODS->m_nJXLEffort = m_nJXLEffort;
+    poODS->m_bJXLLossless = bJXLLossless;
+    poODS->m_fJXLDistance = fJXLDistance;
+    poODS->m_fJXLAlphaDistance = fJXLAlphaDistance;
+    poODS->m_nJXLEffort = nJXLEffort;
 #endif
 
     if (poODS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF), nOverviewOffset,
@@ -2864,7 +2912,8 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset *poSrcDS,
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
     GTIFFGetOverviewBlockSize(GDALRasterBand::ToHandle(GetRasterBand(1)),
-                              &nOvrBlockXSize, &nOvrBlockYSize);
+                              &nOvrBlockXSize, &nOvrBlockYSize, nullptr,
+                              nullptr);
 
     CPLErr eErr = CE_None;
 
@@ -3093,7 +3142,8 @@ GTiffDataset::AddOverviews(const std::vector<GDALDataset *> &apoSrcOvrDSIn,
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
     GTIFFGetOverviewBlockSize(GDALRasterBand::ToHandle(GetRasterBand(1)),
-                              &nOvrBlockXSize, &nOvrBlockYSize);
+                              &nOvrBlockXSize, &nOvrBlockYSize, papszOptions,
+                              "BLOCKSIZE");
 
     CPLErr eErr = CE_None;
     for (const auto *poSrcOvrDS : apoSrcOvrDS)
@@ -3220,12 +3270,35 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     /*      generic handling.                                               */
     /* -------------------------------------------------------------------- */
     bool bUseGenericHandling = false;
+    CPLStringList aosOptions(papszOptions);
 
-    if (CPLTestBool(CSLFetchNameValueDef(
-            papszOptions, "USE_RRD", CPLGetConfigOption("USE_RRD", "NO"))) ||
-        CPLTestBool(
-            CSLFetchNameValueDef(papszOptions, "TIFF_USE_OVR",
-                                 CPLGetConfigOption("TIFF_USE_OVR", "NO"))))
+    const char *pszLocation = CSLFetchNameValue(papszOptions, "LOCATION");
+    if (pszLocation && EQUAL(pszLocation, "EXTERNAL"))
+    {
+        bUseGenericHandling = true;
+    }
+    else if (pszLocation && EQUAL(pszLocation, "INTERNAL"))
+    {
+        if (GetAccess() != GA_Update)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create internal overviews on file opened in "
+                     "read-only mode");
+            return CE_Failure;
+        }
+    }
+    else if (pszLocation && EQUAL(pszLocation, "RRD"))
+    {
+        bUseGenericHandling = true;
+        aosOptions.SetNameValue("USE_RRD", "YES");
+    }
+    // Legacy
+    else if (CPLTestBool(
+                 CSLFetchNameValueDef(papszOptions, "USE_RRD",
+                                      CPLGetConfigOption("USE_RRD", "NO"))) ||
+             CPLTestBool(CSLFetchNameValueDef(
+                 papszOptions, "TIFF_USE_OVR",
+                 CPLGetConfigOption("TIFF_USE_OVR", "NO"))))
     {
         bUseGenericHandling = true;
     }
@@ -3252,7 +3325,6 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             return CE_Failure;
         }
 
-        CPLStringList aosOptions(papszOptions);
         if (!m_bWriteEmptyTiles)
         {
             aosOptions.SetNameValue("SPARSE_OK", "YES");
@@ -3374,7 +3446,8 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
     GTIFFGetOverviewBlockSize(GDALRasterBand::ToHandle(GetRasterBand(1)),
-                              &nOvrBlockXSize, &nOvrBlockYSize);
+                              &nOvrBlockXSize, &nOvrBlockYSize, papszOptions,
+                              "BLOCKSIZE");
     std::vector<bool> abRequireNewOverview(nOverviews, true);
     for (int i = 0; i < nOverviews && eErr == CE_None; ++i)
     {
@@ -4529,6 +4602,14 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         }
     }
 
+    if (const char *pszOverviewResampling =
+            CSLFetchNameValue(papszCreationOptions, "@OVERVIEW_RESAMPLING"))
+    {
+        AppendMetadataItem(&psRoot, &psTail, "OVERVIEW_RESAMPLING",
+                           pszOverviewResampling, 0, nullptr,
+                           "IMAGE_STRUCTURE");
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Write information about some codecs.                            */
     /* -------------------------------------------------------------------- */
@@ -4602,17 +4683,19 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             else
             {
                 fDistance = GTiffGetJXLDistance(papszCreationOptions);
-                AppendMetadataItem(&psRoot, &psTail, "JXL_DISTANCE",
-                                   CPLSPrintf("%f", fDistance), 0, nullptr,
-                                   "IMAGE_STRUCTURE");
+                AppendMetadataItem(
+                    &psRoot, &psTail, "JXL_DISTANCE",
+                    CPLSPrintf("%f", static_cast<double>(fDistance)), 0,
+                    nullptr, "IMAGE_STRUCTURE");
             }
             const float fAlphaDistance =
                 GTiffGetJXLAlphaDistance(papszCreationOptions);
             if (fAlphaDistance >= 0.0f && fAlphaDistance != fDistance)
             {
-                AppendMetadataItem(&psRoot, &psTail, "JXL_ALPHA_DISTANCE",
-                                   CPLSPrintf("%f", fAlphaDistance), 0, nullptr,
-                                   "IMAGE_STRUCTURE");
+                AppendMetadataItem(
+                    &psRoot, &psTail, "JXL_ALPHA_DISTANCE",
+                    CPLSPrintf("%f", static_cast<double>(fAlphaDistance)), 0,
+                    nullptr, "IMAGE_STRUCTURE");
             }
             AppendMetadataItem(
                 &psRoot, &psTail, "JXL_EFFORT",
@@ -4885,7 +4968,7 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
                 if (j == 2)
                 {
                     // Last term of xyY color must be 1.0.
-                    if (v != 1.0)
+                    if (v != 1.0f)
                     {
                         bOutputCHR = false;
                         break;
@@ -4930,7 +5013,7 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
                     if (j == 2)
                     {
                         // Last term of xyY color must be 1.0.
-                        if (v != 1.0)
+                        if (v != 1.0f)
                         {
                             bOutputWhitepoint = false;
                             break;
@@ -5659,10 +5742,30 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     const int l_nJpegTablesMode = GTiffGetJpegTablesMode(papszParamList);
     const double l_dfMaxZError = GTiffGetLERCMaxZError(papszParamList);
 #if HAVE_JXL
-    const bool l_bJXLLossless = GTiffGetJXLLossless(papszParamList);
+    bool bJXLLosslessSpecified = false;
+    const bool l_bJXLLossless =
+        GTiffGetJXLLossless(papszParamList, &bJXLLosslessSpecified);
     const uint32_t l_nJXLEffort = GTiffGetJXLEffort(papszParamList);
-    const float l_fJXLDistance = GTiffGetJXLDistance(papszParamList);
-    const float l_fJXLAlphaDistance = GTiffGetJXLAlphaDistance(papszParamList);
+    bool bJXLDistanceSpecified = false;
+    const float l_fJXLDistance =
+        GTiffGetJXLDistance(papszParamList, &bJXLDistanceSpecified);
+    if (bJXLDistanceSpecified && l_bJXLLossless)
+    {
+        ReportError(pszFilename, CE_Warning, CPLE_AppDefined,
+                    "JXL_DISTANCE creation option is ignored, given %s "
+                    "JXL_LOSSLESS=YES",
+                    bJXLLosslessSpecified ? "(explicit)" : "(implicit)");
+    }
+    bool bJXLAlphaDistanceSpecified = false;
+    const float l_fJXLAlphaDistance =
+        GTiffGetJXLAlphaDistance(papszParamList, &bJXLAlphaDistanceSpecified);
+    if (bJXLAlphaDistanceSpecified && l_bJXLLossless)
+    {
+        ReportError(pszFilename, CE_Warning, CPLE_AppDefined,
+                    "JXL_ALPHA_DISTANCE creation option is ignored, given %s "
+                    "JXL_LOSSLESS=YES",
+                    bJXLLosslessSpecified ? "(explicit)" : "(implicit)");
+    }
 #endif
     /* -------------------------------------------------------------------- */
     /*      Streaming related code                                          */
@@ -5862,11 +5965,16 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     VSIErrorReset();
     const bool bOnlyVisibleAtCloseTime = CPLTestBool(CSLFetchNameValueDef(
         papszParamList, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME", "NO"));
-    VSILFILE *l_fpL =
-        bOnlyVisibleAtCloseTime && !bAppend
+    const bool bSuppressASAP = CPLTestBool(
+        CSLFetchNameValueDef(papszParamList, "@SUPPRESS_ASAP", "NO"));
+    auto l_fpL =
+        (bOnlyVisibleAtCloseTime || bSuppressASAP) && !bAppend
             ? VSIFileManager::GetHandler(pszFilename)
                   ->CreateOnlyVisibleAtCloseTime(pszFilename, true, nullptr)
-            : VSIFOpenExL(pszFilename, bAppend ? "r+b" : "w+b", true);
+                  .release()
+            : VSIFilesystemHandler::OpenStatic(pszFilename,
+                                               bAppend ? "r+b" : "w+b", true)
+                  .release();
     if (l_fpL == nullptr)
     {
         VSIToCPLErrorWithMsg(CE_Failure, CPLE_OpenFailed,
@@ -5876,6 +5984,12 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                                  .c_str());
         return nullptr;
     }
+
+    if (bSuppressASAP)
+    {
+        l_fpL->CancelCreation();
+    }
+
     TIFF *l_hTIFF = VSI_TIFFOpen(pszFilename, szOpeningFlag, l_fpL);
     if (l_hTIFF == nullptr)
     {
@@ -6204,8 +6318,10 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_LOSSYNESS,
                      l_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_EFFORT, l_nJXLEffort);
-        TIFFSetField(l_hTIFF, TIFFTAG_JXL_DISTANCE, l_fJXLDistance);
-        TIFFSetField(l_hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE, l_fJXLAlphaDistance);
+        TIFFSetField(l_hTIFF, TIFFTAG_JXL_DISTANCE,
+                     static_cast<double>(l_fJXLDistance));
+        TIFFSetField(l_hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE,
+                     static_cast<double>(l_fJXLAlphaDistance));
     }
 #endif
     if (l_nCompression == COMPRESSION_WEBP)
@@ -6651,6 +6767,10 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     GTiffDataset *poDS = new GTiffDataset();
     poDS->m_hTIFF = l_hTIFF;
     poDS->m_fpL = l_fpL;
+    const bool bSuppressASAP = CPLTestBool(
+        CSLFetchNameValueDef(papszParamList, "@SUPPRESS_ASAP", "NO"));
+    if (bSuppressASAP)
+        poDS->MarkSuppressOnClose();
     if (bStreaming)
     {
         poDS->m_bStreamingOut = true;
@@ -7702,7 +7822,8 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     CPLString osHiddenStructuralMD;
     const char *pszInterleave =
         CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "PIXEL");
-    if (bCopySrcOverviews)
+    if (bCopySrcOverviews &&
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "TILED", "NO")))
     {
         osHiddenStructuralMD += "LAYOUT=IFDS_BEFORE_DATA\n";
         osHiddenStructuralMD += "BLOCK_ORDER=ROW_MAJOR\n";
@@ -8061,6 +8182,10 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
     GTiffDataset *poDS = new GTiffDataset();
+    const bool bSuppressASAP =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "@SUPPRESS_ASAP", "NO"));
+    if (bSuppressASAP)
+        poDS->MarkSuppressOnClose();
     poDS->SetDescription(pszFilename);
     poDS->eAccess = GA_Update;
     poDS->m_pszFilename = CPLStrdup(pszFilename);
@@ -8330,9 +8455,10 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_LOSSYNESS,
                      poDS->m_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_EFFORT, poDS->m_nJXLEffort);
-        TIFFSetField(l_hTIFF, TIFFTAG_JXL_DISTANCE, poDS->m_fJXLDistance);
+        TIFFSetField(l_hTIFF, TIFFTAG_JXL_DISTANCE,
+                     static_cast<double>(poDS->m_fJXLDistance));
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE,
-                     poDS->m_fJXLAlphaDistance);
+                     static_cast<double>(poDS->m_fJXLAlphaDistance));
     }
 #endif
     if (l_nCompression == COMPRESSION_WEBP)
@@ -8436,7 +8562,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                 int nOvrBlockYSize = 0;
                 GTIFFGetOverviewBlockSize(
                     GDALRasterBand::ToHandle(poDS->GetRasterBand(1)),
-                    &nOvrBlockXSize, &nOvrBlockYSize);
+                    &nOvrBlockXSize, &nOvrBlockYSize, nullptr, nullptr);
                 eErr = poDS->CreateInternalMaskOverviews(nOvrBlockXSize,
                                                          nOvrBlockYSize);
             }
@@ -8806,17 +8932,22 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
 
     if (eErr == CE_Failure)
     {
-        l_fpL->CancelCreation();
-        delete poDS;
-        poDS = nullptr;
-
         if (CPLTestBool(CPLGetConfigOption("GTIFF_DELETE_ON_ERROR", "YES")))
         {
+            l_fpL->CancelCreation();
+            delete poDS;
+            poDS = nullptr;
+
             if (!bStreaming)
             {
                 // Should really delete more carefully.
                 VSIUnlink(pszFilename);
             }
+        }
+        else
+        {
+            delete poDS;
+            poDS = nullptr;
         }
     }
 

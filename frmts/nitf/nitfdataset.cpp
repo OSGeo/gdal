@@ -6114,6 +6114,8 @@ static bool NITFWriteCGMSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     }
 
     return bOK;
+
+#undef PLACE
 }
 
 /************************************************************************/
@@ -6394,6 +6396,7 @@ static bool NITFWriteTextSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     CPLFree(pachLT);
 
     return bOK;
+#undef PLACE
 }
 
 /************************************************************************/
@@ -7163,7 +7166,7 @@ static const char *const apszFieldsBLOCKA[] = {
 
 class NITFDriver final : public GDALDriver
 {
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bCreationOptionListInitialized = false;
     void InitCreationOptionList();
 

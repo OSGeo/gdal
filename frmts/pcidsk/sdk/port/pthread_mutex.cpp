@@ -19,7 +19,7 @@
 /*                             PThreadMutex                             */
 /************************************************************************/
 
-class PThreadMutex : public PCIDSK::Mutex
+class PThreadMutex final: public PCIDSK::Mutex
 
 {
 private:

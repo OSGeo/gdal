@@ -265,6 +265,10 @@ class CreationOption(BaseConfigOption):
     opt_type = "co"
 
 
+class OverviewCreationOption(BaseConfigOption):
+    opt_type = "oco"
+
+
 class DatasetCreationOption(BaseConfigOption):
     opt_type = "dsco"
 
@@ -606,6 +610,7 @@ def log_options(app, env):
 option_classes = {
     "config": ConfigOption,
     "co": CreationOption,
+    "oco": OverviewCreationOption,
     "dsco": DatasetCreationOption,
     "lco": LayerCreationOption,
     "oo": OpenOption,

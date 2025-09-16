@@ -85,6 +85,15 @@ void VSICurlFilesystemHandlerBase::AnalyseSwiftFileList(
             if (osName.size() > osPrefix.size() &&
                 osName.substr(0, osPrefix.size()) == osPrefix)
             {
+                if (CPLHasUnbalancedPathTraversal(osName.c_str()))
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Ignoring name '%s' that has a path traversal pattern",
+                        osName.c_str());
+                    continue;
+                }
+
                 if (bHasCount)
                 {
                     // Case when listing /vsiswift/
@@ -136,6 +145,14 @@ void VSICurlFilesystemHandlerBase::AnalyseSwiftFileList(
                 osSubdir.pop_back();
             if (STARTS_WITH(osSubdir.c_str(), osPrefix.c_str()))
             {
+                if (CPLHasUnbalancedPathTraversal(osSubdir.c_str()))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Ignoring subdir '%s' that has a path traversal "
+                             "pattern",
+                             osSubdir.c_str());
+                    continue;
+                }
 
                 FileProp prop;
                 prop.eExists = EXIST_YES;
@@ -265,7 +282,7 @@ class VSISwiftHandle final : public IVSIS3LikeHandle
   protected:
     struct curl_slist *GetCurlHeaders(const std::string &osVerb,
                                       struct curl_slist *psHeaders) override;
-    virtual bool Authenticate(const char *pszFilename) override;
+    bool Authenticate(const char *pszFilename) override;
 
   public:
     VSISwiftHandle(VSISwiftFSHandler *poFS, const char *pszFilename,

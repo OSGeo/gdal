@@ -32,17 +32,9 @@ class GDALVectorInfoAlgorithm /* non final */
 
     explicit GDALVectorInfoAlgorithm(bool standaloneStep = false);
 
-    void SetDataset(GDALDataset *poDS)
+    bool CanBeLastStep() const override
     {
-        auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        if (arg && poDS)
-        {
-            auto &val = arg->Get<std::vector<GDALArgDatasetValue>>();
-            val.resize(1);
-            val[0].Set(poDS);
-            arg->NotifyValueSet();
-            arg->SetSkipIfAlreadySet();
-        }
+        return true;
     }
 
   private:

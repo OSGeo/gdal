@@ -5545,6 +5545,7 @@ def test_ogr_shape_write_multipolygon_parts_non_constant_z(tmp_vsimem):
 # Test renaming a layer
 
 
+@gdaltest.enable_exceptions()
 def test_ogr_shape_rename_layer(tmp_path):
 
     outfilename = tmp_path / "test_rename.shp"
@@ -5554,15 +5555,18 @@ def test_ogr_shape_rename_layer(tmp_path):
     lyr = ds.GetLayer(0)
     assert lyr.TestCapability(ogr.OLCRename) == 1
 
-    with gdal.quiet_errors():
-        assert lyr.Rename("test_rename") != ogr.OGRERR_NONE
+    with pytest.raises(Exception, match="Illegal character"):
+        lyr.Rename("illegal/slash")
+
+    with pytest.raises(Exception):
+        lyr.Rename("test_rename")
 
     f = gdal.VSIFOpenL(tmp_path / "test_rename_foo.dbf", "wb")
     assert f
     gdal.VSIFCloseL(f)
 
-    with gdal.quiet_errors():
-        assert lyr.Rename("test_rename_foo") != ogr.OGRERR_NONE
+    with pytest.raises(Exception):
+        lyr.Rename("test_rename_foo")
 
     gdal.Unlink(tmp_path / "test_rename_foo.dbf")
 

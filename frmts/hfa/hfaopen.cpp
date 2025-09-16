@@ -528,9 +528,19 @@ CPLErr HFADelete(const char *pszFilename)
                 poDMS->GetStringField("fileName.string");
 
             if (pszRawFilename != nullptr)
-                HFARemove(CPLFormFilenameSafe(psInfo->pszPath, pszRawFilename,
-                                              nullptr)
-                              .c_str());
+            {
+                if (CPLHasPathTraversal(pszRawFilename))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Path traversal detected in %s", pszRawFilename);
+                }
+                else
+                {
+                    HFARemove(CPLFormFilenameSafe(psInfo->pszPath,
+                                                  pszRawFilename, nullptr)
+                                  .c_str());
+                }
+            }
         }
 
         CPL_IGNORE_RET_VAL(HFAClose(psInfo));
@@ -2903,6 +2913,13 @@ std::string HFAGetIGEFilename(HFAHandle hHFA)
 
             if (pszRawFilename != nullptr)
             {
+                if (CPLHasPathTraversal(pszRawFilename))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Path traversal detected in %s", pszRawFilename);
+                    return std::string();
+                }
+
                 VSIStatBufL sStatBuf;
                 std::string osFullFilename =
                     CPLFormFilenameSafe(hHFA->pszPath, pszRawFilename, nullptr);
@@ -3729,46 +3746,48 @@ CPLErr HFARenameReferences(HFAHandle hHFA, const char *pszNewBase,
 
         // Collect all the existing names.
         const int nNameCount = poRRDNL->GetFieldCount("nameList");
-
-        CPLString osAlgorithm = poRRDNL->GetStringField("algorithm.string");
-        for (int i = 0; i < nNameCount; i++)
+        if (nNameCount >= 0)
         {
-            CPLString osFN;
-            osFN.Printf("nameList[%d].string", i);
-            aosNL.push_back(poRRDNL->GetStringField(osFN));
-        }
-
-        // Adjust the names to the new form.
-        for (int i = 0; i < nNameCount; i++)
-        {
-            if (strncmp(aosNL[i], pszOldBase, strlen(pszOldBase)) == 0)
+            CPLString osAlgorithm = poRRDNL->GetStringField("algorithm.string");
+            for (int i = 0; i < nNameCount; i++)
             {
-                std::string osNew = pszNewBase;
-                osNew += aosNL[i].c_str() + strlen(pszOldBase);
-                aosNL[i] = std::move(osNew);
+                CPLString osFN;
+                osFN.Printf("nameList[%d].string", i);
+                aosNL.push_back(poRRDNL->GetStringField(osFN));
             }
-        }
 
-        // Try to make sure the RRDNamesList is big enough to hold the
-        // adjusted name list.
-        if (strlen(pszNewBase) > strlen(pszOldBase))
-        {
-            CPLDebug("HFA", "Growing RRDNamesList to hold new names");
-            poRRDNL->MakeData(static_cast<int>(
-                poRRDNL->GetDataSize() +
-                nNameCount * (strlen(pszNewBase) - strlen(pszOldBase))));
-        }
+            // Adjust the names to the new form.
+            for (int i = 0; i < nNameCount; i++)
+            {
+                if (strncmp(aosNL[i], pszOldBase, strlen(pszOldBase)) == 0)
+                {
+                    std::string osNew = pszNewBase;
+                    osNew += aosNL[i].c_str() + strlen(pszOldBase);
+                    aosNL[i] = std::move(osNew);
+                }
+            }
 
-        // Initialize the whole thing to zeros for a clean start.
-        memset(poRRDNL->GetData(), 0, poRRDNL->GetDataSize());
+            // Try to make sure the RRDNamesList is big enough to hold the
+            // adjusted name list.
+            if (strlen(pszNewBase) > strlen(pszOldBase))
+            {
+                CPLDebug("HFA", "Growing RRDNamesList to hold new names");
+                poRRDNL->MakeData(static_cast<int>(
+                    poRRDNL->GetDataSize() +
+                    nNameCount * (strlen(pszNewBase) - strlen(pszOldBase))));
+            }
 
-        // Write the updates back to the file.
-        poRRDNL->SetStringField("algorithm.string", osAlgorithm);
-        for (int i = 0; i < nNameCount; i++)
-        {
-            CPLString osFN;
-            osFN.Printf("nameList[%d].string", i);
-            poRRDNL->SetStringField(osFN, aosNL[i]);
+            // Initialize the whole thing to zeros for a clean start.
+            memset(poRRDNL->GetData(), 0, poRRDNL->GetDataSize());
+
+            // Write the updates back to the file.
+            poRRDNL->SetStringField("algorithm.string", osAlgorithm);
+            for (int i = 0; i < nNameCount; i++)
+            {
+                CPLString osFN;
+                osFN.Printf("nameList[%d].string", i);
+                poRRDNL->SetStringField(osFN, aosNL[i]);
+            }
         }
     }
 

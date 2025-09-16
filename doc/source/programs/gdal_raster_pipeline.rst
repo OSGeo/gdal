@@ -20,14 +20,22 @@ perform various processing steps that accept raster and generate raster.
 
 For pipelines mixing raster and vector, consult :ref:`gdal_pipeline`.
 
+Most steps proceed in on-demand evaluation of raster blocks,
+unless otherwise stated in their documentation, without "materializing" the
+resulting dataset of the operation of each step. It may be desirable sometimes
+for performance purposes to proceed to materializing an intermediate dataset
+to disk using :ref:`gdal_raster_materialize`.
+
 Synopsis
 --------
 
 .. program-output:: gdal raster pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (exclamation mark) character.
-The first step must be ``read``, ``calc``, ``mosaic`` or ``stack``, and the last one ``write``. Each step has its
-own positional or non-positional arguments. Apart from ``read``, ``calc``, ``mosaic``, ``stack`` and ``write``,
+The first step must be ``read``, ``calc``, ``mosaic`` or ``stack``,
+and the last one ``write``, ``info`` or ``tile``.
+Each step has its own positional or non-positional arguments.
+Apart from ``read``, ``calc``, ``mosaic``, ``stack``, ``compare``, ``info``, ``tile`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
@@ -96,11 +104,23 @@ Details for options can be found in :ref:`gdal_raster_fill_nodata`.
 
 Details for options can be found in :ref:`gdal_raster_hillshade`.
 
+* materialize
+
+.. program-output:: gdal raster pipeline --help-doc=materialize
+
+Details for options can be found in :ref:`gdal_raster_materialize`.
+
 * nodata-to-alpha
 
 .. program-output:: gdal raster pipeline --help-doc=nodata-to-alpha
 
 Details for options can be found in :ref:`gdal_raster_nodata_to_alpha`.
+
+* overview
+
+.. program-output:: gdal raster pipeline --help-doc=overview
+
+Details for options can be found in :ref:`gdal_raster_overview`.
 
 * pansharpen
 
@@ -192,6 +212,12 @@ Details for options can be found in :ref:`gdal_raster_unscale`.
 
 Details for options can be found in :ref:`gdal_raster_viewshed`.
 
+* tee
+
+.. program-output:: gdal raster pipeline --help-doc=tee
+
+Details for options can be found in :ref:`gdal_output_nested_pipeline`.
+
 * info
 
 .. versionadded:: 3.12
@@ -199,6 +225,22 @@ Details for options can be found in :ref:`gdal_raster_viewshed`.
 .. program-output:: gdal raster pipeline --help-doc=info
 
 Details for options can be found in :ref:`gdal_raster_info`.
+
+* tile
+
+.. versionadded:: 3.12
+
+.. program-output:: gdal raster pipeline --help-doc=tile
+
+Details for options can be found in :ref:`gdal_raster_tile`.
+
+* compare
+
+.. versionadded:: 3.12
+
+.. program-output:: gdal raster pipeline --help-doc=compare
+
+Details for options can be found in :ref:`gdal_raster_compare`.
 
 * write
 
@@ -234,6 +276,29 @@ The final ``write`` step can be added but if so it must explicitly specify the
     }
 
 
+Substitutions
+-------------
+
+.. versionadded:: 3.12
+
+It is possible to use :program:`gdal pipeline` to use a pipeline already
+serialized in a .gdal.json file, and customize its existing steps, typically
+changing an input filename, specifying an output filename, or adding/modifying arguments
+of steps.
+
+See :ref:`gdal_pipeline_substitutions`.
+
+
+Nested pipeline
+---------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdal_nested_pipeline_intro.rst
+
+See :ref:`gdal_nested_pipeline`.
+
+
 Examples
 --------
 
@@ -251,6 +316,13 @@ Examples
 
         $ gdal raster pipeline ! read in.tif ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
         $ gdal raster info in_epsg_32632.gdalg.json
+
+.. example::
+   :title: Mosaic on-the-fly several input files and tile that mosaic.
+
+   .. code-block:: bash
+
+      gdal raster pipeline ! mosaic input*.tif ! tile output_folder
 
 
 

@@ -205,7 +205,7 @@ CSF_FADDR32 CsfGetAttrBlock(MAP *m, CSF_ATTR_ID id, ATTR_CNTRL_BLOCK *b);
 CSF_FADDR32 CsfGetAttrPosSize(MAP *m, CSF_ATTR_ID id, size_t *size);
 size_t CsfWriteSwapped(void *buf, size_t size, size_t n, FILE  *f);
 size_t CsfReadSwapped(void *buf, size_t size, size_t n, FILE  *f);
-size_t CsfWritePlain(void *buf, size_t size, size_t n, FILE  *f);
+size_t CsfWritePlain(const void *buf, size_t size, size_t n, FILE  *f);
 size_t CsfReadPlain(void *buf, size_t size, size_t n, FILE  *f);
 void   CsfSwap(void *buf, size_t size, size_t n);
 char *CsfStringPad(char *s, size_t reqSize);

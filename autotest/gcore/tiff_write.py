@@ -4053,7 +4053,9 @@ def test_tiff_write_96(other_options=[], nbands=1, nbits=8):
     ds = gdaltest.tiff_drv.CreateCopy(
         "tmp/tiff_write_96_dst.tif",
         src_ds,
-        options=["COPY_SRC_OVERVIEWS=YES"] + other_options + ["NBITS=" + str(nbits)],
+        options=["COPY_SRC_OVERVIEWS=YES", "TILED=YES"]
+        + other_options
+        + ["NBITS=" + str(nbits)],
     )
     ds = None
     src_ds = None
@@ -9817,28 +9819,68 @@ def test_tiff_write_jpegxl_uint16_single_band():
 
 
 ###############################################################################
-# Test JXL_ALPHA_DISTANCE option
+# Test JXL_DISTANCE option without specifying JXL_LOSSLESS=NO
 
 
-@pytest.mark.require_creation_option("GTiff", "JXL_ALPHA_DISTANCE")
-def test_tiff_write_jpegxl_alpha_distance_zero():
+@pytest.mark.require_creation_option("GTiff", "JXL")
+def test_tiff_write_jpegxl_distance_warning(tmp_vsimem):
 
     drv = gdal.GetDriverByName("GTiff")
 
     src_ds = gdal.Open("data/stefan_full_rgba.tif")
-    filename = "/vsimem/test_tiff_write_jpegxl_alpha_distance_zero.tif"
-    drv.CreateCopy(
-        filename,
-        src_ds,
-        options=["COMPRESS=JXL", "JXL_LOSSLESS=NO", "JXL_ALPHA_DISTANCE=0"],
-    )
+    filename = tmp_vsimem / "test_tiff_write_jpegxl_distance_warning.tif"
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="JXL_DISTANCE creation option is ignored, given (implicit) JXL_LOSSLESS=YES",
+    ):
+        drv.CreateCopy(
+            tmp_vsimem / "warning.jxl",
+            src_ds,
+            options=["COMPRESS=JXL", "JXL_DISTANCE=3"],
+        )
+
+    with gdaltest.error_raised(gdal.CE_None):
+        drv.CreateCopy(
+            filename,
+            src_ds,
+            options=["COMPRESS=JXL", "JXL_LOSSLESS=NO", "JXL_DISTANCE=3"],
+        )
+
+
+###############################################################################
+# Test JXL_ALPHA_DISTANCE option
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL_ALPHA_DISTANCE")
+def test_tiff_write_jpegxl_alpha_distance_zero(tmp_vsimem):
+
+    drv = gdal.GetDriverByName("GTiff")
+
+    src_ds = gdal.Open("data/stefan_full_rgba.tif")
+    filename = tmp_vsimem / "test_tiff_write_jpegxl_alpha_distance_zero.tif"
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="JXL_ALPHA_DISTANCE creation option is ignored, given (implicit) JXL_LOSSLESS=YES",
+    ):
+        drv.CreateCopy(
+            tmp_vsimem / "warning.jxl",
+            src_ds,
+            options=["COMPRESS=JXL", "JXL_ALPHA_DISTANCE=0"],
+        )
+
+    with gdaltest.error_raised(gdal.CE_None):
+        drv.CreateCopy(
+            filename,
+            src_ds,
+            options=["COMPRESS=JXL", "JXL_LOSSLESS=NO", "JXL_ALPHA_DISTANCE=0"],
+        )
     ds = gdal.Open(filename)
     assert float(ds.GetMetadataItem("JXL_ALPHA_DISTANCE", "IMAGE_STRUCTURE")) == 0
     assert ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum()
     assert ds.GetRasterBand(4).Checksum() == src_ds.GetRasterBand(4).Checksum()
     ds = None
-
-    gdal.Unlink(filename)
 
 
 ###############################################################################
@@ -9848,6 +9890,7 @@ def test_tiff_write_jpegxl_alpha_distance_zero():
 def test_tiff_write_jpegxl_five_bands_lossy(tmp_vsimem):
 
     outfilename = str(tmp_vsimem / "test_tiff_write_jpegxl_five_bands_lossy.tif")
+
     gdal.Translate(
         outfilename,
         "data/byte.tif",
@@ -12231,6 +12274,32 @@ def test_tiff_createcopy_only_visible_at_close_time_win32_specific(tmp_path):
 
         with gdal.Open(out_filename) as ds:
             assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+
+
+def test_tiff_create_copy_SUPPRESS_ASAP(tmp_path):
+
+    src_ds = gdal.Open("data/byte.tif")
+    out_filename = tmp_path / "tmp.tif"
+
+    def my_callback(pct, msg, user_data):
+        if sys.platform != "win32":
+            assert gdal.VSIStatL(out_filename) is None
+        return True
+
+    drv = gdal.GetDriverByName("GTIFF")
+    ds = drv.CreateCopy(
+        out_filename,
+        src_ds,
+        options=["@SUPPRESS_ASAP=YES"],
+        callback=my_callback,
+    )
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds.Close()
+
+    assert gdal.VSIStatL(out_filename) is None
 
 
 ###############################################################################

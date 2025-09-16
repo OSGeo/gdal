@@ -486,9 +486,9 @@ class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
                              bool bUseStatementForGetNextFeature,
                              bool bEmptyLayer, bool bCanReopenBaseDS,
                              bool bStringsAsUTF8);
-    virtual ~OGRSQLiteExecuteSQLLayer();
+    ~OGRSQLiteExecuteSQLLayer() override;
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 };
 
 /************************************************************************/
@@ -527,7 +527,7 @@ OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteExecuteSQLLayer::TestCapability(const char *pszCap)
+int OGRSQLiteExecuteSQLLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))
         return m_bStringsAsUTF8;

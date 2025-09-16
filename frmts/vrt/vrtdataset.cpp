@@ -3059,7 +3059,9 @@ CPLErr VRTDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                                    void *pProgressData,
                                    CSLConstList papszOptions)
 {
-    if (CPLTestBool(CPLGetConfigOption("VRT_VIRTUAL_OVERVIEWS", "NO")))
+    if (CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "VIRTUAL",
+            CPLGetConfigOption("VRT_VIRTUAL_OVERVIEWS", "NO"))))
     {
         SetNeedsFlush();
         if (nOverviews == 0 ||
@@ -3140,7 +3142,8 @@ bool VRTDataset::GetShiftedDataset(int nXOff, int nYOff, int nXSize, int nYSize,
         static_cast<VRTSimpleSource *>(poVRTBand->m_papoSources[0].get());
 
     GDALRasterBand *poBand = poSource->GetRasterBand();
-    if (!poBand || poSource->GetMaskBandMainBand())
+    if (!poBand || poSource->GetMaskBandMainBand() ||
+        poBand->GetRasterDataType() != poVRTBand->GetRasterDataType())
         return false;
 
     poSrcDataset = poBand->GetDataset();

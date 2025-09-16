@@ -1198,7 +1198,7 @@ gdal::grib::InventoryWrapper::~InventoryWrapper() = default;
 /************************************************************************/
 /*                           InventoryWrapperGrib                       */
 /************************************************************************/
-class InventoryWrapperGrib : public gdal::grib::InventoryWrapper
+class InventoryWrapperGrib final : public gdal::grib::InventoryWrapper
 {
   public:
     explicit InventoryWrapperGrib(VSILFILE *fp) : gdal::grib::InventoryWrapper()
@@ -1225,7 +1225,7 @@ InventoryWrapperGrib::~InventoryWrapperGrib()
 /*                           InventoryWrapperSidecar                    */
 /************************************************************************/
 
-class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
+class InventoryWrapperSidecar final : public gdal::grib::InventoryWrapper
 {
   public:
     explicit InventoryWrapperSidecar(VSILFILE *fp, uint64_t nStartOffset,
@@ -2878,9 +2878,9 @@ static void GDALDeregister_GRIB(GDALDriver *)
 /*                          GDALGRIBDriver                              */
 /************************************************************************/
 
-class GDALGRIBDriver : public GDALDriver
+class GDALGRIBDriver final : public GDALDriver
 {
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bHasFullInitMetadata = false;
     void InitializeMetadata();
 

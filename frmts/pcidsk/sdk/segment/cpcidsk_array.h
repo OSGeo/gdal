@@ -27,13 +27,13 @@ namespace PCIDSK
     /*                            CPCIDSK_ARRAY                             */
     /************************************************************************/
 
-    class CPCIDSK_ARRAY : public CPCIDSKSegment,
+    class CPCIDSK_ARRAY final: public CPCIDSKSegment,
                           public PCIDSK_ARRAY
     {
     public:
         CPCIDSK_ARRAY( PCIDSKFile *file, int segment,const char *segment_pointer);
 
-        virtual     ~CPCIDSK_ARRAY();
+        ~CPCIDSK_ARRAY() override;
 
         // CPCIDSK_ARRAY
         unsigned char GetDimensionCount() const override ;

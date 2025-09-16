@@ -48,7 +48,7 @@
  *
  * Constructor.
  **********************************************************************/
-TABFeature::TABFeature(OGRFeatureDefn *poDefnIn)
+TABFeature::TABFeature(const OGRFeatureDefn *poDefnIn)
     : OGRFeature(poDefnIn), m_nMapInfoType(TAB_GEOM_NONE), m_dXMin(0),
       m_dYMin(0), m_dXMax(0), m_dYMax(0), m_bDeletedFlag(FALSE), m_nXMin(0),
       m_nYMin(0), m_nXMax(0), m_nYMax(0), m_nComprOrgX(0), m_nComprOrgY(0)
@@ -186,7 +186,7 @@ void TABFeature::CopyTABFeatureBase(TABFeature *poDestFeature)
     /*-----------------------------------------------------------------
      * Copy fields only if OGRFeatureDefn is the same
      *----------------------------------------------------------------*/
-    OGRFeatureDefn *poThisDefnRef = GetDefnRef();
+    const OGRFeatureDefn *poThisDefnRef = GetDefnRef();
 
     if (poThisDefnRef == poDestFeature->GetDefnRef())
     {
@@ -233,7 +233,8 @@ void TABFeature::CopyTABFeatureBase(TABFeature *poDestFeature)
  * This method calls the generic TABFeature::CopyTABFeatureBase() and
  * then copies any members specific to its own type.
  **********************************************************************/
-TABFeature *TABFeature::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+TABFeature *
+TABFeature::CloneTABFeature(const OGRFeatureDefn *poNewDefn /*=NULL*/)
 {
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
@@ -840,14 +841,14 @@ int TABFeature::WriteGeometryToMAPFile(
  **********************************************************************/
 void TABFeature::DumpMID(FILE *fpOut /*=NULL*/)
 {
-    OGRFeatureDefn *l_poDefn = GetDefnRef();
+    const OGRFeatureDefn *l_poDefn = GetDefnRef();
 
     if (fpOut == nullptr)
         fpOut = stdout;
 
-    for (int iField = 0; iField < GetFieldCount(); iField++)
+    for (int iField = 0; iField < l_poDefn->GetFieldCount(); iField++)
     {
-        OGRFieldDefn *poFDefn = l_poDefn->GetFieldDefn(iField);
+        const OGRFieldDefn *poFDefn = l_poDefn->GetFieldDefn(iField);
 
         fprintf(fpOut, "  %s (%s) = %s\n", poFDefn->GetNameRef(),
                 OGRFieldDefn::GetFieldTypeName(poFDefn->GetType()),
@@ -884,7 +885,7 @@ void TABFeature::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABPoint::TABPoint(OGRFeatureDefn *poDefnIn) : TABFeature(poDefnIn)
+TABPoint::TABPoint(const OGRFeatureDefn *poDefnIn) : TABFeature(poDefnIn)
 {
 }
 
@@ -905,7 +906,7 @@ TABPoint::~TABPoint()
  * This method calls the generic TABFeature::CloneTABFeature() and
  * then copies any members specific to its own type.
  **********************************************************************/
-TABFeature *TABPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+TABFeature *TABPoint::CloneTABFeature(const OGRFeatureDefn *poNewDefn /*=NULL*/)
 {
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
@@ -1234,7 +1235,7 @@ void TABPoint::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABFontPoint::TABFontPoint(OGRFeatureDefn *poDefnIn)
+TABFontPoint::TABFontPoint(const OGRFeatureDefn *poDefnIn)
     : TABPoint(poDefnIn), m_dAngle(0.0), m_nFontStyle(0)
 {
 }
@@ -1256,7 +1257,8 @@ TABFontPoint::~TABFontPoint()
  * This method calls the generic TABFeature::CloneTABFeature() and
  * then copies any members specific to its own type.
  **********************************************************************/
-TABFeature *TABFontPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+TABFeature *
+TABFontPoint::CloneTABFeature(const OGRFeatureDefn *poNewDefn /*=NULL*/)
 {
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
@@ -1595,7 +1597,7 @@ void TABFontPoint::SetSymbolFromStyle(OGRStyleSymbol *poSymbolStyle)
  *
  * Constructor.
  **********************************************************************/
-TABCustomPoint::TABCustomPoint(OGRFeatureDefn *poDefnIn)
+TABCustomPoint::TABCustomPoint(const OGRFeatureDefn *poDefnIn)
     : TABPoint(poDefnIn), m_nCustomStyle(0), m_nUnknown_(0)
 {
 }
@@ -1617,7 +1619,8 @@ TABCustomPoint::~TABCustomPoint()
  * This method calls the generic TABFeature::CloneTABFeature() and
  * then copies any members specific to its own type.
  **********************************************************************/
-TABFeature *TABCustomPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+TABFeature *
+TABCustomPoint::CloneTABFeature(const OGRFeatureDefn *poNewDefn /*=NULL*/)
 {
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
@@ -1881,7 +1884,7 @@ const char *TABCustomPoint::GetStyleString() const
  *
  * Constructor.
  **********************************************************************/
-TABPolyline::TABPolyline(OGRFeatureDefn *poDefnIn)
+TABPolyline::TABPolyline(const OGRFeatureDefn *poDefnIn)
     : TABFeature(poDefnIn), m_bCenterIsSet(FALSE), m_dCenterX(0.0),
       m_dCenterY(0.0), m_bWriteTwoPointLineAsPolyline(FALSE), m_bSmooth(FALSE)
 {
@@ -1904,7 +1907,8 @@ TABPolyline::~TABPolyline()
  * This method calls the generic TABFeature::CloneTABFeature() and
  * then copies any members specific to its own type.
  **********************************************************************/
-TABFeature *TABPolyline::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+TABFeature *
+TABPolyline::CloneTABFeature(const OGRFeatureDefn *poNewDefn /*=NULL*/)
 {
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
@@ -2970,7 +2974,7 @@ void TABPolyline::TwoPointLineAsPolyline(GBool bTwoPointLineAsPolyline)
  *
  * Constructor.
  **********************************************************************/
-TABRegion::TABRegion(OGRFeatureDefn *poDefnIn)
+TABRegion::TABRegion(const OGRFeatureDefn *poDefnIn)
     : TABFeature(poDefnIn), m_bSmooth(FALSE), m_bCenterIsSet(FALSE),
       m_dCenterX(0.0), m_dCenterY(0.0)
 {
@@ -2993,7 +2997,8 @@ TABRegion::~TABRegion()
  * This method calls the generic TABFeature::CopyTABFeatureBase() and
  * then copies any members specific to its own type.
  **********************************************************************/
-TABFeature *TABRegion::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+TABFeature *
+TABRegion::CloneTABFeature(const OGRFeatureDefn *poNewDefn /*=NULL*/)
 {
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
@@ -3959,7 +3964,7 @@ void TABRegion::SetCenter(double dX, double dY)
  *
  * Constructor.
  **********************************************************************/
-TABRectangle::TABRectangle(OGRFeatureDefn *poDefnIn)
+TABRectangle::TABRectangle(const OGRFeatureDefn *poDefnIn)
     : TABFeature(poDefnIn), m_bRoundCorners(FALSE), m_dRoundXRadius(0.0),
       m_dRoundYRadius(0.0)
 {
@@ -3982,7 +3987,8 @@ TABRectangle::~TABRectangle()
  * This method calls the generic TABFeature::CopyTABFeatureBase() and
  * then copies any members specific to its own type.
  **********************************************************************/
-TABFeature *TABRectangle::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+TABFeature *
+TABRectangle::CloneTABFeature(const OGRFeatureDefn *poNewDefn /*=NULL*/)
 {
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
@@ -4416,7 +4422,7 @@ void TABRectangle::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABEllipse::TABEllipse(OGRFeatureDefn *poDefnIn)
+TABEllipse::TABEllipse(const OGRFeatureDefn *poDefnIn)
     : TABFeature(poDefnIn), m_dCenterX(0.0), m_dCenterY(0.0), m_dXRadius(0.0),
       m_dYRadius(0.0)
 {
@@ -4439,7 +4445,8 @@ TABEllipse::~TABEllipse()
  * This method calls the generic TABFeature::CopyTABFeatureBase() and
  * then copies any members specific to its own type.
  **********************************************************************/
-TABFeature *TABEllipse::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+TABFeature *
+TABEllipse::CloneTABFeature(const OGRFeatureDefn *poNewDefn /*=NULL*/)
 {
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
@@ -4824,7 +4831,7 @@ void TABEllipse::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABArc::TABArc(OGRFeatureDefn *poDefnIn)
+TABArc::TABArc(const OGRFeatureDefn *poDefnIn)
     : TABFeature(poDefnIn), m_dStartAngle(0.0), m_dEndAngle(0.0),
       m_dCenterX(0.0), m_dCenterY(0.0), m_dXRadius(0.0), m_dYRadius(0.0)
 {
@@ -4847,7 +4854,7 @@ TABArc::~TABArc()
  * This method calls the generic TABFeature::CopyTABFeatureBase() and
  * then copies any members specific to its own type.
  **********************************************************************/
-TABFeature *TABArc::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+TABFeature *TABArc::CloneTABFeature(const OGRFeatureDefn *poNewDefn /*=NULL*/)
 {
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
@@ -5335,7 +5342,7 @@ void TABArc::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABText::TABText(OGRFeatureDefn *poDefnIn)
+TABText::TABText(const OGRFeatureDefn *poDefnIn)
     : TABFeature(poDefnIn), m_pszString(nullptr), m_dAngle(0.0), m_dHeight(0.0),
       m_dWidth(0.0), m_dfLineEndX(0.0), m_dfLineEndY(0.0), m_bLineEndSet(FALSE),
       m_rgbForeground(0x000000), m_rgbBackground(0xffffff),
@@ -5362,7 +5369,7 @@ TABText::~TABText()
  * This method calls the generic TABFeature::CopyTABFeatureBase() and
  * then copies any members specific to its own type.
  **********************************************************************/
-TABFeature *TABText::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+TABFeature *TABText::CloneTABFeature(const OGRFeatureDefn *poNewDefn /*=NULL*/)
 {
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
@@ -6599,7 +6606,7 @@ void TABText::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABMultiPoint::TABMultiPoint(OGRFeatureDefn *poDefnIn)
+TABMultiPoint::TABMultiPoint(const OGRFeatureDefn *poDefnIn)
     : TABFeature(poDefnIn), m_bCenterIsSet(FALSE), m_dCenterX(0.0),
       m_dCenterY(0.0)
 {
@@ -6622,7 +6629,8 @@ TABMultiPoint::~TABMultiPoint()
  * This method calls the generic TABFeature::CloneTABFeature() and
  * then copies any members specific to its own type.
  **********************************************************************/
-TABFeature *TABMultiPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+TABFeature *
+TABMultiPoint::CloneTABFeature(const OGRFeatureDefn *poNewDefn /*=NULL*/)
 {
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
@@ -7138,7 +7146,7 @@ void TABMultiPoint::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABCollection::TABCollection(OGRFeatureDefn *poDefnIn)
+TABCollection::TABCollection(const OGRFeatureDefn *poDefnIn)
     : TABFeature(poDefnIn), m_poRegion(nullptr), m_poPline(nullptr),
       m_poMpoint(nullptr)
 {
@@ -7192,7 +7200,8 @@ void TABCollection::EmptyCollection()
  * This method calls the generic TABFeature::CloneTABFeature() and
  * then copies any members specific to its own type.
  **********************************************************************/
-TABFeature *TABCollection::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+TABFeature *
+TABCollection::CloneTABFeature(const OGRFeatureDefn *poNewDefn /*=NULL*/)
 {
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
@@ -8266,7 +8275,7 @@ void TABCollection::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABDebugFeature::TABDebugFeature(OGRFeatureDefn *poDefnIn)
+TABDebugFeature::TABDebugFeature(const OGRFeatureDefn *poDefnIn)
     : TABFeature(poDefnIn), m_nSize(0), m_nCoordDataPtr(0), m_nCoordDataSize(0)
 {
     memset(m_abyBuf, 0, sizeof(m_abyBuf));

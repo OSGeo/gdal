@@ -540,7 +540,7 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         OGRSpatialReference srs;
         srs.SetFromUserInput("WGS84");
         arg = srs;
-        EXPECT_EQ(val.find("GEOGCRS["), 0);
+        EXPECT_EQ(val.find("GEOGCRS["), 0U);
 
         arg.Set("foo");
         {

@@ -171,7 +171,7 @@ GDALDataset *GDALGeoLocCArrayAccessors::GetBackmapDataset()
         GDALRasterBandH hMEMBand = MEMCreateRasterBandEx(
             poMEMDS, i, static_cast<GByte *>(ptr), GDT_Float32, 0, 0, false);
         poMEMDS->AddMEMBand(hMEMBand);
-        poMEMDS->GetRasterBand(i)->SetNoDataValue(INVALID_BMXY);
+        poMEMDS->GetRasterBand(i)->SetNoDataValue(double(INVALID_BMXY));
     }
     return poMEMDS;
 }

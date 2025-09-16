@@ -256,6 +256,13 @@ All cached entries can be viewed using ``cmake -LAH`` from a build directory.
     up the build process. This is still a bit experimental, so it is disabled by
     default. It also cannot be enabled when using the Visual Studio C++ compiler.
 
+.. option:: GDAL_ENABLE_ALGORITHMS=ON
+
+    Whether algorithms available under the :ref:`gdal <gdal_program>` entry point
+    are compiled in. Default is ON. Note that setting it to OFF will disable will
+    disable building the ogrtindex utility.
+
+
 Resource files embedding
 ++++++++++++++++++++++++
 

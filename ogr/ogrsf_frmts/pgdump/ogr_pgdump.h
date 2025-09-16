@@ -143,25 +143,27 @@ class OGRPGDumpLayer final : public OGRLayer
     OGRPGDumpLayer(OGRPGDumpDataSource *poDS, const char *pszSchemaName,
                    const char *pszLayerName, const char *pszFIDColumn,
                    int bWriteAsHexIn, int bCreateTable, bool bSkipConflicts);
-    virtual ~OGRPGDumpLayer();
+    ~OGRPGDumpLayer() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
-    virtual const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_pszFIDColumn ? m_pszFIDColumn : "";
     }
 
-    virtual void ResetReading() override
+    void ResetReading() override
     {
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateFeatureViaInsert(OGRFeature *poFeature);
     OGRErr CreateFeatureViaCopy(OGRFeature *poFeature);
 
@@ -170,12 +172,11 @@ class OGRPGDumpLayer final : public OGRLayer
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
 
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual CPLErr SetMetadata(char **papszMD,
-                               const char *pszDomain = "") override;
-    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
-                                   const char *pszDomain = "") override;
+    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
+    CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                           const char *pszDomain = "") override;
 
     GDALDataset *GetDataset() override;
 
@@ -268,22 +269,22 @@ class OGRPGDumpDataSource final : public GDALDataset
 
   public:
     OGRPGDumpDataSource(const char *pszName, char **papszOptions);
-    virtual ~OGRPGDumpDataSource();
+    ~OGRPGDumpDataSource() override;
 
     bool Log(const char *pszStr, bool bAddSemiColumn = true);
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     void LogStartTransaction();
     void LogCommit();

@@ -85,11 +85,17 @@
                         <xs:field xpath="@counter|@iterations|@formula"/>
                     </xs:key>
                 </xs:element>
+                <xs:element name="rpf_component" type="rpfComponentType"/>
                 <xs:element name="if" type="ifType"/>
             </xs:choice>
             <xs:element name="if_remaining_bytes" type="if_remaining_bytesType" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
     </xs:group>
+
+    <xs:complexType name="rpfComponentType">
+        <xs:group ref="itemType"/>
+        <xs:attribute name="id"/>
+    </xs:complexType>
 
     <xs:complexType name="loopType">
         <xs:group ref="itemType"/>
@@ -156,6 +162,7 @@
                     <xs:enumeration value="integer"/>
                     <xs:enumeration value="real"/>
                     <xs:enumeration value="IEEE754_Float32_BigEndian"/>
+                    <xs:enumeration value="IEEE754_Float64_BigEndian"/>
                     <xs:enumeration value="UnsignedInt_BigEndian"/>
                     <xs:enumeration value="ISO8859-1"/>
                     <xs:enumeration value="bitmask"/>

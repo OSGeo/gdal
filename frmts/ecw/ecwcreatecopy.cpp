@@ -61,7 +61,7 @@ class GDALECWCompressor final : public CNCSFile
 
   public:
     GDALECWCompressor();
-    virtual ~GDALECWCompressor();
+    ~GDALECWCompressor() override;
     virtual CNCSError WriteReadLine(UINT32 nNextLine,
                                     void **ppInputArray) override;
 #if ECWSDK_VERSION >= 50
@@ -69,10 +69,10 @@ class GDALECWCompressor final : public CNCSFile
                              const NCS::CString &sStatusText,
                              const CompressionCounters &Counters) override;
 #else
-    virtual void WriteStatus(UINT32 nCurrentLine) override;
+    void WriteStatus(UINT32 nCurrentLine) override;
 #endif
 
-    virtual bool WriteCancel() override;
+    bool WriteCancel() override;
 
     CPLErr Initialize(const char *pszFilename, char **papszOptions, int nXSize,
                       int nYSize, int nBands,
@@ -90,7 +90,7 @@ class GDALECWCompressor final : public CNCSFile
     CPLErr ourWriteLineBIL(UINT16 nBands, void **ppOutputLine,
                            UINT32 *pLineSteps = nullptr);
 #if ECWSDK_VERSION >= 50
-    virtual NCSEcwCellType WriteReadLineGetCellType() override
+    NCSEcwCellType WriteReadLineGetCellType() override
     {
         return sFileInfo.eCellType;
     }
@@ -1536,23 +1536,22 @@ class ECWWriteDataset final : public GDALDataset
   public:
     ECWWriteDataset(const char *, int, int, int, GDALDataType,
                     char **papszOptions, int);
-    ~ECWWriteDataset();
+    ~ECWWriteDataset() override;
 
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
 #ifdef OPTIMIZED_FOR_GDALWARP
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, BANDMAP_TYPE panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount,
+                     BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 #endif
 };
 
@@ -1577,9 +1576,9 @@ class ECWWriteRasterBand final : public GDALRasterBand
 
   public:
     ECWWriteRasterBand(ECWWriteDataset *, int);
-    ~ECWWriteRasterBand();
+    ~ECWWriteRasterBand() override;
 
-    virtual CPLErr SetColorInterpretation(GDALColorInterp eInterpIn) override
+    CPLErr SetColorInterpretation(GDALColorInterp eInterpIn) override
     {
         eInterp = eInterpIn;
         if (strlen(GetDescription()) == 0)
@@ -1587,20 +1586,20 @@ class ECWWriteRasterBand final : public GDALRasterBand
         return CE_None;
     }
 
-    virtual GDALColorInterp GetColorInterpretation() override
+    GDALColorInterp GetColorInterpretation() override
     {
         return eInterp;
     }
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
 #ifdef OPTIMIZED_FOR_GDALWARP
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpace,
+                     GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 #endif
 };
 

@@ -7,6 +7,7 @@
 %feature("autodoc");
 
 %include "gdal_docs.i"
+%include "gdal_algorithm_docs.i"
 %include "gdal_band_docs.i"
 %include "gdal_dataset_docs.i"
 %include "gdal_driver_docs.i"
@@ -2065,12 +2066,22 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     def Destroy(self):
         import warnings
         warnings.warn("Destroy() is deprecated; use a context manager or Close() instead", DeprecationWarning)
-        self.Close()
+        self._invalidate_children()
+        try:
+            return _gdal.Dataset_Close(self)
+        finally:
+            self.thisown = 0
+            self.this = None
 
     def Release(self):
         import warnings
         warnings.warn("Release() is deprecated; use a context manager or Close() instead", DeprecationWarning)
-        self.Close()
+        self._invalidate_children()
+        try:
+            return _gdal.Dataset_Close(self)
+        finally:
+            self.thisown = 0
+            self.this = None
 
     def SyncToDisk(self):
         return self.FlushCache()
@@ -2175,17 +2186,23 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         reachable. If :py:meth:`Close` is never called, the dataset will
         be closed automatically during garbage collection.
 
+        It is illegal to call any method on the dataset or objects derived
+        from it (bands, layers, etc.) afterwards.
+
         In most cases, it is preferable to open or create a dataset
         using a context manager instead of calling :py:meth:`Close`
         directly.
         """
 
         self._invalidate_children()
-        try:
-            return _gdal.Dataset_Close(self, *args)
-        finally:
-            self.thisown = 0
-            self.this = None
+        if self.GetRefCount() == 1 and self.thisown:
+            try:
+                return _gdal.Dataset_Close(self, *args)
+            finally:
+                self.thisown = 0
+                self.this = None
+        else:
+            return _gdal.Dataset__RunCloseWithoutDestroying(self, *args)
 %}
 
 %feature("shadow") ExecuteSQL %{
@@ -2369,7 +2386,7 @@ def ReleaseResultSet(self, sql_lyr):
   def ReadAsArray(self, field, start=0, length=None):
       """
       Read a single column of a RAT into a NumPy array.
-      
+
       Parameters
       ----------
       field : int
@@ -2377,13 +2394,13 @@ def ReleaseResultSet(self, sql_lyr):
       start : int, default = 0
           The index of the first row to read (starting at 0)
       length : int, default = None
-          The number of rows to read 
-      
-      
+          The number of rows to read
+
+
       Returns
       -------
       np.ndarray
-      
+
       Examples
       --------
       >>> ds = gdal.Open('clc2018_v2020_20u1.tif')
@@ -5830,7 +5847,7 @@ def quiet_errors():
 def quiet_warnings():
     """Temporarily install an error handler that silences all warnings.
 
-       .. versionadded: 3.11
+       .. versionadded:: 3.11
 
        Returns
        -------
@@ -5852,12 +5869,12 @@ def quiet_warnings():
 def Run(*alg, arguments={}, progress=None, **kwargs):
     """Run a GDAL algorithm and return it.
 
-       .. versionadded: 3.11
+       .. versionadded:: 3.11
 
        This method can also be used within a context manager, in which case
        :py:meth:`osgeo.gdal.Algorithm.Finalize` will be called at the exit of the
        context manager.  An exception will be raised if the algorithm fails,
-       even if `gdal.UseExceptions()` has not been called.
+       even if :py:meth:`osgeo.gdal.UseExceptions()` has not been called.
 
        Parameters
        ----------
@@ -5877,10 +5894,10 @@ def Run(*alg, arguments={}, progress=None, **kwargs):
 
        Returns
        -------
-            An algorithm
+       Algorithm
 
-       Example
-       -------
+       Examples
+       --------
 
        >>> alg = gdal.Run(["raster", "info"], {"input": "byte.tif"})
        >>> print(alg.output()["bands"])
@@ -6228,7 +6245,7 @@ class VSIFile(BytesIO):
 
         """Instantiate an existing GDAL algorithm from its path.
 
-           .. versionadded: 3.11
+           .. versionadded:: 3.11
 
            Parameters
            ----------
@@ -6447,7 +6464,7 @@ class VSIFile(BytesIO):
            >>> alg["input"] = [one_ds, two_ds]
         """
 
-        arg = self.GetArg(key.replace('_', '-'))
+        arg = self.GetArgNonConst(key.replace('_', '-'))
         if not arg:
             raise RuntimeError(f"'{key}' is not a valid argument of '{self.GetName()}'")
         if not arg.Set(value):

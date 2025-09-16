@@ -29,7 +29,8 @@ CPL_C_END
 
 void GTIFFSetThreadLocalInExternalOvr(bool b);
 void GTIFFGetOverviewBlockSize(GDALRasterBandH hBand, int *pnBlockXSize,
-                               int *pnBlockYSize);
+                               int *pnBlockYSize, CSLConstList papszOptions,
+                               const char *pszOptionKey);
 void GTIFFSetJpegQuality(GDALDatasetH hGTIFFDS, int nJpegQuality);
 void GTIFFSetWebPLevel(GDALDatasetH hGTIFFDS, int nWebPLevel);
 void GTIFFSetJpegTablesMode(GDALDatasetH hGTIFFDS, int nJpegTablesMode);

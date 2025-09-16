@@ -161,7 +161,7 @@ OGRFeature *OGRS57Layer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRS57Layer::TestCapability(const char *pszCap)
+int OGRS57Layer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))
@@ -185,7 +185,8 @@ int OGRS57Layer::TestCapability(const char *pszCap)
     {
         OGREnvelope oEnvelope;
 
-        return GetExtent(&oEnvelope, FALSE) == OGRERR_NONE;
+        return const_cast<OGRS57Layer *>(this)->GetExtent(&oEnvelope, FALSE) ==
+               OGRERR_NONE;
     }
 
     if (EQUAL(pszCap, OLCFastSpatialFilter))

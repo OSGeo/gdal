@@ -1303,6 +1303,27 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         CSLDestroy(papszTypeNames);
     }
 
+    // Japan Fundamental Geospatial Data (FGD)
+    if (strstr(szPtr, "http://fgd.gsi.go.jp/spec/2008/FGD_GMLSchema"))
+    {
+        if (ExtractSRSName(szPtr, szSRSName, sizeof(szSRSName)))
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            OGRSpatialReference oSRS;
+            if (oSRS.SetFromUserInput(
+                    szSRSName,
+                    OGRSpatialReference::
+                        SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE)
+            {
+                bUseGlobalSRSName = true;
+                for (int i = 0; i < poReader->GetClassCount(); ++i)
+                {
+                    poReader->GetClass(i)->SetSRSName(szSRSName);
+                }
+            }
+        }
+    }
+
     // Force a first pass to establish the schema.  Eventually we will have
     // mechanisms for remembering the schema and related information.
     const char *pszForceSRSDetection =
@@ -1630,7 +1651,7 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
 /*                         TranslateGMLSchema()                         */
 /************************************************************************/
 
-OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
+OGRLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
 
 {
     // Create an empty layer.
@@ -1716,7 +1737,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
         }
     }
 
-    OGRGMLLayer *poLayer = new OGRGMLLayer(poClass->GetName(), false, this);
+    OGRLayer *poLayer = new OGRGMLLayer(poClass->GetName(), false, this);
 
     // Added attributes (properties).
     if (bExposeGMLId)
@@ -2259,11 +2280,12 @@ OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
     }
 
     // Create the layer object.
-    OGRGMLLayer *poLayer = new OGRGMLLayer(pszCleanLayerName, true, this);
-    poLayer->GetLayerDefn()->SetGeomType(eType);
+    OGRLayer *poLayer = new OGRGMLLayer(pszCleanLayerName, true, this);
+    OGRFeatureDefn *poLayerDefn = poLayer->GetLayerDefn();
+    poLayerDefn->SetGeomType(eType);
     if (eType != wkbNone)
     {
-        auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+        auto poGeomFieldDefn = poLayerDefn->GetGeomFieldDefn(0);
         const char *pszGeomFieldName = poSrcGeomFieldDefn->GetNameRef();
         if (!pszGeomFieldName || pszGeomFieldName[0] == 0)
             pszGeomFieldName = "geometryProperty";
@@ -2296,7 +2318,7 @@ OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGMLDataSource::TestCapability(const char *pszCap)
+int OGRGMLDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -2317,7 +2339,7 @@ int OGRGMLDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRGMLDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRGMLDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)
@@ -3169,24 +3191,24 @@ class OGRGMLSingleFeatureLayer final : public OGRLayer
   public:
     explicit OGRGMLSingleFeatureLayer(int nVal);
 
-    virtual ~OGRGMLSingleFeatureLayer()
+    ~OGRGMLSingleFeatureLayer() override
     {
         poFeatureDefn->Release();
     }
 
-    virtual void ResetReading() override
+    void ResetReading() override
     {
         iNextShapeId = 0;
     }
 
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return FALSE;
     }

@@ -212,7 +212,7 @@ void PDFDataset::InitMapOperators()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDFDataset::TestCapability(CPL_UNUSED const char *pszCap)
+int PDFDataset::TestCapability(const char *) const
 {
     return FALSE;
 }
@@ -221,10 +221,10 @@ int PDFDataset::TestCapability(CPL_UNUSED const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *PDFDataset::GetLayer(int iLayer)
+const OGRLayer *PDFDataset::GetLayer(int iLayer) const
 
 {
-    OpenVectorLayers(nullptr);
+    const_cast<PDFDataset *>(this)->OpenVectorLayers(nullptr);
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))
         return nullptr;
 
@@ -235,9 +235,9 @@ OGRLayer *PDFDataset::GetLayer(int iLayer)
 /*                            GetLayerCount()                           */
 /************************************************************************/
 
-int PDFDataset::GetLayerCount()
+int PDFDataset::GetLayerCount() const
 {
-    OpenVectorLayers(nullptr);
+    const_cast<PDFDataset *>(this)->OpenVectorLayers(nullptr);
     return static_cast<int>(m_apoLayers.size());
 }
 

@@ -61,11 +61,17 @@ This subcommand is also available as a potential step of :ref:`gdal_raster_pipel
 
 .. option:: --metadata <KEY>=<VALUE>
 
-    Add/update metadata item, at the dataset level.
+    Add/update metadata item, at the dataset level. May be repeated.
 
 .. option:: --unset-metadata <KEY>
 
-    Remove metadata item, at the dataset level.
+    Remove metadata item, at the dataset level. May be repeated.
+
+.. option:: --unset-metadata-domain <DOMAIN>
+
+    .. versionadded:: 3.12
+
+    Remove metadata domain, at the dataset level. May be repeated.
 
 .. option:: --stats
 

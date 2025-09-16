@@ -29,13 +29,13 @@ Common metadata (from metadata filename):
 
 */
 
-class CPL_DLL GDALMDReaderPleiades : public GDALMDReaderBase
+class CPL_DLL GDALMDReaderPleiades /* non final */ : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderPleiades();
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    GDALMDReaderPleiades(const char *pszPath, CSLConstList papszSiblingFiles);
+    ~GDALMDReaderPleiades() override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
     static GDALMDReaderPleiades *
     CreateReaderForRPC(const char *pszRPCSourceFilename);
@@ -43,7 +43,7 @@ class CPL_DLL GDALMDReaderPleiades : public GDALMDReaderBase
     char **LoadRPCXmlFile(const CPLXMLNode *psDIMRootNode = nullptr);
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
 
   protected:
     CPLString m_osBaseFilename{};

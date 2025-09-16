@@ -76,14 +76,23 @@ bool OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
                 }
                 else
                 {
+                    char *pszChaiCP1252;
+
                     VSIFPrintfL(m_MMMap.fMMMap, "[VERSIO]\n");
                     VSIFPrintfL(m_MMMap.fMMMap, "Vers=2\n");
                     VSIFPrintfL(m_MMMap.fMMMap, "SubVers=0\n");
                     VSIFPrintfL(m_MMMap.fMMMap, "variant=b\n");
                     VSIFPrintfL(m_MMMap.fMMMap, "\n");
                     VSIFPrintfL(m_MMMap.fMMMap, "[DOCUMENT]\n");
-                    VSIFPrintfL(m_MMMap.fMMMap, "Titol= %s(map)\n",
-                                CPLGetBasenameSafe(poLayer->GetName()).c_str());
+                    pszChaiCP1252 = CPLRecode(
+                        CPLGetBasenameSafe(poLayer->GetName()).c_str(),
+                        CPL_ENC_UTF8, "CP1252");
+                    VSIFPrintfL(
+                        m_MMMap.fMMMap, "Titol= %s(map)\n",
+                        pszChaiCP1252
+                            ? pszChaiCP1252
+                            : CPLGetBasenameSafe(poLayer->GetName()).c_str());
+                    CPLFree(pszChaiCP1252);
                     VSIFPrintfL(m_MMMap.fMMMap, "\n");
                 }
             }
@@ -133,7 +142,7 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 
     // It's a seed to be able to generate a random identifier in
     // MMGenerateFileIdentifierFromMetadataFileName() function
-    srand((unsigned int)time(nullptr));
+    srand(static_cast<unsigned int>(time(nullptr)));
 
     if (OGR_GT_HasM(eType))
     {
@@ -211,7 +220,7 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                               */
 /****************************************************************************/
 
-int OGRMiraMonDataSource::TestCapability(const char *pszCap)
+int OGRMiraMonDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -226,7 +235,7 @@ int OGRMiraMonDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                                  */
 /****************************************************************************/
 
-OGRLayer *OGRMiraMonDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRMiraMonDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))

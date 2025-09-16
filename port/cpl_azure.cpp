@@ -101,36 +101,34 @@ static struct curl_slist *GetAzureBlobHeaders(
      * https://docs.microsoft.com/en-us/rest/api/storageservices/authentication-for-the-azure-storage-services
      */
 
-    std::string osDate = CPLGetConfigOption("CPL_AZURE_TIMESTAMP", "");
-    if (osDate.empty())
-    {
-        osDate = IVSIS3LikeHandleHelper::GetRFC822DateTime();
-    }
-    const std::string osMsVersion(X_MS_VERSION);
-
-    const auto AddHeaders = [&osDate, &osMsVersion,
-                             bIncludeMSVersion](struct curl_slist *l_psHeaders)
+    const auto AddHeaders = [bIncludeMSVersion](struct curl_slist *l_psHeaders,
+                                                const std::string &osDate)
     {
         l_psHeaders = curl_slist_append(
             l_psHeaders, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
         if (bIncludeMSVersion)
         {
-            l_psHeaders =
-                curl_slist_append(l_psHeaders, CPLSPrintf("x-ms-version: %s",
-                                                          osMsVersion.c_str()));
+            l_psHeaders = curl_slist_append(
+                l_psHeaders, CPLSPrintf("x-ms-version: %s", X_MS_VERSION));
         }
         return l_psHeaders;
     };
 
+    std::string osDate = CPLGetConfigOption("CPL_AZURE_TIMESTAMP", "");
+    if (osDate.empty())
+    {
+        osDate = IVSIS3LikeHandleHelper::GetRFC822DateTime();
+    }
+
     if (osStorageKeyB64.empty())
     {
-        psHeaders = AddHeaders(psHeaders);
+        psHeaders = AddHeaders(psHeaders, osDate);
         return psHeaders;
     }
 
     std::map<std::string, std::string> oSortedMapMSHeaders;
     if (bIncludeMSVersion)
-        oSortedMapMSHeaders["x-ms-version"] = osMsVersion;
+        oSortedMapMSHeaders["x-ms-version"] = X_MS_VERSION;
     oSortedMapMSHeaders["x-ms-date"] = osDate;
     std::string osCanonicalizedHeaders(
         IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(oSortedMapMSHeaders,
@@ -184,9 +182,10 @@ static struct curl_slist *GetAzureBlobHeaders(
         "SharedKey " + osStorageAccount + ":" +
         CPLAzureGetSignature(osStringToSign, osStorageKeyB64));
 
-    psHeaders = AddHeaders(psHeaders);
+    psHeaders = AddHeaders(psHeaders, osDate);
     psHeaders = curl_slist_append(
         psHeaders, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
+
     return psHeaders;
 }
 

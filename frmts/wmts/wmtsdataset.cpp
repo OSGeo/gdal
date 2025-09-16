@@ -167,9 +167,9 @@ class WMTSDataset final : public GDALPamDataset
 
   public:
     WMTSDataset();
-    virtual ~WMTSDataset();
+    ~WMTSDataset() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain) override;
@@ -182,15 +182,14 @@ class WMTSDataset final : public GDALPamDataset
                                    CPL_UNUSED void *pProgressData);
 
   protected:
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, BANDMAP_TYPE panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount,
+                     BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/
@@ -204,18 +203,17 @@ class WMTSBand final : public GDALPamRasterBand
   public:
     WMTSBand(WMTSDataset *poDS, int nBand, GDALDataType eDataType);
 
-    virtual GDALRasterBand *GetOverview(int nLevel) override;
-    virtual int GetOverviewCount() override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    GDALRasterBand *GetOverview(int nLevel) override;
+    int GetOverviewCount() override;
+    GDALColorInterp GetColorInterpretation() override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain) override;
 
   protected:
-    virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
-                              void *pImage) override;
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing, GSpacing,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing, GSpacing,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/

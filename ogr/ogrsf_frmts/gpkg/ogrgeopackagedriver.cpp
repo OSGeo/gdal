@@ -250,7 +250,7 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo)
 /*                    OGRGeoPackageDriverGetSubdatasetInfo()            */
 /************************************************************************/
 
-struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
+struct OGRGeoPackageDriverSubdatasetInfo final : public GDALSubdatasetInfo
 {
   public:
     explicit OGRGeoPackageDriverSubdatasetInfo(const std::string &fileName)
@@ -418,7 +418,7 @@ static CPLErr OGRGeoPackageDriverDelete(const char *pszFilename)
 
 class GDALGPKGDriver final : public GDALDriver
 {
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bInitialized = false;
 
     void InitializeCreationOptionList();
@@ -671,6 +671,7 @@ void RegisterOGRGeoPackage()
     poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CAN_READ_AFTER_DELETE, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS,
@@ -727,6 +728,9 @@ void RegisterOGRGeoPackage()
         "  <Option name='IMMUTABLE' type='boolean' description='Whether the "
         "database should be opened in immutable mode'/>"
         "</OpenOptionList>");
+    poDriver->SetMetadataItem(GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST,
+                              "<OverviewCreationOptionList>"
+                              "</OverviewCreationOptionList>");
 
     poDriver->SetMetadataItem(
         GDAL_DS_LAYER_CREATIONOPTIONLIST,
@@ -803,6 +807,7 @@ void RegisterOGRGeoPackage()
     poDriver->SetMetadataItem(GDAL_DCAP_DELETE_RELATIONSHIP, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_UPDATE_RELATIONSHIP, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_FLUSHCACHE_CONSISTENT_STATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_UPSERT, "YES");
 
     poDriver->SetMetadataItem(GDAL_DMD_RELATIONSHIP_FLAGS,
                               "ManyToMany Association");

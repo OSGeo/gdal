@@ -91,39 +91,44 @@ TEST(bug1488, test)
     if (!hTIFFDrv)
     {
         GTEST_SKIP() << "GTIFF driver missing";
-        return;
     }
-    const char *pszCO =
-        GDALGetMetadataItem(hTIFFDrv, GDAL_DMD_CREATIONOPTIONLIST, nullptr);
-    if (pszCO == nullptr || strstr(pszCO, "WEBP") == nullptr)
+    else
     {
-        GTEST_SKIP() << "WEBP driver missing";
-        return;
-    }
-
-    GDALSetCacheMax(30 * 1000 * 1000);
-
-    CPLSetErrorHandler(myErrorHandler);
-
-    VSISync(szSrcDataset, "/vsimem/thread1.tif", nullptr, nullptr, nullptr,
-            nullptr);
-
-    CPLJoinableThread *t1 = CPLCreateJoinableThread(worker_thread1, nullptr);
-    CPLJoinableThread *t2 = CPLCreateJoinableThread(worker_thread2, nullptr);
-    int nCountSeconds = 0;
-    while (!bThread1Finished && !bThread2Finished)
-    {
-        CPLSleep(1);
-        nCountSeconds++;
-        if (nCountSeconds == 2)
+        const char *pszCO =
+            GDALGetMetadataItem(hTIFFDrv, GDAL_DMD_CREATIONOPTIONLIST, nullptr);
+        if (pszCO == nullptr || strstr(pszCO, "WEBP") == nullptr)
         {
-            /* After 2 seconds without errors, assume no threading issue, and */
-            /* early exit */
-            bContinue = FALSE;
+            GTEST_SKIP() << "WEBP driver missing";
+        }
+        else
+        {
+            GDALSetCacheMax(30 * 1000 * 1000);
+
+            CPLSetErrorHandler(myErrorHandler);
+
+            VSISync(szSrcDataset, "/vsimem/thread1.tif", nullptr, nullptr,
+                    nullptr, nullptr);
+
+            CPLJoinableThread *t1 =
+                CPLCreateJoinableThread(worker_thread1, nullptr);
+            CPLJoinableThread *t2 =
+                CPLCreateJoinableThread(worker_thread2, nullptr);
+            int nCountSeconds = 0;
+            while (!bThread1Finished && !bThread2Finished)
+            {
+                CPLSleep(1);
+                nCountSeconds++;
+                if (nCountSeconds == 2)
+                {
+                    /* After 2 seconds without errors, assume no threading issue, and */
+                    /* early exit */
+                    bContinue = FALSE;
+                }
+            }
+            CPLJoinThread(t1);
+            CPLJoinThread(t2);
         }
     }
-    CPLJoinThread(t1);
-    CPLJoinThread(t2);
 }
 
 }  // namespace

@@ -16,6 +16,8 @@
 #include "ogrsf_frmts.h"
 #include <vector>
 #include <map>
+#include <mutex>
+#include <utility>
 
 class OGRVDVDataSource;
 
@@ -25,21 +27,22 @@ class OGRVDVDataSource;
 
 class OGRIDFDataSource final : public GDALDataset
 {
-    CPLString m_osFilename;
-    VSILFILE *m_fpL;
-    bool m_bHasParsed;
-    GDALDataset *m_poTmpDS;
-    bool m_bDestroyTmpDS = false;
+    CPLString m_osFilename{};
+    VSILFILE *m_fpL = nullptr;
+    mutable bool m_bHasParsed = false;
+    mutable GDALDataset *m_poTmpDS = nullptr;
+    mutable bool m_bDestroyTmpDS = false;
+    mutable std::mutex m_oMutex{};
 
-    void Parse();
+    std::pair<GDALDataset *, bool> Parse() const;
 
   public:
     explicit OGRIDFDataSource(const char *pszFilename, VSILFILE *fpL);
-    virtual ~OGRIDFDataSource();
+    ~OGRIDFDataSource() override;
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int) override;
-    virtual int TestCapability(const char *pszCap) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
+    int TestCapability(const char *pszCap) const override;
 };
 
 /************************************************************************/
@@ -64,18 +67,18 @@ class OGRVDVLayer final : public OGRLayer
   public:
     OGRVDVLayer(GDALDataset *poDS, const CPLString &osTableName, VSILFILE *fpL,
                 bool bOwnFP, bool bRecodeFromLatin1, vsi_l_offset nStartOffset);
-    virtual ~OGRVDVLayer();
+    ~OGRVDVLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    GIntBig GetFeatureCount(int bForce) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     GDALDataset *GetDataset() override
     {
@@ -153,21 +156,23 @@ class OGRVDVWriterLayer final : public OGRLayer
                       OGRVDV452Table *poVDV452Table = nullptr,
                       const CPLString &osVDV452Lang = "",
                       bool bProfileStrict = false);
-    virtual ~OGRVDVWriterLayer();
+    ~OGRVDVWriterLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
     virtual OGRErr CreateField(const OGRFieldDefn *poFieldDefn,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 
     GDALDataset *GetDataset() override;
 
@@ -185,29 +190,30 @@ class OGRVDVDataSource final : public GDALDataset
     bool m_bUpdate;
     bool m_bSingleFile;
     bool m_bNew;
-    bool m_bLayersDetected;
-    int m_nLayerCount;
-    OGRLayer **m_papoLayers;
+    mutable bool m_bLayersDetected;
+    mutable int m_nLayerCount;
+    mutable OGRLayer **m_papoLayers;
     OGRVDVWriterLayer *m_poCurrentWriterLayer;
     bool m_bMustWriteEof;
     bool m_bVDV452Loaded;
     OGRVDV452Tables m_oVDV452Tables;
+    mutable std::mutex m_oMutex{};
 
-    void DetectLayers();
+    void DetectLayers() const;
 
   public:
     OGRVDVDataSource(const char *pszFilename, VSILFILE *fpL, bool bUpdate,
                      bool bSingleFile, bool bNew);
-    virtual ~OGRVDVDataSource();
+    ~OGRVDVDataSource() override;
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    virtual int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     void SetCurrentWriterLayer(OGRVDVWriterLayer *poLayer);
 

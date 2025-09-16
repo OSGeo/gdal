@@ -84,9 +84,9 @@ class OGRSelafinLayer final : public OGRLayer
                     const OGRSpatialReference *poSpatialRefP,
                     Selafin::Header *poHeaderP, int nStepNumberP,
                     SelafinTypeDef eTypeP);
-    ~OGRSelafinLayer();
+    ~OGRSelafinLayer() override;
 
-    OGRSpatialReference *GetSpatialRef() override
+    const OGRSpatialReference *GetSpatialRef() const override
     {
         return poSpatialRef;
     }
@@ -101,12 +101,12 @@ class OGRSelafinLayer final : public OGRLayer
     void ResetReading() override;
     OGRErr SetNextByIndex(GIntBig nIndex) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
     GIntBig GetFeatureCount(int bForce = TRUE) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -145,23 +145,23 @@ class OGRSelafinDataSource final : public GDALDataset
 
   public:
     OGRSelafinDataSource();
-    virtual ~OGRSelafinDataSource();
+    ~OGRSelafinDataSource() override;
     int Open(const char *pszFilename, int bUpdate, int bCreate);
     int OpenTable(const char *pszFilename);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    virtual OGRErr DeleteLayer(int) override;
-    int TestCapability(const char *) override;
+    OGRErr DeleteLayer(int) override;
+    int TestCapability(const char *) const override;
 
     void SetDefaultSelafinName(const char *pszNameIn)
     {

@@ -21,10 +21,6 @@
 // #include "kmlnode.h"
 #include "kmlutility.h"
 
-KMLVector::~KMLVector()
-{
-}
-
 bool KMLVector::isLeaf(std::string const &sIn) const
 {
     return sIn.compare("name") == 0 || sIn.compare("coordinates") == 0 ||

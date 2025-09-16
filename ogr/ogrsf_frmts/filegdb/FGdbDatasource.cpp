@@ -449,7 +449,7 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int FGdbDataSource::TestCapability(const char *pszCap)
+int FGdbDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return TRUE;
@@ -463,7 +463,7 @@ int FGdbDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *FGdbDataSource::GetLayer(int iLayer)
+const OGRLayer *FGdbDataSource::GetLayer(int iLayer) const
 {
     int count = static_cast<int>(m_layers.size());
 
@@ -488,19 +488,19 @@ class OGRFGdbSingleFeatureLayer final : public OGRLayer
     OGRFGdbSingleFeatureLayer(const char *pszLayerName, const char *pszVal);
     virtual ~OGRFGdbSingleFeatureLayer();
 
-    virtual void ResetReading() override
+    void ResetReading() override
     {
         iNextShapeId = 0;
     }
 
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return FALSE;
     }

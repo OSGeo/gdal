@@ -44,7 +44,7 @@ static bool kakadu_initialized = false;
 /* ==================================================================== */
 /************************************************************************/
 
-class jpipkak_kdu_cpl_error_message : public kdu_message
+class jpipkak_kdu_cpl_error_message final : public kdu_message
 {
   public:  // Member classes
     using kdu_message::put_text;

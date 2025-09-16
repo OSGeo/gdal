@@ -25,7 +25,7 @@ class OGRVFKDataSource;
 /*                            OGRVFKLayer                               */
 /************************************************************************/
 
-class OGRVFKLayer : public OGRLayer
+class OGRVFKLayer final : public OGRLayer
 {
   private:
     /* spatial reference */
@@ -47,19 +47,21 @@ class OGRVFKLayer : public OGRLayer
   public:
     OGRVFKLayer(const char *, OGRSpatialReference *, OGRwkbGeometryType,
                 OGRVFKDataSource *);
-    ~OGRVFKLayer();
+    ~OGRVFKLayer() override;
 
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
     void ResetReading() override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GIntBig GetFeatureCount(int = TRUE) override;
 };
@@ -67,7 +69,7 @@ class OGRVFKLayer : public OGRLayer
 /************************************************************************/
 /*                           OGRVFKDataSource                           */
 /************************************************************************/
-class OGRVFKDataSource : public GDALDataset
+class OGRVFKDataSource final : public GDALDataset
 {
   private:
     /* list of available layers */
@@ -82,18 +84,18 @@ class OGRVFKDataSource : public GDALDataset
 
   public:
     OGRVFKDataSource();
-    ~OGRVFKDataSource();
+    ~OGRVFKDataSource() override;
 
     int Open(GDALOpenInfo *poOpenInfo);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     IVFKReader *GetReader() const
     {

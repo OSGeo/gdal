@@ -16,6 +16,7 @@
 #include "ogrsf_frmts.h"
 #include "ogrlayerpool.h"
 
+#include <mutex>
 #include <set>
 
 //! @cond Doxygen_Suppress
@@ -56,8 +57,8 @@ GDALVectorSQLAlgorithm::GDALVectorSQLAlgorithm(bool standaloneStep)
                        .SetRemoveSQLCommentsEnabled();
     if (!standaloneStep)
         sqlArg.SetPositional();
-    AddArg("output-layer", standaloneStep ? 0 : 'l', _("Output layer name(s)"),
-           &m_outputLayer);
+    AddArg(GDAL_ARG_NAME_OUTPUT_LAYER, standaloneStep ? 0 : 'l',
+           _("Output layer name(s)"), &m_outputLayer);
     AddArg("dialect", 0, _("SQL dialect (e.g. OGRSQL, SQLITE)"), &m_dialect);
 }
 
@@ -78,12 +79,14 @@ class GDALVectorSQLAlgorithmDataset final : public GDALDataset
     explicit GDALVectorSQLAlgorithmDataset(GDALDataset &oSrcDS)
         : m_oSrcDS(oSrcDS)
     {
+        m_oSrcDS.Reference();
     }
 
     ~GDALVectorSQLAlgorithmDataset() override
     {
         for (OGRLayer *poLayer : m_layers)
             m_oSrcDS.ReleaseResultSet(poLayer);
+        m_oSrcDS.ReleaseRef();
     }
 
     void AddLayer(OGRLayer *poLayer)
@@ -91,12 +94,12 @@ class GDALVectorSQLAlgorithmDataset final : public GDALDataset
         m_layers.push_back(poLayer);
     }
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_layers.size());
     }
 
-    OGRLayer *GetLayer(int idx) override
+    OGRLayer *GetLayer(int idx) const override
     {
         return idx >= 0 && idx < GetLayerCount() ? m_layers[idx] : nullptr;
     }
@@ -112,7 +115,8 @@ namespace
 
 class ProxiedSQLLayer final : public OGRProxiedLayer
 {
-    OGRFeatureDefn *m_poLayerDefn = nullptr;
+    mutable OGRFeatureDefn *m_poLayerDefn = nullptr;
+    mutable std::mutex m_oMutex{};
 
     CPL_DISALLOW_COPY_ASSIGN(ProxiedSQLLayer)
 
@@ -127,19 +131,21 @@ class ProxiedSQLLayer final : public OGRProxiedLayer
         SetDescription(osName.c_str());
     }
 
-    ~ProxiedSQLLayer()
+    ~ProxiedSQLLayer() override
     {
         if (m_poLayerDefn)
             m_poLayerDefn->Release();
     }
 
-    const char *GetName() override
+    const char *GetName() const override
     {
         return GetDescription();
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
+        std::lock_guard oLock(m_oMutex);
+
         if (!m_poLayerDefn)
         {
             m_poLayerDefn = OGRProxiedLayer::GetLayerDefn()->Clone();
@@ -181,6 +187,13 @@ class GDALVectorSQLAlgorithmDatasetMultiLayer final : public GDALDataset
     explicit GDALVectorSQLAlgorithmDatasetMultiLayer(GDALDataset &oSrcDS)
         : m_oSrcDS(oSrcDS)
     {
+        m_oSrcDS.Reference();
+    }
+
+    ~GDALVectorSQLAlgorithmDatasetMultiLayer() override
+    {
+        m_layers.clear();
+        m_oSrcDS.ReleaseRef();
     }
 
     void AddLayer(const std::string &osSQL, const std::string &osDialect,
@@ -210,12 +223,12 @@ class GDALVectorSQLAlgorithmDatasetMultiLayer final : public GDALDataset
             pUserData));
     }
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_layers.size());
     }
 
-    OGRLayer *GetLayer(int idx) override
+    OGRLayer *GetLayer(int idx) const override
     {
         return idx >= 0 && idx < GetLayerCount() ? m_layers[idx].get()
                                                  : nullptr;

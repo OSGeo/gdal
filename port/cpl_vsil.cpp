@@ -2031,10 +2031,13 @@ VSILFILE *VSIFOpenL(const char *pszFilename, const char *pszAccess)
 
 #ifndef DOXYGEN_SKIP
 
-VSIVirtualHandle *VSIFilesystemHandler::Open(const char *pszFilename,
-                                             const char *pszAccess)
+VSIVirtualHandleUniquePtr
+VSIFilesystemHandler::OpenStatic(const char *pszFilename, const char *pszAccess,
+                                 bool bSetError, CSLConstList papszOptions)
 {
-    return Open(pszFilename, pszAccess, false, nullptr);
+    VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszFilename);
+
+    return poFSHandler->Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -2365,7 +2368,7 @@ class VSIVirtualHandleOnlyVisibleAtCloseTime final : public VSIProxyFileHandle
     {
     }
 
-    ~VSIVirtualHandleOnlyVisibleAtCloseTime()
+    ~VSIVirtualHandleOnlyVisibleAtCloseTime() override
     {
         VSIVirtualHandleOnlyVisibleAtCloseTime::Close();
     }
@@ -2385,18 +2388,28 @@ int VSIVirtualHandleOnlyVisibleAtCloseTime::Close()
         return 0;
     m_bAlreadyClosed = true;
     int ret = VSIProxyFileHandle::Close();
-    if (ret != 0)
-        return ret;
-    return m_bCancelCreation
-               ? VSIUnlink(m_osTmpName.c_str())
-               : VSIRename(m_osTmpName.c_str(), m_osTargetName.c_str());
+    if (ret == 0)
+    {
+        if (m_bCancelCreation)
+        {
+            ret = VSIUnlink(m_osTmpName.c_str());
+            VSIStatBufL sStatBuf;
+            if (ret != 0 && VSIStatL(m_osTmpName.c_str(), &sStatBuf) != 0)
+                ret = 0;
+        }
+        else
+        {
+            ret = VSIRename(m_osTmpName.c_str(), m_osTargetName.c_str());
+        }
+    }
+    return ret;
 }
 
 /************************************************************************/
 /*                       CreateOnlyVisibleAtCloseTime()                 */
 /************************************************************************/
 
-VSIVirtualHandle *VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
+VSIVirtualHandleUniquePtr VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
     const char *pszFilename, bool bEmulationAllowed, CSLConstList papszOptions)
 {
     if (!bEmulationAllowed)
@@ -2407,9 +2420,10 @@ VSIVirtualHandle *VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
         Open(tmpName.c_str(), "wb+", true, papszOptions));
     if (!nativeHandle)
         return nullptr;
-    return std::make_unique<VSIVirtualHandleOnlyVisibleAtCloseTime>(
-               std::move(nativeHandle), pszFilename, tmpName)
-        .release();
+    return VSIVirtualHandleUniquePtr(
+        std::make_unique<VSIVirtualHandleOnlyVisibleAtCloseTime>(
+            std::move(nativeHandle), pszFilename, tmpName)
+            .release());
 }
 
 /************************************************************************/
@@ -2474,7 +2488,7 @@ struct VSIDIRGeneric : public VSIDIR
     {
     }
 
-    ~VSIDIRGeneric();
+    ~VSIDIRGeneric() override;
 
     const VSIDIREntry *NextDirEntry() override;
 
@@ -2862,13 +2876,13 @@ VSILFILE *VSIFOpenEx2L(const char *pszFilename, const char *pszAccess,
 
     VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszFilename);
 
-    VSILFILE *fp = poFSHandler->Open(pszFilename, pszAccess,
-                                     CPL_TO_BOOL(bSetError), papszOptions);
+    auto fp = poFSHandler->Open(pszFilename, pszAccess, CPL_TO_BOOL(bSetError),
+                                papszOptions);
 
     VSIDebug4("VSIFOpenEx2L(%s,%s,%d) = %p", pszFilename, pszAccess, bSetError,
-              fp);
+              fp.get());
 
-    return fp;
+    return fp.release();
 }
 
 /************************************************************************/

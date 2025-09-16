@@ -258,32 +258,31 @@ class netCDFRasterBand final : public GDALPamRasterBand
                      const int *panBandZLev = nullptr,
                      const int *panBandZPos = nullptr,
                      const int *paDimIds = nullptr);
-    virtual ~netCDFRasterBand();
+    ~netCDFRasterBand() override;
 
-    virtual double GetNoDataValue(int *) override;
-    virtual int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr) override;
-    virtual uint64_t GetNoDataValueAsUInt64(int *pbSuccess = nullptr) override;
-    virtual CPLErr SetNoDataValue(double) override;
-    virtual CPLErr SetNoDataValueAsInt64(int64_t nNoData) override;
-    virtual CPLErr SetNoDataValueAsUInt64(uint64_t nNoData) override;
+    double GetNoDataValue(int *) override;
+    int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr) override;
+    uint64_t GetNoDataValueAsUInt64(int *pbSuccess = nullptr) override;
+    CPLErr SetNoDataValue(double) override;
+    CPLErr SetNoDataValueAsInt64(int64_t nNoData) override;
+    CPLErr SetNoDataValueAsUInt64(uint64_t nNoData) override;
     // virtual CPLErr DeleteNoDataValue();
-    virtual double GetOffset(int *) override;
-    virtual CPLErr SetOffset(double) override;
-    virtual double GetScale(int *) override;
-    virtual CPLErr SetScale(double) override;
-    virtual const char *GetUnitType() override;
-    virtual CPLErr SetUnitType(const char *) override;
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    double GetOffset(int *) override;
+    CPLErr SetOffset(double) override;
+    double GetScale(int *) override;
+    CPLErr SetScale(double) override;
+    const char *GetUnitType() override;
+    CPLErr SetUnitType(const char *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
     char **GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 
-    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
-                                   const char *pszDomain = "") override;
-    virtual CPLErr SetMetadata(char **papszMD,
-                               const char *pszDomain = "") override;
+    CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                           const char *pszDomain = "") override;
+    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
 };
 
 /************************************************************************/
@@ -6614,7 +6613,7 @@ void netCDFDataset::CreateSubDatasetList(int nGroupId)
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int netCDFDataset::TestCapability(const char *pszCap)
+int netCDFDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
     {
@@ -6632,7 +6631,7 @@ int netCDFDataset::TestCapability(const char *pszCap)
 /*                            GetLayer()                                */
 /************************************************************************/
 
-OGRLayer *netCDFDataset::GetLayer(int nIdx)
+const OGRLayer *netCDFDataset::GetLayer(int nIdx) const
 {
     if (nIdx < 0 || nIdx >= this->GetLayerCount())
         return nullptr;
@@ -6671,6 +6670,14 @@ OGRLayer *netCDFDataset::ICreateLayer(const char *pszName,
     netCDFDataset *poLayerDataset = nullptr;
     if (eMultipleLayerBehavior == SEPARATE_FILES)
     {
+        if (CPLLaunderForFilenameSafe(osNetCDFLayerName.c_str(), nullptr) !=
+            osNetCDFLayerName)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Illegal characters in '%s' to form a valid filename",
+                     osNetCDFLayerName.c_str());
+            return nullptr;
+        }
         char **papszDatasetOptions = nullptr;
         papszDatasetOptions = CSLSetNameValue(
             papszDatasetOptions, "CONFIG_FILE",
@@ -10264,7 +10271,7 @@ class GDALnetCDFDriver final : public GDALDriver
     }
 
   private:
-    std::mutex m_oMutex{};
+    std::recursive_mutex m_oMutex{};
     bool m_bInitialized = false;
 
     void InitializeDCAPVirtualIO()
@@ -10967,7 +10974,6 @@ static CPLErr NCDFPutAttr(int nCdfId, int nVarId, const char *pszAttrName,
                 if (papszValues)
                     CSLDestroy(papszValues);
                 return CE_Failure;
-                break;
         }
     }
 
@@ -11424,7 +11430,6 @@ static CPLErr NCDFPut1DVar(int nCdfId, int nVarId, const char *pszValue)
                             if (papszValues)
                                 CSLDestroy(papszValues);
                             return CE_Failure;
-                            break;
                     }
                 }
                 break;

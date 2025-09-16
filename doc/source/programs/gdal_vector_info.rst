@@ -36,7 +36,7 @@ Standard options
     Which output format to use. Default is JSON, and starting with GDAL 3.12,
     text when invoked from command line.
 
-.. option:: -l, --layer <LAYER>
+.. option:: -l, --layer, --input-layer <INPUT-LAYER>
 
     Name of one or more layers to inspect. If no layer names are passed and
     :option:`--sql` is not specified, then all layers will be selected.
@@ -69,6 +69,8 @@ Standard options
     Editing capabilities depend on the selected
     dialect with :option:`--dialect`.
 
+    This option is mutually exclusive with the :option:`--where` option.
+
 .. option:: --where <WHERE>|@<filename>
 
     An attribute query in a restricted form of the queries used in the SQL
@@ -81,6 +83,8 @@ Standard options
     .. code-block:: console
 
         --where "\"Corner Point Identifier\" LIKE '%__00_00'"
+
+    This option is mutually exclusive with the :option:`--sql` option.
 
 .. option:: --dialect <dialect>
 

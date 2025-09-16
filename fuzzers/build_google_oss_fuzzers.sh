@@ -71,8 +71,6 @@ build_fuzzer gtiff_mmap $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=GDALRegist
 
 build_fuzzer libertiff $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=GDALRegister_LIBERTIFF -DDRIVER_NAME="\"LIBERTIFF\""
 
-build_fuzzer gdal_algorithm $(dirname $0)/gdal_algorithm_fuzzer.cpp
-
 fuzzerFiles="$(dirname $0)/*.cpp"
 for F in $fuzzerFiles; do
     if test $F != "$(dirname $0)/fuzzingengine.cpp"; then
@@ -119,6 +117,7 @@ build_gdal_specialized_fuzzer gdal_vrt GDALAllRegister "/vsimem/test.tar" "/vsit
 build_gdal_specialized_fuzzer ers GDALRegister_ERS "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.ers"
 build_gdal_specialized_fuzzer zarr GDALRegister_Zarr "/vsimem/test.tar" "/vsitar//vsimem/test.tar"
 build_gdal_specialized_fuzzer dimap "GDALRegister_DIMAP();GDALRegister_GTiff" "/vsimem/test.tar" "/vsitar//vsimem/test.tar"
+build_gdal_specialized_fuzzer gdal_miramon "GDALRegister_MiraMon" "/vsimem/test.tar" "/vsitar//vsimem/test.tar/byte_2x3_6_categs_RLEI.rel"
 
 build_fuzzer gdal_filesystem_fuzzer $(dirname $0)/gdal_fuzzer.cpp -DUSE_FILESYSTEM
 build_fuzzer ogr_filesystem_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DUSE_FILESYSTEM

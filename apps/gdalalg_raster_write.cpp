@@ -52,6 +52,11 @@ bool GDALRasterWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     {
         aosOptions.AddString("--no-overwrite");
     }
+    if (m_appendRaster)
+    {
+        aosOptions.AddString("-co");
+        aosOptions.AddString("APPEND_SUBDATASET=YES");
+    }
     if (!m_format.empty())
     {
         aosOptions.AddString("-of");

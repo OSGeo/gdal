@@ -241,10 +241,7 @@ def test_gdalalg_vector_pipeline_help_doc():
     out = gdaltest.runexternal(f"{gdal_path} vector pipeline --help-doc=main")
 
     assert "Usage: gdal vector pipeline [OPTIONS] <PIPELINE>" in out
-    assert (
-        "<PIPELINE> is of the form: read|concat [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]"
-        in out
-    )
+    assert "<PIPELINE> is of the form:" in out
 
     out = gdaltest.runexternal(f"{gdal_path} vector pipeline --help-doc=edit")
 

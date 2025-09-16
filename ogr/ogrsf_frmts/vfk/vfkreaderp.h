@@ -48,7 +48,7 @@ class VFKReader : public IVFKReader
 
     IVFKDataBlock *CreateDataBlock(const char *) override;
     void AddDataBlock(IVFKDataBlock *, const char *) override;
-    virtual OGRErr AddFeature(IVFKDataBlock *, VFKFeature *) override;
+    OGRErr AddFeature(IVFKDataBlock *, VFKFeature *) override;
     void ReadEncoding();
 
     // Metadata.
@@ -56,7 +56,7 @@ class VFKReader : public IVFKReader
 
   public:
     explicit VFKReader(const GDALOpenInfo *);
-    virtual ~VFKReader();
+    ~VFKReader() override;
 
     const char *GetFilename() const override
     {
@@ -80,7 +80,7 @@ class VFKReader : public IVFKReader
 
     bool IsValid() const override
     {
-        return true;
+        return m_poFD != nullptr;
     }
 
     bool HasFileField() const override
@@ -107,7 +107,7 @@ class VFKReader : public IVFKReader
 /*                              VFKReaderSQLite                         */
 /************************************************************************/
 
-class VFKReaderSQLite : public VFKReader
+class VFKReaderSQLite final : public VFKReader
 {
   private:
     char *m_pszDBname;
@@ -129,7 +129,7 @@ class VFKReaderSQLite : public VFKReader
 
   public:
     explicit VFKReaderSQLite(const GDALOpenInfo *);
-    virtual ~VFKReaderSQLite();
+    ~VFKReaderSQLite() override;
 
     bool IsSpatial() const override
     {
@@ -143,7 +143,7 @@ class VFKReaderSQLite : public VFKReader
 
     bool IsValid() const override
     {
-        return m_poDB != nullptr;
+        return VFKReader::IsValid() && m_poDB != nullptr;
     }
 
     int ReadDataBlocks(bool = false) override;

@@ -276,7 +276,7 @@ OGRFeature *OGRMySQLLayer::GetFeature(GIntBig nFeatureId)
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRMySQLLayer::GetFIDColumn()
+const char *OGRMySQLLayer::GetFIDColumn() const
 
 {
     if (pszFIDColumn != nullptr)

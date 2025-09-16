@@ -536,8 +536,7 @@ extern unzFile ZEXPORT cpl_unzOpen2(const char *path,
 
     // Must be a trick to ensure that unz_copyright remains in the binary!
     // cppcheck-suppress knownConditionTrueFalse
-    if (unz_copyright[0] != ' ')
-        return nullptr;
+    central_pos = (unz_copyright[0] != ' ');
 
     if (pzlib_filefunc_def == nullptr)
         cpl_fill_fopen_filefunc(&us.z_filefunc);
@@ -550,7 +549,7 @@ extern unzFile ZEXPORT cpl_unzOpen2(const char *path,
     if (us.filestream == nullptr)
         return nullptr;
 
-    central_pos = unzlocal_SearchCentralDir64(&us.z_filefunc, us.filestream);
+    central_pos += unzlocal_SearchCentralDir64(&us.z_filefunc, us.filestream);
     if (central_pos)
     {
         uLong uS;

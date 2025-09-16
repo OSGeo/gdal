@@ -31,7 +31,7 @@
  * GDALMDReaderPleiades()
  */
 GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
-                                           char **papszSiblingFiles)
+                                           CSLConstList papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles), m_osBaseFilename(pszPath),
       m_osIMDSourceFilename(CPLString()), m_osRPBSourceFilename(CPLString())
 {

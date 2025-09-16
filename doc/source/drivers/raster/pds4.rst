@@ -224,6 +224,15 @@ The following dataset creation options are available:
 
          Manually set bounding box
 
+   -  .. co:: PROPAGATE_SRC_METADATA
+         :choices: YES, NO
+         :default: YES
+         :since: 3.12
+
+         Whether to propagate particular metadata domains, such as json:ISIS3.
+         When YES (the default), if IMAGE_FORMAT=GEOTIFF, that metadata is also
+         written into the GeoTIFF file.
+
 Layer creation options (vector/table datasets)
 ----------------------------------------------
 
@@ -297,17 +306,11 @@ options are available:
 
       Name of a field containing a WKT value.
 
--  .. lco:: SAME_DIRECTORY
-      :choices: YES, NO
-      :default: NO
 
-      Whether table files should be created in
-      the same directory, or in a subdirectory. Defaults to NO, that is
-      that table files will be created in a subdirectory whose name is the
-      basename of the XML file. For example if creating a "foo.xml" PDS4
-      dataset, table files will be created in the "foo" subdirectory by
-      default. If this option is set to YES, they will be created in the
-      same directory as "foo.xml".
+Table files are created in the same directory as the XML file, using its
+name as a prefix. For example if creating a "foo.xml" PDS4 dataset and
+a "bar" layer, a "foo_bar.dat" file will be created.
+
 
 Subdataset / multiple image support
 -----------------------------------

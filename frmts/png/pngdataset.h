@@ -126,7 +126,7 @@ class PNGDataset final : public GDALPamDataset
 
   public:
     PNGDataset();
-    virtual ~PNGDataset();
+    ~PNGDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
@@ -135,22 +135,21 @@ class PNGDataset final : public GDALPamDataset
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
-    virtual char **GetFileList(void) override;
+    char **GetFileList(void) override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
-    virtual char **GetMetadataDomainList() override;
+    char **GetMetadataDomainList() override;
 
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    char **GetMetadata(const char *pszDomain = "") override;
     virtual const char *
     GetMetadataItem(const char *pszName,
                     const char *pszDomain = nullptr) override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, BANDMAP_TYPE, GSpacing,
-                             GSpacing, GSpacing,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, int, BANDMAP_TYPE, GSpacing, GSpacing,
+                     GSpacing, GDALRasterIOExtraArg *psExtraArg) override;
 
 #ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
     bool IsCompatibleOfSingleBlock() const;
@@ -201,11 +200,7 @@ class PNGRasterBand final : public GDALPamRasterBand
   public:
     PNGRasterBand(PNGDataset *, int);
 
-    virtual ~PNGRasterBand()
-    {
-    }
-
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 
     virtual GDALSuggestedBlockAccessPattern
     GetSuggestedBlockAccessPattern() const override
@@ -213,21 +208,21 @@ class PNGRasterBand final : public GDALPamRasterBand
         return GSBAP_TOP_TO_BOTTOM;
     }
 
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
     CPLErr SetNoDataValue(double dfNewValue) override;
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing, GSpacing,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing, GSpacing,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
     int bHaveNoData;
     double dfNoDataValue;
 
 #ifdef SUPPORT_CREATE
     virtual CPLErr SetColorTable(GDALColorTable *);
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
   protected:
     int m_bBandProvided[5];

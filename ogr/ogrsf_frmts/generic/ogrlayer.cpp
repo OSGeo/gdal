@@ -24,6 +24,7 @@
 #include <cassert>
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <set>
 
 /************************************************************************/
@@ -814,18 +815,15 @@ OGRErr OGRLayer::SetNextByIndex(GIntBig nIndex)
 
 {
     if (nIndex < 0)
-        return OGRERR_FAILURE;
+        nIndex = GINTBIG_MAX;
 
     ResetReading();
 
-    OGRFeature *poFeature = nullptr;
     while (nIndex-- > 0)
     {
-        poFeature = GetNextFeature();
+        auto poFeature = std::unique_ptr<OGRFeature>(GetNextFeature());
         if (poFeature == nullptr)
-            return OGRERR_FAILURE;
-
-        delete poFeature;
+            return OGRERR_NON_EXISTING_FEATURE;
     }
 
     return OGRERR_NONE;
@@ -1581,11 +1579,12 @@ int OGRLayer::FindFieldIndex(const char *pszFieldName,
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRLayer::GetSpatialRef()
+const OGRSpatialReference *OGRLayer::GetSpatialRef() const
 {
-    if (GetLayerDefn()->GetGeomFieldCount() > 0)
+    const auto poLayerDefn = GetLayerDefn();
+    if (poLayerDefn->GetGeomFieldCount() > 0)
         return const_cast<OGRSpatialReference *>(
-            GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef());
+            poLayerDefn->GetGeomFieldDefn(0)->GetSpatialRef());
     else
         return nullptr;
 }
@@ -1604,8 +1603,8 @@ OGRSpatialReferenceH OGR_L_GetSpatialRef(OGRLayerH hLayer)
         OGRAPISpy_L_GetSpatialRef(hLayer);
 #endif
 
-    return OGRSpatialReference::ToHandle(
-        OGRLayer::FromHandle(hLayer)->GetSpatialRef());
+    return OGRSpatialReference::ToHandle(const_cast<OGRSpatialReference *>(
+        OGRLayer::FromHandle(hLayer)->GetSpatialRef()));
 }
 
 /************************************************************************/
@@ -2731,7 +2730,7 @@ GIntBig OGR_L_GetFeaturesRead(OGRLayerH hLayer)
 /*                             GetFIDColumn                             */
 /************************************************************************/
 
-const char *OGRLayer::GetFIDColumn()
+const char *OGRLayer::GetFIDColumn() const
 
 {
     return "";
@@ -2758,11 +2757,12 @@ const char *OGR_L_GetFIDColumn(OGRLayerH hLayer)
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
-const char *OGRLayer::GetGeometryColumn()
+const char *OGRLayer::GetGeometryColumn() const
 
 {
-    if (GetLayerDefn()->GetGeomFieldCount() > 0)
-        return GetLayerDefn()->GetGeomFieldDefn(0)->GetNameRef();
+    const auto poLayerDefn = GetLayerDefn();
+    if (poLayerDefn->GetGeomFieldCount() > 0)
+        return poLayerDefn->GetGeomFieldDefn(0)->GetNameRef();
     else
         return "";
 }
@@ -2860,7 +2860,7 @@ void OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable)
 /*                               GetName()                              */
 /************************************************************************/
 
-const char *OGRLayer::GetName()
+const char *OGRLayer::GetName() const
 
 {
     return GetLayerDefn()->GetName();
@@ -2887,9 +2887,9 @@ const char *OGR_L_GetName(OGRLayerH hLayer)
 /*                            GetGeomType()                             */
 /************************************************************************/
 
-OGRwkbGeometryType OGRLayer::GetGeomType()
+OGRwkbGeometryType OGRLayer::GetGeomType() const
 {
-    OGRFeatureDefn *poLayerDefn = GetLayerDefn();
+    const OGRFeatureDefn *poLayerDefn = GetLayerDefn();
     if (poLayerDefn == nullptr)
     {
         CPLDebug("OGR", "GetLayerType() returns NULL !");

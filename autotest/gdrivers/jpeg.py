@@ -25,6 +25,7 @@ from osgeo import gdal, gdalconst
 
 pytestmark = pytest.mark.require_driver("JPEG")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -759,13 +760,13 @@ def test_jpeg_mask_lsb_order_issue_4351():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 15, 4, 3)
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(7, 2, 2, 1, b"\xFF" * 2)
+    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(7, 2, 2, 1, b"\xff" * 2)
     tmpfilename = "/vsimem/test_jpeg_mask_lsb_order_issue_4351.jpg"
     assert gdal.GetDriverByName("JPEG").CreateCopy(tmpfilename, src_ds)
     ds = gdal.Open(tmpfilename)
     assert (
         ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 2, 15, 1)
-        == b"\x00" * 7 + b"\xFF" * 2 + b"\x00" * 6
+        == b"\x00" * 7 + b"\xff" * 2 + b"\x00" * 6
     )
     ds = None
     gdal.GetDriverByName("JPEG").Delete(tmpfilename)
@@ -1381,6 +1382,43 @@ def test_jpeg_flir_error_flir_subds():
     with gdal.quiet_errors():
         ds = gdal.Open("JPEG:data/jpeg/masked.jpg:FLIR_RAW_THERMAL_IMAGE")
         assert ds is None
+
+
+###############################################################################
+# Open JPEG image with DJI raw thermal image as raw
+
+
+def test_jpeg_dji_thermal_metadata():
+
+    ds = gdal.Open("data/jpeg/dji/DJI_M3T.JPG")
+    assert sorted(ds.GetMetadataDomainList()) == [
+        "",
+        "DERIVED_SUBDATASETS",
+        "DJI",
+        "IMAGE_STRUCTURE",
+        "SUBDATASETS",
+        "xml:XMP",
+    ]
+    assert ds.GetMetadata("DJI") == {
+        "RawThermalImageHeight": "512",
+        "RawThermalImageWidth": "640",
+    }
+    assert ds.RasterCount == 3
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 1
+
+    ds = gdal.Open(subds[0][0])
+    assert ds is not None
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+    assert ds.GetRasterBand(1).Checksum() == 50952
+
+
+def test_jpeg_dji_thermal_raw():
+
+    ds = gdal.Open('JPEG:"data/jpeg/dji/DJI_M3T.JPG":DJI_RAW_THERMAL_IMAGE')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+    assert ds.GetRasterBand(1).Checksum() == 50952
 
 
 ###############################################################################

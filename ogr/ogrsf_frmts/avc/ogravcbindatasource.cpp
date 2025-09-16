@@ -144,7 +144,7 @@ int OGRAVCBinDataSource::Open(const char *pszNewName, int bTestOpen)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAVCBinDataSource::TestCapability(CPL_UNUSED const char *pszCap)
+int OGRAVCBinDataSource::TestCapability(const char *) const
 {
     return FALSE;
 }
@@ -153,7 +153,7 @@ int OGRAVCBinDataSource::TestCapability(CPL_UNUSED const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRAVCBinDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRAVCBinDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

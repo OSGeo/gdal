@@ -303,7 +303,7 @@ TEST_F(test_ms_polygon, four_pixels_2)
             cg.feedLine(&data[0]);
             cg.feedLine(&data[2]);
         }
-        EXPECT_EQ(w.polygons_.size(), 2);
+        EXPECT_EQ(w.polygons_.size(), 2U);
         {
             std::ostringstream ostr;
             w.out(ostr, 155.0);
@@ -343,7 +343,7 @@ TEST_F(test_ms_polygon, four_pixels_2)
             cg.feedLine(&data[2]);
         }
         {
-            EXPECT_EQ(w.polygons_.size(), 2);
+            EXPECT_EQ(w.polygons_.size(), 2U);
             auto iter = w.polygons_.find(Inf);
             ASSERT_TRUE(iter != w.polygons_.end());
             EXPECT_TRUE(iter->second.empty());

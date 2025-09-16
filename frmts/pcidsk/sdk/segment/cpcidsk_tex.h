@@ -27,13 +27,13 @@ namespace PCIDSK
     /*                            CPCIDSK_TEX                               */
     /************************************************************************/
 
-    class CPCIDSK_TEX : virtual public CPCIDSKSegment,
+    class CPCIDSK_TEX final: virtual public CPCIDSKSegment,
                         public PCIDSK_TEX
     {
     public:
         CPCIDSK_TEX( PCIDSKFile *file, int segment,const char *segment_pointer);
 
-        virtual     ~CPCIDSK_TEX();
+        ~CPCIDSK_TEX() override;
 
         // PCIDSK_TEX
 

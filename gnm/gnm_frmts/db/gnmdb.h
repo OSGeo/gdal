@@ -33,13 +33,13 @@
 
 #include "gnm.h"
 
-class GNMDatabaseNetwork : public GNMGenericNetwork
+class GNMDatabaseNetwork final : public GNMGenericNetwork
 {
   public:
     GNMDatabaseNetwork();
-    virtual ~GNMDatabaseNetwork();
-    virtual CPLErr Open(GDALOpenInfo *poOpenInfo) override;
-    virtual OGRErr DeleteLayer(int) override;
+    ~GNMDatabaseNetwork() override;
+    CPLErr Open(GDALOpenInfo *poOpenInfo) override;
+    OGRErr DeleteLayer(int) override;
     virtual CPLErr Create(const char *pszFilename,
                           char **papszOptions) override;
 
@@ -52,12 +52,12 @@ class GNMDatabaseNetwork : public GNMGenericNetwork
                                   char **papszOptions) override;
 
   protected:
-    virtual CPLErr DeleteMetadataLayer() override;
-    virtual CPLErr DeleteGraphLayer() override;
-    virtual CPLErr DeleteFeaturesLayer() override;
-    virtual CPLErr DeleteNetworkLayers() override;
-    virtual CPLErr LoadNetworkLayer(const char *pszLayername) override;
-    virtual bool CheckStorageDriverSupport(const char *pszDriverName) override;
+    CPLErr DeleteMetadataLayer() override;
+    CPLErr DeleteGraphLayer() override;
+    CPLErr DeleteFeaturesLayer() override;
+    CPLErr DeleteNetworkLayers() override;
+    CPLErr LoadNetworkLayer(const char *pszLayername) override;
+    bool CheckStorageDriverSupport(const char *pszDriverName) override;
 
   protected:
     CPLErr FormName(const char *pszFilename, char **papszOptions);

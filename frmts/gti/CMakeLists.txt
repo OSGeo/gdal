@@ -28,3 +28,7 @@ endif()
 if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
   target_compile_definitions(gdal_GTI PRIVATE -DUSE_NEON_OPTIMIZATIONS)
 endif()
+
+if (GDAL_ENABLE_ALGORITHMS)
+  target_compile_definitions(gdal_GTI PRIVATE -DGDAL_ENABLE_ALGORITHMS)
+endif()

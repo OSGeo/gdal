@@ -572,6 +572,18 @@ void MEMDataset::LeaveReadWrite()
 const OGRSpatialReference *MEMDataset::GetSpatialRef() const
 
 {
+    if (GetLayerCount())
+        return GDALDataset::GetSpatialRef();
+    return GetSpatialRefRasterOnly();
+}
+
+/************************************************************************/
+/*                      GetSpatialRefRasterOnly()                       */
+/************************************************************************/
+
+const OGRSpatialReference *MEMDataset::GetSpatialRefRasterOnly() const
+
+{
     return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
@@ -1400,10 +1412,13 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
     if (pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE"))
         poDS->SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
 
-    if (bPixelInterleaved)
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-    else
-        poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+    if (nXSize != 0 && nYSize != 0)
+    {
+        if (bPixelInterleaved)
+            poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        else
+            poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */
@@ -3291,7 +3306,7 @@ OGRErr MEMDataset::DeleteLayer(int iLayer)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int MEMDataset::TestCapability(const char *pszCap)
+int MEMDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -3322,7 +3337,7 @@ int MEMDataset::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *MEMDataset::GetLayer(int iLayer)
+const OGRLayer *MEMDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))
@@ -3368,12 +3383,12 @@ bool MEMDataset::DeleteFieldDomain(const std::string &name,
     {
         for (int j = 0; j < poLayer->GetLayerDefn()->GetFieldCount(); ++j)
         {
+            OGRLayer *poLayerAsLayer = poLayer.get();
             OGRFieldDefn *poFieldDefn =
-                poLayer->GetLayerDefn()->GetFieldDefn(j);
+                poLayerAsLayer->GetLayerDefn()->GetFieldDefn(j);
             if (poFieldDefn->GetDomainName() == name)
             {
-                auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
-                poFieldDefn->SetDomainName(std::string());
+                whileUnsealing(poFieldDefn)->SetDomainName(std::string());
             }
         }
     }
@@ -3464,6 +3479,8 @@ void GDALRegister_MEM()
         GDAL_DMD_CREATIONFIELDDATATYPES,
         "Integer Integer64 Real String Date DateTime Time IntegerList "
         "Integer64List RealList StringList Binary");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
+                              "Boolean Int16 Float32 JSON UUID");
     poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
                               "WidthPrecision Nullable Default Unique "
                               "Comment AlternativeName Domain");
@@ -3489,6 +3506,7 @@ void GDALRegister_MEM()
 
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS,
                               "Name Type Nullable SRS CoordinateEpoch");
+    poDriver->SetMetadataItem(GDAL_DCAP_UPSERT, "YES");
 
     // Define GDAL_NO_OPEN_FOR_MEM_DRIVER macro to undefine Open() method for
     // MEM driver.  Otherwise, bad user input can trigger easily a GDAL crash

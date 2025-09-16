@@ -311,7 +311,7 @@ class CPL_DLL GDALDefaultOverviews
     int HaveMaskFile(char **papszSiblings = nullptr,
                      const char *pszBasename = nullptr);
 
-    char **GetSiblingFiles()
+    CSLConstList GetSiblingFiles() const
     {
         return papszInitSiblingFiles;
     }
@@ -918,6 +918,45 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Bands GetBands();
 
+    /** Class returned by GetBands() that act as a container for raster bands.
+     */
+    class CPL_DLL ConstBands
+    {
+      private:
+        friend class GDALDataset;
+        const GDALDataset *const m_poSelf;
+
+        CPL_INTERNAL explicit ConstBands(const GDALDataset *poSelf)
+            : m_poSelf(poSelf)
+        {
+        }
+
+        class CPL_DLL Iterator
+        {
+            struct Private;
+            std::unique_ptr<Private> m_poPrivate;
+
+          public:
+            Iterator(const GDALDataset *poDS, bool bStart);
+            ~Iterator();
+            const GDALRasterBand *operator*() const;
+            Iterator &operator++();
+            bool operator!=(const Iterator &it) const;
+        };
+
+      public:
+        const Iterator begin() const;
+
+        const Iterator end() const;
+
+        size_t size() const;
+
+        const GDALRasterBand *operator[](int iBand) const;
+        const GDALRasterBand *operator[](size_t iBand) const;
+    };
+
+    ConstBands GetBands() const;
+
     virtual CPLErr FlushCache(bool bAtClosing = false);
     virtual CPLErr DropCache();
 
@@ -925,6 +964,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual const OGRSpatialReference *GetSpatialRef() const;
     virtual CPLErr SetSpatialRef(const OGRSpatialReference *poSRS);
+
+    virtual const OGRSpatialReference *GetSpatialRefRasterOnly() const;
+    virtual const OGRSpatialReference *GetSpatialRefVectorOnly() const;
 
     // Compatibility layer
     const char *GetProjectionRef(void) const;
@@ -961,7 +1003,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual GDALDriver *GetDriver(void);
     virtual char **GetFileList(void);
 
-    virtual const char *GetDriverName();
+    const char *GetDriverName() const;
 
     virtual const OGRSpatialReference *GetGCPSpatialRef() const;
     virtual int GetGCPCount();
@@ -970,7 +1012,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                            const OGRSpatialReference *poGCP_SRS);
 
     // Compatibility layer
-    const char *GetGCPProjection();
+    const char *GetGCPProjection() const;
     CPLErr SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
                    const char *pszGCPProjection);
 
@@ -1187,8 +1229,14 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     CPLStringList oDerivedMetadataList{};
 
   public:
-    virtual int GetLayerCount();
-    virtual OGRLayer *GetLayer(int iLayer);
+    virtual int GetLayerCount() const;
+    virtual const OGRLayer *GetLayer(int iLayer) const;
+
+    OGRLayer *GetLayer(int iLayer)
+    {
+        return const_cast<OGRLayer *>(
+            const_cast<const GDALDataset *>(this)->GetLayer(iLayer));
+    }
 
     virtual bool IsLayerPrivate(int iLayer) const;
 
@@ -1233,9 +1281,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
             Iterator &operator=(
                 Iterator &&oOther) noexcept; /**< Move assignment operator */
 
-            OGRLayer *operator*() const; /**< Dereference operator */
-            Iterator &operator++();      /**< Pre-increment operator */
-            Iterator operator++(int);    /**< Post-increment operator */
+            value_type operator*() const; /**< Dereference operator */
+            Iterator &operator++();       /**< Pre-increment operator */
+            Iterator operator++(int);     /**< Post-increment operator */
             bool operator!=(const Iterator &it)
                 const; /**< Difference comparison operator */
         };
@@ -1252,9 +1300,70 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Layers GetLayers();
 
+    /** Class returned by GetLayers() that acts as a range of layers.
+     * @since GDAL 3.12
+     */
+    class CPL_DLL ConstLayers
+    {
+      private:
+        friend class GDALDataset;
+        const GDALDataset *m_poSelf;
+
+        CPL_INTERNAL explicit ConstLayers(const GDALDataset *poSelf)
+            : m_poSelf(poSelf)
+        {
+        }
+
+      public:
+        /** Layer iterator.
+         * @since GDAL 3.12
+         */
+        class CPL_DLL Iterator
+        {
+            struct Private;
+            std::unique_ptr<Private> m_poPrivate;
+
+          public:
+            using value_type = const OGRLayer *; /**< value_type */
+            using reference = const OGRLayer *;  /**< reference */
+            using difference_type = void;        /**< difference_type */
+            using pointer = void;                /**< pointer */
+            using iterator_category =
+                std::input_iterator_tag; /**< iterator_category */
+
+            Iterator(); /**< Default constructor */
+            Iterator(const GDALDataset *poDS, bool bStart); /**< Constructor */
+            Iterator(const Iterator &oOther);     /**< Copy constructor */
+            Iterator(Iterator &&oOther) noexcept; /**< Move constructor */
+            ~Iterator();                          /**< Destructor */
+
+            Iterator &
+            operator=(const Iterator &oOther); /**< Assignment operator */
+            Iterator &operator=(
+                Iterator &&oOther) noexcept; /**< Move assignment operator */
+
+            value_type operator*() const; /**< Dereference operator */
+            Iterator &operator++();       /**< Pre-increment operator */
+            Iterator operator++(int);     /**< Post-increment operator */
+            bool operator!=(const Iterator &it)
+                const; /**< Difference comparison operator */
+        };
+
+        Iterator begin() const;
+        Iterator end() const;
+
+        size_t size() const;
+
+        const OGRLayer *operator[](int iLayer);
+        const OGRLayer *operator[](size_t iLayer);
+        const OGRLayer *operator[](const char *pszLayername);
+    };
+
+    ConstLayers GetLayers() const;
+
     virtual OGRLayer *GetLayerByName(const char *);
 
-    int GetLayerIndex(const char *pszName);
+    int GetLayerIndex(const char *pszName) const;
 
     virtual OGRErr DeleteLayer(int iLayer);
 
@@ -1301,7 +1410,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Features GetFeatures();
 
-    virtual int TestCapability(const char *);
+    virtual int TestCapability(const char *) const;
 
     virtual std::vector<std::string>
     GetFieldDomainNames(CSLConstList papszOptions = nullptr) const;
@@ -1458,29 +1567,29 @@ using GDALDatasetUniquePtr =
  *
  * And the global block manager that manages a least-recently-used list of
  * blocks from various datasets/bands */
-class CPL_DLL GDALRasterBlock
+class CPL_DLL GDALRasterBlock final
 {
     friend class GDALAbstractBandBlockCache;
 
-    GDALDataType eType;
+    GDALDataType eType = GDT_Unknown;
 
-    bool bDirty;
-    volatile int nLockCount;
+    bool bDirty = false;
+    volatile int nLockCount = 0;
 
-    int nXOff;
-    int nYOff;
+    int nXOff = 0;
+    int nYOff = 0;
 
-    int nXSize;
-    int nYSize;
+    int nXSize = 0;
+    int nYSize = 0;
 
-    void *pData;
+    void *pData = nullptr;
 
-    GDALRasterBand *poBand;
+    GDALRasterBand *poBand = nullptr;
 
-    GDALRasterBlock *poNext;
-    GDALRasterBlock *poPrevious;
+    GDALRasterBlock *poNext = nullptr;
+    GDALRasterBlock *poPrevious = nullptr;
 
-    bool bMustDetach;
+    bool bMustDetach = false;
 
     CPL_INTERNAL void Detach_unlocked(void);
     CPL_INTERNAL void Touch_unlocked(void);
@@ -1490,7 +1599,7 @@ class CPL_DLL GDALRasterBlock
   public:
     GDALRasterBlock(GDALRasterBand *, int, int);
     GDALRasterBlock(int nXOffIn, int nYOffIn); /* only for lookup purpose */
-    virtual ~GDALRasterBlock();
+    ~GDALRasterBlock();
 
     CPLErr Internalize(void);
     void Touch(void);
@@ -1935,6 +2044,13 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     //! @endcond
 
   protected:
+    GDALRasterBand();
+    explicit GDALRasterBand(int bForceCachedIO);
+
+    //! @cond Doxygen_Suppress
+    GDALRasterBand(GDALRasterBand &&) = default;
+    //! @endcond
+
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) = 0;
     virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void *pData);
 
@@ -1989,13 +2105,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     //! @endcond
 
   public:
-    GDALRasterBand();
-    explicit GDALRasterBand(int bForceCachedIO);
-
-    //! @cond Doxygen_Suppress
-    GDALRasterBand(GDALRasterBand &&) = default;
-    //! @endcond
-
     ~GDALRasterBand() override;
 
     int GetXSize() const;
@@ -2308,10 +2417,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
         WindowIterator &operator++();
 
       private:
-        const int m_nRasterXSize;
-        const int m_nRasterYSize;
-        const int m_nBlockXSize;
-        const int m_nBlockYSize;
+        int m_nRasterXSize;
+        int m_nRasterYSize;
+        int m_nBlockXSize;
+        int m_nBlockYSize;
         int m_row;
         int m_col;
     };
@@ -2745,7 +2854,7 @@ template <typename... Args> inline GDALComputedRasterBand mean(Args &&...args)
 /*                         GDALAllValidMaskBand                         */
 /* ******************************************************************** */
 
-class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
+class CPL_DLL GDALAllValidMaskBand final : public GDALRasterBand
 {
   protected:
     CPLErr IReadBlock(int, int, void *) override;
@@ -2787,7 +2896,7 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 /*                         GDALNoDataMaskBand                           */
 /* ******************************************************************** */
 
-class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
+class CPL_DLL GDALNoDataMaskBand final : public GDALRasterBand
 {
     friend class GDALRasterBand;
     double m_dfNoDataValue = 0;
@@ -2828,7 +2937,7 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
 /*                  GDALNoDataValuesMaskBand                            */
 /* ******************************************************************** */
 
-class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
+class CPL_DLL GDALNoDataValuesMaskBand final : public GDALRasterBand
 {
     double *padfNodataValues;
 
@@ -2859,7 +2968,7 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
 /*                         GDALRescaledAlphaBand                        */
 /* ******************************************************************** */
 
-class GDALRescaledAlphaBand : public GDALRasterBand
+class GDALRescaledAlphaBand final : public GDALRasterBand
 {
     GDALRasterBand *poParent;
     void *pTemp;
@@ -2928,6 +3037,9 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     GDALDriver();
     ~GDALDriver() override;
 
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain = "") override;
+
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
 
@@ -2944,6 +3056,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                            CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
     CPLErr Delete(const char *pszName);
+    CPLErr Delete(GDALDataset *poDS, CSLConstList papszFileList);
     CPLErr Rename(const char *pszNewName, const char *pszOldName);
     CPLErr CopyFiles(const char *pszNewName, const char *pszOldName);
 
@@ -3228,7 +3341,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
  */
 // clang-format on
 
-class GDALPluginDriverProxy : public GDALDriver
+class GDALPluginDriverProxy final : public GDALDriver
 {
     const std::string m_osPluginFileName;
     std::string m_osPluginFullPath{};
@@ -3297,7 +3410,7 @@ class GDALPluginDriverProxy : public GDALDriver
  * this class.
  */
 
-class CPL_DLL GDALDriverManager : public GDALMajorObject
+class CPL_DLL GDALDriverManager final : public GDALMajorObject
 {
     int nDrivers = 0;
     GDALDriver **papoDrivers = nullptr;
@@ -3340,7 +3453,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
 
   public:
     GDALDriverManager();
-    ~GDALDriverManager();
+    ~GDALDriverManager() override;
 
     int GetDriverCount(void) const;
     GDALDriver *GetDriver(int);
@@ -3847,7 +3960,7 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     //! @endcond
 
   public:
-    virtual ~GDALGroup();
+    ~GDALGroup() override;
 
     /** Return the name of the group.
      *
@@ -4232,7 +4345,7 @@ class CPL_DLL GDALAttribute : virtual public GDALAbstractMDArray
 
   public:
     //! @cond Doxygen_Suppress
-    ~GDALAttribute();
+    ~GDALAttribute() override;
     //! @endcond
 
     std::vector<GUInt64> GetDimensionsSize() const;
@@ -4656,15 +4769,15 @@ bool GDALMDRasterIOFromBand(GDALRasterBand *poBand, GDALRWFlag eRWFlag,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-class CPL_DLL GDALMDArrayRegularlySpaced : public GDALMDArray
+class CPL_DLL GDALMDArrayRegularlySpaced final : public GDALMDArray
 {
-    double m_dfStart;
-    double m_dfIncrement;
-    double m_dfOffsetInIncrement;
-    GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Float64);
-    std::vector<std::shared_ptr<GDALDimension>> m_dims;
+    double m_dfStart = 0;
+    double m_dfIncrement = 0;
+    double m_dfOffsetInIncrement = 0;
+    const GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Float64);
+    const std::vector<std::shared_ptr<GDALDimension>> m_dims;
     std::vector<std::shared_ptr<GDALAttribute>> m_attributes{};
-    std::string m_osEmptyFilename{};
+    const std::string m_osEmptyFilename{};
 
   protected:
     bool IRead(const GUInt64 *, const size_t *, const GInt64 *,
@@ -5437,8 +5550,9 @@ inline bool ARE_REAL_EQUAL(double dfVal1, double dfVal2, int ulp = 2)
 {
     using std::abs;
     return dfVal1 == dfVal2 || /* Should cover infinity */
-           abs(dfVal1 - dfVal2) < std::numeric_limits<float>::epsilon() *
-                                      abs(dfVal1 + dfVal2) * ulp;
+           abs(dfVal1 - dfVal2) <
+               static_cast<double>(std::numeric_limits<float>::epsilon()) *
+                   abs(dfVal1 + dfVal2) * ulp;
 }
 
 double GDALAdjustNoDataCloseToFloatMax(double dfVal);

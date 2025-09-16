@@ -8,6 +8,12 @@
 General API
 ===========
 
+- `Configuration Management`_
+- `Data Type Information`_
+- `Error Handling`_
+- `File Management`_
+
+
 Configuration Management
 ------------------------
 
@@ -53,6 +59,24 @@ Configuration Management
 
 .. autofunction:: osgeo.gdal.VersionInfo
 
+Data Type Information
+---------------------
+
+.. autofunction:: osgeo.gdal.DataTypeIsComplex
+
+.. autofunction:: osgeo.gdal.DataTypeUnion
+
+.. autofunction:: osgeo.gdal.DataTypeUnionWithValue
+
+.. autofunction:: osgeo.gdal.GetDataTypeByName
+
+.. autofunction:: osgeo.gdal.GetDataTypeName
+
+.. autofunction:: osgeo.gdal.GetDataTypeSize
+
+.. autofunction:: osgeo.gdal.GetDataTypeSizeBits
+
+.. autofunction:: osgeo.gdal.GetDataTypeSizeBytes
 
 Error Handling
 --------------
@@ -84,6 +108,8 @@ Error Handling
 .. autofunction:: osgeo.gdal.PushErrorHandler
 
 .. autofunction:: osgeo.gdal.quiet_errors
+
+.. autofunction:: osgeo.gdal.quiet_warnings
 
 .. autofunction:: osgeo.gdal.SetCurrentErrorHandlerCatchDebug
 
@@ -119,6 +145,8 @@ Low level functions
 
 .. autofunction:: osgeo.gdal.CopyFile
 
+.. autofunction:: osgeo.gdal.CopyFileRestartable
+
 .. autoclass:: osgeo.gdal.DirEntry
    :members:
    :undoc-members:
@@ -137,6 +165,10 @@ Low level functions
 
 .. autofunction:: osgeo.gdal.MkdirRecursive
 
+.. autofunction:: osgeo.gdal.Move
+
+.. autofunction:: osgeo.gdal.MoveFile
+
 .. autofunction:: osgeo.gdal.OpenDir
 
 .. autofunction:: osgeo.gdal.ReadDir
@@ -150,6 +182,8 @@ Low level functions
 .. autofunction:: osgeo.gdal.RmdirRecursive
 
 .. autofunction:: osgeo.gdal.SetFileMetadata
+
+.. autofunction:: osgeo.gdal.Sync
 
 .. autofunction:: osgeo.gdal.Unlink
 

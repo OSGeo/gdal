@@ -148,15 +148,15 @@ class TerragenDataset final : public GDALPamDataset
 
   public:
     TerragenDataset();
-    virtual ~TerragenDataset();
+    ~TerragenDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
                                char **papszOptions);
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
@@ -200,20 +200,20 @@ class TerragenRasterBand final : public GDALPamRasterBand
   public:
     explicit TerragenRasterBand(TerragenDataset *);
 
-    virtual ~TerragenRasterBand()
+    ~TerragenRasterBand() override
     {
         if (m_pvLine != nullptr)
             CPLFree(m_pvLine);
     }
 
     // Geomeasure support.
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual const char *GetUnitType() override;
-    virtual double GetOffset(int *pbSuccess = nullptr) override;
-    virtual double GetScale(int *pbSuccess = nullptr) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    const char *GetUnitType() override;
+    double GetOffset(int *pbSuccess = nullptr) override;
+    double GetScale(int *pbSuccess = nullptr) override;
 
-    virtual CPLErr IWriteBlock(int, int, void *) override;
-    virtual CPLErr SetUnitType(const char *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr SetUnitType(const char *) override;
 };
 
 /************************************************************************/

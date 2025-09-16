@@ -65,17 +65,17 @@ class OGRDWGBlocksLayer final : public OGRLayer
 
   public:
     explicit OGRDWGBlocksLayer(OGRDWGDataSource *poDS);
-    ~OGRDWGBlocksLayer();
+    ~OGRDWGBlocksLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRFeature *GetNextUnfilteredFeature();
 
@@ -129,17 +129,17 @@ class OGRDWGLayer final : public OGRLayer
 
   public:
     explicit OGRDWGLayer(OGRDWGDataSource *poDS);
-    ~OGRDWGLayer();
+    ~OGRDWGLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRFeature *GetNextUnfilteredFeature();
 
@@ -181,7 +181,7 @@ class OGRDWGDataSource final : public GDALDataset
 
   public:
     OGRDWGDataSource();
-    ~OGRDWGDataSource();
+    ~OGRDWGDataSource() override;
 
     OdDbDatabasePtr GetDB()
     {
@@ -191,12 +191,12 @@ class OGRDWGDataSource final : public GDALDataset
     int Open(OGRDWGServices *poServices, const char *pszFilename,
              int bHeaderOnly = FALSE);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     // The following is only used by OGRDWGLayer
 

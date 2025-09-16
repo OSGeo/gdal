@@ -27,13 +27,13 @@ namespace PCIDSK
     /*                            CPCIDSKGeoref                             */
     /************************************************************************/
 
-    class CPCIDSKGeoref : virtual public CPCIDSKSegment,
+    class CPCIDSKGeoref final : virtual public CPCIDSKSegment,
                           public PCIDSKGeoref
     {
     public:
         CPCIDSKGeoref( PCIDSKFile *file, int segment,const char *segment_pointer );
 
-        virtual     ~CPCIDSKGeoref();
+        ~CPCIDSKGeoref() override;
 
         // PCIDSKSegment
 

@@ -164,8 +164,8 @@ GDALDataset *GDALGeoLocDatasetAccessors::GetBackmapDataset()
 {
     auto poBandX = m_poBackmapTmpDataset->GetRasterBand(1);
     auto poBandY = m_poBackmapTmpDataset->GetRasterBand(2);
-    poBandX->SetNoDataValue(INVALID_BMXY);
-    poBandY->SetNoDataValue(INVALID_BMXY);
+    poBandX->SetNoDataValue(double(INVALID_BMXY));
+    poBandY->SetNoDataValue(double(INVALID_BMXY));
     return m_poBackmapTmpDataset;
 }
 

@@ -76,6 +76,14 @@ Standard options
 
     Remove metadata item, at the layer level.
 
+.. option:: --unset-fid
+
+    .. versionadded:: 3.12
+
+    Can be specified to prevent the name of the source FID column and source
+    feature IDs from being reused for the target layer. This option can for
+    example be useful if selecting source features with a ORDER BY clause.
+
 
 Advanced options
 ++++++++++++++++

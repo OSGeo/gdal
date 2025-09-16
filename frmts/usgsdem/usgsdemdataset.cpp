@@ -297,7 +297,7 @@ class USGSDEMDataset final : public GDALPamDataset
 
   public:
     USGSDEMDataset();
-    ~USGSDEMDataset();
+    ~USGSDEMDataset() override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -318,9 +318,9 @@ class USGSDEMRasterBand final : public GDALPamRasterBand
   public:
     explicit USGSDEMRasterBand(USGSDEMDataset *);
 
-    virtual const char *GetUnitType() override;
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    const char *GetUnitType() override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/

@@ -75,86 +75,89 @@ struct test_ogr_shape : public ::testing::Test
         if (drv_ == nullptr)
         {
             GTEST_SKIP() << "ESRI Shapefile driver missing";
-            return;
         }
-
-        test_name_ =
-            ::testing::UnitTest::GetInstance()->current_test_info()->name();
-
-        OGRErr err = OGRERR_NONE;
-
-        OGRDataSourceH ds = nullptr;
-        ds = OGR_Dr_CreateDataSource(drv_, data_tmp_.c_str(), nullptr);
-        ASSERT_TRUE(nullptr != ds);
-
-        // Create memory Layer
-        OGRLayerH lyr = nullptr;
-        lyr = OGR_DS_CreateLayer(ds, test_name_, nullptr, wkbPolygon, nullptr);
-        EXPECT_TRUE(nullptr != lyr);
-        if (lyr == nullptr)
+        else
         {
-            OGR_DS_Destroy(ds);
-            return;
-        }
+            test_name_ =
+                ::testing::UnitTest::GetInstance()->current_test_info()->name();
 
-        // Create schema
-        OGRFieldDefnH fld = nullptr;
+            OGRErr err = OGRERR_NONE;
 
-        fld = OGR_Fld_Create("AREA", OFTReal);
-        err = OGR_L_CreateField(lyr, fld, true);
-        OGR_Fld_Destroy(fld);
-        EXPECT_EQ(OGRERR_NONE, err);
+            OGRDataSourceH ds = nullptr;
+            ds = OGR_Dr_CreateDataSource(drv_, data_tmp_.c_str(), nullptr);
+            ASSERT_TRUE(nullptr != ds);
 
-        fld = OGR_Fld_Create("EAS_ID", OFTInteger);
-        err = OGR_L_CreateField(lyr, fld, true);
-        OGR_Fld_Destroy(fld);
-        EXPECT_EQ(OGRERR_NONE, err);
-
-        fld = OGR_Fld_Create("PRFEDEA", OFTString);
-        err = OGR_L_CreateField(lyr, fld, true);
-        OGR_Fld_Destroy(fld);
-        EXPECT_EQ(OGRERR_NONE, err);
-
-        // Check schema
-        OGRFeatureDefnH featDefn = OGR_L_GetLayerDefn(lyr);
-        ASSERT_TRUE(nullptr != featDefn);
-        EXPECT_EQ(3, OGR_FD_GetFieldCount(featDefn));
-
-        // Copy ogr/poly.shp to temporary layer
-        OGRFeatureH featDst = OGR_F_Create(featDefn);
-        EXPECT_TRUE(nullptr != featDst);
-        if (featDst)
-        {
-            std::string source(data_);
-            source += SEP;
-            source += "poly.shp";
-            OGRDataSourceH dsSrc = OGR_Dr_Open(drv_, source.c_str(), false);
-            EXPECT_TRUE(nullptr != dsSrc);
-            if (dsSrc)
+            // Create memory Layer
+            OGRLayerH lyr = nullptr;
+            lyr = OGR_DS_CreateLayer(ds, test_name_, nullptr, wkbPolygon,
+                                     nullptr);
+            EXPECT_TRUE(nullptr != lyr);
+            if (lyr == nullptr)
             {
-                OGRLayerH lyrSrc = OGR_DS_GetLayer(dsSrc, 0);
-                EXPECT_TRUE(nullptr != lyrSrc);
-                if (lyrSrc)
-                {
-                    OGRFeatureH featSrc = nullptr;
-                    while (nullptr != (featSrc = OGR_L_GetNextFeature(lyrSrc)))
-                    {
-                        err = OGR_F_SetFrom(featDst, featSrc, true);
-                        EXPECT_EQ(OGRERR_NONE, err);
-
-                        err = OGR_L_CreateFeature(lyr, featDst);
-                        EXPECT_EQ(OGRERR_NONE, err);
-
-                        OGR_F_Destroy(featSrc);
-                    }
-                }
-                // Release and close resources
-
-                OGR_DS_Destroy(dsSrc);
+                OGR_DS_Destroy(ds);
+                return;
             }
-            OGR_F_Destroy(featDst);
+
+            // Create schema
+            OGRFieldDefnH fld = nullptr;
+
+            fld = OGR_Fld_Create("AREA", OFTReal);
+            err = OGR_L_CreateField(lyr, fld, true);
+            OGR_Fld_Destroy(fld);
+            EXPECT_EQ(OGRERR_NONE, err);
+
+            fld = OGR_Fld_Create("EAS_ID", OFTInteger);
+            err = OGR_L_CreateField(lyr, fld, true);
+            OGR_Fld_Destroy(fld);
+            EXPECT_EQ(OGRERR_NONE, err);
+
+            fld = OGR_Fld_Create("PRFEDEA", OFTString);
+            err = OGR_L_CreateField(lyr, fld, true);
+            OGR_Fld_Destroy(fld);
+            EXPECT_EQ(OGRERR_NONE, err);
+
+            // Check schema
+            OGRFeatureDefnH featDefn = OGR_L_GetLayerDefn(lyr);
+            ASSERT_TRUE(nullptr != featDefn);
+            EXPECT_EQ(3, OGR_FD_GetFieldCount(featDefn));
+
+            // Copy ogr/poly.shp to temporary layer
+            OGRFeatureH featDst = OGR_F_Create(featDefn);
+            EXPECT_TRUE(nullptr != featDst);
+            if (featDst)
+            {
+                std::string source(data_);
+                source += SEP;
+                source += "poly.shp";
+                OGRDataSourceH dsSrc = OGR_Dr_Open(drv_, source.c_str(), false);
+                EXPECT_TRUE(nullptr != dsSrc);
+                if (dsSrc)
+                {
+                    OGRLayerH lyrSrc = OGR_DS_GetLayer(dsSrc, 0);
+                    EXPECT_TRUE(nullptr != lyrSrc);
+                    if (lyrSrc)
+                    {
+                        OGRFeatureH featSrc = nullptr;
+                        while (nullptr !=
+                               (featSrc = OGR_L_GetNextFeature(lyrSrc)))
+                        {
+                            err = OGR_F_SetFrom(featDst, featSrc, true);
+                            EXPECT_EQ(OGRERR_NONE, err);
+
+                            err = OGR_L_CreateFeature(lyr, featDst);
+                            EXPECT_EQ(OGRERR_NONE, err);
+
+                            OGR_F_Destroy(featSrc);
+                        }
+                    }
+                    // Release and close resources
+
+                    OGR_DS_Destroy(dsSrc);
+                }
+                OGR_F_Destroy(featDst);
+            }
+            OGR_DS_Destroy(ds);
         }
-        OGR_DS_Destroy(ds);
     }
 };
 

@@ -28,14 +28,14 @@ Common metadata (from metadata filename):
     AcquisitionDateTime: IMAGING_DATE, IMAGING_TIME
 */
 
-class GDALMDReaderSpot : public GDALMDReaderPleiades
+class GDALMDReaderSpot final : public GDALMDReaderPleiades
 {
   public:
-    GDALMDReaderSpot(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderSpot();
+    GDALMDReaderSpot(const char *pszPath, CSLConstList papszSiblingFiles);
+    ~GDALMDReaderSpot() override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
     virtual char **ReadXMLToList(CPLXMLNode *psNode, char **papszList,
                                  const char *pszName = "") override;
 };

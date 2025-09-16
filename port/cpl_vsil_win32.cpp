@@ -50,38 +50,35 @@ class VSIWin32FilesystemHandler final : public VSIFilesystemHandler
     CPL_DISALLOW_COPY_ASSIGN(VSIWin32FilesystemHandler)
 
   public:
-    // TODO(schwehr): Fix Open call to remove the need for this using call.
-    using VSIFilesystemHandler::Open;
-
     VSIWin32FilesystemHandler() = default;
 
-    virtual VSIVirtualHandle *Open(const char *pszFilename,
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
                                    const char *pszAccess, bool bSetError,
                                    CSLConstList /* papszOptions */) override;
 
-    VSIVirtualHandle *
+    VSIVirtualHandleUniquePtr
     CreateOnlyVisibleAtCloseTime(const char *pszFilename,
                                  bool bEmulationAllowed,
                                  CSLConstList papszOptions) override;
 
     virtual int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
                      int nFlags) override;
-    virtual int Unlink(const char *pszFilename) override;
+    int Unlink(const char *pszFilename) override;
     virtual int Rename(const char *oldpath, const char *newpath,
                        GDALProgressFunc, void *) override;
-    virtual int Mkdir(const char *pszDirname, long nMode) override;
-    virtual int Rmdir(const char *pszDirname) override;
-    virtual char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
+    int Mkdir(const char *pszDirname, long nMode) override;
+    int Rmdir(const char *pszDirname) override;
+    char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
 
-    virtual int IsCaseSensitive(const char *pszFilename) override
+    int IsCaseSensitive(const char *pszFilename) override
     {
         (void)pszFilename;
         return FALSE;
     }
 
-    virtual GIntBig GetDiskFreeSpace(const char *pszDirname) override;
-    virtual int SupportsSparseFiles(const char *pszPath) override;
-    virtual bool IsLocal(const char *pszPath) override;
+    GIntBig GetDiskFreeSpace(const char *pszDirname) override;
+    int SupportsSparseFiles(const char *pszPath) override;
+    bool IsLocal(const char *pszPath) const override;
     std::string
     GetCanonicalFilename(const std::string &osFilename) const override;
 
@@ -118,6 +115,7 @@ class VSIWin32Handle final : public VSIVirtualHandle
     bool m_bWriteThrough = false;
 
     bool m_bCancelCreation = false;
+    std::string m_osFilename{};
     std::string m_osFilenameToSetAtCloseTime{};
 
     VSIWin32Handle() = default;
@@ -351,8 +349,17 @@ int VSIWin32Handle::Close()
         ret = ret2;
     hFile = nullptr;
 
-    if (m_bCancelCreation && !m_osFilenameToSetAtCloseTime.empty())
-        VSIUnlink(m_osFilenameToSetAtCloseTime.c_str());
+    if (m_bCancelCreation && m_osFilenameToSetAtCloseTime.empty())
+        ret = VSIUnlink(m_osFilename.c_str());
+    else if (m_bCancelCreation && !m_osFilenameToSetAtCloseTime.empty())
+    {
+        ret = VSIUnlink((m_osFilenameToSetAtCloseTime + ".tmp_hidden").c_str());
+        VSIStatBufL sStatBuf;
+        if (ret != 0 &&
+            VSIStatL((m_osFilenameToSetAtCloseTime + ".tmp_hidden").c_str(),
+                     &sStatBuf) != 0)
+            ret = 0;
+    }
 
     return ret;
 }
@@ -795,10 +802,9 @@ static bool VSIWin32IsLongFilename(const wchar_t *pwszFilename)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSIWin32FilesystemHandler::Open(const char *pszFilename,
-                                                  const char *pszAccess,
-                                                  bool bSetError,
-                                                  CSLConstList papszOptions)
+VSIVirtualHandleUniquePtr
+VSIWin32FilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
+                                bool bSetError, CSLConstList papszOptions)
 
 {
     DWORD dwDesiredAccess;
@@ -965,9 +971,10 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Create a VSI file handle.                                       */
     /* -------------------------------------------------------------------- */
-    VSIWin32Handle *poHandle = new VSIWin32Handle;
+    auto poHandle = std::make_unique<VSIWin32Handle>();
 
     poHandle->hFile = hFile;
+    poHandle->m_osFilename = pszFilename;
     poHandle->m_bWriteThrough = bWriteThrough;
 
     if (strchr(pszAccess, 'a') != nullptr)
@@ -980,12 +987,11 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open(const char *pszFilename,
     if ((EQUAL(pszAccess, "r") || EQUAL(pszAccess, "rb")) &&
         CPLTestBool(CPLGetConfigOption("VSI_CACHE", "FALSE")))
     {
-        return VSICreateCachedFile(poHandle);
+        return VSIVirtualHandleUniquePtr(
+            VSICreateCachedFile(poHandle.release()));
     }
-    else
-    {
-        return poHandle;
-    }
+
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/
@@ -1072,7 +1078,8 @@ static bool IsPathNTFS(const char *pszPath)
 /*                      CreateOnlyVisibleAtCloseTime()                  */
 /************************************************************************/
 
-VSIVirtualHandle *VSIWin32FilesystemHandler::CreateOnlyVisibleAtCloseTime(
+VSIVirtualHandleUniquePtr
+VSIWin32FilesystemHandler::CreateOnlyVisibleAtCloseTime(
     const char *pszFilename, bool bEmulationAllowed, CSLConstList papszOptions)
 {
     typedef NTSTATUS(WINAPI * CPLNtCreateFile_t)(
@@ -1207,13 +1214,14 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::CreateOnlyVisibleAtCloseTime(
                 break;
             }
 
-            VSIWin32Handle *poHandle = new VSIWin32Handle;
+            auto poHandle = std::make_unique<VSIWin32Handle>();
 
             poHandle->hFile = hFile;
             poHandle->m_bWriteThrough = bWriteThrough;
+            poHandle->m_osFilename = pszFilename;
             poHandle->m_osFilenameToSetAtCloseTime = osFullFilename;
 
-            return poHandle;
+            return VSIVirtualHandleUniquePtr(poHandle.release());
 
         } while (false);
     }
@@ -1273,7 +1281,7 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
         // In that situation try a poor-man implementation with Open()
         if (nResult < 0 && VSIWin32IsLongFilename(pwszFilename))
         {
-            VSIVirtualHandle *poHandle = Open(pszFilename, "rb");
+            auto poHandle = Open(pszFilename, "rb", false, nullptr);
             if (poHandle != nullptr)
             {
                 nResult = 0;
@@ -1281,8 +1289,6 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
                 CPL_IGNORE_RET_VAL(poHandle->Seek(0, SEEK_END));
                 pStatBuf->st_mode = S_IFREG;
                 pStatBuf->st_size = poHandle->Tell();
-                poHandle->Close();
-                delete poHandle;
             }
             else
                 nResult = -1;
@@ -1755,7 +1761,7 @@ int VSIWin32FilesystemHandler::SupportsSparseFiles(const char *pszPath)
 /*                          IsLocal()                                   */
 /************************************************************************/
 
-bool VSIWin32FilesystemHandler::IsLocal(const char *pszPath)
+bool VSIWin32FilesystemHandler::IsLocal(const char *pszPath) const
 {
     if (STARTS_WITH(pszPath, "\\\\") || STARTS_WITH(pszPath, "//"))
         return false;

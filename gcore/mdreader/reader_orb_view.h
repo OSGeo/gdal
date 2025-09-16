@@ -28,16 +28,16 @@ Common metadata (from metadata filename):
     CloudCover:          productInfo.productCloudCoverPercentage
     AcquisitionDateTime: inputImageInfo.firstLineAcquisitionDateTime
 */
-class GDALMDReaderOrbView : public GDALMDReaderBase
+class GDALMDReaderOrbView final : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderOrbView(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderOrbView();
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    GDALMDReaderOrbView(const char *pszPath, CSLConstList papszSiblingFiles);
+    ~GDALMDReaderOrbView() override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
 
   protected:
     CPLString m_osIMDSourceFilename{};

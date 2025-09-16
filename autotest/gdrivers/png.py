@@ -13,7 +13,6 @@
 ###############################################################################
 
 import array
-import os
 
 import gdaltest
 import pytest
@@ -143,7 +142,7 @@ def test_png_7():
 # recovery from errors caused by reading broken file..
 
 
-def test_png_8():
+def test_png_8(tmp_path):
 
     drv = gdal.GetDriverByName("PNG")
     ds_src = gdal.Open("data/png/idat_broken.png")
@@ -166,15 +165,13 @@ def test_png_8():
     assert err != 0, "error condition expected"
 
     with gdal.quiet_errors():
-        ds_dst = drv.CreateCopy("tmp/idat_broken.png", ds_src)
+        ds_dst = drv.CreateCopy(tmp_path / "idat_broken.png", ds_src)
         err = gdal.GetLastErrorNo()
     ds_src = None
 
     assert err != 0, "error condition expected"
 
     assert ds_dst is None, "dataset not expected"
-
-    os.remove("tmp/idat_broken.png")
 
 
 ###############################################################################

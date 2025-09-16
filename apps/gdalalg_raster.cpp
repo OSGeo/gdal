@@ -19,9 +19,11 @@
 #include "gdalalg_raster_clean_collar.h"
 #include "gdalalg_raster_color_map.h"
 #include "gdalalg_raster_color_merge.h"
+#include "gdalalg_raster_compare.h"
 #include "gdalalg_raster_convert.h"
 #include "gdalalg_raster_create.h"
 #include "gdalalg_raster_edit.h"
+#include "gdalalg_raster_as_features.h"
 #include "gdalalg_raster_contour.h"
 #include "gdalalg_raster_footprint.h"
 #include "gdalalg_raster_fill_nodata.h"
@@ -78,20 +80,22 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         AddOutputStringArg(&m_output);
 
         RegisterSubAlgorithm<GDALRasterInfoAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALRasterAsFeaturesAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterAspectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCalcAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCleanCollarAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterClipAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterColorMapAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterColorMergeAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALRasterCompareAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterConvertAlgorithm>();
-        RegisterSubAlgorithm<GDALRasterClipAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCreateAlgorithm>();
         RegisterSubAlgorithm<GDALRasterEditAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterFootprintAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterHillshadeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterFillNodataAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterIndexAlgorithm>();
-        RegisterSubAlgorithm<GDALRasterOverviewAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterOverviewAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterPipelineAlgorithm>();
         RegisterSubAlgorithm<GDALRasterPixelInfoAlgorithm>();
         RegisterSubAlgorithm<GDALRasterProximityAlgorithmStandalone>();
@@ -111,7 +115,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterSieveAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterSlopeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterStackAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterTileAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterTileAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterTPIAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterTRIAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterUnscaleAlgorithmStandalone>();

@@ -28,10 +28,42 @@ OGRFeatherWriterDataset::OGRFeatherWriterDataset(
 }
 
 /************************************************************************/
+/*                     ~OGRFeatherWriterDataset()                       */
+/************************************************************************/
+
+OGRFeatherWriterDataset::~OGRFeatherWriterDataset()
+{
+    OGRFeatherWriterDataset::Close();
+}
+
+/************************************************************************/
+/*                                Close()                               */
+/************************************************************************/
+
+CPLErr OGRFeatherWriterDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (m_poLayer && !m_poLayer->Close())
+        {
+            eErr = CE_Failure;
+        }
+
+        if (GDALPamDataset::Close() != CE_None)
+        {
+            eErr = CE_Failure;
+        }
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int OGRFeatherWriterDataset::GetLayerCount()
+int OGRFeatherWriterDataset::GetLayerCount() const
 {
     return m_poLayer ? 1 : 0;
 }
@@ -40,7 +72,7 @@ int OGRFeatherWriterDataset::GetLayerCount()
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer *OGRFeatherWriterDataset::GetLayer(int idx)
+const OGRLayer *OGRFeatherWriterDataset::GetLayer(int idx) const
 {
     return idx == 0 ? m_poLayer.get() : nullptr;
 }
@@ -49,7 +81,7 @@ OGRLayer *OGRFeatherWriterDataset::GetLayer(int idx)
 /*                         TestCapability()                             */
 /************************************************************************/
 
-int OGRFeatherWriterDataset::TestCapability(const char *pszCap)
+int OGRFeatherWriterDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return m_poLayer == nullptr;

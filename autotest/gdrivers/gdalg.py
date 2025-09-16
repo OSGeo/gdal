@@ -467,13 +467,13 @@ def test_gdalg_missing_command_line():
 
 def test_gdalg_alg_does_not_support_streaming():
     with pytest.raises(
-        Exception, match="Algorithm add does not support a streamed output"
+        Exception, match="Algorithm delete does not support a streamed output"
     ):
         gdal.Open(
             json.dumps(
                 {
                     "type": "gdal_streamed_alg",
-                    "command_line": "gdal raster overview add data/byte.tif",
+                    "command_line": "gdal raster overview delete data/byte.tif",
                 }
             )
         )

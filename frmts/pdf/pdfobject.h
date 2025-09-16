@@ -91,7 +91,7 @@ class GDALPDFObjectNum
     }
 };
 
-class GDALPDFObject
+class GDALPDFObject /* non final */
 {
   protected:
     virtual const char *GetTypeNameNative() = 0;
@@ -137,7 +137,7 @@ class GDALPDFObject
     GDALPDFObjectRW *Clone();
 };
 
-class GDALPDFDictionary
+class GDALPDFDictionary /* non final */
 {
   public:
     virtual ~GDALPDFDictionary();
@@ -159,7 +159,7 @@ class GDALPDFDictionary
     GDALPDFDictionaryRW *Clone();
 };
 
-class GDALPDFArray
+class GDALPDFArray /* non final */
 {
   public:
     virtual ~GDALPDFArray();
@@ -179,7 +179,7 @@ class GDALPDFArray
     GDALPDFArrayRW *Clone();
 };
 
-class GDALPDFStream
+class GDALPDFStream /* non final */
 {
   public:
     virtual ~GDALPDFStream();
@@ -194,7 +194,7 @@ class GDALPDFStream
     virtual char *GetRawBytes() = 0;
 };
 
-class GDALPDFObjectRW : public GDALPDFObject
+class GDALPDFObjectRW final : public GDALPDFObject
 {
   private:
     const GDALPDFObjectType m_eType;
@@ -213,7 +213,7 @@ class GDALPDFObjectRW : public GDALPDFObject
     CPL_DISALLOW_COPY_ASSIGN(GDALPDFObjectRW)
 
   protected:
-    virtual const char *GetTypeNameNative() override;
+    const char *GetTypeNameNative() override;
 
   public:
     static GDALPDFObjectRW *CreateIndirect(const GDALPDFObjectNum &nNum,
@@ -229,33 +229,33 @@ class GDALPDFObjectRW : public GDALPDFObject
     static GDALPDFObjectRW *CreateName(const char *pszName);
     static GDALPDFObjectRW *CreateDictionary(GDALPDFDictionaryRW *poDict);
     static GDALPDFObjectRW *CreateArray(GDALPDFArrayRW *poArray);
-    virtual ~GDALPDFObjectRW();
+    ~GDALPDFObjectRW() override;
 
-    virtual GDALPDFObjectType GetType() override;
-    virtual int GetBool() override;
-    virtual int GetInt() override;
-    virtual double GetReal() override;
+    GDALPDFObjectType GetType() override;
+    int GetBool() override;
+    int GetInt() override;
+    double GetReal() override;
 
-    virtual int CanRepresentRealAsString() override
+    int CanRepresentRealAsString() override
     {
         return m_bCanRepresentRealAsString;
     }
 
-    virtual const CPLString &GetString() override;
-    virtual const CPLString &GetName() override;
-    virtual GDALPDFDictionary *GetDictionary() override;
-    virtual GDALPDFArray *GetArray() override;
-    virtual GDALPDFStream *GetStream() override;
-    virtual GDALPDFObjectNum GetRefNum() override;
-    virtual int GetRefGen() override;
+    const CPLString &GetString() override;
+    const CPLString &GetName() override;
+    GDALPDFDictionary *GetDictionary() override;
+    GDALPDFArray *GetArray() override;
+    GDALPDFStream *GetStream() override;
+    GDALPDFObjectNum GetRefNum() override;
+    int GetRefGen() override;
 
-    virtual int GetPrecision() const override
+    int GetPrecision() const override
     {
         return m_nPrecision;
     }
 };
 
-class GDALPDFDictionaryRW : public GDALPDFDictionary
+class GDALPDFDictionaryRW final : public GDALPDFDictionary
 {
   private:
     std::map<CPLString, GDALPDFObject *> m_map{};
@@ -264,10 +264,10 @@ class GDALPDFDictionaryRW : public GDALPDFDictionary
 
   public:
     GDALPDFDictionaryRW();
-    virtual ~GDALPDFDictionaryRW();
+    ~GDALPDFDictionaryRW() override;
 
-    virtual GDALPDFObject *Get(const char *pszKey) override;
-    virtual std::map<CPLString, GDALPDFObject *> &GetValues() override;
+    GDALPDFObject *Get(const char *pszKey) override;
+    std::map<CPLString, GDALPDFObject *> &GetValues() override;
 
     GDALPDFDictionaryRW &Add(const char *pszKey, GDALPDFObject *poVal);
     GDALPDFDictionaryRW &Remove(const char *pszKey);
@@ -306,7 +306,7 @@ class GDALPDFDictionaryRW : public GDALPDFDictionary
     }
 };
 
-class GDALPDFArrayRW : public GDALPDFArray
+class GDALPDFArrayRW final : public GDALPDFArray
 {
   private:
     std::vector<GDALPDFObject *> m_array{};
@@ -315,10 +315,10 @@ class GDALPDFArrayRW : public GDALPDFArray
 
   public:
     GDALPDFArrayRW();
-    virtual ~GDALPDFArrayRW();
+    ~GDALPDFArrayRW() override;
 
-    virtual int GetLength() override;
-    virtual GDALPDFObject *Get(int nIndex) override;
+    int GetLength() override;
+    GDALPDFObject *Get(int nIndex) override;
 
     GDALPDFArrayRW &Add(GDALPDFObject *poObj);
 
@@ -364,7 +364,7 @@ class GDALPDFArrayRW : public GDALPDFArray
 
 #ifdef HAVE_POPPLER
 
-class GDALPDFObjectPoppler : public GDALPDFObject
+class GDALPDFObjectPoppler final : public GDALPDFObject
 {
   private:
     Object *m_poToDestroy;
@@ -379,7 +379,7 @@ class GDALPDFObjectPoppler : public GDALPDFObject
     CPL_DISALLOW_COPY_ASSIGN(GDALPDFObjectPoppler)
 
   protected:
-    virtual const char *GetTypeNameNative() override;
+    const char *GetTypeNameNative() override;
 
   public:
     GDALPDFObjectPoppler(Object *po, bool bDestroy)
@@ -394,19 +394,19 @@ class GDALPDFObjectPoppler : public GDALPDFObject
 
     void SetRefNumAndGen(const GDALPDFObjectNum &nNum, int nGen);
 
-    virtual ~GDALPDFObjectPoppler();
+    ~GDALPDFObjectPoppler() override;
 
-    virtual GDALPDFObjectType GetType() override;
-    virtual int GetBool() override;
-    virtual int GetInt() override;
-    virtual double GetReal() override;
-    virtual const std::string &GetString() override;
-    virtual const std::string &GetName() override;
-    virtual GDALPDFDictionary *GetDictionary() override;
-    virtual GDALPDFArray *GetArray() override;
-    virtual GDALPDFStream *GetStream() override;
-    virtual GDALPDFObjectNum GetRefNum() override;
-    virtual int GetRefGen() override;
+    GDALPDFObjectType GetType() override;
+    int GetBool() override;
+    int GetInt() override;
+    double GetReal() override;
+    const std::string &GetString() override;
+    const std::string &GetName() override;
+    GDALPDFDictionary *GetDictionary() override;
+    GDALPDFArray *GetArray() override;
+    GDALPDFStream *GetStream() override;
+    GDALPDFObjectNum GetRefNum() override;
+    int GetRefGen() override;
 };
 
 GDALPDFArray *GDALPDFCreateArray(const Array *array);
@@ -415,7 +415,7 @@ GDALPDFArray *GDALPDFCreateArray(const Array *array);
 
 #ifdef HAVE_PODOFO
 
-class GDALPDFObjectPodofo : public GDALPDFObject
+class GDALPDFObjectPodofo final : public GDALPDFObject
 {
   private:
     const PoDoFo::PdfObject *m_po;
@@ -428,32 +428,32 @@ class GDALPDFObjectPodofo : public GDALPDFObject
     CPL_DISALLOW_COPY_ASSIGN(GDALPDFObjectPodofo)
 
   protected:
-    virtual const char *GetTypeNameNative() override;
+    const char *GetTypeNameNative() override;
 
   public:
     GDALPDFObjectPodofo(const PoDoFo::PdfObject *po,
                         const PoDoFo::PdfVecObjects &poObjects);
 
-    virtual ~GDALPDFObjectPodofo();
+    ~GDALPDFObjectPodofo() override;
 
-    virtual GDALPDFObjectType GetType() override;
-    virtual int GetBool() override;
-    virtual int GetInt() override;
-    virtual double GetReal() override;
-    virtual const std::string &GetString() override;
-    virtual const std::string &GetName() override;
-    virtual GDALPDFDictionary *GetDictionary() override;
-    virtual GDALPDFArray *GetArray() override;
-    virtual GDALPDFStream *GetStream() override;
-    virtual GDALPDFObjectNum GetRefNum() override;
-    virtual int GetRefGen() override;
+    GDALPDFObjectType GetType() override;
+    int GetBool() override;
+    int GetInt() override;
+    double GetReal() override;
+    const std::string &GetString() override;
+    const std::string &GetName() override;
+    GDALPDFDictionary *GetDictionary() override;
+    GDALPDFArray *GetArray() override;
+    GDALPDFStream *GetStream() override;
+    GDALPDFObjectNum GetRefNum() override;
+    int GetRefGen() override;
 };
 
 #endif  // HAVE_PODOFO
 
 #ifdef HAVE_PDFIUM
 
-class GDALPDFObjectPdfium : public GDALPDFObject
+class GDALPDFObjectPdfium final : public GDALPDFObject
 {
   private:
     RetainPtr<const CPDF_Object> m_obj;
@@ -467,24 +467,24 @@ class GDALPDFObjectPdfium : public GDALPDFObject
     CPL_DISALLOW_COPY_ASSIGN(GDALPDFObjectPdfium)
 
   protected:
-    virtual const char *GetTypeNameNative() override;
+    const char *GetTypeNameNative() override;
 
   public:
     static GDALPDFObjectPdfium *Build(RetainPtr<const CPDF_Object> obj);
 
-    virtual ~GDALPDFObjectPdfium();
+    ~GDALPDFObjectPdfium() override;
 
-    virtual GDALPDFObjectType GetType() override;
-    virtual int GetBool() override;
-    virtual int GetInt() override;
-    virtual double GetReal() override;
-    virtual const std::string &GetString() override;
-    virtual const std::string &GetName() override;
-    virtual GDALPDFDictionary *GetDictionary() override;
-    virtual GDALPDFArray *GetArray() override;
-    virtual GDALPDFStream *GetStream() override;
-    virtual GDALPDFObjectNum GetRefNum() override;
-    virtual int GetRefGen() override;
+    GDALPDFObjectType GetType() override;
+    int GetBool() override;
+    int GetInt() override;
+    double GetReal() override;
+    const std::string &GetString() override;
+    const std::string &GetName() override;
+    GDALPDFDictionary *GetDictionary() override;
+    GDALPDFArray *GetArray() override;
+    GDALPDFStream *GetStream() override;
+    GDALPDFObjectNum GetRefNum() override;
+    int GetRefGen() override;
 };
 
 #endif  // HAVE_PDFIUM

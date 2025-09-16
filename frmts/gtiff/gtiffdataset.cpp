@@ -981,9 +981,10 @@ void GTiffDataset::RestoreVolatileParameters(TIFF *hTIFF)
             TIFFSetField(hTIFF, TIFFTAG_JXL_LOSSYNESS,
                          m_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
             TIFFSetField(hTIFF, TIFFTAG_JXL_EFFORT, m_nJXLEffort);
-            TIFFSetField(hTIFF, TIFFTAG_JXL_DISTANCE, m_fJXLDistance);
+            TIFFSetField(hTIFF, TIFFTAG_JXL_DISTANCE,
+                         static_cast<double>(m_fJXLDistance));
             TIFFSetField(hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE,
-                         m_fJXLAlphaDistance);
+                         static_cast<double>(m_fJXLAlphaDistance));
         }
 #endif
     }
@@ -1170,6 +1171,24 @@ void GTiffDataset::ScanDirectories()
                     // poODS->m_nZLevel = m_nZLevel;
                     // poODS->m_nLZMAPreset = m_nLZMAPreset;
                     // poODS->m_nZSTDLevel = m_nZSTDLevel;
+
+                    if (const char *pszOverviewResampling =
+                            m_oGTiffMDMD.GetMetadataItem("OVERVIEW_RESAMPLING",
+                                                         "IMAGE_STRUCTURE"))
+                    {
+                        for (int iBand = 1; iBand <= poODS->GetRasterCount();
+                             ++iBand)
+                        {
+                            auto poOBand = cpl::down_cast<GTiffRasterBand *>(
+                                poODS->GetRasterBand(iBand));
+                            if (poOBand->GetMetadataItem("RESAMPLING") ==
+                                nullptr)
+                            {
+                                poOBand->m_oGTiffMDMD.SetMetadataItem(
+                                    "RESAMPLING", pszOverviewResampling);
+                            }
+                        }
+                    }
                 }
             }
             // Embedded mask of the main image.

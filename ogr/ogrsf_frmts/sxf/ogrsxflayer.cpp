@@ -261,8 +261,12 @@ bool OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode,
 
 OGRErr OGRSXFLayer::SetNextByIndex(GIntBig nIndex)
 {
+    m_bEOF = false;
     if (nIndex < 0 || nIndex > (long)mnRecordDesc.size())
-        return OGRERR_FAILURE;
+    {
+        m_bEOF = true;
+        return OGRERR_NON_EXISTING_FEATURE;
+    }
 
     oNextIt = mnRecordDesc.begin();
     std::advance(oNextIt, static_cast<size_t>(nIndex));
@@ -297,7 +301,7 @@ OGRFeature *OGRSXFLayer::GetFeature(GIntBig nFID)
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRSXFLayer::GetSpatialRef()
+const OGRSpatialReference *OGRSXFLayer::GetSpatialRef() const
 {
     return stSXFMapDescription.pSpatRef;
 }
@@ -343,6 +347,7 @@ GIntBig OGRSXFLayer::GetFeatureCount(int bForce)
 void OGRSXFLayer::ResetReading()
 
 {
+    m_bEOF = false;
     oNextIt = mnRecordDesc.begin();
 }
 
@@ -352,6 +357,8 @@ void OGRSXFLayer::ResetReading()
 
 OGRFeature *OGRSXFLayer::GetNextFeature()
 {
+    if (m_bEOF)
+        return nullptr;
     CPLMutexHolderD(m_hIOMutex);
     while (oNextIt != mnRecordDesc.end())
     {
@@ -386,7 +393,7 @@ OGRFeature *OGRSXFLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSXFLayer::TestCapability(const char *pszCap)
+int OGRSXFLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8) &&
@@ -1631,7 +1638,7 @@ OGRFeature *OGRSXFLayer::TranslateText(const SXFRecordDescription &certifInfo,
     return poFeature;
 }
 
-const char *OGRSXFLayer::GetFIDColumn()
+const char *OGRSXFLayer::GetFIDColumn() const
 {
     return sFIDColumn_.c_str();
 }

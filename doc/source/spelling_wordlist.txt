@@ -297,6 +297,8 @@ buildbot
 Buildbot
 BuildVRT
 BuildVRTOptions
+bulleted
+Bulleted
 bumpmap
 BUnits
 bUnlinkAndSeize
@@ -928,6 +930,7 @@ ForceTo
 forceToMultiPolygon
 forecolor
 Foris
+formatter
 formatters
 formly
 Fortran
@@ -1140,6 +1143,7 @@ GetFieldAsDateTime
 GetFieldCount
 GetFieldDefn
 GetFieldSubTypeName
+GetFileList
 GetGeomFieldCount
 GetGeomFieldDefn
 GetLayerDefn
@@ -1205,6 +1209,7 @@ gnot
 Gohlke
 Golang
 Golomb
+Goode
 goog
 googleapis
 gpkg
@@ -1255,6 +1260,7 @@ gz
 gzip
 GZip
 gzipped
+Hadoop
 Haff
 Halasz
 hana
@@ -1846,6 +1852,7 @@ Mollweide
 Mongo
 MONGOCXX
 mongocxxv
+MongoDB
 monoblock
 Monospace
 Morissette
@@ -1891,6 +1898,7 @@ multilines
 multilinestring
 multilinestrings
 Multipage
+multipart
 multipatch
 Multiplatform
 multipoint
@@ -2590,6 +2598,7 @@ precompiled
 precompute
 predefine
 predelete
+preinstalled
 prelimenary
 preload
 premultiplication
@@ -2760,6 +2769,7 @@ rasterize
 Rasterize
 rasterized
 RasterizeOptions
+rasterizes
 rasterizing
 rasterlite
 Rasterlite

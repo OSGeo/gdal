@@ -42,18 +42,23 @@ class WEBPDataset final : public GDALPamDataset
 
     CPL_DISALLOW_COPY_ASSIGN(WEBPDataset)
 
+    CPLErr GetGeoTransform(GDALGeoTransform &gt,
+                           std::string &osWorldFilename) const;
+
   public:
     WEBPDataset();
-    virtual ~WEBPDataset();
+    ~WEBPDataset() override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, BANDMAP_TYPE,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    char **GetFileList() override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, int, BANDMAP_TYPE, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
+
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
 
     CPLStringList GetCompressionFormats(int nXOff, int nYOff, int nXSize,
                                         int nYSize, int nBandCount,
@@ -86,8 +91,8 @@ class WEBPRasterBand final : public GDALPamRasterBand
   public:
     WEBPRasterBand(WEBPDataset *, int);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    CPLErr IReadBlock(int, int, void *) override;
+    GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/
@@ -172,6 +177,54 @@ WEBPDataset::~WEBPDataset()
     if (fpImage)
         VSIFCloseL(fpImage);
     VSIFree(pabyUncompressed);
+}
+
+/************************************************************************/
+/*                               GetFileList()                          */
+/************************************************************************/
+
+char **WEBPDataset::GetFileList()
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+    GDALGeoTransform gt;
+    std::string osWorldFilename;
+    CPL_IGNORE_RET_VAL(GetGeoTransform(gt, osWorldFilename));
+    if (!osWorldFilename.empty())
+    {
+        papszFileList = CSLAddString(papszFileList, osWorldFilename.c_str());
+    }
+    return papszFileList;
+}
+
+/************************************************************************/
+/*                            GetGeoTransform()                         */
+/************************************************************************/
+
+CPLErr WEBPDataset::GetGeoTransform(GDALGeoTransform &gt) const
+{
+    std::string osWorldFilename;
+    return GetGeoTransform(gt, osWorldFilename);
+}
+
+CPLErr WEBPDataset::GetGeoTransform(GDALGeoTransform &gt,
+                                    std::string &osWorldFilename) const
+{
+    bool bGeoTransformValid = GDALPamDataset::GetGeoTransform(gt) == CE_None;
+    if (!bGeoTransformValid)
+    {
+        char *pszWldFilename = nullptr;
+        bGeoTransformValid =
+            GDALReadWorldFile2(GetDescription(), ".wld", gt,
+                               oOvManager.GetSiblingFiles(), &pszWldFilename) ||
+            GDALReadWorldFile2(GetDescription(), ".wpw", gt,
+                               oOvManager.GetSiblingFiles(), &pszWldFilename) ||
+            GDALReadWorldFile2(GetDescription(), ".webpw", gt,
+                               oOvManager.GetSiblingFiles(), &pszWldFilename);
+        if (bGeoTransformValid)
+            osWorldFilename = pszWldFilename;
+        CPLFree(pszWldFilename);
+    }
+    return bGeoTransformValid ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -697,14 +750,14 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
 
             if (!abyData.empty())
             {
-                VSIVirtualHandleUniquePtr fpImage(
+                auto fpImage(
                     CPLTestBool(CSLFetchNameValueDef(
                         papszOptions, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME",
                         "NO"))
                         ? VSIFileManager::GetHandler(pszFilename)
                               ->CreateOnlyVisibleAtCloseTime(pszFilename, true,
                                                              nullptr)
-                        : VSIFOpenL(pszFilename, "wb"));
+                        : VSIFilesystemHandler::OpenStatic(pszFilename, "wb"));
                 if (fpImage == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_OpenFailed,
@@ -929,12 +982,12 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Create the dataset.                                             */
     /* -------------------------------------------------------------------- */
-    VSIVirtualHandleUniquePtr fpImage(
+    auto fpImage(
         CPLTestBool(CSLFetchNameValueDef(
             papszOptions, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME", "NO"))
             ? VSIFileManager::GetHandler(pszFilename)
                   ->CreateOnlyVisibleAtCloseTime(pszFilename, true, nullptr)
-            : VSIFOpenL(pszFilename, "wb"));
+            : VSIFilesystemHandler::OpenStatic(pszFilename, "wb"));
     if (fpImage == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
@@ -1082,6 +1135,14 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     {
         VSIUnlink(pszFilename);
         return nullptr;
+    }
+
+    // Do we need a world file?
+    if (CPLFetchBool(papszOptions, "WORLDFILE", false))
+    {
+        GDALGeoTransform gt;
+        poSrcDS->GetGeoTransform(gt);
+        GDALWriteWorldFile(pszFilename, "wld", gt.data());
     }
 
     /* -------------------------------------------------------------------- */

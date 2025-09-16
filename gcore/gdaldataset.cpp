@@ -293,20 +293,7 @@ GDALDataset::~GDALDataset()
             CPLDebug("GDAL", "GDALClose(%s, this=%p)", GetDescription(), this);
     }
 
-    if (IsMarkedSuppressOnClose())
-    {
-        if (poDriver == nullptr ||
-            // Someone issuing Create("foo.tif") on a
-            // memory driver doesn't expect files with those names to be deleted
-            // on a file system...
-            // This is somewhat messy. Ideally there should be a way for the
-            // driver to overload the default behavior
-            (!EQUAL(poDriver->GetDescription(), "MEM") &&
-             !EQUAL(poDriver->GetDescription(), "Memory")))
-        {
-            VSIUnlink(GetDescription());
-        }
-    }
+    GDALDataset::Close();
 
     /* -------------------------------------------------------------------- */
     /*      Remove dataset from the "open" dataset list.                    */
@@ -407,6 +394,8 @@ GDALDataset::~GDALDataset()
  * If a driver implements this method, it must also call it from its
  * dataset destructor.
  *
+ * This is the equivalent of C function GDALDatasetRunCloseWithoutDestroying().
+ *
  * A typical implementation might look as the following
  * \code{.cpp}
  *
@@ -461,11 +450,62 @@ GDALDataset::~GDALDataset()
  */
 CPLErr GDALDataset::Close()
 {
-    // Call UnregisterFromSharedDataset() before altering nOpenFlags
-    UnregisterFromSharedDataset();
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        // Call UnregisterFromSharedDataset() before altering nOpenFlags
+        UnregisterFromSharedDataset();
 
-    nOpenFlags = OPEN_FLAGS_CLOSED;
+        nOpenFlags = OPEN_FLAGS_CLOSED;
+    }
+
+    if (IsMarkedSuppressOnClose())
+    {
+        if (poDriver == nullptr ||
+            // Someone issuing Create("foo.tif") on a
+            // memory driver doesn't expect files with those names to be deleted
+            // on a file system...
+            // This is somewhat messy. Ideally there should be a way for the
+            // driver to overload the default behavior
+            (!EQUAL(poDriver->GetDescription(), "MEM") &&
+             !EQUAL(poDriver->GetDescription(), "Memory")))
+        {
+            if (VSIUnlink(GetDescription()) == 0)
+                UnMarkSuppressOnClose();
+        }
+    }
+
     return CE_None;
+}
+
+/************************************************************************/
+/*                   GDALDatasetRunCloseWithoutDestroying()             */
+/************************************************************************/
+
+/** Run the Close() method, without running destruction of the object.
+ *
+ * This ensures that content that should be written to file is written and
+ * that all file descriptors are closed.
+ *
+ * Note that this is different from GDALClose() which also destroys
+ * the underlying C++ object. GDALClose() or GDALReleaseDataset() are actually
+ * the only functions that can be safely called on the dataset handle after
+ * this function has been called.
+ *
+ * Most users want to use GDALClose() or GDALReleaseDataset() rather than
+ * this function.
+ *
+ * This function is equivalent to the C++ method GDALDataset:Close()
+ *
+ * @param hDS dataset handle.
+ * @return CE_None if no error
+ *
+ * @since GDAL 3.12
+ * @see GDALClose()
+ */
+CPLErr GDALDatasetRunCloseWithoutDestroying(GDALDatasetH hDS)
+{
+    VALIDATE_POINTER1(hDS, __func__, CE_Failure);
+    return GDALDataset::FromHandle(hDS)->Close();
 }
 
 /************************************************************************/
@@ -1179,6 +1219,8 @@ const char *GDALDataset::GetProjectionRef() const
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
+static thread_local int tlsEnableLayersInGetSpatialRefCounter = 0;
+
 /**
  * \brief Fetch the spatial reference for this dataset.
  *
@@ -1188,18 +1230,88 @@ const char *GDALDataset::GetProjectionRef() const
  * a dataset where there are GCPs and not a geotransform, this method returns
  * null. Use GetGCPSpatialRef() instead.
  *
+ * Since GDAL 3.12, the default implementation of this method will iterate over
+ * vector layers and return their SRS if all geometry columns of all layers use
+ * the same SRS, or nullptr otherwise.
+ *
  * @since GDAL 3.0
  *
  * @return a pointer to an internal object. It should not be altered or freed.
- * Its lifetime will be the one of the dataset object, or until the next
- * call to this method.
+ * Its lifetime will be the one of the dataset object.
  *
  * @see https://gdal.org/tutorials/osr_api_tut.html
  */
 
 const OGRSpatialReference *GDALDataset::GetSpatialRef() const
 {
+    if (tlsEnableLayersInGetSpatialRefCounter == 0)
+        return GetSpatialRefVectorOnly();
     return nullptr;
+}
+
+/************************************************************************/
+/*                       GetSpatialRefVectorOnly()                      */
+/************************************************************************/
+
+/**
+ * \brief Fetch the spatial reference for this dataset (only for vector layers)
+ *
+ * The default implementation of this method will iterate over
+ * vector layers and return their SRS if all geometry columns of all layers use
+ * the same SRS, or nullptr otherwise.
+ *
+ * @since GDAL 3.12
+ *
+ * @return a pointer to an internal object. It should not be altered or freed.
+ * Its lifetime will be the one of the dataset object.
+ */
+
+const OGRSpatialReference *GDALDataset::GetSpatialRefVectorOnly() const
+{
+    bool bInit = false;
+    const OGRSpatialReference *poGlobalSRS = nullptr;
+    for (const OGRLayer *poLayer : GetLayers())
+    {
+        for (const auto *poGeomFieldDefn :
+             poLayer->GetLayerDefn()->GetGeomFields())
+        {
+            const auto *poSRS = poGeomFieldDefn->GetSpatialRef();
+            if (!bInit)
+            {
+                bInit = true;
+                poGlobalSRS = poSRS;
+            }
+            else if ((poSRS && !poGlobalSRS) || (!poSRS && poGlobalSRS) ||
+                     (poSRS && poGlobalSRS && !poSRS->IsSame(poGlobalSRS)))
+            {
+                CPLDebug("GDAL",
+                         "Not all geometry fields or layers have the same CRS");
+                return nullptr;
+            }
+        }
+    }
+    return poGlobalSRS;
+}
+
+/************************************************************************/
+/*                       GetSpatialRefRasterOnly()                      */
+/************************************************************************/
+
+/**
+ * \brief Fetch the spatial reference for this dataset (ignoring vector layers)
+ *
+ * @since GDAL 3.12
+ *
+ * @return a pointer to an internal object. It should not be altered or freed.
+ * Its lifetime will be the one of the dataset object.
+ */
+
+const OGRSpatialReference *GDALDataset::GetSpatialRefRasterOnly() const
+{
+    ++tlsEnableLayersInGetSpatialRefCounter;
+    const auto poRet = GetSpatialRef();
+    --tlsEnableLayersInGetSpatialRefCounter;
+    return poRet;
 }
 
 /************************************************************************/
@@ -1208,6 +1320,8 @@ const OGRSpatialReference *GDALDataset::GetSpatialRef() const
 
 /**
  * \brief Fetch the spatial reference for this dataset.
+ *
+ * Same as the C++ method GDALDataset::GetSpatialRef()
  *
  * @since GDAL 3.0
  *
@@ -1903,7 +2017,7 @@ int CPL_STDCALL GDALGetGCPCount(GDALDatasetH hDS)
  *  It should not be altered, freed or expected to last for long.
  */
 
-const char *GDALDataset::GetGCPProjection()
+const char *GDALDataset::GetGCPProjection() const
 {
     const auto poSRS = GetGCPSpatialRef();
     if (!poSRS || !m_poPrivate)
@@ -2204,7 +2318,9 @@ CPLErr GDALSetGCPs2(GDALDatasetH hDS, int nGCPCount, const GDAL_GCP *pasGCPList,
  * @param pfnProgress a function to call to report progress, or NULL.
  * @param pProgressData application data to pass to the progress function.
  * @param papszOptions (GDAL >= 3.6) NULL terminated list of options as
- *                     key=value pairs, or NULL
+ *                     key=value pairs, or NULL.
+ *                     Possible keys are the ones returned by
+ *                     GetDriver()->GetMetadataItem(GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST)
  *
  * @return CE_None on success or CE_Failure if the operation doesn't work.
  *
@@ -2228,6 +2344,55 @@ CPLErr GDALDataset::BuildOverviews(const char *pszResampling, int nOverviews,
                                    CSLConstList papszOptions)
 {
     int *panAllBandList = nullptr;
+
+    CPLStringList aosOptions(papszOptions);
+    if (poDriver && !aosOptions.empty())
+    {
+        const char *pszOptionList =
+            poDriver->GetMetadataItem(GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST);
+        if (pszOptionList)
+        {
+            // For backwards compatibility
+            if (const char *opt = aosOptions.FetchNameValue("USE_RRD"))
+            {
+                if (strstr(pszOptionList, "<Value>RRD</Value>") &&
+                    aosOptions.FetchNameValue("LOCATION") == nullptr)
+                {
+                    if (CPLTestBool(opt))
+                        aosOptions.SetNameValue("LOCATION", "RRD");
+                    aosOptions.SetNameValue("USE_RRD", nullptr);
+                }
+            }
+            if (const char *opt =
+                    aosOptions.FetchNameValue("VRT_VIRTUAL_OVERVIEWS"))
+            {
+                if (strstr(pszOptionList, "VIRTUAL"))
+                {
+                    aosOptions.SetNameValue("VIRTUAL", opt);
+                    aosOptions.SetNameValue("VRT_VIRTUAL_OVERVIEWS", nullptr);
+                }
+            }
+
+            for (const auto &[pszKey, pszValue] :
+                 cpl::IterateNameValue(papszOptions))
+            {
+                if (cpl::ends_with(std::string_view(pszKey), "_OVERVIEW"))
+                {
+                    aosOptions.SetNameValue(
+                        std::string(pszKey)
+                            .substr(0, strlen(pszKey) - strlen("_OVERVIEW"))
+                            .c_str(),
+                        pszValue);
+                    aosOptions.SetNameValue(pszKey, nullptr);
+                }
+            }
+
+            CPLString osDriver;
+            osDriver.Printf("driver %s", poDriver->GetDescription());
+            GDALValidateOptions(pszOptionList, aosOptions.List(),
+                                "overview creation option", osDriver);
+        }
+    }
 
     if (nListBands == 0)
     {
@@ -2256,18 +2421,9 @@ CPLErr GDALDataset::BuildOverviews(const char *pszResampling, int nOverviews,
         }
     }
 
-    // At time of writing, all overview generation options are actually
-    // expected to be passed as configuration options.
-    std::vector<std::unique_ptr<CPLConfigOptionSetter>> apoConfigOptionSetter;
-    for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(papszOptions))
-    {
-        apoConfigOptionSetter.emplace_back(
-            std::make_unique<CPLConfigOptionSetter>(pszKey, pszValue, false));
-    }
-
-    const CPLErr eErr =
-        IBuildOverviews(pszResampling, nOverviews, panOverviewList, nListBands,
-                        panBandList, pfnProgress, pProgressData, papszOptions);
+    const CPLErr eErr = IBuildOverviews(
+        pszResampling, nOverviews, panOverviewList, nListBands, panBandList,
+        pfnProgress, pProgressData, aosOptions.List());
 
     if (panAllBandList != nullptr)
         CPLFree(panAllBandList);
@@ -2381,7 +2537,9 @@ CPLErr GDALDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
  * @param pfnProgress a function to call to report progress, or NULL.
  * @param pProgressData application data to pass to the progress function.
  * @param papszOptions NULL terminated list of options as
- *                     key=value pairs, or NULL. None currently
+ *                     key=value pairs, or NULL. Possible keys are the
+ *                     ones returned by
+ *                     GetDriver()->GetMetadataItem(GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST)
  *
  * @return CE_None on success or CE_Failure if the operation doesn't work.
  * @since 3.12
@@ -3290,6 +3448,13 @@ struct GDALAntiRecursionStruct
         }
     };
 
+    ~GDALAntiRecursionStruct()
+    {
+        CPLAssert(aosDatasetNamesWithFlags.empty());
+        CPLAssert(nRecLevel == 0);
+        CPLAssert(m_oMapDepth.empty());
+    }
+
     std::set<DatasetContext, DatasetContextCompare> aosDatasetNamesWithFlags{};
     int nRecLevel = 0;
     std::map<std::string, int> m_oMapDepth{};
@@ -3360,7 +3525,10 @@ GDALAntiRecursionGuard::~GDALAntiRecursionGuard()
 {
     if (!m_osIdentifier.empty())
     {
-        --m_psAntiRecursionStruct->m_oMapDepth[m_osIdentifier];
+        auto oIter = m_psAntiRecursionStruct->m_oMapDepth.find(m_osIdentifier);
+        CPLAssert(oIter != m_psAntiRecursionStruct->m_oMapDepth.end());
+        if (--(oIter->second) == 0)
+            m_psAntiRecursionStruct->m_oMapDepth.erase(oIter);
     }
 }
 
@@ -4908,7 +5076,7 @@ char **GDALDataset::GetMetadataDomainList()
 /** Return driver name.
  * @return driver name.
  */
-const char *GDALDataset::GetDriverName()
+const char *GDALDataset::GetDriverName() const
 {
     if (poDriver)
         return poDriver->GetDescription();
@@ -5090,7 +5258,7 @@ int GDALDatasetIsLayerPrivate(GDALDatasetH hDS, int iLayer)
  @return an index >= 0, or -1 if not found.
 */
 
-int GDALDataset::GetLayerIndex(const char *pszName)
+int GDALDataset::GetLayerIndex(const char *pszName) const
 {
     const int nLayerCount = GetLayerCount();
     int iMatch = -1;
@@ -5969,7 +6137,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
 
     /* -------------------------------------------------------------------- */
     std::unique_ptr<OGRCoordinateTransformation> poCT;
-    OGRSpatialReference *sourceSRS = poSrcLayer->GetSpatialRef();
+    const OGRSpatialReference *sourceSRS = poSrcLayer->GetSpatialRef();
     if (sourceSRS != nullptr && pszSRSWKT != nullptr && !oDstSpaRef.IsEmpty() &&
         sourceSRS->IsSame(&oDstSpaRef) == FALSE)
     {
@@ -7687,12 +7855,15 @@ int GDALDataset::IsGenericSQLDialect(const char *pszDialect)
  This method is the same as the C function GDALDatasetGetLayerCount(),
  and the deprecated OGR_DS_GetLayerCount().
 
+ Note that even if this method is const, there is no guarantee it can be
+ safely called by concurrent threads on the same GDALDataset object.
+
  In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @return layer count.
 */
 
-int GDALDataset::GetLayerCount()
+int GDALDataset::GetLayerCount() const
 {
     return 0;
 }
@@ -7702,11 +7873,14 @@ int GDALDataset::GetLayerCount()
 /************************************************************************/
 
 /**
- \fn GDALDataset::GetLayer(int)
+ \fn const GDALDataset::GetLayer(int) const
  \brief Fetch a layer by index.
 
  The returned layer remains owned by the
  GDALDataset and should not be deleted by the application.
+
+ Note that even if this method is const, there is no guarantee it can be
+ safely called by concurrent threads on the same GDALDataset object.
 
  See GetLayers() for a C++ iterator version of this method.
 
@@ -7720,12 +7894,33 @@ int GDALDataset::GetLayerCount()
  @return the layer, or NULL if iLayer is out of range or an error occurs.
 
  @see GetLayers()
+
+ @since GDAL 3.12
 */
 
-OGRLayer *GDALDataset::GetLayer(CPL_UNUSED int iLayer)
+const OGRLayer *GDALDataset::GetLayer(CPL_UNUSED int iLayer) const
 {
     return nullptr;
 }
+
+/**
+ \fn GDALDataset::GetLayer(int)
+ \brief Fetch a layer by index.
+
+ The returned layer remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ See GetLayers() for a C++ iterator version of this method.
+
+ This method is the same as the C function GDALDatasetGetLayer() and the
+ deprecated OGR_DS_GetLayer().
+
+ @param iLayer a layer number between 0 and GetLayerCount()-1.
+
+ @return the layer, or NULL if iLayer is out of range or an error occurs.
+
+ @see GetLayers()
+*/
 
 /************************************************************************/
 /*                                IsLayerPrivate()                      */
@@ -8086,7 +8281,7 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature(GDALDatasetH hDS,
  @return TRUE if capability available otherwise FALSE.
 */
 
-int GDALDataset::TestCapability(const char *pszCap)
+int GDALDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, GDsCFastGetExtent) ||
         EQUAL(pszCap, GDsCFastGetExtentWGS84LongLat))
@@ -9008,6 +9203,239 @@ OGRLayer *GDALDataset::Layers::operator[](const char *pszLayerName)
 }
 
 /************************************************************************/
+/*               GDALDataset::ConstLayers::Iterator::Private            */
+/************************************************************************/
+
+struct GDALDataset::ConstLayers::Iterator::Private
+{
+    const OGRLayer *m_poLayer = nullptr;
+    int m_iCurLayer = 0;
+    int m_nLayerCount = 0;
+    const GDALDataset *m_poDS = nullptr;
+};
+
+GDALDataset::ConstLayers::Iterator::Iterator() : m_poPrivate(new Private())
+{
+}
+
+// False positive of cppcheck 1.72
+// cppcheck-suppress uninitMemberVar
+GDALDataset::ConstLayers::Iterator::Iterator(const Iterator &oOther)
+    : m_poPrivate(new Private(*(oOther.m_poPrivate)))
+{
+}
+
+GDALDataset::ConstLayers::Iterator::Iterator(Iterator &&oOther) noexcept
+    : m_poPrivate(std::move(oOther.m_poPrivate))
+{
+}
+
+GDALDataset::ConstLayers::Iterator::Iterator(const GDALDataset *poDS,
+                                             bool bStart)
+    : m_poPrivate(new Private())
+{
+    m_poPrivate->m_poDS = poDS;
+    m_poPrivate->m_nLayerCount = poDS->GetLayerCount();
+    if (bStart)
+    {
+        if (m_poPrivate->m_nLayerCount)
+            m_poPrivate->m_poLayer = poDS->GetLayer(0);
+    }
+    else
+    {
+        m_poPrivate->m_iCurLayer = m_poPrivate->m_nLayerCount;
+    }
+}
+
+GDALDataset::ConstLayers::Iterator::~Iterator() = default;
+
+// False positive of cppcheck 1.72
+// cppcheck-suppress operatorEqVarError
+GDALDataset::ConstLayers::Iterator &
+GDALDataset::ConstLayers::Iterator::operator=(const Iterator &oOther)
+{
+    *m_poPrivate = *oOther.m_poPrivate;
+    return *this;
+}
+
+GDALDataset::ConstLayers::Iterator &
+GDALDataset::ConstLayers::Iterator::operator=(
+    GDALDataset::ConstLayers::Iterator &&oOther) noexcept
+{
+    m_poPrivate = std::move(oOther.m_poPrivate);
+    return *this;
+}
+
+const OGRLayer *GDALDataset::ConstLayers::Iterator::operator*() const
+{
+    return m_poPrivate->m_poLayer;
+}
+
+GDALDataset::ConstLayers::Iterator &
+GDALDataset::ConstLayers::Iterator::operator++()
+{
+    m_poPrivate->m_iCurLayer++;
+    if (m_poPrivate->m_iCurLayer < m_poPrivate->m_nLayerCount)
+    {
+        m_poPrivate->m_poLayer =
+            m_poPrivate->m_poDS->GetLayer(m_poPrivate->m_iCurLayer);
+    }
+    else
+    {
+        m_poPrivate->m_poLayer = nullptr;
+    }
+    return *this;
+}
+
+GDALDataset::ConstLayers::Iterator
+GDALDataset::ConstLayers::Iterator::operator++(int)
+{
+    GDALDataset::ConstLayers::Iterator temp = *this;
+    ++(*this);
+    return temp;
+}
+
+bool GDALDataset::ConstLayers::Iterator::operator!=(const Iterator &it) const
+{
+    return m_poPrivate->m_iCurLayer != it.m_poPrivate->m_iCurLayer;
+}
+
+/************************************************************************/
+/*                             GetLayers()                              */
+/************************************************************************/
+
+/** Function that returns an iterable object over layers in the dataset.
+ *
+ * This is a C++ iterator friendly version of GetLayer().
+ *
+ * Typical use is:
+ * \code{.cpp}
+ * for( auto&& poLayer: poDS->GetLayers() )
+ * {
+ *       std::cout << "Layer  << poLayer->GetName() << std::endl;
+ * }
+ * \endcode
+ *
+ * @see GetLayer()
+ *
+ * @since GDAL 3.12
+ */
+GDALDataset::ConstLayers GDALDataset::GetLayers() const
+{
+    return ConstLayers(this);
+}
+
+/************************************************************************/
+/*                                 begin()                              */
+/************************************************************************/
+
+/**
+ \brief Return beginning of layer iterator.
+
+ @since GDAL 3.12
+*/
+
+GDALDataset::ConstLayers::Iterator GDALDataset::ConstLayers::begin() const
+{
+    return {m_poSelf, true};
+}
+
+/************************************************************************/
+/*                                  end()                               */
+/************************************************************************/
+
+/**
+ \brief Return end of layer iterator.
+
+ @since GDAL 3.12
+*/
+
+GDALDataset::ConstLayers::Iterator GDALDataset::ConstLayers::end() const
+{
+    return {m_poSelf, false};
+}
+
+/************************************************************************/
+/*                                  size()                             */
+/************************************************************************/
+
+/**
+ \brief Get the number of layers in this dataset.
+
+ @return layer count.
+
+ @since GDAL 3.12
+*/
+
+size_t GDALDataset::ConstLayers::size() const
+{
+    return static_cast<size_t>(m_poSelf->GetLayerCount());
+}
+
+/************************************************************************/
+/*                                operator[]()                          */
+/************************************************************************/
+/**
+ \brief Fetch a layer by index.
+
+ The returned layer remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ @param iLayer a layer number between 0 and size()-1.
+
+ @return the layer, or nullptr if iLayer is out of range or an error occurs.
+
+ @since GDAL 3.12
+*/
+
+const OGRLayer *GDALDataset::ConstLayers::operator[](int iLayer)
+{
+    return m_poSelf->GetLayer(iLayer);
+}
+
+/************************************************************************/
+/*                                operator[]()                          */
+/************************************************************************/
+/**
+ \brief Fetch a layer by index.
+
+ The returned layer remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ @param iLayer a layer number between 0 and size()-1.
+
+ @return the layer, or nullptr if iLayer is out of range or an error occurs.
+
+ @since GDAL 3.12
+*/
+
+const OGRLayer *GDALDataset::ConstLayers::operator[](size_t iLayer)
+{
+    return m_poSelf->GetLayer(static_cast<int>(iLayer));
+}
+
+/************************************************************************/
+/*                                operator[]()                          */
+/************************************************************************/
+/**
+ \brief Fetch a layer by name.
+
+ The returned layer remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ @param pszLayerName layer name
+
+ @return the layer, or nullptr if pszLayerName does not match with a layer
+
+ @since GDAL 3.12
+*/
+
+const OGRLayer *GDALDataset::ConstLayers::operator[](const char *pszLayerName)
+{
+    return const_cast<GDALDataset *>(m_poSelf)->GetLayerByName(pszLayerName);
+}
+
+/************************************************************************/
 /*               GDALDataset::Bands::Iterator::Private                 */
 /************************************************************************/
 
@@ -9063,7 +9491,7 @@ bool GDALDataset::Bands::Iterator::operator!=(const Iterator &it) const
 }
 
 /************************************************************************/
-/*                            GetBands()                           */
+/*                              GetBands()                              */
 /************************************************************************/
 
 /** Function that returns an iterable object over GDALRasterBand in the dataset.
@@ -9179,6 +9607,184 @@ GDALRasterBand *GDALDataset::Bands::operator[](int iBand)
 */
 
 GDALRasterBand *GDALDataset::Bands::operator[](size_t iBand)
+{
+    return m_poSelf->GetRasterBand(1 + static_cast<int>(iBand));
+}
+
+/************************************************************************/
+/*               GDALDataset::ConstBands::Iterator::Private             */
+/************************************************************************/
+
+struct GDALDataset::ConstBands::Iterator::Private
+{
+    const GDALRasterBand *m_poBand = nullptr;
+    int m_iCurBand = 0;
+    int m_nBandCount = 0;
+    const GDALDataset *m_poDS = nullptr;
+};
+
+GDALDataset::ConstBands::Iterator::Iterator(const GDALDataset *poDS,
+                                            bool bStart)
+    : m_poPrivate(new GDALDataset::ConstBands::Iterator::Private())
+{
+    m_poPrivate->m_poDS = poDS;
+    m_poPrivate->m_nBandCount = poDS->GetRasterCount();
+    if (bStart)
+    {
+        if (m_poPrivate->m_nBandCount)
+            m_poPrivate->m_poBand = poDS->GetRasterBand(1);
+    }
+    else
+    {
+        m_poPrivate->m_iCurBand = m_poPrivate->m_nBandCount;
+    }
+}
+
+GDALDataset::ConstBands::Iterator::~Iterator() = default;
+
+const GDALRasterBand *GDALDataset::ConstBands::Iterator::operator*() const
+{
+    return m_poPrivate->m_poBand;
+}
+
+GDALDataset::ConstBands::Iterator &
+GDALDataset::ConstBands::Iterator::operator++()
+{
+    m_poPrivate->m_iCurBand++;
+    if (m_poPrivate->m_iCurBand < m_poPrivate->m_nBandCount)
+    {
+        m_poPrivate->m_poBand =
+            m_poPrivate->m_poDS->GetRasterBand(1 + m_poPrivate->m_iCurBand);
+    }
+    else
+    {
+        m_poPrivate->m_poBand = nullptr;
+    }
+    return *this;
+}
+
+bool GDALDataset::ConstBands::Iterator::operator!=(const Iterator &it) const
+{
+    return m_poPrivate->m_iCurBand != it.m_poPrivate->m_iCurBand;
+}
+
+/************************************************************************/
+/*                             GetBands()                               */
+/************************************************************************/
+
+/** Function that returns an iterable object over GDALRasterBand in the dataset.
+ *
+ * This is a C++ iterator friendly version of GetRasterBand().
+ *
+ * Typical use is:
+ * \code{.cpp}
+ * for( const auto* poBand: poDS->GetConstBands() )
+ * {
+ *       std::cout << "Band  << poBand->GetDescription() << std::endl;
+ * }
+ * \endcode
+ *
+ * @see GetRasterBand()
+ *
+ * @since GDAL 3.12
+ */
+GDALDataset::ConstBands GDALDataset::GetBands() const
+{
+    return ConstBands(this);
+}
+
+/************************************************************************/
+/*                                 begin()                              */
+/************************************************************************/
+
+/**
+ \brief Return beginning of band iterator.
+
+ @since GDAL 3.12
+*/
+
+const GDALDataset::ConstBands::Iterator GDALDataset::ConstBands::begin() const
+{
+    return {m_poSelf, true};
+}
+
+/************************************************************************/
+/*                                  end()                               */
+/************************************************************************/
+
+/**
+ \brief Return end of band iterator.
+
+ @since GDAL 3.12
+*/
+
+const GDALDataset::ConstBands::Iterator GDALDataset::ConstBands::end() const
+{
+    return {m_poSelf, false};
+}
+
+/************************************************************************/
+/*                                  size()                             */
+/************************************************************************/
+
+/**
+ \brief Get the number of raster bands in this dataset.
+
+ @return raster band count.
+
+ @since GDAL 3.12
+*/
+
+size_t GDALDataset::ConstBands::size() const
+{
+    return static_cast<size_t>(m_poSelf->GetRasterCount());
+}
+
+/************************************************************************/
+/*                                operator[]()                          */
+/************************************************************************/
+/**
+ \brief Fetch a raster band by index.
+
+ The returned band remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ @warning Contrary to GDALDataset::GetRasterBand(), the indexing here is
+ consistent with the conventions of C/C++, i.e. starting at 0.
+
+ @param iBand a band index between 0 and size()-1.
+
+ @return the band, or nullptr if iBand is out of range or an error occurs.
+
+ @since GDAL 3.12
+*/
+
+const GDALRasterBand *GDALDataset::ConstBands::operator[](int iBand) const
+{
+    return m_poSelf->GetRasterBand(1 + iBand);
+}
+
+/************************************************************************/
+/*                                operator[]()                          */
+/************************************************************************/
+
+/**
+ \brief Fetch a raster band by index.
+
+ The returned band remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ @warning Contrary to GDALDataset::GetRasterBand(), the indexing here is
+ consistent with the conventions of C/C++, i.e. starting at 0.
+
+ @param iBand a band index between 0 and size()-1.
+
+ @return the band, or nullptr if iBand is out of range or an error occurs.
+
+ @since GDAL 3.12
+*/
+
+const GDALRasterBand *GDALDataset::ConstBands::operator[](size_t iBand) const
 {
     return m_poSelf->GetRasterBand(1 + static_cast<int>(iBand));
 }
@@ -10610,26 +11216,26 @@ CPLErr GDALDatasetGeolocationToPixelLine(GDALDatasetH hDS, double dfGeolocX,
 CPLErr GDALDataset::GetExtent(OGREnvelope *psExtent,
                               const OGRSpatialReference *poCRS) const
 {
-    auto poThisDS = const_cast<GDALDataset *>(this);
-    const OGRSpatialReference *poThisCRS = poThisDS->GetSpatialRef();
+    const OGRSpatialReference *poThisCRS = GetSpatialRefRasterOnly();
     int nLayerCount = 0;
     if (!poThisCRS)
     {
-        nLayerCount = poThisDS->GetLayerCount();
+        nLayerCount = GetLayerCount();
         if (nLayerCount >= 1)
         {
-            if (auto poLayer = poThisDS->GetLayer(0))
+            if (auto poLayer = GetLayer(0))
                 poThisCRS = poLayer->GetSpatialRef();
         }
-        if (poCRS && !poThisCRS)
-            return CE_Failure;
     }
     if (!poCRS)
         poCRS = poThisCRS;
+    else if (!poThisCRS)
+        return CE_Failure;
 
     *psExtent = OGREnvelope();
 
     GDALGeoTransform gt;
+    auto poThisDS = const_cast<GDALDataset *>(this);
     const bool bHasGT = poThisDS->GetGeoTransform(gt) == CE_None;
     if (bHasGT)
     {

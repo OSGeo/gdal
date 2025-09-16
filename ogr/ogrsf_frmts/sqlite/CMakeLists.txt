@@ -81,6 +81,10 @@ if (GDAL_USE_RASTERLITE2)
   gdal_target_link_libraries(ogr_SQLite PRIVATE RASTERLITE2::RASTERLITE2)
 endif ()
 
+if (HAVE_WFLAG_CAST_FUNCTION_TYPE)
+  target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_WFLAG_CAST_FUNCTION_TYPE)
+endif()
+
 # Test utility
 add_executable(test_load_virtual_ogr EXCLUDE_FROM_ALL test_load_virtual_ogr.c)
 gdal_standard_includes(test_load_virtual_ogr)

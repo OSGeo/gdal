@@ -339,7 +339,7 @@ int OGRMySQLDataSource::OpenTable(const char *pszNewName, int bUpdate)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMySQLDataSource::TestCapability(const char *pszCap)
+int OGRMySQLDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -360,7 +360,7 @@ int OGRMySQLDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRMySQLDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRMySQLDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

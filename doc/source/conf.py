@@ -171,9 +171,11 @@ nitpick_ignore = [
     ("cpp:identifier", "ArrowSchema"),
     # Internal GDAL types
     ("cpp:identifier", "ConstIterator"),
-    ("cpp:identifier", "GeomFields"),
+    ("cpp:identifier", "GeomFields<OGRFeatureDefn*, OGRGeomFieldDefn*>"),
+    ("cpp:identifier", "GeomFields<const OGRFeatureDefn*, const OGRGeomFieldDefn*>"),
     ("cpp:identifier", "FeatureIterator"),
-    ("cpp:identifier", "Fields"),
+    ("cpp:identifier", "Fields<OGRFeatureDefn*, OGRFieldDefn*>"),
+    ("cpp:identifier", "Fields<const OGRFeatureDefn*, const OGRFieldDefn*>"),
     ("cpp:identifier", "GDALPamDataset"),
     ("cpp:identifier", "GDALPamRasterBand"),
     ("cpp:identifier", "GDALPluginDriverProxy"),
@@ -308,6 +310,7 @@ nitpick_ignore_regex = [
     (".*", "classPythonPluginLayer"),
     (".*", "classPythonPluginDriver"),
     (".*", "classGDALSubsetGroup"),
+    (".*", "structOGRwkbExportOptions"),  # only emitted by Windows CI
     # FIXME We ignore everything python related for now...
     ("py:.*", ".*"),
     # TODO: To examine
@@ -496,6 +499,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_as_features",
+        "gdal-raster-as-features",
+        "Create features representing the pixels of a raster",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_raster_calc",
         "gdal-raster-calc",
         "Perform pixel-wise calculations on a raster",
@@ -535,6 +545,13 @@ man_pages = [
         "gdal-raster-contour",
         "Creates a vector contour from a raster elevation model (DEM)",
         [author_elpaso],
+        1,
+    ),
+    (
+        "programs/gdal_raster_compare",
+        "gdal-raster-compare",
+        "Compare two raster dataset",
+        [author_evenr],
         1,
     ),
     (
@@ -905,6 +922,13 @@ man_pages = [
         "programs/gdal_vector_layer_algebra",
         "gdal-vector-layer-algebra",
         "Perform algebraic operation between 2 layers",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_partition",
+        "gdal-vector-partition",
+        "Partition a vector dataset into multiple files",
         [author_evenr],
         1,
     ),

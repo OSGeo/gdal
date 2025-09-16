@@ -850,8 +850,8 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
     /* -------------------------------------------------------------------- */
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
-    GTIFFGetOverviewBlockSize(papoBandList[0], &nOvrBlockXSize,
-                              &nOvrBlockYSize);
+    GTIFFGetOverviewBlockSize(papoBandList[0], &nOvrBlockXSize, &nOvrBlockYSize,
+                              papszOptions, "BLOCKSIZE");
 
     CPLString osNoData;  // don't move this in inner scope
     const char *pszNoData = nullptr;
@@ -1078,7 +1078,8 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         {
             const float fJXLDistance =
                 static_cast<float>(CPLAtof(pszJXLDistance));
-            TIFFSetField(hTIFF, TIFFTAG_JXL_DISTANCE, fJXLDistance);
+            TIFFSetField(hTIFF, TIFFTAG_JXL_DISTANCE,
+                         static_cast<double>(fJXLDistance));
             GTIFFSetJXLDistance(GDALDataset::ToHandle(hODS), fJXLDistance);
         }
         if (const char *pszJXLAlphaDistance = GetOptionValue(
@@ -1086,7 +1087,8 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         {
             const float fJXLAlphaDistance =
                 static_cast<float>(CPLAtof(pszJXLAlphaDistance));
-            TIFFSetField(hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE, fJXLAlphaDistance);
+            TIFFSetField(hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE,
+                         static_cast<double>(fJXLAlphaDistance));
             GTIFFSetJXLAlphaDistance(GDALDataset::ToHandle(hODS),
                                      fJXLAlphaDistance);
         }

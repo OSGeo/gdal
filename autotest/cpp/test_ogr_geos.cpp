@@ -65,10 +65,10 @@ TEST_F(test_ogr_geos, exportToGEOS)
 
     GEOSContextHandle_t ctxt = OGRGeometry::createGEOSContext();
     GEOSGeom geosGeom = geom.exportToGEOS(ctxt);
-    OGRGeometry::freeGEOSContext(ctxt);
     ASSERT_TRUE(nullptr != geosGeom);
 
     GEOSGeom_destroy_r(ctxt, geosGeom);
+    OGRGeometry::freeGEOSContext(ctxt);
 #endif
 }
 

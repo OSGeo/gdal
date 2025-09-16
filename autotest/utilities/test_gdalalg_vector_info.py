@@ -145,7 +145,7 @@ def test_gdalalg_vector_info_layer():
 
 def test_gdalalg_vector_info_wrong_layer():
     info = get_info_alg()
-    with pytest.raises(Exception, match="Couldn't fetch requested layer"):
+    with pytest.raises(Exception, match="Cannot find source layer 'invalid'"):
         info.ParseRunAndFinalize(["-l", "invalid", "data/path.shp"])
 
 
@@ -264,3 +264,15 @@ def test_gdalalg_vector_info_update(tmp_vsimem):
 
     with gdal.OpenEx(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 9
+
+
+def test_gdalalg_vector_info_sql_where_mutually_exclusive():
+
+    with pytest.raises(Exception, match="mutually exclusive"):
+        gdal.Run(
+            "vector",
+            "info",
+            dataset="data/path.shp",
+            sql="select * from path",
+            where="1=1",
+        )

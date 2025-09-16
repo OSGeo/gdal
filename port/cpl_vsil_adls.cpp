@@ -88,7 +88,7 @@ static std::string RemoveTrailingSlash(const std::string &osFilename)
 
 class VSIADLSFSHandler;
 
-struct VSIDIRADLS : public VSIDIR
+struct VSIDIRADLS final : public VSIDIR
 {
     int m_nRecurseDepth = 0;
 
@@ -341,7 +341,7 @@ class VSIADLSWriteHandle final : public VSIAppendWriteHandle
   public:
     VSIADLSWriteHandle(VSIADLSFSHandler *poFS, const char *pszFilename,
                        VSIAzureBlobHandleHelper *poHandleHelper);
-    virtual ~VSIADLSWriteHandle();
+    ~VSIADLSWriteHandle() override;
 
     bool CreateFile(CSLConstList papszOptions);
 };

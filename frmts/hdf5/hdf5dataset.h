@@ -246,7 +246,7 @@ class HDF5Dataset CPL_NON_FINAL : public GDALPamDataset
 
   public:
     HDF5Dataset();
-    ~HDF5Dataset();
+    ~HDF5Dataset() override;
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override
     {

@@ -16,7 +16,7 @@
 #include "ogrsf_frmts.h"
 
 #ifdef HAVE_GEOS
-#include "geos_c.h"
+#include "ogr_geos.h"
 #endif
 
 //! @cond Doxygen_Suppress

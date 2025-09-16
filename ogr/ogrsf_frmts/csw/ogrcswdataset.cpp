@@ -48,18 +48,18 @@ class OGRCSWLayer final : public OGRLayer
 
   public:
     explicit OGRCSWLayer(OGRCSWDataSource *poDS);
-    virtual ~OGRCSWLayer();
+    ~OGRCSWLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual GIntBig GetFeatureCount(int bForce = FALSE) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    GIntBig GetFeatureCount(int bForce = FALSE) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return FALSE;
     }
@@ -67,7 +67,7 @@ class OGRCSWLayer final : public OGRLayer
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    virtual OGRErr SetAttributeFilter(const char *) override;
+    OGRErr SetAttributeFilter(const char *) override;
 };
 
 /************************************************************************/
@@ -89,16 +89,16 @@ class OGRCSWDataSource final : public GDALDataset
 
   public:
     OGRCSWDataSource();
-    virtual ~OGRCSWDataSource();
+    ~OGRCSWDataSource() override;
 
     int Open(const char *pszFilename, char **papszOpenOptions);
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return poLayer != nullptr;
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     static CPLHTTPResult *HTTPFetch(const char *pszURL, const char *pszPost);
 
@@ -1014,7 +1014,7 @@ int OGRCSWDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRCSWDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRCSWDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= ((poLayer != nullptr) ? 1 : 0))

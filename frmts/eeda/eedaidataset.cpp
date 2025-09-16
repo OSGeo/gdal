@@ -64,18 +64,17 @@ class GDALEEDAIDataset final : public GDALEEDABaseDataset
 
   public:
     GDALEEDAIDataset();
-    virtual ~GDALEEDAIDataset();
+    ~GDALEEDAIDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, BANDMAP_TYPE panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount,
+                     BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
     bool ComputeQueryStrategy();
 
@@ -110,15 +109,15 @@ class GDALEEDAIRasterBand final : public GDALRasterBand
 
   public:
     GDALEEDAIRasterBand(GDALEEDAIDataset *poDSIn, GDALDataType eDT);
-    virtual ~GDALEEDAIRasterBand();
+    ~GDALEEDAIRasterBand() override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) CPL_OVERRIDE;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpace,
+                     GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) CPL_OVERRIDE;
 
-    virtual CPLErr IReadBlock(int, int, void *) CPL_OVERRIDE;
+    CPLErr IReadBlock(int, int, void *) CPL_OVERRIDE;
     virtual int GetOverviewCount() CPL_OVERRIDE;
     virtual GDALRasterBand *GetOverview(int) CPL_OVERRIDE;
 

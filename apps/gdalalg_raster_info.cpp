@@ -28,12 +28,14 @@
 
 GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool standaloneStep,
                                                  bool openForMixedRasterVector)
-    : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      ConstructorOptions()
-                                          .SetStandaloneStep(standaloneStep)
-                                          .SetInputDatasetMaxCount(1)
-                                          .SetAddDefaultArguments(false)
-                                          .SetInputDatasetAlias("dataset"))
+    : GDALRasterPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetInputDatasetMaxCount(1)
+              .SetAddDefaultArguments(false)
+              .SetInputDatasetHelpMsg(_("Input raster dataset"))
+              .SetInputDatasetAlias("dataset"))
 {
     AddRasterInputArgs(openForMixedRasterVector, !standaloneStep);
 

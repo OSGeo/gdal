@@ -204,21 +204,21 @@ class ECBand final : public GDALRasterBand
 
   public:
     ECBand(ECDataset *parent, int b, int level = 0);
-    virtual ~ECBand();
+    ~ECBand() override;
 
-    virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
+    CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
 
-    virtual GDALColorInterp GetColorInterpretation() override
+    GDALColorInterp GetColorInterpretation() override
     {
         return ci;
     }
 
-    virtual int GetOverviewCount() override
+    int GetOverviewCount() override
     {
         return static_cast<int>(overviews.size());
     }
 
-    virtual GDALRasterBand *GetOverview(int n) override
+    GDALRasterBand *GetOverview(int n) override
     {
         return (n >= 0 && n < GetOverviewCount()) ? overviews[n] : nullptr;
     }

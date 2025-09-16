@@ -52,7 +52,7 @@ OGRElasticDataSource::~OGRElasticDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRElasticDataSource::TestCapability(const char *pszCap)
+int OGRElasticDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||
         EQUAL(pszCap, ODsCCreateGeomFieldAfterCreateLayer))
@@ -123,7 +123,7 @@ OGRElasticDataSource::GetIndexList(const char *pszQueriedIndexName)
 /*                             GetLayerCount()                          */
 /************************************************************************/
 
-int OGRElasticDataSource::GetLayerCount()
+int OGRElasticDataSource::GetLayerCount() const
 {
     if (m_bAllLayersListed)
     {
@@ -133,10 +133,12 @@ int OGRElasticDataSource::GetLayerCount()
     }
     m_bAllLayersListed = true;
 
-    const auto aosList = GetIndexList(nullptr);
+    const auto aosList =
+        const_cast<OGRElasticDataSource *>(this)->GetIndexList(nullptr);
     for (const std::string &osIndexName : aosList)
     {
-        FetchMapping(osIndexName.c_str());
+        const_cast<OGRElasticDataSource *>(this)->FetchMapping(
+            osIndexName.c_str());
     }
 
     return static_cast<int>(m_apoLayers.size());
@@ -313,7 +315,7 @@ OGRLayer *OGRElasticDataSource::GetLayerByName(const char *pszName)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRElasticDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRElasticDataSource::GetLayer(int iLayer) const
 {
     const int nLayers = GetLayerCount();
     if (iLayer < 0 || iLayer >= nLayers)

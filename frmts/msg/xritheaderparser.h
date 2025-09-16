@@ -20,12 +20,12 @@
 
 #include <fstream>
 
-class XRITHeaderParser
+class XRITHeaderParser final
 {
   public:
     explicit XRITHeaderParser(std::ifstream &ifile);
 
-    virtual ~XRITHeaderParser();
+    ~XRITHeaderParser();
 
     bool isValid() const
     {

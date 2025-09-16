@@ -17,12 +17,12 @@
 namespace PCIDSK {
     class PCIDSKFile;
 
-    class CPCIDSKEphemerisSegment : public PCIDSKEphemerisSegment,
+    class CPCIDSKEphemerisSegment /* non final */: public PCIDSKEphemerisSegment,
                                     public CPCIDSKSegment
     {
     public:
         CPCIDSKEphemerisSegment(PCIDSKFile *file, int segment,const char *segment_pointer,bool bLoad=true);
-        ~CPCIDSKEphemerisSegment();
+        ~CPCIDSKEphemerisSegment() override;
 
         const EphemerisSeg_t& GetEphemeris() const override
         {

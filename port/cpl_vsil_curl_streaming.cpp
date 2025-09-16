@@ -188,7 +188,7 @@ namespace cpl
 
 class VSICurlStreamingHandle;
 
-class VSICurlStreamingFSHandler : public VSIFilesystemHandler
+class VSICurlStreamingFSHandler /* non final */ : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSICurlStreamingFSHandler)
 
@@ -212,11 +212,12 @@ class VSICurlStreamingFSHandler : public VSIFilesystemHandler
 
   public:
     VSICurlStreamingFSHandler();
-    virtual ~VSICurlStreamingFSHandler();
+    ~VSICurlStreamingFSHandler() override;
 
-    virtual VSIVirtualHandle *Open(const char *pszFilename,
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
                                    const char *pszAccess, bool bSetError,
                                    CSLConstList /* papszOptions */) override;
+
     virtual int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
                      int nFlags) override;
 
@@ -1598,10 +1599,9 @@ VSICurlStreamingFSHandler::CreateFileHandle(const char *pszFilename,
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSICurlStreamingFSHandler::Open(const char *pszFilename,
-                                                  const char *pszAccess,
-                                                  bool /* bSetError */,
-                                                  CSLConstList papszOptions)
+VSIVirtualHandleUniquePtr
+VSICurlStreamingFSHandler::Open(const char *pszFilename, const char *pszAccess,
+                                bool /* bSetError */, CSLConstList papszOptions)
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
         return nullptr;
@@ -1614,19 +1614,19 @@ VSIVirtualHandle *VSICurlStreamingFSHandler::Open(const char *pszFilename,
         return nullptr;
     }
 
-    VSICurlStreamingHandle *poHandle =
-        CreateFileHandle(pszFilename, pszFilename + GetFSPrefix().size());
+    auto poHandle = std::unique_ptr<VSICurlStreamingHandle>(
+        CreateFileHandle(pszFilename, pszFilename + GetFSPrefix().size()));
     // If we didn't get a filelist, check that the file really exists.
     if (poHandle == nullptr || !poHandle->Exists(pszFilename, papszOptions))
     {
-        delete poHandle;
         return nullptr;
     }
 
     if (CPLTestBool(CPLGetConfigOption("VSI_CACHE", "FALSE")))
-        return VSICreateCachedFile(poHandle);
+        return VSIVirtualHandleUniquePtr(
+            VSICreateCachedFile(poHandle.release()));
 
-    return poHandle;
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/

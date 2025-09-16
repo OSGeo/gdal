@@ -163,40 +163,40 @@ class OGRElasticLayer final : public OGRLayer
                     const char *pszESSearch = nullptr);
     OGRElasticLayer(const char *pszLayerName,
                     OGRElasticLayer *poReferenceLayer);
-    virtual ~OGRElasticLayer();
+    ~OGRElasticLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr IUpsertFeature(OGRFeature *poFeature) override;
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK) override;
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK) override;
 
-    const char *GetName() override
+    const char *GetName() const override
     {
         return m_poFeatureDefn->GetName();
     }
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
-    virtual const char *GetFIDColumn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
+    const char *GetFIDColumn() const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    GIntBig GetFeatureCount(int bForce) override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    virtual OGRErr SetAttributeFilter(const char *pszFilter) override;
+    OGRErr SetAttributeFilter(const char *pszFilter) override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    virtual OGRErr SyncToDisk() override;
+    OGRErr SyncToDisk() override;
 
     GDALDataset *GetDataset() override;
 
@@ -290,7 +290,7 @@ class OGRElasticAggregationLayer final
 
     ~OGRElasticAggregationLayer() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -298,7 +298,7 @@ class OGRElasticAggregationLayer final
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRElasticAggregationLayer)
     GIntBig GetFeatureCount(int bForce) override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
@@ -323,7 +323,7 @@ class OGRElasticDataSource final : public GDALDataset
     std::set<CPLString> m_oSetLayers;
     std::vector<std::unique_ptr<OGRElasticLayer>> m_apoLayers;
     std::unique_ptr<OGRElasticAggregationLayer> m_poAggregationLayer{};
-    bool m_bAllLayersListed = false;
+    mutable bool m_bAllLayersListed = false;
     std::map<OGRLayer *, OGRLayer *> m_oMapResultSet;
     std::map<std::string, std::string> m_oMapHeadersFromEnv{};
 
@@ -335,7 +335,7 @@ class OGRElasticDataSource final : public GDALDataset
 
   public:
     OGRElasticDataSource();
-    virtual ~OGRElasticDataSource();
+    ~OGRElasticDataSource() override;
 
     bool m_bOverwrite;
     int m_nBulkUpload;
@@ -365,21 +365,21 @@ class OGRElasticDataSource final : public GDALDataset
         return m_pszName;
     }
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int) override;
-    virtual OGRLayer *GetLayerByName(const char *pszName) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
+    OGRLayer *GetLayerByName(const char *pszName) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    virtual OGRErr DeleteLayer(int iLayer) override;
+    OGRErr DeleteLayer(int iLayer) override;
 
-    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
-    virtual void ReleaseResultSet(OGRLayer *poLayer) override;
+    OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                         OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+    void ReleaseResultSet(OGRLayer *poLayer) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     bool UploadFile(const CPLString &url, const CPLString &data,
                     const CPLString &osVerb = CPLString());

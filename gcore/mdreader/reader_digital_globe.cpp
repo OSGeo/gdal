@@ -27,8 +27,8 @@
 /**
  * GDALMDReaderDigitalGlobe()
  */
-GDALMDReaderDigitalGlobe::GDALMDReaderDigitalGlobe(const char *pszPath,
-                                                   char **papszSiblingFiles)
+GDALMDReaderDigitalGlobe::GDALMDReaderDigitalGlobe(
+    const char *pszPath, CSLConstList papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles),
       m_osXMLSourceFilename(
           GDALFindAssociatedFile(pszPath, "XML", papszSiblingFiles, 0)),

@@ -33,22 +33,9 @@ class GDALRasterInfoAlgorithm /* non final */
     explicit GDALRasterInfoAlgorithm(bool standaloneStep = false,
                                      bool openForMixedRasterVector = false);
 
-    GDALDataset *GetDatasetRef()
+    bool CanBeLastStep() const override
     {
-        return m_inputDataset.empty() ? nullptr
-                                      : m_inputDataset[0].GetDatasetRef();
-    }
-
-    void SetDataset(GDALDataset *poDS)
-    {
-        auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        if (arg)
-        {
-            auto &val = arg->Get<std::vector<GDALArgDatasetValue>>();
-            val.resize(1);
-            val[0].Set(poDS);
-            arg->SetSkipIfAlreadySet();
-        }
+        return true;
     }
 
   private:

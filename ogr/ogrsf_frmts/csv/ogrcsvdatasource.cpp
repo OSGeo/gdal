@@ -53,7 +53,7 @@ class OGRCSVEditableLayerSynchronizer final
     {
     }
 
-    virtual ~OGRCSVEditableLayerSynchronizer() override;
+    ~OGRCSVEditableLayerSynchronizer() override;
 
     virtual OGRErr EditableSyncToDisk(OGRLayer *poEditableLayer,
                                       OGRLayer **ppoDecoratedLayer) override;
@@ -321,10 +321,10 @@ class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr DeleteField(int iField) override;
+    OGRErr DeleteField(int iField) override;
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                                   int nFlagsIn) override;
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 };
 
 /************************************************************************/
@@ -438,7 +438,7 @@ OGRCSVDataSource::~OGRCSVDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRCSVDataSource::TestCapability(const char *pszCap)
+int OGRCSVDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -463,7 +463,7 @@ int OGRCSVDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRCSVDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRCSVDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))
@@ -1095,6 +1095,13 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
     }
     else
     {
+        if (CPLLaunderForFilenameSafe(pszLayerName, nullptr) != pszLayerName)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Illegal characters in '%s' to form a valid filename",
+                     pszLayerName);
+            return nullptr;
+        }
         osFilename = CPLFormFilenameSafe(pszName, pszLayerName, "csv");
     }
 
@@ -1247,10 +1254,10 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
     if (pszWriteBOM)
         poCSVLayer->SetWriteBOM(CPLTestBool(pszWriteBOM));
 
-    if (poCSVLayer->GetLayerDefn()->GetGeomFieldCount() > 0 &&
-        poSrcGeomFieldDefn)
+    auto poFeatureDefn = poCSVLayer->GetLayerDefn();
+    if (poFeatureDefn->GetGeomFieldCount() > 0 && poSrcGeomFieldDefn)
     {
-        auto poGeomFieldDefn = poCSVLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+        auto poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(0);
         poGeomFieldDefn->SetCoordinatePrecision(
             poSrcGeomFieldDefn->GetCoordinatePrecision());
     }

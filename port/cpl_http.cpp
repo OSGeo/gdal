@@ -35,6 +35,9 @@
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
+#ifdef HAVE_WFLAG_CAST_FUNCTION_TYPE
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
 #endif
 
 #ifdef HAVE_CURL
@@ -533,6 +536,7 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] = {
     {"GDAL_HTTP_TCP_KEEPALIVE", "TCP_KEEPALIVE"},
     {"GDAL_HTTP_TCP_KEEPIDLE", "TCP_KEEPIDLE"},
     {"GDAL_HTTP_TCP_KEEPINTVL", "TCP_KEEPINTVL"},
+    {"GDAL_HTTP_PATH_VERBATIM", "PATH_VERBATIM"},
 };
 
 char **CPLHTTPGetOptionsFromEnv(const char *pszFilename)
@@ -1223,6 +1227,12 @@ int CPLHTTPPopFetchCallback(void)
  * <li>KEYPASSWD=string (GDAL >= 3.7): Passphrase to private key.
  * Cf https://curl.se/libcurl/c/CURLOPT_KEYPASSWD.html.
  * Corresponding configuration option: GDAL_HTTP_KEYPASSWD.
+ * <li>PATH_VERBATIM=[YES/NO] Can be set to YES so that sequences of "/../" or "/./"
+ * that may exist in the URL's path part are kept as it. Otherwise, by default,
+ * they are squashed, according to RFC 3986 section 5.2.4
+ * Cf https://curl.se/libcurl/c/CURLOPT_PATH_AS_IS.html
+ * Corresponding configuration option: GDAL_HTTP_PATH_VERBATIM.
+ * </li>
  * </ul>
  *
  * If an option is specified through papszOptions and as a configuration option,
@@ -2132,6 +2142,14 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
             unchecked_curl_easy_setopt(http_handle, CURLOPT_DEBUGFUNCTION,
                                        CPLHTTPCurlDebugFunction);
         }
+    }
+
+    const char *pszPathAsIt = CSLFetchNameValue(papszOptions, "PATH_VERBATIM");
+    if (pszPathAsIt == nullptr)
+        pszPathAsIt = CPLGetConfigOption("GDAL_HTTP_PATH_VERBATIM", nullptr);
+    if (pszPathAsIt && CPLTestBool(pszPathAsIt))
+    {
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PATH_AS_IS, 1L);
     }
 
     const char *pszHttpVersion =

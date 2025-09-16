@@ -212,7 +212,7 @@ static void MergeFieldDefn(OGRFieldDefn *poFieldDefn,
 /*                             GetLayerDefn()                           */
 /************************************************************************/
 
-OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRUnionLayer::GetLayerDefn() const
 {
     if (poFeatureDefn != nullptr)
         return poFeatureDefn;
@@ -247,12 +247,13 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
             {
                 for (auto &oLayer : m_apoSrcLayers)
                 {
-                    OGRFeatureDefn *poSrcFeatureDefn = oLayer->GetLayerDefn();
+                    const OGRFeatureDefn *poSrcFeatureDefn =
+                        oLayer->GetLayerDefn();
                     int nIndex = poSrcFeatureDefn->GetGeomFieldIndex(
                         poGeomFieldDefn->GetNameRef());
                     if (nIndex >= 0)
                     {
-                        OGRGeomFieldDefn *poSrcGeomFieldDefn =
+                        const OGRGeomFieldDefn *poSrcGeomFieldDefn =
                             poSrcFeatureDefn->GetGeomFieldDefn(nIndex);
                         if (poGeomFieldDefn->bGeomTypeSet == FALSE)
                         {
@@ -388,12 +389,14 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
     }
     else if (eFieldStrategy == FIELD_INTERSECTION_ALL_LAYERS)
     {
-        OGRFeatureDefn *poSrcFeatureDefn = m_apoSrcLayers[0]->GetLayerDefn();
+        const OGRFeatureDefn *poSrcFeatureDefn =
+            m_apoSrcLayers[0]->GetLayerDefn();
         for (int i = 0; i < poSrcFeatureDefn->GetFieldCount(); i++)
             poFeatureDefn->AddFieldDefn(poSrcFeatureDefn->GetFieldDefn(i));
         for (int i = 0; i < poSrcFeatureDefn->GetGeomFieldCount(); i++)
         {
-            OGRGeomFieldDefn *poFldDefn = poSrcFeatureDefn->GetGeomFieldDefn(i);
+            const OGRGeomFieldDefn *poFldDefn =
+                poSrcFeatureDefn->GetGeomFieldDefn(i);
             poFeatureDefn->AddGeomFieldDefn(
                 std::make_unique<OGRUnionLayerGeomFieldDefn>(poFldDefn));
         }
@@ -402,7 +405,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
         for (int iLayer = 1; iLayer < static_cast<int>(m_apoSrcLayers.size());
              iLayer++)
         {
-            OGRFeatureDefn *l_poSrcFeatureDefn =
+            const OGRFeatureDefn *l_poSrcFeatureDefn =
                 m_apoSrcLayers[iLayer]->GetLayerDefn();
             for (int i = iCompareFirstIndex; i < poFeatureDefn->GetFieldCount();
                  // No increment.
@@ -417,7 +420,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
                 }
                 else
                 {
-                    OGRFieldDefn *poSrcFieldDefn =
+                    const OGRFieldDefn *poSrcFieldDefn =
                         l_poSrcFeatureDefn->GetFieldDefn(nSrcIndex);
                     MergeFieldDefn(poFieldDefn, poSrcFieldDefn);
 
@@ -428,7 +431,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
                  // No increment.
             )
             {
-                OGRGeomFieldDefn *poFieldDefn =
+                const OGRGeomFieldDefn *poFieldDefn =
                     poFeatureDefn->GetGeomFieldDefn(i);
                 int nSrcIndex = l_poSrcFeatureDefn->GetGeomFieldIndex(
                     poFieldDefn->GetNameRef());
@@ -453,7 +456,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
 /*                             GetGeomType()                            */
 /************************************************************************/
 
-OGRwkbGeometryType OGRUnionLayer::GetGeomType()
+OGRwkbGeometryType OGRUnionLayer::GetGeomType() const
 {
     if (nGeomFields < 0)
         return wkbNone;
@@ -624,6 +627,8 @@ void OGRUnionLayer::ResetReading()
 
 void OGRUnionLayer::AutoWarpLayerIfNecessary(int iLayer)
 {
+    std::lock_guard oLock(m_oMutex);
+
     if (!m_apoSrcLayers[iLayer].bCheckIfAutoWrap)
     {
         m_apoSrcLayers[iLayer].bCheckIfAutoWrap = true;
@@ -1009,13 +1014,12 @@ OGRErr OGRUnionLayer::IUpdateFeature(OGRFeature *poFeature,
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRUnionLayer::GetSpatialRef()
+const OGRSpatialReference *OGRUnionLayer::GetSpatialRef() const
 {
     if (nGeomFields < 0)
         return nullptr;
     if (nGeomFields >= 1 && papoGeomFields[0]->bSRSSet)
-        return const_cast<OGRSpatialReference *>(
-            papoGeomFields[0]->GetSpatialRef());
+        return papoGeomFields[0]->GetSpatialRef();
 
     if (poGlobalSRS == nullptr)
     {
@@ -1023,14 +1027,14 @@ OGRSpatialReference *OGRUnionLayer::GetSpatialRef()
         if (poGlobalSRS != nullptr)
             const_cast<OGRSpatialReference *>(poGlobalSRS)->Reference();
     }
-    return const_cast<OGRSpatialReference *>(poGlobalSRS);
+    return poGlobalSRS;
 }
 
 /************************************************************************/
 /*                      GetAttrFilterPassThroughValue()                 */
 /************************************************************************/
 
-int OGRUnionLayer::GetAttrFilterPassThroughValue()
+int OGRUnionLayer::GetAttrFilterPassThroughValue() const
 {
     if (m_poAttrQuery == nullptr)
         return TRUE;
@@ -1043,7 +1047,7 @@ int OGRUnionLayer::GetAttrFilterPassThroughValue()
 
     for (auto &oLayer : m_apoSrcLayers)
     {
-        OGRFeatureDefn *poSrcFeatureDefn = oLayer->GetLayerDefn();
+        const OGRFeatureDefn *poSrcFeatureDefn = oLayer->GetLayerDefn();
         char **papszIter = papszUsedFields;
         while (papszIter != nullptr && *papszIter != nullptr)
         {
@@ -1078,6 +1082,8 @@ int OGRUnionLayer::GetAttrFilterPassThroughValue()
 
 void OGRUnionLayer::ApplyAttributeFilterToSrcLayer(int iSubLayer)
 {
+    std::lock_guard oLock(m_oMutex);
+
     CPLAssert(iSubLayer >= 0 &&
               iSubLayer < static_cast<int>(m_apoSrcLayers.size()));
 
@@ -1153,7 +1159,7 @@ OGRErr OGRUnionLayer::SetAttributeFilter(const char *pszAttributeFilterIn)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRUnionLayer::TestCapability(const char *pszCap)
+int OGRUnionLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
     {
@@ -1166,9 +1172,11 @@ int OGRUnionLayer::TestCapability(const char *pszCap)
 
         for (int i = 0; i < static_cast<int>(m_apoSrcLayers.size()); i++)
         {
-            AutoWarpLayerIfNecessary(i);
-            ApplyAttributeFilterToSrcLayer(i);
-            SetSpatialFilterToSourceLayer(m_apoSrcLayers[i].poLayer);
+            const_cast<OGRUnionLayer *>(this)->AutoWarpLayerIfNecessary(i);
+            const_cast<OGRUnionLayer *>(this)->ApplyAttributeFilterToSrcLayer(
+                i);
+            const_cast<OGRUnionLayer *>(this)->SetSpatialFilterToSourceLayer(
+                m_apoSrcLayers[i].poLayer);
             if (!m_apoSrcLayers[i]->TestCapability(pszCap))
                 return FALSE;
         }
@@ -1182,7 +1190,7 @@ int OGRUnionLayer::TestCapability(const char *pszCap)
 
         for (int i = 0; i < static_cast<int>(m_apoSrcLayers.size()); i++)
         {
-            AutoWarpLayerIfNecessary(i);
+            const_cast<OGRUnionLayer *>(this)->AutoWarpLayerIfNecessary(i);
             if (!m_apoSrcLayers[i]->TestCapability(pszCap))
                 return FALSE;
         }
@@ -1193,8 +1201,9 @@ int OGRUnionLayer::TestCapability(const char *pszCap)
     {
         for (int i = 0; i < static_cast<int>(m_apoSrcLayers.size()); i++)
         {
-            AutoWarpLayerIfNecessary(i);
-            ApplyAttributeFilterToSrcLayer(i);
+            const_cast<OGRUnionLayer *>(this)->AutoWarpLayerIfNecessary(i);
+            const_cast<OGRUnionLayer *>(this)->ApplyAttributeFilterToSrcLayer(
+                i);
             if (!m_apoSrcLayers[i]->TestCapability(pszCap))
                 return FALSE;
         }

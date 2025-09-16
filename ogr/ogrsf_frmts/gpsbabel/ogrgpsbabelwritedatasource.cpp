@@ -202,7 +202,7 @@ OGRLayer *OGRGPSBabelWriteDataSource::ICreateLayer(
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGPSBabelWriteDataSource::TestCapability(const char *pszCap)
+int OGRGPSBabelWriteDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -215,7 +215,7 @@ int OGRGPSBabelWriteDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRGPSBabelWriteDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRGPSBabelWriteDataSource::GetLayer(int iLayer) const
 
 {
     if (poGPXDS)
@@ -228,7 +228,7 @@ OGRLayer *OGRGPSBabelWriteDataSource::GetLayer(int iLayer)
 /*                         GetLayerCount()                              */
 /************************************************************************/
 
-int OGRGPSBabelWriteDataSource::GetLayerCount()
+int OGRGPSBabelWriteDataSource::GetLayerCount() const
 
 {
     if (poGPXDS)

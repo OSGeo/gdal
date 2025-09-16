@@ -37,14 +37,14 @@ class OGRJSONFGMemLayer final : public OGRMemLayer
   public:
     OGRJSONFGMemLayer(GDALDataset *poDS, const char *pszName,
                       OGRSpatialReference *poSRS, OGRwkbGeometryType eGType);
-    ~OGRJSONFGMemLayer();
+    ~OGRJSONFGMemLayer() override;
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return osFIDColumn_.c_str();
     }
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     void SetFIDColumn(const char *pszName)
     {
@@ -85,7 +85,7 @@ class OGRJSONFGStreamedLayer final
     OGRJSONFGStreamedLayer(GDALDataset *poDS, const char *pszName,
                            OGRSpatialReference *poSRS,
                            OGRwkbGeometryType eGType);
-    ~OGRJSONFGStreamedLayer();
+    ~OGRJSONFGStreamedLayer() override;
 
     // BEGIN specific public API
 
@@ -116,17 +116,17 @@ class OGRJSONFGStreamedLayer final
 
     // END specific public API
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return osFIDColumn_.c_str();
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn_;
     }
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     GIntBig GetFeatureCount(int bForce) override;
 
@@ -180,17 +180,17 @@ class OGRJSONFGWriteLayer final : public OGRLayer
         std::unique_ptr<OGRCoordinateTransformation> &&poCTToWGS84,
         const std::string &osCoordRefSys, OGRwkbGeometryType eGType,
         CSLConstList papszOptions, OGRJSONFGDataset *poDS);
-    ~OGRJSONFGWriteLayer();
+    ~OGRJSONFGWriteLayer() override;
 
     //
     // OGRLayer Interface
     //
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn_;
     }
 
-    OGRSpatialReference *GetSpatialRef() override
+    const OGRSpatialReference *GetSpatialRef() const override
     {
         return nullptr;
     }
@@ -206,7 +206,7 @@ class OGRJSONFGWriteLayer final : public OGRLayer
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     OGRErr SyncToDisk() override;
 
@@ -238,17 +238,17 @@ class OGRJSONFGDataset final : public GDALDataset
 {
   public:
     OGRJSONFGDataset() = default;
-    ~OGRJSONFGDataset();
+    ~OGRJSONFGDataset() override;
 
     bool Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType);
     bool Create(const char *pszName, CSLConstList papszOptions);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(apoLayers_.size());
     }
 
-    OGRLayer *GetLayer(int i) override;
+    const OGRLayer *GetLayer(int i) const override;
 
     //! Return the output file handle. Used by OGRJSONFGWriteLayer
     VSILFILE *GetOutputFile() const
@@ -276,7 +276,7 @@ class OGRJSONFGDataset final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     OGRErr SyncToDiskInternal();
 
@@ -543,7 +543,7 @@ class OGRJSONFGStreamingParser final : public OGRJSONCollectionStreamingParser
 
   public:
     OGRJSONFGStreamingParser(OGRJSONFGReader &oReader, bool bFirstPass);
-    ~OGRJSONFGStreamingParser();
+    ~OGRJSONFGStreamingParser() override;
 
     void SetRequestedLayer(const char *pszRequestedLayer)
     {

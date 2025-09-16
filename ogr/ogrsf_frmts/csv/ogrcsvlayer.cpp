@@ -1759,7 +1759,7 @@ OGRFeature *OGRCSVLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRCSVLayer::TestCapability(const char *pszCap)
+int OGRCSVLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite))
@@ -2081,7 +2081,11 @@ OGRErr OGRCSVLayer::WriteHeader()
                     ? CPLES_CSV_FORCE_QUOTING
                     : CPLES_CSV);
             if (pszEscaped == nullptr)
+            {
+                if (fpCSVT)
+                    VSIFCloseL(fpCSVT);
                 return OGRERR_FAILURE;
+            }
 
             if (fpCSV)
             {

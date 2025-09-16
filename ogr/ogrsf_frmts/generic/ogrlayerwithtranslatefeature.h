@@ -23,7 +23,7 @@
 class OGRLayerWithTranslateFeature /* non final */ : virtual public OGRLayer
 {
   public:
-    virtual ~OGRLayerWithTranslateFeature();
+    ~OGRLayerWithTranslateFeature() override;
 
     /** Translate the source feature into one or several output features */
     virtual void TranslateFeature(

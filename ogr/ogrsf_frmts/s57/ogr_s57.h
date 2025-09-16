@@ -40,24 +40,24 @@ class OGRS57Layer final : public OGRLayer
   public:
     OGRS57Layer(OGRS57DataSource *poDS, OGRFeatureDefn *,
                 int nFeatureCount = -1, int nOBJL = -1);
-    virtual ~OGRS57Layer();
+    ~OGRS57Layer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetNextUnfilteredFeature();
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    int TestCapability(const char *) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -87,7 +87,7 @@ class OGRS57DataSource final : public GDALDataset
 
   public:
     explicit OGRS57DataSource(char **papszOpenOptions = nullptr);
-    ~OGRS57DataSource();
+    ~OGRS57DataSource() override;
 
     void SetOptionList(char **);
     const char *GetOption(const char *);
@@ -95,16 +95,17 @@ class OGRS57DataSource final : public GDALDataset
     int Open(const char *pszName);
     int Create(const char *pszName, char **papszOptions);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
     void AddLayer(OGRS57Layer *);
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
-    OGRSpatialReference *DSGetSpatialRef()
+    const OGRSpatialReference *DSGetSpatialRef() const
     {
         return poSpatialRef;
     }
@@ -134,7 +135,7 @@ class OGRS57Driver final : public GDALDriver
 
   public:
     OGRS57Driver();
-    ~OGRS57Driver();
+    ~OGRS57Driver() override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszName, int nBands, int nXSize,

@@ -27,16 +27,16 @@ Common metadata (from metadata filename):
     AcquisitionDateTime: sweep_start_utc, sweep_end_utc
 */
 
-class GDALMDReaderEROS : public GDALMDReaderBase
+class GDALMDReaderEROS final : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderEROS(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderEROS();
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    GDALMDReaderEROS(const char *pszPath, CSLConstList papszSiblingFiles);
+    ~GDALMDReaderEROS() override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
     char **LoadImdTxtFile();
     virtual GIntBig
     GetAcquisitionTimeFromString(const char *pszDateTime) override;

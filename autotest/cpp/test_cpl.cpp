@@ -466,7 +466,7 @@ TEST_F(test_cpl, CSLTokenizeString2)
         {
             oMap[name] = value;
         }
-        ASSERT_EQ(oMap.size(), 2);
+        ASSERT_EQ(oMap.size(), 2U);
         EXPECT_EQ(oMap["foo"], "bar");
         EXPECT_EQ(oMap["bar"], "baz");
     }
@@ -830,6 +830,21 @@ TEST_F(test_cpl, CPLStringList_Sort)
     EXPECT_STREQ(oNVL.FetchNameValue("B"), "BB");
     EXPECT_STREQ(oNVL.FetchNameValue("C"), "CC");
     EXPECT_STREQ(oNVL.FetchNameValue("D"), "DD");
+}
+
+TEST_F(test_cpl, URLEncode)
+{
+    EXPECT_STREQ(CPLString("AB").URLEncode(), "AB");
+    EXPECT_STREQ(CPLString("A/B").URLEncode(), "A/B");
+    EXPECT_STREQ(CPLString("A B").URLEncode(), "A%20B");
+
+    const char *uriA =
+        "http://example.com/path with space%20/pipe|/query?param=1&val=A B";
+    const char *uriB = "http://example.com/path%20with%20space%20/pipe%7C/"
+                       "query?param=1&val=A%20B";
+    EXPECT_STREQ(CPLString(uriA).URLEncode(), uriB);
+    EXPECT_STREQ(CPLString(uriA).URLEncode(), CPLString(uriB).URLEncode());
+    EXPECT_STREQ(CPLString(uriA).URLEncode().URLEncode(), uriB);
 }
 
 TEST_F(test_cpl, CPL_HMAC_SHA256)
@@ -4295,19 +4310,20 @@ TEST_F(test_cpl, CPLQuadTree)
 // Test bUnlinkAndSize on VSIGetMemFileBuffer
 TEST_F(test_cpl, VSIGetMemFileBuffer_unlink_and_size)
 {
-    VSILFILE *fp = VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "wb");
-    VSIFWriteL("test", 5, 1, fp);
-    GByte *pRawData =
-        VSIGetMemFileBuffer("/vsimem/test_unlink_and_seize.tif", nullptr, true);
-    ASSERT_TRUE(EQUAL(reinterpret_cast<const char *>(pRawData), "test"));
+    VSIVirtualHandleUniquePtr fp(
+        VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "wb"));
+    VSIFWriteL("test", 5, 1, fp.get());
+    std::unique_ptr<GByte, VSIFreeReleaser> pRawData(VSIGetMemFileBuffer(
+        "/vsimem/test_unlink_and_seize.tif", nullptr, true));
+    ASSERT_TRUE(EQUAL(reinterpret_cast<const char *>(pRawData.get()), "test"));
     ASSERT_TRUE(VSIGetMemFileBuffer("/vsimem/test_unlink_and_seize.tif",
                                     nullptr, false) == nullptr);
-    ASSERT_TRUE(VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "r") == nullptr);
-    ASSERT_TRUE(VSIFReadL(pRawData, 5, 1, fp) == 0);
-    ASSERT_TRUE(VSIFWriteL(pRawData, 5, 1, fp) == 0);
-    ASSERT_TRUE(VSIFSeekL(fp, 0, SEEK_END) == 0);
-    CPLFree(pRawData);
-    VSIFCloseL(fp);
+    VSIVirtualHandleUniquePtr fp2(
+        VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "r"));
+    ASSERT_TRUE(fp2.get() == nullptr);
+    ASSERT_TRUE(VSIFReadL(pRawData.get(), 5, 1, fp.get()) == 0);
+    ASSERT_TRUE(VSIFWriteL(pRawData.get(), 5, 1, fp.get()) == 0);
+    ASSERT_TRUE(VSIFSeekL(fp.get(), 0, SEEK_END) == 0);
 }
 
 // Test CPLLoadConfigOptionsFromFile() for VSI credentials
@@ -4503,13 +4519,16 @@ TEST_F(test_cpl, VSI_plugin_minimal_testing)
     reinterpret_cast<VSIVirtualHandle *>(fp)->AdviseRead(1, &nOffset, &nSize);
 
     VSIFCloseL(fp);
-    EXPECT_TRUE(VSIFOpenL("/vsimyplugin/i_dont_exist", "rb") == nullptr);
+    EXPECT_TRUE(VSIVirtualHandleUniquePtr(
+                    VSIFOpenL("/vsimyplugin/i_dont_exist", "rb")) == nullptr);
 
     // Check that we can remove the handler
     VSIRemovePluginHandler("/vsimyplugin/");
 
-    EXPECT_TRUE(VSIFOpenL("/vsimyplugin/test", "rb") == nullptr);
-    EXPECT_TRUE(VSIFOpenL("/vsimyplugin/i_dont_exist", "rb") == nullptr);
+    EXPECT_TRUE(VSIVirtualHandleUniquePtr(
+                    VSIFOpenL("/vsimyplugin/test", "rb")) == nullptr);
+    EXPECT_TRUE(VSIVirtualHandleUniquePtr(
+                    VSIFOpenL("/vsimyplugin/i_dont_exist", "rb")) == nullptr);
 
     // Removing a non-existing handler is a no-op
     VSIRemovePluginHandler("/vsimyplugin/");
@@ -5003,37 +5022,38 @@ TEST_F(test_cpl, CPLGetExecPath)
     if (!CPLGetExecPath(achBuffer.data(), static_cast<int>(achBuffer.size())))
     {
         GTEST_SKIP() << "CPLGetExecPath() not implemented for this platform";
-        return;
     }
-
-    bool bFoundNulTerminatedChar = false;
-    for (char ch : achBuffer)
+    else
     {
-        if (ch == '\0')
+        bool bFoundNulTerminatedChar = false;
+        for (char ch : achBuffer)
         {
-            bFoundNulTerminatedChar = true;
-            break;
+            if (ch == '\0')
+            {
+                bFoundNulTerminatedChar = true;
+                break;
+            }
         }
+        ASSERT_TRUE(bFoundNulTerminatedChar);
+
+        // Check that the file exists
+        VSIStatBufL sStat;
+        EXPECT_EQ(VSIStatL(achBuffer.data(), &sStat), 0);
+
+        const std::string osStrBefore(achBuffer.data());
+
+        // Resize the buffer to just the minimum size
+        achBuffer.resize(strlen(achBuffer.data()) + 1);
+        EXPECT_TRUE(CPLGetExecPath(achBuffer.data(),
+                                   static_cast<int>(achBuffer.size())));
+
+        EXPECT_STREQ(osStrBefore.c_str(), achBuffer.data());
+
+        // Too small buffer
+        achBuffer.resize(achBuffer.size() - 1);
+        EXPECT_FALSE(CPLGetExecPath(achBuffer.data(),
+                                    static_cast<int>(achBuffer.size())));
     }
-    ASSERT_TRUE(bFoundNulTerminatedChar);
-
-    // Check that the file exists
-    VSIStatBufL sStat;
-    EXPECT_EQ(VSIStatL(achBuffer.data(), &sStat), 0);
-
-    const std::string osStrBefore(achBuffer.data());
-
-    // Resize the buffer to just the minimum size
-    achBuffer.resize(strlen(achBuffer.data()) + 1);
-    EXPECT_TRUE(
-        CPLGetExecPath(achBuffer.data(), static_cast<int>(achBuffer.size())));
-
-    EXPECT_STREQ(osStrBefore.c_str(), achBuffer.data());
-
-    // Too small buffer
-    achBuffer.resize(achBuffer.size() - 1);
-    EXPECT_FALSE(
-        CPLGetExecPath(achBuffer.data(), static_cast<int>(achBuffer.size())));
 }
 
 TEST_F(test_cpl, VSIDuplicateFileSystemHandler)
@@ -5982,6 +6002,43 @@ TEST_F(test_cpl, CPLGetCurrentThreadCount)
 #else
     EXPECT_EQ(CPLGetCurrentThreadCount(), 0);
 #endif
+}
+
+TEST_F(test_cpl, CPLHasPathTraversal)
+{
+    EXPECT_TRUE(CPLHasPathTraversal("a/../b"));
+    EXPECT_TRUE(CPLHasPathTraversal("a/../"));
+    EXPECT_TRUE(CPLHasPathTraversal("a/.."));
+    EXPECT_TRUE(CPLHasPathTraversal("a\\..\\b"));
+    EXPECT_FALSE(CPLHasPathTraversal("a/b"));
+    {
+        CPLConfigOptionSetter oSetter("CPL_ENABLE_PATH_TRAVERSAL_DETECTION",
+                                      "NO", true);
+        EXPECT_FALSE(CPLHasPathTraversal("a/../b"));
+        EXPECT_FALSE(CPLHasPathTraversal("a\\..\\b"));
+    }
+}
+
+TEST_F(test_cpl, CPLHasUnbalancedPathTraversal)
+{
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a"));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("."));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("./"));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a/.."));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a/../b"));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("./a/../b"));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a\\..\\b"));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a/../b/../"));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a/../b/.."));
+    EXPECT_FALSE(CPLHasUnbalancedPathTraversal("a/b"));
+
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal(".."));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("../"));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("../b"));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../../"));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../b/../.."));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../b/../../"));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a\\..\\..\\"));
 }
 
 }  // namespace

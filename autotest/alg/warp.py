@@ -19,6 +19,7 @@ import math
 import os
 import shutil
 import struct
+import sys
 
 import gdaltest
 import pytest
@@ -1292,6 +1293,11 @@ def test_warp_41():
         assert src_gt[i] == pytest.approx(vrt_gt[i], abs=1e-5)
 
 
+def test_warp_suggestedwarp_output_invalid_input():
+    with pytest.raises(Exception):
+        gdal.SuggestedWarpOutput(None, {"DST_SRS": "EPSG:4326"})
+
+
 ###############################################################################
 
 # Maximum
@@ -2111,3 +2117,83 @@ def test_warp_validate_options():
     except Exception:
         print(xml)
         raise
+
+
+###############################################################################
+# Test mode resampling with all data types
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "dt",
+    [
+        gdal.GDT_Int8,
+        gdal.GDT_Byte,
+        gdal.GDT_Int16,
+        gdal.GDT_UInt16,
+        gdal.GDT_Int32,
+        gdal.GDT_UInt32,
+        gdal.GDT_Int64,
+        gdal.GDT_UInt64,
+        gdal.GDT_Float16,
+        gdal.GDT_Float32,
+        gdal.GDT_Float64,
+        gdal.GDT_CInt16,
+        gdal.GDT_CInt32,
+        gdal.GDT_CFloat16,
+        gdal.GDT_CFloat32,
+        gdal.GDT_CFloat64,
+    ],
+)
+def test_warp_mode(dt):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 1, dt)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    dtsize = gdal.GetDataTypeSizeBytes(dt)
+    val = (
+        b"\x38"
+        if dt
+        in (
+            gdal.GDT_Float16,
+            gdal.GDT_Float32,
+            gdal.GDT_Float64,
+            gdal.GDT_CFloat16,
+            gdal.GDT_CFloat32,
+            gdal.GDT_CFloat64,
+        )
+        else b"\xFF"
+    )
+    ds.WriteRaster(1, 0, 2, 1, val * (2 * dtsize))
+
+    out_ds = gdal.Warp("", ds, options="-f MEM -r mode -ts 1 1")
+    assert out_ds.ReadRaster(0, 0, 1, 1) == val * dtsize, gdal.GetDataTypeName(dt)
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "dt",
+    [
+        gdal.GDT_Float16,
+        gdal.GDT_Float32,
+        gdal.GDT_Float64,
+        gdal.GDT_CFloat16,
+        gdal.GDT_CFloat32,
+        gdal.GDT_CFloat64,
+    ],
+)
+def test_warp_mode_nan(dt):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 5, 1, 1, dt)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    dtsize = gdal.GetDataTypeSizeBytes(dt)
+    # 3 different encodings of NaN
+    ds.WriteRaster(1, 0, 1, 1, b"\xFF" * dtsize)
+    if sys.byteorder == "little":
+        ds.WriteRaster(2, 0, 1, 1, b"\xFE" + b"\xFF" * (dtsize - 1))
+        ds.WriteRaster(3, 0, 1, 1, b"\xFD" + b"\xFF" * (dtsize - 1))
+    else:
+        ds.WriteRaster(2, 0, 1, 1, b"\xFF" * (dtsize - 1) + b"\xFE")
+        ds.WriteRaster(3, 0, 1, 1, b"\xFF" * (dtsize - 1) + b"\xFD")
+
+    out_ds = gdal.Warp("", ds, options="-f MEM -r mode -ts 1 1")
+    assert out_ds.ReadRaster(0, 0, 1, 1) == b"\xFF" * dtsize, gdal.GetDataTypeName(dt)

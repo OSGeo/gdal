@@ -291,16 +291,16 @@ class OGRArrowLayer CPL_NON_FINAL
     void SanityCheckOfSetBatch() const;
 
   public:
-    virtual ~OGRArrowLayer() override;
+    ~OGRArrowLayer() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
     void ResetReading() override;
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_osFIDColumn.c_str();
     }
@@ -314,7 +314,7 @@ class OGRArrowLayer CPL_NON_FINAL
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     bool GetArrowStream(struct ArrowArrayStream *out_stream,
                         CSLConstList papszOptions = nullptr) override;
@@ -338,16 +338,21 @@ class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
     std::vector<std::string> m_aosDomainNames{};
     std::map<std::string, int> m_oMapDomainNameToCol{};
 
-  protected:
-    void close()
-    {
-        m_poLayer.reset();
-        m_poMemoryPool.reset();
-    }
-
   public:
     explicit OGRArrowDataset(
         const std::shared_ptr<arrow::MemoryPool> &poMemoryPool);
+
+    ~OGRArrowDataset() override
+    {
+        OGRArrowDataset::Close();
+    }
+
+    CPLErr Close() override
+    {
+        m_poLayer.reset();
+        m_poMemoryPool.reset();
+        return GDALPamDataset::Close();
+    }
 
     inline arrow::MemoryPool *GetMemoryPool() const
     {
@@ -368,8 +373,9 @@ class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
     const OGRFieldDomain *
     GetFieldDomain(const std::string &name) const override;
 
-    int GetLayerCount() override;
-    OGRLayer *GetLayer(int idx) override;
+    int GetLayerCount() const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int idx) const override;
 };
 
 /************************************************************************/
@@ -507,12 +513,14 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     std::vector<std::string> GetFieldDomainNames() const;
     const OGRFieldDomain *GetFieldDomain(const std::string &name) const;
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_osFIDColumn.c_str();
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -526,7 +534,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
         return nullptr;
     }
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
     OGRErr CreateField(const OGRFieldDefn *poField,
                        int bApproxOK = TRUE) override;
     OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,

@@ -163,6 +163,8 @@ void OGRFeatherDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+    poDriver->SetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CAN_READ_AFTER_DELETE, "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONFIELDDATATYPES,

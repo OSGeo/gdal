@@ -56,6 +56,10 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "BAG_GEOREF_MD_BLOCKXSIZE", // from bagdataset.cpp
    "BAG_GEOREF_MD_BLOCKYSIZE", // from bagdataset.cpp
    "BASISU_MAX_FILE_SIZE", // from basisudataset.cpp
+   "BIGQUERY_DATASET_ID", // from ogradbcdataset.cpp
+   "BIGQUERY_JSON_CREDENTIAL_FILE", // from ogradbcdataset.cpp
+   "BIGQUERY_JSON_CREDENTIAL_STRING", // from ogradbcdataset.cpp
+   "BIGQUERY_PROJECT_ID", // from ogradbcdataset.cpp
    "BIGTIFF_OVERVIEW", // from gt_overview.cpp
    "BLOCKXSIZE", // from netcdfdataset.cpp
    "BLOCKYSIZE", // from netcdfdataset.cpp
@@ -100,6 +104,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_CURL_VERBOSE_DATA_IN", // from cpl_http.cpp
    "CPL_CURL_VSIMEM_PRINT_HEADERS", // from cpl_http.cpp
    "CPL_DEBUG", // from cpl_conv.cpp, cpl_error.cpp, gdalinfo_bin.cpp, gdalsrsinfo.cpp, gdalwarp_bin.cpp, gmlutils.cpp
+   "CPL_ENABLE_PATH_TRAVERSAL_DETECTION", // from cpl_path.cpp
    "CPL_ENABLE_USERFAULTFD", // from cpl_userfaultfd.cpp
    "CPL_ERROR_SEPARATOR", // from cpl_error.cpp
    "CPL_GCE_CHECK_LOCAL_FILES", // from cpl_google_cloud.cpp
@@ -220,6 +225,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "ESRI_XML_PAM", // from gtiffdataset.cpp, gtiffdataset_write.cpp
    "FGDB_STRING_WIDTH", // from FGdbUtils.cpp
    "FORCE_BLOCKSIZE", // from hfaopen.cpp
+   "GDAL_ALGORITHM_ALLOW_WRITES_IN_STREAM", // from gdalalg_abstract_pipeline.cpp
    "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", // from JPEG_band.cpp, jpgdataset.cpp
    "GDAL_ALLOW_REMOTE_RESOURCE_TO_ACCESS_LOCAL_FILE", // from vsikerchunk.cpp
    "GDAL_BAG_BLOCK_SIZE", // from bagdataset.cpp
@@ -298,6 +304,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_HTTP_MULTIRANGE", // from cpl_vsil_curl.cpp
    "GDAL_HTTP_NETRC", // from cpl_http.cpp
    "GDAL_HTTP_NETRC_FILE", // from cpl_http.cpp
+   "GDAL_HTTP_PATH_VERBATIM", // from cpl_http.cpp, cpl_vsil_s3.cpp
    "GDAL_HTTP_PROXY", // from cpl_http.cpp
    "GDAL_HTTP_PROXYUSERPWD", // from cpl_http.cpp
    "GDAL_HTTP_RETRY_CODES", // from cpl_http.cpp
@@ -983,6 +990,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "RMF_SET_VERTCS", // from rmfdataset.cpp
    "RPC_INVERSE_LOG", // from gdal_rpc.cpp
    "RPC_INVERSE_VERBOSE", // from gdal_rpc.cpp
+   "RPF_SHOW_ALL_ATTRIBUTES", // from nitfimage.c
    "RPFTOC_FORCE_RGBA", // from rpftocdataset.cpp
    "RPFTOC_MAX_FRAME_COUNT", // from rpftocfile.cpp
    "S57_CSV", // from s57classregistrar.cpp

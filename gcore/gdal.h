@@ -442,6 +442,11 @@ typedef enum
 /** XML snippet with creation options. */
 #define GDAL_DMD_CREATIONOPTIONLIST "DMD_CREATIONOPTIONLIST"
 
+/** XML snippet with overview creation options.
+ * @since GDAL 3.12
+ */
+#define GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST "DMD_OVERVIEW_CREATIONOPTIONLIST"
+
 /** XML snippet with multidimensional dataset creation options.
  * @since GDAL 3.1
  */
@@ -627,6 +632,16 @@ typedef enum
 
 /** Capability set by a driver that can copy over subdatasets. */
 #define GDAL_DCAP_SUBCREATECOPY "DCAP_SUBCREATECOPY"
+
+/** Capability set by a driver that supports the GDAL_OF_UPDATE flag and offers
+ * feature appending capabilities.
+ *
+ * Note: feature appending capability is also implied if GDAL_DCAP_UPDATE or
+ * GDAL_DCAP_CREATE_LAYER is set, in which case GDAL_DCAP_APPEND is not set.
+ *
+ * @since GDAL 3.12.
+ */
+#define GDAL_DCAP_APPEND "DCAP_APPEND"
 
 /** Capability set by a driver that supports the GDAL_OF_UPDATE flag and offers
  * at least some update capabilities.
@@ -852,6 +867,11 @@ typedef enum
 #define GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION                              \
     "DCAP_HONOR_GEOM_COORDINATE_PRECISION"
 
+/** Capability set by drivers that implements OGRLayer::UpsertTeature().
+ * @since GDLA 3.12
+ */
+#define GDAL_DCAP_UPSERT "DCAP_UPSERT"
+
 /** List of (space separated) flags indicating the features of relationships are
  * supported by the driver.
  *
@@ -996,6 +1016,21 @@ typedef enum
  * @since GDAL 3.1
  */
 #define GDAL_DIM_TYPE_PARAMETRIC "PARAMETRIC"
+
+/** "Capability" set by drivers that require re-opening the dataset to be able
+ * to read its content if it has just been created previously
+ *
+ * @since GDAL 3.12
+ */
+#define GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED "DCAP_REOPEN_AFTER_WRITE_REQUIRED"
+
+/** Capability set by drivers that can read from a dataset, even if it deleted
+ * from disk after it has been opened (i.e. such drivers do not need to reopen
+ * or test the existence of the file at that point)
+ *
+ * @since GDAL 3.12
+ */
+#define GDAL_DCAP_CAN_READ_AFTER_DELETE "DCAP_CAN_READ_AFTER_DELETE"
 
 #define GDsCAddRelationship                                                    \
     "AddRelationship" /**< Dataset capability for supporting AddRelationship() \
@@ -1285,6 +1320,7 @@ GDALDriverH CPL_DLL CPL_STDCALL GDALGetDatasetDriver(GDALDatasetH);
 char CPL_DLL **CPL_STDCALL GDALGetFileList(GDALDatasetH);
 void CPL_DLL GDALDatasetMarkSuppressOnClose(GDALDatasetH);
 CPLErr CPL_DLL CPL_STDCALL GDALClose(GDALDatasetH);
+CPLErr CPL_DLL GDALDatasetRunCloseWithoutDestroying(GDALDatasetH hDS);
 int CPL_DLL CPL_STDCALL GDALGetRasterXSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterYSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterCount(GDALDatasetH);
@@ -1557,69 +1593,31 @@ void CPL_DLL GDALDestroySubdatasetInfo(GDALSubdatasetInfoH hInfo);
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
 
-/* Note: the only user of SRCVAL() was frmts/vrt/pixelfunctions.cpp and we no */
-/* longer use it. */
+/* Note: the only user of SRCVAL() is alg/gdal_simplesurf.cpp */
 
+/* clang-format off */
 /**
  * SRCVAL - Macro which may be used by pixel functions to obtain
  *          a pixel from a source buffer.
  */
-#define SRCVAL(papoSource, eSrcType, ii)                                                                      \
-    (eSrcType == GDT_Byte                                                                                     \
-         ? CPL_REINTERPRET_CAST(const GByte *, papoSource)[ii]                                                \
-         : (eSrcType == GDT_Int8                                                                              \
-                ? CPL_REINTERPRET_CAST(const GInt8 *, papoSource)[ii]                                         \
-                : (eSrcType == GDT_Float32                                                                    \
-                       ? CPL_REINTERPRET_CAST(const float *, papoSource)[ii]                                  \
-                       : (eSrcType == GDT_Float64                                                             \
-                              ? CPL_REINTERPRET_CAST(const double *,                                          \
-                                                     papoSource)[ii]                                          \
-                              : (eSrcType == GDT_Int32                                                        \
-                                     ? CPL_REINTERPRET_CAST(const GInt32 *,                                   \
-                                                            papoSource)[ii]                                   \
-                                     : (eSrcType == GDT_UInt16                                                \
-                                            ? CPL_REINTERPRET_CAST(                                           \
-                                                  const GUInt16 *,                                            \
-                                                  papoSource)[ii]                                             \
-                                            : (eSrcType == GDT_Int16                                          \
-                                                   ? CPL_REINTERPRET_CAST(                                    \
-                                                         const GInt16 *,                                      \
-                                                         papoSource)[ii]                                      \
-                                                   : (eSrcType == GDT_UInt32                                  \
-                                                          ? CPL_REINTERPRET_CAST(                             \
-                                                                const GUInt32                                 \
-                                                                    *,                                        \
-                                                                papoSource)                                   \
-                                                                [ii]                                          \
-                                                          : (eSrcType ==                                      \
-                                                                     GDT_CInt16                               \
-                                                                 ? CPL_REINTERPRET_CAST(                      \
-                                                                       const GInt16                           \
-                                                                           *,                                 \
-                                                                       papoSource)                            \
-                                                                       [(ii)*2]                               \
-                                                                 : (eSrcType ==                               \
-                                                                            GDT_CInt32                        \
-                                                                        ? CPL_REINTERPRET_CAST(               \
-                                                                              const GInt32                    \
-                                                                                  *,                          \
-                                                                              papoSource)                     \
-                                                                              [(ii)*2]                        \
-                                                                        : (eSrcType ==                        \
-                                                                                   GDT_CFloat32               \
-                                                                               ? CPL_REINTERPRET_CAST(        \
-                                                                                     const float              \
-                                                                                         *,                   \
-                                                                                     papoSource)              \
-                                                                                     [(ii)*2]                 \
-                                                                               : (eSrcType ==                 \
-                                                                                          GDT_CFloat64        \
-                                                                                      ? CPL_REINTERPRET_CAST( \
-                                                                                            const double      \
-                                                                                                *,            \
-                                                                                            papoSource)       \
-                                                                                            [(ii)*2]          \
-                                                                                      : 0))))))))))))
+#define SRCVAL(papoSource, eSrcType, ii) \
+    (eSrcType == GDT_Byte ? CPL_REINTERPRET_CAST(const GByte *, papoSource)[ii] : \
+     eSrcType == GDT_Int8 ? CPL_REINTERPRET_CAST(const GInt8 *, papoSource)[ii] : \
+     eSrcType == GDT_UInt16 ? CPL_REINTERPRET_CAST(const GUInt16 *, papoSource)[ii] : \
+     eSrcType == GDT_Int16 ? CPL_REINTERPRET_CAST(const GInt16 *, papoSource)[ii] : \
+     eSrcType == GDT_UInt32 ? CPL_REINTERPRET_CAST(const GUInt32 *, papoSource)[ii] : \
+     eSrcType == GDT_Int32 ? CPL_REINTERPRET_CAST(const GInt32 *, papoSource)[ii] : \
+     eSrcType == GDT_UInt64 ? CPL_STATIC_CAST(double, CPL_REINTERPRET_CAST(const GUInt64 *, papoSource)[ii]) : \
+     eSrcType == GDT_Int64 ? CPL_STATIC_CAST(double, CPL_REINTERPRET_CAST(const GUInt64 *, papoSource)[ii]) : \
+     eSrcType == GDT_Float32 ? CPL_STATIC_CAST(double, CPL_REINTERPRET_CAST(const float *, papoSource)[ii]) : \
+     eSrcType == GDT_Float64 ? CPL_REINTERPRET_CAST(const double *, papoSource)[ii] : \
+     eSrcType == GDT_CInt16 ? CPL_REINTERPRET_CAST(const GInt16 *, papoSource)[(ii)*2] : \
+     eSrcType == GDT_CInt32 ? CPL_REINTERPRET_CAST(const GInt32 *, papoSource)[(ii)*2] : \
+     eSrcType == GDT_CFloat32 ? CPL_STATIC_CAST(double, CPL_REINTERPRET_CAST(const float *, papoSource)[ii*2]) : \
+     eSrcType == GDT_CFloat64 ? CPL_REINTERPRET_CAST(const double *, papoSource)[ii*2] : \
+     0)
+
+/* clang-format on */
 
 /** Type of functions to pass to GDALAddDerivedBandPixelFunc.
  * @since GDAL 2.2 */

@@ -3006,7 +3006,7 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
     else  // --version
     {
         osVersionInfo = "GDAL " GDAL_RELEASE_NAME;
-        if (GDAL_RELEASE_NICKNAME[0])
+        if constexpr (GDAL_RELEASE_NICKNAME[0])
         {
             osVersionInfo += " \"" GDAL_RELEASE_NICKNAME "\"";
         }
@@ -4215,6 +4215,8 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 printf("  Supports: Multiple vector layers.\n"); /*ok*/
             if (CPLFetchBool(papszMD, GDAL_DCAP_FIELD_DOMAINS, false))
                 printf("  Supports: Reading field domains.\n"); /*ok*/
+            if (CPLFetchBool(papszMD, GDAL_DCAP_UPSERT, false))
+                printf("  Supports: Feature upsert.\n"); /*ok*/
             if (CSLFetchNameValue(papszMD,
                                   GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES))
                 printf("  Creation field domain types: %s\n", /*ok*/
@@ -4230,6 +4232,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
 
             for (const char *key :
                  {GDAL_DMD_CREATIONOPTIONLIST,
+                  GDAL_DMD_OVERVIEW_CREATIONOPTIONLIST,
                   GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
                   GDAL_DMD_MULTIDIM_GROUP_CREATIONOPTIONLIST,
                   GDAL_DMD_MULTIDIM_DIMENSION_CREATIONOPTIONLIST,

@@ -115,7 +115,7 @@ class HDF4Group final : public GDALGroup
 /*                         HDF4AbstractAttribute                        */
 /************************************************************************/
 
-class HDF4AbstractAttribute : public GDALAttribute
+class HDF4AbstractAttribute /* non final */ : public GDALAttribute
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
@@ -707,7 +707,7 @@ class HDF4SDSArray final : public GDALPamMDArray
         return ar;
     }
 
-    ~HDF4SDSArray();
+    ~HDF4SDSArray() override;
 
     void SetGlobalAttributes(
         const std::vector<std::shared_ptr<GDALAttribute>> &attrs)

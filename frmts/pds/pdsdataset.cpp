@@ -84,28 +84,27 @@ class PDSDataset final : public RawDataset
     CPL_DISALLOW_COPY_ASSIGN(PDSDataset)
 
   protected:
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
     CPLErr Close() override;
 
   public:
     PDSDataset();
-    virtual ~PDSDataset();
+    ~PDSDataset() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
-    virtual char **GetFileList(void) override;
+    char **GetFileList(void) override;
 
-    virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
-                                   const int *, GDALProgressFunc, void *,
-                                   CSLConstList papszOptions) override;
+    CPLErr IBuildOverviews(const char *, int, const int *, int, const int *,
+                           GDALProgressFunc, void *,
+                           CSLConstList papszOptions) override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, BANDMAP_TYPE,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, int, BANDMAP_TYPE, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 
@@ -832,6 +831,12 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     if (!osQube.empty() && osQube[0] == '"')
     {
         const CPLString osFilename = CleanString(osQube);
+        if (CPLHasPathTraversal(osFilename.c_str()))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Path traversal detected in %s", osFilename.c_str());
+            return false;
+        }
         if (!osFilenamePrefix.empty())
         {
             m_osImageFilename = osFilenamePrefix + osFilename;
@@ -1323,6 +1328,12 @@ int PDSDataset::ParseCompressedImage()
 {
     const CPLString osFileName =
         CleanString(GetKeyword("COMPRESSED_FILE.FILE_NAME", ""));
+    if (CPLHasPathTraversal(osFileName.c_str()))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Path traversal detected in %s",
+                 osFileName.c_str());
+        return false;
+    }
 
     const CPLString osPath = CPLGetPathSafe(GetDescription());
     const CPLString osFullFileName =

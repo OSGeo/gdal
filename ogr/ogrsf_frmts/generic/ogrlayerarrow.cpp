@@ -1738,7 +1738,7 @@ static bool FillTimeArray(struct ArrowArray *psChild,
             panValues[iFeat] =
                 psRawField->Date.Hour * 3600000 +
                 psRawField->Date.Minute * 60000 +
-                static_cast<int>(psRawField->Date.Second * 1000 + 0.5);
+                static_cast<int>(psRawField->Date.Second * 1000 + 0.5f);
         }
         else if (bIsNullable)
         {
@@ -1795,7 +1795,8 @@ FillDateTimeArray(struct ArrowArray *psChild,
             brokenDown.tm_sec = static_cast<int>(psRawField->Date.Second);
             auto nVal =
                 CPLYMDHMSToUnixTime(&brokenDown) * 1000 +
-                (static_cast<int>(psRawField->Date.Second * 1000 + 0.5) % 1000);
+                (static_cast<int>(psRawField->Date.Second * 1000 + 0.5f) %
+                 1000);
             if (nFieldTZFlag >= OGR_TZFLAG_MIXED_TZ &&
                 psRawField->Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
             {
@@ -3882,7 +3883,7 @@ inline static void FillFieldListFromHalfFloat(
         const auto nFloat16AsUInt32 = CPLHalfToFloat(paValues[i]);
         float f;
         memcpy(&f, &nFloat16AsUInt32, sizeof(f));
-        aValues.push_back(f);
+        aValues.push_back(static_cast<double>(f));
     }
     oFeature.SetField(iOGRFieldIdx, static_cast<int>(aValues.size()),
                       aValues.data());
@@ -4105,9 +4106,9 @@ static void AddToArray(CPLJSONArray &oArray, const struct ArrowSchema *schema,
     else if (IsInt64(schema->format))
         oArray.Add(static_cast<GIntBig>(GetValue<int64_t>(array, nIdx)));
     else if (IsFloat16(schema->format))
-        oArray.Add(GetValueFloat16(array, nIdx));
+        oArray.Add(static_cast<double>(GetValueFloat16(array, nIdx)));
     else if (IsFloat32(schema->format))
-        oArray.Add(GetValue<float>(array, nIdx));
+        oArray.Add(static_cast<double>(GetValue<float>(array, nIdx)));
     else if (IsFloat64(schema->format))
         oArray.Add(GetValue<double>(array, nIdx));
     else if (IsString(schema->format))
@@ -4229,9 +4230,9 @@ static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
     else if (IsInt64(schema->format))
         oDict.Add(osKey, static_cast<GIntBig>(GetValue<int64_t>(array, nIdx)));
     else if (IsFloat16(schema->format))
-        oDict.Add(osKey, GetValueFloat16(array, nIdx));
+        oDict.Add(osKey, static_cast<double>(GetValueFloat16(array, nIdx)));
     else if (IsFloat32(schema->format))
-        oDict.Add(osKey, GetValue<float>(array, nIdx));
+        oDict.Add(osKey, static_cast<double>(GetValue<float>(array, nIdx)));
     else if (IsFloat64(schema->format))
         oDict.Add(osKey, GetValue<double>(array, nIdx));
     else if (IsString(schema->format))
@@ -4400,8 +4401,8 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
     {
         oFeature.SetField(
             iOGRFieldIndex,
-            GetValueFloat16(array, nOffsettedIndex -
-                                       static_cast<size_t>(array->offset)));
+            static_cast<double>(GetValueFloat16(
+                array, nOffsettedIndex - static_cast<size_t>(array->offset))));
     }
 
     else if (IsFixedWidthBinary(format))
@@ -4469,9 +4470,31 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
              (format[2] == 'u' ||  // time64 [microseconds]
               format[2] == 'n'))   // time64 [nanoseconds]
     {
-        oFeature.SetField(iOGRFieldIndex,
-                          static_cast<GIntBig>(static_cast<const int64_t *>(
-                              array->buffers[1])[nOffsettedIndex]));
+        int64_t value =
+            static_cast<const int64_t *>(array->buffers[1])[nOffsettedIndex];
+        if (oFeature.GetFieldDefnRef(iOGRFieldIndex)->GetType() == OFTInteger64)
+        {
+            oFeature.SetField(iOGRFieldIndex, static_cast<GIntBig>(value));
+        }
+        else
+        {
+            double floatingPart;
+            if (format[2] == 'u')
+            {
+                floatingPart = (value % (1000 * 1000)) / 1e6;
+                value /= 1000 * 1000;
+            }
+            else
+            {
+                floatingPart = (value % (1000 * 1000 * 1000)) / 1e9;
+                value /= 1000 * 1000 * 1000;
+            }
+            const int nHour = static_cast<int>(value / 3600);
+            const int nMinute = static_cast<int>((value / 60) % 60);
+            const int nSecond = static_cast<int>(value % 60);
+            oFeature.SetField(iOGRFieldIndex, 0, 0, 0, nHour, nMinute,
+                              static_cast<float>(nSecond + floatingPart));
+        }
     }
     else if (IsTimestampSeconds(format))
     {
@@ -4574,8 +4597,8 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
             std::vector<double> aValues;
             for (int i = 0; i < nItems; ++i)
             {
-                aValues.push_back(
-                    GetValueFloat16(childArray, nOffsettedIndex * nItems + i));
+                aValues.push_back(static_cast<double>(
+                    GetValueFloat16(childArray, nOffsettedIndex * nItems + i)));
             }
             oFeature.SetField(iOGRFieldIndex, static_cast<int>(aValues.size()),
                               aValues.data());
@@ -5106,9 +5129,10 @@ static size_t FillValidityArrayFromAttrQuery(
             }
             else if (IsFloat32(format))
             {
-                oFeature.SetField(iOGRFieldIndex,
-                                  static_cast<const float *>(
-                                      psArray->buffers[1])[nOffsettedIndex]);
+                oFeature.SetField(
+                    iOGRFieldIndex,
+                    static_cast<double>(static_cast<const float *>(
+                        psArray->buffers[1])[nOffsettedIndex]));
             }
             else if (IsFloat64(format))
             {
@@ -6214,9 +6238,16 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
                         oFieldDefn.SetDomainName(oIter.second);
                 }
                 else if (oIter.first == ARROW_EXTENSION_NAME_KEY &&
-                         oIter.second == EXTENSION_NAME_ARROW_JSON)
+                         (oIter.second == EXTENSION_NAME_ARROW_JSON ||
+                          // Used by BigQuery through ADBC driver
+                          oIter.second == "google:sqlType:json"))
                 {
                     oFieldDefn.SetSubType(OFSTJSON);
+                }
+                else if (oIter.first == ARROW_EXTENSION_NAME_KEY)
+                {
+                    CPLDebug("OGR", "Unknown Arrow extension: %s",
+                             oIter.second.c_str());
                 }
                 else
                 {
@@ -7348,7 +7379,7 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
     }
     else if (IsFloat32(format))
     {
-        FillField<float>(array, iOGRFieldIdx, iFeature, oFeature);
+        FillField<float, double>(array, iOGRFieldIdx, iFeature, oFeature);
         return true;
     }
     else if (IsFloat64(format))

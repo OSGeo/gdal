@@ -127,6 +127,8 @@ void RegisterOGRFlatGeobuf()
     poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CAN_READ_AFTER_DELETE, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "FlatGeobuf");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "fgb");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
@@ -352,14 +354,14 @@ GDALDataset *OGRFlatGeobufDataset::Create(const char *pszName, int /* nBands */,
     return new OGRFlatGeobufDataset(pszName, bIsDir, true, false);
 }
 
-OGRLayer *OGRFlatGeobufDataset::GetLayer(int iLayer)
+const OGRLayer *OGRFlatGeobufDataset::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
         return nullptr;
     return m_apoLayers[iLayer]->GetLayer();
 }
 
-int OGRFlatGeobufDataset::TestCapability(const char *pszCap)
+int OGRFlatGeobufDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return m_bCreate && (m_bIsDir || m_apoLayers.empty());

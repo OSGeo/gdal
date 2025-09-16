@@ -45,9 +45,9 @@ class ZMapDataset final : public GDALPamDataset
 
   public:
     ZMapDataset();
-    virtual ~ZMapDataset();
+    ~ZMapDataset() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -71,8 +71,8 @@ class ZMapRasterBand final : public GDALPamRasterBand
   public:
     explicit ZMapRasterBand(ZMapDataset *);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
 };
 
 /************************************************************************/

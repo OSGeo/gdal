@@ -29,16 +29,16 @@ Common metadata (from metadata filename):
     AcquisitionDateTime: re:acquisitionDateTime
 */
 
-class GDALMDReaderRapidEye : public GDALMDReaderBase
+class GDALMDReaderRapidEye final : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderRapidEye(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderRapidEye();
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    GDALMDReaderRapidEye(const char *pszPath, CSLConstList papszSiblingFiles);
+    ~GDALMDReaderRapidEye() override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
 
   protected:
     CPLString m_osXMLSourceFilename{};

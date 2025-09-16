@@ -1372,6 +1372,23 @@ static int TestBasic(GDALDataset *poDS, OGRLayer *poLayer)
                    "GDAL_DMD_ALTER_FIELD_DEFN_FLAGS but layer capability does "
                    "not advertise OLCAlterFieldDefn!\n");
         }
+
+        if (poLayer->TestCapability(OLCUpsertFeature) &&
+            !poDriver->GetMetadataItem(GDAL_DCAP_UPSERT))
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertises OLCUpsertFeature capability but "
+                   "driver metadata does not advertise GDAL_DCAP_UPSERT!\n");
+        }
+        if (bLayerShouldHaveEditCapabilities &&
+            poDriver->GetMetadataItem(GDAL_DCAP_UPSERT) &&
+            !poLayer->TestCapability(OLCUpsertFeature))
+        {
+            bRet = FALSE;
+            printf(
+                "FAILURE: Driver metadata advertises GDAL_DCAP_UPSERT "
+                "but layer capability does not advertise OLCUpsertFeature!\n");
+        }
     }
 
     return bRet;
@@ -1384,7 +1401,7 @@ static int TestBasic(GDALDataset *poDS, OGRLayer *poLayer)
 static int TestLayerErrorConditions(OGRLayer *poLyr)
 {
     int bRet = TRUE;
-    OGRFeature *poFeat = nullptr;
+    std::unique_ptr<OGRFeature> poFeat;
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
 
@@ -1422,18 +1439,16 @@ static int TestLayerErrorConditions(OGRLayer *poLyr)
     }
 
     poLyr->ResetReading();
-    poFeat = poLyr->GetNextFeature();
+    poFeat.reset(poLyr->GetNextFeature());
     if (poFeat)
     {
         poFeat->SetFID(-10);
-        if (poLyr->SetFeature(poFeat) == OGRERR_NONE)
+        if (poLyr->SetFeature(poFeat.get()) == OGRERR_NONE)
         {
             printf("ERROR: SetFeature(-10) should have returned an error\n");
-            delete poFeat;
             bRet = FALSE;
             goto bye;
         }
-        delete poFeat;
     }
 
     if (poLyr->DeleteFeature(-10) == OGRERR_NONE)
@@ -1451,18 +1466,40 @@ static int TestLayerErrorConditions(OGRLayer *poLyr)
         goto bye;
     }
 
-    if (LOG_ACTION(poLyr->SetNextByIndex(-10)) != OGRERR_FAILURE)
+    if (LOG_ACTION(poLyr->SetNextByIndex(-1)) != OGRERR_NON_EXISTING_FEATURE)
     {
-        printf("ERROR: SetNextByIndex(-10) should have "
-               "returned OGRERR_FAILURE\n");
+        printf("ERROR: SetNextByIndex(-1) should have "
+               "returned OGRERR_NON_EXISTING_FEATURE\n");
+        bRet = FALSE;
+        goto bye;
+    }
+    if (LOG_ACTION(std::unique_ptr<OGRFeature>(poLyr->GetNextFeature())) !=
+        nullptr)
+    {
+        printf("ERROR: GetNextFeature() after SetNextByIndex(-1) "
+               "should have returned NULL\n");
         bRet = FALSE;
         goto bye;
     }
 
-    if (LOG_ACTION(poLyr->SetNextByIndex(2000000000)) == OGRERR_NONE &&
-        LOG_ACTION(poLyr->GetNextFeature()) != nullptr)
+    if (poFeat)
     {
-        printf("ERROR: SetNextByIndex(2000000000) and then GetNextFeature() "
+        poLyr->ResetReading();
+        poFeat.reset(poLyr->GetNextFeature());
+        if (!poFeat)
+        {
+            printf("ERROR: GetNextFeature() after SetNextByIndex(-1) and "
+                   "ResetReading() should have returned a non-NULL feature\n");
+            bRet = FALSE;
+            goto bye;
+        }
+    }
+
+    CPL_IGNORE_RET_VAL(LOG_ACTION(poLyr->SetNextByIndex(2000000000)));
+    if (LOG_ACTION(std::unique_ptr<OGRFeature>(poLyr->GetNextFeature())) !=
+        nullptr)
+    {
+        printf("ERROR: GetNextFeature() after SetNextByIndex(2000000000) "
                "should have returned NULL\n");
         bRet = FALSE;
         goto bye;
@@ -4206,8 +4243,17 @@ static int TestLayerGetArrowStream(OGRLayer *poLayer)
     stream.release(&stream);
     if (stream.release)
     {
-        printf("ERROR: stream.release should be NULL after release\n");
-        return false;
+        // Seems there's an issue in adbc_driver_bigquery implementation
+        if (EQUAL(CSLFetchNameValueDef(papszOpenOptions, "ADBC_DRIVER", ""),
+                  "adbc_driver_bigquery"))
+        {
+            printf("WARNING: stream.release should be NULL after release\n");
+        }
+        else
+        {
+            printf("ERROR: stream.release should be NULL after release\n");
+            return false;
+        }
     }
 
     const int64_t nFCClassic = poLayer->GetFeatureCount(true);

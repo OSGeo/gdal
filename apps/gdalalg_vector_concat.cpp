@@ -53,7 +53,7 @@ GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
         &m_mode)
         .SetChoices("merge-per-layer-name", "stack", "single")
         .SetDefault(m_mode);
-    AddArg("output-layer", 0,
+    AddArg(GDAL_ARG_NAME_OUTPUT_LAYER, 0,
            _("Name of the output vector layer (single mode), or template to "
              "name the output vector layers (stack mode)"),
            &m_layerNameTemplate);
@@ -97,15 +97,15 @@ class GDALVectorConcatOutputDataset final : public GDALDataset
         m_layers.push_back(std::move(layer));
     }
 
-    int GetLayerCount() override;
+    int GetLayerCount() const override;
 
-    OGRLayer *GetLayer(int idx) override
+    OGRLayer *GetLayer(int idx) const override
     {
         return idx >= 0 && idx < GetLayerCount() ? m_layers[idx].get()
                                                  : nullptr;
     }
 
-    int TestCapability(const char *pszCap) override
+    int TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, ODsCCurveGeometries) ||
             EQUAL(pszCap, ODsCMeasuredGeometries) ||
@@ -117,7 +117,7 @@ class GDALVectorConcatOutputDataset final : public GDALDataset
     }
 };
 
-int GDALVectorConcatOutputDataset::GetLayerCount()
+int GDALVectorConcatOutputDataset::GetLayerCount() const
 {
     return static_cast<int>(m_layers.size());
 }
@@ -135,13 +135,13 @@ class GDALVectorConcatRenamedLayer final : public OGRLayerDecorator
     {
     }
 
-    const char *GetName() override;
+    const char *GetName() const override;
 
   private:
     const std::string m_newName;
 };
 
-const char *GDALVectorConcatRenamedLayer::GetName()
+const char *GDALVectorConcatRenamedLayer::GetName() const
 {
     return m_newName.c_str();
 }
@@ -427,7 +427,7 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
         {
             for (int i = 0; i < nLayerCount; ++i)
             {
-                OGRSpatialReference *poSrcLayerCRS;
+                const OGRSpatialReference *poSrcLayerCRS;
                 if (poSrcCRS)
                     poSrcLayerCRS = poSrcCRS.get();
                 else
@@ -493,7 +493,7 @@ bool GDALVectorConcatAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         GDALVectorWriteAlgorithm writeAlg;
         for (auto &arg : writeAlg.GetArgs())
         {
-            if (arg->GetName() != "output-layer")
+            if (arg->GetName() != GDAL_ARG_NAME_OUTPUT_LAYER)
             {
                 auto stepArg = GetArg(arg->GetName());
                 if (stepArg && stepArg->IsExplicitlySet())

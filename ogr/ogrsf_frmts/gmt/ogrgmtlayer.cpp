@@ -985,7 +985,7 @@ OGRErr OGRGmtLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGmtLayer::TestCapability(const char *pszCap)
+int OGRGmtLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))
@@ -1038,9 +1038,6 @@ OGRErr OGRGmtLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
         case OFTDateTime:
             poFeatureDefn->AddFieldDefn(poField);
             return OGRERR_NONE;
-            break;
-
-            break;
 
         default:
             if (!bApproxOK)

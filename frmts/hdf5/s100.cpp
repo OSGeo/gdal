@@ -416,6 +416,12 @@ std::string S100ReadMetadata(GDALDataset *poDS, const std::string &osFilename,
             const char *pszVal = poAttr->ReadAsString();
             if (pszVal && pszVal[0])
             {
+                if (CPLHasPathTraversal(pszVal))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Path traversal detected in %s", pszVal);
+                    continue;
+                }
                 osMetadataFile = CPLFormFilenameSafe(
                     CPLGetPathSafe(osFilename.c_str()).c_str(), pszVal,
                     nullptr);

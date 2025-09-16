@@ -600,7 +600,7 @@ void VRTRawRasterBand::GetFileList(char ***ppapszFileList, int *pnSize,
     else
         osSourceFilename = m_pszSourceFilename;
 
-    if (CPLHashSetLookup(hSetFiles, osSourceFilename) != nullptr)
+    if (CPLHashSetLookup(hSetFiles, osSourceFilename.c_str()) != nullptr)
         return;
 
     /* -------------------------------------------------------------------- */

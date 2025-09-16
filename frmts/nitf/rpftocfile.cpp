@@ -573,6 +573,14 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
         frameEntry->filename[12] = '\0';
         bOK &= strlen(frameEntry->filename) > 0;
 
+        if (CPLHasPathTraversal(frameEntry->filename))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Path traversal detected in %s", frameEntry->filename);
+            RPFTOCFree(toc);
+            return nullptr;
+        }
+
         // Check (case insensitive) if the filename is an overview or legend
         // some CADRG maps have legend name smaller than 8.3 then the extension
         // has blanks (0x20) at the end -> check only the first 3 letters of the
@@ -648,6 +656,14 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
         frameEntry->directory[pathLength] = 0;
         if (frameEntry->directory[pathLength - 1] == '/')
             frameEntry->directory[pathLength - 1] = 0;
+
+        if (CPLHasPathTraversal(frameEntry->directory))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Path traversal detected in %s", frameEntry->directory);
+            RPFTOCFree(toc);
+            return nullptr;
+        }
 
         if (frameEntry->directory[0] == '.' && frameEntry->directory[1] == '/')
         {

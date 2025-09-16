@@ -246,20 +246,21 @@ MAIN_START(argc, argv)
         alg->IsProgressBarRequested() ? GDALTermProgress : nullptr;
     void *pProgressData = nullptr;
 
-    int ret = 0;
-    if (alg->Run(pfnProgress, pProgressData) && alg->Finalize())
+    int ret = (alg->Run(pfnProgress, pProgressData) && alg->Finalize()) ? 0 : 1;
+
+    const auto outputArg =
+        alg->GetActualAlgorithm().GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
+    if (outputArg && outputArg->GetType() == GAAT_STRING &&
+        outputArg->IsOutput())
     {
-        const auto outputArg =
-            alg->GetActualAlgorithm().GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
-        if (outputArg && outputArg->GetType() == GAAT_STRING &&
-            outputArg->IsOutput())
-        {
-            printf("%s", outputArg->Get<std::string>().c_str());
-        }
+        printf("%s", outputArg->Get<std::string>().c_str());
     }
-    else
+
+    const auto retCodeArg = alg->GetActualAlgorithm().GetArg("return-code");
+    if (retCodeArg && retCodeArg->GetType() == GAAT_INTEGER &&
+        retCodeArg->IsOutput())
     {
-        ret = 1;
+        ret = retCodeArg->Get<int>();
     }
 
     return ret;

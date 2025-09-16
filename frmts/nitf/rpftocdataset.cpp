@@ -71,15 +71,15 @@ class RPFTOCDataset final : public GDALPamDataset
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
-    virtual ~RPFTOCDataset()
+    ~RPFTOCDataset() override
     {
         CSLDestroy(papszSubDatasets);
         CSLDestroy(papszFileList);
     }
 
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    char **GetMetadata(const char *pszDomain = "") override;
 
-    virtual char **GetFileList() override
+    char **GetFileList() override
     {
         return CSLDuplicate(papszFileList);
     }
@@ -92,7 +92,7 @@ class RPFTOCDataset final : public GDALPamDataset
         nRasterYSize = rasterYSize;
     }
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         if (bGotGeoTransform)
         {
@@ -102,7 +102,7 @@ class RPFTOCDataset final : public GDALPamDataset
         return CE_Failure;
     }
 
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override
     {
         bGotGeoTransform = TRUE;
         m_gt = gt;
@@ -159,7 +159,7 @@ class RPFTOCSubDataset final : public VRTDataset
 
     ~RPFTOCSubDataset() override;
 
-    virtual char **GetFileList() override
+    char **GetFileList() override
     {
         return CSLDuplicate(papszFileList);
     }
@@ -301,14 +301,13 @@ class RPFTOCProxyRasterBandRGBA final : public GDALPamRasterBand
         blockByteSize = nBlockXSize * nBlockYSize;
     }
 
-    virtual GDALColorInterp GetColorInterpretation() override
+    GDALColorInterp GetColorInterpretation() override
     {
         return static_cast<GDALColorInterp>(GCI_RedBand + nBand - 1);
     }
 
   protected:
-    virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
-                              void *pImage) override;
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
 };
 
 /************************************************************************/
@@ -479,18 +478,18 @@ class RPFTOCProxyRasterBandPalette final : public GDALPamRasterBand
         memset(remapLUT, 0, sizeof(remapLUT));
     }
 
-    virtual GDALColorInterp GetColorInterpretation() override
+    GDALColorInterp GetColorInterpretation() override
     {
         return GCI_PaletteIndex;
     }
 
-    virtual double GetNoDataValue(int *bHasNoDataValue) override
+    double GetNoDataValue(int *bHasNoDataValue) override
     {
         return (reinterpret_cast<RPFTOCProxyRasterDataSet *>(poDS))
             ->GetNoDataValue(bHasNoDataValue);
     }
 
-    virtual GDALColorTable *GetColorTable() override
+    GDALColorTable *GetColorTable() override
     {
         // TODO: This casting is a bit scary.
         return const_cast<GDALColorTable *>(
@@ -499,8 +498,7 @@ class RPFTOCProxyRasterBandPalette final : public GDALPamRasterBand
     }
 
   protected:
-    virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
-                              void *pImage) override;
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
 };
 
 /************************************************************************/

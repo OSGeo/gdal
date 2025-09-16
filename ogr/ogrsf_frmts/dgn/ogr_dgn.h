@@ -53,7 +53,7 @@ class OGRDGNLayer final : public OGRLayer
   public:
     OGRDGNLayer(OGRDGNDataSource *poDS, const char *pszName, DGNHandle hDGN,
                 int bUpdate);
-    virtual ~OGRDGNLayer();
+    ~OGRDGNLayer() override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
@@ -62,17 +62,17 @@ class OGRDGNLayer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
@@ -98,7 +98,7 @@ class OGRDGNDataSource final : public GDALDataset
 
   public:
     OGRDGNDataSource();
-    ~OGRDGNDataSource();
+    ~OGRDGNDataSource() override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
     void PreCreate(CSLConstList);
@@ -107,14 +107,14 @@ class OGRDGNDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList) override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     const std::string &GetEncoding() const
     {

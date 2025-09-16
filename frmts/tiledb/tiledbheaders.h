@@ -157,7 +157,7 @@ class TileDBRasterBand;
 /* ==================================================================== */
 /************************************************************************/
 
-class TileDBDataset : public GDALPamDataset
+class TileDBDataset /* non final */ : public GDALPamDataset
 {
   protected:
     std::unique_ptr<tiledb::Context> m_ctx{};
@@ -263,7 +263,7 @@ class TileDBRasterDataset final : public TileDBDataset
     void LoadOverviews();
 
   public:
-    ~TileDBRasterDataset();
+    ~TileDBRasterDataset() override;
     CPLErr TryLoadCachedXML(CSLConstList papszSiblingFiles = nullptr,
                             bool bReload = true);
     CPLErr TryLoadXML(CSLConstList papszSiblingFiles = nullptr) override;
@@ -271,7 +271,7 @@ class TileDBRasterDataset final : public TileDBDataset
     char **GetMetadata(const char *pszDomain) override;
     CPLErr Close() override;
     int CloseDependentDatasets() override;
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
                            const int *panOverviewList, int nListBands,
@@ -477,23 +477,23 @@ class OGRTileDBLayer final : public OGRLayer,
     OGRTileDBLayer(GDALDataset *poDS, const char *pszFilename,
                    const char *pszLayerName, const OGRwkbGeometryType eGType,
                    const OGRSpatialReference *poSRS);
-    ~OGRTileDBLayer();
+    ~OGRTileDBLayer() override;
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRTileDBLayer)
     OGRFeature *GetFeature(GIntBig nFID) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_osFIDColumn.c_str();
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -521,23 +521,23 @@ class OGRTileDBDataset final : public TileDBDataset
 
   public:
     OGRTileDBDataset();
-    ~OGRTileDBDataset();
+    ~OGRTileDBDataset() override;
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int nIdx) override
+    const OGRLayer *GetLayer(int nIdx) const override
     {
         return nIdx >= 0 && nIdx < GetLayerCount() ? m_apoLayers[nIdx].get()
                                                    : nullptr;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

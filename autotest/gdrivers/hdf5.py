@@ -1276,6 +1276,36 @@ END
 
 
 ###############################################################################
+# Test opening a HDF5EOS swath file with a .aux.xml
+
+
+def test_hdf5_eos_swath_with_aux_xml():
+
+    ds = gdal.Open(
+        'HDF5:"data/hdf5/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5"://HDFEOS/SWATHS/MySwath/Data_Fields/MyDataField'
+    )
+    assert (
+        "data/hdf5/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5.aux.xml"
+        in ds.GetFileList()
+    )
+    assert (
+        b"/i/do/not/exist/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5"
+        in open(
+            "data/hdf5/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5.aux.xml",
+            "rb",
+        ).read()
+    )
+    assert (
+        ds.GetMetadataItem("X_DATASET", "GEOLOCATION")
+        == 'HDF5:"data/hdf5/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5"://HDFEOS/SWATHS/MySwath/Geolocation_Fields/Longitude'
+    )
+    assert (
+        ds.GetMetadataItem("Y_DATASET", "GEOLOCATION")
+        == 'HDF5:"data/hdf5/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5"://HDFEOS/SWATHS/MySwath/Geolocation_Fields/Latitude'
+    )
+
+
+###############################################################################
 # Test opening a file with band specific attributes
 
 
@@ -1631,3 +1661,93 @@ def test_hdf5_open_larger_than_INT_MAX_pixels():
 
     with pytest.raises(Exception, match="At least one dimension size exceeds INT_MAX"):
         gdal.Open('HDF5:"data/bag/larger_than_INT_MAX_pixels.bag"://BAG_root/elevation')
+
+
+###############################################################################
+# Test opening a HDF5EOS grid file
+
+
+def test_hdf5_eos_grid_VIIRS_Grid_IMG_2D_issue_12941():
+
+    if False:
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File("data/hdf5/dummy_HDFEOS_IIRS_Grid_IMG_2D_issue_1294.h5", "w")
+        HDFEOS_INFORMATION = f.create_group("HDFEOS INFORMATION")
+        # Hint from https://forum.hdfgroup.org/t/nullpad-nullterm-strings/9107
+        # to use the low-level API to be able to generate NULLTERM strings
+        # without padding bytes
+        HDFEOSVersion_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        HDFEOSVersion_type.set_size(32)
+        HDFEOSVersion_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        # HDFEOS_INFORMATION.attrs.create("HDFEOSVersion", "HDFEOS_5.1.15", dtype=HDFEOSVersion_type)
+        HDFEOSVersion_attr = h5py.h5a.create(
+            HDFEOS_INFORMATION.id,
+            "HDFEOSVersion".encode("ASCII"),
+            HDFEOSVersion_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        HDFEOSVersion_value = "HDFEOS_5.1.15".encode("ASCII")
+        HDFEOSVersion_value = np.frombuffer(
+            HDFEOSVersion_value, dtype="|S%d" % len(HDFEOSVersion_value)
+        )
+        HDFEOSVersion_attr.write(HDFEOSVersion_value)
+
+        StructMetadata_0_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        StructMetadata_0_type.set_size(32000)
+        StructMetadata_0_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        StructMetadata_0 = """GROUP=SwathStructure\nEND_GROUP=SwathStructure\nGROUP=GridStructure\n\tGROUP=GRID_1\n\t\tGridName=\"test\"\n\t\tXDim=4\n\t\tYDim=5\n\t\tUpperLeftPointMtrs=(-1111950.519667,5559752.598333)\n\t\tLowerRightMtrs=(0.000000,4447802.078667)\n\t\tProjection=HE5_GCTP_SNSOID\n\t\tProjParams=(6371007.181000,0,0,0,0,0,0,0,0,0,0,0,0)\n\t\tSphereCode=-1\n\t\tGROUP=Dimension\n\t\t\tOBJECT=Dimension_1\n\t\t\t\tDimensionName=\"unrelated\"\n\t\t\t\tSize=15\n\t\t\tEND_OBJECT=Dimension_1\n\t\tEND_GROUP=Dimension\n\t\tGROUP=DataField\n\t\t\tOBJECT=DataField_1\n\t\t\t\tDataFieldName=\"test\"\n\t\t\t\tDataType=H5T_NATIVE_UCHAR\n\t\t\t\tDimList=(\"YDim\",\"XDim\")\n\t\t\t\tMaxdimList=(\"YDim\",\"XDim\")\n\t\t\tEND_OBJECT=DataField_1\n\t\tEND_GROUP=DataField\n\t\tGROUP=MergedFields\n\t\tEND_GROUP=MergedFields\n\tEND_GROUP=GRID_1\nEND_GROUP=GridStructure\nGROUP=PointStructure\nEND_GROUP=PointStructure\nGROUP=ZaStructure\nEND_GROUP=ZaStructure\nEND\n"""
+        # HDFEOS_INFORMATION.create_dataset("StructMetadata.0", None, data=StructMetadata_0, dtype=StructMetadata_0_type)
+        StructMetadata_0_dataset = h5py.h5d.create(
+            HDFEOS_INFORMATION.id,
+            "StructMetadata.0".encode("ASCII"),
+            StructMetadata_0_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        StructMetadata_0_value = StructMetadata_0.encode("ASCII")
+        StructMetadata_0_value = np.frombuffer(
+            StructMetadata_0_value, dtype="|S%d" % len(StructMetadata_0_value)
+        )
+        StructMetadata_0_dataset.write(
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            StructMetadata_0_value,
+        )
+
+        HDFEOS = f.create_group("HDFEOS")
+        ADDITIONAL = HDFEOS.create_group("ADDITIONAL")
+        ADDITIONAL.create_group("FILE_ATTRIBUTES")
+        GRIDS = HDFEOS.create_group("GRIDS")
+        test = GRIDS.create_group("test")
+
+        DataFields = test.create_group("Data Fields")
+        ds = DataFields.create_dataset("test", (5, 4), dtype="B")
+        ds[...] = np.array([i for i in range(5 * 4)]).reshape(ds.shape)
+
+        ds = test.create_dataset("XDim", (4), dtype="d")
+        ds.attrs["CLASS"] = "DIMENSION_SCALE"
+        ds[...] = np.array([10, 20, 30, 40]).reshape(ds.shape)
+
+        ds = test.create_dataset("YDim", (5), dtype="d")
+        ds.attrs["CLASS"] = "DIMENSION_SCALE"
+        ds[...] = np.array([500, 400, 300, 200, 100]).reshape(ds.shape)
+
+        f.close()
+
+    ds = gdal.Open("data/hdf5/dummy_HDFEOS_IIRS_Grid_IMG_2D_issue_1294.h5")
+    assert ds
+    assert ds.RasterXSize == 4
+    assert ds.RasterYSize == 5
+    print(ds.GetGeoTransform())
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -1111950.519667,
+            277987.62991675,
+            0.0,
+            5559752.598333,
+            0.0,
+            -222390.10393320007,
+        )
+    )

@@ -62,6 +62,20 @@ build_fuzzer(
   -DREGISTER_FUNC=GDALRegister_GTiff
   -DGTIFF_USE_MMAP)
 
+function (build_gdal_specialized_fuzzer _format _registerFunc _memfile _gdalfile)
+  build_fuzzer(
+    NAME
+    ${_format}_fuzzer
+    SOURCES
+    gdal_fuzzer.cpp
+    DEFINITIONS
+    -DREGISTER_FUNC=${_registerFunc}
+    -DMEM_FILENAME="${_memfile}"
+    -DGDAL_FILENAME="${_gdalfile}")
+endfunction ()
+
+build_gdal_specialized_fuzzer(zarr GDALRegister_Zarr "/vsimem/test.tar" "/vsitar//vsimem/test.tar")
+
 function (build_ogr_specialized_fuzzer _format _registerFunc _memfile _gdalfile)
   build_fuzzer(
     NAME
@@ -122,6 +136,7 @@ build_gdal_specialized_fuzzer(mrf "GDALRegister_mrf();GDALRegister_GTiff" "/vsim
                               "/vsitar//vsimem/test.tar/byte.mrf")
 build_gdal_specialized_fuzzer(gdal_vrt GDALAllRegister "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.vrt")
 build_gdal_specialized_fuzzer(ers GDALRegister_ERS "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.ers")
+build_gdal_specialized_fuzzer(gdal_miramon "GDALRegister_MiraMon" "/vsimem/test.tar" "/vsitar//vsimem/test.tar/byte_2x3_6_categs_RLEI.rel")
 
 build_fuzzer(
     NAME

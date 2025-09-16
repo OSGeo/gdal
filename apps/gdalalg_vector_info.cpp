@@ -43,8 +43,9 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
                            /* positionalAndRequired = */ standaloneStep)
             .AddAlias("dataset")
             .SetHiddenForCLI(!standaloneStep);
-    auto &layerArg =
-        AddLayerNameArg(&m_layerNames).SetMutualExclusionGroup("layer-sql");
+    auto &layerArg = AddLayerNameArg(&m_layerNames)
+                         .SetMutualExclusionGroup("layer-sql")
+                         .AddAlias("layer");
     SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
     auto &argFeature =
         AddArg(
@@ -92,6 +93,18 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
             });
     AddOutputStringArg(&m_output);
     AddStdoutArg(&m_stdout);
+
+    AddValidationAction(
+        [this]()
+        {
+            if (!m_sql.empty() && !m_where.empty())
+            {
+                ReportError(CE_Failure, CPLE_NotSupported,
+                            "Option 'sql' and 'where' are mutually exclusive");
+                return false;
+            }
+            return true;
+        });
 }
 
 /************************************************************************/

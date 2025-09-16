@@ -83,19 +83,19 @@ void OGRLVBAGLayer::ResetReading()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRLVBAGLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRLVBAGLayer::GetLayerDefn() const
 {
-    if (!TouchLayer())
-    {
-        return nullptr;
-    }
-
     if (!bHasReadSchema)
     {
+        if (!const_cast<OGRLVBAGLayer *>(this)->TouchLayer())
+        {
+            return nullptr;
+        }
+
         bSchemaOnly = true;
 
-        ConfigureParser();
-        ParseDocument();
+        const_cast<OGRLVBAGLayer *>(this)->ConfigureParser();
+        const_cast<OGRLVBAGLayer *>(this)->ParseDocument();
     }
 
     return poFeatureDefn;
@@ -893,16 +893,12 @@ OGRFeature *OGRLVBAGLayer::GetNextFeature()
         return nullptr;
     }
 
+    GetLayerDefn();
     if (!bHasReadSchema)
     {
-        GetLayerDefn();
-        if (!bHasReadSchema)
-        {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Parsing LV BAG extract failed : invalid layer definition");
-            return nullptr;
-        }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Parsing LV BAG extract failed : invalid layer definition");
+        return nullptr;
     }
 
     return OGRGetNextFeatureThroughRaw<OGRLVBAGLayer>::GetNextFeature();
@@ -937,13 +933,8 @@ OGRFeature *OGRLVBAGLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRLVBAGLayer::TestCapability(const char *pszCap)
+int OGRLVBAGLayer::TestCapability(const char *pszCap) const
 {
-    if (!TouchLayer())
-    {
-        return FALSE;
-    }
-
     if (EQUAL(pszCap, OLCStringsAsUTF8))
     {
         return TRUE;

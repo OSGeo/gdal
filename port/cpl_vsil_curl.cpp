@@ -253,7 +253,7 @@ VSICurlFindStringSensitiveExceptEscapeSequences(char **papszList,
         const char *pszIter2 = pszTarget;
         char ch1 = '\0';
         char ch2 = '\0';
-        /* The comparison is case-sensitive, escape for escaped */
+        /* The comparison is case-sensitive, except for escaped */
         /* sequences where letters of the hexadecimal sequence */
         /* can be uppercase or lowercase depending on the quoting algorithm */
         while (true)
@@ -4342,10 +4342,10 @@ bool VSICurlFilesystemHandlerBase::IsAllowedFilename(const char *pszFilename)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
-                                                     const char *pszAccess,
-                                                     bool bSetError,
-                                                     CSLConstList papszOptions)
+VSIVirtualHandleUniquePtr
+VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList papszOptions)
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()) &&
         !STARTS_WITH_CI(pszFilename, "/vsicurl?"))
@@ -4422,7 +4422,8 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
         CSLDestroy(papszFileList);
     }
 
-    VSICurlHandle *poHandle = CreateFileHandle(osFilename.c_str());
+    auto poHandle =
+        std::unique_ptr<VSICurlHandle>(CreateFileHandle(osFilename.c_str()));
     if (poHandle == nullptr)
         return nullptr;
     if (!bGotFileList || bForceExistsCheck)
@@ -4430,15 +4431,15 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
         // If we didn't get a filelist, check that the file really exists.
         if (!poHandle->Exists(bSetError))
         {
-            delete poHandle;
             return nullptr;
         }
     }
 
     if (CPLTestBool(CPLGetConfigOption("VSI_CACHE", "FALSE")))
-        return VSICreateCachedFile(poHandle);
+        return VSIVirtualHandleUniquePtr(
+            VSICreateCachedFile(poHandle.release()));
     else
-        return poHandle;
+        return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/
@@ -5156,41 +5157,54 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
                     if (strcmp(pszFilename, ".") != 0 &&
                         strcmp(pszFilename, "..") != 0)
                     {
-                        std::string osCachedFilename =
-                            CPLSPrintf("%s/%s", osURL.c_str(), pszFilename);
-
-                        FileProp cachedFileProp;
-                        GetCachedFileProp(osCachedFilename.c_str(),
-                                          cachedFileProp);
-                        cachedFileProp.eExists = EXIST_YES;
-                        cachedFileProp.bIsDirectory = bIsDirectory;
-                        cachedFileProp.mTime = static_cast<time_t>(mUnixTime);
-                        cachedFileProp.bHasComputedFileSize = bSizeValid;
-                        cachedFileProp.fileSize = nFileSize;
-                        SetCachedFileProp(osCachedFilename.c_str(),
-                                          cachedFileProp);
-
-                        oFileList.AddString(pszFilename);
-                        if (ENABLE_DEBUG_VERBOSE)
+                        if (CPLHasUnbalancedPathTraversal(pszFilename))
                         {
-                            struct tm brokendowntime;
-                            CPLUnixTimeToYMDHMS(mUnixTime, &brokendowntime);
-                            CPLDebug(
-                                GetDebugKey(),
-                                "File[%d] = %s, is_dir = %d, size "
-                                "= " CPL_FRMT_GUIB
-                                ", time = %04d/%02d/%02d %02d:%02d:%02d",
-                                nCount, pszFilename, bIsDirectory ? 1 : 0,
-                                nFileSize, brokendowntime.tm_year + 1900,
-                                brokendowntime.tm_mon + 1,
-                                brokendowntime.tm_mday, brokendowntime.tm_hour,
-                                brokendowntime.tm_min, brokendowntime.tm_sec);
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Ignoring '%s' that has a path traversal "
+                                     "pattern",
+                                     pszFilename);
                         }
+                        else
+                        {
+                            std::string osCachedFilename =
+                                CPLSPrintf("%s/%s", osURL.c_str(), pszFilename);
 
-                        nCount++;
+                            FileProp cachedFileProp;
+                            GetCachedFileProp(osCachedFilename.c_str(),
+                                              cachedFileProp);
+                            cachedFileProp.eExists = EXIST_YES;
+                            cachedFileProp.bIsDirectory = bIsDirectory;
+                            cachedFileProp.mTime =
+                                static_cast<time_t>(mUnixTime);
+                            cachedFileProp.bHasComputedFileSize = bSizeValid;
+                            cachedFileProp.fileSize = nFileSize;
+                            SetCachedFileProp(osCachedFilename.c_str(),
+                                              cachedFileProp);
 
-                        if (nMaxFiles > 0 && oFileList.Count() > nMaxFiles)
-                            break;
+                            oFileList.AddString(pszFilename);
+                            if (ENABLE_DEBUG_VERBOSE)
+                            {
+                                struct tm brokendowntime;
+                                CPLUnixTimeToYMDHMS(mUnixTime, &brokendowntime);
+                                CPLDebug(
+                                    GetDebugKey(),
+                                    "File[%d] = %s, is_dir = %d, size "
+                                    "= " CPL_FRMT_GUIB
+                                    ", time = %04d/%02d/%02d %02d:%02d:%02d",
+                                    nCount, pszFilename, bIsDirectory ? 1 : 0,
+                                    nFileSize, brokendowntime.tm_year + 1900,
+                                    brokendowntime.tm_mon + 1,
+                                    brokendowntime.tm_mday,
+                                    brokendowntime.tm_hour,
+                                    brokendowntime.tm_min,
+                                    brokendowntime.tm_sec);
+                            }
+
+                            nCount++;
+
+                            if (nMaxFiles > 0 && oFileList.Count() > nMaxFiles)
+                                break;
+                        }
                     }
 
                     pszLine = c + 1;

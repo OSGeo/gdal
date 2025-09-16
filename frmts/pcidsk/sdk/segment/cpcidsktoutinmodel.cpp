@@ -1299,7 +1299,6 @@ int CPCIDSKToutinModelSegment::GetModel( int nSensor )
 
     default:
         return ThrowPCIDSKException(0, "Invalid sensor type.");
-        break;
     }
 
     return (nModel);
