@@ -6627,6 +6627,10 @@ class VSIFile(BytesIO):
                     return self.SetAsStringList([','.join(["%.17g" % x for x in v]) for v in value])
                 elif self.GetName() == "gcp" and len(value) >= 1 and isinstance(value[0], GCP):
                     return self.SetAsStringList(["%.17g,%.17g,%.17g,%.17g,%.17g" % (gcp.GCPPixel, gcp.GCPLine, gcp.GCPX, gcp.GCPY, gcp.GCPZ) for gcp in value])
+                elif self.GetName() == "kernel" and len(value) >= 1 and isinstance(value[0], list) and len(value[0]) >= 1 and (isinstance(value[0][0], int) or isinstance(value[0][0], float)):
+                    return self.SetAsStringList(["[" + ",".join(["[" + ",".join([str(v) for v in row]) + "]" for row in value]) + "]"])
+                elif self.GetName() == "kernel" and len(value) >= 1 and isinstance(value[0], list) and len(value[0]) >= 1 and isinstance(value[0][0], list) and len(value[0][0]) >= 1 and (isinstance(value[0][0][0], int) or isinstance(value[0][0][0], float)):
+                    return self.SetAsStringList([("[" + ",".join(["[" + ",".join([str(v) for v in row]) + "]" for row in it]) + "]") for it in value])
                 else:
                     return self.SetAsStringList([str(v) for v in value])
             elif isinstance(value, dict):
