@@ -35,6 +35,12 @@
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
+#if !(defined(LIBXML_VERSION) && LIBXML_VERSION >= 21400)
+// Cf https://gitlab.gnome.org/GNOME/libxml2/-/commit/92d7b0cd909beb61cd90d9746964f303eab36d78
+#define xmlXPathValuePush valuePush
+#define xmlXPathValuePop valuePop
+#endif
+
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
@@ -401,20 +407,20 @@ static void GDALGMLJP2XPathIf(xmlXPathParserContextPtr ctxt, int nargs)
     xmlXPathObjectPtr cond_val, then_val, else_val;
 
     CHECK_ARITY(3);
-    else_val = valuePop(ctxt);
-    then_val = valuePop(ctxt);
+    else_val = xmlXPathValuePop(ctxt);
+    then_val = xmlXPathValuePop(ctxt);
     CAST_TO_BOOLEAN
-    cond_val = valuePop(ctxt);
+    cond_val = xmlXPathValuePop(ctxt);
 
     if (cond_val->boolval)
     {
         xmlXPathFreeObject(else_val);
-        valuePush(ctxt, then_val);
+        xmlXPathValuePush(ctxt, then_val);
     }
     else
     {
         xmlXPathFreeObject(then_val);
-        valuePush(ctxt, else_val);
+        xmlXPathValuePush(ctxt, else_val);
     }
     xmlXPathFreeObject(cond_val);
 }
@@ -460,8 +466,8 @@ static void GDALGMLJP2XPathUUID(xmlXPathParserContextPtr ctxt, int nargs)
         osRet += GDALGMLJP2HexFormatter(fakeRand() & 0xFF);
     }
 
-    valuePush(ctxt, xmlXPathNewString(
-                        reinterpret_cast<const xmlChar *>(osRet.c_str())));
+    xmlXPathValuePush(ctxt, xmlXPathNewString(reinterpret_cast<const xmlChar *>(
+                                osRet.c_str())));
 }
 
 #endif  // LIBXML2
