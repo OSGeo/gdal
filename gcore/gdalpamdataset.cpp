@@ -148,7 +148,7 @@ GDALPamDataset::GDALPamDataset()
 GDALPamDataset::~GDALPamDataset()
 
 {
-    GDALPamDataset::Close();
+    CPL_IGNORE_RET_VAL(GDALPamDataset::Close());
 
     PamClear();
 }

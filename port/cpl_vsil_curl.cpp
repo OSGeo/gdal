@@ -253,7 +253,7 @@ VSICurlFindStringSensitiveExceptEscapeSequences(char **papszList,
         const char *pszIter2 = pszTarget;
         char ch1 = '\0';
         char ch2 = '\0';
-        /* The comparison is case-sensitive, escape for escaped */
+        /* The comparison is case-sensitive, except for escaped */
         /* sequences where letters of the hexadecimal sequence */
         /* can be uppercase or lowercase depending on the quoting algorithm */
         while (true)

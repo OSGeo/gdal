@@ -422,7 +422,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                 }
                 else
                 {
-                    nestedPipelineArgs.push_back(arg);
+                    nestedPipelineArgs.push_back(std::move(arg));
                     continue;
                 }
             }
@@ -437,7 +437,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                         return false;
                     }
                 }
-                nestedPipelineArgs.push_back(arg);
+                nestedPipelineArgs.push_back(std::move(arg));
                 continue;
             }
         }
@@ -510,7 +510,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
 #endif
         else if (!curStep.alg)
         {
-            std::string algName = arg;
+            std::string algName = std::move(arg);
 #ifdef GDAL_PIPELINE_PROJ_NOSTALGIA
             if (!algName.empty() && algName[0] == '+')
                 algName = algName.substr(1);
@@ -545,7 +545,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                 continue;
             }
 #endif
-            curStep.args.push_back(arg);
+            curStep.args.push_back(std::move(arg));
         }
     }
 
