@@ -197,6 +197,43 @@ def test_gdalalg_vector_change_field_type_errors():
             ]
         )
 
+    # No input
+    alg = get_change_field_type_alg()
+    with pytest.raises(
+        Exception,
+        match="Positional arguments starting at 'INPUT' have not been specified.",
+    ):
+        alg.ParseCommandLineArguments(
+            [
+                "--field-name",
+                "value",
+                "--field-type",
+                "Integer",
+                "--of",
+                "MEM",
+                "--output",
+                "memory_ds",
+            ]
+        )
+
+    # No output
+    alg = get_change_field_type_alg()
+    alg["input"] = src_ds
+    with pytest.raises(
+        Exception,
+        match="Positional arguments starting at 'OUTPUT' have not been specified.",
+    ):
+        alg.ParseCommandLineArguments(
+            [
+                "--field-name",
+                "value",
+                "--field-type",
+                "Integer",
+                "--of",
+                "MEM",
+            ]
+        )
+
 
 @pytest.mark.require_driver("GPKG")
 def test_gdalalg_change_field_type_completion(tmp_path):
@@ -227,3 +264,109 @@ def test_gdalalg_change_field_type_completion(tmp_path):
         f"{gdal_path} completion gdal vector change-field-type --field-type Integer --of GPKG --output={out_filename} --input={in_filename} --field-name"
     )
     assert "test_field" in out
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_change_field_type_multiple_layers(tmp_vsimem, tmp_path):
+
+    # Create a GPKG with multiple layers
+    in_filename = str(
+        tmp_vsimem / "test_gdalalg_change_field_type_multiple_layers_in.gpkg"
+    )
+    out_filename = str(
+        tmp_path / "test_gdalalg_change_field_type_multiple_layers_out.gpkg"
+    )
+    src_ds = gdal.GetDriverByName("GPKG").CreateDataSource(in_filename)
+
+    # layer 1
+    lyr = src_ds.CreateLayer("layer1", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("test_field", ogr.OFTString)
+    lyr.CreateField(fld_defn)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["test_field"] = "123"
+    lyr.CreateFeature(f)
+    lyr = None
+
+    # layer 2
+    lyr = src_ds.CreateLayer("layer2", geom_type=ogr.wkbNone)
+    lyr.CreateField(fld_defn)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["test_field"] = "456"
+    lyr.CreateFeature(f)
+    lyr = None
+
+    alg = get_change_field_type_alg()
+    alg["input"] = src_ds
+
+    assert alg.ParseCommandLineArguments(
+        [
+            "--field-name",
+            "test_field",
+            "--field-type",
+            "Integer",
+            "--output",
+            out_filename,
+        ]
+    )
+    assert alg.Run()
+
+    # Verify
+    with gdal.OpenEx(out_filename, gdal.OF_VECTOR) as out_ds:
+        assert out_ds.GetLayerCount() == 2
+        assert out_ds.GetLayer(0).GetFeatureCount() == 1
+        assert out_ds.GetLayer(1).GetFeatureCount() == 1
+        assert (
+            out_ds.GetLayer(0).GetLayerDefn().GetFieldDefn(0).GetType()
+            == ogr.OFTInteger
+        )
+        assert (
+            out_ds.GetLayer(1).GetLayerDefn().GetFieldDefn(0).GetType()
+            == ogr.OFTInteger
+        )
+        assert (
+            out_ds.GetLayer(0).GetLayerDefn().GetFieldDefn(0).GetSubType()
+            == ogr.OFSTNone
+        )
+        assert (
+            out_ds.GetLayer(1).GetLayerDefn().GetFieldDefn(0).GetSubType()
+            == ogr.OFSTNone
+        )
+        f = out_ds.GetLayer(0).GetNextFeature()
+        assert f["test_field"] == 123
+        f = out_ds.GetLayer(1).GetNextFeature()
+        assert f["test_field"] == 456
+
+    gdal.Unlink(out_filename)
+
+    # Test with --layer
+    alg = get_change_field_type_alg()
+    alg["input"] = src_ds
+    assert alg.ParseCommandLineArguments(
+        [
+            "--field-name",
+            "test_field",
+            "--field-type",
+            "Integer",
+            "--layer",
+            "layer2",
+            "--output",
+            out_filename,
+        ]
+    )
+    assert alg.Run()
+    src_ds = None
+
+    # Verify
+    with gdal.OpenEx(out_filename, gdal.OF_VECTOR) as out_ds:
+        assert out_ds.GetLayerCount() == 1
+        assert out_ds.GetLayer(0).GetFeatureCount() == 1
+        assert (
+            out_ds.GetLayer(0).GetLayerDefn().GetFieldDefn(0).GetType()
+            == ogr.OFTInteger
+        )
+        assert (
+            out_ds.GetLayer(0).GetLayerDefn().GetFieldDefn(0).GetSubType()
+            == ogr.OFSTNone
+        )
+        f = out_ds.GetLayer(0).GetNextFeature()
+        assert f["test_field"] == 456
