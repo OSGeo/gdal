@@ -248,7 +248,6 @@ def test_gdalalg_vector_change_field_type_errors():
 
 def test_gdalalg_change_field_type_completion(tmp_path):
 
-    out_filename = str(tmp_path / "test_gdalalg_change_field_type_completion_out.shp")
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary missing")
@@ -259,7 +258,7 @@ def test_gdalalg_change_field_type_completion(tmp_path):
     assert "Binary" in out
 
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal vector change-field-type --input ../ogr/data/poly.shp --output {out_filename} --field-name"
+        f"{gdal_path} completion gdal vector change-field-type --input ../ogr/data/poly.shp --field-name"
     )
     assert "EAS_ID" in out
 

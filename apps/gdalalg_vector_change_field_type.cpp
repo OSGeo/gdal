@@ -29,37 +29,12 @@ GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
-    AddActiveLayerArg(&m_activeLayer);
-    auto &arg = AddFieldNameArg(&m_fieldName).SetRequired();
-    arg.SetAutoCompleteFunction(
-        [this](const std::string &)
-        {
-            std::vector<std::string> ret;
-            if (!this->GetInputDatasets().empty())
-            {
-                // Input layer
-                auto poDS = this->GetInputDatasets()[0].GetDatasetRef();
-                if (poDS)
-                {
-                    OGRLayer *poLayer = nullptr;
-                    if (!m_activeLayer.empty())
-                        poLayer =
-                            const_cast<GDALDataset *>(poDS)->GetLayerByName(
-                                m_activeLayer.c_str());
-                    else
-                        poLayer = const_cast<OGRLayer *>(poDS->GetLayer(0));
-                    if (poLayer)
-                    {
-                        auto poDefn = poLayer->GetLayerDefn();
-                        const int nFieldCount = poDefn->GetFieldCount();
-                        for (int iField = 0; iField < nFieldCount; iField++)
-                            ret.push_back(
-                                poDefn->GetFieldDefn(iField)->GetNameRef());
-                    }
-                }
-            }
-            return ret;
-        });
+    auto &layerArg = AddActiveLayerArg(&m_activeLayer);
+    auto &fieldNameArg = AddFieldNameArg(&m_fieldName).SetRequired();
+    auto &datasetArg = *GetArg(GDAL_ARG_NAME_INPUT);
+    SetAutoCompleteFunctionForFieldName(
+        fieldNameArg, layerArg,
+        static_cast<GDALInConstructionAlgorithmArg &>(datasetArg));
     AddFieldTypeSubtypeArg(&m_newFieldType, &m_newFieldSubType,
                            &m_newFieldTypeSubTypeStr)
         .SetRequired();
