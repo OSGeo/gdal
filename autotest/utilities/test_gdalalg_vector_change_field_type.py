@@ -336,13 +336,12 @@ def test_gdalalg_change_field_type_multiple_layers(tmp_vsimem, tmp_path):
         f = out_ds.GetLayer(1).GetNextFeature()
         assert f["test_field"] == 456
 
-    gdal.Unlink(out_filename)
-
     # Test with --layer
     alg = get_change_field_type_alg()
     alg["input"] = src_ds
     assert alg.ParseCommandLineArguments(
         [
+            "--overwrite",
             "--field-name",
             "test_field",
             "--field-type",
