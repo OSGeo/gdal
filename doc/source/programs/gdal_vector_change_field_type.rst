@@ -4,7 +4,7 @@
 ``gdal vector change-field-type``
 ================================================================================
 
-.. versionadded:: 3.11
+.. versionadded:: 3.12
 
 .. only:: html
 
@@ -22,7 +22,7 @@ Description
 
 :program:`gdal vector change-field-type` can be used to change the field type of a vector dataset:
 
-``edit`` can also be used as a step of :ref:`gdal_vector_pipeline`.
+``change-field-type`` can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 
 Standard options

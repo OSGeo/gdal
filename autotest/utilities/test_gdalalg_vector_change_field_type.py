@@ -235,7 +235,6 @@ def test_gdalalg_vector_change_field_type_errors():
         )
 
 
-@pytest.mark.require_driver("GPKG")
 def test_gdalalg_change_field_type_completion(tmp_path):
 
     gdal_path = test_cli_utilities.get_gdal_path()
@@ -247,23 +246,10 @@ def test_gdalalg_change_field_type_completion(tmp_path):
     )
     assert "Binary" in out
 
-    in_filename = str(tmp_path / "test_gdalalg_change_field_type_completion_in.gpkg")
-    out_filename = str(tmp_path / "test_gdalalg_change_field_type_completion_out.gpkg")
-    src_ds = gdal.GetDriverByName("GPKG").CreateDataSource(in_filename)
-    lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbNone)
-    fld_defn = ogr.FieldDefn("test_field", ogr.OFTString)
-    lyr.CreateField(fld_defn)
-
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f["test_field"] = "foo"
-    lyr.CreateFeature(f)
-    lyr = None
-    src_ds = None
-
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal vector change-field-type --field-type Integer --of GPKG --output={out_filename} --input={in_filename} --field-name"
+        f"{gdal_path} completion gdal vector change-field-type ../ogr/data/poly.shp --field-name"
     )
-    assert "test_field" in out
+    assert "EAS_ID" in out
 
 
 @pytest.mark.require_driver("GPKG")

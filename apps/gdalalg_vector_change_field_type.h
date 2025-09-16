@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                       GDALVectorChangeFieldTypeAlgorithm                        */
+/*                 GDALVectorChangeFieldTypeAlgorithm                   */
 /************************************************************************/
 
 class GDALVectorChangeFieldTypeAlgorithm /* non final */
@@ -44,7 +44,7 @@ class GDALVectorChangeFieldTypeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                   GDALVectorChangeFieldTypeAlgorithmStandalone                  */
+/*             GDALVectorChangeFieldTypeAlgorithmStandalone             */
 /************************************************************************/
 
 class GDALVectorChangeFieldTypeAlgorithmStandalone final
