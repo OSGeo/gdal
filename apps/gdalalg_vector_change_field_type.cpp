@@ -143,30 +143,12 @@ class GDALVectorChangeFieldTypeAlgorithmLayer final
         if (m_poFeatureDefn->GetFieldDefn(m_fieldIndex)->GetType() !=
             m_sourceFieldType)
         {
-            // Store the old value and type in a temporary feature
-            std::unique_ptr<OGRFeatureDefn> poFeatureDefTemp =
-                std::make_unique<OGRFeatureDefn>(m_poFeatureDefn->GetName());
-            poFeatureDefTemp->AddFieldDefn(
-                std::make_unique<OGRFieldDefn>("__dummy__", m_sourceFieldType));
-            OGRFeature oFeatureTemp{poFeatureDefTemp.release()};
-            const int tempMap[1] = {m_fieldIndex};
-            oFeatureTemp.SetFieldsFrom(poSrcFeature.get(), tempMap, false,
-                                       true);
-
-            // Remove the old field value
-            poSrcFeature->UnsetField(m_fieldIndex);
-
-            // Change the type
-            poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
-
-            // Convert the value
-            std::vector<int> fieldsMap(m_poFeatureDefn->GetFieldCount());
-            for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++)
-            {
-                fieldsMap[i] = i == m_fieldIndex ? 0 : -1;
-            }
-            const auto result{poSrcFeature->SetFieldsFrom(
-                &oFeatureTemp, fieldsMap.data(), false, true)};
+            auto poDstFeature = std::make_unique<OGRFeature>(m_poFeatureDefn);
+            std::vector<int> identityMap(m_poFeatureDefn->GetFieldCount());
+            std::fill(identityMap.begin(), identityMap.end(), -1);
+            identityMap[m_fieldIndex] = m_fieldIndex;
+            const auto result{poDstFeature->SetFrom(
+                poSrcFeature.get(), identityMap.data(), false, true)};
             if (result != OGRERR_NONE)
             {
                 CPLError(
@@ -174,15 +156,24 @@ class GDALVectorChangeFieldTypeAlgorithmLayer final
                     "Cannot convert field '%s' to new type, setting it to NULL",
                     m_poFeatureDefn->GetFieldDefn(m_fieldIndex)->GetNameRef());
             }
+            else
+            {
+                poDstFeature->SetFID(poSrcFeature->GetFID());
+                apoOutFeatures.push_back(std::move(poDstFeature));
+            }
         }
-
-        apoOutFeatures.push_back(std::move(poSrcFeature));
+        else
+        {
+            apoOutFeatures.push_back(std::move(poSrcFeature));
+        }
     }
 
     int TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCStringsAsUTF8) ||
-            EQUAL(pszCap, OLCCurveGeometries) || EQUAL(pszCap, OLCZGeometries))
+            EQUAL(pszCap, OLCCurveGeometries) ||
+            EQUAL(pszCap, OLCZGeometries) ||
+            EQUAL(pszCap, OLCMeasuredGeometries))
             return m_srcLayer.TestCapability(pszCap);
         return false;
     }
