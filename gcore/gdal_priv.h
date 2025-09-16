@@ -918,6 +918,45 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Bands GetBands();
 
+    /** Class returned by GetBands() that act as a container for raster bands.
+     */
+    class CPL_DLL ConstBands
+    {
+      private:
+        friend class GDALDataset;
+        const GDALDataset *const m_poSelf;
+
+        CPL_INTERNAL explicit ConstBands(const GDALDataset *poSelf)
+            : m_poSelf(poSelf)
+        {
+        }
+
+        class CPL_DLL Iterator
+        {
+            struct Private;
+            std::unique_ptr<Private> m_poPrivate;
+
+          public:
+            Iterator(const GDALDataset *poDS, bool bStart);
+            ~Iterator();
+            const GDALRasterBand *operator*() const;
+            Iterator &operator++();
+            bool operator!=(const Iterator &it) const;
+        };
+
+      public:
+        const Iterator begin() const;
+
+        const Iterator end() const;
+
+        size_t size() const;
+
+        const GDALRasterBand *operator[](int iBand) const;
+        const GDALRasterBand *operator[](size_t iBand) const;
+    };
+
+    ConstBands GetBands() const;
+
     virtual CPLErr FlushCache(bool bAtClosing = false);
     virtual CPLErr DropCache();
 
@@ -964,7 +1003,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual GDALDriver *GetDriver(void);
     virtual char **GetFileList(void);
 
-    virtual const char *GetDriverName();
+    const char *GetDriverName() const;
 
     virtual const OGRSpatialReference *GetGCPSpatialRef() const;
     virtual int GetGCPCount();
@@ -973,7 +1012,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                            const OGRSpatialReference *poGCP_SRS);
 
     // Compatibility layer
-    const char *GetGCPProjection();
+    const char *GetGCPProjection() const;
     CPLErr SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
                    const char *pszGCPProjection);
 
@@ -2005,6 +2044,13 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     //! @endcond
 
   protected:
+    GDALRasterBand();
+    explicit GDALRasterBand(int bForceCachedIO);
+
+    //! @cond Doxygen_Suppress
+    GDALRasterBand(GDALRasterBand &&) = default;
+    //! @endcond
+
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) = 0;
     virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void *pData);
 
@@ -2059,13 +2105,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     //! @endcond
 
   public:
-    GDALRasterBand();
-    explicit GDALRasterBand(int bForceCachedIO);
-
-    //! @cond Doxygen_Suppress
-    GDALRasterBand(GDALRasterBand &&) = default;
-    //! @endcond
-
     ~GDALRasterBand() override;
 
     int GetXSize() const;
