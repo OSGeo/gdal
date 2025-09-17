@@ -1577,10 +1577,11 @@ int GTiffDataset::VirtualMemIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     size_t nMappingSize = 0;
     GByte *pabySrcData = nullptr;
-    if (STARTS_WITH(m_pszFilename, "/vsimem/"))
+    if (STARTS_WITH(m_osFilename.c_str(), "/vsimem/"))
     {
         vsi_l_offset nDataLength = 0;
-        pabySrcData = VSIGetMemFileBuffer(m_pszFilename, &nDataLength, FALSE);
+        pabySrcData =
+            VSIGetMemFileBuffer(m_osFilename.c_str(), &nDataLength, FALSE);
         nMappingSize = static_cast<size_t>(nDataLength);
         if (pabySrcData == nullptr)
             return -1;
@@ -3868,7 +3869,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     GTiffDataset *poDS = new GTiffDataset();
     poDS->SetDescription(pszFilename);
-    poDS->m_pszFilename = CPLStrdup(pszFilename);
+    poDS->m_osFilename = pszFilename;
     poDS->m_fpL = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
     poDS->m_bStreamingIn = bStreaming;
@@ -4224,13 +4225,16 @@ void GTiffDataset::LookForProjectionFromGeoTIFF()
 
 void GTiffDataset::LookForProjectionFromXML()
 {
+    if (m_poBaseDS != nullptr)
+        return;
+
     CSLConstList papszSiblingFiles = GetSiblingFiles();
 
-    if (!GDALCanFileAcceptSidecarFile(m_pszFilename))
+    if (!GDALCanFileAcceptSidecarFile(m_osFilename.c_str()))
         return;
 
     const std::string osXMLFilenameLowerCase =
-        CPLResetExtensionSafe(m_pszFilename, "xml");
+        CPLResetExtensionSafe(m_osFilename.c_str(), "xml");
 
     CPLString osXMLFilename;
     if (papszSiblingFiles &&
@@ -4240,9 +4244,9 @@ void GTiffDataset::LookForProjectionFromXML()
             papszSiblingFiles, CPLGetFilename(osXMLFilenameLowerCase.c_str()));
         if (iSibling >= 0)
         {
-            osXMLFilename = m_pszFilename;
-            osXMLFilename.resize(strlen(m_pszFilename) -
-                                 strlen(CPLGetFilename(m_pszFilename)));
+            osXMLFilename = m_osFilename.c_str();
+            osXMLFilename.resize(m_osFilename.size() -
+                                 strlen(CPLGetFilename(m_osFilename.c_str())));
             osXMLFilename += papszSiblingFiles[iSibling];
         }
         else
@@ -4264,7 +4268,7 @@ void GTiffDataset::LookForProjectionFromXML()
         else if (VSIIsCaseSensitiveFS(osXMLFilenameLowerCase.c_str()))
         {
             const std::string osXMLFilenameUpperCase =
-                CPLResetExtensionSafe(m_pszFilename, "XML");
+                CPLResetExtensionSafe(m_osFilename.c_str(), "XML");
             bGotXML = VSIStatExL(osXMLFilenameUpperCase.c_str(), &sStatBuf,
                                  VSI_STAT_EXISTS_FLAG) == 0;
             if (bGotXML)
@@ -4671,7 +4675,7 @@ GDALDataset *GTiffDataset::OpenDir(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     GTiffDataset *poDS = new GTiffDataset();
     poDS->SetDescription(poOpenInfo->pszFilename);
-    poDS->m_pszFilename = CPLStrdup(pszFilename);
+    poDS->m_osFilename = pszFilename;
     poDS->m_fpL = l_fpL;
     poDS->m_hTIFF = l_hTIFF;
     poDS->m_bSingleIFDOpened = true;
@@ -5769,19 +5773,18 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
 
 CSLConstList GTiffDataset::GetSiblingFiles()
 {
+    if (m_poBaseDS != nullptr)
+        return nullptr;
+
     if (m_bHasGotSiblingFiles)
     {
         return oOvManager.GetSiblingFiles();
-    }
-    if (m_poBaseDS)
-    {
-        return m_poBaseDS->GetSiblingFiles();
     }
 
     m_bHasGotSiblingFiles = true;
     const int nMaxFiles =
         atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
-    const std::string osDirname = CPLGetDirnameSafe(m_pszFilename);
+    const std::string osDirname = CPLGetDirnameSafe(m_osFilename.c_str());
     CPLStringList aosSiblingFiles(VSIReadDirEx(osDirname.c_str(), nMaxFiles));
     if (nMaxFiles > 0 && aosSiblingFiles.size() > nMaxFiles)
     {
@@ -5829,6 +5832,8 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
 
 {
     if (!m_bReadGeoTransform && !m_bLoadPam)
+        return;
+    if (m_poBaseDS != nullptr)
         return;
 
     IdentifyAuthorizedGeoreferencingSources();
@@ -6018,9 +6023,10 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 // Begin with .tab since it can also have projection info.
                 int nGCPCount = 0;
                 GDAL_GCP *pasGCPList = nullptr;
-                const int bTabFileOK = GDALReadTabFile2(
-                    m_pszFilename, m_adfGeoTransform, &pszTabWKT, &nGCPCount,
-                    &pasGCPList, papszSiblingFiles, &pszGeorefFilename);
+                const int bTabFileOK =
+                    GDALReadTabFile2(m_osFilename.c_str(), m_adfGeoTransform,
+                                     &pszTabWKT, &nGCPCount, &pasGCPList,
+                                     papszSiblingFiles, &pszGeorefFilename);
 
                 if (bTabFileOK)
                 {
@@ -6059,13 +6065,13 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 CSLConstList papszSiblingFiles = GetSiblingFiles();
 
                 m_bGeoTransformValid = CPL_TO_BOOL(GDALReadWorldFile2(
-                    m_pszFilename, nullptr, m_adfGeoTransform,
+                    m_osFilename.c_str(), nullptr, m_adfGeoTransform,
                     papszSiblingFiles, &pszGeorefFilename));
 
                 if (!m_bGeoTransformValid)
                 {
                     m_bGeoTransformValid = CPL_TO_BOOL(GDALReadWorldFile2(
-                        m_pszFilename, "wld", m_adfGeoTransform,
+                        m_osFilename.c_str(), "wld", m_adfGeoTransform,
                         papszSiblingFiles, &pszGeorefFilename));
                 }
                 if (m_bGeoTransformValid)
@@ -6345,7 +6351,7 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
                                    static_cast<GUIntBig>(nOffset),
                                    static_cast<int>(std::min(
                                        static_cast<vsi_l_offset>(1024), nSize)),
-                                   m_pszFilename));
+                                   m_osFilename.c_str()));
                     const char *const apszDrivers[] = {pszDriverName, nullptr};
                     auto poWebPDataset =
                         std::unique_ptr<GDALDataset>(GDALDataset::Open(
@@ -6610,8 +6616,11 @@ void GTiffDataset::LoadMetadata()
     }
 
     GDALMDReaderManager mdreadermanager;
-    GDALMDReaderBase *mdreader = mdreadermanager.GetReader(
-        m_pszFilename, oOvManager.GetSiblingFiles(), MDR_ANY);
+    GDALMDReaderBase *mdreader =
+        m_poBaseDS == nullptr
+            ? mdreadermanager.GetReader(m_osFilename.c_str(),
+                                        oOvManager.GetSiblingFiles(), MDR_ANY)
+            : nullptr;
 
     if (nullptr != mdreader)
     {
@@ -6649,7 +6658,7 @@ bool GTiffDataset::HasOptimizedReadMultiRange()
     if (m_nHasOptimizedReadMultiRange >= 0)
         return m_nHasOptimizedReadMultiRange != 0;
     m_nHasOptimizedReadMultiRange = static_cast<signed char>(
-        VSIHasOptimizedReadMultiRange(m_pszFilename)
+        VSIHasOptimizedReadMultiRange(m_osFilename.c_str())
         // Config option for debug and testing purposes only
         || CPLTestBool(CPLGetConfigOption(
                "GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE", "NO")));
