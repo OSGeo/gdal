@@ -34,9 +34,8 @@ GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
     if (GetArg(GDAL_ARG_NAME_INPUT))
     {
         auto &datasetArg = *GetArg(GDAL_ARG_NAME_INPUT);
-        SetAutoCompleteFunctionForFieldName(
-            fieldNameArg, layerArg,
-            static_cast<GDALInConstructionAlgorithmArg &>(datasetArg));
+        SetAutoCompleteFunctionForFieldName(fieldNameArg, layerArg,
+                                            m_inputDataset);
     }
     AddFieldTypeSubtypeArg(&m_newFieldType, &m_newFieldSubType,
                            &m_newFieldTypeSubTypeStr)

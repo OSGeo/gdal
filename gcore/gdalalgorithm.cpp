@@ -4496,71 +4496,61 @@ void GDALAlgorithm::SetAutoCompleteFunctionForLayerName(
 void GDALAlgorithm::SetAutoCompleteFunctionForFieldName(
     GDALInConstructionAlgorithmArg &fieldArg,
     GDALInConstructionAlgorithmArg &layerNameArg,
-    GDALInConstructionAlgorithmArg &datasetArg)
+    std::vector<GDALArgDatasetValue> &datasetArg)
 {
-    CPLAssert(datasetArg.GetType() == GAAT_DATASET ||
-              datasetArg.GetType() == GAAT_DATASET_LIST);
 
     fieldArg.SetAutoCompleteFunction(
         [&datasetArg, &layerNameArg](const std::string &currentValue)
         {
             std::set<std::string> ret;
-            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-            GDALArgDatasetValue *dsVal = nullptr;
-            if (datasetArg.GetType() == GAAT_DATASET)
+            if (!datasetArg.empty())
             {
-                dsVal = &(datasetArg.Get<GDALArgDatasetValue>());
-            }
-            else
-            {
-                auto &val = datasetArg.Get<std::vector<GDALArgDatasetValue>>();
-                if (val.size() == 1)
-                {
-                    dsVal = &val[0];
-                }
-            }
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
-            auto getLayerFields = [&ret, &currentValue](OGRLayer *poLayer)
-            {
-                auto poDefn = poLayer->GetLayerDefn();
-                const int nFieldCount = poDefn->GetFieldCount();
-                for (int iField = 0; iField < nFieldCount; iField++)
+                auto getLayerFields = [&ret, &currentValue](OGRLayer *poLayer)
                 {
-                    const char *fieldName =
-                        poDefn->GetFieldDefn(iField)->GetNameRef();
-                    if (currentValue == fieldName)
+                    auto poDefn = poLayer->GetLayerDefn();
+                    const int nFieldCount = poDefn->GetFieldCount();
+                    for (int iField = 0; iField < nFieldCount; iField++)
                     {
-                        ret.clear();
-                        ret.insert(fieldName);
-                        break;
-                    }
-                    ret.insert(fieldName);
-                }
-            };
-
-            if (dsVal && !dsVal->GetName().empty())
-            {
-                auto poDS = std::unique_ptr<GDALDataset>(
-                    GDALDataset::Open(dsVal->GetName().c_str(),
-                                      GDAL_OF_VECTOR | GDAL_OF_READONLY));
-                if (poDS)
-                {
-                    const auto layerName = layerNameArg.Get<std::string>();
-                    if (layerName.empty())
-                    {
-                        // Loop through all layers
-                        for (auto &&poLayer : poDS->GetLayers())
+                        const char *fieldName =
+                            poDefn->GetFieldDefn(iField)->GetNameRef();
+                        if (currentValue == fieldName)
                         {
-                            getLayerFields(poLayer);
+                            ret.clear();
+                            ret.insert(fieldName);
+                            break;
                         }
+                        ret.insert(fieldName);
                     }
-                    else
+                };
+
+                GDALArgDatasetValue &dsVal = datasetArg[0];
+
+                if (!dsVal.GetName().empty())
+                {
+                    auto poDS = std::unique_ptr<GDALDataset>(
+                        GDALDataset::Open(dsVal.GetName().c_str(),
+                                          GDAL_OF_VECTOR | GDAL_OF_READONLY));
+                    if (poDS)
                     {
-                        const auto poLayer = poDS->GetLayerByName(
-                            layerNameArg.Get<std::string>().c_str());
-                        if (poLayer)
+                        const auto layerName = layerNameArg.Get<std::string>();
+                        if (layerName.empty())
                         {
-                            getLayerFields(poLayer);
+                            // Loop through all layers
+                            for (auto &&poLayer : poDS->GetLayers())
+                            {
+                                getLayerFields(poLayer);
+                            }
+                        }
+                        else
+                        {
+                            const auto poLayer = poDS->GetLayerByName(
+                                layerNameArg.Get<std::string>().c_str());
+                            if (poLayer)
+                            {
+                                getLayerFields(poLayer);
+                            }
                         }
                     }
                 }
