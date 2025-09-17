@@ -6766,6 +6766,89 @@ OGRGeometryH OGR_G_DelaunayTriangulation(OGRGeometryH hThis, double dfTolerance,
 }
 
 /************************************************************************/
+/*                   ConstrainedDelaunayTriangulation()                 */
+/************************************************************************/
+
+/**
+ * \brief Return a constrained Delaunay triangulation of the vertices of the
+ * given polygon(s). For non-polygonal inputs, silently returns an empty
+ * geometry collection.
+ *
+ * This function is the same as the C function
+ * OGR_G_ConstrainedDelaunayTriangulation().
+ *
+ * This function is built on the GEOS library, v3.10 or above.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @return a new geometry to be freed by the caller, or NULL if an error occurs.
+ *
+ * @since OGR 3.12
+ */
+
+OGRGeometry *OGRGeometry::ConstrainedDelaunayTriangulation() const
+{
+#ifndef HAVE_GEOS
+    CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
+    return nullptr;
+#elif !(GEOS_VERSION_MAJOR > 3 ||                                              \
+        (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 10))
+    CPLError(
+        CE_Failure, CPLE_NotSupported,
+        "GEOS 3.10 or later needed for ConstrainedDelaunayTriangulation().");
+    return nullptr;
+#else
+
+    OGRGeometry *poOGRProduct = nullptr;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    if (hThisGeosGeom != nullptr)
+    {
+        GEOSGeom hGeosProduct =
+            GEOSConstrainedDelaunayTriangulation_r(hGEOSCtxt, hThisGeosGeom);
+        GEOSGeom_destroy_r(hGEOSCtxt, hThisGeosGeom);
+        poOGRProduct =
+            BuildGeometryFromGEOS(hGEOSCtxt, hGeosProduct, this, nullptr);
+    }
+    freeGEOSContext(hGEOSCtxt);
+    return poOGRProduct;
+#endif
+}
+
+/************************************************************************/
+/*                 OGR_G_ConstrainedDelaunayTriangulation()             */
+/************************************************************************/
+
+/**
+ * \brief Return a constrained Delaunay triangulation of the vertices of the
+ * given polygon(s). For non-polygonal inputs, silently returns an empty
+ * geometry collection.
+ *
+ * This function is the same as the C++ method
+ * OGRGeometry::ConstrainedDelaunayTriangulation().
+ *
+ * This function is built on the GEOS library, v3.10 or above.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param hThis the geometry.
+ *
+ * @return a new geometry to be freed by the caller with OGR_G_DestroyGeometry,
+ * or NULL if an error occurs.
+ *
+ * @since OGR 3.12
+ */
+
+OGRGeometryH OGR_G_ConstrainedDelaunayTriangulation(OGRGeometryH hThis)
+{
+    VALIDATE_POINTER1(hThis, "OGR_G_ConstrainedDelaunayTriangulation", nullptr);
+
+    return OGRGeometry::ToHandle(
+        OGRGeometry::FromHandle(hThis)->ConstrainedDelaunayTriangulation());
+}
+
+/************************************************************************/
 /*                             Polygonize()                             */
 /************************************************************************/
 /* Contributor: Alessandro Furieri, a.furieri@lqt.it                    */

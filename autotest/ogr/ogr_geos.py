@@ -607,6 +607,45 @@ def test_ogr_geos_DelaunayTriangulation():
 ###############################################################################
 
 
+def test_ogr_geos_ConstrainedDelaunayTriangulation():
+
+    # polygon input
+    in_wkt = "POLYGON ((10 10, 20 40, 90 90, 90 10, 10 10))"
+    g = ogr.CreateGeometryFromWkt(in_wkt)
+
+    gdal.ErrorReset()
+    tri = g.ConstrainedDelaunayTriangulation()
+    if tri is None:
+        assert "GEOS" in gdal.GetLastErrorMsg()
+        pytest.skip()
+
+    assert (
+        tri.ExportToWkt()
+        == "GEOMETRYCOLLECTION (POLYGON ((90 10,20 40,90 90,90 10)),POLYGON ((20 40,90 10,10 10,20 40)))"
+    ), ("Got: %s" % tri.ExportToWkt())
+
+    # multipolygon input
+    in_wkt = "MULTIPOLYGON (((10 10, 20 50, 50 50, 40 20, 10 10)), ((20 60, 60 60, 90 20, 90 90, 20 60)), ((10 90, 10 70, 40 70, 50 90, 10 90)))"
+    g = ogr.CreateGeometryFromWkt(in_wkt)
+    tri = g.ConstrainedDelaunayTriangulation()
+
+    assert tri is not None
+    assert tri.GetGeometryType() == ogr.wkbGeometryCollection
+    assert tri.GetGeometryCount() == 6
+
+    # non-polygon input
+    in_wkt = "MULTIPOINT(0 0,0 1,1 1,1 0)"
+    g = ogr.CreateGeometryFromWkt(in_wkt)
+    tri = g.ConstrainedDelaunayTriangulation()
+
+    assert tri.ExportToWkt() == "GEOMETRYCOLLECTION EMPTY", (
+        "Got: %s" % tri.ExportToWkt()
+    )
+
+
+###############################################################################
+
+
 def test_ogr_geos_polygonize():
 
     g = ogr.CreateGeometryFromWkt("MULTILINESTRING((0 0,0 1,1 1),(1 1,0 0))")
