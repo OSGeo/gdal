@@ -636,6 +636,27 @@ typedef int CPLErr;
 #endif /* defined(SWIGPYTHON) */
 #endif /* FROM_GDAL_I */
 
+
+
+%inline %{
+/************************************************************************/
+/*                          OGRGetFieldTypeByName                       */
+/************************************************************************/
+OGRFieldType GetFieldTypeByName(const char* typeName )
+{
+    return OGR_GetFieldTypeByName(typeName);
+}
+
+/************************************************************************/
+/*                        OGRGetFieldSubTypeByName                      */
+/************************************************************************/
+OGRFieldSubType GetFieldSubtypeByName (const char* subTypeName )
+{
+    return OGR_GetFieldSubTypeByName(subTypeName);
+}
+%}
+
+
 /************************************************************************/
 /*                               OGRGetGEOSVersion                      */
 /************************************************************************/

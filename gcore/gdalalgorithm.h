@@ -3032,6 +3032,21 @@ class CPL_DLL GDALAlgorithmRegistry
         GDALInConstructionAlgorithmArg &layerArg,
         GDALInConstructionAlgorithmArg &datasetArg);
 
+    /** Register an auto complete function for a field name argument */
+    static void SetAutoCompleteFunctionForFieldName(
+        GDALInConstructionAlgorithmArg &fieldArg,
+        GDALInConstructionAlgorithmArg &layerNameArg,
+        std::vector<GDALArgDatasetValue> &datasetArg);
+
+    /** Add a field name argument */
+    GDALInConstructionAlgorithmArg &
+    AddFieldNameArg(std::string *pValue, const char *helpMessage = nullptr);
+
+    /** Add a field type (or subtipe) argument */
+    GDALInConstructionAlgorithmArg &AddFieldTypeSubtypeArg(
+        OGRFieldType *pTypeValue, OGRFieldSubType *pSubtypeValue,
+        std::string *pStrValue, const char *helpMessage = nullptr);
+
     /** Add (single) band argument. */
     GDALInConstructionAlgorithmArg &
     AddBandArg(int *pValue, const char *helpMessage = nullptr);

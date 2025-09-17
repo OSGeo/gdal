@@ -4548,6 +4548,200 @@ void GDALAlgorithm::SetAutoCompleteFunctionForLayerName(
         });
 }
 
+/**************************************************************************/
+/*       GDALAlgorithm::SetAutoCompleteFunctionForFieldName()             */
+/**************************************************************************/
+
+void GDALAlgorithm::SetAutoCompleteFunctionForFieldName(
+    GDALInConstructionAlgorithmArg &fieldArg,
+    GDALInConstructionAlgorithmArg &layerNameArg,
+    std::vector<GDALArgDatasetValue> &datasetArg)
+{
+
+    fieldArg.SetAutoCompleteFunction(
+        [&datasetArg, &layerNameArg](const std::string &currentValue)
+        {
+            std::set<std::string> ret;
+            if (!datasetArg.empty())
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+
+                auto getLayerFields = [&ret, &currentValue](OGRLayer *poLayer)
+                {
+                    auto poDefn = poLayer->GetLayerDefn();
+                    const int nFieldCount = poDefn->GetFieldCount();
+                    for (int iField = 0; iField < nFieldCount; iField++)
+                    {
+                        const char *fieldName =
+                            poDefn->GetFieldDefn(iField)->GetNameRef();
+                        if (currentValue == fieldName)
+                        {
+                            ret.clear();
+                            ret.insert(fieldName);
+                            break;
+                        }
+                        ret.insert(fieldName);
+                    }
+                };
+
+                GDALArgDatasetValue &dsVal = datasetArg[0];
+
+                if (!dsVal.GetName().empty())
+                {
+                    auto poDS = std::unique_ptr<GDALDataset>(
+                        GDALDataset::Open(dsVal.GetName().c_str(),
+                                          GDAL_OF_VECTOR | GDAL_OF_READONLY));
+                    if (poDS)
+                    {
+                        const auto layerName = layerNameArg.Get<std::string>();
+                        if (layerName.empty())
+                        {
+                            // Loop through all layers
+                            for (auto &&poLayer : poDS->GetLayers())
+                            {
+                                getLayerFields(poLayer);
+                            }
+                        }
+                        else
+                        {
+                            const auto poLayer = poDS->GetLayerByName(
+                                layerNameArg.Get<std::string>().c_str());
+                            if (poLayer)
+                            {
+                                getLayerFields(poLayer);
+                            }
+                        }
+                    }
+                }
+            }
+            std::vector<std::string> retVector(ret.begin(), ret.end());
+            return retVector;
+        });
+}
+
+/************************************************************************/
+/*                  GDALAlgorithm::AddFieldNameArg()                    */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddFieldNameArg(std::string *pValue, const char *helpMessage)
+{
+    return AddArg("field-name", 0, MsgOrDefault(helpMessage, _("Field name")),
+                  pValue);
+}
+
+/************************************************************************/
+/*           GDALAlgorithm::AddFieldTypeSubtypeArg()                    */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &GDALAlgorithm::AddFieldTypeSubtypeArg(
+    OGRFieldType *pTypeValue, OGRFieldSubType *pSubtypeValue,
+    std::string *pStrValue, const char *helpMessage)
+{
+    auto &arg =
+        AddArg("field-type", 0,
+               MsgOrDefault(helpMessage, _("Field type or subtype")), pStrValue)
+            .SetAutoCompleteFunction(
+                [](const std::string &currentValue)
+                {
+                    std::vector<std::string> oRet;
+                    for (int i = 1; i <= OGRFieldSubType::OFSTMaxSubType; i++)
+                    {
+                        const char *pszSubType =
+                            OGRFieldDefn::GetFieldSubTypeName(
+                                static_cast<OGRFieldSubType>(i));
+                        if (pszSubType != nullptr)
+                        {
+                            if (currentValue.empty() ||
+                                STARTS_WITH(pszSubType, currentValue.c_str()))
+                            {
+                                oRet.push_back(pszSubType);
+                            }
+                        }
+                    }
+
+                    for (int i = 0; i <= OGRFieldType::OFTMaxType; i++)
+                    {
+                        // Skip deprecated
+                        if (static_cast<OGRFieldType>(i) ==
+                                OGRFieldType::OFTWideString ||
+                            static_cast<OGRFieldType>(i) ==
+                                OGRFieldType::OFTWideStringList)
+                            continue;
+                        const char *pszType = OGRFieldDefn::GetFieldTypeName(
+                            static_cast<OGRFieldType>(i));
+                        if (pszType != nullptr)
+                        {
+                            if (currentValue.empty() ||
+                                STARTS_WITH(pszType, currentValue.c_str()))
+                            {
+                                oRet.push_back(pszType);
+                            }
+                        }
+                    }
+                    return oRet;
+                });
+
+    auto validationFunction =
+        [this, &arg, pTypeValue, pSubtypeValue, pStrValue]()
+    {
+        bool isValid{true};
+        *pTypeValue = OGRFieldDefn::GetFieldTypeByName(pStrValue->c_str());
+
+        // String is returned for unknown types
+        if (!EQUAL(pStrValue->c_str(), "String") && *pTypeValue == OFTString)
+        {
+            isValid = false;
+        }
+
+        *pSubtypeValue =
+            OGRFieldDefn::GetFieldSubTypeByName(pStrValue->c_str());
+
+        if (*pSubtypeValue != OFSTNone)
+        {
+            isValid = true;
+            switch (*pSubtypeValue)
+            {
+                case OFSTBoolean:
+                case OFSTInt16:
+                {
+                    *pTypeValue = OFTInteger;
+                    break;
+                }
+                case OFSTFloat32:
+                {
+                    *pTypeValue = OFTReal;
+                    break;
+                }
+                default:
+                {
+                    *pTypeValue = OFTString;
+                    break;
+                }
+            }
+        }
+
+        if (!isValid)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Invalid value for argument '%s': '%s'",
+                        arg.GetName().c_str(), pStrValue->c_str());
+        }
+
+        return isValid;
+    };
+
+    if (!pStrValue->empty())
+    {
+        arg.SetDefault(*pStrValue);
+        validationFunction();
+    }
+
+    arg.AddValidationAction(std::move(validationFunction));
+
+    return arg;
+}
+
 /************************************************************************/
 /*                  GDALAlgorithm::ValidateBandArg()                    */
 /************************************************************************/

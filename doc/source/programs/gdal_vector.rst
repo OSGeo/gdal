@@ -23,6 +23,7 @@ Available sub-commands
 - :ref:`gdal_vector_clip`
 - :ref:`gdal_vector_concat`
 - :ref:`gdal_vector_convert`
+- :ref:`gdal_vector_change_field_type`
 - :ref:`gdal_vector_edit`
 - :ref:`gdal_vector_filter`
 - :ref:`gdal_vector_index`
