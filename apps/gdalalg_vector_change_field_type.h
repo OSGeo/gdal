@@ -38,6 +38,9 @@ class GDALVectorChangeFieldTypeAlgorithm /* non final */
 
     std::string m_activeLayer{};
     std::string m_fieldName{};
+    OGRFieldType m_srcFieldType{OGRFieldType::OFTString};
+    OGRFieldSubType m_srcFieldSubType{OGRFieldSubType::OFSTNone};
+    std::string m_srcFieldTypeSubTypeStr{};
     OGRFieldType m_newFieldType{OGRFieldType::OFTString};
     OGRFieldSubType m_newFieldSubType{OGRFieldSubType::OFSTNone};
     std::string m_newFieldTypeSubTypeStr{};

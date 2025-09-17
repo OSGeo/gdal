@@ -3042,10 +3042,11 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddFieldNameArg(std::string *pValue, const char *helpMessage = nullptr);
 
-    /** Add a field type (or subtipe) argument */
+    /** Add a field type (or subtype) argument */
     GDALInConstructionAlgorithmArg &AddFieldTypeSubtypeArg(
         OGRFieldType *pTypeValue, OGRFieldSubType *pSubtypeValue,
-        std::string *pStrValue, const char *helpMessage = nullptr);
+        std::string *pStrValue, const std::string &argName = std::string(),
+        const char *helpMessage = nullptr);
 
     /** Add (single) band argument. */
     GDALInConstructionAlgorithmArg &
