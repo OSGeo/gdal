@@ -190,6 +190,8 @@ OGRGeometryH CPL_DLL OGR_G_SimplifyPreserveTopology(
 OGRGeometryH CPL_DLL
 OGR_G_DelaunayTriangulation(OGRGeometryH hThis, double dfTolerance,
                             int bOnlyEdges) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_ConstrainedDelaunayTriangulation(OGRGeometryH hThis)
+    CPL_WARN_UNUSED_RESULT;
 
 void CPL_DLL OGR_G_Segmentize(OGRGeometryH hGeom, double dfMaxLength);
 int CPL_DLL OGR_G_Intersects(OGRGeometryH, OGRGeometryH);

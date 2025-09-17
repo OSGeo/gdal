@@ -3266,8 +3266,8 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 #ifndef SWIGCSHARP
 %newobject CreateGeometryFromEnvelope;
 %inline %{
-  OGRGeometryShadow *CreateGeometryFromEnvelope(double xmin, 
-                                                double ymin, 
+  OGRGeometryShadow *CreateGeometryFromEnvelope(double xmin,
+                                                double ymin,
                                                 double xmax,
                                                 double ymax,
                                                 OSRSpatialReferenceShadow *reference = nullptr) {
@@ -3804,6 +3804,12 @@ public:
 #endif
   OGRGeometryShadow* DelaunayTriangulation(double dfTolerance = 0.0, int bOnlyEdges = FALSE) {
     return (OGRGeometryShadow*) OGR_G_DelaunayTriangulation(self, dfTolerance, bOnlyEdges);
+  }
+
+  /* OGR >= 3.12 */
+  %newobject ConstrainedDelaunayTriangulation;
+  OGRGeometryShadow* ConstrainedDelaunayTriangulation() {
+    return (OGRGeometryShadow*) OGR_G_ConstrainedDelaunayTriangulation(self);
   }
 
   %newobject Polygonize;
