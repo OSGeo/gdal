@@ -85,8 +85,8 @@ def test_gdalalg_raster_neighbors_mean(neighbors):
     src_ds.WriteRaster(0, 0, 3, 3, array.array("B", [1, 2, 3, 4, 5, 6, 7, 8, 9]))
 
     neighbors["input"] = src_ds
-    neighbors["kernel"] = "one_3x3"
-    neighbors["function"] = "mean"
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = "mean"
     neighbors["output-format"] = "MEM"
     assert neighbors.Run()
 
@@ -103,8 +103,8 @@ def test_gdalalg_raster_neighbors_sum(neighbors):
     src_ds.WriteRaster(0, 0, 3, 3, array.array("B", [1, 2, 3, 4, 5, 6, 7, 8, 9]))
 
     neighbors["input"] = src_ds
-    neighbors["kernel"] = "one_3x3"
-    neighbors["function"] = "sum"
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = "sum"
     neighbors["output-format"] = "MEM"
     assert neighbors.Run()
 
@@ -120,8 +120,8 @@ def test_gdalalg_raster_neighbors_min(neighbors):
     src_ds.WriteRaster(0, 0, 3, 3, array.array("B", [1, 2, 3, 4, 5, 6, 7, 8, 9]))
 
     neighbors["input"] = src_ds
-    neighbors["kernel"] = "one_3x3"
-    neighbors["function"] = "min"
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = "min"
     neighbors["output-format"] = "MEM"
     neighbors["datatype"] = "Byte"
     assert neighbors.Run()
@@ -138,8 +138,8 @@ def test_gdalalg_raster_neighbors_max(neighbors):
     src_ds.WriteRaster(0, 0, 3, 3, array.array("B", [1, 2, 3, 4, 5, 6, 7, 8, 9]))
 
     neighbors["input"] = src_ds
-    neighbors["kernel"] = "one_3x3"
-    neighbors["function"] = "max"
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = "max"
     neighbors["output-format"] = "MEM"
     neighbors["datatype"] = "Byte"
     assert neighbors.Run()
@@ -156,8 +156,8 @@ def test_gdalalg_raster_neighbors_median_odd_number(neighbors):
     src_ds.WriteRaster(0, 0, 3, 3, array.array("B", [1, 2, 3, 4, 5, 60, 70, 80, 90]))
 
     neighbors["input"] = src_ds
-    neighbors["kernel"] = "one_3x3"
-    neighbors["function"] = "median"
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = "median"
     neighbors["output-format"] = "MEM"
     neighbors["datatype"] = "Byte"
     assert neighbors.Run()
@@ -175,8 +175,8 @@ def test_gdalalg_raster_neighbors_median_even_number(neighbors):
     src_ds.GetRasterBand(1).SetNoDataValue(90)
 
     neighbors["input"] = src_ds
-    neighbors["kernel"] = "one_3x3"
-    neighbors["function"] = "median"
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = "median"
     neighbors["output-format"] = "MEM"
     assert neighbors.Run()
 
@@ -192,8 +192,8 @@ def test_gdalalg_raster_neighbors_mode(neighbors):
     src_ds.WriteRaster(0, 0, 3, 3, array.array("B", [1, 2, 3, 4, 5, 6, 3, 8, 9]))
 
     neighbors["input"] = src_ds
-    neighbors["kernel"] = "one_3x3"
-    neighbors["function"] = "mode"
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = "mode"
     neighbors["output-format"] = "MEM"
     neighbors["datatype"] = "Byte"
     assert neighbors.Run()
@@ -210,8 +210,8 @@ def test_gdalalg_raster_neighbors_stddev(neighbors):
     src_ds.WriteRaster(0, 0, 3, 3, array.array("B", [1, 2, 3, 4, 5, 6, 7, 8, 9]))
 
     neighbors["input"] = src_ds
-    neighbors["kernel"] = "one_3x3"
-    neighbors["function"] = "stddev"
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = "stddev"
     neighbors["output-format"] = "MEM"
     assert neighbors.Run()
 
@@ -253,6 +253,46 @@ def test_gdalalg_raster_neighbors_v(neighbors):
     assert ar[0] == 3.0
 
 
+def test_gdalalg_raster_neighbors_gaussian_3x3(neighbors):
+
+    neighbors["input"] = "../gcore/data/byte.tif"
+    neighbors["kernel"] = "gaussian"
+    neighbors["output-format"] = "MEM"
+    assert neighbors.Run()
+
+    out_ds = neighbors.Output()
+    ar = array.array("d")
+    ar.frombytes(out_ds.ReadRaster(10, 10, 1, 1))
+    assert ar[0] == 114.0625
+
+
+def test_gdalalg_raster_neighbors_gaussian_5x5(neighbors):
+
+    neighbors["input"] = "../gcore/data/byte.tif"
+    neighbors["kernel"] = "gaussian"
+    neighbors["size"] = 5
+    neighbors["output-format"] = "MEM"
+    assert neighbors.Run()
+
+    out_ds = neighbors.Output()
+    ar = array.array("d")
+    ar.frombytes(out_ds.ReadRaster(10, 10, 1, 1))
+    assert ar[0] == pytest.approx(119.00390625)
+
+
+def test_gdalalg_raster_neighbors_unsharp_masking(neighbors):
+
+    neighbors["input"] = "../gcore/data/byte.tif"
+    neighbors["kernel"] = "unsharp-masking"
+    neighbors["output-format"] = "MEM"
+    assert neighbors.Run()
+
+    out_ds = neighbors.Output()
+    ar = array.array("d")
+    ar.frombytes(out_ds.ReadRaster(10, 10, 1, 1))
+    assert ar[0] == pytest.approx(110.99609375)
+
+
 def test_gdalalg_raster_neighbors_src_nodata(neighbors):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 3)
@@ -260,8 +300,8 @@ def test_gdalalg_raster_neighbors_src_nodata(neighbors):
     src_ds.GetRasterBand(1).SetNoDataValue(9)
 
     neighbors["input"] = src_ds
-    neighbors["kernel"] = "one_3x3"
-    neighbors["function"] = "max"
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = "max"
     neighbors["output-format"] = "MEM"
     assert neighbors.Run()
 
@@ -279,8 +319,8 @@ def test_gdalalg_raster_neighbors_src_nodata_and_dst_nodata(neighbors):
     src_ds.GetRasterBand(1).SetNoDataValue(9)
 
     neighbors["input"] = src_ds
-    neighbors["kernel"] = "one_3x3"
-    neighbors["function"] = "max"
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = "max"
     neighbors["output-format"] = "MEM"
     neighbors["nodata"] = -1
     assert neighbors.Run()
@@ -299,8 +339,8 @@ def test_gdalalg_raster_neighbors_src_nodata_and_dst_nodata_none(neighbors):
     src_ds.GetRasterBand(1).SetNoDataValue(9)
 
     neighbors["input"] = src_ds
-    neighbors["kernel"] = "one_3x3"
-    neighbors["function"] = "max"
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = "max"
     neighbors["output-format"] = "MEM"
     neighbors["nodata"] = "none"
     assert neighbors.Run()
@@ -326,8 +366,8 @@ def test_gdalalg_raster_neighbors_several_kernels(neighbors):
 def test_gdalalg_raster_neighbors_dst_nodata_incompatible_of_type(neighbors):
 
     neighbors["input"] = "../gcore/data/byte.tif"
-    neighbors["kernel"] = "one_3x3"
-    neighbors["function"] = "max"
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = "max"
     neighbors["output-format"] = "MEM"
     neighbors["nodata"] = "-1"
     neighbors["datatype"] = "Byte"
@@ -337,17 +377,17 @@ def test_gdalalg_raster_neighbors_dst_nodata_incompatible_of_type(neighbors):
         neighbors.Run()
 
 
-def test_gdalalg_raster_neighbors_error_number_of_kernel_not_matching_function(
+def test_gdalalg_raster_neighbors_error_number_of_kernel_not_matching_method(
     neighbors,
 ):
 
     neighbors["input"] = "../gdrivers/data/small_world.tif"
     neighbors["kernel"] = "sharpen"
-    neighbors["function"] = ["sum", "sum"]
+    neighbors["method"] = ["sum", "sum"]
     neighbors["output-format"] = "MEM"
     with pytest.raises(
         Exception,
-        match="The number of values for the 'function' argument should be one or exactly the number of values of 'kernel'",
+        match="The number of values for the 'method' argument should be one or exactly the number of values of 'kernel'",
     ):
         neighbors.Run()
 
@@ -379,13 +419,34 @@ def test_gdalalg_raster_neighbors_error_kernel_not_numeric(neighbors):
         neighbors["kernel"] = "[[1,1,1],[1,foo,1],[1,1,1]]"
 
 
-def test_gdalalg_raster_neighbors_error_function(neighbors):
+def test_gdalalg_raster_neighbors_error_size_not_odd(neighbors):
 
     with pytest.raises(
         Exception,
-        match="Invalid value 'invalid' for string argument 'function'",
+        match="The value of 'size' must be an odd number",
     ):
-        neighbors["function"] = "invalid"
+        neighbors["size"] = 4
+
+
+def test_gdalalg_raster_neighbors_error_size_inconsistent(neighbors):
+
+    neighbors["kernel"] = "[[1,1,1],[1,1,1],[1,1,1]]"
+    neighbors["size"] = 5
+
+    with pytest.raises(
+        Exception,
+        match=r"Value of 'size' argument \(5\) inconsistent with the one deduced from the kernel matrix \(3\)",
+    ):
+        neighbors.Run()
+
+
+def test_gdalalg_raster_neighbors_error_method(neighbors):
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value 'invalid' for string argument 'method'",
+    ):
+        neighbors["method"] = "invalid"
 
 
 def test_gdalalg_raster_neighbors_error_kernel_name(neighbors):
@@ -395,6 +456,39 @@ def test_gdalalg_raster_neighbors_error_kernel_name(neighbors):
         match="Valid values for 'kernel' argument are:",
     ):
         neighbors["kernel"] = "invalid"
+
+
+def test_gdalalg_raster_neighbors_error_u(neighbors):
+
+    neighbors["kernel"] = "u"
+    neighbors["size"] = 7
+    with pytest.raises(
+        Exception,
+        match="Currently only size = 3 is supported for kernel 'u'",
+    ):
+        neighbors.Run()
+
+
+def test_gdalalg_raster_neighbors_error_gaussian(neighbors):
+
+    neighbors["kernel"] = "gaussian"
+    neighbors["size"] = 7
+    with pytest.raises(
+        Exception,
+        match="Currently only size = 3 or 5 is supported for kernel 'gaussian'",
+    ):
+        neighbors.Run()
+
+
+def test_gdalalg_raster_neighbors_error_unsharp_masking(neighbors):
+
+    neighbors["kernel"] = "unsharp-masking"
+    neighbors["size"] = 7
+    with pytest.raises(
+        Exception,
+        match="Currently only size = 5 is supported for kernel 'unsharp-masking'",
+    ):
+        neighbors.Run()
 
 
 def test_gdalalg_raster_neighbors_complete():

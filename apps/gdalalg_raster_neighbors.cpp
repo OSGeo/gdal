@@ -20,6 +20,7 @@
 #include <limits>
 #include <map>
 #include <optional>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -28,6 +29,19 @@
 #ifndef _
 #define _(x) (x)
 #endif
+
+static const std::set<std::string> oSetKernelNames = {
+    "u",     "v",       "equal",    "edge1",
+    "edge2", "sharpen", "gaussian", "unsharp-masking"};
+
+namespace
+{
+struct KernelDef
+{
+    int size = 0;
+    std::vector<double> adfCoefficients{};
+};
+}  // namespace
 
 // clang-format off
 // Cf https://en.wikipedia.org/wiki/Kernel_(image_processing)
@@ -38,9 +52,6 @@ static const std::map<std::string, std::pair<int, std::vector<int>>> oMapKernelN
     { "v", { 3, {  0, -1,  0,
                    0,  0,  0,
                    0,  1,  0 } } },
-    { "one_3x3", { 3, {  1,  1,  1,
-                         1,  1,  1,
-                         1,  1,  1 } } },
     { "edge1", { 3, {  0, -1,  0,
                       -1,  4, -1,
                        0, -1,  0 } } },
@@ -50,18 +61,15 @@ static const std::map<std::string, std::pair<int, std::vector<int>>> oMapKernelN
     { "sharpen",  { 3, { 0, -1,  0,
                         -1,  5, -1,
                          0, -1,  0 } } },
-    { "box_blur", { 3, { 1, 1, 1,
-                         1, 1, 1,
-                         1, 1, 1 } } },
-    { "gaussian_blur_3x3", { 3, { 1, 2, 1,
+    { "gaussian-3x3", { 3, { 1, 2, 1,
                                   2, 4, 2,
                                   1, 2, 1 } } },
-    { "gaussian_blur_5x5", { 5, { 1, 4,   6,  4, 1,
+    { "gaussian-5x5", { 5, { 1, 4,   6,  4, 1,
                                   4, 16, 24, 16, 4,
                                   6, 24, 36, 24, 6,
                                   4, 16, 24, 16, 4,
                                   1, 4,   6,  4, 1, } } },
-    { "unsharp_masking_5x5", { 5, { 1, 4,     6,  4, 1,
+    { "unsharp-masking-5x5", { 5, { 1, 4,     6,  4, 1,
                                     4, 16,   24, 16, 4,
                                     6, 24, -476, 24, 6,
                                     4, 16,   24, 16, 4,
@@ -76,44 +84,9 @@ static const std::map<std::string, std::pair<int, std::vector<int>>> oMapKernelN
 
 static bool CreateDerivedBandXML(VRTDataset *poVRTDS, GDALRasterBand *poSrcBand,
                                  GDALDataType eType, const std::string &noData,
-                                 const std::string &function,
-                                 const std::string &kernel)
+                                 const std::string &method,
+                                 const KernelDef &kernelDef)
 {
-    int nKernelSize = 0;
-    std::vector<double> adfCoefficients;
-    if (kernel.front() == '[')
-    {
-        const CPLStringList aosValues(
-            CSLTokenizeString2(kernel.c_str(), "[] ,",
-                               CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
-        const double dfSize = static_cast<double>(aosValues.size());
-        nKernelSize = static_cast<int>(std::floor(sqrt(dfSize) + 0.5));
-        for (const char *pszC : cpl::Iterate(aosValues))
-        {
-            // Already validated to be numeric by the validation action
-            adfCoefficients.push_back(CPLAtof(pszC));
-        }
-    }
-    else
-    {
-        auto oIterKnownKernel = oMapKernelNameToMatrix.find(kernel);
-        CPLAssert(oIterKnownKernel != oMapKernelNameToMatrix.end());
-        int nSum = 0;
-        nKernelSize = oIterKnownKernel->second.first;
-        for (const int nVal : oIterKnownKernel->second.second)
-            nSum += nVal;
-        const double dfWeight =
-            (kernel == "u" || kernel == "v") ? 0.5
-            : (kernel == "one_3x3")
-                ? 1.0
-                : 1.0 / (static_cast<double>(nSum) +
-                         std::numeric_limits<double>::min());
-        for (const int nVal : oIterKnownKernel->second.second)
-        {
-            adfCoefficients.push_back(nVal * dfWeight);
-        }
-    }
-
     poVRTDS->AddBand(eType, nullptr);
 
     std::optional<double> dstNoData;
@@ -134,10 +107,11 @@ static bool CreateDerivedBandXML(VRTDataset *poVRTDS, GDALRasterBand *poSrcBand,
     auto poSource = std::make_unique<VRTKernelFilteredSource>();
     poSrcBand->GetDataset()->Reference();
     poSource->SetSrcBand(poSrcBand);
-    poSource->SetKernel(nKernelSize, /* separable = */ false, adfCoefficients);
-    poSource->SetNormalized(function != "sum");
-    if (function != "sum" && function != "mean")
-        poSource->SetFunction(function.c_str());
+    poSource->SetKernel(kernelDef.size, /* separable = */ false,
+                        kernelDef.adfCoefficients);
+    poSource->SetNormalized(method != "sum");
+    if (method != "sum" && method != "mean")
+        poSource->SetFunction(method.c_str());
 
     int bSrcHasNoData = false;
     const double dfNoDataValue = poSrcBand->GetNoDataValue(&bSrcHasNoData);
@@ -175,10 +149,10 @@ static bool CreateDerivedBandXML(VRTDataset *poVRTDS, GDALRasterBand *poSrcBand,
 static std::unique_ptr<GDALDataset>
 GDALNeighborsCreateVRTDerived(GDALDataset *poSrcDS, int nBand,
                               GDALDataType eType, const std::string &noData,
-                              const std::vector<std::string> &functions,
-                              const std::vector<std::string> &kernels)
+                              const std::vector<std::string> &methods,
+                              const std::vector<KernelDef> &aKernelDefs)
 {
-    CPLAssert(functions.size() == kernels.size());
+    CPLAssert(methods.size() == aKernelDefs.size());
 
     auto ds = std::make_unique<VRTDataset>(poSrcDS->GetRasterXSize(),
                                            poSrcDS->GetRasterYSize());
@@ -191,10 +165,10 @@ GDALNeighborsCreateVRTDerived(GDALDataset *poSrcDS, int nBand,
     }
 
     bool ret = true;
-    for (size_t i = 0; i < kernels.size() && ret; ++i)
+    for (size_t i = 0; i < aKernelDefs.size() && ret; ++i)
     {
         ret = CreateDerivedBandXML(ds.get(), poSrcDS->GetRasterBand(nBand),
-                                   eType, noData, functions[i], kernels[i]);
+                                   eType, noData, methods[i], aKernelDefs[i]);
     }
     if (!ret)
         ds.reset();
@@ -213,9 +187,23 @@ GDALRasterNeighborsAlgorithm::GDALRasterNeighborsAlgorithm(
 {
     AddBandArg(&m_band);
 
-    AddArg("function", 0, _("Function to combine weighed source pixels"),
-           &m_function)
+    AddArg("method", 0, _("Method to combine weighed source pixels"), &m_method)
         .SetChoices("mean", "sum", "min", "max", "stddev", "median", "mode");
+
+    AddArg("size", 0, _("Neighborhood size"), &m_size)
+        .SetMinValueIncluded(3)
+        .SetMaxValueIncluded(99)
+        .AddValidationAction(
+            [this]()
+            {
+                if ((m_size % 2) != 1)
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "The value of 'size' must be an odd number.");
+                    return false;
+                }
+                return true;
+            });
 
     AddArg("kernel", 0, _("Convolution kernel(s) to apply"), &m_kernel)
         .SetPackedValuesAllowed(false)
@@ -228,11 +216,8 @@ GDALRasterNeighborsAlgorithm::GDALRasterNeighborsAlgorithm(
                 std::vector<std::string> ret;
                 if (v.empty() || v.front() != '[')
                 {
-                    for (const auto &[key, value] : oMapKernelNameToMatrix)
-                    {
-                        CPL_IGNORE_RET_VAL(value);
-                        ret.push_back(key);
-                    }
+                    ret.insert(ret.end(), oSetKernelNames.begin(),
+                               oSetKernelNames.end());
                     ret.push_back(
                         "[[val00,val10,...,valN0],...,[val0N,val1N,...valNN]]");
                 }
@@ -272,19 +257,18 @@ GDALRasterNeighborsAlgorithm::GDALRasterNeighborsAlgorithm(
                             }
                         }
                     }
-                    else if (!cpl::contains(oMapKernelNameToMatrix, kernel))
+                    else if (!cpl::contains(oSetKernelNames, kernel))
                     {
                         std::string osMsg =
                             "Valid values for 'kernel' argument are: ";
                         bool bFirst = true;
-                        for (const auto &[key, value] : oMapKernelNameToMatrix)
+                        for (const auto &name : oSetKernelNames)
                         {
-                            CPL_IGNORE_RET_VAL(value);
                             if (!bFirst)
                                 osMsg += ", ";
                             bFirst = false;
                             osMsg += '\'';
-                            osMsg += key;
+                            osMsg += name;
                             osMsg += '\'';
                         }
                         osMsg += " or "
@@ -305,26 +289,112 @@ GDALRasterNeighborsAlgorithm::GDALRasterNeighborsAlgorithm(
     AddValidationAction(
         [this]()
         {
-            if (m_function.size() > 1 && m_function.size() != m_kernel.size())
+            if (m_method.size() > 1 && m_method.size() != m_kernel.size())
             {
                 ReportError(
                     CE_Failure, CPLE_AppDefined,
-                    "The number of values for the 'function' argument should "
+                    "The number of values for the 'method' argument should "
                     "be one or exactly the number of values of 'kernel'");
                 return false;
             }
 
-            if (m_band == 0 &&
-                m_inputDataset[0].GetDatasetRef()->GetRasterCount() > 1)
+            if (m_band == 0 && !m_inputDataset.empty())
             {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "'band' argument should be specified given input "
-                            "dataset has several bands.");
-                return false;
+                auto poDS = m_inputDataset[0].GetDatasetRef();
+                if (poDS && poDS->GetRasterCount() > 1)
+                {
+                    ReportError(
+                        CE_Failure, CPLE_AppDefined,
+                        "'band' argument should be specified given input "
+                        "dataset has several bands.");
+                    return false;
+                }
+            }
+
+            if (m_size > 0)
+            {
+                for (const std::string &kernel : m_kernel)
+                {
+                    if (kernel == "gaussian")
+                    {
+                        if (m_size != 3 && m_size != 5)
+                        {
+                            ReportError(CE_Failure, CPLE_AppDefined,
+                                        "Currently only size = 3 or 5 is "
+                                        "supported for kernel '%s'",
+                                        kernel.c_str());
+                            return false;
+                        }
+                    }
+                    else if (kernel == "unsharp-masking")
+                    {
+                        if (m_size != 5)
+                        {
+                            ReportError(CE_Failure, CPLE_AppDefined,
+                                        "Currently only size = 5 is supported "
+                                        "for kernel '%s'",
+                                        kernel.c_str());
+                            return false;
+                        }
+                    }
+                    else if (kernel[0] == '[')
+                    {
+                        const CPLStringList aosValues(CSLTokenizeString2(
+                            kernel.c_str(), "[] ,",
+                            CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+                        const double dfSize =
+                            static_cast<double>(aosValues.size());
+                        const int size =
+                            static_cast<int>(std::floor(sqrt(dfSize) + 0.5));
+                        if (m_size != size)
+                        {
+                            ReportError(CE_Failure, CPLE_AppDefined,
+                                        "Value of 'size' argument (%d) "
+                                        "inconsistent with the one deduced "
+                                        "from the kernel matrix (%d)",
+                                        m_size, size);
+                            return false;
+                        }
+                    }
+                    else if (m_size != 3 && kernel != "equal" &&
+                             kernel[0] != '[')
+                    {
+                        ReportError(CE_Failure, CPLE_AppDefined,
+                                    "Currently only size = 3 is supported for "
+                                    "kernel '%s'",
+                                    kernel.c_str());
+                        return false;
+                    }
+                }
             }
 
             return true;
         });
+}
+
+/************************************************************************/
+/*                               GetKernelDef()                         */
+/************************************************************************/
+
+static KernelDef GetKernelDef(const std::string &name, bool normalizeCoefs,
+                              double weightIfNotNormalized)
+{
+    auto it = oMapKernelNameToMatrix.find(name);
+    CPLAssert(it != oMapKernelNameToMatrix.end());
+    KernelDef def;
+    def.size = it->second.first;
+    int nSum = 0;
+    for (const int nVal : it->second.second)
+        nSum += nVal;
+    const double dfWeight = normalizeCoefs
+                                ? 1.0 / (static_cast<double>(nSum) +
+                                         std::numeric_limits<double>::min())
+                                : weightIfNotNormalized;
+    for (const int nVal : it->second.second)
+    {
+        def.adfCoefficients.push_back(nVal * dfWeight);
+    }
+    return def;
 }
 
 /************************************************************************/
@@ -346,20 +416,78 @@ bool GDALRasterNeighborsAlgorithm::RunStep(GDALPipelineStepRunContext &)
         eType = GDT_Float64;
     }
 
-    if (m_function.size() <= 1)
+    if (m_method.size() <= 1)
     {
-        while (m_function.size() < m_kernel.size())
+        while (m_method.size() < m_kernel.size())
         {
-            m_function.push_back(
-                m_function.empty()
-                    ? ((m_kernel[0] == "u" || m_kernel[0] == "v") ? "sum"
-                                                                  : "mean")
-                    : m_function.back());
+            m_method.push_back(m_method.empty()
+                                   ? ((m_kernel[0] == "u" || m_kernel[0] == "v")
+                                          ? "sum"
+                                          : "mean")
+                                   : m_method.back());
         }
     }
 
+    if (m_size == 0 && m_kernel[0][0] != '[')
+        m_size = m_kernel[0] == "unsharp-masking" ? 5 : 3;
+
+    std::vector<KernelDef> aKernelDefs;
+    size_t i = 0;
+    for (std::string &kernel : m_kernel)
+    {
+        KernelDef def;
+        if (kernel == "edge1" || kernel == "edge2" || kernel == "sharpen")
+        {
+            CPLAssert(m_size == 3);
+            def = GetKernelDef(kernel, true, 1.0);
+        }
+        else if (kernel == "u" || kernel == "v")
+        {
+            CPLAssert(m_size == 3);
+            def = GetKernelDef(kernel, false, 0.5);
+        }
+        else if (kernel == "equal")
+        {
+            def.size = m_size;
+            const double dfWeight =
+                m_method[i] == "mean"
+                    ? 1.0 / (static_cast<double>(m_size) * m_size)
+                    : 1.0;
+            def.adfCoefficients.resize(static_cast<size_t>(m_size) * m_size,
+                                       dfWeight);
+        }
+        else if (kernel == "gaussian")
+        {
+            CPLAssert(m_size == 3 || m_size == 5);
+            def = GetKernelDef(m_size == 3 ? "gaussian-3x3" : "gaussian-5x5",
+                               true, 0.0);
+        }
+        else if (kernel == "unsharp-masking")
+        {
+            CPLAssert(m_size == 5);
+            def = GetKernelDef("unsharp-masking-5x5", true, 0.0);
+        }
+        else
+        {
+            CPLAssert(kernel.front() == '[');
+            const CPLStringList aosValues(
+                CSLTokenizeString2(kernel.c_str(), "[] ,",
+                                   CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+            const double dfSize = static_cast<double>(aosValues.size());
+            def.size = static_cast<int>(std::floor(sqrt(dfSize) + 0.5));
+            for (const char *pszC : cpl::Iterate(aosValues))
+            {
+                // Already validated to be numeric by the validation action
+                def.adfCoefficients.push_back(CPLAtof(pszC));
+            }
+        }
+        aKernelDefs.push_back(std::move(def));
+
+        ++i;
+    }
+
     auto vrt = GDALNeighborsCreateVRTDerived(poSrcDS, m_band, eType, m_nodata,
-                                             m_function, m_kernel);
+                                             m_method, aKernelDefs);
     const bool ret = vrt != nullptr;
     if (vrt)
     {

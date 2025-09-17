@@ -41,7 +41,8 @@ class GDALRasterNeighborsAlgorithm : public GDALRasterPipelineStepAlgorithm
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     int m_band = 0;
-    std::vector<std::string> m_function{};
+    std::vector<std::string> m_method{};
+    int m_size = 0;
     std::vector<std::string> m_kernel{};
     std::string m_type{};
     std::string m_nodata{};
