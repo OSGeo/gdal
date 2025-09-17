@@ -262,6 +262,12 @@ def test_gdalalg_change_field_type_completion(tmp_path):
     )
     assert "EAS_ID" in out
 
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! change-field-type --field-name "
+    )
+    # This is failing!
+    # assert "EAS_ID" in out
+
 
 @pytest.mark.require_driver("GPKG")
 def test_gdalalg_change_field_type_multiple_layers(tmp_vsimem, tmp_path):

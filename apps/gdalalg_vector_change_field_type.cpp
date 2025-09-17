@@ -38,24 +38,29 @@ GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
     AddValidationAction(
         [this]
         {
-            auto mInDS = m_inputDataset[0].GetDatasetRef();
-            auto layer = m_activeLayer.empty()
-                             ? mInDS->GetLayer(0)
-                             : mInDS->GetLayerByName(m_activeLayer.c_str());
-            if (!layer)
+            if (!m_inputDataset.empty())
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Cannot find layer '%s'",
-                         m_activeLayer.c_str());
-                return false;
+                auto mInDS = m_inputDataset[0].GetDatasetRef();
+                auto layer = m_activeLayer.empty()
+                                 ? mInDS->GetLayer(0)
+                                 : mInDS->GetLayerByName(m_activeLayer.c_str());
+                if (!layer)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot find layer '%s'", m_activeLayer.c_str());
+                    return false;
+                }
+                if (layer->GetLayerDefn()->GetFieldIndex(m_fieldName.c_str()) <
+                    0)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot find field '%s' in layer '%s'",
+                             m_fieldName.c_str(), layer->GetName());
+                    return false;
+                }
+                return true;
             }
-            if (layer->GetLayerDefn()->GetFieldIndex(m_fieldName.c_str()) < 0)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot find field '%s' in layer '%s'",
-                         m_fieldName.c_str(), layer->GetName());
-                return false;
-            }
-            return true;
+            return false;
         });
 }
 
