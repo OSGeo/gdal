@@ -1826,7 +1826,6 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
         }
         else
         {
-            // FIXME GDT_UInt64
             const double dfVal = srcStrPtr == nullptr ? 0 : CPLAtof(srcStrPtr);
             GDALCopyWords64(&dfVal, GDT_Float64, 0, pDst,
                             dstType.GetNumericDataType(), 0, 1);
@@ -8900,6 +8899,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                         GDALExtendedDataType::CopyValue(
                             &abyTmp[0], dt, &pszTmp,
                             GDALExtendedDataType::CreateString());
+                        dt.FreeDynamicMemory(abyTmp.data());
                         if (pszTmp)
                         {
                             SetMetadataItem(
@@ -8937,6 +8937,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                             &abyTmp[0], dt, &dfVal,
                             GDALExtendedDataType::Create(GDT_Float64));
                         osVal.Printf(oItem.osDefinition.c_str(), dfVal);
+                        dt.FreeDynamicMemory(abyTmp.data());
                     }
                 }
                 else
@@ -8987,6 +8988,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                     GDALExtendedDataType::CopyValue(
                         &abyTmp[0], dt, &dfVal,
                         GDALExtendedDataType::Create(GDT_Float64));
+                    dt.FreeDynamicMemory(abyTmp.data());
                     SetMetadataItem(
                         "CENTRAL_WAVELENGTH_UM",
                         CPLSPrintf(
@@ -9009,6 +9011,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                     GDALExtendedDataType::CopyValue(
                         &abyTmp[0], dt, &dfVal,
                         GDALExtendedDataType::Create(GDT_Float64));
+                    dt.FreeDynamicMemory(abyTmp.data());
                     SetMetadataItem(
                         "FWHM_UM",
                         CPLSPrintf("%g", dfVal * aoBandImageryMetadata[j]
@@ -14230,6 +14233,75 @@ GDALMDArrayH GDALRasterBandAsMDArray(GDALRasterBandH hBand)
 }
 
 /************************************************************************/
+/*                        GDALDatasetAsMDArray()                        */
+/************************************************************************/
+
+/** Return a view of this dataset as a 3D multidimensional GDALMDArray.
+ *
+ * If this dataset is not already marked as shared, it will be, so that the
+ * returned array holds a reference to it.
+ *
+ * If the dataset has a geotransform attached, the X and Y dimensions of the
+ * returned array will have an associated indexing variable.
+ *
+ * The currently supported list of options is:
+ * <ul>
+ * <li>DIM_ORDER=&lt;order&gt; where order can be "AUTO", "Band,Y,X" or "Y,X,Band".
+ * "Band,Y,X" means that the first (slowest changing) dimension is Band
+ * and the last (fastest changing direction) is X
+ * "Y,X,Band" means that the first (slowest changing) dimension is Y
+ * and the last (fastest changing direction) is Band.
+ * "AUTO" (the default) selects "Band,Y,X" for single band datasets, or takes
+ * into account the INTERLEAVE metadata item in the IMAGE_STRUCTURE domain.
+ * If it equals BAND, then "Band,Y,X" is used. Otherwise (if it equals PIXEL),
+ * "Y,X,Band" is use.
+ * </li>
+ * <li>BAND_INDEXING_VAR_ITEM={Description}|{None}|{Index}|{ColorInterpretation}|&lt;BandMetadataItem&gt;:
+ * item from which to build the band indexing variable.
+ * <ul>
+ * <li>"{Description}", the default, means to use the band description (or "Band index" if empty).</li>
+ * <li>"{None}" means that no band indexing variable must be created.</li>
+ * <li>"{Index}" means that the band index (starting at one) is used.</li>
+ * <li>"{ColorInterpretation}" means that the band color interpretation is used (i.e. "Red", "Green", "Blue").</li>
+ * <li>&lt;BandMetadataItem&gt; is the name of a band metadata item to use.</li>
+ * </ul>
+ * </li>
+ * <li>BAND_INDEXING_VAR_TYPE=String|Real|Integer: the data type of the band
+ * indexing variable, when BAND_INDEXING_VAR_ITEM corresponds to a band metadata item.
+ * Defaults to String.
+ * </li>
+ * <li>BAND_DIM_NAME=&lt;string&gt;: Name of the band dimension.
+ * Defaults to "Band".
+ * </li>
+ * <li>X_DIM_NAME=&lt;string&gt;: Name of the X dimension. Defaults to "X".
+ * </li>
+ * <li>Y_DIM_NAME=&lt;string&gt;: Name of the Y dimension. Defaults to "Y".
+ * </li>
+ * </ul>
+ *
+ * The returned pointer must be released with GDALMDArrayRelease().
+ *
+ * The "reverse" methods are GDALRasterBand::AsMDArray() and
+ * GDALDataset::AsMDArray()
+ *
+ * This is the same as the C++ method GDALDataset::AsMDArray().
+ *
+ * @param hDS Dataset handle.
+ * @param papszOptions Null-terminated list of strings, or nullptr.
+ * @return a new array, or NULL.
+ *
+ * @since GDAL 3.12
+ */
+GDALMDArrayH GDALDatasetAsMDArray(GDALDatasetH hDS, CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hDS, __func__, nullptr);
+    auto poArray(GDALDataset::FromHandle(hDS)->AsMDArray(papszOptions));
+    if (!poArray)
+        return nullptr;
+    return new GDALMDArrayHS(poArray);
+}
+
+/************************************************************************/
 /*                       GDALMDArrayAsClassicDataset()                  */
 /************************************************************************/
 
@@ -14240,7 +14312,8 @@ GDALMDArrayH GDALRasterBandAsMDArray(GDALRasterBandH hBand)
  * In the case of > 2D arrays, additional dimensions will be represented as
  * raster bands.
  *
- * The "reverse" method is GDALRasterBand::AsMDArray().
+ * The "reverse" methods are GDALRasterBand::AsMDArray() and
+ * GDALDataset::AsMDArray()
  *
  * This is the same as the C++ method GDALMDArray::AsClassicDataset().
  *
@@ -14981,6 +15054,16 @@ void GDALPamMDArray::ClearStatistics()
     if (!m_poPam)
         return;
     m_poPam->ClearStatistics(GetFullName(), GetContext());
+}
+
+/************************************************************************/
+/*                       GDALMDIAsAttribute::GetDimensions()            */
+/************************************************************************/
+
+const std::vector<std::shared_ptr<GDALDimension>> &
+GDALMDIAsAttribute::GetDimensions() const
+{
+    return m_dims;
 }
 
 //! @endcond

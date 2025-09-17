@@ -1103,6 +1103,14 @@ OGRErr AbortSQL() {
   }
   %clear GDALRelationshipShadow* relationship;
 
+%newobject AsMDArray;
+%apply (char **CSL) {char **};
+  GDALMDArrayHS *AsMDArray(char** options = NULL)
+  {
+    return GDALDatasetAsMDArray(self, options);
+  }
+%clear char **;
+
 } /* extend */
 }; /* GDALDatasetShadow */
 

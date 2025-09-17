@@ -2035,15 +2035,15 @@ VRTDataset::CreateVRTDataset(const char *pszName, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                     CreateMultiDimensional()                         */
+/*                     CreateVRTMultiDimensional()                      */
 /************************************************************************/
 
-GDALDataset *
-VRTDataset::CreateMultiDimensional(const char *pszFilename,
-                                   CSLConstList /*papszRootGroupOptions*/,
-                                   CSLConstList /*papszOptions*/)
+std::unique_ptr<VRTDataset>
+VRTDataset::CreateVRTMultiDimensional(const char *pszFilename,
+                                      CSLConstList /*papszRootGroupOptions*/,
+                                      CSLConstList /*papszOptions*/)
 {
-    VRTDataset *poDS = new VRTDataset(0, 0);
+    auto poDS = std::make_unique<VRTDataset>(0, 0);
     poDS->eAccess = GA_Update;
     poDS->SetDescription(pszFilename);
     poDS->m_poRootGroup = VRTGroup::Create(std::string(), "/");
@@ -2052,6 +2052,20 @@ VRTDataset::CreateMultiDimensional(const char *pszFilename,
     poDS->m_poRootGroup->SetDirty();
 
     return poDS;
+}
+
+/************************************************************************/
+/*                     CreateMultiDimensional()                         */
+/************************************************************************/
+
+GDALDataset *
+VRTDataset::CreateMultiDimensional(const char *pszFilename,
+                                   CSLConstList papszRootGroupOptions,
+                                   CSLConstList papszOptions)
+{
+    return CreateVRTMultiDimensional(pszFilename, papszRootGroupOptions,
+                                     papszOptions)
+        .release();
 }
 
 /************************************************************************/

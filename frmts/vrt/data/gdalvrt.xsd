@@ -735,7 +735,10 @@
 
     <xs:complexType name="InlineValuesWithValueElementType">
         <xs:sequence>
-            <xs:element name="Value" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+            <xs:choice minOccurs="1" maxOccurs="unbounded">
+                <xs:element name="Value" type="xs:string"/>
+                <xs:element name="NullValue"/>
+            </xs:choice>
         </xs:sequence>
         <xs:attribute name="offset" type="xs:string"/>
         <xs:attribute name="count" type="xs:string"/>

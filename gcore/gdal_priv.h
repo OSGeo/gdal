@@ -683,6 +683,7 @@ class OGRStyleTable;
 class swq_select;
 class swq_select_parse_options;
 class GDALGroup;
+class GDALMDArray;
 
 //! @cond Doxygen_Suppress
 typedef struct GDALSQLParseInfo GDALSQLParseInfo;
@@ -1168,6 +1169,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     char **GetMetadataDomainList() override;
 
     virtual void ClearStatistics();
+
+    std::shared_ptr<GDALMDArray> AsMDArray(CSLConstList papszOptions = nullptr);
 
     /** Convert a GDALDataset* to a GDALDatasetH.
      * @since GDAL 2.3

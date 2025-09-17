@@ -15,6 +15,7 @@ import array
 import itertools
 import json
 import math
+import struct
 
 import gdaltest
 import pytest
@@ -29,26 +30,37 @@ def module_disable_exceptions():
         yield
 
 
-def test_multidim_asarray_epsg_4326():
+@pytest.mark.parametrize("obj_name", ["dataset", "band"])
+def test_multidim_asarray_epsg_4326(obj_name):
 
     ds = gdal.Open("../gdrivers/data/small_world.tif")
+
+    obj = ds if obj_name == "dataset" else ds.GetRasterBand(1)
+
     srs_ds = ds.GetSpatialRef()
     assert srs_ds.GetDataAxisToSRSAxisMapping() == [2, 1]
-    band = ds.GetRasterBand(1)
 
-    ar = band.AsMDArray()
+    ar = (
+        obj.AsMDArray(["DIM_ORDER=BAND,Y,X"])
+        if obj_name == "dataset"
+        else obj.AsMDArray()
+    )
+    ixdim = 2 if obj_name == "dataset" else 1
+    iydim = 1 if obj_name == "dataset" else 0
     assert ar
     dims = ar.GetDimensions()
-    assert len(dims) == 2
-    assert dims[0].GetSize() == ds.RasterYSize
-    assert dims[1].GetSize() == ds.RasterXSize
+    assert len(dims) == (3 if obj_name == "dataset" else 2)
+    assert dims[iydim].GetSize() == ds.RasterYSize
+    assert dims[ixdim].GetSize() == ds.RasterXSize
     srs_ar = ar.GetSpatialRef()
-    assert srs_ar.GetDataAxisToSRSAxisMapping() == [1, 2]
+    assert (
+        srs_ar.GetDataAxisToSRSAxisMapping() == [2, 3]
+        if obj_name == "dataset"
+        else [1, 2]
+    )
 
-    assert ar.Read() == ds.GetRasterBand(1).ReadRaster()
+    assert ar.Read() == obj.ReadRaster()
 
-    ixdim = 1
-    iydim = 0
     ds2 = ar.AsClassicDataset(ixdim, iydim)
     assert ds2.RasterYSize == ds.RasterYSize
     assert ds2.RasterXSize == ds.RasterXSize
@@ -56,29 +68,36 @@ def test_multidim_asarray_epsg_4326():
     assert srs_ds2.GetDataAxisToSRSAxisMapping() == [2, 1]
     assert srs_ds2.IsSame(srs_ds)
 
-    assert ds2.ReadRaster() == ds.GetRasterBand(1).ReadRaster()
+    assert ds2.ReadRaster() == obj.ReadRaster()
 
 
-def test_multidim_asarray_epsg_26711():
+@pytest.mark.parametrize("obj_name", ["dataset", "band"])
+def test_multidim_asarray_epsg_26711(obj_name):
 
     ds = gdal.Open("data/byte.tif")
+
+    obj = ds if obj_name == "dataset" else ds.GetRasterBand(1)
+
     srs_ds = ds.GetSpatialRef()
     assert srs_ds.GetDataAxisToSRSAxisMapping() == [1, 2]
-    band = ds.GetRasterBand(1)
 
-    ar = band.AsMDArray()
+    ar = obj.AsMDArray()
+    ixdim = 2 if obj_name == "dataset" else 1
+    iydim = 1 if obj_name == "dataset" else 0
     assert ar
     dims = ar.GetDimensions()
-    assert len(dims) == 2
-    assert dims[0].GetSize() == ds.RasterYSize
-    assert dims[1].GetSize() == ds.RasterXSize
+    assert len(dims) == (3 if obj_name == "dataset" else 2)
+    assert dims[iydim].GetSize() == ds.RasterYSize
+    assert dims[ixdim].GetSize() == ds.RasterXSize
     srs_ar = ar.GetSpatialRef()
-    assert srs_ar.GetDataAxisToSRSAxisMapping() == [2, 1]
+    assert (
+        srs_ar.GetDataAxisToSRSAxisMapping() == [3, 2]
+        if obj_name == "dataset"
+        else [2, 1]
+    )
 
-    assert ar.Read() == ds.GetRasterBand(1).ReadRaster()
+    assert ar.Read() == obj.ReadRaster()
 
-    ixdim = 1
-    iydim = 0
     ds2 = ar.AsClassicDataset(ixdim, iydim)
     assert ds2.RasterYSize == ds.RasterYSize
     assert ds2.RasterXSize == ds.RasterXSize
@@ -86,7 +105,7 @@ def test_multidim_asarray_epsg_26711():
     assert srs_ds2.GetDataAxisToSRSAxisMapping() == [1, 2]
     assert srs_ds2.IsSame(srs_ds)
 
-    assert ds2.ReadRaster() == ds.GetRasterBand(1).ReadRaster()
+    assert ds2.ReadRaster() == obj.ReadRaster()
 
 
 @pytest.mark.parametrize(
@@ -1686,3 +1705,172 @@ def test_multidim_GetMeshGrid():
         assert np.all(xv == ret[0].ReadAsArray())
         assert np.all(yv == ret[1].ReadAsArray())
         assert np.all(zv == np.array(ret[2].Read()).reshape(zv.shape))
+
+
+def test_multidim_dataset_as_mdarray():
+
+    drv = gdal.GetDriverByName("MEM")
+
+    def get_array(options=[]):
+        ds = drv.Create("my_ds", 10, 5, 2, gdal.GDT_UInt16)
+        ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
+        ds.SetMetadataItem("FOO", "BAR")
+        sr = osr.SpatialReference()
+        sr.ImportFromEPSG(32631)
+        ds.SetSpatialRef(sr)
+
+        band = ds.GetRasterBand(1)
+        band.SetUnitType("foo")
+        band.SetNoDataValue(2)
+        band.SetOffset(1.5)
+        band.SetScale(2.5)
+        band.WriteRaster(0, 0, 10, 5, struct.pack("H", 1), 1, 1)
+        band.WriteRaster(0, 1, 1, 1, struct.pack("H", 2))
+        band.WriteRaster(1, 0, 1, 1, struct.pack("H", 3))
+
+        band = ds.GetRasterBand(2)
+        band.SetUnitType("foo")
+        band.SetNoDataValue(2)
+        band.SetOffset(1.5)
+        band.SetScale(2.5)
+        band.WriteRaster(0, 0, 10, 5, struct.pack("H", 4), 1, 1)
+        band.WriteRaster(0, 1, 1, 1, struct.pack("H", 5))
+        band.WriteRaster(1, 0, 1, 1, struct.pack("H", 6))
+
+        return (ds.AsMDArray(options), ds.ReadRaster())
+
+    ar, expected_data = get_array()
+    assert ar
+    assert ar.GetView("[...]")
+    assert ar.GetBlockSize() == [1, 1, 10]
+    assert ar.GetDimensionCount() == 3
+    dims = ar.GetDimensions()
+    assert dims[0].GetName() == "Band"
+    assert dims[0].GetSize() == 2
+    var_band = dims[0].GetIndexingVariable()
+    assert var_band
+    assert var_band.GetDimensions()[0].GetSize() == 2
+    assert var_band.Read() == ["Band 1", "Band 2"]
+
+    assert dims[1].GetName() == "Y"
+    assert dims[1].GetSize() == 5
+    var_y = dims[1].GetIndexingVariable()
+    assert var_y
+    assert var_y.GetDimensions()[0].GetSize() == 5
+    assert struct.unpack("d" * 5, var_y.Read()) == (48.95, 48.85, 48.75, 48.65, 48.55)
+
+    assert dims[2].GetName() == "X"
+    assert dims[2].GetSize() == 10
+    var_x = dims[2].GetIndexingVariable()
+    assert var_x
+    assert var_x.GetDimensions()[0].GetSize() == 10
+    assert struct.unpack("d" * 10, var_x.Read()) == (
+        2.05,
+        2.15,
+        2.25,
+        2.35,
+        2.45,
+        2.55,
+        2.65,
+        2.75,
+        2.85,
+        2.95,
+    )
+
+    assert ar.GetDataType().GetClass() == gdal.GEDTC_NUMERIC
+    assert ar.GetDataType().GetNumericDataType() == gdal.GDT_UInt16
+    assert ar.Read() == expected_data
+    assert struct.unpack(
+        "H" * 8,
+        ar.Read(array_start_idx=[1, 1, 0], count=[2, 2, 2], array_step=[-1, -1, 1]),
+    ) == (5, 4, 4, 6, 2, 1, 1, 3)
+    assert ar.Write(expected_data) == gdal.CE_None
+    assert ar.Read() == expected_data
+    assert ar.GetUnit() == "foo"
+    assert ar.GetNoDataValueAsDouble() == 2
+    assert ar.GetOffset() == 1.5
+    assert ar.GetScale() == 2.5
+    assert ar.GetSpatialRef() is not None
+    assert len(ar.GetAttributes()) == 1
+    attr = ar.GetAttribute("FOO")
+    assert attr
+    assert attr.Read() == "BAR"
+    del ar
+
+    ar, _ = get_array(["DIM_ORDER=Y,X,Band"])
+    assert ar.GetBlockSize() == [1, 10, 1]
+    del ar
+
+    def get_array(options=[]):
+        ds = drv.Create("my_ds", 10, 5, 2)
+        band = ds.GetRasterBand(1)
+        band.SetDescription("FirstBand")
+        band.SetMetadataItem("ITEM", "5.4")
+        band.SetUnitType("foo")
+        band.SetNoDataValue(2)
+        band.SetOffset(1.5)
+        band.SetScale(2.5)
+        band.SetColorInterpretation(gdal.GCI_RedBand)
+        return (ds.AsMDArray(options), ds.ReadRaster())
+
+    ar, expected_data = get_array()
+    var_band = ar.GetDimensions()[0].GetIndexingVariable()
+    assert var_band.Read() == ["FirstBand", "Band 2"]
+    assert ar.GetSpatialRef() is None
+    assert ar.GetUnit() == ""
+    assert ar.GetNoDataValueAsRaw() is None
+    assert ar.GetOffset() is None
+    assert ar.GetScale() is None
+    del ar
+
+    ar, _ = get_array(options=["BAND_INDEXING_VAR_ITEM={None}"])
+    var_band = ar.GetDimensions()[0].GetIndexingVariable()
+    assert var_band is None
+    del ar
+
+    ar, _ = get_array(options=["BAND_INDEXING_VAR_ITEM={Index}"])
+    var_band = ar.GetDimensions()[0].GetIndexingVariable()
+    assert struct.unpack("i" * 2, var_band.Read()) == (1, 2)
+    del ar
+
+    ar, _ = get_array(options=["BAND_INDEXING_VAR_ITEM={ColorInterpretation}"])
+    var_band = ar.GetDimensions()[0].GetIndexingVariable()
+    assert var_band.Read() == ["Red", "Undefined"]
+    del ar
+
+    ar, _ = get_array(options=["BAND_INDEXING_VAR_ITEM=ITEM"])
+    var_band = ar.GetDimensions()[0].GetIndexingVariable()
+    assert var_band.Read() == ["5.4", ""]
+    del ar
+
+    ar, _ = get_array(
+        options=["BAND_INDEXING_VAR_ITEM=ITEM", "BAND_INDEXING_VAR_TYPE=Integer"]
+    )
+    var_band = ar.GetDimensions()[0].GetIndexingVariable()
+    assert struct.unpack("i" * 2, var_band.Read()) == (5, 0)
+    del ar
+
+    ar, _ = get_array(
+        options=["BAND_INDEXING_VAR_ITEM=ITEM", "BAND_INDEXING_VAR_TYPE=Real"]
+    )
+    var_band = ar.GetDimensions()[0].GetIndexingVariable()
+    assert struct.unpack("d" * 2, var_band.Read()) == (5.4, 0)
+    del ar
+
+
+@gdaltest.enable_exceptions()
+def test_multidim_dataset_as_mdarray_errors():
+
+    with pytest.raises(Exception, match="Degenerated array"):
+        with gdal.GetDriverByName("MEM").Create("", 0, 0, 0) as ds:
+            ds.AsMDArray()
+
+    with pytest.raises(Exception, match="Non-uniform data type amongst bands"):
+        with gdal.GetDriverByName("MEM").Create("", 1, 1, 0) as ds:
+            ds.AddBand(gdal.GDT_Byte)
+            ds.AddBand(gdal.GDT_UInt16)
+            ds.AsMDArray()
+
+    with pytest.raises(Exception, match="Illegal value for DIM_ORDER option"):
+        with gdal.GetDriverByName("MEM").Create("", 1, 1, 1) as ds:
+            ds.AsMDArray(["DIM_ORDER=invalid"])

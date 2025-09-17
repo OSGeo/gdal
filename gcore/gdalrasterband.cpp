@@ -42,6 +42,7 @@
 #include "gdal_priv_templates.hpp"
 #include "gdal_interpolateatpoint.h"
 #include "gdal_minmax_element.hpp"
+#include "gdalmultidim_priv.h"
 
 /************************************************************************/
 /*                           GDALRasterBand()                           */
@@ -9926,39 +9927,6 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
                                     static_cast<GUInt64>(nBlockXSize)};
     }
 
-    class MDIAsAttribute final : public GDALAttribute
-    {
-        std::vector<std::shared_ptr<GDALDimension>> m_dims{};
-        const GDALExtendedDataType m_dt = GDALExtendedDataType::CreateString();
-        std::string m_osValue;
-
-      public:
-        MDIAsAttribute(const std::string &name, const std::string &value)
-            : GDALAbstractMDArray(std::string(), name),
-              GDALAttribute(std::string(), name), m_osValue(value)
-        {
-        }
-
-        const std::vector<std::shared_ptr<GDALDimension>> &
-        GetDimensions() const override;
-
-        const GDALExtendedDataType &GetDataType() const override
-        {
-            return m_dt;
-        }
-
-        bool IRead(const GUInt64 *, const size_t *, const GInt64 *,
-                   const GPtrDiff_t *,
-                   const GDALExtendedDataType &bufferDataType,
-                   void *pDstBuffer) const override
-        {
-            const char *pszStr = m_osValue.c_str();
-            GDALExtendedDataType::CopyValue(&pszStr, m_dt, pDstBuffer,
-                                            bufferDataType);
-            return true;
-        }
-    };
-
     std::vector<std::shared_ptr<GDALAttribute>>
     GetAttributes(CSLConstList) const override
     {
@@ -9971,7 +9939,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
             if (pszKey && pszValue)
             {
                 res.emplace_back(
-                    std::make_shared<MDIAsAttribute>(pszKey, pszValue));
+                    std::make_shared<GDALMDIAsAttribute>(pszKey, pszValue));
             }
             CPLFree(pszKey);
         }
@@ -9986,12 +9954,6 @@ bool GDALMDArrayFromRasterBand::IRead(
 {
     return ReadWrite(GF_Read, arrayStartIdx, count, arrayStep, bufferStride,
                      bufferDataType, pDstBuffer);
-}
-
-const std::vector<std::shared_ptr<GDALDimension>> &
-GDALMDArrayFromRasterBand::MDIAsAttribute::GetDimensions() const
-{
-    return m_dims;
 }
 
 /************************************************************************/

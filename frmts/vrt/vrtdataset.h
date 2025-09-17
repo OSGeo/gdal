@@ -411,6 +411,11 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
+    std::shared_ptr<VRTGroup> GetRootVRTGroup() const
+    {
+        return m_poRootGroup;
+    }
+
     void ClearStatistics() override;
 
     /** To be called when a new source is added, to invalidate cached states. */
@@ -455,6 +460,10 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     CreateMultiDimensional(const char *pszFilename,
                            CSLConstList papszRootGroupOptions,
                            CSLConstList papszOptions);
+    static std::unique_ptr<VRTDataset>
+    CreateVRTMultiDimensional(const char *pszFilename,
+                              CSLConstList papszRootGroupOptions,
+                              CSLConstList papszOptions);
     static CPLErr Delete(const char *pszFilename);
 
     static int GetNumThreads(GDALDataset *poDS);
@@ -1958,6 +1967,10 @@ class VRTGroup final : public GDALGroup
     CreateGroup(const std::string &osName,
                 CSLConstList papszOptions = nullptr) override;
 
+    std::shared_ptr<VRTGroup>
+    CreateVRTGroup(const std::string &osName,
+                   CSLConstList papszOptions = nullptr);
+
     std::shared_ptr<GDALDimension>
     CreateDimension(const std::string &osName, const std::string &osType,
                     const std::string &osDirection, GUInt64 nSize,
@@ -1973,7 +1986,13 @@ class VRTGroup final : public GDALGroup
         const std::string &osName,
         const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
         const GDALExtendedDataType &oDataType,
-        CSLConstList papszOptions) override;
+        CSLConstList papszOptions = nullptr) override;
+
+    std::shared_ptr<VRTMDArray> CreateVRTMDArray(
+        const std::string &osName,
+        const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
+        const GDALExtendedDataType &oDataType,
+        CSLConstList papszOptions = nullptr);
 
     void SetIsRootGroup();
 
@@ -1983,7 +2002,7 @@ class VRTGroup final : public GDALGroup
     }
 
     VRTGroup *GetRootGroup() const;
-    std::shared_ptr<GDALGroup> GetRootGroupSharedPtr() const;
+    std::shared_ptr<VRTGroup> GetRootGroupSharedPtr() const;
 
     const std::string &GetVRTPath() const
     {
@@ -2301,12 +2320,17 @@ class VRTMDArray final : public GDALMDArray
         return m_osVRTPath;
     }
 
-    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    std::shared_ptr<VRTGroup> GetRootVRTGroup() const
     {
         auto poGroup = m_poGroupRef.lock();
         if (poGroup)
             return poGroup->m_ptr->GetRootGroupSharedPtr();
         return nullptr;
+    }
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return GetRootVRTGroup();
     }
 };
 
