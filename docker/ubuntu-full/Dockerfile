@@ -580,23 +580,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get install -y -V libarrow-dataset${ARROW_SOVERSION} \
     && apt-get install -y -V libarrow-compute${ARROW_SOVERSION}
 
-# Manually install ADBC packages from Ubuntu 22.04 as there are no 24.04 packages at time of writing.
-RUN if test "$(uname -p)" = "x86_64"; then \
-    curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-manager102_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-manager-dev_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-sqlite102_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-sqlite-dev_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-snowflake102_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-snowflake-dev_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-manager102_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-manager-dev_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-sqlite102_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-sqlite-dev_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-snowflake102_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-snowflake-dev_14-1_amd64.deb \
-    && rm -f libadbc*.deb; \
-    fi
-
 # Install libduckdb
 ARG DUCKDB_VERSION=v1.3.2
 RUN if test "$(uname -p)" = "x86_64"; then \
