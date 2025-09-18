@@ -372,3 +372,32 @@ def test_gdalalg_change_field_type_multiple_layers(tmp_vsimem, tmp_path):
         )
         f = out_ds.GetLayer(0).GetNextFeature()
         assert f["test_field"] == 456
+
+
+def test_gdalalg_change_field_type_src_field_type():
+
+    src_ds = gdal.GetDriverByName("MEM").CreateDataSource("")
+    lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("string1", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("string2", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["string1"] = "123"
+    f["string2"] = "456"
+    f["real"] = 1.25
+    lyr.CreateFeature(f)
+
+    alg = gdal.Run(
+        "vector",
+        "change-field-type",
+        input=src_ds,
+        src_field_type="String",
+        dst_field_type="Integer",
+        output_format="MEM",
+    )
+    ds = alg.Output()
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["string1"] == 123
+    assert f["string2"] == 456
+    assert f["real"] == 1.25

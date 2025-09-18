@@ -38,12 +38,21 @@ Standard options
 
 .. include:: gdal_options/active_layer.rst
 
-
 .. option:: --field-name <FIELD-NAME>
 
-    The name of the field to modify. Required.
+    The name of the field to modify.
 
-.. option:: --field-type <FIELD-TYPE>
+    Mutually exclusive with :option:`--src-field-type`. One of them is required.
+
+.. option:: --src-field-type <FIELD-TYPE>
+
+    The field type of the fields to change.
+    Valid values are: ``Integer``, ``IntegerList``, ``Real``, ``RealList``, ``String``, ``StringList``, ``Binary``,  ` ``Date``, ``Time``, ``DateTime``, ``Integer64``, ``Integer64List``.
+    A field subtype can be specified instead of a field type. Valid values are: ``Boolean``, ``Int16``, ``Float32``, ``JSON``, ``UUID``.
+
+    Mutually exclusive with :option:`--field-name`. One of them is required.
+
+.. option:: --field-type, --dst-field-type <FIELD-TYPE>
 
     The new field type. Valid values are: ``Integer``, ``IntegerList``, ``Real``, ``RealList``, ``String``, ``StringList``, ``Binary``,  ` ``Date``, ``Time``, ``DateTime``, ``Integer64``, ``Integer64List``.
     A field subtype can be specified instead of a field type. Valid values are: ``Boolean``, ``Int16``, ``Float32``, ``JSON``, ``UUID``. The field type will be derived from the subtype.
@@ -68,8 +77,15 @@ Examples
 --------
 
 .. example::
-   :title: Change the type of a field from String to Integer
+   :title: Change the type of a field given by its name to Integer
 
    .. code-block:: bash
 
         $ gdal vector change-field-type input.gpkg output.gpkg --field-name myfield --field-type Integer
+
+.. example::
+   :title: Change the type of all fields of type Date to DateTime
+
+   .. code-block:: bash
+
+        $ gdal vector change-field-type input.gpkg output.gpkg --src-field-type Date --dst-field-type DateTime

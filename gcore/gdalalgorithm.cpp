@@ -2821,10 +2821,28 @@ bool GDALAlgorithm::ValidateArguments()
         if (arg->IsRequired() && !arg->IsExplicitlySet() &&
             !arg->HasDefaultValue())
         {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Required argument '%s' has not been specified.",
-                        arg->GetName().c_str());
-            ret = false;
+            bool emitError = true;
+            const auto &mutualExclusionGroup = arg->GetMutualExclusionGroup();
+            if (!mutualExclusionGroup.empty())
+            {
+                for (const auto &otherArg : m_args)
+                {
+                    if (otherArg->GetMutualExclusionGroup() ==
+                            mutualExclusionGroup &&
+                        otherArg->IsExplicitlySet())
+                    {
+                        emitError = false;
+                        break;
+                    }
+                }
+            }
+            if (emitError)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Required argument '%s' has not been specified.",
+                            arg->GetName().c_str());
+                ret = false;
+            }
         }
         else if (arg->IsExplicitlySet() && arg->GetType() == GAAT_DATASET)
         {
@@ -4636,10 +4654,10 @@ GDALAlgorithm::AddFieldNameArg(std::string *pValue, const char *helpMessage)
 
 GDALInConstructionAlgorithmArg &GDALAlgorithm::AddFieldTypeSubtypeArg(
     OGRFieldType *pTypeValue, OGRFieldSubType *pSubtypeValue,
-    std::string *pStrValue, const char *helpMessage)
+    std::string *pStrValue, const std::string &argName, const char *helpMessage)
 {
     auto &arg =
-        AddArg("field-type", 0,
+        AddArg(argName.empty() ? std::string("field-type") : argName, 0,
                MsgOrDefault(helpMessage, _("Field type or subtype")), pStrValue)
             .SetAutoCompleteFunction(
                 [](const std::string &currentValue)

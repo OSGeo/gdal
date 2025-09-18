@@ -12,7 +12,6 @@
 
 #include "gdalalg_vector_change_field_type.h"
 #include "gdal_priv.h"
-#include "gdal_utils.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,7 +20,7 @@
 #endif
 
 /************************************************************************/
-/*          GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm()          */
+/*                      GDALVectorChangeFieldTypeAlgorithm()            */
 /************************************************************************/
 
 GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
@@ -30,10 +29,19 @@ GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
                                       standaloneStep)
 {
     auto &layerArg = AddActiveLayerArg(&m_activeLayer);
-    auto &fieldNameArg = AddFieldNameArg(&m_fieldName).SetRequired();
+    auto &fieldNameArg = AddFieldNameArg(&m_fieldName)
+                             .SetRequired()
+                             .SetMutualExclusionGroup("name-or-type");
     SetAutoCompleteFunctionForFieldName(fieldNameArg, layerArg, m_inputDataset);
+    AddFieldTypeSubtypeArg(&m_srcFieldType, &m_srcFieldSubType,
+                           &m_srcFieldTypeSubTypeStr, "src-field-type",
+                           _("Source field type or subtype"))
+        .SetRequired()
+        .SetMutualExclusionGroup("name-or-type");
     AddFieldTypeSubtypeArg(&m_newFieldType, &m_newFieldSubType,
-                           &m_newFieldTypeSubTypeStr)
+                           &m_newFieldTypeSubTypeStr, std::string(),
+                           _("Target field type or subtype"))
+        .AddAlias("dst-field-type")
         .SetRequired();
     AddValidationAction(
         [this]
@@ -50,8 +58,9 @@ GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
                              "Cannot find layer '%s'", m_activeLayer.c_str());
                     return false;
                 }
-                if (layer->GetLayerDefn()->GetFieldIndex(m_fieldName.c_str()) <
-                    0)
+                if (!m_fieldName.empty() &&
+                    layer->GetLayerDefn()->GetFieldIndex(m_fieldName.c_str()) <
+                        0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Cannot find field '%s' in layer '%s'",
@@ -76,8 +85,9 @@ class GDALVectorChangeFieldTypeAlgorithmLayer final
   public:
     GDALVectorChangeFieldTypeAlgorithmLayer(
         OGRLayer &oSrcLayer, const std::string &activeLayer,
-        const std::string &fieldName, const OGRFieldType &newFieldType,
-        const OGRFieldSubType &newFieldSubType)
+        const std::string &fieldName, const OGRFieldType srcFieldType,
+        const OGRFieldSubType srcFieldSubType, const OGRFieldType newFieldType,
+        const OGRFieldSubType newFieldSubType)
         : GDALVectorPipelineOutputLayer(oSrcLayer)
     {
 
@@ -86,16 +96,46 @@ class GDALVectorChangeFieldTypeAlgorithmLayer final
 
         if (activeLayer.empty() || activeLayer == GetDescription())
         {
-            m_fieldIndex = m_poFeatureDefn->GetFieldIndex(fieldName.c_str());
-            if (m_fieldIndex >= 0)
+            if (!fieldName.empty())
             {
-                auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(m_fieldIndex);
-                m_sourceFieldType = poFieldDefn->GetType();
+                m_fieldIndex =
+                    m_poFeatureDefn->GetFieldIndex(fieldName.c_str());
+                if (m_fieldIndex >= 0)
+                {
+                    auto poFieldDefn =
+                        m_poFeatureDefn->GetFieldDefn(m_fieldIndex);
+                    if (poFieldDefn->GetType() != newFieldType)
+                    {
+                        m_passThrough = false;
+                    }
 
-                // Set to OFSTNone to bypass the check that prevents changing the type
-                poFieldDefn->SetSubType(OFSTNone);
-                poFieldDefn->SetType(newFieldType);
-                poFieldDefn->SetSubType(newFieldSubType);
+                    // Set to OFSTNone to bypass the check that prevents changing the type
+                    poFieldDefn->SetSubType(OFSTNone);
+                    poFieldDefn->SetType(newFieldType);
+                    poFieldDefn->SetSubType(newFieldSubType);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
+                {
+                    auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
+                    if (poFieldDefn->GetType() == srcFieldType &&
+                        poFieldDefn->GetSubType() == srcFieldSubType)
+                    {
+                        m_passThrough = false;
+
+                        // Set to OFSTNone to bypass the check that prevents changing the type
+                        poFieldDefn->SetSubType(OFSTNone);
+                        poFieldDefn->SetType(newFieldType);
+                        poFieldDefn->SetSubType(newFieldSubType);
+                    }
+                }
+            }
+
+            for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++)
+            {
+                m_identityMap.push_back(i);
             }
         }
     }
@@ -114,36 +154,31 @@ class GDALVectorChangeFieldTypeAlgorithmLayer final
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
-
-        CPLAssert(m_fieldIndex >= 0);
-
-        if (m_poFeatureDefn->GetFieldDefn(m_fieldIndex)->GetType() !=
-            m_sourceFieldType)
+        if (m_passThrough)
+        {
+            apoOutFeatures.push_back(std::move(poSrcFeature));
+        }
+        else
         {
             auto poDstFeature = std::make_unique<OGRFeature>(m_poFeatureDefn);
-            std::vector<int> identityMap(m_poFeatureDefn->GetFieldCount());
-            for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++)
-            {
-                identityMap[i] = i;
-            }
             const auto result{poDstFeature->SetFrom(
-                poSrcFeature.get(), identityMap.data(), false, true)};
+                poSrcFeature.get(), m_identityMap.data(), false, true)};
             if (result != OGRERR_NONE)
             {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "Cannot convert field '%s' to new type, setting it to NULL",
-                    m_poFeatureDefn->GetFieldDefn(m_fieldIndex)->GetNameRef());
+                if (m_fieldIndex >= 0)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Cannot convert field '%s' to new type, setting "
+                             "it to NULL",
+                             m_poFeatureDefn->GetFieldDefn(m_fieldIndex)
+                                 ->GetNameRef());
+                }
             }
             else
             {
                 poDstFeature->SetFID(poSrcFeature->GetFID());
                 apoOutFeatures.push_back(std::move(poDstFeature));
             }
-        }
-        else
-        {
-            apoOutFeatures.push_back(std::move(poSrcFeature));
         }
     }
 
@@ -159,12 +194,9 @@ class GDALVectorChangeFieldTypeAlgorithmLayer final
 
   private:
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
-    /*
-     Stores the original type in order to detect if a change is needed
-     (the change might only affect the subtype)
-    */
-    OGRFieldType m_sourceFieldType = OFTString;
     int m_fieldIndex{-1};
+    bool m_passThrough = true;
+    std::vector<int> m_identityMap{};
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorChangeFieldTypeAlgorithmLayer)
 };
@@ -197,14 +229,15 @@ bool GDALVectorChangeFieldTypeAlgorithm::RunStep(GDALPipelineStepRunContext &)
             outDS->AddLayer(
                 *poSrcLayer,
                 std::make_unique<GDALVectorChangeFieldTypeAlgorithmLayer>(
-                    *poSrcLayer, m_activeLayer, m_fieldName, m_newFieldType,
-                    m_newFieldSubType));
+                    *poSrcLayer, m_activeLayer, m_fieldName, m_srcFieldType,
+                    m_srcFieldSubType, m_newFieldType, m_newFieldSubType));
         }
     }
 
     if (ret)
         m_outputDataset.Set(std::move(outDS));
 
+    printf("ret= %d\n", ret);
     return ret;
 }
 
