@@ -45,7 +45,7 @@ struct Lines
 
     /// Constructor that initializes to line length
     /// \param lineLen  Line length.
-    Lines(size_t lineLen) : cur(lineLen), result(lineLen)
+    explicit Lines(size_t lineLen) : cur(lineLen), result(lineLen)
     {
     }
 };
