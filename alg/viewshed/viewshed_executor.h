@@ -39,13 +39,14 @@ struct Lines
         pitchMask;  //!< Height/indicator values for pitch masking.
 
     /// Constructor
-    Lines()
+    Lines() : cur(), result(), prev(), pitchMask()
     {
     }
 
     /// Constructor that initializes to line length
     /// \param lineLen  Line length.
-    explicit Lines(size_t lineLen) : cur(lineLen), result(lineLen)
+    explicit Lines(size_t lineLen)
+        : cur(lineLen), result(lineLen), prev(), pitchMask()
     {
     }
 };
