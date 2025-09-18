@@ -51,7 +51,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
             build-essential ca-certificates ccache\
-            git make ninja-build cmake wget unzip libtool automake \
+            git make ninja-build cmake unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff-dev${APT_ARCH_SUFFIX} \
             patchelf \
@@ -91,7 +91,7 @@ ARG WITH_CCACHE
 ARG KEA_VERSION=1.5.2
 RUN --mount=type=cache,id=ubuntu-full-kealib,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
-    && wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
+    && curl -LO -fsS https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
     && unzip -q kealib-${KEA_VERSION}.zip \
     && rm -f kealib-${KEA_VERSION}.zip \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
@@ -127,7 +127,7 @@ ARG MONGO_C_DRIVER_VERSION=1.24.4
 RUN --mount=type=cache,id=ubuntu-full-mongo-c-driver,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && mkdir mongo-c-driver \
-    && wget -q https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz -O - \
+    && curl -Lo - -fsS https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz \
         | tar xz -C mongo-c-driver --strip-components=1 \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
         echo "Downloading cache..."; \
@@ -163,7 +163,7 @@ ARG MONGOCXX_VERSION=3.8.1
 RUN --mount=type=cache,id=ubuntu-full-mongo-cxx-driver,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && mkdir mongocxx \
-    && wget -q https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz -O - \
+    && curl -Lo - -fsS https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz \
         | tar xz -C mongocxx --strip-components=1 \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
         echo "Downloading cache..."; \
@@ -218,7 +218,7 @@ RUN --mount=type=cache,id=ubuntu-full-tiledb,target=$HOME/.cache \
         ccache -M 100M; \
     fi \
     && mkdir tiledb \
-    && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
+    && curl -Lo - -fsS https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz \
         | tar xz -C tiledb --strip-components=1 \
     && cd tiledb \
     && patch -p0 < /buildscripts/tiledb-FindLZ4_EP.cmake.patch \
@@ -248,7 +248,7 @@ ARG OPENDRIVE_VERSION=0.6.0-gdal
 RUN --mount=type=cache,id=ubuntu-full-libopendrive,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && if test "${OPENDRIVE_VERSION}" != ""; then ( \
-    wget -q https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
+    curl -LO -fsS https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
     && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
     && rm -f ${OPENDRIVE_VERSION}.tar.gz \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
@@ -283,7 +283,7 @@ RUN --mount=type=cache,id=ubuntu-full-libopendrive,target=$HOME/.cache \
 ARG WITH_FILEGDB=
 RUN . /buildscripts/bh-set-envvars.sh \
   && if echo "$WITH_FILEGDB" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.2/FileGDB_API-RHEL7-64gcc83.tar.gz \
+  curl -LO -fsS https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.2/FileGDB_API-RHEL7-64gcc83.tar.gz \
   && tar -xzf FileGDB_API-RHEL7-64gcc83.tar.gz \
   && chown -R root:root FileGDB_API-RHEL7-64gcc83 \
   && mv FileGDB_API-RHEL7-64gcc83 /usr/local/FileGDB_API \
@@ -298,8 +298,8 @@ ARG WITH_ORACLE=
 RUN . /buildscripts/bh-set-envvars.sh \
   && if test "$(uname -p)" = "x86_64"; then \
   if echo "$WITH_ORACLE" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
-  wget https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip \
-  && wget https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
+  curl -LO -fsS https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip \
+  && curl -LO -fsS https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
   && unzip -o instantclient-basic-linux.x64-19.23.0.0.0dbru.zip \
   && unzip -o instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
   && rm -f instantclient-basic-linux.x64-19.23.0.0.0dbru.zip instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
@@ -315,7 +315,7 @@ ARG WITH_ECW=
 RUN . /buildscripts/bh-set-envvars.sh \
   && if test "$(uname -p)" = "x86_64"; then \
   if echo "$WITH_ECW" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
-  wget https://github.com/rouault/libecwj2-3.3-builds/releases/download/v1/install-libecwj2-3.3-ubuntu-20.04.tar.gz \
+  curl -LO -fsS https://github.com/rouault/libecwj2-3.3-builds/releases/download/v1/install-libecwj2-3.3-ubuntu-20.04.tar.gz \
   && tar xzf install-libecwj2-3.3-ubuntu-20.04.tar.gz \
   && rm -f install-libecwj2-3.3-ubuntu-20.04.tar.gz \
   && mkdir -p /build_thirdparty/opt \
@@ -329,7 +329,7 @@ ARG WITH_MRSID=
 RUN . /buildscripts/bh-set-envvars.sh \
   && if test "$(uname -p)" = "x86_64"; then \
   if echo "$WITH_MRSID" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
-    wget https://bin.extensis.com/download/developer/MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
+    curl -LO -fsS https://bin.extensis.com/download/developer/MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
     && unzip MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
     && mv MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131 mrsid \
     && rm -f MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
@@ -378,7 +378,7 @@ ARG WITH_PDFIUM=yes
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
   if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  wget -q https://github.com/rouault/pdfium_build_gdal_3_12/releases/download/pdfium_7391_v1/install-ubuntu2004-rev7391.tar.gz \
+  curl -LO -fsS https://github.com/rouault/pdfium_build_gdal_3_12/releases/download/pdfium_7391_v1/install-ubuntu2004-rev7391.tar.gz \
   && tar -xzf install-ubuntu2004-rev7391.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
@@ -433,7 +433,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release wget \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release \
     && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get update \
@@ -544,7 +544,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     # PROJ dependencies
     && apt-get install -y \
         libsqlite3-0 libtiff6 libcurl4 \
-        wget curl unzip ca-certificates \
+        curl unzip ca-certificates \
     # GDAL dependencies
     && apt-get install -y \
         bash-completion libopenjp2-7 libcairo2 python3-numpy \
@@ -571,7 +571,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     # Install JRE with --no-install-recommends, otherwise it draws default-jre, which draws systemd, which fails to install when running the arm64v8/ubuntu:24.04 image on a 64bit host
     && apt-get install -y --no-install-recommends openjdk-"$JAVA_VERSION"-jre \
     # Install Arrow C++
-    && apt-get install -y -V ca-certificates lsb-release wget \
+    && apt-get install -y -V ca-certificates lsb-release \
     && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get update \
