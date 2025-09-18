@@ -27,18 +27,24 @@ namespace gdal
 namespace viewshed
 {
 
+/**
+ * Container for lines necessary for processing.
+ */
 struct Lines
 {
-    std::vector<double> cur;
-    std::vector<double> result;
-    std::vector<double> prev;
-    std::vector<double> inputData;
-    std::vector<double> pitchMask;
+    std::vector<double> cur;     //!< Current line being processed
+    std::vector<double> result;  //!< Result values for current line
+    std::vector<double> prev;    //!< Height values for previous line
+    std::vector<double>
+        pitchMask;  //!< Height/indicator values for pitch masking.
 
+    /// Constructor
     Lines()
     {
     }
 
+    /// Constructor that initializes to line length
+    /// \param lineLen  Line length.
     Lines(size_t lineLen) : cur(lineLen), result(lineLen)
     {
     }
