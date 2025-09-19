@@ -13,8 +13,8 @@ fi
 set -eu
 
 mkdir proj
-wget -q "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
-    -O - | tar xz -C proj --strip-components=1
+curl -Lo - -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
+    | tar xz -C proj --strip-components=1
 
 (
     cd proj

@@ -588,6 +588,8 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *
     DelaunayTriangulation(double dfTolerance,
                           int bOnlyEdges) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *
+    ConstrainedDelaunayTriangulation() const CPL_WARN_UNUSED_RESULT;
 
     virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *BuildArea() const CPL_WARN_UNUSED_RESULT;

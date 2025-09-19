@@ -864,6 +864,22 @@ Geometry:
     error occurs.
 ";
 
+%feature("docstring")  ConstrainedDelaunayTriangulation "
+Return a constrained Delaunay triangulation of the vertices of the given
+polygon(s). For non-polygonal inputs, silently returns an empty geometry
+collection.
+
+For more details: :cpp:func:`OGR_G_ConstrainedDelaunayTriangulation`
+
+.. versionadded:: 3.12
+
+Returns
+--------
+Geometry:
+    The geometry collection resulting from the constrained Delaunay
+    triangulation or None if an error occurs.
+";
+
 %feature("docstring")  Polygonize "
 Polygonizes a set of sparse edges.
 

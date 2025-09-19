@@ -28,8 +28,12 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
 
 {
     // Getting band and band file name from metadata.
-    if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osBandSectionIn,
-                                   KEY_NomFitxer, m_osRawBandFileName) ||
+    CPLString osNomFitxer;
+    osNomFitxer = SECTION_ATTRIBUTE_DATA;
+    osNomFitxer.append(":");
+    osNomFitxer.append(osBandSectionIn);
+    if (!m_pfRel->GetMetadataValue(osNomFitxer, KEY_NomFitxer,
+                                   m_osRawBandFileName) ||
         m_osRawBandFileName.empty())
     {
         // A band name may be empty only if it is the only band present

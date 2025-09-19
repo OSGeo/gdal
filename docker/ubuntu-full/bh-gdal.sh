@@ -13,8 +13,8 @@ if [ -z "${GDAL_BUILD_IS_RELEASE:-}" ]; then
 fi
 
 mkdir gdal
-wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
-    -O - | tar xz -C gdal --strip-components=1
+curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
+    | tar xz -C gdal --strip-components=1
 
 
 

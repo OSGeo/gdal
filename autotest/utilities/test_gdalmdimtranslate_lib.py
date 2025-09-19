@@ -993,3 +993,28 @@ def test_gdalmdimtranslate_dict_arguments():
     co_idx = opt.index("-co")
 
     assert opt[co_idx : co_idx + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]
+
+
+def test_gdalmdimtranslate_from_gtiff_multiband(tmp_vsimem):
+    gdal.MultiDimTranslate(
+        tmp_vsimem / "out.vrt",
+        "../gdrivers/data/small_world.tif",
+        arraySpecs=["foo"],
+        format="VRT",
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("foo")
+    assert ar.GetDimensionCount() == 3
+    assert ar.GetDimensions()[0].GetIndexingVariable().Read() == [
+        "Band 1",
+        "Band 2",
+        "Band 3",
+    ]
+    assert (
+        ar.GetDimensions()[1].GetIndexingVariable().GetDimensions()[0].GetSize() == 200
+    )
+    assert (
+        ar.GetDimensions()[2].GetIndexingVariable().GetDimensions()[0].GetSize() == 400
+    )

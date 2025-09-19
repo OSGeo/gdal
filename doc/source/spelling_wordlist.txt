@@ -172,6 +172,7 @@ bak
 bAllowPromotingToCurves
 bAllowResizeOutptr
 bandblockcache
+BandMetadataItem
 BandN
 BandsCount
 bAnglesInPackedDMSFormat
@@ -424,6 +425,7 @@ Coeff
 Coefs
 colname
 colorinterp
+ColorInterpretation
 colormap
 colormapped
 colorspace

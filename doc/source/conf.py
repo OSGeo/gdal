@@ -291,6 +291,7 @@ nitpick_ignore_regex = [
     (".*", "classGDALFootprintMaskBand"),
     (".*", "classGDALGeneric3x3Dataset"),
     (".*", "classGDALGeneric3x3RasterBand"),
+    (".*", "classGDALMDArrayFromDataset"),
     (".*", "classGDALMDArrayFromRasterBand"),
     (".*", "classGDALMDArrayMeshGrid"),
     (".*", "classGDALMDArrayResampledDatasetRasterBand"),
@@ -846,6 +847,13 @@ man_pages = [
         "gdal-vector-edit",
         "Edit metadata of a vector dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_change_field_type",
+        "gdal-vector-change-field-type",
+        "Change the type of a field of a vector dataset",
+        [author_elpaso],
         1,
     ),
     (
