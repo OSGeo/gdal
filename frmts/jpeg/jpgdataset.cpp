@@ -1833,8 +1833,7 @@ JPGDatasetCommon::JPGDatasetCommon() = default;
 JPGDatasetCommon::~JPGDatasetCommon()
 
 {
-    if (m_fpImage != nullptr)
-        VSIFCloseL(m_fpImage);
+    JPGDatasetCommon::Close();
 
     if (m_pabyScanline != nullptr)
         CPLFree(m_pabyScanline);
@@ -1844,8 +1843,27 @@ JPGDatasetCommon::~JPGDatasetCommon()
     CPLFree(pabyBitMask);
     CPLFree(pabyCMask);
     delete poMaskBand;
+}
 
-    JPGDatasetCommon::CloseDependentDatasets();
+/************************************************************************/
+/*                                Close()                               */
+/************************************************************************/
+
+CPLErr JPGDatasetCommon::Close()
+{
+    CPLErr eErr = CE_None;
+
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        JPGDatasetCommon::CloseDependentDatasets();
+
+        if (m_fpImage != nullptr && VSIFCloseL(m_fpImage) != 0)
+            eErr = CE_Failure;
+        m_fpImage = nullptr;
+
+        eErr = GDAL::Combine(eErr, GDALPamDataset::Close());
+    }
+    return eErr;
 }
 
 /************************************************************************/
