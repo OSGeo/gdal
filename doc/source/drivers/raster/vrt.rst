@@ -527,6 +527,11 @@ normalized (defaults to false=0).  The size must always be an odd number,
 and the Coefs must have Size * Size entries separated by spaces.  For now
 kernel is not applied to sub-sampled or over-sampled data.
 
+At the top edge, the values of the first row are replicated to virtually extend
+the source window by a number of rows equal to the radius of the kernel. And
+similarly for the bottom, left and right edges. This strategy may potentially
+lead to unexpected results depending on the applied kernel.
+
 .. code-block:: xml
 
     <KernelFilteredSource>
@@ -553,6 +558,26 @@ For example, a Gaussian blur:
         <Size>13</Size>
         <Coefs>0.01111 0.04394 0.13534 0.32465 0.60653 0.8825 1.0 0.8825 0.60653 0.32465 0.13534 0.04394 0.01111</Coefs>
       </Kernel>
+    </KernelFilteredSource>
+
+
+Starting with GDAL 3.12, a Function element can be set as a child of KernelFilteredSource
+and take values ``min``, ``max``, ``stddev``, ``median`` or ``mode``.
+
+For example to compute the median value in a 3x3 neighborhood around each pixel:
+
+.. code-block:: xml
+
+    <KernelFilteredSource>
+      <SourceFilename>/debian/home/warmerda/openev/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <Kernel>
+        <Size>3</Size>
+        <Coefs>1 1 1
+               1 1 1
+               1 1 1</Coefs>
+      </Kernel>
+      <Function>median</Function>
     </KernelFilteredSource>
 
 NoDataFromMaskSource

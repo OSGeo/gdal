@@ -14,11 +14,13 @@
 #include "cpl_port.h"
 #include "vrtdataset.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <map>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -238,7 +240,18 @@ CPLErr VRTFilteredSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     const GPtrDiff_t nPixelOffset = GDALGetDataTypeSizeBytes(eOperDataType);
     const GPtrDiff_t nLineOffset = nPixelOffset * nExtraXSize;
 
-    memset(pabyWorkData, 0, nLineOffset * nExtraYSize);
+    int bHasNoData = false;
+    const double dfSrcNoDataValue = l_band->GetNoDataValue(&bHasNoData);
+    if (bHasNoData)
+    {
+        GDALCopyWords64(&dfSrcNoDataValue, GDT_Float64, 0, pabyWorkData,
+                        eOperDataType, static_cast<int>(nPixelOffset),
+                        static_cast<size_t>(nExtraXSize) * nExtraYSize);
+    }
+    else
+    {
+        memset(pabyWorkData, 0, nLineOffset * nExtraYSize);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Allocate the output buffer in the same dimensions as the work   */
@@ -488,6 +501,12 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
     CPLAssert(m_nExtraEdgePixels * 2 + 1 == m_nKernelSize ||
               (m_nKernelSize == 0 && m_nExtraEdgePixels == 0));
 
+    const bool bMin = m_function == "min";
+    const bool bMax = m_function == "max";
+    const bool bStdDev = m_function == "stddev";
+    const bool bMedian = m_function == "median";
+    const bool bMode = m_function == "mode";
+
     /* -------------------------------------------------------------------- */
     /*      Float32 case.                                                   */
     /* -------------------------------------------------------------------- */
@@ -535,6 +554,16 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
                     }
 
                     double dfSum = 0.0, dfKernSum = 0.0;
+                    size_t nValidCount = 0;
+                    double dfRes =
+                        bMin   ? std::numeric_limits<double>::infinity()
+                        : bMax ? -std::numeric_limits<double>::infinity()
+                               : 0.0;
+                    double dfMean = 0.0;
+                    double dfM2 = 0.0;
+                    std::vector<double> adfVals;
+                    std::map<double, size_t> mapValToCount;
+                    size_t maxCount = 0;
 
                     for (GPtrDiff_t iII = -m_nExtraEdgePixels, iK = 0;
                          iII <= m_nExtraEdgePixels; ++iII)
@@ -547,22 +576,110 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
                             const float *pfData = pafSrcData + iIndex +
                                                   iII * nIStride +
                                                   iJJ * nJStride;
-                            if (bHasNoData && *pfData == fNoData)
+                            if (bHasNoData &&
+                                (*pfData == fNoData || std::isnan(*pfData)))
+                            {
                                 continue;
-                            dfSum += *pfData * m_adfKernelCoefs[iK];
-                            dfKernSum += m_adfKernelCoefs[iK];
+                            }
+                            if (m_adfKernelCoefs[iK] == 0.0)
+                            {
+                                continue;
+                            }
+                            const double dfVal = static_cast<double>(*pfData) *
+                                                 m_adfKernelCoefs[iK];
+                            ++nValidCount;
+
+                            if (bMax)
+                            {
+                                if (dfVal > dfRes)
+                                    dfRes = dfVal;
+                            }
+                            else if (bMin)
+                            {
+                                if (dfVal < dfRes)
+                                    dfRes = dfVal;
+                            }
+                            else if (bStdDev)
+                            {
+                                const double dfDelta = dfVal - dfMean;
+                                dfMean += dfDelta / nValidCount;
+                                dfM2 += dfDelta * (dfVal - dfMean);
+                            }
+                            else if (bMedian)
+                            {
+                                adfVals.push_back(dfVal);
+                            }
+                            else if (bMode)
+                            {
+                                const size_t nCountVal = ++mapValToCount[dfVal];
+                                if (nCountVal > maxCount)
+                                {
+                                    maxCount = nCountVal;
+                                    dfRes = dfVal;
+                                }
+                            }
+                            else
+                            {
+                                dfSum += dfVal;
+                                dfKernSum += m_adfKernelCoefs[iK];
+                            }
                         }
                     }
 
-                    double fResult;
-
-                    if (!m_bNormalized)
-                        fResult = dfSum;
-                    else if (dfKernSum == 0.0)
-                        fResult = 0.0;
+                    float fResult;
+                    if (bMax || bMin || bMode)
+                    {
+                        fResult = nValidCount  ? static_cast<float>(dfRes)
+                                  : bHasNoData ? fNoData
+                                               : 0.0f;
+                    }
+                    else if (bStdDev)
+                    {
+                        fResult =
+                            nValidCount
+                                ? static_cast<float>(sqrt(
+                                      dfM2 / static_cast<double>(nValidCount)))
+                            : bHasNoData ? fNoData
+                                         : 0.0f;
+                    }
+                    else if (bMedian)
+                    {
+                        if (!adfVals.empty())
+                        {
+                            if ((adfVals.size() % 2) == 1)
+                            {
+                                std::nth_element(adfVals.begin(),
+                                                 adfVals.begin() +
+                                                     adfVals.size() / 2,
+                                                 adfVals.end());
+                                dfRes = adfVals[adfVals.size() / 2];
+                            }
+                            else
+                            {
+                                std::nth_element(adfVals.begin(),
+                                                 adfVals.begin() +
+                                                     adfVals.size() / 2 - 1,
+                                                 adfVals.end());
+                                dfRes = adfVals[adfVals.size() / 2 - 1];
+                                std::nth_element(adfVals.begin(),
+                                                 adfVals.begin() +
+                                                     adfVals.size() / 2,
+                                                 adfVals.end());
+                                dfRes =
+                                    (dfRes + adfVals[adfVals.size() / 2]) / 2;
+                            }
+                            fResult = static_cast<float>(dfRes);
+                        }
+                        else
+                            fResult = bHasNoData ? fNoData : 0.0f;
+                    }
+                    else if (!m_bNormalized)
+                        fResult = static_cast<float>(dfSum);
+                    else if (nValidCount == 0 || dfKernSum == 0.0)
+                        fResult = bHasNoData ? fNoData : 0.0f;
                     else
-                        fResult = dfSum / dfKernSum;
-                    pafDstData[iIndex] = static_cast<float>(fResult);
+                        fResult = static_cast<float>(dfSum / dfKernSum);
+                    pafDstData[iIndex] = fResult;
                 }
             }
         }
@@ -632,6 +749,21 @@ VRTKernelFilteredSource::XMLInit(const CPLXMLNode *psTree,
         SetNormalized(atoi(CPLGetXMLValue(psTree, "Kernel.normalized", "0")) !=
                       0);
     }
+
+    const char *pszFunction = CPLGetXMLValue(psTree, "Function", nullptr);
+    if (pszFunction)
+    {
+        if (!EQUAL(pszFunction, "max") && !EQUAL(pszFunction, "min") &&
+            !EQUAL(pszFunction, "median") && !EQUAL(pszFunction, "mode") &&
+            !EQUAL(pszFunction, "stddev"))
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Unsupported function: %s",
+                     pszFunction);
+            return CE_Failure;
+        }
+        SetFunction(pszFunction);
+    }
+
     return eErr;
 }
 
@@ -668,6 +800,9 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML(const char *pszVRTPath)
 
     CPLSetXMLValue(psKernel, "Size", CPLSPrintf("%d", m_nKernelSize));
     CPLSetXMLValue(psKernel, "Coefs", osCoefs.c_str());
+
+    if (!m_function.empty())
+        CPLCreateXMLElementAndValue(psSrc, "Function", m_function.c_str());
 
     return psSrc;
 }

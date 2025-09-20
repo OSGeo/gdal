@@ -110,6 +110,12 @@ Details for options can be found in :ref:`gdal_raster_hillshade`.
 
 Details for options can be found in :ref:`gdal_raster_materialize`.
 
+* neighbors
+
+.. program-output:: gdal raster pipeline --help-doc=neighbors
+
+Details for options can be found in :ref:`gdal_raster_neighbors`.
+
 * nodata-to-alpha
 
 .. program-output:: gdal raster pipeline --help-doc=nodata-to-alpha

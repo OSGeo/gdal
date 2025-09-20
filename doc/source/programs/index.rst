@@ -95,6 +95,7 @@ Raster commands
    gdal_raster_index
    gdal_raster_materialize
    gdal_raster_mosaic
+   gdal_raster_neighbors
    gdal_raster_nodata_to_alpha
    gdal_raster_overview
    gdal_raster_overview_add
@@ -147,6 +148,7 @@ Raster commands
     - :ref:`gdal_raster_index`: Create a vector index of raster datasets
     - :ref:`gdal_raster_materialize`: Materialize a piped dataset on disk to increase the efficiency of the following steps
     - :ref:`gdal_raster_mosaic`: Build a mosaic, either virtual (VRT) or materialized.
+    - :ref:`gdal_raster_neighbors`: Compute the value of each pixel from its neighbors (focal statistics).
     - :ref:`gdal_raster_nodata_to_alpha`: Replace nodata value(s) with an alpha band
     - :ref:`gdal_raster_overview`: Manage overviews of a raster dataset
     - :ref:`gdal_raster_overview_add`: Add overviews to a raster dataset
