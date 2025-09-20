@@ -143,8 +143,7 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
         addSuffixIfNeeded(GDALVectorInfoAlgorithm::NAME));
 
     registry.Register<GDALVectorBufferAlgorithm>();
-    registry.Register<GDALVectorChangeFieldTypeAlgorithm>(
-        addSuffixIfNeeded(GDALVectorChangeFieldTypeAlgorithm::NAME));
+    registry.Register<GDALVectorChangeFieldTypeAlgorithm>();
     registry.Register<GDALVectorCheckCoverageAlgorithm>();
     registry.Register<GDALVectorCheckGeometryAlgorithm>();
     registry.Register<GDALVectorConcatAlgorithm>();
