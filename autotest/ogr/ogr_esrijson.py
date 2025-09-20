@@ -81,7 +81,7 @@ def test_ogr_esrijson_read_point():
 
     extent = (2, 2, 49, 49)
 
-    rc = validate_layer(lyr, "esripoint", 1, ogr.wkbPoint, 7, extent)
+    rc = validate_layer(lyr, "esripoint", 1, ogr.wkbPoint, 12, extent)
     assert rc
 
     layer_defn = lyr.GetLayerDefn()
@@ -102,12 +102,47 @@ def test_ogr_esrijson_read_point():
     ogrtest.check_feature_geometry(feature, "POINT(2 49)")
 
     assert feature.GetFID() == 1
+    assert (
+        lyr.GetLayerDefn()
+        .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("fooSmallInt"))
+        .GetSubType()
+        == ogr.OFSTInt16
+    )
     assert feature["fooSmallInt"] == 2
     assert feature["fooInt"] == 1234567890
+    assert (
+        lyr.GetLayerDefn()
+        .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("fooSingle"))
+        .GetSubType()
+        == ogr.OFSTFloat32
+    )
     assert feature["fooSingle"] == 1.5
     assert feature["fooDouble"] == 3.4
     assert feature["fooString"] == "56"
     assert feature["fooDate"] == "2021/12/31 00:00:00+00"
+    assert feature["fooDateOnly"] == "2025/09/20"
+    assert (
+        lyr.GetLayerDefn()
+        .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("fooTimeOnly"))
+        .GetType()
+        == ogr.OFTTime
+    )
+    assert feature["fooTimeOnly"] == "12:34:56"
+    assert feature["fooBigInteger"] == 1234567890123456
+    assert (
+        lyr.GetLayerDefn()
+        .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("fooGlobalID"))
+        .GetSubType()
+        == ogr.OFSTUUID
+    )
+    assert feature["fooGlobalID"] == "{FD04C39C-69C6-4DCC-88D6-7E3E673DD0CB}"
+    assert (
+        lyr.GetLayerDefn()
+        .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("fooGUID"))
+        .GetSubType()
+        == ogr.OFSTUUID
+    )
+    assert feature["fooGUID"] == "{3BFE6840-A9E6-432A-AD34-B2067C8A276F}"
 
     lyr = None
     ds = None

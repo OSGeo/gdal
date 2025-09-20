@@ -22,11 +22,12 @@
 #include <algorithm>
 #include <memory>
 
-const char szESRIJSonFeaturesGeometryRings[] =
-    "{\"features\":[{\"geometry\":{\"rings\":[";
+constexpr const char szESRIJSonFeaturesGeometryRings[] =
+    "\"features\":[{\"geometry\":{\"rings\":[";
 
 // Cf https://github.com/OSGeo/gdal/issues/9996#issuecomment-2129845692
-const char szESRIJSonFeaturesAttributes[] = "{\"features\":[{\"attributes\":{";
+constexpr const char szESRIJSonFeaturesAttributes[] =
+    "\"features\":[{\"attributes\":{";
 
 /************************************************************************/
 /*                           SkipUTF8BOM()                              */
@@ -227,8 +228,9 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
 
     const std::string osWithoutSpace = GetCompactJSon(pszText, strlen(pszText));
     if (osWithoutSpace.find("{\"features\":[") == 0 &&
-        osWithoutSpace.find(szESRIJSonFeaturesGeometryRings) != 0 &&
-        osWithoutSpace.find(szESRIJSonFeaturesAttributes) != 0)
+        osWithoutSpace.find(szESRIJSonFeaturesGeometryRings) ==
+            std::string::npos &&
+        osWithoutSpace.find(szESRIJSonFeaturesAttributes) == std::string::npos)
     {
         return true;
     }
@@ -329,8 +331,10 @@ bool ESRIJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
     }
 
     const std::string osWithoutSpace = GetCompactJSon(pszText, strlen(pszText));
-    if (osWithoutSpace.find(szESRIJSonFeaturesGeometryRings) == 0 ||
-        osWithoutSpace.find(szESRIJSonFeaturesAttributes) == 0 ||
+    if (osWithoutSpace.find(szESRIJSonFeaturesGeometryRings) !=
+            std::string::npos ||
+        osWithoutSpace.find(szESRIJSonFeaturesAttributes) !=
+            std::string::npos ||
         osWithoutSpace.find("\"spatialReference\":{\"wkid\":") !=
             std::string::npos)
     {
