@@ -237,7 +237,6 @@ bool GDALVectorChangeFieldTypeAlgorithm::RunStep(GDALPipelineStepRunContext &)
     if (ret)
         m_outputDataset.Set(std::move(outDS));
 
-    printf("ret= %d\n", ret);
     return ret;
 }
 
