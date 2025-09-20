@@ -254,6 +254,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     friend struct VRTFlushCacheStruct<VRTPansharpenedDataset>;
     friend struct VRTFlushCacheStruct<VRTProcessedDataset>;
     friend class VRTSourcedRasterBand;
+    friend class VRTDerivedRasterBand;
     friend class VRTSimpleSource;
     friend struct VRTSourcedRasterBandRasterIOJob;
     friend VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize);

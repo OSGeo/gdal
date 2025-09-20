@@ -437,6 +437,19 @@ int GDALWarpOperation::ValidateOptions()
         return FALSE;
     }
 
+    GDALRasterBandH hSrcBand =
+        GDALGetRasterBand(psOptions->hSrcDS, psOptions->panSrcBands[0]);
+    if (GDALGetMaskFlags(hSrcBand) == GMF_PER_DATASET &&
+        psOptions->padfSrcNoDataReal != nullptr)
+    {
+        CPLError(
+            CE_Warning, CPLE_AppDefined,
+            "Source dataset has both a per-dataset mask band and the warper "
+            "has been also configured with a source nodata value. Only taking "
+            "into account the latter (i.e. ignoring the per-dataset mask "
+            "band)");
+    }
+
     const bool bErrorOutIfEmptySourceWindow = CPLFetchBool(
         psOptions->papszWarpOptions, "ERROR_OUT_IF_EMPTY_SOURCE_WINDOW", true);
     if (!bErrorOutIfEmptySourceWindow &&
@@ -2285,7 +2298,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
         oWK.panUnifiedSrcValid == nullptr && psOptions->nSrcAlphaBand <= 0 &&
         (GDALGetMaskFlags(hSrcBand) & GMF_PER_DATASET)
         // Need to double check for -nosrcalpha case.
-        && !(GDALGetMaskFlags(hSrcBand) & GMF_ALPHA) && nSrcXSize > 0 &&
+        && !(GDALGetMaskFlags(hSrcBand) & GMF_ALPHA) &&
+        psOptions->padfSrcNoDataReal == nullptr && nSrcXSize > 0 &&
         nSrcYSize > 0)
 
     {
