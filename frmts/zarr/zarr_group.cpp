@@ -69,9 +69,9 @@ std::vector<std::string> ZarrGroupBase::GetMDArrayNames(CSLConstList) const
 void ZarrGroupBase::RegisterArray(const std::shared_ptr<ZarrArray> &array) const
 {
     m_oMapMDArrays[array->GetName()] = array;
-    if (std::find(m_aosArrays.begin(), m_aosArrays.end(), array->GetName()) ==
-        m_aosArrays.end())
+    if (!cpl::contains(m_oSetArrayNames, array->GetName()))
     {
+        m_oSetArrayNames.insert(array->GetName());
         m_aosArrays.emplace_back(array->GetName());
     }
     array->RegisterGroup(
@@ -136,6 +136,7 @@ bool ZarrGroupBase::DeleteGroup(const std::string &osName,
 
     m_poSharedResource->DeleteZMetadataItemRecursive(osSubDirName);
 
+    m_oSetGroupNames.erase(osName);
     m_aosGroups.erase(oIterNames);
 
     auto oIter = m_oMapGroups.find(osName);
@@ -286,6 +287,7 @@ bool ZarrGroupBase::DeleteMDArray(const std::string &osName,
 
     m_poSharedResource->DeleteZMetadataItemRecursive(osSubDirName);
 
+    m_oSetArrayNames.erase(osName);
     m_aosArrays.erase(oIterNames);
 
     auto oIter = m_oMapMDArrays.find(osName);
