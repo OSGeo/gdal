@@ -326,7 +326,7 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
             "filters": [],
             "fill_value": None,
         },
-        "x/.zattrs": {},
+        "x/.zattrs": {"_ARRAY_DIMENSIONS": ["my_dim_without_indexing_variable"]},
         "x/0": [
             os.path.join(os.getcwd(), "data/zarr/kerchunk_json/json_ref_v0_min/0.bin")
         ],
@@ -334,11 +334,9 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
     content = json.dumps(j).encode("ASCII")
 
     try:
-        handler = webserver.FileHandler({"/ref.json": content})
-        with gdal.config_option(
-            "GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR"
-        ), webserver.install_http_handler(handler), gdal.OpenEx(
-            f"/vsicurl/http://localhost:{webserver_port}/ref.json",
+        handler = webserver.FileHandler({"/ref.json.zarr": content})
+        with webserver.install_http_handler(handler), gdal.OpenEx(
+            f"/vsicurl/http://localhost:{webserver_port}/ref.json.zarr",
             gdal.OF_MULTIDIM_RASTER,
         ) as ds:
             rg = ds.GetRootGroup()
@@ -346,10 +344,8 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
             with pytest.raises(Exception, match="tries to access local file"):
                 ar.Read()
 
-        with gdal.config_option(
-            "GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR"
-        ), webserver.install_http_handler(handler), gdal.OpenEx(
-            f"/vsicurl/http://localhost:{webserver_port}/ref.json",
+        with webserver.install_http_handler(handler), gdal.OpenEx(
+            f"/vsicurl/http://localhost:{webserver_port}/ref.json.zarr",
             gdal.OF_MULTIDIM_RASTER,
         ) as ds:
             rg = ds.GetRootGroup()
@@ -360,10 +356,8 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
                 with pytest.raises(Exception, match="tries to access local file"):
                     ar.Read()
 
-        with gdal.config_option(
-            "GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR"
-        ), webserver.install_http_handler(handler), gdal.OpenEx(
-            f"/vsicurl/http://localhost:{webserver_port}/ref.json",
+        with webserver.install_http_handler(handler), gdal.OpenEx(
+            f"/vsicurl/http://localhost:{webserver_port}/ref.json.zarr",
             gdal.OF_MULTIDIM_RASTER,
         ) as ds:
             rg = ds.GetRootGroup()
