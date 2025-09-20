@@ -1678,3 +1678,28 @@ def test_vsicurl_GDAL_HTTP_MAX_TOTAL_CONNECTIONS(server):
         full_filename = f"/vsicurl/http://localhost:{server.port}/test.bin"
         statres = gdal.VSIStatL(full_filename)
         assert statres.size == 3
+
+
+###############################################################################
+# Test CACHE=NO file open option
+
+
+@gdaltest.enable_exceptions()
+def test_VSIFOpenExL_CACHE_NO(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("HEAD", "/test.bin", 200, {"Content-Length": "3"})
+    handler.add("GET", "/test.bin", 200, {"Content-Length": "3"}, b"abc")
+    handler.add("HEAD", "/test.bin", 200, {"Content-Length": "4"})
+    handler.add("GET", "/test.bin", 200, {"Content-Length": "4"}, b"1234")
+
+    with webserver.install_http_handler(handler):
+        filename = f"/vsicurl/http://localhost:{server.port}/test.bin"
+
+        with gdal.VSIFile(filename, "rb", False, {"CACHE": "NO"}) as f:
+            assert f.read() == b"abc"
+
+        with gdal.VSIFile(filename, "rb", False, {"CACHE": "NO"}) as f:
+            assert f.read() == b"1234"
