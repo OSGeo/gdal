@@ -425,8 +425,8 @@ void JPGDatasetCommon::ReadDJIMetadata()
     if (!bMakerDJI)
         return;
 
-    const int nImageWidth = nRasterXSize;
-    const int nImageHeight = nRasterYSize;
+    int nImageWidth = nRasterXSize;
+    int nImageHeight = nRasterYSize;
     const size_t expectedSizeBytes = size_t(nImageHeight) * nImageWidth * 2;
 
     std::vector<GByte> abyDJI;
@@ -492,13 +492,24 @@ void JPGDatasetCommon::ReadDJIMetadata()
     {
         if (abyDJI.size() != expectedSizeBytes)
         {
-            const auto size =
-                static_cast<long long unsigned int>(abyDJI.size());
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "DJI thermal sizes do not match. Bytes: %llu, "
-                     "width: %d, height %d",
-                     size, nImageWidth, nImageHeight);
-            return;
+            if (abyDJI.size() == static_cast<size_t>(640 * 512 * 2))
+            {
+                // Some models, like M4T, have an JPEG image 1280x1024, but the raw thermal data is 640x512.
+                // In case the raw bytes are exactly that many, allow it.
+                // 640x512 is nowadays the nominal resolution of those sensors.
+                nImageWidth = 640;
+                nImageHeight = 512;
+            }
+            else
+            {
+                const auto size =
+                    static_cast<long long unsigned int>(abyDJI.size());
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "DJI thermal sizes do not match. Bytes: %llu, "
+                         "width: %d, height %d",
+                         size, nImageWidth, nImageHeight);
+                return;
+            }
         }
         SetMetadataItem("RawThermalImageWidth", CPLSPrintf("%d", nImageWidth),
                         "DJI");
