@@ -167,9 +167,9 @@ def TransformPoint(self, *args):
     >>> ct = osr.CoordinateTransformation(wgs84, vt_sp)
     >>> # Transform a point from WGS84 lat/long to Vermont State Plane easting/northing
     >>> ct.TransformPoint(44.26, -72.58)
-    (1619458.1108559777, 641509.1883246159, 0.0)
+    (1619458.11, 641509.19, 0.0) # rtol: 1e-6
     >>> ct.TransformPoint(44.26, -72.58, 103)
-    (1619458.1108559777, 641509.1883246159, 103.0)
+    (1619458.11, 641509.19, 103.0) # rtol: 1e-6
     """
 
     import collections.abc

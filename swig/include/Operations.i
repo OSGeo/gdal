@@ -1017,9 +1017,10 @@ def SuggestedWarpOutput(*args):
     Example
     -------
 
-    >>> ds = gdal.Open("my.tif")
-    ... res = gdal.SuggestedWarpOutput(ds, ["DST_SRS=EPSG:4326"])
-    ... print(res.width, res.height, res.xmin, res.ymin, res.xmax, res.ymax, res.geotransform)
+    >>> ds = gdal.Open("byte.tif")
+    >>> res = gdal.SuggestedWarpOutput(ds, ["DST_SRS=EPSG:4326"])
+    >>> print(res.width, res.height, res.xmin, res.ymin, res.xmax, res.ymax, res.geotransform)
+        22 18 -117.642 33.891 -117.629 33.902 (-117.642, 0.000598, 0.0, 33.902, 0.0, -0.000598)
 
     """
     if isinstance(args[1], GDALTransformerInfoShadow):

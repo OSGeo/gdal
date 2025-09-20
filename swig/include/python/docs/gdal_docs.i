@@ -194,12 +194,15 @@ See :cpp:func:`GDALGetDriverCount`.
 
 Examples
 --------
->>> gdal.GetDriverCount()
-227
->>> gdal.GetDriverByName('ESRI Shapefile').Deregister()
->>> gdal.GetDriverCount()
-226
 
+.. testsetup::
+    >>> pytest.skip()
+
+>>> gdal.GetDriverCount()
+>>> 124
+>>> gdal.GetDriverByName('MapInfo File').Deregister()
+>>> gdal.GetDriverCount()
+>>> 123
 ";
 
 // gdal.GetGlobalConfigOption
