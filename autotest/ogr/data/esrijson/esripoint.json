@@ -44,6 +44,31 @@
       "alias": "fooDate",
       "type": "esriFieldTypeDate",
       "length": 8
+    },
+    {
+      "name": "fooDateOnly",
+      "alias": "fooDateOnly",
+      "type": "esriFieldTypeDateOnly",
+    },
+    {
+      "name": "fooTimeOnly",
+      "alias": "fooTimeOnly",
+      "type": "esriFieldTypeTimeOnly",
+    },
+    {
+      "name": "fooBigInteger",
+      "alias": "fooBigInteger",
+      "type": "esriFieldTypeBigInteger",
+    },
+    {
+      "name": "fooGUID",
+      "alias": "fooGUID",
+      "type": "esriFieldTypeGUID",
+    },
+    {
+      "name": "fooGlobalID",
+      "alias": "fooGlobalID",
+      "type": "esriFieldTypeGlobalID",
     }
   ],
   "features" : [
@@ -59,7 +84,12 @@
         "fooSingle" : 1.5,
         "fooDouble" : 3.4,
         "fooString" : "56",
-        "fooDate": 1640908800000
+        "fooDate": 1640908800000,
+        "fooDateOnly": "2025-09-20",
+        "fooTimeOnly": "12:34:56",
+        "fooBigInteger": 1234567890123456,
+        "fooGlobalID": "{FD04C39C-69C6-4DCC-88D6-7E3E673DD0CB}",
+        "fooGUID": "{3BFE6840-A9E6-432A-AD34-B2067C8A276F}"
       }
     }
   ]
