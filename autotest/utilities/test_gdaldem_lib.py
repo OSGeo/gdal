@@ -910,3 +910,38 @@ def test_gdaldem_lib_dict_arguments():
     ind = opt.index("-co")
 
     assert opt[ind : ind + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]
+
+
+###############################################################################
+
+
+def flipped_ds():
+
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
+    gt = src_ds.GetGeoTransform()
+    ulx = "%.17g" % gt[0]
+    uly = "%.17g" % gt[3]
+    lrx = "%.17g" % (gt[0] + src_ds.RasterXSize * gt[1])
+    lry = "%.17g" % (gt[3] + src_ds.RasterYSize * gt[5])
+    return gdal.Warp("", src_ds, options=f"-of VRT -te {ulx} {uly} {lrx} {lry}")
+
+
+@pytest.mark.parametrize("alg", ["aspect", "TPI", "TRI"])
+def test_gdaldem_lib_flipped_aspect_tpi_tri(alg):
+
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
+    ref_ds = gdal.DEMProcessing("", src_ds, alg, format="MEM", computeEdges=True)
+    out_ds = gdal.DEMProcessing("", flipped_ds(), alg, format="MEM", computeEdges=True)
+    assert ref_ds.GetGeoTransform() == pytest.approx(out_ds.GetGeoTransform())
+    assert ref_ds.ReadRaster() == out_ds.ReadRaster()
+
+
+@pytest.mark.parametrize("alg", ["hillshade", "slope", "roughness"])
+def test_gdaldem_lib_flipped_hillshade_slope_roughness(alg):
+
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
+    ref_ds = gdal.DEMProcessing("", src_ds, alg, format="MEM", computeEdges=True)
+    out_ds = gdal.DEMProcessing("", flipped_ds(), alg, format="MEM", computeEdges=True)
+    out_ds = gdal.Warp("", out_ds, format="MEM")
+    assert ref_ds.GetGeoTransform() == pytest.approx(out_ds.GetGeoTransform())
+    assert ref_ds.ReadRaster() == out_ds.ReadRaster()
