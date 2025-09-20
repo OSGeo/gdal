@@ -360,8 +360,9 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
     // More would lead to unreadable pipelines
     static constexpr int MAX_NESTING_LEVEL = 3;
 
-    bool CheckFirstAndLastStep(
-        const std::vector<GDALPipelineStepAlgorithm *> &steps) const;
+    bool
+    CheckFirstAndLastStep(const std::vector<GDALPipelineStepAlgorithm *> &steps,
+                          bool forAutoComplete) const;
 
     bool ParseCommandLineArguments(const std::vector<std::string> &args,
                                    bool forAutoComplete);

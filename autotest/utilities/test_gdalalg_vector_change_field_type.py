@@ -285,8 +285,19 @@ def test_gdalalg_change_field_type_completion(tmp_path):
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! change-field-type --field-name "
     )
-    # This is failing!
-    # assert "EAS_ID" in out
+    assert "EAS_ID" in out
+
+    # No completion when there is a tee operator as this can be a slow operation
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! tee [ write /vsimem/out.gpkg ] ! change-field-type --field-name "
+    )
+    assert "EAS_ID" not in out
+
+    # Or with contour
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline read ../gcore/data/byte.tif ! contour --interval 10 ! change-field-type --field-name "
+    )
+    assert "EAS_ID" not in out
 
 
 @pytest.mark.require_driver("GPKG")
