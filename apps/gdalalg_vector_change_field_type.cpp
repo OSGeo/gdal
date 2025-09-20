@@ -44,33 +44,35 @@ GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
         .AddAlias("dst-field-type")
         .SetRequired();
     AddValidationAction(
-        [this]
-        {
-            if (!m_inputDataset.empty())
-            {
-                auto mInDS = m_inputDataset[0].GetDatasetRef();
-                auto layer = m_activeLayer.empty()
-                                 ? mInDS->GetLayer(0)
-                                 : mInDS->GetLayerByName(m_activeLayer.c_str());
-                if (!layer)
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Cannot find layer '%s'", m_activeLayer.c_str());
-                    return false;
-                }
-                if (!m_fieldName.empty() &&
-                    layer->GetLayerDefn()->GetFieldIndex(m_fieldName.c_str()) <
-                        0)
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Cannot find field '%s' in layer '%s'",
-                             m_fieldName.c_str(), layer->GetName());
-                    return false;
-                }
-                return true;
-            }
-            return false;
-        });
+        [this] { return m_inputDataset.empty() || GlobalValidation(); });
+}
+
+/************************************************************************/
+/*                            GlobalValidation()                        */
+/************************************************************************/
+
+bool GDALVectorChangeFieldTypeAlgorithm::GlobalValidation() const
+{
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    auto layer = m_activeLayer.empty()
+                     ? poSrcDS->GetLayer(0)
+                     : const_cast<GDALDataset *>(poSrcDS)->GetLayerByName(
+                           m_activeLayer.c_str());
+    if (!layer)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find layer '%s'",
+                 m_activeLayer.c_str());
+        return false;
+    }
+    if (!m_fieldName.empty() &&
+        layer->GetLayerDefn()->GetFieldIndex(m_fieldName.c_str()) < 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find field '%s' in layer '%s'", m_fieldName.c_str(),
+                 layer->GetName());
+        return false;
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -211,6 +213,8 @@ bool GDALVectorChangeFieldTypeAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
+    if (!GlobalValidation())
+        return false;
 
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());

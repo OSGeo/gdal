@@ -246,6 +246,26 @@ def test_gdalalg_vector_change_field_type_errors():
         )
 
 
+def test_gdalalg_change_field_type_in_pipeline():
+
+    with gdal.Run(
+        "pipeline",
+        pipeline="read ../ogr/data/poly.shp ! change-field-type --field-name EAS_ID --field-type Integer ! write --output-format stream stream",
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["EAS_ID"] == 168
+
+    with pytest.raises(
+        Exception, match="Cannot find field 'invalid_field' in layer 'poly'"
+    ):
+        gdal.Run(
+            "pipeline",
+            pipeline="read ../ogr/data/poly.shp ! change-field-type --field-name invalid_field --field-type Integer ! write --output-format stream stream",
+        )
+
+
 def test_gdalalg_change_field_type_completion(tmp_path):
 
     gdal_path = test_cli_utilities.get_gdal_path()
