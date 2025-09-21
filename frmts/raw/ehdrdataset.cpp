@@ -918,8 +918,12 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
 {
     // Assume the caller is pointing to the binary (i.e. .bil) file.
-    if (poOpenInfo->nHeaderBytes < 2 || poOpenInfo->fpL == nullptr)
+    if (poOpenInfo->nHeaderBytes < 2 || poOpenInfo->fpL == nullptr ||
+        (!poOpenInfo->IsSingleAllowedDriver("EHdr") &&
+         poOpenInfo->IsExtensionEqualToCI("zarr")))
+    {
         return nullptr;
+    }
 
     // Tear apart the filename to form a .HDR filename.
     const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
@@ -937,7 +941,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         pszHeaderExt = "sch";
     }
 
-    char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
+    CSLConstList papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     CPLString osHDRFilename;
     if (papszSiblingFiles)
     {

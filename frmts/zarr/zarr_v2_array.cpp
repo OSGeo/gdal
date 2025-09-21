@@ -14,6 +14,7 @@
 #include "cpl_vsi_virtual.h"
 #include "gdal_thread_pool.h"
 #include "zarr.h"
+#include "vsikerchunk.h"
 
 #include "netcdf_cf_constants.h"  // for CF_UNITS, etc
 
@@ -1498,6 +1499,13 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 }
                 else
                 {
+                    if ((cpl::starts_with(osDirName, JSON_REF_FS_PREFIX) ||
+                         cpl::starts_with(osDirName, JSON_REF_FS_PREFIX)) &&
+                        osDirName.back() == '}')
+                    {
+                        break;
+                    }
+
                     // Recurse to upper level for datasets such as
                     // /vsis3/hrrrzarr/sfc/20210809/20210809_00z_anl.zarr/0.1_sigma_level/HAIL_max_fcst/0.1_sigma_level/HAIL_max_fcst
                     std::string osDirNameNew =
