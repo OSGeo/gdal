@@ -1,7 +1,7 @@
 .. _rfc-109:
 
 =====================================================================
-RFC 109: Split of gdal_priv.h and addition of gdal_cpp.h header
+RFC 109: Split of gdal_priv.h and addition of public C++ headers
 =====================================================================
 
 ============== =============================================
@@ -17,7 +17,8 @@ Summary
 
 This RFC splits the content of :file:`gdal_priv.h`, the installed header
 containing declaration for GDAL (raster) C++ classes, into finer grain exported headers.
-It also adds a new :file:`gdal_cpp.h` exported header, which is essentially the
+It also adds 3 new exported headers, :file:`gdal_raster_cpp.h`, :file:`gdal_multidim_cpp.h`
+and :file:`gdal_vector_cpp.h`, the first two ones being essentially the
 content of current :file:`gdal_priv.h` header, but with a more engaging name.
 Those changes are done in a fully backward compatible way: current external
 users of :file:`gdal_priv.h` will not have any change to do in their source code.
@@ -74,8 +75,14 @@ headers and GDAL specific headers) required to make it compile in a standalone
 mode (and this is enforced by a CI check) and use forward class definitions as
 much as possible.
 
-A new :file:`gdal_cpp.h` file is added and just includes all the above mentioned
-files.
+Three new public entry points header files are added:
+
+- :file:`gdal_raster_cpp.h`: includes all above files but :file:`gdal_multidim.h`
+  and :file:`gdal_pam_multidim.h`
+- :file:`gdal_multidim_cpp.h`: includes :file:`gdal_dataset.h`, :file:`gdal_drivermanager.h`,
+  :file:`gdal_multidim.h` and :file:`gdal_pam_multidim.h`
+- :file:`gdal_vector_cpp.h`: includes :file:`gdal_dataset.h`, :file:`gdal_drivermanager.h`,
+  :file:`ogrsf_frmts.h`, :file:`ogr_feature.h` and :file:`ogr_geometry.h`
 
 The existing :file:`gdal_priv.h` is modified as following:
 
@@ -89,13 +96,14 @@ The existing :file:`gdal_priv.h` is modified as following:
   needed is kept by default.  Users may define ``GDAL_PRIV_SKIP_STANDARD_HEADERS`` or ``GDAL_4_0_COMPAT``
   before including :file:`gdal_priv.h` to avoid including those files.
 
-- and finally it includes the new :file:`gdal_cpp.h`
+- and finally it includes the new :file:`gdal_raster_cpp.h` and :file:`gdal_multidim_cpp.h` files.
 
 The end result is that this whole restructuring should not have any visible
 effect on current users of :file:`gdal_priv.h`.
 
 New users targeting only GDAL 3.12+ can now include at their convenience either
-:file:`gdal_cpp.h` or any of the new finer grain include files.
+:file:`gdal_raster_cpp.h`, :file:`gdal_multidim_cpp.h`, :file:`gdal_vector_cpp.h`
+or any of the new finer grain include files.
 
 .. note::
 
@@ -110,15 +118,6 @@ New users targeting only GDAL 3.12+ can now include at their convenience either
     not CPL_DLL exported.
 
 
-Open questions
---------------
-
-- Do we need :file:`gdal_cpp.h` at all, or just keep with :file:`gdal_priv.h` ?
-  One advantage of :file:`gdal_priv.h` is that the name does not suggest any stability.
-
-- Does the content of :file:`gdal_cpp.h` must target only the GDAL "classic 2D" and
-  multidimensional C++ API, or also the C++ vector API ?
-
 Backwards compatibility
 -----------------------
 
@@ -127,7 +126,8 @@ Changes in this RFC aim at being backward compatible by default.
 Documentation
 -------------
 
-Pages under https://gdal.org/en/latest/api/index.html#raster-api and https://gdal.org/en/latest/api/index.html#multi-dimensional-array-api will be modified to mention the new finer grain headers.
+Documentation under https://gdal.org/en/latest/api will be modified to mention
+the new finer grain headers and entry points.
 
 https://gdal.org/en/latest/tutorials/raster_api_tut.html will be modified to
 mention the possibility of using the new headers.
