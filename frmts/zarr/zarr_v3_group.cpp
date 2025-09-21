@@ -106,8 +106,14 @@ void ZarrV3Group::ExploreDirectory() const
     {
         if (VSI_ISDIR(psEntry->nMode))
         {
+            std::string osName(psEntry->pszName);
+            while (!osName.empty() &&
+                   (osName.back() == '/' || osName.back() == '\\'))
+                osName.pop_back();
+            if (osName.empty())
+                continue;
             const std::string osSubDir = CPLFormFilenameSafe(
-                m_osDirectoryName.c_str(), psEntry->pszName, nullptr);
+                m_osDirectoryName.c_str(), osName.c_str(), nullptr);
             VSIStatBufL sStat;
             const std::string osZarrJsonFilename =
                 CPLFormFilenameSafe(osSubDir.c_str(), "zarr.json", nullptr);
@@ -126,18 +132,18 @@ void ZarrV3Group::ExploreDirectory() const
                     const std::string osNodeType = oRoot.GetString("node_type");
                     if (osNodeType == "array")
                     {
-                        if (std::find(m_aosArrays.begin(), m_aosArrays.end(),
-                                      psEntry->pszName) == m_aosArrays.end())
+                        if (!cpl::contains(m_oSetArrayNames, osName))
                         {
-                            m_aosArrays.emplace_back(psEntry->pszName);
+                            m_oSetArrayNames.insert(osName);
+                            m_aosArrays.emplace_back(std::move(osName));
                         }
                     }
                     else if (osNodeType == "group")
                     {
-                        if (std::find(m_aosGroups.begin(), m_aosGroups.end(),
-                                      psEntry->pszName) == m_aosGroups.end())
+                        if (!cpl::contains(m_oSetGroupNames, osName))
                         {
-                            m_aosGroups.emplace_back(psEntry->pszName);
+                            m_oSetGroupNames.insert(osName);
+                            m_aosGroups.emplace_back(std::move(osName));
                         }
                     }
                     else
@@ -150,11 +156,11 @@ void ZarrV3Group::ExploreDirectory() const
             }
             else
             {
-                // Implicit group
-                if (std::find(m_aosGroups.begin(), m_aosGroups.end(),
-                              psEntry->pszName) == m_aosGroups.end())
+                // Implicit group (deprecated)
+                if (!cpl::contains(m_oSetGroupNames, osName))
                 {
-                    m_aosGroups.emplace_back(psEntry->pszName);
+                    m_oSetGroupNames.insert(osName);
+                    m_aosGroups.emplace_back(std::move(osName));
                 }
             }
         }
@@ -351,8 +357,7 @@ ZarrV3Group::CreateGroup(const std::string &osName,
 
     GetGroupNames();
 
-    if (std::find(m_aosGroups.begin(), m_aosGroups.end(), osName) !=
-        m_aosGroups.end())
+    if (cpl::contains(m_oSetGroupNames, osName))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "A group with same name already exists");
@@ -550,8 +555,7 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
 
     GetMDArrayNames();
 
-    if (std::find(m_aosArrays.begin(), m_aosArrays.end(), osName) !=
-        m_aosArrays.end())
+    if (cpl::contains(m_oSetArrayNames, osName))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "An array with same name already exists");
