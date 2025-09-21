@@ -4726,3 +4726,24 @@ def test_gdalwarplib_on_huge_raster():
     )
     assert out_ds.RasterXSize == 24
     assert out_ds.RasterYSize == 24
+
+
+###############################################################################
+# Just reflect the current behavior. We might decide to adopt a new behavior
+
+
+def test_gdalwarp_lib_mask_band_and_src_nodata():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    src_ds.GetRasterBand(1).SetNoDataValue(2)
+    src_ds.GetRasterBand(1).Fill(2)
+    src_ds.GetRasterBand(1).GetMaskBand().Fill(255)
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="Source dataset has both a per-dataset mask band and the warper has been also configured with a source nodata value. Only taking into account the latter",
+    ):
+        out_ds = gdal.Warp("", src_ds, options="-f MEM -dstnodata 5")
+        assert out_ds.GetRasterBand(1).ReadRaster() == b"\x05"
