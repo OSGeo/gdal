@@ -283,7 +283,7 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
     // we are not the base image.
     if (m_poMaskDS)
     {
-        // Nullify m_nOverviewCount before deleting overviews, otherwise
+        // Nullify m_poMaskDS before deleting overviews, otherwise
         // GTiffDataset::FlushDirectory() might try to access it while being
         // deleted. (#5580)
         auto poMaskDS = m_poMaskDS;
@@ -372,8 +372,7 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
     CPLFree(m_pszVertUnit);
     m_pszVertUnit = nullptr;
 
-    CPLFree(m_pszFilename);
-    m_pszFilename = nullptr;
+    m_osFilename.clear();
 
     CPLFree(m_pszGeorefFilename);
     m_pszGeorefFilename = nullptr;
@@ -861,7 +860,7 @@ void GTiffDataset::ReloadDirectory(bool bReopenHandle)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot re-open TIFF handle for file %s. "
                      "Directory chaining may be corrupted !",
-                     m_pszFilename);
+                     m_osFilename.c_str());
         }
     }
     if (bNeedSetInvalidDir)
@@ -1130,7 +1129,7 @@ void GTiffDataset::ScanDirectories()
                 if (m_bHasGotSiblingFiles)
                     poODS->oOvManager.TransferSiblingFiles(
                         CSLDuplicate(GetSiblingFiles()));
-                poODS->m_pszFilename = CPLStrdup(m_pszFilename);
+                poODS->m_osFilename = m_osFilename;
                 poODS->m_nColorTableMultiplier = m_nColorTableMultiplier;
                 if (poODS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF), nThisDir,
                                       eAccess) != CE_None ||
@@ -1200,7 +1199,7 @@ void GTiffDataset::ScanDirectories()
                 m_poMaskDS = new GTiffDataset();
                 m_poMaskDS->ShareLockWithParentDataset(this);
                 m_poMaskDS->SetStructuralMDFromParent(this);
-                m_poMaskDS->m_pszFilename = CPLStrdup(m_pszFilename);
+                m_poMaskDS->m_osFilename = m_osFilename;
 
                 // The TIFF6 specification - page 37 - only allows 1
                 // SamplesPerPixel and 1 BitsPerSample Here we support either 1
@@ -1246,7 +1245,7 @@ void GTiffDataset::ScanDirectories()
                 GTiffDataset *poDS = new GTiffDataset();
                 poDS->ShareLockWithParentDataset(this);
                 poDS->SetStructuralMDFromParent(this);
-                poDS->m_pszFilename = CPLStrdup(m_pszFilename);
+                poDS->m_osFilename = m_osFilename;
                 if (poDS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF), nThisDir,
                                      eAccess) != CE_None ||
                     poDS->GetRasterCount() == 0 ||
@@ -1349,7 +1348,7 @@ void GTiffDataset::ScanDirectories()
 
                     CPLString osName, osDesc;
                     osName.Printf("SUBDATASET_%d_NAME=GTIFF_DIR:%d:%s",
-                                  iDirIndex, iDirIndex, m_pszFilename);
+                                  iDirIndex, iDirIndex, m_osFilename.c_str());
                     osDesc.Printf(
                         "SUBDATASET_%d_DESC=Page %d (%dP x %dL x %dB)",
                         iDirIndex, iDirIndex, static_cast<int>(nXSize),
@@ -1438,6 +1437,9 @@ void *GTiffDataset::GetInternalHandle(const char *pszHandleName)
 char **GTiffDataset::GetFileList()
 
 {
+    if (m_poBaseDS != nullptr)
+        return nullptr;
+
     LoadGeoreferencingAndPamIfNeeded();
 
     char **papszFileList = GDALPamDataset::GetFileList();
@@ -1470,7 +1472,7 @@ char **GTiffDataset::GetFileList()
         papszFileList = CSLAddString(papszFileList, m_pszXMLFilename);
     }
 
-    const std::string osVATDBF = std::string(m_pszFilename) + ".vat.dbf";
+    const std::string osVATDBF = m_osFilename + ".vat.dbf";
     VSIStatBufL sStat;
     if (VSIStatL(osVATDBF.c_str(), &sStat) == 0)
     {
@@ -1591,7 +1593,7 @@ bool GTiffDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
         }
     }
 
-    sLayout.osRawFilename = m_pszFilename;
+    sLayout.osRawFilename = m_osFilename;
     sLayout.eInterleaving = eInterleaving;
     sLayout.eDataType = eDT;
 #ifdef CPL_LSB

@@ -12454,3 +12454,23 @@ def test_tiff_create_suppress_on_close_only_visible_at_close_time_vsimem(tmp_vsi
     assert gdal.VSIStatL(out_filename) is None
     ds.Close()
     assert gdal.VSIStatL(out_filename) is None
+
+
+###############################################################################
+# Test that this does not crash
+
+
+def test_tiff_write_create_mask_band_and_set_color_interp(tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "out.tif", 1, 1) as ds:
+        band = ds.GetRasterBand(1)
+        band.CreateMaskBand(gdal.GMF_PER_DATASET)
+        mask_band = band.GetMaskBand()
+        mask_band.SetColorInterpretation(gdal.GCI_RedBand)  # ignored
+        mask_band.SetColorInterpretation(gdal.GCI_Undefined)
+        mask_band.SetMetadataItem("foo", "bar")
+        mask_band.SetNoDataValue(0)
+
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem("foo") == "bar"
+        assert ds.GetRasterBand(1).GetMaskBand().GetNoDataValue() == 0
