@@ -79,7 +79,8 @@ bool GDALAbstractPipelineAlgorithm::IsWriteSpecificArgument(
 /************************************************************************/
 
 bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
-    const std::vector<GDALPipelineStepAlgorithm *> &steps) const
+    const std::vector<GDALPipelineStepAlgorithm *> &steps,
+    bool forAutoComplete) const
 {
     if (m_bExpectReadStep && !steps.front()->CanBeFirstStep())
     {
@@ -124,6 +125,10 @@ bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
             return false;
         }
     }
+
+    if (forAutoComplete)
+        return true;
+
     if (!m_bExpectWriteStep)
     {
         if (steps.back()->CanBeLastStep() && !steps.back()->CanBeMiddleStep())
@@ -693,7 +698,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
     std::vector<GDALPipelineStepAlgorithm *> stepAlgs;
     for (const auto &step : steps)
         stepAlgs.push_back(step.alg.get());
-    if (!CheckFirstAndLastStep(stepAlgs))
+    if (!CheckFirstAndLastStep(stepAlgs, forAutoComplete))
         return false;  // CheckFirstAndLastStep emits an error
 
     for (auto &step : steps)
@@ -745,7 +750,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         }
     };
 
-    if (m_bExpectWriteStep)
+    if (m_bExpectWriteStep && steps.back().alg->CanBeLastStep())
     {
         SetWriteArgFromPipeline();
     }
@@ -1010,6 +1015,8 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                         if (poDS && poDS->GetLayerCount() > 0)
                             ret = false;
                     }
+                    else if (!ret && firstStep)
+                        ret = true;
                 }
             }
             else if (!m_bExpectReadStep &&
@@ -1061,7 +1068,8 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         for (auto &step : steps)
         {
             step.alg->m_skipValidationInParseCommandLine = true;
-            if (!step.alg->ParseCommandLineArguments(step.args))
+            if (!step.alg->ParseCommandLineArguments(step.args) &&
+                !forAutoComplete)
                 return false;
         }
     }
@@ -1427,6 +1435,7 @@ GDALAbstractPipelineAlgorithm::GetAutoComplete(std::vector<std::string> &args,
             std::string lastStep = args[0];
             std::vector<std::string> lastArgs;
             bool firstStep = true;
+            bool foundSlowStep = false;
             for (size_t i = 1; i < args.size(); ++i)
             {
                 if (firstStep && isMixedTypePipeline &&
@@ -1464,7 +1473,12 @@ GDALAbstractPipelineAlgorithm::GetAutoComplete(std::vector<std::string> &args,
                             curAlg = GetStepAlg(lastStep + VECTOR_SUFFIX);
                     }
                     if (curAlg)
+                    {
+                        foundSlowStep =
+                            foundSlowStep ||
+                            !curAlg->IsNativelyStreamingCompatible();
                         nDatasetType = curAlg->GetOutputType();
+                    }
                 }
             }
 
@@ -1500,6 +1514,22 @@ GDALAbstractPipelineAlgorithm::GetAutoComplete(std::vector<std::string> &args,
             }
             else
             {
+                if (!foundSlowStep)
+                {
+                    // Try to run the pipeline so that the last step gets its
+                    // input dataset.
+                    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                    GDALPipelineStepRunContext ctxt;
+                    RunStep(ctxt);
+                    if (!m_steps.empty() &&
+                        m_steps.back()->GetName() == lastStep)
+                    {
+                        return m_steps.back()->GetAutoComplete(
+                            lastArgs, lastWordIsComplete,
+                            /* showAllOptions = */ false);
+                    }
+                }
+
                 auto curAlg = GetStepAlg(lastStep);
                 if (isMixedTypePipeline && !curAlg)
                 {
