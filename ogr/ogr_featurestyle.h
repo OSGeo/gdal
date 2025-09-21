@@ -244,6 +244,10 @@ class CPL_DLL OGRStyleTool
     double GetParamDbl(const OGRStyleParamId &sStyleParam,
                        const OGRStyleValue &sStyleValue, GBool &bValueIsNull);
 
+    double GetRawParamDbl(const OGRStyleParamId &sStyleParam,
+                          const OGRStyleValue &sStyleValue,
+                          OGRSTUnitId &eRawUnit, GBool &bValueIsNull);
+
     void SetParamStr(const OGRStyleParamId &sStyleParam,
                      OGRStyleValue &sStyleValue, const char *pszParamString);
 
@@ -293,6 +297,11 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     double Width(GBool &bDefault)
     {
         return GetParamDbl(OGRSTPenWidth, bDefault);
+    }
+
+    double RawWidth(OGRSTUnitId &eRawUnit, GBool &bDefault)
+    {
+        return GetRawParamDbl(OGRSTPenWidth, eRawUnit, bDefault);
     }
 
     void SetWidth(double dfWidth)
@@ -365,6 +374,8 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     const char *GetParamStr(OGRSTPenParam eParam, GBool &bValueIsNull);
     int GetParamNum(OGRSTPenParam eParam, GBool &bValueIsNull);
     double GetParamDbl(OGRSTPenParam eParam, GBool &bValueIsNull);
+    double GetRawParamDbl(OGRSTPenParam eParam, OGRSTUnitId &eRawUnit,
+                          GBool &bValueIsNull);
     void SetParamStr(OGRSTPenParam eParam, const char *pszParamString);
     void SetParamNum(OGRSTPenParam eParam, int nParam);
     void SetParamDbl(OGRSTPenParam eParam, double dfParam);
