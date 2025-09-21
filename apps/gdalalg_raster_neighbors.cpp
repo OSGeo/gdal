@@ -451,7 +451,8 @@ bool GDALRasterNeighborsAlgorithm::RunStep(GDALPipelineStepRunContext &)
             def.size = m_size;
             const double dfWeight =
                 m_method[i] == "mean"
-                    ? 1.0 / (static_cast<double>(m_size) * m_size)
+                    ? 1.0 / (static_cast<double>(m_size) * m_size +
+                             std::numeric_limits<double>::min())
                     : 1.0;
             def.adfCoefficients.resize(static_cast<size_t>(m_size) * m_size,
                                        dfWeight);
