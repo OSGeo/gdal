@@ -30,6 +30,7 @@
 #include "gdalalg_raster_hillshade.h"
 #include "gdalalg_raster_index.h"
 #include "gdalalg_raster_mosaic.h"
+#include "gdalalg_raster_neighbors.h"
 #include "gdalalg_raster_nodata_to_alpha.h"
 #include "gdalalg_raster_overview.h"
 #include "gdalalg_raster_pansharpen.h"
@@ -95,6 +96,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterHillshadeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterFillNodataAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterIndexAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterNeighborsAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterOverviewAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterPipelineAlgorithm>();
         RegisterSubAlgorithm<GDALRasterPixelInfoAlgorithm>();

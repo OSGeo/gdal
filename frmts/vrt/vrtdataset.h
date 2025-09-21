@@ -1783,6 +1783,7 @@ class VRTKernelFilteredSource CPL_NON_FINAL : public VRTFilteredSource
     // m_nKernelSize elements if m_bSeparable, m_nKernelSize * m_nKernelSize otherwise
     std::vector<double> m_adfKernelCoefs{};
     bool m_bNormalized = false;
+    std::string m_function{};
 
   public:
     VRTKernelFilteredSource();
@@ -1799,6 +1800,11 @@ class VRTKernelFilteredSource CPL_NON_FINAL : public VRTFilteredSource
     CPLErr SetKernel(int nKernelSize, bool bSeparable,
                      const std::vector<double> &adfNewCoefs);
     void SetNormalized(bool);
+
+    void SetFunction(const std::string &s)
+    {
+        m_function = s;
+    }
 };
 
 /************************************************************************/

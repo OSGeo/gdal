@@ -612,6 +612,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_neighbors",
+        "gdal-raster-neighbors",
+        "Compute the value of each pixel from its neighbors (focal statistics)",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_nodata_to_alpha",
         "gdal-raster-nodata-to-alpha",
         "Replace nodata value(s) with an alpha band",
