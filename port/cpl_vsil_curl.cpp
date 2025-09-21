@@ -4378,9 +4378,11 @@ VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
         papszOptions, "DISABLE_READDIR_ON_OPEN",
         VSIGetPathSpecificOption(pszFilename, "GDAL_DISABLE_READDIR_ON_OPEN",
                                  "NO"));
-    const bool bSkipReadDir =
-        !bListDir || bEmptyDir || EQUAL(pszOptionVal, "EMPTY_DIR") ||
-        CPLTestBool(pszOptionVal) || !AllowCachedDataFor(pszFilename);
+    const bool bCache = CPLTestBool(CSLFetchNameValueDef(
+        papszOptions, "CACHE", AllowCachedDataFor(pszFilename) ? "YES" : "NO"));
+    const bool bSkipReadDir = !bListDir || bEmptyDir ||
+                              EQUAL(pszOptionVal, "EMPTY_DIR") ||
+                              CPLTestBool(pszOptionVal) || !bCache;
 
     std::string osFilename(pszFilename);
     bool bGotFileList = !bSkipReadDir;
@@ -4428,6 +4430,7 @@ VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
         std::unique_ptr<VSICurlHandle>(CreateFileHandle(osFilename.c_str()));
     if (poHandle == nullptr)
         return nullptr;
+    poHandle->SetCache(bCache);
     if (!bGotFileList || bForceExistsCheck)
     {
         // If we didn't get a filelist, check that the file really exists.

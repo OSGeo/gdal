@@ -6121,14 +6121,14 @@ class VSIFile(BytesIO):
        :since: GDAL 3.11
     """
 
-    def __init__(self, path, mode, encoding="utf-8"):
+    def __init__(self, path, mode, encoding="utf-8", options = {}):
         self._path = path
         self._mode = mode
 
         self._binary = "b" in mode
         self._encoding = encoding
 
-        self._fp = VSIFOpenExL(self._path, self._mode, True)
+        self._fp = VSIFOpenExL(self._path, self._mode, True, options)
         if self._fp is None:
             self._closed = True
             raise OSError(VSIGetLastErrorMsg())
