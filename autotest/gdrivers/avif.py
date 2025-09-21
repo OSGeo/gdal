@@ -13,6 +13,7 @@
 ###############################################################################
 
 import base64
+import os
 import shutil
 
 import gdaltest
@@ -364,3 +365,16 @@ def test_avif_geoheif_curie():
         and gcp.GCPY == pytest.approx(6090000.0, abs=1e-5)
         and gcp.GCPZ == pytest.approx(0, abs=1e-5)
     )
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(not has_avif_encoder(), reason="libavif encoder missing")
+def test_avif_close(tmp_path):
+
+    ds = gdal.GetDriverByName("AVIF").CreateCopy(
+        tmp_path / "out.avif", gdal.Open("data/rgbsmall.tif")
+    )
+    ds.Close()
+    os.remove(tmp_path / "out.avif")

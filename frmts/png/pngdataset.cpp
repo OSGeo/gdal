@@ -269,7 +269,7 @@ GDALColorTable *PNGRasterBand::GetColorTable()
     PNGDataset *poGDS = cpl::down_cast<PNGDataset *>(poDS);
 
     if (nBand == 1)
-        return poGDS->poColorTable;
+        return poGDS->poColorTable.get();
 
     return nullptr;
 }
@@ -326,16 +326,31 @@ PNGDataset::PNGDataset()
 PNGDataset::~PNGDataset()
 
 {
-    PNGDataset::FlushCache(true);
+    PNGDataset::Close();
 
     if (hPNG != nullptr)
         png_destroy_read_struct(&hPNG, &psPNGInfo, nullptr);
+}
 
-    if (fpImage)
-        VSIFCloseL(fpImage);
+/************************************************************************/
+/*                                Close()                               */
+/************************************************************************/
 
-    if (poColorTable != nullptr)
-        delete poColorTable;
+CPLErr PNGDataset::Close()
+{
+    CPLErr eErr = CE_None;
+
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        eErr = PNGDataset::FlushCache(true);
+
+        if (fpImage != nullptr && VSIFCloseL(fpImage) != 0)
+            eErr = CE_Failure;
+        fpImage = nullptr;
+
+        eErr = GDAL::Combine(eErr, GDALPamDataset::Close());
+    }
+    return eErr;
 }
 
 /************************************************************************/
@@ -1921,7 +1936,7 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
         png_get_tRNS(poDS->hPNG, poDS->psPNGInfo, &trans, &num_trans,
                      &trans_values);
 
-        poDS->poColorTable = new GDALColorTable();
+        poDS->poColorTable = std::make_unique<GDALColorTable>();
 
         GDALColorEntry oEntry;
         int nNoDataIndex = -1;

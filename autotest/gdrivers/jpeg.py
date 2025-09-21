@@ -492,12 +492,11 @@ def test_jpeg_15():
 # Test overview support
 
 
-def test_jpeg_16(jpeg_version):
+def test_jpeg_16(jpeg_version, tmp_path):
 
-    shutil.copy("data/jpeg/albania.jpg", "tmp/albania.jpg")
-    gdal.Unlink("tmp/albania.jpg.ovr")
+    shutil.copy("data/jpeg/albania.jpg", tmp_path / "albania.jpg")
 
-    ds = gdal.Open("tmp/albania.jpg")
+    ds = gdal.Open(tmp_path / "albania.jpg")
     assert ds.GetRasterBand(1).GetOverviewCount() == 1
     assert ds.GetRasterBand(1).GetOverview(-1) is None
     assert ds.GetRasterBand(1).GetOverview(1) is None
@@ -525,7 +524,7 @@ def test_jpeg_16(jpeg_version):
     ds = None
 
     # Check we are using external overviews
-    ds = gdal.Open("tmp/albania.jpg")
+    ds = gdal.Open(tmp_path / "albania.jpg")
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if jpeg_version in ("8", "9b"):
@@ -534,7 +533,9 @@ def test_jpeg_16(jpeg_version):
         expected_cs = 32460
     assert cs == expected_cs
 
-    ds = None
+    assert ds.Close() == gdal.CE_None
+    os.unlink(tmp_path / "albania.jpg")
+    os.unlink(tmp_path / "albania.jpg.ovr")
 
 
 ###############################################################################
@@ -1729,12 +1730,3 @@ def test_jpeg_create_copy_only_visible_at_close_time(tmp_path):
 
     with gdal.Open(out_filename) as ds:
         ds.GetRasterBand(1).Checksum()
-
-
-###############################################################################
-# Cleanup
-
-
-def test_jpeg_cleanup():
-    gdal.Unlink("tmp/albania.jpg")
-    gdal.Unlink("tmp/albania.jpg.ovr")

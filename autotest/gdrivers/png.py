@@ -13,6 +13,7 @@
 ###############################################################################
 
 import array
+import os
 
 import gdaltest
 import pytest
@@ -607,3 +608,15 @@ def test_png_create_zlevel(tmp_vsimem, zlevel):
         gdal.GetDriverByName("PNG").CreateCopy(
             tmp_vsimem / "out.png", src_ds, options=[f"ZLEVEL={zlevel}"]
         )
+
+
+###############################################################################
+
+
+def test_png_close(tmp_path):
+
+    ds = gdal.GetDriverByName("PNG").CreateCopy(
+        tmp_path / "out.png", gdal.Open("data/byte.tif")
+    )
+    ds.Close()
+    os.remove(tmp_path / "out.png")
