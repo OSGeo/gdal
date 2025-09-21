@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "color-merge" step of "raster pipeline"
+ * Purpose:  "blend" step of "raster pipeline"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,49 +10,51 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_RASTER_COLOR_MERGE_INCLUDED
-#define GDALALG_RASTER_COLOR_MERGE_INCLUDED
+#ifndef GDALALG_RASTER_BLEND_INCLUDED
+#define GDALALG_RASTER_BLEND_INCLUDED
 
 #include "gdalalg_raster_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                  GDALRasterColorMergeAlgorithm                       */
+/*                     GDALRasterBlendAlgorithm                         */
 /************************************************************************/
 
-class GDALRasterColorMergeAlgorithm /* non final*/
+class GDALRasterBlendAlgorithm /* non final*/
     : public GDALRasterPipelineStepAlgorithm
 {
   public:
-    explicit GDALRasterColorMergeAlgorithm(bool standaloneStep = false);
+    explicit GDALRasterBlendAlgorithm(bool standaloneStep = false);
 
-    static constexpr const char *NAME = "color-merge";
+    static constexpr const char *NAME = "blend";
     static constexpr const char *DESCRIPTION =
-        "Use a grayscale raster to replace the intensity of a RGB/RGBA dataset";
-    static constexpr const char *HELP_URL =
-        "/programs/gdal_raster_color_merge.html";
+        "Blend/compose two raster datasets";
+    static constexpr const char *HELP_URL = "/programs/gdal_raster_blend.html";
 
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
+    bool ValidateGlobal();
 
-    GDALArgDatasetValue m_grayScaleDataset{};
+    GDALArgDatasetValue m_overlayDataset{};
+    std::string m_operator{};
+    static constexpr int OPACITY_INPUT_RANGE = 100;
+    int m_opacity = OPACITY_INPUT_RANGE;
 };
 
 /************************************************************************/
-/*                GDALRasterColorMergeAlgorithmStandalone                */
+/*                  GDALRasterBlendAlgorithmStandalone                  */
 /************************************************************************/
 
-class GDALRasterColorMergeAlgorithmStandalone final
-    : public GDALRasterColorMergeAlgorithm
+class GDALRasterBlendAlgorithmStandalone final : public GDALRasterBlendAlgorithm
 {
   public:
-    GDALRasterColorMergeAlgorithmStandalone()
-        : GDALRasterColorMergeAlgorithm(/* standaloneStep = */ true)
+    GDALRasterBlendAlgorithmStandalone()
+        : GDALRasterBlendAlgorithm(/* standaloneStep = */ true)
     {
     }
 
-    ~GDALRasterColorMergeAlgorithmStandalone() override;
+    ~GDALRasterBlendAlgorithmStandalone() override;
 };
 
 //! @endcond
