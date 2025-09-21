@@ -1860,6 +1860,11 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     std::string ValidateChoice(const std::string &value) const;
     bool ValidateIntRange(int val) const;
     bool ValidateRealRange(double val) const;
+
+    void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
+                     ...) const CPL_PRINT_FUNC_FORMAT(4, 5);
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALAlgorithmArg)
 };
 
 /************************************************************************/
