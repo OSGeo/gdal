@@ -454,7 +454,7 @@ def test_gdalalg_raster_create_driver_not_available():
     drv = gdal.GetDriverByName("MEM")
     drv.Deregister()
     try:
-        with pytest.raises(Exception, match="Cannot find driver MEM"):
+        with pytest.raises(Exception, match="Driver 'MEM' does not exist"):
             alg.Run()
     finally:
         drv.Register()
@@ -497,4 +497,22 @@ def test_gdalalg_raster_set_bbox_failed(tmp_vsimem):
     alg["size"] = [1, 1]
 
     with pytest.raises(Exception, match="Setting extent failed"):
+        alg.Run()
+
+
+def test_gdalalg_raster_create_empty_bbox():
+
+    alg = get_alg()
+    alg["output-format"] = "MEM"
+    with pytest.raises(
+        Exception,
+        match="0 value has been specified for argument 'bbox', whereas exactly 4 were expected",
+    ):
+        alg["bbox"] = []
+    alg["size"] = [1, 1]
+
+    with pytest.raises(
+        Exception,
+        match="0 value has been specified for argument 'bbox', whereas exactly 4 were expected",
+    ):
         alg.Run()

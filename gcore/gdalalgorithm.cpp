@@ -1028,13 +1028,92 @@ bool GDALAlgorithmArg::RunValidationActions()
             ret = ValidateRealRange(v) && ret;
     }
 
-    for (const auto &f : m_validationActions)
+    if (GDALAlgorithmArgTypeIsList(GetType()))
     {
-        if (!f())
+        int valueCount = 0;
+        if (GetType() == GAAT_STRING_LIST)
+        {
+            valueCount =
+                static_cast<int>(Get<std::vector<std::string>>().size());
+        }
+        else if (GetType() == GAAT_INTEGER_LIST)
+        {
+            valueCount = static_cast<int>(Get<std::vector<int>>().size());
+        }
+        else if (GetType() == GAAT_REAL_LIST)
+        {
+            valueCount = static_cast<int>(Get<std::vector<double>>().size());
+        }
+        else if (GetType() == GAAT_DATASET_LIST)
+        {
+            valueCount = static_cast<int>(
+                Get<std::vector<GDALArgDatasetValue>>().size());
+        }
+
+        if (valueCount != GetMinCount() && GetMinCount() == GetMaxCount())
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "%d value%s been specified for argument '%s', "
+                        "whereas exactly %d %s expected.",
+                        valueCount, valueCount > 1 ? "s have" : " has",
+                        GetName().c_str(), GetMinCount(),
+                        GetMinCount() > 1 ? "were" : "was");
             ret = false;
+        }
+        else if (valueCount < GetMinCount())
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Only %d value%s been specified for argument '%s', "
+                        "whereas at least %d %s expected.",
+                        valueCount, valueCount > 1 ? "s have" : " has",
+                        GetName().c_str(), GetMinCount(),
+                        GetMinCount() > 1 ? "were" : "was");
+            ret = false;
+        }
+        else if (valueCount > GetMaxCount())
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "%d value%s been specified for argument '%s', "
+                        "whereas at most %d %s expected.",
+                        valueCount, valueCount > 1 ? "s have" : " has",
+                        GetName().c_str(), GetMaxCount(),
+                        GetMaxCount() > 1 ? "were" : "was");
+            ret = false;
+        }
+    }
+
+    if (ret)
+    {
+        for (const auto &f : m_validationActions)
+        {
+            if (!f())
+                ret = false;
+        }
     }
 
     return ret;
+}
+
+/************************************************************************/
+/*                    GDALAlgorithmArg::ReportError()                   */
+/************************************************************************/
+
+void GDALAlgorithmArg::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
+                                   const char *fmt, ...) const
+{
+    va_list args;
+    va_start(args, fmt);
+    if (m_owner)
+    {
+        m_owner->ReportError(eErrClass, err_no, "%s",
+                             CPLString().vPrintf(fmt, args).c_str());
+    }
+    else
+    {
+        CPLError(eErrClass, err_no, "%s",
+                 CPLString().vPrintf(fmt, args).c_str());
+    }
+    va_end(args);
 }
 
 /************************************************************************/
@@ -2849,63 +2928,6 @@ bool GDALAlgorithm::ValidateArguments()
             if (!ProcessDatasetArg(arg.get(), this))
                 ret = false;
         }
-        else if (arg->IsExplicitlySet() &&
-                 GDALAlgorithmArgTypeIsList(arg->GetType()))
-        {
-            int valueCount = 0;
-            if (arg->GetType() == GAAT_STRING_LIST)
-            {
-                valueCount = static_cast<int>(
-                    arg->Get<std::vector<std::string>>().size());
-            }
-            else if (arg->GetType() == GAAT_INTEGER_LIST)
-            {
-                valueCount =
-                    static_cast<int>(arg->Get<std::vector<int>>().size());
-            }
-            else if (arg->GetType() == GAAT_REAL_LIST)
-            {
-                valueCount =
-                    static_cast<int>(arg->Get<std::vector<double>>().size());
-            }
-            else if (arg->GetType() == GAAT_DATASET_LIST)
-            {
-                valueCount = static_cast<int>(
-                    arg->Get<std::vector<GDALArgDatasetValue>>().size());
-            }
-
-            if (valueCount != arg->GetMinCount() &&
-                arg->GetMinCount() == arg->GetMaxCount())
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "%d value%s been specified for argument '%s', "
-                            "whereas exactly %d %s expected.",
-                            valueCount, valueCount > 1 ? "s have" : " has",
-                            arg->GetName().c_str(), arg->GetMinCount(),
-                            arg->GetMinCount() > 1 ? "were" : "was");
-                ret = false;
-            }
-            else if (valueCount < arg->GetMinCount())
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Only %d value%s been specified for argument '%s', "
-                            "whereas at least %d %s expected.",
-                            valueCount, valueCount > 1 ? "s have" : " has",
-                            arg->GetName().c_str(), arg->GetMinCount(),
-                            arg->GetMinCount() > 1 ? "were" : "was");
-                ret = false;
-            }
-            else if (valueCount > arg->GetMaxCount())
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "%d value%s been specified for argument '%s', "
-                            "whereas at most %d %s expected.",
-                            valueCount, valueCount > 1 ? "s have" : " has",
-                            arg->GetName().c_str(), arg->GetMaxCount(),
-                            arg->GetMaxCount() > 1 ? "were" : "was");
-                ret = false;
-            }
-        }
 
         if (arg->IsExplicitlySet() && arg->GetType() == GAAT_DATASET_LIST &&
             arg->AutoOpenDataset())
@@ -2978,6 +3000,9 @@ bool GDALAlgorithm::ValidateArguments()
                 }
             }
         }
+
+        if (arg->IsExplicitlySet() && !arg->RunValidationActions())
+            ret = false;
     }
 
     for (const auto &f : m_validationActions)

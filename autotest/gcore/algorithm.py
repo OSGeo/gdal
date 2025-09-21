@@ -458,7 +458,10 @@ def test_algorithm_arg_set_dataset_list(tmp_path):
     alg["input"] = [tmp_path]
     alg["input"] = ["foo"]
     alg["input"] = [gdal.GetDriverByName("MEM").Create("", 1, 1)]
-    alg["input"] = []
+    with pytest.raises(
+        RuntimeError, match="Only 0 value has been specified for argument 'input'"
+    ):
+        alg["input"] = []
     alg["input"] = ["foo", "bar"]
 
     with pytest.raises(TypeError):
