@@ -12090,3 +12090,23 @@ def test_tiff_write_interleave_tile(tmp_vsimem, COPY_SRC_OVERVIEWS):
                 )
                 assert offset > last_offset
                 last_offset = offset
+
+
+###############################################################################
+# Test that this does not crash
+
+
+def test_tiff_write_create_mask_band_and_set_color_interp(tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "out.tif", 1, 1) as ds:
+        band = ds.GetRasterBand(1)
+        band.CreateMaskBand(gdal.GMF_PER_DATASET)
+        mask_band = band.GetMaskBand()
+        mask_band.SetColorInterpretation(gdal.GCI_RedBand)  # ignored
+        mask_band.SetColorInterpretation(gdal.GCI_Undefined)
+        mask_band.SetMetadataItem("foo", "bar")
+        mask_band.SetNoDataValue(0)
+
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem("foo") == "bar"
+        assert ds.GetRasterBand(1).GetMaskBand().GetNoDataValue() == 0
