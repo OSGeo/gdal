@@ -4611,7 +4611,7 @@ void GDALAlgorithm::SetAutoCompleteFunctionForFieldName(
                                           GDAL_OF_VECTOR | GDAL_OF_READONLY));
                     if (poDS)
                     {
-                        const auto layerName = layerNameArg.Get<std::string>();
+                        const auto &layerName = layerNameArg.Get<std::string>();
                         if (layerName.empty())
                         {
                             // Loop through all layers

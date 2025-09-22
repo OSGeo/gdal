@@ -819,3 +819,15 @@ def test_mem_extent():
             0.01796630538796444,
         )
     )
+
+
+###############################################################################
+
+
+def test_mem_flush_mask_band_on_close():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds.GetRasterBand(1).GetMaskBand().Fill(255)
+    with gdaltest.error_raised(gdal.CE_None):
+        ds.Close()

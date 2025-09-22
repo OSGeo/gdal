@@ -240,7 +240,7 @@ static int GetMaxRegions()
 /************************************************************************/
 
 static int
-VSICurlFindStringSensitiveExceptEscapeSequences(char **papszList,
+VSICurlFindStringSensitiveExceptEscapeSequences(CSLConstList papszList,
                                                 const char *pszTarget)
 
 {
@@ -287,7 +287,7 @@ VSICurlFindStringSensitiveExceptEscapeSequences(char **papszList,
 /*                      VSICurlIsFileInList()                           */
 /************************************************************************/
 
-static int VSICurlIsFileInList(char **papszList, const char *pszTarget)
+static int VSICurlIsFileInList(CSLConstList papszList, const char *pszTarget)
 {
     int nRet =
         VSICurlFindStringSensitiveExceptEscapeSequences(papszList, pszTarget);
@@ -4378,28 +4378,34 @@ VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
         papszOptions, "DISABLE_READDIR_ON_OPEN",
         VSIGetPathSpecificOption(pszFilename, "GDAL_DISABLE_READDIR_ON_OPEN",
                                  "NO"));
-    const bool bSkipReadDir =
-        !bListDir || bEmptyDir || EQUAL(pszOptionVal, "EMPTY_DIR") ||
-        CPLTestBool(pszOptionVal) || !AllowCachedDataFor(pszFilename);
+    const bool bCache = CPLTestBool(CSLFetchNameValueDef(
+        papszOptions, "CACHE", AllowCachedDataFor(pszFilename) ? "YES" : "NO"));
+    const bool bSkipReadDir = !bListDir || bEmptyDir ||
+                              EQUAL(pszOptionVal, "EMPTY_DIR") ||
+                              CPLTestBool(pszOptionVal) || !bCache;
 
     std::string osFilename(pszFilename);
     bool bGotFileList = !bSkipReadDir;
     bool bForceExistsCheck = false;
     FileProp cachedFileProp;
-    if (!(GetCachedFileProp(osFilename.c_str() + strlen(GetFSPrefix().c_str()),
+    if (!bSkipReadDir &&
+        !(GetCachedFileProp(osFilename.c_str() + strlen(GetFSPrefix().c_str()),
                             cachedFileProp) &&
           cachedFileProp.eExists == EXIST_YES) &&
         strchr(CPLGetFilename(osFilename.c_str()), '.') != nullptr &&
         !STARTS_WITH(CPLGetExtensionSafe(osFilename.c_str()).c_str(), "zip") &&
-        !bSkipReadDir)
+        // Likely a Kerchunk JSON reference file: no need to list siblings
+        !cpl::ends_with(osFilename, ".nc.zarr"))
     {
-        char **papszFileList = ReadDirInternal(
-            (CPLGetDirnameSafe(osFilename.c_str()) + '/').c_str(), 0,
-            &bGotFileList);
+        // 1000 corresponds to the default page size of S3.
+        constexpr int FILE_COUNT_LIMIT = 1000;
+        const CPLStringList aosFileList(ReadDirInternal(
+            (CPLGetDirnameSafe(osFilename.c_str()) + '/').c_str(),
+            FILE_COUNT_LIMIT, &bGotFileList));
         const bool bFound =
-            VSICurlIsFileInList(papszFileList,
+            VSICurlIsFileInList(aosFileList.List(),
                                 CPLGetFilename(osFilename.c_str())) != -1;
-        if (bGotFileList && !bFound)
+        if (bGotFileList && !bFound && aosFileList.size() < FILE_COUNT_LIMIT)
         {
             // Some file servers are case insensitive, so in case there is a
             // match with case difference, do a full check just in case.
@@ -4408,24 +4414,23 @@ VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
             // that is queried by
             // gdalinfo
             // /vsicurl/http://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg004/mega90n000cb.lbl
-            if (CSLFindString(papszFileList,
-                              CPLGetFilename(osFilename.c_str())) != -1)
+            if (aosFileList.FindString(CPLGetFilename(osFilename.c_str())) !=
+                -1)
             {
                 bForceExistsCheck = true;
             }
             else
             {
-                CSLDestroy(papszFileList);
                 return nullptr;
             }
         }
-        CSLDestroy(papszFileList);
     }
 
     auto poHandle =
         std::unique_ptr<VSICurlHandle>(CreateFileHandle(osFilename.c_str()));
     if (poHandle == nullptr)
         return nullptr;
+    poHandle->SetCache(bCache);
     if (!bGotFileList || bForceExistsCheck)
     {
         // If we didn't get a filelist, check that the file really exists.

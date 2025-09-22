@@ -408,6 +408,10 @@ char **ISCEDataset::GetFileList()
 
 int ISCEDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
+    if (!poOpenInfo->IsSingleAllowedDriver("ISCE") &&
+        poOpenInfo->IsExtensionEqualToCI("zarr"))
+        return false;
+
     /* -------------------------------------------------------------------- */
     /*      TODO: This function is unusable now:                            */
     /*          * we can't just check for the presence of a XML file        */

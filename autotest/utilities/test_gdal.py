@@ -526,7 +526,9 @@ def test_gdal_completion_pipeline(gdal_path, subcommand):
         out = gdaltest.runexternal(f"{pipeline_cmd} read test_gdal.py -").split(" ")
         assert "--input-layer" in out
 
-        out = gdaltest.runexternal(f"{pipeline_cmd} read foo ! reproject -").split(" ")
+        out = gdaltest.runexternal(
+            f"{pipeline_cmd} read ../ogr/data/poly.shp ! reproject -"
+        ).split(" ")
         assert "--active-layer" in out
 
         out = gdaltest.runexternal(

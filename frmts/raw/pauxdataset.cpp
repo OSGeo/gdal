@@ -466,8 +466,12 @@ CPLErr PAuxDataset::GetGeoTransform(GDALGeoTransform &gt) const
 GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    if (poOpenInfo->nHeaderBytes < 1)
+    if (poOpenInfo->nHeaderBytes < 1 ||
+        (!poOpenInfo->IsSingleAllowedDriver("PAux") &&
+         poOpenInfo->IsExtensionEqualToCI("zarr")))
+    {
         return nullptr;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      If this is an .aux file, fetch out and form the name of the     */
@@ -511,7 +515,7 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Do we have a .aux file?                                         */
     /* -------------------------------------------------------------------- */
-    char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
+    CSLConstList papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     if (papszSiblingFiles != nullptr &&
         CSLFindString(papszSiblingFiles, CPLGetFilename(osAuxFilename)) == -1)
     {

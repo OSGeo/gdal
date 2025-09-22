@@ -29,6 +29,7 @@
 
 #include <cwchar>
 #include <type_traits>
+#include <filesystem>
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1336,22 +1337,18 @@ int VSIWin32FilesystemHandler::Rename(const char *oldpath, const char *newpath,
                                       GDALProgressFunc, void *)
 
 {
+    std::error_code ec{};
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
-        wchar_t *pwszOldPath =
-            CPLRecodeToWChar(oldpath, CPL_ENC_UTF8, CPL_ENC_UCS2);
-        wchar_t *pwszNewPath =
-            CPLRecodeToWChar(newpath, CPL_ENC_UTF8, CPL_ENC_UCS2);
-
-        const int nResult = _wrename(pwszOldPath, pwszNewPath);
-        CPLFree(pwszOldPath);
-        CPLFree(pwszNewPath);
-        return nResult;
+        std::filesystem::rename(std::filesystem::u8path(oldpath),
+                                std::filesystem::u8path(newpath), ec);
     }
     else
     {
-        return rename(oldpath, newpath);
+        std::filesystem::rename(std::filesystem::path(oldpath),
+                                std::filesystem::path(newpath), ec);
     }
+    return ec ? -1 : 0;
 }
 
 /************************************************************************/

@@ -428,8 +428,7 @@ GDALDataset::~GDALDataset()
  *      CPLErr eErr = CE_None;
  *      if( nOpenFlags != OPEN_FLAGS_CLOSED )
  *      {
- *          if( MyDataset::FlushCache(true) != CE_None )
- *              eErr = CE_Failure;
+ *          eErr = MyDataset::FlushCache(true);
  *
  *          // Do something driver specific
  *          if (m_fpImage)
@@ -442,8 +441,7 @@ GDALDataset::~GDALDataset()
  *          }
  *
  *          // Call parent Close() implementation.
- *          if( MyParentDatasetClass::Close() != CE_None )
- *              eErr = CE_Failure;
+ *          eErr = GDAL::Combine(eErr, MyParentDatasetClass::Close());
  *      }
  *      return eErr;
  *  }

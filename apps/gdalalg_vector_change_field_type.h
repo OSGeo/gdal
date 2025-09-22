@@ -35,6 +35,7 @@ class GDALVectorChangeFieldTypeAlgorithm /* non final */
 
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
+    bool GlobalValidation() const;
 
     std::string m_activeLayer{};
     std::string m_fieldName{};

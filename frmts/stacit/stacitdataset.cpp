@@ -112,6 +112,9 @@ int STACITDataset::Identify(GDALOpenInfo *poOpenInfo)
         return false;
     }
 
+    if (poOpenInfo->IsExtensionEqualToCI("zarr"))
+        return false;
+
     for (int i = 0; i < 2; i++)
     {
         // TryToIngest() may reallocate pabyHeader, so do not move this

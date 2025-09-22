@@ -292,7 +292,7 @@ static const char *StateNames[] = {
 #define SYNC_EOL(eoflab, retrywithouteol)                                      \
     do                                                                         \
     {                                                                          \
-        if (!(sp->b.mode & FAXMODE_NOEOL)) /* skip EOL, if not present */  \
+        if (!(sp->b.mode & FAXMODE_NOEOL)) /* skip EOL, if not present */      \
         {                                                                      \
             if (EOLcnt == 0)                                                   \
             {                                                                  \

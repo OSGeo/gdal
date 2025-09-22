@@ -5816,3 +5816,15 @@ def test_zarr_write_vsizip(tmp_vsimem, format):
 
     ds = gdal.Open(out_filename)
     assert ds.GetMetadata() == {"AREA_OR_POINT": "Area"}
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_ossfuzz_444714656():
+
+    ds = gdal.OpenEx("/vsitar/data/zarr/ossfuzz_444714656.tar", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg.GetGroupNames() == ["x"]

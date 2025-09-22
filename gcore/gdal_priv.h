@@ -5645,6 +5645,21 @@ struct GDALColorAssociation
 std::vector<GDALColorAssociation> GDALLoadTextColorMap(const char *pszFilename,
                                                        GDALRasterBand *poBand);
 
+namespace GDAL
+{
+inline CPLErr Combine(CPLErr eErr1, CPLErr eErr2)
+{
+    return eErr1 == CE_None ? eErr2 : eErr1;
+}
+
+inline CPLErr Combine(CPLErr eErr1, int) = delete;
+
+inline CPLErr Combine(CPLErr eErr1, bool b)
+{
+    return eErr1 == CE_None ? (b ? CE_None : CE_Failure) : eErr1;
+}
+}  // namespace GDAL
+
 // Macro used so that Identify and driver metadata methods in drivers built
 // as plugin can be duplicated in libgdal core and in the driver under different
 // names
