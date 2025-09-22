@@ -36,19 +36,25 @@ struct Lines
     std::vector<double> result;  //!< Result values for current line
     std::vector<double> prev;    //!< Height values for previous line
     std::vector<double>
-        pitchMask;  //!< Height/indicator values for pitch masking.
+        pitchMask;              //!< Height/indicator values for pitch masking.
+    std::vector<double> input;  //!< Copy of input data when in SD mode.
 
     /// Constructor
-    Lines() : cur(), result(), prev(), pitchMask()
+    Lines() : cur(), result(), prev(), pitchMask(), input()
     {
     }
 
     /// Constructor that initializes to line length
     /// \param lineLen  Line length.
     explicit Lines(size_t lineLen)
-        : cur(lineLen), result(lineLen), prev(), pitchMask()
+        : cur(lineLen), result(lineLen), prev(), pitchMask(), input()
     {
     }
+};
+
+class DummyBand : public GDALRasterBand
+{
+    virtual CPLErr IReadBlock(int, int, void *) override;
 };
 
 class Progress;
@@ -58,6 +64,12 @@ class Progress;
 class ViewshedExecutor
 {
   public:
+    ViewshedExecutor(GDALRasterBand &srcBand, GDALRasterBand &sdBand,
+                     GDALRasterBand &dstBand, int nX, int nY,
+                     const Window &oOutExtent, const Window &oCurExtent,
+                     const Options &opts, Progress &oProgress,
+                     bool emitWarningIfNoData);
+
     ViewshedExecutor(GDALRasterBand &srcBand, GDALRasterBand &dstBand, int nX,
                      int nY, const Window &oOutExtent, const Window &oCurExtent,
                      const Options &opts, Progress &oProgress,
@@ -72,7 +84,9 @@ class ViewshedExecutor
 
   private:
     CPLWorkerThreadPool m_pool;
+    DummyBand m_dummyBand;
     GDALRasterBand &m_srcBand;
+    GDALRasterBand &m_sdBand;
     GDALRasterBand &m_dstBand;
     double m_noDataValue = 0;
     bool m_hasNoData = false;
@@ -98,7 +112,7 @@ class ViewshedExecutor
 
     double calcHeightAdjFactor();
     void setOutput(double &dfResult, double &dfCellVal, double dfZ);
-    bool readLine(int nLine, std::vector<double> &line);
+    bool readLine(int nLine, Lines &lines);
     bool writeLine(int nLine, std::vector<double> &vResult);
     bool processLine(int nLine, Lines &lines);
     bool processFirstLine(Lines &lines);
@@ -120,6 +134,7 @@ class ViewshedExecutor
     void applyPitchMask(std::vector<double> &vResult,
                         const std::vector<double> &vPitchMaskVal);
     void calcTestAngles();
+    bool sdMode() const;
 };
 
 }  // namespace viewshed

@@ -26,6 +26,11 @@ namespace gdal
 namespace viewshed
 {
 
+CPLErr DummyBand::IReadBlock(int, int, void *)
+{
+    return static_cast<CPLErr>(CPLE_NotSupported);
+}
+
 namespace
 {
 
@@ -113,6 +118,7 @@ double doMax(int nXOffset, int nYOffset, double dfThisPrev, double dfLast,
 
 /// Constructor - the viewshed algorithm executor
 /// @param srcBand  Source raster band
+/// @param sdBand  Standard-deviation raster band
 /// @param dstBand  Destination raster band
 /// @param nX  X position of observer
 /// @param nY  Y position of observer
@@ -123,11 +129,12 @@ double doMax(int nXOffset, int nYOffset, double dfThisPrev, double dfLast,
 /// @param emitWarningIfNoData  Whether a warning must be emitted if an input
 ///                             pixel is at the nodata value.
 ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
+                                   GDALRasterBand &sdBand,
                                    GDALRasterBand &dstBand, int nX, int nY,
                                    const Window &outExtent,
                                    const Window &curExtent, const Options &opts,
                                    Progress &progress, bool emitWarningIfNoData)
-    : m_pool(4), m_srcBand(srcBand), m_dstBand(dstBand),
+    : m_pool(4), m_srcBand(srcBand), m_sdBand(sdBand), m_dstBand(dstBand),
       m_emitWarningIfNoData(emitWarningIfNoData), oOutExtent(outExtent),
       oCurExtent(curExtent), m_nX(nX - oOutExtent.xStart), m_nY(nY),
       oOpts(opts), oProgress(progress),
@@ -144,6 +151,27 @@ ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
     int hasNoData = false;
     m_noDataValue = m_srcBand.GetNoDataValue(&hasNoData);
     m_hasNoData = hasNoData;
+}
+
+/// Constructor - the viewshed algorithm executor
+/// @param srcBand  Source raster band
+/// @param dstBand  Destination raster band
+/// @param nX  X position of observer
+/// @param nY  Y position of observer
+/// @param outExtent  Extent of output raster (relative to input)
+/// @param curExtent  Extent of active raster.
+/// @param opts  Configuration options.
+/// @param progress  Reference to the progress tracker.
+/// @param emitWarningIfNoData  Whether a warning must be emitted if an input
+///                             pixel is at the nodata value.
+ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
+                                   GDALRasterBand &dstBand, int nX, int nY,
+                                   const Window &outExtent,
+                                   const Window &curExtent, const Options &opts,
+                                   Progress &progress, bool emitWarningIfNoData)
+    : ViewshedExecutor(srcBand, m_dummyBand, dstBand, nX, nY, outExtent,
+                       curExtent, opts, progress, emitWarningIfNoData)
+{
 }
 
 // calculate the height adjustment factor.
@@ -194,15 +222,15 @@ void ViewshedExecutor::setOutput(double &dfResult, double &dfCellVal,
 /// Read a line of raster data.
 ///
 /// @param  nLine  Line number to read.
-/// @param  line   Raster line to fill.
+/// @param  lines  Raster line to fill.
 /// @return  Success or failure.
-bool ViewshedExecutor::readLine(int nLine, std::vector<double> &line)
+bool ViewshedExecutor::readLine(int nLine, Lines &lines)
 {
     std::lock_guard g(iMutex);
 
     if (GDALRasterIO(&m_srcBand, GF_Read, oOutExtent.xStart, nLine,
-                     oOutExtent.xSize(), 1, line.data(), oOutExtent.xSize(), 1,
-                     GDT_Float64, 0, 0))
+                     oOutExtent.xSize(), 1, lines.cur.data(),
+                     oOutExtent.xSize(), 1, GDT_Float64, 0, 0))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RasterIO error when reading DEM at position (%d,%d), "
@@ -210,6 +238,17 @@ bool ViewshedExecutor::readLine(int nLine, std::vector<double> &line)
                  oOutExtent.xStart, nLine, oOutExtent.xSize(), 1);
         return false;
     }
+
+    if (sdMode())
+        lines.input = lines.cur;
+
+    // Initialize the result line.
+    // In DEM mode the base is the pre-adjustment value.  In ground mode the base is zero.
+    if (oOpts.outputMode == OutputMode::DEM)
+        lines.result = lines.cur;
+    else if (oOpts.outputMode == OutputMode::Ground)
+        std::fill(lines.result.begin(), lines.result.end(), 0);
+
     return true;
 }
 
@@ -376,29 +415,23 @@ bool ViewshedExecutor::processFirstLine(Lines &lines)
     int nLine = oOutExtent.clampY(m_nY);
     int nYOffset = nLine - m_nY;
 
-    if (!readLine(nLine, lines.cur))
+    if (!readLine(nLine, lines))
         return false;
 
     // If the observer is outside of the raster, take the specified value as the Z height,
     // otherwise, take it as an offset from the raster height at that location.
     m_dfZObserver = oOpts.observer.z;
     if (oCurExtent.containsX(m_nX))
-    {
         m_dfZObserver += lines.cur[m_nX];
-        if (oOpts.outputMode == OutputMode::Normal)
-            lines.result[m_nX] = oOpts.visibleVal;
-    }
-    m_dfHeightAdjFactor = calcHeightAdjFactor();
-
-    // In DEM mode the base is the pre-adjustment value.  In ground mode the base is zero.
-    if (oOpts.outputMode == OutputMode::DEM)
-        lines.result = lines.cur;
-    else if (oOpts.outputMode == OutputMode::Ground)
-        std::fill(lines.result.begin(), lines.result.end(), 0);
 
     LineLimits ll = adjustHeight(nYOffset, lines);
-    if (oCurExtent.containsX(m_nX) && ll.leftMin != ll.rightMin)
-        lines.result[m_nX] = oOpts.outOfRangeVal;
+    if (oCurExtent.containsX(m_nX))
+    {
+        if (ll.leftMin != ll.rightMin)
+            lines.result[m_nX] = oOpts.outOfRangeVal;
+        else if (oOpts.outputMode == OutputMode::Normal)
+            lines.result[m_nX] = oOpts.visibleVal;
+    }
 
     if (!oCurExtent.containsY(m_nY))
         processFirstLineTopOrBottom(ll, lines);
@@ -866,15 +899,8 @@ bool ViewshedExecutor::processLine(int nLine, Lines &lines)
 {
     int nYOffset = nLine - m_nY;
 
-    if (!readLine(nLine, lines.cur))
+    if (!readLine(nLine, lines))
         return false;
-
-    // In DEM mode the base is the input DEM value.
-    // In ground mode the base is zero.
-    if (oOpts.outputMode == OutputMode::DEM)
-        lines.result = lines.cur;
-    else if (oOpts.outputMode == OutputMode::Ground)
-        std::fill(lines.result.begin(), lines.result.end(), 0);
 
     // Adjust height of the read line.
     LineLimits ll = adjustHeight(nYOffset, lines);
@@ -962,6 +988,8 @@ bool ViewshedExecutor::run()
         firstLine.pitchMask.resize(oOutExtent.xSize(),
                                    std::numeric_limits<double>::quiet_NaN());
 
+    m_dfHeightAdjFactor = calcHeightAdjFactor();
+
     if (!processFirstLine(firstLine))
         return false;
 
@@ -1023,6 +1051,12 @@ bool ViewshedExecutor::run()
             }
         });
     return true;
+}
+
+bool ViewshedExecutor::sdMode() const
+{
+    // If the SD band isn't a dummy band, we're in SD mode.
+    return dynamic_cast<DummyBand *>(&m_sdBand) == nullptr;
 }
 
 }  // namespace viewshed
