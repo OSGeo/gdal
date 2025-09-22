@@ -35,6 +35,9 @@
 #include "ogrgeojsonutils.h"
 #include "ogresrijsongeometry.h"
 
+#include <map>
+#include <utility>
+
 // #include "symbol_renames.h"
 
 /************************************************************************/
@@ -295,6 +298,21 @@ bool OGRESRIJSONReader::GenerateLayerDefn()
 /*                             ParseField()                             */
 /************************************************************************/
 
+static const std::map<std::string, std::pair<OGRFieldType, OGRFieldSubType>>
+    goMapEsriTypeToOGR = {
+        {"esriFieldTypeString", {OFTString, OFSTNone}},
+        {"esriFieldTypeSingle", {OFTReal, OFSTFloat32}},
+        {"esriFieldTypeDouble", {OFTReal, OFSTNone}},
+        {"esriFieldTypeSmallInteger", {OFTInteger, OFSTInt16}},
+        {"esriFieldTypeInteger", {OFTInteger, OFSTNone}},
+        {"esriFieldTypeDate", {OFTDateTime, OFSTNone}},
+        {"esriFieldTypeDateOnly", {OFTDate, OFSTNone}},
+        {"esriFieldTypeTimeOnly", {OFTTime, OFSTNone}},
+        {"esriFieldTypeBigInteger", {OFTInteger64, OFSTNone}},
+        {"esriFieldTypeGUID", {OFTString, OFSTUUID}},
+        {"esriFieldTypeGlobalID", {OFTString, OFSTUUID}},
+};
+
 bool OGRESRIJSONReader::ParseField(json_object *poObj)
 {
     OGRFeatureDefn *poDefn = poLayer_->GetLayerDefn();
@@ -313,43 +331,26 @@ bool OGRESRIJSONReader::ParseField(json_object *poObj)
         OGRFieldSubType eFieldSubType = OFSTNone;
         const char *pszObjName = json_object_get_string(poObjName);
         const char *pszObjType = json_object_get_string(poObjType);
-        if (EQUAL(pszObjType, "esriFieldTypeString"))
-        {
-            // do nothing
-        }
-        else if (EQUAL(pszObjType, "esriFieldTypeOID"))
+        if (strcmp(pszObjType, "esriFieldTypeOID") == 0)
         {
             eFieldType = OFTInteger;
             poLayer_->SetFIDColumn(pszObjName);
         }
-        else if (EQUAL(pszObjType, "esriFieldTypeSingle"))
-        {
-            eFieldType = OFTReal;
-            eFieldSubType = OFSTFloat32;
-        }
-        else if (EQUAL(pszObjType, "esriFieldTypeDouble"))
-        {
-            eFieldType = OFTReal;
-        }
-        else if (EQUAL(pszObjType, "esriFieldTypeSmallInteger"))
-        {
-            eFieldType = OFTInteger;
-            eFieldSubType = OFSTInt16;
-        }
-        else if (EQUAL(pszObjType, "esriFieldTypeInteger"))
-        {
-            eFieldType = OFTInteger;
-        }
-        else if (EQUAL(pszObjType, "esriFieldTypeDate"))
-        {
-            eFieldType = OFTDateTime;
-        }
         else
         {
-            CPLDebug("ESRIJSON",
-                     "Unhandled fields[\"%s\"].type = %s. "
-                     "Processing it as a String",
-                     pszObjName, pszObjType);
+            const auto it = goMapEsriTypeToOGR.find(pszObjType);
+            if (it != goMapEsriTypeToOGR.end())
+            {
+                eFieldType = it->second.first;
+                eFieldSubType = it->second.second;
+            }
+            else
+            {
+                CPLDebug("ESRIJSON",
+                         "Unhandled fields[\"%s\"].type = %s. "
+                         "Processing it as a String",
+                         pszObjName, pszObjType);
+            }
         }
         OGRFieldDefn fldDefn(pszObjName, eFieldType);
         fldDefn.SetSubType(eFieldSubType);
