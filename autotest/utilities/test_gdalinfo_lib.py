@@ -362,3 +362,15 @@ def test_gdalinfo_lib_json_color_table_and_rat():
     assert "rat" in ret["bands"][0]
 
     gdaltest.validate_json(ret, "gdalinfo_output.schema.json")
+
+
+###############################################################################
+
+
+def test_gdalinfo_lib_no_driver():
+
+    ds = gdal.Open("../gcore/data/byte.tif")
+    ds2 = ds.GetRasterBand(1).AsMDArray().AsClassicDataset(0, 1)
+    assert ds2.GetDriver() is None
+    gdal.Info(ds2)
+    gdal.Info(ds2, format="json")
