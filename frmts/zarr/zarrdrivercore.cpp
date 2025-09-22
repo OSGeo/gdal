@@ -48,7 +48,9 @@ static bool CheckExistenceOfOneZarrFile(const char *pszFilename)
 bool ZARRIsLikelyKerchunkJSONRef(const GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->nHeaderBytes > 0 && poOpenInfo->eAccess == GA_ReadOnly &&
-        poOpenInfo->IsExtensionEqualToCI("json"))
+        (poOpenInfo->IsExtensionEqualToCI("json") ||
+         // e.g. like in https://noaa-nodd-kerchunk-pds.s3.amazonaws.com/nos/cbofs/cbofs.fields.best.nc.zarr
+         poOpenInfo->IsExtensionEqualToCI("zarr")))
     {
         const char *pszHeader =
             reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
