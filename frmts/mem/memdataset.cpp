@@ -224,28 +224,40 @@ CPLErr MEMRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         for (int iLine = 0; iLine < nYSize; iLine++)
         {
-            GDALCopyWords(pabyData +
-                              nLineOffset *
-                                  static_cast<GPtrDiff_t>(iLine + nYOff) +
-                              nXOff * nPixelOffset,
-                          eDataType, static_cast<int>(nPixelOffset),
-                          static_cast<GByte *>(pData) +
-                              nLineSpaceBuf * static_cast<GPtrDiff_t>(iLine),
-                          eBufType, static_cast<int>(nPixelSpaceBuf), nXSize);
+            GDALCopyWords64(pabyData +
+                                nLineOffset *
+                                    static_cast<GPtrDiff_t>(iLine + nYOff) +
+                                nXOff * nPixelOffset,
+                            eDataType, static_cast<int>(nPixelOffset),
+                            static_cast<GByte *>(pData) +
+                                nLineSpaceBuf * static_cast<GPtrDiff_t>(iLine),
+                            eBufType, static_cast<int>(nPixelSpaceBuf), nXSize);
         }
     }
     else
     {
-        for (int iLine = 0; iLine < nYSize; iLine++)
+        if (nXSize == nRasterXSize && nPixelSpaceBuf == nPixelOffset &&
+            nLineSpaceBuf == nLineOffset)
         {
-            GDALCopyWords(static_cast<GByte *>(pData) +
-                              nLineSpaceBuf * static_cast<GPtrDiff_t>(iLine),
-                          eBufType, static_cast<int>(nPixelSpaceBuf),
-                          pabyData +
-                              nLineOffset *
-                                  static_cast<GPtrDiff_t>(iLine + nYOff) +
-                              nXOff * nPixelOffset,
-                          eDataType, static_cast<int>(nPixelOffset), nXSize);
+            GDALCopyWords64(pData, eBufType, static_cast<int>(nPixelSpaceBuf),
+                            pabyData +
+                                nLineOffset * static_cast<GPtrDiff_t>(nYOff),
+                            eDataType, static_cast<int>(nPixelOffset),
+                            static_cast<GPtrDiff_t>(nXSize) * nYSize);
+        }
+        else
+        {
+            for (int iLine = 0; iLine < nYSize; iLine++)
+            {
+                GDALCopyWords64(
+                    static_cast<GByte *>(pData) +
+                        nLineSpaceBuf * static_cast<GPtrDiff_t>(iLine),
+                    eBufType, static_cast<int>(nPixelSpaceBuf),
+                    pabyData +
+                        nLineOffset * static_cast<GPtrDiff_t>(iLine + nYOff) +
+                        nXOff * nPixelOffset,
+                    eDataType, static_cast<int>(nPixelOffset), nXSize);
+            }
         }
     }
     return CE_None;
@@ -265,46 +277,46 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 {
     const int eBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
 
+    const auto IsPixelInterleaveDataset = [this, nBandCount, panBandMap]()
+    {
+        GDALDataType eDT = GDT_Unknown;
+        GByte *pabyData = nullptr;
+        GSpacing nPixelOffset = 0;
+        GSpacing nLineOffset = 0;
+        int eDTSize = 0;
+        for (int iBandIndex = 0; iBandIndex < nBandCount; iBandIndex++)
+        {
+            if (panBandMap[iBandIndex] != iBandIndex + 1)
+                return false;
+
+            MEMRasterBand *poBand =
+                cpl::down_cast<MEMRasterBand *>(GetRasterBand(iBandIndex + 1));
+            if (iBandIndex == 0)
+            {
+                eDT = poBand->GetRasterDataType();
+                pabyData = poBand->pabyData;
+                nPixelOffset = poBand->nPixelOffset;
+                nLineOffset = poBand->nLineOffset;
+                eDTSize = GDALGetDataTypeSizeBytes(eDT);
+                if (nPixelOffset != static_cast<GSpacing>(nBands) * eDTSize)
+                    return false;
+            }
+            else if (poBand->GetRasterDataType() != eDT ||
+                     nPixelOffset != poBand->nPixelOffset ||
+                     nLineOffset != poBand->nLineOffset ||
+                     poBand->pabyData != pabyData + iBandIndex * eDTSize)
+            {
+                return false;
+            }
+        }
+        return true;
+    };
+
     // Detect if we have a pixel-interleaved buffer
     if (nXSize == nBufXSize && nYSize == nBufYSize && nBandCount == nBands &&
         nBands > 1 && nBandSpaceBuf == eBufTypeSize &&
         nPixelSpaceBuf == nBandSpaceBuf * nBands)
     {
-        const auto IsPixelInterleaveDataset = [this, nBandCount, panBandMap]()
-        {
-            GDALDataType eDT = GDT_Unknown;
-            GByte *pabyData = nullptr;
-            GSpacing nPixelOffset = 0;
-            GSpacing nLineOffset = 0;
-            int eDTSize = 0;
-            for (int iBandIndex = 0; iBandIndex < nBandCount; iBandIndex++)
-            {
-                if (panBandMap[iBandIndex] != iBandIndex + 1)
-                    return false;
-
-                MEMRasterBand *poBand = cpl::down_cast<MEMRasterBand *>(
-                    GetRasterBand(iBandIndex + 1));
-                if (iBandIndex == 0)
-                {
-                    eDT = poBand->GetRasterDataType();
-                    pabyData = poBand->pabyData;
-                    nPixelOffset = poBand->nPixelOffset;
-                    nLineOffset = poBand->nLineOffset;
-                    eDTSize = GDALGetDataTypeSizeBytes(eDT);
-                    if (nPixelOffset != static_cast<GSpacing>(nBands) * eDTSize)
-                        return false;
-                }
-                else if (poBand->GetRasterDataType() != eDT ||
-                         nPixelOffset != poBand->nPixelOffset ||
-                         nLineOffset != poBand->nLineOffset ||
-                         poBand->pabyData != pabyData + iBandIndex * eDTSize)
-                {
-                    return false;
-                }
-            }
-            return true;
-        };
-
         const auto IsBandSeparatedDataset = [this, nBandCount, panBandMap]()
         {
             GDALDataType eDT = GDT_Unknown;
@@ -424,6 +436,23 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             }
             return CE_None;
         }
+    }
+    // From a band-interleaved buffer to a pixel-interleave dataset
+    else if (eRWFlag == GF_Write && nXSize == nBufXSize &&
+             nYSize == nBufYSize && nXSize == nRasterXSize &&
+             nBandCount == nBands && nBands > 1 &&
+             nPixelSpaceBuf == eBufTypeSize &&
+             nLineSpaceBuf == nPixelSpaceBuf * nBufXSize &&
+             nBandSpaceBuf == nLineSpaceBuf * nBufYSize &&
+             IsPixelInterleaveDataset())
+    {
+        FlushCache(false);
+
+        auto poDstBand = cpl::down_cast<MEMRasterBand *>(papoBands[0]);
+        GDALTranspose2D(pData, eBufType, poDstBand->pabyData,
+                        poDstBand->GetRasterDataType(),
+                        static_cast<size_t>(nXSize) * nYSize, nBands);
+        return CE_None;
     }
 
     if (nBufXSize != nXSize || nBufYSize != nYSize)
