@@ -51,7 +51,7 @@ Standard options
 
    Name of the overlay dataset. Required
 
-.. option:: --operator src-over|hsv-value.
+.. option:: --operator src-over|hsv-value
 
     Select the blending operator, which defines how the overlay dataset is
     blended into the input dataset. Defaults to ``src-over``.
