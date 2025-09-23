@@ -135,9 +135,12 @@ bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
         {
             if (papoSources[i]->GetType() == VRTComplexSource::GetTypeStatic())
             {
-                auto *const poSource =
+                auto *const poComplexSource =
                     static_cast<VRTComplexSource *>(papoSources[i]);
-                if (!poSource->GetResampling().empty())
+                const auto &osSourceResampling =
+                    poComplexSource->GetResampling();
+                if (!osSourceResampling.empty() &&
+                    osSourceResampling != "nearest")
                     return true;
             }
         }
@@ -172,7 +175,10 @@ bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
                 {
                     auto *const poComplexSource =
                         static_cast<VRTComplexSource *>(poSource);
-                    if (!poComplexSource->GetResampling().empty())
+                    const auto &osSourceResampling =
+                        poComplexSource->GetResampling();
+                    if (!osSourceResampling.empty() &&
+                        osSourceResampling != "nearest")
                     {
                         const int lMaskFlags =
                             const_cast<VRTSourcedRasterBand *>(this)
