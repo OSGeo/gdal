@@ -510,7 +510,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 4
-        assert struct.unpack("B" * 4, out_ds.ReadRaster()) == (177, 201, 229, 249)
+        assert struct.unpack("B" * 4, out_ds.ReadRaster()) == (177, 201, 229, 254)
 
     with gdal.Run(
         "raster",

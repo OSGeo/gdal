@@ -816,14 +816,6 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 for (int i = 0; i < nBufXSize;
                      ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
                 {
-                    const int nOverlay =
-                        (pabyOverlayR && pabyOverlayG && pabyOverlayB)
-                            ? RGBToGrayScale(pabyOverlayR[nSrcIdx],
-                                             pabyOverlayG[nSrcIdx],
-                                             pabyOverlayB[nSrcIdx])
-                        : pabyOverlay ? pabyOverlay[nSrcIdx]
-                                      : 255;
-
                     // Corrected to take into account m_opacity255Scale
                     const int nOverlayA =
                         pabyOverlayA ? ((pabyOverlayA[nSrcIdx] *
@@ -832,22 +824,34 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                         256)
                                      : m_oBlendDataset.m_opacity255Scale;
 
-                    const int nSrc = paby ? paby[nSrcIdx] : 255;
                     const int nSrcA = pabyA ? pabyA[nSrcIdx] : 255;
 
                     const int nSrcAMul255MinusOverlayA =
                         (nSrcA * (255 - nOverlayA) + 255) / 256;
-                    int nDst = (nOverlay * nOverlayA +
-                                nSrc * nSrcAMul255MinusOverlayA + 255) /
-                               256;
+                    const int nDstA = nOverlayA + nSrcAMul255MinusOverlayA;
                     if (nBand != 4)
                     {
-                        const int nDstA = nOverlayA + nSrcAMul255MinusOverlayA;
+                        const int nOverlay =
+                            (pabyOverlayR && pabyOverlayG && pabyOverlayB)
+                                ? RGBToGrayScale(pabyOverlayR[nSrcIdx],
+                                                 pabyOverlayG[nSrcIdx],
+                                                 pabyOverlayB[nSrcIdx])
+                            : pabyOverlay ? pabyOverlay[nSrcIdx]
+                                          : 255;
+
+                        const int nSrc = paby ? paby[nSrcIdx] : 255;
+                        int nDst = (nOverlay * nOverlayA +
+                                    nSrc * nSrcAMul255MinusOverlayA + 255) /
+                                   256;
                         if (nDstA != 0 && nDstA != 255)
                             nDst = (nDst * 255 + (nDstA / 2)) / nDstA;
+                        pabyDst[nDstOffset] =
+                            static_cast<GByte>(std::min(nDst, 255));
                     }
-                    pabyDst[nDstOffset] =
-                        static_cast<GByte>(std::min(nDst, 255));
+                    else
+                    {
+                        pabyDst[nDstOffset] = static_cast<GByte>(nDstA);
+                    }
                 }
             }
         }
