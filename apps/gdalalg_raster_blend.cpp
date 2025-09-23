@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "color-merge" step of "raster pipeline"
+ * Purpose:  "blend" step of "raster pipeline"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -11,7 +11,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_raster_color_merge.h"
+#include "gdalalg_raster_blend.h"
 
 #include "cpl_conv.h"
 #include "gdal_priv.h"
@@ -32,26 +32,28 @@
 #define _(x) (x)
 #endif
 
+constexpr const char *SRC_OVER = "src-over";
+constexpr const char *HSV_VALUE = "hsv-value";
+
 /************************************************************************/
-/*     GDALRasterColorMergeAlgorithm::GDALRasterColorMergeAlgorithm()   */
+/*       GDALRasterBlendAlgorithm::GDALRasterBlendAlgorithm()           */
 /************************************************************************/
 
-GDALRasterColorMergeAlgorithm::GDALRasterColorMergeAlgorithm(
-    bool standaloneStep)
+GDALRasterBlendAlgorithm::GDALRasterBlendAlgorithm(bool standaloneStep)
     : GDALRasterPipelineStepAlgorithm(
           NAME, DESCRIPTION, HELP_URL,
           ConstructorOptions()
               .SetStandaloneStep(standaloneStep)
               .SetAddDefaultArguments(false)
-              .SetInputDatasetHelpMsg(_("Input RGB/RGBA raster dataset"))
+              .SetInputDatasetHelpMsg(_("Input raster dataset"))
               .SetInputDatasetAlias("color-input")
               .SetInputDatasetMetaVar("COLOR-INPUT")
-              .SetOutputDatasetHelpMsg(_("Output RGB/RGBA raster dataset")))
+              .SetOutputDatasetHelpMsg(_("Output raster dataset")))
 {
-    const auto AddGrayscaleDataset = [this]()
+    const auto AddOverlayDatasetArg = [this]()
     {
-        auto &arg = AddArg("grayscale", 0, _("Grayscale dataset"),
-                           &m_grayScaleDataset, GDAL_OF_RASTER)
+        auto &arg = AddArg("overlay", 0, _("Overlay dataset"),
+                           &m_overlayDataset, GDAL_OF_RASTER)
                         .SetPositional()
                         .SetRequired();
 
@@ -61,28 +63,43 @@ GDALRasterColorMergeAlgorithm::GDALRasterColorMergeAlgorithm(
     if (standaloneStep)
     {
         AddRasterInputArgs(false, false);
-        AddGrayscaleDataset();
+        AddOverlayDatasetArg();
         AddProgressArg();
         AddRasterOutputArgs(false);
     }
     else
     {
         AddRasterHiddenInputDatasetArg();
-        AddGrayscaleDataset();
+        AddOverlayDatasetArg();
     }
+
+    AddArg("operator", 0, _("Composition operator"), &m_operator)
+        .SetChoices(SRC_OVER, HSV_VALUE)
+        .SetDefault(SRC_OVER);
+    AddArg("opacity", 0,
+           _("Opacity percentage to apply to the overlay dataset (0=fully "
+             "transparent, 100=full use of overlay opacity)"),
+           &m_opacity)
+        .SetDefault(m_opacity)
+        .SetMinValueIncluded(0)
+        .SetMaxValueIncluded(OPACITY_INPUT_RANGE);
+
+    AddValidationAction([this]() { return ValidateGlobal(); });
 }
 
 namespace
 {
 
 /************************************************************************/
-/*                        HSVMergeDataset                               */
+/*                            BlendDataset                              */
 /************************************************************************/
 
-class HSVMergeDataset final : public GDALDataset
+class BlendDataset final : public GDALDataset
 {
   public:
-    HSVMergeDataset(GDALDataset &oColorDS, GDALDataset &oGrayScaleDS);
+    BlendDataset(GDALDataset &oColorDS, GDALDataset &oOverlayDS,
+                 const std::string &sOperator, int nOpacity255Scale);
+    ~BlendDataset() override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
@@ -107,10 +124,12 @@ class HSVMergeDataset final : public GDALDataset
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   private:
-    friend class HSVMergeBand;
+    friend class BlendBand;
     GDALDataset &m_oColorDS;
-    GDALDataset &m_oGrayScaleDS;
-    std::vector<std::unique_ptr<HSVMergeDataset>> m_apoOverviews{};
+    GDALDataset &m_oOverlayDS;
+    const std::string m_operator;
+    const int m_opacity255Scale;
+    std::vector<std::unique_ptr<BlendDataset>> m_apoOverviews{};
     int m_nCachedXOff = 0;
     int m_nCachedYOff = 0;
     int m_nCachedXSize = 0;
@@ -374,39 +393,42 @@ static
 }
 
 /************************************************************************/
-/*                           HSVMergeBand                               */
+/*                          BlendBand                                   */
 /************************************************************************/
 
-class HSVMergeBand final : public GDALRasterBand
+class BlendBand final : public GDALRasterBand
 {
   public:
-    HSVMergeBand(HSVMergeDataset &oHSVMergeDataset, int nBandIn)
-        : m_oHSVMergeDataset(oHSVMergeDataset)
+    BlendBand(BlendDataset &oBlendDataset, int nBandIn)
+        : m_oBlendDataset(oBlendDataset)
     {
         nBand = nBandIn;
-        nRasterXSize = oHSVMergeDataset.GetRasterXSize();
-        nRasterYSize = oHSVMergeDataset.GetRasterYSize();
-        oHSVMergeDataset.m_oColorDS.GetRasterBand(1)->GetBlockSize(
-            &nBlockXSize, &nBlockYSize);
+        nRasterXSize = oBlendDataset.GetRasterXSize();
+        nRasterYSize = oBlendDataset.GetRasterYSize();
+        oBlendDataset.m_oColorDS.GetRasterBand(1)->GetBlockSize(&nBlockXSize,
+                                                                &nBlockYSize);
         eDataType = GDT_Byte;
     }
 
     GDALColorInterp GetColorInterpretation() override
     {
-        return m_oHSVMergeDataset.m_oColorDS.GetRasterBand(nBand)
-            ->GetColorInterpretation();
+        if (m_oBlendDataset.GetRasterCount() <= 2 && nBand == 1)
+            return GCI_GrayIndex;
+        else if (m_oBlendDataset.GetRasterCount() == 2 || nBand == 4)
+            return GCI_AlphaBand;
+        else
+            return static_cast<GDALColorInterp>(GCI_RedBand + nBand - 1);
     }
 
     int GetOverviewCount() override
     {
-        return static_cast<int>(m_oHSVMergeDataset.m_apoOverviews.size());
+        return static_cast<int>(m_oBlendDataset.m_apoOverviews.size());
     }
 
     GDALRasterBand *GetOverview(int idx) override
     {
         return idx >= 0 && idx < GetOverviewCount()
-                   ? m_oHSVMergeDataset.m_apoOverviews[idx]->GetRasterBand(
-                         nBand)
+                   ? m_oBlendDataset.m_apoOverviews[idx]->GetRasterBand(nBand)
                    : nullptr;
     }
 
@@ -429,72 +451,94 @@ class HSVMergeBand final : public GDALRasterBand
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   private:
-    HSVMergeDataset &m_oHSVMergeDataset;
+    BlendDataset &m_oBlendDataset;
 };
 
 /************************************************************************/
-/*                 HSVMergeDataset::HSVMergeDataset()                   */
+/*                       BlendDataset::BlendDataset()                   */
 /************************************************************************/
 
-HSVMergeDataset::HSVMergeDataset(GDALDataset &oColorDS,
-                                 GDALDataset &oGrayScaleDS)
-    : m_oColorDS(oColorDS), m_oGrayScaleDS(oGrayScaleDS)
+BlendDataset::BlendDataset(GDALDataset &oColorDS, GDALDataset &oOverlayDS,
+                           const std::string &sOperator, int nOpacity255Scale)
+    : m_oColorDS(oColorDS), m_oOverlayDS(oOverlayDS), m_operator(sOperator),
+      m_opacity255Scale(nOpacity255Scale)
 {
-    CPLAssert(oColorDS.GetRasterCount() == 3 || oColorDS.GetRasterCount() == 4);
-    CPLAssert(oColorDS.GetRasterXSize() == oGrayScaleDS.GetRasterXSize());
-    CPLAssert(oColorDS.GetRasterYSize() == oGrayScaleDS.GetRasterYSize());
+    m_oColorDS.Reference();
+    m_oOverlayDS.Reference();
+
+    CPLAssert(oColorDS.GetRasterXSize() == oOverlayDS.GetRasterXSize());
+    CPLAssert(oColorDS.GetRasterYSize() == oOverlayDS.GetRasterYSize());
     nRasterXSize = oColorDS.GetRasterXSize();
     nRasterYSize = oColorDS.GetRasterYSize();
-    const int nOvrCount = oGrayScaleDS.GetRasterBand(1)->GetOverviewCount();
+    const int nOvrCount = oOverlayDS.GetRasterBand(1)->GetOverviewCount();
     bool bCanCreateOvr = true;
     for (int iBand = 1; iBand <= oColorDS.GetRasterCount(); ++iBand)
     {
-        SetBand(iBand, std::make_unique<HSVMergeBand>(*this, iBand));
+        SetBand(iBand, std::make_unique<BlendBand>(*this, iBand));
         bCanCreateOvr =
             bCanCreateOvr &&
-            oColorDS.GetRasterBand(iBand)->GetOverviewCount() == nOvrCount;
+            (iBand > oColorDS.GetRasterCount() ||
+             oColorDS.GetRasterBand(iBand)->GetOverviewCount() == nOvrCount) &&
+            (iBand > oOverlayDS.GetRasterCount() ||
+             oOverlayDS.GetRasterBand(iBand)->GetOverviewCount() == nOvrCount);
+        const int nColorBandxIdx =
+            iBand <= oColorDS.GetRasterCount() ? iBand : 1;
+        const int nOverlayBandIdx =
+            iBand <= oOverlayDS.GetRasterCount() ? iBand : 1;
         for (int iOvr = 0; iOvr < nOvrCount && bCanCreateOvr; ++iOvr)
         {
             const auto poColorOvrBand =
-                oColorDS.GetRasterBand(iBand)->GetOverview(iOvr);
+                oColorDS.GetRasterBand(nColorBandxIdx)->GetOverview(iOvr);
             const auto poGSOvrBand =
-                oGrayScaleDS.GetRasterBand(1)->GetOverview(iOvr);
+                oOverlayDS.GetRasterBand(nOverlayBandIdx)->GetOverview(iOvr);
             bCanCreateOvr =
                 poColorOvrBand->GetDataset() != &oColorDS &&
                 poColorOvrBand->GetDataset() == oColorDS.GetRasterBand(1)
                                                     ->GetOverview(iOvr)
                                                     ->GetDataset() &&
-                poGSOvrBand->GetDataset() != &oGrayScaleDS &&
+                poGSOvrBand->GetDataset() != &oOverlayDS &&
+                poGSOvrBand->GetDataset() == oOverlayDS.GetRasterBand(1)
+                                                 ->GetOverview(iOvr)
+                                                 ->GetDataset() &&
                 poColorOvrBand->GetXSize() == poGSOvrBand->GetXSize() &&
                 poColorOvrBand->GetYSize() == poGSOvrBand->GetYSize();
         }
     }
 
-    SetDescription(CPLSPrintf("Merge %s with %s", m_oColorDS.GetDescription(),
-                              m_oGrayScaleDS.GetDescription()));
-    SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    SetDescription(CPLSPrintf("Blend %s width %s", m_oColorDS.GetDescription(),
+                              m_oOverlayDS.GetDescription()));
+    if (nBands > 1)
+        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
 
     if (bCanCreateOvr)
     {
         for (int iOvr = 0; iOvr < nOvrCount; ++iOvr)
         {
-            m_apoOverviews.push_back(std::make_unique<HSVMergeDataset>(
+            m_apoOverviews.push_back(std::make_unique<BlendDataset>(
                 *(oColorDS.GetRasterBand(1)->GetOverview(iOvr)->GetDataset()),
-                *(oGrayScaleDS.GetRasterBand(1)
-                      ->GetOverview(iOvr)
-                      ->GetDataset())));
+                *(oOverlayDS.GetRasterBand(1)->GetOverview(iOvr)->GetDataset()),
+                m_operator, nOpacity255Scale));
         }
     }
 }
 
 /************************************************************************/
-/*               HSVMergeDataset::AcquireSourcePixels()                 */
+/*                     ~BlendDataset::BlendDataset()                    */
 /************************************************************************/
 
-bool HSVMergeDataset::AcquireSourcePixels(int nXOff, int nYOff, int nXSize,
-                                          int nYSize, int nBufXSize,
-                                          int nBufYSize,
-                                          GDALRasterIOExtraArg *psExtraArg)
+BlendDataset::~BlendDataset()
+{
+    m_oColorDS.ReleaseRef();
+    m_oOverlayDS.ReleaseRef();
+}
+
+/************************************************************************/
+/*                  BlendDataset::AcquireSourcePixels()                 */
+/************************************************************************/
+
+bool BlendDataset::AcquireSourcePixels(int nXOff, int nYOff, int nXSize,
+                                       int nYSize, int nBufXSize, int nBufYSize,
+                                       GDALRasterIOExtraArg *psExtraArg)
 {
     if (nXOff == m_nCachedXOff && nYOff == m_nCachedYOff &&
         nXSize == m_nCachedXSize && nYSize == m_nCachedYSize &&
@@ -511,10 +555,12 @@ bool HSVMergeDataset::AcquireSourcePixels(int nXOff, int nYOff, int nXSize,
         return !m_abyBuffer.empty();
     }
 
-    constexpr int N_COMPS_IN_BUFFER = 4;  //  RGB + Grayscale
+    const int nColorCount = m_oColorDS.GetRasterCount();
+    const int nOverlayCount = m_oOverlayDS.GetRasterCount();
+    const int nCompsInBuffer = nColorCount + nOverlayCount;
 
     if (static_cast<size_t>(nBufXSize) >
-        std::numeric_limits<size_t>::max() / nBufYSize / N_COMPS_IN_BUFFER)
+        std::numeric_limits<size_t>::max() / nBufYSize / nCompsInBuffer)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "Out of memory allocating temporary buffer");
@@ -526,8 +572,8 @@ bool HSVMergeDataset::AcquireSourcePixels(int nXOff, int nYOff, int nXSize,
     const size_t nPixelCount = static_cast<size_t>(nBufXSize) * nBufYSize;
     try
     {
-        if (m_abyBuffer.size() < nPixelCount * N_COMPS_IN_BUFFER)
-            m_abyBuffer.resize(nPixelCount * N_COMPS_IN_BUFFER);
+        if (m_abyBuffer.size() < nPixelCount * nCompsInBuffer)
+            m_abyBuffer.resize(nPixelCount * nCompsInBuffer);
     }
     catch (const std::exception &)
     {
@@ -541,12 +587,13 @@ bool HSVMergeDataset::AcquireSourcePixels(int nXOff, int nYOff, int nXSize,
     const bool bOK =
         (m_oColorDS.RasterIO(
              GF_Read, nXOff, nYOff, nXSize, nYSize, m_abyBuffer.data(),
-             nBufXSize, nBufYSize, GDT_Byte, 3, nullptr, 1, nBufXSize,
+             nBufXSize, nBufYSize, GDT_Byte, nColorCount, nullptr, 1, nBufXSize,
              static_cast<GSpacing>(nPixelCount), psExtraArg) == CE_None &&
-         m_oGrayScaleDS.GetRasterBand(1)->RasterIO(
+         m_oOverlayDS.RasterIO(
              GF_Read, nXOff, nYOff, nXSize, nYSize,
-             m_abyBuffer.data() + nPixelCount * 3, nBufXSize, nBufYSize,
-             GDT_Byte, 1, nBufXSize, psExtraArg) == CE_None);
+             m_abyBuffer.data() + nPixelCount * nColorCount, nBufXSize,
+             nBufYSize, GDT_Byte, nOverlayCount, nullptr, 1, nBufXSize,
+             static_cast<GSpacing>(nPixelCount), psExtraArg) == CE_None);
     if (bOK)
     {
         m_nCachedXOff = nXOff;
@@ -566,16 +613,16 @@ bool HSVMergeDataset::AcquireSourcePixels(int nXOff, int nYOff, int nXSize,
 }
 
 /************************************************************************/
-/*                     HSVMergeDataset::IRasterIO()                     */
+/*                       BlendDataset::IRasterIO()                      */
 /************************************************************************/
 
-CPLErr HSVMergeDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                                  int nXSize, int nYSize, void *pData,
-                                  int nBufXSize, int nBufYSize,
-                                  GDALDataType eBufType, int nBandCount,
-                                  BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
-                                  GSpacing nLineSpace, GSpacing nBandSpace,
-                                  GDALRasterIOExtraArg *psExtraArg)
+CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                               int nXSize, int nYSize, void *pData,
+                               int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, int nBandCount,
+                               BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                               GSpacing nLineSpace, GSpacing nBandSpace,
+                               GDALRasterIOExtraArg *psExtraArg)
 {
     // Try to pass the request to the most appropriate overview dataset.
     if (nBufXSize < nXSize && nBufYSize < nYSize)
@@ -589,23 +636,20 @@ CPLErr HSVMergeDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             return eErr;
     }
 
-    GByte *pabyDst = static_cast<GByte *>(pData);
-    if (eRWFlag == GF_Read && eBufType == GDT_Byte && nBandCount == nBands &&
-        panBandMap[0] == 1 && panBandMap[1] == 2 && panBandMap[2] == 3 &&
-        (nBandCount == 3 || panBandMap[3] == 4) &&
+    GByte *const pabyDst = static_cast<GByte *>(pData);
+    const int nColorCount = m_oColorDS.GetRasterCount();
+    const int nOverlayCount = m_oOverlayDS.GetRasterCount();
+    if (nOverlayCount == 1 && m_opacity255Scale == 255 &&
+        m_operator == HSV_VALUE && eRWFlag == GF_Read && eBufType == GDT_Byte &&
+        nBandCount == nBands && IsAllBands(nBands, panBandMap) &&
         AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
-                            psExtraArg) &&
-        (nBandCount == 3 ||
-         m_oColorDS.GetRasterBand(4)->RasterIO(
-             GF_Read, nXOff, nYOff, nXSize, nYSize, pabyDst + nBandSpace * 3,
-             nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace,
-             psExtraArg) == CE_None))
+                            psExtraArg))
     {
         const size_t nPixelCount = static_cast<size_t>(nBufXSize) * nBufYSize;
         const GByte *pabyR = m_abyBuffer.data();
         const GByte *pabyG = m_abyBuffer.data() + nPixelCount;
         const GByte *pabyB = m_abyBuffer.data() + nPixelCount * 2;
-        const GByte *pabyGrayScale = m_abyBuffer.data() + nPixelCount * 3;
+        const GByte *pabyValue = m_abyBuffer.data() + nPixelCount * nColorCount;
         size_t nSrcIdx = 0;
         for (int j = 0; j < nBufYSize; ++j)
         {
@@ -614,7 +658,7 @@ CPLErr HSVMergeDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 nBandSpace >= nLineSpace * nBufYSize)
             {
                 patch_value_line(nBufXSize, pabyR + nSrcIdx, pabyG + nSrcIdx,
-                                 pabyB + nSrcIdx, pabyGrayScale + nSrcIdx,
+                                 pabyB + nSrcIdx, pabyValue + nSrcIdx,
                                  pabyDst + nDstOffset,
                                  pabyDst + nDstOffset + nBandSpace,
                                  pabyDst + nDstOffset + 2 * nBandSpace);
@@ -628,11 +672,22 @@ CPLErr HSVMergeDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     float h, s;
                     rgb_to_hs(pabyR[nSrcIdx], pabyG[nSrcIdx], pabyB[nSrcIdx],
                               &h, &s);
-                    hsv_to_rgb(h, s, pabyGrayScale[nSrcIdx],
+                    hsv_to_rgb(h, s, pabyValue[nSrcIdx],
                                &pabyDst[nDstOffset + 0 * nBandSpace],
                                &pabyDst[nDstOffset + 1 * nBandSpace],
                                &pabyDst[nDstOffset + 2 * nBandSpace]);
                 }
+            }
+        }
+        if (nColorCount == 4)
+        {
+            for (int j = 0; j < nBufYSize; ++j)
+            {
+                auto nDstOffset = 3 * nBandSpace + j * nLineSpace;
+                const GByte *pabyA = m_abyBuffer.data() + nPixelCount * 3;
+                GDALCopyWords64(pabyA, GDT_Byte, 1, pabyDst + nDstOffset,
+                                GDT_Byte, static_cast<int>(nPixelSpace),
+                                nBufXSize);
             }
         }
 
@@ -654,15 +709,14 @@ CPLErr HSVMergeDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                   HSVMergeDataset::IRasterIO()                       */
+/*                        BlendBand::IRasterIO()                        */
 /************************************************************************/
 
-CPLErr HSVMergeBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                               int nXSize, int nYSize, void *pData,
-                               int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, GSpacing nPixelSpace,
-                               GSpacing nLineSpace,
-                               GDALRasterIOExtraArg *psExtraArg)
+CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                            int nXSize, int nYSize, void *pData, int nBufXSize,
+                            int nBufYSize, GDALDataType eBufType,
+                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                            GDALRasterIOExtraArg *psExtraArg)
 {
     // Try to pass the request to the most appropriate overview dataset.
     if (nBufXSize < nXSize && nBufYSize < nYSize)
@@ -675,62 +729,243 @@ CPLErr HSVMergeBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             return eErr;
     }
 
-    if (nBand >= 4)
+    const size_t nPixelCount = static_cast<size_t>(nBufXSize) * nBufYSize;
+    const int nColorCount = m_oBlendDataset.m_oColorDS.GetRasterCount();
+    const int nOverlayCount = m_oBlendDataset.m_oOverlayDS.GetRasterCount();
+    if (nBand == 4 && m_oBlendDataset.m_operator == HSV_VALUE)
     {
-        return m_oHSVMergeDataset.m_oColorDS.GetRasterBand(nBand)->RasterIO(
-            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
-            eBufType, nPixelSpace, nLineSpace, psExtraArg);
+        if (nColorCount == 3)
+        {
+            GByte ch = 255;
+            for (int iY = 0; iY < nBufYSize; ++iY)
+            {
+                GDALCopyWords64(&ch, GDT_Byte, 0,
+                                static_cast<GByte *>(pData) + iY * nLineSpace,
+                                eBufType, static_cast<int>(nPixelSpace),
+                                nBufXSize);
+            }
+            return CE_None;
+        }
+        else
+        {
+            CPLAssert(nColorCount == 4);
+            return m_oBlendDataset.m_oColorDS.GetRasterBand(4)->RasterIO(
+                eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
+                nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg);
+        }
     }
     else if (eRWFlag == GF_Read && eBufType == GDT_Byte &&
-             m_oHSVMergeDataset.AcquireSourcePixels(nXOff, nYOff, nXSize,
-                                                    nYSize, nBufXSize,
-                                                    nBufYSize, psExtraArg))
+             m_oBlendDataset.AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize,
+                                                 nBufXSize, nBufYSize,
+                                                 psExtraArg))
     {
         GByte *pabyDst = static_cast<GByte *>(pData);
-        const GByte *pabyR = m_oHSVMergeDataset.m_abyBuffer.data();
-        const size_t nPixelCount = static_cast<size_t>(nBufXSize) * nBufYSize;
-        const GByte *pabyG =
-            m_oHSVMergeDataset.m_abyBuffer.data() + nPixelCount;
-        const GByte *pabyB =
-            m_oHSVMergeDataset.m_abyBuffer.data() + nPixelCount * 2;
-        const GByte *pabyGrayScale =
-            m_oHSVMergeDataset.m_abyBuffer.data() + nPixelCount * 3;
-        size_t nSrcIdx = 0;
-        for (int j = 0; j < nBufYSize; ++j)
+        if (m_oBlendDataset.m_operator == SRC_OVER)
         {
-            auto nDstOffset = j * nLineSpace;
-            if (nPixelSpace == 1 && nLineSpace >= nPixelSpace * nBufXSize)
+            const auto RGBToGrayScale = [](int R, int G, int B)
             {
-                patch_value_line(nBufXSize, pabyR + nSrcIdx, pabyG + nSrcIdx,
-                                 pabyB + nSrcIdx, pabyGrayScale + nSrcIdx,
-                                 nBand == 1 ? pabyDst + nDstOffset : nullptr,
-                                 nBand == 2 ? pabyDst + nDstOffset : nullptr,
-                                 nBand == 3 ? pabyDst + nDstOffset : nullptr);
-                nSrcIdx += nBufXSize;
-            }
-            else
+                // Equivalent to R * 0.299 + G * 0.587 + B * 0.114
+                // but using faster computation
+                return (R * 306 + G * 601 + B * 117) / 1024;
+            };
+
+            const GByte *paby =
+                (nBand <= nColorCount) ? m_oBlendDataset.m_abyBuffer.data() +
+                                             nPixelCount * (nBand - 1)
+                : (nBand == 4 && nColorCount == 2)
+                    ? m_oBlendDataset.m_abyBuffer.data() + nPixelCount
+                    : nullptr;
+            const GByte *pabyOverlay =
+                (nBand <= nOverlayCount)
+                    ? m_oBlendDataset.m_abyBuffer.data() +
+                          nPixelCount * (nColorCount + nBand - 1)
+                : (nBand <= 3) ? m_oBlendDataset.m_abyBuffer.data() +
+                                     nPixelCount * nColorCount
+                               : nullptr;
+            const GByte *pabyOverlayA =
+                (nOverlayCount == 2 || nOverlayCount == 4)
+                    ? m_oBlendDataset.m_abyBuffer.data() +
+                          nPixelCount * (nColorCount + nOverlayCount - 1)
+                    : nullptr;
+            const GByte *pabyOverlayR =
+                (nOverlayCount >= 3 && nColorCount < 3 && nBand <= 3)
+                    ? m_oBlendDataset.m_abyBuffer.data() +
+                          nPixelCount * nColorCount
+                    : nullptr;
+            const GByte *pabyOverlayG =
+                (nOverlayCount >= 3 && nColorCount < 3 && nBand <= 3)
+                    ? m_oBlendDataset.m_abyBuffer.data() +
+                          nPixelCount * (nColorCount + 1)
+                    : nullptr;
+            const GByte *pabyOverlayB =
+                (nOverlayCount >= 3 && nColorCount < 3 && nBand <= 3)
+                    ? m_oBlendDataset.m_abyBuffer.data() +
+                          nPixelCount * (nColorCount + 2)
+                    : nullptr;
+
+            size_t nSrcIdx = 0;
+            for (int j = 0; j < nBufYSize; ++j)
             {
+                auto nDstOffset = j * nLineSpace;
                 for (int i = 0; i < nBufXSize;
                      ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
                 {
+                    const int nOverlayA =
+                        pabyOverlayA ? ((pabyOverlayA[nSrcIdx] *
+                                             m_oBlendDataset.m_opacity255Scale +
+                                         255) /
+                                        256)
+                                     : m_oBlendDataset.m_opacity255Scale;
+
+                    const int nSrc = paby ? paby[nSrcIdx] : 255;
+
+                    const int nOverlay =
+                        (pabyOverlayR && pabyOverlayG && pabyOverlayB)
+                            ? RGBToGrayScale(pabyOverlayR[nSrcIdx],
+                                             pabyOverlayG[nSrcIdx],
+                                             pabyOverlayB[nSrcIdx])
+                        : pabyOverlay ? pabyOverlay[nSrcIdx]
+                                      : 255;
+
+                    pabyDst[nDstOffset] = static_cast<GByte>(
+                        std::min((nOverlay * m_oBlendDataset.m_opacity255Scale +
+                                  nSrc * (255 - nOverlayA) + 255) /
+                                     256,
+                                 255));
+                }
+            }
+        }
+        else if (nOverlayCount == 1 && m_oBlendDataset.m_opacity255Scale == 255)
+        {
+            const GByte *pabyR = m_oBlendDataset.m_abyBuffer.data();
+            const GByte *pabyG =
+                m_oBlendDataset.m_abyBuffer.data() + nPixelCount;
+            const GByte *pabyB =
+                m_oBlendDataset.m_abyBuffer.data() + nPixelCount * 2;
+            CPLAssert(m_oBlendDataset.m_operator == HSV_VALUE);
+            size_t nSrcIdx = 0;
+            const GByte *pabyValue =
+                m_oBlendDataset.m_abyBuffer.data() + nPixelCount * nColorCount;
+            for (int j = 0; j < nBufYSize; ++j)
+            {
+                auto nDstOffset = j * nLineSpace;
+                if (nPixelSpace == 1 && nLineSpace >= nPixelSpace * nBufXSize)
+                {
+                    patch_value_line(
+                        nBufXSize, pabyR + nSrcIdx, pabyG + nSrcIdx,
+                        pabyB + nSrcIdx, pabyValue + nSrcIdx,
+                        nBand == 1 ? pabyDst + nDstOffset : nullptr,
+                        nBand == 2 ? pabyDst + nDstOffset : nullptr,
+                        nBand == 3 ? pabyDst + nDstOffset : nullptr);
+                    nSrcIdx += nBufXSize;
+                }
+                else
+                {
+                    for (int i = 0; i < nBufXSize;
+                         ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
+                    {
+                        float h, s;
+                        rgb_to_hs(pabyR[nSrcIdx], pabyG[nSrcIdx],
+                                  pabyB[nSrcIdx], &h, &s);
+                        if (nBand == 1)
+                        {
+                            hsv_to_rgb(h, s, pabyValue[nSrcIdx],
+                                       &pabyDst[nDstOffset], nullptr, nullptr);
+                        }
+                        else if (nBand == 2)
+                        {
+                            hsv_to_rgb(h, s, pabyValue[nSrcIdx], nullptr,
+                                       &pabyDst[nDstOffset], nullptr);
+                        }
+                        else
+                        {
+                            CPLAssert(nBand == 3);
+                            hsv_to_rgb(h, s, pabyValue[nSrcIdx], nullptr,
+                                       nullptr, &pabyDst[nDstOffset]);
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            CPLAssert(m_oBlendDataset.m_operator == HSV_VALUE);
+            CPLAssert(nBand <= 3);
+            const GByte *pabyR = m_oBlendDataset.m_abyBuffer.data();
+            const GByte *pabyG =
+                m_oBlendDataset.m_abyBuffer.data() + nPixelCount;
+            const GByte *pabyB =
+                m_oBlendDataset.m_abyBuffer.data() + nPixelCount * 2;
+            const GByte *pabyValue =
+                m_oBlendDataset.m_abyBuffer.data() + nPixelCount * nColorCount;
+            const GByte *pabyOverlayR =
+                nOverlayCount >= 3 ? m_oBlendDataset.m_abyBuffer.data() +
+                                         nPixelCount * nColorCount
+                                   : nullptr;
+            const GByte *pabyOverlayG =
+                nOverlayCount >= 3 ? m_oBlendDataset.m_abyBuffer.data() +
+                                         nPixelCount * (nColorCount + 1)
+                                   : nullptr;
+            const GByte *pabyOverlayB =
+                nOverlayCount >= 3 ? m_oBlendDataset.m_abyBuffer.data() +
+                                         nPixelCount * (nColorCount + 2)
+                                   : nullptr;
+            const GByte *pabyOverlayA =
+                (nOverlayCount == 2 || nOverlayCount == 4)
+                    ? m_oBlendDataset.m_abyBuffer.data() +
+                          nPixelCount * (nColorCount + nOverlayCount - 1)
+                    : nullptr;
+
+            size_t nSrcIdx = 0;
+            for (int j = 0; j < nBufYSize; ++j)
+            {
+                auto nDstOffset = j * nLineSpace;
+                for (int i = 0; i < nBufXSize;
+                     ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
+                {
+                    const int nColorR = pabyR[nSrcIdx];
+                    const int nColorG = pabyG[nSrcIdx];
+                    const int nColorB = pabyB[nSrcIdx];
+                    const int nOverlayV =
+                        (pabyOverlayR && pabyOverlayG && pabyOverlayB)
+                            ? std::max({pabyOverlayR[nSrcIdx],
+                                        pabyOverlayG[nSrcIdx],
+                                        pabyOverlayB[nSrcIdx]})
+                            : pabyValue[nSrcIdx];
+                    const int nOverlayA =
+                        pabyOverlayA ? ((pabyOverlayA[nSrcIdx] *
+                                             m_oBlendDataset.m_opacity255Scale +
+                                         255) /
+                                        256)
+                                     : m_oBlendDataset.m_opacity255Scale;
+                    const int nColorValue =
+                        std::max({nColorR, nColorG, nColorB});
+
                     float h, s;
                     rgb_to_hs(pabyR[nSrcIdx], pabyG[nSrcIdx], pabyB[nSrcIdx],
                               &h, &s);
+
+                    const GByte nTargetValue = static_cast<GByte>(std::min(
+                        (nOverlayV * m_oBlendDataset.m_opacity255Scale +
+                         nColorValue * (255 - nOverlayA) + 255) /
+                            256,
+                        255));
+
                     if (nBand == 1)
                     {
-                        hsv_to_rgb(h, s, pabyGrayScale[nSrcIdx],
-                                   &pabyDst[nDstOffset], nullptr, nullptr);
+                        hsv_to_rgb(h, s, nTargetValue, &pabyDst[nDstOffset],
+                                   nullptr, nullptr);
                     }
                     else if (nBand == 2)
                     {
-                        hsv_to_rgb(h, s, pabyGrayScale[nSrcIdx], nullptr,
+                        hsv_to_rgb(h, s, nTargetValue, nullptr,
                                    &pabyDst[nDstOffset], nullptr);
                     }
                     else
                     {
                         CPLAssert(nBand == 3);
-                        hsv_to_rgb(h, s, pabyGrayScale[nSrcIdx], nullptr,
-                                   nullptr, &pabyDst[nDstOffset]);
+                        hsv_to_rgb(h, s, nTargetValue, nullptr, nullptr,
+                                   &pabyDst[nDstOffset]);
                     }
                 }
             }
@@ -738,7 +973,7 @@ CPLErr HSVMergeBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
         return CE_None;
     }
-    else if (m_oHSVMergeDataset.m_ioError)
+    else if (m_oBlendDataset.m_ioError)
     {
         return CE_Failure;
     }
@@ -747,7 +982,7 @@ CPLErr HSVMergeBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         const CPLErr eErr = GDALRasterBand::IRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
             eBufType, nPixelSpace, nLineSpace, psExtraArg);
-        m_oHSVMergeDataset.m_ioError = eErr != CE_None;
+        m_oBlendDataset.m_ioError = eErr != CE_None;
         return eErr;
     }
 }
@@ -755,49 +990,87 @@ CPLErr HSVMergeBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }  // namespace
 
 /************************************************************************/
-/*                 GDALRasterColorMergeAlgorithm::RunStep()             */
+/*                GDALRasterBlendAlgorithm::ValidateGlobal()            */
 /************************************************************************/
 
-bool GDALRasterColorMergeAlgorithm::RunStep(GDALPipelineStepRunContext &)
+bool GDALRasterBlendAlgorithm::ValidateGlobal()
 {
-    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
-    CPLAssert(poSrcDS);
-
-    auto poGrayScaleDS = m_grayScaleDataset.GetDatasetRef();
-    CPLAssert(poGrayScaleDS);
-
-    if ((poSrcDS->GetRasterCount() != 3 && poSrcDS->GetRasterCount() != 4) ||
-        poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
+    auto poSrcDS =
+        m_inputDataset.empty() ? nullptr : m_inputDataset[0].GetDatasetRef();
+    auto poOverlayDS = m_overlayDataset.GetDatasetRef();
+    if (poSrcDS)
     {
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "Only 3 or 4-band Byte dataset supported as input");
-        return false;
+        if (poSrcDS->GetRasterCount() == 0 || poSrcDS->GetRasterCount() > 4 ||
+            poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
+        {
+            ReportError(CE_Failure, CPLE_NotSupported,
+                        "Only 1-band, 2-band, 3-band or 4-band Byte dataset "
+                        "supported as input");
+            return false;
+        }
+    }
+    if (poOverlayDS)
+    {
+        if (poOverlayDS->GetRasterCount() == 0 ||
+            poOverlayDS->GetRasterCount() > 4 ||
+            poOverlayDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
+        {
+            ReportError(CE_Failure, CPLE_NotSupported,
+                        "Only 1-band, 2-band, 3-band or 4-band Byte dataset "
+                        "supported as overlay");
+            return false;
+        }
     }
 
-    if (poGrayScaleDS->GetRasterCount() != 1 ||
-        poGrayScaleDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
+    if (poSrcDS && poOverlayDS)
     {
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "Only 1-band Byte dataset supported as grayscale dataset");
-        return false;
-    }
+        if (poSrcDS->GetRasterXSize() != poOverlayDS->GetRasterXSize() ||
+            poSrcDS->GetRasterYSize() != poOverlayDS->GetRasterYSize())
+        {
+            ReportError(CE_Failure, CPLE_IllegalArg,
+                        "Input dataset and overlay dataset must have "
+                        "the same dimensions");
+            return false;
+        }
 
-    if (poSrcDS->GetRasterXSize() != poGrayScaleDS->GetRasterXSize() ||
-        poSrcDS->GetRasterYSize() != poGrayScaleDS->GetRasterYSize())
-    {
-        ReportError(CE_Failure, CPLE_IllegalArg,
-                    "Input RGB/RGBA dataset and grayscale dataset must have "
-                    "the same dimensions");
-        return false;
+        if (m_operator == HSV_VALUE && poSrcDS->GetRasterCount() != 3 &&
+            poSrcDS->GetRasterCount() != 4)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Operator %s requires a 3-band or 4-band input dataset",
+                        HSV_VALUE);
+            return false;
+        }
     }
-
-    m_outputDataset.Set(
-        std::make_unique<HSVMergeDataset>(*poSrcDS, *poGrayScaleDS));
 
     return true;
 }
 
-GDALRasterColorMergeAlgorithmStandalone::
-    ~GDALRasterColorMergeAlgorithmStandalone() = default;
+/************************************************************************/
+/*                   GDALRasterBlendAlgorithm::RunStep()                */
+/************************************************************************/
+
+bool GDALRasterBlendAlgorithm::RunStep(GDALPipelineStepRunContext &)
+{
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
+
+    auto poOverlayDS = m_overlayDataset.GetDatasetRef();
+    CPLAssert(poOverlayDS);
+
+    if (!ValidateGlobal())
+        return false;
+
+    const int nOpacity255Scale =
+        (m_opacity * 255 + OPACITY_INPUT_RANGE / 2) / OPACITY_INPUT_RANGE;
+
+    m_outputDataset.Set(std::make_unique<BlendDataset>(
+        *poSrcDS, *poOverlayDS, m_operator, nOpacity255Scale));
+
+    return true;
+}
+
+GDALRasterBlendAlgorithmStandalone::~GDALRasterBlendAlgorithmStandalone() =
+    default;
 
 //! @endcond

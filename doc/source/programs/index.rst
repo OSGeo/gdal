@@ -79,11 +79,11 @@ Raster commands
    gdal_raster_info
    gdal_raster_as_features
    gdal_raster_aspect
+   gdal_raster_blend
    gdal_raster_calc
    gdal_raster_clean_collar
    gdal_raster_clip
    gdal_raster_color_map
-   gdal_raster_color_merge
    gdal_raster_contour
    gdal_raster_compare
    gdal_raster_convert
@@ -132,11 +132,11 @@ Raster commands
     - :ref:`gdal_raster_info`: Get information on a raster dataset
     - :reF:`gdal_raster_as_features`: Create features representing raster pixels
     - :ref:`gdal_raster_aspect`: Generate an aspect map.
+    - :ref:`gdal_raster_blend`: Blend/compose two raster datasets
     - :ref:`gdal_raster_calc`: Perform raster algebra
     - :ref:`gdal_raster_clean_collar`: Clean the collar of a raster dataset, removing noise
     - :ref:`gdal_raster_clip`: Clip a raster dataset
     - :ref:`gdal_raster_color_map`: Use a grayscale raster to replace the intensity of a RGB/RGBA dataset
-    - :ref:`gdal_raster_color_merge`: Replace the color value of a RGB/RGBA dataset by the one of a grayscale raster
     - :ref:`gdal_raster_compare`: Compare two raster datasets
     - :ref:`gdal_raster_convert`: Convert a raster dataset
     - :ref:`gdal_raster_contour`: Builds vector contour lines from a raster elevation model
