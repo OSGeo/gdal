@@ -59,16 +59,23 @@ Standard options
     - ``src-over`` performs standard alpha blending, by compositing the overlay
       dataset over the input dataset.
 
-      Given :math:`overlay_{C}` the value of any component "C" (where C is one
-      of red, green, blue or alpha) of the overlay dataset,
+      Given :math:`overlay_{C}` the value of one of the red, green or blue
+      component of the overlay dataset,
       :math:`overlay_{A}` the value of the alpha component of the overlay dataset,
-      :math:`input_{C}` the value of any component "C" of the overlay dataset
+      :math:`input_{C}` the value of the corresponding component of the input dataset,
+      :math:`input_{A}` the value of the alpha component of the input dataset
       and :math:`opacity`, the value of :option:`--opacity`, the resulting
       component :math:`output_{C}` is (all values normalized to [0,1] range):
 
-       .. math::
+      .. math::
 
-          output_{C} = (overlay_{C} * opacity) + (input_{C} * (1 - overlay_{A} * opacity))
+          output_{C} * output_{A} = (overlay_{C} * overlay_{A} * opacity) + (input_{C} * input_{A} * (1 - overlay_{A} * opacity))
+
+      with
+
+      .. math::
+
+          output_{A} = (overlay_{A} * opacity) + (input_{A} * (1 - overlay_{A} * opacity))
 
     - ``hsv-value`` creates a color with the value of the overlay and the hue
       and saturation of the input. It performs the following steps:
@@ -85,7 +92,7 @@ Standard options
 
         .. math::
 
-            output_{V} = (overlay_{V} * opacity) + (input_{V} * (1 - overlay_{A} * opacity))
+            output_{V} = (overlay_{V} * overlay_{A} * opacity) + (input_{V} * (1 - overlay_{A} * opacity))
 
         If the overlay dataset is a RGB/RGBA dataset, :math:`overlay_{V}` is
         :math:`max(overlay_{R},overlay_{G},overlay_{B})`.

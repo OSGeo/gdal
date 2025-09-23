@@ -259,7 +259,7 @@ def test_gdalalg_raster_blend_check_rgb_hsb_conversion():
         operator="hsv-value",
     ) as alg:
         out_ds = alg.Output()
-        assert out_ds.ReadRaster(0, 0, 1, 1) == rgba_ds.ReadRaster(0, 0, 1, 1)
+        assert out_ds.ReadRaster() == rgba_ds.ReadRaster()
 
     rgb_ds = gdal.Translate("", rgba_ds, bandList=[1, 2, 3], format="MEM")
     with gdal.Run(
@@ -498,7 +498,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 3
-        assert struct.unpack("B" * 3, out_ds.ReadRaster()) == (180, 204, 233)
+        assert struct.unpack("B" * 3, out_ds.ReadRaster()) == (177, 201, 229)
 
     with gdal.Run(
         "raster",
@@ -510,7 +510,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 4
-        assert struct.unpack("B" * 4, out_ds.ReadRaster()) == (180, 204, 233, 253)
+        assert struct.unpack("B" * 4, out_ds.ReadRaster()) == (177, 201, 229, 249)
 
     with gdal.Run(
         "raster",
@@ -669,7 +669,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 2
-        assert struct.unpack("B" * 2, out_ds.ReadRaster()) == (193, 253)
+        assert struct.unpack("B" * 2, out_ds.ReadRaster()) == (190, 250)
 
     with gdal.Run(
         "raster",
@@ -693,4 +693,4 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 1
-        assert struct.unpack("B" * 1, out_ds.ReadRaster()) == (193,)
+        assert struct.unpack("B" * 1, out_ds.ReadRaster()) == (189,)
