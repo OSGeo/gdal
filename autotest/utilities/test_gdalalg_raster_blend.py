@@ -427,7 +427,7 @@ def test_gdalalg_raster_blend_out_of_memory(tmp_vsimem, xsize, ysize, req_object
 
 def test_gdalalg_raster_blend_src_over():
 
-    input_rgba_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 4)
+    input_rgba_ds = gdal.GetDriverByName("MEM").Create("", 100, 1, 4)
     input_rgba_ds.GetRasterBand(1).Fill(100)
     input_rgba_ds.GetRasterBand(2).Fill(150)
     input_rgba_ds.GetRasterBand(3).Fill(200)
@@ -435,7 +435,7 @@ def test_gdalalg_raster_blend_src_over():
 
     input_rgb_ds = gdal.Translate("", input_rgba_ds, bandList=[1, 2, 3], format="MEM")
 
-    overlay_rgba_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 4)
+    overlay_rgba_ds = gdal.GetDriverByName("MEM").Create("", 100, 1, 4)
     overlay_rgba_ds.GetRasterBand(1).Fill(205)
     overlay_rgba_ds.GetRasterBand(2).Fill(220)
     overlay_rgba_ds.GetRasterBand(3).Fill(240)
@@ -454,9 +454,18 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 3
-        assert struct.unpack("B" * 3, out_ds.ReadRaster()) == struct.unpack(
-            "B" * 3, overlay_rgb_ds.ReadRaster()
+        assert struct.unpack("B" * 3 * 100, out_ds.ReadRaster()) == struct.unpack(
+            "B" * 3 * 100, overlay_rgb_ds.ReadRaster()
         )
+        assert struct.unpack(
+            "B" * 100, out_ds.GetRasterBand(1).ReadRaster()
+        ) == struct.unpack("B" * 100, overlay_rgb_ds.GetRasterBand(1).ReadRaster())
+        assert struct.unpack(
+            "B" * 100, out_ds.GetRasterBand(2).ReadRaster()
+        ) == struct.unpack("B" * 100, overlay_rgb_ds.GetRasterBand(2).ReadRaster())
+        assert struct.unpack(
+            "B" * 100, out_ds.GetRasterBand(3).ReadRaster()
+        ) == struct.unpack("B" * 100, overlay_rgb_ds.GetRasterBand(3).ReadRaster())
 
     with gdal.Run(
         "raster",
@@ -468,8 +477,8 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 3
-        assert struct.unpack("B" * 3, out_ds.ReadRaster()) == struct.unpack(
-            "B" * 3, input_rgb_ds.ReadRaster()
+        assert struct.unpack("B" * 3 * 100, out_ds.ReadRaster()) == struct.unpack(
+            "B" * 3 * 100, input_rgb_ds.ReadRaster()
         )
 
     with gdal.Run(
@@ -482,7 +491,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 3
-        assert struct.unpack("B" * 3, out_ds.ReadRaster()) == (
+        assert struct.unpack("B" * 3, out_ds.ReadRaster(0, 0, 1, 1)) == (
             (100 * 25 + 205 * 75) // 100,
             (150 * 25 + 220 * 75) // 100,
             (200 * 25 + 240 * 75) // 100,
@@ -498,7 +507,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 3
-        assert struct.unpack("B" * 3, out_ds.ReadRaster()) == (177, 201, 229)
+        assert struct.unpack("B" * 3, out_ds.ReadRaster(0, 0, 1, 1)) == (177, 201, 229)
 
     with gdal.Run(
         "raster",
@@ -510,7 +519,28 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 4
-        assert struct.unpack("B" * 4, out_ds.ReadRaster()) == (177, 201, 229, 254)
+        assert struct.unpack("B" * 4, out_ds.ReadRaster(0, 0, 1, 1)) == (
+            177,
+            201,
+            229,
+            254,
+        )
+        assert (
+            struct.unpack("B" * 100, out_ds.GetRasterBand(1).ReadRaster())
+            == (177,) * 100
+        )
+        assert (
+            struct.unpack("B" * 100, out_ds.GetRasterBand(2).ReadRaster())
+            == (201,) * 100
+        )
+        assert (
+            struct.unpack("B" * 100, out_ds.GetRasterBand(3).ReadRaster())
+            == (229,) * 100
+        )
+        assert (
+            struct.unpack("B" * 100, out_ds.GetRasterBand(4).ReadRaster())
+            == (254,) * 100
+        )
 
     with gdal.Run(
         "raster",
@@ -522,13 +552,18 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 4
-        assert struct.unpack("B" * 4, out_ds.ReadRaster()) == (205, 220, 240, 255)
+        assert struct.unpack("B" * 4, out_ds.ReadRaster(0, 0, 1, 1)) == (
+            205,
+            220,
+            240,
+            255,
+        )
 
-    input_gray_alpha_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    input_gray_alpha_ds = gdal.GetDriverByName("MEM").Create("", 100, 1, 2)
     input_gray_alpha_ds.GetRasterBand(1).Fill(125)
     input_gray_alpha_ds.GetRasterBand(2).Fill(250)
 
-    input_gray_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    input_gray_ds = gdal.GetDriverByName("MEM").Create("", 100, 1, 1)
     input_gray_ds.GetRasterBand(1).Fill(125)
 
     with gdal.Run(
@@ -540,7 +575,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 1
-        assert struct.unpack("B" * 1, out_ds.ReadRaster()) == (
+        assert struct.unpack("B" * 1, out_ds.ReadRaster(0, 0, 1, 1)) == (
             (205 * 299 + 220 * 587 + 240 * 114) // 1000,
         )
 
@@ -554,7 +589,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 1
-        assert struct.unpack("B" * 1, out_ds.ReadRaster()) == (125,)
+        assert struct.unpack("B" * 1, out_ds.ReadRaster(0, 0, 1, 1)) == (125,)
 
     with gdal.Run(
         "raster",
@@ -566,15 +601,15 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 1
-        assert struct.unpack("B" * 1, out_ds.ReadRaster()) == (
+        assert struct.unpack("B" * 1, out_ds.ReadRaster(0, 0, 1, 1)) == (
             ((205 * 299 + 220 * 587 + 240 * 114) // 1000 * 75 + 125 * 25) // 100,
         )
 
-    overlay_gray_alpha_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    overlay_gray_alpha_ds = gdal.GetDriverByName("MEM").Create("", 100, 1, 2)
     overlay_gray_alpha_ds.GetRasterBand(1).Fill(213)
     overlay_gray_alpha_ds.GetRasterBand(2).Fill(250)
 
-    overlay_gray_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    overlay_gray_ds = gdal.GetDriverByName("MEM").Create("", 100, 1, 1)
     overlay_gray_ds.GetRasterBand(1).Fill(213)
 
     with gdal.Run(
@@ -586,7 +621,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 3
-        assert struct.unpack("B" * 3, out_ds.ReadRaster()) == (213, 213, 213)
+        assert struct.unpack("B" * 3, out_ds.ReadRaster(0, 0, 1, 1)) == (213, 213, 213)
 
     with gdal.Run(
         "raster",
@@ -598,8 +633,8 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 3
-        assert struct.unpack("B" * 3, out_ds.ReadRaster()) == struct.unpack(
-            "B" * 3, input_rgb_ds.ReadRaster()
+        assert struct.unpack("B" * 3 * 100, out_ds.ReadRaster()) == struct.unpack(
+            "B" * 3 * 100, input_rgb_ds.ReadRaster()
         )
 
     with gdal.Run(
@@ -612,7 +647,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 3
-        assert struct.unpack("B" * 3, out_ds.ReadRaster()) == (
+        assert struct.unpack("B" * 3, out_ds.ReadRaster(0, 0, 1, 1)) == (
             (100 * 25 + 213 * 75) // 100,
             (150 * 25 + 213 * 75) // 100,
             (200 * 25 + 213 * 75) // 100,
@@ -627,8 +662,8 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 1
-        assert struct.unpack("B" * 1, out_ds.ReadRaster()) == struct.unpack(
-            "B" * 1, overlay_gray_ds.ReadRaster()
+        assert struct.unpack("B" * 1 * 100, out_ds.ReadRaster()) == struct.unpack(
+            "B" * 1 * 100, overlay_gray_ds.ReadRaster()
         )
 
     with gdal.Run(
@@ -641,8 +676,8 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 1
-        assert struct.unpack("B" * 1, out_ds.ReadRaster()) == struct.unpack(
-            "B" * 1, input_gray_ds.ReadRaster()
+        assert struct.unpack("B" * 1 * 100, out_ds.ReadRaster()) == struct.unpack(
+            "B" * 1 * 100, input_gray_ds.ReadRaster()
         )
 
     with gdal.Run(
@@ -655,7 +690,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 1
-        assert struct.unpack("B" * 1, out_ds.ReadRaster()) == (
+        assert struct.unpack("B" * 1, out_ds.ReadRaster(0, 0, 1, 1)) == (
             (213 * 75 + 125 * 25) // 100,
         )
 
@@ -669,7 +704,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 2
-        assert struct.unpack("B" * 2, out_ds.ReadRaster()) == (190, 250)
+        assert struct.unpack("B" * 2, out_ds.ReadRaster(0, 0, 1, 1)) == (190, 250)
 
     with gdal.Run(
         "raster",
@@ -681,7 +716,7 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 2
-        assert struct.unpack("B" * 2, out_ds.ReadRaster()) == (191, 222)
+        assert struct.unpack("B" * 2, out_ds.ReadRaster(0, 0, 1, 1)) == (191, 222)
 
     with gdal.Run(
         "raster",
@@ -693,4 +728,4 @@ def test_gdalalg_raster_blend_src_over():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 1
-        assert struct.unpack("B" * 1, out_ds.ReadRaster()) == (189,)
+        assert struct.unpack("B" * 1, out_ds.ReadRaster(0, 0, 1, 1)) == (189,)

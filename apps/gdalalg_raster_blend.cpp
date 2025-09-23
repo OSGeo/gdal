@@ -17,6 +17,7 @@
 #include "gdal_priv.h"
 
 #include <algorithm>
+#include <array>
 #include <limits>
 
 #if defined(__x86_64) || defined(_M_X64)
@@ -508,7 +509,9 @@ BlendDataset::BlendDataset(GDALDataset &oColorDS, GDALDataset &oOverlayDS,
     SetDescription(CPLSPrintf("Blend %s width %s", m_oColorDS.GetDescription(),
                               m_oOverlayDS.GetDescription()));
     if (nBands > 1)
+    {
         SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    }
 
     if (bCanCreateOvr)
     {
@@ -613,6 +616,26 @@ bool BlendDataset::AcquireSourcePixels(int nXOff, int nYOff, int nXSize,
 }
 
 /************************************************************************/
+/*                             gTabInvDstA                              */
+/************************************************************************/
+
+constexpr int SHIFT_DIV_DSTA = 8;
+
+// Table of (255 * 256 + k/2) / k values for k in [0,255]
+constexpr auto gTabInvDstA = []()
+{
+    std::array<uint16_t, 256> arr{};
+
+    arr[0] = 0;
+    for (int k = 1; k <= 255; ++k)
+    {
+        arr[k] = static_cast<uint16_t>(((255 << SHIFT_DIV_DSTA) + (k / 2)) / k);
+    }
+
+    return arr;
+}();
+
+/************************************************************************/
 /*                       BlendDataset::IRasterIO()                      */
 /************************************************************************/
 
@@ -636,7 +659,7 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             return eErr;
     }
 
-    GByte *const pabyDst = static_cast<GByte *>(pData);
+    GByte *const CPL_RESTRICT pabyDst = static_cast<GByte *>(pData);
     const int nColorCount = m_oColorDS.GetRasterCount();
     const int nOverlayCount = m_oOverlayDS.GetRasterCount();
     if (nOverlayCount == 1 && m_opacity255Scale == 255 &&
@@ -693,6 +716,77 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
         return CE_None;
     }
+    else if (nOverlayCount == 4 && nColorCount == 4 && m_operator == SRC_OVER &&
+             eRWFlag == GF_Read && eBufType == GDT_Byte &&
+             nBandCount == nBands && IsAllBands(nBands, panBandMap) &&
+             AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize, nBufXSize,
+                                 nBufYSize, psExtraArg))
+    {
+        const int nOpacity = m_opacity255Scale;
+        const size_t nPixelCount = static_cast<size_t>(nBufXSize) * nBufYSize;
+        const GByte *CPL_RESTRICT pabyR = m_abyBuffer.data();
+        const GByte *CPL_RESTRICT pabyG = m_abyBuffer.data() + nPixelCount;
+        const GByte *CPL_RESTRICT pabyB = m_abyBuffer.data() + nPixelCount * 2;
+        const GByte *CPL_RESTRICT pabyA = m_abyBuffer.data() + nPixelCount * 3;
+        const GByte *CPL_RESTRICT pabyOverlayR =
+            m_abyBuffer.data() + nPixelCount * nColorCount;
+        const GByte *CPL_RESTRICT pabyOverlayG =
+            m_abyBuffer.data() + nPixelCount * (nColorCount + 1);
+        const GByte *CPL_RESTRICT pabyOverlayB =
+            m_abyBuffer.data() + nPixelCount * (nColorCount + 2);
+        const GByte *CPL_RESTRICT pabyOverlayA =
+            m_abyBuffer.data() + nPixelCount * (nColorCount + 3);
+        size_t nSrcIdx = 0;
+        for (int j = 0; j < nBufYSize; ++j)
+        {
+            auto nDstOffset = j * nLineSpace;
+            for (int i = 0; i < nBufXSize;
+                 ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
+            {
+                const int nOverlayR = pabyOverlayR[nSrcIdx];
+                const int nOverlayG = pabyOverlayG[nSrcIdx];
+                const int nOverlayB = pabyOverlayB[nSrcIdx];
+                const int nOverlayA =
+                    (pabyOverlayA[nSrcIdx] * nOpacity + 255) / 256;
+                const int nR = pabyR[nSrcIdx];
+                const int nG = pabyG[nSrcIdx];
+                const int nB = pabyB[nSrcIdx];
+                const int nA = pabyA[nSrcIdx];
+                const int nSrcAMul255MinusOverlayA =
+                    (nA * (255 - nOverlayA) + 255) / 256;
+                const unsigned nDstA = nOverlayA + nSrcAMul255MinusOverlayA;
+                unsigned nDstR = (nOverlayR * nOverlayA +
+                                  nR * nSrcAMul255MinusOverlayA + 255) /
+                                 256;
+                unsigned nDstG = (nOverlayG * nOverlayA +
+                                  nG * nSrcAMul255MinusOverlayA + 255) /
+                                 256;
+                unsigned nDstB = (nOverlayB * nOverlayA +
+                                  nB * nSrcAMul255MinusOverlayA + 255) /
+                                 256;
+                const uint16_t nInvDstA =
+                    gTabInvDstA[nDstA &
+                                0xff];  // (255 << SHIFT_DIV_DSTA) / nDstA;
+                constexpr unsigned ROUND_OFFSET_DIV_DSTA =
+                    ((1 << SHIFT_DIV_DSTA) - 1);
+                nDstR = (nDstR * nInvDstA + ROUND_OFFSET_DIV_DSTA) >>
+                        SHIFT_DIV_DSTA;
+                nDstG = (nDstG * nInvDstA + ROUND_OFFSET_DIV_DSTA) >>
+                        SHIFT_DIV_DSTA;
+                nDstB = (nDstB * nInvDstA + ROUND_OFFSET_DIV_DSTA) >>
+                        SHIFT_DIV_DSTA;
+                pabyDst[nDstOffset + 0 * nBandSpace] =
+                    static_cast<GByte>(nDstR);
+                pabyDst[nDstOffset + 1 * nBandSpace] =
+                    static_cast<GByte>(nDstG);
+                pabyDst[nDstOffset + 2 * nBandSpace] =
+                    static_cast<GByte>(nDstB);
+                pabyDst[nDstOffset + 3 * nBandSpace] =
+                    static_cast<GByte>(nDstA);
+            }
+        }
+        return CE_None;
+    }
     else if (m_ioError)
     {
         return CE_Failure;
@@ -705,6 +799,29 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             nBandSpace, psExtraArg);
         m_ioError = eErr != CE_None;
         return eErr;
+    }
+}
+
+/************************************************************************/
+/*                        SrcOverRGBOneComponent()                      */
+/************************************************************************/
+
+// GCC and clang do a god job a auto vectorizing the below function
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("tree-vectorize")))
+#endif
+static void
+SrcOverRGB(const uint8_t *const __restrict pabyOverlay,
+           const uint8_t *const __restrict pabySrc,
+           uint8_t *const __restrict pabyDst, const size_t N,
+           const uint8_t nOpacity)
+{
+    for (size_t i = 0; i < N; ++i)
+    {
+        const uint8_t nOverlay = pabyOverlay[i];
+        const uint8_t nSrc = pabySrc[i];
+        pabyDst[i] = static_cast<uint8_t>(
+            (nOverlay * nOpacity + nSrc * (255 - nOpacity) + 255) / 256);
     }
 }
 
@@ -753,6 +870,46 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
                 nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg);
         }
+    }
+    else if (nOverlayCount == 3 && nColorCount == 3 &&
+             m_oBlendDataset.m_operator == SRC_OVER && eRWFlag == GF_Read &&
+             eBufType == GDT_Byte &&
+             m_oBlendDataset.AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize,
+                                                 nBufXSize, nBufYSize,
+                                                 psExtraArg))
+    {
+        const int nOpacity = m_oBlendDataset.m_opacity255Scale;
+        const GByte *const CPL_RESTRICT pabySrc =
+            m_oBlendDataset.m_abyBuffer.data() + nPixelCount * (nBand - 1);
+        const GByte *const CPL_RESTRICT pabyOverlay =
+            m_oBlendDataset.m_abyBuffer.data() +
+            nPixelCount * (nColorCount + nBand - 1);
+        GByte *const CPL_RESTRICT pabyDst = static_cast<GByte *>(pData);
+        size_t nSrcIdx = 0;
+        for (int j = 0; j < nBufYSize; ++j)
+        {
+            auto nDstOffset = j * nLineSpace;
+            if (nPixelSpace == 1)
+            {
+                SrcOverRGB(pabyOverlay + nSrcIdx, pabySrc + nSrcIdx,
+                           pabyDst + nDstOffset, nBufXSize,
+                           static_cast<uint8_t>(nOpacity));
+                nSrcIdx += nBufXSize;
+            }
+            else
+            {
+                for (int i = 0; i < nBufXSize;
+                     ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
+                {
+                    const int nOverlay = pabyOverlay[nSrcIdx];
+                    const int nSrc = pabySrc[nSrcIdx];
+                    pabyDst[nDstOffset] = static_cast<GByte>(
+                        (nOverlay * nOpacity + nSrc * (255 - nOpacity) + 255) /
+                        256);
+                }
+            }
+        }
+        return CE_None;
     }
     else if (eRWFlag == GF_Read && eBufType == GDT_Byte &&
              m_oBlendDataset.AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize,
