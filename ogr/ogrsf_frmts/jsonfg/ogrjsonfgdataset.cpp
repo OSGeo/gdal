@@ -36,28 +36,49 @@ constexpr const char *CONFORMANCE_MEASURES =
 
 OGRJSONFGDataset::~OGRJSONFGDataset()
 {
+    OGRJSONFGDataset::Close();
     CPLFree(pszGeoData_);
-    if (fpOut_)
-    {
-        FinishWriting();
+}
 
-        VSIFCloseL(fpOut_);
+/************************************************************************/
+/*                        OGRJSONFGDataset::Close()                     */
+/************************************************************************/
+
+CPLErr OGRJSONFGDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (fpOut_)
+        {
+            eErr = GDAL::Combine(eErr, FinishWriting());
+
+            eErr = GDAL::Combine(eErr, VSIFCloseL(fpOut_) == 0);
+            fpOut_ = nullptr;
+        }
+
+        apoLayers_.clear();
+
+        eErr = GDAL::Combine(eErr, GDALDataset::Close());
     }
+
+    return eErr;
 }
 
 /************************************************************************/
 /*                           FinishWriting()                            */
 /************************************************************************/
 
-void OGRJSONFGDataset::FinishWriting()
+bool OGRJSONFGDataset::FinishWriting()
 {
+    bool ret = true;
     if (m_nPositionBeforeFCClosed == 0)
     {
         m_nPositionBeforeFCClosed = fpOut_->Tell();
 
         if (!EmitStartFeaturesIfNeededAndReturnIfFirstFeature())
-            VSIFPrintfL(fpOut_, "\n");
-        VSIFPrintfL(fpOut_, "]");
+            ret &= VSIFPrintfL(fpOut_, "\n") != 0;
+        ret &= VSIFPrintfL(fpOut_, "]") != 0;
 
         // When we didn't know if there was a single layer, we omitted writing
         // the coordinate precision at ICreateLayer() time.
@@ -95,16 +116,18 @@ void OGRJSONFGDataset::FinishWriting()
                 if (oCoordPrec.dfXYResolution !=
                     OGRGeomCoordinatePrecision::UNKNOWN)
                 {
-                    VSIFPrintfL(fpOut_,
-                                ",\n\"xy_coordinate_resolution_place\":%g",
-                                oCoordPrec.dfXYResolution);
+                    ret &=
+                        VSIFPrintfL(fpOut_,
+                                    ",\n\"xy_coordinate_resolution_place\":%g",
+                                    oCoordPrec.dfXYResolution) != 0;
                 }
                 if (oCoordPrec.dfZResolution !=
                     OGRGeomCoordinatePrecision::UNKNOWN)
                 {
-                    VSIFPrintfL(fpOut_,
-                                ",\n\"z_coordinate_resolution_place\":%g",
-                                oCoordPrec.dfZResolution);
+                    ret &=
+                        VSIFPrintfL(fpOut_,
+                                    ",\n\"z_coordinate_resolution_place\":%g",
+                                    oCoordPrec.dfZResolution) != 0;
                 }
 
                 OGRSpatialReference oSRSWGS84;
@@ -115,14 +138,16 @@ void OGRJSONFGDataset::FinishWriting()
                 if (oCoordPrecWGS84.dfXYResolution !=
                     OGRGeomCoordinatePrecision::UNKNOWN)
                 {
-                    VSIFPrintfL(fpOut_, ",\n\"xy_coordinate_resolution\":%g",
-                                oCoordPrecWGS84.dfXYResolution);
+                    ret &= VSIFPrintfL(fpOut_,
+                                       ",\n\"xy_coordinate_resolution\":%g",
+                                       oCoordPrecWGS84.dfXYResolution) != 0;
                 }
                 if (oCoordPrecWGS84.dfZResolution !=
                     OGRGeomCoordinatePrecision::UNKNOWN)
                 {
-                    VSIFPrintfL(fpOut_, ",\n\"z_coordinate_resolution\":%g",
-                                oCoordPrecWGS84.dfZResolution);
+                    ret &=
+                        VSIFPrintfL(fpOut_, ",\n\"z_coordinate_resolution\":%g",
+                                    oCoordPrecWGS84.dfZResolution) != 0;
                 }
             }
         }
@@ -146,44 +171,50 @@ void OGRJSONFGDataset::FinishWriting()
         {
             if (m_nPositionBeforeConformsTo > 0)
             {
-                VSIFSeekL(fpOut_, m_nPositionBeforeConformsTo, SEEK_SET);
+                ret &= VSIFSeekL(fpOut_, m_nPositionBeforeConformsTo,
+                                 SEEK_SET) == 0;
             }
             else
             {
-                VSIFPrintfL(fpOut_, ",\n");
+                ret &= VSIFPrintfL(fpOut_, ",\n") != 0;
             }
-            VSIFPrintfL(fpOut_,
-                        "\"conformsTo\": [\n"
-                        "  \"%s\",\n  \"%s\"",
-                        CONFORMANCE_CORE, CONFORMANCE_FEATURE_TYPE);
+            ret &= VSIFPrintfL(fpOut_,
+                               "\"conformsTo\": [\n"
+                               "  \"%s\",\n  \"%s\"",
+                               CONFORMANCE_CORE, CONFORMANCE_FEATURE_TYPE) != 0;
             if (bPolyhedra)
-                VSIFPrintfL(fpOut_, ",\n  \"%s\"", CONFORMANCE_POLYHEDRA);
+                ret &= VSIFPrintfL(fpOut_, ",\n  \"%s\"",
+                                   CONFORMANCE_POLYHEDRA) != 0;
             if (bCurve)
-                VSIFPrintfL(fpOut_, ",\n  \"%s\"", CONFORMANCE_CIRCULAR_ARCS);
+                ret &= VSIFPrintfL(fpOut_, ",\n  \"%s\"",
+                                   CONFORMANCE_CIRCULAR_ARCS) != 0;
             if (bMeasure)
-                VSIFPrintfL(fpOut_, ",\n  \"%s\"", CONFORMANCE_MEASURES);
+                ret &= VSIFPrintfL(fpOut_, ",\n  \"%s\"",
+                                   CONFORMANCE_MEASURES) != 0;
             if (m_nPositionBeforeConformsTo > 0)
             {
-                VSIFPrintfL(fpOut_, "\n],");
-                VSIFPrintfL(fpOut_, "%s\n",
-                            std::string(static_cast<size_t>(
-                                            m_nPositionAfterConformsTo -
-                                            strlen(",") - VSIFTellL(fpOut_)),
-                                        ' ')
-                                .c_str());
+                ret &= VSIFPrintfL(fpOut_, "\n],") != 0;
+                ret &= VSIFPrintfL(
+                           fpOut_, "%s\n",
+                           std::string(static_cast<size_t>(
+                                           m_nPositionAfterConformsTo -
+                                           strlen(",") - VSIFTellL(fpOut_)),
+                                       ' ')
+                               .c_str()) != 0;
 
-                VSIFSeekL(fpOut_, 0, SEEK_END);
+                ret &= VSIFSeekL(fpOut_, 0, SEEK_END) == 0;
             }
             else
             {
-                VSIFPrintfL(fpOut_, "\n]");
+                ret &= VSIFPrintfL(fpOut_, "\n]") != 0;
             }
         }
 
-        VSIFPrintfL(fpOut_, "\n}\n");
+        ret &= VSIFPrintfL(fpOut_, "\n}\n") != 0;
 
-        fpOut_->Flush();
+        ret &= fpOut_->Flush() == 0;
     }
+    return ret;
 }
 
 /************************************************************************/

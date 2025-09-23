@@ -256,6 +256,8 @@ class OGRJSONFGDataset final : public GDALDataset
     OGRJSONFGDataset() = default;
     ~OGRJSONFGDataset() override;
 
+    CPLErr Close() override;
+
     bool Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType);
     bool Create(const char *pszName, CSLConstList papszOptions);
 
@@ -324,7 +326,7 @@ class OGRJSONFGDataset final : public GDALDataset
     bool ReadFromFile(GDALOpenInfo *poOpenInfo, const char *pszUnprefixed);
     bool ReadFromService(GDALOpenInfo *poOpenInfo, const char *pszSource);
 
-    void FinishWriting();
+    bool FinishWriting();
 
     bool EmitStartFeaturesIfNeededAndReturnIfFirstFeature();
 
