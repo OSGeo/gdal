@@ -38,16 +38,17 @@ struct Lines
     std::vector<double>
         pitchMask;              //!< Height/indicator values for pitch masking.
     std::vector<double> input;  //!< Copy of input data when in SD mode.
+    std::vector<double> sd;     //!< SD mask.
 
     /// Constructor
-    Lines() : cur(), result(), prev(), pitchMask(), input()
+    Lines() : cur(), result(), prev(), pitchMask(), input(), sd()
     {
     }
 
     /// Constructor that initializes to line length
     /// \param lineLen  Line length.
     explicit Lines(size_t lineLen)
-        : cur(lineLen), result(lineLen), prev(), pitchMask(), input()
+        : cur(lineLen), result(lineLen), prev(), pitchMask(), input(), sd()
     {
     }
 };

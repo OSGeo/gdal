@@ -240,7 +240,25 @@ bool ViewshedExecutor::readLine(int nLine, Lines &lines)
     }
 
     if (sdMode())
+    {
         lines.input = lines.cur;
+        double nodata = m_sdBand.GetNoDataValue();
+        int sdStatus = m_sdBand.RasterIO(
+            GF_Read, oOutExtent.xStart, nLine, oOutExtent.xSize(), 1,
+            lines.sd.data(), oOutExtent.xSize(), 1, GDT_Float64, 0, 0, nullptr);
+        if (sdStatus)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "RasterIO error when reading SD band at position (%d,%d), "
+                     "size (%d,%d)",
+                     oOutExtent.xStart, nLine, oOutExtent.xSize(), 1);
+            return false;
+        }
+        // Set the SD to 1000 if nodata is found.
+        for (size_t i = 0; i < lines.sd.size(); ++i)
+            if (lines.sd[i] == nodata)
+                lines.sd[i] = 1000.0;
+    }
 
     // Initialize the result line.
     // In DEM mode the base is the pre-adjustment value.  In ground mode the base is zero.
@@ -433,6 +451,7 @@ bool ViewshedExecutor::processFirstLine(Lines &lines)
             lines.result[m_nX] = oOpts.visibleVal;
     }
 
+    //ABELL
     if (!oCurExtent.containsY(m_nY))
         processFirstLineTopOrBottom(ll, lines);
     else
@@ -442,6 +461,11 @@ bool ViewshedExecutor::processFirstLine(Lines &lines)
         pQueue->SubmitJob([&]() { processFirstLineRight(ll, lines); });
         pQueue->WaitCompletion();
     }
+    //ABELL
+    if (sdMode())
+    {
+    }
+    //ABELL
 
     if (oOpts.pitchMasking())
         applyPitchMask(lines.result, lines.pitchMask);
@@ -797,10 +821,10 @@ void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
         double dfZ;
         if (nXOffset == nYOffset)
         {
-            if (nXOffset == 1)
+            if (nYOffset == 1)
                 dfZ = *pThis;
             else
-                dfZ = CalcHeightLine(nXOffset, *(pLast + 1));
+                dfZ = CalcHeightLine(nYOffset, *(pLast + 1));
         }
         else
             dfZ =
@@ -856,10 +880,10 @@ void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
         double dfZ;
         if (nXOffset == nYOffset)
         {
-            if (nXOffset == 1)
+            if (nYOffset == 1)
                 dfZ = *pThis;
             else
-                dfZ = CalcHeightLine(nXOffset, *(pLast - 1));
+                dfZ = CalcHeightLine(nYOffset, *(pLast - 1));
         }
         else
             dfZ =
@@ -987,6 +1011,8 @@ bool ViewshedExecutor::run()
     if (oOpts.pitchMasking())
         firstLine.pitchMask.resize(oOutExtent.xSize(),
                                    std::numeric_limits<double>::quiet_NaN());
+    if (sdMode())
+        firstLine.sd.resize(oOutExtent.xSize());
 
     m_dfHeightAdjFactor = calcHeightAdjFactor();
 
@@ -1015,6 +1041,8 @@ bool ViewshedExecutor::run()
                 lines.pitchMask.resize(
                     oOutExtent.xSize(),
                     std::numeric_limits<double>::quiet_NaN());
+            if (sdMode())
+                lines.sd.resize(oOutExtent.xSize());
 
             for (int nLine = yStart - 1; nLine >= oCurExtent.yStart && !err;
                  nLine--)
@@ -1038,6 +1066,8 @@ bool ViewshedExecutor::run()
                 lines.pitchMask.resize(
                     oOutExtent.xSize(),
                     std::numeric_limits<double>::quiet_NaN());
+            if (sdMode())
+                lines.sd.resize(oOutExtent.xSize());
 
             for (int nLine = yStart + 1; nLine < oCurExtent.yStop && !err;
                  nLine++)
