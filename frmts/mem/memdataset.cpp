@@ -437,7 +437,7 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             return CE_None;
         }
     }
-    // From a band-interleaved buffer to a pixel-interleave dataset
+    // From a band-interleaved buffer to a pixel-interleaved dataset
     else if (eRWFlag == GF_Write && nXSize == nBufXSize &&
              nYSize == nBufYSize && nXSize == nRasterXSize &&
              nBandCount == nBands && nBands > 1 &&
@@ -449,7 +449,8 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         FlushCache(false);
 
         auto poDstBand = cpl::down_cast<MEMRasterBand *>(papoBands[0]);
-        GDALTranspose2D(pData, eBufType, poDstBand->pabyData,
+        GDALTranspose2D(pData, eBufType,
+                        poDstBand->pabyData + nYOff * poDstBand->nLineOffset,
                         poDstBand->GetRasterDataType(),
                         static_cast<size_t>(nXSize) * nYSize, nBands);
         return CE_None;
