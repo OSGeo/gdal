@@ -4994,6 +4994,7 @@ class GDALSlicedMDArray final : public GDALPamMDArray
     std::shared_ptr<GDALMDArray> m_poParent{};
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
     std::vector<size_t> m_mapDimIdxToParentDimIdx{};  // of size m_dims.size()
+    std::vector<std::shared_ptr<GDALMDArray>> m_apoNewIndexingVariables{};
     std::vector<Range>
         m_parentRanges{};  // of size m_poParent->GetDimensionCount()
 
@@ -5012,6 +5013,7 @@ class GDALSlicedMDArray final : public GDALPamMDArray
         const std::string &viewExpr,
         std::vector<std::shared_ptr<GDALDimension>> &&dims,
         std::vector<size_t> &&mapDimIdxToParentDimIdx,
+        std::vector<std::shared_ptr<GDALMDArray>> &&apoNewIndexingVariables,
         std::vector<Range> &&parentRanges)
         : GDALAbstractMDArray(std::string(), "Sliced view of " +
                                                  poParent->GetFullName() +
@@ -5023,6 +5025,7 @@ class GDALSlicedMDArray final : public GDALPamMDArray
                          poParent->GetContext()),
           m_poParent(std::move(poParent)), m_dims(std::move(dims)),
           m_mapDimIdxToParentDimIdx(std::move(mapDimIdxToParentDimIdx)),
+          m_apoNewIndexingVariables(std::move(apoNewIndexingVariables)),
           m_parentRanges(std::move(parentRanges)),
           m_parentStart(m_poParent->GetDimensionCount()),
           m_parentCount(m_poParent->GetDimensionCount(), 1),
@@ -5050,6 +5053,7 @@ class GDALSlicedMDArray final : public GDALPamMDArray
            const std::string &viewExpr,
            std::vector<std::shared_ptr<GDALDimension>> &&dims,
            std::vector<size_t> &&mapDimIdxToParentDimIdx,
+           std::vector<std::shared_ptr<GDALMDArray>> &&apoNewIndexingVariables,
            std::vector<Range> &&parentRanges)
     {
         CPLAssert(dims.size() == mapDimIdxToParentDimIdx.size());
@@ -5057,7 +5061,8 @@ class GDALSlicedMDArray final : public GDALPamMDArray
 
         auto newAr(std::shared_ptr<GDALSlicedMDArray>(new GDALSlicedMDArray(
             poParent, viewExpr, std::move(dims),
-            std::move(mapDimIdxToParentDimIdx), std::move(parentRanges))));
+            std::move(mapDimIdxToParentDimIdx),
+            std::move(apoNewIndexingVariables), std::move(parentRanges))));
         newAr->SetSelf(newAr);
         return newAr;
     }
@@ -5294,6 +5299,7 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
 
     bool bGotEllipsis = false;
     size_t nCurSrcDim = 0;
+    std::vector<std::shared_ptr<GDALMDArray>> apoNewIndexingVariables;
     for (size_t i = 0; i < nTokens; i++)
     {
         const char *pszIdxSpec = aosTokens[i];
@@ -5420,29 +5426,53 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
                 bPosIncr
                     ? DIV_ROUND_UP(nEndIdx - range.m_nStartIdx, nAbsIncr)
                     : DIV_ROUND_UP(inc + range.m_nStartIdx - nEndIdx, nAbsIncr);
+            const auto &poSrcDim = srcDims[nCurSrcDim];
             if (range.m_nStartIdx == 0 && range.m_nIncr == 1 &&
-                newSize == srcDims[nCurSrcDim]->GetSize())
+                newSize == poSrcDim->GetSize())
             {
-                newDims.push_back(srcDims[nCurSrcDim]);
+                newDims.push_back(poSrcDim);
             }
             else
             {
-                std::string osNewDimName(srcDims[nCurSrcDim]->GetName());
+                std::string osNewDimName(poSrcDim->GetName());
                 if (bRenameDimensions)
                 {
                     osNewDimName =
-                        "subset_" + srcDims[nCurSrcDim]->GetName() +
+                        "subset_" + poSrcDim->GetName() +
                         CPLSPrintf("_" CPL_FRMT_GUIB "_" CPL_FRMT_GIB
                                    "_" CPL_FRMT_GUIB,
                                    static_cast<GUIntBig>(range.m_nStartIdx),
                                    static_cast<GIntBig>(range.m_nIncr),
                                    static_cast<GUIntBig>(newSize));
                 }
-                newDims.push_back(std::make_shared<GDALDimension>(
-                    std::string(), osNewDimName, srcDims[nCurSrcDim]->GetType(),
-                    range.m_nIncr > 0 ? srcDims[nCurSrcDim]->GetDirection()
+                auto poNewDim = std::make_shared<GDALDimensionWeakIndexingVar>(
+                    std::string(), osNewDimName, poSrcDim->GetType(),
+                    range.m_nIncr > 0 ? poSrcDim->GetDirection()
                                       : std::string(),
-                    newSize));
+                    newSize);
+                auto poSrcIndexingVar = poSrcDim->GetIndexingVariable();
+                if (poSrcIndexingVar &&
+                    poSrcIndexingVar->GetDimensionCount() == 1 &&
+                    poSrcIndexingVar->GetDimensions()[0] == poSrcDim)
+                {
+                    std::vector<std::shared_ptr<GDALDimension>>
+                        indexingVarNewDims{poNewDim};
+                    std::vector<size_t> indexingVarMapDimIdxToParentDimIdx{0};
+                    std::vector<std::shared_ptr<GDALMDArray>>
+                        indexingVarNewIndexingVar;
+                    std::vector<GDALSlicedMDArray::Range>
+                        indexingVarParentRanges{range};
+                    auto poNewIndexingVar = GDALSlicedMDArray::Create(
+                        poSrcIndexingVar, pszIdxSpec,
+                        std::move(indexingVarNewDims),
+                        std::move(indexingVarMapDimIdxToParentDimIdx),
+                        std::move(indexingVarNewIndexingVar),
+                        std::move(indexingVarParentRanges));
+                    poNewDim->SetIndexingVariable(poNewIndexingVar);
+                    apoNewIndexingVariables.push_back(
+                        std::move(poNewIndexingVar));
+                }
+                newDims.push_back(std::move(poNewDim));
             }
             mapDimIdxToParentDimIdx.push_back(nCurSrcDim);
             parentRanges.emplace_back(range);
@@ -5462,9 +5492,9 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
     viewSpec.m_parentRanges = parentRanges;
     viewSpecs.emplace_back(std::move(viewSpec));
 
-    return GDALSlicedMDArray::Create(self, viewExpr, std::move(newDims),
-                                     std::move(mapDimIdxToParentDimIdx),
-                                     std::move(parentRanges));
+    return GDALSlicedMDArray::Create(
+        self, viewExpr, std::move(newDims), std::move(mapDimIdxToParentDimIdx),
+        std::move(apoNewIndexingVariables), std::move(parentRanges));
 }
 
 /************************************************************************/
