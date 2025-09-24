@@ -14530,9 +14530,11 @@ bool GDALMDArrayRegularlySpaced::IRead(
     GByte *pabyDstBuffer = static_cast<GByte *>(pDstBuffer);
     for (size_t i = 0; i < count[0]; i++)
     {
-        const double dfVal = m_dfStart + (arrayStartIdx[0] + i * arrayStep[0] +
-                                          m_dfOffsetInIncrement) *
-                                             m_dfIncrement;
+        const double dfVal =
+            m_dfStart +
+            (arrayStartIdx[0] + i * static_cast<double>(arrayStep[0]) +
+             m_dfOffsetInIncrement) *
+                m_dfIncrement;
         GDALExtendedDataType::CopyValue(&dfVal, m_dt, pabyDstBuffer,
                                         bufferDataType);
         pabyDstBuffer += bufferStride[0] * bufferDataType.GetSize();
