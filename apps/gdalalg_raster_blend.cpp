@@ -19,9 +19,11 @@
 #include <algorithm>
 #include <array>
 #include <limits>
+#include <utility>
 
 #if defined(__x86_64) || defined(_M_X64)
 #define HAVE_SSE2
+#include <immintrin.h>
 #endif
 #ifdef HAVE_SSE2
 #include "gdalsse_priv.h"
@@ -636,6 +638,126 @@ constexpr auto gTabInvDstA = []()
 }();
 
 /************************************************************************/
+/*                         BlendSrcOverRGBA_SSE2()                      */
+/************************************************************************/
+
+#ifdef HAVE_SSE2
+static int BlendSrcOverRGBA_SSE2(const GByte *CPL_RESTRICT pabyR,
+                                 const GByte *CPL_RESTRICT pabyG,
+                                 const GByte *CPL_RESTRICT pabyB,
+                                 const GByte *CPL_RESTRICT pabyA,
+                                 const GByte *CPL_RESTRICT pabyOverlayR,
+                                 const GByte *CPL_RESTRICT pabyOverlayG,
+                                 const GByte *CPL_RESTRICT pabyOverlayB,
+                                 const GByte *CPL_RESTRICT pabyOverlayA,
+                                 GByte *CPL_RESTRICT pabyDst,
+                                 GPtrDiff_t nBandSpace, int N, int nOpacity)
+{
+    // See scalar code after call to BlendSrcOverRGBA_SSE2() below for the
+    // non-obfuscated formulas...
+
+    const auto load_and_unpack = [](const void *p)
+    {
+        const auto zero = _mm_setzero_si128();
+        auto overlayA = _mm_loadu_si128(reinterpret_cast<const __m128i *>(p));
+        return std::make_pair(_mm_unpacklo_epi8(overlayA, zero),
+                              _mm_unpackhi_epi8(overlayA, zero));
+    };
+
+    const auto pack_and_store = [](void *p, __m128i lo, __m128i hi) {
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(p),
+                         _mm_packus_epi16(lo, hi));
+    };
+
+    const auto mul16bit_8bit_result = [](__m128i a, __m128i b)
+    {
+        const auto r255 = _mm_set1_epi16(255);
+        return _mm_srli_epi16(_mm_add_epi16(_mm_mullo_epi16(a, b), r255), 8);
+    };
+
+    const auto opacity = _mm_set1_epi16(static_cast<int16_t>(nOpacity));
+    const auto r255 = _mm_set1_epi16(255);
+    const int16_t *tabInvDstASigned =
+        reinterpret_cast<const int16_t *>(gTabInvDstA.data());
+    constexpr int REG_WIDTH = static_cast<int>(sizeof(opacity));
+
+    int i = 0;
+    for (; i <= N - REG_WIDTH; i += REG_WIDTH)
+    {
+        auto [overlayA_lo, overlayA_hi] = load_and_unpack(pabyOverlayA + i);
+        auto [srcA_lo, srcA_hi] = load_and_unpack(pabyA + i);
+        overlayA_lo = mul16bit_8bit_result(overlayA_lo, opacity);
+        overlayA_hi = mul16bit_8bit_result(overlayA_hi, opacity);
+        auto srcAMul255MinusOverlayA_lo =
+            mul16bit_8bit_result(srcA_lo, _mm_sub_epi16(r255, overlayA_lo));
+        auto srcAMul255MinusOverlayA_hi =
+            mul16bit_8bit_result(srcA_hi, _mm_sub_epi16(r255, overlayA_hi));
+        auto dstA_lo = _mm_add_epi16(overlayA_lo, srcAMul255MinusOverlayA_lo);
+        auto dstA_hi = _mm_add_epi16(overlayA_hi, srcAMul255MinusOverlayA_hi);
+
+        // The & 0xff should not be necessary. This is mostly a safety
+        // belt if the above math yields a result outside [0, 255]...
+        dstA_lo = _mm_and_si128(dstA_lo, r255);
+        dstA_hi = _mm_and_si128(dstA_hi, r255);
+
+        // This would be the equivalent of a "_mm_i16gather_epi16" operation
+        // which does not exist...
+        // invDstA_{i} = [tabInvDstASigned[dstA_{i}] for i in range(8)]
+        auto invDstA_lo = _mm_undefined_si128();
+        auto invDstA_hi = _mm_undefined_si128();
+#define SET_INVDSTA(k)                                                         \
+    do                                                                         \
+    {                                                                          \
+        const int idxLo = _mm_extract_epi16(dstA_lo, k);                       \
+        const int idxHi = _mm_extract_epi16(dstA_hi, k);                       \
+        invDstA_lo = _mm_insert_epi16(invDstA_lo, tabInvDstASigned[idxLo], k); \
+        invDstA_hi = _mm_insert_epi16(invDstA_hi, tabInvDstASigned[idxHi], k); \
+    } while (0)
+
+        SET_INVDSTA(0);
+        SET_INVDSTA(1);
+        SET_INVDSTA(2);
+        SET_INVDSTA(3);
+        SET_INVDSTA(4);
+        SET_INVDSTA(5);
+        SET_INVDSTA(6);
+        SET_INVDSTA(7);
+
+        pack_and_store(pabyDst + i + 3 * nBandSpace, dstA_lo, dstA_hi);
+
+#define PROCESS_COMPONENT(pabySrc, pabyOverlay, iBand)                         \
+    do                                                                         \
+    {                                                                          \
+        auto [src_lo, src_hi] = load_and_unpack((pabySrc) + i);                \
+        auto [overlay_lo, overlay_hi] = load_and_unpack((pabyOverlay) + i);    \
+        auto dst_lo = _mm_srli_epi16(                                          \
+            _mm_add_epi16(                                                     \
+                _mm_add_epi16(                                                 \
+                    _mm_mullo_epi16(overlay_lo, overlayA_lo),                  \
+                    _mm_mullo_epi16(src_lo, srcAMul255MinusOverlayA_lo)),      \
+                r255),                                                         \
+            8);                                                                \
+        auto dst_hi = _mm_srli_epi16(                                          \
+            _mm_add_epi16(                                                     \
+                _mm_add_epi16(                                                 \
+                    _mm_mullo_epi16(overlay_hi, overlayA_hi),                  \
+                    _mm_mullo_epi16(src_hi, srcAMul255MinusOverlayA_hi)),      \
+                r255),                                                         \
+            8);                                                                \
+        dst_lo = mul16bit_8bit_result(dst_lo, invDstA_lo);                     \
+        dst_hi = mul16bit_8bit_result(dst_hi, invDstA_hi);                     \
+        pack_and_store(pabyDst + i + (iBand)*nBandSpace, dst_lo, dst_hi);      \
+    } while (0)
+
+        PROCESS_COMPONENT(pabyR, pabyOverlayR, 0);
+        PROCESS_COMPONENT(pabyG, pabyOverlayG, 1);
+        PROCESS_COMPONENT(pabyB, pabyOverlayB, 2);
+    }
+    return i;
+}
+#endif
+
+/************************************************************************/
 /*                       BlendDataset::IRasterIO()                      */
 /************************************************************************/
 
@@ -740,8 +862,21 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         for (int j = 0; j < nBufYSize; ++j)
         {
             auto nDstOffset = j * nLineSpace;
-            for (int i = 0; i < nBufXSize;
-                 ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
+            int i = 0;
+#ifdef HAVE_SSE2
+            if (nPixelSpace == 1)
+            {
+                i = BlendSrcOverRGBA_SSE2(
+                    pabyR + nSrcIdx, pabyG + nSrcIdx, pabyB + nSrcIdx,
+                    pabyA + nSrcIdx, pabyOverlayR + nSrcIdx,
+                    pabyOverlayG + nSrcIdx, pabyOverlayB + nSrcIdx,
+                    pabyOverlayA + nSrcIdx, pabyDst + nDstOffset, nBandSpace,
+                    nBufXSize, nOpacity);
+                nSrcIdx += i;
+                nDstOffset += i;
+            }
+#endif
+            for (; i < nBufXSize; ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
             {
                 const int nOverlayR = pabyOverlayR[nSrcIdx];
                 const int nOverlayG = pabyOverlayG[nSrcIdx];
