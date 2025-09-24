@@ -3455,7 +3455,7 @@ def test_ogr_wfs_vsimem_wfs110_schema_not_understood(with_and_without_streaming)
             or f.int != 123456789
             or f.float != 1.2
             or f.double != 1.23
-            or f.dt != "2015-04-17T12:34:56Z"
+            or f.dt != "2015/04/17 12:34:56+00"
             or f.GetGeometryRef().ExportToWkt() != "POINT (2 49)"
         )
 

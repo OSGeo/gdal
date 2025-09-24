@@ -5025,3 +5025,38 @@ def test_ogr_gml_write_error(tmp_vsimem):
     with pytest.raises(Exception, match="Could not write line"):
         lyr.CreateFeature(f)
     ds.Close()
+
+
+###############################################################################
+
+
+def test_ogr_gml_datetime(tmp_vsimem):
+
+    ds = ogr.Open("data/gml/datetime.gml")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTTime
+    assert f["time"] == "23:59:60"
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTDate
+    assert f["date"] == "9999/12/31"
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTDateTime
+    assert f["datetime"] == "9999/12/31 23:59:60.999"
+    assert lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTDateTime
+    assert f["dtInTimePosition"] == "9999/12/31 23:59:60.999"
+
+    tmp_filename = tmp_vsimem / "out.gml"
+    with gdal.VSIFile("data/gml/datetime.gml", "rb") as fin:
+        with gdal.VSIFile(tmp_filename, "wb") as fout:
+            fout.write(fin.read())
+
+    ds = ogr.Open(tmp_filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTTime
+    assert f["time"] == "23:59:60"
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTDate
+    assert f["date"] == "9999/12/31"
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTDateTime
+    assert f["datetime"] == "9999/12/31 23:59:60.999"
+    assert lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTDateTime
+    assert f["timePosition"] == "9999/12/31 23:59:60.999"
