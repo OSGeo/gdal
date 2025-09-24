@@ -576,12 +576,12 @@ int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess)
 NAMESPACE_MRF_END
 
 /************************************************************************/
-/*                          GDALRegister_mrf()                          */
+/*                          GDALRegister_MRF()                          */
 /************************************************************************/
 
 USING_NAMESPACE_MRF
 
-void GDALRegister_mrf()
+void GDALRegister_MRF()
 {
     if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
@@ -691,11 +691,4 @@ void GDALRegister_mrf()
     driver->pfnCreate = MRFDataset::Create;
     driver->pfnDelete = MRFDataset::Delete;
     GetGDALDriverManager()->RegisterDriver(driver);
-}
-
-extern "C" void CPL_DLL GDALRegister_MRF(void);
-
-void GDALRegister_MRF()
-{
-    GDALRegister_mrf();
 }
