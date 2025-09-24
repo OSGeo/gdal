@@ -56,9 +56,22 @@ bool invalid(int i)
 /// \param Za  Height at the line one unit previous to the target point.
 double CalcHeightLine(int nDistance, double Za)
 {
-    nDistance = std::abs(nDistance);
-    assert(nDistance != 1);
+    assert(nDistance > 1);
     return Za * nDistance / (nDistance - 1);
+}
+
+/// Calculate the height at nDistance units along a line through the origin given the height
+/// at nDistance - 1 units along the line.
+/// \param nDistance  Distance along the line for the target point.
+/// \param Zcur  Height at the line at the target point.
+/// \param Za    Height at the line one unit previous to the target point.
+double CalcHeightLine(int nDistance, double Zcur, double Za)
+{
+    nDistance = std::abs(nDistance);
+    assert(nDistance > 0);
+    if (nDistance == 1)
+        return Zcur;
+    return CalcHeightLine(nDistance, Za);
 }
 
 // Calculate the height Zc of a point (i, j, Zc) given a line through the origin (0, 0, 0)
@@ -795,7 +808,6 @@ void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
     }
     iStart = oCurExtent.clampX(iStart);
 
-    nYOffset = std::abs(nYOffset);
     double *pThis = lines.cur.data() + iStart;
     double *pLast = lines.prev.data() + iStart;
 
@@ -815,17 +827,13 @@ void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
     }
 
     // Go from the observer to the left, calculating Z as we go.
+    nYOffset = std::abs(nYOffset);
     for (int iPixel = iStart; iPixel > iEnd; iPixel--, pThis--, pLast--)
     {
         int nXOffset = std::abs(iPixel - m_nX);
         double dfZ;
         if (nXOffset == nYOffset)
-        {
-            if (nYOffset == 1)
-                dfZ = *pThis;
-            else
-                dfZ = CalcHeightLine(nYOffset, *(pLast + 1));
-        }
+            dfZ = CalcHeightLine(nYOffset, *pThis, *(pLast + 1));
         else
             dfZ =
                 oZcalc(nXOffset, nYOffset, *(pThis + 1), *pLast, *(pLast + 1));
@@ -855,7 +863,6 @@ void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
     }
     iStart = oCurExtent.clampX(iStart);
 
-    nYOffset = std::abs(nYOffset);
     double *pThis = lines.cur.data() + iStart;
     double *pLast = lines.prev.data() + iStart;
 
@@ -874,17 +881,13 @@ void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
     }
 
     // Go from the observer to the right, calculating Z as we go.
+    nYOffset = std::abs(nYOffset);
     for (int iPixel = iStart; iPixel < iEnd; iPixel++, pThis++, pLast++)
     {
         int nXOffset = std::abs(iPixel - m_nX);
         double dfZ;
         if (nXOffset == nYOffset)
-        {
-            if (nYOffset == 1)
-                dfZ = *pThis;
-            else
-                dfZ = CalcHeightLine(nYOffset, *(pLast - 1));
-        }
+            dfZ = CalcHeightLine(nYOffset, *pThis, *(pLast - 1));
         else
             dfZ =
                 oZcalc(nXOffset, nYOffset, *(pThis - 1), *pLast, *(pLast - 1));
@@ -934,11 +937,8 @@ bool ViewshedExecutor::processLine(int nLine, Lines &lines)
     {
         if (ll.left < ll.right && ll.leftMin == ll.rightMin)
         {
-            double dfZ;
-            if (std::abs(nYOffset) == 1)
-                dfZ = lines.cur[m_nX];
-            else
-                dfZ = CalcHeightLine(nYOffset, lines.prev[m_nX]);
+            double dfZ = CalcHeightLine(std::abs(nYOffset), lines.cur[m_nX],
+                                        lines.prev[m_nX]);
             setOutput(lines.result[m_nX], lines.cur[m_nX], dfZ);
         }
         else
