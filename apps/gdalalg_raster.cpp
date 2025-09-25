@@ -14,11 +14,11 @@
 
 #include "gdalalg_raster_info.h"
 #include "gdalalg_raster_aspect.h"
+#include "gdalalg_raster_blend.h"
 #include "gdalalg_raster_calc.h"
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_clean_collar.h"
 #include "gdalalg_raster_color_map.h"
-#include "gdalalg_raster_color_merge.h"
 #include "gdalalg_raster_compare.h"
 #include "gdalalg_raster_convert.h"
 #include "gdalalg_raster_create.h"
@@ -83,11 +83,11 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterInfoAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterAsFeaturesAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterAspectAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALRasterBlendAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCalcAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCleanCollarAlgorithm>();
         RegisterSubAlgorithm<GDALRasterClipAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterColorMapAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterColorMergeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCompareAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterConvertAlgorithm>();
         RegisterSubAlgorithm<GDALRasterCreateAlgorithm>();

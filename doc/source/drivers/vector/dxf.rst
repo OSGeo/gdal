@@ -107,7 +107,7 @@ The following entity types are supported:
 
    -  .. config:: DXF_MERGE_BLOCK_GEOMETRIES
          :choices: TRUE, FALSE
-         :default: FALSE
+         :default: TRUE
 
          To avoid merging blocks into a
          compound geometry the :config:`DXF_MERGE_BLOCK_GEOMETRIES` config option may

@@ -15,9 +15,9 @@
 #include "gdalalg_raster_read.h"
 #include "gdalalg_raster_calc.h"
 #include "gdalalg_raster_aspect.h"
+#include "gdalalg_raster_blend.h"
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
-#include "gdalalg_raster_color_merge.h"
 #include "gdalalg_raster_compare.h"
 #include "gdalalg_raster_edit.h"
 #include "gdalalg_raster_fill_nodata.h"
@@ -179,12 +179,12 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
         addSuffixIfNeeded(GDALRasterInfoAlgorithm::NAME));
 
     registry.Register<GDALRasterAspectAlgorithm>();
+    registry.Register<GDALRasterBlendAlgorithm>();
 
     registry.Register<GDALRasterClipAlgorithm>(
         addSuffixIfNeeded(GDALRasterClipAlgorithm::NAME));
 
     registry.Register<GDALRasterColorMapAlgorithm>();
-    registry.Register<GDALRasterColorMergeAlgorithm>();
     registry.Register<GDALRasterCompareAlgorithm>();
 
     registry.Register<GDALRasterEditAlgorithm>(

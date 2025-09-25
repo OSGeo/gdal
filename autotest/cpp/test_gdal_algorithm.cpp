@@ -2953,8 +2953,8 @@ TEST_F(test_gdal_algorithm, min_max_count_equal)
 
     {
         MyAlgorithm alg;
-        alg.GetArg("arg")->Set(std::vector<std::string>{"foo"});
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.GetArg("arg")->Set(std::vector<std::string>{"foo"}));
         EXPECT_FALSE(alg.ValidateArguments());
         EXPECT_STREQ(CPLGetLastErrorMsg(),
                      "test: 1 value has been specified for argument 'arg', "

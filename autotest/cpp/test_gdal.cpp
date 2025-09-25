@@ -20,6 +20,7 @@
 #include "tilematrixset.hpp"
 #include "gdalcachedpixelaccessor.h"
 #include "memdataset.h"
+#include "vrtdataset.h"
 
 #include <algorithm>
 #include <array>
@@ -709,6 +710,34 @@ TEST_F(test_gdal, GDALBuildVRT)
     EXPECT_EQ(GDALChecksumImage(GDALGetRasterBand(hOutDS, 1), 0, 0, 20, 20),
               4672);
     GDALReleaseDataset(hOutDS);
+}
+
+TEST_F(test_gdal, VRT_CanIRasterIOBeForwardedToEachSource)
+{
+    if (!GDALGetDriverByName("VRT"))
+    {
+        GTEST_SKIP() << "VRT driver missing";
+    }
+    const char *pszVRT =
+        "<VRTDataset rasterXSize=\"20\" rasterYSize=\"20\">"
+        "  <VRTRasterBand dataType=\"Byte\" band=\"1\">"
+        "    <NoDataValue>1</NoDataValue>"
+        "    <ColorInterp>Gray</ColorInterp>"
+        "    <ComplexSource resampline=\"nearest\">"
+        "      <SourceFilename>" GCORE_DATA_DIR "byte.tif</SourceFilename>"
+        "      <SourceBand>1</SourceBand>"
+        "      <NODATA>1</NODATA>"
+        "    </ComplexSource>"
+        "  </VRTRasterBand>"
+        "</VRTDataset>";
+    auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(pszVRT));
+    ASSERT_TRUE(poDS != nullptr);
+    auto poBand = dynamic_cast<VRTSourcedRasterBand *>(poDS->GetRasterBand(1));
+    ASSERT_TRUE(poBand != nullptr);
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    EXPECT_TRUE(poBand->CanIRasterIOBeForwardedToEachSource(
+        GF_Read, 0, 0, 20, 20, 1, 1, &sExtraArg));
 }
 
 // Test that GDALSwapWords() with unaligned buffers
