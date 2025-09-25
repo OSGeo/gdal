@@ -13,6 +13,12 @@
 // ncsjpcbuffer.h needs the min and max macros.
 #undef NOMINMAX
 
+#include "gdal_frmts.h"
+
+#ifdef PLUGIN_FILENAME
+#include "gdalplugindriverproxy.h"
+#endif
+
 #include "ecwdrivercore.h"
 
 #include "ecwsdk_headers.h"

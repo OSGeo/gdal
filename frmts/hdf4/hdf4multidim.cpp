@@ -9,6 +9,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_multiproc.h"
 #include "hdf4dataset.h"
 
 #include "hdf.h"
@@ -17,6 +18,7 @@
 #include "HdfEosDef.h"
 
 #include "cpl_string.h"
+#include "gdal_pam_multidim.h"
 
 #include <algorithm>
 #include <map>

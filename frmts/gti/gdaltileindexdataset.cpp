@@ -33,7 +33,9 @@
 #include "vrt_priv.h"
 #include "ogrsf_frmts.h"
 #include "ogrwarpedlayer.h"
+#include "gdal_frmts.h"
 #include "gdal_proxy.h"
+#include "gdalsubdatasetinfo.h"
 #include "gdal_thread_pool.h"
 #include "gdal_utils.h"
 

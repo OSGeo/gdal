@@ -14,6 +14,9 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
+
 #include "jpegdrivercore.h"
 
 // So that D_LOSSLESS_SUPPORTED is visible if defined in jmorecfg of libjpeg-turbo >= 2.2

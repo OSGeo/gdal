@@ -12,6 +12,8 @@
  ****************************************************************************/
 
 #include "gdal_frmts.h"
+#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 

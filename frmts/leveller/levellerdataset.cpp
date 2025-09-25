@@ -17,6 +17,10 @@
 
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gdal_driver.h"
+#include "gdal_drivermanager.h"
+#include "gdal_openinfo.h"
+#include "gdal_cpp_functions.h"
 #include "ogr_spatialref.h"
 
 static bool str_equal(const char *_s1, const char *_s2)

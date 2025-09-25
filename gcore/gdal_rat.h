@@ -13,8 +13,25 @@
 #ifndef GDAL_RAT_H_INCLUDED
 #define GDAL_RAT_H_INCLUDED
 
+#if !defined(GDAL_COMPILATION) &&                                              \
+    !defined(GDAL_RAT_SKIP_OTHER_GDAL_HEADERS) && !defined(GDAL_4_0_COMPAT)
+
 #include "cpl_minixml.h"
 #include "gdal_priv.h"
+
+#else
+
+#include "cpl_port.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "gdal.h"
+
+#endif
+
+#include <memory>
+#include <vector>
+
+class GDALColorTable;
 
 // Clone and Serialize are allowed to fail if GetRowCount()*GetColCount()
 // greater than this number

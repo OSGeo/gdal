@@ -12,6 +12,7 @@
 
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "gdal_priv.h"
 #include "rawdataset.h"
 
 #include <algorithm>

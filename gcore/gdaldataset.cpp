@@ -12,8 +12,6 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
-#include "gdal.h"
-#include "gdal_priv.h"
 
 #include <array>
 #include <cassert>
@@ -38,7 +36,14 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "cpl_vsi_error.h"
+
+#include "gdal.h"
 #include "gdal_alg.h"
+#include "gdal_abstractbandblockcache.h"
+#include "gdalantirecursion.h"
+#include "gdal_dataset.h"
+#include "gdalsubdatasetinfo.h"
+
 #include "ogr_api.h"
 #include "ogr_attrind.h"
 #include "ogr_core.h"

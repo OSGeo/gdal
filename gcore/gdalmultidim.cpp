@@ -27,6 +27,7 @@
 #include "cpl_float.h"
 #include "gdal_priv.h"
 #include "gdal_pam.h"
+#include "gdal_pam_multidim.h"
 #include "gdal_rat.h"
 #include "gdal_utils.h"
 #include "cpl_safemaths.hpp"

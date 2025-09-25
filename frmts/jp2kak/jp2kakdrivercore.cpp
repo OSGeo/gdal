@@ -10,6 +10,12 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdal_frmts.h"
+
+#ifdef PLUGIN_FILENAME
+#include "gdalplugindriverproxy.h"
+#endif
+
 #include "jp2kakdrivercore.h"
 
 #include "jp2kak_headers.h"

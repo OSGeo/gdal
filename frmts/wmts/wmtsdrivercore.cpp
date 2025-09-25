@@ -12,6 +12,8 @@
  ****************************************************************************/
 
 #include "wmtsdrivercore.h"
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
 
 /************************************************************************/
 /*                     WMTSDriverIdentify()                             */

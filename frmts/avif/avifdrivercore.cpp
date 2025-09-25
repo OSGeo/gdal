@@ -11,6 +11,12 @@
 
 #include "avifdrivercore.h"
 
+#include "gdal_frmts.h"
+
+#ifdef PLUGIN_FILENAME
+#include "gdalplugindriverproxy.h"
+#endif
+
 /************************************************************************/
 /*                        AVIFDriverIdentify()                          */
 /************************************************************************/

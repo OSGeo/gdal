@@ -19,6 +19,7 @@
 
 #include "cpl_list.h"
 #include "gdal_pam.h"
+#include "gdal_pam_multidim.h"
 
 #include <map>
 

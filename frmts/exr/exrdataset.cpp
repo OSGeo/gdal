@@ -9,7 +9,9 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_multiproc.h"
 #include "gdal_pam.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 
 #include <algorithm>
@@ -21,8 +23,6 @@
 
 using namespace OPENEXR_IMF_NAMESPACE;
 using namespace IMATH_NAMESPACE;
-
-extern "C" CPL_DLL void GDALRegister_EXR();
 
 static const char *const apszCompressions[] = {
     "NONE", "RLE", "ZIPS", "ZIP", "PIZ", "PXR24", "B44", "B44A", "DWAA", "DWAB",

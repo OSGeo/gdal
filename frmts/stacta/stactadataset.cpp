@@ -14,6 +14,7 @@
 #include "cpl_mem_cache.h"
 #include "cpl_string.h"
 #include "gdal_pam.h"
+#include "gdal_frmts.h"
 #include "gdal_utils.h"
 #include "memdataset.h"
 #include "tilematrixset.hpp"
@@ -25,8 +26,6 @@
 #include <map>
 #include <memory>
 #include <vector>
-
-extern "C" void GDALRegister_STACTA();
 
 // Implements a driver for
 // https://github.com/stac-extensions/tiled-assets

@@ -12,12 +12,14 @@
 
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_priv.h"
 #include "gdal_utils.h"
 #include "vrtdataset.h"
 
 #include <algorithm>
 #include <limits>
 #include <map>
+#include <set>
 #include <vector>
 
 /************************************************************************/
