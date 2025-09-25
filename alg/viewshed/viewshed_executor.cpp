@@ -220,6 +220,15 @@ double ViewshedExecutor::calcHeightAdjFactor()
 void ViewshedExecutor::setOutput(double &dfResult, double &dfCellVal,
                                  double dfZ)
 {
+    if (!m_sdCalc)
+        setOutputNormal(dfResult, dfCellVal, dfZ);
+    else
+        setOutputSd(dfResult, dfCellVal, dfZ);
+}
+
+void ViewshedExecutor::setOutputNormal(double &dfResult, double &dfCellVal,
+                                       double dfZ)
+{
     if (oOpts.outputMode != OutputMode::Normal)
     {
         double adjustment = dfZ - dfCellVal;
@@ -230,6 +239,25 @@ void ViewshedExecutor::setOutput(double &dfResult, double &dfCellVal,
         dfResult = (dfCellVal + oOpts.targetHeight < dfZ) ? oOpts.invisibleVal
                                                           : oOpts.visibleVal;
     dfCellVal = std::max(dfCellVal, dfZ);
+}
+
+void ViewshedExecutor::setOutputSd(double &dfResult, double &dfCellVal,
+                                   double dfZ)
+{
+    assert(oOpts.outputMode == OutputMode::Normal);
+    if (dfResult == oOpts.invisibleVal)
+    {
+        double cellHeight = dfCellVal + oOpts.targetHeight;
+        if (cellHeight > dfZ)
+            dfResult = oOpts.maybeVisibleVal;
+    }
+    //ABELL
+    /**
+    if (lines.sd[pixel] <= 1)
+        dfCellVal = std::max(dfZ, dfCellVal);
+    else
+        dfCellVal = dfZ;
+**/
 }
 
 /// Read a line of raster data.
@@ -464,21 +492,27 @@ bool ViewshedExecutor::processFirstLine(Lines &lines)
             lines.result[m_nX] = oOpts.visibleVal;
     }
 
-    //ABELL
-    if (!oCurExtent.containsY(m_nY))
-        processFirstLineTopOrBottom(ll, lines);
-    else
+    auto process = [this, &ll, &lines](bool sdCalc)
     {
-        CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
-        pQueue->SubmitJob([&]() { processFirstLineLeft(ll, lines); });
-        pQueue->SubmitJob([&]() { processFirstLineRight(ll, lines); });
-        pQueue->WaitCompletion();
-    }
-    //ABELL
+        m_sdCalc = sdCalc;
+        if (!oCurExtent.containsY(m_nY))
+            processFirstLineTopOrBottom(ll, lines);
+        else
+        {
+            CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
+            pQueue->SubmitJob([&]() { processFirstLineLeft(ll, lines); });
+            pQueue->SubmitJob([&]() { processFirstLineRight(ll, lines); });
+            pQueue->WaitCompletion();
+        }
+        sdCalc = false;
+    };
+
+    process(false);
     if (sdMode())
     {
+        lines.cur = std::move(lines.input);
+        process(true);
     }
-    //ABELL
 
     if (oOpts.pitchMasking())
         applyPitchMask(lines.result, lines.pitchMask);
@@ -947,11 +981,22 @@ bool ViewshedExecutor::processLine(int nLine, Lines &lines)
         maskInitial(lines.result, nLine);
     }
 
-    // process left half then right half of line
-    CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
-    pQueue->SubmitJob([&]() { processLineLeft(nYOffset, ll, lines); });
-    pQueue->SubmitJob([&]() { processLineRight(nYOffset, ll, lines); });
-    pQueue->WaitCompletion();
+    auto process = [this, nYOffset, &ll, &lines](bool sdCalc)
+    {
+        m_sdCalc = sdCalc;
+        CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
+        pQueue->SubmitJob([&]() { processLineLeft(nYOffset, ll, lines); });
+        pQueue->SubmitJob([&]() { processLineRight(nYOffset, ll, lines); });
+        pQueue->WaitCompletion();
+        m_sdCalc = false;
+    };
+
+    process(false);
+    if (sdMode())
+    {
+        lines.cur = std::move(lines.input);
+        process(true);
+    }
 
     if (oOpts.pitchMasking())
         applyPitchMask(lines.result, lines.pitchMask);

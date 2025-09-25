@@ -110,9 +110,12 @@ class ViewshedExecutor
     double m_lowTanPitch{std::numeric_limits<double>::quiet_NaN()};
     double m_highTanPitch{std::numeric_limits<double>::quiet_NaN()};
     double (*oZcalc)(int, int, double, double, double){};
+    bool m_sdCalc = false;
 
     double calcHeightAdjFactor();
     void setOutput(double &dfResult, double &dfCellVal, double dfZ);
+    void setOutputNormal(double &dfResult, double &dfCellVal, double dfZ);
+    void setOutputSd(double &dfResult, double &dfCellVal, double dfZ);
     bool readLine(int nLine, Lines &lines);
     bool writeLine(int nLine, std::vector<double> &vResult);
     bool processLine(int nLine, Lines &lines);
