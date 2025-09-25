@@ -147,10 +147,10 @@ ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
                                    const Window &outExtent,
                                    const Window &curExtent, const Options &opts,
                                    Progress &progress, bool emitWarningIfNoData)
-    : m_pool(4), m_srcBand(srcBand), m_sdBand(sdBand), m_dstBand(dstBand),
-      m_emitWarningIfNoData(emitWarningIfNoData), oOutExtent(outExtent),
-      oCurExtent(curExtent), m_nX(nX - oOutExtent.xStart), m_nY(nY),
-      oOpts(opts), oProgress(progress),
+    : m_pool(4), m_dummyBand(), m_srcBand(srcBand), m_sdBand(sdBand),
+      m_dstBand(dstBand), m_emitWarningIfNoData(emitWarningIfNoData),
+      oOutExtent(outExtent), oCurExtent(curExtent),
+      m_nX(nX - oOutExtent.xStart), m_nY(nY), oOpts(opts), oProgress(progress),
       m_dfMinDistance2(opts.minDistance * opts.minDistance),
       m_dfMaxDistance2(opts.maxDistance * opts.maxDistance)
 {
@@ -225,6 +225,12 @@ void ViewshedExecutor::setOutput(Lines &lines, int pos, double dfZ)
         setOutputSd(lines, pos, dfZ);
 }
 
+/// Set the output Z value depending on the observable height and computation mode
+/// in normal mode.
+///
+/// dfResult  Reference to the result cell
+/// dfCellVal  Reference to the current cell height. Replace with observable height.
+/// dfZ  Minimum observable height at cell.
 void ViewshedExecutor::setOutputNormal(Lines &lines, int pos, double dfZ)
 {
     double &cur = lines.cur[pos];
@@ -242,6 +248,12 @@ void ViewshedExecutor::setOutputNormal(Lines &lines, int pos, double dfZ)
     cur = std::max(cur, dfZ);
 }
 
+/// Set the output Z value depending on the observable height and computation when
+/// making an SD pass.
+///
+/// dfResult  Reference to the result cell
+/// dfCellVal  Reference to the current cell height. Replace with observable height.
+/// dfZ  Minimum observable height at cell.
 void ViewshedExecutor::setOutputSd(Lines &lines, int pos, double dfZ)
 {
     double &cur = lines.cur[pos];

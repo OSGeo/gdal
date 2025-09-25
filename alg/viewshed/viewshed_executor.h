@@ -55,7 +55,7 @@ struct Lines
 
 class DummyBand : public GDALRasterBand
 {
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 class Progress;
