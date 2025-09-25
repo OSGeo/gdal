@@ -11,6 +11,10 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+import shutil
+import sys
+
 import pytest
 
 from osgeo import gdal
@@ -313,6 +317,27 @@ def test_zarr_kerchunk_parquet_gdal_open_dim2():
         elif gdal.GetDriverByName("ADBC") is None:
             with pytest.raises(Exception):
                 ar.Read()
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Fails for some reason on Windows")
+def test_zarr_kerchunk_parquet_gdal_open_missing_bin_file(tmp_path):
+
+    shutil.copytree(
+        "data/zarr/kerchunk_parquet/parquet_ref_2_dim", tmp_path / "parquet_ref_2_dim"
+    )
+    os.unlink(tmp_path / "parquet_ref_2_dim/ar/4.bin")
+
+    with gdal.OpenEx(
+        f"ZARR:/vsikerchunk_parquet_ref/{{{tmp_path}/parquet_ref_2_dim}}",
+        gdal.OF_MULTIDIM_RASTER,
+    ) as ds:
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("ar")
+        with pytest.raises(Exception):
+            ar.Read()
 
 
 ###############################################################################
