@@ -729,3 +729,22 @@ def test_gdalalg_raster_blend_src_over():
         out_ds = alg.Output()
         assert out_ds.RasterCount == 1
         assert struct.unpack("B" * 1, out_ds.ReadRaster(0, 0, 1, 1)) == (189,)
+
+
+def test_gdalalg_raster_blend_src_over_stefan_full_rgba():
+
+    with gdal.Run(
+        "raster",
+        "blend",
+        input="../gcore/data/stefan_full_rgba.tif",
+        overlay="../gcore/data/stefan_full_rgba.tif",
+        output_format="stream",
+        opacity=75,
+    ) as alg:
+        out_ds = alg.Output()
+        assert [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == [
+            13392,
+            59283,
+            36167,
+            12963,
+        ]
