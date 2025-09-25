@@ -3455,12 +3455,19 @@ def test_ogr_parquet_overture_from_azure():
     if not _has_arrow_dataset():
         pytest.skip("Test requires build with ArrowDataset")
 
-    url = "https://overturemapswestus2.blob.core.windows.net/release?comp=list&delimiter=%2F&prefix=2024-11-13.0%2Ftheme%3Ddivisions%2Ftype%3Ddivision_area%2F&restype=container"
-    if gdaltest.gdalurlopen(url, timeout=5) is None:
+    url = "https://overturemapswestus2.blob.core.windows.net/release?comp=list&delimiter=%2F&prefix=2025-09-24.0%2Ftheme%3Ddivisions%2Ftype%3Ddivision_area%2F&restype=container"
+    resp = gdaltest.gdalurlopen(url, timeout=5)
+    if resp is None:
         pytest.skip(reason=f"{url} is down")
+    resp = resp.read()
+    if b"<Blobs />" in resp:
+        print(resp)
+        pytest.skip(
+            reason=f"{url} dataset seems to be empty. Try upgrading to a newer release"
+        )
 
     with ogr.Open(
-        "PARQUET:/vsicurl/https://overturemapswestus2.blob.core.windows.net/release/2024-11-13.0/theme=divisions/type=division_area"
+        "PARQUET:/vsicurl/https://overturemapswestus2.blob.core.windows.net/release/2025-09-24.0/theme=divisions/type=division_area"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() > 0
