@@ -53,6 +53,7 @@ struct Lines
     }
 };
 
+/// Dummy raster band.
 class DummyBand : public GDALRasterBand
 {
     CPLErr IReadBlock(int, int, void *) override;
