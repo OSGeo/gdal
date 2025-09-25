@@ -113,9 +113,11 @@ class ViewshedExecutor
     bool m_sdCalc = false;
 
     double calcHeightAdjFactor();
-    void setOutput(double &dfResult, double &dfCellVal, double dfZ);
-    void setOutputNormal(double &dfResult, double &dfCellVal, double dfZ);
-    void setOutputSd(double &dfResult, double &dfCellVal, double dfZ);
+
+    void setOutput(Lines &lines, int pos, double dfZ);
+    void setOutputNormal(Lines &lines, int pos, double dfZ);
+    void setOutputSd(Lines &lines, int pos, double dfZ);
+
     bool readLine(int nLine, Lines &lines);
     bool writeLine(int nLine, std::vector<double> &vResult);
     bool processLine(int nLine, Lines &lines);
