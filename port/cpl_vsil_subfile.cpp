@@ -338,10 +338,10 @@ int VSISubFileFilesystemHandler::DecomposePath(const char *pszPath,
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *
-VSISubFileFilesystemHandler::Open(const char *pszFilename,
-                                  const char *pszAccess, bool /* bSetError */,
-                                  CSLConstList /* papszOptions */)
+VSIVirtualHandle *VSISubFileFilesystemHandler::Open(const char *pszFilename,
+                                                    const char *pszAccess,
+                                                    bool bSetError,
+                                                    CSLConstList papszOptions)
 
 {
     if (!STARTS_WITH_CI(pszFilename, "/vsisubfile/"))
@@ -371,7 +371,8 @@ VSISubFileFilesystemHandler::Open(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Open the underlying file.                                       */
     /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL(osSubFilePath, pszAccess);
+    VSILFILE *fp =
+        VSIFOpenEx2L(osSubFilePath, pszAccess, bSetError, papszOptions);
 
     if (fp == nullptr)
         return nullptr;
