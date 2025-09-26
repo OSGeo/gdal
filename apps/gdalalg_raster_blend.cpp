@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <limits>
 #include <utility>
 
@@ -642,16 +643,20 @@ constexpr auto gTabInvDstA = []()
 /************************************************************************/
 
 #ifdef HAVE_SSE2
-static int BlendSrcOverRGBA_SSE2(const GByte *CPL_RESTRICT pabyR,
-                                 const GByte *CPL_RESTRICT pabyG,
-                                 const GByte *CPL_RESTRICT pabyB,
-                                 const GByte *CPL_RESTRICT pabyA,
-                                 const GByte *CPL_RESTRICT pabyOverlayR,
-                                 const GByte *CPL_RESTRICT pabyOverlayG,
-                                 const GByte *CPL_RESTRICT pabyOverlayB,
-                                 const GByte *CPL_RESTRICT pabyOverlayA,
-                                 GByte *CPL_RESTRICT pabyDst,
-                                 GPtrDiff_t nBandSpace, int N, int nOpacity)
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static int
+BlendSrcOverRGBA_SSE2(const GByte *CPL_RESTRICT pabyR,
+                      const GByte *CPL_RESTRICT pabyG,
+                      const GByte *CPL_RESTRICT pabyB,
+                      const GByte *CPL_RESTRICT pabyA,
+                      const GByte *CPL_RESTRICT pabyOverlayR,
+                      const GByte *CPL_RESTRICT pabyOverlayG,
+                      const GByte *CPL_RESTRICT pabyOverlayB,
+                      const GByte *CPL_RESTRICT pabyOverlayA,
+                      GByte *CPL_RESTRICT pabyDst, GSpacing nBandSpace, int N,
+                      GByte nOpacity)
 {
     // See scalar code after call to BlendSrcOverRGBA_SSE2() below for the
     // non-obfuscated formulas...
@@ -675,7 +680,7 @@ static int BlendSrcOverRGBA_SSE2(const GByte *CPL_RESTRICT pabyR,
         return _mm_srli_epi16(_mm_add_epi16(_mm_mullo_epi16(a, b), r255), 8);
     };
 
-    const auto opacity = _mm_set1_epi16(static_cast<int16_t>(nOpacity));
+    const auto opacity = _mm_set1_epi16(nOpacity);
     const auto r255 = _mm_set1_epi16(255);
     const int16_t *tabInvDstASigned =
         reinterpret_cast<const int16_t *>(gTabInvDstA.data());
@@ -756,6 +761,85 @@ static int BlendSrcOverRGBA_SSE2(const GByte *CPL_RESTRICT pabyR,
     return i;
 }
 #endif
+
+template <bool bPixelSpaceIsOne>
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+BlendSrcOverRGBA_Generic(const GByte *CPL_RESTRICT pabyR,
+                         const GByte *CPL_RESTRICT pabyG,
+                         const GByte *CPL_RESTRICT pabyB,
+                         const GByte *CPL_RESTRICT pabyA,
+                         const GByte *CPL_RESTRICT pabyOverlayR,
+                         const GByte *CPL_RESTRICT pabyOverlayG,
+                         const GByte *CPL_RESTRICT pabyOverlayB,
+                         const GByte *CPL_RESTRICT pabyOverlayA,
+                         GByte *CPL_RESTRICT pabyDst,
+                         [[maybe_unused]] GSpacing nPixelSpace,
+                         GSpacing nBandSpace, int i, int N, GByte nOpacity)
+{
+#if !(defined(HAVE_SSE2) && defined(__GNUC__))
+    if constexpr (!bPixelSpaceIsOne)
+    {
+        assert(nPixelSpace != 1);
+    }
+#endif
+    [[maybe_unused]] GSpacing nDstOffset = 0;
+#if defined(HAVE_SSE2) && defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+// No need to vectorize for SSE2 and clang
+#pragma clang loop vectorize(disable)
+#endif
+    for (; i < N; ++i)
+    {
+        const GByte nOverlayR = pabyOverlayR[i];
+        const GByte nOverlayG = pabyOverlayG[i];
+        const GByte nOverlayB = pabyOverlayB[i];
+        const GByte nOverlayA =
+            static_cast<GByte>((pabyOverlayA[i] * nOpacity + 255) / 256);
+        const GByte nR = pabyR[i];
+        const GByte nG = pabyG[i];
+        const GByte nB = pabyB[i];
+        const GByte nA = pabyA[i];
+        const GByte nSrcAMul255MinusOverlayA =
+            static_cast<GByte>((nA * (255 - nOverlayA) + 255) / 256);
+        const GByte nDstA =
+            static_cast<GByte>(nOverlayA + nSrcAMul255MinusOverlayA);
+        GByte nDstR = static_cast<GByte>(
+            (nOverlayR * nOverlayA + nR * nSrcAMul255MinusOverlayA + 255) /
+            256);
+        GByte nDstG = static_cast<GByte>(
+            (nOverlayG * nOverlayA + nG * nSrcAMul255MinusOverlayA + 255) /
+            256);
+        GByte nDstB = static_cast<GByte>(
+            (nOverlayB * nOverlayA + nB * nSrcAMul255MinusOverlayA + 255) /
+            256);
+        // nInvDstA = (255 << SHIFT_DIV_DSTA) / nDstA;
+        const uint16_t nInvDstA = gTabInvDstA[nDstA];
+        constexpr unsigned ROUND_OFFSET_DIV_DSTA = ((1 << SHIFT_DIV_DSTA) - 1);
+        nDstR = static_cast<GByte>((nDstR * nInvDstA + ROUND_OFFSET_DIV_DSTA) >>
+                                   SHIFT_DIV_DSTA);
+        nDstG = static_cast<GByte>((nDstG * nInvDstA + ROUND_OFFSET_DIV_DSTA) >>
+                                   SHIFT_DIV_DSTA);
+        nDstB = static_cast<GByte>((nDstB * nInvDstA + ROUND_OFFSET_DIV_DSTA) >>
+                                   SHIFT_DIV_DSTA);
+        if constexpr (bPixelSpaceIsOne)
+        {
+            pabyDst[i] = nDstR;
+            pabyDst[i + nBandSpace] = nDstG;
+            pabyDst[i + 2 * nBandSpace] = nDstB;
+            pabyDst[i + 3 * nBandSpace] = nDstA;
+        }
+        else
+        {
+            pabyDst[nDstOffset] = nDstR;
+            pabyDst[nDstOffset + nBandSpace] = nDstG;
+            pabyDst[nDstOffset + 2 * nBandSpace] = nDstB;
+            pabyDst[nDstOffset + 3 * nBandSpace] = nDstA;
+            nDstOffset += nPixelSpace;
+        }
+    }
+}
 
 /************************************************************************/
 /*                       BlendDataset::IRasterIO()                      */
@@ -844,7 +928,7 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
              AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize, nBufXSize,
                                  nBufYSize, psExtraArg))
     {
-        const int nOpacity = m_opacity255Scale;
+        const GByte nOpacity = static_cast<GByte>(m_opacity255Scale);
         const size_t nPixelCount = static_cast<size_t>(nBufXSize) * nBufYSize;
         const GByte *CPL_RESTRICT pabyR = m_abyBuffer.data();
         const GByte *CPL_RESTRICT pabyG = m_abyBuffer.data() + nPixelCount;
@@ -876,49 +960,29 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 nDstOffset += i;
             }
 #endif
-            for (; i < nBufXSize; ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
+#if !(defined(HAVE_SSE2) && defined(__GNUC__))
+            if (nPixelSpace == 1)
             {
-                const int nOverlayR = pabyOverlayR[nSrcIdx];
-                const int nOverlayG = pabyOverlayG[nSrcIdx];
-                const int nOverlayB = pabyOverlayB[nSrcIdx];
-                const int nOverlayA =
-                    (pabyOverlayA[nSrcIdx] * nOpacity + 255) / 256;
-                const int nR = pabyR[nSrcIdx];
-                const int nG = pabyG[nSrcIdx];
-                const int nB = pabyB[nSrcIdx];
-                const int nA = pabyA[nSrcIdx];
-                const int nSrcAMul255MinusOverlayA =
-                    (nA * (255 - nOverlayA) + 255) / 256;
-                const unsigned nDstA = nOverlayA + nSrcAMul255MinusOverlayA;
-                unsigned nDstR = (nOverlayR * nOverlayA +
-                                  nR * nSrcAMul255MinusOverlayA + 255) /
-                                 256;
-                unsigned nDstG = (nOverlayG * nOverlayA +
-                                  nG * nSrcAMul255MinusOverlayA + 255) /
-                                 256;
-                unsigned nDstB = (nOverlayB * nOverlayA +
-                                  nB * nSrcAMul255MinusOverlayA + 255) /
-                                 256;
-                const uint16_t nInvDstA =
-                    gTabInvDstA[nDstA &
-                                0xff];  // (255 << SHIFT_DIV_DSTA) / nDstA;
-                constexpr unsigned ROUND_OFFSET_DIV_DSTA =
-                    ((1 << SHIFT_DIV_DSTA) - 1);
-                nDstR = (nDstR * nInvDstA + ROUND_OFFSET_DIV_DSTA) >>
-                        SHIFT_DIV_DSTA;
-                nDstG = (nDstG * nInvDstA + ROUND_OFFSET_DIV_DSTA) >>
-                        SHIFT_DIV_DSTA;
-                nDstB = (nDstB * nInvDstA + ROUND_OFFSET_DIV_DSTA) >>
-                        SHIFT_DIV_DSTA;
-                pabyDst[nDstOffset + 0 * nBandSpace] =
-                    static_cast<GByte>(nDstR);
-                pabyDst[nDstOffset + 1 * nBandSpace] =
-                    static_cast<GByte>(nDstG);
-                pabyDst[nDstOffset + 2 * nBandSpace] =
-                    static_cast<GByte>(nDstB);
-                pabyDst[nDstOffset + 3 * nBandSpace] =
-                    static_cast<GByte>(nDstA);
+                // Note: clang 20 does a rather good job at autovectorizing
+                // for SSE2, but BlendSrcOverRGBA_SSE2() performs better.
+                BlendSrcOverRGBA_Generic</* bPixelSpaceIsOne = */ true>(
+                    pabyR + nSrcIdx, pabyG + nSrcIdx, pabyB + nSrcIdx,
+                    pabyA + nSrcIdx, pabyOverlayR + nSrcIdx,
+                    pabyOverlayG + nSrcIdx, pabyOverlayB + nSrcIdx,
+                    pabyOverlayA + nSrcIdx, pabyDst + nDstOffset,
+                    /*nPixelSpace = */ 1, nBandSpace, i, nBufXSize, nOpacity);
             }
+            else
+#endif
+            {
+                BlendSrcOverRGBA_Generic</* bPixelSpaceIsOne = */ false>(
+                    pabyR + nSrcIdx, pabyG + nSrcIdx, pabyB + nSrcIdx,
+                    pabyA + nSrcIdx, pabyOverlayR + nSrcIdx,
+                    pabyOverlayG + nSrcIdx, pabyOverlayB + nSrcIdx,
+                    pabyOverlayA + nSrcIdx, pabyDst + nDstOffset, nPixelSpace,
+                    nBandSpace, i, nBufXSize, nOpacity);
+            }
+            nSrcIdx += nBufXSize - i;
         }
         return CE_None;
     }
