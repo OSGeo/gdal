@@ -28,7 +28,7 @@ First, create a new Conda environment and install GDAL along with the required G
 `libgdal-arrow-parquet <https://anaconda.org/conda-forge/libgdal-arrow-parquet>`_, which provides Arrow and Parquet support.  
 
 On Linux, you will also need to install `libgdal-adbc <https://anaconda.org/conda-forge/libgdal-adbc>`_, which is required for the :ref:`vector.adbc` driver. 
-This package is only available via Conda on Linux and does not appear to be needed on Windows.
+This package is available via Conda on Linux and is not required on Windows, since DuckDB support is built into the Windows ADBC driver.
 
 Finally, install the DuckDB package. This is also only available via Conda on Linux. For Windows, you will need to install DuckDB manually in a separate step.
 
@@ -45,7 +45,7 @@ Finally, install the DuckDB package. This is also only available via Conda on Li
 
         conda create --yes --name gdal
         conda activate gdal
-        # the tutorial only works on Windows with GDAL 3.12
+        # the tutorial only works on Windows with GDAL 3.12 or higher
         conda install --yes -c gdal-master -c conda-forge gdal-master::libgdal-arrow-parquet
 
 On Windows, DuckDB can be installed by downloading a binary release from the `GitHub Releases <https://github.com/duckdb/duckdb/releases/>`_ page.
