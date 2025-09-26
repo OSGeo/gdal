@@ -4151,7 +4151,7 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
                         GDALGetMessageAboutMissingPluginDriver(poMissingDriver);
                     ReportError(CE_Failure, CPLE_AppDefined,
                                 "Invalid value for argument '%s'. Driver '%s' "
-                                "not found but it known. However plugin %s",
+                                "not found but is known. However plugin %s",
                                 arg.GetName().c_str(), val.c_str(),
                                 msg.c_str());
                 }
