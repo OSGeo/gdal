@@ -34,6 +34,7 @@ Vector
    vector_api_tut
    vector_driver_tut
    vector_geoparquet_tut
+   vector_duckdb_tut
    vector_python_driver
 
 Geographic Network Model
