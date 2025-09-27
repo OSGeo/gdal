@@ -108,6 +108,57 @@ def test_multidim_asarray_epsg_26711(obj_name):
     assert ds2.ReadRaster() == obj.ReadRaster()
 
 
+@gdaltest.enable_exceptions()
+def test_multidim_getview_with_indexing_var():
+
+    ds = gdal.Open("data/byte.tif")
+    gt = ds.GetGeoTransform()
+
+    ar = ds.GetRasterBand(1).AsMDArray()
+    view = ar[:, :]
+    assert view.AsClassicDataset(1, 0).GetGeoTransform() == gt
+
+    ar = ds.GetRasterBand(1).AsMDArray()
+    view = ar[11:20, :]
+    assert view.AsClassicDataset(1, 0).GetGeoTransform() == (
+        gt[0],
+        gt[1],
+        gt[2],
+        gt[3] + 11 * gt[5],
+        gt[4],
+        gt[5],
+    )
+
+    out_ds = gdal.MultiDimTranslate(
+        "", ds, format="MEM", arraySpecs=["name=Band1,view=[:,11:20,:]"]
+    )
+    assert out_ds.GetRootGroup().OpenMDArray("Band1").AsClassicDataset(
+        2, 1
+    ).GetGeoTransform() == (
+        gt[0],
+        gt[1],
+        gt[2],
+        gt[3] + 11 * gt[5],
+        gt[4],
+        gt[5],
+    )
+
+    tmp_ds = gdal.MultiDimTranslate("", ds, format="MEM")
+    out_ds = gdal.MultiDimTranslate(
+        "", tmp_ds, format="MEM", arraySpecs=["name=Band1,view=[0,11:20,:]"]
+    )
+    assert out_ds.GetRootGroup().OpenMDArray("Band1").AsClassicDataset(
+        1, 0
+    ).GetGeoTransform() == (
+        gt[0],
+        gt[1],
+        gt[2],
+        gt[3] + 11 * gt[5],
+        gt[4],
+        gt[5],
+    )
+
+
 @pytest.mark.parametrize(
     "resampling",
     [
