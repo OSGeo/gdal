@@ -2668,6 +2668,27 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                 m_oMapDatasetNameToDataset.erase(oIter);
             }
 
+            // A bit of a hack for situations like 'gdal raster clip --like "PG:..."'
+            // where the PG: dataset will be first opened with the PostGISRaster
+            // driver whereas the PostgreSQL (vector) one is actually wanted.
+            if (poDS->GetRasterCount() == 0 && (flags & GDAL_OF_RASTER) != 0 &&
+                (flags & GDAL_OF_VECTOR) != 0 && aosAllowedDrivers.empty() &&
+                aosOpenOptions.empty())
+            {
+                auto poDrv = poDS->GetDriver();
+                if (poDrv && EQUAL(poDrv->GetDescription(), "PostGISRaster"))
+                {
+                    // Retry with PostgreSQL (vector) driver
+                    std::unique_ptr<GDALDataset> poTmpDS(GDALDataset::Open(
+                        osDatasetName.c_str(), flags & ~GDAL_OF_RASTER));
+                    if (poTmpDS)
+                    {
+                        poDS->ReleaseRef();
+                        poDS = poTmpDS.release();
+                    }
+                }
+            }
+
             if (assignToOutputArg)
             {
                 // Avoid opening twice the same datasource if it is both
