@@ -77,6 +77,7 @@ extensions = [
     "configoptions",
     "driverproperties",
     "cli_example",
+    "doctestplus_gdal",
     "source_file",
     "sphinx.ext.napoleon",
     "sphinxcontrib.jquery",
