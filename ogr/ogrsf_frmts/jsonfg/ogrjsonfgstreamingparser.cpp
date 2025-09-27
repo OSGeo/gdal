@@ -28,12 +28,14 @@ static size_t OGRJSONFGStreamingParserGetMaxObjectSize()
 /************************************************************************/
 
 OGRJSONFGStreamingParser::OGRJSONFGStreamingParser(OGRJSONFGReader &oReader,
-                                                   bool bFirstPass)
+                                                   bool bFirstPass,
+                                                   bool bHasTopLevelMeasures)
     : OGRJSONCollectionStreamingParser(
           bFirstPass, /*bStoreNativeData=*/false,
           OGRJSONFGStreamingParserGetMaxObjectSize()),
       m_oReader(oReader)
 {
+    m_bHasTopLevelMeasures = bHasTopLevelMeasures;
 }
 
 /************************************************************************/
@@ -48,8 +50,8 @@ OGRJSONFGStreamingParser::~OGRJSONFGStreamingParser() = default;
 
 std::unique_ptr<OGRJSONFGStreamingParser> OGRJSONFGStreamingParser::Clone()
 {
-    auto poRet =
-        std::make_unique<OGRJSONFGStreamingParser>(m_oReader, IsFirstPass());
+    auto poRet = std::make_unique<OGRJSONFGStreamingParser>(
+        m_oReader, IsFirstPass(), m_bHasTopLevelMeasures);
     poRet->m_osRequestedLayer = m_osRequestedLayer;
     return poRet;
 }
@@ -89,7 +91,8 @@ void OGRJSONFGStreamingParser::GotFeature(json_object *poObj, bool bFirstPass,
     {
         OGRJSONFGStreamedLayer *poStreamedLayer = nullptr;
         auto poFeat = m_oReader.ReadFeature(poObj, m_osRequestedLayer.c_str(),
-                                            nullptr, &poStreamedLayer);
+                                            m_bHasTopLevelMeasures, nullptr,
+                                            &poStreamedLayer);
         if (poFeat)
         {
             CPLAssert(poStreamedLayer);

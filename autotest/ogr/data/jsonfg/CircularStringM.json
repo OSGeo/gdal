@@ -1,0 +1,17 @@
+{
+    "conformsTo": [
+        "http://www.opengis.net/spec/json-fg-1/0.3/conf/core",
+        "http://www.opengis.net/spec/json-fg-1/0.3/conf/circular-arcs",
+        "http://www.opengis.net/spec/json-fg-1/0.3/conf/measures"
+    ],
+    "coordRefSys": "http://www.opengis.net/def/crs/OGC/0/CRS84",
+    "type": "CircularString",
+    "measures": {
+        "enabled": true
+    },
+    "coordinates": [
+        [2.5, 49.5, 100.5],
+        [3.5, 50.5, 101.5],
+        [4.5, 49.5, 102.5]
+    ]
+}

@@ -56,6 +56,26 @@ accepting it, or ``JSONFG`` as the only value of the ``papszAllowedDrivers`` of
 :cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
 URL/filename/text.
 
+CRS support
+-----------
+
+Starting with GDAL 3.12, if writing a CRS which has no known identifier, the
+CRS definition will be written as a `PROJJSON <https://proj.org/specifications/projjson.html>`__
+object like:
+
+.. code-block:: JSON
+
+    "coordRefSys": {
+        "type": "PROJJSON",
+        "value": {
+            "$schema": "https://proj.org/schemas/v0.7/projjson.schema.json",
+            "type": "CRS type",
+            "name": "CRS name",
+            "...[snip]...": {}
+        }
+    }
+
+
 Time support
 ------------
 
@@ -79,6 +99,24 @@ element with the reverse logic as the above explained reading side.
 The field names may also be prefixed with ``jsonfg_`` to distinguish them from
 fields ``time``, ``time_start``, ``time_end`` that must be written in
 Feature.properties
+
+Circular-arc geometry support
+-----------------------------
+
+.. versionadded:: 3.12
+
+Reading and writing of CircularString, CompoundCurve, CurvePolygon, MultiCurve
+and MultiSurface geometries is supported.
+
+Geometry measure support
+------------------------
+
+.. versionadded:: 3.12
+
+Geometry with measure values (M component) can be read and written. The unit
+and description of the measure, if included in the file, is reported in the
+``MEASURES`` layer metadata domain. On the writing side, the :lco:`MEASURE_UNIT`
+and :lco:`MEASURE_DESCRIPTION` layer creation option can be set.
 
 Configuration options
 ---------------------
@@ -181,6 +219,18 @@ The following layer creation options are supported:
       :choices: YES, NO
 
       Auto-generate feature ids
+
+-  .. lco:: MEASURE_UNIT
+      :choices: <string>
+      :since: 3.12
+
+      Unit of measures (M) values
+
+-  .. lco:: MEASURE_DESCRIPTION
+      :choices: <string>
+      :since: 3.12
+
+      Description of measures (M) values
 
 VSI Virtual File System API support
 -----------------------------------

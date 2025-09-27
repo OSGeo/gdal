@@ -1,0 +1,22 @@
+{
+    "conformsTo": [
+        "http://www.opengis.net/spec/json-fg-1/0.3/conf/core"         ,
+        "http://www.opengis.net/spec/json-fg-1/0.3/conf/circular-arcs"
+    ],
+    "coordRefSys": "http://www.opengis.net/def/crs/OGC/0/CRS84",
+    "type": "CompoundCurve",
+    "geometries": [
+        {
+            "type": "CircularString",
+            "coordinates": [
+                [2.5, 49.5],
+                [3.5, 50.5],
+                [4.5, 49.5]
+            ]
+        },
+        {
+            "type": "Point",
+            "coordinates": [4.5, 49.5]
+        }
+    ]
+}

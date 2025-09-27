@@ -471,8 +471,10 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
         }
         if (bFinished && bJSonPLikeWrapper_ && nRead > nSkip)
             nRead--;
-        if (!oParser.Parse(reinterpret_cast<const char *>(pabyBuffer_ + nSkip),
-                           nRead - nSkip, bFinished) ||
+        if (!oParser.Parse(std::string_view(reinterpret_cast<const char *>(
+                                                pabyBuffer_ + nSkip),
+                                            nRead - nSkip),
+                           bFinished) ||
             oParser.ExceptionOccurred())
         {
             // to avoid killing ourselves during layer deletion
@@ -697,8 +699,10 @@ OGRFeature *OGRGeoJSONReader::GetNextFeature(OGRGeoJSONLayer *poLayer)
         if (bFinished && bJSonPLikeWrapper_ && nRead > nSkip)
             nRead--;
         if (!poStreamingParser_->Parse(
-                reinterpret_cast<const char *>(pabyBuffer_ + nSkip),
-                nRead - nSkip, bFinished) ||
+                std::string_view(
+                    reinterpret_cast<const char *>(pabyBuffer_ + nSkip),
+                    nRead - nSkip),
+                bFinished) ||
             poStreamingParser_->ExceptionOccurred())
         {
             break;
@@ -758,7 +762,7 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, GIntBig nFID)
             for (size_t i = 0; i < nRead - nSkip; i++)
             {
                 oParser.ResetFeatureDetectionState();
-                if (!oParser.Parse(pszPtr + i, 1,
+                if (!oParser.Parse(std::string_view(pszPtr + i, 1),
                                    bFinished && (i + 1 == nRead - nSkip)) ||
                     oParser.ExceptionOccurred())
                 {
@@ -1632,7 +1636,8 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn(
     json_object *poGeomObj = CPL_json_object_object_get(poObj, "geometry");
     if (poGeomObj && json_object_get_type(poGeomObj) == json_type_object)
     {
-        const auto eType = OGRGeoJSONGetOGRGeometryType(poGeomObj);
+        const auto eType =
+            OGRGeoJSONGetOGRGeometryType(poGeomObj, /* bHasM = */ false);
 
         OGRGeoJSONUpdateLayerGeomType(m_bFirstGeometry, eType,
                                       m_eLayerGeomType);
@@ -1949,7 +1954,8 @@ OGRGeometry *
 OGRGeoJSONBaseReader::ReadGeometry(json_object *poObj,
                                    const OGRSpatialReference *poLayerSRS)
 {
-    OGRGeometry *poGeometry = OGRGeoJSONReadGeometry(poObj, poLayerSRS);
+    auto poGeometry =
+        OGRGeoJSONReadGeometry(poObj, /* bHasM = */ false, poLayerSRS);
 
     /* -------------------------------------------------------------------- */
     /*      Wrap geometry with GeometryCollection as a common denominator.  */
@@ -1963,13 +1969,13 @@ OGRGeoJSONBaseReader::ReadGeometry(json_object *poObj,
         if (!bGeometryPreserve_ &&
             wkbGeometryCollection != poGeometry->getGeometryType())
         {
-            OGRGeometryCollection *poMetaGeometry = new OGRGeometryCollection();
-            poMetaGeometry->addGeometryDirectly(poGeometry);
-            return poMetaGeometry;
+            auto poMetaGeometry = std::make_unique<OGRGeometryCollection>();
+            poMetaGeometry->addGeometry(std::move(poGeometry));
+            return poMetaGeometry.release();
         }
     }
 
-    return poGeometry;
+    return poGeometry.release();
 }
 
 /************************************************************************/

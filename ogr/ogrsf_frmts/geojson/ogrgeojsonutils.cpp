@@ -91,21 +91,20 @@ static std::string GetTopLevelType(const char *pszText)
         bool m_bInTopLevelType = false;
         std::string m_osTopLevelTypeValue{};
 
-        void StartObjectMember(const char *pszKey, size_t nLength) override
+        void StartObjectMember(std::string_view sKey) override
         {
             m_bInTopLevelType = false;
-            if (nLength == strlen("type") && strcmp(pszKey, "type") == 0 &&
-                m_osLevel == "{")
+            if (sKey == "type" && m_osLevel == "{")
             {
                 m_bInTopLevelType = true;
             }
         }
 
-        void String(const char *pszValue, size_t nLength) override
+        void String(std::string_view sValue) override
         {
             if (m_bInTopLevelType)
             {
-                m_osTopLevelTypeValue.assign(pszValue, nLength);
+                m_osTopLevelTypeValue = sValue;
                 StopParsing();
             }
         }
@@ -138,7 +137,7 @@ static std::string GetTopLevelType(const char *pszText)
     };
 
     MyParser oParser;
-    oParser.Parse(pszText, strlen(pszText), true);
+    oParser.Parse(std::string_view(pszText), true);
     return oParser.m_osTopLevelTypeValue;
 }
 
@@ -621,24 +620,16 @@ bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
     const std::string osWithoutSpace = GetCompactJSon(pszText, strlen(pszText));
 
     // In theory, conformsTo should be required, but let be lax...
+    if (osWithoutSpace.find("conformsTo") != std::string::npos)
     {
-        const auto nPos = osWithoutSpace.find("\"conformsTo\":[");
-        if (nPos != std::string::npos)
+        if (osWithoutSpace.find("\"[ogc-json-fg-1-") != std::string::npos ||
+            osWithoutSpace.find("\"http://www.opengis.net/spec/json-fg-1/") !=
+                std::string::npos ||
+            osWithoutSpace.find(
+                "\"http:\\/\\/www.opengis.net\\/spec\\/json-fg-1\\/") !=
+                std::string::npos)
         {
-            for (const char *pszVersion : {"0.1", "0.2", "0.3"})
-            {
-                if (osWithoutSpace.find(
-                        CPLSPrintf("\"[ogc-json-fg-1-%s:core]\"", pszVersion),
-                        nPos) != std::string::npos ||
-                    osWithoutSpace.find(
-                        CPLSPrintf(
-                            "\"http://www.opengis.net/spec/json-fg-1/%s\"",
-                            pszVersion),
-                        nPos) != std::string::npos)
-                {
-                    return true;
-                }
-            }
+            return true;
         }
     }
 
@@ -647,7 +638,14 @@ bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
             std::string::npos ||
         osWithoutSpace.find("\"time\":{\"date\":") != std::string::npos ||
         osWithoutSpace.find("\"time\":{\"timestamp\":") != std::string::npos ||
-        osWithoutSpace.find("\"time\":{\"interval\":") != std::string::npos)
+        osWithoutSpace.find("\"time\":{\"interval\":") != std::string::npos ||
+        osWithoutSpace.find("\"type\":\"CircularString\"") !=
+            std::string::npos ||
+        osWithoutSpace.find("\"type\":\"CompoundCurve\"") !=
+            std::string::npos ||
+        osWithoutSpace.find("\"type\":\"CurvePolygon\"") != std::string::npos ||
+        osWithoutSpace.find("\"type\":\"MultiCurve\"") != std::string::npos ||
+        osWithoutSpace.find("\"type\":\"MultiSurface\"") != std::string::npos)
     {
         return true;
     }
@@ -663,10 +661,9 @@ bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
             bool m_bFoundJSONFGCoordrefSys = false;
             std::string m_osLevel{};
 
-            void StartObjectMember(const char *pszKey, size_t nLength) override
+            void StartObjectMember(std::string_view sKey) override
             {
-                if (nLength == strlen("featureType") &&
-                    strcmp(pszKey, "featureType") == 0)
+                if (sKey == "featureType")
                 {
                     m_bFoundJSONFGFeatureType =
                         (m_osLevel == "{" ||   // At FeatureCollection level
@@ -674,8 +671,7 @@ bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
                     if (m_bFoundJSONFGFeatureType)
                         StopParsing();
                 }
-                else if (nLength == strlen("coordRefSys") &&
-                         strcmp(pszKey, "coordRefSys") == 0)
+                else if (sKey == "coordRefSys")
                 {
                     m_bFoundJSONFGCoordrefSys =
                         (m_osLevel == "{" ||   // At FeatureCollection level
@@ -709,7 +705,7 @@ bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
         };
 
         MyParser oParser;
-        oParser.Parse(pszText, strlen(pszText), true);
+        oParser.Parse(std::string_view(pszText), true);
         if (oParser.m_bFoundJSONFGFeatureType ||
             oParser.m_bFoundJSONFGCoordrefSys)
         {

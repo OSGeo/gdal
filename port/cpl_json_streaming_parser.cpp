@@ -423,9 +423,10 @@ void CPLJSonStreamingParser::DecodeUnicode()
 /*                              Parse()                                 */
 /************************************************************************/
 
-bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
-                                   bool bFinished)
+bool CPLJSonStreamingParser::Parse(std::string_view sStr, bool bFinished)
 {
+    const char *pStr = sStr.data();
+    size_t nLength = sStr.size();
     while (true)
     {
         if (m_bExceptionOccurred || m_bStopParsing)
@@ -448,6 +449,22 @@ bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
         }
         else if (eCurState == NUMBER)
         {
+            if (m_osToken.empty())
+            {
+                // Optimization to avoid using temporary buffer
+                auto nPos =
+                    std::string_view(pStr, nLength).find_first_of(" \t\r\n,}]");
+                if (nPos != std::string::npos)
+                {
+                    Number(std::string_view(pStr, nPos));
+                    m_aState.pop_back();
+                    pStr += nPos;
+                    nLength -= nPos;
+                    SkipSpace(pStr, nLength);
+                    continue;
+                }
+            }
+
             while (nLength)
             {
                 char ch = *pStr;
@@ -518,7 +535,7 @@ bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
                     }
                 }
 
-                Number(m_osToken.c_str(), m_osToken.size());
+                Number(m_osToken);
                 m_osToken.clear();
                 m_aState.pop_back();
             }
@@ -535,6 +552,37 @@ bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
         else if (eCurState == STRING)
         {
             bool bEOS = false;
+
+            if (m_osToken.empty() && !m_bInStringEscape && !m_bInUnicode)
+            {
+                // Optimization to avoid using temporary buffer
+                auto nPos =
+                    std::string_view(pStr, nLength).find_first_of("\"\\");
+                if (nPos != std::string::npos && pStr[nPos] == '"')
+                {
+                    if (nPos > m_nMaxStringSize)
+                    {
+                        return EmitException("Too many characters in number");
+                    }
+                    if (!m_aeObjectState.empty() &&
+                        m_aeObjectState.back() == IN_KEY)
+                    {
+                        StartObjectMember(std::string_view(pStr, nPos));
+                    }
+                    else
+                    {
+                        String(std::string_view(pStr, nPos));
+                    }
+                    m_aState.pop_back();
+                    pStr += nPos + 1;
+                    nLength -= nPos + 1;
+                    SkipSpace(pStr, nLength);
+                    if (nLength != 0)
+                        continue;
+                    bEOS = true;
+                }
+            }
+
             while (nLength)
             {
                 if (m_osToken.size() == m_nMaxStringSize)
@@ -664,11 +712,11 @@ bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
                     if (!m_aeObjectState.empty() &&
                         m_aeObjectState.back() == IN_KEY)
                     {
-                        StartObjectMember(m_osToken.c_str(), m_osToken.size());
+                        StartObjectMember(m_osToken);
                     }
                     else
                     {
-                        String(m_osToken.c_str(), m_osToken.size());
+                        String(m_osToken);
                     }
                     m_osToken.clear();
                     m_aState.pop_back();
@@ -898,12 +946,11 @@ bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
 /*                       GetSerializedString()                          */
 /************************************************************************/
 
-std::string CPLJSonStreamingParser::GetSerializedString(const char *pszStr)
+std::string CPLJSonStreamingParser::GetSerializedString(std::string_view s)
 {
     std::string osStr("\"");
-    for (int i = 0; pszStr[i]; i++)
+    for (char ch : s)
     {
-        char ch = pszStr[i];
         if (ch == '\b')
             osStr += "\\b";
         else if (ch == '\f')
