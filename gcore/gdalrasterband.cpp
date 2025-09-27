@@ -6763,24 +6763,35 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         if (nSampleRate == 1)
             bApproxOK = false;
 
-        // Particular case for GDT_Byte that only use integral types for all
-        // intermediate computations. Only possible if the number of pixels
-        // explored is lower than GUINTBIG_MAX / (255*255), so that nSumSquare
-        // can fit on a uint64. Should be 99.99999% of cases.
-        // For GUInt16, this limits to raster of 4 giga pixels
-        if ((!poMaskBand && eDataType == GDT_Byte && !bSignedByte &&
-             static_cast<GUIntBig>(nBlocksPerRow) * nBlocksPerColumn /
-                     nSampleRate <
-                 GUINTBIG_MAX / (255U * 255U) /
-                     (static_cast<GUInt64>(nBlockXSize) *
-                      static_cast<GUInt64>(nBlockYSize))) ||
-            (eDataType == GDT_UInt16 &&
-             static_cast<GUIntBig>(nBlocksPerRow) * nBlocksPerColumn /
-                     nSampleRate <
-                 GUINTBIG_MAX / (65535U * 65535U) /
-                     (static_cast<GUInt64>(nBlockXSize) *
-                      static_cast<GUInt64>(nBlockYSize))))
+        // Particular case for GDT_Byte and GUInt16 that only use integral types
+        // for each block, and possibly for the whole raster.
+        if (!poMaskBand && ((eDataType == GDT_Byte && !bSignedByte) ||
+                            eDataType == GDT_UInt16))
         {
+            // We can do integer computation on the whole raster in the Byte case
+            // only if the number of pixels explored is lower than
+            // GUINTBIG_MAX / (255*255), so that nSumSquare can fit on a uint64.
+            // Should be 99.99999% of cases.
+            // For GUInt16, this limits to raster of 4 giga pixels
+
+            const bool bIntegerStats =
+                ((eDataType == GDT_Byte &&
+                  static_cast<GUIntBig>(nBlocksPerRow) * nBlocksPerColumn /
+                          nSampleRate <
+                      GUINTBIG_MAX / (255U * 255U) /
+                          (static_cast<GUInt64>(nBlockXSize) *
+                           static_cast<GUInt64>(nBlockYSize))) ||
+                 (eDataType == GDT_UInt16 &&
+                  static_cast<GUIntBig>(nBlocksPerRow) * nBlocksPerColumn /
+                          nSampleRate <
+                      GUINTBIG_MAX / (65535U * 65535U) /
+                          (static_cast<GUInt64>(nBlockXSize) *
+                           static_cast<GUInt64>(nBlockYSize)))) &&
+                // Can be set to NO for easier debugging of the !bIntegerStats
+                // case which requires huge rasters to trigger
+                CPLTestBool(
+                    CPLGetConfigOption("GDAL_STATS_USE_INTEGER_STATS", "YES"));
+
             const GUInt32 nMaxValueType = (eDataType == GDT_Byte) ? 255 : 65535;
             GUInt32 nMin = nMaxValueType;
             GUInt32 nMax = 0;
@@ -6817,6 +6828,18 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 int nXCheck = 0, nYCheck = 0;
                 GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
+                GUIntBig nBlockSum = 0;
+                GUIntBig nBlockSumSquare = 0;
+                GUIntBig nBlockSampleCount = 0;
+                GUIntBig nBlockValidCount = 0;
+                GUIntBig &nBlockSumRef = bIntegerStats ? nSum : nBlockSum;
+                GUIntBig &nBlockSumSquareRef =
+                    bIntegerStats ? nSumSquare : nBlockSumSquare;
+                GUIntBig &nBlockSampleCountRef =
+                    bIntegerStats ? nSampleCount : nBlockSampleCount;
+                GUIntBig &nBlockValidCountRef =
+                    bIntegerStats ? nValidCount : nBlockValidCount;
+
                 if (eDataType == GDT_Byte)
                 {
                     ComputeStatisticsInternal<
@@ -6824,7 +6847,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                         f(nXCheck, nBlockXSize, nYCheck,
                           static_cast<const GByte *>(pData),
                           nNoDataValue <= nMaxValueType, nNoDataValue, nMin,
-                          nMax, nSum, nSumSquare, nSampleCount, nValidCount);
+                          nMax, nBlockSumRef, nBlockSumSquareRef,
+                          nBlockSampleCountRef, nBlockValidCountRef);
                 }
                 else
                 {
@@ -6833,10 +6857,44 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                         f(nXCheck, nBlockXSize, nYCheck,
                           static_cast<const GUInt16 *>(pData),
                           nNoDataValue <= nMaxValueType, nNoDataValue, nMin,
-                          nMax, nSum, nSumSquare, nSampleCount, nValidCount);
+                          nMax, nBlockSumRef, nBlockSumSquareRef,
+                          nBlockSampleCountRef, nBlockValidCountRef);
                 }
 
                 poBlock->DropLock();
+
+                if (!bIntegerStats)
+                {
+                    nSampleCount += nBlockSampleCount;
+                    if (nBlockValidCount)
+                    {
+                        // Update the global mean and M2 (the difference of the
+                        // square to the mean) from the values of the block
+                        // using https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
+                        const double dfBlockValidCount =
+                            static_cast<double>(nBlockValidCount);
+                        const double dfBlockMean =
+                            static_cast<double>(nBlockSum) / dfBlockValidCount;
+                        const double dfBlockM2 =
+                            static_cast<double>(
+                                GDALUInt128::Mul(nBlockSumSquare,
+                                                 nBlockValidCount) -
+                                GDALUInt128::Mul(nBlockSum, nBlockSum)) /
+                            dfBlockValidCount;
+                        const double dfDelta = dfBlockMean - dfMean;
+                        const auto nNewValidCount =
+                            nValidCount + nBlockValidCount;
+                        const double dfNewValidCount =
+                            static_cast<double>(nNewValidCount);
+                        dfMean +=
+                            dfDelta * (dfBlockValidCount / dfNewValidCount);
+                        dfM2 +=
+                            dfBlockM2 + dfDelta * dfDelta *
+                                            static_cast<double>(nValidCount) *
+                                            dfBlockValidCount / dfNewValidCount;
+                        nValidCount = nNewValidCount;
+                    }
+                }
 
                 if (!pfnProgress(static_cast<double>(iSampleBlock) /
                                      (static_cast<double>(nBlocksPerRow) *
@@ -6855,25 +6913,29 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 return CE_Failure;
             }
 
-            /* --------------------------------------------------------------------
-             */
-            /*      Save computed information. */
-            /* --------------------------------------------------------------------
-             */
-            if (nValidCount)
-                dfMean = static_cast<double>(nSum) / nValidCount;
+            double dfStdDev = 0;
+            if (bIntegerStats)
+            {
+                if (nValidCount)
+                    dfMean = static_cast<double>(nSum) / nValidCount;
 
-            // To avoid potential precision issues when doing the difference,
-            // we need to do that computation on 128 bit rather than casting
-            // to double
-            const GDALUInt128 nTmpForStdDev(
-                GDALUInt128::Mul(nSumSquare, nValidCount) -
-                GDALUInt128::Mul(nSum, nSum));
-            const double dfStdDev =
-                nValidCount > 0
-                    ? sqrt(static_cast<double>(nTmpForStdDev)) / nValidCount
-                    : 0.0;
+                // To avoid potential precision issues when doing the difference,
+                // we need to do that computation on 128 bit rather than casting
+                // to double
+                const GDALUInt128 nTmpForStdDev(
+                    GDALUInt128::Mul(nSumSquare, nValidCount) -
+                    GDALUInt128::Mul(nSum, nSum));
+                dfStdDev =
+                    nValidCount > 0
+                        ? sqrt(static_cast<double>(nTmpForStdDev)) / nValidCount
+                        : 0.0;
+            }
+            else if (nValidCount > 0)
+            {
+                dfStdDev = sqrt(dfM2 / static_cast<double>(nValidCount));
+            }
 
+            /// Save computed information
             if (nValidCount > 0)
             {
                 if (bApproxOK)
