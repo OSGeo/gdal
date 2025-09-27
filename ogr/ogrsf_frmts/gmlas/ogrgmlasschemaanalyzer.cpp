@@ -3344,9 +3344,19 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
 
                         const std::vector<GMLASField> &osNestedClassFields =
                             oNestedClass.GetFields();
+                        const bool bIsTimeInstantType =
+                            transcode(poTypeDef->getName()) ==
+                            szXS_TIME_INSTANT_TYPE;
                         for (size_t j = 0; j < osNestedClassFields.size(); j++)
                         {
                             GMLASField oField(osNestedClassFields[j]);
+                            if (bIsTimeInstantType &&
+                                oField.GetType() == GMLAS_FT_ANYSIMPLETYPE &&
+                                oField.GetName() == "timePosition")
+                            {
+                                oField.SetType(GMLAS_FT_DATETIME,
+                                               szXS_DATETIME);
+                            }
                             oField.SetName(osPrefixedEltName + "_" +
                                            oField.GetName());
                             if (nMinOccurs == 0 ||
@@ -3356,6 +3366,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                 oField.SetMinOccurs(0);
                                 oField.SetNotNullable(false);
                             }
+
                             aoFields.push_back(std::move(oField));
                         }
 

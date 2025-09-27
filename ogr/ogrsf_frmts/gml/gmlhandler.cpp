@@ -1085,10 +1085,18 @@ int GMLHandler::FindRealPropertyByCheckingConditions(int nIdx, void *attr)
 OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName,
                                                 int nLenName, void *attr)
 {
-    /* Reset flag */
-    m_bInCurField = false;
 
     GMLReadState *poState = m_poReader->GetState();
+
+    if (m_bInCurField && m_nAttributeIndex >= 0 &&
+        std::string_view(pszName, nLenName) == "timePosition")
+    {
+        poState->PushPath(pszName, nLenName);
+        return OGRERR_NONE;
+    }
+
+    /* Reset flag */
+    m_bInCurField = false;
 
     /* -------------------------------------------------------------------- */
     /*      If we are collecting geometry, or if we determine this is a     */

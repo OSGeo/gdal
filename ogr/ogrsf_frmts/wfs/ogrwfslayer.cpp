@@ -1185,6 +1185,7 @@ OGRFeatureDefn *OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn *poSrcFDefn)
             return poFeatureDefn;
         }
         poSrcFDefn = l_poLayer->GetLayerDefn();
+        osGeometryColumnName = l_poLayer->GetGeometryColumn();
         bGotApproximateLayerDefn = true;
         /* We cannot trust width and precision based on a single feature */
         bUnsetWidthPrecision = true;
