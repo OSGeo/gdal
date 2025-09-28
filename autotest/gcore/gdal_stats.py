@@ -1099,3 +1099,54 @@ def test_stats_float32_nan_with_nodata(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPTIM)
         assert got_stats == expected_stats
     else:
         assert got_stats == pytest.approx(expected_stats, rel=1e-5)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("GDAL_STATS_USE_FLOAT64_OPTIM", [None, "NO"])
+def test_stats_float64_nan(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM):
+
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "tmp.tif", 257, 257, 1, gdal.GDT_Float64, options={"TILED": "YES"}
+    )
+    src_ds.WriteRaster(1, 127, 1, 1, struct.pack("d", 1.0))
+    src_ds.WriteRaster(1, 255, 1, 1, struct.pack("d", float("nan")))
+    src_ds.WriteRaster(5, 255, 1, 1, struct.pack("d", float("nan")))
+    with gdal.config_option(
+        "GDAL_STATS_USE_FLOAT64_OPTIM", GDAL_STATS_USE_FLOAT64_OPTIM
+    ):
+        got_stats = src_ds.GetRasterBand(1).ComputeStatistics(False)
+    expected_stats = [0.0, 1.0, 1.5140733114297485e-05, 0.0038910800393333316]
+    if GDAL_STATS_USE_FLOAT64_OPTIM == "NO":
+        assert got_stats == expected_stats
+    else:
+        assert got_stats == pytest.approx(expected_stats, rel=1e-15)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("GDAL_STATS_USE_FLOAT64_OPTIM", [None, "NO"])
+def test_stats_float64_nan_with_nodata(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM):
+
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "tmp.tif", 257, 257, 1, gdal.GDT_Float64, options={"TILED": "YES"}
+    )
+    src_ds.GetRasterBand(1).Fill(0)
+    src_ds.GetRasterBand(1).SetNoDataValue(1.5)
+    src_ds.WriteRaster(256, 0, 1, 1, struct.pack("d", 1.5))
+    src_ds.WriteRaster(1, 1, 1, 1, struct.pack("d", 1.5))
+    src_ds.WriteRaster(256, 1, 1, 1, struct.pack("d", 1.5))
+    src_ds.WriteRaster(1, 127, 1, 1, struct.pack("d", 1.0))
+    src_ds.WriteRaster(1, 255, 1, 1, struct.pack("d", float("nan")))
+    src_ds.WriteRaster(5, 255, 1, 1, struct.pack("d", float("nan")))
+    with gdal.config_option(
+        "GDAL_STATS_USE_FLOAT64_OPTIM", GDAL_STATS_USE_FLOAT64_OPTIM
+    ):
+        got_stats = src_ds.GetRasterBand(1).ComputeStatistics(False)
+    expected_stats = [0.0, 1.0, 1.514142087093462e-05, 0.0038911684117124336]
+    if GDAL_STATS_USE_FLOAT64_OPTIM == "NO":
+        assert got_stats == expected_stats
+    else:
+        assert got_stats == pytest.approx(expected_stats, rel=1e-15)
