@@ -70,7 +70,7 @@ tileindex, or as input for the :ref:`GTI <raster.gti>` driver.
     is evaluated after reprojection of its extent to the target SRS defined
     by :option:`-t_srs`.
 
-.. option:: -f <format>
+.. option:: -of <output_format>
 
     The OGR format of the output tile index file. Starting with
     GDAL 2.3, if not specified, the format is guessed from the extension (previously
@@ -153,8 +153,8 @@ gdaltindex can be used to generate a tile index suitable for use by the
   formats such as databases, or for vector formats that do not support setting
   layer metadata items.
 
-Formats that support layer metadata are for example GeoPackage (``-f GPKG``),
-FlatGeoBuf (``-f FlatGeoBuf``) or PostGIS (``-f PG``)
+Formats that support layer metadata are for example GeoPackage (``-of GPKG``),
+FlatGeoBuf (``-of FlatGeoBuf``) or PostGIS (``-of PG``)
 
 Setting :option:`-tr` and :option:`-ot` is recommended to avoid the GTI
 driver to have to deduce them by opening the first tile in the index. If the tiles
@@ -305,7 +305,7 @@ Examples
 
    .. code-block:: bash
 
-      gdaltindex -f GPKG doq_index.gpkg doq/*.tif
+      gdaltindex -of GPKG doq_index.gpkg doq/*.tif
 
 .. example::
 
