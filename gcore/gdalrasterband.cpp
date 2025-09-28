@@ -46,6 +46,10 @@
 #include "gdal_minmax_element.hpp"
 #include "gdalmultidim_priv.h"
 
+#ifdef __AVX2__
+#include <immintrin.h>
+#endif
+
 /************************************************************************/
 /*                           GDALRasterBand()                           */
 /************************************************************************/
@@ -6509,6 +6513,63 @@ void GDALRasterBand::SetValidPercent(GUIntBig nSampleCount,
 
 #if (defined(__x86_64__) || defined(_M_X64))
 
+#ifdef __AVX2__
+
+#define setzero_si _mm256_setzero_si256
+#define setzero_ps _mm256_setzero_ps
+#define set1_ps _mm256_set1_ps
+#define set1_epi32 _mm256_set1_epi32
+#define add_epi32 _mm256_add_epi32
+#define loadu_ps _mm256_loadu_ps
+#define or_ps _mm256_or_ps
+#define min_ps _mm256_min_ps
+#define max_ps _mm256_max_ps
+#define cmpeq_ps(x, y) _mm256_cmp_ps((x), (y), _CMP_EQ_OQ)
+#define cmpneq_ps(x, y) _mm256_cmp_ps((x), (y), _CMP_NEQ_OQ)
+#define cmpunord_ps(x, y) _mm256_cmp_ps((x), (y), _CMP_UNORD_Q)
+#define movemask_ps _mm256_movemask_ps
+#define add_ps _mm256_add_ps
+#define sub_ps _mm256_sub_ps
+#define mul_ps _mm256_mul_ps
+#define div_ps _mm256_div_ps
+#define storeu_ps _mm256_storeu_ps
+#define cvtepi32_ps _mm256_cvtepi32_ps
+#define cvtsi_si32(x) _mm256_extract_epi32((x), 0)
+#define blendv_ps _mm256_blendv_ps
+
+#else
+
+#define setzero_si _mm_setzero_si128
+#define setzero_ps _mm_setzero_ps
+#define set1_ps _mm_set1_ps
+#define set1_epi32 _mm_set1_epi32
+#define add_epi32 _mm_add_epi32
+#define loadu_ps _mm_loadu_ps
+#define or_ps _mm_or_ps
+#define min_ps _mm_min_ps
+#define max_ps _mm_max_ps
+#define cmpeq_ps _mm_cmpeq_ps
+#define cmpneq_ps _mm_cmpneq_ps
+#define cmpunord_ps _mm_cmpunord_ps
+#define movemask_ps _mm_movemask_ps
+#define add_ps _mm_add_ps
+#define sub_ps _mm_sub_ps
+#define mul_ps _mm_mul_ps
+#define div_ps _mm_div_ps
+#define storeu_ps _mm_storeu_ps
+#define cvtepi32_ps _mm_cvtepi32_ps
+#define cvtsi_si32 _mm_cvtsi128_si32
+
+inline __m128 blendv_ps(__m128 a, __m128 b, __m128 mask)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_ps(a, b, mask);
+#else
+    return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
+#endif
+}
+#endif
+
 template <bool CHECK_MIN_NOT_SAME_AS_MAX, bool HAS_NODATA>
 #if defined(__GNUC__)
 __attribute__((noinline))
@@ -6520,107 +6581,95 @@ ComputeStatisticsFloat32_SSE2(const float *pafData,
                               float &fBlockMean, float &fBlockM2,
                               int &nBlockValidCount)
 {
-    auto vValidCount = _mm_setzero_si128();
-    const auto vOne = _mm_set1_epi32(1);
-    [[maybe_unused]] const auto vNoData = _mm_set1_ps(fNoDataValue);
+    auto vValidCount = setzero_si();
+    const auto vOne = set1_epi32(1);
+    [[maybe_unused]] const auto vNoData = set1_ps(fNoDataValue);
 
-    auto vMin_lo = _mm_set1_ps(fMin);
-    auto vMax_lo = _mm_set1_ps(fMax);
-    auto vMean_lo = _mm_setzero_ps();
-    auto vM2_lo = _mm_setzero_ps();
+    auto vMin_lo = set1_ps(fMin);
+    auto vMax_lo = set1_ps(fMax);
+    auto vMean_lo = setzero_ps();
+    auto vM2_lo = setzero_ps();
 
     auto vMin_hi = vMin_lo;
     auto vMax_hi = vMax_lo;
-    auto vMean_hi = _mm_setzero_ps();
-    auto vM2_hi = _mm_setzero_ps();
+    auto vMean_hi = setzero_ps();
+    auto vM2_hi = setzero_ps();
 
-    [[maybe_unused]] const auto blendv_ps = [](__m128 a, __m128 b, __m128 mask)
-    {
-#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-        return _mm_blendv_ps(a, b, mask);
-#else
-        return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
-#endif
-    };
-
-    constexpr int VALS_PER_LOOP = 8;
+    constexpr int VALS_PER_LOOP =
+        2 * static_cast<int>(sizeof(vOne) / sizeof(float));
     for (; iX <= nCount - VALS_PER_LOOP; iX += VALS_PER_LOOP)
     {
-        const auto vValues_lo = _mm_loadu_ps(pafData + iX);
-        const auto vValues_hi = _mm_loadu_ps(pafData + iX + VALS_PER_LOOP / 2);
+        const auto vValues_lo = loadu_ps(pafData + iX);
+        const auto vValues_hi = loadu_ps(pafData + iX + VALS_PER_LOOP / 2);
         // Check if there's at least one NaN in both vectors
-        auto isNaNOrNoData = _mm_cmpunord_ps(vValues_lo, vValues_hi);
+        auto isNaNOrNoData = cmpunord_ps(vValues_lo, vValues_hi);
         if constexpr (HAS_NODATA)
         {
-            isNaNOrNoData = _mm_or_ps(
-                isNaNOrNoData, _mm_or_ps(_mm_cmpeq_ps(vValues_lo, vNoData),
-                                         _mm_cmpeq_ps(vValues_hi, vNoData)));
+            isNaNOrNoData =
+                or_ps(isNaNOrNoData, or_ps(cmpeq_ps(vValues_lo, vNoData),
+                                           cmpeq_ps(vValues_hi, vNoData)));
         }
-        if (_mm_movemask_ps(isNaNOrNoData))
+        if (movemask_ps(isNaNOrNoData))
         {
             break;
         }
 
-        vValidCount = _mm_add_epi32(vValidCount, vOne);
-        const auto vValidCountFloat32 = _mm_cvtepi32_ps(vValidCount);
+        vValidCount = add_epi32(vValidCount, vOne);
+        const auto vValidCountFloat32 = cvtepi32_ps(vValidCount);
 
-        vMin_lo = _mm_min_ps(vMin_lo, vValues_lo);
-        vMax_lo = _mm_max_ps(vMax_lo, vValues_lo);
-        const auto vDelta_lo = _mm_sub_ps(vValues_lo, vMean_lo);
+        vMin_lo = min_ps(vMin_lo, vValues_lo);
+        vMax_lo = max_ps(vMax_lo, vValues_lo);
+        const auto vDelta_lo = sub_ps(vValues_lo, vMean_lo);
         const auto vNewMean_lo =
-            _mm_add_ps(vMean_lo, _mm_div_ps(vDelta_lo, vValidCountFloat32));
+            add_ps(vMean_lo, div_ps(vDelta_lo, vValidCountFloat32));
         if constexpr (CHECK_MIN_NOT_SAME_AS_MAX)
         {
-            const auto vMinNotSameAsMax_lo = _mm_cmpneq_ps(vMin_lo, vMax_lo);
-            vMean_lo = blendv_ps(vMean_lo, vNewMean_lo, vMinNotSameAsMax_lo);
-            const auto vNewM2_lo = _mm_add_ps(
-                vM2_lo,
-                _mm_mul_ps(vDelta_lo, _mm_sub_ps(vValues_lo, vMean_lo)));
+            const auto vMinNotSameAsMax_lo = cmpneq_ps(vMin_lo, vMax_lo);
+            vMean_lo = blendv_ps(vMin_lo, vNewMean_lo, vMinNotSameAsMax_lo);
+            const auto vNewM2_lo =
+                add_ps(vM2_lo, mul_ps(vDelta_lo, sub_ps(vValues_lo, vMean_lo)));
             vM2_lo = blendv_ps(vM2_lo, vNewM2_lo, vMinNotSameAsMax_lo);
         }
         else
         {
             vMean_lo = vNewMean_lo;
-            vM2_lo = _mm_add_ps(
-                vM2_lo,
-                _mm_mul_ps(vDelta_lo, _mm_sub_ps(vValues_lo, vMean_lo)));
+            vM2_lo =
+                add_ps(vM2_lo, mul_ps(vDelta_lo, sub_ps(vValues_lo, vMean_lo)));
         }
 
-        vMin_hi = _mm_min_ps(vMin_hi, vValues_hi);
-        vMax_hi = _mm_max_ps(vMax_hi, vValues_hi);
-        const auto vDelta_hi = _mm_sub_ps(vValues_hi, vMean_hi);
+        vMin_hi = min_ps(vMin_hi, vValues_hi);
+        vMax_hi = max_ps(vMax_hi, vValues_hi);
+        const auto vDelta_hi = sub_ps(vValues_hi, vMean_hi);
         const auto vNewMean_hi =
-            _mm_add_ps(vMean_hi, _mm_div_ps(vDelta_hi, vValidCountFloat32));
+            add_ps(vMean_hi, div_ps(vDelta_hi, vValidCountFloat32));
         if constexpr (CHECK_MIN_NOT_SAME_AS_MAX)
         {
-            const auto vMinNotSameAsMax_hi = _mm_cmpneq_ps(vMin_hi, vMax_hi);
-            vMean_hi = blendv_ps(vMean_hi, vNewMean_hi, vMinNotSameAsMax_hi);
-            const auto vNewM2_hi = _mm_add_ps(
-                vM2_hi,
-                _mm_mul_ps(vDelta_hi, _mm_sub_ps(vValues_hi, vMean_hi)));
+            const auto vMinNotSameAsMax_hi = cmpneq_ps(vMin_hi, vMax_hi);
+            vMean_hi = blendv_ps(vMin_hi, vNewMean_hi, vMinNotSameAsMax_hi);
+            const auto vNewM2_hi =
+                add_ps(vM2_hi, mul_ps(vDelta_hi, sub_ps(vValues_hi, vMean_hi)));
             vM2_hi = blendv_ps(vM2_hi, vNewM2_hi, vMinNotSameAsMax_hi);
         }
         else
         {
             vMean_hi = vNewMean_hi;
-            vM2_hi = _mm_add_ps(
-                vM2_hi,
-                _mm_mul_ps(vDelta_hi, _mm_sub_ps(vValues_hi, vMean_hi)));
+            vM2_hi =
+                add_ps(vM2_hi, mul_ps(vDelta_hi, sub_ps(vValues_hi, vMean_hi)));
         }
     }
-    const int nValidVectorCount = _mm_cvtsi128_si32(vValidCount);
+    const int nValidVectorCount = cvtsi_si32(vValidCount);
     if (nValidVectorCount)
     {
         float afMin[VALS_PER_LOOP], afMax[VALS_PER_LOOP], afMean[VALS_PER_LOOP],
             afM2[VALS_PER_LOOP];
-        _mm_storeu_ps(afMin, vMin_lo);
-        _mm_storeu_ps(afMax, vMax_lo);
-        _mm_storeu_ps(afMean, vMean_lo);
-        _mm_storeu_ps(afM2, vM2_lo);
-        _mm_storeu_ps(afMin + VALS_PER_LOOP / 2, vMin_hi);
-        _mm_storeu_ps(afMax + VALS_PER_LOOP / 2, vMax_hi);
-        _mm_storeu_ps(afMean + VALS_PER_LOOP / 2, vMean_hi);
-        _mm_storeu_ps(afM2 + VALS_PER_LOOP / 2, vM2_hi);
+        storeu_ps(afMin, vMin_lo);
+        storeu_ps(afMax, vMax_lo);
+        storeu_ps(afMean, vMean_lo);
+        storeu_ps(afM2, vM2_lo);
+        storeu_ps(afMin + VALS_PER_LOOP / 2, vMin_hi);
+        storeu_ps(afMax + VALS_PER_LOOP / 2, vMax_hi);
+        storeu_ps(afMean + VALS_PER_LOOP / 2, vMean_hi);
+        storeu_ps(afM2 + VALS_PER_LOOP / 2, vM2_hi);
 
         for (int i = 0; i < VALS_PER_LOOP; ++i)
         {
@@ -7283,18 +7332,26 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                     const double dfBlockMean = static_cast<double>(fBlockMean);
                     if (dfBlockMean != dfMean)
                     {
-                        const double dfBlockValidCount =
-                            static_cast<double>(nBlockValidCount);
                         const double dfBlockM2 = static_cast<double>(fBlockM2);
-                        const double dfDelta = dfBlockMean - dfMean;
-                        const double dfNewValidCount =
-                            static_cast<double>(nNewValidCount);
-                        dfMean +=
-                            dfDelta * (dfBlockValidCount / dfNewValidCount);
-                        dfM2 +=
-                            dfBlockM2 + dfDelta * dfDelta *
-                                            static_cast<double>(nValidCount) *
-                                            dfBlockValidCount / dfNewValidCount;
+                        if (nValidCount == 0)
+                        {
+                            dfMean = dfBlockMean;
+                            dfM2 = dfBlockM2;
+                        }
+                        else
+                        {
+                            const double dfBlockValidCount =
+                                static_cast<double>(nBlockValidCount);
+                            const double dfDelta = dfBlockMean - dfMean;
+                            const double dfNewValidCount =
+                                static_cast<double>(nNewValidCount);
+                            dfMean +=
+                                dfDelta * (dfBlockValidCount / dfNewValidCount);
+                            dfM2 += dfBlockM2 +
+                                    dfDelta * dfDelta *
+                                        static_cast<double>(nValidCount) *
+                                        dfBlockValidCount / dfNewValidCount;
+                        }
                     }
                     nValidCount = nNewValidCount;
                 }

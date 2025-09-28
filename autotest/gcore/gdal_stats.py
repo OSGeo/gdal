@@ -989,14 +989,29 @@ def test_stats_mask_band():
 ###############################################################################
 # Test statistics on a band with all values to large values
 
+FLT_MAX = struct.unpack("f", struct.pack("f", 3.402823466e38))[0]
+
+
+@pytest.mark.parametrize("value", [FLT_MAX, -FLT_MAX, float("inf"), -float("inf")])
+def test_stats_all_large_values_float32(value):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 66, 1, 1, gdal.GDT_Float32)
+    src_ds.WriteRaster(0, 0, 66, 1, struct.pack("f", value) * 66)
+    assert src_ds.GetRasterBand(1).ComputeRasterMinMax(False) == (value, value)
+    assert src_ds.GetRasterBand(1).ComputeStatistics(False) == [value, value, value, 0]
+
+
+###############################################################################
+# Test statistics on a band with all values to large values
+
 
 @pytest.mark.parametrize(
     "value", [sys.float_info.max, -sys.float_info.max, float("inf"), -float("inf")]
 )
-def test_stats_all_large_values(value):
+def test_stats_all_large_values_float64(value):
 
-    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 1, gdal.GDT_Float64)
-    src_ds.WriteRaster(0, 0, 2, 1, struct.pack("d" * 2, value, value))
+    src_ds = gdal.GetDriverByName("MEM").Create("", 66, 1, 1, gdal.GDT_Float64)
+    src_ds.WriteRaster(0, 0, 66, 1, struct.pack("d", value) * 66)
     assert src_ds.GetRasterBand(1).ComputeRasterMinMax(False) == (value, value)
     assert src_ds.GetRasterBand(1).ComputeStatistics(False) == [value, value, value, 0]
 
