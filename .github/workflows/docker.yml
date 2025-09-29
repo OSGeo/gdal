@@ -23,25 +23,15 @@ jobs:
       fail-fast: false
       matrix:
         platform: ["arm64", "amd64"]
-        base: ["alpine", "ubuntu"]
-        size: ["small"]
+        base: ["alpine-small", "alpine-normal", "ubuntu-small", "ubuntu-full"]
         proprietary_sdks: ['false']
         include:
-          - platform: arm64
-            os: ubuntu-24.04-arm
           - platform: amd64
-            os: ubuntu-24.04
-          - base: ubuntu
-            size: full
-          - base: alpine
-            size: normal
-          - platform: amd64
-            base: ubuntu
-            size: full
+            base: ubuntu-full
             os: ubuntu-24.04
             proprietary_sdks: true
 
-    name: ${{ matrix.base }}-${{ matrix.size }}-${{ matrix.platform }}
+    name: ${{ matrix.base }}-${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -89,15 +79,15 @@ jobs:
       - name: Build
         shell: bash -l {0}
         run: |
-          cd docker/${{ matrix.base }}-${{ matrix.size }}
+          cd docker/${{ matrix.base }}
           if test "${{ matrix.proprietary_sdks }}" = "true"; then
             echo "::set-env name=PUSH_PACKAGES::false"
             ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --with-oracle --with-mrsid --with-ecw
           else
             ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
           fi
-          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-${{ matrix.size }}-latest-${{ matrix.platform }} gdalinfo --formats
-          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-${{ matrix.size }}-latest-${{ matrix.platform }} ogrinfo --formats
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} gdalinfo --formats
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} ogrinfo --formats
 
   create-manifest:
     permissions:
