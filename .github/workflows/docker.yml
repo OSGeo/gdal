@@ -16,9 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   docker_builds:
-
     strategy:
       fail-fast: false
       matrix:
@@ -28,11 +26,8 @@ jobs:
         include:
           - platform: amd64
             base: ubuntu-full
-            os: ubuntu-24.04
-            proprietary_sdks: true
-
-    name: ${{ matrix.base }}-${{ matrix.platform }}
-    runs-on: ${{ matrix.os }}
+            proprietary_sdks: 'true'
+    runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm64' }}
     permissions:
       contents: read
       attestations: write
@@ -43,7 +38,13 @@ jobs:
       - name: Set PUSH_PACKAGE due to schedule
         if: github.event.schedule=='*/0 * * * *'
         run: |
-          echo "::set-env name=PUSH_PACKAGES::true"
+          echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
+      - name: Handle Proprietary SDK Build
+
+        if: matrix.proprietary_sdks == 'true'
+        run: |
+          echo "job_id=proprietary_sdks" >> $GITHUB_ENV
+
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Set up Docker
@@ -81,7 +82,7 @@ jobs:
         run: |
           cd docker/${{ matrix.base }}
           if test "${{ matrix.proprietary_sdks }}" = "true"; then
-            echo "::set-env name=PUSH_PACKAGES::false"
+          echo "PUSH_PACKAGES=false" >> $GITHUB_ENV
             ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --with-oracle --with-mrsid --with-ecw
           else
             ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
@@ -105,7 +106,7 @@ jobs:
       - name: Set PUSH_PACKAGE due to schedule
         if: github.event.schedule=='*/0 * * * *'
         run: |
-          echo "::set-env name=PUSH_PACKAGES::true"
+          echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         if: env.PUSH_PACKAGES == 'true'
