@@ -38,7 +38,7 @@ fi
 
 "${SCRIPT_DIR}/../util.sh" "$@" --test-python
 
-if test "${HAS_PLATFORM}" = "0" && test "${HAS_RELEASE}" = "0" && test "x${TARGET_IMAGE}" = "xosgeo/gdal:ubuntu-full"; then
+if test "${HAS_PLATFORM}" = "0" && test "${HAS_RELEASE}" = "0" && test "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-full"; then
  "${SCRIPT_DIR}/../util.sh" --platform linux/arm64 "$@" --test-python
 
  if test "$HAS_PUSH" = "1" && test -z "$CI"; then
