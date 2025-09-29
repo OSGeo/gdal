@@ -609,7 +609,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     class CPL_DLL WindowIteratorWrapper
     {
       public:
-        explicit WindowIteratorWrapper(const GDALRasterBand &band);
+        explicit WindowIteratorWrapper(const GDALRasterBand &band,
+                                       size_t maxSize);
 
         WindowIterator begin() const;
 
@@ -624,7 +625,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     //! @endcond
 
-    WindowIteratorWrapper IterateWindows() const;
+    WindowIteratorWrapper IterateWindows(size_t maxSize = 0) const;
 
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
