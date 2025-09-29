@@ -8,7 +8,7 @@ RFC 109: Split of gdal_priv.h and addition of public C++ headers
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2025-09-12
-Status:        Draft
+Status:        Adopted, implemented
 Target:        GDAL 3.12
 ============== =============================================
 
@@ -150,4 +150,4 @@ Funded by GDAL Sponsorship Program (GSP)
 Voting history
 --------------
 
-TBD
++1 from PSC members MikeS, HowardB, DanielM, DanB, JavierJS, KurtS and me, and +0 from JukkaR
