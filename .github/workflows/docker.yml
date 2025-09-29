@@ -27,6 +27,7 @@ jobs:
           - platform: amd64
             base: ubuntu-full
             proprietary_sdks: 'true'
+    name: ${{ matrix.base }}-${{ matrix.platform }} Proprietary-SDKs=${{ matrix.proprietary_sdks }}
     runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm64' }}
     permissions:
       contents: read
@@ -36,7 +37,7 @@ jobs:
 
     steps:
       - name: Set PUSH_PACKAGE due to schedule
-        if: github.event.schedule=='*/0 * * * *'
+        if: github.event_name == 'schedule'
         run: |
           echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
       - name: Handle Proprietary SDK Build
@@ -104,7 +105,7 @@ jobs:
         tag: ["ubuntu-full", "ubuntu-small", "alpine-small", "alpine-normal"]
     steps:
       - name: Set PUSH_PACKAGE due to schedule
-        if: github.event.schedule=='*/0 * * * *'
+        if: github.event_name == 'schedule'
         run: |
           echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
       - name: Login to GitHub Container Registry
