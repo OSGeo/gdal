@@ -91,6 +91,7 @@ jobs:
         run: |
           cd docker/${{ matrix.base }}-${{ matrix.size }}
           if test "${{ matrix.proprietary_sdks }}" = "true"; then
+            echo "::set-env name=PUSH_PACKAGES::false"
             ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --with-oracle --with-mrsid --with-ecw
           else
             ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
