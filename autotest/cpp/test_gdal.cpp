@@ -6049,65 +6049,122 @@ TEST_F(test_gdal, GDALRasterBand_window_iterator)
     std::unique_ptr<GDALDataset> poDS(poDrv->Create(
         tmpFilename.c_str(), 1050, 600, 1, GDT_Byte, aosOptions.List()));
     GDALRasterBand *poBand = poDS->GetRasterBand(1);
-    std::vector<GDALRasterWindow> windows(poBand->IterateWindows().begin(),
-                                          poBand->IterateWindows().end());
     poDS->MarkSuppressOnClose();
 
-    ASSERT_EQ(windows.size(), 9);
+    // iterate on individual blocks
+    for (size_t sz : {0, 256 * 512 - 1})
+    {
+        std::vector<GDALRasterWindow> windows(
+            poBand->IterateWindows(sz).begin(),
+            poBand->IterateWindows(sz).end());
 
-    // top-left
-    EXPECT_EQ(windows[0].nXOff, 0);
-    EXPECT_EQ(windows[0].nYOff, 0);
-    EXPECT_EQ(windows[0].nXSize, 512);
-    EXPECT_EQ(windows[0].nYSize, 256);
+        ASSERT_EQ(windows.size(), 9);
 
-    // top-middle
-    EXPECT_EQ(windows[1].nXOff, 512);
-    EXPECT_EQ(windows[1].nYOff, 0);
-    EXPECT_EQ(windows[1].nXSize, 512);
-    EXPECT_EQ(windows[1].nYSize, 256);
+        // top-left
+        EXPECT_EQ(windows[0].nXOff, 0);
+        EXPECT_EQ(windows[0].nYOff, 0);
+        EXPECT_EQ(windows[0].nXSize, 512);
+        EXPECT_EQ(windows[0].nYSize, 256);
 
-    // top-right
-    EXPECT_EQ(windows[2].nXOff, 1024);
-    EXPECT_EQ(windows[2].nYOff, 0);
-    EXPECT_EQ(windows[2].nXSize, 1050 - 1024);
-    EXPECT_EQ(windows[2].nYSize, 256);
+        // top-middle
+        EXPECT_EQ(windows[1].nXOff, 512);
+        EXPECT_EQ(windows[1].nYOff, 0);
+        EXPECT_EQ(windows[1].nXSize, 512);
+        EXPECT_EQ(windows[1].nYSize, 256);
 
-    // middle-left
-    EXPECT_EQ(windows[3].nXOff, 0);
-    EXPECT_EQ(windows[3].nYOff, 256);
-    EXPECT_EQ(windows[3].nXSize, 512);
-    EXPECT_EQ(windows[3].nYSize, 256);
+        // top-right
+        EXPECT_EQ(windows[2].nXOff, 1024);
+        EXPECT_EQ(windows[2].nYOff, 0);
+        EXPECT_EQ(windows[2].nXSize, 1050 - 1024);
+        EXPECT_EQ(windows[2].nYSize, 256);
 
-    // middle-middle
-    EXPECT_EQ(windows[4].nXOff, 512);
-    EXPECT_EQ(windows[4].nYOff, 256);
-    EXPECT_EQ(windows[4].nXSize, 512);
-    EXPECT_EQ(windows[4].nYSize, 256);
+        // middle-left
+        EXPECT_EQ(windows[3].nXOff, 0);
+        EXPECT_EQ(windows[3].nYOff, 256);
+        EXPECT_EQ(windows[3].nXSize, 512);
+        EXPECT_EQ(windows[3].nYSize, 256);
 
-    // middle-right
-    EXPECT_EQ(windows[5].nXOff, 1024);
-    EXPECT_EQ(windows[5].nYOff, 256);
-    EXPECT_EQ(windows[5].nXSize, 1050 - 1024);
-    EXPECT_EQ(windows[5].nYSize, 256);
+        // middle-middle
+        EXPECT_EQ(windows[4].nXOff, 512);
+        EXPECT_EQ(windows[4].nYOff, 256);
+        EXPECT_EQ(windows[4].nXSize, 512);
+        EXPECT_EQ(windows[4].nYSize, 256);
 
-    // bottom-left
-    EXPECT_EQ(windows[6].nXOff, 0);
-    EXPECT_EQ(windows[6].nYOff, 512);
-    EXPECT_EQ(windows[6].nXSize, 512);
-    EXPECT_EQ(windows[6].nYSize, 600 - 512);
+        // middle-right
+        EXPECT_EQ(windows[5].nXOff, 1024);
+        EXPECT_EQ(windows[5].nYOff, 256);
+        EXPECT_EQ(windows[5].nXSize, 1050 - 1024);
+        EXPECT_EQ(windows[5].nYSize, 256);
 
-    // bottom-middle
-    EXPECT_EQ(windows[7].nXOff, 512);
-    EXPECT_EQ(windows[7].nYOff, 512);
-    EXPECT_EQ(windows[7].nXSize, 512);
-    EXPECT_EQ(windows[7].nYSize, 600 - 512);
+        // bottom-left
+        EXPECT_EQ(windows[6].nXOff, 0);
+        EXPECT_EQ(windows[6].nYOff, 512);
+        EXPECT_EQ(windows[6].nXSize, 512);
+        EXPECT_EQ(windows[6].nYSize, 600 - 512);
 
-    // bottom-right
-    EXPECT_EQ(windows[8].nXOff, 1024);
-    EXPECT_EQ(windows[8].nYOff, 512);
-    EXPECT_EQ(windows[8].nXSize, 1050 - 1024);
-    EXPECT_EQ(windows[8].nYSize, 600 - 512);
+        // bottom-middle
+        EXPECT_EQ(windows[7].nXOff, 512);
+        EXPECT_EQ(windows[7].nYOff, 512);
+        EXPECT_EQ(windows[7].nXSize, 512);
+        EXPECT_EQ(windows[7].nYSize, 600 - 512);
+
+        // bottom-right
+        EXPECT_EQ(windows[8].nXOff, 1024);
+        EXPECT_EQ(windows[8].nYOff, 512);
+        EXPECT_EQ(windows[8].nXSize, 1050 - 1024);
+        EXPECT_EQ(windows[8].nYSize, 600 - 512);
+    }
+
+    // iterate on single rows of blocks
+    for (size_t sz : {1050 * 256, 1050 * 511})
+    {
+        std::vector<GDALRasterWindow> windows(
+            poBand->IterateWindows(sz).begin(),
+            poBand->IterateWindows(sz).end());
+
+        ASSERT_EQ(windows.size(), 3);
+
+        // top
+        EXPECT_EQ(windows[0].nXOff, 0);
+        EXPECT_EQ(windows[0].nYOff, 0);
+        EXPECT_EQ(windows[0].nXSize, 1050);
+        EXPECT_EQ(windows[0].nYSize, 256);
+
+        // middle
+        EXPECT_EQ(windows[1].nXOff, 0);
+        EXPECT_EQ(windows[1].nYOff, 256);
+        EXPECT_EQ(windows[1].nXSize, 1050);
+        EXPECT_EQ(windows[1].nYSize, 256);
+
+        // bottom
+        EXPECT_EQ(windows[2].nXOff, 0);
+        EXPECT_EQ(windows[2].nYOff, 512);
+        EXPECT_EQ(windows[2].nXSize, 1050);
+        EXPECT_EQ(windows[2].nYSize, 600 - 512);
+    }
+
+    // iterate on batches of rows of blocks
+    {
+        auto sz = 1050 * 512;
+
+        std::vector<GDALRasterWindow> windows(
+            poBand->IterateWindows(sz).begin(),
+            poBand->IterateWindows(sz).end());
+
+        ASSERT_EQ(windows.size(), 2);
+
+        // top
+        EXPECT_EQ(windows[0].nXOff, 0);
+        EXPECT_EQ(windows[0].nYOff, 0);
+        EXPECT_EQ(windows[0].nXSize, 1050);
+        EXPECT_EQ(windows[0].nYSize, 512);
+
+        // bottom
+        EXPECT_EQ(windows[1].nXOff, 0);
+        EXPECT_EQ(windows[1].nYOff, 512);
+        EXPECT_EQ(windows[1].nXSize, 1050);
+        EXPECT_EQ(windows[1].nYSize, 600 - 512);
+    }
 }
 
 }  // namespace

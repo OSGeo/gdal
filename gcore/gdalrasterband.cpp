@@ -9647,18 +9647,48 @@ GDALRasterBand::WindowIterator &GDALRasterBand::WindowIterator::operator++()
 }
 
 GDALRasterBand::WindowIteratorWrapper::WindowIteratorWrapper(
-    const GDALRasterBand &band)
+    const GDALRasterBand &band, size_t maxSize)
     : m_nRasterXSize(band.GetXSize()), m_nRasterYSize(band.GetYSize()),
       m_nBlockXSize(-1), m_nBlockYSize(-1)
 {
-    // If invalid block size is reported, just use a value of 1.
-    CPLErrorStateBackuper state(CPLQuietErrorHandler);
 #ifdef CSA_BUILD
     assert(this);
 #endif
-    band.GetBlockSize(&m_nBlockXSize, &m_nBlockYSize);
-    m_nBlockXSize = std::max<int>(m_nBlockXSize, 1);
-    m_nBlockYSize = std::max<int>(m_nBlockYSize, 1);
+    int nXSize, nYSize;
+
+    CPLErrorStateBackuper state(CPLQuietErrorHandler);
+    band.GetBlockSize(&nXSize, &nYSize);
+    if (nXSize < 1 || nYSize < 0)
+    {
+        // If invalid block size is reported, assume scanlines
+        nXSize = m_nRasterXSize;
+        nYSize = 1;
+    }
+
+    if (maxSize == 0)
+    {
+        m_nBlockXSize = nXSize;
+        m_nBlockYSize = nYSize;
+        return;
+    }
+
+    const double dfBlocksPerRow = static_cast<double>(m_nRasterXSize) / nXSize;
+    const double dfBlocksPerChunk =
+        static_cast<double>(maxSize) /
+        (static_cast<double>(nXSize) * static_cast<double>(nYSize));
+
+    if (dfBlocksPerChunk < dfBlocksPerRow)
+    {
+        m_nBlockXSize =
+            nXSize * std::max<int>(static_cast<int>(dfBlocksPerChunk), 1);
+        m_nBlockYSize = nYSize;
+    }
+    else
+    {
+        m_nBlockXSize = m_nRasterXSize;
+        m_nBlockYSize =
+            nYSize * static_cast<int>(dfBlocksPerChunk / dfBlocksPerRow);
+    }
 }
 
 GDALRasterBand::WindowIterator
@@ -9679,8 +9709,8 @@ GDALRasterBand::WindowIteratorWrapper::end() const
 //! @endcond
 
 /** Return an object whose begin() and end() methods can be used to iterate
- *  over a GDALRasterWindow for each block in this raster band. The iteration
- *  order is from left to right, then from top to bottom.
+ *  over GDALRasterWindow objects that are aligned with blocks in this raster
+ *  band. The iteration order is from left to right, then from top to bottom.
  *
 \code{.cpp}
     std::vector<double> pixelValues;
@@ -9692,11 +9722,15 @@ GDALRasterBand::WindowIteratorWrapper::end() const
 \endcode
  *
  *
+ *  @param maxSize The maximum number of pixels in each window. If set to
+ *         zero (the default), or a number smaller than the block size,
+ *         the window size will be the same as the block size.
  *  @since GDAL 3.12
  */
-GDALRasterBand::WindowIteratorWrapper GDALRasterBand::IterateWindows() const
+GDALRasterBand::WindowIteratorWrapper
+GDALRasterBand::IterateWindows(size_t maxSize) const
 {
-    return WindowIteratorWrapper(*this);
+    return WindowIteratorWrapper(*this, maxSize);
 }
 
 /************************************************************************/
