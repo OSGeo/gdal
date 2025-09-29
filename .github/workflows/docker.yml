@@ -5,66 +5,118 @@ on:
         paths:
             - 'docker/**'
             - '.github/workflows/docker.yml'
+    schedule:
+      - cron: '0 0 * * *'
 
     # Allows you to run this workflow manually from the Actions tab
     workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-
 jobs:
-
   docker_builds:
-
     strategy:
       fail-fast: false
       matrix:
+        platform: ["arm64", "amd64"]
+        base: ["alpine-small", "alpine-normal", "ubuntu-small", "ubuntu-full"]
+        proprietary_sdks: ['false']
         include:
-          - name: alpine-small-amd64
-            image_name: alpine-small
-            arch: amd64
-
-          - name: alpine-normal-amd64
-            image_name: alpine-small
-            arch: amd64
-
-          - name: ubuntu-small-amd64
-            image_name: ubuntu-small
-            arch: amd64
-
-          - name: ubuntu-small-arm64
-            image_name: ubuntu-small
-            arch: arm64
-
-          - name: ubuntu-full-amd64-proprietary-sdks
-            image_name: ubuntu-full
-            arch: amd64
-
-          - name: ubuntu-full-arm64
-            image_name: ubuntu-full
-            arch: arm64
-
-    name: ${{ matrix.name }}
-
-    runs-on: ubuntu-latest
+          - platform: amd64
+            base: ubuntu-full
+            proprietary_sdks: 'true'
+    name: ${{ matrix.base }}-${{ matrix.platform }} Proprietary-SDKs=${{ matrix.proprietary_sdks }}
+    runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm64' }}
+    permissions:
+      contents: read
+      attestations: write
+      packages: write
+      id-token: write
 
     steps:
+      - name: Set PUSH_PACKAGE due to schedule
+        if: github.event_name == 'schedule'
+        run: |
+          echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
+        with:
+          daemon-config: |
+            {
+              "debug": false,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract container metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/osgeo/gdal
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
       - name: Build
         shell: bash -l {0}
         run: |
-          docker run --rm --privileged linuxkit/binfmt:v0.8
-          cd docker/${{ matrix.image_name }}
-          if test "${{ matrix.name }}" = "ubuntu-full-amd64-proprietary-sdks"; then
-            ./build.sh --platform linux/${{ matrix.arch }} --with-oracle --with-mrsid --with-ecw
+          cd docker/${{ matrix.base }}
+          if test "${{ matrix.proprietary_sdks }}" = "true"; then
+          echo "PUSH_PACKAGES=false" >> $GITHUB_ENV
+            ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --with-oracle --with-mrsid --with-ecw
           else
-            ./build.sh --platform linux/${{ matrix.arch }}
+            ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
           fi
-          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.image_name }}-latest-${{ matrix.arch }} gdalinfo --formats
-          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.image_name }}-latest-${{ matrix.arch }} ogrinfo --formats
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} gdalinfo --formats
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} ogrinfo --formats
+
+  create-manifest:
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    runs-on: ubuntu-latest
+    needs: docker_builds
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: ["ubuntu-full", "ubuntu-small", "alpine-small", "alpine-normal"]
+    steps:
+      - name: Set PUSH_PACKAGE due to schedule
+        if: github.event_name == 'schedule'
+        run: |
+          echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        if: env.PUSH_PACKAGES == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push multi-platform manifest
+        if: env.PUSH_PACKAGES == 'true'
+        run: |
+          docker buildx imagetools create \
+          -t ghcr.io/osgeo/gdal:${{ matrix.tag }}-latest \
+          ghcr.io/osgeo/osgeo:${{ matrix.tag }}-latest-amd64 \
+          ghcr.io/osgeo/osgeo:${{ matrix.tag }}-latest-arm64

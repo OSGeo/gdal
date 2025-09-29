@@ -157,7 +157,7 @@ echo "${DOCKER_REPO}" > /tmp/gdal_docker_repo.txt
 
 if test "${DOCKER_BUILDKIT}" = "1" && test "${DOCKER_CLI_EXPERIMENTAL}" = "enabled"; then
   DOCKER_BUILDX="buildx"
-  DOCKER_BUILDX_ARGS=("--platform" "${ARCH_PLATFORMS}")
+  DOCKER_BUILDX_ARGS=("--platform" "${ARCH_PLATFORMS}"  "--sbom" "true" "--provenance" "true")
 fi
 
 if test "${RELEASE}" = "yes"; then
@@ -216,12 +216,12 @@ else
 fi
 echo "Using PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}"
 
-if test "${PROJ_VERSION}" = "" -o "${PROJ_VERSION}" = "master"; then
+if test "${PROJ_VERSION}" = "" || test "${PROJ_VERSION}" = "master"; then
     PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/PROJ/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
 fi
 echo "Using PROJ_VERSION=${PROJ_VERSION}"
 
-if test "${GDAL_VERSION}" = "" -o "${GDAL_VERSION}" = "master"; then
+if test "${GDAL_VERSION}" = "" || test "${GDAL_VERSION}" = "master"; then
     GDAL_VERSION=$(curl -Ls "https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD" -H "Accept: application/vnd.github.VERSION.sha")
 fi
 echo "Using GDAL_VERSION=${GDAL_VERSION}"
@@ -276,7 +276,7 @@ if test "${RELEASE}" = "yes"; then
 
     if test "${BASE_IMAGE}" != ""; then
         BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE_IMAGE}")
-        if test "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-full" -o "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-small"; then
+        if test "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-full" || test "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-small"; then
           BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}")
         fi
     fi
@@ -291,7 +291,7 @@ if test "${RELEASE}" = "yes"; then
        "--label" "org.opencontainers.image.version=${TAG_NAME}" \
     )
 
-    if test "${DOCKER_BUILDX}" = "buildx" -a "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
+    if test "${DOCKER_BUILDX}" = "buildx" && test "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
         docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${REPO_IMAGE_NAME}" --push "${SCRIPT_DIR}"
     else
         docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${REPO_IMAGE_NAME}" "${SCRIPT_DIR}"
@@ -310,10 +310,10 @@ else
     BUILD_ARGS+=("--build-arg" "WITH_CCACHE=1")
 
     IMAGE_NAME_WITH_ARCH="${REPO_IMAGE_NAME}"
-    if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" \
-         -o "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest" \
-         -o "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" \
-         -o "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest"; then
+    if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" || \
+        test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest" || \
+        test "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" || \
+        test "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest"; then
         if test "${DOCKER_BUILDX}" != "buildx"; then
           ARCH_PLATFORM_ARCH=$(echo ${ARCH_PLATFORMS} | sed "s/linux\///")
           IMAGE_NAME_WITH_ARCH="${REPO_IMAGE_NAME}-${ARCH_PLATFORM_ARCH}"
@@ -382,11 +382,11 @@ EOF
 
     if test "${BASE_IMAGE}" != ""; then
         BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE_IMAGE}")
-        if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" -o "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest"; then
+        if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" || test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest"; then
           BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}")
         fi
     else
-      if test "${DOCKER_BUILDX}" != "buildx" -a \( "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" -o "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest" \); then
+      if test "${DOCKER_BUILDX}" != "buildx" && test \( "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" || test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest" \); then
         if test "${ARCH_PLATFORMS}" = "linux/arm64"; then
           BASE_IMAGE=$(grep "ARG BASE_IMAGE=" ${SCRIPT_DIR}/Dockerfile | sed "s/ARG BASE_IMAGE=//")
           echo "Fetching digest for ${BASE_IMAGE} ${ARCH_PLATFORMS}..."
@@ -397,7 +397,7 @@ EOF
           BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}@${TARGET_BASE_IMAGE_DIGEST}")
           # echo "${BUILD_ARGS[@]}"
         fi
-      elif test "${DOCKER_BUILDX}" != "buildx" -a \( "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" -o "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest" \); then
+      elif test "${DOCKER_BUILDX}" != "buildx" && test \( "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" || test "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest" \); then
         if test "${ARCH_PLATFORMS}" = "linux/arm64"; then
           ALPINE_VERSION=$(grep "ARG ALPINE_VERSION=" ${SCRIPT_DIR}/Dockerfile | sed "s/ARG ALPINE_VERSION=//")
           BASE_IMAGE="alpine:${ALPINE_VERSION}"
@@ -438,15 +438,15 @@ EOF
 
     # Cleanup previous images
     NEW_IMAGE_ID=$(docker image ls "${IMAGE_NAME_WITH_ARCH}" -q)
-    if test "${OLD_IMAGE_ID}" != "" -a  "${OLD_IMAGE_ID}" != "${NEW_IMAGE_ID}"; then
+    if test "${OLD_IMAGE_ID}" != "" && test "${OLD_IMAGE_ID}" != "${NEW_IMAGE_ID}"; then
         docker rmi "${OLD_IMAGE_ID}"
     fi
 
-    if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" \
-         -o "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest" \
-         -o "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" \
-         -o "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest"; then
-        if test "${DOCKER_BUILDX}" != "buildx" -a "${ARCH_PLATFORMS}" = "linux/amd64"; then
+    if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" || \
+        test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest" || \
+        test "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" || \
+        test "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest"; then
+        if test "${DOCKER_BUILDX}" != "buildx" && test "${ARCH_PLATFORMS}" = "linux/amd64"; then
           docker image tag "${IMAGE_NAME_WITH_ARCH}" "${REPO_IMAGE_NAME}"
         fi
     fi
