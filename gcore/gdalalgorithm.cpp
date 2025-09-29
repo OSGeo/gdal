@@ -6514,6 +6514,7 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
     }
     if (curAlg != this)
     {
+        curAlg->m_calledFromCommandLine = m_calledFromCommandLine;
         return curAlg->GetAutoComplete(args, lastWordIsComplete,
                                        /* showAllOptions = */ false);
     }

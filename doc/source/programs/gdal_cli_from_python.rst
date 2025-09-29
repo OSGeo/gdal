@@ -153,3 +153,19 @@ Vector commands examples
 
         gdal.UseExceptions()
         gdal.Run("vector", "convert", input="in.shp", output="out.gpkg", overwrite=True)
+
+
+Pipeline examples
+-----------------
+
+.. example::
+   :title: Perform raster reprojection and gets the result as a streamed dataset.
+
+   .. code-block:: python
+
+        from osgeo import gdal
+
+        gdal.UseExceptions()
+        with gdal.Run("pipeline", pipeline="read byte.tif ! reproject --dst-crs EPSG:4326 --resampling cubic") as alg:
+            ds = alg.Output()
+            # do something with the dataset

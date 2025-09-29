@@ -108,7 +108,7 @@ def test_gdalalg_pipeline_read_and_write_raster_from_object():
         input=src_ds,
         output_format="MEM",
         output="",
-        pipeline="read ! write",
+        pipeline="read",
     ) as alg:
         assert alg.Output().GetRasterBand(1).Checksum() == 4672
 
@@ -159,12 +159,6 @@ def test_gdalalg_pipeline_errors():
 
     with pytest.raises(Exception, match="pipeline: unknown step name: foo"):
         gdal.Run("pipeline", pipeline="foo")
-
-    with pytest.raises(Exception, match="pipeline: At least 2 steps must be provided"):
-        gdal.Run("pipeline", pipeline="read ../gcore/data/byte.tif")
-
-    with pytest.raises(Exception, match="pipeline: Last step should be 'write'"):
-        gdal.Run("pipeline", pipeline="read ../gcore/data/byte.tif ! reproject")
 
     with pytest.raises(Exception, match="read: Option '--bar' is unknown"):
         gdal.Run("pipeline", pipeline="read ../gcore/data/byte.tif --bar ! write")
@@ -229,6 +223,11 @@ def gdal_path():
 
 
 def test_gdalalg_pipeline_command_line(gdal_path, tmp_path):
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} pipeline read ../gcore/data/byte.tif"
+    )
+    assert "pipeline: At least 2 steps must be provided" in err
 
     out = gdaltest.runexternal(
         f"{gdal_path} pipeline --progress read ../gcore/data/byte.tif ! write {tmp_path}/out.tif"
