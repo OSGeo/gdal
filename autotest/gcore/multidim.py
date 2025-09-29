@@ -89,6 +89,28 @@ def test_multidim_asarray_epsg_26711():
     assert ds2.ReadRaster() == ds.GetRasterBand(1).ReadRaster()
 
 
+@gdaltest.enable_exceptions()
+def test_multidim_getview_with_indexing_var():
+
+    ds = gdal.Open("data/byte.tif")
+    gt = ds.GetGeoTransform()
+
+    ar = ds.GetRasterBand(1).AsMDArray()
+    view = ar[:, :]
+    assert view.AsClassicDataset(1, 0).GetGeoTransform() == gt
+
+    ar = ds.GetRasterBand(1).AsMDArray()
+    view = ar[11:20, :]
+    assert view.AsClassicDataset(1, 0).GetGeoTransform() == (
+        gt[0],
+        gt[1],
+        gt[2],
+        gt[3] + 11 * gt[5],
+        gt[4],
+        gt[5],
+    )
+
+
 @pytest.mark.parametrize(
     "resampling",
     [
