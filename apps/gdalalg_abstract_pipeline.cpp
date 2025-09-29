@@ -1186,6 +1186,15 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
     for (auto &step : steps)
         m_steps.push_back(std::move(step.alg));
 
+    // If outputting to stdout, automatically turn off progress bar
+    if (!m_steps.empty() &&
+        m_steps.back()->GetOutputDataset().GetName() == "/vsistdout/")
+    {
+        auto quietArg = GetArg(GDAL_ARG_NAME_QUIET);
+        if (quietArg && quietArg->GetType() == GAAT_BOOLEAN)
+            quietArg->Set(true);
+    }
+
     return true;
 }
 

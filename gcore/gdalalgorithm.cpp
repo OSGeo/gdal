@@ -44,8 +44,6 @@ constexpr const char *GDAL_ARG_NAME_OUTPUT_OPEN_OPTION = "output-open-option";
 
 constexpr const char *GDAL_ARG_NAME_BAND = "band";
 
-constexpr const char *GDAL_ARG_NAME_QUIET = "quiet";
-
 //! @cond Doxygen_Suppress
 struct GDALAlgorithmArgHS
 {

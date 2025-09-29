@@ -383,6 +383,9 @@ constexpr const char *GDAL_ARG_NAME_NUM_THREADS = "num-threads";
 constexpr const char *GDAL_ARG_NAME_NUM_THREADS_INT_HIDDEN =
     "num-threads-int-hidden";
 
+/** Name of the argument for quiet mode. */
+constexpr const char *GDAL_ARG_NAME_QUIET = "quiet";
+
 /** Driver must expose GDAL_DCAP_RASTER or GDAL_DCAP_MULTIDIM_RASTER.
  * This is a potential value of GetMetadataItem(GAAMDI_REQUIRED_CAPABILITIES)
  */
@@ -2816,7 +2819,6 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Whether a progress bar is disabled (value of \--quiet argument) */
     bool m_quiet = false;
 
-    friend class GDALVectorPipelineAlgorithm;
     /** Whether ValidateArguments() should be skipped during ParseCommandLineArguments() */
     bool m_skipValidationInParseCommandLine = false;
 
