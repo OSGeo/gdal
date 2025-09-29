@@ -26,7 +26,7 @@ all format drivers built into GDAL/OGR.
 
    .. code-tab:: c++
 
-      // Note: since GDAL >= 3.12, "gdal_vector_cpp.h" can alo be used.
+      // Note: since GDAL >= 3.12, "gdal_vector_cpp.h" can also be used.
       #include "ogrsf_frmts.h"
 
       int main()
