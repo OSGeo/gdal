@@ -43,12 +43,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
-      - name: Handle Proprietary SDK Build
-
-        if: matrix.proprietary_sdks == 'true'
-        run: |
-          echo "job_id=proprietary_sdks" >> $GITHUB_ENV
-
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Set up Docker
