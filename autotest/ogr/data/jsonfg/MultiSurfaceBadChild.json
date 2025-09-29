@@ -1,0 +1,29 @@
+{
+    "conformsTo": [
+        "http://www.opengis.net/spec/json-fg-1/0.3/conf/core"         ,
+        "http://www.opengis.net/spec/json-fg-1/0.3/conf/circular-arcs"
+    ],
+    "coordRefSys": "http://www.opengis.net/def/crs/OGC/0/CRS84",
+    "type": "MultiSurface",
+    "geometries": [
+      {
+        "type": "CurvePolygon",
+        "geometries": [
+          {
+            "type": "CircularString",
+            "coordinates": [
+                [10.5, 10.5],
+                [10.5, 20.5],
+                [20.5, 20.5],
+                [20.5, 10.5],
+                [10.5, 10.5]
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Point",
+        "coordinates": [100, 100]
+      }
+    ]
+}

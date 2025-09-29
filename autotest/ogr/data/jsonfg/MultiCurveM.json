@@ -1,0 +1,48 @@
+{
+    "conformsTo": [
+        "http://www.opengis.net/spec/json-fg-1/0.3/conf/core",
+        "http://www.opengis.net/spec/json-fg-1/0.3/conf/circular-arcs",
+        "http://www.opengis.net/spec/json-fg-1/0.3/conf/measures"
+    ],
+    "coordRefSys": "http://www.opengis.net/def/crs/OGC/0/CRS84",
+    "type": "MultiCurve",
+    "measures": {
+        "enabled": true
+    },
+    "geometries": [
+        {
+            "type": "CircularString",
+            "coordinates": [
+                [2.5, 49.5, 100.5],
+                [3.5, 50.5, 101.5],
+                [4.5, 49.5, 102.5]
+            ]
+        },
+        {
+            "type": "LineString",
+            "coordinates": [
+                [4.5, 49.5, 103.5],
+                [5.5, 50.5, 104.5]
+            ]
+        },
+        {
+            "type": "CompoundCurve",
+            "geometries": [
+              {
+                "type": "LineString",
+                "coordinates": [
+                  [2.5, 49.5, 105.5],
+                  [3.5, 50.5, 106.5]
+                ]
+              },
+               {
+                "type": "LineString",
+                "coordinates": [
+                  [3.5, 50.5, 106.5],
+                  [4.5, 49.5, 107.5]
+                ]
+              }
+            ]
+        }
+    ]
+}

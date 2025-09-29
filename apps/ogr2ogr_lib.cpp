@@ -4869,6 +4869,29 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             oCoordPrec.dfMResolution = psOptions->dfMRes;
         }
 
+        // For JSONFG
+        CSLConstList papszMeasures = poSrcLayer->GetMetadata("MEASURES");
+        if (papszMeasures && pszDestCreationOptions)
+        {
+            for (const char *pszItem : {"UNIT", "DESCRIPTION"})
+            {
+                const char *pszValue =
+                    CSLFetchNameValue(papszMeasures, pszItem);
+                if (pszValue)
+                {
+                    const std::string osOptionName =
+                        std::string("MEASURE_").append(pszItem);
+                    if (strstr(pszDestCreationOptions, osOptionName.c_str()) &&
+                        CSLFetchNameValue(m_papszLCO, osOptionName.c_str()) ==
+                            nullptr)
+                    {
+                        papszLCOTemp = CSLSetNameValue(
+                            papszLCOTemp, osOptionName.c_str(), pszValue);
+                    }
+                }
+            }
+        }
+
         auto poSrcDriver = m_poSrcDS->GetDriver();
 
         // Force FID column as 64 bit if the source feature has a 64 bit FID,

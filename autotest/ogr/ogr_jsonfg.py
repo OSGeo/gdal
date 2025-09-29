@@ -667,14 +667,49 @@ def test_jsonfg_read_prism_with_polygon_base():
 
 
 @pytest.mark.parametrize(
-    "crs,expected_coordRefSys,input_x,input_y,geom_x,geom_y,place_x,place_y",
+    "crs,expected_coordRefSys,check_crs_equivalence,input_x,input_y,geom_x,geom_y,place_x,place_y",
     [
-        (_get_epsg_crs(32631), "[EPSG:32631]", 500000, 0, 3, 0, 500000, 0),
-        (_get_epsg_crs(4326), "[EPSG:4326]", 2, 49, 2, 49, None, None),
-        (_get_epsg_crs(4258), "[EPSG:4258]", 2, 49, 2, 49, 49, 2),
+        (
+            _get_epsg_crs(32631),
+            "http://www.opengis.net/def/crs/EPSG/0/32631",
+            True,
+            500000,
+            0,
+            3,
+            0,
+            500000,
+            0,
+        ),
+        (
+            _get_epsg_crs(4326),
+            "http://www.opengis.net/def/crs/EPSG/0/4326",
+            True,
+            2,
+            49,
+            2,
+            49,
+            None,
+            None,
+        ),
+        (
+            _get_epsg_crs(4258),
+            "http://www.opengis.net/def/crs/EPSG/0/4258",
+            True,
+            2,
+            49,
+            2,
+            49,
+            49,
+            2,
+        ),
         (
             _get_epsg_crs(4326, epoch=2023.4),
-            {"type": "Reference", "href": "[EPSG:4326]", "epoch": 2023.4},
+            {
+                "type": "Reference",
+                "href": "http://www.opengis.net/def/crs/EPSG/0/4326",
+                "epoch": 2023.4,
+            },
+            True,
             2,
             49,
             2,
@@ -684,8 +719,12 @@ def test_jsonfg_read_prism_with_polygon_base():
         ),
         # Compound CRS
         (
-            _get_compound_crs(4258, 7837),
-            ["[EPSG:4258]", "[EPSG:7837]"],
+            _get_compound_crs(4258, 5703),
+            [
+                "http://www.opengis.net/def/crs/EPSG/0/4258",
+                "http://www.opengis.net/def/crs/EPSG/0/5703",
+            ],
+            True,
             2,
             49,
             2,
@@ -694,11 +733,16 @@ def test_jsonfg_read_prism_with_polygon_base():
             2,
         ),
         (
-            _get_compound_crs(4258, 7837, epoch=2023.4),
+            _get_compound_crs(4258, 5703, epoch=2023.4),
             [
-                {"type": "Reference", "href": "[EPSG:4258]", "epoch": 2023.4},
-                "[EPSG:7837]",
+                {
+                    "type": "Reference",
+                    "href": "http://www.opengis.net/def/crs/EPSG/0/4258",
+                    "epoch": 2023.4,
+                },
+                "http://www.opengis.net/def/crs/EPSG/0/5703",
             ],
+            True,
             2,
             49,
             2,
@@ -706,10 +750,42 @@ def test_jsonfg_read_prism_with_polygon_base():
             49,
             2,
         ),
+        (
+            osr.SpatialReference(
+                'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
+            ),
+            "http://www.opengis.net/def/crs/EPSG/0/4326",
+            False,
+            2,
+            49,
+            2,
+            49,
+            None,
+            None,
+        ),
+        (
+            osr.SpatialReference("+proj=merc +datum=NAD83"),
+            {"type": "PROJJSON", "value": {}},
+            True,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ),
     ],
 )
 def test_jsonfg_write_coordRefSys_geometry_place(
-    crs, expected_coordRefSys, input_x, input_y, geom_x, geom_y, place_x, place_y
+    crs,
+    expected_coordRefSys,
+    check_crs_equivalence,
+    input_x,
+    input_y,
+    geom_x,
+    geom_y,
+    place_x,
+    place_y,
 ):
 
     filename = "/vsimem/test_jsonfg_write_coordRefSys_geometry_place.json"
@@ -733,14 +809,20 @@ def test_jsonfg_write_coordRefSys_geometry_place(
             gdal.VSIFCloseL(f)
 
         j = json.loads(data)
-        assert j["coordRefSys"] == expected_coordRefSys
+        if isinstance(expected_coordRefSys, dict):
+            for x in expected_coordRefSys:
+                assert x in j["coordRefSys"]
+                if x == "type":
+                    assert j["coordRefSys"][x] == expected_coordRefSys[x]
+        else:
+            assert j["coordRefSys"] == expected_coordRefSys
         feat = j["features"][0]
-        if geom_x:
+        if geom_x is not None:
             assert feat["geometry"]["coordinates"][0] == pytest.approx(geom_x)
             assert feat["geometry"]["coordinates"][1] == pytest.approx(geom_y)
         else:
             assert feat["geometry"] is None
-        if place_x:
+        if place_x is not None:
             assert feat["place"]["coordinates"][0] == pytest.approx(place_x)
             assert feat["place"]["coordinates"][1] == pytest.approx(place_y)
         else:
@@ -748,7 +830,8 @@ def test_jsonfg_write_coordRefSys_geometry_place(
 
         ds = ogr.Open(filename)
         lyr = ds.GetLayer(0)
-        assert lyr.GetSpatialRef().IsSame(crs)
+        if check_crs_equivalence:
+            assert lyr.GetSpatialRef().IsSame(crs)
         ds = None
 
     finally:
@@ -760,13 +843,21 @@ def test_jsonfg_write_coordRefSys_geometry_place(
 # Test IAU: CRS
 
 
-@pytest.mark.require_proj(8, 2)
+@pytest.mark.require_proj(9, 1)
 def test_jsonfg_write_coordRefSys_IAU():
     srs = osr.SpatialReference()
     srs.SetFromUserInput("IAU:49910")
     srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     test_jsonfg_write_coordRefSys_geometry_place(
-        srs, "[IAU:49910]", 2, 49, None, None, 2, 49
+        srs,
+        "http://www.opengis.net/def/crs/IAU/2015/49910",
+        True,
+        2,
+        49,
+        None,
+        None,
+        2,
+        49,
     )
 
 
@@ -942,31 +1033,27 @@ def test_jsonfg_write_several_layers():
         ],
     ],
 )
-def test_jsonfg_write_all_geom_types(wkts, expect_geom_type):
+def test_jsonfg_write_all_geom_types(tmp_path, wkts, expect_geom_type):
 
-    filename = "/vsimem/test_jsonfg_read_write_all_geom_types.json"
-    try:
-        ds = ogr.GetDriverByName("JSONFG").CreateDataSource(filename)
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(32631)
-        lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
-        for wkt in wkts:
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
-            lyr.CreateFeature(f)
-        ds = None
+    filename = tmp_path / "test_jsonfg_read_write_all_geom_types.json"
 
-        ds = ogr.Open(filename)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetGeomType() == expect_geom_type
-        for wkt in wkts:
-            f = lyr.GetNextFeature()
-            assert f.GetGeometryRef().ExportToIsoWkt() == wkt
-        ds = None
+    ds = ogr.GetDriverByName("JSONFG").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
+    for wkt in wkts:
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
+        lyr.CreateFeature(f)
+    ds = None
 
-    finally:
-        if gdal.VSIStatL(filename):
-            gdal.Unlink(filename)
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == expect_geom_type
+    for wkt in wkts:
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == wkt
+    ds = None
 
 
 ###############################################################################
@@ -1325,3 +1412,275 @@ def test_ogr_jsonfg_force_opening_url():
 
     drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["JSONFG"])
     assert drv.GetDescription() == "JSONFG"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "filename,expected_wkt",
+    [
+        ["CircularString", "CIRCULARSTRING (2.5 49.5,3.5 50.5,4.5 49.5)"],
+        [
+            "CircularStringZ",
+            "CIRCULARSTRING Z (2.5 49.5 10.5,3.5 50.5 11.5,4.5 49.5 12.5)",
+        ],
+        [
+            "CircularStringM",
+            "CIRCULARSTRING M (2.5 49.5 100.5,3.5 50.5 101.5,4.5 49.5 102.5)",
+        ],
+        [
+            "CircularStringZM",
+            "CIRCULARSTRING ZM (2.5 49.5 10.5 100.5,3.5 50.5 11.5 101.5,4.5 49.5 12.5 102.5)",
+        ],
+        [
+            "CompoundCurve",
+            "COMPOUNDCURVE (CIRCULARSTRING (2.5 49.5,3.5 50.5,4.5 49.5),(4.5 49.5,5.5 50.5))",
+        ],
+        [
+            "CompoundCurveZ",
+            "COMPOUNDCURVE Z (CIRCULARSTRING Z (2.5 49.5 10.5,3.5 50.5 11.5,4.5 49.5 12.5),(4.5 49.5 12.5,5.5 50.5 13.5))",
+        ],
+        [
+            "CompoundCurveM",
+            "COMPOUNDCURVE M (CIRCULARSTRING M (2.5 49.5 100.5,3.5 50.5 101.5,4.5 49.5 102.5),(4.5 49.5 102.5,5.5 50.5 103.5))",
+        ],
+        [
+            "CompoundCurveZM",
+            "COMPOUNDCURVE ZM (CIRCULARSTRING ZM (2.5 49.5 10.5 100.5,3.5 50.5 11.5 101.5,4.5 49.5 12.5 102.5),(4.5 49.5 12.5 102.5,5.5 50.5 13.5 103.5))",
+        ],
+        [
+            "CurvePolygon",
+            "CURVEPOLYGON ((10.5 10.5,10.5 20.5,20.5 20.5,20.5 10.5,10.5 10.5),CIRCULARSTRING (11.5 15.5,15.5 19.5,19.5 15.5,15.5 11.5,11.5 15.5),COMPOUNDCURVE ((13.5 13.5,13.5 17.5,17.5 17.5),(17.5 17.5,17.5 13.5,13.5 13.5)))",
+        ],
+        [
+            "CurvePolygonZ",
+            "CURVEPOLYGON Z ((10.5 10.5 -10.5,10.5 20.5 -11.5,20.5 20.5 -12.5,20.5 10.5 -13.5,10.5 10.5 -10.5),CIRCULARSTRING Z (11.5 15.5 -10.5,15.5 19.5 -11.5,19.5 15.5 -12.5,15.5 11.5 -13.5,11.5 15.5 -10.5),COMPOUNDCURVE Z ((13.5 13.5 -10.5,13.5 17.5 -11.5,17.5 17.5 -12.5),(17.5 17.5 -12.5,17.5 13.5 -13.5,13.5 13.5 -10.5)))",
+        ],
+        [
+            "CurvePolygonM",
+            "CURVEPOLYGON M ((10.5 10.5 100.5,10.5 20.5 101.5,20.5 20.5 102.5,20.5 10.5 103.5,10.5 10.5 100.5),CIRCULARSTRING M (11.5 15.5 100.5,15.5 19.5 101.5,19.5 15.5 102.5,15.5 11.5 103.5,11.5 15.5 100.5),COMPOUNDCURVE M ((13.5 13.5 100.5,13.5 17.5 101.5,17.5 17.5 102.5),(17.5 17.5 102.5,17.5 13.5 103.5,13.5 13.5 100.5)))",
+        ],
+        [
+            "CurvePolygonZM",
+            "CURVEPOLYGON ZM ((10.5 10.5 -10.5 100.5,10.5 20.5 -11.5 101.5,20.5 20.5 -12.5 102.5,20.5 10.5 -13.5 103.5,10.5 10.5 -10.5 100.5),CIRCULARSTRING ZM (11.5 15.5 -10.5 100.5,15.5 19.5 -11.5 101.5,19.5 15.5 -12.5 102.5,15.5 11.5 -13.5 103.5,11.5 15.5 -10.5 100.5),COMPOUNDCURVE ZM ((13.5 13.5 -10.5 100.5,13.5 17.5 -11.5 101.5,17.5 17.5 -12.5 102.5),(17.5 17.5 -12.5 102.5,17.5 13.5 -13.5 103.5,13.5 13.5 -10.5 100.5)))",
+        ],
+        [
+            "MultiCurve",
+            "MULTICURVE (CIRCULARSTRING (2.5 49.5,3.5 50.5,4.5 49.5),(4.5 49.5,5.5 50.5),COMPOUNDCURVE ((2.5 49.5,3.5 50.5),(3.5 50.5,4.5 49.5)))",
+        ],
+        [
+            "MultiCurveZ",
+            "MULTICURVE Z (CIRCULARSTRING Z (2.5 49.5 10.5,3.5 50.5 11.5,4.5 49.5 12.5),(4.5 49.5 13.5,5.5 50.5 14.5),COMPOUNDCURVE Z ((2.5 49.5 15.5,3.5 50.5 16.5),(3.5 50.5 16.5,4.5 49.5 17.5)))",
+        ],
+        [
+            "MultiCurveM",
+            "MULTICURVE M (CIRCULARSTRING M (2.5 49.5 100.5,3.5 50.5 101.5,4.5 49.5 102.5),(4.5 49.5 103.5,5.5 50.5 104.5),COMPOUNDCURVE M ((2.5 49.5 105.5,3.5 50.5 106.5),(3.5 50.5 106.5,4.5 49.5 107.5)))",
+        ],
+        [
+            "MultiCurveZM",
+            "MULTICURVE ZM (CIRCULARSTRING ZM (2.5 49.5 10.5 100.5,3.5 50.5 11.5 101.5,4.5 49.5 12.5 102.5),(4.5 49.5 13.5 103.5,5.5 50.5 14.5 104.5),COMPOUNDCURVE ZM ((2.5 49.5 15.5 105.5,3.5 50.5 16.5 106.5),(3.5 50.5 16.5 106.5,4.5 49.5 17.5 107.5)))",
+        ],
+        [
+            "MultiSurface",
+            "MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (10.5 10.5,10.5 20.5,20.5 20.5,20.5 10.5,10.5 10.5)),((100 100,100 200,200 200,100 100)))",
+        ],
+        [
+            "MultiSurfaceZ",
+            "MULTISURFACE Z (CURVEPOLYGON Z (CIRCULARSTRING Z (10.5 10.5 11.5,10.5 20.5 12.5,20.5 20.5 13.5,20.5 10.5 14.5,10.5 10.5 11.5)),((100 100 10.5,100 200 11.5,200 200 12.5,100 100 10.5)))",
+        ],
+        [
+            "MultiSurfaceM",
+            "MULTISURFACE M (CURVEPOLYGON M (CIRCULARSTRING M (10.5 10.5 100.5,10.5 20.5 101.5,20.5 20.5 102.5,20.5 10.5 103.5,10.5 10.5 100.5)),((100 100 100.5,100 200 101.5,200 200 102.5,100 100 100.5)))",
+        ],
+        [
+            "MultiSurfaceZM",
+            "MULTISURFACE ZM (CURVEPOLYGON ZM (CIRCULARSTRING ZM (10.5 10.5 11.5 100.5,10.5 20.5 12.5 101.5,20.5 20.5 13.5 102.5,20.5 10.5 14.5 103.5,10.5 10.5 11.5 100.5)),((100 100 10.5 -100.5,100 200 11.5 -101.5,200 200 12.5 -102.5,100 100 10.5 -100.5)))",
+        ],
+        [
+            None,
+            "POINT (1.5 2.5)",
+        ],
+        [
+            None,
+            "POINT Z (1.5 2.5 3.5)",
+        ],
+        [
+            None,
+            "POINT M (1.5 2.5 4.5)",
+        ],
+        [
+            None,
+            "POINT ZM (1.5 2.5 3.5 4.5)",
+        ],
+        [
+            None,
+            "POLYHEDRALSURFACE Z (((0 0 10,0 1 10,1 1 10,0 0 10)))",
+        ],
+    ],
+)
+def test_jsonfg_read_write_geoms(tmp_vsimem, filename, expected_wkt):
+
+    expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
+
+    if filename:
+        with ogr.Open(f"data/jsonfg/{filename}.json") as ds:
+            lyr = ds.GetLayer(0)
+            f = lyr.GetNextFeature()
+            assert f.GetGeometryRef().ExportToIsoWkt() == expected_wkt
+            assert lyr.GetGeomType() == expected_geom.GetGeometryType()
+
+    out_filename = tmp_vsimem / "out.json"
+    with gdal.GetDriverByName("JSONFG").CreateVector(out_filename) as ds:
+        srs = osr.SpatialReference(epsg=(4979 if "Z" in expected_wkt else 4326))
+        srs.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+        lyr = ds.CreateLayer("test", srs=srs)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(expected_geom)
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(out_filename, "rb") as f:
+        data = f.read()
+        if expected_wkt.startswith("POINT") or expected_wkt.startswith(
+            "POLYHEDRALSURFACE"
+        ):
+            assert b"/conf/circular-arcs" not in data
+        else:
+            assert b"/conf/circular-arcs" in data
+        if " M" in expected_wkt or " ZM" in expected_wkt:
+            assert b"/conf/measures" in data
+        else:
+            assert b"/conf/measures" not in data
+        if expected_wkt.startswith("POLYHEDRALSURFACE"):
+            assert b"/conf/polyhedra" in data
+        else:
+            assert b"/conf/polyhedra" not in data
+
+    with ogr.Open(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == expected_wkt
+        assert lyr.GetGeomType() == expected_geom.GetGeometryType()
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "CompoundCurveBadChild",
+        "CurvePolygonBadChild",
+        "MultiCurveBadChild",
+        "MultiSurfaceBadChild",
+    ],
+)
+def test_jsonfg_read_bad_geoms(filename):
+
+    with gdaltest.error_raised(gdal.CE_Warning):
+        ds = ogr.Open(f"data/jsonfg/{filename}.json")
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef() is None
+
+
+def test_jsonfg_write_to_stdout():
+
+    import gdaltest
+    import test_cli_utilities
+
+    ogr2ogr_path = test_cli_utilities.get_ogr2ogr_path()
+    if ogr2ogr_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{ogr2ogr_path} -f JSONFG /vsistdout/ data/jsonfg/CurvePolygonZM.json"
+    )
+
+    assert "/conf/circular-arcs" in out
+    assert "/conf/measures" in out
+
+    with ogr.Open(out) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert (
+            f.GetGeometryRef().ExportToIsoWkt()
+            == "CURVEPOLYGON ZM ((10.5 10.5 -10.5 100.5,10.5 20.5 -11.5 101.5,20.5 20.5 -12.5 102.5,20.5 10.5 -13.5 103.5,10.5 10.5 -10.5 100.5),CIRCULARSTRING ZM (11.5 15.5 -10.5 100.5,15.5 19.5 -11.5 101.5,19.5 15.5 -12.5 102.5,15.5 11.5 -13.5 103.5,11.5 15.5 -10.5 100.5),COMPOUNDCURVE ZM ((13.5 13.5 -10.5 100.5,13.5 17.5 -11.5 101.5,17.5 17.5 -12.5 102.5),(17.5 17.5 -12.5 102.5,17.5 13.5 -13.5 103.5,13.5 13.5 -10.5 100.5)))"
+        )
+
+
+def test_jsonfg_write_circular_string_longer_than_11_points(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "out.json"
+    with gdal.GetDriverByName("JSONFG").CreateVector(out_filename) as ds:
+        srs = osr.SpatialReference(epsg=4326)
+        srs.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+        lyr = ds.CreateLayer("test", srs=srs)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        g = ogr.CreateGeometryFromWkt(
+            "CIRCULARSTRING(0 0,1 0,2 0,3 0,4 0,5 0,6 0,7 0,8 0,9 0,10 0,11 0,12 0)"
+        )
+        f.SetGeometry(g)
+        lyr.CreateFeature(f)
+
+    with ogr.Open(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert (
+            f.GetGeometryRef().ExportToIsoWkt()
+            == "COMPOUNDCURVE (CIRCULARSTRING (0 0,1 0,2 0,3 0,4 0,5 0,6 0,7 0,8 0,9 0,10 0),CIRCULARSTRING (10 0,11 0,12 0))"
+        )
+
+
+@pytest.mark.parametrize("single_layer", ["YES", "NO"])
+def test_jsonfg_write_read_measure_unit_description(tmp_vsimem, single_layer):
+
+    out_filename = tmp_vsimem / "out.json"
+    with gdal.GetDriverByName("JSONFG").CreateVector(
+        out_filename, options=["SINGLE_LAYER=" + single_layer]
+    ) as ds:
+        srs = osr.SpatialReference(epsg=32631)
+        lyr = ds.CreateLayer(
+            "test",
+            srs=srs,
+            options=["MEASURE_UNIT=my_unit", "MEASURE_DESCRIPTION=my_description"],
+        )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        g = ogr.CreateGeometryFromWkt("POINT M (1 2 3)")
+        f.SetGeometry(g)
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(out_filename, "rb") as f:
+        j = json.loads(f.read())
+        if single_layer == "YES":
+            assert "measures" in j
+            assert j["measures"] == {
+                "enabled": True,
+                "unit": "my_unit",
+                "description": "my_description",
+            }
+        else:
+            assert "measures" in j["features"][0]
+            assert j["features"][0]["measures"] == {
+                "enabled": True,
+                "unit": "my_unit",
+                "description": "my_description",
+            }
+
+    with ogr.Open(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata_Dict("MEASURES") == {
+            "UNIT": "my_unit",
+            "DESCRIPTION": "my_description",
+        }
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == "POINT M (1 2 3)"
+
+    out2_filename = tmp_vsimem / "out2.json"
+    gdal.VectorTranslate(out2_filename, out_filename, format="JSONFG")
+
+    with ogr.Open(out2_filename) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata_Dict("MEASURES") == {
+            "UNIT": "my_unit",
+            "DESCRIPTION": "my_description",
+        }
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == "POINT M (1 2 3)"

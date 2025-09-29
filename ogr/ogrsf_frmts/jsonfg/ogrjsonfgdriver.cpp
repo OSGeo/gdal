@@ -85,6 +85,8 @@ void RegisterOGRJSONFG()
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "OGC Features and Geometries JSON");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "json");
@@ -133,6 +135,10 @@ void RegisterOGRJSONFG()
         "  </Option>"
         "  <Option name='ID_GENERATE' type='boolean' "
         "description='Auto-generate feature ids' default='NO'/>"
+        "  <Option name='MEASURE_UNIT' type='string' "
+        "description='Unit of measures (M) values'/>"
+        "  <Option name='MEASURE_DESCRIPTION' type='string' "
+        "description='Description of measures (M) values'/>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(

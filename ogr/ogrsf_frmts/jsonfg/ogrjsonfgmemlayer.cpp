@@ -86,19 +86,3 @@ void OGRJSONFGMemLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature)
     SetUpdatable(bIsUpdatable);
     SetUpdated(false);
 }
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRJSONFGMemLayer::TestCapability(const char *pszCap) const
-
-{
-    if (EQUAL(pszCap, OLCCurveGeometries))
-        return FALSE;
-
-    else if (EQUAL(pszCap, OLCMeasuredGeometries))
-        return FALSE;
-
-    return OGRMemLayer::TestCapability(pszCap);
-}
