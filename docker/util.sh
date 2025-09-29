@@ -157,7 +157,7 @@ echo "${DOCKER_REPO}" > /tmp/gdal_docker_repo.txt
 
 if test "${DOCKER_BUILDKIT}" = "1" && test "${DOCKER_CLI_EXPERIMENTAL}" = "enabled"; then
   DOCKER_BUILDX="buildx"
-  DOCKER_BUILDX_ARGS=("--platform" "${ARCH_PLATFORMS}")
+  DOCKER_BUILDX_ARGS=("--platform" "${ARCH_PLATFORMS}"  "--sbom" "true" "--provenance" "true")
 fi
 
 if test "${RELEASE}" = "yes"; then

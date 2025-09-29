@@ -41,7 +41,7 @@ fi
 if test "${HAS_PLATFORM}" = "0" && test "${HAS_RELEASE}" = "0" && test "x${TARGET_IMAGE}" = "xosgeo/gdal:ubuntu-full"; then
  "${SCRIPT_DIR}/../util.sh" --platform linux/arm64 "$@" --test-python
 
- if test "$HAS_PUSH" = "1"; then
+ if test "$HAS_PUSH" = "1" && test -z "$CI"; then
    DOCKER_REPO=$(cat /tmp/gdal_docker_repo.txt)
 
    docker manifest rm ${DOCKER_REPO}/${TARGET_IMAGE}-latest || /bin/true
