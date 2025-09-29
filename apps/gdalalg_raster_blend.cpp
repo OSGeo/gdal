@@ -564,6 +564,7 @@ bool BlendDataset::AcquireSourcePixels(int nXOff, int nYOff, int nXSize,
     const int nColorCount = m_oColorDS.GetRasterCount();
     const int nOverlayCount = m_oOverlayDS.GetRasterCount();
     const int nCompsInBuffer = nColorCount + nOverlayCount;
+    assert(nCompsInBuffer > 0);
 
     if (static_cast<size_t>(nBufXSize) >
         std::numeric_limits<size_t>::max() / nBufYSize / nCompsInBuffer)

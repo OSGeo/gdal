@@ -17,6 +17,7 @@
 #include "rat.h"
 #include "s100.h"
 
+#include "gdal_frmts.h"
 #include "gdal_priv.h"
 #include "gdal_proxy.h"
 #include "gdal_rat.h"

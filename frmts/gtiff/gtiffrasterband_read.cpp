@@ -24,6 +24,7 @@
 
 #include "cpl_vsi_virtual.h"
 #include "fetchbufferdirectio.h"
+#include "gdal_priv.h"
 #include "gtiff.h"
 #include "tifvsi.h"
 

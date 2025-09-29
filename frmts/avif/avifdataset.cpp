@@ -9,8 +9,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "cpl_minixml.h"
+#include "cpl_multiproc.h"
 #include "cpl_vsi_virtual.h"
 
 #include "avifdrivercore.h"

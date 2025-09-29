@@ -32,6 +32,7 @@ API
    .. toctree::
        :maxdepth: 1
 
+       gdal_raster_cpp
        gdalmajorobject_cpp
        gdaldriver_cpp
        gdaldataset_cpp
@@ -46,6 +47,7 @@ API
    .. toctree::
        :maxdepth: 1
 
+       gdal_vector_cpp
        ogrfeature_cpp
        ogrfeaturestyle_cpp
        ogrgeometry_cpp
@@ -66,6 +68,7 @@ API
    .. toctree::
        :maxdepth: 1
 
+       gdal_multidim_cpp
        gdalgroup_cpp
        gdaldimension_cpp
        gdalabstractmdarray_cpp

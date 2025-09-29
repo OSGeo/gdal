@@ -21,6 +21,7 @@
 #include "cpl_json_streaming_parser.h"
 #include "cpl_json_streaming_writer.h"
 #include "cpl_mem_cache.h"
+#include "cpl_multiproc.h"  // CPLSleep()
 #include "cpl_vsi_error.h"
 #include "cpl_vsi_virtual.h"
 

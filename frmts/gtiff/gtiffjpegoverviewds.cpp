@@ -14,6 +14,7 @@
 #include "gtiffjpegoverviewds.h"
 
 #include "gtiffdataset.h"
+#include "gdal_priv.h"
 
 #include "tifvsi.h"
 

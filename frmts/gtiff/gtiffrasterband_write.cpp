@@ -20,6 +20,7 @@
 
 #include "cpl_vsi_virtual.h"
 #include "gdal_priv_templates.hpp"
+#include "gdal_priv.h"
 #include "gtiff.h"
 #include "tifvsi.h"
 

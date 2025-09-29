@@ -16,6 +16,7 @@
 #include "ogrlayerarrow.h"
 #include "ogrsqliteutility.h"
 #include "cpl_md5.h"
+#include "cpl_multiproc.h"  // CPLSleep()
 #include "cpl_time.h"
 #include "ogr_p.h"
 #include "sqlite_rtree_bulk_load/wrapper.h"

@@ -10,6 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_multiproc.h"  // CPLSleep()
+
 #include "ogr_plscenes.h"
 #include "ogrlibjsonutils.h"
 #include <time.h>

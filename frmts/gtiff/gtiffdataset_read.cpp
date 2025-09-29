@@ -36,7 +36,8 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
 #include "fetchbufferdirectio.h"
-#include "gdal_mdreader.h"    // MD_DOMAIN_RPC
+#include "gdal_mdreader.h"  // MD_DOMAIN_RPC
+#include "gdal_priv.h"
 #include "geovalues.h"        // RasterPixelIsPoint
 #include "gt_wkt_srs_priv.h"  // GDALGTIFKeyGetSHORT()
 #include "tif_jxl.h"
