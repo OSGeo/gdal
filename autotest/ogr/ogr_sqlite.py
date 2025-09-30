@@ -4310,7 +4310,7 @@ def test_ogr_sqlite_run_deferred_actions_before_start_transaction():
         # Override full schema and JSON/UUID subtype
         (
             [
-                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "schemaType": "Full", "fields": [{ "name": "json_str", "subType": "JSON", "new_name": "json_str" }, {"name": "uuid_str", "subType": "UUID" }]}]}'
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "schemaType": "Full", "fields": [{ "name": "json_str", "subType": "JSON", "newName": "json_str" }, {"name": "uuid_str", "subType": "UUID" }]}]}'
             ],
             [
                 (ogr.OFTString, ogr.OFSTJSON),  # json subType
@@ -4385,7 +4385,7 @@ def test_ogr_sqlite_run_deferred_actions_before_start_transaction():
         # Test invalid field name
         (
             [
-                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "xxxxx", "type": "String", "new_name": "new_str" }]}]}'
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "xxxxx", "type": "String", "newName": "new_str" }]}]}'
             ],
             [],
             [],
