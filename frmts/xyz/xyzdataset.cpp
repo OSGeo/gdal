@@ -1426,7 +1426,12 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (adfStepX.size() != 1 || adfStepX[0] == 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Couldn't determine X spacing");
+        if (!((poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
+              poOpenInfo->IsExtensionEqualToCI("CSV")))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Couldn't determine X spacing");
+        }
         VSIFCloseL(fp);
         return nullptr;
     }
