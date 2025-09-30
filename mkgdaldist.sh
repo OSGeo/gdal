@@ -97,10 +97,10 @@ cd dist_wrk
 
 if test "$TAG" != ""; then
    echo "Generating package '${GDAL_VERSION}' from '${TAG}' tag"
-   git clone "${GITURL}" gdal
+   git clone "${GITURL}" gdal --depth 1
 else
    echo "Generating package '${GDAL_VERSION}' from '${BRANCH}' branch"
-   git clone -b "${BRANCH}" --single-branch "${GITURL}" gdal
+   git clone -b "${BRANCH}" --single-branch "${GITURL}" gdal --depth 1
 fi
 
 if [ ! -d gdal ] ; then
@@ -207,7 +207,6 @@ cd ..
 $MD5 "gdal-${GDAL_VERSION}${RC}.tar.xz" > "gdal-${GDAL_VERSION}${RC}.tar.xz.md5"
 $MD5 "gdal-${GDAL_VERSION}${RC}.tar.gz" > "gdal-${GDAL_VERSION}${RC}.tar.gz.md5"
 $MD5 "gdal${COMPRESSED_VERSION}${RC}.zip" > "gdal${COMPRESSED_VERSION}${RC}.zip.md5"
-
 
 echo "* Signing..."
 GPG_TTY=$(tty)
