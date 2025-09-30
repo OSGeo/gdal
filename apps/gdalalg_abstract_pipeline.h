@@ -15,6 +15,8 @@
 
 //! @cond Doxygen_Suppress
 
+#include "cpl_json.h"
+
 #include "gdalalgorithm.h"
 #include "gdal_priv.h"
 
@@ -251,6 +253,13 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         return false;
     }
 
+    virtual CPLJSONObject Get_OGR_SCHEMA_OpenOption_Layer() const
+    {
+        CPLJSONObject obj;
+        obj.Deinit();
+        return obj;
+    }
+
     virtual bool RunStep(GDALPipelineStepRunContext &ctxt) = 0;
 
     bool m_standaloneStep = false;
@@ -323,8 +332,10 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
     GDALAbstractPipelineAlgorithm(
         const std::string &name, const std::string &description,
         const std::string &helpURL,
-        const typename GDALPipelineStepAlgorithm::ConstructorOptions &options)
-        : GDALPipelineStepAlgorithm(name, description, helpURL, options)
+        const GDALPipelineStepAlgorithm::ConstructorOptions &options)
+        : GDALPipelineStepAlgorithm(
+              name, description, helpURL,
+              ConstructorOptions(options).SetAutoOpenInputDatasets(false))
     {
     }
 

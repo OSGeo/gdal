@@ -33,10 +33,13 @@ class GDALVectorChangeFieldTypeAlgorithm /* non final */
 
     explicit GDALVectorChangeFieldTypeAlgorithm(bool standaloneStep = false);
 
+    CPLJSONObject Get_OGR_SCHEMA_OpenOption_Layer() const override;
+
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool GlobalValidation() const;
 
+    // NOTE: if adding any option, please update Get_OGR_SCHEMA_OpenOption_Layer() */
     std::string m_activeLayer{};
     std::string m_fieldName{};
     OGRFieldType m_srcFieldType{OGRFieldType::OFTString};
@@ -45,6 +48,7 @@ class GDALVectorChangeFieldTypeAlgorithm /* non final */
     OGRFieldType m_newFieldType{OGRFieldType::OFTString};
     OGRFieldSubType m_newFieldSubType{OGRFieldSubType::OFSTNone};
     std::string m_newFieldTypeSubTypeStr{};
+    // NOTE: if adding any option, please update Get_OGR_SCHEMA_OpenOption_Layer() */
 };
 
 /************************************************************************/

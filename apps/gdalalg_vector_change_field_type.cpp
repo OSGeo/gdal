@@ -48,6 +48,39 @@ GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
 }
 
 /************************************************************************/
+/*                     Get_OGR_SCHEMA_OpenOption_Layer()                */
+/************************************************************************/
+
+CPLJSONObject
+GDALVectorChangeFieldTypeAlgorithm::Get_OGR_SCHEMA_OpenOption_Layer() const
+{
+    CPLJSONObject oLayer;
+    oLayer.Set("name", m_activeLayer.empty() ? "*" : m_activeLayer);
+    oLayer.Set("schemaType", "Patch");
+    CPLJSONArray oFields;
+    CPLJSONObject oField;
+    if (m_fieldName.empty())
+    {
+        oField.Set("srcType", OGRFieldDefn::GetFieldTypeName(m_srcFieldType));
+        oField.Set("srcSubType",
+                   OGRFieldDefn::GetFieldSubTypeName(m_srcFieldSubType));
+    }
+    else
+    {
+        oField.Set("name", m_fieldName);
+    }
+    if (!m_newFieldTypeSubTypeStr.empty())
+    {
+        oField.Set("type", OGRFieldDefn::GetFieldTypeName(m_newFieldType));
+        oField.Set("subType",
+                   OGRFieldDefn::GetFieldSubTypeName(m_newFieldSubType));
+    }
+    oFields.Add(oField);
+    oLayer.Set("fields", oFields);
+    return oLayer;
+}
+
+/************************************************************************/
 /*                            GlobalValidation()                        */
 /************************************************************************/
 
