@@ -200,14 +200,6 @@ def test_gdalalg_vector_pipeline_output_through_api(tmp_vsimem):
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
-def test_gdalalg_vector_pipeline_as_api_error():
-
-    pipeline = get_pipeline_alg()
-    pipeline["pipeline"] = "read"
-    with pytest.raises(Exception, match="pipeline: At least 2 steps must be provided"):
-        pipeline.Run()
-
-
 def test_gdalalg_vector_pipeline_mutually_exclusive_args():
 
     with pytest.raises(
@@ -343,7 +335,9 @@ def test_gdalalg_vector_pipeline_missing_at_run():
 def test_gdalalg_vector_pipeline_empty_args():
 
     pipeline = get_pipeline_alg()
-    with pytest.raises(Exception, match="pipeline: At least 2 steps must be provided"):
+    with pytest.raises(
+        Exception, match="pipeline: At least one step must be provided in a pipeline"
+    ):
         pipeline.ParseRunAndFinalize([])
 
 
@@ -367,7 +361,9 @@ def test_gdalalg_vector_pipeline_unknow_step():
 def test_gdalalg_vector_pipeline_read_read():
 
     pipeline = get_pipeline_alg()
-    with pytest.raises(Exception, match="pipeline: Last step should be 'write'"):
+    with pytest.raises(
+        Exception, match="pipeline: 'read' is only allowed as a first step"
+    ):
         pipeline.ParseRunAndFinalize(
             ["read", "../ogr/data/poly.shp", "!", "read", "../ogr/data/poly.shp"]
         )
