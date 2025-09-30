@@ -6482,6 +6482,7 @@ class VSIFile(BytesIO):
            >>> alg["target-aligned-pixels"] = True
 
            >>> # Multiple input datasets
+           >>> alg = gdal.Algorithm("raster mosaic")
            >>> alg["input"] = ["one.tif", "two.tif"]
            >>> one_ds = gdal.Open("byte.tif")
            >>> two_ds = gdal.Open("byte.tif")
