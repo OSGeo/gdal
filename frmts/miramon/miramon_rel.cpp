@@ -533,15 +533,15 @@ CPLString MMRRel::GetAssociatedMetadataFileName(const CPLString &osFileName)
     const CPLStringList folder(VSIReadDir(osPath.c_str()));
     const int size = folder.size();
 
-    for (int i = 0; i < size; i++)
+    for (int nIFile = 0; nIFile < size; nIFile++)
     {
-        if (folder[i][0] == '.' || !strstr(folder[i], "I.rel"))
+        if (folder[nIFile][0] == '.' || !strstr(folder[nIFile], "I.rel"))
         {
             continue;
         }
 
         const CPLString osFilePath =
-            CPLFormFilenameSafe(osPath, folder[i], nullptr);
+            CPLFormFilenameSafe(osPath, folder[nIFile], nullptr);
 
         osRELFile = MMRGetAReferenceToIMGFile(osFileName, osFilePath);
         if (!osRELFile.empty())
@@ -579,11 +579,11 @@ CPLErr MMRRel::CheckBandInRel(const CPLString &osRELFileName,
 
     CPLString osBandSectionKey;
     CPLString osBandSectionValue;
-    for (int i = 0; i < nTokenCount; i++)
+    for (int nIBand = 0; nIBand < nTokenCount; nIBand++)
     {
         osBandSectionKey = KEY_NomCamp;
         osBandSectionKey.append("_");
-        osBandSectionKey.append(aosTokens[i]);
+        osBandSectionKey.append(aosTokens[nIBand]);
 
         if (!GetMetadataValueDirectly(osRELFileName, SECTION_ATTRIBUTE_DATA,
                                       osBandSectionKey, osBandSectionValue) ||
@@ -810,6 +810,7 @@ CPLErr MMRRel::ParseBandInfo()
 
     CPLString osBandSectionKey;
     CPLString osBandSectionValue;
+    CPLStringList aosProcessedTokens;
 
     int nNBand;
     if (m_papoSDSBands.size())
@@ -819,11 +820,16 @@ CPLErr MMRRel::ParseBandInfo()
 
     m_oBands.reserve(nNBand);
 
-    for (int i = 0; i < nMaxBands; i++)
+    for (int nIBand = 0; nIBand < nMaxBands; nIBand++)
     {
+        if (aosProcessedTokens.FindString(aosTokens[nIBand]) >= 0)
+            continue;  // Repeated bands are ignored.
+
+        aosProcessedTokens.AddString(aosTokens[nIBand]);
+
         osBandSectionKey = KEY_NomCamp;
         osBandSectionKey.append("_");
-        osBandSectionKey.append(aosTokens[i]);
+        osBandSectionKey.append(aosTokens[nIBand]);
 
         if (!GetMetadataValue(SECTION_ATTRIBUTE_DATA, osBandSectionKey,
                               osBandSectionValue) ||
