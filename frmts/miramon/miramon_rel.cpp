@@ -15,6 +15,7 @@
 #include "cpl_port.h"
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include <set>
 
 #include "miramon_rel.h"
 #include "miramon_band.h"
@@ -810,7 +811,7 @@ CPLErr MMRRel::ParseBandInfo()
 
     CPLString osBandSectionKey;
     CPLString osBandSectionValue;
-    CPLStringList aosProcessedTokens;
+    std::set<std::string> setProcessedTokens;
 
     int nNBand;
     if (m_papoSDSBands.size())
@@ -822,10 +823,12 @@ CPLErr MMRRel::ParseBandInfo()
 
     for (int nIBand = 0; nIBand < nMaxBands; nIBand++)
     {
-        if (aosProcessedTokens.FindString(aosTokens[nIBand]) >= 0)
+        const std::string lowerCaseToken =
+            CPLString(aosTokens[nIBand]).tolower();
+        if (cpl::contains(setProcessedTokens, lowerCaseToken))
             continue;  // Repeated bands are ignored.
 
-        aosProcessedTokens.AddString(aosTokens[nIBand]);
+        setProcessedTokens.insert(lowerCaseToken);
 
         osBandSectionKey = KEY_NomCamp;
         osBandSectionKey.append("_");
