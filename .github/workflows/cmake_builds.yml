@@ -478,8 +478,8 @@ jobs:
     - name: test (with ctest)
       shell: bash -l {0}
       run: |
-        # Exclude doc spellcheck as it crashes
-        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3 -E spelling
+        # Exclude doc spellcheck and example tests as they crash
+        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3 -E doc
       env:
         SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
         SKIP_OGR_GMLAS_HTTP_RELATED: YES

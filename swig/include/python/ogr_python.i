@@ -622,7 +622,7 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
         Examples
         --------
-        >>> with gdal.OpenEx("data/poly.shp") as ds:
+        >>> with gdal.OpenEx("poly.shp", gdal.OF_VECTOR) as ds:
         ...     lyr = ds.GetLayer(0)
         ...     feature = lyr.GetNextFeature()
         ...     # name-based access

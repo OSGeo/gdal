@@ -36,6 +36,7 @@ jobs:
           . doc_env/bin/activate
           python3 -m pip install -r doc/requirements.txt
           python3 -m pip install setuptools
+          python3 -m pip install pytest
           echo PATH=$PATH >> $GITHUB_ENV
 
     - name: Build GDAL
@@ -73,11 +74,19 @@ jobs:
         if find . -name '*.rst' | xargs grep "\.\.warning"; then echo 'Wrong annotation. Should be .. warning'; false; fi
         if find . -name '*.rst' | xargs grep "\.\.codeblock"; then echo 'Wrong annotation. Should be .. codeblock'; false; fi
       working-directory: ./doc
+
     - name: Doxygen
       shell: bash -l {0}
       run: |
         cmake --build . --target doxygen_xml
       working-directory: build
+
+    - name: Test documentation examples
+      shell: bash -l {0}
+      run: |
+          ctest -V -R doc-examples --output-on-failure
+      working-directory: build
+
     - name: Spelling
       shell: bash -l {0}
       run: |
