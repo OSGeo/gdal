@@ -46,7 +46,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Set up Docker
-        uses: docker/setup-docker-action@v4
+        uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 # v4.3.0
         with:
           daemon-config: |
             {
@@ -56,7 +56,7 @@ jobs:
               }
             }
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -64,7 +64,7 @@ jobs:
 
       - name: Extract container metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5.8.0
         with:
           images: |
             ghcr.io/osgeo/gdal
@@ -80,7 +80,7 @@ jobs:
         run: |
           cd docker/${{ matrix.base }}
           if test "${{ matrix.proprietary_sdks }}" = "true"; then
-          echo "PUSH_PACKAGES=false" >> $GITHUB_ENV
+            echo "PUSH_PACKAGES=false" >> $GITHUB_ENV
             ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --with-oracle --with-mrsid --with-ecw
           else
             ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
@@ -106,7 +106,7 @@ jobs:
         run: |
           echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         if: env.PUSH_PACKAGES == 'true'
         with:
           registry: ghcr.io
