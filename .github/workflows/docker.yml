@@ -80,7 +80,7 @@ jobs:
         run: |
           cd docker/${{ matrix.base }}
           if test "${{ matrix.proprietary_sdks }}" = "true"; then
-          echo "PUSH_PACKAGES=false" >> $GITHUB_ENV
+            echo "PUSH_PACKAGES=false" >> $GITHUB_ENV
             ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --with-oracle --with-mrsid --with-ecw
           else
             ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
