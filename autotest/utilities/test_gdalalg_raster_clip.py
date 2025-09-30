@@ -188,7 +188,7 @@ def test_gdalalg_raster_clip_bbox_outside_source(bbox_pos, allow_bbox_outside_so
     alg["output"] = ""
     alg["output-format"] = "MEM"
     if allow_bbox_outside_source:
-        with gdaltest.error_raised(gdal.CE_Warning):
+        with gdaltest.error_raised(gdal.CE_None):
             assert alg.Run()
     else:
         with pytest.raises(Exception, match=bbox_pos):
@@ -204,7 +204,7 @@ def test_gdalalg_raster_clip_bbox_crs():
     alg["bbox"] = [-117.631, 33.89, -117.628, 33.9005]
     alg["bbox-crs"] = "NAD27"
     alg["allow-bbox-outside-source"] = True
-    with gdaltest.error_raised(gdal.CE_Warning):
+    with gdaltest.error_raised(gdal.CE_None):
         assert alg.Run()
     ds = alg["output"].GetDataset()
     assert ds.RasterXSize == 6
