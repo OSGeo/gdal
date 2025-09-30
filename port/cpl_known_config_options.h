@@ -401,6 +401,9 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND", // from gdalnodatamaskband.cpp
    "GDAL_SKIP", // from gdaldrivermanager.cpp
    "GDAL_STACTA_SKIP_MISSING_METATILE", // from stactadataset.cpp
+   "GDAL_STATS_USE_FLOAT32_OPTIM", // from gdalrasterband.cpp
+   "GDAL_STATS_USE_FLOAT64_OPTIM", // from gdalrasterband.cpp
+   "GDAL_STATS_USE_INTEGER_STATS", // from gdalrasterband.cpp
    "GDAL_SWATH_SIZE", // from gdalmultidim.cpp, rasterio.cpp
    "GDAL_TEMP_DRIVER_NAME", // from nearblack_lib_floodfill.cpp
    "GDAL_TERM_PROGRESS_OSC_9_4", // from cpl_progress.cpp

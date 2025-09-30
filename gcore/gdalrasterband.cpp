@@ -46,6 +46,10 @@
 #include "gdal_minmax_element.hpp"
 #include "gdalmultidim_priv.h"
 
+#if defined(__AVX2__) || defined(__FMA__)
+#include <immintrin.h>
+#endif
+
 /************************************************************************/
 /*                           GDALRasterBand()                           */
 /************************************************************************/
@@ -6507,6 +6511,371 @@ void GDALRasterBand::SetValidPercent(GUIntBig nSampleCount,
 
 //! @endcond
 
+#if (defined(__x86_64__) || defined(_M_X64))
+
+#ifdef __AVX2__
+
+#define setzero_si _mm256_setzero_si256
+#define setzero_ps _mm256_setzero_ps
+#define set1_ps _mm256_set1_ps
+#define set1_epi32 _mm256_set1_epi32
+#define add_epi32 _mm256_add_epi32
+#define loadu_ps _mm256_loadu_ps
+#define or_ps _mm256_or_ps
+#define min_ps _mm256_min_ps
+#define max_ps _mm256_max_ps
+#define cmpeq_ps(x, y) _mm256_cmp_ps((x), (y), _CMP_EQ_OQ)
+#define cmpneq_ps(x, y) _mm256_cmp_ps((x), (y), _CMP_NEQ_OQ)
+#define cmpunord_ps(x, y) _mm256_cmp_ps((x), (y), _CMP_UNORD_Q)
+#define movemask_ps _mm256_movemask_ps
+#define add_ps _mm256_add_ps
+#define sub_ps _mm256_sub_ps
+#define mul_ps _mm256_mul_ps
+#define div_ps _mm256_div_ps
+#define storeu_ps _mm256_storeu_ps
+#define cvtepi32_ps _mm256_cvtepi32_ps
+#define cvtsi_si32(x) _mm256_extract_epi32((x), 0)
+#define blendv_ps _mm256_blendv_ps
+#ifdef __FMA__
+#define fmadd_ps _mm256_fmadd_ps
+#else
+#define fmadd_ps(a, b, c) add_ps(mul_ps((a), (b)), (c))
+#endif
+
+#else
+
+#define setzero_si _mm_setzero_si128
+#define setzero_ps _mm_setzero_ps
+#define set1_ps _mm_set1_ps
+#define set1_epi32 _mm_set1_epi32
+#define add_epi32 _mm_add_epi32
+#define loadu_ps _mm_loadu_ps
+#define or_ps _mm_or_ps
+#define min_ps _mm_min_ps
+#define max_ps _mm_max_ps
+#define cmpeq_ps _mm_cmpeq_ps
+#define cmpneq_ps _mm_cmpneq_ps
+#define cmpunord_ps _mm_cmpunord_ps
+#define movemask_ps _mm_movemask_ps
+#define add_ps _mm_add_ps
+#define sub_ps _mm_sub_ps
+#define mul_ps _mm_mul_ps
+#define div_ps _mm_div_ps
+#define storeu_ps _mm_storeu_ps
+#define cvtepi32_ps _mm_cvtepi32_ps
+#define cvtsi_si32 _mm_cvtsi128_si32
+#ifdef __FMA__
+#define fmadd_ps _mm_fmadd_ps
+#else
+#define fmadd_ps(a, b, c) add_ps(mul_ps((a), (b)), (c))
+#endif
+
+inline __m128 blendv_ps(__m128 a, __m128 b, __m128 mask)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_ps(a, b, mask);
+#else
+    return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
+#endif
+}
+#endif
+
+template <bool CHECK_MIN_NOT_SAME_AS_MAX, bool HAS_NODATA>
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static int
+ComputeStatisticsFloat32_SSE2(const float *pafData,
+                              [[maybe_unused]] float fNoDataValue, int iX,
+                              int nCount, float &fMin, float &fMax,
+                              float &fBlockMean, float &fBlockM2,
+                              int &nBlockValidCount)
+{
+    auto vValidCount = setzero_si();
+    const auto vOne = set1_epi32(1);
+    [[maybe_unused]] const auto vNoData = set1_ps(fNoDataValue);
+
+    auto vMin_lo = set1_ps(fMin);
+    auto vMax_lo = set1_ps(fMax);
+    auto vMean_lo = setzero_ps();
+    auto vM2_lo = setzero_ps();
+
+    auto vMin_hi = vMin_lo;
+    auto vMax_hi = vMax_lo;
+    auto vMean_hi = setzero_ps();
+    auto vM2_hi = setzero_ps();
+
+    constexpr int VALS_PER_LOOP =
+        2 * static_cast<int>(sizeof(vOne) / sizeof(float));
+    for (; iX <= nCount - VALS_PER_LOOP; iX += VALS_PER_LOOP)
+    {
+        const auto vValues_lo = loadu_ps(pafData + iX);
+        const auto vValues_hi = loadu_ps(pafData + iX + VALS_PER_LOOP / 2);
+        // Check if there's at least one NaN in both vectors
+        auto isNaNOrNoData = cmpunord_ps(vValues_lo, vValues_hi);
+        if constexpr (HAS_NODATA)
+        {
+            isNaNOrNoData =
+                or_ps(isNaNOrNoData, or_ps(cmpeq_ps(vValues_lo, vNoData),
+                                           cmpeq_ps(vValues_hi, vNoData)));
+        }
+        if (movemask_ps(isNaNOrNoData))
+        {
+            break;
+        }
+
+        vValidCount = add_epi32(vValidCount, vOne);
+        const auto vValidCountFloat32 = cvtepi32_ps(vValidCount);
+
+        vMin_lo = min_ps(vMin_lo, vValues_lo);
+        vMax_lo = max_ps(vMax_lo, vValues_lo);
+        const auto vDelta_lo = sub_ps(vValues_lo, vMean_lo);
+        const auto vNewMean_lo =
+            add_ps(vMean_lo, div_ps(vDelta_lo, vValidCountFloat32));
+        if constexpr (CHECK_MIN_NOT_SAME_AS_MAX)
+        {
+            const auto vMinNotSameAsMax_lo = cmpneq_ps(vMin_lo, vMax_lo);
+            vMean_lo = blendv_ps(vMin_lo, vNewMean_lo, vMinNotSameAsMax_lo);
+            const auto vNewM2_lo =
+                fmadd_ps(vDelta_lo, sub_ps(vValues_lo, vMean_lo), vM2_lo);
+            vM2_lo = blendv_ps(vM2_lo, vNewM2_lo, vMinNotSameAsMax_lo);
+        }
+        else
+        {
+            vMean_lo = vNewMean_lo;
+            vM2_lo = fmadd_ps(vDelta_lo, sub_ps(vValues_lo, vMean_lo), vM2_lo);
+        }
+
+        vMin_hi = min_ps(vMin_hi, vValues_hi);
+        vMax_hi = max_ps(vMax_hi, vValues_hi);
+        const auto vDelta_hi = sub_ps(vValues_hi, vMean_hi);
+        const auto vNewMean_hi =
+            add_ps(vMean_hi, div_ps(vDelta_hi, vValidCountFloat32));
+        if constexpr (CHECK_MIN_NOT_SAME_AS_MAX)
+        {
+            const auto vMinNotSameAsMax_hi = cmpneq_ps(vMin_hi, vMax_hi);
+            vMean_hi = blendv_ps(vMin_hi, vNewMean_hi, vMinNotSameAsMax_hi);
+            const auto vNewM2_hi =
+                fmadd_ps(vDelta_hi, sub_ps(vValues_hi, vMean_hi), vM2_hi);
+            vM2_hi = blendv_ps(vM2_hi, vNewM2_hi, vMinNotSameAsMax_hi);
+        }
+        else
+        {
+            vMean_hi = vNewMean_hi;
+            vM2_hi = fmadd_ps(vDelta_hi, sub_ps(vValues_hi, vMean_hi), vM2_hi);
+        }
+    }
+    const int nValidVectorCount = cvtsi_si32(vValidCount);
+    if (nValidVectorCount)
+    {
+        float afMin[VALS_PER_LOOP], afMax[VALS_PER_LOOP], afMean[VALS_PER_LOOP],
+            afM2[VALS_PER_LOOP];
+        storeu_ps(afMin, vMin_lo);
+        storeu_ps(afMax, vMax_lo);
+        storeu_ps(afMean, vMean_lo);
+        storeu_ps(afM2, vM2_lo);
+        storeu_ps(afMin + VALS_PER_LOOP / 2, vMin_hi);
+        storeu_ps(afMax + VALS_PER_LOOP / 2, vMax_hi);
+        storeu_ps(afMean + VALS_PER_LOOP / 2, vMean_hi);
+        storeu_ps(afM2 + VALS_PER_LOOP / 2, vM2_hi);
+
+        for (int i = 0; i < VALS_PER_LOOP; ++i)
+        {
+            fMin = std::min(fMin, afMin[i]);
+            fMax = std::max(fMax, afMax[i]);
+            const auto nNewValidCount = nBlockValidCount + nValidVectorCount;
+            if (afMean[i] != fBlockMean)
+            {
+                const float fDelta = afMean[i] - fBlockMean;
+                fBlockMean += fDelta * nValidVectorCount / nNewValidCount;
+                fBlockM2 += afM2[i] + fDelta * fDelta * nBlockValidCount *
+                                          nValidVectorCount / nNewValidCount;
+            }
+            nBlockValidCount = nNewValidCount;
+        }
+    }
+
+    return iX;
+}
+
+#ifdef __AVX2__
+
+#define setzero_pd _mm256_setzero_pd
+#define set1_pd _mm256_set1_pd
+#define loadu_pd _mm256_loadu_pd
+#define or_pd _mm256_or_pd
+#define min_pd _mm256_min_pd
+#define max_pd _mm256_max_pd
+#define cmpeq_pd(x, y) _mm256_cmp_pd((x), (y), _CMP_EQ_OQ)
+#define cmpneq_pd(x, y) _mm256_cmp_pd((x), (y), _CMP_NEQ_OQ)
+#define cmpunord_pd(x, y) _mm256_cmp_pd((x), (y), _CMP_UNORD_Q)
+#define movemask_pd _mm256_movemask_pd
+#define add_pd _mm256_add_pd
+#define sub_pd _mm256_sub_pd
+#define mul_pd _mm256_mul_pd
+#define div_pd _mm256_div_pd
+#define storeu_pd _mm256_storeu_pd
+#define cvtsd_f64(x) _mm_cvtsd_f64(_mm256_castpd256_pd128((x)))
+#define blendv_pd _mm256_blendv_pd
+#ifdef __FMA__
+#define fmadd_pd _mm256_fmadd_pd
+#else
+#define fmadd_pd(a, b, c) add_pd(mul_pd((a), (b)), (c))
+#endif
+
+#else
+
+#define setzero_pd _mm_setzero_pd
+#define set1_pd _mm_set1_pd
+#define loadu_pd _mm_loadu_pd
+#define or_pd _mm_or_pd
+#define min_pd _mm_min_pd
+#define max_pd _mm_max_pd
+#define cmpeq_pd _mm_cmpeq_pd
+#define cmpneq_pd _mm_cmpneq_pd
+#define cmpunord_pd _mm_cmpunord_pd
+#define movemask_pd _mm_movemask_pd
+#define add_pd _mm_add_pd
+#define sub_pd _mm_sub_pd
+#define mul_pd _mm_mul_pd
+#define div_pd _mm_div_pd
+#define storeu_pd _mm_storeu_pd
+#define cvtsd_f64 _mm_cvtsd_f64
+#ifdef __FMA__
+#define fmadd_pd _mm_fmadd_pd
+#else
+#define fmadd_pd(a, b, c) add_pd(mul_pd((a), (b)), (c))
+#endif
+
+inline __m128d blendv_pd(__m128d a, __m128d b, __m128d mask)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_pd(a, b, mask);
+#else
+    return _mm_or_pd(_mm_andnot_pd(mask, a), _mm_and_pd(mask, b));
+#endif
+}
+#endif
+
+template <bool CHECK_MIN_NOT_SAME_AS_MAX, bool HAS_NODATA>
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static int
+ComputeStatisticsFloat64_SSE2(const double *padfData,
+                              [[maybe_unused]] double dfNoDataValue, int iX,
+                              int nCount, double &dfMin, double &dfMax,
+                              double &dfBlockMean, double &dfBlockM2,
+                              double &dfBlockValidCount)
+{
+    auto vValidCount = setzero_pd();
+    const auto vOne = set1_pd(1);
+    [[maybe_unused]] const auto vNoData = set1_pd(dfNoDataValue);
+
+    auto vMin_lo = set1_pd(dfMin);
+    auto vMax_lo = set1_pd(dfMax);
+    auto vMean_lo = setzero_pd();
+    auto vM2_lo = setzero_pd();
+
+    auto vMin_hi = vMin_lo;
+    auto vMax_hi = vMax_lo;
+    auto vMean_hi = setzero_pd();
+    auto vM2_hi = setzero_pd();
+
+    constexpr int VALS_PER_LOOP =
+        2 * static_cast<int>(sizeof(vOne) / sizeof(double));
+    for (; iX <= nCount - VALS_PER_LOOP; iX += VALS_PER_LOOP)
+    {
+        const auto vValues_lo = loadu_pd(padfData + iX);
+        const auto vValues_hi = loadu_pd(padfData + iX + VALS_PER_LOOP / 2);
+        // Check if there's at least one NaN in both vectors
+        auto isNaNOrNoData = cmpunord_pd(vValues_lo, vValues_hi);
+        if constexpr (HAS_NODATA)
+        {
+            isNaNOrNoData =
+                or_pd(isNaNOrNoData, or_pd(cmpeq_pd(vValues_lo, vNoData),
+                                           cmpeq_pd(vValues_hi, vNoData)));
+        }
+        if (movemask_pd(isNaNOrNoData))
+        {
+            break;
+        }
+
+        vValidCount = add_pd(vValidCount, vOne);
+        const auto vInvValidCount = div_pd(vOne, vValidCount);
+
+        vMin_lo = min_pd(vMin_lo, vValues_lo);
+        vMax_lo = max_pd(vMax_lo, vValues_lo);
+        const auto vDelta_lo = sub_pd(vValues_lo, vMean_lo);
+        const auto vNewMean_lo = fmadd_pd(vDelta_lo, vInvValidCount, vMean_lo);
+        if constexpr (CHECK_MIN_NOT_SAME_AS_MAX)
+        {
+            const auto vMinNotSameAsMax_lo = cmpneq_pd(vMin_lo, vMax_lo);
+            vMean_lo = blendv_pd(vMin_lo, vNewMean_lo, vMinNotSameAsMax_lo);
+            const auto vNewM2_lo =
+                fmadd_pd(vDelta_lo, sub_pd(vValues_lo, vMean_lo), vM2_lo);
+            vM2_lo = blendv_pd(vM2_lo, vNewM2_lo, vMinNotSameAsMax_lo);
+        }
+        else
+        {
+            vMean_lo = vNewMean_lo;
+            vM2_lo = fmadd_pd(vDelta_lo, sub_pd(vValues_lo, vMean_lo), vM2_lo);
+        }
+
+        vMin_hi = min_pd(vMin_hi, vValues_hi);
+        vMax_hi = max_pd(vMax_hi, vValues_hi);
+        const auto vDelta_hi = sub_pd(vValues_hi, vMean_hi);
+        const auto vNewMean_hi = fmadd_pd(vDelta_hi, vInvValidCount, vMean_hi);
+        if constexpr (CHECK_MIN_NOT_SAME_AS_MAX)
+        {
+            const auto vMinNotSameAsMax_hi = cmpneq_pd(vMin_hi, vMax_hi);
+            vMean_hi = blendv_pd(vMin_hi, vNewMean_hi, vMinNotSameAsMax_hi);
+            const auto vNewM2_hi =
+                fmadd_pd(vDelta_hi, sub_pd(vValues_hi, vMean_hi), vM2_hi);
+            vM2_hi = blendv_pd(vM2_hi, vNewM2_hi, vMinNotSameAsMax_hi);
+        }
+        else
+        {
+            vMean_hi = vNewMean_hi;
+            vM2_hi = fmadd_pd(vDelta_hi, sub_pd(vValues_hi, vMean_hi), vM2_hi);
+        }
+    }
+    const double dfValidVectorCount = cvtsd_f64(vValidCount);
+    if (dfValidVectorCount > 0)
+    {
+        double adfMin[VALS_PER_LOOP], adfMax[VALS_PER_LOOP],
+            adfMean[VALS_PER_LOOP], adfM2[VALS_PER_LOOP];
+        storeu_pd(adfMin, vMin_lo);
+        storeu_pd(adfMax, vMax_lo);
+        storeu_pd(adfMean, vMean_lo);
+        storeu_pd(adfM2, vM2_lo);
+        storeu_pd(adfMin + VALS_PER_LOOP / 2, vMin_hi);
+        storeu_pd(adfMax + VALS_PER_LOOP / 2, vMax_hi);
+        storeu_pd(adfMean + VALS_PER_LOOP / 2, vMean_hi);
+        storeu_pd(adfM2 + VALS_PER_LOOP / 2, vM2_hi);
+
+        for (int i = 0; i < VALS_PER_LOOP; ++i)
+        {
+            dfMin = std::min(dfMin, adfMin[i]);
+            dfMax = std::max(dfMax, adfMax[i]);
+            const auto dfNewValidCount = dfBlockValidCount + dfValidVectorCount;
+            if (adfMean[i] != dfBlockMean)
+            {
+                const double dfDelta = adfMean[i] - dfBlockMean;
+                dfBlockMean += dfDelta * dfValidVectorCount / dfNewValidCount;
+                dfBlockM2 += adfM2[i] + dfDelta * dfDelta * dfBlockValidCount *
+                                            dfValidVectorCount /
+                                            dfNewValidCount;
+            }
+            dfBlockValidCount = dfNewValidCount;
+        }
+    }
+
+    return iX;
+}
+
+#endif
+
 /************************************************************************/
 /*                         ComputeStatistics()                          */
 /************************************************************************/
@@ -6763,24 +7132,35 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         if (nSampleRate == 1)
             bApproxOK = false;
 
-        // Particular case for GDT_Byte that only use integral types for all
-        // intermediate computations. Only possible if the number of pixels
-        // explored is lower than GUINTBIG_MAX / (255*255), so that nSumSquare
-        // can fit on a uint64. Should be 99.99999% of cases.
-        // For GUInt16, this limits to raster of 4 giga pixels
-        if ((!poMaskBand && eDataType == GDT_Byte && !bSignedByte &&
-             static_cast<GUIntBig>(nBlocksPerRow) * nBlocksPerColumn /
-                     nSampleRate <
-                 GUINTBIG_MAX / (255U * 255U) /
-                     (static_cast<GUInt64>(nBlockXSize) *
-                      static_cast<GUInt64>(nBlockYSize))) ||
-            (eDataType == GDT_UInt16 &&
-             static_cast<GUIntBig>(nBlocksPerRow) * nBlocksPerColumn /
-                     nSampleRate <
-                 GUINTBIG_MAX / (65535U * 65535U) /
-                     (static_cast<GUInt64>(nBlockXSize) *
-                      static_cast<GUInt64>(nBlockYSize))))
+        // Particular case for GDT_Byte and GUInt16 that only use integral types
+        // for each block, and possibly for the whole raster.
+        if (!poMaskBand && ((eDataType == GDT_Byte && !bSignedByte) ||
+                            eDataType == GDT_UInt16))
         {
+            // We can do integer computation on the whole raster in the Byte case
+            // only if the number of pixels explored is lower than
+            // GUINTBIG_MAX / (255*255), so that nSumSquare can fit on a uint64.
+            // Should be 99.99999% of cases.
+            // For GUInt16, this limits to raster of 4 giga pixels
+
+            const bool bIntegerStats =
+                ((eDataType == GDT_Byte &&
+                  static_cast<GUIntBig>(nBlocksPerRow) * nBlocksPerColumn /
+                          nSampleRate <
+                      GUINTBIG_MAX / (255U * 255U) /
+                          (static_cast<GUInt64>(nBlockXSize) *
+                           static_cast<GUInt64>(nBlockYSize))) ||
+                 (eDataType == GDT_UInt16 &&
+                  static_cast<GUIntBig>(nBlocksPerRow) * nBlocksPerColumn /
+                          nSampleRate <
+                      GUINTBIG_MAX / (65535U * 65535U) /
+                          (static_cast<GUInt64>(nBlockXSize) *
+                           static_cast<GUInt64>(nBlockYSize)))) &&
+                // Can be set to NO for easier debugging of the !bIntegerStats
+                // case which requires huge rasters to trigger
+                CPLTestBool(
+                    CPLGetConfigOption("GDAL_STATS_USE_INTEGER_STATS", "YES"));
+
             const GUInt32 nMaxValueType = (eDataType == GDT_Byte) ? 255 : 65535;
             GUInt32 nMin = nMaxValueType;
             GUInt32 nMax = 0;
@@ -6817,6 +7197,18 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 int nXCheck = 0, nYCheck = 0;
                 GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
+                GUIntBig nBlockSum = 0;
+                GUIntBig nBlockSumSquare = 0;
+                GUIntBig nBlockSampleCount = 0;
+                GUIntBig nBlockValidCount = 0;
+                GUIntBig &nBlockSumRef = bIntegerStats ? nSum : nBlockSum;
+                GUIntBig &nBlockSumSquareRef =
+                    bIntegerStats ? nSumSquare : nBlockSumSquare;
+                GUIntBig &nBlockSampleCountRef =
+                    bIntegerStats ? nSampleCount : nBlockSampleCount;
+                GUIntBig &nBlockValidCountRef =
+                    bIntegerStats ? nValidCount : nBlockValidCount;
+
                 if (eDataType == GDT_Byte)
                 {
                     ComputeStatisticsInternal<
@@ -6824,7 +7216,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                         f(nXCheck, nBlockXSize, nYCheck,
                           static_cast<const GByte *>(pData),
                           nNoDataValue <= nMaxValueType, nNoDataValue, nMin,
-                          nMax, nSum, nSumSquare, nSampleCount, nValidCount);
+                          nMax, nBlockSumRef, nBlockSumSquareRef,
+                          nBlockSampleCountRef, nBlockValidCountRef);
                 }
                 else
                 {
@@ -6833,10 +7226,44 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                         f(nXCheck, nBlockXSize, nYCheck,
                           static_cast<const GUInt16 *>(pData),
                           nNoDataValue <= nMaxValueType, nNoDataValue, nMin,
-                          nMax, nSum, nSumSquare, nSampleCount, nValidCount);
+                          nMax, nBlockSumRef, nBlockSumSquareRef,
+                          nBlockSampleCountRef, nBlockValidCountRef);
                 }
 
                 poBlock->DropLock();
+
+                if (!bIntegerStats)
+                {
+                    nSampleCount += nBlockSampleCount;
+                    if (nBlockValidCount)
+                    {
+                        // Update the global mean and M2 (the difference of the
+                        // square to the mean) from the values of the block
+                        // using https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
+                        const double dfBlockValidCount =
+                            static_cast<double>(nBlockValidCount);
+                        const double dfBlockMean =
+                            static_cast<double>(nBlockSum) / dfBlockValidCount;
+                        const double dfBlockM2 =
+                            static_cast<double>(
+                                GDALUInt128::Mul(nBlockSumSquare,
+                                                 nBlockValidCount) -
+                                GDALUInt128::Mul(nBlockSum, nBlockSum)) /
+                            dfBlockValidCount;
+                        const double dfDelta = dfBlockMean - dfMean;
+                        const auto nNewValidCount =
+                            nValidCount + nBlockValidCount;
+                        const double dfNewValidCount =
+                            static_cast<double>(nNewValidCount);
+                        dfMean +=
+                            dfDelta * (dfBlockValidCount / dfNewValidCount);
+                        dfM2 +=
+                            dfBlockM2 + dfDelta * dfDelta *
+                                            static_cast<double>(nValidCount) *
+                                            dfBlockValidCount / dfNewValidCount;
+                        nValidCount = nNewValidCount;
+                    }
+                }
 
                 if (!pfnProgress(static_cast<double>(iSampleBlock) /
                                      (static_cast<double>(nBlocksPerRow) *
@@ -6855,25 +7282,29 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 return CE_Failure;
             }
 
-            /* --------------------------------------------------------------------
-             */
-            /*      Save computed information. */
-            /* --------------------------------------------------------------------
-             */
-            if (nValidCount)
-                dfMean = static_cast<double>(nSum) / nValidCount;
+            double dfStdDev = 0;
+            if (bIntegerStats)
+            {
+                if (nValidCount)
+                    dfMean = static_cast<double>(nSum) / nValidCount;
 
-            // To avoid potential precision issues when doing the difference,
-            // we need to do that computation on 128 bit rather than casting
-            // to double
-            const GDALUInt128 nTmpForStdDev(
-                GDALUInt128::Mul(nSumSquare, nValidCount) -
-                GDALUInt128::Mul(nSum, nSum));
-            const double dfStdDev =
-                nValidCount > 0
-                    ? sqrt(static_cast<double>(nTmpForStdDev)) / nValidCount
-                    : 0.0;
+                // To avoid potential precision issues when doing the difference,
+                // we need to do that computation on 128 bit rather than casting
+                // to double
+                const GDALUInt128 nTmpForStdDev(
+                    GDALUInt128::Mul(nSumSquare, nValidCount) -
+                    GDALUInt128::Mul(nSum, nSum));
+                dfStdDev =
+                    nValidCount > 0
+                        ? sqrt(static_cast<double>(nTmpForStdDev)) / nValidCount
+                        : 0.0;
+            }
+            else if (nValidCount > 0)
+            {
+                dfStdDev = sqrt(dfM2 / static_cast<double>(nValidCount));
+            }
 
+            /// Save computed information
             if (nValidCount > 0)
             {
                 if (bApproxOK)
@@ -6925,6 +7356,22 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             }
         }
 
+        float fMin = std::numeric_limits<float>::infinity();
+        float fMax = -std::numeric_limits<float>::infinity();
+        const bool bFloat32Optim =
+            eDataType == GDT_Float32 && !pabyMaskData &&
+            nBlockXSize < std::numeric_limits<int>::max() / nBlockYSize &&
+            CPLTestBool(
+                CPLGetConfigOption("GDAL_STATS_USE_FLOAT32_OPTIM", "YES"));
+
+#if (defined(__x86_64__) || defined(_M_X64))
+        const bool bFloat64Optim =
+            eDataType == GDT_Float64 && !pabyMaskData &&
+            nBlockXSize < std::numeric_limits<int>::max() / nBlockYSize &&
+            CPLTestBool(
+                CPLGetConfigOption("GDAL_STATS_USE_FLOAT64_OPTIM", "YES"));
+#endif
+
         for (GIntBig iSampleBlock = 0;
              iSampleBlock <
              static_cast<GIntBig>(nBlocksPerRow) * nBlocksPerColumn;
@@ -6954,40 +7401,387 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 return CE_Failure;
             }
 
-            void *const pData = poBlock->GetDataRef();
+            const void *const pData = poBlock->GetDataRef();
 
-            // This isn't the fastest way to do this, but is easier for now.
-            for (int iY = 0; iY < nYCheck; iY++)
+            if (bFloat32Optim)
             {
-                for (int iX = 0; iX < nXCheck; iX++)
+                const bool bHasNoData = sNoDataValues.bGotFloatNoDataValue &&
+                                        !std::isnan(sNoDataValues.fNoDataValue);
+                float fBlockMean = 0.0f;
+                float fBlockM2 = 0.0f;
+                int nBlockValidCount = 0;
+                for (int iY = 0; iY < nYCheck; iY++)
                 {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
-                    if (pabyMaskData && pabyMaskData[iOffset] == 0)
-                        continue;
-
-                    bool bValid = true;
-                    double dfValue =
-                        GetPixelValue(eDataType, bSignedByte, pData, iOffset,
-                                      sNoDataValues, bValid);
-
-                    if (!bValid)
-                        continue;
-
-                    dfMin = std::min(dfMin, dfValue);
-                    dfMax = std::max(dfMax, dfValue);
-
-                    nValidCount++;
-                    if (dfMin == dfMax)
+                    const int iOffset = iY * nBlockXSize;
+                    if (nBlockValidCount && fMin != fMax)
                     {
-                        if (nValidCount == 1)
-                            dfMean = dfMin;
+                        int iX = 0;
+#if (defined(__x86_64__) || defined(_M_X64))
+                        if (bHasNoData)
+                        {
+                            iX = ComputeStatisticsFloat32_SSE2<
+                                /* bCheckMinEqMax = */ false,
+                                /* bHasNoData = */ true>(
+                                static_cast<const float *>(pData) + iOffset,
+                                sNoDataValues.fNoDataValue, iX, nXCheck, fMin,
+                                fMax, fBlockMean, fBlockM2, nBlockValidCount);
+                        }
+                        else
+                        {
+                            iX = ComputeStatisticsFloat32_SSE2<
+                                /* bCheckMinEqMax = */ false,
+                                /* bHasNoData = */ false>(
+                                static_cast<const float *>(pData) + iOffset,
+                                sNoDataValues.fNoDataValue, iX, nXCheck, fMin,
+                                fMax, fBlockMean, fBlockM2, nBlockValidCount);
+                        }
+#endif
+                        for (; iX < nXCheck; iX++)
+                        {
+                            const float fValue =
+                                static_cast<const float *>(pData)[iOffset + iX];
+                            if (std::isnan(fValue) ||
+                                (bHasNoData &&
+                                 fValue == sNoDataValues.fNoDataValue))
+                                continue;
+                            fMin = std::min(fMin, fValue);
+                            fMax = std::max(fMax, fValue);
+                            ++nBlockValidCount;
+                            const float fDelta = fValue - fBlockMean;
+                            fBlockMean +=
+                                fDelta / static_cast<float>(nBlockValidCount);
+                            fBlockM2 += fDelta * (fValue - fBlockMean);
+                        }
                     }
                     else
                     {
-                        const double dfDelta = dfValue - dfMean;
-                        dfMean += dfDelta / nValidCount;
-                        dfM2 += dfDelta * (dfValue - dfMean);
+                        int iX = 0;
+                        if (nBlockValidCount == 0)
+                        {
+                            for (; iX < nXCheck; iX++)
+                            {
+                                const float fValue = static_cast<const float *>(
+                                    pData)[iOffset + iX];
+                                if (std::isnan(fValue) ||
+                                    (bHasNoData &&
+                                     fValue == sNoDataValues.fNoDataValue))
+                                    continue;
+                                fMin = std::min(fMin, fValue);
+                                fMax = std::max(fMax, fValue);
+                                nBlockValidCount = 1;
+                                fBlockMean = fValue;
+                                iX++;
+                                break;
+                            }
+                        }
+#if (defined(__x86_64__) || defined(_M_X64))
+                        if (bHasNoData)
+                        {
+                            iX = ComputeStatisticsFloat32_SSE2<
+                                /* bCheckMinEqMax = */ true,
+                                /* bHasNoData = */ true>(
+                                static_cast<const float *>(pData) + iOffset,
+                                sNoDataValues.fNoDataValue, iX, nXCheck, fMin,
+                                fMax, fBlockMean, fBlockM2, nBlockValidCount);
+                        }
+                        else
+                        {
+                            iX = ComputeStatisticsFloat32_SSE2<
+                                /* bCheckMinEqMax = */ true,
+                                /* bHasNoData = */ false>(
+                                static_cast<const float *>(pData) + iOffset,
+                                sNoDataValues.fNoDataValue, iX, nXCheck, fMin,
+                                fMax, fBlockMean, fBlockM2, nBlockValidCount);
+                        }
+#endif
+                        for (; iX < nXCheck; iX++)
+                        {
+                            const float fValue =
+                                static_cast<const float *>(pData)[iOffset + iX];
+                            if (std::isnan(fValue) ||
+                                (bHasNoData &&
+                                 fValue == sNoDataValues.fNoDataValue))
+                                continue;
+                            fMin = std::min(fMin, fValue);
+                            fMax = std::max(fMax, fValue);
+                            ++nBlockValidCount;
+                            if (fMin != fMax)
+                            {
+                                const float fDelta = fValue - fBlockMean;
+                                fBlockMean += fDelta / static_cast<float>(
+                                                           nBlockValidCount);
+                                fBlockM2 += fDelta * (fValue - fBlockMean);
+                            }
+                        }
+                    }
+                }
+
+                if (nBlockValidCount)
+                {
+                    // Update the global mean and M2 (the difference of the
+                    // square to the mean) from the values of the block
+                    // using https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
+                    const auto nNewValidCount = nValidCount + nBlockValidCount;
+                    const double dfBlockMean = static_cast<double>(fBlockMean);
+                    if (dfBlockMean != dfMean)
+                    {
+                        const double dfBlockM2 = static_cast<double>(fBlockM2);
+                        if (nValidCount == 0)
+                        {
+                            dfMean = dfBlockMean;
+                            dfM2 = dfBlockM2;
+                        }
+                        else
+                        {
+                            const double dfBlockValidCount =
+                                static_cast<double>(nBlockValidCount);
+                            const double dfDelta = dfBlockMean - dfMean;
+                            const double dfNewValidCount =
+                                static_cast<double>(nNewValidCount);
+                            dfMean +=
+                                dfDelta * (dfBlockValidCount / dfNewValidCount);
+                            dfM2 += dfBlockM2 +
+                                    dfDelta * dfDelta *
+                                        static_cast<double>(nValidCount) *
+                                        dfBlockValidCount / dfNewValidCount;
+                        }
+                    }
+                    nValidCount = nNewValidCount;
+                }
+            }
+
+#if (defined(__x86_64__) || defined(_M_X64))
+            else if (bFloat64Optim)
+            {
+                const bool bHasNoData =
+                    sNoDataValues.bGotNoDataValue &&
+                    !std::isnan(sNoDataValues.dfNoDataValue);
+                double dfBlockMean = 0;
+                double dfBlockM2 = 0;
+                double dfBlockValidCount = 0;
+                for (int iY = 0; iY < nYCheck; iY++)
+                {
+                    const int iOffset = iY * nBlockXSize;
+                    if (dfBlockValidCount != 0 && dfMin != dfMax)
+                    {
+                        int iX = 0;
+                        if (bHasNoData)
+                        {
+                            iX = ComputeStatisticsFloat64_SSE2<
+                                /* bCheckMinEqMax = */ false,
+                                /* bHasNoData = */ true>(
+                                static_cast<const double *>(pData) + iOffset,
+                                sNoDataValues.dfNoDataValue, iX, nXCheck, dfMin,
+                                dfMax, dfBlockMean, dfBlockM2,
+                                dfBlockValidCount);
+                        }
+                        else
+                        {
+                            iX = ComputeStatisticsFloat64_SSE2<
+                                /* bCheckMinEqMax = */ false,
+                                /* bHasNoData = */ false>(
+                                static_cast<const double *>(pData) + iOffset,
+                                sNoDataValues.dfNoDataValue, iX, nXCheck, dfMin,
+                                dfMax, dfBlockMean, dfBlockM2,
+                                dfBlockValidCount);
+                        }
+                        for (; iX < nXCheck; iX++)
+                        {
+                            const double dfValue = static_cast<const double *>(
+                                pData)[iOffset + iX];
+                            if (std::isnan(dfValue) ||
+                                (bHasNoData &&
+                                 dfValue == sNoDataValues.dfNoDataValue))
+                                continue;
+                            dfMin = std::min(dfMin, dfValue);
+                            dfMax = std::max(dfMax, dfValue);
+                            dfBlockValidCount += 1.0;
+                            const double dfDelta = dfValue - dfBlockMean;
+                            dfBlockMean += dfDelta / dfBlockValidCount;
+                            dfBlockM2 += dfDelta * (dfValue - dfBlockMean);
+                        }
+                    }
+                    else
+                    {
+                        int iX = 0;
+                        if (dfBlockValidCount == 0)
+                        {
+                            for (; iX < nXCheck; iX++)
+                            {
+                                const double dfValue =
+                                    static_cast<const double *>(
+                                        pData)[iOffset + iX];
+                                if (std::isnan(dfValue) ||
+                                    (bHasNoData &&
+                                     dfValue == sNoDataValues.dfNoDataValue))
+                                    continue;
+                                dfMin = std::min(dfMin, dfValue);
+                                dfMax = std::max(dfMax, dfValue);
+                                dfBlockValidCount = 1;
+                                dfBlockMean = dfValue;
+                                iX++;
+                                break;
+                            }
+                        }
+                        if (bHasNoData)
+                        {
+                            iX = ComputeStatisticsFloat64_SSE2<
+                                /* bCheckMinEqMax = */ true,
+                                /* bHasNoData = */ true>(
+                                static_cast<const double *>(pData) + iOffset,
+                                sNoDataValues.dfNoDataValue, iX, nXCheck, dfMin,
+                                dfMax, dfBlockMean, dfBlockM2,
+                                dfBlockValidCount);
+                        }
+                        else
+                        {
+                            iX = ComputeStatisticsFloat64_SSE2<
+                                /* bCheckMinEqMax = */ true,
+                                /* bHasNoData = */ false>(
+                                static_cast<const double *>(pData) + iOffset,
+                                sNoDataValues.dfNoDataValue, iX, nXCheck, dfMin,
+                                dfMax, dfBlockMean, dfBlockM2,
+                                dfBlockValidCount);
+                        }
+                        for (; iX < nXCheck; iX++)
+                        {
+                            const double dfValue = static_cast<const double *>(
+                                pData)[iOffset + iX];
+                            if (std::isnan(dfValue) ||
+                                (bHasNoData &&
+                                 dfValue == sNoDataValues.dfNoDataValue))
+                                continue;
+                            dfMin = std::min(dfMin, dfValue);
+                            dfMax = std::max(dfMax, dfValue);
+                            dfBlockValidCount += 1.0;
+                            if (dfMin != dfMax)
+                            {
+                                const double dfDelta = dfValue - dfBlockMean;
+                                dfBlockMean += dfDelta / dfBlockValidCount;
+                                dfBlockM2 += dfDelta * (dfValue - dfBlockMean);
+                            }
+                        }
+                    }
+                }
+
+                if (dfBlockValidCount > 0)
+                {
+                    // Update the global mean and M2 (the difference of the
+                    // square to the mean) from the values of the block
+                    // using https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
+                    const auto nNewValidCount =
+                        nValidCount + static_cast<int>(dfBlockValidCount);
+                    if (dfBlockMean != dfMean)
+                    {
+                        if (nValidCount == 0)
+                        {
+                            dfMean = dfBlockMean;
+                            dfM2 = dfBlockM2;
+                        }
+                        else
+                        {
+                            const double dfDelta = dfBlockMean - dfMean;
+                            const double dfNewValidCount =
+                                static_cast<double>(nNewValidCount);
+                            dfMean +=
+                                dfDelta * (dfBlockValidCount / dfNewValidCount);
+                            dfM2 += dfBlockM2 +
+                                    dfDelta * dfDelta *
+                                        static_cast<double>(nValidCount) *
+                                        dfBlockValidCount / dfNewValidCount;
+                        }
+                    }
+                    nValidCount = nNewValidCount;
+                }
+            }
+#endif  // (defined(__x86_64__) || defined(_M_X64))
+
+            else
+            {
+                // This isn't the fastest way to do this, but is easier for now.
+                for (int iY = 0; iY < nYCheck; iY++)
+                {
+                    if (nValidCount && dfMin != dfMax)
+                    {
+                        for (int iX = 0; iX < nXCheck; iX++)
+                        {
+                            const GPtrDiff_t iOffset =
+                                iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                            if (pabyMaskData && pabyMaskData[iOffset] == 0)
+                                continue;
+
+                            bool bValid = true;
+                            double dfValue =
+                                GetPixelValue(eDataType, bSignedByte, pData,
+                                              iOffset, sNoDataValues, bValid);
+
+                            if (!bValid)
+                                continue;
+
+                            dfMin = std::min(dfMin, dfValue);
+                            dfMax = std::max(dfMax, dfValue);
+
+                            nValidCount++;
+                            const double dfDelta = dfValue - dfMean;
+                            dfMean += dfDelta / nValidCount;
+                            dfM2 += dfDelta * (dfValue - dfMean);
+                        }
+                    }
+                    else
+                    {
+                        int iX = 0;
+                        if (nValidCount == 0)
+                        {
+                            for (; iX < nXCheck; iX++)
+                            {
+                                const GPtrDiff_t iOffset =
+                                    iX +
+                                    static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                                if (pabyMaskData && pabyMaskData[iOffset] == 0)
+                                    continue;
+
+                                bool bValid = true;
+                                double dfValue = GetPixelValue(
+                                    eDataType, bSignedByte, pData, iOffset,
+                                    sNoDataValues, bValid);
+
+                                if (!bValid)
+                                    continue;
+
+                                dfMin = dfValue;
+                                dfMax = dfValue;
+                                dfMean = dfValue;
+                                nValidCount = 1;
+                                iX++;
+                                break;
+                            }
+                        }
+                        for (; iX < nXCheck; iX++)
+                        {
+                            const GPtrDiff_t iOffset =
+                                iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                            if (pabyMaskData && pabyMaskData[iOffset] == 0)
+                                continue;
+
+                            bool bValid = true;
+                            double dfValue =
+                                GetPixelValue(eDataType, bSignedByte, pData,
+                                              iOffset, sNoDataValues, bValid);
+
+                            if (!bValid)
+                                continue;
+
+                            dfMin = std::min(dfMin, dfValue);
+                            dfMax = std::max(dfMax, dfValue);
+
+                            nValidCount++;
+                            if (dfMin != dfMax)
+                            {
+                                const double dfDelta = dfValue - dfMean;
+                                dfMean += dfDelta / nValidCount;
+                                dfM2 += dfDelta * (dfValue - dfMean);
+                            }
+                        }
                     }
                 }
             }
@@ -7007,6 +7801,11 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             }
         }
 
+        if (bFloat32Optim)
+        {
+            dfMin = static_cast<double>(fMin);
+            dfMax = static_cast<double>(fMax);
+        }
         CPLFree(pabyMaskData);
     }
 
