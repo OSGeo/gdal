@@ -17,6 +17,7 @@
 #include "gdalalg_abstract_pipeline.h"
 #include "gdalalg_raster_read.h"
 #include "gdalalg_raster_write.h"
+#include "gdalalg_vector_read.h"
 #include "gdalalg_tee.h"
 
 #include <algorithm>
@@ -1083,7 +1084,91 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         inputArg->GetType() == GAAT_DATASET_LIST &&
         inputArg->Get<std::vector<GDALArgDatasetValue>>().size() == 1)
     {
-        steps.front().alg->ProcessDatasetArg(inputArg, steps.back().alg.get());
+        int nCountChangeFieldTypeStepsToBeRemoved = 0;
+        std::string osTmpJSONFilename;
+
+        // Check if there are steps like change-field-type just after the read
+        // step. If so, we can convert them into a OGR_SCHEMA open option for
+        // drivers that support it.
+        auto &inputVals = inputArg->Get<std::vector<GDALArgDatasetValue>>();
+        if (!inputVals[0].GetDatasetRef() && steps.size() >= 2 &&
+            steps[0].alg->GetName() == GDALVectorReadAlgorithm::NAME &&
+            !steps.back().alg->IsGDALGOutput())
+        {
+            auto openOptionArgs =
+                steps.front().alg->GetArg(GDAL_ARG_NAME_OPEN_OPTION);
+            if (openOptionArgs && !openOptionArgs->IsExplicitlySet() &&
+                openOptionArgs->GetType() == GAAT_STRING_LIST)
+            {
+                const auto &openOptionVals =
+                    openOptionArgs->Get<std::vector<std::string>>();
+                if (CPLStringList(openOptionVals)
+                        .FetchNameValue("OGR_SCHEMA") == nullptr)
+                {
+                    CPLJSONArray oLayers;
+                    for (size_t iStep = 1; iStep < steps.size(); ++iStep)
+                    {
+                        auto oObj =
+                            steps[iStep].alg->Get_OGR_SCHEMA_OpenOption_Layer();
+                        if (!oObj.IsValid())
+                            break;
+                        oLayers.Add(oObj);
+                        ++nCountChangeFieldTypeStepsToBeRemoved;
+                    }
+
+                    if (nCountChangeFieldTypeStepsToBeRemoved > 0)
+                    {
+                        CPLJSONDocument oDoc;
+                        oDoc.GetRoot().Set("layers", oLayers);
+                        osTmpJSONFilename =
+                            VSIMemGenerateHiddenFilename(nullptr);
+                        // CPLDebug("GDAL", "OGR_SCHEMA: %s", oDoc.SaveAsString().c_str());
+                        oDoc.Save(osTmpJSONFilename);
+
+                        openOptionArgs->Set(std::vector<std::string>{
+                            std::string("@OGR_SCHEMA=")
+                                .append(osTmpJSONFilename)});
+                    }
+                }
+            }
+        }
+
+        const bool bOK = steps.front().alg->ProcessDatasetArg(
+                             inputArg, steps.back().alg.get()) ||
+                         forAutoComplete;
+
+        if (!osTmpJSONFilename.empty())
+            VSIUnlink(osTmpJSONFilename.c_str());
+
+        if (!bOK)
+        {
+            return false;
+        }
+
+        // Now check if the driver of the input dataset actually supports
+        // the OGR_SCHEMA open option. If so, we can remove the steps from
+        // the pipeline
+        if (nCountChangeFieldTypeStepsToBeRemoved)
+        {
+            if (auto poDS = inputVals[0].GetDatasetRef())
+            {
+                if (auto poDriver = poDS->GetDriver())
+                {
+                    const char *pszOpenOptionList =
+                        poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST);
+                    if (pszOpenOptionList &&
+                        strstr(pszOpenOptionList, "OGR_SCHEMA"))
+                    {
+                        CPLDebug("GDAL",
+                                 "Merging %d step(s) as OGR_SCHEMA open option",
+                                 nCountChangeFieldTypeStepsToBeRemoved);
+                        steps.erase(steps.begin() + 1,
+                                    steps.begin() + 1 +
+                                        nCountChangeFieldTypeStepsToBeRemoved);
+                    }
+                }
+            }
+        }
     }
 
     if (bIsGenericPipeline)

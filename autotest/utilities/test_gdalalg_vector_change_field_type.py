@@ -432,3 +432,46 @@ def test_gdalalg_change_field_type_src_field_type():
     assert f["string1"] == 123
     assert f["string2"] == 456
     assert f["real"] == 1.25
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdalalg_change_field_type_pipeline_fuse_in_open(tmp_vsimem):
+
+    with gdal.VSIFile(tmp_vsimem / "test.csv", "wb") as f:
+        f.write(b"str,int,int2\n")
+        f.write(b"2025-09-30,1,2\n")
+    with gdal.VSIFile(tmp_vsimem / "test.csvt", "wb") as f:
+        f.write(b"String,Integer,Integer\n")
+
+    with gdal.Run(
+        "pipeline",
+        pipeline=f"read {tmp_vsimem}/test.csv ! change-field-type --src-field-type String --field-type Date ! change-field-type --field-name int --field-type Integer64 ! write --format MEM --output whatever",
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
+        assert lyr_defn.GetFieldDefn(0).GetType() == ogr.OFTDate
+        assert lyr_defn.GetFieldDefn(1).GetType() == ogr.OFTInteger64
+        assert lyr_defn.GetFieldDefn(2).GetType() == ogr.OFTInteger
+
+
+def test_gdalalg_change_field_type_pipeline_fuse_in_open_not_supported(tmp_vsimem):
+
+    with gdal.GetDriverByName("ESRI Shapefile").CreateVector(
+        tmp_vsimem / "test.dbf"
+    ) as ds:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+        lyr.CreateField(ogr.FieldDefn("int2", ogr.OFTInteger))
+
+    with gdal.Run(
+        "pipeline",
+        pipeline=f"read {tmp_vsimem}/test.dbf ! change-field-type --src-field-type String --field-type Date ! change-field-type --field-name int --field-type Integer64 ! write --format MEM --output whatever",
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
+        assert lyr_defn.GetFieldDefn(0).GetType() == ogr.OFTDate
+        assert lyr_defn.GetFieldDefn(1).GetType() == ogr.OFTInteger64
+        assert lyr_defn.GetFieldDefn(2).GetType() == ogr.OFTInteger
