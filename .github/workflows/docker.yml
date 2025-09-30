@@ -30,7 +30,7 @@ jobs:
           - platform: amd64
             base: ubuntu-full
             proprietary_sdks: 'true'
-    name: ${{ matrix.base }}-${{ matrix.platform }} Proprietary-SDKs=${{ matrix.proprietary_sdks }}
+    name: ${{ matrix.base }}-${{ matrix.platform }} proprietary-sdks=${{ matrix.proprietary_sdks }}
     runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
     permissions:
       contents: read
@@ -85,9 +85,9 @@ jobs:
           else
             ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
           fi
+          docker image tag ghcr.io/osgeo/gdal:${{ matrix.base }}-latest ${{ matrix.base }}-latest-${{ matrix.platform }}
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} gdalinfo --formats
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} ogrinfo --formats
-
   create-manifest:
     permissions:
       contents: read
