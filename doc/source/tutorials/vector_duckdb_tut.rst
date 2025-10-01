@@ -216,7 +216,8 @@ Now that we have our local Parquet file, we can output some sample records to ve
 
         gdal vector pipeline \
             ! read overture-vt-addresses.parquet \
-            ! sql --sql "SELECT number,street,postcode,country FROM \"overture-vt-addresses\" LIMIT 5" \
+            ! limit 5 \
+            ! select number street postcode country \
             ! write /vsistdout/ --output-format CSV
 
    .. code-tab:: bash Traditional
@@ -225,9 +226,10 @@ Now that we have our local Parquet file, we can output some sample records to ve
 
    .. code-tab:: powershell
 
-        gdal vector pipeline `
-            ! read overture-vt-addresses.parquet `
-            ! sql --sql "SELECT number,street,postcode,country FROM 'overture-vt-addresses' LIMIT 5" --dialect SQLITE `
+        gdal vector pipeline \
+            ! read overture-vt-addresses.parquet \
+            ! limit 5 \
+            ! select number street postcode country \
             ! write /vsistdout/ --output-format CSV --quiet
 
 The commands above should display 5 records in a tabular format, similar to the example below:
