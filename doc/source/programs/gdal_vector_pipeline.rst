@@ -239,8 +239,8 @@ Examples
         $ gdal vector info in_epsg_32632.gdalg.json
 
 .. example:: Union 2 source shapefiles (with similar structure), reproject them to EPSG:32632, keep only cities larger than 1 million inhabitants and write to a GeoPackage
-   :title:
+   :title: Combine and filter two shapefiles, overriding the projection
 
    .. code-block:: bash
 
-        $ gdal vector pipeline ! concat --single --dst-crs=EPSG:32632 france.shp belgium.shp ! filter --where "pop > 1e6" ! write out.gpkg --overwrite
+        $ gdal vector pipeline ! concat --dst-crs=EPSG:32632 france.shp belgium.shp ! filter --where "pop > 1e6" ! write out.gpkg --overwrite

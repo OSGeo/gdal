@@ -38,6 +38,8 @@ class GDALVectorReadAlgorithm final : public GDALVectorPipelineStepAlgorithm
 
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
+
+    int m_featureLimit{0};
 };
 
 //! @endcond

@@ -30,7 +30,57 @@ GDALVectorReadAlgorithm::GDALVectorReadAlgorithm()
                                       /* standaloneStep =*/false)
 {
     AddVectorInputArgs(/* hiddenForCLI = */ false);
+    AddArg("limit", 0, _("Limit the number of features to read per layer"),
+           &m_featureLimit);
 }
+
+/************************************************************************/
+/*                      GDALVectorReadLimitedLayer                      */
+/************************************************************************/
+
+class GDALVectorReadLimitedLayer : public OGRLayer
+{
+  public:
+    GDALVectorReadLimitedLayer(OGRLayer &layer, int featureLimit)
+        : m_layer(layer), m_featureLimit(featureLimit), m_featuresRead(0)
+    {
+    }
+
+    ~GDALVectorReadLimitedLayer() override;
+
+    OGRFeatureDefn *GetLayerDefn() const override
+    {
+        return m_layer.GetLayerDefn();
+    }
+
+    OGRFeature *GetNextFeature() override
+    {
+        if (m_featuresRead < m_featureLimit)
+        {
+            m_featuresRead++;
+            return m_layer.GetNextFeature();
+        }
+        return nullptr;
+    }
+
+    void ResetReading() override
+    {
+        m_layer.ResetReading();
+        m_featuresRead = 0;
+    }
+
+    int TestCapability(const char *const pszCap) const override
+    {
+        return m_layer.TestCapability(pszCap);
+    }
+
+  private:
+    OGRLayer &m_layer;
+    int m_featureLimit;
+    int m_featuresRead;
+};
+
+GDALVectorReadLimitedLayer::~GDALVectorReadLimitedLayer() = default;
 
 /************************************************************************/
 /*                 GDALVectorPipelineReadOutputDataset                  */
@@ -43,11 +93,13 @@ class GDALVectorPipelineReadOutputDataset final : public GDALDataset
 {
     GDALDataset &m_srcDS;
     std::vector<OGRLayer *> m_layers{};
+    std::vector<std::unique_ptr<OGRLayer>> m_ownedLayers{};
+    int m_featureLimit{};
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorPipelineReadOutputDataset)
 
   public:
-    explicit GDALVectorPipelineReadOutputDataset(GDALDataset &oSrcDS);
+    GDALVectorPipelineReadOutputDataset(GDALDataset &oSrcDS, int featureLimit);
 
     void AddLayer(OGRLayer &oSrcLayer);
 
@@ -70,8 +122,8 @@ class GDALVectorPipelineReadOutputDataset final : public GDALDataset
 /************************************************************************/
 
 GDALVectorPipelineReadOutputDataset::GDALVectorPipelineReadOutputDataset(
-    GDALDataset &srcDS)
-    : m_srcDS(srcDS)
+    GDALDataset &srcDS, int featureLimit)
+    : m_srcDS(srcDS), m_featureLimit(featureLimit)
 {
     SetDescription(m_srcDS.GetDescription());
 }
@@ -82,7 +134,18 @@ GDALVectorPipelineReadOutputDataset::GDALVectorPipelineReadOutputDataset(
 
 void GDALVectorPipelineReadOutputDataset::AddLayer(OGRLayer &oSrcLayer)
 {
-    m_layers.push_back(&oSrcLayer);
+    OGRLayer *poSrcLayer = &oSrcLayer;
+
+    CPLDebug("GDAL", "feature limit is %d", m_featureLimit);
+
+    if (m_featureLimit)
+    {
+        m_ownedLayers.push_back(std::make_unique<GDALVectorReadLimitedLayer>(
+            oSrcLayer, m_featureLimit));
+        poSrcLayer = m_ownedLayers.back().get();
+    }
+
+    m_layers.push_back(poSrcLayer);
 }
 
 /************************************************************************/
@@ -160,25 +223,35 @@ bool GDALVectorReadAlgorithm::RunStep(GDALPipelineStepRunContext &)
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
-    if (m_inputLayerNames.empty())
+    if (m_inputLayerNames.empty() && !m_featureLimit)
     {
         m_outputDataset.Set(poSrcDS);
     }
     else
     {
-        auto poOutDS =
-            std::make_unique<GDALVectorPipelineReadOutputDataset>(*poSrcDS);
-        for (const auto &srcLayerName : m_inputLayerNames)
+        auto poOutDS = std::make_unique<GDALVectorPipelineReadOutputDataset>(
+            *poSrcDS, m_featureLimit);
+        if (m_inputLayerNames.empty())
         {
-            auto poSrcLayer = poSrcDS->GetLayerByName(srcLayerName.c_str());
-            if (!poSrcLayer)
+            for (int i = 0; i < poSrcDS->GetLayerCount(); i++)
             {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Cannot find source layer '%s'",
-                            srcLayerName.c_str());
-                return false;
+                poOutDS->AddLayer(*poSrcDS->GetLayer(i));
             }
-            poOutDS->AddLayer(*poSrcLayer);
+        }
+        else
+        {
+            for (const auto &srcLayerName : m_inputLayerNames)
+            {
+                auto poSrcLayer = poSrcDS->GetLayerByName(srcLayerName.c_str());
+                if (!poSrcLayer)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Cannot find source layer '%s'",
+                                srcLayerName.c_str());
+                    return false;
+                }
+                poOutDS->AddLayer(*poSrcLayer);
+            }
         }
         m_outputDataset.Set(std::move(poOutDS));
     }
