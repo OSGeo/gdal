@@ -5828,3 +5828,25 @@ def test_zarr_read_ossfuzz_444714656():
     ds = gdal.OpenEx("/vsitar/data/zarr/ossfuzz_444714656.tar", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     assert rg.GetGroupNames() == ["x"]
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_zarr_with_stac_proj_epsg():
+
+    ds = gdal.Open("data/zarr/zarr_with_stac_proj_epsg.zarr")
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_zarr_with_stac_proj_wkt2():
+
+    ds = gdal.Open("data/zarr/zarr_with_stac_proj_wkt2.zarr")
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"

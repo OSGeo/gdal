@@ -2782,6 +2782,40 @@ void ZarrArray::ParseSpecialAttributes(
         }
     }
 
+    // For EOPF Sentinel Zarr Samples Service datasets, read attributes from
+    // the STAC Proj extension attributes to get the CRS.
+    if (!poSRS)
+    {
+        const auto oProjEPSG = oAttributes["proj:epsg"];
+        if (oProjEPSG.GetType() == CPLJSONObject::Type::Integer)
+        {
+            poSRS = std::make_shared<OGRSpatialReference>();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            if (poSRS->importFromEPSG(oProjEPSG.ToInteger()) != OGRERR_NONE)
+            {
+                poSRS.reset();
+            }
+        }
+        else
+        {
+            const auto oProjWKT2 = oAttributes["proj:wkt2"];
+            if (oProjWKT2.GetType() == CPLJSONObject::Type::String)
+            {
+                poSRS = std::make_shared<OGRSpatialReference>();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (poSRS->importFromWkt(oProjWKT2.ToString().c_str()) !=
+                    OGRERR_NONE)
+                {
+                    poSRS.reset();
+                }
+            }
+        }
+
+        // There is also a "proj:transform" attribute, but we don't need to
+        // use it since the x and y dimensions are already associated with a
+        // 1-dimensional array with the values.
+    }
+
     if (poSRS)
     {
         int iDimX = 0;
