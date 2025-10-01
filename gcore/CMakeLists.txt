@@ -241,6 +241,8 @@ target_public_header(
   gdal_cpp_functions.h
   gdal_fwd.h
   gdalalgorithm.h
+  gdalalgorithm_c.h
+  gdalalgorithm_cpp.h
   gdaljp2metadata.h
   gdaljp2abstractdataset.h
   gdal_frmts.h

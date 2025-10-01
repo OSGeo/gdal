@@ -7093,7 +7093,7 @@ GDALAlgorithmArgType GDALAlgorithmArgGetType(GDALAlgorithmArgH hArg)
 /** Return the description of an argument.
  *
  * @param hArg Handle to an argument. Must NOT be null.
- * @return argument descriptioin whose lifetime is bound to hArg and which must not
+ * @return argument description whose lifetime is bound to hArg and which must not
  * be freed.
  * @since 3.11
  */
