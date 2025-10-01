@@ -182,7 +182,7 @@ if test "${RELEASE}" = "yes"; then
     if test "${WITH_DEBUG_SYMBOLS}" = ""; then
         WITH_DEBUG_SYMBOLS=no
     fi
-    [[ -n "${DOCKER_CACHE_PARAM}" ]] || [[ DOCKER_CACHE_PARAM="--no-cache" ]]
+    [[ -n "${DOCKER_CACHE_PARAM}" ]] || [[ ${DOCKER_CACHE_PARAM} = "--no-cache" ]]
 else
     if test "${TAG_NAME}" = ""; then
         TAG_NAME=latest
@@ -190,7 +190,7 @@ else
     if test "${WITH_DEBUG_SYMBOLS}" = ""; then
         WITH_DEBUG_SYMBOLS=yes
     fi
-    [[ -n "${DOCKER_CACHE_PARAM}" ]] || [[ DOCKER_CACHE_PARAM="" ]]
+    [[ -n "${DOCKER_CACHE_PARAM}" ]] || [[ -z ${DOCKER_CACHE_PARAM} ]]
 fi
 
 check_image()
@@ -332,7 +332,7 @@ else
     echo "Using GDAL_RELEASE_DATE=${GDAL_RELEASE_DATE}"
     BUILD_ARGS+=("--build-arg" "GDAL_RELEASE_DATE=${GDAL_RELEASE_DATE}")
 
-    if [[ -z NO_RSYNC_DAEMON ]]; then
+    if [[ -z ${NO_RSYNC_DAEMON} ]]; then
         RSYNC_DAEMON_CONTAINER=gdal_rsync_daemon
         HOST_CACHE_DIR="$HOME/gdal-docker-cache"
 
