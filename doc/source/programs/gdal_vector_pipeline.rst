@@ -55,13 +55,6 @@ Details for options can be found in :ref:`gdal_vector_buffer`.
 
 Details for options can be found in :ref:`gdal_vector_concat`.
 
-* change-field-type
-
-.. program-output:: gdal vector pipeline --help-doc=change-field-type
-
-Details for options can be found in :ref:`gdal_vector_change_field_type`.
-
-
 * clip
 
 .. program-output:: gdal vector pipeline --help-doc=clip
@@ -115,6 +108,12 @@ Details for options can be found in :ref:`gdal_vector_segmentize`.
 .. program-output:: gdal vector pipeline --help-doc=select
 
 Details for options can be found in :ref:`gdal_vector_select`.
+
+* set-field-type
+
+.. program-output:: gdal vector pipeline --help-doc=set-field-type
+
+Details for options can be found in :ref:`gdal_vector_set_field_type`.
 
 * set-geom-type
 

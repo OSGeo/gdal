@@ -14,7 +14,6 @@
 
 #include "gdalalg_vector_info.h"
 #include "gdalalg_vector_buffer.h"
-#include "gdalalg_vector_change_field_type.h"
 #include "gdalalg_vector_check_geometry.h"
 #include "gdalalg_vector_check_coverage.h"
 #include "gdalalg_vector_clean_coverage.h"
@@ -34,6 +33,7 @@
 #include "gdalalg_vector_reproject.h"
 #include "gdalalg_vector_segmentize.h"
 #include "gdalalg_vector_select.h"
+#include "gdalalg_vector_set_field_type.h"
 #include "gdalalg_vector_set_geom_type.h"
 #include "gdalalg_vector_simplify.h"
 #include "gdalalg_vector_simplify_coverage.h"
@@ -68,7 +68,6 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
 
         RegisterSubAlgorithm<GDALVectorInfoAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorBufferAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorChangeFieldTypeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorCheckCoverageAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorCheckGeometryAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorCleanCoverageAlgorithmStandalone>();
@@ -89,6 +88,7 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALVectorReprojectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSegmentizeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSelectAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSetFieldTypeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSetGeomTypeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSimplifyAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSimplifyCoverageAlgorithmStandalone>();

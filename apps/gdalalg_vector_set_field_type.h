@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "change-field-type" step of "vector pipeline"
+ * Purpose:  "set-field-type" step of "vector pipeline"
  * Author:   Alessandro Pasotti <elpaso at itopen dot it>
  *
  ******************************************************************************
@@ -10,28 +10,28 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VECTOR_CHANGE_FIELD_TYPE_INCLUDED
-#define GDALALG_VECTOR_CHANGE_FIELD_TYPE_INCLUDED
+#ifndef GDALALG_VECTOR_SET_FIELD_TYPE_INCLUDED
+#define GDALALG_VECTOR_SET_FIELD_TYPE_INCLUDED
 
 #include "gdalalg_vector_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                 GDALVectorChangeFieldTypeAlgorithm                   */
+/*                   GDALVectorSetFieldTypeAlgorithm                    */
 /************************************************************************/
 
-class GDALVectorChangeFieldTypeAlgorithm /* non final */
+class GDALVectorSetFieldTypeAlgorithm /* non final */
     : public GDALVectorPipelineStepAlgorithm
 {
   public:
-    static constexpr const char *NAME = "change-field-type";
+    static constexpr const char *NAME = "set-field-type";
     static constexpr const char *DESCRIPTION =
-        "Change the type of a field of a vector dataset.";
+        "Modify the type of a field of a vector dataset.";
     static constexpr const char *HELP_URL =
-        "/programs/gdal_vector_change_field_type.html";
+        "/programs/gdal_vector_set_field_type.html";
 
-    explicit GDALVectorChangeFieldTypeAlgorithm(bool standaloneStep = false);
+    explicit GDALVectorSetFieldTypeAlgorithm(bool standaloneStep = false);
 
     CPLJSONObject Get_OGR_SCHEMA_OpenOption_Layer() const override;
 
@@ -52,21 +52,21 @@ class GDALVectorChangeFieldTypeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*             GDALVectorChangeFieldTypeAlgorithmStandalone             */
+/*               GDALVectorSetFieldTypeAlgorithmStandalone              */
 /************************************************************************/
 
-class GDALVectorChangeFieldTypeAlgorithmStandalone final
-    : public GDALVectorChangeFieldTypeAlgorithm
+class GDALVectorSetFieldTypeAlgorithmStandalone final
+    : public GDALVectorSetFieldTypeAlgorithm
 {
   public:
-    GDALVectorChangeFieldTypeAlgorithmStandalone()
-        : GDALVectorChangeFieldTypeAlgorithm(/* standaloneStep = */ true)
+    GDALVectorSetFieldTypeAlgorithmStandalone()
+        : GDALVectorSetFieldTypeAlgorithm(/* standaloneStep = */ true)
     {
     }
 
-    ~GDALVectorChangeFieldTypeAlgorithmStandalone() override;
+    ~GDALVectorSetFieldTypeAlgorithmStandalone() override;
 };
 
 //! @endcond
 
-#endif /* GDALALG_VECTOR_CHANGE_FIELD_TYPE_INCLUDED */
+#endif /* GDALALG_VECTOR_SET_FIELD_TYPE_INCLUDED */

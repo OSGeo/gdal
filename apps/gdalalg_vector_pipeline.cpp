@@ -14,7 +14,6 @@
 #include "gdalalg_materialize.h"
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_buffer.h"
-#include "gdalalg_vector_change_field_type.h"
 #include "gdalalg_vector_check_coverage.h"
 #include "gdalalg_vector_check_geometry.h"
 #include "gdalalg_vector_clean_coverage.h"
@@ -30,6 +29,7 @@
 #include "gdalalg_vector_reproject.h"
 #include "gdalalg_vector_segmentize.h"
 #include "gdalalg_vector_select.h"
+#include "gdalalg_vector_set_field_type.h"
 #include "gdalalg_vector_set_geom_type.h"
 #include "gdalalg_vector_simplify.h"
 #include "gdalalg_vector_simplify_coverage.h"
@@ -143,7 +143,6 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
         addSuffixIfNeeded(GDALVectorInfoAlgorithm::NAME));
 
     registry.Register<GDALVectorBufferAlgorithm>();
-    registry.Register<GDALVectorChangeFieldTypeAlgorithm>();
     registry.Register<GDALVectorCheckCoverageAlgorithm>();
     registry.Register<GDALVectorCheckGeometryAlgorithm>();
     registry.Register<GDALVectorConcatAlgorithm>();
@@ -172,6 +171,7 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALVectorSelectAlgorithm>(
         addSuffixIfNeeded(GDALVectorSelectAlgorithm::NAME));
 
+    registry.Register<GDALVectorSetFieldTypeAlgorithm>();
     registry.Register<GDALVectorSetGeomTypeAlgorithm>();
     registry.Register<GDALVectorSimplifyAlgorithm>();
     registry.Register<GDALVectorSimplifyCoverageAlgorithm>();

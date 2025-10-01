@@ -1,7 +1,7 @@
-.. _gdal_vector_change_field_type:
+.. _gdal_vector_set_field_type:
 
 ================================================================================
-``gdal vector change-field-type``
+``gdal vector set-field-type``
 ================================================================================
 
 .. versionadded:: 3.12
@@ -10,19 +10,19 @@
 
     Change the type of a field of a vector layer.
 
-.. Index:: gdal vector change-field-type
+.. Index:: gdal vector set-field-type
 
 Synopsis
 --------
 
-.. program-output:: gdal vector change-field-type --help-doc
+.. program-output:: gdal vector set-field-type --help-doc
 
 Description
 -----------
 
-:program:`gdal vector change-field-type` can be used to change the field type of a vector dataset:
+:program:`gdal vector set-field-type` can be used to modify the field type of a vector dataset:
 
-``change-field-type`` can also be used as a step of :ref:`gdal_vector_pipeline`.
+``set-field-type`` can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 
 Standard options
@@ -46,7 +46,7 @@ Standard options
 
 .. option:: --src-field-type <FIELD-TYPE>
 
-    The field type of the fields to change.
+    The field type of the fields to modify.
     Valid values are: ``Integer``, ``IntegerList``, ``Real``, ``RealList``, ``String``, ``StringList``, ``Binary``,  ` ``Date``, ``Time``, ``DateTime``, ``Integer64``, ``Integer64List``.
     A field subtype can be specified instead of a field type. Valid values are: ``Boolean``, ``Int16``, ``Float32``, ``JSON``, ``UUID``.
 
@@ -81,11 +81,11 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal vector change-field-type input.gpkg output.gpkg --field-name myfield --field-type Integer
+        $ gdal vector set-field-type input.gpkg output.gpkg --field-name myfield --field-type Integer
 
 .. example::
    :title: Change the type of all fields of type Date to DateTime
 
    .. code-block:: bash
 
-        $ gdal vector change-field-type input.gpkg output.gpkg --src-field-type Date --dst-field-type DateTime
+        $ gdal vector set-field-type input.gpkg output.gpkg --src-field-type Date --dst-field-type DateTime
