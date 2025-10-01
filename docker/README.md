@@ -118,6 +118,8 @@ that the user invoking the build happens to run, but for others as well.
 
 There is a small setup process depending on your operating system. Refer to [Preparation toward running Docker on ARM Mac: Building multi-arch images with Docker BuildX](https://medium.com/nttlabs/buildx-multiarch-2c6c2df00ca2).
 
+Also, your docker daemon must be set to use the containerd image store.
+
 #### Example Scenario
 
 If you're running Docker for MacOS with an Intel CPU
