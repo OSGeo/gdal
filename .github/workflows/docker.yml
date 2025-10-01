@@ -87,6 +87,7 @@ jobs:
               ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --push
             else
               ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
+            fi
           fi
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} gdalinfo --formats
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} ogrinfo --formats
