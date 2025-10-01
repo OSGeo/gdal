@@ -115,7 +115,7 @@ The following options are available:
 .. option:: --method sum|mean|min|max|stddev|median|mode
 
     Function to apply to the weighted source pixels in the neighborhood defined by the kernel.
-    Defaults to ``mean``, except when :option:`--kernel` is set to ``u`` or ``v``, in which
+    Defaults to ``mean``, except when :option:`--kernel` is set to ``u``, ``v``, ``edge1`` or ``edge2``, in which
     case ``sum`` is used.
 
     - ``sum``: computes the sum of the value of contributing source pixels

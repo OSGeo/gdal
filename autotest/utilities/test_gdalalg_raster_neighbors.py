@@ -25,17 +25,20 @@ def neighbors():
     return raster.InstantiateSubAlgorithm("neighbors")
 
 
-def test_gdalalg_raster_neighbors_kernel_sharpen(neighbors):
+@pytest.mark.parametrize(
+    "kernel,checksum", [("sharpen", 4252), ("edge1", 2278), ("edge2", 2311)]
+)
+def test_gdalalg_raster_neighbors_kernel_sharpen(neighbors, kernel, checksum):
 
     neighbors["input"] = "../gcore/data/byte.tif"
-    neighbors["kernel"] = "sharpen"
+    neighbors["kernel"] = kernel
     neighbors["output-format"] = "MEM"
     neighbors["datatype"] = "Byte"
     assert neighbors.Run()
 
     out_ds = neighbors["output"].GetDataset()
     out_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
-    assert out_ds.GetRasterBand(1).Checksum() == 4252
+    assert out_ds.GetRasterBand(1).Checksum() == checksum
 
 
 def test_gdalalg_raster_neighbors_kernel_manual(neighbors):

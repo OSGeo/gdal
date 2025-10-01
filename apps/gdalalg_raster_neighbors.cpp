@@ -420,11 +420,13 @@ bool GDALRasterNeighborsAlgorithm::RunStep(GDALPipelineStepRunContext &)
     {
         while (m_method.size() < m_kernel.size())
         {
-            m_method.push_back(m_method.empty()
-                                   ? ((m_kernel[0] == "u" || m_kernel[0] == "v")
-                                          ? "sum"
-                                          : "mean")
-                                   : m_method.back());
+            m_method.push_back(
+                m_method.empty()
+                    ? ((m_kernel[0] == "u" || m_kernel[0] == "v" ||
+                        m_kernel[0] == "edge1" || m_kernel[0] == "edge2")
+                           ? "sum"
+                           : "mean")
+                    : m_method.back());
         }
     }
 
@@ -439,7 +441,7 @@ bool GDALRasterNeighborsAlgorithm::RunStep(GDALPipelineStepRunContext &)
         if (kernel == "edge1" || kernel == "edge2" || kernel == "sharpen")
         {
             CPLAssert(m_size == 3);
-            def = GetKernelDef(kernel, true, 1.0);
+            def = GetKernelDef(kernel, false, 1.0);
         }
         else if (kernel == "u" || kernel == "v")
         {
