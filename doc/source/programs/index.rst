@@ -196,7 +196,6 @@ Vector commands
    gdal_vector_check_geometry
    gdal_vector_clean_coverage
    gdal_vector_clip
-   gdal_vector_change_field_type
    gdal_vector_concat
    gdal_vector_convert
    gdal_vector_edit
@@ -214,6 +213,7 @@ Vector commands
    gdal_vector_reproject
    gdal_vector_select
    gdal_vector_segmentize
+   gdal_vector_set_field_type
    gdal_vector_set_geom_type
    gdal_vector_simplify
    gdal_vector_simplify_coverage
@@ -230,7 +230,6 @@ Vector commands
     - :ref:`gdal_vector_check_geometry`: Check a dataset for invalid or non-simple geometries
     - :ref:`gdal_vector_clean_coverage`: Remove gaps and overlaps in a polygon dataset
     - :ref:`gdal_vector_clip`: Clip a vector dataset
-    - :ref:`gdal_vector_change_field_type`: Change the type of a field of a vector dataset
     - :ref:`gdal_vector_concat`: Concatenate vector datasets
     - :ref:`gdal_vector_convert`: Convert a vector dataset
     - :ref:`gdal_vector_edit`: Edit metadata of a vector dataset
@@ -247,6 +246,7 @@ Vector commands
     - :ref:`gdal_vector_reproject`: Reproject a vector dataset
     - :ref:`gdal_vector_segmentize`: Segmentize geometries of a vector dataset
     - :ref:`gdal_vector_select`: Select a subset of fields from a vector dataset.
+    - :ref:`gdal_vector_set_field_type`: Modify the type of a field of a vector dataset
     - :ref:`gdal_vector_set_geom_type`: Modify the geometry type of a vector dataset
     - :ref:`gdal_vector_simplify`: Simplify geometries of a vector dataset
     - :ref:`gdal_vector_simplify_coverage`: Simplify shared boundaries of a polygonal vector dataset

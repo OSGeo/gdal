@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal vector change-field-type' testing
+# Purpose:  'gdal vector set-field-type' testing
 # Author:   Alessandro Pasotti, <elpaso at itopen dot it>
 #
 ###############################################################################
@@ -19,8 +19,8 @@ import test_cli_utilities
 from osgeo import gdal, ogr
 
 
-def get_change_field_type_alg():
-    return gdal.GetGlobalAlgorithmRegistry()["vector"]["change-field-type"]
+def get_set_field_type_alg():
+    return gdal.GetGlobalAlgorithmRegistry()["vector"]["set-field-type"]
 
 
 @pytest.mark.parametrize(
@@ -97,7 +97,7 @@ def get_change_field_type_alg():
         (ogr.OFTInteger, ogr.OFSTBoolean, "integer", False, 0),
     ],
 )
-def test_gdalalg_vector_change_field_type(
+def test_gdalalg_vector_set_field_type(
     src_type, src_subtype, dest_type_str, src_value, expected_value
 ):
 
@@ -117,7 +117,7 @@ def test_gdalalg_vector_change_field_type(
     f["new_type"] = dest_type_str
     lyr.CreateFeature(f)
 
-    alg = get_change_field_type_alg()
+    alg = get_set_field_type_alg()
     alg["input"] = src_ds
 
     assert alg.ParseCommandLineArguments(
@@ -158,7 +158,7 @@ def test_gdalalg_vector_change_field_type(
     assert geom is not None and geom.ExportToWkt() == "POINT (1 2)"
 
 
-def test_gdalalg_vector_change_field_type_errors():
+def test_gdalalg_vector_set_field_type_errors():
     src_ds = gdal.GetDriverByName("MEM").CreateDataSource("")
     lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbNone)
     fld_defn = ogr.FieldDefn("value", ogr.OFTString)
@@ -169,7 +169,7 @@ def test_gdalalg_vector_change_field_type_errors():
     lyr.CreateFeature(f)
 
     # Wrong field name
-    alg = get_change_field_type_alg()
+    alg = get_set_field_type_alg()
     alg["input"] = src_ds
 
     with pytest.raises(
@@ -189,11 +189,11 @@ def test_gdalalg_vector_change_field_type_errors():
         )
 
     # Wrong field type
-    alg = get_change_field_type_alg()
+    alg = get_set_field_type_alg()
     alg["input"] = src_ds
     with pytest.raises(
         Exception,
-        match="change-field-type: Invalid value for argument 'field-type': 'NonExistingType'",
+        match="set-field-type: Invalid value for argument 'field-type': 'NonExistingType'",
     ):
         alg.ParseCommandLineArguments(
             [
@@ -209,7 +209,7 @@ def test_gdalalg_vector_change_field_type_errors():
         )
 
     # No input
-    alg = get_change_field_type_alg()
+    alg = get_set_field_type_alg()
     with pytest.raises(
         Exception,
         match="Positional arguments starting at 'INPUT' have not been specified.",
@@ -228,7 +228,7 @@ def test_gdalalg_vector_change_field_type_errors():
         )
 
     # No output
-    alg = get_change_field_type_alg()
+    alg = get_set_field_type_alg()
     alg["input"] = src_ds
     with pytest.raises(
         Exception,
@@ -246,11 +246,11 @@ def test_gdalalg_vector_change_field_type_errors():
         )
 
 
-def test_gdalalg_change_field_type_in_pipeline():
+def test_gdalalg_set_field_type_in_pipeline():
 
     with gdal.Run(
         "pipeline",
-        pipeline="read ../ogr/data/poly.shp ! change-field-type --field-name EAS_ID --field-type Integer ! write --output-format stream stream",
+        pipeline="read ../ogr/data/poly.shp ! set-field-type --field-name EAS_ID --field-type Integer ! write --output-format stream stream",
     ) as alg:
         ds = alg.Output()
         lyr = ds.GetLayer(0)
@@ -262,53 +262,53 @@ def test_gdalalg_change_field_type_in_pipeline():
     ):
         gdal.Run(
             "pipeline",
-            pipeline="read ../ogr/data/poly.shp ! change-field-type --field-name invalid_field --field-type Integer ! write --output-format stream stream",
+            pipeline="read ../ogr/data/poly.shp ! set-field-type --field-name invalid_field --field-type Integer ! write --output-format stream stream",
         )
 
 
-def test_gdalalg_change_field_type_completion(tmp_path):
+def test_gdalalg_set_field_type_completion(tmp_path):
 
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary missing")
 
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal vector change-field-type --field-type"
+        f"{gdal_path} completion gdal vector set-field-type --field-type"
     )
     assert "Binary" in out
 
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal vector change-field-type --input ../ogr/data/poly.shp --field-name"
+        f"{gdal_path} completion gdal vector set-field-type --input ../ogr/data/poly.shp --field-name"
     )
     assert "EAS_ID" in out
 
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! change-field-type --field-name "
+        f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! set-field-type --field-name "
     )
     assert "EAS_ID" in out
 
     # No completion when there is a tee operator as this can be a slow operation
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! tee [ write /vsimem/out.gpkg ] ! change-field-type --field-name "
+        f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! tee [ write /vsimem/out.gpkg ] ! set-field-type --field-name "
     )
     assert "EAS_ID" not in out
 
     # Or with contour
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal pipeline read ../gcore/data/byte.tif ! contour --interval 10 ! change-field-type --field-name "
+        f"{gdal_path} completion gdal pipeline read ../gcore/data/byte.tif ! contour --interval 10 ! set-field-type --field-name "
     )
     assert "EAS_ID" not in out
 
 
 @pytest.mark.require_driver("GPKG")
-def test_gdalalg_change_field_type_multiple_layers(tmp_vsimem, tmp_path):
+def test_gdalalg_set_field_type_multiple_layers(tmp_vsimem, tmp_path):
 
     # Create a GPKG with multiple layers
     in_filename = str(
-        tmp_vsimem / "test_gdalalg_change_field_type_multiple_layers_in.gpkg"
+        tmp_vsimem / "test_gdalalg_set_field_type_multiple_layers_in.gpkg"
     )
     out_filename = str(
-        tmp_path / "test_gdalalg_change_field_type_multiple_layers_out.gpkg"
+        tmp_path / "test_gdalalg_set_field_type_multiple_layers_out.gpkg"
     )
     src_ds = gdal.GetDriverByName("GPKG").CreateDataSource(in_filename)
 
@@ -329,7 +329,7 @@ def test_gdalalg_change_field_type_multiple_layers(tmp_vsimem, tmp_path):
     lyr.CreateFeature(f)
     lyr = None
 
-    alg = get_change_field_type_alg()
+    alg = get_set_field_type_alg()
     alg["input"] = src_ds
 
     assert alg.ParseCommandLineArguments(
@@ -371,7 +371,7 @@ def test_gdalalg_change_field_type_multiple_layers(tmp_vsimem, tmp_path):
         assert f["test_field"] == 456
 
     # Test with --layer
-    alg = get_change_field_type_alg()
+    alg = get_set_field_type_alg()
     alg["input"] = src_ds
     assert alg.ParseCommandLineArguments(
         [
@@ -405,7 +405,7 @@ def test_gdalalg_change_field_type_multiple_layers(tmp_vsimem, tmp_path):
         assert f["test_field"] == 456
 
 
-def test_gdalalg_change_field_type_src_field_type():
+def test_gdalalg_set_field_type_src_field_type():
 
     src_ds = gdal.GetDriverByName("MEM").CreateDataSource("")
     lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbPoint)
@@ -420,7 +420,7 @@ def test_gdalalg_change_field_type_src_field_type():
 
     alg = gdal.Run(
         "vector",
-        "change-field-type",
+        "set-field-type",
         input=src_ds,
         src_field_type="String",
         dst_field_type="Integer",
@@ -435,7 +435,7 @@ def test_gdalalg_change_field_type_src_field_type():
 
 
 @pytest.mark.require_driver("CSV")
-def test_gdalalg_change_field_type_pipeline_fuse_in_open(tmp_vsimem):
+def test_gdalalg_set_field_type_pipeline_fuse_in_open(tmp_vsimem):
 
     with gdal.VSIFile(tmp_vsimem / "test.csv", "wb") as f:
         f.write(b"str,int,int2\n")
@@ -445,7 +445,7 @@ def test_gdalalg_change_field_type_pipeline_fuse_in_open(tmp_vsimem):
 
     with gdal.Run(
         "pipeline",
-        pipeline=f"read {tmp_vsimem}/test.csv ! change-field-type --src-field-type String --field-type Date ! change-field-type --field-name int --field-type Integer64 ! write --format MEM --output whatever",
+        pipeline=f"read {tmp_vsimem}/test.csv ! set-field-type --src-field-type String --field-type Date ! set-field-type --field-name int --field-type Integer64 ! write --format MEM --output whatever",
     ) as alg:
         ds = alg.Output()
         lyr = ds.GetLayer(0)
@@ -455,7 +455,7 @@ def test_gdalalg_change_field_type_pipeline_fuse_in_open(tmp_vsimem):
         assert lyr_defn.GetFieldDefn(2).GetType() == ogr.OFTInteger
 
 
-def test_gdalalg_change_field_type_pipeline_fuse_in_open_not_supported(tmp_vsimem):
+def test_gdalalg_set_field_type_pipeline_fuse_in_open_not_supported(tmp_vsimem):
 
     with gdal.GetDriverByName("ESRI Shapefile").CreateVector(
         tmp_vsimem / "test.dbf"
@@ -467,7 +467,7 @@ def test_gdalalg_change_field_type_pipeline_fuse_in_open_not_supported(tmp_vsime
 
     with gdal.Run(
         "pipeline",
-        pipeline=f"read {tmp_vsimem}/test.dbf ! change-field-type --src-field-type String --field-type Date ! change-field-type --field-name int --field-type Integer64 ! write --format MEM --output whatever",
+        pipeline=f"read {tmp_vsimem}/test.dbf ! set-field-type --src-field-type String --field-type Date ! set-field-type --field-name int --field-type Integer64 ! write --format MEM --output whatever",
     ) as alg:
         ds = alg.Output()
         lyr = ds.GetLayer(0)

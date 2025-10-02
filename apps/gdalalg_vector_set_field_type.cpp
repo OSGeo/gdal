@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "change-field-type" step of "vector pipeline"
+ * Purpose:  "set-field-type" step of "vector pipeline"
  * Author:   Alessandro Pasotti <elpaso at itopen dot it>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_change_field_type.h"
+#include "gdalalg_vector_set_field_type.h"
 #include "gdal_priv.h"
 
 //! @cond Doxygen_Suppress
@@ -20,10 +20,10 @@
 #endif
 
 /************************************************************************/
-/*                      GDALVectorChangeFieldTypeAlgorithm()            */
+/*                      GDALVectorSetFieldTypeAlgorithm()               */
 /************************************************************************/
 
-GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
+GDALVectorSetFieldTypeAlgorithm::GDALVectorSetFieldTypeAlgorithm(
     bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
@@ -52,7 +52,7 @@ GDALVectorChangeFieldTypeAlgorithm::GDALVectorChangeFieldTypeAlgorithm(
 /************************************************************************/
 
 CPLJSONObject
-GDALVectorChangeFieldTypeAlgorithm::Get_OGR_SCHEMA_OpenOption_Layer() const
+GDALVectorSetFieldTypeAlgorithm::Get_OGR_SCHEMA_OpenOption_Layer() const
 {
     CPLJSONObject oLayer;
     oLayer.Set("name", m_activeLayer.empty() ? "*" : m_activeLayer);
@@ -84,7 +84,7 @@ GDALVectorChangeFieldTypeAlgorithm::Get_OGR_SCHEMA_OpenOption_Layer() const
 /*                            GlobalValidation()                        */
 /************************************************************************/
 
-bool GDALVectorChangeFieldTypeAlgorithm::GlobalValidation() const
+bool GDALVectorSetFieldTypeAlgorithm::GlobalValidation() const
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     auto layer = m_activeLayer.empty()
@@ -109,20 +109,22 @@ bool GDALVectorChangeFieldTypeAlgorithm::GlobalValidation() const
 }
 
 /************************************************************************/
-/*                   GDALVectorChangeFieldTypeAlgorithmLayer            */
+/*                     GDALVectorSetFieldTypeAlgorithmLayer             */
 /************************************************************************/
 
 namespace
 {
-class GDALVectorChangeFieldTypeAlgorithmLayer final
+class GDALVectorSetFieldTypeAlgorithmLayer final
     : public GDALVectorPipelineOutputLayer
 {
   public:
-    GDALVectorChangeFieldTypeAlgorithmLayer(
-        OGRLayer &oSrcLayer, const std::string &activeLayer,
-        const std::string &fieldName, const OGRFieldType srcFieldType,
-        const OGRFieldSubType srcFieldSubType, const OGRFieldType newFieldType,
-        const OGRFieldSubType newFieldSubType)
+    GDALVectorSetFieldTypeAlgorithmLayer(OGRLayer &oSrcLayer,
+                                         const std::string &activeLayer,
+                                         const std::string &fieldName,
+                                         const OGRFieldType srcFieldType,
+                                         const OGRFieldSubType srcFieldSubType,
+                                         const OGRFieldType newFieldType,
+                                         const OGRFieldSubType newFieldSubType)
         : GDALVectorPipelineOutputLayer(oSrcLayer)
     {
 
@@ -175,7 +177,7 @@ class GDALVectorChangeFieldTypeAlgorithmLayer final
         }
     }
 
-    ~GDALVectorChangeFieldTypeAlgorithmLayer() override
+    ~GDALVectorSetFieldTypeAlgorithmLayer() override
     {
         m_poFeatureDefn->Release();
     }
@@ -233,16 +235,16 @@ class GDALVectorChangeFieldTypeAlgorithmLayer final
     bool m_passThrough = true;
     std::vector<int> m_identityMap{};
 
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorChangeFieldTypeAlgorithmLayer)
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorSetFieldTypeAlgorithmLayer)
 };
 
 }  // namespace
 
 /************************************************************************/
-/*                GDALVectorChangeFieldTypeAlgorithm::RunStep()                    */
+/*              GDALVectorSetFieldTypeAlgorithm::RunStep()              */
 /************************************************************************/
 
-bool GDALVectorChangeFieldTypeAlgorithm::RunStep(GDALPipelineStepRunContext &)
+bool GDALVectorSetFieldTypeAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
@@ -265,7 +267,7 @@ bool GDALVectorChangeFieldTypeAlgorithm::RunStep(GDALPipelineStepRunContext &)
         {
             outDS->AddLayer(
                 *poSrcLayer,
-                std::make_unique<GDALVectorChangeFieldTypeAlgorithmLayer>(
+                std::make_unique<GDALVectorSetFieldTypeAlgorithmLayer>(
                     *poSrcLayer, m_activeLayer, m_fieldName, m_srcFieldType,
                     m_srcFieldSubType, m_newFieldType, m_newFieldSubType));
         }
@@ -277,7 +279,7 @@ bool GDALVectorChangeFieldTypeAlgorithm::RunStep(GDALPipelineStepRunContext &)
     return ret;
 }
 
-GDALVectorChangeFieldTypeAlgorithmStandalone::
-    ~GDALVectorChangeFieldTypeAlgorithmStandalone() = default;
+GDALVectorSetFieldTypeAlgorithmStandalone::
+    ~GDALVectorSetFieldTypeAlgorithmStandalone() = default;
 
 //! @endcond
