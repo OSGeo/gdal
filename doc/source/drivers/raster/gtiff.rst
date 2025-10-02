@@ -559,7 +559,7 @@ This driver supports the following creation options:
       * ``NONE`` is the default.
 
 -  .. co:: NUM_THREADS
-      :choices: <integer>, NUM_CPUS
+      :choices: <integer>, ALL_CPUS
       :default: 1
       :since: 2.1
 
