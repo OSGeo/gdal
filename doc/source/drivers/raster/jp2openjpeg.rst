@@ -71,7 +71,7 @@ Starting with OpenJPEG 2.2.0, multi-threaded decoding can also be
 enabled at the code-block level. This must be enabled with the
 OPJ_NUM_THREADS environment variable (note: this is a system environment
 variable, not a GDAL configuration option), which can be set to a
-numeric value or NUM_CPUS. Its default value is 1. Starting with GDAL
+numeric value or ALL_CPUS. Its default value is 1. Starting with GDAL
 2.3, this multi-threading at code-block level is automatically enabled
 by GDAL.
 Starting with GDAL 3.0.1 and OpenJPEG 2.3.2, multi-threaded encoding is
