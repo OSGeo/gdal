@@ -181,7 +181,7 @@ suffix to the option name, but this is now considered a legacy behavior.
       This can also be set with the GDAL_TIFF_OVR_BLOCKSIZE configuration option.
 
 -  .. oco:: NUM_THREADS
-      :choices: <integer>, NUM_CPUS
+      :choices: <integer>, ALL_CPUS
       :default: 1
 
       Enable multi-threaded compression by specifying the number of worker
@@ -768,7 +768,7 @@ This driver supports the following creation options:
       * ``NONE`` is the default.
 
 -  .. co:: NUM_THREADS
-      :choices: <integer>, NUM_CPUS
+      :choices: <integer>, ALL_CPUS
       :default: 1
       :since: 2.1
 
