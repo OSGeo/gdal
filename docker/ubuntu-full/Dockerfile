@@ -347,7 +347,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
 # Build libqb3
 RUN --mount=type=cache,id=ubuntu-full-libqb3,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
-    && git clone https://github.com/lucianpls/QB3.git \
+    && git clone --depth 1 https://github.com/lucianpls/QB3.git \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
         echo "Downloading cache..."; \
         rsync -ra "${RSYNC_REMOTE}/libqb3/${GCC_ARCH}/" "$HOME/.cache/"; \
@@ -396,7 +396,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get install -y --fix-missing --no-install-recommends libgflags-dev${APT_ARCH_SUFFIX}
 RUN --mount=type=cache,id=ubuntu-full-libjxl,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
-    && git clone https://github.com/libjxl/libjxl.git --recursive \
+    && git clone --depth 1 --shallow-submodules https://github.com/libjxl/libjxl.git --recursive \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
         echo "Downloading cache..."; \
         rsync -ra "${RSYNC_REMOTE}/libjxl/${GCC_ARCH}/" "$HOME/.cache/"; \

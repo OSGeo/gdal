@@ -30,8 +30,8 @@ jobs:
           - platform: amd64
             base: ubuntu-full
             proprietary_sdks: 'true'
-    name: ${{ matrix.base }}-${{ matrix.platform }} Proprietary-SDKs=${{ matrix.proprietary_sdks }}
-    runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm64' }}
+    name: ${{ matrix.base }}-${{ matrix.platform }} proprietary-sdks=${{ matrix.proprietary_sdks }}
+    runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
     permissions:
       contents: read
       attestations: write
@@ -39,7 +39,7 @@ jobs:
       id-token: write
 
     steps:
-      - name: Set PUSH_PACKAGE due to schedule
+      - name: Set PUSH_PACKAGES due to schedule
         if: github.event_name == 'schedule'
         run: |
           echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
@@ -83,11 +83,14 @@ jobs:
             echo "PUSH_PACKAGES=false" >> $GITHUB_ENV
             ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --with-oracle --with-mrsid --with-ecw
           else
-            ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
+            if test "${{ env.PUSH_PACKAGES }}" == "true"; then
+              ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --push
+            else
+              ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
+            fi
           fi
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} gdalinfo --formats
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} ogrinfo --formats
-
   create-manifest:
     permissions:
       contents: read
@@ -101,7 +104,7 @@ jobs:
       matrix:
         tag: ["ubuntu-full", "ubuntu-small", "alpine-small", "alpine-normal"]
     steps:
-      - name: Set PUSH_PACKAGE due to schedule
+      - name: Set PUSH_PACKAGES due to schedule
         if: github.event_name == 'schedule'
         run: |
           echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
@@ -118,5 +121,9 @@ jobs:
         run: |
           docker buildx imagetools create \
           -t ghcr.io/osgeo/gdal:${{ matrix.tag }}-latest \
-          ghcr.io/osgeo/osgeo:${{ matrix.tag }}-latest-amd64 \
-          ghcr.io/osgeo/osgeo:${{ matrix.tag }}-latest-arm64
+          ghcr.io/osgeo/gdal:${{ matrix.tag }}-latest-amd64 \
+          ghcr.io/osgeo/gdal:${{ matrix.tag }}-latest-arm64
+      - name: Alias ubuntu-full-latest to latest
+        if: matrix.tag == 'ubuntu-full'
+        run: |
+          docker buildx imagetools create ghcr.io/osgeo/gdal:ubuntu-full-latest --tag ghcr.io/osgeo/gdal:latest
