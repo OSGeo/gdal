@@ -48,7 +48,8 @@ The following options are available:
 
 .. option:: --band <BAND>
 
-    Source band number (indexing starts at one)
+    Source band number (indexing starts at one). If it is not specified, all
+    input bands are used.
 
 .. option:: --kernel
 
@@ -97,8 +98,10 @@ The following options are available:
       adding the sum of the (contributing, i.e. non nodata) weighted source pixels
       and dividing it by the sum of the coefficients in the kernel.
 
-    If  :option:`--kernel` is specified several times, there will be as many
-    output bands as the number of values of the option.
+    If :option:`--kernel` is specified several times, there will be as many
+    output bands as the number of values of the option times the number of bands
+    of the input dataset when :option:`--band` is not specified, or as many
+    output bands as the number of values of the :option:`--kernel` option.
 
 .. option:: --size <SIZE>
 
