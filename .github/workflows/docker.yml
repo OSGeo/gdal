@@ -37,10 +37,9 @@ jobs:
       attestations: write
       packages: write
       id-token: write
-
     steps:
       - name: Set PUSH_PACKAGES due to schedule
-        if: github.event_name == 'schedule'
+        if: github.event_name == 'schedule' || github.event_name ==  'workflow_dispatch'
         run: |
           echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
       - name: Checkout
@@ -105,7 +104,7 @@ jobs:
         tag: ["ubuntu-full", "ubuntu-small", "alpine-small", "alpine-normal"]
     steps:
       - name: Set PUSH_PACKAGES due to schedule
-        if: github.event_name == 'schedule'
+        if: github.event_name == 'schedule' || github.event_name ==  'workflow_dispatch'
         run: |
           echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
       - name: Login to GitHub Container Registry
@@ -115,7 +114,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create and push multi-platform manifest
         if: env.PUSH_PACKAGES == 'true'
         run: |
