@@ -5850,3 +5850,22 @@ def test_zarr_read_zarr_with_stac_proj_wkt2():
 
     ds = gdal.Open("data/zarr/zarr_with_stac_proj_wkt2.zarr")
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+
+
+###############################################################################
+#
+
+
+@pytest.mark.parametrize(
+    "file_path",
+    [
+        ("data/zarr/array_attrs.zarr/.zarray"),
+        ("data/zarr/group.zarr/.zgroup"),
+        ("data/zarr/group_with_zmetadata.zarr/.zmetadata"),
+        ("data/zarr/v3/test.zr3/zarr.json"),
+    ],
+)
+@gdaltest.enable_exceptions()
+def test_zarr_identify_file_extensions(file_path):
+    ds = gdal.Open(file_path)
+    ds.GetRasterBand(1).Checksum()
