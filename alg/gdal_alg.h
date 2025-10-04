@@ -724,6 +724,54 @@ GDALDatasetH CPL_DLL GDALApplyVerticalShiftGrid(GDALDatasetH hSrcDataset,
     /*! @endcond */
     ;
 
+/************************************************************************/
+/*  Zonal statistics interface                                          */
+/************************************************************************/
+
+CPLErr CPL_DLL GDALZonalStats(GDALDatasetH hSrcDS, GDALDatasetH hWeightsDS,
+                              GDALDatasetH hZonesDS, GDALDatasetH hOutDS,
+                              const void *poOptions,
+                              GDALProgressFunc pfnProgress, void *pProgressArg);
+
 CPL_C_END
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+#include <vector>
+#include <string>
+
+extern "C++"
+{
+    /*! @cond Doxygen_Suppress */
+    struct GDALZonalStatsOptions
+    {
+        enum PixelIntersection
+        {
+            DEFAULT,
+            ALL_TOUCHED,
+            FRACTIONAL,
+        };
+
+        enum Strategy
+        {
+            FEATURE_SEQUENTIAL,
+            RASTER_SEQUENTIAL,
+        };
+
+        PixelIntersection pixels{DEFAULT};
+        Strategy strategy{FEATURE_SEQUENTIAL};
+        std::vector<std::string> stats{};
+        std::vector<std::string> include_fields{};
+        std::vector<int> bands{};
+        std::string zones_layer{};
+        std::size_t memory{0};
+        int zones_band{};
+        int weights_band{};
+    };
+
+    /*! @endcond */
+}
+
+#endif
 
 #endif /* ndef GDAL_ALG_H_INCLUDED */

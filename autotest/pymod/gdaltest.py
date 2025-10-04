@@ -2137,12 +2137,16 @@ def error_raised(type, match=""):
     with error_handler(handler):
         yield
 
+    received = f'{[(err_levels[err["level"]], err["message"]) for err in errors]}'
+
     if type == gdal.CE_None:
-        assert not any([err["level"] != gdal.CE_Debug for err in errors])
+        assert not any(
+            [err["level"] != gdal.CE_Debug for err in errors]
+        ), f"Received: {received}"
     else:
         assert any(
             [err["level"] == type and match in err["message"] for err in errors]
-        ), f'Did not receive an error of type {err_levels[type]} matching "{match}". Received: {[(err["level"], err["message"]) for err in errors]}'
+        ), f'Did not receive an error of type {err_levels[type]} matching "{match}. Received: {received}'
 
 
 ###############################################################################

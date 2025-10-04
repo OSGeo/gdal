@@ -808,6 +808,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_zonal_stats",
+        "gdal-raster-zonal-stats",
+        "Compute raster zonal statistics.",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector",
         "gdal-vector",
         "Entry point for vector commands",

@@ -16,6 +16,8 @@
 
 #include "gdal.h"
 
+class GDALRasterWindow;
+
 /* ******************************************************************** */
 /*                             GDALGeoTransform                         */
 /* ******************************************************************** */
@@ -149,6 +151,22 @@ class GDALGeoTransform
         GDALApplyGeoTransform(data(), dfPixel, dfLine, pdfGeoX, pdfGeoY);
     }
 
+    /** Apply a geotransform to an Envelope in geographic coordinates.
+ *
+ * @param env An envelope in geographic coordinates
+ * @param window A window in pixel/line coordinates
+ * @return true if the geotransform was successfully applied
+ */
+    bool Apply(const OGREnvelope &env, GDALRasterWindow &window) const;
+
+    /** Apply a geotransform to an Envelope in pixel/line coordinates.
+     *
+     * @param window A window in pixel/line coordinates
+     * @param env An envelope in geographic coordinates
+     * @return true if the geotransform was successfully applied
+     */
+    bool Apply(const GDALRasterWindow &window, OGREnvelope &env) const;
+
     /**
      * Invert Geotransform.
      *
@@ -177,6 +195,13 @@ class GDALGeoTransform
         xrot *= dfYRatio;
         yrot *= dfXRatio;
         yscale *= dfYRatio;
+    }
+
+    /** Check whether the geotransform has a rotation component.
+     */
+    bool IsAxisAligned() const
+    {
+        return xrot == 0 && yrot == 0;
     }
 };
 

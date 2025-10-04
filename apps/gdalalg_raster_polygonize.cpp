@@ -40,14 +40,15 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm(
     AddProgressArg();
     if (standaloneStep)
     {
-        AddOutputFormatArg(&m_format).AddMetadataItem(
-            GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
         AddOpenOptionsArg(&m_openOptions);
         AddInputFormatsArg(&m_inputFormats)
             .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
         AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
         AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
             .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
+
+        AddOutputFormatArg(&m_format).AddMetadataItem(
+            GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
         AddCreationOptionsArg(&m_creationOptions);
         AddLayerCreationOptionsArg(&m_layerCreationOptions);
         AddOverwriteArg(&m_overwrite);

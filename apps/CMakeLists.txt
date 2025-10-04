@@ -91,6 +91,7 @@ target_sources(appslib PRIVATE
   gdalalg_raster_update.cpp
   gdalalg_raster_viewshed.cpp
   gdalalg_raster_write.cpp
+  gdalalg_raster_zonal_stats.cpp
   gdalalg_tee.cpp
   gdalalg_vector.cpp
   gdalalg_vector_info.cpp
