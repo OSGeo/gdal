@@ -427,7 +427,7 @@ EOF
 
     if test "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
         if test "${DOCKER_BUILDX}" = "buildx"; then
-            docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${REPO_IMAGE_NAME}" --push "${SCRIPT_DIR}"
+            docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" --push "${SCRIPT_DIR}"
         else
             docker push "${IMAGE_NAME_WITH_ARCH}"
         fi
@@ -447,7 +447,7 @@ EOF
     # Cleanup previous images
     NEW_IMAGE_ID=$(docker image ls "${IMAGE_NAME_WITH_ARCH}" -q)
     if test "${OLD_IMAGE_ID}" != "" && test "${OLD_IMAGE_ID}" != "${NEW_IMAGE_ID}"; then
-        docker rmi "${OLD_IMAGE_ID}" --force
+        docker rmi "${OLD_IMAGE_ID}" --force 2>/dev/null
     fi
 
     if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" || \
