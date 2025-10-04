@@ -2959,7 +2959,7 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
     }
     if (bFLIRRawThermalImage || bDJIRawThermalImage)
     {
-        poDS.reset(poJPG_DS->OpenRawThermalImage());
+        poDS.reset(poJPG_DS->OpenRawThermalImage(poOpenInfo->pszFilename));
     }
 
     if (poDS &&
@@ -2986,7 +2986,8 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
 /*                       OpenRawThermalImage()                          */
 /************************************************************************/
 
-GDALDataset *JPGDatasetCommon::OpenRawThermalImage()
+GDALDataset *
+JPGDatasetCommon::OpenRawThermalImage(const char *pszConnectionString)
 {
     ReadThermalMetadata();
     if (m_abyRawThermalImage.empty())
@@ -3012,10 +3013,17 @@ GDALDataset *JPGDatasetCommon::OpenRawThermalImage()
         class JPEGRawDataset final : public RawDataset
         {
           public:
-            JPEGRawDataset(int nXSizeIn, int nYSizeIn)
+            JPEGRawDataset(int nXSizeIn, int nYSizeIn,
+                           std::unique_ptr<GDALRasterBand> poBand,
+                           const char *pszJPEGFilename)
             {
                 nRasterXSize = nXSizeIn;
                 nRasterYSize = nYSizeIn;
+
+                SetBand(1, std::move(poBand));
+                SetPhysicalFilename(pszJPEGFilename);
+                SetSubdatasetName("RAW_THERMAL_IMAGE");
+                TryLoadXML();
             }
 
             CPLErr Close() override
@@ -3049,10 +3057,10 @@ GDALDataset *JPGDatasetCommon::OpenRawThermalImage()
             return nullptr;
 
         auto poRawDS = new JPEGRawDataset(m_nRawThermalImageWidth,
-                                          m_nRawThermalImageHeight);
-        poRawDS->SetDescription(osTmpFilename.c_str());
-        poRawDS->SetBand(1, std::move(poBand));
-        poRawDS->MarkSuppressOnClose();
+                                          m_nRawThermalImageHeight,
+                                          std::move(poBand), GetDescription());
+        poRawDS->SetDescription(pszConnectionString);
+        VSIUnlink(osTmpFilename.c_str());
         return poRawDS;
     }
 
@@ -3066,17 +3074,20 @@ GDALDataset *JPGDatasetCommon::OpenRawThermalImage()
         // Cf https://exiftool.org/TagNames/FLIR.html: "Note that most FLIR
         // cameras using the PNG format seem to write the 16-bit raw image data
         // in the wrong byte order."
-        const char *const apszPNGOpenOptions[] = {
-            "@BYTE_ORDER_LITTLE_ENDIAN=YES", nullptr};
-        auto poRawDS = GDALDataset::Open(osTmpFilename.c_str(), GDAL_OF_RASTER,
-                                         nullptr, apszPNGOpenOptions, nullptr);
+        CPLStringList aosPNGOpenOptions;
+        aosPNGOpenOptions.SetNameValue("@BYTE_ORDER_LITTLE_ENDIAN", "YES");
+        aosPNGOpenOptions.SetNameValue("@PHYSICAL_FILENAME", GetDescription());
+        aosPNGOpenOptions.SetNameValue("@SUBDATASET_NAME", "PNG_THERMAL_IMAGE");
+        auto poRawDS =
+            GDALDataset::Open(osTmpFilename.c_str(), GDAL_OF_RASTER, nullptr,
+                              aosPNGOpenOptions.List(), nullptr);
+        VSIUnlink(osTmpFilename.c_str());
         if (poRawDS == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid raw thermal image");
-            VSIUnlink(osTmpFilename.c_str());
             return nullptr;
         }
-        poRawDS->MarkSuppressOnClose();
+        poRawDS->SetDescription(pszConnectionString);
         return poRawDS;
     }
 

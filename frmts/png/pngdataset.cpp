@@ -2046,7 +2046,25 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
 
     // Initialize any PAM information.
     poDS->SetDescription(poOpenInfo->pszFilename);
-    poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
+
+    const char *pszPhysicalFileName =
+        CSLFetchNameValue(poOpenInfo->papszOpenOptions, "PHYSICAL_FILENAME");
+    if (pszPhysicalFileName)
+    {
+        // Code path used by JPGDatasetCommon::OpenRawThermalImage()
+        poDS->SetPhysicalFilename(pszPhysicalFileName);
+        const char *pszSubdatasetName =
+            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SUBDATASET_NAME");
+        if (pszSubdatasetName)
+        {
+            poDS->SetSubdatasetName(pszSubdatasetName);
+        }
+        poDS->TryLoadXML();
+    }
+    else
+    {
+        poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
+    }
 
     // Open overviews.
     poDS->oOvManager.Initialize(poDS, poOpenInfo);
