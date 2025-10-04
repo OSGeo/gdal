@@ -10,7 +10,11 @@ fi
 
 if grep -q "ubuntu" <<< "$GHA_CI_PLATFORM"; then
     CONDA_PLAT="linux"
-    ARCH="64"
+    if grep -q "arm" <<< "$GHA_CI_PLATFORM"; then
+      ARCH="aarch64"
+    else
+      ARCH="64"
+    fi
 fi
 
 if grep -q "macos-14" <<< "$GHA_CI_PLATFORM"; then
