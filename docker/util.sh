@@ -314,11 +314,13 @@ else
     BUILD_ARGS+=("--build-arg" "WITH_CCACHE=1")
 
     IMAGE_NAME_WITH_ARCH="${REPO_IMAGE_NAME}"
+    # If building for a single architecture, include the architecture name
+    # as a suffix in the image name.
     if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" || \
         test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest" || \
         test "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" || \
         test "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest"; then
-        if test "${DOCKER_BUILDX}" != "buildx"; then
+        if test "${DOCKER_BUILDX}" != "buildx" || (echo ${ARCH_PLATFORMS} | grep -v -q ','); then
           ARCH_PLATFORM_ARCH=$(echo "${ARCH_PLATFORMS}" | sed "s/linux\///")
           IMAGE_NAME_WITH_ARCH="${REPO_IMAGE_NAME}-${ARCH_PLATFORM_ARCH}"
         fi
