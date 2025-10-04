@@ -304,6 +304,9 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     CPLString osFilename(poOpenInfo->pszFilename);
+    if (!poOpenInfo->bIsDirectory) {
+        osFilename = CPLGetPathSafe(osFilename);
+    }
     CPLString osArrayOfInterest;
     std::vector<uint64_t> anExtraDimIndices;
     if (STARTS_WITH(poOpenInfo->pszFilename, "ZARR:"))
