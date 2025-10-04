@@ -97,10 +97,10 @@ cd dist_wrk
 
 if test "$TAG" != ""; then
    echo "Generating package '${GDAL_VERSION}' from '${TAG}' tag"
-   git clone "${GITURL}" gdal
+   git clone "${GITURL}" gdal --depth 1
 else
    echo "Generating package '${GDAL_VERSION}' from '${BRANCH}' branch"
-   git clone -b "${BRANCH}" --single-branch "${GITURL}" gdal
+   git clone -b "${BRANCH}" --single-branch "${GITURL}" gdal --depth 1
 fi
 
 if [ ! -d gdal ] ; then
@@ -202,18 +202,22 @@ MD5=md5
 else
 MD5=md5sum
 fi
+SHA="shasum -a 256 -b"
 
 cd ..
 $MD5 "gdal-${GDAL_VERSION}${RC}.tar.xz" > "gdal-${GDAL_VERSION}${RC}.tar.xz.md5"
 $MD5 "gdal-${GDAL_VERSION}${RC}.tar.gz" > "gdal-${GDAL_VERSION}${RC}.tar.gz.md5"
 $MD5 "gdal${COMPRESSED_VERSION}${RC}.zip" > "gdal${COMPRESSED_VERSION}${RC}.zip.md5"
 
+$SHA "gdal-${GDAL_VERSION}${RC}.tar.xz" > "gdal-${GDAL_VERSION}${RC}.tar.xz.checksum.txt"
+$SHA "gdal-${GDAL_VERSION}${RC}.tar.gz" > "gdal-${GDAL_VERSION}${RC}.tar.gz.checksum.txt"
+$SHA "gdal${COMPRESSED_VERSION}${RC}.zip" > "gdal${COMPRESSED_VERSION}${RC}.zip.checksum.txt"
 
 echo "* Signing..."
-GPG_TTY=$(tty)
-export GPG_TTY
+
 for file in "gdal-${GDAL_VERSION}${RC}.tar.xz" "gdal-${GDAL_VERSION}${RC}.tar.gz" "gdal${COMPRESSED_VERSION}${RC}.zip"; do \
-  gpg2 --output ${file}.sig --detach-sig $file ; \
+  echo "gpg2 --output ${file}.sig --detach-sign ${file}"
+  gpg2 --output ${file}.sig --detach-sign $file ; \
 done
 
 for file in "gdal-${GDAL_VERSION}${RC}.tar.xz" "gdal-${GDAL_VERSION}${RC}.tar.gz" "gdal${COMPRESSED_VERSION}${RC}.zip"; do \
