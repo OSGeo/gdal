@@ -106,6 +106,7 @@ target_sources(appslib PRIVATE
   gdalalg_vector_read.cpp
   gdalalg_vector_filter.cpp
   gdalalg_vector_geom.cpp
+  gdalalg_vector_limit.cpp
   gdalalg_vector_set_geom_type.cpp
   gdalalg_vector_explode_collections.cpp
   gdalalg_vector_make_valid.cpp

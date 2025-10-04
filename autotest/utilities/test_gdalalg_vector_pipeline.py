@@ -341,7 +341,7 @@ def test_gdalalg_vector_pipeline_empty_args():
         pipeline.ParseRunAndFinalize([])
 
 
-def test_gdalalg_vector_pipeline_unknow_step():
+def test_gdalalg_vector_pipeline_unknown_step():
 
     pipeline = get_pipeline_alg()
     with pytest.raises(Exception, match="pipeline: unknown step name: unknown_step"):
@@ -994,3 +994,27 @@ def test_gdalalg_vector_pipeline_info_executable():
         f"{gdal_path} vector pipeline read ../ogr/data/poly.shp ! info"
     )
     assert out.startswith("INFO: Open of `../ogr/data/poly.shp'")
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_pipeline_read_limit(tmp_vsimem):
+
+    src_filename = tmp_vsimem / "src.gpkg"
+    dst_filename = tmp_vsimem / "dst.gpkg"
+
+    src_ds = gdal.GetDriverByName("GPKG").CreateVector(src_filename)
+    layers = [src_ds.CreateLayer("layer1"), src_ds.CreateLayer("layer2")]
+
+    for lyr in layers:
+        for _ in range(5):
+            f = ogr.Feature(lyr.GetLayerDefn())
+            lyr.CreateFeature(f)
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseRunAndFinalize(
+        ["read", src_filename, "!", "limit", "3", "!", "write", dst_filename]
+    )
+
+    with gdal.OpenEx(dst_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 3
+        assert ds.GetLayer(1).GetFeatureCount() == 3
