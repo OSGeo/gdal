@@ -155,6 +155,35 @@ class GDALVectorPipelineAlgorithm final : public GDALAbstractPipelineAlgorithm
 };
 
 /************************************************************************/
+/*                  GDALVectorOutputDataset                             */
+/************************************************************************/
+
+class GDALVectorOutputDataset final : public GDALDataset
+{
+
+  public:
+    int GetLayerCount() const override
+    {
+        return static_cast<int>(m_layers.size());
+    }
+
+    const OGRLayer *GetLayer(int idx) const override
+    {
+        return m_layers[idx].get();
+    }
+
+    int TestCapability(const char *) const override;
+
+    void AddLayer(std::unique_ptr<OGRLayer> layer)
+    {
+        m_layers.emplace_back(std::move(layer));
+    }
+
+  private:
+    std::vector<std::unique_ptr<OGRLayer>> m_layers{};
+};
+
+/************************************************************************/
 /*                  GDALVectorPipelineOutputLayer                       */
 /************************************************************************/
 
