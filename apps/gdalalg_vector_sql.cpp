@@ -38,6 +38,7 @@ GDALVectorSQLAlgorithm::GetConstructorOptions(bool standaloneStep)
     opts.SetUpdateMutualExclusionGroup("output-update");
     opts.SetOutputDatasetMutualExclusionGroup("output-update");
     opts.SetAddInputLayerNameArgument(false);
+    opts.SetAddOutputLayerNameArgument(false);
     return opts;
 }
 

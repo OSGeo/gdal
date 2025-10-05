@@ -20,8 +20,6 @@
 #include "gdalalg_raster_write.h"
 
 #include "gdalalg_vector_read.h"
-#include "gdalalg_vector_concat.h"
-#include "gdalalg_vector_sql.h"
 #include "gdalalg_vector_write.h"
 
 #include "gdalalg_raster_as_features.h"
@@ -215,8 +213,7 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
                 })
             .SetCategory(GAAC_ADVANCED);
     }
-    if (GetName() != GDALVectorSQLAlgorithm::NAME &&
-        GetName() != GDALVectorConcatAlgorithm::NAME)
+    if (m_constructorOptions.addOutputLayerNameArgument)
     {
         AddArg(GDAL_ARG_NAME_OUTPUT_LAYER,
                shortNameOutputLayerAllowed ? 'l' : 0, _("Output layer name"),
