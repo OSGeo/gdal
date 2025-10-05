@@ -393,6 +393,25 @@ def test_ogr_adbc_duckdb_sql(tmp_path):
 
 
 ###############################################################################
+
+
+@pytest.mark.skipif(
+    not _has_adbc_driver_manager(),
+    reason="ADBC driver built without AdbcDriverManager",
+)
+def test_ogr_adbc_duckdb_not_existing_file(tmp_path):
+
+    if not _has_libduckdb():
+        pytest.skip("libduckdb.so missing")
+
+    with pytest.raises(Exception, match="/i/do_not/exist does not exist"):
+        gdal.OpenEx(
+            "ADBC:/i/do_not/exist",
+            open_options=["ADBC_DRIVER=libduckdb"],
+        )
+
+
+###############################################################################
 # Run test_ogrsf on a SQLite3 database
 
 
