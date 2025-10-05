@@ -82,6 +82,11 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         return m_outputDataset;
     }
 
+    const std::string &GetOutputLayerName() const
+    {
+        return m_outputLayerName;
+    }
+
     const std::string &GetOutputFormat() const
     {
         return m_format;
@@ -90,6 +95,21 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     const std::vector<std::string> &GetCreationOptions() const
     {
         return m_creationOptions;
+    }
+
+    const std::vector<std::string> &GetLayerCreationOptions() const
+    {
+        return m_layerCreationOptions;
+    }
+
+    bool GetOverwriteLayer() const
+    {
+        return m_overwriteLayer;
+    }
+
+    bool GetAppendLayer() const
+    {
+        return m_appendLayer;
     }
 
     virtual int GetInputType() const = 0;

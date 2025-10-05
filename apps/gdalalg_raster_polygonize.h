@@ -48,6 +48,9 @@ class GDALRasterPolygonizeAlgorithm /* non final */
         return GDAL_OF_VECTOR;
     }
 
+    bool
+    CanHandleNextStep(GDALPipelineStepAlgorithm *poNextStep) const override;
+
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
