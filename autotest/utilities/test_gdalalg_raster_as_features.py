@@ -173,7 +173,7 @@ def test_gdalalg_raster_as_features_layer_name(alg, tmp_vsimem):
 
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = tmp_vsimem / "out.gpkg"
-    alg["input-layer"] = "layer123"
+    alg["output-layer"] = "layer123"
 
     assert alg.Run()
 

@@ -32,39 +32,22 @@ GDALRasterAsFeaturesAlgorithm::GDALRasterAsFeaturesAlgorithm(
           NAME, DESCRIPTION, HELP_URL,
           ConstructorOptions()
               .SetStandaloneStep(standaloneStep)
-              .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE)),
-      m_bands{}, m_geomTypeName("none"), m_skipNoData(false),
-      m_includeXY(false), m_includeRowCol(false)
+              .SetAddUpsertArgument(false)
+              .SetAddSkipErrorsArgument(false)
+              .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
     m_outputLayerName = "pixels";
 
-    // TODO: This block is copied from gdalalg_raster_polygonize. Avoid duplication?
     if (standaloneStep)
     {
-        AddOutputFormatArg(&m_format).AddMetadataItem(
-            GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
-        AddOpenOptionsArg(&m_openOptions);
-        AddInputFormatsArg(&m_inputFormats)
-            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-
-        AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
-        AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
-            .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
-        AddCreationOptionsArg(&m_creationOptions);
-        AddLayerCreationOptionsArg(&m_layerCreationOptions);
-        AddOverwriteArg(&m_overwrite);
-        AddUpdateArg(&m_update);
-        AddOverwriteLayerArg(&m_overwriteLayer);
-        AddAppendLayerArg(&m_appendLayer);
-        AddLayerNameArg(&m_outputLayerName)
-            .AddAlias("nln")
-            .SetDefault(m_outputLayerName);
+        AddRasterInputArgs(false, false);
+        AddVectorOutputArgs(false, false);
     }
 
     AddBandArg(&m_bands);
     AddArg("geometry-type", 0, _("Geometry type"), &m_geomTypeName)
         .SetChoices("none", "point", "polygon")
-        .SetDefault("none");
+        .SetDefault(m_geomTypeName);
     AddArg("skip-nodata", 0, _("Omit NoData pixels from the result"),
            &m_skipNoData);
     AddArg("include-xy", 0, _("Include fields for cell center coordinates"),
