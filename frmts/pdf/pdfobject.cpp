@@ -1437,7 +1437,12 @@ int64_t GDALPDFStreamPoppler::GetLength(int64_t nMaxSize)
 
 static char *GooStringToCharStart(GooString &gstr)
 {
-    auto nLength = gstr.getLength();
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 10)
+    const auto nLength = gstr.size();
+#else
+    const auto nLength = gstr.getLength();
+#endif
     if (nLength)
     {
         char *pszContent = static_cast<char *>(VSI_MALLOC_VERBOSE(nLength + 1));
@@ -1514,7 +1519,12 @@ char *GDALPDFStreamPoppler::GetRawBytes()
                  "GDALPDFStreamPoppler::GetRawBytes(): %s", e.what());
         return nullptr;
     }
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 10)
+    m_nRawLength = gstr.size();
+#else
     m_nRawLength = gstr.getLength();
+#endif
     return GooStringToCharStart(gstr);
 }
 
