@@ -494,7 +494,10 @@ using OGRLayerUniquePtr = std::unique_ptr<OGRLayer>;
 /************************************************************************/
 
 /** Template class offering a GetNextFeature() implementation relying on
- * GetNextRawFeature()
+ * GetNextRawFeature().
+ * OGRGetNextFeatureThroughRaw::GetNextFeature() calls GetNextRawFeature()
+ * and takes care of applying the spatial and attribute filters, making
+ * their taking into account in GetNextRawFeature() unnecessary.
  *
  * @since GDAL 3.2
  */
