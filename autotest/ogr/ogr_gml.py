@@ -5249,3 +5249,139 @@ def test_ogr_gml_datetime(tmp_vsimem):
     assert f["datetime"] == "9999/12/31 23:59:60.999"
     assert lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTDateTime
     assert f["timePosition"] == "9999/12/31 23:59:60.999"
+
+
+###############################################################################
+
+
+def test_ogr_gml_unique_fid_not_increasing_no_prefix(tmp_vsimem):
+
+    tmpname = tmp_vsimem / "test.xml"
+    gdal.FileFromMemBuffer(
+        tmpname,
+        """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://ogr.maptools.org/ out.xsd"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <gml:featureMember>
+    <ogr:poly fid="2"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="1"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="4"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="3"></ogr:poly>
+  </gml:featureMember>
+</ogr:FeatureCollection>""",
+    )
+
+    ds = ogr.Open(tmpname)
+    lyr = ds.GetLayer(0)
+    assert [f.GetFID() for f in lyr] == [2, 1, 4, 3]
+
+
+###############################################################################
+
+
+def test_ogr_gml_unique_fid_not_increasing_prefix(tmp_vsimem):
+
+    tmpname = tmp_vsimem / "test.xml"
+    gdal.FileFromMemBuffer(
+        tmpname,
+        """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://ogr.maptools.org/ out.xsd"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <gml:featureMember>
+    <ogr:poly fid="poly.2"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.1"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.4"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.3"></ogr:poly>
+  </gml:featureMember>
+</ogr:FeatureCollection>""",
+    )
+
+    ds = ogr.Open(tmpname)
+    lyr = ds.GetLayer(0)
+    assert [f.GetFID() for f in lyr] == [2, 1, 4, 3]
+
+
+###############################################################################
+
+
+def test_ogr_gml_unique_fid_not_unique(tmp_vsimem):
+
+    tmpname = tmp_vsimem / "test.xml"
+    gdal.FileFromMemBuffer(
+        tmpname,
+        """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://ogr.maptools.org/ out.xsd"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <gml:featureMember>
+    <ogr:poly fid="poly.2"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.1"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.2"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.3"></ogr:poly>
+  </gml:featureMember>
+</ogr:FeatureCollection>""",
+    )
+
+    ds = ogr.Open(tmpname)
+    lyr = ds.GetLayer(0)
+    assert [f.GetFID() for f in lyr] == [2, 1, 3, 4]
+
+
+###############################################################################
+
+
+def test_ogr_gml_unique_fid_not_unique_no_numeric(tmp_vsimem):
+
+    tmpname = tmp_vsimem / "test.xml"
+    gdal.FileFromMemBuffer(
+        tmpname,
+        """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://ogr.maptools.org/ out.xsd"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <gml:featureMember>
+    <ogr:poly fid="poly.2"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.1"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.2a"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.3"></ogr:poly>
+  </gml:featureMember>
+</ogr:FeatureCollection>""",
+    )
+
+    ds = ogr.Open(tmpname)
+    lyr = ds.GetLayer(0)
+    assert [f.GetFID() for f in lyr] == [2, 1, 3, 4]
