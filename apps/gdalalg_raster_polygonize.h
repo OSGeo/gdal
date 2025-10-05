@@ -56,6 +56,9 @@ class GDALRasterPolygonizeAlgorithm /* non final */
     int m_band = 1;
     std::string m_attributeName = "DN";
     bool m_connectDiagonalPixels = false;
+
+    // hidden
+    int m_commitInterval = 0;
 };
 
 /************************************************************************/

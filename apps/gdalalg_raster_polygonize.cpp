@@ -68,6 +68,9 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm(
     AddArg("connect-diagonal-pixels", 'c',
            _("Consider diagonal pixels as connected"), &m_connectDiagonalPixels)
         .SetDefault(m_connectDiagonalPixels);
+
+    AddArg("commit-interval", 0, _("Commit interval"), &m_commitInterval)
+        .SetHidden();
 }
 
 /************************************************************************/
@@ -244,6 +247,11 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     if (m_connectDiagonalPixels)
     {
         aosPolygonizeOptions.SetNameValue("8CONNECTED", "8");
+    }
+    if (m_commitInterval)
+    {
+        aosPolygonizeOptions.SetNameValue("COMMIT_INTERVAL",
+                                          CPLSPrintf("%d", m_commitInterval));
     }
 
     bool ret;
