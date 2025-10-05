@@ -529,12 +529,9 @@ void OGRPolygonWriter<DataType>::receive(RPolygon *poPolygon,
                                       ? i
                                       : (nArcPointCount - i - 1)];
 
-                const double dfX =
-                    gt_[0] + oPixel[1] * gt_[1] + oPixel[0] * gt_[2];
-                const double dfY =
-                    gt_[3] + oPixel[1] * gt_[4] + oPixel[0] * gt_[5];
-
-                poRing->setPoint(nDstPointIdx, dfX, dfY);
+                const auto oGeoreferenced = gt_.Apply(oPixel[1], oPixel[0]);
+                poRing->setPoint(nDstPointIdx, oGeoreferenced.first,
+                                 oGeoreferenced.second);
                 ++nDstPointIdx;
             }
             return true;
