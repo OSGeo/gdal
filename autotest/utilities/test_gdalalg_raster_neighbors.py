@@ -70,16 +70,18 @@ def test_gdalalg_raster_neighbors_kernel_manual2(neighbors):
     assert out_ds.GetRasterBand(2).Checksum() == 4672
 
 
-def test_gdalalg_raster_neighbors_error_band_not_specified(neighbors):
+def test_gdalalg_raster_neighbors_multible_band(neighbors):
 
     neighbors["input"] = "../gdrivers/data/small_world.tif"
     neighbors["kernel"] = "sharpen"
     neighbors["output-format"] = "MEM"
-    with pytest.raises(
-        Exception,
-        match="'band' argument should be specified given input dataset has several bands",
-    ):
-        neighbors.Run()
+    assert neighbors.Run()
+
+    out_ds = neighbors["output"].GetDataset()
+    assert out_ds.RasterCount == 3
+    assert out_ds.GetRasterBand(1).Checksum() == 31543
+    assert out_ds.GetRasterBand(2).Checksum() == 35728
+    assert out_ds.GetRasterBand(3).Checksum() == 32040
 
 
 def test_gdalalg_raster_neighbors_mean(neighbors):
