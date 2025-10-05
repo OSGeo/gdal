@@ -34,6 +34,8 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm(
           NAME, DESCRIPTION, HELP_URL,
           ConstructorOptions()
               .SetStandaloneStep(standaloneStep)
+              .SetAddUpsertArgument(false)
+              .SetAddSkipErrorsArgument(false)
               .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
     m_outputLayerName = "polygonize";
@@ -41,23 +43,8 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm(
     AddProgressArg();
     if (standaloneStep)
     {
-        AddOutputFormatArg(&m_format).AddMetadataItem(
-            GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
-        AddOpenOptionsArg(&m_openOptions);
-        AddInputFormatsArg(&m_inputFormats)
-            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-        AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
-        AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
-            .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
-        AddCreationOptionsArg(&m_creationOptions);
-        AddLayerCreationOptionsArg(&m_layerCreationOptions);
-        AddOverwriteArg(&m_overwrite);
-        AddUpdateArg(&m_update);
-        AddOverwriteLayerArg(&m_overwriteLayer);
-        AddAppendLayerArg(&m_appendLayer);
-        AddOutputLayerNameArg(&m_outputLayerName)
-            .SetDefault(m_outputLayerName)
-            .AddAlias("nln");
+        AddRasterInputArgs(false, false);
+        AddVectorOutputArgs(false, false);
     }
 
     // gdal_polygonize specific options

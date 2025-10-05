@@ -202,16 +202,19 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
     AddAppendLayerArg(&m_appendLayer)
         .SetHiddenForCLI(hiddenForCLI)
         .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT);
-    AddArg("upsert", 0, _("Upsert features (implies 'append')"), &m_upsert)
-        .SetHiddenForCLI(hiddenForCLI)
-        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT)
-        .AddAction(
-            [&updateArg, this]()
-            {
-                if (m_upsert)
-                    updateArg.Set(true);
-            })
-        .SetCategory(GAAC_ADVANCED);
+    if (m_constructorOptions.addUpsertArgument)
+    {
+        AddArg("upsert", 0, _("Upsert features (implies 'append')"), &m_upsert)
+            .SetHiddenForCLI(hiddenForCLI)
+            .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT)
+            .AddAction(
+                [&updateArg, this]()
+                {
+                    if (m_upsert)
+                        updateArg.Set(true);
+                })
+            .SetCategory(GAAC_ADVANCED);
+    }
     if (GetName() != GDALVectorSQLAlgorithm::NAME &&
         GetName() != GDALVectorConcatAlgorithm::NAME)
     {
@@ -221,9 +224,12 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
             .AddHiddenAlias("nln")  // For ogr2ogr nostalgic people
             .SetHiddenForCLI(hiddenForCLI);
     }
-    AddArg("skip-errors", 0, _("Skip errors when writing features"),
-           &m_skipErrors)
-        .AddHiddenAlias("skip-failures");  // For ogr2ogr nostalgic people
+    if (m_constructorOptions.addSkipErrorsArgument)
+    {
+        AddArg("skip-errors", 0, _("Skip errors when writing features"),
+               &m_skipErrors)
+            .AddHiddenAlias("skip-failures");  // For ogr2ogr nostalgic people
+    }
 }
 
 /************************************************************************/
