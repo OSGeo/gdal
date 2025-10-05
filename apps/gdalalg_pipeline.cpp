@@ -188,28 +188,38 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
     AddLayerCreationOptionsArg(&m_layerCreationOptions)
         .SetHiddenForCLI(hiddenForCLI);
     AddOverwriteArg(&m_overwrite).SetHiddenForCLI(hiddenForCLI);
-    auto &updateArg = AddUpdateArg(&m_update).SetHiddenForCLI(hiddenForCLI);
-    if (!m_constructorOptions.updateMutualExclusionGroup.empty())
+    GDALInConstructionAlgorithmArg *updateArg = nullptr;
+    if (m_constructorOptions.addUpdateArgument)
     {
-        updateArg.SetMutualExclusionGroup(
+        updateArg = &AddUpdateArg(&m_update).SetHiddenForCLI(hiddenForCLI);
+    }
+    if (updateArg && !m_constructorOptions.updateMutualExclusionGroup.empty())
+    {
+        updateArg->SetMutualExclusionGroup(
             m_constructorOptions.updateMutualExclusionGroup);
     }
-    AddOverwriteLayerArg(&m_overwriteLayer).SetHiddenForCLI(hiddenForCLI);
+    if (m_constructorOptions.addOverwriteLayerArgument)
+    {
+        AddOverwriteLayerArg(&m_overwriteLayer).SetHiddenForCLI(hiddenForCLI);
+    }
     constexpr const char *MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT =
         "append-upsert";
-    AddAppendLayerArg(&m_appendLayer)
-        .SetHiddenForCLI(hiddenForCLI)
-        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT);
+    if (m_constructorOptions.addAppendLayerArgument)
+    {
+        AddAppendLayerArg(&m_appendLayer)
+            .SetHiddenForCLI(hiddenForCLI)
+            .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT);
+    }
     if (m_constructorOptions.addUpsertArgument)
     {
         AddArg("upsert", 0, _("Upsert features (implies 'append')"), &m_upsert)
             .SetHiddenForCLI(hiddenForCLI)
             .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT)
             .AddAction(
-                [&updateArg, this]()
+                [updateArg, this]()
                 {
-                    if (m_upsert)
-                        updateArg.Set(true);
+                    if (m_upsert && updateArg)
+                        updateArg->Set(true);
                 })
             .SetCategory(GAAC_ADVANCED);
     }
