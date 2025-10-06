@@ -37,10 +37,18 @@ template <typename T = GByte> auto CreateBuffer()
     return std::unique_ptr<T, decltype(&CPLFree)>{nullptr, CPLFree};
 }
 
-template <typename T> void Realloc(T &buf, size_t size)
+template <typename T> void Realloc(T &buf, size_t size, bool &success)
 {
+    if (!success)
+    {
+        return;
+    }
     buf.reset(static_cast<typename T::element_type *>(
         VSI_REALLOC_VERBOSE(buf.release(), size)));
+    if (buf == nullptr)
+    {
+        success = false;
+    }
 }
 
 static void TrimWindowToRaster(GDALRasterWindow &window,
@@ -661,6 +669,10 @@ class GDALZonalStatsImpl
         aosOptions.AddString("-ot");
         aosOptions.AddString("Float64");
 
+        // Prevent warning message about Computed -srcwin outside source raster extent.
+        // We've already tested for this an issued a more understandable message.
+        aosOptions.AddString("--no-warn-about-outside-window");
+
         if (srcGT != dstGT || src.GetRasterXSize() != dst.GetRasterXSize() ||
             src.GetRasterYSize() != dst.GetRasterYSize())
         {
@@ -695,13 +707,8 @@ class GDALZonalStatsImpl
 
         GDALTranslateOptions *psOptions =
             GDALTranslateOptionsNew(aosOptions.List(), nullptr);
-        {
-            // Prevent warning message about Computed -srcwin outside source raster extent.
-            // We've already tested for this an issued a more understandable message.
-            CPLErrorStateBackuper state(CPLQuietWarningsErrorHandler);
-            ret.reset(GDALDataset::FromHandle(GDALTranslate(
-                "", GDALDataset::ToHandle(&src), psOptions, nullptr)));
-        }
+        ret.reset(GDALDataset::FromHandle(GDALTranslate(
+            "", GDALDataset::ToHandle(&src), psOptions, nullptr)));
         GDALTranslateOptionsFree(psOptions);
 
         return ret;
@@ -849,32 +856,50 @@ class GDALZonalStatsImpl
 
             if (nBufSize < nWindowSize)
             {
-                Realloc(m_pabyValuesBuf, nWindowSize * GDALGetDataTypeSizeBytes(
-                                                           m_workingDataType));
-                Realloc(pabyZonesBuf, nWindowSize * GDALGetDataTypeSizeBytes(
-                                                        m_zonesDataType));
+                bool bAllocSuccess = true;
+                Realloc(m_pabyValuesBuf,
+                        nWindowSize *
+                            GDALGetDataTypeSizeBytes(m_workingDataType),
+                        bAllocSuccess);
+                Realloc(pabyZonesBuf,
+                        nWindowSize * GDALGetDataTypeSizeBytes(m_zonesDataType),
+                        bAllocSuccess);
                 Realloc(m_pabyMaskBuf,
-                        nWindowSize * GDALGetDataTypeSizeBytes(m_maskDataType));
+                        nWindowSize * GDALGetDataTypeSizeBytes(m_maskDataType),
+                        bAllocSuccess);
 
                 if (m_stats_options.store_xy)
                 {
-                    Realloc(m_padfX, oWindow.nXSize *
-                                         GDALGetDataTypeSizeBytes(GDT_Float64));
-                    Realloc(m_padfY, oWindow.nYSize *
-                                         GDALGetDataTypeSizeBytes(GDT_Float64));
-                    CalculateCellCenters(oWindow, m_srcGT, m_padfX.get(),
-                                         m_padfY.get());
+                    Realloc(m_padfX,
+                            oWindow.nXSize *
+                                GDALGetDataTypeSizeBytes(GDT_Float64),
+                            bAllocSuccess);
+                    Realloc(m_padfY,
+                            oWindow.nYSize *
+                                GDALGetDataTypeSizeBytes(GDT_Float64),
+                            bAllocSuccess);
+                    if (bAllocSuccess)
+                    {
+                        CalculateCellCenters(oWindow, m_srcGT, m_padfX.get(),
+                                             m_padfY.get());
+                    }
                 }
 
                 if (poWeightsBand)
                 {
                     Realloc(m_padfWeightsBuf,
-                            nWindowSize *
-                                GDALGetDataTypeSizeBytes(GDT_Float64));
+                            nWindowSize * GDALGetDataTypeSizeBytes(GDT_Float64),
+                            bAllocSuccess);
                     Realloc(m_pabyWeightsMaskBuf,
                             nWindowSize *
-                                GDALGetDataTypeSizeBytes(m_maskDataType));
+                                GDALGetDataTypeSizeBytes(m_maskDataType),
+                            bAllocSuccess);
                 }
+                if (!bAllocSuccess)
+                {
+                    return false;
+                }
+
                 nBufSize = nWindowSize;
             }
 
@@ -1113,34 +1138,49 @@ class GDALZonalStatsImpl
             {
                 if (nBufSize < nWindowSize)
                 {
+                    bool bAllocSuccess = true;
                     Realloc(m_pabyValuesBuf,
                             nWindowSize *
-                                GDALGetDataTypeSizeBytes(m_workingDataType));
+                                GDALGetDataTypeSizeBytes(m_workingDataType),
+                            bAllocSuccess);
                     Realloc(m_pabyCoverageBuf,
                             nWindowSize *
-                                GDALGetDataTypeSizeBytes(m_coverageDataType));
+                                GDALGetDataTypeSizeBytes(m_coverageDataType),
+                            bAllocSuccess);
                     Realloc(m_pabyMaskBuf,
                             nWindowSize *
-                                GDALGetDataTypeSizeBytes(m_maskDataType));
+                                GDALGetDataTypeSizeBytes(m_maskDataType),
+                            bAllocSuccess);
                     if (m_stats_options.store_xy)
                     {
                         Realloc(m_padfX,
                                 oWindow.nXSize *
-                                    GDALGetDataTypeSizeBytes(GDT_Float64));
+                                    GDALGetDataTypeSizeBytes(GDT_Float64),
+                                bAllocSuccess);
                         Realloc(m_padfY,
                                 oWindow.nYSize *
-                                    GDALGetDataTypeSizeBytes(GDT_Float64));
-                        CalculateCellCenters(oWindow, m_srcGT, m_padfX.get(),
-                                             m_padfY.get());
+                                    GDALGetDataTypeSizeBytes(GDT_Float64),
+                                bAllocSuccess);
+                        if (bAllocSuccess)
+                        {
+                            CalculateCellCenters(oWindow, m_srcGT,
+                                                 m_padfX.get(), m_padfY.get());
+                        }
                     }
                     if (m_weights != nullptr)
                     {
                         Realloc(m_padfWeightsBuf,
                                 nWindowSize *
-                                    GDALGetDataTypeSizeBytes(GDT_Float64));
+                                    GDALGetDataTypeSizeBytes(GDT_Float64),
+                                bAllocSuccess);
                         Realloc(m_pabyWeightsMaskBuf,
                                 nWindowSize *
-                                    GDALGetDataTypeSizeBytes(m_maskDataType));
+                                    GDALGetDataTypeSizeBytes(m_maskDataType),
+                                bAllocSuccess);
+                    }
+                    if (!bAllocSuccess)
+                    {
+                        return false;
                     }
                     nBufSize = nWindowSize;
                 }
@@ -1305,36 +1345,51 @@ class GDALZonalStatsImpl
             {
                 if (nBufSize < nWindowSize)
                 {
+                    bool bAllocSuccess = true;
                     Realloc(m_pabyValuesBuf,
                             nWindowSize *
-                                GDALGetDataTypeSizeBytes(m_workingDataType));
+                                GDALGetDataTypeSizeBytes(m_workingDataType),
+                            bAllocSuccess);
                     Realloc(m_pabyCoverageBuf,
                             nWindowSize *
-                                GDALGetDataTypeSizeBytes(m_coverageDataType));
+                                GDALGetDataTypeSizeBytes(m_coverageDataType),
+                            bAllocSuccess);
                     Realloc(m_pabyMaskBuf,
                             nWindowSize *
-                                GDALGetDataTypeSizeBytes(m_maskDataType));
+                                GDALGetDataTypeSizeBytes(m_maskDataType),
+                            bAllocSuccess);
 
                     if (m_stats_options.store_xy)
                     {
                         Realloc(m_padfX,
                                 oWindow.nXSize *
-                                    GDALGetDataTypeSizeBytes(GDT_Float64));
+                                    GDALGetDataTypeSizeBytes(GDT_Float64),
+                                bAllocSuccess);
                         Realloc(m_padfY,
                                 oWindow.nYSize *
-                                    GDALGetDataTypeSizeBytes(GDT_Float64));
-                        CalculateCellCenters(oWindow, m_srcGT, m_padfX.get(),
-                                             m_padfY.get());
+                                    GDALGetDataTypeSizeBytes(GDT_Float64),
+                                bAllocSuccess);
+                        if (bAllocSuccess)
+                        {
+                            CalculateCellCenters(oWindow, m_srcGT,
+                                                 m_padfX.get(), m_padfY.get());
+                        }
                     }
 
                     if (m_weights != nullptr)
                     {
                         Realloc(m_padfWeightsBuf,
                                 nWindowSize *
-                                    GDALGetDataTypeSizeBytes(GDT_Float64));
+                                    GDALGetDataTypeSizeBytes(GDT_Float64),
+                                bAllocSuccess);
                         Realloc(m_pabyWeightsMaskBuf,
                                 nWindowSize *
-                                    GDALGetDataTypeSizeBytes(m_maskDataType));
+                                    GDALGetDataTypeSizeBytes(m_maskDataType),
+                                bAllocSuccess);
+                    }
+                    if (!bAllocSuccess)
+                    {
+                        return false;
                     }
 
                     nBufSize = nWindowSize;
