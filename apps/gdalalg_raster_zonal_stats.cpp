@@ -56,7 +56,7 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
         "pixels", 0,
         _("Method to determine which pixels are included in stat calculation."),
         &m_pixels)
-        .SetChoices("default", "fractional", "all_touched");
+        .SetChoices("default", "fractional", "all-touched");
     AddArg("stat", 0, _("Statistic(s) to compute for each zone"), &m_stats)
         .SetRequired()
         .SetMinValueIncluded(1)
@@ -174,7 +174,7 @@ bool GDALRasterZonalStatsAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     {
         options.pixels = GDALZonalStatsOptions::FRACTIONAL;
     }
-    else if (m_pixels == "all_touched")
+    else if (m_pixels == "all-touched")
     {
         options.pixels = GDALZonalStatsOptions::ALL_TOUCHED;
     }

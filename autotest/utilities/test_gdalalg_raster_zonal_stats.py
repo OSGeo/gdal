@@ -40,7 +40,7 @@ def have_fractional_pixels():
     ) >= (3, 15)
 
 
-@pytest.fixture(params=["default", "all_touched", "fractional"])
+@pytest.fixture(params=["default", "all-touched", "fractional"])
 def pixels(request):
     if request.param == "fractional" and not have_fractional_pixels():
         pytest.skip("--pixels fractional requires GEOS >= 3.14")
@@ -96,7 +96,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_basic(
         if pixels == "fractional":
             assert results[0]["sum"] == pytest.approx(7130.21435281425)
             assert results[1]["sum"] == pytest.approx(12886.7218339441)
-        elif pixels == "all_touched":
+        elif pixels == "all-touched":
             assert results[0]["sum"] == 8251
             assert results[1]["sum"] == 15131
         else:
@@ -106,7 +106,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_basic(
         if pixels == "fractional":
             assert results[0]["sum"] == pytest.approx(9743.76203341247)
             assert results[1]["sum"] == pytest.approx(18396.5491179946)
-        elif pixels == "all_touched":
+        elif pixels == "all-touched":
             assert results[0]["sum"] == 11232
             assert results[1]["sum"] == 21693
         else:
@@ -124,7 +124,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_basic(
         if pixels == "fractional":
             assert results[0]["sum_band_1"] == pytest.approx(7130.21435281425)
             assert results[1]["sum_band_1"] == pytest.approx(12886.7218339441)
-        elif pixels == "all_touched":
+        elif pixels == "all-touched":
             assert results[0]["sum_band_1"] == 8251
             assert results[1]["sum_band_1"] == 15131
         else:
@@ -132,7 +132,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_basic(
             assert results[1]["sum_band_1"] == 12497
 
 
-@pytest.mark.parametrize("pixels", ["all_touched", "fractional"], indirect=True)
+@pytest.mark.parametrize("pixels", ["all-touched", "fractional"], indirect=True)
 def test_gdalalg_raster_zonal_stats_polygon_zones_weighted(
     zonal, strategy, pixels, tmp_vsimem
 ):
@@ -185,7 +185,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_weighted(
 
     results = out_ds.GetLayer(0).GetNextFeature()
 
-    if pixels == "all_touched":
+    if pixels == "all-touched":
         assert results["mean"] == pytest.approx(np.average(values))
         assert results["weighted_mean"] == pytest.approx(
             np.average(values, weights=weights)
