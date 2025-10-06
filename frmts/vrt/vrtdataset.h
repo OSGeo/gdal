@@ -1335,6 +1335,8 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
 
     void OpenSource() const;
 
+    GDALDataset *GetSourceDataset() const;
+
   protected:
     friend class VRTSourcedRasterBand;
     friend class VRTDataset;

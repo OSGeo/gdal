@@ -2642,9 +2642,9 @@ static bool CheckBandForOverview(GDALRasterBand *poBand,
     {
         return false;
     }
-    GDALRasterBand *poSrcBand = poBand->GetBand() == 0
-                                    ? poSource->GetMaskBandMainBand()
-                                    : poSource->GetRasterBand();
+    GDALRasterBand *poSrcBand = poSource->GetMaskBandMainBand();
+    if (!poSrcBand)
+        poSrcBand = poSource->GetRasterBand();
     if (poSrcBand == nullptr)
         return false;
 
