@@ -533,6 +533,15 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_layer(
         zonal.Run()
 
 
+def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_memory_size(zonal):
+
+    with pytest.raises(Exception, match="Failed to parse memory size"):
+        zonal["memory"] = "2 gigs"
+
+    with pytest.raises(Exception, match="too large"):
+        zonal["memory"] = "1e100 mb"
+
+
 @pytest.mark.parametrize(
     "raster_srs,weights_srs,zones_srs,warn",
     [

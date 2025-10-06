@@ -60,9 +60,12 @@ class GDALRasterZonalStatsAlgorithm /* non final */
     std::vector<std::string> m_stats{};
     std::vector<std::string> m_includeFields{};
     std::string m_strategy{};
-    std::string m_memory{};
+    std::string m_memoryStr{"5%"};
     std::string m_pixels{};
     int m_weightsBand{0};
+    size_t m_memoryBytes{
+        static_cast<size_t>(100) * 1024 *
+        1024};  // FIXME validation action doesn't seem to run if arg isn't specified, so this never gets sets?
 };
 
 /************************************************************************/

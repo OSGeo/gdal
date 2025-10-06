@@ -75,9 +75,8 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
            &m_strategy)
         .SetChoices("feature", "raster")
         .SetDefault("feature");
-    AddArg("memory", 0, _("Number of pixels to use when reading raster chunks"),
-           &m_memory)
-        .SetDefault("2G");
+    AddMemorySizeArg(&m_memoryBytes, &m_memoryStr, "memory",
+                     _("Number of pixels to use when reading raster chunks"));
     AddProgressArg();
 }
 
@@ -187,16 +186,8 @@ bool GDALRasterZonalStatsAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     options.zones_band = m_zonesBand;
     options.zones_layer = m_zonesLayer;
     options.weights_band = m_weightsBand;
-
-    GIntBig maxBytes;
-    if (CPLParseMemorySize(m_memory.c_str(), &maxBytes, nullptr) == CE_None)
-    {
-        options.memory = static_cast<size_t>(maxBytes);
-    }
-    else
-    {
-        return false;
-    }
+    options.memory = m_memoryBytes;
+    CPLDebug("GDAL", "memory: %lu", options.memory);
 
     if (poRetDS)
     {

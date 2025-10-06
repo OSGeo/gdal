@@ -1831,7 +1831,7 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
                         break;
                     default:
                         CPLError(CE_Failure, CPLE_IllegalArg,
-                                 "Unexpected value: %s", pszValue);
+                                 "Failed to parse memory size: %s", pszValue);
                         return CE_Failure;
                 }
             }
@@ -1843,10 +1843,16 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
         }
         else if (*c != ' ')
         {
-            CPLError(CE_Failure, CPLE_IllegalArg, "Unexpected value: %s",
-                     pszValue);
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Failed to parse memory size: %s", pszValue);
             return CE_Failure;
         }
+    }
+
+    if (value > static_cast<double>(std::numeric_limits<GIntBig>::max()))
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Memory size is too large: %s",
+                 pszValue);
     }
 
     *pnValue = static_cast<GIntBig>(value);
