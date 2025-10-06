@@ -20,8 +20,6 @@
 #include "gdalalg_raster_write.h"
 
 #include "gdalalg_vector_read.h"
-#include "gdalalg_vector_concat.h"
-#include "gdalalg_vector_sql.h"
 #include "gdalalg_vector_write.h"
 
 #include "gdalalg_raster_as_features.h"
@@ -190,30 +188,42 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
     AddLayerCreationOptionsArg(&m_layerCreationOptions)
         .SetHiddenForCLI(hiddenForCLI);
     AddOverwriteArg(&m_overwrite).SetHiddenForCLI(hiddenForCLI);
-    auto &updateArg = AddUpdateArg(&m_update).SetHiddenForCLI(hiddenForCLI);
-    if (!m_constructorOptions.updateMutualExclusionGroup.empty())
+    GDALInConstructionAlgorithmArg *updateArg = nullptr;
+    if (m_constructorOptions.addUpdateArgument)
     {
-        updateArg.SetMutualExclusionGroup(
+        updateArg = &AddUpdateArg(&m_update).SetHiddenForCLI(hiddenForCLI);
+    }
+    if (updateArg && !m_constructorOptions.updateMutualExclusionGroup.empty())
+    {
+        updateArg->SetMutualExclusionGroup(
             m_constructorOptions.updateMutualExclusionGroup);
     }
-    AddOverwriteLayerArg(&m_overwriteLayer).SetHiddenForCLI(hiddenForCLI);
+    if (m_constructorOptions.addOverwriteLayerArgument)
+    {
+        AddOverwriteLayerArg(&m_overwriteLayer).SetHiddenForCLI(hiddenForCLI);
+    }
     constexpr const char *MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT =
         "append-upsert";
-    AddAppendLayerArg(&m_appendLayer)
-        .SetHiddenForCLI(hiddenForCLI)
-        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT);
-    AddArg("upsert", 0, _("Upsert features (implies 'append')"), &m_upsert)
-        .SetHiddenForCLI(hiddenForCLI)
-        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT)
-        .AddAction(
-            [&updateArg, this]()
-            {
-                if (m_upsert)
-                    updateArg.Set(true);
-            })
-        .SetCategory(GAAC_ADVANCED);
-    if (GetName() != GDALVectorSQLAlgorithm::NAME &&
-        GetName() != GDALVectorConcatAlgorithm::NAME)
+    if (m_constructorOptions.addAppendLayerArgument)
+    {
+        AddAppendLayerArg(&m_appendLayer)
+            .SetHiddenForCLI(hiddenForCLI)
+            .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT);
+    }
+    if (m_constructorOptions.addUpsertArgument)
+    {
+        AddArg("upsert", 0, _("Upsert features (implies 'append')"), &m_upsert)
+            .SetHiddenForCLI(hiddenForCLI)
+            .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT)
+            .AddAction(
+                [updateArg, this]()
+                {
+                    if (m_upsert && updateArg)
+                        updateArg->Set(true);
+                })
+            .SetCategory(GAAC_ADVANCED);
+    }
+    if (m_constructorOptions.addOutputLayerNameArgument)
     {
         AddArg(GDAL_ARG_NAME_OUTPUT_LAYER,
                shortNameOutputLayerAllowed ? 'l' : 0, _("Output layer name"),
@@ -221,9 +231,12 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
             .AddHiddenAlias("nln")  // For ogr2ogr nostalgic people
             .SetHiddenForCLI(hiddenForCLI);
     }
-    AddArg("skip-errors", 0, _("Skip errors when writing features"),
-           &m_skipErrors)
-        .AddHiddenAlias("skip-failures");  // For ogr2ogr nostalgic people
+    if (m_constructorOptions.addSkipErrorsArgument)
+    {
+        AddArg("skip-errors", 0, _("Skip errors when writing features"),
+               &m_skipErrors)
+            .AddHiddenAlias("skip-failures");  // For ogr2ogr nostalgic people
+    }
 }
 
 /************************************************************************/

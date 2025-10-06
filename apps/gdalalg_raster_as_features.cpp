@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_raster_as_features.h"
+#include "gdalalg_vector_pipeline.h"
 
 #include "cpl_conv.h"
 #include "gdal_priv.h"
@@ -18,6 +19,7 @@
 #include "ogrsf_frmts.h"
 
 #include <cmath>
+#include <limits>
 #include <optional>
 
 //! @cond Doxygen_Suppress
@@ -32,39 +34,22 @@ GDALRasterAsFeaturesAlgorithm::GDALRasterAsFeaturesAlgorithm(
           NAME, DESCRIPTION, HELP_URL,
           ConstructorOptions()
               .SetStandaloneStep(standaloneStep)
-              .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE)),
-      m_bands{}, m_geomTypeName("none"), m_skipNoData(false),
-      m_includeXY(false), m_includeRowCol(false)
+              .SetAddUpsertArgument(false)
+              .SetAddSkipErrorsArgument(false)
+              .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
     m_outputLayerName = "pixels";
 
-    // TODO: This block is copied from gdalalg_raster_polygonize. Avoid duplication?
     if (standaloneStep)
     {
-        AddOutputFormatArg(&m_format).AddMetadataItem(
-            GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
-        AddOpenOptionsArg(&m_openOptions);
-        AddInputFormatsArg(&m_inputFormats)
-            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-
-        AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
-        AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
-            .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
-        AddCreationOptionsArg(&m_creationOptions);
-        AddLayerCreationOptionsArg(&m_layerCreationOptions);
-        AddOverwriteArg(&m_overwrite);
-        AddUpdateArg(&m_update);
-        AddOverwriteLayerArg(&m_overwriteLayer);
-        AddAppendLayerArg(&m_appendLayer);
-        AddLayerNameArg(&m_outputLayerName)
-            .AddAlias("nln")
-            .SetDefault(m_outputLayerName);
+        AddRasterInputArgs(false, false);
+        AddVectorOutputArgs(false, false);
     }
 
     AddBandArg(&m_bands);
     AddArg("geometry-type", 0, _("Geometry type"), &m_geomTypeName)
         .SetChoices("none", "point", "polygon")
-        .SetDefault("none");
+        .SetDefault(m_geomTypeName);
     AddArg("skip-nodata", 0, _("Omit NoData pixels from the result"),
            &m_skipNoData);
     AddArg("include-xy", 0, _("Include fields for cell center coordinates"),
@@ -74,15 +59,6 @@ GDALRasterAsFeaturesAlgorithm::GDALRasterAsFeaturesAlgorithm(
 }
 
 GDALRasterAsFeaturesAlgorithm::~GDALRasterAsFeaturesAlgorithm() = default;
-
-bool GDALRasterAsFeaturesAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                            void *pProgressData)
-{
-    GDALPipelineStepRunContext stepCtxt;
-    stepCtxt.m_pfnProgress = pfnProgress;
-    stepCtxt.m_pProgressData = pProgressData;
-    return RunPreStepPipelineValidations() && RunStep(stepCtxt);
-}
 
 GDALRasterAsFeaturesAlgorithmStandalone::
     ~GDALRasterAsFeaturesAlgorithmStandalone() = default;
@@ -96,37 +72,9 @@ struct RasterAsFeaturesOptions
     std::vector<int> bands{};
 };
 
-class GDALRasterToVectorPipelineOutputDataset final : public GDALDataset
-{
-
-  public:
-    int GetLayerCount() const override
-    {
-        return static_cast<int>(m_layers.size());
-    }
-
-    const OGRLayer *GetLayer(int idx) const override
-    {
-        return m_layers[idx].get();
-    }
-
-    int TestCapability(const char *) const override;
-
-    void AddLayer(std::unique_ptr<OGRLayer> layer)
-    {
-        m_layers.emplace_back(std::move(layer));
-    }
-
-  private:
-    std::vector<std::unique_ptr<OGRLayer>> m_layers{};
-};
-
-int GDALRasterToVectorPipelineOutputDataset::TestCapability(const char *) const
-{
-    return 0;
-}
-
-class GDALRasterAsFeaturesLayer final : public OGRLayer
+class GDALRasterAsFeaturesLayer final
+    : public OGRLayer,
+      public OGRGetNextFeatureThroughRaw<GDALRasterAsFeaturesLayer>
 {
   public:
     static constexpr const char *ROW_FIELD = "ROW";
@@ -134,11 +82,12 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
     static constexpr const char *X_FIELD = "CENTER_X";
     static constexpr const char *Y_FIELD = "CENTER_Y";
 
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALRasterAsFeaturesLayer)
+
     GDALRasterAsFeaturesLayer(GDALDataset &ds, RasterAsFeaturesOptions options)
-        : m_ds(ds), m_bufType(GDT_Float64),
-          m_it(GDALRasterBand::WindowIterator(
-              m_ds.GetRasterXSize(), m_ds.GetRasterYSize(),
-              m_ds.GetRasterXSize(), m_ds.GetRasterYSize(), 0, 0)),
+        : m_ds(ds), m_it(GDALRasterBand::WindowIterator(
+                        m_ds.GetRasterXSize(), m_ds.GetRasterYSize(),
+                        m_ds.GetRasterXSize(), m_ds.GetRasterYSize(), 0, 0)),
           m_end(GDALRasterBand::WindowIterator(
               m_ds.GetRasterXSize(), m_ds.GetRasterYSize(),
               m_ds.GetRasterXSize(), m_ds.GetRasterYSize(), 1, 0)),
@@ -168,8 +117,15 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
         }
 
         m_defn = new OGRFeatureDefn();
-        m_defn->GetGeomFieldDefn(0)->SetType(options.geomType);
-        m_defn->GetGeomFieldDefn(0)->SetSpatialRef(ds.GetSpatialRef());
+        if (options.geomType == wkbNone)
+        {
+            m_defn->SetGeomType(wkbNone);
+        }
+        else
+        {
+            m_defn->GetGeomFieldDefn(0)->SetType(options.geomType);
+            m_defn->GetGeomFieldDefn(0)->SetSpatialRef(ds.GetSpatialRef());
+        }
         m_defn->Reference();
 
         if (m_includeXY)
@@ -213,9 +169,22 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
         }
     }
 
-    int TestCapability(const char *) const override
+    int TestCapability(const char *pszCap) const override
     {
-        return 0;
+        return EQUAL(pszCap, OLCFastFeatureCount) &&
+               m_poFilterGeom == nullptr && m_poAttrQuery == nullptr &&
+               !m_excludeNoDataPixels;
+    }
+
+    GIntBig GetFeatureCount(int bForce) override
+    {
+        if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr &&
+            !m_excludeNoDataPixels)
+        {
+            return static_cast<GIntBig>(m_ds.GetRasterXSize()) *
+                   m_ds.GetRasterYSize();
+        }
+        return OGRLayer::GetFeatureCount(bForce);
     }
 
     OGRFeatureDefn *GetLayerDefn() const override
@@ -223,7 +192,7 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
         return m_defn;
     }
 
-    OGRFeature *GetNextFeature() override
+    OGRFeature *GetNextRawFeature()
     {
         if (m_row >= m_window.nYSize && !NextWindow())
         {
@@ -234,7 +203,7 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
 
         while (m_row < m_window.nYSize)
         {
-            const double *pSrcVal = static_cast<double *>(m_buf) +
+            const double *pSrcVal = reinterpret_cast<double *>(m_buf.data()) +
                                     (m_bands.size() * m_row * m_window.nXSize +
                                      m_col * m_bands.size());
 
@@ -268,13 +237,15 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
                 }
 
                 std::unique_ptr<OGRGeometry> geom;
-                const auto geomType = m_defn->GetGeomFieldDefn(0)->GetType();
+                const auto geomType = m_defn->GetGeomType();
                 if (geomType == wkbPoint)
                 {
                     double x, y;
                     m_gt.Apply(pixel + 0.5, line + 0.5, &x, &y);
 
                     geom = std::make_unique<OGRPoint>(x, y);
+                    geom->assignSpatialReference(
+                        m_defn->GetGeomFieldDefn(0)->GetSpatialRef());
                 }
                 else if (geomType == wkbPolygon)
                 {
@@ -296,6 +267,8 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
                     auto poly = std::make_unique<OGRPolygon>();
                     poly->addRing(std::move(lr));
                     geom = std::move(poly);
+                    geom->assignSpatialReference(
+                        m_defn->GetGeomFieldDefn(0)->GetSpatialRef());
                 }
 
                 feature->SetGeometry(std::move(geom));
@@ -348,35 +321,52 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
         m_window = *m_it;
         ++m_it;
 
-        if (m_buf == nullptr && !m_bands.empty())
+        if (!m_bands.empty())
         {
-            m_buf =
-                VSI_MALLOC3_VERBOSE(m_window.nXSize, m_window.nYSize,
-                                    static_cast<size_t>(nBandCount) *
-                                        GDALGetDataTypeSizeBytes(m_bufType));
-            if (m_buf == nullptr)
+            const auto nBufTypeSize = GDALGetDataTypeSizeBytes(m_bufType);
+            if constexpr (sizeof(int) < sizeof(size_t))
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
+                if (m_window.nYSize > 0 &&
+                    static_cast<size_t>(m_window.nXSize) >
+                        std::numeric_limits<size_t>::max() / m_window.nYSize)
+                {
+                    CPLError(CE_Failure, CPLE_OutOfMemory,
+                             "Failed to allocate buffer");
+                    return false;
+                }
+            }
+            const size_t nPixelCount =
+                static_cast<size_t>(m_window.nXSize) * m_window.nYSize;
+            if (static_cast<size_t>(nBandCount) * nBufTypeSize >
+                std::numeric_limits<size_t>::max() / nPixelCount)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
                          "Failed to allocate buffer");
                 return false;
             }
-        }
+            const size_t nBufSize = nPixelCount * nBandCount * nBufTypeSize;
+            if (m_buf.size() < nBufSize)
+            {
+                try
+                {
+                    m_buf.resize(nBufSize);
+                }
+                catch (const std::exception &)
+                {
+                    CPLError(CE_Failure, CPLE_OutOfMemory,
+                             "Failed to allocate buffer");
+                    return false;
+                }
+            }
 
-        for (size_t i = 0; i < m_bands.size(); i++)
-        {
-            auto eErr =
-                m_ds.GetRasterBand(m_bands[i])
-                    ->RasterIO(GF_Read, m_window.nXOff, m_window.nYOff,
-                               m_window.nXSize, m_window.nYSize,
-                               static_cast<GByte *>(m_buf) +
-                                   i * GDALGetDataTypeSizeBytes(m_bufType),
-                               m_window.nXSize, m_window.nYSize, m_bufType,
-                               static_cast<GSpacing>(nBandCount) *
-                                   GDALGetDataTypeSizeBytes(m_bufType),
-                               static_cast<GSpacing>(nBandCount) *
-                                   GDALGetDataTypeSizeBytes(m_bufType) *
-                                   m_window.nXSize,
-                               nullptr);
+            const auto nPixelSpace =
+                static_cast<GSpacing>(nBandCount) * nBufTypeSize;
+            const auto eErr = m_ds.RasterIO(
+                GF_Read, m_window.nXOff, m_window.nYOff, m_window.nXSize,
+                m_window.nYSize, m_buf.data(), m_window.nXSize, m_window.nYSize,
+                m_bufType, static_cast<int>(m_bands.size()), m_bands.data(),
+                nPixelSpace, nPixelSpace * m_window.nXSize, nBufTypeSize,
+                nullptr);
 
             if (eErr != CE_None)
             {
@@ -393,8 +383,8 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
     }
 
     GDALDataset &m_ds;
-    void *m_buf{nullptr};
-    GDALDataType m_bufType;
+    std::vector<GByte> m_buf{};
+    const GDALDataType m_bufType = GDT_Float64;
     GDALGeoTransform m_gt{};
     std::optional<double> m_noData{std::nullopt};
 
@@ -417,56 +407,11 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
 GDALRasterAsFeaturesLayer::~GDALRasterAsFeaturesLayer()
 {
     m_defn->Release();
-    if (m_buf != nullptr)
-    {
-        CPLFree(m_buf);
-    }
 }
 
 bool GDALRasterAsFeaturesAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
-
-    GDALDataset *poDstDS = m_outputDataset.GetDatasetRef();
-    std::string outputFilename = m_outputDataset.GetName();
-
-    std::unique_ptr<GDALDataset> poRetDS;
-    if (!poDstDS)
-    {
-        if (m_standaloneStep && m_format.empty())
-        {
-            const auto aosFormats =
-                CPLStringList(GDALGetOutputDriversForDatasetName(
-                    m_outputDataset.GetName().c_str(), GDAL_OF_VECTOR,
-                    /* bSingleMatch = */ true,
-                    /* bWarn = */ true));
-            if (aosFormats.size() != 1)
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Cannot guess driver for %s",
-                            m_outputDataset.GetName().c_str());
-                return false;
-            }
-            m_format = aosFormats[0];
-
-            auto poDriver =
-                GetGDALDriverManager()->GetDriverByName(m_format.c_str());
-
-            poRetDS.reset(
-                poDriver->Create(outputFilename.c_str(), 0, 0, 0, GDT_Unknown,
-                                 CPLStringList(m_creationOptions).List()));
-        }
-        else
-        {
-            poRetDS =
-                std::make_unique<GDALRasterToVectorPipelineOutputDataset>();
-        }
-
-        if (!poRetDS)
-            return false;
-
-        poDstDS = poRetDS.get();
-    }
 
     RasterAsFeaturesOptions options;
     options.geomType = m_geomTypeName == "point"     ? wkbPoint
@@ -483,13 +428,10 @@ bool GDALRasterAsFeaturesAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     auto poLayer =
         std::make_unique<GDALRasterAsFeaturesLayer>(*poSrcDS, options);
+    auto poRetDS = std::make_unique<GDALVectorOutputDataset>();
+    poRetDS->AddLayer(std::move(poLayer));
 
-    poDstDS->CopyLayer(poLayer.get(), m_outputLayerName.c_str());
-
-    if (poRetDS)
-    {
-        m_outputDataset.Set(std::move(poRetDS));
-    }
+    m_outputDataset.Set(std::move(poRetDS));
 
     return true;
 }

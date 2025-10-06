@@ -16,6 +16,8 @@
 
 #include "gdal.h"
 
+#include <utility>
+
 /* ******************************************************************** */
 /*                             GDALGeoTransform                         */
 /* ******************************************************************** */
@@ -147,6 +149,30 @@ class GDALGeoTransform
                       double *pdfGeoY) const
     {
         GDALApplyGeoTransform(data(), dfPixel, dfLine, pdfGeoX, pdfGeoY);
+    }
+
+    /**
+     * Apply GeoTransform to x/y coordinate.
+     *
+     * Applies the following computation, converting a (pixel, line) coordinate
+     * into a georeferenced (geo_x, geo_y) location.
+     * \code{.c}
+     *  out.first = padfGeoTransform[0] + dfPixel * padfGeoTransform[1]
+     *                                   + dfLine  * padfGeoTransform[2];
+     *  out.second = padfGeoTransform[3] + dfPixel * padfGeoTransform[4]
+     *                                   + dfLine  * padfGeoTransform[5];
+     * \endcode
+     *
+     * @param dfPixel Input pixel position.
+     * @param dfLine Input line position.
+     * @return output location as a (geo_x, geo_y) pair
+     */
+
+    inline std::pair<double, double> Apply(double dfPixel, double dfLine) const
+    {
+        double dfOutX, dfOutY;
+        GDALApplyGeoTransform(data(), dfPixel, dfLine, &dfOutX, &dfOutY);
+        return {dfOutX, dfOutY};
     }
 
     /**

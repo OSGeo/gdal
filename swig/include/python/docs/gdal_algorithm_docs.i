@@ -403,7 +403,7 @@ Examples
 
 >>> subalg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg('raster').InstantiateSubAlgorithm('polygonize')
 >>> subalg.GetArgNames()
-['help', 'help-doc', 'json-usage', 'config', 'quiet', 'progress', 'output-format', 'open-option', 'input-format', 'input', 'output', 'creation-option', 'layer-creation-option', 'overwrite', 'update', 'overwrite-layer', 'append', 'output-layer', 'band', 'attribute-name', 'connect-diagonal-pixels']
+['help', 'help-doc', 'json-usage', 'config', 'quiet', 'progress', 'input-format', 'open-option', 'input', 'output-format', 'output-open-option', 'output', 'creation-option', 'layer-creation-option', 'overwrite', 'update', 'overwrite-layer', 'append', 'output-layer', 'band', 'attribute-name', 'connect-diagonal-pixels', 'commit-interval']
 
 };
 
