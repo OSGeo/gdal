@@ -1330,10 +1330,7 @@ class GDALZonalStatsImpl
 
             TrimWindowToRaster(oWindow, m_src);
 
-            const size_t nWindowSize = static_cast<size_t>(oWindow.nXSize) *
-                                       static_cast<size_t>(oWindow.nYSize);
-
-            if (nWindowSize == 0)
+            if (oWindow.nXSize == 0 || oWindow.nYSize == 0)
             {
                 const gdal::RasterStats<double> empty(CreateStats());
                 for (int iBand : m_options.bands)
@@ -1343,6 +1340,16 @@ class GDALZonalStatsImpl
             }
             else
             {
+
+                const int nRowsPerChunk = std::min(
+                    oWindow.nYSize,
+                    std::max(1, static_cast<int>(
+                                    m_maxCells /
+                                    static_cast<size_t>(oWindow.nXSize))));
+
+                const size_t nWindowSize = static_cast<size_t>(oWindow.nXSize) *
+                                           static_cast<size_t>(nRowsPerChunk);
+
                 if (nBufSize < nWindowSize)
                 {
                     bool bAllocSuccess = true;
@@ -1395,58 +1402,87 @@ class GDALZonalStatsImpl
                     nBufSize = nWindowSize;
                 }
 
-                const OGREnvelope oSnappedGeomExtent = ToEnvelope(oWindow);
-
-                if (!CalculateCoverage(poGeom, oSnappedGeomExtent,
-                                       oWindow.nXSize, oWindow.nYSize,
-                                       m_pabyCoverageBuf.get()))
+                std::vector<gdal::RasterStats<double>> aoStats;
+                aoStats.reserve(m_options.bands.size());
+                for (size_t q = 0; q < m_options.bands.size(); q++)
                 {
-                    return false;
+                    aoStats.emplace_back(CreateStats());
                 }
 
-                if (m_weights != nullptr)
+                for (int nYOff = oWindow.nYOff;
+                     nYOff < oWindow.nYOff + oWindow.nYSize;
+                     nYOff += nRowsPerChunk)
                 {
-                    GDALRasterBand *poWeightsBand =
-                        poAlignedWeightsDS->GetRasterBand(
-                            m_options.weights_band);
+                    GDALRasterWindow oSubWindow;
+                    oSubWindow.nXOff = oWindow.nXOff;
+                    oSubWindow.nXSize = oWindow.nXSize;
+                    oSubWindow.nYOff = nYOff;
+                    oSubWindow.nYSize = std::min(
+                        nRowsPerChunk, oWindow.nYOff + oWindow.nYSize - nYOff);
 
-                    if (!ReadWindow(
-                            *poWeightsBand, oWindow,
-                            reinterpret_cast<GByte *>(m_padfWeightsBuf.get()),
-                            GDT_Float64))
+                    const OGREnvelope oSnappedGeomExtent =
+                        ToEnvelope(oSubWindow);
+
+                    if (!CalculateCoverage(poGeom, oSnappedGeomExtent,
+                                           oSubWindow.nXSize, oSubWindow.nYSize,
+                                           m_pabyCoverageBuf.get()))
                     {
                         return false;
                     }
-                    if (!ReadWindow(*poWeightsBand->GetMaskBand(), oWindow,
-                                    m_pabyWeightsMaskBuf.get(), GDT_Byte))
+
+                    if (m_weights != nullptr)
                     {
-                        return false;
+                        GDALRasterBand *poWeightsBand =
+                            poAlignedWeightsDS->GetRasterBand(
+                                m_options.weights_band);
+
+                        if (!ReadWindow(*poWeightsBand, oSubWindow,
+                                        reinterpret_cast<GByte *>(
+                                            m_padfWeightsBuf.get()),
+                                        GDT_Float64))
+                        {
+                            return false;
+                        }
+                        if (!ReadWindow(*poWeightsBand->GetMaskBand(),
+                                        oSubWindow, m_pabyWeightsMaskBuf.get(),
+                                        GDT_Byte))
+                        {
+                            return false;
+                        }
+                    }
+
+                    for (size_t iBandInd = 0; iBandInd < m_options.bands.size();
+                         iBandInd++)
+                    {
+                        GDALRasterBand *poBand =
+                            m_src.GetRasterBand(m_options.bands[iBandInd]);
+
+                        if (!ReadWindow(*poBand, oSubWindow,
+                                        m_pabyValuesBuf.get(),
+                                        m_workingDataType))
+                        {
+                            return false;
+                        }
+                        if (!ReadWindow(*poBand->GetMaskBand(), oSubWindow,
+                                        m_pabyMaskBuf.get(), m_maskDataType))
+                        {
+                            return false;
+                        }
+
+                        UpdateStats(aoStats[iBandInd], m_pabyValuesBuf.get(),
+                                    m_pabyMaskBuf.get(), m_padfWeightsBuf.get(),
+                                    m_pabyWeightsMaskBuf.get(),
+                                    m_pabyCoverageBuf.get(), m_padfX.get(),
+                                    m_padfY.get(), oSubWindow.nXSize,
+                                    oSubWindow.nYSize);
                     }
                 }
 
-                for (int iBand : m_options.bands)
+                for (size_t iBandInd = 0; iBandInd < m_options.bands.size();
+                     iBandInd++)
                 {
-                    GDALRasterBand *poBand = m_src.GetRasterBand(iBand);
-
-                    if (!ReadWindow(*poBand, oWindow, m_pabyValuesBuf.get(),
-                                    m_workingDataType))
-                    {
-                        return false;
-                    }
-                    if (!ReadWindow(*poBand->GetMaskBand(), oWindow,
-                                    m_pabyMaskBuf.get(), m_maskDataType))
-                    {
-                        return false;
-                    }
-
-                    gdal::RasterStats<double> stats = CreateStats();
-
-                    UpdateStats(stats, m_pabyValuesBuf.get(),
-                                m_pabyMaskBuf.get(), m_padfWeightsBuf.get(),
-                                m_pabyWeightsMaskBuf.get(),
-                                m_pabyCoverageBuf.get(), m_padfX.get(),
-                                m_padfY.get(), oWindow.nXSize, oWindow.nYSize);
-                    SetStatFields(*poDstFeature, iBand, stats);
+                    SetStatFields(*poDstFeature, m_options.bands[iBandInd],
+                                  aoStats[iBandInd]);
                 }
             }
 

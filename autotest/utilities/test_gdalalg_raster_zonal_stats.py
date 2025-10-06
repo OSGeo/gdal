@@ -83,6 +83,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_basic(
     zonal["pixels"] = pixels
     zonal["stat"] = ["sum", "mean"]
     zonal["band"] = band
+    zonal["memory"] = "2k"  # force iteration over blocks
 
     assert zonal.Run()
 
