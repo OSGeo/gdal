@@ -2138,6 +2138,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 psOptions->srcWin.dfXSize, psOptions->srcWin.dfYSize,
                 dstWin.dfXOff, dstWin.dfYOff, dstWin.dfXSize, dstWin.dfYSize);
 
+            poVRTBand->SetColorInterpretation(GCI_AlphaBand);
+
             // Color interpretation override
             if (!psOptions->anColorInterp.empty())
             {

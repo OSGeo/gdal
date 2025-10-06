@@ -2817,9 +2817,9 @@ static bool CheckBandForOverview(GDALRasterBand *poBand,
     {
         return false;
     }
-    GDALRasterBand *poSrcBand = poBand->GetBand() == 0
-                                    ? poSource->GetMaskBandMainBand()
-                                    : poSource->GetRasterBand();
+    GDALRasterBand *poSrcBand = poSource->GetMaskBandMainBand();
+    if (!poSrcBand)
+        poSrcBand = poSource->GetRasterBand();
     if (poSrcBand == nullptr)
         return false;
 
@@ -2976,13 +2976,6 @@ void VRTDataset::BuildVirtualOverviews()
             }
             if (poNewSource)
             {
-                auto poNewSourceBand = poVRTBand->GetBand() == 0
-                                           ? poNewSource->GetMaskBandMainBand()
-                                           : poNewSource->GetRasterBand();
-                CPLAssert(poNewSourceBand);
-                auto poNewSourceBandDS = poNewSourceBand->GetDataset();
-                if (poNewSourceBandDS)
-                    poNewSourceBandDS->Reference();
                 poOvrVRTBand->AddSource(std::move(poNewSource));
             }
 
