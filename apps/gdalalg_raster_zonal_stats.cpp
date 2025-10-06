@@ -123,13 +123,6 @@ bool GDALRasterZonalStatsAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     return false;
                 }
                 m_format = aosFormats[0];
-
-                auto poDriver =
-                    GetGDALDriverManager()->GetDriverByName(m_format.c_str());
-
-                poRetDS.reset(poDriver->Create(
-                    m_outputDataset.GetName().c_str(), 0, 0, 0, GDT_Unknown,
-                    CPLStringList(m_creationOptions).List()));
             }
         }
         else
