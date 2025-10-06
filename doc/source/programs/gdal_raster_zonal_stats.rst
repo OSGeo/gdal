@@ -115,44 +115,44 @@ This algorithm can be part of a :ref:`gdal_pipeline`.
 
 The following options are available:
 
-.. option:: --stat
+.. option:: --stat <STAT>
 
    Specifies one or more of the :ref:`zonal-supported-stats` to compute for each zone.
 
-.. option:: --zones
+.. option:: --zones <ZONES>
 
    The path to a dataset that defines the zones. If the dataset has more than 1 raster band or feature layer, :option:`--zones-band` or :option:`--zones-layer` must be specified.
 
-.. option:: --zones-band
+.. option:: --zones-band <ZONES-BAND>
 
    Specifies the raster band from which zones can be read.
 
-.. option:: --zones-layer
+.. option:: --zones-layer <ZONES-LAYER>
 
    Specifies the feature layer from which zones can be read.
 
-.. option:: --weights
+.. option:: --weights <WEIGHTS>
 
    Optional path to a dataset to use for weighting.
 
-.. option:: --weights-band
+.. option:: --weights-band <WEIGHTS-BAND>
 
    Specifies the raster band from which weights can be read.
 
-.. option:: --pixels
+.. option:: --pixels <PIXELS>
 
    Method to determine which pixels should be included in the calculation: ``default``, ``all_touched``, or ``fractional``.
   
-.. option:: --memory
+.. option:: --memory <MEMORY>
 
    Defines the size of raster chunks to read. Defaults to 2GB.
 
-.. option:: --strategy
+.. option:: --strategy <STRATEGY>
 
    Specifies the the processing strategy (``raster`` or ``feature``), when vector zones are used.
    In the default strategy (``--strategy feature``), GDAL will iterate over the features in the zone dataset, read the corresponding pixels from the raster, and write the statistics for that feature. This avoids the need to read the entire feature dataset into memory at once, but may cause the same pixels to be read multiple times the polygon features are large or not ordered spatially. If ``--strategy raster`` is used, GDAL will iterate over chunks of the raster dataset, find corresponding polygon zones, and update the statistics for those features. (The size of the raster chunks can be controlled using :opt:``memory``. This ensures that raster pixels are only read once, but may cause the same features to be processed multiple times.
    
-.. option:: --include-field
+.. option:: --include-field <INCLUDE-FIELD>
 
    Specifies one or more fields from the zones to be copied to the output. Only
    available when vector zones are used.
