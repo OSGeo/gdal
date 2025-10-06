@@ -699,9 +699,8 @@ class GDALZonalStatsImpl
             // Prevent warning message about Computed -srcwin outside source raster extent.
             // We've already tested for this an issued a more understandable message.
             CPLErrorStateBackuper state(CPLQuietWarningsErrorHandler);
-            ret.reset(GDALDataset::FromHandle(
-                GDALTranslate("/tmp/x.vrt", GDALDataset::ToHandle(&src),
-                              psOptions, nullptr)));
+            ret.reset(GDALDataset::FromHandle(GDALTranslate(
+                "", GDALDataset::ToHandle(&src), psOptions, nullptr)));
         }
         GDALTranslateOptionsFree(psOptions);
 
