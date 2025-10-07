@@ -787,3 +787,32 @@ def test_gdalalg_raster_zonal_stats_vector_zones_weights_resampled(
     assert results["weighted_mean"] == pytest.approx(
         np.average(values.flatten(), weights=weights_agg.flatten())
     )
+
+
+def test_gdalalg_raster_zonal_stats_pipeline_usage(zonal, tmp_vsimem, polyrast):
+
+    pipeline = gdal.Algorithm("pipeline")
+
+    src_fname = tmp_vsimem / "polyrast.shp"
+    out_fname = tmp_vsimem / "out.csv"
+
+    gdal.GetDriverByName("GTiff").CreateCopy(src_fname, polyrast)
+
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            src_fname,
+            "!",
+            "zonal-stats",
+            "--zones",
+            "../ogr/data/poly.shp",
+            "--stat",
+            "sum",
+            "!",
+            "write",
+            out_fname,
+        ]
+    )
+
+    with gdal.OpenEx(out_fname) as dst:
+        assert dst.GetLayer(0).GetFeatureCount() == 10

@@ -1708,7 +1708,6 @@ static CPLErr GDALZonalStats(GDALDataset &srcDataset, GDALDataset *poWeights,
 
     GDALZonalStatsImpl alg(srcDataset, dstDataset, poWeights, poZones, options);
     return alg.Process(pfnProgress, pProgressData) ? CE_None : CE_Failure;
-    ;
 }
 
 /** Compute statistics of raster values within defined zones

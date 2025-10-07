@@ -33,11 +33,6 @@ class GDALRasterZonalStatsAlgorithm /* non final */
 
     explicit GDALRasterZonalStatsAlgorithm(bool bStandalone = false);
 
-    bool CanBeFirstStep() const override
-    {
-        return true;
-    }
-
     int GetInputType() const override
     {
         return GDAL_OF_RASTER;

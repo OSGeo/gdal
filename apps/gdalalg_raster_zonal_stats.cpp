@@ -34,8 +34,11 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
               .SetStandaloneStep(bStandalone)
               .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
-    AddRasterInputArgs(false, false);
-    AddVectorOutputArgs(false, false);
+    if (bStandalone)
+    {
+        AddRasterInputArgs(false, false);
+        AddVectorOutputArgs(false, false);
+    }
 
     constexpr const char *ZONES_BAND_OR_LAYER = "BAND_OR_LAYER";
 
