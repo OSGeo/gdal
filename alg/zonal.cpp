@@ -1532,7 +1532,7 @@ class GDALZonalStatsImpl
         if (m_options.pixels == GDALZonalStatsOptions::FRACTIONAL)
         {
             std::memset(pabyCoverageBuf, 0,
-                        nXSize * nYSize *
+                        static_cast<size_t>(nXSize) * nYSize *
                             GDALGetDataTypeSizeBytes(GDT_Float32));
             GEOSGeometry *poGeosGeom =
                 poGeom->exportToGEOS(m_geosContext, true);
@@ -1688,7 +1688,6 @@ static CPLErr GDALZonalStats(GDALDataset &srcDataset, GDALDataset *poWeights,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Specified zones band %d not found", nZonesBand);
             return CE_Failure;
-            ;
         }
         poZones = poZonesBand;
     }
