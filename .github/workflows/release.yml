@@ -1,0 +1,253 @@
+name: Perform Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PROJ_VERSION: "9.7.0"
+
+jobs:
+  safety_checks:
+    runs-on: ubuntu-latest
+    outputs:
+        RC: ${{ steps.unpack_tag.outputs.RC }}
+        VERSION: ${{ steps.unpack_tag.outputs.VERSION }}
+        COMPRESSED_VERSION: ${{ steps.unpack_tag.outputs.COMPRESSED_VERSION }}
+
+    steps:
+      - name: ensure repo owner
+        run: |
+          if [[ ${{ github.repository_owner}} != 'osgeo' ]]; then
+            exit 1
+          fi
+      - name: extract tag info
+        id: unpack_tag
+        run: |
+          export RC=$(python3 -c "print('' if 'RC' not in '$github.ref_name' else ''.join('$github.ref_name'.rpartition('RC')[1:]).lower())")
+          export VERSION=$(python3 -c "print('$github.ref_name'.lstrip('v').partition('RC')[0])")
+          export COMPRESSED_VERSION=$(echo "$VERSION" | tr -d .)
+
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "RC=$RC" >> $GITHUB_OUTPUT
+          echo "COMPRESSED_VERSION=$COMPRESSED_VERSION" >> $GITHUB_OUTPUT
+  mkgdaldist:
+    runs-on: ubuntu-latest
+    needs: safety_checks
+    environment: pypi
+    permissions:
+      id-token: write
+      attestations: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Setup environment
+        shell: bash -l {0}
+        env:
+          DEBIAN_FRONTEND: noninteractive
+          RC: ${{ needs.safety_checks.outputs.RC }}
+          VERSION: ${{ needs.safety_checks.outputs.VERSION }}
+          COMPRESSED_VERSION: ${{ needs.safety_checks.outputs.COMPRESSED_VERSION }}
+        run: |
+            sudo apt update
+            sudo apt-get install -y \
+            g++ \
+            cmake \
+            doxygen \
+            enchant-2 \
+            python3 \
+            python3-dev \
+            python3-pip \
+            python3-venv \
+            libproj-dev \
+            swig \
+            libsqlite3-dev \
+            gnupg2 \
+            openjdk-8-jdk-headless \
+            ant
+            python3 -m venv create doc_env
+            . doc_env/bin/activate
+            python3 -m pip install -r doc/requirements.txt
+            python3 -m pip install setuptools
+            python3 -m pip install pytest
+            echo PATH=$PATH >> $GITHUB_ENV
+      - name: Configure GPG Key
+        run: |
+          echo -n "$GPG_SIGNING_KEY" | gpg2 --import
+        env:
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+      - name: Install Doc Dependencies
+        shell: bash
+        run: |
+          sudo apt-get install -y dvipng latexmk texlive-latex-base \
+          texlive-latex-extra git latex-cjk-all texlive-lang-all tex-gyre
+
+      - name: Run mkgdaldist
+        shell: bash -l {0}
+        id: mkgdaldist
+        run: |
+          if test "$RC" != ""; then
+            ./mkgdaldist.sh $VERSION -tag ${{ github.ref_name }} -rc $RC
+          else
+            ./mkgdaldist.sh $VERSION -tag ${{ github.ref_name }}
+          fi
+      - name: Upload tar.gz
+        id: upload-tar-gz
+        uses: actions/upload-artifact@v4
+        with:
+          name: gdal-$VERSION$RC.tar.gz
+          path: |
+            gdal-$VERSION$RC.tar.gz
+      - name: Upload tar.xz
+        id: upload-tar-xz
+        uses: actions/upload-artifact@v4
+        with:
+          name: gdal-$VERSION$RC.tar.xz
+          path: |
+            gdal-$VERSION$RC.tar.xz
+      - name: Upload zip
+        id: upload-zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: gdal$COMPRESSED_VERSION$RC.zip
+          path: |
+            gdal$COMPRESSED_VERSION$RC.zip
+      - uses: actions/attest-build-provenance@v3
+        with:
+          subject-name: gdal-$VERSION$RC.tar.gz
+          subject-digest: sha256:${{ steps.upload-tar-gz.outputs.artifact-digest }}
+      - uses: actions/attest-build-provenance@v3
+        with:
+          subject-name: gdal-$VERSION$RC.tar.xz
+          subject-digest: sha256:${{ steps.upload-tar-xz.outputs.artifact-digest }}
+      - uses: actions/attest-build-provenance@v3
+        with:
+          subject-name: gdal$COMPRESSED_VERSION$RC.zip
+          subject-digest: sha256:${{ steps.upload-zip.outputs.artifact-digest }}
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        name: Publish release as draft
+        with:
+          make_latest: false
+          fail_on_unmatched_files: true
+          prerelease: true
+          generate_release_notes: true
+          draft: true
+          files: |
+            gdal$COMPRESSED_VERSION$RC.zip
+            gdal-$VERSION$RC.tar.xz
+            gdal-$VERSION$RC.tar.gz
+            gdalautotest-$VERSION$RC.zip
+            gdal*doc.zip
+            *.md5
+            *.sig
+      - name: make minimum build for python packages
+        run: |
+          mkdir -p build
+          cd build
+          cmake ../
+      - name: make gdal sdist
+        run: |
+          cd swig/python
+          python3 setup.py sdist
+      - name: Publish gdal sdist to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          attestations: true
+      - name: make gdal-utils bdist_wheel
+        run: |
+          cd gdal-utils
+          python3 setup.py bdist_wheel
+      - name: Publish gdal-utils bdist_wheel to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          attestations: true
+
+  docker_builds:
+    needs: safety_checks
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ["arm64", "amd64"]
+        base: ["alpine-small", "alpine-normal", "ubuntu-small", "ubuntu-full"]
+    name: ${{ matrix.base }}-${{ matrix.platform }}
+    runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    permissions:
+      attestations: write
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Set up Docker
+        uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 # v4.3.0
+        with:
+          daemon-config: |
+            {
+              "debug": false,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract container metadata
+        id: meta
+        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5.8.0
+        with:
+          images: |
+            ghcr.io/osgeo/gdal
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+      - name: Build
+        shell: bash -l {0}
+        id: build
+        run: |
+          TAG=${{ github.ref_name }}
+          echo "VERSION=${TAG#v}" >> $env.GITHUB_OUTPUT
+
+          cd docker/${{ matrix.base }}
+          ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --push --tag ${VERSION} --release --proj ${{ env.PROJ_VERSION }}
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-${VERSION}-${{ matrix.platform }} gdalinfo --formats
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-${VERSION}-${{ matrix.platform }} ogrinfo --formats
+  create-docker-manifest:
+    permissions:
+      packages: write
+      attestations: write
+      id-token: write
+    runs-on: ubuntu-latest
+    needs: docker_builds
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: ["ubuntu-full", "ubuntu-small", "alpine-small", "alpine-normal"]
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create and push multi-platform manifest
+        run: |
+          TAG=${{ github.ref_name }}
+          export "VERSION=${TAG#v}
+          docker buildx imagetools create \
+          -t ghcr.io/osgeo/gdal:${{ matrix.tag }}-${VERSION} \
+          ghcr.io/osgeo/gdal:${{ matrix.tag }}-${VERSION}-amd64 \
+          ghcr.io/osgeo/gdal:${{ matrix.tag }}-${VERSION}-arm64
