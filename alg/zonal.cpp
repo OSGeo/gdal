@@ -1727,6 +1727,11 @@ CPLErr GDALZonalStats(GDALDatasetH hSrcDS, GDALDatasetH hWeightsDS,
                       const void *poOptions, GDALProgressFunc pfnProgress,
                       void *pProgressArg)
 {
+    VALIDATE_POINTER1(hSrcDS, __func__, CE_Failure);
+    VALIDATE_POINTER1(hZonesDS, __func__, CE_Failure);
+    VALIDATE_POINTER1(hOutDS, __func__, CE_Failure);
+    VALIDATE_POINTER1(poOptions, __func__, CE_Failure);
+
     return GDALZonalStats(
         *GDALDataset::FromHandle(hSrcDS), GDALDataset::FromHandle(hWeightsDS),
         *GDALDataset::FromHandle(hZonesDS), *GDALDataset::FromHandle(hOutDS),
