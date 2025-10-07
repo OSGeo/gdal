@@ -168,6 +168,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     std::string osFilename(poOpenInfo->pszFilename);
     bool bIsSubdataset = false;
     bool bIsQuality = false;
+    std::string osBathymetryCoverageName = "BathymetryCoverage.01";
     if (STARTS_WITH(poOpenInfo->pszFilename, "S102:"))
     {
         const CPLStringList aosTokens(
@@ -185,6 +186,10 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
             if (EQUAL(aosTokens[2], "BathymetryCoverage"))
             {
                 // Default dataset
+            }
+            else if (STARTS_WITH(aosTokens[2], "BathymetryCoverage"))
+            {
+                osBathymetryCoverageName = aosTokens[2];
             }
             else if (EQUAL(aosTokens[2], "QualityOfSurvey") ||  // < v3
                      EQUAL(aosTokens[2], "QualityOfBathymetryCoverage"))  // v3
@@ -211,17 +216,113 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
 
     const auto &poRootGroup = poDS->m_poRootGroup;
-    auto poBathymetryCoverage01 = poRootGroup->OpenGroupFromFullname(
-        "/BathymetryCoverage/BathymetryCoverage.01");
-    if (!poBathymetryCoverage01)
+
+    auto poBathymetryCoverage = poRootGroup->OpenGroup("BathymetryCoverage");
+    if (!poBathymetryCoverage)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "S102: Cannot find /BathymetryCoverage/BathymetryCoverage.01");
+                 "S102: Cannot find /BathymetryCoverage group");
         return nullptr;
     }
 
-    const bool bNorthUp = CPLTestBool(
-        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
+    if (!bIsSubdataset)
+    {
+        auto poNumInstances =
+            poBathymetryCoverage->GetAttribute("numInstances");
+        if (poNumInstances &&
+            poNumInstances->GetDataType().GetClass() == GEDTC_NUMERIC)
+        {
+            const int nNumInstances = poNumInstances->ReadAsInt();
+            if (nNumInstances != 1)
+            {
+                CPLStringList aosSubDSList;
+                int iSubDS = 0;
+                for (const std::string &coverageName :
+                     poBathymetryCoverage->GetGroupNames())
+                {
+                    auto poCoverage =
+                        poBathymetryCoverage->OpenGroup(coverageName);
+                    if (poCoverage)
+                    {
+                        GDALMajorObject mo;
+                        // Read first vertical datum from root group and let the
+                        // coverage override it.
+                        S100ReadVerticalDatum(&mo, poRootGroup.get());
+                        S100ReadVerticalDatum(&mo, poCoverage.get());
+                        ++iSubDS;
+                        aosSubDSList.SetNameValue(
+                            CPLSPrintf("SUBDATASET_%d_NAME", iSubDS),
+                            CPLSPrintf("S102:\"%s\":%s", osFilename.c_str(),
+                                       coverageName.c_str()));
+                        std::string verticalDatum;
+                        const char *pszValue =
+                            mo.GetMetadataItem(S100_VERTICAL_DATUM_MEANING);
+                        if (pszValue)
+                        {
+                            verticalDatum = ", vertical datum ";
+                            verticalDatum += pszValue;
+                            pszValue =
+                                mo.GetMetadataItem(S100_VERTICAL_DATUM_ABBREV);
+                            if (pszValue)
+                            {
+                                verticalDatum += " (";
+                                verticalDatum += pszValue;
+                                verticalDatum += ')';
+                            }
+                        }
+                        else
+                        {
+                            pszValue =
+                                mo.GetMetadataItem(S100_VERTICAL_DATUM_NAME);
+                            if (pszValue)
+                            {
+                                verticalDatum = ", vertical datum ";
+                                verticalDatum += pszValue;
+                            }
+                        }
+                        aosSubDSList.SetNameValue(
+                            CPLSPrintf("SUBDATASET_%d_DESC", iSubDS),
+                            CPLSPrintf(
+                                "Bathymetric gridded data, instance %s%s",
+                                coverageName.c_str(), verticalDatum.c_str()));
+                    }
+                }
+                auto poGroupQuality =
+                    poRootGroup->OpenGroup("QualityOfBathymetryCoverage");
+                if (poGroupQuality)
+                {
+                    auto poQualityOfBathymetryCoverage01 =
+                        poGroupQuality->OpenGroup(
+                            "QualityOfBathymetryCoverage.01");
+                    if (poQualityOfBathymetryCoverage01)
+                    {
+                        ++iSubDS;
+                        aosSubDSList.SetNameValue(
+                            CPLSPrintf("SUBDATASET_%d_NAME", iSubDS),
+                            CPLSPrintf(
+                                "S102:\"%s\":QualityOfBathymetryCoverage",
+                                osFilename.c_str()));
+                        aosSubDSList.SetNameValue(
+                            CPLSPrintf("SUBDATASET_%d_DESC", iSubDS),
+                            "Georeferenced metadata "
+                            "QualityOfBathymetryCoverage");
+                    }
+                }
+
+                poDS->GDALDataset::SetMetadata(aosSubDSList.List(),
+                                               "SUBDATASETS");
+
+                // Setup/check for pam .aux.xml.
+                poDS->SetDescription(osFilename.c_str());
+                poDS->TryLoadXML();
+
+                // Setup overviews.
+                poDS->oOvManager.Initialize(poDS.get(), osFilename.c_str());
+
+                return poDS.release();
+            }
+        }
+    }
 
     if (bIsQuality)
     {
@@ -238,11 +339,42 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         return poDS.release();
     }
 
-    // Compute geotransform
-    poDS->m_bHasGT =
-        S100GetGeoTransform(poBathymetryCoverage01.get(), poDS->m_gt, bNorthUp);
+    auto poBathymetryCoverageInstance =
+        poBathymetryCoverage->OpenGroup(osBathymetryCoverageName);
+    if (!poBathymetryCoverageInstance)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "S102: Cannot find %s group in BathymetryCoverage group",
+                 osBathymetryCoverageName.c_str());
+        return nullptr;
+    }
 
-    auto poGroup001 = poBathymetryCoverage01->OpenGroup("Group_001");
+    if (auto poStartSequence =
+            poBathymetryCoverage->GetAttribute("startSequence"))
+    {
+        const char *pszStartSequence = poStartSequence->ReadAsString();
+        if (pszStartSequence && !EQUAL(pszStartSequence, "0,0"))
+        {
+            // Shouldn't happen given this is imposed by the spec.
+            // Cf 4.2.1.1.1.12 "startSequence" of Ed 3.0 spec, page 13
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "startSequence (=%s) != 0,0 is not supported",
+                     pszStartSequence);
+            return nullptr;
+        }
+    }
+
+    // Potentially override vertical datum
+    S100ReadVerticalDatum(poDS.get(), poBathymetryCoverageInstance.get());
+
+    const bool bNorthUp = CPLTestBool(
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
+
+    // Compute geotransform
+    poDS->m_bHasGT = S100GetGeoTransform(poBathymetryCoverageInstance.get(),
+                                         poDS->m_gt, bNorthUp);
+
+    auto poGroup001 = poBathymetryCoverageInstance->OpenGroup("Group_001");
     if (!poGroup001)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -280,7 +412,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     auto poDepth = poValuesArray->GetView("[\"depth\"]");
 
-    // Mandatory in v2.2
+    // Mandatory in v2.2. Since v3.0, EPSG:6498 is the only allowed value
     bool bCSIsElevation = false;
     auto poVerticalCS = poRootGroup->GetAttribute("verticalCS");
     if (poVerticalCS && poVerticalCS->GetDataType().GetClass() == GEDTC_NUMERIC)
@@ -450,7 +582,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       OpenQuality()                          */
+/*                           OpenQuality()                              */
 /************************************************************************/
 
 bool S102Dataset::OpenQuality(GDALOpenInfo *poOpenInfo,

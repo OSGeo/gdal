@@ -13,6 +13,9 @@
 #include "s100.h"
 #include "hdf5dataset.h"
 
+#include "proj.h"
+#include "ogr_proj_p.h"
+
 #include <algorithm>
 #include <cmath>
 
@@ -329,10 +332,10 @@ bool S100GetDimensions(
 /*                       S100ReadVerticalDatum()                        */
 /************************************************************************/
 
-void S100ReadVerticalDatum(GDALDataset *poDS, const GDALGroup *poRootGroup)
+void S100ReadVerticalDatum(GDALMajorObject *poMO, const GDALGroup *poGroup)
 {
-    // https://iho.int/uploads/user/pubs/standards/s-100/S-100_5.0.0_Final_Clean_Web.pdf
-    // Table S100_VerticalAndSoundingDatum page 20
+    // https://iho.int/uploads/user/pubs/standards/s-100/S-100_5.2.0_Final_Clean.pdf
+    // Table 10c-25 - Vertical and sounding datum, page 53
     static const struct
     {
         int nCode;
@@ -371,31 +374,67 @@ void S100ReadVerticalDatum(GDALDataset *poDS, const GDALGroup *poRootGroup)
         {30, "highestAstronomicalTide", "HAT"},
         {44, "balticSeaChartDatum2000", nullptr},
         {46, "internationalGreatLakesDatum2020", nullptr},
+        {47, "seaFloor", nullptr},
+        {48, "seaSurface", nullptr},
+        {49, "hydrographicZero", nullptr},
     };
 
-    auto poVerticalDatum = poRootGroup->GetAttribute("verticalDatum");
+    int nVerticalDatumReference = 1;
+    auto poVerticalDatumReference =
+        poGroup->GetAttribute("verticalDatumReference");
+    if (poVerticalDatumReference &&
+        poVerticalDatumReference->GetDataType().GetClass() == GEDTC_NUMERIC)
+    {
+        nVerticalDatumReference = poVerticalDatumReference->ReadAsInt();
+    }
+
+    auto poVerticalDatum = poGroup->GetAttribute("verticalDatum");
     if (poVerticalDatum &&
         poVerticalDatum->GetDataType().GetClass() == GEDTC_NUMERIC)
     {
-        bool bFound = false;
-        const auto nVal = poVerticalDatum->ReadAsInt();
-        for (const auto &sVerticalDatum : asVerticalDatums)
+        if (nVerticalDatumReference == 1)
         {
-            if (sVerticalDatum.nCode == nVal)
+            bool bFound = false;
+            const auto nVal = poVerticalDatum->ReadAsInt();
+            for (const auto &sVerticalDatum : asVerticalDatums)
             {
-                bFound = true;
-                poDS->GDALDataset::SetMetadataItem("VERTICAL_DATUM_MEANING",
-                                                   sVerticalDatum.pszMeaning);
-                if (sVerticalDatum.pszAbbrev)
-                    poDS->GDALDataset::SetMetadataItem(
-                        "VERTICAL_DATUM_ABBREV", sVerticalDatum.pszAbbrev);
-                break;
+                if (sVerticalDatum.nCode == nVal)
+                {
+                    bFound = true;
+                    poMO->GDALMajorObject::SetMetadataItem(
+                        S100_VERTICAL_DATUM_MEANING, sVerticalDatum.pszMeaning);
+                    if (sVerticalDatum.pszAbbrev)
+                        poMO->GDALMajorObject::SetMetadataItem(
+                            S100_VERTICAL_DATUM_ABBREV,
+                            sVerticalDatum.pszAbbrev);
+                    break;
+                }
+            }
+            if (!bFound)
+            {
+                poMO->GDALMajorObject::SetMetadataItem("verticalDatum",
+                                                       CPLSPrintf("%d", nVal));
             }
         }
-        if (!bFound)
+        else if (nVerticalDatumReference == 2)
         {
-            poDS->GDALDataset::SetMetadataItem("verticalDatum",
-                                               CPLSPrintf("%d", nVal));
+            const auto nVal = poVerticalDatum->ReadAsInt();
+            PJ *datum = proj_create_from_database(
+                OSRGetProjTLSContext(), "EPSG", CPLSPrintf("%d", nVal),
+                PJ_CATEGORY_DATUM, false, nullptr);
+            poMO->GDALMajorObject::SetMetadataItem("VERTICAL_DATUM_EPSG_CODE",
+                                                   CPLSPrintf("%d", nVal));
+            if (datum)
+            {
+                poMO->GDALMajorObject::SetMetadataItem(S100_VERTICAL_DATUM_NAME,
+                                                       proj_get_name(datum));
+                proj_destroy(datum);
+            }
+        }
+        else
+        {
+            CPLDebug("S100", "Unhandled verticalDatumReference = %d",
+                     nVerticalDatumReference);
         }
     }
 }

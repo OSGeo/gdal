@@ -61,7 +61,11 @@ bool S100GetDimensions(
 bool S100GetGeoTransform(const GDALGroup *poGroup, GDALGeoTransform &gt,
                          bool bNorthUp);
 
-void S100ReadVerticalDatum(GDALDataset *poDS, const GDALGroup *poRootGroup);
+constexpr const char *S100_VERTICAL_DATUM_MEANING = "VERTICAL_DATUM_MEANING";
+constexpr const char *S100_VERTICAL_DATUM_ABBREV = "VERTICAL_DATUM_ABBREV";
+constexpr const char *S100_VERTICAL_DATUM_NAME = "VERTICAL_DATUM_NAME";
+
+void S100ReadVerticalDatum(GDALMajorObject *poMO, const GDALGroup *poGroup);
 
 std::string S100ReadMetadata(GDALDataset *poDS, const std::string &osFilename,
                              const GDALGroup *poRootGroup);
