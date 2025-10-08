@@ -1174,6 +1174,28 @@ def test_ogr_geom_getpoints():
     assert points == [(0.0, 1.0)], "did not get expected points (8)"
 
 
+@pytest.mark.parametrize(
+    "wkt",
+    [
+        pytest.param(
+            "COMPOUNDCURVE(CIRCULARSTRING (0 0, 1 1, 2 0))", id="2d CompoundCurve"
+        ),
+        pytest.param(
+            "COMPOUNDCURVE(CIRCULARSTRINGZ (0 0 0, 1 1 0, 2 0 0))",
+            id="3d CompoundCurve",
+        ),
+    ],
+)
+def test_ogr_geom_getpoints_failure(wkt):
+
+    geom = ogr.CreateGeometryFromWkt(wkt)
+
+    with gdaltest.error_raised(gdal.CE_Failure, "Incompatible geometry"):
+        points = geom.GetPoints()
+
+        assert points is None
+
+
 ###############################################################################
 # Test OGRGeometry::empty()
 
