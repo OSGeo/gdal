@@ -18,9 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
         RC: ${{ steps.unpack_tag.outputs.RC }}
+        BETA: ${{ steps.unpack_tag.outputs.BETA }}
         VERSION: ${{ steps.unpack_tag.outputs.VERSION }}
         COMPRESSED_VERSION: ${{ steps.unpack_tag.outputs.COMPRESSED_VERSION }}
-
+        PYPI_REPOSITORY: ${{ steps.unpack_tag.outputs.PYPI_SERVER }}
     steps:
       - name: ensure repo owner
         run: |
@@ -31,12 +32,21 @@ jobs:
         id: unpack_tag
         run: |
           export RC=$(python3 -c "print('' if 'RC' not in '$github.ref_name' else ''.join('$github.ref_name'.rpartition('RC')[1:]).lower())")
+          export BETA=$(python3 -c "print('' if 'beta' not in '$github.ref_name' else ''.join('$github.ref_name'.rpartition('beta')[1:]).lower())")
           export VERSION=$(python3 -c "print('$github.ref_name'.lstrip('v').partition('RC')[0])")
           export COMPRESSED_VERSION=$(echo "$VERSION" | tr -d .)
 
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "RC=$RC" >> $GITHUB_OUTPUT
+          echo "BETA=$BETA" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "COMPRESSED_VERSION=$COMPRESSED_VERSION" >> $GITHUB_OUTPUT
+
+          if [ -z "$RC" ] && [ -z "$BETA" ]; then
+            export PYPI_REPOSITORY="https://upload.pypi.org/legacy/"
+          else
+            export PYPI_REPOSITORY="https://test.pypi.org/legacy/"
+          fi
+          echo "PYPI_REPOSITORY=$PYPI_REPOSITORY" >> $GITHUB_OUTPUT
   mkgdaldist:
     runs-on: ubuntu-latest
     needs: safety_checks
@@ -54,6 +64,7 @@ jobs:
           RC: ${{ needs.safety_checks.outputs.RC }}
           VERSION: ${{ needs.safety_checks.outputs.VERSION }}
           COMPRESSED_VERSION: ${{ needs.safety_checks.outputs.COMPRESSED_VERSION }}
+          PYPI_REPOSITORY: ${{ needs.safety_checks.outputs.PYPI_REPOSITORY }}
         run: |
             sudo apt update
             sudo apt-get install -y \
@@ -160,6 +171,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           attestations: true
+          repository-url: ${{ env.PYPI_REPOSITORY }}
       - name: make gdal-utils bdist_wheel
         run: |
           cd gdal-utils
@@ -168,6 +180,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           attestations: true
+          repository-url: ${{ env.PYPI_REPOSITORY }}
 
   docker_builds:
     needs: safety_checks
