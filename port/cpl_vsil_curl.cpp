@@ -1254,9 +1254,9 @@ retry:
     }
 
     double dfSize = 0;
+    long response_code = -1;
     if (oFileProp.eExists != EXIST_YES)
     {
-        long response_code = 0;
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
         bool bAlreadyLogged = false;
@@ -1632,7 +1632,9 @@ retry:
     oFileProp.bHasComputedFileSize = true;
     if (mtime > 0)
         oFileProp.mTime = mtime;
-    poFS->SetCachedFileProp(m_pszURL, oFileProp);
+    // Do not update cached file properties if cURL returned a non-HTTP error
+    if (response_code != 0)
+        poFS->SetCachedFileProp(m_pszURL, oFileProp);
 
     return oFileProp.fileSize;
 }
