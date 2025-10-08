@@ -1345,6 +1345,8 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        ExprTk and muparser support a number of built-in functions and control structures.
 
+       Since GDAL 3.12, the function standard C++ function ``fmod`` is added to muparser.
+
        Refer to the documentation of those libraries for details.
    * - **geometric_mean**
      - >= 1
