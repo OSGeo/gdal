@@ -25,7 +25,7 @@ jobs:
     steps:
       - name: ensure repo owner
         run: |
-          if [[ ${{ github.repository_owner}} != 'osgeo' ]]; then
+          if [[ ${{ github.repository_owner}} != 'OSGeo' ]]; then
             exit 1
           fi
       - name: extract tag info
