@@ -20,17 +20,13 @@ concurrency:
 
 jobs:
   docker_builds:
+    if: ${{ ! ((github.repository_owner != 'OSGeo') && (github.event_name == 'schedule')) }}
     strategy:
       fail-fast: false
       matrix:
         platform: ["arm64", "amd64"]
         base: ["alpine-small", "alpine-normal", "ubuntu-small", "ubuntu-full"]
-        proprietary_sdks: ['false']
-        include:
-          - platform: amd64
-            base: ubuntu-full
-            proprietary_sdks: 'true'
-    name: ${{ matrix.base }}-${{ matrix.platform }} proprietary-sdks=${{ matrix.proprietary_sdks }}
+    name: ${{ matrix.base }}-${{ matrix.platform }}
     runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
     permissions:
       contents: read
@@ -79,15 +75,10 @@ jobs:
         run: |
           set -e
           cd docker/${{ matrix.base }}
-          if test "${{ matrix.proprietary_sdks }}" = "true"; then
-            echo "PUSH_PACKAGES=false" >> $GITHUB_ENV
-            ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --with-oracle --with-mrsid --with-ecw
+          if test "${{ env.PUSH_PACKAGES }}" == "true"; then
+            ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --push
           else
-            if test "${{ env.PUSH_PACKAGES }}" == "true"; then
-              ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --push
-            else
-              ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
-            fi
+            ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
           fi
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} gdalinfo --formats
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} ogrinfo --formats
@@ -123,6 +114,35 @@ jobs:
           ghcr.io/osgeo/gdal:${{ matrix.tag }}-latest-amd64 \
           ghcr.io/osgeo/gdal:${{ matrix.tag }}-latest-arm64
       - name: Alias ubuntu-full-latest to latest
-        if: matrix.tag == 'ubuntu-full'
+        if: matrix.tag == 'ubuntu-full' && env.PUSH_PACKAGES == 'true'
         run: |
           docker buildx imagetools create ghcr.io/osgeo/gdal:ubuntu-full-latest --tag ghcr.io/osgeo/gdal:latest
+
+
+  docker_proprietary_sdk:
+    if: ${{ ! ((github.repository_owner != 'OSGeo') && (github.event_name == 'schedule')) }}
+    runs-on: ubuntu-latest
+    name: proprietary-sdks
+    env:
+      PUSH_PACKAGES: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Set up Docker
+        uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 # v4.3.0
+        with:
+          daemon-config: |
+            {
+              "debug": false,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+      - name: build
+        shell: bash -l {0}
+        run: |
+          set -e
+          cd docker/ubuntu-full
+          ./build.sh --platform linux/amd64 --with-multi-arch --with-oracle --with-mrsid --with-ecw
+          docker run --rm ghcr.io/osgeo/gdal:ubuntu-full-latest-amd64 gdalinfo --formats
+          docker run --rm ghcr.io/osgeo/gdal:ubuntu-full-latest-amd64 ogrinfo --formats
