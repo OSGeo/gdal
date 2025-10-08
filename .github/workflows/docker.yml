@@ -128,6 +128,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Set up Docker
+        uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 # v4.3.0
+        with:
+          daemon-config: |
+            {
+              "debug": false,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
       - name: build
         shell: bash -l {0}
         run: |
