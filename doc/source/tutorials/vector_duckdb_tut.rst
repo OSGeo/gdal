@@ -198,7 +198,7 @@ A few notes on the GDAL commands below:
             --oo PRELUDE_STATEMENTS="LOAD spatial" `
             --oo PRELUDE_STATEMENTS="INSTALL parquet" `
             --oo PRELUDE_STATEMENTS="LOAD parquet" `
-            --oo PRELUDE_STATEMENTS="INSTALL httpfs" 
+            --oo PRELUDE_STATEMENTS="INSTALL httpfs" `
             --oo PRELUDE_STATEMENTS="LOAD httpfs" `
             --oo PRELUDE_STATEMENTS="INSTALL aws" `
             --oo PRELUDE_STATEMENTS="LOAD aws" `
