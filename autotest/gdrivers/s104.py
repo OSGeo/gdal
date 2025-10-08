@@ -246,3 +246,80 @@ def test_s104_custom_crs(filename, wkt):
     assert ds.GetSpatialRef().IsSame(srs_ref), ds.GetSpatialRef().ExportToWkt(
         ["FORMAT=WKT2_2019", "MULTILINE=NO"]
     )
+
+
+###############################################################################
+
+
+def test_s104_multiple_feature_instance_groups():
+
+    ds = gdal.Open("data/s104/multiple_feature_instance_groups.h5")
+    assert ds.GetSubDatasets() == [
+        (
+            'S104:"data/s104/multiple_feature_instance_groups.h5":WaterLevel.01:Group_001',
+            "Values for feature instance WaterLevel.01, vertical datum meanLowerLowWater (MLLW) at timestamp 20190606T120000Z",
+        ),
+        (
+            'S104:"data/s104/multiple_feature_instance_groups.h5":WaterLevel.02:Group_001',
+            "Values for feature instance WaterLevel.02, vertical datum lowWater (LW) at timestamp 20190606T120000Z",
+        ),
+    ]
+    assert ds.RasterCount == 0
+
+    ds = gdal.Open(
+        'S104:"data/s104/multiple_feature_instance_groups.h5":WaterLevel.01:Group_001'
+    )
+    assert ds.GetSubDatasets() == []
+    assert ds.RasterCount == 2
+    assert ds.RasterYSize == 2
+    assert ds.RasterXSize == 4
+    assert struct.unpack("f" * 8, ds.GetRasterBand(1).ReadRaster()) == (
+        4,
+        5,
+        6,
+        7,
+        0,
+        1,
+        2,
+        3,
+    )
+    assert struct.unpack("B" * 8, ds.GetRasterBand(2).ReadRaster()) == (
+        1,
+        2,
+        0,
+        1,
+        0,
+        1,
+        2,
+        0,
+    )
+    assert ds.GetMetadataItem("VERTICAL_DATUM_MEANING") == "meanLowerLowWater"
+
+    ds = gdal.Open(
+        'S104:"data/s104/multiple_feature_instance_groups.h5":WaterLevel.02:Group_001'
+    )
+    assert ds.GetSubDatasets() == []
+    assert ds.RasterCount == 2
+    assert ds.RasterYSize == 2
+    assert ds.RasterXSize == 4
+    assert struct.unpack("f" * 8, ds.GetRasterBand(1).ReadRaster()) == (
+        40,
+        50,
+        60,
+        70,
+        0,
+        10,
+        20,
+        30,
+    )
+    assert struct.unpack("B" * 8, ds.GetRasterBand(2).ReadRaster()) == (
+        1,
+        2,
+        0,
+        1,
+        0,
+        1,
+        2,
+        0,
+    )
+    assert ds.GetMetadataItem("VERTICAL_DATUM_MEANING") == "lowWater"

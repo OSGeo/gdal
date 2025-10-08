@@ -387,3 +387,150 @@ generate(
         "falseNorthing": np.float64(200000),
     },
 )
+
+
+def generate_multiple_feature_instance_groups():
+    f = h5py.File(
+        os.path.join(os.path.dirname(__file__), "multiple_feature_instance_groups.h5"),
+        "w",
+    )
+    f.attrs["productSpecification"] = "INT.IHO.S-104.2.0"
+    f.attrs["issueDate"] = "2025-10-07"
+    f.attrs["issueTime"] = "12:34:56"
+    f.attrs["westBoundLongitude"] = -180.0
+    f.attrs["southBoundLatitude"] = -90.0
+    f.attrs["eastBoundLongitude"] = 180.0
+    f.attrs["northBoundLatitude"] = 90.0
+    f.attrs["geographicIdentifier"] = "world"
+    f.attrs["horizontalCRS"] = 4326
+    f.attrs["verticalCoordinateBase"] = 2
+    f.attrs["verticalCS"] = 6498
+    f.attrs["verticalDatum"] = 12
+    f.attrs["verticalDatumReference"] = 1
+    f.attrs["waterLevelTrendThreshold"] = np.float32(0.2)
+
+    WaterLevel = f.create_group("WaterLevel")
+    WaterLevel.attrs["dimension"] = 2
+    WaterLevel.attrs["dataCodingFormat"] = 2
+    WaterLevel.attrs["commonPointRule"] = 4
+    WaterLevel.attrs["dataOffsetCode"] = 5
+    WaterLevel.attrs["horizontalPositionUncertainty"] = 0
+    WaterLevel.attrs["interpolationType"] = 1
+    WaterLevel.attrs["numInstances"] = 2
+    WaterLevel.attrs["sequencingRule.scanDirection"] = "longitude,latitude"
+    WaterLevel.attrs["sequencingRule.type"] = 1
+    WaterLevel.attrs["verticalUncertainty"] = 0
+    WaterLevel.attrs["minDatasetHeight"] = np.float32(0)
+    WaterLevel.attrs["maxDatasetHeight"] = np.float32(7)
+
+    WaterLevel_01 = WaterLevel.create_group("WaterLevel.01")
+    Group_001 = WaterLevel_01.create_group("Group_001")
+
+    axisNames = WaterLevel.create_dataset(
+        "axisNames",
+        (2,),
+        dtype=h5py.string_dtype(),
+    )
+    axisNames[...] = np.array(["longitude", "latitude"])
+
+    values_struct_type = np.dtype(
+        [
+            ("waterLevelHeight", "f4"),
+            ("waterLevelTrend", "u1"),
+        ]
+    )
+    values = Group_001.create_dataset("values", (2, 4), dtype=values_struct_type)
+    data = np.array(
+        [(0, 0), (1, 1), (2, 2), (3, 0), (4, 1), (5, 2), (6, 0), (7, 1)],
+        dtype=values_struct_type,
+    ).reshape(values.shape)
+    values[...] = data
+
+    Group_001.attrs["timePoint"] = "20190606T120000Z"
+
+    WaterLevel_01.attrs["gridOriginLongitude"] = np.float64(-180)
+    WaterLevel_01.attrs["gridOriginLatitude"] = np.float64(90)
+    WaterLevel_01.attrs["gridSpacingLongitudinal"] = np.float64(90)
+    WaterLevel_01.attrs["gridSpacingLatitudinal"] = np.float64(90)
+    WaterLevel_01.attrs["numPointsLongitudinal"] = np.uint32(values.shape[1])
+    WaterLevel_01.attrs["numPointsLatitudinal"] = np.uint32(values.shape[0])
+
+    WaterLevel_01.attrs["numberOfTimes"] = np.uint32(1)
+    WaterLevel_01.attrs["timeRecordInterval"] = np.uint16(3600)
+    WaterLevel_01.attrs["dateTimeOfFirstRecord"] = "20190606T120000Z"
+    WaterLevel_01.attrs["dateTimeOfLastRecord"] = "20190606T120000Z"
+
+    WaterLevel_01.attrs["numGRP"] = np.uint32(1)
+    WaterLevel_01.attrs["startSequence"] = "0,0"
+
+    WaterLevel_02 = WaterLevel.create_group("WaterLevel.02")
+    Group_001 = WaterLevel_02.create_group("Group_001")
+
+    values = Group_001.create_dataset("values", (2, 4), dtype=values_struct_type)
+    data = np.array(
+        [(0, 0), (10, 1), (20, 2), (30, 0), (40, 1), (50, 2), (60, 0), (70, 1)],
+        dtype=values_struct_type,
+    ).reshape(values.shape)
+    values[...] = data
+
+    Group_001.attrs["timePoint"] = "20190606T120000Z"
+
+    WaterLevel_02.attrs["gridOriginLongitude"] = np.float64(-180)
+    WaterLevel_02.attrs["gridOriginLatitude"] = np.float64(90)
+    WaterLevel_02.attrs["gridSpacingLongitudinal"] = np.float64(90)
+    WaterLevel_02.attrs["gridSpacingLatitudinal"] = np.float64(90)
+    WaterLevel_02.attrs["numPointsLongitudinal"] = np.uint32(values.shape[1])
+    WaterLevel_02.attrs["numPointsLatitudinal"] = np.uint32(values.shape[0])
+
+    WaterLevel_02.attrs["numberOfTimes"] = np.uint32(1)
+    WaterLevel_02.attrs["timeRecordInterval"] = np.uint16(3600)
+    WaterLevel_02.attrs["dateTimeOfFirstRecord"] = "20190606T120000Z"
+    WaterLevel_02.attrs["dateTimeOfLastRecord"] = "20190606T120000Z"
+
+    WaterLevel_02.attrs["numGRP"] = np.uint32(1)
+    WaterLevel_02.attrs["startSequence"] = "0,0"
+    WaterLevel_02.attrs["verticalDatum"] = 13
+    WaterLevel_02.attrs["verticalDatumReference"] = 1
+
+    Group_F = f.create_group("Group_F")
+    Group_F_WaterLevel_struct_type = np.dtype(
+        [
+            ("code", h5py.string_dtype()),
+            ("name", h5py.string_dtype()),
+            ("uom.name", h5py.string_dtype()),
+            ("fillValue", h5py.string_dtype()),
+            ("datatype", h5py.string_dtype()),
+            ("lower", h5py.string_dtype()),
+            ("upper", h5py.string_dtype()),
+            ("closure", h5py.string_dtype()),
+        ]
+    )
+    Group_F_WaterLevel = Group_F.create_dataset(
+        "WaterLevel", (2,), dtype=Group_F_WaterLevel_struct_type
+    )
+    Group_F_WaterLevel[...] = np.array(
+        [
+            (
+                "waterLevelHeight",
+                "Water Level Height",
+                "metres",
+                "-9999.00",
+                "H5T_FLOAT",
+                "-99.99",
+                "99.99",
+                "closedInterval",
+            ),
+            ("waterLevelTrend", "Water Level Trend", "", "0", "H5T_ENUM", "", "", ""),
+        ],
+        dtype=Group_F_WaterLevel_struct_type,
+    )
+
+    featureCode = Group_F.create_dataset(
+        "featureCode",
+        (1,),
+        dtype=h5py.string_dtype(),
+    )
+    featureCode[...] = np.array(["WaterLevel"])
+
+
+generate_multiple_feature_instance_groups()

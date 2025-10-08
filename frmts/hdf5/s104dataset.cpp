@@ -23,6 +23,7 @@
 #include "gdal_rat.h"
 
 #include <limits>
+#include <map>
 
 /************************************************************************/
 /*                             S104Dataset                              */
@@ -112,6 +113,7 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     std::string osFilename(poOpenInfo->pszFilename);
+    std::string osFeatureInstance = "WaterLevel.01";
     std::string osGroup;
     if (STARTS_WITH(poOpenInfo->pszFilename, "S104:"))
     {
@@ -127,6 +129,12 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
         {
             osFilename = aosTokens[1];
             osGroup = aosTokens[2];
+        }
+        else if (aosTokens.size() == 4)
+        {
+            osFilename = aosTokens[1];
+            osFeatureInstance = aosTokens[2];
+            osGroup = aosTokens[3];
         }
         else
         {
@@ -179,20 +187,131 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    auto poWaterLevel01 = poWaterLevel->OpenGroup("WaterLevel.01");
-    if (!poWaterLevel01)
+    int nNumInstances = 1;
+    if (osGroup.empty())
+    {
+        auto poNumInstances = poWaterLevel->GetAttribute("numInstances");
+        if (poNumInstances &&
+            poNumInstances->GetDataType().GetClass() == GEDTC_NUMERIC)
+        {
+            nNumInstances = poNumInstances->ReadAsInt();
+        }
+    }
+    if (nNumInstances != 1)
+    {
+        CPLStringList aosSubDSList;
+        int iSubDS = 0;
+        for (const std::string &featureInstanceName :
+             poWaterLevel->GetGroupNames())
+        {
+            auto poFeatureInstance =
+                poWaterLevel->OpenGroup(featureInstanceName);
+            if (poFeatureInstance)
+            {
+                GDALMajorObject mo;
+                // Read first vertical datum from root group and let the
+                // coverage override it.
+                S100ReadVerticalDatum(&mo, poRootGroup.get());
+                S100ReadVerticalDatum(&mo, poFeatureInstance.get());
+
+                const auto aosGroupNames = poFeatureInstance->GetGroupNames();
+                for (const auto &osSubGroup : aosGroupNames)
+                {
+                    if (auto poSubGroup =
+                            poFeatureInstance->OpenGroup(osSubGroup))
+                    {
+                        ++iSubDS;
+                        aosSubDSList.SetNameValue(
+                            CPLSPrintf("SUBDATASET_%d_NAME", iSubDS),
+                            CPLSPrintf("S104:\"%s\":%s:%s", osFilename.c_str(),
+                                       featureInstanceName.c_str(),
+                                       osSubGroup.c_str()));
+
+                        std::string verticalDatum;
+                        const char *pszValue =
+                            mo.GetMetadataItem(S100_VERTICAL_DATUM_MEANING);
+                        if (pszValue)
+                        {
+                            verticalDatum = ", vertical datum ";
+                            verticalDatum += pszValue;
+                            pszValue =
+                                mo.GetMetadataItem(S100_VERTICAL_DATUM_ABBREV);
+                            if (pszValue)
+                            {
+                                verticalDatum += " (";
+                                verticalDatum += pszValue;
+                                verticalDatum += ')';
+                            }
+                        }
+                        else
+                        {
+                            pszValue =
+                                mo.GetMetadataItem(S100_VERTICAL_DATUM_NAME);
+                            if (pszValue)
+                            {
+                                verticalDatum = ", vertical datum ";
+                                verticalDatum += pszValue;
+                            }
+                        }
+
+                        std::string osSubDSDesc;
+                        const auto poTimePoint =
+                            poSubGroup->GetAttribute("timePoint");
+                        if (poTimePoint)
+                        {
+                            const char *pszVal = poTimePoint->ReadAsString();
+                            if (pszVal)
+                            {
+                                osSubDSDesc = "Values for feature instance ";
+                                osSubDSDesc += featureInstanceName;
+                                osSubDSDesc += verticalDatum;
+                                osSubDSDesc += " at timestamp ";
+                                osSubDSDesc += pszVal;
+                            }
+                        }
+                        if (osSubDSDesc.empty())
+                        {
+                            osSubDSDesc = "Values for feature instance ";
+                            osSubDSDesc += featureInstanceName;
+                            osSubDSDesc += verticalDatum;
+                            osSubDSDesc += " and group ";
+                            osSubDSDesc += osSubGroup;
+                        }
+
+                        aosSubDSList.SetNameValue(
+                            CPLSPrintf("SUBDATASET_%d_DESC", iSubDS),
+                            osSubDSDesc.c_str());
+                    }
+                }
+            }
+        }
+
+        poDS->GDALDataset::SetMetadata(aosSubDSList.List(), "SUBDATASETS");
+
+        // Setup/check for pam .aux.xml.
+        poDS->SetDescription(osFilename.c_str());
+        poDS->TryLoadXML();
+
+        // Setup overviews.
+        poDS->oOvManager.Initialize(poDS.get(), osFilename.c_str());
+
+        return poDS.release();
+    }
+
+    auto poFeatureInstance = poWaterLevel->OpenGroup(osFeatureInstance);
+    if (!poFeatureInstance)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find /WaterLevel/WaterLevel.01 group");
+                 "Cannot find /WaterLevel/%s group", osFeatureInstance.c_str());
         return nullptr;
     }
 
     // Read additional metadata
     for (const char *pszAttrName :
          {"timeRecordInterval", "dateTimeOfFirstRecord", "dateTimeOfLastRecord",
-          "numberOfTimes"})
+          "numberOfTimes", "dataDynamicity"})
     {
-        auto poAttr = poWaterLevel01->GetAttribute(pszAttrName);
+        auto poAttr = poFeatureInstance->GetAttribute(pszAttrName);
         if (poAttr)
         {
             const char *pszVal = poAttr->ReadAsString();
@@ -203,7 +322,26 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    if (auto poStartSequence = poWaterLevel01->GetAttribute("startSequence"))
+    if (auto poDataDynamicity =
+            poFeatureInstance->GetAttribute("dataDynamicity"))
+    {
+        if (poDataDynamicity->GetDataType().GetClass() == GEDTC_NUMERIC)
+        {
+            const int nVal = poDataDynamicity->ReadAsInt();
+            const std::map<int, const char *> oDataDynamicityMap = {
+                {1, "Observation"},
+                {2, "Astronomical prediction"},
+                {3, "Analysis or hybrid method"},
+                {5, "Hydrodynamic model forecast"},
+            };
+            const auto oIter = oDataDynamicityMap.find(nVal);
+            if (oIter != oDataDynamicityMap.end())
+                poDS->GDALDataset::SetMetadataItem("DATA_DYNAMICITY_MEANING",
+                                                   oIter->second);
+        }
+    }
+
+    if (auto poStartSequence = poFeatureInstance->GetAttribute("startSequence"))
     {
         const char *pszStartSequence = poStartSequence->ReadAsString();
         if (pszStartSequence && !EQUAL(pszStartSequence, "0,0"))
@@ -216,25 +354,28 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     if (!S100GetNumPointsLongitudinalLatitudinal(
-            poWaterLevel01.get(), poDS->nRasterXSize, poDS->nRasterYSize))
+            poFeatureInstance.get(), poDS->nRasterXSize, poDS->nRasterYSize))
     {
         return nullptr;
     }
+
+    // Potentially override vertical datum
+    S100ReadVerticalDatum(poDS.get(), poFeatureInstance.get());
 
     const bool bNorthUp = CPLTestBool(
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
 
     // Compute geotransform
     poDS->m_bHasGT =
-        S100GetGeoTransform(poWaterLevel01.get(), poDS->m_gt, bNorthUp);
+        S100GetGeoTransform(poFeatureInstance.get(), poDS->m_gt, bNorthUp);
 
     if (osGroup.empty())
     {
-        const auto aosGroupNames = poWaterLevel01->GetGroupNames();
+        const auto aosGroupNames = poFeatureInstance->GetGroupNames();
         int iSubDS = 1;
         for (const auto &osSubGroup : aosGroupNames)
         {
-            if (auto poSubGroup = poWaterLevel01->OpenGroup(osSubGroup))
+            if (auto poSubGroup = poFeatureInstance->OpenGroup(osSubGroup))
             {
                 poDS->GDALDataset::SetMetadataItem(
                     CPLSPrintf("SUBDATASET_%d_NAME", iSubDS),
@@ -262,12 +403,12 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        auto poGroup = poWaterLevel01->OpenGroup(osGroup);
+        auto poGroup = poFeatureInstance->OpenGroup(osGroup);
         if (!poGroup)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot find /WaterLevel/WaterLevel.01/%s group",
-                     osGroup.c_str());
+                     "Cannot find /WaterLevel/%s/%s group",
+                     osFeatureInstance.c_str(), osGroup.c_str());
             return nullptr;
         }
 
@@ -275,8 +416,8 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
         if (!poValuesArray)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot find /WaterLevel/WaterLevel.01/%s/values array",
-                     osGroup.c_str());
+                     "Cannot find /WaterLevel/%s/%s/values array",
+                     osFeatureInstance.c_str(), osGroup.c_str());
             return nullptr;
         }
 
