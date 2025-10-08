@@ -816,3 +816,30 @@ def test_gdalalg_raster_zonal_stats_pipeline_usage(zonal, tmp_vsimem, polyrast):
 
     with gdal.OpenEx(out_fname) as dst:
         assert dst.GetLayer(0).GetFeatureCount() == 10
+
+
+def test_gdalalg_raster_zonal_stats_null_geometry(zonal, tmp_vsimem, strategy):
+
+    zones = gdal.GetDriverByName("MEM").CreateVector("")
+    zones_lyr = zones.CreateLayer("zones")
+    zones_lyr.CreateField(ogr.FieldDefn("zone_id", ogr.OFTInteger))
+
+    zones_feature = ogr.Feature(zones_lyr.GetLayerDefn())
+    zones_lyr.CreateFeature(zones_feature)
+
+    zonal["input"] = "../gcore/data/byte.tif"
+    zonal["zones"] = zones
+    zonal["strategy"] = strategy
+    zonal["stat"] = ["sum", "mode"]
+    zonal["output"] = tmp_vsimem / "out.csv"
+
+    assert zonal.Run()
+
+    out_ds = zonal.Output()
+
+    results = [f for f in out_ds.GetLayer(0)]
+
+    assert len(results) == 1
+
+    assert results[0]["sum"] == 0
+    assert results[0]["mode"] is None

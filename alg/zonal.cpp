@@ -1072,6 +1072,11 @@ class GDALZonalStatsImpl
 
             const OGRGeometry *poGeom = features.back()->GetGeometryRef();
 
+            if (poGeom == nullptr)
+            {
+                continue;
+            }
+
             if (poGeom->getDimension() != 2)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1310,25 +1315,32 @@ class GDALZonalStatsImpl
         {
             const auto *poGeom = poFeature->GetGeometryRef();
 
-            if (poGeom->getDimension() != 2)
+            if (poGeom == nullptr)
+            {
+                oWindow.nXSize = 0;
+                oWindow.nYSize = 0;
+            }
+            else if (poGeom->getDimension() != 2)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Non-polygonal geometry encountered.");
                 return false;
             }
+            else
+            {
+                poGeom->getEnvelope(&oGeomExtent);
 
-            poGeom->getEnvelope(&oGeomExtent);
+                if (!m_srcInvGT.Apply(oGeomExtent, oWindow))
+                {
+                    return false;
+                }
+
+                TrimWindowToRaster(oWindow, m_src);
+            }
 
             std::unique_ptr<OGRFeature> poDstFeature(
                 OGRFeature::CreateFeature(poDstLayer->GetLayerDefn()));
             poDstFeature->SetFrom(poFeature.get());
-
-            if (!m_srcInvGT.Apply(oGeomExtent, oWindow))
-            {
-                return false;
-            }
-
-            TrimWindowToRaster(oWindow, m_src);
 
             if (oWindow.nXSize == 0 || oWindow.nYSize == 0)
             {
