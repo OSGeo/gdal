@@ -1019,17 +1019,18 @@ class GDALZonalStatsImpl
                              nullptr) == CE_None;
     }
 
-    bool ProcessVectorZonesByChunk(GDALProgressFunc pfnProgress,
-                                   void *pProgressData)
-    {
 #ifndef HAVE_GEOS
+    bool ProcessVectorZonesByChunk(GDALProgressFunc, void *)
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The GEOS library is required to iterate over blocks of the "
                  "input rasters. Processing can be performed by iterating over "
                  "the input features instead.");
         return false;
 #else
-
+    bool ProcessVectorZonesByChunk(GDALProgressFunc pfnProgress,
+                                   void *pProgressData)
+    {
         if (!Init())
         {
             return false;

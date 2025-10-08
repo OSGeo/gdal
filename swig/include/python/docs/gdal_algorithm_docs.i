@@ -144,7 +144,7 @@ Example
 -------
 >>> alg = gdal.Algorithm("raster")
 >>> alg.GetSubAlgorithmNames()
-['as-features', 'aspect', ..., 'update', 'viewshed']
+['as-features', 'aspect', ..., 'viewshed', 'zonal-stats']
 
 };
 

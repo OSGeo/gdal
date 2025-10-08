@@ -190,7 +190,6 @@ bool GDALRasterZonalStatsAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     options.zones_layer = m_zonesLayer;
     options.weights_band = m_weightsBand;
     options.memory = m_memoryBytes;
-    CPLDebug("GDAL", "memory: %lu", options.memory);
 
     if (poRetDS)
     {
