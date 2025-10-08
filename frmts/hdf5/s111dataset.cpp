@@ -23,6 +23,7 @@
 #include "gdal_rat.h"
 
 #include <limits>
+#include <map>
 
 /************************************************************************/
 /*                             S111Dataset                              */
@@ -118,6 +119,7 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     std::string osFilename(poOpenInfo->pszFilename);
+    std::string osFeatureInstance = "SurfaceCurrent.01";
     std::string osGroup;
     if (STARTS_WITH(poOpenInfo->pszFilename, "S111:"))
     {
@@ -133,6 +135,12 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
         {
             osFilename = aosTokens[1];
             osGroup = aosTokens[2];
+        }
+        else if (aosTokens.size() == 4)
+        {
+            osFilename = aosTokens[1];
+            osFeatureInstance = aosTokens[2];
+            osGroup = aosTokens[3];
         }
         else
         {
@@ -188,11 +196,123 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    auto poSurfaceCurrent01 = poSurfaceCurrent->OpenGroup("SurfaceCurrent.01");
-    if (!poSurfaceCurrent01)
+    int nNumInstances = 1;
+    if (osGroup.empty())
+    {
+        auto poNumInstances = poSurfaceCurrent->GetAttribute("numInstances");
+        if (poNumInstances &&
+            poNumInstances->GetDataType().GetClass() == GEDTC_NUMERIC)
+        {
+            nNumInstances = poNumInstances->ReadAsInt();
+        }
+    }
+    if (nNumInstances != 1)
+    {
+        CPLStringList aosSubDSList;
+        int iSubDS = 0;
+        for (const std::string &featureInstanceName :
+             poSurfaceCurrent->GetGroupNames())
+        {
+            auto poFeatureInstance =
+                poSurfaceCurrent->OpenGroup(featureInstanceName);
+            if (poFeatureInstance)
+            {
+                GDALMajorObject mo;
+                // Read first vertical datum from root group and let the
+                // coverage override it.
+                S100ReadVerticalDatum(&mo, poRootGroup.get());
+                S100ReadVerticalDatum(&mo, poFeatureInstance.get());
+
+                const auto aosGroupNames = poFeatureInstance->GetGroupNames();
+                for (const auto &osSubGroup : aosGroupNames)
+                {
+                    if (auto poSubGroup =
+                            poFeatureInstance->OpenGroup(osSubGroup))
+                    {
+                        ++iSubDS;
+                        aosSubDSList.SetNameValue(
+                            CPLSPrintf("SUBDATASET_%d_NAME", iSubDS),
+                            CPLSPrintf("S111:\"%s\":%s:%s", osFilename.c_str(),
+                                       featureInstanceName.c_str(),
+                                       osSubGroup.c_str()));
+
+                        std::string verticalDatum;
+                        const char *pszValue =
+                            mo.GetMetadataItem(S100_VERTICAL_DATUM_MEANING);
+                        if (pszValue)
+                        {
+                            verticalDatum = ", vertical datum ";
+                            verticalDatum += pszValue;
+                            pszValue =
+                                mo.GetMetadataItem(S100_VERTICAL_DATUM_ABBREV);
+                            if (pszValue)
+                            {
+                                verticalDatum += " (";
+                                verticalDatum += pszValue;
+                                verticalDatum += ')';
+                            }
+                        }
+                        else
+                        {
+                            pszValue =
+                                mo.GetMetadataItem(S100_VERTICAL_DATUM_NAME);
+                            if (pszValue)
+                            {
+                                verticalDatum = ", vertical datum ";
+                                verticalDatum += pszValue;
+                            }
+                        }
+
+                        std::string osSubDSDesc;
+                        const auto poTimePoint =
+                            poSubGroup->GetAttribute("timePoint");
+                        if (poTimePoint)
+                        {
+                            const char *pszVal = poTimePoint->ReadAsString();
+                            if (pszVal)
+                            {
+                                osSubDSDesc = "Values for feature instance ";
+                                osSubDSDesc += featureInstanceName;
+                                osSubDSDesc += verticalDatum;
+                                osSubDSDesc += " at timestamp ";
+                                osSubDSDesc += pszVal;
+                            }
+                        }
+                        if (osSubDSDesc.empty())
+                        {
+                            osSubDSDesc = "Values for feature instance ";
+                            osSubDSDesc += featureInstanceName;
+                            osSubDSDesc += verticalDatum;
+                            osSubDSDesc += " and group ";
+                            osSubDSDesc += osSubGroup;
+                        }
+
+                        aosSubDSList.SetNameValue(
+                            CPLSPrintf("SUBDATASET_%d_DESC", iSubDS),
+                            osSubDSDesc.c_str());
+                    }
+                }
+            }
+        }
+
+        poDS->GDALDataset::SetMetadata(aosSubDSList.List(), "SUBDATASETS");
+
+        // Setup/check for pam .aux.xml.
+        poDS->SetDescription(osFilename.c_str());
+        poDS->TryLoadXML();
+
+        // Setup overviews.
+        poDS->oOvManager.Initialize(poDS.get(), osFilename.c_str());
+
+        return poDS.release();
+    }
+
+    auto poFeatureInstance = poSurfaceCurrent->OpenGroup(osFeatureInstance);
+    if (!poFeatureInstance)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find /SurfaceCurrent/SurfaceCurrent.01 group");
+                 "Cannot find /SurfaceCurrent/%s group",
+                 osFeatureInstance.c_str());
         return nullptr;
     }
 
@@ -201,7 +321,7 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
          {"timeRecordInterval", "dateTimeOfFirstRecord", "dateTimeOfLastRecord",
           "numberOfTimes"})
     {
-        auto poAttr = poSurfaceCurrent01->GetAttribute(pszAttrName);
+        auto poAttr = poFeatureInstance->GetAttribute(pszAttrName);
         if (poAttr)
         {
             const char *pszVal = poAttr->ReadAsString();
@@ -212,8 +332,81 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    if (auto poStartSequence =
-            poSurfaceCurrent01->GetAttribute("startSequence"))
+    if (auto poDataDynamicity =
+            poFeatureInstance->GetAttribute("dataDynamicity"))
+    {
+        if (poDataDynamicity->GetDataType().GetClass() == GEDTC_NUMERIC)
+        {
+            const int nVal = poDataDynamicity->ReadAsInt();
+            const std::map<int, const char *> oDataDynamicityMap = {
+                {1, "Observation"},
+                {2, "Astronomical prediction"},
+                {3, "Analysis or hybrid method"},
+                {4, "Hydrodynamic model hindcast"},
+                {5, "Hydrodynamic model forecast"},
+                {6, "Observed minus predicted"},
+                {7, "Observed minus analysis"},
+                {8, "Observed minus hindcast"},
+                {9, "Observed minus forecast"},
+                {10, "Forecast minus predicted"},
+            };
+            const auto oIter = oDataDynamicityMap.find(nVal);
+            if (oIter != oDataDynamicityMap.end())
+                poDS->GDALDataset::SetMetadataItem("DATA_DYNAMICITY_MEANING",
+                                                   oIter->second);
+        }
+    }
+
+    // Read optional uncertainty array
+    if (auto poUncertainty = poFeatureInstance->OpenMDArray("uncertainty"))
+    {
+        auto &apoDims = poUncertainty->GetDimensions();
+        if (poUncertainty->GetDataType().GetClass() == GEDTC_COMPOUND &&
+            apoDims.size() == 1 && apoDims[0]->GetSize() == 2)
+        {
+            const auto &oComponents =
+                poUncertainty->GetDataType().GetComponents();
+            if (oComponents.size() == 2 &&
+                oComponents[0]->GetName() == "name" &&
+                oComponents[0]->GetType().GetClass() == GEDTC_STRING &&
+                oComponents[1]->GetName() == "value" &&
+                oComponents[1]->GetType().GetNumericDataType() == GDT_Float64)
+            {
+                auto poName = poUncertainty->GetView("[\"name\"]");
+                auto poValue = poUncertainty->GetView("[\"value\"]");
+                if (poName && poValue)
+                {
+                    char *apszStr[2] = {nullptr, nullptr};
+                    double adfVals[2] = {0, 0};
+                    GUInt64 arrayStartIdx[] = {0};
+                    size_t count[] = {2};
+                    GInt64 arrayStep[] = {1};
+                    GPtrDiff_t bufferStride[] = {1};
+                    if (poName->Read(arrayStartIdx, count, arrayStep,
+                                     bufferStride, oComponents[0]->GetType(),
+                                     apszStr) &&
+                        poValue->Read(arrayStartIdx, count, arrayStep,
+                                      bufferStride, oComponents[1]->GetType(),
+                                      adfVals))
+                    {
+                        for (int i = 0; i < 2; ++i)
+                        {
+                            std::string osName = apszStr[i];
+                            if (osName[0] >= 'a' && osName[0] <= 'z')
+                                osName[0] = osName[0] - 'a' + 'A';
+                            osName = "uncertainty" + osName;
+                            poDS->GDALDataset::SetMetadataItem(
+                                osName.c_str(), CPLSPrintf("%f", adfVals[i]));
+                        }
+                    }
+                    VSIFree(apszStr[0]);
+                    VSIFree(apszStr[1]);
+                }
+            }
+        }
+    }
+
+    if (auto poStartSequence = poFeatureInstance->GetAttribute("startSequence"))
     {
         const char *pszStartSequence = poStartSequence->ReadAsString();
         if (pszStartSequence && !EQUAL(pszStartSequence, "0,0"))
@@ -226,25 +419,28 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     if (!S100GetNumPointsLongitudinalLatitudinal(
-            poSurfaceCurrent01.get(), poDS->nRasterXSize, poDS->nRasterYSize))
+            poFeatureInstance.get(), poDS->nRasterXSize, poDS->nRasterYSize))
     {
         return nullptr;
     }
+
+    // Potentially override vertical datum
+    S100ReadVerticalDatum(poDS.get(), poFeatureInstance.get());
 
     const bool bNorthUp = CPLTestBool(
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
 
     // Compute geotransform
     poDS->m_bHasGT =
-        S100GetGeoTransform(poSurfaceCurrent01.get(), poDS->m_gt, bNorthUp);
+        S100GetGeoTransform(poFeatureInstance.get(), poDS->m_gt, bNorthUp);
 
     if (osGroup.empty())
     {
-        const auto aosGroupNames = poSurfaceCurrent01->GetGroupNames();
+        const auto aosGroupNames = poFeatureInstance->GetGroupNames();
         int iSubDS = 1;
         for (const auto &osSubGroup : aosGroupNames)
         {
-            if (auto poSubGroup = poSurfaceCurrent01->OpenGroup(osSubGroup))
+            if (auto poSubGroup = poFeatureInstance->OpenGroup(osSubGroup))
             {
                 poDS->GDALDataset::SetMetadataItem(
                     CPLSPrintf("SUBDATASET_%d_NAME", iSubDS),
@@ -272,22 +468,21 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        auto poGroup = poSurfaceCurrent01->OpenGroup(osGroup);
+        auto poGroup = poFeatureInstance->OpenGroup(osGroup);
         if (!poGroup)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot find /SurfaceCurrent/SurfaceCurrent.01/%s group",
-                     osGroup.c_str());
+                     "Cannot find /SurfaceCurrent/%s/%s group",
+                     osFeatureInstance.c_str(), osGroup.c_str());
             return nullptr;
         }
 
         auto poValuesArray = poGroup->OpenMDArray("values");
         if (!poValuesArray)
         {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Cannot find /SurfaceCurrent/SurfaceCurrent.01/%s/values array",
-                osGroup.c_str());
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot find /SurfaceCurrent/%s/%s/values array",
+                     osFeatureInstance.c_str(), osGroup.c_str());
             return nullptr;
         }
 
