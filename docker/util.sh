@@ -4,6 +4,7 @@
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
 set -e
+set -x
 
 if test "${SCRIPT_DIR}" = ""; then
     echo "SCRIPT_DIR not defined"
@@ -182,7 +183,7 @@ if test "${RELEASE}" = "yes"; then
     if test "${WITH_DEBUG_SYMBOLS}" = ""; then
         WITH_DEBUG_SYMBOLS=no
     fi
-    [[ -n "${DOCKER_CACHE_PARAM}" ]] || [[ ${DOCKER_CACHE_PARAM} = "--no-cache" ]]
+    [ -v DOCKER_CACHE_PARAM ] || DOCKER_CACHE_PARAM="--no-cache"
 else
     if test "${TAG_NAME}" = ""; then
         TAG_NAME=latest
@@ -190,7 +191,7 @@ else
     if test "${WITH_DEBUG_SYMBOLS}" = ""; then
         WITH_DEBUG_SYMBOLS=yes
     fi
-    [[ -n "${DOCKER_CACHE_PARAM}" ]] || [[ -z ${DOCKER_CACHE_PARAM} ]]
+    [ -v DOCKER_CACHE_PARAM ] || DOCKER_CACHE_PARAM=""
 fi
 
 check_image()
@@ -232,6 +233,8 @@ echo "Using GDAL_REPOSITORY=${GDAL_REPOSITORY}"
 
 IMAGE_NAME="${TARGET_IMAGE}-${TAG_NAME}"
 REPO_IMAGE_NAME="${DOCKER_REPO}/${IMAGE_NAME}"
+ARCH_PLATFORM_ARCH=$(echo "${ARCH_PLATFORMS}" | sed "s/linux\///")
+
 
 BUILD_ARGS=(
     "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
@@ -240,7 +243,7 @@ BUILD_ARGS=(
     "--build-arg" "GDAL_REPOSITORY=${GDAL_REPOSITORY}" \
     "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
 )
-[[ -z "${DOCKER_CACHE_PARAM}" ]] || BUILD_ARGS+=("${DOCKER_CACHE_PARAM}")
+[ -z "${DOCKER_CACHE_PARAM}" ] || BUILD_ARGS+=("${DOCKER_CACHE_PARAM}")
 
 if test "${WITH_ORACLE}" != ""; then
       BUILD_ARGS+=("--build-arg" "WITH_ORACLE=${WITH_ORACLE}")
@@ -293,19 +296,20 @@ if test "${RELEASE}" = "yes"; then
        "--label" "org.opencontainers.image.revision=${GDAL_VERSION}" \
        "--label" "org.opencontainers.image.version=${TAG_NAME}" \
     )
-
+    IMAGE_NAME_WITH_ARCH="${REPO_IMAGE_NAME}-${ARCH_PLATFORM_ARCH}"
     if test "${DOCKER_BUILDX}" = "buildx"; then
       if test "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
-        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${REPO_IMAGE_NAME}" --push "${SCRIPT_DIR}"
+        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" --push "${SCRIPT_DIR}"
       else
-        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${REPO_IMAGE_NAME}" --load "${SCRIPT_DIR}"
+        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" --load "${SCRIPT_DIR}"
       fi
     else
-        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${REPO_IMAGE_NAME}" "${SCRIPT_DIR}"
-        check_image "${REPO_IMAGE_NAME}"
+
+        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" "${SCRIPT_DIR}"
+        check_image "${IMAGE_NAME_WITH_ARCH}"
 
         if test "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
-            docker push "${REPO_IMAGE_NAME}"
+            docker push "${IMAGE_NAME_WITH_ARCH}"
         fi
     fi
 
