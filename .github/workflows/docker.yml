@@ -114,7 +114,7 @@ jobs:
           ghcr.io/osgeo/gdal:${{ matrix.tag }}-latest-amd64 \
           ghcr.io/osgeo/gdal:${{ matrix.tag }}-latest-arm64
       - name: Alias ubuntu-full-latest to latest
-        if: matrix.tag == 'ubuntu-full'
+        if: matrix.tag == 'ubuntu-full' && env.PUSH_PACKAGES == 'true'
         run: |
           docker buildx imagetools create ghcr.io/osgeo/gdal:ubuntu-full-latest --tag ghcr.io/osgeo/gdal:latest
 
