@@ -349,7 +349,8 @@ double OGR_G_GetM(OGRGeometryH hGeom, int i)
  * nPointCount) bytes, may be NULL.
  * @param nZStride the number of bytes between 2 elements of pabyZ.
  *
- * @return the number of points
+ * @return the number of points, or -1 (starting in GDAL 3.12) if the operation
+ *         can not be performed in this geometry type.
  *
  * @since OGR 1.9.0
  */
@@ -388,6 +389,7 @@ int OGR_G_GetPoints(OGRGeometryH hGeom, void *pabyX, int nXStride, void *pabyY,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Incompatible geometry for operation");
+            ret = -1;
             break;
         }
     }
