@@ -1431,7 +1431,6 @@ class CPL_DLL OGRFeature
     void SetField(int i, const char *pszValue);
     void SetField(int i, int nCount, const int *panValues);
     void SetField(int i, int nCount, const GIntBig *panValues);
-    void SetField(int i, int nCount, const float *padfValues);
     void SetField(int i, int nCount, const double *padfValues);
     void SetField(int i, const char *const *papszValues);
     void SetField(int i, const OGRField *puValue);
