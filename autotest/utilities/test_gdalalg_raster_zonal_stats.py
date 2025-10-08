@@ -594,7 +594,9 @@ def test_gdalalg_raster_zonal_stats_polygon_zone_outside_raster(
     zonal, tmp_vsimem, strategy
 ):
     zonal["input"] = "../gcore/data/byte.tif"
-    zonal["zones"] = gdaltest.wkt_ds(["POLYGON ((2 2, 8 2, 8 8, 2 2))"])
+    zonal["zones"] = gdaltest.wkt_ds(
+        ["POLYGON ((2 2, 8 2, 8 8, 2 2))", "POLYGON EMPTY"]
+    )
     zonal["strategy"] = strategy
     zonal["stat"] = ["sum", "mode"]
     zonal["output"] = tmp_vsimem / "out.csv"
@@ -605,9 +607,12 @@ def test_gdalalg_raster_zonal_stats_polygon_zone_outside_raster(
 
     results = [f for f in out_ds.GetLayer(0)]
 
-    assert len(results) == 1
+    assert len(results) == 2
     assert results[0]["sum"] == 0
     assert results[0]["mode"] is None
+
+    assert results[1]["sum"] == 0
+    assert results[1]["mode"] is None
 
 
 @pytest.mark.parametrize("src_nodata", (None, 99))
