@@ -3044,3 +3044,118 @@ def test_gti_tile_001():
     assert out_ds.GetRasterBand(2).ComputeRasterMinMax() == (1000, 1000)
     assert out_ds.GetRasterBand(3).ComputeRasterMinMax() == (1000, 1000)
     assert out_ds.GetRasterBand(4).ComputeRasterMinMax() == (65535, 65535)
+
+
+###############################################################################
+@pytest.mark.require_driver("SQLite")
+def test_gti_sql(tmp_vsimem):
+
+    if "SPATIALITE" not in gdal.GetDriverByName("SQLite").GetMetadataItem(
+        gdal.DMD_CREATIONOPTIONLIST
+    ):
+        pytest.skip("Spatialite support missing")
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "red.tif", 1, 1, 3) as ds:
+        ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+        ds.GetRasterBand(1).Fill(255)
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "green.tif", 1, 1, 3) as ds:
+        ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+        ds.GetRasterBand(2).Fill(255)
+
+    with gdal.GetDriverByName("SQLite").CreateVector(
+        tmp_vsimem / "index.db", options=["SPATIALITE=YES"]
+    ) as sqlite_ds:
+        lyr = sqlite_ds.CreateLayer("tileindex", geom_type=ogr.wkbPolygon)
+        lyr.CreateField(ogr.FieldDefn("location"))
+        lyr.CreateField(ogr.FieldDefn("tile_id", ogr.OFTInteger))
+        lyr.CreateField(ogr.FieldDefn("version", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["location"] = tmp_vsimem / "red.tif"
+        f["tile_id"] = 10
+        f["version"] = 2
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))"))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["location"] = tmp_vsimem / "green.tif"
+        f["tile_id"] = 10
+        f["version"] = 1
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))"))
+        lyr.CreateFeature(f)
+
+    xml_content = f"""<GDALTileIndexDataset>
+  <IndexDataset>{tmp_vsimem}/index.db</IndexDataset>
+  <SQL>WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id) SELECT * FROM tileindex INNER JOIN target_version ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version</SQL>
+  <MinX>0</MinX>
+  <MinY>0</MinY>
+  <MaxX>1</MaxX>
+  <MaxY>1</MaxY>
+</GDALTileIndexDataset>"""
+
+    gti_ds = gdal.Open(xml_content)
+    if ogrtest.have_geos():
+        (flags, pct) = gti_ds.GetRasterBand(1).GetDataCoverageStatus(
+            0, 0, gti_ds.RasterXSize, gti_ds.RasterYSize
+        )
+        assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+    assert gti_ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255)
+    assert gti_ds.GetRasterBand(2).ComputeRasterMinMax() == (0, 0)
+    assert gti_ds.GetRasterBand(3).ComputeRasterMinMax() == (0, 0)
+
+    xml_content = f"""<GDALTileIndexDataset>
+  <IndexDataset>{tmp_vsimem}/index.db</IndexDataset>
+  <SQL>WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id) SELECT * FROM tileindex INNER JOIN target_version ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version</SQL>
+  <SpatialSQL>WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id) SELECT * FROM tileindex INNER JOIN target_version ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version INNER JOIN idx_tileindex_geometry ON tileindex.ogc_fid = idx_tileindex_geometry.pkid WHERE idx_tileindex_geometry.xmin &lt;= {{XMAX}} and idx_tileindex_geometry.ymin &lt;= {{YMAX}} and idx_tileindex_geometry.xmax &gt;= {{XMIN}} and idx_tileindex_geometry.ymax &gt;= {{YMIN}}</SpatialSQL>
+  <MinX>0</MinX>
+  <MinY>0</MinY>
+  <MaxX>1</MaxX>
+  <MaxY>1</MaxY>
+</GDALTileIndexDataset>"""
+
+    gti_ds = gdal.Open(xml_content)
+    if ogrtest.have_geos():
+        (flags, pct) = gti_ds.GetRasterBand(1).GetDataCoverageStatus(
+            0, 0, gti_ds.RasterXSize, gti_ds.RasterYSize
+        )
+        assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+    assert gti_ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255)
+    assert gti_ds.GetRasterBand(2).ComputeRasterMinMax() == (0, 0)
+    assert gti_ds.GetRasterBand(3).ComputeRasterMinMax() == (0, 0)
+
+    gti_ds = gdal.OpenEx(
+        f"GTI:{tmp_vsimem}/index.db",
+        open_options=[
+            "SQL=WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id) SELECT * FROM tileindex INNER JOIN target_version ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version",
+            "SPATIAL_SQL=WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id) SELECT * FROM tileindex INNER JOIN target_version ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version INNER JOIN idx_tileindex_geometry ON tileindex.ogc_fid = idx_tileindex_geometry.pkid WHERE idx_tileindex_geometry.xmin <= {XMAX} and idx_tileindex_geometry.ymin <= {YMAX} and idx_tileindex_geometry.xmax >= {XMIN} and idx_tileindex_geometry.ymax >= {YMIN}",
+            "MINX=0",
+            "MINY=0",
+            "MAXX=1",
+            "MAXY=1",
+        ],
+    )
+    assert gti_ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255)
+    assert gti_ds.GetRasterBand(2).ComputeRasterMinMax() == (0, 0)
+    assert gti_ds.GetRasterBand(3).ComputeRasterMinMax() == (0, 0)
+
+    # Invalid SQL
+    with pytest.raises(Exception, match="syntax error"):
+        gdal.OpenEx(f"GTI:{tmp_vsimem}/index.db", open_options=["SQL=invalid"])
+
+    # Invalid Spatial SQL
+    gti_ds = gdal.OpenEx(
+        f"GTI:{tmp_vsimem}/index.db",
+        open_options=[
+            "SQL=SELECT * FROM tileindex",
+            "SPATIAL_SQL=invalid",
+            "MINX=0",
+            "MINY=0",
+            "MAXX=1",
+            "MAXY=1",
+        ],
+    )
+    with pytest.raises(Exception, match="syntax error"):
+        gti_ds.GetRasterBand(1).GetDataCoverageStatus(
+            0, 0, gti_ds.RasterXSize, gti_ds.RasterYSize
+        )
+    with pytest.raises(Exception, match="syntax error"):
+        gti_ds.GetRasterBand(1).ComputeRasterMinMax()

@@ -70,6 +70,8 @@ constexpr int GT_NS_RES = 5;
 constexpr const char *GTI_PREFIX = "GTI:";
 
 constexpr const char *MD_DS_TILE_INDEX_LAYER = "TILE_INDEX_LAYER";
+constexpr const char *MD_DS_TILE_INDEX_SQL = "TILE_INDEX_SQL";
+constexpr const char *MD_DS_TILE_INDEX_SPATIAL_SQL = "TILE_INDEX_SPATIAL_SQL";
 
 constexpr const char *MD_RESX = "RESX";
 constexpr const char *MD_RESY = "RESY";
@@ -211,8 +213,17 @@ class GDALTileIndexDataset final : public GDALPamDataset
     //! Vector dataset with the sources
     std::unique_ptr<GDALDataset> m_poVectorDS{};
 
+    //! Generic SQL request to return features. May be empty.
+    std::string m_osSQL{};
+
+    //! SQL request to return features with placeholders for spatial filtering. May be empty
+    std::string m_osSpatialSQL{};
+
     //! Vector layer with the sources
     OGRLayer *m_poLayer = nullptr;
+
+    //! Whether m_poLayer should be freed with m_poVectorDS->ReleaseResultSet()
+    bool m_bIsSQLResultLayer = false;
 
     //! When the SRS of m_poLayer is not the one we expose
     std::unique_ptr<OGRLayer> m_poWarpedLayerKeeper{};
@@ -761,6 +772,36 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
+    m_osSQL = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "SQL", "");
+    if (m_osSQL.empty())
+    {
+        if (!psRoot)
+        {
+            if (const char *pszVal =
+                    m_poVectorDS->GetMetadataItem(MD_DS_TILE_INDEX_SQL))
+                m_osSQL = pszVal;
+        }
+        else
+            m_osSQL = CPLGetXMLValue(psRoot, "SQL", "");
+    }
+
+    if (!m_osSQL.empty())
+    {
+        m_osSpatialSQL = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                              "SPATIAL_SQL", "");
+        if (m_osSpatialSQL.empty())
+        {
+            if (!psRoot)
+            {
+                if (const char *pszVal = m_poVectorDS->GetMetadataItem(
+                        MD_DS_TILE_INDEX_SPATIAL_SQL))
+                    m_osSpatialSQL = pszVal;
+            }
+            else
+                m_osSpatialSQL = CPLGetXMLValue(psRoot, "SpatialSQL", "");
+        }
+    }
+
     const char *pszLayerName;
 
     if ((pszLayerName = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
@@ -795,6 +836,17 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                      pszLayerName);
             return false;
         }
+    }
+    else if (!m_osSQL.empty())
+    {
+        m_poLayer = m_poVectorDS->ExecuteSQL(m_osSQL.c_str(), nullptr, nullptr);
+        if (!m_poLayer)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "SQL request %s failed",
+                     m_osSQL.c_str());
+            return false;
+        }
+        m_bIsSQLResultLayer = true;
     }
     else if (m_poVectorDS->GetLayerCount() == 1)
     {
@@ -1349,6 +1401,27 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
+    OGREnvelope sEnvelope;
+    if (nCountMinMaxXY == 4)
+    {
+        sEnvelope.MinX = CPLAtof(pszMinX);
+        sEnvelope.MinY = CPLAtof(pszMinY);
+        sEnvelope.MaxX = CPLAtof(pszMaxX);
+        sEnvelope.MaxY = CPLAtof(pszMaxY);
+        if (!(sEnvelope.MaxX > sEnvelope.MinX))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s metadata item must be > %s", MD_MAXX, MD_MINX);
+            return false;
+        }
+        if (!(sEnvelope.MaxY > sEnvelope.MinY))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s metadata item must be > %s", MD_MAXY, MD_MINY);
+            return false;
+        }
+    }
+
     bool bHasMaskBand = false;
     std::unique_ptr<GDALColorTable> poSingleColorTable;
     if ((!pszBandCount && apoXMLNodeBands.empty()) ||
@@ -1488,9 +1561,9 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         const double dfResX = gtTile[GT_WE_RES];
         const double dfResY = -gtTile[GT_NS_RES];
 
-        OGREnvelope sEnvelope;
-        if (m_poLayer->GetExtent(&sEnvelope, /* bForce = */ false) ==
-            OGRERR_FAILURE)
+        if (!sEnvelope.IsInit() &&
+            m_poLayer->GetExtent(&sEnvelope, /* bForce = */ false) ==
+                OGRERR_FAILURE)
         {
             if (m_poLayer->GetExtent(&sEnvelope, /* bForce = */ true) ==
                 OGRERR_FAILURE)
@@ -1600,8 +1673,6 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             return false;
         }
 
-        OGREnvelope sEnvelope;
-
         if (nCountMinMaxXY == 4)
         {
             if (pszXSize || pszYSize || pszGeoTransform)
@@ -1612,29 +1683,10 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                          MD_XSIZE, MD_YSIZE, MD_GEOTRANSFORM, MD_MINX, MD_MINY,
                          MD_MAXX, MD_MAXY);
             }
-            const double dfMinX = CPLAtof(pszMinX);
-            const double dfMinY = CPLAtof(pszMinY);
-            const double dfMaxX = CPLAtof(pszMaxX);
-            const double dfMaxY = CPLAtof(pszMaxY);
-            if (!(dfMaxX > dfMinX))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "%s metadata item must be > %s", MD_MAXX, MD_MINX);
-                return false;
-            }
-            if (!(dfMaxY > dfMinY))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "%s metadata item must be > %s", MD_MAXY, MD_MINY);
-                return false;
-            }
-            sEnvelope.MinX = dfMinX;
-            sEnvelope.MinY = dfMinY;
-            sEnvelope.MaxX = dfMaxX;
-            sEnvelope.MaxY = dfMaxY;
         }
-        else if (m_poLayer->GetExtent(&sEnvelope, /* bForce = */ false) ==
-                 OGRERR_FAILURE)
+        else if (!sEnvelope.IsInit() &&
+                 m_poLayer->GetExtent(&sEnvelope, /* bForce = */ false) ==
+                     OGRERR_FAILURE)
         {
             if (m_poLayer->GetExtent(&sEnvelope, /* bForce = */ true) ==
                 OGRERR_FAILURE)
@@ -2511,6 +2563,9 @@ static GDALDataset *GDALTileIndexDatasetOpen(GDALOpenInfo *poOpenInfo)
 
 GDALTileIndexDataset::~GDALTileIndexDataset()
 {
+    if (m_poVectorDS && m_bIsSQLResultLayer)
+        m_poVectorDS->ReleaseResultSet(m_poLayer);
+
     GDALTileIndexDataset::FlushCache(true);
 }
 
@@ -2892,8 +2947,28 @@ int GDALTileIndexBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
     const double dfMaxY =
         m_poDS->m_gt[GT_TOPLEFT_Y] + nYOff * m_poDS->m_gt[GT_NS_RES];
     const double dfMinY = dfMaxY + nYSize * m_poDS->m_gt[GT_NS_RES];
-    m_poDS->m_poLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
-    m_poDS->m_poLayer->ResetReading();
+
+    OGRLayer *poSQLLayer = nullptr;
+    if (!m_poDS->m_osSpatialSQL.empty())
+    {
+        const std::string osSQL =
+            CPLString(m_poDS->m_osSpatialSQL)
+                .replaceAll("{XMIN}", CPLSPrintf("%.17g", dfMinX))
+                .replaceAll("{YMIN}", CPLSPrintf("%.17g", dfMinY))
+                .replaceAll("{XMAX}", CPLSPrintf("%.17g", dfMaxX))
+                .replaceAll("{YMAX}", CPLSPrintf("%.17g", dfMaxY));
+        poSQLLayer =
+            m_poDS->m_poVectorDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr);
+        if (!poSQLLayer)
+            return 0;
+    }
+    else
+    {
+        m_poDS->m_poLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
+        m_poDS->m_poLayer->ResetReading();
+    }
+
+    OGRLayer *const poLayer = poSQLLayer ? poSQLLayer : m_poDS->m_poLayer;
 
     int nStatus = 0;
 
@@ -2909,8 +2984,7 @@ int GDALTileIndexBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
     }
     while (true)
     {
-        auto poFeature =
-            std::unique_ptr<OGRFeature>(m_poDS->m_poLayer->GetNextFeature());
+        auto poFeature = std::unique_ptr<OGRFeature>(poLayer->GetNextFeature());
         if (!poFeature)
             break;
         if (!poFeature->IsFieldSetAndNotNull(m_poDS->m_nLocationFieldIndex))
@@ -2988,9 +3062,15 @@ int GDALTileIndexBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
         }
         if (nMaskFlagStop != 0 && (nStatus & nMaskFlagStop) != 0)
         {
+            if (poSQLLayer)
+                m_poDS->ReleaseResultSet(poSQLLayer);
             return nStatus;
         }
     }
+
+    if (poSQLLayer)
+        m_poDS->ReleaseResultSet(poSQLLayer);
+
     if (poPolyNonCoveredBySources)
     {
         if (!poPolyNonCoveredBySources->IsEmpty())
@@ -3637,14 +3717,31 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
     m_dfLastMaxYFilter = dfMaxY;
     m_bLastMustUseMultiThreading = false;
 
-    m_poLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
-    m_poLayer->ResetReading();
+    OGRLayer *poSQLLayer = nullptr;
+    if (!m_osSpatialSQL.empty())
+    {
+        const std::string osSQL =
+            CPLString(m_osSpatialSQL)
+                .replaceAll("{XMIN}", CPLSPrintf("%.17g", dfMinX))
+                .replaceAll("{YMIN}", CPLSPrintf("%.17g", dfMinY))
+                .replaceAll("{XMAX}", CPLSPrintf("%.17g", dfMaxX))
+                .replaceAll("{YMAX}", CPLSPrintf("%.17g", dfMaxY));
+        poSQLLayer = m_poVectorDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr);
+        if (!poSQLLayer)
+            return 0;
+    }
+    else
+    {
+        m_poLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
+        m_poLayer->ResetReading();
+    }
+
+    OGRLayer *const poLayer = poSQLLayer ? poSQLLayer : m_poLayer;
 
     m_aoSourceDesc.clear();
     while (true)
     {
-        auto poFeature =
-            std::unique_ptr<OGRFeature>(m_poLayer->GetNextFeature());
+        auto poFeature = std::unique_ptr<OGRFeature>(poLayer->GetNextFeature());
         if (!poFeature)
             break;
         if (!poFeature->IsFieldSetAndNotNull(m_nLocationFieldIndex))
@@ -3665,6 +3762,9 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
             return false;
         }
     }
+
+    if (poSQLLayer)
+        ReleaseResultSet(poSQLLayer);
 
     constexpr int MINIMUM_PIXEL_COUNT_FOR_THREADED_IO = 1000 * 1000;
     if (bMultiThreadAllowed && m_aoSourceDesc.size() > 1 &&
@@ -5060,6 +5160,8 @@ void GDALRegister_GTI()
         GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
         "  <Option name='LAYER' type='string'/>"
+        "  <Option name='SQL' type='string'/>"
+        "  <Option name='SPATIAL_SQL' type='string'/>"
         "  <Option name='LOCATION_FIELD' type='string'/>"
         "  <Option name='SORT_FIELD' type='string'/>"
         "  <Option name='SORT_FIELD_ASC' type='boolean'/>"
