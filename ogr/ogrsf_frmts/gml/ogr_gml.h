@@ -20,6 +20,7 @@
 #include "gmlutils.h"
 
 #include <memory>
+#include <set>
 #include <vector>
 
 class OGRGMLDataSource;
@@ -39,9 +40,10 @@ class OGRGMLLayer final : public OGRLayer
 {
     OGRFeatureDefn *poFeatureDefn;
 
-    GIntBig iNextGMLId;
-    bool bInvalidFIDFound;
-    char *pszFIDPrefix;
+    GIntBig m_iNextGMLId = 0;
+    bool m_bInvalidFIDFound = false;
+    char *m_pszFIDPrefix = nullptr;
+    std::set<GIntBig> m_oSetFIDs{};
 
     bool bWriter;
 
