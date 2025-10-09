@@ -4348,6 +4348,10 @@ class CPL_DLL OGRGeometryFactory
                                 OGRwkbGeometryType eTargetType,
                                 const char *const *papszOptions = nullptr);
 
+    static std::unique_ptr<OGRGeometry>
+    makeCompatibleWith(std::unique_ptr<OGRGeometry>,
+                       OGRwkbGeometryType eTargetType);
+
     static OGRGeometry *removeLowerDimensionSubGeoms(const OGRGeometry *poGeom);
 
     static OGRGeometry *organizePolygons(OGRGeometry **papoPolygons,

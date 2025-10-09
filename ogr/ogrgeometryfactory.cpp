@@ -5182,6 +5182,72 @@ OGRGeometryH OGR_G_ForceTo(OGRGeometryH hGeom, OGRwkbGeometryType eTargetType,
 }
 
 /************************************************************************/
+/*                        makeCompatibleWith()                          */
+/************************************************************************/
+
+/**
+ * \brief Adjust a geometry to be compatible with a specified geometry type.
+ *
+ * This is a soft version of forceTo() that:
+ * - converts single geometry type to a multi-geometry type if eTargetType is
+ *   a multi-geometry type (e.g. wkbMultiPolygon) and the single geometry type
+ *   is compatible with it (e.g. wkbPolygon)
+ * - insert components of multi-geometries that are not wkbGeometryCollection
+ *   into a GeometryCollection, when eTargetType == wkbGeometryCollection
+ * - insert single geometries into a GeometryCollection, when
+ *   eTargetType == wkbGeometryCollection.
+ * - convert a single-part multi-geometry to the specified target single
+ *   geometry type. e.g a MultiPolygon to a Polygon
+ * - in other cases, the geometry is returned unmodified.
+ *
+ * @param poGeom the input geometry - ownership is passed to the method.
+ * @param eTargetType target output geometry type.
+ *                    Typically a layer geometry type.
+ * @return a geometry (potentially poGeom itself)
+ *
+ * @since GDAL 3.12
+ */
+
+std::unique_ptr<OGRGeometry>
+OGRGeometryFactory::makeCompatibleWith(std::unique_ptr<OGRGeometry> poGeom,
+                                       OGRwkbGeometryType eTargetType)
+{
+    const auto eGeomType = poGeom->getGeometryType();
+    const auto eFlattenTargetType = wkbFlatten(eTargetType);
+    if (eFlattenTargetType != wkbUnknown &&
+        eFlattenTargetType != wkbFlatten(eGeomType))
+    {
+        if (OGR_GT_GetCollection(eGeomType) == eFlattenTargetType)
+        {
+            poGeom.reset(
+                OGRGeometryFactory::forceTo(poGeom.release(), eTargetType));
+        }
+        else if (eGeomType == OGR_GT_GetCollection(eTargetType) &&
+                 poGeom->toGeometryCollection()->getNumGeometries() == 1)
+        {
+            poGeom = poGeom->toGeometryCollection()->stealGeometry(0);
+        }
+        else if (eFlattenTargetType == wkbGeometryCollection)
+        {
+            auto poGeomColl = std::make_unique<OGRGeometryCollection>();
+            if (OGR_GT_IsSubClassOf(eGeomType, wkbGeometryCollection))
+            {
+                for (const auto *poSubGeom : *(poGeom->toGeometryCollection()))
+                {
+                    poGeomColl->addGeometry(poSubGeom);
+                }
+            }
+            else
+            {
+                poGeomColl->addGeometry(std::move(poGeom));
+            }
+            poGeom = std::move(poGeomColl);
+        }
+    }
+    return poGeom;
+}
+
+/************************************************************************/
 /*                         GetCurveParameters()                          */
 /************************************************************************/
 

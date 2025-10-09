@@ -7004,7 +7004,9 @@ bool LayerTranslator::Translate(
                             goto end_loop;
                         }
 
-                        poDstGeometry = std::move(poClipped);
+                        poDstGeometry = OGRGeometryFactory::makeCompatibleWith(
+                            std::move(poClipped),
+                            poDstFDefn->GetGeomFieldDefn(iGeom)->GetType());
                     }
                 }
 
@@ -7219,7 +7221,11 @@ bool LayerTranslator::Translate(
                                 goto end_loop;
                             }
 
-                            poDstGeometry = std::move(poClipped);
+                            poDstGeometry =
+                                OGRGeometryFactory::makeCompatibleWith(
+                                    std::move(poClipped),
+                                    poDstFDefn->GetGeomFieldDefn(iGeom)
+                                        ->GetType());
                         }
                     }
 
