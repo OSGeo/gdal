@@ -1341,30 +1341,113 @@ def test_jpeg_flir_png():
 # Open JPEG image with FLIR metadata and raw thermal image as PNG 16 bit
 
 
-def test_jpeg_flir_png_16_bit():
+def test_jpeg_flir_png_16_bit(tmp_vsimem):
 
-    ds = gdal.Open('JPEG:"data/jpeg/flir/FLIR_16bit.jpg":FLIR_RAW_THERMAL_IMAGE')
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
-    assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (65280, 65280)
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "tmp.jpg", open("data/jpeg/flir/FLIR_16bit.jpg", "rb").read()
+    )
+
+    with gdal.Open(f'JPEG:"{tmp_vsimem}/tmp.jpg":FLIR_RAW_THERMAL_IMAGE') as ds:
+        assert (
+            ds.GetDescription() == f'JPEG:"{tmp_vsimem}/tmp.jpg":FLIR_RAW_THERMAL_IMAGE'
+        )
+        assert ds.GetFileList() == [str(tmp_vsimem / "tmp.jpg")]
+        assert ds.GetDriver().GetDescription() == "PNG"
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+        assert ds.GetRasterBand(1).GetStatistics(False, True) == [
+            65280.0,
+            65280.0,
+            65280.0,
+            0.0,
+        ]
+
+    assert gdal.VSIStatL(tmp_vsimem / "tmp.jpg.aux.xml") is not None
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "tmp.jpg.aux.xml",
+        """<PAMDataset>
+  <Subdataset name="PNG_THERMAL_IMAGE">
+    <PAMDataset>
+      <PAMRasterBand band="1">
+        <Metadata>
+          <MDI key="STATISTICS_MINIMUM">1</MDI>
+          <MDI key="STATISTICS_MAXIMUM">2</MDI>
+          <MDI key="STATISTICS_MEAN">3</MDI>
+          <MDI key="STATISTICS_STDDEV">4</MDI>
+          <MDI key="STATISTICS_VALID_PERCENT">100</MDI>
+        </Metadata>
+      </PAMRasterBand>
+    </PAMDataset>
+  </Subdataset>
+</PAMDataset>""",
+    )
+
+    with gdal.Open(f'JPEG:"{tmp_vsimem}/tmp.jpg":FLIR_RAW_THERMAL_IMAGE') as ds:
+        assert ds.GetFileList() == [
+            str(tmp_vsimem / "tmp.jpg"),
+            str(tmp_vsimem / "tmp.jpg.aux.xml"),
+        ]
+        assert ds.GetRasterBand(1).GetStatistics(False, True) == [1, 2, 3, 4]
 
 
 ###############################################################################
 # Open JPEG image with FLIR metadata and raw thermal image as raw
 
 
-def test_jpeg_flir_raw():
+def test_jpeg_flir_raw(tmp_vsimem):
 
-    ds = gdal.Open(
-        "data/jpeg/flir/Image_thermique_de_l_emission_d_un_radiateur_a_travers_un_mur.jpg"
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "tmp.jpg",
+        open(
+            "data/jpeg/flir/Image_thermique_de_l_emission_d_un_radiateur_a_travers_un_mur.jpg",
+            "rb",
+        ).read(),
     )
-    subds = ds.GetSubDatasets()
-    assert len(subds) == 1
 
-    ds = gdal.Open(subds[0][0])
-    assert ds is not None
-    assert ds.RasterCount == 1
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
-    assert ds.GetRasterBand(1).Checksum() == 30310
+    with gdal.Open(tmp_vsimem / "tmp.jpg") as ds:
+        subds = ds.GetSubDatasets()
+        assert len(subds) == 1
+
+    with gdal.Open(subds[0][0]) as ds:
+        assert ds is not None
+        assert ds.GetDescription() == subds[0][0]
+        assert ds.GetFileList() == [str(tmp_vsimem / "tmp.jpg")]
+        assert ds.RasterCount == 1
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+        assert ds.GetRasterBand(1).GetStatistics(False, True) == [
+            13872.0,
+            16040.0,
+            14657.947135416667,
+            542.8919524629978,
+        ]
+
+    assert gdal.VSIStatL(tmp_vsimem / "tmp.jpg.aux.xml") is not None
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "tmp.jpg.aux.xml",
+        """<PAMDataset>
+  <Subdataset name="RAW_THERMAL_IMAGE">
+    <PAMDataset>
+      <PAMRasterBand band="1">
+        <Metadata>
+          <MDI key="STATISTICS_MINIMUM">1</MDI>
+          <MDI key="STATISTICS_MAXIMUM">2</MDI>
+          <MDI key="STATISTICS_MEAN">3</MDI>
+          <MDI key="STATISTICS_STDDEV">4</MDI>
+          <MDI key="STATISTICS_VALID_PERCENT">100</MDI>
+        </Metadata>
+      </PAMRasterBand>
+    </PAMDataset>
+  </Subdataset>
+</PAMDataset>""",
+    )
+
+    with gdal.Open(subds[0][0]) as ds:
+        assert ds.GetFileList() == [
+            str(tmp_vsimem / "tmp.jpg"),
+            str(tmp_vsimem / "tmp.jpg.aux.xml"),
+        ]
+        assert ds.GetRasterBand(1).GetStatistics(False, True) == [1, 2, 3, 4]
 
 
 ###############################################################################
