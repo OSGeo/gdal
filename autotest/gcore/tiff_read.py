@@ -37,7 +37,7 @@ import gdaltest
 import pytest
 import webserver
 
-from osgeo import gdal, osr
+from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("HFA")
 
@@ -5594,6 +5594,31 @@ def test_tiff_read_corrupted_vat_dbf(tmp_vsimem):
         band = ds.GetRasterBand(1)
         with pytest.raises(Exception):
             band.GetDefaultRAT()
+
+
+###############################################################################
+# Test .vat.dbf with Boolean and DateTime
+
+
+def test_tiff_read_vat_dbf_boolean_datetime(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.tif")
+    gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    vat_dbf_filename = filename + ".vat.dbf"
+    with gdal.GetDriverByName("ESRI Shapefile").CreateVector(vat_dbf_filename) as ds:
+        lyr = ds.CreateLayer("test.tif.vat", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("bool", ogr.OFTInteger)
+        fld_defn.SetSubType(ogr.OFSTBoolean)
+        lyr.CreateField(fld_defn)
+        lyr.CreateField(ogr.FieldDefn("date", ogr.OFTDate))
+
+    with gdal.Open(filename) as ds:
+        rat = ds.GetRasterBand(1).GetDefaultRAT()
+        assert rat.GetTypeOfCol(0) == gdal.GFT_Boolean
+        assert rat.GetTypeOfCol(1) == gdal.GFT_DateTime
+
+
+###############################################################################
 
 
 def test_tiff_read_corrupted_lzw():

@@ -2316,6 +2316,7 @@ pabyHeader
 pabyM
 pabySrcData
 pabyValue
+pabyWKB
 pabyX
 pabyY
 pabyZ
@@ -2577,6 +2578,7 @@ Postgresql
 poTargetSRS
 pOutBuffer
 ppabyRet
+ppabyWKB
 ppadfOutNoData
 ppadfPrjParams
 ppanHistogram

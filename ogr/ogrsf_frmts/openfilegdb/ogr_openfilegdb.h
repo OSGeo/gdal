@@ -22,6 +22,7 @@
 #include "gdal_rat.h"
 
 #include <array>
+#include <cmath>
 #include <vector>
 #include <map>
 
@@ -702,6 +703,7 @@ class GDALOpenFileGDBRasterAttributeTable final
     const std::string m_osVATTableName;
     std::unique_ptr<OGRLayer> m_poVATLayer{};
     mutable std::string m_osCachedValue{};
+    mutable std::vector<GByte> m_abyCachedWKB{};
 
     GDALOpenFileGDBRasterAttributeTable(
         const GDALOpenFileGDBRasterAttributeTable &) = delete;
@@ -761,9 +763,17 @@ class GDALOpenFileGDBRasterAttributeTable final
         switch (m_poVATLayer->GetLayerDefn()->GetFieldDefn(iCol)->GetType())
         {
             case OFTInteger:
+            {
+                if (m_poVATLayer->GetLayerDefn()
+                        ->GetFieldDefn(iCol)
+                        ->GetSubType() == OFSTBoolean)
+                    return GFT_Boolean;
                 return GFT_Integer;
+            }
             case OFTReal:
                 return GFT_Real;
+            case OFTDateTime:
+                return GFT_DateTime;
             default:
                 break;
         }
@@ -798,6 +808,47 @@ class GDALOpenFileGDBRasterAttributeTable final
         return poFeat->GetFieldAsDouble(iField);
     }
 
+    bool GetValueAsBoolean(int iRow, int iField) const override
+    {
+        auto poFeat =
+            std::unique_ptr<OGRFeature>(m_poVATLayer->GetFeature(iRow + 1));
+        if (!poFeat || iField >= poFeat->GetFieldCount())
+            return 0;
+        return poFeat->GetFieldAsInteger(iField) != 0;
+    }
+
+    GDALRATDateTime GetValueAsDateTime(int iRow, int iField) const override
+    {
+        GDALRATDateTime dt;
+        auto poFeat =
+            std::unique_ptr<OGRFeature>(m_poVATLayer->GetFeature(iRow + 1));
+        int nTZFlag = 0;
+        if (poFeat && iField < poFeat->GetFieldCount() &&
+            poFeat->GetFieldAsDateTime(iField, &dt.nYear, &dt.nMonth, &dt.nDay,
+                                       &dt.nHour, &dt.nMinute, &dt.fSecond,
+                                       &nTZFlag))
+        {
+            dt.bIsValid = true;
+            dt.bPositiveTimeZone = nTZFlag <= 2 ? false : nTZFlag >= 100;
+            dt.nTimeZoneHour = nTZFlag <= 2 ? 0 : std::abs(nTZFlag - 100) / 4;
+            dt.nTimeZoneMinute =
+                nTZFlag <= 2 ? 0 : (std::abs(nTZFlag - 100) % 4) * 15;
+        }
+        return dt;
+    }
+
+    const GByte *GetValueAsWKBGeometry(int iRow, int iField,
+                                       size_t &nWKBSize) const override
+    {
+        const char *pszWKT = GetValueAsString(iRow, iField);
+        if (pszWKT)
+            m_abyCachedWKB = WKTGeometryToWKB(pszWKT);
+        else
+            m_abyCachedWKB.clear();
+        nWKBSize = m_abyCachedWKB.size();
+        return m_abyCachedWKB.data();
+    }
+
     CPLErr SetValue(int, int, const char *) override
     {
         CPLError(CE_Failure, CPLE_NotSupported, "SetValue() not supported");
@@ -811,6 +862,24 @@ class GDALOpenFileGDBRasterAttributeTable final
     }
 
     CPLErr SetValue(int, int, double) override
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "SetValue() not supported");
+        return CE_Failure;
+    }
+
+    CPLErr SetValue(int, int, bool) override
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "SetValue() not supported");
+        return CE_Failure;
+    }
+
+    CPLErr SetValue(int, int, const GDALRATDateTime &) override
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "SetValue() not supported");
+        return CE_Failure;
+    }
+
+    CPLErr SetValue(int, int, const void *, size_t) override
     {
         CPLError(CE_Failure, CPLE_NotSupported, "SetValue() not supported");
         return CE_Failure;
