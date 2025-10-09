@@ -11,7 +11,7 @@ from osgeo import gdal, ogr, osr
 ###
 # Make modules available to doctests
 #
-# Adding moduels to doctest_namespace allows us to avoid writing "from osgeo import gdal"
+# Adding modules to doctest_namespace allows us to avoid writing "from osgeo import gdal"
 # in every example.
 ###
 @pytest.fixture(scope="session", autouse=True)
@@ -113,7 +113,7 @@ def nested_replace(x):
     if isinstance(x, (gdal.Algorithm, gdal.Dataset)):
         return x
 
-    raise Exception(f"Unspported argument type: {type(x)}")
+    raise Exception(f"Unsupported argument type: {type(x)}")
 
 
 def expand_dsn(f):
