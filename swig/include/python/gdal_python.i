@@ -658,6 +658,16 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         raise ValueError("I/O operation on closed file.")
 %}
 
+%feature("pythonprepend") CPLSetThreadLocalConfigOption %{
+    if type(args[1]) in (bool, int, float):
+        args = (args[0], str(args[1]))
+%}
+
+%feature("pythonprepend") CPLSetConfigOption %{
+    if type(args[1]) in (bool, int, float):
+        args = (args[0], str(args[1]))
+%}
+
 /* -------------------------------------------------------------------- */
 /*      GDAL_GCP                                                        */
 /* -------------------------------------------------------------------- */
