@@ -12,7 +12,7 @@ Close any dataset arguments or outputs of the algorithm.
 
 Returns
 -------
-boolean
+bool
 
 };
 
@@ -25,8 +25,8 @@ Returns
 -------
 Algorithm
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg("raster")
 >>> alg.ParseCommandLineArguments(["convert" ,"--input", "byte.tif", "--output",  "/tmp/byte.png"])
 True
@@ -47,8 +47,8 @@ Returns
 -------
 AlgorithmArg
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster", "polygonize")
 >>> arg = alg.GetArg("connect-diagonal-pixels")
 >>> arg.GetDescription()
@@ -64,8 +64,8 @@ Returns
 -------
 list
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster", "convert")
 >>> sorted(alg.GetArgNames())
 ['append', 'config', 'creation-option', ..., 'progress', 'quiet']
@@ -87,8 +87,8 @@ Returns
 -------
 str
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster", "convert")
 >>> alg.GetDescription()
 'Convert a raster dataset.'
@@ -103,8 +103,8 @@ Returns
 -------
 str
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster", "convert")
 >>> alg.GetHelpFullURL()
 'https://gdal.org/programs/gdal_raster_convert.html'
@@ -125,8 +125,8 @@ Returns
 -------
 str
 
-Example
--------
+Examples
+--------
 >>> gdal.Algorithm("raster", "info").GetName()
 'info'
 
@@ -140,8 +140,8 @@ Returns
 -------
 list or None
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster")
 >>> alg.GetSubAlgorithmNames()
 ['as-features', 'aspect', ..., 'update', 'viewshed']
@@ -156,8 +156,8 @@ Returns
 -------
 str
 
-Example
--------
+Examples
+--------
 >>> import json
 >>> import pprint
 >>> usage = json.loads(gdal.Algorithm("vector", "info").GetUsageAsJSON())
@@ -283,8 +283,8 @@ Returns
 -------
 bool
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster")
 >>> alg.HasSubAlgorithms()
 True
@@ -302,8 +302,8 @@ Returns
 -------
 Algorithm or None
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster")
 >>> alg.InstantiateSubAlgorithm("convert")
 <osgeo.gdal.Algorithm; proxy of <Swig Object of type 'GDALAlgorithmHS *' at ...> >
@@ -325,8 +325,8 @@ Returns
 bool
     Whether the arguments were successfully parsed
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("vector", "info")
 >>> alg.ParseCommandLineArguments(['poly.shp', '--format', 'text'])
 True
@@ -341,7 +341,7 @@ Parameters
 ----------
 args : list
     List of command line arguments
-callback : function
+callback : callable, optional
     Optional progress callback function
 callback_data
     Optional value to be provided as final argument to callback function
@@ -431,8 +431,8 @@ Returns
 -------
 str
 
-Example
--------
+Examples
+--------
 >>> gdal.AlgorithmArgTypeName(gdal.GAAT_REAL)
 'real'
 
@@ -448,7 +448,7 @@ type : int
 
 Returns
 -------
-boolean
+bool
 
 Examples
 --------

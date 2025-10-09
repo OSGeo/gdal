@@ -10,7 +10,8 @@ Create a copy of the RAT.
 
 Returns
 -------
-GDALRasterAttributeTable
+RasterAttributeTable
+    A Python proxy of a :cpp:class:`GDALRasterAttributeTable`
 
 ";
 
@@ -33,7 +34,7 @@ eUsage : int
 
 Returns
 -------
-int:
+int
    :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
 
 ";

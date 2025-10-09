@@ -1692,11 +1692,11 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 
   if( psXMLTree != NULL && psXMLTree->psNext != NULL )
   {
-	CPLXMLNode *psFirst = psXMLTree;
+    CPLXMLNode *psFirst = psXMLTree;
 
-	/* create a "pseudo" root if we have multiple elements */
+    /* create a "pseudo" root if we have multiple elements */
         psXMLTree = CPLCreateXMLNode( NULL, CXT_Element, "" );
-	psXMLTree->psChild = psFirst;
+    psXMLTree->psChild = psFirst;
         bFakeRoot = TRUE;
   }
 
@@ -1715,7 +1715,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 }
 
 /* ==================================================================== */
-/*	Support function for progress callbacks to python.                  */
+/* Support function for progress callbacks to python.                   */
 /* ==================================================================== */
 
 /*  The following scary, scary, voodoo -- hobu                          */
@@ -1855,7 +1855,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 {
     /* %typemap(out) ( GUInt32 )  */
 
-	$1 = 0;
+    $1 = 0;
 
 }
 
@@ -1863,7 +1863,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 {
     /* %typemap(out) ( GUInt32 )  */
 
-	$result = PyLong_FromUnsignedLong($1);
+    $result = PyLong_FromUnsignedLong($1);
 
 }
 
@@ -1872,8 +1872,8 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     /* %typemap(in) ( GUInt32 )  */
 
     if (PyLong_Check($input) || PyInt_Check($input)) {
-		$1 = PyLong_AsUnsignedLong($input);
-	}
+        $1 = PyLong_AsUnsignedLong($input);
+    }
 
 }
 
