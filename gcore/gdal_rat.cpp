@@ -40,6 +40,8 @@
 #endif
 #include "ogrlibjsonutils.h"
 
+// NOTE: keep the below description in sync with doc/source/user/raster_data_model.rst::raster_data_model_rat
+
 /**
  * \class GDALRasterAttributeTable
  *
