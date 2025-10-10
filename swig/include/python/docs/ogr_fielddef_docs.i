@@ -89,7 +89,7 @@ Note: no driver is know to use the concept of field justification.
 
 Returns
 -------
-object
+int
     the justification.
 ";
 
