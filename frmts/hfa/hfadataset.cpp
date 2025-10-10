@@ -1062,11 +1062,16 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
                     // OK we have a problem: The allocated space is not big
                     // enough we need to re-allocate the space and update the
                     // pointers and copy across the old data.
-                    const int nNewOffset =
-                        HFAAllocateSpace(hHFA->papoBand[nBand - 1]->psInfo,
-                                         nRows * nNewMaxChars);
-                    char *pszBuffer = static_cast<char *>(VSIMalloc2(
-                        aoFields[iField].nElementSize, sizeof(char)));
+                    const int nNewOffset = HFAAllocateSpace(
+                        hHFA->papoBand[nBand - 1]->psInfo,
+                        static_cast<unsigned>(nRows) * nNewMaxChars);
+                    char *pszBuffer = static_cast<char *>(
+                        VSI_CALLOC_VERBOSE(1, nNewMaxChars));
+                    if (!pszBuffer)
+                    {
+                        CPLFree(pachColData);
+                        return CE_Failure;
+                    }
                     for (int i = 0; i < nRows; i++)
                     {
                         // Seek to the old place.
@@ -1086,14 +1091,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
                                                  (static_cast<vsi_l_offset>(i) *
                                                   nNewMaxChars),
                                              SEEK_SET) == 0;
+
                         // Write data to new place.
-                        bOK &=
-                            VSIFWriteL(pszBuffer, aoFields[iField].nElementSize,
-                                       1, hHFA->fp) == 1;
-                        // Make sure there is a terminating null byte just to be
-                        // safe.
-                        const char cNullByte = '\0';
-                        bOK &= VSIFWriteL(&cNullByte, sizeof(char), 1,
+                        bOK &= VSIFWriteL(pszBuffer, nNewMaxChars, 1,
                                           hHFA->fp) == 1;
                         if (!bOK)
                         {

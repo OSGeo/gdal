@@ -1290,3 +1290,28 @@ def test_hfa_read_nan_nodata(tmp_vsimem):
         with gdal.Open(filename) as ds:
             assert gdal.GetLastErrorMsg() == ""
             assert math.isnan(ds.GetRasterBand(1).GetNoDataValue())
+
+
+###############################################################################
+#
+
+
+def test_hfa_rat_grow_string(tmp_vsimem):
+
+    with gdal.GetDriverByName("HFA").Create(
+        tmp_vsimem / "test.img", 1, 1, 1, gdal.GDT_Byte
+    ) as ds:
+        rat = gdal.RasterAttributeTable()
+        rat.CreateColumn("str", gdal.GFT_String, gdal.GFU_Generic)
+        rat.SetValueAsString(0, 0, "x" * 5)
+        rat.SetValueAsString(1, 0, "y" * 5)
+        ds.GetRasterBand(1).SetDefaultRAT(rat)
+
+    with gdal.Open(tmp_vsimem / "test.img", gdal.GA_Update) as ds:
+        rat = ds.GetRasterBand(1).GetDefaultRAT()
+        rat.SetValueAsString(0, 0, "x" * 50)
+
+    with gdal.Open(tmp_vsimem / "test.img", gdal.GA_Update) as ds:
+        rat = ds.GetRasterBand(1).GetDefaultRAT()
+        assert rat.GetValueAsString(0, 0) == "x" * 50
+        assert rat.GetValueAsString(1, 0) == "y" * 5
