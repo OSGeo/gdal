@@ -68,7 +68,7 @@ need not be installed.
 
 
 Installation via packaging systems
----------------------------------
+----------------------------------
 
 General
 ~~~~~~~
