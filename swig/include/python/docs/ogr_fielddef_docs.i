@@ -15,7 +15,7 @@ This function is the same as the CPP method
 OGRFieldDefn::OGRFieldDefn().
 
 Parameters
------------
+----------
 pszName:
     the name of the new field definition.
 eType:
@@ -44,8 +44,8 @@ See :cpp:func:`OGRFieldDefn::GetAlternativeNameRef`.
 .. versionadded:: 3.2
 
 Returns
---------
-str:
+-------
+str
     the alternative name of the field definition.
 ";
 
@@ -56,8 +56,8 @@ Get default field value.
 See :cpp:func:`OGRFieldDefn::GetDefault`.
 
 Returns
---------
-str:
+-------
+str
     default field value or ``None``.
 ";
 
@@ -74,8 +74,8 @@ See :cpp:func:`OGRFieldDefn::GetDomainName`.
 .. versionadded:: 3.3
 
 Returns
---------
-str:
+-------
+str
     the field domain name, or an empty string if there is none.
 ";
 
@@ -88,8 +88,8 @@ See :cpp:func:`OGRFieldDefn::GetJustify`.
 Note: no driver is know to use the concept of field justification.
 
 Returns
---------
-OGRJustification:
+-------
+int
     the justification.
 ";
 
@@ -100,8 +100,8 @@ Fetch name of this field.
 See :cpp:func:`OGRFieldDefn::GetNameRef`.
 
 Returns
---------
-str:
+-------
+str
     the name of the field definition.
 ";
 
@@ -114,8 +114,8 @@ This should normally be zero for fields of types other than :py:const:`OFTReal`.
 See :cpp:func:`OGRFieldDefn::GetPrecision`.
 
 Returns
---------
-int:
+-------
+int
     the precision.
 ";
 
@@ -126,7 +126,7 @@ Fetch subtype of this field.
 See :cpp:func:`OGRFieldDefn::GetSubType`.
 
 Returns
---------
+-------
 int
     field subtype code, default = :py:const:`OFSTNone`
 ";
@@ -138,7 +138,7 @@ Fetch type of this field.
 See :cpp:func:`OGRFieldDefn::GetType`.
 
 Returns
---------
+-------
 int
     field type code, e.g. :py:const:`OFTInteger`
 ";
@@ -150,8 +150,8 @@ Get the formatting width for this field.
 See :cpp:func:`OGRFieldDefn::GetWidth`.
 
 Returns
---------
-int:
+-------
+int
     the width, zero means no specified width.
 ";
 
@@ -167,8 +167,8 @@ value.
 See :cpp:func:`OGRFieldDefn::IsDefaultDriverSpecific`.
 
 Returns
---------
-int:
+-------
+int
     TRUE if the default value is driver specific.
 ";
 
@@ -179,8 +179,8 @@ Return whether this field should be omitted when fetching features.
 See :cpp:func:`OGRFieldDefn::IsIgnored`.
 
 Returns
---------
-int:
+-------
+int
     ignore state
 ";
 
@@ -198,8 +198,8 @@ done when :py:meth:`Layer.CreateFeature`/:py:meth:`Layer.SetFeature` is called.
 See :cpp:func:`OGRFieldDefn::IsNullable`.
 
 Returns
---------
-int:
+-------
+int
     TRUE if the field is authorized to be null.
 ";
 
@@ -214,8 +214,8 @@ See :cpp:func:`OGRFieldDefn::IsUnique`.
 .. versionadded:: 3.2
 
 Returns
---------
-int:
+-------
+int
     TRUE if the field has a unique constraint.
 ";
 
@@ -236,7 +236,7 @@ See :cpp:func:`OGRFieldDefn::SetAlternativeName`.
 .. versionadded:: 3.2
 
 Parameters
------------
+----------
 alternativeName : str
     the new alternative name to apply.
 ";
@@ -266,7 +266,7 @@ GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
 See :cpp:func:`OGRFieldDefn::SetDefault`.
 
 Parameters
------------
+----------
 pszValue : str
     new default field value or NULL pointer.
 ";
@@ -282,7 +282,7 @@ See :cpp:func:`OGRFieldDefn::SetDomainName`.
 .. versionadded:: 3.3
 
 Parameters
------------
+----------
 name : str
     Field domain name.
 ";
@@ -294,7 +294,7 @@ Set whether this field should be omitted when fetching features.
 See :cpp:func:`OGRFieldDefn::SetIgnored`.
 
 Parameters
------------
+----------
 bignored : bool
     ignore state
 ";
@@ -308,7 +308,7 @@ Note: no driver is know to use the concept of field justification.
 See :cpp:func:`OGRFieldDefn::SetJustify`.
 
 Parameters
------------
+----------
 justify : int
     the new justification
 
@@ -325,7 +325,7 @@ Reset the name of this field.
 See :cpp:func:`OGRFieldDefn::SetName`.
 
 Parameters
------------
+----------
 name : str
     the new name to apply
 ";
@@ -343,7 +343,7 @@ Drivers that support writing not-null constraint will advertise the
 See :cpp:func:`OGRFieldDefn::SetNullable`.
 
 Parameters
------------
+----------
 bNullable : bool
     ``False`` if the field must have a not-null constraint.
 ";
@@ -357,7 +357,7 @@ This should normally be zero for fields of types other than :py:const:`OFTReal`.
 See :cpp:func:`OGRFieldDefn::SetPrecision`.
 
 Parameters
------------
+----------
 precision : int
     the new precision.
 ";
@@ -372,7 +372,7 @@ an :py:class:FeatureDefn`.
 See :cpp:func:`OGRFieldDefn::SetSubType`.
 
 Parameters
------------
+----------
 type :
     the new field subtype.
 
@@ -395,7 +395,7 @@ an :py:class:`FeatureDefn`.
 See :cpp:func:`OGRFieldDefn::SetType`.
 
 Parameters
------------
+----------
 type : int
     the new field type.
 
@@ -426,7 +426,7 @@ See :cpp:func:`OGRFieldDefn::SetUnique`.
 .. versionadded:: 3.2
 
 Parameters
------------
+----------
 bUnique : bool
     ``True`` if the field must have a unique constraint
 ";
@@ -438,7 +438,7 @@ Set the formatting width for this field in characters.
 See :cpp:func:`OGRFieldDefn::SetWidth`.
 
 Parameters
------------
+----------
 width : int
     the new width
 ";

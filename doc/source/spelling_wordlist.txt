@@ -461,6 +461,8 @@ connectedness
 const
 constexpr
 contensts
+contextlib
+contextmanager
 ContourOptions
 Contrarty
 conv
@@ -1787,6 +1789,7 @@ MaxX
 maxy
 maxY
 MaxY
+maxz
 MaxZ
 mbtiles
 mbtowc
@@ -1837,6 +1840,7 @@ minX
 miny
 minY
 MinY
+minz
 MinZ
 Mipmaps
 MiraD

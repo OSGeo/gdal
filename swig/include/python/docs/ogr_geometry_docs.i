@@ -11,8 +11,8 @@ geometry expressed in a geographic SRS.
 For more details: :cpp:func:`OGR_G_Area`
 
 Returns
---------
-float:
+-------
+float
     the area of the geometry in square units of the spatial reference
     system in use, or 0.0 for unsupported geometry types.
 
@@ -25,8 +25,8 @@ ellipsoid of the SRS attached to the geometry.
 For more details: :cpp:func:`OGR_G_GeodesicArea`
 
 Returns
---------
-float:
+-------
+float
     the area in square meters, or a negative value for unsupported geometry types.
 
 ";
@@ -41,8 +41,8 @@ geometry expressed in a geographic SRS.
 For more details: :cpp:func:`OGR_G_Length`
 
 Returns
---------
-float:
+-------
+float
     the length of the geometry in units of the spatial reference
     system in use, or 0.0 for unsupported geometry types.
 
@@ -55,8 +55,8 @@ ellipsoid of the SRS attached to the geometry.
 For more details: :cpp:func:`OGR_G_GeodesicLength`
 
 Returns
---------
-float:
+-------
+float
     the area in meters, or a negative value for unsupported geometry types.
 
 ";
@@ -73,8 +73,8 @@ Assign spatial reference to this object.
 For more details: :cpp:func:`OGR_G_AssignSpatialReference`
 
 Parameters
------------
-reference: SpatialReference
+----------
+reference : SpatialReference
     The new spatial reference system to apply.
 ";
 
@@ -84,13 +84,13 @@ Determines whether two geometries intersect.
 For more details: :cpp:func:`OGR_G_Intersects`
 
 Parameters
------------
-other: Geometry
+----------
+other : Geometry
     The other geometry to test against.
 
 Returns
---------
-int:
+-------
+int
     True if the geometries intersect, otherwise False.
 ";
 
@@ -100,13 +100,13 @@ Transform geometry to new spatial reference system.
 For more details: :cpp:func:`OGR_G_TransformTo`
 
 Parameters
------------
-reference: SpatialReference
+----------
+reference : SpatialReference
    The spatial reference system to apply.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success, or an error code.
 ";
 
@@ -116,13 +116,13 @@ Apply arbitrary coordinate transformation to geometry.
 For more details: :cpp:func:`OGR_G_Transform`
 
 Parameters
------------
-trans: CoordinateTransform
+----------
+trans : CoordinateTransform
     The transformation to apply.
 
 Returns
---------
-Geometry:
+-------
+Geometry
     The transformed geometry.
 ";
 
@@ -133,8 +133,8 @@ distance.
 For more details: :cpp:func:`OGR_G_Segmentize`
 
 Parameters
------------
-dfMaxLength: float
+----------
+dfMaxLength : float
     the maximum distance between 2 points after segmentization
 ";
 
@@ -144,8 +144,8 @@ Get the dimension of this geometry.
 For more details: :cpp:func:`OGR_G_GetDimension`
 
 Returns
---------
-int:
+-------
+int
     0 for points, 1 for lines, and 2 for surfaces.
 ";
 
@@ -158,8 +158,8 @@ For more details: :cpp:func:`OGR_G_GetCoordinateDimension`
     :py:func:`Is3D`, or :py:func:`IsMeasured`.
 
 Returns
---------
-int:
+-------
+int
     This will return 2 or 3.
 ";
 
@@ -171,8 +171,8 @@ For more details: :cpp:func:`OGR_G_CoordinateDimension`
 .. versionadded:: 2.1
 
 Returns
---------
-int:
+-------
+int
     This will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
 ";
 
@@ -184,8 +184,8 @@ For more details: :cpp:func:`OGR_G_Is3D`
 .. versionadded:: 2.1
 
 Returns
---------
-int:
+-------
+int
     True if the geometry has Z coordinates.
 ";
 
@@ -197,8 +197,8 @@ For more details: :cpp:func:`OGR_G_IsMeasured`
 .. versionadded:: 2.1
 
 Returns
---------
-int:
+-------
+int
     True if the geometry has M coordinates.
 ";
 
@@ -210,8 +210,8 @@ For more details: :cpp:func:`OGR_G_SetCoordinateDimension`
 .. warning:: Deprecated. Use :py:func:`Set3D` or :py:func:`SetMeasured`.
 
 Parameters
------------
-dimension: int
+----------
+dimension : int
     New coordinate dimension value, either 2 or 3.
 ";
 
@@ -223,8 +223,8 @@ For more details: :cpp:func:`OGR_G_Set3D`
 .. versionadded:: 2.1
 
 Parameters
------------
-bIs3D: bool
+----------
+bIs3D : bool
     Should the geometry have a Z dimension, either True or False.
 ";
 
@@ -236,8 +236,8 @@ For more details: :cpp:func:`OGR_G_SetMeasured`
 .. versionadded:: 2.1
 
 Parameters
------------
-bIsMeasured: bool
+----------
+bIsMeasured : bool
     Should the geometry have a M dimension, either True or False.
 ";
 
@@ -247,13 +247,13 @@ Returns True if two geometries are equivalent.
 For more details: :cpp:func:`OGR_G_Equals`
 
 Parameters
------------
-other: Geometry
+----------
+other : Geometry
     The other geometry to test against.
 
 Returns
---------
-int:
+-------
+int
     True if equivalent or False otherwise.
 ";
 
@@ -263,7 +263,7 @@ Returns size of related binary representation.
 For more details: :cpp:func:`OGR_G_WkbSize`
 
 Returns
---------
+-------
 int
 ";
 
@@ -275,7 +275,7 @@ For more details: :cpp:func:`OGR_G_WkbSizeEx`
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 int
 ";
 
@@ -288,11 +288,9 @@ For more details: :cpp:func:`OGR_G_GetEnvelope`
 .. warning:: Check the return order of the bounds.
 
 Returns
---------
-minx: float
-maxx: float
-miny: float
-maxy: float
+-------
+tuple of float
+    (minx, maxx, miny, maxy)
 ";
 
 %feature("docstring")  GetEnvelope3D "
@@ -304,13 +302,9 @@ For more details: :cpp:func:`OGR_G_GetEnvelope3D`
 .. warning:: Check the return order of the bounds.
 
 Returns
---------
-minx: float
-maxx: float
-miny: float
-maxy: float
-minz: float
-maxz: float
+-------
+tuple of float
+    (minx, maxx, miny, maxy, minz, maxz)
 ";
 
 
@@ -320,12 +314,14 @@ Convert a geometry well known binary format.
 For more details: :cpp:func:`OGR_G_ExportToWkb`
 
 Parameters
------------
-byte_order: osgeo.ogr.wkbXDR | osgeo.ogr.wkbNDR, default=osgeo.ogr.wkbNDR
-    One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.
+----------
+byte_order : int, optional
+    One of :py:const:`osgeo.ogr.wkbXDR` or :py:const:`osgeo.ogr.wkbNDR`,
+    indicating MSB (most significant byte) or LSB (least significant byte)
+    byte order. Defaults to :py:const:`osgeo.ogr.wkbNDR`.
 
 Returns
---------
+-------
 bytes
 ";
 
@@ -338,12 +334,14 @@ For more details: :cpp:func:`OGR_G_ExportToIsoWkb`
 .. versionadded:: 2.0
 
 Parameters
------------
-byte_order: osgeo.ogr.wkbXDR | osgeo.ogr.wkbNDR, default=osgeo.ogr.wkbNDR
-    One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.
+----------
+byte_order : int, optional
+    One of :py:const:`osgeo.ogr.wkbXDR` or :py:const:`osgeo.ogr.wkbNDR`,
+    indicating MSB (most significant byte) or LSB (least significant byte)
+    byte order. Defaults to :py:const:`osgeo.ogr.wkbNDR`.
 
 Returns
---------
+-------
 bytes
 ";
 
@@ -354,7 +352,7 @@ Convert a geometry into well known text format.
 For more details: :cpp:func:`OGR_G_ExportToWkt`
 
 Returns
---------
+-------
 str
 ";
 
@@ -367,7 +365,7 @@ For more details: :cpp:func:`OGR_G_ExportToIsoWkt`
 .. versionadded:: 2.0
 
 Returns
---------
+-------
 str
 ";
 
@@ -377,8 +375,8 @@ Fetch geometry type.
 For more details: :cpp:func:`OGR_G_GetGeometryType`
 
 Returns
---------
-int:
+-------
+int
     The geometry type code. The types can be found with
     'osgeo.ogr.wkb' prefix. For example :py:const:`osgeo.ogr.wkbPolygon`.
 ";
@@ -391,7 +389,7 @@ For more details: :cpp:func:`OGR_G_GetGeometryName`
 geometry to get name from.
 
 Returns
---------
+-------
 str
 ";
 
@@ -401,8 +399,8 @@ Make a copy of this object.
 For more details: :cpp:func:`OGR_G_Clone`
 
 Returns
---------
-Geometry:
+-------
+Geometry
     The copy of the geometry with the same spatial reference system
     as the original.
 ";
@@ -413,7 +411,7 @@ For more details: :cpp:func:`OGR_G_GetSpatialReference`
 Returns spatial reference system for geometry.
 
 Returns
---------
+-------
 SpatialReference
 ";
 
@@ -429,8 +427,8 @@ Test if the geometry is empty.
 For more details: :cpp:func:`OGR_G_IsEmpty`
 
 Returns
---------
-int:
+-------
+int
     True if the geometry has no points, otherwise False.
 ";
 
@@ -440,8 +438,8 @@ Test if the geometry is valid.
 For more details: :cpp:func:`OGR_G_IsValid`
 
 Returns
---------
-int:
+-------
+int
     True if the geometry has no points, otherwise False.
 ";
 
@@ -451,8 +449,8 @@ Returns True if the geometry is simple.
 For more details: :cpp:func:`OGR_G_IsSimple`
 
 Returns
---------
-int:
+-------
+int
     True if object is simple, otherwise False.
 ";
 
@@ -462,8 +460,8 @@ Test if the geometry is a ring.
 For more details: :cpp:func:`OGR_G_IsRing`
 
 Returns
---------
-int:
+-------
+int
     True if the coordinates of the geometry form a ring, by checking length
     and closure (self-intersection is not checked), otherwise False.
 ";
@@ -481,13 +479,13 @@ Compute distance between two geometries.
 For more details: :cpp:func:`OGR_G_Distance`
 
 Parameters
------------
-other: Geometry
+----------
+other : Geometry
     The other geometry to compare against.
 
 Returns
---------
-float:
+-------
+float
     The distance between the geometries or -1 if an error occurs.
 ";
 
@@ -499,13 +497,13 @@ For more details: :cpp:func:`OGR_G_Distance3D`
 .. versionadded:: 2.2
 
 Parameters
------------
-other: Geometry
+----------
+other : Geometry
     The other geometry to compare against.
 
 Returns
---------
-float:
+-------
+float
     The distance between the geometries or -1 if an error occurs.
 ";
 
@@ -518,13 +516,13 @@ For more details: :cpp:func:`OGR_G_MakeValidEx`
 .. versionadded:: 3.4 options
 
 Parameters
------------
-options: list[str], optional
+----------
+options : list[str], optional
     papszOptions to be passed in. For example: [\"METHOD=STRUCTURE\"].
 
 Returns
---------
-Geometry:
+-------
+Geometry
     A newly allocated geometry now owned by the caller, or None on
     failure.
 ";
@@ -538,8 +536,8 @@ For more details: :cpp:func:`OGR_G_Normalize`
 .. versionadded:: 3.3
 
 Returns
---------
-Geometry:
+-------
+Geometry
     A newly allocated geometry now owned by the caller, or None on
     failure.
 ";
@@ -550,8 +548,8 @@ Compute convex hull.
 For more details: :cpp:func:`OGR_G_ConvexHull`
 
 Returns
---------
-Geometry:
+-------
+Geometry
     a handle to A newly allocated geometry now owned by the caller, or
     None on failure.
 ";
@@ -562,8 +560,8 @@ Compute boundary.
 For more details: :cpp:func:`OGR_G_Boundary`
 
 Returns
---------
-Geometry:
+-------
+Geometry
     A new geometry or None on failure.
 ";
 
@@ -583,20 +581,20 @@ Compute buffer of geometry.
 For more details: :cpp:func:`OGR_G_Buffer`
 
 Parameters
------------
-distance: float
+----------
+distance : float
     The buffer distance to be applied. Should be expressed into
     the same unit as the coordinates of the geometry.
-quadsecs: int, default=30
+quadsecs : int, default=30
     The number of segments used to approximate a 90 degree
     (quadrant) of curvature.
-options: list/dict
+options : list or dict, optional
     An optional list of options to control the buffer output.
     See :cpp:func:`OGR_G_BufferEx`.
 
 Returns
---------
-Geometry:
+-------
+Geometry
     The newly created geometry or None if an error occurs.
 ";
 
@@ -606,13 +604,13 @@ Compute intersection.
 For more details: :cpp:func:`OGR_G_Intersection`
 
 Parameters
------------
-other: Geometry
+----------
+other : Geometry
     The other geometry.
 
 Returns
---------
-Geometry:
+-------
+Geometry
     A new geometry representing the intersection or None if there is no
     intersection or an error occurs.
 ";
@@ -623,24 +621,24 @@ Compute union.
 For more details: :cpp:func:`OGR_G_Union`
 
 Parameters
------------
-other: Geometry
+----------
+other : Geometry
     The other geometry.
 
 Returns
---------
-Geometry:
+-------
+Geometry
     A new geometry representing the union or None if an error occurs.
 ";
 
 %feature("docstring")  UnionCascaded "
 Compute union using cascading.
 
-For more deails: :cpp:func:`OGR_G_UnionCascaded`
+For more details: :cpp:func:`OGR_G_UnionCascaded`
 
 Returns
---------
-Geometry:
+-------
+Geometry
     A new geometry representing the union or None if an error occurs.
 ";
 
@@ -650,13 +648,13 @@ Compute difference.
 For more details: :cpp:func:`OGR_G_Difference`
 
 Parameters
------------
-other: Geometry
+----------
+other : Geometry
     The other geometry.
 
 Returns
---------
-Geometry:
+-------
+Geometry
     A new geometry representing the difference or None if the difference
     is empty or an error occurs.
 ";
@@ -667,13 +665,13 @@ Compute symmetric difference.
 For more details: :cpp:func:`OGR_G_SymDifference`
 
 Parameters
------------
-other:
+----------
+other : Geometry
     the other geometry.
 
 Returns
---------
-Geometry:
+-------
+Geometry
     A new geometry representing the symmetric difference or None if the
     difference is empty or an error occurs.
 ";
@@ -693,13 +691,13 @@ Test for disjointness.
 For more details: :cpp:func:`OGR_G_Disjoint`
 
 Parameters
------------
-other: Geometry
+----------
+other : Geometry
     The other geometry to compare.
 
 Returns
---------
-int:
+-------
+int
     True if they are disjoint, otherwise False.
 ";
 
@@ -709,13 +707,13 @@ Test for touching.
 For more details: :cpp:func:`OGR_G_Touches`
 
 Parameters
------------
-other:
+----------
+other : Geometry
     the other geometry to compare.
 
 Returns
---------
-int:
+-------
+int
     True if they are touching, otherwise False.
 ";
 
@@ -725,13 +723,13 @@ Test for crossing.
 For more details: :cpp:func:`OGR_G_Crosses`
 
 Parameters
------------
-other: Geometry
+----------
+other : Geometry
     the other geometry to compare.
 
 Returns
---------
-int:
+-------
+int
     True if they are crossing, otherwise False.
 ";
 
@@ -741,13 +739,13 @@ Test for containment.
 For more details: :cpp:func:`OGR_G_Within`
 
 Parameters
------------
-other: Geometry
+----------
+other : Geometry
     the other geometry to compare.
 
 Returns
---------
-int:
+-------
+int
     True if this is within other, otherwise False.
 ";
 
@@ -757,13 +755,13 @@ Test for containment.
 For more details: :cpp:func:`OGR_G_Contains`
 
 Parameters
------------
-other: Geometry
+----------
+other : Geometry
     the other geometry to compare.
 
 Returns
---------
-int:
+-------
+int
     True if this contains the other geometry, otherwise False.
 ";
 
@@ -773,13 +771,13 @@ Test for overlap.
 For more details: :cpp:func:`OGR_G_Overlaps`
 
 Parameters
------------
-other: Geometry
+----------
+other : Geometry
     the other geometry to compare.
 
 Returns
---------
-int:
+-------
+int
     True if they are overlapping, otherwise False.
 ";
 
@@ -795,7 +793,7 @@ Compute the geometry centroid.
 For more details: :cpp:func:`OGR_G_Centroid`
 
 Returns
---------
+-------
 Geometry
 ";
 
@@ -805,8 +803,8 @@ Returns a point guaranteed to lie on the surface.
 For more details: :cpp:func:`OGR_G_PointOnSurface`
 
 Returns
---------
-Geometry:
+-------
+Geometry
     A point guaranteed to lie on the surface or None if an error occurred.
 ";
 
@@ -816,13 +814,13 @@ Compute a simplified geometry.
 For more details: :cpp:func:`OGR_G_Simplify`
 
 Parameters
------------
-tolerance: float
+----------
+tolerance : float
     The distance tolerance for the simplification.
 
 Returns
---------
-Geometry:
+-------
+Geometry
     The simplified geometry or None if an error occurs.
 ";
 
@@ -832,13 +830,13 @@ Simplify the geometry while preserving topology.
 For more details: :cpp:func:`OGR_G_SimplifyPreserveTopology`
 
 Parameters
------------
-tolerance: float
+----------
+tolerance : float
     The distance tolerance for the simplification.
 
 Returns
---------
-Geometry:
+-------
+Geometry
     The simplified geometry or None if an error occurs.
 ";
 
@@ -850,16 +848,16 @@ For more details: :cpp:func:`OGR_G_DelaunayTriangulation`
 .. versionadded:: 2.1
 
 Parameters
------------
-dfTolerance: float
+----------
+dfTolerance : float
     optional snapping tolerance to use for improved robustness
-bOnlyEdges: bool
+bOnlyEdges : bool
     If True, will return a MULTILINESTRING, otherwise it will
     return a GEOMETRYCOLLECTION containing triangular POLYGONs.
 
 Returns
---------
-Geometry:
+-------
+Geometry
     The geometry resulting from the Delaunay triangulation or None if an
     error occurs.
 ";
@@ -874,8 +872,8 @@ For more details: :cpp:func:`OGR_G_ConstrainedDelaunayTriangulation`
 .. versionadded:: 3.12
 
 Returns
---------
-Geometry:
+-------
+Geometry
     The geometry collection resulting from the constrained Delaunay
     triangulation or None if an error occurs.
 ";
@@ -886,8 +884,8 @@ Polygonizes a set of sparse edges.
 For more details: :cpp:func:`OGR_G_Polygonize`
 
 Returns
---------
-Geometry:
+-------
+Geometry
     A new geometry or None on failure.
 ";
 
@@ -897,8 +895,8 @@ Polygonize a linework assuming inner polygons are holes.
 For more details: :cpp:func:`OGR_G_BuildArea`
 
 Returns
---------
-Geometry:
+-------
+Geometry
     A new geometry or None on failure.
 ";
 
@@ -925,16 +923,16 @@ use AddPoint_2D.
 This is the same as :cpp:func:`OGR_G_AddPoint`
 
 Parameters
------------
-X: float
+----------
+X : float
     x coordinate of point to add.
-Y: float
+Y : float
     y coordinate of point to add.
-Z: float
+Z : float
     z coordinate of point to add. Defaults to 0
 
 Examples
--------
+--------
 >>> pt = ogr.Geometry(ogr.wkbPoint)
 >>> ogr.GeometryTypeToName(pt.GetGeometryType())
 'Point'
@@ -955,10 +953,10 @@ for the added point will be 0.
 This is the same as :cpp:func:`OGR_G_AddPoint_2D`
 
 Parameters
------------
-X: float
+----------
+X : float
     x coordinate of point to add.
-Y: float
+Y : float
     y coordinate of point to add.
 
 Examples

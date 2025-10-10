@@ -20,7 +20,7 @@ See :cpp:func:`OGRFieldDomain::GetDescription`.
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 str
     the field domain description (might be empty string).
 ";
@@ -34,7 +34,7 @@ See :cpp:func:`OGRFieldDomain::GetName`.
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 str
     the field domain name.
 ";
@@ -48,7 +48,7 @@ See :cpp:func:`OGRFieldDomain::GetDomainType`.
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 int
     the type of the field domain.
 
@@ -69,7 +69,7 @@ See :cpp:func:`OGRCodedFieldDomain::GetEnumeration`.
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 dict
 
 Examples
@@ -89,7 +89,7 @@ See :cpp:func:`OGRFieldDomain::GetFieldSubType`.
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 int
     the field subtype of the field domain.
 ";
@@ -103,7 +103,7 @@ See :cpp:func:`OGRFieldDomain::GetFieldType`.
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 int
     the field type of the field domain.
 ";
@@ -117,7 +117,7 @@ See :cpp:func:`OGRGlobFieldDomain::GetGlob`.
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 str
     the glob expression, or ``None`` in case of error
 ";
@@ -131,7 +131,7 @@ See :cpp:func:`OGRFieldDomain::GetMergePolicy`.
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 int
     the merge policy of the field domain (default = :py:const:`OFDMP_DEFAULT_VALUE`)
 ";
@@ -145,7 +145,7 @@ See :cpp:func:`OGRRangeFieldDomain::GetMax()`
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 float
     the maximum value of the range
 ";
@@ -159,7 +159,7 @@ See :cpp:func:`OGRRangeFieldDomain::GetMax()`
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 str
     the maximum value of the range
 ";
@@ -173,7 +173,7 @@ See :cpp:func:`OGRRangeFieldDomain::GetMin()`
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 float
     the minimum value of the range
 ";
@@ -187,7 +187,7 @@ See :cpp:func:`OGRRangeFieldDomain::GetMin()`
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 str
     the minimum value of the range
 ";
@@ -201,7 +201,7 @@ See :cpp:func:`OGRFieldDomain::GetSplitPolicy`.
 .. versionadded:: 3.3
 
 Returns
---------
+-------
 int
     the split policy of the field domain (default = :py:const:`OFDSP_DEFAULT_VALUE`)
 ";
@@ -215,7 +215,7 @@ See :cpp:func:`OGRFieldDomain::SetMergePolicy`.
 .. versionadded:: 3.3
 
 Parameters
------------
+----------
 policy : int
     the merge policy code of the field domain.
 ";

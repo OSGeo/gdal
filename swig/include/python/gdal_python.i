@@ -1140,9 +1140,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`.
            Specifies the resampling algorithm to use when the size of
            the read window and the buffer are not equal.
-      callback : function, optional
+      callback : callable, optional
           A progress callback function
-      callback_data: optional
+      callback_data : any, optional
           Optional data to be passed to callback function
 
       Returns
@@ -1210,14 +1210,14 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
          be written. This would be zero to start from the top side.
       resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`
          Resampling algorithm. Placeholder argument, not currently supported.
-      callback : function, optional
+      callback : callable, optional
           A progress callback function
-      callback_data: optional
+      callback_data : any, optional
           Optional data to be passed to callback function
 
       Returns
       -------
-      int:
+      int
           Error code, or ``gdal.CE_None`` if no error occurred.
       """
       from osgeo import gdal_array
@@ -1334,8 +1334,8 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 %}
 
 %feature("shadow") ComputeStatistics %{
-def ComputeStatistics(self, *args, **kwargs) -> "CPLErr":
-    """ComputeStatistics(Band self, bool approx_ok, callback=None, callback_data=None) -> CPLErr
+def ComputeStatistics(self, *args, **kwargs):
+    """ComputeStatistics(Band self, bool approx_ok, callback=None, callback_data=None)
 
     Compute image statistics.
     See :cpp:func:`GDALRasterBand::ComputeStatistics`.
@@ -1345,9 +1345,9 @@ def ComputeStatistics(self, *args, **kwargs) -> "CPLErr":
     approx_ok : bool
                  If ``True``, compute statistics based on overviews or a
                  subset of tiles.
-    callback : function, optional
+    callback : callable, optional
                  A progress callback function
-    callback_data: optional
+    callback_data : any, optional
                  Optional data to be passed to callback function
 
     Returns
@@ -1392,7 +1392,7 @@ def GetNoDataValue(self):
 
     Returns
     -------
-    float/int
+    float or int
         The nodata value, or ``None`` if it has not been set.
     """
 
@@ -1407,8 +1407,8 @@ def GetNoDataValue(self):
 
 
 %feature("shadow") SetNoDataValue %{
-def SetNoDataValue(self, value) -> "CPLErr":
-    """SetNoDataValue(Band self, value) -> CPLErr
+def SetNoDataValue(self, value):
+    """SetNoDataValue(Band self, value)
 
     Set the nodata value for this band.
     Unlike :cpp:func:`GDALRasterBand::SetNoDataValue`, this
@@ -1416,12 +1416,12 @@ def SetNoDataValue(self, value) -> "CPLErr":
 
     Parameters
     ----------
-    value : float/int
+    value : float or int
         The nodata value to set
 
     Returns
     -------
-    int:
+    int
        :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
 
     """
@@ -1694,9 +1694,9 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`.
              Specifies the resampling algorithm to use when the size of
              the read window and the buffer are not equal.
-        callback : function, optional
+        callback : callable, optional
             A progress callback function
-        callback_data: optional
+        callback_data : any, optional
             Optional data to be passed to callback function
         band_list : list, optional
             Indexes of bands from which data should be read. By default,
@@ -1786,14 +1786,14 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             ``(ny, nx, nbands)``.
         resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`
             Resampling algorithm. Placeholder argument, not currently supported.
-        callback : function, optional
+        callback : callable, optional
             A progress callback function
-        callback_data: optional
+        callback_data : any, optional
             Optional data to be passed to callback function
 
         Returns
         -------
-        int:
+        int
             Error code, or ``gdal.CE_None`` if no error occurred.
 
         Examples
@@ -2015,12 +2015,13 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
         Parameters
         ----------
-        value : int/str
+        value : int or str
                 Name or 0-based index of the layer to delete.
 
         Returns
         -------
-        ogr.Layer, or ``None`` on error
+        Layer
+            A layer if successful, or ``None`` on error.
         """
 
         _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions()
@@ -2038,7 +2039,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
         Parameters
         ----------
-        value : int/str
+        value : int or str
                 Name or 0-based index of the layer to delete.
 
         Returns
@@ -2069,8 +2070,8 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         ----------
         gcps : list
                a list of :py:class:`GCP` objects
-        wkt_or_spatial_ref : str/osr.SpatialReference
-               spatial reference of the GCPs
+        wkt_or_spatial_ref : str or SpatialReference
+               spatial reference of the GCPs as a string, or a :py:class:`osr.SpatialReference`
         """
 
         if isinstance(wkt_or_spatial_ref, str):
@@ -2248,23 +2249,23 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
 
     Parameters
     ----------
-    statement:
+    statement : str
         the SQL statement to execute (e.g "SELECT * FROM layer")
-    spatialFilter:
+    spatialFilter : any
         a geometry which represents a spatial filter. Can be None
-    dialect:
+    dialect : str
         allows control of the statement dialect. If set to None or empty string,
         the OGR SQL engine will be used, except for RDBMS drivers that will
         use their dedicated SQL engine, unless OGRSQL is explicitly passed as
         the dialect. The SQLITE dialect can also be used.
-    keep_ref_on_ds:
+    keep_ref_on_ds : bool
         whether the returned layer should keep a (strong) reference on
         the current dataset. Cf example 2 for a use case.
 
     Returns
     -------
-    ogr.Layer:
-        a ogr.Layer containing the results of the query, that will be
+    Layer
+        a layer containing the results of the query, that will be
         automatically released when the context manager goes out of scope.
 
     Examples
@@ -2339,7 +2340,7 @@ def ReleaseResultSet(self, sql_lyr):
 
     Parameters
     ----------
-    sql_lyr:
+    sql_lyr : Layer
         :py:class:`ogr.Layer` got with :py:meth:`ExecuteSQL`
     """
 
@@ -2400,7 +2401,7 @@ def ReleaseResultSet(self, sql_lyr):
 
       Returns
       -------
-      int:
+      int
           Error code, or ``gdal.CE_None`` if no error occurred.
       """
       from osgeo import gdal_array
@@ -2899,7 +2900,8 @@ def Open(self, utf8_path, update=False):
 
     Returns
     -------
-    Dataset, or None on error
+    Dataset or None
+        ``None`` on error
     """
     return OpenEx(utf8_path,
                   OF_VECTOR | (OF_UPDATE if update else 0),
@@ -2927,7 +2929,7 @@ def InfoOptions(options=None, format='text', deserialize=True,
          listMDD=False, showFileList=True, allMetadata=False,
          extraMDDomains=None, wktFormat=None):
     """ Create a InfoOptions() object that can be passed to gdal.Info()
-        options can be be an array of strings, a string or let empty and filled from other keywords."""
+        options can be an array of strings, a string or let empty and filled from other keywords."""
 
     options = [] if options is None else options
 
@@ -2988,9 +2990,9 @@ def Info(ds, **kwargs):
 
     Parameters
     ----------
-    ds:
+    ds : any
         a Dataset object or a filename
-    kwargs:
+    **kwargs : any
         options: return of gdal.InfoOptions(), string or array of strings
         other keywords arguments of gdal.InfoOptions().
         If options is provided as a gdal.InfoOptions() object, other keywords are ignored.
@@ -3025,31 +3027,31 @@ def VectorInfoOptions(options=None,
                       where=None,
                       wktFormat=None):
     """ Create a VectorInfoOptions() object that can be passed to gdal.VectorInfo()
-        options can be be an array of strings, a string or let empty and filled from other keywords.
+        options can be an array of strings, a string or let empty and filled from other keywords.
 
         Parameters
         ----------
-        options:
-            can be be an array of strings, a string or let empty and filled from other keywords.
-        format:
+        options : any
+            can be an array of strings, a string or let empty and filled from other keywords.
+        format : any
             "text" or "json"
-        deserialize:
+        deserialize : any
             if JSON output should be returned as a Python dictionary. Otherwise as a serialized representation.
-        SQLStatement:
+        SQLStatement : str
             SQL statement to apply to the source dataset
-        SQLDialect:
+        SQLDialect : str
             SQL dialect ('OGRSQL', 'SQLITE', ...)
-        where:
+        where : str
             WHERE clause to apply to source layer(s)
-        layers:
+        layers : any
             list of layers of interest
-        featureCount:
+        featureCount : any
             whether to compute and display the feature count
-        extent:
+        extent : any
             whether to compute and display the layer extent. Can also be set to the string '3D' to request a 3D extent
-        dumpFeatures:
+        dumpFeatures : any
             set to True to get the dump of all features
-        limit:
+        limit : int
             maximum number of features to read per layer
     """
 
@@ -3107,9 +3109,9 @@ def VectorInfo(ds, **kwargs):
 
     Parameters
     ----------
-    ds:
+    ds : any
         a Dataset object or a filename
-    kwargs:
+    **kwargs : any
         options: return of gdal.VectorInfoOptions(), string or array of strings
         other keywords arguments of gdal.VectorInfoOptions().
         If options is provided as a gdal.VectorInfoOptions() object, other keywords are ignored.
@@ -3133,7 +3135,7 @@ def VectorInfo(ds, **kwargs):
 
 def MultiDimInfoOptions(options=None, detailed=False, array=None, arrayoptions=None, limit=None, as_text=False):
     """ Create a MultiDimInfoOptions() object that can be passed to gdal.MultiDimInfo()
-        options can be be an array of strings, a string or let empty and filled from other keywords."""
+        options can be an array of strings, a string or let empty and filled from other keywords."""
 
     options = [] if options is None else options
 
@@ -3159,9 +3161,9 @@ def MultiDimInfo(ds, **kwargs):
 
     Parameters
     ----------
-    ds:
+    ds : any
         a Dataset object or a filename
-    kwargs:
+    **kwargs : any
         options: return of gdal.MultiDimInfoOptions(), string or array of strings
         other keywords arguments of gdal.MultiDimInfoOptions().
         If options is provided as a gdal.MultiDimInfoOptions() object, other keywords are ignored.
@@ -3229,77 +3231,77 @@ def TranslateOptions(options=None, format=None,
 
     Parameters
     ----------
-    options:
-        can be be an array of strings, a string or let empty and filled from other keywords.
-    format:
+    options : any
+        can be an array of strings, a string or let empty and filled from other keywords.
+    format : str
         output format ("GTiff", etc...)
-    outputType:
+    outputType : any
         output type (gdalconst.GDT_Byte, etc...)
-    bandList:
+    bandList : any
         array of band numbers (index start at 1)
-    maskBand:
+    maskBand : any
         mask band to generate or not ("none", "auto", "mask", 1, ...)
-    width:
+    width : int
         width of the output raster in pixel
-    height:
+    height : int
         height of the output raster in pixel
-    widthPct:
+    widthPct : any
         width of the output raster in percentage (100 = original width)
-    heightPct:
+    heightPct : any
         height of the output raster in percentage (100 = original height)
-    xRes:
+    xRes : int
         output horizontal resolution
-    yRes:
+    yRes : int
         output vertical resolution
-    creationOptions:
+    creationOptions : list or dict
         list or dict of creation options
-    srcWin:
+    srcWin : any
         subwindow in pixels to extract: [left_x, top_y, width, height]
-    projWin:
+    projWin : any
         subwindow in projected coordinates to extract: [ulx, uly, lrx, lry]
-    projWinSRS:
+    projWinSRS : any
         SRS in which projWin is expressed
-    strict:
+    strict : any
         strict mode
-    unscale:
+    unscale : any
         unscale values with scale and offset metadata
-    scaleParams:
+    scaleParams : any
         list of scale parameters, each of the form [src_min,src_max] or [src_min,src_max,dst_min,dst_max]
-    exponents:
+    exponents : any
         list of exponentiation parameters
-    outputBounds:
+    outputBounds : any
         assigned output bounds: [ulx, uly, lrx, lry]
-    outputGeotransform:
+    outputGeotransform : any
         assigned geotransform matrix (array of 6 values) (mutually exclusive with outputBounds)
-    metadataOptions:
+    metadataOptions : any
         list or dict of metadata options
-    outputSRS:
+    outputSRS : any
         assigned output SRS
-    nogcp:
+    nogcp : any
         ignore GCP in the raster
-    GCPs:
+    GCPs : any
         list of GCPs
-    noData:
+    noData : any
         nodata value (or "none" to unset it)
-    rgbExpand:
+    rgbExpand : any
         Color palette expansion mode: "gray", "rgb", "rgba"
-    stats:
+    stats : any
         whether to calculate statistics
-    rat:
+    rat : any
         whether to write source RAT
-    xmp:
+    xmp : any
         whether to copy XMP metadata
-    resampleAlg:
+    resampleAlg : any
         resampling mode
-    overviewLevel:
+    overviewLevel : any
         To specify which overview level of source files must be used
-    colorInterpretation:
+    colorInterpretation : any
         Band color interpretation, as a single value or a list, of the following values ("red", "green", "blue", "alpha", "grey", "undefined", etc.) or their GCI_xxxx symbolic names
-    callback:
+    callback : any
         callback method
-    callback_data:
+    callback_data : any
         user data for callback
-    domainMetadataOptions:
+    domainMetadataOptions : any
         list or dict of domain-specific metadata options
     errorIfWindowOutsideSource : {True, False, "partially", "completely"}, default=True
          raise an error if the requested window is partially or completely outside the source dataset. ("True" is a synonym for "partially"). This corresponds to the ``-epo`` and ``-eco`` options of ``gdal_translate``.
@@ -3444,11 +3446,11 @@ def Translate(destName, srcDS, **kwargs):
 
     Parameters
     ----------
-    destName:
+    destName : str
         Output dataset name
-    srcDS:
+    srcDS : any
         a Dataset object or a filename
-    kwargs:
+    **kwargs : any
         options: return of gdal.TranslateOptions(), string or array of strings
         other keywords arguments of gdal.TranslateOptions().
         If options is provided as a gdal.TranslateOptions() object, other keywords are ignored.
@@ -3499,96 +3501,96 @@ def WarpOptions(options=None, format=None,
 
     Parameters
     ----------
-    options:
-        can be be an array of strings, a string or let empty and filled from other keywords.
-    format:
+    options : any
+        can be an array of strings, a string or let empty and filled from other keywords.
+    format : str
         output format ("GTiff", etc...)
-    srcBands:
+    srcBands : any
         list of source band numbers (between 1 and the number of input bands)
-    dstBands:
+    dstBands : any
         list of output band numbers
-    outputBounds:
+    outputBounds : any
         output bounds as (minX, minY, maxX, maxY) in target SRS
-    outputBoundsSRS:
+    outputBoundsSRS : any
         SRS in which output bounds are expressed, in the case they are not expressed in dstSRS
-    xRes:
+    xRes : any
         output resolution in target SRS
-    yRes:
+    yRes : any
         output resolution in target SRS
-    targetAlignedPixels:
+    targetAlignedPixels : any
         whether to force output bounds to be multiple of output resolution
-    width:
+    width : int
         width of the output raster in pixel
-    height:
+    height : int
         height of the output raster in pixel
-    srcSRS:
+    srcSRS : any
         source SRS
-    dstSRS:
+    dstSRS : any
         output SRS
-    coordinateOperation:
+    coordinateOperation : any
         coordinate operation as a PROJ string or WKT string
-    srcAlpha:
+    srcAlpha : any
         whether to force the last band of the input dataset to be considered as an alpha band.
         If set to False, source alpha warping will be disabled.
-    dstAlpha:
+    dstAlpha : any
         whether to force the creation of an output alpha band
-    outputType:
+    outputType : any
         output type (gdalconst.GDT_Byte, etc...)
-    workingType:
+    workingType : any
         working type (gdalconst.GDT_Byte, etc...)
-    warpOptions:
+    warpOptions : any
         list or dict of warping options. For a list of available options, see :cpp:member:`GDALWarpOptions::papszWarpOptions`.
-    errorThreshold:
+    errorThreshold : any
         error threshold for approximation transformer (in pixels)
-    warpMemoryLimit:
+    warpMemoryLimit : any
         size of working buffer in MB
-    resampleAlg:
+    resampleAlg : any
         resampling mode
-    creationOptions:
+    creationOptions : list or dict
         list or dict of creation options
-    srcNodata:
+    srcNodata : any
         source nodata value(s)
-    dstNodata:
+    dstNodata : any
         output nodata value(s)
-    multithread:
+    multithread : any
         whether to multithread computation and I/O operations
-    tps:
+    tps : any
         whether to use Thin Plate Spline GCP transformer
-    rpc:
+    rpc : any
         whether to use RPC transformer
-    geoloc:
+    geoloc : any
         whether to use GeoLocation array transformer
-    polynomialOrder:
+    polynomialOrder : any
         order of polynomial GCP interpolation
-    transformerOptions:
+    transformerOptions : any
         list or dict of transformer options
-    cutlineDSName:
+    cutlineDSName : any
         cutline dataset name (mutually exclusive with cutlineWKT)
-    cutlineWKT:
+    cutlineWKT : any
         cutline WKT geometry (POLYGON or MULTIPOLYGON) (mutually exclusive with cutlineDSName)
-    cutlineSRS:
+    cutlineSRS : any
         set/override cutline SRS
-    cutlineLayer:
+    cutlineLayer : any
         cutline layer name
-    cutlineWhere:
+    cutlineWhere : any
         cutline WHERE clause
-    cutlineSQL:
+    cutlineSQL : any
         cutline SQL statement
-    cutlineBlend:
+    cutlineBlend : any
         cutline blend distance in pixels
-    cropToCutline:
+    cropToCutline : any
         whether to use cutline extent for output bounds
-    copyMetadata:
+    copyMetadata : any
         whether to copy source metadata
-    metadataConflictValue:
+    metadataConflictValue : any
         metadata data conflict value
-    setColorInterpretation:
+    setColorInterpretation : any
         whether to force color interpretation of input bands to output bands
-    overviewLevel:
+    overviewLevel : any
         To specify which overview level of source files must be used
-    callback:
+    callback : any
         callback method
-    callback_data:
+    callback_data : any
         user data for callback
     """
 
@@ -3743,16 +3745,16 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
 
     Parameters
     ----------
-    destNameOrDestDS:
+    destNameOrDestDS : any
         Output dataset name or object.
 
         If passed as a dataset name, a potentially existing output dataset of
         the same name will be overwritten. To update an existing output dataset,
         it must be passed as a dataset object.
 
-    srcDSOrSrcDSTab:
+    srcDSOrSrcDSTab : any
         an array of Dataset objects or filenames, or a Dataset object or a filename
-    kwargs:
+    **kwargs : any
         options: return of gdal.WarpOptions(), string or array of strings,
         other keywords arguments of gdal.WarpOptions().
         If options is provided as a gdal.WarpOptions() object, other keywords are ignored.
@@ -3831,97 +3833,97 @@ def VectorTranslateOptions(options=None, format=None,
 
     Parameters
     ----------
-    options:
-        can be be an array of strings, a string or let empty and filled from other
+    options : any
+        can be an array of strings, a string or let empty and filled from other
         keywords.
-    format:
+    format : str
         format ("ESRI Shapefile", etc...)
-    accessMode:
+    accessMode : any
         None for creation, 'update', 'append', 'upsert', 'overwrite'
-    srcSRS:
+    srcSRS : any
         source SRS
-    dstSRS:
+    dstSRS : any
         output SRS (with reprojection if reproject = True)
-    coordinateOperation:
+    coordinateOperation : any
         coordinate operation as a PROJ string or WKT string
-    coordinateOperationOptions:
+    coordinateOperationOptions : any
         list or dict of coordinate operation options (ALLOW_BALLPARK=NO, ONLY_BEST=YES, WARN_ABOUT_DIFFERENT_COORD_OP=NO)
-    reproject:
+    reproject : any
         whether to do reprojection
-    SQLStatement:
+    SQLStatement : any
         SQL statement to apply to the source dataset
-    SQLDialect:
+    SQLDialect : any
         SQL dialect ('OGRSQL', 'SQLITE', ...)
-    where:
+    where : any
         WHERE clause to apply to source layer(s)
-    selectFields:
+    selectFields : any
         list of fields to select
-    addFields:
+    addFields : any
         whether to add new fields found in source layers (to be used with
         accessMode == 'append' or 'upsert')
-    relaxedFieldNameMatch:
+    relaxedFieldNameMatch : any
         Do field name matching between source and existing target layer in a more relaxed way if the target driver has an implementation for it.
-    forceNullable:
+    forceNullable : any
         whether to drop NOT NULL constraints on newly created fields
-    emptyStrAsNull:
+    emptyStrAsNull : any
         whether to treat empty string values as NULL
-    spatFilter:
+    spatFilter : any
         spatial filter as (minX, minY, maxX, maxY) bounding box
-    spatSRS:
+    spatSRS : any
         SRS in which the spatFilter is expressed. If not specified, it is assumed to be
         the one of the layer(s)
-    datasetCreationOptions:
+    datasetCreationOptions : any
         list or dict of dataset creation options
-    layerCreationOptions:
+    layerCreationOptions : any
         list or dict of layer creation options
-    layers:
+    layers : any
         list of layers to convert
-    layerName:
+    layerName : any
         output layer name
-    geometryType:
+    geometryType : any
         output layer geometry type ('POINT', ....). May be an array of strings
         when using a special value like 'PROMOTE_TO_MULTI', 'CONVERT_TO_LINEAR',
         'CONVERT_TO_CURVE' combined with another one or a geometry type.
-    dim:
+    dim : any
         output dimension ('XY', 'XYZ', 'XYM', 'XYZM', 'layer_dim')
-    transactionSize:
+    transactionSize : any
         number of features to save per transaction (default 100 000). Increase the value
         for better performance when writing into DBMS drivers that have transaction
         support. Set to "unlimited" to load the data into a single transaction.
-    clipSrc:
+    clipSrc : any
         clip geometries to the specified bounding box (expressed in source SRS),
         WKT geometry (POLYGON or MULTIPOLYGON), from a datasource or to the spatial
         extent of the -spat option if you use the "spat_extent" keyword. When
         specifying a datasource, you will generally want to use it in combination with
         the clipSrcLayer, clipSrcWhere or clipSrcSQL options.
-    clipSrcSQL:
+    clipSrcSQL : any
         select desired geometries using an SQL query instead.
-    clipSrcLayer:
+    clipSrcLayer : any
         select the named layer from the source clip datasource.
-    clipSrcWhere:
+    clipSrcWhere : any
         restrict desired geometries based on attribute query.
-    clipDst:
+    clipDst : any
         clip geometries after reprojection to the specified bounding box (expressed in
         dest SRS), WKT geometry (POLYGON or MULTIPOLYGON) or from a datasource. When
         specifying a datasource, you will generally want to use it in combination of
         the clipDstLayer, clipDstWhere or clipDstSQL options.
-    clipDstSQL:
+    clipDstSQL : any
         select desired geometries using an SQL query instead.
-    clipDstLayer:
+    clipDstLayer : any
         select the named layer from the destination clip datasource.
-    clipDstWhere:
+    clipDstWhere : any
         restrict desired geometries based on attribute query.
-    simplifyTolerance:
+    simplifyTolerance : any
         distance tolerance for simplification. The algorithm used preserves topology per
         feature, in particular for polygon geometries, but not for a whole layer.
-    segmentizeMaxDist:
+    segmentizeMaxDist : any
         maximum distance between consecutive nodes of a line geometry
-    makeValid:
+    makeValid : any
         run MakeValid() on geometries
-    skipInvalid:
+    skipInvalid : any
         whether to skip features with invalid geometries regarding the rules of
         the Simple Features specification.
-    mapFieldType:
+    mapFieldType : any
         converts any field of the specified type to another type. Valid types are:
         Integer, Integer64, Real, String, Date, Time, DateTime, Binary, IntegerList,
         Integer64List, RealList, StringList. Types can also include subtype between
@@ -3930,38 +3932,38 @@ def VectorTranslateOptions(options=None, format=None,
         the CAST operator of OGR SQL, that may avoid typing a long SQL query.
         Note that this does not influence the field types used by the source driver,
         and is only an afterwards conversion.
-    explodeCollections:
+    explodeCollections : any
         produce one feature for each geometry in any kind of geometry collection in the
         source file, applied after any -sql option. This option is not compatible with
         preserveFID but a SQLStatement (e.g. SELECT fid AS original_fid, * FROM ...)
         can be used to store the original FID if needed.
-    preserveFID:
+    preserveFID : any
         Use the FID of the source features instead of letting the output driver automatically
         assign a new one (for formats that require a FID). If not in append mode, this behavior
         is the default if the output driver has a FID  layer  creation  option,  in which case
         the name of the source FID column will be used and source feature IDs will be attempted
         to be preserved. This behavior can be disabled by setting -unsetFid.
         This option is not compatible with explodeCollections
-    zField:
+    zField : any
         name of field to use to set the Z component of geometries
-    resolveDomains:
+    resolveDomains : any
         whether to create an additional field for each field associated with a coded
         field domain.
-    skipFailures:
+    skipFailures : any
         whether to skip failures
-    limit:
+    limit : int
         maximum number of features to read per layer
-    xyRes:
+    xyRes : any
         Geometry X,Y coordinate resolution. Numeric value, or numeric value suffixed with " m", " mm" or "deg".
-    zRes:
+    zRes : any
         Geometry Z coordinate resolution. Numeric value, or numeric value suffixed with " m" or " mm".
-    mRes:
+    mRes : any
         Geometry M coordinate resolution. Numeric value.
-    setCoordPrecision:
+    setCoordPrecision : any
         Set to False to unset the geometry coordinate precision.
-    callback:
+    callback : any
         callback method
-    callback_data:
+    callback_data : any
         user data for callback
     """
 
@@ -4178,7 +4180,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
 
     Parameters
     ----------
-    destNameOrDestDS:
+    destNameOrDestDS : any
         Output dataset name or object
 
         If passed as a dataset name, a potentially existing output dataset of
@@ -4187,9 +4189,9 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
         also controls, at the layer level, if existing layers must be overwritten
         or updated.
 
-    srcDS:
+    srcDS : any
         a Dataset object or a filename
-    kwargs:
+    **kwargs : any
         options: return of gdal.VectorTranslateOptions(), string or array of strings,
         other keywords arguments of gdal.VectorTranslateOptions().
         If options is provided as a gdal.VectorTranslateOptions() object,
@@ -4222,51 +4224,51 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
 
     Parameters
     ----------
-    options:
-        can be be an array of strings, a string or let empty and filled from other keywords.
-    colorFilename:
+    options : any
+        can be an array of strings, a string or let empty and filled from other keywords.
+    colorFilename : any
         (mandatory for "color-relief") name of file that contains palette definition for the "color-relief" processing.
-    format:
+    format : any
         output format ("GTiff", etc...)
-    creationOptions:
+    creationOptions : any
         list or dict of creation options
-    computeEdges:
+    computeEdges : any
         whether to compute values at raster edges.
-    alg:
+    alg : any
         'Horn' (default) or 'ZevenbergenThorne' for hillshade, slope or aspect. 'Wilson' (default) or 'Riley' for TRI
-    band:
+    band : any
         source band number to use
-    zFactor:
+    zFactor : any
         (hillshade only) vertical exaggeration used to pre-multiply the elevations.
-    scale:
+    scale : any
         ratio of vertical units to horizontal.
-    xscale:
+    xscale : any
         Ratio of vertical units to horizontal X axis units.
-    yscale:
+    yscale : any
         Ratio of vertical units to horizontal Y axis units.
-    azimuth:
+    azimuth : any
         (hillshade only) azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.
-    altitude:
+    altitude : any
         (hillshade only) altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.
-    combined:
+    combined : any
         (hillshade only) whether to compute combined shading, a combination of slope and oblique shading. Only one of combined, multiDirectional and igor can be specified.
-    multiDirectional:
+    multiDirectional : any
         (hillshade only) whether to compute multi-directional shading. Only one of combined, multiDirectional and igor can be specified.
-    igor:
+    igor : any
         (hillshade only) whether to use Igor's hillshading from Maperitive.  Only one of combined, multiDirectional and igor can be specified.
-    slopeFormat:
+    slopeFormat : any
         (slope only) "degree" or "percent".
-    trigonometric:
+    trigonometric : any
         (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
-    zeroForFlat:
+    zeroForFlat : any
         (aspect only) whether to return 0 for flat areas with slope=0, instead of -9999.
-    addAlpha:
+    addAlpha : any
         adds an alpha band to the output file (only for processing = 'color-relief')
-    colorSelection:
+    colorSelection : any
         (color-relief only) Determines how color entries are selected from an input value. Can be "nearest_color_entry", "exact_color_entry" or "linear_interpolation". Defaults to "linear_interpolation"
-    callback:
+    callback : any
         callback method
-    callback_data:
+    callback_data : any
         user data for callback
     """
     # Only used for tests
@@ -4336,13 +4338,13 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
 
     Parameters
     ----------
-    destName:
+    destName : any
         Output dataset name
-    srcDS:
+    srcDS : any
         a Dataset object or a filename
-    processing:
+    processing : any
         one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", "Roughness"
-    kwargs:
+    **kwargs : any
         options: return of gdal.DEMProcessingOptions(), string or array of strings,
         other keywords arguments of gdal.DEMProcessingOptions().
         If options is provided as a gdal.DEMProcessingOptions() object,
@@ -4374,29 +4376,29 @@ def NearblackOptions(options=None, format=None,
 
     Parameters
     ----------
-    options:
-        can be be an array of strings, a string or let empty and filled from other keywords.
-    format:
+    options : any
+        can be an array of strings, a string or let empty and filled from other keywords.
+    format : any
         output format ("GTiff", etc...)
-    creationOptions:
+    creationOptions : any
         list or dict of creation options
-    white:
+    white : any
         whether to search for nearly white (255) pixels instead of nearly black pixels.
-    colors:
+    colors : any
         list of colors  to search for, e.g. ((0,0,0),(255,255,255)). The pixels that are considered as the collar are set to 0
-    maxNonBlack:
+    maxNonBlack : any
         number of non-black (or other searched colors specified with white / colors) pixels that can be encountered before the giving up search inwards. Defaults to 2.
-    nearDist:
+    nearDist : any
         select how far from black, white or custom colors the pixel values can be and still considered near black, white or custom color.  Defaults to 15.
-    setAlpha:
+    setAlpha : any
         adds an alpha band to the output file.
-    setMask:
+    setMask : any
         adds a mask band to the output file.
-    alg:
+    alg : any
         "twopasses" (default), or "floodfill"
-    callback:
+    callback : any
         callback method
-    callback_data:
+    callback_data : any
         user data for callback
     """
     # Only used for tests
@@ -4446,16 +4448,16 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
 
     Parameters
     ----------
-    destNameOrDestDS:
+    destNameOrDestDS : any
         Output dataset name or object
 
         If passed as a dataset name, a potentially existing output dataset of
         the same name will be overwritten. To update an existing output dataset,
         it must be passed as a dataset object.
 
-    srcDS:
+    srcDS : any
         a Dataset object or a filename
-    kwargs:
+    **kwargs : any
         options: return of gdal.NearblackOptions(), string or array of strings,
         other keywords arguments of gdal.NearblackOptions().
         If options is provided as a gdal.NearblackOptions() object, other keywords are ignored.
@@ -4497,49 +4499,49 @@ def GridOptions(options=None, format=None,
 
     Parameters
     ----------
-    options:
-        can be be an array of strings, a string or let empty and filled from other keywords.
-    format:
+    options : any
+        can be an array of strings, a string or let empty and filled from other keywords.
+    format : any
         output format ("GTiff", etc...)
-    outputType:
+    outputType : any
         output type (gdalconst.GDT_Byte, etc...)
-    width:
+    width : any
         width of the output raster in pixel
-    height:
+    height : any
         height of the output raster in pixel
-    creationOptions:
+    creationOptions : any
         list or dict of creation options
-    outputBounds:
+    outputBounds : any
         assigned output bounds:
         [ulx, uly, lrx, lry]
-    outputSRS:
+    outputSRS : any
         assigned output SRS
-    noData:
+    noData : any
         nodata value
-    algorithm:
+    algorithm : any
         e.g "invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0"
-    layers:
+    layers : any
         list of layers to convert
-    SQLStatement:
+    SQLStatement : any
         SQL statement to apply to the source dataset
-    where:
+    where : any
         WHERE clause to apply to source layer(s)
-    spatFilter:
+    spatFilter : any
         spatial filter as (minX, minY, maxX, maxY) bounding box
-    zfield:
+    zfield : any
         Identifies an attribute field on the features to be used to get a Z value from.
         This value overrides Z value read from feature geometry record.
-    z_increase:
+    z_increase : any
         Addition to the attribute field on the features to be used to get a Z value from.
         The addition should be the same unit as Z value. The result value will be
         Z value + Z increase value. The default value is 0.
-    z_multiply:
+    z_multiply : any
         Multiplication ratio for Z field. This can be used for shift from e.g. foot to meters
         or from  elevation to deep. The result value will be
         (Z value + Z increase value) * Z multiply value. The default value is 1.
-    callback:
+    callback : any
         callback method
-    callback_data:
+    callback_data : any
         user data for callback
     """
     # Only used for tests
@@ -4598,11 +4600,11 @@ def Grid(destName, srcDS, **kwargs):
 
     Parameters
     ----------
-    destName:
+    destName : any
         Output dataset name
-    srcDS:
+    srcDS : any
         a Dataset object or a filename
-    kwargs:
+    **kwargs : any
         options: return of gdal.GridOptions(), string or array of strings,
         other keywords arguments of gdal.GridOptions()
         If options is provided as a gdal.GridOptions() object, other keywords are ignored.
@@ -4644,51 +4646,51 @@ def ContourOptions(
 
     Parameters
     ----------
-    options:
-        can be be an array of strings, a string or let empty and filled from other keywords.
-    format:
+    options : any
+        can be an array of strings, a string or let empty and filled from other keywords.
+    format : any
         output format ("ESRI Shapefile", etc...)
-    band:
+    band : any
         band number to use (default = 1)
-    elevationName:
+    elevationName : any
         name of the attribute in which to put the elevation.
         If not provided no elevation attribute is attached.
         Ignored in polygonal contouring (polygonize) mode.
-    minName:
+    minName : any
         name for the attribute in which to put the minimum elevation of contour polygon.
         If not provided no minimum elevation attribute is attached.
         Ignored in default line contouring mode.
-    maxName:
+    maxName : any
         name for the attribute in which to put the maximum elevation of contour polygon.
         If not provided no maximum elevation attribute is attached.
         Ignored in default line contouring mode.
-    with3d:
+    with3d : any
         Force production of 3D vectors instead of 2D. Includes elevation at every vertex.
-    srcNodata:
+    srcNodata : any
         Input pixel value to treat as "nodata".
-    offset:
+    offset : any
         Offset to apply to the elevation values.
-    datasetCreationOptions:
+    datasetCreationOptions : any
         List or dict of dataset creation options.
-    layerCreationOptions:
+    layerCreationOptions : any
         List or dict of layer creation options.
-    interval:
+    interval : any
         Elevation interval between contours. Must specify either "interval" or "fixedLevels" or "exponentialBase".
-    fixedLevels:
+    fixedLevels : any
         Name one or more "fixed levels" to extract. Must specify either "interval" or "fixedLevels" or "exponentialBase".
-    exponentialBase:
+    exponentialBase : any
         Generate levels on an exponential scale: base ^ k, for k an integer. Must specify either. Must specify either "interval" or "fixedLevels" or "exponentialBase".
-    layerName:
+    layerName : any
         Name for the output vector layer, defaults to "contour".
-    polygonize:
+    polygonize : any
         Produce polygons instead of lines (default = False).
-    groupTransactions:
+    groupTransactions : any
         Group n features per transaction (default 100 000). Increase the value for better performance when writing into
         DBMS drivers that have transaction support. n can be set to unlimited to load the data into a single transaction.
         If set to 0, no explicit transaction is done.
-    callback:
+    callback : any
         Callback method.
-    callback_data:
+    callback_data : any
         User data for callback.
     """
 
@@ -4759,16 +4761,16 @@ def Contour(destNameOrDestDS, srcDS, **kwargs):
 
     Parameters
     ----------
-    destNameOrDestDS:
+    destNameOrDestDS : any
         Output dataset name or object
 
         If passed as a dataset name, a potentially existing output dataset of
         the same name will be overwritten. To update an existing output dataset,
         it must be passed as a dataset object.
 
-    srcDS:
+    srcDS : any
         a Dataset object or a filename
-    kwargs:
+    **kwargs : any
         options: return of gdal.ContourOptions(), string or array of strings,
         other keywords arguments of gdal.ContourOptions().
         If options is provided as a gdal.ContourOptions() object, other keywords are ignored.
@@ -4806,70 +4808,72 @@ def RasterizeOptions(options=None, format=None,
 
     Parameters
     ----------
-    options:
-        can be be an array of strings, a string or let empty and filled from other keywords.
-    format:
+    options : any
+        can be an array of strings, a string or let empty and filled from other keywords.
+    format : any
         output format ("GTiff", etc...)
-    outputType:
+    outputType : any
         output type (gdalconst.GDT_Byte, etc...)
-    creationOptions:
+    creationOptions : any
         list or dict of creation options
-    outputBounds:
-        assigned output bounds:
+    outputBounds : any
+        assigned output bounds : any
         [minx, miny, maxx, maxy]
-    outputSRS:
+    outputSRS : any
         assigned output SRS
-    transformerOptions:
+    transformerOptions : any
         list or dict of transformer options
-    width:
+    width : any
         width of the output raster in pixel
-    height:
+    height : any
         height of the output raster in pixel
-    xRes, yRes:
+    xRes : any
         output resolution in target SRS
-    targetAlignedPixels:
+    yRes : any
+        output resolution in target SRS
+    targetAlignedPixels : any
         whether to force output bounds to be multiple of output resolution
-    noData:
+    noData : any
         nodata value
-    initValues:
+    initValues : any
         Value or list of values to pre-initialize the output image bands with.
          However, it is not marked as the nodata value in the output file.
           If only one value is given, the same value is used in all the bands.
-    bands:
+    bands : any
         list of output bands to burn values into
-    inverse:
+    inverse : any
         whether to invert rasterization, i.e. burn the fixed burn value, or the
         burn value associated with the first feature into all parts of the image
         not inside the provided a polygon.
-    allTouched:
+    allTouched : any
         whether to enable the ALL_TOUCHED rasterization option so that all pixels
         touched by lines or polygons will be updated, not just those on the line
         render path, or whose center point is within the polygon.
-    burnValues:
+    burnValues : any
         list of fixed values to burn into each band for all objects.
         Exclusive with attribute.
-    attribute:
+    attribute : any
         identifies an attribute field on the features to be used for a burn-in value.
         The value will be burned into all output bands. Exclusive with burnValues.
-    useZ:
+    useZ : any
         whether to indicate that a burn value should be extracted from the "Z" values
         of the feature. These values are added to the burn value given by burnValues
         or attribute if provided. As of now, only points and lines are drawn in 3D.
-    layers:
+    layers : any
         list of layers from the datasource that will be used for input features.
-    SQLStatement:
+    SQLStatement : any
         SQL statement to apply to the source dataset
-    SQLDialect:
+    SQLDialect : any
         SQL dialect ('OGRSQL', 'SQLITE', ...)
-    where:
+    where : any
         WHERE clause to apply to source layer(s)
-    optim:
+    optim : any
         optimization mode ('RASTER', 'VECTOR')
-    add:
+    add : any
         set to True to use additive mode instead of replace when burning values
-    callback:
+    callback : any
         callback method
-    callback_data:
+    callback_data : any
         user data for callback
     """
 
@@ -4963,16 +4967,16 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
 
     Parameters
     ----------
-    destNameOrDestDS:
+    destNameOrDestDS : any
         Output dataset name or object.
 
         If passed as a dataset name, a potentially existing output dataset of
         the same name will be overwritten. To update an existing output dataset,
         it must be passed as a dataset object.
 
-    srcDS:
+    srcDS : any
         a Dataset object or a filename
-    kwargs:
+    **kwargs : any
         options: return of gdal.RasterizeOptions(), string or array of strings,
         other keywords arguments of gdal.RasterizeOptions()
         If options is provided as a gdal.RasterizeOptions() object, other keywords are ignored.
@@ -5017,47 +5021,47 @@ def FootprintOptions(options=None,
 
     Parameters
     ----------
-    options:
-        can be be an array of strings, a string or let empty and filled from other keywords.
-    format:
+    options : any
+        can be an array of strings, a string or let empty and filled from other keywords.
+    format : any
         output format ("GeoJSON", etc...)
-    bands:
+    bands : any
         list of output bands to burn values into
-    combineBands:
+    combineBands : any
         how to combine bands: "union" (default) or "intersection"
-    srcNodata:
+    srcNodata : any
         source nodata value(s).
-    ovr:
+    ovr : any
         overview index.
-    targetCoordinateSystem:
+    targetCoordinateSystem : any
         "pixel" or "georef"
-    dstSRS:
+    dstSRS : any
         output SRS
-    datasetCreationOptions:
+    datasetCreationOptions : any
         list or dict of dataset creation options
-    layerCreationOptions:
+    layerCreationOptions : any
         list or dict of layer creation options
-    splitPolys:
+    splitPolys : any
         whether to split multipolygons as several polygons
-    convexHull:
+    convexHull : any
         whether to compute the convex hull of polygons/multipolygons
-    densify:
+    densify : any
         tolerance value for polygon densification
-    simplify:
+    simplify : any
         tolerance value for polygon simplification
-    maxPoints:
+    maxPoints : any
         maximum number of points (100 by default, "unlimited" for unlimited)
-    minRingArea:
+    minRingArea : any
         Minimum value for the area of a ring The unit of the area is in square pixels if targetCoordinateSystem equals "pixel", or otherwise in georeferenced units of the target vector dataset. This option is applied after the reprojection implied by dstSRS
-    locationFieldName:
+    locationFieldName : any
         Specifies the name of the field in the resulting vector dataset where the path of the input dataset will be stored. The default field name is "location". Can be set to None to disable creation of such field.
-    writeAbsolutePath:
+    writeAbsolutePath : any
         Enables writing the absolute path of the input dataset. By default, the filename is written in the location field exactly as the dataset name.
-    layerName:
+    layerName : any
         output layer name
-    callback:
+    callback : any
         callback method
-    callback_data:
+    callback_data : any
         user data for callback
     """
 
@@ -5134,16 +5138,16 @@ def Footprint(destNameOrDestDS, srcDS, **kwargs):
 
     Parameters
     ----------
-    destNameOrDestDS:
+    destNameOrDestDS : any
         Output dataset name or object
 
         If passed as a dataset name, a potentially existing output dataset of
         the same name will be overwritten. To update an existing output dataset,
         it must be passed as a dataset object.
 
-    srcDS:
+    srcDS : any
         a Dataset object or a filename
-    kwargs:
+    **kwargs : any
         options: return of gdal.FootprintOptions(), string or array of strings,
         other keywords arguments of gdal.FootprintOptions()
         If options is provided as a gdal.FootprintOptions() object, other keywords are ignored.
@@ -5256,54 +5260,54 @@ def BuildVRTOptions(options=None,
 
     Parameters
     ----------
-    options:l
-        can be be an array of strings, a string or let empty and filled from other keywords.
-    resolution:
+    options : any
+        can be an array of strings, a string or let empty and filled from other keywords.
+    resolution : any
         'highest', 'lowest', 'average', 'user'.
-    outputBounds:l
+    outputBounds : any
         output bounds as (minX, minY, maxX, maxY) in target SRS.
-    xRes:
+    xRes : any
         output resolution in target SRS.
-    yRes:
+    yRes : any
         output resolution in target SRS.
-    targetAlignedPixels:
+    targetAlignedPixels : any
         whether to force output bounds to be multiple of output resolution.
-    separate:
+    separate : any
         whether each source file goes into a separate stacked band in the VRT band.
-    bandList:
+    bandList : any
         array of band numbers (index start at 1).
-    addAlpha:
+    addAlpha : any
         whether to add an alpha mask band to the VRT when the source raster have none.
-    resampleAlg:
+    resampleAlg : any
         resampling mode.
-    outputSRS:
+    outputSRS : any
         assigned output SRS.
-    allowProjectionDifference:
+    allowProjectionDifference : any
         whether to accept input datasets have not the same projection.
         Note: they will *not* be reprojected.
-    srcNodata:
+    srcNodata : any
         source nodata value(s).
-    VRTNodata:
+    VRTNodata : any
         nodata values at the VRT band level.
-    hideNodata:
+    hideNodata : any
         whether to make the VRT band not report the NoData value.
-    nodataMaxMaskThreshold:
+    nodataMaxMaskThreshold : any
         value of the mask band of a source below which the source band values should be replaced by VRTNodata (or 0 if not specified)
-    strict:
+    strict : any
         set to True if warnings should be failures
-    pixelFunction: str
+    pixelFunction : any
         a pixel function to use to calculate output pixel values when multiple
         sources overlap. For a list of available pixel functions, see
         :ref:`builtin_pixel_functions`.
-    pixelFunctionArgs:
+    pixelFunctionArgs : any
         list or dict of pixel function arguments
-    creationOptions:
+    creationOptions : any
         list or dict of creation options
-    writeAbsolutePath:
+    writeAbsolutePath : any
         Enables writing the absolute path of the input datasets. By default, input filenames are written in a relative way with respect to the VRT filename (when possible)
-    callback:
+    callback : any
         callback method.
-    callback_data:
+    callback_data : any
         user data for callback.
     """
 
@@ -5380,11 +5384,11 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
 
     Parameters
     ----------
-    destName:
+    destName : any
         Output dataset name.
-    srcDSOrSrcDSTab:
+    srcDSOrSrcDSTab : any
         An array of Dataset objects or filenames, or a Dataset object or a filename.
-    kwargs:
+    **kwargs : any
         options: return of gdal.BuildVRTOptions(), string or array of strings,
         other keywords arguments of gdal.BuildVRTOptions().
         If options is provided as a gdal.BuildVRTOptions() object,
@@ -5447,51 +5451,51 @@ def TileIndexOptions(options=None,
 
     Parameters
     ----------
-    options:
-        can be be an array of strings, a string or let empty and filled from other keywords.
-    overwrite:
+    options : any
+        can be an array of strings, a string or let empty and filled from other keywords.
+    overwrite : any
         Whether to overwrite the existing tile index
-    recursive:
+    recursive : any
         Whether directories specified in source filenames should be explored recursively
-    filenameFilter:
+    filenameFilter : any
         Pattern that the filenames contained in directories pointed by <file_or_dir> should follow. '*' and '?' wildcard can be used. String or list of strings.
-    minPixelSize:
+    minPixelSize : any
         Minimum pixel size in term of geospatial extent per pixel (resolution) that a raster should have to be selected.
-    maxPixelSize:
+    maxPixelSize : any
         Maximum pixel size in term of geospatial extent per pixel (resolution) that a raster should have to be selected.
-    format:
+    format : any
         output format ("ESRI Shapefile", "GPKG", etc...)
-    layerName:
+    layerName : any
         output layer name
-    layerCreationOptions:
+    layerCreationOptions : any
         list or dict of layer creation options
-    locationFieldName:
+    locationFieldName : any
         Specifies the name of the field in the resulting vector dataset where the path of the input dataset will be stored. The default field name is "location". Can be set to None to disable creation of such field.
-    outputSRS:
+    outputSRS : any
         assigned output SRS
-    writeAbsolutePath:
+    writeAbsolutePath : any
         Enables writing the absolute path of the input dataset. By default, the filename is written in the location field exactly as the dataset name.
-    skipDifferentProjection:
+    skipDifferentProjection : any
         Whether to skip sources that have a different SRS
-    gtiFilename:
+    gtiFilename : any
         Filename of the GDAL XML Tile Index file
-    xRes:
+    xRes : any
         output horizontal resolution
-    yRes:
+    yRes : any
         output vertical resolution
-    outputBounds:
+    outputBounds : any
         output bounds as [minx, miny, maxx, maxy]
-    colorInterpretation:
+    colorInterpretation : any
         Tile color interpretation, as a single value or a list, of the following values ("red", "green", "blue", "alpha", "grey", "undefined", etc.) or their GCI_xxxx symbolic names
-    noData:
+    noData : any
         tile nodata value, as a single value or a list
-    bandCount:
+    bandCount : any
         number of band of tiles in the index
-    mask:
+    mask : any
         whether tiles have a band mask
-    metadataOptions:
+    metadataOptions : any
         list or dict of metadata options
-    fetchMD:
+    fetchMD : any
         Fetch a metadata item from the raster tile and write it as a field in the
         tile index.
         Tuple (raster metadata item name, target field name, target field type), or list of such tuples, with target field type in "String", "Integer", "Integer64", "Real", "Date", "DateTime";
@@ -5598,11 +5602,11 @@ def TileIndex(destName, srcFilenames, **kwargs):
 
     Parameters
     ----------
-    destName:
+    destName : any
         Output dataset name.
-    srcFilenames:
+    srcFilenames : any
         An array of filenames.
-    kwargs:
+    **kwargs  : any
         options: return of gdal.TileIndexOptions(), string or array of strings,
         other keywords arguments of gdal.TileIndexOptions().
         If options is provided as a gdal.TileIndexOptions() object,
@@ -5636,29 +5640,29 @@ def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
 
     Parameters
     ----------
-    options:
-        can be be an array of strings, a string or let empty and filled from other keywords.
-    format:
+    options : any
+        can be an array of strings, a string or let empty and filled from other keywords.
+    format : any
         output format ("GTiff", etc...)
-    creationOptions:
+    creationOptions : any
         list or dict of creation options
-    arraySpecs:
+    arraySpecs : any
         list of array specifications, each of them being an array name or
         "name={src_array_name},dstname={dst_name},transpose=[1,0],view=[:,::-1]"
-    arrayOptions:
+    arrayOptions : any
         list of options passed to `GDALGroup.GetMDArrayNames` to filter reported arrays.
-    groupSpecs:
+    groupSpecs : any
         list of group specifications, each of them being a group name or
         "name={src_array_name},dstname={dst_name},recursive=no"
-    subsetSpecs:
+    subsetSpecs : any
         list of subset specifications, each of them being like
         "{dim_name}({min_val},{max_val})" or "{dim_name}({slice_va})"
-    scaleAxesSpecs:
+    scaleAxesSpecs : any
         list of dimension scaling specifications, each of them being like
         "{dim_name}({scale_factor})"
-    callback:
+    callback : any
         callback method
-    callback_data:
+    callback_data : any
         user data for callback
     """
 
@@ -5705,11 +5709,11 @@ def MultiDimTranslate(destName, srcDSOrSrcDSTab, **kwargs):
 
     Parameters
     ----------
-    destName:
+    destName : any
         Output dataset name
-    srcDSOrSrcDSTab:
+    srcDSOrSrcDSTab : any
         an array of Dataset objects or filenames, or a Dataset object or a filename
-    kwargs:
+    **kwargs : any
         options: return of gdal.MultiDimTranslateOptions(), string or array of strings
         other keywords arguments of gdal.MultiDimTranslateOptions().
         If options is provided as a gdal.MultiDimTranslateOptions() object,
@@ -5799,18 +5803,19 @@ def config_options(options, thread_local=True):
 
        Parameters
        ----------
-       options: dict
+       options : dict
             Dictionary of configuration options passed as key, value
-       thread_local: bool, default=True
+       thread_local : bool, default=True
             Whether the configuration options should be only set on the current
             thread.
 
        Returns
        -------
-            A context manager
+       contextlib.contextmanager
+           A context manager
 
-       Example
-       -------
+       Examples
+       --------
 
        >>> with gdal.config_options({"GDAL_NUM_THREADS": "ALL_CPUS"}):
        ...     gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
@@ -5835,20 +5840,21 @@ def config_option(key, value, thread_local=True):
 
        Parameters
        ----------
-       key: str
+       key : str
             Name of the configuration option
-       value: str
+       value : str
             Value of the configuration option
-       thread_local: bool, default=True
+       thread_local : bool, default=True
             Whether the configuration option should be only set on the current
             thread.
 
        Returns
        -------
-            A context manager
+       contextlib.contextmanager
+           A context manager
 
-       Example
-       -------
+       Examples
+       --------
 
        >>> with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
        ...     gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
@@ -5863,10 +5869,11 @@ def quiet_errors():
 
        Returns
        -------
-            A context manager
+       contextlib.contextmanager
+           A context manager
 
-       Example
-       -------
+       Examples
+       --------
 
        >>> with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
        ...     gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "you will never see me")
@@ -5885,10 +5892,11 @@ def quiet_warnings():
 
        Returns
        -------
-            A context manager
+       contextlib.contextmanager
+           A context manager
 
-       Example
-       -------
+       Examples
+       --------
 
        >>> with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_warnings():
        ...     gdal.Error(gdal.CE_Warning, gdal.CPLE_AppDefined, "you will never see me")
@@ -5912,13 +5920,13 @@ def Run(*alg, arguments={}, progress=None, **kwargs):
 
        Parameters
        ----------
-       alg: str, list[str], tuple[str] or Algorithm
+       alg : str, list[str], tuple[str] or Algorithm
             Path to the algorithm or algorithm instance itself. For example "raster info", ["raster", "info"] or "raster", "info".
-       arguments: dict
+       arguments : dict
             Input arguments of the algorithm. For example {"format": "json", "input": "byte.tif"}
-       progress: callable
+       progress : callable
             Progress function whose arguments are a progress ratio, a string and a user data
-       kwargs:
+       **kwargs : any
             Instead of using the ``arguments`` parameter, it is possible to pass
             algorithm arguments directly as named parameters of gdal.Run().
             If the named argument has dash characters in it, the corresponding
@@ -6013,11 +6021,17 @@ def InterpolateAtPoint(self, *args, **kwargs):
        ----------
        pixel : float
        line : float
-       interpolation : GRIOResampleAlg (nearest, bilinear, cubic, cubicspline)
+       interpolation : str
+           Resampling algorithm to use. One of:
+
+           - ``nearest``
+           - ``bilinear``
+           - ``cubic``
+           - ``cubicspline``
 
        Returns
        -------
-       float:
+       float
            Interpolated value, or ``None`` if it has any error.
     """
 
@@ -6067,17 +6081,23 @@ def InterpolateAtGeolocation(self, *args, **kwargs):
            Latitude or northing in "natural" CRS if `srs` is None,
            otherwise consistent with second axis of `srs`,
            taking into account the data-axis-to-crs-axis mapping
-       srs : osgeo.osr.SpatialReference
-           If set, override the natural CRS in which geolocX, geolocY are expressed
-       interpolation : GRIOResampleAlg (nearest, bilinear, cubic, cubicspline)
+       srs : object
+           :py:class:`osr.SpatialReference`. If set, override the natural CRS in which geolocX, geolocY are expressed
+       interpolation : str
+           Resampling algorithm to use. One of:
+
+           - ``nearest``
+           - ``bilinear``
+           - ``cubic``
+           - ``cubicspline``
 
        Returns
        -------
-       float:
+       float
            Interpolated value, or ``None`` if it has any error.
 
-       Example
-       -------
+       Examples
+       --------
 
        >>> longitude_degree = -117.64 
        >>> latitude_degree = 33.90
@@ -6120,8 +6140,9 @@ def ComputeMinMaxLocation(self, *args, **kwargs):
 
        Returns
        -------
-       a named tuple (min, max, minX, minY, maxX, maxY) or or ``None``
-       in case of error or no valid pixel.
+       tuple or None
+           a named tuple (min, max, minX, minY, maxX, maxY) or ``None``
+           in case of error or no valid pixel.
     """
 
     ret = $action(self, *args, **kwargs)
@@ -6259,8 +6280,8 @@ class VSIFile(BytesIO):
 
            Shortcut for self.InstantiateAlg(key)
 
-           Example
-           -------
+           Examples
+           --------
            >>> gdal.GetGlobalAlgorithmRegistry()["raster"]
            <osgeo.gdal.Algorithm; proxy of <Swig Object of type 'GDALAlgorithmHS *' at 0x...> >
         """
@@ -6287,15 +6308,16 @@ class VSIFile(BytesIO):
 
            Parameters
            ----------
-           path: str, list[str] or tuple[str]
+           path : str, list[str] or tuple[str]
                 Path to the algorithm. For example "raster info", ["raster", "info"] or "raster", "info"
 
            Returns
            -------
+           any
                 An algorithm
 
-           Example
-           -------
+           Examples
+           --------
 
            >>> alg = gdal.Algorithm("raster", "info")
            >>> # or alg = gdal.Algorithm(["raster", "info"])
@@ -6374,16 +6396,17 @@ class VSIFile(BytesIO):
            :py:class:`osgeo.gdal.Dataset` instance.
 
            Parameters
-           -----------
-           parse_json: bool, default=True
+           ----------
+           parse_json : bool, default=True
                Whether a JSON string should be returned as a dict or list (instead of a string).
 
            Returns
            -------
-           The single output argument value
+           any
+               The single output argument value.
 
-           Example
-           -------
+           Examples
+           --------
            >>> with gdal.Run("raster", "info", input="byte.tif") as alg:
            ...    print(alg.Output()["bands"])
            [{'band': 1, 'block': [20, 20], 'type': 'Byte', 'colorInterpretation': 'Gray', 'metadata': {}}]
@@ -6421,17 +6444,18 @@ class VSIFile(BytesIO):
            :py:class:`osgeo.gdal.Dataset` instance.
 
            Parameters
-           -----------
-           parse_json: bool, default=True
+           ----------
+           parse_json : bool, default=True
                Whether a JSON string should be returned as a dict or list (instead of a string).
 
            Returns
            -------
-           A dict whose keys are arguments that have outputs and whose values
-           are the argument values.
+           dict
+               A dict whose keys are arguments that have outputs and whose values
+               are the argument values.
 
-           Example
-           -------
+           Examples
+           --------
            >>> with gdal.Run("raster", "reproject", input="byte.tif", output_format="MEM", dst_crs="EPSG:4326") as alg:
            ...    print(alg.Outputs()["output"].ReadAsArray())
            [[107 123 132 ... 115 99 107]]
@@ -6455,14 +6479,14 @@ class VSIFile(BytesIO):
            or self.InstantiateSubAlgorithm(key) for a non-leaf algorithm
 
            Parameters
-           -----------
-           key: str
+           ----------
+           key : str
                Name of a known argument of the algorithm
-           value:
+           value : any
                Value of the argument
 
-           Example
-           -------
+           Examples
+           --------
            >>> alg = gdal.Algorithm("raster convert")
            >>> alg["output"].GetName()
            ''
@@ -6488,10 +6512,10 @@ class VSIFile(BytesIO):
            Shortcut for self.GetArg(key).Set(value)
 
            Parameters
-           -----------
-           key: str
+           ----------
+           key : str
                Name of a known argument of the algorithm
-           value:
+           value : any
                Value of the argument
 
            Examples
