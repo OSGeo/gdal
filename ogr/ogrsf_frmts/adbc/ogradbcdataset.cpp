@@ -417,7 +417,8 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     if (m_bIsDuckDBDriver && pszFilename[0])
     {
         VSIStatBuf sStatBuf;
-        if (!bIsParquet && VSIStat(pszFilename, &sStatBuf) != 0)
+        if (!bIsParquet && VSIStat(pszFilename, &sStatBuf) != 0 &&
+            strcmp(pszFilename, ":memory:") != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s does not exist",
                      pszFilename);
