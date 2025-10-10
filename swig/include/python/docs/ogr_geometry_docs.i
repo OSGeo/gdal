@@ -111,19 +111,50 @@ int
 ";
 
 %feature("docstring")  Transform "
-Apply arbitrary coordinate transformation to geometry.
+Apply a coordinate transformation to the geometry.
 
-For more details: :cpp:func:`OGR_G_Transform`
+The behavior of the function depends on the type of the provided argument.
+
+If a :py:class:`osr.CoordinateTransformation` is provided, the geometry will be
+transformed in-place, or an error code returned.
+
+If a :py:class:`GeomTransformer` is provided, the geometry will remain unmodified,
+and a transformed geometry will be returned.
+
+See :cpp:func:`OGR_G_Transform` and :cpp:func:`OGR_GeomTransformer_Transform`.
 
 Parameters
 ----------
-trans : CoordinateTransform
+trans : CoordinateTransformation or GeomTransformer
     The transformation to apply.
 
 Returns
 -------
-Geometry
-    The transformed geometry.
+Geometry or int
+    The transformed geometry if ``trans`` is a :py:class:`GeomTransformer`, or an error code if ``trans`` is a :py:class:`osr.CoordinateTransformation`.
+
+Examples
+--------
+>>> # use a CoordinateTransformation to transform a geometry in-place
+>>> wgs84 = osr.SpatialReference(epsg=4326)
+>>> wgs84.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+>>> albers = osr.SpatialReference(epsg=9473)
+>>> xform = osr.CoordinateTransformation(wgs84, albers)
+>>> vt = ogr.Geometry(ogr.wkbPoint)
+>>> vt.AddPoint_2D(145.195, -37.836)
+>>> vt.Transform(xform)
+0
+>>> vt.GetPoint_2D()
+(1166651.434325419, -4196676.777645577)
+
+>>> # use a GeomTransformer and return a transformed geometry
+>>> polar_stereo = osr.SpatialReference(epsg=3413)
+>>> rect = ogr.CreateGeometryFromWkt('POLYGON((-3106890 145265,-3106890 2474514,-672244 2474514,-672244 145265,-3106890 145265))')
+>>> xform = osr.CoordinateTransformation(polar_stereo, wgs84)
+>>> xformer = ogr.GeomTransformer(xform, {'WRAPDATELINE=TRUE':True, 'DATELINEOFFSET': 180})
+>>> rect_transformed = rect.Transform(xformer)
+>>> rect_transformed.ExportToWkt()
+'MULTIPOLYGON (((150.198564480925 66.6449112280509,180.0 74.7428375082776,180.0 56.6419000989319,150.198564480925 66.6449112280509)),((-173.535923883218 54.4721983980102,-180 56.6419000989319,-180 74.7428375082776,-147.193543096797 83.6573164550226,-137.676958092793 61.8457340532701,-173.535923883218 54.4721983980102)))' # no-check
 ";
 
 %feature("docstring")  Segmentize "
