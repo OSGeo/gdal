@@ -4152,7 +4152,7 @@ struct OGRGeomTransformer
 
 /** Create a geometry transformer.
  *
- * This is a enhanced version of OGR_G_Transform().
+ * This is an enhanced version of OGR_G_Transform().
  *
  * When reprojecting geometries from a Polar Stereographic projection or a
  * projection naturally crossing the antimeridian (like UTM Zone 60) to a
