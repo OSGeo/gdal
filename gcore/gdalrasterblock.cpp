@@ -124,7 +124,6 @@ void CPL_STDCALL GDALSetCacheMax(int nNewSizeInBytes)
  *
  * @param nNewSizeInBytes the maximum number of bytes for caching.
  *
- * @since GDAL 1.8.0
  */
 
 void CPL_STDCALL GDALSetCacheMax64(GIntBig nNewSizeInBytes)
@@ -211,7 +210,6 @@ int CPL_STDCALL GDALGetCacheMax()
  *
  * @return maximum in bytes.
  *
- * @since GDAL 1.8.0
  */
 
 GIntBig CPL_STDCALL GDALGetCacheMax64()
@@ -292,7 +290,6 @@ int CPL_STDCALL GDALGetCacheUsed()
  * @return the number of bytes of memory currently in use by the
  * GDALRasterBlock memory caching.
  *
- * @since GDAL 1.8.0
  */
 
 GIntBig CPL_STDCALL GDALGetCacheUsed64()

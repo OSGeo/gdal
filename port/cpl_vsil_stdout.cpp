@@ -445,7 +445,6 @@ int VSIStdoutRedirectFilesystemHandler::Stat(const char * /* pszFilename */,
  See :ref:`/vsistdout/ documentation <vsistdout>`
  \endverbatim
 
- @since GDAL 1.8.0
  */
 
 void VSIInstallStdoutHandler()

@@ -675,7 +675,6 @@ const char *CPLReadLineL(VSILFILE *fp)
  * from the file or NULL if the end of file was encountered or the maximum
  * number of characters allowed reached.
  *
- * @since GDAL 1.7.0
  */
 
 const char *CPLReadLine2L(VSILFILE *fp, int nMaxCars,

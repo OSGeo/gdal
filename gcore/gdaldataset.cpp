@@ -3666,7 +3666,6 @@ char **CPL_STDCALL GDALGetFileList(GDALDatasetH hDS)
  * might be invalidated by CreateMaskBand(). So you have to call GetMaskBand()
  * again.
  *
- * @since GDAL 1.5.0
  *
  * @param nFlagsIn 0 or combination of GMF_PER_DATASET / GMF_ALPHA.
  *                 GMF_PER_DATASET will be always set, even if not explicitly
@@ -4422,7 +4421,7 @@ retry:
  * exactly matches the pszFilename passed to GDALOpenShared() it will be
  * referenced and returned.
  *
- * Starting with GDAL 1.6.0, if GDALOpenShared() is called on the same
+ * If GDALOpenShared() is called on the same
  * pszFilename from two different threads, a different GDALDataset object will
  * be returned as it is not safe to use the same dataset from different threads,
  * unless the user does explicitly use mutexes in its code.
@@ -4889,7 +4888,6 @@ int GDALDataset::CloseDependentDatasets()
  * will be treated as arguments to fill in this format in a manner
  * similar to printf().
  *
- * @since GDAL 1.9.0
  */
 
 void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
@@ -5916,8 +5914,6 @@ OGRErr GDALDataset::Release()
 
 This method is the same as the C function OGR_DS_GetRefCount().
 
-In GDAL 1.X, this method used to be in the OGRDataSource class.
-
 @return the current reference count for the datasource object itself.
 */
 
@@ -5934,8 +5930,6 @@ int GDALDataset::GetRefCount() const
 \brief Fetch reference count of datasource and all owned layers.
 
 This method is the same as the C function  OGR_DS_GetSummaryRefCount().
-
-In GDAL 1.X, this method used to be in the OGRDataSource class.
 
 @deprecated
 
@@ -6008,8 +6002,6 @@ GDALDataset::ICreateLayer(CPL_UNUSED const char *pszName,
 
  This method is the same as the C function GDALDatasetCopyLayer() and the
  deprecated OGR_DS_CopyLayer().
-
- In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param poSrcLayer source layer.
  @param pszNewName the name of the layer to create.
@@ -6353,8 +6345,6 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
  This method is the same as the C function GDALDatasetDeleteLayer() and the
  deprecated OGR_DS_DeleteLayer().
 
- In GDAL 1.X, this method used to be in the OGRDataSource class.
-
  @param iLayer the index of the layer to delete.
 
  @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
@@ -6383,8 +6373,6 @@ OGRErr GDALDataset::DeleteLayer(CPL_UNUSED int iLayer)
 
  This method is the same as the C function GDALDatasetGetLayerByName() and the
  deprecated OGR_DS_GetLayerByName().
-
- In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param pszName the layer name of the layer to fetch.
 
@@ -7136,8 +7124,6 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn(const char *pszSQLCommand)
  href="https://gdal.org/user/sql_sqlite_dialect.html">SQLITE dialect</a> can
  also be used.
 
- In GDAL 1.X, this method used to be in the OGRDataSource class.
-
  @param pszStatement the SQL statement to execute.
  @param poSpatialFilter geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
@@ -7737,8 +7723,6 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
  This method is the same as the C function GDALDatasetReleaseResultSet() and the
  deprecated OGR_DS_ReleaseResultSet().
 
- In GDAL 1.X, this method used to be in the OGRDataSource class.
-
  @param poResultsSet the result of a previous ExecuteSQL() call.
 */
 
@@ -7757,8 +7741,6 @@ void GDALDataset::ReleaseResultSet(OGRLayer *poResultsSet)
 
  This method is the same as the C function GDALDatasetGetStyleTable() and the
  deprecated OGR_DS_GetStyleTable().
-
- In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @return pointer to a style table which should not be modified or freed by the
  caller.
@@ -7782,8 +7764,6 @@ OGRStyleTable *GDALDataset::GetStyleTable()
  This method is the same as the C function GDALDatasetSetStyleTableDirectly()
  and the deprecated OGR_DS_SetStyleTableDirectly().
 
- In GDAL 1.X, this method used to be in the OGRDataSource class.
-
  @param poStyleTable pointer to style table to set
 
 */
@@ -7806,8 +7786,6 @@ void GDALDataset::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
 
  This method is the same as the C function GDALDatasetSetStyleTable() and the
  deprecated OGR_DS_SetStyleTable().
-
- In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param poStyleTable pointer to style table to set
 
@@ -7847,8 +7825,6 @@ int GDALDataset::IsGenericSQLDialect(const char *pszDialect)
  Note that even if this method is const, there is no guarantee it can be
  safely called by concurrent threads on the same GDALDataset object.
 
- In GDAL 1.X, this method used to be in the OGRDataSource class.
-
  @return layer count.
 */
 
@@ -7875,8 +7851,6 @@ int GDALDataset::GetLayerCount() const
 
  This method is the same as the C function GDALDatasetGetLayer() and the
  deprecated OGR_DS_GetLayer().
-
- In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param iLayer a layer number between 0 and GetLayerCount()-1.
 
@@ -8258,8 +8232,6 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature(GDALDatasetH hDS,
 
  This method is the same as the C function GDALDatasetTestCapability() and the
  deprecated OGR_DS_TestCapability().
-
- In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param pszCap the capability to test.
 

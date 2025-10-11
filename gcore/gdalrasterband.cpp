@@ -3836,7 +3836,6 @@ CPLErr GDALRasterBand::SetUnitType(const char * /*pszNewValue*/)
  *
  * @see GDALRasterBand::SetUnitType()
  *
- * @since GDAL 1.8.0
  */
 
 CPLErr CPL_STDCALL GDALSetRasterUnitType(GDALRasterBandH hBand,
@@ -9071,7 +9070,6 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT(GDALRasterBandH hBand,
  *
  * @return a valid mask band.
  *
- * @since GDAL 1.5.0
  *
  * @see https://gdal.org/development/rfc/rfc15_nodatabitmask.html
  *
@@ -9406,7 +9404,6 @@ GDALRasterBandH CPL_STDCALL GDALGetMaskBand(GDALRasterBandH hBand)
  *
  * This method is the same as the C function GDALGetMaskFlags().
  *
- * @since GDAL 1.5.0
  *
  * @return a valid mask band.
  *
@@ -9481,7 +9478,6 @@ void GDALRasterBand::InvalidateMaskBand()
  *
  * This method is the same as the C function GDALCreateMaskBand().
  *
- * @since GDAL 1.5.0
  *
  * @param nFlagsIn 0 or combination of GMF_PER_DATASET / GMF_ALPHA.
  *
@@ -9834,7 +9830,6 @@ void GDALRasterBand::IncDirtyBlocks(int nInc)
  * will be treated as arguments to fill in this format in a manner
  * similar to printf().
  *
- * @since GDAL 1.9.0
  */
 
 void GDALRasterBand::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
@@ -9926,7 +9921,6 @@ void GDALRasterBand::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
  * @return a virtual memory object that must be unreferenced by
  * CPLVirtualMemFree(), or NULL in case of failure.
  *
- * @since GDAL 1.11
  */
 
 CPLVirtualMem *GDALRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,

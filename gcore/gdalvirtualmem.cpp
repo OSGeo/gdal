@@ -876,7 +876,6 @@ GDALGetVirtualMem(GDALDatasetH hDS, GDALRasterBandH hBand, GDALRWFlag eRWFlag,
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
  *         or NULL in case of failure.
  *
- * @since GDAL 1.11
  */
 
 CPLVirtualMem *GDALDatasetGetVirtualMem(
@@ -994,7 +993,6 @@ CPLVirtualMem *GDALDatasetGetVirtualMem(
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
  *         or NULL in case of failure.
  *
- * @since GDAL 1.11
  */
 
 CPLVirtualMem *GDALRasterBandGetVirtualMem(
@@ -1411,7 +1409,6 @@ static CPLVirtualMem *GDALGetTiledVirtualMem(
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
  *         or NULL in case of failure.
  *
- * @since GDAL 1.11
  */
 
 CPLVirtualMem *GDALDatasetGetTiledVirtualMem(
@@ -1517,7 +1514,6 @@ CPLVirtualMem *GDALDatasetGetTiledVirtualMem(
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
  *         or NULL in case of failure.
  *
- * @since GDAL 1.11
  */
 
 CPLVirtualMem *GDALRasterBandGetTiledVirtualMem(

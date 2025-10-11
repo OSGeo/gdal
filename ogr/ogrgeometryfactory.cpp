@@ -4303,7 +4303,6 @@ static inline double DISTANCE(double x1, double y1, double x2, double y2)
  *
  * @return OGRLineString geometry representing an approximation of the arc.
  *
- * @since OGR 1.8.0
  */
 
 OGRGeometry *OGRGeometryFactory::approximateArcAngles(
@@ -4460,7 +4459,6 @@ OGRGeometry *OGRGeometryFactory::approximateArcAngles(
  *
  * @return OGRLineString geometry representing an approximation of the arc.
  *
- * @since OGR 1.8.0
  */
 
 OGRGeometryH CPL_DLL OGR_G_ApproximateArcAngles(

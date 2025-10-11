@@ -2232,7 +2232,6 @@ double OGRSimpleCurve::Project(const OGRPoint *poPoint) const
  * @return a newly allocated linestring now owned by the caller, or NULL on
  * failure.
  *
- * @since OGR 1.11.0
  */
 
 OGRLineString *OGRSimpleCurve::getSubLine(double dfDistanceFrom,

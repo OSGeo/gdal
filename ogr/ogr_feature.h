@@ -326,7 +326,6 @@ inline OGRFieldDefn::TemporaryUnsealer whileUnsealing(OGRFieldDefn *object)
  * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
- * @since OGR 1.11
  */
 
 class CPL_DLL OGRGeomFieldDefn
@@ -486,7 +485,7 @@ whileUnsealing(OGRGeomFieldDefn *object)
  * potentially other metadata.
  *
  * It is essentially a collection of field descriptions (OGRFieldDefn class).
- * Starting with GDAL 1.11, in addition to attribute fields, it can also
+ * In addition to attribute fields, it can also
  * contain multiple geometry fields (OGRGeomFieldDefn class).
  *
  * It is reasonable for different translators to derive classes from

@@ -1755,7 +1755,6 @@ char *OGR_G_ExportToJson(OGRGeometryH hGeometry)
  * @param papszOptions a null terminated list of options.
  * @return A GeoJSON fragment or NULL in case of error.
  *
- * @since OGR 1.9.0
  */
 
 char *OGR_G_ExportToJsonEx(OGRGeometryH hGeometry, char **papszOptions)

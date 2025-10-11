@@ -1385,7 +1385,6 @@ const char *GDALGetColorInterpretationName(GDALColorInterp eInterp)
  *
  * @return GDAL color interpretation.
  *
- * @since GDAL 1.7.0
  */
 
 GDALColorInterp GDALGetColorInterpretationByName(const char *pszName)
@@ -4711,7 +4710,6 @@ CPL_C_START
  * @param nXSize raster width
  * @param nYSize raster height
  *
- * @since GDAL 1.7.0
  */
 int GDALCheckDatasetDimensions(int nXSize, int nYSize)
 {
@@ -4734,7 +4732,6 @@ int GDALCheckDatasetDimensions(int nXSize, int nYSize)
  * @param nBands the band count
  * @param bIsZeroAllowed TRUE if band count == 0 is allowed
  *
- * @since GDAL 1.7.0
  */
 
 int GDALCheckBandCount(int nBands, int bIsZeroAllowed)
@@ -4820,8 +4817,6 @@ void GDALSerializeGCPListToXML(CPLXMLNode *psParentNode,
 
         CPLSetXMLValue(psXMLGCP, "#Y", oFmt.Printf("%.12E", gcp.Y()));
 
-        /* Note: GDAL 1.10.1 and older generated #GCPZ, but could not read it
-         * back */
         if (gcp.Z() != 0.0)
             CPLSetXMLValue(psXMLGCP, "#Z", oFmt.Printf("%.12E", gcp.Z()));
     }

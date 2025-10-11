@@ -1448,7 +1448,6 @@ void OGR_G_GetEnvelope(OGRGeometryH hGeom, OGREnvelope *psEnvelope)
  *
  * @param psEnvelope the structure in which to place the results.
  *
- * @since OGR 1.9.0
  */
 
 /************************************************************************/
@@ -1463,7 +1462,6 @@ void OGR_G_GetEnvelope(OGRGeometryH hGeom, OGREnvelope *psEnvelope)
  * @param hGeom handle of the geometry to get envelope from.
  * @param psEnvelope the structure in which to place the results.
  *
- * @since OGR 1.9.0
  */
 
 void OGR_G_GetEnvelope3D(OGRGeometryH hGeom, OGREnvelope3D *psEnvelope)
@@ -4376,7 +4374,6 @@ OGRGeometryH OGR_G_ConcaveHull(OGRGeometryH hTarget, double dfRatio,
  *
  * @return a new geometry to be freed by the caller, or NULL if an error occurs.
  *
- * @since OGR 1.8.0
  */
 
 OGRGeometry *OGRGeometry::Boundary() const
@@ -4445,7 +4442,6 @@ OGRGeometry *OGRGeometry::getBoundary() const
  * @return a new geometry to be freed by the caller with OGR_G_DestroyGeometry,
  * or NULL if an error occurs.
  *
- * @since OGR 1.8.0
  */
 OGRGeometryH OGR_G_Boundary(OGRGeometryH hTarget)
 
@@ -5102,7 +5098,6 @@ OGRGeometryH OGR_G_Union(OGRGeometryH hThis, OGRGeometryH hOther)
  *
  * @return a new geometry to be freed by the caller, or NULL if an error occurs.
  *
- * @since OGR 1.8.0
  *
  * @deprecated Use UnaryUnion() instead
  */
@@ -5426,7 +5421,6 @@ OGRGeometryH OGR_G_Difference(OGRGeometryH hThis, OGRGeometryH hOther)
  * @return a new geometry to be freed by the caller, or NULL if the difference
  * is empty or if an error occurs.
  *
- * @since OGR 1.8.0
  */
 
 OGRGeometry *OGRGeometry::SymDifference(
@@ -5512,7 +5506,6 @@ OGRGeometry::SymmetricDifference(const OGRGeometry *poOtherGeom) const
  * @return a new geometry to be freed by the caller with OGR_G_DestroyGeometry,
  * or NULL if the difference is empty or if an error occurs.
  *
- * @since OGR 1.8.0
  */
 
 OGRGeometryH OGR_G_SymDifference(OGRGeometryH hThis, OGRGeometryH hOther)
@@ -6080,7 +6073,6 @@ void OGR_G_CloseRings(OGRGeometryH hGeom)
  *
  * @return OGRERR_NONE on success or OGRERR_FAILURE on error.
  *
- * @since OGR 1.8.0 as a OGRGeometry method (previously was restricted
  * to OGRPolygon)
  */
 
@@ -6224,7 +6216,6 @@ int OGR_G_Centroid(OGRGeometryH hGeom, OGRGeometryH hCentroidPoint)
  * @return a new geometry to be freed by the caller with OGR_G_DestroyGeometry,
  * or NULL if an error occurs.
  *
- * @since OGR 1.10
  */
 
 OGRGeometryH OGR_G_PointOnSurface(OGRGeometryH hGeom)
@@ -6335,7 +6326,6 @@ OGRErr OGRGeometry::PointOnSurfaceInternal(OGRPoint *poPoint) const
  *
  * @return a new geometry to be freed by the caller, or NULL if an error occurs.
  *
- * @since OGR 1.8.0
  */
 
 OGRGeometry *OGRGeometry::Simplify(UNUSED_IF_NO_GEOS double dTolerance) const
@@ -6385,7 +6375,6 @@ OGRGeometry *OGRGeometry::Simplify(UNUSED_IF_NO_GEOS double dTolerance) const
  * @return a new geometry to be freed by the caller with OGR_G_DestroyGeometry,
  * or NULL if an error occurs.
  *
- * @since OGR 1.8.0
  */
 
 OGRGeometryH OGR_G_Simplify(OGRGeometryH hThis, double dTolerance)
@@ -6414,7 +6403,6 @@ OGRGeometryH OGR_G_Simplify(OGRGeometryH hThis, double dTolerance)
  *
  * @return a new geometry to be freed by the caller, or NULL if an error occurs.
  *
- * @since OGR 1.9.0
  */
 
 OGRGeometry *
@@ -6466,7 +6454,6 @@ OGRGeometry::SimplifyPreserveTopology(UNUSED_IF_NO_GEOS double dTolerance) const
  * @return a new geometry to be freed by the caller with OGR_G_DestroyGeometry,
  * or NULL if an error occurs.
  *
- * @since OGR 1.9.0
  */
 
 OGRGeometryH OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis,
@@ -6843,7 +6830,6 @@ OGRGeometryH OGR_G_ConstrainedDelaunayTriangulation(OGRGeometryH hThis)
  *
  * @return a new geometry to be freed by the caller, or NULL if an error occurs.
  *
- * @since OGR 1.9.0
  */
 
 OGRGeometry *OGRGeometry::Polygonize() const
@@ -6933,7 +6919,6 @@ OGRGeometry *OGRGeometry::Polygonize() const
  * @return a new geometry to be freed by the caller with OGR_G_DestroyGeometry,
  * or NULL if an error occurs.
  *
- * @since OGR 1.9.0
  */
 
 OGRGeometryH OGR_G_Polygonize(OGRGeometryH hTarget)
@@ -7046,7 +7031,6 @@ OGRGeometryH OGR_G_BuildArea(OGRGeometryH hGeom)
 /**
  * \brief Swap x and y coordinates.
  *
- * @since OGR 1.8.0
  */
 
 void OGRGeometry::swapXY()

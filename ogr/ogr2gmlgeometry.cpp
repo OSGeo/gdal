@@ -1268,7 +1268,6 @@ char *OGR_G_ExportToGML(OGRGeometryH hGeometry)
  * @param papszOptions NULL-terminated list of options.
  * @return A GML fragment or NULL in case of error.
  *
- * @since OGR 1.8.0
  */
 
 char *OGR_G_ExportToGMLEx(OGRGeometryH hGeometry, char **papszOptions)

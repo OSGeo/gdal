@@ -450,7 +450,6 @@ const char *VSIGetDirectorySeparator(const char *pszPath)
  * @return The list of entries in the directory and subdirectories
  * or NULL if the directory doesn't exist.  Filenames are returned in UTF-8
  * encoding.
- * @since GDAL 1.10.0
  *
  */
 
@@ -1562,7 +1561,6 @@ int VSIStatL(const char *pszFilename, VSIStatBufL *psStatBuf)
  *
  * @return 0 on success or -1 on an error.
  *
- * @since GDAL 1.8.0
  */
 
 int VSIStatExL(const char *pszFilename, VSIStatBufL *psStatBuf, int nFlags)
@@ -1744,7 +1742,6 @@ int VSISetFileMetadata(const char *pszFilename, CSLConstList papszMetadata,
  *
  * @return TRUE if the filenames of the filesystem are case sensitive.
  *
- * @since GDAL 1.8.0
  */
 
 int VSIIsCaseSensitiveFS(const char *pszFilename)
@@ -1989,7 +1986,6 @@ char *VSIGetSignedURL(const char *pszFilename, CSLConstList papszOptions)
  * than 2GB) should be supported.  Binary access is always implied and
  * the "b" does not need to be included in the pszAccess string.
  *
- * Note that the "VSILFILE *" returned since GDAL 1.8.0 by this function is
  * *NOT* a standard C library FILE *, and cannot be used with any functions
  * other than the "VSI*L" family of functions.  They aren't "real" FILE objects.
  *
@@ -3165,7 +3161,6 @@ size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp)
  * @param panSizes array of nRanges sizes of objects to read (in bytes).
  *
  * @return 0 in case of success, -1 otherwise.
- * @since GDAL 1.9.0
  */
 
 /**
@@ -3188,7 +3183,6 @@ size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp)
  * @param fp file handle opened with VSIFOpenL().
  *
  * @return 0 in case of success, -1 otherwise.
- * @since GDAL 1.9.0
  */
 
 int VSIFReadMultiRangeL(int nRanges, void **ppData,
@@ -3391,7 +3385,6 @@ void VSIFClearErrL(VSILFILE *fp)
  * @param nNewSize new size in bytes.
  *
  * @return 0 on success
- * @since GDAL 1.9.0
  */
 
 /**
@@ -3406,7 +3399,6 @@ void VSIFClearErrL(VSILFILE *fp)
  * @param nNewSize new size in bytes.
  *
  * @return 0 on success
- * @since GDAL 1.9.0
  */
 
 int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
@@ -3581,7 +3573,6 @@ VSIRangeStatus VSIFGetRangeStatusL(VSILFILE *fp, vsi_l_offset nOffset,
  *
  * @return TRUE in case of success.
  *
- * @since GDAL 1.11
  */
 
 int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,

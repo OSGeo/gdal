@@ -3287,7 +3287,6 @@ const char *VSIGZipFilesystemHandler::GetOptions()
  See :ref:`/vsigzip/ documentation <vsigzip>`
  \endverbatim
 
- @since GDAL 1.6.0
  */
 
 void VSIInstallGZipFileHandler()
@@ -4907,7 +4906,6 @@ void VSIZipWriteHandle::StartNewFile(VSIZipWriteHandle *poSubFile)
  See :ref:`/vsizip/ documentation <vsizip>`
  \endverbatim
 
- @since GDAL 1.6.0
  */
 
 void VSIInstallZipFileHandler()
@@ -4933,7 +4931,6 @@ void VSIInstallZipFileHandler()
  * @return the output buffer (to be freed with VSIFree() if not provided)
  *         or NULL in case of error.
  *
- * @since GDAL 1.10.0
  */
 
 void *CPLZLibDeflate(const void *ptr, size_t nBytes, int nLevel, void *outptr,
@@ -5035,7 +5032,6 @@ void *CPLZLibDeflate(const void *ptr, size_t nBytes, int nLevel, void *outptr,
  * @return the output buffer (to be freed with VSIFree() if not provided)
  *         or NULL in case of error.
  *
- * @since GDAL 1.10.0
  */
 
 void *CPLZLibInflate(const void *ptr, size_t nBytes, void *outptr,

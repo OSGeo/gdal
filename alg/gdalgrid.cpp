@@ -3599,12 +3599,12 @@ CPLErr GDALGridContextProcess(GDALGridContext *psContext, double dfXMin,
  * scattered data. You should supply geometry and extent of the output grid
  * and allocate array sufficient to hold such a grid.
  *
- * Starting with GDAL 1.10, it is possible to set the GDAL_NUM_THREADS
+ * It is possible to set the GDAL_NUM_THREADS
  * configuration option to parallelize the processing. The value to set is
  * the number of worker threads, or ALL_CPUS to use all the cores/CPUs of the
  * computer (default value).
  *
- * Starting with GDAL 1.10, on Intel/AMD i386/x86_64 architectures, some
+ * On Intel/AMD i386/x86_64 architectures, some
  * gridding methods will be optimized with SSE instructions (provided GDAL
  * has been compiled with such support, and it is available at runtime).
  * Currently, only 'invdist' algorithm with default parameters has an optimized
@@ -3612,7 +3612,7 @@ CPLErr GDALGridContextProcess(GDALGridContext *psContext, double dfXMin,
  * This can provide substantial speed-up, but sometimes at the expense of
  * reduced floating point precision. This can be disabled by setting the
  * GDAL_USE_SSE configuration option to NO.
- * Starting with GDAL 1.11, a further optimized version can use the AVX
+ * A further optimized version can use the AVX
  * instruction set. This can be disabled by setting the GDAL_USE_AVX
  * configuration option to NO.
  *

@@ -1406,7 +1406,6 @@ void TransformBounds(
 } /*extend */
 };
 
-/* New in GDAL 1.10 */
 %newobject CreateCoordinateTransformation;
 %inline %{
   OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options = NULL ) {

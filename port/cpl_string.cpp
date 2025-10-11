@@ -300,7 +300,6 @@ char **CSLMerge(char **papszOrig, CSLConstList papszOverride)
  * @return a string list with the files lines, now owned by caller. To be freed
  * with CSLDestroy()
  *
- * @since GDAL 1.7.0
  */
 
 char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols,
@@ -3013,7 +3012,6 @@ if( CPLStrlcpy(szDest, "abcde", sizeof(szDest)) >= sizeof(szDest) )
  *
  * @return the length of the source string (=strlen(pszSrc))
  *
- * @since GDAL 1.7.0
  */
 size_t CPLStrlcpy(char *pszDest, const char *pszSrc, size_t nDestSize)
 {
@@ -3070,7 +3068,6 @@ if( CPLStrlcat(szDest, "cde", sizeof(szDest)) >= sizeof(szDest) )
  *         If strlen(pszDest_before) >= nDestSize, then it returns
  *         nDestSize + strlen(pszSrc)
  *
- * @since GDAL 1.7.0
  */
 size_t CPLStrlcat(char *pszDest, const char *pszSrc, size_t nDestSize)
 {
@@ -3104,7 +3101,6 @@ size_t CPLStrlcat(char *pszDest, const char *pszSrc, size_t nDestSize)
  * @return strlen(pszStr) if the length is lesser than nMaxLen, otherwise
  * nMaxLen if the NUL character has not been found in the first nMaxLen bytes.
  *
- * @since GDAL 1.7.0
  */
 
 size_t CPLStrnlen(const char *pszStr, size_t nMaxLen)

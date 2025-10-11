@@ -6351,7 +6351,6 @@ struct curl_slist *VSICurlSetCreationHeadersFromOptions(
  See :ref:`/vsicurl/ documentation <vsicurl>`
  \endverbatim
 
- @since GDAL 1.8.0
  */
 void VSIInstallCurlFileHandler(void)
 {

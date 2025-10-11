@@ -352,7 +352,6 @@ double OGR_G_GetM(OGRGeometryH hGeom, int i)
  * @return the number of points, or -1 (starting in GDAL 3.12) if the operation
  *         can not be performed in this geometry type.
  *
- * @since OGR 1.9.0
  */
 
 int OGR_G_GetPoints(OGRGeometryH hGeom, void *pabyX, int nXStride, void *pabyY,
@@ -425,7 +424,6 @@ int OGR_G_GetPoints(OGRGeometryH hGeom, void *pabyX, int nXStride, void *pabyY,
  *
  * @return the number of points
  *
- * @since OGR 1.9.0
  */
 
 int OGR_G_GetPointsZM(OGRGeometryH hGeom, void *pabyX, int nXStride,
@@ -1627,7 +1625,6 @@ OGRErr OGR_G_RemoveGeometry(OGRGeometryH hGeom, int iGeom, int bDelete)
  * @param hGeom the geometry to operate on.
  * @return the length or 0.0 for unsupported geometry types.
  *
- * @since OGR 1.8.0
  *
  * @see OGR_G_GeodesicLength() for an alternative method returning lengths
  * computed on the ellipsoid, and in meters.
@@ -1748,7 +1745,6 @@ double OGR_G_GeodesicLength(OGRGeometryH hGeom)
  * @see OGR_G_GeodesicArea() for an alternative function returning areas
  * computed on the ellipsoid, and in square meters.
  *
- * @since OGR 1.8.0
  */
 
 double OGR_G_Area(OGRGeometryH hGeom)

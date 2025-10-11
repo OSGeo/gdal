@@ -2104,7 +2104,6 @@ VSISwiftStreamingFSHandler::CreateFileHandle(const char *pszFilename,
  See :ref:`/vsicurl_streaming/ documentation <vsicurl_streaming>`
  \endverbatim
 
- @since GDAL 1.10
  */
 void VSIInstallCurlStreamingFileHandler(void)
 {
