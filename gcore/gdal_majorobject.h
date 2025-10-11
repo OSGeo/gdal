@@ -85,7 +85,6 @@ class CPL_DLL GDALMajorObject
                                    const char *pszDomain = "");
 
     /** Convert a GDALMajorObject* to a GDALMajorObjectH.
-     * @since GDAL 2.3
      */
     static inline GDALMajorObjectH ToHandle(GDALMajorObject *poMajorObject)
     {
@@ -93,7 +92,6 @@ class CPL_DLL GDALMajorObject
     }
 
     /** Convert a GDALMajorObjectH to a GDALMajorObject*.
-     * @since GDAL 2.3
      */
     static inline GDALMajorObject *FromHandle(GDALMajorObjectH hMajorObject)
     {

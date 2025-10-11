@@ -2453,7 +2453,6 @@ CPLErr GDALGridDataMetricAverageDistancePts(
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  *
- * @since GDAL 2.1
  */
 
 CPLErr GDALGridLinear(const void *poOptionsIn, GUInt32 nPoints,
@@ -2748,7 +2747,6 @@ static void GDALGridContextCreateQuadTree(GDALGridContext *psContext);
  * @return the context (to be freed with GDALGridContextFree()) or NULL in case
  *         or error.
  *
- * @since GDAL 2.1
  */
 
 GDALGridContext *GDALGridContextCreate(GDALGridAlgorithm eAlgorithm,
@@ -3354,7 +3352,6 @@ void GDALGridContextCreateQuadTree(GDALGridContext *psContext)
  *
  * @param psContext the context.
  *
- * @since GDAL 2.1
  */
 void GDALGridContextFree(GDALGridContext *psContext)
 {
@@ -3407,7 +3404,6 @@ void GDALGridContextFree(GDALGridContext *psContext)
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  *
- * @since GDAL 2.1
  */
 
 CPLErr GDALGridContextProcess(GDALGridContext *psContext, double dfXMin,

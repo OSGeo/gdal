@@ -189,13 +189,9 @@ typedef enum
                                                         OFSTInt16 = 2,
     /** Single precision (32 bit) floating point. Only valid for OFTReal and OFTRealList. */
                                                         OFSTFloat32 = 3,
-    /** JSON content. Only valid for OFTString.
-     * @since GDAL 2.4
-     */
+    /** JSON content. Only valid for OFTString. */
                                                         OFSTJSON = 4,
-    /** UUID string representation. Only valid for OFTString.
-     * @since GDAL 3.3
-     */
+    /** UUID string representation. Only valid for OFTString. */
                                                         OFSTUUID = 5,
 } OGRFieldSubType;
 

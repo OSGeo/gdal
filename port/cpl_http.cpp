@@ -1040,7 +1040,7 @@ int CPLHTTPPopFetchCallback(void)
  * <ul>
  * <li>CONNECTTIMEOUT=val, where
  * val is in seconds (possibly with decimals). This is the maximum delay for the
- * connection to be established before being aborted (GDAL >= 2.2).
+ * connection to be established before being aborted.
  * Corresponding configuration option: GDAL_HTTP_CONNECTTIMEOUT.
  * </li>
  * <li>TIMEOUT=val, where val is in seconds. This is the maximum delay for the
@@ -1050,11 +1050,11 @@ int CPLHTTPPopFetchCallback(void)
  * <li>LOW_SPEED_TIME=val,
  * where val is in seconds. This is the maximum time where the transfer speed
  * should be below the LOW_SPEED_LIMIT (if not specified 1b/s), before the
- * transfer to be considered too slow and aborted. (GDAL >= 2.1).
+ * transfer to be considered too slow and aborted.
  * Corresponding configuration option: GDAL_HTTP_LOW_SPEED_TIME.
  * </li>
  * <li>LOW_SPEED_LIMIT=val, where val is in bytes/second. See LOW_SPEED_TIME.
- * Has only effect if LOW_SPEED_TIME is specified too. (GDAL >= 2.1).
+ * Has only effect if LOW_SPEED_TIME is specified too.
  * Corresponding configuration option: GDAL_HTTP_LOW_SPEED_LIMIT.
  * </li>
  * <li>HEADERS=val, where val is an extra header to use when getting a web page.
@@ -1071,7 +1071,7 @@ int CPLHTTPPopFetchCallback(void)
  * </li>
  * <li>HEADER_FILE=filename: filename of a text file with "key: value" headers.
  *     The content of the file is not cached, and thus it is read again before
- *     issuing each HTTP request. (GDAL >= 2.2)
+ *     issuing each HTTP request.
  * Corresponding configuration option: GDAL_HTTP_HEADER_FILE.
  * </li>
  * <li>HTTPAUTH=[BASIC/NTLM/NEGOTIATE/ANY/ANYSAFE/BEARER] to specify an
@@ -1140,10 +1140,9 @@ int CPLHTTPPopFetchCallback(void)
  * </li>
  * <li>COOKIE=val, where val is formatted as COOKIE1=VALUE1; COOKIE2=VALUE2;...
  * Corresponding configuration option: GDAL_HTTP_COOKIE.</li>
- * <li>COOKIEFILE=val, where val is file name to read cookies from
- * (GDAL >= 2.4).
+ * <li>COOKIEFILE=val, where val is file name to read cookies from.
  * Corresponding configuration option: GDAL_HTTP_COOKIEFILE.</li>
- * <li>COOKIEJAR=val, where val is file name to store cookies to (GDAL >= 2.4).
+ * <li>COOKIEJAR=val, where val is file name to store cookies to.
  * Corresponding configuration option: GDAL_HTTP_COOKIEJAR.</li>
  * <li>MAX_RETRY=val, where val is the maximum number of
  * retry attempts, when a retry is allowed (cf RETRY_CODES option).
@@ -1159,17 +1158,17 @@ int CPLHTTPPopFetchCallback(void)
  * HTTP or Curl error message. (GDAL >= 3.10).
  * Corresponding configuration option: GDAL_HTTP_RETRY_CODES.
  * </li>
- * <li>MAX_FILE_SIZE=val, where val is a number of bytes (GDAL >= 2.2)
+ * <li>MAX_FILE_SIZE=val, where val is a number of bytes.
  * No corresponding configuration option.
  * </li>
  * <li>CAINFO=/path/to/bundle.crt. This is path to Certificate Authority (CA)
  *     bundle file. By default, it will be looked for in a system location. If
  *     the CAINFO option is not defined, GDAL will also look in the
  *     CURL_CA_BUNDLE and SSL_CERT_FILE environment variables respectively
- *     and use the first one found as the CAINFO value (GDAL >= 2.1.3). The
+ *     and use the first one found as the CAINFO value. The
  *     GDAL_CURL_CA_BUNDLE environment variable may also be used to set the
  *     CAINFO value in GDAL >= 3.2.</li>
- * <li>HTTP_VERSION=1.0/1.1/2/2TLS (GDAL >= 2.3)/2PRIOR_KNOWLEDGE (GDAL >= 3.10).
+ * <li>HTTP_VERSION=1.0/1.1/2/2TLS/2PRIOR_KNOWLEDGE (2PRIOR_KNOWLEDGE since GDAL 3.10).
  *     Specify HTTP version to use.
  *     Will default to 1.1 generally (except on some controlled environments,
  *     like Google Compute Engine VMs, where 2TLS will be the default).
@@ -1180,16 +1179,15 @@ int CPLHTTPPopFetchCallback(void)
  *     HTTP/2.
  *     Corresponding configuration option: GDAL_HTTP_VERSION.
  * </li>
- * <li>SSL_VERIFYSTATUS=YES/NO (GDAL >= 2.3, and curl >= 7.41): determines
+ * <li>SSL_VERIFYSTATUS=YES/NO (curl >= 7.41): determines
  * whether the status of the server cert using the "Certificate Status Request"
  * TLS extension (aka. OCSP stapling) should be checked. If this option is
  * enabled but the server does not support the TLS extension, the verification
  * will fail. Default to NO.
  * Corresponding configuration option: GDAL_HTTP_SSL_VERIFYSTATUS.
  * </li>
- * <li>USE_CAPI_STORE=YES/NO (GDAL >= 2.3,
- * Windows only): whether CA certificates from the Windows certificate store.
- * Defaults to NO.
+ * <li>USE_CAPI_STORE=YES/NO (Windows only): whether CA certificates from the
+ * Windows certificate store. Defaults to NO.
  * Corresponding configuration option: GDAL_HTTP_USE_CAPI_STORE.
  * </li>
  * <li>TCP_KEEPALIVE=YES/NO (GDAL >= 3.6): whether to
@@ -1773,7 +1771,6 @@ class CPLHTTPErrorBuffer
  * @return an array of CPLHTTPResult* structures that must be freed by
  * CPLHTTPDestroyMultiResult() or NULL if libcurl support is disabled
  *
- * @since GDAL 2.3
  */
 CPLHTTPResult **CPLHTTPMultiFetch(const char *const *papszURL, int nURLCount,
                                   int nMaxSimultaneous,
@@ -2028,7 +2025,6 @@ CPLHTTPResult **CPLHTTPMultiFetch(const char *const *papszURL, int nURLCount,
  *
  * @param papsResults pointer to the return value of CPLHTTPMultiFetch()
  * @param nCount value of the nURLCount parameter passed to CPLHTTPMultiFetch()
- * @since GDAL 2.3
  */
 void CPLHTTPDestroyMultiResult(CPLHTTPResult **papsResults, int nCount)
 {

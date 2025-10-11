@@ -173,7 +173,6 @@ GDALDataType CPL_STDCALL GDALDataTypeUnion(GDALDataType eType1,
  * @param bComplex if the value is complex
  *
  * @return a data type able to express eDT and dfValue.
- * @since GDAL 2.3
  */
 GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
                                                     double dfValue,
@@ -252,7 +251,6 @@ static int GetMinBitsForValue(double dValue)
  * @param bComplex if complex values are necessary
  *
  * @return a best fit GDALDataType for supporting the requirements
- * @since GDAL 2.3
  */
 GDALDataType CPL_STDCALL GDALFindDataType(int nBits, int bSigned, int bFloating,
                                           int bComplex)
@@ -344,7 +342,6 @@ GDALDataType CPL_STDCALL GDALFindDataType(int nBits, int bSigned, int bFloating,
  * @param bComplex is the value complex
  *
  * @return a best fit GDALDataType for supporting the value
- * @since GDAL 2.3
  */
 GDALDataType CPL_STDCALL GDALFindDataTypeForValue(double dValue, int bComplex)
 {
@@ -507,7 +504,6 @@ int CPL_STDCALL GDALDataTypeIsComplex(GDALDataType eDataType)
  *
  * @return TRUE if the passed type is floating (one of GDT_Float32, GDT_Float16,
  * GDT_Float64, GDT_CFloat16, GDT_CFloat32, GDT_CFloat64)
- * @since GDAL 2.3
  */
 
 int CPL_STDCALL GDALDataTypeIsFloating(GDALDataType eDataType)
@@ -550,7 +546,6 @@ int CPL_STDCALL GDALDataTypeIsFloating(GDALDataType eDataType)
  *
  * @return TRUE if the passed type is integer (one of GDT_Byte, GDT_Int16,
  * GDT_UInt16, GDT_Int32, GDT_UInt32, GDT_CInt16, GDT_CInt32).
- * @since GDAL 2.3
  */
 
 int CPL_STDCALL GDALDataTypeIsInteger(GDALDataType eDataType)
@@ -593,7 +588,6 @@ int CPL_STDCALL GDALDataTypeIsInteger(GDALDataType eDataType)
  * \brief Is data type signed?
  *
  * @return TRUE if the passed type is signed.
- * @since GDAL 2.3
  */
 
 int CPL_STDCALL GDALDataTypeIsSigned(GDALDataType eDataType)
@@ -637,7 +631,6 @@ int CPL_STDCALL GDALDataTypeIsSigned(GDALDataType eDataType)
  * @param eTypeFrom input datatype
  * @param eTypeTo output datatype
  * @return TRUE if conversion from eTypeFrom to eTypeTo potentially lossy.
- * @since GDAL 2.3
  */
 
 int CPL_STDCALL GDALDataTypeIsConversionLossy(GDALDataType eTypeFrom,
@@ -853,7 +846,6 @@ static inline void ClampAndRound(double &dfValue, bool &bClamped,
  * been made, or NULL
  *
  * @return adjusted value
- * @since GDAL 2.1
  */
 
 double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
@@ -3127,10 +3119,10 @@ double CPL_STDCALL GDALDecToPackedDMS(double dfDec)
  * given in TL, TR, BR, BL order.  So when using this to get a geotransform
  * from 4 corner coordinates, pass them in this order.
  *
- * Starting with GDAL 2.2.2, if bApproxOK = FALSE, the
+ * If bApproxOK = FALSE, the
  * GDAL_GCPS_TO_GEOTRANSFORM_APPROX_OK configuration option will be read. If
  * set to YES, then bApproxOK will be overridden with TRUE.
- * Starting with GDAL 2.2.2, when exact fit is asked, the
+ * When exact fit is asked, the
  * GDAL_GCPS_TO_GEOTRANSFORM_APPROX_THRESHOLD configuration option can be set to
  * give the maximum error threshold in pixel. The default is 0.25.
  *

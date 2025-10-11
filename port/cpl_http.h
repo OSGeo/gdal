@@ -213,7 +213,6 @@ bool CPLIsMachineForSureGCEInstance();
  * This class handles different authentication methods and handles renewal
  * of access token.
  *
- * @since GDAL 2.3
  */
 class GOA2Manager
 {

@@ -30,12 +30,12 @@
   a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
   (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
 
-  NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned handle to
+  NOTE: It is *NOT* safe to cast the returned handle to
   OGRDataSource*. If a C++ object is needed, the handle should be cast to GDALDataset*.
   Similarly, the returned OGRSFDriverH handle should be cast to GDALDriver*, and
   *NOT* OGRSFDriver*.
 
-  @deprecated Use GDALOpenEx() in GDAL 2.0
+  @deprecated Use GDALOpenEx()
 
   @param pszName the name of the file, or data source to open.
   @param bUpdate FALSE for read-only access (the default) or TRUE for
@@ -82,12 +82,12 @@
   If this function fails, CPLGetLastErrorMsg() can be used to check if there
   is an error message explaining why.
 
-  NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned handle to
+  NOTE: It is *NOT* safe to cast the returned handle to
   OGRDataSource*. If a C++ object is needed, the handle should be cast to GDALDataset*.
   Similarly, the returned OGRSFDriverH handle should be cast to GDALDriver*, and
   *NOT* OGRSFDriver*.
 
-  @deprecated Use GDALOpenEx() in GDAL 2.0
+  @deprecated Use GDALOpenEx()
 
   @param pszName the name of the file, or data source to open.
   @param bUpdate FALSE for read-only access (the default) or TRUE for
@@ -124,7 +124,7 @@
 
   \brief Fetch the number of registered drivers.
 
-  @deprecated Use GDALGetDriverCount() in GDAL 2.0
+  @deprecated Use GDALGetDriverCount()
 
   @return the drivers count.
 
@@ -136,10 +136,10 @@
 
   \brief Fetch the indicated driver.
 
-  NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned handle to
+  NOTE: It is *NOT* safe to cast the returned handle to
   OGRSFDriver*. If a C++ object is needed, the handle should be cast to GDALDriver*.
 
-  @deprecated Use GDALGetDriver() in GDAL 2.0
+  @deprecated Use GDALGetDriver()
 
   @param iDriver the driver index, from 0 to GetDriverCount()-1.
 
@@ -152,10 +152,10 @@
 
   \brief Fetch the indicated driver.
 
-  NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned handle to
+  NOTE: It is *NOT* safe to cast the returned handle to
   OGRSFDriver*. If a C++ object is needed, the handle should be cast to GDALDriver*.
 
-  @deprecated Use GDALGetDriverByName() in GDAL 2.0
+  @deprecated Use GDALGetDriverByName()
 
   @param pszName the driver name
 
@@ -168,7 +168,7 @@
 
   \brief Register all drivers.
 
-   @deprecated Use GDALAllRegister() in GDAL 2.0
+   @deprecated Use GDALAllRegister()
 */
 
 /************************************************************************/
@@ -198,12 +198,12 @@
 
   \brief Attempt to open file with this driver.
 
-  NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned handle to
+  NOTE: It is *NOT* safe to cast the returned handle to
   OGRDataSource*. If a C++ object is needed, the handle should be cast to GDALDataset*.
   Similarly, the returned OGRSFDriverH handle should be cast to GDALDriver*, and
   *NOT* OGRSFDriver*.
 
-  @deprecated Use GDALOpenEx() in GDAL 2.0
+  @deprecated Use GDALOpenEx()
 
   @param hDriver handle to the driver that is used to open file.
   @param pszName the name of the file, or data source to try and open.
@@ -233,7 +233,7 @@
  The \#define macro forms of the capability names should be used in preference
  to the strings themselves to avoid misspelling.
 
- @deprecated Use GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE) in GDAL 2.0
+ @deprecated Use GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE)
 
  @param hDriver handle to the driver to test the capability against.
  @param pszCap the capability to test.
@@ -254,7 +254,7 @@
  Whether this is a supported operation on this driver case be tested
  using TestCapability() on ODrCDeleteDataSource.
 
- @deprecated Use GDALDeleteDataset() in GDAL 2
+ @deprecated Use GDALDeleteDataset()
 
  @param hDriver handle to the driver on which data source deletion is
 based.
@@ -281,7 +281,7 @@ based.
  It is important to call OGR_DS_Destroy() when the datasource is no longer
  used to ensure that all data has been properly flushed to disk.
 
- @deprecated Use GDALCreate() in GDAL 2.0
+ @deprecated Use GDALCreate()
 
  @param hDriver handle to the driver on which data source creation is
 based.
@@ -306,7 +306,7 @@ success.
    It is important to call OGR_DS_Destroy() when the datasource is no longer
    used to ensure that all data has been properly flushed to disk.
 
-   @deprecated Use GDALCreateCopy() in GDAL 2.0
+   @deprecated Use GDALCreateCopy()
 
  @param hDriver handle to the driver on which data source creation is
 based.
@@ -331,7 +331,7 @@ success.
 
    This method is the same as the C++ method OGRDataSource::DestroyDataSource().
 
-  @deprecated Use GDALClose() in GDAL 2.0
+  @deprecated Use GDALClose()
 
   @param hDS handle to allocated datasource object.
 */
@@ -346,7 +346,7 @@ success.
  source was opened with, but it need not be exactly the same string that
  was used to open the data source.  Normally this is a filename.
 
- @deprecated Use GDALGetDescription() in GDAL 2.0
+ @deprecated Use GDALGetDescription()
 
  @param hDS handle to the data source to get the name from.
  @return pointer to an internal name string which should not be modified
@@ -360,7 +360,7 @@ success.
 
  \brief Get the number of layers in this data source.
 
- @deprecated Use GDALDatasetGetLayerCount() in GDAL 2.0
+ @deprecated Use GDALDatasetGetLayerCount()
 
  @param hDS handle to the data source from which to get the number of layers.
  @return layer count.
@@ -375,7 +375,7 @@ success.
  The returned layer remains owned by the
  OGRDataSource and should not be deleted by the application.
 
- @deprecated Use GDALDatasetGetLayer() in GDAL 2.0
+ @deprecated Use GDALDatasetGetLayer()
 
  @param hDS handle to the data source from which to get the layer.
  @param iLayer a layer number between 0 and OGR_DS_GetLayerCount()-1.
@@ -394,7 +394,7 @@ success.
  The returned layer remains owned by the
  OGRDataSource and should not be deleted by the application.
 
- @deprecated Use GDALDatasetGetLayerByName() in GDAL 2.0
+ @deprecated Use GDALDatasetGetLayerByName()
 
  @param hDS handle to the data source from which to get the layer.
  @param pszLayerName Layer the layer name of the layer to fetch.
@@ -418,7 +418,7 @@ success.
  normally documented in the format specific documentation.
  The source layer may come from another dataset.
 
- @deprecated Use GDALDatasetCopyLayer() in GDAL 2.0
+ @deprecated Use GDALDatasetCopyLayer()
 
  @param hDS handle to the data source where to create the new layer
  @param hSrcLayer handle to the source layer.
@@ -437,7 +437,7 @@ success.
  If this method is supported
  the ODsCDeleteLayer capability will test TRUE on the OGRDataSource.
 
- @deprecated Use GDALDatasetDeleteLayer() in GDAL 2.0
+ @deprecated Use GDALDatasetDeleteLayer()
 
  @param hDS handle to the datasource
  @param iLayer the index of the layer to delete.
@@ -469,7 +469,7 @@ success.
  The <a href="https://gdal.org/user/sql_sqlite_dialect.html">SQLITE dialect</a>
  can also be used.
 
- @deprecated Use GDALDatasetExecuteSQL() in GDAL 2.0
+ @deprecated Use GDALDatasetExecuteSQL()
 
  @param hDS handle to the data source on which the SQL query is executed.
  @param pszStatement the SQL statement to execute.
@@ -495,7 +495,7 @@ can also be used.
  Failure to deallocate a results set before destroying the OGRDataSource
  may cause errors.
 
- @deprecated Use GDALDatasetReleaseResultSet() in GDAL 2.0
+ @deprecated Use GDALDatasetReleaseResultSet()
 
  @param hDS a handle to the data source on which was executed an
  SQL query.
@@ -517,7 +517,7 @@ can also be used.
   <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
   <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
         datasource support CreateGeomField() just after layer creation.<p>
-  <li> <b>ODsCCurveGeometries</b>: True if this datasource supports writing curve geometries. (GDAL 2.0).
+  <li> <b>ODsCCurveGeometries</b>: True if this datasource supports writing curve geometries.
                                    In that case, OLCCurveGeometries must also be declared in layers of that dataset.<p>
   <p>
  </ul>
@@ -525,7 +525,7 @@ can also be used.
  The \#define macro forms of the capability names should be used in preference
  to the strings themselves to avoid misspelling.
 
- @deprecated Use GDALDatasetTestCapability() in GDAL 2.0
+ @deprecated Use GDALDatasetTestCapability()
 
  @param hDS handle to the data source against which to test the capability.
  @param pszCapability the capability to test.
@@ -547,7 +547,7 @@ The papszOptions argument
 can be used to control driver specific creation options.  These options are
 normally documented in the format specific documentation.
 
-@deprecated Use GDALDatasetCreateLayer() in GDAL 2.0
+@deprecated Use GDALDatasetCreateLayer()
 
  @param hDS The dataset handle.
  @param pszName the name for the new layer.  This should ideally not
@@ -602,7 +602,7 @@ Internally this actually calls
 the OGRSFDriverRegistrar::ReleaseDataSource() method.  This method is
 essentially a convenient alias.
 
-@deprecated Use GDALClose() in GDAL 2.0
+@deprecated Use GDALClose()
 
 @param hDS handle to the data source to release
 
@@ -614,10 +614,10 @@ essentially a convenient alias.
 
 \brief Returns the driver that the dataset was opened with.
 
-NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned handle to
+NOTE: It is *NOT* safe to cast the returned handle to
 OGRSFDriver*. If a C++ object is needed, the handle should be cast to GDALDriver*.
 
-@deprecated Use GDALGetDatasetDriver() in GDAL 2.0
+@deprecated Use GDALGetDatasetDriver()
 
 @param hDS handle to the datasource
 @return NULL if driver info is not available, or pointer to a driver owned
@@ -827,7 +827,6 @@ by the OGRSFDriverManager.
 
  This method is the same as the C function OGR_L_GetFeatureCount().
 
- Note: since GDAL 2.0, this method returns a GIntBig (previously a int)
 
  @param bForce Flag indicating whether the count should be computed even
  if it is expensive.
@@ -854,7 +853,6 @@ by the OGRSFDriverManager.
 
  This function is the same as the CPP OGRLayer::GetFeatureCount().
 
- Note: since GDAL 2.0, this method returns a GIntBig (previously a int)
 
  @param hLayer handle to the layer that owned the features.
  @param bForce Flag indicating whether the count should be computed even
@@ -1183,8 +1181,7 @@ by the OGRSFDriverManager.
  </li>
  </ul>
 
- Starting with GDAL 2.0, drivers should specialize the ISetFeature() method,
- since SetFeature() is no longer virtual.
+ Drivers should specialize the ISetFeature() method.
 
  This method is the same as the C function OGR_L_SetFeature().
 
@@ -1215,7 +1212,6 @@ by the OGRSFDriverManager.
 
  @return OGRERR_NONE if the operation works, otherwise an appropriate error
  code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
- @since GDAL 2.0
 
  @see SetFeature()
 */
@@ -1273,8 +1269,7 @@ by the OGRSFDriverManager.
  of the new feature, but not necessarily.  Upon successful return the
  passed feature will have been updated with the new feature id.
 
- Starting with GDAL 2.0, drivers should specialize the ICreateFeature() method,
- since CreateFeature() is no longer virtual.
+ Drivers should specialize the ICreateFeature() method.
 
  This method is the same as the C function OGR_L_CreateFeature().
 
@@ -1306,7 +1301,6 @@ by the OGRSFDriverManager.
  @param poFeature the feature to write to disk.
 
  @return OGRERR_NONE on success.
- @since GDAL 2.0
 
  @see CreateFeature()
 */
@@ -1723,7 +1717,7 @@ otherwise FALSE.<p>
 will be omitted when fetching features as set by SetIgnoredFields() method.
 
 <li> <b>OLCCurveGeometries</b> / "CurveGeometries": TRUE if this layer supports
-writing curve geometries or may return such geometries. (GDAL 2.0).
+writing curve geometries or may return such geometries.
 
 <p>
 
@@ -1825,7 +1819,7 @@ CommitTransaction() and RollbackTransaction() methods work in a meaningful way,
 otherwise FALSE.<p>
 
 <li> <b>OLCCurveGeometries</b> / "CurveGeometries": TRUE if this layer supports
-writing curve geometries or may return such geometries. (GDAL 2.0).
+writing curve geometries or may return such geometries.
 
 <p>
 
@@ -2519,7 +2513,7 @@ form depending on the limitations of the format driver.
  OGRERR_FAILURE. Datasources which do not support transactions will
  always return OGRERR_NONE.
 
- Note: as of GDAL 2.0, use of this API is discouraged when the dataset offers
+ Use of this API is discouraged when the dataset offers
  dataset level transaction with GDALDataset::StartTransaction(). The reason is
  that most drivers can only offer transactions at dataset level, and not layer level.
  Very few drivers really support transactions at layer scope.
@@ -2540,7 +2534,7 @@ form depending on the limitations of the format driver.
  OGRERR_FAILURE. Datasources which do not support transactions will
  always return OGRERR_NONE.
 
- Note: as of GDAL 2.0, use of this API is discouraged when the dataset offers
+ Use of this API is discouraged when the dataset offers
  dataset level transaction with GDALDataset::StartTransaction(). The reason is
  that most drivers can only offer transactions at dataset level, and not layer level.
  Very few drivers really support transactions at layer scope.

@@ -111,7 +111,7 @@ OGRFeature::OGRFeature(const OGRFeatureDefn *poDefnIn)
  * which the feature will adhere.
  *
  * @return a handle to the new feature object with null fields and no geometry,
- * or, starting with GDAL 2.1, NULL in case out of memory situation.
+ * or, NULL in case out of memory situation.
  */
 
 OGRFeatureH OGR_F_Create(OGRFeatureDefnH hDefn)
@@ -229,8 +229,8 @@ void OGR_F_Destroy(OGRFeatureH hFeat)
  *
  * @param poDefn Feature definition defining schema.
  *
- * @return new feature object with null fields and no geometry, or, starting
- * with GDAL 2.1, NULL in case of out of memory situation.  May be deleted with
+ * @return new feature object with null fields and no geometry, or
+ * NULL in case of out of memory situation.  May be deleted with
  * DestroyFeature().
  */
 
@@ -399,7 +399,6 @@ void OGRFeature::SetFDefnUnsafe(OGRFeatureDefn *poNewFDefn)
  * This method is the same as the C function OGR_F_GetDefnRef().
  *
  * @return a reference to the feature definition object.
- * @since GDAL 2.3
  */
 
 /************************************************************************/
@@ -756,7 +755,6 @@ OGRGeometry *OGRFeature::GetGeometryRef()
  *
  * @return pointer to internal feature geometry.  This object should
  * not be modified.
- * @since GDAL 2.3
  */
 const OGRGeometry *OGRFeature::GetGeometryRef() const
 
@@ -839,7 +837,6 @@ OGRGeometry *OGRFeature::GetGeomFieldRef(int iField)
  *
  * @return pointer to internal feature geometry.  This object should
  * not be modified.
- * @since GDAL 2.3
  */
 const OGRGeometry *OGRFeature::GetGeomFieldRef(int iField) const
 
@@ -881,7 +878,6 @@ OGRGeometry *OGRFeature::GetGeomFieldRef(const char *pszFName)
  *
  * @return pointer to internal feature geometry.  This object should
  * not be modified.
- * @since GDAL 2.3
  */
 const OGRGeometry *OGRFeature::GetGeomFieldRef(const char *pszFName) const
 
@@ -1299,7 +1295,6 @@ int OGR_F_GetFieldCount(OGRFeatureH hFeat)
  *
  * @return the field definition (from the OGRFeatureDefn).  This is an
  * internal reference, and should not be deleted or modified.
- * @since GDAL 2.3
  */
 
 /************************************************************************/
@@ -1432,7 +1427,6 @@ int OGR_F_GetGeomFieldCount(OGRFeatureH hFeat)
  * @return the field definition (from the OGRFeatureDefn).  This is an
  * internal reference, and should not be deleted or modified.
  *
- * @since GDAL 2.3
  */
 /* clang-format on */
 
@@ -1677,7 +1671,6 @@ void OGR_F_UnsetField(OGRFeatureH hFeat, int iField)
  *
  * @return TRUE if the field is null, otherwise false.
  *
- * @since GDAL 2.2
  */
 
 bool OGRFeature::IsFieldNull(int iField) const
@@ -1709,7 +1702,6 @@ bool OGRFeature::IsFieldNull(int iField) const
  *
  * @return TRUE if the field is null, otherwise false.
  *
- * @since GDAL 2.2
  */
 
 int OGR_F_IsFieldNull(OGRFeatureH hFeat, int iField)
@@ -1740,7 +1732,6 @@ int OGR_F_IsFieldNull(OGRFeatureH hFeat, int iField)
  *
  * @return TRUE if the field is set and not null, otherwise false.
  *
- * @since GDAL 2.2
  */
 
 bool OGRFeature::IsFieldSetAndNotNull(int iField) const
@@ -1772,7 +1763,6 @@ bool OGRFeature::IsFieldSetAndNotNull(int iField) const
  *
  * @return TRUE if the field is set and not null, otherwise false.
  *
- * @since GDAL 2.2
  */
 
 int OGR_F_IsFieldSetAndNotNull(OGRFeatureH hFeat, int iField)
@@ -1802,7 +1792,6 @@ int OGR_F_IsFieldSetAndNotNull(OGRFeatureH hFeat, int iField)
  *
  * @param iField the field to set to null.
  *
- * @since GDAL 2.2
  */
 
 void OGRFeature::SetFieldNull(int iField)
@@ -1855,7 +1844,6 @@ void OGRFeature::SetFieldNull(int iField)
  * @param hFeat handle to the feature on which the field is.
  * @param iField the field to set to null.
  *
- * @since GDAL 2.2
  */
 
 void OGR_F_SetFieldNull(OGRFeatureH hFeat, int iField)
@@ -1877,7 +1865,6 @@ void OGR_F_SetFieldNull(OGRFeatureH hFeat, int iField)
  *               checked by the method !
  *
  * @return the field value.
- * @since GDAL 2.3
  */
 const OGRFeature::FieldValue OGRFeature::operator[](int iField) const
 {
@@ -1891,7 +1878,6 @@ const OGRFeature::FieldValue OGRFeature::operator[](int iField) const
  *               checked by the method !
  *
  * @return the field value.
- * @since GDAL 2.3
  */
 OGRFeature::FieldValue OGRFeature::operator[](int iField)
 {
@@ -1904,7 +1890,6 @@ OGRFeature::FieldValue OGRFeature::operator[](int iField)
  * @param pszFieldName field name
  *
  * @return the field value, or throw a FieldNotFoundException if not found.
- * @since GDAL 2.3
  */
 const OGRFeature::FieldValue
 OGRFeature::operator[](const char *pszFieldName) const
@@ -1921,7 +1906,6 @@ OGRFeature::operator[](const char *pszFieldName) const
  * @param pszFieldName field name
  *
  * @return the field value, or throw a FieldNotFoundException if not found.
- * @since GDAL 2.3
  */
 OGRFeature::FieldValue OGRFeature::operator[](const char *pszFieldName)
 {
@@ -1959,7 +1943,6 @@ OGRFeature::FieldValue OGRFeature::operator[](const char *pszFieldName)
  *
  * @return the returned pointer is to an internal data structure, and should
  * not be freed, or modified.
- * @since GDAL 2.3
  */
 
 /************************************************************************/
@@ -2160,7 +2143,6 @@ int OGR_F_GetFieldAsInteger(OGRFeatureH hFeat, int iField)
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the field value.
- * @since GDAL 2.0
  */
 
 GIntBig OGRFeature::GetFieldAsInteger64(int iField) const
@@ -2239,7 +2221,6 @@ GIntBig OGRFeature::GetFieldAsInteger64(int iField) const
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the field value.
- * @since GDAL 2.0
  */
 
 GIntBig OGR_F_GetFieldAsInteger64(OGRFeatureH hFeat, int iField)
@@ -3007,7 +2988,6 @@ const int *OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField,
  * @return the field value.  This list is internal, and should not be
  * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
  * on return the returned pointer may be NULL or non-NULL.
- * @since GDAL 2.0
  */
 /* clang-format on */
 
@@ -3024,7 +3004,6 @@ const int *OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField,
  * @return the field value.  This list is internal, and should not be
  * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
  * on return the returned pointer may be NULL or non-NULL.
- * @since GDAL 2.0
  */
 
 const GIntBig *OGRFeature::GetFieldAsInteger64List(int iField,
@@ -3067,7 +3046,6 @@ const GIntBig *OGRFeature::GetFieldAsInteger64List(int iField,
  * @return the field value.  This list is internal, and should not be
  * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
  * on return the returned pointer may be NULL or non-NULL.
- * @since GDAL 2.0
  */
 
 const GIntBig *OGR_F_GetFieldAsInteger64List(OGRFeatureH hFeat, int iField,
@@ -3480,7 +3458,6 @@ int OGR_F_GetFieldAsDateTime(OGRFeatureH hFeat, int iField, int *pnYear,
  * @param pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
  *
  * @return TRUE on success or FALSE on failure.
- * @since GDAL 2.0
  */
 
 int OGR_F_GetFieldAsDateTimeEx(OGRFeatureH hFeat, int iField, int *pnYear,
@@ -3545,7 +3522,6 @@ static int OGRFeatureGetIntegerValue(const OGRFeatureDefn *poDefn,
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return a string that must be de-allocate with CPLFree()
- * @since GDAL 2.2
  */
 char *OGRFeature::GetFieldAsSerializedJSon(int iField) const
 
@@ -3834,7 +3810,6 @@ void OGR_F_SetFieldInteger(OGRFeatureH hFeat, int iField, int nValue)
  *
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  * @param nValue the value to assign.
- * @since GDAL 2.0
  */
 
 void OGRFeature::SetField(int iField, GIntBig nValue)
@@ -3962,7 +3937,6 @@ void OGRFeature::SetField(int iField, GIntBig nValue)
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  * @param nValue the value to assign.
- * @since GDAL 2.0
  */
 
 void OGR_F_SetFieldInteger64(OGRFeatureH hFeat, int iField, GIntBig nValue)
@@ -4727,7 +4701,6 @@ void OGR_F_SetFieldIntegerList(OGRFeatureH hFeat, int iField, int nCount,
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nCount the number of values in the list being assigned.
  * @param panValues the values to assign.
- * @since GDAL 2.0
  */
 
 void OGRFeature::SetField(int iField, int nCount, const GIntBig *panValues)
@@ -4825,7 +4798,6 @@ void OGRFeature::SetField(int iField, int nCount, const GIntBig *panValues)
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nCount the number of values in the list being assigned.
  * @param panValues the values to assign.
- * @since GDAL 2.0
  */
 
 void OGR_F_SetFieldInteger64List(OGRFeatureH hFeat, int iField, int nCount,
@@ -5360,7 +5332,6 @@ void OGR_F_SetFieldDateTime(OGRFeatureH hFeat, int iField, int nYear,
  * @param fSecond (0-59, with millisecond accuracy)
  * @param nTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
  *
- * @since GDAL 2.0
  */
 
 void OGR_F_SetFieldDateTimeEx(OGRFeatureH hFeat, int iField, int nYear,
@@ -5872,7 +5843,6 @@ char *OGR_F_DumpReadableAsString(OGRFeatureH hFeat, CSLConstList papszOptions)
  * \brief Get feature identifier.
  *
  * This method is the same as the C function OGR_F_GetFID().
- * Note: since GDAL 2.0, this method returns a GIntBig (previously a long)
  *
  * @return feature id or OGRNullFID if none has been assigned.
  */
@@ -5885,7 +5855,6 @@ char *OGR_F_DumpReadableAsString(OGRFeatureH hFeat, CSLConstList papszOptions)
  * \brief Get feature identifier.
  *
  * This function is the same as the C++ method OGRFeature::GetFID().
- * Note: since GDAL 2.0, this method returns a GIntBig (previously a long)
  *
  * @param hFeat handle to the feature from which to get the feature
  * identifier.
@@ -7009,7 +6978,6 @@ void OGR_F_SetStyleTable(OGRFeatureH hFeat, OGRStyleTableH hStyleTable)
  * @param bNotNullableOnly if we should fill only unset fields with a not-null
  *                     constraint.
  * @param papszOptions unused currently. Must be set to NULL.
- * @since GDAL 2.0
  */
 
 void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
@@ -7084,7 +7052,6 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
  * @param bNotNullableOnly if we should fill only unset fields with a not-null
  *                     constraint.
  * @param papszOptions unused currently. Must be set to NULL.
- * @since GDAL 2.0
  */
 
 void OGR_F_FillUnsetWithDefault(OGRFeatureH hFeat, int bNotNullableOnly,
@@ -7119,7 +7086,6 @@ void OGR_F_FillUnsetWithDefault(OGRFeatureH hFeat, int bNotNullableOnly,
  *                       OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM with '|' operator
  * @param bEmitError TRUE if a CPLError() must be emitted when a check fails
  * @return TRUE if all enabled validation tests pass.
- * @since GDAL 2.0
  */
 
 int OGRFeature::Validate(int nValidateFlags, int bEmitError) const
@@ -7239,7 +7205,6 @@ int OGRFeature::Validate(int nValidateFlags, int bEmitError) const
  *                       OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT with '|' operator
  * @param bEmitError TRUE if a CPLError() must be emitted when a check fails
  * @return TRUE if all enabled validation tests pass.
- * @since GDAL 2.0
  */
 
 int OGR_F_Validate(OGRFeatureH hFeat, int nValidateFlags, int bEmitError)
@@ -7277,7 +7242,6 @@ int OGR_F_Validate(OGRFeatureH hFeat, int nValidateFlags, int bEmitError)
  * OGR_F_GetNativeData().
  *
  * @return a string with the native data, or NULL if there is none.
- * @since GDAL 2.1
  *
  * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
  */
@@ -7308,7 +7272,6 @@ int OGR_F_Validate(OGRFeatureH hFeat, int nValidateFlags, int bEmitError)
  *
  * @param hFeat handle to the feature.
  * @return a string with the native data, or NULL if there is none.
- * @since GDAL 2.1
  *
  * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
  */
@@ -7338,7 +7301,6 @@ const char *OGR_F_GetNativeData(OGRFeatureH hFeat)
  * OGR_F_GetNativeMediaType().
  *
  * @return a string with the native media type, or NULL if there is none.
- * @since GDAL 2.1
  *
  * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
  */
@@ -7359,7 +7321,6 @@ const char *OGR_F_GetNativeData(OGRFeatureH hFeat)
  *
  * @param hFeat handle to the feature.
  * @return a string with the native media type, or NULL if there is none.
- * @since GDAL 2.1
  *
  * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
  */
@@ -7387,7 +7348,6 @@ const char *OGR_F_GetNativeMediaType(OGRFeatureH hFeat)
  * OGR_F_SetNativeData().
  *
  * @param pszNativeData a string with the native data, or NULL if there is none.
- * @since GDAL 2.1
  *
  * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
  */
@@ -7416,7 +7376,6 @@ void OGRFeature::SetNativeData(const char *pszNativeData)
  *
  * @param hFeat handle to the feature.
  * @param pszNativeData a string with the native data, or NULL if there is none.
- * @since GDAL 2.1
  *
  * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
  */
@@ -7444,7 +7403,6 @@ void OGR_F_SetNativeData(OGRFeatureH hFeat, const char *pszNativeData)
  *
  * @param pszNativeMediaType a string with the native media type, or NULL if
  * there is none.
- * @since GDAL 2.1
  *
  * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
  */
@@ -7473,7 +7431,6 @@ void OGRFeature::SetNativeMediaType(const char *pszNativeMediaType)
  * @param hFeat handle to the feature.
  * @param pszNativeMediaType a string with the native media type, or NULL if
  * there is none.
- * @since GDAL 2.1
  *
  * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
  */
@@ -7496,7 +7453,6 @@ void OGR_F_SetNativeMediaType(OGRFeatureH hFeat, const char *pszNativeMediaType)
  * code. Use instead OGR_F_IsFieldSet().
  *
  * @param puField pointer to raw field.
- * @since GDAL 2.2
  */
 
 int OGR_RawField_IsUnset(const OGRField *puField)
@@ -7517,7 +7473,6 @@ int OGR_RawField_IsUnset(const OGRField *puField)
  * code. Use instead OGR_F_IsFieldNull().
  *
  * @param puField pointer to raw field.
- * @since GDAL 2.2
  */
 
 int OGR_RawField_IsNull(const OGRField *puField)
@@ -7541,7 +7496,6 @@ int OGR_RawField_IsNull(const OGRField *puField)
  * code. Use instead OGR_F_UnsetField().
  *
  * @param puField pointer to raw field.
- * @since GDAL 2.2
  */
 
 void OGR_RawField_SetUnset(OGRField *puField)
@@ -7565,7 +7519,6 @@ void OGR_RawField_SetUnset(OGRField *puField)
  * code. Use instead OGR_F_SetFieldNull().
  *
  * @param puField pointer to raw field.
- * @since GDAL 2.2
  */
 
 void OGR_RawField_SetNull(OGRField *puField)

@@ -43,8 +43,6 @@
  * the whole OziExplorer .MAP file. The array is terminated by a NULL pointer.
  *
  * @return OGRERR_NONE on success or an error code in case of failure.
- *
- * @since OGR 2.0
  */
 
 OGRErr OSRImportFromOzi(OGRSpatialReferenceH hSRS,

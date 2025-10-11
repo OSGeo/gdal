@@ -119,13 +119,9 @@ can publish a picture without proper georeferencing too.
 
   Disable messages and status to stdout
 
-  .. versionadded:: 2.1
-
 .. option:: --processes=<NB_PROCESSES>
 
   Number of parallel processes to use for tiling, to speed-up the computation.
-
-  .. versionadded:: 2.3
 
 .. option:: --mpi
 

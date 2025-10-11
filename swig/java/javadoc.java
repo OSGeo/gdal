@@ -10700,7 +10700,6 @@ public class SpatialReference:public String GetAuthorityName(String target_key)
  * @param iAxis axis index (starting with 0)
  *
  * @return axis name, or null on failure.
- * @since GDAL 2.1
  */
 public class SpatialReference:public String GetAxisName(String target_key, int iAxis)
 
@@ -10719,7 +10718,6 @@ public class SpatialReference:public String GetAxisName(String target_key, int i
  * @return axis orientation (org.gdal.osr.osr.OAO_Other, org.gdal.osr.osr.OAO_North,
  *         org.gdal.osr.osr.OAO_South, org.gdal.osr.osr.OAO_East,
  *         org.gdal.osr.osr.OAO_West, org.gdal.osr.osr.OAO_Up, org.gdal.osr.osr.OAO_Down), or org.gdal.osr.osr.OAO_Other on failure.
- * @since GDAL 2.1
  */
 public class SpatialReference:public int GetAxisOrientation(String target_key, int iAxis)
 

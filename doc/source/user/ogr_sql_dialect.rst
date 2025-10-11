@@ -387,8 +387,7 @@ most other parts of OGR SQL.
 LIMIT and OFFSET
 ++++++++++++++++
 
-Starting with GDAL 2.2, the ``LIMIT`` clause can be used to limit the
-number of features returned. For example
+The ``LIMIT`` clause can be used to limit the number of features returned. For example
 
 .. code-block::
 

@@ -128,7 +128,6 @@ OGRErr OGRGeometryFactory::createFromWkb(const void *pabyData,
  * @return OGRERR_NONE if all goes well, otherwise any of
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
  * OGRERR_CORRUPT_DATA may be returned.
- * @since GDAL 2.3
  */
 
 OGRErr OGRGeometryFactory::createFromWkb(const void *pabyData,
@@ -470,7 +469,6 @@ OGRErr OGRGeometryFactory::createFromWkt(const char **ppszData,
  * @return OGRERR_NONE if all goes well, otherwise any of
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
  * OGRERR_CORRUPT_DATA may be returned.
- * @since GDAL 2.3
  */
 
 OGRErr OGRGeometryFactory::createFromWkt(const char *pszData,
@@ -767,8 +765,8 @@ void OGR_G_DestroyGeometry(OGRGeometryH hGeom)
  *
  * Tries to force the provided geometry to be a polygon. This effects a change
  * on multipolygons.
- * Starting with GDAL 2.0, curve polygons or closed curves will be changed to
- * polygons.  The passed in geometry is consumed and a new one returned (or
+ * Curve polygons or closed curves will be changed to polygons.
+ * The passed in geometry is consumed and a new one returned (or
  * potentially the same one).
  *
  * Note: the resulting polygon may break the Simple Features rules for polygons,
@@ -4485,7 +4483,7 @@ OGRGeometryH CPL_DLL OGR_G_ApproximateArcAngles(
  *
  * Tries to force the provided geometry to be a line string.  This nominally
  * effects a change on multilinestrings.
- * In GDAL 2.0, for polygons or curvepolygons that have a single exterior ring,
+ * For polygons or curvepolygons that have a single exterior ring,
  * it will return the ring. For circular strings or compound curves, it will
  * return an approximated line string.
  *
@@ -4699,7 +4697,6 @@ OGRGeometryH OGR_G_ForceToLineString(OGRGeometryH hGeom)
  * @param papszOptions options as a null-terminated list of strings or NULL.
  * @return new geometry, or nullptr in case of error.
  *
- * @since GDAL 2.0
  */
 
 OGRGeometry *OGRGeometryFactory::forceTo(OGRGeometry *poGeom,
@@ -5170,7 +5167,6 @@ OGRGeometry *OGRGeometryFactory::forceTo(OGRGeometry *poGeom,
  * @param papszOptions options as a null-terminated list of strings or NULL.
  * @return new geometry.
  *
- * @since GDAL 2.0
  */
 
 OGRGeometryH OGR_G_ForceTo(OGRGeometryH hGeom, OGRwkbGeometryType eTargetType,
@@ -5272,7 +5268,6 @@ OGRGeometryFactory::makeCompatibleWith(std::unique_ptr<OGRGeometry> poGeom,
  * @param alpha2 angle between center and final point, in radians (output)
  * @return TRUE if the points are not aligned and define an arc circle.
  *
- * @since GDAL 2.0
  */
 
 int OGRGeometryFactory::GetCurveParameters(double x0, double y0, double x1,
@@ -5534,7 +5529,6 @@ static bool OGRGF_NeedSwithArcOrder(double x0, double y0, double x2, double y2)
  *
  * @return the converted geometry (ownership to caller).
  *
- * @since GDAL 2.0
  */
 /* clang-format on */
 
@@ -6310,7 +6304,6 @@ static int OGRGF_DetectArc(const OGRLineString *poLS, int i,
  *
  * @return the converted geometry (ownership to caller).
  *
- * @since GDAL 2.0
  */
 
 OGRCurve *OGRGeometryFactory::curveFromLineString(
@@ -6419,7 +6412,6 @@ OGRCurve *OGRGeometryFactory::curveFromLineString(
  * @param nSize (new in GDAL 3.4) Optional length of the string
  *              if it is not null-terminated
  * @return a geometry on success, or NULL on error.
- * @since GDAL 2.3
  */
 OGRGeometry *OGRGeometryFactory::createFromGeoJson(const char *pszJsonString,
                                                    int nSize)
@@ -6442,7 +6434,6 @@ OGRGeometry *OGRGeometryFactory::createFromGeoJson(const char *pszJsonString,
  * @brief Create geometry from GeoJson fragment.
  * @param oJsonObject The JSONObject class describes the GeoJSON geometry.
  * @return a geometry on success, or NULL on error.
- * @since GDAL 2.3
  */
 OGRGeometry *
 OGRGeometryFactory::createFromGeoJson(const CPLJSONObject &oJsonObject)

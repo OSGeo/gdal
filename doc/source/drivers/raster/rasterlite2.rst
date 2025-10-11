@@ -4,8 +4,6 @@
 RasterLite2 - Rasters in SQLite DB
 ================================================================================
 
-.. versionadded:: 2.2
-
 .. shortname:: SQLite
 
 .. note:: The above short name is not a typo.

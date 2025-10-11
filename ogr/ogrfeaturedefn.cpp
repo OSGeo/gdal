@@ -194,7 +194,6 @@ OGRFeatureDefn *OGRFeatureDefn::Clone() const
  * OGRLayer::Rename() instead.
  *
  * @param pszName feature definition name
- * @since GDAL 2.3
  */
 void OGRFeatureDefn::SetName(const char *pszName)
 {
@@ -325,7 +324,6 @@ OGRFieldDefn *OGRFeatureDefn::GetFieldDefn(int iField)
  * @return a pointer to an internal field definition object or NULL if invalid
  * index.  This object should not be modified or freed by the application.
  *
- * @since GDAL 2.3
  */
 
 const OGRFieldDefn *OGRFeatureDefn::GetFieldDefn(int iField) const
@@ -640,7 +638,6 @@ OGRErr OGRFeatureDefn::ReorderFieldDefns(const int *panMap)
  * for each field definition at position i after reordering,
  * its position before reordering was panMap[i].
  * @return OGRERR_NONE in case of success.
- * @since OGR 2.1.0
  */
 
 OGRErr OGR_FD_ReorderFieldDefns(OGRFeatureDefnH hDefn, const int *panMap)
@@ -735,7 +732,6 @@ OGRGeomFieldDefn *OGRFeatureDefn::GetGeomFieldDefn(int iGeomField)
  * @return a pointer to an internal field definition object or NULL if invalid
  * index.  This object should not be modified or freed by the application.
  *
- * @since GDAL 2.3
  */
 
 const OGRGeomFieldDefn *OGRFeatureDefn::GetGeomFieldDefn(int iGeomField) const
@@ -1624,7 +1620,6 @@ int OGR_FD_IsSame(OGRFeatureDefnH hFDefn, OGRFeatureDefnH hOtherFDefn)
  * or empty in case a source field definition was not found in the target layer
  * and bForgiving == true.
  *
- * @since GDAL 2.3
  */
 
 std::vector<int>

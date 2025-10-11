@@ -5390,7 +5390,6 @@ bool VSIS3Handle::CanRestartOnError(const char *pszErrorMsg,
  See :ref:`/vsis3/ documentation <vsis3>`
  \endverbatim
 
- @since GDAL 2.1
  */
 void VSIInstallS3FileHandler(void)
 {

@@ -679,7 +679,6 @@ int OGRGeomFieldDefn::IsSame(const OGRGeomFieldDefn *poOtherFieldDefn) const
  * This method is the same as the C function OGR_GFld_IsNullable().
  *
  * @return TRUE if the field is authorized to be null.
- * @since GDAL 2.0
  */
 
 /************************************************************************/
@@ -708,7 +707,6 @@ int OGRGeomFieldDefn::IsSame(const OGRGeomFieldDefn *poOtherFieldDefn) const
  *
  * @param hDefn handle to the field definition
  * @return TRUE if the field is authorized to be null.
- * @since GDAL 2.0
  */
 
 int OGR_GFld_IsNullable(OGRGeomFieldDefnH hDefn)
@@ -740,7 +738,6 @@ int OGR_GFld_IsNullable(OGRGeomFieldDefnH hDefn)
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
  * @param bNullableIn FALSE if the field must have a not-null constraint.
- * @since GDAL 2.0
  */
 void OGRGeomFieldDefn::SetNullable(int bNullableIn)
 {
@@ -771,7 +768,6 @@ void OGRGeomFieldDefn::SetNullable(int bNullableIn)
  *
  * @param hDefn handle to the field definition
  * @param bNullableIn FALSE if the field must have a not-null constraint.
- * @since GDAL 2.0
  */
 
 void OGR_GFld_SetNullable(OGRGeomFieldDefnH hDefn, int bNullableIn)

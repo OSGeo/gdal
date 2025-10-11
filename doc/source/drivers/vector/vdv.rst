@@ -3,8 +3,6 @@
 VDV - VDV-451/VDV-452/INTREST Data Format
 =========================================
 
-.. versionadded:: 2.1
-
 .. shortname:: VDV
 
 .. built_in_by_default::

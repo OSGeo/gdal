@@ -735,7 +735,6 @@ bool VSISwiftHandle::Authenticate(const char *pszFilename)
  See :ref:`/vsiswift/ documentation <vsiswift>`
  \endverbatim
 
- @since GDAL 2.3
  */
 void VSIInstallSwiftFileHandler(void)
 {

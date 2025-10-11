@@ -173,7 +173,7 @@ GDALDataset *GDALDriver::Open(GDALOpenInfo *poOpenInfo, bool bSetOpenOptions)
  * file handle, but also ensures that all the data and metadata has been written
  * to the dataset (GDALFlushCache() is not sufficient for that purpose).
  *
- * In GDAL 2, the arguments nXSize, nYSize and nBands can be passed to 0 when
+ * The arguments nXSize, nYSize and nBands can be passed to 0 when
  * creating a vector-only dataset for a compatible driver.
  *
  * Equivalent of the C function GDALCreate().
@@ -2734,8 +2734,6 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriver(const char *pszFilename,
  *
  * @return A GDALDriverH handle or NULL on failure.  For C++ applications
  * this handle can be cast to a GDALDriver *.
- *
- * @since GDAL 2.2
  */
 
 GDALDriverH CPL_STDCALL GDALIdentifyDriverEx(

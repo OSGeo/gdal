@@ -191,7 +191,6 @@ class CPL_DLL OGRLayer : public GDALMajorObject
      * OGRFeatureUniquePtr reference is reused.
      *
      * Only one iterator per layer can be active at a time.
-     * @since GDAL 2.3
      */
     FeatureIterator begin();
 
@@ -379,7 +378,6 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     //! @endcond
 
     /** Convert a OGRLayer* to a OGRLayerH.
-     * @since GDAL 2.3
      */
     static inline OGRLayerH ToHandle(OGRLayer *poLayer)
     {
@@ -387,7 +385,6 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     }
 
     /** Convert a OGRLayerH to a OGRLayer*.
-     * @since GDAL 2.3
      */
     static inline OGRLayer *FromHandle(OGRLayerH hLayer)
     {
@@ -468,7 +465,6 @@ class CPL_DLL OGRLayer : public GDALMajorObject
  * std::unique_ptr&lt;OGRFeature&gt; reference is reused.
  *
  * Only one iterator per layer can be active at a time.
- * @since GDAL 2.3
  * @see OGRLayer::begin()
  */
 inline OGRLayer::FeatureIterator begin(OGRLayer *poLayer)
@@ -558,7 +554,7 @@ template <class BaseLayer> class OGRGetNextFeatureThroughRaw
  * When an OGRDataSource is destroyed, all its associated OGRLayers objects
  * are also destroyed.
  *
- * NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the handle of
+ * NOTE: It is *NOT* safe to cast the handle of
  * a C function that returns a OGRDataSourceH to a OGRDataSource*. If a C++
  * object is needed, the handle should be cast to GDALDataset*.
  *
@@ -595,7 +591,7 @@ class CPL_DLL OGRDataSource : public GDALDataset
  * The list of available drivers is normally managed by the
  * OGRSFDriverRegistrar.
  *
- * NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the handle of
+ * NOTE: It is *NOT* safe to cast the handle of
  * a C function that returns a OGRSFDriverH to a OGRSFDriver*. If a C++ object
  * is needed, the handle should be cast to GDALDriver*.
  *

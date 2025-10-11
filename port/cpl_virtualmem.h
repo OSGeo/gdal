@@ -171,8 +171,7 @@ int CPL_DLL CPLIsVirtualMemFileMapAvailable(void);
  * On Linux AMD64 platforms, the maximum value for nLength is 128 TB.
  * On Linux x86 platforms, the maximum value for nLength is 2 GB.
  *
- * Supported on Linux only in GDAL <= 2.0, and all POSIX systems supporting
- * mmap() in GDAL >= 2.1
+ * Supported on all POSIX systems supporting mmap().
  *
  * @param  fp       Virtual file handle.
  * @param  nOffset  Offset in the file to start the mapping from.
@@ -355,7 +354,6 @@ void CPL_DLL CPLVirtualMemPin(CPLVirtualMem *ctxt, void *pAddr, size_t nSize,
  * This function must be called after the last CPLVirtualMem object has
  * been freed.
  *
- * @since GDAL 2.0
  */
 void CPL_DLL CPLVirtualMemManagerTerminate(void);
 

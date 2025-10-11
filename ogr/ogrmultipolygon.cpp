@@ -24,11 +24,6 @@
 
 /**
  * \brief Copy constructor.
- *
- * Note: before GDAL 2.1, only the default implementation of the constructor
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRMultiPolygon::OGRMultiPolygon(const OGRMultiPolygon &) = default;
@@ -39,11 +34,6 @@ OGRMultiPolygon::OGRMultiPolygon(const OGRMultiPolygon &) = default;
 
 /**
  * \brief Assignment operator.
- *
- * Note: before GDAL 2.1, only the default implementation of the operator
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRMultiPolygon &OGRMultiPolygon::operator=(const OGRMultiPolygon &other)

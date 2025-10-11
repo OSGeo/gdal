@@ -675,22 +675,11 @@ libraries :
 
 -  `Poppler <http://poppler.freedesktop.org/>`__ (GPL-licensed)
 -  `PoDoFo <http://podofo.sourceforge.net/>`__ (LGPL-licensed)
--  `PDFium <https://code.google.com/p/pdfium/>`__ (New BSD-licensed,
-   supported since GDAL 2.1.0)
+-  `PDFium <https://code.google.com/p/pdfium/>`__ (New BSD-licensed)
 
 Note: it is also possible to build against a combination of several of
 the above libraries. PDFium will be used in priority over Poppler,
 itself used in priority over PoDoFo.
-
-Unix build
-~~~~~~~~~~
-
-The relevant configure options are --with-poppler, --with-podofo,
---with-podofo-lib and --with-podofo-extra-lib-for-test.
-
-Starting with GDAL 2.1.0, --with-pdfium, --with-pdfium-lib,
---with-pdfium-extra-lib-for-test and --enable-pdf-plugin are also
-available.
 
 Poppler
 ~~~~~~~

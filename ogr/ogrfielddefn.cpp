@@ -538,7 +538,6 @@ void OGR_Fld_SetType(OGRFieldDefnH hDefn, OGRFieldType eType)
  * This method is the same as the C function OGR_Fld_GetSubType().
  *
  * @return field subtype.
- * @since GDAL 2.0
  */
 
 /************************************************************************/
@@ -551,7 +550,6 @@ void OGR_Fld_SetType(OGRFieldDefnH hDefn, OGRFieldType eType)
  *
  * @param hDefn handle to the field definition to get subtype from.
  * @return field subtype.
- * @since GDAL 2.0
  */
 
 OGRFieldSubType OGR_Fld_GetSubType(OGRFieldDefnH hDefn)
@@ -584,7 +582,6 @@ OGRFieldSubType OGR_Fld_GetSubType(OGRFieldDefnH hDefn)
  * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
  * @param eSubTypeIn the new field subtype.
- * @since GDAL 2.0
  */
 void OGRFieldDefn::SetSubType(OGRFieldSubType eSubTypeIn)
 {
@@ -625,7 +622,6 @@ void OGRFieldDefn::SetSubType(OGRFieldSubType eSubTypeIn)
  *
  * @param hDefn handle to the field definition to set type to.
  * @param eSubType the new field subtype.
- * @since GDAL 2.0
  */
 
 void OGR_Fld_SetSubType(OGRFieldDefnH hDefn, OGRFieldSubType eSubType)
@@ -669,7 +665,6 @@ void OGR_Fld_SetSubType(OGRFieldDefnH hDefn, OGRFieldSubType eSubType)
  *
  * @param pszDefaultIn new default field value or NULL pointer.
  *
- * @since GDAL 2.0
  */
 
 void OGRFieldDefn::SetDefault(const char *pszDefaultIn)
@@ -750,7 +745,6 @@ void OGRFieldDefn::SetDefault(const char *pszDefaultIn)
  * @param hDefn handle to the field definition.
  * @param pszDefault new default field value or NULL pointer.
  *
- * @since GDAL 2.0
  */
 
 void CPL_DLL OGR_Fld_SetDefault(OGRFieldDefnH hDefn, const char *pszDefault)
@@ -768,7 +762,6 @@ void CPL_DLL OGR_Fld_SetDefault(OGRFieldDefnH hDefn, const char *pszDefault)
  * This function is the same as the C function OGR_Fld_GetDefault().
  *
  * @return default field value or NULL.
- * @since GDAL 2.0
  */
 
 const char *OGRFieldDefn::GetDefault() const
@@ -788,7 +781,6 @@ const char *OGRFieldDefn::GetDefault() const
  *
  * @param hDefn handle to the field definition.
  * @return default field value or NULL.
- * @since GDAL 2.0
  */
 
 const char *OGR_Fld_GetDefault(OGRFieldDefnH hDefn)
@@ -812,7 +804,6 @@ const char *OGR_Fld_GetDefault(OGRFieldDefnH hDefn)
  * OGR_Fld_IsDefaultDriverSpecific().
  *
  * @return TRUE if the default value is driver specific.
- * @since GDAL 2.0
  */
 
 int OGRFieldDefn::IsDefaultDriverSpecific() const
@@ -852,7 +843,6 @@ int OGRFieldDefn::IsDefaultDriverSpecific() const
  *
  * @param hDefn handle to the field definition
  * @return TRUE if the default value is driver specific.
- * @since GDAL 2.0
  */
 
 int OGR_Fld_IsDefaultDriverSpecific(OGRFieldDefnH hDefn)
@@ -1014,7 +1004,6 @@ const char *OGR_GetFieldTypeName(OGRFieldType eType)
  * @return pointer to an internal static name string. It should not be
  * modified or freed.
  *
- * @since GDAL 2.0
  */
 
 const char *OGRFieldDefn::GetFieldSubTypeName(OGRFieldSubType eSubType)
@@ -1098,7 +1087,6 @@ OGRFieldSubType OGR_GetFieldSubTypeByName(const char *pszName)
  * @param eSubType the field subtype to get name for.
  * @return the name.
  *
- * @since GDAL 2.0
  */
 
 const char *OGR_GetFieldSubTypeName(OGRFieldSubType eSubType)
@@ -1117,7 +1105,6 @@ const char *OGR_GetFieldSubTypeName(OGRFieldSubType eSubType)
  * @param eSubType the field subtype.
  * @return TRUE if type and subtype are compatible
  *
- * @since GDAL 2.0
  */
 
 int OGR_AreTypeSubTypeCompatible(OGRFieldType eType, OGRFieldSubType eSubType)
@@ -1681,7 +1668,6 @@ int OGRFieldDefn::IsSame(const OGRFieldDefn *poOtherFieldDefn) const
  * This method is the same as the C function OGR_Fld_IsNullable().
  *
  * @return TRUE if the field is authorized to be null.
- * @since GDAL 2.0
  */
 
 /************************************************************************/
@@ -1702,7 +1688,6 @@ int OGRFieldDefn::IsSame(const OGRFieldDefn *poOtherFieldDefn) const
  *
  * @param hDefn handle to the field definition
  * @return TRUE if the field is authorized to be null.
- * @since GDAL 2.0
  */
 
 int OGR_Fld_IsNullable(OGRFieldDefnH hDefn)
@@ -1734,7 +1719,6 @@ int OGR_Fld_IsNullable(OGRFieldDefnH hDefn)
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
  * @param bNullableIn FALSE if the field must have a not-null constraint.
- * @since GDAL 2.0
  */
 void OGRFieldDefn::SetNullable(int bNullableIn)
 {
@@ -1770,7 +1754,6 @@ void OGRFieldDefn::SetNullable(int bNullableIn)
  *
  * @param hDefn handle to the field definition
  * @param bNullableIn FALSE if the field must have a not-null constraint.
- * @since GDAL 2.0
  */
 
 void OGR_Fld_SetNullable(OGRFieldDefnH hDefn, int bNullableIn)
@@ -2142,7 +2125,6 @@ void OGR_Fld_SetComment(OGRFieldDefnH hDefn, const char *pszComment)
  * @param poFDefn the field definition whose type must be updated.
  * @param eNewType the new field type to merge into the existing type.
  * @param eNewSubType the new field subtype to merge into the existing subtype.
- * @since GDAL 2.1
  */
 
 void OGRUpdateFieldType(OGRFieldDefn *poFDefn, OGRFieldType eNewType,

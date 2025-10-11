@@ -3,8 +3,6 @@
 NetCDF: Network Common Data Form - Vector
 =========================================
 
-.. versionadded:: 2.1
-
 .. shortname:: netCDF
 
 .. build_dependencies:: libnetcdf

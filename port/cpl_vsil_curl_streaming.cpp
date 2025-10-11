@@ -2124,7 +2124,6 @@ void VSIInstallCurlStreamingFileHandler(void)
  See :ref:`/vsis3_streaming/ documentation <vsis3_streaming>`
  \endverbatim
 
- @since GDAL 2.1
  */
 void VSIInstallS3StreamingFileHandler(void)
 {
@@ -2144,7 +2143,6 @@ void VSIInstallS3StreamingFileHandler(void)
  See :ref:`/vsigs_streaming/ documentation <vsigs_streaming>`
  \endverbatim
 
- @since GDAL 2.2
  */
 
 void VSIInstallGSStreamingFileHandler(void)
@@ -2165,7 +2163,6 @@ void VSIInstallGSStreamingFileHandler(void)
  See :ref:`/vsiaz_streaming/ documentation <vsiaz_streaming>`
  \endverbatim
 
- @since GDAL 2.3
  */
 
 void VSIInstallAzureStreamingFileHandler(void)
@@ -2186,7 +2183,6 @@ void VSIInstallAzureStreamingFileHandler(void)
  See :ref:`/vsioss_streaming/ documentation <vsioss_streaming>`
  \endverbatim
 
- @since GDAL 2.3
  */
 
 void VSIInstallOSSStreamingFileHandler(void)
@@ -2207,7 +2203,6 @@ void VSIInstallOSSStreamingFileHandler(void)
  See :ref:`/vsiswift_streaming/ documentation <vsiswift_streaming>`
  \endverbatim
 
- @since GDAL 2.3
  */
 
 void VSIInstallSwiftStreamingFileHandler(void)

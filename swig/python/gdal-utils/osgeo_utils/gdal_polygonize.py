@@ -275,7 +275,7 @@ class GDALPolygonize(GDALScript):
             type=str,
             default="1",
             help="The band on <raster_file> to build the polygons from. "
-            'Starting with GDAL 2.2, the value can also be set to "mask", '
+            'The value can also be set to "mask", '
             "to indicate that the mask band of the first band must be used "
             '(or "mask,band_number" for the mask of a specified band).',
         )

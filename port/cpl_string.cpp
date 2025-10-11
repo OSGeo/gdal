@@ -683,7 +683,6 @@ int CSLFindString(CSLConstList papszList, const char *pszTarget)
  *
  * @return the index of the string within the list or -1 on failure.
  *
- * @since GDAL 2.0
  */
 
 int CSLFindStringCaseSensitive(CSLConstList papszList, const char *pszTarget)
@@ -1126,7 +1125,6 @@ static const char *CPLvsnprintf_get_end_of_formatting(const char *fmt)
  * @return the number of characters (excluding terminating nul) that would be
  * written if size is big enough. Or potentially -1 with Microsoft C runtime
  * for Visual Studio < 2015.
- * @since GDAL 2.0
  */
 int CPLvsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char *fmt),
                  va_list args)
@@ -1345,7 +1343,6 @@ int CPLvsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char *fmt),
  * @return the number of characters (excluding terminating nul) that would be
  * written if size is big enough. Or potentially -1 with Microsoft C runtime
  * for Visual Studio < 2015.
- * @since GDAL 2.0
  */
 
 int CPLsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char *fmt), ...)
@@ -1375,7 +1372,6 @@ int CPLsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char *fmt), ...)
   * @param ... arguments
   * @return the number of characters (excluding terminating nul) written in
 ` * output buffer.
-  * @since GDAL 2.0
   */
 int CPLsprintf(char *str, CPL_FORMAT_STRING(const char *fmt), ...)
 {
@@ -1401,7 +1397,6 @@ int CPLsprintf(char *str, CPL_FORMAT_STRING(const char *fmt), ...)
  * @param ... arguments
  * @return the number of characters (excluding terminating nul) written in
  * output buffer.
- * @since GDAL 2.0
  */
 int CPLprintf(CPL_FORMAT_STRING(const char *fmt), ...)
 {
@@ -1462,7 +1457,6 @@ int CPLprintf(CPL_FORMAT_STRING(const char *fmt), ...)
  * @param fmt formatting string
  * @param ... arguments
  * @return the number of matched patterns;
- * @since GDAL 2.0
  */
 #ifdef DOXYGEN_XML
 int CPLsscanf(const char *str, const char *fmt, ...)
@@ -3135,7 +3129,6 @@ size_t CPLStrnlen(const char *pszStr, size_t nMaxLen)
  *
  * @return NULL terminated list of strings to free with CSLDestroy()
  *
- * @since GDAL 2.1
  */
 char **CSLParseCommandLine(const char *pszCommandLine)
 {

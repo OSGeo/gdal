@@ -2126,7 +2126,6 @@ void CPL_STDCALL GDALSwapWords(void *pData, int nWordSize, int nWordCount,
  * @param nWordCount the number of words to be swapped in this call.
  * @param nWordSkip the byte offset from the start of one word to the start of
  * the next. For packed buffers this is the same as nWordSize.
- * @since GDAL 2.1
  */
 void CPL_STDCALL GDALSwapWordsEx(void *pData, int nWordSize, size_t nWordCount,
                                  int nWordSkip)

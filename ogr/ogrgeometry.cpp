@@ -101,11 +101,6 @@ OGRGeometry::OGRGeometry() = default;
 
 /**
  * \brief Copy constructor.
- *
- * Note: before GDAL 2.1, only the default implementation of the constructor
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRGeometry::OGRGeometry(const OGRGeometry &other)
@@ -148,11 +143,6 @@ OGRGeometry::~OGRGeometry()
 
 /**
  * \brief Assignment operator.
- *
- * Note: before GDAL 2.1, only the default implementation of the operator
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRGeometry &OGRGeometry::operator=(const OGRGeometry &other)
@@ -500,7 +490,7 @@ void OGR_G_DumpReadable(OGRGeometryH hGeom, FILE *fp, const char *pszPrefix)
  * geometry.  Note that assigning a spatial reference increments the
  * reference count on the OGRSpatialReference, but does not copy it.
  *
- * Starting with GDAL 2.3, this will also assign the spatial reference to
+ * This will also assign the spatial reference to
  * potential sub-geometries of the geometry (OGRGeometryCollection,
  * OGRCurvePolygon/OGRPolygon, OGRCompoundCurve, OGRPolyhedralSurface and their
  * derived classes).
@@ -536,7 +526,7 @@ void OGRGeometry::assignSpatialReference(const OGRSpatialReference *poSR)
  * geometry.  Note that assigning a spatial reference increments the
  * reference count on the OGRSpatialReference, but does not copy it.
  *
- * Starting with GDAL 2.3, this will also assign the spatial reference to
+ * This will also assign the spatial reference to
  * potential sub-geometries of the geometry (OGRGeometryCollection,
  * OGRCurvePolygon/OGRPolygon, OGRCompoundCurve, OGRPolyhedralSurface and their
  * derived classes).
@@ -985,7 +975,6 @@ int OGRGeometry::getCoordinateDimension() const
  *
  * @return this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
  *
- * @since GDAL 2.1
  */
 
 int OGRGeometry::CoordinateDimension() const
@@ -1041,7 +1030,6 @@ int OGR_G_GetCoordinateDimension(OGRGeometryH hGeom)
  *
  * @return this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
  *
- * @since GDAL 2.1
  */
 
 int OGR_G_CoordinateDimension(OGRGeometryH hGeom)
@@ -1062,7 +1050,6 @@ int OGR_G_CoordinateDimension(OGRGeometryH hGeom)
  * @param hGeom handle on the geometry to check whether it has Z coordinates.
  *
  * @return TRUE if the geometry has Z coordinates.
- * @since GDAL 2.1
  */
 
 int OGR_G_Is3D(OGRGeometryH hGeom)
@@ -1083,7 +1070,6 @@ int OGR_G_Is3D(OGRGeometryH hGeom)
  * @param hGeom handle on the geometry to check whether it is measured.
  *
  * @return TRUE if the geometry has M coordinates.
- * @since GDAL 2.1
  */
 
 int OGR_G_IsMeasured(OGRGeometryH hGeom)
@@ -1134,7 +1120,6 @@ bool OGRGeometry::setCoordinateDimension(int nNewDimension)
  *
  * @param bIs3D Should the geometry have a Z dimension, either TRUE or FALSE.
  * @return (since 3.10) true in case of success, false in case of memory allocation error
- * @since GDAL 2.1
  */
 
 bool OGRGeometry::set3D(OGRBoolean bIs3D)
@@ -1159,7 +1144,6 @@ bool OGRGeometry::set3D(OGRBoolean bIs3D)
  * @param bIsMeasured Should the geometry have a M dimension, either
  * TRUE or FALSE.
  * @return (since 3.10) true in case of success, false in case of memory allocation error
- * @since GDAL 2.1
  */
 
 bool OGRGeometry::setMeasured(OGRBoolean bIsMeasured)
@@ -1215,7 +1199,6 @@ void OGR_G_SetCoordinateDimension(OGRGeometryH hGeom, int nNewDimension)
  *
  * @param hGeom handle on the geometry to set or unset the Z dimension.
  * @param bIs3D Should the geometry have a Z dimension, either TRUE or FALSE.
- * @since GDAL 2.1
  */
 
 void OGR_G_Set3D(OGRGeometryH hGeom, int bIs3D)
@@ -1242,7 +1225,6 @@ void OGR_G_Set3D(OGRGeometryH hGeom, int bIs3D)
  * @param hGeom handle on the geometry to set or unset the M dimension.
  * @param bIsMeasured Should the geometry have a M dimension, either
  * TRUE or FALSE.
- * @since GDAL 2.1
  */
 
 void OGR_G_SetMeasured(OGRGeometryH hGeom, int bIsMeasured)
@@ -1551,7 +1533,6 @@ OGRErr OGRGeometry::importFromWkb(const GByte *pabyData, size_t nSize,
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
  * OGRERR_CORRUPT_DATA may be returned.
  *
- * @since GDAL 2.3
  */
 
 /************************************************************************/
@@ -1685,7 +1666,6 @@ OGRErr OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
  *
  * @return Currently OGRERR_NONE is always returned.
  *
- * @since GDAL 2.0
  */
 
 OGRErr OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
@@ -2051,7 +2031,6 @@ OGRErr OGR_G_ExportToWkt(OGRGeometryH hGeom, char **ppszSrcText)
  *
  * @return Currently OGRERR_NONE is always returned.
  *
- * @since GDAL 2.0
  */
 
 OGRErr OGR_G_ExportToIsoWkt(OGRGeometryH hGeom, char **ppszSrcText)
@@ -2984,7 +2963,6 @@ OGRwkbGeometryType OGRMergeGeometryTypes(OGRwkbGeometryType eMain,
  *
  * @return the merged geometry type.
  *
- * @since GDAL 2.0
  */
 
 OGRwkbGeometryType OGRMergeGeometryTypesEx(OGRwkbGeometryType eMain,
@@ -3083,7 +3061,7 @@ void OGR_G_FlattenTo2D(OGRGeometryH hGeom)
  *
  * The supported options are :
  * <ul>
- * <li> FORMAT=GML2/GML3/GML32 (GML2 or GML32 added in GDAL 2.1).
+ * <li> FORMAT=GML2/GML3/GML32.
  *      If not set, it will default to GML 2.1.2 output.
  * </li>
  * <li> GML3_LINESTRING_ELEMENT=curve. (Only valid for FORMAT=GML3)
@@ -3100,8 +3078,8 @@ void OGR_G_FlattenTo2D(OGRGeometryH hGeom)
  *      If set to NO, SRS with EPSG authority will be written with the "EPSG:"
  *      prefix, even if they are in lat/long order.
  * </li>
- * <li> SRSNAME_FORMAT=SHORT/OGC_URN/OGC_URL (Only valid for FORMAT=GML3, added
- *      in GDAL 2.2). Defaults to OGC_URN.  If SHORT, then srsName will be in
+ * <li> SRSNAME_FORMAT=SHORT/OGC_URN/OGC_URL (Only valid for FORMAT=GML3).
+ *      Defaults to OGC_URN.  If SHORT, then srsName will be in
  *      the form AUTHORITY_NAME:AUTHORITY_CODE. If OGC_URN, then srsName will be
  *      in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE. If OGC_URL,
  *      then srsName will be in the form
@@ -3115,7 +3093,7 @@ void OGR_G_FlattenTo2D(OGRGeometryH hGeom)
  *      Required for GML 3.2 compatibility.
  * </li>
  * <li> SRSDIMENSION_LOC=POSLIST/GEOMETRY/GEOMETRY,POSLIST. (Only valid for
- *      FORMAT=GML3/GML32, GDAL >= 2.0) Default to POSLIST.
+ *      FORMAT=GML3/GML32) Default to POSLIST.
  *      For 2.5D geometries, define the location where to attach the
  *      srsDimension attribute.
  *      There are diverging implementations. Some put in on the
@@ -3469,7 +3447,6 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt,
  *
  * @return TRUE if this geometry is or has curve geometry.
  *
- * @since GDAL 2.0
  */
 
 OGRBoolean OGRGeometry::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
@@ -3501,7 +3478,6 @@ OGRBoolean OGRGeometry::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
  *
  * @return a new geometry to be freed by the caller, or NULL if an error occurs.
  *
- * @since GDAL 2.0
  */
 
 OGRGeometry *
@@ -3536,7 +3512,6 @@ OGRGeometry::getLinearGeometry(CPL_UNUSED double dfMaxAngleStepSizeDegrees,
  *
  * @return a new geometry to be freed by the caller, or NULL if an error occurs.
  *
- * @since GDAL 2.0
  */
 
 OGRGeometry *
@@ -3695,7 +3670,6 @@ double OGR_G_Distance(OGRGeometryH hFirst, OGRGeometryH hOther)
  * This function is the same as the C function OGR_G_Distance3D().
  *
  * @return distance between the two geometries
- * @since GDAL 2.2
  */
 
 double OGRGeometry::Distance3D(
@@ -3763,7 +3737,6 @@ double OGRGeometry::Distance3D(
  * @param hFirst the first geometry to compare against.
  * @param hOther the other geometry to compare against.
  * @return distance between the two geometries
- * @since GDAL 2.2
  *
  * @return the distance between the geometries or -1 if an error occurs.
  */
@@ -6697,8 +6670,6 @@ OGRGeometryH OGR_G_SetPrecision(OGRGeometryH hThis, double dfGridSize,
  *                   return a GEOMETRYCOLLECTION containing triangular POLYGONs.
  *
  * @return a new geometry to be freed by the caller, or NULL if an error occurs.
- *
- * @since OGR 2.1
  */
 
 #ifndef HAVE_GEOS
@@ -6750,8 +6721,6 @@ OGRGeometry *OGRGeometry::DelaunayTriangulation(double dfTolerance,
  *
  * @return a new geometry to be freed by the caller with OGR_G_DestroyGeometry,
  * or NULL if an error occurs.
- *
- * @since OGR 2.1
  */
 
 OGRGeometryH OGR_G_DelaunayTriangulation(OGRGeometryH hThis, double dfTolerance,
@@ -7093,7 +7062,6 @@ void OGRGeometry::swapXY()
  * \brief Swap x and y coordinates.
  *
  * @param hGeom geometry.
- * @since OGR 2.3.0
  */
 
 void OGR_G_SwapXY(OGRGeometryH hGeom)
@@ -7689,7 +7657,6 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt(
  *
  * @return 2D geometry type corresponding to the passed geometry type.
  *
- * @since GDAL 2.0
  */
 
 OGRwkbGeometryType OGR_GT_Flatten(OGRwkbGeometryType eType)
@@ -7714,7 +7681,6 @@ OGRwkbGeometryType OGR_GT_Flatten(OGRwkbGeometryType eType)
  *
  * @return TRUE if the geometry type is a 3D geometry type.
  *
- * @since GDAL 2.0
  */
 
 int OGR_GT_HasZ(OGRwkbGeometryType eType)
@@ -7738,7 +7704,6 @@ int OGR_GT_HasZ(OGRwkbGeometryType eType)
  *
  * @return TRUE if the geometry type is a measured type.
  *
- * @since GDAL 2.1
  */
 
 int OGR_GT_HasM(OGRwkbGeometryType eType)
@@ -7761,7 +7726,6 @@ int OGR_GT_HasM(OGRwkbGeometryType eType)
  *
  * @return 3D geometry type corresponding to the passed geometry type.
  *
- * @since GDAL 2.0
  */
 
 OGRwkbGeometryType OGR_GT_SetZ(OGRwkbGeometryType eType)
@@ -7785,7 +7749,6 @@ OGRwkbGeometryType OGR_GT_SetZ(OGRwkbGeometryType eType)
  *
  * @return measured geometry type corresponding to the passed geometry type.
  *
- * @since GDAL 2.1
  */
 
 OGRwkbGeometryType OGR_GT_SetM(OGRwkbGeometryType eType)
@@ -7812,7 +7775,6 @@ OGRwkbGeometryType OGR_GT_SetM(OGRwkbGeometryType eType)
  *
  * @return Output geometry type.
  *
- * @since GDAL 2.0
  */
 
 OGRwkbGeometryType OGR_GT_SetModifier(OGRwkbGeometryType eType, int bHasZ,
@@ -7839,7 +7801,6 @@ OGRwkbGeometryType OGR_GT_SetModifier(OGRwkbGeometryType eType, int bHasZ,
  *
  * @return TRUE if eType is a subclass of eSuperType.
  *
- * @since GDAL 2.0
  */
 
 int OGR_GT_IsSubClassOf(OGRwkbGeometryType eType, OGRwkbGeometryType eSuperType)
@@ -7903,7 +7864,6 @@ int OGR_GT_IsSubClassOf(OGRwkbGeometryType eType, OGRwkbGeometryType eSuperType)
  * @return the collection type that can contain the passed geometry type or
  * wkbUnknown
  *
- * @since GDAL 2.0
  */
 
 OGRwkbGeometryType OGR_GT_GetCollection(OGRwkbGeometryType eType)
@@ -8017,7 +7977,6 @@ OGRwkbGeometryType OGR_GT_GetSingle(OGRwkbGeometryType eType)
  *
  * @return the curve type that can contain the passed geometry type
  *
- * @since GDAL 2.0
  */
 
 OGRwkbGeometryType OGR_GT_GetCurve(OGRwkbGeometryType eType)
@@ -8067,7 +8026,6 @@ OGRwkbGeometryType OGR_GT_GetCurve(OGRwkbGeometryType eType)
  *
  * @return the non-curve type that can contain the passed geometry type
  *
- * @since GDAL 2.0
  */
 
 OGRwkbGeometryType OGR_GT_GetLinear(OGRwkbGeometryType eType)
@@ -8109,7 +8067,6 @@ OGRwkbGeometryType OGR_GT_GetLinear(OGRwkbGeometryType eType)
  * @param eGeomType the geometry type
  * @return TRUE if the geometry type is an instance of Curve
  *
- * @since GDAL 2.0
  */
 
 int OGR_GT_IsCurve(OGRwkbGeometryType eGeomType)
@@ -8130,7 +8087,6 @@ int OGR_GT_IsCurve(OGRwkbGeometryType eGeomType)
  * @param eGeomType the geometry type
  * @return TRUE if the geometry type is an instance of Surface
  *
- * @since GDAL 2.0
  */
 
 int OGR_GT_IsSurface(OGRwkbGeometryType eGeomType)
@@ -8152,7 +8108,6 @@ int OGR_GT_IsSurface(OGRwkbGeometryType eGeomType)
  * @param eGeomType the geometry type
  * @return TRUE if the geometry type is a non-linear geometry type.
  *
- * @since GDAL 2.0
  */
 
 int OGR_GT_IsNonLinear(OGRwkbGeometryType eGeomType)

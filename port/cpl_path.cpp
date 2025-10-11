@@ -1517,7 +1517,6 @@ std::string CPLExpandTildeSafe(const char *pszFilename)
  *
  * @return an expanded filename.
  *
- * @since GDAL 2.2
  *
  * @deprecated If using C++, prefer using CPLExpandTildeSafe() instead
  */
@@ -1541,7 +1540,6 @@ const char *CPLExpandTilde(const char *pszFilename)
  *
  * @return the home directory, or NULL.
  *
- * @since GDAL 2.3
  */
 
 const char *CPLGetHomeDir()

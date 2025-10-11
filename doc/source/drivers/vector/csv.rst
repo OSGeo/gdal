@@ -49,14 +49,13 @@ and precision of each column, e.g.
 "Integer(5)","Real(10.7)","String(15)". The driver will then use these
 types as specified for the csv columns. Subtypes
 can be passed between parenthesis, such as "Integer(Boolean)",
-"Integer(Int16)" and "Real(Float32)". Starting with GDAL 2.1,
-accordingly with the `GeoCSV
+"Integer(Int16)" and "Real(Float32)". Accordingly with the `GeoCSV
 specification <http://giswiki.hsr.ch/GeoCSV>`__, the "CoordX" or
 "Point(X)" type can be used to specify a column with longitude/easting
 values, "CoordY" or "Point(Y)" for latitude/northing values and "WKT"
 for geometries encoded in WKT
 
-Starting with GDAL 2.2, the "JSonStringList", "JSonIntegerList",
+The "JSonStringList", "JSonIntegerList",
 "JSonInteger64List" and "JSonRealList" types can be used in .csvt to map
 to the corresponding OGR StringList, IntegerList, Integer64List and
 RealList types. The field values are then encoded as JSON arrays, with
@@ -101,7 +100,7 @@ names is all numeric it is assumed that the first line is actually data
 values and dummy field names are generated internally (field_1 through
 field_n) and the first record is treated as a feature.
 Numeric values are treated as field names if they are
-enclosed in double quotes. Starting with GDAL 2.1, this behavior can be
+enclosed in double quotes. This behavior can be
 modified via the HEADERS open option.
 
 All CSV files are treated as UTF-8 encoded. A
@@ -147,7 +146,7 @@ Consider the following CSV file (test.csv):
    49.2,1.1,"Second point"
    47.5,0.75,"Third point"
 
-Starting with GDAL 2.1, it is possible to directly specify the potential
+It is possible to directly specify the potential
 names of the columns that can contain X/longitude and Y/latitude with
 the :oo:`X_POSSIBLE_NAMES` and :oo:`Y_POSSIBLE_NAMES` open option.
 
@@ -428,8 +427,8 @@ Creation Issues
 
 The driver supports creating new databases (as a directory of .csv
 files), adding new .csv files to an existing directory or .csv files or
-appending features to an existing .csv table. Starting with GDAL 2.1,
-deleting or replacing existing features, or adding/modifying/deleting
+appending features to an existing .csv table.
+Deleting or replacing existing features, or adding/modifying/deleting
 fields is supported, provided the modifications done are small enough to
 be stored in RAM temporarily before flushing to disk.
 
@@ -599,8 +598,7 @@ The CSV driver can also read files whose structure is close to CSV files
 Other Notes
 -----------
 
--  `GeoCSV specification <http://giswiki.hsr.ch/GeoCSV>`__ (supported by
-   GDAL >= 2.1)
+-  `GeoCSV specification <http://giswiki.hsr.ch/GeoCSV>`__
 -  Initial development of the OGR CSV driver was supported by `DM
    Solutions Group <http://www.dmsolutions.ca/>`__ and
    `GoMOOS <http://www.gomoos.org/>`__.

@@ -947,7 +947,6 @@ struct curl_slist *VSIGSHandle::GetCurlHeaders(const std::string &osVerb,
  See :ref:`/vsigs/ documentation <vsigs>`
  \endverbatim
 
- @since GDAL 2.2
  */
 
 void VSIInstallGSFileHandler(void)

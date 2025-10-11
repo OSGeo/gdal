@@ -169,7 +169,7 @@ void CPL_STDCALL GDALSetCacheMax64(GIntBig nNewSizeInBytes)
  *
  * The first type this function is called, it will read the GDAL_CACHEMAX
  * configuration option to initialize the maximum cache memory.
- * Starting with GDAL 2.1, the value can be expressed as x% of the usable
+ * The value can be expressed as x% of the usable
  * physical RAM (which may potentially be used by other processes). Otherwise
  * it is expected to be a value in MB.
  *
@@ -204,7 +204,7 @@ int CPL_STDCALL GDALGetCacheMax()
  *
  * The first time this function is called, it will read the GDAL_CACHEMAX
  * configuration option to initialize the maximum cache memory.
- * Starting with GDAL 2.1, the value can be expressed as x% of the usable
+ * The value can be expressed as x% of the usable
  * physical RAM (which may potentially be used by other processes). Starting
  * with GDAL 3.11, the value can include units of memory. If not units are
  * provided the value is assumed to be in MB.
@@ -458,7 +458,6 @@ int GDALRasterBlock::FlushCacheBlock(int bDirtyBlocksOnly)
  * Calling this method before that code can help to work around that issue,
  * in a multiple readers, one writer scenario.
  *
- * @since GDAL 2.0
  */
 
 void GDALRasterBlock::FlushDirtyBlocks()
@@ -486,7 +485,6 @@ void GDALRasterBlock::FlushDirtyBlocks()
  *
  * This call must be paired with a corresponding LeaveDisableDirtyBlockFlush().
  *
- * @since GDAL 2.2.2
  */
 
 void GDALRasterBlock::EnterDisableDirtyBlockFlush()
@@ -503,7 +501,6 @@ void GDALRasterBlock::EnterDisableDirtyBlockFlush()
  *
  * Undoes the effect of EnterDisableDirtyBlockFlush().
  *
- * @since GDAL 2.2.2
  */
 
 void GDALRasterBlock::LeaveDisableDirtyBlockFlush()

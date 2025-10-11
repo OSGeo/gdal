@@ -202,12 +202,12 @@ resampling, and rescaling pixels in the process.
         be transformed into the dataset SRS and used to select a subwindow.
         Before GDAL 3.11, only the two corner points were transformed into the
         dataset SRS, and these two transformed points were used to define an extent
-        in the dataset SRS. Depending on the SRS involved, the subwindow selected in 
+        in the dataset SRS. Depending on the SRS involved, the subwindow selected in
         GDAL 3.11 may be substantially larger than in previous versions.
 
     .. note::
 
-        When using nearest-neighbor resampling, the window specified by 
+        When using nearest-neighbor resampling, the window specified by
         :option:`-projwin` is expanded (rounded, for GDAL < 3.11) if necessary
         to match input pixel boundaries. For other resampling algorithms, the window
         is not modified.
@@ -259,8 +259,6 @@ resampling, and rescaling pixels in the process.
     ``gdal_translate input.tif tmp.vrt -a_scale scale -a_offset offset`` followed by
     ``gdal_translate tmp.vrt output.tif -unscale``
 
-    .. versionadded:: 2.3
-
 .. option:: -a_offset <value>
 
     Set band offset value. No modification of pixel values is done.
@@ -269,8 +267,6 @@ resampling, and rescaling pixels in the process.
     apply a (offset, scale) tuple, for the equivalent of the 2 steps:
     ``gdal_translate input.tif tmp.vrt -a_scale scale -a_offset offset`` followed by
     ``gdal_translate tmp.vrt output.tif -unscale``
-
-    .. versionadded:: 2.3
 
 .. option:: -a_ullr <ulx> <uly> <lrx> <lry>
 
@@ -303,14 +299,10 @@ resampling, and rescaling pixels in the process.
     Override the color interpretation of band X (where X is a valid band number,
     starting at 1)
 
-    .. versionadded:: 2.3
-
 .. option:: -colorinterp {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...},...
 
     Override the color interpretation of all specified bands. For
     example -colorinterp red,green,blue,alpha for a 4 band output dataset.
-
-    .. versionadded:: 2.3
 
 .. option:: -mo <META-TAG>=<VALUE>
 
@@ -437,8 +429,6 @@ C API
 -----
 
 This utility is also callable from C with :cpp:func:`GDALTranslate`.
-
-.. versionadded:: 2.1
 
 Examples
 --------

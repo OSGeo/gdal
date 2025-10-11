@@ -37,11 +37,6 @@ static inline double dist(double x0, double y0, double x1, double y1)
 
 /**
  * \brief Copy constructor.
- *
- * Note: before GDAL 2.1, only the default implementation of the constructor
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRCircularString::OGRCircularString(const OGRCircularString &) = default;
@@ -52,11 +47,6 @@ OGRCircularString::OGRCircularString(const OGRCircularString &) = default;
 
 /**
  * \brief Assignment operator.
- *
- * Note: before GDAL 2.1, only the default implementation of the operator
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRCircularString &OGRCircularString::operator=(const OGRCircularString &other)

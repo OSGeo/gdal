@@ -663,7 +663,6 @@ int CPLGetCurrentThreadCount();
 VSI_RETVAL VSIMkdir(const char *utf8_path, int mode );
 VSI_RETVAL VSIRmdir(const char *utf8_path );
 
-/* Added for GDAL 2.3 */
 VSI_RETVAL VSIMkdirRecursive(const char *utf8_path, int mode );
 VSI_RETVAL VSIRmdirRecursive(const char *utf8_path );
 

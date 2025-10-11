@@ -1711,7 +1711,7 @@ bool OGRLayer::ValidateGeometryFieldIndexForSetSpatialFilter(
  will be returned.  This can result in more shapes being returned that
  should strictly be the case.
 
- Starting with GDAL 2.3, features with null or empty geometries will never
+ Features with null or empty geometries will never
  be considered as matching a spatial filter.
 
  This method makes an internal copy of the passed geometry.  The
@@ -1844,7 +1844,7 @@ OGRErr OGRLayer::ISetSpatialFilter(int iGeomField, const OGRGeometry *poFilter)
  will be returned.  This can result in more shapes being returned that
  should strictly be the case.
 
- Starting with GDAL 2.3, features with null or empty geometries will never
+ Features with null or empty geometries will never
  be considered as matching a spatial filter.
 
  This function makes an internal copy of the passed geometry.  The

@@ -7,15 +7,12 @@ Elasticsearch: Geographically Encoded Objects for Elasticsearch
 
 .. build_dependencies:: libcurl
 
-| Driver is read-write starting with GDAL 2.1
-| As of GDAL 2.1, Elasticsearch 1.X and, partially, 2.X versions are
-  supported (5.0 known not to work). GDAL 2.2 adds supports for
-  Elasticsearch 2.X and 5.X
-
 `Elasticsearch <http://elasticsearch.org/>`__ is an Enterprise-level
 search engine for a variety of data sources. It supports full-text
 indexing and geospatial querying of those data in a fast and efficient
 manor using a predefined REST API.
+
+The driver is known to support ElasticSearch 5.
 
 Driver capabilities
 -------------------
@@ -27,7 +24,7 @@ Driver capabilities
 Opening dataset name syntax
 ---------------------------
 
-Starting with GDAL 2.1, the driver supports reading existing indices
+The driver supports reading existing indices
 from a Elasticsearch host. There are two main possible syntaxes to open
 a dataset:
 
@@ -171,12 +168,6 @@ with text fields within Elasticsearch.
 Geometry types
 --------------
 
-In GDAL 2.0 and earlier, the driver was limited in the geometry it
-handles: even if polygons were provided as input, they were stored as
-`geo
-point <http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html>`__
-and the "center" of the polygon is used as value of the point. Starting
-with GDAL 2.1,
 `geo_shape <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html>`__
 is used to store all geometry types (except curve geometries that are
 not handled by Elasticsearch and will be approximated to their linear
@@ -188,7 +179,7 @@ Filtering
 The driver will forward any spatial filter set with SetSpatialFilter()
 to the server.
 
-Starting with GDAL 2.2, SQL attribute filters set with
+SQL attribute filters set with
 SetAttributeFilter() are converted to `Elasticsearch filter
 syntax <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html>`__.
 They will be combined with the potentially defined spatial filter.
@@ -246,7 +237,7 @@ at all.
 ExecuteSQL() interface
 ----------------------
 
-Starting with GDAL 2.2, SQL requests, involving a single layer, with
+SQL requests, involving a single layer, with
 WHERE and ORDER BY statements will be translated as Elasticsearch
 queries.
 
@@ -447,8 +438,7 @@ Layer creation options
 ----------------------
 
 |about-layer-creation-options|
-Starting with GDAL 2.1, the driver supports the following layer creation
-options:
+The driver supports the following layer creation options:
 
 -  .. lco:: INDEX_NAME
 
@@ -513,8 +503,8 @@ options:
 
       Mapping type for geometry fields. GEO_POINT uses the
       `geo_point <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html>`__
-      mapping type. If used, the "centroid" of the geometry is used. This
-      is the behavior of GDAL < 2.1. GEO_SHAPE uses the
+      mapping type. If used, the "centroid" of the geometry is used.
+      GEO_SHAPE uses the
       `geo_shape <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html>`__
       mapping type, compatible of all geometry types. When using AUTO, for
       geometry fields of type Point, a geo_point is used. In other cases,
@@ -542,8 +532,7 @@ options:
       Whether fields should be stored in the
       index. Setting to YES sets the `"store"
       property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
-      of the field mapping to "true" for all fields. (Note:
-      prior to GDAL 2.1, the default behavior was to store fields) This
+      of the field mapping to "true" for all fields. This
       option is without effect if :lco:`MAPPING` is specified.
 
 -  .. lco:: STORED_FIELDS
@@ -563,8 +552,8 @@ options:
       property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
       of the field mapping set to "not_analyzed" (the default in
       Elasticsearch is "analyzed"). A same field should not be specified
-      both in :lco:`NOT_ANALYZED_FIELDS` and ::lco:`NOT_INDEXED_FIELDS`. Starting with
-      GDAL 2.2, the {ALL} value can be used to designate all fields. This
+      both in :lco:`NOT_ANALYZED_FIELDS` and ::lco:`NOT_INDEXED_FIELDS`.
+      The {ALL} value can be used to designate all fields. This
       option is without effect if :lco:`MAPPING` is specified.
 
 -  .. lco:: NOT_INDEXED_FIELDS
@@ -623,7 +612,7 @@ Configuration options
 
 |about-config-options|
 The following (deprecated) configuration options are
-available. Starting with GDAL 2.1, layer creation options are also available
+available. Layer creation options are also available
 and should be preferred (see above):
 
 -  .. config:: ES_WRITEMAP
@@ -632,14 +621,14 @@ and should be preferred (see above):
       Creates a mapping file that
       can be modified by the user prior to insert in to the index. No
       feature will be written. Note that this will properly work only if
-      only one single layer is created. Starting with GDAL 2.1, the
+      only one single layer is created. The
       :lco:`WRITE_MAPPING` layer creation option should be used instead.
 
 -  .. config:: ES_META
       :choices: <filename>
 
       Tells the driver to the
-      user-defined field mappings. Starting with GDAL 2.1, the lco:`MAPPING`
+      user-defined field mappings. The lco:`MAPPING`
       layer creation option should be used instead.
 
 -  .. config:: ES_BULK
@@ -649,7 +638,7 @@ and should be preferred (see above):
       Identifies the maximum size in bytes of the
       buffer to store documents to be inserted at a time. Lower record
       counts help with memory consumption within Elasticsearch but take
-      longer to insert. Starting with GDAL 2.1, the :lco:`BULK_SIZE` layer
+      longer to insert. The :lco:`BULK_SIZE` layer
       creation option should be used instead.
 
 -  .. config:: ES_OVERWRITE
@@ -657,7 +646,7 @@ and should be preferred (see above):
       :default: NO
 
       Overwrites the current index by deleting an
-      existing one. Starting with GDAL 2.1, the :lco:`OVERWRITE` layer
+      existing one. The :lco:`OVERWRITE` layer
       creation option should be used instead.
 
 Examples
@@ -710,22 +699,10 @@ with text fields.
 
 ::
 
-   ogr2ogr -progress --config ES_WRITEMAP /path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
-
-or (GDAL >= 2.1):
-
-::
-
    ogr2ogr -progress -lco WRITE_MAPPING=/path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
 **Read the Mapping File:** Reads the mapping file during the
 transformation
-
-::
-
-   ogr2ogr -progress --config ES_META /path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
-
-or (GDAL >= 2.1):
 
 ::
 
@@ -738,22 +715,10 @@ considerations <https://www.elastic.co/guide/en/elasticsearch/guide/current/bulk
 
 ::
 
-   ogr2ogr -progress --config ES_BULK 5000000 -f "Elasticsearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
-
-or (GDAL >= 2.1):
-
-::
-
    ogr2ogr -progress -lco BULK_SIZE=5000000 -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
 **Overwrite the current Index:** If specified, this will overwrite the
 current index. Otherwise, the data will be appended.
-
-::
-
-   ogr2ogr -progress --config ES_OVERWRITE 1 -f "Elasticsearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
-
-or (GDAL >= 2.1):
 
 ::
 

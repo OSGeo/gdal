@@ -126,7 +126,7 @@ OGRErr OGRReleaseDataSource(OGRDataSourceH hDS)
 
 int OGRSFDriverRegistrar::GetOpenDSCount()
 {
-    CPLError(CE_Failure, CPLE_AppDefined, "Stub implementation in GDAL 2.0");
+    CPLError(CE_Failure, CPLE_AppDefined, "Stub implementation");
     return 0;
 }
 
@@ -146,7 +146,7 @@ int OGRGetOpenDSCount()
 
 OGRDataSource *OGRSFDriverRegistrar::GetOpenDS(CPL_UNUSED int iDS)
 {
-    CPLError(CE_Failure, CPLE_AppDefined, "Stub implementation in GDAL 2.0");
+    CPLError(CE_Failure, CPLE_AppDefined, "Stub implementation");
     return nullptr;
 }
 

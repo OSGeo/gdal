@@ -220,8 +220,6 @@ parameters:
 invdistnn
 +++++++++
 
-.. versionadded:: 2.1
-
 Inverse distance to a power with nearest neighbor searching, ideal when
 max_points is used. It has following parameters:
 
@@ -329,8 +327,6 @@ Nearest neighbor algorithm. It has following parameters:
 
 linear
 ++++++
-
-.. versionadded:: 2.1
 
 Linear interpolation algorithm.
 

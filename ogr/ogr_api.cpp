@@ -1920,7 +1920,6 @@ bool OGR_G_IsClockwise(OGRGeometryH hGeom)
  * contains a CIRCULARSTRING.
  * @return TRUE if this geometry is or has curve geometry.
  *
- * @since GDAL 2.0
  */
 
 int OGR_G_HasCurveGeometry(OGRGeometryH hGeom, int bLookForNonLinear)
@@ -1956,7 +1955,6 @@ int OGR_G_HasCurveGeometry(OGRGeometryH hGeom, int bLookForNonLinear)
  *
  * @return a new geometry.
  *
- * @since GDAL 2.0
  */
 
 OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry(OGRGeometryH hGeom,
@@ -1994,7 +1992,6 @@ OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry(OGRGeometryH hGeom,
  *
  * @return a new geometry.
  *
- * @since GDAL 2.0
  */
 
 OGRGeometryH CPL_DLL OGR_G_GetCurveGeometry(OGRGeometryH hGeom,
@@ -2021,7 +2018,6 @@ OGRGeometryH CPL_DLL OGR_G_GetCurveGeometry(OGRGeometryH hGeom,
  *                   for this curve.
  * @return a point or NULL.
  *
- * @since GDAL 2.0
  */
 
 OGRGeometryH OGR_G_Value(OGRGeometryH hGeom, double dfDistance)
@@ -2065,7 +2061,6 @@ OGRGeometryH OGR_G_Value(OGRGeometryH hGeom, double dfDistance)
  *              FALSE to ask for non-linear geometries to be approximated as
  *              linear geometries.
  *
- * @since GDAL 2.0
  */
 
 void OGRSetNonLinearGeometriesEnabledFlag(int bFlag)
@@ -2084,7 +2079,6 @@ void OGRSetNonLinearGeometriesEnabledFlag(int bFlag)
  * return TRUE if non-linear geometries might be returned (default value is
  * TRUE).
  *
- * @since GDAL 2.0
  * @see OGRSetNonLinearGeometriesEnabledFlag()
  */
 

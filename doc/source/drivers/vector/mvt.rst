@@ -3,8 +3,6 @@
 MVT: Mapbox Vector Tiles
 ========================
 
-.. versionadded:: 2.3
-
 .. shortname:: MVT
 
 .. build_dependencies:: (requires SQLite and GEOS for write support)

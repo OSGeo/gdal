@@ -378,7 +378,7 @@ inline void QUAD_CHECK(double &dfQuadDist, float &fQuadValue, int target_x,
  * @param papszOptions additional name=value options in a string list.
  * <ul>
  * <li>TEMP_FILE_DRIVER=gdal_driver_name. For example MEM.</li>
- * <li>NODATA=value (starting with GDAL 2.4).
+ * <li>NODATA=value
  * Source pixels at that value will be ignored by the interpolator. Warning:
  * currently this will not be honored by smoothing passes.</li>
  * <li>INTERPOLATION=INV_DIST/NEAREST (GDAL >= 3.9). By default, pixels are

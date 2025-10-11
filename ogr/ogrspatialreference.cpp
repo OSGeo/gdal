@@ -2231,7 +2231,6 @@ OGRErr OSRExportToPROJJSON(OGRSpatialReferenceH hSRS, char **ppszReturn,
  *
  * @return OGRERR_NONE if import succeeds, or OGRERR_CORRUPT_DATA if it
  * fails for any reason.
- * @since GDAL 2.3
  */
 
 OGRErr OGRSpatialReference::importFromWkt(const char **ppszInput)
@@ -2386,7 +2385,7 @@ OGRErr OGRSpatialReference::importFromWkt(const char **ppszInput,
  *
  * @return OGRERR_NONE if import succeeds, or OGRERR_CORRUPT_DATA if it
  * fails for any reason.
- * @deprecated GDAL 2.3. Use importFromWkt(const char**) or importFromWkt(const
+ * @deprecated Use importFromWkt(const char**) or importFromWkt(const
  * char*)
  */
 
@@ -2412,7 +2411,6 @@ OGRErr OGRSpatialReference::importFromWkt(char **ppszInput)
  *
  * @return OGRERR_NONE if import succeeds, or OGRERR_CORRUPT_DATA if it
  * fails for any reason.
- * @since GDAL 2.3
  */
 
 OGRErr OGRSpatialReference::importFromWkt(const char *pszInput)
@@ -2727,7 +2725,6 @@ OGRErr OSRSetAngularUnits(OGRSpatialReferenceH hSRS, const char *pszUnits,
  *
  * @return the value to multiply by angular distances to transform them to
  * radians.
- * @since GDAL 2.3.0
  */
 
 double OGRSpatialReference::GetAngularUnits(const char **ppszName) const
@@ -2814,7 +2811,7 @@ double OGRSpatialReference::GetAngularUnits(const char **ppszName) const
  *
  * @return the value to multiply by angular distances to transform them to
  * radians.
- * @deprecated GDAL 2.3.0. Use GetAngularUnits(const char**) const.
+ * @deprecated Use GetAngularUnits(const char**) const.
  */
 
 double OGRSpatialReference::GetAngularUnits(char **ppszName) const
@@ -3119,7 +3116,7 @@ OGRErr OSRSetTargetLinearUnits(OGRSpatialReferenceH hSRS,
  *
  * @return the value to multiply by linear distances to transform them to
  * meters.
- * @deprecated GDAL 2.3.0. Use GetLinearUnits(const char**) const.
+ * @deprecated Use GetLinearUnits(const char**) const.
  */
 
 double OGRSpatialReference::GetLinearUnits(char **ppszName) const
@@ -3144,7 +3141,6 @@ double OGRSpatialReference::GetLinearUnits(char **ppszName) const
  *
  * @return the value to multiply by linear distances to transform them to
  * meters.
- * @since GDAL 2.3.0
  */
 
 double OGRSpatialReference::GetLinearUnits(const char **ppszName) const
@@ -3192,8 +3188,7 @@ double OSRGetLinearUnits(OGRSpatialReferenceH hSRS, char **ppszName)
  * @return the value to multiply by linear distances to transform them to
  * meters.
  *
- * @since OGR 1.9.0
- * @deprecated GDAL 2.3.0. Use GetTargetLinearUnits(const char*, const char**)
+ * @deprecated Use GetTargetLinearUnits(const char*, const char**)
  * const.
  */
 
@@ -3369,7 +3364,6 @@ double OGRSpatialReference::GetTargetLinearUnits(const char *pszTargetKey,
  * @return the value to multiply by linear distances to transform them to
  * meters.
  *
- * @since GDAL 2.3.0
  */
 
 double OGRSpatialReference::GetTargetLinearUnits(const char *pszTargetKey,
@@ -3424,7 +3418,7 @@ double OSRGetTargetLinearUnits(OGRSpatialReferenceH hSRS,
  *
  * @return the offset to the GEOGCS prime meridian from greenwich in decimal
  * degrees.
- * @deprecated GDAL 2.3.0. Use GetPrimeMeridian(const char**) const.
+ * @deprecated Use GetPrimeMeridian(const char**) const.
  */
 
 double OGRSpatialReference::GetPrimeMeridian(const char **ppszName) const
@@ -3489,7 +3483,6 @@ double OGRSpatialReference::GetPrimeMeridian(const char **ppszName) const
  *
  * @return the offset to the GEOGCS prime meridian from greenwich in decimal
  * degrees.
- * @since GDAL 2.3.0
  */
 
 double OGRSpatialReference::GetPrimeMeridian(char **ppszName) const
@@ -5385,7 +5378,6 @@ double OSRGetInvFlattening(OGRSpatialReferenceH hSRS, OGRErr *pnErr)
  * \brief Get spheroid eccentricity
  *
  * @return eccentricity (or -1 in case of error)
- * @since GDAL 2.3
  */
 
 double OGRSpatialReference::GetEccentricity() const
@@ -5413,7 +5405,6 @@ double OGRSpatialReference::GetEccentricity() const
  * \brief Get spheroid squared eccentricity
  *
  * @return squared eccentricity (or -1 in case of error)
- * @since GDAL 2.3
  */
 
 double OGRSpatialReference::GetSquaredEccentricity() const
@@ -10137,7 +10128,6 @@ int OSRIsSameEx(OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2,
  * @param papszOptions lists of options. None supported currently.
  * @return a new SRS, or NULL in case of error.
  *
- * @since GDAL 2.3
  */
 OGRSpatialReference *OGRSpatialReference::convertToOtherProjection(
     const char *pszTargetProjection,
@@ -10240,7 +10230,6 @@ OGRSpatialReference *OGRSpatialReference::convertToOtherProjection(
  * @param papszOptions lists of options. None supported currently.
  * @return a new SRS, or NULL in case of error.
  *
- * @since GDAL 2.3
  */
 OGRSpatialReferenceH
 OSRConvertToOtherProjection(OGRSpatialReferenceH hSRS,
@@ -10280,7 +10269,6 @@ OSRConvertToOtherProjection(OGRSpatialReferenceH hSRS,
  * @return an array of SRS that match the passed SRS, or NULL. Must be freed
  * with OSRFreeSRSArray()
  *
- * @since GDAL 2.3
  */
 OGRSpatialReferenceH *OSRFindMatches(OGRSpatialReferenceH hSRS,
                                      char **papszOptions, int *pnEntries,
@@ -10304,7 +10292,6 @@ OGRSpatialReferenceH *OSRFindMatches(OGRSpatialReferenceH hSRS,
  * \brief Free return of OSRIdentifyMatches()
  *
  * @param pahSRS array of SRS (must be NULL terminated)
- * @since GDAL 2.3
  */
 void OSRFreeSRSArray(OGRSpatialReferenceH *pahSRS)
 {
@@ -11471,7 +11458,6 @@ OGRErr OGRSpatialReference::importFromMICoordSys(const char *pszCoordSys)
  * @param dfSemiMinor Semi-minor axis length.
  *
  * @return inverse flattening, or 0 if both axis are equal.
- * @since GDAL 2.0
  */
 
 double OSRCalcInvFlattening(double dfSemiMajor, double dfSemiMinor)
@@ -11499,7 +11485,6 @@ double OSRCalcInvFlattening(double dfSemiMajor, double dfSemiMinor)
  * @param dfInvFlattening Inverse flattening or 0 for sphere.
  *
  * @return semi-minor axis
- * @since GDAL 2.0
  */
 
 double OSRCalcSemiMinorFromInvFlattening(double dfSemiMajor,
@@ -11534,7 +11519,6 @@ static CPLMutex *hMutex = nullptr;
  * operation.
  *
  * @return instance.
- * @since GDAL 2.0
  */
 
 OGRSpatialReference *OGRSpatialReference::GetWGS84SRS()
@@ -11907,7 +11891,6 @@ OGRErr OSRMorphFromESRI(OGRSpatialReferenceH hSRS)
  * @return an array of SRS that match the passed SRS, or NULL. Must be freed
  * with OSRFreeSRSArray()
  *
- * @since GDAL 2.3
  *
  * @see OGRSpatialReference::FindBestMatch()
  */
