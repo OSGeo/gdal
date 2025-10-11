@@ -852,7 +852,7 @@ typedef enum
     "DCAP_HONOR_GEOM_COORDINATE_PRECISION"
 
 /** Capability set by drivers that implements OGRLayer::UpsertTeature().
- * @since GDLA 3.12
+ * @since GDAL 3.12
  */
 #define GDAL_DCAP_UPSERT "DCAP_UPSERT"
 
