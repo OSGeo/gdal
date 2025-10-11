@@ -541,6 +541,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GTIFF_VIRTUAL_MEM_IO", // from gtiffdataset.cpp
    "GTIFF_WRITE_ANGULAR_PARAMS_IN_DEGREE", // from gt_wkt_srs.cpp
    "GTIFF_WRITE_IMAGE_STRUCTURE_METADATA", // from gtiffdataset_write.cpp
+   "GTIFF_WRITE_RAT_TO_PAM", // from gtiffdataset_write.cpp, gtiffrasterband_write.cpp
    "GTIFF_WRITE_TOWGS84", // from gt_wkt_srs.cpp
    "GXF_DATATYPE", // from gxfdataset.cpp
    "HDF4_BLOCK_PIXELS", // from hdf4imagedataset.cpp

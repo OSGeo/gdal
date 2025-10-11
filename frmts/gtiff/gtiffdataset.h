@@ -448,6 +448,10 @@ class GTiffDataset final : public GDALPamDataset
 
     static GTIF *GTIFNew(TIFF *hTIFF);
 
+    static constexpr const char *DEFAULT_RASTER_ATTRIBUTE_TABLE =
+        "DEFAULT_RASTER_ATTRIBUTE_TABLE";
+    static constexpr const char *RAT_ROLE = "rat";
+
   protected:
     int CloseDependentDatasets() override;
 

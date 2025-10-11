@@ -12474,3 +12474,63 @@ def test_tiff_write_create_mask_band_and_set_color_interp(tmp_vsimem):
     with gdal.Open(tmp_vsimem / "out.tif") as ds:
         assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem("foo") == "bar"
         assert ds.GetRasterBand(1).GetMaskBand().GetNoDataValue() == 0
+
+
+###############################################################################
+# Test RAT support
+
+
+@pytest.mark.parametrize("GTIFF_WRITE_RAT_TO_PAM", [None, "YES"])
+def test_tiff_write_rat(tmp_vsimem, GTIFF_WRITE_RAT_TO_PAM):
+
+    filename = tmp_vsimem / "out.tif"
+    filename2 = tmp_vsimem / "out2.tif"
+    with gdal.config_option("GTIFF_WRITE_RAT_TO_PAM", GTIFF_WRITE_RAT_TO_PAM):
+        with gdal.GetDriverByName("GTiff").Create(filename, 1, 1) as ds:
+            rat = gdal.RasterAttributeTable()
+            rat.CreateColumn("VALUE_INT", gdal.GFT_Integer, gdal.GFU_Generic)
+            rat.CreateColumn("VALUE_REAL", gdal.GFT_Real, gdal.GFU_Generic)
+            rat.CreateColumn("VALUE_STRING", gdal.GFT_String, gdal.GFU_Generic)
+            rat.CreateColumn("VALUE_BOOL", gdal.GFT_Boolean, gdal.GFU_Generic)
+            rat.CreateColumn("VALUE_DATETIME", gdal.GFT_DateTime, gdal.GFU_Generic)
+            rat.CreateColumn(
+                "VALUE_WKBGEOMETRY", gdal.GFT_WKBGeometry, gdal.GFU_Generic
+            )
+            rat.SetValueAsInt(0, 0, 123)
+            rat.SetValueAsDouble(0, 1, 45.5)
+            rat.SetValueAsString(0, 2, "str")
+            rat.SetValueAsBoolean(0, 3, True)
+            rat.SetValueAsString(0, 4, "2025-12-31T23:58:59.500+01:15")
+            rat.SetValueAsString(0, 5, "POINT (1.0 2)")
+            ds.GetRasterBand(1).SetDefaultRAT(rat)
+            got_rat = ds.GetRasterBand(1).GetDefaultRAT()
+            assert got_rat.GetColumnCount() == rat.GetColumnCount()
+
+        if GTIFF_WRITE_RAT_TO_PAM:
+            assert gdal.VSIStatL(str(filename) + ".aux.xml") is not None
+        else:
+            assert gdal.VSIStatL(str(filename) + ".aux.xml") is None
+
+        gdal.GetDriverByName("GTiff").CreateCopy(filename2, gdal.Open(filename))
+
+        if GTIFF_WRITE_RAT_TO_PAM:
+            assert gdal.VSIStatL(str(filename2) + ".aux.xml") is not None
+        else:
+            assert gdal.VSIStatL(str(filename2) + ".aux.xml") is None
+
+        with gdal.Open(filename2) as ds:
+            got_rat = ds.GetRasterBand(1).GetDefaultRAT()
+            assert ds.GetRasterBand(1).GetDefaultRAT()  # do it again
+            assert got_rat.GetColumnCount() == rat.GetColumnCount()
+            assert got_rat.GetTypeOfCol(0) == gdal.GFT_Integer
+            assert got_rat.GetTypeOfCol(1) == gdal.GFT_Real
+            assert got_rat.GetTypeOfCol(2) == gdal.GFT_String
+            assert got_rat.GetTypeOfCol(3) == gdal.GFT_Boolean
+            assert got_rat.GetTypeOfCol(4) == gdal.GFT_DateTime
+            assert got_rat.GetTypeOfCol(5) == gdal.GFT_WKBGeometry
+            assert got_rat.GetValueAsInt(0, 0) == 123
+            assert got_rat.GetValueAsDouble(0, 1) == 45.5
+            assert got_rat.GetValueAsString(0, 2) == "str"
+            assert got_rat.GetValueAsBoolean(0, 3)
+            assert got_rat.GetValueAsString(0, 4) == "2025-12-31T23:58:59.500+01:15"
+            assert got_rat.GetValueAsString(0, 5) == "POINT (1 2)"
