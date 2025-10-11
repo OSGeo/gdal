@@ -181,7 +181,7 @@ RUN curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/ma
     && dpkg -i libadbc-driver-snowflake-dev_14-1_amd64.deb
 
 # Install libduckdb
-RUN curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/v1.1.3/libduckdb-linux-amd64.zip \
+RUN curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/v1.4.1/libduckdb-linux-amd64.zip \
     && unzip libduckdb-linux-amd64.zip libduckdb.so \
     && mv libduckdb.so /usr/lib/x86_64-linux-gnu \
     && rm -f libduckdb-linux-amd64.zip
