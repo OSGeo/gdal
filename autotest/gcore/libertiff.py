@@ -106,6 +106,60 @@ def test_libertiff_3band_separate(GDAL_FORCE_CACHING):
     ) == ds_ref.ReadRaster(
         1.5, 2.5, 6.5, 7.5, buf_xsize=3, buf_ysize=5, resample_alg=gdal.GRIORA_Bilinear
     )
+    assert ds.ReadRaster(
+        buf_pixel_space=4, buf_line_space=4 * ds.RasterXSize, buf_band_space=1
+    ) == ds_ref.ReadRaster(
+        buf_pixel_space=4, buf_line_space=4 * ds.RasterXSize, buf_band_space=1
+    )
+
+
+@pytest.mark.require_driver("GTiff")
+@pytest.mark.parametrize("GDAL_FORCE_CACHING", ["YES", "NO"])
+def test_libertiff_3band_pixel_interleaved(GDAL_FORCE_CACHING):
+    with gdal.config_option("GDAL_FORCE_CACHING", GDAL_FORCE_CACHING):
+        ds = libertiff_open("data/gtiff/rgbsmall_NONE.tif")
+    ds_ref = gdal.OpenEx("data/gtiff/rgbsmall_NONE.tif", allowed_drivers=["GTiff"])
+    if False:
+        assert ds.ReadRaster() == ds_ref.ReadRaster()
+        assert ds.GetRasterBand(2).ReadRaster() == ds_ref.GetRasterBand(2).ReadRaster()
+        assert ds.ReadRaster(1, 2, 1, 1) == ds_ref.ReadRaster(1, 2, 1, 1)
+        assert ds.ReadRaster(band_list=[3, 2, 1]) == ds_ref.ReadRaster(
+            band_list=[3, 2, 1]
+        )
+        assert ds.ReadRaster(1, 2, 3, 4) == ds_ref.ReadRaster(1, 2, 3, 4)
+        assert ds.ReadRaster(buf_type=gdal.GDT_Int16) == ds_ref.ReadRaster(
+            buf_type=gdal.GDT_Int16
+        )
+        assert ds.ReadRaster(buf_xsize=3, buf_ysize=5) == ds_ref.ReadRaster(
+            buf_xsize=3, buf_ysize=5
+        )
+        assert ds.ReadRaster(
+            1.5,
+            2.5,
+            6.5,
+            7.5,
+            buf_xsize=3,
+            buf_ysize=5,
+            resample_alg=gdal.GRIORA_Bilinear,
+        ) == ds_ref.ReadRaster(
+            1.5,
+            2.5,
+            6.5,
+            7.5,
+            buf_xsize=3,
+            buf_ysize=5,
+            resample_alg=gdal.GRIORA_Bilinear,
+        )
+    assert ds.ReadRaster(
+        buf_pixel_space=4, buf_line_space=4 * ds.RasterXSize, buf_band_space=1
+    ) == ds_ref.ReadRaster(
+        buf_pixel_space=4, buf_line_space=4 * ds.RasterXSize, buf_band_space=1
+    )
+    assert ds.ReadRaster(
+        buf_pixel_space=5, buf_line_space=5 * ds.RasterXSize, buf_band_space=1
+    ) == ds_ref.ReadRaster(
+        buf_pixel_space=5, buf_line_space=5 * ds.RasterXSize, buf_band_space=1
+    )
 
 
 @pytest.mark.require_driver("GTiff")
