@@ -1011,7 +1011,7 @@ class GDALZonalStatsImpl
 
             if (pfnProgress != nullptr)
             {
-                pfnProgress(static_cast<double>(iWindow) /
+                pfnProgress(static_cast<double>(iWindow + 1) /
                                 static_cast<double>(windows.size()),
                             "", pProgressData);
             }
@@ -1150,9 +1150,9 @@ class GDALZonalStatsImpl
             windows.push_back(oWindow);
         }
 
-        for (size_t i = 0; i < windows.size(); i++)
+        for (size_t iWindow = 0; iWindow < windows.size(); iWindow++)
         {
-            const GDALRasterWindow &oChunkWindow = windows[i];
+            const GDALRasterWindow &oChunkWindow = windows[iWindow];
             const size_t nWindowSize =
                 static_cast<size_t>(oChunkWindow.nXSize) *
                 static_cast<size_t>(oChunkWindow.nYSize);
@@ -1326,7 +1326,7 @@ class GDALZonalStatsImpl
 
             if (pfnProgress != nullptr)
             {
-                pfnProgress(static_cast<double>(i) /
+                pfnProgress(static_cast<double>(iWindow + 1) /
                                 static_cast<double>(windows.size()),
                             "", pProgressData);
             }
@@ -1584,7 +1584,7 @@ class GDALZonalStatsImpl
 
             if (pfnProgress)
             {
-                pfnProgress(static_cast<double>(i) /
+                pfnProgress(static_cast<double>(i + 1) /
                                 static_cast<double>(nFeatures),
                             "", pProgressData);
             }
