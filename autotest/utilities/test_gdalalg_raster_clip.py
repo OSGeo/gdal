@@ -180,9 +180,9 @@ def test_gdalalg_raster_clip_bbox_outside_source(bbox_pos, allow_bbox_outside_so
     if allow_bbox_outside_source:
         alg["allow-bbox-outside-source"] = True
     if bbox_pos == "partially outside":
-        alg["bbox"] = [0, 0, 441920, 3751320]
+        alg["bbox"] = [440720 - 100, 3750120, 441920, 3751320]
     elif bbox_pos == "completely outside":
-        alg["bbox"] = [0, 100, 0, 100]
+        alg["bbox"] = [440720 - 100, 3750120 - 100, 440720 - 50, 3750120 - 50]
 
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
