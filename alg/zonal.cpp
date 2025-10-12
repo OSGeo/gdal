@@ -51,7 +51,11 @@ template <typename T> void Realloc(T &buf, size_t size, bool &success)
     }
 }
 
-// Trim a window so that it does not include any pixels outside of a specified window.
+#ifdef HAVE_GEOS
+// This function has nothing to do with GEOS, but if GEOS is not available it
+// will not be uesd, triggering an error under  -Wunused-function.
+
+// Trim a window so that it does not include any pixels outside a specified window.
 static void TrimWindow(GDALRasterWindow &window,
                        const GDALRasterWindow &trimWindow)
 {
@@ -76,6 +80,7 @@ static void TrimWindow(GDALRasterWindow &window,
         window.nYSize = trimWindowYMax - window.nYOff;
     }
 }
+#endif
 
 // Trim a window so that it does not include any pixels outside the raster extent.
 static void TrimWindowToRaster(GDALRasterWindow &window,
