@@ -31,7 +31,7 @@ Pixel inclusion and weighting
 
 When zones are defined using polygons, three methods are available for determining which pixels to include in the calculation.
 By default, the geometries are rasterized using default parameters, and pixels included in the rasterization are used in the calculation with equal weighting.
-By using ``--pixels all_touched``, all pixels touched by the polygon are used in the calculation, again with equal weighting.
+By using ``--pixels all-touched``, all pixels touched by the polygon are used in the calculation, again with equal weighting.
 If using ``--pixels fractional``, the fraction of each pixel that is covered by the polygon is computed, and pixels are weighted according to this fraction.
 This option requires GDAL be built against version 3.14 or later of the GEOS library.
 
@@ -39,15 +39,6 @@ This option requires GDAL be built against version 3.14 or later of the GEOS lib
 
 Supported stats
 ^^^^^^^^^^^^^^^
-
-  * :math:`x_i` represents the value of the *ith* raster cell,
-  * :math:`c_i` represents the fraction of the *ith* raster cell that is covered by the polygon (unless directed otherwise by the ``coverage_weight`` argument), and
-  * :math:`w_i` represents the weight of the *ith* raster cell.
-
-Values in the "example result" column refer to the value and weighting rasters shown below.
-In these images, values of the "value raster" range from 1 to 4, and values of the "weighting raster" range from 5 to 8.
-The area covered by the polygon is shaded purple.
-
 
 .. list-table::
     :width: 100%
@@ -141,11 +132,12 @@ The following options are available:
 
 .. option:: --pixels <PIXELS>
 
-   Method to determine which pixels should be included in the calculation: ``default``, ``all_touched``, or ``fractional``.
+   Method to determine which pixels should be included in the calculation: ``default``, ``all-touched``, or ``fractional``.
   
-.. option:: --memory <MEMORY>
+.. option:: --chunk-size <MEMORY>
 
-   Defines the size of raster chunks to read. Defaults to 2GB.
+   Defines the maximum size of raster chunks to read. May be expressed as either an amount of memory (500 MB, 2 GB, etc.) or as a percentage of
+   available ram (e.g. 10%).
 
 .. option:: --strategy <STRATEGY>
 

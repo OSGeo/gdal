@@ -78,8 +78,8 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
            &m_strategy)
         .SetChoices("feature", "raster")
         .SetDefault("feature");
-    AddMemorySizeArg(&m_memoryBytes, &m_memoryStr, "memory",
-                     _("Number of pixels to use when reading raster chunks"));
+    AddMemorySizeArg(&m_memoryBytes, &m_memoryStr, "chunk-size",
+                     _("Maximum size of raster chunks read into memory"));
     AddProgressArg();
 }
 

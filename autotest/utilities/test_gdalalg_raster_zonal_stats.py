@@ -84,7 +84,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_basic(zonal, strategy, pixels,
     zonal["pixels"] = pixels
     zonal["stat"] = ["sum", "mean"]
     zonal["band"] = band
-    zonal["memory"] = "2k"  # force iteration over blocks
+    zonal["chunk-size"] = "2k"  # force iteration over blocks
 
     assert zonal.Run()
 
@@ -238,7 +238,7 @@ def test_gdalalg_raster_zonal_stats_raster_zones(zonal, band):
     zonal["output-format"] = "MEM"
     zonal["stat"] = ["sum", "mean", "weighted_mean"]
     zonal["band"] = band
-    zonal["memory"] = "8k"  # force iteration over blocks
+    zonal["chunk-size"] = "8k"  # force iteration over blocks
 
     assert zonal.Run()
 
@@ -599,13 +599,13 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_layer(zonal, polyrast)
         zonal.Run()
 
 
-def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_memory_size(zonal):
+def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_chunk_size(zonal):
 
     with pytest.raises(Exception, match="Failed to parse memory size"):
-        zonal["memory"] = "2 gigs"
+        zonal["chunk-size"] = "2 gigs"
 
     with pytest.raises(Exception, match="too large"):
-        zonal["memory"] = "1e100 mb"
+        zonal["chunk-size"] = "1e100 mb"
 
 
 @pytest.mark.parametrize(
