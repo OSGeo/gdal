@@ -51,6 +51,33 @@ template <typename T> void Realloc(T &buf, size_t size, bool &success)
     }
 }
 
+// Trim a window so that it does not include any pixels outside of a specified window.
+static void TrimWindow(GDALRasterWindow &window,
+                       const GDALRasterWindow &trimWindow)
+{
+    if (window.nXOff < trimWindow.nXOff)
+    {
+        window.nXSize -= (trimWindow.nXOff - window.nXOff);
+        window.nXOff = trimWindow.nXOff;
+    }
+    if (window.nYOff < trimWindow.nYOff)
+    {
+        window.nYSize -= (trimWindow.nYOff - window.nYOff);
+        window.nYOff = trimWindow.nYOff;
+    }
+    auto trimWindowXMax = trimWindow.nXOff + trimWindow.nXSize;
+    if (window.nXOff + window.nXSize > trimWindowXMax)
+    {
+        window.nXSize = trimWindowXMax - window.nXOff;
+    }
+    auto trimWindowYMax = trimWindow.nYOff + trimWindow.nYSize;
+    if (window.nYOff + window.nYSize > trimWindowYMax)
+    {
+        window.nYSize = trimWindowYMax - window.nYOff;
+    }
+}
+
+// Trim a window so that it does not include any pixels outside the raster extent.
 static void TrimWindowToRaster(GDALRasterWindow &window,
                                const GDALDataset &rast)
 {
@@ -1062,39 +1089,41 @@ class GDALZonalStatsImpl
 
         std::vector<std::unique_ptr<OGRFeature>> features;
         std::map<int, std::vector<gdal::RasterStats<double>>> stats;
-        OGREnvelope oGeomExtent;
-        //std::vector<GEOSGeometry *> geosStore;
 
         // Construct spatial index of all input features, storing the index
         // of the feature.
-        for (auto &poFeatureIn : *std::get<OGRLayer *>(m_zones))
         {
-            features.emplace_back(poFeatureIn.release());
-
-            const OGRGeometry *poGeom = features.back()->GetGeometryRef();
-
-            if (poGeom == nullptr)
+            OGREnvelope oGeomExtent;
+            for (auto &poFeatureIn : *std::get<OGRLayer *>(m_zones))
             {
-                continue;
-            }
+                features.emplace_back(poFeatureIn.release());
 
-            if (poGeom->getDimension() != 2)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Non-polygonal geometry encountered.");
-                return false;
-            }
+                const OGRGeometry *poGeom = features.back()->GetGeometryRef();
 
-            poGeom->getEnvelope(&oGeomExtent);
-            GEOSGeometry *poEnv = CreateGEOSEnvelope(oGeomExtent);
-            if (poEnv == nullptr)
-            {
-                return false;
-            }
+                if (poGeom == nullptr)
+                {
+                    continue;
+                }
 
-            GEOSSTRtree_insert_r(m_geosContext, tree.get(), poEnv,
-                                 reinterpret_cast<void *>(features.size() - 1));
-            GEOSGeom_destroy_r(m_geosContext, poEnv);
+                if (poGeom->getDimension() != 2)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Non-polygonal geometry encountered.");
+                    return false;
+                }
+
+                poGeom->getEnvelope(&oGeomExtent);
+                GEOSGeometry *poEnv = CreateGEOSEnvelope(oGeomExtent);
+                if (poEnv == nullptr)
+                {
+                    return false;
+                }
+
+                GEOSSTRtree_insert_r(
+                    m_geosContext, tree.get(), poEnv,
+                    reinterpret_cast<void *>(features.size() - 1));
+                GEOSGeom_destroy_r(m_geosContext, poEnv);
+            }
         }
 
         for (int iBand : m_options.bands)
@@ -1123,22 +1152,25 @@ class GDALZonalStatsImpl
 
         for (size_t i = 0; i < windows.size(); i++)
         {
-            const GDALRasterWindow &oWindow = windows[i];
-            const size_t nWindowSize = static_cast<size_t>(oWindow.nXSize) *
-                                       static_cast<size_t>(oWindow.nYSize);
+            const GDALRasterWindow &oChunkWindow = windows[i];
+            const size_t nWindowSize =
+                static_cast<size_t>(oChunkWindow.nXSize) *
+                static_cast<size_t>(oChunkWindow.nYSize);
 
             aiHits.clear();
 
-            OGREnvelope oExtent = ToEnvelope(oWindow);
-            GEOSGeometry *poEnv = CreateGEOSEnvelope(oExtent);
-            if (poEnv == nullptr)
             {
-                return false;
-            }
+                OGREnvelope oChunkExtent = ToEnvelope(oChunkWindow);
+                GEOSGeometry *poEnv = CreateGEOSEnvelope(oChunkExtent);
+                if (poEnv == nullptr)
+                {
+                    return false;
+                }
 
-            GEOSSTRtree_query_r(m_geosContext, tree.get(), poEnv, addHit,
-                                &aiHits);
-            GEOSGeom_destroy_r(m_geosContext, poEnv);
+                GEOSSTRtree_query_r(m_geosContext, tree.get(), poEnv, addHit,
+                                    &aiHits);
+                GEOSGeom_destroy_r(m_geosContext, poEnv);
+            }
 
             if (!aiHits.empty())
             {
@@ -1160,16 +1192,16 @@ class GDALZonalStatsImpl
                     if (m_stats_options.store_xy)
                     {
                         Realloc(m_padfX,
-                                oWindow.nXSize *
+                                oChunkWindow.nXSize *
                                     GDALGetDataTypeSizeBytes(GDT_Float64),
                                 bAllocSuccess);
                         Realloc(m_padfY,
-                                oWindow.nYSize *
+                                oChunkWindow.nYSize *
                                     GDALGetDataTypeSizeBytes(GDT_Float64),
                                 bAllocSuccess);
                         if (bAllocSuccess)
                         {
-                            CalculateCellCenters(oWindow, m_srcGT,
+                            CalculateCellCenters(oChunkWindow, m_srcGT,
                                                  m_padfX.get(), m_padfY.get());
                         }
                     }
@@ -1198,13 +1230,13 @@ class GDALZonalStatsImpl
                             m_options.weights_band);
 
                     if (!ReadWindow(
-                            *poWeightsBand, oWindow,
+                            *poWeightsBand, oChunkWindow,
                             reinterpret_cast<GByte *>(m_padfWeightsBuf.get()),
                             GDT_Float64))
                     {
                         return false;
                     }
-                    if (!ReadWindow(*poWeightsBand->GetMaskBand(), oWindow,
+                    if (!ReadWindow(*poWeightsBand->GetMaskBand(), oChunkWindow,
                                     m_pabyWeightsMaskBuf.get(), GDT_Byte))
                     {
                         return false;
@@ -1216,33 +1248,78 @@ class GDALZonalStatsImpl
 
                     GDALRasterBand *poBand = m_src.GetRasterBand(iBand);
 
-                    if (!(ReadWindow(*poBand, oWindow, m_pabyValuesBuf.get(),
+                    if (!(ReadWindow(*poBand, oChunkWindow,
+                                     m_pabyValuesBuf.get(),
                                      m_workingDataType) &&
-                          ReadWindow(*poBand->GetMaskBand(), oWindow,
+                          ReadWindow(*poBand->GetMaskBand(), oChunkWindow,
                                      m_pabyMaskBuf.get(), m_maskDataType)))
                     {
                         return false;
                     }
 
+                    GDALRasterWindow oGeomWindow;
+                    OGREnvelope oGeomExtent;
                     for (const void *hit : aiHits)
                     {
-                        // TODO: trim window to each hit?
                         size_t iHit = reinterpret_cast<size_t>(hit);
 
-                        if (!CalculateCoverage(features[iHit]->GetGeometryRef(),
-                                               oExtent, oWindow.nXSize,
-                                               oWindow.nYSize,
-                                               m_pabyCoverageBuf.get()))
+                        // Trim the chunk window to the portion that intersects
+                        // the geometry being processed.
+                        features[iHit]->GetGeometryRef()->getEnvelope(
+                            &oGeomExtent);
+                        if (!m_srcInvGT.Apply(oGeomExtent, oGeomWindow))
+                        {
+                            return false;
+                        }
+                        TrimWindow(oGeomWindow, oChunkWindow);
+                        OGREnvelope oTrimmedEnvelope = ToEnvelope(oGeomWindow);
+
+                        if (!CalculateCoverage(
+                                features[iHit]->GetGeometryRef(),
+                                oTrimmedEnvelope, oGeomWindow.nXSize,
+                                oGeomWindow.nYSize, m_pabyCoverageBuf.get()))
                         {
                             return false;
                         }
 
-                        UpdateStats(stats[iBand][iHit], m_pabyValuesBuf.get(),
-                                    m_pabyMaskBuf.get(), m_padfWeightsBuf.get(),
-                                    m_pabyWeightsMaskBuf.get(),
-                                    m_pabyCoverageBuf.get(), m_padfX.get(),
-                                    m_padfY.get(), oWindow.nXSize,
-                                    oWindow.nYSize);
+                        // Because the window used for polygon coverage is not the
+                        // same as the window used for raster values, iterate
+                        // over partial scanlines on the raster window.
+                        const auto nCoverageXOff =
+                            oGeomWindow.nXOff - oChunkWindow.nXOff;
+                        const auto nCoverageYOff =
+                            oGeomWindow.nYOff - oChunkWindow.nYOff;
+                        for (int iRow = 0; iRow < oGeomWindow.nYSize; iRow++)
+                        {
+                            const auto nFirstPx =
+                                (nCoverageYOff + iRow) * oChunkWindow.nXSize +
+                                nCoverageXOff;
+                            UpdateStats(
+                                stats[iBand][iHit],
+                                m_pabyValuesBuf.get() +
+                                    nFirstPx * GDALGetDataTypeSizeBytes(
+                                                   m_workingDataType),
+                                m_pabyMaskBuf.get() +
+                                    nFirstPx * GDALGetDataTypeSizeBytes(
+                                                   m_maskDataType),
+                                m_padfWeightsBuf
+                                    ? m_padfWeightsBuf.get() + nFirstPx
+                                    : nullptr,
+                                m_pabyWeightsMaskBuf
+                                    ? m_pabyWeightsMaskBuf.get() +
+                                          nFirstPx * GDALGetDataTypeSizeBytes(
+                                                         m_maskDataType)
+                                    : nullptr,
+                                m_pabyCoverageBuf.get() +
+                                    iRow * oGeomWindow.nXSize *
+                                        GDALGetDataTypeSizeBytes(
+                                            m_coverageDataType),
+                                m_padfX ? m_padfX.get() + nCoverageXOff
+                                        : nullptr,
+                                m_padfY ? m_padfY.get() + nCoverageYOff + iRow
+                                        : nullptr,
+                                oGeomWindow.nXSize, 1);
+                        }
                     }
                 }
             }
@@ -1353,7 +1430,8 @@ class GDALZonalStatsImpl
             }
             else
             {
-
+                // Calculate how many rows of raster data we can read in at
+                // a time while remaining within maxCells.
                 const int nRowsPerChunk = std::min(
                     oWindow.nYSize,
                     std::max(1, static_cast<int>(
