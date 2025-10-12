@@ -607,6 +607,9 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_chunk_size(zonal):
     with pytest.raises(Exception, match="too large"):
         zonal["chunk-size"] = "1e100 mb"
 
+    with pytest.raises(Exception, match="must have a unit"):
+        zonal["chunk-size"] = "512"
+
 
 @pytest.mark.parametrize(
     "raster_srs,weights_srs,zones_srs,warn",
