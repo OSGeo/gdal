@@ -612,6 +612,67 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_chunk_size(zonal):
 
 
 @pytest.mark.parametrize(
+    "dtype",
+    (
+        gdal.GDT_Int64,
+        gdal.GDT_UInt64,
+        gdal.GDT_CFloat16,
+        gdal.GDT_CFloat32,
+        gdal.GDT_CFloat64,
+    ),
+)
+def test_gdalalg_raster_zonal_stats_unsupported_type(zonal, dtype):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 3, eType=dtype)
+    src_ds.SetGeoTransform((0, 1, 0, 3, 0, -1))
+    src_ds.GetRasterBand(1).Fill(1)
+
+    zones = gdaltest.wkt_ds("POLYGON ((0 0, 3 0, 3 3, 0 0))")
+
+    zonal["input"] = src_ds
+    zonal["zones"] = zones
+    zonal["stat"] = "sum"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+
+    with pytest.raises(Exception, match="Source data type"):
+        zonal.Run()
+
+
+@pytest.mark.parametrize(
+    "dtype",
+    (
+        gdal.GDT_Int64,
+        gdal.GDT_UInt64,
+        gdal.GDT_CFloat16,
+        gdal.GDT_CFloat32,
+        gdal.GDT_CFloat64,
+    ),
+)
+def test_gdalalg_raster_zonal_stats_unsupported_weight_type(zonal, dtype):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 3, eType=gdal.GDT_Float32)
+    src_ds.SetGeoTransform((0, 1, 0, 3, 0, -1))
+    src_ds.GetRasterBand(1).Fill(1)
+
+    weight_ds = gdal.GetDriverByName("MEM").Create("", 3, 3, eType=dtype)
+    weight_ds.SetGeoTransform((0, 1, 0, 3, 0, -1))
+    weight_ds.GetRasterBand(1).Fill(1)
+
+    zones = gdaltest.wkt_ds("POLYGON ((0 0, 3 0, 3 3, 0 0))")
+
+    zonal["input"] = src_ds
+    zonal["weights"] = weight_ds
+    zonal["zones"] = zones
+    zonal["stat"] = "weighted_mean"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+
+    with pytest.raises(Exception, match="Weights data type"):
+        zonal.Run()
+
+
+@pytest.mark.parametrize(
     "raster_srs,weights_srs,zones_srs,warn",
     [
         (4326, None, None, False),

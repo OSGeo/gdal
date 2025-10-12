@@ -212,6 +212,34 @@ class GDALZonalStatsImpl
         }
 #endif
 
+        {
+            const auto eSrcType = m_src.GetRasterBand(m_options.bands.front())
+                                      ->GetRasterDataType();
+            if (GDALDataTypeIsConversionLossy(eSrcType, m_workingDataType))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "GDALRasterZonalStats: Source data type %s is not "
+                         "supported",
+                         GDALGetDataTypeName(eSrcType));
+                return false;
+            }
+        }
+
+        if (m_weights)
+        {
+            const auto eWeightsType =
+                m_weights->GetRasterBand(m_options.weights_band)
+                    ->GetRasterDataType();
+            if (GDALDataTypeIsConversionLossy(eWeightsType, GDT_Float64))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "GDALRasterZonalStats: Weights data type %s is not "
+                         "supported",
+                         GDALGetDataTypeName(eWeightsType));
+                return false;
+            }
+        }
+
         for (const auto &stat : m_options.stats)
         {
             const auto eStat = GetStat(stat);
