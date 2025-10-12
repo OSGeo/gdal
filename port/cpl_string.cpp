@@ -1853,6 +1853,7 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Memory size is too large: %s",
                  pszValue);
+        return CE_Failure;
     }
 
     *pnValue = static_cast<GIntBig>(value);
