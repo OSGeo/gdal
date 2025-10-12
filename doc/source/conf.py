@@ -479,6 +479,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_mdim_mosaic",
+        "gdal-mdim-mosaic",
+        "Build a mosaic, either virtual (VRT) or materialized, from multidimensional datasets",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_pipeline",
         "gdal-pipeline",
         "Process a dataset applying several steps",

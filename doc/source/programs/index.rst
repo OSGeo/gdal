@@ -269,12 +269,14 @@ Multidimensional raster commands
    gdal_mdim
    gdal_mdim_info
    gdal_mdim_convert
+   gdal_mdim_mosaic
 
 .. only:: html
 
     - :ref:`gdal_mdim`: Entry point for multidimensional commands
     - :ref:`gdal_mdim_info`: Get information on a multidimensional dataset
     - :ref:`gdal_mdim_convert`: Convert a multidimensional dataset
+    - :ref:`gdal_mdim_mosaic`: Build a mosaic, either virtual (VRT) or materialized, from multidimensional datasets.
 
 Dataset management commands
 +++++++++++++++++++++++++++
