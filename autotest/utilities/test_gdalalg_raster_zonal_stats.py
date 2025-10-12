@@ -69,9 +69,7 @@ def field_names(f):
 
 
 @pytest.mark.parametrize("band", (1, 2, [3, 1]))
-def test_gdalalg_raster_zonal_stats_polygon_zones_basic(
-    zonal, strategy, pixels, band, tmp_vsimem
-):
+def test_gdalalg_raster_zonal_stats_polygon_zones_basic(zonal, strategy, pixels, band):
 
     zonal["input"] = "../gcore/data/gtiff/rgbsmall_NONE_tiled.tif"
     zonal["zones"] = gdaltest.wkt_ds(
@@ -80,7 +78,8 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_basic(
             "POLYGON((-44.7671 -23.0347,-44.7683 -23.0678,-44.7183 -23.0686,-44.7191 -23.0339,-44.7671 -23.0347))",
         ]
     )
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
     zonal["strategy"] = strategy
     zonal["pixels"] = pixels
     zonal["stat"] = ["sum", "mean"]
@@ -136,9 +135,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_basic(
 
 
 @pytest.mark.parametrize("pixels", ["all-touched", "fractional"], indirect=True)
-def test_gdalalg_raster_zonal_stats_polygon_zones_weighted(
-    zonal, strategy, pixels, tmp_vsimem
-):
+def test_gdalalg_raster_zonal_stats_polygon_zones_weighted(zonal, strategy, pixels):
 
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
@@ -171,7 +168,8 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_weighted(
     zonal["input"] = values_ds
     zonal["weights"] = weights_ds
     zonal["zones"] = zones_ds
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
     zonal["strategy"] = strategy
     zonal["pixels"] = pixels
     zonal["stat"] = [
@@ -214,7 +212,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_weighted(
 
 
 @pytest.mark.parametrize("band", (1, 2, [3, 1]))
-def test_gdalalg_raster_zonal_stats_raster_zones(zonal, tmp_vsimem, band):
+def test_gdalalg_raster_zonal_stats_raster_zones(zonal, band):
 
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
@@ -236,7 +234,8 @@ def test_gdalalg_raster_zonal_stats_raster_zones(zonal, tmp_vsimem, band):
     zonal["input"] = src_ds
     zonal["weights"] = weights_ds
     zonal["zones"] = zones_ds
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
     zonal["stat"] = ["sum", "mean", "weighted_mean"]
     zonal["band"] = band
     zonal["memory"] = "8k"  # force iteration over blocks
@@ -299,9 +298,7 @@ def test_gdalalg_raster_zonal_stats_raster_zones(zonal, tmp_vsimem, band):
         "weights",
     ],
 )
-def test_gdalalg_raster_zonal_stats_polygon_zones_all_stats(
-    zonal, strategy, stat, tmp_vsimem
-):
+def test_gdalalg_raster_zonal_stats_polygon_zones_all_stats(zonal, strategy, stat):
 
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
@@ -342,7 +339,8 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_all_stats(
     zonal["input"] = ds
     zonal["weights"] = weights_ds
     zonal["zones"] = zones
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
     zonal["pixels"] = "fractional"
     zonal["strategy"] = strategy
     zonal[
@@ -443,7 +441,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_all_stats(
         pytest.fail(f"No assert for stat: {stat}")
 
 
-def test_gdalalg_raster_zonal_stats_weighted_stats_nodata(zonal, tmp_vsimem):
+def test_gdalalg_raster_zonal_stats_weighted_stats_nodata(zonal):
 
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
@@ -463,7 +461,8 @@ def test_gdalalg_raster_zonal_stats_weighted_stats_nodata(zonal, tmp_vsimem):
     zonal["input"] = values_ds
     zonal["weights"] = weights_ds
     zonal["zones"] = zones_ds
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
     zonal["stat"] = [
         "weighted_mean",
         "weighted_sum",
@@ -489,11 +488,12 @@ def test_gdalalg_raster_zonal_stats_weighted_stats_nodata(zonal, tmp_vsimem):
     np.testing.assert_array_equal(results["weights"], expected_weights)
 
 
-def test_gdalalg_raster_zonal_stats_non_polygon_geometry(zonal, strategy, tmp_vsimem):
+def test_gdalalg_raster_zonal_stats_non_polygon_geometry(zonal, strategy):
 
     zonal["input"] = "../gcore/data/byte.tif"
     zonal["zones"] = gdaltest.wkt_ds(["LINESTRING (3 3, 8 8)"])
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
     zonal["strategy"] = strategy
     zonal["stat"] = "sum"
 
@@ -501,12 +501,29 @@ def test_gdalalg_raster_zonal_stats_non_polygon_geometry(zonal, strategy, tmp_vs
         zonal.Run()
 
 
+@pytest.mark.require_driver("CSV")
+def test_gdalalg_raster_zonal_stats_output_format_detection(
+    zonal, strategy, polyrast, tmp_vsimem
+):
+    zonal["input"] = polyrast
+    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["stat"] = "mean"
+    zonal["zones"] = "../ogr/data/poly.shp"
+
+    assert zonal.Run()
+
+    out_ds = zonal.Output()
+
+    assert out_ds.GetDriver().GetName() == "CSV"
+
+
 def test_gdalalg_raster_zonal_stats_polygon_zones_include_fields(
-    zonal, strategy, tmp_vsimem, polyrast
+    zonal, strategy, polyrast
 ):
 
     zonal["input"] = polyrast
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
     zonal["strategy"] = strategy
     zonal["stat"] = "sum"
     zonal["include-field"] = "does_not_exist"
@@ -530,11 +547,12 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_include_fields(
     assert f["sum"] == 369.0
 
 
-def test_gdalalg_raster_zonal_stats_raster_zones_include_fields(zonal, tmp_vsimem):
+def test_gdalalg_raster_zonal_stats_raster_zones_include_fields(zonal):
 
     zonal["input"] = "../gcore/data/byte.tif"
     zonal["zones"] = "../gcore/data/byte.tif"
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
     zonal["stat"] = "sum"
     zonal["include-field"] = "id"
 
@@ -542,41 +560,40 @@ def test_gdalalg_raster_zonal_stats_raster_zones_include_fields(zonal, tmp_vsime
         zonal.Run()
 
 
-def test_gdalalg_raster_zonal_stats_raster_zones_invalid_band(zonal, tmp_vsimem):
+def test_gdalalg_raster_zonal_stats_raster_zones_invalid_band(zonal):
 
     zonal["input"] = "../gcore/data/byte.tif"
     zonal["zones"] = "../gcore/data/byte.tif"
     zonal["zones-band"] = 2
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
     zonal["stat"] = "sum"
 
     with pytest.raises(Exception, match="Specified zones band 2 not found"):
         zonal.Run()
 
 
-def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_band(
-    zonal, tmp_vsimem, polyrast
-):
+def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_band(zonal, polyrast):
 
     zonal["input"] = polyrast
     zonal["zones"] = "../ogr/data/poly.shp"
     zonal["stat"] = "sum"
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
     zonal["band"] = 2
 
     with pytest.raises(Exception, match="Value of 'band' should be"):
         zonal.Run()
 
 
-def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_layer(
-    zonal, tmp_vsimem, polyrast
-):
+def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_layer(zonal, polyrast):
 
     zonal["input"] = polyrast
     zonal["zones"] = "../ogr/data/poly.shp"
     zonal["zones-layer"] = "does_not_exist"
     zonal["stat"] = "sum"
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
 
     with pytest.raises(Exception, match="Specified zones layer .* not found"):
         zonal.Run()
@@ -605,7 +622,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_memory_size(zonal):
 )
 @pytest.mark.parametrize("zones_typ", ("raster", "vector"))
 def test_gdalalg_raster_zonal_stats_srs_mismatch(
-    zonal, raster_srs, weights_srs, zones_srs, zones_typ, warn, tmp_vsimem
+    zonal, raster_srs, weights_srs, zones_srs, zones_typ, warn
 ):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
@@ -630,7 +647,8 @@ def test_gdalalg_raster_zonal_stats_srs_mismatch(
     zonal["weights"] = weights_ds
     zonal["zones"] = zones_ds
     zonal["stat"] = "weighted_mean"
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
 
     err_type = gdal.CE_Warning if warn else gdal.CE_None
 
@@ -638,16 +656,15 @@ def test_gdalalg_raster_zonal_stats_srs_mismatch(
         assert zonal.Run()
 
 
-def test_gdalalg_raster_zonal_stats_polygon_zone_outside_raster(
-    zonal, tmp_vsimem, strategy
-):
+def test_gdalalg_raster_zonal_stats_polygon_zone_outside_raster(zonal, strategy):
     zonal["input"] = "../gcore/data/byte.tif"
     zonal["zones"] = gdaltest.wkt_ds(
         ["POLYGON ((2 2, 8 2, 8 8, 2 2))", "POLYGON EMPTY"]
     )
     zonal["strategy"] = strategy
     zonal["stat"] = ["sum", "mode"]
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
 
     assert zonal.Run()
 
@@ -664,9 +681,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zone_outside_raster(
 
 
 @pytest.mark.parametrize("src_nodata", (None, 99))
-def test_gdalalg_raster_zonal_stats_raster_values_partially_outside(
-    zonal, src_nodata, tmp_vsimem
-):
+def test_gdalalg_raster_zonal_stats_raster_values_partially_outside(zonal, src_nodata):
 
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
@@ -691,7 +706,8 @@ def test_gdalalg_raster_zonal_stats_raster_values_partially_outside(
     zonal["input"] = src_ds
     zonal["zones"] = zones_ds
     zonal["stat"] = ["count", "sum"]
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
 
     with gdaltest.error_raised(
         gdal.CE_Warning, match="Source raster does not fully cover zones raster"
@@ -716,9 +732,7 @@ def test_gdalalg_raster_zonal_stats_raster_values_partially_outside(
 
 
 @pytest.mark.parametrize("src_nodata", (None, 99))
-def test_gdalalg_raster_zonal_stats_raster_zones_entirely_outside(
-    zonal, src_nodata, tmp_vsimem
-):
+def test_gdalalg_raster_zonal_stats_raster_zones_entirely_outside(zonal, src_nodata):
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
 
@@ -736,7 +750,8 @@ def test_gdalalg_raster_zonal_stats_raster_zones_entirely_outside(
     zonal["input"] = src_ds
     zonal["zones"] = zones_ds
     zonal["stat"] = ["sum", "mode"]
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
 
     with gdaltest.error_raised(
         gdal.CE_Warning, match="Source raster does not intersect zones raster"
@@ -756,7 +771,7 @@ def test_gdalalg_raster_zonal_stats_raster_zones_entirely_outside(
             assert f["mode"] == 0
 
 
-def test_gdalalg_raster_zonal_stats_raster_weights_partially_outside(zonal, tmp_vsimem):
+def test_gdalalg_raster_zonal_stats_raster_weights_partially_outside(zonal):
 
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
@@ -786,7 +801,8 @@ def test_gdalalg_raster_zonal_stats_raster_weights_partially_outside(zonal, tmp_
     zonal["zones"] = zones_ds
     zonal["weights"] = weights_ds
     zonal["stat"] = "weighted_sum"
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
 
     with gdaltest.error_raised(
         gdal.CE_Warning, match="Weighting raster does not fully cover zones raster"
@@ -805,7 +821,7 @@ def test_gdalalg_raster_zonal_stats_raster_weights_partially_outside(zonal, tmp_
 
 
 def test_gdalalg_raster_zonal_stats_vector_zones_weights_resampled(
-    zonal, strategy, tmp_vsimem, polyrast
+    zonal, strategy, polyrast
 ):
 
     np = pytest.importorskip("numpy")
@@ -826,7 +842,8 @@ def test_gdalalg_raster_zonal_stats_vector_zones_weights_resampled(
     zonal["input"] = values_ds
     zonal["weights"] = weights_ds
     zonal["strategy"] = strategy
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
     zonal["stat"] = ["weighted_mean", "weights"]
 
     with gdaltest.error_raised(gdal.CE_Warning, match="Resampled weight"):
@@ -871,7 +888,7 @@ def test_gdalalg_raster_zonal_stats_pipeline_usage(zonal, tmp_vsimem, polyrast):
         assert dst.GetLayer(0).GetFeatureCount() == 10
 
 
-def test_gdalalg_raster_zonal_stats_null_geometry(zonal, tmp_vsimem, strategy):
+def test_gdalalg_raster_zonal_stats_null_geometry(zonal, strategy):
 
     zones = gdal.GetDriverByName("MEM").CreateVector("")
     zones_lyr = zones.CreateLayer("zones")
@@ -884,7 +901,8 @@ def test_gdalalg_raster_zonal_stats_null_geometry(zonal, tmp_vsimem, strategy):
     zonal["zones"] = zones
     zonal["strategy"] = strategy
     zonal["stat"] = ["sum", "mode"]
-    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
 
     assert zonal.Run()
 
