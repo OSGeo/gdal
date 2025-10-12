@@ -1849,7 +1849,8 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
         }
     }
 
-    if (value > static_cast<double>(std::numeric_limits<GIntBig>::max()))
+    if (value > static_cast<double>(std::numeric_limits<GIntBig>::max()) ||
+        value > static_cast<double>(std::numeric_limits<size_t>::max()))
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Memory size is too large: %s",
                  pszValue);
