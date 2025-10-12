@@ -488,6 +488,22 @@ def test_gdalalg_raster_zonal_stats_weighted_stats_nodata(zonal):
     np.testing.assert_array_equal(results["weights"], expected_weights)
 
 
+@pytest.mark.parametrize(
+    "stat",
+    ("weights", "weighted_mean", "weighted_sum", "weighted_stdev", "weighted_variance"),
+)
+def test_gdalalg_raster_zonal_stats_missing_weights(zonal, polyrast, stat):
+
+    zonal["input"] = polyrast
+    zonal["zones"] = "../ogr/data/poly.shp"
+    zonal["stat"] = stat
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+
+    with pytest.raises(Exception, match="requires weights"):
+        zonal.Run()
+
+
 def test_gdalalg_raster_zonal_stats_non_polygon_geometry(zonal, strategy):
 
     zonal["input"] = "../gcore/data/byte.tif"

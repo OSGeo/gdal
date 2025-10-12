@@ -167,6 +167,13 @@ class GDALZonalStatsImpl
         INVALID,
     };
 
+    static constexpr bool IsWeighted(Stat eStat)
+    {
+        return eStat == WEIGHTS || eStat == WEIGHTED_FRAC ||
+               eStat == WEIGHTED_MEAN || eStat == WEIGHTED_SUM ||
+               eStat == WEIGHTED_VARIANCE || eStat == WEIGHTED_STDEV;
+    }
+
     using BandOrLayer = std::variant<GDALRasterBand *, OGRLayer *>;
 
     GDALZonalStatsImpl(GDALDataset &src, GDALDataset &dst, GDALDataset *weights,
@@ -277,6 +284,13 @@ class GDALZonalStatsImpl
             if (eStat == WEIGHTS)
             {
                 m_stats_options.store_weights = true;
+            }
+            if (m_weights == nullptr && IsWeighted(eStat))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Stat %s requires weights but none were provided",
+                         stat.c_str());
+                return false;
             }
         }
 
