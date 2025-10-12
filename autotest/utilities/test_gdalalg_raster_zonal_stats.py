@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import math
+
 import gdaltest
 import ogrtest
 import pytest
@@ -439,6 +441,52 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_all_stats(
         np.testing.assert_array_equal(f["weights"], expected_weights)
     else:
         pytest.fail(f"No assert for stat: {stat}")
+
+
+def test_gdalalg_raster_zonal_stats_weighted_stats_nodata(zonal, tmp_vsimem):
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    nx, ny = 3, 4
+    values_ds = gdal.GetDriverByName("MEM").Create("", nx, ny)
+    values_ds.SetGeoTransform((0, 1, 0, ny, 0, -1))
+    values_ds.WriteArray(np.arange(nx * ny).reshape(ny, nx))
+
+    weights_ds = gdal.GetDriverByName("MEM").Create("", nx, ny)
+    weights_ds.SetGeoTransform((0, 1, 0, ny, 0, -1))
+    weights_ds.GetRasterBand(1).SetNoDataValue(6)
+    weights_ds.WriteArray(np.arange(nx * ny).reshape(ny, nx))
+
+    zones_ds = gdaltest.wkt_ds([f"POLYGON ((0 0, {nx} 0, {nx} {ny}, 0 {ny}, 0 0))"])
+
+    zonal["input"] = values_ds
+    zonal["weights"] = weights_ds
+    zonal["zones"] = zones_ds
+    zonal["output"] = tmp_vsimem / "out.csv"
+    zonal["stat"] = [
+        "weighted_mean",
+        "weighted_sum",
+        "weighted_stdev",
+        "weighted_variance",
+        "weights",
+    ]
+
+    assert zonal.Run()
+
+    out_ds = zonal.Output()
+
+    results = out_ds.GetLayer(0).GetNextFeature()
+
+    assert math.isnan(results["weighted_mean"])
+    assert math.isnan(results["weighted_sum"])
+    assert math.isnan(results["weighted_stdev"])
+    assert math.isnan(results["weighted_variance"])
+
+    expected_weights = np.arange(nx * ny).astype(np.float64)
+    expected_weights[expected_weights == 6] = float("nan")
+
+    np.testing.assert_array_equal(results["weights"], expected_weights)
 
 
 def test_gdalalg_raster_zonal_stats_non_polygon_geometry(zonal, strategy, tmp_vsimem):

@@ -255,12 +255,6 @@ template <typename ValueType> class RasterStats
     {
     }
 
-    //RasterStats(const RasterStats &other) = default;
-    //RasterStats&operator=(RasterStats &other) = default;
-
-    //RasterStats(RasterStats &&other) = default;
-    //RasterStats&operator=(RasterStats &&other) = default;
-
     // All pixels covered 100%
     void process(const ValueType *pValues, const GByte *pabyMask,
                  const double *padfWeights, const GByte *pabyWeightsMask,
@@ -274,18 +268,13 @@ template <typename ValueType> class RasterStats
                 {
                     process_location(padfX[i % nX], padfY[i / nX]);
                 }
-                if (pabyWeightsMask)
-                {
-                    if (pabyWeightsMask[i] == 255)
-                    {
-                        process_value(pValues[i], 1.0f, padfWeights[i]);
-                    }
-                    // FIXME
-                }
-                else
-                {
-                    process_value(pValues[i], 1.0, 1.0);
-                }
+                const double dfWeight =
+                    pabyWeightsMask
+                        ? (pabyWeightsMask[i] == 255
+                               ? padfWeights[i]
+                               : std::numeric_limits<double>::quiet_NaN())
+                        : 1.0;
+                process_value(pValues[i], 1.0, dfWeight);
             }
         }
     }
@@ -304,18 +293,13 @@ template <typename ValueType> class RasterStats
                 {
                     process_location(pdfX[i % nX], pdfY[i / nX]);
                 }
-                if (pabyWeightsMask)
-                {
-                    if (pabyWeightsMask[i] == 255)
-                    {
-                        process_value(pValues[i], 1.0f, padfWeights[i]);
-                    }
-                    // FIXME
-                }
-                else
-                {
-                    process_value(pValues[i], 1.0, 1.0);
-                }
+                const double dfWeight =
+                    pabyWeightsMask
+                        ? (pabyWeightsMask[i] == 255
+                               ? padfWeights[i]
+                               : std::numeric_limits<double>::quiet_NaN())
+                        : 1.0;
+                process_value(pValues[i], 1.0, dfWeight);
             }
         }
     }
@@ -335,18 +319,13 @@ template <typename ValueType> class RasterStats
                 {
                     process_location(pdfX[i % nX], pdfY[i / nX]);
                 }
-                if (pabyWeightsMask)
-                {
-                    if (pabyWeightsMask[i] == 255)
-                    {
-                        process_value(pValues[i], pfCov[i], padfWeights[i]);
-                    }
-                    // FIXME
-                }
-                else
-                {
-                    process_value(pValues[i], pfCov[i], 1.0);
-                }
+                const double dfWeight =
+                    pabyWeightsMask
+                        ? (pabyWeightsMask[i] == 255
+                               ? padfWeights[i]
+                               : std::numeric_limits<double>::quiet_NaN())
+                        : 1.0;
+                process_value(pValues[i], pfCov[i], dfWeight);
             }
         }
     }
