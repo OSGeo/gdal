@@ -24,10 +24,8 @@ This program builds a mosaic of a list of input GDAL datasets, that can be
 either a virtual mosaic in the :ref:`VRT (Virtual Dataset) <raster.vrt>` format,
 or in a more conventional raster format such as GeoTIFF.
 
-The list of input GDAL datasets can be specified at the end
-of the command line or put in a text file (one filename per line) for very long lists.
-Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used, even on files located
-on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
+Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used for input dataset
+names, even on files located on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
 
 :program:`gdal raster mosaic` does some checks to ensure that all files that will be put
 in the resulting file have similar characteristics: number of bands, projection, color
