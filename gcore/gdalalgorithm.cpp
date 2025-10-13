@@ -4489,6 +4489,52 @@ GDALAlgorithm::AddLayerNameArg(std::string *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
+/*                    GDALAlgorithm::AddMemorySizeArg()                  */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddMemorySizeArg(size_t *pValue, std::string *pStrValue,
+                                const std::string &optionName,
+                                const char *helpMessage)
+{
+    return AddArg(optionName, 0, helpMessage, pStrValue)
+        .SetDefault(*pStrValue)
+        .AddValidationAction(
+            [this, pValue, pStrValue]()
+            {
+                CPLDebug("GDAL", "StrValue `%s`", pStrValue->c_str());
+                GIntBig nBytes;
+                bool bUnitSpecified;
+                if (CPLParseMemorySize(pStrValue->c_str(), &nBytes,
+                                       &bUnitSpecified) != CE_None)
+                {
+                    return false;
+                }
+                if (!bUnitSpecified)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Memory size must have a unit or be a "
+                                "percentage of usable RAM (2GB, 5%%, etc.)");
+                    return false;
+                }
+                if constexpr (sizeof(std::uint64_t) > sizeof(size_t))
+                {
+                    if (static_cast<std::uint64_t>(nBytes) >
+                        std::numeric_limits<size_t>::max())
+                    {
+                        ReportError(CE_Failure, CPLE_AppDefined,
+                                    "Memory size %s is too large.",
+                                    pStrValue->c_str());
+                        return false;
+                    }
+                }
+
+                *pValue = static_cast<size_t>(nBytes);
+                return true;
+            });
+}
+
+/************************************************************************/
 /*                  GDALAlgorithm::AddOutputLayerNameArg()              */
 /************************************************************************/
 

@@ -724,6 +724,15 @@ GDALDatasetH CPL_DLL GDALApplyVerticalShiftGrid(GDALDatasetH hSrcDataset,
     /*! @endcond */
     ;
 
+/************************************************************************/
+/*  Zonal statistics interface                                          */
+/************************************************************************/
+
+CPLErr CPL_DLL GDALZonalStats(GDALDatasetH hSrcDS, GDALDatasetH hWeightsDS,
+                              GDALDatasetH hZonesDS, GDALDatasetH hOutDS,
+                              CSLConstList papszOptions,
+                              GDALProgressFunc pfnProgress, void *pProgressArg);
+
 CPL_C_END
 
 #endif /* ndef GDAL_ALG_H_INCLUDED */

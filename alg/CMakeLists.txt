@@ -43,6 +43,7 @@ add_library(
   viewshed/util.cpp
   viewshed/viewshed.cpp
   viewshed/viewshed_executor.cpp
+  zonal.cpp
   gdalgenericinverse.cpp
   gdal_interpolateatpoint.cpp
 )

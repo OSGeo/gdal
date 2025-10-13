@@ -2810,6 +2810,14 @@ class CPL_DLL GDALAlgorithmRegistry
     AddLayerNameArg(std::vector<std::string> *pValue,
                     const char *helpMessage = nullptr);
 
+    /** Add a memory size argument(s), The final value is stored in *pValue.
+     * pStrValue must be provided as temporary storage, and its initial value
+     * (if not empty) is used as the SetDefault() value.
+     */
+    GDALInConstructionAlgorithmArg &
+    AddMemorySizeArg(size_t *pValue, std::string *pStrValue,
+                     const std::string &optionName, const char *helpMessage);
+
     /** Add geometry type argument */
     GDALInConstructionAlgorithmArg &
     AddGeometryTypeArg(std::string *pValue, const char *helpMessage = nullptr);

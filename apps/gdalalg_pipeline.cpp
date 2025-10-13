@@ -18,6 +18,7 @@
 #include "gdalalg_raster_mosaic.h"
 #include "gdalalg_raster_stack.h"
 #include "gdalalg_raster_write.h"
+#include "gdalalg_raster_zonal_stats.h"
 
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_write.h"
@@ -592,6 +593,7 @@ GDALPipelineAlgorithm::GDALPipelineAlgorithm()
     m_stepRegistry.Register<GDALRasterContourAlgorithm>();
     m_stepRegistry.Register<GDALRasterFootprintAlgorithm>();
     m_stepRegistry.Register<GDALRasterPolygonizeAlgorithm>();
+    m_stepRegistry.Register<GDALRasterZonalStatsAlgorithm>();
     m_stepRegistry.Register<GDALVectorGridAlgorithm>();
     m_stepRegistry.Register<GDALVectorRasterizeAlgorithm>();
 }

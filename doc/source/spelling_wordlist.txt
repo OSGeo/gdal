@@ -949,6 +949,7 @@ fpRawL
 fprintf
 fpSource
 fputc
+frac
 franca
 france
 FrankW
@@ -1331,6 +1332,7 @@ hMaskBand
 hMutex
 hNewSubGeom
 hObject
+hOutDS
 hobu
 hoc
 holded
@@ -1384,6 +1386,7 @@ hypercubes
 hyperspectral
 hypsometric
 Hypsometric
+hZonesDS
 iAxis
 iBand
 iChild
@@ -3117,6 +3120,7 @@ StartTransaction
 stat'ed
 stateful
 stderr
+stdev
 stdin
 stdout
 stealInteriorRing
@@ -3609,6 +3613,8 @@ webmercator
 WebP
 WEBP
 webviewer
+weighted_frac
+weighted_stdev
 wellformedness
 Westervelt
 westing
