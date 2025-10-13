@@ -112,9 +112,11 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 
         poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
 
+        const auto eSrcGeomType = wkbFlatten(poGeom->getGeometryType());
         const auto eFeatGeomType =
             wkbFlatten(poIntersection->getGeometryType());
-        if (m_eFlattenSrcLayerGeomType != wkbUnknown &&
+        if (eFeatGeomType != eSrcGeomType &&
+            m_eFlattenSrcLayerGeomType != wkbUnknown &&
             m_eFlattenSrcLayerGeomType != eFeatGeomType)
         {
             // If the intersection is a collection of geometry and the
