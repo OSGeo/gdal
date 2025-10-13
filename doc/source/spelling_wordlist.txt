@@ -1330,6 +1330,7 @@ hMaskBand
 hMutex
 hNewSubGeom
 hObject
+hOutDS
 hobu
 hoc
 holded
@@ -1383,6 +1384,7 @@ hypercubes
 hyperspectral
 hypsometric
 Hypsometric
+hZonesDS
 iAxis
 iBand
 iChild
