@@ -527,19 +527,19 @@ template <typename ValueType> class RasterStats
 
         // The weighted quantile computation is not processed incrementally.
         // Create it on demand and retain it in case we want multiple quantiles.
-        if (!m_quantiles)
+        if (!m_quantiles.has_value())
         {
-            m_quantiles = std::make_unique<WeightedQuantiles>();
+            m_quantiles = WeightedQuantiles();
 
             for (const auto &entry : m_freq)
             {
-                m_quantiles->Process(static_cast<double>(entry.first),
-                                     entry.second.m_sum_ci);
+                m_quantiles.value().Process(static_cast<double>(entry.first),
+                                            entry.second.m_sum_ci);
             }
         }
 
         double ret;
-        if (m_quantiles->Quantile(q, ret) != CE_None)
+        if (m_quantiles.value().Quantile(q, ret) != CE_None)
         {
             return std::nullopt;
         }
@@ -800,7 +800,7 @@ template <typename ValueType> class RasterStats
     WestVariance m_variance{};
     WestVariance m_weighted_variance{};
 
-    mutable std::unique_ptr<WeightedQuantiles> m_quantiles{nullptr};
+    mutable std::optional<WeightedQuantiles> m_quantiles{std::nullopt};
 
     struct ValueFreqEntry
     {

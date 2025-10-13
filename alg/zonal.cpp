@@ -1187,17 +1187,9 @@ class GDALZonalStatsImpl
                             reinterpret_cast<double *>(pabyZonesBuf.get())[ipx];
 
                         auto &aoStats = stats[zone];
-                        if (aoStats.empty())
-                        {
-                            // TODO: Define RasterStats copy ctor and replace this with call to "resize"
-                            aoStats.reserve(m_options.bands.size());
-                            for (size_t q = 0; q < m_options.bands.size(); q++)
-                            {
-                                aoStats.emplace_back(CreateStats());
-                            }
-                        }
+                        aoStats.resize(m_options.bands.size(), CreateStats());
 
-                        // fixme X/Y are null
+                        // FIXME X/Y are null
                         aoStats[i].process(
                             reinterpret_cast<double *>(m_pabyValuesBuf.get()) +
                                 ipx,
@@ -1294,7 +1286,7 @@ class GDALZonalStatsImpl
             GEOSSTRtree_create_r(m_geosContext, 10), TreeDeleter);
 
         std::vector<std::unique_ptr<OGRFeature>> features;
-        std::map<int, std::vector<gdal::RasterStats<double>>> stats;
+        std::map<int, std::vector<gdal::RasterStats<double>>> statsMap;
 
         // Construct spatial index of all input features, storing the index
         // of the feature.
@@ -1334,13 +1326,7 @@ class GDALZonalStatsImpl
 
         for (int iBand : m_options.bands)
         {
-            // TODO: Define RasterStats copy ctor and replace this with call to "resize"
-            //stats[iBand].resize(features.size(), CreateStats());
-            stats[iBand].reserve(features.size());
-            for (size_t q = 0; q < features.size(); q++)
-            {
-                stats[iBand].emplace_back(CreateStats());
-            }
+            statsMap[iBand].resize(features.size(), CreateStats());
         }
 
         std::vector<void *> aiHits;
@@ -1501,7 +1487,7 @@ class GDALZonalStatsImpl
                                 (nCoverageYOff + iRow) * oChunkWindow.nXSize +
                                 nCoverageXOff;
                             UpdateStats(
-                                stats[iBand][iHit],
+                                statsMap[iBand][iHit],
                                 m_pabyValuesBuf.get() +
                                     nFirstPx * GDALGetDataTypeSizeBytes(
                                                    m_workingDataType),
@@ -1547,7 +1533,7 @@ class GDALZonalStatsImpl
             poDstFeature->SetFrom(features[iFeature].get());
             for (int iBand : m_options.bands)
             {
-                SetStatFields(*poDstFeature, iBand, stats[iBand][iFeature]);
+                SetStatFields(*poDstFeature, iBand, statsMap[iBand][iFeature]);
             }
             if (poDstLayer->CreateFeature(poDstFeature.get()) != OGRERR_NONE)
             {
@@ -1700,11 +1686,7 @@ class GDALZonalStatsImpl
                 }
 
                 std::vector<gdal::RasterStats<double>> aoStats;
-                aoStats.reserve(m_options.bands.size());
-                for (size_t q = 0; q < m_options.bands.size(); q++)
-                {
-                    aoStats.emplace_back(CreateStats());
-                }
+                aoStats.resize(m_options.bands.size(), CreateStats());
 
                 for (int nYOff = oWindow.nYOff;
                      nYOff < oWindow.nYOff + oWindow.nYSize;
