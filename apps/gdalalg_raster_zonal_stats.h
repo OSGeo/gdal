@@ -56,7 +56,7 @@ class GDALRasterZonalStatsAlgorithm /* non final */
     std::vector<std::string> m_includeFields{};
     std::string m_strategy{};
     std::string m_memoryStr{"5%"};
-    std::string m_pixels{};
+    std::string m_pixels{"default"};
     int m_weightsBand{0};
     size_t m_memoryBytes{
         static_cast<size_t>(100) * 1024 *

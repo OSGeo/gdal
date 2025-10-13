@@ -39,13 +39,13 @@ def have_fractional_pixels():
     return ogrtest.have_geos() and (
         ogr.GetGEOSVersionMajor(),
         ogr.GetGEOSVersionMinor(),
-    ) >= (3, 15)
+    ) >= (3, 14, 1)
 
 
 @pytest.fixture(params=["default", "all-touched", "fractional"])
 def pixels(request):
     if request.param == "fractional" and not have_fractional_pixels():
-        pytest.skip("--pixels fractional requires GEOS >= 3.14")
+        pytest.skip("--pixels fractional requires GEOS >= 3.14.1")
 
     return request.param
 
@@ -267,7 +267,7 @@ def test_gdalalg_raster_zonal_stats_raster_zones(zonal, band):
             ), f"i={i}"
 
 
-@pytest.mark.skipif(not have_fractional_pixels(), reason="requires GEOS >= 3.14")
+@pytest.mark.skipif(not have_fractional_pixels(), reason="requires GEOS >= 3.14.1")
 @pytest.mark.parametrize(
     "stat",
     [

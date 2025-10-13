@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_string.h"
 #include "gdal_priv.h"
 #include "gdal_alg.h"
 #include "gdal_utils.h"
@@ -31,6 +32,156 @@
     (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 14)
 #define GEOS_GRID_INTERSECTION_AVAILABLE 1
 #endif
+
+struct GDALZonalStatsOptions
+{
+    CPLErr Init(CSLConstList papszOptions)
+    {
+        for (const auto &[key, value] : cpl::IterateNameValue(papszOptions))
+        {
+            if (EQUAL(key, "BANDS"))
+            {
+                CPLStringList aosBands(CSLTokenizeString2(
+                    value, ",", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+                for (const char *pszBand : aosBands)
+                {
+                    int nBand = std::atoi(pszBand);
+                    if (nBand == 0)
+                    {
+                        CPLError(CE_Failure, CPLE_IllegalArg,
+                                 "Invalid band: %s", pszBand);
+                        return CE_Failure;
+                    }
+                    bands.push_back(nBand);
+                }
+            }
+            else if (EQUAL(key, "INCLUDE_FIELDS"))
+            {
+                CPLStringList aosFields(CSLTokenizeString2(
+                    value, ",",
+                    CSLT_HONOURSTRINGS | CSLT_STRIPLEADSPACES |
+                        CSLT_STRIPENDSPACES));
+                for (const char *pszField : aosFields)
+                {
+                    include_fields.push_back(pszField);
+                }
+            }
+            else if (EQUAL(key, "PIXEL_INTERSECTION"))
+            {
+                if (EQUAL(value, "DEFAULT"))
+                {
+                    pixels = DEFAULT;
+                }
+                else if (EQUAL(value, "ALL-TOUCHED") ||
+                         EQUAL(value, "ALL_TOUCHED"))
+                {
+                    pixels = ALL_TOUCHED;
+                }
+                else if (EQUAL(value, "FRACTIONAL"))
+                {
+                    pixels = FRACTIONAL;
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Unexpected value of PIXEL_INTERSECTION: %s",
+                             value);
+                    return CE_Failure;
+                }
+            }
+            else if (EQUAL(key, "RASTER_CHUNK_SIZE_BYTES"))
+            {
+                memory = std::stoul(value);
+                if (memory == 0)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid memory size: %s", value);
+                    return CE_Failure;
+                }
+            }
+            else if (EQUAL(key, "STATS"))
+            {
+                CPLStringList aosStats(CSLTokenizeString2(
+                    value, ",", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+                for (const char *pszStat : aosStats)
+                {
+                    stats.push_back(pszStat);
+                }
+            }
+            else if (EQUAL(key, "STRATEGY"))
+            {
+                if (EQUAL(value, "FEATURE_SEQUENTIAL"))
+                {
+                    strategy = FEATURE_SEQUENTIAL;
+                }
+                else if (EQUAL(value, "RASTER_SEQUENTIAL"))
+                {
+                    strategy = RASTER_SEQUENTIAL;
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Unexpected value of STRATEGY: %s", value);
+                    return CE_Failure;
+                }
+            }
+            else if (EQUAL(key, "WEIGHTS_BAND"))
+            {
+                weights_band = std::atoi(value);
+                if (weights_band == 0)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid weights band: %s", value);
+                    return CE_Failure;
+                }
+            }
+            else if (EQUAL(key, "ZONES_BAND"))
+            {
+                zones_band = std::atoi(value);
+                if (zones_band == 0)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid zones band: %s", value);
+                    return CE_Failure;
+                }
+            }
+            else if (EQUAL(key, "ZONES_LAYER"))
+            {
+                zones_layer = value;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Unexpected zonal stats option: %s", key);
+            }
+        }
+
+        return CE_None;
+    }
+
+    enum PixelIntersection
+    {
+        DEFAULT,
+        ALL_TOUCHED,
+        FRACTIONAL,
+    };
+
+    enum Strategy
+    {
+        FEATURE_SEQUENTIAL,
+        RASTER_SEQUENTIAL,
+    };
+
+    PixelIntersection pixels{DEFAULT};
+    Strategy strategy{FEATURE_SEQUENTIAL};
+    std::vector<std::string> stats{};
+    std::vector<std::string> include_fields{};
+    std::vector<int> bands{};
+    std::string zones_layer{};
+    std::size_t memory{0};
+    int zones_band{};
+    int weights_band{};
+};
 
 template <typename T = GByte> auto CreateBuffer()
 {
@@ -218,6 +369,16 @@ class GDALZonalStatsImpl
             return false;
         }
 #endif
+
+        if (m_options.bands.empty())
+        {
+            int nBands = m_src.GetRasterCount();
+            m_options.bands.resize(nBands);
+            for (int i = 0; i < nBands; i++)
+            {
+                m_options.bands[i] = i + 1;
+            }
+        }
 
         {
             const auto eSrcType = m_src.GetRasterBand(m_options.bands.front())
@@ -1853,24 +2014,31 @@ static CPLErr GDALZonalStats(GDALDataset &srcDataset, GDALDataset *poWeights,
  * @param hWeightsDS optional raster dataset containing weights
  * @param hZonesDS raster or vector dataset containing zones across which values will be summarized
  * @param hOutDS dataset to which output layer will be written
- * @param poOptions options object
+ * @param papszOptions list of options
  * @param pfnProgress optional progress reporting callback
  * @param pProgressArg optional data for progress callback
  * @return CE_Failure if an error occurred, CE_None otherwise
  */
 CPLErr GDALZonalStats(GDALDatasetH hSrcDS, GDALDatasetH hWeightsDS,
                       GDALDatasetH hZonesDS, GDALDatasetH hOutDS,
-                      const void *poOptions, GDALProgressFunc pfnProgress,
+                      CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                       void *pProgressArg)
 {
     VALIDATE_POINTER1(hSrcDS, __func__, CE_Failure);
     VALIDATE_POINTER1(hZonesDS, __func__, CE_Failure);
     VALIDATE_POINTER1(hOutDS, __func__, CE_Failure);
-    VALIDATE_POINTER1(poOptions, __func__, CE_Failure);
+
+    GDALZonalStatsOptions sOptions;
+    if (papszOptions)
+    {
+        if (auto eErr = sOptions.Init(papszOptions); eErr != CE_None)
+        {
+            return eErr;
+        }
+    }
 
     return GDALZonalStats(
         *GDALDataset::FromHandle(hSrcDS), GDALDataset::FromHandle(hWeightsDS),
         *GDALDataset::FromHandle(hZonesDS), *GDALDataset::FromHandle(hOutDS),
-        *static_cast<const GDALZonalStatsOptions *>(poOptions), pfnProgress,
-        pProgressArg);
+        sOptions, pfnProgress, pProgressArg);
 }

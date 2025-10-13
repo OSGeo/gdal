@@ -96,6 +96,29 @@ bool GDALRasterZonalStatsAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     return RunPreStepPipelineValidations() && RunStep(stepCtxt);
 }
 
+template <typename T>
+static std::string Join(const T &vec, const std::string &separator)
+{
+    std::stringstream ss;
+    bool first = true;
+    for (const auto &val : vec)
+    {
+        static_assert(!std::is_floating_point_v<decltype(val)>,
+                      "Precision would be lost.");
+
+        if (first)
+        {
+            first = false;
+        }
+        else
+        {
+            ss << separator;
+        }
+        ss << val;
+    }
+    return ss.str();
+}
+
 bool GDALRasterZonalStatsAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     GDALDataset *zones = m_zones.GetDatasetRef();
@@ -154,42 +177,38 @@ bool GDALRasterZonalStatsAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     GDALDataset *src = m_inputDataset.front().GetDatasetRef();
 
-    GDALZonalStatsOptions options;
-    if (m_strategy == "raster")
+    CPLStringList aosOptions;
+    if (!m_bands.empty())
     {
-        options.strategy = GDALZonalStatsOptions::RASTER_SEQUENTIAL;
+        aosOptions.AddNameValue("BANDS", Join(m_bands, ",").c_str());
     }
-    if (m_bands.empty())
+    if (!m_includeFields.empty())
     {
-        int nBands = src->GetRasterCount();
-        options.bands.resize(nBands);
-        for (int i = 0; i < nBands; i++)
-        {
-            options.bands[i] = i + 1;
-        }
+        aosOptions.AddNameValue("INCLUDE_FIELDS",
+                                Join(m_includeFields, ",").c_str());
     }
-    else
+    aosOptions.AddNameValue("PIXEL_INTERSECTION", m_pixels.c_str());
+    if (m_memoryBytes != 0)
     {
-        options.bands = m_bands;
+        aosOptions.AddNameValue("RASTER_CHUNK_SIZE_BYTES",
+                                std::to_string(m_memoryBytes).c_str());
     }
-    if (m_pixels == "fractional")
+    aosOptions.AddNameValue("STATS", Join(m_stats, ",").c_str());
+    aosOptions.AddNameValue("STRATEGY", (m_strategy + "_SEQUENTIAL").c_str());
+    if (m_weightsBand != 0)
     {
-        options.pixels = GDALZonalStatsOptions::FRACTIONAL;
+        aosOptions.AddNameValue("WEIGHTS_BAND",
+                                std::to_string(m_weightsBand).c_str());
     }
-    else if (m_pixels == "all-touched")
+    if (m_zonesBand != 0)
     {
-        options.pixels = GDALZonalStatsOptions::ALL_TOUCHED;
+        aosOptions.AddNameValue("ZONES_BAND",
+                                std::to_string(m_zonesBand).c_str());
     }
-    else
+    if (!m_zonesLayer.empty())
     {
-        options.pixels = GDALZonalStatsOptions::DEFAULT;
+        aosOptions.AddNameValue("ZONES_LAYER", m_zonesLayer.c_str());
     }
-    options.stats = m_stats;
-    options.include_fields = m_includeFields;
-    options.zones_band = m_zonesBand;
-    options.zones_layer = m_zonesLayer;
-    options.weights_band = m_weightsBand;
-    options.memory = m_memoryBytes;
 
     if (poRetDS)
     {
@@ -197,7 +216,7 @@ bool GDALRasterZonalStatsAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     return GDALZonalStats(src, m_weights.GetDatasetRef(), zones, poDstDS,
-                          &options, ctxt.m_pfnProgress,
+                          aosOptions.List(), ctxt.m_pfnProgress,
                           ctxt.m_pProgressData) == CE_None;
 }
 
