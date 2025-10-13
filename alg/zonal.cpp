@@ -204,7 +204,7 @@ template <typename T> void Realloc(T &buf, size_t size, bool &success)
 
 #ifdef HAVE_GEOS
 // This function has nothing to do with GEOS, but if GEOS is not available it
-// will not be uesd, triggering an error under  -Wunused-function.
+// will not be used, triggering an error under  -Wunused-function.
 
 // Trim a window so that it does not include any pixels outside a specified window.
 static void TrimWindow(GDALRasterWindow &window,
@@ -882,8 +882,8 @@ class GDALZonalStatsImpl
     }
 
   private:
-    std::unique_ptr<GDALDataset> GetVRT(GDALDataset &src, GDALDataset &dst,
-                                        bool &resampled)
+    static std::unique_ptr<GDALDataset>
+    GetVRT(GDALDataset &src, const GDALDataset &dst, bool &resampled)
     {
         resampled = false;
 
@@ -1086,8 +1086,6 @@ class GDALZonalStatsImpl
             const GDALRasterWindow &oWindow = windows[iWindow];
             auto nWindowSize = static_cast<size_t>(oWindow.nXSize) *
                                static_cast<size_t>(oWindow.nYSize);
-
-            const GDALDataType m_zonesDataType = GDT_Float64;
 
             if (nBufSize < nWindowSize)
             {
@@ -1825,7 +1823,7 @@ class GDALZonalStatsImpl
 
     bool CalculateCoverage(const OGRGeometry *poGeom,
                            const OGREnvelope &oSnappedGeomExtent, int nXSize,
-                           int nYSize, GByte *pabyCoverageBuf)
+                           int nYSize, GByte *pabyCoverageBuf) const
     {
 #if GEOS_GRID_INTERSECTION_AVAILABLE
         if (m_options.pixels == GDALZonalStatsOptions::FRACTIONAL)
@@ -1924,6 +1922,7 @@ class GDALZonalStatsImpl
     const GDALDataType m_coverageDataType;
     const GDALDataType m_workingDataType;
     const GDALDataType m_maskDataType;
+    static constexpr GDALDataType m_zonesDataType = GDT_Float64;
 
     GDALGeoTransform m_srcGT{};
     GDALGeoTransform m_srcInvGT{};

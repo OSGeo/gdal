@@ -70,7 +70,7 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
                     "weighted_mean", "weighted_stdev", "weighted_sum",
                     "weighted_variance", "weights");
     AddArg("include-field", 0,
-           _("Fields from polygon zones to include in ouput"),
+           _("Fields from polygon zones to include in output"),
            &m_includeFields);
     AddArg("strategy", 0,
            _("For polygon zones, whether to iterate over input features or "
