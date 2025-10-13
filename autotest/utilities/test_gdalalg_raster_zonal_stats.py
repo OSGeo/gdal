@@ -71,7 +71,9 @@ def field_names(f):
 @pytest.mark.parametrize("band", (1, 2, [3, 1]))
 def test_gdalalg_raster_zonal_stats_polygon_zones_basic(zonal, strategy, pixels, band):
 
-    zonal["input"] = "../gcore/data/gtiff/rgbsmall_NONE_tiled.tif"
+    src_ds = gdal.Open("../gcore/data/gtiff/rgbsmall_NONE_tiled.tif")
+
+    zonal["input"] = src_ds
     zonal["zones"] = gdaltest.wkt_ds(
         [
             "POLYGON((-44.8151 -22.9973, -44.7357 -22.9979,-44.7755 -22.9563,-44.8151 -22.9973))",
@@ -82,7 +84,9 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_basic(zonal, strategy, pixels,
     zonal["output-format"] = "MEM"
     zonal["strategy"] = strategy
     zonal["pixels"] = pixels
-    zonal["stat"] = ["sum", "mean"]
+    zonal["stat"] = ["sum", "mean"] + (
+        ["max", "max_center_x", "max_center_y"] if band == 1 else []
+    )
     zonal["band"] = band
     zonal["chunk-size"] = "2k"  # force iteration over blocks
 
@@ -102,8 +106,18 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_basic(zonal, strategy, pixels,
             assert results[0]["sum"] == 8251
             assert results[1]["sum"] == 15131
         else:
+            src_values = src_ds.GetRasterBand(1).ReadAsMaskedArray()
+
             assert results[0]["sum"] == 7148
             assert results[1]["sum"] == 12497
+
+            for f in results:
+                src_max_px = gdal.ApplyGeoTransform(
+                    gdal.InvGeoTransform(src_ds.GetGeoTransform()),
+                    f["max_center_x"],
+                    f["max_center_y"],
+                )
+                assert src_values[int(src_max_px[1]), int(src_max_px[0])] == f["max"]
     elif band == 2:
         if pixels == "fractional":
             assert results[0]["sum"] == pytest.approx(9743.76203341247)

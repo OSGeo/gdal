@@ -1392,11 +1392,6 @@ class GDALZonalStatsImpl
                                 oChunkWindow.nYSize *
                                     GDALGetDataTypeSizeBytes(GDT_Float64),
                                 bAllocSuccess);
-                        if (bAllocSuccess)
-                        {
-                            CalculateCellCenters(oChunkWindow, m_srcGT,
-                                                 m_padfX.get(), m_padfY.get());
-                        }
                     }
                     if (m_weights != nullptr)
                     {
@@ -1414,6 +1409,12 @@ class GDALZonalStatsImpl
                         return false;
                     }
                     nBufSize = nWindowSize;
+                }
+
+                if (m_padfX && m_padfY)
+                {
+                    CalculateCellCenters(oChunkWindow, m_srcGT, m_padfX.get(),
+                                         m_padfY.get());
                 }
 
                 if (m_weights != nullptr)
@@ -1660,11 +1661,6 @@ class GDALZonalStatsImpl
                                 oWindow.nYSize *
                                     GDALGetDataTypeSizeBytes(GDT_Float64),
                                 bAllocSuccess);
-                        if (bAllocSuccess)
-                        {
-                            CalculateCellCenters(oWindow, m_srcGT,
-                                                 m_padfX.get(), m_padfY.get());
-                        }
                     }
 
                     if (m_weights != nullptr)
@@ -1686,6 +1682,12 @@ class GDALZonalStatsImpl
                     nBufSize = nWindowSize;
                 }
 
+                if (m_padfX && m_padfY)
+                {
+                    CalculateCellCenters(oWindow, m_srcGT, m_padfX.get(),
+                                         m_padfY.get());
+                }
+
                 std::vector<gdal::RasterStats<double>> aoStats;
                 aoStats.resize(m_options.bands.size(), CreateStats());
 
@@ -1699,6 +1701,9 @@ class GDALZonalStatsImpl
                     oSubWindow.nYOff = nYOff;
                     oSubWindow.nYSize = std::min(
                         nRowsPerChunk, oWindow.nYOff + oWindow.nYSize - nYOff);
+
+                    const auto nCoverageXOff = oSubWindow.nXOff - oWindow.nXOff;
+                    const auto nCoverageYOff = oSubWindow.nYOff - oWindow.nYOff;
 
                     const OGREnvelope oSnappedGeomExtent =
                         ToEnvelope(oSubWindow);
@@ -1749,12 +1754,13 @@ class GDALZonalStatsImpl
                             return false;
                         }
 
-                        UpdateStats(aoStats[iBandInd], m_pabyValuesBuf.get(),
-                                    m_pabyMaskBuf.get(), m_padfWeightsBuf.get(),
-                                    m_pabyWeightsMaskBuf.get(),
-                                    m_pabyCoverageBuf.get(), m_padfX.get(),
-                                    m_padfY.get(), oSubWindow.nXSize,
-                                    oSubWindow.nYSize);
+                        UpdateStats(
+                            aoStats[iBandInd], m_pabyValuesBuf.get(),
+                            m_pabyMaskBuf.get(), m_padfWeightsBuf.get(),
+                            m_pabyWeightsMaskBuf.get(), m_pabyCoverageBuf.get(),
+                            m_padfX ? m_padfX.get() + nCoverageXOff : nullptr,
+                            m_padfY ? m_padfY.get() + nCoverageYOff : nullptr,
+                            oSubWindow.nXSize, oSubWindow.nYSize);
                     }
                 }
 
