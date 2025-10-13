@@ -4517,13 +4517,16 @@ GDALAlgorithm::AddMemorySizeArg(size_t *pValue, std::string *pStrValue,
                                 "percentage of usable RAM (2GB, 5%%, etc.)");
                     return false;
                 }
-                if (static_cast<std::uint64_t>(nBytes) >
-                    std::numeric_limits<size_t>::max())
+                if constexpr (sizeof(std::uint64_t) > sizeof(size_t))
                 {
-                    ReportError(CE_Failure, CPLE_AppDefined,
-                                "Memory size %s is too large.",
-                                pStrValue->c_str());
-                    return false;
+                    if (static_cast<std::uint64_t>(nBytes) >
+                        std::numeric_limits<size_t>::max())
+                    {
+                        ReportError(CE_Failure, CPLE_AppDefined,
+                                    "Memory size %s is too large.",
+                                    pStrValue->c_str());
+                        return false;
+                    }
                 }
 
                 *pValue = static_cast<size_t>(nBytes);
