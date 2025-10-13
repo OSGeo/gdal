@@ -153,15 +153,15 @@ class GDALGeoTransform
         GDALApplyGeoTransform(data(), dfPixel, dfLine, pdfGeoX, pdfGeoY);
     }
 
-    /** Apply a geotransform to an Envelope in geographic coordinates.
- *
- * @param env An envelope in geographic coordinates
- * @param window A window in pixel/line coordinates
- * @return true if the geotransform was successfully applied
- */
+    /** Apply a geotransform to an OGREnvelope in geographic coordinates.
+     *
+     * @param env An envelope in geographic coordinates
+     * @param window A window in pixel/line coordinates
+     * @return true if the geotransform was successfully applied
+     */
     bool Apply(const OGREnvelope &env, GDALRasterWindow &window) const;
 
-    /** Apply a geotransform to an Envelope in pixel/line coordinates.
+    /** Apply a geotransform to a GDALRasterWindow in pixel/line coordinates.
      *
      * @param window A window in pixel/line coordinates
      * @param env An envelope in geographic coordinates

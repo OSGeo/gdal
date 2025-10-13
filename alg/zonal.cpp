@@ -1993,6 +1993,55 @@ static CPLErr GDALZonalStats(GDALDataset &srcDataset, GDALDataset *poWeights,
  * @param hZonesDS raster or vector dataset containing zones across which values will be summarized
  * @param hOutDS dataset to which output layer will be written
  * @param papszOptions list of options
+ *   BANDS: a comma-separated list of band indices to be processed from the
+ *          source dataset. If not present, all bands will be processed.
+ *   INCLUDE_FIELDS: a comma-separated list of field names from the zones
+ *          dataset to be included in output features.
+ *   PIXEL_INTERSECTION: controls which pixels are included in calculations:
+ *          - DEFAULT: use default options to GDALRasterize
+ *          - ALL_TOUCHED: use ALL_TOUCHED option of GDALRasterize
+ *          - FRACTIONAL: calculate fraction of each pixel that is covered
+ *              by the zone. Requires the GEOS library, version >= 3.14.
+ *   RASTER_CHUNK_SIZE_BYTES: sets a maximum amount of raster data to read
+ *              into memory at a single time (from a single source)
+ *   STATS: comma-separated list of stats. The following stats are supported:
+ *          - center_x
+ *          - center_y
+ *          - count
+ *          - coverage
+ *          - frac
+ *          - max
+ *          - max_center_x
+ *          - max_center_y
+ *          - mean
+ *          - min
+ *          - min_center_x
+ *          - min_center_y
+ *          - minority
+ *          - mode
+ *          - stdev
+ *          - sum
+ *          - unique
+ *          - values
+ *          - variance
+ *          - weighted_frac
+ *          - mean
+ *          - weighted_sum
+ *          - weighted_stdev
+ *          - weighted_variance
+ *          - weights
+ *   STRATEGY: determine how to perform processing with vector zones:
+ *           - FEATURE_SEQUENTIAL: iterate over zones, finding raster pixels
+ *             that intersect with each, calculating stats, and writing output
+ *             to hOutDS.
+ *           - RASTER_SEQUENTIAL: iterate over chunks of the raster, finding
+ *             zones that intersect with each chunk and updating stats.
+ *             Features are written to hOutDS after all processing has been
+ *             completed.
+ *   WEIGHTS_BAND: the band to read from WeightsDS
+ *   ZONES_BAND: the band to read from hZonesDS, if hZonesDS is a raster
+ *   ZONES_LAYER: the layer to read from hZonesDS, if hZonesDS is a vector
+ *
  * @param pfnProgress optional progress reporting callback
  * @param pProgressArg optional data for progress callback
  * @return CE_Failure if an error occurred, CE_None otherwise
