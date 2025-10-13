@@ -106,10 +106,14 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_basic(zonal, strategy, pixels,
             assert results[0]["sum"] == 8251
             assert results[1]["sum"] == 15131
         else:
-            src_values = src_ds.GetRasterBand(1).ReadAsMaskedArray()
-
             assert results[0]["sum"] == 7148
             assert results[1]["sum"] == 12497
+
+            try:
+                from osgeo import gdal_array  # noqa: F401
+            except Exception:
+                return
+            src_values = src_ds.GetRasterBand(1).ReadAsMaskedArray()
 
             for f in results:
                 src_max_px = gdal.ApplyGeoTransform(
@@ -813,7 +817,6 @@ def test_gdalalg_raster_zonal_stats_raster_values_partially_outside(zonal, src_n
     zones_ds.SetGeoTransform((2, 1, 0, 12, 0, -1))
     zones_ds.WriteArray(zones)
 
-    # FIXME: assumes default value is zero but should it be NaN ?
     values_adj = np.zeros((10, 10))
     values_adj[2:, 2:] = values[:-2, :-2]
 
@@ -907,7 +910,6 @@ def test_gdalalg_raster_zonal_stats_raster_weights_partially_outside(zonal):
     weights = np.arange(100).reshape(10, 10) / 100
     weights_ds.WriteArray(weights)
 
-    # FIXME: assumes default weight is zero but should it be NaN ?
     weights_adj = np.zeros((10, 10))
     weights_adj[:-2, 2:] = weights[2:, :-2]
 
