@@ -324,7 +324,6 @@ def test_gdalalg_raster_zonal_stats_raster_zones(zonal, band):
         "variance",
         "variety",
         "values",
-        "median",
         "max_center_x",
         "max_center_y",
         "min_center_x",
@@ -431,8 +430,6 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_all_stats(zonal, strategy, sta
         assert f["max_center_y"] == 0.5
     elif stat == "mean":
         assert f["mean"] == pytest.approx(13.75 / 3.5)
-    elif stat == "median":
-        assert f["median"] == pytest.approx(4.2308, abs=1e-4)
     elif stat == "min":
         assert f["min"] == 0
     elif stat == "minority":

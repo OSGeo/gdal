@@ -113,133 +113,6 @@ class WestVariance
     }
 };
 
-class WeightedQuantiles
-{
-    // Compute a quantile from weighted values, linearly
-    // interpolating between points.
-    // Uses a formula from https://stats.stackexchange.com/a/13223
-    //
-    // Unlike spatstat::weighted.quantile, it matches the default behavior of the
-    // base R stats::quantile function when all weights are equal.
-    //
-    // Unlike Hmisc::wtd.quantile, quantiles always change as the probability is
-    // changed, unless there are duplicate values. Hmisc::wtd.quantile also
-    // produces nonsense results for non-integer weights; see
-    // https://github.com/harrelfe/Hmisc/issues/97
-
-  public:
-    CPLErr Process(double x, double w)
-    {
-        if (w < 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Weighted quantile calculation does not support negative "
-                     "weights.");
-            return CE_Failure;
-        }
-
-        if (!std::isfinite(w))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Weighted quantile does not support non-finite weights.");
-            return CE_Failure;
-        }
-
-        m_ready_to_query = false;
-
-        m_elems.emplace_back(x, w);
-
-        return CE_None;
-    }
-
-    CPLErr Quantile(double q, double &ret) const
-    {
-        if (!std::isfinite(q) || q < 0 || q > 1)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Quantile must be between 0 and 1.");
-            return CE_Failure;
-        }
-
-        if (!m_ready_to_query)
-        {
-            Prepare();
-        }
-
-        auto sn = m_sum_w * (static_cast<double>(m_elems.size()) - 1);
-
-        elem_t lookup(
-            0, 0);  // create a dummy element to use with std::upper_bound
-        lookup.s = q * sn;
-
-        // get first element that is greater than the lookup value (q * sn)
-        auto right = std::upper_bound(m_elems.cbegin(), m_elems.cend(), lookup,
-                                      [](const elem_t &a, const elem_t &b)
-                                      { return a.s < b.s; });
-
-        // since the minimum value of "lookup" is zero, and the first value of "s" is zero,
-        // we are guaranteed to have at least one element to the left of "right"
-        auto left = std::prev(right, 1);
-
-        if (right == m_elems.cend())
-        {
-            ret = left->x;
-        }
-        else
-        {
-            ret = left->x + (q * sn - left->s) * (right->x - left->x) /
-                                (right->s - left->s);
-        }
-
-        return CE_None;
-    }
-
-  private:
-    struct elem_t
-    {
-        elem_t(double _x, double _w) : x(_x), w(_w), cumsum(0), s(0)
-        {
-        }
-
-        double x;
-        double w;
-        double cumsum;
-        double s;
-    };
-
-    void Prepare() const
-    {
-        std::sort(m_elems.begin(), m_elems.end(),
-                  [](const elem_t &a, const elem_t &b) { return a.x < b.x; });
-
-        m_sum_w = 0;
-        // relies on map being sorted which it is no
-        for (size_t i = 0; i < m_elems.size(); i++)
-        {
-            m_sum_w += m_elems[i].w;
-
-            if (i == 0)
-            {
-                m_elems[i].s = 0;
-                m_elems[i].cumsum = m_elems[i].w;
-            }
-            else
-            {
-                m_elems[i].cumsum = m_elems[i - 1].cumsum + m_elems[i].w;
-                m_elems[i].s = i * m_elems[i].w +
-                               (static_cast<double>(m_elems.size()) - 1) *
-                                   m_elems[i - 1].cumsum;
-            }
-        }
-
-        m_ready_to_query = true;
-    }
-
-    mutable std::vector<elem_t> m_elems{};
-    mutable double m_sum_w{0.0};
-    mutable bool m_ready_to_query{false};
-};
-
 template <typename ValueType> class RasterStats
 {
   public:
@@ -383,7 +256,6 @@ template <typename ValueType> class RasterStats
             auto &entry = m_freq[val];
             entry.m_sum_ci += static_cast<double>(coverage);
             entry.m_sum_ciwi += ciwi;
-            m_quantiles.reset();
         }
 
         if (m_options.store_values)
@@ -512,39 +384,6 @@ template <typename ValueType> class RasterStats
             return std::nullopt;
         }
         return m_max_xy;
-    }
-
-    /**
-     * The given quantile (0-1) of raster cell values. Coverage fractions
-     * are taken into account but weights are not.
-     */
-    std::optional<ValueType> quantile(double q) const
-    {
-        if (m_sum_ci == 0)
-        {
-            return std::nullopt;
-        }
-
-        // The weighted quantile computation is not processed incrementally.
-        // Create it on demand and retain it in case we want multiple quantiles.
-        if (!m_quantiles.has_value())
-        {
-            m_quantiles = WeightedQuantiles();
-
-            for (const auto &entry : m_freq)
-            {
-                m_quantiles.value().Process(static_cast<double>(entry.first),
-                                            entry.second.m_sum_ci);
-            }
-        }
-
-        double ret;
-        if (m_quantiles.value().Quantile(q, ret) != CE_None)
-        {
-            return std::nullopt;
-        }
-
-        return ret;
     }
 
     /**
@@ -799,8 +638,6 @@ template <typename ValueType> class RasterStats
 
     WestVariance m_variance{};
     WestVariance m_weighted_variance{};
-
-    mutable std::optional<WeightedQuantiles> m_quantiles{std::nullopt};
 
     struct ValueFreqEntry
     {

@@ -297,7 +297,6 @@ class GDALZonalStatsImpl
         MAX_CENTER_X,
         MAX_CENTER_Y,
         MEAN,
-        MEDIAN,
         MIN,
         MIN_CENTER_X,
         MIN_CENTER_Y,
@@ -422,8 +421,7 @@ class GDALZonalStatsImpl
                 m_stats_options.store_coverage_fraction = true;
             }
             if (eStat == VARIETY || eStat == MODE || eStat == MINORITY ||
-                eStat == UNIQUE || eStat == FRAC || eStat == WEIGHTED_FRAC ||
-                eStat == MEDIAN)
+                eStat == UNIQUE || eStat == FRAC || eStat == WEIGHTED_FRAC)
             {
                 m_stats_options.store_histogram = true;
             }
@@ -610,8 +608,6 @@ class GDALZonalStatsImpl
             return MAX_CENTER_Y;
         if (stat == "mean")
             return MEAN;
-        if (stat == "median")
-            return MEDIAN;
         if (stat == "min")
             return MIN;
         if (stat == "minority")
@@ -747,12 +743,6 @@ class GDALZonalStatsImpl
         if (auto iField = GetFieldIndex(iBand, MEAN); iField != -1)
         {
             feature.SetField(iField, stats.mean());
-        }
-        if (auto iField = GetFieldIndex(iBand, MEDIAN); iField != -1)
-        {
-            auto median = stats.quantile(0.5);
-            if (median.has_value())
-                feature.SetField(iField, median.value());
         }
         if (auto iField = GetFieldIndex(iBand, MIN); iField != -1)
         {
