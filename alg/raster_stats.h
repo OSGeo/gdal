@@ -818,7 +818,7 @@ template <typename ValueType> class RasterStats
     std::vector<bool> m_cell_values_defined{};
     std::vector<bool> m_cell_weights_defined{};
 
-    const RasterStatsOptions m_options;
+    RasterStatsOptions m_options;
 };
 
 template <typename T>
