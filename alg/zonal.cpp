@@ -1111,11 +1111,6 @@ class GDALZonalStatsImpl
                             oWindow.nYSize *
                                 GDALGetDataTypeSizeBytes(GDT_Float64),
                             bAllocSuccess);
-                    if (bAllocSuccess)
-                    {
-                        CalculateCellCenters(oWindow, m_srcGT, m_padfX.get(),
-                                             m_padfY.get());
-                    }
                 }
 
                 if (poWeightsBand)
@@ -1134,6 +1129,12 @@ class GDALZonalStatsImpl
                 }
 
                 nBufSize = nWindowSize;
+            }
+
+            if (m_padfX && m_padfY)
+            {
+                CalculateCellCenters(oWindow, m_srcGT, m_padfX.get(),
+                                     m_padfY.get());
             }
 
             if (!ReadWindow(*poZonesBand, oWindow, pabyZonesBuf.get(),
@@ -1189,7 +1190,6 @@ class GDALZonalStatsImpl
                         auto &aoStats = stats[zone];
                         aoStats.resize(m_options.bands.size(), CreateStats());
 
-                        // FIXME X/Y are null
                         aoStats[i].process(
                             reinterpret_cast<double *>(m_pabyValuesBuf.get()) +
                                 ipx,
@@ -1200,7 +1200,8 @@ class GDALZonalStatsImpl
                             m_pabyWeightsMaskBuf.get()
                                 ? m_pabyWeightsMaskBuf.get() + ipx
                                 : nullptr,
-                            nullptr, nullptr, 1, 1);
+                            m_padfX ? m_padfX.get() + j : nullptr,
+                            m_padfY ? m_padfY.get() + k : nullptr, 1, 1);
 
                         ipx++;
                     }

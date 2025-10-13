@@ -236,9 +236,16 @@ def test_gdalalg_raster_zonal_stats_raster_zones(zonal, band):
     zonal["zones"] = zones_ds
     zonal["output"] = ""
     zonal["output-format"] = "MEM"
-    zonal["stat"] = ["sum", "mean", "weighted_mean"]
+    zonal["stat"] = [
+        "sum",
+        "mean",
+        "weighted_mean",
+        "max",
+        "max_center_y",
+        "max_center_x",
+    ]
     zonal["band"] = band
-    zonal["chunk-size"] = "8k"  # force iteration over blocks
+    zonal["chunk-size"] = "2k"  # force iteration over blocks
 
     assert zonal.Run()
 
@@ -254,17 +261,30 @@ def test_gdalalg_raster_zonal_stats_raster_zones(zonal, band):
     for b in band:
         src_values = src_ds.GetRasterBand(b).ReadAsArray()
 
-        sum_field = "sum" if len(band) == 1 else f"sum_band_{b}"
-        weighted_mean_field = (
-            "weighted_mean" if len(band) == 1 else f"weighted_mean_band_{b}"
-        )
+        def stat_field(x):
+            return x if len(band) == 1 else f"{x}_band_{b}"
 
         for i, value in enumerate(np.unique(zones)):
             assert results[i]["value"] == value, f"i={i}"
-            assert results[i][sum_field] == src_values[zones == value].sum(), f"i={i}"
-            assert results[i][weighted_mean_field] == pytest.approx(
+            assert (
+                results[i][stat_field("sum")] == src_values[zones == value].sum()
+            ), f"i={i}"
+            assert results[i][stat_field("weighted_mean")] == pytest.approx(
                 np.average(src_values[zones == value], weights=weights[zones == value])
             ), f"i={i}"
+
+            assert results[i][stat_field("max")] == src_values[zones == value].max()
+
+            src_max_px = gdal.ApplyGeoTransform(
+                gdal.InvGeoTransform(src_ds.GetGeoTransform()),
+                results[i][stat_field("max_center_x")],
+                results[i][stat_field("max_center_y")],
+            )
+
+            assert (
+                src_values[int(src_max_px[1]), int(src_max_px[0])]
+                == results[i][stat_field("max")]
+            )
 
 
 @pytest.mark.skipif(not have_fractional_pixels(), reason="requires GEOS >= 3.14.1")
