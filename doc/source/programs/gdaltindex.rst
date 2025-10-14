@@ -72,9 +72,8 @@ tileindex, or as input for the :ref:`GTI <raster.gti>` driver.
 
 .. option:: -of <output_format>
 
-    The OGR format of the output tile index file. Starting with
-    GDAL 2.3, if not specified, the format is guessed from the extension (previously
-    was ESRI Shapefile).
+    The OGR format of the output tile index file. If not specified, the format
+    is guessed from the extension.
 
 .. option:: -tileindex <field_name>
 

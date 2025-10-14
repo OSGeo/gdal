@@ -100,7 +100,6 @@ char **VSIReadDir(const char *pszPath)
  * limit.
  * @return The list of entries in the directory, or NULL if the directory
  * doesn't exist.  Filenames are returned in UTF-8 encoding.
- * @since GDAL 2.1
  */
 
 char **VSIReadDirEx(const char *pszPath, int nMaxFiles)
@@ -451,7 +450,6 @@ const char *VSIGetDirectorySeparator(const char *pszPath)
  * @return The list of entries in the directory and subdirectories
  * or NULL if the directory doesn't exist.  Filenames are returned in UTF-8
  * encoding.
- * @since GDAL 1.10.0
  *
  */
 
@@ -534,7 +532,6 @@ char **CPLReadDir(const char *pszPath)
  * </ul>
  *
  * @return a handle, or NULL in case of error
- * @since GDAL 2.4
  *
  */
 
@@ -574,7 +571,6 @@ VSIDIR *VSIOpenDir(const char *pszPath, int nRecurseDepth,
  *
  * @return a entry, or NULL if there is no more entry in the directory. This
  * return value must not be freed.
- * @since GDAL 2.4
  *
  */
 
@@ -594,7 +590,6 @@ const VSIDIREntry *VSIGetNextDirEntry(VSIDIR *dir)
  *
  * @param dir Directory handled returned by VSIOpenDir().
  *
- * @since GDAL 2.4
  */
 
 void VSICloseDir(VSIDIR *dir)
@@ -641,7 +636,6 @@ int VSIMkdir(const char *pszPathname, long mode)
  * @param mode the permissions mode.
  *
  * @return 0 on success or -1 on an error.
- * @since GDAL 2.3
  */
 
 int VSIMkdirRecursive(const char *pszPathname, long mode)
@@ -1122,7 +1116,6 @@ int VSICopyFileRestartable(const char *pszSource, const char *pszTarget,
  * @param ppapszOutputs Unused. Should be set to NULL for now.
  *
  * @return TRUE on success or FALSE on an error.
- * @since GDAL 2.4
  */
 
 int VSISync(const char *pszSource, const char *pszTarget,
@@ -1493,7 +1486,6 @@ int VSIRmdir(const char *pszDirname)
  * function, provided that OAuth2 authentication is used.
  *
  * @return 0 on success or -1 on an error.
- * @since GDAL 2.3
  */
 
 int VSIRmdirRecursive(const char *pszDirname)
@@ -1569,7 +1561,6 @@ int VSIStatL(const char *pszFilename, VSIStatBufL *psStatBuf)
  *
  * @return 0 on success or -1 on an error.
  *
- * @since GDAL 1.8.0
  */
 
 int VSIStatExL(const char *pszFilename, VSIStatBufL *psStatBuf, int nFlags)
@@ -1751,7 +1742,6 @@ int VSISetFileMetadata(const char *pszFilename, CSLConstList papszMetadata,
  *
  * @return TRUE if the filenames of the filesystem are case sensitive.
  *
- * @since GDAL 1.8.0
  */
 
 int VSIIsCaseSensitiveFS(const char *pszFilename)
@@ -1780,7 +1770,6 @@ int VSIIsCaseSensitiveFS(const char *pszFilename)
  *              be returned both in cases where it is known to not support them,
  *              or when it is unknown.
  *
- * @since GDAL 2.2
  */
 
 int VSISupportsSparseFiles(const char *pszPath)
@@ -1906,7 +1895,6 @@ bool VSISupportsRandomWrite(const char *pszPath, bool bAllowLocalTempFile)
  * @return TRUE if the file system is known to have an efficient multi-range
  * reading.
  *
- * @since GDAL 2.3
  */
 
 int VSIHasOptimizedReadMultiRange(const char *pszPath)
@@ -1935,7 +1923,6 @@ int VSIHasOptimizedReadMultiRange(const char *pszPath)
  * @return the actual URL corresponding to the supplied filename, or NULL.
  * Should not be freed.
  *
- * @since GDAL 2.3
  */
 
 const char *VSIGetActualURL(const char *pszFilename)
@@ -1979,7 +1966,6 @@ const char *VSIGetActualURL(const char *pszFilename)
  * </ul>
  *
  * @return a signed URL, or NULL. Should be freed with CPLFree().
- * @since GDAL 2.3
  */
 
 char *VSIGetSignedURL(const char *pszFilename, CSLConstList papszOptions)
@@ -2000,7 +1986,6 @@ char *VSIGetSignedURL(const char *pszFilename, CSLConstList papszOptions)
  * than 2GB) should be supported.  Binary access is always implied and
  * the "b" does not need to be included in the pszAccess string.
  *
- * Note that the "VSILFILE *" returned since GDAL 1.8.0 by this function is
  * *NOT* a standard C library FILE *, and cannot be used with any functions
  * other than the "VSI*L" family of functions.  They aren't "real" FILE objects.
  *
@@ -2787,7 +2772,6 @@ bool VSIFilesystemHandler::SetFileMetadata(const char * /* pszFilename*/,
  *
  * @return NULL on failure, or the file handle.
  *
- * @since GDAL 2.1
  */
 
 VSILFILE *VSIFOpenExL(const char *pszFilename, const char *pszAccess,
@@ -3177,7 +3161,6 @@ size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp)
  * @param panSizes array of nRanges sizes of objects to read (in bytes).
  *
  * @return 0 in case of success, -1 otherwise.
- * @since GDAL 1.9.0
  */
 
 /**
@@ -3200,7 +3183,6 @@ size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp)
  * @param fp file handle opened with VSIFOpenL().
  *
  * @return 0 in case of success, -1 otherwise.
- * @since GDAL 1.9.0
  */
 
 int VSIFReadMultiRangeL(int nRanges, void **ppData,
@@ -3403,7 +3385,6 @@ void VSIFClearErrL(VSILFILE *fp)
  * @param nNewSize new size in bytes.
  *
  * @return 0 on success
- * @since GDAL 1.9.0
  */
 
 /**
@@ -3418,7 +3399,6 @@ void VSIFClearErrL(VSILFILE *fp)
  * @param nNewSize new size in bytes.
  *
  * @return 0 on success
- * @since GDAL 1.9.0
  */
 
 int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
@@ -3540,7 +3520,6 @@ int VSIFPutcL(int nChar, VSILFILE *fp)
  *
  * @return extent status: VSI_RANGE_STATUS_UNKNOWN, VSI_RANGE_STATUS_DATA or
  *         VSI_RANGE_STATUS_HOLE
- * @since GDAL 2.2
  */
 
 /**
@@ -3560,7 +3539,6 @@ int VSIFPutcL(int nChar, VSILFILE *fp)
  *
  * @return extent status: VSI_RANGE_STATUS_UNKNOWN, VSI_RANGE_STATUS_DATA or
  *         VSI_RANGE_STATUS_HOLE
- * @since GDAL 2.2
  */
 
 VSIRangeStatus VSIFGetRangeStatusL(VSILFILE *fp, vsi_l_offset nOffset,
@@ -3595,7 +3573,6 @@ VSIRangeStatus VSIFGetRangeStatusL(VSILFILE *fp, vsi_l_offset nOffset,
  *
  * @return TRUE in case of success.
  *
- * @since GDAL 1.11
  */
 
 int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
@@ -3861,7 +3838,6 @@ void *VSIFGetNativeFileDescriptorL(VSILFILE *fp)
  *
  * @param pszDirname a directory of the filesystem to query.
  * @return The free space in bytes. Or -1 in case of error.
- * @since GDAL 2.1
  */
 
 GIntBig VSIGetDiskFreeSpace(const char *pszDirname)
@@ -3882,7 +3858,6 @@ GIntBig VSIGetDiskFreeSpace(const char *pszDirname)
  * Typically: "", "/vsimem/", "/vsicurl/", etc
  *
  * @return a NULL terminated list of prefixes. Must be freed with CSLDestroy()
- * @since GDAL 2.3
  */
 
 char **VSIGetFileSystemsPrefixes(void)
@@ -3902,7 +3877,6 @@ char **VSIGetFileSystemsPrefixes(void)
  *
  * @param pszFilename a filename, or prefix of a virtual file system handler.
  * @return a string, which must not be freed, or NULL if no options is declared.
- * @since GDAL 2.3
  */
 
 const char *VSIGetFileSystemOptions(const char *pszFilename)

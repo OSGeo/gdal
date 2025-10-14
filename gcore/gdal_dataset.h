@@ -536,7 +536,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     std::shared_ptr<GDALMDArray> AsMDArray(CSLConstList papszOptions = nullptr);
 
     /** Convert a GDALDataset* to a GDALDatasetH.
-     * @since GDAL 2.3
      */
     static inline GDALDatasetH ToHandle(GDALDataset *poDS)
     {
@@ -544,7 +543,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     }
 
     /** Convert a GDALDatasetH to a GDALDataset*.
-     * @since GDAL 2.3
      */
     static inline GDALDataset *FromHandle(GDALDatasetH hDS)
     {
@@ -552,7 +550,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     }
 
     /** @see GDALOpenEx().
-     * @since GDAL 2.3
      */
     static GDALDataset *Open(const char *pszFilename,
                              unsigned int nOpenFlags = 0,
@@ -607,7 +604,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual bool IsLayerPrivate(int iLayer) const;
 
     /** Class returned by GetLayers() that acts as a range of layers.
-     * @since GDAL 2.3
      */
     class CPL_DLL Layers
     {
@@ -621,7 +617,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
       public:
         /** Layer iterator.
-         * @since GDAL 2.3
          */
         class CPL_DLL Iterator
         {
@@ -920,7 +915,6 @@ struct CPL_DLL GDALDatasetUniquePtrReleaser
 /** Unique pointer type for GDALDataset.
  * Appropriate for use on datasets open in non-shared mode and onto which
  * reference counter has not been manually modified.
- * @since GDAL 2.3
  */
 using GDALDatasetUniquePtr =
     std::unique_ptr<GDALDataset, GDALDatasetUniquePtrDeleter>;

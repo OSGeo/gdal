@@ -189,13 +189,9 @@ typedef enum
                                                         OFSTInt16 = 2,
     /** Single precision (32 bit) floating point. Only valid for OFTReal and OFTRealList. */
                                                         OFSTFloat32 = 3,
-    /** JSON content. Only valid for OFTString.
-     * @since GDAL 2.4
-     */
+    /** JSON content. Only valid for OFTString. */
                                                         OFSTJSON = 4,
-    /** UUID string representation. Only valid for OFTString.
-     * @since GDAL 3.3
-     */
+    /** UUID string representation. Only valid for OFTString. */
                                                         OFSTUUID = 5,
 } OGRFieldSubType;
 
@@ -306,7 +302,6 @@ typedef void retGetPoints;
 #ifdef SWIGJAVA
 %javaconst(1);
 #endif
-/* Interface constant added for GDAL 1.7.0 */
 %constant wkb25DBit = 0x80000000;
 
 /* typo : deprecated */
@@ -870,12 +865,10 @@ public:
     return OGR_Dr_GetName( self );
   }
 
-  /* Added in GDAL 1.8.0 */
   void Register() {
     OGRRegisterDriver( self );
   }
 
-  /* Added in GDAL 1.8.0 */
   void Deregister() {
     OGRDeregisterDriver( self );
   }
@@ -1347,7 +1340,6 @@ public:
   }
 #endif
 
-  /* Added in OGR 1.8.0 */
   OGRwkbGeometryType GetGeomType() {
     return (OGRwkbGeometryType) OGR_L_GetGeomType(self);
   }
@@ -2994,7 +2986,6 @@ public:
     OGR_Fld_SetTZFlag(self, tzflag);
   }
 
-  /* Interface method added for GDAL 1.7.0 */
   const char * GetTypeName()
   {
       return OGR_GetFieldTypeName(OGR_Fld_GetType(self));
@@ -3656,7 +3647,6 @@ public:
     return OGR_G_GetPointCount(self);
   }
 
-  /* since GDAL 1.9.0 */
 #if defined(SWIGPYTHON) || defined(SWIGJAVA)
 #ifdef SWIGJAVA
   retGetPoints* GetPoints(int* pnCount, double** ppadfXY, double** ppadfZ, int nCoordDimension = 0)
@@ -4834,7 +4824,6 @@ OGRDriverShadow* GetDriver(int driver_number) {
 %apply (char **options) {char **};
 #endif
 
-/* Interface method added for GDAL 1.7.0 */
 #ifdef SWIGJAVA
 %inline %{
   static

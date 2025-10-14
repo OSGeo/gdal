@@ -7,9 +7,6 @@ ESRIJSON / FeatureService driver
 
 .. built_in_by_default::
 
-(Note: prior to GDAL 2.3, the functionality of this driver was available
-in the GeoJSON driver. They are now distinct drivers)
-
 This driver can read the JSON output of Feature Service requests
 following the `GeoServices REST
 Specification <http://www.esri.com/industries/landing-pages/geoservices/geoservices.html>`__,
@@ -48,7 +45,7 @@ The driver accepts three types of sources of data:
    extension .json
 -  Text passed directly and encoded in ESRI JSON
 
-Starting with GDAL 2.3, the URL/filename/text might be prefixed with
+The URL/filename/text might be prefixed with
 ESRIJSON: to avoid any ambiguity with other drivers. Alternatively, starting
 with GDAL 3.10, specifying the ``-if ESRIJSON`` option to command line utilities
 accepting it, or ``ESRIJSON`` as the only value of the ``papszAllowedDrivers`` of

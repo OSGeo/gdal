@@ -72,8 +72,6 @@ If your number of input tiles exhausts the command line buffer, use the general
 
     Overlap in pixels between consecutive tiles. If not specified, 0 is the default
 
-    .. versionadded:: 2.2
-
 .. option:: -levels <numberOfLevels>
 
     Number of pyramids levels to build.

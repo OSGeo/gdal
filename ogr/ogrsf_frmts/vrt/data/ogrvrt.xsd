@@ -178,13 +178,13 @@
             <xs:enumeration value="wkbMultiLineString"/>
             <xs:enumeration value="wkbMultiPolygon"/>
             <xs:enumeration value="wkbGeometryCollection"/>
-            <xs:enumeration value="wkbCircularString"/> <!-- new in GDAL 2.0 -->
-            <xs:enumeration value="wkbCompoundCurve"/> <!-- new in GDAL 2.0 -->
-            <xs:enumeration value="wkbCurvePolygon"/> <!-- new in GDAL 2.0 -->
-            <xs:enumeration value="wkbMultiCurve"/> <!-- new in GDAL 2.0 -->
-            <xs:enumeration value="wkbMultiSurface"/> <!-- new in GDAL 2.0 -->
-            <xs:enumeration value="wkbCurve"/> <!-- new in GDAL 2.1 -->
-            <xs:enumeration value="wkbSurface"/> <!-- new in GDAL 2.1 -->
+            <xs:enumeration value="wkbCircularString"/>
+            <xs:enumeration value="wkbCompoundCurve"/>
+            <xs:enumeration value="wkbCurvePolygon"/>
+            <xs:enumeration value="wkbMultiCurve"/>
+            <xs:enumeration value="wkbMultiSurface"/>
+            <xs:enumeration value="wkbCurve"/>
+            <xs:enumeration value="wkbSurface"/>
             <xs:enumeration value="wkbUnknown25D"/>
             <xs:enumeration value="wkbPoint25D"/>
             <xs:enumeration value="wkbLineString25D"/>
@@ -193,15 +193,14 @@
             <xs:enumeration value="wkbMultiLineString25D"/>
             <xs:enumeration value="wkbMultiPolygon25D"/>
             <xs:enumeration value="wkbGeometryCollection25D"/>
-            <xs:enumeration value="wkbCircularStringZ"/> <!-- new in GDAL 2.0 -->
-            <xs:enumeration value="wkbCompoundCurveZ"/> <!-- new in GDAL 2.0 -->
-            <xs:enumeration value="wkbCurvePolygonZ"/> <!-- new in GDAL 2.0 -->
-            <xs:enumeration value="wkbMultiCurveZ"/> <!-- new in GDAL 2.0 -->
-            <xs:enumeration value="wkbMultiSurfaceZ"/> <!-- new in GDAL 2.0 -->
-            <xs:enumeration value="wkbCurveZ"/> <!-- new in GDAL 2.1 -->
-            <xs:enumeration value="wkbSurfaceZ"/> <!-- new in GDAL 2.1 -->
+            <xs:enumeration value="wkbCircularStringZ"/>
+            <xs:enumeration value="wkbCompoundCurveZ"/>
+            <xs:enumeration value="wkbCurvePolygonZ"/>
+            <xs:enumeration value="wkbMultiCurveZ"/>
+            <xs:enumeration value="wkbMultiSurfaceZ"/>
+            <xs:enumeration value="wkbCurveZ"/>
+            <xs:enumeration value="wkbSurfaceZ"/>
 
-            <!-- below is new in GDAL 2.1 -->
             <xs:enumeration value="wkbPointM"/>
             <xs:enumeration value="wkbLineStringM"/>
             <xs:enumeration value="wkbPolygonM"/>
@@ -232,7 +231,6 @@
             <xs:enumeration value="wkbCurveZM"/>
             <xs:enumeration value="wkbSurfaceZM"/>
 
-            <!-- below is new in GDAL 2.2 -->
             <xs:enumeration value="wkbPolyhedralSurface"/>
             <xs:enumeration value="wkbTIN"/>
             <xs:enumeration value="wkbTriangle"/>
@@ -252,11 +250,11 @@
     <xs:complexType name="FieldTypeWithoutSrc">
         <xs:attribute name="name" type="nonEmptyStringType" use="required"/>
         <xs:attribute name="type" type="OGRFieldTypeType" default="String"/>
-        <xs:attribute name="subtype" type="OGRFieldSubTypeType" default="None"/>  <!-- new in GDAL 2.0 -->
+        <xs:attribute name="subtype" type="OGRFieldSubTypeType" default="None"/>
         <xs:attribute name="width" type="xs:nonNegativeInteger"/>
         <xs:attribute name="precision" type="xs:nonNegativeInteger"/>
-        <xs:attribute name="nullable" type="OGRBooleanType" default="true"/>  <!-- new in GDAL 2.0 -->
-        <xs:attribute name="default" type="xs:string"/>  <!-- new in GDAL 2.0 -->
+        <xs:attribute name="nullable" type="OGRBooleanType" default="true"/>
+        <xs:attribute name="default" type="xs:string"/>
         <xs:attribute name="unique" type="OGRBooleanType" default="false"/>  <!-- new in GDAL 3.2 -->
         <xs:attribute name="alternativeName" type="xs:string"/>  <!-- new in GDAL 3.7 -->
         <xs:attribute name="comment" type="xs:string"/>  <!-- new in GDAL 3.7 -->
@@ -365,7 +363,7 @@
                 <xs:documentation>Only used if no Field element is found at the OGRVRTLayer level</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="nullable" type="OGRBooleanType" default="true"/>  <!-- new in GDAL 2.0 -->
+        <xs:attribute name="nullable" type="OGRBooleanType" default="true"/>
     </xs:attributeGroup>
 
     <xs:complexType name="GeometryFieldTypeWithoutSrc">

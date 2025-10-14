@@ -3,8 +3,6 @@
 Microstation DGN v8
 ===================
 
-.. versionadded:: 2.2
-
 .. shortname:: DGNv8
 
 .. build_dependencies:: Open Design Alliance Teigha library

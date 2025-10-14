@@ -555,7 +555,6 @@ int CPL_STDCALL GDALRATGetLinearBinning(GDALRasterAttributeTableH hRAT,
 /**
  * \brief Get Rat Table Type
  *
- * @since GDAL 2.4
  *
  * This function is the same as the C++ method
  * GDALRasterAttributeTable::GetTableType()
@@ -574,7 +573,6 @@ GDALRATTableType CPL_STDCALL GDALRATGetTableType(GDALRasterAttributeTableH hRAT)
 /**
  * \brief Set RAT Table Type
  *
- * @since GDAL 2.4
  *
  * This function is the same as the C++ method
  * GDALRasterAttributeTable::SetTableType()
@@ -2068,7 +2066,6 @@ int GDALDefaultRasterAttributeTable::GetLinearBinning(double *pdfRow0Min,
  *
  * This method is the same as the C function GDALRATGetTableType().
  *
- * @since GDAL 2.4
  *
  * @return GRTT_THEMATIC or GRTT_ATHEMATIC
  */
@@ -2091,7 +2088,6 @@ GDALRATTableType GDALDefaultRasterAttributeTable::GetTableType() const
  *
  * @param eInTableType the new RAT table type (GRTT_THEMATIC or GRTT_ATHEMATIC)
  *
- * @since GDAL 2.4
  *
  * @return CE_None on success or CE_Failure on failure.
  */
@@ -2150,7 +2146,6 @@ GDALDefaultRasterAttributeTable::CreateColumn(const char *pszFieldName,
  *
  * This method is the same as the C function GDALRATRemoveStatistics().
  *
- * @since GDAL 2.4
  */
 
 void GDALDefaultRasterAttributeTable::RemoveStatistics()
@@ -2245,7 +2240,6 @@ void *CPL_STDCALL GDALRATSerializeJSON(GDALRasterAttributeTableH hRAT)
  * This function is the same as the C++ method
  * GDALRasterAttributeTable::RemoveStatistics()
  *
- * @since GDAL 2.4
  */
 void CPL_STDCALL GDALRATRemoveStatistics(GDALRasterAttributeTableH hRAT)
 

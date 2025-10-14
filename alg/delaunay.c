@@ -79,7 +79,6 @@
  *
  * @return TRUE if GDAL is built with Delaunay triangulation support.
  *
- * @since GDAL 2.1
  */
 int GDALHasTriangulation()
 {
@@ -102,7 +101,6 @@ int GDALHasTriangulation()
  * @return triangulation that must be freed with GDALTriangulationFree(), or
  *         NULL in case of error.
  *
- * @since GDAL 2.1
  */
 GDALTriangulation *GDALTriangulationCreateDelaunay(int nPoints,
                                                    const double *padfX,
@@ -264,7 +262,6 @@ end:
 /** Free a triangulation.
  *
  * @param psDT triangulation.
- * @since GDAL 2.1
  */
 void GDALTriangulationFree(GDALTriangulation *psDT)
 {
@@ -290,7 +287,6 @@ void GDALTriangulationFree(GDALTriangulation *psDT)
  *
  * @return TRUE in case of success.
  *
- * @since GDAL 2.1
  */
 int GDALTriangulationComputeBarycentricCoefficients(GDALTriangulation *psDT,
                                                     const double *padfX,
@@ -371,7 +367,6 @@ int GDALTriangulationComputeBarycentricCoefficients(GDALTriangulation *psDT,
  *
  * @return TRUE in case of success.
  *
- * @since GDAL 2.1
  */
 
 int GDALTriangulationComputeBarycentricCoordinates(
@@ -416,7 +411,6 @@ int GDALTriangulationComputeBarycentricCoordinates(
  *
  * @return index >= 0 of the triangle in case of success, -1 otherwise.
  *
- * @since GDAL 2.1
  */
 
 int GDALTriangulationFindFacetBruteForce(const GDALTriangulation *psDT,
@@ -511,7 +505,6 @@ int GDALTriangulationFindFacetBruteForce(const GDALTriangulation *psDT,
  *
  * @return TRUE in case of success, FALSE otherwise.
  *
- * @since GDAL 2.1
  */
 
 int GDALTriangulationFindFacetDirected(const GDALTriangulation *psDT,

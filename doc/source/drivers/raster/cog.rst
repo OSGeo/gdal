@@ -273,7 +273,7 @@ General creation options
       Create a file with less than 8 bits per sample by
       passing a value from 1 to 7. The apparent pixel type should be Byte.
       Values of n=9...15 (UInt16 type) and n=17...31
-      (UInt32 type) are also accepted. From GDAL 2.2, n=16 is accepted for
+      (UInt32 type) are also accepted. n=16 is accepted for
       Float32 type to generate half-precision floating point values.
 
 -  .. co:: PREDICTOR

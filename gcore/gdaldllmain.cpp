@@ -42,18 +42,12 @@ static bool bGDALDestroyAlreadyCalled = FALSE;
  * This function calls GDALDestroyDriverManager() and OGRCleanupAll() and
  * finalize Thread Local Storage variables.
  *
- * Prior to GDAL 2.4.0, this function should normally be explicitly called by
- * application code if GDAL is dynamically linked (but that does not hurt),
- * since it was automatically called through
- * the unregistration mechanisms of dynamic library loading.
- *
- * Since GDAL 2.4.0, this function may be called by application code, since
+ * This function may be called by application code, since
  * it is no longer called automatically, on non-MSVC builds, due to ordering
  * problems with respect to automatic destruction of global C++ objects.
  *
  * Note: no GDAL/OGR code should be called after this call!
  *
- * @since GDAL 2.0
  */
 
 void GDALDestroy(void)

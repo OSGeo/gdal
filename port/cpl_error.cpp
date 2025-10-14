@@ -879,7 +879,6 @@ void CPLErrorSetState(CPLErr eErrClass, CPLErrorNum err_no, const char *pszMsg,
  * Can be useful if a routine might call CPLErrorReset() and one wants to
  * preserve the previous error state.
  *
- * @since GDAL 2.0
  */
 
 void CPL_DLL CPLErrorSetState(CPLErr eErrClass, CPLErrorNum err_no,
@@ -971,7 +970,6 @@ const char *CPL_STDCALL CPLGetLastErrorMsg()
  * since the last call to CPLErrorReset()
  *
  * @return the error counter.
- * @since GDAL 2.3
  */
 
 GUInt32 CPL_STDCALL CPLGetErrorCounter()
@@ -1473,7 +1471,6 @@ void CPLCallPreviousHandler(CPLErr eErrClass, CPLErrorNum err_no,
  *
  * @param bCatchDebug FALSE if the current error handler should not intercept
  * debug messages
- * @since GDAL 2.1
  */
 
 void CPL_STDCALL CPLSetCurrentErrorHandlerCatchDebug(int bCatchDebug)

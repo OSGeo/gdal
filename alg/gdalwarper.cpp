@@ -1303,7 +1303,7 @@ const char *GDALWarpGetOptionList(void)
  * is no corresponding input data. This will disable initializing the
  * destination (INIT_DEST) and all other processing, and so should be used
  * carefully.  Mostly useful to short circuit a lot of extra work in mosaicing
- * situations. Starting with GDAL 2.4, gdalwarp will automatically enable this
+ * situations. gdalwarp will automatically enable this
  * option when it is assumed to be safe to do so.</li>
  *
  * <li>UNIFIED_SRC_NODATA=YES/NO/PARTIAL: This setting determines
@@ -1399,7 +1399,7 @@ const char *GDALWarpGetOptionList(void)
  * set the number of threads to use to parallelize the computation part of the
  * warping. If not set, computation will be done in a single thread.</li>
  *
- * <li>STREAMABLE_OUTPUT: (GDAL >= 2.0) This defaults to FALSE, but may
+ * <li>STREAMABLE_OUTPUT: This defaults to FALSE, but may
  * be set to TRUE typically when writing to a streamed file. The
  * gdalwarp utility automatically sets this option when writing to
  * /vsistdout/ or a named pipe (on Unix).  This option has performance
@@ -1407,7 +1407,7 @@ const char *GDALWarpGetOptionList(void)
  * not currently supported by the warping algorithm in a streamable
  * compatible way.</li>
  *
- * <li>SRC_COORD_PRECISION: (GDAL >= 2.0). Advanced setting. This
+ * <li>SRC_COORD_PRECISION: Advanced setting. This
  * defaults to 0, to indicate that no rounding of computing source
  * image coordinates corresponding to the target image must be
  * done. If greater than 0 (and typically below 1), this value,
@@ -1421,13 +1421,13 @@ const char *GDALWarpGetOptionList(void)
  * reprojections must statistically be done with a frequency of
  * 4*error_threshold/SRC_COORD_PRECISION.</li>
  *
- * <li>SRC_ALPHA_MAX: (GDAL >= 2.2). Maximum value for the alpha band of the
+ * <li>SRC_ALPHA_MAX: Maximum value for the alpha band of the
  * source dataset. If the value is not set and the alpha band has a NBITS
  * metadata item, it is used to set SRC_ALPHA_MAX = 2^NBITS-1. Otherwise, if the
  * value is not set and the alpha band is of type UInt16 (resp Int16), 65535
  * (resp 32767) is used. Otherwise, 255 is used.</li>
  *
- * <li>DST_ALPHA_MAX: (GDAL >= 2.2). Maximum value for the alpha band of the
+ * <li>DST_ALPHA_MAX: Maximum value for the alpha band of the
  * destination dataset. If the value is not set and the alpha band has a NBITS
  * metadata item, it is used to set DST_ALPHA_MAX = 2^NBITS-1. Otherwise, if the
  * value is not set and the alpha band is of type UInt16 (resp Int16), 65535

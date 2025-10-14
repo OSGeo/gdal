@@ -2054,7 +2054,6 @@ static GDALDataset *VSICryptOpen(GDALOpenInfo *poOpenInfo)
  * VSISetCryptKey() to set the key might make it a bit more complicated to spy
  * the key.  But, as said initially, this is in no way a perfect protection.
  *
- * @since GDAL 2.1.0
  */
 void VSIInstallCryptFileHandler(void)
 
@@ -2126,7 +2125,7 @@ void VSISetCryptKey(const GByte * /* pabyKey */, int /* nKeySize */)
 
 #endif  // HAVE_CRYPTOPP
 
-// Below is only useful if using as a plugin over GDAL >= 2.0.
+// Below is only useful if using as a plugin.
 #ifdef VSICRYPT_AUTOLOAD
 
 CPL_C_START

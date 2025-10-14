@@ -171,8 +171,6 @@ C API
 
 This utility is also callable from C with :cpp:func:`GDALInfo`.
 
-.. versionadded:: 2.1
-
 Examples
 --------
 

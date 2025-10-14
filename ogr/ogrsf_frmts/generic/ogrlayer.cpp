@@ -1711,7 +1711,7 @@ bool OGRLayer::ValidateGeometryFieldIndexForSetSpatialFilter(
  will be returned.  This can result in more shapes being returned that
  should strictly be the case.
 
- Starting with GDAL 2.3, features with null or empty geometries will never
+ Features with null or empty geometries will never
  be considered as matching a spatial filter.
 
  This method makes an internal copy of the passed geometry.  The
@@ -1767,8 +1767,6 @@ OGRErr OGRLayer::SetSpatialFilter(const OGRGeometry *poFilter)
  @param poFilter the geometry to use as a filtering region.  NULL may
  be passed indicating that the current spatial filter should be cleared,
  but no new one instituted.
-
- @since GDAL 1.11
  */
 
 OGRErr OGRLayer::SetSpatialFilter(int iGeomField, const OGRGeometry *poFilter)
@@ -1844,7 +1842,7 @@ OGRErr OGRLayer::ISetSpatialFilter(int iGeomField, const OGRGeometry *poFilter)
  will be returned.  This can result in more shapes being returned that
  should strictly be the case.
 
- Starting with GDAL 2.3, features with null or empty geometries will never
+ Features with null or empty geometries will never
  be considered as matching a spatial filter.
 
  This function makes an internal copy of the passed geometry.  The
@@ -1916,8 +1914,6 @@ void OGR_L_SetSpatialFilter(OGRLayerH hLayer, OGRGeometryH hGeom)
  @param hGeom handle to the geometry to use as a filtering region.  NULL may
  be passed indicating that the current spatial filter should be cleared,
  but no new one instituted.
-
- @since GDAL 1.11
 
  */
 
@@ -1997,8 +1993,6 @@ OGRErr OGRLayer::SetSpatialFilterRect(double dfMinX, double dfMinY,
  @param dfMinY the minimum Y coordinate for the rectangular region.
  @param dfMaxX the maximum X coordinate for the rectangular region.
  @param dfMaxY the maximum Y coordinate for the rectangular region.
-
- @since GDAL 1.11
  */
 
 OGRErr OGRLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
@@ -2096,9 +2090,7 @@ void OGR_L_SetSpatialFilterRect(OGRLayerH hLayer, double dfMinX, double dfMinY,
  @param dfMinY the minimum Y coordinate for the rectangular region.
  @param dfMaxX the maximum X coordinate for the rectangular region.
  @param dfMaxY the maximum Y coordinate for the rectangular region.
-
- @since GDAL 1.11
- */
+*/
 
 void OGR_L_SetSpatialFilterRectEx(OGRLayerH hLayer, int iGeomField,
                                   double dfMinX, double dfMinY, double dfMaxX,

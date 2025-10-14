@@ -143,7 +143,6 @@ typedef OGRMultiPolygon *(*OGRPolyhedralSurfaceCastToMultiPolygon)(
 //! @endcond
 
 /** OGRGeometry visitor interface.
- * @since GDAL 2.3
  */
 class CPL_DLL IOGRGeometryVisitor
 {
@@ -190,7 +189,6 @@ class CPL_DLL IOGRGeometryVisitor
  * This default implementation will recurse down to calling
  * visit(OGRPoint*) on each point.
  *
- * @since GDAL 2.3
  */
 class CPL_DLL OGRDefaultGeometryVisitor : public IOGRGeometryVisitor
 {
@@ -219,7 +217,6 @@ class CPL_DLL OGRDefaultGeometryVisitor : public IOGRGeometryVisitor
 };
 
 /** OGRGeometry visitor interface.
- * @since GDAL 2.3
  */
 class CPL_DLL IOGRConstGeometryVisitor
 {
@@ -266,7 +263,6 @@ class CPL_DLL IOGRConstGeometryVisitor
  * This default implementation will recurse down to calling
  * visit(const OGRPoint*) on each point.
  *
- * @since GDAL 2.3
  */
 class CPL_DLL OGRDefaultConstGeometryVisitor : public IOGRConstGeometryVisitor
 {
@@ -348,7 +344,7 @@ struct CPL_DLL OGRwkbExportOptions
  * Common architecture":
  * <a href="http://www.opengeospatial.org/standards/sfa">OGC 06-103r4</a>
  *
- * In GDAL 2.0, the hierarchy of classes has been extended with
+ * The hierarchy of classes has been extended with
  * <a href="https://portal.opengeospatial.org/files/?artifact_id=32024">
  * (working draft) ISO SQL/MM Part 3 (ISO/IEC 13249-3)</a> curve geometries :
  * CIRCULARSTRING (OGRCircularString), COMPOUNDCURVE (OGRCompoundCurve),
@@ -467,7 +463,7 @@ class CPL_DLL OGRGeometry
 
 #ifndef DOXYGEN_XML
     /** Deprecated.
-     * @deprecated in GDAL 2.3
+     * @deprecated
      */
     OGRErr importFromWkt(char **ppszInput)
         /*! @cond Doxygen_Suppress */
@@ -637,7 +633,6 @@ class CPL_DLL OGRGeometry
     //! @endcond
 
     /** Convert a OGRGeometry* to a OGRGeometryH.
-     * @since GDAL 2.3
      */
     static inline OGRGeometryH ToHandle(OGRGeometry *poGeom)
     {
@@ -645,7 +640,6 @@ class CPL_DLL OGRGeometry
     }
 
     /** Convert a OGRGeometryH to a OGRGeometry*.
-     * @since GDAL 2.3
      */
     static inline OGRGeometry *FromHandle(OGRGeometryH hGeom)
     {
@@ -654,7 +648,6 @@ class CPL_DLL OGRGeometry
 
     /** Down-cast to OGRPoint*.
      * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPoint.
-     * @since GDAL 2.3
      */
     inline OGRPoint *toPoint()
     {
@@ -663,7 +656,6 @@ class CPL_DLL OGRGeometry
 
     /** Down-cast to OGRPoint*.
      * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPoint.
-     * @since GDAL 2.3
      */
     inline const OGRPoint *toPoint() const
     {
@@ -673,7 +665,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRCurve*.
      * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(),
      * wkbCurve).
-     * @since GDAL 2.3
      */
     inline OGRCurve *toCurve()
     {
@@ -683,7 +674,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRCurve*.
      * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(),
      * wkbCurve).
-     * @since GDAL 2.3
      */
     inline const OGRCurve *toCurve() const
     {
@@ -693,7 +683,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRSimpleCurve*.
      * Implies prior checking that getGeometryType() is wkbLineString,
      * wkbCircularString or a derived type.
-     * @since GDAL 2.3
      */
     inline OGRSimpleCurve *toSimpleCurve()
     {
@@ -703,7 +692,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRSimpleCurve*.
      * Implies prior checking that getGeometryType() is wkbLineString,
      * wkbCircularString or a derived type.
-     * @since GDAL 2.3
      */
     inline const OGRSimpleCurve *toSimpleCurve() const
     {
@@ -713,7 +701,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRLineString*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbLineString.
-     * @since GDAL 2.3
      */
     inline OGRLineString *toLineString()
     {
@@ -723,7 +710,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRLineString*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbLineString.
-     * @since GDAL 2.3
      */
     inline const OGRLineString *toLineString() const
     {
@@ -732,7 +718,6 @@ class CPL_DLL OGRGeometry
 
     /** Down-cast to OGRLinearRing*.
      * Implies prior checking that EQUAL(getGeometryName(), "LINEARRING").
-     * @since GDAL 2.3
      */
     inline OGRLinearRing *toLinearRing()
     {
@@ -741,7 +726,6 @@ class CPL_DLL OGRGeometry
 
     /** Down-cast to OGRLinearRing*.
      * Implies prior checking that EQUAL(getGeometryName(), "LINEARRING").
-     * @since GDAL 2.3
      */
     inline const OGRLinearRing *toLinearRing() const
     {
@@ -751,7 +735,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRCircularString*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbCircularString.
-     * @since GDAL 2.3
      */
     inline OGRCircularString *toCircularString()
     {
@@ -761,7 +744,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRCircularString*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbCircularString.
-     * @since GDAL 2.3
      */
     inline const OGRCircularString *toCircularString() const
     {
@@ -771,7 +753,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRCompoundCurve*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbCompoundCurve.
-     * @since GDAL 2.3
      */
     inline OGRCompoundCurve *toCompoundCurve()
     {
@@ -781,7 +762,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRCompoundCurve*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbCompoundCurve.
-     * @since GDAL 2.3
      */
     inline const OGRCompoundCurve *toCompoundCurve() const
     {
@@ -791,7 +771,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRSurface*.
      * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(),
      * wkbSurface).
-     * @since GDAL 2.3
      */
     inline OGRSurface *toSurface()
     {
@@ -801,7 +780,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRSurface*.
      * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(),
      * wkbSurface).
-     * @since GDAL 2.3
      */
     inline const OGRSurface *toSurface() const
     {
@@ -811,7 +789,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRPolygon*.
      * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolygon
      * or wkbTriangle.
-     * @since GDAL 2.3
      */
     inline OGRPolygon *toPolygon()
     {
@@ -821,7 +798,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRPolygon*.
      * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolygon
      * or wkbTriangle.
-     * @since GDAL 2.3
      */
     inline const OGRPolygon *toPolygon() const
     {
@@ -830,7 +806,6 @@ class CPL_DLL OGRGeometry
 
     /** Down-cast to OGRTriangle*.
      * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTriangle.
-     * @since GDAL 2.3
      */
     inline OGRTriangle *toTriangle()
     {
@@ -839,7 +814,6 @@ class CPL_DLL OGRGeometry
 
     /** Down-cast to OGRTriangle*.
      * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTriangle.
-     * @since GDAL 2.3
      */
     inline const OGRTriangle *toTriangle() const
     {
@@ -849,7 +823,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRCurvePolygon*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbCurvePolygon or wkbPolygon or wkbTriangle.
-     * @since GDAL 2.3
      */
     inline OGRCurvePolygon *toCurvePolygon()
     {
@@ -859,7 +832,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRCurvePolygon*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbCurvePolygon or wkbPolygon or wkbTriangle.
-     * @since GDAL 2.3
      */
     inline const OGRCurvePolygon *toCurvePolygon() const
     {
@@ -869,7 +841,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRGeometryCollection*.
      * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(),
      * wkbGeometryCollection).
-     * @since GDAL 2.3
      */
     inline OGRGeometryCollection *toGeometryCollection()
     {
@@ -879,7 +850,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRGeometryCollection*.
      * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(),
      * wkbGeometryCollection).
-     * @since GDAL 2.3
      */
     inline const OGRGeometryCollection *toGeometryCollection() const
     {
@@ -889,7 +859,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRMultiPoint*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbMultiPoint.
-     * @since GDAL 2.3
      */
     inline OGRMultiPoint *toMultiPoint()
     {
@@ -899,7 +868,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRMultiPoint*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbMultiPoint.
-     * @since GDAL 2.3
      */
     inline const OGRMultiPoint *toMultiPoint() const
     {
@@ -909,7 +877,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRMultiLineString*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbMultiLineString.
-     * @since GDAL 2.3
      */
     inline OGRMultiLineString *toMultiLineString()
     {
@@ -919,7 +886,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRMultiLineString*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbMultiLineString.
-     * @since GDAL 2.3
      */
     inline const OGRMultiLineString *toMultiLineString() const
     {
@@ -929,7 +895,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRMultiPolygon*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbMultiPolygon.
-     * @since GDAL 2.3
      */
     inline OGRMultiPolygon *toMultiPolygon()
     {
@@ -939,7 +904,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRMultiPolygon*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbMultiPolygon.
-     * @since GDAL 2.3
      */
     inline const OGRMultiPolygon *toMultiPolygon() const
     {
@@ -949,7 +913,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRMultiCurve*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbMultiCurve and derived types.
-     * @since GDAL 2.3
      */
     inline OGRMultiCurve *toMultiCurve()
     {
@@ -959,7 +922,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRMultiCurve*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbMultiCurve and derived types.
-     * @since GDAL 2.3
      */
     inline const OGRMultiCurve *toMultiCurve() const
     {
@@ -969,7 +931,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRMultiSurface*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbMultiSurface and derived types.
-     * @since GDAL 2.3
      */
     inline OGRMultiSurface *toMultiSurface()
     {
@@ -979,7 +940,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRMultiSurface*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbMultiSurface and derived types.
-     * @since GDAL 2.3
      */
     inline const OGRMultiSurface *toMultiSurface() const
     {
@@ -989,7 +949,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRPolyhedralSurface*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbPolyhedralSurface or wkbTIN.
-     * @since GDAL 2.3
      */
     inline OGRPolyhedralSurface *toPolyhedralSurface()
     {
@@ -999,7 +958,6 @@ class CPL_DLL OGRGeometry
     /** Down-cast to OGRPolyhedralSurface*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
      * wkbPolyhedralSurface or wkbTIN.
-     * @since GDAL 2.3
      */
     inline const OGRPolyhedralSurface *toPolyhedralSurface() const
     {
@@ -1008,7 +966,6 @@ class CPL_DLL OGRGeometry
 
     /** Down-cast to OGRTriangulatedSurface*.
      * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTIN.
-     * @since GDAL 2.3
      */
     inline OGRTriangulatedSurface *toTriangulatedSurface()
     {
@@ -1017,7 +974,6 @@ class CPL_DLL OGRGeometry
 
     /** Down-cast to OGRTriangulatedSurface*.
      * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTIN.
-     * @since GDAL 2.3
      */
     inline const OGRTriangulatedSurface *toTriangulatedSurface() const
     {
@@ -1034,7 +990,6 @@ struct CPL_DLL OGRGeometryUniquePtrDeleter
 //! @endcond
 
 /** Unique pointer type for OGRGeometry.
- * @since GDAL 2.3
  */
 typedef std::unique_ptr<OGRGeometry, OGRGeometryUniquePtrDeleter>
     OGRGeometryUniquePtr;
@@ -1299,7 +1254,6 @@ class CPL_DLL OGRPoint : public OGRGeometry
 /**
  * Interface for a point iterator.
  *
- * @since GDAL 2.0
  */
 
 class CPL_DLL OGRPointIterator
@@ -1372,7 +1326,6 @@ class CPL_DLL OGRCurve : public OGRGeometry
      * due to implementation limitations, you shouldn't try to access
      * (dereference) more than one iterator step at a time, since you will get
      * a reference to the same OGRPoint& object.
-     * @since GDAL 2.3
      */
     ConstIterator begin() const;
     /** Return end of a point iterator. */
@@ -1514,7 +1467,6 @@ class CPL_DLL OGRIteratedPoint : public OGRPoint
  * Note: this class does not exist in SQL/MM standard and exists for
  * implementation convenience.
  *
- * @since GDAL 2.0
  */
 
 class CPL_DLL OGRSimpleCurve : public OGRCurve
@@ -1603,7 +1555,6 @@ class CPL_DLL OGRSimpleCurve : public OGRCurve
      * due to implementation limitations, you shouldn't try to access
      * (dereference) more than one iterator step at a time, since you will get
      * a reference to the same OGRPoint& object.
-     * @since GDAL 2.3
      */
     Iterator begin();
     /** Return end of point iterator. */
@@ -1614,7 +1565,6 @@ class CPL_DLL OGRSimpleCurve : public OGRCurve
      * due to implementation limitations, you shouldn't try to access
      * (dereference) more than one iterator step at a time, since you will get
      * a reference to the same OGRPoint& object.
-     * @since GDAL 2.3
      */
     ConstIterator begin() const;
     /** Return end of point iterator. */
@@ -1965,7 +1915,6 @@ class CPL_DLL OGRLinearRing : public OGRLineString
  *
  * Compatibility: ISO SQL/MM Part 3.
  *
- * @since GDAL 2.0
  */
 
 class CPL_DLL OGRCircularString : public OGRSimpleCurve
@@ -2084,7 +2033,6 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
  * This class is only exported because of linking issues. It should never
  * be directly used.
  *
- * @since GDAL 2.0
  */
 
 //! @cond Doxygen_Suppress
@@ -2112,7 +2060,6 @@ class CPL_DLL OGRCurveCollection
     typedef OGRCurve ChildType;
 
     /** Return begin of curve iterator.
-     * @since GDAL 2.3
      */
     OGRCurve **begin()
     {
@@ -2126,7 +2073,6 @@ class CPL_DLL OGRCurveCollection
     }
 
     /** Return begin of curve iterator.
-     * @since GDAL 2.3
      */
     const OGRCurve *const *begin() const
     {
@@ -2201,7 +2147,6 @@ class CPL_DLL OGRCurveCollection
  *
  * Compatibility: ISO SQL/MM Part 3.
  *
- * @since GDAL 2.0
  */
 
 class CPL_DLL OGRCompoundCurve : public OGRCurve
@@ -2248,7 +2193,6 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     typedef OGRCurve ChildType;
 
     /** Return begin of curve iterator.
-     * @since GDAL 2.3
      */
     ChildType **begin()
     {
@@ -2262,7 +2206,6 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     }
 
     /** Return begin of curve iterator.
-     * @since GDAL 2.3
      */
     const ChildType *const *begin() const
     {
@@ -2468,7 +2411,6 @@ class CPL_DLL OGRSurface : public OGRGeometry
  *
  * Compatibility: ISO SQL/MM Part 3.
  *
- * @since GDAL 2.0
  */
 
 class CPL_DLL OGRCurvePolygon : public OGRSurface
@@ -2518,7 +2460,6 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     typedef OGRCurve ChildType;
 
     /** Return begin of curve iterator.
-     * @since GDAL 2.3
      */
     ChildType **begin()
     {
@@ -2532,7 +2473,6 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     }
 
     /** Return begin of curve iterator.
-     * @since GDAL 2.3
      */
     const ChildType *const *begin() const
     {
@@ -2735,7 +2675,6 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     typedef OGRLinearRing ChildType;
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     ChildType **begin()
     {
@@ -2749,7 +2688,6 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     }
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     const ChildType *const *begin() const
     {
@@ -2875,7 +2813,6 @@ inline OGRPolygon::ChildType **end(OGRPolygon *poGeom)
 /**
  * Triangle class.
  *
- * @since GDAL 2.2
  */
 
 class CPL_DLL OGRTriangle : public OGRPolygon
@@ -2995,7 +2932,6 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     typedef OGRGeometry ChildType;
 
     /** Return begin of sub-geometry iterator.
-     * @since GDAL 2.3
      */
     ChildType **begin()
     {
@@ -3009,7 +2945,6 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     }
 
     /** Return begin of sub-geometry iterator.
-     * @since GDAL 2.3
      */
     const ChildType *const *begin() const
     {
@@ -3158,7 +3093,6 @@ inline OGRGeometryCollection::ChildType **end(OGRGeometryCollection *poGeom)
 /**
  * A collection of non-overlapping OGRSurface.
  *
- * @since GDAL 2.0
  */
 
 class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
@@ -3182,7 +3116,6 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     typedef OGRSurface ChildType;
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     ChildType **begin()
     {
@@ -3196,7 +3129,6 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     }
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     const ChildType *const *begin() const
     {
@@ -3354,7 +3286,6 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     typedef OGRPolygon ChildType;
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     ChildType **begin()
     {
@@ -3368,7 +3299,6 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     }
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     const ChildType *const *begin() const
     {
@@ -3482,7 +3412,6 @@ inline OGRMultiPolygon::ChildType **end(OGRMultiPolygon *poGeom)
 /**
  * PolyhedralSurface class.
  *
- * @since GDAL 2.2
  */
 
 class CPL_DLL OGRPolyhedralSurface : public OGRSurface
@@ -3521,7 +3450,6 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     typedef OGRPolygon ChildType;
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     ChildType **begin()
     {
@@ -3535,7 +3463,6 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     }
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     const ChildType *const *begin() const
     {
@@ -3669,7 +3596,6 @@ inline OGRPolyhedralSurface::ChildType **end(OGRPolyhedralSurface *poGeom)
 /**
  * TriangulatedSurface class.
  *
- * @since GDAL 2.2
  */
 
 class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
@@ -3701,7 +3627,6 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
     typedef OGRTriangle ChildType;
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     ChildType **begin()
     {
@@ -3715,7 +3640,6 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
     }
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     const ChildType *const *begin() const
     {
@@ -3841,7 +3765,6 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     typedef OGRPoint ChildType;
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     ChildType **begin()
     {
@@ -3855,7 +3778,6 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     }
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     const ChildType *const *begin() const
     {
@@ -3975,7 +3897,6 @@ inline OGRMultiPoint::ChildType **end(OGRMultiPoint *poGeom)
 /**
  * A collection of OGRCurve.
  *
- * @since GDAL 2.0
  */
 
 class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
@@ -4003,7 +3924,6 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     typedef OGRCurve ChildType;
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     ChildType **begin()
     {
@@ -4017,7 +3937,6 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     }
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     const ChildType *const *begin() const
     {
@@ -4160,7 +4079,6 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     typedef OGRLineString ChildType;
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     ChildType **begin()
     {
@@ -4174,7 +4092,6 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     }
 
     /** Return begin of iterator.
-     * @since GDAL 2.3
      */
     const ChildType *const *begin() const
     {
@@ -4316,7 +4233,7 @@ class CPL_DLL OGRGeometryFactory
     createFromWkt(const char *, const OGRSpatialReference * = nullptr);
 
     /** Deprecated.
-     * @deprecated in GDAL 2.3
+     * @deprecated
      */
     static OGRErr createFromWkt(char **ppszInput,
                                 const OGRSpatialReference *poSRS,
@@ -4423,7 +4340,6 @@ struct CPL_DLL OGRPreparedGeometryUniquePtrDeleter
 //! @endcond
 
 /** Unique pointer type for OGRPreparedGeometry.
- * @since GDAL 2.3
  */
 typedef std::unique_ptr<OGRPreparedGeometry,
                         OGRPreparedGeometryUniquePtrDeleter>

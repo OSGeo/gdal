@@ -585,7 +585,6 @@ CPLErr CPL_STDCALL GDALPolygonize(GDALRasterBandH hSrcBand,
  *
  * @return CE_None on success or CE_Failure on a failure.
  *
- * @since GDAL 1.9.0
  */
 
 CPLErr CPL_STDCALL GDALFPolygonize(GDALRasterBandH hSrcBand,

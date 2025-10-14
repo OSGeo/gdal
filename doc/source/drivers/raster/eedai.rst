@@ -6,8 +6,6 @@ EEDAI - Google Earth Engine Data API Image
 
 .. shortname:: EEDAI
 
-.. versionadded:: 2.4
-
 .. build_dependencies:: libcurl
 
 The driver supports read-only operations to access image content, using

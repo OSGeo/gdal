@@ -671,7 +671,6 @@ int VSIStdinFilesystemHandler::Stat(const char *pszFilename,
  See :ref:`/vsistdin/ documentation <vsistdin>`
  \endverbatim
 
- @since GDAL 1.8.0
  */
 void VSIInstallStdinHandler()
 

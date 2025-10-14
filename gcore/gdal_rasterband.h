@@ -639,7 +639,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     //! @endcond
 
     /** Convert a GDALRasterBand* to a GDALRasterBandH.
-     * @since GDAL 2.3
      */
     static inline GDALRasterBandH ToHandle(GDALRasterBand *poBand)
     {
@@ -647,7 +646,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     }
 
     /** Convert a GDALRasterBandH to a GDALRasterBand*.
-     * @since GDAL 2.3
      */
     static inline GDALRasterBand *FromHandle(GDALRasterBandH hBand)
     {

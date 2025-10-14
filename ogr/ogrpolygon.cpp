@@ -70,11 +70,6 @@ OGRPolygon::OGRPolygon(const OGREnvelope &envelope)
 
 /**
  * \brief Copy constructor.
- *
- * Note: before GDAL 2.1, only the default implementation of the constructor
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRPolygon::OGRPolygon(const OGRPolygon &) = default;
@@ -85,11 +80,6 @@ OGRPolygon::OGRPolygon(const OGRPolygon &) = default;
 
 /**
  * \brief Assignment operator.
- *
- * Note: before GDAL 2.1, only the default implementation of the operator
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRPolygon &OGRPolygon::operator=(const OGRPolygon &other)

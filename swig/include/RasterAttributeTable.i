@@ -154,7 +154,6 @@ public:
         return GDALRATCreateColumn( self, pszName, eType, eUsage );
     }
 
-    /* Interface method added for GDAL 1.7.0 */
     %apply (double *OUTPUT){double *pdfRow0Min, double *pdfBinSize};
     bool GetLinearBinning( double *pdfRow0Min, double *pdfBinSize )
     {
@@ -162,7 +161,6 @@ public:
     }
     %clear double *pdfRow0Min, double *pdfBinSize;
 
-    /* Interface method added for GDAL 1.7.0 */
     int	SetLinearBinning (double dfRow0Min, double dfBinSize)
     {
         return GDALRATSetLinearBinning(self, dfRow0Min, dfBinSize);

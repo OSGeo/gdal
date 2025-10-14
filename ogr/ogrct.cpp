@@ -983,7 +983,6 @@ OCTDestroyCoordinateTransformation(OGRCoordinateTransformationH hCT)
  *
  * @param poCT the object to delete
  *
- * @since GDAL 1.7.0
  */
 
 void OGRCoordinateTransformation::DestroyCT(OGRCoordinateTransformation *poCT)

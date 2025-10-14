@@ -543,7 +543,7 @@ lead to unexpected results depending on the applied kernel.
       </Kernel>
     </KernelFilteredSource>
 
-Starting with GDAL 2.3, a separable kernel may also be used.  In this case the
+A separable kernel may also be used.  In this case the
 number of Coefs entries should correspond to the Size.  The Coefs specify a
 one-dimensional kernel which is applied along each axis in succession, resulting
 in far quicker execution. Many common image-processing filters are separable.
@@ -820,7 +820,7 @@ Except if (from top priority to lesser priority) :
 - (starting with GDAL 3.2) explicit virtual overviews, if a **OverviewList** element
   is declared in the VRTDataset element (see above).
   Those virtual overviews will be hidden by external .vrt.ovr overviews that might be built later.
-- (starting with GDAL 2.1) implicit virtual overviews, if the VRTRasterBand are made of
+- Implicit virtual overviews, if the VRTRasterBand are made of
   a single SimpleSource or ComplexSource that has overviews.
   Those virtual overviews will be hidden by external .vrt.ovr overviews that might be built later.
 
@@ -2183,8 +2183,6 @@ GDALWarpOptions element which describe the warping options.
 Pansharpened VRT
 ----------------
 
-.. versionadded:: 2.1
-
 A VRT can describe a dataset resulting from a
 `pansharpening operation <https://en.wikipedia.org/wiki/Pansharpened_image>`_
 The pansharpening VRT combines a panchromatic band with several spectral bands
@@ -2593,39 +2591,6 @@ configuration option.
 
 Note that the number of threads actually used is also limited by the
 :config:`GDAL_MAX_DATASET_POOL_SIZE` configuration option.
-
-Multi-threading issues
-----------------------
-
-.. warning::
-
-    The below section applies to GDAL <= 2.2. Starting with GDAL 2.3, the use
-    of VRT datasets is subject to the standard GDAL dataset multi-threaded rules
-    (that is a VRT dataset handle may only be used by a same thread at a time,
-    but you may open several dataset handles on the same VRT file and use them
-    in different threads)
-
-When using VRT datasets in a multi-threading environment, you should be
-careful to open the VRT dataset by the thread that will use it afterwards. The
-reason for that is that the VRT dataset uses :cpp:func:`GDALOpenShared` when opening the
-underlying datasets. So, if you open twice the same VRT dataset by the same
-thread, both VRT datasets will share the same handles to the underlying
-datasets.
-
-The shared attribute, on the SourceFilename indicates whether the
-dataset should be shared (value is 1) or not (value is 0). The default is 1.
-If several VRT datasets referring to the same underlying sources are used in a multithreaded context,
-shared should be set to 0. Alternatively, the :config:`VRT_SHARED_SOURCE` configuration
-option can be set to ``NO`` to force non-shared mode:
-
--  .. config:: VRT_SHARED_SOURCE
-      :choices: YES, NO
-      :default: YES
-
-      Determines whether a VRT dataset should open its underlying sources in
-      shared mode, for ``SourceFilename`` elements that do not specify a
-      ``shared`` attribute. When the ``shared`` attribute is present this
-      configuration option is ignored.
 
 Performance considerations
 --------------------------

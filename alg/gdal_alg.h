@@ -409,7 +409,7 @@ typedef enum
     /*! Average Distance (Data Metric) */ GGA_MetricAverageDistance = 8,
     /*! Average Distance Between Data Points (Data Metric) */
     GGA_MetricAverageDistancePts = 9,
-    /*! Linear interpolation (from Delaunay triangulation. Since GDAL 2.1 */
+    /*! Linear interpolation (from Delaunay triangulation. */
     GGA_Linear = 10,
     /*! Inverse distance to a power with nearest neighbor search for max points
      */

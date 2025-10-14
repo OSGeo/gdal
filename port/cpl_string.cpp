@@ -300,7 +300,6 @@ char **CSLMerge(char **papszOrig, CSLConstList papszOverride)
  * @return a string list with the files lines, now owned by caller. To be freed
  * with CSLDestroy()
  *
- * @since GDAL 1.7.0
  */
 
 char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols,
@@ -683,7 +682,6 @@ int CSLFindString(CSLConstList papszList, const char *pszTarget)
  *
  * @return the index of the string within the list or -1 on failure.
  *
- * @since GDAL 2.0
  */
 
 int CSLFindStringCaseSensitive(CSLConstList papszList, const char *pszTarget)
@@ -1126,7 +1124,6 @@ static const char *CPLvsnprintf_get_end_of_formatting(const char *fmt)
  * @return the number of characters (excluding terminating nul) that would be
  * written if size is big enough. Or potentially -1 with Microsoft C runtime
  * for Visual Studio < 2015.
- * @since GDAL 2.0
  */
 int CPLvsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char *fmt),
                  va_list args)
@@ -1345,7 +1342,6 @@ int CPLvsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char *fmt),
  * @return the number of characters (excluding terminating nul) that would be
  * written if size is big enough. Or potentially -1 with Microsoft C runtime
  * for Visual Studio < 2015.
- * @since GDAL 2.0
  */
 
 int CPLsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char *fmt), ...)
@@ -1375,7 +1371,6 @@ int CPLsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char *fmt), ...)
   * @param ... arguments
   * @return the number of characters (excluding terminating nul) written in
 ` * output buffer.
-  * @since GDAL 2.0
   */
 int CPLsprintf(char *str, CPL_FORMAT_STRING(const char *fmt), ...)
 {
@@ -1401,7 +1396,6 @@ int CPLsprintf(char *str, CPL_FORMAT_STRING(const char *fmt), ...)
  * @param ... arguments
  * @return the number of characters (excluding terminating nul) written in
  * output buffer.
- * @since GDAL 2.0
  */
 int CPLprintf(CPL_FORMAT_STRING(const char *fmt), ...)
 {
@@ -1462,7 +1456,6 @@ int CPLprintf(CPL_FORMAT_STRING(const char *fmt), ...)
  * @param fmt formatting string
  * @param ... arguments
  * @return the number of matched patterns;
- * @since GDAL 2.0
  */
 #ifdef DOXYGEN_XML
 int CPLsscanf(const char *str, const char *fmt, ...)
@@ -3027,7 +3020,6 @@ if( CPLStrlcpy(szDest, "abcde", sizeof(szDest)) >= sizeof(szDest) )
  *
  * @return the length of the source string (=strlen(pszSrc))
  *
- * @since GDAL 1.7.0
  */
 size_t CPLStrlcpy(char *pszDest, const char *pszSrc, size_t nDestSize)
 {
@@ -3084,7 +3076,6 @@ if( CPLStrlcat(szDest, "cde", sizeof(szDest)) >= sizeof(szDest) )
  *         If strlen(pszDest_before) >= nDestSize, then it returns
  *         nDestSize + strlen(pszSrc)
  *
- * @since GDAL 1.7.0
  */
 size_t CPLStrlcat(char *pszDest, const char *pszSrc, size_t nDestSize)
 {
@@ -3118,7 +3109,6 @@ size_t CPLStrlcat(char *pszDest, const char *pszSrc, size_t nDestSize)
  * @return strlen(pszStr) if the length is lesser than nMaxLen, otherwise
  * nMaxLen if the NUL character has not been found in the first nMaxLen bytes.
  *
- * @since GDAL 1.7.0
  */
 
 size_t CPLStrnlen(const char *pszStr, size_t nMaxLen)
@@ -3143,7 +3133,6 @@ size_t CPLStrnlen(const char *pszStr, size_t nMaxLen)
  *
  * @return NULL terminated list of strings to free with CSLDestroy()
  *
- * @since GDAL 2.1
  */
 char **CSLParseCommandLine(const char *pszCommandLine)
 {

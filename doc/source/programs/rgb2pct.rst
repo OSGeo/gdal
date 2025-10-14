@@ -54,9 +54,8 @@ maximize output image visual quality.
 
 .. option:: -of <format>
 
-    Select the output format. Starting with
-    GDAL 2.3, if not specified, the format is guessed from the extension (previously
-    was GTiff). Use the short format name. Only output formats
+    Select the output format. If not specified, the format is guessed from the
+    extension. Use the short format name. Only output formats
     supporting pseudo-color tables should be used.
 
 .. option:: <source_file>

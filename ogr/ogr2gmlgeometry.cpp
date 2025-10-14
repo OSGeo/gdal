@@ -1205,7 +1205,7 @@ char *OGR_G_ExportToGML(OGRGeometryH hGeometry)
  *
  * The supported options are :
  * <ul>
- * <li> FORMAT=GML2/GML3/GML32 (GML2 or GML32 added in GDAL 2.1).
+ * <li> FORMAT=GML2/GML3/GML32
  *      If not set, it will default to GML 2.1.2 output.
  * </li>
  * <li> GML3_LINESTRING_ELEMENT=curve. (Only valid for FORMAT=GML3)
@@ -1222,8 +1222,8 @@ char *OGR_G_ExportToGML(OGRGeometryH hGeometry)
  *      If set to NO, SRS with EPSG authority will be written with the "EPSG:"
  *      prefix, even if they are in lat/long order.
  * </li>
- * <li> SRSNAME_FORMAT=SHORT/OGC_URN/OGC_URL (Only valid for FORMAT=GML3, added
- *      in GDAL 2.2). Defaults to OGC_URN.  If SHORT, then srsName will be in
+ * <li> SRSNAME_FORMAT=SHORT/OGC_URN/OGC_URL (Only valid for FORMAT=GML3).
+ *      Defaults to OGC_URN.  If SHORT, then srsName will be in
  *      the form AUTHORITY_NAME:AUTHORITY_CODE. If OGC_URN, then srsName will be
  *      in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE. If OGC_URL,
  *      then srsName will be in the form
@@ -1237,7 +1237,7 @@ char *OGR_G_ExportToGML(OGRGeometryH hGeometry)
  *      Required for GML 3.2 compatibility.
  * </li>
  * <li> SRSDIMENSION_LOC=POSLIST/GEOMETRY/GEOMETRY,POSLIST. (Only valid for
- *      FORMAT=GML3/GML32, GDAL >= 2.0) Default to POSLIST.
+ *      FORMAT=GML3/GML32) Default to POSLIST.
  *      For 2.5D geometries, define the location where to attach the
  *      srsDimension attribute.
  *      There are diverging implementations. Some put in on the
@@ -1268,7 +1268,6 @@ char *OGR_G_ExportToGML(OGRGeometryH hGeometry)
  * @param papszOptions NULL-terminated list of options.
  * @return A GML fragment or NULL in case of error.
  *
- * @since OGR 1.8.0
  */
 
 char *OGR_G_ExportToGMLEx(OGRGeometryH hGeometry, char **papszOptions)

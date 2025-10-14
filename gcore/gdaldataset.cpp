@@ -1809,7 +1809,6 @@ int CPL_STDCALL GDALDereferenceDataset(GDALDatasetH hDataset)
 /**
  * \brief Drop a reference to this object, and destroy if no longer referenced.
  * @return TRUE if the object has been destroyed.
- * @since GDAL 2.2
  */
 
 int GDALDataset::ReleaseRef()
@@ -1832,7 +1831,6 @@ int GDALDataset::ReleaseRef()
  * \brief Drop a reference to this object, and destroy if no longer referenced.
  *
  * @see GDALDataset::ReleaseRef()
- * @since GDAL 2.2
  */
 
 int CPL_STDCALL GDALReleaseDataset(GDALDatasetH hDataset)
@@ -3009,7 +3007,7 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  * nLineSpace * nBufYSize implying band sequential organization
  * of the data buffer.
  *
- * @param psExtraArg (new in GDAL 2.0) pointer to a GDALRasterIOExtraArg
+ * @param psExtraArg pointer to a GDALRasterIOExtraArg
  * structure with additional arguments to specify resampling and progress
  * callback, or NULL for default behavior. The GDAL_RASTERIO_RESAMPLING
  * configuration option can also be defined to override the default resampling
@@ -3198,7 +3196,6 @@ CPLErr CPL_STDCALL GDALDatasetRasterIO(GDALDatasetH hDS, GDALRWFlag eRWFlag,
  * Note: before GDAL 3.10, panBandMap type was "int*", and not "const int*"
  *
  * @see GDALDataset::RasterIO()
- * @since GDAL 2.0
  */
 
 CPLErr CPL_STDCALL GDALDatasetRasterIOEx(
@@ -3669,7 +3666,6 @@ char **CPL_STDCALL GDALGetFileList(GDALDatasetH hDS)
  * might be invalidated by CreateMaskBand(). So you have to call GetMaskBand()
  * again.
  *
- * @since GDAL 1.5.0
  *
  * @param nFlagsIn 0 or combination of GMF_PER_DATASET / GMF_ALPHA.
  *                 GMF_PER_DATASET will be always set, even if not explicitly
@@ -3902,7 +3898,6 @@ static GDALDataset *GetSharedDS(const char *pszFilename,
  * option is not recognized. In some scenarios, it might be not desirable (e.g.
  * when not knowing which driver will open the file), so the special open option
  * VALIDATE_OPEN_OPTIONS can be set to NO to avoid such warnings. Alternatively,
- * since GDAL 2.1, an option name can be preceded by the @ character to indicate
  * that it may not cause a warning if the driver doesn't declare this option.
  * Starting with GDAL 3.3, OVERVIEW_LEVEL=NONE is supported to indicate that
  * no overviews should be exposed.
@@ -3914,7 +3909,6 @@ static GDALDataset *GetSharedDS(const char *pszFilename,
  * @return A GDALDatasetH handle or NULL on failure.  For C++ applications
  * this handle can be cast to a GDALDataset *.
  *
- * @since GDAL 2.0
  */
 
 GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
@@ -4427,7 +4421,7 @@ retry:
  * exactly matches the pszFilename passed to GDALOpenShared() it will be
  * referenced and returned.
  *
- * Starting with GDAL 1.6.0, if GDALOpenShared() is called on the same
+ * If GDALOpenShared() is called on the same
  * pszFilename from two different threads, a different GDALDataset object will
  * be returned as it is not safe to use the same dataset from different threads,
  * unless the user does explicitly use mutexes in its code.
@@ -4894,7 +4888,6 @@ int GDALDataset::CloseDependentDatasets()
  * will be treated as arguments to fill in this format in a manner
  * similar to printf().
  *
- * @since GDAL 1.9.0
  */
 
 void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
@@ -5102,7 +5095,6 @@ const char *GDALDataset::GetDriverName() const
 
  This function is the same as the C++ method GDALDataset::ReleaseResultSet()
 
- @since GDAL 2.0
 
  @param hDS the dataset handle.
  @param hLayer the result of a previous ExecuteSQL() call.
@@ -5131,7 +5123,6 @@ void GDALDatasetReleaseResultSet(GDALDatasetH hDS, OGRLayerH hLayer)
 
  This function is the same as the C++ method GDALDataset::GetLayerCount()
 
- @since GDAL 2.0
 
  @param hDS the dataset handle.
  @return layer count.
@@ -5162,7 +5153,6 @@ int GDALDatasetGetLayerCount(GDALDatasetH hDS)
 
  This function is the same as the C++ method GDALDataset::GetLayer()
 
- @since GDAL 2.0
 
  @param hDS the dataset handle.
  @param iLayer a layer number between 0 and GetLayerCount()-1.
@@ -5198,7 +5188,6 @@ OGRLayerH GDALDatasetGetLayer(GDALDatasetH hDS, int iLayer)
 
  This function is the same as the C++ method GDALDataset::GetLayerByName()
 
- @since GDAL 2.0
 
  @param hDS the dataset handle.
  @param pszName the layer name of the layer to fetch.
@@ -5299,7 +5288,6 @@ int GDALDataset::GetLayerIndex(const char *pszName) const
 
  This method is the same as the C++ method GDALDataset::DeleteLayer().
 
- @since GDAL 2.0
 
  @param hDS the dataset handle.
  @param iLayer the index of the layer to delete.
@@ -5550,7 +5538,6 @@ Example:
         }
 \endcode
 
-@since GDAL 2.0
 
 @param hDS the dataset handle
 @param pszName the name for the new layer.  This should ideally not
@@ -5678,7 +5665,6 @@ GDALDatasetCreateLayerFromGeomFieldDefn(GDALDatasetH hDS, const char *pszName,
 
  This method is the same as the C++ method GDALDataset::CopyLayer()
 
- @since GDAL 2.0
 
  @param hDS the dataset handle.
  @param hSrcLayer source layer.
@@ -5727,7 +5713,6 @@ OGRLayerH GDALDatasetCopyLayer(GDALDatasetH hDS, OGRLayerH hSrcLayer,
  href="https://gdal.org/user/sql_sqlite_dialect.html">SQLITE dialect</a> can
  also be used.
 
- @since GDAL 2.0
 
  @param hDS the dataset handle.
  @param pszStatement the SQL statement to execute.
@@ -5804,7 +5789,6 @@ OGRErr GDALDatasetAbortSQL(GDALDatasetH hDS)
 
  This function is the same as the C++ method GDALDataset::GetStyleTable()
 
- @since GDAL 2.0
 
  @param hDS the dataset handle
  @return handle to a style table which should not be modified or freed by the
@@ -5833,7 +5817,6 @@ OGRStyleTableH GDALDatasetGetStyleTable(GDALDatasetH hDS)
  This function is the same as the C++ method
  GDALDataset::SetStyleTableDirectly()
 
- @since GDAL 2.0
 
  @param hDS the dataset handle
  @param hStyleTable style table handle to set
@@ -5862,7 +5845,6 @@ void GDALDatasetSetStyleTableDirectly(GDALDatasetH hDS,
 
  This function is the same as the C++ method GDALDataset::SetStyleTable()
 
- @since GDAL 2.0
 
  @param hDS the dataset handle
  @param hStyleTable style table handle to set
@@ -5911,7 +5893,7 @@ close (destroy) the dataset.
 
 This method is the same as the C function OGRReleaseDataSource().
 
-@deprecated. In GDAL 2, use GDALClose() instead
+@deprecated. Use GDALClose() instead
 
 @return OGRERR_NONE on success or an error code.
 */
@@ -5932,8 +5914,6 @@ OGRErr GDALDataset::Release()
 
 This method is the same as the C function OGR_DS_GetRefCount().
 
-In GDAL 1.X, this method used to be in the OGRDataSource class.
-
 @return the current reference count for the datasource object itself.
 */
 
@@ -5950,8 +5930,6 @@ int GDALDataset::GetRefCount() const
 \brief Fetch reference count of datasource and all owned layers.
 
 This method is the same as the C function  OGR_DS_GetSummaryRefCount().
-
-In GDAL 1.X, this method used to be in the OGRDataSource class.
 
 @deprecated
 
@@ -5994,7 +5972,6 @@ int GDALDataset::GetSummaryRefCount() const
 
  @return NULL is returned on failure, or a new OGRLayer handle on success.
 
- @since GDAL 2.0 (prototype modified in 3.9)
 */
 
 OGRLayer *
@@ -6025,8 +6002,6 @@ GDALDataset::ICreateLayer(CPL_UNUSED const char *pszName,
 
  This method is the same as the C function GDALDatasetCopyLayer() and the
  deprecated OGR_DS_CopyLayer().
-
- In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param poSrcLayer source layer.
  @param pszNewName the name of the layer to create.
@@ -6370,8 +6345,6 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
  This method is the same as the C function GDALDatasetDeleteLayer() and the
  deprecated OGR_DS_DeleteLayer().
 
- In GDAL 1.X, this method used to be in the OGRDataSource class.
-
  @param iLayer the index of the layer to delete.
 
  @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
@@ -6400,8 +6373,6 @@ OGRErr GDALDataset::DeleteLayer(CPL_UNUSED int iLayer)
 
  This method is the same as the C function GDALDatasetGetLayerByName() and the
  deprecated OGR_DS_GetLayerByName().
-
- In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param pszName the layer name of the layer to fetch.
 
@@ -7153,8 +7124,6 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn(const char *pszSQLCommand)
  href="https://gdal.org/user/sql_sqlite_dialect.html">SQLITE dialect</a> can
  also be used.
 
- In GDAL 1.X, this method used to be in the OGRDataSource class.
-
  @param pszStatement the SQL statement to execute.
  @param poSpatialFilter geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
@@ -7754,8 +7723,6 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
  This method is the same as the C function GDALDatasetReleaseResultSet() and the
  deprecated OGR_DS_ReleaseResultSet().
 
- In GDAL 1.X, this method used to be in the OGRDataSource class.
-
  @param poResultsSet the result of a previous ExecuteSQL() call.
 */
 
@@ -7774,8 +7741,6 @@ void GDALDataset::ReleaseResultSet(OGRLayer *poResultsSet)
 
  This method is the same as the C function GDALDatasetGetStyleTable() and the
  deprecated OGR_DS_GetStyleTable().
-
- In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @return pointer to a style table which should not be modified or freed by the
  caller.
@@ -7799,8 +7764,6 @@ OGRStyleTable *GDALDataset::GetStyleTable()
  This method is the same as the C function GDALDatasetSetStyleTableDirectly()
  and the deprecated OGR_DS_SetStyleTableDirectly().
 
- In GDAL 1.X, this method used to be in the OGRDataSource class.
-
  @param poStyleTable pointer to style table to set
 
 */
@@ -7823,8 +7786,6 @@ void GDALDataset::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
 
  This method is the same as the C function GDALDatasetSetStyleTable() and the
  deprecated OGR_DS_SetStyleTable().
-
- In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param poStyleTable pointer to style table to set
 
@@ -7864,8 +7825,6 @@ int GDALDataset::IsGenericSQLDialect(const char *pszDialect)
  Note that even if this method is const, there is no guarantee it can be
  safely called by concurrent threads on the same GDALDataset object.
 
- In GDAL 1.X, this method used to be in the OGRDataSource class.
-
  @return layer count.
 */
 
@@ -7892,8 +7851,6 @@ int GDALDataset::GetLayerCount() const
 
  This method is the same as the C function GDALDatasetGetLayer() and the
  deprecated OGR_DS_GetLayer().
-
- In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param iLayer a layer number between 0 and GetLayerCount()-1.
 
@@ -7965,7 +7922,6 @@ bool GDALDataset::IsLayerPrivate(CPL_UNUSED int iLayer) const
 
  This method is the same as the C function GDALDatasetResetReading().
 
- @since GDAL 2.2
 */
 void GDALDataset::ResetReading()
 {
@@ -7995,7 +7951,6 @@ void GDALDataset::ResetReading()
  This method is the same as the C++ method GDALDataset::ResetReading()
 
  @param hDS dataset handle
- @since GDAL 2.2
 */
 void CPL_DLL GDALDatasetResetReading(GDALDatasetH hDS)
 {
@@ -8055,7 +8010,6 @@ void CPL_DLL GDALDatasetResetReading(GDALDatasetH hDS)
                           duration) and offer cancellation possibility, or NULL.
  @param pProgressData     user data provided to pfnProgress, or NULL
  @return a feature, or NULL if no more features are available.
- @since GDAL 2.2
  @see GetFeatures()
 */
 
@@ -8223,7 +8177,6 @@ OGRFeature *GDALDataset::GetNextFeature(OGRLayer **ppoBelongingLayer,
                           duration) and offer cancellation possibility, or NULL
  @param pProgressData     user data provided to pfnProgress, or NULL
  @return a feature, or NULL if no more features are available.
- @since GDAL 2.2
 */
 OGRFeatureH CPL_DLL GDALDatasetGetNextFeature(GDALDatasetH hDS,
                                               OGRLayerH *phBelongingLayer,
@@ -8279,8 +8232,6 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature(GDALDatasetH hDS,
 
  This method is the same as the C function GDALDatasetTestCapability() and the
  deprecated OGR_DS_TestCapability().
-
- In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param pszCap the capability to test.
 
@@ -8342,7 +8293,6 @@ int GDALDataset::TestCapability(const char *pszCap) const
 
  This function is the same as the C++ method GDALDataset::TestCapability()
 
- @since GDAL 2.0
 
  @param hDS the dataset handle.
  @param pszCap the capability to test.
@@ -8407,7 +8357,6 @@ int GDALDatasetTestCapability(GDALDatasetH hDS, const char *pszCap)
                mechanism is acceptable.
 
  @return OGRERR_NONE on success.
- @since GDAL 2.0
 */
 
 OGRErr GDALDataset::StartTransaction(CPL_UNUSED int bForce)
@@ -8465,7 +8414,6 @@ OGRErr GDALDataset::StartTransaction(CPL_UNUSED int bForce)
                mechanism is acceptable.
 
  @return OGRERR_NONE on success.
- @since GDAL 2.0
 */
 OGRErr GDALDatasetStartTransaction(GDALDatasetH hDS, int bForce)
 {
@@ -8498,7 +8446,6 @@ OGRErr GDALDatasetStartTransaction(GDALDatasetH hDS, int bForce)
  This function is the same as the C function GDALDatasetCommitTransaction().
 
  @return OGRERR_NONE on success.
- @since GDAL 2.0
 */
 OGRErr GDALDataset::CommitTransaction()
 {
@@ -8523,7 +8470,6 @@ OGRErr GDALDataset::CommitTransaction()
  This function is the same as the C++ method GDALDataset::CommitTransaction()
 
  @return OGRERR_NONE on success.
- @since GDAL 2.0
 */
 OGRErr GDALDatasetCommitTransaction(GDALDatasetH hDS)
 {
@@ -8553,7 +8499,6 @@ OGRErr GDALDatasetCommitTransaction(GDALDatasetH hDS)
  This function is the same as the C function GDALDatasetRollbackTransaction().
 
  @return OGRERR_NONE on success.
- @since GDAL 2.0
 */
 OGRErr GDALDataset::RollbackTransaction()
 {
@@ -8575,7 +8520,6 @@ OGRErr GDALDataset::RollbackTransaction()
  This function is the same as the C++ method GDALDataset::RollbackTransaction().
 
  @return OGRERR_NONE on success.
- @since GDAL 2.0
 */
 OGRErr GDALDatasetRollbackTransaction(GDALDatasetH hDS)
 {
@@ -8942,7 +8886,6 @@ bool GDALDataset::Features::Iterator::operator!=(const Iterator &it) const
  *
  * @see GetNextFeature()
  *
- * @since GDAL 2.3
  */
 GDALDataset::Features GDALDataset::GetFeatures()
 {
@@ -8956,7 +8899,6 @@ GDALDataset::Features GDALDataset::GetFeatures()
 /**
  \brief Return beginning of feature iterator.
 
- @since GDAL 2.3
 */
 
 const GDALDataset::Features::Iterator GDALDataset::Features::begin() const
@@ -8971,7 +8913,6 @@ const GDALDataset::Features::Iterator GDALDataset::Features::begin() const
 /**
  \brief Return end of feature iterator.
 
- @since GDAL 2.3
 */
 
 const GDALDataset::Features::Iterator GDALDataset::Features::end() const
@@ -9091,7 +9032,6 @@ bool GDALDataset::Layers::Iterator::operator!=(const Iterator &it) const
  *
  * @see GetLayer()
  *
- * @since GDAL 2.3
  */
 GDALDataset::Layers GDALDataset::GetLayers()
 {
@@ -9105,7 +9045,6 @@ GDALDataset::Layers GDALDataset::GetLayers()
 /**
  \brief Return beginning of layer iterator.
 
- @since GDAL 2.3
 */
 
 GDALDataset::Layers::Iterator GDALDataset::Layers::begin() const
@@ -9120,7 +9059,6 @@ GDALDataset::Layers::Iterator GDALDataset::Layers::begin() const
 /**
  \brief Return end of layer iterator.
 
- @since GDAL 2.3
 */
 
 GDALDataset::Layers::Iterator GDALDataset::Layers::end() const
@@ -9137,7 +9075,6 @@ GDALDataset::Layers::Iterator GDALDataset::Layers::end() const
 
  @return layer count.
 
- @since GDAL 2.3
 */
 
 size_t GDALDataset::Layers::size() const
@@ -9158,7 +9095,6 @@ size_t GDALDataset::Layers::size() const
 
  @return the layer, or nullptr if iLayer is out of range or an error occurs.
 
- @since GDAL 2.3
 */
 
 OGRLayer *GDALDataset::Layers::operator[](int iLayer)
@@ -9179,7 +9115,6 @@ OGRLayer *GDALDataset::Layers::operator[](int iLayer)
 
  @return the layer, or nullptr if iLayer is out of range or an error occurs.
 
- @since GDAL 2.3
 */
 
 OGRLayer *GDALDataset::Layers::operator[](size_t iLayer)
@@ -9200,7 +9135,6 @@ OGRLayer *GDALDataset::Layers::operator[](size_t iLayer)
 
  @return the layer, or nullptr if pszLayerName does not match with a layer
 
- @since GDAL 2.3
 */
 
 OGRLayer *GDALDataset::Layers::operator[](const char *pszLayerName)
@@ -9514,7 +9448,6 @@ bool GDALDataset::Bands::Iterator::operator!=(const Iterator &it) const
  *
  * @see GetRasterBand()
  *
- * @since GDAL 2.3
  */
 GDALDataset::Bands GDALDataset::GetBands()
 {
@@ -9528,7 +9461,6 @@ GDALDataset::Bands GDALDataset::GetBands()
 /**
  \brief Return beginning of band iterator.
 
- @since GDAL 2.3
 */
 
 const GDALDataset::Bands::Iterator GDALDataset::Bands::begin() const
@@ -9543,7 +9475,6 @@ const GDALDataset::Bands::Iterator GDALDataset::Bands::begin() const
 /**
  \brief Return end of band iterator.
 
- @since GDAL 2.3
 */
 
 const GDALDataset::Bands::Iterator GDALDataset::Bands::end() const
@@ -9560,7 +9491,6 @@ const GDALDataset::Bands::Iterator GDALDataset::Bands::end() const
 
  @return raster band count.
 
- @since GDAL 2.3
 */
 
 size_t GDALDataset::Bands::size() const
@@ -9584,7 +9514,6 @@ size_t GDALDataset::Bands::size() const
 
  @return the band, or nullptr if iBand is out of range or an error occurs.
 
- @since GDAL 2.3
 */
 
 GDALRasterBand *GDALDataset::Bands::operator[](int iBand)
@@ -9609,7 +9538,6 @@ GDALRasterBand *GDALDataset::Bands::operator[](int iBand)
 
  @return the band, or nullptr if iBand is out of range or an error occurs.
 
- @since GDAL 2.3
 */
 
 GDALRasterBand *GDALDataset::Bands::operator[](size_t iBand)

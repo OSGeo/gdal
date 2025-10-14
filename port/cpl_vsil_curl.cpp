@@ -6351,7 +6351,6 @@ struct curl_slist *VSICurlSetCreationHeadersFromOptions(
  See :ref:`/vsicurl/ documentation <vsicurl>`
  \endverbatim
 
- @since GDAL 1.8.0
  */
 void VSIInstallCurlFileHandler(void)
 {
@@ -6374,7 +6373,6 @@ void VSIInstallCurlFileHandler(void)
  * mechanisms can prevent opening new files, or give an outdated version of
  * them.
  *
- * @since GDAL 2.2.1
  */
 
 void VSICurlClearCache(void)
@@ -6420,7 +6418,6 @@ void VSICurlClearCache(void)
  * "/vsis3/basket/" or "/vsis3/basket/object".
  *
  * @param pszFilenamePrefix Filename prefix
- * @since GDAL 2.4.0
  */
 
 void VSICurlPartialClearCache(const char *pszFilenamePrefix)

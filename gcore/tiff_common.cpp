@@ -75,7 +75,7 @@ std::unique_ptr<GDALColorTable> TIFFColorMapTagToColorTable(
     {
         // TIFF color maps are in the [0, 65535] range, so some remapping must
         // be done to get values in the [0, 255] range, but it is not clear
-        // how to do that exactly. Since GDAL 2.3.0 we have standardized on
+        // how to do that exactly. We have standardized on
         // using a 257 multiplication factor (https://github.com/OSGeo/gdal/commit/eeec5b62e385d53e7f2edaba7b73c7c74bc2af39)
         // but other software uses 256 (cf https://github.com/OSGeo/gdal/issues/10310)
         // Do a first pass to check if all values are multiples of 256 or 257.

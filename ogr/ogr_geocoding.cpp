@@ -230,7 +230,6 @@ static bool OGRGeocodeHasStringValidFormat(const char *pszQueryTemplate)
  * @return a handle that should be freed with OGRGeocodeDestroySession(), or
  *         NULL in case of failure.
  *
- * @since GDAL 1.10
  */
 /* clang-format on */
 
@@ -366,7 +365,6 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char **papszOptions)
 
  * @param hSession the handle to destroy.
  *
- * @since GDAL 1.10
  */
 void OGRGeocodeDestroySession(OGRGeocodingSessionH hSession)
 {
@@ -1402,7 +1400,6 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
  * @return a OGR layer with the result(s), or NULL in case of error.
  *         The returned layer must be freed with OGRGeocodeFreeResult().
  *
- * @since GDAL 1.10
  */
 /* clang-format on */
 
@@ -1549,7 +1546,6 @@ static CPLString OGRGeocodeReverseSubstitute(CPLString osURL, double dfLon,
  * @return a OGR layer with the result(s), or NULL in case of error.
  *         The returned layer must be freed with OGRGeocodeFreeResult().
  *
- * @since GDAL 1.10
  */
 /* clang-format on */
 
@@ -1592,7 +1588,6 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession, double dfLon,
  * @param hLayer the layer returned by OGRGeocode() or OGRGeocodeReverse()
  *               to destroy.
  *
- * @since GDAL 1.10
  */
 void OGRGeocodeFreeResult(OGRLayerH hLayer)
 {
