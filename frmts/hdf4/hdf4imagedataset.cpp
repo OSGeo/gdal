@@ -2185,7 +2185,10 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
     int iLineDim = -1;
     int iLongDim = -1;
     int iLatDim = -1;
-
+    double dfLatNoData = 0;
+    bool bLatNoDataSet = false;
+    double dfLongNoData = 0;
+    bool bLongNoDataSet = false;
     for (int i = 0; i < nGeolocationsCount; i++)
     {
         // Skip "SceneLineNumber" table if present in the list of geolocation
@@ -2255,6 +2258,14 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
                 CPLFree(pLat);
                 pLat = nullptr;
             }
+
+            void *pNoDataValue = CPLMalloc(iDataSize);
+            if (SWgetfillvalue(hSW, papszGeolocations[i], pNoDataValue) != -1)
+            {
+                dfLatNoData = AnyTypeToDouble(iWrkNumType, pNoDataValue);
+                bLatNoDataSet = true;
+            }
+            CPLFree(pNoDataValue);
         }
         else if (strstr(papszGeolocations[i], "Longitude"))
         {
@@ -2269,6 +2280,14 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
                 CPLFree(pLong);
                 pLong = nullptr;
             }
+
+            void *pNoDataValue = CPLMalloc(iDataSize);
+            if (SWgetfillvalue(hSW, papszGeolocations[i], pNoDataValue) != -1)
+            {
+                dfLongNoData = AnyTypeToDouble(iWrkNumType, pNoDataValue);
+                bLongNoDataSet = true;
+            }
+            CPLFree(pNoDataValue);
         }
 
         CSLDestroy(papszGeoDimList);
@@ -2492,6 +2511,11 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
                         iWrkNumType, reinterpret_cast<void *>(
                                          reinterpret_cast<char *>(pLat) +
                                          iGeoOff * iDataSize));
+
+                    if (bLongNoDataSet && dfGCPX == dfLongNoData)
+                        continue;
+                    if (bLatNoDataSet && dfGCPY == dfLatNoData)
+                        continue;
 
                     // GCPs in Level 1A/1B dataset are in geocentric
                     // coordinates. Convert them in geodetic (we
