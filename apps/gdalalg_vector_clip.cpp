@@ -101,10 +101,11 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
     {
         std::unique_ptr<OGRGeometry> poIntersection;
         auto poGeom = poSrcFeature->GetGeometryRef();
-        if (poGeom)
-        {
-            poIntersection.reset(poGeom->Intersection(m_poClipGeom.get()));
-        }
+
+        if (poGeom == nullptr)
+            return;
+
+        poIntersection.reset(poGeom->Intersection(m_poClipGeom.get()));
         if (!poIntersection)
             return;
         poIntersection->assignSpatialReference(
