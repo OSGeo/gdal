@@ -5869,3 +5869,16 @@ def test_zarr_read_zarr_with_stac_proj_wkt2():
 def test_zarr_identify_file_extensions(file_path):
     ds = gdal.Open(file_path)
     ds.GetRasterBand(1).Checksum()
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_zarr_geo_proj_prototype():
+
+    ds = gdal.Open("data/zarr/byte_geo_proj_prototype.zarr")
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert ds.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [1, 2]
+    assert ds.GetGeoTransform() == (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)

@@ -1,0 +1,54 @@
+{
+  "zarr_format":3,
+  "node_type":"array",
+  "shape":[
+    20,
+    20
+  ],
+  "data_type":"uint8",
+  "chunk_grid":{
+    "name":"regular",
+    "configuration":{
+      "chunk_shape":[
+        20,
+        20
+      ]
+    }
+  },
+  "chunk_key_encoding":{
+    "name":"default",
+    "configuration":{
+      "separator":"\/"
+    }
+  },
+  "fill_value":0,
+  "codecs":[
+    {
+      "name":"bytes",
+      "configuration":{
+        "endian":"little"
+      }
+    }
+  ],
+  "attributes":{
+    "zarr_conventions_version": "0.1.0",
+    "zarr_conventions":
+    {
+        "f17cb550-5864-4468-aeb7-f3180cfb622f": {
+            "version": "0.1",
+            "name": "geo/proj",
+            "description": "",
+            "schema": "http://example.com/geo.proj.schema.json",
+            "configuration": {
+                "code": "EPSG:26711",
+                "spatial_dimensions": ["Y", "X"],
+                "transform": [60, 0, 440720, 0, 60, 3750120]
+            }
+        }
+    }
+  },
+  "dimension_names":[
+    "Y",
+    "X"
+  ]
+}

@@ -2816,7 +2816,163 @@ void ZarrArray::ParseSpecialAttributes(
         // 1-dimensional array with the values.
     }
 
-    if (poSRS)
+    bool bAxisAssigned = false;
+    const auto oZarrConventions = oAttributes["zarr_conventions"];
+    if (oZarrConventions.GetType() == CPLJSONObject::Type::Object)
+    {
+        const auto oGeoProj =
+            oZarrConventions["f17cb550-5864-4468-aeb7-f3180cfb622f"];
+        if (oGeoProj.GetType() == CPLJSONObject::Type::Object)
+        {
+            // Cf https://github.com/EOPF-Explorer/data-model/tree/main/attributes/geo/proj
+
+            const auto osVersion = oGeoProj["version"];
+            // TODO: implement SemVer
+            if (osVersion.ToString() != "0.1.0")
+                CPLDebug(
+                    "ZARR",
+                    "geo/proj version unhandled by this implementation: %s",
+                    osVersion.ToString().c_str());
+
+            const auto oConfiguration = oGeoProj["configuration"];
+            if (oConfiguration.GetType() == CPLJSONObject::Type::Object)
+            {
+                const auto oCode = oConfiguration["code"];
+                if (oCode.GetType() == CPLJSONObject::Type::String)
+                {
+                    poSRS = std::make_shared<OGRSpatialReference>();
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    if (poSRS->SetFromUserInput(
+                            oCode.ToString().c_str(),
+                            OGRSpatialReference::
+                                SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
+                        OGRERR_NONE)
+                    {
+                        poSRS.reset();
+                    }
+                }
+                else
+                {
+                    const auto oWKT2 = oConfiguration["wkt2"];
+                    if (oWKT2.GetType() == CPLJSONObject::Type::String)
+                    {
+                        poSRS = std::make_shared<OGRSpatialReference>();
+                        poSRS->SetAxisMappingStrategy(
+                            OAMS_TRADITIONAL_GIS_ORDER);
+                        if (poSRS->importFromWkt(oWKT2.ToString().c_str()) !=
+                            OGRERR_NONE)
+                        {
+                            poSRS.reset();
+                        }
+                    }
+                    else
+                    {
+                        const auto oPROJJSON = oConfiguration["projjson"];
+                        if (oPROJJSON.GetType() == CPLJSONObject::Type::Object)
+                        {
+                            poSRS = std::make_shared<OGRSpatialReference>();
+                            poSRS->SetAxisMappingStrategy(
+                                OAMS_TRADITIONAL_GIS_ORDER);
+                            if (poSRS->SetFromUserInput(
+                                    oPROJJSON.ToString().c_str(),
+                                    OGRSpatialReference::
+                                        SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
+                                OGRERR_NONE)
+                            {
+                                poSRS.reset();
+                            }
+                        }
+                    }
+                }
+
+                if (poSRS)
+                {
+                    const auto oSpatialDimensions =
+                        oConfiguration["spatial_dimensions"];
+                    int iDimName1 = 0;
+                    int iDimName2 = 0;
+                    if (oSpatialDimensions.GetType() ==
+                            CPLJSONObject::Type::Array &&
+                        oSpatialDimensions.ToArray().Size() == 2)
+                    {
+                        const auto osName1 =
+                            oSpatialDimensions.ToArray()[0].ToString();
+                        const auto osName2 =
+                            oSpatialDimensions.ToArray()[1].ToString();
+                        int iDim = 1;
+                        for (const auto &poDim : GetDimensions())
+                        {
+                            if (poDim->GetName() == osName1)
+                                iDimName1 = iDim;
+                            else if (poDim->GetName() == osName2)
+                                iDimName2 = iDim;
+                            ++iDim;
+                        }
+                        if (iDimName1 == 0)
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "spatial_dimensions[0] = %s is a unknown "
+                                     "Zarr dimension",
+                                     osName1.c_str());
+                        }
+                        if (iDimName2 == 0)
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "spatial_dimensions[1] = %s is a unknown "
+                                     "Zarr dimension",
+                                     osName2.c_str());
+                        }
+                    }
+                    else
+                    {
+                        int iDim = 1;
+                        for (const auto &poDim : GetDimensions())
+                        {
+                            if (poDim->GetName() == "y" ||
+                                poDim->GetName() == "Y" ||
+                                poDim->GetName() == "lat" ||
+                                poDim->GetName() == "latitude" ||
+                                poDim->GetName() == "northing" ||
+                                poDim->GetName() == "row")
+                            {
+                                iDimName1 = iDim;
+                            }
+                            else if (poDim->GetName() == "x" ||
+                                     poDim->GetName() == "X" ||
+                                     poDim->GetName() == "lon" ||
+                                     poDim->GetName() == "longitude" ||
+                                     poDim->GetName() == "easting" ||
+                                     poDim->GetName() == "col")
+                            {
+                                iDimName2 = iDim;
+                            }
+                            ++iDim;
+                        }
+                    }
+                    if (iDimName1 > 0 && iDimName2 > 0)
+                    {
+                        bAxisAssigned = true;
+                        const int iDimY = std::min(iDimName1, iDimName2);
+                        const int iDimX = std::max(iDimName1, iDimName2);
+                        const auto &oMapping =
+                            poSRS->GetDataAxisToSRSAxisMapping();
+                        if (oMapping == std::vector<int>{2, 1} ||
+                            oMapping == std::vector<int>{2, 1, 3})
+                            poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
+                        else if (oMapping == std::vector<int>{1, 2} ||
+                                 oMapping == std::vector<int>{1, 2, 3})
+                            poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
+
+                        SetSRS(poSRS);
+                    }
+                }
+
+                // TODO deal with "bbox"? and "transform"
+            }
+        }
+    }
+
+    if (poSRS && !bAxisAssigned)
     {
         int iDimX = 0;
         int iDimY = 0;
