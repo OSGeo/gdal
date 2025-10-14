@@ -101,6 +101,7 @@ target_sources(appslib PRIVATE
   gdalalg_vector_clean_coverage.cpp
   gdalalg_vector_concat.cpp
   gdalalg_vector_convert.cpp
+  gdalalg_vector_create_point.cpp
   gdalalg_vector_edit.cpp
   gdalalg_vector_pipeline.cpp
   gdalalg_vector_rasterize.cpp

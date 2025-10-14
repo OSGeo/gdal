@@ -871,6 +871,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_create_point",
+        "gdal-vector-create-point",
+        "Create point features from attribute fields",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector_edit",
         "gdal-vector-edit",
         "Edit metadata of a vector dataset",

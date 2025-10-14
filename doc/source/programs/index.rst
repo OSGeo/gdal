@@ -200,6 +200,7 @@ Vector commands
    gdal_vector_clip
    gdal_vector_concat
    gdal_vector_convert
+   gdal_vector_create_point
    gdal_vector_edit
    gdal_vector_filter
    gdal_vector_info
@@ -234,6 +235,7 @@ Vector commands
     - :ref:`gdal_vector_clip`: Clip a vector dataset
     - :ref:`gdal_vector_concat`: Concatenate vector datasets
     - :ref:`gdal_vector_convert`: Convert a vector dataset
+    - :ref:`gdal_vector_create_point`: Create point geometries from coordinate fields
     - :ref:`gdal_vector_edit`: Edit metadata of a vector dataset
     - :ref:`gdal_vector_explode_collections`: Explode geometries of type collection of a vector dataset
     - :ref:`gdal_vector_filter`: Filter a vector dataset

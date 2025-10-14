@@ -20,6 +20,7 @@
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_concat.h"
 #include "gdalalg_vector_convert.h"
+#include "gdalalg_vector_create_point.h"
 #include "gdalalg_vector_edit.h"
 #include "gdalalg_vector_explode_collections.h"
 #include "gdalalg_vector_geom.h"
@@ -74,6 +75,7 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALVectorClipAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorConcatAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorConvertAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorCreatePointAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorEditAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorExplodeCollectionsAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorGridAlgorithmStandalone>();
