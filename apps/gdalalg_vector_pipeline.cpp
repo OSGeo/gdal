@@ -353,6 +353,10 @@ OGRFeature *GDALVectorPipelineOutputLayer::GetNextRawFeature()
         if (!poSrcFeature)
             return nullptr;
         TranslateFeature(std::move(poSrcFeature), m_pendingFeatures);
+        if (m_translateError)
+        {
+            return nullptr;
+        }
         if (!m_pendingFeatures.empty())
             break;
     }

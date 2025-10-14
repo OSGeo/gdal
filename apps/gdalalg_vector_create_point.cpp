@@ -59,7 +59,20 @@ class GDALVectorCreatePointAlgorithmLayer final
                                         const std::string &mField,
                                         OGRSpatialReference *srs)
         : GDALVectorPipelineOutputLayer(oSrcLayer), m_xField(xField),
-          m_yField(yField), m_zField(zField), m_mField(mField), m_srs(srs),
+          m_yField(yField), m_zField(zField), m_mField(mField),
+          m_xFieldIndex(
+              oSrcLayer.GetLayerDefn()->GetFieldIndex(xField.c_str())),
+          m_yFieldIndex(
+              oSrcLayer.GetLayerDefn()->GetFieldIndex(yField.c_str())),
+          m_zFieldIndex(
+              zField.empty()
+                  ? -1
+                  : oSrcLayer.GetLayerDefn()->GetFieldIndex(zField.c_str())),
+          m_mFieldIndex(
+              mField.empty()
+                  ? -1
+                  : oSrcLayer.GetLayerDefn()->GetFieldIndex(mField.c_str())),
+          m_hasZ(!zField.empty()), m_hasM(!mField.empty()), m_srs(srs),
           m_defn(oSrcLayer.GetLayerDefn()->Clone())
     {
         m_defn->Reference();
@@ -68,20 +81,28 @@ class GDALVectorCreatePointAlgorithmLayer final
             m_srs->Reference();
         }
 
-        const bool hasZ = !m_zField.empty();
-        const bool hasM = !m_mField.empty();
+        if (!CheckField("X", m_xField, m_xFieldIndex, m_xFieldIsString))
+            return;
+        if (!CheckField("Y", m_yField, m_yFieldIndex, m_yFieldIsString))
+            return;
+        if (m_hasZ &&
+            !CheckField("Z", m_zField, m_zFieldIndex, m_zFieldIsString))
+            return;
+        if (m_hasM &&
+            !CheckField("M", m_mField, m_mFieldIndex, m_mFieldIsString))
+            return;
 
         OGRwkbGeometryType eGeomType = wkbPoint;
 
-        if (hasZ && hasM)
+        if (m_hasZ && m_hasM)
         {
             eGeomType = wkbPointZM;
         }
-        else if (hasZ)
+        else if (m_hasZ)
         {
             eGeomType = wkbPoint25D;
         }
-        else if (hasM)
+        else if (m_hasM)
         {
             eGeomType = wkbPointM;
         }
@@ -105,6 +126,66 @@ class GDALVectorCreatePointAlgorithmLayer final
         }
     }
 
+    double GetField(const OGRFeature &feature, int fieldIndex, bool isString)
+    {
+        if (isString)
+        {
+            const char *pszValue = feature.GetFieldAsString(fieldIndex);
+            char *end;
+            while (std::isspace(*pszValue))
+            {
+                pszValue++;
+            }
+            double dfValue = CPLStrtodM(pszValue, &end);
+            while (std::isspace(*end))
+            {
+                end++;
+            }
+            if (end == pszValue || *end != '\0')
+            {
+                const char *pszFieldName =
+                    m_defn->GetFieldDefn(fieldIndex)->GetNameRef();
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid value in field %s: %s ", pszFieldName,
+                         pszValue);
+                FailTranslation();
+            }
+            return dfValue;
+        }
+        else
+        {
+            return feature.GetFieldAsDouble(fieldIndex);
+        }
+    }
+
+    bool CheckField(const std::string &dim, const std::string &fieldName,
+                    int index, bool &isStringVar)
+    {
+        if (index == -1)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Specified %s field name '%s' does not exist", dim.c_str(),
+                     fieldName.c_str());
+            FailTranslation();
+            return false;
+        }
+
+        const auto eType = m_defn->GetFieldDefn(index)->GetType();
+        if (eType == OFTString)
+        {
+            isStringVar = true;
+        }
+        else if (eType != OFTInteger && eType != OFTReal)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid %s field type: %s",
+                     dim.c_str(), OGR_GetFieldTypeName(eType));
+            FailTranslation();
+            return false;
+        }
+
+        return true;
+    }
+
     const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_defn;
@@ -124,6 +205,16 @@ class GDALVectorCreatePointAlgorithmLayer final
     std::string m_yField;
     std::string m_zField;
     std::string m_mField;
+    int m_xFieldIndex;
+    int m_yFieldIndex;
+    int m_zFieldIndex;
+    int m_mFieldIndex;
+    bool m_hasZ;
+    bool m_hasM;
+    bool m_xFieldIsString = false;
+    bool m_yFieldIsString = false;
+    bool m_zFieldIsString = false;
+    bool m_mFieldIsString = false;
     OGRSpatialReference *m_srs;
     OGRFeatureDefn *m_defn;
 
@@ -138,37 +229,30 @@ void GDALVectorCreatePointAlgorithmLayer::TranslateFeature(
     std::unique_ptr<OGRFeature> poSrcFeature,
     std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures)
 {
-    double x = poSrcFeature->GetFieldAsDouble(m_xField.c_str());
-    double y = poSrcFeature->GetFieldAsDouble(m_yField.c_str());
-    double z = 0;
-    double m = 0;
-
-    if (!m_zField.empty())
-    {
-        z = poSrcFeature->GetFieldAsDouble(m_zField.c_str());
-    }
-    if (!m_mField.empty())
-    {
-        m = poSrcFeature->GetFieldAsDouble(m_mField.c_str());
-    }
+    const double x = GetField(*poSrcFeature, m_xFieldIndex, m_xFieldIsString);
+    const double y = GetField(*poSrcFeature, m_yFieldIndex, m_yFieldIsString);
+    const double z =
+        m_hasZ ? GetField(*poSrcFeature, m_zFieldIndex, m_zFieldIsString) : 0;
+    const double m =
+        m_hasM ? GetField(*poSrcFeature, m_mFieldIndex, m_mFieldIsString) : 0;
 
     std::unique_ptr<OGRPoint> poGeom;
 
-    if (m_mField.empty() && m_zField.empty())
+    if (m_hasZ && m_hasM)
     {
-        poGeom = std::make_unique<OGRPoint>(x, y);
+        poGeom = std::make_unique<OGRPoint>(x, y, z, m);
     }
-    else if (m_mField.empty())
+    else if (m_hasZ)
     {
         poGeom = std::make_unique<OGRPoint>(x, y, z);
     }
-    else if (m_zField.empty())
+    else if (m_hasM)
     {
         poGeom.reset(OGRPoint::createXYM(x, y, m));
     }
     else
     {
-        poGeom = std::make_unique<OGRPoint>(x, y, z, m);
+        poGeom = std::make_unique<OGRPoint>(x, y);
     }
 
     if (m_srs)

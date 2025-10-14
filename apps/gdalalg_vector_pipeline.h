@@ -203,6 +203,11 @@ class GDALVectorPipelineOutputLayer /* non final */
 
     OGRLayer &m_srcLayer;
 
+    void FailTranslation()
+    {
+        m_translateError = true;
+    }
+
   public:
     void ResetReading() override;
     OGRFeature *GetNextRawFeature();
@@ -210,6 +215,7 @@ class GDALVectorPipelineOutputLayer /* non final */
   private:
     std::vector<std::unique_ptr<OGRFeature>> m_pendingFeatures{};
     size_t m_idxInPendingFeatures = 0;
+    bool m_translateError = false;
 };
 
 /************************************************************************/

@@ -112,8 +112,7 @@ def test_gdalalg_vector_create_point_invalid_srs(create_point):
         create_point["dst-crs"] = "invalid"
 
 
-@pytest.mark.xfail()
-@pytest.mark.parametrize("value", (" 40m", ""))
+@pytest.mark.parametrize("value", (" 40m", "", " "))
 def test_gdalalg_vector_create_point_invalid_values(create_point, value):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
@@ -135,5 +134,41 @@ def test_gdalalg_vector_create_point_invalid_values(create_point, value):
     create_point["output"] = ""
     create_point["output-format"] = "MEM"
 
-    with pytest.raises(Exception, match="Failed to parse"):
+    with pytest.raises(Exception, match="Invalid value in field my_y"):
+        create_point.Run()
+
+
+@pytest.mark.parametrize("invalid_field", ("x", "y", "m", "z"))
+def test_gdalalg_vector_create_point_invalid_field_name(create_point, invalid_field):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+
+    src_lyr.CreateField(ogr.FieldDefn("name", ogr.OFTString))
+    src_lyr.CreateField(ogr.FieldDefn("my_x", ogr.OFTReal))
+    src_lyr.CreateField(ogr.FieldDefn("my_y", ogr.OFTReal))
+    src_lyr.CreateField(ogr.FieldDefn("my_z", ogr.OFTReal))
+    src_lyr.CreateField(ogr.FieldDefn("my_m", ogr.OFTReal))
+
+    feature = ogr.Feature(src_lyr.GetLayerDefn())
+    feature["my_x"] = 1
+    feature["my_y"] = 2
+    feature["my_z"] = 3
+    feature["my_m"] = 4
+
+    src_lyr.CreateFeature(feature)
+
+    create_point["input"] = src_ds
+    create_point["x"] = "my_x"
+    create_point["y"] = "my_y"
+    create_point["z"] = "my_z"
+    create_point["m"] = "my_m"
+    create_point[invalid_field] = "does_not_exist"
+    create_point["output"] = ""
+    create_point["output-format"] = "MEM"
+
+    with pytest.raises(
+        Exception,
+        match=f"Specified {invalid_field.upper()} field name .* does not exist",
+    ):
         create_point.Run()
