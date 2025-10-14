@@ -158,6 +158,56 @@ def test_gdal_raster_reclassify():
     )
 
 
+def test_gdal_raster_zonal_stats(tmp_path):
+
+    raster_fname = DATA_DIR / "fortune.tif"
+    vector_fname = DATA_DIR / "fortune_subd.geojson"
+
+    output_fname = tmp_path / "out.dbf"
+
+    alg = gdal.Run(
+        "raster zonal-stats",
+        input=raster_fname,
+        zones=vector_fname,
+        output=output_fname,
+        stat="mean",
+        include_field="csduid",
+    )
+    alg.Finalize()
+
+    with gdal.Open(raster_fname) as ds:
+        fortune = ds.ReadAsMaskedArray()
+        xmin, dx, _, ymax, _, dy = ds.GetGeoTransform()
+        nx = ds.RasterXSize
+        ny = ds.RasterYSize
+        extent = [xmin, xmin + nx * dx, ymax + dy * ny, ymax]
+
+    plt, (ax, ax2) = pyplot.subplots(1, 2, figsize=(12, 5), sharex=True, sharey=True)
+    ax.set_axis_off()
+    ax2.set_axis_off()
+
+    vmin, vmax = np.quantile(fortune.compressed(), [0.01, 0.99])
+
+    ax.imshow(fortune, extent=extent, vmin=vmin, vmax=vmax)
+
+    vector_gdf = gpd.read_file(vector_fname)
+    vector_gdf.boundary.plot(ax=ax, edgecolor="black", linewidth=1, aspect="equal")
+
+    stats_df = gpd.read_file(output_fname)
+    stats_df.drop("geometry", axis=1, inplace=True)
+
+    vector_gdf.merge(stats_df, on="csduid").plot(
+        ax=ax2, aspect="equal", column="mean", vmin=vmin, vmax=vmax
+    )
+    vector_gdf.boundary.plot(ax=ax2, edgecolor="black", linewidth=1, aspect="equal")
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_raster_zonal_stats.jpg",
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
 @pytest.mark.parametrize(
     "operation",
     ("erase", "identity", "intersection", "sym-difference", "union", "update", "clip"),
