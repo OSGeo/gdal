@@ -129,3 +129,177 @@ def generate(filename, version):
 
 
 generate("test_s111_v1.2", "INT.IHO.S-111.1.2")
+
+
+def generate_multiple_feature_instance_groups():
+    f = h5py.File(
+        os.path.join(os.path.dirname(__file__), "multiple_feature_instance_groups.h5"),
+        "w",
+    )
+    f.attrs["productSpecification"] = "INT.IHO.S-111.2.0"
+    f.attrs["issueDate"] = "2025-10-07"
+    f.attrs["issueTime"] = "12:34:56"
+    f.attrs["westBoundLongitude"] = -180.0
+    f.attrs["southBoundLatitude"] = -90.0
+    f.attrs["eastBoundLongitude"] = 180.0
+    f.attrs["northBoundLatitude"] = 90.0
+    f.attrs["geographicIdentifier"] = "world"
+    f.attrs["horizontalCRS"] = 4326
+    f.attrs["verticalCoordinateBase"] = 2
+    f.attrs["verticalCS"] = 6498
+    f.attrs["verticalDatum"] = 12
+    f.attrs["verticalDatumReference"] = 1
+    f.attrs["depthTypeIndex"] = 1
+    f.attrs["surfaceCurrentDepth"] = -4.5
+
+    SurfaceCurrent = f.create_group("SurfaceCurrent")
+    SurfaceCurrent.attrs["dimension"] = 2
+    SurfaceCurrent.attrs["dataCodingFormat"] = 2
+    SurfaceCurrent.attrs["commonPointRule"] = 3
+    SurfaceCurrent.attrs["dataOffsetCode"] = 5
+    SurfaceCurrent.attrs["horizontalPositionUncertainty"] = -1
+    SurfaceCurrent.attrs["interpolationType"] = 10
+    SurfaceCurrent.attrs["numInstances"] = 2
+    SurfaceCurrent.attrs["sequencingRule.scanDirection"] = "longitude,latitude"
+    SurfaceCurrent.attrs["sequencingRule.type"] = 1
+    SurfaceCurrent.attrs["verticalUncertainty"] = -1
+    SurfaceCurrent.attrs["minDatasetCurrentSpeed"] = np.float32(0)
+    SurfaceCurrent.attrs["maxDatasetCurrentSpeed"] = np.float32(7)
+
+    SurfaceCurrent_01 = SurfaceCurrent.create_group("SurfaceCurrent.01")
+    Group_001 = SurfaceCurrent_01.create_group("Group_001")
+
+    axisNames = SurfaceCurrent.create_dataset(
+        "axisNames",
+        (2,),
+        dtype=h5py.string_dtype(),
+    )
+    axisNames[...] = np.array(["longitude", "latitude"])
+
+    values_struct_type = np.dtype(
+        [
+            ("surfaceCurrentSpeed", "f4"),
+            ("surfaceCurrentDirection", "f4"),
+        ]
+    )
+    values = Group_001.create_dataset("values", (2, 4), dtype=values_struct_type)
+    data = np.array(
+        [(0, 0), (1, 1), (2, 2), (3, 0), (4, 1), (5, 2), (6, 0), (7, 1)],
+        dtype=values_struct_type,
+    ).reshape(values.shape)
+    values[...] = data
+
+    Group_001.attrs["timePoint"] = "20190606T120000Z"
+
+    SurfaceCurrent_01.attrs["gridOriginLongitude"] = np.float64(-180)
+    SurfaceCurrent_01.attrs["gridOriginLatitude"] = np.float64(90)
+    SurfaceCurrent_01.attrs["gridSpacingLongitudinal"] = np.float64(90)
+    SurfaceCurrent_01.attrs["gridSpacingLatitudinal"] = np.float64(90)
+    SurfaceCurrent_01.attrs["numPointsLongitudinal"] = np.uint32(values.shape[1])
+    SurfaceCurrent_01.attrs["numPointsLatitudinal"] = np.uint32(values.shape[0])
+
+    SurfaceCurrent_01.attrs["numberOfTimes"] = np.uint32(1)
+    SurfaceCurrent_01.attrs["timeRecordInterval"] = np.uint16(3600)
+    SurfaceCurrent_01.attrs["dateTimeOfFirstRecord"] = "20190606T120000Z"
+    SurfaceCurrent_01.attrs["dateTimeOfLastRecord"] = "20190606T120000Z"
+
+    SurfaceCurrent_01.attrs["numGRP"] = np.uint32(1)
+    SurfaceCurrent_01.attrs["startSequence"] = "0,0"
+    SurfaceCurrent_01.attrs["dataDynamicity"] = 5
+
+    uncertainty_struct_type = np.dtype(
+        [
+            ("name", h5py.string_dtype()),
+            ("value", "f8"),
+        ]
+    )
+    uncertainty = SurfaceCurrent_01.create_dataset(
+        "uncertainty", (2,), dtype=uncertainty_struct_type
+    )
+    data = np.array(
+        [("surfaceCurrentSpeed", -1), ("surfaceCurrentDirection", -1)],
+        dtype=uncertainty_struct_type,
+    ).reshape(uncertainty.shape)
+    uncertainty[...] = data
+
+    SurfaceCurrent_02 = SurfaceCurrent.create_group("SurfaceCurrent.02")
+    Group_001 = SurfaceCurrent_02.create_group("Group_001")
+
+    values = Group_001.create_dataset("values", (2, 4), dtype=values_struct_type)
+    data = np.array(
+        [(0, 0), (10, 1), (20, 2), (30, 0), (40, 1), (50, 2), (60, 0), (70, 1)],
+        dtype=values_struct_type,
+    ).reshape(values.shape)
+    values[...] = data
+
+    Group_001.attrs["timePoint"] = "20190606T120000Z"
+
+    SurfaceCurrent_02.attrs["gridOriginLongitude"] = np.float64(-180)
+    SurfaceCurrent_02.attrs["gridOriginLatitude"] = np.float64(90)
+    SurfaceCurrent_02.attrs["gridSpacingLongitudinal"] = np.float64(90)
+    SurfaceCurrent_02.attrs["gridSpacingLatitudinal"] = np.float64(90)
+    SurfaceCurrent_02.attrs["numPointsLongitudinal"] = np.uint32(values.shape[1])
+    SurfaceCurrent_02.attrs["numPointsLatitudinal"] = np.uint32(values.shape[0])
+
+    SurfaceCurrent_02.attrs["numberOfTimes"] = np.uint32(1)
+    SurfaceCurrent_02.attrs["timeRecordInterval"] = np.uint16(3600)
+    SurfaceCurrent_02.attrs["dateTimeOfFirstRecord"] = "20190606T120000Z"
+    SurfaceCurrent_02.attrs["dateTimeOfLastRecord"] = "20190606T120000Z"
+
+    SurfaceCurrent_02.attrs["numGRP"] = np.uint32(1)
+    SurfaceCurrent_02.attrs["startSequence"] = "0,0"
+    SurfaceCurrent_02.attrs["dataDynamicity"] = 5
+    SurfaceCurrent_02.attrs["verticalDatum"] = 13
+    SurfaceCurrent_02.attrs["verticalDatumReference"] = 1
+
+    Group_F = f.create_group("Group_F")
+    Group_F_SurfaceCurrent_struct_type = np.dtype(
+        [
+            ("code", h5py.string_dtype()),
+            ("name", h5py.string_dtype()),
+            ("uom.name", h5py.string_dtype()),
+            ("fillValue", h5py.string_dtype()),
+            ("datatype", h5py.string_dtype()),
+            ("lower", h5py.string_dtype()),
+            ("upper", h5py.string_dtype()),
+            ("closure", h5py.string_dtype()),
+        ]
+    )
+    Group_F_SurfaceCurrent = Group_F.create_dataset(
+        "SurfaceCurrent", (2,), dtype=Group_F_SurfaceCurrent_struct_type
+    )
+    Group_F_SurfaceCurrent[...] = np.array(
+        [
+            (
+                "surfaceCurrentSpeed",
+                "Surface Current Speed",
+                "knot",
+                "-9999.00",
+                "H5T_FLOAT",
+                "0.00",
+                "",
+                "geSemiInterval",
+            ),
+            (
+                "surfaceCurrentDirection",
+                "Surface Current Direction",
+                "degree",
+                "-9999.00",
+                "H5T_FLOAT",
+                "0.00",
+                "359.9",
+                "closedInterval",
+            ),
+        ],
+        dtype=Group_F_SurfaceCurrent_struct_type,
+    )
+
+    featureCode = Group_F.create_dataset(
+        "featureCode",
+        (1,),
+        dtype=h5py.string_dtype(),
+    )
+    featureCode[...] = np.array(["SurfaceCurrent"])
+
+
+generate_multiple_feature_instance_groups()

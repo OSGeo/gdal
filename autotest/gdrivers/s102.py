@@ -370,3 +370,63 @@ def test_s102_no_uncertainty():
     assert ds.RasterCount == 1
     assert struct.unpack("f" * 6, ds.ReadRaster()) == (1e6, 4, 5, 0, 1, 2)
     assert ds.GetRasterBand(1).GetNoDataValue() == 0
+
+
+###############################################################################
+
+
+def test_s102_multiple_feature_instance_groups():
+
+    ds = gdal.Open("data/s102/multiple_feature_instance_groups.h5")
+    assert ds.GetSubDatasets() == [
+        (
+            'S102:"data/s102/multiple_feature_instance_groups.h5":BathymetryCoverage.01',
+            "Bathymetric gridded data, instance BathymetryCoverage.01, vertical datum meanLowerLowWater (MLLW)",
+        ),
+        (
+            'S102:"data/s102/multiple_feature_instance_groups.h5":BathymetryCoverage.02',
+            "Bathymetric gridded data, instance BathymetryCoverage.02, vertical datum lowWater (LW)",
+        ),
+        (
+            'S102:"data/s102/multiple_feature_instance_groups.h5":QualityOfBathymetryCoverage',
+            "Georeferenced metadata QualityOfBathymetryCoverage",
+        ),
+    ]
+    assert ds.RasterCount == 0
+
+    ds = gdal.Open(
+        'S102:"data/s102/multiple_feature_instance_groups.h5":BathymetryCoverage.01'
+    )
+    assert ds.GetSubDatasets() == []
+    assert ds.RasterCount == 1
+    assert ds.RasterYSize == 2
+    assert ds.RasterXSize == 4
+    assert struct.unpack("f" * 8, ds.ReadRaster()) == (4, 5, 6, 7, 0, 1, 2, 3)
+    assert ds.GetMetadataItem("VERTICAL_DATUM_MEANING") == "meanLowerLowWater"
+
+    ds = gdal.Open(
+        'S102:"data/s102/multiple_feature_instance_groups.h5":BathymetryCoverage.02'
+    )
+    assert ds.GetSubDatasets() == []
+    assert ds.RasterCount == 1
+    assert ds.RasterYSize == 2
+    assert ds.RasterXSize == 4
+    assert struct.unpack("f" * 8, ds.ReadRaster()) == (40, 50, 60, 70, 0, 10, 20, 30)
+    assert ds.GetMetadataItem("VERTICAL_DATUM_MEANING") == "lowWater"
+
+    ds = gdal.Open(
+        'S102:"data/s102/multiple_feature_instance_groups.h5":QualityOfBathymetryCoverage'
+    )
+    assert ds.GetSubDatasets() == []
+    assert ds.RasterCount == 1
+    assert ds.RasterYSize == 2
+    assert ds.RasterXSize == 4
+    assert struct.unpack("i" * 8, ds.ReadRaster()) == (5, 6, 7, 8, 1, 2, 3, 4)
+
+    with pytest.raises(
+        Exception,
+        match="Cannot find BathymetryCoverage.03 group in BathymetryCoverage group",
+    ):
+        gdal.Open(
+            'S102:"data/s102/multiple_feature_instance_groups.h5":BathymetryCoverage.03'
+        )

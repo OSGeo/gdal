@@ -17,7 +17,7 @@ import struct
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 pytestmark = pytest.mark.require_driver("S104")
 
@@ -172,3 +172,154 @@ def test_s104_multidim():
     x_data = struct.unpack("d" * x.GetDimensions()[0].GetSize(), x.Read())
     assert x_data[0] == 2.0
     assert x_data[-1] == 2.8
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "filename,wkt",
+    [
+        (
+            "test_s104_custom_geog_crs.h5",
+            'GEOGCRS["my crs",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]',
+        ),
+        (
+            "test_s104_custom_geog_crs_custom_datum.h5",
+            'GEOGCRS["my crs",DATUM["my datum",ELLIPSOID["GRS 1980",6378137,298.257222101,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]',
+        ),
+        (
+            "test_s104_custom_proj_mercator.h5",
+            'PROJCRS["my crs",BASEGEOGCRS["World Geodetic System 1984",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["Mercator (variant B)",METHOD["Mercator (variant B)",ID["EPSG",9805]],PARAMETER["Latitude of 1st standard parallel",1.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8823]],PARAMETER["Longitude of natural origin",2.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["False easting",100000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",200000,LENGTHUNIT["metre",1],ID["EPSG",8807]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]',
+        ),
+        (
+            "test_s104_custom_proj_transverse_mercator.h5",
+            'PROJCRS["my crs",BASEGEOGCRS["World Geodetic System 1984",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["Transverse Mercator",METHOD["Transverse Mercator",ID["EPSG",9807]],PARAMETER["Latitude of natural origin",1.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",2.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["Scale factor at natural origin",0.9996,SCALEUNIT["unity",1],ID["EPSG",8805]],PARAMETER["False easting",100000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",200000,LENGTHUNIT["metre",1],ID["EPSG",8807]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]',
+        ),
+        (
+            "test_s104_custom_proj_oblique_mercator.h5",
+            'PROJCRS["my crs",BASEGEOGCRS["World Geodetic System 1984",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["Hotine Oblique Mercator (variant B)",METHOD["Hotine Oblique Mercator (variant B)",ID["EPSG",9815]],PARAMETER["Latitude of projection centre",1.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8811]],PARAMETER["Longitude of projection centre",2.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8812]],PARAMETER["Azimuth at projection centre",3.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8813]],PARAMETER["Angle from Rectified to Skew Grid",4.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8814]],PARAMETER["Scale factor at projection centre",5.5,SCALEUNIT["unity",1],ID["EPSG",8815]],PARAMETER["Easting at projection centre",100000,LENGTHUNIT["metre",1],ID["EPSG",8816]],PARAMETER["Northing at projection centre",200000,LENGTHUNIT["metre",1],ID["EPSG",8817]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]',
+        ),
+        (
+            "test_s104_custom_proj_hotine_oblique_mercator.h5",
+            'PROJCRS["my crs",BASEGEOGCRS["World Geodetic System 1984",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["Hotine Oblique Mercator (variant A)",METHOD["Hotine Oblique Mercator (variant A)",ID["EPSG",9812]],PARAMETER["Latitude of projection centre",1.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8811]],PARAMETER["Longitude of projection centre",2.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8812]],PARAMETER["Azimuth at projection centre",3.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8813]],PARAMETER["Angle from Rectified to Skew Grid",4.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8814]],PARAMETER["Scale factor at projection centre",5.5,SCALEUNIT["unity",1],ID["EPSG",8815]],PARAMETER["False easting",100000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",200000,LENGTHUNIT["metre",1],ID["EPSG",8807]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]',
+        ),
+        (
+            "test_s104_custom_proj_lcc_1sp.h5",
+            'PROJCRS["my crs",BASEGEOGCRS["World Geodetic System 1984",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["Lambert Conic Conformal (1SP)",METHOD["Lambert Conic Conformal (1SP)",ID["EPSG",9801]],PARAMETER["Latitude of natural origin",1.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",2.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["Scale factor at natural origin",0.9,SCALEUNIT["unity",1],ID["EPSG",8805]],PARAMETER["False easting",100000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",200000,LENGTHUNIT["metre",1],ID["EPSG",8807]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]',
+        ),
+        (
+            "test_s104_custom_proj_lcc_2sp.h5",
+            'PROJCRS["my crs",BASEGEOGCRS["World Geodetic System 1984",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["Lambert Conic Conformal (2SP)",METHOD["Lambert Conic Conformal (2SP)",ID["EPSG",9802]],PARAMETER["Latitude of false origin",1.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8821]],PARAMETER["Longitude of false origin",2.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8822]],PARAMETER["Latitude of 1st standard parallel",3.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8823]],PARAMETER["Latitude of 2nd standard parallel",4.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8824]],PARAMETER["Easting at false origin",100000,LENGTHUNIT["metre",1],ID["EPSG",8826]],PARAMETER["Northing at false origin",200000,LENGTHUNIT["metre",1],ID["EPSG",8827]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]',
+        ),
+        (
+            "test_s104_custom_proj_oblique_stereographic.h5",
+            'PROJCRS["my crs",BASEGEOGCRS["World Geodetic System 1984",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["Oblique Stereographic",METHOD["Oblique Stereographic",ID["EPSG",9809]],PARAMETER["Latitude of natural origin",1.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",2.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["Scale factor at natural origin",0.9,SCALEUNIT["unity",1],ID["EPSG",8805]],PARAMETER["False easting",100000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",200000,LENGTHUNIT["metre",1],ID["EPSG",8807]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]',
+        ),
+        (
+            "test_s104_custom_proj_polar_stereographic.h5",
+            'PROJCRS["my crs",BASEGEOGCRS["World Geodetic System 1984",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["Polar Stereographic (variant A)",METHOD["Polar Stereographic (variant A)",ID["EPSG",9810]],PARAMETER["Latitude of natural origin",1.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",2.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["Scale factor at natural origin",0.9,SCALEUNIT["unity",1],ID["EPSG",8805]],PARAMETER["False easting",100000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",200000,LENGTHUNIT["metre",1],ID["EPSG",8807]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]',
+        ),
+        (
+            "test_s104_custom_proj_krovak_oblique_conic_conformal.h5",
+            'PROJCRS["my crs",BASEGEOGCRS["World Geodetic System 1984",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["Krovak",METHOD["Krovak",ID["EPSG",9819]],PARAMETER["Latitude of projection centre",1.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8811]],PARAMETER["Longitude of origin",2.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8833]],PARAMETER["Co-latitude of cone axis",3.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",1036]],PARAMETER["Latitude of pseudo standard parallel",4.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8818]],PARAMETER["Scale factor on pseudo standard parallel",0.9,SCALEUNIT["unity",1],ID["EPSG",8819]],PARAMETER["False easting",100000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",200000,LENGTHUNIT["metre",1],ID["EPSG",8807]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]',
+        ),
+        (
+            "test_s104_custom_proj_american_polyconic.h5",
+            'PROJCRS["my crs",BASEGEOGCRS["World Geodetic System 1984",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["American Polyconic",METHOD["American Polyconic",ID["EPSG",9818]],PARAMETER["Latitude of natural origin",1.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",2.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["False easting",100000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",200000,LENGTHUNIT["metre",1],ID["EPSG",8807]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]    ',
+        ),
+        (
+            "test_s104_custom_proj_albers_equal_area.h5",
+            'PROJCRS["my crs",BASEGEOGCRS["World Geodetic System 1984",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["Albers Equal Area",METHOD["Albers Equal Area",ID["EPSG",9822]],PARAMETER["Latitude of false origin",1.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8821]],PARAMETER["Longitude of false origin",2.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8822]],PARAMETER["Latitude of 1st standard parallel",3.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8823]],PARAMETER["Latitude of 2nd standard parallel",4.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8824]],PARAMETER["Easting at false origin",100000,LENGTHUNIT["metre",1],ID["EPSG",8826]],PARAMETER["Northing at false origin",200000,LENGTHUNIT["metre",1],ID["EPSG",8827]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]',
+        ),
+        (
+            "test_s104_custom_proj_lambert_azimuthal_equal_area.h5",
+            'PROJCRS["my crs",BASEGEOGCRS["World Geodetic System 1984",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ID["EPSG",6326]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["Lambert Azimuthal Equal Area",METHOD["Lambert Azimuthal Equal Area",ID["EPSG",9820]],PARAMETER["Latitude of natural origin",1.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",2.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["False easting",100000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",200000,LENGTHUNIT["metre",1],ID["EPSG",8807]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]',
+        ),
+    ],
+)
+def test_s104_custom_crs(filename, wkt):
+
+    ds = gdal.Open("data/s104/" + filename)
+    srs_ref = osr.SpatialReference(wkt)
+    srs_ref.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    assert ds.GetSpatialRef().IsSame(srs_ref), ds.GetSpatialRef().ExportToWkt(
+        ["FORMAT=WKT2_2019", "MULTILINE=NO"]
+    )
+
+
+###############################################################################
+
+
+def test_s104_multiple_feature_instance_groups():
+
+    ds = gdal.Open("data/s104/multiple_feature_instance_groups.h5")
+    assert ds.GetSubDatasets() == [
+        (
+            'S104:"data/s104/multiple_feature_instance_groups.h5":WaterLevel.01:Group_001',
+            "Values for feature instance WaterLevel.01, vertical datum meanLowerLowWater (MLLW) at timestamp 20190606T120000Z",
+        ),
+        (
+            'S104:"data/s104/multiple_feature_instance_groups.h5":WaterLevel.02:Group_001',
+            "Values for feature instance WaterLevel.02, vertical datum lowWater (LW) at timestamp 20190606T120000Z",
+        ),
+    ]
+    assert ds.RasterCount == 0
+
+    ds = gdal.Open(
+        'S104:"data/s104/multiple_feature_instance_groups.h5":WaterLevel.01:Group_001'
+    )
+    assert ds.GetSubDatasets() == []
+    assert ds.RasterCount == 2
+    assert ds.RasterYSize == 2
+    assert ds.RasterXSize == 4
+    assert struct.unpack("f" * 8, ds.GetRasterBand(1).ReadRaster()) == (
+        4,
+        5,
+        6,
+        7,
+        0,
+        1,
+        2,
+        3,
+    )
+    assert struct.unpack("B" * 8, ds.GetRasterBand(2).ReadRaster()) == (
+        1,
+        2,
+        0,
+        1,
+        0,
+        1,
+        2,
+        0,
+    )
+    assert ds.GetMetadataItem("VERTICAL_DATUM_MEANING") == "meanLowerLowWater"
+
+    ds = gdal.Open(
+        'S104:"data/s104/multiple_feature_instance_groups.h5":WaterLevel.02:Group_001'
+    )
+    assert ds.GetSubDatasets() == []
+    assert ds.RasterCount == 2
+    assert ds.RasterYSize == 2
+    assert ds.RasterXSize == 4
+    assert struct.unpack("f" * 8, ds.GetRasterBand(1).ReadRaster()) == (
+        40,
+        50,
+        60,
+        70,
+        0,
+        10,
+        20,
+        30,
+    )
+    assert struct.unpack("B" * 8, ds.GetRasterBand(2).ReadRaster()) == (
+        1,
+        2,
+        0,
+        1,
+        0,
+        1,
+        2,
+        0,
+    )
+    assert ds.GetMetadataItem("VERTICAL_DATUM_MEANING") == "lowWater"

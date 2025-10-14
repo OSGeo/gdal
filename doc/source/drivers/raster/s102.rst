@@ -25,10 +25,12 @@ Georeferencing is reported.
 
 Nodata, minimum and maximum values for each band are also reported.
 
-Supported versions of the specification are S-102 v2.1, v2.2 and v3.0
-(support for v3.0 spatial metadata added in GDAL 3.10. Multiple grids per
-file, as permitted by S-102 v3.0, are not supported currently. Only the
-first one will be reported.)
+Supported versions of the specification are S-102 v2.1, v2.2 and v3.0.
+
+Since GDAL 3.12, multiple feature instance groups per dataset (to encode grids
+using different vertical datums) are supported. In that case, each feature
+instance group is exposed as a GDAL subdataset, whose name is of the form
+``S102:"{filename.h5}":BathymetricCoverage.{XX}``.
 
 Driver capabilities
 -------------------
