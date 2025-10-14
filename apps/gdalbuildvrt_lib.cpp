@@ -998,10 +998,13 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
         else if (we_res != gt[GEOTRSFRM_WE_RES] ||
                  ns_res != gt[GEOTRSFRM_NS_RES])
         {
-            return CPLSPrintf("Dataset %s has resolution %f x %f, whereas "
-                              "previous sources have resolution %f x %f",
-                              dsFileName, gt[GEOTRSFRM_WE_RES],
-                              gt[GEOTRSFRM_NS_RES], we_res, ns_res);
+            return CPLSPrintf(
+                "Dataset %s has resolution %.17g x %.17g, whereas "
+                "previous sources have resolution %.17g x %.17g. To mosaic "
+                "these data sources, a different resolution strategy should be "
+                "specified.",
+                dsFileName, gt[GEOTRSFRM_WE_RES], gt[GEOTRSFRM_NS_RES], we_res,
+                ns_res);
         }
     }
     else if (resolutionStrategy != USER_RESOLUTION)
