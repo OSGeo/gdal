@@ -22,6 +22,10 @@ Description
 
 :program:`gdal raster zonal-stats` computes raster zonal statistics -- a summary of pixel values within zones specified either polygon features or a categorical raster.
 
+.. figure:: ../../images/programs/gdal_raster_zonal_stats.jpg
+
+   Mean elevation calculated for each polygon from an elevation raster.
+
 A weighting raster may be provided in addition to the source raster, allowing calculation of statistics such as population-weighted mean weather conditions.
 
 All inputs should be provided in the same spatial reference system. If input rasters use different resolutions they will be resampled to a consistent resolution using average resampling. However, no reprojection is performed.
@@ -135,12 +139,12 @@ The following options are available:
 .. option:: --chunk-size <MEMORY>
 
    Defines the maximum size of raster chunks to read. May be expressed as either an amount of memory (500 MB, 2 GB, etc.) or as a percentage of
-   available ram (e.g. 10%).
+   available RAM (e.g. 10%).
 
 .. option:: --strategy <STRATEGY>
 
    Specifies the the processing strategy (``raster`` or ``feature``), when vector zones are used.
-   In the default strategy (``--strategy feature``), GDAL will iterate over the features in the zone dataset, read the corresponding pixels from the raster, and write the statistics for that feature. This avoids the need to read the entire feature dataset into memory at once, but may cause the same pixels to be read multiple times the polygon features are large or not ordered spatially. If ``--strategy raster`` is used, GDAL will iterate over chunks of the raster dataset, find corresponding polygon zones, and update the statistics for those features. (The size of the raster chunks can be controlled using :opt:``memory``. This ensures that raster pixels are only read once, but may cause the same features to be processed multiple times.
+   In the default strategy (``--strategy feature``), GDAL will iterate over the features in the zone dataset, read the corresponding pixels from the raster, and write the statistics for that feature. This avoids the need to read the entire feature dataset into memory at once, but may cause the same pixels to be read multiple times if the polygon features are large or not ordered spatially. If ``--strategy raster`` is used, GDAL will iterate over chunks of the raster dataset, find corresponding polygon zones, and update the statistics for those features. (The size of the raster chunks can be controlled using :opt:``memory``.) This ensures that raster pixels are only read once, but may cause the same features to be processed multiple times.
    
 .. option:: --include-field <INCLUDE-FIELD>
 
@@ -149,3 +153,17 @@ The following options are available:
 
 Examples
 --------
+
+
+.. example::
+   :title: Summarize mean elevation within 200m of points of interest
+
+   .. code-block:: bash
+
+      gdal pipeline read dem.tif ! \
+          zonal-stats \
+            --zones [ read points.geojson ! buffer 20 ] \
+            --stat mean ! \
+          write \
+            --output-format CSV \
+            --output /vsistdout/
