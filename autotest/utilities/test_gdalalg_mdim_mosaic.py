@@ -21,6 +21,9 @@ pytestmark = pytest.mark.require_driver("netCDF")
 
 
 def test_gdalalg_mdim_mosaic_labelled_axis_single_value_1D_array(tmp_path):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
     def create_sources():
 
         with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
@@ -107,6 +110,9 @@ def test_gdalalg_mdim_mosaic_labelled_axis_single_value_1D_array(tmp_path):
 
 
 def test_gdalalg_mdim_mosaic_labelled_axis_multiple_value_1D_array(tmp_path):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
     def create_sources():
 
         with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
@@ -173,6 +179,9 @@ def test_gdalalg_mdim_mosaic_labelled_axis_multiple_value_1D_array(tmp_path):
 
 
 def test_gdalalg_mdim_mosaic_regularly_spaced_axis_1D_array(tmp_path):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
     def create_sources():
 
         with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
@@ -239,6 +248,9 @@ def test_gdalalg_mdim_mosaic_regularly_spaced_axis_1D_array(tmp_path):
 
 
 def test_gdalalg_mdim_mosaic_labelled_axis_2D_array(tmp_path):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
     def create_sources():
 
         with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
@@ -336,7 +348,7 @@ def test_gdalalg_mdim_mosaic_labelled_axis_2D_array(tmp_path):
             [10, 20, 30],
             [35],
             None,
-            "has irregularly spaced labels, contrary to other datasets",
+            "has irregularly-spaced values, contrary to other datasets",
         ),
         (
             [10],
@@ -348,7 +360,7 @@ def test_gdalalg_mdim_mosaic_labelled_axis_2D_array(tmp_path):
             [10, 11, 20],
             [30, 29, 25],
             None,
-            "values in indexing variable z of dimension z are not progressing as in other datasets",
+            "must be either increasing or decreasing in all input datasets",
         ),
         (
             [10, 20, 40],
@@ -377,6 +389,9 @@ def test_gdalalg_mdim_mosaic_labelled_axis_2D_array(tmp_path):
     ],
 )
 def test_gdalalg_mdim_mosaic_errors(tmp_path, values1, values2, values3, error_msg):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
     def create_sources():
 
         with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
@@ -438,6 +453,9 @@ def test_gdalalg_mdim_mosaic_errors(tmp_path, values1, values2, values3, error_m
 
 
 def test_gdalalg_mdim_mosaic_error_dim_not_same_name(tmp_path):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
     def create_sources():
 
         values1 = [1]
@@ -473,7 +491,118 @@ def test_gdalalg_mdim_mosaic_error_dim_not_same_name(tmp_path):
 
     create_sources()
 
-    with pytest.raises(Exception, match="has not the same name as in other datasets"):
+    with pytest.raises(
+        Exception, match="does not have the same name as in other datasets"
+    ):
+        gdal.Run(
+            "mdim",
+            "mosaic",
+            input=[tmp_path / "test1.nc", tmp_path / "test2.nc"],
+            output="",
+            array="test",
+            output_format="VRT",
+        )
+
+
+def test_gdalalg_mdim_mosaic_error_array_not_same_type(tmp_path):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
+    def create_sources():
+
+        values1 = [1]
+        values2 = [2]
+
+        with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
+            tmp_path / "test1.nc"
+        ) as ds:
+            rg = ds.GetRootGroup()
+            z = rg.CreateDimension("z", "VERTICAL", "UP", len(values1))
+            z_ar = rg.CreateMDArray(
+                "z", [z], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            z_ar.Write(values1)
+            ar = rg.CreateMDArray(
+                "test", [z], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            ar.Write(array.array("B", [1] * len(values1)))
+
+        with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
+            tmp_path / "test2.nc"
+        ) as ds:
+            rg = ds.GetRootGroup()
+            z = rg.CreateDimension("z", "VERTICAL", "UP", len(values2))
+            z_ar = rg.CreateMDArray(
+                "z", [z], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            z_ar.Write(values2)
+            ar = rg.CreateMDArray(
+                "test", [z], gdal.ExtendedDataType.Create(gdal.GDT_Int32)
+            )
+            ar.Write(array.array("I", [2] * len(values2)))
+
+    create_sources()
+
+    with pytest.raises(
+        Exception, match="does not have the same data type as in other datasets"
+    ):
+        gdal.Run(
+            "mdim",
+            "mosaic",
+            input=[tmp_path / "test1.nc", tmp_path / "test2.nc"],
+            output="",
+            array="test",
+            output_format="VRT",
+        )
+
+
+@pytest.mark.parametrize("nd1,nd2", [(1, 2), (None, 2), (1, None)])
+def test_gdalalg_mdim_mosaic_error_array_not_same_nodata_value(tmp_path, nd1, nd2):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
+    def create_sources():
+
+        values1 = [1]
+        values2 = [2]
+
+        with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
+            tmp_path / "test1.nc"
+        ) as ds:
+            rg = ds.GetRootGroup()
+            z = rg.CreateDimension("z", "VERTICAL", "UP", len(values1))
+            z_ar = rg.CreateMDArray(
+                "z", [z], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            z_ar.Write(values1)
+            ar = rg.CreateMDArray(
+                "test", [z], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            if nd1:
+                ar.SetNoDataValue(nd1)
+            ar.Write(array.array("B", [1] * len(values1)))
+
+        with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
+            tmp_path / "test2.nc"
+        ) as ds:
+            rg = ds.GetRootGroup()
+            z = rg.CreateDimension("z", "VERTICAL", "UP", len(values2))
+            z_ar = rg.CreateMDArray(
+                "z", [z], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            z_ar.Write(values2)
+            ar = rg.CreateMDArray(
+                "test", [z], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            if nd2:
+                ar.SetNoDataValue(nd2)
+            ar.Write(array.array("B", [2] * len(values2)))
+
+    create_sources()
+
+    with pytest.raises(
+        Exception, match="does not have the same nodata value as in other datasets"
+    ):
         gdal.Run(
             "mdim",
             "mosaic",
@@ -485,6 +614,9 @@ def test_gdalalg_mdim_mosaic_error_dim_not_same_name(tmp_path):
 
 
 def test_gdalalg_mdim_mosaic_error_non_existing_arrays(tmp_path):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
     def create_sources():
 
         values1 = [1]
@@ -528,6 +660,9 @@ def test_gdalalg_mdim_mosaic_error_non_existing_arrays(tmp_path):
 
 
 def test_gdalalg_mdim_mosaic_error_zero_dim(tmp_path):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
     def create_sources():
 
         with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
@@ -553,6 +688,9 @@ def test_gdalalg_mdim_mosaic_error_zero_dim(tmp_path):
 
 
 def test_gdalalg_mdim_mosaic_error_non_numeric_indexing_var(tmp_path):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
     def create_sources():
 
         values1 = ["foo"]
@@ -573,7 +711,7 @@ def test_gdalalg_mdim_mosaic_error_non_numeric_indexing_var(tmp_path):
 
     with pytest.raises(
         Exception,
-        match="indexing variable z of dimension z has not a numeric data type",
+        match="indexing variable z of dimension z has a non-numeric data type",
     ):
         gdal.Run(
             "mdim",
@@ -587,6 +725,9 @@ def test_gdalalg_mdim_mosaic_error_non_numeric_indexing_var(tmp_path):
 
 @pytest.mark.require_driver("Zarr")
 def test_gdalalg_mdim_mosaic_error_no_indexing_var(tmp_path):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
     def create_sources():
 
         with gdal.GetDriverByName("Zarr").CreateMultiDimensional(

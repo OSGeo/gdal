@@ -49,7 +49,7 @@ class GDALMdimMosaicAlgorithm final : public GDALAlgorithm
     bool m_overwrite = false;
     std::string m_array{};
 
-    // Describes a dimension of the mosaicenated array.
+    // Describes a dimension of the mosaic array.
     struct DimensionDesc
     {
         std::string osName{};
@@ -61,7 +61,7 @@ class GDALMdimMosaicAlgorithm final : public GDALAlgorithm
         // Used for dimensions with irregular spaced labels
         int nProgressionSign =
             0;  // 1=increasing, -1=decreasing, 0=single value
-        // Groups of irrugularly spaced values. In common cases,
+        // Groups of irregularly spaced values. In common cases,
         // aaValues[i].size() will be just one
         std::vector<std::vector<double>> aaValues{};
 

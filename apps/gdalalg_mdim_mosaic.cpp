@@ -49,34 +49,7 @@ GDALMdimMosaicAlgorithm::GDALMdimMosaicAlgorithm()
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_MULTIDIM_RASTER);
     AddCreationOptionsArg(&m_creationOptions);
     AddOverwriteArg(&m_overwrite);
-
-    {
-        auto &arg =
-            AddArg("array", 0, _("Name of array to mosaicenate."), &m_array);
-
-        arg.SetAutoCompleteFunction(
-            [this](const std::string &)
-            {
-                std::vector<std::string> ret;
-                if (!m_inputDatasets.empty())
-                {
-                    if (auto poDS =
-                            std::unique_ptr<GDALDataset>(GDALDataset::Open(
-                                m_inputDatasets[0].GetName().c_str(),
-                                GDAL_OF_MULTIDIM_RASTER,
-                                CPLStringList(m_inputFormats).List(),
-                                CPLStringList(m_openOptions).List(), nullptr)))
-                    {
-                        if (auto poRG = poDS->GetRootGroup())
-                        {
-                            ret = poRG->GetMDArrayFullNamesRecursive();
-                        }
-                    }
-                }
-
-                return ret;
-            });
-    }
+    AddArrayNameArg(&m_array, _("Name of array to mosaic."));
 }
 
 /************************************************************************/
@@ -108,8 +81,8 @@ GDALMdimMosaicAlgorithm::GetDimensionDesc(
     if (poVar->GetDataType().GetClass() != GEDTC_NUMERIC)
     {
         ReportError(CE_Failure, CPLE_AppDefined,
-                    "Dataset %s: indexing variable %s of dimension %s has not "
-                    "a numeric data type",
+                    "Dataset %s: indexing variable %s of dimension %s has a "
+                    "non-numeric data type",
                     osDSName.c_str(), poVar->GetName().c_str(),
                     poDim->GetName().c_str());
         return std::nullopt;
@@ -317,8 +290,30 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
             if (poArray->GetDimensionCount() != aDimensions.size())
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
-                            "Array %s of dataset %s has not the same number of "
-                            "dimensions as in other datasets",
+                            "Array %s of dataset %s does not have the same "
+                            "number of dimensions as in other datasets",
+                            m_array.c_str(), dataset.GetName().c_str());
+                return std::nullopt;
+            }
+            if (poArray->GetDataType() != poFirstSourceArray->GetDataType())
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Array %s of dataset %s does not have the same "
+                            "data type as in other datasets",
+                            m_array.c_str(), dataset.GetName().c_str());
+                return std::nullopt;
+            }
+            const void *poFirstRawNoData =
+                poFirstSourceArray->GetRawNoDataValue();
+            const void *poRawNoData = poArray->GetRawNoDataValue();
+            if (!((!poFirstRawNoData && !poRawNoData) ||
+                  (poFirstRawNoData && poRawNoData &&
+                   memcmp(poFirstRawNoData, poRawNoData,
+                          poArray->GetDataType().GetSize()) == 0)))
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Array %s of dataset %s does not have the same "
+                            "nodata value as in other datasets",
                             m_array.c_str(), dataset.GetName().c_str());
                 return std::nullopt;
             }
@@ -330,8 +325,8 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                 if (poDim->GetName() != desc.osName)
                 {
                     ReportError(CE_Failure, CPLE_AppDefined,
-                                "Dimension %d of array %s of dataset %s has "
-                                "not the same name as in other datasets",
+                                "Dimension %d of array %s of dataset %s does "
+                                "not have the same name as in other datasets",
                                 static_cast<int>(iDim), m_array.c_str(),
                                 dataset.GetName().c_str());
                     return std::nullopt;
@@ -349,7 +344,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                     {
                         ReportError(CE_Failure, CPLE_AppDefined,
                                     "Dimension %s of array %s of dataset %s "
-                                    "has irregularly spaced labels, contrary "
+                                    "has irregularly-spaced values, contrary "
                                     "to other datasets",
                                     poDim->GetName().c_str(), m_array.c_str(),
                                     dataset.GetName().c_str());
@@ -398,9 +393,8 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                     if (dfSize > MAX_INTEGER_REPRESENTABLE)
                     {
                         ReportError(CE_Failure, CPLE_AppDefined,
-                                    "Dimension %s of array %s of dataset %s is "
-                                    "indexed by a variable whose merging with "
-                                    "the one of other datasets is too large",
+                                    "Dimension %s of array %s of dataset %s "
+                                    "would be too large if merged.",
                                     poDim->GetName().c_str(), m_array.c_str(),
                                     dataset.GetName().c_str());
                         return std::nullopt;
@@ -425,8 +419,8 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                         ReportError(
                             CE_Failure, CPLE_AppDefined,
                             "Dataset %s: values in indexing variable %s of "
-                            "dimension %s are not progressing as in other "
-                            "datasets",
+                            "dimension %s must be either increasing or "
+                            "decreasing in all input datasets.",
                             dataset.GetName().c_str(),
                             poDim->GetIndexingVariable()->GetName().c_str(),
                             desc.osName.c_str());
