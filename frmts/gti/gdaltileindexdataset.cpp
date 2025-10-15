@@ -3472,8 +3472,16 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
                 osTileName.c_str(), nullptr, GA_ReadOnly,
                 /* bShared = */ true, m_osUniqueHandle.c_str()),
             GDALDatasetUniquePtrReleaser());
-        if (!poTileDS || poTileDS->GetRasterCount() == 0)
+        if (!poTileDS)
         {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot open source %s",
+                     osTileName.c_str());
+            return false;
+        }
+        if (poTileDS->GetRasterCount() == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Source %s has no raster bands", osTileName.c_str());
             return false;
         }
 
@@ -3874,7 +3882,7 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
 
         SourceDesc oSourceDesc;
         if (!GetSourceDesc(osTileName, oSourceDesc, nullptr))
-            continue;
+            return false;
 
         // Check consistency of bounding box in tile index vs actual
         // extent of the tile.

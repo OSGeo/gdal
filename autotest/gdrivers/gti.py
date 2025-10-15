@@ -2949,6 +2949,36 @@ def test_gti_read_multi_threaded_disabled_because_truncated_source(tmp_vsimem):
 
 
 ###############################################################################
+# Test non existing source
+
+
+def test_gti_read_non_existing_source(tmp_vsimem):
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", width=2048, format="MEM"
+    )
+    left_filename = str(tmp_vsimem / "left.tif")
+    gdal.Translate(left_filename, src_ds, srcWin=[0, 0, 1024, 1024])
+    right_filename = str(tmp_vsimem / "right.tif")
+    gdal.Translate(right_filename, src_ds, srcWin=[1024, 0, 1024, 1024])
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(
+        index_filename, [gdal.Open(left_filename), gdal.Open(right_filename)]
+    )
+    del index_ds
+
+    gdal.Unlink(right_filename)
+
+    vrt_ds = gdal.Open(index_filename)
+
+    with gdal.config_option("GDAL_NUM_THREADS", "1"), gdaltest.error_raised(
+        gdal.CE_Failure
+    ), gdaltest.disable_exceptions():
+        assert vrt_ds.ReadRaster() is None
+
+
+###############################################################################
 
 
 @pytest.mark.require_curl()
@@ -3047,6 +3077,8 @@ def test_gti_tile_001():
 
 
 ###############################################################################
+
+
 @pytest.mark.require_driver("SQLite")
 def test_gti_sql(tmp_vsimem):
 
