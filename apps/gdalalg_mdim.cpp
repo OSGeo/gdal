@@ -14,6 +14,7 @@
 
 #include "gdalalg_mdim_info.h"
 #include "gdalalg_mdim_convert.h"
+#include "gdalalg_mdim_mosaic.h"
 
 #include "gdal_priv.h"
 
@@ -42,6 +43,7 @@ class GDALMdimAlgorithm final : public GDALAlgorithm
 
         RegisterSubAlgorithm<GDALMdimInfoAlgorithm>();
         RegisterSubAlgorithm<GDALMdimConvertAlgorithm>();
+        RegisterSubAlgorithm<GDALMdimMosaicAlgorithm>();
     }
 
   private:

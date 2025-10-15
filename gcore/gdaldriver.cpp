@@ -3071,13 +3071,13 @@ static bool IsOnlyExpectedGDBDrivers(const CPLStringList &aosDriverNames)
  * provided output file name.
  *
  * @param pszDestDataset Output dataset name (might not exist).
- * @param nFlagRasterVector GDAL_OF_RASTER, GDAL_OF_VECTOR or
- *                          binary-or'ed combination of both
+ * @param nDatasetTypeFlag GDAL_OF_RASTER, GDAL_OF_VECTOR, GDAL_OF_MULTIDIM_RASTER
+ *                         or a binary-or'ed combination of them
  * @param bSingleMatch Whether a single match is desired, that is to say the
  *                     returned list will contain at most one item, which will
  *                     be the first driver in the order they are registered to
  *                     match the output dataset name. Note that in this mode, if
- *                     nFlagRasterVector==GDAL_OF_RASTER and pszDestDataset has
+ *                     nDatasetTypeFlag==GDAL_OF_RASTER and pszDestDataset has
  *                     no extension, GTiff will be selected.
  * @param bEmitWarning Whether a warning should be emitted when bSingleMatch is
  *                     true and there are more than 2 candidates.
@@ -3086,7 +3086,7 @@ static bool IsOnlyExpectedGDBDrivers(const CPLStringList &aosDriverNames)
  * @since 3.9
  */
 char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
-                                          int nFlagRasterVector,
+                                          int nDatasetTypeFlag,
                                           bool bSingleMatch, bool bEmitWarning)
 {
     CPLStringList aosDriverNames;
@@ -3123,15 +3123,17 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
         if ((poDriver->GetMetadataItem(GDAL_DCAP_CREATE) != nullptr ||
              poDriver->GetMetadataItem(GDAL_DCAP_CREATECOPY) != nullptr ||
              poDriver->GetMetadataItem(GDAL_DCAP_UPDATE) != nullptr) &&
-            (((nFlagRasterVector & GDAL_OF_RASTER) &&
+            (((nDatasetTypeFlag & GDAL_OF_RASTER) &&
               poDriver->GetMetadataItem(GDAL_DCAP_RASTER) != nullptr) ||
-             ((nFlagRasterVector & GDAL_OF_VECTOR) &&
-              poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) != nullptr)))
+             ((nDatasetTypeFlag & GDAL_OF_VECTOR) &&
+              poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) != nullptr) ||
+             ((nDatasetTypeFlag & GDAL_OF_MULTIDIM_RASTER) &&
+              poDriver->GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER) != nullptr)))
         {
             bOk = true;
         }
         else if (poDriver->GetMetadataItem(GDAL_DCAP_VECTOR_TRANSLATE_FROM) &&
-                 (nFlagRasterVector & GDAL_OF_VECTOR) != 0)
+                 (nDatasetTypeFlag & GDAL_OF_VECTOR) != 0)
         {
             bOk = true;
         }
@@ -3181,7 +3183,7 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
 
     if (bSingleMatch)
     {
-        if (nFlagRasterVector == GDAL_OF_RASTER)
+        if (nDatasetTypeFlag == GDAL_OF_RASTER)
         {
             if (aosDriverNames.empty())
             {

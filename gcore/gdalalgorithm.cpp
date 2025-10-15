@@ -4489,6 +4489,68 @@ GDALAlgorithm::AddLayerNameArg(std::string *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
+/*                    GDALAlgorithm::AddArrayNameArg()                  */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddArrayNameArg(std::string *pValue, const char *helpMessage)
+{
+    auto &arg =
+        AddArg("array", 0, MsgOrDefault(helpMessage, _("Array name")), pValue);
+    arg.SetAutoCompleteFunction(
+        [this](const std::string &)
+        {
+            std::vector<std::string> ret;
+            std::string osDSName;
+            auto inputArg = GetArg(GDAL_ARG_NAME_INPUT);
+            if (inputArg && inputArg->GetType() == GAAT_DATASET_LIST)
+            {
+                auto &inputDatasets =
+                    inputArg->Get<std::vector<GDALArgDatasetValue>>();
+                if (!inputDatasets.empty())
+                {
+                    osDSName = inputDatasets[0].GetName();
+                }
+            }
+            else if (inputArg && inputArg->GetType() == GAAT_DATASET)
+            {
+                auto &inputDataset = inputArg->Get<GDALArgDatasetValue>();
+                osDSName = inputDataset.GetName();
+            }
+
+            if (!osDSName.empty())
+            {
+                CPLStringList aosAllowedDrivers;
+                const auto ifArg = GetArg(GDAL_ARG_NAME_INPUT_FORMAT);
+                if (ifArg && ifArg->GetType() == GAAT_STRING_LIST)
+                    aosAllowedDrivers =
+                        CPLStringList(ifArg->Get<std::vector<std::string>>());
+
+                CPLStringList aosOpenOptions;
+                const auto ooArg = GetArg(GDAL_ARG_NAME_OPEN_OPTION);
+                if (ooArg && ooArg->GetType() == GAAT_STRING_LIST)
+                    aosOpenOptions =
+                        CPLStringList(ooArg->Get<std::vector<std::string>>());
+
+                if (auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                        osDSName.c_str(), GDAL_OF_MULTIDIM_RASTER,
+                        aosAllowedDrivers.List(), aosOpenOptions.List(),
+                        nullptr)))
+                {
+                    if (auto poRG = poDS->GetRootGroup())
+                    {
+                        ret = poRG->GetMDArrayFullNamesRecursive();
+                    }
+                }
+            }
+
+            return ret;
+        });
+
+    return arg;
+}
+
+/************************************************************************/
 /*                    GDALAlgorithm::AddMemorySizeArg()                  */
 /************************************************************************/
 
