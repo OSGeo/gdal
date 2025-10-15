@@ -281,15 +281,14 @@ bool GDALVectorCreatePointAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
 
-    OGRSpatialReference *poCRS = new OGRSpatialReference();
-    poCRS->Reference();
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poCRS(
+        new OGRSpatialReference());
 
     if (!m_dstCrs.empty())
     {
         auto eErr = poCRS->SetFromUserInput(m_dstCrs.c_str());
         if (eErr != OGRERR_NONE)
         {
-            poCRS->Release();
             return false;
         }
     }
@@ -297,10 +296,9 @@ bool GDALVectorCreatePointAlgorithm::RunStep(GDALPipelineStepRunContext &)
     outDS->AddLayer(
         *poSrcLayer,
         std::make_unique<GDALVectorCreatePointAlgorithmLayer>(
-            *poSrcLayer, m_xField, m_yField, m_zField, m_mField, poCRS));
+            *poSrcLayer, m_xField, m_yField, m_zField, m_mField, poCRS.get()));
 
     m_outputDataset.Set(std::move(outDS));
-    poCRS->Release();
 
     return true;
 }
