@@ -19,13 +19,13 @@
 #include "gdalalg_vector_clean_coverage.h"
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_concat.h"
-#include "gdalalg_vector_create_point.h"
 #include "gdalalg_vector_edit.h"
 #include "gdalalg_vector_explode_collections.h"
 #include "gdalalg_vector_filter.h"
 #include "gdalalg_vector_geom.h"
 #include "gdalalg_vector_info.h"
 #include "gdalalg_vector_limit.h"
+#include "gdalalg_vector_make_point.h"
 #include "gdalalg_vector_make_valid.h"
 #include "gdalalg_vector_partition.h"
 #include "gdalalg_vector_reproject.h"
@@ -153,8 +153,6 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALVectorClipAlgorithm>(
         addSuffixIfNeeded(GDALVectorClipAlgorithm::NAME));
 
-    registry.Register<GDALVectorCreatePointAlgorithm>();
-
     registry.Register<GDALVectorEditAlgorithm>(
         addSuffixIfNeeded(GDALVectorEditAlgorithm::NAME));
 
@@ -169,6 +167,7 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALVectorFilterAlgorithm>();
     registry.Register<GDALVectorGeomAlgorithm>();
     registry.Register<GDALVectorLimitAlgorithm>();
+    registry.Register<GDALVectorMakePointAlgorithm>();
     registry.Register<GDALVectorMakeValidAlgorithm>();
     registry.Register<GDALVectorPartitionAlgorithm>();
     registry.Register<GDALVectorSegmentizeAlgorithm>();

@@ -1,7 +1,7 @@
-.. _gdal_vector_create_point:
+.. _gdal_vector_make_point:
 
 ================================================================================
-``gdal vector create-point``
+``gdal vector make-point``
 ================================================================================
 
 .. versionadded:: 3.12
@@ -10,17 +10,17 @@
 
     Create point geometries from attribute fields containing coordinates.
 
-.. Index:: gdal vector create-point
+.. Index:: gdal vector make-point
 
 Synopsis
 --------
 
-.. program-output:: gdal vector create-point --help-doc
+.. program-output:: gdal vector make-point --help-doc
 
 Description
 -----------
 
-:program:`gdal vector create-point` creates point geometries from attribute fields containing coordinates.
+:program:`gdal vector make-point` creates point geometries from attribute fields containing coordinates.
 
 Options
 -------

@@ -871,13 +871,6 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_vector_create_point",
-        "gdal-vector-create-point",
-        "Create point features from attribute fields",
-        [author_dbaston],
-        1,
-    ),
-    (
         "programs/gdal_vector_edit",
         "gdal-vector-edit",
         "Edit metadata of a vector dataset",
@@ -896,6 +889,13 @@ man_pages = [
         "gdal-vector-explode-collections",
         "Explode geometries of type collection of a vector dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_make_point",
+        "gdal-vector-make-point",
+        "Create point features from attribute fields",
+        [author_dbaston],
         1,
     ),
     (

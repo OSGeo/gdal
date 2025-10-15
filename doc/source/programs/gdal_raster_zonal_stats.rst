@@ -178,7 +178,7 @@ Examples
             --zones watersheds.shp \
             --stat max_center_x \
             --stat max_center_y !
-          create-point \
+          make-point \
             --x max_center_x \
             --y max_center_y \
             --dst-crs EPSG:4326 !

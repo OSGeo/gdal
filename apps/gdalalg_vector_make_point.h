@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "gdal vector create-point"
+ * Purpose:  "gdal vector make-point"
  * Author:   Dan Baston
  *
  ******************************************************************************
@@ -10,28 +10,28 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VECTOR_CREATE_POINT_INCLUDED
-#define GDALALG_VECTOR_CREATE_POINT_INCLUDED
+#ifndef GDALALG_VECTOR_MAKE_POINT_INCLUDED
+#define GDALALG_VECTOR_MAKE_POINT_INCLUDED
 
 #include "gdalalg_vector_geom.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                 GDALVectorCreatePointAlgorithm                       */
+/*                   GDALVectorMakePointAlgorithm                       */
 /************************************************************************/
 
-class GDALVectorCreatePointAlgorithm /* non final */
+class GDALVectorMakePointAlgorithm /* non final */
     : public GDALVectorPipelineStepAlgorithm
 {
   public:
-    static constexpr const char *NAME = "create-point";
+    static constexpr const char *NAME = "make-point";
     static constexpr const char *DESCRIPTION =
-        "Create a point geometries from attribute fields";
+        "Create point geometries from attribute fields";
     static constexpr const char *HELP_URL =
-        "/programs/gdal_vector_create_point.html";
+        "/programs/gdal_vector_make_point.html";
 
-    explicit GDALVectorCreatePointAlgorithm(bool standaloneStep = false);
+    explicit GDALVectorMakePointAlgorithm(bool standaloneStep = false);
 
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
@@ -44,21 +44,21 @@ class GDALVectorCreatePointAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALVectorCreatePointAlgorithmStandalone             */
+/*                   GDALVectorMakePointAlgorithmStandalone             */
 /************************************************************************/
 
-class GDALVectorCreatePointAlgorithmStandalone final
-    : public GDALVectorCreatePointAlgorithm
+class GDALVectorMakePointAlgorithmStandalone final
+    : public GDALVectorMakePointAlgorithm
 {
   public:
-    GDALVectorCreatePointAlgorithmStandalone()
-        : GDALVectorCreatePointAlgorithm(/* standaloneStep = */ true)
+    GDALVectorMakePointAlgorithmStandalone()
+        : GDALVectorMakePointAlgorithm(/* standaloneStep = */ true)
     {
     }
 
-    ~GDALVectorCreatePointAlgorithmStandalone() override;
+    ~GDALVectorMakePointAlgorithmStandalone() override;
 };
 
 //! @endcond
 
-#endif /* GDALALG_VECTOR_CREATE_POINT_INCLUDED */
+#endif /* GDALALG_VECTOR_MAKE_POINT_INCLUDED */

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal vector create-point' testing
+# Purpose:  'gdal vector make-point' testing
 # Author:   Dan Baston
 #
 ###############################################################################
@@ -17,13 +17,13 @@ from osgeo import gdal, ogr, osr
 
 
 @pytest.fixture()
-def create_point():
-    return gdal.Algorithm("vector", "create-point")
+def make_point():
+    return gdal.Algorithm("vector", "make-point")
 
 
 @pytest.mark.parametrize("use_z", (False, True))
 @pytest.mark.parametrize("use_m", (False, True))
-def test_gdalalg_vector_create_point_basic(create_point, use_z, use_m):
+def test_gdalalg_vector_make_point_basic(make_point, use_z, use_m):
 
     nfeat = 3
 
@@ -45,20 +45,20 @@ def test_gdalalg_vector_create_point_basic(create_point, use_z, use_m):
         feature["my_m"] = 4 * i
         src_lyr.CreateFeature(feature)
 
-    create_point["input"] = src_ds
-    create_point["x"] = "my_x"
-    create_point["y"] = "my_y"
+    make_point["input"] = src_ds
+    make_point["x"] = "my_x"
+    make_point["y"] = "my_y"
     if use_z:
-        create_point["z"] = "my_z"
+        make_point["z"] = "my_z"
     if use_m:
-        create_point["m"] = "my_m"
-    create_point["dst-crs"] = "EPSG:6589"
-    create_point["output"] = ""
-    create_point["output-format"] = "MEM"
+        make_point["m"] = "my_m"
+    make_point["dst-crs"] = "EPSG:6589"
+    make_point["output"] = ""
+    make_point["output-format"] = "MEM"
 
-    assert create_point.Run()
+    assert make_point.Run()
 
-    out_ds = create_point.Output()
+    out_ds = make_point.Output()
     assert out_ds.GetLayerCount() == 1
 
     out_lyr = out_ds.GetLayer(0)
@@ -106,14 +106,14 @@ def test_gdalalg_vector_create_point_basic(create_point, use_z, use_m):
             assert geom.ExportToIsoWkt() == f"POINT ({i} {2 * i})"
 
 
-def test_gdalalg_vector_create_point_invalid_srs(create_point):
+def test_gdalalg_vector_make_point_invalid_srs(make_point):
 
     with pytest.raises(Exception, match="Invalid value for 'dst-crs'"):
-        create_point["dst-crs"] = "invalid"
+        make_point["dst-crs"] = "invalid"
 
 
 @pytest.mark.parametrize("value", (" 40m", "", " "))
-def test_gdalalg_vector_create_point_invalid_values(create_point, value):
+def test_gdalalg_vector_make_point_invalid_values(make_point, value):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
@@ -128,18 +128,18 @@ def test_gdalalg_vector_create_point_invalid_values(create_point, value):
     feature["my_y"] = value
     src_lyr.CreateFeature(feature)
 
-    create_point["input"] = src_ds
-    create_point["x"] = "my_x"
-    create_point["y"] = "my_y"
-    create_point["output"] = ""
-    create_point["output-format"] = "MEM"
+    make_point["input"] = src_ds
+    make_point["x"] = "my_x"
+    make_point["y"] = "my_y"
+    make_point["output"] = ""
+    make_point["output-format"] = "MEM"
 
     with pytest.raises(Exception, match="Invalid value in field my_y"):
-        create_point.Run()
+        make_point.Run()
 
 
 @pytest.mark.parametrize("invalid_field", ("x", "y", "m", "z"))
-def test_gdalalg_vector_create_point_invalid_field_name(create_point, invalid_field):
+def test_gdalalg_vector_make_point_invalid_field_name(make_point, invalid_field):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
@@ -158,17 +158,17 @@ def test_gdalalg_vector_create_point_invalid_field_name(create_point, invalid_fi
 
     src_lyr.CreateFeature(feature)
 
-    create_point["input"] = src_ds
-    create_point["x"] = "my_x"
-    create_point["y"] = "my_y"
-    create_point["z"] = "my_z"
-    create_point["m"] = "my_m"
-    create_point[invalid_field] = "does_not_exist"
-    create_point["output"] = ""
-    create_point["output-format"] = "MEM"
+    make_point["input"] = src_ds
+    make_point["x"] = "my_x"
+    make_point["y"] = "my_y"
+    make_point["z"] = "my_z"
+    make_point["m"] = "my_m"
+    make_point[invalid_field] = "does_not_exist"
+    make_point["output"] = ""
+    make_point["output-format"] = "MEM"
 
     with pytest.raises(
         Exception,
         match=f"Specified {invalid_field.upper()} field name .* does not exist",
     ):
-        create_point.Run()
+        make_point.Run()

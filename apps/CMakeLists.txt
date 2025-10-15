@@ -101,7 +101,6 @@ target_sources(appslib PRIVATE
   gdalalg_vector_clean_coverage.cpp
   gdalalg_vector_concat.cpp
   gdalalg_vector_convert.cpp
-  gdalalg_vector_create_point.cpp
   gdalalg_vector_edit.cpp
   gdalalg_vector_pipeline.cpp
   gdalalg_vector_rasterize.cpp
@@ -109,6 +108,7 @@ target_sources(appslib PRIVATE
   gdalalg_vector_filter.cpp
   gdalalg_vector_geom.cpp
   gdalalg_vector_limit.cpp
+  gdalalg_vector_make_point.cpp
   gdalalg_vector_set_geom_type.cpp
   gdalalg_vector_explode_collections.cpp
   gdalalg_vector_make_valid.cpp

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "gdal vector create-point"
+ * Purpose:  "gdal vector make-point"
  * Author:   Dan Baston
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_create_point.h"
+#include "gdalalg_vector_make_point.h"
 
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
@@ -22,11 +22,10 @@
 #endif
 
 /************************************************************************/
-/*                    GDALVectorCreatePointAlgorithm()                       */
+/*                 GDALVectorMakePointAlgorithm()                       */
 /************************************************************************/
 
-GDALVectorCreatePointAlgorithm::GDALVectorCreatePointAlgorithm(
-    bool standaloneStep)
+GDALVectorMakePointAlgorithm::GDALVectorMakePointAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
@@ -45,19 +44,19 @@ namespace
 {
 
 /************************************************************************/
-/*                  GDALVectorCreatePointAlgorithmLayer                 */
+/*                    GDALVectorMakePointAlgorithmLayer                 */
 /************************************************************************/
 
-class GDALVectorCreatePointAlgorithmLayer final
+class GDALVectorMakePointAlgorithmLayer final
     : public GDALVectorPipelineOutputLayer
 {
   public:
-    GDALVectorCreatePointAlgorithmLayer(OGRLayer &oSrcLayer,
-                                        const std::string &xField,
-                                        const std::string &yField,
-                                        const std::string &zField,
-                                        const std::string &mField,
-                                        OGRSpatialReference *srs)
+    GDALVectorMakePointAlgorithmLayer(OGRLayer &oSrcLayer,
+                                      const std::string &xField,
+                                      const std::string &yField,
+                                      const std::string &zField,
+                                      const std::string &mField,
+                                      OGRSpatialReference *srs)
         : GDALVectorPipelineOutputLayer(oSrcLayer), m_xField(xField),
           m_yField(yField), m_zField(zField), m_mField(mField),
           m_xFieldIndex(
@@ -117,7 +116,7 @@ class GDALVectorCreatePointAlgorithmLayer final
         m_defn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
     }
 
-    ~GDALVectorCreatePointAlgorithmLayer() override
+    ~GDALVectorMakePointAlgorithmLayer() override
     {
         m_defn->Release();
         if (m_srs)
@@ -218,14 +217,14 @@ class GDALVectorCreatePointAlgorithmLayer final
     OGRSpatialReference *m_srs;
     OGRFeatureDefn *m_defn;
 
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorCreatePointAlgorithmLayer)
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorMakePointAlgorithmLayer)
 };
 
 /************************************************************************/
 /*                          TranslateFeature()                          */
 /************************************************************************/
 
-void GDALVectorCreatePointAlgorithmLayer::TranslateFeature(
+void GDALVectorMakePointAlgorithmLayer::TranslateFeature(
     std::unique_ptr<OGRFeature> poSrcFeature,
     std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures)
 {
@@ -271,10 +270,10 @@ void GDALVectorCreatePointAlgorithmLayer::TranslateFeature(
 }  // namespace
 
 /************************************************************************/
-/*               GDALVectorCreatePointAlgorithm::RunStep()              */
+/*                 GDALVectorMakePointAlgorithm::RunStep()              */
 /************************************************************************/
 
-bool GDALVectorCreatePointAlgorithm::RunStep(GDALPipelineStepRunContext &)
+bool GDALVectorMakePointAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     GDALDataset *poSrcDS = m_inputDataset[0].GetDatasetRef();
     OGRLayer *poSrcLayer = poSrcDS->GetLayer(0);
@@ -295,7 +294,7 @@ bool GDALVectorCreatePointAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     outDS->AddLayer(
         *poSrcLayer,
-        std::make_unique<GDALVectorCreatePointAlgorithmLayer>(
+        std::make_unique<GDALVectorMakePointAlgorithmLayer>(
             *poSrcLayer, m_xField, m_yField, m_zField, m_mField, poCRS.get()));
 
     m_outputDataset.Set(std::move(outDS));
@@ -303,7 +302,7 @@ bool GDALVectorCreatePointAlgorithm::RunStep(GDALPipelineStepRunContext &)
     return true;
 }
 
-GDALVectorCreatePointAlgorithmStandalone::
-    ~GDALVectorCreatePointAlgorithmStandalone() = default;
+GDALVectorMakePointAlgorithmStandalone::
+    ~GDALVectorMakePointAlgorithmStandalone() = default;
 
 //! @endcond
