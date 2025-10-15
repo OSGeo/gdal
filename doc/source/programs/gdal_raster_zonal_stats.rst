@@ -154,7 +154,6 @@ The following options are available:
 Examples
 --------
 
-
 .. example::
    :title: Summarize mean elevation within 200m of points of interest
 
@@ -167,3 +166,20 @@ Examples
           write \
             --output-format CSV \
             --output /vsistdout/
+
+
+.. example::
+   :title: Create a layer with the highest points in each watershed
+
+   .. code-block:: bash
+
+      gdal pipeline read dem.tif !
+          zonal-stats \
+            --zones watersheds.shp \
+            --stat max_center_x \
+            --stat max_center_y !
+          make-point \
+            --x max_center_x \
+            --y max_center_y \
+            --dst-crs EPSG:4326 !
+          write out.geojson

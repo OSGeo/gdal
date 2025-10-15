@@ -25,6 +25,7 @@
 #include "gdalalg_vector_geom.h"
 #include "gdalalg_vector_info.h"
 #include "gdalalg_vector_limit.h"
+#include "gdalalg_vector_make_point.h"
 #include "gdalalg_vector_make_valid.h"
 #include "gdalalg_vector_partition.h"
 #include "gdalalg_vector_reproject.h"
@@ -166,6 +167,7 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALVectorFilterAlgorithm>();
     registry.Register<GDALVectorGeomAlgorithm>();
     registry.Register<GDALVectorLimitAlgorithm>();
+    registry.Register<GDALVectorMakePointAlgorithm>();
     registry.Register<GDALVectorMakeValidAlgorithm>();
     registry.Register<GDALVectorPartitionAlgorithm>();
     registry.Register<GDALVectorSegmentizeAlgorithm>();
@@ -350,6 +352,10 @@ OGRFeature *GDALVectorPipelineOutputLayer::GetNextRawFeature()
         if (!poSrcFeature)
             return nullptr;
         TranslateFeature(std::move(poSrcFeature), m_pendingFeatures);
+        if (m_translateError)
+        {
+            return nullptr;
+        }
         if (!m_pendingFeatures.empty())
             break;
     }

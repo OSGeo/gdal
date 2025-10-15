@@ -207,6 +207,7 @@ Vector commands
    gdal_vector_grid
    gdal_vector_index
    gdal_vector_layer_algebra
+   gdal_vector_make_point
    gdal_vector_make_valid
    gdal_vector_materialize
    gdal_vector_partition
@@ -241,6 +242,7 @@ Vector commands
     - :ref:`gdal_vector_info`: Get information on a vector dataset
     - :ref:`gdal_vector_index`: Create a vector index of vector datasets
     - :ref:`gdal_vector_layer_algebra`: Perform algebraic operation between 2 layers.
+    - :ref:`gdal_vector_make_point`: Create point geometries from coordinate fields
     - :ref:`gdal_vector_make_valid`: Fix validity of geometries of a vector dataset
     - :ref:`gdal_vector_materialize`: Materialize a piped dataset on disk to increase the efficiency of the following steps
     - :ref:`gdal_vector_partition`: Partition a vector dataset into multiple files

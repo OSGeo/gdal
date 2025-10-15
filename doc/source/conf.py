@@ -899,6 +899,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_make_point",
+        "gdal-vector-make-point",
+        "Create point features from attribute fields",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector_make_valid",
         "gdal-vector-make-valid",
         "Fix validity of geometries of a vector dataset",
