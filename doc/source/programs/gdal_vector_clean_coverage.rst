@@ -39,7 +39,15 @@ Standard options
 
     Defines the largest area that should be considered a "gap" and merged into
     an adjacent polygon. Gaps will be merged unless a circle with radius larger 
-    than the specified tolerance can be inscribed within the gap.
+    than the specified tolerance can be inscribed within the gap. The default
+    maximum gap width is zero, meaning that gaps are not closed.
+
+    .. only:: html
+
+       .. figure:: ../../images/programs/gdal_vector_clean_coverage_close_gaps.svg
+
+          Polygon dataset before cleaning (left), after cleaning with default parameters (center),
+          and after cleaning with ``--maximum-gap-width 1`` (right).
 
 .. option:: --merge-strategy <MERGE-STRATEGY>
 
@@ -49,11 +57,24 @@ Standard options
     - min-area: add areas to the smallest adjacent polygon
     - min-index: add areas to the adjacent polygon that was read first
 
+    .. only:: html
+
+        .. figure:: ../../images/programs/gdal_vector_clean_coverage_merge_max_area.svg
+
+           Polygon dataset before cleaning (left), after cleaning with "longest-border" merge strategy (center) and ``--merge-strategy max-area`` (right).
+   
 .. option:: --snapping-distance <SNAPPING-DISTANCE>
 
     Controls the node snapping step, when nearby vertices are snapped together.
     By default, an automatic snapping distance is determined based on an
     analysis of the input. Set to zero to turn off all snapping.
+
+    .. only:: html
+
+        .. figure:: ../../images/programs/gdal_vector_clean_coverage_snap_distance.svg
+
+           Polygon dataset before cleaning (left), after cleaning with default snapping distance (center), and a more aggressive ``--snapping-distance 0.2`` (right). Note the movement in the
+           upper-left corner of the polygon on the right.
 
 .. include:: gdal_options/active_layer.rst
 
