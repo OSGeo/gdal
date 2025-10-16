@@ -29,9 +29,9 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        # macos-13: Intel
+        # macos-15-intel: Intel
         # macos-14: arm64
-        platform: ['ubuntu-latest','windows-latest','macos-13','macos-14','ubuntu-24.04-arm']
+        platform: ['ubuntu-latest','windows-latest','macos-15-intel','macos-14','ubuntu-24.04-arm']
 
     env:
       GHA_CI_PLATFORM: ${{ matrix.platform }}
