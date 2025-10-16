@@ -1018,3 +1018,14 @@ def test_gdalmdimtranslate_from_gtiff_multiband(tmp_vsimem):
     assert (
         ar.GetDimensions()[2].GetIndexingVariable().GetDimensions()[0].GetSize() == 400
     )
+
+
+@pytest.mark.require_driver("netCDF")
+def test_gdalmdimtranslate_array_copy_blocksize(tmp_path):
+
+    gdal.MultiDimTranslate(
+        tmp_path / "out.nc",
+        "../gdrivers/data/netcdf/byte_chunked_not_multiple.nc",
+    )
+    ds = gdal.Open(tmp_path / "out.nc")
+    assert ds.GetRasterBand(1).GetBlockSize() == [15, 6]

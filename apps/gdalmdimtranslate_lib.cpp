@@ -1276,8 +1276,26 @@ static bool TranslateArray(
     {
         outputType = GDALExtendedDataType(tmpArray->GetDataType());
     }
-    auto dstArray =
-        poDstGroup->CreateVRTMDArray(dstArrayName, dstArrayDims, outputType);
+
+    CPLStringList aosArrayCO;
+    if (!bResampled && anTransposedAxis.empty() && viewExpr.empty() &&
+        psOptions->aosSubset.empty() && psOptions->aosScaleFactor.empty() &&
+        srcArray->GetDimensionCount() == dstArrayDims.size())
+    {
+        const auto anBlockSize = srcArray->GetBlockSize();
+        std::string osBlockSize;
+        for (auto v : anBlockSize)
+        {
+            if (!osBlockSize.empty())
+                osBlockSize += ',';
+            osBlockSize += std::to_string(v);
+        }
+        if (!osBlockSize.empty())
+            aosArrayCO.SetNameValue("BLOCKSIZE", osBlockSize.c_str());
+    }
+
+    auto dstArray = poDstGroup->CreateVRTMDArray(dstArrayName, dstArrayDims,
+                                                 outputType, aosArrayCO.List());
     if (!dstArray)
         return false;
 

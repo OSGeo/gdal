@@ -1026,6 +1026,20 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                 }
             }
 
+            if (aosArrayCO.FetchNameValue("BLOCKSIZE") == nullptr)
+            {
+                const auto anBlockSize = srcArray->GetBlockSize();
+                std::string osBlockSize;
+                for (auto v : anBlockSize)
+                {
+                    if (!osBlockSize.empty())
+                        osBlockSize += ',';
+                    osBlockSize += std::to_string(v);
+                }
+                if (!osBlockSize.empty())
+                    aosArrayCO.SetNameValue("BLOCKSIZE", osBlockSize.c_str());
+            }
+
             auto oIterDimName =
                 mapSrcVariableNameToIndexedDimName.find(srcArray->GetName());
             const auto &srcArrayType = srcArray->GetDataType();
