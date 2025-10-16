@@ -49,6 +49,12 @@
 #include <fstream>
 #include <string>
 
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
+
+#include "test_data.h"
+
 #include "gtest_include.h"
 
 static bool gbGotError = false;
@@ -5433,6 +5439,20 @@ TEST_F(test_cpl, VSIGlob)
     VSIUnlink(osFilenameWithSpecialChars.c_str());
     VSIUnlink(osFilename2.c_str());
     VSIUnlink(osFilenameRadix.c_str());
+
+#if !defined(_WIN32)
+    {
+        std::string osCurDir;
+        osCurDir.resize(4096);
+        getcwd(&osCurDir[0], osCurDir.size());
+        osCurDir.resize(strlen(osCurDir.c_str()));
+        ASSERT_EQ(chdir(TUT_ROOT_DATA_DIR), 0);
+        CPLStringList aosRes(VSIGlob("byte*.tif", nullptr, nullptr, nullptr));
+        chdir(osCurDir.c_str());
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], "byte.tif");
+    }
+#endif
 }
 
 TEST_F(test_cpl, CPLGreatestCommonDivisor)
