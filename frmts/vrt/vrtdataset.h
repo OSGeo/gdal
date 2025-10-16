@@ -1908,7 +1908,9 @@ class VRTGroup final : public GDALGroup
     std::string m_osFilename{};
     mutable bool m_bDirty = false;
     std::string m_osVRTPath{};
+    std::vector<std::string> m_aosGroupNames{};
     std::map<std::string, std::shared_ptr<VRTGroup>> m_oMapGroups{};
+    std::vector<std::string> m_aosMDArrayNames{};
     std::map<std::string, std::shared_ptr<VRTMDArray>> m_oMapMDArrays{};
     std::map<std::string, std::shared_ptr<VRTAttribute>> m_oMapAttributes{};
     std::map<std::string, std::shared_ptr<VRTDimension>> m_oMapDimensions{};

@@ -221,6 +221,7 @@ bool VRTGroup::XMLInit(const std::shared_ptr<VRTGroup> &poRoot,
                 m_bDirty = false;
                 return false;
             }
+            m_aosMDArrayNames.push_back(poArray->GetName());
             m_oMapMDArrays[poArray->GetName()] = poArray;
         }
     }
@@ -301,13 +302,17 @@ void VRTGroup::Serialize(CPLXMLNode *psParent, const char *pszVRTPath) const
     {
         iter.second->Serialize(psGroup);
     }
-    for (const auto &iter : m_oMapMDArrays)
+    for (const auto &name : m_aosMDArrayNames)
     {
-        iter.second->Serialize(psGroup, pszVRTPath);
+        auto iter = m_oMapMDArrays.find(name);
+        CPLAssert(iter != m_oMapMDArrays.end());
+        iter->second->Serialize(psGroup, pszVRTPath);
     }
-    for (const auto &iter : m_oMapGroups)
+    for (const auto &name : m_aosGroupNames)
     {
-        iter.second->Serialize(psGroup, pszVRTPath);
+        auto iter = m_oMapGroups.find(name);
+        CPLAssert(iter != m_oMapGroups.end());
+        iter->second->Serialize(psGroup, pszVRTPath);
     }
 }
 
@@ -317,10 +322,7 @@ void VRTGroup::Serialize(CPLXMLNode *psParent, const char *pszVRTPath) const
 
 std::vector<std::string> VRTGroup::GetGroupNames(CSLConstList) const
 {
-    std::vector<std::string> names;
-    for (const auto &iter : m_oMapGroups)
-        names.push_back(iter.first);
-    return names;
+    return m_aosGroupNames;
 }
 
 /************************************************************************/
@@ -428,10 +430,7 @@ VRTGroup::GetAttributes(CSLConstList) const
 
 std::vector<std::string> VRTGroup::GetMDArrayNames(CSLConstList) const
 {
-    std::vector<std::string> names;
-    for (const auto &iter : m_oMapMDArrays)
-        names.push_back(iter.first);
-    return names;
+    return m_aosMDArrayNames;
 }
 
 /************************************************************************/
@@ -481,6 +480,7 @@ VRTGroup::CreateVRTGroup(const std::string &osName,
     SetDirty();
     auto newGroup(VRTGroup::Create(GetFullName(), osName.c_str()));
     newGroup->SetRootGroupRef(GetRootGroupRef());
+    m_aosGroupNames.push_back(osName);
     m_oMapGroups[osName] = newGroup;
     return newGroup;
 }
@@ -585,6 +585,7 @@ std::shared_ptr<VRTMDArray> VRTGroup::CreateVRTMDArray(
     auto newArray(std::make_shared<VRTMDArray>(GetRef(), GetFullName(), osName,
                                                aoDimensions, oType));
     newArray->SetSelf(newArray);
+    m_aosMDArrayNames.push_back(osName);
     m_oMapMDArrays[osName] = newArray;
     return newArray;
 }

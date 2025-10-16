@@ -209,13 +209,13 @@ def test_vrtmultidim_subgroup_and_cross_references():
     <Group name="/">
         <Dimension name="X" size="20" indexingVariable="X"/>
         <Dimension name="Y" size="30" indexingVariable="/Y"/>
-        <Array name="X">
-            <DataType>Float32</DataType>
-            <DimensionRef ref="/X"/>
-        </Array>
         <Array name="Y">
             <DataType>Float32</DataType>
             <DimensionRef ref="Y"/>
+        </Array>
+        <Array name="X">
+            <DataType>Float32</DataType>
+            <DimensionRef ref="/X"/>
         </Array>
         <Group name="subgroup">
             <Dimension name="X" size="2" indexingVariable="X"/>
@@ -261,7 +261,7 @@ def test_vrtmultidim_subgroup_and_cross_references():
     assert indexing_var.GetDimensionCount() == 1
     assert indexing_var.GetDimensions()[0].GetSize() == 3
 
-    assert rg.GetMDArrayNames() == ["X", "Y"]
+    assert rg.GetMDArrayNames() == ["Y", "X"]
     X = rg.OpenMDArray("X")
     assert X
     assert X.GetDataType().GetNumericDataType() == gdal.GDT_Float32
