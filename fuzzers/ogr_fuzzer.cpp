@@ -114,9 +114,9 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     std::string osFileInTar;
     for (int i = 0; papszFiles && papszFiles[i]; ++i)
     {
-        if (EQUAL(CPLGetExtension(papszFiles[i]), "pol") ||
-            EQUAL(CPLGetExtension(papszFiles[i]), "arc") ||
-            EQUAL(CPLGetExtension(papszFiles[i]), "pnt"))
+        if (CPLGetExtensionSafe(papszFiles[i]) == "pol" ||
+            CPLGetExtensionSafe(papszFiles[i]) == "arc" ||
+            CPLGetExtensionSafe(papszFiles[i]) == "pnt")
         {
             osFileInTar = papszFiles[i];
             break;
