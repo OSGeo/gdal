@@ -56,6 +56,7 @@ class GDALMdimMosaicAlgorithm final : public GDALAlgorithm
         std::string osType{};
         std::string osDirection{};
         uint64_t nSize = 0;
+        uint64_t nBlockSize = 0;
         std::vector<std::shared_ptr<GDALAttribute>> attributes{};
 
         // Used for dimensions with irregular spaced labels

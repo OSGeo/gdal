@@ -3516,9 +3516,7 @@ def test_zarr_create_append_subdataset(tmp_vsimem):
     check()
 
 
-@pytest.mark.parametrize(
-    "blocksize", ["1,2", "2,2,0", "4000000000,4000000000,4000000000"]
-)
+@pytest.mark.parametrize("blocksize", ["1,2", "4000000000,4000000000,4000000000"])
 def test_zarr_create_array_invalid_blocksize(tmp_vsimem, blocksize):
     def create():
         ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(

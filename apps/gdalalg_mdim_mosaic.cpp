@@ -267,18 +267,24 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
                 aoSourceShortDimDesc.push_back(std::move(sourceDesc));
             };
 
+            const auto anBlockSize = poArray->GetBlockSize();
+            CPLAssert(anBlockSize.size() == poArray->GetDimensionCount());
+
             if (!arrayParameters.poFirstSourceArray)
             {
                 arrayParameters.poFirstSourceArray = poArray;
                 CPLAssert(arrayParameters.mosaicDimensions.empty());
+                size_t iDim = 0;
                 for (auto &poDim : poArray->GetDimensions())
                 {
                     auto descOpt = GetDimensionDesc(pszDatasetName, poDim);
                     if (!descOpt.has_value())
                         return false;
-                    const auto &desc = descOpt.value();
+                    auto &desc = descOpt.value();
                     AddToSourceShortDimDesc(desc, poDim->GetSize());
+                    desc.nBlockSize = anBlockSize[iDim];
                     arrayParameters.mosaicDimensions.push_back(std::move(desc));
+                    ++iDim;
                 }
             }
             else
@@ -332,6 +338,8 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
                             pszDatasetName);
                         return false;
                     }
+                    if (desc.nBlockSize != anBlockSize[iDim])
+                        desc.nBlockSize = 0;
 
                     auto descThisDatasetOpt =
                         GetDimensionDesc(pszDatasetName, poDim);
@@ -754,9 +762,21 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
 
         // Create mosaic array
+        CPLStringList aosArrayCO;
+        std::string osBlockSize;
+        for (size_t i = 0; i < apoDstDims.size(); ++i)
+        {
+            if (i > 0)
+                osBlockSize += ',';
+            osBlockSize +=
+                std::to_string(arrayParameters.mosaicDimensions[i].nBlockSize);
+        }
+        if (!osBlockSize.empty())
+            aosArrayCO.SetNameValue("BLOCKSIZE", osBlockSize.c_str());
+
         auto poDstArray = poDstGroup->CreateVRTMDArray(
             CPLGetFilename(poFirstSourceArray->GetName().c_str()), apoDstDims,
-            poFirstSourceArray->GetDataType());
+            poFirstSourceArray->GetDataType(), aosArrayCO);
         if (!poDstArray)
             return false;
 
