@@ -1226,13 +1226,9 @@ FillBlockSize(const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
         size_t nBlockSize = oDataType.GetSize();
         for (size_t i = 0; i < nDims; ++i)
         {
-            anBlockSize[i] = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
-            if (anBlockSize[i] == 0)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Values in BLOCKSIZE should be > 0");
-                return false;
-            }
+            const auto v = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
+            if (v)
+                anBlockSize[i] = v;
             if (anBlockSize[i] >
                 std::numeric_limits<size_t>::max() / nBlockSize)
             {
