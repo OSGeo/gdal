@@ -737,6 +737,18 @@ def test_ogr_dxf_15(tmp_path):
 
 
 ###############################################################################
+# Test that ENCODING open option works
+
+
+def test_ogr_dxf_ENCODING_open_option():
+
+    with gdal.OpenEx("data/dxf/utf-8.dxf", open_options={"ENCODING": "UTF-8"}) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["Layer"] == "\u00E9ven"
+
+
+###############################################################################
 # Test reading without DXF blocks inlined.
 
 
