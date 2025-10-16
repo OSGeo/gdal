@@ -1315,7 +1315,9 @@ def test_vrtmultidim_createmultidimensional():
             "attr_too_big", [4000 * 1000 * 1000], gdal.ExtendedDataType.CreateString()
         )
 
-    ar = rg.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32))
+    ar = rg.CreateMDArray(
+        "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32), ["BLOCKSIZE=2"]
+    )
     assert ar[0]
     with gdal.quiet_errors():
         assert not rg.CreateMDArray(
@@ -1357,6 +1359,7 @@ def test_vrtmultidim_createmultidimensional():
     <Array name="ar">
       <DataType>Float32</DataType>
       <DimensionRef ref="dim" />
+      <BlockSize>2</BlockSize>
       <Attribute name="attr">
         <DataType>String</DataType>
       </Attribute>
@@ -1367,6 +1370,11 @@ def test_vrtmultidim_createmultidimensional():
 """
     )
     _validate(got_data)
+
+    with gdal.OpenEx(tmpfile, gdal.OF_MULTIDIM_RASTER) as ds:
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("ar")
+        assert ar.GetBlockSize() == [2]
 
     gdal.Unlink(tmpfile)
 

@@ -554,7 +554,7 @@ VRTGroup::CreateAttribute(const std::string &osName,
 std::shared_ptr<VRTMDArray> VRTGroup::CreateVRTMDArray(
     const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
-    const GDALExtendedDataType &oType, CSLConstList)
+    const GDALExtendedDataType &oType, CSLConstList papszOptions)
 {
     if (osName.empty())
     {
@@ -582,8 +582,27 @@ std::shared_ptr<VRTMDArray> VRTGroup::CreateVRTMDArray(
             return nullptr;
         }
     }
-    auto newArray(std::make_shared<VRTMDArray>(GetRef(), GetFullName(), osName,
-                                               aoDimensions, oType));
+
+    std::vector<GUInt64> anBlockSize(aoDimensions.size(), 0);
+    const char *pszBlockSize = CSLFetchNameValue(papszOptions, "BLOCKSIZE");
+    if (pszBlockSize)
+    {
+        const auto aszTokens(
+            CPLStringList(CSLTokenizeString2(pszBlockSize, ",", 0)));
+        if (static_cast<size_t>(aszTokens.size()) != aoDimensions.size())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid number of values in BLOCKSIZE");
+            return nullptr;
+        }
+        for (size_t i = 0; i < anBlockSize.size(); ++i)
+        {
+            anBlockSize[i] = std::strtoull(aszTokens[i], nullptr, 10);
+        }
+    }
+
+    auto newArray(std::make_shared<VRTMDArray>(
+        GetRef(), GetFullName(), osName, aoDimensions, oType, anBlockSize));
     newArray->SetSelf(newArray);
     m_aosMDArrayNames.push_back(osName);
     m_oMapMDArrays[osName] = newArray;
@@ -996,6 +1015,7 @@ VRTMDArray::Create(const std::shared_ptr<VRTGroup> &poThisGroup,
     }
     std::vector<std::shared_ptr<GDALDimension>> dims;
     std::map<std::string, std::shared_ptr<VRTAttribute>> oMapAttributes;
+    std::string osBlockSize;
     for (const auto *psIter = psNode->psChild; psIter; psIter = psIter->psNext)
     {
         if (psIter->eType == CXT_Element &&
@@ -1031,11 +1051,34 @@ VRTMDArray::Create(const std::shared_ptr<VRTGroup> &poThisGroup,
                 return nullptr;
             oMapAttributes[poAttr->GetName()] = poAttr;
         }
+        else if (psIter->eType == CXT_Element &&
+                 strcmp(psIter->pszValue, "BlockSize") == 0 &&
+                 psIter->psChild && psIter->psChild->eType == CXT_Text)
+        {
+            osBlockSize = psIter->psChild->pszValue;
+        }
     }
 
-    auto array(std::make_shared<VRTMDArray>(poThisGroup->GetRef(), osParentName,
-                                            pszName, dt, std::move(dims),
-                                            std::move(oMapAttributes)));
+    std::vector<GUInt64> anBlockSize(dims.size(), 0);
+    if (!osBlockSize.empty())
+    {
+        const auto aszTokens(
+            CPLStringList(CSLTokenizeString2(osBlockSize.c_str(), ",", 0)));
+        if (static_cast<size_t>(aszTokens.size()) != dims.size())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid number of values in BLOCKSIZE");
+            return nullptr;
+        }
+        for (size_t i = 0; i < anBlockSize.size(); ++i)
+        {
+            anBlockSize[i] = std::strtoull(aszTokens[i], nullptr, 10);
+        }
+    }
+
+    auto array(std::make_shared<VRTMDArray>(
+        poThisGroup->GetRef(), osParentName, pszName, dt, std::move(dims),
+        std::move(oMapAttributes), std::move(anBlockSize)));
     array->SetSelf(array);
     array->SetSpatialRef(poSRS.get());
 
@@ -2555,6 +2598,23 @@ void VRTMDArray::Serialize(CPLXMLNode *psParent, const char *pszVRTPath) const
         {
             vrtDim->Serialize(psArray);
         }
+    }
+
+    std::string osBlockSize;
+    for (auto v : m_anBlockSize)
+    {
+        if (v == 0)
+        {
+            osBlockSize.clear();
+            break;
+        }
+        if (!osBlockSize.empty())
+            osBlockSize += ",";
+        osBlockSize += std::to_string(v);
+    }
+    if (!osBlockSize.empty())
+    {
+        CPLCreateXMLElementAndValue(psArray, "BlockSize", osBlockSize.c_str());
     }
 
     if (m_poSRS && !m_poSRS->IsEmpty())

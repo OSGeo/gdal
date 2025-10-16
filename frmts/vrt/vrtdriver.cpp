@@ -566,6 +566,13 @@ void GDALRegister_VRT()
         }
     }
 
+    poDriver->SetMetadataItem(
+        GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,
+        "<MultiDimArrayCreationOptionList>"
+        "   <Option name='BLOCKSIZE' type='int' description='Block size in "
+        "pixels'/>"
+        "</MultiDimArrayCreationOptionList>");
+
     poDriver->pfnCreateCopy = VRTCreateCopy;
     poDriver->pfnCreate = VRTDataset::Create;
     poDriver->pfnCreateMultiDimensional = VRTDataset::CreateMultiDimensional;
