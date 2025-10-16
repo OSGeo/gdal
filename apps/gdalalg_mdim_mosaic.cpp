@@ -481,7 +481,10 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
                                     }
                                 }
                                 else if (descThisDataset.aaValues[0][0] >
-                                         desc.aaValues[i][0])
+                                             desc.aaValues[i][0] &&
+                                         (i + 1 == desc.aaValues.size() ||
+                                          descThisDataset.aaValues[0][0] <
+                                              desc.aaValues[i + 1][0]))
                                 {
                                     if (descThisDataset.aaValues[0][0] <=
                                         desc.aaValues[i].back())
@@ -501,8 +504,6 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
                                         return false;
                                     }
                                     if (i + 1 < desc.aaValues.size() &&
-                                        descThisDataset.aaValues[0][0] <
-                                            desc.aaValues[i + 1][0] &&
                                         descThisDataset.aaValues[0].back() >=
                                             desc.aaValues[i + 1][0])
                                     {
