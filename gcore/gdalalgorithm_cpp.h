@@ -2814,6 +2814,11 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddArrayNameArg(std::string *pValue, const char *helpMessage = nullptr);
 
+    /** Add (multiple) (multidimensional) array name argument. */
+    GDALInConstructionAlgorithmArg &
+    AddArrayNameArg(std::vector<std::string> *pValue,
+                    const char *helpMessage = nullptr);
+
     /** Add a memory size argument(s), The final value is stored in *pValue.
      * pStrValue must be provided as temporary storage, and its initial value
      * (if not empty) is used as the SetDefault() value.
@@ -3048,6 +3053,8 @@ class CPL_DLL GDALAlgorithmRegistry
     void ExtractLastOptionAndValue(std::vector<std::string> &args,
                                    std::string &option,
                                    std::string &value) const;
+
+    std::vector<std::string> AutoCompleteArrayName() const;
 
     GDALAlgorithm(const GDALAlgorithm &) = delete;
     GDALAlgorithm &operator=(const GDALAlgorithm &) = delete;

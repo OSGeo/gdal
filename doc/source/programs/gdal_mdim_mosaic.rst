@@ -20,7 +20,7 @@ Synopsis
 Description
 -----------
 
-:program:`gdal mdim mosaic` builds a mosaic of a multidimensional array,
+:program:`gdal mdim mosaic` builds a mosaic of multidimensional array(s),
 from a list of input GDAL multidimensional datasets,
 that can be either a virtual mosaic in the
 :ref:`Multidimensional VRT (Virtual Dataset) <vrt_multidimensional>` format,
@@ -61,6 +61,9 @@ Different typical use cases that can be addressed by this program are:
 - a 2D array is chunked/tiled along X and Y dimensions, with a regular spacing
   along those X and Y dimensions, and where the coordinate values are aligned on
   the same grid among chunks.
+
+By default, a target array is created for each array with two or more dimensions.
+This behavior can be restricted to specific arrays using the :option:`--array` option.
 
 The following options are available:
 
@@ -107,10 +110,10 @@ Standard options
 
 .. include:: gdal_options/overwrite.rst
 
-.. option:: --array <ARRAY>
+.. option:: --array <ARRAYS>
 
-    Name or full path of the array to mosaic. It must generally be specified,
-    unless all input datasets have a single array with 2 or more dimensions.
+    Name or full path of one or several arrays to mosaic. If not specified,
+    a target array is created for each array with two or more dimensions.
 
 Advanced options
 ++++++++++++++++
