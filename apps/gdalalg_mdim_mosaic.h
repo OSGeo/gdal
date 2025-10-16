@@ -78,12 +78,16 @@ class GDALMdimMosaicAlgorithm final : public GDALAlgorithm
         bool bIsRegularlySpaced = false;
     };
 
+    bool GetInputDatasetNames(GDALProgressFunc pfnProgress, void *pProgressData,
+                              CPLStringList &aosInputDatasetNames) const;
+
     std::optional<DimensionDesc>
     // cppcheck-suppress functionStatic
     GetDimensionDesc(const std::string &osDSName,
                      const std::shared_ptr<GDALDimension> &poDim) const;
 
     std::optional<std::vector<DimensionDesc>> BuildDimensionDesc(
+        const CPLStringList &aosInputDatasetNames,
         std::shared_ptr<GDALMDArray> &poFirstSourceArray,
         std::vector<std::vector<SourceShortDimDesc>> &aaoSourceShortDimDesc);
 };

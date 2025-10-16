@@ -13,6 +13,7 @@
 #include "gdalalg_mdim_mosaic.h"
 
 #include "cpl_conv.h"
+#include "cpl_vsi_virtual.h"
 #include "gdal_priv.h"
 #include "vrtdataset.h"
 
@@ -175,26 +176,25 @@ GDALMdimMosaicAlgorithm::GetDimensionDesc(
 
 std::optional<std::vector<GDALMdimMosaicAlgorithm::DimensionDesc>>
 GDALMdimMosaicAlgorithm::BuildDimensionDesc(
+    const CPLStringList &aosInputDatasetNames,
     std::shared_ptr<GDALMDArray> &poFirstSourceArray,
     std::vector<std::vector<SourceShortDimDesc>> &aaoSourceShortDimDesc)
 {
     std::vector<DimensionDesc> aDimensions;
 
-    for (const auto &dataset : m_inputDatasets)
+    for (const char *pszDatasetName : cpl::Iterate(aosInputDatasetNames))
     {
-        auto poDS = std::unique_ptr<GDALDataset>(
-            GDALDataset::Open(dataset.GetName().c_str(),
-                              GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR,
-                              CPLStringList(m_inputFormats).List(),
-                              CPLStringList(m_openOptions).List(), nullptr));
+        auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+            pszDatasetName, GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR,
+            CPLStringList(m_inputFormats).List(),
+            CPLStringList(m_openOptions).List(), nullptr));
         if (!poDS)
             return std::nullopt;
         auto poRG = poDS->GetRootGroup();
         if (!poRG)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
-                        "Cannot get root group for dataset %s",
-                        dataset.GetName().c_str());
+                        "Cannot get root group for dataset %s", pszDatasetName);
             return std::nullopt;
         }
         std::shared_ptr<GDALMDArray> poArray;
@@ -205,7 +205,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
                             "Cannot find array %s in dataset %s",
-                            m_array.c_str(), dataset.GetName().c_str());
+                            m_array.c_str(), pszDatasetName);
                 return std::nullopt;
             }
         }
@@ -220,7 +220,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                 {
                     ReportError(CE_Failure, CPLE_AppDefined,
                                 "Cannot open array %s of dataset %s",
-                                arrayName.c_str(), dataset.GetName().c_str());
+                                arrayName.c_str(), pszDatasetName);
                     return std::nullopt;
                 }
                 if (poIterArray->GetDimensionCount() < 2)
@@ -233,7 +233,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                 ReportError(
                     CE_Failure, CPLE_AppDefined,
                     "No array of dimension count >= 2 found in dataset %s",
-                    dataset.GetName().c_str());
+                    pszDatasetName);
                 return std::nullopt;
             }
             if (arrayNames.size() >= 2)
@@ -241,7 +241,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                 ReportError(CE_Failure, CPLE_AppDefined,
                             "Several arrays of dimension count >= 2 found in "
                             "dataset %s. Specify one with the 'array' argument",
-                            dataset.GetName().c_str());
+                            pszDatasetName);
                 return std::nullopt;
             }
             m_array = arrayNames[0];
@@ -252,7 +252,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Array %s of dataset %s has no dimensions",
-                        m_array.c_str(), dataset.GetName().c_str());
+                        m_array.c_str(), pszDatasetName);
             return std::nullopt;
         }
 
@@ -277,7 +277,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
             CPLAssert(aDimensions.empty());
             for (auto &poDim : poArray->GetDimensions())
             {
-                auto descOpt = GetDimensionDesc(dataset.GetName(), poDim);
+                auto descOpt = GetDimensionDesc(pszDatasetName, poDim);
                 if (!descOpt.has_value())
                     return std::nullopt;
                 const auto &desc = descOpt.value();
@@ -292,7 +292,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                 ReportError(CE_Failure, CPLE_AppDefined,
                             "Array %s of dataset %s does not have the same "
                             "number of dimensions as in other datasets",
-                            m_array.c_str(), dataset.GetName().c_str());
+                            m_array.c_str(), pszDatasetName);
                 return std::nullopt;
             }
             if (poArray->GetDataType() != poFirstSourceArray->GetDataType())
@@ -300,7 +300,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                 ReportError(CE_Failure, CPLE_AppDefined,
                             "Array %s of dataset %s does not have the same "
                             "data type as in other datasets",
-                            m_array.c_str(), dataset.GetName().c_str());
+                            m_array.c_str(), pszDatasetName);
                 return std::nullopt;
             }
             const void *poFirstRawNoData =
@@ -314,7 +314,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                 ReportError(CE_Failure, CPLE_AppDefined,
                             "Array %s of dataset %s does not have the same "
                             "nodata value as in other datasets",
-                            m_array.c_str(), dataset.GetName().c_str());
+                            m_array.c_str(), pszDatasetName);
                 return std::nullopt;
             }
             const auto apoDims = poArray->GetDimensions();
@@ -328,12 +328,12 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                                 "Dimension %d of array %s of dataset %s does "
                                 "not have the same name as in other datasets",
                                 static_cast<int>(iDim), m_array.c_str(),
-                                dataset.GetName().c_str());
+                                pszDatasetName);
                     return std::nullopt;
                 }
 
                 auto descThisDatasetOpt =
-                    GetDimensionDesc(dataset.GetName(), poDim);
+                    GetDimensionDesc(pszDatasetName, poDim);
                 if (!descThisDatasetOpt.has_value())
                     return std::nullopt;
                 auto &descThisDataset = descThisDatasetOpt.value();
@@ -347,7 +347,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                                     "has irregularly-spaced values, contrary "
                                     "to other datasets",
                                     poDim->GetName().c_str(), m_array.c_str(),
-                                    dataset.GetName().c_str());
+                                    pszDatasetName);
                         return std::nullopt;
                     }
                     if (std::fabs(descThisDataset.dfIncrement -
@@ -359,8 +359,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                                     "indexed by a variable with spacing %g, "
                                     "whereas it is %g in other datasets",
                                     poDim->GetName().c_str(), m_array.c_str(),
-                                    dataset.GetName().c_str(),
-                                    descThisDataset.dfIncrement,
+                                    pszDatasetName, descThisDataset.dfIncrement,
                                     desc.dfIncrement);
                         return std::nullopt;
                     }
@@ -375,7 +374,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                             "by a variable whose start value is not aligned "
                             "with the one of other datasets",
                             poDim->GetName().c_str(), m_array.c_str(),
-                            dataset.GetName().c_str());
+                            pszDatasetName);
                         return std::nullopt;
                     }
                     desc.dfStart =
@@ -396,7 +395,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                                     "Dimension %s of array %s of dataset %s "
                                     "would be too large if merged.",
                                     poDim->GetName().c_str(), m_array.c_str(),
-                                    dataset.GetName().c_str());
+                                    pszDatasetName);
                         return std::nullopt;
                     }
                     desc.nSize = static_cast<uint64_t>(dfSize + 0.5);
@@ -410,7 +409,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                                     "has regularly spaced labels, contrary to "
                                     "other datasets",
                                     poDim->GetName().c_str(), m_array.c_str(),
-                                    dataset.GetName().c_str());
+                                    pszDatasetName);
                         return std::nullopt;
                     }
                     if (descThisDataset.nProgressionSign !=
@@ -421,7 +420,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                             "Dataset %s: values in indexing variable %s of "
                             "dimension %s must be either increasing or "
                             "decreasing in all input datasets.",
-                            dataset.GetName().c_str(),
+                            pszDatasetName,
                             poDim->GetIndexingVariable()->GetName().c_str(),
                             desc.osName.c_str());
                         return std::nullopt;
@@ -437,7 +436,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                                 "Dataset %s: values in indexing variable %s of "
                                 "dimension %s are not the same as in other "
                                 "datasets",
-                                dataset.GetName().c_str(),
+                                pszDatasetName,
                                 poDim->GetIndexingVariable()->GetName().c_str(),
                                 desc.osName.c_str());
                             return std::nullopt;
@@ -461,7 +460,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                                         "Dataset %s: values in indexing "
                                         "variable %s of dimension %s are not "
                                         "the same as in other datasets",
-                                        dataset.GetName().c_str(),
+                                        pszDatasetName,
                                         poDim->GetIndexingVariable()
                                             ->GetName()
                                             .c_str(),
@@ -481,7 +480,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                                         "variable %s of dimension %s are "
                                         "overlapping with the ones of other "
                                         "datasets",
-                                        dataset.GetName().c_str(),
+                                        pszDatasetName,
                                         poDim->GetIndexingVariable()
                                             ->GetName()
                                             .c_str(),
@@ -500,7 +499,7 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
                                         "variable %s of dimension %s are "
                                         "overlapping with the ones of other "
                                         "datasets",
-                                        dataset.GetName().c_str(),
+                                        pszDatasetName,
                                         poDim->GetIndexingVariable()
                                             ->GetName()
                                             .c_str(),
@@ -522,6 +521,55 @@ GDALMdimMosaicAlgorithm::BuildDimensionDesc(
     }
 
     return aDimensions;
+}
+
+/************************************************************************/
+/*             GDALMdimMosaicAlgorithm::GetInputDatasetNames()          */
+/************************************************************************/
+
+bool GDALMdimMosaicAlgorithm::GetInputDatasetNames(
+    GDALProgressFunc pfnProgress, void *pProgressData,
+    CPLStringList &aosInputDatasetNames) const
+{
+    for (auto &ds : m_inputDatasets)
+    {
+        if (ds.GetName()[0] == '@')
+        {
+            auto f = VSIVirtualHandleUniquePtr(
+                VSIFOpenL(ds.GetName().c_str() + 1, "r"));
+            if (!f)
+            {
+                ReportError(CE_Failure, CPLE_FileIO, "Cannot open %s",
+                            ds.GetName().c_str() + 1);
+                return false;
+            }
+            while (const char *filename = CPLReadLineL(f.get()))
+            {
+                aosInputDatasetNames.push_back(filename);
+            }
+        }
+        else if (ds.GetName().find_first_of("*?[") != std::string::npos)
+        {
+            CPLStringList aosMatches(VSIGlob(ds.GetName().c_str(), nullptr,
+                                             pfnProgress, pProgressData));
+            for (const char *pszStr : aosMatches)
+            {
+                aosInputDatasetNames.push_back(pszStr);
+            }
+        }
+        else
+        {
+            std::string osDatasetName = ds.GetName();
+            if (!GetReferencePathForRelativePaths().empty())
+            {
+                osDatasetName = GDALDataset::BuildFilename(
+                    osDatasetName.c_str(),
+                    GetReferencePathForRelativePaths().c_str(), true);
+            }
+            aosInputDatasetNames.push_back(osDatasetName.c_str());
+        }
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -558,20 +606,33 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
+    const bool bIsVRT = EQUAL(m_outputFormat.c_str(), "VRT");
+
+    CPLStringList aosInputDatasetNames;
+    const double dfIntermediatePercentage = bIsVRT ? 1.0 : 0.1;
+    std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
+        GDALCreateScaledProgress(0.0, dfIntermediatePercentage, pfnProgress,
+                                 pProgressData),
+        GDALDestroyScaledProgress);
+    if (!GetInputDatasetNames(GDALScaledProgress, pScaledData.get(),
+                              aosInputDatasetNames))
+        return false;
+
     if (!m_array.empty() && m_array[0] != '/')
         m_array = "/" + m_array;
 
     std::shared_ptr<GDALMDArray> poFirstSourceArray;
     std::vector<std::vector<SourceShortDimDesc>> aaoSourceShortDimDesc;
 
-    auto aDimensionsOpt =
-        BuildDimensionDesc(poFirstSourceArray, aaoSourceShortDimDesc);
+    auto aDimensionsOpt = BuildDimensionDesc(
+        aosInputDatasetNames, poFirstSourceArray, aaoSourceShortDimDesc);
     if (!aDimensionsOpt.has_value())
         return false;
     const auto &aDimensions = aDimensionsOpt.value();
 
     CPLAssert(poFirstSourceArray);
-    CPLAssert(aaoSourceShortDimDesc.size() == m_inputDatasets.size());
+    CPLAssert(aaoSourceShortDimDesc.size() ==
+              static_cast<size_t>(aosInputDatasetNames.size()));
 
     auto poVRTDS = VRTDataset::CreateVRTMultiDimensional("", nullptr, nullptr);
     CPLAssert(poVRTDS);
@@ -579,7 +640,7 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     auto poDstGroup = poVRTDS->GetRootVRTGroup();
     CPLAssert(poDstGroup);
 
-    // Create mosaicenated array dimensions
+    // Create mosaic array dimensions
     std::vector<std::shared_ptr<GDALDimension>> apoDstDims;
     for (auto &desc : aDimensions)
     {
@@ -654,7 +715,7 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         apoDstDims.push_back(std::move(dstDim));
     }
 
-    // Create mosaicenated array
+    // Create mosaic array
     auto poDstArray = poDstGroup->CreateVRTMDArray(
         CPLGetFilename(m_array.c_str()), apoDstDims,
         poFirstSourceArray->GetDataType());
@@ -663,10 +724,9 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     poDstArray->CopyFromAllExceptValues(poFirstSourceArray.get(), false,
                                         nCurCost, 0, nullptr, nullptr);
 
-    // Add sources to mosaicenated array
-    for (size_t iDS = 0; iDS < m_inputDatasets.size(); ++iDS)
+    // Add sources to mosaic array
+    for (int iDS = 0; iDS < aosInputDatasetNames.size(); ++iDS)
     {
-        const auto &dataset = m_inputDatasets[iDS];
         const auto &aoSourceShortDimDesc = aaoSourceShortDimDesc[iDS];
 
         const auto dimCount = aDimensions.size();
@@ -713,7 +773,7 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         std::vector<GUInt64> anStep(dimCount, 1);
         std::vector<int> anTransposedAxis;
         auto poSource = std::make_unique<VRTMDArraySourceFromArray>(
-            poDstArray.get(), false, false, dataset.GetName().c_str(), m_array,
+            poDstArray.get(), false, false, aosInputDatasetNames[iDS], m_array,
             std::string(), std::move(anTransposedAxis),
             std::string(),  // viewExpr
             std::move(anSrcOffset), std::move(anCount), std::move(anStep),
@@ -721,9 +781,12 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         poDstArray->AddSource(std::move(poSource));
     }
 
-    auto poOutDS = std::unique_ptr<GDALDataset>(poOutDrv->CreateCopy(
-        m_outputDataset.GetName().c_str(), poVRTDS.get(), false,
-        CPLStringList(m_creationOptions).List(), pfnProgress, pProgressData));
+    pScaledData.reset(GDALCreateScaledProgress(dfIntermediatePercentage, 1.0,
+                                               pfnProgress, pProgressData));
+    auto poOutDS = std::unique_ptr<GDALDataset>(
+        poOutDrv->CreateCopy(m_outputDataset.GetName().c_str(), poVRTDS.get(),
+                             false, CPLStringList(m_creationOptions).List(),
+                             GDALScaledProgress, pScaledData.get()));
 
     if (poOutDS)
         m_outputDataset.Set(std::move(poOutDS));

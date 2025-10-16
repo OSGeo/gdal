@@ -26,6 +26,12 @@ that can be either a virtual mosaic in the
 :ref:`Multidimensional VRT (Virtual Dataset) <vrt_multidimensional>` format,
 or in a more conventional multidimensional format such as :ref:`raster.netcdf` or :ref:`raster.zarr`.
 
+Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used for input dataset
+names, even on files located on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
+Alternatively if a input dataset name is prefixed by the `@` character, it will
+be assumed to contain the list of actual dataset names (one per line) to use
+as input datasets.
+
 To create a mosaic from an array, certain structural constraints apply to all
 contributing arrays from the input datasets:
 
@@ -64,6 +70,12 @@ Standard options
 .. option:: -i, --input <INPUT>
 
    Input multidimensional dataset names. Required.
+
+   Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used for input dataset
+   names, even on files located on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
+   Alternatively if a input dataset name is prefixed by the `@` character, it will
+   be assumed to contain the list of actual dataset names (one per line) to use
+   as input datasets.
 
 .. option::  -o, --output <OUTPUT>
 
@@ -111,8 +123,8 @@ Examples
 --------
 
 .. example::
-   :title: Mosaic together several netCDF files that are slices of a 3D array
+   :title: Mosaic together several all netCDF files starting with ``slice`` that are slices of a 3D array
 
    .. code-block:: bash
 
-      gdal mdim mosaic slice1.nc slice2.nc slice3.nc out.vrt
+      gdal mdim mosaic slice*.nc out.vrt

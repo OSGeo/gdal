@@ -20,7 +20,7 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_driver("netCDF")
 
 
-def test_gdalalg_mdim_mosaic_labelled_axis_single_value_1D_array(tmp_path):
+def test_gdalalg_mdim_mosaic_labelled_axis_single_value_1D_array_and_glob(tmp_path):
     # Use a inner function to make sure all native objects have their
     # reference count down to 0, so the data is actually serialized to disk
     # Ideally we should have a better solution...
@@ -91,7 +91,7 @@ def test_gdalalg_mdim_mosaic_labelled_axis_single_value_1D_array(tmp_path):
     with gdal.Run(
         "mdim",
         "mosaic",
-        input=[tmp_path / "test1.nc", tmp_path / "test2.nc", tmp_path / "test3.nc"],
+        input=tmp_path / "test*.nc",
         output=tmp_path / "out.vrt",
         array="test",
         output_format="VRT",
@@ -109,7 +109,9 @@ def test_gdalalg_mdim_mosaic_labelled_axis_single_value_1D_array(tmp_path):
         assert array.array("B", ar.Read()) == array.array("B", [2, 3, 4])
 
 
-def test_gdalalg_mdim_mosaic_labelled_axis_multiple_value_1D_array(tmp_path):
+def test_gdalalg_mdim_mosaic_labelled_axis_multiple_value_1D_array_and_input_file_list(
+    tmp_path,
+):
     # Use a inner function to make sure all native objects have their
     # reference count down to 0, so the data is actually serialized to disk
     # Ideally we should have a better solution...
@@ -157,10 +159,14 @@ def test_gdalalg_mdim_mosaic_labelled_axis_multiple_value_1D_array(tmp_path):
 
     create_sources()
 
+    with gdal.VSIFile(tmp_path / "list.txt", "wb") as f:
+        f.write(f"{tmp_path}/test1.nc\n".encode("UTF-8"))
+        f.write(f"{tmp_path}/test2.nc\n".encode("UTF-8"))
+
     with gdal.Run(
         "mdim",
         "mosaic",
-        input=[tmp_path / "test1.nc", tmp_path / "test2.nc"],
+        input=f"@{tmp_path}/list.txt",
         output=tmp_path / "out.vrt",
         array="test",
         output_format="VRT",
