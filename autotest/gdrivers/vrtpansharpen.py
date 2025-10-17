@@ -2256,6 +2256,7 @@ def test_vrtpansharpen_nodata_overviews():
     )
     assert vrt_ds
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert vrt_ds.GetRasterBand(1).GetOverview(0).GetNoDataValue() == 0
     vrt_ds = None
 
     gdal.Unlink("/vsimem/pan.tif")
