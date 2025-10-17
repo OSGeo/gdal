@@ -311,10 +311,11 @@ bool OGRParquetWriterLayer::IsSupportedGeometryType(
 /*                           SetOptions()                               */
 /************************************************************************/
 
-bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
-                                       const OGRSpatialReference *poSpatialRef,
-                                       OGRwkbGeometryType eGType)
+bool OGRParquetWriterLayer::SetOptions(
+    const OGRGeomFieldDefn *poSrcGeomFieldDefn, CSLConstList papszOptions)
 {
+    m_aosCreationOptions = papszOptions;
+
     const char *pszWriteCoveringBBox = CSLFetchNameValueDef(
         papszOptions, "WRITE_COVERING_BBOX",
         CPLGetConfigOption("OGR_PARQUET_WRITE_COVERING_BBOX", nullptr));
@@ -388,6 +389,8 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
                                    "COUNTERCLOCKWISE"),
               "COUNTERCLOCKWISE");
 
+    const auto eGType =
+        poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetType() : wkbNone;
     if (eGType != wkbNone)
     {
         if (!IsSupportedGeometryType(eGType))
@@ -406,8 +409,20 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
                 return false;
         }
         m_aeGeomEncoding.push_back(eGeomEncoding);
-        m_poFeatureDefn->GetGeomFieldDefn(0)->SetName(
-            CSLFetchNameValueDef(papszOptions, "GEOMETRY_NAME", "geometry"));
+
+        std::string osGeometryName;
+        const char *pszGeometryName =
+            CSLFetchNameValue(papszOptions, "GEOMETRY_NAME");
+        if (pszGeometryName)
+            osGeometryName = pszGeometryName;
+        else if (poSrcGeomFieldDefn && poSrcGeomFieldDefn->GetNameRef()[0])
+            osGeometryName = poSrcGeomFieldDefn->GetNameRef();
+        else
+            osGeometryName = "geometry";
+        m_poFeatureDefn->GetGeomFieldDefn(0)->SetName(osGeometryName.c_str());
+
+        const auto poSpatialRef =
+            poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetSpatialRef() : nullptr;
         if (poSpatialRef)
         {
             auto poSRS = poSpatialRef->Clone();
@@ -834,6 +849,30 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
                 ->Append(
                     "gdal:metadata",
                     oMultiMetadata.Format(CPLJSONObject::PrettyFormat::Plain));
+        }
+
+        if (!m_aosCreationOptions.empty())
+        {
+            CPLJSONObject oCreationOptions;
+            bool bEmpty = true;
+            for (const auto &[key, value] :
+                 cpl::IterateNameValue(m_aosCreationOptions))
+            {
+                if (!EQUAL(key, "FID") && !EQUAL(key, "GEOMETRY_NAME") &&
+                    !EQUAL(key, "EDGES"))
+                {
+                    bEmpty = false;
+                    oCreationOptions.Add(key, value);
+                }
+            }
+            if (!bEmpty)
+            {
+                const_cast<arrow::KeyValueMetadata *>(
+                    m_poKeyValueMetadata.get())
+                    ->Append("gdal:creation-options",
+                             oCreationOptions.Format(
+                                 CPLJSONObject::PrettyFormat::Plain));
+            }
         }
     }
 }
