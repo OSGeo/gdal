@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import array
 import math
 import struct
 
@@ -1937,3 +1938,66 @@ def test_vrtmultidim_arraysource_getmask_error_wrong_option():
       </VRTRasterBand>
     </VRTDataset>"""
         )
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "source_slab,dest_slab,view_expr,expected",
+    [
+        ("", "", "[::1,:]", [0, 1, 2, 3, 4, 5]),
+        ("", "", "[::-1,:]", [4, 5, 2, 3, 0, 1]),
+        ('<SourceSlab offset="1,0" />', "", "[:,:]", [2, 3, 4, 5, 0, 0]),
+        ('<SourceSlab offset="1,0" />', "", "[::-1,:]", [4, 5, 2, 3, 0, 0]),
+        ("", '<DestSlab offset="1,0" />', "[:,:]", [0, 0, 0, 1, 2, 3]),
+        ("", '<DestSlab offset="1,0" />', "[::-1,:]", [2, 3, 0, 1, 0, 0]),
+        (
+            '<SourceSlab offset="1,0" />',
+            '<DestSlab offset="1,0" />',
+            "[:,:]",
+            [0, 0, 2, 3, 4, 5],
+        ),
+        (
+            '<SourceSlab offset="1,0" />',
+            '<DestSlab offset="1,0" />',
+            "[::-1,:]",
+            [4, 5, 2, 3, 0, 0],
+        ),
+    ],
+)
+def test_vrtmultidim_arraysource_view(
+    tmp_vsimem, source_slab, dest_slab, view_expr, expected
+):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", 2, 3) as ds:
+        ds.GetRasterBand(1).WriteRaster(
+            0, 0, 2, 3, array.array("B", [0, 1, 2, 3, 4, 5])
+        )
+
+    ds = gdal.Open(
+        f"""<VRTDataset rasterXSize="2" rasterYSize="3">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ArraySource>
+      <DerivedArray>
+        <Array name="data">
+          <DataType>Byte</DataType>
+          <Dimension name="y" size="3"/>
+          <Dimension name="x" size="2"/>
+          <Source>
+            <SourceFilename relativeToVRT="0">{tmp_vsimem}/src.tif</SourceFilename>
+            <SourceBand>1</SourceBand>
+            {source_slab}
+            {dest_slab}
+          </Source>
+        </Array>
+        <Step>
+          <View expr="{view_expr}"/>
+        </Step>
+      </DerivedArray>
+    </ArraySource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+
+    assert array.array("B", ds.GetRasterBand(1).ReadRaster()) == array.array(
+        "B", expected
+    )
