@@ -235,6 +235,77 @@ def test_gdal_raster_zonal_stats(tmp_path):
     )
 
 
+def test_gdal_vector_check_coverage(tmp_path):
+
+    src_fname = tmp_path / "src.shp"
+    dst_fname = tmp_path / "dst.shp"
+
+    wkt_ds(
+        src_fname,
+        [
+            "POLYGON ((0 0, 5 0, 5 4, 4.5 5, 5 9, 5 10, 0 10, 0 0))",
+            "POLYGON ((5 0, 10 0, 10 10, 5.1 10, 5 9, 5 3, 4.5 0, 5 0))",
+        ],
+    )
+
+    alg = gdal.Run("vector check-coverage", input=src_fname, output=dst_fname)
+    alg.Finalize()
+
+    plt, (ax, ax2) = pyplot.subplots(1, 2, figsize=(12, 5))
+
+    ax.set_axis_off()
+    ax2.set_axis_off()
+
+    src_gdf = gpd.read_file(src_fname)
+    src_gdf.plot(
+        ax=ax, alpha=0.5, edgecolor="black", column="FID", cmap=GDAL_GREEN_BLUE
+    )
+
+    dst_gdf = gpd.read_file(dst_fname)
+    dst_gdf.plot(ax=ax2, aspect="equal", alpha=0.5, column="FID", cmap=GDAL_GREEN_BLUE)
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_vector_check_coverage.svg",
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
+def test_gdal_vector_check_geometry(tmp_path):
+
+    cases = {
+        "poly": "POLYGON ((0 0, 5 0, 0 10, 5 10, 0 0))",
+        "multipoly": "MULTIPOLYGON (((0 0, 5 0, 5 3, 0 3, 0 0)), ((2 2, 3 2, 3 10, 2 10, 2 2)))",
+        "line": "LINESTRING (5 10, 0 5, 5 0, 2.5 0, 2.5 10)",
+    }
+
+    for k, v in cases.items():
+        src_fname = tmp_path / f"{k}.shp"
+        dst_fname = tmp_path / f"{k}_out.shp"
+
+        wkt_ds(src_fname, [v])
+
+        alg = gdal.Run("vector check-geometry", input=src_fname, output=dst_fname)
+        alg.Finalize()
+
+    plt, ax = pyplot.subplots(1, len(cases), figsize=(12, 5))
+
+    for i, (k, v) in enumerate(cases.items()):
+        ax[i].set_axis_off()
+
+        src_gdf = gpd.read_file(tmp_path / f"{k}.shp")
+        src_gdf.plot(ax=ax[i], alpha=0.5, cmap=GDAL_GREEN_BLUE)
+
+        dst_gdf = gpd.read_file(tmp_path / f"{k}_out.shp")
+        dst_gdf.plot(ax=ax[i], alpha=1.0, color="black")
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_vector_check_geometry.svg",
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
 @pytest.mark.parametrize(
     "operation",
     ("erase", "identity", "intersection", "sym-difference", "union", "update", "clip"),
