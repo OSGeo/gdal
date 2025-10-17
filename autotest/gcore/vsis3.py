@@ -12,6 +12,7 @@
 ###############################################################################
 
 import json
+import os
 import os.path
 import stat
 import sys
@@ -6821,3 +6822,173 @@ def test_vsis3_extra_1():
     gdal.VSIFCloseL(f)
 
     assert len(ret) == 1
+
+
+###############################################################################
+# Test credential_process authentication
+
+
+def test_vsis3_credential_process(tmp_vsimem, aws_test_config, webserver_port):
+    script_content = """#!/bin/bash
+echo '{"AccessKeyId":"AWS_ACCESS_KEY_ID","SecretAccessKey":"AWS_SECRET_ACCESS_KEY","SessionToken":"session_token","Expiration":"2025-01-01T12:00:00Z"}'
+"""
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as f:
+        f.write(script_content)
+        script_path = f.name
+
+    os.chmod(script_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+
+    try:
+        options = {
+            "AWS_SECRET_ACCESS_KEY": "",
+            "AWS_ACCESS_KEY_ID": "",
+            "AWS_SESSION_TOKEN": "",
+            "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
+        }
+
+        gdal.VSICurlClearCache()
+
+        gdal.FileFromMemBuffer(
+            tmp_vsimem / "aws_config",
+            f"""
+[default]
+credential_process = {script_path}
+region = us-east-1
+""",
+        )
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/s3_fake_bucket/resource",
+            custom_method=get_s3_fake_bucket_resource_method,
+        )
+
+        with webserver.install_http_handler(handler):
+            with gdaltest.config_options(options, thread_local=False):
+                f = open_for_read("/vsis3/s3_fake_bucket/resource")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+            gdal.VSIFCloseL(f)
+
+        assert data == "foo"
+
+    finally:
+        os.unlink(script_path)
+
+
+###############################################################################
+# Test credential_process with invalid command
+
+
+def test_vsis3_credential_process_invalid_command(tmp_vsimem, aws_test_config):
+    options = {
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+        "AWS_SESSION_TOKEN": "",
+        "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
+    }
+
+    gdal.VSICurlClearCache()
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "aws_config",
+        """
+[default]
+credential_process = /nonexistent/command
+region = us-east-1
+""",
+    )
+
+    with gdaltest.config_options(options, thread_local=False):
+        with gdal.quiet_errors():
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is None
+
+
+###############################################################################
+# Test credential_process with invalid JSON
+
+
+def test_vsis3_credential_process_invalid_json(tmp_vsimem, aws_test_config):
+    script_content = """#!/bin/bash
+echo 'invalid json response'
+"""
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as f:
+        f.write(script_content)
+        script_path = f.name
+
+    os.chmod(script_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+
+    try:
+        options = {
+            "AWS_SECRET_ACCESS_KEY": "",
+            "AWS_ACCESS_KEY_ID": "",
+            "AWS_SESSION_TOKEN": "",
+            "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
+        }
+
+        gdal.VSICurlClearCache()
+
+        gdal.FileFromMemBuffer(
+            tmp_vsimem / "aws_config",
+            f"""
+[default]
+credential_process = {script_path}
+region = us-east-1
+""",
+        )
+
+        with gdaltest.config_options(options, thread_local=False):
+            with gdal.quiet_errors():
+                f = open_for_read("/vsis3/s3_fake_bucket/resource")
+            assert f is None
+
+    finally:
+        os.unlink(script_path)
+
+
+###############################################################################
+# Test credential_process with missing required fields
+
+
+def test_vsis3_credential_process_missing_fields(tmp_vsimem, aws_test_config):
+
+    script_content = """#!/bin/bash
+echo '{"AccessKeyId":"test_key"}'
+"""
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as f:
+        f.write(script_content)
+        script_path = f.name
+
+    os.chmod(script_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+
+    try:
+        options = {
+            "AWS_SECRET_ACCESS_KEY": "",
+            "AWS_ACCESS_KEY_ID": "",
+            "AWS_SESSION_TOKEN": "",
+            "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
+        }
+
+        gdal.VSICurlClearCache()
+
+        gdal.FileFromMemBuffer(
+            tmp_vsimem / "aws_config",
+            f"""
+[default]
+credential_process = {script_path}
+region = us-east-1
+""",
+        )
+
+        with gdaltest.config_options(options, thread_local=False):
+            with gdal.quiet_errors():
+                f = open_for_read("/vsis3/s3_fake_bucket/resource")
+            assert f is None
+
+    finally:
+        os.unlink(script_path)

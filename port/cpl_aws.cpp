@@ -62,6 +62,13 @@ static std::string gosSSOStartURL;
 static std::string gosSSOAccountID;
 static std::string gosSSORoleName;
 
+// The below variables are used for credential_process caching
+static std::string gosCredentialProcessCommand;
+static std::string gosCredentialProcessAccessKeyId;
+static std::string gosCredentialProcessSecretAccessKey;
+static std::string gosCredentialProcessSessionToken;
+static GIntBig gnCredentialProcessExpiration = 0;
+
 constexpr const char *AWS_DEBUG_KEY = "AWS";
 
 /************************************************************************/
@@ -1188,7 +1195,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     std::string &osMFASerial, std::string &osRoleSessionName,
     std::string &osWebIdentityTokenFile, std::string &osSSOStartURL,
     std::string &osSSOAccountID, std::string &osSSORoleName,
-    std::string &osSSOSession)
+    std::string &osSSOSession, std::string &osCredentialProcess)
 {
     // See http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
     // If AWS_DEFAULT_PROFILE is set (obsolete, no longer documented), use it in
@@ -1364,6 +1371,10 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
                     {
                         osSSORoleName = pszValue;
                     }
+                    else if (strcmp(pszKey, "credential_process") == 0)
+                    {
+                        osCredentialProcess = pszValue;
+                    }
                 }
                 CPLFree(pszKey);
             }
@@ -1391,7 +1402,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
            (pszProfileOri != nullptr && !osRoleArn.empty() &&
             !osWebIdentityTokenFile.empty()) ||
            (!osSSOStartURL.empty() && !osSSOAccountID.empty() &&
-            !osSSORoleName.empty());
+            !osSSORoleName.empty()) ||
+           !osCredentialProcess.empty();
 }
 
 /************************************************************************/
@@ -1747,6 +1759,172 @@ bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForSSO(
 }
 
 /************************************************************************/
+/*                  GetCredentialsFromProcess()                         */
+/************************************************************************/
+
+static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
+                                      std::string &osSecretAccessKey,
+                                      std::string &osAccessKeyId,
+                                      std::string &osSessionToken)
+{
+    CPLDebug(AWS_DEBUG_KEY, "Executing credential_process: %s",
+             osCredentialProcess.c_str());
+
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("TIMEOUT", "30");
+
+    FILE *fp = popen(osCredentialProcess.c_str(), "r");
+    if (fp == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to execute credential_process: %s",
+                 osCredentialProcess.c_str());
+        return false;
+    }
+
+    std::string osOutput;
+    char buffer[1024];
+    while (fgets(buffer, sizeof(buffer), fp) != nullptr)
+    {
+        osOutput += buffer;
+    }
+
+    int nExitCode = pclose(fp);
+    if (nExitCode != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "credential_process failed with exit code %d: %s", nExitCode,
+                 osCredentialProcess.c_str());
+        return false;
+    }
+
+    if (osOutput.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "credential_process returned empty output: %s",
+                 osCredentialProcess.c_str());
+        return false;
+    }
+
+    CPLJSONDocument oDoc;
+    if (!oDoc.LoadMemory(osOutput))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to parse JSON from credential_process: %s",
+                 osCredentialProcess.c_str());
+        return false;
+    }
+
+    auto oRoot = oDoc.GetRoot();
+
+    // Validate Version field (required by AWS specification)
+    const std::string osVersion = oRoot.GetString("Version");
+    if (osVersion != "1")
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "credential_process returned unsupported Version '%s'. "
+                 "Expected '1'",
+                 osVersion.c_str());
+        return false;
+    }
+
+    // Extract required fields
+    // See https://docs.aws.amazon.com/sdkref/latest/guide/feature-process-credentials.html#feature-process-credentials-output
+    osAccessKeyId = oRoot.GetString("AccessKeyId");
+    osSecretAccessKey = oRoot.GetString("SecretAccessKey");
+    osSessionToken = oRoot.GetString("SessionToken");
+    const std::string osExpiration = oRoot.GetString("Expiration");
+
+    if (osAccessKeyId.empty() || osSecretAccessKey.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "credential_process did not return required AccessKeyId and "
+                 "SecretAccessKey");
+        return false;
+    }
+
+    if (osSessionToken.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "credential_process did not return required SessionToken");
+        return false;
+    }
+
+    if (osExpiration.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "credential_process did not return required Expiration");
+        return false;
+    }
+
+    // Cache the credentials and expiration
+    {
+        CPLMutexHolder oHolder(&ghMutex);
+        gosCredentialProcessCommand = osCredentialProcess;
+        gosCredentialProcessAccessKeyId = osAccessKeyId;
+        gosCredentialProcessSecretAccessKey = osSecretAccessKey;
+        gosCredentialProcessSessionToken = osSessionToken;
+
+        // Parse expiration (required field, ISO8601 format)
+        if (!Iso8601ToUnixTime(osExpiration.c_str(),
+                               &gnCredentialProcessExpiration))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to parse Expiration from credential_process: %s",
+                     osExpiration.c_str());
+            return false;
+        }
+    }
+
+    CPLDebug(AWS_DEBUG_KEY,
+             "Successfully obtained credentials from credential_process");
+    return true;
+}
+
+/************************************************************************/
+/*            GetOrRefreshTemporaryCredentialsForProcess()              */
+/************************************************************************/
+
+bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForProcess(
+    bool bForceRefresh, const std::string &osCredentialProcess,
+    std::string &osSecretAccessKey, std::string &osAccessKeyId,
+    std::string &osSessionToken)
+{
+    CPLMutexHolder oHolder(&ghMutex);
+
+    if (!bForceRefresh)
+    {
+        time_t nCurTime;
+        time(&nCurTime);
+        // Try to reuse credentials if they are still valid, but
+        // keep one minute of margin...
+        if (!gosCredentialProcessAccessKeyId.empty() &&
+            gosCredentialProcessCommand == osCredentialProcess &&
+            nCurTime < gnCredentialProcessExpiration - 60)
+        {
+            osAccessKeyId = gosCredentialProcessAccessKeyId;
+            osSecretAccessKey = gosCredentialProcessSecretAccessKey;
+            osSessionToken = gosCredentialProcessSessionToken;
+            CPLDebug(AWS_DEBUG_KEY,
+                     "Reusing cached credential_process credentials");
+            return true;
+        }
+    }
+
+    // Release mutex before calling external process
+    oHolder.~CPLMutexHolder();
+
+    // Execute the credential process to get fresh credentials
+    if (GetCredentialsFromProcess(osCredentialProcess, osSecretAccessKey,
+                                  osAccessKeyId, osSessionToken))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+/************************************************************************/
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
@@ -1833,6 +2011,7 @@ bool VSIS3HandleHelper::GetConfiguration(
     std::string osSSOAccountID;
     std::string osSSORoleName;
     std::string osSSOSession;
+    std::string osCredentialProcess;
     // coverity[tainted_data]
     if (GetConfigurationFromAWSConfigFiles(
             osPathForOption,
@@ -1840,7 +2019,7 @@ bool VSIS3HandleHelper::GetConfiguration(
             osSessionToken, osRegion, osCredentials, osRoleArn, osSourceProfile,
             osExternalId, osMFASerial, osRoleSessionName,
             osWebIdentityTokenFile, osSSOStartURL, osSSOAccountID,
-            osSSORoleName, osSSOSession))
+            osSSORoleName, osSSOSession, osCredentialProcess))
     {
         if (osSecretAccessKey.empty() && !osRoleArn.empty())
         {
@@ -1861,6 +2040,7 @@ bool VSIS3HandleHelper::GetConfiguration(
                 std::string osSSOStartURLSP;
                 std::string osSSOAccountIDSP;
                 std::string osSSORoleNameSP;
+                std::string osCredentialProcessSP;
                 if (GetConfigurationFromAWSConfigFiles(
                         osPathForOption, osSourceProfile.c_str(),
                         osSecretAccessKeySP, osAccessKeyIdSP, osSessionTokenSP,
@@ -1868,7 +2048,7 @@ bool VSIS3HandleHelper::GetConfiguration(
                         osSourceProfileSP, osExternalIdSP, osMFASerialSP,
                         osRoleSessionNameSP, osWebIdentityTokenFile,
                         osSSOStartURLSP, osSSOAccountIDSP, osSSORoleNameSP,
-                        osSSOSession))
+                        osSSOSession, osCredentialProcessSP))
                 {
                     if (GetConfigurationFromAssumeRoleWithWebIdentity(
                             /* bForceRefresh = */ false, osPathForOption,
@@ -1977,6 +2157,17 @@ bool VSIS3HandleHelper::GetConfiguration(
         return true;
     }
 
+    if (!osCredentialProcess.empty())
+    {
+        if (GetOrRefreshTemporaryCredentialsForProcess(
+                /* bForceRefresh = */ false, osCredentialProcess,
+                osSecretAccessKey, osAccessKeyId, osSessionToken))
+        {
+            eCredentialsSource = AWSCredentialsSource::CREDENTIAL_PROCESS;
+            return true;
+        }
+    }
+
     if (CPLTestBool(CPLGetConfigOption("CPL_AWS_WEB_IDENTITY_ENABLE", "YES")))
     {
         // WebIdentity method: use Web Identity Token
@@ -2054,6 +2245,11 @@ void VSIS3HandleHelper::ClearCache()
     gosSSOStartURL.clear();
     gosSSOAccountID.clear();
     gosSSORoleName.clear();
+    gosCredentialProcessCommand.clear();
+    gosCredentialProcessAccessKeyId.clear();
+    gosCredentialProcessSecretAccessKey.clear();
+    gosCredentialProcessSessionToken.clear();
+    gnCredentialProcessExpiration = 0;
 }
 
 /************************************************************************/
@@ -2296,6 +2492,53 @@ void VSIS3HandleHelper::RefreshCredentials(const std::string &osPathForOption,
             m_osSecretAccessKey = std::move(osSecretAccessKey);
             m_osAccessKeyId = std::move(osAccessKeyId);
             m_osSessionToken = std::move(osSessionToken);
+        }
+    }
+    else if (m_eCredentialsSource == AWSCredentialsSource::CREDENTIAL_PROCESS)
+    {
+        // First, check if we have a cached credential_process command
+        std::string osCredentialProcess;
+        {
+            CPLMutexHolder oHolder(&ghMutex);
+            osCredentialProcess = gosCredentialProcessCommand;
+        }
+
+        // If no cached command, re-read config files to get the credential_process setting
+        if (osCredentialProcess.empty())
+        {
+            std::string osSecretAccessKey, osAccessKeyId, osSessionToken,
+                osRegion;
+            std::string osCredentials, osRoleArn, osSourceProfile, osExternalId;
+            std::string osMFASerial, osRoleSessionName, osWebIdentityTokenFile;
+            std::string osSSOStartURL, osSSOAccountID, osSSORoleName,
+                osSSOSession;
+
+            if (GetConfigurationFromAWSConfigFiles(
+                    osPathForOption, nullptr, osSecretAccessKey, osAccessKeyId,
+                    osSessionToken, osRegion, osCredentials, osRoleArn,
+                    osSourceProfile, osExternalId, osMFASerial,
+                    osRoleSessionName, osWebIdentityTokenFile, osSSOStartURL,
+                    osSSOAccountID, osSSORoleName, osSSOSession,
+                    osCredentialProcess))
+            {
+                // Cache the command for future use
+                CPLMutexHolder oHolder(&ghMutex);
+                gosCredentialProcessCommand = osCredentialProcess;
+            }
+        }
+
+        // Now use the cached refresh mechanism
+        if (!osCredentialProcess.empty())
+        {
+            std::string osSecretAccessKey, osAccessKeyId, osSessionToken;
+            if (GetOrRefreshTemporaryCredentialsForProcess(
+                    bForceRefresh, osCredentialProcess, osSecretAccessKey,
+                    osAccessKeyId, osSessionToken))
+            {
+                m_osSecretAccessKey = std::move(osSecretAccessKey);
+                m_osAccessKeyId = std::move(osAccessKeyId);
+                m_osSessionToken = std::move(osSessionToken);
+            }
         }
     }
 }
