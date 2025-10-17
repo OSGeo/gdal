@@ -687,3 +687,19 @@ def test_mbtiles_webp_write():
     ds = None
 
     gdal.Unlink("/vsimem/mbtiles_webp_write.mbtiles")
+
+
+###############################################################################
+
+
+def test_mbtiles_vector_field_type_from_values():
+
+    ds = ogr.Open("data/mbtiles/field_type_from_values.mbtiles")
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("geo_x")).GetType() == ogr.OFTReal
+    )
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("geo_y")).GetType() == ogr.OFTReal
+    )
