@@ -346,6 +346,8 @@ char **VSIGlob(const char *pszPattern, const char *const *papszOptions,
                 }
                 else if (osCurPath.find_first_of("*?[") != std::string::npos)
                 {
+                    if (osPath.empty())
+                        osPath = ".";
                     std::unique_ptr<VSIDIR, VSIDirCloser> psDir(
                         VSIOpenDir(osPath.c_str(), 0, nullptr));
                     if (!psDir)
@@ -360,7 +362,9 @@ char **VSIGlob(const char *pszPattern, const char *const *papszOptions,
                         }
                         if (VSIFnMatch(osCurPath.c_str(), psEntry->pszName))
                         {
-                            std::string osCandidate(osPath);
+                            std::string osCandidate;
+                            if (osPath != ".")
+                                osCandidate = osPath;
                             osCandidate += psEntry->pszName;
                             nPosStart = osCandidate.size();
                             if (*pszPattern)

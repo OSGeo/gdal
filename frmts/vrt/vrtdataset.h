@@ -1908,7 +1908,9 @@ class VRTGroup final : public GDALGroup
     std::string m_osFilename{};
     mutable bool m_bDirty = false;
     std::string m_osVRTPath{};
+    std::vector<std::string> m_aosGroupNames{};
     std::map<std::string, std::shared_ptr<VRTGroup>> m_oMapGroups{};
+    std::vector<std::string> m_aosMDArrayNames{};
     std::map<std::string, std::shared_ptr<VRTMDArray>> m_oMapMDArrays{};
     std::map<std::string, std::shared_ptr<VRTAttribute>> m_oMapAttributes{};
     std::map<std::string, std::shared_ptr<VRTDimension>> m_oMapDimensions{};
@@ -2183,6 +2185,7 @@ class VRTMDArray final : public GDALMDArray
     bool m_bHasScale = false;
     bool m_bHasOffset = false;
     std::string m_osFilename{};
+    std::vector<GUInt64> m_anBlockSize{};
 
     bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
@@ -2197,23 +2200,27 @@ class VRTMDArray final : public GDALMDArray
         const std::string &osParentName, const std::string &osName,
         const GDALExtendedDataType &dt,
         std::vector<std::shared_ptr<GDALDimension>> &&dims,
-        std::map<std::string, std::shared_ptr<VRTAttribute>> &&oMapAttributes)
+        std::map<std::string, std::shared_ptr<VRTAttribute>> &&oMapAttributes,
+        std::vector<GUInt64> &&anBlockSize)
         : GDALAbstractMDArray(osParentName, osName),
           GDALMDArray(osParentName, osName), m_poGroupRef(poGroupRef),
           m_osVRTPath(poGroupRef->m_ptr->GetVRTPath()), m_dt(dt),
           m_dims(std::move(dims)), m_oMapAttributes(std::move(oMapAttributes)),
-          m_osFilename(poGroupRef->m_ptr->GetFilename())
+          m_osFilename(poGroupRef->m_ptr->GetFilename()),
+          m_anBlockSize(std::move(anBlockSize))
     {
     }
 
     VRTMDArray(const std::shared_ptr<VRTGroup::Ref> &poGroupRef,
                const std::string &osParentName, const std::string &osName,
                const std::vector<std::shared_ptr<GDALDimension>> &dims,
-               const GDALExtendedDataType &dt)
+               const GDALExtendedDataType &dt,
+               const std::vector<GUInt64> &anBlockSize)
         : GDALAbstractMDArray(osParentName, osName),
           GDALMDArray(osParentName, osName), m_poGroupRef(poGroupRef),
           m_osVRTPath(poGroupRef->m_ptr->GetVRTPath()), m_dt(dt), m_dims(dims),
-          m_osFilename(poGroupRef->m_ptr->GetFilename())
+          m_osFilename(poGroupRef->m_ptr->GetFilename()),
+          m_anBlockSize(anBlockSize)
     {
     }
 
@@ -2340,6 +2347,11 @@ class VRTMDArray final : public GDALMDArray
     std::shared_ptr<GDALGroup> GetRootGroup() const override
     {
         return GetRootVRTGroup();
+    }
+
+    std::vector<GUInt64> GetBlockSize() const override
+    {
+        return m_anBlockSize;
     }
 };
 

@@ -209,13 +209,13 @@ def test_vrtmultidim_subgroup_and_cross_references():
     <Group name="/">
         <Dimension name="X" size="20" indexingVariable="X"/>
         <Dimension name="Y" size="30" indexingVariable="/Y"/>
-        <Array name="X">
-            <DataType>Float32</DataType>
-            <DimensionRef ref="/X"/>
-        </Array>
         <Array name="Y">
             <DataType>Float32</DataType>
             <DimensionRef ref="Y"/>
+        </Array>
+        <Array name="X">
+            <DataType>Float32</DataType>
+            <DimensionRef ref="/X"/>
         </Array>
         <Group name="subgroup">
             <Dimension name="X" size="2" indexingVariable="X"/>
@@ -261,7 +261,7 @@ def test_vrtmultidim_subgroup_and_cross_references():
     assert indexing_var.GetDimensionCount() == 1
     assert indexing_var.GetDimensions()[0].GetSize() == 3
 
-    assert rg.GetMDArrayNames() == ["X", "Y"]
+    assert rg.GetMDArrayNames() == ["Y", "X"]
     X = rg.OpenMDArray("X")
     assert X
     assert X.GetDataType().GetNumericDataType() == gdal.GDT_Float32
@@ -1315,7 +1315,9 @@ def test_vrtmultidim_createmultidimensional():
             "attr_too_big", [4000 * 1000 * 1000], gdal.ExtendedDataType.CreateString()
         )
 
-    ar = rg.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32))
+    ar = rg.CreateMDArray(
+        "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32), ["BLOCKSIZE=2"]
+    )
     assert ar[0]
     with gdal.quiet_errors():
         assert not rg.CreateMDArray(
@@ -1357,6 +1359,7 @@ def test_vrtmultidim_createmultidimensional():
     <Array name="ar">
       <DataType>Float32</DataType>
       <DimensionRef ref="dim" />
+      <BlockSize>2</BlockSize>
       <Attribute name="attr">
         <DataType>String</DataType>
       </Attribute>
@@ -1367,6 +1370,11 @@ def test_vrtmultidim_createmultidimensional():
 """
     )
     _validate(got_data)
+
+    with gdal.OpenEx(tmpfile, gdal.OF_MULTIDIM_RASTER) as ds:
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("ar")
+        assert ar.GetBlockSize() == [2]
 
     gdal.Unlink(tmpfile)
 

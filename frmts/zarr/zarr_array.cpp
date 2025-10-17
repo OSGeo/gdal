@@ -326,12 +326,10 @@ bool ZarrArray::FillBlockSize(
         size_t nBlockSize = oDataType.GetSize();
         for (size_t i = 0; i < nDims; ++i)
         {
-            anBlockSize[i] = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
-            if (anBlockSize[i] == 0)
+            const auto v = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
+            if (v > 0)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Values in BLOCKSIZE should be > 0");
-                return false;
+                anBlockSize[i] = v;
             }
             if (anBlockSize[i] >
                 std::numeric_limits<size_t>::max() / nBlockSize)

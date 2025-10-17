@@ -20,7 +20,7 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_driver("netCDF")
 
 
-def test_gdalalg_mdim_mosaic_labelled_axis_single_value_1D_array(tmp_path):
+def test_gdalalg_mdim_mosaic_labelled_axis_single_value_1D_array_and_glob(tmp_path):
     # Use a inner function to make sure all native objects have their
     # reference count down to 0, so the data is actually serialized to disk
     # Ideally we should have a better solution...
@@ -91,7 +91,7 @@ def test_gdalalg_mdim_mosaic_labelled_axis_single_value_1D_array(tmp_path):
     with gdal.Run(
         "mdim",
         "mosaic",
-        input=[tmp_path / "test1.nc", tmp_path / "test2.nc", tmp_path / "test3.nc"],
+        input=tmp_path / "test*.nc",
         output=tmp_path / "out.vrt",
         array="test",
         output_format="VRT",
@@ -109,7 +109,9 @@ def test_gdalalg_mdim_mosaic_labelled_axis_single_value_1D_array(tmp_path):
         assert array.array("B", ar.Read()) == array.array("B", [2, 3, 4])
 
 
-def test_gdalalg_mdim_mosaic_labelled_axis_multiple_value_1D_array(tmp_path):
+def test_gdalalg_mdim_mosaic_labelled_axis_multiple_value_1D_array_and_input_file_list(
+    tmp_path,
+):
     # Use a inner function to make sure all native objects have their
     # reference count down to 0, so the data is actually serialized to disk
     # Ideally we should have a better solution...
@@ -157,10 +159,14 @@ def test_gdalalg_mdim_mosaic_labelled_axis_multiple_value_1D_array(tmp_path):
 
     create_sources()
 
+    with gdal.VSIFile(tmp_path / "list.txt", "wb") as f:
+        f.write(f"{tmp_path}/test1.nc\n".encode("UTF-8"))
+        f.write(f"{tmp_path}/test2.nc\n".encode("UTF-8"))
+
     with gdal.Run(
         "mdim",
         "mosaic",
-        input=[tmp_path / "test1.nc", tmp_path / "test2.nc"],
+        input=f"@{tmp_path}/list.txt",
         output=tmp_path / "out.vrt",
         array="test",
         output_format="VRT",
@@ -754,3 +760,228 @@ def test_gdalalg_mdim_mosaic_error_no_indexing_var(tmp_path):
             array="test",
             output_format="VRT",
         )
+
+
+def test_gdalalg_mdim_mosaic_multiple_arrays(tmp_path):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
+    def create_sources():
+
+        with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
+            tmp_path / "test1.nc"
+        ) as ds:
+            rg = ds.GetRootGroup()
+            z = rg.CreateDimension("z", "VERTICAL", "UP", 1)
+            z_ar = rg.CreateMDArray(
+                "z", [z], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            z_ar.CreateAttribute(
+                "axis", [1], gdal.ExtendedDataType.CreateString()
+            ).WriteString("Z")
+            z_ar.CreateAttribute(
+                "positive", [1], gdal.ExtendedDataType.CreateString()
+            ).WriteString("up")
+            z_ar.Write([10])
+
+            dim1 = rg.CreateDimension("dim1", None, None, 1)
+            dim1_ar = rg.CreateMDArray(
+                "dim1", [dim1], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            dim1_ar.Write(array.array("d", [100]))
+
+            ar = rg.CreateMDArray(
+                "test", [z, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            ar.Write(array.array("B", [3]))
+
+            ar2 = rg.CreateMDArray(
+                "test2", [z, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            ar2.Write(array.array("B", [30]))
+
+        with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
+            tmp_path / "test2.nc"
+        ) as ds:
+            rg = ds.GetRootGroup()
+            z = rg.CreateDimension("z", "VERTICAL", "UP", 1)
+            z_ar = rg.CreateMDArray(
+                "z", [z], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            z_ar.CreateAttribute(
+                "axis", [1], gdal.ExtendedDataType.CreateString()
+            ).WriteString("Z")
+            z_ar.CreateAttribute(
+                "positive", [1], gdal.ExtendedDataType.CreateString()
+            ).WriteString("up")
+            z_ar.Write([20])
+
+            dim1 = rg.CreateDimension("dim1", None, None, 1)
+            dim1_ar = rg.CreateMDArray(
+                "dim1", [dim1], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            dim1_ar.Write(array.array("d", [100]))
+
+            ar = rg.CreateMDArray(
+                "test", [z, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            ar.Write(array.array("B", [4]))
+
+            ar2 = rg.CreateMDArray(
+                "test2", [z, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            ar2.Write(array.array("B", [40]))
+
+    create_sources()
+
+    with gdal.Run(
+        "mdim",
+        "mosaic",
+        input=tmp_path / "test*.nc",
+        output=tmp_path / "out.vrt",
+        output_format="VRT",
+    ) as alg:
+        ds = alg.Output()
+        assert set(ds.GetRootGroup().GetMDArrayNames()) == set(
+            ["dim1", "test", "test2", "z"]
+        )
+        ar = ds.GetRootGroup().OpenMDArray("test")
+        dims = ar.GetDimensions()
+        assert dims[0].GetName() == "z"
+        assert dims[0].GetType() == "VERTICAL"
+        assert dims[0].GetDirection() == "UP"
+        assert dims[0].GetSize() == 2
+        assert array.array("d", dims[0].GetIndexingVariable().Read()) == array.array(
+            "d", [10, 20]
+        )
+        assert array.array("B", ar.Read()) == array.array("B", [3, 4])
+
+        ar2 = ds.GetRootGroup().OpenMDArray("test2")
+        dims = ar2.GetDimensions()
+        assert dims[0].GetName() == "z"
+        assert dims[0].GetType() == "VERTICAL"
+        assert dims[0].GetDirection() == "UP"
+        assert dims[0].GetSize() == 2
+        assert array.array("d", dims[0].GetIndexingVariable().Read()) == array.array(
+            "d", [10, 20]
+        )
+        assert array.array("B", ar2.Read()) == array.array("B", [30, 40])
+
+    with gdal.Run(
+        "mdim",
+        "mosaic",
+        input=tmp_path / "test*.nc",
+        output=tmp_path / "out.vrt",
+        output_format="VRT",
+        array=["test", "test2"],
+        overwrite=True,
+    ) as alg:
+        ds = alg.Output()
+        assert set(ds.GetRootGroup().GetMDArrayNames()) == set(
+            ["dim1", "test", "test2", "z"]
+        )
+
+    with pytest.raises(Exception, match="You may specify the --overwrite option"):
+        gdal.Run(
+            "mdim",
+            "mosaic",
+            input=tmp_path / "test*.nc",
+            output=tmp_path / "out.vrt",
+            output_format="VRT",
+            array=["test", "non_existing"],
+        )
+
+    with pytest.raises(Exception, match="Cannot find array /non_existing"):
+        gdal.Run(
+            "mdim",
+            "mosaic",
+            input=tmp_path / "test*.nc",
+            output=tmp_path / "out.vrt",
+            output_format="VRT",
+            overwrite=True,
+            array=["test", "non_existing"],
+        )
+
+
+def test_gdalalg_mdim_mosaic_copy_blocksize(tmp_path):
+
+    with gdal.Run(
+        "mdim",
+        "mosaic",
+        input="../gdrivers/data/netcdf/byte_chunked_not_multiple.nc",
+        output=tmp_path / "out.nc",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRootGroup().OpenMDArray("Band1").GetBlockSize() == [6, 15]
+
+
+def test_gdalalg_mdim_mosaic_copy_blocksize_not_same(tmp_path):
+    # Use a inner function to make sure all native objects have their
+    # reference count down to 0, so the data is actually serialized to disk
+    # Ideally we should have a better solution...
+    def create_sources():
+
+        with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
+            tmp_path / "test1.nc"
+        ) as ds:
+            rg = ds.GetRootGroup()
+            z = rg.CreateDimension("z", "VERTICAL", "UP", 1)
+            z_ar = rg.CreateMDArray(
+                "z", [z], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            z_ar.CreateAttribute(
+                "axis", [1], gdal.ExtendedDataType.CreateString()
+            ).WriteString("Z")
+            z_ar.CreateAttribute(
+                "positive", [1], gdal.ExtendedDataType.CreateString()
+            ).WriteString("up")
+            z_ar.Write([10])
+
+            dim1 = rg.CreateDimension("dim1", None, None, 3)
+            dim1_ar = rg.CreateMDArray(
+                "dim1", [dim1], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            dim1_ar.Write(array.array("d", [100, 200, 300]))
+
+            rg.CreateMDArray(
+                "test",
+                [z, dim1],
+                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                ["BLOCKSIZE=1,2"],
+            )
+
+        with gdal.GetDriverByName("netCDF").CreateMultiDimensional(
+            tmp_path / "test2.nc"
+        ) as ds:
+            rg = ds.GetRootGroup()
+            z = rg.CreateDimension("z", "VERTICAL", "UP", 1)
+            z_ar = rg.CreateMDArray(
+                "z", [z], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            z_ar.CreateAttribute(
+                "axis", [1], gdal.ExtendedDataType.CreateString()
+            ).WriteString("Z")
+            z_ar.CreateAttribute(
+                "positive", [1], gdal.ExtendedDataType.CreateString()
+            ).WriteString("up")
+            z_ar.Write([20])
+
+            dim1 = rg.CreateDimension("dim1", None, None, 3)
+            dim1_ar = rg.CreateMDArray(
+                "dim1", [dim1], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            dim1_ar.Write(array.array("d", [100, 200, 300]))
+
+            rg.CreateMDArray(
+                "test",
+                [z, dim1],
+                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                ["BLOCKSIZE=1,1"],
+            )
+
+    create_sources()
+
+    gdal.Run("mdim", "mosaic", input=tmp_path / "test*.nc", output=tmp_path / "out.nc")
+
+    with gdal.OpenEx(tmp_path / "out.nc", gdal.OF_MULTIDIM_RASTER) as ds:
+        assert ds.GetRootGroup().OpenMDArray("test").GetBlockSize() == [1, 3]

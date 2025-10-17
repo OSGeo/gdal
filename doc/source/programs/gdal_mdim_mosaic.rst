@@ -20,11 +20,17 @@ Synopsis
 Description
 -----------
 
-:program:`gdal mdim mosaic` builds a mosaic of a multidimensional array,
+:program:`gdal mdim mosaic` builds a mosaic of multidimensional array(s),
 from a list of input GDAL multidimensional datasets,
 that can be either a virtual mosaic in the
 :ref:`Multidimensional VRT (Virtual Dataset) <vrt_multidimensional>` format,
 or in a more conventional multidimensional format such as :ref:`raster.netcdf` or :ref:`raster.zarr`.
+
+Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used for input dataset
+names, even on files located on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
+Alternatively if a input dataset name is prefixed by the `@` character, it will
+be assumed to contain the list of actual dataset names (one per line) to use
+as input datasets.
 
 To create a mosaic from an array, certain structural constraints apply to all
 contributing arrays from the input datasets:
@@ -56,6 +62,9 @@ Different typical use cases that can be addressed by this program are:
   along those X and Y dimensions, and where the coordinate values are aligned on
   the same grid among chunks.
 
+By default, a target array is created for each array with two or more dimensions.
+This behavior can be restricted to specific arrays using the :option:`--array` option.
+
 The following options are available:
 
 Standard options
@@ -64,6 +73,12 @@ Standard options
 .. option:: -i, --input <INPUT>
 
    Input multidimensional dataset names. Required.
+
+   Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used for input dataset
+   names, even on files located on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
+   Alternatively if a input dataset name is prefixed by the `@` character, it will
+   be assumed to contain the list of actual dataset names (one per line) to use
+   as input datasets.
 
 .. option::  -o, --output <OUTPUT>
 
@@ -95,10 +110,10 @@ Standard options
 
 .. include:: gdal_options/overwrite.rst
 
-.. option:: --array <ARRAY>
+.. option:: --array <ARRAYS>
 
-    Name or full path of the array to mosaic. It must generally be specified,
-    unless all input datasets have a single array with 2 or more dimensions.
+    Name or full path of one or several arrays to mosaic. If not specified,
+    a target array is created for each array with two or more dimensions.
 
 Advanced options
 ++++++++++++++++
@@ -111,8 +126,8 @@ Examples
 --------
 
 .. example::
-   :title: Mosaic together several netCDF files that are slices of a 3D array
+   :title: Mosaic together several all netCDF files starting with ``slice`` that are slices of a 3D array
 
    .. code-block:: bash
 
-      gdal mdim mosaic slice1.nc slice2.nc slice3.nc out.vrt
+      gdal mdim mosaic slice*.nc out.vrt

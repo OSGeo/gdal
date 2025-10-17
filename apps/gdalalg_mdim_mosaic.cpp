@@ -13,6 +13,7 @@
 #include "gdalalg_mdim_mosaic.h"
 
 #include "cpl_conv.h"
+#include "cpl_vsi_virtual.h"
 #include "gdal_priv.h"
 #include "vrtdataset.h"
 
@@ -49,7 +50,7 @@ GDALMdimMosaicAlgorithm::GDALMdimMosaicAlgorithm()
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_MULTIDIM_RASTER);
     AddCreationOptionsArg(&m_creationOptions);
     AddOverwriteArg(&m_overwrite);
-    AddArrayNameArg(&m_array, _("Name of array to mosaic."));
+    AddArrayNameArg(&m_array, _("Name of array(s) to mosaic."));
 }
 
 /************************************************************************/
@@ -170,358 +171,430 @@ GDALMdimMosaicAlgorithm::GetDimensionDesc(
 }
 
 /************************************************************************/
-/*            GDALMdimMosaicAlgorithm::BuildDimensionDesc()             */
+/*            GDALMdimMosaicAlgorithm::BuildArrayParameters()           */
 /************************************************************************/
 
-std::optional<std::vector<GDALMdimMosaicAlgorithm::DimensionDesc>>
-GDALMdimMosaicAlgorithm::BuildDimensionDesc(
-    std::shared_ptr<GDALMDArray> &poFirstSourceArray,
-    std::vector<std::vector<SourceShortDimDesc>> &aaoSourceShortDimDesc)
+bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
+    const CPLStringList &aosInputDatasetNames,
+    std::vector<ArrayParameters> &aoArrayParameters)
 {
-    std::vector<DimensionDesc> aDimensions;
-
-    for (const auto &dataset : m_inputDatasets)
+    for (const char *pszDatasetName : cpl::Iterate(aosInputDatasetNames))
     {
-        auto poDS = std::unique_ptr<GDALDataset>(
-            GDALDataset::Open(dataset.GetName().c_str(),
-                              GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR,
-                              CPLStringList(m_inputFormats).List(),
-                              CPLStringList(m_openOptions).List(), nullptr));
+        auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+            pszDatasetName, GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR,
+            CPLStringList(m_inputFormats).List(),
+            CPLStringList(m_openOptions).List(), nullptr));
         if (!poDS)
-            return std::nullopt;
+            return false;
         auto poRG = poDS->GetRootGroup();
         if (!poRG)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
-                        "Cannot get root group for dataset %s",
-                        dataset.GetName().c_str());
-            return std::nullopt;
+                        "Cannot get root group for dataset %s", pszDatasetName);
+            return false;
         }
-        std::shared_ptr<GDALMDArray> poArray;
+        std::vector<std::shared_ptr<GDALMDArray>> apoArrays;
         if (!m_array.empty())
         {
-            poArray = poRG->OpenMDArrayFromFullname(m_array);
-            if (!poArray)
+            for (const auto &array : m_array)
             {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Cannot find array %s in dataset %s",
-                            m_array.c_str(), dataset.GetName().c_str());
-                return std::nullopt;
+                auto poArray = poRG->OpenMDArrayFromFullname(array);
+                if (!poArray)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Cannot find array %s in dataset %s",
+                                array.c_str(), pszDatasetName);
+                    return false;
+                }
+                apoArrays.push_back(poArray);
             }
         }
         else
         {
-            std::vector<std::string> arrayNames;
             for (const std::string &arrayName :
                  poRG->GetMDArrayFullNamesRecursive())
             {
-                auto poIterArray = poRG->OpenMDArrayFromFullname(arrayName);
-                if (!poIterArray)
+                auto poArray = poRG->OpenMDArrayFromFullname(arrayName);
+                if (!poArray)
                 {
                     ReportError(CE_Failure, CPLE_AppDefined,
                                 "Cannot open array %s of dataset %s",
-                                arrayName.c_str(), dataset.GetName().c_str());
-                    return std::nullopt;
+                                arrayName.c_str(), pszDatasetName);
+                    return false;
                 }
-                if (poIterArray->GetDimensionCount() < 2)
+                if (poArray->GetDimensionCount() < 2)
                     continue;
-                poArray = poIterArray;
-                arrayNames.push_back(arrayName);
+                m_array.push_back(arrayName);
+                apoArrays.push_back(poArray);
             }
-            if (arrayNames.empty())
+            if (apoArrays.empty())
             {
                 ReportError(
                     CE_Failure, CPLE_AppDefined,
                     "No array of dimension count >= 2 found in dataset %s",
-                    dataset.GetName().c_str());
-                return std::nullopt;
+                    pszDatasetName);
+                return false;
             }
-            if (arrayNames.size() >= 2)
+        }
+
+        if (aoArrayParameters.empty())
+            aoArrayParameters.resize(apoArrays.size());
+
+        for (size_t iArray = 0; iArray < apoArrays.size(); ++iArray)
+        {
+            auto &arrayParameters = aoArrayParameters[iArray];
+            auto &poArray = apoArrays[iArray];
+            if (poArray->GetDimensionCount() == 0)
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
-                            "Several arrays of dimension count >= 2 found in "
-                            "dataset %s. Specify one with the 'array' argument",
-                            dataset.GetName().c_str());
-                return std::nullopt;
+                            "Array %s of dataset %s has no dimensions",
+                            poArray->GetName().c_str(), pszDatasetName);
+                return false;
             }
-            m_array = arrayNames[0];
-        }
-        CPLAssert(poArray);
 
-        if (poArray->GetDimensionCount() == 0)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Array %s of dataset %s has no dimensions",
-                        m_array.c_str(), dataset.GetName().c_str());
-            return std::nullopt;
-        }
+            std::vector<SourceShortDimDesc> aoSourceShortDimDesc;
+            const auto AddToSourceShortDimDesc =
+                [&aoSourceShortDimDesc](const DimensionDesc &dimDesc,
+                                        uint64_t nSize)
+            {
+                SourceShortDimDesc sourceDesc;
+                sourceDesc.nSize = nSize;
+                sourceDesc.bIsRegularlySpaced = dimDesc.aaValues.empty();
+                if (sourceDesc.bIsRegularlySpaced)
+                    sourceDesc.dfStart = dimDesc.dfStart;
+                else
+                    sourceDesc.dfStart = dimDesc.aaValues[0][0];
+                aoSourceShortDimDesc.push_back(std::move(sourceDesc));
+            };
 
-        std::vector<SourceShortDimDesc> aoSourceShortDimDesc;
-        const auto AddToSourceShortDimDesc =
-            [&aoSourceShortDimDesc](const DimensionDesc &dimDesc,
-                                    uint64_t nSize)
-        {
-            SourceShortDimDesc sourceDesc;
-            sourceDesc.nSize = nSize;
-            sourceDesc.bIsRegularlySpaced = dimDesc.aaValues.empty();
-            if (sourceDesc.bIsRegularlySpaced)
-                sourceDesc.dfStart = dimDesc.dfStart;
+            const auto anBlockSize = poArray->GetBlockSize();
+            CPLAssert(anBlockSize.size() == poArray->GetDimensionCount());
+
+            if (!arrayParameters.poFirstSourceArray)
+            {
+                arrayParameters.poFirstSourceArray = poArray;
+                CPLAssert(arrayParameters.mosaicDimensions.empty());
+                size_t iDim = 0;
+                for (auto &poDim : poArray->GetDimensions())
+                {
+                    auto descOpt = GetDimensionDesc(pszDatasetName, poDim);
+                    if (!descOpt.has_value())
+                        return false;
+                    auto &desc = descOpt.value();
+                    AddToSourceShortDimDesc(desc, poDim->GetSize());
+                    desc.nBlockSize = anBlockSize[iDim];
+                    arrayParameters.mosaicDimensions.push_back(std::move(desc));
+                    ++iDim;
+                }
+            }
             else
-                sourceDesc.dfStart = dimDesc.aaValues[0][0];
-            aoSourceShortDimDesc.push_back(std::move(sourceDesc));
-        };
-
-        if (!poFirstSourceArray)
-        {
-            poFirstSourceArray = poArray;
-            CPLAssert(aDimensions.empty());
-            for (auto &poDim : poArray->GetDimensions())
             {
-                auto descOpt = GetDimensionDesc(dataset.GetName(), poDim);
-                if (!descOpt.has_value())
-                    return std::nullopt;
-                const auto &desc = descOpt.value();
-                AddToSourceShortDimDesc(desc, poDim->GetSize());
-                aDimensions.push_back(std::move(desc));
-            }
-        }
-        else
-        {
-            if (poArray->GetDimensionCount() != aDimensions.size())
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Array %s of dataset %s does not have the same "
-                            "number of dimensions as in other datasets",
-                            m_array.c_str(), dataset.GetName().c_str());
-                return std::nullopt;
-            }
-            if (poArray->GetDataType() != poFirstSourceArray->GetDataType())
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Array %s of dataset %s does not have the same "
-                            "data type as in other datasets",
-                            m_array.c_str(), dataset.GetName().c_str());
-                return std::nullopt;
-            }
-            const void *poFirstRawNoData =
-                poFirstSourceArray->GetRawNoDataValue();
-            const void *poRawNoData = poArray->GetRawNoDataValue();
-            if (!((!poFirstRawNoData && !poRawNoData) ||
-                  (poFirstRawNoData && poRawNoData &&
-                   memcmp(poFirstRawNoData, poRawNoData,
-                          poArray->GetDataType().GetSize()) == 0)))
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Array %s of dataset %s does not have the same "
-                            "nodata value as in other datasets",
-                            m_array.c_str(), dataset.GetName().c_str());
-                return std::nullopt;
-            }
-            const auto apoDims = poArray->GetDimensions();
-            for (size_t iDim = 0; iDim < aDimensions.size(); ++iDim)
-            {
-                DimensionDesc &desc = aDimensions[iDim];
-                auto &poDim = apoDims[iDim];
-                if (poDim->GetName() != desc.osName)
+                if (poArray->GetDimensionCount() !=
+                    arrayParameters.mosaicDimensions.size())
                 {
                     ReportError(CE_Failure, CPLE_AppDefined,
-                                "Dimension %d of array %s of dataset %s does "
-                                "not have the same name as in other datasets",
-                                static_cast<int>(iDim), m_array.c_str(),
-                                dataset.GetName().c_str());
-                    return std::nullopt;
+                                "Array %s of dataset %s does not have the same "
+                                "number of dimensions as in other datasets",
+                                poArray->GetName().c_str(), pszDatasetName);
+                    return false;
                 }
+                if (poArray->GetDataType() !=
+                    arrayParameters.poFirstSourceArray->GetDataType())
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Array %s of dataset %s does not have the same "
+                                "data type as in other datasets",
+                                poArray->GetName().c_str(), pszDatasetName);
+                    return false;
+                }
+                const void *poFirstRawNoData =
+                    arrayParameters.poFirstSourceArray->GetRawNoDataValue();
+                const void *poRawNoData = poArray->GetRawNoDataValue();
+                if (!((!poFirstRawNoData && !poRawNoData) ||
+                      (poFirstRawNoData && poRawNoData &&
+                       memcmp(poFirstRawNoData, poRawNoData,
+                              poArray->GetDataType().GetSize()) == 0)))
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Array %s of dataset %s does not have the same "
+                                "nodata value as in other datasets",
+                                poArray->GetName().c_str(), pszDatasetName);
+                    return false;
+                }
+                const auto apoDims = poArray->GetDimensions();
+                for (size_t iDim = 0;
+                     iDim < arrayParameters.mosaicDimensions.size(); ++iDim)
+                {
+                    DimensionDesc &desc =
+                        arrayParameters.mosaicDimensions[iDim];
+                    auto &poDim = apoDims[iDim];
+                    if (poDim->GetName() != desc.osName)
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Dimension %d of array %s of dataset %s does "
+                            "not have the same name as in other datasets",
+                            static_cast<int>(iDim), poArray->GetName().c_str(),
+                            pszDatasetName);
+                        return false;
+                    }
+                    if (desc.nBlockSize != anBlockSize[iDim])
+                        desc.nBlockSize = 0;
 
-                auto descThisDatasetOpt =
-                    GetDimensionDesc(dataset.GetName(), poDim);
-                if (!descThisDatasetOpt.has_value())
-                    return std::nullopt;
-                auto &descThisDataset = descThisDatasetOpt.value();
-                AddToSourceShortDimDesc(descThisDataset, poDim->GetSize());
-                if (desc.aaValues.empty())
-                {
-                    if (!descThisDataset.aaValues.empty())
+                    auto descThisDatasetOpt =
+                        GetDimensionDesc(pszDatasetName, poDim);
+                    if (!descThisDatasetOpt.has_value())
+                        return false;
+                    auto &descThisDataset = descThisDatasetOpt.value();
+                    AddToSourceShortDimDesc(descThisDataset, poDim->GetSize());
+                    if (desc.aaValues.empty())
                     {
-                        ReportError(CE_Failure, CPLE_AppDefined,
-                                    "Dimension %s of array %s of dataset %s "
-                                    "has irregularly-spaced values, contrary "
-                                    "to other datasets",
-                                    poDim->GetName().c_str(), m_array.c_str(),
-                                    dataset.GetName().c_str());
-                        return std::nullopt;
+                        if (!descThisDataset.aaValues.empty())
+                        {
+                            ReportError(
+                                CE_Failure, CPLE_AppDefined,
+                                "Dimension %s of array %s of dataset %s "
+                                "has irregularly-spaced values, contrary "
+                                "to other datasets",
+                                poDim->GetName().c_str(),
+                                poArray->GetName().c_str(), pszDatasetName);
+                            return false;
+                        }
+                        if (std::fabs(descThisDataset.dfIncrement -
+                                      desc.dfIncrement) >
+                            1e-10 * std::fabs(desc.dfIncrement))
+                        {
+                            ReportError(
+                                CE_Failure, CPLE_AppDefined,
+                                "Dimension %s of array %s of dataset %s is "
+                                "indexed by a variable with spacing %g, "
+                                "whereas it is %g in other datasets",
+                                poDim->GetName().c_str(),
+                                poArray->GetName().c_str(), pszDatasetName,
+                                descThisDataset.dfIncrement, desc.dfIncrement);
+                            return false;
+                        }
+                        const double dfPos =
+                            (descThisDataset.dfStart - desc.dfStart) /
+                            desc.dfIncrement;
+                        if (std::fabs(std::round(dfPos) - dfPos) > 1e-3)
+                        {
+                            ReportError(CE_Failure, CPLE_AppDefined,
+                                        "Dimension %s of array %s of dataset "
+                                        "%s is indexed "
+                                        "by a variable whose start value is "
+                                        "not aligned "
+                                        "with the one of other datasets",
+                                        poDim->GetName().c_str(),
+                                        poArray->GetName().c_str(),
+                                        pszDatasetName);
+                            return false;
+                        }
+                        desc.dfStart =
+                            std::min(desc.dfStart, descThisDataset.dfStart);
+                        const double dfEnd = std::max(
+                            desc.dfStart + static_cast<double>(desc.nSize) *
+                                               desc.dfIncrement,
+                            descThisDataset.dfStart +
+                                static_cast<double>(descThisDataset.nSize) *
+                                    descThisDataset.dfIncrement);
+                        const double dfSize =
+                            (dfEnd - desc.dfStart) / desc.dfIncrement;
+                        constexpr double MAX_INTEGER_REPRESENTABLE =
+                            static_cast<double>(1ULL << 53);
+                        if (dfSize > MAX_INTEGER_REPRESENTABLE)
+                        {
+                            ReportError(
+                                CE_Failure, CPLE_AppDefined,
+                                "Dimension %s of array %s of dataset %s "
+                                "would be too large if merged.",
+                                poDim->GetName().c_str(),
+                                poArray->GetName().c_str(), pszDatasetName);
+                            return false;
+                        }
+                        desc.nSize = static_cast<uint64_t>(dfSize + 0.5);
                     }
-                    if (std::fabs(descThisDataset.dfIncrement -
-                                  desc.dfIncrement) >
-                        1e-10 * std::fabs(desc.dfIncrement))
+                    else
                     {
-                        ReportError(CE_Failure, CPLE_AppDefined,
-                                    "Dimension %s of array %s of dataset %s is "
-                                    "indexed by a variable with spacing %g, "
-                                    "whereas it is %g in other datasets",
-                                    poDim->GetName().c_str(), m_array.c_str(),
-                                    dataset.GetName().c_str(),
-                                    descThisDataset.dfIncrement,
-                                    desc.dfIncrement);
-                        return std::nullopt;
-                    }
-                    const double dfPos =
-                        (descThisDataset.dfStart - desc.dfStart) /
-                        desc.dfIncrement;
-                    if (std::fabs(std::round(dfPos) - dfPos) > 1e-3)
-                    {
-                        ReportError(
-                            CE_Failure, CPLE_AppDefined,
-                            "Dimension %s of array %s of dataset %s is indexed "
-                            "by a variable whose start value is not aligned "
-                            "with the one of other datasets",
-                            poDim->GetName().c_str(), m_array.c_str(),
-                            dataset.GetName().c_str());
-                        return std::nullopt;
-                    }
-                    desc.dfStart =
-                        std::min(desc.dfStart, descThisDataset.dfStart);
-                    const double dfEnd = std::max(
-                        desc.dfStart +
-                            static_cast<double>(desc.nSize) * desc.dfIncrement,
-                        descThisDataset.dfStart +
-                            static_cast<double>(descThisDataset.nSize) *
-                                descThisDataset.dfIncrement);
-                    const double dfSize =
-                        (dfEnd - desc.dfStart) / desc.dfIncrement;
-                    constexpr double MAX_INTEGER_REPRESENTABLE =
-                        static_cast<double>(1ULL << 53);
-                    if (dfSize > MAX_INTEGER_REPRESENTABLE)
-                    {
-                        ReportError(CE_Failure, CPLE_AppDefined,
-                                    "Dimension %s of array %s of dataset %s "
-                                    "would be too large if merged.",
-                                    poDim->GetName().c_str(), m_array.c_str(),
-                                    dataset.GetName().c_str());
-                        return std::nullopt;
-                    }
-                    desc.nSize = static_cast<uint64_t>(dfSize + 0.5);
-                }
-                else
-                {
-                    if (descThisDataset.aaValues.empty())
-                    {
-                        ReportError(CE_Failure, CPLE_AppDefined,
-                                    "Dimension %s of array %s of dataset %s "
-                                    "has regularly spaced labels, contrary to "
-                                    "other datasets",
-                                    poDim->GetName().c_str(), m_array.c_str(),
-                                    dataset.GetName().c_str());
-                        return std::nullopt;
-                    }
-                    if (descThisDataset.nProgressionSign !=
-                        desc.nProgressionSign)
-                    {
-                        ReportError(
-                            CE_Failure, CPLE_AppDefined,
-                            "Dataset %s: values in indexing variable %s of "
-                            "dimension %s must be either increasing or "
-                            "decreasing in all input datasets.",
-                            dataset.GetName().c_str(),
-                            poDim->GetIndexingVariable()->GetName().c_str(),
-                            desc.osName.c_str());
-                        return std::nullopt;
-                    }
-                    CPLAssert(descThisDataset.aaValues.size() == 1);
-                    if (descThisDataset.aaValues[0][0] < desc.aaValues[0][0])
-                    {
-                        if (descThisDataset.aaValues[0].back() >=
-                            desc.aaValues[0][0])
+                        if (descThisDataset.aaValues.empty())
+                        {
+                            ReportError(
+                                CE_Failure, CPLE_AppDefined,
+                                "Dimension %s of array %s of dataset %s "
+                                "has regularly spaced labels, contrary to "
+                                "other datasets",
+                                poDim->GetName().c_str(),
+                                poArray->GetName().c_str(), pszDatasetName);
+                            return false;
+                        }
+                        if (descThisDataset.nProgressionSign !=
+                            desc.nProgressionSign)
                         {
                             ReportError(
                                 CE_Failure, CPLE_AppDefined,
                                 "Dataset %s: values in indexing variable %s of "
-                                "dimension %s are not the same as in other "
-                                "datasets",
-                                dataset.GetName().c_str(),
+                                "dimension %s must be either increasing or "
+                                "decreasing in all input datasets.",
+                                pszDatasetName,
                                 poDim->GetIndexingVariable()->GetName().c_str(),
                                 desc.osName.c_str());
-                            return std::nullopt;
+                            return false;
                         }
-                        desc.aaValues.insert(
-                            desc.aaValues.begin(),
-                            std::move(descThisDataset.aaValues[0]));
-                    }
-                    else
-                    {
-                        for (size_t i = 0; i < desc.aaValues.size(); ++i)
+                        CPLAssert(descThisDataset.aaValues.size() == 1);
+                        if (descThisDataset.aaValues[0][0] <
+                            desc.aaValues[0][0])
                         {
-                            if (descThisDataset.aaValues[0][0] ==
-                                desc.aaValues[i][0])
+                            if (descThisDataset.aaValues[0].back() >=
+                                desc.aaValues[0][0])
                             {
-                                if (descThisDataset.aaValues[0] !=
-                                    desc.aaValues[i])
-                                {
-                                    ReportError(
-                                        CE_Failure, CPLE_AppDefined,
-                                        "Dataset %s: values in indexing "
-                                        "variable %s of dimension %s are not "
-                                        "the same as in other datasets",
-                                        dataset.GetName().c_str(),
-                                        poDim->GetIndexingVariable()
-                                            ->GetName()
-                                            .c_str(),
-                                        desc.osName.c_str());
-                                    return std::nullopt;
-                                }
+                                ReportError(
+                                    CE_Failure, CPLE_AppDefined,
+                                    "Dataset %s: values in indexing variable "
+                                    "%s of "
+                                    "dimension %s are not the same as in other "
+                                    "datasets",
+                                    pszDatasetName,
+                                    poDim->GetIndexingVariable()
+                                        ->GetName()
+                                        .c_str(),
+                                    desc.osName.c_str());
+                                return false;
                             }
-                            else if (descThisDataset.aaValues[0][0] >
-                                     desc.aaValues[i][0])
+                            desc.aaValues.insert(
+                                desc.aaValues.begin(),
+                                std::move(descThisDataset.aaValues[0]));
+                        }
+                        else
+                        {
+                            for (size_t i = 0; i < desc.aaValues.size(); ++i)
                             {
-                                if (descThisDataset.aaValues[0][0] <=
-                                    desc.aaValues[i].back())
+                                if (descThisDataset.aaValues[0][0] ==
+                                    desc.aaValues[i][0])
                                 {
-                                    ReportError(
-                                        CE_Failure, CPLE_AppDefined,
-                                        "Dataset %s: values in indexing "
-                                        "variable %s of dimension %s are "
-                                        "overlapping with the ones of other "
-                                        "datasets",
-                                        dataset.GetName().c_str(),
-                                        poDim->GetIndexingVariable()
-                                            ->GetName()
-                                            .c_str(),
-                                        desc.osName.c_str());
-                                    return std::nullopt;
+                                    if (descThisDataset.aaValues[0] !=
+                                        desc.aaValues[i])
+                                    {
+                                        ReportError(
+                                            CE_Failure, CPLE_AppDefined,
+                                            "Dataset %s: values in indexing "
+                                            "variable %s of dimension %s are "
+                                            "not "
+                                            "the same as in other datasets",
+                                            pszDatasetName,
+                                            poDim->GetIndexingVariable()
+                                                ->GetName()
+                                                .c_str(),
+                                            desc.osName.c_str());
+                                        return false;
+                                    }
                                 }
-                                if (i + 1 < desc.aaValues.size() &&
-                                    descThisDataset.aaValues[0][0] <
-                                        desc.aaValues[i + 1][0] &&
-                                    descThisDataset.aaValues[0].back() >=
-                                        desc.aaValues[i + 1][0])
+                                else if (descThisDataset.aaValues[0][0] >
+                                             desc.aaValues[i][0] &&
+                                         (i + 1 == desc.aaValues.size() ||
+                                          descThisDataset.aaValues[0][0] <
+                                              desc.aaValues[i + 1][0]))
                                 {
-                                    ReportError(
-                                        CE_Failure, CPLE_AppDefined,
-                                        "Dataset %s: values in indexing "
-                                        "variable %s of dimension %s are "
-                                        "overlapping with the ones of other "
-                                        "datasets",
-                                        dataset.GetName().c_str(),
-                                        poDim->GetIndexingVariable()
-                                            ->GetName()
-                                            .c_str(),
-                                        desc.osName.c_str());
-                                    return std::nullopt;
+                                    if (descThisDataset.aaValues[0][0] <=
+                                        desc.aaValues[i].back())
+                                    {
+                                        ReportError(
+                                            CE_Failure, CPLE_AppDefined,
+                                            "Dataset %s: values in indexing "
+                                            "variable %s of dimension %s are "
+                                            "overlapping with the ones of "
+                                            "other "
+                                            "datasets",
+                                            pszDatasetName,
+                                            poDim->GetIndexingVariable()
+                                                ->GetName()
+                                                .c_str(),
+                                            desc.osName.c_str());
+                                        return false;
+                                    }
+                                    if (i + 1 < desc.aaValues.size() &&
+                                        descThisDataset.aaValues[0].back() >=
+                                            desc.aaValues[i + 1][0])
+                                    {
+                                        ReportError(
+                                            CE_Failure, CPLE_AppDefined,
+                                            "Dataset %s: values in indexing "
+                                            "variable %s of dimension %s are "
+                                            "overlapping with the ones of "
+                                            "other "
+                                            "datasets",
+                                            pszDatasetName,
+                                            poDim->GetIndexingVariable()
+                                                ->GetName()
+                                                .c_str(),
+                                            desc.osName.c_str());
+                                        return false;
+                                    }
+                                    desc.aaValues.insert(
+                                        desc.aaValues.begin() + i + 1,
+                                        std::move(descThisDataset.aaValues[0]));
+                                    break;
                                 }
-                                desc.aaValues.insert(
-                                    desc.aaValues.begin() + i + 1,
-                                    std::move(descThisDataset.aaValues[0]));
-                                break;
                             }
                         }
                     }
                 }
             }
-        }
 
-        aaoSourceShortDimDesc.push_back(std::move(aoSourceShortDimDesc));
+            arrayParameters.aaoSourceShortDimDesc.push_back(
+                std::move(aoSourceShortDimDesc));
+        }
     }
 
-    return aDimensions;
+    return true;
+}
+
+/************************************************************************/
+/*             GDALMdimMosaicAlgorithm::GetInputDatasetNames()          */
+/************************************************************************/
+
+bool GDALMdimMosaicAlgorithm::GetInputDatasetNames(
+    GDALProgressFunc pfnProgress, void *pProgressData,
+    CPLStringList &aosInputDatasetNames) const
+{
+    for (auto &ds : m_inputDatasets)
+    {
+        if (ds.GetName()[0] == '@')
+        {
+            auto f = VSIVirtualHandleUniquePtr(
+                VSIFOpenL(ds.GetName().c_str() + 1, "r"));
+            if (!f)
+            {
+                ReportError(CE_Failure, CPLE_FileIO, "Cannot open %s",
+                            ds.GetName().c_str() + 1);
+                return false;
+            }
+            while (const char *filename = CPLReadLineL(f.get()))
+            {
+                aosInputDatasetNames.push_back(filename);
+            }
+        }
+        else if (ds.GetName().find_first_of("*?[") != std::string::npos)
+        {
+            CPLStringList aosMatches(VSIGlob(ds.GetName().c_str(), nullptr,
+                                             pfnProgress, pProgressData));
+            for (const char *pszStr : aosMatches)
+            {
+                aosInputDatasetNames.push_back(pszStr);
+            }
+        }
+        else
+        {
+            std::string osDatasetName = ds.GetName();
+            if (!GetReferencePathForRelativePaths().empty())
+            {
+                osDatasetName = GDALDataset::BuildFilename(
+                    osDatasetName.c_str(),
+                    GetReferencePathForRelativePaths().c_str(), true);
+            }
+            aosInputDatasetNames.push_back(osDatasetName.c_str());
+        }
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -558,20 +631,29 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
-    if (!m_array.empty() && m_array[0] != '/')
-        m_array = "/" + m_array;
+    const bool bIsVRT = EQUAL(m_outputFormat.c_str(), "VRT");
 
-    std::shared_ptr<GDALMDArray> poFirstSourceArray;
-    std::vector<std::vector<SourceShortDimDesc>> aaoSourceShortDimDesc;
-
-    auto aDimensionsOpt =
-        BuildDimensionDesc(poFirstSourceArray, aaoSourceShortDimDesc);
-    if (!aDimensionsOpt.has_value())
+    CPLStringList aosInputDatasetNames;
+    const double dfIntermediatePercentage = bIsVRT ? 1.0 : 0.1;
+    std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
+        GDALCreateScaledProgress(0.0, dfIntermediatePercentage, pfnProgress,
+                                 pProgressData),
+        GDALDestroyScaledProgress);
+    if (!GetInputDatasetNames(GDALScaledProgress, pScaledData.get(),
+                              aosInputDatasetNames))
         return false;
-    const auto &aDimensions = aDimensionsOpt.value();
 
-    CPLAssert(poFirstSourceArray);
-    CPLAssert(aaoSourceShortDimDesc.size() == m_inputDatasets.size());
+    for (std::string &name : m_array)
+    {
+        if (!name.empty() && name[0] != '/')
+            name = "/" + name;
+    }
+
+    std::vector<ArrayParameters> aoArrayParameters;
+    if (!BuildArrayParameters(aosInputDatasetNames, aoArrayParameters))
+    {
+        return false;
+    }
 
     auto poVRTDS = VRTDataset::CreateVRTMultiDimensional("", nullptr, nullptr);
     CPLAssert(poVRTDS);
@@ -579,151 +661,196 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     auto poDstGroup = poVRTDS->GetRootVRTGroup();
     CPLAssert(poDstGroup);
 
-    // Create mosaicenated array dimensions
-    std::vector<std::shared_ptr<GDALDimension>> apoDstDims;
-    for (auto &desc : aDimensions)
+    std::map<std::string, std::shared_ptr<GDALDimension>>
+        oMapAlreadyCreatedDims;
+
+    // Iterate over arrays
+    for (auto &arrayParameters : aoArrayParameters)
     {
-        uint64_t nDimSize64 = desc.nSize;
-        if (!desc.aaValues.empty())
-        {
-            nDimSize64 = 0;
-            for (const auto &aValues : desc.aaValues)
-                nDimSize64 += aValues.size();
-        }
-        auto dstDim = poDstGroup->CreateDimension(desc.osName, desc.osType,
-                                                  desc.osDirection, nDimSize64);
-        if (!dstDim)
-            return false;
+        auto &poFirstSourceArray = arrayParameters.poFirstSourceArray;
+        CPLAssert(poFirstSourceArray);
+        auto &aaoSourceShortDimDesc = arrayParameters.aaoSourceShortDimDesc;
+        CPLAssert(aaoSourceShortDimDesc.size() ==
+                  static_cast<size_t>(aosInputDatasetNames.size()));
 
-        auto var = poDstGroup->CreateVRTMDArray(
-            desc.osName, {dstDim}, GDALExtendedDataType::Create(GDT_Float64));
-        if (!var)
-            return false;
-
-        for (const auto &attr : desc.attributes)
+        // Create mosaic array dimensions
+        std::vector<std::shared_ptr<GDALDimension>> apoDstDims;
+        for (auto &desc : arrayParameters.mosaicDimensions)
         {
-            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-            auto dstAttr =
-                var->CreateAttribute(attr->GetName(), attr->GetDimensionsSize(),
-                                     attr->GetDataType());
-            if (dstAttr)
+            auto oIterCreatedDims = oMapAlreadyCreatedDims.find(desc.osName);
+            if (oIterCreatedDims != oMapAlreadyCreatedDims.end())
             {
-                auto raw(attr->ReadAsRaw());
-                CPL_IGNORE_RET_VAL(dstAttr->Write(raw.data(), raw.size()));
-            }
-        }
-
-        if (desc.aaValues.empty())
-        {
-            auto poSource = std::make_unique<VRTMDArraySourceRegularlySpaced>(
-                desc.dfStart, desc.dfIncrement);
-            var->AddSource(std::move(poSource));
-        }
-        else
-        {
-            const size_t nDimSize = static_cast<size_t>(nDimSize64);
-            std::vector<GUInt64> anOffset = {0};
-            std::vector<size_t> anCount = {nDimSize};
-            std::vector<double> adfValues;
-            adfValues.reserve(nDimSize);
-            if (desc.nProgressionSign >= 0)
-            {
-                for (const auto &aValues : desc.aaValues)
-                    adfValues.insert(adfValues.end(), aValues.begin(),
-                                     aValues.end());
+                apoDstDims.push_back(oIterCreatedDims->second);
             }
             else
             {
-                for (auto oIter = desc.aaValues.rbegin();
-                     oIter != desc.aaValues.rend(); ++oIter)
+                uint64_t nDimSize64 = desc.nSize;
+                if (!desc.aaValues.empty())
                 {
-                    adfValues.insert(adfValues.end(), oIter->rbegin(),
-                                     oIter->rend());
+                    nDimSize64 = 0;
+                    for (const auto &aValues : desc.aaValues)
+                        nDimSize64 += aValues.size();
                 }
-            }
-            std::vector<GByte> abyValues(nDimSize * sizeof(double));
-            memcpy(abyValues.data(), adfValues.data(),
-                   nDimSize * sizeof(double));
-            auto poSource = std::make_unique<VRTMDArraySourceInlinedValues>(
-                var.get(),
-                /* bIsConstantValue = */ false, std::move(anOffset),
-                std::move(anCount), std::move(abyValues));
-            var->AddSource(std::move(poSource));
-        }
-        dstDim->SetIndexingVariable(std::move(var));
-        apoDstDims.push_back(std::move(dstDim));
-    }
+                auto dstDim = poDstGroup->CreateDimension(
+                    desc.osName, desc.osType, desc.osDirection, nDimSize64);
+                if (!dstDim)
+                    return false;
 
-    // Create mosaicenated array
-    auto poDstArray = poDstGroup->CreateVRTMDArray(
-        CPLGetFilename(m_array.c_str()), apoDstDims,
-        poFirstSourceArray->GetDataType());
+                auto var = poDstGroup->CreateVRTMDArray(
+                    desc.osName, {dstDim},
+                    GDALExtendedDataType::Create(GDT_Float64));
+                if (!var)
+                    return false;
 
-    GUInt64 nCurCost = 0;
-    poDstArray->CopyFromAllExceptValues(poFirstSourceArray.get(), false,
-                                        nCurCost, 0, nullptr, nullptr);
-
-    // Add sources to mosaicenated array
-    for (size_t iDS = 0; iDS < m_inputDatasets.size(); ++iDS)
-    {
-        const auto &dataset = m_inputDatasets[iDS];
-        const auto &aoSourceShortDimDesc = aaoSourceShortDimDesc[iDS];
-
-        const auto dimCount = aDimensions.size();
-        std::vector<GUInt64> anSrcOffset(dimCount);
-        std::vector<GUInt64> anCount(dimCount);
-        std::vector<GUInt64> anDstOffset;
-        CPLAssert(aoSourceShortDimDesc.size() == dimCount);
-
-        for (size_t iDim = 0; iDim < dimCount; ++iDim)
-        {
-            const DimensionDesc &desc = aDimensions[iDim];
-            const SourceShortDimDesc &sourceDesc = aoSourceShortDimDesc[iDim];
-            if (sourceDesc.bIsRegularlySpaced)
-            {
-                const double dfPos =
-                    (sourceDesc.dfStart - desc.dfStart) / desc.dfIncrement;
-                anDstOffset.push_back(static_cast<uint64_t>(dfPos + 0.5));
-            }
-            else
-            {
-                uint64_t nPos = 0;
-                bool bFound = false;
-                for (size_t i = 0; i < desc.aaValues.size(); ++i)
+                for (const auto &attr : desc.attributes)
                 {
-                    if (sourceDesc.dfStart == desc.aaValues[i][0])
+                    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                    auto dstAttr = var->CreateAttribute(
+                        attr->GetName(), attr->GetDimensionsSize(),
+                        attr->GetDataType());
+                    if (dstAttr)
                     {
-                        bFound = true;
-                        break;
+                        auto raw(attr->ReadAsRaw());
+                        CPL_IGNORE_RET_VAL(
+                            dstAttr->Write(raw.data(), raw.size()));
+                    }
+                }
+
+                if (desc.aaValues.empty())
+                {
+                    auto poSource =
+                        std::make_unique<VRTMDArraySourceRegularlySpaced>(
+                            desc.dfStart, desc.dfIncrement);
+                    var->AddSource(std::move(poSource));
+                }
+                else
+                {
+                    const size_t nDimSize = static_cast<size_t>(nDimSize64);
+                    std::vector<GUInt64> anOffset = {0};
+                    std::vector<size_t> anCount = {nDimSize};
+                    std::vector<double> adfValues;
+                    adfValues.reserve(nDimSize);
+                    if (desc.nProgressionSign >= 0)
+                    {
+                        for (const auto &aValues : desc.aaValues)
+                            adfValues.insert(adfValues.end(), aValues.begin(),
+                                             aValues.end());
                     }
                     else
                     {
-                        nPos += desc.aaValues[i].size();
+                        for (auto oIter = desc.aaValues.rbegin();
+                             oIter != desc.aaValues.rend(); ++oIter)
+                        {
+                            adfValues.insert(adfValues.end(), oIter->rbegin(),
+                                             oIter->rend());
+                        }
                     }
+                    std::vector<GByte> abyValues(nDimSize * sizeof(double));
+                    memcpy(abyValues.data(), adfValues.data(),
+                           nDimSize * sizeof(double));
+                    auto poSource =
+                        std::make_unique<VRTMDArraySourceInlinedValues>(
+                            var.get(),
+                            /* bIsConstantValue = */ false, std::move(anOffset),
+                            std::move(anCount), std::move(abyValues));
+                    var->AddSource(std::move(poSource));
                 }
-                CPLAssert(bFound);
-                CPL_IGNORE_RET_VAL(bFound);
-
-                anDstOffset.push_back(nPos);
+                dstDim->SetIndexingVariable(std::move(var));
+                oMapAlreadyCreatedDims[dstDim->GetName()] = dstDim;
+                apoDstDims.push_back(std::move(dstDim));
             }
-
-            anCount[iDim] = sourceDesc.nSize;
         }
 
-        std::vector<GUInt64> anStep(dimCount, 1);
-        std::vector<int> anTransposedAxis;
-        auto poSource = std::make_unique<VRTMDArraySourceFromArray>(
-            poDstArray.get(), false, false, dataset.GetName().c_str(), m_array,
-            std::string(), std::move(anTransposedAxis),
-            std::string(),  // viewExpr
-            std::move(anSrcOffset), std::move(anCount), std::move(anStep),
-            std::move(anDstOffset));
-        poDstArray->AddSource(std::move(poSource));
+        // Create mosaic array
+        CPLStringList aosArrayCO;
+        std::string osBlockSize;
+        for (size_t i = 0; i < apoDstDims.size(); ++i)
+        {
+            if (i > 0)
+                osBlockSize += ',';
+            osBlockSize +=
+                std::to_string(arrayParameters.mosaicDimensions[i].nBlockSize);
+        }
+        if (!osBlockSize.empty())
+            aosArrayCO.SetNameValue("BLOCKSIZE", osBlockSize.c_str());
+
+        auto poDstArray = poDstGroup->CreateVRTMDArray(
+            CPLGetFilename(poFirstSourceArray->GetName().c_str()), apoDstDims,
+            poFirstSourceArray->GetDataType(), aosArrayCO);
+        if (!poDstArray)
+            return false;
+
+        GUInt64 nCurCost = 0;
+        poDstArray->CopyFromAllExceptValues(poFirstSourceArray.get(), false,
+                                            nCurCost, 0, nullptr, nullptr);
+
+        // Add sources to mosaic array
+        for (int iDS = 0; iDS < aosInputDatasetNames.size(); ++iDS)
+        {
+            const auto &aoSourceShortDimDesc = aaoSourceShortDimDesc[iDS];
+
+            const auto dimCount = arrayParameters.mosaicDimensions.size();
+            std::vector<GUInt64> anSrcOffset(dimCount);
+            std::vector<GUInt64> anCount(dimCount);
+            std::vector<GUInt64> anDstOffset;
+            CPLAssert(aoSourceShortDimDesc.size() == dimCount);
+
+            for (size_t iDim = 0; iDim < dimCount; ++iDim)
+            {
+                const DimensionDesc &desc =
+                    arrayParameters.mosaicDimensions[iDim];
+                const SourceShortDimDesc &sourceDesc =
+                    aoSourceShortDimDesc[iDim];
+                if (sourceDesc.bIsRegularlySpaced)
+                {
+                    const double dfPos =
+                        (sourceDesc.dfStart - desc.dfStart) / desc.dfIncrement;
+                    anDstOffset.push_back(static_cast<uint64_t>(dfPos + 0.5));
+                }
+                else
+                {
+                    uint64_t nPos = 0;
+                    bool bFound = false;
+                    for (size_t i = 0; i < desc.aaValues.size(); ++i)
+                    {
+                        if (sourceDesc.dfStart == desc.aaValues[i][0])
+                        {
+                            bFound = true;
+                            break;
+                        }
+                        else
+                        {
+                            nPos += desc.aaValues[i].size();
+                        }
+                    }
+                    CPLAssert(bFound);
+                    CPL_IGNORE_RET_VAL(bFound);
+
+                    anDstOffset.push_back(nPos);
+                }
+
+                anCount[iDim] = sourceDesc.nSize;
+            }
+
+            std::vector<GUInt64> anStep(dimCount, 1);
+            std::vector<int> anTransposedAxis;
+            auto poSource = std::make_unique<VRTMDArraySourceFromArray>(
+                poDstArray.get(), false, false, aosInputDatasetNames[iDS],
+                poFirstSourceArray->GetFullName(), std::string(),
+                std::move(anTransposedAxis),
+                std::string(),  // viewExpr
+                std::move(anSrcOffset), std::move(anCount), std::move(anStep),
+                std::move(anDstOffset));
+            poDstArray->AddSource(std::move(poSource));
+        }
     }
 
-    auto poOutDS = std::unique_ptr<GDALDataset>(poOutDrv->CreateCopy(
-        m_outputDataset.GetName().c_str(), poVRTDS.get(), false,
-        CPLStringList(m_creationOptions).List(), pfnProgress, pProgressData));
+    pScaledData.reset(GDALCreateScaledProgress(dfIntermediatePercentage, 1.0,
+                                               pfnProgress, pProgressData));
+    auto poOutDS = std::unique_ptr<GDALDataset>(
+        poOutDrv->CreateCopy(m_outputDataset.GetName().c_str(), poVRTDS.get(),
+                             false, CPLStringList(m_creationOptions).List(),
+                             GDALScaledProgress, pScaledData.get()));
 
     if (poOutDS)
         m_outputDataset.Set(std::move(poOutDS));

@@ -686,6 +686,7 @@
                                 <xs:element name="DimensionRef" type="DimensionRefType"/>
                             </xs:choice>
                         </xs:sequence>
+                    <xs:element name="BlockSize" type="integerList" minOccurs="0" maxOccurs="1"/>
                     <xs:element name="SRS" type="SRSType" minOccurs="0" maxOccurs="1"/>
                     <xs:element name="Unit" type="xs:string" minOccurs="0" maxOccurs="1"/>
                     <xs:element name="NoDataValue" type="DoubleOrNanType" minOccurs="0" maxOccurs="1"/>

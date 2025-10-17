@@ -47,7 +47,7 @@ class GDALMdimMosaicAlgorithm final : public GDALAlgorithm
     GDALArgDatasetValue m_outputDataset{};
     std::vector<std::string> m_creationOptions{};
     bool m_overwrite = false;
-    std::string m_array{};
+    std::vector<std::string> m_array{};
 
     // Describes a dimension of the mosaic array.
     struct DimensionDesc
@@ -56,6 +56,7 @@ class GDALMdimMosaicAlgorithm final : public GDALAlgorithm
         std::string osType{};
         std::string osDirection{};
         uint64_t nSize = 0;
+        uint64_t nBlockSize = 0;
         std::vector<std::shared_ptr<GDALAttribute>> attributes{};
 
         // Used for dimensions with irregular spaced labels
@@ -78,14 +79,25 @@ class GDALMdimMosaicAlgorithm final : public GDALAlgorithm
         bool bIsRegularlySpaced = false;
     };
 
+    // For a given output array, gather parameters from source arrays and
+    // output dimensions.
+    struct ArrayParameters
+    {
+        std::vector<DimensionDesc> mosaicDimensions{};
+        std::shared_ptr<GDALMDArray> poFirstSourceArray{};
+        std::vector<std::vector<SourceShortDimDesc>> aaoSourceShortDimDesc{};
+    };
+
+    bool GetInputDatasetNames(GDALProgressFunc pfnProgress, void *pProgressData,
+                              CPLStringList &aosInputDatasetNames) const;
+
     std::optional<DimensionDesc>
     // cppcheck-suppress functionStatic
     GetDimensionDesc(const std::string &osDSName,
                      const std::shared_ptr<GDALDimension> &poDim) const;
 
-    std::optional<std::vector<DimensionDesc>> BuildDimensionDesc(
-        std::shared_ptr<GDALMDArray> &poFirstSourceArray,
-        std::vector<std::vector<SourceShortDimDesc>> &aaoSourceShortDimDesc);
+    bool BuildArrayParameters(const CPLStringList &aosInputDatasetNames,
+                              std::vector<ArrayParameters> &aoArrayParameters);
 };
 
 //! @endcond
