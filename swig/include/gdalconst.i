@@ -465,6 +465,9 @@
 %constant GFT_Integer             = GFT_Integer;
 %constant GFT_Real                = GFT_Real;
 %constant GFT_String              = GFT_String;
+%constant GFT_Boolean             = GFT_Boolean;
+%constant GFT_DateTime            = GFT_DateTime;
+%constant GFT_WKBGeometry         = GFT_WKBGeometry;
 
 // GDALRATFieldUsage
 %constant GFU_Generic             = GFU_Generic;

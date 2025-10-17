@@ -31,7 +31,21 @@
 CPLErr GTiffRasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
 {
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
-    return GDALPamRasterBand::SetDefaultRAT(poRAT);
+    m_bRATSet = true;
+    m_bRATTriedReadingFromPAM = true;
+    if (poRAT)
+        m_poRAT.reset(poRAT->Clone());
+    else
+        m_poRAT.reset();
+    const bool bWriteToPAM =
+        CPLTestBool(CPLGetConfigOption("GTIFF_WRITE_RAT_TO_PAM", "NO"));
+    if (!bWriteToPAM)
+        m_poGDS->m_bMetadataChanged = true;
+    if (bWriteToPAM || GDALPamRasterBand::GetDefaultRAT())
+    {
+        return GDALPamRasterBand::SetDefaultRAT(poRAT);
+    }
+    return CE_None;
 }
 
 /************************************************************************/

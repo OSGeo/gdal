@@ -26,6 +26,7 @@ class GDALRasterAttributeTableFromMDArrays final
     const std::vector<GDALRATFieldUsage> m_aeUsages;
 
     mutable std::string m_osTmp{};
+    mutable std::vector<GByte> m_abyWKB{};
 
   public:
     GDALRasterAttributeTableFromMDArrays(
@@ -167,6 +168,45 @@ class GDALRasterAttributeTableFromMDArrays final
     }
 
     //
+    bool GetValueAsBoolean(int iRow, int iField) const override
+    {
+        // Let ValuesIO do the work.
+        bool bValue = false;
+        if (const_cast<GDALRasterAttributeTableFromMDArrays *>(this)->ValuesIO(
+                GF_Read, iField, iRow, 1, &bValue) != CE_None)
+        {
+            return false;
+        }
+
+        return bValue;
+    }
+
+    //
+    GDALRATDateTime GetValueAsDateTime(int iRow, int iField) const override
+    {
+        // Let ValuesIO do the work.
+        GDALRATDateTime dt;
+        const_cast<GDALRasterAttributeTableFromMDArrays *>(this)->ValuesIO(
+            GF_Read, iField, iRow, 1, &dt);
+        return dt;
+    }
+
+    //
+    const GByte *GetValueAsWKBGeometry(int iRow, int iField,
+                                       size_t &nWKBSize) const override
+    {
+        // Let ValuesIO do the work.
+        GByte *pabyWKB = nullptr;
+        nWKBSize = 0;
+        const_cast<GDALRasterAttributeTableFromMDArrays *>(this)->ValuesIO(
+            GF_Read, iField, iRow, 1, &pabyWKB, &nWKBSize);
+        if (pabyWKB)
+            m_abyWKB.assign(pabyWKB, pabyWKB + nWKBSize);
+        CPLFree(pabyWKB);
+        return pabyWKB ? m_abyWKB.data() : nullptr;
+    }
+
+    //
     CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
                     double *pdfData) override
     {
@@ -266,6 +306,30 @@ class GDALRasterAttributeTableFromMDArrays final
     }
 
     //
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    bool *pbData) override
+    {
+        return ValuesIOBooleanFromIntoInt(eRWFlag, iField, iStartRow, iLength,
+                                          pbData);
+    }
+
+    //
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    GDALRATDateTime *psDateTime) override
+    {
+        return ValuesIODateTimeFromIntoString(eRWFlag, iField, iStartRow,
+                                              iLength, psDateTime);
+    }
+
+    //
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    GByte **ppabyWKB, size_t *pnWKBSize) override
+    {
+        return ValuesIOWKBGeometryFromIntoString(eRWFlag, iField, iStartRow,
+                                                 iLength, ppabyWKB, pnWKBSize);
+    }
+
+    //
     CPLErr SetValue(int, int, const char *) override
     {
         CPLError(
@@ -285,6 +349,33 @@ class GDALRasterAttributeTableFromMDArrays final
 
     //
     CPLErr SetValue(int, int, double) override
+    {
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "GDALRasterAttributeTableFromMDArrays::SetValue(): not supported");
+        return CE_Failure;
+    }
+
+    //
+    CPLErr SetValue(int, int, bool) override
+    {
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "GDALRasterAttributeTableFromMDArrays::SetValue(): not supported");
+        return CE_Failure;
+    }
+
+    //
+    CPLErr SetValue(int, int, const GDALRATDateTime &) override
+    {
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "GDALRasterAttributeTableFromMDArrays::SetValue(): not supported");
+        return CE_Failure;
+    }
+
+    //
+    CPLErr SetValue(int, int, const void *, size_t) override
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,

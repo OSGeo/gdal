@@ -40,6 +40,8 @@
 #endif
 #include "ogrlibjsonutils.h"
 
+// NOTE: keep the below description in sync with doc/source/user/raster_data_model.rst::raster_data_model_rat
+
 /**
  * \class GDALRasterAttributeTable
  *
@@ -54,10 +56,12 @@
  * and classification information.
  *
  * Each column in a raster attribute table has a name, a type (integer,
- * floating point or string), and a GDALRATFieldUsage.  The usage distinguishes
- * columns with particular understood purposes (such as color, histogram
- * count, name) and columns that have specific purposes not understood by
- * the library (long label, suitability_for_growing_wheat, etc).
+ * floating point, string, boolean, date time, geometries encoded as WKB),
+ * and a GDALRATFieldUsage.
+ * The usage distinguishes columns with particular understood purposes
+ * (such as color, histogram count, name) and columns that have specific
+ * purposes not understood by the library (long label,
+ * suitability_for_growing_wheat, etc).
  *
  * In the general case each row has a column indicating the minimum pixel
  * values falling into that category, and a column indicating the maximum
@@ -74,6 +78,77 @@
  * RATs are normally associated with GDALRasterBands and can be queried
  * using the GDALRasterBand::GetDefaultRAT() method.
  */
+
+/************************************************************************/
+/*                        GDALGetRATFieldTypeName()                     */
+/************************************************************************/
+
+/** Return the string representation of a GDALRATFieldType.
+ *
+ * @since 3.12
+ */
+const char *GDALGetRATFieldTypeName(GDALRATFieldType eType)
+{
+#define CASE_GFT(x)                                                            \
+    case GFT_##x:                                                              \
+        return #x
+
+    switch (eType)
+    {
+        CASE_GFT(Integer);
+        CASE_GFT(String);
+        CASE_GFT(Real);
+        CASE_GFT(Boolean);
+        CASE_GFT(DateTime);
+        case GFT_WKBGeometry:
+            break;
+    }
+    return "WKBGeometry";
+
+#undef CASE_GFT
+}
+
+/************************************************************************/
+/*                        GDALGetRATFieldUsageName()                    */
+/************************************************************************/
+
+/** Return the string representation of a GDALRATFieldUsage.
+ *
+ * @since 3.12
+ */
+const char *GDALGetRATFieldUsageName(GDALRATFieldUsage eUsage)
+{
+#define CASE_GFU(x)                                                            \
+    case GFU_##x:                                                              \
+        return #x
+
+    switch (eUsage)
+    {
+        CASE_GFU(Generic);
+        CASE_GFU(PixelCount);
+        CASE_GFU(Name);
+        CASE_GFU(Min);
+        CASE_GFU(Max);
+        CASE_GFU(MinMax);
+        CASE_GFU(Red);
+        CASE_GFU(Green);
+        CASE_GFU(Blue);
+        CASE_GFU(Alpha);
+        CASE_GFU(RedMin);
+        CASE_GFU(GreenMin);
+        CASE_GFU(BlueMin);
+        CASE_GFU(AlphaMin);
+        CASE_GFU(RedMax);
+        CASE_GFU(GreenMax);
+        CASE_GFU(BlueMax);
+        CASE_GFU(AlphaMax);
+        case GFU_MaxCount:
+            break;
+    }
+    return "MaxCount";
+
+#undef CASE_GFU
+}
 
 /************************************************************************/
 /*                  ~GDALRasterAttributeTable()                         */
@@ -94,7 +169,7 @@ GDALRasterAttributeTable::~GDALRasterAttributeTable() = default;
  *
  * This method is the same as the C function GDALRATValuesIOAsDouble().
  *
- * @param eRWFlag Either GF_Read or GF_Write
+ * @param eRWFlag either GF_Read or GF_Write
  * @param iField column of the Attribute Table
  * @param iStartRow start row to start reading/writing (zero based)
  * @param iLength number of rows to read or write
@@ -160,7 +235,7 @@ CPLErr CPL_STDCALL GDALRATValuesIOAsDouble(GDALRasterAttributeTableH hRAT,
  *
  * This method is the same as the C function GDALRATValuesIOAsInteger().
  *
- * @param eRWFlag Either GF_Read or GF_Write
+ * @param eRWFlag either GF_Read or GF_Write
  * @param iField column of the Attribute Table
  * @param iStartRow start row to start reading/writing (zero based)
  * @param iLength number of rows to read or write
@@ -228,7 +303,7 @@ CPLErr CPL_STDCALL GDALRATValuesIOAsInteger(GDALRasterAttributeTableH hRAT,
  * When reading, papszStrList must be already allocated to the correct size.
  * The caller is expected to call CPLFree on each read string.
  *
- * @param eRWFlag Either GF_Read or GF_Write
+ * @param eRWFlag either GF_Read or GF_Write
  * @param iField column of the Attribute Table
  * @param iStartRow start row to start reading/writing (zero based)
  * @param iLength number of rows to read or write
@@ -289,6 +364,465 @@ CPLErr CPL_STDCALL GDALRATValuesIOAsString(GDALRasterAttributeTableH hRAT,
     return GDALRasterAttributeTable::FromHandle(hRAT)->ValuesIO(
         eRWFlag, iField, iStartRow, iLength, papszStrList);
 }
+
+/************************************************************************/
+/*                                ValuesIO()                            */
+/************************************************************************/
+
+/**
+ * \brief Read or Write a block of booleans to/from the Attribute Table.
+ *
+ * This method is the same as the C function GDALRATValuesIOAsBoolean().
+ *
+ * @param eRWFlag either GF_Read or GF_Write
+ * @param iField column of the Attribute Table
+ * @param iStartRow start row to start reading/writing (zero based)
+ * @param iLength number of rows to read or write
+ * @param pbData pointer to array of booleans to read/write. Should be at least
+ *     iLength long.
+ *
+ * @return CE_None or CE_Failure if iStartRow + iLength greater than number of
+ *     rows in table.
+ * @since 3.12
+ */
+
+CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
+                                          int iStartRow, int iLength,
+                                          bool *pbData)
+{
+    if ((iStartRow + iLength) > GetRowCount())
+    {
+        return CE_Failure;
+    }
+
+    CPLErr eErr = CE_None;
+    if (eRWFlag == GF_Read)
+    {
+        for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
+        {
+            pbData[iIndex - iStartRow] = GetValueAsBoolean(iIndex, iField);
+        }
+    }
+    else
+    {
+        for (int iIndex = iStartRow;
+             eErr == CE_None && iIndex < (iStartRow + iLength); iIndex++)
+        {
+            eErr = SetValue(iIndex, iField, pbData[iIndex - iStartRow]);
+        }
+    }
+    return eErr;
+}
+
+/************************************************************************/
+/*                       GDALRATValuesIOAsBoolean()                     */
+/************************************************************************/
+
+/**
+ * \brief Read or Write a block of booleans to/from the Attribute Table.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterAttributeTable::ValuesIO()
+ *
+ * @since 3.12
+ */
+CPLErr GDALRATValuesIOAsBoolean(GDALRasterAttributeTableH hRAT,
+                                GDALRWFlag eRWFlag, int iField, int iStartRow,
+                                int iLength, bool *pbData)
+
+{
+    VALIDATE_POINTER1(hRAT, "GDALRATValuesIOAsBoolean", CE_Failure);
+
+    return GDALRasterAttributeTable::FromHandle(hRAT)->ValuesIO(
+        eRWFlag, iField, iStartRow, iLength, pbData);
+}
+
+/************************************************************************/
+/*                                ValuesIO()                            */
+/************************************************************************/
+
+/**
+ * \brief Read or Write a block of DateTime to/from the Attribute Table.
+ *
+ * This method is the same as the C function GDALRATValuesIOAsDateTime().
+ *
+ * @param eRWFlag either GF_Read or GF_Write
+ * @param iField column of the Attribute Table
+ * @param iStartRow start row to start reading/writing (zero based)
+ * @param iLength number of rows to read or write
+ * @param psDateTime pointer to array of DateTime to read/write. Should be at
+ *                   least iLength long.
+ *
+ * @return CE_None or CE_Failure if iStartRow + iLength greater than number of
+ *     rows in table.
+ * @since 3.12
+ */
+
+CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
+                                          int iStartRow, int iLength,
+                                          GDALRATDateTime *psDateTime)
+{
+    if ((iStartRow + iLength) > GetRowCount())
+    {
+        return CE_Failure;
+    }
+
+    CPLErr eErr = CE_None;
+    if (eRWFlag == GF_Read)
+    {
+        for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
+        {
+            psDateTime[iIndex - iStartRow] = GetValueAsDateTime(iIndex, iField);
+        }
+    }
+    else
+    {
+        for (int iIndex = iStartRow;
+             eErr == CE_None && iIndex < (iStartRow + iLength); iIndex++)
+        {
+            eErr = SetValue(iIndex, iField, psDateTime[iIndex - iStartRow]);
+        }
+    }
+    return eErr;
+}
+
+/************************************************************************/
+/*                       GDALRATValuesIOAsDateTime()                    */
+/************************************************************************/
+
+/**
+ * \brief Read or Write a block of date-times to/from the Attribute Table.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterAttributeTable::ValuesIO()
+ *
+ * @since 3.12
+ */
+CPLErr GDALRATValuesIOAsDateTime(GDALRasterAttributeTableH hRAT,
+                                 GDALRWFlag eRWFlag, int iField, int iStartRow,
+                                 int iLength, GDALRATDateTime *psDateTime)
+
+{
+    VALIDATE_POINTER1(hRAT, "GDALRATValuesIOAsDateTime", CE_Failure);
+
+    return GDALRasterAttributeTable::FromHandle(hRAT)->ValuesIO(
+        eRWFlag, iField, iStartRow, iLength, psDateTime);
+}
+
+/************************************************************************/
+/*                                ValuesIO()                            */
+/************************************************************************/
+
+/**
+ * \brief Read or Write a block of WKB-encoded geometries to/from the Attribute Table.
+ *
+ * When reading, each ppabyWKB[] should be CPLFree'd() after use.
+ *
+ * This method is the same as the C function GDALRATValuesIOAsWKBGeometry().
+ *
+ * @param eRWFlag either GF_Read or GF_Write
+ * @param iField column of the Attribute Table
+ * @param iStartRow start row to start reading/writing (zero based)
+ * @param iLength number of rows to read or write
+ * @param ppabyWKB pointer to array of pointer of WKB-encoded geometries to
+ *                 read/write. Should be at least iLength long.
+ * @param pnWKBSize pointer to array of WKB size.
+ *                  Should be at least iLength long.
+ *
+ * @return CE_None or CE_Failure if iStartRow + iLength greater than number of
+ *     rows in table.
+ * @since 3.12
+ */
+
+CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
+                                          int iStartRow, int iLength,
+                                          GByte **ppabyWKB, size_t *pnWKBSize)
+{
+    if ((iStartRow + iLength) > GetRowCount())
+    {
+        return CE_Failure;
+    }
+
+    CPLErr eErr = CE_None;
+    if (eRWFlag == GF_Read)
+    {
+        for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
+        {
+            size_t nSize = 0;
+            const GByte *pabyWKB = GetValueAsWKBGeometry(iIndex, iField, nSize);
+            pnWKBSize[iIndex - iStartRow] = nSize;
+            if (nSize)
+            {
+                ppabyWKB[iIndex - iStartRow] =
+                    static_cast<GByte *>(CPLMalloc(nSize));
+                memcpy(ppabyWKB[iIndex - iStartRow], pabyWKB, nSize);
+            }
+            else
+            {
+                ppabyWKB[iIndex - iStartRow] = nullptr;
+            }
+        }
+    }
+    else
+    {
+        for (int iIndex = iStartRow;
+             eErr == CE_None && iIndex < (iStartRow + iLength); iIndex++)
+        {
+            eErr = SetValue(iIndex, iField, ppabyWKB[iIndex - iStartRow],
+                            pnWKBSize[iIndex - iStartRow]);
+        }
+    }
+    return eErr;
+}
+
+/************************************************************************/
+/*                     GDALRATValuesIOAsWKBGeometry()                   */
+/************************************************************************/
+
+/**
+ * \brief Read or Write a block of WKB-encoded geometries to/from the Attribute Table.
+ *
+ * When reading, each ppabyWKB[] should be CPLFree'd() after use.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterAttributeTable::ValuesIO()
+ *
+ * @since 3.12
+ */
+CPLErr GDALRATValuesIOAsWKBGeometry(GDALRasterAttributeTableH hRAT,
+                                    GDALRWFlag eRWFlag, int iField,
+                                    int iStartRow, int iLength,
+                                    GByte **ppabyWKB, size_t *pnWKBSize)
+
+{
+    VALIDATE_POINTER1(hRAT, "GDALRATValuesIOAsWKBGeometry", CE_Failure);
+
+    return GDALRasterAttributeTable::FromHandle(hRAT)->ValuesIO(
+        eRWFlag, iField, iStartRow, iLength, ppabyWKB, pnWKBSize);
+}
+
+//! @cond Doxygen_Suppress
+
+/************************************************************************/
+/*                   ValuesIOBooleanFromIntoInt()                       */
+/************************************************************************/
+
+CPLErr GDALRasterAttributeTable::ValuesIOBooleanFromIntoInt(
+    GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength, bool *pbData)
+{
+    if (eRWFlag == GF_Read)
+    {
+        std::vector<int> anData(iLength);
+        CPLErr eErr =
+            ValuesIO(eRWFlag, iField, iStartRow, iLength, anData.data());
+        if (eErr == CE_None)
+        {
+            for (int i = 0; i < iLength; ++i)
+            {
+                pbData[i] = anData[i] != 0;
+            }
+        }
+        return eErr;
+    }
+    else
+    {
+        std::vector<int> anData;
+        anData.reserve(iLength);
+        for (int i = 0; i < iLength; ++i)
+            anData.push_back(pbData[i]);
+        return ValuesIO(eRWFlag, iField, iStartRow, iLength, anData.data());
+    }
+}
+
+/************************************************************************/
+/*                          DateTimeToString()                          */
+/************************************************************************/
+
+/* static */
+std::string
+GDALRasterAttributeTable::DateTimeToString(const GDALRATDateTime &sDateTime)
+{
+    if (!sDateTime.bIsValid)
+        return std::string();
+    return CPLString().Printf(
+        "%04d-%02d-%02dT%02d:%02d:%06.3f%c%02d:%02d", sDateTime.nYear,
+        sDateTime.nMonth, sDateTime.nDay, sDateTime.nHour, sDateTime.nMinute,
+        static_cast<double>(sDateTime.fSecond),
+        sDateTime.bPositiveTimeZone ? '+' : '-', sDateTime.nTimeZoneHour,
+        sDateTime.nTimeZoneMinute);
+}
+
+/************************************************************************/
+/*                           StringToDateTime()                         */
+/************************************************************************/
+
+/* static */
+bool GDALRasterAttributeTable::StringToDateTime(const char *pszStr,
+                                                GDALRATDateTime &sDateTime)
+{
+    OGRField sField;
+    if (OGRParseDate(pszStr, &sField, 0))
+    {
+        sDateTime.nYear = sField.Date.Year;
+        sDateTime.nMonth = sField.Date.Month;
+        sDateTime.nDay = sField.Date.Day;
+        sDateTime.nHour = sField.Date.Hour;
+        sDateTime.nMinute = sField.Date.Minute;
+        sDateTime.fSecond = sField.Date.Second;
+        sDateTime.bPositiveTimeZone =
+            sField.Date.TZFlag <= 2 ? false : sField.Date.TZFlag >= 100;
+        sDateTime.nTimeZoneHour = sField.Date.TZFlag <= 2
+                                      ? 0
+                                      : std::abs(sField.Date.TZFlag - 100) / 4;
+        sDateTime.nTimeZoneMinute =
+            sField.Date.TZFlag <= 2
+                ? 0
+                : (std::abs(sField.Date.TZFlag - 100) % 4) * 15;
+        sDateTime.bIsValid = true;
+        return true;
+    }
+    else
+    {
+        sDateTime = GDALRATDateTime();
+        return false;
+    }
+}
+
+/************************************************************************/
+/*                  ValuesIODateTimeFromIntoString()                    */
+/************************************************************************/
+
+CPLErr GDALRasterAttributeTable::ValuesIODateTimeFromIntoString(
+    GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+    GDALRATDateTime *psDateTime)
+{
+    if (eRWFlag == GF_Read)
+    {
+        std::vector<char *> apszStrList(iLength);
+        CPLErr eErr =
+            ValuesIO(eRWFlag, iField, iStartRow, iLength, apszStrList.data());
+        if (eErr == CE_None)
+        {
+            for (int i = 0; i < iLength; ++i)
+            {
+                StringToDateTime(apszStrList[i], psDateTime[i]);
+            }
+        }
+        for (int i = 0; i < iLength; ++i)
+            VSIFree(apszStrList[i]);
+        return eErr;
+    }
+    else
+    {
+        std::vector<std::string> asStr;
+        std::vector<char *> apszStr;
+        asStr.reserve(iLength);
+        apszStr.reserve(iLength);
+        for (int i = 0; i < iLength; ++i)
+        {
+            asStr.push_back(DateTimeToString(psDateTime[i]));
+            apszStr.push_back(asStr.back().data());
+        }
+        return ValuesIO(eRWFlag, iField, iStartRow, iLength, apszStr.data());
+    }
+}
+
+/************************************************************************/
+/*                          WKBGeometryToWKT()                          */
+/************************************************************************/
+
+/* static */
+std::string GDALRasterAttributeTable::WKBGeometryToWKT(const void *pabyWKB,
+                                                       size_t nWKBSize)
+{
+    std::string osWKT;
+    if (nWKBSize)
+    {
+        OGRGeometry *poGeometry = nullptr;
+        if (OGRGeometryFactory::createFromWkb(pabyWKB, nullptr, &poGeometry,
+                                              nWKBSize,
+                                              wkbVariantIso) == OGRERR_NONE)
+        {
+            osWKT = poGeometry->exportToWkt();
+        }
+        delete poGeometry;
+    }
+    return osWKT;
+}
+
+/************************************************************************/
+/*                          WKTGeometryToWKB()                          */
+/************************************************************************/
+
+/* static */
+std::vector<GByte>
+GDALRasterAttributeTable::WKTGeometryToWKB(const char *pszWKT)
+{
+    std::vector<GByte> abyWKB;
+    OGRGeometry *poGeom = nullptr;
+    if (pszWKT[0] && OGRGeometryFactory::createFromWkt(pszWKT, nullptr,
+                                                       &poGeom) == OGRERR_NONE)
+    {
+        const size_t nWKBSize = poGeom->WkbSize();
+        abyWKB.resize(nWKBSize);
+        poGeom->exportToWkb(wkbNDR, abyWKB.data(), wkbVariantIso);
+    }
+    delete poGeom;
+    return abyWKB;
+}
+
+/************************************************************************/
+/*                     ValuesIOWKBGeometryFromIntoString()              */
+/************************************************************************/
+
+CPLErr GDALRasterAttributeTable::ValuesIOWKBGeometryFromIntoString(
+    GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+    GByte **ppabyWKB, size_t *pnWKBSize)
+{
+    if (eRWFlag == GF_Read)
+    {
+        std::vector<char *> apszStrList(iLength);
+        CPLErr eErr =
+            ValuesIO(eRWFlag, iField, iStartRow, iLength, apszStrList.data());
+        if (eErr == CE_None)
+        {
+            for (int i = 0; i < iLength; ++i)
+            {
+                auto abyWKB = WKTGeometryToWKB(apszStrList[i]);
+                if (abyWKB.empty())
+                {
+                    ppabyWKB[i] = nullptr;
+                    pnWKBSize[i] = 0;
+                }
+                else
+                {
+                    ppabyWKB[i] =
+                        static_cast<GByte *>(CPLMalloc(abyWKB.size()));
+                    memcpy(ppabyWKB[i], abyWKB.data(), abyWKB.size());
+                    pnWKBSize[i] = abyWKB.size();
+                }
+            }
+        }
+        for (int i = 0; i < iLength; ++i)
+            VSIFree(apszStrList[i]);
+        return eErr;
+    }
+    else
+    {
+        std::vector<std::string> asStr;
+        std::vector<char *> apszStr;
+        asStr.reserve(iLength);
+        apszStr.reserve(iLength);
+        for (int i = 0; i < iLength; ++i)
+        {
+            asStr.push_back(WKBGeometryToWKT(ppabyWKB[i], pnWKBSize[i]));
+            apszStr.push_back(asStr.back().data());
+        }
+        return ValuesIO(eRWFlag, iField, iStartRow, iLength, apszStr.data());
+    }
+}
+
+//! @endcond
 
 /************************************************************************/
 /*                            SetRowCount()                             */
@@ -655,55 +1189,16 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
                  static_cast<int>(GetTypeOfCol(iCol)));
         CPLXMLNode *psType =
             CPLCreateXMLElementAndValue(psCol, "Type", szValue);
-        const char *pszTypeStr = "String";
-        switch (GetTypeOfCol(iCol))
-        {
-            case GFT_Integer:
-                pszTypeStr = "Integer";
-                break;
-            case GFT_Real:
-                pszTypeStr = "Real";
-                break;
-            case GFT_String:
-                break;
-        }
-        CPLAddXMLAttributeAndValue(psType, "typeAsString", pszTypeStr);
+        CPLAddXMLAttributeAndValue(psType, "typeAsString",
+                                   GDALGetRATFieldTypeName(GetTypeOfCol(iCol)));
 
         snprintf(szValue, sizeof(szValue), "%d",
                  static_cast<int>(GetUsageOfCol(iCol)));
         CPLXMLNode *psUsage =
             CPLCreateXMLElementAndValue(psCol, "Usage", szValue);
-        const char *pszUsageStr = "";
-
-#define USAGE_STR(x)                                                           \
-    case GFU_##x:                                                              \
-        pszUsageStr = #x;                                                      \
-        break
-        switch (GetUsageOfCol(iCol))
-        {
-            USAGE_STR(Generic);
-            USAGE_STR(PixelCount);
-            USAGE_STR(Name);
-            USAGE_STR(Min);
-            USAGE_STR(Max);
-            USAGE_STR(MinMax);
-            USAGE_STR(Red);
-            USAGE_STR(Green);
-            USAGE_STR(Blue);
-            USAGE_STR(Alpha);
-            USAGE_STR(RedMin);
-            USAGE_STR(GreenMin);
-            USAGE_STR(BlueMin);
-            USAGE_STR(AlphaMin);
-            USAGE_STR(RedMax);
-            USAGE_STR(GreenMax);
-            USAGE_STR(BlueMax);
-            USAGE_STR(AlphaMax);
-            case GFU_MaxCount:
-                break;
-        }
-#undef USAGE_STR
-        CPLAddXMLAttributeAndValue(psUsage, "usageAsString", pszUsageStr);
+        CPLAddXMLAttributeAndValue(
+            psUsage, "usageAsString",
+            GDALGetRATFieldUsageName(GetUsageOfCol(iCol)));
     }
 
     /* -------------------------------------------------------------------- */
@@ -726,18 +1221,46 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
         CPLCreateXMLNode(CPLCreateXMLNode(psRow, CXT_Attribute, "index"),
                          CXT_Text, szValue);
 
+        std::string osStr;
         for (int iCol = 0; iCol < iColCount; iCol++)
         {
             const char *pszValue = szValue;
 
-            if (GetTypeOfCol(iCol) == GFT_Integer)
-                snprintf(szValue, sizeof(szValue), "%d",
-                         GetValueAsInt(iRow, iCol));
-            else if (GetTypeOfCol(iCol) == GFT_Real)
-                CPLsnprintf(szValue, sizeof(szValue), "%.16g",
-                            GetValueAsDouble(iRow, iCol));
-            else
-                pszValue = GetValueAsString(iRow, iCol);
+            switch (GetTypeOfCol(iCol))
+            {
+                case GFT_Integer:
+                    snprintf(szValue, sizeof(szValue), "%d",
+                             GetValueAsInt(iRow, iCol));
+                    break;
+
+                case GFT_Real:
+                    CPLsnprintf(szValue, sizeof(szValue), "%.16g",
+                                GetValueAsDouble(iRow, iCol));
+                    break;
+
+                case GFT_String:
+                    pszValue = GetValueAsString(iRow, iCol);
+                    break;
+
+                case GFT_Boolean:
+                    pszValue = GetValueAsBoolean(iRow, iCol) ? "true" : "false";
+                    break;
+
+                case GFT_DateTime:
+                    osStr = DateTimeToString(GetValueAsDateTime(iRow, iCol));
+                    pszValue = osStr.c_str();
+                    break;
+
+                case GFT_WKBGeometry:
+                {
+                    size_t nWKBSize = 0;
+                    const GByte *pabyWKB =
+                        GetValueAsWKBGeometry(iRow, iCol, nWKBSize);
+                    osStr = WKBGeometryToWKT(pabyWKB, nWKBSize);
+                    pszValue = osStr.c_str();
+                    break;
+                }
+            }
 
             CPLCreateXMLElementAndValue(psRow, "F", pszValue);
         }
@@ -840,13 +1363,37 @@ void *GDALRasterAttributeTable::SerializeJSON() const
         for (int iCol = 0; iCol < iColCount; iCol++)
         {
             json_object *poF = nullptr;
-            if (GetTypeOfCol(iCol) == GFT_Integer)
-                poF = json_object_new_int(GetValueAsInt(iRow, iCol));
-            else if (GetTypeOfCol(iCol) == GFT_Real)
-                poF = json_object_new_double_with_precision(
-                    GetValueAsDouble(iRow, iCol), 16);
-            else
-                poF = json_object_new_string(GetValueAsString(iRow, iCol));
+            switch (GetTypeOfCol(iCol))
+            {
+                case GFT_Integer:
+                    poF = json_object_new_int(GetValueAsInt(iRow, iCol));
+                    break;
+
+                case GFT_Real:
+                    poF = json_object_new_double_with_precision(
+                        GetValueAsDouble(iRow, iCol), 16);
+                    break;
+
+                case GFT_String:
+                    poF = json_object_new_string(GetValueAsString(iRow, iCol));
+                    break;
+
+                case GFT_Boolean:
+                    poF =
+                        json_object_new_boolean(GetValueAsBoolean(iRow, iCol));
+                    break;
+
+                case GFT_DateTime:
+                case GFT_WKBGeometry:
+                {
+                    const char *pszV = GetValueAsString(iRow, iCol);
+                    if (pszV[0])
+                        poF = json_object_new_string(pszV);
+                    else
+                        poF = json_object_new_null();
+                    break;
+                }
+            }
 
             json_object_array_add(poFArray, poF);
         }
@@ -908,11 +1455,29 @@ CPLErr GDALRasterAttributeTable::XMLInit(const CPLXMLNode *psTree,
         if (psChild->eType == CXT_Element &&
             EQUAL(psChild->pszValue, "FieldDefn"))
         {
+            int nType = atoi(CPLGetXMLValue(psChild, "Type", "1"));
+            if (nType < 0 || nType >= GFT_MaxCount)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Invalid RAT field type: %d(%s). Dealing as if it was "
+                         "String",
+                         nType,
+                         CPLGetXMLValue(psChild, "typeAsString", "(unknown)"));
+                nType = GFT_String;
+            }
+            int nUsage = atoi(CPLGetXMLValue(psChild, "Usage", "0"));
+            if (nUsage < 0 || nUsage >= GFU_MaxCount)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Invalid RAT field usage: %d(%s). Dealing as if it "
+                         "was Generic",
+                         nUsage,
+                         CPLGetXMLValue(psChild, "usageAsString", "(unknown)"));
+                nUsage = GFU_Generic;
+            }
             CreateColumn(CPLGetXMLValue(psChild, "Name", ""),
-                         static_cast<GDALRATFieldType>(
-                             atoi(CPLGetXMLValue(psChild, "Type", "1"))),
-                         static_cast<GDALRATFieldUsage>(
-                             atoi(CPLGetXMLValue(psChild, "Usage", "0"))));
+                         static_cast<GDALRATFieldType>(nType),
+                         static_cast<GDALRATFieldUsage>(nUsage));
         }
     }
 
@@ -1520,6 +2085,41 @@ const char *GDALDefaultRasterAttributeTable::GetValueAsString(int iRow,
         {
             return aoFields[iField].aosValues[iRow];
         }
+
+        case GFT_Boolean:
+        {
+            return aoFields[iField].abValues[iRow] ? "true" : "false";
+        }
+
+        case GFT_DateTime:
+        {
+            const auto &sDateTime = aoFields[iField].asDateTimeValues[iRow];
+            const_cast<GDALDefaultRasterAttributeTable *>(this)
+                ->osWorkingResult = DateTimeToString(sDateTime);
+            return osWorkingResult;
+        }
+
+        case GFT_WKBGeometry:
+        {
+            OGRGeometry *poGeom = nullptr;
+            if (!aoFields[iField].aabyWKBGeometryValues[iRow].empty() &&
+                OGRGeometryFactory::createFromWkb(
+                    aoFields[iField].aabyWKBGeometryValues[iRow].data(),
+                    nullptr, &poGeom,
+                    aoFields[iField].aabyWKBGeometryValues[iRow].size(),
+                    wkbVariantIso) == OGRERR_NONE)
+            {
+                const_cast<GDALDefaultRasterAttributeTable *>(this)
+                    ->osWorkingResult = poGeom->exportToWkt();
+            }
+            else
+            {
+                const_cast<GDALDefaultRasterAttributeTable *>(this)
+                    ->osWorkingResult.clear();
+            }
+            delete poGeom;
+            return osWorkingResult;
+        }
     }
 
     return "";
@@ -1576,6 +2176,15 @@ int GDALDefaultRasterAttributeTable::GetValueAsInt(int iRow, int iField) const
 
         case GFT_String:
             return atoi(aoFields[iField].aosValues[iRow].c_str());
+
+        case GFT_Boolean:
+            return aoFields[iField].abValues[iRow];
+
+        case GFT_DateTime:
+        case GFT_WKBGeometry:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Incompatible RAT field type");
+            break;
     }
 
     return 0;
@@ -1634,6 +2243,15 @@ double GDALDefaultRasterAttributeTable::GetValueAsDouble(int iRow,
 
         case GFT_String:
             return CPLAtof(aoFields[iField].aosValues[iRow].c_str());
+
+        case GFT_Boolean:
+            return aoFields[iField].abValues[iRow];
+
+        case GFT_DateTime:
+        case GFT_WKBGeometry:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Incompatible RAT field type");
+            break;
     }
 
     return 0;
@@ -1657,6 +2275,252 @@ double CPL_STDCALL GDALRATGetValueAsDouble(GDALRasterAttributeTableH hRAT,
 
     return GDALRasterAttributeTable::FromHandle(hRAT)->GetValueAsDouble(iRow,
                                                                         iField);
+}
+
+/************************************************************************/
+/*                        GetValueAsBoolean()                           */
+/************************************************************************/
+
+bool GDALDefaultRasterAttributeTable::GetValueAsBoolean(int iRow,
+                                                        int iField) const
+
+{
+    if (iField < 0 || iField >= static_cast<int>(aoFields.size()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "iField (%d) out of range.",
+                 iField);
+
+        return false;
+    }
+
+    if (iRow < 0 || iRow >= nRowCount)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "iRow (%d) out of range.", iRow);
+
+        return false;
+    }
+
+    switch (aoFields[iField].eType)
+    {
+        case GFT_Integer:
+            return aoFields[iField].anValues[iRow] != 0;
+
+        case GFT_Real:
+            return aoFields[iField].adfValues[iRow] != 0;
+
+        case GFT_String:
+            return CPLTestBool(aoFields[iField].aosValues[iRow].c_str());
+
+        case GFT_Boolean:
+            return aoFields[iField].abValues[iRow];
+
+        case GFT_DateTime:
+        case GFT_WKBGeometry:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Incompatible RAT field type");
+            break;
+    }
+
+    return false;
+}
+
+/************************************************************************/
+/*                       GDALRATGetValueAsBoolean()                     */
+/************************************************************************/
+
+/**
+ * \brief Fetch field value as a boolean.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterAttributeTable::GetValueAsBoolean()
+ *
+ * \since 3.12
+ */
+bool GDALRATGetValueAsBoolean(GDALRasterAttributeTableH hRAT, int iRow,
+                              int iField)
+
+{
+    VALIDATE_POINTER1(hRAT, "GDALRATGetValueAsBoolean", false);
+
+    return GDALRasterAttributeTable::FromHandle(hRAT)->GetValueAsBoolean(
+        iRow, iField);
+}
+
+/************************************************************************/
+/*                        GetValueAsDateTime()                          */
+/************************************************************************/
+
+GDALRATDateTime
+GDALDefaultRasterAttributeTable::GetValueAsDateTime(int iRow, int iField) const
+
+{
+    GDALRATDateTime dt;
+
+    if (iField < 0 || iField >= static_cast<int>(aoFields.size()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "iField (%d) out of range.",
+                 iField);
+
+        return dt;
+    }
+
+    if (iRow < 0 || iRow >= nRowCount)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "iRow (%d) out of range.", iRow);
+
+        return dt;
+    }
+
+    switch (aoFields[iField].eType)
+    {
+        case GFT_String:
+            StringToDateTime(aoFields[iField].aosValues[iRow].c_str(), dt);
+            break;
+
+        case GFT_DateTime:
+            dt = aoFields[iField].asDateTimeValues[iRow];
+            break;
+
+        case GFT_Integer:
+        case GFT_Real:
+        case GFT_Boolean:
+        case GFT_WKBGeometry:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Incompatible RAT field type");
+            break;
+    }
+
+    return dt;
+}
+
+/************************************************************************/
+/*                      GDALRATGetValueAsDateTime()                     */
+/************************************************************************/
+
+/**
+ * \brief Fetch field value as a datetime.
+ *
+ * The value of the requested column in the requested row is returned
+ * as a datetime. Besides being called on a GFT_DateTime field, it
+ * is also possible to call this method on a string field that contains a
+ * ISO-8601 encoded datetime.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterAttributeTable::GetValueAsDateTime()
+ *
+ * @param hRAT Raster attribute table handle. Must NOT be null.
+ * @param iRow Row index (0-based indexing)
+ * @param iField Field index (0-based indexing)
+ * @param[out] psDateTime Output date time struct. Must NOT be null.
+ * @return error code.
+ *
+ * \since 3.12
+ */
+CPLErr GDALRATGetValueAsDateTime(GDALRasterAttributeTableH hRAT, int iRow,
+                                 int iField, GDALRATDateTime *psDateTime)
+
+{
+    VALIDATE_POINTER1(hRAT, "GDALRATGetValueAsBoolean", CE_Failure);
+    VALIDATE_POINTER1(psDateTime, "GDALRATGetValueAsBoolean", CE_Failure);
+
+    const auto nErrorCounter = CPLGetErrorCounter();
+    *psDateTime =
+        GDALRasterAttributeTable::FromHandle(hRAT)->GetValueAsDateTime(iRow,
+                                                                       iField);
+    return nErrorCounter == CPLGetErrorCounter() ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                        GetValueAsWKBGeometry()                       */
+/************************************************************************/
+
+const GByte *
+GDALDefaultRasterAttributeTable::GetValueAsWKBGeometry(int iRow, int iField,
+                                                       size_t &nWKBSize) const
+
+{
+    nWKBSize = 0;
+
+    if (iField < 0 || iField >= static_cast<int>(aoFields.size()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "iField (%d) out of range.",
+                 iField);
+
+        return nullptr;
+    }
+
+    if (iRow < 0 || iRow >= nRowCount)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "iRow (%d) out of range.", iRow);
+
+        return nullptr;
+    }
+
+    switch (aoFields[iField].eType)
+    {
+        case GFT_String:
+        {
+            auto abyWKB =
+                WKTGeometryToWKB(aoFields[iField].aosValues[iRow].c_str());
+            if (!abyWKB.empty())
+            {
+                nWKBSize = abyWKB.size();
+                m_abyWKB = std::move(abyWKB);
+                return m_abyWKB.data();
+            }
+            return nullptr;
+        }
+
+        case GFT_WKBGeometry:
+        {
+            nWKBSize = aoFields[iField].aabyWKBGeometryValues[iRow].size();
+            return nWKBSize
+                       ? aoFields[iField].aabyWKBGeometryValues[iRow].data()
+                       : nullptr;
+        }
+
+        case GFT_Integer:
+        case GFT_Real:
+        case GFT_Boolean:
+        case GFT_DateTime:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Incompatible RAT field type");
+            break;
+    }
+
+    return nullptr;
+}
+
+/************************************************************************/
+/*                     GDALRATGetValueAsWKBGeometry()                   */
+/************************************************************************/
+
+/**
+ * \brief Fetch field value as a WKB-encoded geometry.
+ *
+ * The value of the requested column in the requested row is returned
+ * as a WKB geometry. Besides being called on a GFT_WKBGeometry field, it
+ * is also possible to call this method on a string field that contains a WKT
+ * encoded geometry.
+ *
+ * The returned pointer may be invalidated by a following call  call to a method
+ * of this GDALRasterAttributeTable instance.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterAttributeTable::GetValueAsWKBGeometry()
+ *
+ * \since 3.12
+ */
+const GByte *GDALRATGetValueAsWKBGeometry(GDALRasterAttributeTableH hRAT,
+                                          int iRow, int iField,
+                                          size_t *pnWKBSize)
+
+{
+    VALIDATE_POINTER1(hRAT, "GDALRATGetValueAsWKBGeometry", nullptr);
+    VALIDATE_POINTER1(pnWKBSize, "GDALRATGetValueAsWKBGeometry", nullptr);
+
+    return GDALRasterAttributeTable::FromHandle(hRAT)->GetValueAsWKBGeometry(
+        iRow, iField, *pnWKBSize);
 }
 
 /************************************************************************/
@@ -1686,6 +2550,18 @@ void GDALDefaultRasterAttributeTable::SetRowCount(int nNewCount)
 
             case GFT_String:
                 oField.aosValues.resize(nNewCount);
+                break;
+
+            case GFT_Boolean:
+                oField.abValues.resize(nNewCount);
+                break;
+
+            case GFT_DateTime:
+                oField.asDateTimeValues.resize(nNewCount);
+                break;
+
+            case GFT_WKBGeometry:
+                oField.aabyWKBGeometryValues.resize(nNewCount);
                 break;
         }
     }
@@ -1737,6 +2613,25 @@ CPLErr GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
         case GFT_String:
             aoFields[iField].aosValues[iRow] = pszValue;
             break;
+
+        case GFT_Boolean:
+            aoFields[iField].abValues[iRow] = CPLTestBool(pszValue);
+            break;
+
+        case GFT_DateTime:
+        {
+            GDALRATDateTime sDateTime;
+            StringToDateTime(pszValue, sDateTime);
+            aoFields[iField].asDateTimeValues[iRow] = std::move(sDateTime);
+            break;
+        }
+
+        case GFT_WKBGeometry:
+        {
+            auto abyWKB = WKTGeometryToWKB(pszValue);
+            aoFields[iField].aabyWKBGeometryValues[iRow] = std::move(abyWKB);
+            break;
+        }
     }
 
     return CE_None;
@@ -1809,8 +2704,18 @@ CPLErr GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
 
             snprintf(szValue, sizeof(szValue), "%d", nValue);
             aoFields[iField].aosValues[iRow] = szValue;
+            break;
         }
-        break;
+
+        case GFT_Boolean:
+            aoFields[iField].abValues[iRow] = nValue != 0;
+            break;
+
+        case GFT_DateTime:
+        case GFT_WKBGeometry:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Incompatible RAT field type");
+            return CE_Failure;
     }
 
     return CE_None;
@@ -1877,8 +2782,18 @@ CPLErr GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
 
             CPLsnprintf(szValue, sizeof(szValue), "%.15g", dfValue);
             aoFields[iField].aosValues[iRow] = szValue;
+            break;
         }
-        break;
+
+        case GFT_Boolean:
+            aoFields[iField].abValues[iRow] = dfValue != 0;
+            break;
+
+        case GFT_DateTime:
+        case GFT_WKBGeometry:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Incompatible RAT field type");
+            return CE_Failure;
     }
 
     return CE_None;
@@ -1901,6 +2816,247 @@ void CPL_STDCALL GDALRATSetValueAsDouble(GDALRasterAttributeTableH hRAT,
     VALIDATE_POINTER0(hRAT, "GDALRATSetValueAsDouble");
 
     GDALRasterAttributeTable::FromHandle(hRAT)->SetValue(iRow, iField, dfValue);
+}
+
+/************************************************************************/
+/*                              SetValue()                              */
+/************************************************************************/
+
+CPLErr GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
+                                                 bool bValue)
+
+{
+    if (iField < 0 || iField >= static_cast<int>(aoFields.size()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "iField (%d) out of range.",
+                 iField);
+
+        return CE_Failure;
+    }
+
+    if (iRow == nRowCount)
+        SetRowCount(nRowCount + 1);
+
+    if (iRow < 0 || iRow >= nRowCount)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "iRow (%d) out of range.", iRow);
+
+        return CE_Failure;
+    }
+
+    switch (aoFields[iField].eType)
+    {
+        case GFT_Integer:
+        {
+            aoFields[iField].anValues[iRow] = bValue ? 1 : 0;
+            break;
+        }
+        case GFT_String:
+        {
+            aoFields[iField].aosValues[iRow] = bValue ? "true" : "false";
+            break;
+        }
+        case GFT_Real:
+        {
+            aoFields[iField].adfValues[iRow] = bValue ? 1 : 0;
+            break;
+        }
+        case GFT_Boolean:
+        {
+            aoFields[iField].abValues[iRow] = bValue;
+            break;
+        }
+        case GFT_DateTime:
+        case GFT_WKBGeometry:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Incompatible RAT field type");
+            return CE_Failure;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                      GDALRATSetValueAsBoolean()                      */
+/************************************************************************/
+
+/**
+ * \brief Set field value from a boolean value.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterAttributeTable::SetValue()
+ *
+ * \since 3.12
+ */
+CPLErr GDALRATSetValueAsBoolean(GDALRasterAttributeTableH hRAT, int iRow,
+                                int iField, bool bValue)
+
+{
+    VALIDATE_POINTER1(hRAT, "GDALRATSetValueAsBoolean", CE_Failure);
+
+    return GDALRasterAttributeTable::FromHandle(hRAT)->SetValue(iRow, iField,
+                                                                bValue);
+}
+
+/************************************************************************/
+/*                              SetValue()                              */
+/************************************************************************/
+
+CPLErr
+GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
+                                          const GDALRATDateTime &sDateTime)
+
+{
+    if (iField < 0 || iField >= static_cast<int>(aoFields.size()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "iField (%d) out of range.",
+                 iField);
+
+        return CE_Failure;
+    }
+
+    if (iRow == nRowCount)
+        SetRowCount(nRowCount + 1);
+
+    if (iRow < 0 || iRow >= nRowCount)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "iRow (%d) out of range.", iRow);
+
+        return CE_Failure;
+    }
+
+    switch (aoFields[iField].eType)
+    {
+        case GFT_String:
+        {
+            aoFields[iField].aosValues[iRow] = DateTimeToString(sDateTime);
+            break;
+        }
+
+        case GFT_DateTime:
+        {
+            aoFields[iField].asDateTimeValues[iRow] = sDateTime;
+            break;
+        }
+
+        case GFT_Integer:
+        case GFT_Real:
+        case GFT_Boolean:
+        case GFT_WKBGeometry:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Incompatible RAT field type");
+            return CE_Failure;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                      GDALRATSetValueAsDateTime()                     */
+/************************************************************************/
+
+/**
+ * \brief Set field value from datetime.
+ *
+ * Note that the GDALRATDateTime::bIsValid field must be set to true if
+ * the date time is valid.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterAttributeTable::SetValue()
+ *
+ * \since 3.12
+ */
+CPLErr GDALRATSetValueAsDateTime(GDALRasterAttributeTableH hRAT, int iRow,
+                                 int iField, const GDALRATDateTime *psDateTime)
+
+{
+    VALIDATE_POINTER1(hRAT, "GDALRATSetValueAsDateTime", CE_Failure);
+    VALIDATE_POINTER1(psDateTime, "GDALRATSetValueAsDateTime", CE_Failure);
+
+    return GDALRasterAttributeTable::FromHandle(hRAT)->SetValue(iRow, iField,
+                                                                *psDateTime);
+}
+
+/************************************************************************/
+/*                              SetValue()                              */
+/************************************************************************/
+
+CPLErr GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
+                                                 const void *pabyWKB,
+                                                 size_t nWKBSize)
+
+{
+    if (iField < 0 || iField >= static_cast<int>(aoFields.size()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "iField (%d) out of range.",
+                 iField);
+
+        return CE_Failure;
+    }
+
+    if (iRow == nRowCount)
+        SetRowCount(nRowCount + 1);
+
+    if (iRow < 0 || iRow >= nRowCount)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "iRow (%d) out of range.", iRow);
+
+        return CE_Failure;
+    }
+
+    switch (aoFields[iField].eType)
+    {
+        case GFT_String:
+        {
+            aoFields[iField].aosValues[iRow] =
+                WKBGeometryToWKT(pabyWKB, nWKBSize);
+            break;
+        }
+
+        case GFT_WKBGeometry:
+        {
+            if (nWKBSize)
+                aoFields[iField].aabyWKBGeometryValues[iRow].assign(
+                    static_cast<const GByte *>(pabyWKB),
+                    static_cast<const GByte *>(pabyWKB) + nWKBSize);
+            else
+                aoFields[iField].aabyWKBGeometryValues[iRow].clear();
+            break;
+        }
+
+        case GFT_Integer:
+        case GFT_Real:
+        case GFT_Boolean:
+        case GFT_DateTime:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Incompatible RAT field type");
+            return CE_Failure;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                      GDALRATSetValueAsWKBGeometry()                  */
+/************************************************************************/
+
+/**
+ * \brief Set field value from a WKB-encoded geometry.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterAttributeTable::SetValue()
+ *
+ * \since 3.12
+ */
+CPLErr GDALRATSetValueAsWKBGeometry(GDALRasterAttributeTableH hRAT, int iRow,
+                                    int iField, const void *pabyWKB,
+                                    size_t nWKBSize)
+
+{
+    VALIDATE_POINTER1(hRAT, "GDALRATSetValueAsWKBGeometry", CE_Failure);
+
+    return GDALRasterAttributeTable::FromHandle(hRAT)->SetValue(
+        iRow, iField, pabyWKB, nWKBSize);
 }
 
 /************************************************************************/
@@ -2124,13 +3280,32 @@ GDALDefaultRasterAttributeTable::CreateColumn(const char *pszFieldName,
     aoFields[iNewField].eType = eFieldType;
     aoFields[iNewField].eUsage = eFieldUsage;
 
-    if (eFieldType == GFT_Integer)
-        aoFields[iNewField].anValues.resize(nRowCount);
-    else if (eFieldType == GFT_Real)
-        aoFields[iNewField].adfValues.resize(nRowCount);
-    else if (eFieldType == GFT_String)
-        aoFields[iNewField].aosValues.resize(nRowCount);
+    switch (eFieldType)
+    {
+        case GFT_Integer:
+            aoFields[iNewField].anValues.resize(nRowCount);
+            break;
 
+        case GFT_Real:
+            aoFields[iNewField].adfValues.resize(nRowCount);
+            break;
+
+        case GFT_String:
+            aoFields[iNewField].aosValues.resize(nRowCount);
+            break;
+
+        case GFT_Boolean:
+            aoFields[iNewField].abValues.resize(nRowCount);
+            break;
+
+        case GFT_DateTime:
+            aoFields[iNewField].asDateTimeValues.resize(nRowCount);
+            break;
+
+        case GFT_WKBGeometry:
+            aoFields[iNewField].aabyWKBGeometryValues.resize(nRowCount);
+            break;
+    }
     return CE_None;
 }
 

@@ -35,14 +35,30 @@
 GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
 
 {
-    if (m_poRAT || m_poGDS->m_poBaseDS != nullptr)
+    if (m_poGDS->m_poBaseDS != nullptr)
         return m_poRAT.get();
 
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
-    auto poRAT = GDALPamRasterBand::GetDefaultRAT();
-    if (poRAT)
-        return poRAT;
 
+    // RAT from PAM has priority over RAT in GDAL_METADATA TIFF tag
+    if (!m_bRATTriedReadingFromPAM)
+    {
+        m_bRATTriedReadingFromPAM = true;
+        auto poRAT = GDALPamRasterBand::GetDefaultRAT();
+        if (poRAT)
+        {
+            m_bRATSet = true;
+            m_poRAT.reset(poRAT->Clone());
+            return m_poRAT.get();
+        }
+    }
+
+    if (m_bRATSet)
+        return m_poRAT.get();
+
+    m_bRATSet = true;
+
+    // Try reading from a .vat.dbf side car file
     if (!GDALCanFileAcceptSidecarFile(m_poGDS->m_osFilename.c_str()))
         return nullptr;
     const std::string osVATDBF = m_poGDS->m_osFilename + ".vat.dbf";

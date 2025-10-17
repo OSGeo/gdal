@@ -15,6 +15,7 @@
 #include "ogrsf_frmts.h"
 
 #include <algorithm>
+#include <cmath>
 
 /************************************************************************/
 /*                            GDALLoadVATDBF()                          */
@@ -86,13 +87,25 @@ GDALLoadVATDBF(const char *pszFilename)
         }
         else
         {
-            poRAT->CreateColumn(
-                pszName,
-                eFieldType == OFTReal ? GFT_Real
-                : (eFieldType == OFTInteger || eFieldType == OFTInteger64)
-                    ? GFT_Integer
-                    : GFT_String,
-                GFU_Generic);
+            GDALRATFieldType eRATFieldType = GFT_String;
+            switch (eFieldType)
+            {
+                case OFTReal:
+                    eRATFieldType = GFT_Real;
+                    break;
+                case OFTInteger:
+                case OFTInteger64:
+                    eRATFieldType = (poFieldDefn->GetSubType() == OFSTBoolean)
+                                        ? GFT_Boolean
+                                        : GFT_Integer;
+                    break;
+                case OFTDate:
+                    eRATFieldType = GFT_DateTime;
+                    break;
+                default:
+                    break;
+            }
+            poRAT->CreateColumn(pszName, eRATFieldType, GFU_Generic);
         }
     }
 
@@ -131,6 +144,27 @@ GDALLoadVATDBF(const char *pszFilename)
                             iRow, i, poFeature->GetFieldAsString(i));
                         break;
                     }
+                    case GFT_Boolean:
+                    {
+                        poRAT->GDALDefaultRasterAttributeTable::SetValue(
+                            iRow, i, poFeature->GetFieldAsInteger(i) != 0);
+                        break;
+                    }
+                    case GFT_DateTime:
+                    {
+                        GDALRATDateTime dt;
+                        int nTZFlag = 0;
+                        poFeature->GetFieldAsDateTime(
+                            i, &dt.nYear, &dt.nMonth, &dt.nDay, &dt.nHour,
+                            &dt.nMinute, &dt.fSecond, &nTZFlag);
+                        dt.bIsValid = true;
+                        poRAT->GDALDefaultRasterAttributeTable::SetValue(iRow,
+                                                                         i, dt);
+                        break;
+                    }
+                    case GFT_WKBGeometry:
+                        CPLAssert(false);
+                        break;
                 }
             }
         }

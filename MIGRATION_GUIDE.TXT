@@ -29,6 +29,10 @@ MIGRATION GUIDE FROM GDAL 3.11 to GDAL 3.12
 - Changes impacting C++ users:
   * OGRLayer::GetSpatialRef() now returns a const OGRSpatialReference* instead of a non-const one.
 
+- C API change: The GDALRATFieldType enumeration has been extended with 3 new
+  values: GFT_Boolean, GFT_DateTime, GFT_WKBGeometry. Code that calls
+  GDALRATGetTypeOfCol() may encounter those new values.
+
 - The raw file capabilities (VRTRawRasterBand) of the VRT raster driver have
   been limited by default for security reasons. Consult
   https://gdal.org/drivers/raster/vrt.html#vrtrawrasterband_restricted_access

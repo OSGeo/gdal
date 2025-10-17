@@ -4067,39 +4067,45 @@ void GTiffDataset::WriteGeoTIFFInfo()
 
 static void AppendMetadataItem(CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
                                const char *pszKey, const char *pszValue,
-                               int nBand, const char *pszRole,
-                               const char *pszDomain)
+                               CPLXMLNode *psValueNode, int nBand,
+                               const char *pszRole, const char *pszDomain)
 
 {
+    CPLAssert(pszValue || psValueNode);
+    CPLAssert(!(pszValue && psValueNode));
+
     /* -------------------------------------------------------------------- */
     /*      Create the Item element, and subcomponents.                     */
     /* -------------------------------------------------------------------- */
     CPLXMLNode *psItem = CPLCreateXMLNode(nullptr, CXT_Element, "Item");
-    CPLCreateXMLNode(CPLCreateXMLNode(psItem, CXT_Attribute, "name"), CXT_Text,
-                     pszKey);
+    CPLAddXMLAttributeAndValue(psItem, "name", pszKey);
 
     if (nBand > 0)
     {
         char szBandId[32] = {};
         snprintf(szBandId, sizeof(szBandId), "%d", nBand - 1);
-        CPLCreateXMLNode(CPLCreateXMLNode(psItem, CXT_Attribute, "sample"),
-                         CXT_Text, szBandId);
+        CPLAddXMLAttributeAndValue(psItem, "sample", szBandId);
     }
 
     if (pszRole != nullptr)
-        CPLCreateXMLNode(CPLCreateXMLNode(psItem, CXT_Attribute, "role"),
-                         CXT_Text, pszRole);
+        CPLAddXMLAttributeAndValue(psItem, "role", pszRole);
 
     if (pszDomain != nullptr && strlen(pszDomain) > 0)
-        CPLCreateXMLNode(CPLCreateXMLNode(psItem, CXT_Attribute, "domain"),
-                         CXT_Text, pszDomain);
+        CPLAddXMLAttributeAndValue(psItem, "domain", pszDomain);
 
-    // Note: this escaping should not normally be done, as the serialization
-    // of the tree to XML also does it, so we end up width double XML escaping,
-    // but keep it for backward compatibility.
-    char *pszEscapedItemValue = CPLEscapeString(pszValue, -1, CPLES_XML);
-    CPLCreateXMLNode(psItem, CXT_Text, pszEscapedItemValue);
-    CPLFree(pszEscapedItemValue);
+    if (pszValue)
+    {
+        // Note: this escaping should not normally be done, as the serialization
+        // of the tree to XML also does it, so we end up width double XML escaping,
+        // but keep it for backward compatibility.
+        char *pszEscapedItemValue = CPLEscapeString(pszValue, -1, CPLES_XML);
+        CPLCreateXMLNode(psItem, CXT_Text, pszEscapedItemValue);
+        CPLFree(pszEscapedItemValue);
+    }
+    else
+    {
+        CPLAddXMLChild(psItem, psValueNode);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Create root, if missing.                                        */
@@ -4117,6 +4123,20 @@ static void AppendMetadataItem(CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
         CPLAddXMLSibling(*ppsTail, psItem);
 
     *ppsTail = psItem;
+}
+
+/************************************************************************/
+/*                         AppendMetadataItem()                         */
+/************************************************************************/
+
+static void AppendMetadataItem(CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
+                               const char *pszKey, const char *pszValue,
+                               int nBand, const char *pszRole,
+                               const char *pszDomain)
+
+{
+    AppendMetadataItem(ppsRoot, ppsTail, pszKey, pszValue, nullptr, nBand,
+                       pszRole, pszDomain);
 }
 
 /************************************************************************/
@@ -4714,6 +4734,25 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                 nullptr, "IMAGE_STRUCTURE");
         }
 #endif
+    }
+
+    if (!CPLTestBool(CPLGetConfigOption("GTIFF_WRITE_RAT_TO_PAM", "NO")))
+    {
+        for (int nBand = 1; nBand <= poSrcDS->GetRasterCount(); ++nBand)
+        {
+            GDALRasterBand *poBand = poSrcDS->GetRasterBand(nBand);
+            const auto poRAT = poBand->GetDefaultRAT();
+            if (poRAT)
+            {
+                auto psSerializedRAT = poRAT->Serialize();
+                if (psSerializedRAT)
+                {
+                    AppendMetadataItem(
+                        &psRoot, &psTail, DEFAULT_RASTER_ATTRIBUTE_TABLE,
+                        nullptr, psSerializedRAT, nBand, RAT_ROLE, nullptr);
+                }
+            }
+        }
     }
 
     /* -------------------------------------------------------------------- */

@@ -131,7 +131,9 @@ class CPL_DLL GDALRasterAttributeTable
      * \brief Fetch field value as a string.
      *
      * The value of the requested column in the requested row is returned
-     * as a string.  If the field is numeric, it is formatted as a string
+     * as a string. This method is nominally called on fields of type GFT_String,
+     * but it can be called on fields of other types as well.
+     * If the field is numeric, it is formatted as a string
      * using default rules, so some precision may be lost.
      *
      * The returned string is temporary and cannot be expected to be
@@ -150,8 +152,10 @@ class CPL_DLL GDALRasterAttributeTable
      * \brief Fetch field value as a integer.
      *
      * The value of the requested column in the requested row is returned
-     * as an integer.  Non-integer fields will be converted to integer with
-     * the possibility of data loss.
+     * as an integer. This method is nominally called on fields of type
+     * GFT_Integer, but it can be called on fields of other types as well.
+     * Non-integer fields will be converted to integer with the possibility of
+     * data loss.
      *
      * This method is the same as the C function GDALRATGetValueAsInt().
      *
@@ -166,7 +170,9 @@ class CPL_DLL GDALRasterAttributeTable
      * \brief Fetch field value as a double.
      *
      * The value of the requested column in the requested row is returned
-     * as a double.   Non double fields will be converted to double with
+     * as a double. This method is nominally called on fields of type
+     * GFT_Real, but it can be called on fields of other types as well.
+     * Non double fields will be converted to double with
      * the possibility of data loss.
      *
      * This method is the same as the C function GDALRATGetValueAsDouble().
@@ -179,10 +185,71 @@ class CPL_DLL GDALRasterAttributeTable
     virtual double GetValueAsDouble(int iRow, int iField) const = 0;
 
     /**
+     * \brief Fetch field value as a boolean.
+     *
+     * The value of the requested column in the requested row is returned
+     * as a boolean. This method is nominally called on fields of type
+     * GFT_Boolean, but it can be called on fields of other types as well.
+     * Non boolean fields will be converted to boolean with the possibility of
+     * data loss.
+     *
+     * This method is the same as the C function GDALRATGetValueAsBoolean().
+     *
+     * @param iRow row to fetch (zero based).
+     * @param iField column to fetch (zero based).
+     *
+     * @return field value
+     * @since 3.12
+     */
+    virtual bool GetValueAsBoolean(int iRow, int iField) const = 0;
+
+    /**
+     * \brief Fetch field value as a datetime.
+     *
+     * The value of the requested column in the requested row is returned
+     * as a datetime. Besides being called on a GFT_DateTime field, it
+     * is also possible to call this method on a string field that contains a
+     * ISO-8601 encoded datetime.
+     *
+     * This method is the same as the C function GDALRATGetValueAsDateTime().
+     *
+     * @param iRow row to fetch (zero based).
+     * @param iField column to fetch (zero based).
+     *
+     * @return field value
+     * @since 3.12
+     */
+    virtual GDALRATDateTime GetValueAsDateTime(int iRow, int iField) const = 0;
+
+    /**
+     * \brief Fetch field value as a WKB geometry.
+     *
+     * The value of the requested column in the requested row is returned
+     * as a WKB geometry. Besides being called on a GFT_WKBGeometry field, it
+     * is also possible to call this method on a string field that contains a WKT
+     * encoded geometry.
+     *
+     * The returned pointer may be invalidated by a following call to a method
+     * of this GDALRasterAttributeTable instance.
+     *
+     * This method is the same as the C function GDALRATGetValueAsWKBGeometry().
+     *
+     * @param iRow row to fetch (zero based).
+     * @param iField column to fetch (zero based).
+     * @param[out] nWKBSize Number of bytes of the returned pointer
+     * @return field value, or nullptr
+     * @since 3.12
+     */
+    virtual const GByte *GetValueAsWKBGeometry(int iRow, int iField,
+                                               size_t &nWKBSize) const = 0;
+
+    /**
      * \brief Set field value from string.
      *
      * The indicated field (column) on the indicated row is set from the
-     * passed value.  The value will be automatically converted for other field
+     * passed value. This method is nominally called on fields of type
+     * GFT_String, but it can be called on fields of other types as well.
+     * The value will be automatically converted for other field
      * types, with a possible loss of precision.
      *
      * This method is the same as the C function GDALRATSetValueAsString().
@@ -198,7 +265,9 @@ class CPL_DLL GDALRasterAttributeTable
      * \brief Set field value from integer.
      *
      * The indicated field (column) on the indicated row is set from the
-     * passed value.  The value will be automatically converted for other field
+     * passed value. This method is nominally called on fields of type
+     * GFT_Integer, but it can be called on fields of other types as well.
+     * The value will be automatically converted for other field
      * types, with a possible loss of precision.
      *
      * This method is the same as the C function GDALRATSetValueAsInteger().
@@ -214,7 +283,9 @@ class CPL_DLL GDALRasterAttributeTable
      * \brief Set field value from double.
      *
      * The indicated field (column) on the indicated row is set from the
-     * passed value.  The value will be automatically converted for other field
+     * passed value. This method is nominally called on fields of type
+     * GFT_Real, but it can be called on fields of other types as well.
+     * The value will be automatically converted for other field
      * types, with a possible loss of precision.
      *
      * This method is the same as the C function GDALRATSetValueAsDouble().
@@ -225,6 +296,67 @@ class CPL_DLL GDALRasterAttributeTable
      * @return (since 3.12) CE_None in case of success, error code otherwise
      */
     virtual CPLErr SetValue(int iRow, int iField, double dfValue) = 0;
+
+    /**
+     * \brief Set field value from boolean.
+     *
+     * The indicated field (column) on the indicated row is set from the
+     * passed value.  This method is nominally called on fields of type
+     * GFT_Boolean, but it can be called on fields of other types as well.
+     * The value will be automatically converted for other field
+     * types, with a possible loss of precision.
+     *
+     * This method is the same as the C function GDALRATSetValueAsBoolean().
+     *
+     * @param iRow row to fetch (zero based).
+     * @param iField column to fetch (zero based).
+     * @param bValue the value to assign.
+     * @return CE_None in case of success, error code otherwise
+     * @since 3.12
+     */
+    virtual CPLErr SetValue(int iRow, int iField, bool bValue) = 0;
+
+    /**
+     * \brief Set field value from datetime.
+     *
+     * The indicated field (column) on the indicated row is set from the
+     * passed value. Besides being called on a field of type GFT_DateTime, this
+     * method can also be called on a field of type GFT_String, in which case
+     * the datetime will be converted into its ISO-8601 representation.
+     *
+     * Note that the GDALRATDateTime::bIsValid field must be set to true if
+     * the date time is valid.
+     *
+     * This method is the same as the C function GDALRATSetValueAsDateTime().
+     *
+     * @param iRow row to fetch (zero based).
+     * @param iField column to fetch (zero based).
+     * @param sDateTime Date time value
+     * @return CE_None in case of success, error code otherwise
+     * @since 3.12
+     */
+    virtual CPLErr SetValue(int iRow, int iField,
+                            const GDALRATDateTime &sDateTime) = 0;
+
+    /**
+     * \brief Set field value from a WKB geometry.
+     *
+     * The indicated field (column) on the indicated row is set from the
+     * passed value. Besides being called on a field of type GFT_WKBGeometry, this
+     * method can also be called on a field of type GFT_String, in which case
+     * the datetime will be converted into its WKT geometry representation.
+     *
+     * This method is the same as the C function GDALRATSetValueAsWKBGeometry().
+     *
+     * @param iRow row to fetch (zero based).
+     * @param iField column to fetch (zero based).
+     * @param pabyWKB Pointer to a WKB encoded geometry
+     * @param nWKBSize Number of bytes of pabyWKB.
+     * @return CE_None in case of success, error code otherwise
+     * @since 3.12
+     */
+    virtual CPLErr SetValue(int iRow, int iField, const void *pabyWKB,
+                            size_t nWKBSize) = 0;
 
     /**
      * \brief Determine whether changes made to this RAT are reflected directly
@@ -263,6 +395,12 @@ class CPL_DLL GDALRasterAttributeTable
                             int iLength, int *pnData);
     virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
                             int iLength, char **papszStrList);
+    virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
+                            int iLength, bool *pbData);
+    virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
+                            int iLength, GDALRATDateTime *pasDateTime);
+    virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
+                            int iLength, GByte **ppabyWKB, size_t *pnWKBSize);
 
     virtual void SetRowCount(int iCount);
     virtual int GetRowOfValue(double dfValue) const;
@@ -311,6 +449,15 @@ class CPL_DLL GDALRasterAttributeTable
      */
     virtual void RemoveStatistics() = 0;
 
+    //! @cond Doxygen_Suppress
+    static std::string DateTimeToString(const GDALRATDateTime &sDateTime);
+    static bool StringToDateTime(const char *pszStr,
+                                 GDALRATDateTime &sDateTime);
+
+    static std::string WKBGeometryToWKT(const void *pabyWKB, size_t nWKBSize);
+    static std::vector<GByte> WKTGeometryToWKB(const char *pszWKT);
+    //! @endcond
+
   protected:
     //! @cond Doxygen_Suppress
     GDALRasterAttributeTable() = default;
@@ -319,6 +466,16 @@ class CPL_DLL GDALRasterAttributeTable
     operator=(const GDALRasterAttributeTable &) = default;
     GDALRasterAttributeTable(GDALRasterAttributeTable &&) = default;
     GDALRasterAttributeTable &operator=(GDALRasterAttributeTable &&) = default;
+
+    CPLErr ValuesIOBooleanFromIntoInt(GDALRWFlag eRWFlag, int iField,
+                                      int iStartRow, int iLength, bool *pbData);
+    CPLErr ValuesIODateTimeFromIntoString(GDALRWFlag eRWFlag, int iField,
+                                          int iStartRow, int iLength,
+                                          GDALRATDateTime *psDateTime);
+    CPLErr ValuesIOWKBGeometryFromIntoString(GDALRWFlag eRWFlag, int iField,
+                                             int iStartRow, int iLength,
+                                             GByte **ppabyWKB,
+                                             size_t *pnWKBSize);
     //! @endcond
 };
 
@@ -342,6 +499,9 @@ class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
         std::vector<GInt32> anValues{};
         std::vector<double> adfValues{};
         std::vector<CPLString> aosValues{};
+        std::vector<bool> abValues{};
+        std::vector<GDALRATDateTime> asDateTimeValues{};
+        std::vector<std::vector<GByte>> aabyWKBGeometryValues{};
     };
 
     std::vector<GDALRasterAttributeField> aoFields{};
@@ -360,6 +520,7 @@ class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
     int nRowCount = 0;
 
     CPLString osWorkingResult{};
+    mutable std::vector<GByte> m_abyWKB{};
 
   public:
     GDALDefaultRasterAttributeTable();
@@ -391,10 +552,19 @@ class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
     const char *GetValueAsString(int iRow, int iField) const override;
     int GetValueAsInt(int iRow, int iField) const override;
     double GetValueAsDouble(int iRow, int iField) const override;
+    bool GetValueAsBoolean(int iRow, int iField) const override;
+    GDALRATDateTime GetValueAsDateTime(int iRow, int iField) const override;
+    const GByte *GetValueAsWKBGeometry(int iRow, int iField,
+                                       size_t &nWKBSize) const override;
 
     CPLErr SetValue(int iRow, int iField, const char *pszValue) override;
     CPLErr SetValue(int iRow, int iField, double dfValue) override;
     CPLErr SetValue(int iRow, int iField, int nValue) override;
+    CPLErr SetValue(int iRow, int iField, bool bValue) override;
+    CPLErr SetValue(int iRow, int iField,
+                    const GDALRATDateTime &sDateTime) override;
+    CPLErr SetValue(int iRow, int iField, const void *pabyWKB,
+                    size_t nWKBSize) override;
 
     int ChangesAreWrittenToFile() override;
     void SetRowCount(int iCount) override;

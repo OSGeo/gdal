@@ -290,8 +290,11 @@ A raster band has the following properties:
   Values belonging to the IR domain are in the [GCI_IR_Start, GCI_IR_End] range.
   Values belonging to the SAR domain are in the [GCI_SAR_Start, GCI_SAR_End] range.
 
-- A color table, described in more detail later.
-- Knowledge of reduced resolution overviews (pyramids) if available.
+- A :ref:`color table <raster_data_model_color_table>`, if available.
+- A :ref:`raster attribute table <raster_data_model_rat>`, if available.
+- :ref:`Reduced resolution overviews (pyramids) <raster_data_model_overviews>`, if available.
+
+.. _raster_data_model_color_table:
 
 Color Table
 -----------
@@ -323,6 +326,50 @@ The color table also has a palette interpretation value (GDALPaletteInterp) whic
 - GPI_HLS: Use c1 as hue, c2 as lightness, and c3 as saturation.
 
 To associate a color with a raster pixel, the pixel value is used as a subscript into the color table. That means that the colors are always applied starting at zero and ascending. There is no provision for indicating a pre-scaling mechanism before looking up in the color table.
+
+.. _raster_data_model_rat:
+
+Raster Attribute Table
+----------------------
+
+.. Keep this section in sync with gcore/gdal_rat.cpp
+
+A raster attribute table (or RAT) is used to encapsulate a table
+used to provide attribute information about pixel values. Each row
+in the table applies to a range of pixel values (or a single value in
+some cases), and might have attributes such as the histogram count for
+that range, the color pixels of that range should be drawn names of classes
+or any other generic information.
+
+In C++, a RAT is accessible through the :cpp:class:`GDALRasterAttributeTable`
+interface.
+
+Raster attribute tables can be used to represent histograms, color tables,
+and classification information.
+
+Each column in a raster attribute table has a name, a type (:cpp:enum:`GDALRATFieldType`)
+(integer, floating point, string, boolean, date time, geometries encoded as WKB),
+and a field usage (:cpp:enum:`GDALRATFieldUsage`).
+The usage distinguishes columns with particular understood purposes
+(such as color, histogram count, name) and columns that have specific
+purposes not understood by the library (long label, suitability_for_growing_wheat, etc).
+
+In the general case each row has a column indicating the minimum pixel
+values falling into that category, and a column indicating the maximum
+pixel value. These are indicated with usage values of ``GFU_Min``, and
+``GFU_Max``. In other cases where each row is a discrete pixel value, one
+column of usage ``GFU_MinMax`` can be used.
+
+In other cases all the categories are of equal size and regularly spaced
+and the categorization information can be determined just by knowing the
+value at which the categories start, and the size of a category. This
+is called "Linear Binning" and the information is kept specially on
+the raster attribute table as a whole.
+
+RATs are normally associated with :cpp:class:`GDALRasterBand` and can be queried
+using the :cpp:func:`GDALRasterBand::GetDefaultRAT` method.
+
+.. _raster_data_model_overviews:
 
 Overviews
 ---------

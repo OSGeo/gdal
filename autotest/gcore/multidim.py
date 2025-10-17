@@ -1498,6 +1498,7 @@ def test_multidim_CreateRasterAttributeTableFromMDArrays():
     icol = 1
     assert rat.GetValueAsInt(-1, icol) == 0
     assert rat.GetValueAsInt(0, icol) == 1
+    assert rat.GetValueAsBoolean(0, icol)
     assert rat.GetValueAsInt(1, icol) == 2
     assert rat.GetValueAsInt(2, icol) == 0
 
@@ -1513,6 +1514,17 @@ def test_multidim_CreateRasterAttributeTableFromMDArrays():
     with pytest.raises(Exception, match="Invalid iField"):
         rat.ReadValuesIOAsInteger(rat.GetColumnCount(), 0, 1)
 
+    with pytest.raises(Exception, match="Invalid iStartRow/iLength"):
+        rat.ReadValuesIOAsBoolean(icol, -1, 1)
+    with pytest.raises(Exception, match="Invalid iStartRow/iLength"):
+        rat.ReadValuesIOAsBoolean(icol, 0, rat.GetRowCount() + 1)
+    with pytest.raises(Exception, match="invalid length"):
+        rat.ReadValuesIOAsBoolean(icol, 0, -1)
+    with pytest.raises(Exception, match="Invalid iField"):
+        rat.ReadValuesIOAsBoolean(-1, 0, 1)
+    with pytest.raises(Exception, match="Invalid iField"):
+        rat.ReadValuesIOAsBoolean(rat.GetColumnCount(), 0, 1)
+
     ar_string.Write(["foo", "bar"])
 
     icol = 2
@@ -1520,6 +1532,8 @@ def test_multidim_CreateRasterAttributeTableFromMDArrays():
     assert rat.GetValueAsString(0, icol) == "foo"
     assert rat.GetValueAsString(1, icol) == "bar"
     assert rat.GetValueAsString(2, icol) is None
+    assert rat.GetValueAsDateTime(0, icol) is None
+    assert rat.GetValueAsWKBGeometry(0, icol) == b""
 
     assert rat.ReadValuesIOAsString(icol, 0, 2) == ["foo", "bar"]
     with pytest.raises(Exception, match="Invalid iStartRow/iLength"):
@@ -1548,6 +1562,21 @@ def test_multidim_CreateRasterAttributeTableFromMDArrays():
         match=r"GDALRasterAttributeTableFromMDArrays::SetValue\(\): not supported",
     ):
         rat.SetValueAsDouble(0, 0, 0.5)
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterAttributeTableFromMDArrays::SetValue\(\): not supported",
+    ):
+        rat.SetValueAsBoolean(0, 0, False)
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterAttributeTableFromMDArrays::SetValue\(\): not supported",
+    ):
+        rat.SetValueAsDateTime(0, 0, None)
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterAttributeTableFromMDArrays::SetValue\(\): not supported",
+    ):
+        rat.SetValueAsWKBGeometry(0, 0, b"")
     assert rat.ChangesAreWrittenToFile() == False
     with pytest.raises(
         Exception,

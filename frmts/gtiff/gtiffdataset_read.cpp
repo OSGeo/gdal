@@ -5444,9 +5444,10 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
 
     if (TIFFGetField(m_hTIFF, TIFFTAG_GDAL_METADATA, &pszText))
     {
-        CPLXMLNode *psRoot = CPLParseXMLString(pszText);
+        auto psRoot = CPLXMLTreeCloser(CPLParseXMLString(pszText));
         const CPLXMLNode *psItem =
-            psRoot ? CPLGetXMLNode(psRoot, "=GDALMetadata") : nullptr;
+            psRoot.get() ? CPLGetXMLNode(psRoot.get(), "=GDALMetadata")
+                         : nullptr;
         if (psItem)
             psItem = psItem->psChild;
         bool bMaxZErrorFound = false;
@@ -5461,11 +5462,36 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             const char *pszKey = CPLGetXMLValue(psItem, "name", nullptr);
             const char *pszValue = CPLGetXMLValue(psItem, nullptr, nullptr);
             int nBand = atoi(CPLGetXMLValue(psItem, "sample", "-1"));
-            if (nBand < -1 || nBand > 65535)
+            if (nBand < -1 || nBand > nBands - 1)
                 continue;
             nBand++;
             const char *pszRole = CPLGetXMLValue(psItem, "role", "");
             const char *pszDomain = CPLGetXMLValue(psItem, "domain", "");
+
+            if (nBand > 0 && pszKey &&
+                strcmp(pszKey, DEFAULT_RASTER_ATTRIBUTE_TABLE) == 0 &&
+                strcmp(pszRole, RAT_ROLE) == 0)
+            {
+                const CPLXMLNode *psValueNode = psItem->psChild;
+                while (psValueNode && psValueNode->eType != CXT_Element)
+                    psValueNode = psValueNode->psNext;
+                if (psValueNode && psValueNode->eType == CXT_Element)
+                {
+                    auto poRAT =
+                        std::make_unique<GDALDefaultRasterAttributeTable>();
+                    if (poRAT->XMLInit(psValueNode, nullptr) == CE_None)
+                    {
+                        GTiffRasterBand *poBand =
+                            cpl::down_cast<GTiffRasterBand *>(
+                                GetRasterBand(nBand));
+                        if (poBand != nullptr)
+                        {
+                            poBand->m_poRAT = std::move(poRAT);
+                            poBand->m_bRATSet = true;
+                        }
+                    }
+                }
+            }
 
             if (pszKey == nullptr || pszValue == nullptr)
                 continue;
@@ -5666,8 +5692,6 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         {
             m_dfMaxZErrorOverview = m_dfMaxZError;
         }
-
-        CPLDestroyXMLNode(psRoot);
     }
 
     if (m_bStreamingIn)

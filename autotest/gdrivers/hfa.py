@@ -12,6 +12,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import datetime
 import math
 import os
 import shutil
@@ -20,7 +21,7 @@ import struct
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("HFA")
 
@@ -1290,3 +1291,87 @@ def test_hfa_read_nan_nodata(tmp_vsimem):
         with gdal.Open(filename) as ds:
             assert gdal.GetLastErrorMsg() == ""
             assert math.isnan(ds.GetRasterBand(1).GetNoDataValue())
+
+
+###############################################################################
+#
+
+
+def test_hfa_rat_grow_string(tmp_vsimem):
+    with gdal.GetDriverByName("HFA").Create(
+        tmp_vsimem / "test.img", 1, 1, 1, gdal.GDT_Byte
+    ) as ds:
+        rat = gdal.RasterAttributeTable()
+        rat.CreateColumn("str", gdal.GFT_String, gdal.GFU_Generic)
+        rat.SetValueAsString(0, 0, "x" * 5)
+        rat.SetValueAsString(1, 0, "y" * 5)
+        ds.GetRasterBand(1).SetDefaultRAT(rat)
+
+    with gdal.Open(tmp_vsimem / "test.img", gdal.GA_Update) as ds:
+        rat = ds.GetRasterBand(1).GetDefaultRAT()
+        rat.SetValueAsString(0, 0, "x" * 50)
+
+    with gdal.Open(tmp_vsimem / "test.img", gdal.GA_Update) as ds:
+        rat = ds.GetRasterBand(1).GetDefaultRAT()
+        assert rat.GetValueAsString(0, 0) == "x" * 50
+        assert rat.GetValueAsString(1, 0) == "y" * 5
+
+
+###############################################################################
+#
+
+
+def test_hfa_rat_new_types(tmp_vsimem):
+
+    with gdal.GetDriverByName("HFA").Create(
+        tmp_vsimem / "test.img", 1, 1, 1, gdal.GDT_Byte
+    ) as ds:
+        rat = gdal.RasterAttributeTable()
+        rat.CreateColumn("bool", gdal.GFT_Boolean, gdal.GFU_Generic)
+        rat.CreateColumn("datetime", gdal.GFT_DateTime, gdal.GFU_Generic)
+        rat.CreateColumn("wkbgeometry", gdal.GFT_WKBGeometry, gdal.GFU_Generic)
+        rat.SetValueAsBoolean(0, 0, True)
+        rat.SetValueAsString(0, 1, "2025-10-11T12:34:56.500+01:30")
+        rat.SetValueAsString(0, 2, "POINT (1.0 2)")
+        ds.GetRasterBand(1).SetDefaultRAT(rat)
+
+    with gdal.Open(tmp_vsimem / "test.img", gdal.GA_Update) as ds:
+        j = gdal.Info(ds, format="json")["bands"][0]["rat"]
+
+        assert j == {
+            "fieldDefn": [
+                {"index": 0, "name": "bool", "type": 0, "usage": 0},
+                {"index": 1, "name": "datetime", "type": 2, "usage": 0},
+                {"index": 2, "name": "wkbgeometry", "type": 2, "usage": 0},
+            ],
+            "row": [
+                {"f": [1, "2025-10-11T12:34:56.500+01:30", "POINT (1 2)"], "index": 0}
+            ],
+            "tableType": "athematic",
+        }
+
+        rat = ds.GetRasterBand(1).GetDefaultRAT()
+
+        rat.SetValueAsBoolean(0, 0, True)
+        assert rat.GetValueAsBoolean(0, 0) == True
+
+        dt = datetime.datetime(
+            2025,
+            12,
+            31,
+            23,
+            58,
+            59,
+            500000,
+            tzinfo=datetime.timezone(datetime.timedelta(seconds=4500)),
+        )
+        rat.SetValueAsDateTime(0, 1, dt)
+        assert rat.GetValueAsString(0, 1) == "2025-12-31T23:58:59.500+01:15"
+        assert rat.GetValueAsDateTime(0, 1) == dt
+
+        g = ogr.Geometry(ogr.wkbPoint)
+        g.SetPoint_2D(0, 1, 2)
+        wkb = g.ExportToWkb()
+
+        rat.SetValueAsWKBGeometry(0, 2, wkb)
+        assert rat.GetValueAsWKBGeometry(0, 2) == wkb
