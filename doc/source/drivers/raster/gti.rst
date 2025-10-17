@@ -298,7 +298,7 @@ metadata domains such as GeoPackage)
 GTI XML format
 ----------------
 
-A `XML schema of the GDAL GTI format <https://raw.githubusercontent.com/OSGeo/gdal/master/data/gdaltileindex.xsd>`_
+A XML schema of the GDAL GTI format (:source_file:`frmts/gti/data/gdaltileindex.xsd`)
 is available.
 
 The following artificial example contains all potential elements and attributes.
