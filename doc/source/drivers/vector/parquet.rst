@@ -244,6 +244,25 @@ it is lower by 4). This number can be configured with the configuration option
 :config:`GDAL_NUM_THREADS`, which can be set to an integer value or
 ``ALL_CPUS``.
 
+Update support
+--------------
+
+.. versionadded:: 3.12.0
+
+The driver supports adding, updating, removing features and fields. Note that
+this is accomplished by rewriting the whole file during :cpp:func:`GDALDataset::FlushCache`
+or when closing the dataset, and keeping into memory all modifications between
+two flushes.
+
+If the file to be updated has been created by GDAL >= 3.12, the creation options
+to create the original file will be re-applied when creating the updated file.
+Stability of feature ids is only guaranteed if the original file has been
+created with an explicit ``FID`` creation option.
+
+If the file to be updated has been created outside of GDAL, the original
+non-scalar/nested field types will not always be preserved, but a JSON
+representation may be used instead.
+
 Validation script
 -----------------
 

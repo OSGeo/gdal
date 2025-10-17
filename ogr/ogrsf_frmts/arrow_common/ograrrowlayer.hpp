@@ -36,6 +36,8 @@
 #pragma clang diagnostic ignored "-Wweak-vtables"
 #endif
 
+inline IOGRArrowLayer::~IOGRArrowLayer() = default;
+
 /************************************************************************/
 /*                         OGRArrowLayer()                              */
 /************************************************************************/

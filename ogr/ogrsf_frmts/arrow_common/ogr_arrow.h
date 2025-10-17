@@ -74,6 +74,22 @@ inline bool OGRArrowIsGeoArrowStruct(OGRArrowGeomEncoding eEncoding)
 }
 
 /************************************************************************/
+/*                             IOGRArrowLayer                           */
+/************************************************************************/
+
+class OGRArrowLayer;
+
+class IOGRArrowLayer CPL_NON_FINAL
+{
+  public:
+    IOGRArrowLayer() = default;
+    virtual ~IOGRArrowLayer();
+
+    virtual OGRLayer *GetLayer() = 0;
+    virtual OGRArrowLayer *GetUnderlyingArrowLayer() = 0;
+};
+
+/************************************************************************/
 /*                         OGRArrowLayer                                */
 /************************************************************************/
 
@@ -81,7 +97,8 @@ class OGRArrowDataset;
 
 class OGRArrowLayer CPL_NON_FINAL
     : public OGRLayer,
-      public OGRGetNextFeatureThroughRaw<OGRArrowLayer>
+      public OGRGetNextFeatureThroughRaw<OGRArrowLayer>,
+      public IOGRArrowLayer
 {
   public:
     struct Constraint
@@ -290,6 +307,16 @@ class OGRArrowLayer CPL_NON_FINAL
 
     void SanityCheckOfSetBatch() const;
 
+    OGRLayer *GetLayer() override
+    {
+        return this;
+    }
+
+    OGRArrowLayer *GetUnderlyingArrowLayer() override
+    {
+        return this;
+    }
+
   public:
     ~OGRArrowLayer() override;
 
@@ -334,7 +361,7 @@ class OGRArrowLayer CPL_NON_FINAL
 class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
 {
     std::shared_ptr<arrow::MemoryPool> m_poMemoryPool{};
-    std::unique_ptr<OGRArrowLayer> m_poLayer{};
+    std::unique_ptr<IOGRArrowLayer> m_poLayer{};
     std::vector<std::string> m_aosDomainNames{};
     std::map<std::string, int> m_oMapDomainNameToCol{};
 
@@ -364,7 +391,7 @@ class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
         return m_poMemoryPool;
     }
 
-    void SetLayer(std::unique_ptr<OGRArrowLayer> &&poLayer);
+    void SetLayer(std::unique_ptr<IOGRArrowLayer> &&poLayer);
 
     void RegisterDomainName(const std::string &osDomainName, int iFieldIndex);
 

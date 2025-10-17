@@ -104,13 +104,9 @@ OGRParquetWriterDataset::ICreateLayer(const char *pszName,
         return nullptr;
     }
 
-    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
-    const auto poSpatialRef =
-        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
-
     m_poLayer = std::make_unique<OGRParquetWriterLayer>(
         this, m_poMemoryPool.get(), m_poOutputStream, pszName);
-    if (!m_poLayer->SetOptions(papszOptions, poSpatialRef, eGType))
+    if (!m_poLayer->SetOptions(poGeomFieldDefn, papszOptions))
     {
         m_poLayer.reset();
         return nullptr;
