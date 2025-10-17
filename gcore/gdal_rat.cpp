@@ -169,7 +169,7 @@ GDALRasterAttributeTable::~GDALRasterAttributeTable() = default;
  *
  * This method is the same as the C function GDALRATValuesIOAsDouble().
  *
- * @param eRWFlag Either GF_Read or GF_Write
+ * @param eRWFlag either GF_Read or GF_Write
  * @param iField column of the Attribute Table
  * @param iStartRow start row to start reading/writing (zero based)
  * @param iLength number of rows to read or write
@@ -235,7 +235,7 @@ CPLErr CPL_STDCALL GDALRATValuesIOAsDouble(GDALRasterAttributeTableH hRAT,
  *
  * This method is the same as the C function GDALRATValuesIOAsInteger().
  *
- * @param eRWFlag Either GF_Read or GF_Write
+ * @param eRWFlag either GF_Read or GF_Write
  * @param iField column of the Attribute Table
  * @param iStartRow start row to start reading/writing (zero based)
  * @param iLength number of rows to read or write
@@ -303,7 +303,7 @@ CPLErr CPL_STDCALL GDALRATValuesIOAsInteger(GDALRasterAttributeTableH hRAT,
  * When reading, papszStrList must be already allocated to the correct size.
  * The caller is expected to call CPLFree on each read string.
  *
- * @param eRWFlag Either GF_Read or GF_Write
+ * @param eRWFlag either GF_Read or GF_Write
  * @param iField column of the Attribute Table
  * @param iStartRow start row to start reading/writing (zero based)
  * @param iLength number of rows to read or write
@@ -374,7 +374,7 @@ CPLErr CPL_STDCALL GDALRATValuesIOAsString(GDALRasterAttributeTableH hRAT,
  *
  * This method is the same as the C function GDALRATValuesIOAsBoolean().
  *
- * @param eRWFlag Either GF_Read or GF_Write
+ * @param eRWFlag either GF_Read or GF_Write
  * @param iField column of the Attribute Table
  * @param iStartRow start row to start reading/writing (zero based)
  * @param iLength number of rows to read or write
@@ -446,7 +446,7 @@ CPLErr GDALRATValuesIOAsBoolean(GDALRasterAttributeTableH hRAT,
  *
  * This method is the same as the C function GDALRATValuesIOAsDateTime().
  *
- * @param eRWFlag Either GF_Read or GF_Write
+ * @param eRWFlag either GF_Read or GF_Write
  * @param iField column of the Attribute Table
  * @param iStartRow start row to start reading/writing (zero based)
  * @param iLength number of rows to read or write
@@ -520,7 +520,7 @@ CPLErr GDALRATValuesIOAsDateTime(GDALRasterAttributeTableH hRAT,
  *
  * This method is the same as the C function GDALRATValuesIOAsWKBGeometry().
  *
- * @param eRWFlag Either GF_Read or GF_Write
+ * @param eRWFlag either GF_Read or GF_Write
  * @param iField column of the Attribute Table
  * @param iStartRow start row to start reading/writing (zero based)
  * @param iLength number of rows to read or write
