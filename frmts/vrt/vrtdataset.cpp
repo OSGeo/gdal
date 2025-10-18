@@ -2801,13 +2801,6 @@ void VRTDataset::BuildVirtualOverviews()
             }
             if (poNewSource)
             {
-                auto poNewSourceBand = poVRTBand->GetBand() == 0
-                                           ? poNewSource->GetMaskBandMainBand()
-                                           : poNewSource->GetRasterBand();
-                CPLAssert(poNewSourceBand);
-                auto poNewSourceBandDS = poNewSourceBand->GetDataset();
-                if (poNewSourceBandDS)
-                    poNewSourceBandDS->Reference();
                 poOvrVRTBand->AddSource(poNewSource);
             }
 
