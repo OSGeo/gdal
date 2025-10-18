@@ -744,6 +744,49 @@ def test_ogr_geom_transform_geogcrs_to_wgs84():
 
 
 ###############################################################################
+# Test Transform() from a polar projected CRS to geographic
+
+
+@pytest.mark.require_geos
+@pytest.mark.parametrize(
+    "input_wkt,output_wkt",
+    [
+        (
+            "POLYGON((0 100000,100000 0,0 -100000,-100000 0,0 100000),(0 50000,50000 0,0 -50000,-50000 0,0 50000))",
+            "POLYGON ((90.0 89.089200825091,0.0 89.089200825091,-90 89.089200825091,-180 89.0892008251069,-180 89.5445935108883,-90 89.5445935108803,0.0 89.5445935108803,90.0 89.5445935108803,180.0 89.5445935108883,180.0 89.0892008251069,90.0 89.089200825091))",
+        ),
+        (
+            "POLYGON((50000 -100000,100000 -100000,100000 100000,-100000 100000,-100000 50000,50000 50000,50000 -100000))",
+            "MULTIPOLYGON (((135.0 88.7119614804959,45.0 88.7119614804959,26.565051177078 88.9817007095479,135.0 89.3559612202261,180.0 89.5445935108803,180.0 89.089200825091,135.0 88.7119614804959)),((-116.565051177078 88.9817007095479,-135 88.7119614804959,-180 89.089200825091,-180 89.5445935108803,-116.565051177078 88.9817007095479)))",
+        ),
+    ],
+)
+def test_ogr_geom_transform_polar_projected_to_geographic(input_wkt, output_wkt):
+
+    srs_3996 = osr.SpatialReference()
+    srs_3996.ImportFromEPSG(3996)
+    srs_3996.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    srs_4326 = osr.SpatialReference()
+    srs_4326.ImportFromEPSG(4326)
+    srs_4326.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    ct = osr.CoordinateTransformation(srs_3996, srs_4326)
+    tr = ogr.GeomTransformer(ct)
+
+    g = ogr.CreateGeometryFromWkt(input_wkt)
+    g = tr.Transform(g)
+    # print(g.ExportToWkt())
+    ogrtest.check_feature_geometry(g, output_wkt)
+
+    tr = ogr.GeomTransformer(ct, ["WRAPDATELINE=YES"])
+    g = ogr.CreateGeometryFromWkt(input_wkt)
+    g = tr.Transform(g)
+    # print(g.ExportToWkt())
+    ogrtest.check_feature_geometry(g, output_wkt)
+
+
+###############################################################################
 # Test ogr.GeomTransformer()
 
 
