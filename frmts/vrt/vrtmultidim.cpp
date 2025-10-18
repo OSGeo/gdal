@@ -1976,6 +1976,9 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
 {
     // Preliminary check without trying to open source array
     const auto nDims(m_poDstArray->GetDimensionCount());
+
+    // Check that end of request is not lower than the beginning of the dest slab
+    // and that the start of request is not greater than the end of the dest slab
     for (size_t i = 0; i < nDims; i++)
     {
         auto start_i = arrayStartIdx[i];
@@ -1983,29 +1986,14 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
         if (arrayStep[i] < 0)
         {
             // For negative step request, temporarily simulate a positive step
-            start_i = start_i - (m_anCount[i] - 1) * (-step_i);
+            start_i = start_i - (count[i] - 1) * (-step_i);
             step_i = -step_i;
         }
         if (start_i + (count[i] - 1) * step_i < m_anDstOffset[i])
         {
             return true;
         }
-    }
-
-    for (size_t i = 0; i < nDims; i++)
-    {
-        if (m_anCount[i] == 0)  // we need to open the array...
-            break;
-
-        auto start_i = arrayStartIdx[i];
-        auto step_i = arrayStep[i] == 0 ? 1 : arrayStep[i];
-        if (arrayStep[i] < 0)
-        {
-            // For negative step request, temporarily simulate a positive step
-            start_i = start_i - (m_anCount[i] - 1) * (-step_i);
-            // step_i = -step_i;
-        }
-        if (start_i >= m_anDstOffset[i] + m_anCount[i])
+        else if (m_anCount[i] > 0 && start_i >= m_anDstOffset[i] + m_anCount[i])
         {
             return true;
         }
@@ -2135,22 +2123,17 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid SourceSlab.offset");
             return false;
         }
+        if (m_anCount[i] == 0)
+            m_anCount[i] = srcDims[i]->GetSize() - m_anSrcOffset[i];
+
         auto start_i = arrayStartIdx[i];
         auto step_i = arrayStep[i] == 0 ? 1 : arrayStep[i];
         if (arrayStep[i] < 0)
         {
-            if (m_anCount[i] == 0)
-                m_anCount[i] = (m_anSrcOffset[i] + 1) / -step_i;
             // For negative step request, temporarily simulate a positive step
             // and fix up the start at the end of the loop.
-            start_i = start_i - (m_anCount[i] - 1) * (-step_i);
+            start_i = start_i - (count[i] - 1) * (-step_i);
             step_i = -step_i;
-        }
-        else
-        {
-            if (m_anCount[i] == 0)
-                m_anCount[i] =
-                    (srcDims[i]->GetSize() - m_anSrcOffset[i]) / step_i;
         }
 
         const auto nRightDstOffsetFromConfig = m_anDstOffset[i] + m_anCount[i];
@@ -2185,9 +2168,12 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
     std::vector<GInt64> anSrcArrayStep(nDims);
     for (size_t i = 0; i < nDims; i++)
     {
-        const size_t nRelStartDst =
-            static_cast<size_t>(anReqDstStart[i] - arrayStartIdx[i]);
-        nDstOffset += nRelStartDst * bufferStride[i] * nBufferDataTypeSize;
+        if (anReqDstStart[i] > arrayStartIdx[i])
+        {
+            const GPtrDiff_t nRelStartDst =
+                static_cast<size_t>(anReqDstStart[i] - arrayStartIdx[i]);
+            nDstOffset += nRelStartDst * bufferStride[i] * nBufferDataTypeSize;
+        }
         anSrcArrayOffset[i] =
             m_anSrcOffset[i] +
             (anReqDstStart[i] - m_anDstOffset[i]) * m_anStep[i];
