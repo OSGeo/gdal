@@ -276,7 +276,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRErr Rename(const char *pszNewName) CPL_WARN_UNUSED_RESULT;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
-                               int bApproxOK = TRUE);
+                               int bApproxOK = TRUE) CPL_WARN_UNUSED_RESULT;
     virtual OGRErr DeleteField(int iField);
     virtual OGRErr ReorderFields(int *panMap);
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,

@@ -343,9 +343,9 @@ bool OGRParquetWriterLayer::SetOptions(
         if (!m_poTmpGPKGLayer)
             return false;
         // Serialized feature
-        m_poTmpGPKGLayer->CreateField(
+        CPL_IGNORE_RET_VAL(m_poTmpGPKGLayer->CreateField(
             std::make_unique<OGRFieldDefn>("serialized_feature", OFTBinary)
-                .get());
+                .get()));
         CPL_IGNORE_RET_VAL(m_poTmpGPKGLayer->StartTransaction());
     }
 
