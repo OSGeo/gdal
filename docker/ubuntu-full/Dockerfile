@@ -88,7 +88,7 @@ ARG RSYNC_REMOTE
 ARG WITH_CCACHE
 
 # Build libkea
-ARG KEA_VERSION=1.5.2
+ARG KEA_VERSION=1.6.2
 RUN --mount=type=cache,id=ubuntu-full-kealib,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && curl -LO -fsS https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
@@ -123,7 +123,7 @@ RUN --mount=type=cache,id=ubuntu-full-kealib,target=$HOME/.cache \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build mongo-c-driver
-ARG MONGO_C_DRIVER_VERSION=1.24.4
+ARG MONGO_C_DRIVER_VERSION=2.1.2
 RUN --mount=type=cache,id=ubuntu-full-mongo-c-driver,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && mkdir mongo-c-driver \
@@ -159,7 +159,7 @@ RUN --mount=type=cache,id=ubuntu-full-mongo-c-driver,target=$HOME/.cache \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build mongocxx
-ARG MONGOCXX_VERSION=3.8.1
+ARG MONGOCXX_VERSION=4.1.4
 RUN --mount=type=cache,id=ubuntu-full-mongo-cxx-driver,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && mkdir mongocxx \
@@ -448,7 +448,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && rm apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
 
 # Manually build ADBC packages to have support for BigQuery
-ARG ARROW_ADBC_VERSION=19
+ARG ARROW_ADBC_VERSION=20
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     . /buildscripts/bh-set-envvars.sh \

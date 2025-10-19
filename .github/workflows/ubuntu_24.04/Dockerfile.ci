@@ -99,7 +99,7 @@ RUN apt-get update \
    && ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
 
 # Build mongo-c-driver
-ARG MONGO_C_DRIVER_VERSION=2.0.2
+ARG MONGO_C_DRIVER_VERSION=2.1.2
 RUN mkdir mongo-c-driver \
     && wget -q https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz -O - \
         | tar xz -C mongo-c-driver --strip-components=1 \
@@ -113,7 +113,7 @@ RUN mkdir mongo-c-driver \
     && rm -rf mongo-c-driver
 
 # Build mongocxx
-ARG MONGOCXX_VERSION=4.1.1
+ARG MONGOCXX_VERSION=4.1.4
 RUN mkdir mongocxx \
     && wget -q https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz -O - \
         | tar xz -C mongocxx --strip-components=1 \
