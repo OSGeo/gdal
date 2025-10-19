@@ -5997,3 +5997,20 @@ def test_ogr_geojson_invalid_number(tmp_vsimem):
             Exception, match="Unrecognized number: 12345678.1234567-81234567812345678"
         ):
             lyr.GetNextFeature()
+
+
+def test_ogr_geojson_export_to_json_geom_collection_with_curve():
+
+    g = ogr.CreateGeometryFromWkt(
+        "GEOMETRYCOLLECTION(GEOMETRYCOLLECTION(CIRCULARSTRING EMPTY),POINT (0 0))"
+    )
+    assert json.loads(g.ExportToJson()) == {
+        "type": "GeometryCollection",
+        "geometries": [
+            {
+                "type": "GeometryCollection",
+                "geometries": [{"type": "LineString", "coordinates": []}],
+            },
+            {"type": "Point", "coordinates": [0.0, 0.0]},
+        ],
+    }
