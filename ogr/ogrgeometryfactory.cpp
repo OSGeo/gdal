@@ -3060,7 +3060,15 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
                             ((dfX > dfLeftBorderX &&
                               dfPrevX < dfRightBorderX) ||
                              (dfPrevX > dfLeftBorderX && dfX < dfRightBorderX)))
-                            bHasBigDiff = true;
+                        {
+                            constexpr double EPSILON = 1e-5;
+                            if (!(std::fabs(dfDiffLong - 360) < EPSILON &&
+                                  std::fabs(std::fabs(poLS->getY(i)) - 90) <
+                                      EPSILON))
+                            {
+                                bHasBigDiff = true;
+                            }
+                        }
                         else if (dfDiffLong > dfMaxSmallDiffLong)
                             dfMaxSmallDiffLong = dfDiffLong;
                     }
@@ -3416,6 +3424,47 @@ static bool IsPolarToGeographic(OGRCoordinateTransformation *poCT,
 }
 
 /************************************************************************/
+/*                             ContainsPole()                           */
+/************************************************************************/
+
+static bool ContainsPole(const OGRGeometry *poGeom, const OGRPoint *poPole)
+{
+    switch (wkbFlatten(poGeom->getGeometryType()))
+    {
+        case wkbPolygon:
+        case wkbCurvePolygon:
+        {
+            const auto poPoly = poGeom->toCurvePolygon();
+            if (poPoly->getNumInteriorRings() > 0)
+            {
+                const auto poRing = poPoly->getExteriorRingCurve();
+                OGRPolygon oPolygon;
+                oPolygon.addRing(poRing);
+                return oPolygon.Contains(poPole);
+            }
+
+            return poGeom->Contains(poPole);
+        }
+
+        case wkbMultiPolygon:
+        case wkbMultiSurface:
+        case wkbGeometryCollection:
+        {
+            for (const auto *poSubGeom : poGeom->toGeometryCollection())
+            {
+                if (ContainsPole(poSubGeom, poPole))
+                    return true;
+            }
+            return false;
+        }
+
+        default:
+            break;
+    }
+    return poGeom->Contains(poPole);
+}
+
+/************************************************************************/
 /*                 TransformBeforePolarToGeographic()                   */
 /*                                                                      */
 /* Transform the geometry (by intersection), so as to cut each geometry */
@@ -3434,7 +3483,7 @@ static std::unique_ptr<OGRGeometry> TransformBeforePolarToGeographic(
     double dfYPole = nSign * 90.0;
     poRevCT->Transform(1, &dfXPole, &dfYPole);
     OGRPoint oPole(dfXPole, dfYPole);
-    const bool bContainsPole = CPL_TO_BOOL(poDstGeom->Contains(&oPole));
+    const bool bContainsPole = ContainsPole(poDstGeom.get(), &oPole);
 
     const double EPS = 1e-9;
 
@@ -3447,10 +3496,19 @@ static std::unique_ptr<OGRGeometry> TransformBeforePolarToGeographic(
     const bool bContainsNearPoleAntimeridian =
         CPL_TO_BOOL(poDstGeom->Contains(&oNearPoleAntimeridian));
 
+    // Does the geometry intersects the antimeridian ?
+    OGRLineString oAntiMeridianLine;
+    oAntiMeridianLine.addPoint(180.0, nSign * (90.0 - EPS));
+    oAntiMeridianLine.addPoint(180.0, 0);
+    oAntiMeridianLine.transform(poRevCT);
+    const bool bIntersectsAntimeridian =
+        bContainsNearPoleAntimeridian ||
+        CPL_TO_BOOL(poDstGeom->Intersects(&oAntiMeridianLine));
+
     // Does the geometry touches the pole (but not intersect the antimeridian) ?
-    const bool bRegularTouchesPole = !bContainsPole &&
-                                     !bContainsNearPoleAntimeridian &&
-                                     CPL_TO_BOOL(poDstGeom->Touches(&oPole));
+    const bool bRegularTouchesPole =
+        !bContainsPole && !bContainsNearPoleAntimeridian &&
+        !bIntersectsAntimeridian && CPL_TO_BOOL(poDstGeom->Touches(&oPole));
 
     // Create a polygon of nearly a full hemisphere, but excluding the anti
     // meridian and the pole.
@@ -3474,9 +3532,11 @@ static std::unique_ptr<OGRGeometry> TransformBeforePolarToGeographic(
         // Check that longitudes +/- 180 are continuous
         // in the polar projection
         fabs(poRing->getX(0) - poRing->getX(poRing->getNumPoints() - 2)) < 1 &&
-        (bContainsPole || bContainsNearPoleAntimeridian || bRegularTouchesPole))
+        (bContainsPole || bIntersectsAntimeridian ||
+         bContainsNearPoleAntimeridian || bRegularTouchesPole))
     {
-        if (bContainsPole || bContainsNearPoleAntimeridian)
+        if (bContainsPole || bIntersectsAntimeridian ||
+            bContainsNearPoleAntimeridian)
         {
             auto poNewGeom =
                 std::unique_ptr<OGRGeometry>(poDstGeom->Difference(&oCutter));
