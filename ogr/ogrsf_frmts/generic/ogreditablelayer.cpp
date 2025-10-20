@@ -634,8 +634,7 @@ int OGREditableLayer::TestCapability(const char *pszCap) const
         EQUAL(pszCap, OLCReorderFields) || EQUAL(pszCap, OLCAlterFieldDefn) ||
         EQUAL(pszCap, OLCAlterGeomFieldDefn) || EQUAL(pszCap, OLCDeleteFeature))
     {
-        return m_poDecoratedLayer->TestCapability(OLCCreateField) == TRUE ||
-               m_poDecoratedLayer->TestCapability(OLCSequentialWrite) == TRUE;
+        return TRUE;
     }
     if (EQUAL(pszCap, OLCCreateGeomField))
         return m_bSupportsCreateGeomField;

@@ -4440,3 +4440,179 @@ def test_ogr_parquet_test_ogrsf_parquet_geometry():
 
     assert "INFO" in ret
     assert "ERROR" not in ret
+
+
+###############################################################################
+
+
+def test_ogr_parquet_update(tmp_path):
+
+    with gdal.GetDriverByName("PARQUET").CreateVector(tmp_path / "test.parquet") as ds:
+        lyr = ds.CreateLayer(
+            "test", geom_type=ogr.wkbPoint, srs=osr.SpatialReference(epsg=32631)
+        )
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        f["int"] = 123
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+
+    with ogr.Open(tmp_path / "test.parquet", gdal.GA_Update) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata("_GDAL_CREATION_OPTIONS_") == {}
+        assert lyr.GetFIDColumn() == ""
+        assert lyr.GetGeometryColumn() == "geometry"
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.TestCapability(ogr.OLCSequentialWrite)
+        assert lyr.TestCapability(ogr.OLCRandomWrite)
+        assert lyr.TestCapability(ogr.OLCCreateField)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "bar"
+        f["int"] = 456
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr.CreateFeature(f)
+        assert lyr.GetFeatureCount() == 2
+
+    with ogr.Open(tmp_path / "test.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata("_GDAL_CREATION_OPTIONS_") == {}
+        assert lyr.GetFIDColumn() == ""
+        assert lyr.GetGeometryColumn() == "geometry"
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.GetFeatureCount() == 2
+        f = lyr.GetNextFeature()
+        assert f["str"] == "foo"
+        assert f["int"] == 123
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+        f = lyr.GetNextFeature()
+        assert f["str"] == "bar"
+        assert f["int"] == 456
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"
+
+    with ogr.Open(tmp_path / "test.parquet", gdal.GA_Update) as ds:
+        lyr = ds.GetLayer(0)
+        lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
+        f = lyr.GetNextFeature()
+        f["real"] = 1.5
+        lyr.SetFeature(f)
+
+    with ogr.Open(tmp_path / "test.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 2
+        f = lyr.GetNextFeature()
+        assert f["str"] == "foo"
+        assert f["int"] == 123
+        assert f["real"] == 1.5
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        ret = gdaltest.runexternal(
+            test_cli_utilities.get_test_ogrsf_path() + f" {tmp_path}/test.parquet"
+        )
+
+        assert "INFO" in ret
+        assert "ERROR" not in ret
+
+
+###############################################################################
+
+
+def test_ogr_parquet_update_with_creation_options_implicit(tmp_path):
+
+    with gdal.GetDriverByName("PARQUET").CreateVector(tmp_path / "test.parquet") as ds:
+        lyr = ds.CreateLayer(
+            "test",
+            geom_type=ogr.wkbPoint,
+            srs=osr.SpatialReference(epsg=32631),
+            options=["FID=my_fid", "GEOMETRY_NAME=my_geom", "EDGES=SPHERICAL"],
+        )
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        f["int"] = 123
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+
+    with ogr.Open(tmp_path / "test.parquet", gdal.GA_Update) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata("_GDAL_CREATION_OPTIONS_") == {}
+        assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
+        assert lyr.GetFIDColumn() == "my_fid"
+        assert lyr.GetGeometryColumn() == "my_geom"
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "bar"
+        f["int"] = 456
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr.CreateFeature(f)
+        assert lyr.GetFeatureCount() == 2
+
+    with ogr.Open(tmp_path / "test.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata("_GDAL_CREATION_OPTIONS_") == {}
+        assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
+        assert lyr.GetFIDColumn() == "my_fid"
+        assert lyr.GetGeometryColumn() == "my_geom"
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.GetFeatureCount() == 2
+        f = lyr.GetNextFeature()
+        assert f["str"] == "foo"
+        assert f["int"] == 123
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+        f = lyr.GetNextFeature()
+        assert f["str"] == "bar"
+        assert f["int"] == 456
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"
+
+
+###############################################################################
+
+
+def test_ogr_parquet_update_with_creation_options_explicit(tmp_path):
+
+    with gdal.GetDriverByName("PARQUET").CreateVector(tmp_path / "test.parquet") as ds:
+        lyr = ds.CreateLayer(
+            "test",
+            geom_type=ogr.wkbPoint,
+            srs=osr.SpatialReference(epsg=32631),
+            options=["ROW_GROUP_SIZE=1"],
+        )
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        f["int"] = 123
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+
+    with ogr.Open(tmp_path / "test.parquet", gdal.GA_Update) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata("_GDAL_CREATION_OPTIONS_") == {"ROW_GROUP_SIZE": "1"}
+        assert lyr.GetMetadataItem("NUM_ROW_GROUPS", "_PARQUET_") == "1"
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "bar"
+        f["int"] = 456
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr.CreateFeature(f)
+        assert lyr.GetFeatureCount() == 2
+
+    with ogr.Open(tmp_path / "test.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata("_GDAL_CREATION_OPTIONS_") == {"ROW_GROUP_SIZE": "1"}
+        assert lyr.GetMetadataItem("NUM_ROW_GROUPS", "_PARQUET_") == "2"
+        assert lyr.GetFeatureCount() == 2
+        f = lyr.GetNextFeature()
+        assert f["str"] == "foo"
+        assert f["int"] == 123
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+        f = lyr.GetNextFeature()
+        assert f["str"] == "bar"
+        assert f["int"] == 456
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"

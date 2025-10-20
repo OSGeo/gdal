@@ -121,6 +121,9 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     std::map<int, GeomColBBOXParquet>
         m_oMapGeomFieldIndexToGeomColBBOXParquet{};
 
+    //! GDAL creation options that were used to create the file (if done by GDAL)
+    CPLStringList m_aosCreationOptions{};
+
     void EstablishFeatureDefn();
     void ProcessGeometryColumnCovering(
         const std::shared_ptr<arrow::Field> &field,
@@ -193,6 +196,11 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     int GetFIDParquetColumn() const
     {
         return m_iFIDParquetColumn;
+    }
+
+    const CPLStringList &GetCreationOptions() const
+    {
+        return m_aosCreationOptions;
     }
 
     static constexpr int OGR_FID_INDEX = -2;
@@ -297,8 +305,7 @@ class OGRParquetDataset final : public OGRArrowDataset
     std::shared_ptr<arrow::fs::FileSystem> m_poFS{};
 
   public:
-    explicit OGRParquetDataset(
-        const std::shared_ptr<arrow::MemoryPool> &poMemoryPool);
+    explicit OGRParquetDataset();
     ~OGRParquetDataset() override;
 
     CPLErr Close() override;
@@ -314,6 +321,10 @@ class OGRParquetDataset final : public OGRArrowDataset
     {
         m_poFS = fs;
     }
+
+    std::unique_ptr<OGRParquetLayer>
+    CreateReaderLayer(const std::string &osFilename, VSILFILE *&fpIn,
+                      CSLConstList papszOpenOptionsIn);
 };
 
 /************************************************************************/
@@ -342,6 +353,8 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
 
     //! Whether to write "geo" footer metadata;
     bool m_bWriteGeoMetadata = true;
+
+    CPLStringList m_aosCreationOptions{};
 
     bool IsFileWriterCreated() const override
     {
@@ -386,9 +399,8 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
 
     CPLErr SetMetadata(char **papszMetadata, const char *pszDomain) override;
 
-    bool SetOptions(CSLConstList papszOptions,
-                    const OGRSpatialReference *poSpatialRef,
-                    OGRwkbGeometryType eGType);
+    bool SetOptions(const OGRGeomFieldDefn *poSrcGeomFieldDefn,
+                    CSLConstList papszOptions);
 
     OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                            int bApproxOK = TRUE) override;
