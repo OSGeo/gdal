@@ -10458,15 +10458,25 @@ GDALRasterBand::WindowIteratorWrapper::WindowIteratorWrapper(
 
     if (dfBlocksPerChunk < dfBlocksPerRow)
     {
-        m_nBlockXSize =
-            nXSize * std::max<int>(static_cast<int>(dfBlocksPerChunk), 1);
+        m_nBlockXSize = static_cast<int>(std::min<double>(
+            m_nRasterXSize,
+            nXSize * std::max(std::floor(dfBlocksPerChunk), 1.0)));
         m_nBlockYSize = nYSize;
     }
     else
     {
         m_nBlockXSize = m_nRasterXSize;
-        m_nBlockYSize =
-            nYSize * static_cast<int>(dfBlocksPerChunk / dfBlocksPerRow);
+        m_nBlockYSize = static_cast<int>(std::min<double>(
+            m_nRasterYSize,
+            nYSize * std::floor(dfBlocksPerChunk / dfBlocksPerRow)));
+    }
+    if constexpr (sizeof(size_t) < sizeof(uint64_t))
+    {
+        if (m_nBlockXSize > std::numeric_limits<int>::max() / m_nBlockYSize)
+        {
+            nXSize = m_nRasterXSize;
+            nYSize = 1;
+        }
     }
 }
 
@@ -10483,6 +10493,14 @@ GDALRasterBand::WindowIteratorWrapper::end() const
     return WindowIterator(m_nRasterXSize, m_nRasterYSize, m_nBlockXSize,
                           m_nBlockYSize,
                           DIV_ROUND_UP(m_nRasterYSize, m_nBlockYSize), 0);
+}
+
+uint64_t GDALRasterBand::WindowIteratorWrapper::count() const
+{
+    return static_cast<uint64_t>(
+               cpl::div_round_up(m_nRasterXSize, m_nBlockXSize)) *
+           static_cast<uint64_t>(
+               cpl::div_round_up(m_nRasterYSize, m_nBlockYSize));
 }
 
 //! @endcond

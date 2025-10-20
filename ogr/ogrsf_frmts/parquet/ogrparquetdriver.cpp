@@ -222,9 +222,9 @@ static GDALDataset *BuildMemDatasetWithRowGroupExtents(OGRParquetLayer *poLayer)
             poTmpSRS->Release();
         if (!poMemLayer)
             return nullptr;
-        poMemLayer->CreateField(
+        CPL_IGNORE_RET_VAL(poMemLayer->CreateField(
             std::make_unique<OGRFieldDefn>("feature_count", OFTInteger64)
-                .get());
+                .get()));
 
         const auto metadata =
             poLayer->GetReader()->parquet_reader()->metadata();

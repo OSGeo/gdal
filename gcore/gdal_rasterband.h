@@ -612,6 +612,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
         explicit WindowIteratorWrapper(const GDALRasterBand &band,
                                        size_t maxSize);
 
+        uint64_t count() const;
+
         WindowIterator begin() const;
 
         WindowIterator end() const;

@@ -496,9 +496,12 @@ static OGRLayer *OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
         if (poLayer != nullptr)
         {
             OGRFieldDefn oFieldDefnURL(FIELD_URL, OFTString);
-            poLayer->CreateField(&oFieldDefnURL);
             OGRFieldDefn oFieldDefnBlob(FIELD_BLOB, OFTString);
-            poLayer->CreateField(&oFieldDefnBlob);
+            if (poLayer->CreateField(&oFieldDefnURL) != OGRERR_NONE ||
+                poLayer->CreateField(&oFieldDefnBlob) != OGRERR_NONE)
+            {
+                return nullptr;
+            }
             if (EQUAL(osExt, "SQLITE") ||
                 STARTS_WITH_CI(hSession->pszCacheFilename, "PG:"))
             {

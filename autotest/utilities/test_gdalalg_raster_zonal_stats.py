@@ -12,6 +12,7 @@
 ###############################################################################
 
 import math
+import sys
 
 import gdaltest
 import ogrtest
@@ -68,6 +69,46 @@ def field_names(f):
     return [f.GetFieldDefnRef(i).GetName() for i in range(f.GetFieldCount())]
 
 
+def test_gdalalg_raster_zonal_stats_zones_dataset_empty(zonal):
+
+    src_ds = gdal.Open("../gcore/data/gtiff/rgbsmall_NONE_tiled.tif")
+
+    zonal["input"] = src_ds
+    zonal["zones"] = gdal.GetDriverByName("MEM").Create("", 1, 1, 0)
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+    zonal["stat"] = "sum"
+
+    with pytest.raises(Exception, match="Zones dataset has no band or layer"):
+        zonal.Run()
+
+
+def test_gdalalg_raster_zonal_stats_no_geotransform(zonal):
+
+    zonal["input"] = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    zonal["zones"] = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+    zonal["stat"] = "sum"
+
+    with pytest.raises(Exception, match="Dataset has no geotransform"):
+        zonal.Run()
+
+
+def test_gdalalg_raster_zonal_stats_non_invertible_geotransform(zonal):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    src_ds.SetGeoTransform([0] * 6)
+    zonal["input"] = src_ds
+    zonal["zones"] = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+    zonal["stat"] = "sum"
+
+    with pytest.raises(Exception, match="Dataset geotransform cannot be inverted"):
+        zonal.Run()
+
+
 @pytest.mark.parametrize("band", (1, 2, [3, 1]))
 def test_gdalalg_raster_zonal_stats_polygon_zones_basic(zonal, strategy, pixels, band):
 
@@ -89,10 +130,12 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_basic(zonal, strategy, pixels,
     )
     zonal["band"] = band
     zonal["chunk-size"] = "2k"  # force iteration over blocks
+    zonal["layer-creation-option"] = {"FID": "my_fid"}
 
     assert zonal.Run()
 
     out_ds = zonal.Output()
+    assert out_ds.GetLayer(0).GetFIDColumn() == "my_fid"
 
     results = [f for f in out_ds.GetLayer(0)]
 
@@ -620,7 +663,7 @@ def test_gdalalg_raster_zonal_stats_raster_zones_invalid_band(zonal):
     zonal["output-format"] = "MEM"
     zonal["stat"] = "sum"
 
-    with pytest.raises(Exception, match="Specified zones band 2 not found"):
+    with pytest.raises(Exception, match="Invalid zones band: 2"):
         zonal.Run()
 
 
@@ -662,6 +705,19 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_chunk_size(zonal):
         zonal["chunk-size"] = "512"
 
 
+@pytest.mark.skipif(sys.maxsize <= 1 << 32, reason="only works on 64 bit")
+def test_gdalalg_raster_zonal_stats_polygon_zones_large_chunk_size(zonal):
+
+    zonal["input"] = "../gcore/data/byte.tif"
+    zonal["zones"] = "../gcore/data/byte.tif"
+    zonal["stat"] = "sum"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+    zonal["chunk-size"] = "10000GB"
+
+    assert zonal.Run()
+
+
 @pytest.mark.parametrize(
     "dtype",
     (
@@ -687,6 +743,30 @@ def test_gdalalg_raster_zonal_stats_unsupported_type(zonal, dtype):
     zonal["output-format"] = "MEM"
 
     with pytest.raises(Exception, match="Source data type"):
+        zonal.Run()
+
+
+def test_gdalalg_raster_zonal_stats_invalid_weight_band(zonal):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 3, eType=gdal.GDT_Float32)
+    src_ds.SetGeoTransform((0, 1, 0, 3, 0, -1))
+    src_ds.GetRasterBand(1).Fill(1)
+
+    weight_ds = gdal.GetDriverByName("MEM").Create("", 3, 3, eType=gdal.GDT_Float32)
+    weight_ds.SetGeoTransform((0, 1, 0, 3, 0, -1))
+    weight_ds.GetRasterBand(1).Fill(1)
+
+    zones = gdaltest.wkt_ds("POLYGON ((0 0, 3 0, 3 3, 0 0))")
+
+    zonal["input"] = src_ds
+    zonal["weights"] = weight_ds
+    zonal["weights-band"] = 2
+    zonal["zones"] = zones
+    zonal["stat"] = "weighted_mean"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+
+    with pytest.raises(Exception, match="invalid weights band"):
         zonal.Run()
 
 

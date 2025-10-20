@@ -655,8 +655,8 @@ GDALMDArray::GetGridded(const std::string &osGridOptions,
     if (!poLyr)
         return nullptr;
     OGRFieldDefn oFieldDefn("IDX", OFTInteger64);
-    poLyr->CreateField(&oFieldDefn);
-    if (poLyr->StartTransaction() != OGRERR_NONE)
+    if (poLyr->CreateField(&oFieldDefn) != OGRERR_NONE ||
+        poLyr->StartTransaction() != OGRERR_NONE)
         return nullptr;
     OGRFeature oFeat(poLyr->GetLayerDefn());
     for (size_t i = 0; i < adfXVals.size(); ++i)

@@ -209,6 +209,10 @@ bool GDALRasterZonalStatsAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     {
         aosOptions.AddNameValue("ZONES_LAYER", m_zonesLayer.c_str());
     }
+    for (const std::string &lco : m_layerCreationOptions)
+    {
+        aosOptions.AddString(std::string("LCO_").append(lco));
+    }
 
     if (poRetDS)
     {

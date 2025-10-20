@@ -40,17 +40,17 @@ OGRGNMWrappedResultLayer::OGRGNMWrappedResultLayer(GDALDataset *poDSIn,
     // create standard fields
 
     OGRFieldDefn oFieldGID(GNM_SYSFIELD_GFID, GNMGFIDInt);
-    poLayer->CreateField(&oFieldGID);
+    CPL_IGNORE_RET_VAL(poLayer->CreateField(&oFieldGID));
 
     OGRFieldDefn oFieldLayerName(GNM_SYSFIELD_LAYERNAME, OFTString);
     oFieldLayerName.SetWidth(254);
-    poLayer->CreateField(&oFieldLayerName);
+    CPL_IGNORE_RET_VAL(poLayer->CreateField(&oFieldLayerName));
 
     OGRFieldDefn oFieldNo(GNM_SYSFIELD_PATHNUM, OFTInteger);
-    poLayer->CreateField(&oFieldNo);
+    CPL_IGNORE_RET_VAL(poLayer->CreateField(&oFieldNo));
 
     OGRFieldDefn oFieldType(GNM_SYSFIELD_TYPE, OFTString);  // EDGE or VERTEX
-    poLayer->CreateField(&oFieldType);
+    CPL_IGNORE_RET_VAL(poLayer->CreateField(&oFieldType));
 }
 
 OGRGNMWrappedResultLayer::~OGRGNMWrappedResultLayer()

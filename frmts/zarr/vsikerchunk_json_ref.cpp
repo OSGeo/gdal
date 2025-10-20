@@ -1332,6 +1332,7 @@ bool VSIKerchunkRefFile::ConvertToParquetRef(const std::string &osCacheDir,
 
         for (uint64_t i = 0; i < nChunkCount; ++i)
         {
+            bOK = poLayer != nullptr;
             if ((i % nRecordSize) == 0)
             {
                 if (poDS)
@@ -1369,27 +1370,31 @@ bool VSIKerchunkRefFile::ConvertToParquetRef(const std::string &osCacheDir,
                 poLayer = poDS->CreateLayer(
                     CPLGetBasenameSafe(osParqFilename.c_str()).c_str(), nullptr,
                     wkbNone, aosLayerCreationOptions.List());
+                bOK = false;
                 if (poLayer)
                 {
                     {
                         OGRFieldDefn oFieldDefn("path", OFTString);
-                        poLayer->CreateField(&oFieldDefn);
+                        bOK = poLayer->CreateField(&oFieldDefn) == OGRERR_NONE;
                     }
                     {
                         OGRFieldDefn oFieldDefn("offset", OFTInteger64);
-                        poLayer->CreateField(&oFieldDefn);
+                        bOK = bOK &&
+                              poLayer->CreateField(&oFieldDefn) == OGRERR_NONE;
                     }
                     {
                         OGRFieldDefn oFieldDefn("size", OFTInteger64);
-                        poLayer->CreateField(&oFieldDefn);
+                        bOK = bOK &&
+                              poLayer->CreateField(&oFieldDefn) == OGRERR_NONE;
                     }
                     {
                         OGRFieldDefn oFieldDefn("raw", OFTBinary);
-                        poLayer->CreateField(&oFieldDefn);
+                        bOK = bOK &&
+                              poLayer->CreateField(&oFieldDefn) == OGRERR_NONE;
                     }
                 }
             }
-            if (!poLayer)
+            if (!bOK)
                 return false;
 
             auto poFeature =
