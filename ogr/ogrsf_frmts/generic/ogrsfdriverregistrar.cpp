@@ -50,6 +50,8 @@ OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar()
     return &oSingleton;
 }
 
+//! @endcond
+
 /************************************************************************/
 /*                           OGRCleanupAll()                            */
 /************************************************************************/
@@ -69,6 +71,55 @@ void OGRCleanupAll()
 /************************************************************************/
 /*                              OGROpen()                               */
 /************************************************************************/
+
+/**
+  \brief Open a file / data source with one of the registered drivers.
+
+  This function loops through all the drivers registered with the driver
+  manager trying each until one succeeds with the given data source.
+
+  If this function fails, CPLGetLastErrorMsg() can be used to check if there
+  is an error message explaining why.
+
+  For drivers supporting the VSI virtual file API, it is possible to open
+  a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
+  (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
+
+  NOTE: It is *NOT* safe to cast the returned handle to
+  OGRDataSource*. If a C++ object is needed, the handle should be cast to GDALDataset*.
+  Similarly, the returned OGRSFDriverH handle should be cast to GDALDriver*, and
+  *NOT* OGRSFDriver*.
+
+  @deprecated Use GDALOpenEx()
+
+  @param pszName the name of the file, or data source to open.
+  @param bUpdate FALSE for read-only access (the default) or TRUE for
+         read-write access.
+  @param pahDriverList if non-NULL, this argument will be updated with a
+         pointer to the driver which was used to open the data source.
+
+  @return NULL on error or if the pass name is not supported by this driver,
+  otherwise a handle to a GDALDataset.  This GDALDataset should be
+  closed by deleting the object when it is no longer needed.
+
+  Example:
+
+  \code{.cpp}
+    OGRDataSourceH hDS;
+    OGRSFDriverH *pahDriver;
+
+    hDS = OGROpen( "polygon.shp", 0, pahDriver );
+    if( hDS == NULL )
+    {
+        return;
+    }
+
+    ... use the data source ...
+
+    OGRReleaseDataSource( hDS );
+  \endcode
+
+*/
 
 OGRDataSourceH OGROpen(const char *pszName, int bUpdate,
                        OGRSFDriverH *pahDriverList)
@@ -90,6 +141,52 @@ OGRDataSourceH OGROpen(const char *pszName, int bUpdate,
 /*                           OGROpenShared()                            */
 /************************************************************************/
 
+/**
+  \brief Open a file / data source with one of the registered drivers if not
+  already opened, or increment reference count of already opened data source
+  previously opened with OGROpenShared()
+
+  This function loops through all the drivers registered with the driver
+  manager trying each until one succeeds with the given data source.
+
+  If this function fails, CPLGetLastErrorMsg() can be used to check if there
+  is an error message explaining why.
+
+  NOTE: It is *NOT* safe to cast the returned handle to
+  OGRDataSource*. If a C++ object is needed, the handle should be cast to GDALDataset*.
+  Similarly, the returned OGRSFDriverH handle should be cast to GDALDriver*, and
+  *NOT* OGRSFDriver*.
+
+  @deprecated Use GDALOpenEx()
+
+  @param pszName the name of the file, or data source to open.
+  @param bUpdate FALSE for read-only access (the default) or TRUE for
+         read-write access.
+  @param pahDriverList if non-NULL, this argument will be updated with a
+         pointer to the driver which was used to open the data source.
+
+  @return NULL on error or if the pass name is not supported by this driver,
+  otherwise a handle to a GDALDataset.  This GDALDataset should be
+  closed by deleting the object when it is no longer needed.
+
+  Example:
+
+  \code{.cpp}
+    OGRDataSourceH  hDS;
+    OGRSFDriverH        *pahDriver;
+
+    hDS = OGROpenShared( "polygon.shp", 0, pahDriver );
+    if( hDS == NULL )
+    {
+        return;
+    }
+
+    ... use the data source ...
+
+    OGRReleaseDataSource( hDS );
+  \endcode
+
+*/
 OGRDataSourceH OGROpenShared(const char *pszName, int bUpdate,
                              OGRSFDriverH *pahDriverList)
 
@@ -110,6 +207,20 @@ OGRDataSourceH OGROpenShared(const char *pszName, int bUpdate,
 /*                        OGRReleaseDataSource()                        */
 /************************************************************************/
 
+/**
+\brief Drop a reference to this datasource, and if the reference count drops to zero close (destroy) the datasource.
+
+Internally this actually calls
+the OGRSFDriverRegistrar::ReleaseDataSource() method.  This method is
+essentially a convenient alias.
+
+@deprecated Use GDALClose()
+
+@param hDS handle to the data source to release
+
+@return OGRERR_NONE on success or an error code.
+*/
+
 OGRErr OGRReleaseDataSource(OGRDataSourceH hDS)
 
 {
@@ -120,6 +231,7 @@ OGRErr OGRReleaseDataSource(OGRDataSourceH hDS)
     return OGRERR_NONE;
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                           GetOpenDSCount()                           */
 /************************************************************************/
@@ -295,10 +407,20 @@ int OGRSFDriverRegistrar::GetDriverCount()
     return nOGRDriverCount;
 }
 
+//! @endcond
+
 /************************************************************************/
 /*                         OGRGetDriverCount()                          */
 /************************************************************************/
 
+/**
+  \brief Fetch the number of registered drivers.
+
+  @deprecated Use GDALGetDriverCount()
+
+  @return the drivers count.
+
+*/
 int OGRGetDriverCount()
 
 {
@@ -309,6 +431,7 @@ int OGRGetDriverCount()
 /*                             GetDriver()                              */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 GDALDriver *OGRSFDriverRegistrar::GetDriver(int iDriver)
 
 {
@@ -329,9 +452,25 @@ GDALDriver *OGRSFDriverRegistrar::GetDriver(int iDriver)
     return nullptr;
 }
 
+//! @endcond
+
 /************************************************************************/
 /*                            OGRGetDriver()                            */
 /************************************************************************/
+
+/**
+  \brief Fetch the indicated driver.
+
+  NOTE: It is *NOT* safe to cast the returned handle to
+  OGRSFDriver*. If a C++ object is needed, the handle should be cast to GDALDriver*.
+
+  @deprecated Use GDALGetDriver()
+
+  @param iDriver the driver index, from 0 to GetDriverCount()-1.
+
+  @return handle to the driver, or NULL if iDriver is out of range.
+
+*/
 
 OGRSFDriverH OGRGetDriver(int iDriver)
 
@@ -344,6 +483,7 @@ OGRSFDriverH OGRGetDriver(int iDriver)
 /*                          GetDriverByName()                           */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 GDALDriver *OGRSFDriverRegistrar::GetDriverByName(const char *pszName)
 
 {
@@ -358,9 +498,24 @@ GDALDriver *OGRSFDriverRegistrar::GetDriverByName(const char *pszName)
     return poGDALDriver;
 }
 
+//! @endcond
+
 /************************************************************************/
 /*                         OGRGetDriverByName()                         */
 /************************************************************************/
+
+/**
+  \brief Fetch the indicated driver.
+
+  NOTE: It is *NOT* safe to cast the returned handle to
+  OGRSFDriver*. If a C++ object is needed, the handle should be cast to GDALDriver*.
+
+  @deprecated Use GDALGetDriverByName()
+
+  @param pszName the driver name
+
+  @return the driver, or NULL if no driver with that name is found
+*/
 
 OGRSFDriverH OGRGetDriverByName(const char *pszName)
 
@@ -370,5 +525,3 @@ OGRSFDriverH OGRGetDriverByName(const char *pszName)
     return reinterpret_cast<OGRSFDriverH>(
         OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName(pszName));
 }
-
-//! @endcond

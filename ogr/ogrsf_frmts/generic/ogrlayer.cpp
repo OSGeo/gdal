@@ -90,6 +90,13 @@ OGRLayer::~OGRLayer()
 /*                             Reference()                              */
 /************************************************************************/
 
+/**
+\brief Increment layer reference count.
+
+This method is the same as the C function OGR_L_Reference().
+
+@return the reference count after incrementing.
+*/
 int OGRLayer::Reference()
 
 {
@@ -111,6 +118,14 @@ int OGR_L_Reference(OGRLayerH hLayer)
 /************************************************************************/
 /*                            Dereference()                             */
 /************************************************************************/
+
+/**
+\brief Decrement layer reference count.
+
+This method is the same as the C function OGR_L_Dereference().
+
+@return the reference count after decrementing.
+*/
 
 int OGRLayer::Dereference()
 
@@ -134,6 +149,14 @@ int OGR_L_Dereference(OGRLayerH hLayer)
 /*                            GetRefCount()                             */
 /************************************************************************/
 
+/**
+\brief Fetch reference count.
+
+This method is the same as the C function OGR_L_GetRefCount().
+
+@return the current reference count for the layer object itself.
+*/
+
 int OGRLayer::GetRefCount() const
 
 {
@@ -156,6 +179,29 @@ int OGR_L_GetRefCount(OGRLayerH hLayer)
 /*                         GetFeatureCount()                            */
 /************************************************************************/
 
+/**
+ \brief Fetch the feature count in this layer.
+
+ Returns the number of features in the layer.  For dynamic databases the
+ count may not be exact.  If bForce is FALSE, and it would be expensive
+ to establish the feature count a value of -1 may be returned indicating
+ that the count isn't know.  If bForce is TRUE some implementations will
+ actually scan the entire layer once to count objects.
+
+ The returned count takes the spatial filter into account.
+
+ Note that some implementations of this method may alter the read cursor
+ of the layer.
+
+ This method is the same as the C function OGR_L_GetFeatureCount().
+
+
+ @param bForce Flag indicating whether the count should be computed even
+ if it is expensive.
+
+ @return feature count, -1 if count not known.
+*/
+
 GIntBig OGRLayer::GetFeatureCount(int bForce)
 
 {
@@ -176,6 +222,30 @@ GIntBig OGRLayer::GetFeatureCount(int bForce)
 /************************************************************************/
 /*                      OGR_L_GetFeatureCount()                         */
 /************************************************************************/
+
+/**
+ \brief Fetch the feature count in this layer.
+
+ Returns the number of features in the layer.  For dynamic databases the
+ count may not be exact.  If bForce is FALSE, and it would be expensive
+ to establish the feature count a value of -1 may be returned indicating
+ that the count isn't know.  If bForce is TRUE some implementations will
+ actually scan the entire layer once to count objects.
+
+ The returned count takes the spatial filter into account.
+
+ Note that some implementations of this method may alter the read cursor
+ of the layer.
+
+ This function is the same as the CPP OGRLayer::GetFeatureCount().
+
+
+ @param hLayer handle to the layer that owned the features.
+ @param bForce Flag indicating whether the count should be computed even
+ if it is expensive.
+
+ @return feature count, -1 if count not known.
+*/
 
 GIntBig OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce)
 
@@ -649,6 +719,35 @@ OGRErr OGR_L_GetExtent3D(OGRLayerH hLayer, int iGeomField,
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
+/**
+ \brief Set a new attribute query.
+
+ This method sets the attribute query string to be used when
+ fetching features via the GetNextFeature() method.  Only features for which
+ the query evaluates as true will be returned.
+
+ The query string should be in the format of an SQL WHERE clause.  For
+ instance "population > 1000000 and population < 5000000" where population
+ is an attribute in the layer. The query format is normally a SQL WHERE clause
+ as described in the
+ <a href="https://gdal.org/user/ogr_sql_dialect.html#where">"WHERE"</a> section
+ of the OGR SQL dialect documentation.
+ In some cases (RDBMS backed drivers, SQLite, GeoPackage) the native
+ capabilities of the database may be used to to interpret the WHERE clause, in
+ which case the capabilities will be broader than those of OGR SQL.
+
+ Note that installing a query string will generally result in resetting
+ the current reading position (ala ResetReading()).
+
+ This method is the same as the C function OGR_L_SetAttributeFilter().
+
+ @param pszQuery query in restricted SQL WHERE format, or NULL to clear the
+ current query.
+
+ @return OGRERR_NONE if successfully installed, or an error code if the
+ query expression is in error, or some other failure occurs.
+ */
+
 OGRErr OGRLayer::SetAttributeFilter(const char *pszQuery)
 
 {
@@ -739,6 +838,36 @@ int OGRLayer::AttributeFilterEvaluationNeedsGeometry()
 /*                      OGR_L_SetAttributeFilter()                      */
 /************************************************************************/
 
+/**
+ \brief Set a new attribute query.
+
+ This function sets the attribute query string to be used when
+ fetching features via the OGR_L_GetNextFeature() function.
+ Only features for which the query evaluates as true will be returned.
+
+ The query string should be in the format of an SQL WHERE clause.  For
+ instance "population > 1000000 and population < 5000000" where population
+ is an attribute in the layer. The query format is normally a SQL WHERE clause
+ as described in the
+ <a href="https://gdal.org/user/ogr_sql_dialect.html#where">"WHERE"</a> section
+ of the OGR SQL dialect documentation.
+ In some cases (RDBMS backed drivers, SQLite, GeoPackage) the native
+ capabilities of the database may be used to to interpret the WHERE clause, in
+ which case the capabilities will be broader than those of OGR SQL.
+
+ Note that installing a query string will generally result in resetting
+ the current reading position (ala OGR_L_ResetReading()).
+
+ This function is the same as the C++ method OGRLayer::SetAttributeFilter().
+
+ @param hLayer handle to the layer on which attribute query will be executed.
+ @param pszQuery query in restricted SQL WHERE format, or NULL to clear the
+ current query.
+
+ @return OGRERR_NONE if successfully installed, or an error code if the
+ query expression is in error, or some other failure occurs.
+ */
+
 OGRErr OGR_L_SetAttributeFilter(OGRLayerH hLayer, const char *pszQuery)
 
 {
@@ -756,6 +885,35 @@ OGRErr OGR_L_SetAttributeFilter(OGRLayerH hLayer, const char *pszQuery)
 /************************************************************************/
 /*                             GetFeature()                             */
 /************************************************************************/
+
+/**
+ \brief Fetch a feature by its identifier.
+
+ This function will attempt to read the identified feature.  The nFID
+ value cannot be OGRNullFID.  Success or failure of this operation is
+ unaffected by the spatial or attribute filters (and specialized implementations
+ in drivers should make sure that they do not take into account spatial or
+ attribute filters).
+
+ If this method returns a non-NULL feature, it is guaranteed that its
+ feature id (OGRFeature::GetFID()) will be the same as nFID.
+
+ Use OGRLayer::TestCapability(OLCRandomRead) to establish if this layer
+ supports efficient random access reading via GetFeature(); however, the
+ call should always work if the feature exists as a fallback implementation
+ just scans all the features in the layer looking for the desired feature.
+
+ Sequential reads (with GetNextFeature()) are generally considered interrupted
+ by a GetFeature() call.
+
+ The returned feature should be free with OGRFeature::DestroyFeature().
+
+ This method is the same as the C function OGR_L_GetFeature().
+
+ @param nFID the feature id of the feature to read.
+
+ @return a feature now owned by the caller, or NULL on failure.
+*/
 
 OGRFeature *OGRLayer::GetFeature(GIntBig nFID)
 
@@ -793,6 +951,37 @@ OGRFeature *OGRLayer::GetFeature(GIntBig nFID)
 /*                          OGR_L_GetFeature()                          */
 /************************************************************************/
 
+/**
+ \brief Fetch a feature by its identifier.
+
+ This function will attempt to read the identified feature.  The nFID
+ value cannot be OGRNullFID.  Success or failure of this operation is
+ unaffected by the spatial or attribute filters (and specialized implementations
+ in drivers should make sure that they do not take into account spatial or
+ attribute filters).
+
+ If this function returns a non-NULL feature, it is guaranteed that its
+ feature id (OGR_F_GetFID()) will be the same as nFID.
+
+ Use OGR_L_TestCapability(OLCRandomRead) to establish if this layer
+ supports efficient random access reading via OGR_L_GetFeature(); however,
+ the call should always work if the feature exists as a fallback
+ implementation just scans all the features in the layer looking for the
+ desired feature.
+
+ Sequential reads (with OGR_L_GetNextFeature()) are generally considered interrupted by a
+ OGR_L_GetFeature() call.
+
+ The returned feature should be free with OGR_F_Destroy().
+
+ This function is the same as the C++ method OGRLayer::GetFeature( ).
+
+ @param hLayer handle to the layer that owned the feature.
+ @param nFeatureId the feature id of the feature to read.
+
+ @return a handle to a feature now owned by the caller, or NULL on failure.
+*/
+
 OGRFeatureH OGR_L_GetFeature(OGRLayerH hLayer, GIntBig nFeatureId)
 
 {
@@ -810,6 +999,36 @@ OGRFeatureH OGR_L_GetFeature(OGRLayerH hLayer, GIntBig nFeatureId)
 /************************************************************************/
 /*                           SetNextByIndex()                           */
 /************************************************************************/
+
+/**
+ \brief Move read cursor to the nIndex'th feature in the current resultset.
+
+ This method allows positioning of a layer such that the GetNextFeature()
+ call will read the requested feature, where nIndex is an absolute index
+ into the current result set.   So, setting it to 3 would mean the next
+ feature read with GetNextFeature() would have been the 4th feature to have
+ been read if sequential reading took place from the beginning of the layer,
+ including accounting for spatial and attribute filters.
+
+ Only in rare circumstances is SetNextByIndex() efficiently implemented.
+ In all other cases the default implementation which calls ResetReading()
+ and then calls GetNextFeature() nIndex times is used.  To determine if
+ fast seeking is available on the current layer use the TestCapability()
+ method with a value of OLCFastSetNextByIndex.
+
+ Starting with GDAL 3.12, when implementations can detect that nIndex is
+ invalid (at the minimum all should detect negative indices), they should
+ return OGRERR_NON_EXISTING_FEATURE, and following calls to GetNextFeature()
+ should return nullptr, until ResetReading() or a valid call to
+ SetNextByIndex() is done.
+
+ This method is the same as the C function OGR_L_SetNextByIndex().
+
+ @param nIndex the index indicating how many steps into the result set
+ to seek.
+
+ @return OGRERR_NONE on success or an error code.
+*/
 
 OGRErr OGRLayer::SetNextByIndex(GIntBig nIndex)
 
@@ -833,6 +1052,37 @@ OGRErr OGRLayer::SetNextByIndex(GIntBig nIndex)
 /*                        OGR_L_SetNextByIndex()                        */
 /************************************************************************/
 
+/**
+ \brief Move read cursor to the nIndex'th feature in the current resultset.
+
+ This method allows positioning of a layer such that the GetNextFeature()
+ call will read the requested feature, where nIndex is an absolute index
+ into the current result set.   So, setting it to 3 would mean the next
+ feature read with GetNextFeature() would have been the 4th feature to have
+ been read if sequential reading took place from the beginning of the layer,
+ including accounting for spatial and attribute filters.
+
+ Only in rare circumstances is SetNextByIndex() efficiently implemented.
+ In all other cases the default implementation which calls ResetReading()
+ and then calls GetNextFeature() nIndex times is used.  To determine if
+ fast seeking is available on the current layer use the TestCapability()
+ method with a value of OLCFastSetNextByIndex.
+
+ Starting with GDAL 3.12, when implementations can detect that nIndex is
+ invalid (at the minimum all should detect negative indices), they should
+ return OGRERR_NON_EXISTING_FEATURE, and following calls to GetNextFeature()
+ should return nullptr, until ResetReading() or a valid call to
+ SetNextByIndex() is done.
+
+ This method is the same as the C++ method OGRLayer::SetNextByIndex()
+
+ @param hLayer handle to the layer
+ @param nIndex the index indicating how many steps into the result set
+ to seek.
+
+ @return OGRERR_NONE on success or an error code.
+*/
+
 OGRErr OGR_L_SetNextByIndex(OGRLayerH hLayer, GIntBig nIndex)
 
 {
@@ -847,8 +1097,80 @@ OGRErr OGR_L_SetNextByIndex(OGRLayerH hLayer, GIntBig nIndex)
 }
 
 /************************************************************************/
+/*                       OGRLayer::GetNextFeature()                     */
+/************************************************************************/
+
+/**
+ \fn OGRFeature *OGRLayer::GetNextFeature();
+
+ \brief Fetch the next available feature from this layer.
+
+ The returned feature becomes the responsibility of the caller to
+ delete with OGRFeature::DestroyFeature(). It is critical that all
+ features associated with an OGRLayer (more specifically an
+ OGRFeatureDefn) be deleted before that layer/datasource is deleted.
+
+ Only features matching the current spatial filter (set with
+ SetSpatialFilter()) will be returned.
+
+ This method implements sequential access to the features of a layer.  The
+ ResetReading() method can be used to start at the beginning again.
+
+ Starting with GDAL 3.6, it is possible to retrieve them by batches, with a
+ column-oriented memory layout, using the GetArrowStream() method.
+
+ Features returned by GetNextFeature() may or may not be affected by
+ concurrent modifications depending on drivers. A guaranteed way of seeing
+ modifications in effect is to call ResetReading() on layers where
+ GetNextFeature() has been called, before reading again.  Structural changes
+ in layers (field addition, deletion, ...) when a read is in progress may or
+ may not be possible depending on drivers.  If a transaction is
+ committed/aborted, the current sequential reading may or may not be valid
+ after that operation and a call to ResetReading() might be needed.
+
+ This method is the same as the C function OGR_L_GetNextFeature().
+
+ @return a feature, or NULL if no more features are available.
+
+*/
+
+/************************************************************************/
 /*                        OGR_L_GetNextFeature()                        */
 /************************************************************************/
+
+/**
+ \brief Fetch the next available feature from this layer.
+
+ The returned feature becomes the responsibility of the caller to
+ delete with OGR_F_Destroy().  It is critical that all features
+ associated with an OGRLayer (more specifically an OGRFeatureDefn) be
+ deleted before that layer/datasource is deleted.
+
+ Only features matching the current spatial filter (set with
+ SetSpatialFilter()) will be returned.
+
+ This function implements sequential access to the features of a layer.
+ The OGR_L_ResetReading() function can be used to start at the beginning
+ again.
+
+ Starting with GDAL 3.6, it is possible to retrieve them by batches, with a
+ column-oriented memory layout, using the OGR_L_GetArrowStream() function.
+
+ Features returned by OGR_GetNextFeature() may or may not be affected by
+ concurrent modifications depending on drivers. A guaranteed way of seeing
+ modifications in effect is to call OGR_L_ResetReading() on layers where
+ OGR_GetNextFeature() has been called, before reading again.  Structural
+ changes in layers (field addition, deletion, ...) when a read is in progress
+ may or may not be possible depending on drivers.  If a transaction is
+ committed/aborted, the current sequential reading may or may not be valid
+ after that operation and a call to OGR_L_ResetReading() might be needed.
+
+ This function is the same as the C++ method OGRLayer::GetNextFeature().
+
+ @param hLayer handle to the layer from which feature are read.
+ @return a handle to a feature, or NULL if no more features are available.
+
+*/
 
 OGRFeatureH OGR_L_GetNextFeature(OGRLayerH hLayer)
 
@@ -952,6 +1274,44 @@ void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
 /*                             SetFeature()                             */
 /************************************************************************/
 
+/**
+ \brief Rewrite/replace an existing feature.
+
+ This method will write a feature to the layer, based on the feature id
+ within the OGRFeature.
+
+ Use OGRLayer::TestCapability(OLCRandomWrite) to establish if this layer
+ supports random access writing via SetFeature().
+
+ The way unset fields in the provided poFeature are processed is driver dependent:
+ <ul>
+ <li>
+ SQL based drivers which implement SetFeature() through SQL UPDATE will skip
+ unset fields, and thus the content of the existing feature will be preserved.
+ </li>
+ <li>
+ The shapefile driver will write a NULL value in the DBF file.
+ </li>
+ <li>
+ The GeoJSON driver will take into account unset fields to remove the corresponding
+ JSON member.
+ </li>
+ </ul>
+
+ Drivers should specialize the ISetFeature() method.
+
+ This method is the same as the C function OGR_L_SetFeature().
+
+ To set a feature, but create it if it doesn't exist see OGRLayer::UpsertFeature().
+
+ @param poFeature the feature to write.
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+
+ @see UpdateFeature(), CreateFeature(), UpsertFeature()
+*/
+
 OGRErr OGRLayer::SetFeature(OGRFeature *poFeature)
 
 {
@@ -963,15 +1323,70 @@ OGRErr OGRLayer::SetFeature(OGRFeature *poFeature)
 /*                             ISetFeature()                            */
 /************************************************************************/
 
-OGRErr OGRLayer::ISetFeature(OGRFeature *)
+/**
+ \brief Rewrite/replace an existing feature.
+
+ This method is implemented by drivers and not called directly. User code should
+ use SetFeature() instead.
+
+ This method will write a feature to the layer, based on the feature id
+ within the OGRFeature.
+
+ @param poFeature the feature to write.
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+
+ @see SetFeature()
+*/
+
+OGRErr OGRLayer::ISetFeature(OGRFeature *poFeature)
 
 {
+    (void)poFeature;
     return OGRERR_UNSUPPORTED_OPERATION;
 }
 
 /************************************************************************/
 /*                          OGR_L_SetFeature()                          */
 /************************************************************************/
+
+/**
+ \brief Rewrite/replace an existing feature.
+
+ This function will write a feature to the layer, based on the feature id
+ within the OGRFeature.
+
+ Use OGR_L_TestCapability(OLCRandomWrite) to establish if this layer
+ supports random access writing via OGR_L_SetFeature().
+
+ The way unset fields in the provided poFeature are processed is driver dependent:
+ <ul>
+ <li>
+ SQL based drivers which implement SetFeature() through SQL UPDATE will skip
+ unset fields, and thus the content of the existing feature will be preserved.
+ </li>
+ <li>
+ The shapefile driver will write a NULL value in the DBF file.
+ </li>
+ <li>
+ The GeoJSON driver will take into account unset fields to remove the corresponding
+ JSON member.
+ </li>
+ </ul>
+
+ This function is the same as the C++ method OGRLayer::SetFeature().
+
+ To set a feature, but create it if it doesn't exist see OGR_L_UpsertFeature().
+
+ @param hLayer handle to the layer to write the feature.
+ @param hFeat the feature to write.
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+
+ @see OGR_L_UpdateFeature(), OGR_L_CreateFeature(), OGR_L_UpsertFeature()
+*/
 
 OGRErr OGR_L_SetFeature(OGRLayerH hLayer, OGRFeatureH hFeat)
 
@@ -992,6 +1407,28 @@ OGRErr OGR_L_SetFeature(OGRLayerH hLayer, OGRFeatureH hFeat)
 /*                           CreateFeature()                            */
 /************************************************************************/
 
+/**
+ \brief Create and write a new feature within a layer.
+
+ The passed feature is written to the layer as a new feature, rather than
+ overwriting an existing one.  If the feature has a feature id other than
+ OGRNullFID, then the native implementation may use that as the feature id
+ of the new feature, but not necessarily.  Upon successful return the
+ passed feature will have been updated with the new feature id.
+
+ Drivers should specialize the ICreateFeature() method.
+
+ This method is the same as the C function OGR_L_CreateFeature().
+
+ To create a feature, but set it if it exists see OGRLayer::UpsertFeature().
+
+ @param poFeature the feature to write to disk.
+
+ @return OGRERR_NONE on success.
+
+ @see SetFeature(), UpdateFeature(), UpsertFeature()
+*/
+
 OGRErr OGRLayer::CreateFeature(OGRFeature *poFeature)
 
 {
@@ -1003,15 +1440,56 @@ OGRErr OGRLayer::CreateFeature(OGRFeature *poFeature)
 /*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRLayer::ICreateFeature(OGRFeature *)
+/**
+ \brief Create and write a new feature within a layer.
+
+ This method is implemented by drivers  and not called directly. User code should
+ use CreateFeature() instead.
+
+ The passed feature is written to the layer as a new feature, rather than
+ overwriting an existing one.  If the feature has a feature id other than
+ OGRNullFID, then the native implementation may use that as the feature id
+ of the new feature, but not necessarily.  Upon successful return the
+ passed feature will have been updated with the new feature id.
+
+ @param poFeature the feature to write to disk.
+
+ @return OGRERR_NONE on success.
+
+ @see CreateFeature()
+*/
+
+OGRErr OGRLayer::ICreateFeature(OGRFeature *poFeature)
 
 {
+    (void)poFeature;
     return OGRERR_UNSUPPORTED_OPERATION;
 }
 
 /************************************************************************/
 /*                        OGR_L_CreateFeature()                         */
 /************************************************************************/
+
+/**
+ \brief Create and write a new feature within a layer.
+
+ The passed feature is written to the layer as a new feature, rather than
+ overwriting an existing one.  If the feature has a feature id other than
+ OGRNullFID, then the native implementation may use that as the feature id
+ of the new feature, but not necessarily.  Upon successful return the
+ passed feature will have been updated with the new feature id.
+
+ This function is the same as the C++ method OGRLayer::CreateFeature().
+
+ To create a feature, but set it if it exists see OGR_L_UpsertFeature().
+
+ @param hLayer handle to the layer to write the feature to.
+ @param hFeat the handle of the feature to write to disk.
+
+ @return OGRERR_NONE on success.
+
+ @see OGR_L_SetFeature(), OGR_L_UpdateFeature(), OGR_L_UpsertFeature()
+*/
 
 OGRErr OGR_L_CreateFeature(OGRLayerH hLayer, OGRFeatureH hFeat)
 
@@ -1032,6 +1510,26 @@ OGRErr OGR_L_CreateFeature(OGRLayerH hLayer, OGRFeatureH hFeat)
 /*                           UpsertFeature()                           */
 /************************************************************************/
 
+/**
+ \brief Rewrite/replace an existing feature or create a new feature within a layer.
+
+ This function will write a feature to the layer, based on the feature id
+ within the OGRFeature.  If the feature id doesn't exist a new feature will be
+ written.  Otherwise, the existing feature will be rewritten.
+
+ Use OGRLayer::TestCapability(OLCUpsertFeature) to establish if this layer
+ supports upsert writing.
+
+ This method is the same as the C function OGR_L_UpsertFeature().
+
+ @param poFeature the feature to write to disk.
+
+ @return OGRERR_NONE on success.
+ @since GDAL 3.6.0
+
+ @see SetFeature(), CreateFeature(), UpdateFeature()
+*/
+
 OGRErr OGRLayer::UpsertFeature(OGRFeature *poFeature)
 
 {
@@ -1043,14 +1541,54 @@ OGRErr OGRLayer::UpsertFeature(OGRFeature *poFeature)
 /*                           IUpsertFeature()                           */
 /************************************************************************/
 
-OGRErr OGRLayer::IUpsertFeature(OGRFeature *)
+/**
+ \brief Rewrite/replace an existing feature or create a new feature within a layer.
+
+ This method is implemented by drivers and not called directly. User code should
+ use UpsertFeature() instead.
+
+ This function will write a feature to the layer, based on the feature id
+ within the OGRFeature.  If the feature id doesn't exist a new feature will be
+ written.  Otherwise, the existing feature will be rewritten.
+
+ @param poFeature the feature to write to disk.
+
+ @return OGRERR_NONE on success.
+ @since GDAL 3.6.0
+
+ @see UpsertFeature()
+*/
+
+OGRErr OGRLayer::IUpsertFeature(OGRFeature *poFeature)
 {
+    (void)poFeature;
     return OGRERR_UNSUPPORTED_OPERATION;
 }
 
 /************************************************************************/
 /*                        OGR_L_UpsertFeature()                         */
 /************************************************************************/
+
+/**
+ \brief Rewrite/replace an existing feature or create a new feature within a layer.
+
+ This function will write a feature to the layer, based on the feature id
+ within the OGRFeature.  If the feature id doesn't exist a new feature will be
+ written.  Otherwise, the existing feature will be rewritten.
+
+ Use OGR_L_TestCapability(OLCUpsertFeature) to establish if this layer
+ supports upsert writing.
+
+ This function is the same as the C++ method OGRLayer::UpsertFeature().
+
+ @param hLayer handle to the layer to write the feature to.
+ @param hFeat the handle of the feature to write to disk.
+
+ @return OGRERR_NONE on success.
+ @since GDAL 3.6.0
+
+ @see OGR_L_SetFeature(), OGR_L_CreateFeature(), OGR_L_UpdateFeature()
+*/
 
 OGRErr OGR_L_UpsertFeature(OGRLayerH hLayer, OGRFeatureH hFeat)
 
@@ -1070,6 +1608,69 @@ OGRErr OGR_L_UpsertFeature(OGRLayerH hLayer, OGRFeatureH hFeat)
 /************************************************************************/
 /*                           UpdateFeature()                            */
 /************************************************************************/
+
+/**
+ \brief Update (part of) an existing feature.
+
+ This method will update the specified attribute and geometry fields of a
+ feature to the layer, based on the feature id within the OGRFeature.
+
+ Use OGRLayer::TestCapability(OLCRandomWrite) to establish if this layer
+ supports random access writing via UpdateFeature(). And to know if the
+ driver supports a dedicated/efficient UpdateFeature() method, test for the
+ OLCUpdateFeature capability.
+
+ The way unset fields in the provided poFeature are processed is driver dependent:
+ <ul>
+ <li>
+ SQL based drivers which implement SetFeature() through SQL UPDATE will skip
+ unset fields, and thus the content of the existing feature will be preserved.
+ </li>
+ <li>
+ The shapefile driver will write a NULL value in the DBF file.
+ </li>
+ <li>
+ The GeoJSON driver will take into account unset fields to remove the corresponding
+ JSON member.
+ </li>
+ </ul>
+
+ This method is the same as the C function OGR_L_UpdateFeature().
+
+ To fully replace a feature, see OGRLayer::SetFeature().
+
+ Note that after this call the content of hFeat might have changed, and will
+ *not* reflect the content you would get with GetFeature().
+ In particular for performance reasons, passed geometries might have been "stolen",
+ in particular for the default implementation of UpdateFeature() which relies
+ on GetFeature() + SetFeature().
+
+ @param poFeature the feature to update.
+
+ @param nUpdatedFieldsCount number of attribute fields to update. May be 0
+
+ @param panUpdatedFieldsIdx array of nUpdatedFieldsCount values, each between
+                            0 and GetLayerDefn()->GetFieldCount() - 1, indicating
+                            which fields of poFeature must be updated in the
+                            layer.
+
+ @param nUpdatedGeomFieldsCount number of geometry fields to update. May be 0
+
+ @param panUpdatedGeomFieldsIdx array of nUpdatedGeomFieldsCount values, each between
+                                0 and GetLayerDefn()->GetGeomFieldCount() - 1, indicating
+                                which geometry fields of poFeature must be updated in the
+                                layer.
+
+ @param bUpdateStyleString whether the feature style string in the layer should
+                           be updated with the one of poFeature.
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+
+ @since GDAL 3.7
+
+ @see UpdateFeature(), CreateFeature(), UpsertFeature()
+*/
 
 OGRErr OGRLayer::UpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                                const int *panUpdatedFieldsIdx,
@@ -1111,6 +1712,39 @@ OGRErr OGRLayer::UpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
 /*                           IUpdateFeature()                           */
 /************************************************************************/
 
+/**
+ \brief Update (part of) an existing feature.
+
+ This method is implemented by drivers and not called directly. User code should
+ use UpdateFeature() instead.
+
+ @param poFeature the feature to update.
+
+ @param nUpdatedFieldsCount number of attribute fields to update. May be 0
+
+ @param panUpdatedFieldsIdx array of nUpdatedFieldsCount values, each between
+                            0 and GetLayerDefn()->GetFieldCount() - 1, indicating
+                            which fields of poFeature must be updated in the
+                            layer.
+
+ @param nUpdatedGeomFieldsCount number of geometry fields to update. May be 0
+
+ @param panUpdatedGeomFieldsIdx array of nUpdatedGeomFieldsCount values, each between
+                                0 and GetLayerDefn()->GetGeomFieldCount() - 1, indicating
+                                which geometry fields of poFeature must be updated in the
+                                layer.
+
+ @param bUpdateStyleString whether the feature style string in the layer should
+                           be updated with the one of poFeature.
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+
+ @since GDAL 3.7
+
+ @see UpdateFeature()
+*/
+
 OGRErr OGRLayer::IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                                 const int *panUpdatedFieldsIdx,
                                 int nUpdatedGeomFieldsCount,
@@ -1148,6 +1782,71 @@ OGRErr OGRLayer::IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
 /*                        OGR_L_UpdateFeature()                         */
 /************************************************************************/
 
+/**
+ \brief Update (part of) an existing feature.
+
+ This function will update the specified attribute and geometry fields of a
+ feature to the layer, based on the feature id within the OGRFeature.
+
+ Use OGR_L_TestCapability(OLCRandomWrite) to establish if this layer
+ supports random access writing via UpdateFeature(). And to know if the
+ driver supports a dedicated/efficient UpdateFeature() method, test for the
+ OLCUpdateFeature capability.
+
+ The way unset fields in the provided poFeature are processed is driver dependent:
+ <ul>
+ <li>
+ SQL based drivers which implement SetFeature() through SQL UPDATE will skip
+ unset fields, and thus the content of the existing feature will be preserved.
+ </li>
+ <li>
+ The shapefile driver will write a NULL value in the DBF file.
+ </li>
+ <li>
+ The GeoJSON driver will take into account unset fields to remove the corresponding
+ JSON member.
+ </li>
+ </ul>
+
+ This method is the same as the C++ method OGRLayer::UpdateFeature().
+
+ To fully replace a feature, see OGR_L_SetFeature()
+
+ Note that after this call the content of hFeat might have changed, and will
+ *not* reflect the content you would get with OGR_L_GetFeature().
+ In particular for performance reasons, passed geometries might have been "stolen",
+ in particular for the default implementation of UpdateFeature() which relies
+ on GetFeature() + SetFeature().
+
+ @param hLayer handle to the layer to write the feature.
+
+ @param hFeat the feature to update.
+
+ @param nUpdatedFieldsCount number of attribute fields to update. May be 0
+
+ @param panUpdatedFieldsIdx array of nUpdatedFieldsCount values, each between
+                            0 and GetLayerDefn()->GetFieldCount() - 1, indicating
+                            which fields of hFeat must be updated in the
+                            layer.
+
+ @param nUpdatedGeomFieldsCount number of geometry fields to update. May be 0
+
+ @param panUpdatedGeomFieldsIdx array of nUpdatedGeomFieldsCount values, each between
+                                0 and GetLayerDefn()->GetGeomFieldCount() - 1, indicating
+                                which geometry fields of hFeat must be updated in the
+                                layer.
+
+ @param bUpdateStyleString whether the feature style string in the layer should
+                           be updated with the one of hFeat.
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+
+ @since GDAL 3.7
+
+ @see OGR_L_UpdateFeature(), OGR_L_CreateFeature(), OGR_L_UpsertFeature()
+*/
+
 OGRErr OGR_L_UpdateFeature(OGRLayerH hLayer, OGRFeatureH hFeat,
                            int nUpdatedFieldsCount,
                            const int *panUpdatedFieldsIdx,
@@ -1168,6 +1867,34 @@ OGRErr OGR_L_UpdateFeature(OGRLayerH hLayer, OGRFeatureH hFeat,
 /*                            CreateField()                             */
 /************************************************************************/
 
+/**
+\brief Create a new field on a layer.
+
+You must use this to create new fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the new field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This method should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCCreateField capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existing features of the
+backing file/database should be updated accordingly.
+
+Drivers may or may not support not-null constraints. If they support creating
+fields with not-null constraints, this is generally before creating any feature to the layer.
+
+This function is the same as the C function OGR_L_CreateField().
+
+@param poField field definition to write to disk.
+@param bApproxOK If TRUE, the field may be created in a slightly different
+form depending on the limitations of the format driver.
+
+@return OGRERR_NONE on success.
+*/
+
 OGRErr OGRLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 
 {
@@ -1183,6 +1910,35 @@ OGRErr OGRLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 /************************************************************************/
 /*                         OGR_L_CreateField()                          */
 /************************************************************************/
+
+/**
+\brief Create a new field on a layer.
+
+You must use this to create new fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the new field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This function should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+Not all drivers support this function. You can query a layer to check if it supports it
+with the OLCCreateField capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existing features of the
+backing file/database should be updated accordingly.
+
+Drivers may or may not support not-null constraints. If they support creating
+fields with not-null constraints, this is generally before creating any feature to the layer.
+
+ This function is the same as the C++ method OGRLayer::CreateField().
+
+ @param hLayer handle to the layer to write the field definition.
+ @param hField handle of the field definition to write to disk.
+ @param bApproxOK If TRUE, the field may be created in a slightly different
+form depending on the limitations of the format driver.
+
+ @return OGRERR_NONE on success.
+*/
 
 OGRErr OGR_L_CreateField(OGRLayerH hLayer, OGRFieldDefnH hField, int bApproxOK)
 
@@ -1203,6 +1959,33 @@ OGRErr OGR_L_CreateField(OGRLayerH hLayer, OGRFieldDefnH hField, int bApproxOK)
 /*                            DeleteField()                             */
 /************************************************************************/
 
+/**
+\brief Delete an existing field on a layer.
+
+You must use this to delete existing fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the deleted field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This method should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+If a OGRFieldDefn* object corresponding to the deleted field has been retrieved
+from the layer definition before the call to DeleteField(), it must no longer be
+used after the call to DeleteField(), which will have destroyed it.
+
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCDeleteField capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existing features of the
+backing file/database should be updated accordingly.
+
+This function is the same as the C function OGR_L_DeleteField().
+
+@param iField index of the field to delete.
+
+@return OGRERR_NONE on success.
+*/
+
 OGRErr OGRLayer::DeleteField(int iField)
 
 {
@@ -1217,6 +2000,34 @@ OGRErr OGRLayer::DeleteField(int iField)
 /************************************************************************/
 /*                         OGR_L_DeleteField()                          */
 /************************************************************************/
+
+/**
+\brief Delete an existing field on a layer.
+
+You must use this to delete existing fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the deleted field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This function should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+If a OGRFieldDefnH object corresponding to the deleted field has been retrieved
+from the layer definition before the call to DeleteField(), it must no longer be
+used after the call to DeleteField(), which will have destroyed it.
+
+Not all drivers support this function. You can query a layer to check if it supports it
+with the OLCDeleteField capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existing features of the
+backing file/database should be updated accordingly.
+
+This function is the same as the C++ method OGRLayer::DeleteField().
+
+@param hLayer handle to the layer.
+@param iField index of the field to delete.
+
+@return OGRERR_NONE on success.
+*/
 
 OGRErr OGR_L_DeleteField(OGRLayerH hLayer, int iField)
 
@@ -1235,6 +2046,36 @@ OGRErr OGR_L_DeleteField(OGRLayerH hLayer, int iField)
 /*                           ReorderFields()                            */
 /************************************************************************/
 
+/**
+\brief Reorder all the fields of a layer.
+
+You must use this to reorder existing fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the reordering of the fields.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This method should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+panMap is such that,for each field definition at position i after reordering,
+its position before reordering was panMap[i].
+
+For example, let suppose the fields were "0","1","2","3","4" initially.
+ReorderFields([0,2,3,1,4]) will reorder them as "0","2","3","1","4".
+
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCReorderFields capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existing features of the
+backing file/database should be updated accordingly.
+
+This function is the same as the C function OGR_L_ReorderFields().
+
+@param panMap an array of GetLayerDefn()->OGRFeatureDefn::GetFieldCount() elements which
+is a permutation of [0, GetLayerDefn()->OGRFeatureDefn::GetFieldCount()-1].
+
+@return OGRERR_NONE on success.
+*/
+
 OGRErr OGRLayer::ReorderFields(int *panMap)
 
 {
@@ -1249,6 +2090,37 @@ OGRErr OGRLayer::ReorderFields(int *panMap)
 /************************************************************************/
 /*                       OGR_L_ReorderFields()                          */
 /************************************************************************/
+
+/**
+\brief Reorder all the fields of a layer.
+
+You must use this to reorder existing fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the reordering of the fields.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This function should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+panMap is such that,for each field definition at position i after reordering,
+its position before reordering was panMap[i].
+
+For example, let suppose the fields were "0","1","2","3","4" initially.
+ReorderFields([0,2,3,1,4]) will reorder them as "0","2","3","1","4".
+
+Not all drivers support this function. You can query a layer to check if it supports it
+with the OLCReorderFields capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existing features of the
+backing file/database should be updated accordingly.
+
+This function is the same as the C++ method OGRLayer::ReorderFields().
+
+@param hLayer handle to the layer.
+@param panMap an array of GetLayerDefn()->OGRFeatureDefn::GetFieldCount() elements which
+is a permutation of [0, GetLayerDefn()->OGRFeatureDefn::GetFieldCount()-1].
+
+@return OGRERR_NONE on success.
+*/
 
 OGRErr OGR_L_ReorderFields(OGRLayerH hLayer, int *panMap)
 
@@ -1266,6 +2138,39 @@ OGRErr OGR_L_ReorderFields(OGRLayerH hLayer, int *panMap)
 /************************************************************************/
 /*                            ReorderField()                            */
 /************************************************************************/
+
+/**
+\brief Reorder an existing field on a layer.
+
+This method is a convenience wrapper of ReorderFields() dedicated to move a single field.
+It is a non-virtual method, so drivers should implement ReorderFields() instead.
+
+You must use this to reorder existing fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the reordering of the fields.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This method should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+The field definition that was at initial position iOldFieldPos will be moved at
+position iNewFieldPos, and elements between will be shuffled accordingly.
+
+For example, let suppose the fields were "0","1","2","3","4" initially.
+ReorderField(1, 3) will reorder them as "0","2","3","1","4".
+
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCReorderFields capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existing features of the
+backing file/database should be updated accordingly.
+
+This function is the same as the C function OGR_L_ReorderField().
+
+@param iOldFieldPos previous position of the field to move. Must be in the range [0,GetFieldCount()-1].
+@param iNewFieldPos new position of the field to move. Must be in the range [0,GetFieldCount()-1].
+
+@return OGRERR_NONE on success.
+*/
 
 OGRErr OGRLayer::ReorderField(int iOldFieldPos, int iNewFieldPos)
 
@@ -1324,6 +2229,39 @@ OGRErr OGRLayer::ReorderField(int iOldFieldPos, int iNewFieldPos)
 /*                        OGR_L_ReorderField()                          */
 /************************************************************************/
 
+/**
+\brief Reorder an existing field on a layer.
+
+This function is a convenience wrapper of OGR_L_ReorderFields() dedicated to move a single field.
+
+You must use this to reorder existing fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the reordering of the fields.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This function should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+The field definition that was at initial position iOldFieldPos will be moved at
+position iNewFieldPos, and elements between will be shuffled accordingly.
+
+For example, let suppose the fields were "0","1","2","3","4" initially.
+ReorderField(1, 3) will reorder them as "0","2","3","1","4".
+
+Not all drivers support this function. You can query a layer to check if it supports it
+with the OLCReorderFields capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existing features of the
+backing file/database should be updated accordingly.
+
+This function is the same as the C++ method OGRLayer::ReorderField().
+
+@param hLayer handle to the layer.
+@param iOldFieldPos previous position of the field to move. Must be in the range [0,GetFieldCount()-1].
+@param iNewFieldPos new position of the field to move. Must be in the range [0,GetFieldCount()-1].
+
+@return OGRERR_NONE on success.
+*/
+
 OGRErr OGR_L_ReorderField(OGRLayerH hLayer, int iOldFieldPos, int iNewFieldPos)
 
 {
@@ -1342,11 +2280,42 @@ OGRErr OGR_L_ReorderField(OGRLayerH hLayer, int iOldFieldPos, int iNewFieldPos)
 /*                           AlterFieldDefn()                           */
 /************************************************************************/
 
-OGRErr OGRLayer::AlterFieldDefn(int /* iField*/,
-                                OGRFieldDefn * /*poNewFieldDefn*/,
-                                int /* nFlags */)
+/**
+\brief Alter the definition of an existing field on a layer.
+
+You must use this to alter the definition of an existing field of a real layer.
+Internally the OGRFeatureDefn for the layer will be updated
+to reflect the altered field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This method should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCAlterFieldDefn capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existing features of the
+backing file/database should be updated accordingly. Some drivers might also not support
+all update flags.
+
+This function is the same as the C function OGR_L_AlterFieldDefn().
+
+@param iField index of the field whose definition must be altered.
+@param poNewFieldDefn new field definition
+@param nFlagsIn combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG, ALTER_WIDTH_PRECISION_FLAG,
+ALTER_NULLABLE_FLAG and ALTER_DEFAULT_FLAG
+to indicate which of the name and/or type and/or width and precision fields and/or nullability from the new field
+definition must be taken into account.
+
+@return OGRERR_NONE on success.
+*/
+
+OGRErr OGRLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
+                                int nFlagsIn)
 
 {
+    (void)iField;
+    (void)poNewFieldDefn;
+    (void)nFlagsIn;
     CPLError(CE_Failure, CPLE_NotSupported,
              "AlterFieldDefn() not supported by this layer.\n");
 
@@ -1356,6 +2325,36 @@ OGRErr OGRLayer::AlterFieldDefn(int /* iField*/,
 /************************************************************************/
 /*                        OGR_L_AlterFieldDefn()                        */
 /************************************************************************/
+
+/**
+\brief Alter the definition of an existing field on a layer.
+
+You must use this to alter the definition of an existing field of a real layer.
+Internally the OGRFeatureDefn for the layer will be updated
+to reflect the altered field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This function should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+Not all drivers support this function. You can query a layer to check if it supports it
+with the OLCAlterFieldDefn capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existing features of the
+backing file/database should be updated accordingly. Some drivers might also not support
+all update flags.
+
+This function is the same as the C++ method OGRLayer::AlterFieldDefn().
+
+@param hLayer handle to the layer.
+@param iField index of the field whose definition must be altered.
+@param hNewFieldDefn new field definition
+@param nFlags combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG, ALTER_WIDTH_PRECISION_FLAG,
+ALTER_NULLABLE_FLAG and ALTER_DEFAULT_FLAG
+to indicate which of the name and/or type and/or width and precision fields and/or nullability from the new field
+definition must be taken into account.
+
+@return OGRERR_NONE on success.
+*/
 
 OGRErr OGR_L_AlterFieldDefn(OGRLayerH hLayer, int iField,
                             OGRFieldDefnH hNewFieldDefn, int nFlags)
@@ -1378,12 +2377,50 @@ OGRErr OGR_L_AlterFieldDefn(OGRLayerH hLayer, int iField,
 /*                        AlterGeomFieldDefn()                          */
 /************************************************************************/
 
-OGRErr
-OGRLayer::AlterGeomFieldDefn(int /* iGeomField*/,
-                             const OGRGeomFieldDefn * /*poNewGeomFieldDefn*/,
-                             int /* nFlags */)
+/**
+\brief Alter the definition of an existing geometry field on a layer.
+
+You must use this to alter the definition of an existing geometry field of a real layer.
+Internally the OGRFeatureDefn for the layer will be updated
+to reflect the altered field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+Note that altering the SRS does *not* cause coordinate reprojection to occur:
+this is simply a modification of the layer metadata (correcting a wrong SRS
+definition). No modification to existing geometries will ever be performed,
+so this method cannot be used to e.g. promote single part geometries to their
+multipart equivalents.
+
+This method should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCAlterGeomFieldDefn capability. Some drivers might not support
+all update flags. The GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS driver metadata item
+can be queried to examine which flags may be supported by a driver.
+
+This function is the same as the C function OGR_L_AlterGeomFieldDefn().
+
+@param iGeomField index of the field whose definition must be altered.
+@param poNewGeomFieldDefn new field definition
+@param nFlagsIn combination of ALTER_GEOM_FIELD_DEFN_NAME_FLAG, ALTER_GEOM_FIELD_DEFN_TYPE_FLAG, ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG, ALTER_GEOM_FIELD_DEFN_SRS_FLAG, ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG
+to indicate which of the name and/or type and/or nullability and/or SRS and/or coordinate epoch from the new field
+definition must be taken into account. Or ALTER_GEOM_FIELD_DEFN_ALL_FLAG to update all members.
+
+@return OGRERR_NONE on success.
+
+@since OGR 3.6.0
+*/
+
+OGRErr OGRLayer::AlterGeomFieldDefn(int iGeomField,
+                                    const OGRGeomFieldDefn *poNewGeomFieldDefn,
+                                    int nFlagsIn)
 
 {
+    (void)iGeomField;
+    (void)poNewGeomFieldDefn;
+    (void)nFlagsIn;
+
     CPLError(CE_Failure, CPLE_NotSupported,
              "AlterGeomFieldDefn() not supported by this layer.\n");
 
@@ -1393,6 +2430,42 @@ OGRLayer::AlterGeomFieldDefn(int /* iGeomField*/,
 /************************************************************************/
 /*                      OGR_L_AlterGeomFieldDefn()                      */
 /************************************************************************/
+
+/**
+\brief Alter the definition of an existing geometry field on a layer.
+
+You must use this to alter the definition of an existing geometry field of a real layer.
+Internally the OGRFeatureDefn for the layer will be updated
+to reflect the altered field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+Note that altering the SRS does *not* cause coordinate reprojection to occur:
+this is simply a modification of the layer metadata (correcting a wrong SRS
+definition). No modification to existing geometries will ever be performed,
+so this method cannot be used to e.g. promote single part geometries to their
+multipart equivalents.
+
+This function should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+Not all drivers support this function. You can query a layer to check if it supports it
+with the OLCAlterGeomFieldDefn capability. Some drivers might not support
+all update flags. The GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS driver metadata item
+can be queried to examine which flags may be supported by a driver.
+
+This function is the same as the C++ method OGRLayer::AlterFieldDefn().
+
+@param hLayer handle to the layer.
+@param iGeomField index of the field whose definition must be altered.
+@param hNewGeomFieldDefn new field definition
+@param nFlags combination of ALTER_GEOM_FIELD_DEFN_NAME_FLAG, ALTER_GEOM_FIELD_DEFN_TYPE_FLAG, ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG, ALTER_GEOM_FIELD_DEFN_SRS_FLAG, ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG
+to indicate which of the name and/or type and/or nullability and/or SRS and/or coordinate epoch from the new field
+definition must be taken into account. Or ALTER_GEOM_FIELD_DEFN_ALL_FLAG to update all members.
+
+@return OGRERR_NONE on success.
+
+@since OGR 3.6.0
+*/
 
 OGRErr OGR_L_AlterGeomFieldDefn(OGRLayerH hLayer, int iGeomField,
                                 OGRGeomFieldDefnH hNewGeomFieldDefn, int nFlags)
@@ -1414,6 +2487,34 @@ OGRErr OGR_L_AlterGeomFieldDefn(OGRLayerH hLayer, int iGeomField,
 /*                         CreateGeomField()                            */
 /************************************************************************/
 
+/**
+\brief Create a new geometry field on a layer.
+
+You must use this to create new geometry fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the new field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This method should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCCreateGeomField capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existing features of the
+backing file/database should be updated accordingly.
+
+Drivers may or may not support not-null constraints. If they support creating
+fields with not-null constraints, this is generally before creating any feature to the layer.
+
+This function is the same as the C function OGR_L_CreateGeomField().
+
+@param poField geometry field definition to write to disk.
+@param bApproxOK If TRUE, the field may be created in a slightly different
+form depending on the limitations of the format driver.
+
+@return OGRERR_NONE on success.
+*/
+
 OGRErr OGRLayer::CreateGeomField(const OGRGeomFieldDefn *poField, int bApproxOK)
 
 {
@@ -1429,6 +2530,35 @@ OGRErr OGRLayer::CreateGeomField(const OGRGeomFieldDefn *poField, int bApproxOK)
 /************************************************************************/
 /*                        OGR_L_CreateGeomField()                       */
 /************************************************************************/
+
+/**
+\brief Create a new geometry field on a layer.
+
+You must use this to create new geometry fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the new field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This function should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+Not all drivers support this function. You can query a layer to check if it supports it
+with the OLCCreateField capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existing features of the
+backing file/database should be updated accordingly.
+
+Drivers may or may not support not-null constraints. If they support creating
+fields with not-null constraints, this is generally before creating any feature to the layer.
+
+ This function is the same as the C++ method OGRLayer::CreateField().
+
+ @param hLayer handle to the layer to write the field definition.
+ @param hField handle of the geometry field definition to write to disk.
+ @param bApproxOK If TRUE, the field may be created in a slightly different
+form depending on the limitations of the format driver.
+
+ @return OGRERR_NONE on success.
+*/
 
 OGRErr OGR_L_CreateGeomField(OGRLayerH hLayer, OGRGeomFieldDefnH hField,
                              int bApproxOK)
@@ -1450,6 +2580,23 @@ OGRErr OGR_L_CreateGeomField(OGRLayerH hLayer, OGRGeomFieldDefnH hField,
 /*                          StartTransaction()                          */
 /************************************************************************/
 
+/**
+ \brief For datasources which support transactions, StartTransaction creates a transaction.
+
+ If starting the transaction fails, will return
+ OGRERR_FAILURE. Datasources which do not support transactions will
+ always return OGRERR_NONE.
+
+ Use of this API is discouraged when the dataset offers
+ dataset level transaction with GDALDataset::StartTransaction(). The reason is
+ that most drivers can only offer transactions at dataset level, and not layer level.
+ Very few drivers really support transactions at layer scope.
+
+ This function is the same as the C function OGR_L_StartTransaction().
+
+ @return OGRERR_NONE on success.
+*/
+
 OGRErr OGRLayer::StartTransaction()
 
 {
@@ -1459,6 +2606,26 @@ OGRErr OGRLayer::StartTransaction()
 /************************************************************************/
 /*                       OGR_L_StartTransaction()                       */
 /************************************************************************/
+
+/**
+ \brief For datasources which support transactions, StartTransaction creates a transaction.
+
+ If starting the transaction fails, will return
+ OGRERR_FAILURE. Datasources which do not support transactions will
+ always return OGRERR_NONE.
+
+ Use of this API is discouraged when the dataset offers
+ dataset level transaction with GDALDataset::StartTransaction(). The reason is
+ that most drivers can only offer transactions at dataset level, and not layer level.
+ Very few drivers really support transactions at layer scope.
+
+ This function is the same as the C++ method OGRLayer::StartTransaction().
+
+ @param hLayer handle to the layer
+
+ @return OGRERR_NONE on success.
+
+*/
 
 OGRErr OGR_L_StartTransaction(OGRLayerH hLayer)
 
@@ -1477,6 +2644,18 @@ OGRErr OGR_L_StartTransaction(OGRLayerH hLayer)
 /*                         CommitTransaction()                          */
 /************************************************************************/
 
+/**
+ \brief For datasources which support transactions, CommitTransaction commits a transaction.
+
+ If no transaction is active, or the commit fails, will return
+ OGRERR_FAILURE. Datasources which do not support transactions will
+ always return OGRERR_NONE.
+
+ This function is the same as the C function OGR_L_CommitTransaction().
+
+ @return OGRERR_NONE on success.
+*/
+
 OGRErr OGRLayer::CommitTransaction()
 
 {
@@ -1486,6 +2665,18 @@ OGRErr OGRLayer::CommitTransaction()
 /************************************************************************/
 /*                       OGR_L_CommitTransaction()                      */
 /************************************************************************/
+
+/**
+ \brief For datasources which support transactions, CommitTransaction commits a transaction.
+
+ If no transaction is active, or the commit fails, will return
+ OGRERR_FAILURE. Datasources which do not support transactions will
+ always return OGRERR_NONE.
+
+ This function is the same as the C function OGR_L_CommitTransaction().
+
+ @return OGRERR_NONE on success.
+*/
 
 OGRErr OGR_L_CommitTransaction(OGRLayerH hLayer)
 
@@ -1504,6 +2695,42 @@ OGRErr OGR_L_CommitTransaction(OGRLayerH hLayer)
 /*                        RollbackTransaction()                         */
 /************************************************************************/
 
+/**
+ \brief For datasources which support transactions, RollbackTransaction will roll back a datasource to its state before the start of the current transaction.
+ If no transaction is active, or the rollback fails, will return
+ OGRERR_FAILURE. Datasources which do not support transactions will
+ always return OGRERR_NONE.
+
+ This function is the same as the C function OGR_L_RollbackTransaction().
+
+
+ OGRFeature* instances acquired or created between the StartTransaction() and RollbackTransaction() should
+ be destroyed before RollbackTransaction() if the field structure has been modified during the transaction.
+
+ In particular, the following is invalid:
+
+ \code
+ lyr->StartTransaction();
+ lyr->DeleteField(...);
+ f = new OGRFeature(lyr->GetLayerDefn());
+ lyr->RollbackTransaction();
+ // f is in a inconsistent state at this point, given its array of fields doesn't match
+ // the updated layer definition, and thus it cannot even be safely deleted !
+ \endcode
+
+ Instead, the feature should be destroyed before the rollback:
+
+ \code
+ lyr->StartTransaction();
+ lyr->DeleteField(...);
+ f = new OGRFeature(lyr->GetLayerDefn());
+ ...
+ delete f;
+ \endcode
+
+ @return OGRERR_NONE on success.
+*/
+
 OGRErr OGRLayer::RollbackTransaction()
 
 {
@@ -1513,6 +2740,19 @@ OGRErr OGRLayer::RollbackTransaction()
 /************************************************************************/
 /*                     OGR_L_RollbackTransaction()                      */
 /************************************************************************/
+
+/**
+ \brief For datasources which support transactions, RollbackTransaction will roll back a datasource to its state before the start of the current transaction.
+ If no transaction is active, or the rollback fails, will return
+ OGRERR_FAILURE. Datasources which do not support transactions will
+ always return OGRERR_NONE.
+
+ This function is the same as the C++ method OGRLayer::RollbackTransaction().
+
+ @param hLayer handle to the layer
+
+ @return OGRERR_NONE on success.
+*/
 
 OGRErr OGR_L_RollbackTransaction(OGRLayerH hLayer)
 
@@ -1529,9 +2769,59 @@ OGRErr OGR_L_RollbackTransaction(OGRLayerH hLayer)
 }
 
 /************************************************************************/
+/*                        OGRLayer::GetLayerDefn()                      */
+/************************************************************************/
+
+/**
+ \fn OGRFeatureDefn *OGRLayer::GetLayerDefn();
+
+ \brief Fetch the schema information for this layer.
+
+ The returned OGRFeatureDefn is owned by the OGRLayer, and should not be
+ modified or freed by the application.  It encapsulates the attribute schema
+ of the features of the layer.
+
+ This method is the same as the C function OGR_L_GetLayerDefn().
+
+ @return feature definition.
+*/
+
+/**
+ \fn const OGRFeatureDefn *OGRLayer::GetLayerDefn() const;
+
+ \brief Fetch the schema information for this layer.
+
+ The returned OGRFeatureDefn is owned by the OGRLayer, and should not be
+ modified or freed by the application.  It encapsulates the attribute schema
+ of the features of the layer.
+
+ Note that even if this method is const, there is no guarantee it can be
+ safely called by concurrent threads on the same GDALDataset object.
+
+ This method is the same as the C function OGR_L_GetLayerDefn().
+
+ @return feature definition.
+
+ @since 3.12
+*/
+
+/************************************************************************/
 /*                         OGR_L_GetLayerDefn()                         */
 /************************************************************************/
 
+/**
+ \brief Fetch the schema information for this layer.
+
+ The returned handle to the OGRFeatureDefn is owned by the OGRLayer,
+ and should not be modified or freed by the application.  It encapsulates
+ the attribute schema of the features of the layer.
+
+ This function is the same as the C++ method OGRLayer::GetLayerDefn().
+
+ @param hLayer handle to the layer to get the schema information.
+ @return a handle to the feature definition.
+
+*/
 OGRFeatureDefnH OGR_L_GetLayerDefn(OGRLayerH hLayer)
 
 {
@@ -1549,6 +2839,21 @@ OGRFeatureDefnH OGR_L_GetLayerDefn(OGRLayerH hLayer)
 /************************************************************************/
 /*                         OGR_L_FindFieldIndex()                       */
 /************************************************************************/
+
+/**
+ \brief Find the index of field in a layer.
+
+ The returned number is the index of the field in the layers, or -1 if the
+ field doesn't exist.
+
+ If bExactMatch is set to FALSE and the field doesn't exists in the given form
+ the driver might apply some changes to make it match, like those it might do
+ if the layer was created (eg. like LAUNDER in the OCI driver).
+
+ This method is the same as the C++ method OGRLayer::FindFieldIndex().
+
+ @return field index, or -1 if the field doesn't exist
+*/
 
 int OGR_L_FindFieldIndex(OGRLayerH hLayer, const char *pszFieldName,
                          int bExactMatch)
@@ -1569,6 +2874,21 @@ int OGR_L_FindFieldIndex(OGRLayerH hLayer, const char *pszFieldName,
 /*                           FindFieldIndex()                           */
 /************************************************************************/
 
+/**
+ \brief Find the index of field in the layer.
+
+ The returned number is the index of the field in the layers, or -1 if the
+ field doesn't exist.
+
+ If bExactMatch is set to FALSE and the field doesn't exists in the given form
+ the driver might apply some changes to make it match, like those it might do
+ if the layer was created (eg. like LAUNDER in the OCI driver).
+
+ This method is the same as the C function OGR_L_FindFieldIndex().
+
+ @return field index, or -1 if the field doesn't exist
+*/
+
 int OGRLayer::FindFieldIndex(const char *pszFieldName,
                              CPL_UNUSED int bExactMatch)
 {
@@ -1578,6 +2898,26 @@ int OGRLayer::FindFieldIndex(const char *pszFieldName,
 /************************************************************************/
 /*                           GetSpatialRef()                            */
 /************************************************************************/
+
+/**
+ \brief Fetch the spatial reference system for this layer.
+
+ The returned object is owned by the OGRLayer and should not be modified
+ or freed by the application.
+
+ Note that even if this method is const (since GDAL 3.12), there is no guarantee
+ it can be safely called by concurrent threads on the same GDALDataset object.
+
+ Several geometry fields can be associated to a
+ feature definition. Each geometry field can have its own spatial reference
+ system, which is returned by OGRGeomFieldDefn::GetSpatialRef().
+ OGRLayer::GetSpatialRef() is equivalent to
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(0)->GetSpatialRef()
+
+ This method is the same as the C function OGR_L_GetSpatialRef().
+
+ @return spatial reference, or NULL if there isn't one.
+*/
 
 const OGRSpatialReference *OGRLayer::GetSpatialRef() const
 {
@@ -1592,6 +2932,18 @@ const OGRSpatialReference *OGRLayer::GetSpatialRef() const
 /************************************************************************/
 /*                        OGR_L_GetSpatialRef()                         */
 /************************************************************************/
+
+/**
+ \brief Fetch the spatial reference system for this layer.
+
+ The returned object is owned by the OGRLayer and should not be modified
+ or freed by the application.
+
+ This function is the same as the C++ method OGRLayer::GetSpatialRef().
+
+ @param hLayer handle to the layer to get the spatial reference from.
+ @return spatial reference, or NULL if there isn't one.
+*/
 
 OGRSpatialReferenceH OGR_L_GetSpatialRef(OGRLayerH hLayer)
 
@@ -1608,8 +2960,213 @@ OGRSpatialReferenceH OGR_L_GetSpatialRef(OGRLayerH hLayer)
 }
 
 /************************************************************************/
+/*                     OGRLayer::TestCapability()                       */
+/************************************************************************/
+
+/**
+ \fn int OGRLayer::TestCapability( const char * pszCap ) const;
+
+ \brief Test if this layer supported the named capability.
+
+ The capability codes that can be tested are represented as strings, but
+ \#defined constants exists to ensure correct spelling.  Specific layer
+ types may implement class specific capabilities, but this can't generally
+ be discovered by the caller. <p>
+
+<ul>
+
+ <li> <b>OLCRandomRead</b> / "RandomRead": TRUE if the GetFeature() method
+is implemented in an optimized way for this layer, as opposed to the default
+implementation using ResetReading() and GetNextFeature() to find the requested
+feature id.<p>
+
+ <li> <b>OLCSequentialWrite</b> / "SequentialWrite": TRUE if the
+CreateFeature() method works for this layer.  Note this means that this
+particular layer is writable.  The same OGRLayer class may return FALSE
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCRandomWrite</b> / "RandomWrite": TRUE if the SetFeature() method
+is operational on this layer.  Note this means that this
+particular layer is writable.  The same OGRLayer class may return FALSE
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCUpsertFeature</b> / "UpsertFeature": TRUE if the UpsertFeature()
+method is operational on this layer.  Note this means that this
+particular layer is writable.  The same OGRLayer class may return FALSE
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCFastSpatialFilter</b> / "FastSpatialFilter": TRUE if this layer
+implements spatial filtering efficiently.  Layers that effectively read all
+features, and test them with the OGRFeature intersection methods should
+return FALSE.  This can be used as a clue by the application whether it
+should build and maintain its own spatial index for features in this layer.<p>
+
+ <li> <b>OLCFastFeatureCount</b> / "FastFeatureCount":
+TRUE if this layer can return a feature
+count (via GetFeatureCount()) efficiently. i.e. without counting
+the features.  In some cases this will return TRUE until a spatial filter is
+installed after which it will return FALSE.<p>
+
+ <li> <b>OLCFastGetExtent</b> / "FastGetExtent":
+TRUE if this layer can return its data extent (via GetExtent())
+efficiently, i.e. without scanning all the features.  In some cases this
+will return TRUE until a spatial filter is installed after which it will
+return FALSE.<p>
+
+ <li> <b>OLCFastSetNextByIndex</b> / "FastSetNextByIndex":
+TRUE if this layer can perform the SetNextByIndex() call efficiently, otherwise
+FALSE.<p>
+
+ <li> <b>OLCCreateField</b> / "CreateField": TRUE if this layer can create
+new fields on the current layer using CreateField(), otherwise FALSE.<p>
+
+ <li> <b>OLCCreateGeomField</b> / "CreateGeomField": (GDAL >= 1.11) TRUE if this layer can create
+new geometry fields on the current layer using CreateGeomField(), otherwise FALSE.<p>
+
+ <li> <b>OLCDeleteField</b> / "DeleteField": TRUE if this layer can delete
+existing fields on the current layer using DeleteField(), otherwise FALSE.<p>
+
+ <li> <b>OLCReorderFields</b> / "ReorderFields": TRUE if this layer can reorder
+existing fields on the current layer using ReorderField() or ReorderFields(), otherwise FALSE.<p>
+
+ <li> <b>OLCAlterFieldDefn</b> / "AlterFieldDefn": TRUE if this layer can alter
+the definition of an existing field on the current layer using AlterFieldDefn(), otherwise FALSE.<p>
+
+ <li> <b>OLCAlterGeomFieldDefn</b> / "AlterGeomFieldDefn": TRUE if this layer can alter
+the definition of an existing geometry field on the current layer using AlterGeomFieldDefn(), otherwise FALSE.<p>
+
+ <li> <b>OLCDeleteFeature</b> / "DeleteFeature": TRUE if the DeleteFeature()
+method is supported on this layer, otherwise FALSE.<p>
+
+ <li> <b>OLCStringsAsUTF8</b> / "StringsAsUTF8": TRUE if values of OFTString
+fields are assured to be in UTF-8 format.  If FALSE the encoding of fields
+is uncertain, though it might still be UTF-8.<p>
+
+<li> <b>OLCTransactions</b> / "Transactions": TRUE if the StartTransaction(),
+CommitTransaction() and RollbackTransaction() methods work in a meaningful way,
+otherwise FALSE.<p>
+
+<li> <b>OLCIgnoreFields</b> / "IgnoreFields": TRUE if fields, geometry and style
+will be omitted when fetching features as set by SetIgnoredFields() method.
+
+<li> <b>OLCCurveGeometries</b> / "CurveGeometries": TRUE if this layer supports
+writing curve geometries or may return such geometries.
+
+<p>
+
+</ul>
+
+ This method is the same as the C function OGR_L_TestCapability().
+
+ @param pszCap the name of the capability to test.
+
+ @return TRUE if the layer has the requested capability, or FALSE otherwise.
+OGRLayers will return FALSE for any unrecognized capabilities.<p>
+
+*/
+
+/************************************************************************/
 /*                        OGR_L_TestCapability()                        */
 /************************************************************************/
+
+/**
+ \brief Test if this layer supported the named capability.
+
+ The capability codes that can be tested are represented as strings, but
+ \#defined constants exists to ensure correct spelling.  Specific layer
+ types may implement class specific capabilities, but this can't generally
+ be discovered by the caller. <p>
+
+<ul>
+
+ <li> <b>OLCRandomRead</b> / "RandomRead": TRUE if the GetFeature() method
+is implemented in an optimized way for this layer, as opposed to the default
+implementation using ResetReading() and GetNextFeature() to find the requested
+feature id.<p>
+
+ <li> <b>OLCSequentialWrite</b> / "SequentialWrite": TRUE if the
+CreateFeature() method works for this layer.  Note this means that this
+particular layer is writable.  The same OGRLayer class may return FALSE
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCRandomWrite</b> / "RandomWrite": TRUE if the SetFeature() method
+is operational on this layer.  Note this means that this
+particular layer is writable.  The same OGRLayer class may return FALSE
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCUpsertFeature</b> / "UpsertFeature": TRUE if the UpsertFeature()
+method is operational on this layer.  Note this means that this
+particular layer is writable.  The same OGRLayer class may return FALSE
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCFastSpatialFilter</b> / "FastSpatialFilter": TRUE if this layer
+implements spatial filtering efficiently.  Layers that effectively read all
+features, and test them with the OGRFeature intersection methods should
+return FALSE.  This can be used as a clue by the application whether it
+should build and maintain its own spatial index for features in this
+layer.<p>
+
+ <li> <b>OLCFastFeatureCount</b> / "FastFeatureCount":
+TRUE if this layer can return a feature
+count (via OGR_L_GetFeatureCount()) efficiently, i.e. without counting
+the features.  In some cases this will return TRUE until a spatial filter is
+installed after which it will return FALSE.<p>
+
+ <li> <b>OLCFastGetExtent</b> / "FastGetExtent":
+TRUE if this layer can return its data extent (via OGR_L_GetExtent())
+efficiently, i.e. without scanning all the features.  In some cases this
+will return TRUE until a spatial filter is installed after which it will
+return FALSE.<p>
+
+ <li> <b>OLCFastSetNextByIndex</b> / "FastSetNextByIndex":
+TRUE if this layer can perform the SetNextByIndex() call efficiently, otherwise
+FALSE.<p>
+
+ <li> <b>OLCCreateField</b> / "CreateField": TRUE if this layer can create
+new fields on the current layer using CreateField(), otherwise FALSE.<p>
+
+ <li> <b>OLCCreateGeomField</b> / "CreateGeomField": (GDAL >= 1.11) TRUE if this layer can create
+new geometry fields on the current layer using CreateGeomField(), otherwise FALSE.<p>
+
+ <li> <b>OLCDeleteField</b> / "DeleteField": TRUE if this layer can delete
+existing fields on the current layer using DeleteField(), otherwise FALSE.<p>
+
+ <li> <b>OLCReorderFields</b> / "ReorderFields": TRUE if this layer can reorder
+existing fields on the current layer using ReorderField() or ReorderFields(), otherwise FALSE.<p>
+
+ <li> <b>OLCAlterFieldDefn</b> / "AlterFieldDefn": TRUE if this layer can alter
+the definition of an existing field on the current layer using AlterFieldDefn(), otherwise FALSE.<p>
+
+ <li> <b>OLCAlterGeomFieldDefn</b> / "AlterGeomFieldDefn": TRUE if this layer can alter
+the definition of an existing geometry field on the current layer using AlterGeomFieldDefn(), otherwise FALSE.<p>
+
+ <li> <b>OLCDeleteFeature</b> / "DeleteFeature": TRUE if the DeleteFeature()
+method is supported on this layer, otherwise FALSE.<p>
+
+ <li> <b>OLCStringsAsUTF8</b> / "StringsAsUTF8": TRUE if values of OFTString
+fields are assured to be in UTF-8 format.  If FALSE the encoding of fields
+is uncertain, though it might still be UTF-8.<p>
+
+<li> <b>OLCTransactions</b> / "Transactions": TRUE if the StartTransaction(),
+CommitTransaction() and RollbackTransaction() methods work in a meaningful way,
+otherwise FALSE.<p>
+
+<li> <b>OLCCurveGeometries</b> / "CurveGeometries": TRUE if this layer supports
+writing curve geometries or may return such geometries.
+
+<p>
+
+</ul>
+
+ This function is the same as the C++ method OGRLayer::TestCapability().
+
+ @param hLayer handle to the layer to get the capability from.
+ @param pszCap the name of the capability to test.
+
+ @return TRUE if the layer has the requested capability, or FALSE otherwise.
+OGRLayers will return FALSE for any unrecognized capabilities.<p>
+
+*/
 
 int OGR_L_TestCapability(OGRLayerH hLayer, const char *pszCap)
 
@@ -1629,6 +3186,17 @@ int OGR_L_TestCapability(OGRLayerH hLayer, const char *pszCap)
 /*                          GetSpatialFilter()                          */
 /************************************************************************/
 
+/**
+ \brief This method returns the current spatial filter for this layer.
+
+ The returned pointer is to an internally owned object, and should not
+ be altered or deleted by the caller.
+
+ This method is the same as the C function OGR_L_GetSpatialFilter().
+
+ @return spatial filter geometry.
+ */
+
 OGRGeometry *OGRLayer::GetSpatialFilter()
 
 {
@@ -1638,6 +3206,18 @@ OGRGeometry *OGRLayer::GetSpatialFilter()
 /************************************************************************/
 /*                       OGR_L_GetSpatialFilter()                       */
 /************************************************************************/
+
+/**
+ \brief This function returns the current spatial filter for this layer.
+
+ The returned pointer is to an internally owned object, and should not
+ be altered or deleted by the caller.
+
+ This function is the same as the C++ method OGRLayer::GetSpatialFilter().
+
+ @param hLayer handle to the layer to get the spatial filter from.
+ @return a handle to the spatial filter geometry.
+ */
 
 OGRGeometryH OGR_L_GetSpatialFilter(OGRLayerH hLayer)
 
@@ -2588,8 +4168,32 @@ void OGRLayer::FinishRollbackTransaction(const std::string &osSavepointName)
 //! @endcond
 
 /************************************************************************/
+/*                    OGRLayer::ResetReading()                          */
+/************************************************************************/
+
+/**
+ \fn void OGRLayer::ResetReading();
+
+ \brief Reset feature reading to start on the first feature.
+
+ This affects GetNextFeature() and GetArrowStream().
+
+ This method is the same as the C function OGR_L_ResetReading().
+*/
+
+/************************************************************************/
 /*                         OGR_L_ResetReading()                         */
 /************************************************************************/
+
+/**
+ \brief Reset feature reading to start on the first feature.
+
+ This affects GetNextFeature() and GetArrowStream().
+
+ This function is the same as the C++ method OGRLayer::ResetReading().
+
+ @param hLayer handle to the layer on which features are read.
+*/
 
 void OGR_L_ResetReading(OGRLayerH hLayer)
 
@@ -2644,6 +4248,26 @@ OGRLayer::InitializeIndexSupport([[maybe_unused]] const char *pszFilename)
 /*                             SyncToDisk()                             */
 /************************************************************************/
 
+/**
+\brief Flush pending changes to disk.
+
+This call is intended to force the layer to flush any pending writes to
+disk, and leave the disk file in a consistent state.  It would not normally
+have any effect on read-only datasources.
+
+Some layers do not implement this method, and will still return
+OGRERR_NONE.  The default implementation just returns OGRERR_NONE.  An error
+is only returned if an error occurs while attempting to flush to disk.
+
+In any event, you should always close any opened datasource with
+OGRDataSource::DestroyDataSource() that will ensure all data is correctly flushed.
+
+This method is the same as the C function OGR_L_SyncToDisk().
+
+@return OGRERR_NONE if no error occurs (even if nothing is done) or an
+error code.
+*/
+
 OGRErr OGRLayer::SyncToDisk()
 
 {
@@ -2653,6 +4277,28 @@ OGRErr OGRLayer::SyncToDisk()
 /************************************************************************/
 /*                          OGR_L_SyncToDisk()                          */
 /************************************************************************/
+
+/**
+\brief Flush pending changes to disk.
+
+This call is intended to force the layer to flush any pending writes to
+disk, and leave the disk file in a consistent state.  It would not normally
+have any effect on read-only datasources.
+
+Some layers do not implement this method, and will still return
+OGRERR_NONE.  The default implementation just returns OGRERR_NONE.  An error
+is only returned if an error occurs while attempting to flush to disk.
+
+In any event, you should always close any opened datasource with
+OGR_DS_Destroy() that will ensure all data is correctly flushed.
+
+This method is the same as the C++ method OGRLayer::SyncToDisk()
+
+@param hLayer handle to the layer
+
+@return OGRERR_NONE if no error occurs (even if nothing is done) or an
+error code.
+*/
 
 OGRErr OGR_L_SyncToDisk(OGRLayerH hLayer)
 
@@ -2671,6 +4317,24 @@ OGRErr OGR_L_SyncToDisk(OGRLayerH hLayer)
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
+/**
+ \brief Delete feature from layer.
+
+ The feature with the indicated feature id is deleted from the layer if
+ supported by the driver.  Most drivers do not support feature deletion,
+ and will return OGRERR_UNSUPPORTED_OPERATION.  The TestCapability()
+ layer method may be called with OLCDeleteFeature to check if the driver
+ supports feature deletion.
+
+ This method is the same as the C function OGR_L_DeleteFeature().
+
+ @param nFID the feature id to be deleted from the layer
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+
+*/
+
 OGRErr OGRLayer::DeleteFeature(CPL_UNUSED GIntBig nFID)
 {
     return OGRERR_UNSUPPORTED_OPERATION;
@@ -2679,6 +4343,24 @@ OGRErr OGRLayer::DeleteFeature(CPL_UNUSED GIntBig nFID)
 /************************************************************************/
 /*                        OGR_L_DeleteFeature()                         */
 /************************************************************************/
+
+/**
+ \brief Delete feature from layer.
+
+ The feature with the indicated feature id is deleted from the layer if
+ supported by the driver.  Most drivers do not support feature deletion,
+ and will return OGRERR_UNSUPPORTED_OPERATION.  The OGR_L_TestCapability()
+ function may be called with OLCDeleteFeature to check if the driver
+ supports feature deletion.
+
+ This method is the same as the C++ method OGRLayer::DeleteFeature().
+
+ @param hLayer handle to the layer
+ @param nFID the feature id to be deleted from the layer
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+*/
 
 OGRErr OGR_L_DeleteFeature(OGRLayerH hLayer, GIntBig nFID)
 
@@ -2722,6 +4404,14 @@ GIntBig OGR_L_GetFeaturesRead(OGRLayerH hLayer)
 /*                             GetFIDColumn                             */
 /************************************************************************/
 
+/**
+ \brief This method returns the name of the underlying database column being used as the FID column, or "" if not supported.
+
+ This method is the same as the C function OGR_L_GetFIDColumn().
+
+ @return fid column name.
+*/
+
 const char *OGRLayer::GetFIDColumn() const
 
 {
@@ -2731,6 +4421,15 @@ const char *OGRLayer::GetFIDColumn() const
 /************************************************************************/
 /*                         OGR_L_GetFIDColumn()                         */
 /************************************************************************/
+
+/**
+ \brief This method returns the name of the underlying database column being used as the FID column, or "" if not supported.
+
+ This method is the same as the C++ method OGRLayer::GetFIDColumn()
+
+ @param hLayer handle to the layer
+ @return fid column name.
+*/
 
 const char *OGR_L_GetFIDColumn(OGRLayerH hLayer)
 
@@ -2749,6 +4448,18 @@ const char *OGR_L_GetFIDColumn(OGRLayerH hLayer)
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
+/**
+ \brief This method returns the name of the underlying database column being used as the geometry column, or "" if not supported.
+
+ For layers with multiple geometry fields, this method only returns the name
+ of the first geometry column. For other columns, use
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(i)->GetNameRef().
+
+ This method is the same as the C function OGR_L_GetGeometryColumn().
+
+ @return geometry column name.
+*/
+
 const char *OGRLayer::GetGeometryColumn() const
 
 {
@@ -2762,6 +4473,19 @@ const char *OGRLayer::GetGeometryColumn() const
 /************************************************************************/
 /*                      OGR_L_GetGeometryColumn()                       */
 /************************************************************************/
+
+/**
+ \brief This method returns the name of the underlying database column being used as the geometry column, or "" if not supported.
+
+ For layers with multiple geometry fields, this method only returns the geometry
+ type of the first geometry column. For other columns, use
+ OGR_GFld_GetNameRef(OGR_FD_GetGeomFieldDefn(OGR_L_GetLayerDefn(hLayer), i)).
+
+ This method is the same as the C++ method OGRLayer::GetGeometryColumn()
+
+ @param hLayer handle to the layer
+ @return geometry column name.
+*/
 
 const char *OGR_L_GetGeometryColumn(OGRLayerH hLayer)
 
@@ -2780,6 +4504,15 @@ const char *OGR_L_GetGeometryColumn(OGRLayerH hLayer)
 /*                            GetStyleTable()                           */
 /************************************************************************/
 
+/**
+ \brief Returns layer style table.
+
+ This method is the same as the C function OGR_L_GetStyleTable().
+
+ @return pointer to a style table which should not be modified or freed by the
+ caller.
+*/
+
 OGRStyleTable *OGRLayer::GetStyleTable()
 {
     return m_poStyleTable;
@@ -2788,6 +4521,17 @@ OGRStyleTable *OGRLayer::GetStyleTable()
 /************************************************************************/
 /*                         SetStyleTableDirectly()                      */
 /************************************************************************/
+
+/**
+ \brief Set layer style table.
+
+ This method operate exactly as OGRLayer::SetStyleTable() except that it
+ assumes ownership of the passed table.
+
+ This method is the same as the C function OGR_L_SetStyleTableDirectly().
+
+ @param poStyleTable pointer to style table to set
+*/
 
 void OGRLayer::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
 {
@@ -2799,6 +4543,17 @@ void OGRLayer::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
 /************************************************************************/
 /*                            SetStyleTable()                           */
 /************************************************************************/
+
+/**
+ \brief Set layer style table.
+
+ This method operate exactly as OGRLayer::SetStyleTableDirectly() except
+ that it does not assume ownership of the passed table.
+
+ This method is the same as the C function OGR_L_SetStyleTable().
+
+ @param poStyleTable pointer to style table to set
+*/
 
 void OGRLayer::SetStyleTable(OGRStyleTable *poStyleTable)
 {
@@ -2852,6 +4607,21 @@ void OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable)
 /*                               GetName()                              */
 /************************************************************************/
 
+/**
+ \brief Return the layer name.
+
+ This returns the same content as GetLayerDefn()->OGRFeatureDefn::GetName(), but for a
+ few drivers, calling GetName() directly can avoid lengthy layer
+ definition initialization.
+
+ This method is the same as the C function OGR_L_GetName().
+
+ If this method is derived in a driver, it must be done such that it
+ returns the same content as GetLayerDefn()->OGRFeatureDefn::GetName().
+
+ @return the layer name (must not been freed)
+*/
+
 const char *OGRLayer::GetName() const
 
 {
@@ -2861,6 +4631,19 @@ const char *OGRLayer::GetName() const
 /************************************************************************/
 /*                           OGR_L_GetName()                            */
 /************************************************************************/
+
+/**
+ \brief Return the layer name.
+
+ This returns the same content as OGR_FD_GetName(OGR_L_GetLayerDefn(hLayer)),
+ but for a few drivers, calling OGR_L_GetName() directly can avoid lengthy
+ layer definition initialization.
+
+ This function is the same as the C++ method OGRLayer::GetName().
+
+ @param hLayer handle to the layer.
+ @return the layer name (must not been freed)
+*/
 
 const char *OGR_L_GetName(OGRLayerH hLayer)
 
@@ -2879,6 +4662,29 @@ const char *OGR_L_GetName(OGRLayerH hLayer)
 /*                            GetGeomType()                             */
 /************************************************************************/
 
+/**
+ \brief Return the layer geometry type.
+
+ This returns the same result as GetLayerDefn()->OGRFeatureDefn::GetGeomType(), but for a
+ few drivers, calling GetGeomType() directly can avoid lengthy layer
+ definition initialization.
+
+ Note that even if this method is const (since GDAL 3.12), there is no guarantee
+ it can be safely called by concurrent threads on the same GDALDataset object.
+
+ For layers with multiple geometry fields, this method only returns the geometry
+ type of the first geometry column. For other columns, use
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(i)->GetType().
+ For layers without any geometry field, this method returns wkbNone.
+
+ This method is the same as the C function OGR_L_GetGeomType().
+
+ If this method is derived in a driver, it must be done such that it
+ returns the same content as GetLayerDefn()->OGRFeatureDefn::GetGeomType().
+
+ @return the geometry type
+*/
+
 OGRwkbGeometryType OGRLayer::GetGeomType() const
 {
     const OGRFeatureDefn *poLayerDefn = GetLayerDefn();
@@ -2893,6 +4699,24 @@ OGRwkbGeometryType OGRLayer::GetGeomType() const
 /************************************************************************/
 /*                         OGR_L_GetGeomType()                          */
 /************************************************************************/
+
+/**
+ \brief Return the layer geometry type.
+
+ This returns the same result as OGR_FD_GetGeomType(OGR_L_GetLayerDefn(hLayer)),
+ but for a few drivers, calling OGR_L_GetGeomType() directly can avoid lengthy
+ layer definition initialization.
+
+ For layers with multiple geometry fields, this method only returns the geometry
+ type of the first geometry column. For other columns, use
+ OGR_GFld_GetType(OGR_FD_GetGeomFieldDefn(OGR_L_GetLayerDefn(hLayer), i)).
+ For layers without any geometry field, this method returns wkbNone.
+
+ This function is the same as the C++ method OGRLayer::GetGeomType().
+
+ @param hLayer handle to the layer.
+ @return the geometry type
+*/
 
 OGRwkbGeometryType OGR_L_GetGeomType(OGRLayerH hLayer)
 
@@ -2915,6 +4739,27 @@ OGRwkbGeometryType OGR_L_GetGeomType(OGRLayerH hLayer)
 /************************************************************************/
 /*                          SetIgnoredFields()                          */
 /************************************************************************/
+
+/**
+ \brief Set which fields can be omitted when retrieving features from the layer.
+
+ If the driver supports this functionality (testable using OLCIgnoreFields capability), it will not fetch the specified fields
+ in subsequent calls to GetFeature() / GetNextFeature() and thus save some processing time and/or bandwidth.
+
+ Besides field names of the layers, the following special fields can be passed: "OGR_GEOMETRY" to ignore geometry and
+ "OGR_STYLE" to ignore layer style.
+
+ By default, no fields are ignored.
+
+ Note that fields that are used in an attribute filter should generally not be set as
+ ignored fields, as most drivers (such as those relying on the OGR SQL engine)
+ will be unable to correctly evaluate the attribute filter.
+
+ This method is the same as the C function OGR_L_SetIgnoredFields()
+
+ @param papszFields an array of field names terminated by NULL item. If NULL is passed, the ignored list is cleared.
+ @return OGRERR_NONE if all field names have been resolved (even if the driver does not support this method)
+*/
 
 OGRErr OGRLayer::SetIgnoredFields(CSLConstList papszFields)
 {
@@ -2965,6 +4810,28 @@ OGRErr OGRLayer::SetIgnoredFields(CSLConstList papszFields)
 /************************************************************************/
 /*                       OGR_L_SetIgnoredFields()                       */
 /************************************************************************/
+
+/**
+ \brief Set which fields can be omitted when retrieving features from the layer.
+
+ If the driver supports this functionality (testable using OLCIgnoreFields capability), it will not fetch the specified fields
+ in subsequent calls to GetFeature() / GetNextFeature() and thus save some processing time and/or bandwidth.
+
+ Besides field names of the layers, the following special fields can be passed: "OGR_GEOMETRY" to ignore geometry and
+ "OGR_STYLE" to ignore layer style.
+
+ By default, no fields are ignored.
+
+ Note that fields that are used in an attribute filter should generally not be set as
+ ignored fields, as most drivers (such as those relying on the OGR SQL engine)
+ will be unable to correctly evaluate the attribute filter.
+
+ This method is the same as the C++ method OGRLayer::SetIgnoredFields()
+
+ @param hLayer handle to the layer
+ @param papszFields an array of field names terminated by NULL item. If NULL is passed, the ignored list is cleared.
+ @return OGRERR_NONE if all field names have been resolved (even if the driver does not support this method)
+*/
 
 OGRErr OGR_L_SetIgnoredFields(OGRLayerH hLayer, const char **papszFields)
 
