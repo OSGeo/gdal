@@ -1332,7 +1332,6 @@ hMaskBand
 hMutex
 hNewSubGeom
 hObject
-hOutDS
 hobu
 hoc
 holded
@@ -1355,6 +1354,7 @@ hOtherFeature
 hotine
 Hotine
 Hough
+hOutDS
 howard
 HowardB
 hProximityBand
@@ -1404,6 +1404,7 @@ idofic
 Idrisi
 iDriver
 idx
+idxN
 ie
 ieee
 ifdef
@@ -2376,6 +2377,7 @@ papoPolygons
 papszDirFiles
 papszFields
 papszFileList
+papszInfo
 papszLayerList
 papszMetadata
 papszOpenOptions
@@ -2661,6 +2663,7 @@ proxyauth
 proxyuserpwd
 prsence
 ps
+psBlockInfo
 psChild
 psDT
 psEnvelope

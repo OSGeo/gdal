@@ -2147,27 +2147,10 @@ bool ZarrArray::CacheTilePresence()
 
     const std::string osDirectoryName = GetDataDirectory();
 
-    struct DirCloser
-    {
-        DirCloser(const DirCloser &) = delete;
-        DirCloser &operator=(const DirCloser &) = delete;
-
-        VSIDIR *m_psDir;
-
-        explicit DirCloser(VSIDIR *psDir) : m_psDir(psDir)
-        {
-        }
-
-        ~DirCloser()
-        {
-            VSICloseDir(m_psDir);
-        }
-    };
-
-    auto psDir = VSIOpenDir(osDirectoryName.c_str(), -1, nullptr);
+    auto psDir = std::unique_ptr<VSIDIR, decltype(&VSICloseDir)>(
+        VSIOpenDir(osDirectoryName.c_str(), -1, nullptr), VSICloseDir);
     if (!psDir)
         return false;
-    DirCloser dirCloser(psDir);
 
     auto poTilePresenceArray = OpenTilePresenceCache(true);
     if (!poTilePresenceArray)
@@ -2197,7 +2180,7 @@ bool ZarrArray::CacheTilePresence()
     uint64_t nCounter = 0;
     const char chSrcFilenameDirSeparator =
         VSIGetDirectorySeparator(osDirectoryName.c_str())[0];
-    while (const VSIDIREntry *psEntry = VSIGetNextDirEntry(psDir))
+    while (const VSIDIREntry *psEntry = VSIGetNextDirEntry(psDir.get()))
     {
         if (!VSI_ISDIR(psEntry->nMode))
         {
