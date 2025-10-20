@@ -1,3 +1,711 @@
+# GDAL/OGR 3.12.0 "Chicoutimi" Release Notes
+
+(preliminary, up to commit 440150899dcbdf33e596686681c98d5f1475d308)
+
+GDAL/OGR 3.12.0 is a feature release.
+Those notes include changes since GDAL 3.11.0, but not already included in a
+GDAL 3.11.x bugfix release.
+
+## In a nutshell...
+
+* New 'gdal' command line interface capabilities:
+  - Add 'gdal raster as-features' (#12970)
+  - Add 'gdal raster blend' (port of hsv_merge.py + regular alpha blending)
+  - Add 'gdal raster compare' (port of gdalcompare.py) (#12757)
+  - Add 'gdal raster neighbors' (#12768)
+  - Add 'gdal raster nodata-to-alpha' (#12524)
+  - Add 'gdal raster pansharpen' (port of gdal_pansharpen.py)
+  - Add 'gdal raster proximity' (#12350)
+  - Add 'gdal raster rgb-to-palette' (port of rgb2pct.py)
+  - Add 'gdal raster update'
+  - Add 'gdal raster zonal-stats'
+  - Add 'gdal vector check-coverage'
+  - Add 'gdal vector check-geometry'
+  - Add 'gdal vector clean-coverage'
+  - Add 'gdal vector index' (port of ogrtindex)
+  - Add 'gdal vector layer-algebra' (port of ogr_layer_algebra.py)
+  - Add 'gdal vector make-point'
+  - Add 'gdal vector partition'
+  - gdal vector pipeline: add limit step
+  - Add 'gdal vector set-field-type'
+  - Add 'gdal vector simplify-coverage'
+  - Add 'gdal mdim mosaic' (#13208)
+  - Add 'gdal dataset' port of 'gdal manage'
+  - Make 'gdal pipeline' support mixed raster/vector pipelines
+  - Pipeline: add support for nested pipeline (#12874)
+  - Pipeline: add support for a 'tee' step (#12874)
+  - Move 'gdal vector geom XXXX' utilities directly under 'gdal vector'
+  - Rename 'gdal vector geom set-type' as 'gdal vector set-geom-type'
+  - gdal raster reproject: add a -j/--num-threads option and default to ALL_CPUS
+  - Make 'gdal raster fill-nodata/proximity/sieve/viewshed' pipeline-able
+  - gdal raster mosaic/stack: allow it to be the first step of a raster pipeline
+  - gdal pipeline: allow to run an existing pipeline and override/add parameters
+  - Improved Bash completion
+  - Many other improvements to existing utilities (see below)
+
+* VRT pixel functions: Add mean, median, geometric_mean, harmonic_mean, mode
+   (#12418), and handle NoData values
+* Add C/C++/Python API for [raster band algebra](https://gdal.org/en/latest/user/band_algebra.html):
+  arithmetic operators, comparison operators, AsType(),
+  gdal::abs()/sqrt()/log10()/log()/min()/max()/mean()/IfThenElse() functions
+* Add MiraMon raster driver: read-only support (#12293)
+* ADBC driver: support for ADBC BigQuery driver (requires BigQuery ADBC driver)
+* JSONFG driver: add read/write support for curve and measured geometries;
+  update to 0.3.0 spec
+* Parquet: add update support using OGREditableLayer mechanism
+* Add C++ public header files for raster functionality
+* Security: avoid potential path traversal in several drivers
+* Various code linting, static code analyzer fixes, etc.
+* Significant automation of the release process
+* Add Docker attestation (#13066)
+* Bump of shared lib major version
+
+## New installed files
+
+* Include files:
+gdalalgorithm_c.h
+gdalalgorithm_cpp.h
+gdal_asyncreader.h
+gdal_colortable.h
+gdal_computedrasterband.h
+gdal_cpp_functions.h
+gdal_dataset.h
+gdal_defaultoverviews.h
+gdal_driver.h
+gdal_drivermanager.h
+gdal_gcp.h
+gdal_geotransform.h
+gdal_majorobject.h
+gdal_maskbands.h
+gdal_multidim_cpp.h
+gdal_multidim.h
+gdal_multidomainmetadata.h
+gdal_openinfo.h
+gdal_pam_multidim.h
+gdal_rasterband.h
+gdal_rasterblock.h
+gdal_raster_cpp.h
+gdal_relationship.h
+gdal_vector_cpp.h
+
+* Resource files:
+grib2_table_4_2_0_22.csv
+grib2_table_4_2_20_3.csv
+grib2_table_4_2_2_7.csv
+
+## Backward compatibility issues
+
+See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.12/MIGRATION_GUIDE.TXT)
+
+## Build changes
+
+* CMake: unset GDAL/OGR_ENABLE_DRIVER_xxxx when setting
+  GDAL_BUILD_OPTIONAL_DRIVERS=ON/OGR_BUILD_OPTIONAL_DRIVERS=ON the first time
+* Add /MP to MSVC flags (parallel compilation)
+* Add a CMake GDAL_VRT_ENABLE_RAWRASTERBAND=ON/OFF option, default ON, that
+  can be set to OFF to disable VRTRawRasterBand support
+* CMake: install missing completions
+* Add v18 of Microsoft ODBC Driver for SQL Server to CMake module
+* Remove unused macros from generated cpl_config.h
+* add a GDAL_ENABLE_ALGORITHMS boolean variable to disable algorithms beneath
+ 'gdal'
+* Add compatibility with Poppler 25.10
+
+## Internal libraries
+
+* Add third_party/libdivide
+
+## GDAL 3.12.0 - Overview of Changes
+
+### Port
+
+* cpl_port.h: remove obsolete and unused CPL_CVSID() macro (#11433)
+* VSICurlHandle::AdviseRead() (GTIFF multithreading /vsicurl/ reading):
+  implement retry strategy (#12426)
+* Rename VSIE_AWSxxx constants to VSIE_xxx, and CPLE_AWSxxx to CPLE_xxx; rename
+  AWSError to ObjectStorageGenericError
+* Add VSIErrorNumToString()
+* VSIToCPLError(): include error number string in error message
+* /vsis3/: add support for directory buckets
+* /vsis3/: set VSIError on Stat() operations (and others too)
+* /vsis3/: retrieve path specific options in ReadDir()
+* /vsiaz/ and /vsiadls/: set VSI error codes
+* Add CPLFormatReadableFileSize()
+* (some) implementation of GetDiskFreeSpace() for /vsis3/, /vsigs/ and /vsiaz/
+* VSI Win32 GetCanonicalFilename(): make it expend output buffer if needed
+* VSI Win32: implement OpenDir()
+* /vsigs/: make UnlinkBatch() and GetFileMetadata() work when OAuth2 bearer is
+  passed through GDAL_HTTP_HEADERS
+* /vsiswift/: pass HTTP options for GetFileList() operation
+* /vsiwebhdfs/: pass HTTP options for GetFileList(), Unlink() and Mkdir()
+  operations
+* Unix/Win32/Sparse/Archive VSI: make sure that Close() can be called multiple
+  times, and is called by destructor
+* add a VSIVirtualFileSystem::CreateOnlyVisibleAtCloseTime() method, and add a
+  Linux and Windows implementation of it
+* CPLJSONDocument::Save(): propagate failure to write file
+* Add CPLGetCurrentThreadCount()
+* CPLGetRemainingFileDescriptorCount(): add a FreeBSD and netBSD implementation
+* CPLGetExecPath(): implement it on NetBSD
+* Add CPLHasPathTraversal() and CPLHasUnbalancedPathTraversal()
+* CPLSpawnAsync() Win32: properly quote arguments that need it
+* VSI archive (/vsizip/, /vsiar/) performance improvements with large number of
+  files (#12939)
+* vsis3/vsigs/vziaz/vsiwebhdfs/vsiswift/vsicurl: add path traversal protection
+  when parsing result of ListDir
+* /vsis3/ (and /vsigs/, /vsiaz/, etc.): by default squash '/./' and '/../'
+  sequences in path, unless the GDAL_HTTP_PATH_VERBATIM config option is set
+  (#13040)
+* Unix and Win32 file I/O: honour CancelCreation() even for files created by
+  regular Open()
+* Win32: make Rename() able to rename on top of existing dest file
+* VSIFOpenEx2L(): add a CACHE=ON/OFF option to disable caching of file after
+  file closing (for /vsicurl and similar)
+* /vsicurl/: do not update cached file properties if cURL returned a non-HTTP
+  error
+* VSIGlob(): fix when argument contains no directory, like 'byte*.tif'
+
+### Core
+
+Improvements:
+* Raster Attribute Table: add GFT_Boolean, GFT_DateTime and GFT_WKBGeometry
+* C++ API: add GDALGeoTransform class, and modify GDALDataset::GetGeoTransform()
+  /SetGeoTransform() to use it
+* C and SWIG API: add GDALAlgorithmArgGetDefaultAs[Boolean|Integer|Double|String
+  |IntegerList|DoubleList|StringList]
+* Add GDAL_DMD_MAX_STRING_LENGTH driver metadata item
+* Add GDAL_DCAP_APPEND driver capability (#12899)
+* Add GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME driver capability
+* Add GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED and GDAL_DCAP_CAN_READ_AFTER_DELETE
+* Add GDAL_DCAP_UPSERT and use it where relevant
+* Add GDALDataset::GetLayerIndex()
+* Add GDALAlgorithm::AddGeometryTypeArg(), AddAppendLayerArg(),
+  AddOverwriteLayerArg(), AddAbsolutePathArg(), IsHidden(), WarnIfDeprecated(),
+  AddStdoutArg()
+* GDALAlgorithm::ParseCommandLineArguments(): make it accept <INPUT>
+  <ONE-OR-MORE>... <OUTPUT> positional arguments (useful for 'gdal raster
+  pansharpen')
+* Add GDALAlgorithmArgIsHidden(), and rename IsOnlyForCLI() to IsHiddenForAPI()
+* GDALVectorNonStreamingAlgorithmDataset: Set ADVERTIZE_UTF8 if applicable
+* Add GDALRasterBand::SplitRasterIO()
+* GDALRegenerateOverviewsMultiBand(): avoid progress percentage to go beyond 1.0
+  in some cases
+* Add GDALRescaleGeoTransform()
+* Add GDALDataset::AddOverviews() to add existing overview datasets (#12614)
+* gdal raster hillshade/slope/aspect/tpi/tri: make sure it keeps a reference on
+  source dataset, for more robust working in streaming mode
+* Make GDALRasterAttributeTable::SetValue() methods return a CPLErr
+* GDALRasterBand::ReadRaster(): instantiate template for GFloat16
+* GDALRasterBand: Add IterateWindows() (#12674)
+* Add GDALDataset::GetExtent() and GetExtentWGS84LongLat(), corresponding C API
+  and bind to SWIG
+* GDALCopyWords(): perf improvements for some packed conversions
+* GDALCopyWords(): implement efficient conversion of 8 Float16->Float32/Float64
+  conversions using SSE2
+* GDALCopyWords(): speed-up Double->Byte conversion
+* gdal::TileMatrixSet: add a exportToTMSJsonV1() method
+* Add GDALDatasetMarkSuppressOnClose() and expose it to SWIG
+* gdal_minmax_element.hpp: add support for GDT_Float16
+* gdal_minmax_element.hpp: SSE2 optimization for int64_t/uint64_t
+* Add GDALGetGDALPath()
+* ComputeStatistics(): speed-up on Intel SSE2 for number of data types
+
+Fixes:
+* GDALOpenEx(): changes so that opening PG:xxx triggers a message about missing
+  plugin when it is not installed
+* Enhance behavior/error messages regarding deferred plugins (in particular
+  PostgreSQL)
+* GDALGetOutputDriversForDatasetName(): improve error message when matching on
+  prefix and not extension
+* GDALGetOutputDriversForDatasetName(): turn warning into error if plugin
+  driver detected but not available, and take it into account in
+  GDALVectorTranslate()
+* GDALAlgorithm: rename AddNodataDataTypeArg() method to AddNodataArg()
+* GDALAlgorithm: Raise error on malformed list arguments
+* GDALAlgorithm::GetArg(): change suggestionAllowed default to false, e.g. to
+  avoid weird error messages in auto-completion when a filename is close to the
+  'like' argument name
+* GDALDataTypeUnion(): adjust to avoid Byte + CInt32 to go to CFloat64
+* Overview generation: limit external file size in
+  GDALRegenerateOverviewsMultiBand (#12392)
+* Overview generation: avoid potential integer overflows with huge reduction
+  factors
+
+### Multidimensional API
+
+* Add GDALExtendedDataType::GetRAT() and GDALGroup::GetDataTypes()
+* Add GDALDataset::AsMDArray()
+* GDALMDArray::AsClassicDataset(): accept a "attribute" key in BAND_METADATA and
+  BAND_IMAGERY_METADATA options. Also accept fully qualified path for attributes
+  in "attribute" or in "${/path/to/attribute}"
+* Performance improvements in Float16 <--> Float32/64 conversions when F16C
+  instruction set is enabled
+* GDALMDArrayMask::IRead(): avoid potential issue when bufferDataType is not a
+  numeric data type
+
+### GNM
+
+* GNMDBDriver: tighten Identify method
+
+### Algorithms
+
+* alg/: replace some uses of CPLCalloc() by VSI_MALLOC_VERBOSE()
+* GDALChecksumImage(): avoid potential int overflow
+* Geoloc transformer: add a GEOLOC_NORMALIZE_LONGITUDE_MINUS_180_PLUS_180
+  transformer option to force  apply longitude 180 normalization (#6582)
+* Warper: make sure mode resampling doesn't alter values for [U]Int[32|64]
+* Warper: make mode resampling NaN aware
+* Warper: when source nodata is set and per-dataset mask band exists, ignore the
+  later, and raise a warning message (#13074)
+* RasterIO/overview mode resampling: properly takes into account NaN for
+  Float16/CFloat16
+* rasterio/overview: fix handling of large float values (FLT_MAX/DBL_MAX) for
+  average, RMS, cubic, cubicspline, lanczos
+
+### Raster Utilities
+
+* gdal: enable --progress by default, and add --quiet to shut it off (#12712)
+* gdal: when outputting to /vsistdout/, automatically turn on --quiet
+* gdal: Homogenize input/output layer name arg (#12984)
+* gdal raster/vector info and gdal vsi list: change default output format to text
+  when invoked from command line (#12712)
+* gdal raster calc: handle NoData (#12610)
+* gdal raster calc: add --flatten option
+* gdal raster calc: add a --dialect=muparser|builtin, where builtin can be used
+  to compute a single band from all bands of a single input dataset
+* gdal raster calc: check that formula is correct in RunStep() even when writing
+  to VRT, GDALG or stream
+* gdal raster calc: detect providing twice the same input name
+* gdal raster calc: check input names are valid identifiers
+* gdal raster calc: optimize sum of all sources as using builtin sum()
+* gdal raster clip: add a --window <column>,<line>,<width>,<height> argument
+* gdal raster/vector clip: make them work with --like dataset being a PostgreSQL
+  (vector) dataset (#13091)
+* gdal raster clip: do not emit warning about being outside of window when
+  specifying --allow-bbox-outside-source
+* gdal raster color-map: write directly to output file if possible
+* gdal raster edit: add a --gcp option
+* gdal raster edit: add a --unset-metadata-domain option
+* gdal raster footprint: accept output dataset passed as object
+* gdal raster hillshade: write directly to output file if possible
+* gdal raster hillshade: implement SSE2 optimization on Float32 input data type
+* gdal raster index: emit error if using --dst-crs and non existing input dataset
+* gdal raster index: add --skip-errors (#12806)
+* gdal raster mosaic: support VRT pixel functions (--pixel-function and
+  --pixel-function-arg arguments)
+* gdal raster mosaic/stack: add a --absolute-path option
+* gdal raster overview add: add an --overview-src option
+* gdal raster overview add: add a --creation-option/--co argument to properly
+  pass overview creation options (#12446)
+* gdal raster overview add: make it available in a pipeline
+* gdal raster pipeline: make --band validation work for steps
+* gdal raster polygonize: improve performance when using GPKG output (#13169)
+* gdal raster reclassify: validate mappings in case VRT or GDALG output is used
+* gdal raster reproject: avoid going through VRT when writing to final file is
+  possible
+* gdal raster tile: speed-up generation of (max zoom) tiles in PNG format
+* gdal raster tile: reduce consumption of cached source tiles when computing
+  overview tiles
+* gdal raster tile: improve a bit the efficiency of multithreading by reducing
+  the number of jobs to approximately the number of threads (#12661)
+* gdal raster tile: add a --parallel-method=fork on non-Windows OS
+* gdal raster tile: add a --parallel-method=spawn switch
+* gdal raster tile: do not pass potential sensitive information on command line
+  of child processes
+* gdal raster tile: only use a new thread for a minimum of 100 tiles/thread
+* gdal raster tile: generate a stacta.json file (Spatio-Temporal Asset Catalog
+  Tiled Assets)
+* gdal raster tile: honour progress callback asking for process interruption
+* gdal raster tile: allow it to be the last part of a pipeline
+* gdal raster viewshed: add angular, pitch and minimum distance masking (#12457)
+* gdal raster/vector pipeline: do not show hidden algorithms in usage
+* gdal vsi list/copy/move/sync/delete: display object storage errors (#12467)
+* Allow raster/vector info to be used as last step of a pipeline (#12767)
+* gdal completion: avoid multiple completion of dataset/filenames
+* gdal completion: add completion for --layer argument of 'gdal vector info' and
+  'gdal vector pipeline read'
+* gdal completion: only propose long name when completing '-' or '--' (#12465)
+* take into account config options for Bash completion
+* Make 'gdal raster reproject --resampling=?' or
+  'gdal vector info my.gpkg --layer=?' output possible values
+* gdalbuildvrt: add -write_absolute_path (#12401)
+* gdalbuildvrt: when using -addalpha and and a source that has a per-dataset
+  mask band, use that one for the alpha content (instead of using the source
+  raster footprint as opaque)
+* buildvrt / raster mosaic with pixel function: use smaller transfer type when
+  possible
+* gdalinfo: make it display content of archive when opening a /vsirar/
+  (or /vsi7z/) without inner path specified
+* gdal_translate: avoid int overflow on dataset whose at least one dimension is
+  INT_MAX
+* gdal_translate: do not preserve NODATA_VALUES metadata item when subsetting/
+  reordering bands
+* gdalwarp: avoid double->int overflows when computing target dataset size
+* gdaldem: INTERPOL(): avoid issues with large values
+* gdaldem/gdal raster hillshade/slope/aspect/roughness/tpi/tri streaming:
+  expose overviews if source has overviews
+* gdalmdimtranslate: make 'gdalmdimtranslate multiband.tif out.nc/.vrt/.zarr
+  -array <array_name>' generate a 3D array
+* gdal2tiles: fix 'memory leak' (actually static memory not deallocated)
+* Add hidden alias 'gdal [raster|vector] translate' for 'gdal [raster|vector]
+  convert', and 'gdal raster warp' for 'gdal raster reproject
+* gdal_viewshed: set lower bound of DEM to input raster (#12758)
+* gdal_viewshed: pooled lines (code refactoring) (#13099)
+* gdalmdimtranslate: propagate block size when possible
+
+### Raster drivers
+
+Multi drivers: implement Close()
+
+BAG driver:
+ * creation: avoid integer overflow in progress computation if there are more
+   than 2 billion blocks...
+
+COG driver:
+ * in STATISTICS=YES mode, always recompute statistics and do not use the source
+   ones
+ * write OVERVIEW_RESAMPLING in IMAGE_STRUCTURE metadata domain, and expose it
+   when present (#13014)
+
+DTED:
+ * add configuration option DTED_ASSUME_COMPLIANT for the user to opt out of
+   DTED 2's compliment conversion if the values are less than -16000 (#12299)
+
+EHdr/ENVI:
+ * clamp color table components to [0,255] to avoid issues down the road
+
+GeoRaster driver:
+ * Support long schema/table/column name (#12290)
+ * Add OCI connection pool (#12980)
+
+GRIB2 driver:
+ * add four GRIB1 ECMWF tables (210, 215, 217, 218) to read a CAMS global
+   atmospheric composition forecasts product
+ * GRIB2: update tables to https://github.com/wmo-im/GRIB2 v34
+
+GTI driver:
+ * STAC GeoParquet: do s3:// -> /vsis3/ substitution (#12900)
+ * allow to specify a SQL request instead of just a layer/table name to
+   return tile features
+
+GTiff driver:
+ * add support for reading and writing in the GDAL_METADATA TIFF tag
+ * GetFileList(): list .vat.dbf file
+ * make GetInternalHandle() only return the TIFF handle if the parameter of the
+   call is TIFF_HANDLE
+ * fix serialization/deserialization of metadata in a json:XXXX metadata domain
+   in the GDAL_METADATA TIFF tag
+ * in CreateCopy(), serialize json:ISIS3 and json:VICAR metadata domains inside
+   the GDAL_METADATA TIFF tag
+ * SRS reader: try to identify the CRS from PROJ db and its name, when it has no
+   code
+ * only write COG ghost zone if both COPY_SRC_OVERVIEWS and TILED are set
+ * update internal libtiff to 4.7.1
+
+HDF5 driver:
+ * do not try opening datasets with one dimension size > INT_MAX (BAG as well)
+ * support HDF5EOS formulation in VIIRS snow cover products (VNP10A1) products
+   (#12941)
+ * fix path issues when reading GEOLOCATION from .aux.xml (#12824)
+
+HEIF driver:
+ * implement request_range() reading callback, in particular for /vsicurl/
+   access (libheif >= 1.19.0, #12239)
+
+ISCE driver:
+ * do not emit error about .xml file not accessible
+
+ISIS3 driver:
+ * adds a _data member in json:ISIS3 metadata that contains the offline content
+   as hexadecimal encoded.
+ * ISIS3 -> PDS4 GeoTIFF: propagate json:ISIS3 metadata
+ * gdal_translate/gdalwarp: add a GDALHistory section to json:ISIS3 metadata if
+   it might be invalidated
+ * change mapping of PVL to JSON for 'Object = <xxx>' or 'Group = <xxx>' that
+   have a Name attribute to be keyed with '<xxx>_<Name> (#13023)
+
+JPEG driver:
+ * fix GetMetadataDomainList()
+ * Read metadata and subdataset for DJI thermal images in JPEG APP3s
+ * enable PAM for FLIR/DJI thermal images
+
+LIBERTIFF driver:
+ * speed-up decompression on Predictor=3 on Float32 datatype
+
+MEM driver:
+ * BuildOverviews(): set geotransform and SRS from source dataset
+ * improve RasterIO() performance in some cases
+
+MRF driver:
+ * Improved overview progress reporting (#12459)
+ * Add QB3_BAND_MAP option
+
+netCDF driver:
+ * take into account valid_range in x/y indexing variables, only if GMT
+   node_offset attribute is present (#12865)
+
+NITF driver:
+ * add a RPF_SHOW_ALL_ATTRIBUTES config option to dump all RPF attributes
+   (mostly for debugging / extreme advanced users)
+ * nitf_spec.xml: add definition of RPFHDR and very partial of RPFIMG
+ * add support for reading part of RPF components in RPFIMG TRE
+
+PDF driver:
+ * update PDFium backend to rev7391
+ * properly override FlushCache() instead of no longer existing SyncToDisk()
+
+PDS4 driver:
+ * update schema to PDS4 1O00
+ * read hexadecimal values in missing_constant element
+ * add support for Int64/UInt64 raster data types
+ * write missing_constant value as hexadecimal for Float32 and Float64
+ * read invalid_constant as nodata value when missing_constant missing
+ * be more robust to untypical axis names
+
+PNG driver:
+ * implement read/write support for background color through 'BACKGROUND_COLOR'
+   dataset metadata item (#12732)
+ * allow ZLEVEL=0 for no compression (#12834)
+
+Sentinel2 driver:
+ * support L1B products with geolocation arrays (MPC Sen2VM)
+
+S10x drivers:
+ * add support for decoding custom CRS
+
+S102 driver:
+ * add full read support for S102 Ed 3.0 (i.e. managing multiple feature
+   instance groups)
+
+S104 driver:
+ * add read support for S104 Ed 2.0 (i.e. managing multiple feature instance
+   groups)
+
+S111 driver:
+ * add read support for S111 Ed 2.0 (i.e. managing multiple feature instance
+   groups)
+
+STACTA driver:
+ * recognize gs://, az://, azure:// as URL template prefixes, as well as our
+   /vsi ones
+ * allow reading tiles in WEBP and JPEGXL format
+ * when regular /vsicurl/ access does not work, try to remap to /vsis3/, /vsigs/
+   or /vsiaz/
+
+TileDB driver:
+ * add support for /vsiaz/ (#12666)
+
+VRT driver:
+ * VRT pixel functions: Add mean, median, geometric_mean, harmonic_mean, mode
+   (#12418)
+ * VRT pixel functions: Handle NoData values
+ * VRT pixel function min() and max(): allow an optional 'k' constant
+ * VRT pixel function: optimize 'sum' for common data types
+ * VRT pixel function: 'sum': accept one single input
+ * VRT pixel function: SSE2 optimization for  'sum', 'mean', 'min', 'max'
+ * add 'transpose' option for for vrt:// connection (#12366)
+ * add 'fmod' function for muparser expressions
+ * VRTDerivedBand expressions: Add _CENTER_X_ and _CENTER_Y_ built-in variables
+ * VRTDerivedBand: Add argmin, argmax pixel functions
+ * VRTDerivedBand: Make source_names work like other builtin arguments (#12400)
+ * VRTDerivedRasterBand::IRasterIO(): select a smaller source transfer type that
+   the output buffer type if possible
+ * VRTDerivedRasterBand::IRasterIO(): do not zero/nodata initialize source buffer
+   when not needed
+ * VRTDataset::CheckCompatibleForDatasetIO(): work better with anonymous datasets
+ * VRTSimpleSource::UnsetPreservedRelativeFilenames(): only do something if
+   m_bRelativeToVRTOri is set
+ * Add a GDAL_VRT_ENABLE_RAWRASTERBAND=YES/NO (default YES) config option that
+   can be set to NO to disable VRTRawRasterBand at run-time
+ * VRTRawRasterBand: add a GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE config option
+   to restrict allowed sources, and make it default to
+   SIBLING_OR_CHILD_OF_VRT_PATH (breaking change)
+ * ComputeStatistics(): when there's a single source and we can use its
+   statistics (after recomputing them), strictly preserve values (#12650)
+ * multidim: allow opening a multi-band classic dataset, and add support for
+   serialization of null values in a VRTMDArraySourceInlinedValues
+ * multidim: respect creation order for arrays and groups
+ * multidim: add support for array BlockSize
+ * Raise error if pixel function provided without VRTDerivedRasterBand
+
+WEBP driver:
+ * add read and creation support for .wld worldfiles (#13025)
+
+WMS driver:
+ * add a mini-driver for International Image Interoperability Framework (IIIF)
+   Image API 3.0
+
+WMTS driver:
+ * URL encode strings before passing to CURL
+
+Zarr driver:
+ * support opening directly .zarray, .zgroup, .zmetadata, zarr.json files
+ * fix creating a /vsizip/ file (#12790)
+ * make GDALDataset::Close() report errors when write failure occurs (#12790)
+ * Kerchunk JSON: assorted set of fixes and improvements
+ * recognize STAC proj:epsg and proj:wkt2 attributes to expose the CRS from
+   EOPF Sentinel Zarr Samples Service datasets
+
+## OGR 3.12.0 - Overview of Changes
+
+### Core
+
+* Add OGR_G_CreateFromEnvelope()
+* Add OGRGeometry::ConstrainedDelaunayTriangulation()
+* OGRUnionLayer::GetFeatureCount(): avoid potential int64 overflow
+* OGRLayer::SetNextByIndex(invalid_index): return OGRERR_NON_EXISTING_FEATURE
+  and make sure following calls to GetNextFeature() return nullptr (#12832)
+* OGRLayerArrow: fix reading time64[us]/time64[ns] type when OGR field type is
+  OFTTime
+* Add const correctness for GDALDataset::GetLayer()/GetLayerCount()/
+  TestCapability() and OGRLayer::GetName()/GetGeomType()/GetLayerDefn()/
+  GetSpatialRef() and TestCapability()
+* GDALDataset: make 'GetLayer(int) const' return a 'const OGRLayer*', and add a
+ 'OGRLayer *GetLayer(int)' non const override
+* GDALDataset::GetSpatialRef(): make it work on vector datasets (#12956)
+* Make virtual methods OGRLayer::GetFIDColumn()/GetGeometryColumn() const
+* OGRSchemaOverride: allow using '*' wildcard for layer name, and
+  'srcType'/'srcSubType' as an alternative to field name when patching
+
+### OGRSpatialReference
+
+* OSRGetCRSInfoListFromDatabase(): report celestial body name
+* Add OSRGetCelestialBodyName() / OGRSpatialReference::GetCelestialBodyName()
+
+### Vector Utilities
+
+* gdal vector clip: Don't explode result if input was multipart (#13210)
+* gdal vector convert / gdal vector pipeline ! write: add --skip-errors (#12794)
+* gdal vector convert: do not default to shapefile if output file name has no
+  .shp extension
+* gdal vector convert: support updating existing dataset and providing output
+  open options
+* gdal vector write/convert: add --upsert (#13006)
+* gdal vector edit: add --unset-fid
+* gdal vector info: don't make it output features in text mode,
+  unless --features is specified
+* gdal vector info: add a --limit=<FEATURE-COUNT> option (#12876)
+* gdal vector info: do not implicitly set -al with -json (#12510)
+* gdal vector info --update: deprecate it in favor of 'gdal vector sql --update'
+* gdal vector sql: add a --update mode to modify in-place a dataset (##12466)
+* ogr2ogr: avoid int64 addition overflow on huge feature counts
+* ogr2ogr -clipsrc/-clipdst: adjust feature geometry type to match layer
+  geometry type (#13178)
+* ogrtindex: replace implementation by use of gdal vector index
+* ogrmerge.py: validate value of -s_srs/-t_srs/-a_srs
+
+### Vector drivers
+
+ADBC driver:
+ * add support for ADBC BigQuery driver
+ * implement a loading function for DuckDB even when OGR_ADBC_HAS_DRIVER_MANAGER
+   is off
+ * do not try to open in update mode
+ * implement deferred loading of layers (when SQL open option not specified)
+ * error out on non-existing database with DuckDB (#1368)
+
+Arrow/Feather driver:
+ * make it able to recognize the CRS when geoarrow.wkb extension is there without
+  'geo' metadata
+ * make it work properly when geoarrow.wkb extension is loaded
+
+Arrow/Parquet:
+ * handle list of binary and binary as JSON content (struct/list_of_list/
+   array_of binary)
+
+CSV driver:
+ * update FID to 64 bit
+ * Allow to use the PIPE as separator for layer creation
+ * Add a HEADER=YES/NO layer creation option (#9772)
+
+DXF driver:
+ * add support for reading Transparency / group code 440
+ * add write support for true color (code group 420) and transparency
+   (code group 440)
+ * add read/write support for HATCH background color (bc), brush id (id),
+   angle (a), scaling factor (s)
+ * further refine ByBlock and ByLayer color handling
+ * add read support for AutoCAD Binary DXF format
+ * add a special "ogr2ogr out_ascii.dxf in_binary.dxf" code path for
+   direct translation
+
+ESRIJSON driver:
+ * recognize esriFieldTypeDateOnly, esriFieldTypeTimeOnly,
+   esriFieldTypeBigInteger, esriFieldTypeGUID and esriFieldTypeGlobalID data
+   types (#13093)
+ * better recognize some ESRIJSON files
+
+GML driver:
+ * Expose SKIP_CORRUPTED_FEATURES and SKIP_RESOLVE_ELEMS open options (#12770)
+ * Support CityGML3 Shell (#12789)
+ * avoid returning features with duplicated FIDs (#3532)
+
+GPKG driver:
+ * avoid undefined behavior when appending to a layer with a (wrong)
+   feature_count = INT64_MAX
+
+MapML driver:
+ * Change MapML elements for their custom-element counter-part
+
+MBTiles driver:
+ * improve guessing of field type
+
+MEM driver:
+ * Allow creating layer from an OGRFeatureDefn
+ * declare field subtypes Boolean Int16 Float32 JSON UUID
+
+OAPIF driver:
+ * recognize 'itemCount' element in Collection description
+
+Parquet driver:
+ * add support for reading/writing Parquet GEOMETRY data type (libarrow >= 21)
+ * add a COMPRESSION_LEVEL layer creation option (#12639)
+
+PDS4 driver:
+ * writer: create table layers in the same directory as the .xml file and using
+   its base name as a prefix
+
+PGDUMP driver:
+ * Add SKIP_CONFLICTS layer creation option
+
+Shapefile driver:
+ * SHPCreateLL()/DBFCreate(): make error message contains full filename (in case
+   it is very long)
+ * Resync internal shapelib with 1.6.2
+
+SQLite driver:
+ * make REGEXP behave like official extension regarding NULL
+ * advertise OLCStringsAsUTF8 (#12962)
+
+## SWIG Language Bindings
+
+### All languages
+
+* map Band.GetSampleOverview() to GDALGetRasterSampleOverviewEx()
+* Enable kwargs for mdim CreateDimension and CreateGroup
+* make AddFieldDomain() to emit errors / exceptions
+* Guard against null input to SuggestedWarpOutput
+* Avoid returning garbage values from Geometry.GetPoints
+
+### CSharp
+
+* add Utf8 bytes conversion for name on FieldDefn creation
+* add Utf8 bytes conversion on FieldDefn GetName method
+* Add SpatialReference.FindMatches (#12578)
+* Get rid of SWIG csharp warnings (#12596)
+* Add missing typemaps (#12642)
+* Update string marshaling code to use utf-8 native strings (#12546)
+
+### Python
+
+* Add np.bool to map of gdal codes (#12528)
+* Don't promote a boolean array to float64 when trying to write the data
+* accept a band as input for Driver.CreateCopy()
+* hide methods that should not be public
+* Add Band.BlockWindows()
+* coerce config options to strings
+* Docstring Updates for Stub Generation (#13198)
+
 # GDAL/OGR 3.11.4 Release Notes
 
 GDAL 3.11.4 is a bugfix release.
