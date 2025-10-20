@@ -1680,9 +1680,11 @@ CPLErr HFARasterAttributeTable::CreateColumn(const char *pszFieldName,
             eFieldType = GFT_String;
             break;
 
+#ifndef __COVERITY__
         case GFT_WKBGeometry:
             CPLAssert(false);
             break;
+#endif
     }
 
     const int nOffset = HFAAllocateSpace(hHFA->papoBand[nBand - 1]->psInfo,

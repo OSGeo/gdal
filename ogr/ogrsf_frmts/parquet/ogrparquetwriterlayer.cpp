@@ -391,7 +391,7 @@ bool OGRParquetWriterLayer::SetOptions(
 
     const auto eGType =
         poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetType() : wkbNone;
-    if (eGType != wkbNone)
+    if (poSrcGeomFieldDefn && eGType != wkbNone)
     {
         if (!IsSupportedGeometryType(eGType))
         {
@@ -415,14 +415,13 @@ bool OGRParquetWriterLayer::SetOptions(
             CSLFetchNameValue(papszOptions, "GEOMETRY_NAME");
         if (pszGeometryName)
             osGeometryName = pszGeometryName;
-        else if (poSrcGeomFieldDefn && poSrcGeomFieldDefn->GetNameRef()[0])
+        else if (poSrcGeomFieldDefn->GetNameRef()[0])
             osGeometryName = poSrcGeomFieldDefn->GetNameRef();
         else
             osGeometryName = "geometry";
         m_poFeatureDefn->GetGeomFieldDefn(0)->SetName(osGeometryName.c_str());
 
-        const auto poSpatialRef =
-            poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetSpatialRef() : nullptr;
+        const auto poSpatialRef = poSrcGeomFieldDefn->GetSpatialRef();
         if (poSpatialRef)
         {
             auto poSRS = poSpatialRef->Clone();

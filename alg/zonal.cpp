@@ -99,7 +99,8 @@ struct GDALZonalStatsOptions
                           endptr == value + strlen(value);
                 if constexpr (sizeof(memory64) > sizeof(size_t))
                 {
-                    ok = ok && memory64 <= std::numeric_limits<size_t>::max();
+                    ok = ok &&
+                         memory64 <= std::numeric_limits<size_t>::max() - 1;
                 }
                 if (!ok)
                 {
