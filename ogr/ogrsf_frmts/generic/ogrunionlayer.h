@@ -117,6 +117,7 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     GIntBig nFeatureCount = -1;
 
     int iCurLayer = -1;
+    bool m_bHasAlreadyIteratedOverFeatures = false;
     char *pszAttributeFilter = nullptr;
     int nNextFID = 0;
     int *panMap = nullptr;
@@ -126,8 +127,22 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
 
     std::mutex m_oMutex{};
 
+    /* Map from target FID to (source layer, source FID) */
+    struct FIDRange
+    {
+        GIntBig nDstFIDStart = 0;
+        GIntBig nFIDCount = 0;
+        GIntBig nSrcFIDStart = 0;
+        int nLayerIdx = 0;
+    };
+
+    std::vector<FIDRange> m_fidRanges{};
+    bool m_fidRangesInvalid = false;
+    bool m_fidRangesComplete = false;
+
     void AutoWarpLayerIfNecessary(int iSubLayer);
-    OGRFeature *TranslateFromSrcLayer(OGRFeature *poSrcFeature);
+    std::unique_ptr<OGRFeature> TranslateFromSrcLayer(OGRFeature *poSrcFeature,
+                                                      GIntBig nFID);
     void ApplyAttributeFilterToSrcLayer(int iSubLayer);
     int GetAttrFilterPassThroughValue() const;
     void ConfigureActiveLayer();
