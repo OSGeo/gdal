@@ -45,12 +45,6 @@
     SFCGAL_MAKE_VERSION(SFCGAL_VERSION_MAJOR, SFCGAL_VERSION_MINOR,            \
                         SFCGAL_VERSION_PATCH)
 
-#ifndef HAVE_GEOS
-#define UNUSED_IF_NO_GEOS CPL_UNUSED
-#else
-#define UNUSED_IF_NO_GEOS
-#endif
-
 //! @cond Doxygen_Suppress
 int OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER = FALSE;
 //! @endcond
@@ -3241,9 +3235,9 @@ GEOSContextHandle_t OGRGeometry::createGEOSContext()
 /** Destroy a GEOS context.
  * @param hGEOSCtxt GEOS context
  */
-void OGRGeometry::freeGEOSContext(
-    UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt)
+void OGRGeometry::freeGEOSContext(GEOSContextHandle_t hGEOSCtxt)
 {
+    (void)hGEOSCtxt;
 #ifdef HAVE_GEOS
     if (hGEOSCtxt != nullptr)
     {
@@ -3290,11 +3284,12 @@ static GEOSGeom convertToGEOSGeom(GEOSContextHandle_t hGEOSCtxt,
  * @return a GEOSGeom object corresponding to the geometry (to be freed with
  * GEOSGeom_destroy_r()), or NULL in case of error
  */
-GEOSGeom
-OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt,
-                          UNUSED_IF_NO_GEOS bool bRemoveEmptyParts) const
+GEOSGeom OGRGeometry::exportToGEOS(GEOSContextHandle_t hGEOSCtxt,
+                                   bool bRemoveEmptyParts) const
 
 {
+    (void)hGEOSCtxt;
+    (void)bRemoveEmptyParts;
 #ifndef HAVE_GEOS
 
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
@@ -4500,10 +4495,11 @@ OGRGeometryH OGR_G_GetBoundary(OGRGeometryH hTarget)
  * @return a new geometry to be freed by the caller, or NULL if an error occurs.
  */
 
-OGRGeometry *OGRGeometry::Buffer(UNUSED_IF_NO_GEOS double dfDist,
-                                 UNUSED_IF_NO_GEOS int nQuadSegs) const
+OGRGeometry *OGRGeometry::Buffer(double dfDist, int nQuadSegs) const
 
 {
+    (void)dfDist;
+    (void)nQuadSegs;
 #ifndef HAVE_GEOS
 
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
@@ -4610,10 +4606,11 @@ OGRGeometryH OGR_G_Buffer(OGRGeometryH hTarget, double dfDist, int nQuadSegs)
  * @since GDAL 3.10
  */
 
-OGRGeometry *
-OGRGeometry::BufferEx(UNUSED_IF_NO_GEOS double dfDist,
-                      UNUSED_IF_NO_GEOS CSLConstList papszOptions) const
+OGRGeometry *OGRGeometry::BufferEx(double dfDist,
+                                   CSLConstList papszOptions) const
 {
+    (void)dfDist;
+    (void)papszOptions;
 #ifndef HAVE_GEOS
 
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
@@ -5423,10 +5420,10 @@ OGRGeometryH OGR_G_Difference(OGRGeometryH hThis, OGRGeometryH hOther)
  *
  */
 
-OGRGeometry *OGRGeometry::SymDifference(
-    UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom) const
+OGRGeometry *OGRGeometry::SymDifference(const OGRGeometry *poOtherGeom) const
 
 {
+    (void)poOtherGeom;
     if (IsSFCGALCompatible() || poOtherGeom->IsSFCGALCompatible())
     {
 #ifndef HAVE_SFCGAL
@@ -5558,10 +5555,10 @@ OGRGeometryH OGR_G_SymmetricDifference(OGRGeometryH hThis, OGRGeometryH hOther)
  * @return TRUE if they are disjoint, otherwise FALSE.
  */
 
-OGRBoolean
-OGRGeometry::Disjoint(UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom) const
+OGRBoolean OGRGeometry::Disjoint(const OGRGeometry *poOtherGeom) const
 
 {
+    (void)poOtherGeom;
 #ifndef HAVE_GEOS
 
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
@@ -5631,10 +5628,10 @@ int OGR_G_Disjoint(OGRGeometryH hThis, OGRGeometryH hOther)
  * @return TRUE if they are touching, otherwise FALSE.
  */
 
-OGRBoolean
-OGRGeometry::Touches(UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom) const
+OGRBoolean OGRGeometry::Touches(const OGRGeometry *poOtherGeom) const
 
 {
+    (void)poOtherGeom;
 #ifndef HAVE_GEOS
 
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
@@ -5812,10 +5809,10 @@ int OGR_G_Crosses(OGRGeometryH hThis, OGRGeometryH hOther)
  * @return TRUE if poOtherGeom is within this geometry, otherwise FALSE.
  */
 
-OGRBoolean
-OGRGeometry::Within(UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom) const
+OGRBoolean OGRGeometry::Within(const OGRGeometry *poOtherGeom) const
 
 {
+    (void)poOtherGeom;
 #ifndef HAVE_GEOS
 
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
@@ -5885,10 +5882,10 @@ int OGR_G_Within(OGRGeometryH hThis, OGRGeometryH hOther)
  * @return TRUE if poOtherGeom contains this geometry, otherwise FALSE.
  */
 
-OGRBoolean
-OGRGeometry::Contains(UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom) const
+OGRBoolean OGRGeometry::Contains(const OGRGeometry *poOtherGeom) const
 
 {
+    (void)poOtherGeom;
 #ifndef HAVE_GEOS
 
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
@@ -5959,10 +5956,10 @@ int OGR_G_Contains(OGRGeometryH hThis, OGRGeometryH hOther)
  * @return TRUE if they are overlapping, otherwise FALSE.
  */
 
-OGRBoolean
-OGRGeometry::Overlaps(UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom) const
+OGRBoolean OGRGeometry::Overlaps(const OGRGeometry *poOtherGeom) const
 
 {
+    (void)poOtherGeom;
 #ifndef HAVE_GEOS
 
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
@@ -6328,9 +6325,10 @@ OGRErr OGRGeometry::PointOnSurfaceInternal(OGRPoint *poPoint) const
  *
  */
 
-OGRGeometry *OGRGeometry::Simplify(UNUSED_IF_NO_GEOS double dTolerance) const
+OGRGeometry *OGRGeometry::Simplify(double dTolerance) const
 
 {
+    (void)dTolerance;
 #ifndef HAVE_GEOS
 
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
@@ -6405,10 +6403,10 @@ OGRGeometryH OGR_G_Simplify(OGRGeometryH hThis, double dTolerance)
  *
  */
 
-OGRGeometry *
-OGRGeometry::SimplifyPreserveTopology(UNUSED_IF_NO_GEOS double dTolerance) const
+OGRGeometry *OGRGeometry::SimplifyPreserveTopology(double dTolerance) const
 
 {
+    (void)dTolerance;
 #ifndef HAVE_GEOS
 
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
@@ -6573,9 +6571,10 @@ void OGRGeometry::roundCoordinates(const OGRGeomCoordinatePrecision &sPrecision)
  * @since GDAL 3.9
  */
 
-OGRGeometry *OGRGeometry::SetPrecision(UNUSED_IF_NO_GEOS double dfGridSize,
-                                       UNUSED_IF_NO_GEOS int nFlags) const
+OGRGeometry *OGRGeometry::SetPrecision(double dfGridSize, int nFlags) const
 {
+    (void)dfGridSize;
+    (void)nFlags;
 #ifndef HAVE_GEOS
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
     return nullptr;
@@ -7096,9 +7095,9 @@ int OGRHasPreparedGeometrySupport()
  * @return handle to a prepared geometry.
  * @since GDAL 3.3
  */
-OGRPreparedGeometryH
-OGRCreatePreparedGeometry(UNUSED_IF_NO_GEOS OGRGeometryH hGeom)
+OGRPreparedGeometryH OGRCreatePreparedGeometry(OGRGeometryH hGeom)
 {
+    (void)hGeom;
 #if defined(HAVE_GEOS)
     OGRGeometry *poGeom = OGRGeometry::FromHandle(hGeom);
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
@@ -7136,9 +7135,9 @@ OGRCreatePreparedGeometry(UNUSED_IF_NO_GEOS OGRGeometryH hGeom)
  * @param hPreparedGeom prepared geometry.
  * @since GDAL 3.3
  */
-void OGRDestroyPreparedGeometry(
-    UNUSED_IF_NO_GEOS OGRPreparedGeometryH hPreparedGeom)
+void OGRDestroyPreparedGeometry(OGRPreparedGeometryH hPreparedGeom)
 {
+    (void)hPreparedGeom;
 #if defined(HAVE_GEOS)
     if (hPreparedGeom != nullptr)
     {
@@ -7161,10 +7160,11 @@ void OGRDestroyPreparedGeometry(
  * @return TRUE or FALSE.
  * @since GDAL 3.3
  */
-int OGRPreparedGeometryIntersects(
-    UNUSED_IF_NO_GEOS const OGRPreparedGeometryH hPreparedGeom,
-    UNUSED_IF_NO_GEOS const OGRGeometryH hOtherGeom)
+int OGRPreparedGeometryIntersects(const OGRPreparedGeometryH hPreparedGeom,
+                                  const OGRGeometryH hOtherGeom)
 {
+    (void)hPreparedGeom;
+    (void)hOtherGeom;
 #if defined(HAVE_GEOS)
     OGRGeometry *poOtherGeom = OGRGeometry::FromHandle(hOtherGeom);
     if (hPreparedGeom == nullptr ||
@@ -7197,10 +7197,11 @@ int OGRPreparedGeometryIntersects(
  * @param hOtherGeom other geometry.
  * @return TRUE or FALSE.
  */
-int OGRPreparedGeometryContains(UNUSED_IF_NO_GEOS const OGRPreparedGeometryH
-                                    hPreparedGeom,
-                                UNUSED_IF_NO_GEOS const OGRGeometryH hOtherGeom)
+int OGRPreparedGeometryContains(const OGRPreparedGeometryH hPreparedGeom,
+                                const OGRGeometryH hOtherGeom)
 {
+    (void)hPreparedGeom;
+    (void)hOtherGeom;
 #if defined(HAVE_GEOS)
     OGRGeometry *poOtherGeom = OGRGeometry::FromHandle(hOtherGeom);
     if (hPreparedGeom == nullptr ||
