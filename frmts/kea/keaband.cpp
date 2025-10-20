@@ -887,61 +887,91 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
                 continue;
 
             // ok now copy data
-            if (eFieldType == GFT_Integer)
+            switch (eFieldType)
             {
-                int *panIntData =
-                    (int *)VSI_MALLOC2_VERBOSE(numRows, sizeof(int));
-                if (panIntData == nullptr)
+                case GFT_Integer:
                 {
-                    return CE_Failure;
+                    int *panIntData =
+                        (int *)VSI_MALLOC2_VERBOSE(numRows, sizeof(int));
+                    if (panIntData == nullptr)
+                    {
+                        return CE_Failure;
+                    }
+
+                    if (((GDALRasterAttributeTable *)poRAT)
+                            ->ValuesIO(GF_Read, nGDALColumnIndex, 0, numRows,
+                                       panIntData) == CE_None)
+                    {
+                        pKEATable->ValuesIO(GF_Write, nKEAColumnIndex, 0,
+                                            numRows, panIntData);
+                    }
+                    CPLFree(panIntData);
+                    break;
                 }
 
-                if (((GDALRasterAttributeTable *)poRAT)
-                        ->ValuesIO(GF_Read, nGDALColumnIndex, 0, numRows,
-                                   panIntData) == CE_None)
+                case GFT_Boolean:
                 {
-                    pKEATable->ValuesIO(GF_Write, nKEAColumnIndex, 0, numRows,
-                                        panIntData);
-                }
-                CPLFree(panIntData);
-            }
-            else if (eFieldType == GFT_Real)
-            {
-                double *padfFloatData =
-                    (double *)VSI_MALLOC2_VERBOSE(numRows, sizeof(double));
-                if (padfFloatData == nullptr)
-                {
-                    return CE_Failure;
+                    bool *pabData =
+                        (bool *)VSI_MALLOC2_VERBOSE(numRows, sizeof(bool));
+                    if (pabData == nullptr)
+                    {
+                        return CE_Failure;
+                    }
+
+                    if (((GDALRasterAttributeTable *)poRAT)
+                            ->ValuesIO(GF_Read, nGDALColumnIndex, 0, numRows,
+                                       pabData) == CE_None)
+                    {
+                        pKEATable->ValuesIO(GF_Write, nKEAColumnIndex, 0,
+                                            numRows, pabData);
+                    }
+                    CPLFree(pabData);
+                    break;
                 }
 
-                if (((GDALRasterAttributeTable *)poRAT)
-                        ->ValuesIO(GF_Read, nGDALColumnIndex, 0, numRows,
-                                   padfFloatData) == CE_None)
+                case GFT_Real:
                 {
-                    pKEATable->ValuesIO(GF_Write, nKEAColumnIndex, 0, numRows,
-                                        padfFloatData);
-                }
-                CPLFree(padfFloatData);
-            }
-            else
-            {
-                char **papszStringData =
-                    (char **)VSI_MALLOC2_VERBOSE(numRows, sizeof(char *));
-                if (papszStringData == nullptr)
-                {
-                    return CE_Failure;
+                    double *padfFloatData =
+                        (double *)VSI_MALLOC2_VERBOSE(numRows, sizeof(double));
+                    if (padfFloatData == nullptr)
+                    {
+                        return CE_Failure;
+                    }
+
+                    if (((GDALRasterAttributeTable *)poRAT)
+                            ->ValuesIO(GF_Read, nGDALColumnIndex, 0, numRows,
+                                       padfFloatData) == CE_None)
+                    {
+                        pKEATable->ValuesIO(GF_Write, nKEAColumnIndex, 0,
+                                            numRows, padfFloatData);
+                    }
+                    CPLFree(padfFloatData);
+                    break;
                 }
 
-                if (((GDALRasterAttributeTable *)poRAT)
-                        ->ValuesIO(GF_Read, nGDALColumnIndex, 0, numRows,
-                                   papszStringData) == CE_None)
+                case GFT_String:
+                case GFT_DateTime:
+                case GFT_WKBGeometry:
                 {
-                    pKEATable->ValuesIO(GF_Write, nKEAColumnIndex, 0, numRows,
-                                        papszStringData);
-                    for (int n = 0; n < numRows; n++)
-                        CPLFree(papszStringData[n]);
+                    char **papszStringData =
+                        (char **)VSI_MALLOC2_VERBOSE(numRows, sizeof(char *));
+                    if (papszStringData == nullptr)
+                    {
+                        return CE_Failure;
+                    }
+
+                    if (((GDALRasterAttributeTable *)poRAT)
+                            ->ValuesIO(GF_Read, nGDALColumnIndex, 0, numRows,
+                                       papszStringData) == CE_None)
+                    {
+                        pKEATable->ValuesIO(GF_Write, nKEAColumnIndex, 0,
+                                            numRows, papszStringData);
+                        for (int n = 0; n < numRows; n++)
+                            CPLFree(papszStringData[n]);
+                    }
+                    CPLFree(papszStringData);
+                    break;
                 }
-                CPLFree(papszStringData);
             }
         }
     }

@@ -2224,8 +2224,14 @@ typedef enum
 {
     /*! Integer field */ GFT_Integer,
     /*! Floating point (double) field */ GFT_Real,
-    /*! String field */ GFT_String
+    /*! String field */ GFT_String,
+    /*! Boolean field (GDAL >= 3.12) */ GFT_Boolean,
+    /*! DateTime field (GDAL >= 3.12) */ GFT_DateTime,
+    /*! Geometry field, as WKB (GDAL >= 3.12) */ GFT_WKBGeometry
 } GDALRATFieldType;
+
+/** First invalid value for the GDALRATFieldType enumeration */
+#define GFT_MaxCount (GFT_WKBGeometry + 1)
 
 /** Field usage of raster attribute table */
 typedef enum
@@ -2274,23 +2280,84 @@ GDALRATGetUsageOfCol(GDALRasterAttributeTableH, int);
 GDALRATFieldType CPL_DLL CPL_STDCALL
 GDALRATGetTypeOfCol(GDALRasterAttributeTableH, int);
 
+const char CPL_DLL *GDALGetRATFieldTypeName(GDALRATFieldType);
+const char CPL_DLL *GDALGetRATFieldUsageName(GDALRATFieldUsage);
+
 int CPL_DLL CPL_STDCALL GDALRATGetColOfUsage(GDALRasterAttributeTableH,
                                              GDALRATFieldUsage);
 int CPL_DLL CPL_STDCALL GDALRATGetRowCount(GDALRasterAttributeTableH);
 
 const char CPL_DLL *CPL_STDCALL
-GDALRATGetValueAsString(GDALRasterAttributeTableH, int, int);
-int CPL_DLL CPL_STDCALL GDALRATGetValueAsInt(GDALRasterAttributeTableH, int,
-                                             int);
+GDALRATGetValueAsString(GDALRasterAttributeTableH, int iRow, int iField);
+int CPL_DLL CPL_STDCALL GDALRATGetValueAsInt(GDALRasterAttributeTableH,
+                                             int iRow, int iField);
 double CPL_DLL CPL_STDCALL GDALRATGetValueAsDouble(GDALRasterAttributeTableH,
-                                                   int, int);
+                                                   int iRow, int iField);
+bool CPL_DLL GDALRATGetValueAsBoolean(GDALRasterAttributeTableH, int iRow,
+                                      int iField);
 
-void CPL_DLL CPL_STDCALL GDALRATSetValueAsString(GDALRasterAttributeTableH, int,
-                                                 int, const char *);
-void CPL_DLL CPL_STDCALL GDALRATSetValueAsInt(GDALRasterAttributeTableH, int,
-                                              int, int);
-void CPL_DLL CPL_STDCALL GDALRATSetValueAsDouble(GDALRasterAttributeTableH, int,
-                                                 int, double);
+#ifdef __cplusplus
+extern "C++"
+{
+#endif
+
+    /** Structure encoding a DateTime field for a GDAL Raster Attribute Table.
+ *
+ * @since 3.12
+ */
+    struct GDALRATDateTime
+    {
+        /*! Year */ int nYear;
+        /*! Month [1, 12] */ int nMonth;
+        /*! Day [1, 31] */ int nDay;
+        /*! Hour [0, 23] */ int nHour;
+        /*! Minute [0, 59] */ int nMinute;
+        /*! Second [0, 61) */ float fSecond;
+        /*! Time zone hour [0, 23] */ int nTimeZoneHour;
+        /*! Time zone minute: 0, 15, 30, 45 */ int nTimeZoneMinute;
+        /*! Whether time zone is positive (or null) */ bool bPositiveTimeZone;
+        /*! Whether this object is valid */ bool bIsValid;
+
+#ifdef __cplusplus
+        GDALRATDateTime()
+            : nYear(0), nMonth(0), nDay(0), nHour(0), nMinute(0), fSecond(0),
+              nTimeZoneHour(0), nTimeZoneMinute(0), bPositiveTimeZone(false),
+              bIsValid(false)
+        {
+        }
+#endif
+    };
+
+#ifdef __cplusplus
+}
+#endif
+
+/*! @cond Doxygen_Suppress */
+typedef struct GDALRATDateTime GDALRATDateTime;
+/*! @endcond */
+
+CPLErr CPL_DLL GDALRATGetValueAsDateTime(GDALRasterAttributeTableH, int iRow,
+                                         int iField,
+                                         GDALRATDateTime *psDateTime);
+const GByte CPL_DLL *GDALRATGetValueAsWKBGeometry(GDALRasterAttributeTableH,
+                                                  int iRow, int iField,
+                                                  size_t *pnWKBSize);
+
+void CPL_DLL CPL_STDCALL GDALRATSetValueAsString(GDALRasterAttributeTableH,
+                                                 int iRow, int iField,
+                                                 const char *);
+void CPL_DLL CPL_STDCALL GDALRATSetValueAsInt(GDALRasterAttributeTableH,
+                                              int iRow, int iField, int);
+void CPL_DLL CPL_STDCALL GDALRATSetValueAsDouble(GDALRasterAttributeTableH,
+                                                 int iRow, int iField, double);
+CPLErr CPL_DLL GDALRATSetValueAsBoolean(GDALRasterAttributeTableH, int iRow,
+                                        int iField, bool);
+CPLErr CPL_DLL GDALRATSetValueAsDateTime(GDALRasterAttributeTableH, int iRow,
+                                         int iField,
+                                         const GDALRATDateTime *psDateTime);
+CPLErr CPL_DLL GDALRATSetValueAsWKBGeometry(GDALRasterAttributeTableH, int iRow,
+                                            int iField, const void *pabyWKB,
+                                            size_t nWKBSize);
 
 int CPL_DLL CPL_STDCALL
 GDALRATChangesAreWrittenToFile(GDALRasterAttributeTableH hRAT);
@@ -2304,6 +2371,19 @@ GDALRATValuesIOAsInteger(GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag,
 CPLErr CPL_DLL CPL_STDCALL GDALRATValuesIOAsString(
     GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag, int iField,
     int iStartRow, int iLength, char **papszStrList);
+CPLErr CPL_DLL GDALRATValuesIOAsBoolean(GDALRasterAttributeTableH hRAT,
+                                        GDALRWFlag eRWFlag, int iField,
+                                        int iStartRow, int iLength,
+                                        bool *pbData);
+CPLErr CPL_DLL GDALRATValuesIOAsDateTime(GDALRasterAttributeTableH hRAT,
+                                         GDALRWFlag eRWFlag, int iField,
+                                         int iStartRow, int iLength,
+                                         GDALRATDateTime *pasDateTime);
+CPLErr CPL_DLL GDALRATValuesIOAsWKBGeometry(GDALRasterAttributeTableH hRAT,
+                                            GDALRWFlag eRWFlag, int iField,
+                                            int iStartRow, int iLength,
+                                            GByte **ppabyWKB,
+                                            size_t *pnWKBSize);
 
 void CPL_DLL CPL_STDCALL GDALRATSetRowCount(GDALRasterAttributeTableH, int);
 CPLErr CPL_DLL CPL_STDCALL GDALRATCreateColumn(GDALRasterAttributeTableH,

@@ -2273,7 +2273,7 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
 
     .. testsetup::
 
-       >>> src_ds = gdal.OpenEx("poly.shp", gdal.OF_VECTOR) 
+       >>> src_ds = gdal.OpenEx("poly.shp", gdal.OF_VECTOR)
        >>> ds = gdal.GetDriverByName("MEM").CreateVector("")
        >>> _ = ds.CopyLayer(src_ds.GetLayer(0), "layer")
 
@@ -2386,6 +2386,96 @@ def ReleaseResultSet(self, sql_lyr):
 
 %extend GDALRasterAttributeTableShadow {
 %pythoncode %{
+
+
+  def GetValueAsDateTime(self, iRow, iCol):
+      """
+      Fetch field value as a datetime.
+
+      The value of the requested column in the requested row is returned
+      as a Python datetime. Besides being called on a GFT_DateTime field, it
+      is also possible to call this method on a string field that contains a
+      ISO-8601 encoded datetime.
+
+      Parameters
+      ----------
+      iRow : int
+          The index of the row to read (starting at 0)
+      iCol : int
+          The index of the column to read (starting at 0)
+
+      Returns
+      -------
+      datetime.datetime:
+          Datetime value, or None if it is invalid
+      """
+
+      import datetime
+      import math
+      RAT_dt = _gdal.RasterAttributeTable_GetValueAsDateTime(self, iRow, iCol)
+      if not RAT_dt.bIsValid:
+          return None
+      delta = RAT_dt.nTimeZoneHour * 3600 + RAT_dt.nTimeZoneMinute * 60
+      if not RAT_dt.bPositiveTimeZone:
+          delta = -delta
+      tz = datetime.timezone(datetime.timedelta(seconds=delta))
+      return datetime.datetime(RAT_dt.nYear, RAT_dt.nMonth, RAT_dt.nDay,
+                               RAT_dt.nHour, RAT_dt.nMinute, int(RAT_dt.fSecond),
+                               int(math.fmod(RAT_dt.fSecond, 1) * 1e6 + 0.5),
+                               tz)
+
+  def SetValueAsDateTime(self, iRow, iCol, dt):
+      """
+      Set field value from a datetime.
+
+      The indicated field (column) on the indicated row is set from the
+      passed value.  The value will be automatically converted for other field
+      types, with a possible loss of precision.
+
+      Parameters
+      ----------
+      iRow : int
+          The index of the row to read (starting at 0)
+      iCol : int
+          The index of the column to read (starting at 0)
+      dt : datetime.datetime | RATDateTime | None
+          The datetime value
+      """
+
+      if dt is None:
+          RAT_dt = RATDateTime()
+          RAT_dt.bIsValid = False
+      elif isinstance(dt, RATDateTime):
+          RAT_dt = dt
+      else:
+          import datetime
+          if not isinstance(dt, datetime.datetime):
+              raise ValueError("dt is not a datetime.datetime instance")
+          RAT_dt = RATDateTime()
+          RAT_dt.nYear = dt.year
+          RAT_dt.nMonth = dt.month
+          RAT_dt.nDay = dt.day
+          RAT_dt.nHour = dt.hour
+          RAT_dt.nMinute = dt.minute
+          RAT_dt.fSecond = dt.second + dt.microsecond * 1e-6
+          RAT_dt.bPositiveTimeZone = False
+          RAT_dt.nTimeZoneHour = 0
+          RAT_dt.nTimeZoneMinute = 0
+          RAT_dt.bIsValid = True
+          tzinfo = dt.tzinfo
+          if tzinfo:
+              offset = tzinfo.utcoffset(dt)
+              delta_minutes = offset.days * 24 * 60 + offset.seconds // 60
+              if delta_minutes >= 0:
+                  RAT_dt.bPositiveTimeZone = True
+              else:
+                  RAT_dt.bPositiveTimeZone = False
+                  delta_minutes = -delta_minutes
+              RAT_dt.nTimeZoneHour = delta_minutes // 60;
+              RAT_dt.nTimeZoneMinute = delta_minutes % 60;
+
+      _gdal.RasterAttributeTable_SetValueAsDateTime(self, iRow, iCol, RAT_dt)
+
   def WriteArray(self, array, field, start=0):
       """
       Write a NumPy array to a single column of a RAT.
@@ -2428,7 +2518,7 @@ def ReleaseResultSet(self, sql_lyr):
 
       Examples
       --------
- 
+
       .. testsetup::
          >>> pytest.skip()
 
@@ -5858,7 +5948,7 @@ def config_option(key, value, thread_local=True):
 
        >>> with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
        ...     gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
-       <osgeo.gdal.Dataset; proxy of <Swig Object of type 'GDALDatasetShadow *' at 0x...> > 
+       <osgeo.gdal.Dataset; proxy of <Swig Object of type 'GDALDatasetShadow *' at 0x...> >
     """
     return config_options({key: value}, thread_local=thread_local)
 
@@ -6099,7 +6189,7 @@ def InterpolateAtGeolocation(self, *args, **kwargs):
        Examples
        --------
 
-       >>> longitude_degree = -117.64 
+       >>> longitude_degree = -117.64
        >>> latitude_degree = 33.90
        >>> with gdal.Open("byte.tif") as ds:
        ...    wgs84_srs = osr.SpatialReference("WGS84")

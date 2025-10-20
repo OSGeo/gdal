@@ -461,9 +461,14 @@ PAM .aux.xml file.
 Raster Attribute Table
 ----------------------
 
-Starting with GDAL 3.11, Raster attribute tables stored in auxiliary
+Starting with GDAL 3.11, raster attribute tables stored in auxiliary
 .tif.vat.dbf files, as written by ArcGIS, can be read as GDAL Raster Attribute
 Table.
+
+Starting with GDAL 3.12, raster attribute tables can be written into and
+read from the ``GDAL_METADATA`` TIFF tag.
+If the :config:`GTIFF_WRITE_RAT_TO_PAM` configuration option is set,
+raster attribute tables will be written instead into the ``.aux.xml`` side car file.
 
 Sparse files
 ------------
@@ -1401,6 +1406,17 @@ the default behavior of the GTiff driver.
    GDAL (warping, gridding, ...).
    Starting with GDAL 3.6, this option also enables multi-threaded decoding
    when RasterIO() requests intersect several tiles/strips.
+
+-  .. config:: GTIFF_WRITE_RAT_TO_PAM
+      :choices: YES, NO
+      :since: 3.12.0
+      :default: YES
+
+      Whether raster attribute tables attached to bands of a GeoTIFF dataset
+      must be serialized in the ``.aux.xml`` side-car file, instead of the
+      ``GDAL_METADATA`` TIFF tag.
+      In versions prior to 3.12, raster attribute tables were always written
+      and read in the ``.aux.xml`` side-car file.
 
 -  .. config:: GTIFF_WRITE_TOWGS84
       :choices: AUTO, YES, NO

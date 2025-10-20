@@ -3597,6 +3597,52 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
 }
 
 /***************************************************
+ * Typemap for RasterAttributeTable.ReadValuesIOAsBoolean()
+ ***************************************************/
+
+%typemap(in,numinputs=1) (int iLength, bool *pbData) (int iLength)
+{
+  /* %typemap(in,numinputs=1) (int iLength, bool *pbData) (int iLength) */
+  if ( !PyArg_Parse($input,"i",&iLength) ) {
+    PyErr_SetString(PyExc_TypeError, "not a integer");
+    SWIG_fail;
+  }
+  if( iLength <= 0 )
+  {
+      PyErr_SetString(PyExc_TypeError, "invalid length");
+      SWIG_fail;
+  }
+  $1 = iLength;
+  $2 = (bool*)VSICalloc(iLength, sizeof(bool));
+  if( !$2 )
+  {
+      PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+      SWIG_fail;
+  }
+}
+
+%typemap(argout) (int iLength, bool *pbData)
+{
+  /* %typemap(argout) (int iLength, bool *pbData) */
+  Py_DECREF($result);
+  PyObject *out = PyList_New( $1 );
+  if( !out ) {
+      SWIG_fail;
+  }
+  for( int i=0; i<$1; i++ ) {
+    PyObject *val = PyBool_FromLong( ($2)[i] );
+    PyList_SetItem( out, i, val );
+  }
+  $result = out;
+}
+
+%typemap(freearg) (int iLength, bool *pbData)
+{
+  /* %typemap(freearg) (int iLength, bool *pbData) */
+  CPLFree($2);
+}
+
+/***************************************************
  * Typemap for gdal.CreateRasterAttributeTableFromMDArrays()
  ***************************************************/
 

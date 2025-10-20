@@ -485,7 +485,8 @@ void AIGDataset::ReadRAT()
                     const char *pszTmp =
                         (const char *)(pasFields[iField].pszStr);
                     CPLString osStrValue(pszTmp);
-                    poRAT->SetValue(iRecord - 1, iField, osStrValue.Trim());
+                    poRAT->SetValue(iRecord - 1, iField,
+                                    osStrValue.Trim().c_str());
                 }
                 break;
 
