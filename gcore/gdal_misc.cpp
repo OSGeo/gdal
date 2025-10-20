@@ -2997,7 +2997,7 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
     else  // --version
     {
         osVersionInfo = "GDAL " GDAL_RELEASE_NAME;
-        if constexpr (GDAL_RELEASE_NICKNAME[0])
+        if constexpr (GDAL_RELEASE_NICKNAME[0] != '\0')
         {
             osVersionInfo += " \"" GDAL_RELEASE_NICKNAME "\"";
         }
