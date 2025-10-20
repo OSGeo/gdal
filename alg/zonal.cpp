@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include <limits>
 #include <variant>
 #include <vector>
 
@@ -335,7 +336,7 @@ class GDALZonalStatsImpl
           m_workingDataType(GDT_Float64), m_maskDataType(GDT_Byte),
           m_options(options),
           m_maxCells(options.memory /
-                     GDALGetDataTypeSizeBytes(m_workingDataType)),
+                     std::max(1, GDALGetDataTypeSizeBytes(m_workingDataType))),
           m_pabyCoverageBuf{nullptr, CPLFree}, m_pabyMaskBuf{nullptr, CPLFree},
           m_pabyValuesBuf{nullptr, CPLFree}, m_padfWeightsBuf{nullptr, CPLFree},
           m_pabyWeightsMaskBuf{nullptr, CPLFree}, m_padfX{nullptr, CPLFree},
@@ -817,7 +818,9 @@ class GDALZonalStatsImpl
             values.reserve(freq.size());
             for (const auto &[_, valueCount] : freq)
             {
-                values.push_back(valueCount.m_sum_ciwi / count);
+                // Add std::numeric_limits<double>::min() to please Coverity Scan
+                values.push_back(valueCount.m_sum_ciwi /
+                                 (count + std::numeric_limits<double>::min()));
             }
             feature.SetField(iField, static_cast<int>(values.size()),
                              values.data());
@@ -1911,8 +1914,8 @@ class GDALZonalStatsImpl
 
     size_t m_maxCells{0};
 
-    static constexpr auto NUM_VALID_STATS = Stat::INVALID;
-    std::map<int, std::array<int, NUM_VALID_STATS>> m_statFields{};
+    static constexpr auto NUM_STATS = Stat::INVALID + 1;
+    std::map<int, std::array<int, NUM_STATS>> m_statFields{};
 
     std::unique_ptr<GByte, decltype(&CPLFree)> m_pabyCoverageBuf;
     std::unique_ptr<GByte, decltype(&CPLFree)> m_pabyMaskBuf;

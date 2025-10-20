@@ -4597,8 +4597,9 @@ GDALAlgorithm::AddMemorySizeArg(size_t *pValue, std::string *pStrValue,
                 }
                 if constexpr (sizeof(std::uint64_t) > sizeof(size_t))
                 {
+                    // -1 to please CoverityScan
                     if (static_cast<std::uint64_t>(nBytes) >
-                        std::numeric_limits<size_t>::max())
+                        std::numeric_limits<size_t>::max() - 1U)
                     {
                         ReportError(CE_Failure, CPLE_AppDefined,
                                     "Memory size %s is too large.",

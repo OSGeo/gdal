@@ -206,7 +206,7 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
                                 array.c_str(), pszDatasetName);
                     return false;
                 }
-                apoArrays.push_back(poArray);
+                apoArrays.push_back(std::move(poArray));
             }
         }
         else
@@ -225,7 +225,7 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
                 if (poArray->GetDimensionCount() < 2)
                     continue;
                 m_array.push_back(arrayName);
-                apoArrays.push_back(poArray);
+                apoArrays.push_back(std::move(poArray));
             }
             if (apoArrays.empty())
             {
@@ -321,7 +321,8 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
                                 poArray->GetName().c_str(), pszDatasetName);
                     return false;
                 }
-                const auto apoDims = poArray->GetDimensions();
+                const std::vector<std::shared_ptr<GDALDimension>> apoDims =
+                    poArray->GetDimensions();
                 for (size_t iDim = 0;
                      iDim < arrayParameters.mosaicDimensions.size(); ++iDim)
                 {
