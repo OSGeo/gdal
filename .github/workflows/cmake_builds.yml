@@ -703,7 +703,7 @@ jobs:
     - uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
       with:
         activate-environment: gdalenv
-        python-version: 3.10
+        python-version: "3.10"
         channels: conda-forge
     - name: Install dependency
       shell: bash -l {0}
