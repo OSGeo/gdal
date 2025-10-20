@@ -54,6 +54,12 @@ class netCDFSharedResources
     std::shared_ptr<GDALPamMultiDim> m_poPAM{};
     std::map<int, std::weak_ptr<GDALDimension>> m_oCachedDimensions{};
 
+  protected:
+    friend class netCDFVariable;
+
+    std::unique_ptr<GDALDataset> m_poHDF5DS{};
+    std::shared_ptr<GDALMDArray> m_poHDF5CurArray{};
+
   public:
     explicit netCDFSharedResources(const std::string &osFilename);
     ~netCDFSharedResources();
@@ -700,6 +706,9 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
     {
         return netCDFGroup::Create(m_poShared, nullptr, m_gid);
     }
+
+    bool GetRawBlockInfo(const uint64_t *panBlockCoordinates,
+                         GDALMDArrayRawBlockInfo &info) const override;
 };
 
 /************************************************************************/
@@ -4392,6 +4401,58 @@ void netCDFVariable::NotifyChildrenOfRenaming()
 {
     for (const auto &iter : m_oMapAttributes)
         iter.second->ParentRenamed(m_osFullName);
+}
+
+/************************************************************************/
+/*                    netCDFVariable::GetRawBlockInfo()                 */
+/************************************************************************/
+
+bool netCDFVariable::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
+                                     GDALMDArrayRawBlockInfo &info) const
+{
+    info.clear();
+
+    int nFormat = 0;
+    if (m_poShared->m_poHDF5DS)
+    {
+        nFormat = NC_FORMAT_NETCDF4;
+    }
+    else
+    {
+        CPLMutexHolderD(&hNCMutex);
+        NCDF_ERR(nc_inq_format(m_poShared->GetCDFId(), &nFormat));
+    }
+    if (nFormat == NC_FORMAT_NETCDF4 || nFormat == NC_FORMAT_NETCDF4_CLASSIC)
+    {
+        if (!m_poShared->m_poHDF5DS)
+        {
+            const char *const apszAllowedDrivers[] = {"HDF5", nullptr};
+            m_poShared->m_poHDF5DS.reset(
+                GDALDataset::Open(m_poShared->GetFilename().c_str(),
+                                  GDAL_OF_MULTIDIM_RASTER, apszAllowedDrivers));
+        }
+        if (m_poShared->m_poHDF5DS)
+        {
+            if (!m_poShared->m_poHDF5CurArray ||
+                m_poShared->m_poHDF5CurArray->GetFullName() != GetFullName())
+            {
+                m_poShared->m_poHDF5CurArray =
+                    m_poShared->m_poHDF5DS->GetRootGroup()
+                        ->OpenMDArrayFromFullname(GetFullName());
+            }
+            if (m_poShared->m_poHDF5CurArray)
+            {
+                return m_poShared->m_poHDF5CurArray->GetRawBlockInfo(
+                    panBlockCoordinates, info);
+            }
+        }
+        return false;
+    }
+
+    // We should implement https://docs.unidata.ucar.edu/nug/2.0-draft/nc3_file_formats.html ...
+    CPLDebug("netCDF", "GetRawBlockInfo() not implemented for netCDF classic");
+
+    return false;
 }
 
 /************************************************************************/
