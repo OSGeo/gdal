@@ -1924,7 +1924,7 @@ class GDALZonalStatsImpl
             }
             GEOSGeom_destroy_r(m_geosContext, poGeosGeom);
 
-            return true;
+            return bRet;
         }
         else
 #endif
