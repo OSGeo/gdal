@@ -45,7 +45,7 @@ Standard options
 
     Resampling method to use. Available methods are:
 
-    ``near``: nearest neighbour resampling (default, fastest algorithm, worst interpolation quality).
+    ``nearest``: nearest neighbour resampling (default, fastest algorithm, worst interpolation quality).
 
     ``bilinear``: bilinear resampling.
 
