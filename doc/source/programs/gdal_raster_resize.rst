@@ -34,12 +34,22 @@ Standard options
 
 .. include:: gdal_options/overwrite.rst
 
+.. option:: --resolution <xres>,<yres>
+
+    .. versionadded:: 3.12
+
+    Set output file resolution (in target georeferenced units).
+
+    Mutually exclusive with :option:`--size`.
+
 .. option:: --size <width[%]>,<height[%]>
 
     Set output raster width and height, expressed in pixels,
     or percentage if using the ``%`` suffix.
     If the width or the height is set to 0, the other dimension will be guessed
     from the computed resolution.
+
+    Mutually exclusive with :option:`--resolution`.
 
 .. option:: -r, --resampling <RESAMPLING>
 

@@ -111,3 +111,23 @@ def test_gdalalg_raster_illegal_size():
         alg["size"] = ["1.5 x", "1"]
     with pytest.raises(Exception, match="Invalid size value"):
         alg["size"] = ["2147483648", "1"]
+
+
+def test_gdalalg_raster_resize_resolution(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    alg = get_resize_alg()
+    assert alg.ParseRunAndFinalize(
+        [
+            "--resolution=120,30",
+            "-r",
+            "cubic",
+            "../gcore/data/byte.tif",
+            out_filename,
+        ]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.RasterXSize == 10
+        assert ds.RasterYSize == 40
