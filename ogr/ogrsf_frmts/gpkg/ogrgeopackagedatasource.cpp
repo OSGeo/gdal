@@ -7354,8 +7354,12 @@ int GDALGeoPackageDataset::TestCapability(const char *pszCap) const
              EQUAL(pszCap, GDsCAddRelationship) ||
              EQUAL(pszCap, GDsCDeleteRelationship) ||
              EQUAL(pszCap, GDsCUpdateRelationship) ||
-             EQUAL(pszCap, ODsCAddFieldDomain))
+             EQUAL(pszCap, ODsCAddFieldDomain) ||
+             EQUAL(pszCap, ODsCUpdateFieldDomain) ||
+             EQUAL(pszCap, ODsCDeleteFieldDomain))
+    {
         return GetUpdate();
+    }
 
     return OGRSQLiteBaseDataSource::TestCapability(pszCap);
 }
@@ -10178,6 +10182,70 @@ bool GDALGeoPackageDataset::AddFieldDomain(
 
     m_oMapFieldDomains[domainName] = std::move(domain);
     return true;
+}
+
+/************************************************************************/
+/*                        UpdateFieldDomain()                           */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::UpdateFieldDomain(
+    std::unique_ptr<OGRFieldDomain> &&domain, std::string &failureReason)
+{
+    const std::string domainName(domain->GetName());
+    if (eAccess != GA_Update)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "UpdateFieldDomain() not supported on read-only dataset");
+        return false;
+    }
+
+    if (GetFieldDomain(domainName) == nullptr)
+    {
+        failureReason = "The domain should already exist to be updated";
+        return false;
+    }
+
+    bool bRet = SoftStartTransaction() == OGRERR_NONE;
+    if (bRet)
+    {
+        bRet = DeleteFieldDomain(domainName, failureReason) &&
+               AddFieldDomain(std::move(domain), failureReason);
+        if (bRet)
+            bRet = SoftCommitTransaction() == OGRERR_NONE;
+        else
+            SoftRollbackTransaction();
+    }
+    return bRet;
+}
+
+/************************************************************************/
+/*                         DeleteFieldDomain()                          */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::DeleteFieldDomain(const std::string &name,
+                                              std::string &failureReason)
+{
+    if (eAccess != GA_Update)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "DeleteFieldDomain() not supported on read-only dataset");
+        return false;
+    }
+    if (GetFieldDomain(name) == nullptr)
+    {
+        failureReason = "Domain does not exist";
+        return false;
+    }
+
+    char *pszSQL =
+        sqlite3_mprintf("DELETE FROM gpkg_data_column_constraints WHERE "
+                        "constraint_name IN ('%q', '_%q_domain_description')",
+                        name.c_str(), name.c_str());
+    const bool ok = SQLCommand(hDB, pszSQL) == OGRERR_NONE;
+    sqlite3_free(pszSQL);
+    if (ok)
+        m_oMapFieldDomains.erase(name);
+    return ok;
 }
 
 /************************************************************************/
