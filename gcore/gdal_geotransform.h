@@ -225,7 +225,7 @@ class GDALGeoTransform
 
     /** Check whether the geotransform has a rotation component.
      */
-    bool IsAxisAligned() const
+    inline bool IsAxisAligned() const
     {
         return xrot == 0 && yrot == 0;
     }
