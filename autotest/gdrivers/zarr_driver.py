@@ -2279,21 +2279,21 @@ def test_zarr_create_array_compressor_v3(
         [
             ["@ENDIAN=little", "CHUNK_MEMORY_LAYOUT=F"],
             [
-                {"name": "transpose", "configuration": {"order": "F"}},
+                {"name": "transpose", "configuration": {"order": [1, 0]}},
                 {"configuration": {"endian": "little"}, "name": "bytes"},
             ],
         ],
         [
             ["@ENDIAN=big", "CHUNK_MEMORY_LAYOUT=F"],
             [
-                {"name": "transpose", "configuration": {"order": "F"}},
+                {"name": "transpose", "configuration": {"order": [1, 0]}},
                 {"configuration": {"endian": "big"}, "name": "bytes"},
             ],
         ],
         [
             ["@ENDIAN=big", "CHUNK_MEMORY_LAYOUT=F", "COMPRESS=GZIP"],
             [
-                {"name": "transpose", "configuration": {"order": "F"}},
+                {"name": "transpose", "configuration": {"order": [1, 0]}},
                 {"name": "bytes", "configuration": {"endian": "big"}},
                 {"name": "gzip", "configuration": {"level": 6}},
             ],
@@ -2331,8 +2331,9 @@ def test_zarr_create_array_endian_v3(
         rg = ds.GetRootGroup()
         assert rg
         dim0 = rg.CreateDimension("dim0", None, None, 2)
+        dim1 = rg.CreateDimension("dim1", None, None, 1)
         ar = rg.CreateMDArray(
-            "test", [dim0], gdal.ExtendedDataType.Create(gdal_data_type), options
+            "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal_data_type), options
         )
         assert ar.Write(array.array(array_type, [1, 2])) == gdal.CE_None
 
@@ -3346,7 +3347,7 @@ def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator(
     else:
         assert "codecs" in j
         assert j["codecs"] == [
-            {"name": "transpose", "configuration": {"order": "F"}},
+            {"name": "transpose", "configuration": {"order": [2, 1, 0]}},
             {"name": "bytes", "configuration": {"endian": "little"}},
             {"name": "gzip", "configuration": {"level": 6}},
         ]
