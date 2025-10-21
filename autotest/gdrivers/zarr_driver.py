@@ -5868,3 +5868,136 @@ def test_zarr_read_zarr_with_stac_proj_wkt2():
 def test_zarr_identify_file_extensions(file_path):
     ds = gdal.Open(file_path)
     ds.GetRasterBand(1).Checksum()
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_zarr_v2_GetRawBlockInfo():
+
+    ds = gdal.OpenEx("data/zarr/zlib.zarr", gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("zlib")
+    info = ar.GetRawBlockInfo([0])
+    assert info.GetOffset() == 0
+    assert info.GetSize() == 10
+    assert info.GetFilename().replace("\\", "/") == "data/zarr/zlib.zarr/0"
+    assert info.GetInfo() == ['COMPRESSOR={ "id": "zlib", "level": 1 }']
+
+    with pytest.raises(Exception, match="invalid block coordinate"):
+        ar.GetRawBlockInfo([1])
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "filename,expected_info",
+    [
+        ("data/zarr/f2_le.zarr", ["ENDIANNESS=LITTLE"]),
+        ("data/zarr/f2_be.zarr", ["ENDIANNESS=BIG"]),
+        ("data/zarr/order_f_u2.zarr", ["ENDIANNESS=LITTLE", "TRANSPOSE_ORDER=[1,0]"]),
+        ("data/zarr/v3/f2_le.zarr", ["ENDIANNESS=LITTLE"]),
+        ("data/zarr/v3/f2_be.zarr", ["ENDIANNESS=BIG"]),
+        (
+            "data/zarr/v3/order_f_u2.zarr",
+            ["ENDIANNESS=LITTLE", "TRANSPOSE_ORDER=[1,0]"],
+        ),
+    ],
+)
+def test_zarr_read_zarr_endian_or_transpose_GetRawBlockInfo(filename, expected_info):
+
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray(ds.GetRootGroup().GetMDArrayNames()[0])
+    info = ar.GetRawBlockInfo([0] * ar.GetDimensionCount())
+    assert info.GetInfo() == expected_info
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_zarr_v2_missing_block_GetRawBlockInfo(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+        tmp_vsimem / "test.zarr", ["FORMAT=ZARR_V2"]
+    )
+    dim0 = ds.GetRootGroup().CreateDimension("dim0", None, None, 2)
+    ar = ds.GetRootGroup().CreateMDArray(
+        "test", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    info = ar.GetRawBlockInfo([0])
+    assert info.GetOffset() == 0
+    assert info.GetSize() == 0
+    assert info.GetFilename() is None
+    assert info.GetInfo() is None
+    assert info.GetInlineData() is None
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_zarr_v2_kerchunk_GetRawBlockInfo():
+
+    ds = gdal.OpenEx(
+        "data/zarr/kerchunk_json/json_ref_v0_min/ref.json", gdal.OF_MULTIDIM_RASTER
+    )
+    ar = ds.GetRootGroup().OpenMDArray("x")
+    info = ar.GetRawBlockInfo([0])
+    assert info.GetOffset() == 0
+    assert info.GetSize() == 1
+    assert (
+        info.GetFilename().replace("\\", "/")
+        == "data/zarr/kerchunk_json/json_ref_v0_min/0.bin"
+    )
+    assert info.GetInfo() is None
+    assert info.GetInlineData() is None
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_zarr_v3_GetRawBlockInfo():
+
+    ds = gdal.OpenEx("data/zarr/v3/gzip.zarr", gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("gzip")
+    info = ar.GetRawBlockInfo([0, 0])
+    assert info.GetOffset() == 0
+    assert info.GetSize() == 25
+    assert info.GetFilename().replace("\\", "/") == "data/zarr/v3/gzip.zarr/gzip/c/0/0"
+    assert info.GetInfo() == [
+        'COMPRESSOR={ "name": "gzip", "configuration": { "level": 6 } }'
+    ]
+    assert info.GetInlineData() is None
+
+    with pytest.raises(Exception, match="invalid block coordinate"):
+        ar.GetRawBlockInfo([1, 0])
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("Parquet")
+def test_zarr_read_kerchunk_parquet_GetRawBlockInfo():
+
+    ds = gdal.OpenEx(
+        "ZARR:data/zarr/kerchunk_parquet/parquet_ref_0_dim_inline_content",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    ar = ds.GetRootGroup().OpenMDArray("x")
+    info = ar.GetRawBlockInfo([])
+    assert info.GetOffset() == 0
+    assert info.GetSize() == 1
+    assert info.GetFilename() is None
+    assert info.GetInfo() is None
+    assert info.GetInlineData() == b"\x01"

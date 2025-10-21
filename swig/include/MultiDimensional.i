@@ -337,6 +337,21 @@ struct GDALMDArrayRawBlockInfo
   }
   %clear char**;
 
+  void GetInlineData( size_t *nLen, char **pBuf )
+  {
+      if (self->pabyInlineData )
+      {
+          *nLen = self->nSize;
+          *pBuf = reinterpret_cast<char*>(self->pabyInlineData);
+          self->pabyInlineData = NULL;
+      }
+      else
+      {
+          *nLen = 0;
+          *pBuf = NULL;
+      }
+  }
+
 
 } /* extend */
 } /* GDALMDArrayRawBlockInfo */ ;

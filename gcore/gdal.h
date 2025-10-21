@@ -2835,11 +2835,20 @@ extern "C++"
         /** NULL or Null-terminated list of driver specific information on the
          * raw block */
         char **papszInfo;
+        /** In-memory buffer of nSize bytes. When this is set, pszFilename and
+         * nOffset are set to NULL.
+         *
+         * When using C++ copy constructor or copy-assignment operator, if
+         * a memory allocation fails, a CPLError() will be emitted and this
+         * field will be NULL, but nSize not zero.
+         */
+        GByte *pabyInlineData;
 
 #ifdef __cplusplus
         /*! @cond Doxygen_Suppress */
         inline GDALMDArrayRawBlockInfo()
-            : pszFilename(nullptr), nOffset(0), nSize(0), papszInfo(nullptr)
+            : pszFilename(nullptr), nOffset(0), nSize(0), papszInfo(nullptr),
+              pabyInlineData(nullptr)
         {
         }
 

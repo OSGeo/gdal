@@ -6167,4 +6167,146 @@ TEST_F(test_gdal, GDALRasterBand_window_iterator)
     }
 }
 
+TEST_F(test_gdal, GDALMDArrayRawBlockInfo)
+{
+    GDALMDArrayRawBlockInfo info;
+    {
+        GDALMDArrayRawBlockInfo info2(info);
+        EXPECT_EQ(info2.nOffset, 0);
+        EXPECT_EQ(info2.nSize, 0);
+        EXPECT_EQ(info2.pszFilename, nullptr);
+        EXPECT_EQ(info2.papszInfo, nullptr);
+        EXPECT_EQ(info2.pabyInlineData, nullptr);
+    }
+
+    {
+        GDALMDArrayRawBlockInfo info2;
+        info2 = info;
+        EXPECT_EQ(info2.nOffset, 0);
+        EXPECT_EQ(info2.nSize, 0);
+        EXPECT_EQ(info2.pszFilename, nullptr);
+        EXPECT_EQ(info2.papszInfo, nullptr);
+        EXPECT_EQ(info2.pabyInlineData, nullptr);
+
+        info2 = std::move(info);
+        EXPECT_EQ(info2.nOffset, 0);
+        EXPECT_EQ(info2.nSize, 0);
+        EXPECT_EQ(info2.pszFilename, nullptr);
+        EXPECT_EQ(info2.papszInfo, nullptr);
+        EXPECT_EQ(info2.pabyInlineData, nullptr);
+
+        const auto pinfo2 = &info2;
+        info2 = *pinfo2;
+        EXPECT_EQ(info2.nOffset, 0);
+        EXPECT_EQ(info2.nSize, 0);
+        EXPECT_EQ(info2.pszFilename, nullptr);
+        EXPECT_EQ(info2.papszInfo, nullptr);
+        EXPECT_EQ(info2.pabyInlineData, nullptr);
+    }
+
+    {
+        GDALMDArrayRawBlockInfo info2(std::move(info));
+        EXPECT_EQ(info2.nOffset, 0);
+        EXPECT_EQ(info2.nSize, 0);
+        EXPECT_EQ(info2.pszFilename, nullptr);
+        EXPECT_EQ(info2.papszInfo, nullptr);
+        EXPECT_EQ(info2.pabyInlineData, nullptr);
+    }
+
+    info.nOffset = 1;
+    info.nSize = 2;
+    info.pszFilename = CPLStrdup("filename");
+    info.papszInfo = CSLSetNameValue(nullptr, "key", "value");
+    info.pabyInlineData =
+        static_cast<GByte *>(CPLMalloc(static_cast<size_t>(info.nSize)));
+    info.pabyInlineData[0] = 1;
+    info.pabyInlineData[1] = 2;
+
+    {
+        GDALMDArrayRawBlockInfo info2;
+        info2 = info;
+        EXPECT_EQ(info2.nOffset, info.nOffset);
+        EXPECT_EQ(info2.nSize, info.nSize);
+        EXPECT_STREQ(info2.pszFilename, info.pszFilename);
+        EXPECT_TRUE(info2.papszInfo != nullptr);
+        EXPECT_STREQ(info2.papszInfo[0], "key=value");
+        EXPECT_TRUE(info2.papszInfo[1] == nullptr);
+        ASSERT_NE(info2.pabyInlineData, nullptr);
+        EXPECT_EQ(info2.pabyInlineData[0], 1);
+        EXPECT_EQ(info2.pabyInlineData[1], 2);
+    }
+
+    {
+        GDALMDArrayRawBlockInfo info2(info);
+        EXPECT_EQ(info2.nOffset, info.nOffset);
+        EXPECT_EQ(info2.nSize, info.nSize);
+        EXPECT_STREQ(info2.pszFilename, info.pszFilename);
+        EXPECT_TRUE(info2.papszInfo != nullptr);
+        EXPECT_STREQ(info2.papszInfo[0], "key=value");
+        EXPECT_TRUE(info2.papszInfo[1] == nullptr);
+        ASSERT_NE(info2.pabyInlineData, nullptr);
+        EXPECT_EQ(info2.pabyInlineData[0], 1);
+        EXPECT_EQ(info2.pabyInlineData[1], 2);
+    }
+
+    {
+        GDALMDArrayRawBlockInfo info2;
+        info2 = info;
+        EXPECT_EQ(info2.nOffset, info.nOffset);
+        EXPECT_EQ(info2.nSize, info.nSize);
+        EXPECT_STREQ(info2.pszFilename, info.pszFilename);
+        EXPECT_TRUE(info2.papszInfo != nullptr);
+        EXPECT_STREQ(info2.papszInfo[0], "key=value");
+        EXPECT_TRUE(info2.papszInfo[1] == nullptr);
+        ASSERT_NE(info2.pabyInlineData, nullptr);
+        EXPECT_EQ(info2.pabyInlineData[0], 1);
+        EXPECT_EQ(info2.pabyInlineData[1], 2);
+
+        const auto pinfo2 = &info2;
+        info2 = *pinfo2;
+        EXPECT_EQ(info2.nOffset, info.nOffset);
+        EXPECT_EQ(info2.nSize, info.nSize);
+        EXPECT_STREQ(info2.pszFilename, info.pszFilename);
+        EXPECT_TRUE(info2.papszInfo != nullptr);
+        EXPECT_STREQ(info2.papszInfo[0], "key=value");
+        EXPECT_TRUE(info2.papszInfo[1] == nullptr);
+        ASSERT_NE(info2.pabyInlineData, nullptr);
+        EXPECT_EQ(info2.pabyInlineData[0], 1);
+        EXPECT_EQ(info2.pabyInlineData[1], 2);
+    }
+
+    {
+        GDALMDArrayRawBlockInfo infoCopy(info);
+        GDALMDArrayRawBlockInfo info2(std::move(info));
+        info = infoCopy;
+
+        EXPECT_EQ(info2.nOffset, info.nOffset);
+        EXPECT_EQ(info2.nSize, info.nSize);
+        EXPECT_STREQ(info2.pszFilename, info.pszFilename);
+        EXPECT_TRUE(info2.papszInfo != nullptr);
+        EXPECT_STREQ(info2.papszInfo[0], "key=value");
+        EXPECT_TRUE(info2.papszInfo[1] == nullptr);
+        ASSERT_NE(info2.pabyInlineData, nullptr);
+        EXPECT_EQ(info2.pabyInlineData[0], 1);
+        EXPECT_EQ(info2.pabyInlineData[1], 2);
+    }
+
+    {
+        GDALMDArrayRawBlockInfo infoCopy(info);
+        GDALMDArrayRawBlockInfo info2;
+        info2 = std::move(info);
+        info = infoCopy;
+
+        EXPECT_EQ(info2.nOffset, info.nOffset);
+        EXPECT_EQ(info2.nSize, info.nSize);
+        EXPECT_STREQ(info2.pszFilename, info.pszFilename);
+        EXPECT_TRUE(info2.papszInfo != nullptr);
+        EXPECT_STREQ(info2.papszInfo[0], "key=value");
+        EXPECT_TRUE(info2.papszInfo[1] == nullptr);
+        ASSERT_NE(info2.pabyInlineData, nullptr);
+        EXPECT_EQ(info2.pabyInlineData[0], 1);
+        EXPECT_EQ(info2.pabyInlineData[1], 2);
+    }
+}
+
 }  // namespace

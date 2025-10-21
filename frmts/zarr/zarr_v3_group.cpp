@@ -736,7 +736,7 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
             "COMPRESSOR", oCodecs[oCodecs.Size() - 1].ToString().c_str());
     }
     if (poCodecs)
-        poArray->SetCodecs(std::move(poCodecs));
+        poArray->SetCodecs(oCodecs, std::move(poCodecs));
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
     if (!cpl::starts_with(osFilename, "/vsi") && !poArray->Flush())

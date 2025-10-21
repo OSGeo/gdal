@@ -15134,6 +15134,8 @@ void GDALMDArrayRawBlockInfo::clear()
     papszInfo = nullptr;
     nOffset = 0;
     nSize = 0;
+    CPLFree(pabyInlineData);
+    pabyInlineData = nullptr;
 }
 
 /************************************************************************/
@@ -15144,8 +15146,16 @@ GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo(
     const GDALMDArrayRawBlockInfo &other)
     : pszFilename(other.pszFilename ? CPLStrdup(other.pszFilename) : nullptr),
       nOffset(other.nOffset), nSize(other.nSize),
-      papszInfo(CSLDuplicate(other.papszInfo))
+      papszInfo(CSLDuplicate(other.papszInfo)), pabyInlineData(nullptr)
 {
+    if (other.pabyInlineData)
+    {
+        pabyInlineData = static_cast<GByte *>(
+            VSI_MALLOC_VERBOSE(static_cast<size_t>(other.nSize)));
+        if (pabyInlineData)
+            memcpy(pabyInlineData, other.pabyInlineData,
+                   static_cast<size_t>(other.nSize));
+    }
 }
 
 /************************************************************************/
@@ -15164,6 +15174,16 @@ GDALMDArrayRawBlockInfo::operator=(const GDALMDArrayRawBlockInfo &other)
         nSize = other.nSize;
         CSLDestroy(papszInfo);
         papszInfo = CSLDuplicate(other.papszInfo);
+        CPLFree(pabyInlineData);
+        pabyInlineData = nullptr;
+        if (other.pabyInlineData)
+        {
+            pabyInlineData = static_cast<GByte *>(
+                VSI_MALLOC_VERBOSE(static_cast<size_t>(other.nSize)));
+            if (pabyInlineData)
+                memcpy(pabyInlineData, other.pabyInlineData,
+                       static_cast<size_t>(other.nSize));
+        }
     }
     return *this;
 }
@@ -15175,10 +15195,12 @@ GDALMDArrayRawBlockInfo::operator=(const GDALMDArrayRawBlockInfo &other)
 GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo(
     GDALMDArrayRawBlockInfo &&other)
     : pszFilename(other.pszFilename), nOffset(other.nOffset),
-      nSize(other.nSize), papszInfo(other.papszInfo)
+      nSize(other.nSize), papszInfo(other.papszInfo),
+      pabyInlineData(other.pabyInlineData)
 {
     other.pszFilename = nullptr;
     other.papszInfo = nullptr;
+    other.pabyInlineData = nullptr;
 }
 
 /************************************************************************/
@@ -15194,6 +15216,7 @@ GDALMDArrayRawBlockInfo::operator=(GDALMDArrayRawBlockInfo &&other)
         nOffset = other.nOffset;
         nSize = other.nSize;
         std::swap(papszInfo, other.papszInfo);
+        std::swap(pabyInlineData, other.pabyInlineData);
     }
     return *this;
 }
@@ -15225,6 +15248,11 @@ GDALMDArrayRawBlockInfo::operator=(GDALMDArrayRawBlockInfo &&other)
  * For HDF5 and netCDF 4, the potential keys are "COMPRESSION" (possible values
  * "DEFLATE" or "SZIP") and "FILTER" (if several filters, names are
  * comma-separated)
+ *
+ * For ZARR, the potential keys are "COMPRESSOR" (value is the JSON encoded
+ * content from the array definition), "FILTERS" (for Zarr V2, value is JSON
+ * encoded content) and "TRANSPOSE_ORDER" (value is a string like
+ * "[idx0,...,idxN]" with the permutation).
  *
  * This is the same as C function GDALMDArrayGetRawBlockInfo().
  *
@@ -15267,6 +15295,11 @@ bool GDALMDArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
  * For HDF5 and netCDF 4, the potential keys are "COMPRESSION" (possible values
  * "DEFLATE" or "SZIP") and "FILTER" (if several filters, names are
  * comma-separated)
+ *
+ * For ZARR, the potential keys are "COMPRESSOR" (value is the JSON encoded
+ * content from the array definition), "FILTERS" (for Zarr V2, value is JSON
+ * encoded content) and "TRANSPOSE_ORDER" (value is a string like
+ * "[idx0,...,idxN]" with the permutation).
  *
  * This is the same as C++ method GDALMDArray::GetRawBlockInfo().
  *
