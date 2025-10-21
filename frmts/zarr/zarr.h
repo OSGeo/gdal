@@ -1419,7 +1419,6 @@ class ZarrV3CodecTranspose final : public ZarrV3Codec
     }
 
     static CPLJSONObject GetConfiguration(const std::vector<int> &anOrder);
-    static CPLJSONObject GetConfiguration(const std::string &osOrder);
 
     bool
     InitFromConfiguration(const CPLJSONObject &configuration,

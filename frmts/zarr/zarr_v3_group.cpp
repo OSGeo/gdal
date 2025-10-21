@@ -593,12 +593,18 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
 
     const bool bFortranOrder = EQUAL(
         CSLFetchNameValueDef(papszOptions, "CHUNK_MEMORY_LAYOUT", "C"), "F");
-    if (bFortranOrder)
+    if (bFortranOrder && aoDimensions.size() > 1)
     {
         CPLJSONObject oCodec;
         oCodec.Add("name", "transpose");
+        std::vector<int> anOrder;
+        const int nDims = static_cast<int>(aoDimensions.size());
+        for (int i = 0; i < nDims; ++i)
+        {
+            anOrder.push_back(nDims - 1 - i);
+        }
         oCodec.Add("configuration",
-                   ZarrV3CodecTranspose::GetConfiguration("F"));
+                   ZarrV3CodecTranspose::GetConfiguration(anOrder));
         oCodecs.Add(oCodec);
     }
 
