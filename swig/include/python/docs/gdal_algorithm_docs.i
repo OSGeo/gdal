@@ -197,7 +197,7 @@ Examples
                       'max_count': 2147483647,
                       'min_count': 0,
                       'name': 'input',
-                      'packed_values_allowed': True,
+                      'packed_values_allowed': False,
                       'repeated_arg_allowed': True,
                       'required': True,
                       'type': 'dataset_list'},
