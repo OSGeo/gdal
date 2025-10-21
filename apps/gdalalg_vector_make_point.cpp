@@ -92,19 +92,10 @@ class GDALVectorMakePointAlgorithmLayer final
             return;
 
         OGRwkbGeometryType eGeomType = wkbPoint;
-
-        if (m_hasZ && m_hasM)
-        {
-            eGeomType = wkbPointZM;
-        }
-        else if (m_hasZ)
-        {
-            eGeomType = wkbPoint25D;
-        }
-        else if (m_hasM)
-        {
-            eGeomType = wkbPointM;
-        }
+        if (m_hasZ)
+            eGeomType = OGR_GT_SetZ(eGeomType);
+        if (m_hasM)
+            eGeomType = OGR_GT_SetM(eGeomType);
 
         auto poGeomFieldDefn =
             std::make_unique<OGRGeomFieldDefn>("geometry", eGeomType);
@@ -113,6 +104,8 @@ class GDALVectorMakePointAlgorithmLayer final
             poGeomFieldDefn->SetSpatialRef(m_srs);
         }
 
+        while (m_defn->GetGeomFieldCount() > 0)
+            m_defn->DeleteGeomFieldDefn(0);
         m_defn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
     }
 
@@ -130,13 +123,13 @@ class GDALVectorMakePointAlgorithmLayer final
         if (isString)
         {
             const char *pszValue = feature.GetFieldAsString(fieldIndex);
-            char *end;
-            while (std::isspace(*pszValue))
+            while (std::isspace(static_cast<unsigned char>(*pszValue)))
             {
                 pszValue++;
             }
+            char *end = nullptr;
             double dfValue = CPLStrtodM(pszValue, &end);
-            while (std::isspace(*end))
+            while (std::isspace(static_cast<unsigned char>(*end)))
             {
                 end++;
             }
@@ -200,16 +193,16 @@ class GDALVectorMakePointAlgorithmLayer final
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override;
 
-    std::string m_xField;
-    std::string m_yField;
-    std::string m_zField;
-    std::string m_mField;
-    int m_xFieldIndex;
-    int m_yFieldIndex;
-    int m_zFieldIndex;
-    int m_mFieldIndex;
-    bool m_hasZ;
-    bool m_hasM;
+    const std::string m_xField;
+    const std::string m_yField;
+    const std::string m_zField;
+    const std::string m_mField;
+    const int m_xFieldIndex;
+    const int m_yFieldIndex;
+    const int m_zFieldIndex;
+    const int m_mFieldIndex;
+    const bool m_hasZ;
+    const bool m_hasM;
     bool m_xFieldIsString = false;
     bool m_yFieldIsString = false;
     bool m_zFieldIsString = false;
@@ -276,21 +269,26 @@ void GDALVectorMakePointAlgorithmLayer::TranslateFeature(
 bool GDALVectorMakePointAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     GDALDataset *poSrcDS = m_inputDataset[0].GetDatasetRef();
+    if (poSrcDS->GetLayerCount() == 0)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "No input vector layer");
+        return false;
+    }
     OGRLayer *poSrcLayer = poSrcDS->GetLayer(0);
 
-    auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
-
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poCRS(
-        new OGRSpatialReference());
-
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poCRS;
     if (!m_dstCrs.empty())
     {
+        poCRS.reset(new OGRSpatialReference());
+        poCRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         auto eErr = poCRS->SetFromUserInput(m_dstCrs.c_str());
         if (eErr != OGRERR_NONE)
         {
             return false;
         }
     }
+
+    auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
 
     outDS->AddLayer(
         *poSrcLayer,
