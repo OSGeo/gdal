@@ -74,6 +74,12 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
     if (args.size() == 1 && (args[0] == "-h" || args[0] == "--help"))
         return GDALAlgorithm::ParseCommandLineArguments(args);
 
+    if (IsCalledFromCommandLine())
+    {
+        m_rasterDispatcher->SetCalledFromCommandLine();
+        m_vectorDispatcher->SetCalledFromCommandLine();
+    }
+
     // We first try to process with the raster specific algorithm (that has
     // been instantiated in a special way to accept both raster and vector
     // input datasets). If the raster specific algorithm can parse successfully
@@ -148,8 +154,7 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
     size_t nCountLikelyDatasetName = 0;
     for (const auto &arg : args)
     {
-        if (arg == "-i" || arg == "--input" || arg == "-f" || arg == "--of" ||
-            arg == "--output-format" || arg == "--format")
+        if (arg == "-i" || arg == "--input")
         {
             skipNext = true;
         }
