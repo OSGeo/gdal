@@ -2001,3 +2001,86 @@ def test_vrtmultidim_arraysource_view(
     assert array.array("B", ds.GetRasterBand(1).ReadRaster()) == array.array(
         "B", expected
     )
+
+
+@pytest.mark.require_driver("HDF5")
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_GetRawBlockInfo_single_source(tmp_vsimem):
+
+    if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
+        pytest.skip("libhdf5 < 1.10.5")
+
+    gdal.Run(
+        "mdim convert", input="data/hdf5/deflate.h5", output=tmp_vsimem / "out.vrt"
+    )
+    with gdal.OpenEx(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+        array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
+
+        info = array.GetRawBlockInfo([0, 0])
+        assert info.GetFilename() == "data/hdf5/deflate.h5"
+        assert info.GetOffset() == 13908
+        assert info.GetSize() == 10
+        assert info.GetInfo() == ["COMPRESSION=DEFLATE", "FILTER=SHUFFLE"]
+        assert info.GetInlineData() is None
+
+        info = array.GetRawBlockInfo([19, 9])
+        assert info.GetFilename() == "data/hdf5/deflate.h5"
+        assert info.GetOffset() == 15898
+        assert info.GetSize() == 10
+        assert info.GetInfo() == ["COMPRESSION=DEFLATE", "FILTER=SHUFFLE"]
+        assert info.GetInlineData() is None
+
+        with pytest.raises(Exception, match="invalid block coordinate"):
+            array.GetRawBlockInfo([20, 0])
+
+
+@pytest.mark.require_driver("netCDF")
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_GetRawBlockInfo_unblocked(tmp_vsimem):
+
+    gdal.Run("mdim convert", input="data/netcdf/byte.nc", output=tmp_vsimem / "out.vrt")
+    with gdal.OpenEx(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+        array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
+
+        with pytest.raises(Exception, match="block size for dimension 0 is unknown"):
+            array.GetRawBlockInfo([0, 0])
+
+
+@pytest.mark.require_driver("netCDF")
+@pytest.mark.require_driver("HDF5")
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_GetRawBlockInfo_two_sources(tmp_path):
+
+    if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
+        pytest.skip("libhdf5 < 1.10.5")
+
+    gdal.Run(
+        "raster clip",
+        input="data/byte.tif",
+        output=tmp_path / "out_top.nc",
+        window=[0, 0, 20, 10],
+        creation_option={"FORMAT": "NC4", "COMPRESS": "DEFLATE"},
+    )
+    gdal.Run(
+        "raster clip",
+        input="data/byte.tif",
+        output=tmp_path / "out_bottom.nc",
+        window=[0, 10, 20, 10],
+        creation_option={"FORMAT": "NC4", "COMPRESS": "DEFLATE"},
+    )
+    gdal.Run(
+        "mdim mosaic",
+        input=[tmp_path / "out_top.nc", tmp_path / "out_bottom.nc"],
+        output=tmp_path / "out.vrt",
+    )
+
+    with gdal.OpenEx(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+        array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
+
+        for y in range(10):
+            info = array.GetRawBlockInfo([y, 0])
+            assert "out_bottom.nc" in info.GetFilename()
+
+        for y in range(10, 20):
+            info = array.GetRawBlockInfo([y, 0])
+            assert "out_top.nc" in info.GetFilename()

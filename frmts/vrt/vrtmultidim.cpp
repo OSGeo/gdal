@@ -1194,6 +1194,74 @@ VRTMDArray::GetAttributes(CSLConstList) const
 }
 
 /************************************************************************/
+/*                     VRTMDArray::GetRawBlockInfo()                    */
+/************************************************************************/
+
+bool VRTMDArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
+                                 GDALMDArrayRawBlockInfo &info) const
+{
+    info.clear();
+    std::vector<uint64_t> anStartIdx;
+    std::vector<size_t> anCount;
+    for (size_t i = 0; i < m_anBlockSize.size(); ++i)
+    {
+        const auto nBlockSize = m_anBlockSize[i];
+        if (nBlockSize == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetRawBlockInfo() failed: array %s: "
+                     "block size for dimension %u is unknown",
+                     GetName().c_str(), static_cast<unsigned>(i));
+            return false;
+        }
+        const auto nBlockCount =
+            cpl::div_round_up(m_dims[i]->GetSize(), nBlockSize);
+        if (panBlockCoordinates[i] >= nBlockCount)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetRawBlockInfo() failed: array %s: "
+                     "invalid block coordinate (%u) for dimension %u",
+                     GetName().c_str(),
+                     static_cast<unsigned>(panBlockCoordinates[i]),
+                     static_cast<unsigned>(i));
+            return false;
+        }
+        anStartIdx.push_back(panBlockCoordinates[i] * nBlockSize);
+        anCount.push_back(static_cast<size_t>(std::min<uint64_t>(
+            m_dims[i]->GetSize() - panBlockCoordinates[i] * nBlockSize,
+            nBlockSize)));
+    }
+
+    // Check if there is one and only one source for which the VRT array
+    // block matches exactly one of its block.
+    VRTMDArraySource *poSource = nullptr;
+    for (const auto &poSourceIter : m_sources)
+    {
+        switch (
+            poSourceIter->GetRelationship(anStartIdx.data(), anCount.data()))
+        {
+            case VRTMDArraySource::RelationShip::NO_INTERSECTION:
+                break;
+
+            case VRTMDArraySource::RelationShip::PARTIAL_INTERSECTION:
+                return false;
+
+            case VRTMDArraySource::RelationShip::SOURCE_BLOCK_MATCH:
+            {
+                if (poSource)
+                    return false;
+                poSource = poSourceIter.get();
+                break;
+            }
+        }
+    }
+    if (!poSource)
+        return false;
+
+    return poSource->GetRawBlockInfo(anStartIdx.data(), anCount.data(), info);
+}
+
+/************************************************************************/
 /*                                  Read()                              */
 /************************************************************************/
 
@@ -1959,7 +2027,7 @@ VRTMDArraySourceFromArray::~VRTMDArraySourceFromArray()
 }
 
 /************************************************************************/
-/*                                   Read()                             */
+/*              VRTMDArraySourceFromArray::GetSourceArray()             */
 /************************************************************************/
 
 static std::string CreateKey(const std::string &filename)
@@ -1967,38 +2035,9 @@ static std::string CreateKey(const std::string &filename)
     return filename + CPLSPrintf("__thread_" CPL_FRMT_GIB, CPLGetPID());
 }
 
-bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
-                                     const size_t *count,
-                                     const GInt64 *arrayStep,
-                                     const GPtrDiff_t *bufferStride,
-                                     const GDALExtendedDataType &bufferDataType,
-                                     void *pDstBuffer) const
+std::pair<std::shared_ptr<VRTArrayDatasetWrapper>, std::shared_ptr<GDALMDArray>>
+VRTMDArraySourceFromArray::GetSourceArray() const
 {
-    // Preliminary check without trying to open source array
-    const auto nDims(m_poDstArray->GetDimensionCount());
-
-    // Check that end of request is not lower than the beginning of the dest slab
-    // and that the start of request is not greater than the end of the dest slab
-    for (size_t i = 0; i < nDims; i++)
-    {
-        auto start_i = arrayStartIdx[i];
-        auto step_i = arrayStep[i] == 0 ? 1 : arrayStep[i];
-        if (arrayStep[i] < 0)
-        {
-            // For negative step request, temporarily simulate a positive step
-            start_i = start_i - (count[i] - 1) * (-step_i);
-            step_i = -step_i;
-        }
-        if (start_i + (count[i] - 1) * step_i < m_anDstOffset[i])
-        {
-            return true;
-        }
-        else if (m_anCount[i] > 0 && start_i >= m_anDstOffset[i] + m_anCount[i])
-        {
-            return true;
-        }
-    }
-
     const std::string osFilename =
         m_bRelativeToVRT
             ? CPLProjectRelativeFilenameSafe(m_poDstArray->GetVRTPath().c_str(),
@@ -2029,7 +2068,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
                                       GDAL_OF_INTERNAL | GDAL_OF_VERBOSE_ERROR,
                                   nullptr, nullptr, nullptr);
             if (!poSrcDS)
-                return false;
+                return {nullptr, nullptr};
             poSrcDSWrapper = std::make_shared<VRTArrayDatasetWrapper>(poSrcDS);
             oPair.first = std::move(poSrcDSWrapper);
             oPair.second.insert(this);
@@ -2042,7 +2081,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
     {
         auto rg(poSrcDS->GetRootGroup());
         if (rg == nullptr)
-            return false;
+            return {nullptr, nullptr};
 
         auto curGroup(rg);
         std::string arrayName(m_osArray);
@@ -2052,7 +2091,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot find array %s",
                      m_osArray.c_str());
-            return false;
+            return {nullptr, nullptr};
         }
     }
     else if (m_osBand.empty())
@@ -2065,7 +2104,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
         int nSrcBand = atoi(m_osBand.c_str());
         auto poBand = poSrcDS->GetRasterBand(nSrcBand);
         if (poBand == nullptr)
-            return false;
+            return {nullptr, nullptr};
         poArray = poBand->AsMDArray();
         CPLAssert(poArray);
     }
@@ -2080,7 +2119,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
                                   GRIORA_NearestNeighbour, nullptr, nullptr);
         if (poArray == nullptr)
         {
-            return false;
+            return {nullptr, nullptr};
         }
         if (osViewExpr == "resample=true")
             osViewExpr.clear();
@@ -2093,7 +2132,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
         poArray = poArray->Transpose(m_anTransposedAxis);
         if (poArray == nullptr)
         {
-            return false;
+            return {nullptr, nullptr};
         }
     }
     if (!osViewExpr.empty())
@@ -2101,15 +2140,59 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
         poArray = poArray->GetView(osViewExpr);
         if (poArray == nullptr)
         {
-            return false;
+            return {nullptr, nullptr};
         }
     }
     if (m_poDstArray->GetDimensionCount() != poArray->GetDimensionCount())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Inconsistent number of dimensions");
-        return false;
+        return {nullptr, nullptr};
     }
+
+    return {poSrcDSWrapper, poArray};
+}
+
+/************************************************************************/
+/*                                   Read()                             */
+/************************************************************************/
+
+bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
+                                     const size_t *count,
+                                     const GInt64 *arrayStep,
+                                     const GPtrDiff_t *bufferStride,
+                                     const GDALExtendedDataType &bufferDataType,
+                                     void *pDstBuffer) const
+{
+    // Preliminary check without trying to open source array
+    // Check that end of request is not lower than the beginning of the dest slab
+    // and that the start of request is not greater than the end of the dest slab
+    const auto nDims(m_poDstArray->GetDimensionCount());
+    for (size_t i = 0; i < nDims; i++)
+    {
+        auto start_i = arrayStartIdx[i];
+        auto step_i = arrayStep[i] == 0 ? 1 : arrayStep[i];
+        if (arrayStep[i] < 0)
+        {
+            // For negative step request, temporarily simulate a positive step
+            start_i = start_i - (count[i] - 1) * (-step_i);
+            step_i = -step_i;
+        }
+        if (start_i + (count[i] - 1) * step_i < m_anDstOffset[i])
+        {
+            return true;
+        }
+        else if (m_anCount[i] > 0 && start_i >= m_anDstOffset[i] + m_anCount[i])
+        {
+            return true;
+        }
+    }
+
+    std::shared_ptr<VRTArrayDatasetWrapper> poSrcDSWrapper;
+    std::shared_ptr<GDALMDArray> poArray;
+    std::tie(poSrcDSWrapper, poArray) = GetSourceArray();
+    if (!poArray)
+        return false;
 
     const auto &srcDims(poArray->GetDimensions());
     std::vector<GUInt64> anReqDstStart(nDims);
@@ -2186,6 +2269,91 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
     return poArray->Read(anSrcArrayOffset.data(), anReqCount.data(),
                          anSrcArrayStep.data(), bufferStride, bufferDataType,
                          static_cast<GByte *>(pDstBuffer) + nDstOffset);
+}
+
+/************************************************************************/
+/*          VRTMDArraySourceFromArray::GetRelationship()                */
+/************************************************************************/
+
+VRTMDArraySource::RelationShip
+VRTMDArraySourceFromArray::GetRelationship(const uint64_t *arrayStartIdx,
+                                           const size_t *count) const
+{
+    // Check that end of request is not lower than the beginning of the dest slab
+    // and that the start of request is not greater than the end of the dest slab
+    const auto nDims(m_poDstArray->GetDimensionCount());
+    const std::vector<GUInt64> anParentBlockSize = m_poDstArray->GetBlockSize();
+    for (size_t i = 0; i < nDims; i++)
+    {
+        if (arrayStartIdx[i] + (count[i] - 1) < m_anDstOffset[i] ||
+            (m_anCount[i] > 0 &&
+             arrayStartIdx[i] >= m_anDstOffset[i] + m_anCount[i]))
+        {
+            return VRTMDArraySource::RelationShip::NO_INTERSECTION;
+        }
+        if (m_anStep[i] != 1 || anParentBlockSize[i] == 0 ||
+            arrayStartIdx[i] < m_anDstOffset[i] ||
+            ((arrayStartIdx[i] - m_anDstOffset[i]) % anParentBlockSize[i]) != 0)
+        {
+            return VRTMDArraySource::RelationShip::PARTIAL_INTERSECTION;
+        }
+    }
+
+    std::shared_ptr<VRTArrayDatasetWrapper> poSrcDSWrapper;
+    std::shared_ptr<GDALMDArray> poArray;
+    std::tie(poSrcDSWrapper, poArray) = GetSourceArray();
+    if (!poArray)
+        return VRTMDArraySource::RelationShip::NO_INTERSECTION;
+
+    // Further checks to check that (arrayStartIdx, count) hits exactly
+    // one and only one block in the source array
+    const std::vector<GUInt64> anSrcBlockSize = poArray->GetBlockSize();
+    const auto &apoSrcDims = poArray->GetDimensions();
+    for (size_t i = 0; i < nDims; i++)
+    {
+        const auto nSrcOffset =
+            arrayStartIdx[i] - m_anDstOffset[i] + m_anSrcOffset[i];
+        if (anSrcBlockSize[i] == 0 ||
+            anParentBlockSize[i] != anSrcBlockSize[i] ||
+            (nSrcOffset % anSrcBlockSize[i]) != 0 ||
+            (count[i] != anSrcBlockSize[i] &&
+             nSrcOffset + count[i] != apoSrcDims[i]->GetSize()))
+        {
+            return VRTMDArraySource::RelationShip::PARTIAL_INTERSECTION;
+        }
+    }
+
+    return VRTMDArraySource::RelationShip::SOURCE_BLOCK_MATCH;
+}
+
+/************************************************************************/
+/*          VRTMDArraySourceFromArray::GetRawBlockInfo()                */
+/************************************************************************/
+
+bool VRTMDArraySourceFromArray::GetRawBlockInfo(
+    const uint64_t *arrayStartIdx, [[maybe_unused]] const size_t *count,
+    GDALMDArrayRawBlockInfo &info) const
+{
+    // This method should only be called if below is true
+    CPLAssert(GetRelationship(arrayStartIdx, count) ==
+              VRTMDArraySource::RelationShip::SOURCE_BLOCK_MATCH);
+
+    std::shared_ptr<VRTArrayDatasetWrapper> poSrcDSWrapper;
+    std::shared_ptr<GDALMDArray> poArray;
+    std::tie(poSrcDSWrapper, poArray) = GetSourceArray();
+    if (!poArray)
+        return false;
+
+    std::vector<uint64_t> anBlockCoordinates;
+    const auto nDims(m_poDstArray->GetDimensionCount());
+    const std::vector<GUInt64> anSrcBlockSize = poArray->GetBlockSize();
+    for (size_t i = 0; i < nDims; i++)
+    {
+        const auto nSrcOffset =
+            arrayStartIdx[i] - m_anDstOffset[i] + m_anSrcOffset[i];
+        anBlockCoordinates.push_back(nSrcOffset / anSrcBlockSize[i]);
+    }
+    return poArray->GetRawBlockInfo(anBlockCoordinates.data(), info);
 }
 
 /************************************************************************/

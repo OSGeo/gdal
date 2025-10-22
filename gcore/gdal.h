@@ -2811,6 +2811,74 @@ GDALMDArrayGetMeshGrid(const GDALMDArrayH *pahInputArrays,
                        size_t nCountInputArrays, size_t *pnCountOutputArrays,
                        CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
+#ifdef __cplusplus
+extern "C++"
+{
+#endif
+
+    /** Information on a raw block of a GDALMDArray
+     *
+     * @since 3.12
+     */
+    struct
+#ifdef __cplusplus
+        CPL_DLL
+#endif
+            GDALMDArrayRawBlockInfo
+    {
+        /** Filename into which the raw block is found */
+        char *pszFilename;
+        /** File offset within pszFilename of the start of the raw block */
+        uint64_t nOffset;
+        /** Size in bytes of the raw block */
+        uint64_t nSize;
+        /** NULL or Null-terminated list of driver specific information on the
+         * raw block */
+        char **papszInfo;
+        /** In-memory buffer of nSize bytes. When this is set, pszFilename and
+         * nOffset are set to NULL.
+         *
+         * When using C++ copy constructor or copy-assignment operator, if
+         * a memory allocation fails, a CPLError() will be emitted and this
+         * field will be NULL, but nSize not zero.
+         */
+        GByte *pabyInlineData;
+
+#ifdef __cplusplus
+        /*! @cond Doxygen_Suppress */
+        inline GDALMDArrayRawBlockInfo()
+            : pszFilename(nullptr), nOffset(0), nSize(0), papszInfo(nullptr),
+              pabyInlineData(nullptr)
+        {
+        }
+
+        ~GDALMDArrayRawBlockInfo();
+
+        void clear();
+
+        GDALMDArrayRawBlockInfo(const GDALMDArrayRawBlockInfo &);
+        GDALMDArrayRawBlockInfo &operator=(const GDALMDArrayRawBlockInfo &);
+        GDALMDArrayRawBlockInfo(GDALMDArrayRawBlockInfo &&);
+        GDALMDArrayRawBlockInfo &operator=(GDALMDArrayRawBlockInfo &&);
+        /*! @endcond */
+#endif
+    };
+
+#ifdef __cplusplus
+}
+#endif
+
+/*! @cond Doxygen_Suppress */
+typedef struct GDALMDArrayRawBlockInfo GDALMDArrayRawBlockInfo;
+/*! @endcond */
+
+GDALMDArrayRawBlockInfo CPL_DLL *GDALMDArrayRawBlockInfoCreate(void);
+void CPL_DLL
+GDALMDArrayRawBlockInfoRelease(GDALMDArrayRawBlockInfo *psBlockInfo);
+bool CPL_DLL GDALMDArrayGetRawBlockInfo(GDALMDArrayH hArray,
+                                        const uint64_t *panBlockCoordinates,
+                                        GDALMDArrayRawBlockInfo *psBlockInfo);
+
 void CPL_DLL GDALReleaseArrays(GDALMDArrayH *arrays, size_t nCount);
 int CPL_DLL GDALMDArrayCache(GDALMDArrayH hArray, CSLConstList papszOptions);
 bool CPL_DLL GDALMDArrayRename(GDALMDArrayH hArray, const char *pszNewName);

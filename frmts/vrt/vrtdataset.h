@@ -2020,6 +2020,11 @@ class VRTGroup final : public GDALGroup
         return m_osVRTPath;
     }
 
+    void SetVRTPath(const std::string &osVRTPath)
+    {
+        m_osVRTPath = osVRTPath;
+    }
+
     void SetDirty();
 
     void SetFilename(const std::string &osFilename)
@@ -2150,6 +2155,20 @@ class VRTMDArraySource
 {
   public:
     virtual ~VRTMDArraySource();
+
+    enum class RelationShip
+    {
+        NO_INTERSECTION,
+        PARTIAL_INTERSECTION,
+        SOURCE_BLOCK_MATCH,
+    };
+
+    virtual RelationShip GetRelationship(const uint64_t *arrayStartIdx,
+                                         const size_t *count) const = 0;
+
+    virtual bool GetRawBlockInfo(const uint64_t *arrayStartIdx,
+                                 const size_t *count,
+                                 GDALMDArrayRawBlockInfo &info) const = 0;
 
     virtual bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
                       const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
@@ -2353,6 +2372,9 @@ class VRTMDArray final : public GDALMDArray
     {
         return m_anBlockSize;
     }
+
+    bool GetRawBlockInfo(const uint64_t *panBlockCoordinates,
+                         GDALMDArrayRawBlockInfo &info) const override;
 };
 
 /************************************************************************/
@@ -2404,6 +2426,19 @@ class VRTMDArraySourceInlinedValues final : public VRTMDArraySource
     static std::unique_ptr<VRTMDArraySourceInlinedValues>
     Create(const VRTMDArray *poDstArray, const CPLXMLNode *psNode);
 
+    RelationShip GetRelationship(const uint64_t * /*arrayStartIdx*/,
+                                 const size_t * /*count*/) const override
+    {
+        return RelationShip::PARTIAL_INTERSECTION;
+    }
+
+    bool GetRawBlockInfo(const uint64_t * /*arrayStartIdx*/,
+                         const size_t * /*count*/,
+                         GDALMDArrayRawBlockInfo & /*info*/) const override
+    {
+        return false;
+    }
+
     bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
               const GDALExtendedDataType &bufferDataType,
@@ -2427,6 +2462,19 @@ class VRTMDArraySourceRegularlySpaced final : public VRTMDArraySource
     {
     }
 
+    RelationShip GetRelationship(const uint64_t * /*arrayStartIdx*/,
+                                 const size_t * /*count*/) const override
+    {
+        return RelationShip::PARTIAL_INTERSECTION;
+    }
+
+    bool GetRawBlockInfo(const uint64_t * /*arrayStartIdx*/,
+                         const size_t * /*count*/,
+                         GDALMDArrayRawBlockInfo & /*info*/) const override
+    {
+        return false;
+    }
+
     bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
               const GDALExtendedDataType &bufferDataType,
@@ -2438,6 +2486,8 @@ class VRTMDArraySourceRegularlySpaced final : public VRTMDArraySource
 /************************************************************************/
 /*                       VRTMDArraySourceFromArray                      */
 /************************************************************************/
+
+struct VRTArrayDatasetWrapper;
 
 class VRTMDArraySourceFromArray final : public VRTMDArraySource
 {
@@ -2453,6 +2503,10 @@ class VRTMDArraySourceFromArray final : public VRTMDArraySource
     mutable std::vector<GUInt64> m_anCount{};
     std::vector<GUInt64> m_anStep{};
     std::vector<GUInt64> m_anDstOffset{};
+
+    std::pair<std::shared_ptr<VRTArrayDatasetWrapper>,
+              std::shared_ptr<GDALMDArray>>
+    GetSourceArray() const;
 
     VRTMDArraySourceFromArray(const VRTMDArraySourceFromArray &) = delete;
     VRTMDArraySourceFromArray &
@@ -2480,6 +2534,12 @@ class VRTMDArraySourceFromArray final : public VRTMDArraySource
 
     static std::unique_ptr<VRTMDArraySourceFromArray>
     Create(const VRTMDArray *poDstArray, const CPLXMLNode *psNode);
+
+    RelationShip GetRelationship(const uint64_t *arrayStartIdx,
+                                 const size_t *count) const override;
+
+    bool GetRawBlockInfo(const uint64_t *arrayStartIdx, const size_t *count,
+                         GDALMDArrayRawBlockInfo &info) const override;
 
     bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,

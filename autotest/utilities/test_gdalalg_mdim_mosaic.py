@@ -985,3 +985,52 @@ def test_gdalalg_mdim_mosaic_copy_blocksize_not_same(tmp_path):
 
     with gdal.OpenEx(tmp_path / "out.nc", gdal.OF_MULTIDIM_RASTER) as ds:
         assert ds.GetRootGroup().OpenMDArray("test").GetBlockSize() == [1, 3]
+
+
+def test_gdalalg_mdim_mosaic_two_sources(tmp_path):
+
+    gdal.Run(
+        "raster clip",
+        input="../gcore/data/byte.tif",
+        output=tmp_path / "out_top.nc",
+        window=[0, 0, 20, 10],
+    )
+    gdal.Run(
+        "raster clip",
+        input="../gcore/data/byte.tif",
+        output=tmp_path / "out_bottom.nc",
+        window=[0, 10, 20, 10],
+    )
+
+    gdal.Run(
+        "mdim mosaic",
+        input=[tmp_path / "out_top.nc", tmp_path / "out_bottom.nc"],
+        output=tmp_path / "out.vrt",
+    )
+
+    with gdal.OpenEx(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+        assert (
+            ds.GetRootGroup()
+            .OpenMDArray("Band1")
+            .AsClassicDataset(1, 0)
+            .GetRasterBand(1)
+            .Checksum()
+            == 4855
+        )
+
+    gdal.Run(
+        "mdim mosaic",
+        input=[tmp_path / "out_bottom.nc", tmp_path / "out_top.nc"],
+        output=tmp_path / "out.vrt",
+        overwrite=True,
+    )
+
+    with gdal.OpenEx(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+        assert (
+            ds.GetRootGroup()
+            .OpenMDArray("Band1")
+            .AsClassicDataset(1, 0)
+            .GetRasterBand(1)
+            .Checksum()
+            == 4855
+        )

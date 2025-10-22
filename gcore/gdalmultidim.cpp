@@ -15113,4 +15113,251 @@ GDALMDIAsAttribute::GetDimensions() const
     return m_dims;
 }
 
+/************************************************************************/
+/*           GDALMDArrayRawBlockInfo::~GDALMDArrayRawBlockInfo()        */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo::~GDALMDArrayRawBlockInfo()
+{
+    clear();
+}
+
+/************************************************************************/
+/*                     GDALMDArrayRawBlockInfo::clear()                 */
+/************************************************************************/
+
+void GDALMDArrayRawBlockInfo::clear()
+{
+    CPLFree(pszFilename);
+    pszFilename = nullptr;
+    CSLDestroy(papszInfo);
+    papszInfo = nullptr;
+    nOffset = 0;
+    nSize = 0;
+    CPLFree(pabyInlineData);
+    pabyInlineData = nullptr;
+}
+
+/************************************************************************/
+/*            GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo()        */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo(
+    const GDALMDArrayRawBlockInfo &other)
+    : pszFilename(other.pszFilename ? CPLStrdup(other.pszFilename) : nullptr),
+      nOffset(other.nOffset), nSize(other.nSize),
+      papszInfo(CSLDuplicate(other.papszInfo)), pabyInlineData(nullptr)
+{
+    if (other.pabyInlineData)
+    {
+        pabyInlineData = static_cast<GByte *>(
+            VSI_MALLOC_VERBOSE(static_cast<size_t>(other.nSize)));
+        if (pabyInlineData)
+            memcpy(pabyInlineData, other.pabyInlineData,
+                   static_cast<size_t>(other.nSize));
+    }
+}
+
+/************************************************************************/
+/*                GDALMDArrayRawBlockInfo::operator=()                  */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo &
+GDALMDArrayRawBlockInfo::operator=(const GDALMDArrayRawBlockInfo &other)
+{
+    if (this != &other)
+    {
+        CPLFree(pszFilename);
+        pszFilename =
+            other.pszFilename ? CPLStrdup(other.pszFilename) : nullptr;
+        nOffset = other.nOffset;
+        nSize = other.nSize;
+        CSLDestroy(papszInfo);
+        papszInfo = CSLDuplicate(other.papszInfo);
+        CPLFree(pabyInlineData);
+        pabyInlineData = nullptr;
+        if (other.pabyInlineData)
+        {
+            pabyInlineData = static_cast<GByte *>(
+                VSI_MALLOC_VERBOSE(static_cast<size_t>(other.nSize)));
+            if (pabyInlineData)
+                memcpy(pabyInlineData, other.pabyInlineData,
+                       static_cast<size_t>(other.nSize));
+        }
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*            GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo()        */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo(
+    GDALMDArrayRawBlockInfo &&other)
+    : pszFilename(other.pszFilename), nOffset(other.nOffset),
+      nSize(other.nSize), papszInfo(other.papszInfo),
+      pabyInlineData(other.pabyInlineData)
+{
+    other.pszFilename = nullptr;
+    other.papszInfo = nullptr;
+    other.pabyInlineData = nullptr;
+}
+
+/************************************************************************/
+/*                GDALMDArrayRawBlockInfo::operator=()                  */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo &
+GDALMDArrayRawBlockInfo::operator=(GDALMDArrayRawBlockInfo &&other)
+{
+    if (this != &other)
+    {
+        std::swap(pszFilename, other.pszFilename);
+        nOffset = other.nOffset;
+        nSize = other.nSize;
+        std::swap(papszInfo, other.papszInfo);
+        std::swap(pabyInlineData, other.pabyInlineData);
+    }
+    return *this;
+}
+
 //! @endcond
+
+/************************************************************************/
+/*                       GDALMDArray::GetRawBlockInfo()                 */
+/************************************************************************/
+
+/** Return information on a raw block.
+ *
+ * The block coordinates must be between 0 and
+ * (GetDimensions()[i]->GetSize() / GetBlockSize()[i]) - 1, for all i between
+ * 0 and GetDimensionCount()-1.
+ *
+ * If the queried block has valid coordinates but is missing in the dataset,
+ * all fields of info will be set to 0/nullptr, but the function will return
+ * true.
+ *
+ * This method is only implemented by a subset of drivers. The base
+ * implementation just returns false and empty info.
+ *
+ * The values returned in psBlockInfo->papszInfo are driver dependent.
+ *
+ * For multi-byte data types, drivers should return a "ENDIANNESS" key whose
+ * value is "LITTLE" or "BIG".
+ *
+ * For HDF5 and netCDF 4, the potential keys are "COMPRESSION" (possible values
+ * "DEFLATE" or "SZIP") and "FILTER" (if several filters, names are
+ * comma-separated)
+ *
+ * For ZARR, the potential keys are "COMPRESSOR" (value is the JSON encoded
+ * content from the array definition), "FILTERS" (for Zarr V2, value is JSON
+ * encoded content) and "TRANSPOSE_ORDER" (value is a string like
+ * "[idx0,...,idxN]" with the permutation).
+ *
+ * For VRT, the potential keys are the ones of the underlying source(s). Note
+ * that GetRawBlockInfo() on VRT only works when the VRT declares a block size,
+ * that for each queried VRT block, there is one and only one source that
+ * is used to fill the VRT block and that the block size of this source is
+ * exactly the one of the VRT block.
+ *
+ * This is the same as C function GDALMDArrayGetRawBlockInfo().
+ *
+ * @param panBlockCoordinates array of GetDimensionCount() values with the block
+ *                            coordinates.
+ * @param[out] info structure to fill with block information.
+ * @return true in case of success, or false if an error occurs.
+ * @since 3.12
+ */
+bool GDALMDArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
+                                  GDALMDArrayRawBlockInfo &info) const
+{
+    (void)panBlockCoordinates;
+    info.clear();
+    return false;
+}
+
+/************************************************************************/
+/*                      GDALMDArrayGetRawBlockInfo()                    */
+/************************************************************************/
+
+/** Return information on a raw block.
+ *
+ * The block coordinates must be between 0 and
+ * (GetDimensions()[i]->GetSize() / GetBlockSize()[i]) - 1, for all i between
+ * 0 and GetDimensionCount()-1.
+ *
+ * If the queried block has valid coordinates but is missing in the dataset,
+ * all fields of info will be set to 0/nullptr, but the function will return
+ * true.
+ *
+ * This method is only implemented by a subset of drivers. The base
+ * implementation just returns false and empty info.
+ *
+ * The values returned in psBlockInfo->papszInfo are driver dependent.
+ *
+ * For multi-byte data types, drivers should return a "ENDIANNESS" key whose
+ * value is "LITTLE" or "BIG".
+ *
+ * For HDF5 and netCDF 4, the potential keys are "COMPRESSION" (possible values
+ * "DEFLATE" or "SZIP") and "FILTER" (if several filters, names are
+ * comma-separated)
+ *
+ * For ZARR, the potential keys are "COMPRESSOR" (value is the JSON encoded
+ * content from the array definition), "FILTERS" (for Zarr V2, value is JSON
+ * encoded content) and "TRANSPOSE_ORDER" (value is a string like
+ * "[idx0,...,idxN]" with the permutation).
+ *
+ * For VRT, the potential keys are the ones of the underlying source(s). Note
+ * that GetRawBlockInfo() on VRT only works when the VRT declares a block size,
+ * that for each queried VRT block, there is one and only one source that
+ * is used to fill the VRT block and that the block size of this source is
+ * exactly the one of the VRT block.
+ *
+ * This is the same as C++ method GDALMDArray::GetRawBlockInfo().
+ *
+ * @param hArray handle to array.
+ * @param panBlockCoordinates array of GetDimensionCount() values with the block
+ *                            coordinates.
+ * @param[out] psBlockInfo structure to fill with block information.
+ *                         Must be allocated with GDALMDArrayRawBlockInfoCreate(),
+ *                         and freed with GDALMDArrayRawBlockInfoRelease().
+ * @return true in case of success, or false if an error occurs.
+ * @since 3.12
+ */
+bool GDALMDArrayGetRawBlockInfo(GDALMDArrayH hArray,
+                                const uint64_t *panBlockCoordinates,
+                                GDALMDArrayRawBlockInfo *psBlockInfo)
+{
+    VALIDATE_POINTER1(hArray, __func__, false);
+    VALIDATE_POINTER1(panBlockCoordinates, __func__, false);
+    VALIDATE_POINTER1(psBlockInfo, __func__, false);
+    return hArray->m_poImpl->GetRawBlockInfo(panBlockCoordinates, *psBlockInfo);
+}
+
+/************************************************************************/
+/*                    GDALMDArrayRawBlockInfoCreate()                   */
+/************************************************************************/
+
+/** Allocate a new instance of GDALMDArrayRawBlockInfo.
+ *
+ * Returned pointer must be freed with GDALMDArrayRawBlockInfoRelease().
+ *
+ * @since 3.12
+ */
+GDALMDArrayRawBlockInfo *GDALMDArrayRawBlockInfoCreate(void)
+{
+    return new GDALMDArrayRawBlockInfo();
+}
+
+/************************************************************************/
+/*                    GDALMDArrayRawBlockInfoRelease()                  */
+/************************************************************************/
+
+/** Free an instance of GDALMDArrayRawBlockInfo.
+ *
+ * @since 3.12
+ */
+void GDALMDArrayRawBlockInfoRelease(GDALMDArrayRawBlockInfo *psBlockInfo)
+{
+    delete psBlockInfo;
+}

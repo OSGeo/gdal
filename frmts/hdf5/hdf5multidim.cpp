@@ -16,6 +16,7 @@
 #include "cpl_float.h"
 
 #include <algorithm>
+#include <limits>
 #include <set>
 #include <utility>
 
@@ -392,6 +393,9 @@ class HDF5Array final : public GDALMDArray
     {
         return m_poShared->GetRootGroup();
     }
+
+    bool GetRawBlockInfo(const uint64_t *panBlockCoordinates,
+                         GDALMDArrayRawBlockInfo &info) const override;
 };
 
 /************************************************************************/
@@ -1788,6 +1792,234 @@ HDF5Array::GetCoordinateVariables() const
 }
 
 /************************************************************************/
+/*                            GetFilterInfo()                           */
+/************************************************************************/
+
+static CPLStringList GetFilterInfo(hid_t hArray, unsigned nFilterMask)
+{
+    static const struct
+    {
+        int nFilterId;
+        const char *pszName;
+    } gasHDF5Filters[] = {
+        // { H5Z_FILTER_DEFLATE, "DEFLATE" },
+        {H5Z_FILTER_SHUFFLE, "SHUFFLE"},
+        {H5Z_FILTER_FLETCHER32, "FLETCHER32"},
+        // { H5Z_FILTER_SZIP, "SZIP" },
+        {H5Z_FILTER_NBIT, "NBIT"},
+        {H5Z_FILTER_SCALEOFFSET, "SCALEOFFSET"},
+        // Below from netcdf_filter.h
+        {/*H5Z_FILTER_ZSTD */ 32015, "ZSTD"},
+        {/*H5Z_FILTER_BZIP2 */ 307, "BZIP2"},
+        {/*H5Z_FILTER_BLOSC */ 32001, "BLOSC"},
+    };
+
+    CPLStringList aosInfo;
+    const hid_t nListId = H5Dget_create_plist(hArray);
+    if (nListId > 0)
+    {
+        const int nFilters = H5Pget_nfilters(nListId);
+        const char *pszCompression = nullptr;
+        std::string osFilters;
+        for (int i = 0; i < nFilters; ++i)
+        {
+            unsigned int flags = 0;
+            size_t cd_nelmts = 0;
+            char szName[64 + 1] = {0};
+            const auto eFilter =
+                H5Pget_filter(nListId, i, &flags, &cd_nelmts, nullptr,
+                              sizeof(szName) - 1, szName);
+            if ((flags & nFilterMask) == 0)
+            {
+                if (eFilter == H5Z_FILTER_DEFLATE)
+                {
+                    pszCompression = "DEFLATE";
+                }
+                else if (eFilter == H5Z_FILTER_SZIP)
+                {
+                    pszCompression = "SZIP";
+                }
+                else
+                {
+                    bool bFound = false;
+                    if (!osFilters.empty())
+                        osFilters += ',';
+                    for (const auto &sFilterInfo : gasHDF5Filters)
+                    {
+                        if (sFilterInfo.nFilterId == eFilter)
+                        {
+                            bFound = true;
+                            osFilters += sFilterInfo.pszName;
+                            break;
+                        }
+                    }
+                    if (!bFound)
+                        osFilters += szName;
+                }
+            }
+        }
+        H5Pclose(nListId);
+        if (pszCompression)
+            aosInfo.SetNameValue("COMPRESSION", pszCompression);
+        if (!osFilters.empty())
+            aosInfo.SetNameValue("FILTER", osFilters.c_str());
+    }
+    return aosInfo;
+}
+
+/************************************************************************/
+/*                        HDF5Array::GetRawBlockInfo()                  */
+/************************************************************************/
+
+bool HDF5Array::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
+                                GDALMDArrayRawBlockInfo &info) const
+{
+    info.clear();
+
+    const auto anBlockSize = GetBlockSize();
+    CPLAssert(anBlockSize.size() == m_dims.size());
+
+    const auto AddExtraInfo = [this, &info]()
+    {
+        if (m_dt.GetSize() > 1)
+        {
+            const hid_t hDataType = H5Dget_type(m_hArray);
+            switch (H5Tget_order(hDataType))
+            {
+                case H5T_ORDER_LE:
+                    info.papszInfo =
+                        CSLSetNameValue(info.papszInfo, "ENDIANNESS", "LITTLE");
+                    break;
+                case H5T_ORDER_BE:
+                    info.papszInfo =
+                        CSLSetNameValue(info.papszInfo, "ENDIANNESS", "BIG");
+                    break;
+                case H5T_ORDER_VAX:
+                    info.papszInfo =
+                        CSLSetNameValue(info.papszInfo, "ENDIANNESS", "VAX");
+                    break;
+                case H5T_ORDER_MIXED:
+                    info.papszInfo =
+                        CSLSetNameValue(info.papszInfo, "ENDIANNESS", "MIXED");
+                    break;
+                case H5T_ORDER_NONE:
+                case H5T_ORDER_ERROR:
+                    break;
+            }
+            H5Tclose(hDataType);
+        }
+    };
+
+    if (!anBlockSize.empty() && anBlockSize[0] == 0)
+    {
+        HDF5_GLOBAL_LOCK();
+        const auto nOffset = H5Dget_offset(m_hArray);
+        if (nOffset != HADDR_UNDEF)
+        {
+            bool bAllZeroes = true;
+            for (size_t i = 0; i < m_dims.size() && bAllZeroes; ++i)
+                bAllZeroes = panBlockCoordinates[i] == 0;
+            if (bAllZeroes)
+            {
+                info.pszFilename = CPLStrdup(m_poShared->GetFilename().c_str());
+                info.nOffset = nOffset;
+                info.nSize = H5Dget_storage_size(m_hArray);
+                info.papszInfo =
+                    GetFilterInfo(m_hArray, /* nFilterMask = */ 0).StealList();
+                AddExtraInfo();
+                return true;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "GetRawBlockInfo() failed: invalid block coordinates. "
+                         "Should be all 0");
+                return false;
+            }
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetRawBlockInfo() failed: array %s is not chunked or "
+                     "contiguous",
+                     GetName().c_str());
+            return false;
+        }
+    }
+
+#if (defined(H5_VERS_MAJOR) &&                                                 \
+     (H5_VERS_MAJOR >= 2 || (H5_VERS_MAJOR == 1 && H5_VERS_MINOR > 10) ||      \
+      (H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 10 && H5_VERS_RELEASE >= 5)))
+    // Compute the block index from the coordinates
+    hsize_t nBlockIdx = 0;
+    hsize_t nMult = 1;
+    for (size_t nDimIdx = anBlockSize.size(); nDimIdx > 0;)
+    {
+        --nDimIdx;
+        const auto nBlockSize = anBlockSize[nDimIdx];
+        const auto nBlockCount =
+            cpl::div_round_up(m_dims[nDimIdx]->GetSize(), nBlockSize);
+        if (panBlockCoordinates[nDimIdx] >= nBlockCount)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetRawBlockInfo() failed: array %s: "
+                     "invalid block coordinate (%u) for dimension %u",
+                     GetName().c_str(),
+                     static_cast<unsigned>(panBlockCoordinates[nDimIdx]),
+                     static_cast<unsigned>(nDimIdx));
+            return false;
+        }
+        nBlockIdx += panBlockCoordinates[nDimIdx] * nMult;
+        nMult *= nBlockCount;
+    }
+
+    HDF5_GLOBAL_LOCK();
+    std::vector<hsize_t> anOffset(GetDimensionCount());
+    unsigned nFilterMask = 0;
+    haddr_t nChunkOffset = 0;
+    hsize_t nChunkSize = 0;
+    if (H5Dget_chunk_info(m_hArray, m_hDataSpace, nBlockIdx, anOffset.data(),
+                          &nFilterMask, &nChunkOffset, &nChunkSize) < 0)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "GetRawBlockInfo() failed: array %s: H5Dget_chunk_info() failed",
+            GetName().c_str());
+        return false;
+    }
+
+    info.pszFilename = CPLStrdup(m_poShared->GetFilename().c_str());
+    info.nOffset = nChunkOffset == HADDR_UNDEF ? 0 : nChunkOffset;
+
+#if !(defined(H5_VERS_MAJOR) &&                                                \
+      (H5_VERS_MAJOR >= 2 ||                                                   \
+       (H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 14 && H5_VERS_RELEASE >= 4)))
+    // Before HDF5 1.14.4, H5Dget_chunk_info() doesn't take into account the
+    // user block
+    const hid_t nListId = H5Fget_create_plist(m_poShared->GetHDF5());
+    if (nListId > 0)
+    {
+        hsize_t nUserBlockSize = 0;
+        if (H5Pget_userblock(nListId, &nUserBlockSize) >= 0)
+        {
+            info.nOffset += nUserBlockSize;
+        }
+        H5Pclose(nListId);
+    }
+#endif
+
+    info.nSize = nChunkSize;
+    info.papszInfo = GetFilterInfo(m_hArray, nFilterMask).StealList();
+    AddExtraInfo();
+
+    return true;
+#else
+    CPLDebug("HDF5", "H5Dget_chunk_info() only available in HDF5 >= 1.10.5");
+    return false;
+#endif
+}
+
+/************************************************************************/
 /*                          GetAttributesCallback()                     */
 /************************************************************************/
 
@@ -1982,36 +2214,7 @@ CSLConstList HDF5Array::GetStructuralInfo() const
     if (m_aosStructuralInfo.empty())
     {
         HDF5_GLOBAL_LOCK();
-        const hid_t nListId = H5Dget_create_plist(m_hArray);
-        if (nListId > 0)
-        {
-            const int nFilters = H5Pget_nfilters(nListId);
-            for (int i = 0; i < nFilters; ++i)
-            {
-                unsigned int flags = 0;
-                size_t cd_nelmts = 0;
-                char szName[64 + 1] = {0};
-                const auto eFilter = H5Pget_filter(
-                    nListId, i, &flags, &cd_nelmts, nullptr, 64, szName);
-                if (eFilter == H5Z_FILTER_DEFLATE)
-                {
-                    m_aosStructuralInfo.SetNameValue("COMPRESSION", "DEFLATE");
-                }
-                else if (eFilter == H5Z_FILTER_SZIP)
-                {
-                    m_aosStructuralInfo.SetNameValue("COMPRESSION", "SZIP");
-                }
-                else if (eFilter == H5Z_FILTER_SHUFFLE)
-                {
-                    m_aosStructuralInfo.SetNameValue("FILTER", "SHUFFLE");
-                }
-                else
-                {
-                    CPLDebug("HDF5", "Filter used: %s", szName);
-                }
-            }
-            H5Pclose(nListId);
-        }
+        m_aosStructuralInfo = GetFilterInfo(m_hArray, /* nFilterMask = */ 0);
     }
     return m_aosStructuralInfo.List();
 }

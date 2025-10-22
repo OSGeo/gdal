@@ -356,3 +356,57 @@ def test_zarr_kerchunk_parquet_invalid_parquet_struct():
             match="has an unexpected field structure",
         ):
             ar.Read()
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "ref_filename,expected_md",
+    [
+        (
+            "data/zarr/kerchunk_parquet/parquet_ref_0_dim",
+            {
+                "FILENAME": "data/zarr/kerchunk_parquet/parquet_ref_0_dim/x/0.bin",
+                "OFFSET": "0",
+                "SIZE": "1",
+            },
+        ),
+        (
+            "data/zarr/kerchunk_parquet/parquet_ref_0_dim_missing_size",
+            {
+                "FILENAME": "data/zarr/kerchunk_parquet/parquet_ref_0_dim_missing_size/x/0.bin",
+                "OFFSET": "0",
+                "SIZE": "1",
+            },
+        ),
+        (
+            "data/zarr/kerchunk_parquet/parquet_ref_0_dim_inline_content",
+            {"BASE64": "AQ==", "SIZE": "1"},
+        ),
+    ],
+)
+@pytest.mark.require_driver("PARQUET")
+def test_vsikerchunk_parquet_ref_GetFileMetadata(ref_filename, expected_md):
+
+    assert gdal.GetFileMetadata("/vsikerchunk_parquet_ref/", None) == {}
+    with pytest.raises(Exception, match="Invalid /vsikerchunk_parquet_ref/ syntax"):
+        assert gdal.GetFileMetadata("/vsikerchunk_parquet_ref/", "CHUNK_INFO")
+    with pytest.raises(Exception, match="Invalid /vsikerchunk_parquet_ref/ syntax"):
+        assert gdal.GetFileMetadata("/vsikerchunk_parquet_ref/{foo", "CHUNK_INFO")
+    assert (
+        gdal.GetFileMetadata("/vsikerchunk_parquet_ref{/i_do/not/exist}", "CHUNK_INFO")
+        == {}
+    )
+    assert (
+        gdal.GetFileMetadata(
+            "/vsikerchunk_parquet_ref/{" + ref_filename + "}/non_existing", "CHUNK_INFO"
+        )
+        == {}
+    )
+    got_md = gdal.GetFileMetadata(
+        "/vsikerchunk_parquet_ref/{" + ref_filename + "}/x/0", "CHUNK_INFO"
+    )
+    if "FILENAME" in got_md:
+        got_md["FILENAME"] = got_md["FILENAME"].replace("\\", "/")
+    assert got_md == expected_md

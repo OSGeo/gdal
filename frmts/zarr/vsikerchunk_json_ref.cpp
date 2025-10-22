@@ -152,6 +152,9 @@ class VSIKerchunkJSONRefFileSystem final : public VSIFilesystemHandler
 
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
 
+    char **GetFileMetadata(const char *pszFilename, const char *pszDomain,
+                           CSLConstList papszOptions) override;
+
   private:
     friend bool VSIKerchunkConvertJSONToParquet(const char *pszSrcJSONFilename,
                                                 const char *pszDstDirname,
@@ -1669,6 +1672,76 @@ int VSIKerchunkJSONRefFileSystem::Stat(const char *pszFilename,
     pStatBuf->st_mode = S_IFREG;
 
     return 0;
+}
+
+/************************************************************************/
+/*           VSIKerchunkJSONRefFileSystem::GetFileMetadata()            */
+/************************************************************************/
+
+char **
+VSIKerchunkJSONRefFileSystem::GetFileMetadata(const char *pszFilename,
+                                              const char *pszDomain,
+                                              CSLConstList /* papszOptions */)
+{
+    if (!pszDomain || !EQUAL(pszDomain, "CHUNK_INFO"))
+        return nullptr;
+
+    const auto [osJSONFilename, osKey] = SplitFilename(pszFilename);
+    if (osJSONFilename.empty() || osKey.empty())
+        return nullptr;
+
+    const auto [refFile, osParqFilename] = Load(
+        osJSONFilename, STARTS_WITH(pszFilename, JSON_REF_CACHED_FS_PREFIX));
+    if (!refFile)
+        return nullptr;
+
+    const auto oIter = refFile->GetMapKeys().find(osKey);
+    if (oIter == refFile->GetMapKeys().end())
+        return nullptr;
+
+    const auto &keyInfo = oIter->second;
+    CPLStringList aosMetadata;
+    if (!(keyInfo.posURI))
+    {
+        aosMetadata.SetNameValue(
+            "SIZE", CPLSPrintf(CPL_FRMT_GUIB,
+                               static_cast<GUIntBig>(keyInfo.abyValue.size())));
+        if (keyInfo.abyValue.size() <
+            static_cast<size_t>(std::numeric_limits<int>::max() - 1))
+        {
+            char *pszBase64 =
+                CPLBase64Encode(static_cast<int>(keyInfo.abyValue.size()),
+                                keyInfo.abyValue.data());
+            aosMetadata.SetNameValue("BASE64", pszBase64);
+            CPLFree(pszBase64);
+        }
+    }
+    else
+    {
+        const std::string osVSIPath = VSIKerchunkMorphURIToVSIPath(
+            *(keyInfo.posURI), CPLGetPathSafe(osJSONFilename.c_str()));
+        if (osVSIPath.empty())
+            return nullptr;
+        if (keyInfo.nSize)
+        {
+            aosMetadata.SetNameValue("SIZE", CPLSPrintf("%u", keyInfo.nSize));
+        }
+        else
+        {
+            VSIStatBufL sStatBuf;
+            if (VSIStatL(osVSIPath.c_str(), &sStatBuf) != 0)
+                return nullptr;
+            aosMetadata.SetNameValue(
+                "SIZE", CPLSPrintf(CPL_FRMT_GUIB,
+                                   static_cast<GUIntBig>(sStatBuf.st_size)));
+        }
+        aosMetadata.SetNameValue(
+            "OFFSET",
+            CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(keyInfo.nOffset)));
+        aosMetadata.SetNameValue("FILENAME", osVSIPath.c_str());
+    }
+
+    return aosMetadata.StealList();
 }
 
 /************************************************************************/
