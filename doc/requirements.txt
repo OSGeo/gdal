@@ -1,6 +1,7 @@
 # This file may be used to create an environment using:
 # $ pip install --upgrade -r <this file>
 breathe
+docstub
 fsspec
 numpy
 sphinx
