@@ -391,14 +391,14 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
                                         pszDatasetName);
                             return false;
                         }
-                        desc.dfStart =
-                            std::min(desc.dfStart, descThisDataset.dfStart);
                         const double dfEnd = std::max(
                             desc.dfStart + static_cast<double>(desc.nSize) *
                                                desc.dfIncrement,
                             descThisDataset.dfStart +
                                 static_cast<double>(descThisDataset.nSize) *
                                     descThisDataset.dfIncrement);
+                        desc.dfStart =
+                            std::min(desc.dfStart, descThisDataset.dfStart);
                         const double dfSize =
                             (dfEnd - desc.dfStart) / desc.dfIncrement;
                         constexpr double MAX_INTEGER_REPRESENTABLE =
