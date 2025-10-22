@@ -15254,6 +15254,12 @@ GDALMDArrayRawBlockInfo::operator=(GDALMDArrayRawBlockInfo &&other)
  * encoded content) and "TRANSPOSE_ORDER" (value is a string like
  * "[idx0,...,idxN]" with the permutation).
  *
+ * For VRT, the potential keys are the ones of the underlying source(s). Note
+ * that GetRawBlockInfo() on VRT only works when the VRT declares a block size,
+ * that for each queried VRT block, there is one and only one source that
+ * is used to fill the VRT block and that the block size of this source is
+ * exactly the one of the VRT block.
+ *
  * This is the same as C function GDALMDArrayGetRawBlockInfo().
  *
  * @param panBlockCoordinates array of GetDimensionCount() values with the block
@@ -15300,6 +15306,12 @@ bool GDALMDArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
  * content from the array definition), "FILTERS" (for Zarr V2, value is JSON
  * encoded content) and "TRANSPOSE_ORDER" (value is a string like
  * "[idx0,...,idxN]" with the permutation).
+ *
+ * For VRT, the potential keys are the ones of the underlying source(s). Note
+ * that GetRawBlockInfo() on VRT only works when the VRT declares a block size,
+ * that for each queried VRT block, there is one and only one source that
+ * is used to fill the VRT block and that the block size of this source is
+ * exactly the one of the VRT block.
  *
  * This is the same as C++ method GDALMDArray::GetRawBlockInfo().
  *
