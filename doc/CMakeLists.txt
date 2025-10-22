@@ -219,6 +219,5 @@ if (BUILD_DOCS)
              ${Python_EXECUTABLE} -m docstub run ${CMAKE_BINARY_DIR}/swig/python/osgeo
              --config ${CMAKE_BINARY_DIR}/swig/python/pyproject.toml
              WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-    )
 
 endif ()
