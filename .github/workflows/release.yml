@@ -121,34 +121,34 @@ jobs:
           fi
       - name: Upload tar.gz
         id: upload_tar_gz
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
           path: |
             gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
       - name: Upload tar.xz
         id: upload_tar_xz
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
           path: |
             gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
       - name: Upload zip
         id: upload_zip
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
           path: |
             gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
-      - uses: actions/attest-build-provenance@v3
+      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
         with:
           subject-name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
           subject-digest: sha256:${{ steps.upload_tar_gz.outputs.artifact-digest }}
-      - uses: actions/attest-build-provenance@v3
+      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
         with:
           subject-name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
           subject-digest: sha256:${{ steps.upload_tar_xz.outputs.artifact-digest }}
-      - uses: actions/attest-build-provenance@v3
+      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
         with:
           subject-name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
           subject-digest: sha256:${{ steps.upload_zip.outputs.artifact-digest }}
@@ -165,13 +165,13 @@ jobs:
           python3 setup.py bdist_wheel
           cp dist/* ${{ github.workspace }}/dist
       - name: Upload bdist_wheel
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: gdal-utils whl
           path: |
             dist/*
       - name: Publish gdal-utils bdist_wheel to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
           attestations: true
           repository-url: ${{ env.PYPI_REPOSITORY }}
@@ -183,18 +183,18 @@ jobs:
           python3 setup.py sdist
           cp dist/* ${{ github.workspace }}/dist
       - name: Upload sdist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: gdal sdist
           path: |
             dist/*
       - name: Publish gdal sdist to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
           attestations: true
           repository-url: ${{ env.PYPI_REPOSITORY }}
           skip-existing: ${{ env.PYPI_SKIP_EXISTING}}
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
         if: startsWith(github.ref, 'refs/tags/')
         name: Publish release as draft
         with:
@@ -231,7 +231,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Set up Docker
-        uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 # v4.3.0
+        uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4.4.0
         with:
           daemon-config: |
             {
