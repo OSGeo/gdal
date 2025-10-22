@@ -1141,9 +1141,11 @@ GetLinearCollection(const OGRGeometryCollection *poGeomColl)
         }
         else
         {
-            poFlatGeom->addGeometryDirectly(OGRGeometryFactory::forceTo(
+            auto poNewGeom = OGRGeometryFactory::forceTo(
                 poSubGeom->clone(),
-                OGR_GT_GetLinear(poSubGeom->getGeometryType())));
+                OGR_GT_GetLinear(poSubGeom->getGeometryType()));
+            if (poNewGeom)
+                poFlatGeom->addGeometryDirectly(poNewGeom);
         }
     }
     return poFlatGeom;
