@@ -3277,9 +3277,9 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo, bool bRecurseAllowed)
                                                              pszLayerName);
 
                         poDS->m_apoLayers.push_back(
-                            std::unique_ptr<OGRLayer>(new OGRMVTLayer(
+                            std::make_unique<OGRMVTLayer>(
                                 poDS, pszLayerName, pabyDataLayer, nLayerSize,
-                                oFields, oAttributesFromTileStats, eGeomType)));
+                                oFields, oAttributesFromTileStats, eGeomType));
                         CPLFree(pszLayerName);
                         break;
                     }
@@ -3292,6 +3292,12 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo, bool bRecurseAllowed)
             }
             else
             {
+                if (nKey == 0 && !poDS->m_apoLayers.empty())
+                {
+                    // File attached to https://github.com/OSGeo/gdal/issues/13268
+                    // has 0-byte padding after the layer definition.
+                    break;
+                }
                 SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, FALSE);
             }
         }

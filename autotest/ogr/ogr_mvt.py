@@ -1796,3 +1796,14 @@ def test_ogr_mvt_write_custom_tiling_scheme_WorldCRS84Quad(tmp_vsimem, TILING_SC
         ogrtest.check_feature_geometry(
             out_f, "MULTIPOINT ((120.0146484375 39.990234375))"
         )
+
+
+###############################################################################
+# Test reading a uncompressed file with 0-byte padding
+# Scenario of https://github.com/OSGeo/gdal/issues/13268
+
+
+def test_ogr_mvt_read_with_padding():
+
+    ds = ogr.Open("data/mvt/with_padding.mvt")
+    assert ds.GetLayerCount() == 2
