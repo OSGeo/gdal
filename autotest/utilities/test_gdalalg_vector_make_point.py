@@ -172,3 +172,36 @@ def test_gdalalg_vector_make_point_invalid_field_name(make_point, invalid_field)
         match=f"Specified {invalid_field.upper()} field name .* does not exist",
     ):
         make_point.Run()
+
+
+def test_gdalalg_vector_make_point_remove_existing_geom_fields(make_point):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbPolygon)
+    src_lyr.CreateField(ogr.FieldDefn("my_x", ogr.OFTReal))
+    src_lyr.CreateField(ogr.FieldDefn("my_y", ogr.OFTReal))
+
+    make_point["input"] = src_ds
+    make_point["x"] = "my_x"
+    make_point["y"] = "my_y"
+    make_point["output"] = ""
+    make_point["output-format"] = "MEM"
+
+    make_point.Run()
+
+    out_ds = make_point.Output()
+    out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.GetSpatialRef() is None
+    assert out_lyr.GetLayerDefn().GetGeomFieldCount() == 1
+
+
+def test_gdalalg_vector_make_point_no_input_layer(make_point):
+
+    make_point["input"] = gdal.GetDriverByName("MEM").CreateVector("")
+    make_point["x"] = "my_x"
+    make_point["y"] = "my_y"
+    make_point["output"] = ""
+    make_point["output-format"] = "MEM"
+
+    with pytest.raises(Exception, match="No input vector layer"):
+        make_point.Run()
