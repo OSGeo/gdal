@@ -2020,6 +2020,11 @@ class VRTGroup final : public GDALGroup
         return m_osVRTPath;
     }
 
+    void SetVRTPath(const std::string &osVRTPath)
+    {
+        m_osVRTPath = osVRTPath;
+    }
+
     void SetDirty();
 
     void SetFilename(const std::string &osFilename)

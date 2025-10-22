@@ -109,7 +109,10 @@ CPLErr VRTDataset::FlushCache(bool bAtClosing)
 
 {
     if (m_poRootGroup)
+    {
+        m_poRootGroup->SetVRTPath(CPLGetPathSafe(GetDescription()));
         return m_poRootGroup->Serialize() ? CE_None : CE_Failure;
+    }
     else
         return VRTFlushCacheStruct<VRTDataset>::FlushCache(*this, bAtClosing);
 }
