@@ -997,7 +997,7 @@ OGRErr OGRUnionLayer::ISetFeature(OGRFeature *poFeature)
 
 OGRErr OGRUnionLayer::IUpsertFeature(OGRFeature *poFeature)
 {
-    if (GetFeature(poFeature->GetFID()))
+    if (std::unique_ptr<OGRFeature>(GetFeature(poFeature->GetFID())))
     {
         return ISetFeature(poFeature);
     }
