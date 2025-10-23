@@ -672,29 +672,9 @@ int ILI2Reader::SetupParser()
     m_poSAXReader->setFeature(XMLUni::fgXercesDisableDefaultEntityResolution,
                               true);
 
-    /* No Validation
-    #if (OGR_ILI2_VALIDATION)
-        m_poSAXReader->setFeature(
-            XMLString::transcode("http://xml.org/sax/features/validation"),
-    true); m_poSAXReader->setFeature(
-            XMLString::transcode("http://xml.org/sax/features/namespaces"),
-    true);
-
-        m_poSAXReader->setFeature( XMLUni::fgSAX2CoreNameSpaces, true );
-        m_poSAXReader->setFeature( XMLUni::fgXercesSchema, true );
-
-    //    m_poSAXReader->setDoSchema(true);
-    //    m_poSAXReader->setValidationSchemaFullChecking(true);
-    #else
-    */
-    XMLCh *tmpCh =
-        XMLString::transcode("http://xml.org/sax/features/validation");
-    m_poSAXReader->setFeature(tmpCh, false);
-    XMLString::release(&tmpCh);
-    tmpCh = XMLString::transcode("http://xml.org/sax/features/namespaces");
-    m_poSAXReader->setFeature(tmpCh, false);
-    XMLString::release(&tmpCh);
-    // #endif
+    // No Validation
+    m_poSAXReader->setFeature(XMLUni::fgSAX2CoreValidation, false);
+    m_poSAXReader->setFeature(XMLUni::fgXercesSchema, false);
 
     m_bReadStarted = FALSE;
 
