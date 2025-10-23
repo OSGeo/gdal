@@ -96,6 +96,8 @@ This list is provided to help you locate equivalent functionality when upgrading
 .. only:: html
 
     - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/gdalinfo.py`: See :ref:`gdalinfo`. A direct port of :source_file:`apps/gdalinfo_bin.cpp`.
+    - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/gdal_ls.py`: Display the list of files in a virtual directory, like /vsicurl or /vsizip. Now available in :ref:`gdal_vsi`.
+    - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/gdal_cp.py`: Copy a virtual file. Now available in :ref:`gdal_dataset_copy`.
     - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/ogrinfo.py`: See :ref:`ogrinfo`. A direct port of :source_file:`apps/ogrinfo_bin.cpp`.
     - :source_file:`swig/python/gdal-utils/scripts/ogr_layer_algebra.py`: See :ref:`gdal_vector_layer_algebra`. Application for executing OGR layer algebra operations.
     - :source_file:`swig/python/gdal-utils/osgeo_utils/gdal2xyz.py`: See :ref:`gdal2xyz`. Translates a raster file into xyz format.
@@ -107,7 +109,5 @@ The following scripts have been replaced by equivalent functionality in GDAL, an
 .. only:: html
 
     - `hsv_merge.py`: Merge greyscale image into RGB image as intensity in HSV space. Now available in :ref:`gdal_raster_blend`. 
-    - `gdal_ls.py`: Display the list of files in a virtual directory, like /vsicurl or /vsizip. Now available in :ref:`gdal_vsi`.
-    - `gdal_cp.py`: Copy a virtual file. Now available in :ref:`gdal_dataset_copy`.
     - `gdal_vrtmerge.py`: Similar to gdal_merge, but produces a VRT file. Now available in :ref:`gdal_raster_mosaic`.
     - `gdal2grd.py`: Script to write out ASCII GRD rasters (used in Golden Software Surfer). from any source supported by GDAL. Now available in the :ref:`raster.gsag` driver.
