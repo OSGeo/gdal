@@ -53,7 +53,7 @@ OGRILI2DataSource::~OGRILI2DataSource()
 /************************************************************************/
 
 int OGRILI2DataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
-                            int bTestOpen)
+                            int /* bTestOpen */)
 
 {
     CPLString osBasename;
@@ -82,48 +82,6 @@ int OGRILI2DataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
     }
 
     pszName = CPLStrdup(osBasename);
-
-    /* -------------------------------------------------------------------- */
-    /*      Open the source file.                                           */
-    /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL(pszName, "r");
-    if (fp == nullptr)
-    {
-        if (!bTestOpen)
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Failed to open ILI2 file `%s'.", pszNewName);
-
-        return FALSE;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      If we aren't sure it is ILI2, load a header chunk and check     */
-    /*      for signs it is ILI2                                            */
-    /* -------------------------------------------------------------------- */
-    char szHeader[1000];
-    if (bTestOpen)
-    {
-        int nLen =
-            static_cast<int>(VSIFReadL(szHeader, 1, sizeof(szHeader), fp));
-        if (nLen == sizeof(szHeader))
-            szHeader[sizeof(szHeader) - 1] = '\0';
-        else
-            szHeader[nLen] = '\0';
-
-        if (szHeader[0] != '<' ||
-            strstr(szHeader, "interlis.ch/INTERLIS2") == nullptr)
-        {
-            // "www.interlis.ch/INTERLIS2.3"
-            VSIFCloseL(fp);
-            return FALSE;
-        }
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      We assume now that it is ILI2.  Close and instantiate a         */
-    /*      ILI2Reader on it.                                               */
-    /* -------------------------------------------------------------------- */
-    VSIFCloseL(fp);
 
     poReader = CreateILI2Reader();
     if (poReader == nullptr)

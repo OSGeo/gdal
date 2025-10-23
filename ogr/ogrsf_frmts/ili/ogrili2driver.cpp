@@ -23,16 +23,13 @@
 static GDALDataset *OGRILI2DriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if (poOpenInfo->eAccess == GA_Update ||
-        (!poOpenInfo->bStatOK &&
-         strchr(poOpenInfo->pszFilename, ',') == nullptr))
-        return nullptr;
-
     if (poOpenInfo->pabyHeader != nullptr)
     {
         if (poOpenInfo->pabyHeader[0] != '<' ||
-            strstr((const char *)poOpenInfo->pabyHeader,
-                   "interlis.ch/INTERLIS2") == nullptr)
+            (strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+                    "interlis.ch/INTERLIS2") == nullptr &&
+             strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+                    "//www.interlis.ch/xtf/") == nullptr))
         {
             return nullptr;
         }
