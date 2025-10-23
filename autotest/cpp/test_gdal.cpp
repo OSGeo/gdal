@@ -6280,6 +6280,11 @@ TEST_F(test_gdal, GDALMDArrayRawBlockInfo)
         GDALMDArrayRawBlockInfo info2(std::move(info));
         info = infoCopy;
 
+        // to avoid Coverity warng that the above copy assignment could be a
+        // moved one...
+        infoCopy.nOffset = 1;
+        CPL_IGNORE_RET_VAL(infoCopy.nOffset);
+
         EXPECT_EQ(info2.nOffset, info.nOffset);
         EXPECT_EQ(info2.nSize, info.nSize);
         EXPECT_STREQ(info2.pszFilename, info.pszFilename);
@@ -6296,6 +6301,11 @@ TEST_F(test_gdal, GDALMDArrayRawBlockInfo)
         GDALMDArrayRawBlockInfo info2;
         info2 = std::move(info);
         info = infoCopy;
+
+        // to avoid Coverity warng that the above copy assignment could be a
+        // moved one...
+        infoCopy.nOffset = 1;
+        CPL_IGNORE_RET_VAL(infoCopy.nOffset);
 
         EXPECT_EQ(info2.nOffset, info.nOffset);
         EXPECT_EQ(info2.nSize, info.nSize);
