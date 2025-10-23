@@ -48,6 +48,8 @@ class OGRAVCLayer CPL_NON_FINAL : public OGRLayer
     OGRAVCLayer(AVCFileType eSectionType, OGRAVCDataSource *poDS);
     ~OGRAVCLayer() override;
 
+    using OGRLayer::GetLayerDefn;
+
     const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;

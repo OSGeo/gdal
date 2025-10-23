@@ -1874,8 +1874,8 @@ int TABRelation::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
     CPLAssert(m_poMainTable && m_poRelTable);
 
     // We'll need the feature Defn later...
-    const OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
-    const OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
+    OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
+    OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
 
     /*-----------------------------------------------------------------
      * Create one feature for each table

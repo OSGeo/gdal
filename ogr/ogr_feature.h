@@ -498,6 +498,10 @@ whileUnsealing(OGRGeomFieldDefn *object)
  * methods, but rather through OGRLayer::CreateField(),
  * OGRLayer::AlterFieldDefn() or OGRLayer::ReorderFields(), for drivers that
  * support those operations.
+ *
+ * Note that modifying a OGRFeatureDefn (besides changing its reference count),
+ * while there are OGRFeature instances based on it is undefined behavior, and
+ * will likely cause crashes.
  */
 
 class CPL_DLL OGRFeatureDefn
@@ -934,7 +938,7 @@ class CPL_DLL OGRFeature
 {
   private:
     GIntBig nFID;
-    const OGRFeatureDefn *poDefn;
+    OGRFeatureDefn *poDefn;
     OGRGeometry **papoGeometries;
     OGRField *pauFields;
     char *m_pszNativeData;
@@ -952,7 +956,7 @@ class CPL_DLL OGRFeature
     bool CopySelfTo(OGRFeature *poNew) const;
 
   public:
-    explicit OGRFeature(const OGRFeatureDefn *);
+    explicit OGRFeature(OGRFeatureDefn *);
     virtual ~OGRFeature();
 
     /** Field value. */
@@ -1226,6 +1230,11 @@ class CPL_DLL OGRFeature
 
     const FieldValue operator[](const char *pszFieldName) const;
     FieldValue operator[](const char *pszFieldName);
+
+    OGRFeatureDefn *GetDefnRef()
+    {
+        return poDefn;
+    }
 
     const OGRFeatureDefn *GetDefnRef() const
     {
@@ -1528,10 +1537,9 @@ class CPL_DLL OGRFeature
                          bool bUseISO8601ForDateTimeAsString = false);
 
     //! @cond Doxygen_Suppress
-    OGRErr RemapFields(const OGRFeatureDefn *poNewDefn,
-                       const int *panRemapSource);
+    OGRErr RemapFields(OGRFeatureDefn *poNewDefn, const int *panRemapSource);
     void AppendField();
-    OGRErr RemapGeomFields(const OGRFeatureDefn *poNewDefn,
+    OGRErr RemapGeomFields(OGRFeatureDefn *poNewDefn,
                            const int *panRemapSource);
     //! @endcond
 
@@ -1569,7 +1577,7 @@ class CPL_DLL OGRFeature
     void SetNativeData(const char *pszNativeData);
     void SetNativeMediaType(const char *pszNativeMediaType);
 
-    static OGRFeature *CreateFeature(const OGRFeatureDefn *);
+    static OGRFeature *CreateFeature(OGRFeatureDefn *);
     static void DestroyFeature(OGRFeature *);
 
     /** Convert a OGRFeature* to a OGRFeatureH.

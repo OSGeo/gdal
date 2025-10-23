@@ -284,7 +284,7 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
     CPLAssert(wkbFlatten(poMultiPoint->GetGeometryRef()->getGeometryType()) ==
               wkbMultiPoint);
 
-    const OGRFeatureDefn *poDefn = poMultiPoint->GetDefnRef();
+    OGRFeatureDefn *poDefn = poMultiPoint->GetDefnRef();
     OGRFeature *poPoint = new OGRFeature(poDefn);
     OGRMultiPoint *poMPGeom = poMultiPoint->GetGeometryRef()->toMultiPoint();
 
