@@ -161,7 +161,7 @@ Examples
 
       gdal pipeline read dem.tif ! \
           zonal-stats \
-            --zones [ read points.geojson ! buffer 20 ] \
+            --zones [ read points.geojson ! buffer 200 ] \
             --stat mean ! \
           write \
             --output-format CSV \
