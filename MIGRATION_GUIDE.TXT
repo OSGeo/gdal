@@ -26,9 +26,6 @@ MIGRATION GUIDE FROM GDAL 3.11 to GDAL 3.12
   * OGRLayer::GetSpatialRef() is now a const method that returns a const OGRSpatialReference*
   * OGRLayer::TestCapacility() is now a const method
 
-- Changes impacting C++ users:
-  * OGRLayer::GetSpatialRef() now returns a const OGRSpatialReference* instead of a non-const one.
-
 - C API change: The GDALRATFieldType enumeration has been extended with 3 new
   values: GFT_Boolean, GFT_DateTime, GFT_WKBGeometry. Code that calls
   GDALRATGetTypeOfCol() may encounter those new values.

@@ -2903,6 +2903,34 @@ int OGRLayer::FindFieldIndex(const char *pszFieldName,
  \brief Fetch the spatial reference system for this layer.
 
  The returned object is owned by the OGRLayer and should not be modified
+ by the application, besides calling OGRSpatialReference::Reference()
+ or OGRSpatialReference::Release() on it.
+
+ Several geometry fields can be associated to a
+ feature definition. Each geometry field can have its own spatial reference
+ system, which is returned by OGRGeomFieldDefn::GetSpatialRef().
+ OGRLayer::GetSpatialRef() is equivalent to
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(0)->GetSpatialRef()
+
+ This method is the same as the C function OGR_L_GetSpatialRef().
+
+ @return spatial reference, or NULL if there isn't one.
+*/
+
+OGRSpatialReference *OGRLayer::GetSpatialRef()
+{
+    return const_cast<OGRSpatialReference *>(
+        const_cast<const OGRLayer *>(this)->GetSpatialRef());
+}
+
+/************************************************************************/
+/*                           GetSpatialRef()                            */
+/************************************************************************/
+
+/**
+ \brief Fetch the spatial reference system for this layer.
+
+ The returned object is owned by the OGRLayer and should not be modified
  or freed by the application.
 
  Note that even if this method is const (since GDAL 3.12), there is no guarantee
@@ -2917,6 +2945,8 @@ int OGRLayer::FindFieldIndex(const char *pszFieldName,
  This method is the same as the C function OGR_L_GetSpatialRef().
 
  @return spatial reference, or NULL if there isn't one.
+
+ @since 3.12 (const method)
 */
 
 const OGRSpatialReference *OGRLayer::GetSpatialRef() const
@@ -2937,7 +2967,7 @@ const OGRSpatialReference *OGRLayer::GetSpatialRef() const
  \brief Fetch the spatial reference system for this layer.
 
  The returned object is owned by the OGRLayer and should not be modified
- or freed by the application.
+ by the application, besides calling OSRReference() or OSRRelease() on it.
 
  This function is the same as the C++ method OGRLayer::GetSpatialRef().
 

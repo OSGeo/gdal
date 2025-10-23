@@ -250,6 +250,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual int FindFieldIndex(const char *pszFieldName, int bExactMatch);
 
+    OGRSpatialReference *GetSpatialRef();
+
     virtual const OGRSpatialReference *GetSpatialRef() const;
 
     /** Return type of OGRLayer::GetSupportedSRSList() */
