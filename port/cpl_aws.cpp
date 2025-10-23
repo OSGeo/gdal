@@ -21,6 +21,7 @@
 #include "cpl_time.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "cpl_spawn.h"
 #include "cpl_http.h"
 #include <algorithm>
 
@@ -1775,76 +1776,45 @@ static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
         return false;
     }
 
-    // Use CPLSpawn for cross-platform compatibility
-    VSILFILE *fpIn = nullptr;
-    VSILFILE *fpOut = nullptr;
-    VSILFILE *fpErr = nullptr;
-
-    CPLPid pid = CPLSpawn(papszArgs, &fpIn, &fpOut, &fpErr, TRUE);
-    CSLDestroy(papszArgs);
-
-    if (pid <= 0)
+    // Create a memory file to capture output
+    CPLString osMemFile;
+    osMemFile.Printf("/vsimem/credential_process_%p", papszArgs);
+    VSILFILE *fOut = VSIFOpenL(osMemFile.c_str(), "w");
+    if (fOut == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed to execute credential_process: %s. %s",
-                 osCredentialProcess.c_str(), VSIStrerror(errno));
+                 "Failed to create memory file for output");
+        CSLDestroy(papszArgs);
         return false;
     }
 
-    // Close stdin to the child process
-    if (fpIn)
-        VSIFCloseL(fpIn);
+    // Use CPLSpawn - handles process creation, pipes, and cleanup
+    int nExitCode = CPLSpawn(papszArgs, nullptr, fOut, TRUE);
+    CSLDestroy(papszArgs);
+    VSIFCloseL(fOut);
 
-    // Read output
-    std::string osOutput;
-    if (fpOut)
-    {
-        char buffer[1024];
-        size_t nRead;
-        while ((nRead = VSIFReadL(buffer, 1, sizeof(buffer) - 1, fpOut)) > 0)
-        {
-            buffer[nRead] = '\0';
-            osOutput += buffer;
-        }
-        VSIFCloseL(fpOut);
-    }
-
-    // Read error output (for debugging)
-    std::string osError;
-    if (fpErr)
-    {
-        char buffer[1024];
-        size_t nRead;
-        while ((nRead = VSIFReadL(buffer, 1, sizeof(buffer) - 1, fpErr)) > 0)
-        {
-            buffer[nRead] = '\0';
-            osError += buffer;
-        }
-        VSIFCloseL(fpErr);
-    }
-
-    // Wait for process to complete
-    int nExitCode = CPLSpawnWait(pid);
     if (nExitCode != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "credential_process failed with exit code %d: %s", nExitCode,
                  osCredentialProcess.c_str());
-        if (!osError.empty())
-        {
-            CPLDebug(AWS_DEBUG_KEY, "credential_process stderr: %s",
-                     osError.c_str());
-        }
+        VSIUnlink(osMemFile.c_str());
         return false;
     }
 
-    if (osOutput.empty())
+    // Read the output from memory file
+    vsi_l_offset nDataLength = 0;
+    GByte *pData = VSIGetMemFileBuffer(osMemFile.c_str(), &nDataLength, TRUE);
+    if (pData == nullptr || nDataLength == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "credential_process returned empty output: %s",
                  osCredentialProcess.c_str());
         return false;
     }
+
+    std::string osOutput(reinterpret_cast<char *>(pData), nDataLength);
+    CPLFree(pData);
 
     CPLJSONDocument oDoc;
     if (!oDoc.LoadMemory(osOutput))
@@ -2211,11 +2181,6 @@ void VSIS3HandleHelper::ClearCache()
     gosSSOStartURL.clear();
     gosSSOAccountID.clear();
     gosSSORoleName.clear();
-    gosCredentialProcessCommand.clear();
-    gosCredentialProcessAccessKeyId.clear();
-    gosCredentialProcessSecretAccessKey.clear();
-    gosCredentialProcessSessionToken.clear();
-    gnCredentialProcessExpiration = 0;
 }
 
 /************************************************************************/
