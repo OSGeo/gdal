@@ -17,14 +17,14 @@ MIGRATION GUIDE FROM GDAL 3.11 to GDAL 3.12
 - Changes impacting out-of-tree vector drivers:
   * GDALDataset::GetLayer() is now a const method that returns a const OGRLayer*
   * GDALDataset::GetLayerCount() is now a const method
-  * GDALDataset::TestCapacility() is now a const method
+  * GDALDataset::TestCapability() is now a const method
   * OGRLayer::GetName() is now a const method
   * OGRLayer::GetGeomType() is now a const method
   * OGRLayer::GetLayerDefn() is now a const method that returns a const OGRFeatureDefn*
   * OGRLayer::GetFIDColumn() is now a const method
   * OGRLayer::GetGeometryColumn() is now a const method
   * OGRLayer::GetSpatialRef() is now a const method that returns a const OGRSpatialReference*
-  * OGRLayer::TestCapacility() is now a const method
+  * OGRLayer::TestCapability() is now a const method
 
 - Changes impacting C++ users:
   * OGRLayer::GetSpatialRef() now returns a const OGRSpatialReference* instead of a non-const one.
