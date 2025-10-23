@@ -46,7 +46,18 @@ GDALVSICopyAlgorithm::GDALVSICopyAlgorithm()
                    &m_destination)
                 .SetPositional()
                 .SetMinCharCount(1)
-                .SetRequired();
+                .SetRequired()
+                .AddAction(
+                    [this]()
+                    {
+                        // If outputting to stdout, automatically turn off progress bar
+                        if (m_destination == "/vsistdout/")
+                        {
+                            auto quietArg = GetArg(GDAL_ARG_NAME_QUIET);
+                            if (quietArg && quietArg->GetType() == GAAT_BOOLEAN)
+                                quietArg->Set(true);
+                        }
+                    });
         SetAutoCompleteFunctionForFilename(arg, 0);
     }
 
