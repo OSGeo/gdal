@@ -6829,11 +6829,19 @@ def test_vsis3_extra_1():
 
 
 def test_vsis3_credential_process(tmp_vsimem, aws_test_config, webserver_port):
-    script_content = """#!/bin/bash
-echo '{"AccessKeyId":"AWS_ACCESS_KEY_ID","SecretAccessKey":"AWS_SECRET_ACCESS_KEY","SessionToken":"session_token","Expiration":"2025-01-01T12:00:00Z"}'
+    script_content = """#!/usr/bin/env python3
+import json
+import sys
+credentials = {
+    "AccessKeyId": "AWS_ACCESS_KEY_ID",
+    "SecretAccessKey": "AWS_SECRET_ACCESS_KEY", 
+    "SessionToken": "session_token",
+    "Expiration": "2025-01-01T12:00:00Z"
+}
+print(json.dumps(credentials))
 """
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(script_content)
         script_path = f.name
 
@@ -6853,7 +6861,7 @@ echo '{"AccessKeyId":"AWS_ACCESS_KEY_ID","SecretAccessKey":"AWS_SECRET_ACCESS_KE
             tmp_vsimem / "aws_config",
             f"""
 [default]
-credential_process = {script_path}
+credential_process = {sys.executable} {script_path}
 region = us-east-1
 """,
         )
@@ -6912,11 +6920,11 @@ region = us-east-1
 
 
 def test_vsis3_credential_process_invalid_json(tmp_vsimem, aws_test_config):
-    script_content = """#!/bin/bash
-echo 'invalid json response'
+    script_content = """#!/usr/bin/env python3
+print('invalid json response')
 """
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(script_content)
         script_path = f.name
 
@@ -6936,7 +6944,7 @@ echo 'invalid json response'
             tmp_vsimem / "aws_config",
             f"""
 [default]
-credential_process = {script_path}
+credential_process = {sys.executable} {script_path}
 region = us-east-1
 """,
         )
@@ -6956,11 +6964,13 @@ region = us-east-1
 
 def test_vsis3_credential_process_missing_fields(tmp_vsimem, aws_test_config):
 
-    script_content = """#!/bin/bash
-echo '{"AccessKeyId":"test_key"}'
+    script_content = """#!/usr/bin/env python3
+import json
+credentials = {"AccessKeyId": "test_key"}
+print(json.dumps(credentials))
 """
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(script_content)
         script_path = f.name
 
@@ -6980,7 +6990,7 @@ echo '{"AccessKeyId":"test_key"}'
             tmp_vsimem / "aws_config",
             f"""
 [default]
-credential_process = {script_path}
+credential_process = {sys.executable} {script_path}
 region = us-east-1
 """,
         )
