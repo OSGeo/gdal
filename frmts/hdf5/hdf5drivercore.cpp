@@ -538,6 +538,7 @@ void S102DriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "h5");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
@@ -551,8 +552,34 @@ void S102DriverSetCommonMetadata(GDALDriver *poDriver)
         "description='Whether the top line of the dataset should be the "
         "northern-most one'/>"
         "</OpenOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "  <Option name='VERTICAL_DATUM' type='string' description="
+        "'Vertical datum abbreviation or code (required)'/>"
+        "  <Option name='ISSUE_DATE' type='string' description="
+        "'Issue date as YYYYMMDD'/>"
+        "  <Option name='ISSUE_TIME' type='string' description="
+        "'Issue time as hhmmssZ or hhmmss[+-]HHMM'/>"
+        "  <Option name='HORIZONTAL_POSITION_UNCERTAINTY' type='float' "
+        "description='Horizontal position uncertainty in meter'/>"
+        "  <Option name='VERTICAL_UNCERTAINTY' type='float' "
+        "description='Vertical uncertainty in meter'/>"
+        "  <Option name='QUALITY_DATASET' type='string' description="
+        "'Path to a dataset with the quality of bathymetric coverage'/>"
+        "  <Option name='COMPRESS' type='string-select' default='DEFLATE'>"
+        "    <Value>NONE</Value>"
+        "    <Value>DEFLATE</Value>"
+        "  </Option>"
+        "  <Option name='ZLEVEL' type='int' "
+        "description='DEFLATE compression level 1-9' default='6' />"
+        "  <Option name='BLOCK_SIZE' type='int' description='Chunk size' />"
+        "</CreationOptionList>");
+
     poDriver->pfnIdentify = S102DatasetIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
 }
 
 /************************************************************************/
