@@ -4021,6 +4021,17 @@ def test_gdalwarp_lib_dict_arguments():
     assert opt == ["-wo", "SKIP_NOSOURCE=YES", "-wo", "NUM_THREADS=2"]
 
 
+def test_gdalwarp_lib_str_arguments():
+
+    opt = gdal.WarpOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions="COMPRESS=DEFLATE",
+        warpOptions="SKIP_NOSOURCE=YES",
+    )
+
+    assert opt == ["-wo", "SKIP_NOSOURCE=YES", "-co", "COMPRESS=DEFLATE"]
+
+
 ###############################################################################
 # Test warping from long/lat to ortho
 

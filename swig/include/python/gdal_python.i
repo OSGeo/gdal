@@ -3291,16 +3291,19 @@ mapGRIORAMethodToString = {
     gdalconst.GRIORA_Gauss: 'gauss',
 }
 
+def _addOptions(new_options, arg, options):
+    if isinstance(options, str):
+        new_options += [arg, options]
+    elif isinstance(options, dict):
+        for k, v in options.items():
+            new_options += [arg, f'{k}={v}']
+    else:
+        for opt in options:
+            new_options += [arg, opt]
+
 def _addCreationOptions(new_options, creationOptions):
     """Update new_options with creationOptions formatted as expected by utilities"""
-    if isinstance(creationOptions, str):
-        new_options += ['-co', creationOptions]
-    elif isinstance(creationOptions, dict):
-        for k, v in creationOptions.items():
-            new_options += ['-co', f'{k}={v}']
-    else:
-        for opt in creationOptions:
-            new_options += ['-co', opt]
+    _addOptions(new_options, '-co', creationOptions)
 
 def TranslateOptions(options=None, format=None,
               outputType = gdalconst.GDT_Unknown, bandList=None, maskBand=None,
@@ -3449,14 +3452,7 @@ def TranslateOptions(options=None, format=None,
             for val in outputGeotransform:
                 new_options += [_strHighPrec(val)]
         if metadataOptions is not None:
-            if isinstance(metadataOptions, str):
-                new_options += ['-mo', metadataOptions]
-            elif isinstance(metadataOptions, dict):
-                for k, v in metadataOptions.items():
-                    new_options += ['-mo', f'{k}={v}']
-            else:
-                for opt in metadataOptions:
-                    new_options += ['-mo', opt]
+            _addOptions(new_options, '-mo', metadataOptions)
         if domainMetadataOptions is not None:
             if isinstance(domainMetadataOptions, str):
                 new_options += ['-dmo', domainMetadataOptions]
@@ -3731,12 +3727,7 @@ def WarpOptions(options=None, format=None,
         if dstAlpha:
             new_options += ['-dstalpha']
         if warpOptions is not None:
-            if isinstance(warpOptions, dict):
-                for k, v in warpOptions.items():
-                    new_options += ['-wo', f'{k}={v}']
-            else:
-                for opt in warpOptions:
-                    new_options += ['-wo', str(opt)]
+            _addOptions(new_options, '-wo', warpOptions)
         if errorThreshold is not None:
             new_options += ['-et', _strHighPrec(errorThreshold)]
         if resampleAlg is not None:
@@ -3781,12 +3772,7 @@ def WarpOptions(options=None, format=None,
         if polynomialOrder is not None:
             new_options += ['-order', str(polynomialOrder)]
         if transformerOptions is not None:
-            if isinstance(transformerOptions, dict):
-                for k, v in transformerOptions.items():
-                    new_options += ['-to', f'{k}={v}']
-            else:
-                for opt in transformerOptions:
-                    new_options += ['-to', opt]
+            _addOptions(new_options, '-to', transformerOptions)
         if cutlineDSName is not None:
             if cutlineWKT is not None:
                 raise Exception("cutlineDSName and cutlineWKT are mutually exclusive")
@@ -4082,13 +4068,7 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-ct', coordinateOperation]
 
         if coordinateOperationOptions is not None:
-            if isinstance(coordinateOperationOptions, dict):
-                for k, v in coordinateOperationOptions.items():
-                    new_options += ['-ct_opt', f'{k}={v}']
-            else:
-                for opt in coordinateOperationOptions:
-                    new_options += ['-ct_opt', opt]
-
+            _addOptions(new_options,'-ct_opt', coordinateOperationOptions)
         if SQLStatement is not None:
             new_options += ['-sql', str(SQLStatement)]
         if SQLDialect is not None:
@@ -4126,20 +4106,10 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-select', val]
 
         if datasetCreationOptions is not None:
-            if isinstance(datasetCreationOptions, dict):
-                for k, v in datasetCreationOptions.items():
-                    new_options += ['-dsco', f'{k}={v}']
-            else:
-                for opt in datasetCreationOptions:
-                    new_options += ['-dsco', opt]
+            _addOptions(new_options, '-dsco', datasetCreationOptions)
 
         if layerCreationOptions is not None:
-            if isinstance(layerCreationOptions, dict):
-                for k, v in layerCreationOptions.items():
-                    new_options += ['-lco', f'{k}={v}']
-            else:
-                for opt in layerCreationOptions:
-                    new_options += ['-lco', opt]
+            _addOptions(new_options, '-lco', layerCreationOptions)
 
         if layers is not None:
             if isinstance(layers, str):
@@ -4813,19 +4783,11 @@ def ContourOptions(
         if offset is not None:
             new_options += ['-off', str(offset)]
         if datasetCreationOptions is not None:
-            if isinstance(datasetCreationOptions, dict):
-                for k, v in datasetCreationOptions.items():
-                    new_options += ['-dsco', f'{k}={v}']
-            else:
-                for opt in datasetCreationOptions:
-                    new_options += ['-dsco', opt]
+            _addOptions(new_options, '-dsco', datasetCreationOptions)
+
         if layerCreationOptions is not None:
-            if isinstance(layerCreationOptions, dict):
-                for k, v in layerCreationOptions.items():
-                    new_options += ['-lco', f'{k}={v}']
-            else:
-                for opt in layerCreationOptions:
-                    new_options += ['-lco', opt]
+            _addOptions(new_options, '-lco', layerCreationOptions)
+              
         if interval is not None:
             new_options += ['-i', str(interval)]
         if fixedLevels is not None:
@@ -5002,12 +4964,7 @@ def RasterizeOptions(options=None, format=None,
         if outputSRS is not None:
             new_options += ['-a_srs', str(outputSRS)]
         if transformerOptions is not None:
-            if isinstance(transformerOptions, dict):
-                for k, v in transformerOptions.items():
-                    new_options += ['-to', f'{k}={v}']
-            else:
-                for opt in transformerOptions:
-                    new_options += ['-to', opt]
+            _addOptions(new_options, '-to', transformerOptions)
         if width is not None and height is not None:
             new_options += ['-ts', str(width), str(height)]
         if xRes is not None and yRes is not None:
@@ -5198,19 +5155,9 @@ def FootprintOptions(options=None,
         if layerName is not None:
             new_options += ['-lyr_name', layerName]
         if datasetCreationOptions is not None:
-            if isinstance(datasetCreationOptions, dict):
-                for k, v in datasetCreationOptions.items():
-                    new_options += ['-dsco', f'{k}={v}']
-            else:
-                for opt in datasetCreationOptions:
-                    new_options += ['-dsco', opt]
+            _addOptions(new_options, '-dsco', datasetCreationOptions)
         if layerCreationOptions is not None:
-            if isinstance(layerCreationOptions, dict):
-                for k, v in layerCreationOptions.items():
-                    new_options += ['-lco', f'{k}={v}']
-            else:
-                for opt in layerCreationOptions:
-                    new_options += ['-lco', opt]
+            _addOptions(new_options, '-lco', layerCreationOptions)
         if locationFieldName is not None:
             new_options += ['-location_field_name', locationFieldName]
         else:
@@ -5454,15 +5401,7 @@ def BuildVRTOptions(options=None,
         if pixelFunction:
             new_options += ['-pixel-function', pixelFunction]
         if pixelFunctionArgs:
-            if isinstance(pixelFunctionArgs, str):
-                new_options += ['-pixel-function-arg', pixelFunctionArgs]
-            elif isinstance(pixelFunctionArgs, dict):
-                for k, v in pixelFunctionArgs.items():
-                    new_options += ['-pixel-function-arg', f'{k}={v}']
-            else:
-                for opt in pixelFunctionArgs:
-                    new_options += ['-pixel-function-arg', opt]
-
+            _addOptions(new_options, '-pixel-function-arg', pixelFunctionArgs)
 
     if return_option_list:
         return new_options
@@ -5623,12 +5562,7 @@ def TileIndexOptions(options=None,
             new_options += ['-lyr_name', layerName]
 
         if layerCreationOptions is not None:
-            if isinstance(layerCreationOptions, dict):
-                for k, v in layerCreationOptions.items():
-                    new_options += ['-lco', f'{k}={v}']
-            else:
-                for opt in layerCreationOptions:
-                    new_options += ['-lco', opt]
+            _addOptions(new_options, '-lco', layerCreationOptions)
 
         if locationFieldName is not None:
             new_options += ['-tileindex', locationFieldName]
@@ -5665,14 +5599,7 @@ def TileIndexOptions(options=None,
         if mask:
             new_options += ['-mask']
         if metadataOptions is not None:
-            if isinstance(metadataOptions, str):
-                new_options += ['-mo', metadataOptions]
-            elif isinstance(metadataOptions, dict):
-                for k, v in metadataOptions.items():
-                    new_options += ['-mo', f'{k}={v}']
-            else:
-                for opt in metadataOptions:
-                    new_options += ['-mo', opt]
+            _addOptions(new_options, '-mo', metadataOptions)
         if fetchMD is not None:
             if isinstance(fetchMD, list):
                 for mdItemName, fieldName, fieldType in fetchMD:
