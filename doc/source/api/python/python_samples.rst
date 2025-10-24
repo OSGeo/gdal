@@ -111,3 +111,15 @@ The following scripts have been replaced by equivalent functionality in GDAL, an
     - `gdal_cp.py`: Copy a virtual file. Equivalent functionality available in :ref:`gdal_dataset_copy`.
     - `gdal_vrtmerge.py`: Similar to gdal_merge, but produces a VRT file. Equivalent functionality available in :ref:`gdal_raster_mosaic`.
     - `gdal2grd.py`: Script to write out ASCII GRD rasters (used in Golden Software Surfer). from any source supported by GDAL. Equivalent functionality available in the :ref:`raster.gsag` driver.
+
+.. note::
+
+    For scripts that have been migrated to the new unified ``gdal`` command-line interface, you can run these in Python using ``gdal.Run``. For example:
+
+    .. code-block:: python
+
+        >>> import os
+        >>> from osgeo import gdal
+        >>> os.environ["AWS_NO_SIGN_REQUEST"] = "YES"
+        >>> gdal.Run("vsi", "list", filename="/vsis3/overturemaps-us-west-2/release/2025-10-22.0/theme=buildings/type=building").Output()
+        ['part-00000-c5e0b5f2-08ff-4192-af19-c572ecc088f1-c000.zstd.parquet', ...]
