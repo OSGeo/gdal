@@ -2406,7 +2406,7 @@ def ReleaseResultSet(self, sql_lyr):
 
       Returns
       -------
-      datetime.datetime:
+      datetime
           Datetime value, or None if it is invalid
       """
 
@@ -2438,7 +2438,7 @@ def ReleaseResultSet(self, sql_lyr):
           The index of the row to read (starting at 0)
       iCol : int
           The index of the column to read (starting at 0)
-      dt : datetime.datetime | RATDateTime | None
+      dt : datetime | RATDateTime | None
           The datetime value
       """
 
