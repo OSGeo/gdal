@@ -240,6 +240,7 @@ endif()
 
 if (SWIG_FOUND AND (Python_Interpreter_FOUND OR Python_FOUND))
   option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
+  option(BUILD_PYTHON_STUBS "Generate Python stub files for Python binding" OFF)
 else()
   option(BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
 endif()
