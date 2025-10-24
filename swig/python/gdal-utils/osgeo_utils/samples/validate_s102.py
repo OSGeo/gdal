@@ -391,7 +391,7 @@ class S102Checker:
 
         self._validate_verticalCoordinateBase(f)
         self._validate_verticalDatumReference(f)
-        self._validate_verticalDatum(f)
+        self._validate_verticalDatum("top level", f)
         self._validate_epoch(f)
         self._validate_metadata(f, self.filename)
         self._validate_horizontalCRS(f)
@@ -448,16 +448,15 @@ class S102Checker:
             }
             self._validate_enumeration(f, "verticalDatumReference", expected_values)
 
-    def _validate_verticalDatum(self, f):
-        if "verticalDatum" in f.attrs:
-            value = f.attrs["verticalDatum"]
-            if isinstance(value, int) and not (
-                (value >= 1 and value <= 30) or value == 44
-            ):
-                # 102_Dev1006
-                self._critical_error(
-                    f"Top level attribute verticalDatum has value '{value}', whereas it should be in [1, 30] range or 44"
-                )
+    def _validate_verticalDatum(self, ctxt_name, f):
+        verticalDatum = _get_int_attr_or_none(f, "verticalDatum")
+        if verticalDatum is not None and not (
+            (verticalDatum >= 1 and verticalDatum <= 30) or verticalDatum == 44
+        ):
+            # 102_Dev1006
+            self._critical_error(
+                f"{ctxt_name} attribute verticalDatum has value '{verticalDatum}', whereas it should be in [1, 30] range or 44"
+            )
 
     def _validate_epoch(self, f):
         self._log_check("102_Dev1007")
@@ -1449,6 +1448,15 @@ class S102Checker:
             if numGRP != countGroups:
                 self._critical_error(
                     f"BathymetryCoverage feature instance group {instance.name}: Count of values groups does not match attribute numGRP in instance group"
+                )
+
+        self._validate_verticalDatum(instance.name, instance)
+        verticalDatum = _get_int_attr_or_none(instance, "verticalDatum")
+        topVerticalDatum = _get_int_attr_or_none(f, "verticalDatum")
+        if verticalDatum is not None and topVerticalDatum is not None:
+            if verticalDatum == topVerticalDatum:
+                self._error(
+                    f"BathymetryCoverage feature instance group {instance.name} has same value for 'verticalDatum' attribute as top level attribute"
                 )
 
         # Check that QualityOfBathymetryCoverage.QualityOfBathymetryCoverage.01
