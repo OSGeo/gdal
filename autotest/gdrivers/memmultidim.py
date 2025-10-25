@@ -963,10 +963,25 @@ def test_mem_md_array_slice():
     with gdal.quiet_errors():
         assert not ar[:]
 
+    dim_1 = rg.CreateDimension("dim_1", None, None, 1)
+    ar = rg.CreateMDArray(
+        "array_1", [dim_1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    data = b"\xFE"
+    assert ar.Write(data) == gdal.CE_None
+    assert ar[:].Read() == data
+    assert ar[0:1].Read() == data
+    assert ar[0].Read() == data
+    assert ar[::-1].Read() == data
+    with gdaltest.error_raised(
+        gdal.CE_Failure, "Output dimension of size 0 is not allowed"
+    ):
+        ar[0:0]
+
     ar = rg.CreateMDArray(
         "array", [dim_2, dim_3, dim_4], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
     )
-    data = array.array("B", list(range(24))).tobytes()
+    data = array.array("B", list(range(2 * 3 * 4))).tobytes()
     assert ar.Write(data) == gdal.CE_None
 
     with pytest.raises(Exception):
