@@ -107,7 +107,7 @@ The following scripts have been replaced by equivalent functionality in GDAL, an
 .. only:: html
 
     - `hsv_merge.py`: Merge greyscale image into RGB image as intensity in HSV space. Equivalent functionality available in :ref:`gdal_raster_blend`.
-    - `gdal_ls.py`: Display the list of files in a virtual directory, like /vsicurl or /vsizip. Equivalent functionality available in :ref:`gdal_vsi`.
+    - `gdal_ls.py`: Display the list of files in a virtual directory, like /vsicurl or /vsizip. Equivalent functionality available in :ref:`gdal_vsi_list`.
     - `gdal_cp.py`: Copy a virtual file. Equivalent functionality available in :ref:`gdal_dataset_copy`.
     - `gdal_vrtmerge.py`: Similar to gdal_merge, but produces a VRT file. Equivalent functionality available in :ref:`gdal_raster_mosaic`.
     - `gdal2grd.py`: Script to write out ASCII GRD rasters (used in Golden Software Surfer). from any source supported by GDAL. Equivalent functionality available in the :ref:`raster.gsag` driver.
