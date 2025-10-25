@@ -21,6 +21,7 @@
 #include "cpl_time.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "cpl_spawn.h"
 #include "cpl_http.h"
 #include <algorithm>
 
@@ -1188,7 +1189,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     std::string &osMFASerial, std::string &osRoleSessionName,
     std::string &osWebIdentityTokenFile, std::string &osSSOStartURL,
     std::string &osSSOAccountID, std::string &osSSORoleName,
-    std::string &osSSOSession)
+    std::string &osSSOSession, std::string &osCredentialProcess)
 {
     // See http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
     // If AWS_DEFAULT_PROFILE is set (obsolete, no longer documented), use it in
@@ -1364,6 +1365,10 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
                     {
                         osSSORoleName = pszValue;
                     }
+                    else if (strcmp(pszKey, "credential_process") == 0)
+                    {
+                        osCredentialProcess = pszValue;
+                    }
                 }
                 CPLFree(pszKey);
             }
@@ -1391,7 +1396,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
            (pszProfileOri != nullptr && !osRoleArn.empty() &&
             !osWebIdentityTokenFile.empty()) ||
            (!osSSOStartURL.empty() && !osSSOAccountID.empty() &&
-            !osSSORoleName.empty());
+            !osSSORoleName.empty()) ||
+           !osCredentialProcess.empty();
 }
 
 /************************************************************************/
@@ -1747,6 +1753,113 @@ bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForSSO(
 }
 
 /************************************************************************/
+/*                  GetCredentialsFromProcess()                         */
+/************************************************************************/
+
+static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
+                                      std::string &osSecretAccessKey,
+                                      std::string &osAccessKeyId,
+                                      std::string &osSessionToken)
+{
+    CPLDebug(AWS_DEBUG_KEY, "Executing credential_process: %s",
+             osCredentialProcess.c_str());
+
+    // Tokenize the command line for CPLSpawn
+    char **papszArgs = CSLTokenizeString2(osCredentialProcess.c_str(), " ",
+                                          CSLT_HONOURSTRINGS);
+    if (papszArgs == nullptr || papszArgs[0] == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to parse credential_process command: %s",
+                 osCredentialProcess.c_str());
+        CSLDestroy(papszArgs);
+        return false;
+    }
+
+    // Create a memory file to capture output
+    CPLString osMemFile;
+    osMemFile.Printf("/vsimem/credential_process_%p", papszArgs);
+    VSILFILE *fOut = VSIFOpenL(osMemFile.c_str(), "w");
+    if (fOut == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to create memory file for output");
+        CSLDestroy(papszArgs);
+        return false;
+    }
+
+    // Use CPLSpawn - handles process creation, pipes, and cleanup
+    int nExitCode = CPLSpawn(papszArgs, nullptr, fOut, TRUE);
+    CSLDestroy(papszArgs);
+    VSIFCloseL(fOut);
+
+    if (nExitCode != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "credential_process failed with exit code %d: %s", nExitCode,
+                 osCredentialProcess.c_str());
+        VSIUnlink(osMemFile.c_str());
+        return false;
+    }
+
+    // Read the output from memory file
+    vsi_l_offset nDataLength = 0;
+    GByte *pData = VSIGetMemFileBuffer(osMemFile.c_str(), &nDataLength, TRUE);
+    if (pData == nullptr || nDataLength == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "credential_process returned empty output: %s",
+                 osCredentialProcess.c_str());
+        return false;
+    }
+
+    std::string osOutput(reinterpret_cast<char *>(pData), nDataLength);
+    CPLFree(pData);
+
+    CPLJSONDocument oDoc;
+    if (!oDoc.LoadMemory(osOutput))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to parse JSON from credential_process: %s",
+                 osCredentialProcess.c_str());
+        return false;
+    }
+
+    auto oRoot = oDoc.GetRoot();
+
+    // Validate Version field (required by AWS specification)
+    const std::string osVersion = oRoot.GetString("Version");
+    if (osVersion != "1")
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "credential_process returned unsupported Version '%s'. "
+                 "Expected '1'",
+                 osVersion.c_str());
+        return false;
+    }
+
+    // Extract required fields
+    osAccessKeyId = oRoot.GetString("AccessKeyId");
+    osSecretAccessKey = oRoot.GetString("SecretAccessKey");
+
+    // Extract optional fields
+    osSessionToken = oRoot.GetString("SessionToken");
+    const std::string osExpiration = oRoot.GetString("Expiration");
+
+    if (osAccessKeyId.empty() || osSecretAccessKey.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "credential_process did not return required AccessKeyId and "
+                 "SecretAccessKey");
+        return false;
+    }
+
+    CPLDebug(AWS_DEBUG_KEY,
+             "Successfully obtained credentials from credential_process");
+    return true;
+}
+
+/************************************************************************/
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
@@ -1833,6 +1946,7 @@ bool VSIS3HandleHelper::GetConfiguration(
     std::string osSSOAccountID;
     std::string osSSORoleName;
     std::string osSSOSession;
+    std::string osCredentialProcess;
     // coverity[tainted_data]
     if (GetConfigurationFromAWSConfigFiles(
             osPathForOption,
@@ -1840,7 +1954,7 @@ bool VSIS3HandleHelper::GetConfiguration(
             osSessionToken, osRegion, osCredentials, osRoleArn, osSourceProfile,
             osExternalId, osMFASerial, osRoleSessionName,
             osWebIdentityTokenFile, osSSOStartURL, osSSOAccountID,
-            osSSORoleName, osSSOSession))
+            osSSORoleName, osSSOSession, osCredentialProcess))
     {
         if (osSecretAccessKey.empty() && !osRoleArn.empty())
         {
@@ -1861,6 +1975,7 @@ bool VSIS3HandleHelper::GetConfiguration(
                 std::string osSSOStartURLSP;
                 std::string osSSOAccountIDSP;
                 std::string osSSORoleNameSP;
+                std::string osCredentialProcessSP;
                 if (GetConfigurationFromAWSConfigFiles(
                         osPathForOption, osSourceProfile.c_str(),
                         osSecretAccessKeySP, osAccessKeyIdSP, osSessionTokenSP,
@@ -1868,7 +1983,7 @@ bool VSIS3HandleHelper::GetConfiguration(
                         osSourceProfileSP, osExternalIdSP, osMFASerialSP,
                         osRoleSessionNameSP, osWebIdentityTokenFile,
                         osSSOStartURLSP, osSSOAccountIDSP, osSSORoleNameSP,
-                        osSSOSession))
+                        osSSOSession, osCredentialProcessSP))
                 {
                     if (GetConfigurationFromAssumeRoleWithWebIdentity(
                             /* bForceRefresh = */ false, osPathForOption,
@@ -1969,6 +2084,18 @@ bool VSIS3HandleHelper::GetConfiguration(
                 osAccessKeyId = std::move(osTempAccessKeyId);
                 osSessionToken = std::move(osTempSessionToken);
                 eCredentialsSource = AWSCredentialsSource::SSO;
+                return true;
+            }
+            return false;
+        }
+
+        if (!osCredentialProcess.empty())
+        {
+            if (GetCredentialsFromProcess(osCredentialProcess,
+                                          osSecretAccessKey, osAccessKeyId,
+                                          osSessionToken))
+            {
+                eCredentialsSource = AWSCredentialsSource::CREDENTIAL_PROCESS;
                 return true;
             }
             return false;
@@ -2296,6 +2423,32 @@ void VSIS3HandleHelper::RefreshCredentials(const std::string &osPathForOption,
             m_osSecretAccessKey = std::move(osSecretAccessKey);
             m_osAccessKeyId = std::move(osAccessKeyId);
             m_osSessionToken = std::move(osSessionToken);
+        }
+    }
+    else if (m_eCredentialsSource == AWSCredentialsSource::CREDENTIAL_PROCESS)
+    {
+        std::string osCredentialProcess;
+        std::string osSecretAccessKey, osAccessKeyId, osSessionToken, osRegion;
+        std::string osCredentials, osRoleArn, osSourceProfile, osExternalId;
+        std::string osMFASerial, osRoleSessionName, osWebIdentityTokenFile;
+        std::string osSSOStartURL, osSSOAccountID, osSSORoleName, osSSOSession;
+
+        if (GetConfigurationFromAWSConfigFiles(
+                osPathForOption, nullptr, osSecretAccessKey, osAccessKeyId,
+                osSessionToken, osRegion, osCredentials, osRoleArn,
+                osSourceProfile, osExternalId, osMFASerial, osRoleSessionName,
+                osWebIdentityTokenFile, osSSOStartURL, osSSOAccountID,
+                osSSORoleName, osSSOSession, osCredentialProcess) &&
+            !osCredentialProcess.empty())
+        {
+            if (GetCredentialsFromProcess(osCredentialProcess,
+                                          osSecretAccessKey, osAccessKeyId,
+                                          osSessionToken))
+            {
+                m_osSecretAccessKey = std::move(osSecretAccessKey);
+                m_osAccessKeyId = std::move(osAccessKeyId);
+                m_osSessionToken = std::move(osSessionToken);
+            }
         }
     }
 }
