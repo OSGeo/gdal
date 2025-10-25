@@ -1768,7 +1768,6 @@ static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
     CPLDebug(AWS_DEBUG_KEY, "Executing credential_process: %s",
              osCredentialProcess.c_str());
 
-    // Tokenize the command line for CPLSpawn
     char **papszArgs = CSLTokenizeString2(osCredentialProcess.c_str(), " ",
                                           CSLT_HONOURSTRINGS);
     if (papszArgs == nullptr || papszArgs[0] == nullptr)
@@ -1780,7 +1779,6 @@ static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
         return false;
     }
 
-    // Create a memory file to capture output
     CPLString osMemFile;
     osMemFile.Printf("/vsimem/credential_process_%p", papszArgs);
     VSILFILE *fOut = VSIFOpenL(osMemFile.c_str(), "w");
@@ -1792,7 +1790,6 @@ static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
         return false;
     }
 
-    // Use CPLSpawn - handles process creation, pipes, and cleanup
     int nExitCode = CPLSpawn(papszArgs, nullptr, fOut, TRUE);
     CSLDestroy(papszArgs);
     VSIFCloseL(fOut);
@@ -1806,7 +1803,6 @@ static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
         return false;
     }
 
-    // Read the output from memory file
     vsi_l_offset nDataLength = 0;
     GByte *pData = VSIGetMemFileBuffer(osMemFile.c_str(), &nDataLength, TRUE);
     if (pData == nullptr || nDataLength == 0)
@@ -1831,7 +1827,6 @@ static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
 
     auto oRoot = oDoc.GetRoot();
 
-    // Validate Version field (required by AWS specification)
     const std::string osVersion = oRoot.GetString("Version");
     if (osVersion != "1")
     {
@@ -1845,20 +1840,20 @@ static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
     // Extract required fields
     osAccessKeyId = oRoot.GetString("AccessKeyId");
     osSecretAccessKey = oRoot.GetString("SecretAccessKey");
+    osSessionToken = oRoot.GetString("SessionToken");
 
     // Extract optional fields
-    osSessionToken = oRoot.GetString("SessionToken");
     const std::string osExpiration = oRoot.GetString("Expiration");
 
-    if (osAccessKeyId.empty() || osSecretAccessKey.empty())
+    if (osAccessKeyId.empty() || osSecretAccessKey.empty() ||
+        osSessionToken.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "credential_process did not return required AccessKeyId and "
-                 "SecretAccessKey");
+                 "credential_process did not return required AccessKeyId, "
+                 "SecretAccessKey, and SessionToken");
         return false;
     }
 
-    // Cache credentials globally for reuse
     GIntBig nExpirationUnix = 0;
     if (!osExpiration.empty())
     {
