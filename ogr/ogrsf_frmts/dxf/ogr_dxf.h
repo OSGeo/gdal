@@ -393,7 +393,7 @@ class OGRDXFFeature final : public OGRFeature
     std::vector<std::unique_ptr<OGRDXFFeature>> apoAttribFeatures;
 
   public:
-    explicit OGRDXFFeature(const OGRFeatureDefn *poFeatureDefn);
+    explicit OGRDXFFeature(OGRFeatureDefn *poFeatureDefn);
     ~OGRDXFFeature() override;
 
     OGRDXFFeature *CloneDXFFeature();

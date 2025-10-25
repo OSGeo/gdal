@@ -176,7 +176,8 @@ OGRErr OGRGNMWrappedResultLayer::InsertFeature(OGRFeature *poFeature,
         }
     }
 
-    auto poInsertFeature = std::make_unique<OGRFeature>(GetLayerDefn());
+    auto poInsertFeature = std::make_unique<OGRFeature>(
+        const_cast<OGRFeatureDefn *>(GetLayerDefn()));
     if (poInsertFeature->SetFrom(poFeature, anMap.data(), TRUE) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,

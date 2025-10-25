@@ -116,6 +116,8 @@ class OGRXLSXLayer final : public OGRMemLayer
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
+    using OGRLayer::GetLayerDefn;
+
     const OGRFeatureDefn *GetLayerDefn() const override
     {
         const_cast<OGRXLSXLayer *>(this)->Init();

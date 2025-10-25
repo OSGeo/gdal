@@ -172,6 +172,8 @@ class OGRFlatGeobufLayer final : public OGRLayer,
 
     void ResetReading() override;
 
+    using OGRLayer::GetLayerDefn;
+
     const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;

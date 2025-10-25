@@ -331,6 +331,8 @@ class PythonPluginLayer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFID) override;
     int TestCapability(const char *) const override;
+
+    using OGRLayer::GetLayerDefn;
     const OGRFeatureDefn *GetLayerDefn() const override;
 
     GIntBig GetFeatureCount(int bForce) override;

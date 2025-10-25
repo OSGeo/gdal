@@ -67,7 +67,7 @@
  * adhere.
  */
 
-OGRFeature::OGRFeature(const OGRFeatureDefn *poDefnIn)
+OGRFeature::OGRFeature(OGRFeatureDefn *poDefnIn)
     : nFID(OGRNullFID), poDefn(poDefnIn), papoGeometries(nullptr),
       pauFields(nullptr), m_pszNativeData(nullptr),
       m_pszNativeMediaType(nullptr), m_pszStyleString(nullptr),
@@ -234,7 +234,7 @@ void OGR_F_Destroy(OGRFeatureH hFeat)
  * DestroyFeature().
  */
 
-OGRFeature *OGRFeature::CreateFeature(const OGRFeatureDefn *poDefn)
+OGRFeature *OGRFeature::CreateFeature(OGRFeatureDefn *poDefn)
 
 {
     OGRFeature *poFeature = new (std::nothrow) OGRFeature(poDefn);
@@ -388,6 +388,11 @@ void OGRFeature::SetFDefnUnsafe(OGRFeatureDefn *poNewFDefn)
  *
  * This method is the same as the C function OGR_F_GetDefnRef().
  *
+ * Note that the returned feature definition object should be considered as
+ * const (except calling its Reference() or Release() methods), as altering
+ * the feature definition while they are alive OGRFeature based on it can
+ * cause crashes.
+ *
  * @return a reference to the feature definition object.
  */
 
@@ -409,6 +414,11 @@ void OGRFeature::SetFDefnUnsafe(OGRFeatureDefn *poNewFDefn)
  * \brief Fetch feature definition.
  *
  * This function is the same as the C++ method OGRFeature::GetDefnRef().
+ *
+ * Note that the returned feature definition object should be considered as
+ * const (except calling its OGR_FD_Reference() or OGR_FD_Release() function),
+ * as altering the feature definition while they are alive OGRFeature based on
+ * it can cause crashes.
  *
  * @param hFeat handle to the feature to get the feature definition from.
  *
@@ -6811,7 +6821,7 @@ void OGRFeature::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
 /*      feature defn to another with minimum work.                      */
 /************************************************************************/
 
-OGRErr OGRFeature::RemapFields(const OGRFeatureDefn *poNewDefn,
+OGRErr OGRFeature::RemapFields(OGRFeatureDefn *poNewDefn,
                                const int *panRemapSource)
 
 {
@@ -6873,7 +6883,7 @@ void OGRFeature::AppendField()
 /*      feature defn to another with minimum work.                      */
 /************************************************************************/
 
-OGRErr OGRFeature::RemapGeomFields(const OGRFeatureDefn *poNewDefn,
+OGRErr OGRFeature::RemapGeomFields(OGRFeatureDefn *poNewDefn,
                                    const int *panRemapSource)
 
 {

@@ -51,6 +51,8 @@ class OGRS57Layer final : public OGRLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
+    using OGRLayer::GetLayerDefn;
+
     const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
