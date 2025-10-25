@@ -5461,17 +5461,23 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
             }
             GUInt64 nEndIdx = endIdx;
             nEndIdx = EQUAL(pszEnd, "") ? (!bPosIncr ? 0 : nDimSize) : nEndIdx;
-            if ((bPosIncr && range.m_nStartIdx >= nEndIdx) ||
-                (!bPosIncr && range.m_nStartIdx <= nEndIdx))
+            if (pszStart[0] || pszEnd[0])
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Output dimension of size 0 is not allowed");
-                return nullptr;
+                if ((bPosIncr && range.m_nStartIdx >= nEndIdx) ||
+                    (!bPosIncr && range.m_nStartIdx <= nEndIdx))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Output dimension of size 0 is not allowed");
+                    return nullptr;
+                }
             }
             int inc = (EQUAL(pszEnd, "") && !bPosIncr) ? 1 : 0;
             const auto nAbsIncr = std::abs(range.m_nIncr);
             const GUInt64 newSize =
-                bPosIncr
+                (pszStart[0] == 0 && pszEnd[0] == 0 &&
+                 range.m_nStartIdx == nEndIdx)
+                    ? 1
+                : bPosIncr
                     ? DIV_ROUND_UP(nEndIdx - range.m_nStartIdx, nAbsIncr)
                     : DIV_ROUND_UP(inc + range.m_nStartIdx - nEndIdx, nAbsIncr);
             const auto &poSrcDim = srcDims[nCurSrcDim];
