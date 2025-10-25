@@ -147,6 +147,10 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
         std::string &osAccessKeyId, std::string &osSessionToken,
         std::string &osRegion);
 
+    static bool GetOrRefreshTemporaryCredentialsFromProcess(
+        bool bForceRefresh, std::string &osSecretAccessKey,
+        std::string &osAccessKeyId, std::string &osSessionToken);
+
     static bool GetConfigurationFromAssumeRoleWithWebIdentity(
         bool bForceRefresh, const std::string &osPathForOption,
         const std::string &osRoleArnIn,

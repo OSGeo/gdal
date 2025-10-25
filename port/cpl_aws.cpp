@@ -63,6 +63,10 @@ static std::string gosSSOStartURL;
 static std::string gosSSOAccountID;
 static std::string gosSSORoleName;
 
+// The below variable is used to store the credential_process command to skip
+// re-reading the config file on subsequent credential requests
+static std::string gosCredentialProcessCommand;
+
 constexpr const char *AWS_DEBUG_KEY = "AWS";
 
 /************************************************************************/
@@ -1854,9 +1858,74 @@ static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
         return false;
     }
 
+    // Cache credentials globally for reuse
+    GIntBig nExpirationUnix = 0;
+    if (!osExpiration.empty())
+    {
+        Iso8601ToUnixTime(osExpiration.c_str(), &nExpirationUnix);
+    }
+
+    {
+        CPLMutexHolder oHolder(&ghMutex);
+        gosGlobalAccessKeyId = osAccessKeyId;
+        gosGlobalSecretAccessKey = osSecretAccessKey;
+        gosGlobalSessionToken = osSessionToken;
+        gnGlobalExpiration = nExpirationUnix;
+        if (!osExpiration.empty())
+        {
+            CPLDebug(AWS_DEBUG_KEY,
+                     "Storing credential_process credentials until %s",
+                     osExpiration.c_str());
+        }
+        else
+        {
+            CPLDebug(AWS_DEBUG_KEY,
+                     "Storing credential_process credentials (no expiration)");
+        }
+    }
+
     CPLDebug(AWS_DEBUG_KEY,
              "Successfully obtained credentials from credential_process");
     return true;
+}
+
+/************************************************************************/
+/*            GetOrRefreshTemporaryCredentialsFromProcess()             */
+/************************************************************************/
+
+bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsFromProcess(
+    bool bForceRefresh, std::string &osSecretAccessKey,
+    std::string &osAccessKeyId, std::string &osSessionToken)
+{
+    CPLMutexHolder oHolder(&ghMutex);
+    if (!bForceRefresh)
+    {
+        time_t nCurTime;
+        time(&nCurTime);
+        // Try to reuse credentials if they are still valid with one minute margin
+        if (!gosGlobalAccessKeyId.empty() && nCurTime < gnGlobalExpiration - 60)
+        {
+            osAccessKeyId = gosGlobalAccessKeyId;
+            osSecretAccessKey = gosGlobalSecretAccessKey;
+            osSessionToken = gosGlobalSessionToken;
+            return true;
+        }
+    }
+
+    if (!gosCredentialProcessCommand.empty())
+    {
+        gosGlobalSecretAccessKey.clear();
+        gosGlobalAccessKeyId.clear();
+        gosGlobalSessionToken.clear();
+        if (GetCredentialsFromProcess(gosCredentialProcessCommand,
+                                      osSecretAccessKey, osAccessKeyId,
+                                      osSessionToken))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /************************************************************************/
@@ -1914,10 +1983,12 @@ bool VSIS3HandleHelper::GetConfiguration(
     // Next try to see if we have a current assumed role
     bool bAssumedRole = false;
     bool bSSO = false;
+    bool bCredentialProcess = false;
     {
         CPLMutexHolder oHolder(&ghMutex);
         bAssumedRole = !gosRoleArn.empty();
         bSSO = !gosSSOStartURL.empty();
+        bCredentialProcess = !gosCredentialProcessCommand.empty();
     }
     if (bAssumedRole && GetOrRefreshTemporaryCredentialsForRole(
                             /* bForceRefresh = */ false, osSecretAccessKey,
@@ -1931,6 +2002,14 @@ bool VSIS3HandleHelper::GetConfiguration(
                          osAccessKeyId, osSessionToken, osRegion))
     {
         eCredentialsSource = AWSCredentialsSource::SSO;
+        return true;
+    }
+    else if (bCredentialProcess &&
+             GetOrRefreshTemporaryCredentialsFromProcess(
+                 /* bForceRefresh = */ false, osSecretAccessKey, osAccessKeyId,
+                 osSessionToken))
+    {
+        eCredentialsSource = AWSCredentialsSource::CREDENTIAL_PROCESS;
         return true;
     }
 
@@ -2095,6 +2174,11 @@ bool VSIS3HandleHelper::GetConfiguration(
                                           osSecretAccessKey, osAccessKeyId,
                                           osSessionToken))
             {
+                // Cache the credential_process command for future use
+                {
+                    CPLMutexHolder oHolder(&ghMutex);
+                    gosCredentialProcessCommand = osCredentialProcess;
+                }
                 eCredentialsSource = AWSCredentialsSource::CREDENTIAL_PROCESS;
                 return true;
             }
@@ -2181,6 +2265,7 @@ void VSIS3HandleHelper::ClearCache()
     gosSSOStartURL.clear();
     gosSSOAccountID.clear();
     gosSSORoleName.clear();
+    gosCredentialProcessCommand.clear();
 }
 
 /************************************************************************/
