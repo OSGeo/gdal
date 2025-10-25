@@ -6833,6 +6833,7 @@ def test_vsis3_credential_process(tmp_vsimem, aws_test_config, webserver_port):
 import json
 import sys
 credentials = {
+    "Version": "1",
     "AccessKeyId": "AWS_ACCESS_KEY_ID",
     "SecretAccessKey": "AWS_SECRET_ACCESS_KEY", 
     "SessionToken": "session_token",
