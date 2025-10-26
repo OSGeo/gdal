@@ -1813,7 +1813,7 @@ static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
         return false;
     }
 
-    std::string osOutput(static_cast<char *>(pData),
+    std::string osOutput(reinterpret_cast<char *>(pData),
                          static_cast<size_t>(nDataLength));
     CPLFree(pData);
 
