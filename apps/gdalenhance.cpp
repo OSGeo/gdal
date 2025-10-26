@@ -253,6 +253,12 @@ MAIN_START(argc, argv)
         {
             osFormat = pszFormat;
         }
+        if (EQUAL(osFormat.c_str(), "VRT"))
+        {
+            printf("Output format VRT is not supported\n");
+            GDALDestroyDriverManager();
+            exit(1);
+        }
 
         if (!osFormat.empty())
         {
