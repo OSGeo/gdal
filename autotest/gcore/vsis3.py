@@ -6836,7 +6836,7 @@ credentials = {
     "Version": "1",
     "AccessKeyId": "AWS_ACCESS_KEY_ID",
     "SecretAccessKey": "AWS_SECRET_ACCESS_KEY", 
-    "SessionToken": "session_token",
+    "SessionToken": "AWS_SESSION_TOKEN",
     "Expiration": "2025-01-01T12:00:00Z"
 }
 print(json.dumps(credentials))
@@ -6871,7 +6871,7 @@ region = us-east-1
         handler.add(
             "GET",
             "/s3_fake_bucket/resource",
-            custom_method=get_s3_fake_bucket_resource_method,
+            custom_method=get_s3_fake_bucket_resource_method_with_security_token,
         )
 
         with webserver.install_http_handler(handler):
