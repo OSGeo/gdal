@@ -120,6 +120,8 @@ class IVSIS3LikeHandleHelper
 
 enum class AWSCredentialsSource
 {
+    UNINITIALIZED,
+    NO_SIGN_REQUEST,
     REGULAR,       // credentials from env variables or ~/.aws/crediential
     EC2,           // credentials from EC2 private networking
     WEB_IDENTITY,  // credentials from Web Identity Token
