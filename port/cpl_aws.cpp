@@ -37,6 +37,8 @@ const char *CPLGetWineVersion();  // defined in cpl_vsil_win32.cpp
 
 #ifdef HAVE_CURL
 static CPLMutex *ghMutex = nullptr;
+static AWSCredentialsSource geCredentialsSource =
+    AWSCredentialsSource::UNINITIALIZED;
 static std::string gosIAMRole;
 static std::string gosGlobalAccessKeyId;
 static std::string gosGlobalSecretAccessKey;
@@ -698,7 +700,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(
     std::string &osSessionToken)
 {
     CPLMutexHolder oHolder(&ghMutex);
-    if (!bForceRefresh)
+    if (!bForceRefresh &&
+        geCredentialsSource == AWSCredentialsSource::WEB_IDENTITY)
     {
         time_t nCurTime;
         time(&nCurTime);
@@ -812,6 +815,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(
         !osSessionToken.empty() &&
         Iso8601ToUnixTime(osExpiration.c_str(), &nExpirationUnix))
     {
+        geCredentialsSource = AWSCredentialsSource::WEB_IDENTITY;
         gosGlobalAccessKeyId = osAccessKeyId;
         gosGlobalSecretAccessKey = osSecretAccessKey;
         gosGlobalSessionToken = osSessionToken;
@@ -833,7 +837,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
     std::string &osSessionToken)
 {
     CPLMutexHolder oHolder(&ghMutex);
-    if (!bForceRefresh)
+    if (!bForceRefresh && geCredentialsSource == AWSCredentialsSource::EC2)
     {
         time_t nCurTime;
         time(&nCurTime);
@@ -1058,6 +1062,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
     if (!osAccessKeyId.empty() && !osSecretAccessKey.empty() &&
         Iso8601ToUnixTime(osExpiration.c_str(), &nExpirationUnix))
     {
+        geCredentialsSource = AWSCredentialsSource::EC2;
         gosGlobalAccessKeyId = osAccessKeyId;
         gosGlobalSecretAccessKey = osSecretAccessKey;
         gosGlobalSessionToken = osSessionToken;
@@ -1649,7 +1654,8 @@ bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForRole(
     std::string &osRegion)
 {
     CPLMutexHolder oHolder(&ghMutex);
-    if (!bForceRefresh)
+    if (!bForceRefresh &&
+        geCredentialsSource == AWSCredentialsSource::ASSUMED_ROLE)
     {
         time_t nCurTime;
         time(&nCurTime);
@@ -1694,6 +1700,7 @@ bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForRole(
                 gosSourceProfileSessionToken, gosGlobalSecretAccessKey,
                 gosGlobalAccessKeyId, gosGlobalSessionToken, osExpiration))
         {
+            geCredentialsSource = AWSCredentialsSource::ASSUMED_ROLE;
             Iso8601ToUnixTime(osExpiration.c_str(), &gnGlobalExpiration);
             osAccessKeyId = gosGlobalAccessKeyId;
             osSecretAccessKey = gosGlobalSecretAccessKey;
@@ -1716,7 +1723,7 @@ bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForSSO(
     std::string &osRegion)
 {
     CPLMutexHolder oHolder(&ghMutex);
-    if (!bForceRefresh)
+    if (!bForceRefresh && geCredentialsSource == AWSCredentialsSource::SSO)
     {
         time_t nCurTime;
         time(&nCurTime);
@@ -1743,6 +1750,7 @@ bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForSSO(
                 gosGlobalSecretAccessKey, gosGlobalAccessKeyId,
                 gosGlobalSessionToken, osExpirationEpochInMS))
         {
+            geCredentialsSource = AWSCredentialsSource::SSO;
             gnGlobalExpiration =
                 CPLAtoGIntBig(osExpirationEpochInMS.c_str()) / 1000;
             osAccessKeyId = gosGlobalAccessKeyId;
@@ -1768,30 +1776,27 @@ static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
     CPLDebug(AWS_DEBUG_KEY, "Executing credential_process: %s",
              osCredentialProcess.c_str());
 
-    char **papszArgs = CSLTokenizeString2(osCredentialProcess.c_str(), " ",
-                                          CSLT_HONOURSTRINGS);
-    if (papszArgs == nullptr || papszArgs[0] == nullptr)
+    const CPLStringList aosArgs(CSLTokenizeString2(osCredentialProcess.c_str(),
+                                                   " ", CSLT_HONOURSTRINGS));
+    if (aosArgs.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to parse credential_process command: %s",
                  osCredentialProcess.c_str());
-        CSLDestroy(papszArgs);
         return false;
     }
 
-    CPLString osMemFile;
-    osMemFile.Printf("/vsimem/credential_process_%p", papszArgs);
+    const std::string osMemFile =
+        VSIMemGenerateHiddenFilename("credential_process");
     VSILFILE *fOut = VSIFOpenL(osMemFile.c_str(), "w");
     if (fOut == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to create memory file for output");
-        CSLDestroy(papszArgs);
         return false;
     }
 
-    int nExitCode = CPLSpawn(papszArgs, nullptr, fOut, TRUE);
-    CSLDestroy(papszArgs);
+    const int nExitCode = CPLSpawn(aosArgs.List(), nullptr, fOut, TRUE);
     VSIFCloseL(fOut);
 
     if (nExitCode != 0)
@@ -1813,8 +1818,8 @@ static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
         return false;
     }
 
-    std::string osOutput(reinterpret_cast<char *>(pData),
-                         static_cast<size_t>(nDataLength));
+    const std::string osOutput(reinterpret_cast<char *>(pData),
+                               static_cast<size_t>(nDataLength));
     CPLFree(pData);
 
     CPLJSONDocument oDoc;
@@ -1894,7 +1899,8 @@ bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsFromProcess(
     std::string &osAccessKeyId, std::string &osSessionToken)
 {
     CPLMutexHolder oHolder(&ghMutex);
-    if (!bForceRefresh)
+    if (!bForceRefresh &&
+        geCredentialsSource == AWSCredentialsSource::CREDENTIAL_PROCESS)
     {
         time_t nCurTime;
         time(&nCurTime);
@@ -1934,7 +1940,7 @@ bool VSIS3HandleHelper::GetConfiguration(
     std::string &osSessionToken, std::string &osRegion,
     AWSCredentialsSource &eCredentialsSource)
 {
-    eCredentialsSource = AWSCredentialsSource::REGULAR;
+    eCredentialsSource = AWSCredentialsSource::UNINITIALIZED;
 
     // AWS_REGION is GDAL specific. Later overloaded by standard
     // AWS_DEFAULT_REGION
@@ -1946,6 +1952,7 @@ bool VSIS3HandleHelper::GetConfiguration(
     if (CPLTestBool(VSIGetPathSpecificOption(osPathForOption.c_str(),
                                              "AWS_NO_SIGN_REQUEST", "NO")))
     {
+        eCredentialsSource = AWSCredentialsSource::NO_SIGN_REQUEST;
         osSecretAccessKey.clear();
         osAccessKeyId.clear();
         osSessionToken.clear();
@@ -1969,6 +1976,7 @@ bool VSIS3HandleHelper::GetConfiguration(
             return false;
         }
 
+        eCredentialsSource = AWSCredentialsSource::REGULAR;
         osSessionToken = CSLFetchNameValueDef(
             papszOptions, "AWS_SESSION_TOKEN",
             VSIGetPathSpecificOption(osPathForOption.c_str(),
@@ -2105,6 +2113,7 @@ bool VSIS3HandleHelper::GetConfiguration(
                     // Store global variables to be able to reuse the
                     // temporary credentials
                     CPLMutexHolder oHolder(&ghMutex);
+                    geCredentialsSource = AWSCredentialsSource::ASSUMED_ROLE;
                     Iso8601ToUnixTime(osExpiration.c_str(),
                                       &gnGlobalExpiration);
                     gosRoleArn = std::move(osRoleArn);
@@ -2145,6 +2154,7 @@ bool VSIS3HandleHelper::GetConfiguration(
                     // Store global variables to be able to reuse the
                     // temporary credentials
                     CPLMutexHolder oHolder(&ghMutex);
+                    geCredentialsSource = AWSCredentialsSource::SSO;
                     gnGlobalExpiration =
                         CPLAtoGIntBig(osExpirationEpochInMS.c_str()) / 1000;
                     gosSSOStartURL = std::move(osSSOStartURL);
@@ -2173,6 +2183,8 @@ bool VSIS3HandleHelper::GetConfiguration(
                 // Cache the credential_process command for future use
                 {
                     CPLMutexHolder oHolder(&ghMutex);
+                    geCredentialsSource =
+                        AWSCredentialsSource::CREDENTIAL_PROCESS;
                     gosCredentialProcessCommand = osCredentialProcess;
                 }
                 eCredentialsSource = AWSCredentialsSource::CREDENTIAL_PROCESS;
@@ -2243,6 +2255,7 @@ void VSIS3HandleHelper::ClearCache()
 {
     CPLMutexHolder oHolder(&ghMutex);
 
+    geCredentialsSource = AWSCredentialsSource::UNINITIALIZED;
     gosIAMRole.clear();
     gosGlobalAccessKeyId.clear();
     gosGlobalSecretAccessKey.clear();
@@ -2281,7 +2294,8 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
     std::string osAccessKeyId;
     std::string osSessionToken;
     std::string osRegion;
-    AWSCredentialsSource eCredentialsSource = AWSCredentialsSource::REGULAR;
+    AWSCredentialsSource eCredentialsSource =
+        AWSCredentialsSource::UNINITIALIZED;
     if (!GetConfiguration(osPathForOption, papszOptions, osSecretAccessKey,
                           osAccessKeyId, osSessionToken, osRegion,
                           eCredentialsSource))

@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import copy
 import json
 import os
 import os.path
@@ -5330,7 +5331,6 @@ def test_vsis3_read_credentials_ec2_imdsv2(aws_test_config, webserver_port):
         "AWS_ACCESS_KEY_ID": "",
         # Disable hypervisor related check to test if we are really on EC2
         "CPL_AWS_AUTODETECT_EC2": "NO",
-        "CPL_AWS_WEB_IDENTITY_ENABLE": "NO",
     }
 
     gdal.VSICurlClearCache()
@@ -5371,7 +5371,9 @@ def test_vsis3_read_credentials_ec2_imdsv2(aws_test_config, webserver_port):
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options, thread_local=False):
+        initial_options = copy.copy(options)
+        initial_options["CPL_AWS_WEB_IDENTITY_ENABLE"] = "NO"
+        with gdaltest.config_options(initial_options, thread_local=False):
             with gdaltest.config_option(
                 "CPL_AWS_EC2_API_ROOT_URL",
                 "http://localhost:%d" % webserver_port,
@@ -5565,13 +5567,30 @@ def test_vsis3_read_credentials_ec2_imdsv1(aws_test_config, webserver_port):
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options, thread_local=False):
+        initial_options = copy.copy(options)
+        initial_options["CPL_AWS_WEB_IDENTITY_ENABLE"] = "NO"
+        with gdaltest.config_options(initial_options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
         gdal.VSIFCloseL(f)
 
     assert data == "foo"
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket/bar", 200, {}, "bar")
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            # Set a fake URL to check that credentials re-use works
+            with gdaltest.config_option(
+                "CPL_AWS_EC2_API_ROOT_URL", "", thread_local=False
+            ):
+                f = open_for_read("/vsis3/s3_fake_bucket/bar")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "bar"
 
 
 ###############################################################################
@@ -5649,7 +5668,9 @@ def test_vsis3_read_credentials_ec2_expiration(aws_test_config, webserver_port):
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options, thread_local=False):
+        initial_options = copy.copy(options)
+        initial_options["CPL_AWS_WEB_IDENTITY_ENABLE"] = "NO"
+        with gdaltest.config_options(initial_options, thread_local=False):
             with gdaltest.config_option(
                 "CPL_AWS_EC2_API_ROOT_URL", valid_url, thread_local=False
             ):
@@ -5691,7 +5712,6 @@ def test_vsis3_read_credentials_AWS_CONTAINER_CREDENTIALS_FULL_URI(
         "AWS_ACCESS_KEY_ID": "",
         # Disable hypervisor related check to test if we are really on EC2
         "CPL_AWS_AUTODETECT_EC2": "NO",
-        "CPL_AWS_WEB_IDENTITY_ENABLE": "NO",
         "AWS_CONTAINER_CREDENTIALS_FULL_URI": f"http://localhost:{webserver_port}/AWS_CONTAINER_CREDENTIALS_FULL_URI",
     }
 
@@ -5716,13 +5736,30 @@ def test_vsis3_read_credentials_AWS_CONTAINER_CREDENTIALS_FULL_URI(
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options, thread_local=False):
+        initial_options = copy.copy(options)
+        initial_options["CPL_AWS_WEB_IDENTITY_ENABLE"] = "NO"
+        with gdaltest.config_options(initial_options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
         gdal.VSIFCloseL(f)
 
     assert data == "foo"
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket/bar", 200, {}, "bar")
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            # Set a fake URL to check that credentials re-use works
+            with gdaltest.config_option(
+                "CPL_AWS_EC2_API_ROOT_URL", "", thread_local=False
+            ):
+                f = open_for_read("/vsis3/s3_fake_bucket/bar")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "bar"
 
 
 ###############################################################################
@@ -5740,7 +5777,6 @@ def test_vsis3_read_credentials_AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE(
         "AWS_ACCESS_KEY_ID": "",
         # Disable hypervisor related check to test if we are really on EC2
         "CPL_AWS_AUTODETECT_EC2": "NO",
-        "CPL_AWS_WEB_IDENTITY_ENABLE": "NO",
         "AWS_CONTAINER_CREDENTIALS_FULL_URI": f"http://localhost:{webserver_port}/AWS_CONTAINER_CREDENTIALS_FULL_URI",
         "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE": f"{tmp_vsimem}/container_authorization_token_file",
         "AWS_CONTAINER_AUTHORIZATION_TOKEN": "invalid",
@@ -5770,13 +5806,30 @@ def test_vsis3_read_credentials_AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE(
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options, thread_local=False):
+        initial_options = copy.copy(options)
+        initial_options["CPL_AWS_WEB_IDENTITY_ENABLE"] = "NO"
+        with gdaltest.config_options(initial_options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
         gdal.VSIFCloseL(f)
 
     assert data == "foo"
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket/bar", 200, {}, "bar")
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            # Set a fake URL to check that credentials re-use works
+            with gdaltest.config_option(
+                "CPL_AWS_EC2_API_ROOT_URL", "", thread_local=False
+            ):
+                f = open_for_read("/vsis3/s3_fake_bucket/bar")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "bar"
 
 
 ###############################################################################
