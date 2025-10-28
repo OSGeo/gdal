@@ -35,6 +35,7 @@ GDALVectorSimplifyCoverageAlgorithm::GDALVectorSimplifyCoverageAlgorithm(
     AddActiveLayerArg(&m_activeLayer);
     AddArg("tolerance", 0, _("Distance tolerance for simplification."),
            &m_opts.tolerance)
+        .SetPositional()
         .SetRequired()
         .SetMinValueIncluded(0);
     AddArg("preserve-boundary", 0,
