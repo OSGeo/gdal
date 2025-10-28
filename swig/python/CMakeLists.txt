@@ -380,6 +380,7 @@ if __name__ == '__main__':
   if (BUILD_PYTHON_STUBS)
     add_custom_target(
         python_stub_files
+        ALL
         COMMAND ${Python_EXECUTABLE_CMAKE} -m docstub run
                 ${CMAKE_CURRENT_BINARY_DIR}/osgeo
                 --config ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml
