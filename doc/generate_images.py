@@ -88,6 +88,49 @@ def test_gdal_raster_footprint(tmp_path):
     )
 
 
+def test_gdal_raster_neighbors():
+    nodata = -999
+    data_raw = np.arange(9, dtype=np.int16).reshape(3, 3)
+    data_raw[2, 2] = nodata
+    data = np.ma.masked_array(data_raw, data_raw == nodata)
+
+    plt, (ax, ax2) = pyplot.subplots(1, 2, figsize=(15, 6))
+
+    for x in (ax, ax2):
+        x.set_aspect("equal", adjustable="box")
+        x.set_xticks([], [])
+        x.set_yticks([], [])
+        x.grid(color="black", linewidth=2)
+        x.invert_yaxis()
+
+    ds = gdal_array.OpenArray(data)
+    ds.GetRasterBand(1).SetNoDataValue(nodata)
+
+    alg = gdal.Run(
+        "raster neighbors",
+        input=ds,
+        output_format="MEM",
+        method="sum",
+        size=3,
+        kernel="equal",
+    )
+
+    data_out = alg["output"].GetDataset().ReadAsMaskedArray()
+
+    alg.Finalize()
+
+    ax.pcolor(data, cmap=pyplot.get_cmap("viridis"))
+    print_cell_values(ax, data)
+    ax2.pcolor(data_out, cmap=pyplot.get_cmap("viridis"))
+    print_cell_values(ax2, data_out)
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_raster_neighbors.svg",
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
 def test_gdal_raster_polygonize(tmp_path):
     output_fname = tmp_path / "out.shp"
 
