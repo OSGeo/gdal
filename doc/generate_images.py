@@ -119,9 +119,9 @@ def test_gdal_raster_neighbors():
 
     alg.Finalize()
 
-    ax.pcolor(data, cmap=pyplot.get_cmap("Purples"))
+    ax.pcolor(data, cmap=pyplot.get_cmap("viridis"))
     print_cell_values(ax, data)
-    ax2.pcolor(data_out, cmap=pyplot.get_cmap("Set3", 3))
+    ax2.pcolor(data_out, cmap=pyplot.get_cmap("viridis"))
     print_cell_values(ax2, data_out)
 
     plt.savefig(
