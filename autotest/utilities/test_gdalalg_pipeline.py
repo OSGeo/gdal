@@ -1047,3 +1047,58 @@ def test_gdalalg_pipeline_tee_error(tmp_vsimem):
             "pipeline",
             pipeline=f"read ../gcore/data/byte.tif ! tee [ write {out_filename} ]",
         )
+
+
+def test_gdalalg_pipeline_tee_output_string(tmp_vsimem):
+
+    with gdal.Run(
+        "pipeline",
+        pipeline=f"read ../gcore/data/byte.tif ! tee [ write {tmp_vsimem}/tmp.tif ] [ info ]",
+    ) as alg:
+        with pytest.raises(
+            Exception,
+            match=r"Cannot use 'output' method on this algorithm as it supports multiple output arguments. Use 'Outputs' \(plural\) instead",
+        ):
+            alg.Output()
+
+    with gdal.Run(
+        "pipeline",
+        pipeline=f"read ../gcore/data/byte.tif ! tee [ write {tmp_vsimem}/tmp.tif --overwrite ] [ info ]",
+    ) as alg:
+        assert alg.Outputs()["output"].GetDescription() == "../gcore/data/byte.tif"
+        assert alg.Outputs()["output-string"]["description"] == "../gcore/data/byte.tif"
+
+
+def test_gdalalg_pipeline_tee_output_string_from_gdal_cli(tmp_vsimem):
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} pipeline read ../gcore/data/byte.tif ! tee [ write {tmp_vsimem}/tmp.tif ] [ info ] ! select --band 1 ! write {tmp_vsimem}/tmp2.tif"
+    )
+    assert out.startswith("Driver: GTiff/GeoTIFF"), out
+
+
+@pytest.mark.require_driver("XYZ")
+def test_gdalalg_pipeline_tee_output_to_stdout(tmp_vsimem):
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} pipeline read ../gcore/data/byte.tif ! tee [ write --of XYZ /vsistdout/ ]"
+    )
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.xyz", out)
+
+    with gdal.Open(tmp_vsimem / "test.xyz") as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672

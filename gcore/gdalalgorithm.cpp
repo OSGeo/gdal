@@ -3133,6 +3133,16 @@ bool GDALAlgorithm::IsKnownOutputRelatedBooleanArgName(std::string_view osName)
 }
 
 /************************************************************************/
+/*                      GDALAlgorithm::HasOutputString()                */
+/************************************************************************/
+
+bool GDALAlgorithm::HasOutputString() const
+{
+    auto outputStringArg = GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
+    return outputStringArg && outputStringArg->IsOutput();
+}
+
+/************************************************************************/
 /*                      GDALAlgorithm::GetArg()                         */
 /************************************************************************/
 

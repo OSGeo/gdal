@@ -82,6 +82,11 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         return m_outputDataset;
     }
 
+    const std::string &GetOutputString() const
+    {
+        return m_output;
+    }
+
     const std::string &GetOutputLayerName() const
     {
         return m_outputLayerName;
@@ -387,10 +392,23 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
 
     std::string GetUsageAsJSON() const override;
 
+    bool
+    ParseCommandLineArguments(const std::vector<std::string> &args) override;
+
+    bool HasSteps() const
+    {
+        return !m_steps.empty();
+    }
+
     static constexpr const char *OPEN_NESTED_PIPELINE = "[";
     static constexpr const char *CLOSE_NESTED_PIPELINE = "]";
 
+    static constexpr const char *RASTER_SUFFIX = "-raster";
+    static constexpr const char *VECTOR_SUFFIX = "-vector";
+
   protected:
+    friend class GDALTeeStepAlgorithmAbstract;
+
     GDALAbstractPipelineAlgorithm(
         const std::string &name, const std::string &description,
         const std::string &helpURL,
@@ -410,14 +428,10 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
     std::unique_ptr<GDALPipelineStepAlgorithm>
     GetStepAlg(const std::string &name) const;
 
-    bool
-    ParseCommandLineArguments(const std::vector<std::string> &args) override;
+    bool HasOutputString() const override;
 
     static bool IsReadSpecificArgument(const char *pszArgName);
     static bool IsWriteSpecificArgument(const char *pszArgName);
-
-    static constexpr const char *RASTER_SUFFIX = "-raster";
-    static constexpr const char *VECTOR_SUFFIX = "-vector";
 
   private:
     friend class GDALPipelineAlgorithm;
