@@ -67,7 +67,8 @@ class IliClass
 
     const char *GetIliName()
     {
-        return CPLGetXMLValue(node, "TID", nullptr);
+        return CPLGetXMLValue(node, "TID",
+                              CPLGetXMLValue(node, "ili:tid", nullptr));
     }
 
     char *LayerName()
@@ -187,7 +188,9 @@ class IliClass
 
     OGRFieldType GetFormattedType(CPLXMLNode *nodeIn)
     {
-        const char *psRefSuper = CPLGetXMLValue(nodeIn, "Super.REF", nullptr);
+        const char *psRefSuper = CPLGetXMLValue(
+            nodeIn, "Super.REF",
+            CPLGetXMLValue(nodeIn, "IlisMeta16:Super.ili:ref", nullptr));
         if (psRefSuper)
             return GetFormattedType(oTidLookup[psRefSuper]);
 
@@ -199,7 +202,8 @@ class IliClass
         // Delete default geometry field
         poTableDefn->DeleteGeomFieldDefn(0);
 
-        const char *psKind = CPLGetXMLValue(node, "Kind", "");
+        const char *psKind = CPLGetXMLValue(
+            node, "Kind", CPLGetXMLValue(node, "IlisMeta16:Kind", ""));
 #ifdef DEBUG_VERBOSE
         CPLDebug("OGR_ILI", "InitFieldDefinitions of '%s' kind: %s", GetName(),
                  psKind);
@@ -248,50 +252,65 @@ class IliClass
         {
             if (*it == nullptr)
                 continue;
-            const char *psName = CPLGetXMLValue(*it, "Name", nullptr);
+            const char *psName = CPLGetXMLValue(
+                *it, "Name", CPLGetXMLValue(*it, "IlisMeta16:Name", nullptr));
             if (psName == nullptr)
                 continue;
-            const char *psTypeRef = CPLGetXMLValue(*it, "Type.REF", nullptr);
+            const char *psTypeRef = CPLGetXMLValue(
+                *it, "Type.REF",
+                CPLGetXMLValue(*it, "IlisMeta16:Type.ili:ref", nullptr));
             if (psTypeRef == nullptr)         // Assoc Role
-                AddField(psName, OFTString);  // FIXME: numeric?
+                AddField(psName, OFTString);  // TODO: numeric?
             else
             {
                 const CPLXMLNode *psElementNode = TidLookup(psTypeRef);
                 if (psElementNode == nullptr)
                     continue;
                 const char *typeName = psElementNode->pszValue;
-                if (EQUAL(typeName, "IlisMeta07.ModelData.TextType"))
+                CPLDebug("OGR_ILI", "AddFieldDefinitions typename '%s'",
+                         typeName);
+                if (EQUAL(typeName, "IlisMeta07.ModelData.TextType") ||
+                    EQUAL(typeName, "IlisMeta16:TextType"))
                 {  // Kind Text,MText
                     AddField(psName, OFTString);
                 }
-                else if (EQUAL(typeName, "IlisMeta07.ModelData.EnumType"))
+                else if (EQUAL(typeName, "IlisMeta07.ModelData.EnumType") ||
+                         EQUAL(typeName, "IlisMeta16:EnumType"))
                 {
                     AddField(psName,
                              (iliVersion == 1) ? OFTInteger : OFTString);
                 }
-                else if (EQUAL(typeName, "IlisMeta07.ModelData.BooleanType"))
+                else if (EQUAL(typeName, "IlisMeta07.ModelData.BooleanType") ||
+                         EQUAL(typeName, "IlisMeta16:BooleanType"))
                 {
                     AddField(psName, OFTString);  //??
                 }
-                else if (EQUAL(typeName, "IlisMeta07.ModelData.NumType"))
+                else if (EQUAL(typeName, "IlisMeta07.ModelData.NumType") ||
+                         EQUAL(typeName, "IlisMeta16:NumType"))
                 {  //// Unit INTERLIS.ANYUNIT, INTERLIS.TIME, INTERLIS.h,
                     /// INTERLIS.min, INTERLIS.s, INTERLIS.M, INTERLIS.d
                     AddField(psName, OFTReal);
                 }
-                else if (EQUAL(typeName, "IlisMeta07.ModelData.BlackboxType"))
+                else if (EQUAL(typeName, "IlisMeta07.ModelData.BlackboxType") ||
+                         EQUAL(typeName, "IlisMeta16:BlackboxType"))
                 {
                     AddField(psName, OFTString);
                 }
-                else if (EQUAL(typeName, "IlisMeta07.ModelData.FormattedType"))
+                else if (EQUAL(typeName,
+                               "IlisMeta07.ModelData.FormattedType") ||
+                         EQUAL(typeName, "IlisMeta16:FormattedType"))
                 {
                     AddField(psName, GetFormattedType(*it));
                 }
-                else if (EQUAL(typeName, "IlisMeta07.ModelData.MultiValue"))
+                else if (EQUAL(typeName, "IlisMeta07.ModelData.MultiValue") ||
+                         EQUAL(typeName, "IlisMeta16:MultiValue"))
                 {
                     // min -> Multiplicity/IlisMeta07.ModelData.Multiplicity/Min
                     // max -> Multiplicity/IlisMeta07.ModelData.Multiplicity/Max
-                    const char *psClassRef =
-                        CPLGetXMLValue(psElementNode, "BaseType.REF", nullptr);
+                    const char *psClassRef = CPLGetXMLValue(
+                        psElementNode, "BaseType.REF",
+                        CPLGetXMLValue(psElementNode,
+                                       "IlisMeta16:BaseType.ili:ref", nullptr));
                     if (psClassRef)
                     {
                         IliClass *psParentClass =
@@ -308,14 +327,17 @@ class IliClass
                         */
                     }
                 }
-                else if (EQUAL(typeName, "IlisMeta07.ModelData.CoordType"))
+                else if (EQUAL(typeName, "IlisMeta07.ModelData.CoordType") ||
+                         EQUAL(typeName, "IlisMeta16:CoordType"))
                 {
                     AddCoord(psName, psElementNode);
                 }
-                else if (EQUAL(typeName, "IlisMeta07.ModelData.LineType"))
+                else if (EQUAL(typeName, "IlisMeta07.ModelData.LineType") ||
+                         EQUAL(typeName, "IlisMeta16:LineType"))
                 {
-                    const char *psKind =
-                        CPLGetXMLValue(psElementNode, "Kind", "");
+                    const char *psKind = CPLGetXMLValue(
+                        psElementNode, "Kind",
+                        CPLGetXMLValue(psElementNode, "IlisMeta16:Kind", ""));
                     poGeomFieldInfos[psName].iliGeomType = psKind;
                     bool isLinearType =
                         (std::find(oArcLineTypes.begin(), oArcLineTypes.end(),
@@ -419,6 +441,9 @@ void ImdReader::ReadModel(const char *pszFilename)
     CPLXMLNode *psSectionNode =
         CPLGetXMLNode(psRootNode, "=TRANSFER.DATASECTION");
     if (psSectionNode == nullptr)
+        psSectionNode =
+            CPLGetXMLNode(psRootNode, "=ili:transfer.ili:datasection");
+    if (psSectionNode == nullptr)
     {
         CPLDestroyXMLNode(psRootNode);
         return;
@@ -451,7 +476,8 @@ void ImdReader::ReadModel(const char *pszFilename)
     CPLXMLNode *psModel = psSectionNode->psChild;
     while (psModel != nullptr)
     {
-        const char *modelName = CPLGetXMLValue(psModel, "BID", nullptr);
+        const char *modelName = CPLGetXMLValue(
+            psModel, "BID", CPLGetXMLValue(psModel, "ili:bid", nullptr));
 #ifdef DEBUG_VERBOSE
         CPLDebug("OGR_ILI", "Model: '%s'", modelName);
 #endif
@@ -464,11 +490,14 @@ void ImdReader::ReadModel(const char *pszFilename)
 #ifdef DEBUG_VERBOSE
                 CPLDebug("OGR_ILI", "Node tag: '%s'", psEntry->pszValue);
 #endif
-                const char *psTID = CPLGetXMLValue(psEntry, "TID", nullptr);
+                const char *psTID =
+                    CPLGetXMLValue(psEntry, "TID",
+                                   CPLGetXMLValue(psEntry, "ili:tid", nullptr));
                 if (psTID != nullptr)
                     oTidLookup[psTID] = psEntry;
 
-                if (EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Model") &&
+                if ((EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Model") ||
+                     EQUAL(psEntry->pszValue, "IlisMeta16:Model")) &&
                     !EQUAL(modelName, "MODEL.INTERLIS"))
                 {
                     IliModelInfo modelInfo;
@@ -477,9 +506,9 @@ void ImdReader::ReadModel(const char *pszFilename)
                     modelInfo.uri = CPLGetXMLValue(psEntry, "At", "");
                     modelInfos.push_back(modelInfo);
                     mainModelName =
-                        modelInfo.name;  // FIXME: check model inheritance
-                    // version = CPLGetXMLValue(psEntry, "iliVersion", "0"); //1
-                    // or 2.3
+                        modelInfo.name;  // TODO: check model inheritance
+                    // version = CPLGetXMLValue(psEntry, "iliVersion", "0");
+                    // 1 or 2.3
 
                     CPLXMLNode *psFormatNode =
                         CPLGetXMLNode(psEntry, "ili1Format");
@@ -495,12 +524,15 @@ void ImdReader::ReadModel(const char *pszFilename)
                     }
                 }
                 else if (EQUAL(psEntry->pszValue,
-                               "IlisMeta07.ModelData.SubModel"))
+                               "IlisMeta07.ModelData.SubModel") ||
+                         EQUAL(psEntry->pszValue, "IlisMeta16:SubModel"))
                 {
                     mainBasketName = CPLGetXMLValue(psEntry, "TID", "OGR");
                     mainTopicName = CPLGetXMLValue(psEntry, "Name", "OGR");
                 }
-                else if (EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Class"))
+                else if (EQUAL(psEntry->pszValue,
+                               "IlisMeta07.ModelData.Class") ||
+                         EQUAL(psEntry->pszValue, "IlisMeta16:Class"))
                 {
                     CPLDebug("OGR_ILI", "Class name: '%s'", psTID);
                     oClasses[psEntry] = new IliClass(
@@ -545,17 +577,28 @@ void ImdReader::ReadModel(const char *pszFilename)
                     psParentClass->AddFieldNode(psElementNode, iOrderPos);
                 }
                 else if (EQUAL(psEntry->pszValue,
-                               "IlisMeta07.ModelData.TransferElement"))
+                               "IlisMeta07.ModelData.TransferElement") ||
+                         EQUAL(psEntry->pszValue, "IlisMeta16:TransferElement"))
                 {
-                    const char *psClassRef =
-                        CPLGetXMLValue(psEntry, "TransferClass.REF", nullptr);
-                    const char *psElementRef =
-                        CPLGetXMLValue(psEntry, "TransferElement.REF", nullptr);
+                    const char *psClassRef = CPLGetXMLValue(
+                        psEntry, "TransferClass.REF",
+                        CPLGetXMLValue(psEntry,
+                                       "IlisMeta16:TransferClass.ili:ref",
+                                       nullptr));
+                    const char *psElementRef = CPLGetXMLValue(
+                        psEntry, "TransferElement.REF",
+                        CPLGetXMLValue(psEntry,
+                                       "IlisMeta16:TransferElement.ili:ref",
+                                       nullptr));
                     if (psClassRef == nullptr || psElementRef == nullptr)
                         continue;
                     int iOrderPos =
-                        atoi(CPLGetXMLValue(psEntry,
-                                            "TransferElement.ORDER_POS", "0")) -
+                        atoi(CPLGetXMLValue(
+                            psEntry, "TransferElement.ORDER_POS",
+                            CPLGetXMLValue(
+                                psEntry,
+                                "IlisMeta16:TransferElement.ili:order_pos",
+                                "0"))) -
                         1;
                     auto tidClassRef = TidLookup(psClassRef);
                     if (tidClassRef == nullptr)
@@ -569,15 +612,23 @@ void ImdReader::ReadModel(const char *pszFilename)
                         continue;
                     psParentClass->AddFieldNode(psElementNode, iOrderPos);
                 }
-                else if (EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Role"))
+                else if (EQUAL(psEntry->pszValue,
+                               "IlisMeta07.ModelData.Role") ||
+                         EQUAL(psEntry->pszValue, "IlisMeta16:Role"))
                 {
-                    const char *psRefParent =
-                        CPLGetXMLValue(psEntry, "Association.REF", nullptr);
+                    const char *psRefParent = CPLGetXMLValue(
+                        psEntry, "Association.REF",
+                        CPLGetXMLValue(psEntry,
+                                       "IlisMeta16:Association.ili:ref",
+                                       nullptr));
                     if (psRefParent == nullptr)
                         continue;
                     int iOrderPos =
-                        atoi(CPLGetXMLValue(psEntry, "Association.ORDER_POS",
-                                            "0")) -
+                        atoi(CPLGetXMLValue(
+                            psEntry, "Association.ORDER_POS",
+                            CPLGetXMLValue(
+                                psEntry, "IlisMeta16:Association.ili:order_pos",
+                                "0"))) -
                         1;
                     auto tidClassRef = TidLookup(psRefParent);
                     if (tidClassRef == nullptr)
@@ -590,10 +641,13 @@ void ImdReader::ReadModel(const char *pszFilename)
                         psParentClass->AddRoleNode(psEntry, iOrderPos);
                 }
                 else if (EQUAL(psEntry->pszValue,
-                               "IlisMeta07.ModelData.AxisSpec"))
+                               "IlisMeta07.ModelData.AxisSpec") ||
+                         EQUAL(psEntry->pszValue, "IlisMeta16:AxisSpec"))
                 {
-                    const char *psClassRef =
-                        CPLGetXMLValue(psEntry, "CoordType.REF", nullptr);
+                    const char *psClassRef = CPLGetXMLValue(
+                        psEntry, "CoordType.REF",
+                        CPLGetXMLValue(psEntry, "IlisMeta16:CoordType.ili:ref",
+                                       nullptr));
                     if (psClassRef == nullptr)
                         continue;
                     // int iOrderPos = atoi(
@@ -604,15 +658,21 @@ void ImdReader::ReadModel(const char *pszFilename)
                     oAxisCount[psCoordTypeNode] += 1;
                 }
                 else if (EQUAL(psEntry->pszValue,
-                               "IlisMeta07.ModelData.LinesForm"))
+                               "IlisMeta07.ModelData.LinesForm") ||
+                         EQUAL(psEntry->pszValue, "IlisMeta16:LinesForm"))
                 {
-                    const char *psLineForm =
-                        CPLGetXMLValue(psEntry, "LineForm.REF", nullptr);
+                    const char *psLineForm = CPLGetXMLValue(
+                        psEntry, "LineForm.REF",
+                        CPLGetXMLValue(psEntry, "IlisMeta16:LineForm.ili:ref",
+                                       nullptr));
                     if (psLineForm != nullptr &&
                         EQUAL(psLineForm, "INTERLIS.ARCS"))
                     {
-                        const char *psElementRef =
-                            CPLGetXMLValue(psEntry, "LineType.REF", nullptr);
+                        const char *psElementRef = CPLGetXMLValue(
+                            psEntry, "LineType.REF",
+                            CPLGetXMLValue(psEntry,
+                                           "IlisMeta16:LineType.ili:ref",
+                                           nullptr));
                         CPLXMLNode *psElementNode = TidLookup(psElementRef);
                         if (psElementNode == nullptr)
                             continue;
@@ -632,8 +692,9 @@ void ImdReader::ReadModel(const char *pszFilename)
 #ifdef DEBUG_VERBOSE
         CPLDebug("OGR_ILI", "Class: '%s'", it->second->GetName());
 #endif
-        const char *psRefSuper =
-            CPLGetXMLValue(it->first, "Super.REF", nullptr);
+        const char *psRefSuper = CPLGetXMLValue(
+            it->first, "Super.REF",
+            CPLGetXMLValue(it->first, "IlisMeta16:Super.ili:ref", nullptr));
         if (psRefSuper)
         {
             if (oTidLookup.find(psRefSuper) != oTidLookup.end() &&
