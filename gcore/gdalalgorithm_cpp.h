@@ -2568,6 +2568,9 @@ class CPL_DLL GDALAlgorithmRegistry
         return m_calledFromCommandLine;
     }
 
+    /** Whether the algorithm generates an output string */
+    virtual bool HasOutputString() const;
+
     /** Save command line in a .gdalg.json file.
      * If filename is empty, outString will contain the serialized JSON content.
      */

@@ -426,6 +426,14 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
     {
         std::string arg(argIn);
 
+        // If outputting to stdout, automatically turn off progress bar
+        if (arg == "/vsistdout/")
+        {
+            auto quietArg = GetArg(GDAL_ARG_NAME_QUIET);
+            if (quietArg && quietArg->GetType() == GAAT_BOOLEAN)
+                quietArg->Set(true);
+        }
+
         auto &curStep = steps.back();
 
         if (nNestLevel > 0)
@@ -1274,15 +1282,6 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
     for (auto &step : steps)
         m_steps.push_back(std::move(step.alg));
 
-    // If outputting to stdout, automatically turn off progress bar
-    if (!m_steps.empty() &&
-        m_steps.back()->GetOutputDataset().GetName() == "/vsistdout/")
-    {
-        auto quietArg = GetArg(GDAL_ARG_NAME_QUIET);
-        if (quietArg && quietArg->GetType() == GAAT_BOOLEAN)
-            quietArg->Set(true);
-    }
-
     return true;
 }
 
@@ -1943,15 +1942,10 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     GDALProgressFunc pfnProgress = ctxt.m_pfnProgress;
     void *pProgressData = ctxt.m_pProgressData;
-    if (IsCalledFromCommandLine() && !m_steps.empty())
+    if (IsCalledFromCommandLine() && HasOutputString())
     {
-        auto stepOutputStringArg =
-            m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
-        if (stepOutputStringArg && stepOutputStringArg->IsOutput())
-        {
-            pfnProgress = nullptr;
-            pProgressData = nullptr;
-        }
+        pfnProgress = nullptr;
+        pProgressData = nullptr;
     }
 
     for (size_t i = 0; i < m_steps.size(); ++i)
@@ -2029,33 +2023,44 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             return false;
         }
 
+        m_output += step->GetOutputString();
+
         if (bCanHandleNextStep)
         {
             ++i;
         }
     }
 
-    if (pfnProgress &&
-        m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_STRING) == nullptr)
+    if (pfnProgress && m_output.empty())
         pfnProgress(1.0, "", pProgressData);
 
-    if (!m_steps.back()->m_output.empty())
+    if (!m_output.empty())
     {
-        auto stepOutputStringArg =
-            m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
-        if (stepOutputStringArg && stepOutputStringArg->IsOutput())
-        {
-            auto outputStringArg = GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
-            if (outputStringArg && outputStringArg->GetType() == GAAT_STRING)
-                outputStringArg->Set(m_steps.back()->m_output);
-        }
+        auto outputStringArg = GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
+        if (outputStringArg && outputStringArg->GetType() == GAAT_STRING)
+            outputStringArg->Set(m_output);
     }
-    else if (ret && !m_outputDataset.GetDatasetRef())
+
+    if (ret && poCurDS && !m_outputDataset.GetDatasetRef())
     {
         m_outputDataset.Set(poCurDS);
     }
 
     return ret;
+}
+
+/************************************************************************/
+/*             GDALAbstractPipelineAlgorithm::HasOutputString()         */
+/************************************************************************/
+
+bool GDALAbstractPipelineAlgorithm::HasOutputString() const
+{
+    for (const auto &step : m_steps)
+    {
+        if (step->HasOutputString())
+            return true;
+    }
+    return false;
 }
 
 /************************************************************************/
