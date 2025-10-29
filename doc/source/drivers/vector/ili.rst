@@ -56,6 +56,10 @@ example:
 
    java -jar ili2c.jar --ilidirs '%ILI_DIR;http://models.interlis.ch/;%JAR_DIR' -oIMD --out models.imd model1.ili [model2.ili ...]
 
+or for newer models:
+
+   java -jar ili2c.jar --ilidirs '%ILI_DIR;http://models.interlis.ch/;%JAR_DIR' -oIMD16 --out models.imd model1.ili [model2.ili ...]
+
 Some possible transformations using :ref:`ogr2ogr`.
 
 -  Interlis 1 -> Shape:
@@ -102,8 +106,6 @@ Arc interpolation
 Other Notes
 -----------
 
--  `ogrtools <https://github.com/sourcepole/ogrtools>`__ library
-   includes extensions for the OGR Interlis driver
 -  Development of the OGR INTERLIS driver was supported by `Swiss
    Federal Administration <http://www.kogis.ch/>`__, `Canton
    Solothurn <http://www.sogis.ch/>`__ and `Canton

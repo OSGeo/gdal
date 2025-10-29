@@ -876,7 +876,7 @@ def test_ogr_interlis2_3():
 
 
 def test_ogr_interlis2_4():
-    ds = ogr.Open("data/ili/fpds2_v1_1.xtf")
+    ds = ogr.Open("data/ili/fpds2_v1_1.xtf,data/ili/KGKCGC_FPDS2_V1_1.imd")
     assert ds is not None
 
     layers = [
