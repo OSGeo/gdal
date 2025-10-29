@@ -966,6 +966,23 @@ def test_ogr_geom_segmentize():
         geom.Segmentize(1e-30)
     assert gdal.GetLastErrorMsg() != ""
 
+    # on a CircularStringZM
+    geom = ogr.CreateGeometryFromWkt(
+        "CIRCULARSTRING ZM(0 0 10 100,1 1 11 101,2 0 12 102)"
+    )
+    geom.Segmentize(1)
+    ogrtest.check_feature_geometry(
+        geom,
+        "CIRCULARSTRING ZM (0 0 10 100,0.292893218813453 0.707106781186548 10.5 101,1 1 11 101,1.70710678118655 0.707106781186547 11.5 102,2 0 12 102)",
+    )
+
+    # Test that it does not crash
+    geom.Segmentize(0.1)
+
+    with gdaltest.enable_exceptions():
+        with pytest.raises(Exception):
+            geom.Segmentize(1e-10)
+
 
 def test_ogr_geom_segmentize_issue_1341():
 
