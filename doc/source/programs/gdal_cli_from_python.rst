@@ -65,6 +65,61 @@ will be called at the exit of the context manager.
                   dst_crs="EPSG:4326") as alg:
         values = alg.Output().ReadAsArray()
 
+``gdal.alg`` module
+-------------------
+
+.. versionadded:: 3.12
+
+The ``gdal.alg`` module is also available with submodules and
+functions reflecting the hierarchy of algorithms. Functions return an
+:py:class:`osgeo.gdal.Algorithm` instance similarly to :py:func:`osgeo.gdal.Run`
+
+The above example running "gdal raster convert" can also be rewritten as:
+
+.. code-block:: python
+
+    >>> from osgeo import gdal
+    >>> gdal.alg.raster.convert(input="in.tif", output="out.tif")
+
+The documentation of the function lists argument names, types and semantics:
+
+.. code-block:: python
+
+    >>> from osgeo import gdal
+    >>> help(gdal.alg.raster.convert)
+
+        Help on function convert:
+
+        convert(input: Union[List[osgeo.gdal.Dataset], List[str], List[os.PathLike[str]]], output: Union[osgeo.gdal.Dataset, str, os.PathLike[str]], input_format: Union[List[str], str, NoneType] = None, open_option: Union[List[str], str, NoneType] = None, output_format: Optional[str] = None, creation_option: Union[List[str], str, NoneType] = None, overwrite: Optional[bool] = None, append: Optional[bool] = None)
+            Convert a raster dataset.
+
+            Consult https://gdal.org/programs/gdal_raster_convert.html for more details.
+
+            Parameters
+            ----------
+            input: Union[List[gdal.Dataset], List[str], List[os.PathLike[str]]]
+                Input raster datasets
+            output: Union[gdal.Dataset, str, os.PathLike[str]]
+                Output raster dataset
+            input_format: Optional[Union[List[str], str]]=None
+                Input formats
+            open_option: Optional[Union[List[str], dict, str]]=None
+                Open options
+            output_format: Optional[str]=None
+                Output format ("GDALG" allowed)
+            creation_option: Optional[Union[List[str], dict, str]]=None
+                Creation option
+            overwrite: Optional[bool]=None
+                Whether overwriting existing output is allowed
+            append: Optional[bool]=None
+                Append as a subdataset to existing output
+
+
+            Output parameters
+            -----------------
+            output: gdal.ArgDatasetValue
+                Output raster dataset
+
 
 Raster commands examples
 ------------------------
@@ -77,12 +132,21 @@ Raster commands examples
         from osgeo import gdal
 
         gdal.UseExceptions()
-        alg = gdal.Run("raster", "info", input="byte.tif")
-        info_as_dict = alg.Output()
+        info_as_dict = gdal.alg.raster.info(input="byte.tif").Output()
 
 
 .. example::
    :title: Converting a georeferenced netCDF file to cloud-optimized GeoTIFF
+
+
+   .. code-block:: python
+
+        from osgeo import gdal
+
+        gdal.UseExceptions()
+        gdal.alg.raster.convert(input="in.tif", output="out.tif", output_format="COG", overwrite=True)
+
+   or
 
    .. code-block:: python
 
@@ -110,7 +174,8 @@ Raster commands examples
         from osgeo import gdal
 
         gdal.UseExceptions()
-        gdal.Run("raster", "reproject", input="in.tif", output="out.tif",
+        gdal.alg.raster.reproject(
+                  input="in.tif", output="out.tif",
                   dst_crs="EPSG:4326",
                   creation_options={ "TILED": "YES", "COMPRESS": "DEFLATE"})
 
@@ -123,7 +188,7 @@ Raster commands examples
         from osgeo import gdal
 
         gdal.UseExceptions()
-        with gdal.Run("raster", "reproject", input=src_ds, output_format="MEM",
+        with gdal.alg.raster.reproject(input=src_ds, output_format="MEM",
                       dst_crs="EPSG:4326") as alg:
             values = alg.Output().ReadAsArray()
 
@@ -140,8 +205,7 @@ Vector commands examples
         from osgeo import gdal
 
         gdal.UseExceptions()
-        alg = gdal.Run("vector", "info", input="poly.gpkg")
-        info_as_dict = alg.Output()
+        info_as_dict = gdal.alg.vector.info(input="poly.gpkg").Output()
 
 
 .. example::
@@ -152,7 +216,7 @@ Vector commands examples
         from osgeo import gdal
 
         gdal.UseExceptions()
-        gdal.Run("vector", "convert", input="in.shp", output="out.gpkg", overwrite=True)
+        gdal.alg.vector.convert(input="in.shp", output="out.gpkg", overwrite=True)
 
 
 Pipeline examples
@@ -166,6 +230,6 @@ Pipeline examples
         from osgeo import gdal
 
         gdal.UseExceptions()
-        with gdal.Run("pipeline", pipeline="read byte.tif ! reproject --dst-crs EPSG:4326 --resampling cubic") as alg:
+        with gdal.alg.pipeline(pipeline="read byte.tif ! reproject --dst-crs EPSG:4326 --resampling cubic") as alg:
             ds = alg.Output()
             # do something with the dataset

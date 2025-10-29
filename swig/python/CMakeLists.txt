@@ -16,6 +16,7 @@ set(GDAL_PYTHON_CSOURCES
   list(APPEND GDAL_SWIG_COMMON_INTERFACE_FILES
        ${PROJECT_SOURCE_DIR}/swig/include/python/callback.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/gdal_python.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/generate_gdal_alg_methods.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/gnm_python.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/ogr_python.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/osr_python.i
