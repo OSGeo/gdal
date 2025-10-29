@@ -1389,8 +1389,6 @@ void *GDALRasterAttributeTable::SerializeJSON() const
                     const char *pszV = GetValueAsString(iRow, iCol);
                     if (pszV[0])
                         poF = json_object_new_string(pszV);
-                    else
-                        poF = json_object_new_null();
                     break;
                 }
             }
