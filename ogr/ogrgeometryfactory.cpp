@@ -773,7 +773,7 @@ void OGR_G_DestroyGeometry(OGRGeometryH hGeom)
  * for example when converting from a multi-part multipolygon.
  *
  * @param poGeom the input geometry - ownership is passed to the method.
- * @return new geometry.
+ * @return new geometry, or nullptr in case of error
  */
 
 OGRGeometry *OGRGeometryFactory::forceToPolygon(OGRGeometry *poGeom)
@@ -887,7 +887,7 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon(OGRGeometry *poGeom)
  * OGRGeometryFactory::forceToPolygon().
  *
  * @param hGeom handle to the geometry to convert (ownership surrendered).
- * @return the converted geometry (ownership to caller).
+ * @return the converted geometry (ownership to caller), or NULL in case of error
  *
  * @since GDAL/OGR 1.8.0
  */
@@ -910,7 +910,7 @@ OGRGeometryH OGR_G_ForceToPolygon(OGRGeometryH hGeom)
  * this just effects a change on polygons.  The passed in geometry is
  * consumed and a new one returned (or potentially the same one).
  *
- * @return new geometry.
+ * @return new geometry, or nullptr in case of error
  */
 
 OGRGeometry *OGRGeometryFactory::forceToMultiPolygon(OGRGeometry *poGeom)
@@ -1055,7 +1055,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon(OGRGeometry *poGeom)
  * OGRGeometryFactory::forceToMultiPolygon().
  *
  * @param hGeom handle to the geometry to convert (ownership surrendered).
- * @return the converted geometry (ownership to caller).
+ * @return the converted geometry (ownership to caller), or NULL in case of error
  *
  * @since GDAL/OGR 1.8.0
  */
@@ -5192,8 +5192,11 @@ OGRGeometry *OGRGeometryFactory::forceTo(OGRGeometry *poGeom,
     else if (eTargetTypeFlat == wkbMultiPolygon)
     {
         poGeom = forceToMultiPolygon(poGeom);
-        poGeom->set3D(OGR_GT_HasZ(eTargetType));
-        poGeom->setMeasured(OGR_GT_HasM(eTargetType));
+        if (poGeom)
+        {
+            poGeom->set3D(OGR_GT_HasZ(eTargetType));
+            poGeom->setMeasured(OGR_GT_HasM(eTargetType));
+        }
     }
     else if (eTargetTypeFlat == wkbMultiLineString)
     {
