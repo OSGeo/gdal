@@ -711,7 +711,7 @@ VSIMemFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
     poHandle->m_bReadAllowed = strchr(pszAccess, 'r') || strchr(pszAccess, '+');
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("VSIMEM", "Opening handle %p on %s: ref_count=%d", poHandle,
+    CPLDebug("VSIMEM", "Opening handle %p on %s: ref_count=%d", poHandle.get(),
              pszFilename, static_cast<int>(poFile.use_count()));
 #endif
     if (strchr(pszAccess, 'a'))
