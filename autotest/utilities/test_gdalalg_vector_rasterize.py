@@ -64,7 +64,7 @@ def temp_cutline(input_csv):
         (
             False,
             ["--all-touched", "-b", "3,2,1", "--burn", "200,220,240", "-l", "cutline"],
-            "Size and resolution are missing",
+            "Must specify output resolution (--resolution) or size (--size)",
         ),
         (
             True,
@@ -250,7 +250,7 @@ def temp_cutline(input_csv):
                 "-l",
                 "cutline",
             ],
-            "'-tr xres yres' or '-ts xsize ysize' is required.",
+            "Must specify output resolution (--resolution) or size (--size)",
         ),
         (
             False,
@@ -613,3 +613,14 @@ def test_gdalalg_vector_rasterize_overwrite(tmp_vsimem):
             assert ds.RasterXSize == 10
             assert ds.RasterYSize == 11
             assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]
+
+
+def test_gdalalg_vector_rasterize_missing_size_and_res():
+
+    rasterize = get_rasterize_alg()
+    rasterize["input"] = "../ogr/data/poly.shp"
+    rasterize["burn"] = 1
+    rasterize["output-format"] = "MEM"
+
+    with pytest.raises(Exception, match="--resolution.*or.*--size"):
+        rasterize.Run()
