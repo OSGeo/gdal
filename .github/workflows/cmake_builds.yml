@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       BUILD_NAME: cmake-ubuntu-jammy
-      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.10 -DUSE_CCACHE=ON -DSWIG_REGENERATE_PYTHON=ON
+      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.10 -DUSE_CCACHE=ON -DSWIG_REGENERATE_PYTHON=ON -DBUILD_PYTHON_STUBS=ON
       cache-name: cmake-ubuntu-jammy
     steps:
     - name: Checkout GDAL
