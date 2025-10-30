@@ -3106,6 +3106,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
             {
                 const OGRGeometry *poWorkGeom =
                     poDupGeom ? poDupGeom.get() : poGeom;
+                assert(poWorkGeom);
                 OGRGeometry *poRectangle1 = nullptr;
                 OGRGeometry *poRectangle2 = nullptr;
                 const char *pszWKT1 =
