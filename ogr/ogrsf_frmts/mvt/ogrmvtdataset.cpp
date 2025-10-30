@@ -1218,7 +1218,7 @@ OGRFeature *OGRMVTLayer::GetNextRawFeature()
 
     unsigned int nKey = 0;
     const GByte *pabyDataLimit = m_pabyDataEnd;
-    OGRFeature *poFeature = nullptr;
+    std::unique_ptr<OGRFeature> poFeature;
     unsigned int nFeatureLength = 0;
     unsigned int nGeomType = 0;
 
@@ -1233,7 +1233,7 @@ OGRFeature *OGRMVTLayer::GetNextRawFeature()
                 READ_VARUINT32(m_pabyDataCur, pabyDataLimit, nKey);
                 if (nKey == MAKE_KEY(knLAYER_FEATURES, WT_DATA))
                 {
-                    poFeature = new OGRFeature(m_poFeatureDefn);
+                    poFeature = std::make_unique<OGRFeature>(m_poFeatureDefn);
                     break;
                 }
                 else
@@ -1383,19 +1383,17 @@ OGRFeature *OGRMVTLayer::GetNextRawFeature()
             {
                 poFeature->SetFID(m_nFID);
                 m_nFID++;
-                return poFeature;
+                return poFeature.release();
             }
             else
             {
-                delete poFeature;
-                poFeature = nullptr;
+                poFeature.reset();
             }
         }
     }
     catch (const GPBException &e)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
-        delete poFeature;
         return nullptr;
     }
 }
