@@ -16,6 +16,7 @@
 #include "cpl_multiproc.h"
 #include "gdal_version.h"
 #include "gdal.h"
+#include "gdal_cpp_functions.h"
 #include "vrtdataset.h"
 #include "commonutils.h"
 
@@ -713,7 +714,11 @@ CPLErr WriteEnhanced(GDALDatasetH hDataset, int **papanLUTs, int nLUTBins,
         /* ---------------------------------------------------------------- */
         /*      copy over some other information of interest.               */
         /* ---------------------------------------------------------------- */
-        poVRTBand->CopyCommonInfoFrom(poSrcBand);
+        poVRTBand->SetColorInterpretation(poSrcBand->GetColorInterpretation());
+        if (strlen(poSrcBand->GetDescription()) > 0)
+            poVRTBand->SetDescription(poSrcBand->GetDescription());
+        if (poSrcBand->GetRasterDataType() == poVRTBand->GetRasterDataType())
+            GDALCopyNoDataValue(poVRTBand, poSrcBand);
     }
 
     /* -------------------------------------------------------------------- */
