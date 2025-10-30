@@ -2397,5 +2397,8 @@ GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
 ogr.DataSource = Dataset
 ogr.Driver = Driver
 %}
+
+%include "generate_gdal_alg_methods.i"
+
 #endif
 
