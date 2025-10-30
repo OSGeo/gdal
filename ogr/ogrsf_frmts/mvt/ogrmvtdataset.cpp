@@ -29,6 +29,7 @@
 #include "gpb.h"
 
 #include <algorithm>
+#include <cassert>
 #include <memory>
 #include <vector>
 #include <set>
@@ -3415,9 +3416,17 @@ class OGRMVTWriterDataset final : public GDALDataset
     void ConvertToTileCoords(double dfX, double dfY, int &nX, int &nY,
                              double dfTopX, double dfTopY,
                              double dfTileDim) const;
+
+    enum class ExpectedWindingOrder
+    {
+        NONE,
+        CLOCKWISE,
+        COUNTERCLOCKWISE,
+    };
     bool EncodeLineString(MVTTileLayerFeature *poGPBFeature,
                           const OGRLineString *poLS, OGRLineString *poOutLS,
-                          bool bWriteLastPoint, bool bReverseOrder,
+                          bool bWriteLastPoint,
+                          ExpectedWindingOrder eExpectedWindingOrder,
                           GUInt32 nMinLineTo, double dfTopX, double dfTopY,
                           double dfTileDim, int &nLastX, int &nLastY) const;
     bool EncodePolygon(MVTTileLayerFeature *poGPBFeature,
@@ -3711,21 +3720,72 @@ static unsigned GetCmdCountCombined(unsigned int nCmdId, unsigned int nCmdCount)
 
 bool OGRMVTWriterDataset::EncodeLineString(
     MVTTileLayerFeature *poGPBFeature, const OGRLineString *poLS,
-    OGRLineString *poOutLS, bool bWriteLastPoint, bool bReverseOrder,
-    GUInt32 nMinLineTo, double dfTopX, double dfTopY, double dfTileDim,
-    int &nLastX, int &nLastY) const
+    OGRLineString *poOutLS, bool bWriteLastPoint,
+    ExpectedWindingOrder eExpectedWindingOrder, GUInt32 nMinLineTo,
+    double dfTopX, double dfTopY, double dfTileDim, int &nLastX,
+    int &nLastY) const
 {
     const GUInt32 nInitialSize = poGPBFeature->getGeometryCount();
     const int nLastXOri = nLastX;
     const int nLastYOri = nLastY;
     GUInt32 nLineToCount = 0;
     const int nPoints = poLS->getNumPoints() - (bWriteLastPoint ? 0 : 1);
-    if (poOutLS)
-        poOutLS->setNumPoints(nPoints);
+    bool bReverseOrder = false;
+
+    if (eExpectedWindingOrder != ExpectedWindingOrder::NONE &&
+        poLS->getNumPoints() >= 4)
+    {
+        // Do the check on winding order in integer coordinates, since very flat
+        // rings in non rounded coordinates can change orientation after going
+        // to integer coordinates! In that case, let's remove them if they are
+        // inner rings.
+        int nLastXTmp = nLastX;
+        int nLastYTmp = nLastY;
+        OGRLinearRing oRingInteger;
+        for (int i = 0; i < nPoints; i++)
+        {
+            int nX, nY;
+            const double dfX = poLS->getX(i);
+            const double dfY = poLS->getY(i);
+            ConvertToTileCoords(dfX, dfY, nX, nY, dfTopX, dfTopY, dfTileDim);
+            const int nDiffX = nX - nLastXTmp;
+            const int nDiffY = nY - nLastYTmp;
+            if (i == 0 || nDiffX != 0 || nDiffY != 0)
+            {
+                // The minus sign is because the Y axis is positive-downward
+                // in vector tile coordinates!
+                // Cf https://docs.mapbox.com/data/tilesets/guides/vector-tiles-standards/#winding-order
+                oRingInteger.addPoint(nX, -nY);
+                nLastXTmp = nX;
+                nLastYTmp = nY;
+            }
+        }
+        oRingInteger.closeRings();
+        if (oRingInteger.getNumPoints() < 4)
+            return false;
+        const auto bIsClockWise = oRingInteger.isClockwise();
+        if (eExpectedWindingOrder == ExpectedWindingOrder::COUNTERCLOCKWISE)
+        {
+            if ((dfTileDim != 0 && bIsClockWise != poLS->isClockwise()) ||
+                (dfTileDim == 0 && bIsClockWise == poLS->isClockwise()))
+            {
+                return false;
+            }
+        }
+        bReverseOrder =
+            (eExpectedWindingOrder == ExpectedWindingOrder::CLOCKWISE &&
+             !bIsClockWise) ||
+            (eExpectedWindingOrder == ExpectedWindingOrder::COUNTERCLOCKWISE &&
+             bIsClockWise);
+    }
+
     int nFirstX = 0;
     int nFirstY = 0;
     int nLastXValid = nLastX;
     int nLastYValid = nLastY;
+    if (poOutLS)
+        poOutLS->setNumPoints(nPoints);
+
     for (int i = 0; i < nPoints; i++)
     {
         int nX, nY;
@@ -3932,15 +3992,9 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
             continue;
         }
         const bool bWriteLastPoint = false;
-        // If dealing with input geometry in CRS units, exterior rings must
-        // be clockwise oriented.
-        // But if re-encoding a geometry already in tile coordinates
-        // (dfTileDim == 0), this is the reverse.
-        const bool bReverseOrder = dfTileDim != 0
-                                       ? ((i == 0 && !poRing->isClockwise()) ||
-                                          (i > 0 && poRing->isClockwise()))
-                                       : ((i == 0 && poRing->isClockwise()) ||
-                                          (i > 0 && !poRing->isClockwise()));
+        const auto eExpectedWindingOrder =
+            ((i == 0) ? ExpectedWindingOrder::CLOCKWISE
+                      : ExpectedWindingOrder::COUNTERCLOCKWISE);
         const GUInt32 nMinLineTo = 2;
         std::unique_ptr<OGRLinearRing> poOutInnerRing;
         if (i > 0)
@@ -3948,9 +4002,10 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
         OGRLinearRing *poOutRing =
             poOutInnerRing.get() ? poOutInnerRing.get() : poOutOuterRing.get();
 
-        bool bSuccess = EncodeLineString(
-            poGPBFeature, poRing, poOutRing, bWriteLastPoint, bReverseOrder,
-            nMinLineTo, dfTopX, dfTopY, dfTileDim, nLastX, nLastY);
+        bool bSuccess =
+            EncodeLineString(poGPBFeature, poRing, poOutRing, bWriteLastPoint,
+                             eExpectedWindingOrder, nMinLineTo, dfTopX, dfTopY,
+                             dfTileDim, nLastX, nLastY);
         if (!bSuccess)
         {
             if (i == 0)
@@ -4180,7 +4235,6 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     else if (eGeomType == wkbLineString || eGeomType == wkbMultiLineString)
     {
         const bool bWriteLastPoint = true;
-        const bool bReverseOrder = false;
         const GUInt32 nMinLineTo = 1;
 
         if (eGeomToEncodeType == wkbLineString)
@@ -4189,10 +4243,10 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             int nLastX = 0;
             int nLastY = 0;
             OGRLineString oOutLS;
-            bGeomOK =
-                EncodeLineString(poGPBFeature.get(), poLS, &oOutLS,
-                                 bWriteLastPoint, bReverseOrder, nMinLineTo,
-                                 dfTopX, dfTopY, dfTileDim, nLastX, nLastY);
+            bGeomOK = EncodeLineString(
+                poGPBFeature.get(), poLS, &oOutLS, bWriteLastPoint,
+                ExpectedWindingOrder::NONE, nMinLineTo, dfTopX, dfTopY,
+                dfTileDim, nLastX, nLastY);
             dfAreaOrLength = oOutLS.get_Length();
         }
         else if (eGeomToEncodeType == wkbMultiLineString ||
@@ -4210,8 +4264,8 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     OGRLineString oOutLS;
                     bool bSubGeomOK = EncodeLineString(
                         poGPBFeature.get(), poLS, &oOutLS, bWriteLastPoint,
-                        bReverseOrder, nMinLineTo, dfTopX, dfTopY, dfTileDim,
-                        nLastX, nLastY);
+                        ExpectedWindingOrder::NONE, nMinLineTo, dfTopX, dfTopY,
+                        dfTileDim, nLastX, nLastY);
                     if (bSubGeomOK)
                         dfAreaOrLength += oOutLS.get_Length();
                     bGeomOK |= bSubGeomOK;

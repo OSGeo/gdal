@@ -1807,3 +1807,28 @@ def test_ogr_mvt_read_with_padding():
 
     ds = ogr.Open("data/mvt/with_padding.mvt")
     assert ds.GetLayerCount() == 2
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/13305
+
+
+@pytest.mark.require_driver("GeoJSON")
+@pytest.mark.require_geos
+def test_ogr_mvt_winding_order_issue_13305(tmp_vsimem):
+
+    filename = tmp_vsimem / "out"
+    gdal.VectorTranslate(
+        filename,
+        ogr.Open("data/mvt/input_issue_13305.geojson"),
+        format="MVT",
+        layerCreationOptions=["MINZOOM=12", "MAXZOOM=12"],
+    )
+    ds = ogr.Open(filename / "12")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetGeometryType() == ogr.wkbMultiPolygon
+    assert g.GetGeometryCount() == 1
+    assert g.GetGeometryRef(0).GetGeometryCount() == 122
+    assert g.IsValid()
