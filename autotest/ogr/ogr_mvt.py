@@ -1832,3 +1832,20 @@ def test_ogr_mvt_winding_order_issue_13305(tmp_vsimem):
     assert g.GetGeometryCount() == 1
     assert g.GetGeometryRef(0).GetGeometryCount() == 122
     assert g.IsValid()
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/13305
+
+
+@pytest.mark.require_geos
+def test_ogr_mvt_autofix_winding_order_issue_13305(tmp_vsimem):
+
+    ds = ogr.Open("data/mvt/issue_13305_bad_winding_order/12")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetGeometryType() == ogr.wkbMultiPolygon
+    assert g.GetGeometryCount() == 1
+    assert g.GetGeometryRef(0).GetGeometryCount() == 124
+    assert g.IsValid()

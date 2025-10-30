@@ -1034,6 +1034,7 @@ OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
             int externalIsClockwise = 0;
             int nX = 0;
             int nY = 0;
+            OGREnvelope sExteriorRingEnvelope;
             while (m_pabyDataCur < pabyDataGeometryEnd)
             {
                 unsigned int nCmdCountCombined = 0;
@@ -1073,11 +1074,20 @@ OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                 {
                     poPoly = std::make_unique<OGRPolygon>();
                     externalIsClockwise = poRing->isClockwise();
-                    if (!externalIsClockwise && m_bEnforceExternalIsClockwise)
+                    if (!externalIsClockwise)
                     {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Bad ring orientation detected");
-                        return nullptr;
+                        if (m_bEnforceExternalIsClockwise)
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Bad ring orientation detected");
+                            return nullptr;
+                        }
+                        else
+                        {
+                            CPLDebugOnce(
+                                "MVT",
+                                "Bad ring orientation detected. Auto-fixing");
+                        }
                     }
                     poPoly->addRing(std::move(poRing));
                 }
@@ -1091,6 +1101,36 @@ OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                     }
                     else
                     {
+#ifdef HAVE_GEOS
+                        {
+                            // This block is just to deal with potential bad
+                            // oriented rings
+                            // Such as those produced by GDAL < 3.12 in some
+                            // situations like
+                            // https://github.com/OSGeo/gdal/issues/13305
+                            if (!sExteriorRingEnvelope.IsInit())
+                                poPoly->getEnvelope(&sExteriorRingEnvelope);
+                            OGREnvelope sCurRingEnvelope;
+                            poRing->getEnvelope(&sCurRingEnvelope);
+                            // Cheap heuristics to detect potentially inner
+                            // rings
+                            if (sExteriorRingEnvelope.Contains(
+                                    sCurRingEnvelope))
+                            {
+                                // Now do the real check
+                                OGRLineString oLS(*poRing);
+                                if (poPoly->Contains(&oLS))
+                                {
+                                    CPLDebugOnce("MVT",
+                                                 "Bad ring orientation "
+                                                 "detected. Auto-fixing");
+                                    poPoly->addRing(std::move(poRing));
+                                    continue;
+                                }
+                            }
+                        }
+#endif
+
                         if (!poMultiPoly)
                         {
                             poMultiPoly = std::make_unique<OGRMultiPolygon>();
@@ -1099,6 +1139,7 @@ OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
 
                         poPoly = std::make_unique<OGRPolygon>();
                         poPoly->addRing(std::move(poRing));
+                        sExteriorRingEnvelope = OGREnvelope();
                     }
                 }
             }
