@@ -1684,3 +1684,32 @@ def test_jsonfg_write_read_measure_unit_description(tmp_vsimem, single_layer):
         }
         f = lyr.GetNextFeature()
         assert f.GetGeometryRef().ExportToIsoWkt() == "POINT M (1 2 3)"
+
+
+###############################################################################
+# Test reading OGC:CRS84
+
+
+def test_jsonfg_read_ogc_crs84():
+
+    j = {
+        "type": "FeatureCollection",
+        "conformsTo": ["[ogc-json-fg-1-0.3:core]"],
+        "coordRefSys": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {},
+                "geometry": None,
+                "place": {"type": "Point", "coordinates": [2, 49]},
+            }
+        ],
+    }
+
+    ds = gdal.OpenEx(json.dumps(j))
+    assert ds.GetDriver().GetDescription() == "JSONFG"
+    lyr = ds.GetLayer(0)
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [2, 1]
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (2 49)"
