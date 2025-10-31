@@ -3360,3 +3360,26 @@ def test_ogr2ogr_lib_clip_promote_poly_to_geometry_collection_bis():
     f = out_lyr.GetNextFeature()
     assert f.GetGeometryRef().GetGeometryType() == ogr.wkbGeometryCollection
     assert f.GetGeometryRef().GetGeometryCount() == 2
+
+
+###############################################################################
+
+
+@pytest.mark.require_geos
+def test_ogr2ogr_lib_wrapdateline_useless():
+
+    src_ds = gdaltest.wkt_ds(
+        "POLYGON ((-83.0556348903452 8.26039022660911,-83.0556348903452 8.25855541870704,-83.0536624718505 8.25852920716559,-83.0536821305066 8.26037712083838,-83.0556348903452 8.26039022660911))",
+        geom_type=ogr.wkbPolygon,
+        epsg=4326,
+    )
+    with gdaltest.error_raised(gdal.CE_None):
+        out_ds = gdal.VectorTranslate(
+            "", src_ds, options="-of MEM -t_srs EPSG:32617 -wrapdateline"
+        )
+    lyr = out_ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(
+        f,
+        "POLYGON ((273569.876923437 913668.344183491,273568.830352505 913465.374678854,273786.170063323 913461.355034812,273785.056779618 913665.785238482,273569.876923437 913668.344183491))",
+    )

@@ -2175,9 +2175,13 @@ def wkt_ds(wkts, *, geom_type=None, epsg=None):
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
 
+    srs = osr.SpatialReference(epsg=epsg) if epsg else None
+    if srs:
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
     lyr = ds.CreateLayer(
         "polys",
-        osr.SpatialReference(epsg=epsg) if epsg else None,
+        srs=srs,
         geom_type=geom_type if geom_type else ogr.wkbUnknown,
     )
 
