@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       BUILD_NAME: cmake-ubuntu-jammy
-      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.10 -DUSE_CCACHE=ON -DSWIG_REGENERATE_PYTHON=ON -DBUILD_PYTHON_STUBS=ON
+      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.10 -DUSE_CCACHE=ON -DSWIG_REGENERATE_PYTHON=ON
       cache-name: cmake-ubuntu-jammy
     steps:
     - name: Checkout GDAL
@@ -96,7 +96,6 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y -V libarrow-dev libparquet-dev libarrow-dataset-dev libarrow-compute-dev
         #
-        PYTHON_CMD=python3 && $PYTHON_CMD -m pip install docstub==0.5.0 --break-system-packages
         PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
 
     - name: Build libjxl
