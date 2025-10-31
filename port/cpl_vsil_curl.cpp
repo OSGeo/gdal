@@ -4664,7 +4664,7 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
         pszDir = "";
 
     /* Apache / Nginx */
-    /* Most of the time the fomat is <title>Index of {pszDir[/]}</title>, but
+    /* Most of the time the format is <title>Index of {pszDir[/]}</title>, but
      * there are special cases like https://cdn.star.nesdis.noaa.gov/GOES18/ABI/MESO/M1/GEOCOLOR/
      * where a CDN stuff makes that the title is <title>Index of /ma-cdn02/GOES/data/GOES18/ABI/MESO/M1/GEOCOLOR/</title>
      */
