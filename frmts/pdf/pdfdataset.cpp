@@ -5149,8 +5149,9 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (bUseLib.test(PDFLIB_PODOFO))
     {
         CPLAssert(poPagePodofo);
-#if PODOFO_VERSION_MAJOR > 0 ||                                                \
-    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+#if PODOFO_VERSION_MAJOR >= 1
+        poPagePodofo->TryGetRotationRaw(dfRotation);
+#elif (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
         dfRotation = poPagePodofo->GetRotationRaw();
 #else
         dfRotation = poPagePodofo->GetRotation();

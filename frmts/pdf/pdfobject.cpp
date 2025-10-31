@@ -1747,7 +1747,8 @@ const char *GDALPDFObjectPodofo::GetTypeNameNative()
 {
     try
     {
-        return m_po->GetDataTypeString();
+        osStr = m_po->GetDataTypeString();
+        return osStr.c_str();
     }
     catch (PoDoFo::PdfError &oError)
     {
@@ -1977,7 +1978,8 @@ std::map<CPLString, GDALPDFObject *> &GDALPDFDictionaryPodofo::GetValues()
     (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
     for (const auto &oIter : *m_poDict)
     {
-        Get(oIter.first.GetString().c_str());
+        const std::string osTmp(oIter.first.GetString());
+        Get(osTmp.c_str());
     }
 #else
     for (const auto &oIter : m_poDict->GetKeys())
