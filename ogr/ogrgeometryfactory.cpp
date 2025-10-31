@@ -3376,6 +3376,8 @@ static bool IsPolarToGeographic(OGRCoordinateTransformation *poCT,
     double x = 0.0;
     double y = 90.0;
 
+    CPLErrorStateBackuper oErrorBackuper(CPLQuietErrorHandler);
+
     const bool bBackupEmitErrors = poCT->GetEmitErrors();
     poRevCT->SetEmitErrors(false);
     poCT->SetEmitErrors(false);
@@ -3970,17 +3972,10 @@ OGRGeometryFactory::TransformWithOptionsCache::~TransformWithOptionsCache()
 /*              isTransformWithOptionsRegularTransform()                */
 /************************************************************************/
 
-//! @cond Doxygen_Suppress
-/*static */
-bool OGRGeometryFactory::isTransformWithOptionsRegularTransform(
-    [[maybe_unused]] const OGRSpatialReference *poSourceCRS,
-    [[maybe_unused]] const OGRSpatialReference *poTargetCRS,
-    CSLConstList papszOptions)
-{
-    if (papszOptions)
-        return false;
-
 #ifdef HAVE_GEOS
+static bool MayBePolarToGeographic(const OGRSpatialReference *poSourceCRS,
+                                   const OGRSpatialReference *poTargetCRS)
+{
     if (poSourceCRS && poTargetCRS && poSourceCRS->IsProjected() &&
         poTargetCRS->IsGeographic() &&
         poTargetCRS->GetAxisMappingStrategy() == OAMS_TRADITIONAL_GIS_ORDER &&
@@ -4000,8 +3995,30 @@ bool OGRGeometryFactory::isTransformWithOptionsRegularTransform(
               dfWestLong > dfEastLong))
         {
             // Not a global geographic CRS
-            return true;
+            return false;
         }
+        return true;
+    }
+    return false;
+}
+#endif
+
+//! @cond Doxygen_Suppress
+/*static */
+bool OGRGeometryFactory::isTransformWithOptionsRegularTransform(
+    [[maybe_unused]] const OGRSpatialReference *poSourceCRS,
+    [[maybe_unused]] const OGRSpatialReference *poTargetCRS,
+    CSLConstList papszOptions)
+{
+    if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "NO")) &&
+        poTargetCRS && poTargetCRS->IsGeographic())
+    {
+        return false;
+    }
+
+#ifdef HAVE_GEOS
+    if (MayBePolarToGeographic(poSourceCRS, poTargetCRS))
+    {
         return false;
     }
 #endif
@@ -4067,9 +4084,7 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
             cache.d->poSourceCRS = poSourceCRS;
             cache.d->poTargetCRS = poTargetCRS;
             cache.d->poCT = poCT;
-            if (poSourceCRS && poTargetCRS &&
-                !isTransformWithOptionsRegularTransform(
-                    poSourceCRS, poTargetCRS, papszOptions))
+            if (MayBePolarToGeographic(poSourceCRS, poTargetCRS))
             {
                 cache.d->poRevCT.reset(OGRCreateCoordinateTransformation(
                     poTargetCRS, poSourceCRS));
@@ -4116,13 +4131,12 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
 
     if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "NO")))
     {
-        if (poDstGeom->getSpatialReference() &&
-            !poDstGeom->getSpatialReference()->IsGeographic())
+        const auto poDstGeomSRS = poDstGeom->getSpatialReference();
+        if (poDstGeomSRS && !poDstGeomSRS->IsGeographic())
         {
-            CPLErrorOnce(
-                CE_Warning, CPLE_AppDefined,
-                "WRAPDATELINE is without effect when reprojecting to a "
-                "non-geographic CRS");
+            CPLDebugOnce(
+                "OGR", "WRAPDATELINE is without effect when reprojecting to a "
+                       "non-geographic CRS");
             return poDstGeom.release();
         }
         // TODO and we should probably also test that the axis order + data axis
