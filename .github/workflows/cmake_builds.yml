@@ -471,9 +471,6 @@ jobs:
     - name: Build HTML pages
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2 --target html
-    - name: Build Python stubs
-      shell: bash -l {0}
-      run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2 --target python_stub_files
     - name: test
       shell: bash -l {0}
       run: |
