@@ -37,6 +37,7 @@ jobs:
           python3 -m pip install -r doc/requirements.txt
           python3 -m pip install setuptools
           python3 -m pip install pytest
+          python3 -m pip install docstub
           echo PATH=$PATH >> $GITHUB_ENV
 
     - name: Build GDAL
