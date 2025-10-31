@@ -1948,6 +1948,19 @@ def test_gdalwarp_lib_135(gdalwarp_135_src_ds, gdalwarp_135_grid_gtx):
 
 
 @pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_novshift(gdalwarp_135_src_ds, gdalwarp_135_grid_gtx):
+
+    with gdaltest.error_raised(gdal.CE_None):
+        ds = gdal.Warp(
+            "",
+            gdalwarp_135_src_ds,
+            options=f'-f MEM -s_srs "+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs" -t_srs EPSG:4979 -novshift',
+        )
+    data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    assert data == 100, "Bad value"
+
+
+@pytest.mark.require_driver("GTX")
 def test_gdalwarp_lib_135a(gdalwarp_135_src_ds_longlat, gdalwarp_135_grid_gtx):
 
     # Forward transform, longlat
