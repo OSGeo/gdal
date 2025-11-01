@@ -1286,6 +1286,11 @@ static bool TranslateArray(
         std::string osBlockSize;
         for (auto v : anBlockSize)
         {
+            if (v == 0)
+            {
+                osBlockSize.clear();
+                break;
+            }
             if (!osBlockSize.empty())
                 osBlockSize += ',';
             osBlockSize += std::to_string(v);

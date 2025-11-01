@@ -1032,6 +1032,11 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                 std::string osBlockSize;
                 for (auto v : anBlockSize)
                 {
+                    if (v == 0)
+                    {
+                        osBlockSize.clear();
+                        break;
+                    }
                     if (!osBlockSize.empty())
                         osBlockSize += ',';
                     osBlockSize += std::to_string(v);

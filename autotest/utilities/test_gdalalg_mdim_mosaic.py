@@ -984,7 +984,7 @@ def test_gdalalg_mdim_mosaic_copy_blocksize_not_same(tmp_path):
     gdal.Run("mdim", "mosaic", input=tmp_path / "test*.nc", output=tmp_path / "out.nc")
 
     with gdal.OpenEx(tmp_path / "out.nc", gdal.OF_MULTIDIM_RASTER) as ds:
-        assert ds.GetRootGroup().OpenMDArray("test").GetBlockSize() == [1, 3]
+        assert ds.GetRootGroup().OpenMDArray("test").GetBlockSize() == [0, 0]
 
 
 def test_gdalalg_mdim_mosaic_two_sources(tmp_path):
