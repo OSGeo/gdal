@@ -121,21 +121,21 @@ jobs:
           fi
       - name: Upload tar.gz
         id: upload_tar_gz
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
           path: |
             gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
       - name: Upload tar.xz
         id: upload_tar_xz
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
           path: |
             gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
       - name: Upload zip
         id: upload_zip
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
           path: |
@@ -165,7 +165,7 @@ jobs:
           python3 setup.py bdist_wheel
           cp dist/* ${{ github.workspace }}/dist
       - name: Upload bdist_wheel
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: gdal-utils whl
           path: |
@@ -183,7 +183,7 @@ jobs:
           python3 setup.py sdist
           cp dist/* ${{ github.workspace }}/dist
       - name: Upload sdist
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: gdal sdist
           path: |
