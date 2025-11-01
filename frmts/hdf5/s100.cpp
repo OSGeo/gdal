@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
 
 /************************************************************************/
 /*                       S100BaseDataset()                              */
@@ -108,45 +109,45 @@ char **S100BaseDataset::GetFileList()
 /*                            S100ReadSRS()                             */
 /************************************************************************/
 
+constexpr int PROJECTION_METHOD_MERCATOR = 9805;
+static_assert(PROJECTION_METHOD_MERCATOR ==
+              EPSG_CODE_METHOD_MERCATOR_VARIANT_B);
+constexpr int PROJECTION_METHOD_TRANSVERSE_MERCATOR = 9807;
+static_assert(PROJECTION_METHOD_TRANSVERSE_MERCATOR ==
+              EPSG_CODE_METHOD_TRANSVERSE_MERCATOR);
+constexpr int PROJECTION_METHOD_OBLIQUE_MERCATOR = 9815;
+static_assert(PROJECTION_METHOD_OBLIQUE_MERCATOR ==
+              EPSG_CODE_METHOD_HOTINE_OBLIQUE_MERCATOR_VARIANT_B);
+constexpr int PROJECTION_METHOD_HOTINE_OBLIQUE_MERCATOR = 9812;
+static_assert(PROJECTION_METHOD_HOTINE_OBLIQUE_MERCATOR ==
+              EPSG_CODE_METHOD_HOTINE_OBLIQUE_MERCATOR_VARIANT_A);
+constexpr int PROJECTION_METHOD_LCC_1SP = 9801;
+static_assert(PROJECTION_METHOD_LCC_1SP ==
+              EPSG_CODE_METHOD_LAMBERT_CONIC_CONFORMAL_1SP);
+constexpr int PROJECTION_METHOD_LCC_2SP = 9802;
+static_assert(PROJECTION_METHOD_LCC_2SP ==
+              EPSG_CODE_METHOD_LAMBERT_CONIC_CONFORMAL_2SP);
+constexpr int PROJECTION_METHOD_OBLIQUE_STEREOGRAPHIC = 9809;
+static_assert(PROJECTION_METHOD_OBLIQUE_STEREOGRAPHIC ==
+              EPSG_CODE_METHOD_OBLIQUE_STEREOGRAPHIC);
+constexpr int PROJECTION_METHOD_POLAR_STEREOGRAPHIC = 9810;
+static_assert(PROJECTION_METHOD_POLAR_STEREOGRAPHIC ==
+              EPSG_CODE_METHOD_POLAR_STEREOGRAPHIC_VARIANT_A);
+constexpr int PROJECTION_METHOD_KROVAK_OBLIQUE_CONIC_CONFORMAL = 9819;
+static_assert(PROJECTION_METHOD_KROVAK_OBLIQUE_CONIC_CONFORMAL ==
+              EPSG_CODE_METHOD_KROVAK);
+constexpr int PROJECTION_METHOD_AMERICAN_POLYCONIC = 9818;
+static_assert(PROJECTION_METHOD_AMERICAN_POLYCONIC ==
+              EPSG_CODE_METHOD_AMERICAN_POLYCONIC);
+constexpr int PROJECTION_METHOD_ALBERS_EQUAL_AREA = 9822;
+static_assert(PROJECTION_METHOD_ALBERS_EQUAL_AREA ==
+              EPSG_CODE_METHOD_ALBERS_EQUAL_AREA);
+constexpr int PROJECTION_METHOD_LAMBERT_AZIMUTHAL_EQUAL_AREA = 9820;
+static_assert(PROJECTION_METHOD_LAMBERT_AZIMUTHAL_EQUAL_AREA ==
+              EPSG_CODE_METHOD_LAMBERT_AZIMUTHAL_EQUAL_AREA);
+
 bool S100ReadSRS(const GDALGroup *poRootGroup, OGRSpatialReference &oSRS)
 {
-    constexpr int PROJECTION_METHOD_MERCATOR = 9805;
-    static_assert(PROJECTION_METHOD_MERCATOR ==
-                  EPSG_CODE_METHOD_MERCATOR_VARIANT_B);
-    constexpr int PROJECTION_METHOD_TRANSVERSE_MERCATOR = 9807;
-    static_assert(PROJECTION_METHOD_TRANSVERSE_MERCATOR ==
-                  EPSG_CODE_METHOD_TRANSVERSE_MERCATOR);
-    constexpr int PROJECTION_METHOD_OBLIQUE_MERCATOR = 9815;
-    static_assert(PROJECTION_METHOD_OBLIQUE_MERCATOR ==
-                  EPSG_CODE_METHOD_HOTINE_OBLIQUE_MERCATOR_VARIANT_B);
-    constexpr int PROJECTION_METHOD_HOTINE_OBLIQUE_MERCATOR = 9812;
-    static_assert(PROJECTION_METHOD_HOTINE_OBLIQUE_MERCATOR ==
-                  EPSG_CODE_METHOD_HOTINE_OBLIQUE_MERCATOR_VARIANT_A);
-    constexpr int PROJECTION_METHOD_LCC_1SP = 9801;
-    static_assert(PROJECTION_METHOD_LCC_1SP ==
-                  EPSG_CODE_METHOD_LAMBERT_CONIC_CONFORMAL_1SP);
-    constexpr int PROJECTION_METHOD_LCC_2SP = 9802;
-    static_assert(PROJECTION_METHOD_LCC_2SP ==
-                  EPSG_CODE_METHOD_LAMBERT_CONIC_CONFORMAL_2SP);
-    constexpr int PROJECTION_METHOD_OBLIQUE_STEREOGRAPHIC = 9809;
-    static_assert(PROJECTION_METHOD_OBLIQUE_STEREOGRAPHIC ==
-                  EPSG_CODE_METHOD_OBLIQUE_STEREOGRAPHIC);
-    constexpr int PROJECTION_METHOD_POLAR_STEREOGRAPHIC = 9810;
-    static_assert(PROJECTION_METHOD_POLAR_STEREOGRAPHIC ==
-                  EPSG_CODE_METHOD_POLAR_STEREOGRAPHIC_VARIANT_A);
-    constexpr int PROJECTION_METHOD_KROVAK_OBLIQUE_CONIC_CONFORMAL = 9819;
-    static_assert(PROJECTION_METHOD_KROVAK_OBLIQUE_CONIC_CONFORMAL ==
-                  EPSG_CODE_METHOD_KROVAK);
-    constexpr int PROJECTION_METHOD_AMERICAN_POLYCONIC = 9818;
-    static_assert(PROJECTION_METHOD_AMERICAN_POLYCONIC ==
-                  EPSG_CODE_METHOD_AMERICAN_POLYCONIC);
-    constexpr int PROJECTION_METHOD_ALBERS_EQUAL_AREA = 9822;
-    static_assert(PROJECTION_METHOD_ALBERS_EQUAL_AREA ==
-                  EPSG_CODE_METHOD_ALBERS_EQUAL_AREA);
-    constexpr int PROJECTION_METHOD_LAMBERT_AZIMUTHAL_EQUAL_AREA = 9820;
-    static_assert(PROJECTION_METHOD_LAMBERT_AZIMUTHAL_EQUAL_AREA ==
-                  EPSG_CODE_METHOD_LAMBERT_AZIMUTHAL_EQUAL_AREA);
-
     // Get SRS
     oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     auto poHorizontalCRS = poRootGroup->GetAttribute("horizontalCRS");
@@ -1113,6 +1114,9 @@ bool S100BaseWriter::BaseChecks(const char *pszDriverName, bool crsMustBeEPSG)
     if (!pszVerticalDatum)
         pszVerticalDatum = m_poSrcDS->GetMetadataItem("VERTICAL_DATUM_MEANING");
     if (!pszVerticalDatum)
+        pszVerticalDatum =
+            m_poSrcDS->GetMetadataItem("VERTICAL_DATUM_EPSG_CODE");
+    if (!pszVerticalDatum)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "VERTICAL_DATUM creation option must be specified");
@@ -1122,9 +1126,24 @@ bool S100BaseWriter::BaseChecks(const char *pszDriverName, bool crsMustBeEPSG)
         S100GetVerticalDatumCodeFromCodeMeaningOrAbbrev(pszVerticalDatum);
     if (m_nVerticalDatum <= 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "VERTICAL_DATUM value is invalid");
-        return false;
+        auto pjCtxt = OSRGetProjTLSContext();
+        PJ *vertical_datum =
+            proj_create_from_database(pjCtxt, "EPSG", pszVerticalDatum,
+                                      PJ_CATEGORY_DATUM, false, nullptr);
+        const bool bIsValid =
+            vertical_datum != nullptr &&
+            proj_get_type(vertical_datum) == PJ_TYPE_VERTICAL_REFERENCE_FRAME;
+        proj_destroy(vertical_datum);
+        if (bIsValid)
+        {
+            m_nVerticalDatum = atoi(pszVerticalDatum);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "VERTICAL_DATUM value is invalid");
+            return false;
+        }
     }
 
     const std::string osFilename = CPLGetFilename(m_osDestFilename.c_str());
@@ -1202,6 +1221,17 @@ bool S100BaseWriter::WriteUInt8Value(hid_t hGroup, const char *pszName,
 }
 
 /************************************************************************/
+/*                    S100BaseWriter::WriteUInt16Value()                */
+/************************************************************************/
+
+bool S100BaseWriter::WriteUInt16Value(hid_t hGroup, const char *pszName,
+                                      int value)
+{
+    return GH5_CreateAttribute(hGroup, pszName, H5T_STD_U16LE) &&
+           GH5_WriteAttribute(hGroup, pszName, value);
+}
+
+/************************************************************************/
 /*                    S100BaseWriter::WriteUInt32Value()                */
 /************************************************************************/
 
@@ -1209,6 +1239,17 @@ bool S100BaseWriter::WriteUInt32Value(hid_t hGroup, const char *pszName,
                                       unsigned value)
 {
     return GH5_CreateAttribute(hGroup, pszName, H5T_STD_U32LE) &&
+           GH5_WriteAttribute(hGroup, pszName, value);
+}
+
+/************************************************************************/
+/*                    S100BaseWriter::WriteInt32Value()                 */
+/************************************************************************/
+
+bool S100BaseWriter::WriteInt32Value(hid_t hGroup, const char *pszName,
+                                     int value)
+{
+    return GH5_CreateAttribute(hGroup, pszName, H5T_STD_I32LE) &&
            GH5_WriteAttribute(hGroup, pszName, value);
 }
 
@@ -1309,7 +1350,7 @@ bool S100BaseWriter::WriteIssueDate()
 /*                    S100BaseWriter::WriteIssueTime()                  */
 /************************************************************************/
 
-bool S100BaseWriter::WriteIssueTime()
+bool S100BaseWriter::WriteIssueTime(bool bAutogenerateFromCurrent)
 {
     const char *pszIssueTime = m_aosOptions.FetchNameValue("ISSUE_TIME");
     if (!pszIssueTime)
@@ -1317,6 +1358,17 @@ bool S100BaseWriter::WriteIssueTime()
         const char *pszTmp = m_poSrcDS->GetMetadataItem("issueTime");
         if (pszTmp && strlen(pszTmp) == 7 && pszTmp[6] == 'Z')
             pszIssueTime = pszTmp;
+    }
+    std::string osIssueTime;  // keep in that scope
+    if (!pszIssueTime && bAutogenerateFromCurrent)
+    {
+        time_t now;
+        time(&now);
+        struct tm brokenDown;
+        CPLUnixTimeToYMDHMS(now, &brokenDown);
+        osIssueTime = CPLSPrintf("%02d%02d%02dZ", brokenDown.tm_hour,
+                                 brokenDown.tm_min, brokenDown.tm_sec);
+        pszIssueTime = osIssueTime.c_str();
     }
     return !pszIssueTime || pszIssueTime[0] == 0 ||
            WriteVarLengthStringValue(m_hdf5, "issueTime", pszIssueTime);
@@ -1347,10 +1399,284 @@ bool S100BaseWriter::WriteTopLevelBoundingBox()
 /*                  S100BaseWriter::WriteHorizontalCRS()                */
 /************************************************************************/
 
-bool S100BaseWriter::WriteHorizontalCRS(int nCode)
+bool S100BaseWriter::WriteHorizontalCRS()
 {
-    return GH5_CreateAttribute(m_hdf5, "horizontalCRS", H5T_STD_I32LE) &&
-           GH5_WriteAttribute(m_hdf5, "horizontalCRS", nCode);
+    bool ret = WriteInt32Value(m_hdf5, "horizontalCRS",
+                               m_nEPSGCode > 0 ? m_nEPSGCode : -1);
+    if (ret && m_nEPSGCode <= 0)
+    {
+        ret = WriteVarLengthStringValue(m_hdf5, "nameOfHorizontalCRS",
+                                        m_poSRS->GetName());
+        {
+            GH5_HIDTypeHolder hEnumType(H5_CHECK(H5Tenum_create(H5T_STD_U8LE)));
+            ret = ret && hEnumType;
+            if (ret)
+            {
+                uint8_t val;
+                val = 1;
+                ret = ret && H5_CHECK(H5Tenum_insert(hEnumType, "geodeticCRS2D",
+                                                     &val)) >= 0;
+                val = 2;
+                ret = ret && H5_CHECK(H5Tenum_insert(hEnumType, "projectedCRS",
+                                                     &val)) >= 0;
+                ret = ret &&
+                      GH5_CreateAttribute(m_hdf5, "typeOfHorizontalCRS",
+                                          hEnumType) &&
+                      GH5_WriteAttribute(m_hdf5, "typeOfHorizontalCRS",
+                                         m_poSRS->IsGeographic() ? 1 : 2);
+            }
+        }
+
+        const int nHorizontalCS = m_poSRS->IsGeographic() ? 6422
+                                  : m_poSRS->EPSGTreatsAsNorthingEasting()
+                                      ? 4500
+                                      : 4400;
+        ret = ret && WriteInt32Value(m_hdf5, "horizontalCS", nHorizontalCS);
+
+        const char *pszDatumKey =
+            m_poSRS->IsGeographic() ? "GEOGCS|DATUM" : "PROJCS|GEOGCS|DATUM";
+        const char *pszDatumAuthName = m_poSRS->GetAuthorityName(pszDatumKey);
+        const char *pszDatumCode = m_poSRS->GetAuthorityCode(pszDatumKey);
+        const int nDatum = (pszDatumAuthName && pszDatumCode &&
+                            EQUAL(pszDatumAuthName, "EPSG"))
+                               ? atoi(pszDatumCode)
+                               : -1;
+        ret = ret && WriteInt32Value(m_hdf5, "horizontalDatum", nDatum);
+        if (ret && nDatum < 0)
+        {
+            const char *pszDatum = m_poSRS->GetAttrValue(pszDatumKey);
+            if (!pszDatum)
+                pszDatum = "unknown";
+            ret = WriteVarLengthStringValue(m_hdf5, "nameOfHorizontalDatum",
+                                            pszDatum);
+
+            const char *pszSpheroidKey = m_poSRS->IsGeographic()
+                                             ? "GEOGCS|DATUM|SPHEROID"
+                                             : "PROJCS|GEOGCS|DATUM|SPHEROID";
+            const char *pszSpheroidAuthName =
+                m_poSRS->GetAuthorityName(pszSpheroidKey);
+            const char *pszSpheroidCode =
+                m_poSRS->GetAuthorityCode(pszSpheroidKey);
+            const char *pszSpheroidName = m_poSRS->GetAttrValue(pszSpheroidKey);
+            const int nSpheroid =
+                (pszSpheroidAuthName && pszSpheroidCode &&
+                 EQUAL(pszSpheroidAuthName, "EPSG"))
+                    ? atoi(pszSpheroidCode)
+                : (pszSpheroidName && EQUAL(pszSpheroidName, "Bessel 1841"))
+                    ? 7004
+                    : -1;
+            if (nSpheroid <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unknown code for ellipsoid of CRS");
+                return false;
+            }
+            ret = ret && WriteInt32Value(m_hdf5, "spheroid", nSpheroid);
+
+            const char *pszPrimeMeridianKey = m_poSRS->IsGeographic()
+                                                  ? "GEOGCS|PRIMEM"
+                                                  : "PROJCS|GEOGCS|PRIMEM";
+            const char *pszPrimeMeridianAuthName =
+                m_poSRS->GetAuthorityName(pszPrimeMeridianKey);
+            const char *pszPrimeMeridianCode =
+                m_poSRS->GetAuthorityCode(pszPrimeMeridianKey);
+            const char *pszPrimeMeridianName =
+                m_poSRS->GetAttrValue(pszPrimeMeridianKey);
+            const int nPrimeMeridian =
+                (pszPrimeMeridianAuthName && pszPrimeMeridianCode &&
+                 EQUAL(pszPrimeMeridianAuthName, "EPSG"))
+                    ? atoi(pszPrimeMeridianCode)
+                : (pszPrimeMeridianName && EQUAL(pszPrimeMeridianName, "Ferro"))
+                    ? 8909
+                    : -1;
+            if (nPrimeMeridian <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unknown code for prime meridian of CRS");
+                return false;
+            }
+            ret =
+                ret && WriteInt32Value(m_hdf5, "primeMeridian", nPrimeMeridian);
+        }
+
+        const char *pszProjection = m_poSRS->IsProjected()
+                                        ? m_poSRS->GetAttrValue("PROJECTION")
+                                        : nullptr;
+        if (pszProjection)
+        {
+            int nProjectionMethod = 0;
+            double adfParams[] = {std::numeric_limits<double>::quiet_NaN(),
+                                  std::numeric_limits<double>::quiet_NaN(),
+                                  std::numeric_limits<double>::quiet_NaN(),
+                                  std::numeric_limits<double>::quiet_NaN(),
+                                  std::numeric_limits<double>::quiet_NaN()};
+            if (EQUAL(pszProjection, SRS_PT_MERCATOR_2SP))
+            {
+                nProjectionMethod = PROJECTION_METHOD_MERCATOR;
+                adfParams[0] =
+                    m_poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
+                adfParams[1] =
+                    m_poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+            }
+            else if (EQUAL(pszProjection, SRS_PT_MERCATOR_1SP))
+            {
+                auto poTmpSRS = std::unique_ptr<OGRSpatialReference>(
+                    m_poSRS->convertToOtherProjection(SRS_PT_MERCATOR_2SP));
+                nProjectionMethod = PROJECTION_METHOD_MERCATOR;
+                adfParams[0] =
+                    poTmpSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
+                adfParams[1] =
+                    poTmpSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+            }
+            else if (EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR))
+            {
+                nProjectionMethod = PROJECTION_METHOD_TRANSVERSE_MERCATOR;
+                adfParams[0] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+                adfParams[1] =
+                    m_poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                adfParams[2] =
+                    m_poSRS->GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+            }
+            else if (EQUAL(pszProjection,
+                           SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER))
+            {
+                nProjectionMethod = PROJECTION_METHOD_OBLIQUE_MERCATOR;
+                adfParams[0] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0);
+                adfParams[1] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0);
+                adfParams[2] = m_poSRS->GetNormProjParm(SRS_PP_AZIMUTH, 0.0);
+                adfParams[3] =
+                    m_poSRS->GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE, 0.0);
+                adfParams[4] =
+                    m_poSRS->GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+            }
+            else if (EQUAL(pszProjection, SRS_PT_HOTINE_OBLIQUE_MERCATOR))
+            {
+                nProjectionMethod = PROJECTION_METHOD_HOTINE_OBLIQUE_MERCATOR;
+                adfParams[0] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0);
+                adfParams[1] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0);
+                adfParams[2] = m_poSRS->GetNormProjParm(SRS_PP_AZIMUTH, 0.0);
+                adfParams[3] =
+                    m_poSRS->GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE, 0.0);
+                adfParams[4] =
+                    m_poSRS->GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+            }
+            else if (EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP))
+            {
+                nProjectionMethod = PROJECTION_METHOD_LCC_1SP;
+                adfParams[0] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+                adfParams[1] =
+                    m_poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                adfParams[2] =
+                    m_poSRS->GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+            }
+            else if (EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP))
+            {
+                nProjectionMethod = PROJECTION_METHOD_LCC_2SP;
+                adfParams[0] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+                adfParams[1] =
+                    m_poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                adfParams[2] =
+                    m_poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
+                adfParams[3] =
+                    m_poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0);
+            }
+            else if (EQUAL(pszProjection, SRS_PT_OBLIQUE_STEREOGRAPHIC))
+            {
+                nProjectionMethod = PROJECTION_METHOD_OBLIQUE_STEREOGRAPHIC;
+                adfParams[0] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+                adfParams[1] =
+                    m_poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                adfParams[2] =
+                    m_poSRS->GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+            }
+            else if (EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC))
+            {
+                nProjectionMethod = PROJECTION_METHOD_POLAR_STEREOGRAPHIC;
+                adfParams[0] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+                adfParams[1] =
+                    m_poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                adfParams[2] =
+                    m_poSRS->GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+            }
+            else if (EQUAL(pszProjection, SRS_PT_KROVAK))
+            {
+                nProjectionMethod =
+                    PROJECTION_METHOD_KROVAK_OBLIQUE_CONIC_CONFORMAL;
+                adfParams[0] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+                adfParams[1] =
+                    m_poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                adfParams[2] = m_poSRS->GetNormProjParm(SRS_PP_AZIMUTH, 0.0);
+                adfParams[3] =
+                    m_poSRS->GetNormProjParm(SRS_PP_PSEUDO_STD_PARALLEL_1, 0.0);
+                adfParams[4] =
+                    m_poSRS->GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+            }
+            else if (EQUAL(pszProjection, SRS_PT_POLYCONIC))
+            {
+                nProjectionMethod = PROJECTION_METHOD_AMERICAN_POLYCONIC;
+                adfParams[0] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+                adfParams[1] =
+                    m_poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+            }
+            else if (EQUAL(pszProjection, SRS_PT_ALBERS_CONIC_EQUAL_AREA))
+            {
+                nProjectionMethod = PROJECTION_METHOD_ALBERS_EQUAL_AREA;
+                adfParams[0] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0);
+                adfParams[1] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0);
+                adfParams[2] =
+                    m_poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
+                adfParams[3] =
+                    m_poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0);
+            }
+            else if (EQUAL(pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA))
+            {
+                nProjectionMethod =
+                    PROJECTION_METHOD_LAMBERT_AZIMUTHAL_EQUAL_AREA;
+                adfParams[0] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0);
+                adfParams[1] =
+                    m_poSRS->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Projection method %s is not supported by S100",
+                         pszProjection);
+                return false;
+            }
+
+            ret = ret && WriteInt32Value(m_hdf5, "projectionMethod",
+                                         nProjectionMethod);
+            for (int i = 0; i < 5 && !std::isnan(adfParams[i]); ++i)
+            {
+                const std::string osAttrName =
+                    "projectionParameter" + std::to_string(i + 1);
+                ret = ret && WriteFloat64Value(m_hdf5, osAttrName.c_str(),
+                                               adfParams[i]);
+            }
+
+            ret = ret && WriteFloat64Value(m_hdf5, "falseNorthing",
+                                           m_poSRS->GetNormProjParm(
+                                               SRS_PP_FALSE_NORTHING, 0.0));
+            ret = ret && WriteFloat64Value(m_hdf5, "falseEasting",
+                                           m_poSRS->GetNormProjParm(
+                                               SRS_PP_FALSE_EASTING, 0.0));
+        }
+    }
+    return ret;
 }
 
 /************************************************************************/
@@ -1593,9 +1919,11 @@ bool S100BaseWriter::WriteInterpolationType(hid_t hGroup, int nCode)
 /*                  S100BaseWriter::WriteNumInstances()                 */
 /************************************************************************/
 
-bool S100BaseWriter::WriteNumInstances(hid_t hGroup, int numInstances)
+bool S100BaseWriter::WriteNumInstances(hid_t hGroup, hid_t hType,
+                                       int numInstances)
 {
-    return WriteUInt8Value(hGroup, "numInstances", numInstances);
+    return GH5_CreateAttribute(hGroup, "numInstances", hType) &&
+           GH5_WriteAttribute(hGroup, "numInstances", numInstances);
 }
 
 /************************************************************************/
@@ -1733,9 +2061,10 @@ bool S100BaseWriter::WriteFIGGridRelatedParameters(hid_t hGroup)
 /*                   S100BaseWriter::WriteNumGRP()                      */
 /************************************************************************/
 
-bool S100BaseWriter::WriteNumGRP(hid_t hGroup, int numGRP)
+bool S100BaseWriter::WriteNumGRP(hid_t hGroup, hid_t hType, int numGRP)
 {
-    return WriteUInt8Value(hGroup, "numGRP", numGRP);
+    return GH5_CreateAttribute(hGroup, "numGRP", hType) &&
+           GH5_WriteAttribute(hGroup, "numGRP", numGRP);
 }
 
 /************************************************************************/
