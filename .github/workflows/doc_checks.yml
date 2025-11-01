@@ -37,6 +37,7 @@ jobs:
           python3 -m pip install -r doc/requirements.txt
           python3 -m pip install setuptools
           python3 -m pip install pytest
+          python3 -m pip install docstub
           echo PATH=$PATH >> $GITHUB_ENV
 
     - name: Build GDAL
@@ -92,6 +93,12 @@ jobs:
       run: |
         python3 -c 'from osgeo import gdal'
         ctest -V -R spelling --output-on-failure
+      working-directory: build
+
+    - name: Docstub annotations
+      shell: bash -l {0}
+      run: |
+        ctest -V -R docstub-annotations --output-on-failure
       working-directory: build
 
     # ReadTheDocs pull requests do not build PDF, but we can break it though,
