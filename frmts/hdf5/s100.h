@@ -73,6 +73,8 @@ class S100BaseWriter CPL_NON_FINAL
     bool BaseChecks(const char *pszDriverName, bool crsMustBeEPSG);
 
     static bool WriteUInt8Value(hid_t hGroup, const char *pszName, int value);
+    static bool WriteUInt16Value(hid_t hGroup, const char *pszName, int value);
+    static bool WriteInt32Value(hid_t hGroup, const char *pszName, int value);
     static bool WriteUInt32Value(hid_t hGroup, const char *pszName,
                                  unsigned value);
     static bool WriteFloat32Value(hid_t hGroup, const char *pszName,
@@ -91,9 +93,9 @@ class S100BaseWriter CPL_NON_FINAL
     bool CreateFile();
     bool WriteProductSpecification(const char *pszProductSpecification);
     bool WriteIssueDate();
-    bool WriteIssueTime();
+    bool WriteIssueTime(bool bAutogenerateFromCurrent);
     bool WriteTopLevelBoundingBox();
-    bool WriteHorizontalCRS(int nCode);
+    bool WriteHorizontalCRS();
     bool WriteVerticalCS(int nCode);
     bool WriteVerticalCoordinateBase(int nCode);
     static bool WriteVerticalDatumReference(hid_t hGroup, int nCode);
@@ -107,7 +109,7 @@ class S100BaseWriter CPL_NON_FINAL
     static bool WriteHorizontalPositionUncertainty(hid_t hGroup, float fValue);
     static bool WriteVerticalUncertainty(hid_t hGroup, float fValue);
     static bool WriteInterpolationType(hid_t hGroup, int nCode);
-    static bool WriteNumInstances(hid_t hGroup, int numInstances);
+    static bool WriteNumInstances(hid_t hGroup, hid_t hType, int numInstances);
     static bool WriteSequencingRuleScanDirection(hid_t hGroup,
                                                  const char *pszValue);
     static bool WriteSequencingRuleType(hid_t hGroup, int nCode);
@@ -115,7 +117,7 @@ class S100BaseWriter CPL_NON_FINAL
 
     bool CreateFeatureInstanceGroup(const char *name);
     bool WriteFIGGridRelatedParameters(hid_t hGroup);
-    static bool WriteNumGRP(hid_t hGroup, int numGRP);
+    static bool WriteNumGRP(hid_t hGroup, hid_t hType, int numGRP);
 
     bool CreateValuesGroup(const char *name);
 

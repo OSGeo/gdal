@@ -1097,7 +1097,7 @@ bool S102Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
                                               H5T_STD_U16LE, m_nVerticalDatum);
             }
 
-            ret = ret && WriteNumGRP(m_featureInstanceGroup, 1);
+            ret = ret && WriteNumGRP(m_featureInstanceGroup, H5T_STD_U8LE, 1);
 
             ret = ret && CreateValuesGroup("Group_001");
             ret = ret && WriteVarLengthStringValue(m_valuesGroup, "timePoint",
@@ -1133,8 +1133,8 @@ bool S102Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
         bool ret = CreateFile();
         ret = ret && WriteProductSpecification("INT.IHO.S-102.3.0.0");
         ret = ret && WriteIssueDate();
-        ret = ret && WriteIssueTime();
-        ret = ret && WriteHorizontalCRS(m_nEPSGCode);
+        ret = ret && WriteIssueTime(/* bAutogenerateFromCurrent = */ false);
+        ret = ret && WriteHorizontalCRS();
         ret = ret && WriteTopLevelBoundingBox();
         ret = ret && WriteVerticalCS(6498);           // Depth, metre, down
         ret = ret && WriteVerticalCoordinateBase(2);  // verticalDatum
@@ -1150,7 +1150,7 @@ bool S102Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
 
         ret = ret && CreateFeatureInstanceGroup("BathymetryCoverage.01");
         ret = ret && WriteFIGGridRelatedParameters(m_featureInstanceGroup);
-        ret = ret && WriteNumGRP(m_featureInstanceGroup, 1);
+        ret = ret && WriteNumGRP(m_featureInstanceGroup, H5T_STD_U8LE, 1);
 
         ret = ret && CreateValuesGroup("Group_001");
 
@@ -1178,7 +1178,7 @@ bool S102Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
             ret = ret &&
                   CreateFeatureInstanceGroup("QualityOfBathymetryCoverage.01");
             ret = ret && WriteFIGGridRelatedParameters(m_featureInstanceGroup);
-            ret = ret && WriteNumGRP(m_featureInstanceGroup, 1);
+            ret = ret && WriteNumGRP(m_featureInstanceGroup, H5T_STD_U8LE, 1);
 
             ret = ret && CreateValuesGroup("Group_001");
             pScaledProgressData.reset(GDALCreateScaledProgress(
@@ -1232,7 +1232,7 @@ bool S102Creator::WriteFeatureGroupAttributes(bool isQuality)
                          ? static_cast<float>(CPLAtof(pszVerticalUncertainty))
                          : -1.0f);
     ret = ret && WriteInterpolationType(m_featureGroup, 1);  // Nearest neighbor
-    ret = ret && WriteNumInstances(m_featureGroup, 1);
+    ret = ret && WriteNumInstances(m_featureGroup, H5T_STD_U8LE, 1);
     ret = ret && WriteSequencingRuleScanDirection(m_featureGroup,
                                                   m_poSRS->IsProjected()
                                                       ? "Easting, Northing"
