@@ -3620,11 +3620,12 @@ int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
                 CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
             return FALSE;
         }
+        constexpr size_t CHUNK_SIZE = 32768;
         while (true)
         {
-            if (nDataLen + 8192 + 1 > nDataAlloc)
+            if (nDataLen + CHUNK_SIZE + 1 > nDataAlloc)
             {
-                nDataAlloc = (nDataAlloc * 4) / 3 + 8192 + 1;
+                nDataAlloc = (nDataAlloc * 4) / 3 + CHUNK_SIZE + 1;
                 if (nDataAlloc >
                     static_cast<vsi_l_offset>(static_cast<size_t>(nDataAlloc)))
                 {
@@ -3651,8 +3652,8 @@ int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
                 }
                 *ppabyRet = pabyNew;
             }
-            const int nRead =
-                static_cast<int>(VSIFReadL(*ppabyRet + nDataLen, 1, 8192, fp));
+            const int nRead = static_cast<int>(
+                VSIFReadL(*ppabyRet + nDataLen, 1, CHUNK_SIZE, fp));
             nDataLen += nRead;
 
             if (nMaxSize >= 0 && nDataLen > static_cast<vsi_l_offset>(nMaxSize))
@@ -3687,12 +3688,9 @@ int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
 
         // With "large" VSI I/O API we can read data chunks larger than
         // VSIMalloc could allocate. Catch it here.
-        if (nDataLen !=
-                static_cast<vsi_l_offset>(static_cast<size_t>(nDataLen)) ||
-            nDataLen + 1 < nDataLen
-            // opening a directory returns nDataLen = INT_MAX (on 32bit) or
-            // INT64_MAX (on 64bit)
-            || nDataLen + 1 > std::numeric_limits<size_t>::max() / 2 ||
+        // Opening a directory returns nDataLen = INT_MAX (on 32bit) or
+        // INT64_MAX (on 64bit)
+        if (nDataLen > std::numeric_limits<size_t>::max() / 2 - 1 ||
             (nMaxSize >= 0 && nDataLen > static_cast<vsi_l_offset>(nMaxSize)))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
