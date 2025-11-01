@@ -62,6 +62,7 @@
 #include "cpl_vsi.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cstddef>
 #include <cstdio>
@@ -4166,18 +4167,53 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
     info.nUncompressedSize = static_cast<uint64_t>(file_info.uncompressed_size);
     info.nCompressedSize = static_cast<uint64_t>(file_info.compressed_size);
 
+    // Sanity checks
+    if (info.nCompressedSize >
+        std::numeric_limits<uint64_t>::max() - info.nStartDataStream)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid compressed size for file %s", pszFilename);
+        return false;
+    }
+    const uLong64 afterFileOffset =
+        info.nStartDataStream + info.nCompressedSize;
+
+    // Cf https://stackoverflow.com/questions/16792189/gzip-compression-ratio-for-zeros/16794960
+    constexpr unsigned MAX_DEFLATE_COMPRESSION_RATIO = 1032;
+    if (info.nCompressedSize != 0 &&
+        info.nUncompressedSize / info.nCompressedSize >
+            MAX_DEFLATE_COMPRESSION_RATIO)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid compression ratio for file %s: %" PRIu64, pszFilename,
+                 info.nUncompressedSize / info.nCompressedSize);
+        return false;
+    }
+
+    // A bit arbitrary
+    constexpr unsigned THRESHOLD_FOR_BIG_ALLOCS = 1024 * 1024 * 1024;
+    if (info.nUncompressedSize > THRESHOLD_FOR_BIG_ALLOCS)
+    {
+        // Check that the compressed file size is consistent with the ZIP file size
+        poVirtualHandle->Seek(0, SEEK_END);
+        if (afterFileOffset > poVirtualHandle->Tell())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid compressed size for file %s: %" PRIu64,
+                     pszFilename, info.nCompressedSize);
+            return false;
+        }
+    }
+
     // Try to locate .sozip.idx file
-    uLong64 local_header_pos;
-    cpl_unzGetLocalHeaderPos(unzF, &local_header_pos);
-    local_header_pos = info.nStartDataStream + file_info.compressed_size;
     unz_file_info file_info2;
     std::string osAuxName;
     osAuxName.resize(1024);
     uLong64 indexPos;
     if (file_info.compression_method == 8 &&
         cpl_unzCurrentFileInfoFromLocalHeader(
-            unzF, local_header_pos, &file_info2, &osAuxName[0],
-            osAuxName.size(), &indexPos) == UNZ_OK)
+            unzF, afterFileOffset, &file_info2, &osAuxName[0], osAuxName.size(),
+            &indexPos) == UNZ_OK)
     {
         osAuxName.resize(strlen(osAuxName.c_str()));
         if (osAuxName.find(".sozip.idx") != std::string::npos)
