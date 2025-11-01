@@ -514,3 +514,29 @@ def test_gdalalg_raster_neighbors_complete():
         f"{gdal_path} completion gdal raster neighbors --kernel ["
     ).split(" ")
     assert "sharpen" not in out
+
+
+def test_gdalalg_raster_neighbors_custom_kernel_0_sum(neighbors):
+
+    neighbors["input"] = "../gcore/data/byte.tif"
+    neighbors["kernel"] = [[0, -0.04, 0], [-0.04, 0.16, -0.04], [0, -0.04, 0]]
+    neighbors["output-format"] = "MEM"
+    assert neighbors.Run()
+
+    out_ds = neighbors.Output()
+    assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == pytest.approx(
+        (-7.56, 12.24)
+    )
+
+
+def test_gdalalg_raster_neighbors_custom_kernel_0_sum_error(neighbors):
+
+    neighbors["input"] = "../gcore/data/byte.tif"
+    neighbors["kernel"] = [[0, -0.04, 0], [-0.04, 0.16, -0.04], [0, -0.04, 0]]
+    neighbors["method"] = "mean"
+    neighbors["output-format"] = "MEM"
+    with pytest.raises(
+        Exception,
+        match="Specifying method = 'mean' for a kernel whose sum of coeffients is zero is not allowed. Use 'sum' instead",
+    ):
+        neighbors.Run()
