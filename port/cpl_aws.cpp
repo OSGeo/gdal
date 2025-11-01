@@ -2185,7 +2185,8 @@ bool VSIS3HandleHelper::GetConfiguration(
                     CPLMutexHolder oHolder(&ghMutex);
                     geCredentialsSource =
                         AWSCredentialsSource::CREDENTIAL_PROCESS;
-                    gosCredentialProcessCommand = osCredentialProcess;
+                    gosCredentialProcessCommand =
+                        std::move(osCredentialProcess);
                 }
                 eCredentialsSource = AWSCredentialsSource::CREDENTIAL_PROCESS;
                 return true;
