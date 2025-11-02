@@ -148,6 +148,21 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     const auto &poRootGroup = poDS->m_poRootGroup;
 
+    auto poVerticalCS = poRootGroup->GetAttribute("verticalCS");
+    if (poVerticalCS && poVerticalCS->GetDataType().GetClass() == GEDTC_NUMERIC)
+    {
+        const int nVerticalCS = poVerticalCS->ReadAsInt();
+        if (nVerticalCS == 6498)
+            poDS->GDALDataset::SetMetadataItem(
+                "VERTICAL_CS_MEANING", "depth, meters, orientation down");
+        else if (nVerticalCS == 6499)
+            poDS->GDALDataset::SetMetadataItem(
+                "VERTICAL_CS_MEANING", "height, meters, orientation up");
+
+        poDS->GDALDataset::SetMetadataItem("verticalCS",
+                                           std::to_string(nVerticalCS).c_str());
+    }
+
     auto poWaterLevel = poRootGroup->OpenGroup("WaterLevel");
     if (!poWaterLevel)
     {

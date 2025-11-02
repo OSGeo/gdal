@@ -35,6 +35,8 @@ def test_s111_basic():
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.4, 0.0, 48.75, 0.0, -0.5))
     assert ds.GetMetadata_Dict() == {
         "AREA_OR_POINT": "Point",
+        "verticalCS": "6498",
+        "VERTICAL_CS_MEANING": "depth, meters, orientation down",
         "dateTimeOfFirstRecord": "20190606T120000Z",
         "dateTimeOfLastRecord": "20190606T120000Z",
         "geographicIdentifier": "Somewhere",
@@ -206,6 +208,8 @@ def test_s111_multiple_feature_instance_groups():
         "DATA_DYNAMICITY_MEANING": "Hydrodynamic model forecast",
         "VERTICAL_DATUM_ABBREV": "MLLW",
         "VERTICAL_DATUM_MEANING": "meanLowerLowWater",
+        "verticalCS": "6498",
+        "VERTICAL_CS_MEANING": "depth, meters, orientation down",
         "dateTimeOfFirstRecord": "20190606T120000Z",
         "dateTimeOfLastRecord": "20190606T120000Z",
         "depthTypeIndex": "1",

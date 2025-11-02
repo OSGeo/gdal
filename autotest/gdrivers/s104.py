@@ -35,6 +35,8 @@ def test_s104_basic():
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.4, 0.0, 48.75, 0.0, -0.5))
     assert ds.GetMetadata_Dict() == {
         "AREA_OR_POINT": "Point",
+        "verticalCS": "6498",
+        "VERTICAL_CS_MEANING": "depth, meters, orientation down",
         "dateTimeOfFirstRecord": "20190606T120000Z",
         "dateTimeOfLastRecord": "20190606T120000Z",
         "geographicIdentifier": "Somewhere",
