@@ -18,6 +18,7 @@
 #include "gdalalg_vector_check_geometry.h"
 #include "gdalalg_vector_clean_coverage.h"
 #include "gdalalg_vector_clip.h"
+#include "gdalalg_vector_collect.h"
 #include "gdalalg_vector_concat.h"
 #include "gdalalg_vector_edit.h"
 #include "gdalalg_vector_explode_collections.h"
@@ -155,6 +156,7 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALVectorBufferAlgorithm>();
     registry.Register<GDALVectorCheckCoverageAlgorithm>();
     registry.Register<GDALVectorCheckGeometryAlgorithm>();
+    registry.Register<GDALVectorCollectAlgorithm>();
     registry.Register<GDALVectorConcatAlgorithm>();
     registry.Register<GDALVectorCleanCoverageAlgorithm>();
 
@@ -584,8 +586,15 @@ OGRLayer *GDALVectorNonStreamingAlgorithmDataset::GetLayer(int idx) const
 /*       GDALVectorNonStreamingAlgorithmDataset::TestCapability()       */
 /************************************************************************/
 
-int GDALVectorNonStreamingAlgorithmDataset::TestCapability(const char *) const
+int GDALVectorNonStreamingAlgorithmDataset::TestCapability(
+    const char *pszCap) const
 {
+    if (EQUAL(pszCap, ODsCCurveGeometries) ||
+        EQUAL(pszCap, ODsCMeasuredGeometries) || EQUAL(pszCap, ODsCZGeometries))
+    {
+        return true;
+    }
+
     return false;
 }
 

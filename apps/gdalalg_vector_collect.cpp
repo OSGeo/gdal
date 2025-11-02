@@ -1,0 +1,438 @@
+/******************************************************************************
+*
+ * Project:  GDAL
+ * Purpose:  "gdal vector collect" subcommand
+ * Author:   Daniel Baston
+ *
+ ******************************************************************************
+ * Copyright (c) 2025, ISciences LLC
+ *
+ * SPDX-License-Identifier: MIT
+ ****************************************************************************/
+
+#include "gdalalg_vector_collect.h"
+
+#include "cpl_error.h"
+#include "gdal_priv.h"
+#include "gdalalg_vector_geom.h"
+#include "ogr_geometry.h"
+
+#include <cinttypes>
+#include <optional>
+
+#ifndef _
+#define _(x) (x)
+#endif
+
+//! @cond Doxygen_Suppress
+
+GDALVectorCollectAlgorithm::GDALVectorCollectAlgorithm(bool standaloneStep)
+    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      standaloneStep)
+{
+    AddArg("group-by", 0,
+           _("Names of field(s) by which inputs should be grouped"), &m_groupBy)
+        .AddValidationAction(
+            [this]()
+            {
+                auto fields = m_groupBy;
+
+                std::sort(fields.begin(), fields.end());
+                if (std::adjacent_find(fields.begin(), fields.end()) !=
+                    fields.end())
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "--group-by must be a list of unique field names.");
+                    return false;
+                }
+                return true;
+            });
+}
+
+namespace
+{
+class GDALVectorCollectOutputLayer final
+    : public GDALVectorNonStreamingAlgorithmLayer
+{
+  public:
+    explicit GDALVectorCollectOutputLayer(
+        OGRLayer &srcLayer, int geomFieldIndex,
+        const std::vector<std::string> &groupBy)
+        : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
+          m_groupBy(groupBy), m_defn(OGRFeatureDefn::CreateFeatureDefn(
+                                  srcLayer.GetLayerDefn()->GetName()))
+    {
+        m_defn->Reference();
+
+        const OGRFeatureDefn *srcDefn = m_srcLayer.GetLayerDefn();
+
+        for (const auto &fieldName : m_groupBy)
+        {
+            // RunStep already checked that the field exists
+            auto nField = srcDefn->GetFieldIndex(fieldName.c_str());
+
+            m_srcFieldIndices.push_back(nField);
+            m_defn->AddFieldDefn(srcDefn->GetFieldDefn(nField));
+        }
+
+        // Copy all geometry fields, upgrading the type to the corresponding
+        // collection type.
+        for (int iGeomField = 0; iGeomField < srcDefn->GetGeomFieldCount();
+             iGeomField++)
+        {
+            const OGRGeomFieldDefn *srcGeomDefn =
+                srcDefn->GetGeomFieldDefn(iGeomField);
+
+            auto eSrcGeomType = srcGeomDefn->GetType();
+            const bool bHasZ = OGR_GT_HasZ(eSrcGeomType);
+            const bool bHasM = OGR_GT_HasM(eSrcGeomType);
+
+            OGRwkbGeometryType eDstGeomType =
+                OGR_GT_SetModifier(wkbGeometryCollection, bHasZ, bHasM);
+
+            // If the layer claims to have single-part geometries, choose a more
+            // specific output type like "MultiPoint" rather than "GeometryCollection"
+            if (eSrcGeomType != wkbUnknown &&
+                !OGR_GT_IsSubClassOf(wkbFlatten(eSrcGeomType),
+                                     wkbGeometryCollection))
+            {
+                eDstGeomType = OGR_GT_GetCollection(eSrcGeomType);
+            }
+
+            if (iGeomField == 0)
+            {
+                m_defn->DeleteGeomFieldDefn(0);
+            }
+
+            auto dstGeomDefn = std::make_unique<OGRGeomFieldDefn>(
+                srcGeomDefn->GetNameRef(), eDstGeomType);
+            dstGeomDefn->SetSpatialRef(srcGeomDefn->GetSpatialRef());
+            m_defn->AddGeomFieldDefn(std::move(dstGeomDefn));
+        }
+    }
+
+    ~GDALVectorCollectOutputLayer() override
+    {
+        m_defn->Release();
+    }
+
+    GIntBig GetFeatureCount(int bForce) override
+    {
+        if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
+        {
+            return static_cast<GIntBig>(m_features.size());
+        }
+
+        return OGRLayer::GetFeatureCount(bForce);
+    }
+
+    const OGRFeatureDefn *GetLayerDefn() const override
+    {
+        return m_defn;
+    }
+
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override
+    {
+        return m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
+    }
+
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                        bool bForce) override
+    {
+        return m_srcLayer.GetExtent3D(iGeomField, psExtent, bForce);
+    }
+
+    std::unique_ptr<OGRFeature> GetNextProcessedFeature() override
+    {
+        if (!m_itFeature)
+        {
+            m_itFeature = m_features.begin();
+        }
+
+        if (m_itFeature.value() == m_features.end())
+        {
+            return nullptr;
+        }
+
+        std::unique_ptr<OGRFeature> feature(
+            m_itFeature.value()->second->Clone());
+        feature->SetFID(m_nProcessedFeaturesRead++);
+        ++m_itFeature.value();
+        return feature;
+    }
+
+    bool Process(GDALProgressFunc pfnProgress, void *pProgressData) override
+    {
+        const int nGeomFields = m_srcLayer.GetLayerDefn()->GetGeomFieldCount();
+
+        const GIntBig nLayerFeatures =
+            m_srcLayer.TestCapability(OLCFastFeatureCount)
+                ? m_srcLayer.GetFeatureCount(false)
+                : -1;
+        const double dfInvLayerFeatures =
+            1.0 / std::max(1.0, static_cast<double>(nLayerFeatures));
+
+        GIntBig nFeaturesRead = 0;
+
+        std::vector<std::string> fieldValues(m_srcFieldIndices.size());
+        const auto srcDstFieldMap =
+            m_defn->ComputeMapForSetFrom(m_srcLayer.GetLayerDefn(), true);
+        for (const auto &srcFeature : m_srcLayer)
+        {
+            for (size_t iDstField = 0; iDstField < m_srcFieldIndices.size();
+                 iDstField++)
+            {
+                const int iSrcField = m_srcFieldIndices[iDstField];
+                fieldValues[iDstField] =
+                    srcFeature->GetFieldAsString(iSrcField);
+            }
+
+            OGRFeature *dstFeature;
+
+            if (auto it = m_features.find(fieldValues); it == m_features.end())
+            {
+                m_features[fieldValues] = std::make_unique<OGRFeature>(m_defn);
+                dstFeature = m_features[fieldValues].get();
+
+                dstFeature->SetFrom(srcFeature.get(), srcDstFieldMap.data(),
+                                    false);
+
+                for (int iGeomField = 0; iGeomField < nGeomFields; iGeomField++)
+                {
+                    OGRGeomFieldDefn *poGeomDefn =
+                        m_defn->GetGeomFieldDefn(iGeomField);
+                    const auto eGeomType = poGeomDefn->GetType();
+
+                    std::unique_ptr<OGRGeometry> poGeom(
+                        OGRGeometryFactory::createGeometry(eGeomType));
+                    poGeom->assignSpatialReference(poGeomDefn->GetSpatialRef());
+
+                    dstFeature->SetGeomField(iGeomField, std::move(poGeom));
+                }
+            }
+            else
+            {
+                dstFeature = it->second.get();
+            }
+
+            for (int iGeomField = 0; iGeomField < nGeomFields; iGeomField++)
+            {
+                OGRGeomFieldDefn *poGeomFieldDefn =
+                    m_defn->GetGeomFieldDefn(iGeomField);
+
+                std::unique_ptr<OGRGeometry> poSrcGeom(
+                    srcFeature->StealGeometry(iGeomField));
+                if (poSrcGeom != nullptr && !poSrcGeom->IsEmpty())
+                {
+                    const auto eSrcType = poSrcGeom->getGeometryType();
+
+                    // Did this geometry unexpectedly have Z?
+                    if (OGR_GT_HasZ(eSrcType) !=
+                        OGR_GT_HasZ(poGeomFieldDefn->GetType()))
+                    {
+                        AddZ(iGeomField);
+                    }
+                    // Did this geometry unexpectedly have M?
+                    if (OGR_GT_HasM(eSrcType) !=
+                        OGR_GT_HasM(poGeomFieldDefn->GetType()))
+                    {
+                        AddM(iGeomField);
+                    }
+
+                    if (OGR_GT_IsSubClassOf(wkbFlatten(eSrcType),
+                                            wkbGeometryCollection) &&
+                        wkbFlatten(poGeomFieldDefn->GetType()) !=
+                            wkbGeometryCollection)
+                    {
+                        SetTypeGeometryCollection(iGeomField);
+                    }
+
+                    OGRGeometryCollection *poDstGeom =
+                        cpl::down_cast<OGRGeometryCollection *>(
+                            dstFeature->GetGeomFieldRef(iGeomField));
+
+                    if (poDstGeom->addGeometry(std::move(poSrcGeom)) !=
+                        OGRERR_NONE)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Failed to add geometry of type %s to output "
+                                 "feature of type %s",
+                                 OGRGeometryTypeToName(eSrcType),
+                                 OGRGeometryTypeToName(
+                                     poDstGeom->getGeometryType()));
+                        return false;
+                    }
+                }
+            }
+
+            if (pfnProgress && nLayerFeatures > 0 &&
+                !pfnProgress(static_cast<double>(++nFeaturesRead) *
+                                 dfInvLayerFeatures,
+                             "", pProgressData))
+            {
+                CPLError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
+                return false;
+            }
+        }
+
+        if (pfnProgress)
+        {
+            pfnProgress(1.0, "", pProgressData);
+        }
+
+        return true;
+    }
+
+    int TestCapability(const char *pszCap) const override
+    {
+        if (EQUAL(pszCap, OLCFastFeatureCount))
+        {
+            return true;
+        }
+
+        if (EQUAL(pszCap, OLCFastGetExtent) ||
+            EQUAL(pszCap, OLCFastGetExtent3D) ||
+            EQUAL(pszCap, OLCCurveGeometries) ||
+            EQUAL(pszCap, OLCMeasuredGeometries) ||
+            EQUAL(pszCap, OLCZGeometries))
+        {
+            return m_srcLayer.TestCapability(pszCap);
+        }
+
+        return false;
+    }
+
+    void ResetReading() override
+    {
+        m_itFeature.reset();
+        m_nProcessedFeaturesRead = 0;
+    }
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorCollectOutputLayer)
+
+  private:
+    void AddM(int iGeomField)
+    {
+        OGRGeomFieldDefn *poGeomFieldDefn =
+            m_defn->GetGeomFieldDefn(iGeomField);
+        whileUnsealing(poGeomFieldDefn)
+            ->SetType(OGR_GT_SetM(poGeomFieldDefn->GetType()));
+
+        for (auto &[_, poFeature] : m_features)
+        {
+            poFeature->GetGeomFieldRef(iGeomField)->setMeasured(true);
+        }
+    }
+
+    void AddZ(int iGeomField)
+    {
+        OGRGeomFieldDefn *poGeomFieldDefn =
+            m_defn->GetGeomFieldDefn(iGeomField);
+        whileUnsealing(poGeomFieldDefn)
+            ->SetType(OGR_GT_SetZ(poGeomFieldDefn->GetType()));
+
+        for (auto &[_, poFeature] : m_features)
+        {
+            poFeature->GetGeomFieldRef(iGeomField)->set3D(true);
+        }
+    }
+
+    void SetTypeGeometryCollection(int iGeomField)
+    {
+        OGRGeomFieldDefn *poGeomFieldDefn =
+            m_defn->GetGeomFieldDefn(iGeomField);
+        const bool hasZ = OGR_GT_HasZ(poGeomFieldDefn->GetType());
+        const bool hasM = OGR_GT_HasM(poGeomFieldDefn->GetType());
+
+        whileUnsealing(poGeomFieldDefn)
+            ->SetType(OGR_GT_SetModifier(wkbGeometryCollection, hasZ, hasM));
+
+        for (auto &[_, poFeature] : m_features)
+        {
+            std::unique_ptr<OGRGeometry> poTmpGeom(
+                poFeature->StealGeometry(iGeomField));
+            poTmpGeom = OGRGeometryFactory::forceTo(std::move(poTmpGeom),
+                                                    poGeomFieldDefn->GetType());
+            CPLAssert(poTmpGeom);
+            poFeature->SetGeomField(iGeomField, std::move(poTmpGeom));
+        }
+    }
+
+    const std::vector<std::string> m_groupBy{};
+    std::vector<int> m_srcFieldIndices{};
+    std::map<std::vector<std::string>, std::unique_ptr<OGRFeature>>
+        m_features{};
+    std::optional<decltype(m_features)::const_iterator> m_itFeature{};
+    OGRFeatureDefn *m_defn;
+    GIntBig m_nProcessedFeaturesRead = 0;
+};
+}  // namespace
+
+bool GDALVectorCollectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
+{
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    auto poDstDS = std::make_unique<GDALVectorNonStreamingAlgorithmDataset>();
+
+    GDALVectorAlgorithmLayerProgressHelper progressHelper(ctxt);
+
+    for (auto &&poSrcLayer : poSrcDS->GetLayers())
+    {
+        if (m_inputLayerNames.empty() ||
+            std::find(m_inputLayerNames.begin(), m_inputLayerNames.end(),
+                      poSrcLayer->GetDescription()) != m_inputLayerNames.end())
+        {
+            const auto poSrcLayerDefn = poSrcLayer->GetLayerDefn();
+            if (poSrcLayerDefn->GetGeomFieldCount() == 0)
+            {
+                if (m_inputLayerNames.empty())
+                    continue;
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Specified layer '%s' has no geometry field",
+                            poSrcLayer->GetDescription());
+                return false;
+            }
+
+            // Check that all attributes exist
+            for (const auto &fieldName : m_groupBy)
+            {
+                const int iSrcFieldIndex =
+                    poSrcLayerDefn->GetFieldIndex(fieldName.c_str());
+                if (iSrcFieldIndex == -1)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Specified attribute field '%s' does not exist "
+                                "in layer '%s'",
+                                fieldName.c_str(),
+                                poSrcLayer->GetDescription());
+                    return false;
+                }
+            }
+
+            progressHelper.AddProcessedLayer(*poSrcLayer);
+        }
+    }
+
+    for ([[maybe_unused]] auto [poSrcLayer, bProcessed, layerProgressFunc,
+                                layerProgressData] : progressHelper)
+    {
+        auto poLayer = std::make_unique<GDALVectorCollectOutputLayer>(
+            *poSrcLayer, -1, m_groupBy);
+
+        if (!poDstDS->AddProcessedLayer(std::move(poLayer), layerProgressFunc,
+                                        layerProgressData.get()))
+        {
+            return false;
+        }
+    }
+
+    m_outputDataset.Set(std::move(poDstDS));
+
+    return true;
+}
+
+GDALVectorCollectAlgorithmStandalone::~GDALVectorCollectAlgorithmStandalone() =
+    default;
+
+//! @endcond

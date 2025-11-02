@@ -104,6 +104,7 @@ geometry-field
 geometry-type
 gradient-alg
 group
+group-by
 group-transactions
 height
 hide-nodata
