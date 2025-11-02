@@ -891,6 +891,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_dissolve",
+        "gdal-vector-dissolve",
+        "Unions the elmeents of each feature's geometry.",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector_edit",
         "gdal-vector-edit",
         "Edit metadata of a vector dataset",
