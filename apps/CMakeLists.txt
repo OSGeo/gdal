@@ -100,6 +100,7 @@ target_sources(appslib PRIVATE
   gdalalg_vector_check_geometry.cpp
   gdalalg_vector_clip.cpp
   gdalalg_vector_clean_coverage.cpp
+  gdalalg_vector_collect.cpp
   gdalalg_vector_concat.cpp
   gdalalg_vector_convert.cpp
   gdalalg_vector_edit.cpp
