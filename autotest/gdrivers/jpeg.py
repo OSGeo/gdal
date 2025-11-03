@@ -1472,24 +1472,30 @@ def test_jpeg_flir_error_flir_subds():
 # Open JPEG image with DJI raw thermal image as raw
 
 
-def test_jpeg_dji_thermal_metadata():
+def test_jpeg_dji_thermal_metadata(tmp_vsimem):
 
-    ds = gdal.Open("data/jpeg/dji/DJI_M3T.JPG")
-    assert sorted(ds.GetMetadataDomainList()) == [
-        "",
-        "DERIVED_SUBDATASETS",
-        "DJI",
-        "IMAGE_STRUCTURE",
-        "SUBDATASETS",
-        "xml:XMP",
-    ]
-    assert ds.GetMetadata("DJI") == {
-        "RawThermalImageHeight": "512",
-        "RawThermalImageWidth": "640",
-    }
-    assert ds.RasterCount == 3
-    subds = ds.GetSubDatasets()
-    assert len(subds) == 1
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.jpg", open("data/jpeg/dji/DJI_M3T.JPG", "rb").read()
+    )
+
+    with gdal.Open(tmp_vsimem / "test.jpg") as ds:
+        assert sorted(ds.GetMetadataDomainList()) == [
+            "",
+            "DERIVED_SUBDATASETS",
+            "DJI",
+            "IMAGE_STRUCTURE",
+            "SUBDATASETS",
+            "xml:XMP",
+        ]
+        assert ds.GetMetadata("DJI") == {
+            "RawThermalImageHeight": "512",
+            "RawThermalImageWidth": "640",
+        }
+        assert ds.RasterCount == 3
+        subds = ds.GetSubDatasets()
+        assert len(subds) == 1
+
+    assert gdal.VSIStatL(tmp_vsimem / "test.jpg.aux.xml") is None
 
     ds = gdal.Open(subds[0][0])
     assert ds is not None

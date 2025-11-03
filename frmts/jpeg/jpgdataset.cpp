@@ -511,10 +511,10 @@ void JPGDatasetCommon::ReadDJIMetadata()
                 return;
             }
         }
-        SetMetadataItem("RawThermalImageWidth", CPLSPrintf("%d", nImageWidth),
-                        "DJI");
-        SetMetadataItem("RawThermalImageHeight", CPLSPrintf("%d", nImageHeight),
-                        "DJI");
+        GDALDataset::SetMetadataItem("RawThermalImageWidth",
+                                     CPLSPrintf("%d", nImageWidth), "DJI");
+        GDALDataset::SetMetadataItem("RawThermalImageHeight",
+                                     CPLSPrintf("%d", nImageHeight), "DJI");
         m_bRawThermalLittleEndian = true;  // Is that always?
         m_nRawThermalImageWidth = nImageWidth;
         m_nRawThermalImageHeight = nImageHeight;
@@ -525,12 +525,12 @@ void JPGDatasetCommon::ReadDJIMetadata()
         if (!STARTS_WITH(GetDescription(), "JPEG:"))
         {
             m_nSubdatasetCount++;
-            SetMetadataItem(
+            GDALDataset::SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_NAME", m_nSubdatasetCount),
                 CPLSPrintf("JPEG:\"%s\":DJI_RAW_THERMAL_IMAGE",
                            GetDescription()),
                 "SUBDATASETS");
-            SetMetadataItem(
+            GDALDataset::SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_DESC", m_nSubdatasetCount),
                 "DJI raw thermal image", "SUBDATASETS");
         }
