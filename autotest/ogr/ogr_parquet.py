@@ -3841,6 +3841,29 @@ def test_ogr_parquet_sort_by_bbox(tmp_vsimem):
 
 
 ###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("GPKG")
+def test_ogr_parquet_sort_by_bbox__empty_layer(tmp_vsimem):
+    """Test fix for https://github.com/OSGeo/gdal/issues/13328"""
+
+    outfilename = str(tmp_vsimem / "test_ogr_parquet_sort_by_bbox_empty_layer.parquet")
+    ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
+
+    ds.CreateLayer(
+        "test",
+        geom_type=ogr.wkbPoint,
+        options=["SORT_BY_BBOX=YES", "FID=fid"],
+    )
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 0
+
+
+###############################################################################
 # Check GeoArrow struct encoding
 
 
