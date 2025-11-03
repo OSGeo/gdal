@@ -871,7 +871,7 @@ man_pages = [
     ),
     (
         "programs/gdal_vector_concat",
-        "gdal-vector_concat",
+        "gdal-vector-concat",
         "Concatenate vector datasets",
         [author_evenr],
         1,
