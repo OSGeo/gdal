@@ -34,9 +34,9 @@ jobs:
         id: unpack_tag
         run: |
           export TAG=${{ github.ref_name }}
-          export RC=$(python3 -c "print('' if 'RC' not in '$TAG' else ''.join('$TAG'.rpartition('RC')[1:]).lower())")
-          export BETA=$(python3 -c "print('' if 'beta' not in '$TAG' else ''.join('$TAG'.rpartition('beta')[1:]).lower())")
-          export VERSION=$(python3 -c "print('$TAG'.lstrip('v').partition('RC')[0])")
+          export RC=$(python3 -c "print('' if 'rc' not in '$TAG'.lower() else ''.join('$TAG'.lower().rpartition('rc')[1:]).lower())")
+          export BETA=$(python3 -c "print('' if 'beta' not in '$TAG'.lower() else ''.join('$TAG'.lower().rpartition('beta')[1:]).lower())")
+          export VERSION=$(python3 -c "print('$TAG'.lower().lstrip('v').partition('rc')[0])")
           export GDAL_VERSION=${VERSION:1}
           export COMPRESSED_VERSION=$(echo "$VERSION" | tr -d .)
 
