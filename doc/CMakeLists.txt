@@ -213,4 +213,11 @@ if (BUILD_DOCS)
                ${CMAKE_BINARY_DIR}/swig/python/osgeo/osr.py
              WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+    # Check docstub annotations
+    add_test(NAME docstub-annotations
+             COMMAND ${CMAKE_COMMAND} -E env ${BUILD_RUN_ENV}
+             ${Python_EXECUTABLE} -m docstub run ${CMAKE_BINARY_DIR}/swig/python/osgeo
+             --config ${CMAKE_BINARY_DIR}/swig/python/pyproject.toml
+             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
 endif ()

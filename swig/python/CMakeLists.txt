@@ -377,6 +377,18 @@ if __name__ == '__main__':
 
   add_custom_target(python_binding ALL DEPENDS ${PY_SO_LIST} ${PY_SO_LIST_WITH_RPATH} ${GDAL_PYTHON_PYSOURCES} ${GDAL_LIB_TARGET_NAME})
 
+  if (BUILD_PYTHON_STUBS)
+    add_custom_target(
+        python_stub_files
+        ALL
+        COMMAND ${Python_EXECUTABLE_CMAKE} -m docstub run
+                ${CMAKE_CURRENT_BINARY_DIR}/osgeo
+                --config ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS ${GDAL_PYTHON_PYSOURCES}
+    )
+  endif ()
+
   # Generate wheel
   if (ONLY_GENERATE_FOR_NON_DEBUG)
     set(BUILD_BDIST_WHEEL_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_bdist_wheel_$<CONFIG>.cmake)
