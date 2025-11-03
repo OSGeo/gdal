@@ -10362,6 +10362,7 @@ OGRSpatialReference::FindBestMatch(int nMinimumMatchConfidence,
         const char *pszAuthorityCode = nullptr;
         const char *pszBaseAuthorityName = nullptr;
         const char *pszBaseAuthorityCode = nullptr;
+        const char *pszBaseName = poBaseGeogCRS->GetName();
         if (adfTOWGS84 == std::vector<double>(7) &&
             (pszAuthorityName = poSRS->GetAuthorityName(nullptr)) != nullptr &&
             EQUAL(pszAuthorityName, "EPSG") &&
@@ -10372,7 +10373,9 @@ OGRSpatialReference::FindBestMatch(int nMinimumMatchConfidence,
             (pszBaseAuthorityCode = poBaseGeogCRS->GetAuthorityCode(nullptr)) !=
                 nullptr &&
             (EQUAL(pszBaseAuthorityCode, "4326") ||
-             EQUAL(pszBaseAuthorityCode, "4258")))
+             EQUAL(pszBaseAuthorityCode, "4258") ||
+             // For ETRS89-XXX [...] new CRS added in EPSG 12.033+
+             (pszBaseName && STARTS_WITH(pszBaseName, "ETRS89"))))
         {
             poSRS->importFromEPSG(atoi(pszAuthorityCode));
         }
