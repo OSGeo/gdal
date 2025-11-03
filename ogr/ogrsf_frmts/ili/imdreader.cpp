@@ -32,6 +32,7 @@ class IliClass
   public:
     CPLXMLNode *node;
     int iliVersion;
+    CPLString modelVersion;
     OGRFeatureDefn *poTableDefn;
     StrNodeMap &oTidLookup;
     ClassesMap &oClasses;
@@ -42,12 +43,13 @@ class IliClass
     bool isAssocClass;
     bool hasDerivedClasses;
 
-    IliClass(CPLXMLNode *node_, int iliVersion_, StrNodeMap &oTidLookup_,
-             ClassesMap &oClasses_, NodeCountMap &oAxisCount_)
-        : node(node_), iliVersion(iliVersion_), oTidLookup(oTidLookup_),
-          oClasses(oClasses_), oAxisCount(oAxisCount_), poGeomFieldInfos(),
-          poStructFieldInfos(), oFields(), isAssocClass(false),
-          hasDerivedClasses(false)
+    IliClass(CPLXMLNode *node_, int iliVersion_, CPLString modelVersion_,
+             StrNodeMap &oTidLookup_, ClassesMap &oClasses_,
+             NodeCountMap &oAxisCount_)
+        : node(node_), iliVersion(iliVersion_), modelVersion(modelVersion_),
+          oTidLookup(oTidLookup_), oClasses(oClasses_), oAxisCount(oAxisCount_),
+          poGeomFieldInfos(), poStructFieldInfos(), oFields(),
+          isAssocClass(false), hasDerivedClasses(false)
     {
         char *layerName = LayerName();
         poTableDefn = new OGRFeatureDefn(layerName);
@@ -91,8 +93,19 @@ class IliClass
             CSLDestroy(papszTokens);
             return CPLStrdup(layername);
         }
-
-        return CPLStrdup(psClassTID);
+        else if (EQUAL(modelVersion, "2.4"))
+        {
+            // Remove namespace
+            char **papszTokens = CSLTokenizeString2(psClassTID, ".", 0);
+            CPLString layername =
+                CPLStrdup(papszTokens[CSLCount(papszTokens) - 1]);
+            CSLDestroy(papszTokens);
+            return CPLStrdup(layername);
+        }
+        else
+        {
+            return CPLStrdup(psClassTID);
+        }
     }
 
     void AddFieldNode(CPLXMLNode *nodeIn, int iOrderPos)
@@ -126,8 +139,10 @@ class IliClass
             {
                 if (*it == nullptr)
                     continue;
-                if (CPLTestBool(
-                        CPLGetXMLValue(*it, "EmbeddedTransfer", "FALSE")))
+                if (CPLTestBool(CPLGetXMLValue(
+                        *it, "EmbeddedTransfer",
+                        CPLGetXMLValue(*it, "IlisMeta16:EmbeddedTransfer",
+                                       "FALSE"))))
                     return true;
             }
         return false;
@@ -419,10 +434,7 @@ class IliClass
 };
 
 ImdReader::ImdReader(int iliVersionIn)
-    : iliVersion(iliVersionIn),
-      modelInfos(),  // TODO(schwehr): Remove.  No need for default ctor,
-                     // correct?
-      mainModelName("OGR"), mainTopicName("OGR"), codeBlank('_'),
+    : iliVersion(iliVersionIn), mainTopicName("OGR"), codeBlank('_'),
       codeUndefined('@'), codeContinue('\\')
 {
 }
@@ -496,19 +508,19 @@ void ImdReader::ReadModel(const char *pszFilename)
                 if (psTID != nullptr)
                     oTidLookup[psTID] = psEntry;
 
-                if ((EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Model") ||
-                     EQUAL(psEntry->pszValue, "IlisMeta16:Model")) &&
-                    !EQUAL(modelName, "MODEL.INTERLIS"))
+                if (EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Model") ||
+                    EQUAL(psEntry->pszValue, "IlisMeta16:Model"))
                 {
                     IliModelInfo modelInfo;
-                    modelInfo.name = CPLGetXMLValue(psEntry, "Name", "OGR");
-                    modelInfo.version = CPLGetXMLValue(psEntry, "Version", "");
+                    modelInfo.name = CPLGetXMLValue(
+                        psEntry, "Name",
+                        CPLGetXMLValue(psEntry, "IlisMeta16:Name", "OGR"));
+                    modelInfo.version = CPLGetXMLValue(
+                        psEntry, "Version",
+                        CPLGetXMLValue(psEntry, "IlisMeta16:iliVersion", ""));
+                    // "1", "2.3", "2.4"
                     modelInfo.uri = CPLGetXMLValue(psEntry, "At", "");
                     modelInfos.push_back(modelInfo);
-                    mainModelName =
-                        modelInfo.name;  // TODO: check model inheritance
-                    // version = CPLGetXMLValue(psEntry, "iliVersion", "0");
-                    // 1 or 2.3
 
                     CPLXMLNode *psFormatNode =
                         CPLGetXMLNode(psEntry, "ili1Format");
@@ -527,16 +539,22 @@ void ImdReader::ReadModel(const char *pszFilename)
                                "IlisMeta07.ModelData.SubModel") ||
                          EQUAL(psEntry->pszValue, "IlisMeta16:SubModel"))
                 {
-                    mainBasketName = CPLGetXMLValue(psEntry, "TID", "OGR");
-                    mainTopicName = CPLGetXMLValue(psEntry, "Name", "OGR");
+                    mainBasketName = CPLGetXMLValue(
+                        psEntry, "TID",
+                        CPLGetXMLValue(psEntry, "ili:tid", "OGR"));
+                    mainTopicName = CPLGetXMLValue(
+                        psEntry, "Name",
+                        CPLGetXMLValue(psEntry, "IlisMeta16:Name", "OGR"));
                 }
                 else if (EQUAL(psEntry->pszValue,
                                "IlisMeta07.ModelData.Class") ||
                          EQUAL(psEntry->pszValue, "IlisMeta16:Class"))
                 {
                     CPLDebug("OGR_ILI", "Class name: '%s'", psTID);
-                    oClasses[psEntry] = new IliClass(
-                        psEntry, iliVersion, oTidLookup, oClasses, oAxisCount);
+                    CPLString modelVersion = modelInfos.back().version;
+                    oClasses[psEntry] =
+                        new IliClass(psEntry, iliVersion, modelVersion,
+                                     oTidLookup, oClasses, oAxisCount);
                 }
             }
         }
@@ -685,6 +703,12 @@ void ImdReader::ReadModel(const char *pszFilename)
         psModel = psModel->psNext;
     }
 
+    // Last model ist main model
+    CPLString mainModelName = modelInfos.back().name;
+    CPLString modelVersion = modelInfos.back().version;
+    CPLDebug("OGR_ILI", "mainModelName: '%s' version: '%s'",
+             mainModelName.c_str(), modelVersion.c_str());
+
     /* Analyze class inheritance & add fields to class table defn */
     for (ClassesMap::const_iterator it = oClasses.begin(); it != oClasses.end();
          ++it)
@@ -718,9 +742,13 @@ void ImdReader::ReadModel(const char *pszFilename)
     {
         const char *className = it->second->GetIliName();
         FeatureDefnInfo oClassInfo = it->second->tableDefs();
-        if (!STARTS_WITH_CI(className, "INTERLIS.") &&
-            oClassInfo.GetTableDefnRef())
+        bool include = EQUAL(modelVersion, "2.4")
+                           ? STARTS_WITH_CI(className, mainModelName.c_str())
+                           : !STARTS_WITH_CI(className, "INTERLIS.");
+        if (include && oClassInfo.GetTableDefnRef())
+        {
             featureDefnInfos.push_back(oClassInfo);
+        }
     }
 
     for (ClassesMap::iterator it = oClasses.begin(); it != oClasses.end(); ++it)
