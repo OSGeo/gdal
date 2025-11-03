@@ -900,7 +900,7 @@ def test_ogr_interlis2_4():
     feat = lyr.GetNextFeature()
 
     field_values = [
-        "",
+        "1667a884-a4a8-461f-8db1-4fbb395b0e57",
         "2006-11-13",
         0.05,
         535.36,
@@ -913,8 +913,8 @@ def test_ogr_interlis2_4():
         "",
         "",
         "",
-        "",
-        "",
+        "72b72689-85cb-411a-9022-7de6fbd3277b",
+        "ba10bace-1efc-4abb-8a59-ebd40a006c9e",
     ]
 
     if feat.GetFieldCount() != len(field_values):
@@ -924,7 +924,9 @@ def test_ogr_interlis2_4():
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
             feat.DumpReadable()
-            print(feat.GetFieldAsString(i))
+            print(
+                lyr.GetLayerDefn().GetFieldDefn(i).GetName(), feat.GetFieldAsString(i)
+            )
             pytest.fail("field value wrong.")
 
     geom_field_values = [
