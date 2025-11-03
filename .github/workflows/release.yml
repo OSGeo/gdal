@@ -20,7 +20,7 @@ jobs:
         RC: ${{ steps.unpack_tag.outputs.RC }}
         BETA: ${{ steps.unpack_tag.outputs.BETA }}
         VERSION: ${{ steps.unpack_tag.outputs.VERSION }}
-        GDAL_VERSION: ${{ steps.unpack_tag.outputs.VERSION }}
+        VERSION_WITH_RC: ${{ steps.unpack_tag.outputs.VERSION_WITH_RC }}
         COMPRESSED_VERSION: ${{ steps.unpack_tag.outputs.COMPRESSED_VERSION }}
         PYPI_REPOSITORY: ${{ steps.unpack_tag.outputs.PYPI_REPOSITORY }}
         PYPI_SKIP_EXISTING: ${{ steps.unpack_tag.outputs.PYPI_SKIP_EXISTING }}
@@ -37,14 +37,14 @@ jobs:
           export RC=$(python3 -c "print('' if 'rc' not in '$TAG'.lower() else ''.join('$TAG'.lower().rpartition('rc')[1:]).lower())")
           export BETA=$(python3 -c "print('' if 'beta' not in '$TAG'.lower() else ''.join('$TAG'.lower().rpartition('beta')[1:]).lower())")
           export VERSION=$(python3 -c "print('$TAG'.lower().lstrip('v').partition('rc')[0])")
-          export GDAL_VERSION=${VERSION:1}
+          export VERSION_WITH_RC="${VERSION}${RC}"
           export COMPRESSED_VERSION=$(echo "$VERSION" | tr -d .)
 
           echo "RC=$RC" >> $GITHUB_OUTPUT
           echo "BETA=$BETA" >> $GITHUB_OUTPUT
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "COMPRESSED_VERSION=$COMPRESSED_VERSION" >> $GITHUB_OUTPUT
-          echo "GDAL_VERSION=$GDAL_VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION_WITH_RC=$VERSION_WITH_RC" >> $GITHUB_OUTPUT
 
           if [ -z "$RC" ] && [ -z "$BETA" ]; then
             export PYPI_REPOSITORY="https://upload.pypi.org/legacy/"
@@ -215,7 +215,7 @@ jobs:
     needs: [safety_checks, mkgdaldist]
     env:
       VERSION: ${{ needs.safety_checks.outputs.VERSION }}
-      GDAL_VERSION: ${{ needs.safety_checks.outputs.GDAL_VERSION }}
+      VERSION_WITH_RC: ${{ needs.safety_checks.outputs.VERSION_WITH_RC }}
     strategy:
       fail-fast: false
       matrix:
@@ -267,8 +267,8 @@ jobs:
         run: |
           cd docker/${{ matrix.base }}
           ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --push --gdal ${{ github.ref_name }} --tag ${{ env.VERSION }} --release --proj ${{ env.PROJ_VERSION }}
-          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-${VERSION}-${{ matrix.platform }} gdalinfo --formats
-          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-${VERSION}-${{ matrix.platform }} ogrinfo --formats
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-${VERSION_WITH_RC}-${{ matrix.platform }} gdalinfo --formats
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-${VERSION_WITH_RC}-${{ matrix.platform }} ogrinfo --formats
   create-docker-manifest:
     permissions:
       packages: write
@@ -277,7 +277,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [docker_builds, safety_checks]
     env:
-      VERSION: ${{ needs.safety_checks.outputs.VERSION }}
+      VERSION_WITH_RC: ${{ needs.safety_checks.outputs.VERSION_WITH_RC }}
     strategy:
       fail-fast: false
       matrix:
@@ -292,6 +292,6 @@ jobs:
       - name: Create and push multi-platform manifest
         run: |
           docker buildx imagetools create \
-          -t ghcr.io/osgeo/gdal:${{ matrix.tag }}-${VERSION} \
-          ghcr.io/osgeo/gdal:${{ matrix.tag }}-${VERSION}-amd64 \
-          ghcr.io/osgeo/gdal:${{ matrix.tag }}-${VERSION}-arm64
+          -t ghcr.io/osgeo/gdal:${{ matrix.tag }}-${VERSION_WITH_RC} \
+          ghcr.io/osgeo/gdal:${{ matrix.tag }}-${VERSION_WITH_RC}-amd64 \
+          ghcr.io/osgeo/gdal:${{ matrix.tag }}-${VERSION_WITH_RC}-arm64
