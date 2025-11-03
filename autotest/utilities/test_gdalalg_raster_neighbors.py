@@ -537,6 +537,6 @@ def test_gdalalg_raster_neighbors_custom_kernel_0_sum_error(neighbors):
     neighbors["output-format"] = "MEM"
     with pytest.raises(
         Exception,
-        match="Specifying method = 'mean' for a kernel whose sum of coeffients is zero is not allowed. Use 'sum' instead",
+        match="Specifying method = 'mean' for a kernel whose sum of coefficients is zero is not allowed. Use 'sum' instead",
     ):
         neighbors.Run()

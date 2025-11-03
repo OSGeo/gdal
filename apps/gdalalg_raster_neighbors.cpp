@@ -444,7 +444,7 @@ bool GDALRasterNeighborsAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 ReportError(
                     CE_Failure, CPLE_AppDefined,
                     "Specifying method = 'mean' for a kernel whose sum of "
-                    "coeffients is zero is not allowed. Use 'sum' instead");
+                    "coefficients is zero is not allowed. Use 'sum' instead");
                 return false;
             }
             aKernelDefs[i] = std::move(def);
