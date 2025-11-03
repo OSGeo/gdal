@@ -124,11 +124,12 @@ OWSessionPool::OWSessionPool(const char *pszUserIn, const char *pszPasswordIn,
                 hEnv, hError, hPool, reinterpret_cast<OraText **>(&pszPoolName),
                 &nPoolNameLen,
                 reinterpret_cast<OraText *>(const_cast<char *>(pszServerIn)),
-                strlen(pszServerIn), nSessMin, nSessMax, nSessIncr,
+                static_cast<unsigned>(strlen(pszServerIn)), nSessMin, nSessMax,
+                nSessIncr,
                 reinterpret_cast<OraText *>(const_cast<char *>(pszUserId)),
-                strlen(pszUserId),
+                static_cast<unsigned>(strlen(pszUserId)),
                 reinterpret_cast<OraText *>(const_cast<char *>(pszPasswordIn)),
-                strlen(pszPasswordIn), nPoolMode),
+                static_cast<unsigned>(strlen(pszPasswordIn)), nPoolMode),
             hError))
     {
         CPLDebug("OCI", "Session pool creation failed");
