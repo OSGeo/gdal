@@ -1472,7 +1472,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 else
                 {
                     if ((cpl::starts_with(osDirName, JSON_REF_FS_PREFIX) ||
-                         cpl::starts_with(osDirName, JSON_REF_FS_PREFIX)) &&
+                         cpl::starts_with(osDirName, PARQUET_REF_FS_PREFIX)) &&
                         osDirName.back() == '}')
                     {
                         break;
