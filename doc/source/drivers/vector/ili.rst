@@ -24,7 +24,7 @@
 -  the long term data storage
 -  the contract-proof security and the availability of the software
 
-OGR supports INTERLIS 1 and INTERLIS 2 (2.2 and 2.3) with the following
+OGR supports INTERLIS 1 and INTERLIS 2 (2.2 and newer) with the following
 limitations:
 
 -  Curves in Interlis 1 area polygons are converted to line segments
@@ -46,7 +46,7 @@ Model support
 
 Data is read from transfer files which have different
 formats in INTERLIS 1 (.itf) and INTERLIS 2 (.xtf). Models are passed in
-IlisMeta format by using "a_filename.xtf,models.imd" as a connection
+IlisMeta format with the open option :config:`MODEL` or by using "a_filename.xtf,models.imd" as a connection
 string.
 
 IlisMeta files can be be generated with the ili2c compiler. Command line
@@ -66,32 +66,32 @@ Some possible transformations using :ref:`ogr2ogr`.
 
    ::
 
-      ogr2ogr -f "ESRI Shapefile" shpdir ili-bsp.itf,Beispiel.imd
+      gdal vector convert --oo MODEL=Beispiel.imd -f "ESRI Shapefile" ili-bsp.itf shpdir
 
--  Interlis 2 -> Shape:
+-  Interlis 2 -> GeoPackage:
 
    ::
 
-      ogr2ogr -f "ESRI Shapefile" shpdir RoadsExdm2ien.xml,RoadsExdm2ien.imd
+      gdal vector convert --oo MODEL=KGKCGC_FPDS2_V1_1.imd fpds2_v1_1.xtf fpds2_v1_1.gpkg
 
    or without model:
 
    ::
 
-      ogr2ogr -f "ESRI Shapefile" shpdir RoadsExdm2ien.xml
+      gdal vector convert -f "ESRI Shapefile" RoadsExdm2ien.xml shpdir
 
    Example with curves and multiple geometries:
 
    ::
 
-      ogr2ogr --config OGR_STROKE_CURVE TRUE -SQL 'SELECT Rechtsstatus,publiziertAb,MetadatenGeobasisdaten,Eigentumsbeschraenkung,ZustaendigeStelle,Flaeche FROM "OeREBKRM09trsfr.Transferstruktur.Geometrie"' shpdir ch.bazl.sicherheitszonenplan.oereb_20131118.xtf,OeREBKRM09vs.imd OeREBKRM09trsfr.Transferstruktur.Geometrie
+      gdal vector sql --oo MODEL=OeREBKRM09vs.imd --config OGR_STROKE_CURVE=TRUE --sql 'SELECT Rechtsstatus,publiziertAb,MetadatenGeobasisdaten,Eigentumsbeschraenkung,ZustaendigeStelle,Flaeche FROM "OeREBKRM09trsfr.Transferstruktur.Geometrie"' -f "ESRI Shapefile" ch.bazl.sicherheitszonenplan.oereb_20131118.xtf shpdir
 
 -  Importing multiple Interlis 1 files into PostGIS:
 
    ::
 
-      ogr2ogr -f PostgreSQL PG:dbname=warmerda av_fixpunkte_ohne_LFPNachfuehrung.itf,av.imd -lco OVERWRITE=yes
-      ogr2ogr -f PostgreSQL PG:dbname=warmerda av_fixpunkte_mit_LFPNachfuehrung.itf,av.imd -append
+      gdal vector convert --oo MODEL=av.imd --overwrite-layer av_fixpunkte_ohne_LFPNachfuehrung.itf PG:dbname=warmerda
+      gdal vector convert --oo MODEL=av.imd --append av_fixpunkte_mit_LFPNachfuehrung.itf PG:dbname=warmerda
 
 Arc interpolation
 ~~~~~~~~~~~~~~~~~
