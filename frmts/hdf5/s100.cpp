@@ -857,6 +857,15 @@ void S100ReadVerticalDatum(GDALMajorObject *poMO, const GDALGroup *poGroup)
     if (poVerticalDatum &&
         poVerticalDatum->GetDataType().GetClass() == GEDTC_NUMERIC)
     {
+        poMO->GDALMajorObject::SetMetadataItem(S100_VERTICAL_DATUM_MEANING,
+                                               nullptr);
+        poMO->GDALMajorObject::SetMetadataItem(S100_VERTICAL_DATUM_ABBREV,
+                                               nullptr);
+        poMO->GDALMajorObject::SetMetadataItem("VERTICAL_DATUM_EPSG_CODE",
+                                               nullptr);
+        poMO->GDALMajorObject::SetMetadataItem(S100_VERTICAL_DATUM_NAME,
+                                               nullptr);
+        poMO->GDALMajorObject::SetMetadataItem("verticalDatum", nullptr);
         if (nVerticalDatumReference == 1)
         {
             bool bFound = false;
