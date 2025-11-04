@@ -427,6 +427,21 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
 
+        // Read additional metadata
+        for (const char *pszAttrName :
+             {"timePoint", "waterLevelTrendThreshold", "trendInterval"})
+        {
+            auto poAttr = poGroup->GetAttribute(pszAttrName);
+            if (poAttr)
+            {
+                const char *pszVal = poAttr->ReadAsString();
+                if (pszVal)
+                {
+                    poDS->GDALDataset::SetMetadataItem(pszAttrName, pszVal);
+                }
+            }
+        }
+
         auto poValuesArray = poGroup->OpenMDArray("values");
         if (!poValuesArray)
         {
