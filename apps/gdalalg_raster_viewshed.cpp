@@ -45,6 +45,9 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
         .SetRepeatedArgAllowed(false);
     AddArg("height", 'z', _("Observer height"), &m_opts.observer.z);
 
+    AddArg("sd-filename", 0, _("Filename of standard-deviation raster"),
+           &m_sdFilename);
+
     AddArg("target-height", 0,
            _("Height of the target above the DEM surface in the height unit of "
              "the DEM."),
@@ -151,6 +154,15 @@ bool GDALRasterViewshedAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     CPLAssert(poSrcDS);
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
+    std::unique_ptr<GDALDataset> sdDataset;
+    GDALRasterBandH sdBand = nullptr;
+    if (GetArg("sd-filename")->IsExplicitlySet())
+    {
+        GDALDatasetH ds = GDALOpen(m_sdFilename.c_str(), GA_ReadOnly);
+        sdDataset.reset(GDALDataset::FromHandle(ds));
+        sdBand = sdDataset->GetRasterBand(1);
+    }
+
     if (GetArg("height")->IsExplicitlySet())
     {
         if (m_observerPos.size() == 3)
@@ -234,8 +246,8 @@ bool GDALRasterViewshedAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
     else
     {
-        static const std::vector<std::string> badArgs{
-            "observer-spacing", GDAL_ARG_NAME_NUM_THREADS};
+        static const std::vector<std::string> badArgs{"observer-spacing",
+                                                      "num-threads"};
         for (const auto &arg : badArgs)
             if (GetArg(arg)->IsExplicitlySet())
             {
@@ -256,7 +268,7 @@ bool GDALRasterViewshedAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
         gdal::viewshed::Viewshed oViewshed(m_opts);
         const bool bSuccess = oViewshed.run(
-            GDALRasterBand::ToHandle(poSrcDS->GetRasterBand(m_band)),
+            GDALRasterBand::ToHandle(poSrcDS->GetRasterBand(m_band)), sdBand,
             pfnProgress ? pfnProgress : GDALDummyProgress, pProgressData);
         if (bSuccess)
         {

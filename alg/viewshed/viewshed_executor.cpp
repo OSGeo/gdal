@@ -267,6 +267,7 @@ void ViewshedExecutor::setOutputSd(Lines &lines, int pos, double dfZ)
         if (cellHeight > dfZ)
             result = oOpts.maybeVisibleVal;
     }
+
     if (sd <= 1)
         cur = std::max(dfZ, cur);
     else
@@ -505,9 +506,8 @@ bool ViewshedExecutor::processFirstLine(Lines &lines)
             lines.result[m_nX] = oOpts.visibleVal;
     }
 
-    auto process = [this, &ll, &lines](bool sdCalc)
+    auto process = [this, &ll, &lines]()
     {
-        m_sdCalc = sdCalc;
         if (!oCurExtent.containsY(m_nY))
             processFirstLineTopOrBottom(ll, lines);
         else
@@ -517,14 +517,17 @@ bool ViewshedExecutor::processFirstLine(Lines &lines)
             pQueue->SubmitJob([&]() { processFirstLineRight(ll, lines); });
             pQueue->WaitCompletion();
         }
-        sdCalc = false;
     };
 
-    process(false);
+    process();
+    lines.prev = lines.cur;
     if (sdMode())
     {
+        m_sdCalc = true;
         lines.cur = std::move(lines.input);
-        process(true);
+        process();
+        lines.prevTmp = lines.cur;
+        m_sdCalc = false;
     }
 
     if (oOpts.pitchMasking())
@@ -598,7 +601,12 @@ void ViewshedExecutor::processFirstLineLeft(const LineLimits &ll, Lines &lines)
     {
         double dfZ = lines.cur[iStart];
         if (oOpts.outputMode == OutputMode::Normal)
+        {
             lines.result[iStart] = oOpts.visibleVal;
+            if (m_sdCalc)
+                if (lines.sd[iStart] > 1)
+                    lines.cur[iStart] = m_dfZObserver;
+        }
         else
             setOutput(lines, iStart, dfZ);
         iStart--;
@@ -810,7 +818,12 @@ void ViewshedExecutor::processFirstLineRight(const LineLimits &ll, Lines &lines)
     {
         double dfZ = lines.cur[iStart];
         if (oOpts.outputMode == OutputMode::Normal)
+        {
             lines.result[iStart] = oOpts.visibleVal;
+            if (m_sdCalc)
+                if (lines.sd[iStart] > 1)
+                    lines.cur[iStart] = m_dfZObserver;
+        }
         else
             setOutput(lines, iStart, dfZ);
         iStart++;
@@ -916,8 +929,17 @@ void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
         int nXOffset = std::abs(iPixel - m_nX);
         double dfZ;
         if (nXOffset == nYOffset)
+        {
+            if (m_sdCalc && nXOffset == 1)
+            {
+                lines.result[iPixel] = oOpts.visibleVal;
+                if (lines.sd[iPixel] > 1)
+                    lines.cur[iPixel] = m_dfZObserver;
+                continue;
+            }
             dfZ = CalcHeightLine(nYOffset, lines.cur[iPixel],
                                  lines.prev[iPixel - 1]);
+        }
         else
             dfZ = oZcalc(nXOffset, nYOffset, lines.cur[iPixel - 1],
                          lines.prev[iPixel], lines.prev[iPixel - 1]);
@@ -927,24 +949,41 @@ void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
     maskLineRight(lines.result, ll, nLine);
 }
 
-/// Apply angular mask to the initial X position.  Assumes m_nX is in the raster.
+/// Apply angular/distance mask to the initial X position.  Assumes m_nX is in the raster.
 /// @param vResult  Raster line on which to apply mask.
+/// @param ll  Line limits.
 /// @param nLine  Line number.
-void ViewshedExecutor::maskInitial(std::vector<double> &vResult, int nLine)
+/// @return True if the initial X position was masked.
+bool ViewshedExecutor::maskInitial(std::vector<double> &vResult,
+                                   const LineLimits &ll, int nLine)
 {
+    // Mask min/max.
+    if (ll.left >= ll.right || ll.leftMin != ll.rightMin)
+    {
+        vResult[m_nX] = oOpts.outOfRangeVal;
+        return true;
+    }
+
     if (!oOpts.angleMasking())
-        return;
+        return false;
 
     if (nLine < m_nY)
     {
         if (!rayBetween(oOpts.startAngle, oOpts.endAngle, M_PI / 2))
+        {
             vResult[m_nX] = oOpts.outOfRangeVal;
+            return true;
+        }
     }
     else if (nLine > m_nY)
     {
         if (!rayBetween(oOpts.startAngle, oOpts.endAngle, 3 * M_PI / 2))
+        {
             vResult[m_nX] = oOpts.outOfRangeVal;
+            return true;
+        }
     }
+    return false;
 }
 
 /// Process a line above or below the observer.
@@ -962,37 +1001,61 @@ bool ViewshedExecutor::processLine(int nLine, Lines &lines)
     // Adjust height of the read line.
     LineLimits ll = adjustHeight(nYOffset, lines);
 
-    // Handle the initial position on the line.
+    auto process = [this, nYOffset, &ll, &lines]()
+    {
+        CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
+        pQueue->SubmitJob([&]() { processLineLeft(nYOffset, ll, lines); });
+        pQueue->SubmitJob([&]() { processLineRight(nYOffset, ll, lines); });
+        pQueue->WaitCompletion();
+    };
+
+    bool masked = false;
+    // Handle initial position on the line.
     if (oCurExtent.containsX(m_nX))
     {
-        if (ll.left < ll.right && ll.leftMin == ll.rightMin)
+        masked = maskInitial(lines.result, ll, nLine);
+        if (!masked)
         {
             double dfZ = CalcHeightLine(std::abs(nYOffset), lines.cur[m_nX],
                                         lines.prev[m_nX]);
             setOutput(lines, m_nX, dfZ);
         }
-        else
-            lines.result[m_nX] = oOpts.outOfRangeVal;
-
-        maskInitial(lines.result, nLine);
     }
 
-    auto process = [this, nYOffset, &ll, &lines](bool sdCalc)
-    {
-        m_sdCalc = sdCalc;
-        CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
-        pQueue->SubmitJob([&]() { processLineLeft(nYOffset, ll, lines); });
-        pQueue->SubmitJob([&]() { processLineRight(nYOffset, ll, lines); });
-        pQueue->WaitCompletion();
-        m_sdCalc = false;
-    };
+    process();
 
-    process(false);
+    // Process SD mode
     if (sdMode())
     {
+        m_sdCalc = true;
+
+        lines.prev = std::move(lines.prevTmp);
+        lines.prevTmp = std::move(lines.cur);
         lines.cur = std::move(lines.input);
-        process(true);
+        // Handle initial position on the line.
+        if (!masked && oCurExtent.containsX(m_nX))
+        {
+            if (std::abs(nYOffset) == 1)
+            {
+                lines.result[m_nX] = oOpts.visibleVal;
+                if (lines.sd[m_nX] > 1)
+                    lines.cur[m_nX] = m_dfZObserver;
+            }
+            else
+            {
+
+                double dfZ = CalcHeightLine(std::abs(nYOffset), lines.cur[m_nX],
+                                            lines.prev[m_nX]);
+                setOutput(lines, m_nX, dfZ);
+            }
+        }
+        process();
+        lines.prev = std::move(lines.prevTmp);
+        lines.prevTmp = lines.cur;
+        m_sdCalc = false;
     }
+    else
+        lines.prev = lines.cur;
 
     if (oOpts.pitchMasking())
         applyPitchMask(lines.result, lines.pitchMask);
@@ -1077,7 +1140,8 @@ bool ViewshedExecutor::run()
         [&]()
         {
             Lines lines(oCurExtent.xSize());
-            lines.prev = firstLine.cur;
+            lines.prev = firstLine.prev;
+            lines.prevTmp = firstLine.prevTmp;
             if (oOpts.pitchMasking())
                 lines.pitchMask.resize(
                     oOutExtent.xSize(),
@@ -1090,7 +1154,6 @@ bool ViewshedExecutor::run()
             {
                 if (!processLine(nLine, lines))
                     err = true;
-                lines.prev = lines.cur;
                 if (oOpts.pitchMasking())
                     std::fill(lines.pitchMask.begin(), lines.pitchMask.end(),
                               std::numeric_limits<double>::quiet_NaN());
@@ -1102,7 +1165,8 @@ bool ViewshedExecutor::run()
         [&]()
         {
             Lines lines(oCurExtent.xSize());
-            lines.prev = firstLine.cur;
+            lines.prev = firstLine.prev;
+            lines.prevTmp = firstLine.prevTmp;
             if (oOpts.pitchMasking())
                 lines.pitchMask.resize(
                     oOutExtent.xSize(),
@@ -1115,7 +1179,6 @@ bool ViewshedExecutor::run()
             {
                 if (!processLine(nLine, lines))
                     err = true;
-                lines.prev = lines.cur;
                 if (oOpts.pitchMasking())
                     std::fill(lines.pitchMask.begin(), lines.pitchMask.end(),
                               std::numeric_limits<double>::quiet_NaN());

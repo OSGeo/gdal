@@ -38,7 +38,8 @@ struct Lines
     std::vector<double>
         pitchMask;              //!< Height/indicator values for pitch masking.
     std::vector<double> input;  //!< Copy of input data when in SD mode.
-    std::vector<double> sd;     //!< SD mask.
+    std::vector<double> prevTmp;  //!< Saved prev values when in SD mode.
+    std::vector<double> sd;       //!< SD mask.
 
     /// Constructor
     Lines() : cur(), result(), prev(), pitchMask(), input(), sd()
@@ -129,7 +130,8 @@ class ViewshedExecutor
     void processLineLeft(int nYOffset, LineLimits &ll, Lines &lines);
     void processLineRight(int nYOffset, LineLimits &ll, Lines &lines);
     LineLimits adjustHeight(int iLine, Lines &lines);
-    void maskInitial(std::vector<double> &vResult, int nLine);
+    bool maskInitial(std::vector<double> &vResult, const LineLimits &ll,
+                     int nLine);
     bool maskAngleLeft(std::vector<double> &vResult, int nLine);
     bool maskAngleRight(std::vector<double> &vResult, int nLine);
     void maskLineLeft(std::vector<double> &vResult, const LineLimits &ll,

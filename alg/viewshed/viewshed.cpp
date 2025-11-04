@@ -373,6 +373,21 @@ bool Viewshed::calcExtents(int nX, int nY, const GDALGeoTransform &invGT)
 bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                    void *pProgressArg)
 {
+    return run(band, nullptr, pfnProgress, pProgressArg);
+}
+
+/// Compute the viewshed of a raster band with .
+///
+/// @param band  Pointer to the raster band to be processed.
+/// @param sdBand  Pointer to the SD raster band to be processed.
+/// @param pfnProgress  Pointer to the progress function. Can be null.
+/// @param pProgressArg  Argument passed to the progress function
+/// @return  True on success, false otherwise.
+bool Viewshed::run(GDALRasterBandH band, GDALRasterBandH sdBand,
+                   GDALProgressFunc pfnProgress, void *pProgressArg)
+{
+    if (sdBand)
+        pSdBand = static_cast<GDALRasterBand *>(sdBand);
     pSrcBand = static_cast<GDALRasterBand *>(band);
 
     GDALGeoTransform fwdTransform, invTransform;
@@ -443,10 +458,20 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 
     // Execute the viewshed algorithm.
     GDALRasterBand *pDstBand = poDstDS->GetRasterBand(1);
-    ViewshedExecutor executor(*pSrcBand, *pDstBand, nX, nY, oOutExtent,
-                              oCurExtent, oOpts, oProgress,
-                              /* emitWarningIfNoData = */ true);
-    executor.run();
+    if (pSdBand)
+    {
+        ViewshedExecutor executor(*pSrcBand, *pSdBand, *pDstBand, nX, nY,
+                                  oOutExtent, oCurExtent, oOpts, oProgress,
+                                  /* emitWarningIfNoData = */ true);
+        executor.run();
+    }
+    else
+    {
+        ViewshedExecutor executor(*pSrcBand, *pDstBand, nX, nY, oOutExtent,
+                                  oCurExtent, oOpts, oProgress,
+                                  /* emitWarningIfNoData = */ true);
+        executor.run();
+    }
     oProgress.emit(1);
     return static_cast<bool>(poDstDS);
 }
