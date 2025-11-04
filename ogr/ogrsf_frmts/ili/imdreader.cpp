@@ -96,11 +96,9 @@ class IliClass
         else if (EQUAL(modelVersion, "2.4"))
         {
             // Remove namespace
-            char **papszTokens = CSLTokenizeString2(psClassTID, ".", 0);
-            CPLString layername =
-                CPLStrdup(papszTokens[CSLCount(papszTokens) - 1]);
-            CSLDestroy(papszTokens);
-            return CPLStrdup(layername);
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(psClassTID, ".", 0));
+            return CPLStrdup(aosTokens[aosTokens.size() - 1]);
         }
         else
         {
@@ -704,8 +702,8 @@ void ImdReader::ReadModel(const char *pszFilename)
     }
 
     // Last model ist main model
-    CPLString mainModelName = modelInfos.back().name;
-    CPLString modelVersion = modelInfos.back().version;
+    const CPLString mainModelName = modelInfos.back().name;
+    const CPLString modelVersion = modelInfos.back().version;
     CPLDebug("OGR_ILI", "mainModelName: '%s' version: '%s'",
              mainModelName.c_str(), modelVersion.c_str());
 
@@ -743,7 +741,7 @@ void ImdReader::ReadModel(const char *pszFilename)
         const char *className = it->second->GetIliName();
         FeatureDefnInfo oClassInfo = it->second->tableDefs();
         bool include = EQUAL(modelVersion, "2.4")
-                           ? STARTS_WITH_CI(className, mainModelName.c_str())
+                           ? STARTS_WITH(className, mainModelName.c_str())
                            : !STARTS_WITH_CI(className, "INTERLIS.");
         if (include && oClassInfo.GetTableDefnRef())
         {

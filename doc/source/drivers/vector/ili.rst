@@ -41,12 +41,23 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Dataset open options
+--------------------
+
+|about-open-options|
+The following open options are available:
+
+-  .. oo:: MODEL
+      :since: 2.1
+
+      Path to IlisMeta model file.
+
 Model support
 -------------
 
 Data is read from transfer files which have different
 formats in INTERLIS 1 (.itf) and INTERLIS 2 (.xtf). Models are passed in
-IlisMeta format with the open option :config:`MODEL` or by using "a_filename.xtf,models.imd" as a connection
+IlisMeta format with the open option ``MODEL`` or by using "a_filename.xtf,models.imd" as a connection
 string.
 
 IlisMeta files can be be generated with the ili2c compiler. Command line
@@ -57,6 +68,8 @@ example:
    java -jar ili2c.jar --ilidirs '%ILI_DIR;http://models.interlis.ch/;%JAR_DIR' -oIMD --out models.imd model1.ili [model2.ili ...]
 
 or for newer models:
+
+::
 
    java -jar ili2c.jar --ilidirs '%ILI_DIR;http://models.interlis.ch/;%JAR_DIR' -oIMD16 --out models.imd model1.ili [model2.ili ...]
 
