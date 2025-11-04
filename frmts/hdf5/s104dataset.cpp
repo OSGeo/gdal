@@ -189,7 +189,9 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Read additional metadata
     for (const char *pszAttrName :
-         {"methodWaterLevelProduct", "minDatasetHeight", "maxDatasetHeight"})
+         {"methodWaterLevelProduct", "minDatasetHeight", "maxDatasetHeight",
+          "horizontalPositionUncertainty", "verticalUncertainty",
+          "timeUncertainty", "commonPointRule"})
     {
         auto poAttr = poWaterLevel->GetAttribute(pszAttrName);
         if (poAttr)
