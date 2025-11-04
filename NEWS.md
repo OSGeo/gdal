@@ -769,6 +769,139 @@ GDAL 3.11.4 is a bugfix release.
 * Various compiler and cppcheck warning fixes
 * Add option to disable libavif version check
 
+# GDAL/OGR 3.11.5 Release Notes
+
+GDAL 3.11.5 is a bugfix release.
+
+## Build
+
+* Fix Clang 21 -Wunnecessary-virtual-specifier warnings
+* Add compatibility with Poppler 25.10 (support for older versions kept)
+  (#13173)
+
+## GDAL 3.11.5
+
+### Port
+
+* /vsis3/: fix issue when doing a new connection using EC2 credentials would go
+ through WebIdentity (#13272)
+
+### Algorithms
+
+* InitializeDestinationBuffer(): do not return CE_Failure when emitting warning
+  about INIT_DEST=NO_DATA without nodata, to make sure to 0 initialize the dest
+  buffer (#13026)
+
+### Raster core
+
+* GDALAlgorithm: re-arrange argument validation so that
+  'gdal raster create --bbox=' doesn't crash (#13112)
+* GDALMDArrayRegularlySpaced::IRead(): avoid potential unsigned integer
+  overflow
+* Multidim: make CreateSlicedArray() also slice indexing variables of
+  dimensions (#13119)
+* Multidim: Fix ``GetView(["::-1"])`` on a dimension of size 1
+
+### Raster utilities
+
+* GDALInfo(): fix crash on datasets not linked to a driver (#13106)
+* gdaldem: fix wrong results on non north-up src ds with aspect/tpi/tri
+  (and on rotated for hillshade/slope/roughness) (#13100)
+* Fix crash on 'gdal_translate -of COG -b 1 -b 2 -b 3 -b mask
+  RGBmask_with_ovr.tif out.tif', and tag mask band turned as regular one as
+  alpha (#13183)
+
+### Raster drivers
+
+PDF driver:
+ * Properly override FlushCache() instead of no longer existing SyncToDisk()
+
+GTI driver:
+ * make sure that a non readable source causes IRasterIO() to fail (#13212)
+
+GTiff driver:
+ * fix crash when setting color interpretation on newly created mask band
+
+HDF4 driver:
+ * skip long/lat values at nodata when creating GCPs (#13207)
+
+LIBERTIFF driver:
+ * fix reading a RGB pixel-interleaved file into a RGBA pixel-interleaved
+   buffer (#13193)
+
+VRT driver:
+ * fix slowness when downsampling from VRTs with explicit resampling=nearest
+   (qgis/QGIS#63293)
+ * Pansharpening: make sure VRTPansharpenedRasterBand of overviews inherit the
+   nodata value from the full res band
+ * VRTMDArraySourceFromArray::Read(): fix various issues when reading with a
+   negative step (#13236)
+
+Zarr driver:
+ * Kerchunk JSON: assorted set of fixes and improvement for datasets such as in
+   https://noaa-nodd-kerchunk-pds.s3.amazonaws.com/index.html#nos/cbofs/
+ * avoid infinite recursion on archives with hostile object names
+ * emit an error when reading from a JSON/Kerchunk reference store and one of
+   the pointed file cannot be opened (#13126)
+
+## OGR 3.11.5
+
+### Vector core
+
+* OGRParseDate(): make it accept leap seconds
+* Geometry reprojection: fix issues with polar to geographic reprojection
+  (#13222)
+* OGRBuildPolygonFromEdges(): return multipolygon when appropriate (fixes
+  reading some DXF HATCH) (#13230)
+* OGRGeometryFactory::forceTo(): fix potential nullptr dereference
+
+### Vector utilities
+
+* gdal vector reproject: fix reprojecting from polar CRS to geographic
+  coordinates (#13222)
+
+### Vector drivers
+
+ADBC driver:
+ * error out on non-existing database with DuckDB (#13168)
+
+DXF driver:
+ * fix taking into account ENCODING open option (#13224)
+
+ESRIJSON driver:
+ * recognize esriFieldTypeDateOnly, esriFieldTypeTimeOnly,
+   esriFieldTypeBigInteger, esriFieldTypeGUID and esriFieldTypeGlobalID data
+   types
+ * JSON variant detection heuristics: better recognize some ESRIJSON files
+
+GML driver:
+ * add support for gml:TimeInstantType (#13120)
+
+GMLAS driver:
+ * add support for gml:TimeInstantType (#13120)
+
+GPKG driver:
+ * optimize GetNextArrowArray() on SQL result layers that return 0 row (#13041)
+
+MapInfo driver:
+ * .tab: fix support of px vs pt for pen width, including fractional point
+   width (#13064)
+
+MBTiles driver
+ * improve guessing of field type (#13232)
+
+MVT driver:
+ * fix reading files with 0-byte padding (#13268)
+
+WFS driver:
+ * make spatial filter be forwarded to server even if we don't understand the
+   XSD schema (#13120)
+
+## SWIG bindings
+
+* Guard against null input to SuggestedWarpOutput (#13054)
+* fix non-freeing of dataset created with CreateVector()
+
 ## GDAL 3.11.4
 
 ### Port
