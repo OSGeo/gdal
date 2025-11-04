@@ -617,7 +617,12 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
 
     // Setup/check for pam .aux.xml.
-    poDS->SetDescription(osFilename.c_str());
+    if (osFilename != poOpenInfo->pszFilename)
+    {
+        poDS->SetSubdatasetName((osFeatureInstance + "/" + osGroup).c_str());
+        poDS->SetPhysicalFilename(osFilename.c_str());
+    }
+    poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
     // Setup overviews.
