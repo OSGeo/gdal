@@ -555,6 +555,44 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
         poWaterLevelTrendBand->m_poRAT = std::move(poRAT);
 
         poDS->SetBand(2, poWaterLevelTrendBand.release());
+
+        auto poUncertaintyDataset =
+            poFeatureInstance->OpenMDArray("uncertainty");
+        if (poUncertaintyDataset)
+        {
+            const auto &apoUncertaintyDims =
+                poUncertaintyDataset->GetDimensions();
+            const auto oUncertaintyType = poUncertaintyDataset->GetDataType();
+            if (apoUncertaintyDims.size() == 1 &&
+                apoUncertaintyDims[0]->GetSize() == 1 &&
+                oUncertaintyType.GetClass() == GEDTC_COMPOUND)
+            {
+                const auto &oUncertaintyComponents =
+                    oUncertaintyType.GetComponents();
+                if (oUncertaintyComponents.size() == 2 &&
+                    oUncertaintyComponents[1]->GetType().GetClass() ==
+                        GEDTC_NUMERIC)
+                {
+                    auto poView = poUncertaintyDataset->GetView(
+                        std::string("[\"")
+                            .append(oUncertaintyComponents[1]->GetName())
+                            .append("\"]"));
+                    double dfVal = 0;
+                    const GUInt64 arrayStartIdx[] = {0};
+                    const size_t count[] = {1};
+                    const GInt64 arrayStep[] = {0};
+                    const GPtrDiff_t bufferStride[] = {0};
+                    if (poView &&
+                        poView->Read(
+                            arrayStartIdx, count, arrayStep, bufferStride,
+                            GDALExtendedDataType::Create(GDT_Float64), &dfVal))
+                    {
+                        poDS->GDALDataset::SetMetadataItem(
+                            "uncertainty", CPLSPrintf("%f", dfVal));
+                    }
+                }
+            }
+        }
     }
 
     poDS->GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
