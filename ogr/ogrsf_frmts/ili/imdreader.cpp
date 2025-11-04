@@ -488,9 +488,9 @@ void ImdReader::ReadModel(const char *pszFilename)
     CPLXMLNode *psModel = psSectionNode->psChild;
     while (psModel != nullptr)
     {
+#ifdef DEBUG_VERBOSE
         const char *modelName = CPLGetXMLValue(
             psModel, "BID", CPLGetXMLValue(psModel, "ili:bid", nullptr));
-#ifdef DEBUG_VERBOSE
         CPLDebug("OGR_ILI", "Model: '%s'", modelName);
 #endif
 
