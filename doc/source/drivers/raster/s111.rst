@@ -13,12 +13,15 @@ S111 -- S-111 Surface Currents Product
 This driver provides read-only support for surface currents in the S-111 format,
 which is a specific product profile in an HDF5 file.
 
-S-111 files have two image bands representing the following values for each
+S-111 files have at a minimum two image bands representing the following values for each
 cell in a raster grid area:
 
 - surface current speed (band 1), in knots
 - surface current direction (band 2), in degree measured from true north
   clock-wise.
+
+Additional optional bands can be present to represent the speed uncertainty
+(in knots) and the direction uncertainty (in degree).s
 
 When opening a S-111 file, no raster band is directly available. But a list of
 subdatasets will be reported, one for each timestamp available in the file.
