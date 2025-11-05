@@ -157,7 +157,8 @@ jobs:
           mkdir -p python_pkgs
           mkdir -p dist
           cd python_pkgs
-          cmake ../
+          cmake .. -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF -DOGR_BUILD_OPTIONAL_DRIVERS=OFF
+          cmake --build . --config Debug -j$(nproc)
       - name: make gdal-utils bdist_wheel
         run: |
           rm -rf dist/*
