@@ -140,9 +140,13 @@ if (Python_Interpreter_FOUND)
 
   # Use the 'X.Y.Z' numbering scheme from libgdal by default for the gdal python package version number
   # And append a ".patch" if the patch is not 0.
-  set(GDAL_PYTHON_VERSION "${GDAL_VERSION_NO_DEV_SUFFIX}")
-  if( NOT "${GDAL_VERSION_BUILD}" STREQUAL "0" )
-      string(APPEND GDAL_PYTHON_VERSION ".${GDAL_VERSION_BUILD}")
+  if(DEFINED ENV{GDAL_PYTHON_VERSION})
+      set(GDAL_PYTHON_VERSION "$ENV{GDAL_PYTHON_VERSION}")
+  else()
+      set(GDAL_PYTHON_VERSION "${GDAL_VERSION_NO_DEV_SUFFIX}")
+      if( NOT "${GDAL_VERSION_BUILD}" STREQUAL "0" )
+          string(APPEND GDAL_PYTHON_VERSION ".${GDAL_VERSION_BUILD}")
+      endif()
   endif()
 
   file(TO_NATIVE_PATH "${GDAL_PYTHON_CSOURCE_DIR}" GDAL_PYTHON_EXT_SOURCE_DIR)
