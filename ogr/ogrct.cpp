@@ -2380,7 +2380,7 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
     bool bDebugCT = CPLTestBool(CPLGetConfigOption("OGR_CT_DEBUG", "NO"));
     if (bDebugCT)
     {
-        CPLDebug("OGRCT", "count = %d", nCount);
+        CPLDebug("OGRCT", "count = %u", static_cast<unsigned>(nCount));
         for (size_t i = 0; i < nCount; ++i)
         {
             CPLDebug("OGRCT", "  x[%d] = %.16g y[%d] = %.16g", int(i), x[i],
