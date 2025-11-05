@@ -1060,7 +1060,8 @@ bool S100BaseWriter::BaseClose()
 /*                      S100BaseWriter::BaseChecks()                    */
 /************************************************************************/
 
-bool S100BaseWriter::BaseChecks(const char *pszDriverName, bool crsMustBeEPSG)
+bool S100BaseWriter::BaseChecks(const char *pszDriverName, bool crsMustBeEPSG,
+                                bool verticalDatumRequired)
 {
     if (m_poSrcDS->GetRasterXSize() < 1 || m_poSrcDS->GetRasterYSize() < 1)
     {
@@ -1118,31 +1119,37 @@ bool S100BaseWriter::BaseChecks(const char *pszDriverName, bool crsMustBeEPSG)
             m_poSrcDS->GetMetadataItem("VERTICAL_DATUM_EPSG_CODE");
     if (!pszVerticalDatum)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "VERTICAL_DATUM creation option must be specified");
-        return false;
-    }
-    m_nVerticalDatum =
-        S100GetVerticalDatumCodeFromCodeMeaningOrAbbrev(pszVerticalDatum);
-    if (m_nVerticalDatum <= 0)
-    {
-        auto pjCtxt = OSRGetProjTLSContext();
-        PJ *vertical_datum =
-            proj_create_from_database(pjCtxt, "EPSG", pszVerticalDatum,
-                                      PJ_CATEGORY_DATUM, false, nullptr);
-        const bool bIsValid =
-            vertical_datum != nullptr &&
-            proj_get_type(vertical_datum) == PJ_TYPE_VERTICAL_REFERENCE_FRAME;
-        proj_destroy(vertical_datum);
-        if (bIsValid)
-        {
-            m_nVerticalDatum = atoi(pszVerticalDatum);
-        }
-        else
+        if (verticalDatumRequired)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "VERTICAL_DATUM value is invalid");
+                     "VERTICAL_DATUM creation option must be specified");
             return false;
+        }
+    }
+    else
+    {
+        m_nVerticalDatum =
+            S100GetVerticalDatumCodeFromCodeMeaningOrAbbrev(pszVerticalDatum);
+        if (m_nVerticalDatum <= 0)
+        {
+            auto pjCtxt = OSRGetProjTLSContext();
+            PJ *vertical_datum =
+                proj_create_from_database(pjCtxt, "EPSG", pszVerticalDatum,
+                                          PJ_CATEGORY_DATUM, false, nullptr);
+            const bool bIsValid = vertical_datum != nullptr &&
+                                  proj_get_type(vertical_datum) ==
+                                      PJ_TYPE_VERTICAL_REFERENCE_FRAME;
+            proj_destroy(vertical_datum);
+            if (bIsValid)
+            {
+                m_nVerticalDatum = atoi(pszVerticalDatum);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "VERTICAL_DATUM value is invalid");
+                return false;
+            }
         }
     }
 

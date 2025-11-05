@@ -70,7 +70,8 @@ class S100BaseWriter CPL_NON_FINAL
     virtual bool Close() = 0;
     bool BaseClose();
 
-    bool BaseChecks(const char *pszDriverName, bool crsMustBeEPSG);
+    bool BaseChecks(const char *pszDriverName, bool crsMustBeEPSG,
+                    bool verticalDatumRequired);
 
     static bool WriteUInt8Value(hid_t hGroup, const char *pszName, int value);
     static bool WriteUInt16Value(hid_t hGroup, const char *pszName, int value);
