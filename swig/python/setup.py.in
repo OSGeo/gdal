@@ -18,7 +18,7 @@ from setuptools import setup
 from setuptools import find_packages
 from setuptools import Extension
 
-version = '@GDAL_PYTHON_VERSION@'
+version = os.environ.get("GDAL_PYTHON_VERSION", '@GDAL_PYTHON_VERSION@')
 
 # If CXX is defined in the environment, it will be used to link the .so
 # but setuptools will be confused if it is made of several words like 'ccache g++'
@@ -292,9 +292,13 @@ class gdal_ext(build_ext):
                 if pos > 0:
                     library_version = library_version[0:pos]
             library_version_num = [int(x) for x in library_version.split('.')]
-            gdal_python_version = [int(x) for x in version.split('.')]
+            bindings_version = version
+            pos = bindings_version.find(".post")
+            if pos > 0:
+                bindings_version = bindings_version[0:pos]
+            gdal_python_version = [int(x) for x in bindings_version.split('.')]
             if library_version_num < gdal_python_version:
-                raise Exception(f"Python bindings of GDAL {version} require at least libgdal {version}, but {library_version} was found")
+                raise Exception(f"Python bindings of GDAL {bindings_version} require at least libgdal {bindings_version}, but {library_version} was found")
         except gdal_config_error:
             pass
 
