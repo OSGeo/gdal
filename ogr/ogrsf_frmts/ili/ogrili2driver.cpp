@@ -39,8 +39,9 @@ static GDALDataset *OGRILI2DriverOpen(GDALOpenInfo *poOpenInfo)
 
     OGRILI2DataSource *poDS = new OGRILI2DataSource();
 
+    const bool bTestOpen = (poOpenInfo->pabyHeader == nullptr);
     if (!poDS->Open(poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions,
-                    TRUE) ||
+                    bTestOpen) ||
         poDS->GetLayerCount() == 0)
     {
         delete poDS;
