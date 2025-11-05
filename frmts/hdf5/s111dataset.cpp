@@ -334,7 +334,7 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
     // Read additional metadata
     for (const char *pszAttrName :
          {"timeRecordInterval", "dateTimeOfFirstRecord", "dateTimeOfLastRecord",
-          "numberOfTimes"})
+          "numberOfTimes", "dataDynamicity"})
     {
         auto poAttr = poFeatureInstance->GetAttribute(pszAttrName);
         if (poAttr)

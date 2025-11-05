@@ -210,6 +210,7 @@ def test_s111_multiple_feature_instance_groups():
         "VERTICAL_DATUM_MEANING": "meanLowerLowWater",
         "verticalCS": "6498",
         "VERTICAL_CS_MEANING": "depth, meters, orientation down",
+        "dataDynamicity": "5",
         "dateTimeOfFirstRecord": "20190606T120000Z",
         "dateTimeOfLastRecord": "20190606T120000Z",
         "depthTypeIndex": "1",
