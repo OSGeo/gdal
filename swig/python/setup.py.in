@@ -399,11 +399,20 @@ ext_modules = [gdal_module,
                ogr_module]
 
 GNM_ENABLED = @GNM_ENABLED@
+
+sources = ['extensions/gdal_wrap.cpp', 'extensions/gdalconst_wrap.c', 'extensions/osr_wrap.cpp', 'extensions/ogr_wrap.cpp']
+
 if GNM_ENABLED:
+    sources.append('extensions/gnm_wrap.cpp')
     ext_modules.append(gnm_module)
 
 if HAVE_NUMPY:
+    sources.append('extensions/gdal_array_wrap.cpp')
     ext_modules.append(array_module)
+
+for filename in sources:
+    if not os.path.exists(filename):
+        raise FileNotFoundError(f"Missing source file {filename}")
 
 utils_package_root = 'gdal-utils'   # path for gdal-utils sources
 packages = find_packages(utils_package_root)
