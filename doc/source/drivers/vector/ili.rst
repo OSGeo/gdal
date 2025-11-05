@@ -48,7 +48,6 @@ Dataset open options
 The following open options are available:
 
 -  .. oo:: MODEL
-      :since: 3.13
 
       Path to IlisMeta model file.
 
