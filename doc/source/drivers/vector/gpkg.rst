@@ -63,9 +63,15 @@ against the database.
 SQL SELECT statements passed to ExecuteSQL() are
 also executed directly against the database. If Spatialite is used, a
 recent version (4.2.0) is needed and use of explicit cast operators
-AsGPB() is required to transform GeoPackage geometries to Spatialite
+AsGPB() is required to transform Spatialite geometries to GeoPackage   
 geometries (the reverse conversion from Spatialite geometries is
-automatically done by the GPKG driver). It is also possible to use with
+automatically done by the GPKG driver). 
+
+::
+
+   ogrinfo -update points.gpkg -sql "INSERT INTO points (geom) values (AsGPB(ST_GeomFromText('POINT(3 54)', 4326)))"
+
+It is also possible to use with
 any Spatialite version, but in a slower way, by specifying the
 "INDIRECT_SQLITE" dialect. In which case, GeoPackage geometries
 automatically appear as Spatialite geometries after translation by OGR.
