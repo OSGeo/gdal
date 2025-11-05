@@ -235,6 +235,7 @@ def test_gdalinfo_lib_nodata_full_precision_float64():
 
     ret = gdal.Info(ds, format="json")
     assert ret["bands"][0]["noDataValue"] == float(nodata_str)
+    assert ret["stac"]["raster:bands"][0]["nodata"] == float(nodata_str)
 
 
 def test_gdalinfo_lib_nodata_int():
