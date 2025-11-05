@@ -780,7 +780,8 @@ bool S104Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
         return false;
     }
 
-    if (!BaseChecks("S104", /* crsMustBeEPSG = */ false))
+    if (!BaseChecks("S104", /* crsMustBeEPSG = */ false,
+                    /* verticalDatumRequired = */ true))
         return false;
 
     std::map<std::string, std::variant<GDALDataset *, std::string>>

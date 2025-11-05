@@ -847,7 +847,8 @@ bool S102Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
         return false;
     }
 
-    if (!BaseChecks("S102", true))
+    if (!BaseChecks("S102", /* crsMustBeEPSG = */ true,
+                    /* verticalDatumRequired = */ true))
         return false;
 
     const bool bAppendSubdataset =
