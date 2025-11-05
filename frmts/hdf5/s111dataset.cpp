@@ -518,7 +518,7 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
 
         const auto &oComponents = oType.GetComponents();
-        if (!(oComponents.size() == 2 &&
+        if (!(oComponents.size() >= 2 &&
               ((oComponents[0]->GetName() == "surfaceCurrentSpeed" &&
                 oComponents[0]->GetType().GetNumericDataType() == GDT_Float32 &&
                 oComponents[1]->GetName() == "surfaceCurrentDirection" &&
@@ -631,6 +631,37 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
         poSurfaceCurrentDirectionBand->GDALRasterBand::SetMetadataItem(
             "ANGLE_CONVENTION", "From true north, clockwise");
         poDS->SetBand(2, poSurfaceCurrentDirectionBand.release());
+
+        for (size_t i = 2; i < oComponents.size(); ++i)
+        {
+            if (oComponents[i]->GetName() == "speedUncertainty" &&
+                oComponents[i]->GetType().GetNumericDataType() == GDT_Float32)
+            {
+                auto poSubArray =
+                    poValuesArray->GetView("[\"speedUncertainty\"]");
+                auto poSubArrayDS = std::unique_ptr<GDALDataset>(
+                    poSubArray->AsClassicDataset(1, 0));
+                auto poSubArrayBand =
+                    std::make_unique<S111RasterBand>(std::move(poSubArrayDS));
+                poSubArrayBand->SetDescription("speedUncertainty");
+                poSubArrayBand->m_osUnitType = "knot";
+                poDS->SetBand(poDS->nBands + 1, poSubArrayBand.release());
+            }
+            else if (oComponents[i]->GetName() == "directionUncertainty" &&
+                     oComponents[i]->GetType().GetNumericDataType() ==
+                         GDT_Float32)
+            {
+                auto poSubArray =
+                    poValuesArray->GetView("[\"directionUncertainty\"]");
+                auto poSubArrayDS = std::unique_ptr<GDALDataset>(
+                    poSubArray->AsClassicDataset(1, 0));
+                auto poSubArrayBand =
+                    std::make_unique<S111RasterBand>(std::move(poSubArrayDS));
+                poSubArrayBand->SetDescription("directionUncertainty");
+                poSubArrayBand->m_osUnitType = "degree";
+                poDS->SetBand(poDS->nBands + 1, poSubArrayBand.release());
+            }
+        }
     }
 
     poDS->GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
