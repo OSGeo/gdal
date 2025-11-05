@@ -182,10 +182,8 @@ class OGRParquetLayer final : public OGRParquetLayerBase
         return m_poArrowReader.get();
     }
 
-    const std::vector<int> &GetMapFieldIndexToParquetColumn() const
-    {
-        return m_anMapFieldIndexToParquetColumn;
-    }
+    std::vector<int>
+    GetParquetColumnIndicesForArrowField(const std::string &field_name) const;
 
     const std::vector<std::shared_ptr<arrow::DataType>> &
     GetArrowFieldTypes() const

@@ -254,13 +254,14 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                     OGR_RawField_SetNull(&sField);
                     OGRFieldType eType = OFTReal;
                     OGRFieldSubType eSubType = OFSTNone;
-                    const int iCol =
+                    const std::vector<int> anCols =
                         iOGRField == OGRParquetLayer::OGR_FID_INDEX
-                            ? poLayer->GetFIDParquetColumn()
-                            : poLayer->GetMapFieldIndexToParquetColumn()
-                                  [iOGRField];
-                    if (iCol < 0)
+                            ? std::vector<int>{poLayer->GetFIDParquetColumn()}
+                            : poLayer->GetParquetColumnIndicesForArrowField(
+                                  pszFieldName);
+                    if (anCols.size() != 1 || anCols[0] < 0)
                         break;
+                    const int iCol = anCols[0];
                     const auto metadata =
                         poLayer->GetReader()->parquet_reader()->metadata();
                     const auto numRowGroups = metadata->num_row_groups();
