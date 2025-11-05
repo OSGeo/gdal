@@ -385,7 +385,9 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
                 oComponents[0]->GetName() == "name" &&
                 oComponents[0]->GetType().GetClass() == GEDTC_STRING &&
                 oComponents[1]->GetName() == "value" &&
-                oComponents[1]->GetType().GetNumericDataType() == GDT_Float64)
+                (oComponents[1]->GetType().GetNumericDataType() ==
+                     GDT_Float32 ||
+                 oComponents[1]->GetType().GetNumericDataType() == GDT_Float64))
             {
                 auto poName = poUncertainty->GetView("[\"name\"]");
                 auto poValue = poUncertainty->GetView("[\"value\"]");
@@ -400,9 +402,9 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
                     if (poName->Read(arrayStartIdx, count, arrayStep,
                                      bufferStride, oComponents[0]->GetType(),
                                      apszStr) &&
-                        poValue->Read(arrayStartIdx, count, arrayStep,
-                                      bufferStride, oComponents[1]->GetType(),
-                                      adfVals))
+                        poValue->Read(
+                            arrayStartIdx, count, arrayStep, bufferStride,
+                            GDALExtendedDataType::Create(GDT_Float64), adfVals))
                     {
                         for (int i = 0; i < 2; ++i)
                         {
