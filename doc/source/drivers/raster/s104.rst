@@ -15,6 +15,7 @@ which is a specific product profile in an HDF5 file.
 
 S-104 files have two image bands representing water level height (band 1)
 and water level trend (band 2) values for each cell in a raster grid area.
+An optional third band can contain the uncertainty in water level height.
 
 When opening a S-104 file, no raster band is directly available. But a list of
 subdatasets will be reported, one for each timestamp available in the file.

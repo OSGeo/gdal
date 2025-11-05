@@ -470,13 +470,16 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
 
         const auto &oComponents = oType.GetComponents();
-        if (oComponents.size() != 2 ||
+        if ((oComponents.size() != 2 && oComponents.size() != 3) ||
             oComponents[0]->GetName() != "waterLevelHeight" ||
             oComponents[0]->GetType().GetNumericDataType() != GDT_Float32 ||
             oComponents[1]->GetName() != "waterLevelTrend" ||
             (oComponents[1]->GetType().GetNumericDataType() != GDT_Byte &&
              // In theory should be Byte, but 104US00_ches_dcf2_20190606T12Z.h5 uses Int32
-             oComponents[1]->GetType().GetNumericDataType() != GDT_Int32))
+             oComponents[1]->GetType().GetNumericDataType() != GDT_Int32) ||
+            (oComponents.size() == 3 &&
+             (oComponents[2]->GetName() != "uncertainty" ||
+              oComponents[2]->GetType().GetNumericDataType() != GDT_Float32)))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Wrong data type for %s",
                      poValuesArray->GetFullName().c_str());
@@ -557,6 +560,20 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
         poWaterLevelTrendBand->m_poRAT = std::move(poRAT);
 
         poDS->SetBand(2, poWaterLevelTrendBand.release());
+
+        if (oComponents.size() == 3)
+        {
+            // Create uncertainty band
+            auto poUncertaintyArray =
+                poValuesArray->GetView("[\"uncertainty\"]");
+            auto poUncertaintyDS = std::unique_ptr<GDALDataset>(
+                poUncertaintyArray->AsClassicDataset(1, 0));
+            auto poUncertaintyBand =
+                std::make_unique<S104RasterBand>(std::move(poUncertaintyDS));
+            poUncertaintyBand->SetDescription("uncertainty");
+            poUncertaintyBand->m_osUnitType = "metre";
+            poDS->SetBand(3, poUncertaintyBand.release());
+        }
 
         auto poUncertaintyDataset =
             poFeatureInstance->OpenMDArray("uncertainty");
