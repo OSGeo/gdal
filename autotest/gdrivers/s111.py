@@ -220,6 +220,7 @@ def test_s111_multiple_feature_instance_groups():
         "minDatasetCurrentSpeed": "0",
         "numberOfTimes": "1",
         "surfaceCurrentDepth": "-4.5",
+        "timePoint": "20190606T120000Z",
         "timeRecordInterval": "3600",
         "uncertaintySurfaceCurrentDirection": "-1.000000",
         "uncertaintySurfaceCurrentSpeed": "-1.000000",
