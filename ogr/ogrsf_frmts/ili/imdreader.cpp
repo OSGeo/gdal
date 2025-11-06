@@ -43,7 +43,7 @@ class IliClass
     bool isAssocClass;
     bool hasDerivedClasses;
 
-    IliClass(CPLXMLNode *node_, int iliVersion_, CPLString modelVersion_,
+    IliClass(CPLXMLNode *node_, int iliVersion_, const CPLString &modelVersion_,
              StrNodeMap &oTidLookup_, ClassesMap &oClasses_,
              NodeCountMap &oAxisCount_)
         : node(node_), iliVersion(iliVersion_), modelVersion(modelVersion_),
@@ -518,7 +518,7 @@ void ImdReader::ReadModel(const char *pszFilename)
                         CPLGetXMLValue(psEntry, "IlisMeta16:iliVersion", ""));
                     // "1", "2.3", "2.4"
                     modelInfo.uri = CPLGetXMLValue(psEntry, "At", "");
-                    modelInfos.push_back(modelInfo);
+                    modelInfos.push_back(std::move(modelInfo));
 
                     CPLXMLNode *psFormatNode =
                         CPLGetXMLNode(psEntry, "ili1Format");
@@ -549,7 +549,7 @@ void ImdReader::ReadModel(const char *pszFilename)
                          EQUAL(psEntry->pszValue, "IlisMeta16:Class"))
                 {
                     CPLDebug("OGR_ILI", "Class name: '%s'", psTID);
-                    CPLString modelVersion = modelInfos.back().version;
+                    const auto &modelVersion = modelInfos.back().version;
                     oClasses[psEntry] =
                         new IliClass(psEntry, iliVersion, modelVersion,
                                      oTidLookup, oClasses, oAxisCount);
