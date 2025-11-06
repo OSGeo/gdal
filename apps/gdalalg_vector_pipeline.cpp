@@ -35,6 +35,7 @@
 #include "gdalalg_vector_set_geom_type.h"
 #include "gdalalg_vector_simplify.h"
 #include "gdalalg_vector_simplify_coverage.h"
+#include "gdalalg_vector_sort.h"
 #include "gdalalg_vector_sql.h"
 #include "gdalalg_vector_swap_xy.h"
 #include "gdalalg_vector_update.h"
@@ -180,6 +181,7 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALVectorSetGeomTypeAlgorithm>();
     registry.Register<GDALVectorSimplifyAlgorithm>();
     registry.Register<GDALVectorSimplifyCoverageAlgorithm>();
+    registry.Register<GDALVectorSortAlgorithm>();
     registry.Register<GDALVectorSQLAlgorithm>();
     registry.Register<GDALVectorUpdateAlgorithm>(
         addSuffixIfNeeded(GDALVectorUpdateAlgorithm::NAME));
