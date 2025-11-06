@@ -61,6 +61,7 @@ add_library(
   gdal_thread_pool.cpp
   nasakeywordhandler.cpp
   tiff_common.cpp
+  enviutils.cpp
 )
 
 add_library(gcore_gdal_misc OBJECT gdal_misc.cpp)

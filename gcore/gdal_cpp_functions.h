@@ -388,6 +388,12 @@ inline CPLErr Combine(CPLErr eErr1, bool b)
 
 }  // namespace GDAL
 
+CPLStringList CPL_DLL GDALReadENVIHeader(VSILFILE *fpHdr);
+CPLStringList CPL_DLL GDALENVISplitList(const char *pszCleanInput);
+void CPL_DLL GDALApplyENVIHeaders(GDALDataset *poDS,
+                                  const CPLStringList &aosHeaders,
+                                  CSLConstList papszOptions);
+
 //! @endcond
 
 #endif

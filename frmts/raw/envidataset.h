@@ -64,7 +64,6 @@ class ENVIDataset final : public RawDataset
 
     Interleave eInterleave = Interleave::BSQ;
 
-    bool ReadHeader(VSILFILE *);
     bool ProcessMapinfo(const char *);
     void ProcessRPCinfo(const char *, int, int);
     void ProcessGeoPoints(const char *);
