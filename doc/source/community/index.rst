@@ -70,6 +70,15 @@ Social media
 You can follow GDAL official news on Mastodon: https://mastodon.social/@gdal / @gdal@mastodon.social
 
 
+Online swag store
+-----------------
+
+You can find several designs of GDAL T-shirts, hoodies, etc on the
+`NumFocus swag store <https://numfocus.myspreadshop.com/gdal>`__. A part of the
+price goes to the GDAL project.
+Note on the bottom of the pages the possibility to select alternative stores
+for countries other than the USA.
+
 Conferences
 -----------
 
