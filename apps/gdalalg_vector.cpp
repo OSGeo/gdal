@@ -38,6 +38,7 @@
 #include "gdalalg_vector_set_geom_type.h"
 #include "gdalalg_vector_simplify.h"
 #include "gdalalg_vector_simplify_coverage.h"
+#include "gdalalg_vector_sort.h"
 #include "gdalalg_vector_sql.h"
 #include "gdalalg_vector_make_valid.h"
 #include "gdalalg_vector_swap_xy.h"
@@ -94,6 +95,7 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALVectorSetGeomTypeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSimplifyAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSimplifyCoverageAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSortAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSQLAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSwapXYAlgorithmStandalone>();
     }
