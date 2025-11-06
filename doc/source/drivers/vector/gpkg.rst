@@ -60,15 +60,18 @@ The driver supports OGR attribute filters, and users are expected to
 provide filters in the SQLite dialect, as they will be executed directly
 against the database.
 
-SQL SELECT statements passed to ExecuteSQL() are
-also executed directly against the database. If Spatialite is used, a
-recent version (4.2.0) is needed and use of explicit cast operators
-AsGPB() is required to transform GeoPackage geometries to Spatialite
-geometries (the reverse conversion from Spatialite geometries is
-automatically done by the GPKG driver). It is also possible to use with
-any Spatialite version, but in a slower way, by specifying the
-"INDIRECT_SQLITE" dialect. In which case, GeoPackage geometries
-automatically appear as Spatialite geometries after translation by OGR.
+SQL SELECT statements passed to ExecuteSQL() are also executed directly against the database.
+
+If the SQLite dialect is used with the SpatiaLite functions, an explicit cast
+operator AsGPB() is required to transform SpatiaLite geometries into GeoPackage
+geometries.
+
+::
+
+   ogrinfo -update points.gpkg -sql "INSERT INTO points (geom) values (AsGPB(ST_GeomFromText('POINT(3 54)', 4326)))"
+
+The reverse conversion from GPKG geometries into SpatiaLite geometries
+is automatically done.
 
 The "DROP TABLE layer_name" and "ALTER TABLE
 layer_name RENAME TO new_layer" statements can be used. They will update
@@ -143,16 +146,14 @@ are also available.
 Link with Spatialite
 ~~~~~~~~~~~~~~~~~~~~
 
-If it has been compiled against Spatialite 4.2
-or later, it is also possible to use Spatialite SQL functions. Explicit
-transformation from GPKG geometry binary encoding to Spatialite geometry
-binary encoding must be done.
+If GDAL has been compiled against Spatialite, it is also possible to use
+Spatialite SQL functions. Transformation from GPKG geometry binary to Spatialite geometry
+binary encoding is done implicitly
 
 ::
 
-   ogrinfo poly.gpkg -sql "SELECT ST_Buffer(CastAutomagic(geom),5) FROM poly"
+   ogrinfo poly.gpkg -sql "SELECT ST_Buffer(geom,5) FROM poly"
 
-Starting with Spatialite 4.3, CastAutomagic is no longer needed.
 
 Note that due to the loose typing mechanism of SQLite, if a geometry expression
 returns a NULL value for the first row, this will generally cause OGR not to
