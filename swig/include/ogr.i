@@ -1896,8 +1896,12 @@ public:
       return (OGRFeatureShadow*) OGR_F_Create( feature_def );
   }
 
+  %newobject GetDefnRef;
   OGRFeatureDefnShadow *GetDefnRef() {
-    return (OGRFeatureDefnShadow*) OGR_F_GetDefnRef(self);
+    auto defn = (OGRFeatureDefnShadow*) OGR_F_GetDefnRef(self);
+    if (defn)
+       OGR_FD_Reference(defn);
+    return defn;
   }
 
   OGRErr SetGeometry(OGRGeometryShadow* geom) {
