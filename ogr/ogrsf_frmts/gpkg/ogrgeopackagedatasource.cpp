@@ -7404,6 +7404,19 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
     if (!osSQLCommand.empty() && osSQLCommand.back() == ';')
         osSQLCommand.pop_back();
 
+    if (osSQLCommand.ifind("AsGPB(ST_") != std::string::npos ||
+        osSQLCommand.ifind("AsGPB( ST_") != std::string::npos)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Use of AsGPB(ST_xxx(...)) found in \"%s\". Since GDAL 3.13, "
+                 "ST_xxx() functions return a GeoPackage geometry when used "
+                 "with a GeoPackage connection, and the use of AsGPB() is no "
+                 "longer needed. It is here automatically removed",
+                 osSQLCommand.c_str());
+        osSQLCommand.replaceAll("AsGPB(ST_", "(ST_");
+        osSQLCommand.replaceAll("AsGPB( ST_", "(ST_");
+    }
+
     if (pszDialect == nullptr || !EQUAL(pszDialect, "DEBUG"))
     {
         // Some SQL commands will influence the feature count behind our
@@ -9344,13 +9357,12 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
 {
     InitSpatialite();
 
-    // Enable SpatiaLite 4.3 "amphibious" mode, i.e. that SpatiaLite functions
-    // that take geometries will accept GPKG encoded geometries without
+    // Enable SpatiaLite 4.3 GPKG mode, i.e. that SpatiaLite functions
+    // that take geometries will accept and return GPKG encoded geometries without
     // explicit conversion.
     // Use sqlite3_exec() instead of SQLCommand() since we don't want verbose
     // error.
-    sqlite3_exec(hDB, "SELECT EnableGpkgAmphibiousMode()", nullptr, nullptr,
-                 nullptr);
+    sqlite3_exec(hDB, "SELECT EnableGpkgMode()", nullptr, nullptr, nullptr);
 
     /* Used by RTree Spatial Index Extension */
     sqlite3_create_function(hDB, "ST_MinX", 1, UTF8_INNOCUOUS, nullptr,
