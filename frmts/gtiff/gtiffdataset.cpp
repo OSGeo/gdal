@@ -93,8 +93,8 @@ GTiffDataset::GTiffDataset()
       m_bIgnoreReadErrors(
           CPLTestBool(CPLGetConfigOption("GTIFF_IGNORE_READ_ERRORS", "NO"))),
       m_bDirectIO(CPLTestBool(CPLGetConfigOption("GTIFF_DIRECT_IO", "NO"))),
-      m_bReadGeoTransform(false), m_bLoadPam(false),
-      m_bHasGotSiblingFiles(false),
+      m_bReadGeoTransform(false), m_bLoadPam(false), m_bENVIHdrTried(false),
+      m_bENVIHdrFound(false), m_bHasGotSiblingFiles(false),
       m_bHasIdentifiedAuthorizedGeoreferencingSources(false),
       m_bLayoutIFDSBeforeData(false), m_bBlockOrderRowMajor(false),
       m_bLeaderSizeAsUInt4(false), m_bTrailerRepeatedLast4BytesRepeated(false),
@@ -1443,44 +1443,48 @@ char **GTiffDataset::GetFileList()
 
     LoadGeoreferencingAndPamIfNeeded();
 
-    char **papszFileList = GDALPamDataset::GetFileList();
+    CPLStringList aosFiles(GDALPamDataset::GetFileList());
 
     LoadMetadata();
     if (nullptr != m_papszMetadataFiles)
     {
         for (int i = 0; m_papszMetadataFiles[i] != nullptr; ++i)
         {
-            if (CSLFindString(papszFileList, m_papszMetadataFiles[i]) < 0)
+            if (aosFiles.FindString(m_papszMetadataFiles[i]) < 0)
             {
-                papszFileList =
-                    CSLAddString(papszFileList, m_papszMetadataFiles[i]);
+                aosFiles.AddString(m_papszMetadataFiles[i]);
             }
         }
     }
 
-    if (m_pszGeorefFilename &&
-        CSLFindString(papszFileList, m_pszGeorefFilename) == -1)
+    if (m_pszGeorefFilename && aosFiles.FindString(m_pszGeorefFilename) == -1)
     {
-        papszFileList = CSLAddString(papszFileList, m_pszGeorefFilename);
+        aosFiles.AddString(m_pszGeorefFilename);
     }
 
     if (m_nXMLGeorefSrcIndex >= 0)
         LookForProjection();
 
-    if (m_pszXMLFilename &&
-        CSLFindString(papszFileList, m_pszXMLFilename) == -1)
+    if (m_pszXMLFilename && aosFiles.FindString(m_pszXMLFilename) == -1)
     {
-        papszFileList = CSLAddString(papszFileList, m_pszXMLFilename);
+        aosFiles.AddString(m_pszXMLFilename);
     }
 
     const std::string osVATDBF = m_osFilename + ".vat.dbf";
     VSIStatBufL sStat;
     if (VSIStatL(osVATDBF.c_str(), &sStat) == 0)
     {
-        papszFileList = CSLAddString(papszFileList, osVATDBF.c_str());
+        aosFiles.AddString(osVATDBF.c_str());
     }
 
-    return papszFileList;
+    LoadENVIHdrIfNeeded();
+    if (m_bENVIHdrFound)
+    {
+        aosFiles.AddString(
+            GetSidecarFilenameWithReplacedExtension("hdr").c_str());
+    }
+
+    return aosFiles.StealList();
 }
 
 /************************************************************************/
