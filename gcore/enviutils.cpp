@@ -362,6 +362,20 @@ void GDALApplyENVIHeaders(GDALDataset *poDS, const CPLStringList &aosHeaders,
             GDALENVISplitList(pszClassNames).List());
     }
 
+    if (const char *pszBBL = aosHeaders["bbl"])
+    {
+        const CPLStringList aosValues(GDALENVISplitList(pszBBL));
+        if (aosValues.size() == nBands)
+        {
+            for (int i = 0; i < nBands; ++i)
+            {
+                poDS->GetRasterBand(i + 1)->SetMetadataItem(
+                    "good_band",
+                    strcmp(aosValues[i], "1") == 0 ? "true" : "false");
+            }
+        }
+    }
+
     if (CPLTestBool(
             CSLFetchNameValueDef(papszOptions, "APPLY_CLASS_LOOKUP", "YES")))
     {
