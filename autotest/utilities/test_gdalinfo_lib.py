@@ -55,6 +55,8 @@ def test_gdalinfo_lib_2():
 
     ret = gdal.Info(ds, format="json")
     assert ret["driverShortName"] == "GTiff", "wrong value for driverShortName."
+    assert ret["geoTransform"] == [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
+    assert ret["stac"]["proj:transform"] == [60.0, 0.0, 440720.0, 0.0, -60.0, 3751320.0]
 
     gdaltest.validate_json(ret, "gdalinfo_output.schema.json")
 
