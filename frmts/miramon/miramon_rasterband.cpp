@@ -588,18 +588,11 @@ CPLErr MMRRasterBand::CreateRATFromDBF(const CPLString &osRELName,
 CPLErr MMRRasterBand::UpdateTableColorsFromPalette()
 
 {
-    if (!m_Palette)
+    if (!m_Palette || !m_Palette->IsValid())
         return CE_Failure;
 
     if (m_Palette->IsConstantColor())
         return AssignUniformColorTable();
-
-    CPLString os_Color_Paleta;
-
-    if (!m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
-                                   "Color_Paleta", os_Color_Paleta) ||
-        os_Color_Paleta.empty() || os_Color_Paleta == "<Automatic>")
-        return CE_Failure;
 
     CPLErr peErr;
     if (m_Palette->IsCategorical())
@@ -678,9 +671,9 @@ CPLErr MMRRasterBand::FromPaletteToColorTableCategoricalMode()
     if (m_Palette->GetSizeOfPaletteColors() == 0)
         return CE_Failure;
 
-    if (m_Palette->ColorScaling == ColorTreatment::DEFAULT_SCALING)
-        m_Palette->ColorScaling = ColorTreatment::DIRECT_ASSIGNATION;
-    else if (m_Palette->ColorScaling != ColorTreatment::DIRECT_ASSIGNATION)
+    if (m_Palette->GetColorScaling() == ColorTreatment::DEFAULT_SCALING)
+        m_Palette->SetColorScaling(ColorTreatment::DIRECT_ASSIGNATION);
+    else if (m_Palette->GetColorScaling() != ColorTreatment::DIRECT_ASSIGNATION)
         return CE_Failure;
 
     // Getting number of color in the palette
@@ -756,7 +749,7 @@ CPLErr MMRRasterBand::FromPaletteToColorTableContinuousMode()
         return CE_Failure;
 
     // TODO: more types of scaling
-    if (m_Palette->ColorScaling != ColorTreatment::LINEAR_SCALING)
+    if (m_Palette->GetColorScaling() != ColorTreatment::LINEAR_SCALING)
         return CE_Failure;
 
     MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
@@ -990,8 +983,8 @@ CPLErr MMRRasterBand::FromPaletteToAttributeTable()
         return CE_None;
 
     // TODO: more types of scaling
-    if (m_Palette->ColorScaling != ColorTreatment::LINEAR_SCALING &&
-        m_Palette->ColorScaling != ColorTreatment::DIRECT_ASSIGNATION)
+    if (m_Palette->GetColorScaling() != ColorTreatment::LINEAR_SCALING &&
+        m_Palette->GetColorScaling() != ColorTreatment::DIRECT_ASSIGNATION)
         return CE_Failure;
 
     MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
@@ -1004,7 +997,7 @@ CPLErr MMRRasterBand::FromPaletteToAttributeTable()
     if (m_Palette->GetNumberOfColors() <= 0)
         return CE_Failure;
 
-    if (m_Palette->ColorScaling == ColorTreatment::DIRECT_ASSIGNATION)
+    if (m_Palette->GetColorScaling() == ColorTreatment::DIRECT_ASSIGNATION)
         return FromPaletteToAttributeTableDirectAssig();
 
     // A scaling is applied between the minimum and maximum display values.
@@ -1060,6 +1053,12 @@ CPLErr MMRRasterBand::FromPaletteToAttributeTableDirectAssig()
     if (!poBand)
         return CE_Failure;
 
+    if (!m_Palette)
+        return CE_Failure;
+
+    if (m_Palette->GetNumberOfColors() <= 0)
+        return CE_Failure;
+
     m_poDefaultRAT->SetTableType(GRTT_THEMATIC);
 
     m_poDefaultRAT->CreateColumn("MIN_MAX", GFT_Real, GFU_MinMax);
@@ -1112,6 +1111,12 @@ CPLErr MMRRasterBand::FromPaletteToAttributeTableLinear()
 {
     MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
     if (!poBand)
+        return CE_Failure;
+
+    if (!m_Palette)
+        return CE_Failure;
+
+    if (m_Palette->GetNumberOfColors() <= 0)
         return CE_Failure;
 
     // Some necessary information
