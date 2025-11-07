@@ -212,19 +212,6 @@ double ViewshedExecutor::calcHeightAdjFactor()
     return 0;
 }
 
-/// Set the output Z value depending on the observable height and computation mode.
-///
-/// dfResult  Reference to the result cell
-/// dfCellVal  Reference to the current cell height. Replace with observable height.
-/// dfZ  Minimum observable height at cell.
-void ViewshedExecutor::setOutput(Lines &lines, int pos, double dfZ)
-{
-    if (!m_sdCalc)
-        setOutputNormal(lines, pos, dfZ);
-    else
-        setOutputSd(lines, pos, dfZ);
-}
-
 /// Set the output Z value depending on the observable height and computation mode
 /// in normal mode.
 ///
@@ -506,28 +493,28 @@ bool ViewshedExecutor::processFirstLine(Lines &lines)
             lines.result[m_nX] = oOpts.visibleVal;
     }
 
-    auto process = [this, &ll, &lines]()
+    auto process = [this, &ll, &lines](bool sdCalc)
     {
         if (!oCurExtent.containsY(m_nY))
             processFirstLineTopOrBottom(ll, lines);
         else
         {
             CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
-            pQueue->SubmitJob([&]() { processFirstLineLeft(ll, lines); });
-            pQueue->SubmitJob([&]() { processFirstLineRight(ll, lines); });
+            pQueue->SubmitJob([&]()
+                              { processFirstLineLeft(ll, lines, sdCalc); });
+            pQueue->SubmitJob([&]()
+                              { processFirstLineRight(ll, lines, sdCalc); });
             pQueue->WaitCompletion();
         }
     };
 
-    process();
+    process(false);
     lines.prev = lines.cur;
     if (sdMode())
     {
-        m_sdCalc = true;
         lines.cur = std::move(lines.input);
-        process();
+        process(true);
         lines.prevTmp = lines.cur;
-        m_sdCalc = false;
     }
 
     if (oOpts.pitchMasking())
@@ -569,7 +556,7 @@ void ViewshedExecutor::processFirstLineTopOrBottom(const LineLimits &ll,
         if (oOpts.outputMode == OutputMode::Normal)
             lines.result[iPixel] = oOpts.visibleVal;
         else
-            setOutput(lines, iPixel, lines.cur[iPixel]);
+            setOutputNormal(lines, iPixel, lines.cur[iPixel]);
     }
 
     std::fill(lines.result.begin(), lines.result.begin() + ll.left,
@@ -580,9 +567,11 @@ void ViewshedExecutor::processFirstLineTopOrBottom(const LineLimits &ll,
 
 /// Process the part of the first line to the left of the observer.
 ///
-/// @param ll  Line limits for masking.
-/// @param lines  Raster lines to process.
-void ViewshedExecutor::processFirstLineLeft(const LineLimits &ll, Lines &lines)
+/// @param ll      Line limits for masking.
+/// @param sdCalc  True when doing SD calculation.
+/// @param lines   Raster lines to process.
+void ViewshedExecutor::processFirstLineLeft(const LineLimits &ll, Lines &lines,
+                                            bool sdCalc)
 {
     int iEnd = ll.left - 1;
     int iStart = m_nX - 1;  // One left of the observer.
@@ -603,12 +592,13 @@ void ViewshedExecutor::processFirstLineLeft(const LineLimits &ll, Lines &lines)
         if (oOpts.outputMode == OutputMode::Normal)
         {
             lines.result[iStart] = oOpts.visibleVal;
-            if (m_sdCalc)
+            if (sdCalc)
                 if (lines.sd[iStart] > 1)
-                    lines.cur[iStart] = m_dfZObserver;
+                    lines.cur[iStart] =
+                        m_dfZObserver;  // Should this be a minimum value?
         }
         else
-            setOutput(lines, iStart, dfZ);
+            setOutputNormal(lines, iStart, dfZ);
         iStart--;
     }
 
@@ -617,7 +607,10 @@ void ViewshedExecutor::processFirstLineLeft(const LineLimits &ll, Lines &lines)
     {
         int nXOffset = std::abs(iPixel - m_nX);
         double dfZ = CalcHeightLine(nXOffset, lines.cur[iPixel + 1]);
-        setOutput(lines, iPixel, dfZ);
+        if (!sdCalc)
+            setOutputNormal(lines, iPixel, dfZ);
+        else
+            setOutputSd(lines, iPixel, dfZ);
     }
 
     maskLineLeft(lines.result, ll, m_nY);
@@ -798,8 +791,10 @@ void ViewshedExecutor::maskLineRight(std::vector<double> &vResult,
 /// Process the part of the first line to the right of the observer.
 ///
 /// @param ll  Line limits
+/// @param sdCalc  True when doing SD calcuation.
 /// @param lines  Raster lines to process.
-void ViewshedExecutor::processFirstLineRight(const LineLimits &ll, Lines &lines)
+void ViewshedExecutor::processFirstLineRight(const LineLimits &ll, Lines &lines,
+                                             bool sdCalc)
 {
     int iStart = m_nX + 1;
     int iEnd = ll.right;
@@ -820,12 +815,13 @@ void ViewshedExecutor::processFirstLineRight(const LineLimits &ll, Lines &lines)
         if (oOpts.outputMode == OutputMode::Normal)
         {
             lines.result[iStart] = oOpts.visibleVal;
-            if (m_sdCalc)
+            if (sdCalc)
                 if (lines.sd[iStart] > 1)
-                    lines.cur[iStart] = m_dfZObserver;
+                    lines.cur[iStart] =
+                        m_dfZObserver;  // Use some minimum value instead?
         }
         else
-            setOutput(lines, iStart, dfZ);
+            setOutputNormal(lines, iStart, dfZ);
         iStart++;
     }
 
@@ -834,7 +830,10 @@ void ViewshedExecutor::processFirstLineRight(const LineLimits &ll, Lines &lines)
     {
         int nXOffset = std::abs(iPixel - m_nX);
         double dfZ = CalcHeightLine(nXOffset, lines.cur[iPixel - 1]);
-        setOutput(lines, iPixel, dfZ);
+        if (!sdCalc)
+            setOutputNormal(lines, iPixel, dfZ);
+        else
+            setOutputSd(lines, iPixel, dfZ);
     }
 
     maskLineRight(lines.result, ll, m_nY);
@@ -845,8 +844,9 @@ void ViewshedExecutor::processFirstLineRight(const LineLimits &ll, Lines &lines)
 /// @param nYOffset  Offset of the line being processed from the observer
 /// @param ll  Line limits
 /// @param lines  Raster lines to process.
+/// @param sdCalc  SD calculation indicator.
 void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
-                                       Lines &lines)
+                                       Lines &lines, bool sdCalc)
 {
     int iStart = m_nX - 1;
     int iEnd = ll.left - 1;
@@ -868,7 +868,7 @@ void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
         if (oOpts.outputMode == OutputMode::Normal)
             lines.result[iStart] = oOpts.visibleVal;
         else
-            setOutput(lines, iStart, lines.cur[iStart]);
+            setOutputNormal(lines, iStart, lines.cur[iStart]);
         iStart--;
     }
 
@@ -884,7 +884,10 @@ void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
         else
             dfZ = oZcalc(nXOffset, nYOffset, lines.cur[iPixel + 1],
                          lines.prev[iPixel], lines.prev[iPixel + 1]);
-        setOutput(lines, iPixel, dfZ);
+        if (!sdCalc)
+            setOutputNormal(lines, iPixel, dfZ);
+        else
+            setOutputSd(lines, iPixel, dfZ);
     }
 
     maskLineLeft(lines.result, ll, nLine);
@@ -895,8 +898,9 @@ void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
 /// @param nYOffset  Offset of the line being processed from the observer
 /// @param ll  Line limits
 /// @param lines  Raster lines to process.
+/// @param sdCalc  SD calculation indicator.
 void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
-                                        Lines &lines)
+                                        Lines &lines, bool sdCalc)
 {
     int iStart = m_nX + 1;
     int iEnd = ll.right;
@@ -918,7 +922,7 @@ void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
         if (oOpts.outputMode == OutputMode::Normal)
             lines.result[iStart] = oOpts.visibleVal;
         else
-            setOutput(lines, 0, lines.cur[0]);
+            setOutputNormal(lines, 0, lines.cur[0]);
         iStart++;
     }
 
@@ -930,7 +934,7 @@ void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
         double dfZ;
         if (nXOffset == nYOffset)
         {
-            if (m_sdCalc && nXOffset == 1)
+            if (sdCalc && nXOffset == 1)
             {
                 lines.result[iPixel] = oOpts.visibleVal;
                 if (lines.sd[iPixel] > 1)
@@ -943,7 +947,10 @@ void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
         else
             dfZ = oZcalc(nXOffset, nYOffset, lines.cur[iPixel - 1],
                          lines.prev[iPixel], lines.prev[iPixel - 1]);
-        setOutput(lines, iPixel, dfZ);
+        if (!sdCalc)
+            setOutputNormal(lines, iPixel, dfZ);
+        else
+            setOutputSd(lines, iPixel, dfZ);
     }
 
     maskLineRight(lines.result, ll, nLine);
@@ -1001,11 +1008,13 @@ bool ViewshedExecutor::processLine(int nLine, Lines &lines)
     // Adjust height of the read line.
     LineLimits ll = adjustHeight(nYOffset, lines);
 
-    auto process = [this, nYOffset, &ll, &lines]()
+    auto process = [this, nYOffset, &ll, &lines](bool sdCalc)
     {
         CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
-        pQueue->SubmitJob([&]() { processLineLeft(nYOffset, ll, lines); });
-        pQueue->SubmitJob([&]() { processLineRight(nYOffset, ll, lines); });
+        pQueue->SubmitJob([&]()
+                          { processLineLeft(nYOffset, ll, lines, sdCalc); });
+        pQueue->SubmitJob([&]()
+                          { processLineRight(nYOffset, ll, lines, sdCalc); });
         pQueue->WaitCompletion();
     };
 
@@ -1018,17 +1027,15 @@ bool ViewshedExecutor::processLine(int nLine, Lines &lines)
         {
             double dfZ = CalcHeightLine(std::abs(nYOffset), lines.cur[m_nX],
                                         lines.prev[m_nX]);
-            setOutput(lines, m_nX, dfZ);
+            setOutputNormal(lines, m_nX, dfZ);
         }
     }
 
-    process();
+    process(false);
 
     // Process SD mode
     if (sdMode())
     {
-        m_sdCalc = true;
-
         lines.prev = std::move(lines.prevTmp);
         lines.prevTmp = std::move(lines.cur);
         lines.cur = std::move(lines.input);
@@ -1046,13 +1053,12 @@ bool ViewshedExecutor::processLine(int nLine, Lines &lines)
 
                 double dfZ = CalcHeightLine(std::abs(nYOffset), lines.cur[m_nX],
                                             lines.prev[m_nX]);
-                setOutput(lines, m_nX, dfZ);
+                setOutputSd(lines, m_nX, dfZ);
             }
         }
-        process();
+        process(true);
         lines.prev = std::move(lines.prevTmp);
         lines.prevTmp = lines.cur;
-        m_sdCalc = false;
     }
     else
         lines.prev = lines.cur;

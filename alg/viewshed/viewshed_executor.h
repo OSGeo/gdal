@@ -112,11 +112,9 @@ class ViewshedExecutor
     double m_lowTanPitch{std::numeric_limits<double>::quiet_NaN()};
     double m_highTanPitch{std::numeric_limits<double>::quiet_NaN()};
     double (*oZcalc)(int, int, double, double, double){};
-    bool m_sdCalc = false;
 
     double calcHeightAdjFactor();
 
-    void setOutput(Lines &lines, int pos, double dfZ);
     void setOutputNormal(Lines &lines, int pos, double dfZ);
     void setOutputSd(Lines &lines, int pos, double dfZ);
 
@@ -124,11 +122,13 @@ class ViewshedExecutor
     bool writeLine(int nLine, std::vector<double> &vResult);
     bool processLine(int nLine, Lines &lines);
     bool processFirstLine(Lines &lines);
-    void processFirstLineLeft(const LineLimits &ll, Lines &lines);
-    void processFirstLineRight(const LineLimits &ll, Lines &lines);
+    void processFirstLineLeft(const LineLimits &ll, Lines &lines, bool sdCalc);
+    void processFirstLineRight(const LineLimits &ll, Lines &lines, bool sdCalc);
     void processFirstLineTopOrBottom(const LineLimits &ll, Lines &lines);
-    void processLineLeft(int nYOffset, LineLimits &ll, Lines &lines);
-    void processLineRight(int nYOffset, LineLimits &ll, Lines &lines);
+    void processLineLeft(int nYOffset, LineLimits &ll, Lines &lines,
+                         bool sdCalc);
+    void processLineRight(int nYOffset, LineLimits &ll, Lines &lines,
+                          bool sdCalc);
     LineLimits adjustHeight(int iLine, Lines &lines);
     bool maskInitial(std::vector<double> &vResult, const LineLimits &ll,
                      int nLine);
