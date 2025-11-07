@@ -170,12 +170,12 @@ jobs:
           name: gdal-utils whl
           path: |
             dist/*
-      - name: Publish gdal-utils bdist_wheel to PyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
-        with:
-          attestations: true
-          repository-url: ${{ env.PYPI_REPOSITORY }}
-          skip-existing: ${{ env.PYPI_SKIP_EXISTING}}
+      #- name: Publish gdal-utils bdist_wheel to PyPI
+      #  uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+      #  with:
+      #    attestations: true
+      #    repository-url: ${{ env.PYPI_REPOSITORY }}
+      #    skip-existing: ${{ env.PYPI_SKIP_EXISTING}}
       - name: make gdal sdist
         run: |
           rm -rf dist/*
@@ -188,12 +188,12 @@ jobs:
           name: gdal sdist
           path: |
             dist/*
-      - name: Publish gdal sdist to PyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
-        with:
-          attestations: true
-          repository-url: ${{ env.PYPI_REPOSITORY }}
-          skip-existing: ${{ env.PYPI_SKIP_EXISTING}}
+      #- name: Publish gdal sdist to PyPI
+      #  uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+      #  with:
+      #    attestations: true
+      #    repository-url: ${{ env.PYPI_REPOSITORY }}
+      #    skip-existing: ${{ env.PYPI_SKIP_EXISTING}}
       - uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
         if: startsWith(github.ref, 'refs/tags/')
         name: Publish release as draft
