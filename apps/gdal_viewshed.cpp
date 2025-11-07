@@ -312,7 +312,7 @@ MAIN_START(argc, argv)
     /*      Open source SD raster file.                                     */
     /* -------------------------------------------------------------------- */
     GDALDatasetH hSdDS = GDALOpen(localOpts.osSdFilename.c_str(), GA_ReadOnly);
-    if (hSrcDS == nullptr)
+    if (hSdDS == nullptr)
         exit(2);
 
     GDALRasterBandH hSdBand = GDALGetRasterBand(hSdDS, 1);

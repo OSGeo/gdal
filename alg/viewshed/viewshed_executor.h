@@ -42,14 +42,15 @@ struct Lines
     std::vector<double> sd;       //!< SD mask.
 
     /// Constructor
-    Lines() : cur(), result(), prev(), pitchMask(), input(), sd()
+    Lines() : cur(), result(), prev(), pitchMask(), input(), prevTmp(), sd()
     {
     }
 
     /// Constructor that initializes to line length
     /// \param lineLen  Line length.
     explicit Lines(size_t lineLen)
-        : cur(lineLen), result(lineLen), prev(), pitchMask(), input(), sd()
+        : cur(lineLen), result(lineLen), prev(), pitchMask(), input(),
+          prevTmp(), sd()
     {
     }
 };
