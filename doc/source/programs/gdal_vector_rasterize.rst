@@ -24,6 +24,27 @@ Description
 
 Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline`.
 
+.. only:: html
+
+   .. list-table::
+      :widths: 50 50
+      :width: 70%
+      :header-rows: 0
+
+      * - .. figure:: ../../images/programs/gdal_vector_rasterize.png
+             :width: 100%
+
+             Rasterization of a vector polygon input.
+
+             The figure shows the default behavior, where only pixels on the line render path are burnt into the raster.
+
+        - .. figure:: ../../images/programs/gdal_vector_rasterize_all_touching.png
+             :width: 100%
+
+             Rasterization of a vector polygon input, using the ``--all-touched`` option.
+
+             All cells touching the input polygons are burnt into the raster.
+
 The following options are available:
 
 Standard options
