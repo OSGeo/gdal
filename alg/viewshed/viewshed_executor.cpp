@@ -1193,6 +1193,7 @@ bool ViewshedExecutor::run()
     return true;
 }
 
+// cppcheck-suppress knownConditionTrueFalse
 bool ViewshedExecutor::sdMode() const
 {
     // If the SD band isn't a dummy band, we're in SD mode.
