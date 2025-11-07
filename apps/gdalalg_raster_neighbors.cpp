@@ -165,10 +165,26 @@ GDALNeighborsCreateVRTDerived(GDALDataset *poSrcDS, int nBand,
     }
 
     bool ret = true;
-    for (size_t i = 0; i < aKernelDefs.size() && ret; ++i)
+    if (nBand != 0)
     {
-        ret = CreateDerivedBandXML(ds.get(), poSrcDS->GetRasterBand(nBand),
-                                   eType, noData, methods[i], aKernelDefs[i]);
+        for (size_t i = 0; i < aKernelDefs.size() && ret; ++i)
+        {
+            ret =
+                CreateDerivedBandXML(ds.get(), poSrcDS->GetRasterBand(nBand),
+                                     eType, noData, methods[i], aKernelDefs[i]);
+        }
+    }
+    else
+    {
+        for (int iBand = 1; iBand <= poSrcDS->GetRasterCount(); ++iBand)
+        {
+            for (size_t i = 0; i < aKernelDefs.size() && ret; ++i)
+            {
+                ret = CreateDerivedBandXML(ds.get(),
+                                           poSrcDS->GetRasterBand(iBand), eType,
+                                           noData, methods[i], aKernelDefs[i]);
+            }
+        }
     }
     if (!ret)
         ds.reset();
@@ -298,19 +314,6 @@ GDALRasterNeighborsAlgorithm::GDALRasterNeighborsAlgorithm(
                 return false;
             }
 
-            if (m_band == 0 && !m_inputDataset.empty())
-            {
-                auto poDS = m_inputDataset[0].GetDatasetRef();
-                if (poDS && poDS->GetRasterCount() > 1)
-                {
-                    ReportError(
-                        CE_Failure, CPLE_AppDefined,
-                        "'band' argument should be specified given input "
-                        "dataset has several bands.");
-                    return false;
-                }
-            }
-
             if (m_size > 0)
             {
                 for (const std::string &kernel : m_kernel)
@@ -406,8 +409,6 @@ bool GDALRasterNeighborsAlgorithm::RunStep(GDALPipelineStepRunContext &)
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
-    if (m_band == 0)
-        m_band = 1;
     CPLAssert(m_band <= poSrcDS->GetRasterCount());
 
     auto eType = GDALGetDataTypeByName(m_type.c_str());
@@ -415,76 +416,105 @@ bool GDALRasterNeighborsAlgorithm::RunStep(GDALPipelineStepRunContext &)
     {
         eType = GDT_Float64;
     }
-
-    if (m_method.size() <= 1)
+    std::vector<KernelDef> aKernelDefs(m_kernel.size());
+    std::vector<bool> abNullCoefficientSum(m_kernel.size());
+    for (size_t i = 0; i < m_kernel.size(); ++i)
     {
-        while (m_method.size() < m_kernel.size())
+        const std::string &kernel = m_kernel[i];
+        if (!kernel.empty() && kernel[0] == '[')
         {
-            m_method.push_back(m_method.empty()
-                                   ? ((m_kernel[0] == "u" || m_kernel[0] == "v")
-                                          ? "sum"
-                                          : "mean")
-                                   : m_method.back());
+            const CPLStringList aosValues(
+                CSLTokenizeString2(kernel.c_str(), "[] ,",
+                                   CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+            const double dfSize = static_cast<double>(aosValues.size());
+            KernelDef def;
+            def.size = static_cast<int>(std::floor(sqrt(dfSize) + 0.5));
+            double dfSum = 0;
+            for (const char *pszC : cpl::Iterate(aosValues))
+            {
+                const double dfV = CPLAtof(pszC);
+                dfSum += dfV;
+                // Already validated to be numeric by the validation action
+                def.adfCoefficients.push_back(dfV);
+            }
+            abNullCoefficientSum[i] = std::fabs(dfSum) < 1e-10;
+            if (abNullCoefficientSum[i] && m_method.size() == m_kernel.size() &&
+                m_method[i] == "mean")
+            {
+                ReportError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Specifying method = 'mean' for a kernel whose sum of "
+                    "coefficients is zero is not allowed. Use 'sum' instead");
+                return false;
+            }
+            aKernelDefs[i] = std::move(def);
         }
+    }
+
+    if (m_method.empty())
+    {
+        for (size_t i = 0; i < m_kernel.size(); ++i)
+        {
+            const bool bIsZeroSumKernel =
+                m_kernel[i] == "u" || m_kernel[i] == "v" ||
+                m_kernel[i] == "edge1" || m_kernel[i] == "edge2" ||
+                abNullCoefficientSum[i];
+            m_method.push_back(bIsZeroSumKernel ? "sum" : "mean");
+        }
+    }
+    else if (m_method.size() == 1)
+    {
+        const std::string lastValue(m_method.back());
+        m_method.resize(m_kernel.size(), lastValue);
     }
 
     if (m_size == 0 && m_kernel[0][0] != '[')
         m_size = m_kernel[0] == "unsharp-masking" ? 5 : 3;
 
-    std::vector<KernelDef> aKernelDefs;
-    size_t i = 0;
-    for (std::string &kernel : m_kernel)
+    for (size_t i = 0; i < m_kernel.size(); ++i)
     {
-        KernelDef def;
-        if (kernel == "edge1" || kernel == "edge2" || kernel == "sharpen")
+        const std::string &kernel = m_kernel[i];
+        if (aKernelDefs[i].adfCoefficients.empty())
         {
-            CPLAssert(m_size == 3);
-            def = GetKernelDef(kernel, true, 1.0);
-        }
-        else if (kernel == "u" || kernel == "v")
-        {
-            CPLAssert(m_size == 3);
-            def = GetKernelDef(kernel, false, 0.5);
-        }
-        else if (kernel == "equal")
-        {
-            def.size = m_size;
-            const double dfWeight =
-                m_method[i] == "mean"
-                    ? 1.0 / (static_cast<double>(m_size) * m_size +
-                             std::numeric_limits<double>::min())
-                    : 1.0;
-            def.adfCoefficients.resize(static_cast<size_t>(m_size) * m_size,
-                                       dfWeight);
-        }
-        else if (kernel == "gaussian")
-        {
-            CPLAssert(m_size == 3 || m_size == 5);
-            def = GetKernelDef(m_size == 3 ? "gaussian-3x3" : "gaussian-5x5",
-                               true, 0.0);
-        }
-        else if (kernel == "unsharp-masking")
-        {
-            CPLAssert(m_size == 5);
-            def = GetKernelDef("unsharp-masking-5x5", true, 0.0);
-        }
-        else
-        {
-            CPLAssert(kernel.front() == '[');
-            const CPLStringList aosValues(
-                CSLTokenizeString2(kernel.c_str(), "[] ,",
-                                   CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
-            const double dfSize = static_cast<double>(aosValues.size());
-            def.size = static_cast<int>(std::floor(sqrt(dfSize) + 0.5));
-            for (const char *pszC : cpl::Iterate(aosValues))
+            KernelDef def;
+            if (kernel == "edge1" || kernel == "edge2" || kernel == "sharpen")
             {
-                // Already validated to be numeric by the validation action
-                def.adfCoefficients.push_back(CPLAtof(pszC));
+                CPLAssert(m_size == 3);
+                def = GetKernelDef(kernel, false, 1.0);
             }
+            else if (kernel == "u" || kernel == "v")
+            {
+                CPLAssert(m_size == 3);
+                def = GetKernelDef(kernel, false, 0.5);
+            }
+            else if (kernel == "equal")
+            {
+                def.size = m_size;
+                const double dfWeight =
+                    m_method[i] == "mean"
+                        ? 1.0 / (static_cast<double>(m_size) * m_size +
+                                 std::numeric_limits<double>::min())
+                        : 1.0;
+                def.adfCoefficients.resize(static_cast<size_t>(m_size) * m_size,
+                                           dfWeight);
+            }
+            else if (kernel == "gaussian")
+            {
+                CPLAssert(m_size == 3 || m_size == 5);
+                def = GetKernelDef(
+                    m_size == 3 ? "gaussian-3x3" : "gaussian-5x5", true, 0.0);
+            }
+            else if (kernel == "unsharp-masking")
+            {
+                CPLAssert(m_size == 5);
+                def = GetKernelDef("unsharp-masking-5x5", true, 0.0);
+            }
+            else
+            {
+                CPLAssert(false);
+            }
+            aKernelDefs[i] = std::move(def);
         }
-        aKernelDefs.push_back(std::move(def));
-
-        ++i;
     }
 
     auto vrt = GDALNeighborsCreateVRTDerived(poSrcDS, m_band, eType, m_nodata,

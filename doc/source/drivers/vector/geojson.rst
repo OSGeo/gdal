@@ -22,9 +22,8 @@ The OGR GeoJSON driver translates GeoJSON encoded data to objects of the
 Feature, Geometry. The implementation is based on `GeoJSON
 Specification, v1.0 <http://geojson.org/geojson-spec.html>`__.
 
-Starting with GDAL 2.1.0, the GeoJSON driver supports updating existing
-GeoJSON files. In that case, the default value for the NATIVE_DATA open
-option will be YES.
+The GeoJSON driver supports updating existing GeoJSON files.
+In that case, the default value for the NATIVE_DATA open option will be YES.
 
 Driver capabilities
 -------------------
@@ -47,7 +46,7 @@ The OGR GeoJSON driver accepts three types of sources of data:
    extension .geojson or .json
 -  Text passed directly and encoded in GeoJSON
 
-Starting with GDAL 2.3, the URL/filename/text might be prefixed with
+The URL/filename/text might be prefixed with
 GeoJSON: to avoid any ambiguity with other drivers. Alternatively, starting
 with GDAL 3.10, specifying the ``-if GeoJSON`` option to command line utilities
 accepting it, or ``GeoJSON`` as the only value of the ``papszAllowedDrivers`` of
@@ -67,7 +66,7 @@ pre-defined name *OGRGeoJSON*:
 It is also valid to assume that OGRDataSource::GetLayerCount() for
 GeoJSON datasource always returns 1.
 
-Starting with GDAL 2.2, the layer name is built with the following
+The layer name is built with the following
 logic:
 
 #. If a "name" member is found at the FeatureCollection level, it is
@@ -456,7 +455,7 @@ Round-tripping of extra JSON members
 
 See :ref:`rfc-60` for more details.
 
-Starting with GDAL 2.1, extra JSON members at the FeatureCollection,
+Extra JSON members at the FeatureCollection,
 Feature or geometry levels that are not normally reflected in the OGR
 abstraction, such as the ones called "extra_XXXXX_member" in the below
 snippet, are by default preserved when executing ogr2ogr with GeoJSON

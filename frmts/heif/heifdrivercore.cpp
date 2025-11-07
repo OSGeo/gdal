@@ -9,6 +9,9 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
+
 #include "include_libheif.h"
 
 #include "heifdrivercore.h"

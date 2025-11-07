@@ -13,6 +13,7 @@
 #include "cpl_port.h"
 
 #include "gdal_priv.h"
+#include "gdal_frmts.h"
 #include "gtiff.h"
 #include "gt_overview.h"
 #include "gdal_utils.h"
@@ -28,8 +29,6 @@
 #include <vector>
 
 static bool gbHasLZW = false;
-
-extern "C" CPL_DLL void GDALRegister_COG();
 
 /************************************************************************/
 /*                        HasZSTDCompression()                          */

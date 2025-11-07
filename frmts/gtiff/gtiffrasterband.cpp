@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <set>
 
+#include "gdal_priv.h"
 #include "cpl_vsi_virtual.h"
 #include "tifvsi.h"
 

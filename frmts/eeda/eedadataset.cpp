@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"
+#include "gdal_frmts.h"
 #include "ogrsf_frmts.h"
 #include "cpl_http.h"
 #include "cpl_conv.h"
@@ -24,8 +25,6 @@
 #include <map>
 #include <set>
 #include <limits>
-
-extern "C" void GDALRegister_EEDA();
 
 /************************************************************************/
 /*                     CPLEscapeURLQueryParameter()                     */

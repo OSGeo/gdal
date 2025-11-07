@@ -32,8 +32,16 @@ def test_gdalalg_raster_as_features_multiple_bands(alg, tmp_vsimem):
     alg["output"] = tmp_vsimem / "out.gpkg"
     alg["geometry-type"] = "point"
 
-    assert alg.Run()
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    assert alg.Run(my_progress)
     assert alg.Finalize()
+    assert tab_pct[0] == 1
 
     with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
         assert ds.GetLayerCount() == 1
@@ -173,7 +181,7 @@ def test_gdalalg_raster_as_features_layer_name(alg, tmp_vsimem):
 
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = tmp_vsimem / "out.gpkg"
-    alg["input-layer"] = "layer123"
+    alg["output-layer"] = "layer123"
 
     assert alg.Run()
 

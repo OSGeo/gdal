@@ -908,6 +908,32 @@ void OGRParquetLayer::EstablishFeatureDefn()
 
     LoadGDALMetadata(kv_metadata.get());
 
+    if (kv_metadata && kv_metadata->Contains("gdal:creation-options"))
+    {
+        auto co = kv_metadata->Get("gdal:creation-options");
+        if (co.ok())
+        {
+            CPLDebugOnly("PARQUET", "gdal:creation-options = %s", co->c_str());
+            CPLJSONDocument oDoc;
+            if (oDoc.LoadMemory(*co))
+            {
+                auto oRoot = oDoc.GetRoot();
+                if (oRoot.GetType() == CPLJSONObject::Type::Object)
+                {
+                    for (const auto &oChild : oRoot.GetChildren())
+                    {
+                        if (oChild.GetType() == CPLJSONObject::Type::String)
+                        {
+                            m_aosCreationOptions.SetNameValue(
+                                oChild.GetName().c_str(),
+                                oChild.ToString().c_str());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     if (!m_poArrowReader->GetSchema(&m_poSchema).ok())
     {
         return;
@@ -2748,6 +2774,13 @@ char **OGRParquetLayer::GetMetadata(const char *pszDomain)
         }
         return m_aosFeatherMetadata.List();
     }
+
+    // Mostly for unit test purposes
+    if (pszDomain != nullptr && EQUAL(pszDomain, "_GDAL_CREATION_OPTIONS_"))
+    {
+        return m_aosCreationOptions.List();
+    }
+
     return OGRLayer::GetMetadata(pszDomain);
 }
 

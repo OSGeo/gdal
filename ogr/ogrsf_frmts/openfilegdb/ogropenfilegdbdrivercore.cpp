@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "ogrsf_frmts.h"
+#include "gdalplugindriverproxy.h"
 
 #include "ogropenfilegdbdrivercore.h"
 

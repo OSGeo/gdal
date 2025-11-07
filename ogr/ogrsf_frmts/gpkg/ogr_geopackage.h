@@ -340,6 +340,12 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     bool AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                         std::string &failureReason) override;
 
+    bool UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
+                           std::string &failureReason) override;
+
+    bool DeleteFieldDomain(const std::string &name,
+                           std::string &failureReason) override;
+
     bool AddRelationship(std::unique_ptr<GDALRelationship> &&relationship,
                          std::string &failureReason) override;
 

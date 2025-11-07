@@ -44,7 +44,8 @@ OGREditableLayer::OGREditableLayer(
     m_poEditableFeatureDefn->Reference();
 
     for (int i = 0; i < m_poEditableFeatureDefn->GetFieldCount(); i++)
-        m_poMemLayer->CreateField(m_poEditableFeatureDefn->GetFieldDefn(i));
+        CPL_IGNORE_RET_VAL(m_poMemLayer->CreateField(
+            m_poEditableFeatureDefn->GetFieldDefn(i)));
 
     for (int i = 0; i < m_poEditableFeatureDefn->GetGeomFieldCount(); i++)
         m_poMemLayer->CreateGeomField(
@@ -634,8 +635,7 @@ int OGREditableLayer::TestCapability(const char *pszCap) const
         EQUAL(pszCap, OLCReorderFields) || EQUAL(pszCap, OLCAlterFieldDefn) ||
         EQUAL(pszCap, OLCAlterGeomFieldDefn) || EQUAL(pszCap, OLCDeleteFeature))
     {
-        return m_poDecoratedLayer->TestCapability(OLCCreateField) == TRUE ||
-               m_poDecoratedLayer->TestCapability(OLCSequentialWrite) == TRUE;
+        return TRUE;
     }
     if (EQUAL(pszCap, OLCCreateGeomField))
         return m_bSupportsCreateGeomField;

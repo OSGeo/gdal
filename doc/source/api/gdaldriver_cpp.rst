@@ -9,10 +9,11 @@
 GDALDriver C++ API
 ================================================================================
 
-Include file
-------------
+Include files
+-------------
 
-:source_file:`gcore/gdal_priv.h`
+- :source_file:`gcore/gdal_driver.h`
+- :source_file:`gcore/gdal_drivermanager.h`
 
 GDALDriver class
 ----------------

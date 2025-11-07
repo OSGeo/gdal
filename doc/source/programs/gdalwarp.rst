@@ -159,7 +159,7 @@ with control information.
     Disable the use of vertical shift when one of the source or target SRS has
     an explicit vertical datum, and the input dataset is a single band dataset.
 
-    .. note:: this option was named ``-novshiftgrid`` in GDAL 2.2 to 3.3.
+    .. note:: this option was named ``-novshiftgrid`` until GDAL 3.3.
 
     .. versionadded:: 3.4
 
@@ -345,8 +345,6 @@ with control information.
     Prevent the alpha band of a source image to be
     considered as such (it will be warped as a regular band)
 
-    .. versionadded:: 2.2
-
 .. option:: -dstalpha
 
     Create an output alpha band to identify nodata (unset/transparent) pixels.
@@ -452,8 +450,6 @@ with control information.
 .. option:: -doo <NAME>=<VALUE>
 
     Output dataset open option (format specific)
-
-    .. versionadded:: 2.1
 
 .. option:: <src_dataset_name>
 
@@ -748,8 +744,6 @@ Examples
   control points mapping the corners to lat/long could be warped to a UTM
   projection with a command like this:
 
-    .. versionadded:: 2.2
-
 .. code-block:: bash
 
     gdalwarp -overwrite HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 \
@@ -770,8 +764,6 @@ where cutline.csv content is like:
     1,"POLYGON((....))"
 
 - To transform a DEM from geoid elevations (using EGM96) to WGS84 ellipsoidal heights:
-
-    .. versionadded:: 2.2
 
 .. code-block:: bash
 

@@ -19,6 +19,7 @@
 #include "gdal_shapelib_symbol_rename.h"
 #endif
 
+#include "cpl_multiproc.h"
 #include "ogrsf_frmts.h"
 #include "shapefil.h"
 #include "shp_vsi.h"

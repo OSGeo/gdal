@@ -200,7 +200,6 @@ int OGRCurve::get_IsClosed() const
  *
  * @return a line string approximating the curve
  *
- * @since GDAL 2.0
  */
 
 /**
@@ -218,7 +217,6 @@ int OGRCurve::get_IsClosed() const
  *
  * @return the number of points of the curve.
  *
- * @since GDAL 2.0
  */
 
 /**
@@ -232,7 +230,6 @@ int OGRCurve::get_IsClosed() const
  *
  * @return a point iterator over the curve.
  *
- * @since GDAL 2.0
  */
 
 /**
@@ -248,7 +245,6 @@ int OGRCurve::get_IsClosed() const
  * @see get_GeodesicArea() for an alternative method returning areas
  * computed on the ellipsoid, and in square meters.
  *
- * @since GDAL 2.0
  */
 
 /**
@@ -293,7 +289,6 @@ int OGRCurve::get_IsClosed() const
  * @return the area of the feature in square units of the spatial reference
  * system in use.
  *
- * @since GDAL 2.0
  */
 
 /************************************************************************/
@@ -305,7 +300,6 @@ int OGRCurve::get_IsClosed() const
  *
  * @return TRUE if the curve forms a convex shape.
  *
- * @since GDAL 2.0
  */
 
 OGRBoolean OGRCurve::IsConvex() const
@@ -350,7 +344,6 @@ OGRBoolean OGRCurve::IsConvex() const
  * @param poCurve the input geometry - ownership is passed to the method.
  * @return new geometry
  *
- * @since GDAL 2.0
  */
 
 OGRCompoundCurve *OGRCurve::CastToCompoundCurve(OGRCurve *poCurve)
@@ -381,7 +374,6 @@ OGRCompoundCurve *OGRCurve::CastToCompoundCurve(OGRCurve *poCurve)
  * @param poCurve the input geometry - ownership is passed to the method.
  * @return new geometry.
  *
- * @since GDAL 2.0
  */
 
 OGRLineString *OGRCurve::CastToLineString(OGRCurve *poCurve)
@@ -403,7 +395,6 @@ OGRLineString *OGRCurve::CastToLineString(OGRCurve *poCurve)
  * @param poCurve the input geometry - ownership is passed to the method.
  * @return new geometry.
  *
- * @since GDAL 2.0
  */
 
 OGRLinearRing *OGRCurve::CastToLinearRing(OGRCurve *poCurve)
@@ -424,7 +415,6 @@ OGRLinearRing *OGRCurve::CastToLinearRing(OGRCurve *poCurve)
  * @param p the point to test
  * @return TRUE if it is inside the curve, FALSE otherwise or -1 if unknown.
  *
- * @since GDAL 2.0
  */
 
 int OGRCurve::ContainsPoint(CPL_UNUSED const OGRPoint *p) const
@@ -444,7 +434,6 @@ int OGRCurve::ContainsPoint(CPL_UNUSED const OGRPoint *p) const
  * @param p the point to test
  * @return TRUE if it intersects the curve, FALSE otherwise or -1 if unknown.
  *
- * @since GDAL 2.3
  */
 
 int OGRCurve::IntersectsPoint(CPL_UNUSED const OGRPoint *p) const
@@ -467,7 +456,6 @@ OGRPointIterator::~OGRPointIterator() = default;
  *
  * @return TRUE in case of success, or FALSE if the end of the curve is reached.
  *
- * @since GDAL 2.0
  */
 
 /************************************************************************/
@@ -477,7 +465,6 @@ OGRPointIterator::~OGRPointIterator() = default;
 /**
  * \brief Destroys a point iterator.
  *
- * @since GDAL 2.0
  */
 void OGRPointIterator::destroy(OGRPointIterator *poIter)
 {

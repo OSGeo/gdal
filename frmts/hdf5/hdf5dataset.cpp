@@ -99,6 +99,13 @@ void GDALRegister_HDF5()
 
     poDriver->pfnOpen = HDF5Dataset::Open;
     poDriver->pfnUnloadDriver = HDF5DatasetDriverUnload;
+
+#if (defined(H5_VERS_MAJOR) &&                                                 \
+     (H5_VERS_MAJOR >= 2 || (H5_VERS_MAJOR == 1 && H5_VERS_MINOR > 10) ||      \
+      (H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 10 && H5_VERS_RELEASE >= 5)))
+    poDriver->SetMetadataItem("HAVE_H5Dget_chunk_info", "YES");
+#endif
+
     GetGDALDriverManager()->RegisterDriver(poDriver);
 
 #ifdef HDF5_PLUGIN

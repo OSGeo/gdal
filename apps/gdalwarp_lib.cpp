@@ -2540,7 +2540,7 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 #if defined(USE_PROJ_BASED_VERTICAL_SHIFT_METHOD)
     if (psOptions->bNoVShift)
     {
-        psOptions->aosTransformerOptions.SetNameValue("STRIP_VERT_CS", "YES");
+        psOptions->aosTransformerOptions.SetNameValue("@STRIP_VERT_CS", "YES");
     }
     else if (nSrcCount)
     {
@@ -2557,7 +2557,7 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         }
     }
 #else
-    psOptions->aosTransformerOptions.SetNameValue("STRIP_VERT_CS", "YES");
+    psOptions->aosTransformerOptions.SetNameValue("@STRIP_VERT_CS", "YES");
 #endif
 
     bool bVRT = false;

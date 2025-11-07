@@ -257,6 +257,33 @@ def test_gdalalg_vector_clip_split_multipart():
     assert out_lyr.GetNextFeature() is None
 
 
+@pytest.mark.require_geos()
+def test_gdalalg_vector_clip_dont_split_multipart():
+
+    # input layer misrepresents its geometry type
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbPolygon)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("MULTIPOINT ((0 0), (5 5))").Buffer(2))
+    src_lyr.CreateFeature(f)
+
+    clip = get_clip_alg()
+
+    clip["input"] = src_ds
+    clip["bbox"] = [0, 0, 5, 5]
+    clip["output"] = ""
+    clip["output-format"] = "MEM"
+
+    assert clip.Run()
+
+    out_ds = clip.Output()
+    out_lyr = out_ds.GetLayer(0)
+
+    assert out_lyr.GetFeatureCount() == 1
+    assert out_lyr.GetNextFeature().GetGeometryRef().GetGeometryCount() == 2
+
+
 @pytest.mark.parametrize(
     "clip_geom",
     [

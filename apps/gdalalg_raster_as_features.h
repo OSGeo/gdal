@@ -35,11 +35,6 @@ class GDALRasterAsFeaturesAlgorithm /* non final */
 
     ~GDALRasterAsFeaturesAlgorithm() override;
 
-    bool IsNativelyStreamingCompatible() const override
-    {
-        return true;
-    }
-
     int GetInputType() const override
     {
         return GDAL_OF_RASTER;
@@ -52,13 +47,12 @@ class GDALRasterAsFeaturesAlgorithm /* non final */
 
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    std::vector<int> m_bands;
-    std::string m_geomTypeName;
-    bool m_skipNoData;
-    bool m_includeXY;
-    bool m_includeRowCol;
+    std::vector<int> m_bands{};
+    std::string m_geomTypeName = "none";
+    bool m_skipNoData = false;
+    bool m_includeXY = false;
+    bool m_includeRowCol = false;
 };
 
 /************************************************************************/

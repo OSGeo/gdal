@@ -14,7 +14,7 @@
 #include "gdal_alg.h"
 #include "gdalgrid.h"
 #include "gdal_priv.h"
-#include "gdal_pam.h"
+#include "gdal_pam_multidim.h"
 #include "ogrsf_frmts.h"
 #include "memdataset.h"
 
@@ -655,8 +655,8 @@ GDALMDArray::GetGridded(const std::string &osGridOptions,
     if (!poLyr)
         return nullptr;
     OGRFieldDefn oFieldDefn("IDX", OFTInteger64);
-    poLyr->CreateField(&oFieldDefn);
-    if (poLyr->StartTransaction() != OGRERR_NONE)
+    if (poLyr->CreateField(&oFieldDefn) != OGRERR_NONE ||
+        poLyr->StartTransaction() != OGRERR_NONE)
         return nullptr;
     OGRFeature oFeat(poLyr->GetLayerDefn());
     for (size_t i = 0; i < adfXVals.size(); ++i)

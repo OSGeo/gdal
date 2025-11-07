@@ -1231,6 +1231,13 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources):
             ["muparser"],
             id="index substitution works correctly",
         ),
+        pytest.param(
+            "fmod(B, A)",
+            [("A", 2.2), ("B", 7.3)],
+            0.7,
+            ["muparser"],
+            id="fmod works correctly",
+        ),
     ],
 )
 @pytest.mark.parametrize("dialect", ("exprtk", "muparser"))

@@ -20,11 +20,16 @@ When opening a S-104 file, no raster band is directly available. But a list of
 subdatasets will be reported, one for each timestamp available in the file.
 
 An actual dataset can be opened through such a subdataset, with a syntax like
-``S104:"filename.h5":Group_001``.
+``S104:"{filename.h5}":Group_001``.
 
 Georeferencing is reported.
 
 Note that the driver currently only supports regularly gridded S104 datasets.
+
+Since GDAL 3.12, multiple feature instance groups per dataset (to encode grids
+using different vertical datums) are supported. In that case, each feature
+instance group and timestamp group is exposed as a GDAL subdataset, whose name
+is of the form ``S104:"{filename.h5}":WaterLevel.{XX}:Group_{YYY}``.
 
 Driver capabilities
 -------------------

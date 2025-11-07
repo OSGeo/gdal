@@ -401,6 +401,9 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND", // from gdalnodatamaskband.cpp
    "GDAL_SKIP", // from gdaldrivermanager.cpp
    "GDAL_STACTA_SKIP_MISSING_METATILE", // from stactadataset.cpp
+   "GDAL_STATS_USE_FLOAT32_OPTIM", // from gdalrasterband.cpp
+   "GDAL_STATS_USE_FLOAT64_OPTIM", // from gdalrasterband.cpp
+   "GDAL_STATS_USE_INTEGER_STATS", // from gdalrasterband.cpp
    "GDAL_SWATH_SIZE", // from gdalmultidim.cpp, rasterio.cpp
    "GDAL_TEMP_DRIVER_NAME", // from nearblack_lib_floodfill.cpp
    "GDAL_TERM_PROGRESS_OSC_9_4", // from cpl_progress.cpp
@@ -538,6 +541,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GTIFF_VIRTUAL_MEM_IO", // from gtiffdataset.cpp
    "GTIFF_WRITE_ANGULAR_PARAMS_IN_DEGREE", // from gt_wkt_srs.cpp
    "GTIFF_WRITE_IMAGE_STRUCTURE_METADATA", // from gtiffdataset_write.cpp
+   "GTIFF_WRITE_RAT_TO_PAM", // from gtiffdataset_write.cpp, gtiffrasterband_write.cpp
    "GTIFF_WRITE_TOWGS84", // from gt_wkt_srs.cpp
    "GXF_DATATYPE", // from gxfdataset.cpp
    "HDF4_BLOCK_PIXELS", // from hdf4imagedataset.cpp
@@ -768,11 +772,11 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_OPENFILEGDB_WRITE_EMPTY_GEOMETRY", // from ogropenfilegdblayer_write.cpp
    "OGR_ORGANIZE_POLYGONS", // from filegdbtable.cpp, ogrgeometryfactory.cpp
    "OGR_PARQUET_BATCH_READ_AHEAD", // from ogrparquetdatasetlayer.cpp
-   "OGR_PARQUET_BATCH_SIZE", // from ogrparquetdatasetlayer.cpp, ogrparquetdriver.cpp
+   "OGR_PARQUET_BATCH_SIZE", // from ogrparquetdataset.cpp, ogrparquetdatasetlayer.cpp
    "OGR_PARQUET_COMPUTE_GEOMETRY_TYPE", // from ogrparquetlayer.cpp
    "OGR_PARQUET_CRS_ENCODING", // from ogrparquetwriterlayer.cpp
    "OGR_PARQUET_CRS_OMIT_IF_WGS84", // from ogrparquetwriterlayer.cpp
-   "OGR_PARQUET_ENABLE_ARROW_EXTENSIONS", // from ogrparquetdriver.cpp
+   "OGR_PARQUET_ENABLE_ARROW_EXTENSIONS", // from ogrparquetdataset.cpp, ogrparquetdriver.cpp
    "OGR_PARQUET_FRAGMENT_READ_AHEAD", // from ogrparquetdatasetlayer.cpp
    "OGR_PARQUET_GEO_METADATA", // from ogrparquetwriterlayer.cpp
    "OGR_PARQUET_LOAD_FILE_SYSTEM_FACTORIES", // from ogrparquetdriver.cpp
@@ -783,8 +787,8 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_PARQUET_USE_BBOX", // from ogrparquetdatasetlayer.cpp, ogrparquetlayer.cpp
    "OGR_PARQUET_USE_METADATA_FILE", // from ogrparquetdriver.cpp
    "OGR_PARQUET_USE_STATISTICS", // from ogrparquetdataset.cpp
-   "OGR_PARQUET_USE_THREADS", // from ogrparquetdatasetlayer.cpp, ogrparquetdriver.cpp
-   "OGR_PARQUET_USE_VSI", // from ogrparquetdriver.cpp
+   "OGR_PARQUET_USE_THREADS", // from ogrparquetdataset.cpp, ogrparquetdatasetlayer.cpp
+   "OGR_PARQUET_USE_VSI", // from ogrparquetdataset.cpp, ogrparquetdriver.cpp
    "OGR_PARQUET_WRITE_ARROW_EXTENSION_NAME", // from ogrparquetwriterlayer.cpp
    "OGR_PARQUET_WRITE_ARROW_SCHEMA", // from ogrparquetwriterlayer.cpp
    "OGR_PARQUET_WRITE_BBOX", // from ogrparquetwriterlayer.cpp

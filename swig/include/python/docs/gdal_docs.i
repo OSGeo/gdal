@@ -194,12 +194,15 @@ See :cpp:func:`GDALGetDriverCount`.
 
 Examples
 --------
->>> gdal.GetDriverCount()
-227
->>> gdal.GetDriverByName('ESRI Shapefile').Deregister()
->>> gdal.GetDriverCount()
-226
 
+.. testsetup::
+    >>> pytest.skip()
+
+>>> gdal.GetDriverCount()
+>>> 124
+>>> gdal.GetDriverByName('MapInfo File').Deregister()
+>>> gdal.GetDriverCount()
+>>> 123
 ";
 
 // gdal.GetGlobalConfigOption
@@ -307,7 +310,8 @@ eAccess : int, default = :py:const:`gdal.GA_ReadOnly`
 
 Returns
 -------
-Dataset, or ``None`` on failure
+Dataset or None
+    A dataset if successful, or ``None`` on failure.
 
 See Also
 --------
@@ -331,14 +335,15 @@ flags : int
         may be combined using the ``|`` operator. See :cpp:func:`GDALOpenEx`.
 allowed_drivers : list, optional
         A list of the names of drivers that may attempt to open the dataset.
-open_options : dict/list, optional
+open_options : dict or list, optional
         A dict or list of name=value driver-specific opening options.
-sibling_files: list, optional
+sibling_files : list, optional
         A list of filenames that are auxiliary to the main filename
 
 Returns
 -------
-Dataset, or ``None`` on failure.
+Dataset or None
+    A dataset if successful, or ``None`` on failure.
 
 See Also
 --------
@@ -362,7 +367,8 @@ eAccess : int, default = :py:const:`gdal.GA_ReadOnly`
 
 Returns
 -------
-Dataset, or ``None`` on failure
+Dataset or None
+    A dataset if successful, or ``None`` on failure.
 
 See Also
 --------
@@ -379,7 +385,7 @@ See :cpp:func:`GDALSetCacheMax`.
 
 Parameters
 ----------
-nBytes: int
+nBytes : int
     Cache size in bytes
 
 See Also

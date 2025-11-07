@@ -141,7 +141,8 @@ OGRFeature *OGRJSONFGStreamedLayer::GetNextRawFeature()
         size_t nRead = poFile_->Read(abyBuffer.data(), 1, abyBuffer.size());
         const bool bFinished = nRead < abyBuffer.size();
         if (!poStreamingParser_->Parse(
-                reinterpret_cast<const char *>(abyBuffer.data()), nRead,
+                std::string_view(
+                    reinterpret_cast<const char *>(abyBuffer.data()), nRead),
                 bFinished) ||
             poStreamingParser_->ExceptionOccurred())
         {
@@ -173,8 +174,12 @@ int OGRJSONFGStreamedLayer::TestCapability(const char *pszCap) const
     else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;
 
-    else if (EQUAL(pszCap, OLCZGeometries))
+    else if (EQUAL(pszCap, OLCZGeometries) ||
+             EQUAL(pszCap, OLCMeasuredGeometries) ||
+             EQUAL(pszCap, OLCCurveGeometries))
+    {
         return TRUE;
+    }
 
     return FALSE;
 }

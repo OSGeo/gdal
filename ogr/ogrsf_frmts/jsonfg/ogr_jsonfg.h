@@ -44,8 +44,6 @@ class OGRJSONFGMemLayer final : public OGRMemLayer
         return osFIDColumn_.c_str();
     }
 
-    int TestCapability(const char *pszCap) const override;
-
     void SetFIDColumn(const char *pszName)
     {
         osFIDColumn_ = pszName;
@@ -212,6 +210,21 @@ class OGRJSONFGWriteLayer final : public OGRLayer
 
     GDALDataset *GetDataset() override;
 
+    bool HasPolyhedra() const
+    {
+        return m_bPolyhedraWritten;
+    }
+
+    bool HasCurve() const
+    {
+        return m_bCurveWritten;
+    }
+
+    bool HasMeasure() const
+    {
+        return m_bMeasureWritten;
+    }
+
   private:
     OGRJSONFGDataset *poDS_{};
     OGRFeatureDefn *poFeatureDefn_ = nullptr;
@@ -220,6 +233,12 @@ class OGRJSONFGWriteLayer final : public OGRLayer
     bool m_bMustSwapForPlace = false;
     int nOutCounter_ = 0;
     std::string osCoordRefSys_{};
+    bool m_bPolyhedraWritten = false;
+    bool m_bCurveWritten = false;
+    bool m_bMeasureWritten = false;
+    bool bLayerLevelMeasuresWritten_ = false;
+    std::string osMeasureUnit_{};
+    std::string osMeasureDescription_{};
 
     OGRGeoJSONWriteOptions oWriteOptions_{};
     OGRGeoJSONWriteOptions oWriteOptionsPlace_{};
@@ -239,6 +258,8 @@ class OGRJSONFGDataset final : public GDALDataset
   public:
     OGRJSONFGDataset() = default;
     ~OGRJSONFGDataset() override;
+
+    CPLErr Close() override;
 
     bool Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType);
     bool Create(const char *pszName, CSLConstList papszOptions);
@@ -294,6 +315,8 @@ class OGRJSONFGDataset final : public GDALDataset
 
     // Write side
     VSILFILE *fpOut_ = nullptr;
+    vsi_l_offset m_nPositionBeforeConformsTo = 0;
+    vsi_l_offset m_nPositionAfterConformsTo = 0;
     bool bSingleOutputLayer_ = false;
     bool bHasEmittedFeatures_ = false;
     bool bFpOutputIsSeekable_ = false;
@@ -306,7 +329,7 @@ class OGRJSONFGDataset final : public GDALDataset
     bool ReadFromFile(GDALOpenInfo *poOpenInfo, const char *pszUnprefixed);
     bool ReadFromService(GDALOpenInfo *poOpenInfo, const char *pszSource);
 
-    void FinishWriting();
+    bool FinishWriting();
 
     bool EmitStartFeaturesIfNeededAndReturnIfFirstFeature();
 
@@ -342,7 +365,8 @@ class OGRJSONFGReader
      */
     bool AnalyzeWithStreamingParser(OGRJSONFGDataset *poDS, VSILFILE *fp,
                                     const std::string &osDefaultLayerName,
-                                    bool &bCanTryWithNonStreamingParserOut);
+                                    bool &bCanTryWithNonStreamingParserOut,
+                                    bool &bHasTopLevelMeasures);
 
     /** Geometry element we are interested in. */
     enum class GeometryElement
@@ -367,6 +391,7 @@ class OGRJSONFGReader
      * @param pszRequestedLayer name of the layer of interest, or nullptr if
      * no filtering needed on the layer name. If the feature does not belong
      * to the requested layer, nullptr is returned.
+     * @param bHasM Whether the upper level of this object has measures
      * @param pOutMemLayer Pointer to the OGRJSONFGMemLayer* layer to which
      * the returned feature belongs to. May be nullptr. Only applies when
      * the Load() method has been used.
@@ -375,7 +400,7 @@ class OGRJSONFGReader
      * the AnalyzeWithStreamingParser() method has been used.
      */
     std::unique_ptr<OGRFeature>
-    ReadFeature(json_object *poObj, const char *pszRequestedLayer,
+    ReadFeature(json_object *poObj, const char *pszRequestedLayer, bool bHasM,
                 OGRJSONFGMemLayer **pOutMemLayer,
                 OGRJSONFGStreamedLayer **pOutStreamedLayer);
 
@@ -395,6 +420,8 @@ class OGRJSONFGReader
     char chNestedAttributeSeparator_ = 0;
     bool bArrayAsString_ = false;
     bool bDateAsString_ = false;
+    std::string osMeasureUnit_{};
+    std::string osMeasureDescription_{};
 
     /** Layer building context, specific to one layer. */
     struct LayerDefnBuildContext
@@ -495,6 +522,14 @@ class OGRJSONFGReader
          * AnalyzeWithStreamingParser() mode) */
         OGRJSONFGStreamedLayer *poStreamedLayer = nullptr;
 
+        bool bSameMeasureMetadata = true;
+
+        //! Measure unit
+        std::string osMeasureUnit{};
+
+        //! Measure description
+        std::string osMeasureDescription{};
+
         LayerDefnBuildContext() = default;
         LayerDefnBuildContext(LayerDefnBuildContext &&) = default;
         LayerDefnBuildContext &operator=(LayerDefnBuildContext &&) = default;
@@ -542,7 +577,8 @@ class OGRJSONFGStreamingParser final : public OGRJSONCollectionStreamingParser
     void TooComplex() override;
 
   public:
-    OGRJSONFGStreamingParser(OGRJSONFGReader &oReader, bool bFirstPass);
+    OGRJSONFGStreamingParser(OGRJSONFGReader &oReader, bool bFirstPass,
+                             bool bHasTopLevelMeasures);
     ~OGRJSONFGStreamingParser() override;
 
     void SetRequestedLayer(const char *pszRequestedLayer)

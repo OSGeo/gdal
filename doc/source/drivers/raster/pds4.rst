@@ -28,9 +28,8 @@ Geological Survey.
 
 PDS4 is part of a family of related formats including PDS and ISIS3.
 
-Starting with GDAL 2.5, the PDS4 driver supports reading and writing
-ASCII fixed-with, binary fixed-with and delimited(CSV) tables as OGR
-vector layers.
+The PDS4 driver supports reading and writing ASCII fixed-with, binary fixed-with
+and delimited(CSV) tables as OGR vector layers.
 
 Driver capabilities
 -------------------

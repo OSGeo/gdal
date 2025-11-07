@@ -61,21 +61,15 @@ the OGR connection type.
     rectangular polygons in the same coordinate reference system as the
     input vector layers.
 
-    .. versionadded:: 2.2.0
-
 .. option:: -src_srs_name <field_name>
 
     The name of the field to store the SRS of each tile. This field name
     can be used as the value of the TILESRS keyword in MapServer >= 7.2.
 
-    .. versionadded:: 2.2.0
-
 .. option:: -src_srs_format {AUTO|WKT|EPSG|PROJ}
 
     The format in which the SRS of each tile must be written.
     Available formats are: ``AUTO``, ``WKT``, ``EPSG``, ``PROJ``.
-
-    .. versionadded:: 2.2.0
 
 .. option:: -accept_different_schemas
 

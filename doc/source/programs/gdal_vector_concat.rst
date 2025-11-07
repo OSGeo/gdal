@@ -152,7 +152,7 @@ Examples
 
    .. code-block:: bash
 
-       gdal vector concat --stack *.shp out.gpkg
+       gdal vector concat --mode=stack *.shp out.gpkg
 
 .. example::
    :title: Adding a field to indicate the source layer, and reprojecting to a single CRS
@@ -163,4 +163,4 @@ Examples
 
    .. code-block:: bash
 
-       gdal vector concat --single --source-layer-field-name=country --dst-crs=EPSG:4258 france.shp germany.shp merged.shp
+       gdal vector concat --mode=single --source-layer-field-name=country --dst-crs=EPSG:4258 france.shp germany.shp merged.shp

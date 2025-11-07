@@ -382,6 +382,7 @@ ClassificationCode
 Clayers
 CleanTimeout
 clearerr
+CLI
 clib
 clipdst
 clipdstlayer
@@ -460,6 +461,8 @@ connectedness
 const
 constexpr
 contensts
+contextlib
+contextmanager
 ContourOptions
 Contrarty
 conv
@@ -531,6 +534,7 @@ cvs
 Cxx
 Cygwin
 dall
+Damerau
 dan
 DanB
 DanielM
@@ -945,6 +949,7 @@ fpRawL
 fprintf
 fpSource
 fputc
+frac
 franca
 france
 FrankW
@@ -998,6 +1003,8 @@ gdalabstractbandblockcache
 gdaladdo
 gdalalljni
 gdalallregister
+GDALArgDatasetValue
+GDALArgDatasetValue
 gdalarraybandblockcache
 gdalasyncread
 GDALAsyncReader
@@ -1347,6 +1354,7 @@ hOtherFeature
 hotine
 Hotine
 Hough
+hOutDS
 howard
 HowardB
 hProximityBand
@@ -1378,6 +1386,7 @@ hypercubes
 hyperspectral
 hypsometric
 Hypsometric
+hZonesDS
 iAxis
 iBand
 iChild
@@ -1395,6 +1404,7 @@ idofic
 Idrisi
 iDriver
 idx
+idxN
 ie
 ieee
 ifdef
@@ -1587,6 +1597,7 @@ leftfov
 LegalConstraints
 len
 Leveller
+Levenshtein
 lf
 libaom
 libarchive
@@ -1744,6 +1755,7 @@ mapbox
 Mapbox
 Maperitive
 mapFieldType
+Mapfile
 mapinfo
 Mapinfo
 maplist
@@ -1781,6 +1793,7 @@ MaxX
 maxy
 maxY
 MaxY
+maxz
 MaxZ
 mbtiles
 mbtowc
@@ -1809,6 +1822,7 @@ Miara
 MiB
 Microstation
 mif
+MikeS
 millimetric
 mimetype
 miniconda
@@ -1830,6 +1844,7 @@ minX
 miny
 minY
 MinY
+minz
 MinZ
 Mipmaps
 MiraD
@@ -2289,6 +2304,7 @@ outptr
 outputBounds
 outputer
 outputSchema
+outString
 Oversample
 OverviewCount
 ovf
@@ -2301,6 +2317,7 @@ pabyHeader
 pabyM
 pabySrcData
 pabyValue
+pabyWKB
 pabyX
 pabyY
 pabyZ
@@ -2360,6 +2377,7 @@ papoPolygons
 papszDirFiles
 papszFields
 papszFileList
+papszInfo
 papszLayerList
 papszMetadata
 papszOpenOptions
@@ -2518,6 +2536,7 @@ poFeatureDefn
 poFieldDefn
 poFilterGeom
 poGCP
+poGeom
 poGeomFieldDefn
 PointFromColumns
 PointOnSurface
@@ -2561,6 +2580,7 @@ Postgresql
 poTargetSRS
 pOutBuffer
 ppabyRet
+ppabyWKB
 ppadfOutNoData
 ppadfPrjParams
 ppanHistogram
@@ -2643,6 +2663,7 @@ proxyauth
 proxyuserpwd
 prsence
 ps
+psBlockInfo
 psChild
 psDT
 psEnvelope
@@ -3104,6 +3125,7 @@ StartTransaction
 stat'ed
 stateful
 stderr
+stdev
 stdin
 stdout
 stealInteriorRing
@@ -3142,6 +3164,8 @@ Struve
 styleurl
 styleurls
 su
+subalgorithm
+subalgorithms
 subarcs
 subarray
 subbottom
@@ -3594,6 +3618,8 @@ webmercator
 WebP
 WEBP
 webviewer
+weighted_frac
+weighted_stdev
 wellformedness
 Westervelt
 westing

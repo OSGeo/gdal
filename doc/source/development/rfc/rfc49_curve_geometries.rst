@@ -96,19 +96,19 @@ values :
 ::
 
        wkbCircularString = 8,  /**< one or more circular arc segments connected end to end,
-                                *   ISO SQL/MM Part 3. GDAL >= 2.0 */
-       wkbCompoundCurve = 9,   /**< sequence of contiguous curves, ISO SQL/MM Part 3. GDAL >= 2.0 */
+                                *   ISO SQL/MM Part 3. */
+       wkbCompoundCurve = 9,   /**< sequence of contiguous curves, ISO SQL/MM Part 3. */
        wkbCurvePolygon = 10,   /**< planar surface, defined by 1 exterior boundary
                                 *   and zero or more interior boundaries, that are curves.
-                                *    ISO SQL/MM Part 3. GDAL >= 2.0 */
-       wkbMultiCurve = 11,     /**< GeometryCollection of Curves, ISO SQL/MM Part 3. GDAL >= 2.0 */
-       wkbMultiSurface = 12,   /**< GeometryCollection of Surfaces, ISO SQL/MM Part 3. GDAL >= 2.0 */
+                                *    ISO SQL/MM Part 3. */
+       wkbMultiCurve = 11,     /**< GeometryCollection of Curves, ISO SQL/MM Part 3. */
+       wkbMultiSurface = 12,   /**< GeometryCollection of Surfaces, ISO SQL/MM Part 3. */
 
-       wkbCircularStringZ = 1008,  /**< wkbCircularString with Z component. ISO SQL/MM Part 3. GDAL >= 2.0 */
-       wkbCompoundCurveZ = 1009,   /**< wkbCompoundCurve with Z component. ISO SQL/MM Part 3. GDAL >= 2.0 */
-       wkbCurvePolygonZ = 1010,    /**< wkbCurvePolygon with Z component. ISO SQL/MM Part 3. GDAL >= 2.0 */
-       wkbMultiCurveZ = 1011,      /**< wkbMultiCurve with Z component. ISO SQL/MM Part 3. GDAL >= 2.0 */
-       wkbMultiSurfaceZ = 1012,    /**< wkbMultiSurface with Z component. ISO SQL/MM Part 3. GDAL >= 2.0 */
+       wkbCircularStringZ = 1008,  /**< wkbCircularString with Z component. ISO SQL/MM Part 3. */
+       wkbCompoundCurveZ = 1009,   /**< wkbCompoundCurve with Z component. ISO SQL/MM Part 3. */
+       wkbCurvePolygonZ = 1010,    /**< wkbCurvePolygon with Z component. ISO SQL/MM Part 3. */
+       wkbMultiCurveZ = 1011,      /**< wkbMultiCurve with Z component. ISO SQL/MM Part 3. */
+       wkbMultiSurfaceZ = 1012,    /**< wkbMultiSurface with Z component. ISO SQL/MM Part 3. */
 
 The codes have been taken from SFA 1.2.1, and are consistent with the
 PostGIS 2 implementation. Note that ISO SQL/MM Part 3 allows alternates

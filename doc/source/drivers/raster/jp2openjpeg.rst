@@ -45,7 +45,7 @@ Georeferencing information can come from different sources : internal
 information is fetched in following order (first listed is the highest
 priority): PAM, GeoJP2, GMLJP2, WORLDFILE.
 
-Starting with GDAL 2.2, the allowed sources and their priority order can
+The allowed sources and their priority order can
 be changed with the :config:`GDAL_GEOREF_SOURCES` configuration option (or
 :oo:`GEOREF_SOURCES` open option) whose value is a comma-separated list of the
 following keywords : PAM, GEOJP2, GMLJP2, INTERNAL (shortcut for
@@ -71,7 +71,7 @@ Starting with OpenJPEG 2.2.0, multi-threaded decoding can also be
 enabled at the code-block level. This must be enabled with the
 OPJ_NUM_THREADS environment variable (note: this is a system environment
 variable, not a GDAL configuration option), which can be set to a
-numeric value or NUM_CPUS. Its default value is 1. Starting with GDAL
+numeric value or ALL_CPUS. Its default value is 1. Starting with GDAL
 2.3, this multi-threading at code-block level is automatically enabled
 by GDAL.
 Starting with GDAL 3.0.1 and OpenJPEG 2.3.2, multi-threaded encoding is
@@ -152,12 +152,7 @@ The following creation options are available:
       should be built. See below section for the syntax of the JSON
       configuration file. It is also possible to directly pass the JSON
       content inlined as a string. If filename is just set to YES, a
-      minimal instance will be built. Note: GDAL 2.0 and 2.1 use the older
-      `OGC GML in JPEG2000, version
-      2.0 <http://docs.opengeospatial.org/is/08-085r4/08-085r4.html>`__
-      specification, that differ essentially by the content of the
-      gml:domainSet, gml:rangeSet and gmlcov:rangeType elements of
-      gmljp2:GMLJP2CoverageCollection.
+      minimal instance will be built.
 
 -  .. co:: GeoJP2
       :choices: YES, NO
@@ -486,7 +481,6 @@ documentation, and can be omitted):
            "grid_coverage_file": "gmljp2gridcoverage.xml",
 
            "#grid_coverage_range_type_field_predefined_name_doc": [
-               "New in GDAL 2.2",
                "One of Color, Elevation_meter or Panchromatic ",
                "to fill gmlcov:rangeType/swe:DataRecord/swe:field",
                "Only used if grid_coverage_file is not defined.",
@@ -494,7 +488,6 @@ documentation, and can be omitted):
            "grid_coverage_range_type_field_predefined_name": "Color",
 
            "#grid_coverage_range_type_file_doc": [
-               "New in GDAL 2.2",
                "File that is XML content to put under gml:RectifiedGrid/gmlcov:rangeType",
                "Only used if grid_coverage_file is not defined.",
                "Exclusive with grid_coverage_range_type_field_predefined_name" ],
@@ -699,12 +692,7 @@ See Also
    page <https://github.com/uclouvain/openjpeg>`__
 
 -  `OGC GML in JPEG2000, version
-   2.0 <http://docs.opengeospatial.org/is/08-085r4/08-085r4.html>`__
-   (GDAL 2.0 and 2.1)
-
--  `OGC GML in JPEG2000, version
    2.0.1 <http://docs.opengeospatial.org/is/08-085r5/08-085r5.html>`__
-   (GDAL 2.2 and above)
 
 -  `Inspire Data Specification on Orthoimagery - Technical
    Guidelines <http://inspire.ec.europa.eu/documents/Data_Specifications/INSPIRE_DataSpecification_OI_v3.0.pdf>`__

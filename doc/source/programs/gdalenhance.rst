@@ -48,6 +48,8 @@ directly.
 
     Select the output format. The default is GeoTIFF (GTiff).
 
+    VRT output is not supported.
+
 .. include:: options/co.rst
 
 .. include:: options/ot.rst

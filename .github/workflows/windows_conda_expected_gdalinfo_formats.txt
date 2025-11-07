@@ -105,8 +105,8 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   KEA -raster- (rw+uv): KEA Image Format (.kea) (*.kea)
   BAG -raster,multidimensional raster,vector- (rw+v): Bathymetry Attributed Grid (*.bag)
   S102 -raster,multidimensional raster- (rovs): S-102 Bathymetric Surface Product (*.h5)
-  S104 -raster,multidimensional raster- (rov): S-104 Water Level Information for Surface Navigation Product (*.h5)
-  S111 -raster,multidimensional raster- (rov): Surface Currents Product (*.h5)
+  S104 -raster,multidimensional raster- (rovs): S-104 Water Level Information for Surface Navigation Product (*.h5)
+  S111 -raster,multidimensional raster- (rovs): S-111 Surface Currents Product (*.h5)
   HDF5 -raster,multidimensional raster- (rovs): Hierarchical Data Format Release 5 (*.h5, *.hdf5)
   HDF5Image -raster- (rov): HDF5 Dataset
   NWT_GRD -raster- (rw+v): Northwood Numeric Grid Format .grd/.tab (*.grd)

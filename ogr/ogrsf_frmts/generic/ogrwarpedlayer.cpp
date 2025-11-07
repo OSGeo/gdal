@@ -130,9 +130,11 @@ OGRWarpedLayer::SrcFeatureToWarpedFeature(std::unique_ptr<OGRFeature> poFeature)
     poFeature->SetFDefnUnsafe(poThisLayer->GetLayerDefn());
 
     OGRGeometry *poGeom = poFeature->GetGeomFieldRef(m_iGeomField);
-    if (poGeom && poGeom->transform(m_poCT) != OGRERR_NONE)
+    if (poGeom)
     {
-        delete poFeature->StealGeometry(m_iGeomField);
+        auto poNewGeom = OGRGeometryFactory::transformWithOptions(
+            poGeom, m_poCT, nullptr, m_transformCacheForward);
+        poFeature->SetGeomFieldDirectly(m_iGeomField, poNewGeom);
     }
 
     return poFeature;
@@ -150,10 +152,15 @@ OGRWarpedLayer::WarpedFeatureToSrcFeature(std::unique_ptr<OGRFeature> poFeature)
     poFeature->SetFDefnUnsafe(m_poDecoratedLayer->GetLayerDefn());
 
     OGRGeometry *poGeom = poFeature->GetGeomFieldRef(m_iGeomField);
-    if (poGeom &&
-        (!m_poReversedCT || poGeom->transform(m_poReversedCT) != OGRERR_NONE))
+    if (poGeom)
     {
-        return nullptr;
+        if (!m_poReversedCT)
+            return nullptr;
+        auto poNewGeom = OGRGeometryFactory::transformWithOptions(
+            poGeom, m_poReversedCT, nullptr, m_transformCacheReverse);
+        if (!poNewGeom)
+            return nullptr;
+        poFeature->SetGeomFieldDirectly(m_iGeomField, poNewGeom);
     }
 
     return poFeature;

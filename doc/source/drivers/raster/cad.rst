@@ -6,8 +6,6 @@ CAD -- AutoCAD DWG raster layer
 
 .. shortname:: CAD
 
-.. versionadded:: 2.2
-
 .. build_dependencies:: (internal libopencad provided)
 
 OGR DWG support is based on libopencad, so the list of supported DWG

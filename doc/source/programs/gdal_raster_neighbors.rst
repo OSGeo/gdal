@@ -35,6 +35,12 @@ in the neighborhood defined by the kernel, source nodata values are ignored.
 
 This algorithm can be part of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeline`.
 
+.. only:: html
+
+   .. figure:: ../../images/programs/gdal_raster_neighbors.svg
+
+      Raster dataset before (left) and after (right) summation with a 3x3 equal-weight kernel. NoData values are considered zero for the purpose of the summation. Edge cells are replicated where the kernel window extends beyond the edge of the dataset.
+
 Options
 -------
 
@@ -48,7 +54,8 @@ The following options are available:
 
 .. option:: --band <BAND>
 
-    Source band number (indexing starts at one)
+    Source band number (indexing starts at one). If it is not specified, all
+    input bands are used.
 
 .. option:: --kernel
 
@@ -97,8 +104,8 @@ The following options are available:
       adding the sum of the (contributing, i.e. non nodata) weighted source pixels
       and dividing it by the sum of the coefficients in the kernel.
 
-    If  :option:`--kernel` is specified several times, there will be as many
-    output bands as the number of values of the option.
+    If :option:`--kernel` is specified several times, there will one output band for each
+    combination of kernel and input band.
 
 .. option:: --size <SIZE>
 
@@ -115,29 +122,22 @@ The following options are available:
 .. option:: --method sum|mean|min|max|stddev|median|mode
 
     Function to apply to the weighted source pixels in the neighborhood defined by the kernel.
-    Defaults to ``mean``, except when :option:`--kernel` is set to ``u`` or ``v``, in which
-    case ``sum`` is used.
+    Defaults to ``mean``, except when :option:`--kernel` is set to ``u``, ``v``, ``edge1``, ``edge2``,
+    or a user defined kernel whose sum of coefficients is zero, in which case ``sum`` is used.
 
-    - ``sum``: computes the sum of the value of contributing source pixels
-       multiplied by the corresponding weight of the kernel
+    - ``sum``: computes the sum of the value of contributing source pixels multiplied by the corresponding weight of the kernel. This corresponds to a kernel with un-normalized sum of coefficients.
 
-    - ``mean``: computes the average of the value of contributing source pixels
-       multiplied by the corresponding weight of the kernel
+    - ``mean``: computes the average of the value of contributing source pixels multiplied by the corresponding weight of the kernel. This has the effect of normalizing kernel coefficients so their sum is one.
 
-    - ``min``: computes the minimum of the value of contributing source pixels
-       multiplied by the corresponding weight of the kernel
+    - ``min``: computes the minimum of the value of contributing source pixels multiplied by the corresponding weight of the kernel
 
-    - ``max``: computes the maximum of the value of contributing source pixels
-       multiplied by the corresponding weight of the kernel
+    - ``max``: computes the maximum of the value of contributing source pixels multiplied by the corresponding weight of the kernel
 
-    - ``stddev``: computes the standard deviation of the value of contributing source pixels
-       multiplied by the corresponding weight of the kernel
+    - ``stddev``: computes the standard deviation of the value of contributing source pixels multiplied by the corresponding weight of the kernel
 
-    - ``median``: computes the median of the value of contributing source pixels
-       multiplied by the corresponding weight of the kernel
+    - ``median``: computes the median of the value of contributing source pixels multiplied by the corresponding weight of the kernel
 
-    - ``mode`` (majority): computes the most frequent of the value of contributing source pixels
-       multiplied by the corresponding weight of the kernel
+    - ``mode`` (majority): computes the most frequent of the value of contributing source pixels multiplied by the corresponding weight of the kernel
 
 .. option:: --nodata
 

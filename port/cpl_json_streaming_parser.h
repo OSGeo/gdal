@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <string>
+#include <string_view>
 #include "cpl_port.h"
 
 class CPL_DLL CPLJSonStreamingParser /* non final */
@@ -35,20 +36,20 @@ class CPL_DLL CPLJSonStreamingParser /* non final */
         return m_bExceptionOccurred;
     }
 
-    static std::string GetSerializedString(const char *pszStr);
+    static std::string GetSerializedString(std::string_view sStr);
 
     virtual void Reset();
-    virtual bool Parse(const char *pStr, size_t nLength, bool bFinished);
+    virtual bool Parse(std::string_view sStr, bool bFinished);
 
   protected:
     bool EmitException(const char *pszMessage);
     void StopParsing();
 
-    virtual void String(const char * /*pszValue*/, size_t /*nLength*/)
+    virtual void String(std::string_view /* sValue */)
     {
     }
 
-    virtual void Number(const char * /*pszValue*/, size_t /*nLength*/)
+    virtual void Number(std::string_view /* sValue */)
     {
     }
 
@@ -68,7 +69,7 @@ class CPL_DLL CPLJSonStreamingParser /* non final */
     {
     }
 
-    virtual void StartObjectMember(const char * /*pszKey*/, size_t /*nLength*/)
+    virtual void StartObjectMember(std::string_view /* sKey */)
     {
     }
 

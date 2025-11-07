@@ -35,6 +35,8 @@ class OGRJSONCollectionStreamingParser CPL_NON_FINAL
     bool m_bInType = false;
     bool m_bIsTypeKnown = false;
     bool m_bIsFeatureCollection = false;
+    bool m_bInMeasures = false;
+    bool m_bInMeasuresEnabled = false;
     json_object *m_poRootObj = nullptr;
     size_t m_nRootObjMemEstimate = 0;
     json_object *m_poCurObj = nullptr;
@@ -65,19 +67,21 @@ class OGRJSONCollectionStreamingParser CPL_NON_FINAL
                             const std::string &osJson) = 0;
     virtual void TooComplex() = 0;
 
+    bool m_bHasTopLevelMeasures = false;
+
   public:
     OGRJSONCollectionStreamingParser(bool bFirstPass, bool bStoreNativeData,
                                      size_t nMaxObjectSize);
     ~OGRJSONCollectionStreamingParser() override;
 
-    void String(const char * /*pszValue*/, size_t) override;
-    void Number(const char * /*pszValue*/, size_t) override;
+    void String(std::string_view) override;
+    void Number(std::string_view) override;
     void Boolean(bool b) override;
     void Null() override;
 
     void StartObject() override;
     void EndObject() override;
-    void StartObjectMember(const char * /*pszKey*/, size_t) override;
+    void StartObjectMember(std::string_view) override;
 
     void StartArray() override;
     void EndArray() override;
@@ -86,6 +90,11 @@ class OGRJSONCollectionStreamingParser CPL_NON_FINAL
     void Exception(const char * /*pszMessage*/) override;
 
     json_object *StealRootObject();
+
+    inline bool HasTopLevelMeasures() const
+    {
+        return m_bHasTopLevelMeasures;
+    }
 
     inline bool IsTypeKnown() const
     {

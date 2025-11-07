@@ -2594,7 +2594,6 @@ bool VSIAzureHandle::IsDirectoryFromExists(const char * /*pszVerb*/,
  See :ref:`/vsiaz/ documentation <vsiaz>`
  \endverbatim
 
- @since GDAL 2.3
  */
 
 void VSIInstallAzureFileHandler(void)

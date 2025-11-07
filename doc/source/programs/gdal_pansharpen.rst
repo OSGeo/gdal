@@ -8,8 +8,6 @@ gdal_pansharpen
 
     Perform a pansharpen operation.
 
-    (Since GDAL 2.1)
-
 .. Index:: gdal_pansharpen
 
 Synopsis
@@ -44,9 +42,8 @@ More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
 
 .. option:: -of <format>
 
-    Select the output format. Starting with GDAL 2.3, if not specified,
-    the format is guessed from the extension (previously was ``GTiff``). Use
-    the short format name. ``VRT`` can also be used.
+    Select the output format. If not specified, the format is guessed from the
+    extension. Use the short format name. ``VRT`` can also be used.
 
 .. option:: -b <band>
 

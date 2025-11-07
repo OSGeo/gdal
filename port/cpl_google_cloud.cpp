@@ -86,7 +86,6 @@ struct GOA2ManagerCache
  * Note: only works for Linux GCE instances.
  *
  * @return true if the current machine is surely a GCE instance.
- * @since GDAL 2.3
  */
 bool CPLIsMachineForSureGCEInstance()
 {
@@ -133,7 +132,6 @@ bool CPLIsMachineForSureGCEInstance()
  * queried.
  *
  * @return true if the current machine is potentially a GCE instance.
- * @since GDAL 2.3
  */
 bool CPLIsMachinePotentiallyGCEInstance()
 {

@@ -363,7 +363,7 @@ typedef enum
     OGRERR_FAILURE,                   /**< Failure */
     OGRERR_UNSUPPORTED_SRS,           /**< Unsupported SRS */
     OGRERR_INVALID_HANDLE,            /**< Invalid handle */
-    OGRERR_NON_EXISTING_FEATURE /**< Non existing feature. Added in GDAL 2.0 */
+    OGRERR_NON_EXISTING_FEATURE       /**< Non existing feature */
 } OGRErr;
 #else
 /** Type for a OGR error */
@@ -378,8 +378,7 @@ typedef int OGRErr;
 #define OGRERR_FAILURE 6                   /**< Failure */
 #define OGRERR_UNSUPPORTED_SRS 7           /**< Unsupported SRS */
 #define OGRERR_INVALID_HANDLE 8            /**< Invalid handle */
-#define OGRERR_NON_EXISTING_FEATURE                                            \
-    9 /**< Non existing feature. Added in GDAL 2.0 */
+#define OGRERR_NON_EXISTING_FEATURE 9      /**< Non existing feature */
 
 #endif
 
@@ -420,83 +419,80 @@ typedef enum
                                     or more geometric objects, standard WKB */
 
     wkbCircularString = 8, /**< one or more circular arc segments connected end
-                            * to end, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+                            * to end, ISO SQL/MM Part 3. */
     wkbCompoundCurve = 9, /**< sequence of contiguous curves, ISO SQL/MM Part 3.
-                             GDAL &gt;= 2.0 */
+                             */
     wkbCurvePolygon = 10, /**< planar surface, defined by 1 exterior boundary
                            *   and zero or more interior boundaries, that are
-                           * curves. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+                           * curves. ISO SQL/MM Part 3. */
     wkbMultiCurve = 11,   /**< GeometryCollection of Curves, ISO SQL/MM Part 3.
-                             GDAL &gt;= 2.0 */
+                             */
     wkbMultiSurface = 12, /**< GeometryCollection of Surfaces, ISO SQL/MM
-                             Part 3. GDAL &gt;= 2.0 */
-    wkbCurve =
-        13, /**< Curve (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbSurface =
-        14, /**< Surface (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+                             Part 3. */
+    wkbCurve = 13,        /**< Curve (abstract type). ISO SQL/MM Part 3. */
+    wkbSurface = 14,      /**< Surface (abstract type). ISO SQL/MM Part 3. */
     wkbPolyhedralSurface =
         15,      /**< a contiguous collection of polygons, which share common
-                  * boundary segments,      ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+                  * boundary segments,      ISO SQL/MM Part 3. */
     wkbTIN = 16, /**< a PolyhedralSurface consisting only of Triangle patches
-                  *    ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
-    wkbTriangle = 17, /**< a Triangle. ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+                  *    ISO SQL/MM Part 3. */
+    wkbTriangle = 17, /**< a Triangle. ISO SQL/MM Part 3. */
 
     wkbNone = 100,       /**< non-standard, for pure attribute records */
     wkbLinearRing = 101, /**< non-standard, just for createGeometry() */
 
     wkbCircularStringZ = 1008, /**< wkbCircularString with Z component. ISO
-                                  SQL/MM Part 3. GDAL &gt;= 2.0 */
+                                  SQL/MM Part 3. */
     wkbCompoundCurveZ = 1009, /**< wkbCompoundCurve with Z component. ISO SQL/MM
-                                 Part 3. GDAL &gt;= 2.0 */
+                                 Part 3. */
     wkbCurvePolygonZ = 1010,  /**< wkbCurvePolygon with Z component. ISO SQL/MM
-                                 Part 3. GDAL &gt;= 2.0 */
+                                 Part 3. */
     wkbMultiCurveZ = 1011,    /**< wkbMultiCurve with Z component. ISO SQL/MM
-                                 Part 3. GDAL &gt;= 2.0 */
+                                 Part 3. */
     wkbMultiSurfaceZ = 1012,  /**< wkbMultiSurface with Z component. ISO SQL/MM
-                                 Part 3. GDAL &gt;= 2.0 */
-    wkbCurveZ = 1013,   /**< wkbCurve with Z component. ISO SQL/MM Part 3. GDAL
-                           &gt;= 2.1 */
+                                 Part 3. */
+    wkbCurveZ = 1013,   /**< wkbCurve with Z component. ISO SQL/MM Part 3.*/
     wkbSurfaceZ = 1014, /**< wkbSurface with Z component. ISO SQL/MM Part 3.
-                           GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceZ = 1015, /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
-    wkbTINZ = 1016,               /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
-    wkbTriangleZ = 1017,          /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+                           */
+    wkbPolyhedralSurfaceZ = 1015, /**< ISO SQL/MM Part 3. */
+    wkbTINZ = 1016,               /**< ISO SQL/MM Part 3. */
+    wkbTriangleZ = 1017,          /**< ISO SQL/MM Part 3. */
 
-    wkbPointM = 2001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbLineStringM = 2002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolygonM = 2003,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiPointM = 2004,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiLineStringM = 2005,    /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiPolygonM = 2006,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbGeometryCollectionM = 2007, /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCircularStringM = 2008,     /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCompoundCurveM = 2009,      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCurvePolygonM = 2010,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiCurveM = 2011,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiSurfaceM = 2012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCurveM = 2013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbSurfaceM = 2014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
-    wkbTINM = 2016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
-    wkbTriangleM = 2017,           /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbPointM = 2001,              /**< ISO SQL/MM Part 3. */
+    wkbLineStringM = 2002,         /**< ISO SQL/MM Part 3. */
+    wkbPolygonM = 2003,            /**< ISO SQL/MM Part 3. */
+    wkbMultiPointM = 2004,         /**< ISO SQL/MM Part 3. */
+    wkbMultiLineStringM = 2005,    /**< ISO SQL/MM Part 3. */
+    wkbMultiPolygonM = 2006,       /**< ISO SQL/MM Part 3. */
+    wkbGeometryCollectionM = 2007, /**< ISO SQL/MM Part 3. */
+    wkbCircularStringM = 2008,     /**< ISO SQL/MM Part 3. */
+    wkbCompoundCurveM = 2009,      /**< ISO SQL/MM Part 3. */
+    wkbCurvePolygonM = 2010,       /**< ISO SQL/MM Part 3. */
+    wkbMultiCurveM = 2011,         /**< ISO SQL/MM Part 3. */
+    wkbMultiSurfaceM = 2012,       /**< ISO SQL/MM Part 3. */
+    wkbCurveM = 2013,              /**< ISO SQL/MM Part 3. */
+    wkbSurfaceM = 2014,            /**< ISO SQL/MM Part 3. */
+    wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. */
+    wkbTINM = 2016,                /**< ISO SQL/MM Part 3. */
+    wkbTriangleM = 2017,           /**< ISO SQL/MM Part 3. */
 
-    wkbPointZM = 3001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbLineStringZM = 3002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolygonZM = 3003,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiPointZM = 3004,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiLineStringZM = 3005,    /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiPolygonZM = 3006,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbGeometryCollectionZM = 3007, /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCircularStringZM = 3008,     /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCompoundCurveZM = 3009,      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCurvePolygonZM = 3010,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiCurveZM = 3011,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiSurfaceZM = 3012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCurveZM = 3013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbSurfaceZM = 3014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
-    wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
-    wkbTriangleZM = 3017,           /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbPointZM = 3001,              /**< ISO SQL/MM Part 3. */
+    wkbLineStringZM = 3002,         /**< ISO SQL/MM Part 3. */
+    wkbPolygonZM = 3003,            /**< ISO SQL/MM Part 3. */
+    wkbMultiPointZM = 3004,         /**< ISO SQL/MM Part 3. */
+    wkbMultiLineStringZM = 3005,    /**< ISO SQL/MM Part 3. */
+    wkbMultiPolygonZM = 3006,       /**< ISO SQL/MM Part 3. */
+    wkbGeometryCollectionZM = 3007, /**< ISO SQL/MM Part 3. */
+    wkbCircularStringZM = 3008,     /**< ISO SQL/MM Part 3. */
+    wkbCompoundCurveZM = 3009,      /**< ISO SQL/MM Part 3. */
+    wkbCurvePolygonZM = 3010,       /**< ISO SQL/MM Part 3. */
+    wkbMultiCurveZM = 3011,         /**< ISO SQL/MM Part 3. */
+    wkbMultiSurfaceZM = 3012,       /**< ISO SQL/MM Part 3. */
+    wkbCurveZM = 3013,              /**< ISO SQL/MM Part 3. */
+    wkbSurfaceZM = 3014,            /**< ISO SQL/MM Part 3. */
+    wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. */
+    wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. */
+    wkbTriangleZM = 3017,           /**< ISO SQL/MM Part 3. */
 
 #if defined(DOXYGEN_SKIP)
     // Sphinx doesn't like 0x8000000x constants
@@ -550,7 +546,7 @@ typedef enum
 } OGRwkbVariant;
 
 #ifndef GDAL_COMPILATION
-/** @deprecated in GDAL 2.0. Use wkbHasZ() or wkbSetZ() instead */
+/** @deprecated Use wkbHasZ() or wkbSetZ() instead */
 #define wkb25DBit 0x80000000
 #endif
 
@@ -563,23 +559,19 @@ typedef enum
 #endif
 
 /** Return if the geometry type is a 3D geometry type
- * @since GDAL 2.0
  */
 #define wkbHasZ(x) (OGR_GT_HasZ(x) != 0)
 
 /** Return the 3D geometry type corresponding to the specified geometry type.
- * @since GDAL 2.0
  */
 #define wkbSetZ(x) OGR_GT_SetZ(x)
 
 /** Return if the geometry type is a measured geometry type
- * @since GDAL 2.1
  */
 #define wkbHasM(x) (OGR_GT_HasM(x) != 0)
 
 /** Return the measured geometry type corresponding to the specified geometry
  * type.
- * @since GDAL 2.1
  */
 #define wkbSetM(x) OGR_GT_SetM(x)
 
@@ -653,13 +645,11 @@ typedef enum
 
 /** Alter field NOT NULL constraint.
  * Used by OGR_L_AlterFieldDefn().
- * @since GDAL 2.0
  */
 #define ALTER_NULLABLE_FLAG 0x8
 
 /** Alter field DEFAULT value.
  * Used by OGR_L_AlterFieldDefn().
- * @since GDAL 2.0
  */
 #define ALTER_DEFAULT_FLAG 0x10
 
@@ -736,19 +726,16 @@ typedef enum
 
 /** Validate that fields respect not-null constraints.
  * Used by OGR_F_Validate().
- * @since GDAL 2.0
  */
 #define OGR_F_VAL_NULL 0x00000001
 
 /** Validate that geometries respect geometry column type.
  * Used by OGR_F_Validate().
- * @since GDAL 2.0
  */
 #define OGR_F_VAL_GEOM_TYPE 0x00000002
 
 /** Validate that (string) fields respect field width.
  * Used by OGR_F_Validate().
- * @since GDAL 2.0
  */
 #define OGR_F_VAL_WIDTH 0x00000004
 
@@ -756,7 +743,6 @@ typedef enum
  * This can be used for drivers where the low-level layers will automatically
  * set the field value to the associated default value. This flag only makes
  * sense if OGR_F_VAL_NULL is set too. Used by OGR_F_Validate().
- * @since GDAL 2.0
  */
 #define OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT 0x00000008
 
@@ -764,13 +750,11 @@ typedef enum
  * geometry column type.
  * This flag only makes sense if OGR_F_VAL_GEOM_TYPE is set too.
  * Used by OGR_F_Validate().
- * @since GDAL 2.1
  */
 #define OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM 0x00000010
 
 /** Enable all validation tests (except OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM)
  * Used by OGR_F_Validate().
- * @since GDAL 2.0
  */
 #define OGR_F_VAL_ALL (0x7FFFFFFF & ~OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM)
 
@@ -810,7 +794,6 @@ typedef enum
  * future ... avoid coding applications based on the assumption that all
  * field types can be known.
  * Most subtypes only make sense for a restricted set of main types.
- * @since GDAL 2.0
  */
 typedef enum
 {
@@ -823,7 +806,6 @@ typedef enum
        OFTRealList. */
     OFSTFloat32 = 3,
     /** JSON content. Only valid for OFTString.
-     * @since GDAL 2.4
      */
     OFSTJSON = 4,
     /** UUID string representation. Only valid for OFTString.
@@ -866,7 +848,6 @@ typedef enum
  *  a null field.
  *  Direct use of this value is strongly discouraged.
  *  Use OGR_RawField_SetNull() or OGR_RawField_IsNull() instead.
- *  @since GDAL 2.2
  */
 #define OGRNullMarker -21122
 
@@ -1086,7 +1067,6 @@ int CPL_DLL OGRParseDate(const char *pszInput, OGRField *psOutput,
 /* -------------------------------------------------------------------- */
 /** Capability set to YES as metadata on a layer that has features with
   * 64 bit identifiers.
-  @since GDAL 2.0
   */
 #define OLMD_FID64 "OLMD_FID64"
 

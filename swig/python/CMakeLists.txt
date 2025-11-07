@@ -16,6 +16,7 @@ set(GDAL_PYTHON_CSOURCES
   list(APPEND GDAL_SWIG_COMMON_INTERFACE_FILES
        ${PROJECT_SOURCE_DIR}/swig/include/python/callback.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/gdal_python.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/generate_gdal_alg_methods.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/gnm_python.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/ogr_python.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/osr_python.i
@@ -139,9 +140,13 @@ if (Python_Interpreter_FOUND)
 
   # Use the 'X.Y.Z' numbering scheme from libgdal by default for the gdal python package version number
   # And append a ".patch" if the patch is not 0.
-  set(GDAL_PYTHON_VERSION "${GDAL_VERSION_NO_DEV_SUFFIX}")
-  if( NOT "${GDAL_VERSION_BUILD}" STREQUAL "0" )
-      string(APPEND GDAL_PYTHON_VERSION ".${GDAL_VERSION_BUILD}")
+  if(DEFINED ENV{GDAL_PYTHON_VERSION})
+      set(GDAL_PYTHON_VERSION "$ENV{GDAL_PYTHON_VERSION}")
+  else()
+      set(GDAL_PYTHON_VERSION "${GDAL_VERSION_NO_DEV_SUFFIX}")
+      if( NOT "${GDAL_VERSION_BUILD}" STREQUAL "0" )
+          string(APPEND GDAL_PYTHON_VERSION ".${GDAL_VERSION_BUILD}")
+      endif()
   endif()
 
   file(TO_NATIVE_PATH "${GDAL_PYTHON_CSOURCE_DIR}" GDAL_PYTHON_EXT_SOURCE_DIR)
@@ -172,6 +177,9 @@ if (Python_Interpreter_FOUND)
   endif ()
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README.rst ${CMAKE_CURRENT_BINARY_DIR}/README.rst @ONLY)
+
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/conftest.py ${CMAKE_CURRENT_BINARY_DIR}/conftest.py COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pytest.ini ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini COPYONLY)
 
   execute_process(
     COMMAND ${Python_EXECUTABLE} -c "import setuptools; print(setuptools.__version__)"
@@ -372,6 +380,18 @@ if __name__ == '__main__':
   endforeach()
 
   add_custom_target(python_binding ALL DEPENDS ${PY_SO_LIST} ${PY_SO_LIST_WITH_RPATH} ${GDAL_PYTHON_PYSOURCES} ${GDAL_LIB_TARGET_NAME})
+
+  if (BUILD_PYTHON_STUBS)
+    add_custom_target(
+        python_stub_files
+        ALL
+        COMMAND ${Python_EXECUTABLE_CMAKE} -m docstub run
+                ${CMAKE_CURRENT_BINARY_DIR}/osgeo
+                --config ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS ${GDAL_PYTHON_PYSOURCES}
+    )
+  endif ()
 
   # Generate wheel
   if (ONLY_GENERATE_FOR_NON_DEBUG)

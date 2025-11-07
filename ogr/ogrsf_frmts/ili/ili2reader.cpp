@@ -25,7 +25,10 @@ using namespace std;
 //
 static const char *const ILI2_TID = "TID";
 static const XMLCh xmlch_ILI2_TID[] = {'T', 'I', 'D', '\0'};
+static const XMLCh xmlch_ILI2_TID_NS[] = {'i', 'l', 'i', ':',
+                                          't', 'i', 'd', '\0'};
 static const XMLCh ILI2_REF[] = {'R', 'E', 'F', '\0'};
+static const XMLCh ILI2_REF_NS[] = {'i', 'l', 'i', ':', 'r', 'e', 'f', '\0'};
 
 constexpr int ILI2_STRING_TYPE = 0;
 constexpr int ILI2_COORD_TYPE = 1;
@@ -151,7 +154,10 @@ static char *getObjValue(DOMElement *elem)
 
 static char *getREFValue(DOMElement *elem)
 {
-    CPLString osREFValue(transcode(elem->getAttribute(ILI2_REF)));
+    const XMLCh *val = elem->hasAttribute(ILI2_REF)
+                           ? elem->getAttribute(ILI2_REF)
+                           : elem->getAttribute(ILI2_REF_NS);
+    CPLString osREFValue(transcode(val));
     return CPLStrdup(osREFValue);
 }
 
@@ -672,29 +678,9 @@ int ILI2Reader::SetupParser()
     m_poSAXReader->setFeature(XMLUni::fgXercesDisableDefaultEntityResolution,
                               true);
 
-    /* No Validation
-    #if (OGR_ILI2_VALIDATION)
-        m_poSAXReader->setFeature(
-            XMLString::transcode("http://xml.org/sax/features/validation"),
-    true); m_poSAXReader->setFeature(
-            XMLString::transcode("http://xml.org/sax/features/namespaces"),
-    true);
-
-        m_poSAXReader->setFeature( XMLUni::fgSAX2CoreNameSpaces, true );
-        m_poSAXReader->setFeature( XMLUni::fgXercesSchema, true );
-
-    //    m_poSAXReader->setDoSchema(true);
-    //    m_poSAXReader->setValidationSchemaFullChecking(true);
-    #else
-    */
-    XMLCh *tmpCh =
-        XMLString::transcode("http://xml.org/sax/features/validation");
-    m_poSAXReader->setFeature(tmpCh, false);
-    XMLString::release(&tmpCh);
-    tmpCh = XMLString::transcode("http://xml.org/sax/features/namespaces");
-    m_poSAXReader->setFeature(tmpCh, false);
-    XMLString::release(&tmpCh);
-    // #endif
+    // No Validation
+    m_poSAXReader->setFeature(XMLUni::fgSAX2CoreValidation, false);
+    m_poSAXReader->setFeature(XMLUni::fgXercesSchema, false);
 
     m_bReadStarted = FALSE;
 
@@ -835,8 +821,10 @@ int ILI2Reader::AddFeature(DOMElement *elem)
     int fIndex = feature->GetFieldIndex(ILI2_TID);
     if (fIndex != -1)
     {
-        feature->SetField(
-            fIndex, transcode(elem->getAttribute(xmlch_ILI2_TID)).c_str());
+        const XMLCh *val = elem->hasAttribute(xmlch_ILI2_TID)
+                               ? elem->getAttribute(xmlch_ILI2_TID)
+                               : elem->getAttribute(xmlch_ILI2_TID_NS);
+        feature->SetField(fIndex, transcode(val).c_str());
     }
     else
     {

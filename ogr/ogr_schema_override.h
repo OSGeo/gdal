@@ -14,6 +14,7 @@
 
 //! @cond Doxygen_Suppress
 
+#include <functional>
 #include <string>
 #include <map>
 #include <optional>
@@ -26,14 +27,21 @@
 class CPL_DLL OGRFieldDefnOverride
 {
   public:
-    OGRFieldDefnOverride()
-        : m_osName(), m_eType(), m_eSubType(), m_nWidth(), m_nPrecision()
-    {
-    }
+    OGRFieldDefnOverride() = default;
 
     void SetFieldName(const std::string &osName)
     {
         m_osName = osName;
+    }
+
+    void SetSrcFieldType(OGRFieldType eType)
+    {
+        m_eSrcType = eType;
+    }
+
+    void SetSrcFieldSubType(OGRFieldSubType eSubType)
+    {
+        m_eSrcSubType = eSubType;
     }
 
     void SetFieldType(OGRFieldType eType)
@@ -61,6 +69,16 @@ class CPL_DLL OGRFieldDefnOverride
         return m_osName;
     }
 
+    std::optional<OGRFieldType> GetSrcFieldType() const
+    {
+        return m_eSrcType;
+    }
+
+    std::optional<OGRFieldSubType> GetSrcFieldSubType() const
+    {
+        return m_eSrcSubType;
+    }
+
     std::optional<OGRFieldType> GetFieldType() const
     {
         return m_eType;
@@ -85,30 +103,35 @@ class CPL_DLL OGRFieldDefnOverride
     bool IsValid() const;
 
   private:
-    std::optional<std::string> m_osName;
-    std::optional<OGRFieldType> m_eType;
-    std::optional<OGRFieldSubType> m_eSubType;
-    std::optional<int> m_nWidth;
-    std::optional<int> m_nPrecision;
+    std::optional<std::string> m_osName{};
+    std::optional<OGRFieldType> m_eSrcType{};
+    std::optional<OGRFieldSubType> m_eSrcSubType{};
+    std::optional<OGRFieldType> m_eType{};
+    std::optional<OGRFieldSubType> m_eSubType{};
+    std::optional<int> m_nWidth{};
+    std::optional<int> m_nPrecision{};
 };
 
 /** Class that holds the schema override options for a single layer */
 class CPL_DLL OGRLayerSchemaOverride
 {
   public:
-    OGRLayerSchemaOverride() : m_osLayerName(), m_moFieldOverrides()
-    {
-    }
+    OGRLayerSchemaOverride() = default;
 
     void SetLayerName(const std::string &osLayerName)
     {
         m_osLayerName = osLayerName;
     }
 
-    void AddFieldOverride(const std::string &osFieldName,
-                          const OGRFieldDefnOverride &oFieldOverride)
+    void AddNamedFieldOverride(const std::string &osFieldName,
+                               const OGRFieldDefnOverride &oFieldOverride)
     {
-        m_moFieldOverrides[osFieldName] = oFieldOverride;
+        m_oNamedFieldOverrides[osFieldName] = oFieldOverride;
+    }
+
+    void AddUnnamedFieldOverride(const OGRFieldDefnOverride &oFieldOverride)
+    {
+        m_aoUnnamedFieldOverrides.push_back(oFieldOverride);
     }
 
     const std::string &GetLayerName() const
@@ -116,9 +139,15 @@ class CPL_DLL OGRLayerSchemaOverride
         return m_osLayerName;
     }
 
-    const std::map<std::string, OGRFieldDefnOverride> &GetFieldOverrides() const
+    const std::map<std::string, OGRFieldDefnOverride> &
+    GetNamedFieldOverrides() const
     {
-        return m_moFieldOverrides;
+        return m_oNamedFieldOverrides;
+    }
+
+    const std::vector<OGRFieldDefnOverride> &GetUnnamedFieldOverrides() const
+    {
+        return m_aoUnnamedFieldOverrides;
     }
 
     bool IsFullOverride() const
@@ -134,37 +163,42 @@ class CPL_DLL OGRLayerSchemaOverride
     bool IsValid() const;
 
   private:
-    std::string m_osLayerName;
-    std::map<std::string, OGRFieldDefnOverride> m_moFieldOverrides;
+    std::string m_osLayerName{};
+    std::map<std::string, OGRFieldDefnOverride> m_oNamedFieldOverrides{};
+    std::vector<OGRFieldDefnOverride> m_aoUnnamedFieldOverrides{};
     bool m_bIsFullOverride = false;
 };
+
+class GDALDataset;
 
 /** Class that holds the schema override options for a datasource */
 class CPL_DLL OGRSchemaOverride
 {
   public:
-    OGRSchemaOverride() : m_moLayerOverrides()
-    {
-    }
+    OGRSchemaOverride() = default;
 
-    void AddLayerOverride(const std::string &osLayerName,
-                          const OGRLayerSchemaOverride &oLayerOverride)
+    void AddLayerOverride(const OGRLayerSchemaOverride &oLayerOverride)
     {
-        m_moLayerOverrides[osLayerName] = oLayerOverride;
+        m_aoLayerOverrides.push_back(oLayerOverride);
     }
 
     bool LoadFromJSON(const std::string &osJSON);
 
-    const std::map<std::string, OGRLayerSchemaOverride> &
-    GetLayerOverrides() const
+    const std::vector<OGRLayerSchemaOverride> &GetLayerOverrides() const
     {
-        return m_moLayerOverrides;
+        return m_aoLayerOverrides;
     }
 
     bool IsValid() const;
 
+    // Default implementation to apply the overrides to a dataset
+    bool DefaultApply(
+        GDALDataset *poDS, const char *pszDebugKey,
+        std::function<void(OGRLayer *, int)> callbackWhenRemovingField =
+            [](OGRLayer *, int) {}) const;
+
   private:
-    std::map<std::string, OGRLayerSchemaOverride> m_moLayerOverrides;
+    std::vector<OGRLayerSchemaOverride> m_aoLayerOverrides{};
 };
 
 //! @endcond

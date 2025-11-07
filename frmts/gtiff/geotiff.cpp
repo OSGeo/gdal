@@ -20,7 +20,9 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "gdal.h"
+#include "gdal_frmts.h"
 #include "gdal_mdreader.h"  // RPC_xxx
+#include "gdalsubdatasetinfo.h"
 #include "gtiffdataset.h"
 #include "tiffio.h"
 #include "tif_jxl.h"

@@ -13,6 +13,9 @@
  * SPDX-License-Identifier: MIT
  *******************************************************************************/
 
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
+
 #include "ogrsf_frmts.h"
 
 #include "ogrcaddrivercore.h"

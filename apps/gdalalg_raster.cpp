@@ -55,6 +55,7 @@
 #include "gdalalg_raster_unscale.h"
 #include "gdalalg_raster_update.h"
 #include "gdalalg_raster_viewshed.h"
+#include "gdalalg_raster_zonal_stats.h"
 
 #include "gdal_priv.h"
 
@@ -123,6 +124,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterUnscaleAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterUpdateAlgorithm>();
         RegisterSubAlgorithm<GDALRasterViewshedAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALRasterZonalStatsAlgorithmStandalone>();
     }
 
   private:

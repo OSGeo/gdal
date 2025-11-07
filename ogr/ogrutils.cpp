@@ -1261,7 +1261,7 @@ int OGRParseDate(const char *pszInput, OGRField *psField, int nOptions)
                 return FALSE;
             const double dfSeconds = CPLAtof(pszInput);
             // We accept second=60 for leap seconds
-            if (dfSeconds > 60.0)
+            if (dfSeconds >= 61.0)
                 return FALSE;
             psField->Date.Second = static_cast<float>(dfSeconds);
 
@@ -2020,7 +2020,6 @@ double OGRFastAtof(const char *pszStr)
  * @param panPermutation an array of nSize elements.
  * @param nSize size of the array.
  * @return OGRERR_NONE if panPermutation is a permutation of [0, nSize - 1].
- * @since OGR 1.9.0
  */
 OGRErr OGRCheckPermutation(const int *panPermutation, int nSize)
 {

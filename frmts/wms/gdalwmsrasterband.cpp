@@ -15,6 +15,10 @@
 
 #include "wmsdriver.h"
 
+#include "gdal_colortable.h"
+#include "gdal_rasterblock.h"
+#include "gdal_cpp_functions.h"
+
 #include <algorithm>
 
 GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band,

@@ -7,7 +7,7 @@ See :cpp:func:`OGRCodedFieldDomain::OGRCodedFieldDomain`.
 .. versionadded:: 3.3
 
 Parameters
------------
+----------
 name : str
     Domain name. Should not be ``None``.
 description : str, optional
@@ -20,7 +20,7 @@ enumeration : dict
     Enumeration as a dictionary of (code : value) pairs. Should not be ``None``.
 
 Returns
---------
+-------
 FieldDomain
 ";
 
@@ -40,7 +40,7 @@ xmax : float
     maximum x coordinate value
 ymax : float
     maximum y coordinate value
-srs : osr.SpatialReference, default = 0
+srs : SpatialReference, optional
     optional spatial reference to assign to the geometry
 
 Returns
@@ -63,7 +63,7 @@ See :cpp:func:`OGRGlobFieldDomain::OGRGlobFieldDomain`
 .. versionadded:: 3.3
 
 Parameters
------------
+----------
 name : str
     Domain name. Should not be ``None``.
 description : str, optional
@@ -76,7 +76,7 @@ glob : str
     Glob expression. Should not be ``None``.
 
 Returns
---------
+-------
 FieldDomain
 ";
 
@@ -88,7 +88,7 @@ See :cpp:func:`OGRRangeFieldDomain::OGRRangeFieldDomain`.
 .. versionadded:: 3.3
 
 Parameters
------------
+----------
 name : str
     Domain name. Should not be ``None``.
 description : str, optional
@@ -107,7 +107,7 @@ maxIsInclusive : bool
     Whether the maximum value is included in the range.
 
 Returns
---------
+-------
 FieldDomain
 ";
 
@@ -119,12 +119,12 @@ Fetch human readable name for a field subtype.
 See :cpp:func:`OGRFieldDefn::GetFieldSubTypeName`.
 
 Parameters
------------
+----------
 type : int
     the field subtype to get name for.
 
 Returns
---------
+-------
 str
     the name.
 
@@ -145,12 +145,12 @@ Fetch human readable name for a field type.
 See :cpp:func:`OGRFieldDefn::GetFieldTypeName`.
 
 Parameters
------------
+----------
 type : int
     the field type code to get name for
 
 Returns
---------
+-------
 str
     the name
 
@@ -175,7 +175,7 @@ name : str
 
 Returns
 -------
-gdal.Driver
+Driver
 
 Examples
 --------
@@ -208,7 +208,8 @@ utf8_path : str
 
 Returns
 -------
-gdal.Dataset, or ``None`` on failure
+Dataset or None
+    A dataset or ``None`` on failure.
 
 Examples
 --------
@@ -234,7 +235,8 @@ utf8_path : str
 
 Returns
 -------
-gdal.Dataset, or ``None`` on failure
+Dataset or None
+    A dataset or ``None`` on failure.
 
 ";
 

@@ -468,3 +468,56 @@ def test_algorithm_arg_set_dataset_list(tmp_path):
         alg["input"] = None
     with pytest.raises(TypeError):
         alg["input"] = [None]
+
+
+###############################################################################
+# Test gdal.alg module
+
+
+def test_gdal_alg_module(tmp_vsimem):
+
+    assert set(["dataset", "mdim", "raster", "vector", "vsi"]).issubset(
+        set(gdal.alg.__dict__.keys())
+    )
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "a", "a")
+
+    assert gdal.alg.vsi.__doc__ == "GDAL Virtual System Interface (VSI) commands."
+
+    assert (
+        gdal.alg.vsi.list.__doc__
+        == """List files of one of the GDAL Virtual System Interface (VSI).
+
+       Consult https://gdal.org/programs/gdal_vsi_list.html for more details.
+
+       Parameters
+       ----------
+       filename: str
+           File or directory name
+       output_format: Optional[str]=None
+           Output format
+       long_listing: Optional[bool]=None
+           Use a long listing format
+       recursive: Optional[bool]=None
+           List subdirectories recursively
+       depth: Optional[int]=None
+           Maximum depth in recursive mode
+       absolute_path: Optional[bool]=None
+           Display absolute path
+       tree: Optional[bool]=None
+           Use a hierarchical presentation for JSON output
+
+
+       Output parameters
+       -----------------
+       output_string: str
+           Output string, in which the result is placed
+
+"""
+    )
+
+    assert gdal.alg.vsi.list(tmp_vsimem).Output() == ["a"]
+
+    gdal.reregister_gdal_alg()
+
+    assert gdal.alg.vsi.list(filename=tmp_vsimem).Output() == ["a"]

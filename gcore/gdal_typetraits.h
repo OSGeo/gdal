@@ -29,6 +29,8 @@
 #include "gdal_priv.h"
 #include "cpl_float.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <complex>
 
 namespace gdal

@@ -87,7 +87,7 @@ Standard options
 
     Set output file resolution (in target georeferenced units).
 
-    If not specified (or not deduced from -te and -ts), gdalwarp will, in the
+    If not specified (or not deduced from :option:`--size`), the program will, in the
     general case, generate an output raster with xres=yres.
 
     If neither :option:`--resolution` nor :option:`--size` are specified,
@@ -95,11 +95,14 @@ Standard options
     or RPC), the resolution of the source file(s) will be preserved (in previous
     version, an output raster with xres=yres was always generated).
 
+    Mutually exclusive with :option:`--size`.
+
 .. option:: --size <width>,<height>
 
     Set output file size in pixels and lines. If width or height is set to 0,
-    the other dimension will be guessed from the computed resolution. Note that
-    :option:`--size` cannot be used with :option:`--resolution`
+    the other dimension will be guessed from the computed resolution.
+
+    Mutually exclusive with :option:`--resolution`.
 
 .. option:: --bbox <xmin>,<ymin>,<xmax>,<ymax>
 

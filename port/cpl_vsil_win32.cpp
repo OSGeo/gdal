@@ -1486,6 +1486,8 @@ struct VSIDIRWin32 final : public VSIDIR
     {
         intptr_t handle = -1;
 
+        DIR() = default;
+
         ~DIR()
         {
             close();

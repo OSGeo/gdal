@@ -45,9 +45,6 @@ class GDALInfoAlgorithm final
     ~GDALInfoAlgorithm() override;
 
   private:
-    std::unique_ptr<GDALRasterInfoAlgorithm> m_rasterInfo{};
-    std::unique_ptr<GDALVectorInfoAlgorithm> m_vectorInfo{};
-
     std::string m_format{};
     GDALArgDatasetValue m_dataset{};
 

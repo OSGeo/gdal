@@ -5214,3 +5214,174 @@ def test_ogr_gml_citygml3(tmp_vsimem, skip_resolve_as_open_option):
         f.GetGeometryRef().ExportToWkt()
         == "POLYHEDRALSURFACE Z (((0 0 0,1 1 1,1 0 2,0 0 0)))"
     )
+
+
+###############################################################################
+
+
+def test_ogr_gml_datetime(tmp_vsimem):
+
+    ds = ogr.Open("data/gml/datetime.gml")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTTime
+    assert f["time"] == "23:59:60"
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTDate
+    assert f["date"] == "9999/12/31"
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTDateTime
+    assert f["datetime"] == "9999/12/31 23:59:60.999"
+    assert lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTDateTime
+    assert f["dtInTimePosition"] == "9999/12/31 23:59:60.999"
+
+    tmp_filename = tmp_vsimem / "out.gml"
+    with gdal.VSIFile("data/gml/datetime.gml", "rb") as fin:
+        with gdal.VSIFile(tmp_filename, "wb") as fout:
+            fout.write(fin.read())
+
+    ds = ogr.Open(tmp_filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTTime
+    assert f["time"] == "23:59:60"
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTDate
+    assert f["date"] == "9999/12/31"
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTDateTime
+    assert f["datetime"] == "9999/12/31 23:59:60.999"
+    assert lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTDateTime
+    assert f["timePosition"] == "9999/12/31 23:59:60.999"
+
+
+###############################################################################
+
+
+def test_ogr_gml_unique_fid_not_increasing_no_prefix(tmp_vsimem):
+
+    tmpname = tmp_vsimem / "test.xml"
+    gdal.FileFromMemBuffer(
+        tmpname,
+        """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://ogr.maptools.org/ out.xsd"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <gml:featureMember>
+    <ogr:poly fid="2"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="1"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="4"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="3"></ogr:poly>
+  </gml:featureMember>
+</ogr:FeatureCollection>""",
+    )
+
+    ds = ogr.Open(tmpname)
+    lyr = ds.GetLayer(0)
+    assert [f.GetFID() for f in lyr] == [2, 1, 4, 3]
+
+
+###############################################################################
+
+
+def test_ogr_gml_unique_fid_not_increasing_prefix(tmp_vsimem):
+
+    tmpname = tmp_vsimem / "test.xml"
+    gdal.FileFromMemBuffer(
+        tmpname,
+        """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://ogr.maptools.org/ out.xsd"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <gml:featureMember>
+    <ogr:poly fid="poly.2"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.1"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.4"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.3"></ogr:poly>
+  </gml:featureMember>
+</ogr:FeatureCollection>""",
+    )
+
+    ds = ogr.Open(tmpname)
+    lyr = ds.GetLayer(0)
+    assert [f.GetFID() for f in lyr] == [2, 1, 4, 3]
+
+
+###############################################################################
+
+
+def test_ogr_gml_unique_fid_not_unique(tmp_vsimem):
+
+    tmpname = tmp_vsimem / "test.xml"
+    gdal.FileFromMemBuffer(
+        tmpname,
+        """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://ogr.maptools.org/ out.xsd"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <gml:featureMember>
+    <ogr:poly fid="poly.2"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.1"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.2"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.3"></ogr:poly>
+  </gml:featureMember>
+</ogr:FeatureCollection>""",
+    )
+
+    ds = ogr.Open(tmpname)
+    lyr = ds.GetLayer(0)
+    assert [f.GetFID() for f in lyr] == [2, 1, 3, 4]
+
+
+###############################################################################
+
+
+def test_ogr_gml_unique_fid_not_unique_no_numeric(tmp_vsimem):
+
+    tmpname = tmp_vsimem / "test.xml"
+    gdal.FileFromMemBuffer(
+        tmpname,
+        """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://ogr.maptools.org/ out.xsd"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <gml:featureMember>
+    <ogr:poly fid="poly.2"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.1"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.2a"></ogr:poly>
+  </gml:featureMember>
+  <gml:featureMember>
+    <ogr:poly fid="poly.3"></ogr:poly>
+  </gml:featureMember>
+</ogr:FeatureCollection>""",
+    )
+
+    ds = ogr.Open(tmpname)
+    lyr = ds.GetLayer(0)
+    assert [f.GetFID() for f in lyr] == [2, 1, 3, 4]

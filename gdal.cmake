@@ -6,8 +6,8 @@
 # a new member or virtual function in a public C++ class, etc.
 # This will typically happen for each GDAL feature release (change of X or Y in
 # a X.Y.Z numbering scheme), but should not happen for a bugfix release (change of Z)
-# Previous value: 37 for GDAL 3.11
-set(GDAL_SOVERSION 37)
+# Previous value: 38 for GDAL 3.12
+set(GDAL_SOVERSION 38)
 
 # Switches to control build targets(cached)
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
@@ -441,6 +441,7 @@ if (USE_PRECOMPILED_HEADERS)
   target_precompile_headers(gdal_priv_header PUBLIC
     $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/port/cpl_float.h>
     $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/gcore/gdal_priv.h>
+    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/gcore/gdal_pam.h>
     $<$<COMPILE_LANGUAGE:C>:${CMAKE_CURRENT_SOURCE_DIR}/port/cpl_port.h>
   )
 endif()

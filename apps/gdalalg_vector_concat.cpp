@@ -40,6 +40,7 @@ GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
                                       ConstructorOptions()
                                           .SetStandaloneStep(bStandalone)
                                           .SetInputDatasetMaxCount(INT_MAX)
+                                          .SetAddOutputLayerNameArgument(false)
                                           .SetAutoOpenInputDatasets(false))
 {
     if (!bStandalone)

@@ -12,7 +12,7 @@ The driver supports both reading and writing (including create, delete,
 and copy) SAGA GIS binary grids. SAGA binary grid datasets are made of
 an ASCII header (.SGRD) and a binary data (.SDAT) file with a common
 basename. The .SDAT file should be selected to access the dataset.
-Starting with GDAL 2.3, the driver can read compressed .sg-grd-z files
+The driver can read compressed .sg-grd-z files
 that are ZIP archives with .sgrd, .sdat and .prj files.
 
 The driver supports reading the following SAGA datatypes (in brackets

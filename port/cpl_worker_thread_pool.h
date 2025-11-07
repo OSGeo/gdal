@@ -27,7 +27,6 @@
  * \file cpl_worker_thread_pool.h
  *
  * Class to manage a pool of worker threads.
- * @since GDAL 2.1
  */
 
 #ifndef DOXYGEN_SKIP

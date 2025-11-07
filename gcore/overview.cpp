@@ -971,7 +971,7 @@ inline __m128 sse2_hadd_ps(__m128 a, __m128 b)
 #define max_ps _mm256_max_ps
 #define shuffle_ps _mm256_shuffle_ps
 #define div_ps _mm256_div_ps
-#define cmpeq_ps(x, y) _mm256_cmp_ps(x, y, _CMP_EQ_OQ)
+#define cmpeq_ps(x, y) _mm256_cmp_ps((x), (y), _CMP_EQ_OQ)
 #define mul_ps _mm256_mul_ps
 #define add_ps _mm256_add_ps
 #define hadd_ps _mm256_hadd_ps

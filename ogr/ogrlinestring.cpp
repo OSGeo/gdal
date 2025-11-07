@@ -45,11 +45,6 @@ int DoubleToIntClamp(double dfValue)
 
 /**
  * \brief Copy constructor.
- *
- * Note: before GDAL 2.1, only the default implementation of the constructor
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRSimpleCurve::OGRSimpleCurve(const OGRSimpleCurve &other)
@@ -103,11 +98,6 @@ OGRSimpleCurve::~OGRSimpleCurve()
 
 /**
  * \brief Assignment operator.
- *
- * Note: before GDAL 2.1, only the default implementation of the operator
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRSimpleCurve &OGRSimpleCurve::operator=(const OGRSimpleCurve &other)
@@ -1432,8 +1422,6 @@ void OGRSimpleCurve::getPoints(OGRRawPoint *paoPointsOut,
  * @param pabyM a buffer of at last size (nMStride * nPointCount) bytes, may be
  * NULL.
  * @param nMStride the number of bytes between 2 elements of pabyM.
- *
- * @since OGR 2.1.0
  */
 
 void OGRSimpleCurve::getPoints(void *pabyX, int nXStride, void *pabyY,
@@ -2244,7 +2232,6 @@ double OGRSimpleCurve::Project(const OGRPoint *poPoint) const
  * @return a newly allocated linestring now owned by the caller, or NULL on
  * failure.
  *
- * @since OGR 1.11.0
  */
 
 OGRLineString *OGRSimpleCurve::getSubLine(double dfDistanceFrom,
@@ -2894,11 +2881,6 @@ OGRPointIterator *OGRSimpleCurve::getPointIterator() const
 
 /**
  * \brief Copy constructor.
- *
- * Note: before GDAL 2.1, only the default implementation of the constructor
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRLineString::OGRLineString(const OGRLineString &) = default;
@@ -2921,11 +2903,6 @@ OGRLineString::OGRLineString(OGRLineString &&) = default;
 
 /**
  * \brief Assignment operator.
- *
- * Note: before GDAL 2.1, only the default implementation of the operator
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRLineString &OGRLineString::operator=(const OGRLineString &other)

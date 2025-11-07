@@ -184,8 +184,11 @@ template <typename DataType>
 class OGRPolygonWriter : public PolygonReceiver<DataType>
 {
     OGRLayer *poOutLayer_ = nullptr;
-    int iPixValField_;
-    double *padfGeoTransform_;
+    GDALDataset *poOutDS_ = nullptr;
+    const int iPixValField_;
+    const GDALGeoTransform gt_;
+    int nCommitInterval_ = 0;
+    GIntBig nFeaturesWrittenInTransaction_ = 0;
     std::unique_ptr<OGRFeature> poFeature_{};
     OGRPolygon *poPolygon_ =
         nullptr;  // = poFeature_->GetGeometryRef(), owned by poFeature
@@ -194,12 +197,15 @@ class OGRPolygonWriter : public PolygonReceiver<DataType>
 
   public:
     OGRPolygonWriter(OGRLayerH hOutLayer, int iPixValField,
-                     double *padfGeoTransform);
+                     const GDALGeoTransform &gt, int nCommitInterval);
+    ~OGRPolygonWriter() override;
 
     OGRPolygonWriter(const OGRPolygonWriter<DataType> &) = delete;
 
     OGRPolygonWriter<DataType> &
     operator=(const OGRPolygonWriter<DataType> &) = delete;
+
+    bool Finalize();
 
     void receive(RPolygon *poPolygon, DataType nPolygonCellValue) override;
 

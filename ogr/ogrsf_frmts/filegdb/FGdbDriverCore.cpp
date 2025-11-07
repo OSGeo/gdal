@@ -12,6 +12,12 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdal_frmts.h"
+
+#ifdef PLUGIN_FILENAME
+#include "gdalplugindriverproxy.h"
+#endif
+
 #include "ogrsf_frmts.h"
 #include "FGdbDriverCore.h"
 

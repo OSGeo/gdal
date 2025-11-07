@@ -6298,18 +6298,21 @@ def test_ogr_gpkg_field_domains(tmp_vsimem, tmp_path):
 
     assert set(ds.GetFieldDomainNames()) == {"range_domain_int"}
 
-    assert not ds.AddFieldDomain(
-        ogr.CreateRangeFieldDomain(
-            "range_domain_int",
-            "my desc",
-            ogr.OFTInteger,
-            ogr.OFSTNone,
-            1,
-            True,
-            2,
-            True,
+    with gdaltest.error_raised(
+        gdal.CE_Failure, match="A domain of identical name already exists"
+    ):
+        assert not ds.AddFieldDomain(
+            ogr.CreateRangeFieldDomain(
+                "range_domain_int",
+                "my desc",
+                ogr.OFTInteger,
+                ogr.OFSTNone,
+                1,
+                True,
+                2,
+                True,
+            )
         )
-    )
 
     assert ds.AddFieldDomain(
         ogr.CreateRangeFieldDomain(
@@ -6690,7 +6693,91 @@ def test_ogr_gpkg_field_domains(tmp_vsimem, tmp_path):
         "range_domain_real_inf",
     }
 
+    assert ds.TestCapability(ogr.ODsCAddFieldDomain) == 0
+    assert ds.TestCapability(ogr.ODsCUpdateFieldDomain) == 0
+    assert ds.TestCapability(ogr.ODsCDeleteFieldDomain) == 0
+
     ds = None
+
+    # Test UpdateFieldDomain()
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR) as ds:
+        with gdaltest.error_raised(
+            gdal.CE_Failure, match="not supported on read-only dataset"
+        ):
+            assert not ds.UpdateFieldDomain(
+                ogr.CreateRangeFieldDomain(
+                    "range_domain_int",
+                    "new desc",
+                    ogr.OFTInteger,
+                    ogr.OFSTNone,
+                    10,
+                    False,
+                    20,
+                    True,
+                )
+            )
+    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        assert ds.TestCapability(ogr.ODsCUpdateFieldDomain) == 1
+
+        assert (
+            ds.UpdateFieldDomain(
+                ogr.CreateCodedFieldDomain(
+                    "non_existing",
+                    "",
+                    ogr.OFTInteger64,
+                    ogr.OFSTNone,
+                    {1: "one", "2": None},
+                )
+            )
+            is False
+        )
+
+        assert ds.UpdateFieldDomain(
+            ogr.CreateRangeFieldDomain(
+                "range_domain_int",
+                "new desc",
+                ogr.OFTInteger,
+                ogr.OFSTNone,
+                10,
+                False,
+                20,
+                True,
+            )
+        )
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR) as ds:
+        domain = ds.GetFieldDomain("range_domain_int")
+        assert domain is not None
+        assert domain.GetName() == "range_domain_int"
+        assert domain.GetDescription() == "new desc"
+        assert domain.GetDomainType() == ogr.OFDT_RANGE
+        assert domain.GetFieldType() == ogr.OFTInteger
+        assert domain.GetMinAsDouble() == 10.0
+        assert not domain.IsMinInclusive()
+        assert domain.GetMaxAsDouble() == 20.0
+        assert domain.IsMaxInclusive()
+
+    # Test DeleteFieldDomain()
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR) as ds:
+        with gdaltest.error_raised(
+            gdal.CE_Failure, match="not supported on read-only dataset"
+        ):
+            assert ds.DeleteFieldDomain("range_domain_int") is False
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+
+        assert ds.TestCapability(ogr.ODsCDeleteFieldDomain) == 1
+
+        assert ds.DeleteFieldDomain("non_existing") is False
+        domain_names = ds.GetFieldDomainNames()
+        for name in domain_names:
+            assert ds.DeleteFieldDomain(name)
+            assert ds.GetFieldDomain(name) is None
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR) as ds:
+        assert ds.GetFieldDomainNames() is None
 
 
 ###############################################################################

@@ -580,7 +580,7 @@ bool ZarrV3CodecBytes::Encode(const ZarrByteVectorQuickResize &abySrc,
     if (abySrc.size() < nEltCount * nNativeSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "ZarrV3CodecTranspose::Encode(): input buffer too small");
+                 "ZarrV3CodecBytes::Encode(): input buffer too small");
         return false;
     }
     CPLAssert(abySrc.size() >= nEltCount * nNativeSize);
@@ -677,19 +677,6 @@ ZarrV3CodecTranspose::GetConfiguration(const std::vector<int> &anOrder)
 }
 
 /************************************************************************/
-/*                           GetConfiguration()                         */
-/************************************************************************/
-
-/* static */ CPLJSONObject
-ZarrV3CodecTranspose::GetConfiguration(const std::string &osOrder)
-{
-    CPLJSONObject oConfig;
-    CPLJSONArray oOrder;
-    oConfig.Add("order", osOrder);
-    return oConfig;
-}
-
-/************************************************************************/
 /*                ZarrV3CodecTranspose::InitFromConfiguration()         */
 /************************************************************************/
 
@@ -726,6 +713,7 @@ bool ZarrV3CodecTranspose::InitFromConfiguration(
     const int nDims = static_cast<int>(oInputArrayMetadata.anBlockSizes.size());
     if (oOrder.GetType() == CPLJSONObject::Type::String)
     {
+        // Deprecated
         const auto osOrder = oOrder.ToString();
         if (osOrder == "C")
         {

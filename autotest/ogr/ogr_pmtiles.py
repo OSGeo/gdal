@@ -322,7 +322,11 @@ def test_ogr_pmtiles_vsipmtiles():
         gdal.VSIFCloseL(f)
     j = json.loads(data)
     assert "json" in j
+
+    assert gdal.VSIStatL("/vsipmtiles/" + filename).mode == 16384
+
     assert gdal.VSIStatL("/vsipmtiles/" + filename + "/metadata.json").size == len(data)
+    assert gdal.VSIStatL("/vsipmtiles/" + filename + "/metadata.json").mode == 32768
 
     assert gdal.VSIFOpenL("/vsipmtiles/invalid", "rb") is None
     assert gdal.VSIFOpenL("/vsipmtiles/invalid.pmtiles", "rb") is None

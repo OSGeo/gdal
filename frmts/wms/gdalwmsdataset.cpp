@@ -28,6 +28,9 @@
 #include "minidriver_tiled_wms.h"
 #include "minidriver_virtualearth.h"
 
+#include "gdal_colortable.h"
+#include "gdal_cpp_functions.h"
+
 #include <algorithm>
 
 /************************************************************************/

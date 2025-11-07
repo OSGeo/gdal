@@ -564,7 +564,7 @@ GDALDataset *OGRCSWLayer::FetchGetRecords()
         l_poBaseDS = MEMDataset::Create("", 0, 0, 0, GDT_Unknown, nullptr);
         OGRLayer *poLyr = l_poBaseDS->CreateLayer("records");
         OGRFieldDefn oField("raw_xml", OFTString);
-        poLyr->CreateField(&oField);
+        CPL_IGNORE_RET_VAL(poLyr->CreateField(&oField));
         for (CPLXMLNode *psIter = psSearchResults->psChild; psIter;
              psIter = psIter->psNext)
         {

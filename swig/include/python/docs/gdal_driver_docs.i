@@ -16,7 +16,7 @@ oldName : str
 
 Returns
 -------
-int:
+int
    :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
 ";
 
@@ -35,9 +35,9 @@ ysize : int
    Height of created raster in pixels. Set to zero for vector datasets.
 bands : int, default = 1
     Number of bands. Set to zero for vector datasets.
-eType : int/NumPy dtype, default = :py:const:`GDT_Byte`
+eType : int or numpy.dtype, default = :py:const:`GDT_Byte`
     Raster data type. Set to :py:const:`GDT_Unknown` for vector datasets.
-options : list/dict
+options : list or dict
     List of driver-specific options
 
 Returns
@@ -80,15 +80,15 @@ Parameters
 utf8_path : str
    Path of the dataset to create.
 src : Dataset
-   The Dataset being duplicated.
+   The dataset being duplicated.
 strict : bool, default=1
    Indicates whether the copy must be strictly equivalent or if
    it may be adapted as needed for the output format.
-options : list/dict
+options : list or dict
    List of driver-specific options
-callback : function, optional
+callback : callable, optional
    A progress callback function
-callback_data: optional
+callback_data : any, optional
    Optional data to be passed to callback function
 
 Returns
@@ -105,10 +105,10 @@ Parameters
 ----------
 utf8_path : str
    Path of the dataset to create.
-root_group_options : dict/list
+root_group_options : list or dict
    Driver-specific options regarding the creation of the
    root group.
-options : list/dict
+options : list or dict
    List of driver-specific options regarding the creation
    of the Dataset.
 
@@ -118,6 +118,10 @@ Dataset
 
 Examples
 --------
+.. testsetup::
+   >>> if gdal.GetDriverByName('netCDF') is None:
+   ...     pytest.skip()
+
 >>> with gdal.GetDriverByName('netCDF').CreateMultiDimensional('test.nc') as ds:
 ...     gdal.MultiDimInfo(ds)
 ...
@@ -159,7 +163,7 @@ utf8_path : str
 
 Returns
 -------
-int:
+int
    :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
 ";
 
@@ -179,7 +183,7 @@ openOptionName : str
 
 Returns
 -------
-bool:
+bool
    ``True``, if the option is supported by this driver, ``False`` otherwise.
 
 Examples
@@ -219,7 +223,7 @@ oldName : str
 
 Returns
 -------
-int:
+int
    :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
 ";
 
@@ -242,7 +246,7 @@ cap : str
 
 Returns
 -------
-bool:
+bool
    ``True`` if the driver supports the capability, ``False`` otherwise.
 
 Examples

@@ -1796,3 +1796,56 @@ def test_ogr_mvt_write_custom_tiling_scheme_WorldCRS84Quad(tmp_vsimem, TILING_SC
         ogrtest.check_feature_geometry(
             out_f, "MULTIPOINT ((120.0146484375 39.990234375))"
         )
+
+
+###############################################################################
+# Test reading a uncompressed file with 0-byte padding
+# Scenario of https://github.com/OSGeo/gdal/issues/13268
+
+
+def test_ogr_mvt_read_with_padding():
+
+    ds = ogr.Open("data/mvt/with_padding.mvt")
+    assert ds.GetLayerCount() == 2
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/13305
+
+
+@pytest.mark.require_driver("GeoJSON")
+@pytest.mark.require_geos
+def test_ogr_mvt_winding_order_issue_13305(tmp_vsimem):
+
+    filename = tmp_vsimem / "out"
+    gdal.VectorTranslate(
+        filename,
+        ogr.Open("data/mvt/input_issue_13305.geojson"),
+        format="MVT",
+        layerCreationOptions=["MINZOOM=12", "MAXZOOM=12"],
+    )
+    ds = ogr.Open(filename / "12")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetGeometryType() == ogr.wkbMultiPolygon
+    assert g.GetGeometryCount() == 1
+    assert g.GetGeometryRef(0).GetGeometryCount() == 122
+    assert g.IsValid()
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/13305
+
+
+@pytest.mark.require_geos
+def test_ogr_mvt_autofix_winding_order_issue_13305(tmp_vsimem):
+
+    ds = ogr.Open("data/mvt/issue_13305_bad_winding_order/12")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetGeometryType() == ogr.wkbMultiPolygon
+    assert g.GetGeometryCount() == 1
+    assert g.GetGeometryRef(0).GetGeometryCount() == 124
+    assert g.IsValid()

@@ -46,6 +46,9 @@
 #include "wmsdriver.h"
 #include "minidriver_tiled_wms.h"
 
+#include "gdal_colortable.h"
+#include "gdal_cpp_functions.h"
+
 #include <set>
 
 static const char SIG[] = "GDAL_WMS TiledWMS: ";

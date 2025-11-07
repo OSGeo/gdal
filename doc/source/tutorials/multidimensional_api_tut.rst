@@ -11,7 +11,9 @@ Read the content of an array
 
    .. code-tab:: c++
 
+      // Note: since GDAL >= 3.12, "gdal_multidim_cpp.h" can also be used.
       #include "gdal_priv.h"
+
       int main()
       {
           GDALAllRegister();

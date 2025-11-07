@@ -11,6 +11,10 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+import shutil
+import sys
+
 import pytest
 
 from osgeo import gdal
@@ -318,6 +322,27 @@ def test_zarr_kerchunk_parquet_gdal_open_dim2():
 ###############################################################################
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Fails for some reason on Windows")
+def test_zarr_kerchunk_parquet_gdal_open_missing_bin_file(tmp_path):
+
+    shutil.copytree(
+        "data/zarr/kerchunk_parquet/parquet_ref_2_dim", tmp_path / "parquet_ref_2_dim"
+    )
+    os.unlink(tmp_path / "parquet_ref_2_dim/ar/4.bin")
+
+    with gdal.OpenEx(
+        f"ZARR:/vsikerchunk_parquet_ref/{{{tmp_path}/parquet_ref_2_dim}}",
+        gdal.OF_MULTIDIM_RASTER,
+    ) as ds:
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("ar")
+        with pytest.raises(Exception):
+            ar.Read()
+
+
+###############################################################################
+
+
 @pytest.mark.require_driver("PARQUET")
 def test_zarr_kerchunk_parquet_invalid_parquet_struct():
     with gdal.OpenEx(
@@ -331,3 +356,57 @@ def test_zarr_kerchunk_parquet_invalid_parquet_struct():
             match="has an unexpected field structure",
         ):
             ar.Read()
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "ref_filename,expected_md",
+    [
+        (
+            "data/zarr/kerchunk_parquet/parquet_ref_0_dim",
+            {
+                "FILENAME": "data/zarr/kerchunk_parquet/parquet_ref_0_dim/x/0.bin",
+                "OFFSET": "0",
+                "SIZE": "1",
+            },
+        ),
+        (
+            "data/zarr/kerchunk_parquet/parquet_ref_0_dim_missing_size",
+            {
+                "FILENAME": "data/zarr/kerchunk_parquet/parquet_ref_0_dim_missing_size/x/0.bin",
+                "OFFSET": "0",
+                "SIZE": "1",
+            },
+        ),
+        (
+            "data/zarr/kerchunk_parquet/parquet_ref_0_dim_inline_content",
+            {"BASE64": "AQ==", "SIZE": "1"},
+        ),
+    ],
+)
+@pytest.mark.require_driver("PARQUET")
+def test_vsikerchunk_parquet_ref_GetFileMetadata(ref_filename, expected_md):
+
+    assert gdal.GetFileMetadata("/vsikerchunk_parquet_ref/", None) == {}
+    with pytest.raises(Exception, match="Invalid /vsikerchunk_parquet_ref/ syntax"):
+        assert gdal.GetFileMetadata("/vsikerchunk_parquet_ref/", "CHUNK_INFO")
+    with pytest.raises(Exception, match="Invalid /vsikerchunk_parquet_ref/ syntax"):
+        assert gdal.GetFileMetadata("/vsikerchunk_parquet_ref/{foo", "CHUNK_INFO")
+    assert (
+        gdal.GetFileMetadata("/vsikerchunk_parquet_ref{/i_do/not/exist}", "CHUNK_INFO")
+        == {}
+    )
+    assert (
+        gdal.GetFileMetadata(
+            "/vsikerchunk_parquet_ref/{" + ref_filename + "}/non_existing", "CHUNK_INFO"
+        )
+        == {}
+    )
+    got_md = gdal.GetFileMetadata(
+        "/vsikerchunk_parquet_ref/{" + ref_filename + "}/x/0", "CHUNK_INFO"
+    )
+    if "FILENAME" in got_md:
+        got_md["FILENAME"] = got_md["FILENAME"].replace("\\", "/")
+    assert got_md == expected_md

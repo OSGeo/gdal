@@ -149,7 +149,6 @@ class ImdReader
   public:           // TODO(schwehr): Private?
     int iliVersion; /* 1 or 2 */
     IliModelInfos modelInfos;
-    CPLString mainModelName;
     CPLString mainBasketName;
     CPLString mainTopicName;
     FeatureDefnInfos featureDefnInfos;

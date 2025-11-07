@@ -12,7 +12,12 @@
 
 #include "hdf4drivercore.h"
 
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
+
 #include <cctype>
+
+#include "gdalsubdatasetinfo.h"
 
 /************************************************************************/
 /*                              Identify()                              */

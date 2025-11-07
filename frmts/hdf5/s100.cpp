@@ -13,6 +13,11 @@
 #include "s100.h"
 #include "hdf5dataset.h"
 
+#include "proj.h"
+#include "proj_experimental.h"
+#include "proj_constants.h"
+#include "ogr_proj_p.h"
+
 #include <algorithm>
 #include <cmath>
 
@@ -101,16 +106,480 @@ char **S100BaseDataset::GetFileList()
 
 bool S100ReadSRS(const GDALGroup *poRootGroup, OGRSpatialReference &oSRS)
 {
+    constexpr int PROJECTION_METHOD_MERCATOR = 9805;
+    static_assert(PROJECTION_METHOD_MERCATOR ==
+                  EPSG_CODE_METHOD_MERCATOR_VARIANT_B);
+    constexpr int PROJECTION_METHOD_TRANSVERSE_MERCATOR = 9807;
+    static_assert(PROJECTION_METHOD_TRANSVERSE_MERCATOR ==
+                  EPSG_CODE_METHOD_TRANSVERSE_MERCATOR);
+    constexpr int PROJECTION_METHOD_OBLIQUE_MERCATOR = 9815;
+    static_assert(PROJECTION_METHOD_OBLIQUE_MERCATOR ==
+                  EPSG_CODE_METHOD_HOTINE_OBLIQUE_MERCATOR_VARIANT_B);
+    constexpr int PROJECTION_METHOD_HOTINE_OBLIQUE_MERCATOR = 9812;
+    static_assert(PROJECTION_METHOD_HOTINE_OBLIQUE_MERCATOR ==
+                  EPSG_CODE_METHOD_HOTINE_OBLIQUE_MERCATOR_VARIANT_A);
+    constexpr int PROJECTION_METHOD_LCC_1SP = 9801;
+    static_assert(PROJECTION_METHOD_LCC_1SP ==
+                  EPSG_CODE_METHOD_LAMBERT_CONIC_CONFORMAL_1SP);
+    constexpr int PROJECTION_METHOD_LCC_2SP = 9802;
+    static_assert(PROJECTION_METHOD_LCC_2SP ==
+                  EPSG_CODE_METHOD_LAMBERT_CONIC_CONFORMAL_2SP);
+    constexpr int PROJECTION_METHOD_OBLIQUE_STEREOGRAPHIC = 9809;
+    static_assert(PROJECTION_METHOD_OBLIQUE_STEREOGRAPHIC ==
+                  EPSG_CODE_METHOD_OBLIQUE_STEREOGRAPHIC);
+    constexpr int PROJECTION_METHOD_POLAR_STEREOGRAPHIC = 9810;
+    static_assert(PROJECTION_METHOD_POLAR_STEREOGRAPHIC ==
+                  EPSG_CODE_METHOD_POLAR_STEREOGRAPHIC_VARIANT_A);
+    constexpr int PROJECTION_METHOD_KROVAK_OBLIQUE_CONIC_CONFORMAL = 9819;
+    static_assert(PROJECTION_METHOD_KROVAK_OBLIQUE_CONIC_CONFORMAL ==
+                  EPSG_CODE_METHOD_KROVAK);
+    constexpr int PROJECTION_METHOD_AMERICAN_POLYCONIC = 9818;
+    static_assert(PROJECTION_METHOD_AMERICAN_POLYCONIC ==
+                  EPSG_CODE_METHOD_AMERICAN_POLYCONIC);
+    constexpr int PROJECTION_METHOD_ALBERS_EQUAL_AREA = 9822;
+    static_assert(PROJECTION_METHOD_ALBERS_EQUAL_AREA ==
+                  EPSG_CODE_METHOD_ALBERS_EQUAL_AREA);
+    constexpr int PROJECTION_METHOD_LAMBERT_AZIMUTHAL_EQUAL_AREA = 9820;
+    static_assert(PROJECTION_METHOD_LAMBERT_AZIMUTHAL_EQUAL_AREA ==
+                  EPSG_CODE_METHOD_LAMBERT_AZIMUTHAL_EQUAL_AREA);
+
     // Get SRS
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     auto poHorizontalCRS = poRootGroup->GetAttribute("horizontalCRS");
     if (poHorizontalCRS &&
         poHorizontalCRS->GetDataType().GetClass() == GEDTC_NUMERIC)
     {
         // horizontalCRS is v2.2
-        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if (oSRS.importFromEPSG(poHorizontalCRS->ReadAsInt()) != OGRERR_NONE)
+        const int nHorizontalCRS = poHorizontalCRS->ReadAsInt();
+        if (nHorizontalCRS > 0)
         {
-            oSRS.Clear();
+            if (oSRS.importFromEPSG(nHorizontalCRS) != OGRERR_NONE)
+            {
+                oSRS.Clear();
+            }
+        }
+        else
+        {
+            auto poNameOfHorizontalCRS =
+                poRootGroup->GetAttribute("nameOfHorizontalCRS");
+            auto poTypeOfHorizontalCRS =
+                poRootGroup->GetAttribute("typeOfHorizontalCRS");
+            auto poHorizontalCS = poRootGroup->GetAttribute("horizontalCS");
+            auto poHorizontalDatum =
+                poRootGroup->GetAttribute("horizontalDatum");
+            if (poNameOfHorizontalCRS &&
+                poNameOfHorizontalCRS->GetDataType().GetClass() ==
+                    GEDTC_STRING &&
+                poTypeOfHorizontalCRS &&
+                poTypeOfHorizontalCRS->GetDataType().GetClass() ==
+                    GEDTC_NUMERIC &&
+                poHorizontalCS &&
+                poHorizontalCS->GetDataType().GetClass() == GEDTC_NUMERIC &&
+                poHorizontalDatum &&
+                poHorizontalDatum->GetDataType().GetClass() == GEDTC_NUMERIC)
+            {
+                const int nCRSType = poTypeOfHorizontalCRS->ReadAsInt();
+                constexpr int CRS_TYPE_GEOGRAPHIC = 1;
+                constexpr int CRS_TYPE_PROJECTED = 2;
+
+                PJ *crs = nullptr;
+                const char *pszCRSName = poNameOfHorizontalCRS->ReadAsString();
+
+                const int nHorizontalCS = poHorizontalCS->ReadAsInt();
+                const int nHorizontalDatum = poHorizontalDatum->ReadAsInt();
+
+                auto pjCtxt = OSRGetProjTLSContext();
+                if (nHorizontalDatum < 0)
+                {
+                    auto poNameOfHorizontalDatum =
+                        poRootGroup->GetAttribute("nameOfHorizontalDatum");
+                    auto poPrimeMeridian =
+                        poRootGroup->GetAttribute("primeMeridian");
+                    auto poSpheroid = poRootGroup->GetAttribute("spheroid");
+                    if (poNameOfHorizontalDatum &&
+                        poNameOfHorizontalDatum->GetDataType().GetClass() ==
+                            GEDTC_STRING &&
+                        poPrimeMeridian &&
+                        poPrimeMeridian->GetDataType().GetClass() ==
+                            GEDTC_NUMERIC &&
+                        poSpheroid &&
+                        poSpheroid->GetDataType().GetClass() == GEDTC_NUMERIC)
+                    {
+                        const char *pszDatumName =
+                            poNameOfHorizontalDatum->ReadAsString();
+                        const char *pszGeogCRSName =
+                            nCRSType == CRS_TYPE_PROJECTED
+                                ? (pszDatumName ? pszDatumName : "unknown")
+                                : (pszCRSName ? pszCRSName : "unknown");
+
+                        const int nPrimeMeridian = poPrimeMeridian->ReadAsInt();
+                        const int nSpheroid = poSpheroid->ReadAsInt();
+                        PJ *prime_meridian = proj_create_from_database(
+                            pjCtxt, "EPSG", CPLSPrintf("%d", nPrimeMeridian),
+                            PJ_CATEGORY_PRIME_MERIDIAN, false, nullptr);
+                        if (!prime_meridian)
+                            return false;
+                        PJ *spheroid = proj_create_from_database(
+                            pjCtxt, "EPSG", CPLSPrintf("%d", nSpheroid),
+                            PJ_CATEGORY_ELLIPSOID, false, nullptr);
+                        if (!spheroid)
+                        {
+                            proj_destroy(prime_meridian);
+                            return false;
+                        }
+
+                        double semiMajorMetre = 0;
+                        double invFlattening = 0;
+                        proj_ellipsoid_get_parameters(pjCtxt, spheroid,
+                                                      &semiMajorMetre, nullptr,
+                                                      nullptr, &invFlattening);
+
+                        double primeMeridianOffset = 0;
+                        double primeMeridianUnitConv = 1;
+                        const char *primeMeridianUnitName = nullptr;
+                        proj_prime_meridian_get_parameters(
+                            pjCtxt, prime_meridian, &primeMeridianOffset,
+                            &primeMeridianUnitConv, &primeMeridianUnitName);
+
+                        PJ *ellipsoidalCS = proj_create_ellipsoidal_2D_cs(
+                            pjCtxt, PJ_ELLPS2D_LATITUDE_LONGITUDE, nullptr,
+                            0.0);
+
+                        crs = proj_create_geographic_crs(
+                            pjCtxt, pszGeogCRSName,
+                            pszDatumName ? pszDatumName : "unknown",
+                            proj_get_name(spheroid), semiMajorMetre,
+                            invFlattening, proj_get_name(prime_meridian),
+                            primeMeridianOffset, primeMeridianUnitName,
+                            primeMeridianUnitConv, ellipsoidalCS);
+
+                        proj_destroy(ellipsoidalCS);
+                        proj_destroy(spheroid);
+                        proj_destroy(prime_meridian);
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Cannot establish CRS because "
+                                 "nameOfHorizontalDatum, primeMeridian and/or "
+                                 "spheroid are missing");
+                        return false;
+                    }
+                }
+                else
+                {
+                    PJ *datum = proj_create_from_database(
+                        pjCtxt, "EPSG", CPLSPrintf("%d", nHorizontalDatum),
+                        PJ_CATEGORY_DATUM, false, nullptr);
+                    if (!datum)
+                        return false;
+                    const char *pszDatumName = proj_get_name(datum);
+                    const char *pszGeogCRSName =
+                        nCRSType == CRS_TYPE_PROJECTED
+                            ? pszDatumName
+                            : (pszCRSName ? pszCRSName : "unknown");
+
+                    PJ *ellipsoidalCS = proj_create_ellipsoidal_2D_cs(
+                        pjCtxt, PJ_ELLPS2D_LATITUDE_LONGITUDE, nullptr, 0.0);
+
+                    crs = proj_create_geographic_crs_from_datum(
+                        pjCtxt, pszGeogCRSName, datum, ellipsoidalCS);
+
+                    proj_destroy(ellipsoidalCS);
+                    proj_destroy(datum);
+                }
+
+                if (nCRSType == CRS_TYPE_PROJECTED)
+                {
+                    auto poProjectionMethod =
+                        poRootGroup->GetAttribute("projectionMethod");
+                    if (poProjectionMethod &&
+                        poProjectionMethod->GetDataType().GetClass() ==
+                            GEDTC_NUMERIC)
+                    {
+                        const int nProjectionMethod =
+                            poProjectionMethod->ReadAsInt();
+
+                        auto poFalseEasting =
+                            poRootGroup->GetAttribute("falseEasting");
+                        const double falseEasting =
+                            poFalseEasting &&
+                                    poFalseEasting->GetDataType().GetClass() ==
+                                        GEDTC_NUMERIC
+                                ? poFalseEasting->ReadAsDouble()
+                                : 0.0;
+
+                        auto poFalseNorthing =
+                            poRootGroup->GetAttribute("falseNorthing");
+                        const double falseNorthing =
+                            poFalseNorthing &&
+                                    poFalseNorthing->GetDataType().GetClass() ==
+                                        GEDTC_NUMERIC
+                                ? poFalseNorthing->ReadAsDouble()
+                                : 0.0;
+
+                        const auto getParameter = [poRootGroup](int nParam)
+                        {
+                            auto poParam = poRootGroup->GetAttribute(
+                                "projectionParameter" + std::to_string(nParam));
+                            if (poParam && poParam->GetDataType().GetClass() ==
+                                               GEDTC_NUMERIC)
+                                return poParam->ReadAsDouble();
+                            CPLError(
+                                CE_Warning, CPLE_AppDefined, "%s",
+                                std::string(
+                                    "Missing attribute projectionParameter")
+                                    .append(std::to_string(nParam))
+                                    .c_str());
+                            return 0.0;
+                        };
+
+                        PJ *conv = nullptr;
+                        switch (nProjectionMethod)
+                        {
+                            case PROJECTION_METHOD_MERCATOR:
+                            {
+                                conv =
+                                    proj_create_conversion_mercator_variant_b(
+                                        pjCtxt,
+                                        /* latitude_first_parallel = */
+                                        getParameter(1),
+                                        /* center_long = */ getParameter(2),
+                                        falseEasting, falseNorthing, nullptr,
+                                        0.0, nullptr, 0.0);
+                                break;
+                            }
+
+                            case PROJECTION_METHOD_TRANSVERSE_MERCATOR:
+                            {
+                                conv =
+                                    proj_create_conversion_transverse_mercator(
+                                        pjCtxt,
+                                        /* center_lat = */ getParameter(1),
+                                        /* center_long = */ getParameter(2),
+                                        /* scale = */ getParameter(3),
+                                        falseEasting, falseNorthing, nullptr,
+                                        0.0, nullptr, 0.0);
+                                break;
+                            }
+
+                            case PROJECTION_METHOD_OBLIQUE_MERCATOR:
+                            {
+                                conv =
+                                    proj_create_conversion_hotine_oblique_mercator_variant_b(
+                                        pjCtxt,
+                                        /* latitude_projection_centre = */
+                                        getParameter(1),
+                                        /* longitude_projection_centre = */
+                                        getParameter(2),
+                                        /* azimuth_initial_line = */
+                                        getParameter(3),
+                                        /* angle_from_rectified_to_skrew_grid = */
+                                        getParameter(4),
+                                        /* scale = */ getParameter(5),
+                                        falseEasting, falseNorthing, nullptr,
+                                        0.0, nullptr, 0.0);
+                                break;
+                            }
+
+                            case PROJECTION_METHOD_HOTINE_OBLIQUE_MERCATOR:
+                            {
+                                conv =
+                                    proj_create_conversion_hotine_oblique_mercator_variant_a(
+                                        pjCtxt,
+                                        /* latitude_projection_centre = */
+                                        getParameter(1),
+                                        /* longitude_projection_centre = */
+                                        getParameter(2),
+                                        /* azimuth_initial_line = */
+                                        getParameter(3),
+                                        /* angle_from_rectified_to_skrew_grid = */
+                                        getParameter(4),
+                                        /* scale = */ getParameter(5),
+                                        falseEasting, falseNorthing, nullptr,
+                                        0.0, nullptr, 0.0);
+                                break;
+                            }
+
+                            case PROJECTION_METHOD_LCC_1SP:
+                            {
+                                conv =
+                                    proj_create_conversion_lambert_conic_conformal_1sp(
+                                        pjCtxt,
+                                        /* center_lat = */ getParameter(1),
+                                        /* center_long = */ getParameter(2),
+                                        /* scale = */ getParameter(3),
+                                        falseEasting, falseNorthing, nullptr,
+                                        0.0, nullptr, 0.0);
+                                break;
+                            }
+
+                            case PROJECTION_METHOD_LCC_2SP:
+                            {
+                                conv =
+                                    proj_create_conversion_lambert_conic_conformal_2sp(
+                                        pjCtxt,
+                                        /* latitude_false_origin = */
+                                        getParameter(1),
+                                        /* longitude_false_origin = */
+                                        getParameter(2),
+                                        /* latitude_first_parallel = */
+                                        getParameter(3),
+                                        /* latitude_second_parallel = */
+                                        getParameter(4), falseEasting,
+                                        falseNorthing, nullptr, 0.0, nullptr,
+                                        0.0);
+                                break;
+                            }
+
+                            case PROJECTION_METHOD_OBLIQUE_STEREOGRAPHIC:
+                            {
+                                conv =
+                                    proj_create_conversion_oblique_stereographic(
+                                        pjCtxt,
+                                        /* center_lat = */ getParameter(1),
+                                        /* center_long = */ getParameter(2),
+                                        /* scale = */ getParameter(3),
+                                        falseEasting, falseNorthing, nullptr,
+                                        0.0, nullptr, 0.0);
+                                break;
+                            }
+
+                            case PROJECTION_METHOD_POLAR_STEREOGRAPHIC:
+                            {
+                                conv =
+                                    proj_create_conversion_polar_stereographic_variant_a(
+                                        pjCtxt,
+                                        /* center_lat = */ getParameter(1),
+                                        /* center_long = */ getParameter(2),
+                                        /* scale = */ getParameter(3),
+                                        falseEasting, falseNorthing, nullptr,
+                                        0.0, nullptr, 0.0);
+                                break;
+                            }
+
+                            case PROJECTION_METHOD_KROVAK_OBLIQUE_CONIC_CONFORMAL:
+                            {
+                                conv = proj_create_conversion_krovak(
+                                    pjCtxt,
+                                    /* latitude_projection_centre = */
+                                    getParameter(1),
+                                    /* longitude_of_origin = */ getParameter(2),
+                                    /* colatitude_cone_axis = */
+                                    getParameter(3),
+                                    /* latitude_pseudo_standard_parallel = */
+                                    getParameter(4),
+                                    /* scale_factor_pseudo_standard_parallel = */
+                                    getParameter(5), falseEasting,
+                                    falseNorthing, nullptr, 0.0, nullptr, 0.0);
+                                break;
+                            }
+
+                            case PROJECTION_METHOD_AMERICAN_POLYCONIC:
+                            {
+                                conv =
+                                    proj_create_conversion_american_polyconic(
+                                        pjCtxt,
+                                        /* center_lat = */ getParameter(1),
+                                        /* center_long = */ getParameter(2),
+                                        falseEasting, falseNorthing, nullptr,
+                                        0.0, nullptr, 0.0);
+                                break;
+                            }
+
+                            case PROJECTION_METHOD_ALBERS_EQUAL_AREA:
+                            {
+                                conv = proj_create_conversion_albers_equal_area(
+                                    pjCtxt,
+                                    /* latitude_false_origin = */
+                                    getParameter(1),
+                                    /* longitude_false_origin = */
+                                    getParameter(2),
+                                    /* latitude_first_parallel = */
+                                    getParameter(3),
+                                    /* latitude_second_parallel = */
+                                    getParameter(4), falseEasting,
+                                    falseNorthing, nullptr, 0.0, nullptr, 0.0);
+                                break;
+                            }
+
+                            case PROJECTION_METHOD_LAMBERT_AZIMUTHAL_EQUAL_AREA:
+                            {
+                                conv =
+                                    proj_create_conversion_lambert_azimuthal_equal_area(
+                                        pjCtxt,
+                                        /* latitude_nat_origin = */
+                                        getParameter(1),
+                                        /* longitude_nat_origin = */
+                                        getParameter(2), falseEasting,
+                                        falseNorthing, nullptr, 0.0, nullptr,
+                                        0.0);
+                                break;
+                            }
+
+                            default:
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Cannot establish CRS because "
+                                         "projectionMethod = %d is unhandled",
+                                         nProjectionMethod);
+                                proj_destroy(crs);
+                                return false;
+                            }
+                        }
+
+                        constexpr int HORIZONTAL_CS_EASTING_NORTHING_METRE =
+                            4400;
+                        // constexpr int HORIZONTAL_CS_NORTHING_EASTING_METRE = 4500;
+                        PJ *cartesianCS = proj_create_cartesian_2D_cs(
+                            pjCtxt,
+                            nHorizontalCS ==
+                                    HORIZONTAL_CS_EASTING_NORTHING_METRE
+                                ? PJ_CART2D_EASTING_NORTHING
+                                : PJ_CART2D_NORTHING_EASTING,
+                            nullptr, 0.0);
+
+                        PJ *projCRS = proj_create_projected_crs(
+                            pjCtxt, pszCRSName ? pszCRSName : "unknown", crs,
+                            conv, cartesianCS);
+                        proj_destroy(crs);
+                        crs = projCRS;
+                        proj_destroy(conv);
+                        proj_destroy(cartesianCS);
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Cannot establish CRS because "
+                                 "projectionMethod is missing");
+                        proj_destroy(crs);
+                        return false;
+                    }
+                }
+                else if (nCRSType != CRS_TYPE_GEOGRAPHIC)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Cannot establish CRS because of invalid value "
+                             "for typeOfHorizontalCRS: %d",
+                             nCRSType);
+                    proj_destroy(crs);
+                    return false;
+                }
+
+                const char *pszPROJJSON =
+                    proj_as_projjson(pjCtxt, crs, nullptr);
+                oSRS.SetFromUserInput(pszPROJJSON);
+
+                proj_destroy(crs);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot establish CRS because nameOfHorizontalCRS, "
+                         "typeOfHorizontalCRS, horizontalCS and/or "
+                         "horizontalDatum are missing");
+                return false;
+            }
         }
     }
     else
@@ -126,7 +595,6 @@ bool S100ReadSRS(const GDALGroup *poRootGroup, OGRSpatialReference &oSRS)
             const char *pszAuthCode = poHorizontalDatumValue->ReadAsString();
             if (pszAuthName && pszAuthCode)
             {
-                oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if (oSRS.SetFromUserInput(
                         (std::string(pszAuthName) + ':' + pszAuthCode).c_str(),
                         OGRSpatialReference::
@@ -329,10 +797,10 @@ bool S100GetDimensions(
 /*                       S100ReadVerticalDatum()                        */
 /************************************************************************/
 
-void S100ReadVerticalDatum(GDALDataset *poDS, const GDALGroup *poRootGroup)
+void S100ReadVerticalDatum(GDALMajorObject *poMO, const GDALGroup *poGroup)
 {
-    // https://iho.int/uploads/user/pubs/standards/s-100/S-100_5.0.0_Final_Clean_Web.pdf
-    // Table S100_VerticalAndSoundingDatum page 20
+    // https://iho.int/uploads/user/pubs/standards/s-100/S-100_5.2.0_Final_Clean.pdf
+    // Table 10c-25 - Vertical and sounding datum, page 53
     static const struct
     {
         int nCode;
@@ -371,31 +839,67 @@ void S100ReadVerticalDatum(GDALDataset *poDS, const GDALGroup *poRootGroup)
         {30, "highestAstronomicalTide", "HAT"},
         {44, "balticSeaChartDatum2000", nullptr},
         {46, "internationalGreatLakesDatum2020", nullptr},
+        {47, "seaFloor", nullptr},
+        {48, "seaSurface", nullptr},
+        {49, "hydrographicZero", nullptr},
     };
 
-    auto poVerticalDatum = poRootGroup->GetAttribute("verticalDatum");
+    int nVerticalDatumReference = 1;
+    auto poVerticalDatumReference =
+        poGroup->GetAttribute("verticalDatumReference");
+    if (poVerticalDatumReference &&
+        poVerticalDatumReference->GetDataType().GetClass() == GEDTC_NUMERIC)
+    {
+        nVerticalDatumReference = poVerticalDatumReference->ReadAsInt();
+    }
+
+    auto poVerticalDatum = poGroup->GetAttribute("verticalDatum");
     if (poVerticalDatum &&
         poVerticalDatum->GetDataType().GetClass() == GEDTC_NUMERIC)
     {
-        bool bFound = false;
-        const auto nVal = poVerticalDatum->ReadAsInt();
-        for (const auto &sVerticalDatum : asVerticalDatums)
+        if (nVerticalDatumReference == 1)
         {
-            if (sVerticalDatum.nCode == nVal)
+            bool bFound = false;
+            const auto nVal = poVerticalDatum->ReadAsInt();
+            for (const auto &sVerticalDatum : asVerticalDatums)
             {
-                bFound = true;
-                poDS->GDALDataset::SetMetadataItem("VERTICAL_DATUM_MEANING",
-                                                   sVerticalDatum.pszMeaning);
-                if (sVerticalDatum.pszAbbrev)
-                    poDS->GDALDataset::SetMetadataItem(
-                        "VERTICAL_DATUM_ABBREV", sVerticalDatum.pszAbbrev);
-                break;
+                if (sVerticalDatum.nCode == nVal)
+                {
+                    bFound = true;
+                    poMO->GDALMajorObject::SetMetadataItem(
+                        S100_VERTICAL_DATUM_MEANING, sVerticalDatum.pszMeaning);
+                    if (sVerticalDatum.pszAbbrev)
+                        poMO->GDALMajorObject::SetMetadataItem(
+                            S100_VERTICAL_DATUM_ABBREV,
+                            sVerticalDatum.pszAbbrev);
+                    break;
+                }
+            }
+            if (!bFound)
+            {
+                poMO->GDALMajorObject::SetMetadataItem("verticalDatum",
+                                                       CPLSPrintf("%d", nVal));
             }
         }
-        if (!bFound)
+        else if (nVerticalDatumReference == 2)
         {
-            poDS->GDALDataset::SetMetadataItem("verticalDatum",
-                                               CPLSPrintf("%d", nVal));
+            const auto nVal = poVerticalDatum->ReadAsInt();
+            PJ *datum = proj_create_from_database(
+                OSRGetProjTLSContext(), "EPSG", CPLSPrintf("%d", nVal),
+                PJ_CATEGORY_DATUM, false, nullptr);
+            poMO->GDALMajorObject::SetMetadataItem("VERTICAL_DATUM_EPSG_CODE",
+                                                   CPLSPrintf("%d", nVal));
+            if (datum)
+            {
+                poMO->GDALMajorObject::SetMetadataItem(S100_VERTICAL_DATUM_NAME,
+                                                       proj_get_name(datum));
+                proj_destroy(datum);
+            }
+        }
+        else
+        {
+            CPLDebug("S100", "Unhandled verticalDatumReference = %d",
+                     nVerticalDatumReference);
         }
     }
 }
@@ -458,7 +962,18 @@ std::string S100ReadMetadata(GDALDataset *poDS, const std::string &osFilename,
                  osName != "westBoundLongitude" && osName != "extentTypeCode" &&
                  osName != "verticalCS" && osName != "verticalCoordinateBase" &&
                  osName != "verticalDatumReference" &&
-                 osName != "verticalDatum")
+                 osName != "verticalDatum" && osName != "nameOfHorizontalCRS" &&
+                 osName != "typeOfHorizontalCRS" && osName != "horizontalCS" &&
+                 osName != "horizontalDatum" &&
+                 osName != "nameOfHorizontalDatum" &&
+                 osName != "primeMeridian" && osName != "spheroid" &&
+                 osName != "projectionMethod" &&
+                 osName != "projectionParameter1" &&
+                 osName != "projectionParameter2" &&
+                 osName != "projectionParameter3" &&
+                 osName != "projectionParameter4" &&
+                 osName != "projectionParameter5" &&
+                 osName != "falseNorthing" && osName != "falseEasting")
         {
             const char *pszVal = poAttr->ReadAsString();
             if (pszVal && pszVal[0])
