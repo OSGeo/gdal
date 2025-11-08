@@ -481,7 +481,7 @@ if __name__ == '__main__':
     # This might not be the case if using a regular (non-Debian patched) Python
     # installation or setuptools (cf https://github.com/OSGeo/gdal/issues/11636)
     execute_process(
-        COMMAND env GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY=yes ${Python_EXECUTABLE_CMAKE} setup.py install --help
+        COMMAND env GDAL_PYTHON_CHECK_SOURCE_FILES=no GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY=yes ${Python_EXECUTABLE_CMAKE} setup.py install --help
         OUTPUT_VARIABLE SETUP_INSTALL_HELP
         OUTPUT_STRIP_TRAILING_WHITESPACE
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
