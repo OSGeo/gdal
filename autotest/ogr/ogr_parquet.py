@@ -4639,3 +4639,34 @@ def test_ogr_parquet_update_with_creation_options_explicit(tmp_path):
         assert f["str"] == "bar"
         assert f["int"] == 456
         assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"
+
+
+###############################################################################
+
+
+def test_ogr_parquet_arrow_stream_list_of_struct_ignored_fields():
+    pytest.importorskip("pyarrow")
+
+    ds = ogr.Open("data/parquet/test_list_of_struct.parquet")
+    lyr = ds.GetLayer(0)
+    lyr.SetIgnoredFields(["OGR_GEOMETRY"])
+    stream = lyr.GetArrowStreamAsPyArrow()
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    assert len(batches[0].field("col_flat")) == 3
+    assert len(batches[0].field("col_nested")) == 3
+    assert batches[0].field("col_flat")[0].as_py() == 0
+    assert batches[0].field("col_flat")[1].as_py() == 1
+    assert batches[0].field("col_flat")[2].as_py() == 2
+    assert batches[0].field("col_nested")[0].as_py() == [
+        {"a": 1, "b": 2},
+        {"a": 1, "b": 2},
+    ]
+    assert batches[0].field("col_nested")[1].as_py() == [
+        {"a": 1, "b": 2},
+        {"a": 1, "b": 2},
+    ]
+    assert batches[0].field("col_nested")[2].as_py() == [
+        {"a": 1, "b": 2},
+        {"a": 1, "b": 2},
+    ]
