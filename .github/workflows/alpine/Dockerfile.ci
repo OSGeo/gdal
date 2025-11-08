@@ -52,14 +52,6 @@ RUN apk add \
     poppler-dev \
     proj-dev \
     proj-util \
-    py3-pyarrow \
-    py3-pyarrow-pyc \
-    py3-numpy \
-    py3-numpy-dev \
-    py3-numpy-tests \
-    py3-pip \
-    py3-setuptools \
-    python3-dev \
     qhull-dev \
     sfcgal-dev \
     snappy-dev \
@@ -69,8 +61,30 @@ RUN apk add \
     unixodbc-dev \
     xerces-c-dev \
     xz-dev \
+    wget \
     zlib-dev \
     zstd-dev
+
+#    py3-pyarrow \
+#    py3-pyarrow-pyc \
+#    py3-numpy \
+#    py3-numpy-dev \
+#    py3-numpy-tests \
+#    py3-pip \
+#    py3-setuptools \
+#    python3-dev \
+
+# Build a free-standing/no-gil Python
+RUN wget https://www.python.org/ftp/python/3.14.0/Python-3.14.0.tar.xz && \
+    tar xJvf Python-3.14.0.tar.xz && \
+    cd Python-3.14.0 && \
+    ./configure --enable-shared --disable-gil --prefix=/usr && \
+    make -j$(nproc) && \
+    make -j$(nproc) install && \
+    cd .. \
+    rm -rf Python-3.14.0 Python-3.14.0.tar.xz
+
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages numpy setuptools pyarrow
 
 COPY requirements.txt /tmp/
 RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages -U -r /tmp/requirements.txt

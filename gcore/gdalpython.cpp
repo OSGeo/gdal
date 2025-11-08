@@ -110,7 +110,9 @@ int (*PyBuffer_FillInfo)(Py_buffer *view, PyObject *obj, void *buf, size_t len,
                          int readonly, int infoflags) = nullptr;
 PyObject *(*PyMemoryView_FromBuffer)(Py_buffer *view) = nullptr;
 
-PyObject *(*PyModule_Create2)(struct PyModuleDef *, int) = nullptr;
+PyObject *(*PyCFunction_New)(const PyMethodDef *ml, PyObject *self) = nullptr;
+int (*PyModule_AddObject)(PyObject *mod, const char *name,
+                          PyObject *value) = nullptr;
 }  // namespace GDALPy
 
 /* MinGW32 might define HAVE_DLFCN_H, so skip the unix implementation */
@@ -713,7 +715,8 @@ static bool LoadPythonAPI()
     LOAD(libHandle, PyBytes_FromObject);
     LOAD(libHandle, PyBytes_FromStringAndSize);
 
-    LOAD(libHandle, PyModule_Create2);
+    LOAD(libHandle, PyCFunction_New);
+    LOAD(libHandle, PyModule_AddObject);
 
     LOAD_NOCHECK_WITH_NAME(libHandle, PyUnicode_FromString,
                            "PyUnicode_FromString");
