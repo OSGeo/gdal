@@ -1507,9 +1507,13 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                             ? json_object_new_int(static_cast<int>(dfNoData))
                             : gdal_json_object_new_double_significant_digits(
                                   dfNoData, nSignificantDigits);
-                    json_object *poStacNoDataValue = nullptr;
-                    json_object_deep_copy(poNoDataValue, &poStacNoDataValue,
-                                          nullptr);
+                    json_object *poStacNoDataValue =
+                        (GDALDataTypeIsInteger(eDT) && dfNoData >= INT_MIN &&
+                         dfNoData <= INT_MAX &&
+                         static_cast<int>(dfNoData) == dfNoData)
+                            ? json_object_new_int(static_cast<int>(dfNoData))
+                            : gdal_json_object_new_double_significant_digits(
+                                  dfNoData, nSignificantDigits);
                     json_object_object_add(poStacRasterBand, "nodata",
                                            poStacNoDataValue);
                     json_object_object_add(poBand, "noDataValue",
