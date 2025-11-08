@@ -4787,7 +4787,7 @@ def ContourOptions(
 
         if layerCreationOptions is not None:
             _addOptions(new_options, '-lco', layerCreationOptions)
-              
+
         if interval is not None:
             new_options += ['-i', str(interval)]
         if fixedLevels is not None:
@@ -6203,9 +6203,11 @@ class VSIFile(BytesIO):
         self._binary = "b" in mode
         self._encoding = encoding
 
+        self._closed = True
+        self._fp = None
+
         self._fp = VSIFOpenExL(self._path, self._mode, True, options)
         if self._fp is None:
-            self._closed = True
             raise OSError(VSIGetLastErrorMsg())
 
         self._closed = False
