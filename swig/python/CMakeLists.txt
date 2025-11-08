@@ -387,7 +387,7 @@ if __name__ == '__main__':
         ALL
         COMMAND ${Python_EXECUTABLE_CMAKE} -m docstub run
                 ${CMAKE_CURRENT_BINARY_DIR}/osgeo
-                --config ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml
+                --config ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml --quiet
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         DEPENDS ${GDAL_PYTHON_PYSOURCES}
     )
