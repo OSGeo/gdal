@@ -410,9 +410,10 @@ if HAVE_NUMPY:
     sources.append('extensions/gdal_array_wrap.cpp')
     ext_modules.append(array_module)
 
-for filename in sources:
-    if not os.path.exists(filename):
-        raise FileNotFoundError(f"Missing source file {filename}")
+if os.environ.get("GDAL_PYTHON_CHECK_SOURCE_FILES", "YES") == "YES":
+    for filename in sources:
+        if not os.path.exists(filename):
+            raise FileNotFoundError(f"Missing source file {filename}")
 
 utils_package_root = 'gdal-utils'   # path for gdal-utils sources
 packages = find_packages(utils_package_root)
