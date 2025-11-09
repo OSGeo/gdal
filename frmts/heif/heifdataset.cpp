@@ -457,7 +457,7 @@ void GDALHEIFDataset::ReadMetadata()
 
             const bool bLittleEndianTIFF = data[nTIFFFileOffset] == 'I' &&
                                            data[nTIFFFileOffset + 1] == 'I';
-            const bool bLSBPlatform = CPL_IS_LSB != 0;
+            constexpr bool bLSBPlatform = CPL_IS_LSB != 0;
             const bool bSwabflag = bLittleEndianTIFF != bLSBPlatform;
 
             int nTIFFDirOff;
@@ -868,21 +868,14 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
     auto err = heif_image_handle_decode_image_tile(
         poGDS->m_hImageHandle, &hImage, heif_colorspace_RGB,
-        nBands == 3
-            ? (eDataType == GDT_UInt16 ?
-#if CPL_IS_LSB
-                                       heif_chroma_interleaved_RRGGBB_LE
-#else
-                                       heif_chroma_interleaved_RRGGBB_BE
-#endif
-                                       : heif_chroma_interleaved_RGB)
-            : (eDataType == GDT_UInt16 ?
-#if CPL_IS_LSB
-                                       heif_chroma_interleaved_RRGGBBAA_LE
-#else
-                                       heif_chroma_interleaved_RRGGBBAA_BE
-#endif
-                                       : heif_chroma_interleaved_RGBA),
+        nBands == 3 ? (eDataType == GDT_UInt16
+                           ? (CPL_IS_LSB ? heif_chroma_interleaved_RRGGBB_LE
+                                         : heif_chroma_interleaved_RRGGBB_BE)
+                           : heif_chroma_interleaved_RGB)
+                    : (eDataType == GDT_UInt16
+                           ? (CPL_IS_LSB ? heif_chroma_interleaved_RRGGBBAA_LE
+                                         : heif_chroma_interleaved_RRGGBBAA_BE)
+                           : heif_chroma_interleaved_RGBA),
         decode_options, nBlockXOff, nBlockYOff);
 
     if (err.code != heif_error_Ok)
@@ -945,24 +938,17 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
             nBands == 3
                 ? (
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
-                      eDataType == GDT_UInt16 ?
-#if CPL_IS_LSB
-                                              heif_chroma_interleaved_RRGGBB_LE
-#else
-                                              heif_chroma_interleaved_RRGGBB_BE
+                      eDataType == GDT_UInt16
+                          ? (CPL_IS_LSB ? heif_chroma_interleaved_RRGGBB_LE
+                                        : heif_chroma_interleaved_RRGGBB_BE)
+                          :
 #endif
-                                              :
-#endif
-                                              heif_chroma_interleaved_RGB)
+                          heif_chroma_interleaved_RGB)
                 : (
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
                       eDataType == GDT_UInt16
-                          ?
-#if CPL_IS_LSB
-                          heif_chroma_interleaved_RRGGBBAA_LE
-#else
-                          heif_chroma_interleaved_RRGGBBAA_BE
-#endif
+                          ? (CPL_IS_LSB ? heif_chroma_interleaved_RRGGBBAA_LE
+                                        : heif_chroma_interleaved_RRGGBBAA_BE)
                           :
 #endif
                           heif_chroma_interleaved_RGBA),

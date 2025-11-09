@@ -37,11 +37,7 @@
 #include "netcdfuffd.h"
 #include "netcdf_cf_constants.h"
 
-#if CPL_IS_LSB
-#define PLATFORM_HEADER 1
-#else
-#define PLATFORM_HEADER 0
-#endif
+constexpr uint8_t PLATFORM_HEADER = CPL_IS_LSB;
 
 /************************************************************************/
 /* ==================================================================== */

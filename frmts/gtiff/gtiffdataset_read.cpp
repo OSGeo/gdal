@@ -3532,11 +3532,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
     GByte *pabyBuffer = static_cast<GByte *>(
         VSIGetMemFileBuffer(osTmpFilename, &nDataLength, FALSE));
     const bool bLittleEndian = (pabyBuffer[0] == 'I');
-#if CPL_IS_LSB
-    const bool bSwap = !bLittleEndian;
-#else
-    const bool bSwap = bLittleEndian;
-#endif
+    const bool bSwap = CPL_IS_LSB ^ bLittleEndian;
     const bool bBigTIFF = pabyBuffer[2] == 43 || pabyBuffer[3] == 43;
     vsi_l_offset nMaxOffset = 0;
     if (bBigTIFF)

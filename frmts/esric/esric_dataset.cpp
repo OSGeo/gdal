@@ -135,11 +135,11 @@ struct Bundle
             fh.reset();
         }
 
-#if !CPL_IS_LSB
-        for (auto &v : index)
-            CPL_LSBPTR64(&v);
-        return;
-#endif
+        if constexpr (!CPL_IS_LSB)
+        {
+            for (auto &v : index)
+                CPL_LSBPTR64(&v);
+        }
     }
 
     std::vector<GUInt64> index{};
