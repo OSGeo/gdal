@@ -322,6 +322,9 @@ bool OGRParquetWriterLayer::SetOptions(
     m_bWriteBBoxStruct =
         pszWriteCoveringBBox == nullptr || CPLTestBool(pszWriteCoveringBBox);
 
+    m_oBBoxStructFieldName =
+        CSLFetchNameValueDef(papszOptions, "COVERING_BBOX_NAME", "");
+
     if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "SORT_BY_BBOX", "NO")))
     {
         const std::string osTmpGPKG(std::string(m_poDataset->GetDescription()) +

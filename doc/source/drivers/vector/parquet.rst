@@ -152,6 +152,13 @@ The following layer creation options are supported:
      and :lco:`WRITE_COVERING_BBOX` is set or let to its default ``AUTO`` value,
      no covering bounding box columns is written.
 
+- .. lco:: COVERING_BBOX_NAME
+     :choices: <string>
+     :since: 3.13
+
+     Name of the bounding box of geometries Only used if :lco:`WRITE_COVERING_BBOX` is set.
+     If not set, it defaults to the geometry column name, suffixed with ``_bbox``.
+
 - .. lco:: USE_PARQUET_GEO_TYPES
      :choices: YES, NO, ONLY
      :default: NO

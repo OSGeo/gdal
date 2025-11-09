@@ -958,6 +958,16 @@ void OGRParquetDriver::InitMetadata()
         CPLCreateXMLElementAndValue(psOption, "Value", "NO");
     }
 
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "COVERING_BBOX_NAME");
+        CPLAddXMLAttributeAndValue(psOption, "type", "string");
+        CPLAddXMLAttributeAndValue(psOption, "description",
+                                   "Name of the bounding box of "
+                                   "geometries. If not same, "
+                                   "equals to {'GEOMETRY_NAME}_bbox'");
+    }
+
 #if ARROW_VERSION_MAJOR >= 21
     {
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");

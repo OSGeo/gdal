@@ -3887,7 +3887,9 @@ def test_ogr_parquet_sort_by_bbox__empty_layer(tmp_vsimem):
     ],
 )
 @pytest.mark.parametrize("check_with_pyarrow", [True, False])
-@pytest.mark.parametrize("covering_bbox", [True, False])
+@pytest.mark.parametrize(
+    "covering_bbox,covering_bbox_name", [(True, None), (True, "bbox"), (False, None)]
+)
 @gdaltest.enable_exceptions()
 def test_ogr_parquet_geoarrow(
     tmp_vsimem,
@@ -3895,6 +3897,7 @@ def test_ogr_parquet_geoarrow(
     wkt,
     check_with_pyarrow,
     covering_bbox,
+    covering_bbox_name,
     with_arrow_dataset_or_not,
 ):
 
@@ -3908,13 +3911,16 @@ def test_ogr_parquet_geoarrow(
 
     ds = ogr.GetDriverByName("Parquet").CreateDataSource(filename)
 
+    options = {
+        "GEOMETRY_ENCODING": "GEOARROW",
+        "WRITE_COVERING_BBOX": "YES" if covering_bbox else "NO",
+    }
+    if covering_bbox_name:
+        options["COVERING_BBOX_NAME"] = covering_bbox_name
     lyr = ds.CreateLayer(
         "test",
         geom_type=geom.GetGeometryType(),
-        options=[
-            "GEOMETRY_ENCODING=GEOARROW",
-            "WRITE_COVERING_BBOX=" + ("YES" if covering_bbox else "NO"),
-        ],
+        options=options,
     )
     lyr.CreateField(ogr.FieldDefn("foo"))
 
@@ -3983,6 +3989,14 @@ def test_ogr_parquet_geoarrow(
     ds = ogr.Open(filename_to_open)
     lyr = ds.GetLayer(0)
     check(lyr)
+
+    if covering_bbox and not with_arrow_dataset_or_not:
+        geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+        assert geo is not None
+        j = json.loads(geo)
+        assert j["columns"]["geometry"]["covering"]["bbox"]["xmin"][0] == (
+            covering_bbox_name if covering_bbox_name else "geometry_bbox"
+        )
 
     if (
         covering_bbox
