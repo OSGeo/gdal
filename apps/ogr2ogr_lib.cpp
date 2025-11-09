@@ -87,46 +87,6 @@ typedef enum
 #define TZ_OFFSET_INVALID INT_MIN
 
 /************************************************************************/
-/*                              CopyableGCPs                            */
-/************************************************************************/
-
-namespace gdal::ogr2ogr_lib
-{
-struct CopyableGCPs
-{
-    /*! size of the list pasGCPs */
-    int nGCPCount = 0;
-
-    /*! list of ground control points to be added */
-    GDAL_GCP *pasGCPs = nullptr;
-
-    CopyableGCPs() = default;
-
-    CopyableGCPs(const CopyableGCPs &other)
-    {
-        nGCPCount = other.nGCPCount;
-        if (other.nGCPCount)
-            pasGCPs = GDALDuplicateGCPs(other.nGCPCount, other.pasGCPs);
-        else
-            pasGCPs = nullptr;
-    }
-
-    ~CopyableGCPs()
-    {
-        if (pasGCPs)
-        {
-            GDALDeinitGCPs(nGCPCount, pasGCPs);
-            CPLFree(pasGCPs);
-        }
-    }
-
-    CopyableGCPs &operator=(const CopyableGCPs &) = delete;
-};
-}  // namespace gdal::ogr2ogr_lib
-
-using namespace gdal::ogr2ogr_lib;
-
-/************************************************************************/
 /*                        GDALVectorTranslateOptions                    */
 /************************************************************************/
 
@@ -413,7 +373,7 @@ struct GDALVectorTranslateOptions
     std::string osSpatSRSDef{};
 
     /*! list of ground control points to be added */
-    CopyableGCPs oGCPs{};
+    std::vector<gdal::GCP> asGCPs{};
 
     /*! order of polynomial used for warping (1 to 3). The default is to select
        a polynomial order based on the number of GCPs */
@@ -2089,7 +2049,7 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
         CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-zfield");
         return nullptr;
     }
-    if (psOptions->oGCPs.nGCPCount)
+    if (!psOptions->asGCPs.empty())
     {
         CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-gcp");
         return nullptr;
@@ -3069,11 +3029,11 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     /*      destination coordinate system.                                  */
     /* -------------------------------------------------------------------- */
     std::unique_ptr<GCPCoordTransformation> poGCPCoordTrans;
-    if (psOptions->oGCPs.nGCPCount > 0)
+    if (!psOptions->asGCPs.empty())
     {
         poGCPCoordTrans = std::make_unique<GCPCoordTransformation>(
-            psOptions->oGCPs.nGCPCount, psOptions->oGCPs.pasGCPs,
-            psOptions->nTransformOrder,
+            static_cast<int>(psOptions->asGCPs.size()),
+            gdal::GCP::c_ptr(psOptions->asGCPs), psOptions->nTransformOrder,
             poSourceSRS ? poSourceSRS : oOutputSRSHolder.get());
         if (!(poGCPCoordTrans->IsValid()))
         {
@@ -4292,7 +4252,7 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
          CPLTestBool(CPLGetConfigOption("OGR2OGR_USE_ARROW_API", "NO"))) &&
         !psOptions->bUpsert && !psOptions->bSkipFailures &&
         !psOptions->poClipSrc && !psOptions->poClipDst &&
-        psOptions->oGCPs.nGCPCount == 0 && !psOptions->bWrapDateline &&
+        psOptions->asGCPs.empty() && !psOptions->bWrapDateline &&
         !m_papszSelFields && !m_bAddMissingFields &&
         m_eGType == GEOMTYPE_UNCHANGED && psOptions->eGeomOp == GEOMOP_NONE &&
         m_eGeomTypeConversion == GTC_DEFAULT && m_nCoordDim < 0 &&
@@ -8539,21 +8499,13 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
             char *endptr = nullptr;
             /* -gcp pixel line easting northing [elev] */
 
-            psOptions->oGCPs.nGCPCount++;
-            psOptions->oGCPs.pasGCPs = static_cast<GDAL_GCP *>(
-                CPLRealloc(psOptions->oGCPs.pasGCPs,
-                           sizeof(GDAL_GCP) * psOptions->oGCPs.nGCPCount));
-            GDALInitGCPs(1, psOptions->oGCPs.pasGCPs +
-                                psOptions->oGCPs.nGCPCount - 1);
+            psOptions->asGCPs.resize(psOptions->asGCPs.size() + 1);
+            auto &sGCP = psOptions->asGCPs.back();
 
-            psOptions->oGCPs.pasGCPs[psOptions->oGCPs.nGCPCount - 1]
-                .dfGCPPixel = CPLAtof(papszArgv[++i]);
-            psOptions->oGCPs.pasGCPs[psOptions->oGCPs.nGCPCount - 1].dfGCPLine =
-                CPLAtof(papszArgv[++i]);
-            psOptions->oGCPs.pasGCPs[psOptions->oGCPs.nGCPCount - 1].dfGCPX =
-                CPLAtof(papszArgv[++i]);
-            psOptions->oGCPs.pasGCPs[psOptions->oGCPs.nGCPCount - 1].dfGCPY =
-                CPLAtof(papszArgv[++i]);
+            sGCP.Pixel() = CPLAtof(papszArgv[++i]);
+            sGCP.Line() = CPLAtof(papszArgv[++i]);
+            sGCP.X() = CPLAtof(papszArgv[++i]);
+            sGCP.Y() = CPLAtof(papszArgv[++i]);
             if (papszArgv[i + 1] != nullptr &&
                 (CPLStrtod(papszArgv[i + 1], &endptr) != 0.0 ||
                  papszArgv[i + 1][0] == '0'))
@@ -8562,8 +8514,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                  * filename */
                 /* looking like a number (see ticket #863) */
                 if (endptr && *endptr == 0)
-                    psOptions->oGCPs.pasGCPs[psOptions->oGCPs.nGCPCount - 1]
-                        .dfGCPZ = CPLAtof(papszArgv[++i]);
+                    sGCP.Z() = CPLAtof(papszArgv[++i]);
             }
 
             /* should set id and info? */
