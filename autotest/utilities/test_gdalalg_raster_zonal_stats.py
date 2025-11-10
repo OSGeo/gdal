@@ -851,13 +851,37 @@ def test_gdalalg_raster_zonal_stats_srs_mismatch(
         assert zonal.Run()
 
 
-def test_gdalalg_raster_zonal_stats_polygon_zone_outside_raster(zonal, strategy):
+@pytest.mark.parametrize("xoff", (-200, 0, 200))
+@pytest.mark.parametrize("yoff", (-200, 0, 200))
+def test_gdalalg_raster_zonal_stats_polygon_zone_outside_raster(
+    zonal, strategy, xoff, yoff
+):
+
+    src_ds = gdal.Open("../gcore/data/byte.tif")
+
+    xmin, xmax, ymin, ymax = src_ds.GetExtent()
+
+    if xoff == 0 and yoff == 0:
+        # polygon would be inside the raster
+        return
+
+    if xoff > 0:
+        x0 = xmax + xoff
+    else:
+        x0 = xmin + xoff
+
+    if yoff > 0:
+        y0 = ymax + yoff
+    else:
+        y0 = ymin + yoff
+
+    # square polygon the size of a single pixel
+    wkt = f"POLYGON (({x0} {y0}, {x0 + 60} {y0}, {x0 + 60} {y0 + 60}, {x0} {y0 + 60}, {x0} {y0}))"
+
     zonal["input"] = "../gcore/data/byte.tif"
-    zonal["zones"] = gdaltest.wkt_ds(
-        ["POLYGON ((2 2, 8 2, 8 8, 2 2))", "POLYGON EMPTY"]
-    )
+    zonal["zones"] = gdaltest.wkt_ds([wkt, "POLYGON EMPTY"])
     zonal["strategy"] = strategy
-    zonal["stat"] = ["sum", "mode"]
+    zonal["stat"] = ["sum", "mode", "count"]
     zonal["output"] = ""
     zonal["output-format"] = "MEM"
 
@@ -868,9 +892,11 @@ def test_gdalalg_raster_zonal_stats_polygon_zone_outside_raster(zonal, strategy)
     results = [f for f in out_ds.GetLayer(0)]
 
     assert len(results) == 2
+    assert results[0]["count"] == 0
     assert results[0]["sum"] == 0
     assert results[0]["mode"] is None
 
+    assert results[0]["count"] == 0
     assert results[1]["sum"] == 0
     assert results[1]["mode"] is None
 
