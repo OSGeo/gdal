@@ -289,8 +289,8 @@ static void TrimWindowToRaster(GDALRasterWindow &window,
         window.nYOff = 0;
         window.nYSize = 0;
     }
-    window.nXSize = std::min(window.nXSize, nXSize - window.nXOff);
-    window.nYSize = std::min(window.nYSize, nYSize - window.nYOff);
+    window.nXSize = std::max(0, std::min(window.nXSize, nXSize - window.nXOff));
+    window.nYSize = std::max(0, std::min(window.nYSize, nYSize - window.nYOff));
 }
 
 static void CalculateCellCenters(const GDALRasterWindow &window,
