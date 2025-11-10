@@ -1133,3 +1133,68 @@ def test_gdalalg_raster_zonal_stats_null_geometry(zonal, strategy):
 
     assert results[0]["sum"] == 0
     assert results[0]["mode"] is None
+
+
+def test_gdalalg_raster_zonal_stats_polygon_huge_extent(zonal, strategy):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 20, 20)
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
+    zonal["input"] = "../gcore/data/byte.tif"
+    v = 1e11
+    zonal["zones"] = gdaltest.wkt_ds(
+        [f"POLYGON ((-{v} -{v},-{v} {v},{v} {v},{v} -{v},-{v} -{v}))"]
+    )
+    zonal["strategy"] = strategy
+    zonal["stat"] = ["count"]
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+
+    assert zonal.Run()
+
+    out_ds = zonal.Output()
+
+    results = [f for f in out_ds.GetLayer(0)]
+
+    assert len(results) == 1
+
+    assert results[0]["count"] == 400
+
+
+@pytest.mark.require_geos
+@pytest.mark.slow()
+def test_gdalalg_raster_zonal_stats_polygon_huge_extent_huge_raster(zonal):
+
+    huge_raster = gdal.Open(
+        """<VRTDataset rasterXSize="2147483647" rasterYSize="1">
+  <GeoTransform>0,1,0,0,0,1</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">../gcore/data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="1" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="1" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+
+    zonal["input"] = huge_raster
+    v = 1e11
+    zonal["zones"] = gdaltest.wkt_ds(
+        [f"POLYGON ((-{v} -{v},-{v} {v},{v} {v},{v} -{v},-{v} -{v}))"]
+    )
+    zonal["strategy"] = "raster"
+    zonal["stat"] = ["count"]
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+
+    assert zonal.Run()
+
+    out_ds = zonal.Output()
+
+    results = [f for f in out_ds.GetLayer(0)]
+
+    assert len(results) == 1
+
+    assert results[0]["count"] == 2147483647.0
