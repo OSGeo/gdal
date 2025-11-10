@@ -5855,11 +5855,23 @@ bool GDALGeoTransform::Apply(const OGREnvelope &env,
     Apply(env.MinX, env.MinY, &dfLeft, &dfBottom);
     Apply(env.MaxX, env.MaxY, &dfRight, &dfTop);
 
-    dfTop = std::floor(dfTop);
-    dfBottom = std::ceil(dfBottom);
-    dfLeft = std::floor(dfLeft);
-    dfRight = std::ceil(dfRight);
+    if (dfLeft > dfRight)
+        std::swap(dfLeft, dfRight);
+    if (dfTop > dfBottom)
+        std::swap(dfTop, dfBottom);
 
+    constexpr double EPSILON = 1e-5;
+    dfTop = std::floor(dfTop + EPSILON);
+    dfBottom = std::ceil(dfBottom - EPSILON);
+    dfLeft = std::floor(dfLeft + EPSILON);
+    dfRight = std::ceil(dfRight - EPSILON);
+
+    if (!(dfLeft >= INT_MIN && dfLeft <= INT_MAX &&
+          dfRight - dfLeft <= INT_MAX && dfTop >= INT_MIN && dfTop <= INT_MAX &&
+          dfBottom - dfLeft <= INT_MAX))
+    {
+        return false;
+    }
     window.nXOff = static_cast<int>(dfLeft);
     window.nXSize = static_cast<int>(dfRight - dfLeft);
     window.nYOff = static_cast<int>(dfTop);
@@ -5883,6 +5895,11 @@ bool GDALGeoTransform::Apply(const GDALRasterWindow &window,
 
     Apply(dfLeft, dfBottom, &env.MinX, &env.MinY);
     Apply(dfRight, dfTop, &env.MaxX, &env.MaxY);
+
+    if (env.MaxX < env.MinX)
+        std::swap(env.MinX, env.MaxX);
+    if (env.MaxY < env.MinY)
+        std::swap(env.MinY, env.MaxY);
 
     return true;
 }
