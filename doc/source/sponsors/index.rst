@@ -349,3 +349,10 @@ Related Resources
    :hidden:
 
    faq
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    Nield
+    Spreadshirt
