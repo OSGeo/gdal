@@ -65,7 +65,6 @@ The scripts provide examples of both raster and vector usage of the GDAL Python 
       this script tries to match features between the datasources, to decide whether to create a new feature, or to update an existing one.
     - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/ogr_build_junction_table.py`: Create junction tables for layers coming from GML datasources that
       reference other objects in _href fields
-    - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/ogr_dispatch.py`: Dispatch features into layers according to the value of some fields or the geometry type.
     - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/rel.py`: Script to produce a shaded relief image from the elevation data. (similar functionality in gdaldem now)
     - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/tigerpoly.py`: Script demonstrating how to assemble polygons from arcs in TIGER/Line datasource,
       writing results to a newly created shapefile.
@@ -111,6 +110,7 @@ The following scripts have been replaced by equivalent functionality in GDAL, an
     - `gdal_cp.py`: Copy a virtual file. Equivalent functionality available in :ref:`gdal_dataset_copy`.
     - `gdal_vrtmerge.py`: Similar to gdal_merge, but produces a VRT file. Equivalent functionality available in :ref:`gdal_raster_mosaic`.
     - `gdal2grd.py`: Script to write out ASCII GRD rasters (used in Golden Software Surfer). from any source supported by GDAL. Equivalent functionality available in the :ref:`raster.gsag` driver.
+    - `ogr_dispatch.py`: Dispatch features into layers according to the value of some fields or the geometry type. Equivalent functionality available in :ref:`gdal_vector_partition`.
 
 .. note::
 
