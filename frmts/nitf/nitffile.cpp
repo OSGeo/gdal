@@ -2403,13 +2403,12 @@ int NITFReconcileAttachments(NITFFile *psFile)
 /*                        NITFFindValFromEnd()                          */
 /************************************************************************/
 
-static const char *NITFFindValFromEnd(char **papszMD, int nMDSize,
+static const char *NITFFindValFromEnd(CSLConstList papszMD, int nMDSize,
                                       const char *pszVar,
-                                      CPL_UNUSED const char *pszDefault)
+                                      const char * /*pszDefault*/)
 {
-    int nVarLen = static_cast<int>(strlen(pszVar));
-    int nIter = nMDSize - 1;
-    for (; nIter >= 0; nIter--)
+    const size_t nVarLen = strlen(pszVar);
+    for (int nIter = nMDSize - 1; nIter >= 0; nIter--)
     {
         if (strncmp(papszMD[nIter], pszVar, nVarLen) == 0 &&
             papszMD[nIter][nVarLen] == '=')
@@ -2422,13 +2421,13 @@ static const char *NITFFindValFromEnd(char **papszMD, int nMDSize,
 /*                  NITFFindValRecursive()                              */
 /************************************************************************/
 
-static const char *NITFFindValRecursive(char **papszMD, int nMDSize,
+static const char *NITFFindValRecursive(CSLConstList papszMD, int nMDSize,
                                         const char *pszMDPrefix,
                                         const char *pszVar)
 {
-    char *pszMDItemName = CPLStrdup(CPLSPrintf("%s%s", pszMDPrefix, pszVar));
+    std::string osMDItemName = std::string(pszMDPrefix).append(pszVar);
     const char *pszCondVal =
-        NITFFindValFromEnd(papszMD, nMDSize, pszMDItemName, nullptr);
+        NITFFindValFromEnd(papszMD, nMDSize, osMDItemName.c_str(), nullptr);
 
     if (pszCondVal == nullptr)
     {
@@ -2437,32 +2436,29 @@ static const char *NITFFindValRecursive(char **papszMD, int nMDSize,
         /* If the condition variable is not found at this level, */
         /* try to research it at upper levels by shortening on _ */
         /* separators */
-        char *pszMDPrefixShortened = CPLStrdup(pszMDPrefix);
-        char *pszLastUnderscore = strrchr(pszMDPrefixShortened, '_');
-        if (pszLastUnderscore)
+        std::string osMDPrefixShortened(pszMDPrefix);
+        auto pos = osMDPrefixShortened.rfind('_');
+        if (pos != std::string::npos)
         {
-            *pszLastUnderscore = 0;
-            pszLastUnderscore = strrchr(pszMDPrefixShortened, '_');
+            osMDPrefixShortened.resize(pos);
+            pos = osMDPrefixShortened.rfind('_');
         }
-        while (pszLastUnderscore)
+        while (pos != std::string::npos)
         {
-            pszLastUnderscore[1] = 0;
-            CPLFree(pszMDItemName);
-            pszMDItemName =
-                CPLStrdup(CPLSPrintf("%s%s", pszMDPrefixShortened, pszVar));
-            pszCondVal =
-                NITFFindValFromEnd(papszMD, nMDSize, pszMDItemName, nullptr);
+            osMDPrefixShortened.resize(pos);
+            osMDItemName = osMDPrefixShortened;
+            osMDItemName += '_';
+            osMDItemName += pszVar;
+            pszCondVal = NITFFindValFromEnd(papszMD, nMDSize,
+                                            osMDItemName.c_str(), nullptr);
             if (pszCondVal)
                 break;
-            *pszLastUnderscore = 0;
-            pszLastUnderscore = strrchr(pszMDPrefixShortened, '_');
+            pos = osMDPrefixShortened.rfind('_');
         }
-        CPLFree(pszMDPrefixShortened);
 
         if (!pszCondVal)
             pszCondVal = NITFFindValFromEnd(papszMD, nMDSize, pszVar, nullptr);
     }
-    CPLFree(pszMDItemName);
 
     return pszCondVal;
 }
