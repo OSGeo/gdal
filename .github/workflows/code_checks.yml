@@ -81,6 +81,7 @@ jobs:
         run: |
           git clone https://github.com/danmar/cppcheck
           cd cppcheck
+          git checkout 2af570d02db4577ee7da98c8257d6ccc37f36095
           mkdir build
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Release
