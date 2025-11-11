@@ -124,33 +124,24 @@ def generate_tif(comb_val):
     return content
 
 
-nVals = 1
-for level, tag in enumerate(tags):
-    len_possible_vals = len(tag[2])
-    tags[level].append(len_possible_vals)
-    nVals = nVals * len_possible_vals
-itern = 0
-while True:
-    itern += 1
-    comb_val = random.randrange(0, nVals)
-    content = generate_tif(comb_val)
+def run_test():
+    nVals = 1
+    for level, tag in enumerate(tags):
+        len_possible_vals = len(tag[2])
+        tags[level].append(len_possible_vals)
+        nVals = nVals * len_possible_vals
+    itern = 0
+    while True:
+        itern += 1
+        comb_val = random.randrange(0, nVals)
+        content = generate_tif(comb_val)
 
-    # f = open('test.tif', 'wb')
-    # f.write(content)
-    # f.close()
+        # Create in-memory file
+        gdal.FileFromMemBuffer("/vsimem/test.tif", content)
 
-    # print(struct.unpack('B' * len(content), content))
+        print("iter = %d, comb_val_init = %d" % (itern, comb_val))
+        gdal.Open("/vsimem/test.tif")
 
-    # Create in-memory file
-    gdal.FileFromMemBuffer("/vsimem/test.tif", content)
 
-    print("iter = %d, comb_val_init = %d" % (itern, comb_val))
-    ds = gdal.Open("/vsimem/test.tif")
-    # if ds is not None and ds.RasterCount == 1:
-    #    (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
-    #    if blockxsize == ds.RasterXSize:
-    #        ds.GetRasterBand(1).Checksum()
-    ds = None
-
-    # Release memory associated to the in-memory file
-    # gdal.Unlink('/vsimem/test.tif')
+if __name__ == "__main__":
+    run_test()
