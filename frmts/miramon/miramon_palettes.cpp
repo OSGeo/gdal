@@ -100,12 +100,14 @@ MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
         }
         else
         {
-            // Predefined color table
             if (IsCategorical())
-                m_nRealNPaletteColors = m_nNPaletteColors =
-                    static_cast<int>(m_ThematicPalette.size());
-            else
-                m_nRealNPaletteColors = 256;  //!!!!
+            {
+                // Predefined color table: m_ThematicPalette
+                if (CE_None != GetPaletteColors_Automatic())
+                    return;
+            }
+            else  // No palette associated
+                return;
         }
         m_bIsValid = true;
         return;
@@ -215,6 +217,46 @@ CPLErr MMRPalettes::GetPaletteColors_DBF_Indexes(
     if (nClauSimbol == oColorTable.nFields || nRIndex == oColorTable.nFields ||
         nGIndex == oColorTable.nFields || nBIndex == oColorTable.nFields)
         return CE_Failure;
+
+    return CE_None;
+}
+
+// Colors in a PAL, P25 or P65 format files
+// Updates nNPaletteColors
+CPLErr MMRPalettes::GetPaletteColors_Automatic()
+{
+    m_nRealNPaletteColors = m_nNPaletteColors =
+        static_cast<int>(m_ThematicPalette.size());
+
+    for (int iColumn = 0; iColumn < 4; iColumn++)
+    {
+        try
+        {
+            m_aadfPaletteColors[iColumn].resize(m_nNPaletteColors, 0);
+        }
+        catch (std::bad_alloc &e)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+            return CE_Failure;
+        }
+    }
+
+    for (int nIndex = 0; nIndex < m_nRealNPaletteColors; nIndex++)
+    {
+        // Index of the color
+
+        // RED
+        m_aadfPaletteColors[0][nIndex] = m_ThematicPalette[nIndex].c1;
+
+        // GREEN
+        m_aadfPaletteColors[1][nIndex] = m_ThematicPalette[nIndex].c2;
+
+        // BLUE
+        m_aadfPaletteColors[2][nIndex] = m_ThematicPalette[nIndex].c3;
+
+        // ALPHA
+        m_aadfPaletteColors[3][nIndex] = m_ThematicPalette[nIndex].c4;
+    }
 
     return CE_None;
 }
