@@ -301,3 +301,20 @@ Post-commit testing
 ^^^^^^^^^^^^^^^^^^^
 
 A weekly static analysis is run by `Coverity <https://scan.coverity.com>`__. Developers/maintainers can request access on the `GDAL project page <https://scan.coverity.com/projects/749>`__.
+
+Running the test suite from official source and test archives
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Archives for the source release code and test suite are distinct to keep the
+one with the source code as small as possible. To be able to run the test suite,
+you need to perform the following steps (given for a Unix-like environment):
+
+1. Download archives :file:`gdal-X.Y.Z.tar.gzv` and :file:`gdalautotest-X.Y.Z.tar.gz` in a directory
+2. Go to that directory and extract the source code: ``tar xvzf gdal-X.Y.Z.tar.gz``
+3. Go to the :file:`gdal-X.Y.Z` directory: ``cd gdal-X.Y.Z``
+4. Extract the test suite: ``unzip ../gdalautotest-X.Y.Z.tar.gz``
+5. Rename the :file:`gdalautotest-X.Y.Z` directory to :file:`autotest`: ``mv gdalautotest-X.Y.Z autotest``
+6. Create a build directory: ``mkdir build``
+7. Configure: ``cmake .. -DCMAKE_BUILD_TYPE=Release``. This will generate a :file:`autotest` directory in the build directory with the needed :file:`pytest.ini` and :file:`conftest.py`.
+8. Build: ``cmake --build . --config Release -j$(nproc)``
+9. Run the test suite: ``ctest -j$(nproc)``
