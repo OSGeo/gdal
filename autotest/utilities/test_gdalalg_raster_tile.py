@@ -1066,9 +1066,12 @@ def test_gdalalg_raster_tile_spawn(tmp_path):
         last_pct[0] = pct
         return True
 
+    got_subprocess_debug_msg = [False]
     got_spurious = [False]
 
     def my_handler(errorClass, errno, msg):
+        if "gdal_raster_tile: subprocess 0: Generating tiles" in msg:
+            got_subprocess_debug_msg[0] = True
         if "Spurious" in msg:
             got_spurious[0] = True
         return
@@ -1096,6 +1099,7 @@ def test_gdalalg_raster_tile_spawn(tmp_path):
     assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) == 108
     assert gdal.VSIStatL(tmp_path / "log.txt") is not None
     assert got_spurious[0]
+    assert got_subprocess_debug_msg[0]
 
 
 @pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
