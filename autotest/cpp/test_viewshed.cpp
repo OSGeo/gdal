@@ -69,7 +69,7 @@ DatasetPtr runViewshed(const int8_t *in, int xlen, int ylen,
     return v.output();
 }
 
-DatasetPtr runViewshed(const float *in, const float *sd, int xlen, int ylen,
+DatasetPtr runViewshed(const double *in, const double *sd, int xlen, int ylen,
                        const Options &opts)
 {
     Viewshed v(opts);
@@ -82,12 +82,12 @@ DatasetPtr runViewshed(const float *in, const float *sd, int xlen, int ylen,
     GDALRasterBand *band = dataset->GetRasterBand(1);
     EXPECT_TRUE(band);
     CPLErr err = band->RasterIO(GF_Write, 0, 0, xlen, ylen, (void *)in, xlen,
-                                ylen, GDT_Float32, 0, 0, nullptr);
+                                ylen, GDT_Float64, 0, 0, nullptr);
     EXPECT_EQ(err, CE_None);
     GDALRasterBand *sdBand = dataset->GetRasterBand(2);
     EXPECT_TRUE(sdBand);
     err = sdBand->RasterIO(GF_Write, 0, 0, xlen, ylen, (void *)sd, xlen, ylen,
-                           GDT_Float32, 0, 0, nullptr);
+                           GDT_Float64, 0, 0, nullptr);
     EXPECT_EQ(err, CE_None);
 
     EXPECT_TRUE(v.run(band, sdBand));
@@ -791,12 +791,12 @@ TEST(Viewshed, sd)
         // clang-format off
         const int xlen = 8;
         const int ylen = 1;
-        std::array<float, xlen * ylen> in
+        std::array<double, xlen * ylen> in
         {
             0, 1, 1, 3.1, 1.5, 2.7, 3.7, 7.5
         };
 
-        std::array<float, xlen * ylen> sd
+        std::array<double, xlen * ylen> sd
         {
             1, 100, .1, 100, .1, .1, 100, .1
         };
@@ -829,12 +829,12 @@ TEST(Viewshed, sd)
         // clang-format off
         const int xlen = 8;
         const int ylen = 1;
-        std::array<float, xlen * ylen> in
+        std::array<double, xlen * ylen> in
         {
             7.5, 3.7, 2.7, 1.5, 3.1, 1, 1, 0
         };
 
-        std::array<float, xlen * ylen> sd
+        std::array<double, xlen * ylen> sd
         {
             .1, 100, .1, .1, 100, .1, 100, 1
         };
@@ -873,12 +873,12 @@ TEST(Viewshed, sd_up_down)
         // clang-format off
         const int xlen = 1;
         const int ylen = 8;
-        std::array<float, xlen * ylen> in
+        std::array<double, xlen * ylen> in
         {
             0, 1, 1, 3.1, 1.5, 2.7, 3.7, 7.5
         };
 
-        std::array<float, xlen * ylen> sd
+        std::array<double, xlen * ylen> sd
         {
             1, 100, .1, 100, .1, .1, 100, .1
         };
@@ -912,12 +912,12 @@ TEST(Viewshed, sd_up_down)
         // clang-format off
         const int xlen = 1;
         const int ylen = 8;
-        std::array<float, xlen * ylen> in
+        std::array<double, xlen * ylen> in
         {
             7.5, 3.7, 2.7, 1.5, 3.1, 1, 1, 0
         };
 
-        std::array<float, xlen * ylen> sd
+        std::array<double, xlen * ylen> sd
         {
             .1, 100, .1, .1, 100, .1, 100, 1
         };
@@ -955,13 +955,13 @@ TEST(Viewshed, sd_2)
         // clang-format off
         const int xlen = 8;
         const int ylen = 2;
-        std::array<float, xlen * ylen> in
+        std::array<double, xlen * ylen> in
         {
             0, 1,   1,   3.1, 1.5, 2.7, 3.7, 7.5,  // Row 0
             0, 1.1, 1.4, 3.1, 1.5, 2.7, 3.7, 7.5   // Row 1
         };
 
-        std::array<float, xlen * ylen> sd
+        std::array<double, xlen * ylen> sd
         {
             1, 100, .1, 100, .1, .1, 100, .1,  // Row 0
             1, 100, .1, 100, .1, .1, 100, .1   // Row 1

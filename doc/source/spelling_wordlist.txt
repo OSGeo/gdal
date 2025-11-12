@@ -747,6 +747,7 @@ dstType
 dt
 dT
 dtype
+DummyBand
 DUnits
 dValue
 dve
