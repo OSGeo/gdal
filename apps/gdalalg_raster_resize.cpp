@@ -29,6 +29,16 @@ GDALRasterResizeAlgorithm::GDALRasterResizeAlgorithm(bool standaloneStep)
     : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
+    AddArg("resolution", 0, _("Target resolution (in destination CRS units)"),
+           &m_resolution)
+        .SetMinCount(2)
+        .SetMaxCount(2)
+        .SetMinValueExcluded(0)
+        .SetRepeatedArgAllowed(false)
+        .SetDisplayHintAboutRepetition(false)
+        .SetMetaVar("<xres>,<yres>")
+        .SetMutualExclusionGroup("resolution-size");
+
     AddArg("size", 0,
            _("Target size in pixels (or percentage if using '%' suffix)"),
            &m_size)
@@ -39,6 +49,7 @@ GDALRasterResizeAlgorithm::GDALRasterResizeAlgorithm(bool standaloneStep)
         .SetRepeatedArgAllowed(false)
         .SetDisplayHintAboutRepetition(false)
         .SetMetaVar("<width[%]>,<height[%]>")
+        .SetMutualExclusionGroup("resolution-size")
         .AddValidationAction(
             [this]()
             {
@@ -101,7 +112,12 @@ bool GDALRasterResizeAlgorithm::RunStep(GDALPipelineStepRunContext &)
         aosOptions.AddString(m_size[0]);
         aosOptions.AddString(m_size[1]);
     }
-
+    if (!m_resolution.empty())
+    {
+        aosOptions.AddString("-tr");
+        aosOptions.AddString(CPLSPrintf("%.17g", m_resolution[0]));
+        aosOptions.AddString(CPLSPrintf("%.17g", m_resolution[1]));
+    }
     if (!m_resampling.empty())
     {
         aosOptions.AddString("-r");

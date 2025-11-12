@@ -25,6 +25,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import os
 
 import gdaltest
 import pytest
@@ -567,3 +568,30 @@ def test_gdal_subdataset_bogus(bogus):
     """Test it doesn't crash"""
 
     gdal.GetSubdatasetInfo(bogus)
+
+
+###############################################################################
+# Test reading dataset with lat/long fields with nodata values
+
+
+def test_hdf4_gcp_nodata():
+
+    if gdaltest.hdf4_drv is None:
+        pytest.skip()
+
+    # Cf https://github.com/OSGeo/gdal/issues/13207
+    gdaltest.download_or_skip(
+        "https://github.com/user-attachments/files/22880884/MOD04_3K.NRT.ForGDALTest.zip",
+        "MOD04_3K.NRT.ForGDALTest.zip",
+    )
+
+    if not os.path.exists("tmp/cache/MOD04_3K.A2025284.0010.061.NRT.hdf"):
+        gdaltest.unzip("tmp/cache", "tmp/cache/MOD04_3K.NRT.ForGDALTest.zip")
+
+    ds = gdal.Open(
+        'HDF4_EOS:EOS_SWATH:"tmp/cache/MOD04_3K.A2025284.0010.061.NRT.hdf":mod04:BowTie_Flag'
+    )
+    gcp_count = ds.GetGCPCount()
+    ds = None
+
+    assert gcp_count == 72, "did not get expected gcp count"

@@ -1866,3 +1866,23 @@ def test_vsifile_move(tmp_path, tmp_vsimem):
     assert gdal.VSIStatL(tmp_vsimem / "dir") is None
     assert gdal.VSIStatL(tmp_path / "dir") is not None
     assert gdal.VSIStatL(tmp_path / "dir" / "myfile").size == 3
+
+
+###############################################################################
+# Test that Rename() can rename on top of an existing file
+
+
+@pytest.mark.parametrize(
+    "source,dest", [("src.bin", "dst.bin"), ("srcé.bin", "dsté.bin")]
+)
+def test_vsifile_rename_on_top_of_existing_file(tmp_path, source, dest):
+
+    with gdal.VSIFile(tmp_path / dest, "wb") as f:
+        f.write(b"a")
+
+    with gdal.VSIFile(tmp_path / source, "wb") as f:
+        f.write(b"bc")
+
+    assert gdal.Rename(tmp_path / source, tmp_path / dest) == 0
+
+    assert gdal.VSIStatL(tmp_path / dest).size == 2

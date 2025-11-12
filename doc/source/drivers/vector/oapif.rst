@@ -3,8 +3,6 @@
 OGC API - Features
 ==================
 
-.. versionadded:: 2.3
-
 .. shortname:: OAPIF
 
 .. build_dependencies:: libcurl

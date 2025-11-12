@@ -107,7 +107,7 @@ The following entity types are supported:
 
    -  .. config:: DXF_MERGE_BLOCK_GEOMETRIES
          :choices: TRUE, FALSE
-         :default: FALSE
+         :default: TRUE
 
          To avoid merging blocks into a
          compound geometry the :config:`DXF_MERGE_BLOCK_GEOMETRIES` config option may
@@ -141,7 +141,7 @@ The following entity types are supported:
          tolerance used when looking for the next component to add to the
          hatch boundary.
 
--  3DFACE, SOLID, (GDAL >= 2.3.0) TRACE: Translated as POLYGON, except
+-  3DFACE, SOLID, TRACE: Translated as POLYGON, except
    for SOLID and TRACE entities with only one distinct vertex
    (translated as POINT) or two distinct vertices (translated as
    LINESTRING).
@@ -202,20 +202,19 @@ different as described here.
 -  A new layer will be available called "blocks". It will contain one or
    more features for each BLOCK defined in the file. In addition to the
    usual fields, they will also have a Block field indicating what block
-   they are part of. (Note, in GDAL 2.2.x and earlier this field was
-   called BlockName.)
--  (GDAL >= 2.3.0) ATTDEF entities in the blocks layer will have an
+   they are part of.
+-  ATTDEF entities in the blocks layer will have an
    AttributeTag field, giving the tag of the ATTDEF entity.
 -  The entities layer will have several new fields:
 
    -  BlockName: The name of the referenced block.
    -  BlockScale: The X, Y, and Z scale factors.
    -  BlockAngle: The angle of the block in degrees.
-   -  BlockOCSNormal (GDAL >= 2.3.0): The unit normal vector of the
+   -  BlockOCSNormal: The unit normal vector of the
       object coordinate system (OCS) of the INSERT entity.
-   -  BlockOCSCoords (GDAL >= 2.3.0): The OCS coordinates of the
+   -  BlockOCSCoords: The OCS coordinates of the
       insertion point.
-   -  BlockAttributes (GDAL >= 2.3.0): The text content of attributes
+   -  BlockAttributes: The text content of attributes
       associated with this block. Each entry in this string list
       contains an attribute tag, followed by a space, followed by the
       text for that attribute (which may be empty).
@@ -455,8 +454,7 @@ conditions apply:
 -  A "blocks" layer may be created, and it must be created before the
    entities layer.
 -  The entities in the blocks layer should have the Block field
-   populated. (Note, in GDAL 2.2.x and earlier this attribute was called
-   BlockName.)
+   populated.
 -  Objects to be written as INSERTs in the entities layer should have a
    POINT geometry, and the BlockName field set. You may also set
    BlockAngle, BlockScale, BlockOCSNormal and BlockOCSCoords (see above

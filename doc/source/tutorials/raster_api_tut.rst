@@ -15,6 +15,9 @@ Once the drivers are registered, the application should call the free standing :
 
    .. code-tab:: c++
 
+      // Note: since GDAL >= 3.12, "gdal_raster_cpp.h" can also be used
+      // or finer grained include files such as "gdal_drivermanager.h",
+      // "gdal_dataset.h" and "gdal_rasterband.h".
       #include "gdal_priv.h"
 
       #include <errno.h>

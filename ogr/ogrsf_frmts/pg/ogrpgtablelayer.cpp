@@ -2123,7 +2123,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
                      "that's perhaps the reason for the failure. "
                      "If so, this can happen if you reuse the same feature "
                      "object for sequential insertions. "
-                     "Indeed, since GDAL 1.8.0, the FID of an inserted feature "
+                     "The FID of an inserted feature "
                      "is got from the server, so it is not a good idea"
                      "to reuse it afterwards... All in all, try unsetting the "
                      "FID with SetFID(-1) before calling CreateFeature()");

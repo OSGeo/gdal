@@ -14,14 +14,14 @@ read/creation/update access to ISIS3 formatted imagery data.
 
 ISIS3 files often have the extension .cub, sometimes with an associated
 .lbl (label) file. When a .lbl file exists it should be used as the
-dataset name rather than the .cub file. Since GDAL 2.2, the driver also
+dataset name rather than the .cub file. The driver also
 supports imagery stored in a separate GeoTIFF file.
 
 In addition to support for most ISIS3 imagery configurations, this
 driver also reads georeferencing and coordinate system information as
 well as selected other header metadata.
 
-Starting with GDAL 2.2, a mask band is attached to each source band. The
+A mask band is attached to each source band. The
 value of this mask band is 0 when the pixel value is the NULL value or
 one of the low/high on-instrument/processed saturation value, or 255
 when the pixel value is valid.
@@ -45,8 +45,7 @@ Driver capabilities
 Metadata
 --------
 
-Starting with GDAL 2.2, the ISIS3 label can be retrieved as
-JSON-serialized content in the json:ISIS3 metadata domain.
+The ISIS3 label can be retrieved as JSON-serialized content in the json:ISIS3 metadata domain.
 
 For example:
 
@@ -159,7 +158,7 @@ interface in the "json:ISIS3" metadata domain.
 Creation support
 ----------------
 
-Starting with GDAL 2.2, the ISIS3 driver supports updating imagery of
+The ISIS3 driver supports updating imagery of
 existing datasets, creating new datasets through the CreateCopy() and
 Create() interfaces.
 

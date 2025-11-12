@@ -92,3 +92,13 @@ def test_gdalalg_raster_convert_failed_append(tmp_vsimem):
         match="Subdataset creation not supported for driver HFA",
     ):
         convert.ParseRunAndFinalize(["data/utmsmall.tif", out_filename, "--append"])
+
+
+def test_gdalalg_raster_convert_comma_in_filename(tmp_vsimem):
+
+    gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "a,b.tif", 1, 1)
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    convert = get_convert_alg()
+    assert convert.ParseRunAndFinalize([tmp_vsimem / "a,b.tif", out_filename])

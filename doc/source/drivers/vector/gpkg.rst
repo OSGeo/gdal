@@ -60,22 +60,24 @@ The driver supports OGR attribute filters, and users are expected to
 provide filters in the SQLite dialect, as they will be executed directly
 against the database.
 
-SQL SELECT statements passed to ExecuteSQL() are
-also executed directly against the database. If Spatialite is used, a
-recent version (4.2.0) is needed and use of explicit cast operators
-AsGPB() is required to transform GeoPackage geometries to Spatialite
-geometries (the reverse conversion from Spatialite geometries is
-automatically done by the GPKG driver). It is also possible to use with
-any Spatialite version, but in a slower way, by specifying the
-"INDIRECT_SQLITE" dialect. In which case, GeoPackage geometries
-automatically appear as Spatialite geometries after translation by OGR.
+SQL SELECT statements passed to ExecuteSQL() are also executed directly against the database.
 
-Starting with GDAL 2.2, the "DROP TABLE layer_name" and "ALTER TABLE
+If the SQLite dialect is used with the SpatiaLite functions, an explicit cast
+operator AsGPB() is required to transform SpatiaLite geometries into GeoPackage
+geometries.
+
+::
+
+   ogrinfo -update points.gpkg -sql "INSERT INTO points (geom) values (AsGPB(ST_GeomFromText('POINT(3 54)', 4326)))"
+
+The reverse conversion from GPKG geometries into SpatiaLite geometries
+is automatically done.
+
+The "DROP TABLE layer_name" and "ALTER TABLE
 layer_name RENAME TO new_layer" statements can be used. They will update
 GeoPackage system tables.
 
-Starting with GDAL 2.2, the
-"HasSpatialIndex('table_name','geom_col_name')" statement can be used
+The "HasSpatialIndex('table_name','geom_col_name')" statement can be used
 for checking if the table has spatial index on the named geometry
 column.
 
@@ -144,16 +146,14 @@ are also available.
 Link with Spatialite
 ~~~~~~~~~~~~~~~~~~~~
 
-If it has been compiled against Spatialite 4.2
-or later, it is also possible to use Spatialite SQL functions. Explicit
-transformation from GPKG geometry binary encoding to Spatialite geometry
-binary encoding must be done.
+If GDAL has been compiled against Spatialite, it is also possible to use
+Spatialite SQL functions. Transformation from GPKG geometry binary to Spatialite geometry
+binary encoding is done implicitly
 
 ::
 
-   ogrinfo poly.gpkg -sql "SELECT ST_Buffer(CastAutomagic(geom),5) FROM poly"
+   ogrinfo poly.gpkg -sql "SELECT ST_Buffer(geom,5) FROM poly"
 
-Starting with Spatialite 4.3, CastAutomagic is no longer needed.
 
 Note that due to the loose typing mechanism of SQLite, if a geometry expression
 returns a NULL value for the first row, this will generally cause OGR not to
@@ -364,9 +364,7 @@ The following layer creation options are available:
 -  .. lco:: GEOMETRY_NAME
       :default: geom
 
-      Column to use for the geometry column. Default to
-      "geom". Note: This option was called GEOMETRY_COLUMN in releases before
-      GDAL 2
+      Column to use for the geometry column. Default to "geom".
 
 -  .. lco:: GEOMETRY_NULLABLE
       :choices: YES, NO
@@ -455,19 +453,12 @@ The following layer creation options are available:
       :since: 2.2
 
       How to register non spatial tables. Defaults to
-      GPKG_ATTRIBUTES in GDAL 2.2 or later (behavior in previous version
-      was equivalent to OGR_ASPATIAL). Starting with GeoPackage 1.2, non
+      GPKG_ATTRIBUTES. Starting with GeoPackage 1.2, non
       spatial tables are part of the specification. They are recorded with
-      data_type="attributes" in the gpkg_contents table. This is only
-      compatible of GDAL 2.2 or later.
+      data_type="attributes" in the gpkg_contents table.
       It is also possible to use the NOT_REGISTERED
       option, in which case the non spatial table is not registered at all
       in any GeoPackage system tables.
-      Priorly, in OGR 2.0 and 2.1, the "aspatial" extension had been developed for
-      similar purposes, so if selecting OGR_ASPATIAL, non spatial tables will be
-      recorded with data_type="aspatial" and the "aspatial" extension was declared in the
-      gpkg_extensions table. Starting with GDAL 3.3, OGR_ASPATIAL is no longer
-      available on creation.
 
 -  .. lco:: DATETIME_PRECISION
       :choices: AUTO, MILLISECOND, SECOND, MINUTE
@@ -560,10 +551,10 @@ support non-spatial tables. This was added in GeoPackage 1.2 as the
 
 The driver allows creating and reading non-spatial tables with the :ref:`vector.geopackage_aspatial`.
 
-Starting with GDAL 2.2, the driver will also, by default, list non
+The driver will also, by default, list non
 spatial tables that are not registered through the gdal_aspatial
 extension, and support the GeoPackage 1.2 "attributes" data type as
-well. Starting with GDAL 2.2, non spatial tables are by default created
+well. Non spatial tables are by default created
 following the GeoPackage 1.2 "attributes" data type (can be controlled
 with the :lco:`ASPATIAL_VARIANT` layer creation option).
 
@@ -574,7 +565,7 @@ Views can be created and recognized as valid spatial layers if a
 corresponding record is inserted into the gpkg_contents and
 gpkg_geometry_columns table.
 
-Starting with GDAL 2.2, in the case of the columns in the SELECT clause
+In the case of the columns in the SELECT clause
 of the view acts a integer primary key, then it can be recognized by OGR
 as the FID column of the view, provided it is renamed as OGC_FID.
 Selecting a feature id from a source table without renaming will not be
@@ -592,7 +583,7 @@ For example:
 
 This requires GDAL to be compiled with the SQLITE_HAS_COLUMN_METADATA
 option and SQLite3 with the SQLITE_ENABLE_COLUMN_METADATA option.
-Starting with GDAL 2.3, this can be easily verified if the
+This can be easily verified if the
 SQLITE_HAS_COLUMN_METADATA=YES driver metadata item is declared (for
 example with "ogrinfo --format GPKG").
 
@@ -658,7 +649,7 @@ Level of support of GeoPackage Extensions
      - Supported by GDAL?
    * - `Non-Linear Geometry Types <http://www.geopackage.org/guidance/extensions/nonlinear_geometry_types.html>`__
      - Yes
-     - Yes, since GDAL 2.1
+     - Yes
    * - `RTree Spatial Indexes <http://www.geopackage.org/guidance/extensions/rtree_spatial_indexes.html>`__
      - Yes
      - Yes
@@ -670,10 +661,10 @@ Level of support of GeoPackage Extensions
      - Yes, since GDAL 3.3 (Geopackage constraints exposed as field domains)
    * - `WKT for Coordinate Reference Systems <http://www.geopackage.org/guidance/extensions/wkt_for_crs.md>`__ (WKT v2)
      - Yes
-     -  Partially, since GDAL 2.2. GDAL can read databases using this extension, but cannot interpret a SRS entry that has only a WKT v2 entry.
+     - Yes
    * - :ref:`vector.geopackage_aspatial`
      - No
-     - Yes. Deprecated in GDAL 2.2 for the *attributes* official data_type
+     - Yes. Deprecated, in favor of the *attributes* official data_type
    * - :ref:`vector.gpkg_spatialite_computed_geom_column`
      - No
      - Yes, starting with GDAL 3.7.1

@@ -34,7 +34,6 @@
  * @param pszNameIn the name of the new field.
  * @param eGeomTypeIn the type of the new field.
  *
- * @since GDAL 1.11
  */
 
 OGRGeomFieldDefn::OGRGeomFieldDefn(const char *pszNameIn,
@@ -55,7 +54,6 @@ OGRGeomFieldDefn::OGRGeomFieldDefn(const char *pszNameIn,
  *
  * @param poPrototype the geometry field definition to clone.
  *
- * @since GDAL 1.11
  */
 
 OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn *poPrototype)
@@ -86,7 +84,6 @@ OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn *poPrototype)
  * @param eType the type of the new field definition.
  * @return handle to the new field definition.
  *
- * @since GDAL 1.11
  */
 
 OGRGeomFieldDefnH OGR_GFld_Create(const char *pszName, OGRwkbGeometryType eType)
@@ -181,7 +178,6 @@ OGRGeomFieldDefn &OGRGeomFieldDefn::operator=(const OGRGeomFieldDefn &oOther)
  *
  * @param hDefn handle to the geometry field definition to destroy.
  *
- * @since GDAL 1.11
  */
 
 void OGR_GFld_Destroy(OGRGeomFieldDefnH hDefn)
@@ -209,7 +205,6 @@ void OGR_GFld_Destroy(OGRGeomFieldDefnH hDefn)
  *
  * @param pszNameIn the new name to apply.
  *
- * @since GDAL 1.11
  */
 
 void OGRGeomFieldDefn::SetName(const char *pszNameIn)
@@ -246,7 +241,6 @@ void OGRGeomFieldDefn::SetName(const char *pszNameIn)
  * new name to.
  * @param pszName the new name to apply.
  *
- * @since GDAL 1.11
  */
 
 void OGR_GFld_SetName(OGRGeomFieldDefnH hDefn, const char *pszName)
@@ -271,7 +265,6 @@ void OGR_GFld_SetName(OGRGeomFieldDefnH hDefn, const char *pszName)
  * @return pointer to an internal name string that should not be freed or
  * modified.
  *
- * @since GDAL 1.11
  */
 
 /************************************************************************/
@@ -285,7 +278,6 @@ void OGR_GFld_SetName(OGRGeomFieldDefnH hDefn, const char *pszName)
  * @param hDefn handle to the geometry field definition.
  * @return the name of the geometry field definition.
  *
- * @since GDAL 1.11
  */
 
 const char *OGR_GFld_GetNameRef(OGRGeomFieldDefnH hDefn)
@@ -314,7 +306,6 @@ const char *OGR_GFld_GetNameRef(OGRGeomFieldDefnH hDefn)
  *
  * @return field geometry type.
  *
- * @since GDAL 1.11
  */
 
 /************************************************************************/
@@ -328,7 +319,6 @@ const char *OGR_GFld_GetNameRef(OGRGeomFieldDefnH hDefn)
  * @param hDefn handle to the geometry field definition to get type from.
  * @return field geometry type.
  *
- * @since GDAL 1.11
  */
 
 OGRwkbGeometryType OGR_GFld_GetType(OGRGeomFieldDefnH hDefn)
@@ -368,7 +358,6 @@ OGRwkbGeometryType OGR_GFld_GetType(OGRGeomFieldDefnH hDefn)
  *
  * @param eTypeIn the new field geometry type.
  *
- * @since GDAL 1.11
  */
 
 void OGRGeomFieldDefn::SetType(OGRwkbGeometryType eTypeIn)
@@ -402,7 +391,6 @@ void OGRGeomFieldDefn::SetType(OGRwkbGeometryType eTypeIn)
  * @param hDefn handle to the geometry field definition to set type to.
  * @param eType the new field geometry type.
  *
- * @since GDAL 1.11
  */
 
 void OGR_GFld_SetType(OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType)
@@ -426,7 +414,6 @@ void OGR_GFld_SetType(OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType)
  *
  * @return ignore state
  *
- * @since GDAL 1.11
  */
 
 /************************************************************************/
@@ -441,7 +428,6 @@ void OGR_GFld_SetType(OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType)
  * @param hDefn handle to the geometry field definition
  * @return ignore state
  *
- * @since GDAL 1.11
  */
 
 int OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn)
@@ -468,7 +454,6 @@ int OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn)
  *
  * @param ignore ignore state
  *
- * @since GDAL 1.11
  */
 
 /************************************************************************/
@@ -487,7 +472,6 @@ int OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn)
  * @param hDefn handle to the geometry field definition
  * @param ignore ignore state
  *
- * @since GDAL 1.11
  */
 
 void OGR_GFld_SetIgnored(OGRGeomFieldDefnH hDefn, int ignore)
@@ -507,7 +491,6 @@ void OGR_GFld_SetIgnored(OGRGeomFieldDefnH hDefn, int ignore)
  *
  * @return field spatial reference system.
  *
- * @since GDAL 1.11
  */
 
 const OGRSpatialReference *OGRGeomFieldDefn::GetSpatialRef() const
@@ -530,7 +513,6 @@ const OGRSpatialReference *OGRGeomFieldDefn::GetSpatialRef() const
  * @return a reference to the field spatial reference system.
  * It should not be modified.
  *
- * @since GDAL 1.11
  */
 
 OGRSpatialReferenceH OGR_GFld_GetSpatialRef(OGRGeomFieldDefnH hDefn)
@@ -566,7 +548,6 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef(OGRGeomFieldDefnH hDefn)
  *
  * @param poSRSIn the new SRS to apply.
  *
- * @since GDAL 1.11
  */
 void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
 {
@@ -615,7 +596,6 @@ void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
  * @param hDefn handle to the geometry field definition
  * @param hSRS the new SRS to apply.
  *
- * @since GDAL 1.11
  */
 
 void OGR_GFld_SetSpatialRef(OGRGeomFieldDefnH hDefn, OGRSpatialReferenceH hSRS)
@@ -636,7 +616,6 @@ void OGR_GFld_SetSpatialRef(OGRGeomFieldDefnH hDefn, OGRSpatialReferenceH hSRS)
  * @param poOtherFieldDefn the other field definition to compare to.
  * @return TRUE if the geometry field definition is identical to the other one.
  *
- * @since GDAL 1.11
  */
 
 int OGRGeomFieldDefn::IsSame(const OGRGeomFieldDefn *poOtherFieldDefn) const
@@ -679,7 +658,6 @@ int OGRGeomFieldDefn::IsSame(const OGRGeomFieldDefn *poOtherFieldDefn) const
  * This method is the same as the C function OGR_GFld_IsNullable().
  *
  * @return TRUE if the field is authorized to be null.
- * @since GDAL 2.0
  */
 
 /************************************************************************/
@@ -708,7 +686,6 @@ int OGRGeomFieldDefn::IsSame(const OGRGeomFieldDefn *poOtherFieldDefn) const
  *
  * @param hDefn handle to the field definition
  * @return TRUE if the field is authorized to be null.
- * @since GDAL 2.0
  */
 
 int OGR_GFld_IsNullable(OGRGeomFieldDefnH hDefn)
@@ -740,7 +717,6 @@ int OGR_GFld_IsNullable(OGRGeomFieldDefnH hDefn)
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
  * @param bNullableIn FALSE if the field must have a not-null constraint.
- * @since GDAL 2.0
  */
 void OGRGeomFieldDefn::SetNullable(int bNullableIn)
 {
@@ -771,7 +747,6 @@ void OGRGeomFieldDefn::SetNullable(int bNullableIn)
  *
  * @param hDefn handle to the field definition
  * @param bNullableIn FALSE if the field must have a not-null constraint.
- * @since GDAL 2.0
  */
 
 void OGR_GFld_SetNullable(OGRGeomFieldDefnH hDefn, int bNullableIn)

@@ -68,7 +68,7 @@ unless :option:`-strict` is used.
 
 Starting with GDAL 3.12, a function (e.g., ``min``, ``mean``, ``median``) can
 be specified (:option:`-pixel-function`) to calculate pixel values from
-overlapping inputs. If no function is specified, or in earlier versions, 
+overlapping inputs. If no function is specified, or in earlier versions,
 the order of the input list is used to determine priority.
 Files that are listed at the end are the ones
 from which the content will be fetched. Note that nodata will be taken into account
@@ -219,7 +219,7 @@ changed in later versions.
     option.
 
     .. versionadded:: 3.12
-    
+
 .. option:: -allow_projection_difference
 
     When this option is specified, the utility will create a VRT even if the input datasets do not have
@@ -238,8 +238,6 @@ changed in later versions.
 .. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format-specific)
-
-    .. versionadded:: 2.2
 
 .. option:: -co <NAME>=<VALUE>
 

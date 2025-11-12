@@ -39,6 +39,8 @@ class CPL_DLL OGRWarpedLayer final : public OGRLayerDecorator,
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
     int m_iGeomField = 0;
 
+    OGRGeometryFactory::TransformWithOptionsCache m_transformCacheForward{};
+    OGRGeometryFactory::TransformWithOptionsCache m_transformCacheReverse{};
     OGRCoordinateTransformation *m_poCT = nullptr;
     OGRCoordinateTransformation *m_poReversedCT = nullptr; /* may be NULL */
     OGRSpatialReference *m_poSRS = nullptr;

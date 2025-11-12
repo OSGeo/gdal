@@ -116,7 +116,7 @@ static void AddEdgeToRing(OGRLinearRing *poRing, OGRLineString *poLine,
  * @param dfTolerance tolerance into which two arcs are considered
  * close enough to be joined.
  * @param peErr OGRERR_NONE on success, or OGRERR_FAILURE on failure.
- * @return a handle to the new geometry, a polygon.
+ * @return a handle to the new geometry, a polygon or multipolygon.
  *
  */
 
@@ -166,7 +166,7 @@ OGRGeometryH OGRBuildPolygonFromEdges(OGRGeometryH hLines,
 
     bool bSuccess = true;
     OGRGeometryCollection *poLines = poGeom->toGeometryCollection();
-    std::vector<OGRLinearRing *> apoRings;
+    std::vector<OGRGeometry *> apoPolys;
 
     /* -------------------------------------------------------------------- */
     /*      Setup array of line markers indicating if they have been        */
@@ -280,7 +280,7 @@ OGRGeometryH OGRBuildPolygonFromEdges(OGRGeometryH hLines,
             CPLDebug("OGR",
                      "Failed to close ring %d.\n"
                      "End Points are: (%.8f,%.7f) and (%.7f,%.7f)",
-                     static_cast<int>(apoRings.size()), poRing->getX(0),
+                     static_cast<int>(apoPolys.size()), poRing->getX(0),
                      poRing->getY(0), poRing->getX(poRing->getNumPoints() - 1),
                      poRing->getY(poRing->getNumPoints() - 1));
 
@@ -313,49 +313,16 @@ OGRGeometryH OGRBuildPolygonFromEdges(OGRGeometryH hLines,
             }
         }
 
-        apoRings.push_back(poRing);
+        auto poPoly = new OGRPolygon();
+        poPoly->addRingDirectly(poRing);
+        apoPolys.push_back(poPoly);
     }  // Next ring.
-
-    /* -------------------------------------------------------------------- */
-    /*      Identify exterior ring - it will be the largest.  #3610         */
-    /* -------------------------------------------------------------------- */
-    double maxarea = 0.0;
-    int maxring = -1;
-    OGREnvelope tenv;
-
-    for (int rn = 0; rn < static_cast<int>(apoRings.size()); ++rn)
-    {
-        apoRings[rn]->getEnvelope(&tenv);
-        const double tarea = (tenv.MaxX - tenv.MinX) * (tenv.MaxY - tenv.MinY);
-        if (tarea > maxarea)
-        {
-            maxarea = tarea;
-            maxring = rn;
-        }
-    }
-
-    OGRPolygon *poPolygon = new OGRPolygon();
-
-    if (maxring != -1)
-    {
-        poPolygon->addRingDirectly(apoRings[maxring]);
-        for (int rn = 0; rn < static_cast<int>(apoRings.size()); ++rn)
-        {
-            if (rn == maxring)
-                continue;
-            poPolygon->addRingDirectly(apoRings[rn]);
-        }
-    }
-    else
-    {
-        for (auto &poRing : apoRings)
-            delete poRing;
-    }
 
     if (peErr != nullptr)
     {
         *peErr = bSuccess ? OGRERR_NONE : OGRERR_FAILURE;
     }
 
-    return OGRGeometry::ToHandle(poPolygon);
+    return OGRGeometry::ToHandle(OGRGeometryFactory::organizePolygons(
+        apoPolys.data(), static_cast<int>(apoPolys.size()), nullptr, nullptr));
 }

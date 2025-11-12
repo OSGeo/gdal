@@ -240,7 +240,7 @@ static int GetMaxRegions()
 /************************************************************************/
 
 static int
-VSICurlFindStringSensitiveExceptEscapeSequences(char **papszList,
+VSICurlFindStringSensitiveExceptEscapeSequences(CSLConstList papszList,
                                                 const char *pszTarget)
 
 {
@@ -287,7 +287,7 @@ VSICurlFindStringSensitiveExceptEscapeSequences(char **papszList,
 /*                      VSICurlIsFileInList()                           */
 /************************************************************************/
 
-static int VSICurlIsFileInList(char **papszList, const char *pszTarget)
+static int VSICurlIsFileInList(CSLConstList papszList, const char *pszTarget)
 {
     int nRet =
         VSICurlFindStringSensitiveExceptEscapeSequences(papszList, pszTarget);
@@ -1254,9 +1254,9 @@ retry:
     }
 
     double dfSize = 0;
+    long response_code = -1;
     if (oFileProp.eExists != EXIST_YES)
     {
-        long response_code = 0;
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
         bool bAlreadyLogged = false;
@@ -1632,7 +1632,9 @@ retry:
     oFileProp.bHasComputedFileSize = true;
     if (mtime > 0)
         oFileProp.mTime = mtime;
-    poFS->SetCachedFileProp(m_pszURL, oFileProp);
+    // Do not update cached file properties if cURL returned a non-HTTP error
+    if (response_code != 0)
+        poFS->SetCachedFileProp(m_pszURL, oFileProp);
 
     return oFileProp.fileSize;
 }
@@ -4378,28 +4380,34 @@ VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
         papszOptions, "DISABLE_READDIR_ON_OPEN",
         VSIGetPathSpecificOption(pszFilename, "GDAL_DISABLE_READDIR_ON_OPEN",
                                  "NO"));
-    const bool bSkipReadDir =
-        !bListDir || bEmptyDir || EQUAL(pszOptionVal, "EMPTY_DIR") ||
-        CPLTestBool(pszOptionVal) || !AllowCachedDataFor(pszFilename);
+    const bool bCache = CPLTestBool(CSLFetchNameValueDef(
+        papszOptions, "CACHE", AllowCachedDataFor(pszFilename) ? "YES" : "NO"));
+    const bool bSkipReadDir = !bListDir || bEmptyDir ||
+                              EQUAL(pszOptionVal, "EMPTY_DIR") ||
+                              CPLTestBool(pszOptionVal) || !bCache;
 
     std::string osFilename(pszFilename);
     bool bGotFileList = !bSkipReadDir;
     bool bForceExistsCheck = false;
     FileProp cachedFileProp;
-    if (!(GetCachedFileProp(osFilename.c_str() + strlen(GetFSPrefix().c_str()),
+    if (!bSkipReadDir &&
+        !(GetCachedFileProp(osFilename.c_str() + strlen(GetFSPrefix().c_str()),
                             cachedFileProp) &&
           cachedFileProp.eExists == EXIST_YES) &&
         strchr(CPLGetFilename(osFilename.c_str()), '.') != nullptr &&
         !STARTS_WITH(CPLGetExtensionSafe(osFilename.c_str()).c_str(), "zip") &&
-        !bSkipReadDir)
+        // Likely a Kerchunk JSON reference file: no need to list siblings
+        !cpl::ends_with(osFilename, ".nc.zarr"))
     {
-        char **papszFileList = ReadDirInternal(
-            (CPLGetDirnameSafe(osFilename.c_str()) + '/').c_str(), 0,
-            &bGotFileList);
+        // 1000 corresponds to the default page size of S3.
+        constexpr int FILE_COUNT_LIMIT = 1000;
+        const CPLStringList aosFileList(ReadDirInternal(
+            (CPLGetDirnameSafe(osFilename.c_str()) + '/').c_str(),
+            FILE_COUNT_LIMIT, &bGotFileList));
         const bool bFound =
-            VSICurlIsFileInList(papszFileList,
+            VSICurlIsFileInList(aosFileList.List(),
                                 CPLGetFilename(osFilename.c_str())) != -1;
-        if (bGotFileList && !bFound)
+        if (bGotFileList && !bFound && aosFileList.size() < FILE_COUNT_LIMIT)
         {
             // Some file servers are case insensitive, so in case there is a
             // match with case difference, do a full check just in case.
@@ -4408,24 +4416,23 @@ VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
             // that is queried by
             // gdalinfo
             // /vsicurl/http://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg004/mega90n000cb.lbl
-            if (CSLFindString(papszFileList,
-                              CPLGetFilename(osFilename.c_str())) != -1)
+            if (aosFileList.FindString(CPLGetFilename(osFilename.c_str())) !=
+                -1)
             {
                 bForceExistsCheck = true;
             }
             else
             {
-                CSLDestroy(papszFileList);
                 return nullptr;
             }
         }
-        CSLDestroy(papszFileList);
     }
 
     auto poHandle =
         std::unique_ptr<VSICurlHandle>(CreateFileHandle(osFilename.c_str()));
     if (poHandle == nullptr)
         return nullptr;
+    poHandle->SetCache(bCache);
     if (!bGotFileList || bForceExistsCheck)
     {
         // If we didn't get a filelist, check that the file really exists.
@@ -4489,7 +4496,8 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char *pszStr,
             // Format of Apache, like in
             // http://download.osgeo.org/gdal/data/gtiff/
             // "17-May-2010 12:26"
-            if (pszMonthFound - pszStr > 2 && strlen(pszMonthFound) > 15 &&
+            const auto nMonthFoundLen = strlen(pszMonthFound);
+            if (pszMonthFound - pszStr > 2 && nMonthFoundLen > 15 &&
                 pszMonthFound[-2 + 11] == ' ' && pszMonthFound[-2 + 14] == ':')
             {
                 pszMonthFound -= 2;
@@ -4506,6 +4514,17 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char *pszStr,
                     brokendowntime.tm_hour = nHour;
                     brokendowntime.tm_min = nMin;
                     mTime = CPLYMDHMSToUnixTime(&brokendowntime);
+
+                    if (nMonthFoundLen > 15 + 2)
+                    {
+                        const char *pszFilesize = pszMonthFound + 15 + 2;
+                        while (*pszFilesize == ' ')
+                            pszFilesize++;
+                        if (*pszFilesize >= '1' && *pszFilesize <= '9')
+                            nFileSize = CPLScanUIntBig(
+                                pszFilesize,
+                                static_cast<int>(strlen(pszFilesize)));
+                    }
 
                     return true;
                 }
@@ -4644,22 +4663,21 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
     if (pszDir == nullptr)
         pszDir = "";
 
-    /* Apache */
-    std::string osExpectedString = "<title>Index of ";
-    osExpectedString += pszDir;
-    osExpectedString += "</title>";
-    /* shttpd */
-    std::string osExpectedString2 = "<title>Index of ";
-    osExpectedString2 += pszDir;
-    osExpectedString2 += "/</title>";
+    /* Apache / Nginx */
+    /* Most of the time the format is <title>Index of {pszDir[/]}</title>, but
+     * there are special cases like https://cdn.star.nesdis.noaa.gov/GOES18/ABI/MESO/M1/GEOCOLOR/
+     * where a CDN stuff makes that the title is <title>Index of /ma-cdn02/GOES/data/GOES18/ABI/MESO/M1/GEOCOLOR/</title>
+     */
+    const std::string osTitleIndexOfPrefix = "<title>Index of ";
+    const std::string osExpectedSuffix = std::string(pszDir).append("</title>");
+    const std::string osExpectedSuffixWithSlash =
+        std::string(pszDir).append("/</title>");
     /* FTP */
-    std::string osExpectedString3 = "FTP Listing of ";
-    osExpectedString3 += pszDir;
-    osExpectedString3 += "/";
+    const std::string osExpectedStringFTP =
+        std::string("FTP Listing of ").append(pszDir).append("/");
     /* Apache 1.3.33 */
-    std::string osExpectedString4 = "<TITLE>Index of ";
-    osExpectedString4 += pszDir;
-    osExpectedString4 += "</TITLE>";
+    const std::string osExpectedStringOldApache =
+        std::string("<TITLE>Index of ").append(pszDir).append("</TITLE>");
 
     // The listing of
     // http://dds.cr.usgs.gov/srtm/SRTM_image_sample/picture%20examples/
@@ -4672,7 +4690,7 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
     if (strchr(pszDir, '%'))
     {
         char *pszUnescapedDir = CPLUnescapeString(pszDir, nullptr, CPLES_URL);
-        osExpectedString_unescaped = "<title>Index of ";
+        osExpectedString_unescaped = osTitleIndexOfPrefix;
         osExpectedString_unescaped += pszUnescapedDir;
         osExpectedString_unescaped += "</title>";
         CPLFree(pszUnescapedDir);
@@ -4704,10 +4722,11 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
         }
 
         if (!bIsHTMLDirList &&
-            (strstr(pszLine, osExpectedString.c_str()) ||
-             strstr(pszLine, osExpectedString2.c_str()) ||
-             strstr(pszLine, osExpectedString3.c_str()) ||
-             strstr(pszLine, osExpectedString4.c_str()) ||
+            ((strstr(pszLine, osTitleIndexOfPrefix.c_str()) &&
+              (strstr(pszLine, osExpectedSuffix.c_str()) ||
+               strstr(pszLine, osExpectedSuffixWithSlash.c_str()))) ||
+             strstr(pszLine, osExpectedStringFTP.c_str()) ||
+             strstr(pszLine, osExpectedStringOldApache.c_str()) ||
              (!osExpectedString_unescaped.empty() &&
               strstr(pszLine, osExpectedString_unescaped.c_str()))))
         {
@@ -6344,7 +6363,6 @@ struct curl_slist *VSICurlSetCreationHeadersFromOptions(
  See :ref:`/vsicurl/ documentation <vsicurl>`
  \endverbatim
 
- @since GDAL 1.8.0
  */
 void VSIInstallCurlFileHandler(void)
 {
@@ -6367,7 +6385,6 @@ void VSIInstallCurlFileHandler(void)
  * mechanisms can prevent opening new files, or give an outdated version of
  * them.
  *
- * @since GDAL 2.2.1
  */
 
 void VSICurlClearCache(void)
@@ -6413,7 +6430,6 @@ void VSICurlClearCache(void)
  * "/vsis3/basket/" or "/vsis3/basket/object".
  *
  * @param pszFilenamePrefix Filename prefix
- * @since GDAL 2.4.0
  */
 
 void VSICurlPartialClearCache(const char *pszFilenamePrefix)

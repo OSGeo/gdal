@@ -364,7 +364,6 @@ char *GOA2GetAccessToken(const char *pszRefreshToken,
  * @param papszOptions NULL terminated list of options. None currently
  *
  * @return a list of key=value pairs, including a access_token and expires_in
- * @since GDAL 2.3
  */
 
 char **GOA2GetAccessTokenFromCloudEngineVM(CSLConstList papszOptions)
@@ -404,7 +403,6 @@ char **GOA2GetAccessTokenFromCloudEngineVM(CSLConstList papszOptions)
  * @param papszOptions NULL terminated list of options. None currently
  *
  * @return a list of key=value pairs, including a access_token and expires_in
- * @since GDAL 2.3
  */
 
 char **GOA2GetAccessTokenFromServiceAccount(const char *pszPrivateKey,

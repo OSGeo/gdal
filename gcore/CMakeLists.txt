@@ -218,12 +218,36 @@ target_public_header(
   HEADERS
   ${CMAKE_CURRENT_BINARY_DIR}/gdal_version_full/gdal_version.h
   gdal.h
+  gdal_raster_cpp.h
+  gdal_multidim_cpp.h
+  gdal_vector_cpp.h
+  gdal_multidomainmetadata.h
+  gdal_majorobject.h
+  gdal_defaultoverviews.h
+  gdal_openinfo.h
+  gdal_gcp.h
+  gdal_geotransform.h
+  gdal_dataset.h
+  gdal_rasterblock.h
+  gdal_colortable.h
+  gdal_rasterband.h
+  gdal_computedrasterband.h
+  gdal_maskbands.h
+  gdal_driver.h
+  gdal_drivermanager.h
+  gdal_asyncreader.h
+  gdal_multidim.h
+  gdal_relationship.h
+  gdal_cpp_functions.h
   gdal_fwd.h
   gdalalgorithm.h
+  gdalalgorithm_c.h
+  gdalalgorithm_cpp.h
   gdaljp2metadata.h
   gdaljp2abstractdataset.h
   gdal_frmts.h
   gdal_pam.h
+  gdal_pam_multidim.h
   gdal_priv.h
   gdal_proxy.h
   gdal_rat.h

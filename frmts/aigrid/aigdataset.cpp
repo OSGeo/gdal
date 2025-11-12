@@ -16,6 +16,11 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gdal_colortable.h"
+#include "gdal_driver.h"
+#include "gdal_drivermanager.h"
+#include "gdal_openinfo.h"
+#include "gdal_cpp_functions.h"
 #include "gdal_rat.h"
 #include "ogr_spatialref.h"
 
@@ -480,7 +485,8 @@ void AIGDataset::ReadRAT()
                     const char *pszTmp =
                         (const char *)(pasFields[iField].pszStr);
                     CPLString osStrValue(pszTmp);
-                    poRAT->SetValue(iRecord - 1, iField, osStrValue.Trim());
+                    poRAT->SetValue(iRecord - 1, iField,
+                                    osStrValue.Trim().c_str());
                 }
                 break;
 

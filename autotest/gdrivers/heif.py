@@ -553,8 +553,6 @@ def test_heif_network_read(tmp_vsimem):
             expected_headers={"Range": "bytes=0-16383"},
         )
         handler.add("GET", "/", 404)
-        handler.add("HEAD", "/test.aux", 404)
-        handler.add("HEAD", "/test.AUX", 404)
         with gdaltest.config_option(
             "GDAL_PAM_ENABLED", "NO"
         ), webserver.install_http_handler(handler):
@@ -848,3 +846,15 @@ def test_heif_geoheif_curie_order():
         and gcp.GCPY == pytest.approx(6090000.0, abs=1e-5)
         and gcp.GCPZ == pytest.approx(0, abs=1e-5)
     )
+
+
+###############################################################################
+
+
+def test_heif_close(tmp_path):
+    if not _has_read_write_support_for("HEVC"):
+        pytest.skip("no HEVC encoding support")
+
+    ds = gdal.GetDriverByName("HEIF").CreateCopy(tmp_path / "out.heif", make_data())
+    ds.Close()
+    os.remove(tmp_path / "out.heif")

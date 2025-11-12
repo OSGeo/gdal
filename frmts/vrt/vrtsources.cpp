@@ -37,6 +37,7 @@
 #include "gdal_priv.h"
 #include "gdal_proxy.h"
 #include "gdal_priv_templates.hpp"
+#include "gdalsubdatasetinfo.h"
 
 /*! @cond Doxygen_Suppress */
 
@@ -119,6 +120,13 @@ VRTSimpleSource::VRTSimpleSource(const VRTSimpleSource *poSrcSource,
         m_dfDstXSize = poSrcSource->m_dfDstXSize * dfXDstRatio;
         m_dfDstYSize = poSrcSource->m_dfDstYSize * dfYDstRatio;
     }
+
+    if (m_bDropRefOnSrcBand)
+    {
+        GDALDataset *poDS = GetSourceDataset();
+        if (poDS)
+            poDS->Reference();
+    }
 }
 
 /************************************************************************/
@@ -128,21 +136,26 @@ VRTSimpleSource::VRTSimpleSource(const VRTSimpleSource *poSrcSource,
 VRTSimpleSource::~VRTSimpleSource()
 
 {
-    if (!m_bDropRefOnSrcBand)
-        return;
+    if (m_bDropRefOnSrcBand)
+    {
+        GDALDataset *poDS = GetSourceDataset();
+        if (poDS)
+            poDS->ReleaseRef();
+    }
+}
 
-    if (m_poMaskBandMainBand != nullptr)
-    {
-        if (m_poMaskBandMainBand->GetDataset() != nullptr)
-        {
-            m_poMaskBandMainBand->GetDataset()->ReleaseRef();
-        }
-    }
-    else if (m_poRasterBand != nullptr &&
-             m_poRasterBand->GetDataset() != nullptr)
-    {
-        m_poRasterBand->GetDataset()->ReleaseRef();
-    }
+/************************************************************************/
+/*                          GetSourceDataset()                          */
+/************************************************************************/
+
+GDALDataset *VRTSimpleSource::GetSourceDataset() const
+{
+    GDALDataset *poDS = nullptr;
+    if (m_poMaskBandMainBand)
+        poDS = m_poMaskBandMainBand->GetDataset();
+    else if (m_poRasterBand)
+        poDS = m_poRasterBand->GetDataset();
+    return poDS;
 }
 
 /************************************************************************/

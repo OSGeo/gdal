@@ -488,20 +488,27 @@ def test_stats_dbl_min():
 # Test stats on a tiled Byte with partial tiles
 
 
-def test_stats_byte_partial_tiles():
+@pytest.mark.parametrize("GDAL_STATS_USE_INTEGER_STATS", [None, "NO"])
+def test_stats_byte_partial_tiles(GDAL_STATS_USE_INTEGER_STATS):
 
     ds = gdal.Translate(
         "/vsimem/stats_byte_tiled.tif",
         "../gdrivers/data/small_world.tif",
         creationOptions=["TILED=YES", "BLOCKXSIZE=64", "BLOCKYSIZE=64"],
     )
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     gdal.GetDriverByName("GTiff").Delete("/vsimem/stats_byte_tiled.tif")
 
     expected_stats = [0.0, 255.0, 50.22115, 67.119029288849973]
-    assert stats == expected_stats, "did not get expected stats"
+    if GDAL_STATS_USE_INTEGER_STATS == "NO":
+        assert stats == pytest.approx(expected_stats, rel=1e-15)
+    else:
+        assert stats == expected_stats, "did not get expected stats"
 
     # Same but with nodata set
     ds = gdal.Translate(
@@ -510,7 +517,10 @@ def test_stats_byte_partial_tiles():
         creationOptions=["TILED=YES", "BLOCKXSIZE=64", "BLOCKYSIZE=64"],
     )
     ds.GetRasterBand(1).SetNoDataValue(0)
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     gdal.GetDriverByName("GTiff").Delete("/vsimem/stats_byte_tiled.tif")
@@ -527,7 +537,10 @@ def test_stats_byte_partial_tiles():
         options="-srcwin 0 0 399 200",
     )
     ds.GetRasterBand(1).SetNoDataValue(0)
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     gdal.GetDriverByName("GTiff").Delete("/vsimem/stats_byte_untiled.tif")
@@ -544,7 +557,10 @@ def test_stats_byte_partial_tiles():
         options=["TILED=YES", "BLOCKXSIZE=512", "BLOCKYSIZE=512"],
     )
     ds.GetRasterBand(1).Fill(255)
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
     gdal.Unlink("/vsimem/stats_byte_tiled.tif")
 
@@ -556,7 +572,10 @@ def test_stats_byte_partial_tiles():
     # Non optimized code path
     ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, struct.pack("B" * 1, 1))
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     expected_stats = [1.0, 1.0, 1.0, 0.0]
@@ -570,7 +589,10 @@ def test_stats_byte_partial_tiles():
     ds.GetRasterBand(1).WriteRaster(0, 2, 3, 1, struct.pack("B" * 3, 10, 20, 0))
     ds.GetRasterBand(1).WriteRaster(0, 3, 3, 1, struct.pack("B" * 3, 10, 20, 255))
     ds.GetRasterBand(1).WriteRaster(0, 4, 3, 1, struct.pack("B" * 3, 10, 20, 10))
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     expected_stats = [0.0, 255.0, 35.333333333333336, 60.785597709398971]
@@ -581,7 +603,10 @@ def test_stats_byte_partial_tiles():
     ds = gdal.GetDriverByName("MEM").Create("", 32 + 2, 2)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).WriteRaster(32, 1, 2, 1, struct.pack("B" * 2, 0, 255))
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     expected_stats = [0.0, 255.0, 4.7205882352941178, 30.576733555893391]
@@ -593,7 +618,10 @@ def test_stats_byte_partial_tiles():
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).SetNoDataValue(2)
     ds.GetRasterBand(1).WriteRaster(32, 1, 2, 1, struct.pack("B" * 2, 0, 255))
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     expected_stats = [0.0, 255.0, 4.7205882352941178, 30.576733555893391]
@@ -606,7 +634,8 @@ def test_stats_byte_partial_tiles():
 # Test stats on uint16
 
 
-def test_stats_uint16():
+@pytest.mark.parametrize("GDAL_STATS_USE_INTEGER_STATS", [None, "NO"])
+def test_stats_uint16(GDAL_STATS_USE_INTEGER_STATS):
 
     ds = gdal.Translate(
         "/vsimem/stats_uint16_tiled.tif",
@@ -615,7 +644,10 @@ def test_stats_uint16():
         scaleParams=[[0, 255, 0, 65535]],
         creationOptions=["TILED=YES", "BLOCKXSIZE=64", "BLOCKYSIZE=64"],
     )
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     gdal.GetDriverByName("GTiff").Delete("/vsimem/stats_uint16_tiled.tif")
@@ -633,13 +665,19 @@ def test_stats_uint16():
         "../gdrivers/data/small_world.tif",
         options="-srcwin 0 0 399 200 -scale 0 255 0 65535 -ot UInt16",
     )
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     gdal.GetDriverByName("GTiff").Delete("/vsimem/stats_uint16_untiled.tif")
 
     expected_stats = [0.0, 65535.0, 12923.9921679198, 17259.703026841547]
-    assert stats == expected_stats, "did not get expected stats"
+    if GDAL_STATS_USE_INTEGER_STATS == "NO":
+        assert stats == pytest.approx(expected_stats, rel=1e-14)
+    else:
+        assert stats == expected_stats, "did not get expected stats"
 
     # Same but with nodata set but untiled and with non power of 16 block size
     ds = gdal.Translate(
@@ -648,7 +686,10 @@ def test_stats_uint16():
         options="-srcwin 0 0 399 200 -scale 0 255 0 65535 -ot UInt16",
     )
     ds.GetRasterBand(1).SetNoDataValue(0)
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     gdal.GetDriverByName("GTiff").Delete("/vsimem/stats_uint16_untiled.tif")
@@ -673,7 +714,10 @@ def test_stats_uint16():
             options=["TILED=YES", "BLOCKXSIZE=512", "BLOCKYSIZE=512"],
         )
         ds.GetRasterBand(1).Fill(fill_val)
-        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+        with gdal.config_option(
+            "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+        ):
+            stats = ds.GetRasterBand(1).GetStatistics(0, 1)
         ds = None
         gdal.Unlink("/vsimem/stats_uint16_tiled.tif")
 
@@ -686,7 +730,10 @@ def test_stats_uint16():
     ds = gdal.GetDriverByName("MEM").Create("", 32 + 2, 1, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).WriteRaster(32, 0, 2, 1, struct.pack("H" * 2, 0, 65535))
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     expected_stats = [0.0, 65535.0, 1928.4411764705883, 11072.48066469611]
@@ -698,7 +745,10 @@ def test_stats_uint16():
     for fill_val in [0, 1, 32767, 32768, 65535]:
         ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_UInt16)
         ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, struct.pack("H" * 1, fill_val))
-        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+        with gdal.config_option(
+            "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+        ):
+            stats = ds.GetRasterBand(1).GetStatistics(0, 1)
         ds = None
 
         expected_stats = [fill_val, fill_val, fill_val, 0.0]
@@ -712,24 +762,26 @@ def test_stats_uint16():
     ds.GetRasterBand(1).WriteRaster(0, 2, 3, 1, struct.pack("H" * 3, 10, 20, 0))
     ds.GetRasterBand(1).WriteRaster(0, 3, 3, 1, struct.pack("H" * 3, 10, 20, 65535))
     ds.GetRasterBand(1).WriteRaster(0, 4, 3, 1, struct.pack("H" * 3, 10, 20, 10))
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     expected_stats = [0.0, 65535.0, 4387.333333333333, 16342.408927558861]
-    assert (
-        max([abs(stats[i] - expected_stats[i]) for i in range(4)]) <= 1e-15
-    ), "did not get expected stats"
+    assert stats == pytest.approx(expected_stats, rel=1e-15)
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, struct.pack("H" * 2, 0, 65535))
     ds.GetRasterBand(1).WriteRaster(0, 1, 2, 1, struct.pack("H" * 2, 1, 65534))
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    with gdal.config_option(
+        "GDAL_STATS_USE_INTEGER_STATS", GDAL_STATS_USE_INTEGER_STATS
+    ):
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
     expected_stats = [0.0, 65535.0, 32767.5, 32767.000003814814]
-    assert (
-        max([abs(stats[i] - expected_stats[i]) for i in range(4)]) <= 1e-15
-    ), "did not get expected stats"
+    assert stats == pytest.approx(expected_stats, abs=1e-15)
 
 
 ###############################################################################
@@ -937,14 +989,29 @@ def test_stats_mask_band():
 ###############################################################################
 # Test statistics on a band with all values to large values
 
+FLT_MAX = struct.unpack("f", struct.pack("f", 3.402823466e38))[0]
+
+
+@pytest.mark.parametrize("value", [FLT_MAX, -FLT_MAX, float("inf"), -float("inf")])
+def test_stats_all_large_values_float32(value):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 66, 1, 1, gdal.GDT_Float32)
+    src_ds.WriteRaster(0, 0, 66, 1, struct.pack("f", value) * 66)
+    assert src_ds.GetRasterBand(1).ComputeRasterMinMax(False) == (value, value)
+    assert src_ds.GetRasterBand(1).ComputeStatistics(False) == [value, value, value, 0]
+
+
+###############################################################################
+# Test statistics on a band with all values to large values
+
 
 @pytest.mark.parametrize(
     "value", [sys.float_info.max, -sys.float_info.max, float("inf"), -float("inf")]
 )
-def test_stats_all_large_values(value):
+def test_stats_all_large_values_float64(value):
 
-    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 1, gdal.GDT_Float64)
-    src_ds.WriteRaster(0, 0, 2, 1, struct.pack("d" * 2, value, value))
+    src_ds = gdal.GetDriverByName("MEM").Create("", 66, 1, 1, gdal.GDT_Float64)
+    src_ds.WriteRaster(0, 0, 66, 1, struct.pack("d", value) * 66)
     assert src_ds.GetRasterBand(1).ComputeRasterMinMax(False) == (value, value)
     assert src_ds.GetRasterBand(1).ComputeStatistics(False) == [value, value, value, 0]
 
@@ -981,3 +1048,105 @@ def test_stats_uint64():
         1 << 50,
         0,
     ]
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("GDAL_STATS_USE_FLOAT32_OPTIM", [None, "NO"])
+def test_stats_float32_nan(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPTIM):
+
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "tmp.tif", 257, 257, 1, gdal.GDT_Float32, options={"TILED": "YES"}
+    )
+    src_ds.WriteRaster(1, 127, 1, 1, struct.pack("f", 1.0))
+    src_ds.WriteRaster(1, 255, 1, 1, struct.pack("f", float("nan")))
+    src_ds.WriteRaster(5, 255, 1, 1, struct.pack("f", float("nan")))
+    with gdal.config_option(
+        "GDAL_STATS_USE_FLOAT32_OPTIM", GDAL_STATS_USE_FLOAT32_OPTIM
+    ):
+        got_stats = src_ds.GetRasterBand(1).ComputeStatistics(False)
+    expected_stats = [0.0, 1.0, 1.5140733114297485e-05, 0.0038910800393333316]
+    if GDAL_STATS_USE_FLOAT32_OPTIM == "NO":
+        assert got_stats == expected_stats
+    else:
+        assert got_stats == pytest.approx(expected_stats, rel=1e-5)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("GDAL_STATS_USE_FLOAT32_OPTIM", [None, "NO"])
+def test_stats_float32_nan_with_nodata(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPTIM):
+
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "tmp.tif", 257, 257, 1, gdal.GDT_Float32, options={"TILED": "YES"}
+    )
+    src_ds.GetRasterBand(1).Fill(0)
+    src_ds.GetRasterBand(1).SetNoDataValue(1.5)
+    src_ds.WriteRaster(256, 0, 1, 1, struct.pack("f", 1.5))
+    src_ds.WriteRaster(1, 1, 1, 1, struct.pack("f", 1.5))
+    src_ds.WriteRaster(256, 1, 1, 1, struct.pack("f", 1.5))
+    src_ds.WriteRaster(1, 127, 1, 1, struct.pack("f", 1.0))
+    src_ds.WriteRaster(1, 255, 1, 1, struct.pack("f", float("nan")))
+    src_ds.WriteRaster(5, 255, 1, 1, struct.pack("f", float("nan")))
+    with gdal.config_option(
+        "GDAL_STATS_USE_FLOAT32_OPTIM", GDAL_STATS_USE_FLOAT32_OPTIM
+    ):
+        got_stats = src_ds.GetRasterBand(1).ComputeStatistics(False)
+    expected_stats = [0.0, 1.0, 1.514142087093462e-05, 0.0038911684117124336]
+    if GDAL_STATS_USE_FLOAT32_OPTIM == "NO":
+        assert got_stats == expected_stats
+    else:
+        assert got_stats == pytest.approx(expected_stats, rel=1e-5)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("GDAL_STATS_USE_FLOAT64_OPTIM", [None, "NO"])
+def test_stats_float64_nan(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM):
+
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "tmp.tif", 257, 257, 1, gdal.GDT_Float64, options={"TILED": "YES"}
+    )
+    src_ds.WriteRaster(1, 127, 1, 1, struct.pack("d", 1.0))
+    src_ds.WriteRaster(1, 255, 1, 1, struct.pack("d", float("nan")))
+    src_ds.WriteRaster(5, 255, 1, 1, struct.pack("d", float("nan")))
+    with gdal.config_option(
+        "GDAL_STATS_USE_FLOAT64_OPTIM", GDAL_STATS_USE_FLOAT64_OPTIM
+    ):
+        got_stats = src_ds.GetRasterBand(1).ComputeStatistics(False)
+    expected_stats = [0.0, 1.0, 1.5140733114297485e-05, 0.0038910800393333316]
+    if GDAL_STATS_USE_FLOAT64_OPTIM == "NO":
+        assert got_stats == expected_stats
+    else:
+        assert got_stats == pytest.approx(expected_stats, rel=1e-15)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("GDAL_STATS_USE_FLOAT64_OPTIM", [None, "NO"])
+def test_stats_float64_nan_with_nodata(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM):
+
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "tmp.tif", 257, 257, 1, gdal.GDT_Float64, options={"TILED": "YES"}
+    )
+    src_ds.GetRasterBand(1).Fill(0)
+    src_ds.GetRasterBand(1).SetNoDataValue(1.5)
+    src_ds.WriteRaster(256, 0, 1, 1, struct.pack("d", 1.5))
+    src_ds.WriteRaster(1, 1, 1, 1, struct.pack("d", 1.5))
+    src_ds.WriteRaster(256, 1, 1, 1, struct.pack("d", 1.5))
+    src_ds.WriteRaster(1, 127, 1, 1, struct.pack("d", 1.0))
+    src_ds.WriteRaster(1, 255, 1, 1, struct.pack("d", float("nan")))
+    src_ds.WriteRaster(5, 255, 1, 1, struct.pack("d", float("nan")))
+    with gdal.config_option(
+        "GDAL_STATS_USE_FLOAT64_OPTIM", GDAL_STATS_USE_FLOAT64_OPTIM
+    ):
+        got_stats = src_ds.GetRasterBand(1).ComputeStatistics(False)
+    expected_stats = [0.0, 1.0, 1.514142087093462e-05, 0.0038911684117124336]
+    if GDAL_STATS_USE_FLOAT64_OPTIM == "NO":
+        assert got_stats == expected_stats
+    else:
+        assert got_stats == pytest.approx(expected_stats, rel=1e-15)

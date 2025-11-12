@@ -78,6 +78,38 @@ struct GDALDimensionHS
     }
 };
 
+class GDALMDIAsAttribute final : public GDALAttribute
+{
+    std::vector<std::shared_ptr<GDALDimension>> m_dims{};
+    const GDALExtendedDataType m_dt = GDALExtendedDataType::CreateString();
+    std::string m_osValue;
+
+  public:
+    GDALMDIAsAttribute(const std::string &name, const std::string &value)
+        : GDALAbstractMDArray(std::string(), name),
+          GDALAttribute(std::string(), name), m_osValue(value)
+    {
+    }
+
+    const std::vector<std::shared_ptr<GDALDimension>> &
+    GetDimensions() const override;
+
+    const GDALExtendedDataType &GetDataType() const override
+    {
+        return m_dt;
+    }
+
+    bool IRead(const GUInt64 *, const size_t *, const GInt64 *,
+               const GPtrDiff_t *, const GDALExtendedDataType &bufferDataType,
+               void *pDstBuffer) const override
+    {
+        const char *pszStr = m_osValue.c_str();
+        GDALExtendedDataType::CopyValue(&pszStr, m_dt, pDstBuffer,
+                                        bufferDataType);
+        return true;
+    }
+};
+
 //! @endcond
 
 #endif  // GDALMULTIDIM_PRIV_INCLUDED

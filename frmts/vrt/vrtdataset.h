@@ -18,9 +18,9 @@
 
 #include "cpl_hash_set.h"
 #include "cpl_minixml.h"
+#include "gdal_driver.h"
+#include "gdal_multidim.h"
 #include "gdal_pam.h"
-#include "gdal_priv.h"
-#include "gdal_rat.h"
 #include "gdal_vrt.h"
 #include "gdal_rat.h"
 
@@ -254,6 +254,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     friend struct VRTFlushCacheStruct<VRTPansharpenedDataset>;
     friend struct VRTFlushCacheStruct<VRTProcessedDataset>;
     friend class VRTSourcedRasterBand;
+    friend class VRTDerivedRasterBand;
     friend class VRTSimpleSource;
     friend struct VRTSourcedRasterBandRasterIOJob;
     friend VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize);
@@ -411,6 +412,11 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
+    std::shared_ptr<VRTGroup> GetRootVRTGroup() const
+    {
+        return m_poRootGroup;
+    }
+
     void ClearStatistics() override;
 
     /** To be called when a new source is added, to invalidate cached states. */
@@ -455,6 +461,10 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     CreateMultiDimensional(const char *pszFilename,
                            CSLConstList papszRootGroupOptions,
                            CSLConstList papszOptions);
+    static std::unique_ptr<VRTDataset>
+    CreateVRTMultiDimensional(const char *pszFilename,
+                              CSLConstList papszRootGroupOptions,
+                              CSLConstList papszOptions);
     static CPLErr Delete(const char *pszFilename);
 
     static int GetNumThreads(GDALDataset *poDS);
@@ -1355,6 +1365,8 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
 
     void OpenSource() const;
 
+    GDALDataset *GetSourceDataset() const;
+
   protected:
     friend class VRTSourcedRasterBand;
     friend class VRTDerivedRasterBand;
@@ -1773,6 +1785,7 @@ class VRTKernelFilteredSource CPL_NON_FINAL : public VRTFilteredSource
     // m_nKernelSize elements if m_bSeparable, m_nKernelSize * m_nKernelSize otherwise
     std::vector<double> m_adfKernelCoefs{};
     bool m_bNormalized = false;
+    std::string m_function{};
 
   public:
     VRTKernelFilteredSource();
@@ -1789,6 +1802,11 @@ class VRTKernelFilteredSource CPL_NON_FINAL : public VRTFilteredSource
     CPLErr SetKernel(int nKernelSize, bool bSeparable,
                      const std::vector<double> &adfNewCoefs);
     void SetNormalized(bool);
+
+    void SetFunction(const std::string &s)
+    {
+        m_function = s;
+    }
 };
 
 /************************************************************************/
@@ -1890,7 +1908,9 @@ class VRTGroup final : public GDALGroup
     std::string m_osFilename{};
     mutable bool m_bDirty = false;
     std::string m_osVRTPath{};
+    std::vector<std::string> m_aosGroupNames{};
     std::map<std::string, std::shared_ptr<VRTGroup>> m_oMapGroups{};
+    std::vector<std::string> m_aosMDArrayNames{};
     std::map<std::string, std::shared_ptr<VRTMDArray>> m_oMapMDArrays{};
     std::map<std::string, std::shared_ptr<VRTAttribute>> m_oMapAttributes{};
     std::map<std::string, std::shared_ptr<VRTDimension>> m_oMapDimensions{};
@@ -1958,6 +1978,10 @@ class VRTGroup final : public GDALGroup
     CreateGroup(const std::string &osName,
                 CSLConstList papszOptions = nullptr) override;
 
+    std::shared_ptr<VRTGroup>
+    CreateVRTGroup(const std::string &osName,
+                   CSLConstList papszOptions = nullptr);
+
     std::shared_ptr<GDALDimension>
     CreateDimension(const std::string &osName, const std::string &osType,
                     const std::string &osDirection, GUInt64 nSize,
@@ -1973,7 +1997,13 @@ class VRTGroup final : public GDALGroup
         const std::string &osName,
         const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
         const GDALExtendedDataType &oDataType,
-        CSLConstList papszOptions) override;
+        CSLConstList papszOptions = nullptr) override;
+
+    std::shared_ptr<VRTMDArray> CreateVRTMDArray(
+        const std::string &osName,
+        const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
+        const GDALExtendedDataType &oDataType,
+        CSLConstList papszOptions = nullptr);
 
     void SetIsRootGroup();
 
@@ -1983,11 +2013,16 @@ class VRTGroup final : public GDALGroup
     }
 
     VRTGroup *GetRootGroup() const;
-    std::shared_ptr<GDALGroup> GetRootGroupSharedPtr() const;
+    std::shared_ptr<VRTGroup> GetRootGroupSharedPtr() const;
 
     const std::string &GetVRTPath() const
     {
         return m_osVRTPath;
+    }
+
+    void SetVRTPath(const std::string &osVRTPath)
+    {
+        m_osVRTPath = osVRTPath;
     }
 
     void SetDirty();
@@ -2121,6 +2156,20 @@ class VRTMDArraySource
   public:
     virtual ~VRTMDArraySource();
 
+    enum class RelationShip
+    {
+        NO_INTERSECTION,
+        PARTIAL_INTERSECTION,
+        SOURCE_BLOCK_MATCH,
+    };
+
+    virtual RelationShip GetRelationship(const uint64_t *arrayStartIdx,
+                                         const size_t *count) const = 0;
+
+    virtual bool GetRawBlockInfo(const uint64_t *arrayStartIdx,
+                                 const size_t *count,
+                                 GDALMDArrayRawBlockInfo &info) const = 0;
+
     virtual bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
                       const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
                       const GDALExtendedDataType &bufferDataType,
@@ -2155,6 +2204,7 @@ class VRTMDArray final : public GDALMDArray
     bool m_bHasScale = false;
     bool m_bHasOffset = false;
     std::string m_osFilename{};
+    std::vector<GUInt64> m_anBlockSize{};
 
     bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
@@ -2169,23 +2219,27 @@ class VRTMDArray final : public GDALMDArray
         const std::string &osParentName, const std::string &osName,
         const GDALExtendedDataType &dt,
         std::vector<std::shared_ptr<GDALDimension>> &&dims,
-        std::map<std::string, std::shared_ptr<VRTAttribute>> &&oMapAttributes)
+        std::map<std::string, std::shared_ptr<VRTAttribute>> &&oMapAttributes,
+        std::vector<GUInt64> &&anBlockSize)
         : GDALAbstractMDArray(osParentName, osName),
           GDALMDArray(osParentName, osName), m_poGroupRef(poGroupRef),
           m_osVRTPath(poGroupRef->m_ptr->GetVRTPath()), m_dt(dt),
           m_dims(std::move(dims)), m_oMapAttributes(std::move(oMapAttributes)),
-          m_osFilename(poGroupRef->m_ptr->GetFilename())
+          m_osFilename(poGroupRef->m_ptr->GetFilename()),
+          m_anBlockSize(std::move(anBlockSize))
     {
     }
 
     VRTMDArray(const std::shared_ptr<VRTGroup::Ref> &poGroupRef,
                const std::string &osParentName, const std::string &osName,
                const std::vector<std::shared_ptr<GDALDimension>> &dims,
-               const GDALExtendedDataType &dt)
+               const GDALExtendedDataType &dt,
+               const std::vector<GUInt64> &anBlockSize)
         : GDALAbstractMDArray(osParentName, osName),
           GDALMDArray(osParentName, osName), m_poGroupRef(poGroupRef),
           m_osVRTPath(poGroupRef->m_ptr->GetVRTPath()), m_dt(dt), m_dims(dims),
-          m_osFilename(poGroupRef->m_ptr->GetFilename())
+          m_osFilename(poGroupRef->m_ptr->GetFilename()),
+          m_anBlockSize(anBlockSize)
     {
     }
 
@@ -2301,13 +2355,26 @@ class VRTMDArray final : public GDALMDArray
         return m_osVRTPath;
     }
 
-    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    std::shared_ptr<VRTGroup> GetRootVRTGroup() const
     {
         auto poGroup = m_poGroupRef.lock();
         if (poGroup)
             return poGroup->m_ptr->GetRootGroupSharedPtr();
         return nullptr;
     }
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return GetRootVRTGroup();
+    }
+
+    std::vector<GUInt64> GetBlockSize() const override
+    {
+        return m_anBlockSize;
+    }
+
+    bool GetRawBlockInfo(const uint64_t *panBlockCoordinates,
+                         GDALMDArrayRawBlockInfo &info) const override;
 };
 
 /************************************************************************/
@@ -2359,6 +2426,19 @@ class VRTMDArraySourceInlinedValues final : public VRTMDArraySource
     static std::unique_ptr<VRTMDArraySourceInlinedValues>
     Create(const VRTMDArray *poDstArray, const CPLXMLNode *psNode);
 
+    RelationShip GetRelationship(const uint64_t * /*arrayStartIdx*/,
+                                 const size_t * /*count*/) const override
+    {
+        return RelationShip::PARTIAL_INTERSECTION;
+    }
+
+    bool GetRawBlockInfo(const uint64_t * /*arrayStartIdx*/,
+                         const size_t * /*count*/,
+                         GDALMDArrayRawBlockInfo & /*info*/) const override
+    {
+        return false;
+    }
+
     bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
               const GDALExtendedDataType &bufferDataType,
@@ -2382,6 +2462,19 @@ class VRTMDArraySourceRegularlySpaced final : public VRTMDArraySource
     {
     }
 
+    RelationShip GetRelationship(const uint64_t * /*arrayStartIdx*/,
+                                 const size_t * /*count*/) const override
+    {
+        return RelationShip::PARTIAL_INTERSECTION;
+    }
+
+    bool GetRawBlockInfo(const uint64_t * /*arrayStartIdx*/,
+                         const size_t * /*count*/,
+                         GDALMDArrayRawBlockInfo & /*info*/) const override
+    {
+        return false;
+    }
+
     bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
               const GDALExtendedDataType &bufferDataType,
@@ -2393,6 +2486,8 @@ class VRTMDArraySourceRegularlySpaced final : public VRTMDArraySource
 /************************************************************************/
 /*                       VRTMDArraySourceFromArray                      */
 /************************************************************************/
+
+struct VRTArrayDatasetWrapper;
 
 class VRTMDArraySourceFromArray final : public VRTMDArraySource
 {
@@ -2408,6 +2503,10 @@ class VRTMDArraySourceFromArray final : public VRTMDArraySource
     mutable std::vector<GUInt64> m_anCount{};
     std::vector<GUInt64> m_anStep{};
     std::vector<GUInt64> m_anDstOffset{};
+
+    std::pair<std::shared_ptr<VRTArrayDatasetWrapper>,
+              std::shared_ptr<GDALMDArray>>
+    GetSourceArray() const;
 
     VRTMDArraySourceFromArray(const VRTMDArraySourceFromArray &) = delete;
     VRTMDArraySourceFromArray &
@@ -2435,6 +2534,12 @@ class VRTMDArraySourceFromArray final : public VRTMDArraySource
 
     static std::unique_ptr<VRTMDArraySourceFromArray>
     Create(const VRTMDArray *poDstArray, const CPLXMLNode *psNode);
+
+    RelationShip GetRelationship(const uint64_t *arrayStartIdx,
+                                 const size_t *count) const override;
+
+    bool GetRawBlockInfo(const uint64_t *arrayStartIdx, const size_t *count,
+                         GDALMDArrayRawBlockInfo &info) const override;
 
     bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,

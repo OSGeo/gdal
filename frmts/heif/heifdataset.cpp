@@ -10,13 +10,12 @@
  ****************************************************************************/
 
 #include "heifdataset.h"
+#include "gdal_frmts.h"
 
 #include "cpl_vsi_virtual.h"
 
 #include <algorithm>
 #include <cinttypes>
-
-extern "C" void CPL_DLL GDALRegister_HEIF();
 
 /************************************************************************/
 /*                       GDALHEIFRasterBand                             */
@@ -72,18 +71,42 @@ GDALHEIFDataset::GDALHEIFDataset() : m_hCtxt(heif_context_alloc())
 
 GDALHEIFDataset::~GDALHEIFDataset()
 {
-    if (m_hCtxt)
-        heif_context_free(m_hCtxt);
+    GDALHEIFDataset::Close();
+}
+
+/************************************************************************/
+/*                                Close()                               */
+/************************************************************************/
+
+CPLErr GDALHEIFDataset::Close()
+{
+    CPLErr eErr = CE_None;
+
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (m_hCtxt)
+            heif_context_free(m_hCtxt);
+        m_hCtxt = nullptr;
+
 #ifdef HAS_CUSTOM_FILE_READER
-    if (m_fpL)
-        VSIFCloseL(m_fpL);
+        if (m_fpL)
+            VSIFCloseL(m_fpL);
+        m_fpL = nullptr;
 #endif
+
 #ifndef LIBHEIF_SUPPORTS_TILES
-    if (m_hImage)
-        heif_image_release(m_hImage);
+        if (m_hImage)
+            heif_image_release(m_hImage);
+        m_hImage = nullptr;
 #endif
-    if (m_hImageHandle)
-        heif_image_handle_release(m_hImageHandle);
+
+        if (m_hImageHandle)
+            heif_image_handle_release(m_hImageHandle);
+        m_hImageHandle = nullptr;
+
+        eErr = GDALPamDataset::Close();
+    }
+    return eErr;
 }
 
 #ifdef HAS_CUSTOM_FILE_READER

@@ -25,6 +25,7 @@
 #include <mutex>
 #include <type_traits>
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_mdreader.h"
 #include "gdal_interpolateatpoint.h"
@@ -1779,6 +1780,38 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                         static_cast<GIntBig>(nBlockActualXSize) * nBands));
             }
         }
+        else if (!bSeparate && nBands == nBandCount &&
+                 nBufTypeSize == nBandSpace &&
+                 eBufType == papoBands[0]->GetRasterDataType() &&
+                 nPixelSpace > nBandSpace * nBandCount &&
+                 nLineSpace >= nPixelSpace * nBlockXSize &&
+                 IsContiguousBandMap())
+        {
+            // Optimization for typically reading a pixel-interleaved RGB buffer
+            // into a pixel-interleaved RGBA buffer
+            for (int iY = 0; iY < nBlockActualYSize; ++iY)
+            {
+                GByte *const pabyDst = pabyBlockData + iY * nLineSpace;
+                const GByte *const pabySrc =
+                    abyDecompressedStrile.data() +
+                    nNativeDTSize * iY * nBlockXSize * nBands;
+                if (nBands == 3 && nPixelSpace == 4 && nBufTypeSize == 1)
+                {
+                    for (int iX = 0; iX < nBlockActualXSize; ++iX)
+                    {
+                        memcpy(pabyDst + iX * 4, pabySrc + iX * 3, 3);
+                    }
+                }
+                else
+                {
+                    for (int iX = 0; iX < nBlockActualXSize; ++iX)
+                    {
+                        memcpy(pabyDst + iX * nPixelSpace,
+                               pabySrc + iX * nBands, nBands * nBufTypeSize);
+                    }
+                }
+            }
+        }
         else
         {
             // General case
@@ -1794,7 +1827,8 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                                 (iY * nBlockXSize * nSrcPixels + iSrcBand),
                         eNativeDT, static_cast<int>(nSrcPixels * nNativeDTSize),
                         pabyBlockData + iBand * nBandSpace + iY * nLineSpace,
-                        eBufType, nBufTypeSize, nBlockActualXSize);
+                        eBufType, static_cast<int>(nPixelSpace),
+                        nBlockActualXSize);
                 }
             }
         }

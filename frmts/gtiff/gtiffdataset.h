@@ -153,7 +153,7 @@ class GTiffDataset final : public GDALPamDataset
 
     MaskOffset *m_panMaskOffsetLsb = nullptr;
     char *m_pszVertUnit = nullptr;
-    char *m_pszFilename = nullptr;
+    std::string m_osFilename{};
     char *m_pszTmpFilename = nullptr;
     char *m_pszGeorefFilename = nullptr;
     char *m_pszXMLFilename = nullptr;
@@ -447,6 +447,10 @@ class GTiffDataset final : public GDALPamDataset
     static void ThreadDecompressionFunc(void *pData);
 
     static GTIF *GTIFNew(TIFF *hTIFF);
+
+    static constexpr const char *DEFAULT_RASTER_ATTRIBUTE_TABLE =
+        "DEFAULT_RASTER_ATTRIBUTE_TABLE";
+    static constexpr const char *RAT_ROLE = "rat";
 
   protected:
     int CloseDependentDatasets() override;

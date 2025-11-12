@@ -1880,7 +1880,6 @@ CPLXMLNode *CPLCreateXMLElementAndValue(CPLXMLNode *psParent,
  * @param pszName the attribute name to create.
  * @param pszValue the text to attach to the attribute. Must not be NULL.
  *
- * @since GDAL 2.0
  */
 
 void CPLAddXMLAttributeAndValue(CPLXMLNode *psParent, const char *pszName,

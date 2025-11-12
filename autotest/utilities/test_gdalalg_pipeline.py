@@ -108,7 +108,7 @@ def test_gdalalg_pipeline_read_and_write_raster_from_object():
         input=src_ds,
         output_format="MEM",
         output="",
-        pipeline="read ! write",
+        pipeline="read",
     ) as alg:
         assert alg.Output().GetRasterBand(1).Checksum() == 4672
 
@@ -159,12 +159,6 @@ def test_gdalalg_pipeline_errors():
 
     with pytest.raises(Exception, match="pipeline: unknown step name: foo"):
         gdal.Run("pipeline", pipeline="foo")
-
-    with pytest.raises(Exception, match="pipeline: At least 2 steps must be provided"):
-        gdal.Run("pipeline", pipeline="read ../gcore/data/byte.tif")
-
-    with pytest.raises(Exception, match="pipeline: Last step should be 'write'"):
-        gdal.Run("pipeline", pipeline="read ../gcore/data/byte.tif ! reproject")
 
     with pytest.raises(Exception, match="read: Option '--bar' is unknown"):
         gdal.Run("pipeline", pipeline="read ../gcore/data/byte.tif --bar ! write")
@@ -229,6 +223,11 @@ def gdal_path():
 
 
 def test_gdalalg_pipeline_command_line(gdal_path, tmp_path):
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} pipeline read ../gcore/data/byte.tif"
+    )
+    assert "pipeline: At least 2 steps must be provided" in err
 
     out = gdaltest.runexternal(
         f"{gdal_path} pipeline --progress read ../gcore/data/byte.tif ! write {tmp_path}/out.tif"
@@ -811,7 +810,7 @@ def test_gdalalg_pipeline_nested_nominal():
 
     with gdal.Run(
         "pipeline",
-        pipeline="read ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! color-merge --grayscale [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] ! write --of MEM unnamed",
+        pipeline="read ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! blend --operator=hsv-value --overlay [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] ! write --of MEM unnamed",
     ) as alg:
         ds = alg.Output()
         assert ds.RasterCount == 3
@@ -827,7 +826,7 @@ def test_gdalalg_pipeline_nested_serialize_to_gdalg(tmp_vsimem):
     out_filename = tmp_vsimem / "out.gdalg.json"
     gdal.Run(
         "pipeline",
-        pipeline=f"read ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! color-merge --grayscale [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] ! write {out_filename}",
+        pipeline=f"read ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! blend --operator=hsv-value --overlay [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] ! write {out_filename}",
     )
 
     with gdal.VSIFile(out_filename, "rb") as f:
@@ -840,7 +839,7 @@ def test_gdalalg_pipeline_nested_serialize_to_gdalg(tmp_vsimem):
 
     del j["gdal_version"]
     assert j == {
-        "command_line": "gdal pipeline read --input ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! color-merge --grayscale [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ]",
+        "command_line": "gdal pipeline read --input ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! blend --overlay [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] --operator hsv-value",
         "relative_paths_relative_to_this_file": False,
         "type": "gdal_streamed_alg",
     }
@@ -1048,3 +1047,58 @@ def test_gdalalg_pipeline_tee_error(tmp_vsimem):
             "pipeline",
             pipeline=f"read ../gcore/data/byte.tif ! tee [ write {out_filename} ]",
         )
+
+
+def test_gdalalg_pipeline_tee_output_string(tmp_vsimem):
+
+    with gdal.Run(
+        "pipeline",
+        pipeline=f"read ../gcore/data/byte.tif ! tee [ write {tmp_vsimem}/tmp.tif ] [ info ]",
+    ) as alg:
+        with pytest.raises(
+            Exception,
+            match=r"Cannot use 'output' method on this algorithm as it supports multiple output arguments. Use 'Outputs' \(plural\) instead",
+        ):
+            alg.Output()
+
+    with gdal.Run(
+        "pipeline",
+        pipeline=f"read ../gcore/data/byte.tif ! tee [ write {tmp_vsimem}/tmp.tif --overwrite ] [ info ]",
+    ) as alg:
+        assert alg.Outputs()["output"].GetDescription() == "../gcore/data/byte.tif"
+        assert alg.Outputs()["output-string"]["description"] == "../gcore/data/byte.tif"
+
+
+def test_gdalalg_pipeline_tee_output_string_from_gdal_cli(tmp_vsimem):
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} pipeline read ../gcore/data/byte.tif ! tee [ write {tmp_vsimem}/tmp.tif ] [ info ] ! select --band 1 ! write {tmp_vsimem}/tmp2.tif"
+    )
+    assert out.startswith("Driver: GTiff/GeoTIFF"), out
+
+
+@pytest.mark.require_driver("XYZ")
+def test_gdalalg_pipeline_tee_output_to_stdout(tmp_vsimem):
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} pipeline read ../gcore/data/byte.tif ! tee [ write --of XYZ /vsistdout/ ]"
+    )
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.xyz", out)
+
+    with gdal.Open(tmp_vsimem / "test.xyz") as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672

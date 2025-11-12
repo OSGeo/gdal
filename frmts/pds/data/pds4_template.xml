@@ -15,7 +15,7 @@
         <logical_identifier>${LOGICAL_IDENTIFIER}</logical_identifier>
         <version_id>1.0</version_id>
         <title>${TITLE}</title>
-        <information_model_version>1.16.0.0</information_model_version>
+        <information_model_version>1.24.0.0</information_model_version>
         <product_class>Product_Observational</product_class>
     </Identification_Area>
     <Observation_Area>

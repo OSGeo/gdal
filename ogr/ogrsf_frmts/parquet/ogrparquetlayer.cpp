@@ -908,6 +908,32 @@ void OGRParquetLayer::EstablishFeatureDefn()
 
     LoadGDALMetadata(kv_metadata.get());
 
+    if (kv_metadata && kv_metadata->Contains("gdal:creation-options"))
+    {
+        auto co = kv_metadata->Get("gdal:creation-options");
+        if (co.ok())
+        {
+            CPLDebugOnly("PARQUET", "gdal:creation-options = %s", co->c_str());
+            CPLJSONDocument oDoc;
+            if (oDoc.LoadMemory(*co))
+            {
+                auto oRoot = oDoc.GetRoot();
+                if (oRoot.GetType() == CPLJSONObject::Type::Object)
+                {
+                    for (const auto &oChild : oRoot.GetChildren())
+                    {
+                        if (oChild.GetType() == CPLJSONObject::Type::String)
+                        {
+                            m_aosCreationOptions.SetNameValue(
+                                oChild.GetName().c_str(),
+                                oChild.ToString().c_str());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     if (!m_poArrowReader->GetSchema(&m_poSchema).ok())
     {
         return;
@@ -1152,8 +1178,6 @@ void OGRParquetLayer::EstablishFeatureDefn()
 
     CPLAssert(static_cast<int>(m_anMapFieldIndexToArrowColumn.size()) ==
               m_poFeatureDefn->GetFieldCount());
-    CPLAssert(static_cast<int>(m_anMapFieldIndexToParquetColumn.size()) ==
-              m_poFeatureDefn->GetFieldCount());
     CPLAssert(static_cast<int>(m_anMapGeomFieldIndexToArrowColumn.size()) ==
               m_poFeatureDefn->GetGeomFieldCount());
     CPLAssert(static_cast<int>(m_anMapGeomFieldIndexToParquetColumns.size()) ==
@@ -1274,6 +1298,96 @@ void OGRParquetLayer::ProcessGeometryColumnCovering(
 }
 
 /************************************************************************/
+/*                               FindNode()                             */
+/************************************************************************/
+
+static const parquet::schema::Node *FindNode(const parquet::schema::Node *node,
+                                             const std::string &arrowFieldName)
+{
+    CPLAssert(node);
+    if (node->name() == arrowFieldName)
+    {
+        return node;
+    }
+    else if (node->is_group())
+    {
+        const auto groupNode =
+            cpl::down_cast<const parquet::schema::GroupNode *>(node);
+        for (int i = 0; i < groupNode->field_count(); ++i)
+        {
+            const auto found =
+                FindNode(groupNode->field(i).get(), arrowFieldName);
+            if (found)
+                return found;
+        }
+    }
+    return nullptr;
+}
+
+/************************************************************************/
+/*                         CollectLeaveNodes()                          */
+/************************************************************************/
+
+static void CollectLeaveNodes(
+    const parquet::schema::Node *node,
+    const std::map<const parquet::schema::Node *, int> &oMapNodeToColIdx,
+    std::vector<int> &anParquetCols)
+{
+    CPLAssert(node);
+    if (node->is_primitive())
+    {
+        const auto it = oMapNodeToColIdx.find(node);
+        if (it != oMapNodeToColIdx.end())
+            anParquetCols.push_back(it->second);
+    }
+    else if (node->is_group())
+    {
+        const auto groupNode =
+            cpl::down_cast<const parquet::schema::GroupNode *>(node);
+        for (int i = 0; i < groupNode->field_count(); ++i)
+        {
+            CollectLeaveNodes(groupNode->field(i).get(), oMapNodeToColIdx,
+                              anParquetCols);
+        }
+    }
+}
+
+/************************************************************************/
+/*                 GetParquetColumnIndicesForArrowField()               */
+/************************************************************************/
+
+std::vector<int> OGRParquetLayer::GetParquetColumnIndicesForArrowField(
+    const std::string &arrowFieldName) const
+{
+    const auto metadata = m_poArrowReader->parquet_reader()->metadata();
+    const auto schema = metadata->schema();
+
+    std::vector<int> anParquetCols;
+    const auto *rootNode = schema->schema_root().get();
+    const auto *fieldNode = FindNode(rootNode, arrowFieldName);
+    if (!fieldNode)
+    {
+        CPLDebug("Parquet",
+                 "Cannot find Parquet node corresponding to Arrow field %s",
+                 arrowFieldName.c_str());
+        return anParquetCols;
+    }
+
+    /// Build mapping from schema node to column index
+    std::map<const parquet::schema::Node *, int> oMapNodeToColIdx;
+    const int num_cols = schema->num_columns();
+    for (int i = 0; i < num_cols; ++i)
+    {
+        const auto *node = schema->Column(i)->schema_node().get();
+        oMapNodeToColIdx[node] = i;
+    }
+
+    CollectLeaveNodes(fieldNode, oMapNodeToColIdx, anParquetCols);
+
+    return anParquetCols;
+}
+
+/************************************************************************/
 /*                CheckMatchArrowParquetColumnNames()                   */
 /************************************************************************/
 
@@ -1390,8 +1504,6 @@ void OGRParquetLayer::CreateFieldFromSchema(
         if (bTypeOK)
         {
             m_apoArrowDataTypes.push_back(std::move(type));
-            m_anMapFieldIndexToParquetColumn.push_back(
-                bParquetColValid ? iParquetCol : -1);
         }
     }
 
@@ -1407,25 +1519,25 @@ std::unique_ptr<OGRFieldDomain>
 OGRParquetLayer::BuildDomain(const std::string &osDomainName,
                              int iFieldIndex) const
 {
-#ifdef DEBUG
     const int iArrowCol = m_anMapFieldIndexToArrowColumn[iFieldIndex][0];
-    (void)iArrowCol;
+    const std::string osArrowColName = m_poSchema->fields()[iArrowCol]->name();
     CPLAssert(m_poSchema->fields()[iArrowCol]->type()->id() ==
               arrow::Type::DICTIONARY);
-#endif
-    const int iParquetCol = m_anMapFieldIndexToParquetColumn[iFieldIndex];
-    CPLAssert(iParquetCol >= 0);
+    const auto anParquetColsForField =
+        GetParquetColumnIndicesForArrowField(osArrowColName.c_str());
+    CPLAssert(!anParquetColsForField.empty());
     const auto oldBatchSize = m_poArrowReader->properties().batch_size();
     m_poArrowReader->set_batch_size(1);
 #if PARQUET_VERSION_MAJOR >= 21
     std::unique_ptr<arrow::RecordBatchReader> poRecordBatchReader;
-    auto result = m_poArrowReader->GetRecordBatchReader({0}, {iParquetCol});
+    auto result =
+        m_poArrowReader->GetRecordBatchReader({0}, anParquetColsForField);
     if (result.ok())
         poRecordBatchReader = std::move(*result);
 #else
     std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
     CPL_IGNORE_RET_VAL(m_poArrowReader->GetRecordBatchReader(
-        {0}, {iParquetCol}, &poRecordBatchReader));
+        {0}, anParquetColsForField, &poRecordBatchReader));
 #endif
     if (poRecordBatchReader != nullptr)
     {
@@ -2191,19 +2303,21 @@ bool OGRParquetLayer::ReadNextBatch()
                         else if (constraint.nOperation == SWQ_ISNULL ||
                                  constraint.nOperation == SWQ_ISNOTNULL)
                         {
-                            const int iCol =
+                            const std::vector<int> anCols =
                                 iOGRField == OGR_FID_INDEX
-                                    ? m_iFIDParquetColumn
-                                    : GetMapFieldIndexToParquetColumn()
-                                          [iOGRField];
-                            if (iCol >= 0)
+                                    ? std::vector<int>{m_iFIDParquetColumn}
+                                    : GetParquetColumnIndicesForArrowField(
+                                          GetLayerDefn()
+                                              ->GetFieldDefn(iOGRField)
+                                              ->GetNameRef());
+                            if (anCols.size() == 1 && anCols[0] >= 0)
                             {
                                 const auto metadata =
                                     m_poArrowReader->parquet_reader()
                                         ->metadata();
                                 const auto rowGroupColumnChunk =
                                     metadata->RowGroup(iRowGroup)->ColumnChunk(
-                                        iCol);
+                                        anCols[0]);
                                 const auto rowGroupStats =
                                     rowGroupColumnChunk->statistics();
                                 if (rowGroupColumnChunk->is_stats_set() &&
@@ -2385,9 +2499,6 @@ OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
                                         m_anMapFieldIndexToArrowColumn[j][0];
                              ++j)
                         {
-                            const int iParquetCol =
-                                m_anMapFieldIndexToParquetColumn[j];
-                            CPLAssert(iParquetCol >= 0);
                             if (!m_poFeatureDefn->GetFieldDefn(j)->IsIgnored())
                             {
                                 m_anMapFieldIndexToArrayIndex.push_back(
@@ -2397,7 +2508,18 @@ OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
                             {
                                 m_anMapFieldIndexToArrayIndex.push_back(-1);
                             }
-                            m_anRequestedParquetColumns.push_back(iParquetCol);
+
+                            const int iArrowCol =
+                                m_anMapFieldIndexToArrowColumn[i][0];
+                            const std::string osArrowColName =
+                                m_poSchema->fields()[iArrowCol]->name();
+                            const auto anParquetColsForField =
+                                GetParquetColumnIndicesForArrowField(
+                                    osArrowColName.c_str());
+                            m_anRequestedParquetColumns.insert(
+                                m_anRequestedParquetColumns.end(),
+                                anParquetColsForField.begin(),
+                                anParquetColsForField.end());
                         }
                         i = j - 1;
                         nBatchColumns++;
@@ -2417,17 +2539,17 @@ OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
                 }
                 else if (!m_poFeatureDefn->GetFieldDefn(i)->IsIgnored())
                 {
-                    const int iParquetCol = m_anMapFieldIndexToParquetColumn[i];
-                    CPLAssert(iParquetCol >= 0);
                     m_anMapFieldIndexToArrayIndex.push_back(nBatchColumns);
                     nBatchColumns++;
-                    m_anRequestedParquetColumns.push_back(iParquetCol);
-                    if (eArrowType == arrow::Type::MAP)
-                    {
-                        // For a map, request both keys and items Parquet
-                        // columns
-                        m_anRequestedParquetColumns.push_back(iParquetCol + 1);
-                    }
+                    const int iArrowCol = m_anMapFieldIndexToArrowColumn[i][0];
+                    const std::string osArrowColName =
+                        m_poSchema->fields()[iArrowCol]->name();
+                    const auto anParquetColsForField =
+                        GetParquetColumnIndicesForArrowField(osArrowColName);
+                    m_anRequestedParquetColumns.insert(
+                        m_anRequestedParquetColumns.end(),
+                        anParquetColsForField.begin(),
+                        anParquetColsForField.end());
                 }
                 else
                 {
@@ -2748,6 +2870,13 @@ char **OGRParquetLayer::GetMetadata(const char *pszDomain)
         }
         return m_aosFeatherMetadata.List();
     }
+
+    // Mostly for unit test purposes
+    if (pszDomain != nullptr && EQUAL(pszDomain, "_GDAL_CREATION_OPTIONS_"))
+    {
+        return m_aosCreationOptions.List();
+    }
+
     return OGRLayer::GetMetadata(pszDomain);
 }
 
@@ -3022,11 +3151,14 @@ bool OGRParquetLayer::GetMinMaxForOGRField(int iRowGroup,  // -1 for all
     bFoundMin = false;
     bFoundMax = false;
 
-    const int iCol = iOGRField == OGR_FID_INDEX
-                         ? m_iFIDParquetColumn
-                         : GetMapFieldIndexToParquetColumn()[iOGRField];
-    if (iCol < 0)
+    const std::vector<int> anCols =
+        iOGRField == OGR_FID_INDEX
+            ? std::vector<int>{m_iFIDParquetColumn}
+            : GetParquetColumnIndicesForArrowField(
+                  GetLayerDefn()->GetFieldDefn(iOGRField)->GetNameRef());
+    if (anCols.empty() || anCols[0] < 0)
         return false;
+    const int iCol = anCols[0];
     const auto &arrowType = iOGRField == OGR_FID_INDEX
                                 ? m_poFIDType
                                 : GetArrowFieldTypes()[iOGRField];

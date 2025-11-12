@@ -214,7 +214,7 @@ class VSIMemFilesystemHandler final : public VSIFilesystemHandler
                void *) override;
     GIntBig GetDiskFreeSpace(const char *pszDirname) override;
 
-    static std::string NormalizePath(const std::string &in);
+    static CPLString NormalizePath(const std::string &in);
 
     int Unlink_unlocked(const char *pszFilename);
 
@@ -625,7 +625,7 @@ VSIMemFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
 
 {
     CPLMutexHolder oHolder(&hMutex);
-    const std::string osFilename = NormalizePath(pszFilename);
+    const CPLString osFilename = NormalizePath(pszFilename);
     if (osFilename.empty())
         return nullptr;
 
@@ -711,7 +711,7 @@ VSIMemFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
     poHandle->m_bReadAllowed = strchr(pszAccess, 'r') || strchr(pszAccess, '+');
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("VSIMEM", "Opening handle %p on %s: ref_count=%d", poHandle,
+    CPLDebug("VSIMEM", "Opening handle %p on %s: ref_count=%d", poHandle.get(),
              pszFilename, static_cast<int>(poFile.use_count()));
 #endif
     if (strchr(pszAccess, 'a'))
@@ -737,7 +737,7 @@ int VSIMemFilesystemHandler::Stat(const char *pszFilename,
 {
     CPLMutexHolder oHolder(&hMutex);
 
-    const std::string osFilename = NormalizePath(pszFilename);
+    const CPLString osFilename = NormalizePath(pszFilename);
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
@@ -802,7 +802,7 @@ int VSIMemFilesystemHandler::Unlink(const char *pszFilename)
 int VSIMemFilesystemHandler::Unlink_unlocked(const char *pszFilename)
 
 {
-    const std::string osFilename = NormalizePath(pszFilename);
+    const CPLString osFilename = NormalizePath(pszFilename);
 
     auto oIter = oFileList.find(osFilename);
     if (oIter == oFileList.end())
@@ -830,7 +830,7 @@ int VSIMemFilesystemHandler::Mkdir(const char *pszPathname, long /* nMode */)
 {
     CPLMutexHolder oHolder(&hMutex);
 
-    const std::string osPathname = NormalizePath(pszPathname);
+    const CPLString osPathname = NormalizePath(pszPathname);
     if (STARTS_WITH(osPathname.c_str(), szHIDDEN_DIRNAME))
     {
         if (osPathname.size() == strlen(szHIDDEN_DIRNAME))
@@ -1087,22 +1087,14 @@ int VSIMemFilesystemHandler::Rename(const char *pszOldPath,
 /*                           NormalizePath()                            */
 /************************************************************************/
 
-std::string VSIMemFilesystemHandler::NormalizePath(const std::string &in)
+CPLString VSIMemFilesystemHandler::NormalizePath(const std::string &in)
 {
     CPLString s(in);
     std::replace(s.begin(), s.end(), '\\', '/');
     s.replaceAll("//", '/');
     if (!s.empty() && s.back() == '/')
         s.pop_back();
-#if __GNUC__ >= 13
-    // gcc 13 complains about below explicit std::move()
     return s;
-#else
-    // Android NDK (and probably other compilers) warn about
-    // "warning: local variable 's' will be copied despite being returned by name [-Wreturn-std-move]"
-    // if not specifying std::move()
-    return std::move(s);
-#endif
 }
 
 /************************************************************************/

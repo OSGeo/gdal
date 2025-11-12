@@ -48,6 +48,7 @@ typedef int GDALRIOResampleAlg;
 
 %{
 #include <vector>
+#include "cpl_time.h"
 #include "gdal_priv.h"
 #include "ogr_recordbatch.h"
 
@@ -2242,6 +2243,98 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
         }
         CPLFree(papszStringData);
     }
+    else if( nType == NPY_BOOL )
+    {
+        retval = GDALRATValuesIOAsBoolean(poRAT, GF_Write, nField, nStart, nLength,
+                        (bool*)PyArray_DATA(psArray) );
+    }
+    else if( nType == NPY_OBJECT && GDALRATGetTypeOfCol(poRAT, nField) == GFT_DateTime )
+    {
+        GDALRATDateTime dt;
+        std::vector<GDALRATDateTime> asDateTimeValues(nLength, dt);
+        for( int i = 0; i < nLength; i++ )
+        {
+            PyObject* pyDateTime = *(PyObject**)PyArray_GETPTR1(psArray, i);
+            if (!pyDateTime || pyDateTime == Py_None)
+            {
+                continue;
+            }
+            if (!PyDateTime_Check(pyDateTime))
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                      "Non-datetime object found at index %d", i);
+                return CE_Failure;
+            }
+            asDateTimeValues[i].nYear = PyDateTime_GET_YEAR(pyDateTime);
+            asDateTimeValues[i].nMonth = PyDateTime_GET_MONTH(pyDateTime);
+            asDateTimeValues[i].nDay = PyDateTime_GET_DAY(pyDateTime);
+            asDateTimeValues[i].nHour = PyDateTime_DATE_GET_HOUR(pyDateTime);
+            asDateTimeValues[i].nMinute = PyDateTime_DATE_GET_MINUTE(pyDateTime);
+            asDateTimeValues[i].fSecond = (float)(PyDateTime_DATE_GET_SECOND(pyDateTime) +
+                                            PyDateTime_DATE_GET_MICROSECOND(pyDateTime) * 1e-6);
+            asDateTimeValues[i].bPositiveTimeZone = true;
+            asDateTimeValues[i].bIsValid = true;
+            asDateTimeValues[i].nTimeZoneHour = 0;
+            asDateTimeValues[i].nTimeZoneMinute = 0;
+            PyObject *tzinfo = ((PyDateTime_DateTime *)pyDateTime)->tzinfo;
+            if (tzinfo && tzinfo != Py_None)
+            {
+                PyObject *pyMethodName = PyUnicode_FromString("utcoffset");
+                PyObject *pyDelta = PyObject_CallMethodObjArgs(
+                    tzinfo,
+                    pyMethodName,
+                    pyDateTime,
+                    NULL
+                );
+                Py_DECREF(pyMethodName);
+                if (pyDelta && pyDelta != Py_None)
+                {
+                    if (!PyDelta_Check(pyDelta)) {
+                        Py_DECREF(pyDelta);
+                        PyErr_SetString(PyExc_TypeError, "tzinfo.utcoffset() did not return timedelta");
+                        return CE_Failure;
+                    }
+                    int days = PyDateTime_DELTA_GET_DAYS(pyDelta);
+                    int seconds = PyDateTime_DELTA_GET_SECONDS(pyDelta);
+                    int minutes = days * 24 * 60 + seconds / 60;
+                    if (minutes < 0 )
+                    {
+                        asDateTimeValues[i].bPositiveTimeZone = false;
+                        minutes = -minutes;
+                    }
+                    asDateTimeValues[i].nTimeZoneHour = minutes / 60;
+                    asDateTimeValues[i].nTimeZoneMinute = minutes % 60;
+                }
+                Py_DECREF(pyDelta);
+            }
+        }
+        retval = GDALRATValuesIOAsDateTime(poRAT, GF_Write, nField, nStart, nLength,
+                                           asDateTimeValues.data());
+    }
+    else if( nType == NPY_OBJECT && GDALRATGetTypeOfCol(poRAT, nField) == GFT_WKBGeometry )
+    {
+        retval = CE_None;
+        std::vector<GByte*> apabyWKB(nLength);
+        std::vector<size_t> anWKBSize(nLength);
+        for( int i = 0; i < nLength; i++ )
+        {
+            PyObject* pyBytes = *(PyObject**)PyArray_GETPTR1(psArray, i);
+            if (!PyBytes_Check(pyBytes))
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                      "Non-byte object found at index %d", i);
+                retval = CE_Failure;
+                break;
+            }
+            apabyWKB[i] = (GByte*)PyBytes_AsString(pyBytes);
+            anWKBSize[i] = PyBytes_Size(pyBytes);
+        }
+        if (retval == CE_None )
+        {
+            retval = GDALRATValuesIOAsWKBGeometry(poRAT, GF_Write, nField, nStart, nLength,
+                                                  apabyWKB.data(), anWKBSize.data());
+        }
+    }
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -2261,91 +2354,184 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
   PyObject *RATValuesIONumPyRead( GDALRasterAttributeTableShadow* poRAT, int nField, int nStart,
                        int nLength) {
 
-    GDALRATFieldType colType = GDALRATGetTypeOfCol(poRAT, nField);
+    const GDALRATFieldType colType = GDALRATGetTypeOfCol(poRAT, nField);
     npy_intp dims = nLength;
     PyObject *pOutArray = NULL;
-    if( colType == GFT_Integer )
+    switch (colType)
     {
-        pOutArray = PyArray_SimpleNew(1, &dims, NPY_INT32);
-        if( GDALRATValuesIOAsInteger(poRAT, GF_Read, nField, nStart, nLength,
-                        (int*)PyArray_DATA((PyArrayObject *) pOutArray)) != CE_None)
+        case GFT_Integer:
         {
-            Py_DECREF(pOutArray);
-            Py_RETURN_NONE;
-        }
-    }
-    else if( colType == GFT_Real )
-    {
-        pOutArray = PyArray_SimpleNew(1, &dims, NPY_DOUBLE);
-        if( GDALRATValuesIOAsDouble(poRAT, GF_Read, nField, nStart, nLength,
-                        (double*)PyArray_DATA((PyArrayObject *) pOutArray)) != CE_None)
-        {
-            Py_DECREF(pOutArray);
-            Py_RETURN_NONE;
-        }
-    }
-    else if( colType == GFT_String )
-    {
-        // must read the data first to work out max size
-        // of strings to create array
-        int n;
-        char **papszStringList = (char**)CPLCalloc(sizeof(char*), nLength);
-        if( GDALRATValuesIOAsString(poRAT, GF_Read, nField, nStart, nLength, papszStringList) != CE_None )
-        {
-            CPLFree(papszStringList);
-            Py_RETURN_NONE;
-        }
-        int nMaxLen = 0, nLen;
-        for( n = 0; n < nLength; n++ )
-        {
-            // note strlen doesn't include null char
-            // but that is what numpy expects so all good
-            nLen = static_cast<int>(strlen(papszStringList[n]));
-            if( nLen > nMaxLen )
-                nMaxLen = nLen;
-        }
-        int bZeroLength = FALSE;
-        // numpy can't deal with zero length strings
-        if( nMaxLen == 0 )
-        {
-            nMaxLen = 1;
-            bZeroLength = TRUE;
+            pOutArray = PyArray_SimpleNew(1, &dims, NPY_INT32);
+            if( GDALRATValuesIOAsInteger(poRAT, GF_Read, nField, nStart, nLength,
+                            (int*)PyArray_DATA((PyArrayObject *) pOutArray)) != CE_None)
+            {
+                Py_DECREF(pOutArray);
+                Py_RETURN_NONE;
+            }
+            break;
         }
 
-        // create the dtype string
-        PyObject *pDTypeString = PyUnicode_FromFormat("S%d", nMaxLen);
-        // out type description object
-        PyArray_Descr *pDescr;
-        PyArray_DescrConverter(pDTypeString, &pDescr);
-        Py_DECREF(pDTypeString);
-
-        // create array
-        pOutArray = PyArray_SimpleNewFromDescr(1, &dims, pDescr);
-
-        // copy data in
-        if( !bZeroLength )
+        case GFT_Real:
         {
+            pOutArray = PyArray_SimpleNew(1, &dims, NPY_DOUBLE);
+            if( GDALRATValuesIOAsDouble(poRAT, GF_Read, nField, nStart, nLength,
+                            (double*)PyArray_DATA((PyArrayObject *) pOutArray)) != CE_None)
+            {
+                Py_DECREF(pOutArray);
+                Py_RETURN_NONE;
+            }
+            break;
+        }
+
+        case GFT_String:
+        {
+            // must read the data first to work out max size
+            // of strings to create array
+            int n;
+            char **papszStringList = (char**)CPLCalloc(sizeof(char*), nLength);
+            if( GDALRATValuesIOAsString(poRAT, GF_Read, nField, nStart, nLength, papszStringList) != CE_None )
+            {
+                CPLFree(papszStringList);
+                Py_RETURN_NONE;
+            }
+            int nMaxLen = 0, nLen;
             for( n = 0; n < nLength; n++ )
             {
-                // we use strncpy so that we don't go over nMaxLen
-                // which we would if the null char is copied
-                // (which we don't want as numpy 'knows' to interpret the string as nMaxLen long)
-                strncpy((char*)PyArray_GETPTR1((PyArrayObject *) pOutArray, n), papszStringList[n], nMaxLen);
+                // note strlen doesn't include null char
+                // but that is what numpy expects so all good
+                nLen = static_cast<int>(strlen(papszStringList[n]));
+                if( nLen > nMaxLen )
+                    nMaxLen = nLen;
             }
-        }
-        else
-        {
-            // so there isn't rubbish in the 1 char strings
-            PyArray_FILLWBYTE((PyArrayObject *) pOutArray, 0);
+            int bZeroLength = FALSE;
+            // numpy can't deal with zero length strings
+            if( nMaxLen == 0 )
+            {
+                nMaxLen = 1;
+                bZeroLength = TRUE;
+            }
+
+            // create the dtype string
+            PyObject *pDTypeString = PyUnicode_FromFormat("S%d", nMaxLen);
+            // out type description object
+            PyArray_Descr *pDescr;
+            PyArray_DescrConverter(pDTypeString, &pDescr);
+            Py_DECREF(pDTypeString);
+
+            // create array
+            pOutArray = PyArray_SimpleNewFromDescr(1, &dims, pDescr);
+
+            // copy data in
+            if( !bZeroLength )
+            {
+                for( n = 0; n < nLength; n++ )
+                {
+                    // we use strncpy so that we don't go over nMaxLen
+                    // which we would if the null char is copied
+                    // (which we don't want as numpy 'knows' to interpret the string as nMaxLen long)
+                    strncpy((char*)PyArray_GETPTR1((PyArrayObject *) pOutArray, n), papszStringList[n], nMaxLen);
+                }
+            }
+            else
+            {
+                // so there isn't rubbish in the 1 char strings
+                PyArray_FILLWBYTE((PyArrayObject *) pOutArray, 0);
+            }
+
+            // free strings
+            for( n = 0; n < nLength; n++ )
+            {
+                CPLFree(papszStringList[n]);
+            }
+            CPLFree(papszStringList);
+
+            break;
         }
 
-        // free strings
-        for( n = 0; n < nLength; n++ )
+        case GFT_Boolean:
         {
-            CPLFree(papszStringList[n]);
+            pOutArray = PyArray_SimpleNew(1, &dims, NPY_BOOL);
+            if( GDALRATValuesIOAsBoolean(poRAT, GF_Read, nField, nStart, nLength,
+                            (bool*)PyArray_DATA((PyArrayObject *) pOutArray)) != CE_None)
+            {
+                Py_DECREF(pOutArray);
+                Py_RETURN_NONE;
+            }
+            break;
         }
-        CPLFree(papszStringList);
+
+        case GFT_DateTime:
+        {
+            std::vector<GDALRATDateTime> asDateTimeValues(nLength);
+            if( GDALRATValuesIOAsDateTime(poRAT, GF_Read, nField, nStart, nLength,
+                                          asDateTimeValues.data()) != CE_None)
+            {
+                Py_RETURN_NONE;
+            }
+            pOutArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+            for( int i = 0; i < nLength; i++ )
+            {
+                PyObject* pyDateTime;
+                if (asDateTimeValues[i].bIsValid )
+                {
+                    struct tm brokendowntime;
+                    brokendowntime.tm_year = asDateTimeValues[i].nYear - 1900;
+                    brokendowntime.tm_mon = asDateTimeValues[i].nMonth - 1;
+                    brokendowntime.tm_mday = asDateTimeValues[i].nDay;
+                    brokendowntime.tm_hour = asDateTimeValues[i].nHour;
+                    brokendowntime.tm_min = asDateTimeValues[i].nMinute;
+                    brokendowntime.tm_sec = (int)asDateTimeValues[i].fSecond;
+                    GIntBig nTimestamp = CPLYMDHMSToUnixTime(&brokendowntime);
+                    double dfTimestamp = (double)nTimestamp + (double)fmod(asDateTimeValues[i].fSecond, 1.0f);
+                    int nTimeZoneOffset = asDateTimeValues[i].nTimeZoneHour * 3600 +
+                                          asDateTimeValues[i].nTimeZoneMinute * 60;
+                    if (!asDateTimeValues[i].bPositiveTimeZone)
+                        nTimeZoneOffset = -nTimeZoneOffset;
+                    dfTimestamp -= nTimeZoneOffset;
+                    PyObject* pyTimestamp = PyFloat_FromDouble(dfTimestamp);
+                    PyObject* pyDelta = PyDelta_FromDSU(0, nTimeZoneOffset, 0);
+                    PyObject* pyTimeZone = PyTimeZone_FromOffset(pyDelta);
+                    Py_DECREF(pyDelta);
+                    PyObject* pyArgs = PyTuple_Pack(2, pyTimestamp, pyTimeZone);
+                    pyDateTime = PyDateTime_FromTimestamp(pyArgs);
+                    Py_DECREF(pyArgs);
+                    Py_DECREF(pyTimestamp);
+                    Py_DECREF(pyTimeZone);
+                }
+                else
+                {
+                    pyDateTime = Py_None;
+                    Py_INCREF(pyDateTime);
+                }
+                memcpy(PyArray_GETPTR1((PyArrayObject *) pOutArray, i),
+                   &pyDateTime,
+                   sizeof(PyObject*));
+            }
+            break;
+        }
+
+        case GFT_WKBGeometry:
+        {
+            std::vector<GByte*> apabyWKB(nLength);
+            std::vector<size_t> anWKBSize(nLength);
+            if( GDALRATValuesIOAsWKBGeometry(poRAT, GF_Read, nField, nStart, nLength,
+                                             apabyWKB.data(), anWKBSize.data()) != CE_None)
+            {
+                Py_RETURN_NONE;
+            }
+            pOutArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+            for( int i = 0; i < nLength; i++ )
+            {
+                PyObject* pyWKB = PyBytes_FromStringAndSize((const char*)apabyWKB[i], anWKBSize[i]);
+                CPLFree(apabyWKB[i]);
+                memcpy(PyArray_GETPTR1((PyArrayObject *) pOutArray, i),
+                   &pyWKB,
+                   sizeof(PyObject*));
+            }
+            break;
+        }
     }
+
     return pOutArray;
   }
 %}
@@ -2887,8 +3073,12 @@ def RATWriteArray(rat, array, field, start=0):
     elif numpy.issubdtype(array.dtype, numpy.character):
         # cast away any kind of Unicode etc
         array = array.astype(bytes)
+    elif numpy.issubdtype(array.dtype, numpy.bool_):
+        pass
+    elif numpy.issubdtype(array.dtype, object) and rat.GetTypeOfCol(field) in (gdal.GFT_DateTime, gdal.GFT_WKBGeometry):
+        pass
     else:
-        raise ValueError("Array not of a supported type (integer, double or string)")
+        raise ValueError("Array not of a supported type (integer, double, string, bool or object)")
 
     ret = RATValuesIONumPyWrite(rat, field, start, array)
     if ret != 0:

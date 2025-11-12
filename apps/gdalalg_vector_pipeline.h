@@ -148,8 +148,39 @@ class GDALVectorPipelineAlgorithm final : public GDALAbstractPipelineAlgorithm
     std::unique_ptr<GDALAbstractPipelineAlgorithm>
     CreateNestedPipeline() const override
     {
-        return std::make_unique<GDALVectorPipelineAlgorithm>();
+        auto pipeline = std::make_unique<GDALVectorPipelineAlgorithm>();
+        pipeline->m_bInnerPipeline = true;
+        return pipeline;
     }
+};
+
+/************************************************************************/
+/*                  GDALVectorOutputDataset                             */
+/************************************************************************/
+
+class GDALVectorOutputDataset final : public GDALDataset
+{
+
+  public:
+    int GetLayerCount() const override
+    {
+        return static_cast<int>(m_layers.size());
+    }
+
+    const OGRLayer *GetLayer(int idx) const override
+    {
+        return m_layers[idx].get();
+    }
+
+    int TestCapability(const char *) const override;
+
+    void AddLayer(std::unique_ptr<OGRLayer> layer)
+    {
+        m_layers.emplace_back(std::move(layer));
+    }
+
+  private:
+    std::vector<std::unique_ptr<OGRLayer>> m_layers{};
 };
 
 /************************************************************************/
@@ -172,6 +203,11 @@ class GDALVectorPipelineOutputLayer /* non final */
 
     OGRLayer &m_srcLayer;
 
+    void FailTranslation()
+    {
+        m_translateError = true;
+    }
+
   public:
     void ResetReading() override;
     OGRFeature *GetNextRawFeature();
@@ -179,6 +215,7 @@ class GDALVectorPipelineOutputLayer /* non final */
   private:
     std::vector<std::unique_ptr<OGRFeature>> m_pendingFeatures{};
     size_t m_idxInPendingFeatures = 0;
+    bool m_translateError = false;
 };
 
 /************************************************************************/

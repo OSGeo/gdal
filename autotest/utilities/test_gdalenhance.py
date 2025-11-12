@@ -78,7 +78,10 @@ def test_gdalenhance_output_histogram(gdalenhance_path, histogram_dest, tmp_path
 
 def test_gdalenhance_output_image(gdalenhance_path, tmp_path):
 
-    infile = "../gcore/data/rgbsmall.tif"
+    infile = tmp_path / "in.tif"
+    gdal.Translate(infile, "../gcore/data/rgbsmall.tif")
+    with gdal.Open(infile, gdal.GA_Update) as ds:
+        ds.GetRasterBand(1).ComputeStatistics(False, False)
     outfile = tmp_path / "out.tif"
 
     out, err = gdaltest.runexternal_out_and_err(
@@ -91,6 +94,9 @@ def test_gdalenhance_output_image(gdalenhance_path, tmp_path):
         assert src.RasterCount == dst.RasterCount
         assert src.RasterXSize == dst.RasterXSize
         assert src.RasterYSize == dst.RasterYSize
+        assert dst.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+        # Check that statistics are not transferred from input to output.
+        assert dst.GetRasterBand(1).GetMetadata() == {}
 
         # check that -co was honored
         assert dst.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION"] == "DEFLATE"

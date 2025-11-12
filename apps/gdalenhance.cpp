@@ -16,6 +16,7 @@
 #include "cpl_multiproc.h"
 #include "gdal_version.h"
 #include "gdal.h"
+#include "gdal_cpp_functions.h"
 #include "vrtdataset.h"
 #include "commonutils.h"
 
@@ -252,6 +253,12 @@ MAIN_START(argc, argv)
         else if (pszFormat != nullptr)
         {
             osFormat = pszFormat;
+        }
+        if (EQUAL(osFormat.c_str(), "VRT"))
+        {
+            printf("Output format VRT is not supported\n");
+            GDALDestroyDriverManager();
+            exit(1);
         }
 
         if (!osFormat.empty())
@@ -707,7 +714,11 @@ CPLErr WriteEnhanced(GDALDatasetH hDataset, int **papanLUTs, int nLUTBins,
         /* ---------------------------------------------------------------- */
         /*      copy over some other information of interest.               */
         /* ---------------------------------------------------------------- */
-        poVRTBand->CopyCommonInfoFrom(poSrcBand);
+        poVRTBand->SetColorInterpretation(poSrcBand->GetColorInterpretation());
+        if (strlen(poSrcBand->GetDescription()) > 0)
+            poVRTBand->SetDescription(poSrcBand->GetDescription());
+        if (poSrcBand->GetRasterDataType() == poVRTBand->GetRasterDataType())
+            GDALCopyNoDataValue(poVRTBand, poSrcBand);
     }
 
     /* -------------------------------------------------------------------- */

@@ -210,7 +210,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     void ReadThermalMetadata();
     void ReadFLIRMetadata();
     void ReadDJIMetadata();
-    GDALDataset *OpenRawThermalImage();
+    GDALDataset *OpenRawThermalImage(const char *pszConnectionString);
 
     bool bHasCheckedForMask{};
     JPGMaskBand *poMaskBand{};
@@ -240,6 +240,8 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
   public:
     JPGDatasetCommon();
     ~JPGDatasetCommon() override;
+
+    CPLErr Close() override;
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                      GDALDataType, int, BANDMAP_TYPE, GSpacing nPixelSpace,

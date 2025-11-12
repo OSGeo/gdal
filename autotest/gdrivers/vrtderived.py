@@ -1231,6 +1231,13 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources):
             ["muparser"],
             id="index substitution works correctly",
         ),
+        pytest.param(
+            "fmod(B, A)",
+            [("A", 2.2), ("B", 7.3)],
+            0.7,
+            ["muparser"],
+            id="fmod works correctly",
+        ),
     ],
 )
 @pytest.mark.parametrize("dialect", ("exprtk", "muparser"))
@@ -2189,3 +2196,45 @@ def test_vrt_split_in_halves(tmp_vsimem):
     with gdal.config_option("VRT_DERIVED_DATASET_ALLOWED_RAM_USAGE", "1000"):
         got = gdal.Open(xml).ReadRaster()
         assert got == b"\x03" * (width * height)
+
+
+def test_vrt_derived_virtual_overviews(tmp_vsimem):
+
+    width = 2
+    height = 2
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src1.tif", width, height, 1, gdal.GDT_Byte
+    ) as src:
+        src.WriteRaster(0, 0, width, height, b"\x01" * (width * height))
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src2.tif", width, height, 1, gdal.GDT_Byte
+    ) as src:
+        src.WriteRaster(0, 0, width, height, b"\x02" * (width * height))
+
+    xml = f"""
+    <VRTDataset rasterXSize="{width}" rasterYSize="{height}">
+      <VRTRasterBand dataType="Byte" band="1">
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src1.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+      <MaskBand>
+          <VRTRasterBand dataType="Byte" subclass="VRTDerivedRasterBand">
+            <PixelFunctionType>sum</PixelFunctionType>
+            <SimpleSource>
+              <SourceFilename>{tmp_vsimem / "src2.tif"}</SourceFilename>
+              <SourceBand>1</SourceBand>
+            </SimpleSource>
+          </VRTRasterBand>
+      </MaskBand>
+      <OverviewList>2</OverviewList>
+    </VRTDataset>"""
+
+    ds = gdal.Open(xml)
+    mask_band = ds.GetRasterBand(1).GetMaskBand()
+    with gdaltest.error_raised(gdal.CE_None):
+        got = mask_band.ReadRaster(0, 0, width, height, 1, 1)
+    assert got == b"\x02"

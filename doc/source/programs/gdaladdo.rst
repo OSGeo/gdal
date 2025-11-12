@@ -83,8 +83,6 @@ most supported file formats with one of several downsampling algorithms.
     Maximum width or height of the smallest overview level. Only taken into
     account if explicit levels are not specified. Defaults to 256.
 
-    .. versionadded:: 2.3
-
 .. option:: --partial-refresh-from-source-timestamp
 
     .. versionadded:: 3.8
@@ -127,8 +125,6 @@ most supported file formats with one of several downsampling algorithms.
 .. option:: <levels>
 
     A list of integral overview levels to build. Ignored with :option:`-clean` option.
-
-    .. versionadded:: 2.3
 
         Levels are no longer required to build overviews.
         In which case, appropriate overview power-of-two factors will be selected
@@ -219,7 +215,7 @@ External overviews can be created in the BigTIFF format by using
 the :config:`BIGTIFF_OVERVIEW` configuration option:
 ``--config BIGTIFF_OVERVIEW {IF_NEEDED|IF_SAFER|YES|NO}``.
 
-The default value is IF_SAFER starting with GDAL 2.3.0 (previously was IF_NEEDED).
+The default value is IF_SAFER.
 The behavior of this option is exactly the same as the BIGTIFF creation option
 documented in the GeoTIFF driver documentation.
 

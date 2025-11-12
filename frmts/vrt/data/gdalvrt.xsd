@@ -562,6 +562,7 @@
             <xs:choice minOccurs="0" maxOccurs="unbounded">
                 <xs:group ref="ComplexSourceElementsGroup"/>
                 <xs:element name="Kernel" type="KernelType"/>
+                <xs:element name="Function" type="xs:string"/>  <!-- added in 3.12 -->
             </xs:choice>
         </xs:sequence>
         <xs:attribute name="resampling" type="xs:string"/>
@@ -685,6 +686,7 @@
                                 <xs:element name="DimensionRef" type="DimensionRefType"/>
                             </xs:choice>
                         </xs:sequence>
+                    <xs:element name="BlockSize" type="integerList" minOccurs="0" maxOccurs="1"/>
                     <xs:element name="SRS" type="SRSType" minOccurs="0" maxOccurs="1"/>
                     <xs:element name="Unit" type="xs:string" minOccurs="0" maxOccurs="1"/>
                     <xs:element name="NoDataValue" type="DoubleOrNanType" minOccurs="0" maxOccurs="1"/>
@@ -735,7 +737,10 @@
 
     <xs:complexType name="InlineValuesWithValueElementType">
         <xs:sequence>
-            <xs:element name="Value" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+            <xs:choice minOccurs="1" maxOccurs="unbounded">
+                <xs:element name="Value" type="xs:string"/>
+                <xs:element name="NullValue"/>
+            </xs:choice>
         </xs:sequence>
         <xs:attribute name="offset" type="xs:string"/>
         <xs:attribute name="count" type="xs:string"/>

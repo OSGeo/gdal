@@ -79,6 +79,10 @@ Details for options can be found in :ref:`gdal_vector_explode_collections`.
 
 Details for options can be found in :ref:`gdal_vector_filter`.
 
+* limit
+
+.. program-output:: gdal vector pipeline --help-doc=limit
+
 * make-valid
 
 .. program-output:: gdal vector pipeline --help-doc=make-valid
@@ -108,6 +112,12 @@ Details for options can be found in :ref:`gdal_vector_segmentize`.
 .. program-output:: gdal vector pipeline --help-doc=select
 
 Details for options can be found in :ref:`gdal_vector_select`.
+
+* set-field-type
+
+.. program-output:: gdal vector pipeline --help-doc=set-field-type
+
+Details for options can be found in :ref:`gdal_vector_set_field_type`.
 
 * set-geom-type
 

@@ -315,7 +315,6 @@ bool VSIOSSHandle::CanRestartOnError(const char *pszErrorMsg,
  See :ref:`/vsioss/ documentation <vsioss>`
  \endverbatim
 
- @since GDAL 2.3
  */
 void VSIInstallOSSFileHandler(void)
 {

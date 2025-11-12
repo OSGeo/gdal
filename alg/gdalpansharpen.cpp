@@ -47,7 +47,6 @@
  * @return a newly allocated pansharpening option structure that must be freed
  * with GDALDestroyPansharpenOptions().
  *
- * @since GDAL 2.1
  */
 
 GDALPansharpenOptions *GDALCreatePansharpenOptions()
@@ -68,7 +67,6 @@ GDALPansharpenOptions *GDALCreatePansharpenOptions()
  * @param psOptions a pansharpening option structure allocated with
  * GDALCreatePansharpenOptions()
  *
- * @since GDAL 2.1
  */
 
 void GDALDestroyPansharpenOptions(GDALPansharpenOptions *psOptions)
@@ -92,7 +90,6 @@ void GDALDestroyPansharpenOptions(GDALPansharpenOptions *psOptions)
  * @return a newly allocated pansharpening option structure that must be freed
  * with GDALDestroyPansharpenOptions().
  *
- * @since GDAL 2.1
  */
 
 GDALPansharpenOptions *
@@ -1161,7 +1158,6 @@ static void ClampValues(T *panBuffer, size_t nValues, T nMaxVal)
  *
  * @return CE_None in case of success, CE_Failure in case of failure.
  *
- * @since GDAL 2.1
  */
 CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                                               int nYSize, void *pDataBuf,
@@ -1853,7 +1849,6 @@ GDALPansharpenOptions *GDALPansharpenOperation::GetOptions()
  * GDALCreatePansharpenOptions(). It is duplicated by this function.
  * @return a valid pansharpening operation handle, or NULL in case of failure.
  *
- * @since GDAL 2.1
  */
 
 GDALPansharpenOperationH
@@ -1874,7 +1869,6 @@ GDALCreatePansharpenOperation(const GDALPansharpenOptions *psOptions)
  *
  * @param hOperation a valid pansharpening operation.
  *
- * @since GDAL 2.1
  */
 
 void GDALDestroyPansharpenOperation(GDALPansharpenOperationH hOperation)
@@ -1909,7 +1903,6 @@ void GDALDestroyPansharpenOperation(GDALPansharpenOperationH hOperation)
  *
  * @return CE_None in case of success, CE_Failure in case of failure.
  *
- * @since GDAL 2.1
  */
 CPLErr GDALPansharpenProcessRegion(GDALPansharpenOperationH hOperation,
                                    int nXOff, int nYOff, int nXSize, int nYSize,

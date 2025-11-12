@@ -1948,6 +1948,19 @@ def test_gdalwarp_lib_135(gdalwarp_135_src_ds, gdalwarp_135_grid_gtx):
 
 
 @pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_novshift(gdalwarp_135_src_ds, gdalwarp_135_grid_gtx):
+
+    with gdaltest.error_raised(gdal.CE_None):
+        ds = gdal.Warp(
+            "",
+            gdalwarp_135_src_ds,
+            options=f'-f MEM -s_srs "+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs" -t_srs EPSG:4979 -novshift',
+        )
+    data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    assert data == 100, "Bad value"
+
+
+@pytest.mark.require_driver("GTX")
 def test_gdalwarp_lib_135a(gdalwarp_135_src_ds_longlat, gdalwarp_135_grid_gtx):
 
     # Forward transform, longlat
@@ -4021,6 +4034,17 @@ def test_gdalwarp_lib_dict_arguments():
     assert opt == ["-wo", "SKIP_NOSOURCE=YES", "-wo", "NUM_THREADS=2"]
 
 
+def test_gdalwarp_lib_str_arguments():
+
+    opt = gdal.WarpOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions="COMPRESS=DEFLATE",
+        warpOptions="SKIP_NOSOURCE=YES",
+    )
+
+    assert opt == ["-wo", "SKIP_NOSOURCE=YES", "-co", "COMPRESS=DEFLATE"]
+
+
 ###############################################################################
 # Test warping from long/lat to ortho
 
@@ -4726,3 +4750,24 @@ def test_gdalwarplib_on_huge_raster():
     )
     assert out_ds.RasterXSize == 24
     assert out_ds.RasterYSize == 24
+
+
+###############################################################################
+# Just reflect the current behavior. We might decide to adopt a new behavior
+
+
+def test_gdalwarp_lib_mask_band_and_src_nodata():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    src_ds.GetRasterBand(1).SetNoDataValue(2)
+    src_ds.GetRasterBand(1).Fill(2)
+    src_ds.GetRasterBand(1).GetMaskBand().Fill(255)
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="Source dataset has both a per-dataset mask band and the warper has been also configured with a source nodata value. Only taking into account the latter",
+    ):
+        out_ds = gdal.Warp("", src_ds, options="-f MEM -dstnodata 5")
+        assert out_ds.GetRasterBand(1).ReadRaster() == b"\x05"

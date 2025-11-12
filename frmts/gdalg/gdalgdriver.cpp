@@ -14,6 +14,7 @@
 #include "cpl_string.h"
 
 #include "gdalalgorithm.h"
+#include "gdal_frmts.h"
 #include "gdal_proxy.h"
 #include "gdal_priv.h"
 

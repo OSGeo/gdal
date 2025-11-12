@@ -39,10 +39,16 @@ OGRJSONFGWriteLayer::OGRJSONFGWriteLayer(
     }
     SetDescription(poFeatureDefn_->GetName());
 
-    bIsWGS84CRS_ = osCoordRefSys_.find("[OGC:CRS84]") != std::string::npos ||
-                   osCoordRefSys_.find("[OGC:CRS84h]") != std::string::npos ||
-                   osCoordRefSys_.find("[EPSG:4326]") != std::string::npos ||
-                   osCoordRefSys_.find("[EPSG:4979]") != std::string::npos;
+    bIsWGS84CRS_ =
+        osCoordRefSys_.find("\"http://www.opengis.net/def/crs/OGC/0/CRS84\"") !=
+            std::string::npos ||
+        osCoordRefSys_.find(
+            "\"http://www.opengis.net/def/crs/OGC/0/CRS84h\"") !=
+            std::string::npos ||
+        osCoordRefSys_.find("\"http://www.opengis.net/def/crs/EPSG/0/4326\"") !=
+            std::string::npos ||
+        osCoordRefSys_.find("\"http://www.opengis.net/def/crs/EPSG/0/4979\"") !=
+            std::string::npos;
 
     oWriteOptions_.nXYCoordPrecision = atoi(CSLFetchNameValueDef(
         papszOptions, "XY_COORD_PRECISION_GEOMETRY", "-1"));
@@ -59,9 +65,15 @@ OGRJSONFGWriteLayer::OGRJSONFGWriteLayer(
         CSLFetchNameValueDef(papszOptions, "Z_COORD_PRECISION_PLACE", "-1"));
     oWriteOptionsPlace_.nSignificantFigures =
         atoi(CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"));
+    oWriteOptionsPlace_.bAllowCurve = true;
+    oWriteOptionsPlace_.bAllowMeasure = true;
 
     bWriteFallbackGeometry_ = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "WRITE_GEOMETRY", "TRUE"));
+
+    osMeasureUnit_ = CSLFetchNameValueDef(papszOptions, "MEASURE_UNIT", "");
+    osMeasureDescription_ =
+        CSLFetchNameValueDef(papszOptions, "MEASURE_DESCRIPTION", "");
 
     VSILFILE *fp = poDS_->GetOutputFile();
     if (poDS_->IsSingleOutputLayer())
@@ -73,6 +85,32 @@ OGRJSONFGWriteLayer::OGRJSONFGWriteLayer(
         json_object_put(poFeatureType);
         if (!osCoordRefSys.empty())
             VSIFPrintfL(fp, "\"coordRefSys\" : %s,\n", osCoordRefSys.c_str());
+
+        if (!osMeasureUnit_.empty() || !osMeasureDescription_.empty())
+        {
+            m_bMeasureWritten = true;
+            bLayerLevelMeasuresWritten_ = true;
+            VSIFPrintfL(fp, "\"measures\": {\n");
+            VSIFPrintfL(fp, "  \"enabled\": true");
+            if (!osMeasureUnit_.empty())
+            {
+                auto poUnit = json_object_new_string(osMeasureUnit_.c_str());
+                VSIFPrintfL(fp, ",\n  \"unit\": %s",
+                            json_object_to_json_string_ext(
+                                poUnit, JSON_C_TO_STRING_SPACED));
+                json_object_put(poUnit);
+            }
+            if (!osMeasureDescription_.empty())
+            {
+                auto poDescription =
+                    json_object_new_string(osMeasureDescription_.c_str());
+                VSIFPrintfL(fp, ",\n  \"description\": %s",
+                            json_object_to_json_string_ext(
+                                poDescription, JSON_C_TO_STRING_SPACED));
+                json_object_put(poDescription);
+            }
+            VSIFPrintfL(fp, "\n},\n");
+        }
     }
 }
 
@@ -300,40 +338,26 @@ OGRErr OGRJSONFGWriteLayer::ICreateFeature(OGRFeature *poFeature)
     /* -------------------------------------------------------------------- */
     /*      Write place and/or geometry                                     */
     /* -------------------------------------------------------------------- */
-    const OGRGeometry *poGeom = poFeature->GetGeometryRef();
-    if (!poGeom)
+    json_object *poJSONGeometry = nullptr;
+    json_object *poPlace = nullptr;
+    if (const OGRGeometry *poGeom = poFeature->GetGeometryRef())
     {
-        json_object_object_add(poObj, "geometry", nullptr);
-        json_object_object_add(poObj, "place", nullptr);
-    }
-    else
-    {
+        const bool bHasCurve = poGeom->hasCurveGeometry(true);
+        if (bHasCurve)
+            m_bCurveWritten = true;
+        const bool bHasMeasure = CPL_TO_BOOL(poGeom->IsMeasured());
+        if (bHasMeasure)
+            m_bMeasureWritten = true;
+        bool bWritePlace = false;
         if (wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface)
         {
-            json_object_object_add(poObj, "geometry", nullptr);
-            if (m_bMustSwapForPlace)
-            {
-                auto poGeomClone =
-                    std::unique_ptr<OGRGeometry>(poGeom->clone());
-                poGeomClone->swapXY();
-                json_object_object_add(
-                    poObj, "place",
-                    OGRJSONFGWriteGeometry(poGeomClone.get(),
-                                           oWriteOptionsPlace_));
-            }
-            else
-            {
-                json_object_object_add(
-                    poObj, "place",
-                    OGRJSONFGWriteGeometry(poGeom, oWriteOptionsPlace_));
-            }
+            m_bPolyhedraWritten = true;
+            bWritePlace = true;
         }
         else if (bIsWGS84CRS_)
         {
-            json_object_object_add(
-                poObj, "geometry",
-                OGRGeoJSONWriteGeometry(poGeom, oWriteOptions_));
-            json_object_object_add(poObj, "place", nullptr);
+            bWritePlace = bHasCurve || bHasMeasure;
+            poJSONGeometry = OGRGeoJSONWriteGeometry(poGeom, oWriteOptions_);
         }
         else
         {
@@ -343,39 +367,70 @@ OGRErr OGRJSONFGWriteLayer::ICreateFeature(OGRFeature *poFeature)
                     std::unique_ptr<OGRGeometry>(poGeom->clone());
                 if (poGeomClone->transform(poCTToWGS84_.get()) == OGRERR_NONE)
                 {
-                    json_object_object_add(
-                        poObj, "geometry",
-                        OGRGeoJSONWriteGeometry(poGeomClone.get(),
-                                                oWriteOptions_));
+                    poJSONGeometry = OGRGeoJSONWriteGeometry(poGeomClone.get(),
+                                                             oWriteOptions_);
                 }
-                else
-                {
-                    json_object_object_add(poObj, "geometry", nullptr);
-                }
-            }
-            else
-            {
-                json_object_object_add(poObj, "geometry", nullptr);
             }
 
+            bWritePlace = true;
+        }
+
+        std::unique_ptr<OGRGeometry> poGeomClone;  // keep in that scope
+        if (bWritePlace)
+        {
             if (m_bMustSwapForPlace)
             {
-                auto poGeomClone =
-                    std::unique_ptr<OGRGeometry>(poGeom->clone());
+                poGeomClone.reset(poGeom->clone());
                 poGeomClone->swapXY();
-                json_object_object_add(
-                    poObj, "place",
-                    OGRGeoJSONWriteGeometry(poGeomClone.get(),
-                                            oWriteOptionsPlace_));
+                poGeom = poGeomClone.get();
+            }
+            if (wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface)
+            {
+                poPlace = OGRJSONFGWriteGeometry(poGeom, oWriteOptionsPlace_);
             }
             else
             {
-                json_object_object_add(
-                    poObj, "place",
-                    OGRGeoJSONWriteGeometry(poGeom, oWriteOptionsPlace_));
+                poPlace = OGRGeoJSONWriteGeometry(poGeom, oWriteOptionsPlace_);
             }
         }
+
+        if (poGeom->IsMeasured())
+        {
+            if (!bLayerLevelMeasuresWritten_)
+            {
+                json_object *poMeasures = json_object_new_object();
+                json_object_object_add(poMeasures, "enabled",
+                                       json_object_new_boolean(true));
+                if (!poDS_->IsSingleOutputLayer())
+                {
+                    if (!osMeasureUnit_.empty())
+                    {
+                        json_object_object_add(
+                            poMeasures, "unit",
+                            json_object_new_string(osMeasureUnit_.c_str()));
+                    }
+                    if (!osMeasureDescription_.empty())
+                    {
+                        json_object_object_add(
+                            poMeasures, "description",
+                            json_object_new_string(
+                                osMeasureDescription_.c_str()));
+                    }
+                }
+                json_object_object_add(poObj, "measures", poMeasures);
+            }
+        }
+        else if (bLayerLevelMeasuresWritten_)
+        {
+            json_object *poMeasures = json_object_new_object();
+            json_object_object_add(poMeasures, "enabled",
+                                   json_object_new_boolean(false));
+            json_object_object_add(poObj, "measures", poMeasures);
+        }
     }
+
+    json_object_object_add(poObj, "geometry", poJSONGeometry);
+    json_object_object_add(poObj, "place", poPlace);
 
     json_object_object_add(poObj, "time", poTime);
 
@@ -425,6 +480,9 @@ int OGRJSONFGWriteLayer::TestCapability(const char *pszCap) const
     else if (EQUAL(pszCap, OLCSequentialWrite))
         return TRUE;
     else if (EQUAL(pszCap, OLCStringsAsUTF8))
+        return TRUE;
+    else if (EQUAL(pszCap, OLCMeasuredGeometries) ||
+             EQUAL(pszCap, OLCZGeometries) || EQUAL(pszCap, OLCCurveGeometries))
         return TRUE;
     return FALSE;
 }

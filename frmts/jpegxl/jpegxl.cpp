@@ -11,6 +11,8 @@
  ****************************************************************************/
 
 #include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "gdal_frmts.h"
 #include "gdalexif.h"
 #include "gdaljp2metadata.h"
 #include "gdaljp2abstractdataset.h"
@@ -79,6 +81,8 @@ class JPEGXLDataset final : public GDALJP2AbstractDataset
   public:
     ~JPEGXLDataset() override;
 
+    CPLErr Close() override;
+
     char **GetMetadataDomainList() override;
     char **GetMetadata(const char *pszDomain) override;
     const char *GetMetadataItem(const char *pszName,
@@ -130,8 +134,28 @@ class JPEGXLRasterBand final : public GDALPamRasterBand
 
 JPEGXLDataset::~JPEGXLDataset()
 {
-    if (m_fp)
-        VSIFCloseL(m_fp);
+    JPEGXLDataset::Close();
+}
+
+/************************************************************************/
+/*                                Close()                               */
+/************************************************************************/
+
+CPLErr JPEGXLDataset::Close()
+{
+    CPLErr eErr = CE_None;
+
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        eErr = JPEGXLDataset::FlushCache(true);
+
+        if (m_fp != nullptr && VSIFCloseL(m_fp) != 0)
+            eErr = CE_Failure;
+        m_fp = nullptr;
+
+        eErr = GDAL::Combine(eErr, GDALPamDataset::Close());
+    }
+    return eErr;
 }
 
 /************************************************************************/

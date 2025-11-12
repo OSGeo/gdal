@@ -9,8 +9,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "cpl_minixml.h"
+#include "cpl_multiproc.h"
 #include "cpl_vsi_virtual.h"
 
 #include "avifdrivercore.h"
@@ -67,6 +69,8 @@ class GDALAVIFDataset final : public GDALPamDataset
     }
 
     ~GDALAVIFDataset() override;
+
+    CPLErr Close() override;
 
     static GDALPamDataset *OpenStaticPAM(GDALOpenInfo *poOpenInfo);
 
@@ -151,11 +155,29 @@ class GDALAVIFIO
 
 GDALAVIFDataset::~GDALAVIFDataset()
 {
-    if (m_decoder)
+    GDALAVIFDataset::Close();
+}
+
+/************************************************************************/
+/*                                Close()                               */
+/************************************************************************/
+
+CPLErr GDALAVIFDataset::Close()
+{
+    CPLErr eErr = CE_None;
+
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        avifDecoderDestroy(m_decoder);
-        avifRGBImageFreePixels(&m_rgb);
+        if (m_decoder)
+        {
+            avifDecoderDestroy(m_decoder);
+            avifRGBImageFreePixels(&m_rgb);
+        }
+        m_decoder = nullptr;
+
+        eErr = GDALPamDataset::Close();
     }
+    return eErr;
 }
 
 /************************************************************************/

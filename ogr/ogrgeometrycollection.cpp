@@ -34,11 +34,6 @@
 
 /**
  * \brief Copy constructor.
- *
- * Note: before GDAL 2.1, only the default implementation of the constructor
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRGeometryCollection::OGRGeometryCollection(const OGRGeometryCollection &other)
@@ -94,11 +89,6 @@ OGRGeometryCollection::~OGRGeometryCollection()
 
 /**
  * \brief Assignment operator.
- *
- * Note: before GDAL 2.1, only the default implementation of the operator
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRGeometryCollection &
@@ -1616,7 +1606,6 @@ OGRGeometryCollection::TransferMembersAndDestroy(OGRGeometryCollection *poSrc,
  *
  * @param poSrc the input geometry - ownership is passed to the method.
  * @return new geometry.
- * @since GDAL 2.2
  */
 
 OGRGeometryCollection *

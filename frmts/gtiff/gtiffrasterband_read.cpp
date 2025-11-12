@@ -24,6 +24,7 @@
 
 #include "cpl_vsi_virtual.h"
 #include "fetchbufferdirectio.h"
+#include "gdal_priv.h"
 #include "gtiff.h"
 #include "tifvsi.h"
 
@@ -34,18 +35,33 @@
 GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
 
 {
-    if (m_poRAT)
+    if (m_poGDS->m_poBaseDS != nullptr)
         return m_poRAT.get();
 
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
-    auto poRAT = GDALPamRasterBand::GetDefaultRAT();
-    if (poRAT)
-        return poRAT;
 
-    if (!GDALCanFileAcceptSidecarFile(m_poGDS->m_pszFilename))
+    // RAT from PAM has priority over RAT in GDAL_METADATA TIFF tag
+    if (!m_bRATTriedReadingFromPAM)
+    {
+        m_bRATTriedReadingFromPAM = true;
+        auto poRAT = GDALPamRasterBand::GetDefaultRAT();
+        if (poRAT)
+        {
+            m_bRATSet = true;
+            m_poRAT.reset(poRAT->Clone());
+            return m_poRAT.get();
+        }
+    }
+
+    if (m_bRATSet)
+        return m_poRAT.get();
+
+    m_bRATSet = true;
+
+    // Try reading from a .vat.dbf side car file
+    if (!GDALCanFileAcceptSidecarFile(m_poGDS->m_osFilename.c_str()))
         return nullptr;
-    const std::string osVATDBF =
-        std::string(m_poGDS->m_pszFilename) + ".vat.dbf";
+    const std::string osVATDBF = m_poGDS->m_osFilename + ".vat.dbf";
     CSLConstList papszSiblingFiles = m_poGDS->GetSiblingFiles();
     if (papszSiblingFiles &&
         // cppcheck-suppress knownConditionTrueFalse
@@ -55,9 +71,10 @@ GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
             CSLFindString(papszSiblingFiles, CPLGetFilename(osVATDBF.c_str()));
         if (iSibling >= 0)
         {
-            CPLString osFilename = m_poGDS->m_pszFilename;
-            osFilename.resize(strlen(m_poGDS->m_pszFilename) -
-                              strlen(CPLGetFilename(m_poGDS->m_pszFilename)));
+            CPLString osFilename = m_poGDS->m_osFilename;
+            osFilename.resize(
+                m_poGDS->m_osFilename.size() -
+                strlen(CPLGetFilename(m_poGDS->m_osFilename.c_str())));
             osFilename += papszSiblingFiles[iSibling];
             m_poRAT = GDALLoadVATDBF(osFilename.c_str());
         }

@@ -27,6 +27,7 @@
 #include "cpl_float.h"
 #include "gdal_priv.h"
 #include "gdal_pam.h"
+#include "gdal_pam_multidim.h"
 #include "gdal_rat.h"
 #include "gdal_utils.h"
 #include "cpl_safemaths.hpp"
@@ -1025,6 +1026,25 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                 }
             }
 
+            if (aosArrayCO.FetchNameValue("BLOCKSIZE") == nullptr)
+            {
+                const auto anBlockSize = srcArray->GetBlockSize();
+                std::string osBlockSize;
+                for (auto v : anBlockSize)
+                {
+                    if (v == 0)
+                    {
+                        osBlockSize.clear();
+                        break;
+                    }
+                    if (!osBlockSize.empty())
+                        osBlockSize += ',';
+                    osBlockSize += std::to_string(v);
+                }
+                if (!osBlockSize.empty())
+                    aosArrayCO.SetNameValue("BLOCKSIZE", osBlockSize.c_str());
+            }
+
             auto oIterDimName =
                 mapSrcVariableNameToIndexedDimName.find(srcArray->GetName());
             const auto &srcArrayType = srcArray->GetDataType();
@@ -1826,7 +1846,6 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
         }
         else
         {
-            // FIXME GDT_UInt64
             const double dfVal = srcStrPtr == nullptr ? 0 : CPLAtof(srcStrPtr);
             GDALCopyWords64(&dfVal, GDT_Float64, 0, pDst,
                             dstType.GetNumericDataType(), 0, 1);
@@ -5028,6 +5047,7 @@ class GDALSlicedMDArray final : public GDALPamMDArray
     std::shared_ptr<GDALMDArray> m_poParent{};
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
     std::vector<size_t> m_mapDimIdxToParentDimIdx{};  // of size m_dims.size()
+    std::vector<std::shared_ptr<GDALMDArray>> m_apoNewIndexingVariables{};
     std::vector<Range>
         m_parentRanges{};  // of size m_poParent->GetDimensionCount()
 
@@ -5046,6 +5066,7 @@ class GDALSlicedMDArray final : public GDALPamMDArray
         const std::string &viewExpr,
         std::vector<std::shared_ptr<GDALDimension>> &&dims,
         std::vector<size_t> &&mapDimIdxToParentDimIdx,
+        std::vector<std::shared_ptr<GDALMDArray>> &&apoNewIndexingVariables,
         std::vector<Range> &&parentRanges)
         : GDALAbstractMDArray(std::string(), "Sliced view of " +
                                                  poParent->GetFullName() +
@@ -5057,6 +5078,7 @@ class GDALSlicedMDArray final : public GDALPamMDArray
                          poParent->GetContext()),
           m_poParent(std::move(poParent)), m_dims(std::move(dims)),
           m_mapDimIdxToParentDimIdx(std::move(mapDimIdxToParentDimIdx)),
+          m_apoNewIndexingVariables(std::move(apoNewIndexingVariables)),
           m_parentRanges(std::move(parentRanges)),
           m_parentStart(m_poParent->GetDimensionCount()),
           m_parentCount(m_poParent->GetDimensionCount(), 1),
@@ -5084,6 +5106,7 @@ class GDALSlicedMDArray final : public GDALPamMDArray
            const std::string &viewExpr,
            std::vector<std::shared_ptr<GDALDimension>> &&dims,
            std::vector<size_t> &&mapDimIdxToParentDimIdx,
+           std::vector<std::shared_ptr<GDALMDArray>> &&apoNewIndexingVariables,
            std::vector<Range> &&parentRanges)
     {
         CPLAssert(dims.size() == mapDimIdxToParentDimIdx.size());
@@ -5091,7 +5114,8 @@ class GDALSlicedMDArray final : public GDALPamMDArray
 
         auto newAr(std::shared_ptr<GDALSlicedMDArray>(new GDALSlicedMDArray(
             poParent, viewExpr, std::move(dims),
-            std::move(mapDimIdxToParentDimIdx), std::move(parentRanges))));
+            std::move(mapDimIdxToParentDimIdx),
+            std::move(apoNewIndexingVariables), std::move(parentRanges))));
         newAr->SetSelf(newAr);
         return newAr;
     }
@@ -5328,6 +5352,7 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
 
     bool bGotEllipsis = false;
     size_t nCurSrcDim = 0;
+    std::vector<std::shared_ptr<GDALMDArray>> apoNewIndexingVariables;
     for (size_t i = 0; i < nTokens; i++)
     {
         const char *pszIdxSpec = aosTokens[i];
@@ -5441,42 +5466,72 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
             }
             GUInt64 nEndIdx = endIdx;
             nEndIdx = EQUAL(pszEnd, "") ? (!bPosIncr ? 0 : nDimSize) : nEndIdx;
-            if ((bPosIncr && range.m_nStartIdx >= nEndIdx) ||
-                (!bPosIncr && range.m_nStartIdx <= nEndIdx))
+            if (pszStart[0] || pszEnd[0])
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Output dimension of size 0 is not allowed");
-                return nullptr;
+                if ((bPosIncr && range.m_nStartIdx >= nEndIdx) ||
+                    (!bPosIncr && range.m_nStartIdx <= nEndIdx))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Output dimension of size 0 is not allowed");
+                    return nullptr;
+                }
             }
             int inc = (EQUAL(pszEnd, "") && !bPosIncr) ? 1 : 0;
             const auto nAbsIncr = std::abs(range.m_nIncr);
             const GUInt64 newSize =
-                bPosIncr
+                (pszStart[0] == 0 && pszEnd[0] == 0 &&
+                 range.m_nStartIdx == nEndIdx)
+                    ? 1
+                : bPosIncr
                     ? DIV_ROUND_UP(nEndIdx - range.m_nStartIdx, nAbsIncr)
                     : DIV_ROUND_UP(inc + range.m_nStartIdx - nEndIdx, nAbsIncr);
+            const auto &poSrcDim = srcDims[nCurSrcDim];
             if (range.m_nStartIdx == 0 && range.m_nIncr == 1 &&
-                newSize == srcDims[nCurSrcDim]->GetSize())
+                newSize == poSrcDim->GetSize())
             {
-                newDims.push_back(srcDims[nCurSrcDim]);
+                newDims.push_back(poSrcDim);
             }
             else
             {
-                std::string osNewDimName(srcDims[nCurSrcDim]->GetName());
+                std::string osNewDimName(poSrcDim->GetName());
                 if (bRenameDimensions)
                 {
                     osNewDimName =
-                        "subset_" + srcDims[nCurSrcDim]->GetName() +
+                        "subset_" + poSrcDim->GetName() +
                         CPLSPrintf("_" CPL_FRMT_GUIB "_" CPL_FRMT_GIB
                                    "_" CPL_FRMT_GUIB,
                                    static_cast<GUIntBig>(range.m_nStartIdx),
                                    static_cast<GIntBig>(range.m_nIncr),
                                    static_cast<GUIntBig>(newSize));
                 }
-                newDims.push_back(std::make_shared<GDALDimension>(
-                    std::string(), osNewDimName, srcDims[nCurSrcDim]->GetType(),
-                    range.m_nIncr > 0 ? srcDims[nCurSrcDim]->GetDirection()
+                auto poNewDim = std::make_shared<GDALDimensionWeakIndexingVar>(
+                    std::string(), osNewDimName, poSrcDim->GetType(),
+                    range.m_nIncr > 0 ? poSrcDim->GetDirection()
                                       : std::string(),
-                    newSize));
+                    newSize);
+                auto poSrcIndexingVar = poSrcDim->GetIndexingVariable();
+                if (poSrcIndexingVar &&
+                    poSrcIndexingVar->GetDimensionCount() == 1 &&
+                    poSrcIndexingVar->GetDimensions()[0] == poSrcDim)
+                {
+                    std::vector<std::shared_ptr<GDALDimension>>
+                        indexingVarNewDims{poNewDim};
+                    std::vector<size_t> indexingVarMapDimIdxToParentDimIdx{0};
+                    std::vector<std::shared_ptr<GDALMDArray>>
+                        indexingVarNewIndexingVar;
+                    std::vector<GDALSlicedMDArray::Range>
+                        indexingVarParentRanges{range};
+                    auto poNewIndexingVar = GDALSlicedMDArray::Create(
+                        poSrcIndexingVar, pszIdxSpec,
+                        std::move(indexingVarNewDims),
+                        std::move(indexingVarMapDimIdxToParentDimIdx),
+                        std::move(indexingVarNewIndexingVar),
+                        std::move(indexingVarParentRanges));
+                    poNewDim->SetIndexingVariable(poNewIndexingVar);
+                    apoNewIndexingVariables.push_back(
+                        std::move(poNewIndexingVar));
+                }
+                newDims.push_back(std::move(poNewDim));
             }
             mapDimIdxToParentDimIdx.push_back(nCurSrcDim);
             parentRanges.emplace_back(range);
@@ -5496,9 +5551,9 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
     viewSpec.m_parentRanges = parentRanges;
     viewSpecs.emplace_back(std::move(viewSpec));
 
-    return GDALSlicedMDArray::Create(self, viewExpr, std::move(newDims),
-                                     std::move(mapDimIdxToParentDimIdx),
-                                     std::move(parentRanges));
+    return GDALSlicedMDArray::Create(
+        self, viewExpr, std::move(newDims), std::move(mapDimIdxToParentDimIdx),
+        std::move(apoNewIndexingVariables), std::move(parentRanges));
 }
 
 /************************************************************************/
@@ -8900,6 +8955,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                         GDALExtendedDataType::CopyValue(
                             &abyTmp[0], dt, &pszTmp,
                             GDALExtendedDataType::CreateString());
+                        dt.FreeDynamicMemory(abyTmp.data());
                         if (pszTmp)
                         {
                             SetMetadataItem(
@@ -8937,6 +8993,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                             &abyTmp[0], dt, &dfVal,
                             GDALExtendedDataType::Create(GDT_Float64));
                         osVal.Printf(oItem.osDefinition.c_str(), dfVal);
+                        dt.FreeDynamicMemory(abyTmp.data());
                     }
                 }
                 else
@@ -8987,6 +9044,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                     GDALExtendedDataType::CopyValue(
                         &abyTmp[0], dt, &dfVal,
                         GDALExtendedDataType::Create(GDT_Float64));
+                    dt.FreeDynamicMemory(abyTmp.data());
                     SetMetadataItem(
                         "CENTRAL_WAVELENGTH_UM",
                         CPLSPrintf(
@@ -9009,6 +9067,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                     GDALExtendedDataType::CopyValue(
                         &abyTmp[0], dt, &dfVal,
                         GDALExtendedDataType::Create(GDT_Float64));
+                    dt.FreeDynamicMemory(abyTmp.data());
                     SetMetadataItem(
                         "FWHM_UM",
                         CPLSPrintf("%g", dfVal * aoBandImageryMetadata[j]
@@ -14230,6 +14289,75 @@ GDALMDArrayH GDALRasterBandAsMDArray(GDALRasterBandH hBand)
 }
 
 /************************************************************************/
+/*                        GDALDatasetAsMDArray()                        */
+/************************************************************************/
+
+/** Return a view of this dataset as a 3D multidimensional GDALMDArray.
+ *
+ * If this dataset is not already marked as shared, it will be, so that the
+ * returned array holds a reference to it.
+ *
+ * If the dataset has a geotransform attached, the X and Y dimensions of the
+ * returned array will have an associated indexing variable.
+ *
+ * The currently supported list of options is:
+ * <ul>
+ * <li>DIM_ORDER=&lt;order&gt; where order can be "AUTO", "Band,Y,X" or "Y,X,Band".
+ * "Band,Y,X" means that the first (slowest changing) dimension is Band
+ * and the last (fastest changing direction) is X
+ * "Y,X,Band" means that the first (slowest changing) dimension is Y
+ * and the last (fastest changing direction) is Band.
+ * "AUTO" (the default) selects "Band,Y,X" for single band datasets, or takes
+ * into account the INTERLEAVE metadata item in the IMAGE_STRUCTURE domain.
+ * If it equals BAND, then "Band,Y,X" is used. Otherwise (if it equals PIXEL),
+ * "Y,X,Band" is use.
+ * </li>
+ * <li>BAND_INDEXING_VAR_ITEM={Description}|{None}|{Index}|{ColorInterpretation}|&lt;BandMetadataItem&gt;:
+ * item from which to build the band indexing variable.
+ * <ul>
+ * <li>"{Description}", the default, means to use the band description (or "Band index" if empty).</li>
+ * <li>"{None}" means that no band indexing variable must be created.</li>
+ * <li>"{Index}" means that the band index (starting at one) is used.</li>
+ * <li>"{ColorInterpretation}" means that the band color interpretation is used (i.e. "Red", "Green", "Blue").</li>
+ * <li>&lt;BandMetadataItem&gt; is the name of a band metadata item to use.</li>
+ * </ul>
+ * </li>
+ * <li>BAND_INDEXING_VAR_TYPE=String|Real|Integer: the data type of the band
+ * indexing variable, when BAND_INDEXING_VAR_ITEM corresponds to a band metadata item.
+ * Defaults to String.
+ * </li>
+ * <li>BAND_DIM_NAME=&lt;string&gt;: Name of the band dimension.
+ * Defaults to "Band".
+ * </li>
+ * <li>X_DIM_NAME=&lt;string&gt;: Name of the X dimension. Defaults to "X".
+ * </li>
+ * <li>Y_DIM_NAME=&lt;string&gt;: Name of the Y dimension. Defaults to "Y".
+ * </li>
+ * </ul>
+ *
+ * The returned pointer must be released with GDALMDArrayRelease().
+ *
+ * The "reverse" methods are GDALRasterBand::AsMDArray() and
+ * GDALDataset::AsMDArray()
+ *
+ * This is the same as the C++ method GDALDataset::AsMDArray().
+ *
+ * @param hDS Dataset handle.
+ * @param papszOptions Null-terminated list of strings, or nullptr.
+ * @return a new array, or NULL.
+ *
+ * @since GDAL 3.12
+ */
+GDALMDArrayH GDALDatasetAsMDArray(GDALDatasetH hDS, CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hDS, __func__, nullptr);
+    auto poArray(GDALDataset::FromHandle(hDS)->AsMDArray(papszOptions));
+    if (!poArray)
+        return nullptr;
+    return new GDALMDArrayHS(poArray);
+}
+
+/************************************************************************/
 /*                       GDALMDArrayAsClassicDataset()                  */
 /************************************************************************/
 
@@ -14240,7 +14368,8 @@ GDALMDArrayH GDALRasterBandAsMDArray(GDALRasterBandH hBand)
  * In the case of > 2D arrays, additional dimensions will be represented as
  * raster bands.
  *
- * The "reverse" method is GDALRasterBand::AsMDArray().
+ * The "reverse" methods are GDALRasterBand::AsMDArray() and
+ * GDALDataset::AsMDArray()
  *
  * This is the same as the C++ method GDALMDArray::AsClassicDataset().
  *
@@ -14457,9 +14586,11 @@ bool GDALMDArrayRegularlySpaced::IRead(
     GByte *pabyDstBuffer = static_cast<GByte *>(pDstBuffer);
     for (size_t i = 0; i < count[0]; i++)
     {
-        const double dfVal = m_dfStart + (arrayStartIdx[0] + i * arrayStep[0] +
-                                          m_dfOffsetInIncrement) *
-                                             m_dfIncrement;
+        const double dfVal =
+            m_dfStart +
+            (arrayStartIdx[0] + i * static_cast<double>(arrayStep[0]) +
+             m_dfOffsetInIncrement) *
+                m_dfIncrement;
         GDALExtendedDataType::CopyValue(&dfVal, m_dt, pabyDstBuffer,
                                         bufferDataType);
         pabyDstBuffer += bufferStride[0] * bufferDataType.GetSize();
@@ -14983,4 +15114,261 @@ void GDALPamMDArray::ClearStatistics()
     m_poPam->ClearStatistics(GetFullName(), GetContext());
 }
 
+/************************************************************************/
+/*                       GDALMDIAsAttribute::GetDimensions()            */
+/************************************************************************/
+
+const std::vector<std::shared_ptr<GDALDimension>> &
+GDALMDIAsAttribute::GetDimensions() const
+{
+    return m_dims;
+}
+
+/************************************************************************/
+/*           GDALMDArrayRawBlockInfo::~GDALMDArrayRawBlockInfo()        */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo::~GDALMDArrayRawBlockInfo()
+{
+    clear();
+}
+
+/************************************************************************/
+/*                     GDALMDArrayRawBlockInfo::clear()                 */
+/************************************************************************/
+
+void GDALMDArrayRawBlockInfo::clear()
+{
+    CPLFree(pszFilename);
+    pszFilename = nullptr;
+    CSLDestroy(papszInfo);
+    papszInfo = nullptr;
+    nOffset = 0;
+    nSize = 0;
+    CPLFree(pabyInlineData);
+    pabyInlineData = nullptr;
+}
+
+/************************************************************************/
+/*            GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo()        */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo(
+    const GDALMDArrayRawBlockInfo &other)
+    : pszFilename(other.pszFilename ? CPLStrdup(other.pszFilename) : nullptr),
+      nOffset(other.nOffset), nSize(other.nSize),
+      papszInfo(CSLDuplicate(other.papszInfo)), pabyInlineData(nullptr)
+{
+    if (other.pabyInlineData)
+    {
+        pabyInlineData = static_cast<GByte *>(
+            VSI_MALLOC_VERBOSE(static_cast<size_t>(other.nSize)));
+        if (pabyInlineData)
+            memcpy(pabyInlineData, other.pabyInlineData,
+                   static_cast<size_t>(other.nSize));
+    }
+}
+
+/************************************************************************/
+/*                GDALMDArrayRawBlockInfo::operator=()                  */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo &
+GDALMDArrayRawBlockInfo::operator=(const GDALMDArrayRawBlockInfo &other)
+{
+    if (this != &other)
+    {
+        CPLFree(pszFilename);
+        pszFilename =
+            other.pszFilename ? CPLStrdup(other.pszFilename) : nullptr;
+        nOffset = other.nOffset;
+        nSize = other.nSize;
+        CSLDestroy(papszInfo);
+        papszInfo = CSLDuplicate(other.papszInfo);
+        CPLFree(pabyInlineData);
+        pabyInlineData = nullptr;
+        if (other.pabyInlineData)
+        {
+            pabyInlineData = static_cast<GByte *>(
+                VSI_MALLOC_VERBOSE(static_cast<size_t>(other.nSize)));
+            if (pabyInlineData)
+                memcpy(pabyInlineData, other.pabyInlineData,
+                       static_cast<size_t>(other.nSize));
+        }
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*            GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo()        */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo(
+    GDALMDArrayRawBlockInfo &&other)
+    : pszFilename(other.pszFilename), nOffset(other.nOffset),
+      nSize(other.nSize), papszInfo(other.papszInfo),
+      pabyInlineData(other.pabyInlineData)
+{
+    other.pszFilename = nullptr;
+    other.papszInfo = nullptr;
+    other.pabyInlineData = nullptr;
+}
+
+/************************************************************************/
+/*                GDALMDArrayRawBlockInfo::operator=()                  */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo &
+GDALMDArrayRawBlockInfo::operator=(GDALMDArrayRawBlockInfo &&other)
+{
+    if (this != &other)
+    {
+        std::swap(pszFilename, other.pszFilename);
+        nOffset = other.nOffset;
+        nSize = other.nSize;
+        std::swap(papszInfo, other.papszInfo);
+        std::swap(pabyInlineData, other.pabyInlineData);
+    }
+    return *this;
+}
+
 //! @endcond
+
+/************************************************************************/
+/*                       GDALMDArray::GetRawBlockInfo()                 */
+/************************************************************************/
+
+/** Return information on a raw block.
+ *
+ * The block coordinates must be between 0 and
+ * (GetDimensions()[i]->GetSize() / GetBlockSize()[i]) - 1, for all i between
+ * 0 and GetDimensionCount()-1.
+ *
+ * If the queried block has valid coordinates but is missing in the dataset,
+ * all fields of info will be set to 0/nullptr, but the function will return
+ * true.
+ *
+ * This method is only implemented by a subset of drivers. The base
+ * implementation just returns false and empty info.
+ *
+ * The values returned in psBlockInfo->papszInfo are driver dependent.
+ *
+ * For multi-byte data types, drivers should return a "ENDIANNESS" key whose
+ * value is "LITTLE" or "BIG".
+ *
+ * For HDF5 and netCDF 4, the potential keys are "COMPRESSION" (possible values
+ * "DEFLATE" or "SZIP") and "FILTER" (if several filters, names are
+ * comma-separated)
+ *
+ * For ZARR, the potential keys are "COMPRESSOR" (value is the JSON encoded
+ * content from the array definition), "FILTERS" (for Zarr V2, value is JSON
+ * encoded content) and "TRANSPOSE_ORDER" (value is a string like
+ * "[idx0,...,idxN]" with the permutation).
+ *
+ * For VRT, the potential keys are the ones of the underlying source(s). Note
+ * that GetRawBlockInfo() on VRT only works when the VRT declares a block size,
+ * that for each queried VRT block, there is one and only one source that
+ * is used to fill the VRT block and that the block size of this source is
+ * exactly the one of the VRT block.
+ *
+ * This is the same as C function GDALMDArrayGetRawBlockInfo().
+ *
+ * @param panBlockCoordinates array of GetDimensionCount() values with the block
+ *                            coordinates.
+ * @param[out] info structure to fill with block information.
+ * @return true in case of success, or false if an error occurs.
+ * @since 3.12
+ */
+bool GDALMDArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
+                                  GDALMDArrayRawBlockInfo &info) const
+{
+    (void)panBlockCoordinates;
+    info.clear();
+    return false;
+}
+
+/************************************************************************/
+/*                      GDALMDArrayGetRawBlockInfo()                    */
+/************************************************************************/
+
+/** Return information on a raw block.
+ *
+ * The block coordinates must be between 0 and
+ * (GetDimensions()[i]->GetSize() / GetBlockSize()[i]) - 1, for all i between
+ * 0 and GetDimensionCount()-1.
+ *
+ * If the queried block has valid coordinates but is missing in the dataset,
+ * all fields of info will be set to 0/nullptr, but the function will return
+ * true.
+ *
+ * This method is only implemented by a subset of drivers. The base
+ * implementation just returns false and empty info.
+ *
+ * The values returned in psBlockInfo->papszInfo are driver dependent.
+ *
+ * For multi-byte data types, drivers should return a "ENDIANNESS" key whose
+ * value is "LITTLE" or "BIG".
+ *
+ * For HDF5 and netCDF 4, the potential keys are "COMPRESSION" (possible values
+ * "DEFLATE" or "SZIP") and "FILTER" (if several filters, names are
+ * comma-separated)
+ *
+ * For ZARR, the potential keys are "COMPRESSOR" (value is the JSON encoded
+ * content from the array definition), "FILTERS" (for Zarr V2, value is JSON
+ * encoded content) and "TRANSPOSE_ORDER" (value is a string like
+ * "[idx0,...,idxN]" with the permutation).
+ *
+ * For VRT, the potential keys are the ones of the underlying source(s). Note
+ * that GetRawBlockInfo() on VRT only works when the VRT declares a block size,
+ * that for each queried VRT block, there is one and only one source that
+ * is used to fill the VRT block and that the block size of this source is
+ * exactly the one of the VRT block.
+ *
+ * This is the same as C++ method GDALMDArray::GetRawBlockInfo().
+ *
+ * @param hArray handle to array.
+ * @param panBlockCoordinates array of GetDimensionCount() values with the block
+ *                            coordinates.
+ * @param[out] psBlockInfo structure to fill with block information.
+ *                         Must be allocated with GDALMDArrayRawBlockInfoCreate(),
+ *                         and freed with GDALMDArrayRawBlockInfoRelease().
+ * @return true in case of success, or false if an error occurs.
+ * @since 3.12
+ */
+bool GDALMDArrayGetRawBlockInfo(GDALMDArrayH hArray,
+                                const uint64_t *panBlockCoordinates,
+                                GDALMDArrayRawBlockInfo *psBlockInfo)
+{
+    VALIDATE_POINTER1(hArray, __func__, false);
+    VALIDATE_POINTER1(panBlockCoordinates, __func__, false);
+    VALIDATE_POINTER1(psBlockInfo, __func__, false);
+    return hArray->m_poImpl->GetRawBlockInfo(panBlockCoordinates, *psBlockInfo);
+}
+
+/************************************************************************/
+/*                    GDALMDArrayRawBlockInfoCreate()                   */
+/************************************************************************/
+
+/** Allocate a new instance of GDALMDArrayRawBlockInfo.
+ *
+ * Returned pointer must be freed with GDALMDArrayRawBlockInfoRelease().
+ *
+ * @since 3.12
+ */
+GDALMDArrayRawBlockInfo *GDALMDArrayRawBlockInfoCreate(void)
+{
+    return new GDALMDArrayRawBlockInfo();
+}
+
+/************************************************************************/
+/*                    GDALMDArrayRawBlockInfoRelease()                  */
+/************************************************************************/
+
+/** Free an instance of GDALMDArrayRawBlockInfo.
+ *
+ * @since 3.12
+ */
+void GDALMDArrayRawBlockInfoRelease(GDALMDArrayRawBlockInfo *psBlockInfo)
+{
+    delete psBlockInfo;
+}

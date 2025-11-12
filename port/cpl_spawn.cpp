@@ -99,7 +99,6 @@ static void FillPipeFromFile(VSILFILE *fin, CPL_FILE_HANDLE pipe_fd)
  *
  * @return the exit code of the spawned process, or -1 in case of error.
  *
- * @since GDAL 1.10.0
  */
 
 int CPLSpawn(const char *const papszArgv[], VSILFILE *fin, VSILFILE *fout,
@@ -450,7 +449,6 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess *p)
  *
  * @return TRUE in case of success.
  *
- * @since GDAL 1.10.0
  */
 int CPLPipeRead(CPL_FILE_HANDLE fin, void *data, int length)
 {
@@ -502,7 +500,6 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void *data, int length)
  *
  * @return TRUE in case of success.
  *
- * @since GDAL 1.10.0
  */
 int CPLPipeWrite(CPL_FILE_HANDLE fout, const void *data, int length)
 {
@@ -600,7 +597,6 @@ struct _CPLSpawnedProcess
  *
  * @return a handle, that must be freed with CPLSpawnAsyncFinish()
  *
- * @since GDAL 1.10.0
  */
 CPLSpawnedProcess *
 CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
@@ -869,7 +865,6 @@ CPL_PID CPLSpawnAsyncGetChildProcessId(CPLSpawnedProcess *p)
  *
  * @return the return code of the forked process if bWait == TRUE, 0 otherwise
  *
- * @since GDAL 1.10.0
  */
 
 int CPLSpawnAsyncFinish(CPLSpawnedProcess *p, int bWait, CPL_UNUSED int bKill)
@@ -962,7 +957,6 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess *p)
  *
  * @return the file handle.
  *
- * @since GDAL 1.10.0
  */
 CPL_FILE_HANDLE CPLSpawnAsyncGetInputFileHandle(CPLSpawnedProcess *p)
 {
@@ -981,7 +975,6 @@ CPL_FILE_HANDLE CPLSpawnAsyncGetInputFileHandle(CPLSpawnedProcess *p)
  *
  * @return the file handle.
  *
- * @since GDAL 1.10.0
  */
 CPL_FILE_HANDLE CPLSpawnAsyncGetOutputFileHandle(CPLSpawnedProcess *p)
 {
@@ -1000,7 +993,6 @@ CPL_FILE_HANDLE CPLSpawnAsyncGetOutputFileHandle(CPLSpawnedProcess *p)
  *
  * @return the file handle
  *
- * @since GDAL 1.10.0
  */
 CPL_FILE_HANDLE CPLSpawnAsyncGetErrorFileHandle(CPLSpawnedProcess *p)
 {

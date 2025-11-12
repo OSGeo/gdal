@@ -1024,3 +1024,18 @@ def test_vrtmisc_add_band_gdt_unknown():
     options = ["subClass=VRTSourcedRasterBand", "blockXSize=32", "blockYSize=48"]
     with pytest.raises(Exception, match="Illegal GDT_Unknown/GDT_TypeCount argument"):
         vrt_ds.AddBand(gdal.GDT_Unknown, options)
+
+
+###############################################################################
+
+
+def test_vrtmisc_virtual_overview_mask_band_as_regular_band(tmp_vsimem):
+
+    src_filename = tmp_vsimem / "src.tif"
+    with gdal.GetDriverByName("GTiff").Create(src_filename, 256, 256, 3) as src_ds:
+        src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        src_ds.BuildOverviews("NEAR", [2])
+
+    vrt_ds = gdal.Translate("", src_filename, options="-of VRT -b 1 -b 2 -b 3 -b mask")
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert vrt_ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand

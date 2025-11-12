@@ -79,7 +79,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   PNM -raster- (rw+v): Portable Pixmap Format (netpbm) (*.pgm, *.ppm, *.pnm)
   DOQ1 -raster- (rov): USGS DOQ (Old Style)
   DOQ2 -raster- (rov): USGS DOQ (New Style)
-  PAux -raster- (rov): PCI .aux Labelled
   MFF -raster- (rov): Vexcel MFF Raster (*.hdr)
   MFF2 -raster- (ro): Vexcel MFF2 (HKV) Raster
   GSC -raster- (rov): GSC Geogrid
@@ -106,8 +105,8 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   KEA -raster- (rw+uv): KEA Image Format (.kea) (*.kea)
   BAG -raster,multidimensional raster,vector- (rw+v): Bathymetry Attributed Grid (*.bag)
   S102 -raster,multidimensional raster- (rovs): S-102 Bathymetric Surface Product (*.h5)
-  S104 -raster,multidimensional raster- (rov): S-104 Water Level Information for Surface Navigation Product (*.h5)
-  S111 -raster,multidimensional raster- (rov): Surface Currents Product (*.h5)
+  S104 -raster,multidimensional raster- (rovs): S-104 Water Level Information for Surface Navigation Product (*.h5)
+  S111 -raster,multidimensional raster- (rovs): S-111 Surface Currents Product (*.h5)
   HDF5 -raster,multidimensional raster- (rovs): Hierarchical Data Format Release 5 (*.h5, *.hdf5)
   HDF5Image -raster- (rov): HDF5 Dataset
   NWT_GRD -raster- (rw+v): Northwood Numeric Grid Format .grd/.tab (*.grd)
@@ -140,6 +139,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   PLSCENES -raster,vector- (ro): Planet Labs Scenes API
   NGW -raster,vector- (rw+s): NextGIS Web
   MiraMonRaster -raster- (rovs): MiraMon Raster Images (*.rel, *.img)
+  PAux -raster- (rov): PCI .aux Labelled
   GenBin -raster- (rov): Generic Binary (.hdr Labelled)
   ENVI -raster- (rw+uv): ENVI .hdr Labelled
   EHdr -raster- (rw+uv): ESRI .hdr Labelled (*.bil)

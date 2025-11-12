@@ -18,11 +18,47 @@ Source Code
 Current Release
 ...............
 
-* **2025-09-11** `gdal-3.11.4.tar.gz`_ `3.11.4 Release Notes`_ (`3.11.4 md5`_)
+* **2025-11-08** `gdal-3.12.0.tar.gz`_ `3.12.0 Release Notes`_ (`3.12.0 md5`_, `3.12.0 sig`_)
 
-.. _`3.11.4 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.11.4/NEWS.md
-.. _`gdal-3.11.4.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.11.4/gdal-3.11.4.tar.gz
-.. _`3.11.4 md5`: https://github.com/OSGeo/gdal/releases/download/v3.11.4/gdal-3.11.4.tar.gz.md5
+.. _`3.12.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.12.0/NEWS.md
+.. _`gdal-3.12.0.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.12.0/gdal-3.12.0.tar.gz
+.. _`3.12.0 md5`: https://github.com/OSGeo/gdal/releases/download/v3.12.0/gdal-3.12.0.tar.gz.md5
+.. _`3.12.0 sig`: https://github.com/OSGeo/gdal/releases/download/v3.12.0/gdal-3.12.0.tar.gz.sig
+
+The GPG signing key is:
+
+::
+
+    -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+    mQINBGjlDXoBEACjbYUouwHnW+X/xK51AfwN1vTrJn+pZziGGLobD4Jfs4gU4PwQ
+    dEw1bFj6tsgBrJ7hrKmcyd0bBQiKU1FTYy+tOu768t9qlC7HC3JfRBACrGn3Svz4
+    evinQkq5GGcZ1FkJhRKgEIxJLGppG7O45XEFYdcbCkLqC8uyu2+PbY2SYXlzlKs8
+    DLiAwqX670eZ78pDtynJj81CRowSqyNBOzaltR6OLCsYZrYzAYYtBqSiifKoIpm/
+    sV4VRvUuWaaUNNMPPRLt+mV+iIYm8cKLH2uyozZWIfOSck7I30fGIuuUhulc41bi
+    3WNV+QtOepPyuMolab8JNbaRJXAFxQ5Q2k5ZyzXvpuAEqwrhaFIroc7LvkQ4RLlT
+    r6BkFUzvCCjRWG5jCFA0CjvvvYG9DPSUKdSaD2Vxfor/cwSRqnPYwRauFMuST57H
+    exrLYJZqfeZuqV2mlI8wVvh3tO9oC/pGmggV3B1KxYvzj2I/nQ/bnugveEvD005j
+    EcfSlmAPWcuily+rgB9xqed0tZwG0A9fjY/gveqxLVE41EIoAfkdeRl+KVOqEEYk
+    cyiJQdFKBuGxemEP2cfDnROUawp+1XXEuA1MGkLvB+6nNIp1e+mhUtWfDY70MEz1
+    l7J49MUZBfPM3vy63t7ihlPLIP9IUcO9j9rfy1iW8t86qG3CnZE/rsnVZwARAQAB
+    tCRHREFMIFJlbGVhc2UgQm90IDxnZGFsb3JnQGdtYWlsLmNvbT6JAlQEEwEKAD4W
+    IQR7Ew6VW0TYfM4nZfDb2B/1LsKkKgUCaOUNegIbAwUJA8JnAAULCQgHAgYVCgkI
+    CwIEFgIDAQIeAQIXgAAKCRDb2B/1LsKkKpY+D/9hVR9JIQNT3So4fg/fQx36azSf
+    kVzO4nS0lZhSxR4/Xig5Zqq8EOFk7ipWwb4hhivPi7yR49BhVSQbHo36+jNbC5k/
+    jDMsZ+9CNzUjp1XSH/v06mcdSD4LB4vSvHBfLjDdV7OoOGnExkEyqBcoje53tW6p
+    tKQGwqZ3ilZs75GkLO1UC3DNQ9VpVc7lk1Cv+npto86A6CWMAC7q+n540wC/oTj7
+    APn6dz1S0LAPWR9v0aBoLMoRP9YiRQSmQmyQsKe3HJd4c7hSdWyST/PIMvPZawpP
+    BYG+JRRuRoWm6zjJIWnvqj9IZeFkQv1fKqYHKW86aITTqGGF6kcq83mf2XH26KQR
+    mu8ArI5aLULmpKA67p2RXxyPdoSNiaiP8UuWQ18rnEA/Hedz2sgBYSvjeYYziTRm
+    wgiRbts4MjB5pj+JGKtX7FEL6HuPDVnMYGc8n8bO8qiKctuYMwBM/KRE+2e3zx0m
+    m5YXjjCSvBiTLYNhvrrQ5pxiUK5xiAH0G/MzPXjJToJzLrHn0vqRVHXs9F8d9zLe
+    o6E4S8VVgyJ9zdXkYtj9nyL9jb00K+jj/g4avpnOKTuIgpsTR2ntxWz2liWU6Saz
+    03Vrd9mVwgU7NBnYAMXOg54eYwhyWkGvbFHvCK6ijL1+SaAkN9mVs5VTJMpGiJ9s
+    qj7DbIY0GwZQMVSvxQ==
+    =FY/p
+    -----END PGP PUBLIC KEY BLOCK-----
+
 
 Past Releases
 .............

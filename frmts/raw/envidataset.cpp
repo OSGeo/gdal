@@ -14,6 +14,7 @@
 
 #include "cpl_port.h"
 #include "envidataset.h"
+#include "gdal_priv.h"
 #include "rawdataset.h"
 
 #include <climits>
@@ -1972,8 +1973,12 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
 {
     // Assume the caller is pointing to the binary (i.e. .bil) file.
-    if (poOpenInfo->nHeaderBytes < 2)
+    if (poOpenInfo->nHeaderBytes < 2 ||
+        (!poOpenInfo->IsSingleAllowedDriver("ENVI") &&
+         poOpenInfo->IsExtensionEqualToCI("zarr")))
+    {
         return nullptr;
+    }
 
     // Do we have a .hdr file?  Try upper and lower case, and
     // replacing the extension as well as appending the extension
@@ -1987,7 +1992,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
     CPLString osHdrFilename;
     VSILFILE *fpHeader = nullptr;
-    char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
+    CSLConstList papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     if (papszSiblingFiles == nullptr)
     {
         // First try hdr as an extra extension

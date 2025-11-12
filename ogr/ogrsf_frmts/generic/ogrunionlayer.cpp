@@ -616,9 +616,7 @@ void OGRUnionLayer::ConfigureActiveLayer()
 
 void OGRUnionLayer::ResetReading()
 {
-    iCurLayer = 0;
-    ConfigureActiveLayer();
-    nNextFID = 0;
+    iCurLayer = -1;
 }
 
 /************************************************************************/
@@ -702,15 +700,22 @@ OGRFeature *OGRUnionLayer::GetNextFeature()
 {
     if (poFeatureDefn == nullptr)
         GetLayerDefn();
-    if (iCurLayer < 0)
-        ResetReading();
 
-    if (iCurLayer == static_cast<int>(m_apoSrcLayers.size()))
+    if (iCurLayer < 0)
+    {
+        iCurLayer = 0;
+        ConfigureActiveLayer();
+        nNextFID = 0;
+    }
+    else if (iCurLayer == static_cast<int>(m_apoSrcLayers.size()))
         return nullptr;
+
+    m_bHasAlreadyIteratedOverFeatures = true;
 
     while (true)
     {
-        OGRFeature *poSrcFeature = m_apoSrcLayers[iCurLayer]->GetNextFeature();
+        auto poSrcFeature = std::unique_ptr<OGRFeature>(
+            m_apoSrcLayers[iCurLayer]->GetNextFeature());
         if (poSrcFeature == nullptr)
         {
             iCurLayer++;
@@ -720,20 +725,57 @@ OGRFeature *OGRUnionLayer::GetNextFeature()
                 continue;
             }
             else
+            {
+                if (!m_fidRangesInvalid && !bPreserveSrcFID)
+                {
+                    m_fidRangesComplete = true;
+                }
                 break;
+            }
         }
 
-        OGRFeature *poFeature = TranslateFromSrcLayer(poSrcFeature);
-        delete poSrcFeature;
+        auto poFeature = TranslateFromSrcLayer(poSrcFeature.get(), -1);
+
+        // When iterating over all features, build a ma
+        if (!m_fidRangesInvalid && !bPreserveSrcFID && !m_fidRangesComplete)
+        {
+            if (m_fidRanges.empty() ||
+                m_fidRanges.back().nLayerIdx != iCurLayer ||
+                poSrcFeature->GetFID() > m_fidRanges.back().nSrcFIDStart +
+                                             m_fidRanges.back().nFIDCount)
+            {
+                FIDRange range;
+                range.nDstFIDStart = poFeature->GetFID();
+                range.nFIDCount = 1;
+                range.nSrcFIDStart = poSrcFeature->GetFID();
+                range.nLayerIdx = iCurLayer;
+                m_fidRanges.push_back(std::move(range));
+                if (m_fidRanges.size() > 1000 * 1000)
+                {
+                    m_fidRangesInvalid = true;
+                    m_fidRanges.clear();
+                }
+            }
+            else if (poSrcFeature->GetFID() == m_fidRanges.back().nSrcFIDStart +
+                                                   m_fidRanges.back().nFIDCount)
+            {
+                ++m_fidRanges.back().nFIDCount;
+            }
+            else
+            {
+                // Decreasing src FID
+                m_fidRangesInvalid = true;
+                m_fidRanges.clear();
+            }
+        }
 
         if ((m_poFilterGeom == nullptr ||
              FilterGeometry(poFeature->GetGeomFieldRef(m_iGeomFieldFilter))) &&
-            (m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate(poFeature)))
+            (m_poAttrQuery == nullptr ||
+             m_poAttrQuery->Evaluate(poFeature.get())))
         {
-            return poFeature;
+            return poFeature.release();
         }
-
-        delete poFeature;
     }
     return nullptr;
 }
@@ -744,16 +786,72 @@ OGRFeature *OGRUnionLayer::GetNextFeature()
 
 OGRFeature *OGRUnionLayer::GetFeature(GIntBig nFeatureId)
 {
-    OGRFeature *poFeature = nullptr;
+    std::unique_ptr<OGRFeature> poFeature;
 
     if (!bPreserveSrcFID)
     {
-        poFeature = OGRLayer::GetFeature(nFeatureId);
+        if (m_fidRangesComplete)
+        {
+            if (!m_fidRanges.empty() &&
+                nFeatureId >= m_fidRanges[0].nDstFIDStart &&
+                nFeatureId < m_fidRanges.back().nDstFIDStart +
+                                 m_fidRanges.back().nFIDCount)
+            {
+                // Dichotomic search
+                size_t iStart = 0;
+                size_t iEnd = m_fidRanges.size() - 1;
+                while (iEnd - iStart > 1)
+                {
+                    size_t iMiddle = (iStart + iEnd) / 2;
+                    if (nFeatureId < m_fidRanges[iMiddle].nDstFIDStart)
+                    {
+                        iEnd = iMiddle;
+                    }
+                    else
+                    {
+                        iStart = iMiddle;
+                    }
+                }
+
+                size_t iRange = iStart;
+                CPLAssert(nFeatureId >= m_fidRanges[iStart].nDstFIDStart);
+                CPLAssert(nFeatureId < m_fidRanges[iEnd].nDstFIDStart +
+                                           m_fidRanges[iEnd].nFIDCount);
+                if (iStart < iEnd &&
+                    nFeatureId >= m_fidRanges[iEnd].nDstFIDStart)
+                    ++iRange;
+                if (nFeatureId < m_fidRanges[iRange].nDstFIDStart +
+                                     m_fidRanges[iRange].nFIDCount)
+                {
+                    iCurLayer = m_fidRanges[iRange].nLayerIdx;
+                    ConfigureActiveLayer();
+
+                    const auto nSrcFID = nFeatureId -
+                                         m_fidRanges[iRange].nDstFIDStart +
+                                         m_fidRanges[iRange].nSrcFIDStart;
+
+                    auto poSrcFeature = std::unique_ptr<OGRFeature>(
+                        m_apoSrcLayers[iCurLayer]->GetFeature(nSrcFID));
+                    // In theory below assertion should be true, unless the
+                    // dataset has been modified behind our back.
+                    // CPLAssert(poSrcFeature);
+                    if (poSrcFeature)
+                    {
+                        poFeature = TranslateFromSrcLayer(poSrcFeature.get(),
+                                                          nFeatureId);
+                    }
+                }
+            }
+        }
+        else
+        {
+            poFeature.reset(OGRLayer::GetFeature(nFeatureId));
+        }
     }
     else
     {
-        int iGeomFieldFilterSave = m_iGeomFieldFilter;
-        OGRGeometry *poGeomSave = m_poFilterGeom;
+        const int iGeomFieldFilterSave = m_iGeomFieldFilter;
+        std::unique_ptr<OGRGeometry> poGeomSave(m_poFilterGeom);
         m_poFilterGeom = nullptr;
         SetSpatialFilter(nullptr);
 
@@ -762,24 +860,22 @@ OGRFeature *OGRUnionLayer::GetFeature(GIntBig nFeatureId)
             iCurLayer = i;
             ConfigureActiveLayer();
 
-            OGRFeature *poSrcFeature =
-                m_apoSrcLayers[i]->GetFeature(nFeatureId);
+            auto poSrcFeature = std::unique_ptr<OGRFeature>(
+                m_apoSrcLayers[i]->GetFeature(nFeatureId));
             if (poSrcFeature != nullptr)
             {
-                poFeature = TranslateFromSrcLayer(poSrcFeature);
-                delete poSrcFeature;
-
+                poFeature =
+                    TranslateFromSrcLayer(poSrcFeature.get(), nFeatureId);
                 break;
             }
         }
 
-        SetSpatialFilter(iGeomFieldFilterSave, poGeomSave);
-        delete poGeomSave;
+        SetSpatialFilter(iGeomFieldFilterSave, poGeomSave.get());
 
         ResetReading();
     }
 
-    return poFeature;
+    return poFeature.release();
 }
 
 /************************************************************************/
@@ -810,6 +906,9 @@ OGRErr OGRUnionLayer::ICreateFeature(OGRFeature *poFeature)
                  osSourceLayerFieldName.c_str());
         return OGRERR_FAILURE;
     }
+
+    m_fidRangesComplete = false;
+    m_fidRanges.clear();
 
     const char *pszSrcLayerName = poFeature->GetFieldAsString(0);
     for (auto &oLayer : m_apoSrcLayers)
@@ -898,7 +997,7 @@ OGRErr OGRUnionLayer::ISetFeature(OGRFeature *poFeature)
 
 OGRErr OGRUnionLayer::IUpsertFeature(OGRFeature *poFeature)
 {
-    if (GetFeature(poFeature->GetFID()))
+    if (std::unique_ptr<OGRFeature>(GetFeature(poFeature->GetFID())))
     {
         return ISetFeature(poFeature);
     }
@@ -1136,6 +1235,13 @@ OGRErr OGRUnionLayer::SetAttributeFilter(const char *pszAttributeFilterIn)
         strcmp(pszAttributeFilterIn, pszAttributeFilter) == 0)
         return OGRERR_NONE;
 
+    if (m_bHasAlreadyIteratedOverFeatures)
+    {
+        m_fidRanges.clear();
+        m_fidRangesComplete = false;
+        m_fidRangesInvalid = true;
+    }
+
     if (poFeatureDefn == nullptr)
         GetLayerDefn();
 
@@ -1222,7 +1328,7 @@ int OGRUnionLayer::TestCapability(const char *pszCap) const
 
     if (EQUAL(pszCap, OLCRandomRead))
     {
-        if (!bPreserveSrcFID)
+        if (!bPreserveSrcFID && !m_fidRangesComplete)
             return FALSE;
 
         for (auto &oLayer : m_apoSrcLayers)
@@ -1328,13 +1434,26 @@ OGRErr OGRUnionLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 OGRErr OGRUnionLayer::ISetSpatialFilter(int iGeomField,
                                         const OGRGeometry *poGeom)
 {
-    m_iGeomFieldFilter = iGeomField;
-    if (InstallFilter(poGeom))
-        ResetReading();
-
-    if (iCurLayer >= 0 && iCurLayer < static_cast<int>(m_apoSrcLayers.size()))
+    if (!(m_iGeomFieldFilter == iGeomField &&
+          ((poGeom == nullptr && m_poFilterGeom == nullptr) ||
+           (poGeom && m_poFilterGeom && poGeom->Equals(m_poFilterGeom)))))
     {
-        SetSpatialFilterToSourceLayer(m_apoSrcLayers[iCurLayer].poLayer);
+        if (m_bHasAlreadyIteratedOverFeatures)
+        {
+            m_fidRanges.clear();
+            m_fidRangesComplete = false;
+            m_fidRangesInvalid = true;
+        }
+
+        m_iGeomFieldFilter = iGeomField;
+        if (InstallFilter(poGeom))
+            ResetReading();
+
+        if (iCurLayer >= 0 &&
+            iCurLayer < static_cast<int>(m_apoSrcLayers.size()))
+        {
+            SetSpatialFilterToSourceLayer(m_apoSrcLayers[iCurLayer].poLayer);
+        }
     }
 
     return OGRERR_NONE;
@@ -1344,13 +1463,14 @@ OGRErr OGRUnionLayer::ISetSpatialFilter(int iGeomField,
 /*                        TranslateFromSrcLayer()                       */
 /************************************************************************/
 
-OGRFeature *OGRUnionLayer::TranslateFromSrcLayer(OGRFeature *poSrcFeature)
+std::unique_ptr<OGRFeature>
+OGRUnionLayer::TranslateFromSrcLayer(OGRFeature *poSrcFeature, GIntBig nFID)
 {
     CPLAssert(poSrcFeature->GetFieldCount() == 0 || panMap != nullptr);
     CPLAssert(iCurLayer >= 0 &&
               iCurLayer < static_cast<int>(m_apoSrcLayers.size()));
 
-    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
+    auto poFeature = std::make_unique<OGRFeature>(poFeatureDefn);
     poFeature->SetFrom(poSrcFeature, panMap, TRUE);
 
     if (!osSourceLayerFieldName.empty() &&
@@ -1374,7 +1494,9 @@ OGRFeature *OGRUnionLayer::TranslateFromSrcLayer(OGRFeature *poSrcFeature)
         }
     }
 
-    if (bPreserveSrcFID)
+    if (nFID >= 0)
+        poFeature->SetFID(nFID);
+    else if (bPreserveSrcFID)
         poFeature->SetFID(poSrcFeature->GetFID());
     else
         poFeature->SetFID(nNextFID++);

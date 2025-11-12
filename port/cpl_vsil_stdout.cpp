@@ -38,7 +38,6 @@ static FILE *pWriteStream = stdout;
  * @param pFct Function with same signature as fwrite()
  * @param stream File handle on which to output. Passed to pFct.
  *
- * @since GDAL 2.0
  */
 void VSIStdoutSetRedirection(VSIWriteFunction pFct, FILE *stream)
 {
@@ -446,7 +445,6 @@ int VSIStdoutRedirectFilesystemHandler::Stat(const char * /* pszFilename */,
  See :ref:`/vsistdout/ documentation <vsistdout>`
  \endverbatim
 
- @since GDAL 1.8.0
  */
 
 void VSIInstallStdoutHandler()

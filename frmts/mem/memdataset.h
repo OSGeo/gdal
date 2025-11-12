@@ -22,6 +22,9 @@
 #include <memory>
 
 CPL_C_START
+
+void CPL_DLL GDALRegister_MEM();
+
 /* Caution: if changing this prototype, also change in
    swig/include/gdal_python.i where it is redefined */
 GDALRasterBandH CPL_DLL MEMCreateRasterBand(GDALDataset *, int, GByte *,
@@ -84,6 +87,8 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
   public:
     MEMDataset();
     ~MEMDataset() override;
+
+    CPLErr Close() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     const OGRSpatialReference *GetSpatialRefRasterOnly() const override;

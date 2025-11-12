@@ -4,6 +4,9 @@
 Downloading GeoParquet Data from Overture Maps
 ================================================================================
 
+:Last Updated:   2025-09-26
+:Version Tested: GDAL 3.11.4
+
 .. contents::
     :depth: 3
 
@@ -13,6 +16,12 @@ Overview
 This tutorial guides you through a complete workflow for downloading data from `Overture Maps <https://overturemaps.org/>`__
 using GDAL's :ref:`vector.parquet` driver. We'll use the GDAL command-line tools installed via Conda, to download
 building and administrative division data for Mostar, Bosnia and Herzegovina, the host city for `FOSS4G Europe 2025 <https://2025.europe.foss4g.org/>`__.
+
+.. note::
+
+    As Overture only maintain publicly available datasets for a maximum of 60 days (two monthly releases) the data version URLs may
+    need to be updated (by changing the release name ``2025-09-24.0``). Use the ``gdal vsi list`` command detailed below to get the latest available versions.
+    See the `Overture Data retention policy <https://docs.overturemaps.org/release-calendar/#data-retention-policy>`__ for details.
 
 Code examples assume a Bash shell on Linux. Where syntax differs, PowerShell examples are also provided for Windows users.
 The tutorial covers both the unified :ref:`gdal command-line interface <programs_gdal>` and the :ref:`traditional <programs_traditional>`
@@ -31,12 +40,12 @@ This tutorial assumes Conda is already installed. We'll start by creating a new 
     $ conda --version
     conda 24.3.0
     $ gdal --version
-    GDAL 3.11.0 "Eganville", released 2025/05/06
+    GDAL 3.11.4 "Eganville", released 2025/09/04
 
 .. note::
 
     Be sure to install GDAL from the ``conda-forge`` channel, as it typically provides more up-to-date versions than the ``defaults`` channel.
-    For example, at the time of writing the ``defaults`` channel offers GDAL 3.6.2, while ``conda-forge`` provides version 3.11.0.
+    For example, at the time of writing the ``defaults`` channel offers GDAL 3.6.2, while ``conda-forge`` provides version 3.11.4.
 
 Now that GDAL is installed, let's verify that it supports reading and writing Parquet files.
 
@@ -85,6 +94,9 @@ Once installed, the driver should appear in the list of supported formats.
     .. code-block:: powershell
 
         conda activate gdal
+        # check the library is installed
+        conda list | Select-String "libgdal-arrow-parquet"
+        # libgdal-arrow-parquet     3.11.4               h33343fa_2    conda-forge
 
 Now that the driver is installed, let's verify it by retrieving information from a sample Parquet dataset in the GDAL repository.
 
@@ -92,7 +104,7 @@ Now that the driver is installed, let's verify it by retrieving information from
 
    .. code-tab:: console  gdal CLI
 
-        $ gdal vector info https://github.com/OSGeo/gdal/raw/refs/heads/master/autotest/ogr/data/parquet/example.parquet
+        $ gdal vector info https://github.com/OSGeo/gdal/raw/refs/heads/master/autotest/ogr/data/parquet/example.parquet -f json
         {
           "description":"https://github.com/OSGeo/gdal/raw/refs/heads/master/autotest/ogr/data/parquet/example.parquet",
           "driverShortName":"Parquet",
@@ -118,12 +130,12 @@ configuration option to prevent GDAL from attempting to sign the request.
 
 .. code-block:: console
 
-    $ gdal vsi list "/vsis3/overturemaps-us-west-2/release/" --config AWS_NO_SIGN_REQUEST=YES
+    $ gdal vsi list "/vsis3/overturemaps-us-west-2/release/" --config AWS_NO_SIGN_REQUEST=YES -f json
     [
-      "2023-04-02-alpha",
-      "2023-07-26-alpha.0",
-      "2023-10-19-alpha.0",
-      ...
+      "2025-08-20.0",
+      "2025-08-20.1",
+      "2025-09-24.0"
+    ]
 
 If the configuration option is not provided, an error will occur:
 
@@ -151,7 +163,7 @@ To avoid including the ``--config AWS_NO_SIGN_REQUEST=YES`` option in every comm
         gdal vsi list "/vsis3/overturemaps-us-west-2/release/"
 
 The :ref:`gdal_vsi` commands were introduced in GDAL 3.11. Before that, a helper Python script included with the GDAL installation was used to
-list the contents of an S3 bucket - and remains available if needed.
+list the contents of an S3 bucket - and remains available until GDAL 3.12.
 To run the ``gdal_ls.py`` script, navigate to the ``samples`` directory, set the ``AWS_NO_SIGN_REQUEST`` environment variable,
 and execute the script using Python:
 
@@ -175,13 +187,13 @@ options available in :ref:`gdal_vsi_list`.
 
 .. code-block:: console
 
-    $ gdal vsi list "/vsis3/overturemaps-us-west-2/release/2025-05-21.0/theme=buildings/type=building"
+    $ gdal vsi list "/vsis3/overturemaps-us-west-2/release/2025-09-24.0/theme=buildings/type=building"
     [
       "part-00000-0df994ca-3323-4d7c-a374-68c653f78289-c000.zstd.parquet",
       "part-00001-0df994ca-3323-4d7c-a374-68c653f78289-c000.zstd.parquet",
       ...
 
-    $ gdal vsi list "/vsis3/overturemaps-us-west-2/release/2025-05-21.0" --recursive --depth 2
+    $ gdal vsi list "/vsis3/overturemaps-us-west-2/release/2025-09-24.0" --recursive --depth 2
     [
       "theme=addresses",
       "theme=addresses/type=address",
@@ -189,26 +201,34 @@ options available in :ref:`gdal_vsi_list`.
       "theme=base/type=bathymetry",
       ...
 
+Note the versions used above may need to be updated, as Overture only retail each version for 2 months. If a version has been removed you will
+see an error such as:
+
+.. code-block:: console
+
+    ERROR 3: list: '/vsis3/overturemaps-us-west-2/release/2025-09-24.0/theme=buildings/type=building' does not exist
+
+
 To view details for any of the Parquet files:
 
 .. tabs::
 
    .. code-tab:: console  gdal CLI
 
-        $ gdal vector info "/vsis3/overturemaps-us-west-2/release/2025-05-21.0/theme=buildings/type=building/part-00212-0df994ca-3323-4d7c-a374-68c653f78289-c000.zstd.parquet"
+        $ gdal vector info "/vsis3/overturemaps-us-west-2/release/2025-09-24.0/theme=buildings/type=building/part-00212-93d280c5-9152-4ecc-b500-d9681495941f-c000.zstd.parquet"
         {
-          "description":"/vsis3/overturemaps-us-west-2/release/2025-05-21.0/theme=buildings/type=building/part-00212-0df994ca-3323-4d7c-a374-68c653f78289-c000.zstd.parquet",
+          "description":"/vsis3/overturemaps-us-west-2/release/2025-09-24.0/theme=buildings/type=building/part-00212-93d280c5-9152-4ecc-b500-d9681495941f-c000.zstd.parquet",
           "driverShortName":"Parquet",
           "driverLongName":"(Geo)Parquet",
           "layers":[
             {
-              "name":"part-00212-0df994ca-3323-4d7c-a374-68c653f78289-c000.zstd",
+              "name":"part-00212-93d280c5-9152-4ecc-b500-d9681495941f-c000.zstd",
               ...
 
    .. code-tab:: console Traditional
 
-        $ ogrinfo "/vsis3/overturemaps-us-west-2/release/2025-05-21.0/theme=buildings/type=building/part-00212-0df994ca-3323-4d7c-a374-68c653f78289-c000.zstd.parquet"
-        INFO: Open of `/vsis3/overturemaps-us-west-2/release/2025-05-21.0/theme=buildings/type=building/part-00212-0df994ca-3323-4d7c-a374-68c653f78289-c000.zstd.parquet'
+        $ ogrinfo "/vsis3/overturemaps-us-west-2/release/2025-09-24.0/theme=buildings/type=building/part-00212-93d280c5-9152-4ecc-b500-d9681495941f-c000.zstd.parquet"
+        INFO: Open of `/vsis3/overturemaps-us-west-2/release/2025-09-24.0/theme=buildings/type=building/part-00212-93d280c5-9152-4ecc-b500-d9681495941f-c000.zstd.parquet'
               using driver `Parquet' successful.
         1: part-00212-0df994ca-3323-4d7c-a374-68c653f78289-c000.zstd (Multi Polygon)
 
@@ -229,14 +249,14 @@ Let's apply a spatial filter using a bounding box to retrieve data. Because of t
    .. code-tab:: bash  gdal CLI
 
         $ gdal vector filter \
-            --input "PARQUET:/vsis3/overturemaps-us-west-2/release/2025-05-21.0/theme=buildings/type=building/" \
+            --input "PARQUET:/vsis3/overturemaps-us-west-2/release/2025-09-24.0/theme=buildings/type=building/" \
             --bbox 17.773,43.331,17.8392,43.3716 \
             --output buildings.parquet
 
    .. code-tab:: bash Traditional
 
-        $ ogr2ogr buildings5.parquet \
-            "PARQUET:/vsis3/overturemaps-us-west-2/release/2025-05-21.0/theme=buildings/type=building/" \
+        $ ogr2ogr buildings.parquet \
+            "PARQUET:/vsis3/overturemaps-us-west-2/release/2025-09-24.0/theme=buildings/type=building/" \
             -clipsrc 17.773 43.331 17.8392 43.3716
 
 .. note::
@@ -285,14 +305,14 @@ this represents *"the largest sub-region administrative unit in most countries, 
    .. code-tab:: bash  gdal CLI
 
         gdal vector filter \
-            --input "PARQUET:/vsis3/overturemaps-us-west-2/release/2025-05-21.0/theme=divisions/type=division_area/" \
+            --input "PARQUET:/vsis3/overturemaps-us-west-2/release/2025-09-24.0/theme=divisions/type=division_area/" \
             --where "country='BA' AND subtype='county'" \
             --output counties.parquet
 
    .. code-tab:: bash Traditional
 
         ogr2ogr counties.parquet \
-            "PARQUET:/vsis3/overturemaps-us-west-2/release/2025-05-21.0/theme=divisions/type=division_area/" \
+            "PARQUET:/vsis3/overturemaps-us-west-2/release/2025-09-24.0/theme=divisions/type=division_area/" \
             -where "country='BA' AND subtype='county'"
 
 Finally, let's generate a quick image preview of the data:

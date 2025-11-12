@@ -91,7 +91,7 @@ NITFDataset::NITFDataset()
 NITFDataset::~NITFDataset()
 
 {
-    NITFDataset::CloseDependentDatasets();
+    NITFDataset::Close();
 
     /* -------------------------------------------------------------------- */
     /*      Free datastructures.                                            */
@@ -105,105 +105,132 @@ NITFDataset::~NITFDataset()
 }
 
 /************************************************************************/
+/*                                Close()                               */
+/************************************************************************/
+
+CPLErr NITFDataset::Close()
+{
+    int bHasDroppedRef = FALSE;
+    return NITFDataset::Close(bHasDroppedRef);
+}
+
+CPLErr NITFDataset::Close(int &bHasDroppedRef)
+{
+    CPLErr eErr = CE_None;
+    bHasDroppedRef = FALSE;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        eErr = NITFDataset::FlushCache(true);
+
+        bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
+
+        /* -------------------------------------------------------------------- */
+        /*      If we have been writing to a JPEG2000 file, check if the        */
+        /*      color interpretations were set.  If so, apply the settings      */
+        /*      to the NITF file.                                               */
+        /* -------------------------------------------------------------------- */
+        if (poJ2KDataset != nullptr && bJP2Writing)
+        {
+            for (int i = 0; i < nBands && papoBands != nullptr; i++)
+            {
+                if (papoBands[i]->GetColorInterpretation() != GCI_Undefined)
+                    NITFSetColorInterpretation(
+                        psImage, i + 1, papoBands[i]->GetColorInterpretation());
+            }
+        }
+
+        /* -------------------------------------------------------------------- */
+        /*      Close the underlying NITF file.                                 */
+        /* -------------------------------------------------------------------- */
+        if (psFile != nullptr)
+        {
+            eErr = GDAL::Combine(eErr, NITFClose(psFile));
+            psFile = nullptr;
+        }
+
+        /* -------------------------------------------------------------------- */
+        /*      If we have a jpeg2000 output file, make sure it gets closed     */
+        /*      and flushed out.                                                */
+        /* -------------------------------------------------------------------- */
+        if (poJ2KDataset != nullptr)
+        {
+            eErr = GDAL::Combine(eErr, poJ2KDataset->Close());
+            poJ2KDataset.reset();
+            bHasDroppedRef = TRUE;
+        }
+
+        /* -------------------------------------------------------------------- */
+        /*      Update file length, and COMRAT for JPEG2000 files we are        */
+        /*      writing to.                                                     */
+        /* -------------------------------------------------------------------- */
+        if (bJP2Writing)
+        {
+            const GIntBig nPixelCount =
+                static_cast<GIntBig>(nRasterXSize) * nRasterYSize * nBands;
+
+            eErr = GDAL::Combine(
+                eErr, NITFPatchImageLength(GetDescription(), m_nIMIndex,
+                                           m_nImageOffset, nPixelCount, "C8",
+                                           m_nICOffset, nullptr));
+        }
+
+        bJP2Writing = FALSE;
+
+        /* -------------------------------------------------------------------- */
+        /*      If we have a jpeg output file, make sure it gets closed         */
+        /*      and flushed out.                                                */
+        /* -------------------------------------------------------------------- */
+        if (poJPEGDataset != nullptr)
+        {
+            eErr = GDAL::Combine(eErr, poJPEGDataset->Close());
+            poJPEGDataset.reset();
+            bHasDroppedRef = TRUE;
+        }
+
+        /* -------------------------------------------------------------------- */
+        /*      If the dataset was opened by Create(), we may need to write     */
+        /*      the CGM and TEXT segments                                       */
+        /* -------------------------------------------------------------------- */
+        if (m_nIMIndex + 1 == m_nImageCount)
+        {
+            eErr = GDAL::Combine(eErr, NITFWriteExtraSegments(
+                                           GetDescription(), papszCgmMDToWrite,
+                                           papszTextMDToWrite,
+                                           aosCreationOptions.List()));
+        }
+
+        CSLDestroy(papszTextMDToWrite);
+        papszTextMDToWrite = nullptr;
+        CSLDestroy(papszCgmMDToWrite);
+        papszCgmMDToWrite = nullptr;
+
+        eErr = GDAL::Combine(eErr, GDALPamDataset::Close());
+
+        /* -------------------------------------------------------------------- */
+        /*      Destroy the raster bands if they exist.                         */
+        /* We must do it now since the rasterbands can be NITFWrapperRasterBand */
+        /* that derive from the GDALProxyRasterBand object, which keeps         */
+        /* a reference on the JPEG/JP2K dataset, so any later call to           */
+        /* FlushCache() would result in FlushCache() being called on a          */
+        /* already destroyed object                                             */
+        /* -------------------------------------------------------------------- */
+        for (int iBand = 0; iBand < nBands; iBand++)
+        {
+            delete papoBands[iBand];
+        }
+        nBands = 0;
+    }
+    return eErr;
+}
+
+/************************************************************************/
 /*                        CloseDependentDatasets()                      */
 /************************************************************************/
 
 int NITFDataset::CloseDependentDatasets()
 {
-    NITFDataset::FlushCache(true);
-
-    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
-
-    /* -------------------------------------------------------------------- */
-    /*      If we have been writing to a JPEG2000 file, check if the        */
-    /*      color interpretations were set.  If so, apply the settings      */
-    /*      to the NITF file.                                               */
-    /* -------------------------------------------------------------------- */
-    if (poJ2KDataset != nullptr && bJP2Writing)
-    {
-        for (int i = 0; i < nBands && papoBands != nullptr; i++)
-        {
-            if (papoBands[i]->GetColorInterpretation() != GCI_Undefined)
-                NITFSetColorInterpretation(
-                    psImage, i + 1, papoBands[i]->GetColorInterpretation());
-        }
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Close the underlying NITF file.                                 */
-    /* -------------------------------------------------------------------- */
-    if (psFile != nullptr)
-    {
-        NITFClose(psFile);
-        psFile = nullptr;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      If we have a jpeg2000 output file, make sure it gets closed     */
-    /*      and flushed out.                                                */
-    /* -------------------------------------------------------------------- */
-    if (poJ2KDataset != nullptr)
-    {
-        poJ2KDataset.reset();
-        bHasDroppedRef = TRUE;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Update file length, and COMRAT for JPEG2000 files we are        */
-    /*      writing to.                                                     */
-    /* -------------------------------------------------------------------- */
-    if (bJP2Writing)
-    {
-        const GIntBig nPixelCount =
-            static_cast<GIntBig>(nRasterXSize) * nRasterYSize * nBands;
-
-        CPL_IGNORE_RET_VAL(NITFPatchImageLength(GetDescription(), m_nIMIndex,
-                                                m_nImageOffset, nPixelCount,
-                                                "C8", m_nICOffset, nullptr));
-    }
-
-    bJP2Writing = FALSE;
-
-    /* -------------------------------------------------------------------- */
-    /*      If we have a jpeg output file, make sure it gets closed         */
-    /*      and flushed out.                                                */
-    /* -------------------------------------------------------------------- */
-    if (poJPEGDataset != nullptr)
-    {
-        poJPEGDataset.reset();
-        bHasDroppedRef = TRUE;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      If the dataset was opened by Create(), we may need to write     */
-    /*      the CGM and TEXT segments                                       */
-    /* -------------------------------------------------------------------- */
-    if (m_nIMIndex + 1 == m_nImageCount)
-    {
-        CPL_IGNORE_RET_VAL(NITFWriteExtraSegments(
-            GetDescription(), papszCgmMDToWrite, papszTextMDToWrite,
-            aosCreationOptions.List()));
-    }
-
-    CSLDestroy(papszTextMDToWrite);
-    papszTextMDToWrite = nullptr;
-    CSLDestroy(papszCgmMDToWrite);
-    papszCgmMDToWrite = nullptr;
-
-    /* -------------------------------------------------------------------- */
-    /*      Destroy the raster bands if they exist.                         */
-    /* We must do it now since the rasterbands can be NITFWrapperRasterBand */
-    /* that derive from the GDALProxyRasterBand object, which keeps         */
-    /* a reference on the JPEG/JP2K dataset, so any later call to           */
-    /* FlushCache() would result in FlushCache() being called on a          */
-    /* already destroyed object                                             */
-    /* -------------------------------------------------------------------- */
-    for (int iBand = 0; iBand < nBands; iBand++)
-    {
-        delete papoBands[iBand];
-    }
-    nBands = 0;
-
+    int bHasDroppedRef = FALSE;
+    Close(bHasDroppedRef);
     return bHasDroppedRef;
 }
 

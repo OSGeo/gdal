@@ -42,6 +42,8 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     GDALColorInterp m_eBandInterp = GCI_Undefined;
     std::set<GTiffRasterBand **> m_aSetPSelf{};
     bool m_bHaveOffsetScale = false;
+    bool m_bRATSet = false;
+    bool m_bRATTriedReadingFromPAM = false;
     std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
 
     int DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
@@ -124,7 +126,7 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     CPLErr SetScale(double dfNewValue) override final;
     const char *GetUnitType() override final;
     CPLErr SetUnitType(const char *pszNewValue) override final;
-    CPLErr SetColorInterpretation(GDALColorInterp) override final;
+    CPLErr SetColorInterpretation(GDALColorInterp) override;
 
     char **GetMetadataDomainList() override final;
     CPLErr SetMetadata(char **, const char * = "") override final;

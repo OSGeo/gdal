@@ -40,8 +40,7 @@ image. Additionally, all BLOCKA instances are returned as metadata. If
 GeoSDE TRE (Tagged Record Extension) are available, they will be used to provide higher precision
 coordinates. If the RPC00B (or RPC00A) TRE is available, it is used to
 report RPC (Rapid Positioning Capability / Rational Polynomial Coefficients) metadata.
-Starting with GDAL 2.2, RPC information can be
-retrieved from \_rpc.txt files, and they will be used in priority over
+RPC information can be retrieved from \_rpc.txt files, and they will be used in priority over
 internal RPC00B values, since the latter have less precision than the
 ones stored in external \_rpc.txt.
 
@@ -340,7 +339,7 @@ The following creation options are available:
       the input file.
 
 
-The following creation options to se fields in the NITF file header are available:
+The following creation options to set fields in the NITF file header are available:
 
 -  .. co:: OSTAID
       :choices: string of up to 10 characters
@@ -457,7 +456,7 @@ The following creation options to se fields in the NITF file header are availabl
 
       Originator Phone Number
 
-The following creation options to se fields in the NITF image header are available:
+The following creation options to set fields in the NITF image header are available:
 
 -  .. co:: IID1
       :choices: string of up to 10 characters

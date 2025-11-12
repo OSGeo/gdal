@@ -2953,8 +2953,8 @@ TEST_F(test_gdal_algorithm, min_max_count_equal)
 
     {
         MyAlgorithm alg;
-        alg.GetArg("arg")->Set(std::vector<std::string>{"foo"});
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.GetArg("arg")->Set(std::vector<std::string>{"foo"}));
         EXPECT_FALSE(alg.ValidateArguments());
         EXPECT_STREQ(CPLGetLastErrorMsg(),
                      "test: 1 value has been specified for argument 'arg', "
@@ -4153,12 +4153,17 @@ TEST_F(test_gdal_algorithm, GDALGlobalAlgorithmRegistry)
     }
 }
 
+TEST_F(test_gdal_algorithm, registry)
+{
+    auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
+    EXPECT_EQ(singleton.Instantiate(std::vector<std::string>()), nullptr);
+    EXPECT_EQ(singleton.Instantiate("vector", "not_existing"), nullptr);
+}
+
 TEST_F(test_gdal_algorithm, vector_pipeline_GetUsageForCLI)
 {
     auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
-    auto vector = singleton.Instantiate("vector");
-    ASSERT_NE(vector, nullptr);
-    auto pipeline = vector->InstantiateSubAlgorithm("pipeline");
+    auto pipeline = singleton.Instantiate("vector", "pipeline");
     ASSERT_NE(pipeline, nullptr);
     pipeline->GetUsageForCLI(false);
     pipeline->GetUsageForCLI(true);
@@ -4199,11 +4204,19 @@ TEST_F(test_gdal_algorithm, registry_c_api)
     char **names = GDALAlgorithmRegistryGetAlgNames(reg);
     EXPECT_GE(CSLCount(names), 2);
     CSLDestroy(names);
-    auto alg = GDALAlgorithmRegistryInstantiateAlg(reg, "raster");
-    ASSERT_NE(alg, nullptr);
-    EXPECT_EQ(GDALAlgorithmRegistryInstantiateAlg(reg, "not_existing"),
-              nullptr);
-    GDALAlgorithmRelease(alg);
+    {
+        auto alg = GDALAlgorithmRegistryInstantiateAlg(reg, "raster");
+        ASSERT_NE(alg, nullptr);
+        EXPECT_EQ(GDALAlgorithmRegistryInstantiateAlg(reg, "not_existing"),
+                  nullptr);
+        GDALAlgorithmRelease(alg);
+    }
+    {
+        const char *const apszPath[] = {"raster", "reproject", nullptr};
+        auto alg = GDALAlgorithmRegistryInstantiateAlgFromPath(reg, apszPath);
+        ASSERT_NE(alg, nullptr);
+        GDALAlgorithmRelease(alg);
+    }
     GDALAlgorithmRegistryRelease(reg);
 }
 

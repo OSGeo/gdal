@@ -38,22 +38,20 @@ fi
 
 "${SCRIPT_DIR}/../util.sh" "$@" --test-python
 
-if test "${HAS_PLATFORM}" = "0" -a "${HAS_RELEASE}" = "0" -a "x${TARGET_IMAGE}" = "xosgeo/gdal:ubuntu-full"; then
+if test "${HAS_PLATFORM}" = "0" && test "${HAS_RELEASE}" = "0" && test "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-full"; then
  "${SCRIPT_DIR}/../util.sh" --platform linux/arm64 "$@" --test-python
 
- if test "$HAS_PUSH" = "1"; then
+ if test "${HAS_PUSH}" = "1" && test -z "${CI}"; then
    DOCKER_REPO=$(cat /tmp/gdal_docker_repo.txt)
 
    docker manifest rm ${DOCKER_REPO}/${TARGET_IMAGE}-latest || /bin/true
-   docker manifest create ${DOCKER_REPO}/${TARGET_IMAGE}-latest \
-     --amend ${DOCKER_REPO}/${TARGET_IMAGE}-latest-amd64 \
-     --amend ${DOCKER_REPO}/${TARGET_IMAGE}-latest-arm64
-   docker manifest push ${DOCKER_REPO}/${TARGET_IMAGE}-latest
+   docker buildx imagetools create -t ${DOCKER_REPO}/${TARGET_IMAGE}-latest \
+    ${DOCKER_REPO}/${TARGET_IMAGE}-latest-amd64 \
+    ${DOCKER_REPO}/${TARGET_IMAGE}-latest-arm64
 
    docker manifest rm ${DOCKER_REPO}/osgeo/gdal || /bin/true
-   docker manifest create ${DOCKER_REPO}/osgeo/gdal \
-     --amend ${DOCKER_REPO}/osgeo/gdal:ubuntu-full-latest-amd64 \
-     --amend ${DOCKER_REPO}/osgeo/gdal:ubuntu-full-latest-arm64
-   docker manifest push ${DOCKER_REPO}/osgeo/gdal
+   docker buildx imagetools create -t ${DOCKER_REPO}/osgeo/gdal \
+    ${DOCKER_REPO}/osgeo/gdal:ubuntu-full-latest-amd64 \
+    ${DOCKER_REPO}/osgeo/gdal:ubuntu-full-latest-arm64
  fi
 fi

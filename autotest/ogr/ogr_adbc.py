@@ -431,6 +431,48 @@ def test_ogr_adbc_duckdb_sql(tmp_path):
 
 
 ###############################################################################
+
+
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
+@pytest.mark.skipif(
+    not _has_adbc_driver_manager(),
+    reason="ADBC driver built without AdbcDriverManager",
+)
+def test_ogr_adbc_duckdb_not_existing_file(tmp_path):
+
+    with pytest.raises(Exception, match="/i/do_not/exist does not exist"):
+        gdal.OpenEx(
+            "ADBC:/i/do_not/exist",
+            open_options=["ADBC_DRIVER=libduckdb"],
+        )
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
+@pytest.mark.skipif(
+    not _has_adbc_driver_manager(),
+    reason="ADBC driver built without AdbcDriverManager",
+)
+def test_ogr_adbc_duckdb_memory(tmp_path):
+
+    with gdal.OpenEx(
+        "ADBC::memory:",
+        open_options=["ADBC_DRIVER=libduckdb", "SQL=SELECT 1"],
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetField(0) == 1
+
+
+###############################################################################
 # Run test_ogrsf on a SQLite3 database
 
 

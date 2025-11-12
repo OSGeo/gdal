@@ -200,14 +200,6 @@ def test_gdalalg_vector_pipeline_output_through_api(tmp_vsimem):
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
-def test_gdalalg_vector_pipeline_as_api_error():
-
-    pipeline = get_pipeline_alg()
-    pipeline["pipeline"] = "read"
-    with pytest.raises(Exception, match="pipeline: At least 2 steps must be provided"):
-        pipeline.Run()
-
-
 def test_gdalalg_vector_pipeline_mutually_exclusive_args():
 
     with pytest.raises(
@@ -343,11 +335,13 @@ def test_gdalalg_vector_pipeline_missing_at_run():
 def test_gdalalg_vector_pipeline_empty_args():
 
     pipeline = get_pipeline_alg()
-    with pytest.raises(Exception, match="pipeline: At least 2 steps must be provided"):
+    with pytest.raises(
+        Exception, match="pipeline: At least one step must be provided in a pipeline"
+    ):
         pipeline.ParseRunAndFinalize([])
 
 
-def test_gdalalg_vector_pipeline_unknow_step():
+def test_gdalalg_vector_pipeline_unknown_step():
 
     pipeline = get_pipeline_alg()
     with pytest.raises(Exception, match="pipeline: unknown step name: unknown_step"):
@@ -367,7 +361,9 @@ def test_gdalalg_vector_pipeline_unknow_step():
 def test_gdalalg_vector_pipeline_read_read():
 
     pipeline = get_pipeline_alg()
-    with pytest.raises(Exception, match="pipeline: Last step should be 'write'"):
+    with pytest.raises(
+        Exception, match="pipeline: 'read' is only allowed as a first step"
+    ):
         pipeline.ParseRunAndFinalize(
             ["read", "../ogr/data/poly.shp", "!", "read", "../ogr/data/poly.shp"]
         )
@@ -998,3 +994,27 @@ def test_gdalalg_vector_pipeline_info_executable():
         f"{gdal_path} vector pipeline read ../ogr/data/poly.shp ! info"
     )
     assert out.startswith("INFO: Open of `../ogr/data/poly.shp'")
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_pipeline_read_limit(tmp_vsimem):
+
+    src_filename = tmp_vsimem / "src.gpkg"
+    dst_filename = tmp_vsimem / "dst.gpkg"
+
+    src_ds = gdal.GetDriverByName("GPKG").CreateVector(src_filename)
+    layers = [src_ds.CreateLayer("layer1"), src_ds.CreateLayer("layer2")]
+
+    for lyr in layers:
+        for _ in range(5):
+            f = ogr.Feature(lyr.GetLayerDefn())
+            lyr.CreateFeature(f)
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseRunAndFinalize(
+        ["read", src_filename, "!", "limit", "3", "!", "write", dst_filename]
+    )
+
+    with gdal.OpenEx(dst_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 3
+        assert ds.GetLayer(1).GetFeatureCount() == 3

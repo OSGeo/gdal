@@ -8618,11 +8618,10 @@ const char *ITABFeaturePen::GetPenStyleString() const
     if (strlen(szPattern) != 0)
     {
         if (m_sPenDef.nPointWidth > 0)
-            pszStyle = CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\"mapinfo-pen-%d,"
+            pszStyle = CPLSPrintf("PEN(w:%.1fpt,c:#%6.6x,id:\"mapinfo-pen-%d,"
                                   "ogr-pen-%d\",p:\"%spx\",cap:r,j:r)",
-                                  static_cast<int>(GetPenWidthPoint()),
-                                  m_sPenDef.rgbColor, GetPenPattern(),
-                                  nOGRStyle, szPattern);
+                                  GetPenWidthPoint(), m_sPenDef.rgbColor,
+                                  GetPenPattern(), nOGRStyle, szPattern);
         else
             pszStyle = CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d,"
                                   "ogr-pen-%d\",p:\"%spx\",cap:r,j:r)",
@@ -8632,11 +8631,10 @@ const char *ITABFeaturePen::GetPenStyleString() const
     else
     {
         if (m_sPenDef.nPointWidth > 0)
-            pszStyle =
-                CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\""
-                           "mapinfo-pen-%d,ogr-pen-%d\",cap:r,j:r)",
-                           static_cast<int>(GetPenWidthPoint()),
-                           m_sPenDef.rgbColor, GetPenPattern(), nOGRStyle);
+            pszStyle = CPLSPrintf("PEN(w:%.1fpt,c:#%6.6x,id:\""
+                                  "mapinfo-pen-%d,ogr-pen-%d\",cap:r,j:r)",
+                                  GetPenWidthPoint(), m_sPenDef.rgbColor,
+                                  GetPenPattern(), nOGRStyle);
         else
             pszStyle = CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\""
                                   "mapinfo-pen-%d,ogr-pen-%d\",cap:r,j:r)",
@@ -8691,15 +8689,7 @@ void ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
 
     OGRStylePen *poPenStyle = cpl::down_cast<OGRStylePen *>(poStylePart);
 
-    // With Pen, we always want to output points or pixels (which are the same,
-    // so just use points).
-    //
-    // It's very important to set the output unit of the feature.
-    // The default value is meter. If we don't do it all numerical values
-    // will be assumed to be converted from the input unit to meter when we
-    // will get them via GetParam...() functions.
-    // See OGRStyleTool::Parse() for more details.
-    poPenStyle->SetUnit(OGRSTUPoints, 1);
+    // With Pen, we always want to output points or pixels
 
     // Get the Pen Id or pattern
     const char *pszPenName = poPenStyle->Id(bIsNull);
@@ -8707,14 +8697,26 @@ void ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
         pszPenName = nullptr;
 
     // Set the width
-    if (poPenStyle->Width(bIsNull) != 0.0)
+    OGRSTUnitId ePenWidthUnit = OGRSTUGround;
+    // Respect the original unit if it is points vs pixel. Otherwise convert
+    // to points.
+    const double dfPenWidth = poPenStyle->RawWidth(ePenWidthUnit, bIsNull);
+    if (dfPenWidth != 0.0)
     {
-        const double nPenWidth = poPenStyle->Width(bIsNull);
-        // Width < 10 is a pixel
-        if (nPenWidth > 10)
-            SetPenWidthPoint(nPenWidth);
+        if (ePenWidthUnit == OGRSTUPoints)
+        {
+            SetPenWidthPoint(dfPenWidth);
+        }
+        else if (ePenWidthUnit == OGRSTUPixel)
+        {
+            SetPenWidthPixel(
+                static_cast<GByte>(std::clamp(dfPenWidth + 0.5, 0.0, 255.0)));
+        }
         else
-            SetPenWidthPixel(static_cast<GByte>(nPenWidth));
+        {
+            poPenStyle->SetUnit(OGRSTUPoints, 1);
+            SetPenWidthPoint(poPenStyle->Width(bIsNull));
+        }
     }
 
     // Set the color

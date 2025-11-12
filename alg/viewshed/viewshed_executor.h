@@ -27,6 +27,30 @@ namespace gdal
 namespace viewshed
 {
 
+/**
+ * Container for lines necessary for processing.
+ */
+struct Lines
+{
+    std::vector<double> cur;     //!< Current line being processed
+    std::vector<double> result;  //!< Result values for current line
+    std::vector<double> prev;    //!< Height values for previous line
+    std::vector<double>
+        pitchMask;  //!< Height/indicator values for pitch masking.
+
+    /// Constructor
+    Lines() : cur(), result(), prev(), pitchMask()
+    {
+    }
+
+    /// Constructor that initializes to line length
+    /// \param lineLen  Line length.
+    explicit Lines(size_t lineLen)
+        : cur(lineLen), result(lineLen), prev(), pitchMask()
+    {
+    }
+};
+
 class Progress;
 
 /// Executes a viewshed computation on a source band, placing the result
@@ -74,30 +98,16 @@ class ViewshedExecutor
 
     double calcHeightAdjFactor();
     void setOutput(double &dfResult, double &dfCellVal, double dfZ);
-    bool readLine(int nLine, double *data);
+    bool readLine(int nLine, std::vector<double> &line);
     bool writeLine(int nLine, std::vector<double> &vResult);
-    bool processLine(int nLine, std::vector<double> &vLastLineVal);
-    bool processFirstLine(std::vector<double> &vLastLineVal);
-    void processFirstLineLeft(const LineLimits &ll,
-                              std::vector<double> &vResult,
-                              std::vector<double> &vThisLineVal);
-    void processFirstLineRight(const LineLimits &ll,
-                               std::vector<double> &vResult,
-                               std::vector<double> &vThisLineVal);
-    void processFirstLineTopOrBottom(const LineLimits &ll,
-                                     std::vector<double> &vResult,
-                                     std::vector<double> &vThisLineVal);
-    void processLineLeft(int nYOffset, LineLimits &ll,
-                         std::vector<double> &vResult,
-                         std::vector<double> &vThisLineVal,
-                         std::vector<double> &vLastLineVal);
-    void processLineRight(int nYOffset, LineLimits &ll,
-                          std::vector<double> &vResult,
-                          std::vector<double> &vThisLineVal,
-                          std::vector<double> &vLastLineVal);
-    LineLimits adjustHeight(int iLine, std::vector<double> &thisLineVal,
-                            const std::vector<double> &vResult,
-                            std::vector<double> &vPitchMaskVal);
+    bool processLine(int nLine, Lines &lines);
+    bool processFirstLine(Lines &lines);
+    void processFirstLineLeft(const LineLimits &ll, Lines &lines);
+    void processFirstLineRight(const LineLimits &ll, Lines &lines);
+    void processFirstLineTopOrBottom(const LineLimits &ll, Lines &lines);
+    void processLineLeft(int nYOffset, LineLimits &ll, Lines &lines);
+    void processLineRight(int nYOffset, LineLimits &ll, Lines &lines);
+    LineLimits adjustHeight(int iLine, Lines &lines);
     void maskInitial(std::vector<double> &vResult, int nLine);
     bool maskAngleLeft(std::vector<double> &vResult, int nLine);
     bool maskAngleRight(std::vector<double> &vResult, int nLine);

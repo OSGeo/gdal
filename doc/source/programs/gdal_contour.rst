@@ -52,15 +52,11 @@ be on the right, i.e. a line string goes clockwise around a top.
     of contour polygon. If not provided no minimum elevation attribute
     is attached. Ignored in default line contouring mode.
 
-    .. versionadded:: 2.4.0
-
 .. option:: -amax <name>
 
     Provides a name for the attribute in which to put the maximum elevation of
     contour polygon. If not provided no maximum elevation attribute is attached.
     Ignored in default line contouring mode.
-
-    .. versionadded:: 2.4.0
 
 .. option:: -3d
 
@@ -78,8 +74,6 @@ be on the right, i.e. a line string goes clockwise around a top.
 .. option:: -f <format>
 
     Create output in a particular format.
-
-    .. versionadded:: 2.3.0
 
         If not specified, the format is guessed from the extension (previously was ESRI Shapefile).
 
@@ -112,8 +106,6 @@ be on the right, i.e. a line string goes clockwise around a top.
     Generate levels on an exponential scale: `base ^ k`, for `k` an integer.
     Must specify either -i or -fl or -e.
 
-    .. versionadded:: 2.4.0
-
 .. option:: -nln <name>
 
     Provide a name for the output vector layer. Defaults to "contour".
@@ -129,9 +121,6 @@ be on the right, i.e. a line string goes clockwise around a top.
     The minimum and maximum values from the raster are not automatically added to
     the fixed levels list but the special values ``MIN`` and ``MAX`` (case insensitive)
     can be used to include them.
-
-
-    .. versionadded:: 2.4.0
 
 .. option:: -gt <n>
 

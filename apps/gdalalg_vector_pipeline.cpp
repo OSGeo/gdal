@@ -24,11 +24,14 @@
 #include "gdalalg_vector_filter.h"
 #include "gdalalg_vector_geom.h"
 #include "gdalalg_vector_info.h"
+#include "gdalalg_vector_limit.h"
+#include "gdalalg_vector_make_point.h"
 #include "gdalalg_vector_make_valid.h"
 #include "gdalalg_vector_partition.h"
 #include "gdalalg_vector_reproject.h"
 #include "gdalalg_vector_segmentize.h"
 #include "gdalalg_vector_select.h"
+#include "gdalalg_vector_set_field_type.h"
 #include "gdalalg_vector_set_geom_type.h"
 #include "gdalalg_vector_simplify.h"
 #include "gdalalg_vector_simplify_coverage.h"
@@ -163,6 +166,8 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
 
     registry.Register<GDALVectorFilterAlgorithm>();
     registry.Register<GDALVectorGeomAlgorithm>();
+    registry.Register<GDALVectorLimitAlgorithm>();
+    registry.Register<GDALVectorMakePointAlgorithm>();
     registry.Register<GDALVectorMakeValidAlgorithm>();
     registry.Register<GDALVectorPartitionAlgorithm>();
     registry.Register<GDALVectorSegmentizeAlgorithm>();
@@ -170,6 +175,7 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALVectorSelectAlgorithm>(
         addSuffixIfNeeded(GDALVectorSelectAlgorithm::NAME));
 
+    registry.Register<GDALVectorSetFieldTypeAlgorithm>();
     registry.Register<GDALVectorSetGeomTypeAlgorithm>();
     registry.Register<GDALVectorSimplifyAlgorithm>();
     registry.Register<GDALVectorSimplifyCoverageAlgorithm>();
@@ -346,12 +352,25 @@ OGRFeature *GDALVectorPipelineOutputLayer::GetNextRawFeature()
         if (!poSrcFeature)
             return nullptr;
         TranslateFeature(std::move(poSrcFeature), m_pendingFeatures);
+        if (m_translateError)
+        {
+            return nullptr;
+        }
         if (!m_pendingFeatures.empty())
             break;
     }
     OGRFeature *poFeature = m_pendingFeatures[0].release();
     m_idxInPendingFeatures = 1;
     return poFeature;
+}
+
+/************************************************************************/
+/*                         GDALVectorOutputDataset                      */
+/************************************************************************/
+
+int GDALVectorOutputDataset::TestCapability(const char *) const
+{
+    return 0;
 }
 
 /************************************************************************/
@@ -462,6 +481,7 @@ OGRFeature *GDALVectorPipelineOutputDataset::GetNextFeature(
             m_belongingLayer = iterToDstLayer->second;
             m_belongingLayer->TranslateFeature(std::move(poSrcFeature),
                                                m_pendingFeatures);
+
             if (!m_pendingFeatures.empty())
                 break;
         }

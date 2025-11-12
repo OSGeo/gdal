@@ -318,7 +318,6 @@ int  FPolygonize( GDALRasterBandShadow *srcBand,
 /*                             FillNodata()                             */
 /************************************************************************/
 
-/* Interface method added for GDAL 1.7.0 */
 %apply Pointer NONNULL {GDALRasterBandShadow *targetBand};
 #ifndef SWIGJAVA
 %feature( "kwargs" ) FillNodata;
@@ -992,34 +991,36 @@ def SuggestedWarpOutput(*args):
     Parameters
     ----------
 
-    src: Dataset
+    src : Dataset
         Source dataset
-    transformer: Transformer
+    transformer : Transformer
         The return value of gdal.Transformer(src, None, options)
         (exclusive with below options parameter)
-    options: list[str]
+    options : list[str]
         List of strings that are the transforming options accepted by
         :cpp:func:`GDALCreateGenImgProjTransformer2` (e.g ``DST_SRS``)
         (exclusive with above transformer parameter)
 
     Returns
     -------
+    SuggestedWarpOutputRes
+        An instance of the SuggestedWarpOutputRes class with the following members:
 
-    A SuggestedWarpOutputRes class instance with the following members:
-    - width: number of pixels in width of the output dataset
-    - height: number of pixels in height of the output dataset
-    - xmin: minimum value of the georeferenced X coordinates
-    - ymin: maximum value of the georeferenced Y coordinates
-    - xmax: minimum value of the georeferenced X coordinates
-    - ymax: maximum value of the georeferenced Y coordinates
-    - geotransform: affine geotransformation matrix (6 values)
+        - ``width`` (int): Number of pixels in width of the output dataset.
+        - ``height`` (int): Number of pixels in height of the output dataset.
+        - ``xmin`` (float): Minimum value of the georeferenced X coordinates.
+        - ``ymin`` (float): Minimum value of the georeferenced Y coordinates.
+        - ``xmax`` (float): Maximum value of the georeferenced X coordinates.
+        - ``ymax`` (float): Maximum value of the georeferenced Y coordinates.
+        - ``geotransform`` (tuple of 6 floats): Affine geotransformation matrix.
 
-    Example
-    -------
+    Examples
+    --------
 
-    >>> ds = gdal.Open("my.tif")
-    ... res = gdal.SuggestedWarpOutput(ds, ["DST_SRS=EPSG:4326"])
-    ... print(res.width, res.height, res.xmin, res.ymin, res.xmax, res.ymax, res.geotransform)
+    >>> ds = gdal.Open("byte.tif")
+    >>> res = gdal.SuggestedWarpOutput(ds, ["DST_SRS=EPSG:4326"])
+    >>> print(res.width, res.height, res.xmin, res.ymin, res.xmax, res.ymax, res.geotransform)
+        22 18 -117.642 33.891 -117.629 33.902 (-117.642, 0.000598, 0.0, 33.902, 0.0, -0.000598)
 
     """
     if isinstance(args[1], GDALTransformerInfoShadow):

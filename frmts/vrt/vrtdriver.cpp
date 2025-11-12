@@ -17,6 +17,7 @@
 #include "cpl_string.h"
 #include "gdal_alg_priv.h"
 #include "gdal_frmts.h"
+#include "gdal_priv.h"
 #include "vrtexpression.h"
 
 #include <mutex>
@@ -564,6 +565,13 @@ void GDALRegister_VRT()
                                       ocoList.c_str());
         }
     }
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,
+        "<MultiDimArrayCreationOptionList>"
+        "   <Option name='BLOCKSIZE' type='int' description='Block size in "
+        "pixels'/>"
+        "</MultiDimArrayCreationOptionList>");
 
     poDriver->pfnCreateCopy = VRTCreateCopy;
     poDriver->pfnCreate = VRTDataset::Create;

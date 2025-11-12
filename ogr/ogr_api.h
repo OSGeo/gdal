@@ -190,6 +190,8 @@ OGRGeometryH CPL_DLL OGR_G_SimplifyPreserveTopology(
 OGRGeometryH CPL_DLL
 OGR_G_DelaunayTriangulation(OGRGeometryH hThis, double dfTolerance,
                             int bOnlyEdges) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_ConstrainedDelaunayTriangulation(OGRGeometryH hThis)
+    CPL_WARN_UNUSED_RESULT;
 
 void CPL_DLL OGR_G_Segmentize(OGRGeometryH hGeom, double dfMaxLength);
 int CPL_DLL OGR_G_Intersects(OGRGeometryH, OGRGeometryH);
@@ -675,7 +677,6 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature(OGRLayerH) CPL_WARN_UNUSED_RESULT;
  *              inside the macro body.
  * @param hLayer layer to iterate over.
  *
- * @since GDAL 2.3
  */
 #define OGR_FOR_EACH_FEATURE_BEGIN(hFeat, hLayer)                              \
     {                                                                          \
@@ -868,7 +869,7 @@ OGRDataSourceH CPL_DLL OGRGetOpenDS(int iDS);
 
 void CPL_DLL OGRRegisterAll(void);
 
-/** Clean-up all drivers (including raster ones starting with GDAL 2.0.
+/** Clean-up all drivers, including raster ones.
  * See GDALDestroyDriverManager() */
 void CPL_DLL OGRCleanupAll(void);
 

@@ -68,9 +68,6 @@ std::vector<double> WCSDataset110::GetNativeExtent(int nXOff, int nYOff,
         // sampling density.
         if (nBufXSize != nXSize || nBufYSize != nYSize)
         {
-            dfXStep = (nXSize / (double)nBufXSize) * m_gt[1];
-            dfYStep = (nYSize / (double)nBufYSize) * m_gt[5];
-
             extent[0] = nXOff * m_gt[1] + m_gt[0] + dfXStep * 0.5;
             extent[2] = extent[0] + (nBufXSize - 1) * dfXStep;
 

@@ -428,10 +428,6 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
     {
         json_object *poDescription =
             json_object_new_string(GDALGetDescription(hDataset));
-        json_object *poDriverShortName =
-            json_object_new_string(GDALGetDriverShortName(hDriver));
-        json_object *poDriverLongName =
-            json_object_new_string(GDALGetDriverLongName(hDriver));
         poJsonObject = json_object_new_object();
         poBands = json_object_new_array();
         poMetadata = json_object_new_object();
@@ -440,12 +436,19 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
         poStacEOBands = json_object_new_array();
 
         json_object_object_add(poJsonObject, "description", poDescription);
-        json_object_object_add(poJsonObject, "driverShortName",
-                               poDriverShortName);
-        json_object_object_add(poJsonObject, "driverLongName",
-                               poDriverLongName);
+        if (hDriver)
+        {
+            json_object *poDriverShortName =
+                json_object_new_string(GDALGetDriverShortName(hDriver));
+            json_object *poDriverLongName =
+                json_object_new_string(GDALGetDriverLongName(hDriver));
+            json_object_object_add(poJsonObject, "driverShortName",
+                                   poDriverShortName);
+            json_object_object_add(poJsonObject, "driverLongName",
+                                   poDriverLongName);
+        }
     }
-    else
+    else if (hDriver)
     {
         Concat(osStr, psOptions->bStdoutOutput, "Driver: %s/%s\n",
                GDALGetDriverShortName(hDriver), GDALGetDriverLongName(hDriver));
@@ -456,7 +459,8 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
         // The list of files of a raster FileGDB is not super useful and potentially
         // super long, so omit it, unless the -json mode is enabled
         char **papszFileList =
-            (!bJson && EQUAL(GDALGetDriverShortName(hDriver), "OpenFileGDB"))
+            (!bJson && hDriver &&
+             EQUAL(GDALGetDriverShortName(hDriver), "OpenFileGDB"))
                 ? nullptr
                 : GDALGetFileList(hDataset);
 
@@ -684,27 +688,38 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
         if (bJson)
         {
             json_object *poGeoTransform = json_object_new_array();
-            // Deep copy wasn't working on the array, for some reason, so we
-            // build the geotransform STAC array at the same time.
-            json_object *poStacGeoTransform = json_object_new_array();
 
             for (int i = 0; i < 6; i++)
             {
                 json_object *poGeoTransformCoefficient =
                     json_object_new_double_with_precision(adfGeoTransform[i],
                                                           16);
-                json_object *poStacGeoTransformCoefficient =
-                    json_object_new_double_with_precision(adfGeoTransform[i],
-                                                          16);
-
                 json_object_array_add(poGeoTransform,
                                       poGeoTransformCoefficient);
-                json_object_array_add(poStacGeoTransform,
-                                      poStacGeoTransformCoefficient);
             }
 
             json_object_object_add(poJsonObject, "geoTransform",
                                    poGeoTransform);
+
+            json_object *poStacGeoTransform = json_object_new_array();
+            json_object_array_add(
+                poStacGeoTransform,
+                json_object_new_double_with_precision(adfGeoTransform[1], 16));
+            json_object_array_add(
+                poStacGeoTransform,
+                json_object_new_double_with_precision(adfGeoTransform[2], 16));
+            json_object_array_add(
+                poStacGeoTransform,
+                json_object_new_double_with_precision(adfGeoTransform[0], 16));
+            json_object_array_add(
+                poStacGeoTransform,
+                json_object_new_double_with_precision(adfGeoTransform[4], 16));
+            json_object_array_add(
+                poStacGeoTransform,
+                json_object_new_double_with_precision(adfGeoTransform[5], 16));
+            json_object_array_add(
+                poStacGeoTransform,
+                json_object_new_double_with_precision(adfGeoTransform[3], 16));
             json_object_object_add(poStac, "proj:transform",
                                    poStacGeoTransform);
         }
@@ -1503,9 +1518,13 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                             ? json_object_new_int(static_cast<int>(dfNoData))
                             : gdal_json_object_new_double_significant_digits(
                                   dfNoData, nSignificantDigits);
-                    json_object *poStacNoDataValue = nullptr;
-                    json_object_deep_copy(poNoDataValue, &poStacNoDataValue,
-                                          nullptr);
+                    json_object *poStacNoDataValue =
+                        (GDALDataTypeIsInteger(eDT) && dfNoData >= INT_MIN &&
+                         dfNoData <= INT_MAX &&
+                         static_cast<int>(dfNoData) == dfNoData)
+                            ? json_object_new_int(static_cast<int>(dfNoData))
+                            : gdal_json_object_new_double_significant_digits(
+                                  dfNoData, nSignificantDigits);
                     json_object_object_add(poStacRasterBand, "nodata",
                                            poStacNoDataValue);
                     json_object_object_add(poBand, "noDataValue",

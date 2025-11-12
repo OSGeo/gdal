@@ -37,6 +37,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
+#include "gdalantirecursion.h"
 #include "gdal_priv.h"
 #include "gdal_thread_pool.h"
 #include "ogr_geometry.h"
@@ -136,7 +137,10 @@ bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
             {
                 auto *const poComplexSource =
                     static_cast<VRTComplexSource *>(poSource.get());
-                if (!poComplexSource->GetResampling().empty())
+                const auto &osSourceResampling =
+                    poComplexSource->GetResampling();
+                if (!osSourceResampling.empty() &&
+                    osSourceResampling != "nearest")
                     return true;
             }
         }
@@ -172,7 +176,10 @@ bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
                 {
                     auto *const poComplexSource =
                         static_cast<VRTComplexSource *>(poSimpleSource);
-                    if (!poComplexSource->GetResampling().empty())
+                    const auto &osSourceResampling =
+                        poComplexSource->GetResampling();
+                    if (!osSourceResampling.empty() &&
+                        osSourceResampling != "nearest")
                     {
                         const int lMaskFlags =
                             const_cast<VRTSourcedRasterBand *>(this)

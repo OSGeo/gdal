@@ -26,6 +26,7 @@ all format drivers built into GDAL/OGR.
 
    .. code-tab:: c++
 
+      // Note: since GDAL >= 3.12, "gdal_vector_cpp.h" can also be used.
       #include "ogrsf_frmts.h"
 
       int main()
@@ -186,11 +187,11 @@ and fetch and report the attributes based on their type.
 
       OGRFeatureDefnH hFDefn = OGR_L_GetLayerDefn(hLayer);
       int iField;
-   
+
       for( iField = 0; iField < OGR_FD_GetFieldCount(hFDefn); iField++ )
       {
           OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn( hFDefn, iField );
-   
+
           if( !OGR_F_IsFieldSet(hFeature, iField) )
           {
               printf("(unset),");
@@ -328,7 +329,7 @@ Several geometry fields can be associated to a feature.
       #else
               OGRPoint *poPoint = (OGRPoint *) poGeometry;
       #endif
-     
+
               printf( "%.3f,%3.f\n", poPoint->getX(), poPoint->getY() );
           }
           else

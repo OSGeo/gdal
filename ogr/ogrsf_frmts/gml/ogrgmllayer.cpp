@@ -19,6 +19,8 @@
 #include "ogr_p.h"
 #include "ogr_api.h"
 
+#include <limits>
+
 /************************************************************************/
 /*                           OGRGMLLayer()                              */
 /************************************************************************/
@@ -27,7 +29,6 @@ OGRGMLLayer::OGRGMLLayer(const char *pszName, bool bWriterIn,
                          OGRGMLDataSource *poDSIn)
     : poFeatureDefn(new OGRFeatureDefn(
           pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0))),
-      iNextGMLId(0), bInvalidFIDFound(false), pszFIDPrefix(nullptr),
       bWriter(bWriterIn), poDS(poDSIn),
       poFClass(!bWriter ? poDS->GetReader()->GetClass(pszName) : nullptr),
       // Reader's should get the corresponding GMLFeatureClass and cache it.
@@ -53,7 +54,7 @@ OGRGMLLayer::OGRGMLLayer(const char *pszName, bool bWriterIn,
 OGRGMLLayer::~OGRGMLLayer()
 
 {
-    CPLFree(pszFIDPrefix);
+    CPLFree(m_pszFIDPrefix);
 
     if (poFeatureDefn)
         poFeatureDefn->Release();
@@ -76,7 +77,7 @@ void OGRGMLLayer::ResetReading()
     {
         // Does the last stored feature belong to our layer ? If so, no
         // need to reset the reader.
-        if (iNextGMLId == 0 && poDS->PeekStoredGMLFeature() != nullptr &&
+        if (m_iNextGMLId == 0 && poDS->PeekStoredGMLFeature() != nullptr &&
             poDS->PeekStoredGMLFeature()->GetClass() == poFClass)
             return;
 
@@ -84,7 +85,8 @@ void OGRGMLLayer::ResetReading()
         poDS->SetStoredGMLFeature(nullptr);
     }
 
-    iNextGMLId = 0;
+    m_iNextGMLId = 0;
+    m_oSetFIDs.clear();
     poDS->GetReader()->ResetReading();
     CPLDebug("GML", "ResetReading()");
     if (poDS->GetLayerCount() > 1 && poDS->GetReadMode() == STANDARD)
@@ -165,7 +167,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         if (poGMLFeature->GetClass() != poFClass)
         {
             if (poDS->GetReadMode() == INTERLEAVED_LAYERS ||
-                (poDS->GetReadMode() == SEQUENTIAL_LAYERS && iNextGMLId != 0))
+                (poDS->GetReadMode() == SEQUENTIAL_LAYERS && m_iNextGMLId != 0))
             {
                 CPLAssert(poDS->PeekStoredGMLFeature() == nullptr);
                 poDS->SetStoredGMLFeature(poGMLFeature);
@@ -190,72 +192,101 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         /* --------------------------------------------------------------------
          */
         GIntBig nFID = -1;
+        constexpr size_t MAX_FID_DIGIT_COUNT = 20;
         const char *pszGML_FID = poGMLFeature->GetFID();
-        if (bInvalidFIDFound)
+        if (m_bInvalidFIDFound || pszGML_FID == nullptr || pszGML_FID[0] == 0)
         {
-            nFID = iNextGMLId;
-            iNextGMLId = Increment(iNextGMLId);
+            // do nothing
         }
-        else if (pszGML_FID == nullptr)
+        else if (m_iNextGMLId == 0)
         {
-            bInvalidFIDFound = true;
-            nFID = iNextGMLId;
-            iNextGMLId = Increment(iNextGMLId);
-        }
-        else if (iNextGMLId == 0)
-        {
-            int j = 0;
-            int i = static_cast<int>(strlen(pszGML_FID)) - 1;
-            while (i >= 0 && pszGML_FID[i] >= '0' && pszGML_FID[i] <= '9' &&
-                   j < 20)
+            size_t j = 0;
+            size_t i = strlen(pszGML_FID);
+            while (i > 0 && j < MAX_FID_DIGIT_COUNT)
             {
-                i--;
+                --i;
+                if (!(pszGML_FID[i] >= '0' && pszGML_FID[i] <= '9'))
+                    break;
                 j++;
+                if (i == 0)
+                {
+                    i = std::numeric_limits<size_t>::max();
+                    break;
+                }
             }
-            // i points the last character of the fid.
-            if (i >= 0 && j < 20 && pszFIDPrefix == nullptr)
+            // i points the last character of the fid prefix.
+            if (i != std::numeric_limits<size_t>::max() &&
+                j < MAX_FID_DIGIT_COUNT && m_pszFIDPrefix == nullptr)
             {
-                pszFIDPrefix = static_cast<char *>(CPLMalloc(i + 2));
-                pszFIDPrefix[i + 1] = '\0';
-                strncpy(pszFIDPrefix, pszGML_FID, i + 1);
+                m_pszFIDPrefix = static_cast<char *>(CPLMalloc(i + 2));
+                memcpy(m_pszFIDPrefix, pszGML_FID, i + 1);
+                m_pszFIDPrefix[i + 1] = '\0';
             }
-            // pszFIDPrefix now contains the prefix or NULL if no prefix is
+            // m_pszFIDPrefix now contains the prefix or NULL if no prefix is
             // found.
-            if (j < 20 && sscanf(pszGML_FID + i + 1, CPL_FRMT_GIB, &nFID) == 1)
+            if (j < MAX_FID_DIGIT_COUNT)
             {
-                if (iNextGMLId <= nFID)
-                    iNextGMLId = Increment(nFID);
-            }
-            else
-            {
-                bInvalidFIDFound = true;
-                nFID = iNextGMLId;
-                iNextGMLId = Increment(iNextGMLId);
+                char *endptr = nullptr;
+                nFID = std::strtoll(
+                    pszGML_FID +
+                        (i != std::numeric_limits<size_t>::max() ? i + 1 : 0),
+                    &endptr, 10);
+                if (endptr == pszGML_FID + strlen(pszGML_FID))
+                {
+                    if (m_iNextGMLId <= nFID)
+                        m_iNextGMLId = Increment(nFID);
+                }
+                else
+                {
+                    nFID = -1;
+                }
             }
         }
         else  // if( iNextGMLId != 0 ).
         {
-            const char *pszFIDPrefix_notnull = pszFIDPrefix;
+            const char *pszFIDPrefix_notnull = m_pszFIDPrefix;
             if (pszFIDPrefix_notnull == nullptr)
                 pszFIDPrefix_notnull = "";
-            int nLenPrefix = static_cast<int>(strlen(pszFIDPrefix_notnull));
+            const size_t nLenPrefix = strlen(pszFIDPrefix_notnull);
 
             if (strncmp(pszGML_FID, pszFIDPrefix_notnull, nLenPrefix) == 0 &&
-                strlen(pszGML_FID + nLenPrefix) < 20 &&
-                sscanf(pszGML_FID + nLenPrefix, CPL_FRMT_GIB, &nFID) == 1)
+                strlen(pszGML_FID + nLenPrefix) < MAX_FID_DIGIT_COUNT)
             {
-                // fid with the prefix. Using its numerical part.
-                if (iNextGMLId < nFID)
-                    iNextGMLId = Increment(nFID);
+                char *endptr = nullptr;
+                nFID = std::strtoll(pszGML_FID + nLenPrefix, &endptr, 10);
+                if (endptr == pszGML_FID + strlen(pszGML_FID))
+                {
+                    // fid with the prefix. Using its numerical part.
+                    if (m_iNextGMLId <= nFID)
+                        m_iNextGMLId = Increment(nFID);
+                }
+                else
+                {
+                    nFID = -1;
+                }
             }
+        }
+
+        constexpr size_t MAX_FID_SET_SIZE = 10 * 1000 * 1000;
+        if (nFID >= 0 && m_oSetFIDs.size() < MAX_FID_SET_SIZE)
+        {
+            // Make sure FIDs are unique
+            if (!cpl::contains(m_oSetFIDs, nFID))
+                m_oSetFIDs.insert(nFID);
             else
             {
-                // fid without the aforementioned prefix or a valid numerical
-                // part.
-                bInvalidFIDFound = true;
-                nFID = iNextGMLId;
-                iNextGMLId = Increment(iNextGMLId);
+                m_oSetFIDs.clear();
+                nFID = -1;
             }
+        }
+
+        if (nFID < 0)
+        {
+            // fid without the aforementioned prefix or a valid numerical
+            // part.
+            m_bInvalidFIDFound = true;
+            nFID = m_iNextGMLId;
+            m_iNextGMLId = Increment(m_iNextGMLId);
         }
 
         /* --------------------------------------------------------------------
@@ -695,7 +726,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
     }
 
     if (poFeature->GetFID() == OGRNullFID)
-        poFeature->SetFID(iNextGMLId++);
+        poFeature->SetFID(m_iNextGMLId++);
 
     if (bWriteSpaceIndentation)
         VSIFPrintfL(fp, "    ");
@@ -1107,10 +1138,10 @@ int OGRGMLLayer::TestCapability(const char *pszCap) const
         return bWriter;
 
     else if (EQUAL(pszCap, OLCCreateField))
-        return bWriter && iNextGMLId == 0;
+        return bWriter && m_iNextGMLId == 0;
 
     else if (EQUAL(pszCap, OLCCreateGeomField))
-        return bWriter && iNextGMLId == 0;
+        return bWriter && m_iNextGMLId == 0;
 
     else if (EQUAL(pszCap, OLCFastGetExtent))
     {
@@ -1154,7 +1185,7 @@ int OGRGMLLayer::TestCapability(const char *pszCap) const
 OGRErr OGRGMLLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 
 {
-    if (!bWriter || iNextGMLId != 0)
+    if (!bWriter || m_iNextGMLId != 0)
         return OGRERR_FAILURE;
 
     /* -------------------------------------------------------------------- */
@@ -1198,7 +1229,7 @@ OGRErr OGRGMLLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
                                     int bApproxOK)
 
 {
-    if (!bWriter || iNextGMLId != 0)
+    if (!bWriter || m_iNextGMLId != 0)
         return OGRERR_FAILURE;
 
     /* -------------------------------------------------------------------- */

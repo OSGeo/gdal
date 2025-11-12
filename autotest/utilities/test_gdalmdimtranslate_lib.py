@@ -158,15 +158,15 @@ def test_gdalmdimtranslate_classic_to_multidim(tmp_vsimem):
     <Dimension name="X" size="20" indexingVariable="X" />
     <Dimension name="Y" size="20" indexingVariable="Y" />
     <Dimension name="newaxis" size="1" />
-    <Array name="X">
-      <DataType>Float64</DataType>
-      <DimensionRef ref="X" />
-      <RegularlySpacedValues start="440750" increment="60" />
-    </Array>
     <Array name="Y">
       <DataType>Float64</DataType>
       <DimensionRef ref="Y" />
       <RegularlySpacedValues start="3751290" increment="-60" />
+    </Array>
+    <Array name="X">
+      <DataType>Float64</DataType>
+      <DimensionRef ref="X" />
+      <RegularlySpacedValues start="440750" increment="60" />
     </Array>
     <Array name="ar">
       <DataType>Byte</DataType>
@@ -224,6 +224,16 @@ def test_gdalmdimtranslate_array(tmp_vsimem):
     <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
     <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
     <Dimension name="time_increasing" type="TEMPORAL" size="4" indexingVariable="time_increasing" />
+    <Array name="time_increasing">
+      <DataType>String</DataType>
+      <DimensionRef ref="time_increasing" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/time_increasing</SourceArray>
+        <SourceSlab offset="0" count="4" step="1" />
+        <DestSlab offset="0" />
+      </Source>
+    </Array>
     <Array name="latitude">
       <DataType>Float32</DataType>
       <DimensionRef ref="latitude" />
@@ -254,16 +264,6 @@ def test_gdalmdimtranslate_array(tmp_vsimem):
         <SourceArray>/my_variable_with_time_increasing</SourceArray>
         <SourceSlab offset="0,0,0" count="4,10,10" step="1,1,1" />
         <DestSlab offset="0,0,0" />
-      </Source>
-    </Array>
-    <Array name="time_increasing">
-      <DataType>String</DataType>
-      <DimensionRef ref="time_increasing" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/time_increasing</SourceArray>
-        <SourceSlab offset="0" count="4" step="1" />
-        <DestSlab offset="0" />
       </Source>
     </Array>
   </Group>
@@ -303,27 +303,6 @@ def test_gdalmdimtranslate_array_with_transpose_and_view(tmp_vsimem):
   <Group name="/">
     <Dimension name="subset_latitude_9_-1_10" type="HORIZONTAL_Y" size="10" indexingVariable="subset_latitude_9_-1_10" />
     <Dimension name="time_increasing" type="TEMPORAL" size="4" indexingVariable="time_increasing" />
-    <Array name="foo">
-      <DataType>Int32</DataType>
-      <DimensionRef ref="subset_latitude_9_-1_10" />
-      <DimensionRef ref="time_increasing" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/my_variable_with_time_increasing</SourceArray>
-        <SourceTranspose>1,2,0</SourceTranspose>
-        <SourceView>[::-1,1,...]</SourceView>
-        <SourceSlab offset="0,0" count="10,4" step="1,1" />
-        <DestSlab offset="0,0" />
-      </Source>
-      <Attribute name="DIM_longitude_INDEX">
-        <DataType>Int32</DataType>
-        <Value>1</Value>
-      </Attribute>
-      <Attribute name="DIM_longitude_VALUE">
-        <DataType>Float32</DataType>
-        <Value>2.5</Value>
-      </Attribute>
-    </Array>
     <Array name="subset_latitude_9_-1_10">
       <DataType>Float32</DataType>
       <DimensionRef ref="subset_latitude_9_-1_10" />
@@ -344,6 +323,27 @@ def test_gdalmdimtranslate_array_with_transpose_and_view(tmp_vsimem):
         <SourceSlab offset="0" count="4" step="1" />
         <DestSlab offset="0" />
       </Source>
+    </Array>
+    <Array name="foo">
+      <DataType>Int32</DataType>
+      <DimensionRef ref="subset_latitude_9_-1_10" />
+      <DimensionRef ref="time_increasing" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/my_variable_with_time_increasing</SourceArray>
+        <SourceTranspose>1,2,0</SourceTranspose>
+        <SourceView>[::-1,1,...]</SourceView>
+        <SourceSlab offset="0,0" count="10,4" step="1,1" />
+        <DestSlab offset="0,0" />
+      </Source>
+      <Attribute name="DIM_longitude_INDEX">
+        <DataType>Int32</DataType>
+        <Value>1</Value>
+      </Attribute>
+      <Attribute name="DIM_longitude_VALUE">
+        <DataType>Float32</DataType>
+        <Value>2.5</Value>
+      </Attribute>
     </Array>
   </Group>
 </VRTDataset>
@@ -383,17 +383,6 @@ def test_gdalmdimtranslate_group(tmp_vsimem):
   <Group name="/">
     <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
     <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
-    <Array name="array_in_subgroup">
-      <DataType>Int32</DataType>
-      <DimensionRef ref="latitude" />
-      <DimensionRef ref="longitude" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/my_subgroup/array_in_subgroup</SourceArray>
-        <SourceSlab offset="0,0" count="10,10" step="1,1" />
-        <DestSlab offset="0,0" />
-      </Source>
-    </Array>
     <Array name="latitude">
       <DataType>Float32</DataType>
       <DimensionRef ref="latitude" />
@@ -412,6 +401,17 @@ def test_gdalmdimtranslate_group(tmp_vsimem):
         <SourceArray>/longitude</SourceArray>
         <SourceSlab offset="0" count="10" step="1" />
         <DestSlab offset="0" />
+      </Source>
+    </Array>
+    <Array name="array_in_subgroup">
+      <DataType>Int32</DataType>
+      <DimensionRef ref="latitude" />
+      <DimensionRef ref="longitude" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/my_subgroup/array_in_subgroup</SourceArray>
+        <SourceSlab offset="0,0" count="10,10" step="1,1" />
+        <DestSlab offset="0,0" />
       </Source>
     </Array>
   </Group>
@@ -450,17 +450,6 @@ def test_gdalmdimtranslate_two_groups(tmp_vsimem):
     <Group name="my_subgroup">
       <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
       <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
-      <Array name="array_in_subgroup">
-        <DataType>Int32</DataType>
-        <DimensionRef ref="latitude" />
-        <DimensionRef ref="longitude" />
-        <Source>
-          <SourceFilename>data/mdim.vrt</SourceFilename>
-          <SourceArray>/my_subgroup/array_in_subgroup</SourceArray>
-          <SourceSlab offset="0,0" count="10,10" step="1,1" />
-          <DestSlab offset="0,0" />
-        </Source>
-      </Array>
       <Array name="latitude">
         <DataType>Float32</DataType>
         <DimensionRef ref="latitude" />
@@ -479,6 +468,17 @@ def test_gdalmdimtranslate_two_groups(tmp_vsimem):
           <SourceArray>/longitude</SourceArray>
           <SourceSlab offset="0" count="10" step="1" />
           <DestSlab offset="0" />
+        </Source>
+      </Array>
+      <Array name="array_in_subgroup">
+        <DataType>Int32</DataType>
+        <DimensionRef ref="latitude" />
+        <DimensionRef ref="longitude" />
+        <Source>
+          <SourceFilename>data/mdim.vrt</SourceFilename>
+          <SourceArray>/my_subgroup/array_in_subgroup</SourceArray>
+          <SourceSlab offset="0,0" count="10,10" step="1,1" />
+          <DestSlab offset="0,0" />
         </Source>
       </Array>
     </Group>
@@ -668,19 +668,6 @@ def test_gdalmdimtranslate_subset(tmp_vsimem):
         <DestSlab offset="0" />
       </Source>
     </Array>
-    <Array name="my_variable_with_time_decreasing">
-      <DataType>Int32</DataType>
-      <DimensionRef ref="time_decreasing" />
-      <DimensionRef ref="latitude" />
-      <DimensionRef ref="longitude" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/my_variable_with_time_decreasing</SourceArray>
-        <SourceView>[:,1:9:1,:]</SourceView>
-        <SourceSlab offset="0,0,0" count="4,8,10" step="1,1,1" />
-        <DestSlab offset="0,0,0" />
-      </Source>
-    </Array>
     <Array name="my_variable_with_time_increasing">
       <DataType>Int32</DataType>
       <DimensionRef ref="latitude" />
@@ -701,16 +688,6 @@ def test_gdalmdimtranslate_subset(tmp_vsimem):
         <Value>2012-01-01</Value>
       </Attribute>
     </Array>
-    <Array name="time_decreasing">
-      <DataType>String</DataType>
-      <DimensionRef ref="time_decreasing" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/time_decreasing</SourceArray>
-        <SourceSlab offset="0" count="4" step="1" />
-        <DestSlab offset="0" />
-      </Source>
-    </Array>
     <Array name="time_increasing">
       <DataType>String</DataType>
       <Source>
@@ -726,6 +703,29 @@ def test_gdalmdimtranslate_subset(tmp_vsimem):
         <DataType>String</DataType>
         <Value>2012-01-01</Value>
       </Attribute>
+    </Array>
+    <Array name="my_variable_with_time_decreasing">
+      <DataType>Int32</DataType>
+      <DimensionRef ref="time_decreasing" />
+      <DimensionRef ref="latitude" />
+      <DimensionRef ref="longitude" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/my_variable_with_time_decreasing</SourceArray>
+        <SourceView>[:,1:9:1,:]</SourceView>
+        <SourceSlab offset="0,0,0" count="4,8,10" step="1,1,1" />
+        <DestSlab offset="0,0,0" />
+      </Source>
+    </Array>
+    <Array name="time_decreasing">
+      <DataType>String</DataType>
+      <DimensionRef ref="time_decreasing" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/time_decreasing</SourceArray>
+        <SourceSlab offset="0" count="4" step="1" />
+        <DestSlab offset="0" />
+      </Source>
     </Array>
     <Group name="my_subgroup">
       <Array name="array_in_subgroup">
@@ -784,6 +784,16 @@ def test_gdalmdimtranslate_scaleaxes(tmp_vsimem):
     <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
     <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="5" indexingVariable="longitude" />
     <Dimension name="time_increasing" type="TEMPORAL" size="4" indexingVariable="time_increasing" />
+    <Array name="time_increasing">
+      <DataType>String</DataType>
+      <DimensionRef ref="time_increasing" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/time_increasing</SourceArray>
+        <SourceSlab offset="0" count="4" step="1" />
+        <DestSlab offset="0" />
+      </Source>
+    </Array>
     <Array name="latitude">
       <DataType>Float32</DataType>
       <DimensionRef ref="latitude" />
@@ -816,16 +826,6 @@ def test_gdalmdimtranslate_scaleaxes(tmp_vsimem):
         <SourceView>[:,:,0:10:2]</SourceView>
         <SourceSlab offset="0,0,0" count="4,10,5" step="1,1,1" />
         <DestSlab offset="0,0,0" />
-      </Source>
-    </Array>
-    <Array name="time_increasing">
-      <DataType>String</DataType>
-      <DimensionRef ref="time_increasing" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/time_increasing</SourceArray>
-        <SourceSlab offset="0" count="4" step="1" />
-        <DestSlab offset="0" />
       </Source>
     </Array>
   </Group>
@@ -993,3 +993,39 @@ def test_gdalmdimtranslate_dict_arguments():
     co_idx = opt.index("-co")
 
     assert opt[co_idx : co_idx + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]
+
+
+def test_gdalmdimtranslate_from_gtiff_multiband(tmp_vsimem):
+    gdal.MultiDimTranslate(
+        tmp_vsimem / "out.vrt",
+        "../gdrivers/data/small_world.tif",
+        arraySpecs=["foo"],
+        format="VRT",
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("foo")
+    assert ar.GetDimensionCount() == 3
+    assert ar.GetDimensions()[0].GetIndexingVariable().Read() == [
+        "Band 1",
+        "Band 2",
+        "Band 3",
+    ]
+    assert (
+        ar.GetDimensions()[1].GetIndexingVariable().GetDimensions()[0].GetSize() == 200
+    )
+    assert (
+        ar.GetDimensions()[2].GetIndexingVariable().GetDimensions()[0].GetSize() == 400
+    )
+
+
+@pytest.mark.require_driver("netCDF")
+def test_gdalmdimtranslate_array_copy_blocksize(tmp_path):
+
+    gdal.MultiDimTranslate(
+        tmp_path / "out.nc",
+        "../gdrivers/data/netcdf/byte_chunked_not_multiple.nc",
+    )
+    ds = gdal.Open(tmp_path / "out.nc")
+    assert ds.GetRasterBand(1).GetBlockSize() == [15, 6]

@@ -109,7 +109,10 @@ CPLErr VRTDataset::FlushCache(bool bAtClosing)
 
 {
     if (m_poRootGroup)
+    {
+        m_poRootGroup->SetVRTPath(CPLGetPathSafe(GetDescription()));
         return m_poRootGroup->Serialize() ? CE_None : CE_Failure;
+    }
     else
         return VRTFlushCacheStruct<VRTDataset>::FlushCache(*this, bAtClosing);
 }
@@ -2035,15 +2038,15 @@ VRTDataset::CreateVRTDataset(const char *pszName, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                     CreateMultiDimensional()                         */
+/*                     CreateVRTMultiDimensional()                      */
 /************************************************************************/
 
-GDALDataset *
-VRTDataset::CreateMultiDimensional(const char *pszFilename,
-                                   CSLConstList /*papszRootGroupOptions*/,
-                                   CSLConstList /*papszOptions*/)
+std::unique_ptr<VRTDataset>
+VRTDataset::CreateVRTMultiDimensional(const char *pszFilename,
+                                      CSLConstList /*papszRootGroupOptions*/,
+                                      CSLConstList /*papszOptions*/)
 {
-    VRTDataset *poDS = new VRTDataset(0, 0);
+    auto poDS = std::make_unique<VRTDataset>(0, 0);
     poDS->eAccess = GA_Update;
     poDS->SetDescription(pszFilename);
     poDS->m_poRootGroup = VRTGroup::Create(std::string(), "/");
@@ -2052,6 +2055,20 @@ VRTDataset::CreateMultiDimensional(const char *pszFilename,
     poDS->m_poRootGroup->SetDirty();
 
     return poDS;
+}
+
+/************************************************************************/
+/*                     CreateMultiDimensional()                         */
+/************************************************************************/
+
+GDALDataset *
+VRTDataset::CreateMultiDimensional(const char *pszFilename,
+                                   CSLConstList papszRootGroupOptions,
+                                   CSLConstList papszOptions)
+{
+    return CreateVRTMultiDimensional(pszFilename, papszRootGroupOptions,
+                                     papszOptions)
+        .release();
 }
 
 /************************************************************************/
@@ -2803,9 +2820,9 @@ static bool CheckBandForOverview(GDALRasterBand *poBand,
     {
         return false;
     }
-    GDALRasterBand *poSrcBand = poBand->GetBand() == 0
-                                    ? poSource->GetMaskBandMainBand()
-                                    : poSource->GetRasterBand();
+    GDALRasterBand *poSrcBand = poSource->GetMaskBandMainBand();
+    if (!poSrcBand)
+        poSrcBand = poSource->GetRasterBand();
     if (poSrcBand == nullptr)
         return false;
 
@@ -2962,13 +2979,6 @@ void VRTDataset::BuildVirtualOverviews()
             }
             if (poNewSource)
             {
-                auto poNewSourceBand = poVRTBand->GetBand() == 0
-                                           ? poNewSource->GetMaskBandMainBand()
-                                           : poNewSource->GetRasterBand();
-                CPLAssert(poNewSourceBand);
-                auto poNewSourceBandDS = poNewSourceBand->GetDataset();
-                if (poNewSourceBandDS)
-                    poNewSourceBandDS->Reference();
                 poOvrVRTBand->AddSource(std::move(poNewSource));
             }
 

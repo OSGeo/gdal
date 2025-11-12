@@ -15,6 +15,5 @@ options : CoordinateTransformationOptions
 Returns
 -------
 CoordinateTransformation
-
 ";
 

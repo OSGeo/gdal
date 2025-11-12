@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdal_frmts.h"
+#include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
@@ -408,6 +409,10 @@ char **ISCEDataset::GetFileList()
 
 int ISCEDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
+    if (!poOpenInfo->IsSingleAllowedDriver("ISCE") &&
+        poOpenInfo->IsExtensionEqualToCI("zarr"))
+        return false;
+
     /* -------------------------------------------------------------------- */
     /*      TODO: This function is unusable now:                            */
     /*          * we can't just check for the presence of a XML file        */

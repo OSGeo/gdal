@@ -55,6 +55,8 @@ def test_gdalinfo_lib_2():
 
     ret = gdal.Info(ds, format="json")
     assert ret["driverShortName"] == "GTiff", "wrong value for driverShortName."
+    assert ret["geoTransform"] == [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
+    assert ret["stac"]["proj:transform"] == [60.0, 0.0, 440720.0, 0.0, -60.0, 3751320.0]
 
     gdaltest.validate_json(ret, "gdalinfo_output.schema.json")
 
@@ -235,6 +237,7 @@ def test_gdalinfo_lib_nodata_full_precision_float64():
 
     ret = gdal.Info(ds, format="json")
     assert ret["bands"][0]["noDataValue"] == float(nodata_str)
+    assert ret["stac"]["raster:bands"][0]["nodata"] == float(nodata_str)
 
 
 def test_gdalinfo_lib_nodata_int():
@@ -362,3 +365,15 @@ def test_gdalinfo_lib_json_color_table_and_rat():
     assert "rat" in ret["bands"][0]
 
     gdaltest.validate_json(ret, "gdalinfo_output.schema.json")
+
+
+###############################################################################
+
+
+def test_gdalinfo_lib_no_driver():
+
+    ds = gdal.Open("../gcore/data/byte.tif")
+    ds2 = ds.GetRasterBand(1).AsMDArray().AsClassicDataset(0, 1)
+    assert ds2.GetDriver() is None
+    gdal.Info(ds2)
+    gdal.Info(ds2, format="json")

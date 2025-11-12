@@ -11,7 +11,10 @@
  ****************************************************************************/
 
 #include "zarrdrivercore.h"
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
 
+#include "cpl_string.h"
 #include "vsikerchunk.h"
 #include "vsikerchunk_inline.hpp"
 
@@ -48,7 +51,9 @@ static bool CheckExistenceOfOneZarrFile(const char *pszFilename)
 bool ZARRIsLikelyKerchunkJSONRef(const GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->nHeaderBytes > 0 && poOpenInfo->eAccess == GA_ReadOnly &&
-        poOpenInfo->IsExtensionEqualToCI("json"))
+        (poOpenInfo->IsExtensionEqualToCI("json") ||
+         // e.g. like in https://noaa-nodd-kerchunk-pds.s3.amazonaws.com/nos/cbofs/cbofs.fields.best.nc.zarr
+         poOpenInfo->IsExtensionEqualToCI("zarr")))
     {
         const char *pszHeader =
             reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
@@ -68,8 +73,9 @@ bool ZARRIsLikelyKerchunkJSONRef(const GDALOpenInfo *poOpenInfo)
 int ZARRDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (STARTS_WITH(poOpenInfo->pszFilename, "ZARR:") ||
-        STARTS_WITH(poOpenInfo->pszFilename, "ZARR_DUMMY:"))
+    const std::string_view osvFilename(poOpenInfo->pszFilename);
+    if (cpl::starts_with(osvFilename, "ZARR:") ||
+        cpl::starts_with(osvFilename, "ZARR_DUMMY:"))
     {
         return TRUE;
     }
@@ -78,11 +84,18 @@ int ZARRDriverIdentify(GDALOpenInfo *poOpenInfo)
     {
         return TRUE;
     }
-    if (STARTS_WITH(poOpenInfo->pszFilename, JSON_REF_FS_PREFIX))
+    if (cpl::starts_with(osvFilename, JSON_REF_FS_PREFIX))
     {
         return -1;
     }
-
+    for (const char *pszFile :
+         {".zarray", ".zgroup", ".zmetadata", "zarr.json"})
+    {
+        if (cpl::ends_with(osvFilename, pszFile))
+        {
+            return TRUE;
+        }
+    }
     if (!poOpenInfo->bIsDirectory)
     {
         return FALSE;

@@ -176,6 +176,8 @@ struct GDALTranslateOptions
 
     bool bNoClip = false;
 
+    bool bNoWarnAboutOutsideWindow = false;
+
     /*! to apply non-linear scaling with a power function. It is the list of
        exponents of the power function (must be positive). This option must be
        used with GDALTranslateOptions::asScaleParams. If
@@ -1042,7 +1044,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         const bool bIsError =
             psOptions->bErrorOnPartiallyOutside ||
             (bCompletelyOutside && psOptions->bErrorOnCompletelyOutside);
-        if (!psOptions->bQuiet || bIsError)
+        if ((!psOptions->bQuiet && !psOptions->bNoWarnAboutOutsideWindow) ||
+            bIsError)
         {
             CPLErr eErr = bIsError ? CE_Failure : CE_Warning;
 
@@ -2135,6 +2138,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 psOptions->srcWin.dfXSize, psOptions->srcWin.dfYSize,
                 dstWin.dfXOff, dstWin.dfYOff, dstWin.dfXSize, dstWin.dfYSize);
 
+            poVRTBand->SetColorInterpretation(GCI_AlphaBand);
+
             // Color interpretation override
             if (!psOptions->anColorInterp.empty())
             {
@@ -3173,6 +3178,11 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
     // Undocumented option used by gdal raster scale
     argParser->add_argument("--no-clip")
         .store_into(psOptions->bNoClip)
+        .hidden();
+
+    // Undocumented option used by gdal raster clip
+    argParser->add_argument("--no-warn-about-outside-window")
+        .store_into(psOptions->bNoWarnAboutOutsideWindow)
         .hidden();
 
     if (psOptionsForBinary)

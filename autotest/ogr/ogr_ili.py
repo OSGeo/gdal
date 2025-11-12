@@ -790,8 +790,7 @@ def test_ogr_interlis2_2():
 # Ili2 Oereb model
 
 
-def test_ogr_interlis2_4():
-
+def test_ogr_interlis2_3():
     ds = ogr.Open(
         "data/ili/ch.bazl.sicherheitszonenplan.oereb_20131118.xtf,data/ili/ch.bazl.sicherheitszonenplan.oereb_20131118.imd"
     )
@@ -860,6 +859,80 @@ def test_ogr_interlis2_4():
         None,
         None,
         "CURVEPOLYGON (COMPOUNDCURVE ((658593.928 254957.714,658511.628 254948.614,658418.028 254938.516,658106.426 254913.918,658192.222 254445.914,658771.228 254619.412,659667.232 254699.606,660369.238 254827.202,661016.442 255010.1,661279.644 255090.198,661866.648 255138.094,661784.45 255601.798,661211.146 255432.8,660320.54 255352.806,659523.436 255206.71,658703.528 254966.814,658624.228 254961.014,658593.928 254957.714)))",
+    ]
+    assert feat.GetGeomFieldCount() == len(geom_field_values), "geom field count wrong."
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        val = geom_field_values[i]
+        if val is None:
+            assert geom is None
+        else:
+            ogrtest.check_feature_geometry(geom, val)
+
+
+###############################################################################
+# Ili 2.4 model
+
+
+def test_ogr_interlis2_4():
+    ds = gdal.OpenEx(
+        "data/ili/fpds2_v1_1.xtf", open_options=["MODEL=data/ili/KGKCGC_FPDS2_V1_1.imd"]
+    )
+    assert ds is not None
+
+    layers = [
+        "UebersichtGeodienst",
+        "UebersichtMassstab",
+        "Zustaendigkeit",
+        "Fixpunkt",
+        "FixpunktAktion",
+        "FixpunkteNachfuehrung",
+        "FixpunktVersion",
+    ]
+
+    assert ds.GetLayerCount() == len(layers), "layer count wrong."
+
+    for i in range(ds.GetLayerCount()):
+        assert ds.GetLayer(i).GetName() in layers, "Did not get right layers"
+
+    lyr = ds.GetLayerByName("FixpunktVersion")
+    assert lyr.GetFeatureCount() == 7, "feature count wrong."
+
+    feat = lyr.GetNextFeature()
+
+    field_values = [
+        "1667a884-a4a8-461f-8db1-4fbb395b0e57",
+        "2006-11-13",
+        0.05,
+        535.36,
+        "ja",
+        "transformiert",
+        0.02,
+        "ja",
+        "Stein",
+        "Nr.reservieren",
+        "",
+        "",
+        "",
+        "72b72689-85cb-411a-9022-7de6fbd3277b",
+        "ba10bace-1efc-4abb-8a59-ebd40a006c9e",
+    ]
+
+    if feat.GetFieldCount() != len(field_values):
+        feat.DumpReadable()
+        pytest.fail("field count wrong.")
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+            feat.DumpReadable()
+            print(
+                lyr.GetLayerDefn().GetFieldDefn(i).GetName(), feat.GetFieldAsString(i)
+            )
+            pytest.fail("field value wrong.")
+
+    geom_field_values = [
+        "POINT (2761075.728 1198812.021)",
     ]
     assert feat.GetGeomFieldCount() == len(geom_field_values), "geom field count wrong."
 

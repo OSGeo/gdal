@@ -255,3 +255,52 @@ def test_gdalalg_raster_polygonize_creation_options(tmp_vsimem):
         ) as sql_lyr:
             assert sql_lyr.GetFeatureCount() == 2
         assert ds.GetLayer(0).GetMetadata_Dict() == {"DESCRIPTION": "my_desc"}
+        assert ds.GetLayer(0).GetFeatureCount() == 281
+
+
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.parametrize("commit_interval", [-1, 0, 10])
+def test_gdalalg_raster_polygonize_commit_interval(tmp_vsimem, commit_interval):
+
+    out_filename = tmp_vsimem / "out.gpkg"
+
+    alg = get_alg()
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output"] = out_filename
+    alg["commit-interval"] = commit_interval
+    assert alg.Run()
+    assert alg.Finalize()
+    with ogr.Open(out_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 281
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_raster_polygonize_creation_options_in_pipeline(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "out.gpkg"
+
+    gdal.Run(
+        "pipeline",
+        pipeline=f"read ../gcore/data/byte.tif ! polygonize ! write --creation-option METADATA_TABLES=YES --layer-creation-option DESCRIPTION=my_desc {out_filename}",
+    )
+
+    with ogr.Open(out_filename) as ds:
+        with ds.ExecuteSQL(
+            "SELECT * FROM sqlite_master WHERE name LIKE '%metadata%'"
+        ) as sql_lyr:
+            assert sql_lyr.GetFeatureCount() == 2
+        assert ds.GetLayer(0).GetMetadata_Dict() == {"DESCRIPTION": "my_desc"}
+        assert ds.GetLayer(0).GetFeatureCount() == 281
+
+
+def test_gdalalg_raster_polygonize_no_next_usable_step_in_pipeline(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "out.shp"
+
+    gdal.Run(
+        "pipeline",
+        pipeline=f"read ../gcore/data/byte.tif ! polygonize ! edit ! write {out_filename}",
+    )
+
+    with ogr.Open(out_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 281

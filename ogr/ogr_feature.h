@@ -237,7 +237,6 @@ class CPL_DLL OGRFieldDefn
     int IsSame(const OGRFieldDefn *) const;
 
     /** Convert a OGRFieldDefn* to a OGRFieldDefnH.
-     * @since GDAL 2.3
      */
     static inline OGRFieldDefnH ToHandle(OGRFieldDefn *poFieldDefn)
     {
@@ -245,7 +244,6 @@ class CPL_DLL OGRFieldDefn
     }
 
     /** Convert a OGRFieldDefnH to a OGRFieldDefn*.
-     * @since GDAL 2.3
      */
     static inline OGRFieldDefn *FromHandle(OGRFieldDefnH hFieldDefn)
     {
@@ -328,7 +326,6 @@ inline OGRFieldDefn::TemporaryUnsealer whileUnsealing(OGRFieldDefn *object)
  * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
- * @since OGR 1.11
  */
 
 class CPL_DLL OGRGeomFieldDefn
@@ -403,7 +400,6 @@ class CPL_DLL OGRGeomFieldDefn
     int IsSame(const OGRGeomFieldDefn *) const;
 
     /** Convert a OGRGeomFieldDefn* to a OGRGeomFieldDefnH.
-     * @since GDAL 2.3
      */
     static inline OGRGeomFieldDefnH ToHandle(OGRGeomFieldDefn *poGeomFieldDefn)
     {
@@ -411,7 +407,6 @@ class CPL_DLL OGRGeomFieldDefn
     }
 
     /** Convert a OGRGeomFieldDefnH to a OGRGeomFieldDefn*.
-     * @since GDAL 2.3
      */
     static inline OGRGeomFieldDefn *FromHandle(OGRGeomFieldDefnH hGeomFieldDefn)
     {
@@ -490,7 +485,7 @@ whileUnsealing(OGRGeomFieldDefn *object)
  * potentially other metadata.
  *
  * It is essentially a collection of field descriptions (OGRFieldDefn class).
- * Starting with GDAL 1.11, in addition to attribute fields, it can also
+ * In addition to attribute fields, it can also
  * contain multiple geometry fields (OGRGeomFieldDefn class).
  *
  * It is reasonable for different translators to derive classes from
@@ -852,7 +847,6 @@ class CPL_DLL OGRFeatureDefn
     static void DestroyFeatureDefn(OGRFeatureDefn *);
 
     /** Convert a OGRFeatureDefn* to a OGRFeatureDefnH.
-     * @since GDAL 2.3
      */
     static inline OGRFeatureDefnH ToHandle(OGRFeatureDefn *poFeatureDefn)
     {
@@ -860,7 +854,6 @@ class CPL_DLL OGRFeatureDefn
     }
 
     /** Convert a OGRFeatureDefnH to a OGRFeatureDefn*.
-     * @since GDAL 2.3
      */
     static inline OGRFeatureDefn *FromHandle(OGRFeatureDefnH hFeatureDefn)
     {
@@ -1208,7 +1201,6 @@ class CPL_DLL OGRFeature
      * }
      * \endcode
      *
-     * @since GDAL 2.3
      */
     ConstFieldIterator begin() const;
     /** Return end of field value iterator. */
@@ -1581,7 +1573,6 @@ class CPL_DLL OGRFeature
     static void DestroyFeature(OGRFeature *);
 
     /** Convert a OGRFeature* to a OGRFeatureH.
-     * @since GDAL 2.3
      */
     static inline OGRFeatureH ToHandle(OGRFeature *poFeature)
     {
@@ -1589,7 +1580,6 @@ class CPL_DLL OGRFeature
     }
 
     /** Convert a OGRFeatureH to a OGRFeature*.
-     * @since GDAL 2.3
      */
     static inline OGRFeature *FromHandle(OGRFeatureH hFeature)
     {
@@ -1609,7 +1599,6 @@ struct CPL_DLL OGRFeatureUniquePtrDeleter
 //! @endcond
 
 /** Unique pointer type for OGRFeature.
- * @since GDAL 2.3
  */
 typedef std::unique_ptr<OGRFeature, OGRFeatureUniquePtrDeleter>
     OGRFeatureUniquePtr;

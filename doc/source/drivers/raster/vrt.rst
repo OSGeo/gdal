@@ -527,6 +527,11 @@ normalized (defaults to false=0).  The size must always be an odd number,
 and the Coefs must have Size * Size entries separated by spaces.  For now
 kernel is not applied to sub-sampled or over-sampled data.
 
+At the top edge, the values of the first row are replicated to virtually extend
+the source window by a number of rows equal to the radius of the kernel. And
+similarly for the bottom, left and right edges. This strategy may potentially
+lead to unexpected results depending on the applied kernel.
+
 .. code-block:: xml
 
     <KernelFilteredSource>
@@ -538,7 +543,7 @@ kernel is not applied to sub-sampled or over-sampled data.
       </Kernel>
     </KernelFilteredSource>
 
-Starting with GDAL 2.3, a separable kernel may also be used.  In this case the
+A separable kernel may also be used.  In this case the
 number of Coefs entries should correspond to the Size.  The Coefs specify a
 one-dimensional kernel which is applied along each axis in succession, resulting
 in far quicker execution. Many common image-processing filters are separable.
@@ -553,6 +558,26 @@ For example, a Gaussian blur:
         <Size>13</Size>
         <Coefs>0.01111 0.04394 0.13534 0.32465 0.60653 0.8825 1.0 0.8825 0.60653 0.32465 0.13534 0.04394 0.01111</Coefs>
       </Kernel>
+    </KernelFilteredSource>
+
+
+Starting with GDAL 3.12, a Function element can be set as a child of KernelFilteredSource
+and take values ``min``, ``max``, ``stddev``, ``median`` or ``mode``.
+
+For example to compute the median value in a 3x3 neighborhood around each pixel:
+
+.. code-block:: xml
+
+    <KernelFilteredSource>
+      <SourceFilename>/debian/home/warmerda/openev/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <Kernel>
+        <Size>3</Size>
+        <Coefs>1 1 1
+               1 1 1
+               1 1 1</Coefs>
+      </Kernel>
+      <Function>median</Function>
     </KernelFilteredSource>
 
 NoDataFromMaskSource
@@ -795,7 +820,7 @@ Except if (from top priority to lesser priority) :
 - (starting with GDAL 3.2) explicit virtual overviews, if a **OverviewList** element
   is declared in the VRTDataset element (see above).
   Those virtual overviews will be hidden by external .vrt.ovr overviews that might be built later.
-- (starting with GDAL 2.1) implicit virtual overviews, if the VRTRasterBand are made of
+- Implicit virtual overviews, if the VRTRasterBand are made of
   a single SimpleSource or ComplexSource that has overviews.
   Those virtual overviews will be hidden by external .vrt.ovr overviews that might be built later.
 
@@ -1319,6 +1344,8 @@ GDAL provides a set of default pixel functions that can be used without writing 
        can be included in the expression if the derived band has a NoData value.
 
        ExprTk and muparser support a number of built-in functions and control structures.
+
+       Since GDAL 3.12, the function standard C++ function ``fmod`` is added to muparser.
 
        Refer to the documentation of those libraries for details.
    * - **geometric_mean**
@@ -2156,8 +2183,6 @@ GDALWarpOptions element which describe the warping options.
 Pansharpened VRT
 ----------------
 
-.. versionadded:: 2.1
-
 A VRT can describe a dataset resulting from a
 `pansharpening operation <https://en.wikipedia.org/wiki/Pansharpened_image>`_
 The pansharpening VRT combines a panchromatic band with several spectral bands
@@ -2566,39 +2591,6 @@ configuration option.
 
 Note that the number of threads actually used is also limited by the
 :config:`GDAL_MAX_DATASET_POOL_SIZE` configuration option.
-
-Multi-threading issues
-----------------------
-
-.. warning::
-
-    The below section applies to GDAL <= 2.2. Starting with GDAL 2.3, the use
-    of VRT datasets is subject to the standard GDAL dataset multi-threaded rules
-    (that is a VRT dataset handle may only be used by a same thread at a time,
-    but you may open several dataset handles on the same VRT file and use them
-    in different threads)
-
-When using VRT datasets in a multi-threading environment, you should be
-careful to open the VRT dataset by the thread that will use it afterwards. The
-reason for that is that the VRT dataset uses :cpp:func:`GDALOpenShared` when opening the
-underlying datasets. So, if you open twice the same VRT dataset by the same
-thread, both VRT datasets will share the same handles to the underlying
-datasets.
-
-The shared attribute, on the SourceFilename indicates whether the
-dataset should be shared (value is 1) or not (value is 0). The default is 1.
-If several VRT datasets referring to the same underlying sources are used in a multithreaded context,
-shared should be set to 0. Alternatively, the :config:`VRT_SHARED_SOURCE` configuration
-option can be set to ``NO`` to force non-shared mode:
-
--  .. config:: VRT_SHARED_SOURCE
-      :choices: YES, NO
-      :default: YES
-
-      Determines whether a VRT dataset should open its underlying sources in
-      shared mode, for ``SourceFilename`` elements that do not specify a
-      ``shared`` attribute. When the ``shared`` attribute is present this
-      configuration option is ignored.
 
 Performance considerations
 --------------------------

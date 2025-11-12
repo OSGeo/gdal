@@ -926,6 +926,8 @@ def test_vsicurl_test_fallback_from_head_to_get(server):
 
 def test_vsicurl_test_parse_html_filelist_apache(server):
 
+    gdal.VSICurlClearCache()
+
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
@@ -969,6 +971,43 @@ def test_vsicurl_test_parse_html_filelist_apache(server):
             )
             is None
         )
+
+
+###############################################################################
+
+
+def test_vsicurl_test_parse_html_filelist_nginx_cdn(server):
+
+    gdal.VSICurlClearCache()
+
+    # Format of https://cdn.star.nesdis.noaa.gov/GOES18/ABI/MESO/M1/GEOCOLOR/
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/mydir/",
+        200,
+        {},
+        """<html>
+<head><title>Index of /ma-cdn02/mydir/</title></head>
+<body>
+<h1>Index of /ma-cdn02/mydir/</h1><hr><pre><a href="../">../</a>
+<a href="1000x1000.jpg">1000x1000.jpg</a>                                      28-Oct-2025 18:48              665983
+<a href="2000x2000.jpg">2000x2000.jpg</a>                                      28-Oct-2025 18:48             2013236
+</pre><hr></body>
+</html>
+
+""",
+    )
+    with webserver.install_http_handler(handler):
+        fl = gdal.ReadDir("/vsicurl/http://localhost:%d/mydir" % server.port)
+    assert fl == ["1000x1000.jpg", "2000x2000.jpg"]
+
+    stat = gdal.VSIStatL(
+        "/vsicurl/http://localhost:%d/mydir/1000x1000.jpg" % server.port
+    )
+    assert stat
+    assert stat.size == 665983
 
 
 ###############################################################################
@@ -1678,3 +1717,28 @@ def test_vsicurl_GDAL_HTTP_MAX_TOTAL_CONNECTIONS(server):
         full_filename = f"/vsicurl/http://localhost:{server.port}/test.bin"
         statres = gdal.VSIStatL(full_filename)
         assert statres.size == 3
+
+
+###############################################################################
+# Test CACHE=NO file open option
+
+
+@gdaltest.enable_exceptions()
+def test_VSIFOpenExL_CACHE_NO(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("HEAD", "/test.bin", 200, {"Content-Length": "3"})
+    handler.add("GET", "/test.bin", 200, {"Content-Length": "3"}, b"abc")
+    handler.add("HEAD", "/test.bin", 200, {"Content-Length": "4"})
+    handler.add("GET", "/test.bin", 200, {"Content-Length": "4"}, b"1234")
+
+    with webserver.install_http_handler(handler):
+        filename = f"/vsicurl/http://localhost:{server.port}/test.bin"
+
+        with gdal.VSIFile(filename, "rb", False, {"CACHE": "NO"}) as f:
+            assert f.read() == b"abc"
+
+        with gdal.VSIFile(filename, "rb", False, {"CACHE": "NO"}) as f:
+            assert f.read() == b"1234"

@@ -2501,7 +2501,14 @@ const OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
 
         if (poSRSNonConst)
         {
-            if (CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")))
+            double adfTOWGS84[7];
+            const char *pszSRSName = poSRSNonConst->GetName();
+            if (CPLTestBool(
+                    CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")) &&
+                // Below works around bug fixed in PROJ per
+                // https://github.com/OSGeo/PROJ/pull/4599
+                !(pszSRSName && strstr(pszSRSName, "NTF (Paris)") != nullptr &&
+                  poSRSNonConst->GetTOWGS84(adfTOWGS84) == OGRERR_NONE))
             {
                 auto poSRSMatch = poSRSNonConst->FindBestMatch();
                 if (poSRSMatch)

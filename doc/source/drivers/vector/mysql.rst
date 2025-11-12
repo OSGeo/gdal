@@ -139,8 +139,6 @@ The following layer creation options are supported:
       :default: OGR_FID
 
       This option specifies the name of the FID column.
-      Note: option was called MYSQL_FID in
-      releases before GDAL 2
 
 -  .. lco:: FID64
       :choices: TRUE, FALSE

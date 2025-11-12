@@ -620,7 +620,6 @@ VSITarFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
  See :ref:`/vsitar/ documentation <vsitar>`
  \endverbatim
 
- @since GDAL 1.8.0
  */
 
 void VSIInstallTarFileHandler(void)

@@ -825,8 +825,15 @@ def debug_output():
 
 @pytest.mark.parametrize(
     "booleans",
-    [("YES", "NO"), ("TRUE", "FALSE"), ("ON", "OFF"), ("1", "0")],
-    ids="_".join,
+    [
+        ("YES", "NO"),
+        ("TRUE", "FALSE"),
+        ("ON", "OFF"),
+        ("1", "0"),
+        (True, False),
+        (1, 0),
+    ],
+    ids=lambda x: f"{type(x[0]).__name__}_" + "_".join(str(y) for y in x),
 )
 def test_misc_cpl_debug(debug_output, booleans):
 

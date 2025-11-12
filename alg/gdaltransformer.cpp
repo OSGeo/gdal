@@ -2658,7 +2658,7 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     /*      Setup reprojection.                                             */
     /* -------------------------------------------------------------------- */
 
-    if (CPLFetchBool(papszOptions, "STRIP_VERT_CS", false))
+    if (CPLFetchBool(papszOptions, "@STRIP_VERT_CS", false))
     {
         if (oSrcSRS.IsCompound())
         {

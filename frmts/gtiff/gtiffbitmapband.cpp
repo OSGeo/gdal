@@ -14,6 +14,8 @@
 #include "gtiffbitmapband.h"
 #include "gtiffdataset.h"
 
+#include "gdal_priv.h"
+
 /************************************************************************/
 /*                           GTiffBitmapBand()                          */
 /************************************************************************/
@@ -73,6 +75,21 @@ GDALColorInterp GTiffBitmapBand::GetColorInterpretation()
         return GCI_Undefined;
 
     return GCI_PaletteIndex;
+}
+
+/************************************************************************/
+/*                       SetColorInterpretation()                       */
+/************************************************************************/
+
+CPLErr GTiffBitmapBand::SetColorInterpretation(GDALColorInterp eInterp)
+{
+    if (eInterp != GetColorInterpretation())
+    {
+        CPLDebug(
+            "GTiff",
+            "Setting color interpration on GTiffBitmap band is not supported");
+    }
+    return CE_None;
 }
 
 /************************************************************************/

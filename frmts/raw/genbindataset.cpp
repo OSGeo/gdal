@@ -13,6 +13,7 @@
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"
+#include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
@@ -388,8 +389,12 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      We assume the user is pointing to the binary (i.e. .bil) file.  */
     /* -------------------------------------------------------------------- */
-    if (poOpenInfo->nHeaderBytes < 2 || poOpenInfo->fpL == nullptr)
+    if (poOpenInfo->nHeaderBytes < 2 || poOpenInfo->fpL == nullptr ||
+        (!poOpenInfo->IsSingleAllowedDriver("GenBin") &&
+         poOpenInfo->IsExtensionEqualToCI("zarr")))
+    {
         return nullptr;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Now we need to tear apart the filename to form a .HDR           */
@@ -399,7 +404,7 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     const CPLString osName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
     CPLString osHDRFilename;
 
-    char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
+    CSLConstList papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     if (papszSiblingFiles)
     {
         const int iFile =

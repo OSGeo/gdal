@@ -3,8 +3,6 @@
 GMLAS - Geography Markup Language (GML) driven by application schemas
 =====================================================================
 
-.. versionadded:: 2.2
-
 .. shortname:: GMLAS
 
 .. build_dependencies:: Xerces

@@ -16,7 +16,7 @@ LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 ENV HOME="/root"
 
 # Setup build env for PROJ
-RUN apk add --no-cache  wget curl unzip cmake make libtool autoconf automake pkgconfig gcc g++ sqlite sqlite-dev tiff-dev
+RUN apk add --no-cache curl unzip cmake make libtool autoconf automake pkgconfig gcc g++ sqlite sqlite-dev tiff-dev
 
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \

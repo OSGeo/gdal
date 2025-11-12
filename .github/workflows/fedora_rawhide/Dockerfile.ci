@@ -11,7 +11,7 @@ RUN dnf install -y clang make diffutils ccache cmake \
       geos-devel \
       sqlite-devel pcre-devel libspatialite-devel freexl-devel \
       libtiff-devel libgeotiff-devel \
-      poppler-cpp-devel \
+      poppler-cpp-devel podofo-devel \
       cryptopp-devel \
       mdbtools-devel mdbtools-odbc unixODBC-devel \
       armadillo-devel qhull-devel \

@@ -16,7 +16,7 @@
 #include "cpl_compressor.h"
 #include "cpl_json.h"
 #include "gdal_priv.h"
-#include "gdal_pam.h"
+#include "gdal_pam_multidim.h"
 #include "memmultidim.h"
 
 #include <array>
@@ -366,7 +366,9 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     mutable std::map<CPLString, std::shared_ptr<ZarrDimension>>
         m_oMapDimensions{};
     mutable bool m_bDirectoryExplored = false;
+    mutable std::set<std::string> m_oSetGroupNames{};
     mutable std::vector<std::string> m_aosGroups{};
+    mutable std::set<std::string> m_oSetArrayNames{};
     mutable std::vector<std::string> m_aosArrays{};
     mutable ZarrAttributeGroup m_oAttrGroup;
     mutable bool m_bAttributesLoaded = false;
@@ -878,6 +880,11 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
                        double dfMean, double dfStdDev, GUInt64 nValidCount,
                        CSLConstList papszOptions) override;
 
+    bool IsTileMissingFromCacheInfo(const std::string &osFilename,
+                                    const uint64_t *tileIndices) const;
+
+    virtual CPLStringList GetRawBlockInfoInfo() const = 0;
+
   public:
     ~ZarrArray() override;
 
@@ -1054,6 +1061,9 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
         return m_poSharedResource->GetRootGroup();
     }
 
+    bool GetRawBlockInfo(const uint64_t *panBlockCoordinates,
+                         GDALMDArrayRawBlockInfo &info) const override;
+
     bool CacheTilePresence();
 
     void SetStructuralInfo(const char *pszKey, const char *pszValue)
@@ -1154,6 +1164,8 @@ class ZarrV2Array final : public ZarrArray
 
     bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override;
+
+    CPLStringList GetRawBlockInfoInfo() const override;
 };
 
 /************************************************************************/
@@ -1361,6 +1373,11 @@ class ZarrV3CodecBytes final : public ZarrV3Codec
                           const ZarrArrayMetadata &oInputArrayMetadata,
                           ZarrArrayMetadata &oOutputArrayMetadata) override;
 
+    bool IsLittle() const
+    {
+        return m_bLittle;
+    }
+
 #if CPL_IS_LSB
     bool IsNoOp() const override
     {
@@ -1417,12 +1434,16 @@ class ZarrV3CodecTranspose final : public ZarrV3Codec
     }
 
     static CPLJSONObject GetConfiguration(const std::vector<int> &anOrder);
-    static CPLJSONObject GetConfiguration(const std::string &osOrder);
 
     bool
     InitFromConfiguration(const CPLJSONObject &configuration,
                           const ZarrArrayMetadata &oInputArrayMetadata,
                           ZarrArrayMetadata &oOutputArrayMetadata) override;
+
+    const std::vector<int> &GetOrder() const
+    {
+        return m_anOrder;
+    }
 
     bool IsNoOp() const override;
 
@@ -1463,6 +1484,11 @@ class ZarrV3CodecSequence
         return m_oCodecArray;
     }
 
+    const std::vector<std::unique_ptr<ZarrV3Codec>> &GetCodecs() const
+    {
+        return m_apoCodecs;
+    }
+
     bool Encode(ZarrByteVectorQuickResize &abyBuffer);
     bool Decode(ZarrByteVectorQuickResize &abyBuffer);
 };
@@ -1475,6 +1501,7 @@ class ZarrV3Array final : public ZarrArray
 {
     bool m_bV2ChunkKeyEncoding = false;
     std::unique_ptr<ZarrV3CodecSequence> m_poCodecs{};
+    CPLJSONArray m_oJSONCodecs{};
 
     ZarrV3Array(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                 const std::string &osParentName, const std::string &osName,
@@ -1513,8 +1540,10 @@ class ZarrV3Array final : public ZarrArray
         m_bV2ChunkKeyEncoding = b;
     }
 
-    void SetCodecs(std::unique_ptr<ZarrV3CodecSequence> &&poCodecs)
+    void SetCodecs(const CPLJSONArray &oJSONCodecs,
+                   std::unique_ptr<ZarrV3CodecSequence> &&poCodecs)
     {
+        m_oJSONCodecs = oJSONCodecs;
         m_poCodecs = std::move(poCodecs);
     }
 
@@ -1537,6 +1566,8 @@ class ZarrV3Array final : public ZarrArray
 
     bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override;
+
+    CPLStringList GetRawBlockInfoInfo() const override;
 };
 
 #endif  // ZARR_H

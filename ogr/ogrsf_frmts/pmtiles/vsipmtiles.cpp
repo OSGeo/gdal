@@ -283,23 +283,24 @@ int VSIPMTilesFilesystemHandler::Stat(const char *pszFilename,
     if (!poDS)
         return -1;
 
-    if (osSubfilename.empty())
-        return -1;
-
     VSIStatBufL sStatPmtiles;
     if (VSIStatL(poDS->GetDescription(), &sStatPmtiles) == 0)
     {
         pStatBuf->st_mtime = sStatPmtiles.st_mtime;
     }
 
-    if (osSubfilename == METADATA_JSON)
+    if (osSubfilename.empty())
+    {
+        pStatBuf->st_mode = S_IFDIR;
+        return 0;
+    }
+    else if (osSubfilename == METADATA_JSON)
     {
         pStatBuf->st_mode = S_IFREG;
         pStatBuf->st_size = poDS->GetMetadataContent().size();
         return 0;
     }
-
-    if (osSubfilename == PMTILES_HEADER_JSON)
+    else if (osSubfilename == PMTILES_HEADER_JSON)
     {
         pStatBuf->st_mode = S_IFREG;
         pStatBuf->st_size = VSIPMTilesGetPMTilesHeaderJson(poDS.get()).size();

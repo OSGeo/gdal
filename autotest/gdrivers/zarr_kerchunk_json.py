@@ -245,16 +245,14 @@ def test_zarr_kerchunk_json_fail_exception(
         """{".zgroup": {"zarr_format":2}, "foo":["https://localhost:1/",0,1]}""",
     ],
 )
-def test_zarr_kerchunk_json_open_fail_no_exception(tmp_vsimem, content):
+def test_zarr_kerchunk_json_open_fail(tmp_vsimem, content):
 
     json_filename = str(tmp_vsimem / "test.json")
     gdal.FileFromMemBuffer(json_filename, content)
 
-    with gdal.quiet_errors():
-        assert (
-            gdal.VSIFOpenL("/vsikerchunk_json_ref/{" + json_filename + "}/foo", "rb")
-            is None
-        )
+    with pytest.raises(Exception):
+        with gdal.VSIFile("/vsikerchunk_json_ref/{" + json_filename + "}/foo", "rb"):
+            pass
 
 
 ###############################################################################
@@ -326,7 +324,7 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
             "filters": [],
             "fill_value": None,
         },
-        "x/.zattrs": {},
+        "x/.zattrs": {"_ARRAY_DIMENSIONS": ["my_dim_without_indexing_variable"]},
         "x/0": [
             os.path.join(os.getcwd(), "data/zarr/kerchunk_json/json_ref_v0_min/0.bin")
         ],
@@ -334,11 +332,9 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
     content = json.dumps(j).encode("ASCII")
 
     try:
-        handler = webserver.FileHandler({"/ref.json": content})
-        with gdal.config_option(
-            "GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR"
-        ), webserver.install_http_handler(handler), gdal.OpenEx(
-            f"/vsicurl/http://localhost:{webserver_port}/ref.json",
+        handler = webserver.FileHandler({"/ref.json.zarr": content})
+        with webserver.install_http_handler(handler), gdal.OpenEx(
+            f"/vsicurl/http://localhost:{webserver_port}/ref.json.zarr",
             gdal.OF_MULTIDIM_RASTER,
         ) as ds:
             rg = ds.GetRootGroup()
@@ -346,10 +342,8 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
             with pytest.raises(Exception, match="tries to access local file"):
                 ar.Read()
 
-        with gdal.config_option(
-            "GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR"
-        ), webserver.install_http_handler(handler), gdal.OpenEx(
-            f"/vsicurl/http://localhost:{webserver_port}/ref.json",
+        with webserver.install_http_handler(handler), gdal.OpenEx(
+            f"/vsicurl/http://localhost:{webserver_port}/ref.json.zarr",
             gdal.OF_MULTIDIM_RASTER,
         ) as ds:
             rg = ds.GetRootGroup()
@@ -360,10 +354,8 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
                 with pytest.raises(Exception, match="tries to access local file"):
                     ar.Read()
 
-        with gdal.config_option(
-            "GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR"
-        ), webserver.install_http_handler(handler), gdal.OpenEx(
-            f"/vsicurl/http://localhost:{webserver_port}/ref.json",
+        with webserver.install_http_handler(handler), gdal.OpenEx(
+            f"/vsicurl/http://localhost:{webserver_port}/ref.json.zarr",
             gdal.OF_MULTIDIM_RASTER,
         ) as ds:
             rg = ds.GetRootGroup()
@@ -785,3 +777,47 @@ def test_vsikerchunk_json_ref_create_copy(tmp_vsimem):
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("x")
     assert ar.Read() == b"\x01"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "ref_filename,expected_filename",
+    [
+        (
+            "data/zarr/kerchunk_json/json_ref_v0_min/ref.json",
+            "data/zarr/kerchunk_json/json_ref_v0_min/0.bin",
+        ),
+        (
+            "data/zarr/kerchunk_json/json_ref_v1_min/ref.json",
+            "data/zarr/kerchunk_json/json_ref_v1_min/0.bin",
+        ),
+    ],
+)
+def test_vsikerchunk_json_ref_GetFileMetadata(ref_filename, expected_filename):
+
+    assert gdal.GetFileMetadata("/vsikerchunk_json_ref/", None) == {}
+    with pytest.raises(Exception, match="Invalid /vsikerchunk_json_ref/ syntax"):
+        assert gdal.GetFileMetadata("/vsikerchunk_json_ref/", "CHUNK_INFO")
+    with pytest.raises(Exception, match="Invalid /vsikerchunk_json_ref/ syntax"):
+        assert gdal.GetFileMetadata("/vsikerchunk_json_ref/{foo", "CHUNK_INFO")
+    assert (
+        gdal.GetFileMetadata("/vsikerchunk_json_ref{/i_do/not/exist}", "CHUNK_INFO")
+        == {}
+    )
+    assert (
+        gdal.GetFileMetadata(
+            "/vsikerchunk_json_ref/{" + ref_filename + "}/non_existing", "CHUNK_INFO"
+        )
+        == {}
+    )
+    got_md = gdal.GetFileMetadata(
+        "/vsikerchunk_json_ref/{" + ref_filename + "}/x/0", "CHUNK_INFO"
+    )
+    got_md["FILENAME"] = got_md["FILENAME"].replace("\\", "/")
+    assert got_md == {
+        "FILENAME": expected_filename,
+        "OFFSET": "0",
+        "SIZE": "1",
+    }
