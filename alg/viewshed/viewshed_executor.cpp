@@ -21,15 +21,19 @@
 #include "progress.h"
 #include "util.h"
 
+// cppcheck-suppress-begin knownConditionTrueFalse
 namespace gdal
 {
 namespace viewshed
 {
 
+//! @cond Doxygen_Suppress
 CPLErr DummyBand::IReadBlock(int, int, void *)
 {
     return static_cast<CPLErr>(CPLE_NotSupported);
 }
+
+//! @endcond
 
 namespace
 {
@@ -1193,7 +1197,6 @@ bool ViewshedExecutor::run()
     return true;
 }
 
-// cppcheck-suppress knownConditionTrueFalse
 bool ViewshedExecutor::sdMode() const
 {
     // If the SD band isn't a dummy band, we're in SD mode.
@@ -1202,3 +1205,5 @@ bool ViewshedExecutor::sdMode() const
 
 }  // namespace viewshed
 }  // namespace gdal
+
+// cppcheck-suppress-end knownConditionTrueFalse
