@@ -616,14 +616,14 @@ def generate_test_parquet():
     HERE = pathlib.Path(__file__).parent
     pq.write_table(
         table,
-        HERE / "ogr/data/parquet/test.parquet",
+        HERE / "data/parquet/test.parquet",
         compression="NONE",
         row_group_size=3,
         version="1.0",
     )
     pq.write_table(
         table,
-        HERE / "ogr/data/parquet/test_single_group.parquet",
+        HERE / "data/parquet/test_single_group.parquet",
         compression="NONE",
         version="1.0",
     )
@@ -685,7 +685,7 @@ def generate_test_parquet():
 
     table = table.cast(my_schema)
 
-    feather.write_feather(table, HERE / "ogr/data/arrow/test.feather")
+    feather.write_feather(table, HERE / "data/arrow/test.feather")
 
 
 def generate_all_geoms_parquet():
@@ -733,9 +733,7 @@ def generate_all_geoms_parquet():
 
     table = table.cast(my_schema)
     HERE = pathlib.Path(__file__).parent
-    pq.write_table(
-        table, HERE / "ogr/data/parquet/all_geoms.parquet", compression="NONE"
-    )
+    pq.write_table(table, HERE / "data/parquet/all_geoms.parquet", compression="NONE")
 
 
 def generate_parquet_wkt_with_dict():
@@ -775,7 +773,7 @@ def generate_parquet_wkt_with_dict():
     HERE = pathlib.Path(__file__).parent
     pq.write_table(
         table,
-        HERE / "ogr/data/parquet/wkt_with_dict.parquet",
+        HERE / "data/parquet/wkt_with_dict.parquet",
         compression="NONE",
         row_group_size=3,
     )
@@ -1160,7 +1158,7 @@ def generate_nested_types():
     HERE = pathlib.Path(__file__).parent
     pq.write_table(
         table,
-        HERE / "ogr/data/parquet/nested_types.parquet",
+        HERE / "data/parquet/nested_types.parquet",
         compression="NONE",
         row_group_size=3,
     )
@@ -1194,9 +1192,9 @@ def generate_extension_custom():
     table = pa.table([locals_[x] for x in names], names=names)
 
     HERE = pathlib.Path(__file__).parent
-    feather.write_feather(table, HERE / "ogr/data/arrow/extension_custom.feather")
+    feather.write_feather(table, HERE / "data/arrow/extension_custom.feather")
     pq.write_table(
-        table, HERE / "ogr/data/parquet/extension_custom.parquet", compression="NONE"
+        table, HERE / "data/parquet/extension_custom.parquet", compression="NONE"
     )
 
 
@@ -1228,9 +1226,9 @@ def generate_extension_json():
     table = pa.table([locals_[x] for x in names], names=names)
 
     HERE = pathlib.Path(__file__).parent
-    feather.write_feather(table, HERE / "ogr/data/arrow/extension_json.feather")
+    feather.write_feather(table, HERE / "data/arrow/extension_json.feather")
     pq.write_table(
-        table, HERE / "ogr/data/parquet/extension_json.parquet", compression="NONE"
+        table, HERE / "data/parquet/extension_json.parquet", compression="NONE"
     )
 
 
@@ -1265,7 +1263,7 @@ def generate_arrow_stringview():
     table = pa.table([locals_[x] for x in names], names=names)
 
     HERE = pathlib.Path(__file__).parent
-    feather.write_feather(table, HERE / "ogr/data/arrow/stringview.feather")
+    feather.write_feather(table, HERE / "data/arrow/stringview.feather")
 
 
 def generate_arrow_binaryview():
@@ -1282,7 +1280,7 @@ def generate_arrow_binaryview():
     table = pa.table([locals_[x] for x in names], names=names)
 
     HERE = pathlib.Path(__file__).parent
-    feather.write_feather(table, HERE / "ogr/data/arrow/binaryview.feather")
+    feather.write_feather(table, HERE / "data/arrow/binaryview.feather")
 
 
 def generate_arrow_listview():
@@ -1299,7 +1297,7 @@ def generate_arrow_listview():
     table = pa.table([locals_[x] for x in names], names=names)
 
     HERE = pathlib.Path(__file__).parent
-    feather.write_feather(table, HERE / "ogr/data/arrow/listview.feather")
+    feather.write_feather(table, HERE / "data/arrow/listview.feather")
 
 
 def generate_arrow_largelistview():
@@ -1316,7 +1314,7 @@ def generate_arrow_largelistview():
     table = pa.table([locals_[x] for x in names], names=names)
 
     HERE = pathlib.Path(__file__).parent
-    feather.write_feather(table, HERE / "ogr/data/arrow/largelistview.feather")
+    feather.write_feather(table, HERE / "data/arrow/largelistview.feather")
 
 
 def generate_parquet_list_binary():
@@ -1335,7 +1333,7 @@ def generate_parquet_list_binary():
     table = pa.table([locals_[x] for x in names], names=names)
 
     HERE = pathlib.Path(__file__).parent
-    pq.write_table(table, HERE / "ogr/data/parquet/list_binary.parquet")
+    pq.write_table(table, HERE / "data/parquet/list_binary.parquet")
 
 
 if __name__ == "__main__":
