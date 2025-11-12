@@ -56,10 +56,12 @@ struct Lines
 };
 
 /// Dummy raster band.
+//! @cond Doxygen_Suppress
 class DummyBand : public GDALRasterBand
 {
     CPLErr IReadBlock(int, int, void *) override;
 };
+//! @endcond
 
 class Progress;
 
