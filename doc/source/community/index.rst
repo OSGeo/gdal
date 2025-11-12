@@ -81,9 +81,9 @@ Upcoming
 
 .. image::   ../../images/community/foss4gnz2025.png
    :alt:     FOSS4G 2025
-   :target:  https://https://2025.foss4g.org//
+   :target:  https://2025.foss4g.org//
 
-`FOSS4G 2025 <https://https://2025.foss4g.org//>`__ is the Open Source Geospatial Foundation (OSGeo) annual FOSS4G event.
+`FOSS4G 2025 <https://2025.foss4g.org//>`__ is the Open Source Geospatial Foundation (OSGeo) annual FOSS4G event.
 
 Previous
 ++++++++
