@@ -67,7 +67,10 @@ communication channels in most situations.
 Social media
 ------------
 
-You can follow GDAL official news on Mastodon: https://mastodon.social/@gdal / @gdal@mastodon.social
+You can follow GDAL official news on the following platforms:
+
+* Mastodon: https://mastodon.social/@gdal / ``@gdal@mastodon.social``
+* LinkedIn: https://www.linkedin.com/company/gdalorg/
 
 
 Conferences
@@ -76,13 +79,11 @@ Conferences
 Upcoming
 ++++++++
 
-.. image::   ../../images/community/foss4geurope2025.png
-   :alt:     FOSS4G Europe 2025
-   :target:  https://2025.europe.foss4g.org/
+.. image::   ../../images/community/foss4gnz2025.png
+   :alt:     FOSS4G 2025
+   :target:  https://2025.foss4g.org//
 
-`FOSS4G Europe 2025 <https://2025.europe.foss4g.org/>`__ is a European extension of the Open Source Geospatial Foundation (OSGeo) annual FOSS4G event.
-It will include presentations related to GDAL/OGR, and some of the GDAL/OGR development community will be attending.
-The conference will be held in Mostar, Bosnia-Herzegovina from July 14th to July 20th 2025.
+`FOSS4G 2025 <https://2025.foss4g.org//>`__ is the Open Source Geospatial Foundation (OSGeo) annual FOSS4G event.
 
 Previous
 ++++++++
