@@ -134,6 +134,10 @@ Supporter
 
     .. container:: horizontal-logo
 
+        `UAV4GEO <https://uav4geo.com/>`__
+
+    .. container:: horizontal-logo
+
         `Umbra <https://umbra.space/>`__
 
     .. container:: horizontal-logo
