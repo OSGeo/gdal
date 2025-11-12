@@ -188,24 +188,30 @@ Supporter
 Sponsorship Program
 --------------------------------------------------------------------------------
 
-You can financially support GDAL by direct participation in its development and
-community, by contracting development via :ref:`service_providers`, or by
-contributing to the GDAL Sponsorship Program (GSP). GDAL is hosted by `OSGeo
-<https://www.osgeo.org>`__, and collaborates with `NumFOCUS
-<https://numfocus.org>`__, a nonprofit dedicated to supporting the open-source
-scientific computing community, to provide administrative support for the GSP.
+You can support GDAL by direct participation in its development and community,
+by contracting development via :ref:`service_providers`, or by financially
+contributing to the GDAL Sponsorship Program (GSP) as a corporation or
+individually.
 
-GSP funds support development of GDAL activities that no single organization
+GSP supports development of GDAL activities that no single organization
 would directly contribute through a service provider or in-kind effort. GSP
 funds are undirected resources the :ref:`psc` manages to repay technical debt,
 address performance and security issues, and add new project-wide features such
 as the recently added :ref:`gdal_program`.
 
+GDAL collaborates with `NumFOCUS <https://numfocus.org>`__, a nonprofit
+dedicated to supporting the open source scientific computing community, as a
+`NumFOCUS Sponsored Project <https://numfocus.org/sponsored-projects>`__ to
+have it provide administrative support for the GSP.  Donations in support of
+the GSP are made to NumFOCUS and it provides administrative support of the
+program for a fee.
+
+
 .. note::
 
     NumFOCUS is 501(c)(3) non-profit charity in the United States (and soon in
     France); as such, donations to NumFOCUS are tax-deductible as allowed by
-    law.  As with any donation, you should consult with your personal tax
+    law. As with any donation, you should consult with your personal tax
     adviser or the IRS about your particular tax situation.
 
 Donations
@@ -232,9 +238,9 @@ Corporate
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 The GDAL project primarily targets corporate donations due to their efficiency.
-If you work for an organization the leverages GDAL and would like to use your
-organization's resources to help sponsor the project, please contact the
-sponsorship leads.
+If you represent an organization the leverages GDAL and would like to coordinate
+your organization's resources to help sponsor the project, please email
+``gdal-sponsors@osgeo.org``.
 
 Individual
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -244,8 +250,8 @@ to NumFOCUS through `https://numfocus.org/donate-to-gdal <https://numfocus.org/d
 
 .. note::
 
-    If your workplace has a corporate giving program, consider enrolling GDAL
-    for a match.
+    If your workplace has a corporate giving program, please consider enrolling GDAL
+    in it for a match.
 
 Government
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -254,7 +260,7 @@ Government donations (grants) often have significant constraints on their
 acquisition, usage, and amount. While the project is happy to accept government
 support through NumFOCUS, note that it can be difficult to meet all requirements.
 If you are a government organization that desires to support the project
-through NumFOCUS, please reach out to the sponsorship leads.
+through NumFOCUS, please email ``gdal-sponsors@osgeo.org``.
 
 
 T-shirts
@@ -276,15 +282,21 @@ to the project.
 Past Sponsors
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Visit :ref:`past_sponsors` to see the roster of previous GSP sponsors. Without
-their support many of the feature, security, and performance improvements contributed
-to the project would not exist.
+:ref:`past_sponsors` have been critical to enable many feature, security, and
+performance improvements to the project over the past three years. The project
+thanks them for their contribution and hopes they can sponsor the project in
+the future.
 
 Administration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`Howard Butler <https://howardbutler.com/>`__ is the GDAL Sponsorship Program Lead.
-Contact him for questions, donation leads, or more information about the program.
+`Howard Butler <https://howardbutler.com/>`__ is the GDAL Sponsorship Program
+Lead and :ref:`psc` member. Contact him for questions or information about the
+program.
+
+The GDAL Maintainers Meeting is every fourth Thursday at 1300 UTC. Any PSC or
+PR contributor is welcome to join. Contact Howard for an invite and look for
+the minutes on the :ref:`mailing_list`.
 
 Impact
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -312,9 +324,6 @@ Related Resources
 - :ref:`Sponsoring frequently asked questions (FAQ) <sponsoring-faq>`.
 - :ref:`rfc-80`
 - :ref:`rfc-83`
-
-
-
 
 .. container:: horizontal-logos
 
