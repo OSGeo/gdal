@@ -146,7 +146,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug \
       -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
       -DOGR_BUILD_OPTIONAL_DRIVERS=OFF \
       -DBUILD_APPS=ON \
-      -DBUILD_TESTING=OFF \
+      -DBUILD_TESTING=ON \
       -DBUILD_PYTHON_BINDINGS=ON \
       -DBUILD_JAVA_BINDINGS=ON \
       -DGDAL_JAVA_GENERATE_JAVADOC=ON \
@@ -154,6 +154,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug \
       -DOGR_ENABLE_DRIVER_GPKG=ON \
       -DOGR_ENABLE_DRIVER_OPENFILEGDB=ON \
       -B cmake-build-doc -S .
+grep -v log_file cmake-build-doc/autotest/pytest.ini | grep -v "^;" | grep -v GDAL_DATA > autotest/pytest.ini
 cmake --build cmake-build-doc --target man doczip -j$(nproc)
 mkdir -p man/man1
 cp cmake-build-doc/doc/build/man/*.1 man/man1
