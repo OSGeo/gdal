@@ -563,6 +563,19 @@ def test_miramon_subdatasets_detection(
 ###### Testing color table
 init_list_color_tables = [
     (
+        "data/miramon/normal/byte_2x3_6_categsI.rel",
+        1,  # band index
+        {  # color table
+            0: (0, 0, 255, 255),
+            1: (0, 255, 255, 255),
+            2: (0, 255, 0, 255),
+            3: (255, 255, 0, 255),
+            4: (255, 0, 0, 255),
+            5: (255, 0, 255, 255),
+        },
+        "25831",  # reference system
+    ),
+    (
         "data/miramon/palettes/Constant/byte_2x3_6_categsI.rel",
         1,  # band index
         {  # color table

@@ -4180,9 +4180,17 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
 
     // Cf https://stackoverflow.com/questions/16792189/gzip-compression-ratio-for-zeros/16794960
     constexpr unsigned MAX_DEFLATE_COMPRESSION_RATIO = 1032;
-    if (info.nCompressedSize != 0 &&
-        info.nUncompressedSize / info.nCompressedSize >
-            MAX_DEFLATE_COMPRESSION_RATIO)
+    if (info.nCompressedSize == 0 && info.nUncompressedSize != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid compressed size (=0) vs uncompressed size (!=0) for "
+                 "file %s",
+                 pszFilename);
+        return false;
+    }
+    else if (info.nCompressedSize != 0 &&
+             info.nUncompressedSize / info.nCompressedSize >
+                 MAX_DEFLATE_COMPRESSION_RATIO)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid compression ratio for file %s: %" PRIu64, pszFilename,

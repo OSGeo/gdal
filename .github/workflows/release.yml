@@ -22,8 +22,7 @@ jobs:
         VERSION: ${{ steps.unpack_tag.outputs.VERSION }}
         VERSION_WITH_RC: ${{ steps.unpack_tag.outputs.VERSION_WITH_RC }}
         COMPRESSED_VERSION: ${{ steps.unpack_tag.outputs.COMPRESSED_VERSION }}
-        PYPI_REPOSITORY: ${{ steps.unpack_tag.outputs.PYPI_REPOSITORY }}
-        PYPI_SKIP_EXISTING: ${{ steps.unpack_tag.outputs.PYPI_SKIP_EXISTING }}
+        PRE_RELEASE: ${{ STEPS.unpack_tag.outputs.PRE_RELEASE }}
     steps:
       - name: ensure repo owner
         run: |
@@ -47,14 +46,11 @@ jobs:
           echo "VERSION_WITH_RC=$VERSION_WITH_RC" >> $GITHUB_OUTPUT
 
           if [ -z "$RC" ] && [ -z "$BETA" ]; then
-            export PYPI_REPOSITORY="https://upload.pypi.org/legacy/"
-            export PYPI_SKIP_EXISTING="false"
+            export PRE_RELEASE="false"
           else
-            export PYPI_REPOSITORY="https://test.pypi.org/legacy/"
-            export PYPI_SKIP_EXISTING="true"
+            export PRE_RELEASE="true"
           fi
-          echo "PYPI_REPOSITORY=$PYPI_REPOSITORY" >> $GITHUB_OUTPUT
-          echo "PYPI_SKIP_EXISTING=$PYPI_SKIP_EXISTING" >> $GITHUB_OUTPUT
+          echo "PRE_RELEASE"=$PRE_RELEASE" >> $GITHUB_OUTPUT
   mkgdaldist:
     runs-on: ubuntu-latest
     needs: safety_checks
@@ -63,8 +59,7 @@ jobs:
       RC: ${{ needs.safety_checks.outputs.RC }}
       VERSION: ${{ needs.safety_checks.outputs.VERSION }}
       COMPRESSED_VERSION: ${{ needs.safety_checks.outputs.COMPRESSED_VERSION }}
-      PYPI_REPOSITORY: ${{ needs.safety_checks.outputs.PYPI_REPOSITORY }}
-      PYPI_SKIP_EXISTING: ${{ needs.safety_checks.outputs.PYPI_SKIP_EXISTING }}
+      PRE_RELEASE: ${{ needs.safety_checks.outputs.PRE_RELEASE }}
     permissions:
       id-token: write
       attestations: write
@@ -173,11 +168,9 @@ jobs:
             dist/*
       - name: Publish gdal-utils bdist_wheel to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') && env.PRE_RELEASE != 'true'
         with:
           attestations: true
-          repository-url: ${{ env.PYPI_REPOSITORY }}
-          skip-existing: ${{ env.PYPI_SKIP_EXISTING}}
       - name: make gdal sdist
         run: |
           rm -rf dist/*
@@ -192,11 +185,9 @@ jobs:
             dist/*
       - name: Publish gdal sdist to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') && env.PRE_RELEASE != 'true'
         with:
           attestations: true
-          repository-url: ${{ env.PYPI_REPOSITORY }}
-          skip-existing: ${{ env.PYPI_SKIP_EXISTING}}
       - uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
         if: startsWith(github.ref, 'refs/tags/')
         name: Publish release as draft

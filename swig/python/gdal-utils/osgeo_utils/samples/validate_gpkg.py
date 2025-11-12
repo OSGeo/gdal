@@ -1043,13 +1043,15 @@ class GPKGChecker:
         c.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (rtree_name,))
         has_rtree = c.fetchone() is not None
         if has_rtree:
-            c.execute(
-                "SELECT 1 FROM gpkg_extensions WHERE "
-                "extension_name = 'gpkg_rtree_index' AND "
-                "table_name=? AND column_name=? AND "
-                "scope='write-only'",
-                (table_name, geom_column_name),
-            )
+            c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_extensions'")
+            if c.fetchone():
+                c.execute(
+                    "SELECT 1 FROM gpkg_extensions WHERE "
+                    "extension_name = 'gpkg_rtree_index' AND "
+                    "table_name=? AND column_name=? AND "
+                    "scope='write-only'",
+                    (table_name, geom_column_name),
+                )
             self._assert(
                 c.fetchone() is not None,
                 78,

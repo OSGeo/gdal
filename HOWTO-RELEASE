@@ -149,7 +149,7 @@ Process :
 
   c) Build the bindings: make java_binding
 
-    Upon success you should see a file named "swig/java/build/maven/bundle.jar"
+    Upon success you should see a file named "swig/java/build/bundle.zip"
     that contains all the maven artifacts with signatures. This file is what
     will be uploaded to maven central. See the next step.
 
@@ -172,31 +172,13 @@ Process :
 
     The following steps summarize the process.
 
-a) Log into the Sonatype repository manager at https://oss.sonatype.org. Use the
+a) Log into the Sonatype repository manager at https://central.sonatype.com. Use the
    same credentials as your Sonatype JIRA account.
 
-b) Once log in select "Staging Upload" on the left hand side.
+b) Once log in, select "Publish" on the top
 
-c) Select "Artifact Bundle" under "Upload Mode" and then choose the "bundle.jar"
-   created in the previous Step 22. Finally "Upload Bundle" to start the upload.
-
-d) When the upload has been completed you will be notified that a staging
-   repository has been created. Note the name of the repository. It should look
-   something like "orggdal-100x".
-
-e) From the left hand menu navigate to "Staging Repositories". In the search
-   box look for the staging repository name you noted from the previous section.
-   Or just search for "gdal". It should be obvious which repository is the
-   current one.
-
-f) Select the staging repository. If all is well You should see the option to
-   "Release" (Located as a button near the top of the page). If not it means
-   there was an issue with the bundle. Consult the "Activity" tab at the bottom
-   of the page to find out why.
-
-e) Click the "Release" button and that is it! The release should be available in
-   Maven Central shortly. You can verify this by going to search.maven.org and
-   searching for "gdal".
+c) As description, type "GDAL <version>" and then choose the "bundle.zip"
+   created in the previous Step 22.
 
 18) Finalize the release on GitHub in https://github.com/OSGeo/gdal/releases
     and remove its draft status.

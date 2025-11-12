@@ -21,28 +21,30 @@
 MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
     : m_pfRel(&fRel), m_osBandSection(osBandSectionIn)
 {
-    // Is a constant color, and which colors is it?
+    // Is the palette a constant color? Then, which color is it?
     CPLString os_Color_Const;
-    if (!m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
-                                   "Color_Const", os_Color_Const))
-        os_Color_Const = "";  // Coverity scan CID 1620831
-
-    if (EQUAL(os_Color_Const, "1"))
+    if (m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
+                                  "Color_Const", os_Color_Const) &&
+        EQUAL(os_Color_Const, "1"))
     {
         m_bIsConstantColor = true;
         if (CE_None != UpdateConstantColor())
             return;  // The constant color indicated is wrong
+        m_nRealNPaletteColors = 1;
+        m_bIsValid = true;
+        m_ColorScaling = ColorTreatment::DIRECT_ASSIGNATION;
+        SetIsCategorical(true);
+        return;
     }
 
-    CPLString os_Color_Paleta;
-
-    if (!m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
-                                   "Color_Paleta", os_Color_Paleta) ||
-        EQUAL(os_Color_Paleta, "<Automatic>"))
+    // Is this an authomatic palette or has a color table (dbf, pal,...)?
+    CPLString os_Color_Paleta = "";
+    ;
+    if (m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
+                                  "Color_Paleta", os_Color_Paleta))
     {
-        m_bIsValid = true;
-        ColorScaling = ColorTreatment::DIRECT_ASSIGNATION;
-        return;
+        if (EQUAL(os_Color_Paleta, "<Automatic>"))
+            m_bIsAutomatic = true;
     }
 
     // Treatment of the color variable
@@ -56,7 +58,7 @@ MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
         if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA,
                                        "TractamentVariable",
                                        os_TractamentVariable))
-            os_TractamentVariable = "";  // Coverity scan CID 1620831
+            os_TractamentVariable = "";
 
         if (EQUAL(os_TractamentVariable, "Categoric"))
             SetIsCategorical(true);
@@ -71,8 +73,47 @@ MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
             SetIsCategorical(false);
     }
 
-    UpdateColorInfo();
+    if (UpdateColorInfo() == CE_Failure)
+        return;
 
+    if (m_bIsAutomatic)
+    {
+        // How many "colors" are involved?
+        CPLString os_Color_N_SimbolsALaTaula = "";
+        if (m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
+                                      "Color_N_SimbolsALaTaula",
+                                      os_Color_N_SimbolsALaTaula))
+        {
+            GIntBig nBigVal = CPLAtoGIntBig(os_Color_N_SimbolsALaTaula);
+            if (nBigVal >= INT_MAX)
+                return;
+            m_nRealNPaletteColors = m_nNPaletteColors =
+                static_cast<int>(nBigVal);
+            if (m_nNPaletteColors <= 0 || m_nNPaletteColors >= 256)
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "Invalid number of colors "
+                         "(Color_N_SimbolsALaTaula) in \"%s\".",
+                         m_pfRel->GetRELName().c_str());
+                return;
+            }
+        }
+        else
+        {
+            if (IsCategorical())
+            {
+                // Predefined color table: m_ThematicPalette
+                if (CE_None != GetPaletteColors_Automatic())
+                    return;
+            }
+            else  // No palette associated
+                return;
+        }
+        m_bIsValid = true;
+        return;
+    }
+
+    // If color is no automatic, from where we got this?
     CPLString osExtension = CPLGetExtensionSafe(os_Color_Paleta);
     if (osExtension.tolower() == "dbf")
     {
@@ -176,6 +217,46 @@ CPLErr MMRPalettes::GetPaletteColors_DBF_Indexes(
     if (nClauSimbol == oColorTable.nFields || nRIndex == oColorTable.nFields ||
         nGIndex == oColorTable.nFields || nBIndex == oColorTable.nFields)
         return CE_Failure;
+
+    return CE_None;
+}
+
+// Colors in a PAL, P25 or P65 format files
+// Updates nNPaletteColors
+CPLErr MMRPalettes::GetPaletteColors_Automatic()
+{
+    m_nRealNPaletteColors = m_nNPaletteColors =
+        static_cast<int>(m_ThematicPalette.size());
+
+    for (int iColumn = 0; iColumn < 4; iColumn++)
+    {
+        try
+        {
+            m_aadfPaletteColors[iColumn].resize(m_nNPaletteColors, 0);
+        }
+        catch (std::bad_alloc &e)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+            return CE_Failure;
+        }
+    }
+
+    for (int nIndex = 0; nIndex < m_nRealNPaletteColors; nIndex++)
+    {
+        // Index of the color
+
+        // RED
+        m_aadfPaletteColors[0][nIndex] = m_ThematicPalette[nIndex].c1;
+
+        // GREEN
+        m_aadfPaletteColors[1][nIndex] = m_ThematicPalette[nIndex].c2;
+
+        // BLUE
+        m_aadfPaletteColors[2][nIndex] = m_ThematicPalette[nIndex].c3;
+
+        // ALPHA
+        m_aadfPaletteColors[3][nIndex] = m_ThematicPalette[nIndex].c4;
+    }
 
     return CE_None;
 }
@@ -452,7 +533,7 @@ MMRPalettes::GetPaletteColors_PAL_P25_P65(const CPLString &os_Color_Paleta_DBF)
     return CE_None;
 }
 
-void MMRPalettes::UpdateColorInfo()
+CPLErr MMRPalettes::UpdateColorInfo()
 {
     CPLString os_Color_EscalatColor;
     if (m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
@@ -461,23 +542,27 @@ void MMRPalettes::UpdateColorInfo()
         !os_Color_EscalatColor.empty())
     {
         if (os_Color_EscalatColor.compare("AssigDirecta") == 0)
-            ColorScaling = ColorTreatment::DIRECT_ASSIGNATION;
+            m_ColorScaling = ColorTreatment::DIRECT_ASSIGNATION;
         else if (os_Color_EscalatColor.compare("DespOrigen") == 0)
-            ColorScaling = ColorTreatment::ORIGIN_DISPLACEMENT;
+            m_ColorScaling = ColorTreatment::ORIGIN_DISPLACEMENT;
         else if (os_Color_EscalatColor.compare("lineal") == 0)
-            ColorScaling = ColorTreatment::LINEAR_SCALING;
+            m_ColorScaling = ColorTreatment::LINEAR_SCALING;
         else if (os_Color_EscalatColor.compare("log_10") == 0)
-            ColorScaling = ColorTreatment::LOG_10_SCALING;
+            m_ColorScaling = ColorTreatment::LOG_10_SCALING;
         else if (os_Color_EscalatColor.compare("IntervalsUsuari") == 0)
-            ColorScaling = ColorTreatment::USER_INTERVALS;
+            m_ColorScaling = ColorTreatment::USER_INTERVALS;
     }
     else
     {
         if (IsCategorical())
-            ColorScaling = ColorTreatment::DIRECT_ASSIGNATION;
+            m_ColorScaling = ColorTreatment::DIRECT_ASSIGNATION;
         else
-            ColorScaling = ColorTreatment::LINEAR_SCALING;
+            m_ColorScaling = ColorTreatment::LINEAR_SCALING;
     }
+
+    if (m_ColorScaling == ColorTreatment::DEFAULT_SCALING)
+        return CE_Failure;
+    return CE_None;
 }
 
 CPLErr MMRPalettes::UpdateConstantColor()
