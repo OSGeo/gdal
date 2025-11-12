@@ -118,54 +118,7 @@ endfunction ()
   # not easily found, hence we disable pytest_runner for that situation We might not need it at all
   get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
   if (Python_Development_FOUND AND NOT (_isMultiConfig AND WIN32))
-    file(
-      WRITE ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp
-      "
-#include <string>
-#include <Python.h>
-int main(int argc, char **argv) {
-    std::string args;
-    if ( argc > 1) {
-        args.append(\"[\");
-        for (int i = 1; i < argc; i++) {
-            if (i > 2)
-                args.append(\",\");
-            args.append(\"\\\"\");
-            args.append(argv[i]);
-            args.append(\"\\\"\");
-        }
-        args.append(\"]\");
-    }
-    std::string pycode = \"import pytest\\npytest.main(\" + args + \")\\n\";
-#if PY_VERSION_HEX >= 0x03080000
-    PyConfig config;
-    PyConfig_InitPythonConfig(&config);
-    config.install_signal_handlers = 0;
-    PyStatus status;
-    status = PyConfig_SetBytesString(&config, &config.program_name, argv[0]);
-    if (PyStatus_Exception(status)) {
-        PyConfig_Clear(&config);
-        if (argc >= 0) Py_ExitStatusException(status);
-        return 1;
-    }
-    status = Py_InitializeFromConfig(&config);
-    if (PyStatus_Exception(status)) {
-        PyConfig_Clear(&config);
-        if (argc >= 0) Py_ExitStatusException(status);
-        return 1;
-    }
-    PyConfig_Clear(&config);
-#else
-    wchar_t * program_name = Py_DecodeLocale(argv[0], NULL);
-    Py_SetProgramName(program_name);
-    Py_Initialize();
-#endif
-    PyRun_SimpleString(&*pycode.begin());
-    Py_Finalize();
-    return 0;
-}")
-
-    add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
+    add_executable(pytest_runner pytest_runner.cpp)
     target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
     target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
     add_custom_target(
