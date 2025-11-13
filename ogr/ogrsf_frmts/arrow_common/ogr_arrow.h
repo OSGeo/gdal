@@ -438,6 +438,10 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     // of the geometries. Used by Parquet.
     bool m_bWriteBBoxStruct = false;
 
+    //! Name of the struct field for the bounding box. Only used if m_bWriteBBoxStruct
+    // is set. If not set, it defaults to {geometry_column_name}_bbox
+    std::string m_oBBoxStructFieldName{};
+
     //! Schema fields for bounding box of geometry columns.
     // Constraint: if not empty, m_apoFieldsBBOX.size() == m_poFeatureDefn->GetGeomFieldCount()
     std::vector<std::shared_ptr<arrow::Field>> m_apoFieldsBBOX{};
