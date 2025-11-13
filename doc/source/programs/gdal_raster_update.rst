@@ -29,6 +29,9 @@ are not modified by this operation.
 Overviews are updated by this command (using :ref:`gdal_raster_overview_refresh`),
 unless :option:`--no-update-overviews` is specified.
 
+Starting with GDAL 3.13, :program:`gdal raster update` can be used as a
+step of a pipeline, with the source dataset being the output of the previous step.
+
 Standard options
 ++++++++++++++++
 

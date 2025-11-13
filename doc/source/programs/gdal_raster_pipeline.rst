@@ -212,6 +212,12 @@ Details for options can be found in :ref:`gdal_raster_tri`.
 
 Details for options can be found in :ref:`gdal_raster_unscale`.
 
+* update
+
+.. program-output:: gdal raster pipeline --help-doc=update
+
+Details for options can be found in :ref:`gdal_raster_update`.
+
 * viewshed
 
 .. program-output:: gdal raster pipeline --help-doc=viewshed
