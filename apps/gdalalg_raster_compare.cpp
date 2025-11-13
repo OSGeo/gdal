@@ -49,7 +49,15 @@ GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm(bool standaloneStep)
 
     SetAutoCompleteFunctionForFilename(referenceDatasetArg, GDAL_OF_RASTER);
 
-    AddRasterInputArgs(false, !standaloneStep);
+    if (standaloneStep)
+    {
+        AddRasterInputArgs(/* openForMixedRasterVector = */ false,
+                           /* hiddenForCLI = */ false);
+    }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
 
     AddArg("skip-all-optional", 0, _("Skip all optional comparisons"),
            &m_skipAllOptional);

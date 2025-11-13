@@ -161,7 +161,15 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
         .SetMinValueIncluded(0)
         .SetHidden();  // Used in spawn mode
 
-    AddRasterInputArgs(false, !standaloneStep);
+    if (standaloneStep)
+    {
+        AddRasterInputArgs(/* openForMixedRasterVector = */ false,
+                           /* hiddenForCLI = */ false);
+    }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
 
     m_format = "PNG";
     AddOutputFormatArg(&m_format)
@@ -3878,13 +3886,14 @@ static int GenerateTilesForkMethod(CPL_FILE_HANDLE in, CPL_FILE_HANDLE out)
     CPLSetConfigOption("GDAL_NUM_THREADS", "1");
     GDALSetCacheMax64(pWorkStructure->nCacheMaxPerProcess);
 
-    GDALRasterTileAlgorithm alg;
+    GDALRasterTileAlgorithmStandalone alg;
     if (pWorkStructure->poMemSrcDS)
     {
         auto *inputArg = alg.GetArg(GDAL_ARG_NAME_INPUT);
-        auto &val = inputArg->Get<std::vector<GDALArgDatasetValue>>();
+        std::vector<GDALArgDatasetValue> val;
         val.resize(1);
         val[0].Set(pWorkStructure->poMemSrcDS);
+        inputArg->Set(std::move(val));
     }
     return alg.ParseCommandLineArguments(pWorkStructure->aosArgv) && alg.Run()
                ? 0
