@@ -13,6 +13,7 @@
 
 import struct
 
+import gdaltest
 import ogrtest
 import pytest
 
@@ -1039,3 +1040,29 @@ def test_rasterize_bugfix_gh12129():
 
     # 121 on s390x
     assert target_ds.GetRasterBand(1).Checksum() in (120, 121)
+
+
+###############################################################################
+
+
+def test_rasterize_huge_geometry():
+
+    # Create a memory raster to rasterize into.
+    target_ds = gdal.GetDriverByName("MEM").Create("", 20, 20, 1, gdal.GDT_Byte)
+    target_ds.SetGeoTransform((0, 1, 0, 0, 0, 1))
+
+    v = 1e300
+    rast_ogr_ds = gdaltest.wkt_ds(
+        [f"POLYGON ((-{v} -{v},-{v} {v},{v} {v},{v} -{v},-{v} -{v}))"]
+    )
+
+    # Run the algorithm.
+    gdal.RasterizeLayer(
+        target_ds,
+        [1],
+        rast_ogr_ds.GetLayer(0),
+        burn_values=[1],
+        options=["ALL_TOUCHED=YES"],
+    )
+
+    assert target_ds.GetRasterBand(1).Checksum() == 400
