@@ -78,7 +78,7 @@ The following options are available:
     pan-sharpening computation itself. If not set, deduced from the
     input bands, provided they have a consistent setting.
 
-.. option:: --spatial-extent--adjustment union|intersection|none|none-without-warning
+.. option:: --spatial-extent-adjustment union|intersection|none|none-without-warning
 
     Select behavior when bands have not the same extent. See
     *SpatialExtentAdjustment* documentation in :ref:`gdal_vrttut_pansharpen`
