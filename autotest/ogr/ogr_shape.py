@@ -6222,3 +6222,31 @@ def test_ogr_shape_write_check_golden_file(tmp_path, src_directory):
         assert (
             open(src_filename, "rb").read() == open(out_filename, "rb").read()
         ), filename
+
+
+###############################################################################
+# Test reading a huge multipolygon with lots of rings
+# https://github.com/qgis/QGIS/issues/63826
+
+
+@pytest.mark.require_curl
+@gdaltest.enable_exceptions()
+@pytest.mark.skipif(
+    "debug" in gdal.VersionInfo(""), reason="test too slow for debug builds"
+)
+def test_ogr_shape_read_huge_multipolygon():
+
+    gdaltest.download_or_skip(
+        "https://sistemas.anatel.gov.br/se/public/file/b/smp/pred_4G_TIM_dbm-90.zip",
+        "pred_4G_TIM_dbm-90.zip",
+    )
+
+    ds = ogr.Open("/vsizip/tmp/cache/pred_4G_TIM_dbm-90.zip/4G_TIM_dbm.shp")
+    lyr = ds.GetLayer(0)
+    start = time.time()
+    f = lyr.GetNextFeature()
+    end = time.time()
+    # This takes ~ 3 seconds on a release build on my machine.
+    assert end - start < 20
+    g = f.GetGeometryRef()
+    assert g.GetGeometryCount() == 161782
