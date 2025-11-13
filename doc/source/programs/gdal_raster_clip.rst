@@ -136,7 +136,7 @@ Standard options
     than the input dataset. Output pixels from areas beyond the input extent will be set to
     zero or the NoData value of the input dataset.
 
-.. option:: --addalpha
+.. option:: --add-alpha
 
     Adds an alpha mask band to the destination when the source raster has none.
 

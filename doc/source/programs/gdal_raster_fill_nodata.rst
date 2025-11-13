@@ -37,12 +37,6 @@ The following options are available:
 
 .. include:: gdal_options/overwrite.rst
 
-.. option:: --output-layer <OUTPUT-LAYER>
-
-    Output layer name.
-
-.. include:: gdal_options/overwrite.rst
-
 .. option:: -b <BAND>
 
     Select an input <BAND> to be processed. Bands are numbered from 1.

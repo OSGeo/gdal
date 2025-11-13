@@ -56,7 +56,7 @@ Standard options
 
     Whether appending features to the existing output vector layer is allowed.
 
-.. option:: -l, --nln, --layer <LAYER>
+.. option:: --nln, --output-layer <LAYER>
 
     Provides a name for the output vector layer.
 

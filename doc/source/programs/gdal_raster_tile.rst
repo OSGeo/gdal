@@ -158,7 +158,7 @@ Standard options
 
     Disable the creation of an alpha channel.
 
-.. option:: --dstnodata <DSTNODATA>
+.. option:: --dst-nodata <DSTNODATA>
 
     Destination nodata value.
 
