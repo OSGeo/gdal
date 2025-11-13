@@ -175,3 +175,13 @@ def test_gdalalg_raster_info_read_gdalg_with_input_format():
     info["input"] = "../gdrivers/data/gdalg/read_byte.gdalg.json"
     info["input-format"] = "GDALG"
     assert info.Run()
+
+
+def test_gdalalg_raster_info_pipeline():
+
+    with gdal.alg.raster.pipeline(
+        input="../gdrivers/data/small_world.tif",
+        pipeline="read ! info",
+    ) as alg:
+        j = alg.Output()
+        assert len(j["bands"]) == 3
