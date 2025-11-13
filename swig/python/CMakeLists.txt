@@ -50,6 +50,12 @@ set(GDAL_PYTHON_CSOURCES
   if( ${SWIG_VERSION} VERSION_LESS "4.1" )
       set(SWIG_PY3_DEPRECATED "-py3")
   endif()
+  if( ${SWIG_VERSION} VERSION_GREATER_EQUAL "4.4" )
+      # For compatibility with Python 3.13+ free-standing/no-gil builds
+      # Note that this -nogil option has only effects on such Python builds
+      # and is a no-op for classic gil-enabled Python builds.
+      set(SWIG_NOGIL "-nogil")
+  endif()
   gdal_swig_bindings(
     BINDING
     python
@@ -57,6 +63,7 @@ set(GDAL_PYTHON_CSOURCES
     -I${PROJECT_SOURCE_DIR}/swig/include/python/docs
     ${SWIG_PY3_DEPRECATED}
     -threads
+    ${SWIG_NOGIL}
     -relativeimport
     -outdir
     ${CMAKE_CURRENT_BINARY_DIR}/osgeo)
@@ -69,7 +76,7 @@ set(GDAL_PYTHON_CSOURCES
       OUTPUT ${ARRAY_OUTPUT} "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_array.py"
       COMMAND
         ${SWIG_EXECUTABLE} -Wall -I${PROJECT_SOURCE_DIR}/swig/include -I${PROJECT_SOURCE_DIR}/swig/include/python
-        -I${PROJECT_SOURCE_DIR}/swig/include/python/docs ${SWIG_PY3_DEPRECATED} -threads -relativeimport -outdir
+        -I${PROJECT_SOURCE_DIR}/swig/include/python/docs ${SWIG_PY3_DEPRECATED} -threads ${SWIG_NOGIL} -relativeimport -outdir
         ${CMAKE_CURRENT_BINARY_DIR}/osgeo ${SWIG_DEFINES} -I${PROJECT_SOURCE_DIR}/gdal -c++ -python -o ${ARRAY_OUTPUT}
         ${ARRAY_INPUT}
       COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} "-DFILE=${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_array.py" -P ${PROJECT_SOURCE_DIR}/swig/python/modify_cpp_files.cmake

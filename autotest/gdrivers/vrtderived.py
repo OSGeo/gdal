@@ -239,10 +239,32 @@ def test_vrtderived_5():
     except (ImportError, AttributeError):
         pytest.skip()
 
-    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
+    def worker(args_dict):
         ds = gdal.Open("data/vrt/n43_hillshade.vrt")
-        cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 50577, "invalid checksum"
+        for i in range(20):
+            ds.FlushCache()
+            with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
+                cs = ds.GetRasterBand(1).Checksum()
+            if cs != 50577:
+                print("Got wrong cs", cs)
+                args_dict["ret"] = False
+
+    import threading
+
+    threads = []
+    args_array = []
+    num_threads = gdal.GetNumCPUs()
+    for i in range(num_threads):
+        args_dict = {"ret": True}
+        t = threading.Thread(target=worker, args=(args_dict,))
+        args_array.append(args_dict)
+        threads.append(t)
+        t.start()
+
+    for i in range(len(threads)):
+        threads[i].join()
+        if not args_array[i]:
+            assert False
 
 
 ###############################################################################

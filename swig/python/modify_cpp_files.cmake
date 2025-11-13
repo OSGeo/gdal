@@ -37,8 +37,8 @@ string(REPLACE "PyObject *resultobj = 0;"
                "PyObject *resultobj = 0; int bLocalUseExceptionsCode = GetUseExceptions();"
        _CONTENTS "${_CONTENTS}")
 
-string(REPLACE "#define SWIGPYTHON"
-               "#define SWIGPYTHON\n\#define SED_HACKS"
+string(REPLACE "#define SWIGPYTHON\n"
+               "#define SWIGPYTHON\n\#define SED_HACKS\n"
        _CONTENTS "${_CONTENTS}")
 
 # patch to avoid memory leaks on exception (see 594fe48)

@@ -39,11 +39,6 @@ void GDALDriverManager::CleanupPythonDrivers()
 static PyObject *layer_featureCount(PyObject *m, PyObject *args,
                                     PyObject *kwargs);
 
-static const PyMethodDef gdal_python_driver_methods[] = {
-    {"layer_featureCount", layer_featureCount, METH_VARARGS | METH_KEYWORDS,
-     nullptr},
-    {nullptr, nullptr, 0, nullptr}};
-
 static PyObject *Py_None = nullptr;
 
 static PyObject *gpoGDALPythonDriverModule = nullptr;
@@ -102,29 +97,7 @@ static bool InitializePythonAndLoadGDALPythonDriverModule()
 
     GIL_Holder oHolder(false);
 
-    static PyModuleDef gdal_python_driver_moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_gdal_python_driver",
-        nullptr,
-        static_cast<Py_ssize_t>(-1),  // sizeof(struct module_state),
-        gdal_python_driver_methods,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr};
-
-    PyObject *module =
-        PyModule_Create2(&gdal_python_driver_moduledef, PYTHON_API_VERSION);
-    // Add module to importable modules
-    PyObject *sys = PyImport_ImportModule("sys");
-    PyObject *sys_modules = PyObject_GetAttrString(sys, "modules");
-    PyDict_SetItemString(sys_modules, "_gdal_python_driver", module);
-    Py_DecRef(sys_modules);
-    Py_DecRef(sys);
-    Py_DecRef(module);
-
     PyObject *poCompiledString = Py_CompileString(
-        "import _gdal_python_driver\n"
         "import json\n"
         "import inspect\n"
         "import sys\n"
@@ -141,7 +114,7 @@ static bool InitializePythonAndLoadGDALPythonDriverModule()
         "   def feature_count(self, force):\n"
         "       assert isinstance(self, BaseLayer), 'self not instance of "
         "BaseLayer'\n"
-        "       return _gdal_python_driver.layer_featureCount(self, force)\n"
+        "       return _layer_featureCount(self, force)\n"
         "\n"
         "class BaseDataset:\n"
         "   def __init__(self):\n"
@@ -176,6 +149,17 @@ static bool InitializePythonAndLoadGDALPythonDriverModule()
     gpoGDALPythonDriverModule =
         PyImport_ExecCodeModule("gdal_python_driver", poCompiledString);
     Py_DecRef(poCompiledString);
+
+    static const PyMethodDef layer_featureCount_def = {
+        "_layer_featureCount",
+        layer_featureCount,
+        METH_VARARGS | METH_KEYWORDS,
+        nullptr,
+    };
+    PyObject *layer_featureCount_func =
+        PyCFunction_New(&layer_featureCount_def, nullptr);
+    PyModule_AddObject(gpoGDALPythonDriverModule, layer_featureCount_def.name,
+                       layer_featureCount_func);
 
     // Initialize Py_None
     PyObject *returnNone =
