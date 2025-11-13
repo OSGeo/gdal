@@ -535,11 +535,8 @@ void RRASTERDataset::RewriteHeader()
     if (bGotNoDataValue)
         VSIFPrintfL(fp, "nodatavalue=%.17g\n", dfNoDataValue);
 
-#if CPL_IS_LSB
-    VSIFPrintfL(fp, "byteorder=%s\n", m_bNativeOrder ? "little" : "big");
-#else
-    VSIFPrintfL(fp, "byteorder=%s\n", !m_bNativeOrder ? "little" : "big");
-#endif
+    VSIFPrintfL(fp, "byteorder=%s\n",
+                (m_bNativeOrder ^ CPL_IS_LSB) ? "big" : "little");
     VSIFPrintfL(fp, "nbands=%d\n", nBands);
     if (nBands > 1)
         VSIFPrintfL(fp, "bandorder=%s\n", m_osBandOrder.c_str());

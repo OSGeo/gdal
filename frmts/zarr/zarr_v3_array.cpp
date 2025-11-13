@@ -1621,11 +1621,10 @@ CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
     {
         // By default, assume that the ENDIANNESS is the native one.
         // Otherwise there will be a ZarrV3CodecBytes instance.
-#if CPL_IS_LSB
-        aosInfo.SetNameValue("ENDIANNESS", "LITTLE");
-#else
-        aosInfo.SetNameValue("ENDIANNESS", "BIG");
-#endif
+        if constexpr (CPL_IS_LSB)
+            aosInfo.SetNameValue("ENDIANNESS", "LITTLE");
+        else
+            aosInfo.SetNameValue("ENDIANNESS", "BIG");
     }
 
     if (m_poCodecs)
