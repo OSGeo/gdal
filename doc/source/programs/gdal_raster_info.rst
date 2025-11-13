@@ -101,10 +101,6 @@ Advanced options
 
     Suppress printing of color table.
 
-.. option:: --no-rat
-
-    Suppress printing of raster attribute table.
-
 .. option:: --no-fl
 
     Only display the first file of the file list.

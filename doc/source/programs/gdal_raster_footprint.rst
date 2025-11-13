@@ -68,7 +68,7 @@ The following options are available:
     ``intersection`` means that a pixel is valid only if it is valid for all
     selected bands.
 
-.. option:: --ovr <index>
+.. option:: --overview <index>
 
    To specify which overview level of source file must be used, when overviews
    are available on the source raster. By default the full resolution level is

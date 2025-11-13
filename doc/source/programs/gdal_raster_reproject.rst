@@ -166,7 +166,7 @@ Advanced options
     Note that a number of output formats, including GeoTIFF, do not support
     different per-band nodata values, but a single one for all bands.
 
-.. option:: --addalpha
+.. option:: --add-alpha
 
     Create an output alpha band to identify nodata (unset/transparent) pixels.
     Value 0 is used for fully transparent pixels. The maximum value for the alpha
