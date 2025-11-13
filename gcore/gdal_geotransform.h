@@ -38,7 +38,7 @@ class GDALRasterWindow;
  *
  * @since 3.12
  */
-class GDALGeoTransform
+class CPL_DLL GDALGeoTransform
 {
   public:
     // NOTE to GDAL developers: do not reorder those coefficients!
@@ -153,10 +153,10 @@ class GDALGeoTransform
         GDALApplyGeoTransform(data(), dfPixel, dfLine, pdfGeoX, pdfGeoY);
     }
 
-    /** Apply a geotransform to an OGREnvelope in geographic coordinates.
+    /** Apply a (inverse) geotransform to an OGREnvelope in georeferenced coordinates.
      *
-     * @param env An envelope in geographic coordinates
-     * @param window A window in pixel/line coordinates
+     * @param env An envelope in georeferenced coordinates
+     * @param[out] window A window in pixel/line coordinates
      * @return true if the geotransform was successfully applied
      */
     bool Apply(const OGREnvelope &env, GDALRasterWindow &window) const;
@@ -164,7 +164,7 @@ class GDALGeoTransform
     /** Apply a geotransform to a GDALRasterWindow in pixel/line coordinates.
      *
      * @param window A window in pixel/line coordinates
-     * @param env An envelope in geographic coordinates
+     * @param[out] env An envelope in georeferenced coordinates
      * @return true if the geotransform was successfully applied
      */
     bool Apply(const GDALRasterWindow &window, OGREnvelope &env) const;

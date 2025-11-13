@@ -6319,4 +6319,74 @@ TEST_F(test_gdal, GDALMDArrayRawBlockInfo)
     }
 }
 
+TEST_F(test_gdal, GDALGeoTransform)
+{
+    GDALGeoTransform gt{5, 6, 0, 7, 0, -8};
+
+    OGREnvelope initEnv;
+    initEnv.MinX = -1;
+    initEnv.MinY = -2;
+    initEnv.MaxX = 3;
+    initEnv.MaxY = 4;
+
+    {
+        GDALRasterWindow window;
+        EXPECT_TRUE(gt.Apply(initEnv, window));
+        EXPECT_EQ(window.nXOff, -1);
+        EXPECT_EQ(window.nYOff, -25);
+        EXPECT_EQ(window.nXSize, 24);
+        EXPECT_EQ(window.nYSize, 48);
+    }
+
+    {
+        gt[5] = -gt[5];
+        GDALRasterWindow window;
+        EXPECT_TRUE(gt.Apply(initEnv, window));
+        gt[5] = -gt[5];
+        EXPECT_EQ(window.nXOff, -1);
+        EXPECT_EQ(window.nYOff, -9);
+        EXPECT_EQ(window.nXSize, 24);
+        EXPECT_EQ(window.nYSize, 48);
+    }
+
+    {
+        gt[1] = -gt[1];
+        GDALRasterWindow window;
+        EXPECT_TRUE(gt.Apply(initEnv, window));
+        gt[1] = -gt[1];
+        EXPECT_EQ(window.nXOff, -13);
+        EXPECT_EQ(window.nYOff, -25);
+        EXPECT_EQ(window.nXSize, 24);
+        EXPECT_EQ(window.nYSize, 48);
+    }
+
+    {
+        OGREnvelope env(initEnv);
+        env.MinX *= 1e10;
+        GDALRasterWindow window;
+        EXPECT_FALSE(gt.Apply(env, window));
+    }
+
+    {
+        OGREnvelope env(initEnv);
+        env.MinY *= 1e10;
+        GDALRasterWindow window;
+        EXPECT_FALSE(gt.Apply(env, window));
+    }
+
+    {
+        OGREnvelope env(initEnv);
+        env.MaxX *= 1e10;
+        GDALRasterWindow window;
+        EXPECT_FALSE(gt.Apply(env, window));
+    }
+
+    {
+        OGREnvelope env(initEnv);
+        env.MaxY *= 1e10;
+        GDALRasterWindow window;
+        EXPECT_FALSE(gt.Apply(env, window));
+    }
+}
+
 }  // namespace
