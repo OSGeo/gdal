@@ -7007,9 +7007,10 @@ def test_ogr_gpkg_spatial_view_computed_geom_column(tmp_vsimem, tmp_path):
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT Z (1 2 3)"))
     lyr.CreateFeature(f)
 
-    ds.ExecuteSQL(
-        "CREATE VIEW geom_view AS SELECT fid AS my_fid, AsGPB(ST_Multi(geom)) AS my_geom FROM foo"
-    )
+    with gdaltest.error_raised(gdal.CE_Warning):
+        ds.ExecuteSQL(
+            "CREATE VIEW geom_view AS SELECT fid AS my_fid, AsGPB(ST_Multi(geom)) AS my_geom FROM foo"
+        )
     ds.ExecuteSQL(
         "INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'geom_view', 'geom_view', 'features', 4326 )"
     )
