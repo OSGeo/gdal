@@ -294,6 +294,8 @@ class GTiffDataset final : public GDALPamDataset
     bool m_bDirectIO : 1;
     bool m_bReadGeoTransform : 1;
     bool m_bLoadPam : 1;
+    bool m_bENVIHdrTried : 1;
+    bool m_bENVIHdrFound : 1;
     bool m_bHasGotSiblingFiles : 1;
     bool m_bHasIdentifiedAuthorizedGeoreferencingSources : 1;
     bool m_bLayoutIFDSBeforeData : 1;
@@ -412,7 +414,11 @@ class GTiffDataset final : public GDALPamDataset
                                  const int *panBandMap, GSpacing nPixelSpace,
                                  GSpacing nLineSpace, GSpacing nBandSpace);
 
+    std::string GetSidecarFilenameWithReplacedExtension(const char *pszExt);
+
     void LoadGeoreferencingAndPamIfNeeded();
+
+    void LoadENVIHdrIfNeeded();
 
     CSLConstList GetSiblingFiles();
 

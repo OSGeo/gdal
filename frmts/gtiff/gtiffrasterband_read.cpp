@@ -25,6 +25,7 @@
 #include "cpl_vsi_virtual.h"
 #include "fetchbufferdirectio.h"
 #include "gdal_priv.h"
+#include "gdal_mdreader.h"
 #include "gtiff.h"
 #include "tifvsi.h"
 
@@ -1062,6 +1063,8 @@ char **GTiffRasterBand::GetMetadataDomainList()
 {
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
 
+    m_poGDS->LoadENVIHdrIfNeeded();
+
     return CSLDuplicate(m_oGTiffMDMD.GetDomainList());
 }
 
@@ -1075,6 +1078,12 @@ char **GTiffRasterBand::GetMetadata(const char *pszDomain)
     if (pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE"))
     {
         m_poGDS->LoadGeoreferencingAndPamIfNeeded();
+
+        m_poGDS->LoadENVIHdrIfNeeded();
+    }
+    else if (EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
+    {
+        m_poGDS->LoadENVIHdrIfNeeded();
     }
 
     return m_oGTiffMDMD.GetMetadata(pszDomain);
@@ -1091,6 +1100,12 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
     if (pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE"))
     {
         m_poGDS->LoadGeoreferencingAndPamIfNeeded();
+
+        m_poGDS->LoadENVIHdrIfNeeded();
+    }
+    else if (EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
+    {
+        m_poGDS->LoadENVIHdrIfNeeded();
     }
 
     if (pszName != nullptr && pszDomain != nullptr && EQUAL(pszDomain, "TIFF"))

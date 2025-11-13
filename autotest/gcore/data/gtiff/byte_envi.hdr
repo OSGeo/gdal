@@ -1,0 +1,16 @@
+ENVI
+description = {
+  GEO-TIFF File Imported into ENVI}
+samples = 20
+lines   = 20
+bands   = 1
+header offset = 0
+file type = TIFF
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+wavelength units = Nanometers
+wavelength = { 400.1 }
+fwhm = { 5.5 }
+bbl = { 1 }
