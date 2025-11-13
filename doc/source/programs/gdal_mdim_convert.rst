@@ -117,7 +117,7 @@ Standard options
 
     See :example:`mdim-convert-subset-1`.
 
-.. option:: -scaleaxes <scaleaxes_spec>
+.. option:: --scale-axes <scaleaxes_spec>
 
     Applies a integral scale factor to one or several dimensions, that is
     extract 1 value every N values (without resampling).
