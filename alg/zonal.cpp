@@ -1657,6 +1657,18 @@ class GDALZonalStatsImpl
                     {
                         return false;
                     }
+                    oWindow.nXOff =
+                        std::max(oWindow.nXOff, oRasterWindow.nXOff);
+                    oWindow.nYOff =
+                        std::max(oWindow.nYOff, oRasterWindow.nYOff);
+                    oWindow.nXSize =
+                        std::min(oWindow.nXSize, oRasterWindow.nXOff +
+                                                     oRasterWindow.nXSize -
+                                                     oWindow.nXOff);
+                    oWindow.nYSize =
+                        std::min(oWindow.nYSize, oRasterWindow.nYOff +
+                                                     oRasterWindow.nYSize -
+                                                     oWindow.nYOff);
                 }
             }
 
