@@ -167,6 +167,25 @@ def test_ogr2ogr_lib_6():
 
 
 ###############################################################################
+# Test selectFields with arrow optimization
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_selectFields_gpkg(tmp_vsimem):
+
+    srcDS = gdal.VectorTranslate(tmp_vsimem / "in.gpkg", "../ogr/data/poly.shp")
+    gdal.VectorTranslate(
+        tmp_vsimem / "out.gpkg", srcDS, selectFields=["eas_id", "prfedea"]
+    )
+    ds = ogr.Open(tmp_vsimem / "out.gpkg")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    feat = lyr.GetNextFeature()
+    assert feat.GetFieldAsDouble("EAS_ID") == 168
+    assert feat.GetFieldAsString("PRFEDEA") == "35043411"
+
+
+###############################################################################
 # Test selectFields to []
 
 
@@ -176,6 +195,24 @@ def test_ogr2ogr_lib_sel_fields_empty():
     ds = gdal.VectorTranslate("", srcDS, format="MEM", selectFields=[])
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 0
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeometryRef() is not None
+
+
+###############################################################################
+# Test selectFields to []
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_sel_fields_empty_with_arow_optimization(tmp_vsimem):
+
+    srcDS = gdal.VectorTranslate(tmp_vsimem / "in.gpkg", "../ogr/data/poly.shp")
+    gdal.VectorTranslate(tmp_vsimem / "out.gpkg", srcDS, selectFields=[])
+    ds = ogr.Open(tmp_vsimem / "out.gpkg")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 0
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeometryRef() is not None
 
 
 ###############################################################################

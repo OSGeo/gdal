@@ -12,6 +12,8 @@
 
 #include "ogrsf_frmts.h"
 #include "gdal_priv.h"
+
+#include "gdal_frmts.h"
 #include "gdalplugindriverproxy.h"
 #include "gdalsubdatasetinfo.h"
 
