@@ -278,9 +278,9 @@ void GDALdllImageLine(int nRasterXSize, int nRasterYSize, int nPartCount,
                 continue;
 
             // TODO: clamp coordinates to [0, nRasterXSize] * [0, nRasterYSize]
-            if (!(dfX >= INT_MIN && dfX <= INT_MAX && dfX >= INT_MIN &&
-                  dfX <= INT_MAX && dfX >= INT_MIN && dfX <= INT_MAX &&
-                  dfX >= INT_MIN && dfX <= INT_MAX))
+            if (!(dfX >= INT_MIN && dfX <= INT_MAX && dfY >= INT_MIN &&
+                  dfY <= INT_MAX && dfXEnd >= INT_MIN && dfXEnd <= INT_MAX &&
+                  dfYEnd >= INT_MIN && dfYEnd <= INT_MAX))
             {
                 CPLErrorOnce(
                     CE_Warning, CPLE_AppDefined,
