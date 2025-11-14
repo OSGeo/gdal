@@ -36,6 +36,7 @@ Available sub-commands
 - :ref:`gdal_vector_set_field_type`
 - :ref:`gdal_vector_set_geom_type`
 - :ref:`gdal_vector_sql`
+- :ref:`gdal_vector_update`
 
 Examples
 --------
