@@ -368,3 +368,7 @@ for Bosnia and Herzegovina (country code "BA"), limited to the "county" subtype.
         // We manually generate the PNG file using the Average or PAETH filter
         for (const CPLXMLNode *psIter = psTreNode->psChild;
     for (const CPLXMLNode *psIter = psTreNode->psChild;
+                (0, 2, "metres"),
+                (1, 2, "metres"),
+            {"depth", "depth", "metres", "1000000", "H5T_FLOAT",
+            {"uncertainty", "uncertainty", "metres", "1000000", "H5T_FLOAT",
