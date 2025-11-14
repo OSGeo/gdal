@@ -499,6 +499,8 @@ def test_gdal_alg_module(tmp_vsimem):
            Display absolute path
        tree: Optional[bool]=None
            Use a hierarchical presentation for JSON output
+       progress: Optional[Callable[[float, str, object], bool]]=None
+           Progress callback
 
 
        Output parameters
