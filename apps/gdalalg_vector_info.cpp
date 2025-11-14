@@ -38,15 +38,21 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR})
         .SetHiddenForCLI(!standaloneStep);
-    auto &datasetArg =
-        AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR,
-                           /* positionalAndRequired = */ standaloneStep)
-            .AddAlias("dataset")
-            .SetHiddenForCLI(!standaloneStep);
+    GDALInConstructionAlgorithmArg *pDatasetArg = nullptr;
+    if (standaloneStep)
+    {
+        auto &datasetArg =
+            AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR,
+                               /* positionalAndRequired = */ standaloneStep)
+                .AddAlias("dataset")
+                .SetHiddenForCLI(!standaloneStep);
+        pDatasetArg = &datasetArg;
+    }
     auto &layerArg = AddLayerNameArg(&m_layerNames)
                          .SetMutualExclusionGroup("layer-sql")
                          .AddAlias("layer");
-    SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
+    if (pDatasetArg)
+        SetAutoCompleteFunctionForLayerName(layerArg, *pDatasetArg);
     auto &argFeature =
         AddArg(
             "features", 0,
