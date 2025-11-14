@@ -701,7 +701,7 @@ void ImdReader::ReadModel(const char *pszFilename)
         psModel = psModel->psNext;
     }
 
-    // Last model ist main model
+    // Last model is main model
     const CPLString mainModelName = modelInfos.back().name;
     const CPLString modelVersion = modelInfos.back().version;
     CPLDebug("OGR_ILI", "mainModelName: '%s' version: '%s'",
