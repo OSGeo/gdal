@@ -100,9 +100,8 @@ Start a Conda-enabled PowerShell console and assuming there is a ``c:\\dev`` dir
     cd c:\dev
     conda create --yes --name gdal
     conda activate gdal
-    conda install --yes --quiet -c conda-forge compilers
-    conda install --yes --quiet -c conda-forge cmake curl libiconv icu python=3.12 swig numpy pytest `
-        pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
+    conda install --yes --quiet -c conda-forge compilers cmake curl libiconv icu python swig numpy `
+        pytest pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
     # --only-deps only installs the dependencies of the listed packages, not the packages themselves
     conda install --yes --quiet -c conda-forge --only-deps `
         libgdal libgdal-hdf4 libgdal-hdf5 libgdal-netcdf libgdal-pdf libgdal-jp2openjpeg
