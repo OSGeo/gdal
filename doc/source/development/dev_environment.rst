@@ -98,10 +98,10 @@ Start a Conda enabled Powershell console and assuming there is a c:\\dev directo
 .. code-block:: ps1
 
     cd c:\dev
-    conda create --yes  --name gdal
+    conda create --yes --name gdal
     conda activate gdal
     conda install --yes --quiet -c conda-forge compilers
-    conda install --yes --quiet cmake curl libiconv icu python=3.12 swig numpy pytest `
+    conda install --yes --quiet -c conda-forge cmake curl libiconv icu python=3.12 swig numpy pytest `
         pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
     # --only-deps only installs the dependencies of the listed packages, not the packages themselves
     conda install --yes --quiet -c conda-forge --only-deps `
@@ -110,7 +110,8 @@ Start a Conda enabled Powershell console and assuming there is a c:\\dev directo
 .. note::
 
     The ``compilers`` package will install ``vs2022_win-64`` (at time of writing)
-    to set the appropriate environment for cmake to pick up.
+    to set the appropriate environment for cmake to pick up. It also finds and works
+    with Visual Studio 2022 (Professional or Enterprise) if that is installed.
 
 Checkout GDAL sources
 +++++++++++++++++++++
@@ -131,14 +132,24 @@ From a Conda enabled Powershell console:
     cd c:\dev\gdal
     cmake -S . -B build -DCMAKE_PREFIX_PATH:FILEPATH="$env:CONDA_PREFIX"
     cmake --build build --config Release -j 8
-    gdal --version
 
 Run GDAL tests
 ++++++++++++++
 
+Check everything has built correctly, and then run the test suite using
+the commands below from a Conda enabled Powershell console:
+
 .. code-block:: ps1
 
     cd c:\dev\gdal\build
+    # set environment variables, see section below
+    ..\scripts\setdevenv.ps1
+    # check the version
+    gdal --version
+    # check the Python module and version
+    python -c "import osgeo; import inspect; print(inspect.getfile(osgeo))"
+    python -c "from osgeo import gdal; print(gdal.__version__)"
+    # run the test suite
     ctest -V --build-config Release
 
 .. _setting_dev_environment_variables:
