@@ -8,7 +8,7 @@ def _generate_gdal_alg_methods():
     import os
     import types
     import typing
-    from typing import List, Union, Optional
+    from typing import Callable, List, Union, Optional
 
     gdal_module = sys.modules[__name__]
 
@@ -102,6 +102,20 @@ def _generate_gdal_alg_methods():
                         parameters += arg.GetDescription()
                         parameters += "\n"
 
+            if args:
+                args += ", "
+                kwargs += ", "
+            args += "progress: Optional[Callable[[float, str, object], bool]]=None"
+            kwargs += '"progress": progress'
+            parameters += "       "
+            parameters += "progress"
+            parameters += ": "
+            parameters += "Optional[Callable[[float, str, object], bool]]=None"
+            parameters += "\n"
+            parameters += "       "
+            parameters += "    "
+            parameters += "Progress callback"
+            parameters += "\n"
 
             kwargs += "}"
 
@@ -134,7 +148,7 @@ def {name_sanitized}({args}):
     return gdal.Run({new_path}, **kwargs)
 """
             g = parent_module.__dict__
-            extra = {"gdal": gdal_module, "os": os, "List": List, "Union": Union, "Optional": Optional}
+            extra = {"gdal": gdal_module, "os": os, "List": List, "Union": Union, "Optional": Optional, "Callable": Callable}
             for k,v in extra.items():
                 g[k] = v
             exec(func_code, g)
