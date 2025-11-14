@@ -520,12 +520,6 @@ struct AssociatedLayers
 
 class SetupTargetLayer
 {
-    bool CanUseWriteArrowBatch(OGRLayer *poSrcLayer, OGRLayer *poDstLayer,
-                               bool bJustCreatedLayer,
-                               const GDALVectorTranslateOptions *psOptions,
-                               bool bPreserveFID, bool &bError,
-                               OGRArrowArrayStream &streamSrc);
-
   public:
     GDALDataset *m_poSrcDS = nullptr;
     GDALDataset *m_poDstDS = nullptr;
@@ -565,6 +559,15 @@ class SetupTargetLayer
     std::unique_ptr<TargetLayerInfo>
     Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
           GDALVectorTranslateOptions *psOptions, GIntBig &nTotalEventsDone);
+
+  private:
+    bool CanUseWriteArrowBatch(OGRLayer *poSrcLayer, OGRLayer *poDstLayer,
+                               bool bJustCreatedLayer,
+                               const GDALVectorTranslateOptions *psOptions,
+                               bool bPreserveFID, bool &bError,
+                               OGRArrowArrayStream &streamSrc);
+
+    void SetIgnoredFields(OGRLayer *poSrcLayer);
 };
 
 class LayerTranslator
@@ -4253,8 +4256,8 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
         !psOptions->bUpsert && !psOptions->bSkipFailures &&
         !psOptions->poClipSrc && !psOptions->poClipDst &&
         psOptions->asGCPs.empty() && !psOptions->bWrapDateline &&
-        !m_papszSelFields && !m_bAddMissingFields &&
-        m_eGType == GEOMTYPE_UNCHANGED && psOptions->eGeomOp == GEOMOP_NONE &&
+        !m_bAddMissingFields && m_eGType == GEOMTYPE_UNCHANGED &&
+        psOptions->eGeomOp == GEOMOP_NONE &&
         m_eGeomTypeConversion == GTC_DEFAULT && m_nCoordDim < 0 &&
         !m_papszFieldTypesToString && !m_papszMapFieldType &&
         !m_bUnsetFieldWidth && !m_bExplodeCollections && !m_pszZField &&
@@ -4280,6 +4283,11 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
             {
                 return false;
             }
+        }
+
+        if (m_bSelFieldsSet)
+        {
+            SetIgnoredFields(poSrcLayer);
         }
 
         const CPLStringList aosGetArrowStreamOptions(BuildGetArrowStreamOptions(
@@ -4426,6 +4434,55 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
         }
     }
     return bUseWriteArrowBatch;
+}
+
+/************************************************************************/
+/*              SetupTargetLayer::SetIgnoredFields()                    */
+/************************************************************************/
+
+void SetupTargetLayer::SetIgnoredFields(OGRLayer *poSrcLayer)
+{
+    bool bUseIgnoredFields = true;
+    CPLStringList aosWHEREUsedFields;
+    const auto poSrcFDefn = poSrcLayer->GetLayerDefn();
+
+    if (m_pszWHERE)
+    {
+        /* We must not ignore fields used in the -where expression
+         * (#4015) */
+        OGRFeatureQuery oFeatureQuery;
+        if (oFeatureQuery.Compile(poSrcFDefn, m_pszWHERE, FALSE, nullptr) ==
+            OGRERR_NONE)
+        {
+            aosWHEREUsedFields = oFeatureQuery.GetUsedFields();
+        }
+        else
+        {
+            bUseIgnoredFields = false;
+        }
+    }
+
+    CPLStringList aosIgnoredFields;
+    for (int iSrcField = 0;
+         bUseIgnoredFields && iSrcField < poSrcFDefn->GetFieldCount();
+         iSrcField++)
+    {
+        const char *pszFieldName =
+            poSrcFDefn->GetFieldDefn(iSrcField)->GetNameRef();
+        bool bFieldRequested =
+            CSLFindString(m_papszSelFields, pszFieldName) >= 0;
+        bFieldRequested |= aosWHEREUsedFields.FindString(pszFieldName) >= 0;
+        bFieldRequested |=
+            (m_pszZField != nullptr && EQUAL(pszFieldName, m_pszZField));
+
+        // If the source field is not requested, add it to the list of ignored
+        // fields.
+        if (!bFieldRequested)
+            aosIgnoredFields.push_back(pszFieldName);
+    }
+    if (bUseIgnoredFields)
+        poSrcLayer->SetIgnoredFields(
+            const_cast<const char **>(aosIgnoredFields.List()));
 }
 
 /************************************************************************/
@@ -5301,58 +5358,9 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         /* Use SetIgnoredFields() on source layer if available */
         /* --------------------------------------------------------------------
          */
-        if (poSrcLayer->TestCapability(OLCIgnoreFields))
+        if (m_bSelFieldsSet && poSrcLayer->TestCapability(OLCIgnoreFields))
         {
-            bool bUseIgnoredFields = true;
-            CPLStringList aosWHEREUsedFields;
-
-            if (m_pszWHERE)
-            {
-                /* We must not ignore fields used in the -where expression
-                 * (#4015) */
-                OGRFeatureQuery oFeatureQuery;
-                if (oFeatureQuery.Compile(poSrcLayer->GetLayerDefn(),
-                                          m_pszWHERE, FALSE,
-                                          nullptr) == OGRERR_NONE)
-                {
-                    aosWHEREUsedFields = oFeatureQuery.GetUsedFields();
-                }
-                else
-                {
-                    bUseIgnoredFields = false;
-                }
-            }
-
-            CPLStringList aosIgnoredFields;
-            for (int iSrcField = 0;
-                 bUseIgnoredFields && iSrcField < poSrcFDefn->GetFieldCount();
-                 iSrcField++)
-            {
-                const char *pszFieldName =
-                    poSrcFDefn->GetFieldDefn(iSrcField)->GetNameRef();
-                bool bFieldRequested = false;
-                for (int iField = 0;
-                     m_papszSelFields && m_papszSelFields[iField]; iField++)
-                {
-                    if (EQUAL(pszFieldName, m_papszSelFields[iField]))
-                    {
-                        bFieldRequested = true;
-                        break;
-                    }
-                }
-                bFieldRequested |=
-                    aosWHEREUsedFields.FindString(pszFieldName) >= 0;
-                bFieldRequested |= (m_pszZField != nullptr &&
-                                    EQUAL(pszFieldName, m_pszZField));
-
-                /* If source field not requested, add it to ignored files list
-                 */
-                if (!bFieldRequested)
-                    aosIgnoredFields.push_back(pszFieldName);
-            }
-            if (bUseIgnoredFields)
-                poSrcLayer->SetIgnoredFields(
-                    const_cast<const char **>(aosIgnoredFields.List()));
+            SetIgnoredFields(poSrcLayer);
         }
     }
     else if (!bAppend || m_bAddMissingFields)
