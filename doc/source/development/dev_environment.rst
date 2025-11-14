@@ -93,7 +93,7 @@ Only the latest Community Edition (2022) is available.
 Install GDAL dependencies
 +++++++++++++++++++++++++
 
-Start a Conda enabled Powershell console and assuming there is a c:\\dev directory
+Start a Conda-enabled PowerShell console and assuming there is a ``c:\\dev`` directory
 
 .. code-block:: ps1
 
@@ -110,7 +110,7 @@ Start a Conda enabled Powershell console and assuming there is a c:\\dev directo
 .. note::
 
     The ``compilers`` package will install ``vs2022_win-64`` (at time of writing)
-    to set the appropriate environment for cmake to pick up. It also finds and works
+    to set the appropriate environment for CMake to pick up. It also finds and works
     with Visual Studio 2022 (Professional or Enterprise) if that is installed.
 
 Checkout GDAL sources
@@ -124,7 +124,7 @@ Checkout GDAL sources
 Build GDAL
 ++++++++++
 
-From a Conda enabled Powershell console:
+From a Conda-enabled PowerShell console:
 
 .. code-block:: ps1
 
@@ -137,7 +137,7 @@ Run GDAL tests
 ++++++++++++++
 
 Check everything has built correctly, and then run the test suite using
-the commands below from a Conda enabled Powershell console:
+the commands below from a Conda-enabled PowerShell console:
 
 .. code-block:: ps1
 
