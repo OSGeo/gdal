@@ -68,7 +68,10 @@ To avoid built objects being owned by root, it may be desirable to add ``-u $(id
 Building on Windows with Conda dependencies and Visual Studio
 --------------------------------------------------------------------------------
 
-It is less appropriate for Debug builds of GDAL, than other methods, such as using vcpkg.
+This approach is less appropriate for Debug builds of GDAL, than other methods, such as using vcpkg.
+
+A minimal Windows build configuration utilizing Conda is provided within the GitHub Actions workflow
+defined in :source_file:.github/workflows/cmake_builds.yml - see the ``build-windows-conda`` job.
 
 Install git
 +++++++++++
@@ -90,31 +93,29 @@ Only the latest Community Edition (2022) is available.
 Install GDAL dependencies
 +++++++++++++++++++++++++
 
-Start a Conda enabled console and assuming there is a c:\\dev directory
+Start a Conda enabled Powershell console and assuming there is a c:\\dev directory
 
-.. code-block:: console
+.. code-block:: ps1
 
     cd c:\dev
-    conda create --name gdal
+    conda create --yes  --name gdal
     conda activate gdal
-    conda install --yes --quiet curl libiconv icu git python swig numpy pytest zlib
-    conda install --yes --quiet -c conda-forge compilers clcache
-    conda install --yes --quiet -c conda-forge \
-        cmake proj geos hdf4 hdf5 \
-        libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
-        cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre postgresql \
-        sqlite tiledb zstd charls cryptopp cgal librttopo libkml openssl xz
+    conda install --yes --quiet -c conda-forge compilers
+    conda install --yes --quiet cmake curl libiconv icu python=3.12 swig numpy pytest `
+        pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
+    # --only-deps only installs the dependencies of the listed packages, not the packages themselves
+    conda install --yes --quiet -c conda-forge --only-deps `
+        libgdal libgdal-hdf4 libgdal-hdf5 libgdal-netcdf libgdal-pdf libgdal-jp2openjpeg
 
 .. note::
 
-    The ``compilers`` package will install ``vs2019_win-64`` (at time of writing)
-    to set the appropriate environment for cmake to pick up. It also finds and works  
-    with Visual Studio 2022 if that is installed.
+    The ``compilers`` package will install ``vs2022_win-64`` (at time of writing)
+    to set the appropriate environment for cmake to pick up.
 
 Checkout GDAL sources
 +++++++++++++++++++++
 
-.. code-block:: console
+.. code-block:: ps1
 
     cd c:\dev
     git clone https://github.com/OSGeo/gdal.git
@@ -122,28 +123,23 @@ Checkout GDAL sources
 Build GDAL
 ++++++++++
 
-From a Conda enabled console
+From a Conda enabled Powershell console:
 
-.. code-block:: console
+.. code-block:: ps1
 
     conda activate gdal
     cd c:\dev\gdal
-    cmake -S . -B build -DCMAKE_PREFIX_PATH:FILEPATH="%CONDA_PREFIX%" \
-                        -DCMAKE_C_COMPILER_LAUNCHER=clcache
-                        -DCMAKE_CXX_COMPILER_LAUNCHER=clcache
+    cmake -S . -B build -DCMAKE_PREFIX_PATH:FILEPATH="$env:CONDA_PREFIX"
     cmake --build build --config Release -j 8
+    gdal --version
 
-.. only:: FIXME
+Run GDAL tests
+++++++++++++++
 
-    Run GDAL tests
-    ++++++++++++++
+.. code-block:: ps1
 
-    ::
-
-        cd c:\dev\GDAL
-        cd _build.vs2019
-        ctest -V --build-config Release
-
+    cd c:\dev\gdal\build
+    ctest -V --build-config Release
 
 .. _setting_dev_environment_variables:
 
@@ -180,7 +176,7 @@ To verify that environment variables have been set correctly, you can check the 
 .. code-block:: bash
 
     gdalinfo --version
-    # GDAL 3.11.0dev-c4a2e0b926-dirty, released 2025/04/10
+    # GDAL 3.13.0dev-8c3cf3de02, released 2025/11/14
 
 and the Python bindings:
 
