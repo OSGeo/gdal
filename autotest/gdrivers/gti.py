@@ -329,7 +329,7 @@ def test_gti_prototype_tile_wrong_gt_5th_value(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_gti_prototype_tile_wrong_gt_6th_value(tmp_vsimem):
+def test_gti_prototype_tile_wrong_gt_2nd_value(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
     protods_filename = str(tmp_vsimem / "protods_filename.tif")
@@ -346,7 +346,7 @@ def test_gti_prototype_tile_wrong_gt_6th_value(tmp_vsimem):
     lyr.CreateFeature(f)
     del index_ds
 
-    with pytest.raises(Exception, match="6th value of GeoTransform"):
+    with pytest.raises(Exception, match="2nd value of GeoTransform"):
         gdal.Open(index_filename)
 
 
@@ -367,6 +367,28 @@ def test_gti_no_extent(tmp_vsimem):
 
     with pytest.raises(Exception, match="Cannot get layer extent"):
         gdal.Open(index_filename)
+
+
+def test_gti_south_up(tmp_vsimem):
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    protods_filename = str(tmp_vsimem / "protods_filename.tif")
+    with gdal.GetDriverByName("GTiff").Create(protods_filename, 1, 2) as ds:
+        ds.SetGeoTransform([0, 1, 0, 10, 0, 1])
+        ds.WriteRaster(0, 0, 1, 2, b"\x01\x02")
+
+    index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
+    lyr = index_ds.CreateLayer("index")
+    lyr.CreateField(ogr.FieldDefn("location"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["location"] = protods_filename
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 10,0 12,1 12,1 12,0 12))"))
+    lyr.CreateFeature(f)
+    del index_ds
+
+    ds = gdal.Open(index_filename)
+    assert ds.GetGeoTransform() == (0, 1, 0, 12, 0, -1)
+    assert ds.ReadRaster() == b"\x02\x01"
 
 
 def test_gti_too_big_x(tmp_vsimem):
