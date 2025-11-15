@@ -18,7 +18,9 @@
 #include "gdalalg_vector_check_geometry.h"
 #include "gdalalg_vector_clean_coverage.h"
 #include "gdalalg_vector_clip.h"
+#include "gdalalg_vector_collect.h"
 #include "gdalalg_vector_concat.h"
+#include "gdalalg_vector_dissolve.h"
 #include "gdalalg_vector_edit.h"
 #include "gdalalg_vector_explode_collections.h"
 #include "gdalalg_vector_filter.h"
@@ -147,11 +149,13 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALVectorBufferAlgorithm>();
     registry.Register<GDALVectorCheckCoverageAlgorithm>();
     registry.Register<GDALVectorCheckGeometryAlgorithm>();
+    registry.Register<GDALVectorCollectAlgorithm>();
     registry.Register<GDALVectorConcatAlgorithm>();
     registry.Register<GDALVectorCleanCoverageAlgorithm>();
 
     registry.Register<GDALVectorClipAlgorithm>(
         addSuffixIfNeeded(GDALVectorClipAlgorithm::NAME));
+    registry.Register<GDALVectorDissolveAlgorithm>();
 
     registry.Register<GDALVectorEditAlgorithm>(
         addSuffixIfNeeded(GDALVectorEditAlgorithm::NAME));

@@ -198,8 +198,10 @@ Vector commands
    gdal_vector_check_geometry
    gdal_vector_clean_coverage
    gdal_vector_clip
+   gdal_vector_collect
    gdal_vector_concat
    gdal_vector_convert
+   gdal_vector_dissolve
    gdal_vector_edit
    gdal_vector_filter
    gdal_vector_info
