@@ -1120,7 +1120,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 "@QUIET_DELETE_ON_CREATE_COPY", "NO");
         }
 
-        if (psOptions->bNoOverwrite && !EQUAL(pszDest, ""))
+        if (psOptions->bNoOverwrite && !EQUAL(pszDest, "") &&
+            !EQUAL(pszDest, "/vsistdout/"))
         {
             VSIStatBufL sStat;
             if (VSIStatL(pszDest, &sStat) == 0)
@@ -1131,13 +1132,23 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                          pszDest);
                 return nullptr;
             }
-            else if (std::unique_ptr<GDALDataset>(GDALDataset::Open(pszDest)))
+            else
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Dataset '%s' already exists. Specify the --overwrite "
-                         "option to overwrite it.",
-                         pszDest);
-                return nullptr;
+                bool bExists;
+                {
+                    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                    bExists = std::unique_ptr<GDALDataset>(
+                                  GDALDataset::Open(pszDest)) != nullptr;
+                }
+                if (bExists)
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Dataset '%s' already exists. Specify the --overwrite "
+                        "option to overwrite it.",
+                        pszDest);
+                    return nullptr;
+                }
             }
         }
 
