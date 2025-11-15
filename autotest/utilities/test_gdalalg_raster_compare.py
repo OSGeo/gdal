@@ -1155,3 +1155,12 @@ def test_gdalalg_raster_compare_subdataset_progress():
         assert alg["output-string"] == ""
 
     assert tab_pct[0] == 1.0
+
+
+def test_gdalalg_raster_compare_same_file_pipeline():
+
+    with gdal.alg.raster.pipeline(
+        input="../gcore/data/byte.tif",
+        pipeline="read ! compare --reference ../gcore/data/byte.tif",
+    ) as alg:
+        assert alg["output-string"] == ""
