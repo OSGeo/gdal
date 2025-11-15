@@ -320,6 +320,11 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         return false;
     }
 
+    virtual bool OutputDatasetAllowedBeforeRunningStep() const
+    {
+        return false;
+    }
+
     virtual CPLJSONObject Get_OGR_SCHEMA_OpenOption_Layer() const
     {
         CPLJSONObject obj;

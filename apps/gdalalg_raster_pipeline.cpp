@@ -45,6 +45,7 @@
 #include "gdalalg_raster_tpi.h"
 #include "gdalalg_raster_tri.h"
 #include "gdalalg_raster_unscale.h"
+#include "gdalalg_raster_update.h"
 #include "gdalalg_raster_viewshed.h"
 #include "gdalalg_tee.h"
 
@@ -222,6 +223,8 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALRasterTPIAlgorithm>();
     registry.Register<GDALRasterTRIAlgorithm>();
     registry.Register<GDALRasterUnscaleAlgorithm>();
+    registry.Register<GDALRasterUpdateAlgorithm>(
+        addSuffixIfNeeded(GDALRasterUpdateAlgorithm::NAME));
     registry.Register<GDALRasterViewshedAlgorithm>();
     registry.Register<GDALTeeRasterAlgorithm>(
         addSuffixIfNeeded(GDALTeeRasterAlgorithm::NAME));

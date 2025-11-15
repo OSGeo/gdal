@@ -2836,8 +2836,7 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Register an auto complete function for a layer name argument */
     static void SetAutoCompleteFunctionForLayerName(
-        GDALInConstructionAlgorithmArg &layerArg,
-        GDALInConstructionAlgorithmArg &datasetArg);
+        GDALInConstructionAlgorithmArg &layerArg, GDALAlgorithmArg &datasetArg);
 
     /** Register an auto complete function for a field name argument */
     static void SetAutoCompleteFunctionForFieldName(
