@@ -979,7 +979,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                 CPLDebug("GTI", "Using %s as location field",
                          osLocationFieldName.c_str());
             }
-            else if (poLayerDefn->GetFieldIndex("stac_version") >= 0)
+            else if (poLayerDefn->GetFieldIndex("stac_version") >= 0 ||
+                     poLayerDefn->GetFieldIndex("stac_extensions") >= 0)
             {
                 const int nFieldCount = poLayerDefn->GetFieldCount();
                 // Look for "assets.xxxxx.href" fields
@@ -1017,7 +1018,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                 else if (nAssetCount == 0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "File has stac_version property but lacks assets");
+                             "File has stac_version or stac_extensions "
+                             "property but lacks assets");
                     return false;
                 }
             }
