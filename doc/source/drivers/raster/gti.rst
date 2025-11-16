@@ -74,16 +74,20 @@ The GTI driver accepts different types of connection strings:
 
   For example: ``tileindex.gti``
 
+.. _raster.gti.stac_geoparquet:
+
 STAC GeoParquet support
 -----------------------
 
 .. versionadded:: 3.10
 
-The driver can support `STAC GeoParquet catalogs <https://stac-utils.github.io/stac-geoparquet/latest/spec/stac-geoparquet-spec>`_,
+The driver can support `STAC GeoParquet catalogs <https://radiantearth.github.io/stac-geoparquet-spec/latest/>`_,
 provided GDAL is built with :ref:`vector.parquet` support.
 It can make use of fields (``proj:code``, ``proj:epsg``, ``proj:wkt2``, or ``proj:projson``) and ``proj:transform`` from the
 `Projection Extension Specification <https://github.com/stac-extensions/projection/>`_,
 to correctly infer the appropriate projection and resolution.
+
+Since GDAL 3.13, program :ref:`gdal_raster_index` can generate such catalogs with the ``--profile STAC-GeoParquet`` option.
 
 Example of a valid connection string: ``GTI:/vsicurl/https://github.com/stac-utils/stac-geoparquet/raw/main/tests/data/naip.parquet``
 
