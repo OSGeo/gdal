@@ -33,7 +33,7 @@ static constexpr int TZFLAG_UNINITIALIZED = -1;
         if (!(status).ok())                                                    \
         {                                                                      \
             CPLError(CE_Failure, CPLE_AppDefined, "%s failed",                 \
-                     ARROW_STRINGIFY(status));                                 \
+                     (status).message().c_str());                              \
             return (ret_value);                                                \
         }                                                                      \
     } while (false)
@@ -872,7 +872,8 @@ inline bool OGRArrowWriterLayer::CreateFieldFromArrowSchema(
     if (!result.ok())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "CreateFieldFromArrowSchema() failed");
+                 "CreateFieldFromArrowSchema() failed: %s",
+                 result.status().message().c_str());
         return false;
     }
     m_apoFieldsFromArrowSchema.emplace_back(std::move(*result));
