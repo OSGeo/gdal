@@ -1001,10 +1001,29 @@ def test_ComputeMinMaxLocation():
         and ret.maxY == 18
     )
 
-    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Float64)
+
+@pytest.mark.parametrize(
+    "datatype", [gdal.GDT_Float16, gdal.GDT_Float32, gdal.GDT_Float64]
+)
+def test_ComputeMinMaxLocation_nan(datatype):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, datatype)
     ds.GetRasterBand(1).Fill(float("nan"))
     ret = ds.GetRasterBand(1).ComputeMinMaxLocation()
     assert ret is None
+
+
+@pytest.mark.parametrize("value", [float("inf"), float("-inf")])
+@pytest.mark.parametrize(
+    "datatype", [gdal.GDT_Float16, gdal.GDT_Float32, gdal.GDT_Float64]
+)
+def test_ComputeMinMaxLocation_inf(value, datatype):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, datatype)
+    ds.GetRasterBand(1).Fill(value)
+    ret = ds.GetRasterBand(1).ComputeMinMaxLocation()
+    assert ret.min == value and ret.max == value
+    assert ret.minX == 0 and ret.minY == 0 and ret.maxX == 0 and ret.maxY == 0
 
 
 def test_create_numpy_types():
