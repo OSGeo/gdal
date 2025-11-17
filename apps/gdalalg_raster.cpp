@@ -122,7 +122,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterTPIAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterTRIAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterUnscaleAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterUpdateAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterUpdateAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterViewshedAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterZonalStatsAlgorithmStandalone>();
     }

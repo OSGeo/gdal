@@ -164,28 +164,21 @@ def test_algorithm(tmp_path):
 
 def test_algorithm_dataset_value(tmp_path):
 
+    outfilename = str(tmp_path / "out.tif")
+
+    gdal.Run("raster", "create", input="data/byte.tif", output=outfilename)
+
     reg = gdal.GetGlobalAlgorithmRegistry()
     raster = reg.InstantiateAlg("raster")
     update = raster.InstantiateSubAlgorithm("update")
 
-    input_arg = update.GetArg("input")
-    input_arg_value = input_arg.Get()
-    input_arg_value.SetName("data/byte.tif")
-    assert input_arg_value.GetName() == "data/byte.tif"
-    assert input_arg_value.GetDataset() is None
-
-    outfilename = str(tmp_path / "out.tif")
-
-    gdal.Run("raster", "create", input="data/byte.tif", output=outfilename)
+    update["input"] = "data/byte.tif"
 
     output_arg = update.GetArg("output")
     output_arg_value = output_arg.Get()
     output_arg_value.SetName(outfilename)
 
     assert update.Run()
-
-    in_ds = input_arg_value.GetDataset()
-    assert in_ds is not None
 
     out_ds = output_arg_value.GetDataset()
     assert out_ds is not None
@@ -425,23 +418,23 @@ def test_algorithm_arg_set_dataset(tmp_path):
     reg = gdal.GetGlobalAlgorithmRegistry()
     alg = reg["raster"]["update"]
 
-    alg["input"] = tmp_path
-    alg["input"] = "foo"
-    alg["input"] = gdal.GetDriverByName("MEM").Create("", 1, 1)
-    alg["input"] = [tmp_path]
-    alg["input"] = ["foo"]
-    alg["input"] = [gdal.GetDriverByName("MEM").Create("", 1, 1)]
+    alg["output"] = tmp_path
+    alg["output"] = "foo"
+    alg["output"] = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    alg["output"] = [tmp_path]
+    alg["output"] = ["foo"]
+    alg["output"] = [gdal.GetDriverByName("MEM").Create("", 1, 1)]
 
     with pytest.raises(TypeError):
-        alg["input"] = None
+        alg["output"] = None
     with pytest.raises(TypeError):
-        alg["input"] = []
+        alg["output"] = []
     with pytest.raises(TypeError):
-        alg["input"] = [None]
+        alg["output"] = [None]
     with pytest.raises(
         RuntimeError, match="Only one value supported for an argument of type Dataset"
     ):
-        alg["input"] = ["foo", "bar"]
+        alg["output"] = ["foo", "bar"]
 
 
 ###############################################################################
