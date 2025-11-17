@@ -495,3 +495,32 @@ def test_gdalalg_vector_check_geometry_no_geometry_field(alg):
         Exception, match="Specified layer 'source' has no geometry field"
     ):
         alg.Run()
+
+
+def test_gdalalg_vector_check_geometry_include_field(alg):
+
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["include-field"] = ["EAS_ID", "AREA"]
+    alg["output-format"] = "stream"
+    alg["include-valid"] = True
+
+    assert alg.Run()
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+    dst_defn = dst_lyr.GetLayerDefn()
+    assert dst_defn.GetFieldDefn(0).GetName() == "EAS_ID"
+    assert dst_defn.GetFieldDefn(1).GetName() == "AREA"
+
+    f = dst_lyr.GetNextFeature()
+    assert f["EAS_ID"] == 168
+    assert f["AREA"] == 215229.266
+
+
+def test_gdalalg_vector_check_geometry_include_field_error(alg):
+
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["include-field"] = "does_not_exist"
+    alg["output-format"] = "stream"
+
+    with pytest.raises(Exception, match="Specified field .* does not exist"):
+        alg.Run()

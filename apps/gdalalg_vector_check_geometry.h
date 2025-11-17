@@ -38,6 +38,7 @@ class GDALVectorCheckGeometryAlgorithm : public GDALVectorPipelineStepAlgorithm
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
+    std::vector<std::string> m_includeFields{};
     std::string m_geomField{};
     bool m_includeValid{false};
 };
