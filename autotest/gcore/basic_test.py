@@ -1180,3 +1180,14 @@ def test_basic_get_extent_rotated():
         assert ds.GetExtent() == pytest.approx(
             (1840900, 1841030, 1143870, 1144000), abs=4
         )
+
+
+def test_basic_GetDataTypeByName():
+
+    assert gdal.GetDataTypeByName("Byte") == gdal.GDT_Byte
+    assert gdal.GetDataTypeByName("Byte") == gdal.GDT_UInt8
+    assert gdal.GetDataTypeByName("UInt8") == gdal.GDT_Byte
+    assert gdal.GetDataTypeByName("UInt8") == gdal.GDT_UInt8
+
+    # For now, to avoid breaking backwards compatibility
+    assert gdal.GetDataTypeName(gdal.GDT_UInt8) == "Byte"
