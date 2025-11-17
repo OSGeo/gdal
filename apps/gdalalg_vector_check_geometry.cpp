@@ -31,6 +31,9 @@ GDALVectorCheckGeometryAlgorithm::GDALVectorCheckGeometryAlgorithm(
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
+    AddArg("include-field", 0,
+           _("Fields from input layer to include in output"), &m_includeFields);
+
     AddArg("include-valid", 0,
            _("Include valid inputs in output, with empty geometry"),
            &m_includeValid);
@@ -47,8 +50,10 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
     static constexpr const char *ERROR_DESCRIPTION_FIELD = "error";
 
   public:
-    GDALInvalidLocationLayer(OGRLayer &layer, bool bSingleLayerOutput,
-                             int srcGeomField, bool skipValid)
+    GDALInvalidLocationLayer(OGRLayer &layer,
+                             const std::vector<int> &srcFieldIndices,
+                             bool bSingleLayerOutput, int srcGeomField,
+                             bool skipValid)
         : GDALVectorPipelineOutputLayer(layer),
           m_defn(OGRFeatureDefn::CreateFeatureDefn(
               bSingleLayerOutput ? "error_location"
@@ -59,6 +64,18 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
           m_srcGeomField(srcGeomField), m_skipValid(skipValid)
     {
         m_defn->Reference();
+
+        if (!srcFieldIndices.empty())
+        {
+            const OGRFeatureDefn &srcDefn = *layer.GetLayerDefn();
+            m_srcFieldMap.resize(srcDefn.GetFieldCount(), -1);
+            int iDstField = 0;
+            for (int iSrcField : srcFieldIndices)
+            {
+                m_defn->AddFieldDefn(srcDefn.GetFieldDefn(iSrcField));
+                m_srcFieldMap[iSrcField] = iDstField++;
+            }
+        }
 
         auto poDescriptionFieldDefn =
             std::make_unique<OGRFieldDefn>(ERROR_DESCRIPTION_FIELD, OFTString);
@@ -82,7 +99,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
         return m_defn;
     }
 
-    std::unique_ptr<OGRFeature> CreateFeatureFromLastError()
+    std::unique_ptr<OGRFeature> CreateFeatureFromLastError() const
     {
         auto poErrorFeature = std::make_unique<OGRFeature>(m_defn);
 
@@ -244,6 +261,11 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
         if (poErrorFeature)
         {
+            if (!m_srcFieldMap.empty())
+            {
+                poErrorFeature->SetFieldsFrom(
+                    poSrcFeature.get(), m_srcFieldMap.data(), false, false);
+            }
             poErrorFeature->SetFID(poSrcFeature->GetFID());
             apoOutputFeatures.push_back(std::move(poErrorFeature));
         }
@@ -252,6 +274,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
     CPL_DISALLOW_COPY_ASSIGN(GDALInvalidLocationLayer)
 
   private:
+    std::vector<int> m_srcFieldMap{};
     OGRFeatureDefn *const m_defn;
     const GEOSContextHandle_t m_geosContext;
     const int m_srcGeomField;
@@ -310,9 +333,26 @@ bool GDALVectorCheckGeometryAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 return false;
             }
 
+            std::vector<int> includeFieldIndices;
+            for (const auto &fieldName : m_includeFields)
+            {
+                auto iSrcField =
+                    poSrcLayerDefn->GetFieldIndex(fieldName.c_str());
+                if (iSrcField == -1)
+                {
+                    ReportError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Specified field '%s' does not exist in layer '%s'",
+                        fieldName.c_str(), poSrcLayer->GetDescription());
+                    return false;
+                }
+                includeFieldIndices.push_back(iSrcField);
+            }
+
             outDS->AddLayer(*poSrcLayer,
                             std::make_unique<GDALInvalidLocationLayer>(
-                                *poSrcLayer, bSingleLayerOutput, geomFieldIndex,
+                                *poSrcLayer, includeFieldIndices,
+                                bSingleLayerOutput, geomFieldIndex,
                                 !m_includeValid));
         }
     }
