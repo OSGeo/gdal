@@ -82,8 +82,8 @@ GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm(bool standaloneStep)
     AddCreationOptionsArg(&m_creationOptions);
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
 
-    AddArg("field", 0, _("Attribute or geomery field(s) on which to partition"),
-           &m_fields)
+    AddArg("field", 0,
+           _("Attribute or geometry field(s) on which to partition"), &m_fields)
         .SetRequired();
     AddArg("scheme", 0, _("Partitioning scheme"), &m_scheme)
         .SetChoices(SCHEME_HIVE, SCHEME_FLAT)
