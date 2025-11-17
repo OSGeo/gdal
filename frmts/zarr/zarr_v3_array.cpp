@@ -888,7 +888,7 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
             if (str == "bool")  // boolean
             {
                 elt.nativeType = DtypeElt::NativeType::BOOLEAN;
-                eDT = GDT_Byte;
+                eDT = GDT_UInt8;
             }
             else if (str == "int8")
             {
@@ -898,7 +898,7 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
             else if (str == "uint8")
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
-                eDT = GDT_Byte;
+                eDT = GDT_UInt8;
             }
             else if (str == "int16")
             {

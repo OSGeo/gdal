@@ -338,9 +338,9 @@ CPLErr GDALWarpCutlineMaskerEx(void *pMaskFuncArg, int /* nBandCount */,
     GByte *pabyPolyMask = static_cast<GByte *>(CPLCalloc(nXSize, nYSize));
 
     auto poMEMDS =
-        MEMDataset::Create("warp_temp", nXSize, nYSize, 0, GDT_Byte, nullptr);
+        MEMDataset::Create("warp_temp", nXSize, nYSize, 0, GDT_UInt8, nullptr);
     GDALRasterBandH hMEMBand =
-        MEMCreateRasterBandEx(poMEMDS, 1, pabyPolyMask, GDT_Byte, 0, 0, false);
+        MEMCreateRasterBandEx(poMEMDS, 1, pabyPolyMask, GDT_UInt8, 0, 0, false);
     poMEMDS->AddMEMBand(hMEMBand);
 
     GDALDatasetH hMemDS = GDALDataset::ToHandle(poMEMDS);

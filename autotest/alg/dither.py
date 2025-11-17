@@ -31,7 +31,7 @@ def test_dither_1():
     b_band = src_ds.GetRasterBand(3)
 
     dst_ds = drv.Create(
-        "tmp/rgbsmall.tif", src_ds.RasterXSize, src_ds.RasterYSize, 1, gdal.GDT_Byte
+        "tmp/rgbsmall.tif", src_ds.RasterXSize, src_ds.RasterYSize, 1, gdal.GDT_UInt8
     )
     dst_band = dst_ds.GetRasterBand(1)
 

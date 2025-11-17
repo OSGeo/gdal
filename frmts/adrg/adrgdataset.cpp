@@ -110,7 +110,7 @@ ADRGRasterBand::ADRGRasterBand(ADRGDataset *poDSIn, int nBandIn)
     poDS = poDSIn;
     nBand = nBandIn;
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     nBlockXSize = 128;
     nBlockYSize = 128;

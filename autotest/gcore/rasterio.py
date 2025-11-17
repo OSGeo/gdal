@@ -42,7 +42,7 @@ def test_rasterio_1():
         ds.RasterXSize,
         ds.RasterYSize,
         data,
-        buf_type=gdal.GDT_Byte,
+        buf_type=gdal.GDT_UInt8,
         buf_xsize=1,
         buf_ysize=1,
     )
@@ -76,7 +76,7 @@ def test_rasterio_2():
         ds.RasterXSize,
         ds.RasterYSize,
         data,
-        buf_type=gdal.GDT_Byte,
+        buf_type=gdal.GDT_UInt8,
         buf_xsize=5,
         buf_ysize=4,
     )
@@ -122,12 +122,12 @@ def test_rasterio_3():
                                 k + 1,
                                 m + 1,
                                 data[xsize][ysize],
-                                buf_type=gdal.GDT_Byte,
+                                buf_type=gdal.GDT_UInt8,
                                 buf_xsize=xsize + 1,
                                 buf_ysize=ysize + 1,
                             )
                             data2 = ds.ReadRaster(
-                                i, j, k + 1, m + 1, xsize + 1, ysize + 1, gdal.GDT_Byte
+                                i, j, k + 1, m + 1, xsize + 1, ysize + 1, gdal.GDT_UInt8
                             )
                             assert (
                                 data2 == data[xsize][ysize]
@@ -179,12 +179,12 @@ def test_rasterio_4():
                                 k + 1,
                                 m + 1,
                                 data[(xsize + 1) * (ysize + 1) - 1],
-                                buf_type=gdal.GDT_Byte,
+                                buf_type=gdal.GDT_UInt8,
                                 buf_xsize=xsize + 1,
                                 buf_ysize=ysize + 1,
                             )
                             data2 = ds.ReadRaster(
-                                i, j, k + 1, m + 1, xsize + 1, ysize + 1, gdal.GDT_Byte
+                                i, j, k + 1, m + 1, xsize + 1, ysize + 1, gdal.GDT_UInt8
                             )
                             if data2 != data[(xsize + 1) * (ysize + 1) - 1]:
                                 print(i, j, k, m, xsize, ysize)
@@ -486,7 +486,7 @@ def rasterio_9_progress_callback(pct, message, user_data):
     return 1  # 1 to continue, 0 to stop
 
 
-def rasterio_9_checksum(data, buf_xsize, buf_ysize, data_type=gdal.GDT_Byte):
+def rasterio_9_checksum(data, buf_xsize, buf_ysize, data_type=gdal.GDT_UInt8):
     ds = gdal.GetDriverByName("MEM").Create("", buf_xsize, buf_ysize, 1)
     ds.GetRasterBand(1).WriteRaster(
         0, 0, buf_xsize, buf_ysize, data, buf_type=data_type
@@ -563,7 +563,7 @@ def test_rasterio_9():
     tab = [0, None]
     complex_ds = gdal.GetDriverByName("MEM").Create("", 20, 20, 1, gdal.GDT_CInt16)
     complex_ds.GetRasterBand(1).WriteRaster(
-        0, 0, 20, 20, ds.GetRasterBand(1).ReadRaster(), buf_type=gdal.GDT_Byte
+        0, 0, 20, 20, ds.GetRasterBand(1).ReadRaster(), buf_type=gdal.GDT_UInt8
     )
     data = complex_ds.GetRasterBand(1).ReadRaster(
         buf_xsize=10,
@@ -713,7 +713,7 @@ def test_rasterio_overview_subpixel_resampling():
     numpy = pytest.importorskip("numpy")
 
     temp_path = "/vsimem/rasterio_ovr.tif"
-    ds = gdal.GetDriverByName("GTiff").Create(temp_path, 8, 8, 1, gdal.GDT_Byte)
+    ds = gdal.GetDriverByName("GTiff").Create(temp_path, 8, 8, 1, gdal.GDT_UInt8)
     ds.GetRasterBand(1).WriteArray(
         numpy.array(
             [
@@ -892,7 +892,7 @@ def test_rasterio_13(dt):
     mem_ds.GetRasterBand(1).SetNoDataValue(0)
     if dt == gdal.GDT_Int8:
         x = (1 << 7) - 1
-    elif dt == gdal.GDT_Byte:
+    elif dt == gdal.GDT_UInt8:
         x = (1 << 8) - 1
     elif dt == gdal.GDT_Int16:
         x = (1 << 15) - 1
@@ -965,7 +965,7 @@ def test_rasterio_nearest_or_mode(dt, resample_alg, use_nan):
     mem_ds = gdal.GetDriverByName("MEM").Create("", 4, 4, 1, dt)
     if dt == gdal.GDT_Int8:
         x = (1 << 7) - 1
-    elif dt == gdal.GDT_Byte:
+    elif dt == gdal.GDT_UInt8:
         x = (1 << 8) - 1
     elif dt == gdal.GDT_Int16 or dt == gdal.GDT_CInt16:
         x = (1 << 15) - 1
@@ -1226,7 +1226,7 @@ def test_rasterio_nodata():
 
     ndv = 123
     btype = [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_Int32,
         gdal.GDT_Float32,
@@ -1583,7 +1583,7 @@ def test_rasterio_average_halfsize_downsampling_byte():
     v32 = 220
     m8 = (v29 + v30 + v31 + v32 + 2) >> 2
 
-    ds = gdal.GetDriverByName("MEM").Create("", 64 + 2, 4, 1, gdal.GDT_Byte)
+    ds = gdal.GetDriverByName("MEM").Create("", 64 + 2, 4, 1, gdal.GDT_UInt8)
     ds.WriteRaster(
         0,
         0,
@@ -2740,7 +2740,7 @@ def internal_test_rasterio_rms_halfsize_downsampling_byte_content(gdal_dt, struc
 
 def test_rasterio_rms_halfsize_downsampling_byte():
 
-    internal_test_rasterio_rms_halfsize_downsampling_byte_content(gdal.GDT_Byte, "B")
+    internal_test_rasterio_rms_halfsize_downsampling_byte_content(gdal.GDT_UInt8, "B")
 
 
 ###############################################################################
@@ -2750,7 +2750,7 @@ def test_rasterio_rms_halfsize_downsampling_byte():
 
 def test_rasterio_rms_halfsize_downsampling_byte_nodata_not_hit():
 
-    ds = gdal.GetDriverByName("MEM").Create("", 20, 6, 1, gdal.GDT_Byte)
+    ds = gdal.GetDriverByName("MEM").Create("", 20, 6, 1, gdal.GDT_UInt8)
     ds.GetRasterBand(1).SetNoDataValue(180)
     ds.WriteRaster(
         0,
@@ -3649,7 +3649,7 @@ def test_rasterio_float64(resample_alg):
 @pytest.mark.parametrize(
     "dt,struct_type,val",
     [
-        (gdal.GDT_Byte, "B", 255),
+        (gdal.GDT_UInt8, "B", 255),
         (gdal.GDT_UInt16, "H", 65535),
         (gdal.GDT_Float32, "f", 1.5),
         (gdal.GDT_Float32, "f", struct.unpack("<f", b"\x00\x00\x80\x00")[0]),  # FLT_MIN
@@ -3724,7 +3724,7 @@ def test_rasterio_constant_value(resample_alg, dt, struct_type, val):
 @pytest.mark.parametrize(
     "dt,struct_type,val",
     [
-        (gdal.GDT_Byte, "B", 255),
+        (gdal.GDT_UInt8, "B", 255),
         (gdal.GDT_UInt16, "H", 65535),
         (gdal.GDT_Float32, "f", 1.5),
         (gdal.GDT_Float32, "f", struct.unpack("<f", b"\x00\x00\x80\x00")[0]),  # FLT_MIN

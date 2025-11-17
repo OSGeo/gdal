@@ -31,7 +31,7 @@ def create_gtiff_from_array(
     gt=(0, 1, 0, 0, 0, -1),
     srs_wkt=None,
     nodata_val=None,
-    dtype=gdal.GDT_Byte,
+    dtype=gdal.GDT_UInt8,
 ):
     driver = gdal.GetDriverByName("GTiff")
     rows, cols = data_array.shape

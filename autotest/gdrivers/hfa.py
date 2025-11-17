@@ -338,7 +338,7 @@ def test_hfa_metadata_1(tmp_path):
     md1_img = str(tmp_path / "md_1.img")
 
     drv = gdal.GetDriverByName("HFA")
-    ds = drv.Create(md1_img, 100, 150, 1, gdal.GDT_Byte)
+    ds = drv.Create(md1_img, 100, 150, 1, gdal.GDT_UInt8)
 
     md_val = "0123456789" * 60
     md = {"test": md_val}
@@ -492,7 +492,7 @@ def test_hfa_nodata_write(tmp_path):
     nodata_img = str(tmp_path / "nodata.img")
 
     drv = gdal.GetDriverByName("HFA")
-    ds = drv.Create(nodata_img, 7, 7, 1, gdal.GDT_Byte)
+    ds = drv.Create(nodata_img, 7, 7, 1, gdal.GDT_UInt8)
 
     p = [1, 2, 1, 4, 1, 2, 1]
     raw_data = b"".join(struct.pack("h", x) for x in p)
@@ -576,7 +576,7 @@ def test_hfa_rotated_write():
         pass
 
     drv = gdal.GetDriverByName("HFA")
-    ds = drv.Create("tmp/rot.img", 100, 150, 1, gdal.GDT_Byte)
+    ds = drv.Create("tmp/rot.img", 100, 150, 1, gdal.GDT_UInt8)
 
     check_gt = (
         11856857.07898215,
@@ -1198,7 +1198,7 @@ def test_hfa_write_rat():
 
     rat = src_ds.GetRasterBand(1).GetDefaultRAT()
 
-    dst_ds = drv.Create("tmp/write_rat.img", 100, 100, 1, gdal.GDT_Byte)
+    dst_ds = drv.Create("tmp/write_rat.img", 100, 100, 1, gdal.GDT_UInt8)
 
     dst_ds.GetRasterBand(1).SetDefaultRAT(rat)
 
@@ -1299,7 +1299,7 @@ def test_hfa_read_nan_nodata(tmp_vsimem):
 
 def test_hfa_rat_grow_string(tmp_vsimem):
     with gdal.GetDriverByName("HFA").Create(
-        tmp_vsimem / "test.img", 1, 1, 1, gdal.GDT_Byte
+        tmp_vsimem / "test.img", 1, 1, 1, gdal.GDT_UInt8
     ) as ds:
         rat = gdal.RasterAttributeTable()
         rat.CreateColumn("str", gdal.GFT_String, gdal.GFU_Generic)
@@ -1324,7 +1324,7 @@ def test_hfa_rat_grow_string(tmp_vsimem):
 def test_hfa_rat_new_types(tmp_vsimem):
 
     with gdal.GetDriverByName("HFA").Create(
-        tmp_vsimem / "test.img", 1, 1, 1, gdal.GDT_Byte
+        tmp_vsimem / "test.img", 1, 1, 1, gdal.GDT_UInt8
     ) as ds:
         rat = gdal.RasterAttributeTable()
         rat.CreateColumn("bool", gdal.GFT_Boolean, gdal.GFU_Generic)

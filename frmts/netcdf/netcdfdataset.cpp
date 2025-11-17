@@ -399,9 +399,9 @@ netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
     else
     {
         if (nc_datatype == NC_BYTE)
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
         else if (nc_datatype == NC_CHAR)
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
         else if (nc_datatype == NC_SHORT)
             eDataType = GDT_Int16;
         else if (nc_datatype == NC_INT)
@@ -411,7 +411,7 @@ netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
         else if (nc_datatype == NC_DOUBLE)
             eDataType = GDT_Float64;
         else if (nc_datatype == NC_UBYTE)
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
         else if (nc_datatype == NC_USHORT)
             eDataType = GDT_UInt16;
         else if (nc_datatype == NC_UINT)
@@ -922,7 +922,7 @@ netCDFRasterBand::netCDFRasterBand(
 
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             nc_datatype = NC_BYTE;
             // NC_UBYTE (unsigned byte) is only available for NC4.
             if (poNCDFDS->eFormat == NCDF_FORMAT_NC4)
@@ -1055,7 +1055,7 @@ netCDFRasterBand::netCDFRasterBand(
     }
 
     // For Byte data add signed/unsigned info.
-    if (eDataType == GDT_Byte || eDataType == GDT_Int8)
+    if (eDataType == GDT_UInt8 || eDataType == GDT_Int8)
     {
         if (bDefineVar)
         {
@@ -1470,7 +1470,7 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
         cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
         int status;
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
         {
             if (bSignedData)
             {
@@ -2355,7 +2355,7 @@ bool netCDFRasterBand::FetchNetcdfChunk(size_t xstart, size_t ystart,
 
     // Read data according to type.
     int status;
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         if (bSignedData)
         {
@@ -2723,7 +2723,7 @@ CPLErr netCDFRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     // Copy data according to type.
     int status = 0;
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         if (bSignedData)
             status = nc_put_vara_schar(cdfid, nZId, start, edge,
@@ -9484,7 +9484,7 @@ GDALDataset *netCDFDataset::Create(const char *pszFilename, int nXSize,
     // TODO should this only be done in Create()
     poDS->bSignedData = true;
     const char *pszValue = CSLFetchNameValueDef(papszOptions, "PIXELTYPE", "");
-    if (eType == GDT_Byte && !EQUAL(pszValue, "SIGNEDBYTE"))
+    if (eType == GDT_UInt8 && !EQUAL(pszValue, "SIGNEDBYTE"))
         poDS->bSignedData = false;
 
     // Add Conventions, GDAL info and history.
@@ -9942,7 +9942,7 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         GDALRasterBand *poDstBand = poDS->GetRasterBand(iBand);
 
         // Copy band data.
-        if (eDT == GDT_Byte)
+        if (eDT == GDT_UInt8)
         {
             CPLDebug("GDAL_netCDF", "GByte Band#%d", iBand);
             eErr = NCDFCopyBand<GByte>(poSrcBand, poDstBand, nXSize, nYSize,

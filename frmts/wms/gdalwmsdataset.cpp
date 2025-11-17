@@ -38,7 +38,7 @@
 /************************************************************************/
 GDALWMSDataset::GDALWMSDataset()
     : m_mini_driver(nullptr), m_cache(nullptr), m_poColorTable(nullptr),
-      m_data_type(GDT_Byte), m_block_size_x(0), m_block_size_y(0),
+      m_data_type(GDT_UInt8), m_block_size_x(0), m_block_size_y(0),
       m_use_advise_read(0), m_verify_advise_read(0), m_offline_mode(0),
       m_http_max_conn(0), m_http_timeout(0), m_http_options(nullptr),
       m_tileOO(nullptr), m_clamp_requests(true), m_unsafeSsl(false),

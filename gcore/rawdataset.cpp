@@ -426,10 +426,10 @@ CPLErr RawRasterBand::FlushCache(bool bAtClosing)
 bool RawRasterBand::NeedsByteOrderChange() const
 {
 #ifdef CPL_LSB
-    return eDataType != GDT_Byte &&
+    return eDataType != GDT_UInt8 &&
            eByteOrder != RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
 #else
-    return eDataType != GDT_Byte &&
+    return eDataType != GDT_UInt8 &&
            eByteOrder != RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
 #endif
 }

@@ -395,7 +395,7 @@ L1BMaskBand::L1BMaskBand(L1BDataset *poDSIn)
               poDSIn->eL1BFormat == L1B_NOAA15_NOHDR);
 
     poDS = poDSIn;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     nRasterXSize = poDS->GetRasterXSize();
     nRasterYSize = poDS->GetRasterYSize();
@@ -3091,7 +3091,7 @@ L1BCloudsRasterBand::L1BCloudsRasterBand(L1BCloudsDataset *poDSIn, int nBandIn)
     nBand = nBandIn;
     nRasterXSize = poDSIn->nRasterXSize;
     nRasterYSize = poDSIn->nRasterYSize;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     nBlockXSize = nRasterXSize;
     nBlockYSize = 1;
 }

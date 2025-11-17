@@ -89,7 +89,7 @@ NWT_GRCRasterBand::NWT_GRCRasterBand(NWT_GRCDataset *poDSIn, int nBandIn)
     NWT_GRCDataset *poGDS = cpl::down_cast<NWT_GRCDataset *>(poDS);
 
     if (poGDS->pGrd->nBitsPerPixel == 8)
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
     else if (poGDS->pGrd->nBitsPerPixel == 16)
         eDataType = GDT_UInt16;
     else                         /* if( poGDS->pGrd->nBitsPerPixel == 32 ) */

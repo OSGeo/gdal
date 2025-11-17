@@ -220,7 +220,7 @@ GDALDataset *PNMDataset::Open(GDALOpenInfo *poOpenInfo)
 
     GDALDataType eDataType = GDT_Unknown;
     if (nMaxValue < 256)
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
     else
         eDataType = GDT_UInt16;
 
@@ -296,7 +296,7 @@ GDALDataset *PNMDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Verify input options.                                           */
     /* -------------------------------------------------------------------- */
-    if (eType != GDT_Byte && eType != GDT_UInt16)
+    if (eType != GDT_UInt8 && eType != GDT_UInt16)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create PNM dataset with an illegal "
@@ -353,14 +353,14 @@ GDALDataset *PNMDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     if (pszMaxValue)
     {
         nMaxValue = atoi(pszMaxValue);
-        if (eType == GDT_Byte && (nMaxValue > 255 || nMaxValue < 0))
+        if (eType == GDT_UInt8 && (nMaxValue > 255 || nMaxValue < 0))
             nMaxValue = 255;
         else if (nMaxValue > 65535 || nMaxValue < 0)
             nMaxValue = 65535;
     }
     else
     {
-        if (eType == GDT_Byte)
+        if (eType == GDT_UInt8)
             nMaxValue = 255;
         else
             nMaxValue = 65535;

@@ -1304,7 +1304,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
     VRTSourcedRasterBand *poMaskVRTBand = nullptr;
     if (bAddAlpha)
     {
-        poVRTDS->AddBand(GDT_Byte);
+        poVRTDS->AddBand(GDT_UInt8);
         GDALRasterBand *poBand = poVRTDS->GetRasterBand(nSelectedBands + 1);
         poBand->SetColorInterpretation(GCI_AlphaBand);
     }
@@ -1399,7 +1399,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
                     hProxyDS,
                     j < static_cast<int>(asBandProperties.size())
                         ? asBandProperties[j].dataType
-                        : GDT_Byte,
+                        : GDT_UInt8,
                     psDatasetProperties->nBlockXSize,
                     psDatasetProperties->nBlockYSize);
             }
@@ -1410,7 +1410,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
                         GDALDataset::FromHandle(hProxyDS))
                         ->GetRasterBand(1))
                     ->AddSrcMaskBandDescription(
-                        GDT_Byte, psDatasetProperties->nMaskBlockXSize,
+                        GDT_UInt8, psDatasetProperties->nMaskBlockXSize,
                         psDatasetProperties->nMaskBlockYSize);
             }
 

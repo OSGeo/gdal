@@ -327,7 +327,7 @@ def test_multidim_getresampled_3d():
     dimY = ar_b1.GetDimensions()[0]
     dimX = ar_b1.GetDimensions()[1]
     ar = rg.CreateMDArray(
-        "ar", [dimBand, dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "ar", [dimBand, dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     ar.SetOffset(1.5)
     ar.SetScale(2.5)
@@ -377,7 +377,7 @@ def test_multidim_getresampled_error_single_dim():
     mem_ds = drv.CreateMultiDimensional("myds")
     rg = mem_ds.GetRootGroup()
     dimX = rg.CreateDimension("X", None, None, 3)
-    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
     with gdal.quiet_errors():
         resampled_ar = ar.GetResampled([None], gdal.GRIORA_NearestNeighbour, None)
         assert resampled_ar is None
@@ -391,7 +391,7 @@ def test_multidim_getresampled_error_too_large_y():
     dimY = rg.CreateDimension("Y", None, None, 4)
     dimX = rg.CreateDimension("X", None, None, 3)
     ar = rg.CreateMDArray(
-        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     new_dimY = rg.CreateDimension("Y", None, None, 4 * 1000 * 1000 * 1000)
     with gdal.quiet_errors():
@@ -409,7 +409,7 @@ def test_multidim_getresampled_error_too_large_x():
     dimY = rg.CreateDimension("Y", None, None, 4)
     dimX = rg.CreateDimension("X", None, None, 3)
     ar = rg.CreateMDArray(
-        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     new_dimX = rg.CreateDimension("Y", None, None, 4 * 1000 * 1000 * 1000)
     with gdal.quiet_errors():
@@ -427,7 +427,7 @@ def test_multidim_getresampled_error_no_geotransform():
     dimY = rg.CreateDimension("Y", None, None, 2)
     dimX = rg.CreateDimension("X", None, None, 3)
     ar = rg.CreateMDArray(
-        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     with gdal.quiet_errors():
         resampled_ar = ar.GetResampled([None, None], gdal.GRIORA_NearestNeighbour, None)
@@ -446,7 +446,7 @@ def test_multidim_getresampled_error_extra_dim_not_same():
     dimY = ar_b1.GetDimensions()[0]
     dimX = ar_b1.GetDimensions()[1]
     ar = rg.CreateMDArray(
-        "ar", [dimOther, dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "ar", [dimOther, dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
 
     dimOtherNew = rg.CreateDimension("otherNew", None, None, 1)
@@ -1298,7 +1298,9 @@ def test_multidim_SubsetDimensionFromSelection():
         "too_large_dim", None, None, 10 * 1024 * 1024 + 1
     )
     rg.CreateMDArray(
-        "too_large_dim_ar", [too_large_dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "too_large_dim_ar",
+        [too_large_dim],
+        gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
     )
 
     same_value = rg.CreateMDArray(
@@ -1947,7 +1949,7 @@ def test_multidim_dataset_as_mdarray_errors():
 
     with pytest.raises(Exception, match="Non-uniform data type amongst bands"):
         with gdal.GetDriverByName("MEM").Create("", 1, 1, 0) as ds:
-            ds.AddBand(gdal.GDT_Byte)
+            ds.AddBand(gdal.GDT_UInt8)
             ds.AddBand(gdal.GDT_UInt16)
             ds.AsMDArray()
 

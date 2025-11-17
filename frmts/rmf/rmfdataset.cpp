@@ -1640,7 +1640,7 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
     /* -------------------------------------------------------------------- */
     /*  Set up essential image parameters.                                  */
     /* -------------------------------------------------------------------- */
-    GDALDataType eType = GDT_Byte;
+    GDALDataType eType = GDT_UInt8;
 
     poDS->nRasterXSize = poDS->sHeader.nWidth;
     poDS->nRasterYSize = poDS->sHeader.nHeight;
@@ -1728,14 +1728,14 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
                 delete poDS;
                 return nullptr;
         }
-        eType = GDT_Byte;
+        eType = GDT_UInt8;
     }
     else
     {
         poDS->nBands = 1;
         if (poDS->sHeader.nBitDepth == 8)
         {
-            eType = GDT_Byte;
+            eType = GDT_UInt8;
         }
         else if (poDS->sHeader.nBitDepth == 16)
         {
@@ -2056,7 +2056,7 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    if (nBandsIn == 1 && eType != GDT_Byte && eType != GDT_Int16 &&
+    if (nBandsIn == 1 && eType != GDT_UInt8 && eType != GDT_Int16 &&
         eType != GDT_Int32 && eType != GDT_Float64)
     {
         CPLError(
@@ -2069,7 +2069,7 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    if (nBandsIn == 3 && eType != GDT_Byte)
+    if (nBandsIn == 3 && eType != GDT_UInt8)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -2801,7 +2801,7 @@ int RMFDataset::SetupCompression(GDALDataType eType, const char *pszFilename)
     }
     else if (sHeader.iCompression == RMF_COMPRESSION_JPEG)
     {
-        if (eType != GDT_Byte || nBands != RMF_JPEG_BAND_COUNT ||
+        if (eType != GDT_UInt8 || nBands != RMF_JPEG_BAND_COUNT ||
             sHeader.nBitDepth != 24)
         {
             CPLError(CE_Failure, CPLE_AppDefined,

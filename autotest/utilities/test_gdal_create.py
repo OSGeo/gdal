@@ -82,7 +82,7 @@ def test_gdal_create_pdf_no_direct_write_capabilities(gdal_create_path, tmp_path
     assert ds.RasterCount == 1
     assert ds.RasterXSize == 1
     assert ds.RasterYSize == 2
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     assert ds.GetRasterBand(1).GetNoDataValue() is None
     assert ds.GetProjectionRef() == ""
     assert ds.GetGeoTransform(can_return_null=True) is None

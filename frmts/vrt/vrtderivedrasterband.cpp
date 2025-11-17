@@ -68,7 +68,7 @@ static PyObject *GDALCreateNumpyArray(PyObject *pCreateArray, void *pBuffer,
     const char *pszDataType = nullptr;
     switch (eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             pszDataType = "uint8";
             break;
         case GDT_Int8:

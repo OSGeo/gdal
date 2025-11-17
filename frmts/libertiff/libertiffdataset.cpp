@@ -1881,10 +1881,10 @@ GDALDataType LIBERTIFFDataset::ComputeGDALDataType() const
                  m_image->planarConfiguration() ==
                      LIBERTIFF_NS::PlanarConfiguration::Separate))
             {
-                eDT = GDT_Byte;
+                eDT = GDT_UInt8;
             }
             else if (m_image->bitsPerSample() == 8)
-                eDT = GDT_Byte;
+                eDT = GDT_UInt8;
             else if (m_image->bitsPerSample() == 16)
                 eDT = GDT_UInt16;
             else if (m_image->bitsPerSample() == 32)
@@ -2388,7 +2388,7 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
                 "IMAGE_STRUCTURE");
         }
 
-        if (l_nBands == 1 && eDT == GDT_Byte)
+        if (l_nBands == 1 && eDT == GDT_UInt8)
         {
             poBand->ReadColorMap();
         }
@@ -2621,7 +2621,7 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
                         poMaskDS->GetRasterYSize() ==
                             poLastNonMaskDS->nRasterYSize &&
                         poMaskDS->GetRasterBand(1)->GetRasterDataType() ==
-                            GDT_Byte)
+                            GDT_UInt8)
                     {
                         poMaskDS->m_bExpand1To255 = true;
                         poLastNonMaskDS->m_poMaskDS = std::move(poMaskDS);

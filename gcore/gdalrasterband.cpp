@@ -541,7 +541,7 @@ template <class T> struct GetGDTFromCppType;
         static constexpr GDALDataType GDT = eDT;                               \
     }
 
-DEFINE_GetGDTFromCppType(uint8_t, GDT_Byte);
+DEFINE_GetGDTFromCppType(uint8_t, GDT_UInt8);
 DEFINE_GetGDTFromCppType(int8_t, GDT_Int8);
 DEFINE_GetGDTFromCppType(uint16_t, GDT_UInt16);
 DEFINE_GetGDTFromCppType(int16_t, GDT_Int16);
@@ -1022,7 +1022,7 @@ INSTANTIATE_READ_RASTER_VECTOR(std::complex<double>)
  {
      memset( panHistogram, 0, sizeof(GUIntBig) * 256 );
 
-     CPLAssert( poBand->GetRasterDataType() == GDT_Byte );
+     CPLAssert( poBand->GetRasterDataType() == GDT_UInt8 );
 
      int nXBlockSize, nYBlockSize;
 
@@ -2905,7 +2905,7 @@ double GDALRasterBand::GetMaximum(int *pbSuccess)
 
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         {
             EnablePixelTypeSignedByteWarning(false);
             const char *pszPixelType =
@@ -3014,7 +3014,7 @@ double GDALRasterBand::GetMinimum(int *pbSuccess)
 
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         {
             EnablePixelTypeSignedByteWarning(false);
             const char *pszPixelType =
@@ -4259,7 +4259,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
     }
 
     bool bSignedByte = false;
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
@@ -4322,7 +4322,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
 
             if (poMaskBand->RasterIO(GF_Read, 0, 0, nRasterXSize, nRasterYSize,
                                      pabyMaskData, nXReduced, nYReduced,
-                                     GDT_Byte, 0, 0, nullptr) != CE_None)
+                                     GDT_UInt8, 0, 0, nullptr) != CE_None)
             {
                 CPLFree(pData);
                 CPLFree(pabyMaskData);
@@ -4343,7 +4343,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
 
                 switch (eDataType)
                 {
-                    case GDT_Byte:
+                    case GDT_UInt8:
                     {
                         if (bSignedByte)
                             dfValue =
@@ -4558,7 +4558,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
             if (poMaskBand &&
                 poMaskBand->RasterIO(GF_Read, iXBlock * nBlockXSize,
                                      iYBlock * nBlockYSize, nXCheck, nYCheck,
-                                     pabyMaskData, nXCheck, nYCheck, GDT_Byte,
+                                     pabyMaskData, nXCheck, nYCheck, GDT_UInt8,
                                      0, nBlockXSize, nullptr) != CE_None)
             {
                 CPLFree(pabyMaskData);
@@ -4575,7 +4575,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
             void *pData = poBlock->GetDataRef();
 
             // this is a special case for a common situation.
-            if (eDataType == GDT_Byte && !bSignedByte && dfScale == 1.0 &&
+            if (eDataType == GDT_UInt8 && !bSignedByte && dfScale == 1.0 &&
                 (dfMin >= -0.5 && dfMin <= 0.5) && nYCheck == nBlockYSize &&
                 nXCheck == nBlockXSize && nBuckets == 256)
             {
@@ -4614,7 +4614,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
 
                     switch (eDataType)
                     {
-                        case GDT_Byte:
+                        case GDT_UInt8:
                         {
                             if (bSignedByte)
                                 dfValue =
@@ -4916,7 +4916,7 @@ CPLErr GDALRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
     int nBuckets = 256;
 
     bool bSignedByte = false;
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
@@ -4926,7 +4926,7 @@ CPLErr GDALRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
             pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
     }
 
-    if (GetRasterDataType() == GDT_Byte && !bSignedByte)
+    if (GetRasterDataType() == GDT_UInt8 && !bSignedByte)
     {
         *pdfMin = -0.5;
         *pdfMax = 255.5;
@@ -6341,7 +6341,7 @@ static inline double GetPixelValue(GDALDataType eDataType, bool bSignedByte,
     double dfValue = 0;
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         {
             if (bSignedByte)
                 dfValue = static_cast<const signed char *>(pData)[iOffset];
@@ -6988,7 +6988,7 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
     }
 
     bool bSignedByte = false;
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
@@ -7051,7 +7051,7 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
 
             if (poMaskBand->RasterIO(GF_Read, 0, 0, nRasterXSize, nRasterYSize,
                                      pabyMaskData, nXReduced, nYReduced,
-                                     GDT_Byte, 0, 0, nullptr) != CE_None)
+                                     GDT_UInt8, 0, 0, nullptr) != CE_None)
             {
                 CPLFree(pData);
                 CPLFree(pabyMaskData);
@@ -7124,9 +7124,9 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         if (nSampleRate == 1)
             bApproxOK = false;
 
-        // Particular case for GDT_Byte and GUInt16 that only use integral types
+        // Particular case for GDT_UInt8 and GUInt16 that only use integral types
         // for each block, and possibly for the whole raster.
-        if (!poMaskBand && ((eDataType == GDT_Byte && !bSignedByte) ||
+        if (!poMaskBand && ((eDataType == GDT_UInt8 && !bSignedByte) ||
                             eDataType == GDT_UInt16))
         {
             // We can do integer computation on the whole raster in the Byte case
@@ -7136,7 +7136,7 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             // For GUInt16, this limits to raster of 4 giga pixels
 
             const bool bIntegerStats =
-                ((eDataType == GDT_Byte &&
+                ((eDataType == GDT_UInt8 &&
                   static_cast<GUIntBig>(nBlocksPerRow) * nBlocksPerColumn /
                           nSampleRate <
                       GUINTBIG_MAX / (255U * 255U) /
@@ -7153,7 +7153,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 CPLTestBool(
                     CPLGetConfigOption("GDAL_STATS_USE_INTEGER_STATS", "YES"));
 
-            const GUInt32 nMaxValueType = (eDataType == GDT_Byte) ? 255 : 65535;
+            const GUInt32 nMaxValueType =
+                (eDataType == GDT_UInt8) ? 255 : 65535;
             GUInt32 nMin = nMaxValueType;
             GUInt32 nMax = 0;
             GUIntBig nSum = 0;
@@ -7201,7 +7202,7 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 GUIntBig &nBlockValidCountRef =
                     bIntegerStats ? nValidCount : nBlockValidCount;
 
-                if (eDataType == GDT_Byte)
+                if (eDataType == GDT_UInt8)
                 {
                     ComputeStatisticsInternal<
                         GByte, /* COMPUTE_OTHER_STATS = */ true>::
@@ -7378,7 +7379,7 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             if (poMaskBand &&
                 poMaskBand->RasterIO(GF_Read, iXBlock * nBlockXSize,
                                      iYBlock * nBlockYSize, nXCheck, nYCheck,
-                                     pabyMaskData, nXCheck, nYCheck, GDT_Byte,
+                                     pabyMaskData, nXCheck, nYCheck, GDT_UInt8,
                                      0, nBlockXSize, nullptr) != CE_None)
             {
                 CPLFree(pabyMaskData);
@@ -8035,16 +8036,16 @@ static void ComputeMinMaxGeneric(const void *pData, GDALDataType eDataType,
         case GDT_Unknown:
             CPLAssert(false);
             break;
-        case GDT_Byte:
+        case GDT_UInt8:
             if (bSignedByte)
             {
-                ComputeMinMaxGeneric<GDT_Byte, true>(
+                ComputeMinMaxGeneric<GDT_UInt8, true>(
                     pData, nXCheck, nYCheck, nBlockXSize, sNoDataValues,
                     pabyMaskData, dfMin, dfMax);
             }
             else
             {
-                ComputeMinMaxGeneric<GDT_Byte, false>(
+                ComputeMinMaxGeneric<GDT_UInt8, false>(
                     pData, nXCheck, nYCheck, nBlockXSize, sNoDataValues,
                     pabyMaskData, dfMin, dfMax);
             }
@@ -8163,7 +8164,7 @@ static bool ComputeMinMaxGenericIterBlocks(
         if (poMaskBand &&
             poMaskBand->RasterIO(GF_Read, iXBlock * nBlockXSize,
                                  iYBlock * nBlockYSize, nXCheck, nYCheck,
-                                 pabyMaskData, nXCheck, nYCheck, GDT_Byte, 0,
+                                 pabyMaskData, nXCheck, nYCheck, GDT_UInt8, 0,
                                  nBlockXSize, nullptr) != CE_None)
         {
             CPLFree(pabyMaskData);
@@ -8281,7 +8282,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
     }
 
     bool bSignedByte = false;
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
@@ -8294,7 +8295,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-    GUInt32 nMin = (eDataType == GDT_Byte)
+    GUInt32 nMin = (eDataType == GDT_UInt8)
                        ? 255
                        : 65535;  // used for GByte & GUInt16 cases
     GUInt32 nMax = 0;            // used for GByte & GUInt16 cases
@@ -8307,7 +8308,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
     double dfMax =
         -std::numeric_limits<double>::infinity();  // used for generic code path
     const bool bUseOptimizedPath =
-        !poMaskBand && ((eDataType == GDT_Byte && !bSignedByte) ||
+        !poMaskBand && ((eDataType == GDT_UInt8 && !bSignedByte) ||
                         eDataType == GDT_Int16 || eDataType == GDT_UInt16);
 
     const auto ComputeMinMaxForBlock =
@@ -8315,7 +8316,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
          &nMaxInt16](const void *pData, int nXCheck, int nBufferWidth,
                      int nYCheck)
     {
-        if (eDataType == GDT_Byte && !bSignedByte)
+        if (eDataType == GDT_UInt8 && !bSignedByte)
         {
             const bool bHasNoData =
                 sNoDataValues.bGotNoDataValue &&
@@ -8431,7 +8432,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
 
             if (poMaskBand->RasterIO(GF_Read, 0, 0, nRasterXSize, nRasterYSize,
                                      pabyMaskData, nXReduced, nYReduced,
-                                     GDT_Byte, 0, 0, nullptr) != CE_None)
+                                     GDT_UInt8, 0, 0, nullptr) != CE_None)
             {
                 CPLFree(pData);
                 CPLFree(pabyMaskData);
@@ -8504,7 +8505,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
 
                 poBlock->DropLock();
 
-                if (eDataType == GDT_Byte && !bSignedByte && nMin == 0 &&
+                if (eDataType == GDT_UInt8 && !bSignedByte && nMin == 0 &&
                     nMax == 255)
                     break;
             }
@@ -8524,7 +8525,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
 
     if (bUseOptimizedPath)
     {
-        if ((eDataType == GDT_Byte && !bSignedByte) || eDataType == GDT_UInt16)
+        if ((eDataType == GDT_UInt8 && !bSignedByte) || eDataType == GDT_UInt16)
         {
             dfMin = nMin;
             dfMax = nMax;
@@ -8647,7 +8648,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
     }
 
     bool bSignedByte = false;
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
@@ -8683,7 +8684,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
         if (poMaskBand &&
             poMaskBand->RasterIO(GF_Read, iXBlock * nBlockXSize,
                                  iYBlock * nBlockYSize, nXCheck, nYCheck,
-                                 pabyMaskData, nXCheck, nYCheck, GDT_Byte, 0,
+                                 pabyMaskData, nXCheck, nYCheck, GDT_UInt8, 0,
                                  nBlockXSize, nullptr) != CE_None)
         {
             CPLFree(pabyMaskData);
@@ -8792,7 +8793,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
 
         poBlock->DropLock();
 
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
         {
             if (bNeedsMin && dfMin == 0)
             {
@@ -9062,7 +9063,7 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT(GDALRasterBandH hBand,
  * </li>
  * <li>If there is no nodata value, but the dataset has an alpha band that seems
  * to apply to this band (specific rules yet to be determined) and that is of
- * type GDT_Byte then that alpha band will be returned, and the flags
+ * type GDT_UInt8 then that alpha band will be returned, and the flags
  * GMF_PER_DATASET and GMF_ALPHA will be returned in the flags.
  * </li>
  * <li>If neither of the above apply, an instance of the new
@@ -9275,7 +9276,7 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
         this == poDS->GetRasterBand(1) &&
         poDS->GetRasterBand(2)->GetColorInterpretation() == GCI_AlphaBand)
     {
-        if (poDS->GetRasterBand(2)->GetRasterDataType() == GDT_Byte)
+        if (poDS->GetRasterBand(2)->GetRasterDataType() == GDT_UInt8)
         {
             nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
             poMask.resetNotOwned(poDS->GetRasterBand(2));
@@ -9303,7 +9304,7 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
          this == poDS->GetRasterBand(3)) &&
         poDS->GetRasterBand(4)->GetColorInterpretation() == GCI_AlphaBand)
     {
-        if (poDS->GetRasterBand(4)->GetRasterDataType() == GDT_Byte)
+        if (poDS->GetRasterBand(4)->GetRasterDataType() == GDT_UInt8)
         {
             nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
             poMask.resetNotOwned(poDS->GetRasterBand(4));
@@ -9401,7 +9402,7 @@ GDALRasterBandH CPL_STDCALL GDALGetMaskBand(GDALRasterBandH hBand)
  * </li>
  * <li>If there is no nodata value, but the dataset has an alpha band that
  * seems to apply to this band (specific rules yet to be determined) and that is
- * of type GDT_Byte then that alpha band will be returned, and the flags
+ * of type GDT_UInt8 then that alpha band will be returned, and the flags
  * GMF_PER_DATASET and GMF_ALPHA will be returned in the flags.
  * </li>
  * <li>If neither of the above apply, an instance of the new
@@ -9667,8 +9668,8 @@ GDALRasterBand::GetIndexColorTranslationTo(GDALRasterBand *poReferenceBand,
     if (poReferenceBand->GetColorInterpretation() == GCI_PaletteIndex &&
         // cppcheck-suppress knownConditionTrueFalse
         GetColorInterpretation() == GCI_PaletteIndex &&
-        poReferenceBand->GetRasterDataType() == GDT_Byte &&
-        GetRasterDataType() == GDT_Byte)
+        poReferenceBand->GetRasterDataType() == GDT_UInt8 &&
+        GetRasterDataType() == GDT_UInt8)
     {
         const GDALColorTable *srcColorTable = GetColorTable();
         GDALColorTable *destColorTable = poReferenceBand->GetColorTable();
@@ -10378,7 +10379,7 @@ const char *GDALRasterBand::GetMetadataItem(const char *pszName,
                                             const char *pszDomain)
 {
     // TODO (GDAL 4.0?): remove this when GDAL 3.7 has been widely adopted.
-    if (m_bEnablePixelTypeSignedByteWarning && eDataType == GDT_Byte &&
+    if (m_bEnablePixelTypeSignedByteWarning && eDataType == GDT_UInt8 &&
         pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
         EQUAL(pszName, "PIXELTYPE"))
     {

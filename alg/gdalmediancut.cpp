@@ -445,13 +445,13 @@ int GDALComputeMedianCutPCTInternal(
         }
 
         err = GDALRasterIO(hRed, GF_Read, 0, iLine, nXSize, 1, pabyRedLine,
-                           nXSize, 1, GDT_Byte, 0, 0);
+                           nXSize, 1, GDT_UInt8, 0, 0);
         if (err == CE_None)
             err = GDALRasterIO(hGreen, GF_Read, 0, iLine, nXSize, 1,
-                               pabyGreenLine, nXSize, 1, GDT_Byte, 0, 0);
+                               pabyGreenLine, nXSize, 1, GDT_UInt8, 0, 0);
         if (err == CE_None)
             err = GDALRasterIO(hBlue, GF_Read, 0, iLine, nXSize, 1,
-                               pabyBlueLine, nXSize, 1, GDT_Byte, 0, 0);
+                               pabyBlueLine, nXSize, 1, GDT_UInt8, 0, 0);
         if (err != CE_None)
             goto end_and_cleanup;
 

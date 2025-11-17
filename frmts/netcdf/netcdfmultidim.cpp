@@ -1011,7 +1011,7 @@ static int CreateOrGetType(int gid, const GDALExtendedDataType &oType)
     {
         switch (oType.GetNumericDataType())
         {
-            case GDT_Byte:
+            case GDT_UInt8:
                 nTypeId = NC_UBYTE;
                 break;
             case GDT_Int8:
@@ -2514,7 +2514,7 @@ static bool BuildDataType(int gid, int varid, const int nVarTypeIn,
             }
             if (!bSignedData)
             {
-                eDataType = GDT_Byte;
+                eDataType = GDT_UInt8;
                 bPerfectDataTypeMatch = true;
             }
             else
@@ -2527,7 +2527,7 @@ static bool BuildDataType(int gid, int varid, const int nVarTypeIn,
         {
             // Not sure of this
             bPerfectDataTypeMatch = true;
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
         }
         else if (nVarType == NC_SHORT)
         {
@@ -2570,7 +2570,7 @@ static bool BuildDataType(int gid, int varid, const int nVarTypeIn,
         else if (nVarType == NC_UBYTE)
         {
             bPerfectDataTypeMatch = true;
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
         }
         else if (nVarType == NC_USHORT)
         {
@@ -4527,7 +4527,7 @@ netCDFAttribute::netCDFAttribute(
     {
         m_nAttType = NC_CHAR;
     }
-    else if (oDataType.GetNumericDataType() == GDT_Byte &&
+    else if (oDataType.GetNumericDataType() == GDT_UInt8 &&
              EQUAL(CSLFetchNameValueDef(papszOptions, "NC_TYPE", ""),
                    "NC_BYTE"))
     {
@@ -4607,9 +4607,9 @@ std::shared_ptr<netCDFAttribute> netCDFAttribute::Create(
 
     const char *apszOptions[2] = {nullptr, nullptr};
     if (!poShared->IsNC4() && oDataType.GetClass() == GEDTC_NUMERIC &&
-        oDataType.GetNumericDataType() == GDT_Byte && !papszOptions)
+        oDataType.GetNumericDataType() == GDT_UInt8 && !papszOptions)
     {
-        // GDT_Byte would map to a NC_UBYTE datatype, which is not available in
+        // GDT_UInt8 would map to a NC_UBYTE datatype, which is not available in
         // NC3 datasets
         apszOptions[0] = "NC_TYPE=NC_BYTE";
         papszOptions = apszOptions;

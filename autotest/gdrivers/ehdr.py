@@ -63,7 +63,7 @@ def test_ehdr_3():
 def test_ehdr_4():
 
     drv = gdal.GetDriverByName("EHdr")
-    ds = drv.Create("tmp/test_4.bil", 200, 100, 1, gdal.GDT_Byte)
+    ds = drv.Create("tmp/test_4.bil", 200, 100, 1, gdal.GDT_UInt8)
 
     raw_data = b"".join(struct.pack("h", v) for v in range(200))
 

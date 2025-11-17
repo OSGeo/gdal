@@ -1962,7 +1962,7 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         case CEOS_TYP_CHAR:
         case CEOS_TYP_UCHAR:
-            eType = GDT_Byte;
+            eType = GDT_UInt8;
             break;
 
         case CEOS_TYP_SHORT:

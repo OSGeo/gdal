@@ -833,8 +833,9 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 {
                     bRet = DownsamplingIntegerXFactor<true, 1>(
                         this, iSrcX, nSrcXInc, iSrcOffsetCst, pabyDstData,
-                        static_cast<int>(nPixelSpace), nBufXSize, GDT_Byte,
-                        GDT_Byte, nStartBlockX, nBlockXSize, poBlock, nLBlockY);
+                        static_cast<int>(nPixelSpace), nBufXSize, GDT_UInt8,
+                        GDT_UInt8, nStartBlockX, nBlockXSize, poBlock,
+                        nLBlockY);
                 }
                 else if (eDataType == eBufType)
                 {
@@ -1396,7 +1397,7 @@ CPLErr GDALRasterBand::RasterIOResampled(
                         GF_Read, nChunkXOffQueried, nChunkYOffQueried,
                         nChunkXSizeQueried, nChunkYSizeQueried,
                         pabyChunkNoDataMask, nChunkXSizeQueried,
-                        nChunkYSizeQueried, GDT_Byte, 0, 0, nullptr);
+                        nChunkYSizeQueried, GDT_UInt8, 0, 0, nullptr);
 
                     /* Optimizations if mask if fully opaque or transparent */
                     int nPixels = nChunkXSizeQueried * nChunkYSizeQueried;
@@ -1857,7 +1858,7 @@ CPLErr GDALDataset::RasterIOResampled(
                         GF_Read, nChunkXOffQueried, nChunkYOffQueried,
                         nChunkXSizeQueried, nChunkYSizeQueried,
                         pabyChunkNoDataMask, nChunkXSizeQueried,
-                        nChunkYSizeQueried, GDT_Byte, 0, 0, nullptr);
+                        nChunkYSizeQueried, GDT_UInt8, 0, 0, nullptr);
 
                     /* Optimizations if mask if fully opaque or transparent */
                     const int nPixels = nChunkXSizeQueried * nChunkYSizeQueried;
@@ -1878,7 +1879,7 @@ CPLErr GDALDataset::RasterIOResampled(
                                 for (int j = 0; j < nDstYCount; j++)
                                 {
                                     GDALCopyWords64(
-                                        abyZero, GDT_Byte, 0,
+                                        abyZero, GDT_UInt8, 0,
                                         static_cast<GByte *>(pData) +
                                             iBand * nBandSpace +
                                             nLineSpace * (j + nDstYOff) +
@@ -3217,7 +3218,7 @@ inline void GDALCopyWordsFromT(const T *const CPL_RESTRICT pSrcData,
 {
     switch (eDstType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             GDALCopyWordsT(pSrcData, nSrcPixelStride,
                            static_cast<unsigned char *>(pDstData),
                            nDstPixelStride, nWordCount);
@@ -3420,7 +3421,7 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
 
     switch (eDstType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         case GDT_Int8:
         {
             if (nDstPixelStride == 1)
@@ -3760,7 +3761,7 @@ void CPL_STDCALL GDALCopyWords(const void *CPL_RESTRICT pSrcData,
  * rules:
  * <ul>
  * <li>Values assigned to a lower range integer type are clipped. For
- * instance assigning GDT_Int16 values to a GDT_Byte buffer will cause values
+ * instance assigning GDT_Int16 values to a GDT_UInt8 buffer will cause values
  * less the 0 to be set to 0, and values larger than 255 to be set to 255.
  * </li>
  * <li>
@@ -3882,7 +3883,7 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
 
     if (eSrcType == eDstType)
     {
-        if (eSrcType == GDT_Byte || eSrcType == GDT_Int8)
+        if (eSrcType == GDT_UInt8 || eSrcType == GDT_Int8)
         {
             GDALFastCopy(static_cast<GByte *>(pDstData), nDstPixelStride,
                          static_cast<const GByte *>(pSrcData), nSrcPixelStride,
@@ -3933,7 +3934,7 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
     // directly.
     switch (eSrcType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             GDALCopyWordsFromT<unsigned char>(
                 static_cast<const unsigned char *>(pSrcData), nSrcPixelStride,
                 false, pDstData, eDstType, nDstPixelStride, nWordCount);
@@ -4481,7 +4482,7 @@ CPLErr GDALDataset::BlockBasedRasterIO(
     int nBlockXSize = 1;
     int nBlockYSize = 1;
     CPLErr eErr = CE_None;
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
 
     const bool bUseIntegerRequestCoords =
         (!psExtraArg->bFloatingPointWindowValidity ||
@@ -6075,7 +6076,7 @@ void GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
 {
     if (eSourceDT == eDestDT)
     {
-        if (eSourceDT == GDT_Byte || eSourceDT == GDT_Int8)
+        if (eSourceDT == GDT_UInt8 || eSourceDT == GDT_Int8)
         {
             if (nComponents == 3)
             {
@@ -6358,7 +6359,7 @@ static void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, DST *pDst,
     // clang-format off
     switch (eSrcType)
     {
-        case GDT_Byte:     CALL_GDALTranspose2D_internal(uint8_t); break;
+        case GDT_UInt8:     CALL_GDALTranspose2D_internal(uint8_t); break;
         case GDT_Int8:     CALL_GDALTranspose2D_internal(int8_t); break;
         case GDT_UInt16:   CALL_GDALTranspose2D_internal(uint16_t); break;
         case GDT_Int16:    CALL_GDALTranspose2D_internal(int16_t); break;
@@ -6580,7 +6581,7 @@ GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
 void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, void *pDst,
                      GDALDataType eDstType, size_t nSrcWidth, size_t nSrcHeight)
 {
-    if (eSrcType == eDstType && (eSrcType == GDT_Byte || eSrcType == GDT_Int8))
+    if (eSrcType == eDstType && (eSrcType == GDT_UInt8 || eSrcType == GDT_Int8))
     {
         if (nSrcHeight == 2)
         {
@@ -6620,7 +6621,7 @@ void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, void *pDst,
     // clang-format off
     switch (eDstType)
     {
-        case GDT_Byte:     CALL_GDALTranspose2D_internal(uint8_t, false); break;
+        case GDT_UInt8:     CALL_GDALTranspose2D_internal(uint8_t, false); break;
         case GDT_Int8:     CALL_GDALTranspose2D_internal(int8_t, false); break;
         case GDT_UInt16:   CALL_GDALTranspose2D_internal(uint16_t, false); break;
         case GDT_Int16:    CALL_GDALTranspose2D_internal(int16_t, false); break;

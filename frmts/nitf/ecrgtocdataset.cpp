@@ -458,7 +458,7 @@ bool ECRGTOCSource::ValidateOpenedBand(GDALRasterBand *poBand) const
     WARN_CHECK_DS(
         EQUAL(poSourceDS->GetProjectionRef(), SRS_WKT_WGS84_LAT_LONG));
     WARN_CHECK_DS(poSourceDS->GetRasterBand(1)->GetRasterDataType() ==
-                  GDT_Byte);
+                  GDT_UInt8);
     return checkOK;
 }
 
@@ -537,7 +537,7 @@ GDALDataset *ECRGTOCSubDataset::Build(
 
     for (int i = 0; i < 3; i++)
     {
-        poVirtualDS->AddBand(GDT_Byte, nullptr);
+        poVirtualDS->AddBand(GDT_UInt8, nullptr);
         GDALRasterBand *poBand = poVirtualDS->GetRasterBand(i + 1);
         poBand->SetColorInterpretation(
             static_cast<GDALColorInterp>(GCI_RedBand + i));

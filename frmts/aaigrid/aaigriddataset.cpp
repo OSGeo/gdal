@@ -1402,7 +1402,7 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
 
     // Handle nodata (optionally).
     GDALRasterBand *poBand = poSrcDS->GetRasterBand(1);
-    const bool bReadAsInt = poBand->GetRasterDataType() == GDT_Byte ||
+    const bool bReadAsInt = poBand->GetRasterDataType() == GDT_UInt8 ||
                             poBand->GetRasterDataType() == GDT_Int16 ||
                             poBand->GetRasterDataType() == GDT_UInt16 ||
                             poBand->GetRasterDataType() == GDT_Int32;

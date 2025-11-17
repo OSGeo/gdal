@@ -457,7 +457,7 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
             oComponents[0]->GetName() != "waterLevelHeight" ||
             oComponents[0]->GetType().GetNumericDataType() != GDT_Float32 ||
             oComponents[1]->GetName() != "waterLevelTrend" ||
-            (oComponents[1]->GetType().GetNumericDataType() != GDT_Byte &&
+            (oComponents[1]->GetType().GetNumericDataType() != GDT_UInt8 &&
              // In theory should be Byte, but 104US00_ches_dcf2_20190606T12Z.h5 uses Int32
              oComponents[1]->GetType().GetNumericDataType() != GDT_Int32))
         {

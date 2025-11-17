@@ -460,7 +460,7 @@ static bool ZarrFixedScaleOffsetDecompressor(const void *input_data,
     }
 
     const int inputEltSize = astype[2] - '0';
-    const GDALDataType eInDT = inputEltSize == 1   ? GDT_Byte
+    const GDALDataType eInDT = inputEltSize == 1   ? GDT_UInt8
                                : inputEltSize == 2 ? GDT_UInt16
                                                    : GDT_UInt32;
 

@@ -70,7 +70,7 @@ def test_rat_1(test_rat):
 def test_rat_2(test_rat, tmp_vsimem):
 
     with gdal.GetDriverByName("PNM").Create(
-        tmp_vsimem / "rat_2.pnm", 100, 90, 1, gdal.GDT_Byte
+        tmp_vsimem / "rat_2.pnm", 100, 90, 1, gdal.GDT_UInt8
     ) as ds:
         ds.GetRasterBand(1).SetDefaultRAT(test_rat)
 

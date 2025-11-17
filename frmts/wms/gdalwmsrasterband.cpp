@@ -731,10 +731,10 @@ CPLErr GDALWMSRasterBand::ReadBlockFromDataset(GDALDataset *ds, int x, int y,
         if (nDSRasterCount != m_parent_dataset->nBands)
         {
             /* Maybe its an image with color table */
-            if ((eDataType == GDT_Byte) && (ds->GetRasterCount() == 1))
+            if ((eDataType == GDT_UInt8) && (ds->GetRasterCount() == 1))
             {
                 GDALRasterBand *rb = ds->GetRasterBand(1);
-                if (rb->GetRasterDataType() == GDT_Byte)
+                if (rb->GetRasterDataType() == GDT_UInt8)
                 {
                     GDALColorTable *ct = rb->GetColorTable();
                     if (ct != nullptr)

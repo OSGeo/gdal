@@ -36,7 +36,7 @@ def test_gdal_rasterize_lib_1():
 
     # Create a raster to rasterize into.
 
-    target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
@@ -113,7 +113,7 @@ def test_gdal_rasterize_lib_3(tmp_path, tmp_vsimem):
         "",
         dst_shp,
         format="MEM",
-        outputType=gdal.GDT_Byte,
+        outputType=gdal.GDT_UInt8,
         useZ=True,
         layers=["n43dt0"],
         width=121,
@@ -280,7 +280,7 @@ def test_gdal_rasterize_lib_4():
 
     # Create a raster to rasterize into.
     for optim in ["RASTER", "VECTOR", "AUTO"]:
-        target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_Byte)
+        target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_UInt8)
         target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
         target_ds.SetProjection(sr_wkt)
 
@@ -553,7 +553,7 @@ def test_gdal_rasterize_lib_inverse():
 def test_gdal_rasterize_lib_inverse_nested_polygons():
 
     # Create a memory raster to rasterize into.
-    target_ds = gdal.GetDriverByName("MEM").Create("", 10, 10, 1, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 10, 10, 1, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((0, 1, 0, 10, 0, -1))
 
     # Create a memory layer to rasterize from.
@@ -805,7 +805,7 @@ def test_gdal_rasterize_no_options(tmp_vsimem):
 
     # Create a raster to rasterize into.
     target_ds = gdal.GetDriverByName("GTiff").Create(
-        tmp_vsimem / "out.tif", 10, 10, 1, gdal.GDT_Byte
+        tmp_vsimem / "out.tif", 10, 10, 1, gdal.GDT_UInt8
     )
 
     assert target_ds

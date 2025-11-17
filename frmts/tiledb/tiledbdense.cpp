@@ -110,7 +110,7 @@ static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
 {
     switch (eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             poQuery->set_data_buffer(
                 osAttrName, reinterpret_cast<unsigned char *>(pImage), nSize);
             break;
@@ -196,7 +196,7 @@ TileDBRasterBand::TileDBRasterBand(TileDBRasterDataset *poDSIn, int nBandIn,
                     eDataType = GDT_Int8;
                     break;
                 case TILEDB_UINT8:
-                    eDataType = GDT_Byte;
+                    eDataType = GDT_UInt8;
                     break;
                 case TILEDB_INT16:
                     eDataType =
@@ -491,7 +491,7 @@ double TileDBRasterBand::GetNoDataValue(int *pbHasNoData)
         {
             switch (eDataType)
             {
-                case GDT_Byte:
+                case GDT_UInt8:
                     dfNoData = *static_cast<const uint8_t *>(value);
                     break;
                 case GDT_Int8:
@@ -584,7 +584,7 @@ CPLErr TileDBRasterBand::SetNoDataValue(double dfNoData)
     bool bIsValid = false;
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             bIsValid = IsValidNoData<uint8_t>(dfNoData);
             break;
         case GDT_Int8:
@@ -1829,7 +1829,7 @@ CPLErr TileDBRasterDataset::CreateAttribute(GDALDataType eType,
 
             switch (eType)
             {
-                case GDT_Byte:
+                case GDT_UInt8:
                 {
                     m_schema->add_attribute(::CreateAttribute<unsigned char>(
                         *m_ctx, osName, *m_filterList, bHasFillValue,

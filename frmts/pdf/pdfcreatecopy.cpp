@@ -3352,7 +3352,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteMask(GDALDataset *poSrcDS, int nXOff,
     CPLErr eErr;
     eErr = poSrcDS->GetRasterBand(4)->RasterIO(
         GF_Read, nXOff, nYOff, nReqXSize, nReqYSize, pabyMask, nReqXSize,
-        nReqYSize, GDT_Byte, 0, 0, nullptr);
+        nReqYSize, GDT_UInt8, 0, 0, nullptr);
     if (eErr != CE_None)
     {
         VSIFree(pabyMask);
@@ -3549,8 +3549,8 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
         if (nBands == 4)
             nBands = 3;
 
-        poMEMDS.reset(
-            MEMDataset::Create("", nReqXSize, nReqYSize, 0, GDT_Byte, nullptr));
+        poMEMDS.reset(MEMDataset::Create("", nReqXSize, nReqYSize, 0, GDT_UInt8,
+                                         nullptr));
 
         pabyMEMDSBuffer =
             static_cast<GByte *>(VSIMalloc3(nReqXSize, nReqYSize, nBands));
@@ -3561,7 +3561,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
 
         eErr = poSrcDS->RasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize,
                                  pabyMEMDSBuffer, nReqXSize, nReqYSize,
-                                 GDT_Byte, nBands, nullptr, 0, 0, 0, nullptr);
+                                 GDT_UInt8, nBands, nullptr, 0, 0, 0, nullptr);
 
         if (eErr != CE_None)
         {
@@ -3574,8 +3574,8 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
         {
             auto hBand = MEMCreateRasterBandEx(
                 poMEMDS.get(), iBand + 1,
-                pabyMEMDSBuffer + iBand * nReqXSize * nReqYSize, GDT_Byte, 0, 0,
-                false);
+                pabyMEMDSBuffer + iBand * nReqXSize * nReqYSize, GDT_UInt8, 0,
+                0, false);
             poMEMDS->AddMEMBand(hBand);
         }
 
@@ -3752,7 +3752,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
             /* Get pixel interleaved data */
             eErr = poBlockSrcDS->RasterIO(
                 GF_Read, 0, iLine, nReqXSize, 1, pabyLine, nReqXSize, 1,
-                GDT_Byte, nBands, nullptr, nBands, 0, 1, nullptr);
+                GDT_UInt8, nBands, nullptr, nBands, 0, 1, nullptr);
             if (eErr != CE_None)
                 break;
 
@@ -4153,7 +4153,7 @@ GDALDataset *GDALPDFCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     }
 
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    if (eDT != GDT_Byte)
+    if (eDT != GDT_UInt8)
     {
         CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                  "PDF driver doesn't support data type %s. "

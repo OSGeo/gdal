@@ -65,7 +65,7 @@ void MMRRasterBand::UpdateDataType()
         case MMDataType::DATATYPE_AND_COMPR_BIT:
         case MMDataType::DATATYPE_AND_COMPR_BYTE:
         case MMDataType::DATATYPE_AND_COMPR_BYTE_RLE:
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             break;
 
         case MMDataType::DATATYPE_AND_COMPR_UINTEGER:
@@ -96,7 +96,7 @@ void MMRRasterBand::UpdateDataType()
             break;
 
         default:
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             // This should really report an error, but this isn't
             // so easy from within constructors.
             CPLDebug("GDAL", "Unsupported pixel type in MMRRasterBand: %d.",

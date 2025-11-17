@@ -651,7 +651,7 @@ def test_gdal_setgcpspatialref():
 
 def test_gdal_getdatatypename():
 
-    assert gdal.GetDataTypeName(gdal.GDT_Byte) == "Byte"
+    assert gdal.GetDataTypeName(gdal.GDT_UInt8) == "Byte"
     with pytest.raises(Exception):
         gdal.GetDataTypeName(-1)
     with pytest.raises(Exception):
@@ -763,7 +763,7 @@ def test_gdal_EscapeString_errors():
 
 def test_gdal_DataTypeUnion():
 
-    assert gdal.DataTypeUnion(gdal.GDT_Byte, gdal.GDT_UInt16) == gdal.GDT_UInt16
+    assert gdal.DataTypeUnion(gdal.GDT_UInt8, gdal.GDT_UInt16) == gdal.GDT_UInt16
 
 
 def test_exceptionmanager():

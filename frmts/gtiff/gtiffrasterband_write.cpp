@@ -597,7 +597,7 @@ CPLErr GTiffRasterBand::SetColorTable(GDALColorTable *poCT)
             return CE_Failure;
         }
 
-        if (eDataType != GDT_Byte && eDataType != GDT_UInt16)
+        if (eDataType != GDT_UInt8 && eDataType != GDT_UInt16)
         {
             ReportError(
                 CE_Failure, CPLE_NotSupported,
@@ -640,7 +640,7 @@ CPLErr GTiffRasterBand::SetColorTable(GDALColorTable *poCT)
     {
         int nColors = 65536;
 
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
             nColors = 256;
 
         unsigned short *panTRed = static_cast<unsigned short *>(

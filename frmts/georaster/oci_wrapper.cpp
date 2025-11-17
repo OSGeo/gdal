@@ -13,7 +13,7 @@
 
 #include "oci_wrapper.h"
 
-static const OW_CellDepth ahOW_CellDepth[] = {{"8BIT_U", GDT_Byte},
+static const OW_CellDepth ahOW_CellDepth[] = {{"8BIT_U", GDT_UInt8},
                                               {"16BIT_U", GDT_UInt16},
                                               {"16BIT_S", GDT_Int16},
                                               {"32BIT_U", GDT_UInt32},
@@ -22,9 +22,9 @@ static const OW_CellDepth ahOW_CellDepth[] = {{"8BIT_U", GDT_Byte},
                                               {"64BIT_REAL", GDT_Float64},
                                               {"32BIT_COMPLEX", GDT_CFloat32},
                                               {"64BIT_COMPLEX", GDT_CFloat64},
-                                              {"1BIT", GDT_Byte},
-                                              {"2BIT", GDT_Byte},
-                                              {"4BIT", GDT_Byte}};
+                                              {"1BIT", GDT_UInt8},
+                                              {"2BIT", GDT_UInt8},
+                                              {"4BIT", GDT_UInt8}};
 
 /*****************************************************************************/
 /*                            OWSessionPool                                  */

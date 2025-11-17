@@ -390,7 +390,7 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(GIFAbstractDataset *poDSIn,
     poDS = poDSIn;
     nBand = nBandIn;
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;

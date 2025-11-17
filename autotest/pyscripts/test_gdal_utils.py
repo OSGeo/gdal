@@ -243,7 +243,7 @@ def test_utils_color_table_and_palette():
 def test_read_write_color_table_from_raster(tmp_path):
     """test color palettes with and without nv"""
     gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    ds = gdaltest.tiff_drv.Create(str(tmp_path / "ct8.tif"), 1, 1, 1, gdal.GDT_Byte)
+    ds = gdaltest.tiff_drv.Create(str(tmp_path / "ct8.tif"), 1, 1, 1, gdal.GDT_UInt8)
     ct = get_color_table(ds)
     assert ct is None
 

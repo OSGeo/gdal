@@ -57,7 +57,7 @@ GBool TranslateDataType(const char *pszDataType,
         if (pnBitsDepth)
             *pnBitsDepth = 1;
         if (poDataType)
-            *poDataType = GDT_Byte;
+            *poDataType = GDT_UInt8;
     }
 
     else if (EQUAL(pszDataType, "2BUI"))
@@ -65,7 +65,7 @@ GBool TranslateDataType(const char *pszDataType,
         if (pnBitsDepth)
             *pnBitsDepth = 2;
         if (poDataType)
-            *poDataType = GDT_Byte;
+            *poDataType = GDT_UInt8;
     }
 
     else if (EQUAL(pszDataType, "4BUI"))
@@ -73,7 +73,7 @@ GBool TranslateDataType(const char *pszDataType,
         if (pnBitsDepth)
             *pnBitsDepth = 4;
         if (poDataType)
-            *poDataType = GDT_Byte;
+            *poDataType = GDT_UInt8;
     }
 
     else if (EQUAL(pszDataType, "8BUI"))
@@ -81,7 +81,7 @@ GBool TranslateDataType(const char *pszDataType,
         if (pnBitsDepth)
             *pnBitsDepth = 8;
         if (poDataType)
-            *poDataType = GDT_Byte;
+            *poDataType = GDT_UInt8;
     }
 
     else if (EQUAL(pszDataType, "8BSI"))

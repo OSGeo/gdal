@@ -242,7 +242,7 @@ GDALEXRPreviewRasterBand::GDALEXRPreviewRasterBand(GDALEXRDataset *poDSIn,
     nRasterYSize = poDSIn->GetRasterYSize();
     nBlockXSize = nRasterXSize;
     nBlockYSize = 1;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 }
 
 /************************************************************************/
@@ -259,7 +259,7 @@ CPLErr GDALEXRPreviewRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
         GDALCopyWords(reinterpret_cast<const GByte *>(
                           preview.pixels() + nBlockYOff * nRasterXSize) +
                           nBand - 1,
-                      GDT_Byte, 4, pImage, GDT_Byte, 1, nRasterXSize);
+                      GDT_UInt8, 4, pImage, GDT_UInt8, 1, nRasterXSize);
         return CE_None;
     }
     catch (const std::exception &e)
@@ -846,7 +846,7 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
 static PixelType getPixelType(GDALDataType eSrcDT, char **papszOptions)
 {
     PixelType pixelType =
-        (eSrcDT == GDT_Byte) ? HALF
+        (eSrcDT == GDT_UInt8) ? HALF
         : (eSrcDT == GDT_Int16 || eSrcDT == GDT_UInt16 || eSrcDT == GDT_UInt32)
             ? UINT
             : FLOAT;
@@ -965,7 +965,7 @@ GDALDataset *GDALEXRDataset::CreateCopy(const char *pszFilename,
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "PREVIEW", "NO")) &&
         (nXSize > 100 || nYSize > 100);
     const GDALDataType eSrcDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    if (bPreview && !(bRGB_or_RGBA && eSrcDT == GDT_Byte))
+    if (bPreview && !(bRGB_or_RGBA && eSrcDT == GDT_UInt8))
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
@@ -974,7 +974,7 @@ GDALDataset *GDALEXRDataset::CreateCopy(const char *pszFilename,
     }
     const PixelType pixelType = getPixelType(eSrcDT, papszOptions);
     const bool bRescaleDiv255 =
-        pixelType == HALF && bRGB_or_RGBA && eSrcDT == GDT_Byte &&
+        pixelType == HALF && bRGB_or_RGBA && eSrcDT == GDT_UInt8 &&
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "AUTO_RESCALE", "YES"));
 
     setNumThreads();
@@ -1019,8 +1019,8 @@ GDALDataset *GDALEXRDataset::CreateCopy(const char *pszFilename,
                                     nYSize / nXSize));
             std::vector<PreviewRgba> pixels(previewWidth * previewHeight);
             if (poSrcDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize, &pixels[0],
-                                  previewWidth, previewHeight, GDT_Byte, nBands,
-                                  nullptr, 4, 4 * previewWidth, 1,
+                                  previewWidth, previewHeight, GDT_UInt8,
+                                  nBands, nullptr, 4, 4 * previewWidth, 1,
                                   nullptr) == CE_None)
             {
                 header.setPreviewImage(
@@ -1653,7 +1653,7 @@ void GDALEXRWritableDataset::WriteHeader()
             }
         }
         m_bRescaleDiv255 &= m_pixelType == HALF && bRGB_or_RGBA &&
-                            GetRasterBand(1)->GetRasterDataType() == GDT_Byte;
+                            GetRasterBand(1)->GetRasterDataType() == GDT_UInt8;
 
         if (bRGB_or_RGBA)
         {

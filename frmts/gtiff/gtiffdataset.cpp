@@ -1220,7 +1220,7 @@ void GTiffDataset::ScanDirectories()
                     m_poMaskDS->GetRasterXSize() != GetRasterXSize() ||
                     m_poMaskDS->GetRasterYSize() != GetRasterYSize() ||
                     m_poMaskDS->GetRasterBand(1)->GetRasterDataType() !=
-                        GDT_Byte)
+                        GDT_UInt8)
                 {
                     delete m_poMaskDS;
                     m_poMaskDS = nullptr;
@@ -1250,7 +1250,7 @@ void GTiffDataset::ScanDirectories()
                 if (poDS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF), nThisDir,
                                      eAccess) != CE_None ||
                     poDS->GetRasterCount() == 0 ||
-                    poDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
+                    poDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt8)
                 {
                     delete poDS;
                 }
