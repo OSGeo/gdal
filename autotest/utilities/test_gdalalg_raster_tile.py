@@ -2251,6 +2251,24 @@ def test_gdalalg_raster_tile_pipeline(tmp_path):
     assert len(gdal.ReadDirRecursive(out_dirname)) == 108
 
 
+def test_gdalalg_raster_tile_pipeline_input_ds(tmp_path):
+
+    out_dirname = tmp_path / "subdir"
+    with gdaltest.config_options(
+        {
+            "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN": "1",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+        }
+    ):
+        gdal.Run(
+            "raster pipeline",
+            input="../gdrivers/data/small_world.tif",
+            pipeline=f"read ! tile {out_dirname} --min-zoom=0 --max-zoom=3",
+        )
+
+    assert len(gdal.ReadDirRecursive(out_dirname)) == 108
+
+
 @pytest.mark.skipif(_get_effective_cpus() <= 2, reason="needs more than 2 CPUs")
 def test_gdalalg_raster_tile_pipeline_error(tmp_path):
 
