@@ -250,3 +250,27 @@ def test_gdalalg_vector_make_valid_test_ogrsf(tmp_path):
     assert "INFO" in ret
     assert "ERROR" not in ret
     assert "FAILURE" not in ret
+
+
+def test_gdalalg_vector_make_valid_3d():
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("layer")
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt("POLYGON Z ((0 0 0,1 1 0,1 0 0,0 1 0,0 0 0))")
+    )
+    src_lyr.CreateFeature(f)
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    out_ds = alg["output"].GetDataset()
+    out_lyr = out_ds.GetLayer(0)
+    out_f = out_lyr.GetNextFeature()
+    assert out_f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiPolygon25D
