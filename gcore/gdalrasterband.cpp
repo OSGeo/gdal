@@ -8260,6 +8260,26 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
         }
     }
 
+    if (!bApproxOK &&
+        (eDataType == GDT_Int8 || eDataType == GDT_Int16 ||
+         eDataType == GDT_UInt32 || eDataType == GDT_Int32 ||
+         eDataType == GDT_UInt64 || eDataType == GDT_Int64 ||
+         eDataType == GDT_Float16 || eDataType == GDT_Float32 ||
+         eDataType == GDT_Float64) &&
+        !poMaskBand)
+    {
+        CPLErr eErr = ComputeRasterMinMaxLocation(
+            &adfMinMax[0], &adfMinMax[1], nullptr, nullptr, nullptr, nullptr);
+        if (eErr == CE_Warning)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Failed to compute min/max, no valid pixels found in "
+                        "sampling.");
+            eErr = CE_Failure;
+        }
+        return eErr;
+    }
+
     bool bSignedByte = false;
     if (eDataType == GDT_Byte)
     {
