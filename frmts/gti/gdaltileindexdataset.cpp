@@ -1968,13 +1968,15 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     std::vector<double> adfOffset;
     if (bIsStacGeoParquet && poFeature)
     {
-        const int nEOBandsIdx = poLayerDefn->GetFieldIndex(
+        int nBandsIdx = poLayerDefn->GetFieldIndex(
             CPLSPrintf("assets.%s.eo:bands", osAssetName.c_str()));
-        if (nEOBandsIdx >= 0 &&
-            poLayerDefn->GetFieldDefn(nEOBandsIdx)->GetSubType() == OFSTJSON &&
-            poFeature->IsFieldSet(nEOBandsIdx))
+        if (nBandsIdx < 0)
+            nBandsIdx = poLayerDefn->GetFieldIndex("bands");
+        if (nBandsIdx >= 0 &&
+            poLayerDefn->GetFieldDefn(nBandsIdx)->GetSubType() == OFSTJSON &&
+            poFeature->IsFieldSet(nBandsIdx))
         {
-            const char *pszStr = poFeature->GetFieldAsString(nEOBandsIdx);
+            const char *pszStr = poFeature->GetFieldAsString(nBandsIdx);
             CPLJSONDocument oDoc;
             if (oDoc.LoadMemory(pszStr) &&
                 oDoc.GetRoot().GetType() == CPLJSONObject::Type::Array)
@@ -1990,8 +1992,9 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                     {
                         if (oObj.GetType() == CPLJSONObject::Type::Object)
                         {
-                            const auto osCommonName =
-                                oObj.GetString("common_name");
+                            auto osCommonName = oObj.GetString("common_name");
+                            if (osCommonName.empty())
+                                osCommonName = oObj.GetString("eo:common_name");
                             const auto eInterp =
                                 GDALGetColorInterpFromSTACCommonName(
                                     osCommonName.c_str());
@@ -2016,8 +2019,14 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
 
                             adfCenterWavelength[i] =
                                 oObj.GetDouble("center_wavelength");
+                            if (adfCenterWavelength[i] == 0)
+                                adfCenterWavelength[i] =
+                                    oObj.GetDouble("eo:center_wavelength");
                             adfFullWidthHalfMax[i] =
                                 oObj.GetDouble("full_width_half_max");
+                            if (adfFullWidthHalfMax[i] == 0)
+                                adfFullWidthHalfMax[i] =
+                                    oObj.GetDouble("eo:full_width_half_max");
                         }
                         ++i;
                     }
@@ -2025,8 +2034,10 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        const int nRasterBandsIdx = poLayerDefn->GetFieldIndex(
+        int nRasterBandsIdx = poLayerDefn->GetFieldIndex(
             CPLSPrintf("assets.%s.raster:bands", osAssetName.c_str()));
+        if (nRasterBandsIdx < 0)
+            nRasterBandsIdx = poLayerDefn->GetFieldIndex("bands");
         if (nRasterBandsIdx >= 0 &&
             poLayerDefn->GetFieldDefn(nRasterBandsIdx)->GetSubType() ==
                 OFSTJSON &&
