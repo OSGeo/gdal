@@ -1292,14 +1292,15 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             if (!oSTACSRS.IsEmpty())
             {
                 int nTransformCount = 0;
-                double adfGeoTransform[6] = {0, 0, 0, 0, 0, 0};
+                // Note: different coefficient ordering than GDAL geotransform
+                double adfProjTransform[6] = {0, 0, 0, 0, 0, 0};
                 if (poProjTransformField->GetType() == OFTRealList)
                 {
                     const auto padfFeatureTransform =
                         poFeature->GetFieldAsDoubleList(iProjTransform,
                                                         &nTransformCount);
                     if (nTransformCount >= 6)
-                        memcpy(adfGeoTransform, padfFeatureTransform,
+                        memcpy(adfProjTransform, padfFeatureTransform,
                                6 * sizeof(double));
                 }
                 else if (poProjTransformField->GetType() == OFTInteger64List)
@@ -1310,7 +1311,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                     if (nTransformCount >= 6)
                     {
                         for (int i = 0; i < 6; ++i)
-                            adfGeoTransform[i] =
+                            adfProjTransform[i] =
                                 static_cast<double>(paFeatureTransform[i]);
                     }
                 }
@@ -1322,7 +1323,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                     if (nTransformCount >= 6)
                     {
                         for (int i = 0; i < 6; ++i)
-                            adfGeoTransform[i] = paFeatureTransform[i];
+                            adfProjTransform[i] = paFeatureTransform[i];
                     }
                 }
                 OGREnvelope sEnvelope;
@@ -1330,9 +1331,9 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                     m_poLayer->GetExtent(&sEnvelope, /* bForce = */ true) ==
                         OGRERR_NONE)
                 {
-                    const double dfResX = adfGeoTransform[0];
+                    const double dfResX = adfProjTransform[0];
                     osResX = CPLSPrintf("%.17g", dfResX);
-                    const double dfResY = std::fabs(adfGeoTransform[4]);
+                    const double dfResY = std::fabs(adfProjTransform[4]);
                     osResY = CPLSPrintf("%.17g", dfResY);
 
                     auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
@@ -1352,9 +1353,9 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                     {
                         constexpr double EPSILON = 1e-3;
                         const bool bTileAlignedOnRes =
-                            (fmod(std::fabs(adfGeoTransform[3]), dfResX) <=
+                            (fmod(std::fabs(adfProjTransform[3]), dfResX) <=
                                  EPSILON * dfResX &&
-                             fmod(std::fabs(adfGeoTransform[5]), dfResY) <=
+                             fmod(std::fabs(adfProjTransform[5]), dfResY) <=
                                  EPSILON * dfResY);
 
                         osMinX = CPLSPrintf(
