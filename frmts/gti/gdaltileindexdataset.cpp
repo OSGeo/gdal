@@ -1553,16 +1553,23 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                      "5th value of GeoTransform of %s must be 0", pszTileName);
             return false;
         }
-        if (!(gtTile[GT_NS_RES] < 0))
+
+        const double dfResX = gtTile[GT_WE_RES];
+        const double dfResY = gtTile[GT_NS_RES];
+        if (!(dfResX > 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "6th value of GeoTransform of %s must be < 0",
+                     "2nd value of GeoTransform of %s must be > 0",
                      pszTileName);
             return false;
         }
-
-        const double dfResX = gtTile[GT_WE_RES];
-        const double dfResY = -gtTile[GT_NS_RES];
+        if (!(dfResY != 0))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "6th value of GeoTransform of %s must be != 0",
+                     pszTileName);
+            return false;
+        }
 
         if (!sEnvelope.IsInit() &&
             m_poLayer->GetExtent(&sEnvelope, /* bForce = */ false) ==
@@ -1587,7 +1594,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             return false;
         }
 
-        const double dfYSize = (sEnvelope.MaxY - sEnvelope.MinY) / dfResY;
+        const double dfYSize =
+            (sEnvelope.MaxY - sEnvelope.MinY) / std::fabs(dfResY);
         if (!(dfYSize >= 0 && dfYSize < INT_MAX))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1600,7 +1608,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         m_gt[GT_ROTATION_PARAM1] = 0;
         m_gt[GT_TOPLEFT_Y] = sEnvelope.MaxY;
         m_gt[GT_ROTATION_PARAM2] = 0;
-        m_gt[GT_NS_RES] = -dfResY;
+        m_gt[GT_NS_RES] = -std::fabs(dfResY);
+
         nRasterXSize = static_cast<int>(std::ceil(dfXSize));
         nRasterYSize = static_cast<int>(std::ceil(dfYSize));
     }
@@ -1637,6 +1646,12 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             m_gt[i] = CPLAtof(aosTokens[i]);
         }
+        if (!(m_gt[GT_WE_RES] > 0))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "2nd value of %s must be > 0",
+                     MD_GEOTRANSFORM);
+            return false;
+        }
         if (!(m_gt[GT_ROTATION_PARAM1] == 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "3rd value of %s must be 0",
@@ -1655,7 +1670,6 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                      MD_GEOTRANSFORM);
             return false;
         }
-
         nRasterXSize = nXSize;
         nRasterYSize = nYSize;
     }
@@ -3492,16 +3506,37 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
         if (!GTIDoPaletteExpansionIfNeeded(poTileDS, nBands))
             return false;
 
-        const OGRSpatialReference *poTileSRS;
-        if (!m_oSRS.IsEmpty() &&
-            (poTileSRS = poTileDS->GetSpatialRef()) != nullptr &&
+        bool bWarpVRT = false;
+        bool bExportSRS = false;
+        bool bAddAlphaToVRT = false;
+        const OGRSpatialReference *poTileSRS = poTileDS->GetSpatialRef();
+        GDALGeoTransform tileGT;
+        if (!m_oSRS.IsEmpty() && poTileSRS != nullptr &&
             !m_oSRS.IsSame(poTileSRS))
         {
             CPLDebug("VRT",
                      "Tile %s has not the same SRS as the VRT. "
                      "Proceed to on-the-fly warping",
                      osTileName.c_str());
+            bWarpVRT = true;
+            bExportSRS = true;
+            bAddAlphaToVRT = true;
+        }
+        else if (poTileDS->GetGeoTransform(tileGT) == CE_None &&
+                 tileGT[GT_NS_RES] > 0 &&
+                 ((m_oSRS.IsEmpty() && poTileSRS == nullptr) ||
+                  (!m_oSRS.IsEmpty() && poTileSRS && m_oSRS.IsSame(poTileSRS))))
 
+        {
+            CPLDebug("VRT",
+                     "Tile %s is south-up oriented. "
+                     "Proceed to on-the-fly warping",
+                     osTileName.c_str());
+            bWarpVRT = true;
+        }
+
+        if (bWarpVRT)
+        {
             CPLStringList aosOptions;
             aosOptions.AddString("-of");
             aosOptions.AddString("VRT");
@@ -3514,25 +3549,29 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
                 aosOptions.AddString(m_osResampling.c_str());
             }
 
-            if (m_osWKT.empty())
+            if (bExportSRS)
             {
-                char *pszWKT = nullptr;
-                const char *const apszWKTOptions[] = {"FORMAT=WKT2_2019",
-                                                      nullptr};
-                m_oSRS.exportToWkt(&pszWKT, apszWKTOptions);
-                if (pszWKT)
-                    m_osWKT = pszWKT;
-                CPLFree(pszWKT);
-            }
-            if (m_osWKT.empty())
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot export VRT SRS to WKT2");
-                return false;
-            }
+                if (m_osWKT.empty())
+                {
+                    char *pszWKT = nullptr;
+                    const char *const apszWKTOptions[] = {"FORMAT=WKT2_2019",
+                                                          nullptr};
+                    m_oSRS.exportToWkt(&pszWKT, apszWKTOptions);
+                    if (pszWKT)
+                        m_osWKT = pszWKT;
+                    CPLFree(pszWKT);
 
-            aosOptions.AddString("-t_srs");
-            aosOptions.AddString(m_osWKT.c_str());
+                    if (m_osWKT.empty())
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Cannot export VRT SRS to WKT2");
+                        return false;
+                    }
+                }
+
+                aosOptions.AddString("-t_srs");
+                aosOptions.AddString(m_osWKT.c_str());
+            }
 
             // First pass to get the extent of the tile in the
             // target VRT SRS
@@ -3592,7 +3631,8 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
             aosOptions.AddString(CPLSPrintf("%.17g", dfVRTResX));
             aosOptions.AddString(CPLSPrintf("%.17g", dfVRTResYAbs));
 
-            aosOptions.AddString("-dstalpha");
+            if (bAddAlphaToVRT)
+                aosOptions.AddString("-dstalpha");
 
             psWarpOptions = GDALWarpAppOptionsNew(aosOptions.List(), nullptr);
             poWarpDS.reset(GDALDataset::FromHandle(GDALWarp(
