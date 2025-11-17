@@ -47,7 +47,7 @@ Standard options
 
    When using the ``hsv-value`` blending operator, this must be a three-band or four-band Byte raster.
 
-.. option:: --overlay <GRAYSCALE>
+.. option:: --overlay <OVERLAY>
 
    Name of the overlay dataset. Required
 
