@@ -513,7 +513,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
-    /** Declares whether, for list type of arguments, several values, space
+    /** Declares whether, for list type of arguments, several values, comma
      * separated, may be specified. That is "--foo=bar,baz".
      * The default is true.
      */
