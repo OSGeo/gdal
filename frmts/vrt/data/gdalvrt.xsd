@@ -515,6 +515,7 @@
     <xs:complexType name="SimpleSourceType">
         <xs:group ref="SimpleSourceElementsGroup"/>
         <xs:attribute name="resampling" type="xs:string"/>
+        <xs:attribute name="name" type="xs:string"/>
     </xs:complexType>
 
     <xs:group name="ComplexSourceElementsGroup">
@@ -540,6 +541,7 @@
     <xs:complexType name="ComplexSourceType">
         <xs:group ref="ComplexSourceElementsGroup"/>
         <xs:attribute name="resampling" type="xs:string"/>
+        <xs:attribute name="name" type="xs:string"/>
     </xs:complexType>
 
     <xs:group name="NoDataFromMaskSourceElementsGroup">
@@ -566,6 +568,7 @@
             </xs:choice>
         </xs:sequence>
         <xs:attribute name="resampling" type="xs:string"/>
+        <xs:attribute name="name" type="xs:string" />
     </xs:complexType>
 
     <xs:complexType name="KernelType">
@@ -594,6 +597,7 @@
             <xs:element name="SrcRect" type="RectType" minOccurs="0"/>
             <xs:element name="DstRect" type="RectType" minOccurs="0"/>
         </xs:sequence>
+        <xs:attribute name="name" type="xs:string"/>
     </xs:complexType>
 
     <xs:element name="AbstractArray" type="AbstractArrayType" abstract="true"/>
