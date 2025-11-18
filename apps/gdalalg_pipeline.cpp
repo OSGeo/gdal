@@ -65,6 +65,10 @@ void GDALPipelineStepAlgorithm::AddRasterHiddenInputDatasetArg()
     // GDALAlgorithm must be able to retrieve the input dataset
     AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER,
                        /* positionalAndRequired = */ false)
+        .SetMinCount(1)
+        .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
+        .SetAutoOpenDataset(m_constructorOptions.autoOpenInputDatasets)
+        .SetMetaVar(m_constructorOptions.inputDatasetMetaVar)
         .SetHidden();
 }
 

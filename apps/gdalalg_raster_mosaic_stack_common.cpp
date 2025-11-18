@@ -272,11 +272,14 @@ bool GDALRasterMosaicStackCommonAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         GDALRasterWriteAlgorithm writeAlg;
         for (auto &arg : writeAlg.GetArgs())
         {
-            auto stepArg = GetArg(arg->GetName());
-            if (stepArg && stepArg->IsExplicitlySet())
+            if (!arg->IsHidden())
             {
-                arg->SetSkipIfAlreadySet(true);
-                arg->SetFrom(*stepArg);
+                auto stepArg = GetArg(arg->GetName());
+                if (stepArg && stepArg->IsExplicitlySet())
+                {
+                    arg->SetSkipIfAlreadySet(true);
+                    arg->SetFrom(*stepArg);
+                }
             }
         }
 
