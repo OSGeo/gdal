@@ -425,6 +425,10 @@ extern "C++"
 
         CPLSTRING_METHOD_DLL CPLString URLEncode() const;
 
+        CPLSTRING_METHOD_DLL CPLString SQLQuotedIdentifier() const;
+
+        CPLSTRING_METHOD_DLL CPLString SQLQuotedLiteral() const;
+
       private:
         operator void *(void) = delete;
     };

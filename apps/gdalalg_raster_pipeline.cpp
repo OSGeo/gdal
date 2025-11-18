@@ -223,7 +223,8 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALRasterTPIAlgorithm>();
     registry.Register<GDALRasterTRIAlgorithm>();
     registry.Register<GDALRasterUnscaleAlgorithm>();
-    registry.Register<GDALRasterUpdateAlgorithm>();
+    registry.Register<GDALRasterUpdateAlgorithm>(
+        addSuffixIfNeeded(GDALRasterUpdateAlgorithm::NAME));
     registry.Register<GDALRasterViewshedAlgorithm>();
     registry.Register<GDALTeeRasterAlgorithm>(
         addSuffixIfNeeded(GDALTeeRasterAlgorithm::NAME));

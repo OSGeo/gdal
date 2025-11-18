@@ -61,8 +61,6 @@ The scripts provide examples of both raster and vector usage of the GDAL Python 
     - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/make_fuzzer_friendly_archive.py`: Make fuzzer friendly archive (only works in DEBUG mode).
     - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/mkgraticule.py`: Produce a graticule (grid) dataset.
     - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/ogr2vrt.py`: Produce a graticule (grid) dataset.
-    - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/ogrupdate.py`: Update a target datasource with the features of a source datasource. Contrary to ogr2ogr,
-      this script tries to match features between the datasources, to decide whether to create a new feature, or to update an existing one.
     - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/ogr_build_junction_table.py`: Create junction tables for layers coming from GML datasources that
       reference other objects in _href fields
     - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/rel.py`: Script to produce a shaded relief image from the elevation data. (similar functionality in gdaldem now)
@@ -111,6 +109,7 @@ The following scripts have been replaced by equivalent functionality in GDAL, an
     - `gdal_vrtmerge.py`: Similar to gdal_merge, but produces a VRT file. Equivalent functionality available in :ref:`gdal_raster_mosaic`.
     - `gdal2grd.py`: Script to write out ASCII GRD rasters (used in Golden Software Surfer). from any source supported by GDAL. Equivalent functionality available in the :ref:`raster.gsag` driver.
     - `ogr_dispatch.py`: Dispatch features into layers according to the value of some fields or the geometry type. Equivalent functionality available in :ref:`gdal_vector_partition`.
+    - `ogrupdate.py`: Update a target datasource with the features of a source datasource. Equivalent functionality available in :ref:`gdal_vector_update`.
 
 .. note::
 
