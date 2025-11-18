@@ -148,9 +148,9 @@ Metadata in the default domain is intended to be related to the image, and not p
 Currently the following items are defined by :ref:`rfc-14` as having specific semantics in the IMAGE_STRUCTURE domain.
 
 - COMPRESSION: The compression type used for this dataset or band. There is no fixed catalog of compression type names, but where a given format includes a COMPRESSION creation option, the same list of values should be used here as there.
-- NBITS: The actual number of bits used for this band, or the bands of this dataset. Normally only present when the number of bits is non-standard for the datatype, such as when a 1 bit TIFF is represented through GDAL as GDT_Byte.
+- NBITS: The actual number of bits used for this band, or the bands of this dataset. Normally only present when the number of bits is non-standard for the datatype, such as when a 1 bit TIFF is represented through GDAL as GDT_UInt8.
 - INTERLEAVE: This only applies on datasets, and the value should be one of PIXEL, LINE or BAND. It can be used as a data access hint.
-- PIXELTYPE: This may appear on a GDT_Byte band (or the corresponding dataset)
+- PIXELTYPE: This may appear on a GDT_UInt8 band (or the corresponding dataset)
   and have the value SIGNEDBYTE to indicate the unsigned byte values between
   128 and 255 should be interpreted as being values between -128 and -1 for
   applications that recognise the SIGNEDBYTE type.

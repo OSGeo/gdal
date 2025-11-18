@@ -1063,7 +1063,7 @@ instead of using the simple source.
     "</KernelFilteredSource>";
 
     // Create the virtual dataset.
-    poVRTDS = poDriver->Create( "", 512, 512, 1, GDT_Byte, NULL );
+    poVRTDS = poDriver->Create( "", 512, 512, 1, GDT_UInt8, NULL );
     poVRTDS->GetRasterBand(1)->SetMetadataItem("source_0",pszFilterSourceXML,
                                                 "new_vrt_sources");
 
@@ -1115,7 +1115,7 @@ should be specified with the above :cpp:func:`GDALRasterBand::SetMetadataItem` e
   GDALDriver *poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
   GDALDataset *poVRTDS;
 
-  poVRTDS = poDriver->Create( "out.vrt", 512, 512, 0, GDT_Byte, NULL );
+  poVRTDS = poDriver->Create( "out.vrt", 512, 512, 0, GDT_UInt8, NULL );
   char** papszOptions = NULL;
   papszOptions = CSLAddNameValue(papszOptions, "subclass", "VRTRawRasterBand"); // if not specified, default to VRTRasterBand
   papszOptions = CSLAddNameValue(papszOptions, "SourceFilename", "src.tif"); // mandatory
@@ -1124,7 +1124,7 @@ should be specified with the above :cpp:func:`GDALRasterBand::SetMetadataItem` e
   papszOptions = CSLAddNameValue(papszOptions, "LineOffset", "1024"); // optional. default = size of band type * width
   papszOptions = CSLAddNameValue(papszOptions, "ByteOrder", "LSB"); // optional. default = machine order
   papszOptions = CSLAddNameValue(papszOptions, "relativeToVRT", "true"); // optional. default = false
-  poVRTDS->AddBand(GDT_Byte, papszOptions);
+  poVRTDS->AddBand(GDT_UInt8, papszOptions);
   CSLDestroy(papszOptions);
 
   delete poVRTDS;
