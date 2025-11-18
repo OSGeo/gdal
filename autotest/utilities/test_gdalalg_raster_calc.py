@@ -29,6 +29,15 @@ def require_muparser():
         pytest.skip("muparser not available")
 
 
+@pytest.fixture(
+    scope="module", autouse=True, params=[False, True], ids=["no_jit", "force_jit"]
+)
+def use_jit(request):
+
+    with gdal.config_option("GDAL_USE_JIT", "YES" if request.param else "NO"):
+        yield
+
+
 @pytest.fixture()
 def calc():
     reg = gdal.GetGlobalAlgorithmRegistry()
@@ -1021,6 +1030,26 @@ def test_gdalalg_raster_calc_sum_float_input_with_nodata(calc, tmp_vsimem):
     calc["output-format"] = "MEM"
     calc["calc"] = "A * 10"
     calc["output-data-type"] = "Byte"
+    calc.Run()
+
+    out_ds = calc["output"].GetDataset()
+    assert out_ds.GetRasterBand(1).Checksum() == 1
+
+
+def test_gdalalg_raster_calc_avg_int(calc, tmp_vsimem):
+
+    input = tmp_vsimem / "in.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(input, 1, 1, 3, gdal.GDT_UInt8) as ds:
+        ds.GetRasterBand(1).Fill(1)
+        ds.GetRasterBand(2).Fill(1)
+        ds.GetRasterBand(3).Fill(0)
+
+    calc["input"] = [f"A={input}"]
+    calc["output-format"] = "MEM"
+    calc["calc"] = "avg(A)"
+    calc["output-data-type"] = "UInt8"
+    calc["flatten"] = True
     calc.Run()
 
     out_ds = calc["output"].GetDataset()

@@ -105,11 +105,14 @@ curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.t
         -DOpenDrive_DIR=/usr/lib/ \
         -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE \
         -DGDAL_USE_EXPRTK:BOOL=ON \
+        -DLLVM_FIND_VERSION=${LLVM_VERSION} \
 
 
     if test "${GCC_ARCH}" = "aarch64"; then
       grep "GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS:BOOL=ON" CMakeCache.txt >/dev/null || (echo "ARM Neon not enabled"; /bin/false)
     fi
+
+    grep "GDAL_USE_LLVM:BOOL=ON" CMakeCache.txt >/dev/null || (echo "LLVM not enabled"; grep LLVM CMakeCache.txt; llvm-config-${LLVM_VERSION} --version; /bin/false)
 
     ninja
     DESTDIR="/build" ninja install

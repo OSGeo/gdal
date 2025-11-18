@@ -2,6 +2,8 @@
 
 set -e
 
+export GDAL_JIT_DEBUG=YES
+
 export PROJ_NETWORK=ON
 
 echo 'Running CPP unit tests'

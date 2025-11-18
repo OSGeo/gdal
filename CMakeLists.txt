@@ -101,7 +101,6 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i586|i686|x86|AMD64)")
   endif ()
 
 else()
-
   # Check ability to use Arm Neon optimizations
   include(CheckCXXSourceCompiles)
   include(CMakePushCheckState)

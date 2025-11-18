@@ -8,6 +8,7 @@ RUN apk add \
     brunsli-dev \
     ccache \
     cfitsio-dev \
+    clang21-dev \
     cmake \
     curl-dev \
     expat-dev \
@@ -38,6 +39,7 @@ RUN apk add \
     libxml2-dev \
     libxslt-dev \
     linux-headers \
+    llvm-dev \
     lz4-dev \
     make \
     mariadb-connector-c-dev \

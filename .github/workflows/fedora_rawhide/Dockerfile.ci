@@ -22,7 +22,8 @@ RUN dnf install -y clang make diffutils ccache cmake \
       python3-setuptools python3-pip python3-devel python3-lxml swig \
       glibc-gconv-extra \
       python3-jsonschema python3-pytest python3-pytest-env python3-pytest-sugar \
-      python3-pytest-benchmark python3-filelock
+      python3-pytest-benchmark python3-filelock \
+      llvm-devel clang-devel
 
 COPY requirements.txt /tmp/
 RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r /tmp/requirements.txt

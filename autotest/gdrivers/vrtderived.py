@@ -1566,6 +1566,20 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources, dt=gdal.GDT_Float64
             id="unary_minus_variable",
         ),
         pytest.param(
+            "A | B",
+            [("A", 5), ("B", 3)],
+            7,
+            None,
+            id="bitwise_or",
+        ),
+        pytest.param(
+            "A & B",
+            [("A", 5), ("B", 3)],
+            1,
+            None,
+            id="bitwise_and",
+        ),
+        pytest.param(
             "_e",
             [("A", 0)],
             math.exp(1),
@@ -1630,7 +1644,14 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources, dt=gdal.GDT_Float64
         ),
     ],
 )
-@pytest.mark.parametrize("dialect", ("exprtk", "muparser"))
+@pytest.mark.parametrize(
+    "dialect,use_jit",
+    [
+        pytest.param("exprtk", None, id="exprtk"),
+        pytest.param("muparser", True, id="muparser_use_jit"),
+        pytest.param("muparser", False, id="muparser_no_jit"),
+    ],
+)
 @pytest.mark.parametrize(
     "dt",
     [
@@ -1639,7 +1660,7 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources, dt=gdal.GDT_Float64
     ],
 )
 def test_vrt_pixelfn_expression(
-    tmp_vsimem, expression, sources, result, dialect, dialects, dt
+    tmp_vsimem, expression, sources, result, dialect, use_jit, dialects, dt
 ):
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
@@ -1650,13 +1671,25 @@ def test_vrt_pixelfn_expression(
     if dialects and dialect not in dialects:
         pytest.skip(f"Expression not supported for dialect {dialect}")
 
+    if expression in ("A & B", "A | B"):
+        if os.environ.get("BUILD_NAME", "") in ("ubuntu_2004", "sanitize"):
+            pytest.skip("muparser too old")
+        if not use_jit:
+            pytest.skip(
+                "Skipping in non_jit use case as older muparser version do not support bitwise and/or"
+            )
+        dt = gdal.GDT_Byte
+
     xml = vrt_expression_xml(tmp_vsimem, expression, dialect, sources, dt)
 
-    with gdal.Open(xml) as ds:
-        assert (
-            pytest.approx(ds.ReadAsArray(), nan_ok=True)
-            == [[result] * ds.RasterXSize] * ds.RasterYSize
-        )
+    with gdal.config_option(
+        "GDAL_USE_JIT", "YES" if use_jit else None if use_jit is None else "FALSE"
+    ):
+        with gdal.Open(xml) as ds:
+            assert (
+                pytest.approx(ds.ReadAsArray(), nan_ok=True)
+                == [[result] * ds.RasterXSize] * ds.RasterYSize
+            )
 
 
 @pytest.mark.parametrize(

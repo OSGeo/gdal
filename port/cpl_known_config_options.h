@@ -325,6 +325,10 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_HTTPS_PROXY", // from cpl_http.cpp
    "GDAL_IGNORE_AXIS_ORIENTATION", // from gdaljp2metadata.cpp
    "GDAL_INGESTED_BYTES_AT_OPEN", // from cpl_vsil_curl.cpp, gdalopeninfo.cpp
+   "GDAL_JIT_DEBUG", // from gdal_jit.cpp, pixelfunctions.cpp
+   "GDAL_JIT_USE_VECLIB", // from gdal_jit.cpp
+   "GDAL_JIT_VECLIB_PATH", // from gdal_jit.cpp
+   "GDAL_JIT_VECLIB_TYPE", // from gdal_jit.cpp
    "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER", // from gdaljp2metadata.cpp
    "GDAL_JPEG2000_STRUCTURE_MAX_LINES", // from gdaljp2structure.cpp
    "GDAL_JPEG_TO_RGB", // from jpgdataset.cpp
@@ -419,6 +423,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_USE_AVX", // from gdalgrid.cpp
    "GDAL_USE_GEOJP2", // from gdaljp2metadata.cpp
    "GDAL_USE_GMLJP2", // from gdaljp2metadata.cpp
+   "GDAL_USE_JIT", // from pixelfunctions.cpp
    "GDAL_USE_SSE", // from gdalgrid.cpp
    "GDAL_USE_SSSE3", // from cpl_cpu_features.cpp
    "GDAL_VALIDATE_CREATION_OPTIONS", // from gdaldataset.cpp, gdaldriver.cpp

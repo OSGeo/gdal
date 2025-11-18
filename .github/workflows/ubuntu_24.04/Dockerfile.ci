@@ -21,6 +21,8 @@ RUN apt-get update && \
     libcairo2-dev \
     libcfitsio-dev \
     libcrypto++-dev \
+    libclang-18-dev \
+    libclang-cpp18-dev \
     libcurl4-gnutls-dev \
     libexpat-dev \
     libfcgi-dev \
@@ -57,6 +59,7 @@ RUN apt-get update && \
     libxslt-dev \
     libzstd-dev \
     locales \
+    llvm-18-dev \
     mysql-client-core-8.0 \
     netcdf-bin \
     openjdk-8-jdk-headless \
