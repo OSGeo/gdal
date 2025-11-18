@@ -1072,6 +1072,82 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
         }
     }
 
+    const int nLayerCount =
+        (psOptions->osSQL.empty() && psOptions->aosLayers.empty())
+            ? 1
+            : static_cast<int>(psOptions->aosLayers.size());
+
+    const bool bOneSizeNeedsCalculation{
+        static_cast<bool>((psOptions->nXSize == 0) ^ (psOptions->nYSize == 0))};
+
+    // Calculate the size if either nXSize or nYSize is 0
+    if (psOptions->osSQL.empty() && bOneSizeNeedsCalculation)
+    {
+        CPLErr eErr = CE_None;
+        // Get the extent of the source dataset
+        OGREnvelope sEnvelop;
+        bool bFirstLayer = true;
+        for (int i = 0; i < nLayerCount; i++)
+        {
+            OGRLayerH hLayer;
+            if (psOptions->aosLayers.size() > static_cast<size_t>(i))
+                hLayer = GDALDatasetGetLayerByName(
+                    hSrcDataset, psOptions->aosLayers[i].c_str());
+            else
+                hLayer = GDALDatasetGetLayer(hSrcDataset, 0);
+            if (hLayer == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unable to find layer \"%s\".",
+                         psOptions->aosLayers.size() > static_cast<size_t>(i)
+                             ? psOptions->aosLayers[i].c_str()
+                             : "0");
+                eErr = CE_Failure;
+                break;
+            }
+            OGREnvelope sLayerEnvelop;
+            if (OGR_L_GetExtent(hLayer, &sLayerEnvelop, TRUE) != OGRERR_NONE)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot get layer extent");
+                eErr = CE_Failure;
+                break;
+            }
+            if (bFirstLayer)
+            {
+                sEnvelop = sLayerEnvelop;
+                bFirstLayer = false;
+            }
+            else
+            {
+                sEnvelop.Merge(sLayerEnvelop);
+            }
+        }
+        if (eErr == CE_Failure)
+        {
+            if (bCloseOutDSOnError && hDstDS)
+            {
+                GDALClose(hDstDS);
+            }
+            return nullptr;
+        }
+
+        if (psOptions->nXSize == 0)
+        {
+            const_cast<GDALRasterizeOptions *>(psOptions)->nXSize =
+                static_cast<int>(
+                    (sEnvelop.MaxX - sEnvelop.MinX) /
+                    ((sEnvelop.MaxY - sEnvelop.MinY) / psOptions->nYSize));
+        }
+        else
+        {
+            const_cast<GDALRasterizeOptions *>(psOptions)->nYSize =
+                static_cast<int>(
+                    (sEnvelop.MaxY - sEnvelop.MinY) /
+                    ((sEnvelop.MaxX - sEnvelop.MinX) / psOptions->nXSize));
+        }
+    }
+
     const auto GetOutputDataType = [&](OGRLayerH hLayer)
     {
         CPLAssert(bCreateOutput);
@@ -1120,6 +1196,34 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
                                   nullptr, psOptions->osDialect.c_str());
         if (hLayer != nullptr)
         {
+
+            if (bOneSizeNeedsCalculation)
+            {
+                OGREnvelope sEnvelop;
+                if (OGR_L_GetExtent(hLayer, &sEnvelop, TRUE) != OGRERR_NONE)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot get layer extent");
+                    GDALDatasetReleaseResultSet(hSrcDataset, hLayer);
+                    return nullptr;
+                }
+
+                if (psOptions->nXSize == 0)
+                {
+                    const_cast<GDALRasterizeOptions *>(psOptions)->nXSize =
+                        static_cast<int>((sEnvelop.MaxX - sEnvelop.MinX) /
+                                         ((sEnvelop.MaxY - sEnvelop.MinY) /
+                                          psOptions->nYSize));
+                }
+                else
+                {
+                    const_cast<GDALRasterizeOptions *>(psOptions)->nYSize =
+                        static_cast<int>((sEnvelop.MaxY - sEnvelop.MinY) /
+                                         ((sEnvelop.MaxX - sEnvelop.MinX) /
+                                          psOptions->nXSize));
+                }
+            }
+
             if (bCreateOutput)
             {
                 std::vector<OGRLayerH> ahLayers;
@@ -1154,10 +1258,6 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
     /* -------------------------------------------------------------------- */
     /*      Create output file if necessary.                                */
     /* -------------------------------------------------------------------- */
-    const int nLayerCount =
-        (psOptions->osSQL.empty() && psOptions->aosLayers.empty())
-            ? 1
-            : static_cast<int>(psOptions->aosLayers.size());
 
     if (bCreateOutput && hDstDS == nullptr)
     {
@@ -1454,10 +1554,11 @@ GDALRasterizeOptionsNew(char **papszArgv,
             psOptions->nXSize = nXSize;
             psOptions->nYSize = nYSize;
 
-            if (psOptions->nXSize <= 0 || psOptions->nYSize <= 0)
+            if (!(psOptions->nXSize > 0 || psOptions->nYSize > 0))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Wrong value for -ts parameter.");
+                         "Wrong value for -ts parameter: at least one of the "
+                         "arguments must be greater than zero.");
                 return nullptr;
             }
 

@@ -166,6 +166,8 @@ raster data is supported.
 
     Set output file size in pixels and lines. Note that :option:`-ts` cannot be used with
     :option:`-tr`
+    If one of the two values is set to 0, it will be computed from the other value in order to
+    preserve the aspect ratio.
 
 .. option:: -ot <type>
 
