@@ -472,6 +472,9 @@ def test_gdal_alg_module(tmp_vsimem):
     assert set(["dataset", "mdim", "raster", "vector", "vsi"]).issubset(
         set(gdal.alg.__dict__.keys())
     )
+    assert "gdal" not in gdal.alg.__dict__.keys()
+    assert "os" not in gdal.alg.__dict__.keys()
+    assert "Optional" not in gdal.alg.__dict__.keys()
 
     gdal.FileFromMemBuffer(tmp_vsimem / "a", "a")
 
