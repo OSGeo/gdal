@@ -138,6 +138,7 @@ Standard options
 .. option:: --size <xsize>,<ysize>
 
     Set output file size in pixels and lines. Note that `--size` cannot be used with `--resolution`.
+    If one of the two values is set to 0, it will be computed from the other value in order to preserve the aspect ratio of the extent.
 
 .. option:: --ot, --datatype, --output-data-type <OUTPUT-DATA-TYPE>
 
