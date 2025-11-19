@@ -234,7 +234,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
             osLayername = "layer";
         auto poLayer = std::make_unique<OGRFeatherLayer>(
             poDS.get(), osLayername.c_str(), infile, bSeekable, options,
-            poRecordBatchStreamReader);
+            poRecordBatchStreamReader, poOpenInfo->papszOpenOptions);
         poDS->SetLayer(std::move(poLayer));
 
         // Pre-load field domains, as this depends on the first record batch
@@ -270,7 +270,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
         auto poRecordBatchReader = *result;
         auto poLayer = std::make_unique<OGRFeatherLayer>(
             poDS.get(), CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str(),
-            poRecordBatchReader);
+            poRecordBatchReader, poOpenInfo->papszOpenOptions);
         poDS->SetLayer(std::move(poLayer));
     }
     return poDS.release();

@@ -4684,3 +4684,42 @@ def test_ogr_parquet_arrow_stream_list_of_struct_ignored_fields():
         {"a": 1, "b": 2},
         {"a": 1, "b": 2},
     ]
+
+
+###############################################################################
+
+
+def test_ogr_parquet_lists_as_string_json():
+
+    ds = gdal.OpenEx(
+        "data/parquet/test.parquet", open_options=["LISTS_AS_STRING_JSON=YES"]
+    )
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("list_boolean")).GetType()
+        == ogr.OFTString
+    )
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("list_boolean")).GetSubType()
+        == ogr.OFSTJSON
+    )
+    assert (
+        lyr_defn.GetFieldDefn(
+            lyr_defn.GetFieldIndex("fixed_size_list_float64")
+        ).GetType()
+        == ogr.OFTString
+    )
+    assert (
+        lyr_defn.GetFieldDefn(
+            lyr_defn.GetFieldIndex("fixed_size_list_float64")
+        ).GetSubType()
+        == ogr.OFSTJSON
+    )
+    f = lyr.GetFeature(4)
+    assert f["list_boolean"] == "[null,false,true,false]"
+    assert f["list_uint8"] == "[null,7,8,9]"
+    assert f["list_int64"] == "[null,7,8,9]"
+    assert f["list_float64"] == "[null,7.5,8.5,9.5]"
+    assert f["list_string"] == "[null]"
+    assert f["fixed_size_list_float64"] == "[8.0,9.0]"
