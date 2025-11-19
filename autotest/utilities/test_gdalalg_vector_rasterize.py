@@ -38,30 +38,6 @@ def temp_cutline(input_csv):
         gdal.Unlink(input_csv)
 
 
-@contextlib.contextmanager
-def temp_cutverticalline(input_csv):
-    content = """Counter,HEIGHT,WKT
-1,100,"LINESTRING(6.25 1.25,6.25 2.25 100)"
-"""
-    gdal.FileFromMemBuffer(input_csv, content)
-    try:
-        yield
-    finally:
-        gdal.Unlink(input_csv)
-
-
-@contextlib.contextmanager
-def temp_cutsinglepoint(input_csv):
-    content = """Counter,HEIGHT,WKT
-1,100,"POINT(6.25 1.25)"
-"""
-    gdal.FileFromMemBuffer(input_csv, content)
-    try:
-        yield
-    finally:
-        gdal.Unlink(input_csv)
-
-
 @pytest.mark.require_driver("CSV")
 @pytest.mark.parametrize(
     "create_empty_dataset,options,expected",
@@ -738,32 +714,3 @@ def test_gdalalg_vector_rasterize_missing_size_and_res():
 
     with pytest.raises(Exception, match="--resolution.*or.*--size"):
         rasterize.Run()
-
-
-@pytest.mark.require_driver("CSV")
-def test_gdalalg_vector_rasterize_vertical_line(tmp_vsimem):
-
-    input_csv = str(tmp_vsimem / "cutverticalline.csv")
-    with temp_cutverticalline(input_csv):
-
-        output_tif = str(tmp_vsimem / "rasterize_alg_vertical_line.tif")
-
-        rasterize = get_rasterize_alg()
-        assert rasterize.ParseRunAndFinalize(
-            [
-                "--all-touched",
-                "--size",
-                "10,10",
-                "--init",
-                "0",
-                "--burn",
-                "100",
-                input_csv,
-                output_tif,
-            ]
-        )
-
-        with gdal.Open(output_tif) as ds:
-            checksum = ds.GetRasterBand(1).Checksum()
-            # TODO: verify exact expected value but the test is failing with RuntimeError: Could not determine bounds
-            assert checksum == 100

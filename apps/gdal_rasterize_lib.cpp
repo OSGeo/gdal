@@ -1083,22 +1083,9 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
             return false;
         }
 
-        if (height == 0 && width == 0)
+        if (height == 0 || width == 0)
         {
             return false;
-        }
-
-        // Clamp to 1 the size of one dimension if the extent in that
-        // dimension is zero.
-        if (height == 0)
-        {
-            sOptions.nYSize = 1;
-            return true;
-        }
-        else if (width == 0)
-        {
-            sOptions.nXSize = 1;
-            return true;
         }
 
         if (sOptions.nXSize == 0)
