@@ -1,4 +1,4 @@
-/* Dynamially generates gdal.alg module. */
+/* Dynamically generates gdal.alg module. */
 
 %pythoncode %{
 
