@@ -5,6 +5,7 @@
 def _generate_gdal_alg_methods():
     """Dynamically generates gdal.alg.{X}.{Y}.{func} methods from GDAL algorithms"""
 
+    import copy
     import os
     import types
     import typing
@@ -147,14 +148,16 @@ def {name_sanitized}({args}):
     kwargs = {{k: v for k, v in kwargs.items() if v is not None}}
     return gdal.Run({new_path}, **kwargs)
 """
-            g = parent_module.__dict__
+            func_globals = copy.copy(parent_module.__dict__)
             extra = {"gdal": gdal_module, "os": os, "List": List, "Union": Union, "Optional": Optional, "Callable": Callable}
             for k,v in extra.items():
-                g[k] = v
-            exec(func_code, g)
+                func_globals[k] = v
+            exec(func_code, func_globals)
+
+            parent_module.__dict__[name_sanitized] = func_globals[name_sanitized]
 
             # Register doc string
-            g[name_sanitized].__doc__ = f"""{alg.GetDescription()}
+            parent_module.__dict__[name_sanitized].__doc__ = f"""{alg.GetDescription()}
 
        Consult {alg.GetHelpFullURL()} for more details.
 
