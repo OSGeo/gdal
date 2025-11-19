@@ -37,7 +37,10 @@
 OGRParquetLayerBase::OGRParquetLayerBase(OGRParquetDataset *poDS,
                                          const char *pszLayerName,
                                          CSLConstList papszOpenOptions)
-    : OGRArrowLayer(poDS, pszLayerName), m_poDS(poDS),
+    : OGRArrowLayer(poDS, pszLayerName,
+                    CPLTestBool(CSLFetchNameValueDef(
+                        papszOpenOptions, "LISTS_AS_STRING_JSON", "NO"))),
+      m_poDS(poDS),
       m_aosGeomPossibleNames(CSLTokenizeString2(
           CSLFetchNameValueDef(papszOpenOptions, "GEOM_POSSIBLE_NAMES",
                                "geometry,wkb_geometry,wkt_geometry"),

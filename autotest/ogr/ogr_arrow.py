@@ -982,3 +982,42 @@ def test_ogr_arrow_convert_from_geoarrow_wkb_with_extension_loaded(tmp_path):
     with gdal.OpenEx(tmp_path / "out.feather") as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 9
+
+
+###############################################################################
+
+
+def test_ogr_arrow_lists_as_string_json():
+
+    ds = gdal.OpenEx(
+        "data/arrow/test.feather", open_options=["LISTS_AS_STRING_JSON=YES"]
+    )
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("list_boolean")).GetType()
+        == ogr.OFTString
+    )
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("list_boolean")).GetSubType()
+        == ogr.OFSTJSON
+    )
+    assert (
+        lyr_defn.GetFieldDefn(
+            lyr_defn.GetFieldIndex("fixed_size_list_float64")
+        ).GetType()
+        == ogr.OFTString
+    )
+    assert (
+        lyr_defn.GetFieldDefn(
+            lyr_defn.GetFieldIndex("fixed_size_list_float64")
+        ).GetSubType()
+        == ogr.OFSTJSON
+    )
+    f = lyr.GetFeature(4)
+    assert f["list_boolean"] == "[null,false,true,false]"
+    assert f["list_uint8"] == "[null,7,8,9]"
+    assert f["list_int64"] == "[null,7,8,9]"
+    assert f["list_float64"] == "[null,7.5,8.5,9.5]"
+    assert f["list_string"] == "[null]"
+    assert f["fixed_size_list_float64"] == "[8.0,9.0]"
