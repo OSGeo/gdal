@@ -1866,7 +1866,8 @@ class GDALColorReliefDataset final : public GDALDataset
 
     bool InitOK() const
     {
-        return pafSourceBuf != nullptr || panSourceBuf != nullptr;
+        return !asColorAssociation.empty() &&
+               (pafSourceBuf != nullptr || panSourceBuf != nullptr);
     }
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
