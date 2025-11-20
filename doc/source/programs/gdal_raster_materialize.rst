@@ -58,6 +58,8 @@ Examples
         $ gdal pipeline ! read in.tif ! reproject --dst-crs=EPSG:32632 ! \
                         ! materialize ! contour --interval=10 ! write out.gpkg --overwrite
 
+
+.. example::
     :title: How to use materialize for Cloud Optimzed GeoTIFF (COG)
 
     Usually when you want load COG data, you are not loading the whole data but instead on certain region and using lower resolution for fast analysis.
