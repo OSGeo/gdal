@@ -57,3 +57,26 @@ Examples
 
         $ gdal pipeline ! read in.tif ! reproject --dst-crs=EPSG:32632 ! \
                         ! materialize ! contour --interval=10 ! write out.gpkg --overwrite
+
+    :title: How to use materialize for Cloud Optimzed GeoTIFF (COG)
+
+    Usually when you want load COG data, you are not loading the whole data but instead on certain region and using lower resolution for tiling or overview.
+    Therefore, after using command `read`, it is not supposed to be materialize right away because it mean it will download the whole thing into the memory/disk.
+    Instead, you should use command `clip` to select your region interest either with `--bbox` or dataset with `--like` or use `resize` to use the lower resolution overview of the image.
+
+    This is a bad example
+    .. code-block:: bash
+
+        $ gdal pipeline ! read /vsicurl/https://some.storage.com/mydata/image.tif \
+                        ! materialize ! reproject -d EPSG:4326 ! write out.tif --overwrite 
+    
+    This is a good example
+   .. code-block:: bash
+
+        $ gdal pipeline ! read /vsicurl/https://some.storage.com/mydata/image.tif \
+                        ! clip --bbox=112,2,116,4.5 --bbox-crs=EPSG:4326 \
+                        ! resize --size=256,256 \
+                        ! materialize \
+                        ! color-map --color-map=mycolor.txt \
+                        ! write out.tif --overwrite
+
