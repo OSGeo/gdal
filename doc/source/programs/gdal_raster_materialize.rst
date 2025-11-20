@@ -55,3 +55,10 @@ Examples
 
         $ gdal pipeline ! read in.tif ! reproject --dst-crs=EPSG:32632 ! \
                         ! materialize ! contour --interval=10 ! write out.gpkg --overwrite
+
+    :title: Mosaic then materialize to VRT is not possible (this command will not work!)
+
+    .. code-block: bash
+        $ gdal pipeline ! mosaic data/*.tif ! materialize -f VRT ! reproject -d EPSG:4326 --size=1000,1000 \
+                        ! write data.tif --overwrite
+    
