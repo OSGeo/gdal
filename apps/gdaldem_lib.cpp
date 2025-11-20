@@ -109,6 +109,11 @@
 #define HAVE_16_SSE_REG
 #include "emmintrin.h"
 #include "gdalsse_priv.h"
+#elif defined(USE_NEON_OPTIMIZATIONS)
+#define HAVE_16_SSE_REG
+#define USE_SSE2
+#include "include_sse2neon.h"
+#include "gdalsse_priv.h"
 #endif
 
 static const double kdfDegreesToRadians = M_PI / 180.0;
