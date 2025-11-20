@@ -217,10 +217,10 @@ void GDALJP2Metadata::CollectGMLData(GDALJP2Box *poGMLData)
 
             while (strlen(oSubChildBox.GetType()) > 0)
             {
-                if (EQUAL(oSubChildBox.GetType(), "lbl "))
+                if (EQUAL(oSubChildBox.GetType(), "lbl ") && !pszLabel)
                     pszLabel =
                         reinterpret_cast<char *>(oSubChildBox.ReadBoxData());
-                else if (EQUAL(oSubChildBox.GetType(), "xml "))
+                else if (EQUAL(oSubChildBox.GetType(), "xml ") && !pszXML)
                 {
                     pszXML =
                         reinterpret_cast<char *>(oSubChildBox.ReadBoxData());
