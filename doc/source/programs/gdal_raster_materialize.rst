@@ -60,23 +60,15 @@ Examples
 
     :title: How to use materialize for Cloud Optimzed GeoTIFF (COG)
 
-    Usually when you want load COG data, you are not loading the whole data but instead on certain region and using lower resolution for tiling or overview.
+    Usually when you want load COG data, you are not loading the whole data but instead on certain region and using lower resolution for fast analysis.
     Therefore, after using command `read`, it is not supposed to be materialize right away because it mean it will download the whole thing into the memory/disk.
-    Instead, you should use command `clip` to select your region interest either with `--bbox` or dataset with `--like` or use `resize` to use the lower resolution overview of the image.
+    Instead, you could use command `reproject` and use `--bbox` to limit the region of interest and set `--size` or `--resolution` to use lower resolution overview.
 
-    This is a bad example
-    .. code-block:: bash
-
-        $ gdal pipeline ! read /vsicurl/https://some.storage.com/mydata/image.tif \
-                        ! materialize ! reproject -d EPSG:4326 ! write out.tif --overwrite 
-    
-    This is a good example
    .. code-block:: bash
 
-        $ gdal pipeline ! read /vsicurl/https://some.storage.com/mydata/image.tif \
-                        ! clip --bbox=112,2,116,4.5 --bbox-crs=EPSG:4326 \
-                        ! resize --size=256,256 \
+        $ gdal pipeline ! read /vsicurl/https://some.storage.com/mydata/landcover.tif \
+                        ! reproject -r mode -d EPSG:4326 --bbox=112,2,116,4.5 --bbox-crs=EPSG:4326 --size=3000,3000 \
                         ! materialize \
-                        ! color-map --color-map=mycolor.txt \
-                        ! write out.tif --overwrite
+                        ! zonal-stats --zones=/vsicurl/https://some.storage.com/mydata/adm_level4.fgb --stat=values \
+                        ! write out.geojson
 
