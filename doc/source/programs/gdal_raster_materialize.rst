@@ -60,7 +60,7 @@ Examples
 
 
 .. example::
-    :title: How to use materialize for Cloud Optimzed GeoTIFF (COG)
+   :title: How to use materialize for Cloud Optimzed GeoTIFF (COG)
 
     Usually when you want load COG data, you are not loading the whole data but instead on certain region and using lower resolution for fast analysis.
     Therefore, after using command `read`, it is not supposed to be materialize right away because it mean it will download the whole thing into the memory/disk.
