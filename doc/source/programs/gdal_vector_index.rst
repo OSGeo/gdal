@@ -150,8 +150,8 @@ Examples
 
    Produce a GeoPackage with a record for every
    layer that the utility found in the ``countries`` folder. Each record holds
-   information that points to the location of the image and also a bounding rectangle
-   shape showing the bounds of the image:
+   information that points to the location of each input vector file and also a bounding rectangle
+   shape showing its bounds:
 
    .. code-block:: bash
 
