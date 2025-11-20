@@ -1556,6 +1556,17 @@ struct sPolyExtended
         pBounds->maxx = poPolyEx->sEnvelope.MaxX;
         pBounds->maxy = poPolyEx->sEnvelope.MaxY;
     }
+
+    // recent libc++ std::sort() involve unsigned integer overflow in some
+    // situation
+    CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+    static void SortByIncreasingEra(const sPolyExtended **pStart,
+                                    const sPolyExtended **pEnd)
+    {
+        std::sort(pStart, pEnd,
+                  [](const sPolyExtended *psPoly1, const sPolyExtended *psPoly2)
+                  { return psPoly1->dfArea < psPoly2->dfArea; });
+    }
 };
 
 static bool OGRGeometryFactoryCompareAreaDescending(const sPolyExtended &sPoly1,
@@ -2026,24 +2037,21 @@ OGRGeometry *OGRGeometryFactory::organizePolygons(OGRGeometry **papoPolygons,
         aoi.maxx = thisPoly.sEnvelope.MaxX;
         aoi.maxy = thisPoly.sEnvelope.MaxY;
         int nCandidates = 0;
-        std::unique_ptr<void *, decltype(&CPLFree)> aphCandidateShells(
-            CPLQuadTreeSearch(poQuadTree.get(), &aoi, &nCandidates), CPLFree);
+        std::unique_ptr<const sPolyExtended *, decltype(&CPLFree)>
+            aphCandidateShells(
+                const_cast<const sPolyExtended **>(
+                    reinterpret_cast<sPolyExtended **>(CPLQuadTreeSearch(
+                        poQuadTree.get(), &aoi, &nCandidates))),
+                CPLFree);
 
         // Sort candidate outer rings by increasing area
-        std::sort(
-            aphCandidateShells.get(), aphCandidateShells.get() + nCandidates,
-            [](void *hFeature1, void *hFeature2)
-            {
-                const auto &sPoly1 = *(static_cast<sPolyExtended *>(hFeature1));
-                const auto &sPoly2 = *(static_cast<sPolyExtended *>(hFeature2));
-                return sPoly1.dfArea < sPoly2.dfArea;
-            });
+        sPolyExtended::SortByIncreasingEra(
+            aphCandidateShells.get(), aphCandidateShells.get() + nCandidates);
 
         int j = 0;
         for (; bValidTopology && j < nCandidates; j++)
         {
-            const auto &otherPoly = *static_cast<const sPolyExtended *>(
-                (aphCandidateShells.get())[j]);
+            const auto &otherPoly = *(aphCandidateShells.get()[j]);
 
             if (method == METHOD_ONLY_CCW && otherPoly.bIsCW == false)
             {
