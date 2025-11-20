@@ -321,6 +321,8 @@ class PDFDataset final : public GDALPamDataset
     std::vector<LayerStruct> m_oLayerNameSet{};
     CPLStringList m_aosLayerNames{};
 
+    void SortLayerList();
+
     struct LayerWithRef
     {
         CPLString osName{};

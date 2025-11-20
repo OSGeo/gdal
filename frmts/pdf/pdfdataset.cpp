@@ -3575,10 +3575,13 @@ void PDFDataset::AddLayer(const std::string &osName, int iPage)
 }
 
 /************************************************************************/
-/*                           CreateLayerList()                          */
+/*                            SortLayerList()                           */
 /************************************************************************/
 
-void PDFDataset::CreateLayerList()
+// recent libc++ std::sort() involve unsigned integer overflow in some
+// situation
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+void PDFDataset::SortLayerList()
 {
     // Sort layers by prioritizing page number and then insertion index
     std::sort(m_oLayerNameSet.begin(), m_oLayerNameSet.end(),
@@ -3590,6 +3593,15 @@ void PDFDataset::CreateLayerList()
                       return false;
                   return a.nInsertIdx < b.nInsertIdx;
               });
+}
+
+/************************************************************************/
+/*                           CreateLayerList()                          */
+/************************************************************************/
+
+void PDFDataset::CreateLayerList()
+{
+    SortLayerList();
 
     if (m_oLayerNameSet.size() >= 100)
     {
