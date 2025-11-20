@@ -329,14 +329,14 @@ static
         const auto half = XMMReg4Float::Set1(0.5f);
         const auto six_h0 = six * h0;
         const auto idx0 = six_h0.truncate_to_int();
-        const auto f0 = six_h0 - idx0.to_float();
+        const auto f0 = six_h0 - idx0.cast_to_float();
         const auto p0 = (v0 * (one - s0) + half).truncate_to_int();
         const auto q0 = (v0 * (one - s0 * f0) + half).truncate_to_int();
         const auto t0 = (v0 * (one - s0 * (one - f0)) + half).truncate_to_int();
 
         const auto six_h1 = six * h1;
         const auto idx1 = six_h1.truncate_to_int();
-        const auto f1 = six_h1 - idx1.to_float();
+        const auto f1 = six_h1 - idx1.cast_to_float();
         const auto p1 = (v1 * (one - s1) + half).truncate_to_int();
         const auto q1 = (v1 * (one - s1 * f1) + half).truncate_to_int();
         const auto t1 = (v1 * (one - s1 * (one - f1)) + half).truncate_to_int();

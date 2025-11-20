@@ -409,7 +409,31 @@ class XMMReg4Float
 
     inline XMMReg4Int truncate_to_int() const;
 
+    inline XMMReg4Float cast_to_float() const
+    {
+        return *this;
+    }
+
     inline XMMReg4Double cast_to_double() const;
+
+    inline XMMReg4Float approx_inv_sqrt(const XMMReg4Float &one,
+                                        const XMMReg4Float &half) const
+    {
+        __m128 reg = xmm;
+        __m128 reg_half = _mm_mul_ps(reg, half.xmm);
+        // Compute rough approximation of 1 / sqrt(b) with _mm_rsqrt_ps
+        reg = _mm_rsqrt_ps(reg);
+        // And perform one step of Newton-Raphson approximation to improve it
+        // approx_inv_sqrt_x = approx_inv_sqrt_x*(1.5 -
+        //                            0.5*x*approx_inv_sqrt_x*approx_inv_sqrt_x);
+        const __m128 one_and_a_half = _mm_add_ps(one.xmm, half.xmm);
+        reg = _mm_mul_ps(
+            reg, _mm_sub_ps(one_and_a_half,
+                            _mm_mul_ps(reg_half, _mm_mul_ps(reg, reg))));
+        XMMReg4Float ret;
+        ret.xmm = reg;
+        return ret;
+    }
 
     inline void Store4Val(float *ptr) const
     {
@@ -515,7 +539,7 @@ class XMMReg4Int
 
     XMMReg4Double cast_to_double() const;
 
-    XMMReg4Float to_float() const
+    XMMReg4Float cast_to_float() const
     {
         XMMReg4Float ret;
         ret.xmm = _mm_cvtepi32_ps(xmm);
