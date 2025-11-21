@@ -120,7 +120,8 @@ GDALDatasetH GDALViewshedGenerate(
     double dfTargetHeight, double dfVisibleVal, double dfInvisibleVal,
     double dfOutOfRangeVal, double dfNoDataVal, double dfCurvCoeff,
     GDALViewshedMode eMode, double dfMaxDistance, GDALProgressFunc pfnProgress,
-    void *pProgressArg, GDALViewshedOutputType heightMode,
+    void *pProgressArg, GDALViewshedOutputType heightMode, double startAngle,
+    double endAngle, double lowPitch, double highPitch,
     [[maybe_unused]] CSLConstList papszExtraOptions)
 {
     using namespace gdal;
@@ -136,6 +137,10 @@ GDALDatasetH GDALViewshedGenerate(
     oOpts.curveCoeff = dfCurvCoeff;
     oOpts.maxDistance = dfMaxDistance;
     oOpts.nodataVal = dfNoDataVal;
+    oOpts.startAngle = startAngle;
+    oOpts.endAngle = endAngle;
+    oOpts.lowPitch = lowPitch;
+    oOpts.highPitch = highPitch;
 
     switch (eMode)
     {

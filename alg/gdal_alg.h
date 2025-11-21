@@ -353,8 +353,8 @@ GDALDatasetH CPL_DLL GDALViewshedGenerate(
     double dfTargetHeight, double dfVisibleVal, double dfInvisibleVal,
     double dfOutOfRangeVal, double dfNoDataVal, double dfCurvCoeff,
     GDALViewshedMode eMode, double dfMaxDistance, GDALProgressFunc pfnProgress,
-    void *pProgressArg, GDALViewshedOutputType heightMode,
-    CSLConstList papszExtraOptions);
+    void *pProgressArg, GDALViewshedOutputType heightMode, double startAngle,
+    double endAngle, double lowPitch, double highPitch, CSLConstList papszExtraOptions);
 
 bool CPL_DLL GDALIsLineOfSightVisible(
     const GDALRasterBandH, const int xA, const int yA, const double zA,
