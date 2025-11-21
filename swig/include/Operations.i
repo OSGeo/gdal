@@ -591,8 +591,6 @@ GDALDatasetShadow *ViewshedGenerate( GDALRasterBandShadow *srcBand,
                         GDALViewshedMode mode, double maxDistance,
                         GDALProgressFunc callback = NULL, void* callback_data = NULL,
                         GDALViewshedOutputType heightMode = GVOT_NORMAL,
-                        double startAngle = 0.0, double endAngle = 0.0,
-                        double lowPitch = -90.0, double highPitch = 90.0
                         char** options = NULL)
 {
     GDALDatasetShadow* ds = GDALViewshedGenerate( srcBand,
