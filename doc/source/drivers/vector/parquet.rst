@@ -53,6 +53,17 @@ The following open options are supported:
      The string is typically formatted as CODE:AUTH (e.g "EPSG:4326"), or can
      be a PROJ.4 or WKT CRS string.
 
+- .. oo:: LISTS_AS_STRING_JSON
+     :choices: YES, NO
+     :default: NO
+     :since: 3.12.1
+
+     Whether lists of strings/integers/reals should be reported as String(JSON)
+     fields rather than String/Integer[64]/RealList.
+     Useful when null values in such lists must be exactly mapped as such,
+     instead of being omitted (for lists of strings), or set to 0 (for list of
+     boolean, integer or real).
+
 Creation issues
 ---------------
 

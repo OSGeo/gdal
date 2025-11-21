@@ -97,12 +97,14 @@ class OGRFeatherLayer final : public OGRArrowLayer
   public:
     OGRFeatherLayer(OGRFeatherDataset *poDS, const char *pszLayerName,
                     std::shared_ptr<arrow::ipc::RecordBatchFileReader>
-                        &poRecordBatchFileReader);
+                        &poRecordBatchFileReader,
+                    CSLConstList papszOpenOptions);
     OGRFeatherLayer(OGRFeatherDataset *poDS, const char *pszLayerName,
                     std::shared_ptr<arrow::io::RandomAccessFile> poFile,
                     bool bSeekable, const arrow::ipc::IpcReadOptions &oOptions,
                     std::shared_ptr<arrow::ipc::RecordBatchStreamReader>
-                        &poRecordBatchStreamReader);
+                        &poRecordBatchStreamReader,
+                    CSLConstList papszOpenOptions);
 
     void ResetReading() override;
     int TestCapability(const char *pszCap) const override;
