@@ -431,6 +431,7 @@ def test_gdalalg_raster_index_stac_geoparquet_base_url(tmp_vsimem):
 
     with ogr.Open(tmp_vsimem / "out.parquet") as ds:
         lyr = ds.GetLayer(0)
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
         f = lyr.GetNextFeature()
         assert f["assets.image.href"] == "http://example.com/byte.tif"
 
@@ -477,3 +478,47 @@ def test_gdalalg_raster_index_stac_geoparquet_no_proj_code(tmp_vsimem):
         assert f["proj:code"] is None
         assert f["proj:wkt2"].startswith("GEOGCRS[")
         assert json.loads(f["proj:projjson"])["type"] == "GeographicCRS"
+
+
+@pytest.mark.require_driver("PARQUET")
+def test_gdalalg_raster_index_stac_geoparquet_error_not_parquet(tmp_vsimem):
+
+    with pytest.raises(
+        Exception,
+        match="STAC-GeoParquet profile is only compatible with Parquet output format",
+    ):
+        gdal.alg.raster.index(
+            input="../gcore/data/byte.tif",
+            output=tmp_vsimem / "out.gpkg",
+            profile="STAC-GeoParquet",
+        )
+
+
+@pytest.mark.require_driver("PARQUET")
+def test_gdalalg_raster_index_stac_geoparquet_error_not_parquet_bis(tmp_vsimem):
+
+    with pytest.raises(
+        Exception,
+        match="STAC-GeoParquet profile is only compatible with Parquet output format",
+    ):
+        gdal.alg.raster.index(
+            input="../gcore/data/byte.tif",
+            output=tmp_vsimem / "out.parquet",
+            profile="STAC-GeoParquet",
+            output_format="GPKG",
+        )
+
+
+@pytest.mark.require_driver("PARQUET")
+def test_gdalalg_raster_index_stac_geoparquet_error_not_epsg_4326(tmp_vsimem):
+
+    with pytest.raises(
+        Exception,
+        match="STAC-GeoParquet profile is only compatible with --dst-crs=EPSG:4326",
+    ):
+        gdal.alg.raster.index(
+            input="../gcore/data/byte.tif",
+            output=tmp_vsimem / "out.parquet",
+            profile="STAC-GeoParquet",
+            dst_crs="EPSG:3857",
+        )
