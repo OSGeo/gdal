@@ -33,9 +33,12 @@
 
 OGRFeatherLayer::OGRFeatherLayer(
     OGRFeatherDataset *poDS, const char *pszLayerName,
-    std::shared_ptr<arrow::ipc::RecordBatchFileReader> &poRecordBatchFileReader)
-    : OGRArrowLayer(poDS, pszLayerName), m_poDS(poDS),
-      m_poRecordBatchFileReader(poRecordBatchFileReader)
+    std::shared_ptr<arrow::ipc::RecordBatchFileReader> &poRecordBatchFileReader,
+    CSLConstList papszOpenOptions)
+    : OGRArrowLayer(poDS, pszLayerName,
+                    CPLTestBool(CSLFetchNameValueDef(
+                        papszOpenOptions, "LISTS_AS_STRING_JSON", "NO"))),
+      m_poDS(poDS), m_poRecordBatchFileReader(poRecordBatchFileReader)
 {
     EstablishFeatureDefn();
     CPLAssert(static_cast<int>(m_aeGeomEncoding.size()) ==
@@ -51,10 +54,13 @@ OGRFeatherLayer::OGRFeatherLayer(
     std::shared_ptr<arrow::io::RandomAccessFile> poFile, bool bSeekable,
     const arrow::ipc::IpcReadOptions &oOptions,
     std::shared_ptr<arrow::ipc::RecordBatchStreamReader>
-        &poRecordBatchStreamReader)
-    : OGRArrowLayer(poDS, pszLayerName), m_poDS(poDS),
-      m_poFile(std::move(poFile)), m_bSeekable(bSeekable), m_oOptions(oOptions),
-      m_poRecordBatchReader(poRecordBatchStreamReader)
+        &poRecordBatchStreamReader,
+    CSLConstList papszOpenOptions)
+    : OGRArrowLayer(poDS, pszLayerName,
+                    CPLTestBool(CSLFetchNameValueDef(
+                        papszOpenOptions, "LISTS_AS_STRING_JSON", "NO"))),
+      m_poDS(poDS), m_poFile(std::move(poFile)), m_bSeekable(bSeekable),
+      m_oOptions(oOptions), m_poRecordBatchReader(poRecordBatchStreamReader)
 {
     EstablishFeatureDefn();
     CPLAssert(static_cast<int>(m_aeGeomEncoding.size()) ==
