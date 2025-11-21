@@ -2816,6 +2816,7 @@ ReadCompressedData
 readdir
 ReadDir
 ReadRaster
+RealList
 realloc
 rebased
 Recherches
