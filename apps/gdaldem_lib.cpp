@@ -1080,45 +1080,46 @@ static float GDALHillshadeAlg_same_res(const T *afWin,
     return cang;
 }
 
-#ifdef HAVE_16_SSE_REG
-
-template <class T, class REG_T>
+#if defined(HAVE_16_SSE_REG)
+template <class T, class REG_T, class REG_FLOAT>
 static int GDALHillshadeAlg_same_res_multisample(
     const T *pafFirstLine, const T *pafSecondLine, const T *pafThirdLine,
     int nXSize, const AlgorithmParameters *pData, float *pafOutputBuf)
 {
     const GDALHillshadeAlgData *psData =
         static_cast<const GDALHillshadeAlgData *>(pData);
-    const auto reg_fact_x = XMMReg4Float::Set1(
-        psData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res);
-    const auto reg_fact_y = XMMReg4Float::Set1(
-        psData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res);
+    const auto reg_fact_x =
+        REG_FLOAT::Set1(psData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res);
+    const auto reg_fact_y =
+        REG_FLOAT::Set1(psData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res);
     const auto reg_constant_num =
-        XMMReg4Float::Set1(psData->sin_altRadians_mul_254);
+        REG_FLOAT::Set1(psData->sin_altRadians_mul_254);
     const auto reg_constant_denom =
-        XMMReg4Float::Set1(psData->square_z_mul_square_inv_res);
-    const auto reg_half = XMMReg4Float::Set1(0.5f);
+        REG_FLOAT::Set1(psData->square_z_mul_square_inv_res);
+    const auto reg_half = REG_FLOAT::Set1(0.5f);
     const auto reg_one = reg_half + reg_half;
-    const auto reg_one_float = XMMReg4Float::Set1(1.0f);
+    const auto reg_one_float = REG_FLOAT::Set1(1.0f);
 
     int j = 1;  // Used after for.
-    for (; j < nXSize - 4; j += 4)
+    constexpr int N_VAL_PER_REG =
+        static_cast<int>(sizeof(REG_FLOAT) / sizeof(float));
+    for (; j < nXSize - N_VAL_PER_REG; j += N_VAL_PER_REG)
     {
         const T *firstLine = pafFirstLine + j - 1;
         const T *secondLine = pafSecondLine + j - 1;
         const T *thirdLine = pafThirdLine + j - 1;
 
-        const auto firstLine0 = REG_T::Load4Val(firstLine);
-        const auto firstLine1 = REG_T::Load4Val(firstLine + 1);
-        const auto firstLine2 = REG_T::Load4Val(firstLine + 2);
-        const auto thirdLine0 = REG_T::Load4Val(thirdLine);
-        const auto thirdLine1 = REG_T::Load4Val(thirdLine + 1);
-        const auto thirdLine2 = REG_T::Load4Val(thirdLine + 2);
+        const auto firstLine0 = REG_T::LoadAllVal(firstLine);
+        const auto firstLine1 = REG_T::LoadAllVal(firstLine + 1);
+        const auto firstLine2 = REG_T::LoadAllVal(firstLine + 2);
+        const auto thirdLine0 = REG_T::LoadAllVal(thirdLine);
+        const auto thirdLine1 = REG_T::LoadAllVal(thirdLine + 1);
+        const auto thirdLine2 = REG_T::LoadAllVal(thirdLine + 2);
         auto accX = firstLine0 - thirdLine2;
         const auto six_minus_two = thirdLine0 - firstLine2;
         auto accY = accX;
         const auto three_minus_five =
-            REG_T::Load4Val(secondLine) - REG_T::Load4Val(secondLine + 2);
+            REG_T::LoadAllVal(secondLine) - REG_T::LoadAllVal(secondLine + 2);
         const auto one_minus_seven = firstLine1 - thirdLine1;
         accX += three_minus_five;
         accY += one_minus_seven;
@@ -1137,9 +1138,9 @@ static int GDALHillshadeAlg_same_res_multisample(
         const auto num_div_sqrt_denom =
             reg_numerator * reg_denominator.approx_inv_sqrt(reg_one, reg_half);
 
-        auto res = XMMReg4Float::Max(reg_one_float,
-                                     num_div_sqrt_denom + reg_one_float);
-        res.Store4Val(pafOutputBuf + j);
+        auto res =
+            REG_FLOAT::Max(reg_one_float, num_div_sqrt_denom + reg_one_float);
+        res.StoreAllVal(pafOutputBuf + j);
     }
     return j;
 }
@@ -3934,13 +3935,20 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                 {
                     pfnAlgFloat = GDALHillshadeAlg_same_res<float>;
                     pfnAlgInt32 = GDALHillshadeAlg_same_res<GInt32>;
-#ifdef HAVE_16_SSE_REG
+#if defined(HAVE_16_SSE_REG) && defined(__AVX2__)
                     pfnAlgFloat_multisample =
-                        GDALHillshadeAlg_same_res_multisample<float,
-                                                              XMMReg4Float>;
+                        GDALHillshadeAlg_same_res_multisample<
+                            float, XMMReg8Float, XMMReg8Float>;
                     pfnAlgInt32_multisample =
-                        GDALHillshadeAlg_same_res_multisample<GInt32,
-                                                              XMMReg4Int>;
+                        GDALHillshadeAlg_same_res_multisample<
+                            GInt32, XMMReg8Int, XMMReg8Float>;
+#elif defined(HAVE_16_SSE_REG)
+                    pfnAlgFloat_multisample =
+                        GDALHillshadeAlg_same_res_multisample<
+                            float, XMMReg4Float, XMMReg4Float>;
+                    pfnAlgInt32_multisample =
+                        GDALHillshadeAlg_same_res_multisample<
+                            GInt32, XMMReg4Int, XMMReg4Float>;
 #endif
                 }
                 else
