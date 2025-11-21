@@ -711,8 +711,10 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference *poSRSIn)
             CPLSPrintf(" AND epoch = %.17g", poSRSIn->GetCoordinateEpoch());
     }
 
-    if (!(poSRS->IsGeographic() && poSRS->GetAxesCount() == 3))
+    if (!(poSRS->IsGeographic() && poSRS->GetAxesCount() == 3) &&
+        !poSRS->IsDerivedGeographic())
     {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         char *pszTmp = nullptr;
         poSRS->exportToWkt(&pszTmp, apszOptionsWkt1);
         pszWKT1.reset(pszTmp);
@@ -722,6 +724,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference *poSRSIn)
         }
     }
     {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         char *pszTmp = nullptr;
         poSRS->exportToWkt(&pszTmp, apszOptionsWkt2_2015);
         pszWKT2_2015.reset(pszTmp);

@@ -488,7 +488,7 @@ GDALJP2Box *GDALJP2Box::CreateLblBox(const char *pszLabel)
 {
     GDALJP2Box *const poBox = new GDALJP2Box();
     poBox->SetType("lbl ");
-    poBox->SetWritableData(static_cast<int>(strlen(pszLabel) + 1),
+    poBox->SetWritableData(static_cast<int>(strlen(pszLabel)),
                            reinterpret_cast<const GByte *>(pszLabel));
 
     return poBox;
@@ -504,12 +504,12 @@ GDALJP2Box *GDALJP2Box::CreateLabelledXMLAssoc(const char *pszLabel,
 {
     GDALJP2Box oLabel;
     oLabel.SetType("lbl ");
-    oLabel.SetWritableData(static_cast<int>(strlen(pszLabel) + 1),
+    oLabel.SetWritableData(static_cast<int>(strlen(pszLabel)),
                            reinterpret_cast<const GByte *>(pszLabel));
 
     GDALJP2Box oXML;
     oXML.SetType("xml ");
-    oXML.SetWritableData(static_cast<int>(strlen(pszXML) + 1),
+    oXML.SetWritableData(static_cast<int>(strlen(pszXML)),
                          reinterpret_cast<const GByte *>(pszXML));
 
     GDALJP2Box *aoList[2] = {&oLabel, &oXML};
@@ -530,6 +530,8 @@ GDALJP2Box *GDALJP2Box::CreateJUMBFDescriptionBox(const GByte *pabyUUIDType,
 
     poBox->AppendWritableData(16, pabyUUIDType);
     poBox->AppendUInt8(3);  // requestable field
+    // +1 since NUL terminated byte required in the JUMBF spec
+    // cf other implementation at https://gitlab.com/wg1/jpeg-systems/reference-software/jumbf-reference-implementation-2/-/blame/main/dbench_jumbf/src/db_jumbf_desc_box.cpp?ref_type=heads#L169
     const size_t nLabelLen = strlen(pszLabel) + 1;
     poBox->AppendWritableData(static_cast<int>(nLabelLen), pszLabel);
 

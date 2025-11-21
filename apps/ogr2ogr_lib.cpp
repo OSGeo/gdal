@@ -6072,7 +6072,8 @@ SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
         if (bWrapDateline)
         {
             if (bTransform && poCT != nullptr && poOutputSRS != nullptr &&
-                poOutputSRS->IsGeographic())
+                poOutputSRS->IsGeographic() &&
+                !poOutputSRS->IsDerivedGeographic())
             {
                 papszTransformOptions =
                     CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
@@ -6084,7 +6085,8 @@ SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
                         CSLAddString(papszTransformOptions, soOffset);
                 }
             }
-            else if (poSourceSRS != nullptr && poSourceSRS->IsGeographic())
+            else if (poSourceSRS != nullptr && poSourceSRS->IsGeographic() &&
+                     !poSourceSRS->IsDerivedGeographic())
             {
                 papszTransformOptions =
                     CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
