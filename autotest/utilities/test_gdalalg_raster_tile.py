@@ -1066,9 +1066,12 @@ def test_gdalalg_raster_tile_spawn(tmp_path):
         last_pct[0] = pct
         return True
 
+    got_subprocess_debug_msg = [False]
     got_spurious = [False]
 
     def my_handler(errorClass, errno, msg):
+        if "gdal_raster_tile: subprocess 0: Generating tiles" in msg:
+            got_subprocess_debug_msg[0] = True
         if "Spurious" in msg:
             got_spurious[0] = True
         return
@@ -1096,6 +1099,7 @@ def test_gdalalg_raster_tile_spawn(tmp_path):
     assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) == 108
     assert gdal.VSIStatL(tmp_path / "log.txt") is not None
     assert got_spurious[0]
+    assert got_subprocess_debug_msg[0]
 
 
 @pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
@@ -2242,6 +2246,24 @@ def test_gdalalg_raster_tile_pipeline(tmp_path):
         gdal.Run(
             "raster pipeline",
             pipeline=f"mosaic ../gdrivers/data/small_world.tif ! tile {out_dirname} --min-zoom=0 --max-zoom=3",
+        )
+
+    assert len(gdal.ReadDirRecursive(out_dirname)) == 108
+
+
+def test_gdalalg_raster_tile_pipeline_input_ds(tmp_path):
+
+    out_dirname = tmp_path / "subdir"
+    with gdaltest.config_options(
+        {
+            "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN": "1",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+        }
+    ):
+        gdal.Run(
+            "raster pipeline",
+            input="../gdrivers/data/small_world.tif",
+            pipeline=f"read ! tile {out_dirname} --min-zoom=0 --max-zoom=3",
         )
 
     assert len(gdal.ReadDirRecursive(out_dirname)) == 108

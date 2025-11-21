@@ -27,7 +27,7 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         # macos-15-intel: Intel
         # macos-14: arm64

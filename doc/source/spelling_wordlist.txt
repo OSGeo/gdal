@@ -2817,6 +2817,7 @@ ReadCompressedData
 readdir
 ReadDir
 ReadRaster
+RealList
 realloc
 rebased
 Recherches
@@ -3757,6 +3758,7 @@ yk
 ym
 ymax
 ymin
+yml
 yoff
 yOff
 YOrigin

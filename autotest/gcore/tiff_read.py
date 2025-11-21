@@ -5663,3 +5663,48 @@ def test_tiff_read_multithreaded_read_missing_tilebytecounts_and_offsets():
         match="missing_tilebytecounts_and_offsets.tif: Error while getting location of block 0",
     ):
         ds.ReadRaster()
+
+
+###############################################################################
+# Test reading GeoTIFF file with a ENVI .hdr sidecar
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_read_envi_hdr():
+
+    with gdal.Open("data/gtiff/byte_envi.bin") as ds:
+        assert ds.GetFileList() == [
+            "data/gtiff/byte_envi.bin",
+            "data/gtiff/byte_envi.hdr",
+        ]
+    assert gdal.VSIStatL("data/gtiff/byte_envi.bin.aux.xml") is None
+
+    with gdal.Open("data/gtiff/byte_envi.bin") as ds:
+        assert ds.GetRasterBand(1).GetMetadataDomainList() == ["", "IMAGERY"]
+    assert gdal.VSIStatL("data/gtiff/byte_envi.bin.aux.xml") is None
+
+    with gdal.Open("data/gtiff/byte_envi.bin") as ds:
+        assert ds.GetRasterBand(1).GetMetadata_Dict() == {
+            "good_band": "true",
+            "wavelength": "400.1",
+            "wavelength_units": "Nanometers",
+        }
+    assert gdal.VSIStatL("data/gtiff/byte_envi.bin.aux.xml") is None
+
+    with gdal.Open("data/gtiff/byte_envi.bin") as ds:
+        assert ds.GetRasterBand(1).GetMetadata_Dict("IMAGERY") == {
+            "CENTRAL_WAVELENGTH_UM": "0.400",
+            "FWHM_UM": "0.005",
+        }
+    assert gdal.VSIStatL("data/gtiff/byte_envi.bin.aux.xml") is None
+
+    with gdal.Open("data/gtiff/byte_envi.bin") as ds:
+        assert ds.GetRasterBand(1).GetMetadataItem("good_band") == "true"
+    assert gdal.VSIStatL("data/gtiff/byte_envi.bin.aux.xml") is None
+
+    with gdal.Open("data/gtiff/byte_envi.bin") as ds:
+        assert (
+            ds.GetRasterBand(1).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+            == "0.400"
+        )
+    assert gdal.VSIStatL("data/gtiff/byte_envi.bin.aux.xml") is None

@@ -1742,3 +1742,27 @@ def test_VSIFOpenExL_CACHE_NO(server):
 
         with gdal.VSIFile(filename, "rb", False, {"CACHE": "NO"}) as f:
             assert f.read() == b"1234"
+
+
+###############################################################################
+# Test redirection to a URL ending with a slash, followed by a 403
+
+
+def test_vsicurl_test_redirect_301_to_url_ending_slash_and_then_403(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/test_redirect",
+        301,
+        {"Location": "http://localhost:%d/test_redirect/" % server.port},
+    )
+    handler.add("HEAD", "/test_redirect/", 403)
+
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        assert (
+            gdal.VSIStatL("/vsicurl/http://localhost:%d/test_redirect" % server.port)
+            is None
+        )

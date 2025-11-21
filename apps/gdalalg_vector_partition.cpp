@@ -82,7 +82,8 @@ GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm(bool standaloneStep)
     AddCreationOptionsArg(&m_creationOptions);
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
 
-    AddArg("field", 0, _("Field(s) on which to partition"), &m_fields)
+    AddArg("field", 0,
+           _("Attribute or geometry field(s) on which to partition"), &m_fields)
         .SetRequired();
     AddArg("scheme", 0, _("Partitioning scheme"), &m_scheme)
         .SetChoices(SCHEME_HIVE, SCHEME_FLAT)
@@ -363,11 +364,13 @@ struct Layer
 static bool GetCurrentOutputLayer(
     GDALAlgorithm *const alg, const OGRFeatureDefn *const poSrcFeatureDefn,
     OGRLayer *const poSrcLayer, const std::string &osKey,
+    const std::vector<OGRwkbGeometryType> &aeGeomTypes,
     const std::string &osLayerDir, const std::string &osScheme,
     const std::string &osPatternIn, bool partDigitLeadingZeroes,
     size_t partDigitCount, const int featureLimit, const GIntBig maxFileSize,
     const bool omitPartitionedFields,
-    const std::vector<bool> &abPartitionedFields, const char *pszExtension,
+    const std::vector<bool> &abPartitionedFields,
+    const std::vector<bool> &abPartitionedGeomFields, const char *pszExtension,
     GDALDriver *const poOutDriver, const CPLStringList &datasetCreationOptions,
     const CPLStringList &layerCreationOptions,
     const OGRFeatureDefn *const poFeatureDefnWithoutPartitionedFields,
@@ -662,11 +665,22 @@ static bool GetCurrentOutputLayer(
                                                          pszSrcFIDColumn);
             }
 
+            std::unique_ptr<OGRGeomFieldDefn> poFirstGeomFieldDefn;
+            if (poSrcFeatureDefn->GetGeomFieldCount())
+            {
+                poFirstGeomFieldDefn = std::make_unique<OGRGeomFieldDefn>(
+                    *poSrcFeatureDefn->GetGeomFieldDefn(0));
+                if (abPartitionedGeomFields[0])
+                {
+                    if (aeGeomTypes[0] == wkbNone)
+                        poFirstGeomFieldDefn.reset();
+                    else
+                        whileUnsealing(poFirstGeomFieldDefn.get())
+                            ->SetType(aeGeomTypes[0]);
+                }
+            }
             auto poLayer = outputLayer->poDS->CreateLayer(
-                poSrcLayer->GetDescription(),
-                poSrcFeatureDefn->GetGeomFieldCount()
-                    ? poSrcFeatureDefn->GetGeomFieldDefn(0)
-                    : nullptr,
+                poSrcLayer->GetDescription(), poFirstGeomFieldDefn.get(),
                 modLayerCreationOptions.List());
             if (!poLayer)
             {
@@ -687,14 +701,22 @@ static bool GetCurrentOutputLayer(
                     return false;
                 }
             }
-            bool bFirst = true;
+            int iGeomField = -1;
             for (const auto *poGeomFieldDefn :
                  poSrcFeatureDefn->GetGeomFields())
             {
-                if (!bFirst)
+                ++iGeomField;
+                if (iGeomField > 0)
                 {
-                    if (poLayer->CreateGeomField(poGeomFieldDefn) !=
-                        OGRERR_NONE)
+                    OGRGeomFieldDefn oClone(poGeomFieldDefn);
+                    if (abPartitionedGeomFields[iGeomField])
+                    {
+                        if (aeGeomTypes[iGeomField] == wkbNone)
+                            continue;
+                        whileUnsealing(&oClone)->SetType(
+                            aeGeomTypes[iGeomField]);
+                    }
+                    if (poLayer->CreateGeomField(&oClone) != OGRERR_NONE)
                     {
                         alg->ReportError(CE_Failure, CPLE_AppDefined,
                                          "Cannot create geometry field '%s'",
@@ -702,7 +724,6 @@ static bool GetCurrentOutputLayer(
                         return false;
                     }
                 }
-                bFirst = false;
             }
 
             if (bUseTransactions)
@@ -949,6 +970,7 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         struct Field
         {
             int nIdx{};
+            bool bIsGeom = false;
             std::string encodedFieldName{};
             OGRFieldType eType{};
         };
@@ -956,33 +978,63 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         std::vector<Field> asFields;
         std::vector<bool> abPartitionedFields(poSrcFeatureDefn->GetFieldCount(),
                                               false);
+        std::vector<bool> abPartitionedGeomFields(
+            poSrcFeatureDefn->GetGeomFieldCount(), false);
         for (const std::string &fieldName : m_fields)
         {
-            const int nIdx = poSrcFeatureDefn->GetFieldIndex(fieldName.c_str());
+            int nIdx = poSrcFeatureDefn->GetFieldIndex(fieldName.c_str());
             if (nIdx < 0)
             {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Cannot find field '%s' in layer '%s'",
-                            fieldName.c_str(), poSrcLayer->GetDescription());
-                return false;
+                if (fieldName == "OGR_GEOMETRY" &&
+                    poSrcFeatureDefn->GetGeomFieldCount() > 0)
+                    nIdx = 0;
+                else
+                    nIdx =
+                        poSrcFeatureDefn->GetGeomFieldIndex(fieldName.c_str());
+                if (nIdx < 0)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Cannot find field '%s' in layer '%s'",
+                                fieldName.c_str(),
+                                poSrcLayer->GetDescription());
+                    return false;
+                }
+                else
+                {
+                    abPartitionedGeomFields[nIdx] = true;
+                    Field f;
+                    f.nIdx = nIdx;
+                    f.bIsGeom = true;
+                    if (fieldName.empty())
+                        f.encodedFieldName = "OGR_GEOMETRY";
+                    else
+                        f.encodedFieldName = PercentEncode(fieldName);
+                    asFields.push_back(std::move(f));
+                }
             }
-            const auto eType = poSrcFeatureDefn->GetFieldDefn(nIdx)->GetType();
-            if (eType != OFTString && eType != OFTInteger &&
-                eType != OFTInteger64)
+            else
             {
-                ReportError(
-                    CE_Failure, CPLE_NotSupported,
-                    "Field '%s' not valid for partitioning. Only fields of "
-                    "type String, Integer or Integer64 are accepted",
-                    fieldName.c_str());
-                return false;
+                const auto eType =
+                    poSrcFeatureDefn->GetFieldDefn(nIdx)->GetType();
+                if (eType != OFTString && eType != OFTInteger &&
+                    eType != OFTInteger64)
+                {
+                    ReportError(
+                        CE_Failure, CPLE_NotSupported,
+                        "Field '%s' not valid for partitioning. Only fields of "
+                        "type String, Integer or Integer64, or geometry fields,"
+                        " are accepted",
+                        fieldName.c_str());
+                    return false;
+                }
+                abPartitionedFields[nIdx] = true;
+                Field f;
+                f.nIdx = nIdx;
+                f.bIsGeom = false;
+                f.encodedFieldName = PercentEncode(fieldName);
+                f.eType = eType;
+                asFields.push_back(std::move(f));
             }
-            abPartitionedFields[nIdx] = true;
-            Field f;
-            f.nIdx = nIdx;
-            f.encodedFieldName = PercentEncode(fieldName);
-            f.eType = eType;
-            asFields.push_back(std::move(f));
         }
 
         std::vector<OGRFieldType> aeSrcFieldTypes;
@@ -996,12 +1048,16 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         std::vector<int> anMapForSetFrom;
         if (m_omitPartitionedFields)
         {
-            for (const std::string &fieldName : m_fields)
+            // Sort fields by descending index (so we can delete them easily)
+            std::vector<Field> sortedFields(asFields);
+            std::sort(sortedFields.begin(), sortedFields.end(),
+                      [](const Field &a, const Field &b)
+                      { return a.nIdx > b.nIdx; });
+            for (const auto &field : sortedFields)
             {
-                const int nIdx =
-                    poFeatureDefnWithoutPartitionedFields->GetFieldIndex(
-                        fieldName.c_str());
-                poFeatureDefnWithoutPartitionedFields->DeleteFieldDefn(nIdx);
+                if (!field.bIsGeom)
+                    poFeatureDefnWithoutPartitionedFields->DeleteFieldDefn(
+                        field.nIdx);
             }
             anMapForSetFrom =
                 poFeatureDefnWithoutPartitionedFields->ComputeMapForSetFrom(
@@ -1025,18 +1081,40 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             osAttrQueryString = pszAttrQueryString;
 
         std::string osKeyTmp;
+        std::vector<OGRwkbGeometryType> aeGeomTypesTmp;
         const auto BuildKey =
-            [&osKeyTmp](const std::vector<Field> &fields,
-                        const OGRFeature *poFeature) -> const std::string &
+            [&osKeyTmp, &aeGeomTypesTmp](const std::vector<Field> &fields,
+                                         const OGRFeature *poFeature)
+            -> std::pair<const std::string &,
+                         const std::vector<OGRwkbGeometryType> &>
         {
             osKeyTmp.clear();
+            aeGeomTypesTmp.resize(poFeature->GetDefnRef()->GetGeomFieldCount());
             for (const auto &field : fields)
             {
                 if (!osKeyTmp.empty())
                     osKeyTmp += '/';
                 osKeyTmp += field.encodedFieldName;
                 osKeyTmp += '=';
-                if (poFeature->IsFieldSetAndNotNull(field.nIdx))
+                if (field.bIsGeom)
+                {
+                    const auto poGeom = poFeature->GetGeomFieldRef(field.nIdx);
+                    if (poGeom)
+                    {
+                        aeGeomTypesTmp[field.nIdx] = poGeom->getGeometryType();
+                        osKeyTmp += poGeom->getGeometryName();
+                        if (poGeom->Is3D())
+                            osKeyTmp += 'Z';
+                        if (poGeom->IsMeasured())
+                            osKeyTmp += 'M';
+                    }
+                    else
+                    {
+                        aeGeomTypesTmp[field.nIdx] = wkbNone;
+                        osKeyTmp += NULL_MARKER;
+                    }
+                }
+                else if (poFeature->IsFieldSetAndNotNull(field.nIdx))
                 {
                     if (field.eType == OFTString)
                     {
@@ -1062,7 +1140,7 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     osKeyTmp += NULL_MARKER;
                 }
             }
-            return osKeyTmp;
+            return {osKeyTmp, aeGeomTypesTmp};
         };
 
         std::set<std::string> oSetKeys;
@@ -1072,7 +1150,7 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 "GDAL",
                 "First pass to determine all distinct partitioned values...");
 
-            if (asFields.size() == 1)
+            if (asFields.size() == 1 && !asFields[0].bIsGeom)
             {
                 std::string osSQL = "SELECT DISTINCT \"";
                 osSQL += CPLString(m_fields[0]).replaceAll('"', "\"\"");
@@ -1093,8 +1171,8 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 asSingleField[0].nIdx = 0;
                 for (auto &poFeature : *poSQLLayer)
                 {
-                    const std::string &osKey =
-                        BuildKey(asSingleField, poFeature.get());
+                    const auto sPair = BuildKey(asFields, poFeature.get());
+                    const std::string &osKey = sPair.first;
                     oSetKeys.insert(osKey);
 #ifdef DEBUG_VERBOSE
                     CPLDebug("GDAL", "Found %s", osKey.c_str());
@@ -1111,8 +1189,8 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             {
                 for (auto &poFeature : *poSrcLayer)
                 {
-                    const std::string &osKey =
-                        BuildKey(asFields, poFeature.get());
+                    const auto sPair = BuildKey(asFields, poFeature.get());
+                    const std::string &osKey = sPair.first;
                     if (oSetKeys.insert(osKey).second)
                     {
 #ifdef DEBUG_VERBOSE
@@ -1154,7 +1232,9 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
             for (auto &poFeature : *poSrcLayer)
             {
-                const std::string &osKey = BuildKey(asFields, poFeature.get());
+                const auto sPair = BuildKey(asFields, poFeature.get());
+                const std::string &osKey = sPair.first;
+                const auto &aeGeomTypes = sPair.second;
 
                 if (!oSetKeysAllowedInThisPass.empty() &&
                     !cpl::contains(oSetKeysAllowedInThisPass, osKey))
@@ -1163,10 +1243,11 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 }
 
                 if (!GetCurrentOutputLayer(
-                        this, poSrcFeatureDefn, poSrcLayer, osKey, osLayerDir,
-                        m_scheme, m_pattern, m_partDigitLeadingZeroes,
-                        m_partDigitCount, m_featureLimit, m_maxFileSize,
-                        m_omitPartitionedFields, abPartitionedFields,
+                        this, poSrcFeatureDefn, poSrcLayer, osKey, aeGeomTypes,
+                        osLayerDir, m_scheme, m_pattern,
+                        m_partDigitLeadingZeroes, m_partDigitCount,
+                        m_featureLimit, m_maxFileSize, m_omitPartitionedFields,
+                        abPartitionedFields, abPartitionedGeomFields,
                         pszExtension, poOutDriver, datasetCreationOptions,
                         layerCreationOptions,
                         poFeatureDefnWithoutPartitionedFields.get(),
@@ -1183,7 +1264,9 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     poFeature->SetFID(OGRNullFID);
 
                 OGRErr eErr;
-                if (m_omitPartitionedFields)
+                if (m_omitPartitionedFields ||
+                    std::find(aeGeomTypes.begin(), aeGeomTypes.end(),
+                              wkbNone) != aeGeomTypes.end())
                 {
                     OGRFeature oFeat(outputLayer->poLayer->GetLayerDefn());
                     oFeat.SetFrom(poFeature.get(), anMapForSetFrom.data());

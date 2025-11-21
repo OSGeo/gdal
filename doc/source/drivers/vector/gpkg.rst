@@ -62,16 +62,21 @@ against the database.
 
 SQL SELECT statements passed to ExecuteSQL() are also executed directly against the database.
 
-If the SQLite dialect is used with the SpatiaLite functions, an explicit cast
-operator AsGPB() is required to transform SpatiaLite geometries into GeoPackage
-geometries.
+.. warning::
 
-::
+    Before GDAL 3.13, if the SQLite dialect is used with the SpatiaLite functions, an explicit cast
+    operator AsGPB() is required to transform SpatiaLite geometries into GeoPackage
+    geometries.
 
-   ogrinfo -update points.gpkg -sql "INSERT INTO points (geom) values (AsGPB(ST_GeomFromText('POINT(3 54)', 4326)))"
+    ::
 
-The reverse conversion from GPKG geometries into SpatiaLite geometries
-is automatically done.
+       ogrinfo -update points.gpkg -sql "INSERT INTO points (geom) values (AsGPB(ST_GeomFromText('POINT(3 54)', 4326)))"
+
+    Since GDAL 3.13, the use of AsGPB() is no longer needed
+    (GDAL will automatically remove it when detecting ``AsGPB(ST_`` patterns)
+
+    The reverse conversion from GPKG geometries into SpatiaLite geometries
+    is automatically done.
 
 The "DROP TABLE layer_name" and "ALTER TABLE
 layer_name RENAME TO new_layer" statements can be used. They will update

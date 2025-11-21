@@ -290,7 +290,7 @@ The following dataset creation options are supported:
 -  .. dsco:: CREATOR
       :since: 3.8
 
-      Name of creating application. Defaults to ``GDAL ``` followed by its
+      Name of creating application. Defaults to ``GDAL`` followed by its
       version number.
 
 Dataset creation options to fill the top <metadata> element have been added in

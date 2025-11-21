@@ -1299,6 +1299,8 @@ GDALAsyncReader *JPIPKAKDataset::BeginAsyncReader(
                                          ario->nPixelSpace * nBandCount);
         if (ario->pBuf == nullptr)
         {
+            delete[] ario->panBandMap;
+            ario->panBandMap = nullptr;
             delete ario;
             return nullptr;
         }

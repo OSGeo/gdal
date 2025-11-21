@@ -1110,8 +1110,11 @@ const OGRSpatialReference *GDALProxyPoolDataset::GetGCPSpatialRef() const
     if (poUnderlyingDataset == nullptr)
         return nullptr;
 
-    m_poGCPSRS->Release();
-    m_poGCPSRS = nullptr;
+    if (m_poGCPSRS)
+    {
+        m_poGCPSRS->Release();
+        m_poGCPSRS = nullptr;
+    }
 
     const auto poUnderlyingGCPSRS = poUnderlyingDataset->GetGCPSpatialRef();
     if (poUnderlyingGCPSRS)

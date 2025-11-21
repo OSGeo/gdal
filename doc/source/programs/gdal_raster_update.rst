@@ -20,14 +20,17 @@ Synopsis
 Description
 -----------
 
-:program:`gdal raster update` can be used to update an existing target raster dataset
-with the pixel values of the source raster, doing reprojection if the source
-and target datasets do not have the same coordinate reference systems.
-The extent, size, resolution or coordinate reference system of the target dataset
+:program:`gdal raster update` can be used to update an existing output raster dataset
+with the pixel values of the input raster, doing reprojection if the input
+and output datasets do not have the same coordinate reference systems.
+The extent, size, resolution or coordinate reference system of the output dataset
 are not modified by this operation.
 
 Overviews are updated by this command (using :ref:`gdal_raster_overview_refresh`),
 unless :option:`--no-update-overviews` is specified.
+
+Starting with GDAL 3.13, :program:`gdal raster update` can be used as a
+step of a pipeline, with the input dataset being the output of the previous step.
 
 Standard options
 ++++++++++++++++
@@ -73,7 +76,7 @@ Advanced options
 .. option:: --et, --error-threshold <ERROR-THRESHOLD>
 
     Error threshold for transformation approximation, expressed as a number of
-    source pixels. Defaults to 0.125 pixels unless the ``RPC_DEM`` transformer
+    input pixels. Defaults to 0.125 pixels unless the ``RPC_DEM`` transformer
     option is specified, in which case an exact transformer, i.e.
     ``--error-threshold=0``, will be used.
 

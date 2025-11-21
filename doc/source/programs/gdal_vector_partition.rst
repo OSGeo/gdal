@@ -21,8 +21,8 @@ Description
 -----------
 
 :program:`gdal vector partition` dispatches features into different
-files, depending on the values the feature take on a subset of fields specified
-by the user.
+files, depending on the values the feature take on a subset of attribute or
+geometry fields specified by the user.
 
 Two partitioning schemes are available:
 
@@ -63,9 +63,14 @@ Standard options
 
     Fields(s) on which to partition. [required]
 
-    Only fields of type String, Integer and Integer64 are allowed.
+    Only attribute fields of type String, Integer and Integer64 are allowed.
     The order into which fields are specified matter to determine the directory
     hierarchy.
+
+    Starting with GDAL 3.13, geometry field names can be specified (``OGR_GEOMETRY``
+    being the generic name for the first geometry field). Partitioning on
+    geometry fields is done on the geometry type. This can be useful for file
+    formats where a single geometry type per layer is allowed.
 
 .. include:: gdal_options/of_vector.rst
 
@@ -157,3 +162,10 @@ Examples
    .. code-block:: bash
 
         $ gdal pipeline ! read world_cities.gpkg ! filter --where "pop > 1e6" ! partition out_directory --field country --format GPKG --scheme flat
+
+.. example::
+   :title: Create multiple Shapefiles, one for each geometry type, from a GeoPackage file, by grouping together POLYGON/MULTIPOLYGON or LINESTRING/MULTILINESTRING.
+
+   .. code-block:: bash
+
+        $ gdal vector pipeline ! read input.gpkg ! set-geom-type --multi ! partition out_directory --scheme flat --field OGR_GEOMETRY --format "ESRI Shapefile"

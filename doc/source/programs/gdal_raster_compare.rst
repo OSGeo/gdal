@@ -91,7 +91,7 @@ Options
 
     Whether to skip comparison of coordinate reference systems (CRS).
 
-.. option:: --skip-sds
+.. option:: --skip-subdataset
 
     Whether to ignore comparison of all subdatasets that are part of the dataset.
 

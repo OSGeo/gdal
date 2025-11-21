@@ -1150,3 +1150,83 @@ def test_stats_float64_nan_with_nodata(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM)
         assert got_stats == expected_stats
     else:
         assert got_stats == pytest.approx(expected_stats, rel=1e-15)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "datatype",
+    [
+        gdal.GDT_Byte,
+        gdal.GDT_Int8,
+        gdal.GDT_UInt16,
+        gdal.GDT_Int16,
+        gdal.GDT_UInt32,
+        gdal.GDT_Int32,
+        gdal.GDT_UInt64,
+        gdal.GDT_Int64,
+        gdal.GDT_Float16,
+        gdal.GDT_Float32,
+        gdal.GDT_Float64,
+    ],
+)
+def test_stats_minmax_one_two(datatype):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 1, datatype)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02", buf_type=gdal.GDT_Byte)
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (1.0, 2.0)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "datatype",
+    [
+        gdal.GDT_Byte,
+        gdal.GDT_Int8,
+        gdal.GDT_UInt16,
+        gdal.GDT_Int16,
+        gdal.GDT_UInt32,
+        gdal.GDT_Int32,
+        gdal.GDT_UInt64,
+        gdal.GDT_Int64,
+        gdal.GDT_Float16,
+        gdal.GDT_Float32,
+        gdal.GDT_Float64,
+    ],
+)
+def test_stats_minmax_all_invalid_nodata(datatype):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, datatype)
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    with pytest.raises(Exception, match="Failed to compute min/max"):
+        ds.GetRasterBand(1).ComputeRasterMinMax()
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "datatype",
+    [
+        gdal.GDT_Byte,
+        gdal.GDT_Int8,
+        gdal.GDT_UInt16,
+        gdal.GDT_Int16,
+        gdal.GDT_UInt32,
+        gdal.GDT_Int32,
+        gdal.GDT_UInt64,
+        gdal.GDT_Int64,
+        gdal.GDT_Float16,
+        gdal.GDT_Float32,
+        gdal.GDT_Float64,
+    ],
+)
+def test_stats_minmax_all_invalid_mask(datatype):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, datatype)
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    with pytest.raises(Exception, match="Failed to compute min/max"):
+        ds.GetRasterBand(1).ComputeRasterMinMax()

@@ -51,6 +51,12 @@ Standard options
 
    Include features for valid geometries in the output, maintaining 1:1 correspondence between input and output features.
 
+.. option:: --include-field
+
+   .. versionadded:: 3.12.1
+
+   Optional field(s) to copy from the input features to the output.
+
 .. option:: --maximum-gap-width <MAXIMUM-GAP-WIDTH>
 
    Defines the largest area that should be considered a gap.

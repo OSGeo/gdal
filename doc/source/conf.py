@@ -1017,6 +1017,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_update",
+        "gdal-vector-update",
+        "Update an existing vector dataset with an input vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vsi",
         "gdal-vsi",
         "Entry point for GDAL Virtual System Interface (VSI) commands",

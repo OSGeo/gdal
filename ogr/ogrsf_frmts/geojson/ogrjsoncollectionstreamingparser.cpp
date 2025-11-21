@@ -401,6 +401,8 @@ void OGRJSONCollectionStreamingParser::String(std::string_view sValue)
 /*                              Number()                                */
 /************************************************************************/
 
+// recent libc++ std::from_chars() involve unsigned integer overflow
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 void OGRJSONCollectionStreamingParser::Number(std::string_view sValue)
 {
     if (m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize)

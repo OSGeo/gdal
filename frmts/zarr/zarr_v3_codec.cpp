@@ -977,12 +977,9 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
     std::string osLastCodec;
 
     const auto InsertImplicitEndianCodecIfNeeded =
-        [
-#if !CPL_IS_LSB
-            this,
-#endif
-            &oInputArrayMetadata, &eLastType, &osLastCodec]()
+        [this, &oInputArrayMetadata, &eLastType, &osLastCodec]()
     {
+        CPL_IGNORE_RET_VAL(this);
         if (eLastType == ZarrV3Codec::IOType::ARRAY &&
             oInputArrayMetadata.oElt.nativeSize > 1)
         {
@@ -997,10 +994,11 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
             oInputArrayMetadata = std::move(oOutputArrayMetadata);
             eLastType = poEndianCodec->GetOutputType();
             osLastCodec = poEndianCodec->GetName();
-#if !CPL_IS_LSB
-            // Insert a little endian codec if we are on a big endian target
-            m_apoCodecs.emplace_back(std::move(poEndianCodec));
-#endif
+            if constexpr (!CPL_IS_LSB)
+            {
+                // Insert a little endian codec if we are on a big endian target
+                m_apoCodecs.emplace_back(std::move(poEndianCodec));
+            }
         }
     };
 

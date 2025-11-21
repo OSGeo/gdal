@@ -276,3 +276,11 @@ def test_gdalalg_vector_info_sql_where_mutually_exclusive():
             sql="select * from path",
             where="1=1",
         )
+
+
+def test_gdalalg_vector_info_in_pipeline():
+
+    with gdal.alg.vector.pipeline(pipeline="read data/path.shp ! info") as alg:
+        j = alg.Output()
+        assert j["layers"][0]["name"] == "path"
+        assert "features" not in j["layers"][0]

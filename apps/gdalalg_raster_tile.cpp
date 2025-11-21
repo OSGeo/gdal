@@ -71,6 +71,10 @@
 constexpr const char PROGRESS_MARKER[] = {'!', '.', 'x'};
 constexpr const char END_MARKER[] = {'?', 'E', '?', 'N', '?', 'D', '?'};
 
+constexpr const char ERROR_START_MARKER[] = {'%', 'E', '%', 'R', '%', 'R',
+                                             '%', '_', '%', 'S', '%', 'T',
+                                             '%', 'A', '%', 'R', '%', 'T'};
+
 constexpr const char *STOP_MARKER = "STOP\n";
 
 namespace
@@ -157,7 +161,15 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
         .SetMinValueIncluded(0)
         .SetHidden();  // Used in spawn mode
 
-    AddRasterInputArgs(false, !standaloneStep);
+    if (standaloneStep)
+    {
+        AddRasterInputArgs(/* openForMixedRasterVector = */ false,
+                           /* hiddenForCLI = */ false);
+    }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
 
     m_format = "PNG";
     AddOutputFormatArg(&m_format)
@@ -3599,6 +3611,7 @@ static void GetProgressForChildProcesses(
     std::vector<unsigned int> anProgressState(ahSpawnedProcesses.size(), 0);
     std::vector<unsigned int> anEndState(ahSpawnedProcesses.size(), 0);
     std::vector<bool> abFinished(ahSpawnedProcesses.size(), false);
+    std::vector<unsigned int> anStartErrorState(ahSpawnedProcesses.size(), 0);
 
     while (bRet)
     {
@@ -3643,6 +3656,59 @@ static void GetProgressForChildProcesses(
                     anEndState[iProcess] = 0;
                     abFinished[iProcess] = true;
                     ++nFinished;
+                }
+            }
+            else if (ch == ERROR_START_MARKER[anStartErrorState[iProcess]])
+            {
+                ++anStartErrorState[iProcess];
+                if (anStartErrorState[iProcess] == sizeof(ERROR_START_MARKER))
+                {
+                    anStartErrorState[iProcess] = 0;
+                    uint32_t nErr = 0;
+                    CPLPipeRead(
+                        CPLSpawnAsyncGetInputFileHandle(hSpawnedProcess), &nErr,
+                        sizeof(nErr));
+                    uint32_t nNum = 0;
+                    CPLPipeRead(
+                        CPLSpawnAsyncGetInputFileHandle(hSpawnedProcess), &nNum,
+                        sizeof(nNum));
+                    uint16_t nMsgLen = 0;
+                    CPLPipeRead(
+                        CPLSpawnAsyncGetInputFileHandle(hSpawnedProcess),
+                        &nMsgLen, sizeof(nMsgLen));
+                    std::string osMsg;
+                    osMsg.resize(nMsgLen);
+                    CPLPipeRead(
+                        CPLSpawnAsyncGetInputFileHandle(hSpawnedProcess),
+                        &osMsg[0], nMsgLen);
+                    if (nErr <= CE_Fatal &&
+                        nNum <= CPLE_ObjectStorageGenericError)
+                    {
+                        bool bDone = false;
+                        if (nErr == CE_Debug)
+                        {
+                            auto nPos = osMsg.find(": ");
+                            if (nPos != std::string::npos)
+                            {
+                                bDone = true;
+                                CPLDebug(
+                                    osMsg.substr(0, nPos).c_str(),
+                                    "subprocess %d: %s",
+                                    static_cast<int>(iProcess),
+                                    osMsg.substr(nPos + strlen(": ")).c_str());
+                            }
+                        }
+                        // cppcheck-suppress knownConditionTrueFalse
+                        if (!bDone)
+                        {
+                            CPLError(nErr == CE_Fatal
+                                         ? CE_Failure
+                                         : static_cast<CPLErr>(nErr),
+                                     static_cast<CPLErrorNum>(nNum),
+                                     "Sub-process %d: %s",
+                                     static_cast<int>(iProcess), osMsg.c_str());
+                        }
+                    }
                 }
             }
             else
@@ -3820,13 +3886,14 @@ static int GenerateTilesForkMethod(CPL_FILE_HANDLE in, CPL_FILE_HANDLE out)
     CPLSetConfigOption("GDAL_NUM_THREADS", "1");
     GDALSetCacheMax64(pWorkStructure->nCacheMaxPerProcess);
 
-    GDALRasterTileAlgorithm alg;
+    GDALRasterTileAlgorithmStandalone alg;
     if (pWorkStructure->poMemSrcDS)
     {
         auto *inputArg = alg.GetArg(GDAL_ARG_NAME_INPUT);
-        auto &val = inputArg->Get<std::vector<GDALArgDatasetValue>>();
+        std::vector<GDALArgDatasetValue> val;
         val.resize(1);
         val[0].Set(pWorkStructure->poMemSrcDS);
+        inputArg->Set(std::move(val));
     }
     return alg.ParseCommandLineArguments(pWorkStructure->aosArgv) && alg.Run()
                ? 0
@@ -4011,7 +4078,7 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
                 m_parallelMethod == "fork" ? nullptr : aosArgv.List(),
                 /* bCreateInputPipe = */ true,
                 /* bCreateOutputPipe = */ true,
-                /* bCreateErrorPipe = */ true, nullptr);
+                /* bCreateErrorPipe = */ false, nullptr);
             if (!hSpawnedProcess)
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
@@ -4331,6 +4398,24 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     stepCtxt.m_pfnProgress = pfnProgress;
     stepCtxt.m_pProgressData = pProgressData;
     return RunStep(stepCtxt);
+}
+
+/************************************************************************/
+/*                          SpawnedErrorHandler()                       */
+/************************************************************************/
+
+static void CPL_STDCALL SpawnedErrorHandler(CPLErr eErr, CPLErrorNum eNum,
+                                            const char *pszMsg)
+{
+    fwrite(ERROR_START_MARKER, sizeof(ERROR_START_MARKER), 1, stdout);
+    uint32_t nErr = eErr;
+    fwrite(&nErr, sizeof(nErr), 1, stdout);
+    uint32_t nNum = eNum;
+    fwrite(&nNum, sizeof(nNum), 1, stdout);
+    uint16_t nLen = static_cast<uint16_t>(strlen(pszMsg));
+    fwrite(&nLen, sizeof(nLen), 1, stdout);
+    fwrite(pszMsg, nLen, 1, stdout);
+    fflush(stdout);
 }
 
 /************************************************************************/
@@ -5217,8 +5302,14 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     std::atomic<bool> bParentAskedForStop = false;
     std::thread threadWaitForParentStop;
+    std::unique_ptr<CPLErrorHandlerPusher> poErrorHandlerPusher;
     if (m_spawned)
     {
+        // Redirect errors to stdout so the parent listens on a single
+        // file descriptor.
+        poErrorHandlerPusher =
+            std::make_unique<CPLErrorHandlerPusher>(SpawnedErrorHandler);
+
         threadWaitForParentStop = std::thread(
             [&bParentAskedForStop]()
             {
@@ -6075,6 +6166,9 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     if (m_spawned)
     {
+        // Uninstall he custom error handler, before we close stdout.
+        poErrorHandlerPusher.reset();
+
         fwrite(END_MARKER, sizeof(END_MARKER), 1, stdout);
         fflush(stdout);
         fclose(stdout);

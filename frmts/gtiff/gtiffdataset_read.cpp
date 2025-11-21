@@ -3532,11 +3532,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
     GByte *pabyBuffer = static_cast<GByte *>(
         VSIGetMemFileBuffer(osTmpFilename, &nDataLength, FALSE));
     const bool bLittleEndian = (pabyBuffer[0] == 'I');
-#if CPL_IS_LSB
-    const bool bSwap = !bLittleEndian;
-#else
-    const bool bSwap = bLittleEndian;
-#endif
+    const bool bSwap = CPL_IS_LSB ^ bLittleEndian;
     const bool bBigTIFF = pabyBuffer[2] == 43 || pabyBuffer[3] == 43;
     vsi_l_offset nMaxOffset = 0;
     if (bBigTIFF)
@@ -4221,6 +4217,63 @@ void GTiffDataset::LookForProjectionFromGeoTIFF()
 }
 
 /************************************************************************/
+/*               GetSidecarFilenameWithReplacedExtension()    ¨         */
+/************************************************************************/
+
+std::string
+GTiffDataset::GetSidecarFilenameWithReplacedExtension(const char *pszExt)
+{
+    if (!GDALCanFileAcceptSidecarFile(m_osFilename.c_str()))
+        return std::string();
+
+    CSLConstList papszSiblingFiles = GetSiblingFiles();
+    const std::string osSidecarFilenameLowerCaseExt = CPLResetExtensionSafe(
+        m_osFilename.c_str(), CPLString(pszExt).tolower());
+
+    if (papszSiblingFiles && GDALCanReliablyUseSiblingFileList(
+                                 osSidecarFilenameLowerCaseExt.c_str()))
+    {
+        const int iSibling = CSLFindString(
+            papszSiblingFiles,
+            CPLGetFilename(osSidecarFilenameLowerCaseExt.c_str()));
+        if (iSibling >= 0)
+        {
+            std::string osRet = m_osFilename.c_str();
+            osRet.resize(m_osFilename.size() -
+                         strlen(CPLGetFilename(m_osFilename.c_str())));
+            osRet += papszSiblingFiles[iSibling];
+            return osRet;
+        }
+        else
+        {
+            return std::string();
+        }
+    }
+
+    VSIStatBufL sStatBuf;
+    bool bGotSidecar = VSIStatExL(osSidecarFilenameLowerCaseExt.c_str(),
+                                  &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
+
+    if (bGotSidecar)
+    {
+        return osSidecarFilenameLowerCaseExt;
+    }
+    else if (VSIIsCaseSensitiveFS(osSidecarFilenameLowerCaseExt.c_str()))
+    {
+        const std::string osSidecarFilenameUppercaseExt = CPLResetExtensionSafe(
+            m_osFilename.c_str(), CPLString(pszExt).toupper());
+        bGotSidecar = VSIStatExL(osSidecarFilenameUppercaseExt.c_str(),
+                                 &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
+        if (bGotSidecar)
+        {
+            return osSidecarFilenameUppercaseExt;
+        }
+    }
+
+    return std::string();
+}
+
+/************************************************************************/
 /*                      LookForProjectionFromXML()                      */
 /************************************************************************/
 
@@ -4229,60 +4282,10 @@ void GTiffDataset::LookForProjectionFromXML()
     if (m_poBaseDS != nullptr)
         return;
 
-    CSLConstList papszSiblingFiles = GetSiblingFiles();
-
-    if (!GDALCanFileAcceptSidecarFile(m_osFilename.c_str()))
-        return;
-
-    const std::string osXMLFilenameLowerCase =
-        CPLResetExtensionSafe(m_osFilename.c_str(), "xml");
-
-    CPLString osXMLFilename;
-    if (papszSiblingFiles &&
-        GDALCanReliablyUseSiblingFileList(osXMLFilenameLowerCase.c_str()))
-    {
-        const int iSibling = CSLFindString(
-            papszSiblingFiles, CPLGetFilename(osXMLFilenameLowerCase.c_str()));
-        if (iSibling >= 0)
-        {
-            osXMLFilename = m_osFilename.c_str();
-            osXMLFilename.resize(m_osFilename.size() -
-                                 strlen(CPLGetFilename(m_osFilename.c_str())));
-            osXMLFilename += papszSiblingFiles[iSibling];
-        }
-        else
-        {
-            return;
-        }
-    }
-
+    const std::string osXMLFilename =
+        GetSidecarFilenameWithReplacedExtension("xml");
     if (osXMLFilename.empty())
-    {
-        VSIStatBufL sStatBuf;
-        bool bGotXML = VSIStatExL(osXMLFilenameLowerCase.c_str(), &sStatBuf,
-                                  VSI_STAT_EXISTS_FLAG) == 0;
-
-        if (bGotXML)
-        {
-            osXMLFilename = osXMLFilenameLowerCase;
-        }
-        else if (VSIIsCaseSensitiveFS(osXMLFilenameLowerCase.c_str()))
-        {
-            const std::string osXMLFilenameUpperCase =
-                CPLResetExtensionSafe(m_osFilename.c_str(), "XML");
-            bGotXML = VSIStatExL(osXMLFilenameUpperCase.c_str(), &sStatBuf,
-                                 VSI_STAT_EXISTS_FLAG) == 0;
-            if (bGotXML)
-            {
-                osXMLFilename = osXMLFilenameUpperCase;
-            }
-        }
-
-        if (osXMLFilename.empty())
-        {
-            return;
-        }
-    }
+        return;
 
     GByte *pabyRet = nullptr;
     vsi_l_offset nSize = 0;
@@ -6664,6 +6667,54 @@ void GTiffDataset::LoadMetadata()
             CSLDestroy(papszRPCMD);
         }
     }
+}
+
+/************************************************************************/
+/*                        LoadENVIHdrIfNeeded()                         */
+/************************************************************************/
+
+void GTiffDataset::LoadENVIHdrIfNeeded()
+{
+    if (m_bENVIHdrTried || m_poBaseDS)
+        return;
+    m_bENVIHdrTried = true;
+
+    const std::string osHdrFilename =
+        GetSidecarFilenameWithReplacedExtension("hdr");
+    if (osHdrFilename.empty())
+        return;
+
+    auto fp = VSIFilesystemHandler::OpenStatic(osHdrFilename.c_str(), "rb");
+    if (!fp)
+        return;
+
+    constexpr int MAX_LINE_SIZE = 10000;
+
+    // Check line is "ENVI"
+    const char *pszFirstLine = CPLReadLine2L(fp.get(), MAX_LINE_SIZE, nullptr);
+    if (!pszFirstLine || !EQUAL(pszFirstLine, "ENVI"))
+        return;
+
+    VSIRewindL(fp.get());
+
+    const CPLStringList aosHeaders(GDALReadENVIHeader(fp.get()));
+
+    // Basic check to verify the .hdr file is indeed related to the GeoTIFF one
+    if (atoi(aosHeaders.FetchNameValueDef("samples", "0")) != nRasterXSize ||
+        atoi(aosHeaders.FetchNameValueDef("lines", "0")) != nRasterYSize ||
+        !EQUAL(aosHeaders.FetchNameValueDef("file_type", ""), "TIFF"))
+    {
+        return;
+    }
+
+    m_bENVIHdrFound = true;
+
+    const char *const apszOptions[] = {
+        "APPLY_DEFAULT_BANDS=NO",        "APPLY_CLASS_LOOKUP=NO",
+        "APPLY_DATA_IGNORE_VALUE=NO",    "SET_BAND_NAME=NO",
+        "SET_DATASET_LEVEL_METADATA=NO", nullptr,
+    };
+    GDALApplyENVIHeaders(this, aosHeaders, apszOptions);
 }
 
 /************************************************************************/

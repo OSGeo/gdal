@@ -182,6 +182,16 @@ void OGRFeatherDriverSetCommonMetadata(GDALDriver *poDriver)
                               "WidthPrecision Nullable "
                               "Comment AlternativeName Domain");
 
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='LISTS_AS_STRING_JSON' type='boolean' description='"
+        "Whether lists of strings/integers/reals should be reported as "
+        "String(JSON) fields rather than String/Integer[64]/RealList. Useful "
+        "when null values in such lists must be exactly mapped as such.' "
+        "default='NO'/>"
+        "</OpenOptionList>");
+
     poDriver->pfnIdentify = OGRFeatherDriverIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");

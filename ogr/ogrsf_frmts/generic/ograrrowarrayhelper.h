@@ -50,21 +50,26 @@ class CPL_DLL OGRArrowArrayHelper
                         const CPLStringList &aosArrowArrayStreamOptions,
                         struct ArrowArray *out_array);
 
-    bool SetNull(int iArrowField, int iFeat)
+    //! Construct an helper from an already initialized array
+    OGRArrowArrayHelper(struct ArrowArray *out_array, int nMaxBatchSize);
+
+    static bool SetNull(struct ArrowArray *psArray, int iFeat,
+                        int nMaxBatchSize, bool bAlignedMalloc)
     {
-        auto psArray = m_out_array->children[iArrowField];
         ++psArray->null_count;
         uint8_t *pabyNull =
             static_cast<uint8_t *>(const_cast<void *>(psArray->buffers[0]));
         if (psArray->buffers[0] == nullptr)
         {
             pabyNull = static_cast<uint8_t *>(
-                VSI_MALLOC_ALIGNED_AUTO_VERBOSE((m_nMaxBatchSize + 7) / 8));
+                bAlignedMalloc
+                    ? VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nMaxBatchSize + 7) / 8)
+                    : VSI_MALLOC_VERBOSE((nMaxBatchSize + 7) / 8));
             if (pabyNull == nullptr)
             {
                 return false;
             }
-            memset(pabyNull, 0xFF, (m_nMaxBatchSize + 7) / 8);
+            memset(pabyNull, 0xFF, (nMaxBatchSize + 7) / 8);
             psArray->buffers[0] = pabyNull;
         }
         pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
@@ -76,6 +81,12 @@ class CPL_DLL OGRArrowArrayHelper
             panOffsets[iFeat + 1] = panOffsets[iFeat];
         }
         return true;
+    }
+
+    bool SetNull(int iArrowField, int iFeat)
+    {
+        return SetNull(m_out_array->children[iArrowField], iFeat,
+                       m_nMaxBatchSize, true);
     }
 
     inline static void SetBoolOn(struct ArrowArray *psArray, int iFeat)
@@ -193,13 +204,14 @@ class CPL_DLL OGRArrowArrayHelper
             nVal;
     }
 
-    GByte *GetPtrForStringOrBinary(int iArrowField, int iFeat, size_t nLen)
+    static GByte *GetPtrForStringOrBinary(struct ArrowArray *psArray, int iFeat,
+                                          size_t nLen, uint32_t &nMaxAlloc,
+                                          bool bAlignedMalloc)
     {
-        auto psArray = m_out_array->children[iArrowField];
         auto panOffsets =
             static_cast<int32_t *>(const_cast<void *>(psArray->buffers[1]));
         const uint32_t nCurLength = static_cast<uint32_t>(panOffsets[iFeat]);
-        if (nLen > m_anArrowFieldMaxAlloc[iArrowField] - nCurLength)
+        if (nLen > nMaxAlloc - nCurLength)
         {
             if (nLen >
                 static_cast<uint32_t>(std::numeric_limits<int32_t>::max()) -
@@ -210,19 +222,30 @@ class CPL_DLL OGRArrowArrayHelper
                 return nullptr;
             }
             uint32_t nNewSize = nCurLength + static_cast<uint32_t>(nLen);
-            if ((m_anArrowFieldMaxAlloc[iArrowField] >> 31) == 0)
+            if ((nMaxAlloc >> 31) == 0)
             {
-                const uint32_t nDoubleSize =
-                    2U * m_anArrowFieldMaxAlloc[iArrowField];
+                const uint32_t nDoubleSize = 2U * nMaxAlloc;
                 if (nNewSize < nDoubleSize)
                     nNewSize = nDoubleSize;
             }
-            void *newBuffer = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nNewSize);
-            if (newBuffer == nullptr)
-                return nullptr;
-            m_anArrowFieldMaxAlloc[iArrowField] = nNewSize;
-            memcpy(newBuffer, psArray->buffers[2], nCurLength);
-            VSIFreeAligned(const_cast<void *>(psArray->buffers[2]));
+            void *newBuffer;
+            if (bAlignedMalloc)
+            {
+                newBuffer = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nNewSize);
+                if (newBuffer == nullptr)
+                    return nullptr;
+                nMaxAlloc = nNewSize;
+                memcpy(newBuffer, psArray->buffers[2], nCurLength);
+                VSIFreeAligned(const_cast<void *>(psArray->buffers[2]));
+            }
+            else
+            {
+                newBuffer = VSI_REALLOC_VERBOSE(
+                    const_cast<void *>(psArray->buffers[2]), nNewSize);
+                if (newBuffer == nullptr)
+                    return nullptr;
+                nMaxAlloc = nNewSize;
+            }
             psArray->buffers[2] = newBuffer;
         }
         GByte *paby =
@@ -230,6 +253,15 @@ class CPL_DLL OGRArrowArrayHelper
             nCurLength;
         panOffsets[iFeat + 1] = panOffsets[iFeat] + static_cast<int32_t>(nLen);
         return paby;
+    }
+
+    GByte *GetPtrForStringOrBinary(int iArrowField, int iFeat, size_t nLen,
+                                   bool bAlignedMalloc = true)
+    {
+        auto psArray = m_out_array->children[iArrowField];
+        return GetPtrForStringOrBinary(psArray, iFeat, nLen,
+                                       m_anArrowFieldMaxAlloc[iArrowField],
+                                       bAlignedMalloc);
     }
 
     static void SetEmptyStringOrBinary(struct ArrowArray *psArray, int iFeat)

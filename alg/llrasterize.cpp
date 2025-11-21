@@ -85,20 +85,16 @@ void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
         {
             dminy = padfY[i];
         }
-        if (padfY[i] > dmaxy)
+        else if (padfY[i] > dmaxy)
         {
             dmaxy = padfY[i];
         }
     }
-    int miny = static_cast<int>(dminy);
-    int maxy = static_cast<int>(dmaxy);
+    const int miny = static_cast<int>(std::max(0.0, dminy));
+    const int maxy =
+        static_cast<int>(std::min<double>(dmaxy, nRasterYSize - 1));
 
-    if (miny < 0)
-        miny = 0;
-    if (maxy >= nRasterYSize)
-        maxy = nRasterYSize - 1;
-
-    int minx = 0;
+    constexpr int minx = 0;
     const int maxx = nRasterXSize - 1;
 
     // Fix in 1.3: count a vertex only once.
@@ -159,13 +155,16 @@ void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
                 // -Fill them separately-
                 if (padfX[ind1] > padfX[ind2])
                 {
-                    const int horizontal_x1 =
-                        static_cast<int>(floor(padfX[ind2] + 0.5));
-                    const int horizontal_x2 =
-                        static_cast<int>(floor(padfX[ind1] + 0.5));
+                    const double dhorizontal_x1 = floor(padfX[ind2] + 0.5);
+                    const double dhorizontal_x2 = floor(padfX[ind1] + 0.5);
 
-                    if ((horizontal_x1 > maxx) || (horizontal_x2 <= minx))
+                    if ((dhorizontal_x1 > static_cast<double>(maxx)) ||
+                        (dhorizontal_x2 <= 0))
                         continue;
+                    const int horizontal_x1 =
+                        static_cast<int>(std::max(dhorizontal_x1, 0.0));
+                    const int horizontal_x2 = static_cast<int>(
+                        std::min<double>(dhorizontal_x2, nRasterXSize));
 
                     // Fill the horizontal segment (separately from the rest).
                     if (bAvoidBurningSamePoints)
@@ -187,8 +186,9 @@ void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
 
             if (dy < dy2 && dy >= dy1)
             {
-                const double intersect =
-                    (dy - dy1) * (dx2 - dx1) / (dy2 - dy1) + dx1;
+                const double intersect = std::clamp<double>(
+                    (dy - dy1) * (dx2 - dx1) / (dy2 - dy1) + dx1, INT_MIN,
+                    INT_MAX);
 
                 polyInts[ints++] = static_cast<int>(floor(intersect + 0.5));
             }
@@ -237,14 +237,15 @@ void GDALdllImagePoint(int nRasterXSize, int nRasterYSize, int nPartCount,
 {
     for (int i = 0; i < nPartCount; i++)
     {
-        const int nX = static_cast<int>(floor(padfX[i]));
-        const int nY = static_cast<int>(floor(padfY[i]));
+        const double dfX = padfX[i];
+        const double dfY = padfY[i];
         double dfVariant = 0.0;
         if (padfVariant != nullptr)
             dfVariant = padfVariant[i];
 
-        if (0 <= nX && nX < nRasterXSize && 0 <= nY && nY < nRasterYSize)
-            pfnPointFunc(pCBData, nY, nX, dfVariant);
+        if (0 <= dfX && dfX < nRasterXSize && 0 <= dfY && dfY < nRasterYSize)
+            pfnPointFunc(pCBData, static_cast<int>(dfY), static_cast<int>(dfX),
+                         dfVariant);
     }
 }
 
@@ -264,11 +265,34 @@ void GDALdllImageLine(int nRasterXSize, int nRasterYSize, int nPartCount,
     {
         for (int j = 1; j < panPartSize[i]; j++)
         {
-            int iX = static_cast<int>(floor(padfX[n + j - 1]));
-            int iY = static_cast<int>(floor(padfY[n + j - 1]));
+            double dfX = padfX[n + j - 1];
+            double dfY = padfY[n + j - 1];
+            double dfXEnd = padfX[n + j];
+            double dfYEnd = padfY[n + j];
 
-            const int iX1 = static_cast<int>(floor(padfX[n + j]));
-            const int iY1 = static_cast<int>(floor(padfY[n + j]));
+            // Skip segments that are off the target region.
+            if ((dfY < 0.0 && dfYEnd < 0.0) ||
+                (dfY > nRasterYSize && dfYEnd > nRasterYSize) ||
+                (dfX < 0.0 && dfXEnd < 0.0) ||
+                (dfX > nRasterXSize && dfXEnd > nRasterXSize))
+                continue;
+
+            // TODO: clamp coordinates to [0, nRasterXSize] * [0, nRasterYSize]
+            if (!(dfX >= INT_MIN && dfX <= INT_MAX && dfY >= INT_MIN &&
+                  dfY <= INT_MAX && dfXEnd >= INT_MIN && dfXEnd <= INT_MAX &&
+                  dfYEnd >= INT_MIN && dfYEnd <= INT_MAX))
+            {
+                CPLErrorOnce(
+                    CE_Warning, CPLE_AppDefined,
+                    "GDALdllImageLine(): coordinates outside of int range");
+                continue;
+            }
+
+            int iX = static_cast<int>(floor(dfX));
+            int iY = static_cast<int>(floor(dfY));
+
+            const int iX1 = static_cast<int>(floor(dfXEnd));
+            const int iY1 = static_cast<int>(floor(dfYEnd));
 
             double dfVariant = 0.0;
             double dfVariant1 = 0.0;
@@ -412,6 +436,24 @@ void GDALdllImageLineAllTouched(
             double dfXEnd = padfX[n + j];
             double dfYEnd = padfY[n + j];
 
+            // Skip segments that are off the target region.
+            if ((dfY < 0.0 && dfYEnd < 0.0) ||
+                (dfY > nRasterYSize && dfYEnd > nRasterYSize) ||
+                (dfX < 0.0 && dfXEnd < 0.0) ||
+                (dfX > nRasterXSize && dfXEnd > nRasterXSize))
+                continue;
+
+            // TODO: clamp coordinates to [0, nRasterXSize] * [0, nRasterYSize]
+            if (!(dfX >= INT_MIN && dfX <= INT_MAX && dfY >= INT_MIN &&
+                  dfY <= INT_MAX && dfXEnd >= INT_MIN && dfXEnd <= INT_MAX &&
+                  dfYEnd >= INT_MIN && dfYEnd <= INT_MAX))
+            {
+                CPLErrorOnce(CE_Warning, CPLE_AppDefined,
+                             "GDALdllImageLineAllTouched(): coordinates "
+                             "outside of int range");
+                continue;
+            }
+
             double dfVariant = 0.0;
             double dfVariantEnd = 0.0;
             if (padfVariant != nullptr &&
@@ -421,13 +463,6 @@ void GDALdllImageLineAllTouched(
                 dfVariant = padfVariant[n + j - 1];
                 dfVariantEnd = padfVariant[n + j];
             }
-
-            // Skip segments that are off the target region.
-            if ((dfY < 0.0 && dfYEnd < 0.0) ||
-                (dfY > nRasterYSize && dfYEnd > nRasterYSize) ||
-                (dfX < 0.0 && dfXEnd < 0.0) ||
-                (dfX > nRasterXSize && dfXEnd > nRasterXSize))
-                continue;
 
             // Swap if needed so we can proceed from left2right (X increasing)
             if (dfX > dfXEnd)
