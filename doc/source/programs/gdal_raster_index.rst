@@ -129,6 +129,41 @@ Standard options
 
     Skip errors related to input datasets.
 
+.. option:: --profile none|STAC-GeoParquet
+
+    .. versionadded:: 3.13
+
+    Defines the profile of the output dataset. If selecting ``STAC-GeoParquet``,
+    a Parquet file conforming to the `STAC-GeoParquet <https://radiantearth.github.io/stac-geoparquet-spec/latest/>`__
+    specification is created (provided that the Parquet format is also selected).
+    Such file can be read by the :ref:`GTI driver <raster.gti.stac_geoparquet>`.
+
+.. option:: --base-url <BASE-URL>
+
+    .. versionadded:: 3.13
+
+    Base URL for STAC-GeoParquet the ``href`` property of the `id` property in
+    a STAC-GeoParquet index.
+
+.. option:: --id-method filename|md5|metadata-item
+
+    .. versionadded:: 3.13
+
+    How to derive STAC-GeoParquet `id` property
+
+    - ``filename`` (the default): only the filename (without directory, but including extension) is used
+
+    - ``md5``: the MD5Sum of the file is computed, and suffixed with the filename.
+
+    - ``metadata-item``: the value of the metadata item defined by :option:`--id-metadata-item` from each source dataset is used.
+
+.. option:: --id-metadata-item <ID-METADATA-ITEM>
+
+    .. versionadded:: 3.13
+
+    Name of metadata item used to set STAC-GeoParquet  `id` property. Defaults to ``id``.
+
+
 Examples
 --------
 
@@ -151,3 +186,10 @@ Examples
    .. code-block:: bash
 
        gdal raster index --dst-crs EPSG:4326 --source-crs-field-name=src_srs *.tif tile_index_mixed_crs.gpkg
+
+.. example::
+   :title: Creates a STAC-GeoParquet compliant index.
+
+   .. code-block:: bash
+
+       gdal raster index --dst-crs EPSG:4326 --profile STAC-GeoParquet  *.tif index.parquet

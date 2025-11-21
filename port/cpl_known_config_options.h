@@ -380,6 +380,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_PNG_WHOLE_IMAGE_OPTIM", // from pngdataset.cpp
    "GDAL_PROXY_AUTH", // from cpl_http.cpp
    "GDAL_PYTHON_DRIVER_PATH", // from gdalpythondriverloader.cpp
+   "GDAL_RASTER_INDEX_BATCH_SIZE", // from gdaltindex_lib.cpp
    "GDAL_RASTER_PIPELINE_USE_GTIFF_FOR_TEMP_DATASET", // from gdalalg_raster_pipeline.cpp
    "GDAL_RASTER_TILE_EMIT_SPURIOUS_CHARS", // from gdalalg_raster_tile.cpp
    "GDAL_RASTER_TILE_HTML_PREC", // from gdalalg_raster_tile.cpp
