@@ -107,7 +107,7 @@
  *
  *
  * @param papszExtraOptions Extra options to control the viewshed analysis.
- * This is a NULL-terminated list of strings in "KEY=VALUE" format.
+ * This is a NULL-terminated list of strings in "KEY=VALUE" format, or NULL for no options.
  * The following keys are supported:
  * <ul>
  * <li><b>START_ANGLE</b>: Mask all cells outside of the arc ('start-angle', 'end-angle'). Clockwise degrees from north. Also used to clamp the extent of the output raster.</li>
