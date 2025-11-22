@@ -137,6 +137,7 @@ Standard options
     a Parquet file conforming to the `STAC-GeoParquet <https://radiantearth.github.io/stac-geoparquet-spec/latest/>`__
     specification is created (provided that the Parquet format is also selected).
     Such file can be read by the :ref:`GTI driver <raster.gti.stac_geoparquet>`.
+    Setting ``STAC-GeoParquet`` also implicitly sets the target CRS to EPSG:4326.
 
 .. option:: --base-url <BASE-URL>
 
@@ -192,4 +193,4 @@ Examples
 
    .. code-block:: bash
 
-       gdal raster index --dst-crs EPSG:4326 --profile STAC-GeoParquet  *.tif index.parquet
+       gdal raster index --profile STAC-GeoParquet  *.tif index.parquet
