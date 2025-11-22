@@ -222,8 +222,7 @@ OGRWAsPLayer::~OGRWAsPLayer()
                     else if (startNeighbors[j] >= 0)
                         j = startNeighbors[j];
                     else
-                        assert(
-                            false); /* there must be a neighbor since it is a
+                        assert(false); /* there must be a neighbor since it is a
                                           ring */
                 }
                 WriteRoughness(p->poLine, p->dfLeft, p->dfRight);

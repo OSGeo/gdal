@@ -196,23 +196,17 @@ GDALDatasetH GDALViewshedGenerate(
     oOpts.invisibleVal = dfInvisibleVal;
     oOpts.outOfRangeVal = dfOutOfRangeVal;
 
-    const char *pszStartAngle =
-        CSLFetchNameValue(papszExtraOptions, "START_ANGLE");
-    if (pszStartAngle)
-        oOpts.startAngle = CPLAtof(pszStartAngle);
+    const char* pszStartAngle = CSLFetchNameValue(papszExtraOptions, "START_ANGLE");
+    if( pszStartAngle ) oOpts.startAngle = CPLAtof(pszStartAngle);
 
-    const char *pszEndAngle = CSLFetchNameValue(papszExtraOptions, "END_ANGLE");
-    if (pszEndAngle)
-        oOpts.endAngle = CPLAtof(pszEndAngle);
+    const char* pszEndAngle = CSLFetchNameValue(papszExtraOptions, "END_ANGLE");
+    if( pszEndAngle ) oOpts.endAngle = CPLAtof(pszEndAngle);
+    
+    const char* pszLowPitch = CSLFetchNameValue(papszExtraOptions, "LOW_PITCH");
+    if( pszLowPitch ) oOpts.lowPitch = CPLAtof(pszLowPitch);
 
-    const char *pszLowPitch = CSLFetchNameValue(papszExtraOptions, "LOW_PITCH");
-    if (pszLowPitch)
-        oOpts.lowPitch = CPLAtof(pszLowPitch);
-
-    const char *pszHighPitch =
-        CSLFetchNameValue(papszExtraOptions, "HIGH_PITCH");
-    if (pszHighPitch)
-        oOpts.highPitch = CPLAtof(pszHighPitch);
+    const char* pszHighPitch = CSLFetchNameValue(papszExtraOptions, "HIGH_PITCH");
+    if( pszHighPitch ) oOpts.highPitch = CPLAtof(pszHighPitch);
 
     gdal::viewshed::Viewshed v(oOpts);
 
