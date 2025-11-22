@@ -538,6 +538,7 @@ void S102DriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "h5");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
@@ -551,8 +552,34 @@ void S102DriverSetCommonMetadata(GDALDriver *poDriver)
         "description='Whether the top line of the dataset should be the "
         "northern-most one'/>"
         "</OpenOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "  <Option name='VERTICAL_DATUM' type='string' description="
+        "'Vertical datum abbreviation or code (required)'/>"
+        "  <Option name='ISSUE_DATE' type='string' description="
+        "'Issue date as YYYYMMDD'/>"
+        "  <Option name='ISSUE_TIME' type='string' description="
+        "'Issue time as hhmmssZ or hhmmss[+-]HHMM'/>"
+        "  <Option name='HORIZONTAL_POSITION_UNCERTAINTY' type='float' "
+        "description='Horizontal position uncertainty in meter'/>"
+        "  <Option name='VERTICAL_UNCERTAINTY' type='float' "
+        "description='Vertical uncertainty in meter'/>"
+        "  <Option name='QUALITY_DATASET' type='string' description="
+        "'Path to a dataset with the quality of bathymetric coverage'/>"
+        "  <Option name='COMPRESS' type='string-select' default='DEFLATE'>"
+        "    <Value>NONE</Value>"
+        "    <Value>DEFLATE</Value>"
+        "  </Option>"
+        "  <Option name='ZLEVEL' type='int' "
+        "description='DEFLATE compression level 1-9' default='6' />"
+        "  <Option name='BLOCK_SIZE' type='int' description='Chunk size' />"
+        "</CreationOptionList>");
+
     poDriver->pfnIdentify = S102DatasetIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
 }
 
 /************************************************************************/
@@ -571,6 +598,7 @@ void S104DriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "h5");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
@@ -579,8 +607,81 @@ void S104DriverSetCommonMetadata(GDALDriver *poDriver)
         "description='Whether the top line of the dataset should be the "
         "northern-most one'/>"
         "</OpenOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "  <Option name='TIME_POINT' type='string' description="
+        "'Timestamp as YYYYMMDDTHHMMSSZ format (required)'/>"
+        "  <Option name='VERTICAL_DATUM' type='string' description="
+        "'Vertical datum abbreviation or code (required)'/>"
+        "  <Option name='VERTICAL_CS' type='string-select' description="
+        "'Vertical coordinate system (required).'>"
+        "    <Value alias='6498'>DEPTH</Value>"
+        "    <Value alias='6499'>HEIGHT</Value>"
+        "  </Option>"
+        "  <Option name='WATER_LEVEL_TREND_THRESHOLD' type='float' description="
+        "'Critical value used to determine steady water level trend (required)."
+        "Units are meters/hour (m/hr)'/>"
+        "  <Option name='DATA_DYNAMICITY' type='string-select' description="
+        "'Classification of data according to the relationship between the "
+        "time of its collection, generation, or calculation of generation "
+        "parameters, in relation to the time of publication of the dataset "
+        "(required).'>"
+        "    <Value alias='1'>observation</Value>"
+        "    <Value alias='2'>astronomicalPrediction</Value>"
+        "    <Value alias='3'>analysisOrHybrid</Value>"
+        "    <Value alias='5'>hydrodynamicForecast</Value>"
+        "  </Option>"
+        "  <Option name='DATASETS' type='string' description="
+        "'Comma separated list of datasets at different timestamps.'/>"
+        "  <Option name='DATASETS_TIME_POINT' type='string' description="
+        "'Comma separated list of the time point value of each dataset of "
+        "DATASETS.'/>"
+        "  <Option name='GEOGRAPHIC_IDENTIFIER' type='string' description="
+        "'Description, or location code from list agreed by data producers'/>"
+        "  <Option name='ISSUE_DATE' type='string' description="
+        "'Issue date as YYYYMMDD'/>"
+        "  <Option name='ISSUE_TIME' type='string' description="
+        "'Issue time as hhmmssZ or hhmmss[+-]HHMM'/>"
+        "  <Option name='TREND_INTERVAL' type='integer' "
+        "description='Interval, in minutes, over which trend at a a particular "
+        "time is calculated'/>"
+        "  <Option name='DATASET_DELIVERY_INTERVAL' type='string' description="
+        "'Expected time interval between availability of successive datasets "
+        "for time-varying data. Must be formatted as PnYnMnDTnHnMnS "
+        "(ISO8601 duration)'/>"
+        "  <Option name='TIME_RECORD_INTERVAL' type='integer' description="
+        "'Interval in seconds between time records.'/>"
+        "  <Option name='COMMON_POINT_RULE' type='string-select' description="
+        "'Procedure used for evaluating the coverage at a position that falls "
+        "on the boundary or in an area of overlap between geographic objects' "
+        "default='all'>"
+        "    <Value alias='1'>average</Value>"
+        "    <Value alias='2'>low</Value>"
+        "    <Value alias='3'>high</Value>"
+        "    <Value alias='4'>all</Value>"
+        "  </Option>"
+        "  <Option name='UNCERTAINTY' type='float' "
+        "description='Uncertainty of depth values in meter'/>"
+        "  <Option name='HORIZONTAL_POSITION_UNCERTAINTY' type='float' "
+        "description='Horizontal position uncertainty in meter'/>"
+        "  <Option name='VERTICAL_UNCERTAINTY' type='float' "
+        "description='Vertical uncertainty in meter'/>"
+        "  <Option name='TIME_UNCERTAINTY' type='float' "
+        "description='Time uncertainty in second'/>"
+        "  <Option name='COMPRESS' type='string-select' default='DEFLATE'>"
+        "    <Value>NONE</Value>"
+        "    <Value>DEFLATE</Value>"
+        "  </Option>"
+        "  <Option name='ZLEVEL' type='int' "
+        "description='DEFLATE compression level 1-9' default='6' />"
+        "  <Option name='BLOCK_SIZE' type='int' description='Chunk size' />"
+        "</CreationOptionList>");
+
     poDriver->pfnIdentify = S104DatasetIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
 }
 
 /************************************************************************/
@@ -598,6 +699,7 @@ void S111DriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "h5");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
@@ -606,8 +708,86 @@ void S111DriverSetCommonMetadata(GDALDriver *poDriver)
         "description='Whether the top line of the dataset should be the "
         "northern-most one'/>"
         "</OpenOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "  <Option name='TIME_POINT' type='string' description="
+        "'Timestamp as YYYYMMDDTHHMMSSZ format (required)'/>"
+        "  <Option name='DEPTH_TYPE' type='string-select' description="
+        "'Type of depth (required). When selecting heightOrDepth, "
+        "the interpretation depends on the VERTICAL_CS value.'>"
+        "    <Value alias='1'>heightOrDepth</Value>"
+        "    <Value alias='2'>layerAverage</Value>"
+        "  </Option>"
+        "  <Option name='VERTICAL_DATUM' type='string' description="
+        "'Vertical datum abbreviation or code (required if "
+        "DEPTH_TYPE=heightOrDepth)'/>"
+        "  <Option name='VERTICAL_CS' type='string-select' description="
+        "'Vertical coordinate system (required if DEPTH_TYPE=heightOrDepth).'>"
+        "    <Value alias='6498'>DEPTH</Value>"
+        "    <Value alias='6499'>HEIGHT</Value>"
+        "  </Option>"
+        "  <Option name='SURFACE_CURRENT_DEPTH' type='float' description="
+        "'Depth/height value or layer thickness (m) (required)'/>"
+        "  <Option name='DATA_DYNAMICITY' type='string-select' description="
+        "'Classification of data according to the relationship between the "
+        "time of its collection, generation, or calculation of generation "
+        "parameters, in relation to the time of publication of the dataset "
+        "(required).'>"
+        "    <Value alias='1'>observation</Value>"
+        "    <Value alias='2'>astronomicalPrediction</Value>"
+        "    <Value alias='3'>analysisOrHybrid</Value>"
+        "    <Value alias='5'>hydrodynamicForecast</Value>"
+        "  </Option>"
+        "  <Option name='DATASETS' type='string' description="
+        "'Comma separated list of datasets at different timestamps.'/>"
+        "  <Option name='DATASETS_TIME_POINT' type='string' description="
+        "'Comma separated list of the time point value of each dataset of "
+        "DATASETS.'/>"
+        "  <Option name='GEOGRAPHIC_IDENTIFIER' type='string' description="
+        "'Description, or location code from list agreed by data producers'/>"
+        "  <Option name='ISSUE_DATE' type='string' description="
+        "'Issue date as YYYYMMDD'/>"
+        "  <Option name='ISSUE_TIME' type='string' description="
+        "'Issue time as hhmmssZ or hhmmss[+-]HHMM'/>"
+        "  <Option name='DATASET_DELIVERY_INTERVAL' type='string' description="
+        "'Expected time interval between availability of successive datasets "
+        "for time-varying data. Must be formatted as PnYnMnDTnHnMnS "
+        "(ISO8601 duration)'/>"
+        "  <Option name='TIME_RECORD_INTERVAL' type='integer' description="
+        "'Interval in seconds between time records.'/>"
+        "  <Option name='COMMON_POINT_RULE' type='string-select' description="
+        "'Procedure used for evaluating the coverage at a position that falls "
+        "on the boundary or in an area of overlap between geographic objects' "
+        "default='high'>"
+        "    <Value alias='1'>average</Value>"
+        "    <Value alias='2'>low</Value>"
+        "    <Value alias='3'>high</Value>"
+        "    <Value alias='4'>all</Value>"
+        "  </Option>"
+        "  <Option name='UNCERTAINTY_SPEED' type='float' "
+        "description='Uncertainty of speeds in knot'/>"
+        "  <Option name='UNCERTAINTY_DIRECTION' type='float' "
+        "description='Uncertainty of direction angles in degree'/>"
+        "  <Option name='HORIZONTAL_POSITION_UNCERTAINTY' type='float' "
+        "description='Horizontal position uncertainty in meter'/>"
+        "  <Option name='VERTICAL_UNCERTAINTY' type='float' "
+        "description='Vertical uncertainty in meter'/>"
+        "  <Option name='TIME_UNCERTAINTY' type='float' "
+        "description='Time uncertainty in second'/>"
+        "  <Option name='COMPRESS' type='string-select' default='DEFLATE'>"
+        "    <Value>NONE</Value>"
+        "    <Value>DEFLATE</Value>"
+        "  </Option>"
+        "  <Option name='ZLEVEL' type='int' "
+        "description='DEFLATE compression level 1-9' default='6' />"
+        "  <Option name='BLOCK_SIZE' type='int' description='Chunk size' />"
+        "</CreationOptionList>");
+
     poDriver->pfnIdentify = S111DatasetIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
 }
 
 /************************************************************************/
