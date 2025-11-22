@@ -139,7 +139,40 @@ void GDALRasterIndexAlgorithm::AddCommonOptions()
                                 "with Parquet output format");
                     return false;
                 }
+                else if (m_outputFormat.empty() &&
+                         !EQUAL(CPLGetExtensionSafe(
+                                    m_outputDataset.GetName().c_str())
+                                    .c_str(),
+                                "parquet"))
+                {
+                    ReportError(CE_Failure, CPLE_NotSupported,
+                                "STAC-GeoParquet profile is only compatible "
+                                "with Parquet output format");
+                    return false;
+                }
                 m_outputFormat = "Parquet";
+
+                if (!m_crs.empty() && m_crs != "EPSG:4326")
+                {
+                    OGRSpatialReference oSRS;
+                    CPL_IGNORE_RET_VAL(oSRS.SetFromUserInput(m_crs.c_str()));
+                    const char *pszCelestialBodyName =
+                        oSRS.GetCelestialBodyName();
+                    // STAC-GeoParquet requires EPSG:4326, but let be nice
+                    // with planetary use cases and allow a non-Earth geographic CRS...
+                    if (!(pszCelestialBodyName &&
+                          !EQUAL(pszCelestialBodyName, "Earth") &&
+                          oSRS.IsGeographic()))
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_NotSupported,
+                            "STAC-GeoParquet profile is only compatible "
+                            "with --dst-crs=EPSG:4326");
+                        return false;
+                    }
+                }
+                if (m_crs.empty())
+                    m_crs = "EPSG:4326";
             }
             return true;
         });
