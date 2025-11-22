@@ -188,7 +188,17 @@ GDALDatasetH GDALViewshedGenerate(
     oOpts.invisibleVal = dfInvisibleVal;
     oOpts.outOfRangeVal = dfOutOfRangeVal;
 
-    viewshed::applyExtraOptionsFromCSL(papszCreationOptions, oOpts);
+    const char* pszStartAngle = CSLFetchNameValue(papszExtraOptions, "START_ANGLE");
+    if( pszStartAngle ) oOpts.startAngle = CPLAtof(pszStartAngle);
+
+    const char* pszEndAngle = CSLFetchNameValue(papszExtraOptions, "END_ANGLE");
+    if( pszEndAngle ) oOpts.endAngle = CPLAtof(pszEndAngle);
+    
+    const char* pszLowPitch = CSLFetchNameValue(papszExtraOptions, "LOW_PITCH");
+    if( pszLowPitch ) oOpts.lowPitch = CPLAtof(pszLowPitch);
+
+    const char* pszHighPitch = CSLFetchNameValue(papszExtraOptions, "HIGH_PITCH");
+    if( pszHighPitch ) oOpts.highPitch = CPLAtof(pszHighPitch);
 
     gdal::viewshed::Viewshed v(oOpts);
 
@@ -364,31 +374,6 @@ bool Viewshed::calcExtents(int nX, int nY, const GDALGeoTransform &invGT)
     oCurExtent.shiftX(-oOutExtent.xStart);
 
     return true;
-}
-
-void applyExtraOptionsFromCSL(CSLConstList papszExtraOptions, Options &oOpts)
-{
-    struct ExtraOptionDesc
-    {
-        const char *key;
-        double *target;
-    };
-
-    const ExtraOptionDesc extraOptionList[] = {
-        {"START_ANGLE", &oOpts.startAngle},
-        {"END_ANGLE", &oOpts.endAngle},
-        {"LOW_PITCH", &oOpts.lowPitch},
-        {"HIGH_PITCH", &oOpts.highPitch},
-    };
-
-    for (const auto &opt : extraOptionList)
-    {
-        const char *val = CSLFetchNameValue(papszExtraOptions, opt.key);
-        if (val != nullptr)
-        {
-            *(opt.target) = CPLAtof(val);
-        }
-    }
 }
 
 /// Compute the viewshed of a raster band.
