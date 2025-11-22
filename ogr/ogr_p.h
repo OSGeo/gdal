@@ -63,12 +63,12 @@ const char CPL_DLL *OGRWktReadPoints(const char *pszInput,
                                      OGRRawPoint **ppaoPoints, double **ppadfZ,
                                      int *pnMaxPoints, int *pnReadPoints);
 
-const char CPL_DLL *
-OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
-                  double **ppadfZ, double **ppadfM,
-                  int *flags, /* geometry flags, are we expecting Z, M, or both;
+const char CPL_DLL *OGRWktReadPointsM(
+    const char *pszInput, OGRRawPoint **ppaoPoints, double **ppadfZ,
+    double **ppadfM,
+    int *flags, /* geometry flags, are we expecting Z, M, or both;
                                  may change due to input */
-                  int *pnMaxPoints, int *pnReadPoints);
+    int *pnMaxPoints, int *pnReadPoints);
 
 void CPL_DLL OGRMakeWktCoordinate(char *, double, double, double, int);
 std::string CPL_DLL OGRMakeWktCoordinate(double, double, double, int,
@@ -153,8 +153,9 @@ bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(std::string_view sInput,
                                                  OGRField *psField);
 #endif
 
-int OGRCompareDate(const OGRField *psFirstTuple,
-                   const OGRField *psSecondTuple); /* used by ogr_gensql.cpp and
+int OGRCompareDate(
+    const OGRField *psFirstTuple,
+    const OGRField *psSecondTuple); /* used by ogr_gensql.cpp and
                                                       ogrfeaturequery.cpp */
 
 /* General utility option processing. */

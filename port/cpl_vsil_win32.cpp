@@ -184,15 +184,15 @@ static int ErrnoFromGetLastError(DWORD dwError = 0)
         case ERROR_ACCESS_DENIED:     /* Access denied. */
         case ERROR_CURRENT_DIRECTORY: /* The directory cannot be removed. */
         case ERROR_WRITE_PROTECT:     /* The media is write protected. */
-        case ERROR_LOCK_VIOLATION:    /* Another process has locked a portion of
+        case ERROR_LOCK_VIOLATION: /* Another process has locked a portion of
                                          the file. */
-        case ERROR_WRONG_DISK:        /* The wrong diskette is in the drive. */
+        case ERROR_WRONG_DISK:     /* The wrong diskette is in the drive. */
         case ERROR_SHARING_BUFFER_EXCEEDED: /* Too many files opened for
                                                sharing. */
-        case ERROR_DRIVE_LOCKED:      /* The disk is in use or locked by another
+        case ERROR_DRIVE_LOCKED:   /* The disk is in use or locked by another
                                          process. */
-        case ERROR_LOCK_FAILED:       /* Unable to lock a region of a file. */
-        case ERROR_SEEK_ON_DEVICE:    /* The file pointer cannot be set on the
+        case ERROR_LOCK_FAILED:    /* Unable to lock a region of a file. */
+        case ERROR_SEEK_ON_DEVICE: /* The file pointer cannot be set on the
                                          specified device or file. */
         case ERROR_SHARING_VIOLATION: /* The process cannot access the file
                                          because it is being used by another
