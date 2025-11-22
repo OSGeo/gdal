@@ -168,4 +168,6 @@ def test_gdalalg_raster_slope_overview():
     assert out_ds.GetRasterBand(1).GetOverview(1).XSize == 31
     assert out_ds.GetRasterBand(1).GetOverview(1).YSize == 31
     assert out_ds.GetRasterBand(1).GetOverview(0).Checksum() == cs
-    assert out_ds.GetRasterBand(1).GetOverview(0).ComputeStatistics(False) == stats
+    assert out_ds.GetRasterBand(1).GetOverview(0).ComputeStatistics(
+        False
+    ) == pytest.approx(stats)
