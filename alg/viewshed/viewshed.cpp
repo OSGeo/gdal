@@ -114,7 +114,7 @@
  * <li><b>LOW_PITCH</b>: Bound observable height to be no lower than the 'low-pitch' angle from the observer. Degrees from horizontal - positive is up. Must be less than 'high-pitch'.</li>
  * <li><b>HIGH_PITCH</b>: Mark all cells out-of-range where the observable height would be higher than the 'high-pitch' angle from the observer. Degrees from horizontal - positive is up. Must be greater than 'low-pitch'.</li>
  * </ul>
- * If NULL, a 360-degree omnidirectional viewshed is calculated.
+ * If NULL, a 360-degree omni-directional viewshed is calculated.
  *
  * @return not NULL output dataset on success (to be closed with GDALClose()) or
  * NULL if an error occurs.
