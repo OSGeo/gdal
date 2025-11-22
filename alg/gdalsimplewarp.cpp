@@ -281,7 +281,7 @@ int CPL_STDCALL GDALSimpleImageWarp(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         if (GDALRasterIO(GDALGetRasterBand(hSrcDS, panBandList[iBand]), GF_Read,
                          0, 0, nSrcXSize, nSrcYSize,
                          apabySrcDataUniquePtr[iBand].get(), nSrcXSize,
-                         nSrcYSize, GDT_Byte, 0, 0) != CE_None)
+                         nSrcYSize, GDT_UInt8, 0, 0) != CE_None)
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "GDALSimpleImageWarp GDALRasterIO failure %s",
@@ -369,7 +369,7 @@ int CPL_STDCALL GDALSimpleImageWarp(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                 if (GDALRasterIO(GDALGetRasterBand(hDstDS, iBand + 1), GF_Read,
                                  0, iDstY, nDstXSize, 1,
                                  apabyDstLine[iBand].get(), nDstXSize, 1,
-                                 GDT_Byte, 0, 0) != CE_None)
+                                 GDT_UInt8, 0, 0) != CE_None)
                 {
                     return FALSE;
                 }
@@ -423,7 +423,7 @@ int CPL_STDCALL GDALSimpleImageWarp(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         {
             if (GDALRasterIO(GDALGetRasterBand(hDstDS, iBand + 1), GF_Write, 0,
                              iDstY, nDstXSize, 1, apabyDstLine[iBand].get(),
-                             nDstXSize, 1, GDT_Byte, 0, 0) != CE_None)
+                             nDstXSize, 1, GDT_UInt8, 0, 0) != CE_None)
             {
                 return FALSE;
             }

@@ -100,7 +100,7 @@ def test_vicar_1():
 
 
 read_datatypes_lists = [
-    ("vicar_byte", gdal.GDT_Byte, 129),
+    ("vicar_byte", gdal.GDT_UInt8, 129),
     ("vicar_int16", gdal.GDT_Int16, 129),
     ("vicar_bigendian_int16", gdal.GDT_Int16, 129),
     ("vicar_int32", gdal.GDT_Int32, 129),
@@ -212,7 +212,7 @@ def test_vicar_create():
         src_ds.RasterXSize,
         src_ds.RasterYSize,
         src_ds.RasterCount,
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
     )
     ds.SetMetadata([json.dumps(md)], "json:VICAR")
     ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, src_ds.ReadRaster())
@@ -288,7 +288,7 @@ def test_vicar_create_label_option_as_inline_value():
 
     filename = "/vsimem/test.vic"
     assert gdal.GetDriverByName("VICAR").Create(
-        filename, 1, 1, 1, gdal.GDT_Byte, options=['LABEL={"BLTYPE":"foo"}']
+        filename, 1, 1, 1, gdal.GDT_UInt8, options=['LABEL={"BLTYPE":"foo"}']
     )
     ds = gdal.Open(filename)
     lbl = ds.GetMetadata_List("json:VICAR")[0]
@@ -303,7 +303,7 @@ def test_vicar_create_label_option_as_inline_value_error():
     filename = "/vsimem/test.vic"
     with gdal.quiet_errors():
         assert not gdal.GetDriverByName("VICAR").Create(
-            filename, 1, 1, 1, gdal.GDT_Byte, options=["LABEL={error"]
+            filename, 1, 1, 1, gdal.GDT_UInt8, options=["LABEL={error"]
         )
     gdal.Unlink(filename)
 
@@ -314,7 +314,7 @@ def test_vicar_create_label_option_as_filename():
     json_filename = "/vsimem/test.json"
     gdal.FileFromMemBuffer(json_filename, '{"BLTYPE":"foo"}')
     assert gdal.GetDriverByName("VICAR").Create(
-        filename, 1, 1, 1, gdal.GDT_Byte, options=["LABEL=" + json_filename]
+        filename, 1, 1, 1, gdal.GDT_UInt8, options=["LABEL=" + json_filename]
     )
     gdal.Unlink(json_filename)
     ds = gdal.Open(filename)
@@ -333,7 +333,7 @@ def test_vicar_create_label_option_as_filename_error():
     gdal.FileFromMemBuffer(json_filename, "error")
     with gdal.quiet_errors():
         assert not gdal.GetDriverByName("VICAR").Create(
-            filename, 1, 1, 1, gdal.GDT_Byte, options=["LABEL=" + json_filename]
+            filename, 1, 1, 1, gdal.GDT_UInt8, options=["LABEL=" + json_filename]
         )
     gdal.Unlink(json_filename)
     gdal.Unlink(filename)
@@ -390,10 +390,10 @@ def test_vicar_create_georeferencing(georef_format):
 
 
 compressed_datasets_lists = [
-    ("vicar_byte_basic", gdal.GDT_Byte, 4672),  # BASIC compression
-    ("vicar_byte_basic2", gdal.GDT_Byte, 4672),  # BASIC2 compression
+    ("vicar_byte_basic", gdal.GDT_UInt8, 4672),  # BASIC compression
+    ("vicar_byte_basic2", gdal.GDT_UInt8, 4672),  # BASIC2 compression
     ("vicar_int16_basic2", gdal.GDT_Int16, 4672),  # BASIC2 compression
-    ("vicar_all_ones_basic2", gdal.GDT_Byte, 34464),  # BASIC2 compression
+    ("vicar_all_ones_basic2", gdal.GDT_UInt8, 34464),  # BASIC2 compression
 ]
 
 

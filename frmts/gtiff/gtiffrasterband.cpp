@@ -44,7 +44,7 @@ GTiffRasterBand::GTiffRasterBand(GTiffDataset *poDSIn, int nBandIn)
         if (nSampleFormat == SAMPLEFORMAT_INT)
             eDataType = GDT_Int8;
         else
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
     }
     else if (nBitsPerSample <= 16)
     {

@@ -813,7 +813,7 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
     ) == (0, 1)
 
     assert struct.unpack(
-        "B" * 2, vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Byte)
+        "B" * 2, vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_UInt8)
     ) == (0, 1)
 
     # UInt16, VRTNodata=65535
@@ -909,7 +909,7 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
 @pytest.mark.parametrize(
     "dtype,nodata",
     [
-        (gdal.GDT_Byte, float("nan")),
+        (gdal.GDT_UInt8, float("nan")),
         (gdal.GDT_UInt16, -1),
     ],
 )

@@ -4057,7 +4057,7 @@ SENTINEL2Dataset *SENTINEL2Dataset::CreateL1CL2ADataset(
             ? 3
             : ((bAlpha) ? 1 : 0) + static_cast<int>(aosBands.size());
     const int nAlphaBand = (bIsPreview || bIsTCI || !bAlpha) ? 0 : nBands;
-    const GDALDataType eDT = (bIsPreview || bIsTCI) ? GDT_Byte : GDT_UInt16;
+    const GDALDataType eDT = (bIsPreview || bIsTCI) ? GDT_UInt8 : GDT_UInt16;
 
     for (int nBand = 1; nBand <= nBands; nBand++)
     {

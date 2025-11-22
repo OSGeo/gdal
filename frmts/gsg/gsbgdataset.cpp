@@ -818,7 +818,7 @@ GDALDataset *GSBGDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    if (eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16 &&
+    if (eType != GDT_UInt8 && eType != GDT_Float32 && eType != GDT_UInt16 &&
         eType != GDT_Int16)
     {
         CPLError(CE_Failure, CPLE_AppDefined,

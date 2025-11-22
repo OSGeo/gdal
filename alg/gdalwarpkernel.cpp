@@ -585,7 +585,7 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
  * any data type (working internally in double precision complex), all three
  * resampling types, and any or all of the validity/density masks.  At the
  * other end would be highly optimized algorithms for common cases like
- * nearest neighbour resampling on GDT_Byte data with no masks.
+ * nearest neighbour resampling on GDT_UInt8 data with no masks.
  *
  * The full set of optimized versions have not been decided but we should
  * expect to have at least:
@@ -634,7 +634,7 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
  *
  * The datatype of pixels in the source image (papabySrcimage) and
  * destination image (papabyDstImage) buffers.  Note that operations on
- * some data types (such as GDT_Byte) may be much better optimized than other
+ * some data types (such as GDT_UInt8) may be much better optimized than other
  * less common cases.
  *
  * This field is required.  It may not be GDT_Unknown.
@@ -1206,23 +1206,23 @@ CPLErr GDALWarpKernel::PerformWarp()
         papanBandSrcValid == nullptr && panUnifiedSrcValid == nullptr &&
         pafUnifiedSrcDensity == nullptr && panDstValid == nullptr;
 
-    if (eWorkingDataType == GDT_Byte && eResample == GRA_NearestNeighbour &&
+    if (eWorkingDataType == GDT_UInt8 && eResample == GRA_NearestNeighbour &&
         bNoMasksOrDstDensityOnly)
         return GWKNearestNoMasksOrDstDensityOnlyByte(this);
 
-    if (eWorkingDataType == GDT_Byte && eResample == GRA_Bilinear &&
+    if (eWorkingDataType == GDT_UInt8 && eResample == GRA_Bilinear &&
         bNoMasksOrDstDensityOnly)
         return GWKBilinearNoMasksOrDstDensityOnlyByte(this);
 
-    if (eWorkingDataType == GDT_Byte && eResample == GRA_Cubic &&
+    if (eWorkingDataType == GDT_UInt8 && eResample == GRA_Cubic &&
         bNoMasksOrDstDensityOnly)
         return GWKCubicNoMasksOrDstDensityOnlyByte(this);
 
-    if (eWorkingDataType == GDT_Byte && eResample == GRA_CubicSpline &&
+    if (eWorkingDataType == GDT_UInt8 && eResample == GRA_CubicSpline &&
         bNoMasksOrDstDensityOnly)
         return GWKCubicSplineNoMasksOrDstDensityOnlyByte(this);
 
-    if (eWorkingDataType == GDT_Byte && eResample == GRA_NearestNeighbour)
+    if (eWorkingDataType == GDT_UInt8 && eResample == GRA_NearestNeighbour)
         return GWKNearestByte(this);
 
     if ((eWorkingDataType == GDT_Int16 || eWorkingDataType == GDT_UInt16) &&
@@ -1661,7 +1661,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
         // TODO(schwehr): Factor out this repreated type of set.
         switch (poWK->eWorkingDataType)
         {
-            case GDT_Byte:
+            case GDT_UInt8:
                 dfDstReal = pabyDst[iDstOffset];
                 dfDstImag = 0.0;
                 break;
@@ -1777,7 +1777,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
 
     switch (poWK->eWorkingDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             ClampRoundAndAvoidNoData<GByte>(poWK, iBand, iDstOffset, dfReal);
             break;
 
@@ -1936,7 +1936,7 @@ static bool GWKSetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
 
         switch (poWK->eWorkingDataType)
         {
-            case GDT_Byte:
+            case GDT_UInt8:
                 dfDstReal = pabyDst[iDstOffset];
                 break;
 
@@ -2011,7 +2011,7 @@ static bool GWKSetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
 
     switch (poWK->eWorkingDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             ClampRoundAndAvoidNoData<GByte>(poWK, iBand, iDstOffset, dfReal);
             break;
 
@@ -2100,7 +2100,7 @@ static bool GWKGetPixelValue(const GDALWarpKernel *poWK, int iBand,
     // TODO(schwehr): Fix casting.
     switch (poWK->eWorkingDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             *pdfReal = pabySrc[iSrcOffset];
             *pdfImag = 0.0;
             break;
@@ -2221,7 +2221,7 @@ static bool GWKGetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
 
     switch (poWK->eWorkingDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             *pdfReal = pabySrc[iSrcOffset];
             break;
 
@@ -2362,7 +2362,7 @@ static bool GWKGetPixelRow(const GDALWarpKernel *poWK, int iBand,
     // Fetch data.
     switch (poWK->eWorkingDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         {
             GByte *pSrc =
                 reinterpret_cast<GByte *>(poWK->papabySrcImage[iBand]);
@@ -4245,7 +4245,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
 
     // Loop over pixel rows in the kernel.
 
-    if (poWK->eWorkingDataType == GDT_Byte && !poWK->panUnifiedSrcValid &&
+    if (poWK->eWorkingDataType == GDT_UInt8 && !poWK->panUnifiedSrcValid &&
         !poWK->papanBandSrcValid && !poWK->pafUnifiedSrcDensity &&
         !padfRowDensity)
     {
@@ -5708,7 +5708,7 @@ static void GWKRealCaseThread(void *pData)
                 {
                     if (bSrcMaskIsDensity)
                     {
-                        if (poWK->eWorkingDataType == GDT_Byte)
+                        if (poWK->eWorkingDataType == GDT_UInt8)
                         {
                             GWKCubicResampleSrcMaskIsDensity4SampleRealT<GByte>(
                                 poWK, iBand, padfX[iDstX] - poWK->nSrcXOff,
@@ -7265,7 +7265,7 @@ static void GWKAverageOrModeThread(void *pData)
 
         switch (poWK->eWorkingDataType)
         {
-            case GDT_Byte:
+            case GDT_UInt8:
                 nBins = 256;
                 break;
 

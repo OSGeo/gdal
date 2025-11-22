@@ -188,7 +188,7 @@ static CPLErr BandAffineCombinationInit(
         }
         else if (EQUAL(pszKey, "dst_intended_datatype"))
         {
-            for (GDALDataType eDT = GDT_Byte; eDT < GDT_TypeCount;
+            for (GDALDataType eDT = GDT_UInt8; eDT < GDT_TypeCount;
                  eDT = static_cast<GDALDataType>(eDT + 1))
             {
                 if (EQUAL(GDALGetDataTypeName(eDT), pszValue))

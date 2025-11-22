@@ -1288,7 +1288,7 @@ def test_tiff_direct_and_virtual_mem_io():
     with gdal.ExceptionMgr(useExceptions=False):
 
         # Test with pixel-interleaved and band-interleaved datasets
-        for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_CInt16]:
+        for dt in [gdal.GDT_UInt8, gdal.GDT_Int16, gdal.GDT_CInt16]:
 
             src_ds = gdal.Open("data/stefan_full_rgba.tif")
             dt_size = 1
@@ -4716,7 +4716,7 @@ def test_tiff_read_jxl_dng_1_7_52546():
             64,
             96,
             3,
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             [
                 "COMPRESS=LZW",
                 "PREDICTOR=2",
@@ -4740,7 +4740,7 @@ def test_tiff_read_jxl_dng_1_7_52546():
             100,
             100,
             3,
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             [
                 "COMPRESS=LZW",
                 "TILED=YES",
@@ -4755,7 +4755,7 @@ def test_tiff_read_jxl_dng_1_7_52546():
             100,
             100,
             3,
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             [
                 "COMPRESS=LZW",
                 "TILED=YES",
@@ -4771,7 +4771,7 @@ def test_tiff_read_jxl_dng_1_7_52546():
             100,
             100,
             1,
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             [
                 "COMPRESS=LZW",
                 "TILED=YES",
@@ -4786,7 +4786,7 @@ def test_tiff_read_jxl_dng_1_7_52546():
             100,
             100,
             3,
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             ["COMPRESS=LZW", "TILED=YES", "BLOCKXSIZE=16", "BLOCKYSIZE=32"],
         ),
         (
@@ -4795,7 +4795,7 @@ def test_tiff_read_jxl_dng_1_7_52546():
             100,
             100,
             3,
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             [
                 "COMPRESS=LZW",
                 "TILED=YES",
@@ -4810,7 +4810,7 @@ def test_tiff_read_jxl_dng_1_7_52546():
             100,
             100,
             3,
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             ["COMPRESS=LZW", "BLOCKYSIZE=18"],
         ),  # strip organization, block height *not* multiple of height
         (
@@ -4819,29 +4819,29 @@ def test_tiff_read_jxl_dng_1_7_52546():
             100,
             100,
             5,
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             ["COMPRESS=LZW", "BLOCKYSIZE=50"],
         ),  # strip organization, block height multiple of height. Also test nbands = 5
         # Try all supported compression methods
-        (False, False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=NONE", "BLOCKYSIZE=18"]),
+        (False, False, 100, 100, 3, gdal.GDT_UInt8, ["COMPRESS=NONE", "BLOCKYSIZE=18"]),
         (
             False,
             False,
             100,
             100,
             3,
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             ["COMPRESS=DEFLATE", "BLOCKYSIZE=18"],
         ),
-        (False, False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=ZSTD", "BLOCKYSIZE=18"]),
-        (False, False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=LZMA", "BLOCKYSIZE=18"]),
+        (False, False, 100, 100, 3, gdal.GDT_UInt8, ["COMPRESS=ZSTD", "BLOCKYSIZE=18"]),
+        (False, False, 100, 100, 3, gdal.GDT_UInt8, ["COMPRESS=LZMA", "BLOCKYSIZE=18"]),
         (
             False,
             False,
             100,
             100,
             3,
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             ["COMPRESS=WEBP", "WEBP_LOSSLESS=YES", "BLOCKYSIZE=18"],
         ),
         (
@@ -4850,19 +4850,19 @@ def test_tiff_read_jxl_dng_1_7_52546():
             100,
             100,
             3,
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             ["COMPRESS=JPEG", "JPEG_QUALITY=95", "PHOTOMETRIC=YCBCR", "BLOCKYSIZE=16"],
         ),
-        (False, False, 100, 100, 1, gdal.GDT_Byte, ["COMPRESS=JPEG", "BLOCKYSIZE=16"]),
-        (False, False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=LERC", "BLOCKYSIZE=18"]),
-        (False, False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=JXL", "BLOCKYSIZE=18"]),
+        (False, False, 100, 100, 1, gdal.GDT_UInt8, ["COMPRESS=JPEG", "BLOCKYSIZE=16"]),
+        (False, False, 100, 100, 3, gdal.GDT_UInt8, ["COMPRESS=LERC", "BLOCKYSIZE=18"]),
+        (False, False, 100, 100, 3, gdal.GDT_UInt8, ["COMPRESS=JXL", "BLOCKYSIZE=18"]),
         (
             False,
             False,
             100,
             100,
             3,
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             ["COMPRESS=PACKBITS", "BLOCKYSIZE=18"],
         ),
     ],
@@ -4886,7 +4886,7 @@ def test_tiff_read_multi_threaded(
                 "B", [band * 10 + j + i for i in range(ref_ds.RasterXSize)]
             )
         ref_ds.GetRasterBand(band + 1).WriteRaster(
-            0, 0, ref_ds.RasterXSize, ref_ds.RasterYSize, buf, buf_type=gdal.GDT_Byte
+            0, 0, ref_ds.RasterXSize, ref_ds.RasterYSize, buf, buf_type=gdal.GDT_UInt8
         )
 
     tmpfile = tmp_path / "test_tiff_read_multi_threaded.tif"
@@ -4931,8 +4931,8 @@ def test_tiff_read_multi_threaded(
             )
     else:
         assert ds.ReadRaster() == ref_ds.ReadRaster()
-        assert ds.ReadRaster(buf_type=gdal.GDT_Byte) == ref_ds.ReadRaster(
-            buf_type=gdal.GDT_Byte
+        assert ds.ReadRaster(buf_type=gdal.GDT_UInt8) == ref_ds.ReadRaster(
+            buf_type=gdal.GDT_UInt8
         )
         assert ds.ReadRaster(buf_xsize=ds.RasterXSize // 2) == ref_ds.ReadRaster(
             buf_xsize=ds.RasterXSize // 2
@@ -5641,7 +5641,7 @@ def test_tiff_read_multithreaded_read_fresh_file(tmp_vsimem):
         xsize=100,
         ysize=100,
         bands=1,
-        eType=gdal.GDT_Byte,
+        eType=gdal.GDT_UInt8,
         options=["COMPRESS=DEFLATE", "NUM_THREADS=2"],
     )
     assert ds_out.ReadRaster(0, 0, 100, 100) == b"\x00" * (100 * 100)

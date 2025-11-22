@@ -623,7 +623,7 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
     if (EQUAL(pszDataType, rstBYTE))
     {
         poDS->nBands = 1;
-        poDS->SetBand(1, new IdrisiRasterBand(poDS, 1, GDT_Byte));
+        poDS->SetBand(1, new IdrisiRasterBand(poDS, 1, GDT_UInt8));
     }
     else if (EQUAL(pszDataType, rstINTEGER))
     {
@@ -638,9 +638,9 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
     else if (EQUAL(pszDataType, rstRGB24))
     {
         poDS->nBands = 3;
-        poDS->SetBand(1, new IdrisiRasterBand(poDS, 1, GDT_Byte));
-        poDS->SetBand(2, new IdrisiRasterBand(poDS, 2, GDT_Byte));
-        poDS->SetBand(3, new IdrisiRasterBand(poDS, 3, GDT_Byte));
+        poDS->SetBand(1, new IdrisiRasterBand(poDS, 1, GDT_UInt8));
+        poDS->SetBand(2, new IdrisiRasterBand(poDS, 2, GDT_UInt8));
+        poDS->SetBand(3, new IdrisiRasterBand(poDS, 3, GDT_UInt8));
     }
     else
     {
@@ -863,7 +863,7 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    if (nBandsIn == 3 && eType != GDT_Byte)
+    if (nBandsIn == 3 && eType != GDT_UInt8)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -881,7 +881,7 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename, int nXSize,
 
     switch (eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             if (nBandsIn == 1)
                 pszLDataType = rstBYTE;
             else
@@ -1020,9 +1020,9 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
     if ((poSrcDS->GetRasterCount() == 3) &&
-        ((poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte) ||
-         (poSrcDS->GetRasterBand(2)->GetRasterDataType() != GDT_Byte) ||
-         (poSrcDS->GetRasterBand(3)->GetRasterDataType() != GDT_Byte)))
+        ((poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt8) ||
+         (poSrcDS->GetRasterBand(2)->GetRasterDataType() != GDT_UInt8) ||
+         (poSrcDS->GetRasterBand(3)->GetRasterDataType() != GDT_UInt8)))
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -1042,7 +1042,8 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
 
         if (bStrict)
         {
-            if (eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_Float32)
+            if (eType != GDT_UInt8 && eType != GDT_Int16 &&
+                eType != GDT_Float32)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Attempt to create IDRISI dataset in strict mode "
@@ -1053,7 +1054,7 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
         }
         else
         {
-            if (eType != GDT_Byte && eType != GDT_Int16 &&
+            if (eType != GDT_UInt8 && eType != GDT_Int16 &&
                 eType != GDT_UInt16 && eType != GDT_UInt32 &&
                 eType != GDT_Int32 && eType != GDT_Float32 &&
                 eType != GDT_Float64)
@@ -1085,7 +1086,7 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
         poBand->GetStatistics(false, true, &dfMin, &dfMax, nullptr, nullptr);
     }
 
-    if (!((eType == GDT_Byte) || (eType == GDT_Int16) ||
+    if (!((eType == GDT_UInt8) || (eType == GDT_Int16) ||
           (eType == GDT_Float32)))
     {
         if (eType == GDT_Float64)

@@ -634,7 +634,7 @@ def test_mask_19():
 def test_mask_20():
 
     types = [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
         gdal.GDT_Int32,
@@ -675,7 +675,7 @@ def test_mask_20():
 def test_mask_21():
 
     types = [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
         gdal.GDT_Int32,
@@ -959,13 +959,13 @@ def test_mask_27():
 # Test setting nodata after having first queried GetMaskBand()
 
 
-@pytest.mark.parametrize("dt", [gdal.GDT_Byte, gdal.GDT_Int64, gdal.GDT_UInt64])
+@pytest.mark.parametrize("dt", [gdal.GDT_UInt8, gdal.GDT_Int64, gdal.GDT_UInt64])
 @pytest.mark.parametrize(
     "GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND", [None, "YES", "ALWAYS"]
 )
 def test_mask_setting_nodata(dt, GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND):
     def set_nodata_value(ds, val):
-        if dt == gdal.GDT_Byte:
+        if dt == gdal.GDT_UInt8:
             ds.GetRasterBand(1).SetNoDataValue(val)
         elif dt == gdal.GDT_Int64:
             ds.GetRasterBand(1).SetNoDataValueAsInt64(val)
@@ -980,14 +980,14 @@ def test_mask_setting_nodata(dt, GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND):
         got = ds.GetRasterBand(1).GetMaskBand().ReadRaster()
         if (
             GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND == "ALWAYS"
-            and dt != gdal.GDT_Byte
+            and dt != gdal.GDT_UInt8
         ):
             assert got is None
             assert gdal.GetLastErrorType() == gdal.CE_Failure
         else:
             if (
                 GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND == "YES"
-                and dt != gdal.GDT_Byte
+                and dt != gdal.GDT_UInt8
             ):
                 assert gdal.GetLastErrorType() == gdal.CE_Warning
             assert got == struct.pack("B", 0)

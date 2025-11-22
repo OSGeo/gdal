@@ -173,7 +173,7 @@ def test_vrtprocesseddataset_affine_combination_nominal(tmp_vsimem, INTERLEAVE):
     assert ds.RasterCount == 3
     assert ds.GetSpatialRef() is None
     assert ds.GetGeoTransform(can_return_null=True) is None
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[15, 10 + 6]]))
     np.testing.assert_equal(
         ds.GetRasterBand(2).ReadAsArray(), np.array([[20 + 3, 20 + 3]])
@@ -227,7 +227,7 @@ def test_vrtprocesseddataset_several_steps(tmp_vsimem):
     assert ds.RasterCount == 3
     assert ds.GetSpatialRef() is None
     assert ds.GetGeoTransform(can_return_null=True) is None
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (1, 1)
     assert ds.GetRasterBand(2).ComputeRasterMinMax(False) == (2, 2)
     assert ds.GetRasterBand(3).ComputeRasterMinMax(False) == (3, 3)
@@ -262,7 +262,7 @@ def test_vrtprocesseddataset_affine_combination_nodata(tmp_vsimem):
     </VRTDataset>
         """
     )
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[1, 5]]))
     # 0 should actually be 3-2=1, but this is the nodata value hence the replacement value
     np.testing.assert_equal(ds.GetRasterBand(2).ReadAsArray(), np.array([[1, 0]]))
@@ -294,7 +294,7 @@ def test_vrtprocesseddataset_affine_combination_nodata_as_parameter(tmp_vsimem):
     </VRTDataset>
         """
     )
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[255, 5]]))
     # 254 should actually be 256+1*2+(-1)*3=255, but this is the nodata value hence the replacement value
     np.testing.assert_equal(ds.GetRasterBand(2).ReadAsArray(), np.array([[255, 254]]))
@@ -330,7 +330,7 @@ def test_vrtprocesseddataset_affine_combination_replacement_nodata(tmp_vsimem):
     </VRTDataset>
         """
     )
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[255, 5]]))
     # 254 should actually be 256+1*2+(-1)*3=255, but this is the nodata value hence the replacement value
     np.testing.assert_equal(ds.GetRasterBand(2).ReadAsArray(), np.array([[255, 128]]))
@@ -739,7 +739,7 @@ def test_vrtprocesseddataset_dehazing_edge_effects(tmp_vsimem):
         257,
         257,
         1,
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         ["TILED=YES", "BLOCKXSIZE=256", "BLOCKYSIZE=256"],
     )
     src_ds.GetRasterBand(1).Fill(10)

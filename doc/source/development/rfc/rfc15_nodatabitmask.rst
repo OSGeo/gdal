@@ -24,7 +24,7 @@ values, and alpha bands).
 The basic approach is to treat such masks as raster bands, but not
 regular raster bands on the datasource. Instead they are freestanding
 raster bands in a manner similar to the overview raster band objects.
-The masks are represented as GDT_Byte bands with a value of zero
+The masks are represented as GDT_UInt8 bands with a value of zero
 indicating nodata and non-zero values indicating valid data. Normally
 the value 255 will be used for valid data pixels.
 
@@ -82,7 +82,7 @@ GetMaskBand() that returns one of three default implementations.
    return GMF_NODATA.
 -  If there is no nodata value, but the dataset has an alpha band that
    seems to apply to this band (specific rules yet to be determined) and
-   that is of type GDT_Byte then that alpha band will be returned, and
+   that is of type GDT_UInt8 then that alpha band will be returned, and
    the flags GMF_PER_DATASET and GMF_ALPHA will be returned in the
    flags.
 -  If neither of the above apply, an instance of the new
@@ -134,7 +134,7 @@ not copied since they are just derived information.
 Alpha Bands
 -----------
 
-When a dataset has a normal GDT_Byte alpha (transparency) band that
+When a dataset has a normal GDT_UInt8 alpha (transparency) band that
 applies, it should be returned as the null mask, but the GetMaskFlags()
 method should include GMF_ALPHA. For processing purposes any value other
 than 0 should be treated as valid data, though some algorithms will

@@ -62,7 +62,7 @@ def test_aigrid_2():
     band1 = ds.GetRasterBand(1)
     assert band1.GetNoDataValue() == 255, "Grid NODATA value wrong or missing."
 
-    assert band1.DataType == gdal.GDT_Byte, "Data type is not Byte!"
+    assert band1.DataType == gdal.GDT_UInt8, "Data type is not Byte!"
 
 
 ###############################################################################

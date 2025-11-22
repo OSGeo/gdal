@@ -837,9 +837,9 @@ def test_gdaldem_lib_aspect_ZevenbergenThorne():
 def test_gdaldem_lib_nodata():
 
     for (value, typ) in [
-        (0, gdal.GDT_Byte),
-        (1, gdal.GDT_Byte),
-        (255, gdal.GDT_Byte),
+        (0, gdal.GDT_UInt8),
+        (1, gdal.GDT_UInt8),
+        (255, gdal.GDT_UInt8),
         (0, gdal.GDT_UInt16),
         (1, gdal.GDT_UInt16),
         (65535, gdal.GDT_UInt16),

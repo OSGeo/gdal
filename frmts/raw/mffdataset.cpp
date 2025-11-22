@@ -825,7 +825,7 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
             else if (EQUAL(pszRefinedType, "R*8"))
                 eDataType = GDT_Float64;
             else if (EQUAL(pszRefinedType, "I*1"))
-                eDataType = GDT_Byte;
+                eDataType = GDT_UInt8;
             else if (EQUAL(pszRefinedType, "I*2"))
                 eDataType = GDT_Int16;
             else if (EQUAL(pszRefinedType, "I*4"))
@@ -863,7 +863,7 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else if (STARTS_WITH_CI(osExt.c_str(), "b"))
         {
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
         }
         else if (STARTS_WITH_CI(osExt.c_str(), "i"))
         {

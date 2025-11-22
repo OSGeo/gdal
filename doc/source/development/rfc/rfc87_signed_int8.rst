@@ -22,7 +22,7 @@ Motivation
 ----------
 
 :ref:`rfc-14` introduced in GDAL 1.5.0 a way of specifying that a 8-bit integer
-should be interpreted as signed, by (ab)using the GDT_Byte type, with the
+should be interpreted as signed, by (ab)using the GDT_UInt8 type, with the
 addition of the PIXELTYPE=SIGNEDBYTE metadata item in the IMAGE_STRUCTURE metadata
 domain of bands for which this is desired.
 
@@ -57,7 +57,7 @@ specifically with a subset of types (e.g Byte, Float32) and promoted other
 types to the closest one will automatically have proper support for the new
 data type (e.g overview computation).
 
-Existing drivers that, on reading, reported GDT_Byte + PIXELTYPE=SIGNEDBYTE are
+Existing drivers that, on reading, reported GDT_UInt8 + PIXELTYPE=SIGNEDBYTE are
 modified to report GDT_Int8. This has backward compatibility impact to external
 code. This affects the EEDAI, ERS, GTA, GTiff, HFA, netCDF, PostGISRaster, EHDR,
 RRaster, Rasterlite2 and Zarr drivers.

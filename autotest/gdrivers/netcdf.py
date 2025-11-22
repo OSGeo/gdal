@@ -1663,7 +1663,7 @@ def test_netcdf_geolocation_array_no_srs(tmp_path, write_bottomup, read_bottomup
     ):
         ds = gdal.Open(f'NETCDF:"{ofile}":Band1')
         got_data = struct.unpack(
-            "B" * 6, ds.GetRasterBand(1).ReadRaster(0, 0, 3, 2, buf_type=gdal.GDT_Byte)
+            "B" * 6, ds.GetRasterBand(1).ReadRaster(0, 0, 3, 2, buf_type=gdal.GDT_UInt8)
         )
         if (write_bottomup and not read_bottomup) or (
             not write_bottomup and read_bottomup
@@ -1675,7 +1675,7 @@ def test_netcdf_geolocation_array_no_srs(tmp_path, write_bottomup, read_bottomup
 
         ds = gdal.Open(f'NETCDF:"{ofile}":lon')
         got_data = struct.unpack(
-            "B" * 6, ds.GetRasterBand(1).ReadRaster(0, 0, 3, 2, buf_type=gdal.GDT_Byte)
+            "B" * 6, ds.GetRasterBand(1).ReadRaster(0, 0, 3, 2, buf_type=gdal.GDT_UInt8)
         )
         if (write_bottomup and not read_bottomup) or (
             not write_bottomup and read_bottomup
@@ -1687,7 +1687,7 @@ def test_netcdf_geolocation_array_no_srs(tmp_path, write_bottomup, read_bottomup
 
         ds = gdal.Open(f'NETCDF:"{ofile}":lat')
         got_data = struct.unpack(
-            "B" * 6, ds.GetRasterBand(1).ReadRaster(0, 0, 3, 2, buf_type=gdal.GDT_Byte)
+            "B" * 6, ds.GetRasterBand(1).ReadRaster(0, 0, 3, 2, buf_type=gdal.GDT_UInt8)
         )
         if (write_bottomup and not read_bottomup) or (
             not write_bottomup and read_bottomup

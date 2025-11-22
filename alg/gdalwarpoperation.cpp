@@ -859,7 +859,7 @@ CPLErr GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
 
         GByte *pBandData = static_cast<GByte *>(pDstBuffer) + iBand * nBandSize;
 
-        if (psOptions->eWorkingDataType == GDT_Byte)
+        if (psOptions->eWorkingDataType == GDT_UInt8)
         {
             memset(pBandData,
                    std::max(

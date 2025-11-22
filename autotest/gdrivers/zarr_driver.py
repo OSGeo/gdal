@@ -36,7 +36,7 @@ def module_disable_exceptions():
 
 _gdal_data_type_to_array_type = {
     gdal.GDT_Int8: "b",
-    gdal.GDT_Byte: "B",
+    gdal.GDT_UInt8: "B",
     gdal.GDT_Int16: "h",
     gdal.GDT_UInt16: "H",
     gdal.GDT_Int32: "i",
@@ -55,13 +55,13 @@ _gdal_data_type_to_array_type = {
 @pytest.mark.parametrize(
     "dtype,gdaltype,fill_value,nodata_value",
     [
-        ["!b1", gdal.GDT_Byte, None, None],
+        ["!b1", gdal.GDT_UInt8, None, None],
         ["!i1", gdal.GDT_Int8, None, None],
         ["!i1", gdal.GDT_Int8, -1, -1],
-        ["!u1", gdal.GDT_Byte, None, None],
+        ["!u1", gdal.GDT_UInt8, None, None],
         [
             "!u1",
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             "1",
             1,
         ],  # not really legit to have the fill_value as a str
@@ -773,7 +773,7 @@ def test_zarr_read_fortran_order(name):
     ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
     assert ar
     assert ar.Read(
-        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     ) == array.array("b", [i for i in range(16)])
 
 
@@ -814,7 +814,7 @@ def test_zarr_read_fortran_order_3d():
     ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
     assert ar
     assert ar.Read(
-        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     ) == array.array("b", [i for i in range(2 * 3 * 4)])
 
 
@@ -871,7 +871,7 @@ def test_zarr_read_compound_not_aligned():
     assert comps[0].GetType().GetNumericDataType() == gdal.GDT_UInt16
     assert comps[1].GetName() == "b"
     assert comps[1].GetOffset() == 2
-    assert comps[1].GetType().GetNumericDataType() == gdal.GDT_Byte
+    assert comps[1].GetType().GetNumericDataType() == gdal.GDT_UInt8
     assert comps[2].GetName() == "c"
     assert comps[2].GetOffset() == 4
     assert comps[2].GetType().GetNumericDataType() == gdal.GDT_UInt16
@@ -907,7 +907,7 @@ def test_zarr_read_compound_complex():
     assert len(comps) == 4
     assert comps[0].GetName() == "a"
     assert comps[0].GetOffset() == 0
-    assert comps[0].GetType().GetNumericDataType() == gdal.GDT_Byte
+    assert comps[0].GetType().GetNumericDataType() == gdal.GDT_UInt8
     assert comps[1].GetName() == "b"
     assert comps[1].GetOffset() == 2
     assert comps[1].GetType().GetClass() == gdal.GEDTC_COMPOUND
@@ -1931,8 +1931,8 @@ def getCompoundDT():
 @pytest.mark.parametrize(
     "datatype,nodata",
     [
-        [gdal.ExtendedDataType.Create(gdal.GDT_Byte), None],
-        [gdal.ExtendedDataType.Create(gdal.GDT_Byte), 1],
+        [gdal.ExtendedDataType.Create(gdal.GDT_UInt8), None],
+        [gdal.ExtendedDataType.Create(gdal.GDT_UInt8), 1],
         [gdal.ExtendedDataType.Create(gdal.GDT_UInt16), None],
         [gdal.ExtendedDataType.Create(gdal.GDT_Int16), None],
         [gdal.ExtendedDataType.Create(gdal.GDT_UInt32), None],
@@ -2070,14 +2070,14 @@ def test_zarr_create_array_errors(tmp_vsimem, array_name, format):
         rg = ds.GetRootGroup()
         assert rg
         assert (
-            rg.CreateMDArray("foo", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+            rg.CreateMDArray("foo", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
             is not None
         )
         gdal.Mkdir(tmp_vsimem / "test.zarr/directory_with_that_name", 0)
         with gdal.quiet_errors():
             assert (
                 rg.CreateMDArray(
-                    array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+                    array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
                 )
                 is None
             )
@@ -2093,7 +2093,7 @@ def test_zarr_create_array_errors(tmp_vsimem, array_name, format):
         with gdal.quiet_errors():
             assert (
                 rg.CreateMDArray(
-                    array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+                    array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
                 )
                 is None
             )
@@ -2131,7 +2131,7 @@ def test_zarr_create_array_compressor(tmp_vsimem, compressor, options, expected_
             rg.CreateMDArray(
                 "test",
                 [],
-                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
                 ["COMPRESS=" + compressor] + options,
             )
             is not None
@@ -2242,7 +2242,7 @@ def test_zarr_create_array_compressor_v3(
         ar = rg.CreateMDArray(
             "test",
             [dim],
-            gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+            gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
             ["COMPRESS=" + compressor] + options,
         )
         assert ar.Write(array.array("b", [1, 2])) == gdal.CE_None
@@ -2304,7 +2304,7 @@ def test_zarr_create_array_compressor_v3(
     "gdal_data_type",
     [
         gdal.GDT_Int8,
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
         gdal.GDT_Int32,
@@ -2833,7 +2833,7 @@ def test_zarr_create_array_bad_compressor(tmp_vsimem, format):
             rg.CreateMDArray(
                 "test",
                 [],
-                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
                 ["COMPRESS=invalid"],
             )
             is None
@@ -2849,7 +2849,7 @@ def test_zarr_create_array_attributes(tmp_vsimem, format):
         assert ds is not None
         rg = ds.GetRootGroup()
         assert rg
-        ar = rg.CreateMDArray("test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        ar = rg.CreateMDArray("test", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
         assert ar
         assert ar.GetFullName() == "/test"
 
@@ -2913,7 +2913,7 @@ def test_zarr_create_array_set_crs(tmp_vsimem):
         assert ds is not None
         rg = ds.GetRootGroup()
         assert rg
-        ar = rg.CreateMDArray("test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        ar = rg.CreateMDArray("test", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
         assert ar
         crs = osr.SpatialReference()
         crs.ImportFromEPSG(4326)
@@ -2945,11 +2945,11 @@ def test_zarr_create_array_set_dimension_name(tmp_vsimem):
 
         dim0 = rg.CreateDimension("dim0", None, None, 2)
         dim0_ar = rg.CreateMDArray(
-            "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         dim0.SetIndexingVariable(dim0_ar)
 
-        rg.CreateMDArray("test", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        rg.CreateMDArray("test", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
 
     create()
 
@@ -2965,11 +2965,11 @@ def test_zarr_create_array_set_dimension_name(tmp_vsimem):
 @pytest.mark.parametrize(
     "dtype,gdaltype,fill_value,nodata_value",
     [
-        ["!b1", gdal.GDT_Byte, None, None],
+        ["!b1", gdal.GDT_UInt8, None, None],
         ["!i1", gdal.GDT_Int16, None, None],
         ["!i1", gdal.GDT_Int16, -1, -1],
-        ["!u1", gdal.GDT_Byte, None, None],
-        ["!u1", gdal.GDT_Byte, "1", 1],
+        ["!u1", gdal.GDT_UInt8, None, None],
+        ["!u1", gdal.GDT_UInt8, "1", 1],
         ["<i2", gdal.GDT_Int16, None, None],
         [">i2", gdal.GDT_Int16, None, None],
         ["<i4", gdal.GDT_Int32, None, None],
@@ -3144,7 +3144,7 @@ def test_zarr_write_array_content(
 @pytest.mark.parametrize(
     "dt,array_type",
     [
-        (gdal.GDT_Byte, "B"),
+        (gdal.GDT_UInt8, "B"),
         (gdal.GDT_UInt16, "H"),
         (gdal.GDT_UInt32, "I"),
         (gdal.GDT_UInt64, "Q"),
@@ -3209,7 +3209,7 @@ def test_zarr_write_interleave(tmp_vsimem, dt, array_type):
     )
     if dt != gdal.GDT_CFloat64:
         assert ar.Read(
-            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         ) == array.array("B", [0, 1, 2, 3, 4, 5])
 
 
@@ -3289,7 +3289,7 @@ def test_zarr_update_array_string(tmp_vsimem, srcfilename):
     "gdal_data_type",
     [
         gdal.GDT_Int8,
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
         gdal.GDT_Int32,
@@ -3369,7 +3369,7 @@ def test_zarr_create_unit_offset_scale(tmp_vsimem):
         rg = ds.GetRootGroup()
         assert rg
 
-        ar = rg.CreateMDArray("test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        ar = rg.CreateMDArray("test", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
         assert ar.SetOffset(1.5) == gdal.CE_None
         assert ar.SetScale(2.5) == gdal.CE_None
         assert ar.SetUnit("my unit") == gdal.CE_None
@@ -3535,7 +3535,7 @@ def test_zarr_create_array_invalid_blocksize(tmp_vsimem, blocksize):
             ar = rg.CreateMDArray(
                 "test",
                 [dim0, dim1, dim2],
-                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
                 ["BLOCKSIZE=" + blocksize],
             )
             assert ar is None
@@ -3620,7 +3620,7 @@ def test_zarr_pam_spatial_ref(tmp_vsimem):
         dim0 = rg.CreateDimension("dim0", None, None, 2)
         dim1 = rg.CreateDimension("dim1", None, None, 2)
         rg.CreateMDArray(
-            "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
 
     create()
@@ -3892,7 +3892,7 @@ def test_zarr_cache_tile_presence(tmp_path, format):
         ar = rg.CreateMDArray(
             "test",
             [dim0, dim1],
-            gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+            gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
             ["BLOCKSIZE=1,2"],
         )
         assert ar
@@ -4026,7 +4026,7 @@ def test_zarr_advise_read(tmp_path, compression, format):
         ar = rg.CreateMDArray(
             "test",
             [dim0, dim1],
-            gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+            gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
             [
                 "COMPRESS=" + compression,
                 "BLOCKSIZE=%d,%d" % (dim0_blocksize, dim1_blocksize),
@@ -4282,7 +4282,7 @@ def test_zarr_resize(tmp_vsimem, format, create_z_metadata):
         dim0 = rg.CreateDimension("dim0", None, None, 2)
         dim1 = rg.CreateDimension("dim1", None, None, 2)
         var = rg.CreateMDArray(
-            "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         assert var.Write(struct.pack("B" * (2 * 2), 1, 2, 3, 4)) == gdal.CE_None
 
@@ -4365,21 +4365,21 @@ def test_zarr_resize_XARRAY(tmp_vsimem, create_z_metadata):
 
         dim0 = rg.CreateDimension("dim0", None, None, 2)
         dim0_var = rg.CreateMDArray(
-            "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         dim0.SetIndexingVariable(dim0_var)
         dim1 = rg.CreateDimension("dim1", None, None, 2)
         dim1_var = rg.CreateMDArray(
-            "dim1", [dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "dim1", [dim1], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         dim1.SetIndexingVariable(dim1_var)
         var = rg.CreateMDArray(
-            "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         assert var.Write(struct.pack("B" * (2 * 2), 1, 2, 3, 4)) == gdal.CE_None
 
         var2 = rg.CreateMDArray(
-            "test2", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "test2", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         assert var2 is not None
 
@@ -4462,12 +4462,12 @@ def test_zarr_resize_dim_referenced_twice(tmp_vsimem):
 
         dim0 = rg.CreateDimension("dim0", None, None, 2)
         dim0_var = rg.CreateMDArray(
-            "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         dim0.SetIndexingVariable(dim0_var)
 
         var = rg.CreateMDArray(
-            "test", [dim0, dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "test", [dim0, dim0], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         assert var.Write(struct.pack("B" * (2 * 2), 1, 2, 3, 4)) == gdal.CE_None
 
@@ -4527,28 +4527,28 @@ def test_zarr_multidim_rename_group_at_creation(tmp_vsimem, format, create_z_met
         rg = ds.GetRootGroup()
         group = rg.CreateGroup("group")
         group_attr = group.CreateAttribute(
-            "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         rg.CreateGroup("other_group")
         dim = group.CreateDimension(
             "dim0", "unspecified type", "unspecified direction", 2
         )
         ar = group.CreateMDArray(
-            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         attr = ar.CreateAttribute(
-            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
 
         subgroup = group.CreateGroup("subgroup")
         subgroup_attr = subgroup.CreateAttribute(
-            "subgroup_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "subgroup_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         subgroup_ar = subgroup.CreateMDArray(
-            "subgroup_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "subgroup_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         subgroup_ar_attr = subgroup_ar.CreateAttribute(
-            "subgroup_ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "subgroup_ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
 
         # Cannot rename root group
@@ -4656,7 +4656,7 @@ def test_zarr_multidim_rename_group_after_reopening(
             "dim0", "unspecified type", "unspecified direction", 2
         )
         ar = group.CreateMDArray(
-            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
         attr.Write("foo")
@@ -4761,13 +4761,13 @@ def test_zarr_multidim_rename_array_at_creation(tmp_path, format, create_z_metad
             "dim0", "unspecified type", "unspecified direction", 2
         )
         ar = group.CreateMDArray(
-            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         group.CreateMDArray(
-            "other_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "other_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         attr = ar.CreateAttribute(
-            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
 
         # Empty name
@@ -4851,10 +4851,10 @@ def test_zarr_multidim_rename_array_after_reopening(
             "dim0", "unspecified type", "unspecified direction", 2
         )
         ar = group.CreateMDArray(
-            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         group.CreateMDArray(
-            "other_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "other_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
         attr.Write("foo")
@@ -4956,10 +4956,10 @@ def test_zarr_multidim_rename_attr_after_reopening(
             "dim0", "unspecified type", "unspecified direction", 2
         )
         ar = group.CreateMDArray(
-            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         group.CreateMDArray(
-            "other_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "other_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
         attr.Write("foo")
@@ -5189,7 +5189,7 @@ def test_zarr_multidim_delete_group_after_reopening(
             "dim0", "unspecified type", "unspecified direction", 2
         )
         ar = group.CreateMDArray(
-            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
         attr.Write("foo")
@@ -5289,13 +5289,15 @@ def test_zarr_multidim_delete_array_after_reopening(
         )
         rg = ds.GetRootGroup()
         group = rg.CreateGroup("group")
-        ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
         attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
         attr.Write("foo")
         attr2 = ar.CreateAttribute("attr2", [], gdal.ExtendedDataType.CreateString())
         attr2.Write("foo")
 
-        group.CreateMDArray("other_ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        group.CreateMDArray(
+            "other_ar", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
+        )
 
     def reopen_readonly():
         ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
@@ -5389,7 +5391,7 @@ def test_zarr_multidim_delete_attribute_after_reopening(
         )
         group_attr2.Write("foo")
 
-        ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
         attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
         attr.Write("foo")
         attr2 = ar.CreateAttribute("attr2", [], gdal.ExtendedDataType.CreateString())
@@ -5787,7 +5789,7 @@ def test_zarr_write_error_at_close_on_array(tmp_path, format):
     rg = ds.GetRootGroup()
     dim0 = rg.CreateDimension("dim0", None, None, 2)
 
-    ar = rg.CreateMDArray("my_ar", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar = rg.CreateMDArray("my_ar", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
     attr = ar.CreateAttribute("str_attr", [], gdal.ExtendedDataType.CreateString())
     assert attr.Write("my_string") == gdal.CE_None
     del attr
@@ -5928,7 +5930,7 @@ def test_zarr_read_zarr_v2_missing_block_GetRawBlockInfo(tmp_vsimem):
     )
     dim0 = ds.GetRootGroup().CreateDimension("dim0", None, None, 2)
     ar = ds.GetRootGroup().CreateMDArray(
-        "test", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "test", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     info = ar.GetRawBlockInfo([0])
     assert info.GetOffset() == 0

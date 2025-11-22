@@ -133,7 +133,7 @@ class GLTOrthoRectifiedArray final : public GDALPamMDArray
                 newAr->m_abyBandValidity.resize(count[0], 1);
                 CPL_IGNORE_RET_VAL(poGoodWaveLengths->Read(
                     arrayStartIdx, count, arrayStep, bufferStride,
-                    GDALExtendedDataType::Create(GDT_Byte),
+                    GDALExtendedDataType::Create(GDT_UInt8),
                     newAr->m_abyBandValidity.data()));
             }
         }

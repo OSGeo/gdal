@@ -174,7 +174,7 @@ JPEGXLRasterBand::JPEGXLRasterBand(JPEGXLDataset *poDSIn, int nBandIn,
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
     SetColorInterpretation(eInterp);
-    if ((eDataType == GDT_Byte && nBitsPerSample < 8) ||
+    if ((eDataType == GDT_UInt8 && nBitsPerSample < 8) ||
         (eDataType == GDT_UInt16 && nBitsPerSample < 16))
     {
         SetMetadataItem("NBITS", CPLSPrintf("%d", nBitsPerSample),
@@ -495,7 +495,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
             if (info.exponent_bits_per_sample == 0)
             {
                 if (info.bits_per_sample <= 8)
-                    eDT = GDT_Byte;
+                    eDT = GDT_UInt8;
                 else if (info.bits_per_sample <= 16)
                     eDT = GDT_UInt16;
             }
@@ -607,7 +607,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef HAVE_JxlDecoderDefaultPixelFormat
             JxlPixelFormat format = {
                 static_cast<uint32_t>(nBands),
-                eDT == GDT_Byte     ? JXL_TYPE_UINT8
+                eDT == GDT_UInt8    ? JXL_TYPE_UINT8
                 : eDT == GDT_UInt16 ? JXL_TYPE_UINT16
                                     : JXL_TYPE_FLOAT,
                 JXL_NATIVE_ENDIAN, 0 /* alignment */
@@ -1429,7 +1429,7 @@ void JPEGXLDataset::GetDecodedImage(void *pabyOutputData,
         {
             JxlPixelFormat format = {
                 static_cast<uint32_t>(nBands - m_nNonAlphaExtraChannels),
-                eDT == GDT_Byte     ? JXL_TYPE_UINT8
+                eDT == GDT_UInt8    ? JXL_TYPE_UINT8
                 : eDT == GDT_UInt16 ? JXL_TYPE_UINT16
                                     : JXL_TYPE_FLOAT,
                 JXL_NATIVE_ENDIAN, 0 /* alignment */
@@ -1517,7 +1517,7 @@ void JPEGXLDataset::GetDecodedImage(void *pabyOutputData,
             const size_t nSamples =
                 static_cast<size_t>(nRasterXSize) * nRasterYSize * nChannels;
             const int nMaxVal = (1 << m_nBits) - 1;
-            if (eDT == GDT_Byte)
+            if (eDT == GDT_UInt8)
             {
                 const int nHalfMaxWidth = 127;
                 GByte *panData = static_cast<GByte *>(pBuffer);
@@ -2097,7 +2097,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     const auto eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     switch (eDT)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             format.data_type = JXL_TYPE_UINT8;
             break;
         case GDT_UInt16:
@@ -2209,7 +2209,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         pszNBits = poSrcDS->GetRasterBand(1)->GetMetadataItem(
             "NBITS", "IMAGE_STRUCTURE");
     const int nBits =
-        ((eDT == GDT_Byte || eDT == GDT_UInt16) && pszNBits != nullptr)
+        ((eDT == GDT_UInt8 || eDT == GDT_UInt16) && pszNBits != nullptr)
             ? atoi(pszNBits)
             : GDALGetDataTypeSizeBits(eDT);
 
@@ -2874,7 +2874,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         const auto Rescale = [eDT, nBits, poSrcDS](void *pBuffer, int nChannels)
         {
             // Rescale to 8-bits/16-bits
-            if ((eDT == GDT_Byte && nBits < 8) ||
+            if ((eDT == GDT_UInt8 && nBits < 8) ||
                 (eDT == GDT_UInt16 && nBits < 16))
             {
                 const size_t nSamples =
@@ -2882,7 +2882,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
                     poSrcDS->GetRasterYSize() * nChannels;
                 const int nMaxVal = (1 << nBits) - 1;
                 const int nMavValHalf = nMaxVal / 2;
-                if (eDT == GDT_Byte)
+                if (eDT == GDT_UInt8)
                 {
                     uint8_t *panData = static_cast<uint8_t *>(pBuffer);
                     for (size_t i = 0; i < nSamples; ++i)

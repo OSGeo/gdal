@@ -155,7 +155,7 @@ def test_kea_4(tmp_path):
         assert ret != 0
 
     with gdal.quiet_errors():
-        ret = ds.AddBand(gdal.GDT_Byte)
+        ret = ds.AddBand(gdal.GDT_UInt8)
     assert ret != 0
 
     with gdal.quiet_errors():
@@ -380,11 +380,11 @@ def test_kea_9(tmp_path):
 @pytest.mark.parametrize(
     "dt,nd,expected_nd",
     [
-        (gdal.GDT_Byte, 0, 0),
-        (gdal.GDT_Byte, 1.1, 1.0),
-        (gdal.GDT_Byte, 255, 255),
-        (gdal.GDT_Byte, -1, None),
-        (gdal.GDT_Byte, 256, None),
+        (gdal.GDT_UInt8, 0, 0),
+        (gdal.GDT_UInt8, 1.1, 1.0),
+        (gdal.GDT_UInt8, 255, 255),
+        (gdal.GDT_UInt8, -1, None),
+        (gdal.GDT_UInt8, 256, None),
         (gdal.GDT_UInt16, 0, 0),
         (gdal.GDT_UInt16, 65535, 65535),
         (gdal.GDT_UInt16, -1, None),
@@ -439,17 +439,17 @@ def test_kea_10(tmp_path, dt, nd, expected_nd):
 
 def test_kea_11(tmp_path):
 
-    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_UInt8)
     ds = None
 
     ds = gdal.Open(tmp_path / "out.kea", gdal.GA_Update)
-    assert ds.AddBand(gdal.GDT_Byte) == 0
+    assert ds.AddBand(gdal.GDT_UInt8) == 0
     assert ds.AddBand(gdal.GDT_Int16, options=["DEFLATE=9"]) == 0
     ds = None
 
     ds = gdal.Open(tmp_path / "out.kea")
     assert ds.RasterCount == 3
-    assert ds.GetRasterBand(2).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(2).DataType == gdal.GDT_UInt8
     assert ds.GetRasterBand(3).DataType == gdal.GDT_Int16
     ds = None
 
@@ -460,7 +460,7 @@ def test_kea_11(tmp_path):
 
 def test_kea_rat(tmp_path):
 
-    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_UInt8)
     assert ds.GetRasterBand(1).GetDefaultRAT().GetColumnCount() == 0
     assert ds.GetRasterBand(1).SetDefaultRAT(None) != 0
     rat = ds.GetRasterBand(1).GetDefaultRAT()
@@ -663,7 +663,7 @@ def test_kea_13(tmp_path):
 
 def test_kea_14(tmp_path):
 
-    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_UInt8)
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALL_VALID
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 3
     ds.GetRasterBand(1).CreateMaskBand(0)

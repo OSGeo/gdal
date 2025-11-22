@@ -80,7 +80,7 @@ def test_wms_3(gpwv3_wms):
 
     assert gpwv3_wms.GetRasterBand(1).GetOverviewCount() >= 1, "no overviews!"
 
-    assert gpwv3_wms.GetRasterBand(1).DataType >= gdal.GDT_Byte, "wrong band data type"
+    assert gpwv3_wms.GetRasterBand(1).DataType >= gdal.GDT_UInt8, "wrong band data type"
 
 
 ###############################################################################

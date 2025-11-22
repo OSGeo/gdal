@@ -208,7 +208,7 @@ def test_testnonboundtoswig_GDALSimpleImageWarp():
 
 def GDALTypeToCTypes(gdaltype):
 
-    if gdaltype == gdal.GDT_Byte:
+    if gdaltype == gdal.GDT_UInt8:
         return ctypes.c_ubyte
     if gdaltype == gdal.GDT_Int16:
         return ctypes.c_short

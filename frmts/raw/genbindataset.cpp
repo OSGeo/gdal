@@ -97,7 +97,7 @@ GenBinBitRasterBand::GenBinBitRasterBand(GenBinDataset *poDSIn, int nBitsIn)
     poDS = poDSIn;
     nBand = 1;
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
@@ -540,7 +540,7 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Figure out the data type.                                       */
     /* -------------------------------------------------------------------- */
     const char *pszDataType = CSLFetchNameValue(papszHdr, "DATATYPE");
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     int nBits = -1;  // Only needed for partial byte types
 
     if (pszDataType == nullptr)

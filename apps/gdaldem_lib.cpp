@@ -366,12 +366,12 @@ static CPLErr GDALGeneric3x3Processing(
         if (bSrcHasNoData)
         {
             GDALDataType eSrcDT = GDALGetRasterDataType(hSrcBand);
-            CPLAssert(eSrcDT == GDT_Byte || eSrcDT == GDT_UInt16 ||
+            CPLAssert(eSrcDT == GDT_UInt8 || eSrcDT == GDT_UInt16 ||
                       eSrcDT == GDT_Int16);
-            const int nMinVal = (eSrcDT == GDT_Byte)     ? 0
+            const int nMinVal = (eSrcDT == GDT_UInt8)    ? 0
                                 : (eSrcDT == GDT_UInt16) ? 0
                                                          : -32768;
-            const int nMaxVal = (eSrcDT == GDT_Byte)     ? 255
+            const int nMaxVal = (eSrcDT == GDT_UInt8)    ? 255
                                 : (eSrcDT == GDT_UInt16) ? 65535
                                                          : 32767;
 
@@ -1836,10 +1836,10 @@ static GByte *GDALColorReliefPrecompute(
     *pnIndexOffset = nIndexOffset;
     const int nXSize = GDALGetRasterBandXSize(hSrcBand);
     const int nYSize = GDALGetRasterBandYSize(hSrcBand);
-    if (eDT == GDT_Byte || ((eDT == GDT_Int16 || eDT == GDT_UInt16) &&
-                            static_cast<GIntBig>(nXSize) * nYSize > 65536))
+    if (eDT == GDT_UInt8 || ((eDT == GDT_Int16 || eDT == GDT_UInt16) &&
+                             static_cast<GIntBig>(nXSize) * nYSize > 65536))
     {
-        const int iMax = (eDT == GDT_Byte) ? 256 : 65536;
+        const int iMax = (eDT == GDT_UInt8) ? 256 : 65536;
         pabyPrecomputed = static_cast<GByte *>(VSI_MALLOC2_VERBOSE(4, iMax));
         if (pabyPrecomputed)
         {
@@ -1976,7 +1976,7 @@ GDALColorReliefRasterBand::GDALColorReliefRasterBand(
 {
     poDS = poDSIn;
     nBand = nBandIn;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     GDALGetBlockSize(poDSIn->hSrcBand, &nBlockXSize, &nBlockYSize);
 }
 
@@ -2074,7 +2074,7 @@ GDALColorRelief(GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand1,
 
     /* -------------------------------------------------------------------- */
     /*      Precompute the map from values to RGBA quadruplets              */
-    /*      for GDT_Byte, GDT_Int16 or GDT_UInt16                           */
+    /*      for GDT_UInt8, GDT_Int16 or GDT_UInt16                           */
     /* -------------------------------------------------------------------- */
     int nIndexOffset = 0;
     std::unique_ptr<GByte, VSIFreeReleaser> pabyPrecomputed(
@@ -2166,21 +2166,21 @@ GDALColorRelief(GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand1,
          * Write Line to Raster
          */
         eErr = GDALRasterIO(hDstBand1, GF_Write, 0, i, nXSize, 1, pabyDestBuf1,
-                            nXSize, 1, GDT_Byte, 0, 0);
+                            nXSize, 1, GDT_UInt8, 0, 0);
         if (eErr == CE_None)
         {
             eErr = GDALRasterIO(hDstBand2, GF_Write, 0, i, nXSize, 1,
-                                pabyDestBuf2, nXSize, 1, GDT_Byte, 0, 0);
+                                pabyDestBuf2, nXSize, 1, GDT_UInt8, 0, 0);
         }
         if (eErr == CE_None)
         {
             eErr = GDALRasterIO(hDstBand3, GF_Write, 0, i, nXSize, 1,
-                                pabyDestBuf3, nXSize, 1, GDT_Byte, 0, 0);
+                                pabyDestBuf3, nXSize, 1, GDT_UInt8, 0, 0);
         }
         if (eErr == CE_None && hDstBand4)
         {
             eErr = GDALRasterIO(hDstBand4, GF_Write, 0, i, nXSize, 1,
-                                pabyDestBuf4, nXSize, 1, GDT_Byte, 0, 0);
+                                pabyDestBuf4, nXSize, 1, GDT_UInt8, 0, 0);
         }
 
         if (eErr == CE_None &&
@@ -2556,7 +2556,7 @@ GDALGeneric3x3Dataset<T>::GDALGeneric3x3Dataset(
       bDstHasNoData(bDstHasNoDataIn), dfDstNoDataValue(dfDstNoDataValueIn),
       bComputeAtEdges(bComputeAtEdgesIn), bTakeReference(bTakeReferenceIn)
 {
-    CPLAssert(eDstDataType == GDT_Byte || eDstDataType == GDT_Float32);
+    CPLAssert(eDstDataType == GDT_UInt8 || eDstDataType == GDT_Float32);
 
     if (bTakeReference)
         GDALReferenceDataset(hSrcDS);
@@ -2572,7 +2572,7 @@ GDALGeneric3x3Dataset<T>::GDALGeneric3x3Dataset(
         static_cast<T *>(VSI_MALLOC2_VERBOSE(sizeof(T), nRasterXSize));
     apafSourceBuf[2] =
         static_cast<T *>(VSI_MALLOC2_VERBOSE(sizeof(T), nRasterXSize));
-    if (pfnAlg_multisample && eDstDataType == GDT_Byte)
+    if (pfnAlg_multisample && eDstDataType == GDT_UInt8)
     {
         pafOutputBuf.reset(static_cast<float *>(
             VSI_MALLOC2_VERBOSE(sizeof(float), nRasterXSize)));
@@ -2644,12 +2644,12 @@ GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(
         if (bSrcHasNoData)
         {
             GDALDataType eSrcDT = GDALGetRasterDataType(poDSIn->hSrcBand);
-            CPLAssert(eSrcDT == GDT_Byte || eSrcDT == GDT_UInt16 ||
+            CPLAssert(eSrcDT == GDT_UInt8 || eSrcDT == GDT_UInt16 ||
                       eSrcDT == GDT_Int16);
-            const int nMinVal = (eSrcDT == GDT_Byte)     ? 0
+            const int nMinVal = (eSrcDT == GDT_UInt8)    ? 0
                                 : (eSrcDT == GDT_UInt16) ? 0
                                                          : -32768;
-            const int nMaxVal = (eSrcDT == GDT_Byte)     ? 255
+            const int nMaxVal = (eSrcDT == GDT_UInt8)    ? 255
                                 : (eSrcDT == GDT_UInt16) ? 65535
                                                          : 32767;
 
@@ -2676,7 +2676,7 @@ template <class T>
 void GDALGeneric3x3RasterBand<T>::InitWithNoData(void *pImage)
 {
     auto poGDS = cpl::down_cast<GDALGeneric3x3Dataset<T> *>(poDS);
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         for (int j = 0; j < nBlockXSize; j++)
             static_cast<GByte *>(pImage)[j] =
@@ -2769,7 +2769,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                     static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
                     poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
-                if (eDataType == GDT_Byte)
+                if (eDataType == GDT_UInt8)
                     static_cast<GByte *>(pImage)[j] =
                         static_cast<GByte>(fVal + 0.5f);
                 else
@@ -2824,7 +2824,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                     static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
                     poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
-                if (eDataType == GDT_Byte)
+                if (eDataType == GDT_UInt8)
                     static_cast<GByte *>(pImage)[j] =
                         static_cast<GByte>(fVal + 0.5f);
                 else
@@ -2905,7 +2905,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                 afWin, static_cast<float>(poGDS->dfDstNoDataValue),
                 poGDS->pfnAlg, poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
-            if (eDataType == GDT_Byte)
+            if (eDataType == GDT_UInt8)
                 static_cast<GByte *>(pImage)[j] =
                     static_cast<GByte>(fVal + 0.5f);
             else
@@ -2935,14 +2935,14 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
             static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
             poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
             static_cast<GByte *>(pImage)[j] = static_cast<GByte>(fVal + 0.5f);
         else
             static_cast<float *>(pImage)[j] = fVal;
     }
     else
     {
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
         {
             static_cast<GByte *>(pImage)[0] =
                 static_cast<GByte>(poGDS->dfDstNoDataValue);
@@ -2976,7 +2976,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
         {
             GDALCopyWords64(poGDS->pafOutputBuf.get() + 1, GDT_Float32,
                             static_cast<int>(sizeof(float)),
-                            static_cast<GByte *>(pImage) + 1, GDT_Byte, 1,
+                            static_cast<GByte *>(pImage) + 1, GDT_UInt8, 1,
                             j - 1);
         }
     }
@@ -2995,7 +2995,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
             static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
             poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
             static_cast<GByte *>(pImage)[j] = static_cast<GByte>(fVal + 0.5f);
         else
             static_cast<float *>(pImage)[j] = fVal;
@@ -4031,7 +4031,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 
     const GDALDataType eDstDataType =
         (eUtilityMode == HILL_SHADE || eUtilityMode == COLOR_RELIEF)
-            ? GDT_Byte
+            ? GDT_UInt8
             : GDT_Float32;
 
     if (EQUAL(osFormat, "VRT"))
@@ -4134,7 +4134,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         }
         else
         {
-            if (eSrcDT == GDT_Byte || eSrcDT == GDT_Int16 ||
+            if (eSrcDT == GDT_UInt8 || eSrcDT == GDT_Int16 ||
                 eSrcDT == GDT_UInt16)
             {
                 auto poDS = std::make_unique<GDALGeneric3x3Dataset<GInt32>>(
@@ -4211,7 +4211,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         if (bDstHasNoData)
             GDALSetRasterNoDataValue(hDstBand, dfDstNoDataValue);
 
-        if (eSrcDT == GDT_Byte || eSrcDT == GDT_Int16 || eSrcDT == GDT_UInt16)
+        if (eSrcDT == GDT_UInt8 || eSrcDT == GDT_Int16 || eSrcDT == GDT_UInt16)
         {
             GDALGeneric3x3Processing<GInt32>(
                 hSrcBand, hDstBand, pfnAlgInt32, pfnAlgInt32_multisample,

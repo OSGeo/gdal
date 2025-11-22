@@ -304,7 +304,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else if (strcmp(pszExtension, "flg") == 0)
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         nBands = 1;
         eInterleave = PIXEL;
     }
@@ -595,7 +595,7 @@ GDALDataset *ROIPACDataset::Create(const char *pszFilename, int nXSize,
     }
     else if (strcmp(pszExtension, "flg") == 0)
     {
-        if (nBandsIn != 1 || eType != GDT_Byte)
+        if (nBandsIn != 1 || eType != GDT_UInt8)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Attempt to create ROI_PAC %s dataset with an illegal "

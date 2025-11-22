@@ -129,7 +129,7 @@ static int isAllVal(GDALDataType gt, void *b, size_t bytecount, double ndv)
 
     switch (gt)
     {
-        TEST_T(GDT_Byte, GByte);
+        TEST_T(GDT_UInt8, GByte);
         TEST_T(GDT_Int8, GInt8);
         TEST_T(GDT_UInt16, GUInt16);
         TEST_T(GDT_Int16, GInt16);
@@ -577,7 +577,7 @@ CPLErr MRFRasterBand::FillBlock(void *buffer)
     size_t bsb = blockSizeBytes();
 
     // use memset for speed for bytes, or if nodata is zeros
-    if (0.0 == ndv || eDataType == GDT_Byte || eDataType == GDT_Int8)
+    if (0.0 == ndv || eDataType == GDT_UInt8 || eDataType == GDT_Int8)
     {
         memset(buffer, int(ndv), bsb);
         return CE_None;

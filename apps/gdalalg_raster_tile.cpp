@@ -715,7 +715,7 @@ static bool GenerateTile(
     constexpr int EXTRA_BYTE_PER_ROW = 1;  // for filter type
     constexpr int EXTRA_ROWS = 2;          // for paethBuffer and paethBufferTmp
     if (!bAuxXML && EQUAL(pszExtension, "png") &&
-        eWorkingDataType == GDT_Byte && poColorTable == nullptr &&
+        eWorkingDataType == GDT_UInt8 && poColorTable == nullptr &&
         pdfDstNoData == nullptr && W <= INT_MAX / nBands &&
         nBands * W <= INT_MAX - EXTRA_BYTE_PER_ROW &&
         H <= INT_MAX - EXTRA_ROWS &&
@@ -2552,7 +2552,7 @@ GenerateSTAC(const std::string &osDirectory, const std::string &osTitle,
         {GDT_Int16, "int16"},
         {GDT_Int32, "int32"},
         {GDT_Int64, "int64"},
-        {GDT_Byte, "uint8"},
+        {GDT_UInt8, "uint8"},
         {GDT_UInt16, "uint16"},
         {GDT_UInt32, "uint32"},
         {GDT_UInt64, "uint64"},
@@ -3422,7 +3422,7 @@ bool GDALRasterTileAlgorithm::ValidateOutputFormat(GDALDataType eSrcDT) const
                         "Only up to 4 bands supported for PNG.");
             return false;
         }
-        if (eSrcDT != GDT_Byte && eSrcDT != GDT_UInt16)
+        if (eSrcDT != GDT_UInt8 && eSrcDT != GDT_UInt16)
         {
             ReportError(CE_Failure, CPLE_NotSupported,
                         "Only Byte and UInt16 data types supported for PNG.");
@@ -3441,7 +3441,7 @@ bool GDALRasterTileAlgorithm::ValidateOutputFormat(GDALDataType eSrcDT) const
         const bool bUInt16Supported =
             strstr(m_poDstDriver->GetMetadataItem(GDAL_DMD_CREATIONDATATYPES),
                    "UInt16");
-        if (eSrcDT != GDT_Byte && !(eSrcDT == GDT_UInt16 && bUInt16Supported))
+        if (eSrcDT != GDT_UInt8 && !(eSrcDT == GDT_UInt16 && bUInt16Supported))
         {
             ReportError(
                 CE_Failure, CPLE_NotSupported,
@@ -3486,7 +3486,7 @@ bool GDALRasterTileAlgorithm::ValidateOutputFormat(GDALDataType eSrcDT) const
                         "Only 3 or 4 bands supported for WEBP.");
             return false;
         }
-        if (eSrcDT != GDT_Byte)
+        if (eSrcDT != GDT_UInt8)
         {
             ReportError(CE_Failure, CPLE_NotSupported,
                         "Only Byte data type supported for WEBP.");

@@ -340,7 +340,7 @@ CPLErr PDFWritableVectorDataset::FlushCache(bool /* bAtClosing*/)
     GDALPDFWriter oWriter(fp);
 
     GDALDataset *poSrcDS =
-        MEMDataset::Create("MEM:::", nWidth, nHeight, 0, GDT_Byte, nullptr);
+        MEMDataset::Create("MEM:::", nWidth, nHeight, 0, GDT_UInt8, nullptr);
 
     poSrcDS->SetGeoTransform(gt);
 

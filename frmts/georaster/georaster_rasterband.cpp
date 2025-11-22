@@ -276,7 +276,7 @@ GDALColorInterp GeoRasterRasterBand::GetColorInterpretation()
 {
     GeoRasterDataset *poGDS = cpl::down_cast<GeoRasterDataset *>(poDS);
 
-    if (eDataType == GDT_Byte && poGDS->nBands > 2)
+    if (eDataType == GDT_UInt8 && poGDS->nBands > 2)
     {
         if (nBand == poGeoRaster->iDefaultRedBand)
         {
@@ -964,7 +964,7 @@ void GeoRasterRasterBand::ApplyNoDataArray(void *pBuffer) const
 
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         {
             GByte *pbBuffer = (GByte *)pBuffer;
 

@@ -349,7 +349,7 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
                     const int64_t nVal = attr->ReadAsInt64();
                     o.Add(attr->GetName(), static_cast<GInt64>(nVal));
                 }
-                else if (eDT == GDT_Byte || eDT == GDT_UInt16 ||
+                else if (eDT == GDT_UInt8 || eDT == GDT_UInt16 ||
                          eDT == GDT_UInt32 || eDT == GDT_UInt64)
                 {
                     const int64_t nVal = attr->ReadAsInt64();
@@ -373,7 +373,7 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
                         arr.Add(static_cast<GInt64>(nVal));
                     }
                 }
-                else if (eDT == GDT_Byte || eDT == GDT_UInt16 ||
+                else if (eDT == GDT_UInt8 || eDT == GDT_UInt16 ||
                          eDT == GDT_UInt32 || eDT == GDT_UInt64)
                 {
                     const auto list = attr->ReadAsInt64Array();

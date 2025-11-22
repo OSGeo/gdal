@@ -331,7 +331,7 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
 
         switch (hBand->GetRasterDataType())
         {
-            case GDT_Byte:
+            case GDT_UInt8:
                 nBandBits = 8;
                 nBandFormat = SAMPLEFORMAT_UINT;
                 break;
@@ -568,7 +568,7 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
     if (nBands == 3)
         nPhotometric = PHOTOMETRIC_RGB;
     else if (papoBandList[0]->GetColorTable() != nullptr &&
-             (papoBandList[0]->GetRasterDataType() == GDT_Byte ||
+             (papoBandList[0]->GetRasterDataType() == GDT_UInt8 ||
               papoBandList[0]->GetRasterDataType() == GDT_UInt16) &&
              !STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2"))
     {

@@ -700,9 +700,10 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
             delete poDS;
             return nullptr;
         }
-        poDS->SetBand(
-            1, new GDALTGARasterBand(
-                   poDS, 1, sHeader.nPixelDepth == 16 ? GDT_UInt16 : GDT_Byte));
+        poDS->SetBand(1, new GDALTGARasterBand(poDS, 1,
+                                               sHeader.nPixelDepth == 16
+                                                   ? GDT_UInt16
+                                                   : GDT_UInt8));
     }
     else
     {
@@ -718,7 +719,7 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
             sHeader.nPixelDepth == 16 ? 3 : (3 + (hasFourthChannel ? 1 : 0));
         for (int iBand = 1; iBand <= l_nBands; iBand++)
         {
-            poDS->SetBand(iBand, new GDALTGARasterBand(poDS, iBand, GDT_Byte));
+            poDS->SetBand(iBand, new GDALTGARasterBand(poDS, iBand, GDT_UInt8));
         }
     }
 

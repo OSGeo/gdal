@@ -70,4 +70,4 @@ def test_zmap_no_flush_end_of_column(tmp_path):
         == b"!\n! Created by GDAL.\n!\n@GRID FILE, GRID, 4\n        20,               1E+30,          ,         7,         1\n         5,         2,     0.0000000,     2.0000000,    -5.0000000,     0.0000000\n0.0, 0.0, 0.0\n@\n           0.0000000           2.0000000           4.0000000           6.0000000\n           8.0000000           1.0000000           3.0000000           5.0000000\n           7.0000000           9.0000000\n"
     )
     ds = gdal.Open(filename)
-    assert ds.ReadRaster(buf_type=gdal.GDT_Byte) == src_ds.ReadRaster()
+    assert ds.ReadRaster(buf_type=gdal.GDT_UInt8) == src_ds.ReadRaster()

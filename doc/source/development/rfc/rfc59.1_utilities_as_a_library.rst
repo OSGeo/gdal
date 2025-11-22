@@ -352,7 +352,7 @@ keywords. So various combinations are possible :
            Keyword arguments are :
              options --- can be be an array of strings, a string or let empty and filled from other keywords.
              format --- output format ("GTiff", etc...)
-             outputType --- output type (gdal.GDT_Byte, etc...)
+             outputType --- output type (gdal.GDT_UInt8, etc...)
              bandList --- array of band numbers (index start at 1)
              maskBand --- mask band to generate or not ("none", "auto", "mask", 1, ...)
              width --- width of the output raster in pixel
@@ -426,8 +426,8 @@ keywords. So various combinations are possible :
              dstSRS --- output SRS
              srcAlpha --- whether to force the last band of the input dataset to be considered as an alpha band
              dstAlpha --- whether to force the creation of an output alpha band
-             outputType --- output type (gdal.GDT_Byte, etc...)
-             workingType --- working type (gdal.GDT_Byte, etc...)
+             outputType --- output type (gdal.GDT_UInt8, etc...)
+             workingType --- working type (gdal.GDT_UInt8, etc...)
              warpOptions --- list of warping options
              errorThreshold --- error threshold for approximation transformer (in pixels)
              warpMemoryLimit --- size of working buffer in bytes
@@ -604,7 +604,7 @@ keywords. So various combinations are possible :
            Keyword arguments are :
              options --- can be be an array of strings, a string or let empty and filled from other keywords.
              format --- output format ("GTiff", etc...)
-             outputType --- output type (gdal.GDT_Byte, etc...)
+             outputType --- output type (gdal.GDT_UInt8, etc...)
              width --- width of the output raster in pixel
              height --- height of the output raster in pixel
              creationOptions --- list of creation options

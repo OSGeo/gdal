@@ -254,7 +254,7 @@ def test_mrf_overview_nnb_fact_2():
 
     expected_cs = 1087
     for dt in (
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
         gdal.GDT_Int32,
@@ -284,7 +284,7 @@ def test_mrf_overview_nnb_with_nodata_fact_2():
 
     expected_cs = 1117
     for dt in [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
         gdal.GDT_Int32,
@@ -314,7 +314,7 @@ def test_mrf_overview_nnb_with_nodata_fact_2():
 def test_mrf_overview_avg_fact_2():
 
     for dt in [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
         gdal.GDT_Int32,
@@ -354,7 +354,7 @@ def test_mrf_overview_avg_fact_2():
 def test_mrf_overview_avg_with_nodata_fact_2():
 
     for dt in (
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
         gdal.GDT_Int32,

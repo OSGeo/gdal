@@ -310,7 +310,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     /********   Grab format type - isis2 only supports 8,16,32 *******/
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     bool bNoDataSet = false;
     double dfNoData = 0.0;
 
@@ -318,7 +318,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     switch (itype)
     {
         case 1:
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             dfNoData = NULL1;
             bNoDataSet = true;
             break;

@@ -2,7 +2,7 @@
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALRescaledAlphaBand, a class implementing
- *           a band mask based from a non-GDT_Byte alpha band
+ *           a band mask based from a non-GDT_UInt8 alpha band
  * Author:   Even Rouault, <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
@@ -37,7 +37,7 @@ GDALRescaledAlphaBand::GDALRescaledAlphaBand(GDALRasterBand *poParentIn)
     nRasterXSize = poParent->GetXSize();
     nRasterYSize = poParent->GetYSize();
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     poParent->GetBlockSize(&nBlockXSize, &nBlockYSize);
 }
 
@@ -69,7 +69,7 @@ CPLErr GDALRescaledAlphaBand::IReadBlock(int nXBlockOff, int nYBlockOff,
 
     return IRasterIO(GF_Read, nXBlockOff * nBlockXSize,
                      nYBlockOff * nBlockYSize, nXSizeRequest, nYSizeRequest,
-                     pImage, nXSizeRequest, nYSizeRequest, GDT_Byte, 1,
+                     pImage, nXSizeRequest, nYSizeRequest, GDT_UInt8, 1,
                      nBlockXSize, &sExtraArg);
 }
 
@@ -85,7 +85,7 @@ CPLErr GDALRescaledAlphaBand::IRasterIO(
     // Optimization in common use case.
     // This avoids triggering the block cache on this band, which helps
     // reducing the global block cache consumption.
-    if (eRWFlag == GF_Read && eBufType == GDT_Byte && nXSize == nBufXSize &&
+    if (eRWFlag == GF_Read && eBufType == GDT_UInt8 && nXSize == nBufXSize &&
         nYSize == nBufYSize && nPixelSpace == 1)
     {
         if (pTemp == nullptr)

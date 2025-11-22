@@ -209,7 +209,7 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *bytes,
 {
     switch (eDT)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             DumpValue<GByte>(serializer, bytes);
             break;
         case GDT_Int8:

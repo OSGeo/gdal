@@ -33,7 +33,7 @@ GDALDataType cellRepresentation2GDALType(CSF_CR cellRepresentation)
         // ----------------------------------------------------------
         case CR_UINT1:
         {
-            type = GDT_Byte;
+            type = GDT_UInt8;
             break;
         }
         case CR_INT4:
@@ -55,7 +55,7 @@ GDALDataType cellRepresentation2GDALType(CSF_CR cellRepresentation)
         // ----------------------------------------------------------
         case CR_INT1:
         {
-            type = GDT_Byte;
+            type = GDT_UInt8;
             break;
         }
         case CR_INT2:
@@ -271,7 +271,7 @@ CSF_VS GDALType2ValueScale(GDALDataType type)
 
     switch (type)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         {
             // A foreign dataset is unlikely to support our LDD's.
             valueScale = VS_BOOLEAN;
@@ -329,7 +329,7 @@ CSF_CR GDALType2CellRepresentation(GDALDataType type, bool exact)
 
     switch (type)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         {
             cellRepresentation = CR_UINT1;
             break;

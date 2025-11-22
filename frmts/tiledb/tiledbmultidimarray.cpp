@@ -78,7 +78,7 @@ TileDBArray::TileDBDataTypeToGDALDataType(tiledb_datatype_t tiledb_dt)
     switch (tiledb_dt)
     {
         case TILEDB_UINT8:
-            eDT = GDT_Byte;
+            eDT = GDT_UInt8;
             break;
 
         case TILEDB_INT8:
@@ -332,7 +332,7 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
                                : schema.attribute(osAttributeName);
         GDALDataType eDT = TileDBDataTypeToGDALDataType(attr.type());
         if (attr.type() == TILEDB_CHAR)
-            eDT = GDT_Byte;
+            eDT = GDT_UInt8;
         if (eDT == GDT_Unknown)
         {
             const char *pszTypeName = "";
@@ -1251,7 +1251,7 @@ FillBlockSize(const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
 {
     switch (dt)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             tiledb_dt = TILEDB_UINT8;
             break;
         case GDT_Int8:

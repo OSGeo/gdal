@@ -23,7 +23,7 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_driver("MiraMonRaster")
 
 gdal_to_struct = {
-    gdal.GDT_Byte: ("B", 1),
+    gdal.GDT_UInt8: ("B", 1),
     gdal.GDT_UInt16: ("H", 2),
     gdal.GDT_Int16: ("h", 2),
     gdal.GDT_UInt32: ("I", 4),

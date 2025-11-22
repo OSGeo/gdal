@@ -94,7 +94,7 @@ CPLErr BIGGifRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     if (poGDS->poWorkDS != nullptr && nBlockYOff <= poGDS->nLastLineRead)
     {
         return poGDS->poWorkDS->RasterIO(GF_Read, 0, nBlockYOff, nBlockXSize, 1,
-                                         pImage, nBlockXSize, 1, GDT_Byte, 1,
+                                         pImage, nBlockXSize, 1, GDT_UInt8, 1,
                                          nullptr, 0, 0, 0, nullptr);
     }
 
@@ -127,7 +127,7 @@ CPLErr BIGGifRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         {
             eErr = poGDS->poWorkDS->RasterIO(
                 GF_Write, 0, poGDS->nLastLineRead, nBlockXSize, 1, pImage,
-                nBlockXSize, 1, GDT_Byte, 1, nullptr, 0, 0, 0, nullptr);
+                nBlockXSize, 1, GDT_UInt8, 1, nullptr, 0, 0, 0, nullptr);
         }
     }
 
@@ -225,7 +225,7 @@ CPLErr BIGGIFDataset::ReOpen()
             osTempFilename += ".tif";
 
             poWorkDS = poGTiffDriver->Create(osTempFilename, nRasterXSize,
-                                             nRasterYSize, 1, GDT_Byte,
+                                             nRasterYSize, 1, GDT_UInt8,
                                              const_cast<char **>(apszOptions));
         }
     }

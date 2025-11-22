@@ -476,7 +476,7 @@ CPLErr ISISTiledBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
         return CE_Failure;
     }
 
-    if (!m_bNativeOrder && eDataType != GDT_Byte)
+    if (!m_bNativeOrder && eDataType != GDT_UInt8)
         GDALSwapWords(pImage, nDTSize, nBlockXSize * nBlockYSize, nDTSize);
 
     return CE_None;
@@ -503,7 +503,7 @@ static void RemapNoDataT(T *pBuffer, int nItems, T srcNoData, T dstNoData)
 static void RemapNoData(GDALDataType eDataType, void *pBuffer, int nItems,
                         double dfSrcNoData, double dfDstNoData)
 {
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         RemapNoDataT(reinterpret_cast<GByte *>(pBuffer), nItems,
                      static_cast<GByte>(dfSrcNoData),
@@ -590,7 +590,7 @@ CPLErr ISISTiledBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
         return CE_Failure;
     }
 
-    if (!m_bNativeOrder && eDataType != GDT_Byte)
+    if (!m_bNativeOrder && eDataType != GDT_UInt8)
         GDALSwapWords(pImage, nDTSize, nBlockXSize * nBlockYSize, nDTSize);
 
     if (VSIFWriteL(pImage, 1, nBlockSize, m_fpVSIL) != nBlockSize)
@@ -601,7 +601,7 @@ CPLErr ISISTiledBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
         return CE_Failure;
     }
 
-    if (!m_bNativeOrder && eDataType != GDT_Byte)
+    if (!m_bNativeOrder && eDataType != GDT_UInt8)
         GDALSwapWords(pImage, nDTSize, nBlockXSize * nBlockYSize, nDTSize);
 
     return CE_None;
@@ -1142,7 +1142,7 @@ CPLErr ISIS3WrapperRasterBand::IRasterIO(
 ISISMaskBand::ISISMaskBand(GDALRasterBand *poBaseBand)
     : m_poBaseBand(poBaseBand), m_pBuffer(nullptr)
 {
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     nRasterXSize = poBaseBand->GetXSize();
     nRasterYSize = poBaseBand->GetYSize();
@@ -1221,7 +1221,7 @@ CPLErr ISISMaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
     }
 
     GByte *pabyDst = static_cast<GByte *>(pImage);
-    if (eSrcDT == GDT_Byte)
+    if (eSrcDT == GDT_UInt8)
     {
         FillMask<GByte>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
                         ISIS3_NULL1, LOW_REPR_SAT1, LOW_INSTR_SAT1,
@@ -1873,13 +1873,13 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     const int nBands = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Bands"));
 
     /****** Grab format type - ISIS3 only supports 8,U16,S16,32 *****/
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     double dfNoData = 0.0;
 
     const char *itype = poDS->GetKeyword("IsisCube.Core.Pixels.Type");
     if (EQUAL(itype, "UnsignedByte"))
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         dfNoData = ISIS3_NULL1;
     }
     else if (EQUAL(itype, "UnsignedWord"))
@@ -2797,7 +2797,7 @@ void ISIS3Dataset::BuildLabel()
     CPLJSONObject oPixels = GetOrCreateJSONObject(oCore, "Pixels");
     oPixels.Set("_type", "group");
     const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
-    oPixels.Set("Type", (eDT == GDT_Byte)     ? "UnsignedByte"
+    oPixels.Set("Type", (eDT == GDT_UInt8)    ? "UnsignedByte"
                         : (eDT == GDT_UInt16) ? "UnsignedWord"
                         : (eDT == GDT_Int16)  ? "SignedWord"
                                               : "Real");
@@ -4126,7 +4126,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
                                   int nYSize, int nBandsIn, GDALDataType eType,
                                   char **papszOptions)
 {
-    if (eType != GDT_Byte && eType != GDT_UInt16 && eType != GDT_Int16 &&
+    if (eType != GDT_UInt8 && eType != GDT_UInt16 && eType != GDT_Int16 &&
         eType != GDT_Float32)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported data type");
@@ -4289,7 +4289,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
         poDS->m_osGDALHistory =
             CSLFetchNameValueDef(papszOptions, "GDAL_HISTORY", "");
     }
-    const double dfNoData = (eType == GDT_Byte)     ? ISIS3_NULL1
+    const double dfNoData = (eType == GDT_UInt8)    ? ISIS3_NULL1
                             : (eType == GDT_UInt16) ? ISIS3_NULLU2
                             : (eType == GDT_Int16)
                                 ? ISIS3_NULL2

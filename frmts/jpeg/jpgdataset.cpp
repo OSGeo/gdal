@@ -1512,7 +1512,7 @@ JPGMaskBand::JPGMaskBand(JPGDatasetCommon *poDSIn)
     nRasterXSize = poDS->GetRasterXSize();
     nRasterYSize = poDS->GetRasterYSize();
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     nBlockXSize = nRasterXSize;
     nBlockYSize = 1;
 }
@@ -1574,7 +1574,7 @@ JPGRasterBand::JPGRasterBand(JPGDatasetCommon *poDSIn, int nBandIn)
     if (poDSIn->GetDataPrecision() == 12)
         eDataType = GDT_UInt16;
     else
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
 
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
@@ -1633,7 +1633,7 @@ CPLErr JPGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                       pImage, eDataType, nWordSize, nXSize);
 #else
         if (poGDS->eGDALColorSpace == JCS_RGB &&
-            poGDS->GetOutColorSpace() == JCS_CMYK && eDataType == GDT_Byte)
+            poGDS->GetOutColorSpace() == JCS_CMYK && eDataType == GDT_UInt8)
         {
             GByte *const pbyImage = static_cast<GByte *>(pImage);
             if (nBand == 1)
@@ -2833,7 +2833,7 @@ CPLErr JPGDatasetCommon::IRasterIO(
     if ((eRWFlag == GF_Read) && (nBandCount == 3) && (nBands == 3) &&
         (nXOff == 0) && (nYOff == 0) && (nXSize == nBufXSize) &&
         (nXSize == nRasterXSize) && (nYSize == nBufYSize) &&
-        (nYSize == nRasterYSize) && (eBufType == GDT_Byte) &&
+        (nYSize == nRasterYSize) && (eBufType == GDT_UInt8) &&
         (GetDataPrecision() != 12) && (pData != nullptr) &&
         IsAllBands(nBandCount, panBandMap) &&
         // These color spaces need to be transformed to RGB.
@@ -4058,7 +4058,7 @@ CPLErr JPGAppendMask(const char *pszJPGFilename, GDALRasterBand *poMask,
     for (int iY = 0; eErr == CE_None && iY < nYSize; iY++)
     {
         eErr = poMask->RasterIO(GF_Read, 0, iY, nXSize, 1, pabyMaskLine, nXSize,
-                                1, GDT_Byte, 0, 0, nullptr);
+                                1, GDT_UInt8, 0, 0, nullptr);
         if (eErr != CE_None)
             break;
 
@@ -4651,7 +4651,7 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
 #if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
-    if (eDT != GDT_Byte && eDT != GDT_UInt16)
+    if (eDT != GDT_UInt8 && eDT != GDT_UInt16)
     {
         CPLError(bStrict ? CE_Failure : CE_Warning, CPLE_NotSupported,
                  "JPEG driver doesn't support data type %s. "
@@ -4675,11 +4675,11 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
     }
     else
     {
-        eDT = GDT_Byte;
+        eDT = GDT_UInt8;
     }
 
 #else   // !(defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12))
-    if (eDT != GDT_Byte)
+    if (eDT != GDT_UInt8)
     {
         CPLError(bStrict ? CE_Failure : CE_Warning, CPLE_NotSupported,
                  "JPEG driver doesn't support data type %s. "
@@ -4691,7 +4691,7 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
             return nullptr;
     }
 
-    eDT = GDT_Byte;  // force to 8bit.
+    eDT = GDT_UInt8;  // force to 8bit.
 #endif  // !(defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12))
 
     // What options has the caller selected?

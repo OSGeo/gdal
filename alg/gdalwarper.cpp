@@ -366,7 +366,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
 
     switch (eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             return GDALWarpNoDataMaskerT(padfNoData, nPixels,
                                          *ppImageData,  // Already a GByte *.
                                          panValidityMask, pbOutAllValid);
@@ -540,7 +540,7 @@ CPLErr GDALWarpSrcAlphaMasker(void *pMaskFuncArg, int /* nBandCount */,
     GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
     // Make sure that pafMask is at least 8-byte aligned, which should
     // normally be always the case if being a ptr returned by malloc().
-    if ((eDT == GDT_Byte || eDT == GDT_UInt16) && CPL_IS_ALIGNED(pafMask, 8))
+    if ((eDT == GDT_UInt8 || eDT == GDT_UInt16) && CPL_IS_ALIGNED(pafMask, 8))
     {
         // Read data.
         eErr = GDALRasterIOEx(
@@ -554,7 +554,7 @@ CPLErr GDALWarpSrcAlphaMasker(void *pMaskFuncArg, int /* nBandCount */,
         // Make sure we have the correct alignment before doing SSE
         // On Linux x86_64, the alignment should be always correct due
         // the alignment of malloc() being 16 byte.
-        const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
+        const GUInt32 mask = (eDT == GDT_UInt8) ? 0xff : 0xffff;
         if (!CPL_IS_ALIGNED(pafMask, 16))
         {
             pafMask[iPixel] =
@@ -752,7 +752,7 @@ CPLErr GDALWarpSrcMaskMasker(void *pMaskFuncArg, int /* nBandCount */,
     /*      Read the mask band.                                             */
     /* -------------------------------------------------------------------- */
     CPLErr eErr = GDALRasterIO(hMaskBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
-                               pabySrcMask, nXSize, nYSize, GDT_Byte, 0, 0);
+                               pabySrcMask, nXSize, nYSize, GDT_UInt8, 0, 0);
 
     if (eErr != CE_None)
     {
@@ -840,7 +840,7 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
         const GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
         // Make sure that pafMask is at least 8-byte aligned, which should
         // normally be always the case if being a ptr returned by malloc().
-        if ((eDT == GDT_Byte || eDT == GDT_UInt16) &&
+        if ((eDT == GDT_UInt8 || eDT == GDT_UInt16) &&
             CPL_IS_ALIGNED(pafMask, 8))
         {
             // Read data.
@@ -855,7 +855,7 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
             // Make sure we have the correct alignment before doing SSE
             // On Linux x86_64, the alignment should be always correct due
             // the alignment of malloc() being 16 byte.
-            const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
+            const GUInt32 mask = (eDT == GDT_UInt8) ? 0xff : 0xffff;
             if (!CPL_IS_ALIGNED(pafMask, 16))
             {
                 pafMask[iPixel] =
@@ -958,7 +958,7 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
         const float cst_alpha_max =
             static_cast<float>(CPLAtof(CSLFetchNameValueDef(
                 psWO->papszWarpOptions, "DST_ALPHA_MAX", "255"))) +
-            ((eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16 ||
+            ((eDT == GDT_UInt8 || eDT == GDT_Int16 || eDT == GDT_UInt16 ||
               eDT == GDT_Int32 || eDT == GDT_UInt32)
                  ? 0.1f
                  : 0.0f);
@@ -968,7 +968,7 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
 #if (defined(__x86_64) || defined(_M_X64))
         // Make sure that pafMask is at least 8-byte aligned, which should
         // normally be always the case if being a ptr returned by malloc()
-        if ((eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16) &&
+        if ((eDT == GDT_UInt8 || eDT == GDT_Int16 || eDT == GDT_UInt16) &&
             CPL_IS_ALIGNED(pafMask, 8))
         {
             // Make sure we have the correct alignment before doing SSE
@@ -1756,7 +1756,7 @@ void CPL_STDCALL GDALWarpResolveWorkingDataType(GDALWarpOptions *psOptions)
         return;
     }
 
-    psOptions->eWorkingDataType = GDT_Byte;
+    psOptions->eWorkingDataType = GDT_UInt8;
 
     // If none of the provided input nodata values can be represented in the
     // data type of the corresponding source band, ignore them.

@@ -492,7 +492,7 @@ PDFRasterBand::PDFRasterBand(PDFDataset *poDSIn, int nBandIn,
     poDS = poDSIn;
     nBand = nBandIn;
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     if (nResolutionLevel > 0)
     {
@@ -2144,7 +2144,7 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
                 {
                     eErr = poDS->RasterIO(GF_Read, 0, 0, nReqXSize, nReqYSize,
                                           pabyData, nReqXSize, nReqYSize,
-                                          GDT_Byte, 3, nullptr, nPixelSpace,
+                                          GDT_UInt8, 3, nullptr, nPixelSpace,
                                           nLineSpace, nBandSpace, nullptr);
                 }
             }
@@ -2689,7 +2689,7 @@ CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (m_aiTiles.empty() && eRWFlag == GF_Read && nXSize == nBufXSize &&
         nYSize == nBufYSize &&
         (nBufXSize > nBandBlockXSize || nBufYSize > nBandBlockYSize) &&
-        eBufType == GDT_Byte && nBandCount == nBands &&
+        eBufType == GDT_UInt8 && nBandCount == nBands &&
         IsAllBands(nBandCount, panBandMap))
     {
         bReadPixels = TRUE;
@@ -2705,7 +2705,7 @@ CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         return ReadPixels(nXOff, nYOff, nXSize, nYSize, nPixelSpace, nLineSpace,
                           nBandSpace, static_cast<GByte *>(pData));
 
-    if (nBufXSize != nXSize || nBufYSize != nYSize || eBufType != GDT_Byte)
+    if (nBufXSize != nXSize || nBufYSize != nYSize || eBufType != GDT_UInt8)
     {
         m_bCacheBlocksForOtherBands = true;
     }
@@ -2741,7 +2741,7 @@ CPLErr PDFRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             return eErr;
     }
 
-    if (nBufXSize != nXSize || nBufYSize != nYSize || eBufType != GDT_Byte)
+    if (nBufXSize != nXSize || nBufYSize != nYSize || eBufType != GDT_UInt8)
     {
         poGDS->m_bCacheBlocksForOtherBands = true;
     }

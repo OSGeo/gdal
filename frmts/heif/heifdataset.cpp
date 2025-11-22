@@ -827,7 +827,7 @@ GDALHEIFRasterBand::GDALHEIFRasterBand(GDALHEIFDataset *poDSIn, int nBandIn)
     poDS = poDSIn;
     nBand = nBandIn;
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
     const int nBits =
         heif_image_handle_get_luma_bits_per_pixel(poDSIn->m_hImageHandle);
@@ -890,7 +890,7 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     int nStride = 0;
     const uint8_t *pSrcData = heif_image_get_plane_readonly(
         hImage, heif_channel_interleaved, &nStride);
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         for (int y = 0; y < nBlockYSize; y++)
         {
@@ -975,7 +975,7 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
     const uint8_t *pSrcData = heif_image_get_plane_readonly(
         poGDS->m_hImage, heif_channel_interleaved, &nStride);
     pSrcData += static_cast<size_t>(nBlockYOff) * nStride;
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         for (int i = 0; i < nBlockXSize; i++)
             (static_cast<GByte *>(pImage))[i] =

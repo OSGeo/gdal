@@ -459,10 +459,10 @@ def test_isis_16():
     for read_before_write in [False, True]:
         for init_nd in [False, True]:
             for dt, cs, nd, options in [
-                [gdal.GDT_Byte, 0, 0, []],
-                [gdal.GDT_Byte, 0, 0, ["TILED=YES"]],
+                [gdal.GDT_UInt8, 0, 0, []],
+                [gdal.GDT_UInt8, 0, 0, ["TILED=YES"]],
                 [
-                    gdal.GDT_Byte,
+                    gdal.GDT_UInt8,
                     0,
                     0,
                     ["DATA_LOCATION=GEOTIFF", "GEOTIFF_OPTIONS=COMPRESS=LZW"],

@@ -280,12 +280,12 @@ CPLErr RS2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
             nRequestXSize, nRequestYSize, pImage, nRequestXSize, nRequestYSize,
             GDT_UInt16, 1, nullptr, 2, nBlockXSize * 2, 0, nullptr);
-    else if (eDataType == GDT_Byte)
+    else if (eDataType == GDT_UInt8)
         /* Ticket #2104: Support for ScanSAR products */
         return poBandFile->RasterIO(
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
             nRequestXSize, nRequestYSize, pImage, nRequestXSize, nRequestYSize,
-            GDT_Byte, 1, nullptr, 1, nBlockXSize, 0, nullptr);
+            GDT_UInt8, 1, nullptr, 1, nBlockXSize, 0, nullptr);
 
     CPLAssert(false);
     return CE_Failure;
@@ -518,14 +518,14 @@ CPLErr RS2CalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
         CPLFree(pnImageTmp);
     } /* Ticket #2104: Support for ScanSAR products */
-    else if (m_eType == GDT_Byte)
+    else if (m_eType == GDT_UInt8)
     {
         GByte *pnImageTmp = reinterpret_cast<GByte *>(
             CPLMalloc(static_cast<size_t>(nBlockXSize) * nBlockYSize));
         eErr = m_poBandDataset->RasterIO(
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
             nBlockXSize, nRequestYSize, pnImageTmp, nBlockXSize, nRequestYSize,
-            GDT_Byte, 1, nullptr, 1, 1, 0, nullptr);
+            GDT_UInt8, 1, nullptr, 1, 1, 0, nullptr);
 
         /* iterate over detected values */
         for (int i = 0; i < nBlockYSize; i++)
@@ -828,7 +828,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     else if (nBitsPerSample == 16 && STARTS_WITH_CI(pszDataType, "Mag"))
         eDataType = GDT_UInt16;
     else if (nBitsPerSample == 8 && STARTS_WITH_CI(pszDataType, "Mag"))
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
     else
     {
         CPLError(

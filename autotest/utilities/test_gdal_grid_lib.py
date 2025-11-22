@@ -131,7 +131,7 @@ def test_gdal_grid_lib_2(tmp_vsimem, env):
             outputBounds=[-0.5, -0.5, 0.5, 0.5],
             width=1,
             height=1,
-            outputType=gdal.GDT_Byte,
+            outputType=gdal.GDT_UInt8,
             SQLStatement="select * from test_gdal_grid_lib_2",
         )
 
@@ -142,7 +142,7 @@ def test_gdal_grid_lib_2(tmp_vsimem, env):
             outputBounds=[-0.4, -0.4, 0.6, 0.6],
             width=10,
             height=10,
-            outputType=gdal.GDT_Byte,
+            outputType=gdal.GDT_UInt8,
         )
 
     cs = ds1.GetRasterBand(1).Checksum()

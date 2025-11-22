@@ -519,7 +519,7 @@ CPLErr MEMRasterBand::CreateMaskBand(int nFlagsIn)
 
     nMaskFlags = nFlagsIn;
     auto poMemMaskBand = std::unique_ptr<MEMRasterBand>(
-        new MEMRasterBand(pabyMaskData, GDT_Byte, nRasterXSize, nRasterYSize,
+        new MEMRasterBand(pabyMaskData, GDT_UInt8, nRasterXSize, nRasterYSize,
                           /* bOwnData= */ true));
     poMemMaskBand->m_bIsMask = true;
     poMask.reset(std::move(poMemMaskBand));
@@ -1185,7 +1185,7 @@ std::unique_ptr<GDALDataset> MEMDataset::Clone(int nScopeFlags,
                 {
                     auto poMaskBand =
                         std::unique_ptr<MEMRasterBand>(new MEMRasterBand(
-                            poSrcMaskBand->pabyData, GDT_Byte, nRasterXSize,
+                            poSrcMaskBand->pabyData, GDT_UInt8, nRasterXSize,
                             nRasterYSize, /* bOwnData = */ false));
                     poMaskBand->m_bIsMask = true;
                     poNewBand->poMask.reset(std::move(poMaskBand));
@@ -1277,7 +1277,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     pszOption = CSLFetchNameValue(papszOptions, "DATATYPE");
-    GDALDataType eType = GDT_Byte;
+    GDALDataType eType = GDT_UInt8;
     if (pszOption != nullptr)
     {
         if (atoi(pszOption) > 0 && atoi(pszOption) < GDT_TypeCount)

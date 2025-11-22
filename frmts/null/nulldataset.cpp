@@ -288,7 +288,7 @@ GDALDataset *GDALNullDataset::Open(GDALOpenInfo *poOpenInfo)
     int nYSize = atoi(CSLFetchNameValueDef(papszTokens, "height", "512"));
     int nBands = atoi(CSLFetchNameValueDef(papszTokens, "bands", "1"));
     const char *pszDTName = CSLFetchNameValueDef(papszTokens, "type", "Byte");
-    GDALDataType eDT = GDT_Byte;
+    GDALDataType eDT = GDT_UInt8;
     for (int iType = 1; iType < GDT_TypeCount; iType++)
     {
         if (GDALGetDataTypeName(static_cast<GDALDataType>(iType)) != nullptr &&

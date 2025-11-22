@@ -289,7 +289,7 @@ BMPRasterBand::BMPRasterBand(BMPDataset *poDSIn, int nBandIn)
 {
     poDS = poDSIn;
     nBand = nBandIn;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     // We will read one scanline per time. Scanlines in BMP aligned at 4-byte
     // boundary
@@ -1413,7 +1413,7 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 char **papszOptions)
 
 {
-    if (eType != GDT_Byte)
+    if (eType != GDT_UInt8)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create BMP dataset with an illegal\n"

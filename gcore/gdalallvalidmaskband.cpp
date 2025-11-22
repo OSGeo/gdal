@@ -33,7 +33,7 @@ GDALAllValidMaskBand::GDALAllValidMaskBand(GDALRasterBand *poParent)
     nRasterXSize = poParent->GetXSize();
     nRasterYSize = poParent->GetYSize();
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     poParent->GetBlockSize(&nBlockXSize, &nBlockYSize);
 }
 
@@ -75,7 +75,7 @@ CPLErr GDALAllValidMaskBand::IRasterIO(GDALRWFlag eRWFlag, int, int, int, int,
     GByte byVal = 255;
     for (int iY = 0; iY < nBufYSize; ++iY)
     {
-        GDALCopyWords64(&byVal, GDT_Byte, 0, pabyData + iY * nLineSpace,
+        GDALCopyWords64(&byVal, GDT_UInt8, 0, pabyData + iY * nLineSpace,
                         eBufType, static_cast<int>(nPixelSpace), nBufXSize);
     }
 

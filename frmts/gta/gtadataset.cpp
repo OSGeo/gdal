@@ -323,7 +323,7 @@ GTARasterBand::GTARasterBand(GTADataset *poDSIn, int nBandIn)
             eDataType = GDT_Int8;
             break;
         case gta::uint8:
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             break;
         case gta::int16:
             eDataType = GDT_Int16;
@@ -1350,7 +1350,7 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         GDALDataType eDT = poSrcBand->GetRasterDataType();
         switch (eDT)
         {
-            case GDT_Byte:
+            case GDT_UInt8:
             {
                 const char *pszPixelType =
                     poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");

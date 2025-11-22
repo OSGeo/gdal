@@ -35,7 +35,7 @@ GTiffOddBitsBand::GTiffOddBitsBand(GTiffDataset *m_poGDSIn, int nBandIn)
     else if ((m_poGDS->m_nSampleFormat == SAMPLEFORMAT_UINT ||
               m_poGDS->m_nSampleFormat == SAMPLEFORMAT_INT) &&
              m_poGDS->m_nBitsPerSample < 8)
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
     else if ((m_poGDS->m_nSampleFormat == SAMPLEFORMAT_UINT ||
               m_poGDS->m_nSampleFormat == SAMPLEFORMAT_INT) &&
              m_poGDS->m_nBitsPerSample > 8 && m_poGDS->m_nBitsPerSample < 16)
@@ -221,7 +221,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             for (int iX = 0; iX < nBlockXSize; ++iX)
             {
                 GUInt32 nInWord = 0;
-                if (eDataType == GDT_Byte)
+                if (eDataType == GDT_UInt8)
                 {
                     nInWord = static_cast<GByte *>(pImage)[iPixel++];
                 }
@@ -416,7 +416,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             for (int iX = 0; iX < nBlockXSize; ++iX)
             {
                 GUInt32 nInWord = 0;
-                if (eDataType == GDT_Byte)
+                if (eDataType == GDT_UInt8)
                 {
                     nInWord =
                         static_cast<const GByte *>(pabyThisImage)[iPixel++];
@@ -751,7 +751,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         const unsigned nBitsPerSample = m_poGDS->m_nBitsPerSample;
         GPtrDiff_t iPixel = 0;
 
-        if (nBitsPerSample == 1 && eDataType == GDT_Byte)
+        if (nBitsPerSample == 1 && eDataType == GDT_UInt8)
         {
             for (unsigned iY = 0; iY < static_cast<unsigned>(nBlockYSize); ++iY)
             {
@@ -791,7 +791,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
                     iBitOffset = iBitOffset + iPixelBitSkip - nBitsPerSample;
 
-                    if (eDataType == GDT_Byte)
+                    if (eDataType == GDT_UInt8)
                     {
                         static_cast<GByte *>(pImage)[iPixel++] =
                             static_cast<GByte>(nOutWord);

@@ -537,7 +537,7 @@ def test_pixfun_div_r():
 
 @pytest.mark.parametrize(
     "dtype,expected",
-    [(gdal.GDT_Float32, float("inf")), (gdal.GDT_Int16, 32767), (gdal.GDT_Byte, 255)],
+    [(gdal.GDT_Float32, float("inf")), (gdal.GDT_Int16, 32767), (gdal.GDT_UInt8, 255)],
 )
 def test_pixfun_div_by_zero(tmp_vsimem, dtype, expected):
 

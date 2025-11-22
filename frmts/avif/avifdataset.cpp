@@ -532,7 +532,7 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
     }
 
     const auto eDataType =
-        (m_decoder->image->depth <= 8) ? GDT_Byte : GDT_UInt16;
+        (m_decoder->image->depth <= 8) ? GDT_UInt8 : GDT_UInt16;
     const int l_nBands = m_decoder->image->yuvFormat == AVIF_PIXEL_FORMAT_YUV400
                              ? (m_decoder->alphaPresent ? 2 : 1)
                          : m_decoder->alphaPresent ? 4
@@ -743,7 +743,7 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
     }
 
     const auto eDT = poFirstBand->GetRasterDataType();
-    if (eDT != GDT_Byte && eDT != GDT_UInt16)
+    if (eDT != GDT_UInt8 && eDT != GDT_UInt16)
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
@@ -751,7 +751,7 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    int nBits = eDT == GDT_Byte ? 8 : 12;
+    int nBits = eDT == GDT_UInt8 ? 8 : 12;
     const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
     if (pszNBITS)
     {
@@ -765,7 +765,7 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
             nBits = atoi(pszNBITS);
         }
     }
-    if ((eDT == GDT_Byte && nBits != 8) ||
+    if ((eDT == GDT_UInt8 && nBits != 8) ||
         (eDT == GDT_UInt16 && nBits != 10 && nBits != 12))
     {
         CPLError(CE_Failure, CPLE_FileIO,

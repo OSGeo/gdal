@@ -1654,7 +1654,7 @@ void VICARDataset::BuildLabel()
     CPL_IGNORE_RET_VAL(pszFormat);  // Make CSA happy
     switch (eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             pszFormat = "BYTE";
             break;
         case GDT_Int16:
@@ -1914,7 +1914,7 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
     }
     const char *const apszOptions[] = {"GEOTIFF_VERSION=1.0", nullptr};
     auto poDS = std::unique_ptr<GDALDataset>(poGTiffDriver->Create(
-        osTmpFilename.c_str(), 1, 1, 1, GDT_Byte, apszOptions));
+        osTmpFilename.c_str(), 1, 1, 1, GDT_UInt8, apszOptions));
     if (!poDS)
         return;
     poDS->SetSpatialRef(&m_oSRS);
@@ -2537,7 +2537,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
     double dfNoData = 0.0;
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         dfNoData = VICAR_NULL1;
     }
@@ -3045,7 +3045,7 @@ const char *VICARDataset::GetKeyword(const char *pszPath,
 GDALDataType VICARDataset::GetDataTypeFromFormat(const char *pszFormat)
 {
     if (EQUAL(pszFormat, "BYTE"))
-        return GDT_Byte;
+        return GDT_UInt8;
 
     if (EQUAL(pszFormat, "HALF") || EQUAL(pszFormat, "WORD"))
         return GDT_Int16;
@@ -3158,7 +3158,7 @@ VICARDataset *VICARDataset::CreateInternal(const char *pszFilename, int nXSize,
                                            GDALDataType eType,
                                            char **papszOptions)
 {
-    if (eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_Int32 &&
+    if (eType != GDT_UInt8 && eType != GDT_Int16 && eType != GDT_Int32 &&
         eType != GDT_Float32 && eType != GDT_Float64 && eType != GDT_CFloat32)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported data type");

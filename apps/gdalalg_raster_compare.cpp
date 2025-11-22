@@ -568,7 +568,7 @@ void GDALRasterCompareAlgorithm::DatasetComparison(
                               poInputDS->GetRasterBand(1)->GetRasterDataType());
         switch (eReqDT)
         {
-            case GDT_Byte:
+            case GDT_UInt8:
                 DatasetPixelComparison<uint8_t, uint8_t, false>(
                     aosReport, poRefDS, poInputDS, eReqDT, pfnProgress,
                     pProgressData);
@@ -728,7 +728,7 @@ static void ComparePixels(std::vector<std::string> &aosReport,
                                           poInputBand->GetRasterDataType());
     switch (eReqDT)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             ComparePixels<uint8_t, uint8_t, false>(aosReport, bandId, poRefBand,
                                                    poInputBand, eReqDT,
                                                    pfnProgress, pProgressData);

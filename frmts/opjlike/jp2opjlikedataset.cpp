@@ -1316,7 +1316,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
                                   &nTileH, &numResolutions))
         return nullptr;
 
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     if (localctx.psImage->comps[0].prec > 16)
     {
         if (localctx.psImage->comps[0].sgnd)
@@ -1334,7 +1334,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
 
     int bIs420 =
         (localctx.psImage->color_space != CODEC::cvtenum(JP2_CLRSPC_SRGB) &&
-         eDataType == GDT_Byte &&
+         eDataType == GDT_UInt8 &&
          (localctx.psImage->numcomps == 3 || localctx.psImage->numcomps == 4) &&
          localctx.psImage->comps[1].w == localctx.psImage->comps[0].w / 2 &&
          localctx.psImage->comps[1].h == localctx.psImage->comps[0].h / 2 &&
@@ -2014,7 +2014,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
 
     GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
-    if (eDataType != GDT_Byte && eDataType != GDT_Int16 &&
+    if (eDataType != GDT_UInt8 && eDataType != GDT_Int16 &&
         eDataType != GDT_UInt16 && eDataType != GDT_Int32 &&
         eDataType != GDT_UInt32)
     {
@@ -2218,7 +2218,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     int bYCBCR420 = FALSE;
     if (pszYCBCR420 && CPLTestBool(pszYCBCR420))
     {
-        if ((nBands == 3 || nBands == 4) && eDataType == GDT_Byte &&
+        if ((nBands == 3 || nBands == 4) && eDataType == GDT_UInt8 &&
             nRedBandIndex == 0 && nGreenBandIndex == 1 && nBlueBandIndex == 2)
         {
             if (((nXSize % 2) == 0 && (nYSize % 2) == 0 &&

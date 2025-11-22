@@ -60,7 +60,7 @@ def test_gdalalg_raster_unscale_datatype():
 @pytest.mark.parametrize(
     "input_dt,out_dt",
     [
-        (gdal.GDT_Byte, gdal.GDT_Float32),
+        (gdal.GDT_UInt8, gdal.GDT_Float32),
         (gdal.GDT_Float32, gdal.GDT_Float32),
         (gdal.GDT_Float64, gdal.GDT_Float64),
         (gdal.GDT_CInt16, gdal.GDT_CFloat32),

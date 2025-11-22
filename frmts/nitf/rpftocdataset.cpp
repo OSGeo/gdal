@@ -296,7 +296,7 @@ class RPFTOCProxyRasterBandRGBA final : public GDALPamRasterBand
         nRasterYSize = poDSIn->GetRasterYSize();
         this->nBlockXSize = nBlockXSizeIn;
         this->nBlockYSize = nBlockYSizeIn;
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         this->nBand = nBandIn;
         blockByteSize = nBlockXSize * nBlockYSize;
     }
@@ -473,7 +473,7 @@ class RPFTOCProxyRasterBandPalette final : public GDALPamRasterBand
         nRasterYSize = poDSIn->GetRasterYSize();
         this->nBlockXSize = nBlockXSizeIn;
         this->nBlockYSize = nBlockYSizeIn;
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         this->nBand = nBandIn;
         memset(remapLUT, 0, sizeof(remapLUT));
     }
@@ -649,7 +649,7 @@ int RPFTOCProxyRasterDataSet::SanityCheckOK(GDALDataset *sourceDS)
     ERROR_ON_FAIL(src_nBlockYSize == nBlockYSize);
     WARN_ON_FAIL(sourceDS->GetRasterBand(1)->GetColorInterpretation() ==
                  GCI_PaletteIndex);
-    WARN_ON_FAIL(sourceDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte);
+    WARN_ON_FAIL(sourceDS->GetRasterBand(1)->GetRasterDataType() == GDT_UInt8);
 
     return checkOK;
 }
@@ -842,7 +842,7 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
                 poSrcDS->GetRasterBand(1)->GetColorInterpretation() ==
                 GCI_PaletteIndex);
             ASSERT_CREATE_VRT(poSrcDS->GetRasterBand(1)->GetRasterDataType() ==
-                              GDT_Byte);
+                              GDT_UInt8);
             GDALClose(poSrcDS);
         }
 
@@ -883,7 +883,7 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
     /* option through the config option RPFTOC_FORCE_RGBA */
     if (isRGBA == FALSE)
     {
-        poVirtualDS->AddBand(GDT_Byte, nullptr);
+        poVirtualDS->AddBand(GDT_UInt8, nullptr);
         GDALRasterBand *poBand = poVirtualDS->GetRasterBand(1);
         poBand->SetColorInterpretation(GCI_PaletteIndex);
         nBands = 1;
@@ -952,7 +952,7 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
     {
         for (int i = 0; i < 4; i++)
         {
-            poVirtualDS->AddBand(GDT_Byte, nullptr);
+            poVirtualDS->AddBand(GDT_UInt8, nullptr);
             GDALRasterBand *poBand = poVirtualDS->GetRasterBand(i + 1);
             poBand->SetColorInterpretation(
                 static_cast<GDALColorInterp>(GCI_RedBand + i));

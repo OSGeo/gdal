@@ -2047,7 +2047,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         atoi(poDS->m_aosHeader.FetchNameValueDef("header_offset", "0"));
 
     // Translate the datatype.
-    GDALDataType eType = GDT_Byte;
+    GDALDataType eType = GDT_UInt8;
 
     const char *pszDataType = poDS->m_aosHeader["data_type"];
     if (pszDataType != nullptr)
@@ -2055,7 +2055,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         switch (atoi(pszDataType))
         {
             case 1:
-                eType = GDT_Byte;
+                eType = GDT_UInt8;
                 break;
 
             case 2:
@@ -2343,7 +2343,7 @@ int ENVIDataset::GetEnviType(GDALDataType eType)
     int iENVIType = 1;
     switch (eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             iENVIType = 1;
             break;
         case GDT_Int16:

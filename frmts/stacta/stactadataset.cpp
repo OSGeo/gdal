@@ -1076,7 +1076,7 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                 {"int16", GDT_Int16},
                 {"int32", GDT_Int32},
                 {"int64", GDT_Int64},
-                {"uint8", GDT_Byte},
+                {"uint8", GDT_UInt8},
                 {"uint16", GDT_UInt16},
                 {"uint32", GDT_UInt32},
                 {"uint64", GDT_UInt64},
@@ -1407,7 +1407,7 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                 oBands.IsValid() ? "raster:bits_per_sample"
                                  : "bits_per_sample");
             if (((nBitsPerSample >= 1 && nBitsPerSample <= 7) &&
-                 poBand->GetRasterDataType() == GDT_Byte) ||
+                 poBand->GetRasterDataType() == GDT_UInt8) ||
                 ((nBitsPerSample >= 9 && nBitsPerSample <= 15) &&
                  poBand->GetRasterDataType() == GDT_UInt16))
             {

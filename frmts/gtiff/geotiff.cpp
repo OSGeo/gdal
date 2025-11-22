@@ -666,7 +666,7 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     TIFF *hTIFFTmp =
         GTiffDataset::CreateLL(osTmpFilenameIn, nInMemImageWidth,
                                nInMemImageHeight, (nBands <= 4) ? nBands : 1,
-                               (l_nBitsPerSample <= 8) ? GDT_Byte : GDT_UInt16,
+                               (l_nBitsPerSample <= 8) ? GDT_UInt8 : GDT_UInt16,
                                0.0, 0, papszLocalParameters, &fpTmp, osTmp,
                                /* bCreateCopy=*/false, bTileInterleaving);
     CSLDestroy(papszLocalParameters);

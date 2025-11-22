@@ -29,7 +29,7 @@ def test_sieve_1():
     src_ds = gdal.Open("data/sieve_src.grd")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/sieve_1.tif", 5, 7, 1, gdal.GDT_Byte)
+    dst_ds = drv.Create("tmp/sieve_1.tif", 5, 7, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.SieveFilter(src_band, None, dst_band, 2, 4)
@@ -59,7 +59,7 @@ def test_sieve_2():
     src_ds = gdal.Open("data/sieve_src.grd")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/sieve_2.tif", 5, 7, 1, gdal.GDT_Byte)
+    dst_ds = drv.Create("tmp/sieve_2.tif", 5, 7, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.SieveFilter(src_band, None, dst_band, 2, 8)
@@ -89,7 +89,7 @@ def test_sieve_3():
     src_ds = gdal.Open("data/unmergable.grd")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/sieve_3.tif", 5, 7, 1, gdal.GDT_Byte)
+    dst_ds = drv.Create("tmp/sieve_3.tif", 5, 7, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.SieveFilter(src_band, None, dst_band, 2, 8)
@@ -120,7 +120,7 @@ def test_sieve_4():
     src_ds = gdal.Open("data/sieve_2634.grd")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/sieve_4.tif", 10, 8, 1, gdal.GDT_Byte)
+    dst_ds = drv.Create("tmp/sieve_4.tif", 10, 8, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.SieveFilter(src_band, None, dst_band, 2, 4)
@@ -151,7 +151,7 @@ def test_sieve_5():
     src_ds = gdal.Open("data/sieve_src.grd")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/sieve_1.tif", 5, 7, 1, gdal.GDT_Byte)
+    dst_ds = drv.Create("tmp/sieve_1.tif", 5, 7, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.SieveFilter(src_band, dst_band.GetMaskBand(), dst_band, 2, 4)
@@ -235,7 +235,7 @@ NODATA_value 0
     src_ds = gdal.Open("/vsimem/sieve_7.asc")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("/vsimem/sieve_7.tif", 7, 7, 1, gdal.GDT_Byte)
+    dst_ds = drv.Create("/vsimem/sieve_7.tif", 7, 7, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.SieveFilter(src_band, src_band.GetMaskBand(), dst_band, 4, 4)
@@ -293,7 +293,7 @@ cellsize     60.000000000000
     src_ds = gdal.Open("/vsimem/sieve_8.asc")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("/vsimem/sieve_8.tif", 7, 7, 1, gdal.GDT_Byte)
+    dst_ds = drv.Create("/vsimem/sieve_8.tif", 7, 7, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.SieveFilter(src_band, src_band.GetMaskBand(), dst_band, 4, 4)
@@ -322,14 +322,14 @@ cellsize     60.000000000000
 def test_sieve_all_masked():
 
     drv = gdal.GetDriverByName("MEM")
-    src_ds = drv.Create("", 10, 10, gdal.GDT_Byte)
+    src_ds = drv.Create("", 10, 10, gdal.GDT_UInt8)
     src_band = src_ds.GetRasterBand(1)
     src_band.Fill(1)
 
-    mask_ds = drv.Create("", 10, 10, gdal.GDT_Byte)
+    mask_ds = drv.Create("", 10, 10, gdal.GDT_UInt8)
     mask_band = mask_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("", 10, 10, gdal.GDT_Byte)
+    dst_ds = drv.Create("", 10, 10, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     expected_cs = src_band.Checksum()

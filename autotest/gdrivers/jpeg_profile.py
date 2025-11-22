@@ -54,7 +54,7 @@ def test_jpeg_copy_icc():
 
     driver = gdal.GetDriverByName("JPEG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte, options)
+    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
 
     # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy("tmp/icc_test.jpg", ds)
@@ -92,7 +92,7 @@ def test_jpeg_copy_options_icc():
 
     driver = gdal.GetDriverByName("JPEG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte)
+    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
 
     # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy("tmp/icc_test.jpg", ds, options=options)
@@ -136,7 +136,7 @@ def test_jpeg_copy_icc_64K():
 
     driver = gdal.GetDriverByName("JPEG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte, options)
+    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
 
     # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy("tmp/icc_test.jpg", ds, options=["COMMENT=foo"])

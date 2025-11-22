@@ -161,7 +161,7 @@ RIKRasterBand::RIKRasterBand(RIKDataset *poDSIn, int nBandIn)
     poDS = poDSIn;
     nBand = nBandIn;
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     nBlockXSize = poDSIn->nBlockXSize;
     nBlockYSize = poDSIn->nBlockYSize;

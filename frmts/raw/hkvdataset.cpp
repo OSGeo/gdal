@@ -843,7 +843,7 @@ GDALDataset *HKVDataset::Open(GDALOpenInfo *poOpenInfo)
 
     GDALDataType eType;
     if (nSize == 1)
-        eType = GDT_Byte;
+        eType = GDT_UInt8;
     else if (nSize == 2 && strstr(pszEncoding, "*unsigned") != nullptr)
         eType = GDT_UInt16;
     else if (nSize == 4 && bComplex)

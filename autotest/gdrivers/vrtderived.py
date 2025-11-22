@@ -75,7 +75,7 @@ def test_vrtderived_1(tmp_vsimem):
     options = [
         "subClass=VRTDerivedRasterBand",
     ]
-    vrt_ds.AddBand(gdal.GDT_Byte, options)
+    vrt_ds.AddBand(gdal.GDT_UInt8, options)
 
     simpleSourceXML = """    <SimpleSource>
       <SourceFilename>data/byte.tif</SourceFilename>
@@ -118,7 +118,7 @@ def test_vrtderived_2(tmp_vsimem):
         "PixelFunctionType=dummy",
         "PixelFunctionLanguage=Python",
     ]
-    vrt_ds.AddBand(gdal.GDT_Byte, options)
+    vrt_ds.AddBand(gdal.GDT_UInt8, options)
 
     simpleSourceXML = """    <SimpleSource>
       <SourceFilename>data/byte.tif</SourceFilename>
@@ -162,7 +162,7 @@ def test_vrtderived_3(tmp_vsimem):
         "PixelFunctionType=dummy",
         "SourceTransferType=Byte",
     ]
-    vrt_ds.AddBand(gdal.GDT_Byte, options)
+    vrt_ds.AddBand(gdal.GDT_UInt8, options)
 
     simpleSourceXML = """    <SimpleSource>
       <SourceFilename>data/byte.tif</SourceFilename>
@@ -198,7 +198,7 @@ def test_vrtderived_4(tmp_vsimem):
         "SourceTransferType=Invalid",
     ]
     with gdal.quiet_errors():
-        ret = vrt_ds.AddBand(gdal.GDT_Byte, options)
+        ret = vrt_ds.AddBand(gdal.GDT_UInt8, options)
     assert ret != 0, "invalid SourceTransferType value not detected"
 
 
@@ -1726,7 +1726,7 @@ def test_vrt_pixelfn_nodata(
 def test_vrt_pixelfn_mean_byte(tmp_vsimem, values):
 
     with gdal.GetDriverByName("GTiff").Create(
-        tmp_vsimem / "src.tif", 63, 1, len(values), gdal.GDT_Byte
+        tmp_vsimem / "src.tif", 63, 1, len(values), gdal.GDT_UInt8
     ) as src:
         for i in range(len(values)):
             src.GetRasterBand(i + 1).Fill(values[i])
@@ -2191,12 +2191,12 @@ def test_vrt_split_in_halves(tmp_vsimem):
     height = 500
 
     with gdal.GetDriverByName("GTiff").Create(
-        tmp_vsimem / "src1.tif", width, height, 1, gdal.GDT_Byte
+        tmp_vsimem / "src1.tif", width, height, 1, gdal.GDT_UInt8
     ) as src:
         src.WriteRaster(0, 0, width, height, b"\x01" * (width * height))
 
     with gdal.GetDriverByName("GTiff").Create(
-        tmp_vsimem / "src2.tif", width, height, 1, gdal.GDT_Byte
+        tmp_vsimem / "src2.tif", width, height, 1, gdal.GDT_UInt8
     ) as src:
         src.WriteRaster(0, 0, width, height, b"\x02" * (width * height))
 
@@ -2226,12 +2226,12 @@ def test_vrt_derived_virtual_overviews(tmp_vsimem):
     height = 2
 
     with gdal.GetDriverByName("GTiff").Create(
-        tmp_vsimem / "src1.tif", width, height, 1, gdal.GDT_Byte
+        tmp_vsimem / "src1.tif", width, height, 1, gdal.GDT_UInt8
     ) as src:
         src.WriteRaster(0, 0, width, height, b"\x01" * (width * height))
 
     with gdal.GetDriverByName("GTiff").Create(
-        tmp_vsimem / "src2.tif", width, height, 1, gdal.GDT_Byte
+        tmp_vsimem / "src2.tif", width, height, 1, gdal.GDT_UInt8
     ) as src:
         src.WriteRaster(0, 0, width, height, b"\x02" * (width * height))
 

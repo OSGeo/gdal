@@ -813,7 +813,7 @@ def test_stats_nodata_almost_max_float32():
 # Test STATISTICS_APPROXIMATE
 
 
-def test_stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt="B"):
+def test_stats_approx_stats_flag(dt=gdal.GDT_UInt8, struct_frmt="B"):
 
     ds = gdal.GetDriverByName("MEM").Create("", 2000, 2000, 1, dt)
     ds.GetRasterBand(1).WriteRaster(1000, 1000, 1, 1, struct.pack(struct_frmt * 1, 20))
@@ -914,8 +914,8 @@ def test_stats_clear():
 @pytest.mark.parametrize(
     "datatype,minval,maxval",
     [
-        (gdal.GDT_Byte, 1, 254),
-        (gdal.GDT_Byte, -127, 127),
+        (gdal.GDT_UInt8, 1, 254),
+        (gdal.GDT_UInt8, -127, 127),
         (gdal.GDT_UInt16, 1, 65535),
         (gdal.GDT_Int16, -32767, 32766),
         (gdal.GDT_UInt32, 1, (1 << 32) - 2),
@@ -943,7 +943,7 @@ def test_stats_computeminmax(datatype, minval, maxval, nodata):
     ds = gdal.GetDriverByName("MEM").Create("", 64, 1, 1, datatype)
     minval_mod = minval
     expected_minval = minval
-    if datatype == gdal.GDT_Byte and minval < 0:
+    if datatype == gdal.GDT_UInt8 and minval < 0:
         ds.GetRasterBand(1).SetMetadataItem(
             "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE"
         )
@@ -1158,7 +1158,7 @@ def test_stats_float64_nan_with_nodata(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM)
 @pytest.mark.parametrize(
     "datatype",
     [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int8,
         gdal.GDT_UInt16,
         gdal.GDT_Int16,
@@ -1174,7 +1174,7 @@ def test_stats_float64_nan_with_nodata(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM)
 def test_stats_minmax_one_two(datatype):
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 1, datatype)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02", buf_type=gdal.GDT_Byte)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02", buf_type=gdal.GDT_UInt8)
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == (1.0, 2.0)
 
 
@@ -1184,7 +1184,7 @@ def test_stats_minmax_one_two(datatype):
 @pytest.mark.parametrize(
     "datatype",
     [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int8,
         gdal.GDT_UInt16,
         gdal.GDT_Int16,
@@ -1211,7 +1211,7 @@ def test_stats_minmax_all_invalid_nodata(datatype):
 @pytest.mark.parametrize(
     "datatype",
     [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int8,
         gdal.GDT_UInt16,
         gdal.GDT_Int16,

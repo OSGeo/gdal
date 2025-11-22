@@ -330,7 +330,7 @@ static void GetMinMax(const void *pBuffer, GDALDataType eDT, int nBufXSize,
 {
     switch (eDT)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             GetMinMax(static_cast<const GByte *>(pBuffer), nBufXSize, nBufYSize,
                       nPixelSpace, nLineSpace, dfNoDataValue, dfMin, dfMax);
             break;
@@ -521,7 +521,7 @@ void RRASTERDataset::RewriteHeader()
     GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
     VSIFPrintfL(fp, "datatype=%s\n",
                 (eDT == GDT_Int8 || m_bSignedByte) ? "INT1S"
-                : (eDT == GDT_Byte)                ? "INT1U"
+                : (eDT == GDT_UInt8)               ? "INT1U"
                 : (eDT == GDT_UInt16)              ? "INT2U"
                 : (eDT == GDT_UInt32)              ? "INT4U"
                 : (eDT == GDT_Int16)               ? "INT2S"
@@ -1115,7 +1115,7 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
 
     GDALDataType eDT = GDT_Unknown;
     if (EQUAL(osDataType, "LOG1S"))
-        eDT = GDT_Byte;  // mapping TBC
+        eDT = GDT_UInt8;  // mapping TBC
     else if (EQUAL(osDataType, "INT1S"))
         eDT = GDT_Int8;
     else if (EQUAL(osDataType, "INT2S"))
@@ -1125,7 +1125,7 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
     // else if( EQUAL(osDataType, "INT8S") )
     //     eDT = GDT_UInt64; // unhandled
     else if (EQUAL(osDataType, "INT1U"))
-        eDT = GDT_Byte;
+        eDT = GDT_UInt8;
     else if (EQUAL(osDataType, "INT2U"))
         eDT = GDT_UInt16;
     else if (EQUAL(osDataType, "INT4U"))  // Not documented
@@ -1406,7 +1406,7 @@ GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    if (eType != GDT_Byte && eType != GDT_Int8 && eType != GDT_UInt16 &&
+    if (eType != GDT_UInt8 && eType != GDT_Int8 && eType != GDT_UInt16 &&
         eType != GDT_Int16 && eType != GDT_Int32 && eType != GDT_UInt32 &&
         eType != GDT_Float32 && eType != GDT_Float64)
     {
@@ -1461,7 +1461,7 @@ GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
     poDS->m_bInitRaster = CPLFetchBool(papszOptions, "@INIT_RASTER", true);
 
     const char *pszPixelType = CSLFetchNameValue(papszOptions, "PIXELTYPE");
-    const bool bByteSigned = (eType == GDT_Byte && pszPixelType &&
+    const bool bByteSigned = (eType == GDT_UInt8 && pszPixelType &&
                               EQUAL(pszPixelType, "SIGNEDBYTE"));
     if (bByteSigned)
         poDS->m_bSignedByte = true;

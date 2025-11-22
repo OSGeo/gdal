@@ -1073,7 +1073,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
             const char *stacDataType = nullptr;
             switch (eDT)
             {
-                case GDT_Byte:
+                case GDT_UInt8:
                     stacDataType = "uint8";
                     break;
                 case GDT_Int8:

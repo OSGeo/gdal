@@ -1052,7 +1052,7 @@ BAGResampledBand::BAGResampledBand(BAGDataset *poDSIn, int nBandIn,
     nBlockYSize = std::min(nBlockSize, poDS->GetRasterYSize());
     if (poDSIn->m_bMask)
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
     }
     else if (poDSIn->m_ePopulation == BAGDataset::Population::COUNT)
     {
@@ -2288,7 +2288,7 @@ BAGGeorefMDBand::BAGGeorefMDBand(const std::shared_ptr<GDALMDArray> &poValues,
     }
     else
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         m_poElevBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
 
@@ -2399,7 +2399,7 @@ BAGGeorefMDSuperGridBand::BAGGeorefMDSuperGridBand(
     }
     else
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         m_poElevBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
 }

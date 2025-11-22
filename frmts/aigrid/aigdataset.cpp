@@ -105,7 +105,7 @@ AIGRasterBand::AIGRasterBand(AIGDataset *poDSIn, int nBandIn)
     if (poDSIn->psInfo->nCellType == AIG_CELLTYPE_INT &&
         poDSIn->psInfo->dfMin >= 0.0 && poDSIn->psInfo->dfMax <= 254.0)
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
     }
     else if (poDSIn->psInfo->nCellType == AIG_CELLTYPE_INT &&
              poDSIn->psInfo->dfMin >= -32767 && poDSIn->psInfo->dfMax <= 32767)
@@ -143,7 +143,7 @@ CPLErr AIGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             return CE_Failure;
         }
 
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
         {
             for (int i = 0; i < nBlockXSize * nBlockYSize; i++)
             {
@@ -250,7 +250,7 @@ double AIGRasterBand::GetNoDataValue(int *pbSuccess)
     if (eDataType == GDT_Int16)
         return -32768;
 
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
         return 255;
 
     return ESRI_GRID_NO_DATA;

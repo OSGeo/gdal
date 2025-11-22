@@ -113,7 +113,7 @@ char *SPrintArray(GDALDataType eDataType, const void *paDataArray, int nValues,
     {
         switch (eDataType)
         {
-            case GDT_Byte:
+            case GDT_UInt8:
                 snprintf(pszField, iFieldSize + 1, "%d%s",
                          reinterpret_cast<GByte *>(
                              const_cast<void *>(paDataArray))[i],
@@ -180,7 +180,7 @@ GDALDataType HDF4Dataset::GetDataType(int32 iNumType)
         case DFNT_CHAR8:   // The same as DFNT_CHAR
         case DFNT_UCHAR8:  // The same as DFNT_UCHAR
         case DFNT_UINT8:
-            return GDT_Byte;
+            return GDT_UInt8;
         case DFNT_INT8:
             return GDT_Int8;
         case DFNT_INT16:

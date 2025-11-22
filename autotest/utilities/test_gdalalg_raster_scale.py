@@ -27,7 +27,7 @@ def get_scale_alg():
 @pytest.mark.parametrize(
     "dt,min,max",
     [
-        (gdal.GDT_Byte, 0, 255),
+        (gdal.GDT_UInt8, 0, 255),
         (gdal.GDT_Int8, -128, 127),
         (gdal.GDT_UInt16, 0, 65535),
         (gdal.GDT_Int16, -32768, 32767),
@@ -40,7 +40,9 @@ def get_scale_alg():
 def test_gdalalg_raster_scale_no_option(dt, min, max):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 2, 1, dt)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 2, b"\x01\x02", buf_type=gdal.GDT_Byte)
+    src_ds.GetRasterBand(1).WriteRaster(
+        0, 0, 1, 2, b"\x01\x02", buf_type=gdal.GDT_UInt8
+    )
 
     alg = get_scale_alg()
     alg["input"] = src_ds

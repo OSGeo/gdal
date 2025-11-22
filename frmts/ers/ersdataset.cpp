@@ -950,7 +950,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
         poHeader->Find("RasterInfo.CellType", "Unsigned8BitInteger");
     GDALDataType eType;
     if (EQUAL(osCellType, "Unsigned8BitInteger"))
-        eType = GDT_Byte;
+        eType = GDT_UInt8;
     else if (EQUAL(osCellType, "Signed8BitInteger"))
         eType = GDT_Int8;
     else if (EQUAL(osCellType, "Unsigned16BitInteger"))
@@ -968,7 +968,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     else
     {
         CPLDebug("ERS", "Unknown CellType '%s'", osCellType.c_str());
-        eType = GDT_Byte;
+        eType = GDT_UInt8;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1332,7 +1332,7 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    if (eType != GDT_Byte && eType != GDT_Int8 && eType != GDT_Int16 &&
+    if (eType != GDT_UInt8 && eType != GDT_Int8 && eType != GDT_Int16 &&
         eType != GDT_UInt16 && eType != GDT_Int32 && eType != GDT_UInt32 &&
         eType != GDT_Float32 && eType != GDT_Float64)
     {
@@ -1366,7 +1366,7 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     const char *pszCellType = "Unsigned8BitInteger";
     CPL_IGNORE_RET_VAL(pszCellType);  // Make CSA happy
 
-    if (eType == GDT_Byte)
+    if (eType == GDT_UInt8)
         pszCellType = "Unsigned8BitInteger";
     else if (eType == GDT_Int8)
         pszCellType = "Signed8BitInteger";
@@ -1391,7 +1391,7 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /*      Handling for signed eight bit data.                             */
     /* -------------------------------------------------------------------- */
     const char *pszPixelType = CSLFetchNameValue(papszOptions, "PIXELTYPE");
-    if (pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE") && eType == GDT_Byte)
+    if (pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE") && eType == GDT_UInt8)
         pszCellType = "Signed8BitInteger";
 
     /* -------------------------------------------------------------------- */

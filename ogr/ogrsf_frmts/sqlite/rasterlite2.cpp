@@ -358,19 +358,19 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
                     CPLFetchBool(papszOpenOptions, "1BIT_AS_8BIT", true);
             }
             nBits = 1;
-            eDT = GDT_Byte;
+            eDT = GDT_UInt8;
             break;
         }
         case RL2_SAMPLE_2_BIT:
         {
             nBits = 2;
-            eDT = GDT_Byte;
+            eDT = GDT_UInt8;
             break;
         }
         case RL2_SAMPLE_4_BIT:
         {
             nBits = 4;
-            eDT = GDT_Byte;
+            eDT = GDT_UInt8;
             break;
         }
         case RL2_SAMPLE_INT8:
@@ -382,7 +382,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
         case RL2_SAMPLE_UINT8:
         {
             nBits = 8;
-            eDT = GDT_Byte;
+            eDT = GDT_UInt8;
             break;
         }
         case RL2_SAMPLE_INT16:
@@ -1519,7 +1519,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
         {
             nPixelType = RL2_PIXEL_PALETTE;
         }
-        else if (nBandCount == 3 && (eDT == GDT_Byte || eDT == GDT_UInt16) &&
+        else if (nBandCount == 3 && (eDT == GDT_UInt8 || eDT == GDT_UInt16) &&
                  poSrcDS->GetRasterBand(1)->GetColorInterpretation() ==
                      GCI_RedBand &&
                  poSrcDS->GetRasterBand(2)->GetColorInterpretation() ==
@@ -1529,11 +1529,11 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
         {
             nPixelType = RL2_PIXEL_RGB;
         }
-        else if (nBandCount > 1 && (eDT == GDT_Byte || eDT == GDT_UInt16))
+        else if (nBandCount > 1 && (eDT == GDT_UInt8 || eDT == GDT_UInt16))
         {
             nPixelType = RL2_PIXEL_MULTIBAND;
         }
-        else if (nBandCount == 1 && eDT != GDT_Byte)
+        else if (nBandCount == 1 && eDT != GDT_UInt8)
         {
             nPixelType = RL2_PIXEL_DATAGRID;
         }
@@ -1561,7 +1561,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
         }
     }
 
-    if (nBITS > 0 && nBITS <= 8 && eDT != GDT_Byte)
+    if (nBITS > 0 && nBITS <= 8 && eDT != GDT_UInt8)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "NBITS <= 8 only compatible with Byte data type");
@@ -1589,7 +1589,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
 
     if (nPixelType == RL2_PIXEL_MONOCHROME)
     {
-        if (eDT != GDT_Byte)
+        if (eDT != GDT_UInt8)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Incompatible data type for MONOCHROME");
@@ -1614,7 +1614,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
         nSampleType = RL2_SAMPLE_FLOAT;
     else if (eDT == GDT_Float64)
         nSampleType = RL2_SAMPLE_DOUBLE;
-    else if (eDT != GDT_Byte)
+    else if (eDT != GDT_UInt8)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported data type");
         return nullptr;

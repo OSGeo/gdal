@@ -1088,7 +1088,7 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     VSIMemGenerateHiddenFilename("tmp.tif");
                 auto poDS = std::unique_ptr<GDALDataset>(
                     poGTIFFDrv->Create(osFilename.c_str(), 1, 1, maxSourceBands,
-                                       GDT_Byte, nullptr));
+                                       GDT_UInt8, nullptr));
                 if (poDS)
                     osTmpFilename = std::move(osFilename);
             }
@@ -1099,7 +1099,7 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     pixelFunctionArgs, options, maxSourceBands, osTmpFilename);
                 if (fakeVRT &&
                     fakeVRT->RasterIO(GF_Read, 0, 0, 1, 1, dummyData.data(), 1,
-                                      1, GDT_Byte, vrt->GetRasterCount(),
+                                      1, GDT_UInt8, vrt->GetRasterCount(),
                                       nullptr, 0, 0, 0, nullptr) != CE_None)
                 {
                     return false;

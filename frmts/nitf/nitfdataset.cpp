@@ -4083,7 +4083,7 @@ static const char *GDALToNITFDataType(GDALDataType eType)
 
     switch (eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         case GDT_UInt16:
         case GDT_UInt32:
             pszPVType = "INT";
@@ -4817,7 +4817,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             papszFullOptions = CSLSetNameValue(papszFullOptions, "IREPBAND",
                                                osIREPBAND.c_str());
         }
-        else if (poSrcDS->GetRasterCount() == 1 && eType == GDT_Byte &&
+        else if (poSrcDS->GetRasterCount() == 1 && eType == GDT_UInt8 &&
                  poBand1->GetColorTable() != nullptr)
         {
             papszFullOptions =
@@ -6843,7 +6843,7 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
 #if defined(JPEG_LIB_MK1) || defined(JPEG_DUAL_MODE_8_12)
-    if (eDT != GDT_Byte && eDT != GDT_UInt16)
+    if (eDT != GDT_UInt8 && eDT != GDT_UInt16)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "JPEG driver doesn't support data type %s. "
@@ -6857,10 +6857,10 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
     if (eDT == GDT_UInt16 || eDT == GDT_Int16)
         eDT = GDT_UInt16;
     else
-        eDT = GDT_Byte;
+        eDT = GDT_UInt8;
 
 #else
-    if (eDT != GDT_Byte)
+    if (eDT != GDT_UInt8)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "JPEG driver doesn't support data type %s. "
@@ -6871,7 +6871,7 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
         return false;
     }
 
-    eDT = GDT_Byte;  // force to 8bit.
+    eDT = GDT_UInt8;  // force to 8bit.
 #endif
 
     /* -------------------------------------------------------------------- */

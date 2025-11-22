@@ -5596,7 +5596,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
 
     /* -------------------------------------------------------------------- */
     /*      How many bits per sample?  We have a special case if NBITS      */
-    /*      specified for GDT_Byte, GDT_UInt16, GDT_UInt32.                 */
+    /*      specified for GDT_UInt8, GDT_UInt16, GDT_UInt32.                 */
     /* -------------------------------------------------------------------- */
     int l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
     if (CSLFetchNameValue(papszParamList, "NBITS") != nullptr)
@@ -5604,7 +5604,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         int nMinBits = 0;
         int nMaxBits = 0;
         l_nBitsPerSample = atoi(CSLFetchNameValue(papszParamList, "NBITS"));
-        if (eType == GDT_Byte)
+        if (eType == GDT_UInt8)
         {
             nMinBits = 1;
             nMaxBits = 8;
@@ -5663,7 +5663,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         eType != GDT_Float16 && eType != GDT_Float32)
     {
         // Reflects tif_jxl's GetJXLDataType()
-        if (eType != GDT_Byte && eType != GDT_UInt16)
+        if (eType != GDT_UInt8 && eType != GDT_UInt16)
         {
             ReportError(pszFilename, CE_Failure, CPLE_NotSupported,
                         "Data type %s not supported for JXL compression. Only "
@@ -5677,7 +5677,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
             GDALDataType eDT;
             int nBitsPerSample;
         } asSupportedDTBitsPerSample[] = {
-            {GDT_Byte, 8},
+            {GDT_UInt8, 8},
             {GDT_UInt16, 16},
         };
 
@@ -6071,7 +6071,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     const char *pszPixelType = CSLFetchNameValue(papszParamList, "PIXELTYPE");
     if (pszPixelType == nullptr)
         pszPixelType = "";
-    if (eType == GDT_Byte && EQUAL(pszPixelType, "SIGNEDBYTE"))
+    if (eType == GDT_UInt8 && EQUAL(pszPixelType, "SIGNEDBYTE"))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Using PIXELTYPE=SIGNEDBYTE with Byte data type is deprecated "
@@ -6087,7 +6087,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     TIFFSetField(l_hTIFF, TIFFTAG_BITSPERSAMPLE, l_nBitsPerSample);
 
     uint16_t l_nSampleFormat = 0;
-    if ((eType == GDT_Byte && EQUAL(pszPixelType, "SIGNEDBYTE")) ||
+    if ((eType == GDT_UInt8 && EQUAL(pszPixelType, "SIGNEDBYTE")) ||
         eType == GDT_Int8 || eType == GDT_Int16 || eType == GDT_Int32 ||
         eType == GDT_Int64)
         l_nSampleFormat = SAMPLEFORMAT_INT;
@@ -6123,7 +6123,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         }
         else if (EQUAL(pszValue, "PALETTE"))
         {
-            if (eType == GDT_Byte || eType == GDT_UInt16)
+            if (eType == GDT_UInt8 || eType == GDT_UInt16)
             {
                 TIFFSetField(l_hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE);
                 nSamplesAccountedFor = 1;
@@ -6234,12 +6234,12 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     {
         // If image contains 3 or 4 bands and datatype is Byte then we will
         // assume it is RGB. In all other cases assume it is MINISBLACK.
-        if (l_nBands == 3 && eType == GDT_Byte)
+        if (l_nBands == 3 && eType == GDT_UInt8)
         {
             TIFFSetField(l_hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
             nSamplesAccountedFor = 3;
         }
-        else if (l_nBands == 4 && eType == GDT_Byte)
+        else if (l_nBands == 4 && eType == GDT_UInt8)
         {
             uint16_t v[1] = {
                 GTiffGetAlphaValue(CSLFetchNameValue(papszParamList, "ALPHA"),
@@ -6388,7 +6388,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     if (bForceColorTable)
     {
-        const int nColors = eType == GDT_Byte ? 256 : 65536;
+        const int nColors = eType == GDT_UInt8 ? 256 : 65536;
 
         unsigned short *panTRed = static_cast<unsigned short *>(
             CPLMalloc(sizeof(unsigned short) * nColors));
@@ -6399,7 +6399,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
 
         for (int iColor = 0; iColor < nColors; ++iColor)
         {
-            if (eType == GDT_Byte)
+            if (eType == GDT_UInt8)
             {
                 panTRed[iColor] = GTiffDataset::ClampCTEntry(
                     iColor, 1, iColor, nColorTableMultiplier);
@@ -7143,7 +7143,7 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset *poDstDS,
                     }
                     eErr = poSrcMaskBand->RasterIO(
                         GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
-                        nReqXSize, nReqYSize, GDT_Byte, 1,
+                        nReqXSize, nReqYSize, GDT_UInt8, 1,
                         poDstDS->m_nBlockXSize, nullptr);
                     if (eErr == CE_None)
                     {
@@ -7305,7 +7305,7 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset *poDstDS,
                     }
                     eErr = poSrcMaskBand->RasterIO(
                         GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
-                        nReqXSize, nReqYSize, GDT_Byte, 1,
+                        nReqXSize, nReqYSize, GDT_UInt8, 1,
                         poDstDS->m_nBlockXSize, nullptr);
                     if (eErr == CE_None)
                     {
@@ -7410,7 +7410,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     }
 
     if (CSLFetchNameValue(papszOptions, "PIXELTYPE") == nullptr &&
-        eType == GDT_Byte)
+        eType == GDT_UInt8)
     {
         poPBand->EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
@@ -7756,7 +7756,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     if ((l_nBands == 1 || l_nBands == 2) &&
         poSrcDS->GetRasterBand(1)->GetColorTable() != nullptr &&
-        eType == GDT_Byte)
+        eType == GDT_UInt8)
     {
         unsigned short anTRed[256] = {0};
         unsigned short anTGreen[256] = {0};
@@ -7860,7 +7860,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
 
     if (l_nBands == 2 &&
         poSrcDS->GetRasterBand(1)->GetColorTable() != nullptr &&
-        (eType == GDT_Byte || eType == GDT_UInt16))
+        (eType == GDT_UInt8 || eType == GDT_UInt16))
     {
         uint16_t v[1] = {EXTRASAMPLE_UNASSALPHA};
 
@@ -8265,17 +8265,17 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    // Legacy... Patch back GDT_Int8 type to GDT_Byte if the user used
+    // Legacy... Patch back GDT_Int8 type to GDT_UInt8 if the user used
     // PIXELTYPE=SIGNEDBYTE
     const char *pszPixelType = CSLFetchNameValue(papszOptions, "PIXELTYPE");
     if (pszPixelType == nullptr)
         pszPixelType = "";
-    if (eType == GDT_Byte && EQUAL(pszPixelType, "SIGNEDBYTE"))
+    if (eType == GDT_UInt8 && EQUAL(pszPixelType, "SIGNEDBYTE"))
     {
         for (int i = 0; i < poDS->nBands; ++i)
         {
             auto poBand = static_cast<GTiffRasterBand *>(poDS->papoBands[i]);
-            poBand->eDataType = GDT_Byte;
+            poBand->eDataType = GDT_UInt8;
             poBand->EnablePixelTypeSignedByteWarning(false);
             poBand->SetMetadataItem("PIXELTYPE", "SIGNEDBYTE",
                                     "IMAGE_STRUCTURE");
@@ -8812,8 +8812,8 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             for (int j = 0; j < nYSize && eErr == CE_None; ++j)
             {
                 eErr = poSrcDS->RasterIO(GF_Read, 0, j, nXSize, 1, pabyScanline,
-                                         nXSize, 1, GDT_Byte, l_nBands, nullptr,
-                                         poDS->nBands, 0, 1, nullptr);
+                                         nXSize, 1, GDT_UInt8, l_nBands,
+                                         nullptr, poDS->nBands, 0, 1, nullptr);
                 if (eErr == CE_None &&
                     TIFFWriteScanline(l_hTIFF, pabyScanline, j, 0) == -1)
                 {
@@ -8841,7 +8841,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                 {
                     eErr = poSrcDS->GetRasterBand(iBand)->RasterIO(
                         GF_Read, 0, j, nXSize, 1, pabyScanline, nXSize, 1,
-                        GDT_Byte, 0, 0, nullptr);
+                        GDT_UInt8, 0, 0, nullptr);
                     if (poDS->m_bTreatAsSplitBitmap)
                     {
                         for (int i = 0; i < nXSize; ++i)

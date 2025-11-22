@@ -24,7 +24,7 @@ GTiffBitmapBand::GTiffBitmapBand(GTiffDataset *poDSIn, int nBandIn)
     : GTiffOddBitsBand(poDSIn, nBandIn)
 
 {
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     if (poDSIn->m_poColorTable != nullptr)
     {

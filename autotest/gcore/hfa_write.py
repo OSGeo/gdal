@@ -88,7 +88,7 @@ def test_hfa_write_nd_invalid(tmp_path):
     img_path = tmp_path / "ndinvalid.img"
 
     drv = gdal.GetDriverByName("HFA")
-    ds = drv.Create(img_path, 512, 512, 1, gdal.GDT_Byte, [])
+    ds = drv.Create(img_path, 512, 512, 1, gdal.GDT_UInt8, [])
     ds.GetRasterBand(1).SetNoDataValue(200)
     ds = None
 

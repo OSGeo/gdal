@@ -655,7 +655,7 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
         else if (EQUAL(aosTokensBand[0], "32R"))
             eType = GDT_Float32;
         else
-            eType = GDT_Byte;
+            eType = GDT_UInt8;
 
         bool bNative = true;
         if (CSLCount(aosTokensBand) > 4)
