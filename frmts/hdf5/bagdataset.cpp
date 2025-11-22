@@ -58,26 +58,6 @@ struct BAGRefinementGrid
 constexpr float fDEFAULT_NODATA = 1000000.0f;
 
 /************************************************************************/
-/*                                h5check()                             */
-/************************************************************************/
-
-#ifdef DEBUG
-template <class T> static T h5check(T ret, const char *filename, int line)
-{
-    if (ret < 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "HDF5 API failed at %s:%d",
-                 filename, line);
-    }
-    return ret;
-}
-
-#define H5_CHECK(x) h5check(x, __FILE__, __LINE__)
-#else
-#define H5_CHECK(x) (x)
-#endif
-
-/************************************************************************/
 /* ==================================================================== */
 /*                               BAGDataset                             */
 /* ==================================================================== */
