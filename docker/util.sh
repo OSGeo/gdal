@@ -396,7 +396,7 @@ EOF
           BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}")
         fi
     else
-      if test "${DOCKER_BUILDX}" != "buildx" && [[ "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" || "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest" ]]; then
+      if test "${DOCKER_BUILDX}" != "buildx" && [[ "${IMAGE_NAME}" == osgeo/gdal:ubuntu-* ]]; then
         if test "${ARCH_PLATFORMS}" = "linux/arm64"; then
           BASE_IMAGE=$(grep "ARG BASE_IMAGE=" "${SCRIPT_DIR}/Dockerfile" | sed "s/ARG BASE_IMAGE=//")
           echo "Fetching digest for ${BASE_IMAGE} ${ARCH_PLATFORMS}..."
@@ -407,7 +407,7 @@ EOF
           BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}@${TARGET_BASE_IMAGE_DIGEST}")
           echo "${BUILD_ARGS[@]}"
         fi
-      elif test "${DOCKER_BUILDX}" != "buildx" && [[ "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" || "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest" ]]; then
+      elif test "${DOCKER_BUILDX}" != "buildx" && [[ "${IMAGE_NAME}" == osgeo/gdal:alpine-* ]]; then
         if test "${ARCH_PLATFORMS}" = "linux/arm64"; then
           ALPINE_VERSION=$(grep "ARG ALPINE_VERSION=" "${SCRIPT_DIR}/Dockerfile" | sed "s/ARG ALPINE_VERSION=//")
           BASE_IMAGE="alpine:${ALPINE_VERSION}"
