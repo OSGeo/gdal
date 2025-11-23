@@ -2140,6 +2140,7 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
             // Write "assets.image.href"
             {
                 std::string osHref = osFileNameToWrite;
+                CPL_IGNORE_RET_VAL(osFileNameToWrite);
                 if (!psOptions->osBaseURL.empty())
                 {
                     osHref = CPLFormFilenameSafe(psOptions->osBaseURL.c_str(),
