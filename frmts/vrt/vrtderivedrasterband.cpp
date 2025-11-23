@@ -1122,7 +1122,13 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         }
 
         if (eAllSrcType != GDT_Unknown)
+        {
+            // Very few CPUs have efficient Float16
+            if (eAllSrcType == GDT_Float16)
+                eAllSrcType = GDT_Float32;
+
             eSrcType = GDALDataTypeUnion(eAllSrcType, eDataType);
+        }
         else
             eSrcType = GDALDataTypeUnion(GDT_Float64, eDataType);
     }
