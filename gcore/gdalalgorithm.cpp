@@ -4414,9 +4414,10 @@ GDALAlgorithm::AddOutputDataTypeArg(std::string *pValue,
             .AddAlias("ot")
             .AddAlias("datatype")
             .AddMetadataItem("type", {"GDALDataType"})
-            .SetChoices("Byte", "Int8", "UInt16", "Int16", "UInt32", "Int32",
+            .SetChoices("UInt8", "Int8", "UInt16", "Int16", "UInt32", "Int32",
                         "UInt64", "Int64", "CInt16", "CInt32", "Float16",
-                        "Float32", "Float64", "CFloat32", "CFloat64");
+                        "Float32", "Float64", "CFloat32", "CFloat64")
+            .SetHiddenChoices("Byte");
     return arg;
 }
 
