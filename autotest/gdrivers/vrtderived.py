@@ -14,6 +14,7 @@
 
 import math
 import os
+import struct
 import sys
 import threading
 
@@ -1100,17 +1101,20 @@ def test_vrt_expression_missing_expression_arg():
 # Test arbitrary expression pixel functions
 
 
-def vrt_expression_xml(tmpdir, expression, dialect, sources):
+def vrt_expression_xml(tmpdir, expression, dialect, sources, dt=gdal.GDT_Float64):
 
     drv = gdal.GetDriverByName("GTiff")
 
-    nx = 1
-    ny = 1
+    nx = 40
+    ny = 3
 
-    expression = expression.replace("<", "&lt;").replace(">", "&gt;")
+    expression = (
+        expression.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    )
 
+    dt_str = gdal.GetDataTypeName(dt)
     xml = f"""<VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
-              <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+              <VRTRasterBand dataType="{dt_str}" band="1" subClass="VRTDerivedRasterBand">
                  <PixelFunctionType>expression</PixelFunctionType>
                  <PixelFunctionArguments expression="{expression}" dialect="{dialect}" />"""
 
@@ -1123,7 +1127,7 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources):
 
         src_fname = tmpdir / f"source_{i}.tif"
 
-        with drv.Create(src_fname, 1, 1, 1, gdal.GDT_Float64) as ds:
+        with drv.Create(src_fname, nx, ny, 1, dt) as ds:
             ds.GetRasterBand(1).Fill(source_value)
 
         xml += f"""<SimpleSource name="{source_name}">
@@ -1260,11 +1264,382 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources):
             ["muparser"],
             id="fmod works correctly",
         ),
+        pytest.param(
+            "A / 0",
+            [("A", 2.2)],
+            float("inf"),
+            ["muparser"],
+            id="div_by_zero",
+        ),
+        pytest.param(
+            "A ^ 2",
+            [("A", 2.2)],
+            2.2**2,
+            ["muparser"],
+            id="pow_two",
+        ),
+        pytest.param(
+            "A ^ B",
+            [("A", 2.2), ("B", 1.1)],
+            2.2**1.1,
+            ["muparser"],
+            id="pow_generic",
+        ),
+        pytest.param(
+            "min(A, B, C)",
+            [("A", 1.1), ("B", 2.1), ("C", 3.1)],
+            min([1.1, 2.1, 3.1]),
+            None,
+            id="min",
+        ),
+        pytest.param(
+            "max(A, B, C)",
+            [("A", 1.1), ("B", 2.1), ("C", 3.1)],
+            max([1.1, 2.1, 3.1]),
+            None,
+            id="max",
+        ),
+        pytest.param(
+            "sum(A, B, C)",
+            [("A", 1.1), ("B", 2.1), ("C", 3.1)],
+            sum([1.1, 2.1, 3.1]),
+            None,
+            id="sum",
+        ),
+        pytest.param(
+            "avg(A, B, C)",
+            [("A", 1.1), ("B", 2.1), ("C", 3.1)],
+            sum([1.1, 2.1, 3.1]) / 3,
+            None,
+            id="avg",
+        ),
+        pytest.param(
+            "sqrt(A)",
+            [("A", 1.1)],
+            math.sqrt(1.1),
+            None,
+            id="sqrt",
+        ),
+        pytest.param(
+            "sin(A)",
+            [("A", 1.1)],
+            math.sin(1.1),
+            None,
+            id="sin",
+        ),
+        pytest.param(
+            "cos(A)",
+            [("A", 1.1)],
+            math.cos(1.1),
+            None,
+            id="cos",
+        ),
+        pytest.param(
+            "tan(A)",
+            [("A", 1.1)],
+            math.tan(1.1),
+            None,
+            id="tan",
+        ),
+        pytest.param(
+            "asin(A)",
+            [("A", 0.1)],
+            math.asin(0.1),
+            None,
+            id="asin",
+        ),
+        pytest.param(
+            "acos(A)",
+            [("A", 0.1)],
+            math.acos(0.1),
+            None,
+            id="acos",
+        ),
+        pytest.param(
+            "atan(A)",
+            [("A", 0.1)],
+            math.atan(0.1),
+            None,
+            id="atan",
+        ),
+        pytest.param(
+            "cosh(A)",
+            [("A", 1.1)],
+            math.cosh(1.1),
+            None,
+            id="cosh",
+        ),
+        pytest.param(
+            "sinh(A)",
+            [("A", 1.1)],
+            math.sinh(1.1),
+            None,
+            id="sinh",
+        ),
+        pytest.param(
+            "tanh(A)",
+            [("A", 1.1)],
+            math.tanh(1.1),
+            None,
+            id="tanh",
+        ),
+        pytest.param(
+            "acosh(A)",
+            [("A", 1.1)],
+            math.acosh(1.1),
+            None,
+            id="acosh",
+        ),
+        pytest.param(
+            "asinh(A)",
+            [("A", 1.1)],
+            math.asinh(1.1),
+            None,
+            id="asinh",
+        ),
+        pytest.param(
+            "atanh(A)",
+            [("A", 0.1)],
+            math.atanh(0.1),
+            None,
+            id="atanh",
+        ),
+        pytest.param(
+            "exp(A)",
+            [("A", 0.1)],
+            math.exp(0.1),
+            None,
+            id="exp",
+        ),
+        pytest.param(
+            "log(A)",
+            [("A", 0.1)],
+            math.log(0.1),
+            None,
+            id="log",
+        ),
+        pytest.param(
+            "log10(A)",
+            [("A", 0.1)],
+            math.log10(0.1),
+            None,
+            id="log10",
+        ),
+        pytest.param(
+            "log2(A)",
+            [("A", 0.1)],
+            math.log2(0.1),
+            None,
+            id="log2",
+        ),
+        pytest.param(
+            "abs(A)",
+            [("A", -1.1)],
+            1.1,
+            None,
+            id="abs",
+        ),
+        pytest.param(
+            "A == B ? 1 : 0",
+            [("A", 1), ("B", 1)],
+            1,
+            None,
+            id="eq_true",
+        ),
+        pytest.param(
+            "A == B ? 1 : 0",
+            [("A", 1), ("B", 2)],
+            0,
+            None,
+            id="eq_false",
+        ),
+        pytest.param(
+            "A != B ? 1 : 0",
+            [("A", 1), ("B", 2)],
+            1,
+            None,
+            id="neq_true",
+        ),
+        pytest.param(
+            "A != B ? 1 : 0",
+            [("A", 1), ("B", 1)],
+            0,
+            None,
+            id="neq_false",
+        ),
+        pytest.param(
+            "A < B ? 1 : 0",
+            [("A", 1), ("B", 1.1)],
+            1,
+            None,
+            id="lt_true",
+        ),
+        pytest.param(
+            "A < B ? 1 : 0",
+            [("A", 1), ("B", 1)],
+            0,
+            None,
+            id="lt_false",
+        ),
+        pytest.param(
+            "A <= B ? 1 : 0",
+            [("A", 1), ("B", 1)],
+            1,
+            None,
+            id="le_true",
+        ),
+        pytest.param(
+            "A <= B ? 1 : 0",
+            [("A", 1), ("B", 0.9)],
+            0,
+            None,
+            id="le_false",
+        ),
+        pytest.param(
+            "A > B ? 1 : 0",
+            [("A", 1), ("B", 0.9)],
+            1,
+            None,
+            id="gt_true",
+        ),
+        pytest.param(
+            "A > B ? 1 : 0",
+            [("A", 1), ("B", 1)],
+            0,
+            None,
+            id="gt_false",
+        ),
+        pytest.param(
+            "A >= B ? 1 : 0",
+            [("A", 1), ("B", 1)],
+            1,
+            None,
+            id="ge_true",
+        ),
+        pytest.param(
+            "A >= B ? 1 : 0",
+            [("A", 1), ("B", 1.9)],
+            0,
+            None,
+            id="ge_false",
+        ),
+        pytest.param(
+            "1 && 1 ? 1 : A",
+            [("A", 10)],
+            1,
+            ["muparser"],
+            id="and_true",
+        ),
+        pytest.param(
+            "1 && 0 ? 1 : A",
+            [("A", 10)],
+            10,
+            ["muparser"],
+            id="and_false",
+        ),
+        pytest.param(
+            "0 || 1 ? 1 : A",
+            [("A", 10)],
+            1,
+            ["muparser"],
+            id="or_true",
+        ),
+        pytest.param(
+            "0 || 0 ? 1 : A",
+            [("A", 10)],
+            10,
+            ["muparser"],
+            id="or_false",
+        ),
+        pytest.param(
+            "-1 + A*0",
+            [("A", 10)],
+            -1,
+            None,
+            id="unary_minus_constant",
+        ),
+        pytest.param(
+            "-A",
+            [("A", 10)],
+            -10,
+            None,
+            id="unary_minus_variable",
+        ),
+        pytest.param(
+            "_e",
+            [("A", 0)],
+            math.exp(1),
+            ["muparser"],
+            id="e_constant",
+        ),
+        pytest.param(
+            "_pi",
+            [("A", 0)],
+            math.pi,
+            ["muparser"],
+            id="pi_constant",
+        ),
+        pytest.param(
+            "nan",
+            [("A", 0)],
+            float("nan"),
+            ["muparser"],
+            id="nan",
+        ),
+        pytest.param(
+            "rint(A)",
+            [("A", -1.9)],
+            -2.0,
+            ["muparser"],
+            id="rint_floor",
+        ),
+        pytest.param(
+            "rint(A)",
+            [("A", -1.1)],
+            -1.0,
+            ["muparser"],
+            id="rint_ceil",
+        ),
+        pytest.param(
+            "sign(A)",
+            [("A", -2.1)],
+            -1,
+            ["muparser"],
+            id="sign_neg",
+        ),
+        pytest.param(
+            "sign(A)",
+            [("A", 2.1)],
+            1.0,
+            ["muparser"],
+            id="sign_pos",
+        ),
+        pytest.param(
+            "sign(A)",
+            [("A", 0.0)],
+            0.0,
+            ["muparser"],
+            id="sign_zero",
+        ),
+        pytest.param(
+            "sign(A)",
+            [("A", float("nan"))],
+            0.0,
+            ["muparser"],
+            id="sign_nan",
+        ),
     ],
 )
 @pytest.mark.parametrize("dialect", ("exprtk", "muparser"))
+@pytest.mark.parametrize(
+    "dt",
+    [
+        pytest.param(gdal.GDT_Float32, id="Float32"),
+        pytest.param(gdal.GDT_Float64, id="Float64"),
+    ],
+)
 def test_vrt_pixelfn_expression(
-    tmp_vsimem, expression, sources, result, dialect, dialects
+    tmp_vsimem, expression, sources, result, dialect, dialects, dt
 ):
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
@@ -1275,10 +1650,13 @@ def test_vrt_pixelfn_expression(
     if dialects and dialect not in dialects:
         pytest.skip(f"Expression not supported for dialect {dialect}")
 
-    xml = vrt_expression_xml(tmp_vsimem, expression, dialect, sources)
+    xml = vrt_expression_xml(tmp_vsimem, expression, dialect, sources, dt)
 
     with gdal.Open(xml) as ds:
-        assert pytest.approx(ds.ReadAsArray()[0][0], nan_ok=True) == result
+        assert (
+            pytest.approx(ds.ReadAsArray(), nan_ok=True)
+            == [[result] * ds.RasterXSize] * ds.RasterYSize
+        )
 
 
 @pytest.mark.parametrize(
@@ -1402,6 +1780,37 @@ def test_vrt_pixelfn_expression_coordinates_no_geotransform():
 
     with pytest.raises(Exception, match="VRTDataset must have a <GeoTransform>"):
         gdal.Open(xml).ReadRaster()
+
+
+###############################################################################
+# Test rnd()
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_pixelfn_expression_muparser_rnd():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("muparser not available")
+
+    xml = """
+    <VRTDataset rasterXSize="1" rasterYSize="1">
+      <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>expression</PixelFunctionType>
+        <PixelFunctionArguments expression="rnd()"/>
+        <SimpleSource>
+           <SourceFilename>data/byte.tif</SourceFilename>
+           <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    try:
+        v = struct.unpack("f", gdal.Open(xml).ReadRaster())[0]
+        assert v >= 0 and v <= 1
+    except RuntimeError as e:
+        # Old versions of muparser don't support rnd()
+        assert 'Unexpected token "rnd" found at position 0' in str(e)
+        pytest.skip("rnd() not supported by this version of muparser")
 
 
 ###############################################################################
