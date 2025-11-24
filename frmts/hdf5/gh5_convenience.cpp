@@ -242,11 +242,11 @@ bool GH5_FetchAttribute(hid_t loc_id, const char *pszAttrName, double &dfResult,
 GDALDataType GH5_GetDataType(hid_t TypeID)
 {
     if (H5Tequal(H5T_NATIVE_CHAR, TypeID))
-        return GDT_Byte;
+        return GDT_UInt8;
     else if (H5Tequal(H5T_NATIVE_SCHAR, TypeID))
         return GDT_Int8;
     else if (H5Tequal(H5T_NATIVE_UCHAR, TypeID))
-        return GDT_Byte;
+        return GDT_UInt8;
     else if (H5Tequal(H5T_NATIVE_SHORT, TypeID))
         return GDT_Int16;
     else if (H5Tequal(H5T_NATIVE_USHORT, TypeID))

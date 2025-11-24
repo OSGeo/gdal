@@ -956,7 +956,7 @@ GDALDataset *EnvisatDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Envisat product format not recognised.  Assuming 8bit\n"
                  "with no per-record prefix data.  Results may be useless!");
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         poDS->nRasterXSize = dsr_size;
     }
     else
@@ -964,7 +964,7 @@ GDALDataset *EnvisatDataset::Open(GDALOpenInfo *poOpenInfo)
         if (dsr_size >= 2 * poDS->nRasterXSize)
             eDataType = GDT_UInt16;
         else
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
     }
 
     const int nPrefixBytes =
@@ -1040,7 +1040,7 @@ GDALDataset *EnvisatDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     auto poBand = RawRasterBand::Create(
                         poDS.get(), iBand + 1, poDS->fpImage,
-                        ds_offset + nPrefixBytes, 3, dsr_size, GDT_Byte,
+                        ds_offset + nPrefixBytes, 3, dsr_size, GDT_UInt8,
                         RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
                         RawRasterBand::OwnFP::NO);
                     if (!poBand)
@@ -1089,7 +1089,7 @@ GDALDataset *EnvisatDataset::Open(GDALOpenInfo *poOpenInfo)
             int nPrefixBytes2, nSubBands, nSubBandIdx, nSubBandOffset;
 
             int nPixelSize = 1;
-            GDALDataType eDataType2 = GDT_Byte;
+            GDALDataType eDataType2 = GDT_UInt8;
 
             nSubBands = dsr_size2 / poDS->nRasterXSize;
             if ((nSubBands < 1) || (nSubBands > 3))

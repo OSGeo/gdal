@@ -582,7 +582,7 @@ def test_vrtmisc_blocksize(tmp_vsimem):
     filename = tmp_vsimem / "test_vrtmisc_blocksize.vrt"
     vrt_ds = gdal.GetDriverByName("VRT").Create(filename, 50, 50, 0)
     options = ["subClass=VRTSourcedRasterBand", "blockXSize=32", "blockYSize=48"]
-    vrt_ds.AddBand(gdal.GDT_Byte, options)
+    vrt_ds.AddBand(gdal.GDT_UInt8, options)
     vrt_ds = None
 
     vrt_ds = gdal.Open(filename)

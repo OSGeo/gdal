@@ -1169,7 +1169,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
     {
         /* JPEG-F can only compress byte data type
          */
-        if (eType != GDT_Byte)
+        if (eType != GDT_UInt8)
         {
             CPLError(
                 CE_Failure, CPLE_IllegalArg,

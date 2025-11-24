@@ -296,7 +296,7 @@ class GDALZonalStatsImpl
         : m_src(src), m_weights(weights), m_dst(dst), m_zones(zones),
           m_coverageDataType(options.pixels == GDALZonalStatsOptions::FRACTIONAL
                                  ? GDT_Float32
-                                 : GDT_Byte),
+                                 : GDT_UInt8),
           m_options(options),
           m_maxCells(options.memory /
                      std::max(1, GDALGetDataTypeSizeBytes(m_workingDataType)))
@@ -1187,7 +1187,7 @@ class GDALZonalStatsImpl
                     return false;
                 }
                 if (!ReadWindow(*poWeightsBand->GetMaskBand(), oWindow,
-                                m_pabyWeightsMaskBuf.get(), GDT_Byte))
+                                m_pabyWeightsMaskBuf.get(), GDT_UInt8))
                 {
                     return false;
                 }
@@ -1454,7 +1454,7 @@ class GDALZonalStatsImpl
                         return false;
                     }
                     if (!ReadWindow(*poWeightsBand->GetMaskBand(), oChunkWindow,
-                                    m_pabyWeightsMaskBuf.get(), GDT_Byte))
+                                    m_pabyWeightsMaskBuf.get(), GDT_UInt8))
                     {
                         return false;
                     }
@@ -1785,7 +1785,7 @@ class GDALZonalStatsImpl
                         }
                         if (!ReadWindow(*poWeightsBand->GetMaskBand(),
                                         oSubWindow, m_pabyWeightsMaskBuf.get(),
-                                        GDT_Byte))
+                                        GDT_UInt8))
                         {
                             return false;
                         }
@@ -1966,7 +1966,7 @@ class GDALZonalStatsImpl
 
     const GDALDataType m_coverageDataType;
     const GDALDataType m_workingDataType = GDT_Float64;
-    const GDALDataType m_maskDataType = GDT_Byte;
+    const GDALDataType m_maskDataType = GDT_UInt8;
     static constexpr GDALDataType m_zonesDataType = GDT_Float64;
 
     GDALGeoTransform m_srcGT{};

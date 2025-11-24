@@ -392,7 +392,7 @@ MAIN_START(argc, argv)
 
     if (sOptions.nPixels != 0 && sOptions.eDT == GDT_Unknown)
     {
-        sOptions.eDT = GDT_Byte;
+        sOptions.eDT = GDT_UInt8;
     }
     if (sOptions.nBandCount < 0)
     {

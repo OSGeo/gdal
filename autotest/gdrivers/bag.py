@@ -687,7 +687,7 @@ def test_bag_vr_resampled_mask():
     )
     assert ds is not None
     assert ds.RasterCount == 1
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     assert ds.GetRasterBand(1).GetNoDataValue() is None
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4552

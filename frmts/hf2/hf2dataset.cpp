@@ -765,7 +765,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
     GDALDataType eSrcDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     GDALDataType eReqDT;
     float fVertPres = (float)0.01;
-    if (eSrcDT == GDT_Byte || eSrcDT == GDT_Int16)
+    if (eSrcDT == GDT_UInt8 || eSrcDT == GDT_Int16)
     {
         fVertPres = 1;
         eReqDT = GDT_Int16;

@@ -411,7 +411,7 @@ class BlendBand final : public GDALRasterBand
         nRasterYSize = oBlendDataset.GetRasterYSize();
         oBlendDataset.m_oColorDS.GetRasterBand(1)->GetBlockSize(&nBlockXSize,
                                                                 &nBlockYSize);
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
     }
 
     GDALColorInterp GetColorInterpretation() override
@@ -444,7 +444,7 @@ class BlendBand final : public GDALRasterBand
         GetActualBlockSize(nBlockXOff, nBlockYOff, &nReqXSize, &nReqYSize);
         return RasterIO(GF_Read, nBlockXOff * nBlockXSize,
                         nBlockYOff * nBlockYSize, nReqXSize, nReqYSize, pData,
-                        nReqXSize, nReqYSize, GDT_Byte, 1, nBlockXSize,
+                        nReqXSize, nReqYSize, GDT_UInt8, 1, nBlockXSize,
                         nullptr);
     }
 
@@ -592,14 +592,15 @@ bool BlendDataset::AcquireSourcePixels(int nXOff, int nYOff, int nXSize,
     }
 
     const bool bOK =
-        (m_oColorDS.RasterIO(
-             GF_Read, nXOff, nYOff, nXSize, nYSize, m_abyBuffer.data(),
-             nBufXSize, nBufYSize, GDT_Byte, nColorCount, nullptr, 1, nBufXSize,
-             static_cast<GSpacing>(nPixelCount), psExtraArg) == CE_None &&
+        (m_oColorDS.RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
+                             m_abyBuffer.data(), nBufXSize, nBufYSize,
+                             GDT_UInt8, nColorCount, nullptr, 1, nBufXSize,
+                             static_cast<GSpacing>(nPixelCount),
+                             psExtraArg) == CE_None &&
          m_oOverlayDS.RasterIO(
              GF_Read, nXOff, nYOff, nXSize, nYSize,
              m_abyBuffer.data() + nPixelCount * nColorCount, nBufXSize,
-             nBufYSize, GDT_Byte, nOverlayCount, nullptr, 1, nBufXSize,
+             nBufYSize, GDT_UInt8, nOverlayCount, nullptr, 1, nBufXSize,
              static_cast<GSpacing>(nPixelCount), psExtraArg) == CE_None);
     if (bOK)
     {
@@ -870,8 +871,9 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     const int nColorCount = m_oColorDS.GetRasterCount();
     const int nOverlayCount = m_oOverlayDS.GetRasterCount();
     if (nOverlayCount == 1 && m_opacity255Scale == 255 &&
-        m_operator == HSV_VALUE && eRWFlag == GF_Read && eBufType == GDT_Byte &&
-        nBandCount == nBands && IsAllBands(nBands, panBandMap) &&
+        m_operator == HSV_VALUE && eRWFlag == GF_Read &&
+        eBufType == GDT_UInt8 && nBandCount == nBands &&
+        IsAllBands(nBands, panBandMap) &&
         AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                             psExtraArg))
     {
@@ -915,8 +917,8 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             {
                 auto nDstOffset = 3 * nBandSpace + j * nLineSpace;
                 const GByte *pabyA = m_abyBuffer.data() + nPixelCount * 3;
-                GDALCopyWords64(pabyA, GDT_Byte, 1, pabyDst + nDstOffset,
-                                GDT_Byte, static_cast<int>(nPixelSpace),
+                GDALCopyWords64(pabyA, GDT_UInt8, 1, pabyDst + nDstOffset,
+                                GDT_UInt8, static_cast<int>(nPixelSpace),
                                 nBufXSize);
             }
         }
@@ -924,7 +926,7 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         return CE_None;
     }
     else if (nOverlayCount == 4 && nColorCount == 4 && m_operator == SRC_OVER &&
-             eRWFlag == GF_Read && eBufType == GDT_Byte &&
+             eRWFlag == GF_Read && eBufType == GDT_UInt8 &&
              nBandCount == nBands && IsAllBands(nBands, panBandMap) &&
              AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize, nBufXSize,
                                  nBufYSize, psExtraArg))
@@ -1056,7 +1058,7 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             GByte ch = 255;
             for (int iY = 0; iY < nBufYSize; ++iY)
             {
-                GDALCopyWords64(&ch, GDT_Byte, 0,
+                GDALCopyWords64(&ch, GDT_UInt8, 0,
                                 static_cast<GByte *>(pData) + iY * nLineSpace,
                                 eBufType, static_cast<int>(nPixelSpace),
                                 nBufXSize);
@@ -1073,7 +1075,7 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     }
     else if (nOverlayCount == 3 && nColorCount == 3 &&
              m_oBlendDataset.m_operator == SRC_OVER && eRWFlag == GF_Read &&
-             eBufType == GDT_Byte &&
+             eBufType == GDT_UInt8 &&
              m_oBlendDataset.AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize,
                                                  nBufXSize, nBufYSize,
                                                  psExtraArg))
@@ -1111,7 +1113,7 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
         return CE_None;
     }
-    else if (eRWFlag == GF_Read && eBufType == GDT_Byte &&
+    else if (eRWFlag == GF_Read && eBufType == GDT_UInt8 &&
              m_oBlendDataset.AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize,
                                                  nBufXSize, nBufYSize,
                                                  psExtraArg))
@@ -1377,7 +1379,7 @@ bool GDALRasterBlendAlgorithm::ValidateGlobal()
     if (poSrcDS)
     {
         if (poSrcDS->GetRasterCount() == 0 || poSrcDS->GetRasterCount() > 4 ||
-            poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
+            poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt8)
         {
             ReportError(CE_Failure, CPLE_NotSupported,
                         "Only 1-band, 2-band, 3-band or 4-band Byte dataset "
@@ -1389,7 +1391,7 @@ bool GDALRasterBlendAlgorithm::ValidateGlobal()
     {
         if (poOverlayDS->GetRasterCount() == 0 ||
             poOverlayDS->GetRasterCount() > 4 ||
-            poOverlayDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
+            poOverlayDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt8)
         {
             ReportError(CE_Failure, CPLE_NotSupported,
                         "Only 1-band, 2-band, 3-band or 4-band Byte dataset "

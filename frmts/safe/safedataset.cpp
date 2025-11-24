@@ -123,11 +123,11 @@ CPLErr SAFERasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             nRequestXSize, nRequestYSize, pImage, nRequestXSize, nRequestYSize,
             GDT_UInt16, 1, nullptr, 2, nBlockXSize * 2, 0, nullptr);
 
-    else if (eDataType == GDT_Byte)
+    else if (eDataType == GDT_UInt8)
         return poBandFile->RasterIO(
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
             nRequestXSize, nRequestYSize, pImage, nRequestXSize, nRequestYSize,
-            GDT_Byte, 1, nullptr, 1, nBlockXSize, 0, nullptr);
+            GDT_UInt8, 1, nullptr, 1, nBlockXSize, 0, nullptr);
 
     CPLAssert(false);
     return CE_Failure;
@@ -591,11 +591,11 @@ CPLErr SAFECalibratedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         CPLFree(pnImageTmp);
         return eErr;
     }
-    else if (eDataType == GDT_Byte)  // Check if this is required.
+    else if (eDataType == GDT_UInt8)  // Check if this is required.
         return poBandDataset->RasterIO(
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
             nRequestXSize, nRequestYSize, pImage, nRequestXSize, nRequestYSize,
-            GDT_Byte, 1, nullptr, 1, nBlockXSize, 0, nullptr);
+            GDT_UInt8, 1, nullptr, 1, nBlockXSize, 0, nullptr);
 
     CPLAssert(false);
     return CE_Failure;

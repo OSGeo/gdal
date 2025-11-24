@@ -623,14 +623,14 @@ double XYZRasterBand::GetNoDataValue(int *pbSuccess)
 {
     XYZDataset *poGDS = cpl::down_cast<XYZDataset *>(poDS);
     if (!poGDS->bSameNumberOfValuesPerLine && poGDS->dfMinZ > -32768 &&
-        eDataType != GDT_Byte)
+        eDataType != GDT_UInt8)
     {
         if (pbSuccess)
             *pbSuccess = TRUE;
         return (poGDS->dfMinZ > 0) ? 0 : -32768;
     }
     else if (!poGDS->bSameNumberOfValuesPerLine && poGDS->dfMinZ > 0 &&
-             eDataType == GDT_Byte)
+             eDataType == GDT_UInt8)
     {
         if (pbSuccess)
             *pbSuccess = TRUE;
@@ -988,7 +988,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
     double dfLastY = 0.0;
     std::vector<double> adfStepX;
     std::vector<double> adfStepY;
-    GDALDataType eDT = GDT_Byte;
+    GDALDataType eDT = GDT_UInt8;
     bool bSameNumberOfValuesPerLine = true;
     char chDecimalSep = '\0';
     int nStepYSign = 0;
@@ -1108,7 +1108,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                             {
                                 eDT = GDT_Float32;
                             }
-                            else if ((eDT == GDT_Byte || eDT == GDT_Int16)
+                            else if ((eDT == GDT_UInt8 || eDT == GDT_Int16)
                                      // cppcheck-suppress
                                      // knownConditionTrueFalse
                                      && (nZ < 0 || nZ > 255))
@@ -1493,7 +1493,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         if (eDT == GDT_Int32)
             eDT = GDT_Float32;
-        else if (eDT == GDT_Byte)
+        else if (eDT == GDT_UInt8)
             eDT = GDT_Int16;
         CPLAssert(eDT == GDT_Int16 || eDT == GDT_Float32);
     }
@@ -1609,7 +1609,7 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
 
     const GDALDataType eSrcDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     GDALDataType eReqDT;
-    if (eSrcDT == GDT_Byte || eSrcDT == GDT_Int16 || eSrcDT == GDT_UInt16 ||
+    if (eSrcDT == GDT_UInt8 || eSrcDT == GDT_Int16 || eSrcDT == GDT_UInt16 ||
         eSrcDT == GDT_Int32)
         eReqDT = GDT_Int32;
     else

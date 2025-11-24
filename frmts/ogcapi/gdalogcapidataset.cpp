@@ -1330,7 +1330,7 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
             }
             static const std::map<std::string, GDALDataType> oMapTypes = {
                 // https://edc-oapi.dev.hub.eox.at/oapi/collections/S2L2A
-                {"UINT8", GDT_Byte},
+                {"UINT8", GDT_UInt8},
                 {"INT16", GDT_Int16},
                 {"UINT16", GDT_UInt16},
                 {"INT32", GDT_Int32},
@@ -1338,7 +1338,7 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
                 {"FLOAT32", GDT_Float32},
                 {"FLOAT64", GDT_Float64},
                 // https://test.cubewerx.com/cubewerx/cubeserv/demo/ogcapi/Daraa/collections/Daraa_DTED/coverage/rangetype?f=json
-                {"ogcType:unsignedByte", GDT_Byte},
+                {"ogcType:unsignedByte", GDT_UInt8},
                 {"ogcType:signedShort", GDT_Int16},
                 {"ogcType:unsignedShort", GDT_UInt16},
                 {"ogcType:signedInt", GDT_Int32},
@@ -1603,7 +1603,7 @@ GDALColorInterp OGCAPIMapWrapperBand::GetColorInterpretation()
     OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
     // The WMS driver returns Grey-Alpha for 2 band, RGB(A) for 3 or 4 bands
     // Restrict that behavior to Byte only data.
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
         return poGDS->m_poWMSDS->GetRasterBand(nBand)->GetColorInterpretation();
     return GCI_Undefined;
 }

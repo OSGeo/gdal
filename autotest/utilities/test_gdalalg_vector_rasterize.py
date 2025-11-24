@@ -530,7 +530,7 @@ def test_gdalalg_vector_rasterize(tmp_vsimem, create_empty_dataset, options, exp
         if create_empty_dataset:
             # Create a raster to rasterize into.
             target_ds = gdal.GetDriverByName("GTiff").Create(
-                output_tif, 12, 12, 3, gdal.GDT_Byte
+                output_tif, 12, 12, 3, gdal.GDT_UInt8
             )
             target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
 
@@ -588,7 +588,7 @@ def test_gdalalg_vector_rasterize_add_option(tmp_vsimem):
 
     # Create a raster to rasterize into.
     target_ds = gdal.GetDriverByName("GTiff").Create(
-        output_tif, 12, 12, 3, gdal.GDT_Byte
+        output_tif, 12, 12, 3, gdal.GDT_UInt8
     )
     target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
 
@@ -649,7 +649,7 @@ def test_gdalalg_vector_rasterize_dialect_warning(tmp_vsimem):
 
         # Create a raster to rasterize into.
         target_ds = gdal.GetDriverByName("GTiff").Create(
-            output_tif, 12, 12, 3, gdal.GDT_Byte
+            output_tif, 12, 12, 3, gdal.GDT_UInt8
         )
         target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
 
@@ -673,7 +673,7 @@ def test_gdalalg_vector_rasterize_overwrite(tmp_vsimem):
 
         # Create a raster to rasterize into.
         with gdal.GetDriverByName("GTiff").Create(
-            output_tif, 12, 12, 3, gdal.GDT_Byte
+            output_tif, 12, 12, 3, gdal.GDT_UInt8
         ) as target_ds:
             target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
 

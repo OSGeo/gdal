@@ -287,7 +287,7 @@ class GDALFootprintMaskBand final : public GDALRasterBand
     {
         nRasterXSize = m_poSrcBand->GetXSize();
         nRasterYSize = m_poSrcBand->GetYSize();
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         m_poSrcBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
 
@@ -312,7 +312,7 @@ CPLErr GDALFootprintMaskBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     return IRasterIO(GF_Read, nBlockXOff * nBlockXSize,
                      nBlockYOff * nBlockYSize, nWindowXSize, nWindowYSize,
-                     pData, nWindowXSize, nWindowYSize, GDT_Byte, 1,
+                     pData, nWindowXSize, nWindowYSize, GDT_UInt8, 1,
                      nBlockXSize, &sExtraArg);
 }
 
@@ -322,7 +322,7 @@ CPLErr GDALFootprintMaskBand::IRasterIO(
     GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
-        eBufType == GDT_Byte && nPixelSpace == 1)
+        eBufType == GDT_UInt8 && nPixelSpace == 1)
     {
         // Request when band seen as the mask band for GDALPolygonize()
 
@@ -396,7 +396,7 @@ class GDALFootprintCombinedMaskBand final : public GDALRasterBand
     {
         nRasterXSize = m_apoSrcBands[0]->GetXSize();
         nRasterYSize = m_apoSrcBands[0]->GetYSize();
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         m_apoSrcBands[0]->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
 
@@ -421,7 +421,7 @@ CPLErr GDALFootprintCombinedMaskBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     return IRasterIO(GF_Read, nBlockXOff * nBlockXSize,
                      nBlockYOff * nBlockYSize, nWindowXSize, nWindowYSize,
-                     pData, nWindowXSize, nWindowYSize, GDT_Byte, 1,
+                     pData, nWindowXSize, nWindowYSize, GDT_UInt8, 1,
                      nBlockXSize, &sExtraArg);
 }
 
@@ -431,7 +431,7 @@ CPLErr GDALFootprintCombinedMaskBand::IRasterIO(
     GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
-        eBufType == GDT_Byte && nPixelSpace == 1)
+        eBufType == GDT_UInt8 && nPixelSpace == 1)
     {
         // Request when band seen as the mask band for GDALPolygonize()
         {
@@ -447,7 +447,7 @@ CPLErr GDALFootprintCombinedMaskBand::IRasterIO(
         for (auto poBand : m_apoSrcBands)
         {
             if (poBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
-                                 abyTmp.data(), nBufXSize, nBufYSize, GDT_Byte,
+                                 abyTmp.data(), nBufXSize, nBufYSize, GDT_UInt8,
                                  1, nXSize, psExtraArg) != CE_None)
             {
                 return CE_Failure;
@@ -507,7 +507,7 @@ CPLErr GDALFootprintCombinedMaskBand::IRasterIO(
         for (auto poBand : m_apoSrcBands)
         {
             if (poBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
-                                 abyTmp.data(), nBufXSize, nBufYSize, GDT_Byte,
+                                 abyTmp.data(), nBufXSize, nBufYSize, GDT_UInt8,
                                  1, nXSize, psExtraArg) != CE_None)
             {
                 return CE_Failure;

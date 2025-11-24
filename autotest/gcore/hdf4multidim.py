@@ -219,7 +219,7 @@ def test_hdf4multidim_gdal_sds_2d():
     assert len(dims) == 2
     assert dims[0].GetFullName() == "/Y"
     assert dims[1].GetFullName() == "/X"
-    assert array.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+    assert array.GetDataType().GetNumericDataType() == gdal.GDT_UInt8
 
     got_data = array.Read(array_start_idx=[0, 0], count=[2, 2])
     assert len(got_data) == 2 * 2
@@ -266,7 +266,7 @@ def test_hdf4multidim_gdal_sds_3d():
     assert dims[0].GetFullName() == "/Y"
     assert dims[1].GetFullName() == "/X"
     assert dims[2].GetFullName() == "/Band"
-    assert array.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+    assert array.GetDataType().GetNumericDataType() == gdal.GDT_UInt8
 
     got_data = array.Read(array_start_idx=[0, 0, 0], count=[2, 2, 1])
     assert len(got_data) == 2 * 2

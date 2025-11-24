@@ -79,7 +79,7 @@ def test_wcs_3(geoserver_ds):
     gdaltest.check_geotransform(gt, expected_gt)
 
     assert (
-        geoserver_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+        geoserver_ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     ), "wrong band data type"
 
 

@@ -1084,7 +1084,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
 
     if (m_nPlanarConfig == PLANARCONFIG_CONTIG &&
         (nBands == 3 || nBands == 4) && nBands == nBandCount &&
-        (sContext.eDT == GDT_Byte || sContext.eDT == GDT_Int16 ||
+        (sContext.eDT == GDT_UInt8 || sContext.eDT == GDT_Int16 ||
          sContext.eDT == GDT_UInt16))
     {
         if (sContext.bSkipBlockCache)
@@ -1133,7 +1133,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
         {
             sContext.bCacheAllBands = true;
             if ((nBands == 3 || nBands == 4) &&
-                (sContext.eDT == GDT_Byte || sContext.eDT == GDT_Int16 ||
+                (sContext.eDT == GDT_UInt8 || sContext.eDT == GDT_Int16 ||
                  sContext.eDT == GDT_UInt16))
             {
                 sContext.bUseDeinterleaveOptimBlockCache = true;
@@ -3123,7 +3123,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
             // Other optimization: no resampling, no data type change,
             // data type is Byte/Int8.
             else if (nBufXSize == nXSize && eDataType == eBufType &&
-                     (eDataType == GDT_Byte || eDataType == GDT_Int8))
+                     (eDataType == GDT_UInt8 || eDataType == GDT_Int8))
             {
                 GByte *pabySrcData = static_cast<GByte *>(ppData[iSrcY]);
                 GByte *pabyDstData =
@@ -3141,8 +3141,8 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                     for (int iBand = 0; iBand < nBandCount; ++iBand)
                     {
                         GDALCopyWords(
-                            pabySrcData + iBand, GDT_Byte, nSrcPixelSize,
-                            pabyDstData + iBand * nBandSpace, GDT_Byte,
+                            pabySrcData + iBand, GDT_UInt8, nSrcPixelSize,
+                            pabyDstData + iBand * nBandSpace, GDT_UInt8,
                             static_cast<int>(nPixelSpace), nBufXSize);
                     }
                 }
@@ -3155,7 +3155,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                         static_cast<GByte *>(ppData[iSrcY]) + iBand * nDTSize;
                     GByte *pabyDstData = static_cast<GByte *>(pData) +
                                          iBand * nBandSpace + iY * nLineSpace;
-                    if ((eDataType == GDT_Byte && eBufType == GDT_Byte) ||
+                    if ((eDataType == GDT_UInt8 && eBufType == GDT_UInt8) ||
                         (eDataType == GDT_Int8 && eBufType == GDT_Int8))
                     {
                         double dfSrcX = 0.5 * dfSrcXInc;
@@ -5425,7 +5425,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
     else
         m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
 
-    if ((GetRasterBand(1)->GetRasterDataType() == GDT_Byte &&
+    if ((GetRasterBand(1)->GetRasterDataType() == GDT_UInt8 &&
          m_nBitsPerSample != 8) ||
         (GetRasterBand(1)->GetRasterDataType() == GDT_UInt16 &&
          m_nBitsPerSample != 16) ||

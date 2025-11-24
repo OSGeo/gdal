@@ -1172,7 +1172,7 @@ def test_tiff_ovr_32(tmp_path, both_endian):
     )
     src_data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize)
     tmp_ds.WriteRaster(
-        0, 0, src_ds.RasterXSize, src_ds.RasterYSize, src_data, buf_type=gdal.GDT_Byte
+        0, 0, src_ds.RasterXSize, src_ds.RasterYSize, src_data, buf_type=gdal.GDT_UInt8
     )
     tmp_ds.BuildOverviews("cubic", overviewlist=[2])
 
@@ -1186,7 +1186,7 @@ def test_tiff_ovr_32(tmp_path, both_endian):
     tmp2_ovr_ds = tmp2_ds.GetRasterBand(1).GetOverview(0).GetDataset()
     tmp_ovr_ds = tmp_ds.GetRasterBand(1).GetOverview(0).GetDataset()
     src_data = tmp_ovr_ds.ReadRaster(
-        0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, buf_type=gdal.GDT_Byte
+        0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, buf_type=gdal.GDT_UInt8
     )
     tmp2_ovr_ds.WriteRaster(
         0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, src_data
@@ -1268,7 +1268,7 @@ def test_tiff_ovr_32(tmp_path, both_endian):
     )
     src_data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize)
     tmp_ds.WriteRaster(
-        0, 0, src_ds.RasterXSize, src_ds.RasterYSize, src_data, buf_type=gdal.GDT_Byte
+        0, 0, src_ds.RasterXSize, src_ds.RasterYSize, src_data, buf_type=gdal.GDT_UInt8
     )
     tmp_ds.BuildOverviews("cubic", overviewlist=[2])
 
@@ -1282,7 +1282,7 @@ def test_tiff_ovr_32(tmp_path, both_endian):
     tmp2_ovr_ds = tmp2_ds.GetRasterBand(1).GetOverview(0).GetDataset()
     tmp_ovr_ds = tmp_ds.GetRasterBand(1).GetOverview(0).GetDataset()
     src_data = tmp_ovr_ds.ReadRaster(
-        0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, buf_type=gdal.GDT_Byte
+        0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, buf_type=gdal.GDT_UInt8
     )
     tmp2_ovr_ds.WriteRaster(
         0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, src_data
@@ -1457,7 +1457,7 @@ def test_tiff_ovr_38(tmp_path, both_endian):
 @pytest.mark.parametrize(
     "datatype",
     (
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
         gdal.GDT_Int32,
@@ -2778,7 +2778,7 @@ def test_tiff_ovr_internal_overview_different_method():
 
     temp_path = "/vsimem/test.tif"
     gdal.GetDriverByName("GTiff").Create(
-        temp_path, 2, 1, 1, gdal.GDT_Byte, options=["COMPRESS=LZW"]
+        temp_path, 2, 1, 1, gdal.GDT_UInt8, options=["COMPRESS=LZW"]
     )
     ds = gdal.OpenEx(temp_path, gdal.GA_Update)
     with gdaltest.config_options(
@@ -2802,7 +2802,7 @@ def test_tiff_ovr_internal_overview_different_method_propagate_predictor():
 
     temp_path = "/vsimem/test.tif"
     gdal.GetDriverByName("GTiff").Create(
-        temp_path, 2, 1, 1, gdal.GDT_Byte, options=["COMPRESS=LZW", "PREDICTOR=2"]
+        temp_path, 2, 1, 1, gdal.GDT_UInt8, options=["COMPRESS=LZW", "PREDICTOR=2"]
     )
     ds = gdal.OpenEx(temp_path, gdal.GA_Update)
     with gdaltest.config_options({"COMPRESS_OVERVIEW": "DEFLATE"}):
@@ -2824,7 +2824,7 @@ def test_tiff_ovr_internal_overview_different_method_do_not_propagate_predictor(
 
     temp_path = "/vsimem/test.tif"
     gdal.GetDriverByName("GTiff").Create(
-        temp_path, 2, 1, 1, gdal.GDT_Byte, options=["COMPRESS=LZW", "PREDICTOR=2"]
+        temp_path, 2, 1, 1, gdal.GDT_UInt8, options=["COMPRESS=LZW", "PREDICTOR=2"]
     )
     ds = gdal.OpenEx(temp_path, gdal.GA_Update)
     with gdaltest.config_options({"COMPRESS_OVERVIEW": "PACKBITS"}):
@@ -2846,7 +2846,7 @@ def test_tiff_ovr_internal_overview_different_planar_config_to_pixel():
 
     temp_path = "/vsimem/test.tif"
     gdal.GetDriverByName("GTiff").Create(
-        temp_path, 2, 1, 3, gdal.GDT_Byte, options=["INTERLEAVE=BAND"]
+        temp_path, 2, 1, 3, gdal.GDT_UInt8, options=["INTERLEAVE=BAND"]
     )
     ds = gdal.OpenEx(temp_path, gdal.GA_Update)
     with gdaltest.config_options({"INTERLEAVE_OVERVIEW": "PIXEL"}):
@@ -2867,7 +2867,7 @@ def test_tiff_ovr_internal_overview_different_planar_config_to_band():
 
     temp_path = "/vsimem/test.tif"
     gdal.GetDriverByName("GTiff").Create(
-        temp_path, 2, 1, 3, gdal.GDT_Byte, options=["INTERLEAVE=PIXEL"]
+        temp_path, 2, 1, 3, gdal.GDT_UInt8, options=["INTERLEAVE=PIXEL"]
     )
     ds = gdal.OpenEx(temp_path, gdal.GA_Update)
     with gdaltest.config_options({"INTERLEAVE_OVERVIEW": "BAND"}):

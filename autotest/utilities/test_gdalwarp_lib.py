@@ -1736,7 +1736,7 @@ def test_gdalwarp_lib_131(tmp_vsimem):
 # with alpha > 0 and < 255
 
 
-@pytest.mark.parametrize("dt", [gdal.GDT_Byte, gdal.GDT_Float32])
+@pytest.mark.parametrize("dt", [gdal.GDT_UInt8, gdal.GDT_Float32])
 def test_gdalwarp_lib_132(tmp_vsimem, dt):
 
     src_ds = gdal.GetDriverByName("GTiff").Create(
@@ -1767,7 +1767,7 @@ def test_gdalwarp_lib_132(tmp_vsimem, dt):
         for x in range(33):
             data = struct.unpack(
                 "B" * 1,
-                ds.GetRasterBand(i + 1).ReadRaster(i, 0, 1, 1, buf_type=gdal.GDT_Byte),
+                ds.GetRasterBand(i + 1).ReadRaster(i, 0, 1, 1, buf_type=gdal.GDT_UInt8),
             )[0]
             if data != pytest.approx(expected_val[i], abs=1):
                 print(dt)
@@ -2171,7 +2171,7 @@ def test_gdalwarp_lib_135n(gdalwarp_135_grid_gtx):
     src_ds.GetRasterBand(1).SetUnitType("ft")
 
     ds = gdal.Warp(
-        "", src_ds, format="MEM", dstSRS="EPSG:4979", outputType=gdal.GDT_Byte
+        "", src_ds, format="MEM", dstSRS="EPSG:4979", outputType=gdal.GDT_UInt8
     )
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 120, "Bad value"
@@ -2191,7 +2191,7 @@ def test_gdalwarp_lib_135o(gdalwarp_135_grid_gtx):
     src_ds.GetRasterBand(1).SetUnitType("US survey foot")
 
     ds = gdal.Warp(
-        "", src_ds, format="MEM", dstSRS="EPSG:4979", outputType=gdal.GDT_Byte
+        "", src_ds, format="MEM", dstSRS="EPSG:4979", outputType=gdal.GDT_UInt8
     )
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 120, "Bad value"

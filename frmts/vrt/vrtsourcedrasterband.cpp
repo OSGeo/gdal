@@ -1105,7 +1105,7 @@ double VRTSourcedRasterBand::GetMinimum(int *pbSuccess)
         if (iSource == 0 || dfSourceMin < dfMin)
         {
             dfMin = dfSourceMin;
-            if (dfMin == 0 && eDataType == GDT_Byte)
+            if (dfMin == 0 && eDataType == GDT_UInt8)
                 break;
         }
         if (m_papoSources.size() > 1)
@@ -1183,7 +1183,7 @@ double VRTSourcedRasterBand::GetMaximum(int *pbSuccess)
         if (iSource == 0 || dfSourceMax > dfMax)
         {
             dfMax = dfSourceMax;
-            if (dfMax == 255.0 && eDataType == GDT_Byte)
+            if (dfMax == 255.0 && eDataType == GDT_UInt8)
                 break;
         }
         if (m_papoSources.size() > 1)
@@ -1455,7 +1455,7 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
         }
 
         bool bSignedByte = false;
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
         {
             EnablePixelTypeSignedByteWarning(false);
             const char *pszPixelType =
@@ -1527,7 +1527,7 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
             }
 
             // Early exit if we know we reached theoretical bounds
-            if (eDataType == GDT_Byte && !bSignedByte && dfGlobalMin == 0.0 &&
+            if (eDataType == GDT_UInt8 && !bSignedByte && dfGlobalMin == 0.0 &&
                 dfGlobalMax == 255.0)
             {
                 break;

@@ -58,24 +58,26 @@ def test_tiledb_multidim_basic():
             rg.CreateGroup("group")
 
         with pytest.raises(Exception, match="Zero-dimension"):
-            group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+            group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
 
         dim0 = rg.CreateDimension("dim0", None, None, 2)
         with pytest.raises(Exception, match="Only numeric data types"):
             group.CreateMDArray("ar", [dim0], gdal.ExtendedDataType.CreateString())
 
         with pytest.raises(Exception, match="Invalid array name"):
-            group.CreateMDArray("", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+            group.CreateMDArray(
+                "", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
+            )
 
         os.mkdir(filename + "/group/ar")
         with pytest.raises(Exception, match="Path .* already exists"):
             group.CreateMDArray(
-                "ar", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+                "ar", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
             )
         os.rmdir(filename + "/group/ar")
 
         ar = group.CreateMDArray(
-            "ar", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "ar", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         assert group.GetMDArrayNames() == ["ar"]
         assert ar.GetName() == "ar"
@@ -87,7 +89,7 @@ def test_tiledb_multidim_basic():
             group.CreateGroup("ar")
         with pytest.raises(Exception, match="A group named subgroup already exists"):
             group.CreateMDArray(
-                "subgroup", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+                "subgroup", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
             )
 
         attr = group.CreateAttribute(
@@ -167,7 +169,7 @@ def test_tiledb_multidim_basic():
 
         with pytest.raises(Exception, match=r".*not .* in update mode.*"):
             group.CreateMDArray(
-                "new_ar", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+                "new_ar", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
             )
 
         with pytest.raises(Exception, match=r".*not .* in update mode.*"):
@@ -204,7 +206,7 @@ def test_tiledb_multidim_basic():
     "gdal_data_type",
     [
         gdal.GDT_Int8,
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
         gdal.GDT_Int32,

@@ -616,7 +616,7 @@ CPLErr KEARasterBand::SetNoDataValue(double dfNoData)
     GDALDataType dtype = this->GetRasterDataType();
     switch (dtype)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             bSet = (dfNoData >= 0) && (dfNoData <= UCHAR_MAX);
             break;
         case GDT_UInt16:

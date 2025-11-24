@@ -1247,7 +1247,7 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
         m_dt.GetComponents()[0]->GetType().GetNumericDataType() ==
             GDT_Float32 &&
         // In theory should be Byte, but 104US00_ches_dcf2_20190606T12Z.h5 uses Int32
-        (m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Byte ||
+        (m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_UInt8 ||
          m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Int32))
     {
         m_abyNoData.resize(m_dt.GetSize());
@@ -2505,7 +2505,7 @@ GetHDF5DataTypeFromGDALDataType(const GDALExtendedDataType &dt, hid_t hNativeDT,
     hid_t hBufferType = H5I_INVALID_HID;
     switch (bufferDataType.GetNumericDataType())
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             hBufferType = H5Tcopy(H5T_NATIVE_UCHAR);
             break;
         case GDT_Int8:

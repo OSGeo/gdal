@@ -82,7 +82,7 @@ JP2KAKRasterBand::JP2KAKRasterBand(int nBandIn, kdu_codestream oCodeStreamIn,
              !oCodeStream.get_signed(nBand - 1))
         eDataType = GDT_UInt32;
     else
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
 
     oCodeStream.apply_input_restrictions(0, 0, poBaseDSIn->m_nDiscardLevels, 0,
                                          nullptr);
@@ -1240,7 +1240,7 @@ CPLErr JP2KAKDataset::DirectRasterIO(
                                  nBandSpace, psExtraArg);
     }
 
-    CPLAssert(eBufType == GDT_Byte || eBufType == GDT_Int16 ||
+    CPLAssert(eBufType == GDT_UInt8 || eBufType == GDT_Int16 ||
               eBufType == GDT_UInt16 || eBufType == GDT_Int32 ||
               eBufType == GDT_UInt32);
 
@@ -1370,7 +1370,7 @@ CPLErr JP2KAKDataset::DirectRasterIO(
                 row_gaps[i] = static_cast<int>(nLineSpace) / nBufDTSize;
             }
 
-            if (eBufType == GDT_Byte)
+            if (eBufType == GDT_UInt8)
                 decompressor.pull_stripe(static_cast<kdu_byte *>(pData),
                                          &stripe_heights[0], &sample_offsets[0],
                                          &sample_gaps[0], &row_gaps[0],
@@ -1420,7 +1420,7 @@ CPLErr JP2KAKDataset::DirectRasterIO(
                 }
             }
 
-            if (eBufType == GDT_Byte)
+            if (eBufType == GDT_UInt8)
                 decompressor.pull_stripe(
                     reinterpret_cast<kdu_byte *>(pabyIntermediate),
                     &stripe_heights[0], nullptr, nullptr, nullptr,
@@ -1459,7 +1459,7 @@ CPLErr JP2KAKDataset::DirectRasterIO(
                     for (int i = 0; i < nBandCount; i++)
                     {
                         // TODO(schwehr): Cleanup this block.
-                        if (eBufType == GDT_Byte)
+                        if (eBufType == GDT_UInt8)
                             static_cast<GByte *>(
                                 pData)[iX * nPixelSpace + iY * nLineSpace +
                                        i * nBandSpace] = pabyIntermediate
@@ -1541,7 +1541,7 @@ bool JP2KAKDataset::TestUseBlockIO(int nXSize, int nYSize, int nBufXSize,
 {
 
     if (eDataType != GetRasterBand(1)->GetRasterDataType() ||
-        (eDataType != GDT_Byte && eDataType != GDT_Int16 &&
+        (eDataType != GDT_UInt8 && eDataType != GDT_Int16 &&
          eDataType != GDT_UInt16 && eDataType != GDT_Int32 &&
          eDataType != GDT_UInt32))
         return true;
@@ -1713,7 +1713,7 @@ static bool JP2KAKCreateCopy_WriteTile(
             anCurLine[c]++;
 
             const bool bIsAbsolute = apoLines[c]->is_absolute();
-            if (eType == GDT_Byte)
+            if (eType == GDT_UInt8)
             {
                 const kdu_byte *sp = static_cast<const kdu_byte *>(pabyBuffer);
                 const kdu_int16 nOffset = 1 << (nBits - 1);
@@ -2051,7 +2051,7 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
     GDALRasterBand *poPrototypeBand = poSrcDS->GetRasterBand(1);
 
     GDALDataType eType = poPrototypeBand->GetRasterDataType();
-    if (eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_UInt16 &&
+    if (eType != GDT_UInt8 && eType != GDT_Int16 && eType != GDT_UInt16 &&
         eType != GDT_Int32 && eType != GDT_UInt32 && eType != GDT_Float32)
     {
         if (bStrict)
@@ -2931,7 +2931,7 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
                 break;
             }
 
-            if (eType == GDT_Byte)
+            if (eType == GDT_UInt8)
                 compressor.push_stripe(stripe_bufs.data(),
                                        stripe_heights.data(),
                                        /*const int *sample_gaps=*/nullptr,

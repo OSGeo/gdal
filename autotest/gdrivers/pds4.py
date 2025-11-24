@@ -742,7 +742,7 @@ def test_pds4_11():
 
     filename = "/vsimem/out.xml"
     for (dt, data) in [
-        (gdal.GDT_Byte, struct.pack("B", 255)),
+        (gdal.GDT_UInt8, struct.pack("B", 255)),
         (gdal.GDT_Int8, struct.pack("b", -128)),
         (gdal.GDT_UInt16, struct.pack("H", 65535)),
         (gdal.GDT_Int16, struct.pack("h", -32768)),
@@ -1902,7 +1902,7 @@ def test_pds4_read_hexadecimal_missing_constant(filename, expected_val):
 @pytest.mark.parametrize(
     "dt,val,serialized_val",
     [
-        (gdal.GDT_Byte, 255, "255"),
+        (gdal.GDT_UInt8, 255, "255"),
         (gdal.GDT_Int64, (1 << 63) - 1, str((1 << 63) - 1)),
         (gdal.GDT_UInt64, (1 << 64) - 1, str((1 << 64) - 1)),
         (gdal.GDT_Float32, -3.4028226550889045e38, "0xFF7FFFFB"),

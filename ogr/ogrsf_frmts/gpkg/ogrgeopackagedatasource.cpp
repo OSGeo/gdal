@@ -2369,7 +2369,7 @@ bool GDALGeoPackageDataset::InitRaster(
     {
         nBandCount = poParentDS->GetRasterCount();
     }
-    else if (m_eDT != GDT_Byte)
+    else if (m_eDT != GDT_UInt8)
     {
         if (pszBAND_COUNT != nullptr && !EQUAL(pszBAND_COUNT, "AUTO") &&
             !EQUAL(pszBAND_COUNT, "1"))
@@ -2464,10 +2464,10 @@ bool GDALGeoPackageDataset::AllocCachedTiles()
     const int nCacheCount = 4;
     /*
             (m_nShiftXPixelsMod != 0 || m_nShiftYPixelsMod != 0) ? 4 :
-            (GetUpdate() && m_eDT == GDT_Byte) ? 2 : 1;
+            (GetUpdate() && m_eDT == GDT_UInt8) ? 2 : 1;
     */
     m_pabyCachedTiles = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
-        cpl::fits_on<int>(nCacheCount * (m_eDT == GDT_Byte ? 4 : 1) *
+        cpl::fits_on<int>(nCacheCount * (m_eDT == GDT_UInt8 ? 4 : 1) *
                           m_nDTSize),
         nTileWidth, nTileHeight));
     if (m_pabyCachedTiles == nullptr)
@@ -3273,7 +3273,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     osInsertGpkgContentsFormatting += ",%d)";
     char *pszSQL = sqlite3_mprintf(
         osInsertGpkgContentsFormatting.c_str(), m_osRasterTable.c_str(),
-        (m_eDT == GDT_Byte) ? "tiles" : "2d-gridded-coverage",
+        (m_eDT == GDT_UInt8) ? "tiles" : "2d-gridded-coverage",
         m_osIdentifier.c_str(), m_osDescription.c_str(), dfGDALMinX, dfGDALMinY,
         dfGDALMaxX, dfGDALMaxY,
         pszCurrentDate ? pszCurrentDate
@@ -4788,7 +4788,7 @@ void GDALGeoPackageDataset::FlushMetadata()
             }
         }
         if (GetRasterCount() > 0 &&
-            GetRasterBand(1)->GetRasterDataType() == GDT_Byte)
+            GetRasterBand(1)->GetRasterDataType() == GDT_UInt8)
         {
             int bHasNoData = FALSE;
             const double dfNoDataValue =
@@ -4953,7 +4953,7 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
 
     if (nBandsIn != 0)
     {
-        if (eDT == GDT_Byte)
+        if (eDT == GDT_UInt8)
         {
             if (nBandsIn != 1 && nBandsIn != 2 && nBandsIn != 3 &&
                 nBandsIn != 4)
@@ -5142,7 +5142,7 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
                 "description TEXT";
         if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "CRS_WKT_EXTENSION",
                                              "NO")) ||
-            (nBandsIn != 0 && eDT != GDT_Byte))
+            (nBandsIn != 0 && eDT != GDT_UInt8))
         {
             m_bHasDefinition12_063 = true;
             osSQL += ", definition_12_063 TEXT NOT NULL";
@@ -5537,7 +5537,7 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
                 m_eTF = GPKG_TF_PNG;
         }
 
-        if (eDT != GDT_Byte)
+        if (eDT != GDT_UInt8)
         {
             if (!CreateTileGriddedTable(papszOptions))
                 return FALSE;
@@ -5647,7 +5647,7 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
         }
     }
 
-    if (bFileExists && nBandsIn > 0 && eDT == GDT_Byte)
+    if (bFileExists && nBandsIn > 0 && eDT == GDT_UInt8)
     {
         // If there was an ogr_empty_table table, we can remove it
         RemoveOGREmptyTable();
@@ -5964,7 +5964,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
                                                 pProgressData));
 
             if (poDS != nullptr &&
-                poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte &&
+                poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_UInt8 &&
                 nBands <= 3)
             {
                 poDS->m_nBandCountFromMetadata = nBands;
@@ -6192,7 +6192,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
     int nTargetBands = nBands;
     /* For grey level or RGB, if there's reprojection involved, add an alpha */
     /* channel */
-    if (eDT == GDT_Byte &&
+    if (eDT == GDT_UInt8 &&
         ((nBands == 1 &&
           poSrcDS->GetRasterBand(1)->GetColorTable() == nullptr) ||
          nBands == 3))
@@ -6249,7 +6249,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
     int bHasNoData = FALSE;
     double dfNoDataValue =
         poSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoData);
-    if (eDT != GDT_Byte && bHasNoData)
+    if (eDT != GDT_UInt8 && bHasNoData)
     {
         poDS->GetRasterBand(1)->SetNoDataValue(dfNoDataValue);
     }

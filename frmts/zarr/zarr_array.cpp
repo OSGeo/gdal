@@ -1213,7 +1213,7 @@ lbl_next_depth:
             {
                 bNoDataIsZero = true;
                 GByte zero = 0;
-                GDALCopyWords(&zero, GDT_Byte, 0, &abyTargetNoData[0],
+                GDALCopyWords(&zero, GDT_UInt8, 0, &abyTargetNoData[0],
                               bufferDataType.GetNumericDataType(), 0, 1);
             }
         }
@@ -2045,7 +2045,7 @@ ZarrArray::OpenTilePresenceCache(bool bCanCreate) const
     const std::string osTilePresenceArrayName(MassageName(GetFullName()) +
                                               "_tile_presence");
     auto poTilePresenceArray = poRGCache->OpenMDArray(osTilePresenceArrayName);
-    const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+    const auto eByteDT = GDALExtendedDataType::Create(GDT_UInt8);
     if (poTilePresenceArray)
     {
         bool ok = true;
@@ -2172,7 +2172,7 @@ bool ZarrArray::CacheTilePresence()
     const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
     const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
     const auto &apoDimsCache = poTilePresenceArray->GetDimensions();
-    const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+    const auto eByteDT = GDALExtendedDataType::Create(GDT_UInt8);
 
     CPLDebug(ZARR_DEBUG_KEY,
              "CacheTilePresence(): Iterating over %s to find which tiles are "
@@ -2908,7 +2908,7 @@ bool ZarrArray::IsTileMissingFromCacheInfo(const std::string &osFilename,
         const std::vector<size_t> anCount(m_aoDims.size(), 1);
         const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
         const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
-        const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+        const auto eByteDT = GDALExtendedDataType::Create(GDT_UInt8);
         for (size_t i = 0; i < m_aoDims.size(); ++i)
         {
             anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);

@@ -61,7 +61,7 @@ static CPLErr GPMaskImageData(GDALRasterBandH hMaskBand, GByte *pabyMaskLine,
 
 {
     const CPLErr eErr = GDALRasterIO(hMaskBand, GF_Read, 0, iY, nXSize, 1,
-                                     pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0);
+                                     pabyMaskLine, nXSize, 1, GDT_UInt8, 0, 0);
     if (eErr == CE_None)
     {
         for (int i = 0; i < nXSize; i++)

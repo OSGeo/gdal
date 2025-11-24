@@ -50,7 +50,7 @@ BuildBandDescArray(json_object *poBands,
         const char *pszPrecision = json_object_get_string(poPrecision);
         if (pszPrecision == nullptr)
             continue;
-        GDALDataType eDT = GDT_Byte;
+        GDALDataType eDT = GDT_UInt8;
         if (EQUAL(pszPrecision, "INT"))
         {
             json_object *poRange =

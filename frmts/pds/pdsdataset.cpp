@@ -1012,7 +1012,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
 
     /**** Grab format type - pds supports 1,2,4,8,16,32,64 (in theory) **/
     /**** I have only seen 8, 16, 32 (float) in released datasets      **/
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     int nSuffixItems = 0;
     int nSuffixLines = 0;
     int nSuffixBytes = 4;  // Default as per PDS specification
@@ -1029,7 +1029,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
         switch (itype)
         {
             case 8:
-                eDataType = GDT_Byte;
+                eDataType = GDT_UInt8;
                 dfNoData = PDS_NULL1;
                 break;
             case 16:
@@ -1071,7 +1071,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
         switch (itype)
         {
             case 1:
-                eDataType = GDT_Byte;
+                eDataType = GDT_UInt8;
                 break;
             case 2:
                 if (strstr(osST, "UNSIGNED") != nullptr)

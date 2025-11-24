@@ -56,7 +56,7 @@ inline double GetSrcVal(const void *pSource, GDALDataType eSrcType, T ii)
     {
         case GDT_Unknown:
             return 0;
-        case GDT_Byte:
+        case GDT_UInt8:
             return static_cast<const GByte *>(pSource)[ii];
         case GDT_Int8:
             return static_cast<const GInt8 *>(pSource)[ii];
@@ -791,7 +791,7 @@ static bool OptimizedSumPackedOutput(GDALDataType eSrcType, double dfK,
 {
     switch (eSrcType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             OptimizedSumPackedOutput<uint8_t, Tdest>(dfK, pOutBuffer,
                                                      nLineSpace, nXSize, nYSize,
                                                      nSources, papoSources);
@@ -927,7 +927,7 @@ static bool OptimizedSumThroughLargerType(GDALDataType eBufType, double dfK,
 {
     switch (eBufType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             return OptimizedSumThroughLargerType<Tsrc, uint8_t>(
                 dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize, nYSize,
                 nSources, papoSources);
@@ -967,7 +967,7 @@ static bool OptimizedSumThroughLargerType(GDALDataType eSrcType,
 {
     switch (eSrcType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             return OptimizedSumThroughLargerType<uint8_t>(
                 eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
                 nYSize, nSources, papoSources);
@@ -1086,8 +1086,8 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
         if (dfNoData == 0 && !bPropagateNoData)
         {
 #ifdef USE_SSE2
-            if (eBufType == GDT_Byte && nPixelSpace == sizeof(uint8_t) &&
-                eSrcType == GDT_Byte &&
+            if (eBufType == GDT_UInt8 && nPixelSpace == sizeof(uint8_t) &&
+                eSrcType == GDT_UInt8 &&
                 dfK >= std::numeric_limits<uint8_t>::min() &&
                 dfK <= std::numeric_limits<uint8_t>::max() &&
                 static_cast<int>(dfK) == dfK)
@@ -1155,7 +1155,7 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
             }
             else if (
                 dfK >= 0 && dfK <= INT_MAX && eBufType == GDT_Int32 &&
-                nPixelSpace == sizeof(int32_t) && eSrcType == GDT_Byte &&
+                nPixelSpace == sizeof(int32_t) && eSrcType == GDT_UInt8 &&
                 // Limitation to avoid overflow of int32 if all source values are at the max of their data type
                 nSources <=
                     (INT_MAX - dfK) / std::numeric_limits<uint8_t>::max())
@@ -2683,7 +2683,7 @@ static CPLErr MinPixelFunc(void **papoSources, int nSources, void *pData,
             eSrcType == eBufType &&
             nPixelSpace == GDALGetDataTypeSizeBytes(eSrcType))
         {
-            if (eSrcType == GDT_Byte)
+            if (eSrcType == GDT_UInt8)
             {
                 OptimizedMinOrMaxSSE2<uint8_t, SSEWrapperMinByte>(
                     papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
@@ -2749,7 +2749,7 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
             eSrcType == eBufType &&
             nPixelSpace == GDALGetDataTypeSizeBytes(eSrcType))
         {
-            if (eSrcType == GDT_Byte)
+            if (eSrcType == GDT_UInt8)
             {
                 OptimizedMinOrMaxSSE2<uint8_t, SSEWrapperMaxByte>(
                     papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
@@ -3578,7 +3578,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
 #if defined(USE_SSE2) && !defined(USE_NEON_OPTIMIZATIONS)
     if constexpr (std::is_same_v<Kernel, MeanKernel>)
     {
-        if (!bHasNoData && eSrcType == GDT_Byte && eBufType == GDT_Byte &&
+        if (!bHasNoData && eSrcType == GDT_UInt8 && eBufType == GDT_UInt8 &&
             nPixelSpace == 1 &&
             // We use signed int16 to accumulate
             nSources <= std::numeric_limits<int16_t>::max() /
@@ -3678,7 +3678,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
             return CE_None;
         }
 
-        if (!bHasNoData && eSrcType == GDT_Byte && eBufType == GDT_Byte &&
+        if (!bHasNoData && eSrcType == GDT_UInt8 && eBufType == GDT_UInt8 &&
             nPixelSpace == 1 &&
             // We use signed int32 to accumulate
             nSources <= std::numeric_limits<int32_t>::max() /

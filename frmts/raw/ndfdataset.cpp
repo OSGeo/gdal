@@ -302,7 +302,7 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->papszExtraFiles = CSLAddString(poDS->papszExtraFiles, osFilename);
 
         auto poBand = RawRasterBand::Create(
-            poDS.get(), iBand + 1, fpRaw, 0, 1, poDS->nRasterXSize, GDT_Byte,
+            poDS.get(), iBand + 1, fpRaw, 0, 1, poDS->nRasterXSize, GDT_UInt8,
             RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
             RawRasterBand::OwnFP::YES);
         if (!poBand)

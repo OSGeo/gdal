@@ -2108,7 +2108,7 @@ CPLErr FITSDataset::Init(fitsfile *hFITS, bool isExistingFile, int hduNum)
     // Determine data type and nodata value if BLANK keyword is absent
     if (bitpix == BYTE_IMG)
     {
-        m_gdalDataType = GDT_Byte;
+        m_gdalDataType = GDT_UInt8;
         m_fitsDataType = TBYTE;
     }
     else if (bitpix == SHORT_IMG)
@@ -2720,7 +2720,7 @@ GDALDataset *FITSDataset::Create(const char *pszFilename, int nXSize,
 
     // Determine FITS type of image
     int bitpix;
-    if (eType == GDT_Byte)
+    if (eType == GDT_UInt8)
     {
         bitpix = BYTE_IMG;
     }

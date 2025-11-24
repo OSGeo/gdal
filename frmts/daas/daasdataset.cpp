@@ -688,7 +688,7 @@ GetGDALDataTypeFromDAASPixelType(const CPLString &osPixelType)
         const char *pszName;
         GDALDataType eDT;
     } asDataTypes[] = {
-        {"Byte", GDT_Byte},       {"UInt16", GDT_UInt16},
+        {"Byte", GDT_UInt8},      {"UInt16", GDT_UInt16},
         {"Int16", GDT_Int16},     {"UInt32", GDT_UInt32},
         {"Int32", GDT_Int32},     {"Float32", GDT_Float32},
         {"Float64", GDT_Float64},
@@ -1229,7 +1229,7 @@ bool GDALDAASDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         if ((m_aoBandDesc.size() == 1 || m_aoBandDesc.size() == 3 ||
              m_aoBandDesc.size() == 4) &&
-            m_eDT == GDT_Byte)
+            m_eDT == GDT_UInt8)
         {
             m_eFormat = Format::PNG;
         }
@@ -1246,7 +1246,7 @@ bool GDALDAASDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         if ((m_aoBandDesc.size() == 1 || m_aoBandDesc.size() == 3 ||
              m_aoBandDesc.size() == 4) &&
-            m_eDT == GDT_Byte)
+            m_eDT == GDT_UInt8)
         {
             m_eFormat = Format::PNG;
         }
@@ -1261,7 +1261,7 @@ bool GDALDAASDataset::Open(GDALOpenInfo *poOpenInfo)
     else if (EQUAL(pszFormat, "JPEG"))
     {
         if ((m_aoBandDesc.size() == 1 || m_aoBandDesc.size() == 3) &&
-            m_eDT == GDT_Byte)
+            m_eDT == GDT_UInt8)
         {
             m_eFormat = Format::JPEG;
         }
@@ -2344,7 +2344,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     // Get the actual data type of the buffer response
     GDALDataType eBufferDataType =
         anRequestedBands[0] == MAIN_MASK_BAND_NUMBER
-            ? GDT_Byte
+            ? GDT_UInt8
             : poGDS->m_aoBandDesc[anRequestedBands[0] - 1].eDT;
     auto oBandArray = oDocRoot.GetArray("properties/bands");
     if (oBandArray.IsValid() && oBandArray.Size() >= 1)

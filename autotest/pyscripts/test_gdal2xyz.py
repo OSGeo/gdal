@@ -81,7 +81,7 @@ def test_gdal2xyz_py_1():
     pixel_size = (10, -10)
     nodata_value = 255
     band_count = 2
-    dt = gdal.GDT_Byte
+    dt = gdal.GDT_UInt8
     np_dt = flip_code(dt)
     ds = create_flat_raster(
         filename="",

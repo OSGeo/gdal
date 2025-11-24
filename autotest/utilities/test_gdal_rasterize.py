@@ -55,7 +55,7 @@ def test_gdal_rasterize_1(gdal_rasterize_path, tmp_path):
     # Create a raster to rasterize into.
 
     target_ds = gdal.GetDriverByName("GTiff").Create(
-        output_tif, 100, 100, 3, gdal.GDT_Byte
+        output_tif, 100, 100, 3, gdal.GDT_UInt8
     )
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
@@ -124,7 +124,7 @@ def test_gdal_rasterize_2(gdal_rasterize_path, tmp_path):
 
     # Create a raster to rasterize into.
     target_ds = gdal.GetDriverByName("GTiff").Create(
-        output_tif, 12, 12, 3, gdal.GDT_Byte
+        output_tif, 12, 12, 3, gdal.GDT_UInt8
     )
     target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
 
@@ -430,7 +430,7 @@ def test_gdal_rasterize_ts_1(tmp_path, gdal_rasterize_path):
 
     # Create a raster to rasterize into.
     target_ds = gdal.GetDriverByName("GTiff").Create(
-        output_tif, 12, 12, 3, gdal.GDT_Byte
+        output_tif, 12, 12, 3, gdal.GDT_UInt8
     )
     target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
 

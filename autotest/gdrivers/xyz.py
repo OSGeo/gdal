@@ -446,7 +446,7 @@ def test_xyz_looks_like_organized_by_columns_but_is_not():
         assert ds.GetGeoTransform() == pytest.approx(
             (371998.0, 1.0, 0.0, 5806917.0, 0.0, 1.0)
         )
-        assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
         assert struct.unpack("b" * (2 * 3), ds.ReadRaster()) == (0, 1, 0, 2, 3, 4)
 
 
@@ -472,7 +472,7 @@ def test_xyz_looks_like_organized_by_columns_but_is_not_case2():
         assert ds.GetGeoTransform() == pytest.approx(
             (395998.0, 1.0, 0.0, 5807443.0, 0.0, 1.0)
         )
-        assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
         assert struct.unpack("b" * (2 * 5), ds.ReadRaster()) == (
             0,
             1,
@@ -510,7 +510,7 @@ def test_xyz_looks_like_missing_lines():
         ds = gdal.Open("/vsimem/grid.xyz")
         assert ds.RasterXSize == 3 and ds.RasterYSize == 9
         assert ds.GetGeoTransform() == pytest.approx((97.0, 1.0, 0.0, 91.0, 0.0, 1.0))
-        assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
         assert struct.unpack("b" * (3 * 9), ds.ReadRaster()) == (
             0,
             1,

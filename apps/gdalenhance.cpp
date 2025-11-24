@@ -480,7 +480,7 @@ static CPLErr EnhancerCallback(void *hCBData, int nXOff, int nYOff, int nXSize,
 {
     const EnhanceCBInfo *psEInfo = static_cast<const EnhanceCBInfo *>(hCBData);
 
-    if (psEInfo->eWrkType != GDT_Byte)
+    if (psEInfo->eWrkType != GDT_UInt8)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Currently gdalenhance only supports Byte output.");
@@ -685,7 +685,7 @@ CPLErr WriteEnhanced(GDALDatasetH hDataset, int **papanLUTs, int nLUTBins,
         /*      Select output data type to match source.                    */
         /* ---------------------------------------------------------------- */
         if (eOutputType == GDT_Unknown)
-            eBandType = GDT_Byte;
+            eBandType = GDT_UInt8;
         else
             eBandType = eOutputType;
 

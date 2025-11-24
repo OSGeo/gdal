@@ -1754,7 +1754,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (aeDataTypes.empty() && !pszDataType)
     {
-        aeDataTypes.resize(nBandCount, GDT_Byte);
+        aeDataTypes.resize(nBandCount, GDT_UInt8);
     }
     else if (pszDataType)
     {
@@ -2260,7 +2260,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     if (bHasMaskBand)
     {
         m_poMaskBand = std::make_unique<GDALTileIndexBand>(
-            this, 0, GDT_Byte, nBlockXSize, nBlockYSize);
+            this, 0, GDT_UInt8, nBlockXSize, nBlockYSize);
     }
 
     if (dfOvrFactor == 1.0)
@@ -4135,7 +4135,7 @@ CompositeSrcWithMaskIntoDest(const int nOutXSize, const int nOutYSize,
                              const GByte *const pabyMask, GByte *const pabyDest)
 {
     size_t iMaskIdx = 0;
-    if (eBufType == GDT_Byte)
+    if (eBufType == GDT_UInt8)
     {
         // Optimization for byte case
         for (int iY = 0; iY < nOutYSize; iY++)
@@ -4348,7 +4348,7 @@ CPLErr GDALTileIndexDataset::RenderSource(
 
     if (poTileDS->GetRasterCount() + 1 == nBandNrMax &&
         papoBands[nBandNrMax - 1]->GetColorInterpretation() == GCI_AlphaBand &&
-        papoBands[nBandNrMax - 1]->GetRasterDataType() == GDT_Byte)
+        papoBands[nBandNrMax - 1]->GetRasterDataType() == GDT_UInt8)
     {
         // Special case when there's typically a mix of RGB and RGBA source
         // datasets and we read a RGB one.
@@ -4393,7 +4393,7 @@ CPLErr GDALTileIndexDataset::RenderSource(
                     for (int iY = 0; iY < nOutYSize; iY++)
                     {
                         GDALCopyWords(
-                            &n255, GDT_Byte, 0,
+                            &n255, GDT_UInt8, 0,
                             pabyOut + static_cast<GPtrDiff_t>(iY * nLineSpace),
                             eBufType, static_cast<int>(nPixelSpace), nOutXSize);
                     }
@@ -4471,7 +4471,7 @@ CPLErr GDALTileIndexDataset::RenderSource(
                 &nOutXSize, &nOutYSize, bError))
         {
             int iMaskBandIdx = -1;
-            if (eBufType == GDT_Byte && nBandNrMax == 0)
+            if (eBufType == GDT_UInt8 && nBandNrMax == 0)
             {
                 // when called from m_poMaskBand
                 iMaskBandIdx = 0;
@@ -4482,7 +4482,7 @@ CPLErr GDALTileIndexDataset::RenderSource(
                 // one of the queried bands of this request, we can save
                 // requesting it separately.
                 const int nMaskBandNr = oSourceDesc.poMaskBand->GetBand();
-                if (eBufType == GDT_Byte && nMaskBandNr >= 1 &&
+                if (eBufType == GDT_UInt8 && nMaskBandNr >= 1 &&
                     nMaskBandNr <= poTileDS->GetRasterCount() &&
                     poTileDS->GetRasterBand(nMaskBandNr) ==
                         oSourceDesc.poMaskBand)
@@ -4535,7 +4535,7 @@ CPLErr GDALTileIndexDataset::RenderSource(
                 if (oSourceDesc.poMaskBand->RasterIO(
                         GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                         oSourceDesc.abyMask.data(), nOutXSize, nOutYSize,
-                        GDT_Byte, 0, 0, &sExtraArg) != CE_None)
+                        GDT_UInt8, 0, 0, &sExtraArg) != CE_None)
                 {
                     oSourceDesc.abyMask.clear();
                     return CE_Failure;

@@ -68,7 +68,7 @@ class CALSRasterBand final : public GDALPamRasterBand
         poUnderlyingBand = poDSIn->poUnderlyingDS->GetRasterBand(1);
         poUnderlyingBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
         nBand = 1;
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
     }
 
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
@@ -133,7 +133,7 @@ class CALSWrapperSrcBand final : public GDALPamRasterBand
         poSrcDS = poSrcDSIn;
         SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE");
         poSrcDS->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         bInvertValues = true;
         GDALColorTable *poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
         if (poCT != nullptr && poCT->GetColorEntryCount() >= 2)
@@ -480,7 +480,7 @@ GDALDataset *CALSDataset::CreateCopy(const char *pszFilename,
     papszOptions = CSLSetNameValue(papszOptions, "SPARSE_OK", "YES");
     GDALDataset *poDS = poGTiffDrv->Create(
         osTmpFilename, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), 1,
-        GDT_Byte, papszOptions);
+        GDT_UInt8, papszOptions);
     if (poDS == nullptr)
     {
         // Should not happen normally (except if CCITTFAX4 not available).

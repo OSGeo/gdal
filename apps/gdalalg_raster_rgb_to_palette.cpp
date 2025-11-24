@@ -70,7 +70,7 @@ bool GDALRasterRGBToPaletteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     for (int i = 1; i <= nSrcBandCount; ++i)
     {
         auto poSrcBand = poSrcDS->GetRasterBand(i);
-        if (poSrcBand->GetRasterDataType() != GDT_Byte)
+        if (poSrcBand->GetRasterDataType() != GDT_UInt8)
         {
             ReportError(CE_Failure, CPLE_NotSupported,
                         "Non-byte band found and not supported");
@@ -115,7 +115,7 @@ bool GDALRasterRGBToPaletteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     auto poTmpDS = CreateTemporaryDataset(
-        poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), 1, GDT_Byte,
+        poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), 1, GDT_UInt8,
         /* bTiledIfPossible = */ true, poSrcDS, /* bCopyMetadata = */ true);
     if (!poTmpDS)
         return false;

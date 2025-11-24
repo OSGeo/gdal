@@ -211,7 +211,7 @@ DatasetPtr createOutputDataset(GDALRasterBand &srcBand, const Options &opts,
     /* create output raster */
     DatasetPtr dataset(hDriver->Create(
         opts.outputFilename.c_str(), extent.xSize(), extent.ySize(), 1,
-        opts.outputMode == OutputMode::Normal ? GDT_Byte : GDT_Float64,
+        opts.outputMode == OutputMode::Normal ? GDT_UInt8 : GDT_Float64,
         const_cast<char **>(opts.creationOpts.List())));
     if (!dataset)
     {

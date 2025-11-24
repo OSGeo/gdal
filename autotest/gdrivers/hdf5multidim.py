@@ -41,7 +41,7 @@ def test_hdf5_multidim_basic():
     assert len(dims) == 2
     assert dims[0].GetSize() == 6
     assert dims[1].GetSize() == 5
-    assert ar.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+    assert ar.GetDataType().GetNumericDataType() == gdal.GDT_UInt8
 
     got_data = ar.Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_UInt16))
     assert len(got_data) == 30 * 2
@@ -113,11 +113,11 @@ def test_hdf5_multidim_var_alldatatypes():
     rg = ds.GetRootGroup()
     assert rg
 
-    expected_vars = [  # ('char_var', gdal.GDT_Byte, (ord('x'),ord('y'))),
-        ("ubyte_var", gdal.GDT_Byte, (255, 254)),
+    expected_vars = [  # ('char_var', gdal.GDT_UInt8, (ord('x'),ord('y'))),
+        ("ubyte_var", gdal.GDT_UInt8, (255, 254)),
         # ("byte_var", gdal.GDT_Int16, (-128, -127)),
         # ("byte_unsigned_false_var", gdal.GDT_Int8, (-128, -127)),
-        # ('byte_unsigned_true_var', gdal.GDT_Byte, (128, 129)),
+        # ('byte_unsigned_true_var', gdal.GDT_UInt8, (128, 129)),
         ("ushort_var", gdal.GDT_UInt16, (65534, 65533)),
         ("short_var", gdal.GDT_Int16, (-32768, -32767)),
         ("uint_var", gdal.GDT_UInt32, (4294967294, 4294967293)),
@@ -140,7 +140,7 @@ def test_hdf5_multidim_var_alldatatypes():
         assert var
         assert var.GetDataType().GetClass() == gdal.GEDTC_NUMERIC, var_name
         assert var.GetDataType().GetNumericDataType() == dt, var_name
-        if dt == gdal.GDT_Byte:
+        if dt == gdal.GDT_UInt8:
             assert struct.unpack("B" * len(val), var.Read()) == val
         if dt == gdal.GDT_Int8:
             assert struct.unpack("b" * len(val), var.Read()) == val
@@ -460,7 +460,8 @@ def test_hdf5_multidim_attr_alldatatypes():
     assert map_attrs["attr_two_doubles"].ReadAsDouble() == 1.25125
 
     assert (
-        map_attrs["attr_enum_ubyte"].GetDataType().GetNumericDataType() == gdal.GDT_Byte
+        map_attrs["attr_enum_ubyte"].GetDataType().GetNumericDataType()
+        == gdal.GDT_UInt8
     )
     assert map_attrs["attr_enum_ubyte"].Read() == 1
 
@@ -546,7 +547,7 @@ def test_hdf5_multidim_read_missing_value_of_different_type_not_in_range():
         gdal.ErrorReset()
         var = rg.OpenMDArray("test")
         assert gdal.GetLastErrorMsg() != ""
-        assert var.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+        assert var.GetDataType().GetNumericDataType() == gdal.GDT_UInt8
         assert (
             var.GetAttribute("_FillValue").GetDataType().GetNumericDataType()
             == gdal.GDT_Float64

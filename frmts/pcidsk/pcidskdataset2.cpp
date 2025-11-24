@@ -1668,7 +1668,7 @@ GDALDataType PCIDSK2Dataset::PCIDSKTypeToGDAL(eChanType eType)
     switch (eType)
     {
         case CHN_8U:
-            return GDT_Byte;
+            return GDT_UInt8;
 
         case CHN_16U:
             return GDT_UInt16;
@@ -1680,7 +1680,7 @@ GDALDataType PCIDSK2Dataset::PCIDSKTypeToGDAL(eChanType eType)
             return GDT_Float32;
 
         case CHN_BIT:
-            return GDT_Byte;
+            return GDT_UInt8;
 
         case CHN_C16U:
             return GDT_CInt16;

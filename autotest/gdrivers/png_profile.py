@@ -54,7 +54,7 @@ def test_png_copy_icc():
 
     driver = gdal.GetDriverByName("PNG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte, options)
+    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
 
     # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy("tmp/icc_test.png", ds)
@@ -111,7 +111,7 @@ def test_png_copy_options_icc():
 
     driver = gdal.GetDriverByName("PNG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte)
+    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
 
     # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy("tmp/icc_test.png", ds, options=options)
@@ -152,7 +152,7 @@ def test_png_copy_options_colorimetric_data():
 
     driver = gdal.GetDriverByName("PNG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte)
+    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
 
     # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy("tmp/icc_test.png", ds, options=options)
@@ -228,7 +228,7 @@ def test_png_copy_colorimetric_data():
 
     driver = gdal.GetDriverByName("PNG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte, options)
+    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
     ds = None
     ds = gdal.Open("tmp/icc_test.tiff")
 
@@ -296,7 +296,7 @@ def test_png_sRGB():
 
     driver = gdal.GetDriverByName("PNG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte)
+    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
 
     # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy("tmp/icc_test.png", ds, options=options)

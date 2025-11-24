@@ -249,7 +249,7 @@ GDALDataset *GFFDataset::Open(GDALOpenInfo *poOpenInfo)
     switch (poDS->nImageType)
     {
         case 0:
-            poDS->eDataType = GDT_Byte;
+            poDS->eDataType = GDT_UInt8;
             break;
 
         case 1:

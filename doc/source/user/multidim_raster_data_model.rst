@@ -190,7 +190,7 @@ guaranteed to be serialized when all objects related to a dataset have been rele
           auto poDim = poRootGroup->CreateDimension(
               "my_dim", std::string(), std::string(), 10);
           auto poArray = poRootGroup->CreateMDArray(
-              "my_var", {poDim}, GDALExtendedDataType::Create(GDT_Byte), nullptr);
+              "my_var", {poDim}, GDALExtendedDataType::Create(GDT_UInt8), nullptr);
 
           // Can be closed in any order
           poArray.reset();
@@ -209,7 +209,7 @@ guaranteed to be serialized when all objects related to a dataset have been rele
       with gdal.GetDriverByName("netCDF").CreateMultiDimensional("new.nc") as ds:
           rg = ds.GetRootGroup()
           dim = rg.CreateDimension("my_dim", "", "", 10)
-          array = rg.CreateMDArray("my_var", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+          array = rg.CreateMDArray("my_var", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
 
           del array
           del dim

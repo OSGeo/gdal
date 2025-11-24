@@ -156,7 +156,7 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
     GDALDataType eDT = GDT_Unknown;
     if (nDepth == 8)
     {
-        eDT = GDT_Byte;
+        eDT = GDT_UInt8;
     }
     else if (nDepth == 16)
     {
@@ -238,7 +238,7 @@ GDALDataset *KRODataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
                                 char ** /* papszOptions */)
 {
-    if (eType != GDT_Byte && eType != GDT_UInt16 && eType != GDT_Float32)
+    if (eType != GDT_UInt8 && eType != GDT_UInt16 && eType != GDT_Float32)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create KRO file with unsupported data type '%s'.",

@@ -24,7 +24,7 @@
 GTiffRGBABand::GTiffRGBABand(GTiffDataset *poDSIn, int nBandIn)
     : GTiffRasterBand(poDSIn, nBandIn)
 {
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 }
 
 /************************************************************************/
@@ -156,10 +156,10 @@ CPLErr GTiffRGBABand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             static_cast<GPtrDiff_t>(nThisBlockYSize - iDestLine - 1) *
             nBlockXSize * 4;
 
-        GDALCopyWords(m_poGDS->m_pabyBlockBuf + nBO + nSrcOffset, GDT_Byte, 4,
+        GDALCopyWords(m_poGDS->m_pabyBlockBuf + nBO + nSrcOffset, GDT_UInt8, 4,
                       static_cast<GByte *>(pImage) +
                           static_cast<GPtrDiff_t>(iDestLine) * nBlockXSize,
-                      GDT_Byte, 1, nBlockXSize);
+                      GDT_UInt8, 1, nBlockXSize);
     }
 
     if (eErr == CE_None)

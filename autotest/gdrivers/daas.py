@@ -2098,7 +2098,7 @@ Content-Type: application/json
     )
 
     with webserver.install_http_handler(handler):
-        data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(buf_type=gdal.GDT_Byte)
+        data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(buf_type=gdal.GDT_UInt8)
     assert data == "GHIJKL".encode("ascii")
 
     ds.FlushCache()
@@ -2123,9 +2123,9 @@ Content-Type: application/json
         response2,
     )
     with webserver.install_http_handler(handler):
-        data = ds.ReadRaster(buf_type=gdal.GDT_Byte)
+        data = ds.ReadRaster(buf_type=gdal.GDT_UInt8)
     assert data == "XXXXXX".encode("ascii")
-    data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(buf_type=gdal.GDT_Byte)
+    data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(buf_type=gdal.GDT_UInt8)
     assert data == "GHIJKL".encode("ascii")
 
 

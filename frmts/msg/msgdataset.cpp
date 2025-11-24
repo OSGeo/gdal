@@ -385,14 +385,14 @@ MSGRasterBand::MSGRasterBand(MSGDataset *poDSIn, int nBandIn)
             if (xhp.isValid())
             {
                 // Data type is either 8 or 16 bits .. we tell this to GDAL here
-                eDataType = GDT_Byte;  // default .. always works
+                eDataType = GDT_UInt8;  // default .. always works
                 if (xhp.nrBitsPerPixel() > 8)
                 {
                     if (poDSIn->command.cDataConversion == 'N')
                         eDataType =
                             GDT_UInt16;  // normal case: MSG 10 bits data
                     else if (poDSIn->command.cDataConversion == 'B')
-                        eDataType = GDT_Byte;  // output data type Byte
+                        eDataType = GDT_UInt8;  // output data type Byte
                     else
                         eDataType = GDT_Float32;  // Radiometric calibration
                 }
@@ -422,7 +422,7 @@ MSGRasterBand::MSGRasterBand(MSGDataset *poDSIn, int nBandIn)
         if (poDSIn->command.cDataConversion == 'N')
             eDataType = GDT_UInt16;  // normal case: MSG 10 bits data
         else if (poDSIn->command.cDataConversion == 'B')
-            eDataType = GDT_Byte;  // output data type Byte
+            eDataType = GDT_UInt8;  // output data type Byte
         else
             eDataType = GDT_Float32;  // Radiometric calibration
 
@@ -604,7 +604,7 @@ CPLErr MSGRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
                 // cases:
                 // combination of the following:
                 // - scan direction can be north or south
-                // - eDataType can be GDT_Byte, GDT_UInt16 or GDT_Float32
+                // - eDataType can be GDT_UInt8, GDT_UInt16 or GDT_Float32
                 // - nBlockXSize == chunk_width or nBlockXSize > chunk_width
                 // - when nBlockXSize > chunk_width, fSplitStrip can be true or
                 // false we won't distinguish the following cases:
@@ -623,7 +623,7 @@ CPLErr MSGRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
                 }
 
                 COMP::CImage cimg(img_uncompressed);  // unpack
-                if (eDataType == GDT_Byte)
+                if (eDataType == GDT_UInt8)
                 {
                     if (nBlockXSize == chunk_width)  // optimized version
                     {

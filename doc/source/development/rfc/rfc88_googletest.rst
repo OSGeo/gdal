@@ -126,9 +126,9 @@ all potential combinations of (datatype1, datatype2)
     // Test GDALDataTypeUnion() on all (GDALDataType, GDALDataType) combinations
     template<> template<> void object::test<6>()
     {
-        for(int i=GDT_Byte;i<GDT_TypeCount;i++)
+        for(int i=GDT_UInt8;i<GDT_TypeCount;i++)
         {
-            for(int j=GDT_Byte;j<GDT_TypeCount;j++)
+            for(int j=GDT_UInt8;j<GDT_TypeCount;j++)
             {
                 GDALDataType eDT1 = static_cast<GDALDataType>(i);
                 GDALDataType eDT2 = static_cast<GDALDataType>(j);
@@ -156,9 +156,9 @@ can be written in GoogleTest as
         static std::vector<std::tuple<GDALDataType, GDALDataType>> GetTupleValues()
         {
             std::vector<std::tuple<GDALDataType, GDALDataType>> ret;
-            for( GDALDataType eIn = GDT_Byte; eIn < GDT_TypeCount; eIn = static_cast<GDALDataType>(eIn + 1) )
+            for( GDALDataType eIn = GDT_UInt8; eIn < GDT_TypeCount; eIn = static_cast<GDALDataType>(eIn + 1) )
             {
-                for( GDALDataType eOut = GDT_Byte; eOut < GDT_TypeCount; eOut = static_cast<GDALDataType>(eOut + 1) )
+                for( GDALDataType eOut = GDT_UInt8; eOut < GDT_TypeCount; eOut = static_cast<GDALDataType>(eOut + 1) )
                 {
                     ret.emplace_back(std::make_tuple(eIn, eOut));
                 }

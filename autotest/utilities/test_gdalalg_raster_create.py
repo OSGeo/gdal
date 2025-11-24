@@ -69,7 +69,7 @@ def test_gdalalg_raster_create_minimal():
     assert ds.RasterCount == 1
     assert ds.RasterXSize == 2
     assert ds.RasterYSize == 3
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     assert ds.GetRasterBand(1).GetNoDataValue() is None
 
 
@@ -204,8 +204,12 @@ def test_gdalalg_raster_create_full():
     assert ds.RasterYSize == 4
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
     assert ds.GetRasterBand(1).GetNoDataValue() == 255
-    assert ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Byte) == b"\xFD"
-    assert ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Byte) == b"\xFE"
+    assert (
+        ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\xFD"
+    )
+    assert (
+        ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\xFE"
+    )
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
     assert ds.GetGeoTransform() == (2.0, 0.5, 0.0, 50.0, 0.0, -0.25)
     assert ds.GetMetadataItem("key") == "value"
@@ -224,8 +228,12 @@ def test_gdalalg_raster_create_copy():
     assert ds.RasterYSize == 4
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
     assert ds.GetRasterBand(1).GetNoDataValue() == 255
-    assert ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Byte) == b"\x00"
-    assert ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Byte) == b"\x00"
+    assert (
+        ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\x00"
+    )
+    assert (
+        ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\x00"
+    )
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
     assert ds.GetGeoTransform() == (2.0, 0.5, 0.0, 50.0, 0.0, -0.25)
     assert ds.GetMetadataItem("key") is None
@@ -389,7 +397,7 @@ def test_gdalalg_raster_create_copy_override_datatype():
     alg["datatype"] = "Byte"
     assert alg.Run()
     ds = alg["output"].GetDataset()
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
 
 
 def test_gdalalg_raster_create_copy_override_crs():
