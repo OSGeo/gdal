@@ -156,10 +156,10 @@ jobs:
             test_script: test.sh
             os: ubuntu-22.04
 
-          - name: Ubuntu 24.04, arm64
-            id: ubuntu_2404_arm64
-            container: ubuntu_2404_arm64
-            travis_branch: ubuntu_2404_arm64
+          - name: Ubuntu 25.10, arm64
+            id: ubuntu_2510_arm64
+            container: ubuntu_2510_arm64
+            travis_branch: ubuntu_2510_arm64
             build_script: build.sh
             test_script: test.sh
             os: ubuntu-24.04-arm

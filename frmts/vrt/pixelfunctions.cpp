@@ -2810,14 +2810,14 @@ static bool JITCompute(void **papoSources, int nSources, void *pData,
                        int nXSize, int nYSize, GDALDataType eBufType,
                        int nPixelSpace, int nLineSpace, const char *c_code,
                        bool includeCenterCoords, int nXOff, int nYOff,
-                       GDALGeoTransform &gt)
+                       GDALGeoTransform &gt, bool bDisassemble)
 {
     using T = typename gdal::GDALDataTypeTraits<eSrcType>::type;
     using FnType = std::function<void(const T *const *, const double *const *,
                                       T *, size_t)>;
     static thread_local lru11::Cache<std::string, FnType> cache;
     std::string disassembly;
-    std::string *pDisassembly = CPLIsDebugEnabled() ? &disassembly : nullptr;
+    std::string *pDisassembly = bDisassemble ? &disassembly : nullptr;
     FnType computePixels;
     if (!cache.tryGet(c_code, computePixels))
     {
@@ -2828,7 +2828,7 @@ static bool JITCompute(void **papoSources, int nSources, void *pData,
                 c_code, "computePixels", nullptr, pDisassembly);
         }
         if (pDisassembly)
-            CPLDebug("VRT", "Disassembly:\n%s", disassembly.c_str());
+            CPLDebug("GDAL_JIT", "Disassembly:\n%s", disassembly.c_str());
         if (!computePixels)
             return false;
         cache.insert(c_code, computePixels);
@@ -3921,7 +3921,12 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                 dfNoData, bPropagateNoData, includeCenterCoords);
             if (!osCFunction.empty())
             {
-                CPLDebug("VRT", "C code:\n%s", osCFunction.c_str());
+                const bool bDisassemble =
+                    CPLTestBool(CPLGetConfigOption("GDAL_JIT_DEBUG", "OFF"));
+                if (bDisassemble)
+                {
+                    CPLDebug("GDAL_JIT", "C code:\n%s", osCFunction.c_str());
+                }
 
                 bool bRet = false;
 
@@ -3930,7 +3935,7 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         bRet = JITCompute<type>(papoSources, nSources, pData, nXSize, nYSize,  \
                                 eBufType, nPixelSpace, nLineSpace,             \
                                 osCFunction.c_str(), includeCenterCoords,      \
-                                nXOff, nYOff, gt);                             \
+                                nXOff, nYOff, gt, bDisassemble);               \
         break
 
                 switch (eSrcType)
