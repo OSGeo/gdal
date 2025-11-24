@@ -645,8 +645,15 @@ void ZarrArray::BlockTranspose(const ZarrByteVectorQuickResize &abySrc,
     };
 
     std::vector<Stack> stack(nDims);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     stack.emplace_back(
         Stack());  // to make gcc 9.3 -O2 -Wnull-dereference happy
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
     if (bDecode)
     {

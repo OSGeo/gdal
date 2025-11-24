@@ -829,9 +829,16 @@ bool ZarrV3CodecTranspose::Transpose(const ZarrByteVectorQuickResize &abySrc,
         size_t dst_inc_offset = 0;
     };
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     std::vector<Stack> stack(nDims);
     stack.emplace_back(
         Stack());  // to make gcc 9.3 -O2 -Wnull-dereference happy
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
     if (!bEncodeDirection)
     {
