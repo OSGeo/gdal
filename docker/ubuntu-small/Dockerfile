@@ -177,9 +177,19 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
         export CC=$PWD/ccache_gcc.sh; \
         export CXX=$PWD/ccache_g++.sh; \
         ccache -M 1G; \
+    else \
+        export CC="${GCC_ARCH}-linux-gnu-gcc"; \
+        export CXX="${GCC_ARCH}-linux-gnu-g++"; \
     fi \
     && mkdir build \
     && cd build \
+    && if test "$(uname -m)" = "x86_64" && test "${GCC_ARCH}" = "aarch64"; then \
+      echo "set(CMAKE_SYSTEM_NAME Linux)" > toolchain_arm64.cmake; \
+      echo "set(CMAKE_SYSTEM_PROCESSOR aarch64)" >> toolchain_arm64.cmake; \
+      echo "set(CMAKE_C_COMPILER ${CC})" >> toolchain_arm64.cmake; \
+      echo "set(CMAKE_CXX_COMPILER ${CXX})" >> toolchain_arm64.cmake; \
+      export GDAL_CMAKE_EXTRA_OPTS="${GDAL_CMAKE_EXTRA_OPTS} -DCMAKE_TOOLCHAIN_FILE=toolchain_arm64.cmake"; \
+    fi \
     # -Wno-psabi avoid 'note: parameter passing for argument of type 'std::pair<double, double>' when C++17 is enabled changed to match C++14 in GCC 10.1' on arm64
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -Wno-psabi' \
        cmake .. \
