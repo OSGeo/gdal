@@ -241,6 +241,7 @@ class CPL_DLL OGRArrowArrayHelper
             }
             else
             {
+                // coverity[overflow_sink]
                 newBuffer = VSI_REALLOC_VERBOSE(
                     const_cast<void *>(psArray->buffers[2]), nNewSize);
                 if (newBuffer == nullptr)
