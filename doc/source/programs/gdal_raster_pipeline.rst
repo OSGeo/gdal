@@ -140,6 +140,12 @@ Details for options can be found in :ref:`gdal_raster_pansharpen`.
 
 Details for options can be found in :ref:`gdal_raster_proximity`.
 
+* reclassify
+
+.. program-output:: gdal raster pipeline --help-doc=reclassify
+
+Details for options can be found in :ref:`gdal_raster_reclassify`.
+
 * reproject
 
 .. program-output:: gdal raster pipeline --help-doc=reproject
