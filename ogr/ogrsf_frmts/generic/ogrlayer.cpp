@@ -2846,7 +2846,7 @@ OGRFeatureDefnH OGR_L_GetLayerDefn(OGRLayerH hLayer)
  The returned number is the index of the field in the layers, or -1 if the
  field doesn't exist.
 
- If bExactMatch is set to FALSE and the field doesn't exists in the given form
+ If bExactMatch is set to FALSE and the field doesn't exist in the given form
  the driver might apply some changes to make it match, like those it might do
  if the layer was created (eg. like LAUNDER in the OCI driver).
 
@@ -2880,7 +2880,7 @@ int OGR_L_FindFieldIndex(OGRLayerH hLayer, const char *pszFieldName,
  The returned number is the index of the field in the layers, or -1 if the
  field doesn't exist.
 
- If bExactMatch is set to FALSE and the field doesn't exists in the given form
+ If bExactMatch is set to FALSE and the field doesn't exist in the given form
  the driver might apply some changes to make it match, like those it might do
  if the layer was created (eg. like LAUNDER in the OCI driver).
 
