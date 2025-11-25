@@ -2469,7 +2469,7 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                         switch (poBand->GetRasterDataType())
                         {
                             case GDT_Int8:     pszDT = "int8";     break;
-                            case GDT_Byte:     pszDT = "uint8";    break;
+                            case GDT_UInt8:    pszDT = "uint8";    break;
                             case GDT_Int16:    pszDT = "int16";    break;
                             case GDT_UInt16:   pszDT = "uint16";   break;
                             case GDT_Int32:    pszDT = "int32";    break;

@@ -53,7 +53,7 @@ class GDALGPKGMBTilesLikePseudoDataset /* non final */
     bool m_bHasModifiedTiles = false;
 
     CPLString m_osRasterTable{};
-    GDALDataType m_eDT = GDT_Byte;
+    GDALDataType m_eDT = GDT_UInt8;
     int m_nDTSize = 1;
     double m_dfOffset = 0.0;
     double m_dfScale = 1.0;
