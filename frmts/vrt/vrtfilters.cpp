@@ -161,6 +161,8 @@ CPLErr VRTFilteredSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
 
     bool bError = false;
     if (!GetSrcDstWindow(dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
+                         psExtraArg ? psExtraArg->eResampleAlg
+                                    : GRIORA_NearestNeighbour,
                          &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                          &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                          &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))

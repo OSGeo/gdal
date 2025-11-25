@@ -1480,6 +1480,12 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
                         int *, int *, int *, int *, int *, int *,
                         bool &bErrorOut);
 
+    int GetSrcDstWindow(double, double, double, double, int, int,
+                        GDALRIOResampleAlg eResampleAlg, double *pdfReqXOff,
+                        double *pdfReqYOff, double *pdfReqXSize,
+                        double *pdfReqYSize, int *, int *, int *, int *, int *,
+                        int *, int *, int *, bool &bErrorOut);
+
     virtual CPLErr RasterIO(GDALDataType eVRTBandDataType, int nXOff, int nYOff,
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
