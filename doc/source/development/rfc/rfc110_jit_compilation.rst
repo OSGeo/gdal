@@ -235,6 +235,7 @@ On a Skylake x86_64 CPU, i.e. with AVX2 and Fused multiply add (FMA) extensions:
 
     $ gdal raster resize --size 10000,5000 autotest/gdrivers/data/small_world.tif big_world.tif
 
+
 Averaging all 3 bands (per pixel), with Byte output:
 
   .. code-block:: shell
@@ -250,6 +251,17 @@ Averaging all 3 bands (per pixel), with Byte output:
         --output-data-type Byte
 
       real 0m1,255s
+
+   $ time gdal raster calc big_world.tif big_world_mean.tif --dialect builtin \
+        --flatten --calc "mean" -q --overwrite --output-data-type Byte
+
+      real 0m0,246s
+
+
+  .. note::
+
+       The builtin "mean" method is slightly faster than the JIT'ed "avg(X)",
+       since it has a manual ultra optimized SSE2 implementation.
 
 Computing the maximum minus the minimum of all 3 bands (per pixel):
 
@@ -267,6 +279,7 @@ Computing the maximum minus the minimum of all 3 bands (per pixel):
 
       real 0m1,838s
 
+
 Computing the log10 of each pixel, per band, as Float64:
 
   .. code-block:: shell
@@ -280,6 +293,46 @@ Computing the log10 of each pixel, per band, as Float64:
         --calc "log10(X)" -q --config GDAL_USE_JIT=NO --overwrite
 
       real 0m5,631s
+
+    $ time gdal raster calc big_world.tif big_world_log10_builtin.tif --dialect builtin \
+        --calc "log10" -q --overwrite
+
+      real 0m6,490s
+
+
+Computing the log10 of each pixel, per band, as Float32:
+
+  .. code-block:: shell
+
+    $ time gdal raster calc big_world.tif big_world_log10.tif \
+        --calc "log10(X)" -q --config GDAL_USE_JIT=YES --overwrite --output-data-type Float32
+
+      real 0m1,842s
+
+    $ time gdal raster calc big_world.tif big_world_log10.tif \
+        --calc "log10(X)" -q --config GDAL_USE_JIT=NO --overwrite --output-data-type Float32
+
+      real 0m4,893s
+
+    $ time gdal raster calc big_world.tif big_world_log10_builtin.tif --dialect builtin \
+        --calc "log10" -q --overwrite --output-data-type Float32
+
+      real 0m6,032s
+
+
+Computing the modulus of a complex number from one band with the real part and another one with the imaginary part:
+
+  .. code-block:: shell
+
+    $ time gdal raster calc two_float_bands.tif modulus_jit.tif --flatten \
+        --calc "sqrt(X[1]^2 + X[2]^2)" -q --overwrite --config GDAL_USE_JIT=YES --output-data-type Float32
+
+      real 0m0,549s
+
+    $ time gdal raster calc two_float_bands.tif modulus_nojit.tif --flatten \
+        --calc "sqrt(X[1]^2 + X[2]^2)" -q --overwrite --config GDAL_USE_JIT=NO --output-data-type Float32
+
+      real 0m1,582s
 
 
 .. warning::
@@ -384,6 +437,7 @@ TBD
     FindLLVM
     glibc
     jit
+    JIT'ed
     libLLVM
     libclang
     libmvec
