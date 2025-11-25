@@ -1202,9 +1202,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                 static_cast<VRTSimpleSource *>(m_papoSources[iSource].get());
             if (!poSource->GetSrcDstWindow(
                     nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
-                    &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
-                    &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
-                    &nOutXSize, &nOutYSize, bError))
+                    psExtraArg->eResampleAlg, &dfReqXOff, &dfReqYOff,
+                    &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff, &nReqXSize,
+                    &nReqYSize, &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize,
+                    bError))
             {
                 if (bError)
                 {
