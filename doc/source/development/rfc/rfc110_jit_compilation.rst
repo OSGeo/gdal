@@ -201,7 +201,12 @@ The following (advanced) configuration options are added:
   below that threshold we fallback to MuParser interpretation. Setting to
   YES or NO can force/disable the use of the JIT, independently of that threshold.
 
-* GDAL_JIT_USE_VECLIB=YES/NO (default YES): whether a mathematic library
+* GDAL_JIT_DEBUG=YES/NO (default: NO): when enabled, and :config:`CPL_DEBUG`
+  configuration option is set to ``ON`` or ``GDAL_JIT``, debug messages specific
+  to JIT usage, including generated C code and disassembly of the JIT code,
+  will be emitted.
+
+* GDAL_JIT_USE_VECLIB=YES/NO (default: YES): whether a mathematic library
   providing vectorized implementations of common
   transcendental functions, ``sin()``, ``cos()``, ``tan()``, ``exp()``, ``log()``, etc.
   can be used, when it is available. Such library is not linked to GDAL itself
@@ -220,10 +225,6 @@ The following (advanced) configuration options are added:
   for more details.
 
 Normally, users should not have to bother with any of them.
-
-When the :config:`CPL_DEBUG` configuration option is set to ``ON`` or ``VRT``,
-the generated C code and disassembly of the JIT code are also shown so that
-advanced users can check if the vectorization looks reasonable.
 
 Benchmarks
 ----------
