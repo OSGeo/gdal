@@ -90,6 +90,8 @@ struct DatasetProperty
     int nMaskBlockXSize = 0;
     int nMaskBlockYSize = 0;
     std::vector<int> anOverviewFactors{};
+    std::vector<std::string> aosDescriptions{};
+    std::vector<CPLStringList> mapBandMetadata{};
 };
 
 struct BandProperty
@@ -103,6 +105,8 @@ struct BandProperty
     double dfOffset = 0;
     bool bHasScale = false;
     double dfScale = 0;
+    std::string osDescription = "";
+    CPLStringList aosMetadata{};
 };
 }  // namespace gdal::GDALBuildVRT
 
@@ -610,6 +614,8 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
 
     /* For the -separate case */
     psDatasetProperties->aeBandType.resize(_nBands);
+    psDatasetProperties->aosDescriptions.resize(_nBands);
+    psDatasetProperties->mapBandMetadata.resize(_nBands);
 
     psDatasetProperties->adfNoDataValues.resize(_nBands);
     psDatasetProperties->abHasNoData.resize(_nBands);
@@ -663,6 +669,29 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
         GDALRasterBand *poBand = poDS->GetRasterBand(j + 1);
 
         psDatasetProperties->aeBandType[j] = poBand->GetRasterDataType();
+
+        // Only used by separate mode
+        if (bSeparate)
+        {
+            psDatasetProperties->aosDescriptions[j] = poBand->GetDescription();
+            // Add metadata items
+            char **papszMD = poBand->GetMetadata();
+            if (papszMD)
+            {
+                for (int i = 0; i < CSLCount(papszMD); i++)
+                {
+                    char *pszKey = nullptr;
+                    const char *pszValue =
+                        CPLParseNameValue(papszMD[i], &pszKey);
+                    if (pszKey)
+                    {
+                        psDatasetProperties->mapBandMetadata[j].SetNameValue(
+                            pszKey, pszValue);
+                        CPLFree(pszKey);
+                    }
+                }
+            }
+        }
 
         if (!bSeparate && nSrcNoDataCount > 0)
         {
@@ -761,6 +790,25 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                 asBandProperties[j].colorInterpretation =
                     poBand->GetColorInterpretation();
                 asBandProperties[j].dataType = poBand->GetRasterDataType();
+                asBandProperties[j].osDescription = poBand->GetDescription();
+                // Add metadata items
+                char **papszMD = poBand->GetMetadata();
+                if (papszMD)
+                {
+                    for (int i = 0; i < CSLCount(papszMD); i++)
+                    {
+                        char *pszKey = nullptr;
+                        const char *pszValue =
+                            CPLParseNameValue(papszMD[i], &pszKey);
+                        if (pszKey)
+                        {
+                            asBandProperties[j].aosMetadata.SetNameValue(
+                                pszKey, pszValue);
+                            CPLFree(pszKey);
+                        }
+                    }
+                }
+
                 if (asBandProperties[j].colorInterpretation == GCI_PaletteIndex)
                 {
                     auto colorTable = poBand->GetColorTable();
@@ -849,6 +897,37 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                 const int nSelBand = panSelectedBandList[j];
                 CPLAssert(nSelBand >= 1 && nSelBand <= _nBands);
                 GDALRasterBand *poBand = poDS->GetRasterBand(nSelBand);
+                // In normal mode we only preserve description if identical across
+                if (asBandProperties[j].osDescription !=
+                    poBand->GetDescription())
+                {
+                    asBandProperties[j].osDescription = "";
+                }
+                // same for metadata
+                char **papszMD = poBand->GetMetadata();
+                if (papszMD)
+                {
+                    for (int i = 0; i < CSLCount(papszMD); i++)
+                    {
+                        char *pszKey = nullptr;
+                        const char *pszValue =
+                            CPLParseNameValue(papszMD[i], &pszKey);
+                        if (pszKey)
+                        {
+                            const char *pszExistingValue =
+                                asBandProperties[j].aosMetadata.FetchNameValue(
+                                    pszKey);
+                            if (pszExistingValue == nullptr ||
+                                !EQUAL(pszExistingValue, pszValue))
+                            {
+                                asBandProperties[j].aosMetadata.SetNameValue(
+                                    pszKey, nullptr);
+                            }
+                            CPLFree(pszKey);
+                        }
+                    }
+                }
+
                 if (asBandProperties[j].colorInterpretation !=
                     poBand->GetColorInterpretation())
                 {
@@ -1166,6 +1245,11 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
                 static_cast<VRTSourcedRasterBand *>(
                     poVRTDS->GetRasterBand(iBand));
 
+            poVRTBand->SetDescription(
+                psDatasetProperties->aosDescriptions[nSrcBandIdx].c_str());
+            poVRTBand->SetMetadata(
+                psDatasetProperties->mapBandMetadata[nSrcBandIdx]);
+
             if (bHideNoData)
                 poVRTBand->SetMetadataItem("HideNoDataValue", "1", nullptr);
 
@@ -1285,6 +1369,8 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
         poVRTDS->AddBand(asBandProperties[j].dataType, aosOptions.List());
         GDALRasterBand *poBand = poVRTDS->GetRasterBand(j + 1);
         poBand->SetColorInterpretation(asBandProperties[j].colorInterpretation);
+        poBand->SetDescription(asBandProperties[j].osDescription.c_str());
+        poBand->SetMetadata(asBandProperties[j].aosMetadata.List());
         if (asBandProperties[j].colorInterpretation == GCI_PaletteIndex)
         {
             poBand->SetColorTable(asBandProperties[j].colorTable.get());
