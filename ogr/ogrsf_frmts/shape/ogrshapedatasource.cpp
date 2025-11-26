@@ -1255,7 +1255,8 @@ OGRLayer *OGRShapeDataSource::ExecuteSQL(const char *pszStatement,
 const char *const *OGRShapeDataSource::GetExtensionsForDeletion()
 {
     static const char *const apszExtensions[] = {
-        "shp",  "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind", "qix", "cpg",
+        "shp",  "shx", "dbf", "sbn", "sbx",     "prj",
+        "idm",  "ind", "qix", "cpg", "shp.xml",
         "qpj",  // QGIS projection file
         nullptr};
     return apszExtensions;

@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "cpl_time.h"
 #include "cpl_vsi.h"
+#include "cpl_vsi_virtual.h"
 #include "ogr_core.h"
 #include "ogr_feature.h"
 #include "ogr_geometry.h"
@@ -133,9 +134,13 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
     }
     SetMetadataItem("SOURCE_ENCODING", m_osEncoding, "SHAPEFILE");
 
+    auto fpShpXML = VSIFilesystemHandler::OpenStatic(
+        CPLResetExtensionSafe(m_osFullName.c_str(), "shp.xml").c_str(), "rb");
+    m_bHasShpXML = fpShpXML != nullptr;
+
     m_poFeatureDefn = SHPReadOGRFeatureDefn(
         CPLGetBasenameSafe(m_osFullName.c_str()).c_str(), m_hSHP, m_hDBF,
-        m_osEncoding,
+        fpShpXML.get(), m_osEncoding,
         CPLFetchBool(m_poDS->GetOpenOptions(), "ADJUST_TYPE", false));
 
     // To make sure that
@@ -3743,6 +3748,14 @@ void OGRShapeLayer::AddToFileList(CPLStringList &oFileList)
             oFileList.AddStringDirectly(
                 VSIGetCanonicalFilename(osSBXFilename.c_str()));
         }
+    }
+
+    if (m_bHasShpXML)
+    {
+        const std::string osSBXFilename =
+            CPLResetExtensionSafe(m_osFullName.c_str(), "shp.xml");
+        oFileList.AddStringDirectly(
+            VSIGetCanonicalFilename(osSBXFilename.c_str()));
     }
 }
 

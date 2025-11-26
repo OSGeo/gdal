@@ -43,7 +43,7 @@ OGRFeature *SHPReadOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
 OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                               bool &bHasWarnedWrongWindingOrder);
 OGRFeatureDefn *SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP,
-                                      DBFHandle hDBF,
+                                      DBFHandle hDBF, VSILFILE *fpSHPXML,
                                       const char *pszSHPEncoding,
                                       int bAdjustType);
 OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
@@ -112,6 +112,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
     DBFHandle m_hDBF = nullptr;
 
     bool m_bUpdateAccess = false;
+    bool m_bHasShpXML = false;
 
     OGRwkbGeometryType m_eRequestedGeomType = wkbUnknown;
     int ResetGeomType(int nNewType);
