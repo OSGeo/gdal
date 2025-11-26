@@ -1156,6 +1156,14 @@ def test_gdalbuildvrt_lib_source_had_ds_mask_band_and_addalpha():
             "",
             {"KEY2": "VALUE2"},
         ),
+        (
+            "",
+            "",
+            {"KEY1": "VALUE1"},
+            {"KEY2": "VALUE2", "KEY3": "VALUE3"},
+            "",
+            {},
+        ),
     ],
 )
 def test_gdalbuildvrt_preserve_band_metadata_normal_mode(
