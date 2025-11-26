@@ -942,7 +942,27 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         nSRSDimension = atoi(pszSRSDimension);
 
     if (pszSRSName == nullptr)
+    {
         pszSRSName = CPLGetXMLValue(psNode, "srsName", nullptr);
+
+        if (pszSRSName && nSRSDimension == 0)
+        {
+            std::shared_ptr<OGRSpatialReference> poSRS;
+            if (!oSRSCache.tryGet(pszSRSName, poSRS))
+            {
+                poSRS = std::make_shared<OGRSpatialReference>();
+                if (poSRS->SetFromUserInput(
+                        pszSRSName,
+                        OGRSpatialReference::
+                            SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
+                    OGRERR_NONE)
+                    poSRS.reset();
+                oSRSCache.insert(pszSRSName, poSRS);
+            }
+            if (poSRS)
+                nSRSDimension = poSRS->GetAxesCount();
+        }
+    }
 
     if (!pszId && nRecLevel == 0)
     {
