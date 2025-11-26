@@ -344,10 +344,16 @@ bool VRTSourcedRasterBand::CanMultiThreadRasterIO(
             poSimpleSource->GetDstWindow(dfSourceXOff, dfSourceYOff,
                                          dfSourceXSize, dfSourceYSize);
             constexpr double EPSILON = 1e-1;
-            sSourceBounds.minx = dfSourceXOff + EPSILON;
-            sSourceBounds.miny = dfSourceYOff + EPSILON;
-            sSourceBounds.maxx = dfSourceXOff + dfSourceXSize - EPSILON;
-            sSourceBounds.maxy = dfSourceYOff + dfSourceYSize - EPSILON;
+            // We floor/ceil to detect potential overlaps of sources whose
+            // destination offset is not integer. Otherwise, in case of
+            // multithreading, this could cause one line to be written
+            // concurrently by multiple threads.
+            sSourceBounds.minx = std::floor(dfSourceXOff) + EPSILON;
+            sSourceBounds.miny = std::floor(dfSourceYOff) + EPSILON;
+            sSourceBounds.maxx =
+                std::ceil(dfSourceXOff + dfSourceXSize) - EPSILON;
+            sSourceBounds.maxy =
+                std::ceil(dfSourceYOff + dfSourceYSize) - EPSILON;
             iLastSource = iSource;
 
             if (hQuadTree)
