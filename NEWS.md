@@ -757,18 +757,6 @@ SQLite driver:
 * Docstring Updates for Stub Generation (#13198)
 * Utilities as a function: consistently handle options as string (#13274)
 
-# GDAL/OGR 3.11.4 Release Notes
-
-GDAL 3.11.4 is a bugfix release.
-
-## Build
-
-* Install missing symlinks for completions of a few missing utilities, and
-  remove ones that are no longer installed
-* CMake: fix checks for CMAKE_SYSTEM_PROCESSOR on non Windows platforms
-* Various compiler and cppcheck warning fixes
-* Add option to disable libavif version check
-
 # GDAL/OGR 3.11.5 Release Notes
 
 GDAL 3.11.5 is a bugfix release.
@@ -901,6 +889,18 @@ WFS driver:
 
 * Guard against null input to SuggestedWarpOutput (#13054)
 * fix non-freeing of dataset created with CreateVector()
+
+# GDAL/OGR 3.11.4 Release Notes
+
+GDAL 3.11.4 is a bugfix release.
+
+## Build
+
+* Install missing symlinks for completions of a few missing utilities, and
+  remove ones that are no longer installed
+* CMake: fix checks for CMAKE_SYSTEM_PROCESSOR on non Windows platforms
+* Various compiler and cppcheck warning fixes
+* Add option to disable libavif version check
 
 ## GDAL 3.11.4
 
