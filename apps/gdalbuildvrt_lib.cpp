@@ -675,7 +675,7 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
         {
             psDatasetProperties->aosDescriptions[j] = poBand->GetDescription();
             // Add metadata items
-            char **papszMD = poBand->GetMetadata();
+            CSLConstList papszMD = poBand->GetMetadata();
             if (papszMD)
             {
                 for (int i = 0; i < CSLCount(papszMD); i++)

@@ -1194,8 +1194,7 @@ def test_gdalbuildvrt_preserve_band_metadata_normal_mode(
     desc = rt_ds.GetRasterBand(1).GetDescription()
 
     assert desc == expected_desc
-    for mdkey, mdval in expected_metadata.items():
-        assert rt_ds.GetRasterBand(1).GetMetadataItem(mdkey) == mdval
+    assert rt_ds.GetRasterBand(1).GetMetadata_Dict() == expected_metadata
 
 
 @pytest.mark.parametrize(
