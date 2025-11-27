@@ -21,15 +21,20 @@
 
 #include "cpl_string.h"
 #include "cpl_conv.h"
+#ifdef OGR_P_WITH_SRS_CACHE
+#include "cpl_mem_cache.h"
+#endif
 #include "cpl_minixml.h"
 
 #include "ogr_core.h"
 
 #include <limits>
+#include <memory>
 #include <string_view>
 
 class OGRGeometry;
 class OGRFieldDefn;
+class OGRSpatialReference;
 
 /* A default name for the default geometry column, instead of '' */
 #define OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME "_ogr_geometry_"
@@ -191,6 +196,15 @@ OGRGeometry CPL_DLL *GML2OGRGeometry_XMLNode(
     int nRecLevel = 0, int nSRSDimension = 0, bool bIgnoreGSG = false,
     bool bOrientation = true, bool bFaceHoleNegative = false,
     const char *pszId = nullptr);
+
+#ifdef OGR_P_WITH_SRS_CACHE
+OGRGeometry CPL_DLL *GML2OGRGeometry_XMLNode(
+    const CPLXMLNode *psNode, int nPseudoBoolGetSecondaryGeometryOption,
+    lru11::Cache<std::string, std::shared_ptr<OGRSpatialReference>> &oSRSCache,
+    int nRecLevel = 0, int nSRSDimension = 0, bool bIgnoreGSG = false,
+    bool bOrientation = true, bool bFaceHoleNegative = false,
+    const char *pszId = nullptr);
+#endif
 
 /************************************************************************/
 /*                        PostGIS EWKB encoding                         */
