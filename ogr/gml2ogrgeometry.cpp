@@ -894,6 +894,20 @@ OGRGeometry *GML2OGRGeometry_XMLNode(const CPLXMLNode *psNode,
         .release();
 }
 
+OGRGeometry *GML2OGRGeometry_XMLNode(
+    const CPLXMLNode *psNode, int nPseudoBoolGetSecondaryGeometryOption,
+    lru11::Cache<std::string, std::shared_ptr<OGRSpatialReference>> &oSRSCache,
+    int nRecLevel, int nSRSDimension, bool bIgnoreGSG, bool bOrientation,
+    bool bFaceHoleNegative, const char *pszId)
+
+{
+    return GML2OGRGeometry_XMLNode_Internal(
+               psNode, pszId, nPseudoBoolGetSecondaryGeometryOption, nRecLevel,
+               nSRSDimension, nullptr, oSRSCache, bIgnoreGSG, bOrientation,
+               bFaceHoleNegative)
+        .release();
+}
+
 static void ReportError(const char *pszId, CPLErr eErr, const char *fmt, ...)
     CPL_PRINT_FUNC_FORMAT(3, 4);
 
@@ -3873,7 +3887,9 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
 OGRGeometryH OGR_G_CreateFromGMLTree(const CPLXMLNode *psTree)
 
 {
-    return OGRGeometry::ToHandle(GML2OGRGeometry_XMLNode(psTree, -1));
+    lru11::Cache<std::string, std::shared_ptr<OGRSpatialReference>> oSRSCache;
+    return OGRGeometry::ToHandle(
+        GML2OGRGeometry_XMLNode(psTree, -1, oSRSCache));
 }
 
 /************************************************************************/
@@ -3941,8 +3957,9 @@ OGRGeometryH OGR_G_CreateFromGML(const char *pszGML)
     // and GMLReader::GMLReader().
     const bool bFaceHoleNegative =
         CPLTestBool(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"));
-    OGRGeometry *poGeometry = GML2OGRGeometry_XMLNode(psGML, -1, 0, 0, false,
-                                                      true, bFaceHoleNegative);
+    lru11::Cache<std::string, std::shared_ptr<OGRSpatialReference>> oSRSCache;
+    OGRGeometry *poGeometry = GML2OGRGeometry_XMLNode(
+        psGML, -1, oSRSCache, 0, 0, false, true, bFaceHoleNegative);
 
     CPLDestroyXMLNode(psGML);
 

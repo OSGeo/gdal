@@ -21,15 +21,18 @@
 
 #include "cpl_string.h"
 #include "cpl_conv.h"
+#include "cpl_mem_cache.h"
 #include "cpl_minixml.h"
 
 #include "ogr_core.h"
 
 #include <limits>
+#include <memory>
 #include <string_view>
 
 class OGRGeometry;
 class OGRFieldDefn;
+class OGRSpatialReference;
 
 /* A default name for the default geometry column, instead of '' */
 #define OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME "_ogr_geometry_"
@@ -188,6 +191,13 @@ OGRErr CPL_DLL OGRCheckPermutation(const int *panPermutation, int nSize);
 
 OGRGeometry CPL_DLL *GML2OGRGeometry_XMLNode(
     const CPLXMLNode *psNode, int nPseudoBoolGetSecondaryGeometryOption,
+    int nRecLevel = 0, int nSRSDimension = 0, bool bIgnoreGSG = false,
+    bool bOrientation = true, bool bFaceHoleNegative = false,
+    const char *pszId = nullptr);
+
+OGRGeometry CPL_DLL *GML2OGRGeometry_XMLNode(
+    const CPLXMLNode *psNode, int nPseudoBoolGetSecondaryGeometryOption,
+    lru11::Cache<std::string, std::shared_ptr<OGRSpatialReference>> &oSRSCache,
     int nRecLevel = 0, int nSRSDimension = 0, bool bIgnoreGSG = false,
     bool bOrientation = true, bool bFaceHoleNegative = false,
     const char *pszId = nullptr);
