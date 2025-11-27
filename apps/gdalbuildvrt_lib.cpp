@@ -1231,13 +1231,11 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
                 psDatasetProperties->aosDescriptions[nSrcBandIdx].c_str());
             if (!psDatasetProperties->mapBandMetadata[nSrcBandIdx].empty())
             {
-                CPLStringList osBandMD;
                 for (const auto &[key, value] :
                      psDatasetProperties->mapBandMetadata[nSrcBandIdx])
                 {
-                    osBandMD.AddNameValue(key.c_str(), value.c_str());
+                    poVRTBand->SetMetadataItem(key.c_str(), value.c_str());
                 }
-                poVRTBand->SetMetadata(osBandMD.List());
             }
 
             if (bHideNoData)
@@ -1362,12 +1360,10 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
         poBand->SetDescription(asBandProperties[j].osDescription.c_str());
         if (!asBandProperties[j].mapBandMetadata.empty())
         {
-            CPLStringList osBandMD;
             for (const auto &[key, value] : asBandProperties[j].mapBandMetadata)
             {
-                osBandMD.AddNameValue(key.c_str(), value.c_str());
+                poBand->SetMetadataItem(key.c_str(), value.c_str());
             }
-            poBand->SetMetadata(osBandMD.List());
         }
         if (asBandProperties[j].colorInterpretation == GCI_PaletteIndex)
         {

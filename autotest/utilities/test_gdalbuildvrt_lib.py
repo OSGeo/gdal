@@ -1287,5 +1287,4 @@ def test_gdalbuildvrt_preserve_band_metadata_separate_mode(
             expected_metadata_i = metadata2
 
         assert desc == expected_desc_i
-        for mdkey, mdval in expected_metadata_i.items():
-            assert rt_ds.GetRasterBand(i + 1).GetMetadataItem(mdkey) == mdval
+        assert rt_ds.GetRasterBand(i + 1).GetMetadata_Dict() == expected_metadata_i
