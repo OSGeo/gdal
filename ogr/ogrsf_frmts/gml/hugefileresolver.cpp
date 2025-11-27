@@ -116,7 +116,8 @@ class huge_helper
     struct huge_href *pLastHref = nullptr;
     struct huge_parent *pFirstParent = nullptr;
     struct huge_parent *pLastParent = nullptr;
-    lru11::Cache<std::string, std::shared_ptr<OGRSpatialReference>> oSRSCache{};
+    std::unique_ptr<OGRGML_SRSCache, decltype(&OGRGML_SRSCache_Destroy)>
+        srsCache{OGRGML_SRSCache_Create(), OGRGML_SRSCache_Destroy};
 };
 
 static bool gmlHugeFileSQLiteInit(huge_helper *helper)
@@ -1022,7 +1023,7 @@ static void gmlHugeFileNodeCoords(huge_helper *helper, struct huge_tag *pItem,
     CPLXMLNode *psEdge = CPLCloneXMLTree(psNode);
     CPLAddXMLChild(psDirEdge, psEdge);
     OGRGeometry *poTopoCurve =
-        GML2OGRGeometry_XMLNode(psTopoCurve, FALSE, helper->oSRSCache);
+        GML2OGRGeometry_XMLNode(psTopoCurve, FALSE, helper->srsCache.get());
     CPLDestroyXMLNode(psTopoCurve);
     if (poTopoCurve != nullptr)
     {

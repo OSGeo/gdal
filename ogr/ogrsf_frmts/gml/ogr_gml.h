@@ -51,7 +51,8 @@ class OGRGMLLayer final : public OGRLayer
 
     GMLFeatureClass *poFClass;
 
-    void *hCacheSRS;
+    std::unique_ptr<OGRGML_SRSCache, decltype(&OGRGML_SRSCache_Destroy)>
+        m_srsCache{OGRGML_SRSCache_Create(), OGRGML_SRSCache_Destroy};
 
     bool bUseOldFIDFormat;
 

@@ -3049,7 +3049,7 @@ def test_gml_write_gml_ns():
 def test_gml_read_gml_ArcByCenterPoint_projected_crs_northing_easting():
 
     g = ogr.CreateGeometryFromGML(
-        """<gml:Surface srsName="EPSG:2326" srsDimension="2">
+        """<gml:Surface srsName="urn:ogc:def:crs:EPSG::2326" srsDimension="2">
     <gml:patches>
     <gml:PolygonPatch>
     <gml:exterior>

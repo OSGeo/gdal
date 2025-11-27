@@ -146,6 +146,7 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/ogr_sfcgal.h
 )
 target_include_directories(ogr PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(ogr PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ogrsf_frmts/gmlutils)
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)
   target_compile_definitions(ogr PRIVATE -DHAVE_ZLIB_H -DHAVE_ZLIB)

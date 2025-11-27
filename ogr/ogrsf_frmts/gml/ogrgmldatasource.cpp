@@ -3415,11 +3415,13 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
                 CPLErrorReset();
                 if (psTree)
                 {
-                    lru11::Cache<std::string,
-                                 std::shared_ptr<OGRSpatialReference>>
-                        oSRSCache;
-                    m_poStandaloneGeom.reset(GML2OGRGeometry_XMLNode(
-                        psTree, false, oSRSCache, 0, 0, false, true, false));
+                    std::unique_ptr<OGRGML_SRSCache,
+                                    decltype(&OGRGML_SRSCache_Destroy)>
+                        srsCache{OGRGML_SRSCache_Create(),
+                                 OGRGML_SRSCache_Destroy};
+                    m_poStandaloneGeom.reset(
+                        GML2OGRGeometry_XMLNode(psTree, false, srsCache.get(),
+                                                0, 0, false, true, false));
 
                     if (m_poStandaloneGeom)
                     {
