@@ -7,7 +7,9 @@ sphinx
 sphinx-tabs
 sphinxcontrib-bibtex
 sphinxcontrib-jquery
-sphinx-rtd-theme >= 3.0.0
+# Hopefully temporary pin of sphinx-rtd-theme, needed for correct behavior of version switching, as well as a forked doc/source/_static/js/version.js
+# Cf https://github.com/OSGeo/gdal/pull/13480
+sphinx-rtd-theme == 3.0.2
 # We use a slightly forked version
 # sphinxcontrib-programoutput
 sphinxcontrib-spelling
