@@ -140,6 +140,12 @@ Details for options can be found in :ref:`gdal_raster_pansharpen`.
 
 Details for options can be found in :ref:`gdal_raster_proximity`.
 
+* reclassify
+
+.. program-output:: gdal raster pipeline --help-doc=reclassify
+
+Details for options can be found in :ref:`gdal_raster_reclassify`.
+
 * reproject
 
 .. program-output:: gdal raster pipeline --help-doc=reproject
@@ -336,7 +342,12 @@ Examples
 
       gdal raster pipeline ! mosaic input*.tif ! tile output_folder
 
+.. example::
+   :title: Reclassify GeoTIFF and render it as RGB image.
 
+   .. code-block:: bash
+
+      $ gdal raster pipeline ! read in.tif ! reclassify -m "[1,10]=1; [11,20]=2; [21,30]=3; DEFAULT=NO_DATA" --ot=Byte ! color-map --color-map=color_map.txt --color-selection=exact --add-alpha ! write -f WEBP rendered.webp
 
 .. below is an allow-list for spelling checker.
 
