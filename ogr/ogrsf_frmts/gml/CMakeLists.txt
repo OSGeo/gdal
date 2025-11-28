@@ -71,6 +71,8 @@ set_property(
   APPEND
   PROPERTY RESOURCE "${GDAL_DATA_FILES}")
 
+target_compile_definitions(ogr_GML PRIVATE OGR_P_WITH_SRS_CACHE)
+
 if (EMBED_RESOURCE_FILES)
     add_driver_embedded_resources(ogr_GML OGR_ENABLE_DRIVER_GML_PLUGIN embedded_resources.c)
 endif()

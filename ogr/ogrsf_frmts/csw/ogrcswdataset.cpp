@@ -10,6 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#define OGR_P_WITH_SRS_CACHE
+
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_http.h"
@@ -565,6 +567,8 @@ GDALDataset *OGRCSWLayer::FetchGetRecords()
         OGRLayer *poLyr = l_poBaseDS->CreateLayer("records");
         OGRFieldDefn oField("raw_xml", OFTString);
         CPL_IGNORE_RET_VAL(poLyr->CreateField(&oField));
+        lru11::Cache<std::string, std::shared_ptr<OGRSpatialReference>>
+            oSRSCache;
         for (CPLXMLNode *psIter = psSearchResults->psChild; psIter;
              psIter = psIter->psNext)
         {
@@ -630,7 +634,7 @@ GDALDataset *OGRCSWLayer::FetchGetRecords()
                     psBBox->pszValue = CPLStrdup("gml:Envelope");
                     CPLString osSRS = CPLGetXMLValue(psBBox, "crs", "");
                     OGRGeometry *poGeom = GML2OGRGeometry_XMLNode(
-                        psBBox, FALSE, 0, 0, false, true, false);
+                        psBBox, FALSE, oSRSCache, 0, 0, false, true, false);
                     if (poGeom)
                     {
                         bool bLatLongOrder = true;
