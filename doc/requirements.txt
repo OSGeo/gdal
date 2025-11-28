@@ -7,7 +7,7 @@ sphinx
 sphinx-tabs
 sphinxcontrib-bibtex
 sphinxcontrib-jquery
-sphinx-rtd-theme >= 3.0.0
+sphinx-rtd-theme == 3.0.2
 # We use a slightly forked version
 # sphinxcontrib-programoutput
 sphinxcontrib-spelling
