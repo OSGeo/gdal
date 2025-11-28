@@ -43,6 +43,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 #include "ogr_geo_utils.h"
+#include "gmlutils.h"
 
 constexpr double kdfD2R = M_PI / 180.0;
 constexpr double kdf2PI = 2.0 * M_PI;
@@ -850,12 +851,11 @@ static double GetUOMInMetre(const char *pszUnits, const char *pszAttribute,
 }
 
 /************************************************************************/
-/*                            GetSemiMajor()                            */
+/*                        StantardizeSemiMajor()                        */
 /************************************************************************/
 
-static double GetSemiMajor(const OGRSpatialReference *poSRS)
+static double StantardizeSemiMajor(double dfSemiMajor)
 {
-    double dfSemiMajor = poSRS->GetSemiMajor();
     // Standardize on OGR_GREATCIRCLE_DEFAULT_RADIUS for Earth ellipsoids.
     if (std::fabs(dfSemiMajor - OGR_GREATCIRCLE_DEFAULT_RADIUS) <
         0.05 * OGR_GREATCIRCLE_DEFAULT_RADIUS)
@@ -874,22 +874,20 @@ static double GetSemiMajor(const OGRSpatialReference *poSRS)
 static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
     const CPLXMLNode *psNode, const char *pszId,
     int nPseudoBoolGetSecondaryGeometryOption, int nRecLevel, int nSRSDimension,
-    const char *pszSRSName,
-    lru11::Cache<std::string, std::shared_ptr<OGRSpatialReference>> &oSRSCache,
-    bool bIgnoreGSG = false, bool bOrientation = true,
-    bool bFaceHoleNegative = false);
+    const char *pszSRSName, OGRGML_SRSCache *hSRSCache, bool bIgnoreGSG = false,
+    bool bOrientation = true, bool bFaceHoleNegative = false);
 
 OGRGeometry *GML2OGRGeometry_XMLNode(const CPLXMLNode *psNode,
                                      int nPseudoBoolGetSecondaryGeometryOption,
-                                     int nRecLevel, int nSRSDimension,
-                                     bool bIgnoreGSG, bool bOrientation,
-                                     bool bFaceHoleNegative, const char *pszId)
+                                     OGRGML_SRSCache *hSRSCache, int nRecLevel,
+                                     int nSRSDimension, bool bIgnoreGSG,
+                                     bool bOrientation, bool bFaceHoleNegative,
+                                     const char *pszId)
 
 {
-    lru11::Cache<std::string, std::shared_ptr<OGRSpatialReference>> oSRSCache;
     return GML2OGRGeometry_XMLNode_Internal(
                psNode, pszId, nPseudoBoolGetSecondaryGeometryOption, nRecLevel,
-               nSRSDimension, nullptr, oSRSCache, bIgnoreGSG, bOrientation,
+               nSRSDimension, nullptr, hSRSCache, bIgnoreGSG, bOrientation,
                bFaceHoleNegative)
         .release();
 }
@@ -919,9 +917,8 @@ static void ReportError(const char *pszId, CPLErr eErr, const char *fmt, ...)
 static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
     const CPLXMLNode *psNode, const char *pszId,
     int nPseudoBoolGetSecondaryGeometryOption, int nRecLevel, int nSRSDimension,
-    const char *pszSRSName,
-    lru11::Cache<std::string, std::shared_ptr<OGRSpatialReference>> &oSRSCache,
-    bool bIgnoreGSG, bool bOrientation, bool bFaceHoleNegative)
+    const char *pszSRSName, OGRGML_SRSCache *hSRSCache, bool bIgnoreGSG,
+    bool bOrientation, bool bFaceHoleNegative)
 {
     // constexpr bool bCastToLinearTypeIfPossible = true;  // Hard-coded for
     // now.
@@ -942,7 +939,16 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         nSRSDimension = atoi(pszSRSDimension);
 
     if (pszSRSName == nullptr)
+    {
         pszSRSName = CPLGetXMLValue(psNode, "srsName", nullptr);
+
+        if (pszSRSName && nSRSDimension == 0)
+        {
+            auto entry = OGRGML_SRSCache_GetInfo(hSRSCache, pszSRSName);
+            if (entry)
+                nSRSDimension = entry->nAxisCount;
+        }
+    }
 
     if (!pszId && nRecLevel == 0)
     {
@@ -996,7 +1002,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         // Translate outer ring and add to polygon.
         auto poGeom = GML2OGRGeometry_XMLNode_Internal(
             psChild, pszId, nPseudoBoolGetSecondaryGeometryOption,
-            nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+            nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
         if (poGeom == nullptr)
         {
             ReportFailure("Invalid exterior ring");
@@ -1057,7 +1063,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     poGeomInterior = GML2OGRGeometry_XMLNode_Internal(
                         psInteriorChild, pszId,
                         nPseudoBoolGetSecondaryGeometryOption, nRecLevel + 1,
-                        nSRSDimension, pszSRSName, oSRSCache);
+                        nSRSDimension, pszSRSName, hSRSCache);
                 if (poGeomInterior == nullptr)
                 {
                     ReportFailure("Invalid interior ring");
@@ -1145,7 +1151,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         // Translate outer ring and add to Triangle.
         auto poGeom = GML2OGRGeometry_XMLNode_Internal(
             psChild, pszId, nPseudoBoolGetSecondaryGeometryOption,
-            nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+            nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
         if (poGeom == nullptr)
         {
             ReportFailure("Invalid exterior ring");
@@ -1198,7 +1204,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
     }
 
     const auto storeArcByCenterPointParameters =
-        [pszId, &oSRSCache](const CPLXMLNode *psChild, const char *l_pszSRSName,
+        [pszId, &hSRSCache](const CPLXMLNode *psChild, const char *l_pszSRSName,
                             bool &bIsApproximateArc,
                             double &dfLastCurveApproximateArcRadius,
                             bool &bLastCurveWasApproximateArcInvertedAxisOrder,
@@ -1217,25 +1223,12 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             bool bInvertedAxisOrder = false;
             if (l_pszSRSName != nullptr)
             {
-                std::shared_ptr<OGRSpatialReference> poSRS;
-                if (!oSRSCache.tryGet(l_pszSRSName, poSRS))
+                auto entry = OGRGML_SRSCache_GetInfo(hSRSCache, l_pszSRSName);
+                if (entry && entry->bIsGeographic)
                 {
-                    poSRS = std::make_shared<OGRSpatialReference>();
-                    if (poSRS->SetFromUserInput(
-                            l_pszSRSName,
-                            OGRSpatialReference::
-                                SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
-                        OGRERR_NONE)
-                        poSRS.reset();
-                    oSRSCache.insert(l_pszSRSName, poSRS);
-                }
-                if (poSRS && poSRS->IsGeographic())
-                {
-                    bInvertedAxisOrder =
-                        CPL_TO_BOOL(poSRS->EPSGTreatsAsLatLong());
-                    dfSemiMajor = GetSemiMajor(poSRS.get());
-                    bSRSUnitIsDegree = fabs(poSRS->GetAngularUnits(nullptr) -
-                                            CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
+                    bInvertedAxisOrder = entry->bInvertedAxisOrder;
+                    dfSemiMajor = StantardizeSemiMajor(entry->dfSemiMajor);
+                    bSRSUnitIsDegree = entry->bAngularUnitIsDegree;
                 }
             }
             if (bSRSUnitIsDegree && dfUOMConv > 0)
@@ -1368,7 +1361,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     poGeom = GML2OGRGeometry_XMLNode_Internal(
                         psCurveChild, pszId,
                         nPseudoBoolGetSecondaryGeometryOption, nRecLevel + 1,
-                        nSRSDimension, pszSRSName, oSRSCache);
+                        nSRSDimension, pszSRSName, hSRSCache);
                 }
                 else
                 {
@@ -1848,36 +1841,18 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         double dfSemiMajor = OGR_GREATCIRCLE_DEFAULT_RADIUS;
         if (pszSRSName != nullptr)
         {
-            std::shared_ptr<OGRSpatialReference> poSRS;
-            if (!oSRSCache.tryGet(pszSRSName, poSRS))
+            auto entry = OGRGML_SRSCache_GetInfo(hSRSCache, pszSRSName);
+            if (entry)
             {
-                poSRS = std::make_shared<OGRSpatialReference>();
-                if (poSRS->SetFromUserInput(
-                        pszSRSName,
-                        OGRSpatialReference::
-                            SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
-                    OGRERR_NONE)
-                    poSRS.reset();
-                oSRSCache.insert(pszSRSName, poSRS);
-            }
-            if (poSRS)
-            {
-                if (poSRS->IsGeographic())
+                bInvertedAxisOrder = entry->bInvertedAxisOrder;
+                dfSemiMajor = StantardizeSemiMajor(entry->dfSemiMajor);
+                if (entry->bIsGeographic)
                 {
-                    dfSemiMajor = GetSemiMajor(poSRS.get());
-                    bInvertedAxisOrder =
-                        CPL_TO_BOOL(poSRS->EPSGTreatsAsLatLong());
-                    bSRSUnitIsDegree = fabs(poSRS->GetAngularUnits(nullptr) -
-                                            CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
+                    bSRSUnitIsDegree = entry->bAngularUnitIsDegree;
                 }
-                else if (poSRS->IsProjected())
+                else if (entry->bIsProjected)
                 {
-                    dfSemiMajor = GetSemiMajor(poSRS.get());
-                    bInvertedAxisOrder =
-                        CPL_TO_BOOL(poSRS->EPSGTreatsAsNorthingEasting());
-
-                    const double dfSRSUnitsToMetre =
-                        poSRS->GetLinearUnits(nullptr);
+                    const double dfSRSUnitsToMetre = entry->dfLinearUnits;
                     if (dfSRSUnitsToMetre > 0)
                         dfRadius /= dfSRSUnitsToMetre;
                 }
@@ -1991,25 +1966,18 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         double dfSemiMajor = OGR_GREATCIRCLE_DEFAULT_RADIUS;
         if (pszSRSName != nullptr)
         {
-            OGRSpatialReference oSRS;
-            if (oSRS.SetFromUserInput(pszSRSName) == OGRERR_NONE)
+            auto entry = OGRGML_SRSCache_GetInfo(hSRSCache, pszSRSName);
+            if (entry)
             {
-                if (oSRS.IsGeographic())
+                bInvertedAxisOrder = entry->bInvertedAxisOrder;
+                dfSemiMajor = StantardizeSemiMajor(entry->dfSemiMajor);
+                if (entry->bIsGeographic)
                 {
-                    dfSemiMajor = GetSemiMajor(&oSRS);
-                    bInvertedAxisOrder =
-                        CPL_TO_BOOL(oSRS.EPSGTreatsAsLatLong());
-                    bSRSUnitIsDegree = fabs(oSRS.GetAngularUnits(nullptr) -
-                                            CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
+                    bSRSUnitIsDegree = entry->bAngularUnitIsDegree;
                 }
-                else if (oSRS.IsProjected())
+                else if (entry->bIsProjected)
                 {
-                    dfSemiMajor = GetSemiMajor(&oSRS);
-                    bInvertedAxisOrder =
-                        CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting());
-
-                    const double dfSRSUnitsToMetre =
-                        oSRS.GetLinearUnits(nullptr);
+                    const double dfSRSUnitsToMetre = entry->dfLinearUnits;
                     if (dfSRSUnitsToMetre > 0)
                         dfRadius /= dfSRSUnitsToMetre;
                 }
@@ -2238,7 +2206,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                                               psInteriorChild, pszId,
                                               nPseudoBoolGetSecondaryGeometryOption,
                                               nRecLevel + 1, nSRSDimension,
-                                              pszSRSName, oSRSCache);
+                                              pszSRSName, hSRSCache);
                                 if (poRing == nullptr)
                                 {
                                     ReportFailure("Invalid interior ring");
@@ -2271,7 +2239,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                             psSurfaceChild, pszId,
                             nPseudoBoolGetSecondaryGeometryOption,
                             nRecLevel + 1, nSRSDimension, pszSRSName,
-                            oSRSCache);
+                            hSRSCache);
                         if (!GML2OGRGeometry_AddToMultiSurface(
                                 poMS.get(), std::move(poGeom), pszMemberElement,
                                 bChildrenAreAllPolygons))
@@ -2300,7 +2268,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                             psChild2, pszId,
                             nPseudoBoolGetSecondaryGeometryOption,
                             nRecLevel + 1, nSRSDimension, pszSRSName,
-                            oSRSCache);
+                            hSRSCache);
                         if (!GML2OGRGeometry_AddToMultiSurface(
                                 poMS.get(), std::move(poGeom), pszMemberElement,
                                 bChildrenAreAllPolygons))
@@ -2369,7 +2337,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     auto poPointMember = GML2OGRGeometry_XMLNode_Internal(
                         psPointChild, pszId,
                         nPseudoBoolGetSecondaryGeometryOption, nRecLevel + 1,
-                        nSRSDimension, pszSRSName, oSRSCache);
+                        nSRSDimension, pszSRSName, hSRSCache);
                     if (poPointMember == nullptr ||
                         wkbFlatten(poPointMember->getGeometryType()) !=
                             wkbPoint)
@@ -2398,7 +2366,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                             psChild2, pszId,
                             nPseudoBoolGetSecondaryGeometryOption,
                             nRecLevel + 1, nSRSDimension, pszSRSName,
-                            oSRSCache);
+                            hSRSCache);
                         if (poGeom == nullptr)
                         {
                             ReportFailure("Invalid %s",
@@ -2448,7 +2416,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                                         psLineStringChild, pszId,
                                         nPseudoBoolGetSecondaryGeometryOption,
                                         nRecLevel + 1, nSRSDimension,
-                                        pszSRSName, oSRSCache);
+                                        pszSRSName, hSRSCache);
                 if (poGeom == nullptr ||
                     wkbFlatten(poGeom->getGeometryType()) != wkbLineString)
                 {
@@ -2485,7 +2453,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                 {
                     auto poGeom = GML2OGRGeometry_XMLNode_Internal(
                         psChild2, pszId, nPseudoBoolGetSecondaryGeometryOption,
-                        nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+                        nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
                     if (poGeom == nullptr ||
                         !OGR_GT_IsCurve(poGeom->getGeometryType()))
                     {
@@ -2517,7 +2485,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                             psChild2, pszId,
                             nPseudoBoolGetSecondaryGeometryOption,
                             nRecLevel + 1, nSRSDimension, pszSRSName,
-                            oSRSCache);
+                            hSRSCache);
                         if (poGeom == nullptr ||
                             !OGR_GT_IsCurve(poGeom->getGeometryType()))
                         {
@@ -2570,7 +2538,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                 {
                     auto poGeom = GML2OGRGeometry_XMLNode_Internal(
                         psChild2, pszId, nPseudoBoolGetSecondaryGeometryOption,
-                        nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+                        nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
                     if (!GML2OGRGeometry_AddToCompositeCurve(
                             poCC.get(), std::move(poGeom),
                             bChildrenAreAllLineString))
@@ -2591,7 +2559,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                             psChild2, pszId,
                             nPseudoBoolGetSecondaryGeometryOption,
                             nRecLevel + 1, nSRSDimension, pszSRSName,
-                            oSRSCache);
+                            hSRSCache);
                         if (!GML2OGRGeometry_AddToCompositeCurve(
                                 poCC.get(), std::move(poGeom),
                                 bChildrenAreAllLineString))
@@ -2627,7 +2595,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
 
         auto poGeom = GML2OGRGeometry_XMLNode_Internal(
             psChild, pszId, nPseudoBoolGetSecondaryGeometryOption,
-            nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+            nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
         if (poGeom == nullptr || !OGR_GT_IsCurve(poGeom->getGeometryType()))
         {
             ReportFailure(
@@ -2668,7 +2636,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             {
                 auto poGeom = GML2OGRGeometry_XMLNode_Internal(
                     psChild, pszId, nPseudoBoolGetSecondaryGeometryOption,
-                    nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+                    nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
                 if (poGeom == nullptr ||
                     !OGR_GT_IsCurve(poGeom->getGeometryType()))
                 {
@@ -2768,7 +2736,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     auto poGeom = GML2OGRGeometry_XMLNode_Internal(
                         psGeometryChild, pszId,
                         nPseudoBoolGetSecondaryGeometryOption, nRecLevel + 1,
-                        nSRSDimension, pszSRSName, oSRSCache);
+                        nSRSDimension, pszSRSName, hSRSCache);
                     if (poGeom == nullptr)
                     {
                         ReportFailure(
@@ -2793,7 +2761,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                             psChild2, pszId,
                             nPseudoBoolGetSecondaryGeometryOption,
                             nRecLevel + 1, nSRSDimension, pszSRSName,
-                            oSRSCache);
+                            hSRSCache);
                         if (poGeom == nullptr)
                         {
                             ReportFailure(
@@ -2863,7 +2831,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
 
             poGeom = GML2OGRGeometry_XMLNode_Internal(
                 psPoint, pszId, nPseudoBoolGetSecondaryGeometryOption,
-                nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache, true);
+                nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache, true);
             if (poGeom == nullptr ||
                 wkbFlatten(poGeom->getGeometryType()) != wkbPoint)
             {
@@ -2911,7 +2879,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
 
             poGeom = GML2OGRGeometry_XMLNode_Internal(
                 psPoint, pszId, nPseudoBoolGetSecondaryGeometryOption,
-                nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache, true);
+                nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache, true);
             if (poGeom == nullptr ||
                 wkbFlatten(poGeom->getGeometryType()) != wkbPoint)
             {
@@ -2963,7 +2931,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
 
         auto poLineStringBeforeCast = GML2OGRGeometry_XMLNode_Internal(
             psCurve, pszId, nPseudoBoolGetSecondaryGeometryOption,
-            nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache, true);
+            nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache, true);
         if (poLineStringBeforeCast == nullptr ||
             wkbFlatten(poLineStringBeforeCast->getGeometryType()) !=
                 wkbLineString)
@@ -3029,7 +2997,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             {
                 auto poGeom = GML2OGRGeometry_XMLNode_Internal(
                     psChild, pszId, nPseudoBoolGetSecondaryGeometryOption,
-                    nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+                    nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
                 if (poGeom == nullptr)
                 {
                     ReportFailure("Failed to get geometry in directedEdge");
@@ -3154,7 +3122,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                                 psDirectedEdgeChild, pszId,
                                 nPseudoBoolGetSecondaryGeometryOption,
                                 nRecLevel + 1, nSRSDimension, pszSRSName,
-                                oSRSCache, true);
+                                hSRSCache, true);
 
                             if (poEdgeGeom == nullptr ||
                                 wkbFlatten(poEdgeGeom->getGeometryType()) !=
@@ -3282,7 +3250,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                         auto poEdgeGeom = GML2OGRGeometry_XMLNode_Internal(
                             psDirectedEdgeChild, pszId,
                             nPseudoBoolGetSecondaryGeometryOption,
-                            nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache,
+                            nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache,
                             true, bFaceOrientation);
 
                         if (poEdgeGeom == nullptr ||
@@ -3411,7 +3379,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             {
                 auto poGeom = GML2OGRGeometry_XMLNode_Internal(
                     psChild, pszId, nPseudoBoolGetSecondaryGeometryOption,
-                    nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+                    nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
                 if (poGeom == nullptr)
                 {
                     return nullptr;
@@ -3462,7 +3430,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             {
                 auto poGeom = GML2OGRGeometry_XMLNode_Internal(
                     psChild, pszId, nPseudoBoolGetSecondaryGeometryOption,
-                    nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+                    nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
                 if (poGeom == nullptr)
                 {
                     return nullptr;
@@ -3532,7 +3500,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             {
                 auto poTriangle = GML2OGRGeometry_XMLNode_Internal(
                     psChild, pszId, nPseudoBoolGetSecondaryGeometryOption,
-                    nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+                    nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
                 if (poTriangle == nullptr)
                 {
                     return nullptr;
@@ -3599,7 +3567,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                 {
                     auto poPolygon = GML2OGRGeometry_XMLNode_Internal(
                         psChild, pszId, nPseudoBoolGetSecondaryGeometryOption,
-                        nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+                        nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
                     if (poPolygon == nullptr)
                     {
                         ReportFailure("Wrong geometry type for %s.",
@@ -3700,7 +3668,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                             psSurfaceChild, pszId,
                             nPseudoBoolGetSecondaryGeometryOption,
                             nRecLevel + 1, nSRSDimension, pszSRSName,
-                            oSRSCache);
+                            hSRSCache);
                         if (poGeom != nullptr &&
                             wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
                         {
@@ -3715,7 +3683,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         // Get the geometry inside <exterior>.
         auto poGeom = GML2OGRGeometry_XMLNode_Internal(
             psChild, pszId, nPseudoBoolGetSecondaryGeometryOption,
-            nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+            nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
         if (poGeom == nullptr)
         {
             ReportFailure("Invalid exterior element");
@@ -3742,7 +3710,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
 
         auto poGeom = GML2OGRGeometry_XMLNode_Internal(
             psChild, pszId, nPseudoBoolGetSecondaryGeometryOption,
-            nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+            nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
         if (!poGeom || !OGR_GT_IsCurve(poGeom->getGeometryType()))
         {
             ReportFailure("baseCurve of OrientableCurve is not a curve.");
@@ -3772,7 +3740,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
 
         return GML2OGRGeometry_XMLNode_Internal(
             psChild, pszId, nPseudoBoolGetSecondaryGeometryOption,
-            nRecLevel + 1, nSRSDimension, pszSRSName, oSRSCache);
+            nRecLevel + 1, nSRSDimension, pszSRSName, hSRSCache);
     }
 
     /* -------------------------------------------------------------------- */
@@ -3853,7 +3821,10 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
 OGRGeometryH OGR_G_CreateFromGMLTree(const CPLXMLNode *psTree)
 
 {
-    return OGRGeometry::ToHandle(GML2OGRGeometry_XMLNode(psTree, -1));
+    std::unique_ptr<OGRGML_SRSCache, decltype(&OGRGML_SRSCache_Destroy)> cache{
+        OGRGML_SRSCache_Create(), OGRGML_SRSCache_Destroy};
+    return OGRGeometry::ToHandle(
+        GML2OGRGeometry_XMLNode(psTree, -1, cache.get()));
 }
 
 /************************************************************************/
@@ -3921,8 +3892,10 @@ OGRGeometryH OGR_G_CreateFromGML(const char *pszGML)
     // and GMLReader::GMLReader().
     const bool bFaceHoleNegative =
         CPLTestBool(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"));
-    OGRGeometry *poGeometry = GML2OGRGeometry_XMLNode(psGML, -1, 0, 0, false,
-                                                      true, bFaceHoleNegative);
+    std::unique_ptr<OGRGML_SRSCache, decltype(&OGRGML_SRSCache_Destroy)> cache{
+        OGRGML_SRSCache_Create(), OGRGML_SRSCache_Destroy};
+    OGRGeometry *poGeometry = GML2OGRGeometry_XMLNode(
+        psGML, -1, cache.get(), 0, 0, false, true, bFaceHoleNegative);
 
     CPLDestroyXMLNode(psGML);
 
