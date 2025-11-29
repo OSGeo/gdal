@@ -3024,3 +3024,90 @@ def test_vrt_read_CheckCompatibleForDatasetIO():
     assert (
         another_vrt.GetMetadataItem("CheckCompatibleForDatasetIO()", "__DEBUG__") == "1"
     )
+
+
+###############################################################################
+# Fixes https://github.com/OSGeo/gdal/issues/13464
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_read_multithreaded_non_integer_coordinates_nearest(tmp_vsimem):
+
+    gdal.Translate(
+        tmp_vsimem / "test.tif",
+        "data/byte.tif",
+        creationOptions={"BLOCKYSIZE": "1", "COMPRESS": "DEFLATE"},
+    )
+    gdal.Translate(
+        tmp_vsimem / "test.vrt", tmp_vsimem / "test.tif", srcWin=[0.5, 0.5, 10, 10]
+    )
+
+    with gdal.Open(tmp_vsimem / "test.vrt") as ds:
+        expected = ds.GetRasterBand(1).ReadRaster()
+
+    with gdal.config_option("GDAL_NUM_THREADS", "2"):
+        with gdal.Open(tmp_vsimem / "test.vrt") as ds:
+            assert ds.GetRasterBand(1).ReadRaster() == expected
+
+
+###############################################################################
+# Fixes https://github.com/OSGeo/gdal/issues/13464
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_read_multithreaded_non_integer_coordinates_nearest_two_sources(tmp_vsimem):
+
+    gdal.Translate(
+        tmp_vsimem / "test1.tif",
+        "data/byte.tif",
+        srcWin=[0, 0, 10, 20],
+        width=502,
+        height=1002,
+        creationOptions={"BLOCKYSIZE": "1", "COMPRESS": "DEFLATE"},
+    )
+    gdal.Translate(
+        tmp_vsimem / "test2.tif",
+        "data/byte.tif",
+        srcWin=[10, 0, 10, 20],
+        width=502,
+        height=1002,
+        creationOptions={"BLOCKYSIZE": "1", "COMPRESS": "DEFLATE"},
+    )
+
+    ds = gdal.Open("data/byte.tif")
+    gt = ds.GetGeoTransform()
+    extent = [
+        gt[0],
+        gt[3] + ds.RasterYSize * gt[5],
+        gt[0] + ds.RasterXSize * gt[1],
+        gt[3],
+    ]
+    ds = None
+
+    ds = gdal.Open(tmp_vsimem / "test1.tif")
+    gt = ds.GetGeoTransform()
+    res_big = gt[1]
+    ds = None
+
+    gdal.BuildVRT(
+        tmp_vsimem / "test.vrt",
+        [tmp_vsimem / "test1.tif", tmp_vsimem / "test2.tif"],
+        outputBounds=[
+            extent[0] + res_big / 2,
+            extent[1] + res_big / 2,
+            extent[2] - res_big / 2,
+            extent[3] - res_big / 2,
+        ],
+    )
+
+    with gdal.Open(tmp_vsimem / "test.vrt") as ds:
+        expected = ds.GetRasterBand(1).ReadRaster()
+
+    with gdal.config_option("GDAL_NUM_THREADS", "2"):
+        with gdal.Open(tmp_vsimem / "test.vrt") as ds:
+            assert ds.GetRasterBand(1).ReadRaster() == expected
+
+            assert (
+                ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__")
+                == "0"
+            )

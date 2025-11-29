@@ -779,7 +779,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         int nLimitBlockY = 0;
         const bool bByteCopy = eDataType == eBufType && nBandDataSize == 1;
         int nStartBlockX = -nBlockXSize;
-        const double EPS = 1e-10;
+        constexpr double EPS = 1e-10;
         int nLBlockY = -1;
         const double dfSrcXStart = 0.5 * dfSrcXInc + dfXOff + EPS;
         const bool bIntegerXFactor =

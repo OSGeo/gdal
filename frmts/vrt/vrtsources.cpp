@@ -986,6 +986,23 @@ int VRTSimpleSource::GetSrcDstWindow(
     int *pnOutYSize, bool &bErrorOut)
 
 {
+    return GetSrcDstWindow(
+        dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
+        GRIORA_Bilinear,  // to stick with legacy behavior
+        pdfReqXOff, pdfReqYOff, pdfReqXSize, pdfReqYSize, pnReqXOff, pnReqYOff,
+        pnReqXSize, pnReqYSize, pnOutXOff, pnOutYOff, pnOutXSize, pnOutYSize,
+        bErrorOut);
+}
+
+int VRTSimpleSource::GetSrcDstWindow(
+    double dfXOff, double dfYOff, double dfXSize, double dfYSize, int nBufXSize,
+    int nBufYSize, GDALRIOResampleAlg eResampleAlg, double *pdfReqXOff,
+    double *pdfReqYOff, double *pdfReqXSize, double *pdfReqYSize,
+    int *pnReqXOff, int *pnReqYOff, int *pnReqXSize, int *pnReqYSize,
+    int *pnOutXOff, int *pnOutYOff, int *pnOutXSize, int *pnOutYSize,
+    bool &bErrorOut)
+
+{
     bErrorOut = false;
 
     if (m_dfSrcXSize == 0.0 || m_dfSrcYSize == 0.0 || m_dfDstXSize == 0.0 ||
@@ -1102,8 +1119,25 @@ int VRTSimpleSource::GetSrcDstWindow(
         bModifiedY = true;
     }
 
-    *pnReqXOff = static_cast<int>(floor(*pdfReqXOff));
-    *pnReqYOff = static_cast<int>(floor(*pdfReqYOff));
+    constexpr double EPSILON = 1e-10;
+    if (eResampleAlg == GRIORA_NearestNeighbour &&
+        (std::fabs(m_dfSrcXOff - std::round(m_dfSrcXOff)) > EPSILON ||
+         std::fabs(m_dfSrcYOff - std::round(m_dfSrcYOff)) > EPSILON ||
+         std::fabs(m_dfDstXOff - std::round(m_dfDstXOff)) > EPSILON ||
+         std::fabs(m_dfDstYOff - std::round(m_dfDstYOff)) > EPSILON))
+    {
+        // Align the behavior with https://github.com/OSGeo/gdal/blob/0e5bb914b80d049198d9a85e04b22c9b0590cc36/gcore/rasterio.cpp#L799
+        // in the way we round coordinates
+        // Add small epsilon to avoid some numeric precision issues.
+        // Covered by test_vrt_read_multithreaded_non_integer_coordinates_nearest test
+        *pnReqXOff = static_cast<int>(*pdfReqXOff + 0.5 + EPSILON);
+        *pnReqYOff = static_cast<int>(*pdfReqYOff + 0.5 + EPSILON);
+    }
+    else
+    {
+        *pnReqXOff = static_cast<int>(*pdfReqXOff);
+        *pnReqYOff = static_cast<int>(*pdfReqYOff);
+    }
 
     constexpr double EPS = 1e-3;
     constexpr double ONE_MINUS_EPS = 1.0 - EPS;
@@ -1371,11 +1405,21 @@ CPLErr VRTSimpleSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     int nOutXSize = 0;
     int nOutYSize = 0;
 
+    if (!m_osResampling.empty())
+    {
+        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
+    }
+    else if (psExtraArgIn != nullptr)
+    {
+        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
+    }
+
     bool bError = false;
     if (!GetSrcDstWindow(dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
-                         &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                         &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                         &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
+                         psExtraArg->eResampleAlg, &dfReqXOff, &dfReqYOff,
+                         &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff,
+                         &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                         &nOutXSize, &nOutYSize, bError))
     {
         return bError ? CE_Failure : CE_None;
     }
@@ -1394,14 +1438,6 @@ CPLErr VRTSimpleSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     /* -------------------------------------------------------------------- */
     /*      Actually perform the IO request.                                */
     /* -------------------------------------------------------------------- */
-    if (!m_osResampling.empty())
-    {
-        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
-    }
-    else if (psExtraArgIn != nullptr)
-    {
-        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
-    }
     psExtraArg->bFloatingPointWindowValidity = TRUE;
     psExtraArg->dfXOff = dfReqXOff;
     psExtraArg->dfYOff = dfReqYOff;
@@ -1508,10 +1544,11 @@ double VRTSimpleSource::GetMinimum(int nXSize, int nYSize, int *pbSuccess)
     bool bError = false;
     auto l_band = GetRasterBand();
     if (!l_band ||
-        !GetSrcDstWindow(0, 0, nXSize, nYSize, nXSize, nYSize, &dfReqXOff,
-                         &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
-                         &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff,
-                         &nOutYOff, &nOutXSize, &nOutYSize, bError) ||
+        !GetSrcDstWindow(0, 0, nXSize, nYSize, nXSize, nYSize,
+                         GRIORA_NearestNeighbour, &dfReqXOff, &dfReqYOff,
+                         &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff,
+                         &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                         &nOutXSize, &nOutYSize, bError) ||
         nReqXOff != 0 || nReqYOff != 0 || nReqXSize != l_band->GetXSize() ||
         nReqYSize != l_band->GetYSize())
     {
@@ -1550,10 +1587,11 @@ double VRTSimpleSource::GetMaximum(int nXSize, int nYSize, int *pbSuccess)
     bool bError = false;
     auto l_band = GetRasterBand();
     if (!l_band ||
-        !GetSrcDstWindow(0, 0, nXSize, nYSize, nXSize, nYSize, &dfReqXOff,
-                         &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
-                         &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff,
-                         &nOutYOff, &nOutXSize, &nOutYSize, bError) ||
+        !GetSrcDstWindow(0, 0, nXSize, nYSize, nXSize, nYSize,
+                         GRIORA_NearestNeighbour, &dfReqXOff, &dfReqYOff,
+                         &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff,
+                         &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                         &nOutXSize, &nOutYSize, bError) ||
         nReqXOff != 0 || nReqYOff != 0 || nReqXSize != l_band->GetXSize() ||
         nReqYSize != l_band->GetYSize())
     {
@@ -1597,10 +1635,11 @@ CPLErr VRTSimpleSource::GetHistogram(int nXSize, int nYSize, double dfMin,
     bool bError = false;
     auto l_band = GetRasterBand();
     if (!l_band || NeedMaxValAdjustment() ||
-        !GetSrcDstWindow(0, 0, nXSize, nYSize, nXSize, nYSize, &dfReqXOff,
-                         &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
-                         &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff,
-                         &nOutYOff, &nOutXSize, &nOutYSize, bError) ||
+        !GetSrcDstWindow(0, 0, nXSize, nYSize, nXSize, nYSize,
+                         GRIORA_NearestNeighbour, &dfReqXOff, &dfReqYOff,
+                         &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff,
+                         &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                         &nOutXSize, &nOutYSize, bError) ||
         nReqXOff != 0 || nReqYOff != 0 || nReqXSize != l_band->GetXSize() ||
         nReqYSize != l_band->GetYSize())
     {
@@ -1662,11 +1701,21 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
     int nOutXSize = 0;
     int nOutYSize = 0;
 
+    if (!m_osResampling.empty())
+    {
+        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
+    }
+    else if (psExtraArgIn != nullptr)
+    {
+        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
+    }
+
     bool bError = false;
     if (!GetSrcDstWindow(dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
-                         &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                         &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                         &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
+                         psExtraArg->eResampleAlg, &dfReqXOff, &dfReqYOff,
+                         &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff,
+                         &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                         &nOutXSize, &nOutYSize, bError))
     {
         return bError ? CE_Failure : CE_None;
     }
@@ -1679,14 +1728,6 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
     if (poDS == nullptr)
         return CE_Failure;
 
-    if (!m_osResampling.empty())
-    {
-        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
-    }
-    else if (psExtraArgIn != nullptr)
-    {
-        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
-    }
     psExtraArg->bFloatingPointWindowValidity = TRUE;
     psExtraArg->dfXOff = dfReqXOff;
     psExtraArg->dfYOff = dfReqYOff;
@@ -1901,11 +1942,21 @@ CPLErr VRTAveragedSource::RasterIO(GDALDataType /*eVRTBandDataType*/, int nXOff,
     int nOutXSize = 0;
     int nOutYSize = 0;
 
+    if (!m_osResampling.empty())
+    {
+        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
+    }
+    else if (psExtraArgIn != nullptr)
+    {
+        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
+    }
+
     bool bError = false;
     if (!GetSrcDstWindow(dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
-                         &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                         &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                         &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
+                         psExtraArg->eResampleAlg, &dfReqXOff, &dfReqYOff,
+                         &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff,
+                         &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                         &nOutXSize, &nOutYSize, bError))
     {
         return bError ? CE_Failure : CE_None;
     }
@@ -1928,15 +1979,6 @@ CPLErr VRTAveragedSource::RasterIO(GDALDataType /*eVRTBandDataType*/, int nXOff,
     /* -------------------------------------------------------------------- */
     /*      Load it.                                                        */
     /* -------------------------------------------------------------------- */
-    if (!m_osResampling.empty())
-    {
-        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
-    }
-    else if (psExtraArgIn != nullptr)
-    {
-        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
-    }
-
     psExtraArg->bFloatingPointWindowValidity = TRUE;
     psExtraArg->dfXOff = dfReqXOff;
     psExtraArg->dfYOff = dfReqYOff;
@@ -2303,11 +2345,21 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
     int nOutXSize = 0;
     int nOutYSize = 0;
 
+    if (!m_osResampling.empty())
+    {
+        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
+    }
+    else if (psExtraArgIn != nullptr)
+    {
+        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
+    }
+
     bool bError = false;
     if (!GetSrcDstWindow(dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
-                         &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                         &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                         &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
+                         psExtraArg->eResampleAlg, &dfReqXOff, &dfReqYOff,
+                         &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff,
+                         &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                         &nOutXSize, &nOutYSize, bError))
     {
         return bError ? CE_Failure : CE_None;
     }
@@ -2404,15 +2456,6 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
     /* -------------------------------------------------------------------- */
     /*      Load data.                                                      */
     /* -------------------------------------------------------------------- */
-    if (!m_osResampling.empty())
-    {
-        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
-    }
-    else if (psExtraArgIn != nullptr)
-    {
-        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
-    }
-
     psExtraArg->bFloatingPointWindowValidity = TRUE;
     psExtraArg->dfXOff = dfReqXOff;
     psExtraArg->dfYOff = dfReqYOff;
@@ -3031,11 +3074,21 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     int nOutXSize = 0;
     int nOutYSize = 0;
 
+    if (!m_osResampling.empty())
+    {
+        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
+    }
+    else if (psExtraArgIn != nullptr)
+    {
+        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
+    }
+
     bool bError = false;
     if (!GetSrcDstWindow(dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
-                         &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                         &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                         &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
+                         psExtraArg->eResampleAlg, &dfReqXOff, &dfReqYOff,
+                         &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff,
+                         &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                         &nOutXSize, &nOutYSize, bError))
     {
         return bError ? CE_Failure : CE_None;
     }
@@ -3055,14 +3108,6 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     if (!poSourceBand)
         return CE_Failure;
 
-    if (!m_osResampling.empty())
-    {
-        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
-    }
-    else if (psExtraArgIn != nullptr)
-    {
-        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
-    }
     psExtraArg->bFloatingPointWindowValidity = TRUE;
     psExtraArg->dfXOff = dfReqXOff;
     psExtraArg->dfYOff = dfReqYOff;
