@@ -27,6 +27,7 @@ RUN \
 
 # For PROJ and GDAL
 ARG POPPLER_DEV=poppler-dev
+ARG LLVM_VERSION=20
 RUN apk add --no-cache \
     apache-arrow-dev \
     armadillo-dev \
@@ -35,6 +36,7 @@ RUN apk add --no-cache \
     brunsli-dev \
     ccache \
     cfitsio-dev \
+    clang${LLVM_VERSION}-dev \
     cmake \
     curl-dev \
     expat-dev \
@@ -42,6 +44,7 @@ RUN apk add --no-cache \
     geos-dev \
     giflib-dev \
     gnu-libiconv-dev \
+    g++ \
     hdf5-dev \
     json-c-dev \
     kealib-dev \
@@ -62,6 +65,7 @@ RUN apk add --no-cache \
     libwebp-dev \
     libxml2-dev \
     linux-headers \
+    llvm${LLVM_VERSION}-dev \
     lz4-dev \
     make \
     mariadb-connector-c-dev \
@@ -285,6 +289,8 @@ RUN --mount=type=cache,id=alpine-normal-gdal,target=$HOME/.cache \
         -DOpenDrive_DIR=/usr/lib/ \
         -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE \
         -DGDAL_USE_EXPRTK:BOOL=ON \
+        -DLLVM_FIND_VERSION=${LLVM_VERSION} \
+    && (grep "GDAL_USE_LLVM:BOOL=ON" CMakeCache.txt >/dev/null || (echo "LLVM not enabled"; grep LLVM CMakeCache.txt; llvm-config-${LLVM_VERSION} --version; /bin/false)) \
     && ninja \
     && DESTDIR="/build" ninja install \
     && (ninja multireadtest && cp apps/multireadtest /build/usr/bin) \
@@ -326,6 +332,7 @@ FROM alpine:${ALPINE_VERSION} AS runner
 
 RUN date
 
+ARG LLVM_VERSION=20
 RUN apk add --no-cache \
         armadillo \
         bash-completion \
@@ -334,6 +341,7 @@ RUN apk add --no-cache \
         brotli-libs \
         brunsli-libs \
         cfitsio \
+        clang${LLVM_VERSION}-libs \
         expat \
         freexl \
         geos \
@@ -368,6 +376,7 @@ RUN apk add --no-cache \
         liburiparser \
         libwebp \
         libxml2 \
+        llvm${LLVM_VERSION}-libs \
         lz4-libs \
         mariadb-connector-c \
         muparser \

@@ -36,6 +36,9 @@ curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.t
         export CXX=$PWD/ccache_g++.sh
 
         ccache -M 1G
+    else
+        export CC="${GCC_ARCH}-linux-gnu-gcc"
+        export CXX="${GCC_ARCH}-linux-gnu-g++"
     fi
 
     export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 -g"
@@ -76,7 +79,17 @@ curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.t
         export GDAL_CMAKE_EXTRA_OPTS="${GDAL_CMAKE_EXTRA_OPTS} -DMRSID_ROOT=/opt/Raster_DSDK"
       fi
     fi
+
+    if test "$(uname -m)" = "x86_64" && test "${GCC_ARCH}" = "aarch64"; then
+      echo "set(CMAKE_SYSTEM_NAME Linux)" > toolchain_arm64.cmake
+      echo "set(CMAKE_SYSTEM_PROCESSOR aarch64)" >> toolchain_arm64.cmake
+      echo "set(CMAKE_C_COMPILER ${CC})" >> toolchain_arm64.cmake
+      echo "set(CMAKE_CXX_COMPILER ${CXX})" >> toolchain_arm64.cmake
+      export GDAL_CMAKE_EXTRA_OPTS="${GDAL_CMAKE_EXTRA_OPTS} -DCMAKE_TOOLCHAIN_FILE=toolchain_arm64.cmake"
+    fi
+
     echo "${GDAL_CMAKE_EXTRA_OPTS}"
+
     cmake .. \
         -G Ninja \
         -DCMAKE_INSTALL_PREFIX=/usr \
@@ -87,10 +100,19 @@ curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.t
         -DGDAL_ENABLE_PLUGINS=ON \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DBUILD_PYTHON_BINDINGS=ON \
+        -DRASTERLITE2_VERSION_STRING=1.1.0 \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON ${GDAL_CMAKE_EXTRA_OPTS} \
         -DOpenDrive_DIR=/usr/lib/ \
         -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE \
         -DGDAL_USE_EXPRTK:BOOL=ON \
+        -DLLVM_FIND_VERSION=${LLVM_VERSION} \
+
+
+    if test "${GCC_ARCH}" = "aarch64"; then
+      grep "GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS:BOOL=ON" CMakeCache.txt >/dev/null || (echo "ARM Neon not enabled"; /bin/false)
+    fi
+
+    grep "GDAL_USE_LLVM:BOOL=ON" CMakeCache.txt >/dev/null || (echo "LLVM not enabled"; grep LLVM CMakeCache.txt; llvm-config-${LLVM_VERSION} --version; /bin/false)
 
     ninja
     DESTDIR="/build" ninja install

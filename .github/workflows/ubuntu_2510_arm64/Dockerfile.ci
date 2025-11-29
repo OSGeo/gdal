@@ -1,0 +1,80 @@
+FROM arm64v8/ubuntu@sha256:dafe28fcc437e510ee904aa58432a65d5fe43d58e20279344bf329ae7fb8507f
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --allow-unauthenticated \
+    autoconf \
+    automake \
+    bash \
+    ccache \
+    cmake \
+    clang \
+    curl \
+    doxygen \
+    fossil \
+    g++ \
+    git \
+    gpsbabel \
+    libblosc-dev \
+    libboost-dev \
+    libcairo2-dev \
+    libcfitsio-dev \
+    libcrypto++-dev \
+    libclang-21-dev \
+    libclang-cpp21-dev \
+    libcurl4-gnutls-dev \
+    libexpat-dev \
+    libfcgi-dev \
+    libfyba-dev \
+    libfreexl-dev \
+    libgeos-dev \
+    libgeotiff-dev \
+    libgif-dev \
+    libhdf4-alt-dev \
+    libhdf5-serial-dev \
+    libjpeg-dev \
+    libjxl-dev \
+    libkml-dev \
+    liblcms2-2 \
+    liblz4-dev \
+    liblzma-dev \
+    libmuparser-dev \
+    libmysqlclient-dev \
+    libnetcdf-dev \
+    libopenexr-dev \
+    libopenjp2-7-dev \
+    libpcre3-dev \
+    libpng-dev \
+    libpoppler-dev \
+    libpoppler-private-dev \
+    libpq-dev \
+    libproj-dev \
+    librasterlite2-dev \
+    libspatialite-dev \
+    libssl-dev \
+    libwebp-dev \
+    libxerces-c-dev \
+    libxml2-dev \
+    libxslt-dev \
+    libzstd-dev \
+    locales \
+    llvm-21-dev \
+    netcdf-bin \
+    poppler-utils \
+    postgis \
+    postgresql-client \
+    python3-dev \
+    python3-numpy \
+    python3-pip \
+    python3-setuptools \
+    sqlite3 \
+    swig \
+    unixodbc-dev \
+    wget \
+    zip
+
+COPY requirements.txt /tmp/
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U --break-system-packages -r /tmp/requirements.txt
+
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages fsspec

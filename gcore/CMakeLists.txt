@@ -62,7 +62,32 @@ add_library(
   nasakeywordhandler.cpp
   tiff_common.cpp
   enviutils.cpp
+  gdal_jit.cpp
+  gdal_c_expr.cpp
 )
+
+if (GDAL_USE_LLVM)
+    include(CheckIncludeFile)
+    check_include_file("gnu/libc-version.h" HAVE_GNU_LIBC_VERSION_H)
+    if (HAVE_GNU_LIBC_VERSION_H)
+        target_compile_definitions(gcore PRIVATE HAVE_GNU_LIBC_VERSION_H)
+    endif()
+
+    target_compile_definitions(gcore PRIVATE HAVE_JIT)
+    target_include_directories(gcore PRIVATE ${LLVM_INCLUDE_DIRS})
+    gdal_target_link_libraries(gcore PRIVATE ${LLVM_LIBS} ${LLVM_SYSTEM_LIBS} ${LLVM_CLANG_LIBS})
+
+    if(APPLE)
+        if (EXISTS "/System/Library/Frameworks/Accelerate.framework")
+            set(ACCELERATE_LIBRARY "/System/Library/Frameworks/Accelerate.framework/Accelerate")
+            message(STATUS "Accelerate library found: ${ACCELERATE_LIBRARY}")
+            target_compile_definitions(gcore PRIVATE ACCELERATE_LIBRARY="${ACCELERATE_LIBRARY}")
+        else()
+            message(STATUS "Accelerate framework NOT found")
+        endif()
+    endif()
+
+endif()
 
 add_library(gcore_gdal_misc OBJECT gdal_misc.cpp)
 gdal_standard_includes(gcore_gdal_misc)
@@ -262,6 +287,7 @@ target_public_header(
   gdal_minmax_element.hpp
   gdal_priv_templates.hpp  # Required by gdal_minmax_element.hpp
   geoheif.h
+  gdal_jit_cpp.h
 )
 
 set(GDAL_DATA_FILES
@@ -275,3 +301,36 @@ set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}
   APPEND
   PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+
+
+###########################################################
+# Targets to refresh gdal_c_expr_parser.cpp
+###########################################################
+
+# Those targets need to be run manually each time gdal_c_expr_parser.cpp
+# is modified.
+# We could of course run them automatically, but that would make building
+# GDAL harder.
+
+# This target checks that gdal_c_expr_parser.cpp md5sum has not changed
+# If it has, then it should be updated and the generate_c_expr_parser target
+# should be manually run
+add_custom_target(check_c_expr_parser_md5 ALL
+                  COMMAND ${CMAKE_COMMAND}
+                      "-DIN_FILE=gdal_c_expr_parser.cpp"
+                      "-DTARGET=generate_c_expr_parser"
+                      "-DEXPECTED_MD5SUM=d701b5a831106f2dc417215a33e44cb4"
+                      "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
+                      -P "${PROJECT_SOURCE_DIR}/cmake/helpers/check_md5sum.cmake"
+                  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/gdal_c_expr_parser.cpp"
+                  VERBATIM)
+
+find_package(BISON)
+add_custom_target(generate_c_expr_parser
+                  COMMAND ${CMAKE_COMMAND}
+                      "-DBISON_FOUND=${BISON_FOUND}"
+                      "-DBISON_EXECUTABLE=${BISON_EXECUTABLE}"
+                      -P "${CMAKE_CURRENT_SOURCE_DIR}/generate_c_expr_parser.cmake"
+                  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                  VERBATIM)

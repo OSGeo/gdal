@@ -434,7 +434,9 @@ jobs:
             cfitsio freexl geotiff libjpeg-turbo libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd cryptopp cgal doxygen librttopo openssl liblzma-devel \
             openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc libarchive \
-            libarrow pyarrow libaec libheif libavif muparser cmake fsspec
+            libarrow pyarrow libaec libheif libavif muparser cmake fsspec llvmdev clangdev intel-cmplr-lib-rt
+        # Remove the clang binaries, otherwise cmake is going to use it instead of MSVC
+        conda uninstall --yes --quiet --force clang
         pip install -r doc/requirements.txt
     - name: Check CMake version
       shell: bash -l {0}

@@ -19,6 +19,13 @@
 #include "vrtreclassifier.h"
 #include "cpl_float.h"
 
+#ifdef GDAL_USE_LLVM
+#include "cpl_mem_cache.h"
+#include "gdal_typetraits.h"
+#include "gdal_c_expr.h"
+#include "gdal_jit_cpp.h"
+#endif
+
 #if defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
 #define USE_SSE2
 #include "gdalsse_priv.h"
@@ -43,6 +50,7 @@
 #include <algorithm>
 #include <cassert>
 #include <limits>
+#include <set>
 
 namespace gdal
 {
@@ -2788,6 +2796,931 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
         nPixelSpace, nLineSpace, papszArgs);
 }
 
+#ifdef GDAL_USE_LLVM
+
+/************************************************************************/
+/*                              JITCompute()                            */
+/************************************************************************/
+
+/** Given the input parameters of the pixel function and the corresponding C
+ * code of that function, computes a line of pixel values.
+ */
+template <GDALDataType eSrcType>
+static bool JITCompute(void **papoSources, int nSources, void *pData,
+                       int nXSize, int nYSize, GDALDataType eBufType,
+                       int nPixelSpace, int nLineSpace, const char *c_code,
+                       bool includeCenterCoords, int nXOff, int nYOff,
+                       GDALGeoTransform &gt, bool bDisassemble)
+{
+    using T = typename gdal::GDALDataTypeTraits<eSrcType>::type;
+    using FnType = std::function<void(const T *const *, const double *const *,
+                                      T *, size_t)>;
+    static thread_local lru11::Cache<std::string, FnType> cache;
+    std::string disassembly;
+    std::string *pDisassembly = bDisassemble ? &disassembly : nullptr;
+    FnType computePixels;
+    if (!cache.tryGet(c_code, computePixels))
+    {
+        {
+            CPLTurnFailureIntoWarningBackuper oFailuresAsWarnings;
+            computePixels = GDALGetJITFunction<void(
+                const T *const *, const double *const *, T *, size_t)>(
+                c_code, "computePixels", nullptr, pDisassembly);
+        }
+        if (pDisassembly)
+            CPLDebug("GDAL_JIT", "Disassembly:\n%s", disassembly.c_str());
+        if (!computePixels)
+            return false;
+        cache.insert(c_code, computePixels);
+    }
+
+    std::unique_ptr<T, VSIFreeReleaser> paResults;
+    const bool bNeedTmpBuffer =
+        !(eBufType == eSrcType && nPixelSpace == static_cast<int>(sizeof(T)));
+    if (bNeedTmpBuffer)
+    {
+        paResults.reset(
+            static_cast<T *>(VSI_MALLOC2_VERBOSE(nXSize, sizeof(T))));
+        if (!paResults)
+            return false;
+    }
+
+    std::unique_ptr<double, VSIFreeReleaser> padfX;
+    std::unique_ptr<double, VSIFreeReleaser> padfY;
+    if (includeCenterCoords)
+    {
+        padfX.reset(
+            static_cast<double *>(VSI_MALLOC2_VERBOSE(nXSize, sizeof(double))));
+        padfY.reset(
+            static_cast<double *>(VSI_MALLOC2_VERBOSE(nXSize, sizeof(double))));
+        if (!padfX || !padfY)
+            return false;
+    }
+
+    std::vector<const T *> inAr(nSources);
+    const double *auxDoubleArrays[2] = {nullptr, nullptr};
+    if (includeCenterCoords)
+    {
+        auxDoubleArrays[0] = padfX.get();
+        auxDoubleArrays[1] = padfY.get();
+    }
+
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        for (int iSrc = 0; iSrc < nSources; ++iSrc)
+        {
+            inAr[iSrc] =
+                reinterpret_cast<T *>(papoSources[iSrc]) + iLine * nXSize;
+        }
+        if (padfX && padfY)
+        {
+            const double x_shift = gt[0] + (nYOff + iLine + 0.5) * gt[2];
+            const double y_shift = gt[3] + (nYOff + iLine + 0.5) * gt[5];
+            for (int iCol = 0; iCol < nXSize; ++iCol)
+            {
+                (padfX.get())[iCol] = x_shift + (nXOff + iCol + 0.5) * gt[1];
+                (padfY.get())[iCol] = y_shift + (nXOff + iCol + 0.5) * gt[4];
+            }
+        }
+
+        if (!paResults)
+        {
+            computePixels(inAr.data(), auxDoubleArrays,
+                          reinterpret_cast<T *>(
+                              static_cast<GByte *>(pData) +
+                              static_cast<GSpacing>(nLineSpace) * iLine),
+                          nXSize);
+        }
+        else
+        {
+            computePixels(inAr.data(), auxDoubleArrays, paResults.get(),
+                          nXSize);
+            GDALCopyWords64(paResults.get(), eSrcType,
+                            static_cast<int>(sizeof(T)),
+                            static_cast<GByte *>(pData) +
+                                static_cast<GSpacing>(nLineSpace) * iLine,
+                            eBufType, nPixelSpace, nXSize);
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                          GDALCFunctionGenerator                      */
+/************************************************************************/
+
+namespace
+{
+class GDALCFunctionGenerator
+{
+  public:
+    static std::string generate(const GDAL_c_expr_node *node,
+                                const CPLStringList &aosSourceNames,
+                                GDALDataType eSrcType, bool bHasNoData,
+                                double dfNoData, bool bPropagateNoData,
+                                bool includeCenterCoords);
+
+  private:
+    explicit GDALCFunctionGenerator(GDALDataType eSrcType,
+                                    const CPLStringList &aosSourceNames)
+        : m_eSrcType(eSrcType), m_aosSourceNames(aosSourceNames)
+    {
+    }
+
+    void GenCExpr(const GDAL_c_expr_node *node);
+
+    const GDALDataType m_eSrcType;
+    const CPLStringList m_aosSourceNames;
+    std::set<std::string> m_setNeededFuncs{};
+
+    std::string m_osExpr{};
+    bool m_bError = false;
+};
+}  // namespace
+
+/************************************************************************/
+/*                  GDALCFunctionGenerator::generate()                  */
+/************************************************************************/
+
+/* Takes an input expression, source names, nodata information and returns
+ * the code of a C function
+ * "void computePixels(const T* const* inArrays, const double* const* auxDoubleArrays, T* outArray, size_t n);"
+ */
+
+/* static */
+std::string GDALCFunctionGenerator::generate(
+    const GDAL_c_expr_node *node, const CPLStringList &aosSourceNames,
+    GDALDataType eSrcType, bool bHasNoData, double dfNoData,
+    bool bPropagateNoData, bool includeCenterCoords)
+{
+    GDALCFunctionGenerator oGen(eSrcType, aosSourceNames);
+    oGen.GenCExpr(node);
+    if (oGen.m_bError)
+        return std::string();
+
+    if (bHasNoData && bPropagateNoData)
+    {
+        oGen.m_setNeededFuncs.insert("IsNoData");
+        oGen.m_setNeededFuncs.insert("NoData");
+    }
+    if (GDALDataTypeIsInteger(eSrcType))
+        oGen.m_setNeededFuncs.insert("round");
+
+    const char *c_type = "";
+    // clang-format off
+    switch (eSrcType)
+    {
+        case GDT_UInt8:   c_type = "unsigned char"; break;
+        case GDT_Int8:    c_type = "signed char"; break;
+        case GDT_UInt16:  c_type = "unsigned short"; break;
+        case GDT_Int16:   c_type = "short"; break;
+        case GDT_UInt32:  c_type = "unsigned int"; break;
+        case GDT_Int32:   c_type = "int"; break;
+        case GDT_UInt64:  c_type = "unsigned long long"; break;
+        case GDT_Int64:   c_type = "long long"; break;
+        case GDT_Float32: c_type = "float"; break;
+        case GDT_Float64: c_type = "double"; break;
+        default:          CPLAssert(0);
+    }
+
+    std::string c_code = "typedef __SIZE_TYPE__ size_t;\n";
+
+    for (const std::string &func : oGen.m_setNeededFuncs)
+    {
+        if (func == "my_min")
+        {
+            c_code += "static inline ";
+            c_code += c_type;
+            c_code += " my_min(";
+            c_code += c_type;
+            c_code += " a, ";
+            c_code += c_type;
+            c_code += " b)\n"
+                      "{\n"
+                      "  return a < b ? a : b;\n"
+                      "}\n";
+        }
+        else if (func == "my_max")
+        {
+            c_code += "static inline ";
+            c_code += c_type;
+            c_code += " my_max(";
+            c_code += c_type;
+            c_code += " a, ";
+            c_code += c_type;
+            c_code += " b)\n"
+                      "{\n"
+                      "  return a > b ? a : b;\n"
+                      "}\n";
+        }
+        else if (func == "my_div")
+        {
+            c_code += "static inline ";
+            c_code += c_type;
+            c_code += " my_div(";
+            c_code += c_type;
+            c_code += " a, ";
+            c_code += c_type;
+            c_code += " b)\n"
+                      "{\n"
+                      "  return b ? a / b : 0;\n"
+                      "}\n";
+        }
+        else if (func == "my_mod")
+        {
+            c_code += "static inline ";
+            c_code += c_type;
+            c_code += " my_mod(";
+            c_code += c_type;
+            c_code += " a, ";
+            c_code += c_type;
+            c_code += " b)\n"
+                      "{\n"
+                      "  return b ? a % b : 0;\n"
+                      "}\n";
+        }
+        else if (func == "my_square")
+        {
+            c_code += "static inline ";
+            c_code += c_type;
+            c_code += " my_square(";
+            c_code += c_type;
+            c_code += " a)\n"
+                      "{\n"
+                      "  return a * a;\n"
+                      "}\n";
+        }
+        else if (func == "my_abs")
+        {
+            c_code += "static inline ";
+            c_code += c_type;
+            c_code += " my_abs(";
+            c_code += c_type;
+            c_code += " a)\n"
+                      "{\n"
+                      "  return a < 0 ? -a : a;\n"
+                      "}\n";
+        }
+        else if (func == "my_sign")
+        {
+            c_code += "static inline ";
+            c_code += c_type;
+            c_code += " my_sign(";
+            c_code += c_type;
+            c_code += " a)\n"
+                      "{\n"
+                      // Written that way for sign(nan) = 0
+                      "  return a < 0 ? -1 : a > 0 ? 1 : 0;\n"
+                      "}\n";
+        }
+        else if (func == "my_rnd")
+        {
+            const char* res_type = eSrcType == GDT_Float32 ? "float": "double";
+            c_code += "static inline ";
+            c_code += res_type;
+            c_code += " my_rnd()\n"
+                      "{\n"
+                      "  static unsigned long int next = 1;\n"
+                      "  next = next * 1103515245 + 12345;\n"
+                      "  return (";
+            c_code += res_type;
+            c_code += ")((unsigned int)(next/65536) % 32768) * ((";
+            c_code += res_type;
+            c_code += ")1 / (";
+            c_code += res_type;
+            c_code += ")32767);\n"
+                      "}\n";
+        }
+        else if (func == "my_sum")
+        {
+            const char* res_type = eSrcType == GDT_Float32 ? "float": "double";
+            c_code += "static inline ";
+            c_code += res_type;
+            c_code += " my_sum(const ";
+            c_code += c_type;
+            c_code += "* __restrict const* inArrays, size_t nSources, size_t iCol)\n"
+                      "{\n"
+                      "  ";
+            c_code += res_type;
+            c_code += " res = 0;\n"
+                      "  for (size_t iSrc = 0; iSrc < nSources; ++iSrc)\n"
+                      "     res += inArrays[iSrc][iCol];\n"
+                      "  return res;\n"
+                      "}\n";
+        }
+        else if (func == "IsNoData")
+        {
+            c_code += "static inline int IsNoData(";
+            c_code += c_type;
+            c_code += " x)\n"
+                      "{\n";
+            if( bHasNoData )
+            {
+                if( std::isnan(dfNoData) )
+                {
+                    c_code += "  return __builtin_isnan(x)";
+                }
+                else if( eSrcType == GDT_Float32 )
+                {
+                    c_code += "  return x == ";
+                    c_code += CPLSPrintf("%.8gf", dfNoData);
+                }
+                else if( eSrcType == GDT_Float64 ||
+                         eSrcType == GDT_Int64 ||
+                         eSrcType == GDT_UInt64)
+                {
+                    c_code += "  return x == ";
+                    c_code += CPLSPrintf("%.17g", dfNoData);
+                }
+                else
+                {
+                    c_code += "  return x == ";
+                    c_code += std::to_string(static_cast<int64_t>(dfNoData));
+                }
+                c_code += ";\n";
+            }
+            else
+            {
+                c_code += "  (void)x;\n"
+                          "  return 0;\n";
+            }
+            c_code += "}\n";
+        }
+        else if (func == "NoData")
+        {
+            c_code += "static const ";
+            c_code += c_type;
+            c_code += " NoData = ";
+            if( bHasNoData )
+            {
+                if( std::isnan(dfNoData) )
+                {
+                    if( eSrcType == GDT_Float32 )
+                        c_code += " __builtin_nanf(\"\")";
+                    else
+                        c_code += "__builtin_nan(\"\")";
+                }
+                else if( std::isinf(dfNoData) )
+                {
+                    if( dfNoData > 0 )
+                    {
+                        if( eSrcType == GDT_Float32 )
+                            c_code += "__builtin_inff()";
+                        else
+                            c_code += "__builtin_inf()";
+                    }
+                    else
+                    {
+                        if( eSrcType == GDT_Float32 )
+                            c_code += "-__builtin_inff()";
+                        else
+                            c_code += "-__builtin_inf()";
+                    }
+                }
+                else if( eSrcType == GDT_Float32 )
+                {
+                    c_code += CPLSPrintf("%.8gf", dfNoData);
+                }
+                else if( eSrcType == GDT_Float64 ||
+                         eSrcType == GDT_Int64 ||
+                         eSrcType == GDT_UInt64)
+                {
+                    c_code += CPLSPrintf("%.17g", dfNoData);
+                }
+                else
+                {
+                    c_code += std::to_string(static_cast<int64_t>(dfNoData));
+                }
+            }
+            else
+            {
+                c_code += "0";
+            }
+            c_code += ";\n";
+        }
+        else if (func == "powf" || func == "fmodf")
+        {
+            c_code += "float ";
+            c_code += func;
+            c_code += "(float, float);\n";
+        }
+        else if (func == "pow" || func == "fmod")
+        {
+            c_code += "double ";
+            c_code += func;
+            c_code += "(double, double);\n";
+        }
+        else if (func.back() == 'f')
+        {
+            c_code += "float ";
+            c_code += func;
+            c_code += "(float);\n";
+        }
+        else
+        {
+            c_code += "double ";
+            c_code += func;
+            c_code += "(double);\n";
+        }
+    }
+
+    c_code += "void computePixels(const ";
+    c_code += c_type;
+    c_code += "* __restrict const* const inArrays,\n"
+              "                   "
+              "const double* __restrict const* const auxDoubleArrays,\n"
+              "                   ";
+    c_code += c_type;
+    c_code += "* __restrict const outArray,\n"
+              "                   size_t nSources)\n"
+              "{\n";
+    // clang-format on
+
+    std::string in_array_type = "const ";
+    in_array_type += c_type;
+    in_array_type += "* const __restrict";
+
+    const int nSources = aosSourceNames.size();
+    if (includeCenterCoords)
+    {
+        c_code += "  const double* __restrict CENTER_X = "
+                  "auxDoubleArrays[0];\n";
+        c_code += "  const double* __restrict CENTER_Y = "
+                  "auxDoubleArrays[1];\n";
+    }
+    else
+    {
+        c_code += "  (void)auxDoubleArrays;\n";
+    }
+
+    // clang-format off
+    c_code +=
+        "  for(size_t i = 0; i < nSources; ++i)\n"
+        "  {\n"
+        "     outArray[i] = ";
+    if( GDALDataTypeIsInteger(eSrcType) )
+    {
+        c_code += '(';
+        c_code += c_type;
+        c_code += ")round(";
+    }
+    if( bHasNoData && bPropagateNoData )
+    {
+        c_code += "((";
+        for (int iSrc = 0; iSrc < nSources; ++iSrc)
+        {
+            if( iSrc > 0 )
+                c_code += " || ";
+            c_code += "IsNoData(inArrays[";
+            c_code += std::to_string(iSrc);
+            c_code += "][i])";
+        }
+        c_code += ") ? NoData : (";
+    }
+    c_code += oGen.m_osExpr;
+    if( bHasNoData && bPropagateNoData )
+    {
+        c_code += "))";
+    }
+    if( GDALDataTypeIsInteger(eSrcType) )
+    {
+        c_code += ')';
+    }
+    c_code +=
+        ";\n"
+        "  }\n"
+        "}\n";
+    // clang-format on
+
+    return c_code;
+}
+
+/************************************************************************/
+/*                  GDALCFunctionGenerator::GenCExpr()                  */
+/************************************************************************/
+
+/* Transform the passed in node in a C-valid expression in the m_osExpr member,
+ * and set m_bError in case of error, and fill m_setNeededFuncs with the names
+ * of the functions used in the expression.
+ */
+void GDALCFunctionGenerator::GenCExpr(const GDAL_c_expr_node *node)
+{
+    const char *pszFunctionSuffix = m_eSrcType == GDT_Float32 ? "f" : "";
+    const char *pszIntegerNumberSuffix = m_eSrcType == GDT_Float32 ? ".0f" : "";
+
+    switch (node->eNodeType)
+    {
+        case CENT_CONSTANT:
+        {
+            switch (node->field_type)
+            {
+                case C_EXPR_FIELD_TYPE_INTEGER:
+                    m_osExpr += std::to_string(node->int_value);
+                    m_osExpr += pszIntegerNumberSuffix;
+                    break;
+                case C_EXPR_FIELD_TYPE_FLOAT:
+                    if (m_eSrcType == GDT_Float32)
+                    {
+                        if (std::isnan(node->float_value))
+                            m_osExpr += "__builtin_nanf(\"\")";
+                        else
+                            m_osExpr += CPLSPrintf("%.8gf", node->float_value);
+                    }
+                    else
+                    {
+                        if (std::isnan(node->float_value))
+                            m_osExpr += "__builtin_nan(\"\")";
+                        else
+                            m_osExpr += CPLSPrintf("%.17g", node->float_value);
+                    }
+                    break;
+                case C_EXPR_FIELD_TYPE_IDENTIFIER:
+                {
+                    if (EQUAL(node->string_value.c_str(), "_CENTER_X_"))
+                    {
+                        m_osExpr += "CENTER_X[i]";
+                    }
+                    else if (EQUAL(node->string_value.c_str(), "_CENTER_Y_"))
+                    {
+                        m_osExpr += "CENTER_Y[i]";
+                    }
+                    else
+                    {
+                        int iFound = -1;
+                        for (int i = 0; i < m_aosSourceNames.size(); ++i)
+                        {
+                            if (m_aosSourceNames[i] == node->string_value)
+                            {
+                                iFound = i;
+                                break;
+                            }
+                        }
+                        if (iFound < 0)
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Unknown variable name: %s",
+                                     node->string_value.c_str());
+                            m_bError = false;
+                        }
+                        else
+                        {
+                            m_osExpr += "inArrays[";
+                            m_osExpr += std::to_string(iFound);
+                            m_osExpr += "][i]";
+                        }
+                    }
+                    break;
+                }
+                case C_EXPR_FIELD_TYPE_EMPTY:
+                    CPLAssert(false);
+                    break;
+            }
+            break;
+        }
+        case CENT_OPERATION:
+        {
+            const auto EmitBinary = [this, node](const char *pszOp)
+            {
+                CPLAssert(node->apoSubExpr.size() == 2);
+                m_osExpr += '(';
+                GenCExpr(node->apoSubExpr[0].get());
+                m_osExpr += ' ';
+                m_osExpr += pszOp;
+                m_osExpr += ' ';
+                GenCExpr(node->apoSubExpr[1].get());
+                m_osExpr += ')';
+            };
+
+            const auto EmitSuffixedFunction =
+                [this, node, pszFunctionSuffix](const char *pszFuncName)
+            {
+                CPLAssert(node->apoSubExpr.size() >= 1);
+                m_setNeededFuncs.insert(
+                    std::string(pszFuncName).append(pszFunctionSuffix));
+                m_osExpr += pszFuncName;
+                m_osExpr += pszFunctionSuffix;
+                m_osExpr += '(';
+                GenCExpr(node->apoSubExpr[0].get());
+                m_osExpr += ')';
+            };
+
+            const auto EmitSuffixedFunctionTwoArgs =
+                [this, node, pszFunctionSuffix](const char *pszFuncName)
+            {
+                CPLAssert(node->apoSubExpr.size() == 2);
+                m_setNeededFuncs.insert(
+                    std::string(pszFuncName).append(pszFunctionSuffix));
+                m_osExpr += pszFuncName;
+                m_osExpr += pszFunctionSuffix;
+                m_osExpr += '(';
+                GenCExpr(node->apoSubExpr[0].get());
+                m_osExpr += ", ";
+                GenCExpr(node->apoSubExpr[1].get());
+                m_osExpr += ')';
+            };
+
+            std::function<void(const char *,
+                               const std::unique_ptr<GDAL_c_expr_node> *,
+                               size_t)>
+                EmitMultiArgFunction;
+
+            EmitMultiArgFunction =
+                [this, &EmitMultiArgFunction](
+                    const char *pszFuncName,
+                    const std::unique_ptr<GDAL_c_expr_node> *argsBegin,
+                    size_t argCount)
+            {
+                if (argCount == 1)
+                {
+                    GenCExpr(argsBegin[0].get());
+                }
+                else if (strcmp(pszFuncName, "sum") == 0)
+                {
+                    bool allSources = argCount == static_cast<size_t>(
+                                                      m_aosSourceNames.size());
+                    if (allSources)
+                    {
+                        for (size_t i = 0; i < argCount; ++i)
+                        {
+                            if (!(argsBegin[i]->eNodeType == CENT_CONSTANT &&
+                                  argsBegin[i]->field_type ==
+                                      C_EXPR_FIELD_TYPE_IDENTIFIER &&
+                                  argsBegin[i]->string_value ==
+                                      m_aosSourceNames[i]))
+                            {
+                                allSources = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (allSources)
+                    {
+                        m_setNeededFuncs.insert("my_sum");
+                        m_osExpr += "my_sum(inArrays, " +
+                                    std::to_string(argCount) + ", i)";
+                    }
+                    else
+                    {
+                        m_osExpr += '(';
+                        EmitMultiArgFunction(pszFuncName, argsBegin,
+                                             argCount / 2);
+                        m_osExpr += " + ";
+                        EmitMultiArgFunction(pszFuncName,
+                                             argsBegin + argCount / 2,
+                                             argCount - argCount / 2);
+                        m_osExpr += ')';
+                    }
+                }
+                else
+                {
+                    m_osExpr += "my_";
+                    m_osExpr += pszFuncName;
+                    m_osExpr += '(';
+                    EmitMultiArgFunction(pszFuncName, argsBegin, argCount / 2);
+                    m_osExpr += ", ";
+                    EmitMultiArgFunction(pszFuncName, argsBegin + argCount / 2,
+                                         argCount - argCount / 2);
+                    m_osExpr += ')';
+                }
+            };
+
+            switch (node->eOp)
+            {
+                case C_EXPR_OR:
+                    EmitBinary("||");
+                    break;
+                case C_EXPR_AND:
+                    EmitBinary("&&");
+                    break;
+                case C_EXPR_BITWISE_OR:
+                    EmitBinary("|");
+                    break;
+                case C_EXPR_BITWISE_AND:
+                    EmitBinary("&");
+                    break;
+                case C_EXPR_NOT:
+                    m_osExpr += "(!";
+                    GenCExpr(node->apoSubExpr[0].get());
+                    m_osExpr += ')';
+                    break;
+                case C_EXPR_TERNARY:
+                    CPLAssert(node->apoSubExpr.size() == 3);
+                    m_osExpr += '(';
+                    GenCExpr(node->apoSubExpr[0].get());
+                    m_osExpr += " ? ";
+                    GenCExpr(node->apoSubExpr[1].get());
+                    m_osExpr += " : ";
+                    GenCExpr(node->apoSubExpr[2].get());
+                    m_osExpr += ')';
+                    break;
+                case C_EXPR_EQ:
+                    EmitBinary("==");
+                    break;
+                case C_EXPR_NE:
+                    EmitBinary("!=");
+                    break;
+                case C_EXPR_LT:
+                    EmitBinary("<");
+                    break;
+                case C_EXPR_LE:
+                    EmitBinary("<=");
+                    break;
+                case C_EXPR_GT:
+                    EmitBinary(">");
+                    break;
+                case C_EXPR_GE:
+                    EmitBinary(">=");
+                    break;
+                case C_EXPR_ADD:
+                    EmitBinary("+");
+                    break;
+                case C_EXPR_SUBTRACT:
+                    EmitBinary("-");
+                    break;
+                case C_EXPR_MULTIPLY:
+                    EmitBinary("*");
+                    break;
+                case C_EXPR_DIVIDE:
+                    if (GDALDataTypeIsFloating(m_eSrcType))
+                    {
+                        m_osExpr += '(';
+                        GenCExpr(node->apoSubExpr[0].get());
+                        m_osExpr += " / ";
+                        GenCExpr(node->apoSubExpr[1].get());
+                        m_osExpr += ')';
+                    }
+                    else
+                    {
+                        m_setNeededFuncs.insert("my_div");
+                        m_osExpr += "my_div(";
+                        GenCExpr(node->apoSubExpr[0].get());
+                        m_osExpr += ", ";
+                        GenCExpr(node->apoSubExpr[1].get());
+                        m_osExpr += ')';
+                    }
+                    break;
+                case C_EXPR_MODULUS:
+                    if (GDALDataTypeIsFloating(m_eSrcType))
+                    {
+                        m_osExpr += '(';
+                        GenCExpr(node->apoSubExpr[0].get());
+                        m_osExpr += " % ";
+                        GenCExpr(node->apoSubExpr[1].get());
+                        m_osExpr += ')';
+                    }
+                    else
+                    {
+                        m_setNeededFuncs.insert("my_mod");
+                        m_osExpr += "my_mod(";
+                        GenCExpr(node->apoSubExpr[0].get());
+                        m_osExpr += ", ";
+                        GenCExpr(node->apoSubExpr[1].get());
+                        m_osExpr += ')';
+                    }
+                    break;
+                case C_EXPR_POWER:
+                {
+                    if (node->apoSubExpr[1]->eNodeType == CENT_CONSTANT &&
+                        node->apoSubExpr[1]->field_type ==
+                            C_EXPR_FIELD_TYPE_INTEGER &&
+                        node->apoSubExpr[1]->int_value == 2 &&
+                        GDALDataTypeIsFloating(m_eSrcType))
+                    {
+                        m_setNeededFuncs.insert("my_square");
+                        m_osExpr += "my_square(";
+                        GenCExpr(node->apoSubExpr[0].get());
+                        m_osExpr += ')';
+                    }
+                    else
+                    {
+                        EmitSuffixedFunctionTwoArgs("pow");
+                    }
+                    break;
+                }
+                case C_EXPR_RND:
+                {
+                    m_setNeededFuncs.insert("my_rnd");
+                    m_osExpr += "my_rnd()";
+                    break;
+                }
+                case C_EXPR_FMOD:
+                    EmitSuffixedFunctionTwoArgs("fmod");
+                    break;
+                case C_EXPR_ABS:
+                {
+                    if (GDALDataTypeIsFloating(m_eSrcType))
+                    {
+                        EmitSuffixedFunction("fabs");
+                    }
+                    else if (GDALDataTypeIsSigned(m_eSrcType))
+                    {
+                        m_setNeededFuncs.insert("my_abs");
+                        m_osExpr += "my_abs(";
+                        GenCExpr(node->apoSubExpr[0].get());
+                        m_osExpr += ')';
+                    }
+                    else
+                    {
+                        GenCExpr(node->apoSubExpr[0].get());
+                    }
+                    break;
+                }
+                // clang-format off
+                case C_EXPR_SQRT:  EmitSuffixedFunction("sqrt");  break;
+                case C_EXPR_SIN:   EmitSuffixedFunction("sin");   break;
+                case C_EXPR_COS:   EmitSuffixedFunction("cos");   break;
+                case C_EXPR_TAN:   EmitSuffixedFunction("tan");   break;
+                case C_EXPR_ASIN:  EmitSuffixedFunction("asin");  break;
+                case C_EXPR_ACOS:  EmitSuffixedFunction("acos");  break;
+                case C_EXPR_ATAN:  EmitSuffixedFunction("atan");  break;
+                case C_EXPR_SINH:  EmitSuffixedFunction("sinh");  break;
+                case C_EXPR_COSH:  EmitSuffixedFunction("cosh");  break;
+                case C_EXPR_TANH:  EmitSuffixedFunction("tanh");  break;
+                case C_EXPR_ASINH: EmitSuffixedFunction("asinh"); break;
+                case C_EXPR_ACOSH: EmitSuffixedFunction("acosh"); break;
+                case C_EXPR_ATANH: EmitSuffixedFunction("atanh"); break;
+                case C_EXPR_EXP:   EmitSuffixedFunction("exp");   break;
+                case C_EXPR_LOG:   EmitSuffixedFunction("log");   break;
+                case C_EXPR_LOG2:  EmitSuffixedFunction("log2");  break;
+                case C_EXPR_LOG10: EmitSuffixedFunction("log10"); break;
+                // clang-format on
+                case C_EXPR_ISNAN:
+                    m_osExpr += "__builtin_isnan(";
+                    GenCExpr(node->apoSubExpr[0].get());
+                    m_osExpr += ')';
+                    break;
+                case C_EXPR_ISNODATA:
+                    m_setNeededFuncs.insert("IsNoData");
+                    m_osExpr += "IsNoData(";
+                    GenCExpr(node->apoSubExpr[0].get());
+                    m_osExpr += ')';
+                    break;
+                case C_EXPR_RINT:
+                {
+                    std::string osFuncName("rint");
+                    osFuncName += pszFunctionSuffix;
+                    m_setNeededFuncs.insert(osFuncName);
+                    m_osExpr += osFuncName;
+                    m_osExpr += '(';
+                    GenCExpr(node->apoSubExpr[0].get());
+                    m_osExpr += ')';
+                    break;
+                }
+                case C_EXPR_SIGN:
+                {
+                    m_setNeededFuncs.insert("my_sign");
+                    m_osExpr += "my_sign(";
+                    GenCExpr(node->apoSubExpr[0].get());
+                    m_osExpr += ')';
+                    break;
+                }
+                case C_EXPR_MIN:
+                    m_setNeededFuncs.insert("my_min");
+                    EmitMultiArgFunction("min", node->apoSubExpr.data(),
+                                         node->apoSubExpr.size());
+                    break;
+                case C_EXPR_MAX:
+                    m_setNeededFuncs.insert("my_max");
+                    EmitMultiArgFunction("max", node->apoSubExpr.data(),
+                                         node->apoSubExpr.size());
+                    break;
+                case C_EXPR_SUM:
+                    EmitMultiArgFunction("sum", node->apoSubExpr.data(),
+                                         node->apoSubExpr.size());
+                    break;
+                case C_EXPR_AVG:
+                    m_osExpr += '(';
+                    EmitMultiArgFunction("sum", node->apoSubExpr.data(),
+                                         node->apoSubExpr.size());
+                    m_osExpr += " * (1.0";
+                    if (m_eSrcType == GDT_Float32)
+                        m_osExpr += 'f';
+                    m_osExpr += " / ";
+                    m_osExpr += std::to_string(node->apoSubExpr.size());
+                    m_osExpr += pszIntegerNumberSuffix;
+                    m_osExpr += "))";
+                    break;
+                case C_EXPR_NODATA:
+                    m_setNeededFuncs.insert("NoData");
+                    m_osExpr += "NoData";
+                    break;
+                case C_EXPR_LIST:
+                case C_EXPR_INVALID:
+                    CPLAssert(false);
+                    break;
+            }
+            break;
+        }
+    }
+}
+
+#endif  // GDAL_USE_LLVM
+
+/************************************************************************/
+/*                            ExprPixelFunc()                           */
+/************************************************************************/
+
 static const char pszExprPixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
     "   <Argument type='builtin' value='NoData' optional='true' />"
@@ -2801,8 +3734,15 @@ static const char pszExprPixelFuncMetadata[] =
     "             description='Expression dialect' "
     "             type='string-select'"
     "             default='muparser'>"
+#ifdef GDAL_VRT_ENABLE_EXPRTK
     "       <Value>exprtk</Value>"
+#endif
+#ifdef GDAL_VRT_ENABLE_MUPARSER
     "       <Value>muparser</Value>"
+#endif
+#ifdef GDAL_USE_LLVM
+    "       <Value>LLVM</Value>"
+#endif
     "   </Argument>"
     "   <Argument type='builtin' value='source_names' />"
     "   <Argument type='builtin' value='xoff' />"
@@ -2860,14 +3800,6 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         pszDialect = "muparser";
     }
 
-    auto poExpression = gdal::MathExpression::Create(pszExpression, pszDialect);
-
-    // cppcheck-suppress knownConditionTrueFalse
-    if (!poExpression)
-    {
-        return CE_Failure;
-    }
-
     int nXOff = 0;
     int nYOff = 0;
     GDALGeoTransform gt;
@@ -2909,6 +3841,118 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         }
     }
 
+#ifdef GDAL_USE_LLVM
+    if (EQUAL(pszDialect, "LLVM"))
+    {
+        if (!((eSrcType == GDT_UInt8 || eSrcType == GDT_Int8 ||
+               eSrcType == GDT_UInt16 || eSrcType == GDT_Int16 ||
+               eSrcType == GDT_UInt32 || eSrcType == GDT_Int32 ||
+               eSrcType == GDT_UInt64 || eSrcType == GDT_Int64 ||
+               eSrcType == GDT_Float32 || eSrcType == GDT_Float64)))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Transfer type %s not supported for LLVM dialect",
+                     GDALGetDataTypeName(eSrcType));
+            return CE_Failure;
+        }
+
+        CPLString osExpr = pszExpression;
+        if (strstr(pszExpression, "BANDS"))
+        {
+            std::string osElementsList;
+            for (int i = 0; i < nSources; ++i)
+            {
+                if (i > 0)
+                    osElementsList += ',';
+                osElementsList += aosSourceNames[i];
+            }
+            osExpr.replaceAll("BANDS", osElementsList);
+        }
+
+        // Our source names are like "A[i]", which GDAL_c_expr_compile()
+        // doesn't like. So sanitize them
+        const auto SanitizeIdentifier = [](CPLString &s)
+        { return s.replaceAll('[', '_').replaceAll(']', '_'); };
+
+        SanitizeIdentifier(osExpr);
+
+        CPLStringList aosSanitizedSourceNames;
+        for (const char *pszName : cpl::Iterate(aosSourceNames))
+        {
+            CPLString osSourceName(pszName);
+            SanitizeIdentifier(osSourceName);
+            aosSanitizedSourceNames.push_back(osSourceName.c_str());
+        }
+
+        auto node = GDAL_c_expr_compile(osExpr);
+        if (node)
+        {
+            const std::string osCFunction = GDALCFunctionGenerator::generate(
+                node.get(), aosSanitizedSourceNames, eSrcType, bHasNoData,
+                dfNoData, bPropagateNoData, includeCenterCoords);
+            if (!osCFunction.empty())
+            {
+                const bool bDisassemble =
+                    CPLTestBool(CPLGetConfigOption("GDAL_JIT_DEBUG", "OFF"));
+                if (bDisassemble)
+                {
+                    CPLDebug("GDAL_JIT", "C code:\n%s", osCFunction.c_str());
+                }
+
+                bool bRet = false;
+
+#define CASE_CALL_JITCompute(type)                                             \
+    case type:                                                                 \
+        bRet = JITCompute<type>(papoSources, nSources, pData, nXSize, nYSize,  \
+                                eBufType, nPixelSpace, nLineSpace,             \
+                                osCFunction.c_str(), includeCenterCoords,      \
+                                nXOff, nYOff, gt, bDisassemble);               \
+        break
+
+                switch (eSrcType)
+                {
+                    CASE_CALL_JITCompute(GDT_UInt8);
+                    CASE_CALL_JITCompute(GDT_Int8);
+                    CASE_CALL_JITCompute(GDT_UInt16);
+                    CASE_CALL_JITCompute(GDT_Int16);
+                    CASE_CALL_JITCompute(GDT_UInt32);
+                    CASE_CALL_JITCompute(GDT_Int32);
+                    CASE_CALL_JITCompute(GDT_UInt64);
+                    CASE_CALL_JITCompute(GDT_Int64);
+                    CASE_CALL_JITCompute(GDT_Float32);
+                    CASE_CALL_JITCompute(GDT_Float64);
+                    default:
+                        CPLAssert(false);
+                        break;
+                }
+                if (bRet)
+                    return CE_None;
+            }
+        }
+
+        return CE_Failure;
+    }
+#else
+    if (EQUAL(pszDialect, "LLVM"))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Dialect LLVM not supported in this build. "
+#ifdef GDAL_VRT_ENABLE_MUPARSER
+                 "You can try switching to MuParser."
+#endif
+        );
+        return CE_Failure;
+    }
+#endif
+
+    auto poExpression = gdal::MathExpression::Create(pszExpression, pszDialect);
+
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!poExpression)
+    {
+        return CE_Failure;
+    }
+
     {
         int iSource = 0;
         for (const auto &osName : aosSourceNames)
@@ -2945,7 +3989,11 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
     {
         for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
-            double &dfResult = padfResults.get()[iCol];
+            double &dfResult =
+                /*eBufType == GDT_Float64 ?
+                    *reinterpret_cast<double*>(static_cast<GByte *>(pData) +
+                          static_cast<GSpacing>(nLineSpace) * iLine + nPixelSpace * iCol):*/
+                padfResults.get()[iCol];
             bool resultIsNoData = false;
 
             for (int iSrc = 0; iSrc < nSources; iSrc++)
@@ -2984,10 +4032,13 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
             }
         }
 
-        GDALCopyWords(padfResults.get(), GDT_Float64, sizeof(double),
-                      static_cast<GByte *>(pData) +
-                          static_cast<GSpacing>(nLineSpace) * iLine,
-                      eBufType, nPixelSpace, nXSize);
+        //if( eBufType != GDT_Float64 )
+        {
+            GDALCopyWords(padfResults.get(), GDT_Float64, sizeof(double),
+                          static_cast<GByte *>(pData) +
+                              static_cast<GSpacing>(nLineSpace) * iLine,
+                          eBufType, nPixelSpace, nXSize);
+        }
     }
 
     /* ---- Return success ---- */

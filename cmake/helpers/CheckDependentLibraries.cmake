@@ -12,6 +12,8 @@ include(CheckDependentLibrariesCommon)
 
 # Custom find_package definitions
 
+gdal_check_package(LLVM "LLVM" CAN_DISABLE)
+
 define_find_package2(Crnlib crunch/crnlib.h crunch)
 
 if (WIN32)

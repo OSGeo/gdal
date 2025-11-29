@@ -21,6 +21,8 @@ ARG TARGET_ARCH=
 RUN echo ${TARGET_ARCH}
 COPY ./bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
 
+ARG LLVM_VERSION=18
+
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
     && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
     && echo 'Acquire::Retries "10";' > /etc/apt/apt.conf.d/80-retries
@@ -41,7 +43,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-13-${GCC_ARCH}-linux-gnu \
     && ln -s ${GCC_ARCH}-linux-gnu-gcc-13 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
     && ln -s ${GCC_ARCH}-linux-gnu-g++-13 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
-    fi
+    fi \
+    && apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y libclang-${LLVM_VERSION}-dev${APT_ARCH_SUFFIX} libclang-cpp${LLVM_VERSION}-dev${APT_ARCH_SUFFIX} llvm-${LLVM_VERSION}-dev${APT_ARCH_SUFFIX}
 
 # Setup build env for PROJ
 USER root
@@ -568,6 +572,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         python-is-python3 \
         # for validate_geoparquet.py (cf https://github.com/OSGeo/gdal/issues/11953)
         python3-jsonschema \
+        libclang-cpp18 llvm-18 \
     # Install JRE with --no-install-recommends, otherwise it draws default-jre, which draws systemd, which fails to install when running the arm64v8/ubuntu:24.04 image on a 64bit host
     && apt-get install -y --no-install-recommends openjdk-"$JAVA_VERSION"-jre \
     # Install Arrow C++

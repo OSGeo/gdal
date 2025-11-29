@@ -606,14 +606,27 @@ void GDALRegister_VRT()
                               "DatasetMetadata BandMetadata");
 
     const char *pszExpressionDialects = "ExpressionDialects";
-#if defined(GDAL_VRT_ENABLE_MUPARSER) && defined(GDAL_VRT_ENABLE_EXPRTK)
-    poDriver->SetMetadataItem(pszExpressionDialects, "muparser,exprtk");
-#elif defined(GDAL_VRT_ENABLE_MUPARSER)
-    poDriver->SetMetadataItem(pszExpressionDialects, "muparser");
-#elif defined(GDAL_VRT_ENABLE_EXPRTK)
-    poDriver->SetMetadataItem(pszExpressionDialects, "exprtk");
-#else
+#if !defined(GDAL_VRT_ENABLE_MUPARSER) && !defined(GDAL_VRT_ENABLE_EXPRTK) &&  \
+    !defined(GDAL_USE_LLVM)
     poDriver->SetMetadataItem(pszExpressionDialects, "none");
+#else
+    poDriver->SetMetadataItem(pszExpressionDialects,
+#if defined(GDAL_VRT_ENABLE_MUPARSER)
+                              "muparser"
+#endif
+#if defined(GDAL_VRT_ENABLE_EXPRTK)
+#if defined(GDAL_VRT_ENABLE_MUPARSER)
+                              ","
+#endif
+                              "exprtk"
+#endif
+#if defined(GDAL_USE_LLVM)
+#if defined(GDAL_VRT_ENABLE_MUPARSER) || defined(GDAL_VRT_ENABLE_EXPRTK)
+                              ","
+#endif
+                              "LLVM"
+#endif
+    );
 #endif
 
 #ifdef GDAL_VRT_ENABLE_MUPARSER

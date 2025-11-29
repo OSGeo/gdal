@@ -37,6 +37,10 @@ if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
   target_compile_definitions(gdal_vrt PRIVATE -DUSE_NEON_OPTIMIZATIONS)
 endif()
 
+if (GDAL_USE_LLVM)
+    target_compile_definitions(gdal_vrt PRIVATE GDAL_USE_LLVM)
+endif()
+
 if (GDAL_USE_EXPRTK)
     target_sources(gdal_vrt PRIVATE vrtexpression_exprtk.cpp)
         if (MSVC)

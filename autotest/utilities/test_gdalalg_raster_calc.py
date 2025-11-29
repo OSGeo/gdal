@@ -29,6 +29,25 @@ def require_muparser():
         pytest.skip("muparser not available")
 
 
+@pytest.fixture(
+    scope="module",
+    params=(
+        [False, True] if gdaltest.gdal_has_vrt_expression_dialect("LLVM") else [False]
+    ),
+    ids=(
+        ["no_jit", "force_jit"]
+        if gdaltest.gdal_has_vrt_expression_dialect("LLVM")
+        else ["no_jit"]
+    ),
+)
+def dialect(request):
+
+    if request.param:
+        yield "LLVM"
+    else:
+        yield None
+
+
 @pytest.fixture()
 def calc():
     reg = gdal.GetGlobalAlgorithmRegistry()
@@ -84,7 +103,7 @@ def test_gdalalg_raster_calc_basic_2(calc, tmp_vsimem, output_format):
         assert src.GetSpatialRef().IsSame(dst.GetSpatialRef())
 
 
-@pytest.mark.parametrize("dialect", ("muparser", "builtin"))
+@pytest.mark.parametrize("dialect", ("muparser", "builtin", "LLVM"))
 @pytest.mark.parametrize("propagateNoData", (True, False))
 def test_gdalalg_raster_calc_nodata(calc, tmp_vsimem, dialect, propagateNoData):
 
@@ -99,6 +118,9 @@ def test_gdalalg_raster_calc_nodata(calc, tmp_vsimem, dialect, propagateNoData):
         is None
     ):
         pytest.skip("muparser version does not support isnodata function")
+
+    if dialect == "LLVM" and not gdaltest.gdal_has_vrt_expression_dialect("LLVM"):
+        pytest.skip("LLVM not available")
 
     input_1 = tmp_vsimem / "in1.tif"
     input_2 = tmp_vsimem / "in2.tif"
@@ -118,7 +140,7 @@ def test_gdalalg_raster_calc_nodata(calc, tmp_vsimem, dialect, propagateNoData):
     calc["input"] = [f"A={input_1}", f"B={input_2}"]
     calc["calc"] = (
         "(isnodata(A) ? 0 : A) + (isnodata(B) ? 0 : B)"
-        if dialect == "muparser"
+        if dialect in ("muparser", "LLVM")
         else "sum"
     )
     calc["dialect"] = dialect
@@ -140,7 +162,7 @@ def test_gdalalg_raster_calc_nodata(calc, tmp_vsimem, dialect, propagateNoData):
 
 
 @pytest.mark.parametrize("output_type", (gdal.GDT_Int16, gdal.GDT_Float32))
-def test_gdalalg_raster_calc_nan_result(calc, tmp_vsimem, output_type):
+def test_gdalalg_raster_calc_nan_result(calc, tmp_vsimem, output_type, dialect):
 
     gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
@@ -155,6 +177,8 @@ def test_gdalalg_raster_calc_nan_result(calc, tmp_vsimem, output_type):
     calc["calc"] = "X + nan"
     calc["output-format"] = "stream"
     calc["output-data-type"] = output_type
+    if dialect:
+        calc["dialect"] = dialect
 
     assert calc.Run()
 
@@ -168,7 +192,7 @@ def test_gdalalg_raster_calc_nan_result(calc, tmp_vsimem, output_type):
         assert np.isnan(result)
 
 
-def test_gdalalg_raster_calc_nodata_variable(calc, tmp_vsimem):
+def test_gdalalg_raster_calc_nodata_variable(calc, tmp_vsimem, dialect):
     if (
         gdal.GetDriverByName("VRT").GetMetadataItem("MUPARSER_HAS_DEFINE_FUN_USER_DATA")
         is None
@@ -188,6 +212,8 @@ def test_gdalalg_raster_calc_nodata_variable(calc, tmp_vsimem):
     calc["calc"] = "isnodata(X) ? NODATA : 5"
     calc["output-format"] = "stream"
     calc["nodata"] = -802
+    if dialect:
+        calc["dialect"] = dialect
 
     assert calc.Run()
 
@@ -228,7 +254,7 @@ def test_gdalalg_raster_calc_output_format(calc, tmp_vsimem):
         assert dst.GetDriver().GetName() == "GTiff"
 
 
-def test_gdalalg_raster_calc_output_type(calc, tmp_vsimem):
+def test_gdalalg_raster_calc_output_type(calc, tmp_vsimem, dialect):
 
     gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
@@ -244,6 +270,8 @@ def test_gdalalg_raster_calc_output_type(calc, tmp_vsimem):
     calc["output-format"] = "MEM"
     calc["calc"] = "X > 256 ? 100 : 50"
     calc["output-data-type"] = "Byte"
+    if dialect:
+        calc["dialect"] = dialect
 
     assert calc.Run()
 
@@ -255,7 +283,7 @@ def test_gdalalg_raster_calc_output_type(calc, tmp_vsimem):
     assert calc.Finalize()
 
 
-def test_gdalalg_raster_calc_invalid_nodata_for_output_type(calc, tmp_vsimem):
+def test_gdalalg_raster_calc_invalid_nodata_for_output_type(calc, tmp_vsimem, dialect):
 
     with gdal.GetDriverByName("GTiff").Create(
         tmp_vsimem / "src.tif", 1, 1, eType=gdal.GDT_Int16
@@ -268,12 +296,14 @@ def test_gdalalg_raster_calc_invalid_nodata_for_output_type(calc, tmp_vsimem):
     calc["calc"] = "X"
     calc["output-data-type"] = "Byte"
     calc["nodata"] = -9
+    if dialect:
+        calc["dialect"] = dialect
 
     with pytest.raises(Exception, match="Byte cannot represent NoData value -9"):
         calc.Run()
 
 
-def test_gdalalg_raster_calc_output_nodata_taken_from_source(calc, tmp_vsimem):
+def test_gdalalg_raster_calc_output_nodata_taken_from_source(calc, tmp_vsimem, dialect):
 
     with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", 1, 1) as ds:
         ds.GetRasterBand(1).SetNoDataValue(255)
@@ -283,6 +313,8 @@ def test_gdalalg_raster_calc_output_nodata_taken_from_source(calc, tmp_vsimem):
     calc["output-format"] = "stream"
     calc["calc"] = "X"
     calc["propagate-nodata"] = True
+    if dialect:
+        calc["dialect"] = dialect
 
     assert calc.Run()
 
@@ -385,7 +417,7 @@ def test_gdalalg_raster_calc_test_name(calc, name, expected_error_msg):
         calc.Run()
 
 
-def test_gdalalg_raster_calc_multiple_calcs(calc, tmp_vsimem):
+def test_gdalalg_raster_calc_multiple_calcs(calc, tmp_vsimem, dialect):
 
     gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
@@ -396,6 +428,8 @@ def test_gdalalg_raster_calc_multiple_calcs(calc, tmp_vsimem):
     calc["input"] = [infile]
     calc["output"] = outfile
     calc["calc"] = ["X + 3", "sqrt(X)"]
+    if dialect:
+        calc["dialect"] = dialect
 
     assert calc.Run()
 
@@ -414,7 +448,7 @@ def test_gdalalg_raster_calc_multiple_calcs(calc, tmp_vsimem):
         "A[2] + B",
     ),
 )
-def test_gdalalg_raster_calc_multiple_inputs(calc, tmp_vsimem, expr):
+def test_gdalalg_raster_calc_multiple_inputs(calc, tmp_vsimem, expr, dialect):
 
     gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
@@ -449,6 +483,8 @@ def test_gdalalg_raster_calc_multiple_inputs(calc, tmp_vsimem, expr):
     calc["input"] = [f"A={input_1}", f"B={input_2}"]
     calc["output"] = outfile
     calc["calc"] = [expr]
+    if dialect:
+        calc["dialect"] = dialect
 
     assert calc.Run()
 
@@ -458,7 +494,9 @@ def test_gdalalg_raster_calc_multiple_inputs(calc, tmp_vsimem, expr):
 
 
 @pytest.mark.parametrize("formula", ["A+B", "sum(A, B)"])
-def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path, formula):
+def test_gdalalg_raster_calc_inputs_from_file(
+    calc, tmp_vsimem, tmp_path, formula, dialect
+):
 
     gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
@@ -481,6 +519,8 @@ def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path, formul
     calc["input"] = [f"@{input_txt}"]
     calc["output"] = outfile
     calc["calc"] = formula
+    if dialect:
+        calc["dialect"] = dialect
 
     assert calc.Run()
 
@@ -488,7 +528,7 @@ def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path, formul
         assert np.all(dst.ReadAsArray() == 3)
 
 
-def test_gdalalg_raster_calc_different_band_counts(calc, tmp_vsimem):
+def test_gdalalg_raster_calc_different_band_counts(calc, tmp_vsimem, dialect):
 
     gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
@@ -509,6 +549,8 @@ def test_gdalalg_raster_calc_different_band_counts(calc, tmp_vsimem):
     calc["input"] = [f"A={input_1}", f"B={input_2}"]
     calc["output"] = outfile
     calc["calc"] = ["A[1] + A[2] + B[1] + B[2] + B[3]"]
+    if dialect:
+        calc["dialect"] = dialect
 
     assert calc.Run()
 
@@ -683,7 +725,7 @@ def test_gdalalg_raster_calc_error_band_count_mismatch(calc, tmp_vsimem, bands):
     ],
 )
 def test_gdalalg_raster_calc_expression_rewriting(
-    calc, tmp_vsimem, expr, source, bands, expected
+    calc, tmp_vsimem, expr, source, bands, expected, dialect
 ):
     # The expression rewriting isn't exposed to Python, so we
     # create an VRT with an expression and a single source, and
@@ -702,6 +744,8 @@ def test_gdalalg_raster_calc_expression_rewriting(
     calc["output"] = outfile
     calc["calc"] = [expr]
     calc["no-check-expression"] = True
+    if dialect:
+        calc["dialect"] = dialect
 
     assert calc.Run()
 
@@ -773,7 +817,7 @@ def test_gdalalg_raster_calc_reference_several_bands_to_stream(calc):
 
 
 @pytest.mark.parametrize("fn", ("avg", "min", "max", "sum"))
-def test_gdalalg_raster_calc_muparser_flatten(calc, tmp_vsimem, fn):
+def test_gdalalg_raster_calc_muparser_flatten(calc, tmp_vsimem, fn, dialect):
 
     with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in1.tif", 1, 1, 2) as ds:
         ds.GetRasterBand(1).Fill(10)
@@ -789,6 +833,8 @@ def test_gdalalg_raster_calc_muparser_flatten(calc, tmp_vsimem, fn):
     calc["output"] = ""
     calc["calc"] = f"{fn}(A)-{fn}(B)"
     calc["flatten"] = True
+    if dialect:
+        calc["dialect"] = dialect
     calc.Run()
     ds = calc["output"].GetDataset()
     assert ds.RasterCount == 1
@@ -808,7 +854,9 @@ def test_gdalalg_raster_calc_muparser_flatten(calc, tmp_vsimem, fn):
     )
 
 
-def test_gdalalg_raster_calc_muparser_flatten_not_an_aggregate(calc, tmp_vsimem):
+def test_gdalalg_raster_calc_muparser_flatten_not_an_aggregate(
+    calc, tmp_vsimem, dialect
+):
 
     with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", 1, 1, 2) as ds:
         ds.GetRasterBand(1).Fill(10)
@@ -819,13 +867,15 @@ def test_gdalalg_raster_calc_muparser_flatten_not_an_aggregate(calc, tmp_vsimem)
     calc["output"] = ""
     calc["calc"] = "sin(X)"
     calc["flatten"] = True
+    if dialect:
+        calc["dialect"] = dialect
 
     assert calc.Run()
     ds = calc["output"].GetDataset()
     assert ds.RasterCount == 2
 
 
-def test_gdalalg_raster_calc_muparser_partial_flatten(calc, tmp_vsimem):
+def test_gdalalg_raster_calc_muparser_partial_flatten(calc, tmp_vsimem, dialect):
 
     with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in1.tif", 1, 1, 2) as ds:
         ds.GetRasterBand(1).Fill(10)
@@ -836,6 +886,8 @@ def test_gdalalg_raster_calc_muparser_partial_flatten(calc, tmp_vsimem):
     calc["output"] = ""
     calc["calc"] = "A / sum(A)"
     calc["flatten"] = True
+    if dialect:
+        calc["dialect"] = dialect
     calc.Run()
     ds = calc["output"].GetDataset()
     assert ds.RasterCount == 2
@@ -849,7 +901,7 @@ def test_gdalalg_raster_calc_muparser_partial_flatten(calc, tmp_vsimem):
     )
 
 
-def test_gdalalg_raster_calc_muparser_nothing_to_flatten(calc, tmp_vsimem):
+def test_gdalalg_raster_calc_muparser_nothing_to_flatten(calc, tmp_vsimem, dialect):
 
     with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in1.tif", 1, 1, 2) as ds:
         ds.GetRasterBand(1).Fill(10)
@@ -864,6 +916,8 @@ def test_gdalalg_raster_calc_muparser_nothing_to_flatten(calc, tmp_vsimem):
     calc["output"] = ""
     calc["calc"] = "(A + B)"
     calc["flatten"] = True
+    if dialect:
+        calc["dialect"] = dialect
     calc.Run()
     ds = calc["output"].GetDataset()
     assert ds.RasterCount == 2
@@ -1009,7 +1063,7 @@ def test_gdalalg_raster_calc_sum_builtin_two_bands_three_bands_fail(calc, tmp_vs
         calc.Run()
 
 
-def test_gdalalg_raster_calc_sum_float_input_with_nodata(calc, tmp_vsimem):
+def test_gdalalg_raster_calc_sum_float_input_with_nodata(calc, tmp_vsimem, dialect):
 
     input = tmp_vsimem / "in.tif"
 
@@ -1021,6 +1075,30 @@ def test_gdalalg_raster_calc_sum_float_input_with_nodata(calc, tmp_vsimem):
     calc["output-format"] = "MEM"
     calc["calc"] = "A * 10"
     calc["output-data-type"] = "Byte"
+    if dialect:
+        calc["dialect"] = dialect
+    calc.Run()
+
+    out_ds = calc["output"].GetDataset()
+    assert out_ds.GetRasterBand(1).Checksum() == 1
+
+
+def test_gdalalg_raster_calc_avg_int(calc, tmp_vsimem, dialect):
+
+    input = tmp_vsimem / "in.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(input, 1, 1, 3, gdal.GDT_UInt8) as ds:
+        ds.GetRasterBand(1).Fill(1)
+        ds.GetRasterBand(2).Fill(1)
+        ds.GetRasterBand(3).Fill(0)
+
+    calc["input"] = [f"A={input}"]
+    calc["output-format"] = "MEM"
+    calc["calc"] = "avg(A)"
+    calc["output-data-type"] = "UInt8"
+    calc["flatten"] = True
+    if dialect:
+        calc["dialect"] = dialect
     calc.Run()
 
     out_ds = calc["output"].GetDataset()

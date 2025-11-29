@@ -156,6 +156,14 @@ jobs:
             test_script: test.sh
             os: ubuntu-22.04
 
+          - name: Ubuntu 25.10, arm64
+            id: ubuntu_2510_arm64
+            container: ubuntu_2510_arm64
+            travis_branch: ubuntu_2510_arm64
+            build_script: build.sh
+            test_script: test.sh
+            os: ubuntu-24.04-arm
+
     name: ${{ matrix.name }}
 
     runs-on: ${{ matrix.os }}
@@ -200,6 +208,7 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
 
       - name: Enable Docker qemu
+        if: ${{ matrix.os != 'ubuntu-24.04-arm' }}
         shell: bash -l {0}
         run: |
           docker run --rm --privileged linuxkit/binfmt:v0.8

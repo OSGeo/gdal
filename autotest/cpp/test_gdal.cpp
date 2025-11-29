@@ -17,6 +17,7 @@
 #include "gdal_utils.h"
 #include "gdal_priv_templates.hpp"
 #include "gdal.h"
+#include "gdal_jit_cpp.h"
 #include "tilematrixset.hpp"
 #include "gdalcachedpixelaccessor.h"
 #include "memdataset.h"
@@ -6387,6 +6388,75 @@ TEST_F(test_gdal, GDALGeoTransform)
         GDALRasterWindow window;
         EXPECT_FALSE(gt.Apply(env, window));
     }
+}
+
+TEST_F(test_gdal, JIT)
+{
+#ifdef GDAL_USE_LLVM
+    {
+        std::vector<std::string> expected{"LLVM"};
+        EXPECT_EQ(GDALGetJITEngines(), expected);
+    }
+    {
+        bool bHasVeclib = false;
+        auto fn =
+            GDALGetJITFunction<int(void)>("int foo(void) { return 4; }", "foo",
+                                          nullptr, nullptr, &bHasVeclib);
+        ASSERT_TRUE(fn);
+        EXPECT_EQ(fn(), 4);
+        if (bHasVeclib)
+            printf("Math vector lib found!\n");
+        else
+            printf("Math vector lib not found!\n");
+    }
+
+    {
+        std::string disassembled;
+        auto fn = GDALGetJITFunction<int(void)>(
+            // clang-format off
+            "float cosf(float);\n"
+            "void foo(const float* __restrict a, const float* __restrict b, "
+            "         float* __restrict res, int n)\n"
+            "{\n"
+            "   for (int i = 0; i < n; ++i) res[i] = a[i] * cosf(b[i]);\n"
+            "}\n",
+            "foo",
+            // clang-format on
+            nullptr, &disassembled);
+        ASSERT_TRUE(fn);
+        printf("Disassembly:\n%s", disassembled.c_str());
+    }
+
+    // Attempt at using a header
+    {
+        auto fn = GDALGetJITFunction<int(void)>(
+            "#include <math.h>\nint foo(void) { return 4; }", "foo");
+        ASSERT_FALSE(fn);
+    }
+
+    // Invalid C code
+    {
+        auto fn = GDALGetJITFunction<int(void)>("bug", "foo");
+        ASSERT_FALSE(fn);
+    }
+
+    // Requesting non existing symbol
+    {
+        auto fn = GDALGetJITFunction<void(void)>("void f(void) {}", "bar");
+        ASSERT_FALSE(fn);
+    }
+#else
+
+    {
+        std::vector<std::string> expected;
+        EXPECT_EQ(GDALGetJITEngines(), expected);
+    }
+
+    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    EXPECT_EQ(
+        GDALGetJITFunction<int(void)>("int foo(void) { return 4; }", "foo"),
+        nullptr);
+#endif
 }
 
 }  // namespace

@@ -18,6 +18,7 @@ cmake ${GDAL_SOURCE_DIR:=..} \
   -DCMAKE_UNITY_BUILD=ON \
   -DUSE_CCACHE=ON \
   -DCMAKE_INSTALL_PREFIX=/usr \
+  -DLLVM_ROOT=/usr/lib/llvm21 \
   -DIconv_INCLUDE_DIR=/usr/include/gnu-libiconv \
   -DIconv_LIBRARY=/usr/lib/libiconv.so \
   -DADD_EXTERNAL_DEFERRED_PLUGIN_FOO=/tmp/foo.cpp \
