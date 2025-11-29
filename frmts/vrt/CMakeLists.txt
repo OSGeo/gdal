@@ -38,7 +38,7 @@ if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
 endif()
 
 if (GDAL_USE_LLVM)
-    target_compile_definitions(gdal_vrt PRIVATE HAVE_JIT)
+    target_compile_definitions(gdal_vrt PRIVATE GDAL_USE_LLVM)
 endif()
 
 if (GDAL_USE_EXPRTK)

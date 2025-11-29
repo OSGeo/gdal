@@ -164,6 +164,10 @@ if (NOT BUILD_SHARED_LIBS)
   target_compile_definitions(appslib PRIVATE STATIC_BUILD)
 endif()
 
+if (GDAL_USE_LLVM)
+  target_compile_definitions(appslib PRIVATE GDAL_USE_LLVM)
+endif()
+
 set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 
 if (GDAL_USE_GEOS)

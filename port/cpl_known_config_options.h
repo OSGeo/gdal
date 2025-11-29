@@ -423,7 +423,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_USE_AVX", // from gdalgrid.cpp
    "GDAL_USE_GEOJP2", // from gdaljp2metadata.cpp
    "GDAL_USE_GMLJP2", // from gdaljp2metadata.cpp
-   "GDAL_USE_JIT", // from pixelfunctions.cpp
    "GDAL_USE_SSE", // from gdalgrid.cpp
    "GDAL_USE_SSSE3", // from cpl_cpu_features.cpp
    "GDAL_VALIDATE_CREATION_OPTIONS", // from gdaldataset.cpp, gdaldriver.cpp

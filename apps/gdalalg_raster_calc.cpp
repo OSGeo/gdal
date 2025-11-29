@@ -566,7 +566,7 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
         else
         {
             CPLCreateXMLNode(pixelFunctionType, CXT_Text, "expression");
-            CPLAddXMLAttributeAndValue(arguments, "dialect", "muparser");
+            CPLAddXMLAttributeAndValue(arguments, "dialect", dialect.c_str());
             // Add the expression as a last step, because we may modify the
             // expression as we iterate through the bands.
             CPLAddXMLAttributeAndValue(arguments, "expression",
@@ -896,7 +896,11 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm(bool standaloneStep) noexcept
 
     AddArg("dialect", 0, _("Expression dialect"), &m_dialect)
         .SetDefault(m_dialect)
-        .SetChoices("muparser", "builtin");
+        .SetChoices("muparser",
+#ifdef GDAL_USE_LLVM
+                    "LLVM",
+#endif
+                    "builtin");
 
     AddArg("flatten", 0,
            _("Generate a single band output raster per expression, even if "

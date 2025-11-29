@@ -1162,7 +1162,7 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources, dt=gdal.GDT_Float64
             "(A > B) ? 1.5*C : A",
             [("A", 77), ("B", 63), ("C", 18)],
             27,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="muparser conditional (explicit)",
         ),
         pytest.param(
@@ -1219,7 +1219,7 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources, dt=gdal.GDT_Float64
             "B3 ? B1 : B2",
             (5, 9, float("nan")),
             5,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="muparser nan = truth in conditional?",
         ),
         pytest.param(
@@ -1233,14 +1233,14 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources, dt=gdal.GDT_Float64
             "(B3 > 0) ? B1 : B2",
             (5, 9, float("nan")),
             9,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="muparser nan comparison is false in conditional",
         ),
         pytest.param(
             "isnan(B3) ? B1 : B2",
             (5, 9, float("nan")),
             5,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="muparser isnan",
         ),
         pytest.param(
@@ -1254,35 +1254,35 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources, dt=gdal.GDT_Float64
             "ZB[1] + B[1]",
             [("ZB[1]", 7), ("B[1]", 3)],
             10,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="index substitution works correctly",
         ),
         pytest.param(
             "fmod(B, A)",
             [("A", 2.2), ("B", 7.3)],
             0.7,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="fmod works correctly",
         ),
         pytest.param(
             "A / 0",
             [("A", 2.2)],
             float("inf"),
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="div_by_zero",
         ),
         pytest.param(
             "A ^ 2",
             [("A", 2.2)],
             2.2**2,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="pow_two",
         ),
         pytest.param(
             "A ^ B",
             [("A", 2.2), ("B", 1.1)],
             2.2**1.1,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="pow_generic",
         ),
         pytest.param(
@@ -1527,28 +1527,28 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources, dt=gdal.GDT_Float64
             "1 && 1 ? 1 : A",
             [("A", 10)],
             1,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="and_true",
         ),
         pytest.param(
             "1 && 0 ? 1 : A",
             [("A", 10)],
             10,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="and_false",
         ),
         pytest.param(
             "0 || 1 ? 1 : A",
             [("A", 10)],
             1,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="or_true",
         ),
         pytest.param(
             "0 || 0 ? 1 : A",
             [("A", 10)],
             10,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="or_false",
         ),
         pytest.param(
@@ -1583,73 +1583,73 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources, dt=gdal.GDT_Float64
             "_e",
             [("A", 0)],
             math.exp(1),
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="e_constant",
         ),
         pytest.param(
             "_pi",
             [("A", 0)],
             math.pi,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="pi_constant",
         ),
         pytest.param(
             "nan",
             [("A", 0)],
             float("nan"),
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="nan",
         ),
         pytest.param(
             "rint(A)",
             [("A", -1.9)],
             -2.0,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="rint_floor",
         ),
         pytest.param(
             "rint(A)",
             [("A", -1.1)],
             -1.0,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="rint_ceil",
         ),
         pytest.param(
             "sign(A)",
             [("A", -2.1)],
             -1,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="sign_neg",
         ),
         pytest.param(
             "sign(A)",
             [("A", 2.1)],
             1.0,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="sign_pos",
         ),
         pytest.param(
             "sign(A)",
             [("A", 0.0)],
             0.0,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="sign_zero",
         ),
         pytest.param(
             "sign(A)",
             [("A", float("nan"))],
             0.0,
-            ["muparser"],
+            ["muparser", "LLVM"],
             id="sign_nan",
         ),
     ],
 )
 @pytest.mark.parametrize(
-    "dialect,use_jit",
+    "dialect",
     [
-        pytest.param("exprtk", None, id="exprtk"),
-        pytest.param("muparser", True, id="muparser_use_jit"),
-        pytest.param("muparser", False, id="muparser_no_jit"),
+        pytest.param("exprtk", id="exprtk"),
+        pytest.param("muparser", id="muparser"),
+        pytest.param("LLVM", id="LLVM"),
     ],
 )
 @pytest.mark.parametrize(
@@ -1660,7 +1660,7 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources, dt=gdal.GDT_Float64
     ],
 )
 def test_vrt_pixelfn_expression(
-    tmp_vsimem, expression, sources, result, dialect, use_jit, dialects, dt
+    tmp_vsimem, expression, sources, result, dialect, dialects, dt
 ):
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
@@ -1674,22 +1674,19 @@ def test_vrt_pixelfn_expression(
     if expression in ("A & B", "A | B"):
         if os.environ.get("BUILD_NAME", "") in ("ubuntu_2004", "sanitize"):
             pytest.skip("muparser too old")
-        if not use_jit:
+        if dialect != "LLVM":
             pytest.skip(
-                "Skipping in non_jit use case as older muparser version do not support bitwise and/or"
+                "Skipping in non LLVM use case as older muparser version do not support bitwise and/or"
             )
         dt = gdal.GDT_Byte
 
     xml = vrt_expression_xml(tmp_vsimem, expression, dialect, sources, dt)
 
-    with gdal.config_option(
-        "GDAL_USE_JIT", "YES" if use_jit else None if use_jit is None else "FALSE"
-    ):
-        with gdal.Open(xml) as ds:
-            assert (
-                pytest.approx(ds.ReadAsArray(), nan_ok=True)
-                == [[result] * ds.RasterXSize] * ds.RasterYSize
-            )
+    with gdal.Open(xml) as ds:
+        assert (
+            pytest.approx(ds.ReadAsArray(), nan_ok=True)
+            == [[result] * ds.RasterXSize] * ds.RasterYSize
+        )
 
 
 @pytest.mark.parametrize(

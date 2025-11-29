@@ -19,7 +19,7 @@
 #include "vrtreclassifier.h"
 #include "cpl_float.h"
 
-#ifdef HAVE_JIT
+#ifdef GDAL_USE_LLVM
 #include "cpl_mem_cache.h"
 #include "gdal_typetraits.h"
 #include "gdal_c_expr.h"
@@ -2796,7 +2796,7 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
         nPixelSpace, nLineSpace, papszArgs);
 }
 
-#ifdef HAVE_JIT
+#ifdef GDAL_USE_LLVM
 
 /************************************************************************/
 /*                              JITCompute()                            */
@@ -3715,7 +3715,7 @@ void GDALCFunctionGenerator::GenCExpr(const GDAL_c_expr_node *node)
     }
 }
 
-#endif  // HAVE_JIT
+#endif  // GDAL_USE_LLVM
 
 /************************************************************************/
 /*                            ExprPixelFunc()                           */
@@ -3734,8 +3734,15 @@ static const char pszExprPixelFuncMetadata[] =
     "             description='Expression dialect' "
     "             type='string-select'"
     "             default='muparser'>"
+#ifdef GDAL_VRT_ENABLE_EXPRTK
     "       <Value>exprtk</Value>"
+#endif
+#ifdef GDAL_VRT_ENABLE_MUPARSER
     "       <Value>muparser</Value>"
+#endif
+#ifdef GDAL_USE_LLVM
+    "       <Value>LLVM</Value>"
+#endif
     "   </Argument>"
     "   <Argument type='builtin' value='source_names' />"
     "   <Argument type='builtin' value='xoff' />"
@@ -3793,14 +3800,6 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         pszDialect = "muparser";
     }
 
-    auto poExpression = gdal::MathExpression::Create(pszExpression, pszDialect);
-
-    // cppcheck-suppress knownConditionTrueFalse
-    if (!poExpression)
-    {
-        return CE_Failure;
-    }
-
     int nXOff = 0;
     int nYOff = 0;
     GDALGeoTransform gt;
@@ -3842,49 +3841,21 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         }
     }
 
+#ifdef GDAL_USE_LLVM
+    if (EQUAL(pszDialect, "LLVM"))
     {
-        int iSource = 0;
-        for (const auto &osName : aosSourceNames)
+        if (!((eSrcType == GDT_UInt8 || eSrcType == GDT_Int8 ||
+               eSrcType == GDT_UInt16 || eSrcType == GDT_Int16 ||
+               eSrcType == GDT_UInt32 || eSrcType == GDT_Int32 ||
+               eSrcType == GDT_UInt64 || eSrcType == GDT_Int64 ||
+               eSrcType == GDT_Float32 || eSrcType == GDT_Float64)))
         {
-            poExpression->RegisterVariable(osName,
-                                           &adfValuesForPixel[iSource++]);
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Transfer type %s not supported for LLVM dialect",
+                     GDALGetDataTypeName(eSrcType));
+            return CE_Failure;
         }
-    }
 
-    if (includeCenterCoords)
-    {
-        poExpression->RegisterVariable("_CENTER_X_", &dfCenterX);
-        poExpression->RegisterVariable("_CENTER_Y_", &dfCenterY);
-    }
-
-    if (bHasNoData)
-    {
-        poExpression->RegisterVariable("NODATA", &dfNoData);
-    }
-
-    if (strstr(pszExpression, "BANDS"))
-    {
-        poExpression->RegisterVector("BANDS", &adfValuesForPixel);
-    }
-
-#ifdef HAVE_JIT
-    const bool bIsJITCompatible =
-        EQUAL(pszDialect, "muparser") &&
-        (eSrcType == GDT_UInt8 || eSrcType == GDT_Int8 ||
-         eSrcType == GDT_UInt16 || eSrcType == GDT_Int16 ||
-         eSrcType == GDT_UInt32 || eSrcType == GDT_Int32 ||
-         eSrcType == GDT_UInt64 || eSrcType == GDT_Int64 ||
-         eSrcType == GDT_Float32 || eSrcType == GDT_Float64);
-
-    const char *pszUseJIT = bIsJITCompatible
-                                ? CPLGetConfigOption("GDAL_USE_JIT", nullptr)
-                                : nullptr;
-    constexpr int THRESHOLD = 10 * 1000;  // arbitrary of course...
-    if (bIsJITCompatible &&
-        (((!pszUseJIT || EQUAL(pszUseJIT, "AUTO")) &&
-          static_cast<int64_t>(nXSize) * nYSize * nSources > THRESHOLD) ||
-         (pszUseJIT && CPLTestBool(pszUseJIT))))
-    {
         CPLString osExpr = pszExpression;
         if (strstr(pszExpression, "BANDS"))
         {
@@ -3958,8 +3929,54 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                     return CE_None;
             }
         }
+
+        return CE_Failure;
+    }
+#else
+    if (EQUAL(pszDialect, "LLVM"))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Dialect LLVM not supported in this build. "
+#ifdef GDAL_VRT_ENABLE_MUPARSER
+                 "You can try switching to MuParser."
+#endif
+        );
+        return CE_Failure;
     }
 #endif
+
+    auto poExpression = gdal::MathExpression::Create(pszExpression, pszDialect);
+
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!poExpression)
+    {
+        return CE_Failure;
+    }
+
+    {
+        int iSource = 0;
+        for (const auto &osName : aosSourceNames)
+        {
+            poExpression->RegisterVariable(osName,
+                                           &adfValuesForPixel[iSource++]);
+        }
+    }
+
+    if (includeCenterCoords)
+    {
+        poExpression->RegisterVariable("_CENTER_X_", &dfCenterX);
+        poExpression->RegisterVariable("_CENTER_Y_", &dfCenterY);
+    }
+
+    if (bHasNoData)
+    {
+        poExpression->RegisterVariable("NODATA", &dfNoData);
+    }
+
+    if (strstr(pszExpression, "BANDS"))
+    {
+        poExpression->RegisterVector("BANDS", &adfValuesForPixel);
+    }
 
     std::unique_ptr<double, VSIFreeReleaser> padfResults(
         static_cast<double *>(VSI_MALLOC2_VERBOSE(nXSize, sizeof(double))));
