@@ -4771,3 +4771,34 @@ def test_gdalwarp_lib_mask_band_and_src_nodata():
     ):
         out_ds = gdal.Warp("", src_ds, options="-f MEM -dstnodata 5")
         assert out_ds.GetRasterBand(1).ReadRaster() == b"\x05"
+
+
+###############################################################################
+# Test RESET_DEST_PIXELS warping option
+
+
+@pytest.mark.parametrize("dstNodata", [255, None])
+def test_gdalwarp_lib_RESET_DEST_PIXELS(dstNodata):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 3)
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    src_ds.GetRasterBand(1).Fill(1)
+
+    out_ds = gdal.Warp("", src_ds, format="MEM", dstNodata=dstNodata)
+
+    assert out_ds.ReadRaster() == b"\x01" * (3 * 3)
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetGeoTransform([1, 1, 0, -1, 0, -1])
+    src_ds.GetRasterBand(1).Fill(2)
+
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src2_ds.SetGeoTransform([2, 1, 0, -1, 0, -1])
+    src2_ds.GetRasterBand(1).Fill(3)
+
+    gdal.Warp(out_ds, [src_ds, src2_ds], warpOptions={"RESET_DEST_PIXELS": "YES"})
+
+    if dstNodata is None:
+        assert out_ds.ReadRaster() == b"\x00\x00\x00\x00\x02\x03\x00\x00\x00"
+    else:
+        assert out_ds.ReadRaster() == b"\xFF\xFF\xFF\xFF\x02\x03\xFF\xFF\xFF"

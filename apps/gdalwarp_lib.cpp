@@ -2792,6 +2792,10 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             }
         }
 
+        if (iSrc > 0)
+            psOptions->aosWarpOptions.SetNameValue("RESET_DEST_PIXELS",
+                                                   nullptr);
+
         /* --------------------------------------------------------------------
          */
         /*      Create a transformation object from the source to */
