@@ -403,12 +403,8 @@ def test_ogr_geojsonseq_COORDINATE_PRECISION(tmp_vsimem):
     lyr.CreateFeature(f)
     ds.Close()
 
-    f = gdal.VSIFOpenL(filename, "rb")
-    assert f
-    data = gdal.VSIFReadL(1, 10000, f)
-    gdal.VSIFCloseL(f)
-
-    assert b'"coordinates": [ 1.235, 2.346, 9.877 ]' in data
+    with gdal.VSIFile(filename, "rb") as f:
+        assert b'"coordinates":[1.235,2.346,9.877]' in f.read()
 
 
 ###############################################################################
@@ -436,12 +432,8 @@ def test_ogr_geojsonseq_geom_coord_precision_already_4326(tmp_vsimem):
     lyr.CreateFeature(f)
     ds.Close()
 
-    f = gdal.VSIFOpenL(filename, "rb")
-    assert f
-    data = gdal.VSIFReadL(1, 10000, f)
-    gdal.VSIFCloseL(f)
-
-    assert b'"coordinates": [ 1.23457, 2.34568, 9.877 ]' in data
+    with gdal.VSIFile(filename, "rb") as f:
+        assert b'"coordinates":[1.23457,2.34568,9.877]' in f.read()
 
 
 ###############################################################################
@@ -469,12 +461,8 @@ def test_ogr_geojsonseq_geom_coord_precision_not_4326(tmp_vsimem):
     lyr.CreateFeature(f)
     ds.Close()
 
-    f = gdal.VSIFOpenL(filename, "rb")
-    assert f
-    data = gdal.VSIFReadL(1, 10000, f)
-    gdal.VSIFCloseL(f)
-
-    assert b'"coordinates": [ 2.363925, 45.151706, 9.877 ]' in data
+    with gdal.VSIFile(filename, "rb") as f:
+        assert b'"coordinates":[2.363925,45.151706,9.877]' in f.read()
 
 
 ###############################################################################
@@ -516,9 +504,5 @@ def test_ogr_geojsonseq_WRITE_BBOX(tmp_vsimem):
     lyr.CreateFeature(f)
     ds.Close()
 
-    f = gdal.VSIFOpenL(filename, "rb")
-    assert f
-    data = gdal.VSIFReadL(1, 10000, f)
-    gdal.VSIFCloseL(f)
-
-    assert b'"bbox": [ 2.0, 49.0, 3.0, 50.0 ]' in data
+    with gdal.VSIFile(filename, "rb") as f:
+        assert b'"bbox":[2.0,49.0,3.0,50.0]' in f.read()
