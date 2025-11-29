@@ -248,7 +248,7 @@ list of changes is :
    advertized as soon as MAX(fid_column) is 64 bit. GetFeatureCount()
    modified to return 64 bit values.
 -  SQLite: Integer64 and 64 bit FID supported in read/write. On write,
-   Integer64 are createad as "BIGINT" and on read BIGINT or INT8 are
+   Integer64 are created as "BIGINT" and on read BIGINT or INT8 are
    considered as Integer64. However it might be possible that databases
    produced by other tools are created with "INTEGER" and hold 64 bit
    values, in which case OGR will not be able to detect it. The

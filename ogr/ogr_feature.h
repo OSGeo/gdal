@@ -911,7 +911,7 @@ class CPL_DLL OGRFeatureDefn
  *
  * @param bSealFields Whether fields and geometry fields should be unsealed and
  *                    resealed.
- *                    This is generally desirabled, but in case of deferred
+ *                    This is generally desirable, but in case of deferred
  *                    resolution of them, this parameter should be set to false.
  * @since GDAL 3.9
  */

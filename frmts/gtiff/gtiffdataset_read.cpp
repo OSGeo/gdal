@@ -4386,7 +4386,7 @@ void GTiffDataset::ApplyPamInfo()
     {
         m_aoGCPs = gdal::GCP::fromC(GDALPamDataset::GetGCPs(), nPamGCPCount);
 
-        // Invalidate Geotransorm got from less prioritary sources
+        // Invalidate Geotransorm got from less priority sources
         if (!m_aoGCPs.empty() && m_bGeoTransformValid && !bGotGTFromPAM &&
             m_nPAMGeorefSrcIndex == 0)
         {
@@ -4484,7 +4484,7 @@ void GTiffDataset::ApplyPamInfo()
                             /* Y = */ adfTargetGCPs[2 * i + 1]);
                     }
 
-                    // Invalidate Geotransform got from less prioritary sources
+                    // Invalidate Geotransform got from less priority sources
                     if (!m_aoGCPs.empty() && m_bGeoTransformValid &&
                         !bGotGTFromPAM && m_nPAMGeorefSrcIndex == 0)
                     {

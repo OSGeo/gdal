@@ -393,7 +393,7 @@ optional:
   ids. The names in the comma-delimited list of ids are scanned until one is
   recognized by the target system.
 
-  Brush Ids can be either system-specific ids (see furtherbelow) or be one of
+  Brush Ids can be either system-specific ids (see further below) or be one of
   the pre-defined OGR brush ids for well known brush patterns. The id parameter
   should always include one of the OGR ids at the end of the comma-delimited
   list of ids so that an application never has to rely on understanding
@@ -548,7 +548,7 @@ optional:
 
   * ``ds`` is the step to use when  placing symbols along the line.
     By default, symbols applied to a feature with a line geometry are placed at
-    each vertex, butsetting "ds" triggers the placement of symbols at an equal
+    each vertex, but setting "ds" triggers the placement of symbols at an equal
     distance along the line. "ds" has no effect for a feature with a point
     geometry.
 

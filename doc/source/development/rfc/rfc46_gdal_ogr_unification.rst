@@ -93,7 +93,7 @@ Drivers and driver registration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  The OGRSFDriver now extends GDALDriver and is meant as being a legacy
-   way of implementing a vector driver. It is kept mainbly because, in
+   way of implementing a vector driver. It is kept mainly because, in
    the current implementation, not all drivers have been migrated to
    being "pure" GDALDriver. The CopyDataSource() virtual method has been
    removed since no in-tree drivers implement it. The inheritance to
@@ -613,7 +613,7 @@ Changes in SWIG bindings
       MajorObject
 
 -  Perl and CSharp: make sure that it still compiles but some work would
-   have to be done by their mainteners to be able to use the new
+   have to be done by their maintainers to be able to use the new
    capabilities
 
 Potential changes that are *NOT* included in this RFC

@@ -31,7 +31,7 @@ Motivations
    mirror has existed since 2012 and has over time become the preferred
    way for contributors without direct SVN access (or even those with
    SVN access) to submit their contributions, in particular because of
-   the coupling with the continuous integratations services of Travis-CI
+   the coupling with the continuous integration services of Travis-CI
    and !AppVeyor that enable maintainers to check that the contribution
    doesn't introduce known regressions + the friendly way of commenting
    a pull request. However the manual porting of !GitHub pull requests

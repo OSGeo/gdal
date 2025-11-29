@@ -7314,7 +7314,7 @@ OGRErr OSRSetHOM2PNO(OGRSpatialReferenceH hSRS, double dfCenterLat,
  * @param dfCenterLong Longitude of the projection origin.
  * @param dfAzimuth Azimuth, measured clockwise from North, of the projection
  * centerline.
- * @param dfScale Scale factor on the initiali line
+ * @param dfScale Scale factor on the initial line
  * @param dfFalseEasting False easting.
  * @param dfFalseNorthing False northing.
  *

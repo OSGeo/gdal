@@ -305,7 +305,7 @@ specifying options in a more user friendly way.
 
 gdal.Info() can be used either with setting the attributes of
 gdal.InfoOptions() or inlined arguments of gdal.Info(). Arguments can be
-specified as array of strings, command line syntax or dedeicated
+specified as array of strings, command line syntax or dedicated
 keywords. So various combinations are possible :
 
 ::
