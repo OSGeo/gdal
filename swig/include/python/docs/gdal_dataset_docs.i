@@ -772,7 +772,7 @@ Update an existing field domain by replacing its definition.
 
 The existing field domain with matching name will be replaced.
 
-Requires the :py:const:`ogr.ODsCUpdateFieldDomain` datasset capability.
+Requires the :py:const:`ogr.ODsCUpdateFieldDomain` dataset capability.
 
 Parameters
 ----------

@@ -88,7 +88,7 @@ Efficiency considerations
 
 Drivers that support the query logger callback function would need to
 check if the function pointer is `nullptr` and call the function if it is
-not. The cost of thish check is probably negligible on most architectures.
+not. The cost of this check is probably negligible on most architectures.
 
 In order to catch SQLite prepare errors, a prepare function wrapper will be 
 called instead of the sqlite3 API C function, this implies the cost of

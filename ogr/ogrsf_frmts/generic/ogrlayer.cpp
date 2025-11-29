@@ -535,7 +535,7 @@ OGRErr OGR_L_GetExtentEx(OGRLayerH hLayer, int iGeomField,
  TRUE then some implementations will actually scan the entire layer once
  to compute the MBR of all the features in the layer.
 
- (Contrarty to GetExtent() 2D), the returned extent will always take into
+ (Contrary to GetExtent() 2D), the returned extent will always take into
  account the attribute and spatial filters that may be installed.
 
  Layers without any geometry may return OGRERR_FAILURE just indicating that
@@ -677,7 +677,7 @@ OGRErr OGRLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
  TRUE then some implementations will actually scan the entire layer once
  to compute the MBR of all the features in the layer.
 
- (Contrarty to GetExtent() 2D), the returned extent will always take into
+ (Contrary to GetExtent() 2D), the returned extent will always take into
  account the attribute and spatial filters that may be installed.
 
  Layers without any geometry may return OGRERR_FAILURE just indicating that

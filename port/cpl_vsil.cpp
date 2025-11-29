@@ -1291,7 +1291,7 @@ char *VSIMultipartUploadAddPart(const char *pszFilename,
  *                    Should be the same as the one used for
  *                    VSIMultipartUploadStart()
  * @param pszUploadId Value returned by VSIMultipartUploadStart()
- * @param nPartIdsCount Number of parts,  andsize of apszPartIds
+ * @param nPartIdsCount Number of parts, and size of apszPartIds
  * @param apszPartIds Array of part identifiers (as returned by
  *                    VSIMultipartUploadAddPart()), that must be ordered in
  *                    the sequential order of parts, and of size nPartIdsCount.

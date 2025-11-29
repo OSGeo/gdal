@@ -6393,7 +6393,7 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
  * struct (format=+s) (unless writing a set of fields grouped together in the
  * same structure).
  *
- * Additional field metadata can be speciffed through the ArrowSchema::metadata
+ * Additional field metadata can be specified through the ArrowSchema::metadata
  * field with the potential following items:
  * <ul>
  * <li>"GDAL:OGR:alternative_name": value of
@@ -6439,7 +6439,7 @@ bool OGRLayer::CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
  * struct (format=+s) (unless writing a set of fields grouped together in the
  * same structure).
  *
- * Additional field metadata can be speciffed through the ArrowSchema::metadata
+ * Additional field metadata can be specified through the ArrowSchema::metadata
  * field with the potential following items:
  * <ul>
  * <li>"GDAL:OGR:alternative_name": value of

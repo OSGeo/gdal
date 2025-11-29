@@ -518,7 +518,7 @@ bench_fiona.py
 ++++++++++++++
 
 Use of the Fiona Python library which uses the OGR C GetNextFeature() underneath to
-expose them as GeoJSON features holded by a Python dictionary.
+expose them as GeoJSON features stored in a Python dictionary.
 
 .. code-block:: python
 

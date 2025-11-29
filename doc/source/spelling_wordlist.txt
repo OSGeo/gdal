@@ -32,7 +32,6 @@ adfMinMax
 advertized
 advertizing
 AdviseRead
-advized
 AES
 affine
 Affine
@@ -53,7 +52,6 @@ allCountries
 allocator
 alphanumerics
 Alpina
-altername
 alternance
 altitudemode
 altitudeMode
@@ -68,7 +66,6 @@ Analysing
 analytics
 Andrey
 AndreyK
-andsize
 anMapNewAxisToOldAxis
 Antalya
 antialias
@@ -79,7 +76,6 @@ aoDims
 api
 Api
 apoNewDims
-apploy
 approximator
 AppVeyor
 APSTILE
@@ -93,7 +89,6 @@ argc
 args
 argv
 ari
-arra
 Arrayname
 arrayStartIdx
 ASC
@@ -101,7 +96,6 @@ ascii
 aspatial
 Aspatial
 assumerolewithwebidentity
-asterix
 Astrogeology
 Astun
 AStyle
@@ -115,7 +109,6 @@ Athlon
 atof
 atoi
 atomicity
-atrix
 attr
 Attrbute
 attrib
@@ -148,7 +141,6 @@ Avenza
 Avyav
 avyavkumar
 aws
-axactly
 axisLabels
 axisOrder
 axisswap
@@ -257,7 +249,6 @@ Bonne
 Bool
 boolean
 booleans
-Bootstraping
 boto
 Boto
 bottomfov
@@ -305,7 +296,6 @@ BUnits
 bUnlinkAndSeize
 bUpdate
 burnValues
-butsetting
 bValueIsNull
 byn
 bytecode
@@ -314,12 +304,9 @@ cadastral
 Cadastral
 Cadastre
 Cadcorp
-Cadorp
 calc
 Calc
-calclulated
 calloc
-capabalities
 capi
 cardinality
 Cardinality
@@ -460,11 +447,9 @@ conformities
 connectedness
 const
 constexpr
-contensts
 contextlib
 contextmanager
 ContourOptions
-Contrarty
 conv
 Convair
 conveniency
@@ -494,7 +479,6 @@ CPUs
 CPython
 Cracknell
 creatable
-createad
 CreateCopy
 CreateFieldFromArrowSchema
 createGeometry
@@ -551,12 +535,10 @@ dataset
 Dataset
 datasets
 Datasets
-datasett
 datasource
 Datasource
 datasources
 Datasources
-datasset
 datastore
 Datastores
 datastream
@@ -586,7 +568,6 @@ DCMAKE
 de
 De
 deaccess
-deails
 deallocate
 Deallocate
 deallocated
@@ -599,7 +580,6 @@ Decompressor
 decompressors
 decrementing
 decrypted
-dedeicated
 Deegree
 defacto
 define'ed
@@ -627,13 +607,11 @@ derogations
 des
 DES
 desc
-descendent
 describedby
 deserialization
 deserialize
 deserialized
 deserializing
-desirabled
 dest
 destructor
 Destructor
@@ -694,7 +672,6 @@ dimensioned
 dimN
 DINSTALL
 dir
-directies
 Discoe
 discretization
 discretizing
@@ -721,18 +698,16 @@ domainSet
 domainuser
 doo
 doq
-doubtfull
+doubtful
 downcasting
 downsampled
 downsampling
 downscaling
-downswhen
 dox
 doxing
 Doxyfiles
 Doxygen
 dp
-dpecified
 drawOrder
 drv
 ds
@@ -772,12 +747,10 @@ ecw
 ecwp
 eDataType
 EDE
-editings
 eDstType
 eDT
 eedaconf
 eErrClass
-effictively
 eFieldType
 eg
 eGeomType
@@ -856,7 +829,6 @@ ExportToWKB
 exportToWkt
 ExportToWKT
 expr
-Exte
 extendbeyonddateline
 ExtendBeyondDateLine
 Extensibility
@@ -913,7 +885,6 @@ filesystems
 fillnodata
 FillValue
 FindFile
-finition
 fiona
 fipszone
 fixedLevels
@@ -938,7 +909,6 @@ forecolor
 Foris
 formatter
 formatters
-formly
 Fortran
 fp
 fpInput
@@ -976,8 +946,6 @@ fullExtent
 func
 funnyline
 Furieri
-furtherbelow
-Furthermode
 fusiontables
 fwhm
 fwrite
@@ -1304,7 +1272,6 @@ heightfields
 Helmert
 hElseBand
 Helvetica
-hether
 hFeat
 hGeom
 hGeomCoordPrec
@@ -1334,7 +1301,6 @@ hNewSubGeom
 hObject
 hobu
 hoc
-holded
 Homebrew
 homographies
 Homographies
@@ -1452,12 +1418,10 @@ ini
 init
 Init
 initialExtent
-initiali
 initializer
 inlined
 instantiable
 instantiation
-integratations
 integrations
 integrators
 intentionally
@@ -1668,7 +1632,6 @@ libwebp
 libXML
 libxz
 libzstd
-licencing
 Lichun
 lifonly
 linearities
@@ -1711,7 +1674,6 @@ loheight
 lon
 LongitudeDirection
 longjmp
-longtiudinal
 lonorth
 los
 Loskot
@@ -1742,8 +1704,6 @@ MacOS
 magellan
 magnetics
 Mahamood
-mainbly
-mainteners
 makefile
 Makefile
 makefiles
@@ -2390,8 +2350,6 @@ papszStrList
 papszURL
 papszVectorTranslateArguments
 papszWarpOptions
-Paquet
-paradygm
 parallelisation
 parallelising
 Parallelization
@@ -2439,7 +2397,6 @@ pds
 PDS
 pDstBuffer
 pDstBufferAllocStart
-pecedence
 pel
 perefix
 performant
@@ -2609,7 +2566,6 @@ ppszRawXML
 ppszResult
 ppszUnits
 ppWorkingData
-practise
 pre
 Pre
 pread
@@ -2621,7 +2577,6 @@ precompute
 predefine
 predelete
 preinstalled
-prelimenary
 preload
 premultiplication
 Prepar
@@ -2635,7 +2590,6 @@ pRet
 prf
 printf
 Printf
-prioritary
 priorly
 Priorly
 priv
@@ -2656,12 +2610,10 @@ projjson
 projwin
 projWin
 PropertyDefn
-prounounces
 Provincie
 proximities
 proxyauth
 proxyuserpwd
-prsence
 ps
 psBlockInfo
 psChild
@@ -2860,7 +2812,6 @@ relaxedFieldNameMatch
 relink
 RemoveM
 renderer
-repistory
 repo
 reportings
 reportSrcColumn
@@ -2900,7 +2851,6 @@ resy
 retile
 retiling
 RetrieveNumericColumnsAsDouble
-Retrurns
 rewrap
 rewrapped
 rfc
@@ -2928,7 +2878,6 @@ RollbackTransaction
 Ronnen
 rorient
 rouault
-rought
 roundCoordinates
 roundoff
 roundtrip
@@ -3041,7 +2990,6 @@ si
 sig
 Sightlines
 signedness
-significants
 Simmon
 sinc
 sizeBytes
@@ -3089,9 +3037,7 @@ spatio
 Spatio
 spc
 specialised
-speciffed
 specificities
-Specifieds
 SpectralBand
 spf
 sprintf
@@ -3285,12 +3231,10 @@ tgt
 tgz
 th
 thebuffer
-themself
 thenBand
 thescale
 thf
 THH
-thish
 Thorne
 thorougful
 threadsafe
@@ -3372,12 +3316,9 @@ tpkx
 tps
 trac
 Trac
-Traditionnaly
 Traditonal
-trailaing
 transactional
 Transactional
-transcations
 transcode
 transcoded
 transcoding
@@ -3427,10 +3368,8 @@ uncoded
 uncomment
 Uncompress
 uncompressing
-underscope
 undirected
 Undirected
-undoubtly
 unencrypted
 unescape
 Unescape
@@ -3439,7 +3378,6 @@ ungeoreference
 ungeoreferenced
 ungridded
 unicode
-unintentionnaly
 uninvertable
 unioned
 unistd
@@ -3448,12 +3386,10 @@ unix
 unixodbc
 unixODBC
 unlabelled
-unlikeley
 unlink
 Unlink
 unlogged
 Unlogged
-unmanagable
 unmanaged
 unmapped
 unoptimized
@@ -3496,7 +3432,6 @@ Userid
 userNote
 USERPROFILE
 UserPwd
-useul
 usgsdemdataset
 ushort
 usr
@@ -3525,7 +3460,6 @@ vct
 vcvars
 vdc
 vdv
-vecror
 VectorInfo
 VectorInfoOptions
 vectorization
