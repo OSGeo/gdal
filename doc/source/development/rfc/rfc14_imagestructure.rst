@@ -50,7 +50,7 @@ values between 128 and 255 should be interpreted as being values between
 Compatibility Issues
 --------------------
 
-This RFC has two changes from existing practise that may cause
+This RFC has two changes from existing practice that may cause
 compatibility issues:
 
 1. Traditionally the NBITS metadata appeared in the default metadata

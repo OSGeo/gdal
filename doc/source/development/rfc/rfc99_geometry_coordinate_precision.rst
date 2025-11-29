@@ -49,7 +49,7 @@ remembered when data is edited/appended to an existing layer
 (see https://github.com/qgis/QGIS/issues/56335).
 
 For binary formats using IEEE-754 double-precision encoding of real numbers,
-one can show that at least the last 16 least-significants bits (ie the last
+one can show that at least the last 16 least-significant bits (ie the last
 2 bytes of 8) of a coordinate can be set to zero while keeping a 1 mm precision
 (which corresponds to about 8.9e-9 degree).
 On a test dataset, setting a 1 mm precision reduced the size of the .zip of the
@@ -421,7 +421,7 @@ And for the C API:
 
 A new ``GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION`` driver capability will be added
 to advertise that a driver honours OGRGeomFieldDefn::GetCoordinatePrecision()
-when writing geometries. This may be useul for user interfaces that could offer
+when writing geometries. This may be useful for user interfaces that could offer
 an option to the user to specify the coordinate precision. Note however that
 the driver may not be able to store that precision in the dataset metadata.
 

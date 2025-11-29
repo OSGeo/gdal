@@ -1347,7 +1347,7 @@ GDALGroup::OpenAttributeFromFullname(const std::string &osFullName,
  * Otherwise the search will start from the group identified by osStartingPath,
  * and an array whose name is osName will be looked for in this group (if
  * osStartingPath is empty or "/", then the current group is used). If there
- * is no match, then a recursive descendent search will be made in its
+ * is no match, then a recursive descendant search will be made in its
  * subgroups. If there is no match in the subgroups, then the parent (if
  * existing) of the group pointed by osStartingPath will be used as the new
  * starting point for the search.
@@ -2420,7 +2420,7 @@ GUInt64 GDALAbstractMDArray::GetTotalElementsCount() const
  *
  * This method is used by GetProcessingChunkSize().
  *
- * Pedantic note: the returned type is GUInt64, so in the highly unlikeley
+ * Pedantic note: the returned type is GUInt64, so in the highly unlikely
  * theoretical case of a 32-bit platform, this might exceed its size_t
  * allocation capabilities.
  *
@@ -12937,7 +12937,7 @@ double GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int *pbHasValue,
  *
  * This method is used by GetProcessingChunkSize().
  *
- * Pedantic note: the returned type is GUInt64, so in the highly unlikeley
+ * Pedantic note: the returned type is GUInt64, so in the highly unlikely
  * theoretical case of a 32-bit platform, this might exceed its size_t
  * allocation capabilities.
  *

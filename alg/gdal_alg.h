@@ -670,7 +670,7 @@ typedef struct
     int nFacets;             /**< number of facets */
     GDALTriFacet *pasFacets; /**< array of nFacets facets */
     GDALTriBarycentricCoefficients
-        *pasFacetCoefficients; /**< arra of nFacets barycentric coefficients */
+        *pasFacetCoefficients; /**< array of nFacets barycentric coefficients */
 } GDALTriangulation;
 
 int CPL_DLL GDALHasTriangulation(void);

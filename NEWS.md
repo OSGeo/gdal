@@ -8278,7 +8278,7 @@ GTiff driver:
  * early checks for PREDICTOR settings, and update internal libtiff to support PREDICTOR=2 for 64-bit samples (rasterio/rasterio#2384)
  * remove limitation to 32,000 bytes when writing the GDAL metadata tag (#4116)
  * Create(): better detection of threshold when to switch to BigTIFF for tiled images (#5479)
- * unset geotransform from non-PAM source if PAM defines GCPs, and PAM is the prioritary source
+ * unset geotransform from non-PAM source if PAM defines GCPs, and PAM is the priority source
  * fix crash when building overviews and computing approx stats (#5580)
 
 HDF5 driver:

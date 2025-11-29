@@ -443,7 +443,7 @@ Read datasource contents (1730 is resource group identifier):
 
        ogrinfo -ro NGW:https://demo.nextgis.com/resource/1730
 
-Read layer details (`1730` is resource group identifier, `Parks` is vecror layer
+Read layer details (`1730` is resource group identifier, `Parks` is vector layer
 name):
 
 ::

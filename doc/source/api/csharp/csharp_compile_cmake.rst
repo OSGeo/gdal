@@ -85,7 +85,7 @@ Using the .NET Bindings
 
 The easiest way to use the bindings in development would be use the NuGET packages created.
 
-To do this you need to add a local repistory pointing to the GDAL install directory. `This is explained here <https://docs.microsoft.com/en-us/nuget/hosting-packages/local-feeds>`__ .
+To do this you need to add a local repository pointing to the GDAL install directory. `This is explained here <https://docs.microsoft.com/en-us/nuget/hosting-packages/local-feeds>`__ .
 
 Once this is done, you add the GDAL packages into your project as normal.
 
@@ -163,7 +163,7 @@ As an example:
     cmake -DGDAL_CSHARP_ONLY=ON -B ../build -S .
     cmake --build ../build --config Release --target csharp_samples
 
-The output from this build is axactly the same as documented as above, except that the outputs will be in `../build/swig/csharp` and some of the sub folders.
+The output from this build is exactly the same as documented as above, except that the outputs will be in `../build/swig/csharp` and some of the sub folders.
 
 Signing of build artifacts
 ++++++++++++++++++++++++++

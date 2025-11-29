@@ -1694,7 +1694,7 @@ OGRFeatureDefn::ComputeMapForSetFrom(const OGRFeatureDefn *poSrcFDefn,
  * This method should only be called by driver implementations.
  *
  * @param bSealFields Whether fields and geometry fields should be sealed.
- *                    This is generally desirabled, but in case of deferred
+ *                    This is generally desirable, but in case of deferred
  *                    resolution of them, this parameter should be set to false.
  * @since GDAL 3.9
  */
@@ -1734,7 +1734,7 @@ void OGRFeatureDefn::Seal(bool bSealFields)
  * This method should only be called by driver implementations.
  *
  * @param bUnsealFields Whether fields and geometry fields should be unsealed.
- *                      This is generally desirabled, but in case of deferred
+ *                      This is generally desirable, but in case of deferred
  *                      resolution of them, this parameter should be set to
  * false.
  * @since GDAL 3.9
@@ -1780,7 +1780,7 @@ void OGRFeatureDefn::Unseal(bool bUnsealFields)
  *
  * @param bSealFields Whether fields and geometry fields should be unsealed and
  *                    resealed.
- *                    This is generally desirabled, but in case of deferred
+ *                    This is generally desirable, but in case of deferred
  *                    resolution of them, this parameter should be set to false.
  * @since GDAL 3.9
  */

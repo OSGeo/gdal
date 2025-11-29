@@ -3922,7 +3922,7 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
         SortSourceDesc();
     }
 
-    // Try to find the last (most prioritary) fully opaque source covering
+    // Try to find the last (most priority) fully opaque source covering
     // the whole AOI. We only need to start rendering from it.
     size_t i = m_aoSourceDesc.size();
     while (i > 0)
@@ -4219,7 +4219,7 @@ bool GDALTileIndexDataset::NeedInitBuffer(int nBandCount,
                                           const int *panBandMap) const
 {
     bool bNeedInitBuffer = true;
-    // If the last source (that is the most prioritary one) covers at least
+    // If the last source (that is the most priority one) covers at least
     // the window of interest and is fully opaque, then we don't need to
     // initialize the buffer, and can directly render that source.
     int bHasNoData = false;
