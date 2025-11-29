@@ -362,7 +362,15 @@ OGRErr OGRGeoJSONLayer::ICreateFeature(OGRFeature *poFeature)
                 }
                 json_object *poObj =
                     OGRGeoJSONWriteFeature(poFeature, oWriteOptions_);
-                VSIFPrintfL(fp, "%s", json_object_to_json_string(poObj));
+
+                const char *pszJson = json_object_to_json_string_ext(
+                    poObj, JSON_C_TO_STRING_PLAIN
+#ifdef JSON_C_TO_STRING_NOSLASHESCAPE
+                               | JSON_C_TO_STRING_NOSLASHESCAPE
+#endif
+                );
+
+                VSIFPrintfL(fp, "%s", pszJson);
                 json_object_put(poObj);
 
                 if (poFeature->GetFID() == OGRNullFID)
