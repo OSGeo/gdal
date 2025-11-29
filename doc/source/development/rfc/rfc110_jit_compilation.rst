@@ -18,7 +18,7 @@ Summary
 This RFC introduces the optional use of the `CLang <https://clang.llvm.org/>`__ and
 `LLVM <https://llvm.org/>`__ embedded libraries to provide Just-In-Time (JIT) /
 on-the-fly compilation of code, and its use to speed-up evaluation of
-MuParser-compatible expressions, as used in VRTDerivedBand and :ref:`gdal_raster_calc`.
+expressions, as used in VRTDerivedBand and :ref:`gdal_raster_calc`.
 
 Motivation
 ----------
@@ -32,6 +32,10 @@ SSE/AVX on Intel or Neon on ARM CPUs.
 
 Technical details
 -----------------
+
+A new ``LLVM`` expression dialect is added. The aim is to keep it synchronized as
+much as possible to the ``MuParser`` dialect, but acknowledging there are subtle
+differences in some numeric results, particularly when ``Float32`` is used.
 
 The LLVM/CLang dependency is optional, and does not make any assumption on which
 compiler is used to build GDAL itself. It is perfectly fine to build GDAL with
@@ -152,7 +156,7 @@ Modified files
 The ``ExprPixelFunc`` function in `frmts/vrt/pixelfunctions.cpp`, which is
 the method used to evaluate MuParser/ExprTK expressions is modified.
 
-When the JIT is present and a MuParser expression is used with that function,
+When the JIT is present and dialect LLVM is specific,
 ``GDAL_c_expr_compile`` is used to build an AST from it, and then a
 ``GDALCFunctionGenerator`` class translates that AST back into a C function
 that iterates over all pixels.
@@ -194,13 +198,6 @@ Runtime Configuration options
 
 The following (advanced) configuration options are added:
 
-* GDAL_USE_JIT=YES/NO/AUTO: used by the VRT expression evaluation code.
-  In AUTO default mode, the JIT code path is only used if more than 10,000
-  pixels are computed. JIT compilation is very fast for small functions like
-  the ones we generate, but it has still a cost on very small requests. So
-  below that threshold we fallback to MuParser interpretation. Setting to
-  YES or NO can force/disable the use of the JIT, independently of that threshold.
-
 * GDAL_JIT_DEBUG=YES/NO (default: NO): when enabled, and :config:`CPL_DEBUG`
   configuration option is set to ``ON`` or ``GDAL_JIT``, debug messages specific
   to JIT usage, including generated C code and disassembly of the JIT code,
@@ -241,13 +238,13 @@ Averaging all 3 bands (per pixel), with Byte output:
   .. code-block:: shell
 
     $ time gdal raster calc big_world.tif big_world_avg.tif \
-        --flatten --calc "avg(X)" -q --config GDAL_USE_JIT=YES --overwrite \
+        --flatten --calc "avg(X)" -q --dialect LLVM --overwrite \
         --output-data-type Byte
 
       real 0m0,283s
 
     $ time gdal raster calc big_world.tif big_world_avg.tif \
-        --flatten --calc "avg(X)" -q --config GDAL_USE_JIT=NO --overwrite \
+        --flatten --calc "avg(X)" -q --dialect muparser --overwrite \
         --output-data-type Byte
 
       real 0m1,255s
@@ -268,13 +265,13 @@ Computing the maximum minus the minimum of all 3 bands (per pixel):
   .. code-block:: shell
 
     $ time gdal raster calc big_world.tif big_world_max_minus_min.tif \
-        --flatten --calc "avg(X)" -q --config GDAL_USE_JIT=YES --overwrite \
+        --flatten --calc "avg(X)" -q --dialect LLVM --overwrite \
         --output-data-type Byte
 
       real 0m0,248s
 
     $ time gdal raster calc big_world.tif big_world_max_minus_min.tif \
-        --flatten --calc "avg(X)" -q --config GDAL_USE_JIT=NO --overwrite \
+        --flatten --calc "avg(X)" -q --dialect muparser --overwrite \
         --output-data-type Byte
 
       real 0m1,838s
@@ -285,12 +282,12 @@ Computing the log10 of each pixel, per band, as Float64:
   .. code-block:: shell
 
     $ time gdal raster calc big_world.tif big_world_log10.tif \
-        --calc "log10(X)" -q --config GDAL_USE_JIT=YES --overwrite
+        --calc "log10(X)" -q --dialect LLVM --overwrite
 
       real 0m2,850s
 
     $ time gdal raster calc big_world.tif big_world_log10.tif \
-        --calc "log10(X)" -q --config GDAL_USE_JIT=NO --overwrite
+        --calc "log10(X)" -q --dialect muparser --overwrite
 
       real 0m5,631s
 
@@ -305,12 +302,12 @@ Computing the log10 of each pixel, per band, as Float32:
   .. code-block:: shell
 
     $ time gdal raster calc big_world.tif big_world_log10.tif \
-        --calc "log10(X)" -q --config GDAL_USE_JIT=YES --overwrite --output-data-type Float32
+        --calc "log10(X)" -q --dialect LLVM --overwrite --output-data-type Float32
 
       real 0m1,842s
 
     $ time gdal raster calc big_world.tif big_world_log10.tif \
-        --calc "log10(X)" -q --config GDAL_USE_JIT=NO --overwrite --output-data-type Float32
+        --calc "log10(X)" -q --dialect muparser --overwrite --output-data-type Float32
 
       real 0m4,893s
 
@@ -325,12 +322,12 @@ Computing the modulus of a complex number from one band with the real part and a
   .. code-block:: shell
 
     $ time gdal raster calc two_float_bands.tif modulus_jit.tif --flatten \
-        --calc "sqrt(X[1]^2 + X[2]^2)" -q --overwrite --config GDAL_USE_JIT=YES --output-data-type Float32
+        --calc "sqrt(X[1]^2 + X[2]^2)" -q --overwrite --dialect LLVM --output-data-type Float32
 
       real 0m0,549s
 
     $ time gdal raster calc two_float_bands.tif modulus_nojit.tif --flatten \
-        --calc "sqrt(X[1]^2 + X[2]^2)" -q --overwrite --config GDAL_USE_JIT=NO --output-data-type Float32
+        --calc "sqrt(X[1]^2 + X[2]^2)" -q --overwrite --dialect muparser --output-data-type Float32
 
       real 0m1,582s
 
@@ -345,12 +342,7 @@ Computing the modulus of a complex number from one band with the real part and a
 Backward compatibility
 ----------------------
 
-This is mostly invisible from the user, except for computations where the
-"transfer type" is Float32. Currently with MuParser the computations
-are always done on double, before being cast on the output data type.
-With the C code generated by ``GDALCFunctionGenerator`` to benefit from the
-maximum optimizations, when the transfer type is Float32, all intermediate
-computations are done on Float32. This can lead to numeric differences.
+This enhancement is fully backwards compatible.
 
 Security
 --------
@@ -360,7 +352,7 @@ to arbitrary code execution depending on the content of the provided C code.
 
 That said, in the VRTDerivedBand context, we are confident that there is no security
 risk because the ``GDALCFunctionGenerator`` class composes the C code in a very
-controlled way. Only MuParser operators and functions are emitted, and none of
+controlled way. Only recognized operators and functions are emitted, and none of
 them involve risky operations. Furthermore the identifiers (names
 referencing input arrays or variables) are never emitted verbatim from the
 input but always translated from a controlled set.
@@ -381,9 +373,9 @@ with LLVM/CLang support: ``LLVM_ROOT``, ``LLVM_FIND_VERSION``, ``LLVM_CONFIG_EXE
 Testing
 -------
 
-New tests have been added to test all the MuParser operators and functions.
-Tests in :file:`autotest/gdrivers/vrtderived.py` and :file:`autotest/utilities/test_gdal_raster_calc.py`
-are run once with ``GDAL_USE_JIT=YES`` and once with ``GDAL_USE_JIT=NO``.
+New tests have been added to test all the operators and functions.
+A number of tests in :file:`autotest/gdrivers/vrtderived.py` and :file:`autotest/utilities/test_gdal_raster_calc.py`
+are run both with MuParser and LLVM dialects.
 
 The following continuous integration configurations are enhanced to add libLLVM/libclang-cpp
 support to GDAL:
