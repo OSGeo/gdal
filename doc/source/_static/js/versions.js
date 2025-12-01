@@ -64,7 +64,7 @@ if (themeFlyoutDisplay === "attached") {
                 .map(
                     (version) => `
         <dd ${version.slug === config.versions.current.slug ? 'class="rtd-current-item"' : ""}>
-          <a href="${version.urls.documentation}">${version.slug}</a>
+          <a href="${window.location.pathname.replace(config.versions.current.slug, version.slug)}">${version.slug}</a>
         </dd>
         `,
                 )
