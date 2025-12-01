@@ -1025,3 +1025,15 @@ def test_gdalalg_raster_calc_sum_float_input_with_nodata(calc, tmp_vsimem):
 
     out_ds = calc["output"].GetDataset()
     assert out_ds.GetRasterBand(1).Checksum() == 1
+
+
+@pytest.mark.require_driver("GDALG")
+def test_gdalalg_raster_calc_input_pipeline(calc):
+
+    calc["input"] = "A=[ read ../gcore/data/byte.tif ! aspect ]"
+    calc["output-format"] = "MEM"
+    calc["calc"] = "A * 10"
+    calc.Run()
+
+    out_ds = calc["output"].GetDataset()
+    assert out_ds.GetRasterBand(1).Checksum() == 4692
