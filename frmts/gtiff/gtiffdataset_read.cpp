@@ -52,10 +52,9 @@
 
 int GTiffDataset::GetJPEGOverviewCount()
 {
-    if (m_nJPEGOverviewCount >= 0)
-        return m_nJPEGOverviewCount;
+    if (!m_apoJPEGOverviewDS.empty())
+        return static_cast<int>(m_apoJPEGOverviewDS.size());
 
-    m_nJPEGOverviewCount = 0;
     if (m_poBaseDS || eAccess != GA_ReadOnly ||
         m_nCompression != COMPRESSION_JPEG ||
         (nRasterXSize < 256 && nRasterYSize < 256) ||
@@ -76,15 +75,16 @@ int GTiffDataset::GetJPEGOverviewCount()
 
     // libjpeg-6b only supports 2, 4 and 8 scale denominators.
     // TODO: Later versions support more.
+    int nJPEGOverviewCount = 0;
     for (signed char i = 2; i >= 0; i--)
     {
         if (nRasterXSize >= (256 << i) || nRasterYSize >= (256 << i))
         {
-            m_nJPEGOverviewCount = i + 1;
+            nJPEGOverviewCount = i + 1;
             break;
         }
     }
-    if (m_nJPEGOverviewCount == 0)
+    if (nJPEGOverviewCount == 0)
         return 0;
 
     // Get JPEG tables.
@@ -97,7 +97,6 @@ int GTiffDataset::GetJPEGOverviewCount()
             nJPEGTableSize > INT_MAX ||
             static_cast<GByte *>(pJPEGTable)[nJPEGTableSize - 1] != 0xD9)
         {
-            m_nJPEGOverviewCount = 0;
             return 0;
         }
         nJPEGTableSize--;  // Remove final 0xD9.
@@ -108,17 +107,13 @@ int GTiffDataset::GetJPEGOverviewCount()
         nJPEGTableSize = 2;
     }
 
-    m_papoJPEGOverviewDS = static_cast<GTiffJPEGOverviewDS **>(
-        CPLMalloc(sizeof(GTiffJPEGOverviewDS *) * m_nJPEGOverviewCount));
-    for (int i = 0; i < m_nJPEGOverviewCount; ++i)
+    for (int i = 0; i < nJPEGOverviewCount; ++i)
     {
-        m_papoJPEGOverviewDS[i] = new GTiffJPEGOverviewDS(
-            this, i + 1, pJPEGTable, static_cast<int>(nJPEGTableSize));
+        m_apoJPEGOverviewDS.emplace_back(std::make_unique<GTiffJPEGOverviewDS>(
+            this, i + 1, pJPEGTable, static_cast<int>(nJPEGTableSize)));
     }
 
-    m_nJPEGOverviewCountOri = m_nJPEGOverviewCount;
-
-    return m_nJPEGOverviewCount;
+    return nJPEGOverviewCount;
 }
 
 /************************************************************************/
@@ -3726,7 +3721,7 @@ bool GTiffDataset::AssociateExternalMask()
     if (m_poMaskExtOvrDS->GetRasterBand(1)->GetOverviewCount() !=
         GetRasterBand(1)->GetOverviewCount())
         return false;
-    if (m_papoOverviewDS == nullptr)
+    if (m_apoOverviewDS.empty())
         return false;
     if (m_poMaskDS)
         return false;
@@ -3734,20 +3729,22 @@ bool GTiffDataset::AssociateExternalMask()
         m_poMaskExtOvrDS->GetRasterYSize() != nRasterYSize)
         return false;
     m_poExternalMaskDS = m_poMaskExtOvrDS.get();
-    for (int i = 0; i < m_nOverviewCount; i++)
+    int i = 0;
+    for (auto &poOvrDS : m_apoOverviewDS)
     {
-        if (m_papoOverviewDS[i]->m_poMaskDS)
+        if (poOvrDS->m_poMaskDS)
             return false;
-        m_papoOverviewDS[i]->m_poExternalMaskDS =
+        poOvrDS->m_poExternalMaskDS =
             m_poMaskExtOvrDS->GetRasterBand(1)->GetOverview(i)->GetDataset();
-        if (!m_papoOverviewDS[i]->m_poExternalMaskDS)
+        if (!poOvrDS->m_poExternalMaskDS)
             return false;
-        auto poOvrBand = m_papoOverviewDS[i]->GetRasterBand(1);
-        if (m_papoOverviewDS[i]->m_poExternalMaskDS->GetRasterXSize() !=
+        auto poOvrBand = poOvrDS->GetRasterBand(1);
+        if (poOvrDS->m_poExternalMaskDS->GetRasterXSize() !=
                 poOvrBand->GetXSize() ||
-            m_papoOverviewDS[i]->m_poExternalMaskDS->GetRasterYSize() !=
+            poOvrDS->m_poExternalMaskDS->GetRasterYSize() !=
                 poOvrBand->GetYSize())
             return false;
+        ++i;
     }
     return true;
 }
@@ -3864,7 +3861,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    GTiffDataset *poDS = new GTiffDataset();
+    auto poDS = std::make_unique<GTiffDataset>();
     poDS->SetDescription(pszFilename);
     poDS->m_osFilename = pszFilename;
     poDS->m_fpL = poOpenInfo->fpL;
@@ -3935,7 +3932,6 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
                          "to YES.",
                          pszFilename);
                 XTIFFClose(l_hTIFF);
-                delete poDS;
                 return nullptr;
             }
             poDS->m_oGTiffMDMD.SetMetadataItem("LAYOUT", "COG",
@@ -3962,7 +3958,6 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
                          poOpenInfo->eAccess, bAllowRGBAInterface,
                          true) != CE_None)
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -3999,7 +3994,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Initialize info for external overviews.                         */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo, pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo, pszFilename);
 
     // For backward compatibility, in case GTIFF_POINT_GEO_IGNORE is defined
     // load georeferencing right now so as to not require it to be defined
@@ -4009,7 +4004,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->LoadGeoreferencingAndPamIfNeeded();
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -4677,7 +4672,7 @@ GDALDataset *GTiffDataset::OpenDir(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    GTiffDataset *poDS = new GTiffDataset();
+    auto poDS = std::make_unique<GTiffDataset>();
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->m_osFilename = pszFilename;
     poDS->m_fpL = l_fpL;
@@ -4697,11 +4692,10 @@ GDALDataset *GTiffDataset::OpenDir(GDALOpenInfo *poOpenInfo)
     if (poDS->OpenOffset(l_hTIFF, nOffset, poOpenInfo->eAccess,
                          bAllowRGBAInterface, true) != CE_None)
     {
-        delete poDS;
         return nullptr;
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -5250,17 +5244,23 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
     for (int iBand = 0; iBand < nBands; ++iBand)
     {
         if (bTreatAsRGBA)
-            SetBand(iBand + 1, new GTiffRGBABand(this, iBand + 1));
+            SetBand(iBand + 1,
+                    std::make_unique<GTiffRGBABand>(this, iBand + 1));
         else if (m_bTreatAsSplitBitmap)
-            SetBand(iBand + 1, new GTiffSplitBitmapBand(this, iBand + 1));
+            SetBand(iBand + 1,
+                    std::make_unique<GTiffSplitBitmapBand>(this, iBand + 1));
         else if (m_bTreatAsSplit)
-            SetBand(iBand + 1, new GTiffSplitBand(this, iBand + 1));
+            SetBand(iBand + 1,
+                    std::make_unique<GTiffSplitBand>(this, iBand + 1));
         else if (bTreatAsBitmap)
-            SetBand(iBand + 1, new GTiffBitmapBand(this, iBand + 1));
+            SetBand(iBand + 1,
+                    std::make_unique<GTiffBitmapBand>(this, iBand + 1));
         else if (bTreatAsOdd)
-            SetBand(iBand + 1, new GTiffOddBitsBand(this, iBand + 1));
+            SetBand(iBand + 1,
+                    std::make_unique<GTiffOddBitsBand>(this, iBand + 1));
         else
-            SetBand(iBand + 1, new GTiffRasterBand(this, iBand + 1));
+            SetBand(iBand + 1,
+                    std::make_unique<GTiffRasterBand>(this, iBand + 1));
     }
 
     if (GetRasterBand(1)->GetRasterDataType() == GDT_Unknown)
