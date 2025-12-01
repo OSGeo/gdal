@@ -302,6 +302,7 @@ class GTiffDataset final : public GDALPamDataset
     bool m_bHasUsedReadEncodedAPI : 1;  // for debugging
     bool m_bWriteCOGLayout : 1;
     bool m_bTileInterleave : 1;
+    bool m_bLayoutChecked : 1;
 
     void ScanDirectories();
     bool ReadStrile(int nBlockId, void *pOutputBuffer,
@@ -443,6 +444,8 @@ class GTiffDataset final : public GDALPamDataset
     void *CacheMultiRange(int nXOff, int nYOff, int nXSize, int nYSize,
                           int nBufXSize, int nBufYSize, const int *panBandMap,
                           int nBandCount, GDALRasterIOExtraArg *psExtraArg);
+
+    bool CheckCOGLayout();
 
     static void ThreadDecompressionFunc(void *pData);
 

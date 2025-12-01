@@ -7869,7 +7869,8 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             osHiddenStructuralMD += "MASK_INTERLEAVED_WITH_IMAGERY=YES\n";
         }
     }
-    if (!osHiddenStructuralMD.empty())
+    if (!osHiddenStructuralMD.empty() &&
+        CPLTestBool(CPLGetConfigOption("GTIFF_WRITE_COG_GHOST_AREA", "YES")))
     {
         const int nHiddenMDSize = static_cast<int>(osHiddenStructuralMD.size());
         osHiddenStructuralMD =

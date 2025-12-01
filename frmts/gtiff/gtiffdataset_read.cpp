@@ -6305,6 +6305,7 @@ char **GTiffDataset::GetMetadata(const char *pszDomain)
     if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
     {
         GTiffDataset::GetMetadataItem("COMPRESSION_REVERSIBILITY", pszDomain);
+        GTiffDataset::GetMetadataItem("LAYOUT", pszDomain);
     }
     else
     {
@@ -6387,6 +6388,18 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
                                 "IMAGE_STRUCTURE");
                     }
                 }
+            }
+        }
+
+        if (!m_bLayoutChecked && m_poBaseDS == nullptr)
+        {
+            m_bLayoutChecked = true;
+            const char *pszLayout =
+                m_oGTiffMDMD.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE");
+            if (eAccess == GA_ReadOnly && !pszLayout && CheckCOGLayout())
+            {
+                m_oGTiffMDMD.SetMetadataItem("LAYOUT", "COG",
+                                             "IMAGE_STRUCTURE");
             }
         }
     }
@@ -7226,4 +7239,68 @@ void *GTiffDataset::CacheMultiRange(int nXOff, int nYOff, int nXSize,
         }
     }
     return pBufferedData;
+}
+
+/************************************************************************/
+/*                         CheckCOGLayout()                             */
+/************************************************************************/
+
+bool GTiffDataset::CheckCOGLayout()
+{
+    bool bRet = CPL_TO_BOOL(TIFFIsTiled(m_hTIFF));
+    const bool bNeedsOverviews = (nRasterXSize > 512 || nRasterYSize > 512);
+    if (bNeedsOverviews)
+        ScanDirectories();
+    bRet = bRet && !(m_apoOverviewDS.empty() && bNeedsOverviews);
+#ifdef TIFFLIB_MAJOR_VERSION
+    // TIFFIsBigTIFF() added in libtiff 4.4
+    const uint64_t nExpectedDirOffset = TIFFIsBigTIFF(m_hTIFF) ? 16 : 8;
+#else
+    GByte abyData[4] = {0, 0, 0, 0};
+    {
+        const auto nCurFPOffset = VSIFTellL(m_fpL);
+        VSIFSeekL(m_fpL, 0, SEEK_SET);
+        CPL_IGNORE_RET_VAL(VSIFReadL(abyData, 1, sizeof(abyData), m_fpL));
+        VSIFSeekL(m_fpL, nCurFPOffset, SEEK_SET);
+    }
+    const uint64_t nExpectedDirOffset =
+        (abyData[2] == 0x2B || abyData[3] == 0x2B) ? 16 : 8;
+#endif
+    bRet = bRet && (m_nDirOffset == nExpectedDirOffset);
+    uint64_t nLastIFDOffset = nExpectedDirOffset;
+    int nLastXSize = nRasterXSize;
+    int nLastYSize = nRasterYSize;
+    for (const auto &poOvrDS : m_apoOverviewDS)
+    {
+        bRet = bRet && poOvrDS->m_nDirOffset > nLastIFDOffset;
+        bRet = bRet && poOvrDS->nRasterXSize <= nLastXSize;
+        bRet = bRet && poOvrDS->nRasterYSize <= nLastYSize;
+        bRet = bRet && CPL_TO_BOOL(TIFFIsTiled(poOvrDS->m_hTIFF));
+        nLastXSize = poOvrDS->nRasterXSize;
+        nLastYSize = poOvrDS->nRasterYSize;
+        nLastIFDOffset = poOvrDS->m_nDirOffset;
+    }
+    uint64_t nDataOffset = nLastIFDOffset;
+    for (auto iter = m_apoOverviewDS.rbegin();
+         bRet && iter != m_apoOverviewDS.rend(); ++iter)
+    {
+        bRet = CPL_TO_BOOL(TIFFIsTiled((*iter)->m_hTIFF));
+        vsi_l_offset nOffset = 0;
+        vsi_l_offset nSize = 0;
+        if ((*iter)->IsBlockAvailable(0, &nOffset, &nSize, nullptr))
+        {
+            bRet = bRet && nOffset > nDataOffset;
+            nDataOffset = nOffset;
+        }
+    }
+    if (!m_apoOverviewDS.empty())
+    {
+        vsi_l_offset nOffset = 0;
+        vsi_l_offset nSize = 0;
+        if (IsBlockAvailable(0, &nOffset, &nSize, nullptr))
+        {
+            bRet = bRet && nOffset > nDataOffset;
+        }
+    }
+    return bRet;
 }

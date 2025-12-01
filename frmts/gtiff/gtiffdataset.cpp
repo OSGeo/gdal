@@ -100,7 +100,8 @@ GTiffDataset::GTiffDataset()
       m_bLeaderSizeAsUInt4(false), m_bTrailerRepeatedLast4BytesRepeated(false),
       m_bMaskInterleavedWithImagery(false), m_bKnownIncompatibleEdition(false),
       m_bWriteKnownIncompatibleEdition(false), m_bHasUsedReadEncodedAPI(false),
-      m_bWriteCOGLayout(false), m_bTileInterleave(false)
+      m_bWriteCOGLayout(false), m_bTileInterleave(false),
+      m_bLayoutChecked(false)
 {
     // CPLDebug("GDAL", "sizeof(GTiffDataset) = %d bytes", static_cast<int>(
     //     sizeof(GTiffDataset)));

@@ -541,6 +541,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GTIFF_USE_MMAP", // from tifvsi.cpp
    "GTIFF_VIRTUAL_MEM_IO", // from gtiffdataset.cpp
    "GTIFF_WRITE_ANGULAR_PARAMS_IN_DEGREE", // from gt_wkt_srs.cpp
+   "GTIFF_WRITE_COG_GHOST_AREA", // from gtiffdataset_write.cpp
    "GTIFF_WRITE_IMAGE_STRUCTURE_METADATA", // from gtiffdataset_write.cpp
    "GTIFF_WRITE_RAT_TO_PAM", // from gtiffdataset_write.cpp, gtiffrasterband_write.cpp
    "GTIFF_WRITE_TOWGS84", // from gt_wkt_srs.cpp
