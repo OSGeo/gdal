@@ -121,6 +121,8 @@ CPLErr GDALProxyDataset::IRasterIO(
     return ret;
 }
 
+D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, Close, (), ())
+
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BlockBasedRasterIO,
                         (GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                          int nYSize, void *pData, int nBufXSize, int nBufYSize,
