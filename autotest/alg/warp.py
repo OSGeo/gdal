@@ -2197,3 +2197,19 @@ def test_warp_mode_nan(dt):
 
     out_ds = gdal.Warp("", ds, options="-f MEM -r mode -ts 1 1")
     assert out_ds.ReadRaster(0, 0, 1, 1) == b"\xFF" * dtsize, gdal.GetDataTypeName(dt)
+
+
+def test_warp_zero_sized_target_extent():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    out_ds = gdal.Warp(
+        "",
+        ds,
+        format="MEM",
+        outputBounds=[0, 1, 0, 1],
+        xRes=1,
+        yRes=1,
+    )
+    assert out_ds.RasterXSize == 1
+    assert out_ds.RasterYSize == 1
