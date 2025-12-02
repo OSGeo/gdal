@@ -2968,9 +2968,16 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
 
     CPLFree(padfX);
     CPLFree(pabSuccess);
-    // Should we check if dfMinXOut < dfMaxXOut && dfMinYOut < dfMaxYOut before returning true?
-    // This happened when testing issue #13498
-    return true;
+    if ((dfMinXOut >= dfMaxXOut) || (dfMinYOut >= dfMaxYOut))
+    {
+        CPLDebug("WARP",
+                 "ComputeSourceWindow(): source window size is not valid.");
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 /************************************************************************/
