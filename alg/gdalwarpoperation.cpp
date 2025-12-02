@@ -2968,16 +2968,7 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
 
     CPLFree(padfX);
     CPLFree(pabSuccess);
-    if ((dfMinXOut >= dfMaxXOut) || (dfMinYOut >= dfMaxYOut))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Source window size is not valid.");
-        return false;
-    }
-    else
-    {
-        return true;
-    }
+    return true;
 }
 
 /************************************************************************/
