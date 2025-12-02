@@ -610,6 +610,27 @@ bool GDALDatasetGetCloseReportsProgress(GDALDatasetH hDS)
 }
 
 /************************************************************************/
+/*                   CanReopenWithCurrentDescription()                  */
+/************************************************************************/
+
+/** Returns whether, once this dataset is closed, it can be re-opened with
+ * Open() using the current value of GetDescription()
+ *
+ * The default implementation returns true. Some drivers, like MVT in Create()
+ * mode, can return false. Some drivers return true, but the re-opened dataset
+ * may be opened by another driver (e.g. the COG driver will return true, but
+ * the driver used for re-opening is GTiff).
+ *
+ * @return true if the dataset can be re-opened using the value as
+ *         GetDescription() as connection string for Open()
+ * @since GDAL 3.13
+ */
+bool GDALDataset::CanReopenWithCurrentDescription() const
+{
+    return true;
+}
+
+/************************************************************************/
 /*                UnregisterFromSharedDataset()                         */
 /************************************************************************/
 

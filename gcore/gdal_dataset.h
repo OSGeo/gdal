@@ -228,6 +228,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual bool GetCloseReportsProgress() const;
 
+    virtual bool CanReopenWithCurrentDescription() const;
+
     int GetRasterXSize() const;
     int GetRasterYSize() const;
     int GetRasterCount() const;

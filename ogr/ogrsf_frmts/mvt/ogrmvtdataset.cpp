@@ -3484,6 +3484,11 @@ class OGRMVTWriterDataset final : public GDALDataset
 
     CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
+    bool CanReopenWithCurrentDescription() const override
+    {
+        return false;
+    }
+
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
