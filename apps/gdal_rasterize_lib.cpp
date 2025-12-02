@@ -1272,11 +1272,22 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
                 }
             }
 
+            const bool bCloseReportsProgress =
+                bCreateOutput &&
+                GDALDataset::FromHandle(hDstDS)->GetCloseReportsProgress();
+
+            std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+                pScaledProgressArg(GDALCreateScaledProgress(
+                                       0.0, bCloseReportsProgress ? 0.5 : 1.0,
+                                       sOptions.pfnProgress,
+                                       sOptions.pProgressData),
+                                   GDALDestroyScaledProgress);
+
             eErr = ProcessLayer(
                 hLayer, hSRS != nullptr, hDstDS, sOptions.anBandList,
                 sOptions.adfBurnValues, sOptions.b3D, sOptions.bInverse,
                 sOptions.osBurnAttribute.c_str(), sOptions.aosRasterizeOptions,
-                sOptions.aosTO, sOptions.pfnProgress, sOptions.pProgressData);
+                sOptions.aosTO, GDALScaledProgress, pScaledProgressArg.get());
 
             GDALDatasetReleaseResultSet(hSrcDataset, hLayer);
         }
@@ -1336,6 +1347,10 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
         }
     }
 
+    const bool bCloseReportsProgress =
+        bCreateOutput &&
+        GDALDataset::FromHandle(hDstDS)->GetCloseReportsProgress();
+
     /* -------------------------------------------------------------------- */
     /*      Process each layer.                                             */
     /* -------------------------------------------------------------------- */
@@ -1369,17 +1384,21 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
             }
         }
 
-        void *pScaledProgress = GDALCreateScaledProgress(
-            0.0, 1.0 * (i + 1) / nLayerCount, sOptions.pfnProgress,
-            sOptions.pProgressData);
+        const double dfFactor = bCloseReportsProgress ? 0.5 : 1.0;
+
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+            pScaledProgressArg(
+                GDALCreateScaledProgress(dfFactor * i / nLayerCount,
+                                         dfFactor * (i + 1) / nLayerCount,
+                                         sOptions.pfnProgress,
+                                         sOptions.pProgressData),
+                GDALDestroyScaledProgress);
 
         eErr = ProcessLayer(
             hLayer, !sOptions.oOutputSRS.IsEmpty(), hDstDS, sOptions.anBandList,
             sOptions.adfBurnValues, sOptions.b3D, sOptions.bInverse,
             sOptions.osBurnAttribute.c_str(), sOptions.aosRasterizeOptions,
-            sOptions.aosTO, GDALScaledProgress, pScaledProgress);
-
-        GDALDestroyScaledProgress(pScaledProgress);
+            sOptions.aosTO, GDALScaledProgress, pScaledProgressArg.get());
         if (eErr != CE_None)
             break;
     }
@@ -1389,6 +1408,46 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
         if (bCloseOutDSOnError)
             GDALClose(hDstDS);
         return nullptr;
+    }
+
+    if (bCloseReportsProgress)
+    {
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+            pScaledProgressArg(GDALCreateScaledProgress(0.5, 1.0,
+                                                        sOptions.pfnProgress,
+                                                        sOptions.pProgressData),
+                               GDALDestroyScaledProgress);
+
+        const bool bCanReopenWithCurrentDescription =
+            GDALDataset::FromHandle(hDstDS)->CanReopenWithCurrentDescription();
+
+        eErr = GDALDataset::FromHandle(hDstDS)->Close(GDALScaledProgress,
+                                                      pScaledProgressArg.get());
+        if (eErr != CE_None)
+            return nullptr;
+
+        if (bCanReopenWithCurrentDescription)
+        {
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                hDstDS = GDALOpenEx(pszDest, GDAL_OF_RASTER | GDAL_OF_UPDATE,
+                                    nullptr, nullptr, nullptr);
+            }
+            if (!hDstDS)
+                hDstDS =
+                    GDALOpenEx(pszDest, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                               nullptr, nullptr, nullptr);
+        }
+        else
+        {
+            struct DummyDataset final : public GDALDataset
+            {
+                DummyDataset() = default;
+            };
+
+            hDstDS = GDALDataset::ToHandle(
+                std::make_unique<DummyDataset>().release());
+        }
     }
 
     return hDstDS;
