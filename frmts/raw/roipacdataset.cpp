@@ -37,7 +37,7 @@ class ROIPACDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(ROIPACDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     ROIPACDataset();
@@ -123,7 +123,7 @@ ROIPACDataset::~ROIPACDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr ROIPACDataset::Close()
+CPLErr ROIPACDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

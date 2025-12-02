@@ -92,7 +92,7 @@ class VICARDataset final : public RawDataset
     void BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel);
 #endif
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     CPL_DISALLOW_COPY_ASSIGN(VICARDataset)
 

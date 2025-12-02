@@ -278,14 +278,23 @@ public:
 #ifdef SWIGJAVA
   %rename (CloseInternal) Close;
   %javamethodmodifiers Close() "private";
-#endif
   CPLErr Close() {
      return GDALClose(self);
   }
+#else
+%feature("kwargs") Close;
+  CPLErr Close(GDALProgressFunc callback = NULL, void* callback_data=NULL) {
+     return GDALCloseEx(self, callback, callback_data);
+  }
+
+  bool GetCloseReportsProgress() {
+    return GDALDatasetGetCloseReportsProgress(self);
+  }
+#endif
 
 #ifdef SWIGPYTHON
-  CPLErr _RunCloseWithoutDestroying() {
-     CPLErr eErr = GDALDatasetRunCloseWithoutDestroying(self);
+  CPLErr _RunCloseWithoutDestroying(GDALProgressFunc callback = NULL, void* callback_data=NULL) {
+     CPLErr eErr = GDALDatasetRunCloseWithoutDestroyingEx(self, callback, callback_data);
      if (eErr != CE_None && CPLGetLastErrorType() == CE_None ) {
        CPLError(CE_Failure, CPLE_AppDefined, "Error occurred in GDALDatasetRunCloseWithoutDestroying()");
      }

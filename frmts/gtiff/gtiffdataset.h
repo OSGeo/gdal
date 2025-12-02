@@ -462,7 +462,7 @@ class GTiffDataset final : public GDALPamDataset
     GTiffDataset();
     ~GTiffDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;

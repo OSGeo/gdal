@@ -40,7 +40,7 @@ OGRParquetDataset::~OGRParquetDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr OGRParquetDataset::Close()
+CPLErr OGRParquetDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

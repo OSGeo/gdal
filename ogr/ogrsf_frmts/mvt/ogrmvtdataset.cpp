@@ -3484,7 +3484,7 @@ class OGRMVTWriterDataset final : public GDALDataset
     OGRMVTWriterDataset();
     ~OGRMVTWriterDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
@@ -3663,7 +3663,7 @@ OGRMVTWriterDataset::~OGRMVTWriterDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr OGRMVTWriterDataset::Close()
+CPLErr OGRMVTWriterDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

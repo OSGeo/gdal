@@ -130,7 +130,7 @@ GTiffDataset::~GTiffDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr GTiffDataset::Close()
+CPLErr GTiffDataset::Close(GDALProgressFunc, void *)
 {
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {

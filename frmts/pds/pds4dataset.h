@@ -376,7 +376,7 @@ class PDS4Dataset final : public RawDataset
                    int nYSize, int nBands, GDALDataType eType,
                    const char *const *papszOptions);
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     CPL_DISALLOW_COPY_ASSIGN(PDS4Dataset)
 

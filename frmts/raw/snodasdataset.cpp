@@ -41,7 +41,7 @@ class SNODASDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(SNODASDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     SNODASDataset();
@@ -172,7 +172,7 @@ SNODASDataset::~SNODASDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr SNODASDataset::Close()
+CPLErr SNODASDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

@@ -34,7 +34,7 @@ class PNMDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(PNMDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     PNMDataset() = default;
@@ -63,7 +63,7 @@ PNMDataset::~PNMDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr PNMDataset::Close()
+CPLErr PNMDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

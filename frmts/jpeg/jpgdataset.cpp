@@ -1849,7 +1849,7 @@ JPGDatasetCommon::~JPGDatasetCommon()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr JPGDatasetCommon::Close()
+CPLErr JPGDatasetCommon::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
 
@@ -3026,7 +3026,7 @@ JPGDatasetCommon::OpenRawThermalImage(const char *pszConnectionString)
                 TryLoadXML();
             }
 
-            CPLErr Close() override
+            CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override
             {
                 return GDALPamDataset::Close();
             }

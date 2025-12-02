@@ -376,7 +376,7 @@ class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
         OGRArrowDataset::Close();
     }
 
-    CPLErr Close() override
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override
     {
         m_poLayer.reset();
         m_poMemoryPool.reset();

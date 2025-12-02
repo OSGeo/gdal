@@ -108,7 +108,7 @@ NITFDataset::~NITFDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr NITFDataset::Close()
+CPLErr NITFDataset::Close(GDALProgressFunc, void *)
 {
     int bHasDroppedRef = FALSE;
     return NITFDataset::Close(bHasDroppedRef);

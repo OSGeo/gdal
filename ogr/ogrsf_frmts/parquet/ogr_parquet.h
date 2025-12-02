@@ -306,7 +306,7 @@ class OGRParquetDataset final : public OGRArrowDataset
     explicit OGRParquetDataset();
     ~OGRParquetDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,
@@ -469,7 +469,7 @@ class OGRParquetWriterDataset final : public GDALPamDataset
         return m_poMemoryPool.get();
     }
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int idx) const override;

@@ -166,6 +166,8 @@ class GDALThreadSafeDataset final : public GDALProxyDataset
                           GDALDataset *poPrototypeDS);
     ~GDALThreadSafeDataset() override;
 
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
+
     static std::unique_ptr<GDALDataset>
     Create(std::unique_ptr<GDALDataset> poPrototypeDS, int nScopeFlags);
 
@@ -634,35 +636,54 @@ GDALThreadSafeDataset::Create(GDALDataset *poPrototypeDS, int nScopeFlags)
 
 GDALThreadSafeDataset::~GDALThreadSafeDataset()
 {
-    // Collect TLS datasets in a vector, and free them after releasing
-    // g_nInDestructorCounter to limit contention
-    std::vector<std::pair<std::shared_ptr<GDALDataset>, GIntBig>> aoDSToFree;
+    GDALThreadSafeDataset::Close();
+}
+
+/************************************************************************/
+/*                           Close()                                    */
+/************************************************************************/
+
+CPLErr GDALThreadSafeDataset::Close(GDALProgressFunc, void *)
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        auto &oSetOfCache = GetSetOfCache();
-        std::lock_guard oLock(oSetOfCache.oMutex);
-        for (auto *poCache : oSetOfCache.oSetOfCache)
+        // Collect TLS datasets in a vector, and free them after releasing
+        // g_nInDestructorCounter to limit contention
+        std::vector<std::pair<std::shared_ptr<GDALDataset>, GIntBig>>
+            aoDSToFree;
         {
-            std::unique_lock oLockCache(poCache->m_oMutex);
-            std::shared_ptr<GDALDataset> poDS;
-            if (poCache->m_oCache.tryGet(this, poDS))
+            auto &oSetOfCache = GetSetOfCache();
+            std::lock_guard oLock(oSetOfCache.oMutex);
+            for (auto *poCache : oSetOfCache.oSetOfCache)
             {
-                aoDSToFree.emplace_back(std::move(poDS), poCache->m_nThreadID);
-                poCache->m_oCache.remove(this);
+                std::unique_lock oLockCache(poCache->m_oMutex);
+                std::shared_ptr<GDALDataset> poDS;
+                if (poCache->m_oCache.tryGet(this, poDS))
+                {
+                    aoDSToFree.emplace_back(std::move(poDS),
+                                            poCache->m_nThreadID);
+                    poCache->m_oCache.remove(this);
+                }
             }
         }
+
+        for (const auto &oEntry : aoDSToFree)
+        {
+            CPLDebug("GDAL",
+                     "~GDALThreadSafeDataset(): GDALClose(%s, this=%p) for "
+                     "thread " CPL_FRMT_GIB,
+                     GetDescription(), oEntry.first.get(), oEntry.second);
+        }
+        // Actually release TLS datasets
+        aoDSToFree.clear();
+
+        GDALThreadSafeDataset::CloseDependentDatasets();
+
+        eErr = GDALDataset::Close();
     }
 
-    for (const auto &oEntry : aoDSToFree)
-    {
-        CPLDebug("GDAL",
-                 "~GDALThreadSafeDataset(): GDALClose(%s, this=%p) for "
-                 "thread " CPL_FRMT_GIB,
-                 GetDescription(), oEntry.first.get(), oEntry.second);
-    }
-    // Actually release TLS datasets
-    aoDSToFree.clear();
-
-    GDALThreadSafeDataset::CloseDependentDatasets();
+    return eErr;
 }
 
 /************************************************************************/
@@ -774,7 +795,7 @@ GDALDataset *GDALThreadSafeDataset::RefUnderlyingDataset() const
             poTLSDS.reset();
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Re-opened dataset for %s does not share the same "
-                     "characteristics has the master dataset",
+                     "characteristics as the master dataset",
                      GetDescription());
         }
     }

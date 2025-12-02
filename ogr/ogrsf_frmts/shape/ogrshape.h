@@ -327,7 +327,7 @@ class OGRShapeDataSource final : public GDALDataset
     OGRShapeDataSource();
     ~OGRShapeDataSource() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     OGRLayerPool *GetPool() const
     {

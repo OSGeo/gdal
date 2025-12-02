@@ -90,7 +90,7 @@ class ENVIDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(ENVIDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     ENVIDataset();

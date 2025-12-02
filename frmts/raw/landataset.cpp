@@ -133,7 +133,7 @@ class LANDataset final : public RawDataset
 
     char **GetFileList() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     LANDataset();
@@ -314,7 +314,7 @@ LANDataset::~LANDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr LANDataset::Close()
+CPLErr LANDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

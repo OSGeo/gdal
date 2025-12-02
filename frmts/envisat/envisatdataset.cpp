@@ -157,7 +157,7 @@ class EnvisatDataset final : public RawDataset
     void CollectDSDMetadata();
     void CollectADSMetadata();
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     EnvisatDataset();
@@ -204,7 +204,7 @@ EnvisatDataset::~EnvisatDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr EnvisatDataset::Close()
+CPLErr EnvisatDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

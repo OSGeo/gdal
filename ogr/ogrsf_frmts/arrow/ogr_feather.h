@@ -214,7 +214,7 @@ class OGRFeatherWriterDataset final : public GDALPamDataset
 
     ~OGRFeatherWriterDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     arrow::MemoryPool *GetMemoryPool() const
     {

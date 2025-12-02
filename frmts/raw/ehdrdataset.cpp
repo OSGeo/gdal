@@ -355,7 +355,7 @@ EHdrDataset::~EHdrDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr EHdrDataset::Close()
+CPLErr EHdrDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

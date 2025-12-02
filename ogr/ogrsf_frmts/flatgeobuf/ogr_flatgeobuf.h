@@ -58,7 +58,7 @@ class OGRFlatGeobufBaseLayerInterface CPL_NON_FINAL
 
     virtual const std::string &GetFilename() const = 0;
     virtual OGRLayer *GetLayer() = 0;
-    virtual CPLErr Close() = 0;
+    virtual CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) = 0;
 };
 
 class OGRFlatGeobufLayer final : public OGRLayer,
@@ -148,7 +148,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     virtual int GetNextArrowArray(struct ArrowArrayStream *,
                                   struct ArrowArray *out_array) override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     ~OGRFlatGeobufLayer() override;
@@ -236,7 +236,7 @@ class OGRFlatGeobufEditableLayer final : public OGREditableLayer,
 
     int TestCapability(const char *pszCap) const override;
 
-    CPLErr Close() override
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override
     {
         return CE_None;
     }
@@ -252,7 +252,7 @@ class OGRFlatGeobufDataset final : public GDALDataset
 
     bool OpenFile(const char *pszFilename, VSILFILE *fp, bool bVerifyBuffers);
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     OGRFlatGeobufDataset(const char *pszName, bool bIsDir, bool bCreate,

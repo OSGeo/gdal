@@ -86,7 +86,7 @@ class PDSDataset final : public RawDataset
   protected:
     int CloseDependentDatasets() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     PDSDataset();
@@ -140,7 +140,7 @@ PDSDataset::~PDSDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr PDSDataset::Close()
+CPLErr PDSDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

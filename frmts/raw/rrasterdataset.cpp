@@ -56,7 +56,7 @@ class RRASTERDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(RRASTERDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     RRASTERDataset();
@@ -446,7 +446,7 @@ RRASTERDataset::~RRASTERDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr RRASTERDataset::Close()
+CPLErr RRASTERDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

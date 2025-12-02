@@ -292,7 +292,7 @@ OGRXLSXDataSource::~OGRXLSXDataSource()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr OGRXLSXDataSource::Close()
+CPLErr OGRXLSXDataSource::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
