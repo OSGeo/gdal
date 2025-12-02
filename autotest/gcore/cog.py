@@ -2282,3 +2282,25 @@ def test_cog_write_complex(tmp_vsimem):
     with gdal.Open(tmp_vsimem / "out.tif") as src_ds:
         assert src_ds.GetRasterBand(1).GetOverviewCount() == 1
         assert src_ds.GetRasterBand(1).GetOverview(0).Checksum() != 0
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_cog_create(tmp_vsimem):
+
+    with gdal.GetDriverByName("COG").Create(
+        tmp_vsimem / "out.tif", 1, 1, options=["COMPRESS=LZW", "PREDICTOR=YES"]
+    ) as ds:
+        assert ds.GetDriver().ShortName == "COG"
+        ds.GetRasterBand(1).Fill(1)
+
+    with gdal.Open(tmp_vsimem / "out.tif") as src_ds:
+        assert src_ds.GetRasterBand(1).Checksum() == 1
+        assert src_ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
+        assert src_ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
+        assert src_ds.GetMetadataItem("PREDICTOR", "IMAGE_STRUCTURE") == "2"
+
+    with pytest.raises(Exception, match="Attempt to create 0x0 dataset is illegal"):
+        gdal.GetDriverByName("COG").Create(tmp_vsimem / "out.tif", 0, 0)
