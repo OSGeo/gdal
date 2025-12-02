@@ -67,6 +67,9 @@ constexpr const char *GAAMDI_ALLOWED_FORMATS = "allowed_formats";
 /** Argument metadata item that applies to "output-format" argument */
 constexpr const char *GAAMDI_EXCLUDED_FORMATS = "excluded_formats";
 
+/** Argument metadata item that applies to "output-format" argument */
+constexpr const char *GAAMDI_EXTRA_FORMATS = "extra_formats";
+
 /** Name of the argument for an input dataset. */
 constexpr const char *GDAL_ARG_NAME_INPUT = "input";
 
