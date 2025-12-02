@@ -69,7 +69,8 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
         [this, &arg]()
         {
             // Validate it's not empty
-            if ((m_bbox[0] >= m_bbox[2]) || (m_bbox[1] >= m_bbox[3]))
+            const std::vector<double> &bbox = arg.Get<std::vector<double>>();
+            if ((bbox[0] >= bbox[2]) || (bbox[1] >= bbox[3]))
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
                             "Invalid bounding box specified");
