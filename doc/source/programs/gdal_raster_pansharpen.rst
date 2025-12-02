@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    Performan a pansharpen operation.
+    Perform a pansharpen operation.
 
 .. Index:: gdal raster pansharpen
 
