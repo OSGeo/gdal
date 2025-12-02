@@ -2968,6 +2968,8 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
 
     CPLFree(padfX);
     CPLFree(pabSuccess);
+    // Should we check if dfMinXOut < dfMaxXOut && dfMinYOut < dfMaxYOut before returning true?
+    // This happened when testing issue #13498
     return true;
 }
 

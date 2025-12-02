@@ -62,7 +62,25 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
         .SetMetaVar("<width>,<height>")
         .SetMutualExclusionGroup("resolution-size");
 
-    AddBBOXArg(&m_bbox, _("Target bounding box (in destination CRS units)"));
+    auto &arg = AddBBOXArg(&m_bbox,
+                           _("Target bounding box (in destination CRS units)"));
+
+    arg.AddValidationAction(
+        [this, &arg]()
+        {
+            // Validate it's not empty
+            if ((m_bbox[0] >= m_bbox[2]) || (m_bbox[1] >= m_bbox[3]))
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Invalid bounding box specified");
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        });
+
     AddArg("bbox-crs", 0, _("CRS of target bounding box"), &m_bboxCrs)
         .SetIsCRSArg()
         .AddHiddenAlias("bbox_srs");
