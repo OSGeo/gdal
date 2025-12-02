@@ -44,7 +44,7 @@ class GenBinDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(GenBinDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     GenBinDataset();
@@ -213,7 +213,7 @@ GenBinDataset::~GenBinDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr GenBinDataset::Close()
+CPLErr GenBinDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

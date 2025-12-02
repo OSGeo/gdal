@@ -320,7 +320,7 @@ class OGRGeoJSONDataSource final : public GDALDataset
 
     CPLErr FlushCache(bool bAtClosing) override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     // Analyze the OGR_SCHEMA open options and apply changes to the feature definition, return false in case of a critical error
     bool DealWithOgrSchemaOpenOption(const GDALOpenInfo *poOpenInfo);

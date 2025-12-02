@@ -94,7 +94,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
 /*                                 Close()                              */
 /************************************************************************/
 
-CPLErr OGRGMLDataSource::Close()
+CPLErr OGRGMLDataSource::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

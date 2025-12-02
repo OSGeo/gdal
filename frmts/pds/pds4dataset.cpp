@@ -640,7 +640,7 @@ PDS4Dataset::~PDS4Dataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr PDS4Dataset::Close()
+CPLErr PDS4Dataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

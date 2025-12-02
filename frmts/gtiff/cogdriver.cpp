@@ -1440,7 +1440,13 @@ class COGProxyDataset final : public GDALProxyDataset
 
     ~COGProxyDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc pfnProgress = nullptr,
+                 void *pProgressData = nullptr) override;
+
+    bool GetCloseReportsProgress() const override
+    {
+        return true;
+    }
 
     GDALDriver *GetDriver() override
     {
@@ -1475,21 +1481,18 @@ COGProxyDataset::~COGProxyDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr COGProxyDataset::Close()
+CPLErr COGProxyDataset::Close(GDALProgressFunc pfnProgress, void *pProgressData)
 {
+    CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        CPLErr eErr = CE_None;
-
         if (IsMarkedSuppressOnClose())
         {
             m_poGTiffTmpDS->MarkSuppressOnClose();
         }
-        else if (!GDALCOGCreator().Create(m_osFilename.c_str(),
-                                          m_poGTiffTmpDS.get(),
-                                          m_aosOptions.List(),
-                                          /* pfnProgress = */ nullptr,
-                                          /* pProgressData = */ nullptr))
+        else if (!GDALCOGCreator().Create(
+                     m_osFilename.c_str(), m_poGTiffTmpDS.get(),
+                     m_aosOptions.List(), pfnProgress, pProgressData))
 
         {
             eErr = CE_Failure;
@@ -1504,7 +1507,7 @@ CPLErr COGProxyDataset::Close()
 
         eErr = GDAL::Combine(eErr, GDALDataset::Close());
     }
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/

@@ -800,7 +800,7 @@ JP2OPJLikeDataset<CODEC, BASE>::~JP2OPJLikeDataset()
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
-CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close()
+CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

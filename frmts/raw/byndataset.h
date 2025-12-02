@@ -198,7 +198,7 @@ class BYNDataset final : public RawDataset
 
     static void buffer2header(const GByte *pabyBuf, BYNHeader *pohHeader);
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     BYNDataset();

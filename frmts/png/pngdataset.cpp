@@ -336,7 +336,7 @@ PNGDataset::~PNGDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr PNGDataset::Close()
+CPLErr PNGDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
 

@@ -51,7 +51,8 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
                               GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc, void *) override;
+    bool GetCloseReportsProgress() const override;
 
     char **GetMetadataDomainList() override;
     char **GetMetadata(const char *pszDomain) override;

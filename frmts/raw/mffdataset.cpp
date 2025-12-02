@@ -51,7 +51,7 @@ class MFFDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(MFFDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     MFFDataset();
@@ -247,7 +247,7 @@ MFFDataset::~MFFDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr MFFDataset::Close()
+CPLErr MFFDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

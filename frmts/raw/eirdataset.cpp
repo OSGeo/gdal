@@ -43,7 +43,7 @@ class EIRDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(EIRDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     EIRDataset();
@@ -83,7 +83,7 @@ EIRDataset::~EIRDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr EIRDataset::Close()
+CPLErr EIRDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

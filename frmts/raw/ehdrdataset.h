@@ -78,7 +78,7 @@ class EHdrDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(EHdrDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     EHdrDataset();

@@ -70,7 +70,7 @@ class GDALAVIFDataset final : public GDALPamDataset
 
     ~GDALAVIFDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     static GDALPamDataset *OpenStaticPAM(GDALOpenInfo *poOpenInfo);
 
@@ -162,7 +162,7 @@ GDALAVIFDataset::~GDALAVIFDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr GDALAVIFDataset::Close()
+CPLErr GDALAVIFDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
 

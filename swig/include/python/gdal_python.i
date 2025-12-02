@@ -2191,9 +2191,9 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 %}
 
 %feature("shadow") Close %{
-    def Close(self, *args):
+    def Close(self, callback=None, callback_data=None):
         r"""
-        Close(Dataset self) -> CPLErr
+        Close(Dataset self, callback=Callable|None, callback_data=any|None) -> CPLErr
 
         Closes opened dataset and releases allocated resources.
 
@@ -2208,17 +2208,28 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         In most cases, it is preferable to open or create a dataset
         using a context manager instead of calling :py:meth:`Close`
         directly.
+
+        This function may report progress if a progress
+        callback if provided and if the dataset returns True for
+        GetCloseReportsProgress()
+
+        Parameters
+        ----------
+        callback: Callable|None
+            Callable that accepts (pct: float, message: str, user_data) and returns bool
+        callback_data: any|None
+            User data to pass to the callback
         """
 
         self._invalidate_children()
         if self.GetRefCount() == 1 and self.thisown:
             try:
-                return _gdal.Dataset_Close(self, *args)
+                return _gdal.Dataset_Close(self, callback, callback_data)
             finally:
                 self.thisown = 0
                 self.this = None
         else:
-            return _gdal.Dataset__RunCloseWithoutDestroying(self, *args)
+            return _gdal.Dataset__RunCloseWithoutDestroying(self, callback, callback_data)
 %}
 
 %feature("shadow") ExecuteSQL %{

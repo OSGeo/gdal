@@ -991,7 +991,7 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr GDALGeoPackageDataset::Close()
+CPLErr GDALGeoPackageDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

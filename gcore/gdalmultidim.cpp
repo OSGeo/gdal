@@ -8782,7 +8782,7 @@ class GDALDatasetFromArray final : public GDALPamDataset
 
     ~GDALDatasetFromArray() override;
 
-    CPLErr Close() override
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override
     {
         CPLErr eErr = CE_None;
         if (nOpenFlags != OPEN_FLAGS_CLOSED)
