@@ -3078,6 +3078,10 @@ int GDALGenImgProjTransform(void *pTransformArgIn, int bDstToSrc,
                             int nPointCount, double *padfX, double *padfY,
                             double *padfZ, int *panSuccess)
 {
+    // Sanity check (see issue GH #13498)
+    if (nullptr == pTransformArgIn)
+        return FALSE;
+
     GDALGenImgProjTransformInfo *psInfo =
         static_cast<GDALGenImgProjTransformInfo *>(pTransformArgIn);
 
