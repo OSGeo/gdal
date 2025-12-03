@@ -738,7 +738,12 @@ OGRErr OGRGeoJSONSeqLayer::ICreateFeature(OGRFeature *poFeature)
         m_oWriteOptions);
     CPLAssert(nullptr != poObj);
 
-    const char *pszJson = json_object_to_json_string(poObj);
+    const char *pszJson = json_object_to_json_string_ext(
+        poObj, JSON_C_TO_STRING_PLAIN
+#ifdef JSON_C_TO_STRING_NOSLASHESCAPE
+                   | JSON_C_TO_STRING_NOSLASHESCAPE
+#endif
+    );
 
     char chEOL = '\n';
     OGRErr eErr = OGRERR_NONE;
