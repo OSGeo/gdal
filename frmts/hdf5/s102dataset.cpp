@@ -268,7 +268,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
                                        coverageName.c_str()));
                         std::string verticalDatum;
                         const char *pszValue =
-                            mo.GetMetadataItem(S100_VERTICAL_DATUM_MEANING);
+                            mo.GetMetadataItem(S100_VERTICAL_DATUM_NAME);
                         if (pszValue)
                         {
                             verticalDatum = ", vertical datum ";
@@ -280,16 +280,6 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
                                 verticalDatum += " (";
                                 verticalDatum += pszValue;
                                 verticalDatum += ')';
-                            }
-                        }
-                        else
-                        {
-                            pszValue =
-                                mo.GetMetadataItem(S100_VERTICAL_DATUM_NAME);
-                            if (pszValue)
-                            {
-                                verticalDatum = ", vertical datum ";
-                                verticalDatum += pszValue;
                             }
                         }
                         aosSubDSList.SetNameValue(

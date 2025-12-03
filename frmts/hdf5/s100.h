@@ -45,6 +45,10 @@ class S100BaseDataset CPL_NON_FINAL : public GDALPamDataset
 
     bool Init();
 
+    void SetMetadataForDataDynamicity(const GDALAttribute *poAttr);
+    void SetMetadataForCommonPointRule(const GDALAttribute *poAttr);
+    void SetMetadataForInterpolationType(const GDALAttribute *poAttr);
+
   public:
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -164,11 +168,12 @@ bool S100GetDimensions(
 bool S100GetGeoTransform(const GDALGroup *poGroup, GDALGeoTransform &gt,
                          bool bNorthUp);
 
-constexpr const char *S100_VERTICAL_DATUM_MEANING = "VERTICAL_DATUM_MEANING";
-constexpr const char *S100_VERTICAL_DATUM_ABBREV = "VERTICAL_DATUM_ABBREV";
 constexpr const char *S100_VERTICAL_DATUM_NAME = "VERTICAL_DATUM_NAME";
+constexpr const char *S100_VERTICAL_DATUM_ABBREV = "VERTICAL_DATUM_ABBREV";
+constexpr const char *S100_VERTICAL_DATUM_EPSG_CODE =
+    "VERTICAL_DATUM_EPSG_CODE";
 
-int S100GetVerticalDatumCodeFromCodeMeaningOrAbbrev(const char *pszStr);
+int S100GetVerticalDatumCodeFromNameOrAbbrev(const char *pszStr);
 void S100ReadVerticalDatum(GDALMajorObject *poMO, const GDALGroup *poGroup);
 
 std::string S100ReadMetadata(GDALDataset *poDS, const std::string &osFilename,

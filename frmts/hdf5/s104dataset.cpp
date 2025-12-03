@@ -165,10 +165,10 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
         const int nVerticalCS = poVerticalCS->ReadAsInt();
         if (nVerticalCS == 6498)
             poDS->GDALDataset::SetMetadataItem(
-                "VERTICAL_CS_MEANING", "depth, meters, orientation down");
+                "VERTICAL_CS_DEFINITION", "depth, meters, orientation down");
         else if (nVerticalCS == 6499)
             poDS->GDALDataset::SetMetadataItem(
-                "VERTICAL_CS_MEANING", "height, meters, orientation up");
+                "VERTICAL_CS_DEFINITION", "height, meters, orientation up");
 
         poDS->GDALDataset::SetMetadataItem("verticalCS",
                                            std::to_string(nVerticalCS).c_str());
@@ -202,7 +202,7 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
     for (const char *pszAttrName :
          {"methodWaterLevelProduct", "minDatasetHeight", "maxDatasetHeight",
           "horizontalPositionUncertainty", "verticalUncertainty",
-          "timeUncertainty", "commonPointRule"})
+          "timeUncertainty", "commonPointRule", "interpolationType"})
     {
         auto poAttr = poWaterLevel->GetAttribute(pszAttrName);
         if (poAttr)
@@ -213,6 +213,17 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
                 poDS->GDALDataset::SetMetadataItem(pszAttrName, pszVal);
             }
         }
+    }
+
+    if (auto poCommonPointRule = poWaterLevel->GetAttribute("commonPointRule"))
+    {
+        poDS->SetMetadataForCommonPointRule(poCommonPointRule.get());
+    }
+
+    if (auto poInterpolationType =
+            poWaterLevel->GetAttribute("interpolationType"))
+    {
+        poDS->SetMetadataForInterpolationType(poInterpolationType.get());
     }
 
     int nNumInstances = 1;
@@ -257,7 +268,7 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
 
                         std::string verticalDatum;
                         const char *pszValue =
-                            mo.GetMetadataItem(S100_VERTICAL_DATUM_MEANING);
+                            mo.GetMetadataItem(S100_VERTICAL_DATUM_NAME);
                         if (pszValue)
                         {
                             verticalDatum = ", vertical datum ";
@@ -269,16 +280,6 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
                                 verticalDatum += " (";
                                 verticalDatum += pszValue;
                                 verticalDatum += ')';
-                            }
-                        }
-                        else
-                        {
-                            pszValue =
-                                mo.GetMetadataItem(S100_VERTICAL_DATUM_NAME);
-                            if (pszValue)
-                            {
-                                verticalDatum = ", vertical datum ";
-                                verticalDatum += pszValue;
                             }
                         }
 
@@ -353,20 +354,7 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (auto poDataDynamicity =
             poFeatureInstance->GetAttribute("dataDynamicity"))
     {
-        if (poDataDynamicity->GetDataType().GetClass() == GEDTC_NUMERIC)
-        {
-            const int nVal = poDataDynamicity->ReadAsInt();
-            const std::map<int, const char *> oDataDynamicityMap = {
-                {1, "Observation"},
-                {2, "Astronomical prediction"},
-                {3, "Analysis or hybrid method"},
-                {5, "Hydrodynamic model forecast"},
-            };
-            const auto oIter = oDataDynamicityMap.find(nVal);
-            if (oIter != oDataDynamicityMap.end())
-                poDS->GDALDataset::SetMetadataItem("DATA_DYNAMICITY_MEANING",
-                                                   oIter->second);
-        }
+        poDS->SetMetadataForDataDynamicity(poDataDynamicity.get());
     }
 
     if (auto poStartSequence = poFeatureInstance->GetAttribute("startSequence"))
@@ -841,8 +829,7 @@ bool S104Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
             if (pszVerticalDatum)
             {
                 const int nVerticalDatum =
-                    S100GetVerticalDatumCodeFromCodeMeaningOrAbbrev(
-                        pszVerticalDatum);
+                    S100GetVerticalDatumCodeFromNameOrAbbrev(pszVerticalDatum);
                 if (nVerticalDatum != m_nVerticalDatum)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,

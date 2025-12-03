@@ -166,16 +166,55 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     const auto &poRootGroup = poDS->m_poRootGroup;
 
+    // Read additional metadata
+    for (const char *pszAttrName : {"depthTypeIndex"})
+    {
+        auto poAttr = poRootGroup->GetAttribute(pszAttrName);
+        if (poAttr)
+        {
+            const char *pszVal = poAttr->ReadAsString();
+            if (pszVal)
+            {
+                poDS->GDALDataset::SetMetadataItem(pszAttrName, pszVal);
+            }
+        }
+    }
+
+    if (const auto poDepthTypeIndex =
+            poRootGroup->GetAttribute("depthTypeIndex"))
+    {
+        if (poDepthTypeIndex->GetDataType().GetClass() == GEDTC_NUMERIC)
+        {
+            const int nDepthType = poDepthTypeIndex->ReadAsInt();
+            if (nDepthType == 1)
+            {
+                poDS->GDALDataset::SetMetadataItem("DEPTH_TYPE_INDEX_NAME",
+                                                   "heightOrDepth");
+                poDS->GDALDataset::SetMetadataItem(
+                    "DEPTH_TYPE_INDEX_DEFINITION", "Height or depth");
+            }
+            else if (nDepthType == 2)
+            {
+                poDS->GDALDataset::SetMetadataItem("DEPTH_TYPE_INDEX_NAME",
+                                                   "layerAverage");
+                poDS->GDALDataset::SetMetadataItem(
+                    "DEPTH_TYPE_INDEX_DEFINITION", "Layer average");
+            }
+            poDS->GDALDataset::SetMetadataItem(
+                "depthTypeIndex", std::to_string(nDepthType).c_str());
+        }
+    }
+
     auto poVerticalCS = poRootGroup->GetAttribute("verticalCS");
     if (poVerticalCS && poVerticalCS->GetDataType().GetClass() == GEDTC_NUMERIC)
     {
         const int nVerticalCS = poVerticalCS->ReadAsInt();
         if (nVerticalCS == 6498)
             poDS->GDALDataset::SetMetadataItem(
-                "VERTICAL_CS_MEANING", "depth, meters, orientation down");
+                "VERTICAL_CS_DEFINITION", "depth, meters, orientation down");
         else if (nVerticalCS == 6499)
             poDS->GDALDataset::SetMetadataItem(
-                "VERTICAL_CS_MEANING", "height, meters, orientation up");
+                "VERTICAL_CS_DEFINITION", "height, meters, orientation up");
 
         poDS->GDALDataset::SetMetadataItem("verticalCS",
                                            std::to_string(nVerticalCS).c_str());
@@ -210,7 +249,7 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
     // Read additional metadata
     for (const char *pszAttrName :
          {"methodCurrentsProduct", "minDatasetCurrentSpeed",
-          "maxDatasetCurrentSpeed"})
+          "maxDatasetCurrentSpeed", "commonPointRule", "interpolationType"})
     {
         auto poAttr = poSurfaceCurrent->GetAttribute(pszAttrName);
         if (poAttr)
@@ -221,6 +260,18 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
                 poDS->GDALDataset::SetMetadataItem(pszAttrName, pszVal);
             }
         }
+    }
+
+    if (auto poCommonPointRule =
+            poSurfaceCurrent->GetAttribute("commonPointRule"))
+    {
+        poDS->SetMetadataForCommonPointRule(poCommonPointRule.get());
+    }
+
+    if (auto poInterpolationType =
+            poSurfaceCurrent->GetAttribute("interpolationType"))
+    {
+        poDS->SetMetadataForInterpolationType(poInterpolationType.get());
     }
 
     int nNumInstances = 1;
@@ -265,7 +316,7 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
 
                         std::string verticalDatum;
                         const char *pszValue =
-                            mo.GetMetadataItem(S100_VERTICAL_DATUM_MEANING);
+                            mo.GetMetadataItem(S100_VERTICAL_DATUM_NAME);
                         if (pszValue)
                         {
                             verticalDatum = ", vertical datum ";
@@ -277,16 +328,6 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
                                 verticalDatum += " (";
                                 verticalDatum += pszValue;
                                 verticalDatum += ')';
-                            }
-                        }
-                        else
-                        {
-                            pszValue =
-                                mo.GetMetadataItem(S100_VERTICAL_DATUM_NAME);
-                            if (pszValue)
-                            {
-                                verticalDatum = ", vertical datum ";
-                                verticalDatum += pszValue;
                             }
                         }
 
@@ -362,26 +403,7 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (auto poDataDynamicity =
             poFeatureInstance->GetAttribute("dataDynamicity"))
     {
-        if (poDataDynamicity->GetDataType().GetClass() == GEDTC_NUMERIC)
-        {
-            const int nVal = poDataDynamicity->ReadAsInt();
-            const std::map<int, const char *> oDataDynamicityMap = {
-                {1, "Observation"},
-                {2, "Astronomical prediction"},
-                {3, "Analysis or hybrid method"},
-                {4, "Hydrodynamic model hindcast"},
-                {5, "Hydrodynamic model forecast"},
-                {6, "Observed minus predicted"},
-                {7, "Observed minus analysis"},
-                {8, "Observed minus hindcast"},
-                {9, "Observed minus forecast"},
-                {10, "Forecast minus predicted"},
-            };
-            const auto oIter = oDataDynamicityMap.find(nVal);
-            if (oIter != oDataDynamicityMap.end())
-                poDS->GDALDataset::SetMetadataItem("DATA_DYNAMICITY_MEANING",
-                                                   oIter->second);
-        }
+        poDS->SetMetadataForDataDynamicity(poDataDynamicity.get());
     }
 
     // Read optional uncertainty array
@@ -908,8 +930,7 @@ bool S111Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
             if (pszVerticalDatum)
             {
                 const int nVerticalDatum =
-                    S100GetVerticalDatumCodeFromCodeMeaningOrAbbrev(
-                        pszVerticalDatum);
+                    S100GetVerticalDatumCodeFromNameOrAbbrev(pszVerticalDatum);
                 if (nVerticalDatum != m_nVerticalDatum)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,

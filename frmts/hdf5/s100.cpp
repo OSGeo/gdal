@@ -799,6 +799,136 @@ bool S100GetDimensions(
 }
 
 /************************************************************************/
+/*                     SetMetadataForDataDynamicity()                   */
+/************************************************************************/
+
+void S100BaseDataset::SetMetadataForDataDynamicity(const GDALAttribute *poAttr)
+{
+    if (poAttr && poAttr->GetDataType().GetClass() == GEDTC_NUMERIC)
+    {
+        const int nVal = poAttr->ReadAsInt();
+        const std::map<int, std::pair<const char *, const char *>> map = {
+            {1,
+             {"observation", "Values from in-situ sensor(s); may be quality "
+                             "controlled and stored after collection"}},
+            {2,
+             {"astronomicalPrediction",
+              "Values computed using harmonic analysis or other proven method "
+              "of tidal analysis"}},
+            {3,
+             {"analysisOrHybrid",
+              "Values calculated by statistical or other indirect methods, or "
+              "a combination of methods"}},
+            {3,
+             {"hydrodynamicHindcast",
+              "Values calculated from a two- or three-dimensional dynamic "
+              "simulation of past conditions using only observed data for "
+              "boundary forcing, via statistical method or combination"}},
+            {5,
+             {"hydrodynamicForecast",
+              "Values calculated from a two- or three-dimensional dynamic "
+              "simulation of future conditions using predicted data for "
+              "boundary forcing, via statistical method or combination"}},
+            {6,
+             {"observedMinusPredicted",
+              "Values computed as observed minus predicted values"}},
+            {7,
+             {"observedMinusAnalysis",
+              "Values computed as observed minus analysis values"}},
+            {8,
+             {"observedMinusHindcast",
+              "Values computed as observed minus hindcast values"}},
+            {9,
+             {"observedMinusForecast",
+              "Values computed as observed minus forecast values"}},
+            {10,
+             {"forecastMinusPredicted",
+              "Values computed as forecast minus predicted values"}},
+        };
+        const auto oIter = map.find(nVal);
+        if (oIter != map.end())
+        {
+            GDALDataset::SetMetadataItem("DATA_DYNAMICITY_NAME",
+                                         oIter->second.first);
+            GDALDataset::SetMetadataItem("DATA_DYNAMICITY_DEFINITION",
+                                         oIter->second.second);
+        }
+    }
+}
+
+/************************************************************************/
+/*                     SetMetadataForCommonPointRule()                  */
+/************************************************************************/
+
+void S100BaseDataset::SetMetadataForCommonPointRule(const GDALAttribute *poAttr)
+{
+    if (poAttr && poAttr->GetDataType().GetClass() == GEDTC_NUMERIC)
+    {
+        const int nVal = poAttr->ReadAsInt();
+        const std::map<int, std::pair<const char *, const char *>> map = {
+            {1, {"average", "return the mean of the attribute values"}},
+            {2, {"low", "use the least of the attribute values"}},
+            {3, {"high", "use the greatest of the attribute values"}},
+            {4,
+             {"all", "return all the attribute values that can be determined "
+                     "for the position"}},
+        };
+        const auto oIter = map.find(nVal);
+        if (oIter != map.end())
+        {
+            GDALDataset::SetMetadataItem("COMMON_POINT_RULE_NAME",
+                                         oIter->second.first);
+            GDALDataset::SetMetadataItem("COMMON_POINT_RULE_DEFINITION",
+                                         oIter->second.second);
+        }
+    }
+}
+
+/************************************************************************/
+/*                    SetMetadataForInterpolationType()                 */
+/************************************************************************/
+
+void S100BaseDataset::SetMetadataForInterpolationType(
+    const GDALAttribute *poAttr)
+{
+    if (poAttr && poAttr->GetDataType().GetClass() == GEDTC_NUMERIC)
+    {
+        const int nVal = poAttr->ReadAsInt();
+        const std::map<int, std::pair<const char *, const char *>> map = {
+            {1,
+             {"nearestneighbor",
+              "Assign the feature attribute value associated with the nearest "
+              "domain object in the domain of the coverage"}},
+            {5,
+             {"bilinear", "Assign a value computed by using a bilinear "
+                          "function of position within the grid cell"}},
+            {6,
+             {"biquadratic", "Assign a value computed by using a biquadratic "
+                             "function of position within the grid cell"}},
+            {7,
+             {"bicubic", "Assign a value computed by using a bicubic function "
+                         "of position within the grid cell"}},
+            {8,
+             {"lostarea", "Assign a value computed by using the lost area "
+                          "method described in ISO 19123"}},
+            {9,
+             {"barycentric", "Assign a value computed by using the barycentric "
+                             "method described in ISO 19123"}},
+            {10,
+             {"discrete", "No interpolation method applies to the coverage"}},
+        };
+        const auto oIter = map.find(nVal);
+        if (oIter != map.end())
+        {
+            GDALDataset::SetMetadataItem("INTERPOLATION_TYPE_NAME",
+                                         oIter->second.first);
+            GDALDataset::SetMetadataItem("INTERPOLATION_TYPE_DEFINITION",
+                                         oIter->second.second);
+        }
+    }
+}
+
+/************************************************************************/
 /*                         gasVerticalDatums                            */
 /************************************************************************/
 
@@ -807,56 +937,131 @@ bool S100GetDimensions(
 static const struct
 {
     int nCode;
-    const char *pszMeaning;
+    const char *pszName;
     const char *pszAbbrev;
+    const char *pszDefinition;
 } gasVerticalDatums[] = {
-    {1, "meanLowWaterSprings", "MLWS"},
-    {2, "meanLowerLowWaterSprings", nullptr},
-    {3, "meanSeaLevel", "MSL"},
-    {4, "lowestLowWater", nullptr},
-    {5, "meanLowWater", "MLW"},
-    {6, "lowestLowWaterSprings", nullptr},
-    {7, "approximateMeanLowWaterSprings", nullptr},
-    {8, "indianSpringLowWater", nullptr},
-    {9, "lowWaterSprings", nullptr},
-    {10, "approximateLowestAstronomicalTide", nullptr},
-    {11, "nearlyLowestLowWater", nullptr},
-    {12, "meanLowerLowWater", "MLLW"},
-    {13, "lowWater", "LW"},
-    {14, "approximateMeanLowWater", nullptr},
-    {15, "approximateMeanLowerLowWater", nullptr},
-    {16, "meanHighWater", "MHW"},
-    {17, "meanHighWaterSprings", "MHWS"},
-    {18, "highWater", "HW"},
-    {19, "approximateMeanSeaLevel", nullptr},
-    {20, "highWaterSprings", nullptr},
-    {21, "meanHigherHighWater", "MHHW"},
-    {22, "equinoctialSpringLowWater", nullptr},
-    {23, "lowestAstronomicalTide", "LAT"},
-    {24, "localDatum", nullptr},
-    {25, "internationalGreatLakesDatum1985", nullptr},
-    {26, "meanWaterLevel", nullptr},
-    {27, "lowerLowWaterLargeTide", nullptr},
-    {28, "higherHighWaterLargeTide", nullptr},
-    {29, "nearlyHighestHighWater", nullptr},
-    {30, "highestAstronomicalTide", "HAT"},
-    {44, "balticSeaChartDatum2000", nullptr},
-    {46, "internationalGreatLakesDatum2020", nullptr},
-    {47, "seaFloor", nullptr},
-    {48, "seaSurface", nullptr},
-    {49, "hydrographicZero", nullptr},
+    {1, "meanLowWaterSprings", "MLWS",
+     "The average height of the low waters of spring tides. This level is used "
+     "as a tidal datum in some areas. Also called spring low water."},
+    {2, "meanLowerLowWaterSprings", nullptr,
+     "The average height of lower low water springs at a place"},
+    {3, "meanSeaLevel", "MSL",
+     "The average height of the surface of the sea at a tide station for all "
+     "stages of the tide over a 19-year period, usually determined from hourly "
+     "height readings measured from a fixed predetermined reference level."},
+    {4, "lowestLowWater", nullptr,
+     "An arbitrary level conforming to the lowest tide observed at a place, or "
+     "some what lower."},
+    {5, "meanLowWater", "MLW",
+     "The average height of all low waters at a place over a 19-year period."},
+    {6, "lowestLowWaterSprings", nullptr,
+     "An arbitrary level conforming to the lowest water level observed at a "
+     "place at spring tides during a period of time shorter than 19 years."},
+    {7, "approximateMeanLowWaterSprings", nullptr,
+     "An arbitrary level, usually within 0.3m from that of Mean Low Water "
+     "Springs (MLWS)."},
+    {8, "indianSpringLowWater", "ISLW",
+     "An arbitrary tidal datum approximating the level of the mean of the "
+     "lower low water at spring tides. It was first used in waters surrounding "
+     "India."},
+    {9, "lowWaterSprings", nullptr,
+     "An arbitrary level, approximating that of mean low water springs "
+     "(MLWS)."},
+    {10, "approximateLowestAstronomicalTide", nullptr,
+     "An arbitrary level, usually within 0.3m from that of Lowest Astronomical "
+     "Tide (LAT)."},
+    {11, "nearlyLowestLowWater", nullptr,
+     "An arbitrary level approximating the lowest water level observed at a "
+     "place, usually equivalent to the Indian Spring Low Water (ISLW)."},
+    {12, "meanLowerLowWater", "MLLW",
+     "The average height of the lower low waters at a place over a 19-year "
+     "period."},
+    {13, "lowWater", "LW",
+     "The lowest level reached at a place by the water surface in one "
+     "oscillation. Also called low tide."},
+    {14, "approximateMeanLowWater", nullptr,
+     "An arbitrary level, usually within 0.3m from that of Mean Low Water "
+     "(MLW)."},
+    {15, "approximateMeanLowerLowWater", nullptr,
+     "An arbitrary level, usually within 0.3m from that of Mean Lower Low "
+     "Water (MLLW)."},
+    {16, "meanHighWater", "MHW",
+     "The average height of all high waters at a place over a 19-year period."},
+    {17, "meanHighWaterSprings", "MHWS",
+     "The average height of the high waters of spring tides. Also called "
+     "spring high water."},
+    {18, "highWater", "HW",
+     "The highest level reached at a place by the water surface in one "
+     "oscillation."},
+    {19, "approximateMeanSeaLevel", nullptr,
+     "An arbitrary level, usually within 0.3m from that of Mean Sea Level "
+     "(MSL)."},
+    {20, "highWaterSprings", nullptr,
+     "An arbitrary level, approximating that of mean high water springs "
+     "(MHWS)."},
+    {21, "meanHigherHighWater", "MHHW",
+     "The average height of higher high waters at a place over a 19-year "
+     "period."},
+    {22, "equinoctialSpringLowWater", nullptr,
+     "The level of low water springs near the time of an equinox."},
+    {23, "lowestAstronomicalTide", "LAT",
+     "The lowest tide level which can be predicted to occur under average "
+     "meteorological conditions and under any combination of astronomical "
+     "conditions."},
+    {24, "localDatum", nullptr,
+     "An arbitrary datum defined by a local harbour authority, from which "
+     "levels and tidal heights are measured by this authority."},
+    {25, "internationalGreatLakesDatum1985", nullptr,
+     "A vertical reference system with its zero based on the mean water level "
+     "at Rimouski/Pointe-au-Pere, Quebec, over the period 1970 to 1988."},
+    {26, "meanWaterLevel", nullptr,
+     "The average of all hourly water levels over the available period of "
+     "record."},
+    {27, "lowerLowWaterLargeTide", nullptr,
+     "The average of the lowest low waters, one from each of 19 years of "
+     "observations."},
+    {28, "higherHighWaterLargeTide", nullptr,
+     "The average of the highest high waters, one from each of 19 years of "
+     "observations."},
+    {29, "nearlyHighestHighWater", nullptr,
+     "An arbitrary level approximating the highest water level observed at a "
+     "place, usually equivalent to the high water springs."},
+    {30, "highestAstronomicalTide", "HAT",
+     "The highest tidal level which can be predicted to occur under average "
+     "meteorological conditions and under any combination of astronomical "
+     "conditions."},
+    {44, "balticSeaChartDatum2000", nullptr,
+     "The datum refers to each Baltic country's realization of the European "
+     "Vertical Reference System (EVRS) with land-uplift epoch 2000, which is "
+     "connected to the Normaal Amsterdams Peil (NAP)"},
+    {46, "internationalGreatLakesDatum2020", nullptr,
+     "The 2020 update to the International Great Lakes Datum, the official "
+     "reference system used to measure water level heights in the Great Lakes, "
+     "connecting channels, and the St. Lawrence River system."},
+    {47, "seaFloor", nullptr,
+     "The bottom of the ocean and seas where there is a generally smooth "
+     "gentle gradient. Also referred to as sea bed (sometimes seabed or "
+     "sea-bed), and sea bottom."},
+    {48, "seaSurface", nullptr,
+     "A two-dimensional (in the horizontal plane) field representing the "
+     "air-sea interface, with high-frequency fluctuations such as wind waves "
+     "and swell, but not astronomical tides, filtered out"},
+    {49, "hydrographicZero", nullptr,
+     "A vertical reference near the lowest astronomical tide (LAT) below which "
+     "the sea level falls only very exceptionally"},
 };
 
 /************************************************************************/
-/*              S100GetVerticalDatumCodeFromCodeMeaningOrAbbrev()       */
+/*              S100GetVerticalDatumCodeFromNameOrAbbrev()              */
 /************************************************************************/
 
-int S100GetVerticalDatumCodeFromCodeMeaningOrAbbrev(const char *pszStr)
+int S100GetVerticalDatumCodeFromNameOrAbbrev(const char *pszStr)
 {
     const int nCode = atoi(pszStr);
     for (const auto &sEntry : gasVerticalDatums)
     {
-        if (sEntry.nCode == nCode || EQUAL(pszStr, sEntry.pszMeaning) ||
+        if (sEntry.nCode == nCode || EQUAL(pszStr, sEntry.pszName) ||
             (sEntry.pszAbbrev && EQUAL(pszStr, sEntry.pszAbbrev)))
         {
             return sEntry.nCode;
@@ -885,11 +1090,9 @@ void S100ReadVerticalDatum(GDALMajorObject *poMO, const GDALGroup *poGroup)
     if (poVerticalDatum &&
         poVerticalDatum->GetDataType().GetClass() == GEDTC_NUMERIC)
     {
-        poMO->GDALMajorObject::SetMetadataItem(S100_VERTICAL_DATUM_MEANING,
-                                               nullptr);
         poMO->GDALMajorObject::SetMetadataItem(S100_VERTICAL_DATUM_ABBREV,
                                                nullptr);
-        poMO->GDALMajorObject::SetMetadataItem("VERTICAL_DATUM_EPSG_CODE",
+        poMO->GDALMajorObject::SetMetadataItem(S100_VERTICAL_DATUM_EPSG_CODE,
                                                nullptr);
         poMO->GDALMajorObject::SetMetadataItem(S100_VERTICAL_DATUM_NAME,
                                                nullptr);
@@ -904,11 +1107,16 @@ void S100ReadVerticalDatum(GDALMajorObject *poMO, const GDALGroup *poGroup)
                 {
                     bFound = true;
                     poMO->GDALMajorObject::SetMetadataItem(
-                        S100_VERTICAL_DATUM_MEANING, sVerticalDatum.pszMeaning);
+                        S100_VERTICAL_DATUM_NAME, sVerticalDatum.pszName);
                     if (sVerticalDatum.pszAbbrev)
+                    {
                         poMO->GDALMajorObject::SetMetadataItem(
                             S100_VERTICAL_DATUM_ABBREV,
                             sVerticalDatum.pszAbbrev);
+                    }
+                    poMO->GDALMajorObject::SetMetadataItem(
+                        "VERTICAL_DATUM_DEFINITION",
+                        sVerticalDatum.pszDefinition);
                     break;
                 }
             }
@@ -924,8 +1132,8 @@ void S100ReadVerticalDatum(GDALMajorObject *poMO, const GDALGroup *poGroup)
             PJ *datum = proj_create_from_database(
                 OSRGetProjTLSContext(), "EPSG", CPLSPrintf("%d", nVal),
                 PJ_CATEGORY_DATUM, false, nullptr);
-            poMO->GDALMajorObject::SetMetadataItem("VERTICAL_DATUM_EPSG_CODE",
-                                                   CPLSPrintf("%d", nVal));
+            poMO->GDALMajorObject::SetMetadataItem(
+                S100_VERTICAL_DATUM_EPSG_CODE, CPLSPrintf("%d", nVal));
             if (datum)
             {
                 poMO->GDALMajorObject::SetMetadataItem(S100_VERTICAL_DATUM_NAME,
@@ -1113,10 +1321,10 @@ bool S100BaseWriter::BaseChecks(const char *pszDriverName, bool crsMustBeEPSG,
     const char *pszVerticalDatum =
         m_aosOptions.FetchNameValue("VERTICAL_DATUM");
     if (!pszVerticalDatum)
-        pszVerticalDatum = m_poSrcDS->GetMetadataItem("VERTICAL_DATUM_MEANING");
-    if (!pszVerticalDatum)
         pszVerticalDatum =
-            m_poSrcDS->GetMetadataItem("VERTICAL_DATUM_EPSG_CODE");
+            m_poSrcDS->GetMetadataItem(S100_VERTICAL_DATUM_EPSG_CODE);
+    if (!pszVerticalDatum)
+        pszVerticalDatum = m_poSrcDS->GetMetadataItem(S100_VERTICAL_DATUM_NAME);
     if (!pszVerticalDatum)
     {
         if (verticalDatumRequired)
@@ -1129,7 +1337,7 @@ bool S100BaseWriter::BaseChecks(const char *pszDriverName, bool crsMustBeEPSG,
     else
     {
         m_nVerticalDatum =
-            S100GetVerticalDatumCodeFromCodeMeaningOrAbbrev(pszVerticalDatum);
+            S100GetVerticalDatumCodeFromNameOrAbbrev(pszVerticalDatum);
         if (m_nVerticalDatum <= 0)
         {
             auto pjCtxt = OSRGetProjTLSContext();
