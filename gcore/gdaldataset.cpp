@@ -16,11 +16,13 @@
 #include <array>
 #include <cassert>
 #include <climits>
+#include <cmath>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <mutex>
 #include <new>
@@ -12123,4 +12125,678 @@ std::shared_ptr<GDALMDArray> GDALDataset::AsMDArray(CSLConstList papszOptions)
         return nullptr;
     }
     return GDALMDArrayFromDataset::Create(this, papszOptions);
+}
+
+/************************************************************************/
+/*              GDALDataset::GetInterBandCovarianceMatrix()             */
+/************************************************************************/
+
+/**
+ \brief Fetch or compute the covariance matrix between bands of this dataset.
+
+ The covariance indicates the level to which two bands vary together.
+
+ If we call \f$ v_i[y,x] \f$ the value of pixel at row=y and column=x for band i,
+ and \f$ mean_i \f$ the mean value of all pixels of band i, then
+
+ \f[
+    \mathrm{cov}[i,j] =
+    \frac{
+        \sum_{y,x} \left( v_i[y,x] - \mathrm{mean}_i \right)
+        \left( v_j[y,x] - \mathrm{mean}_j \right)
+    }{
+        \mathrm{pixel\_count} - \mathrm{nDeltaDegreeOfFreedom}
+    }
+ \f]
+
+ When there are no nodata values, \f$ pixel\_count = GetRasterXSize() * GetRasterYSize() \f$.
+ We can see that \f$ cov[i,j] = cov[j,i] \f$, and consequently the returned matrix
+ is symmetric.
+
+ A value of nDeltaDegreeOfFreedom=1 (the default) will return a unbiased estimate
+ if the pixels in bands are considered to be a sample of the whole population.
+ This is consistent with the default of
+ https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+ matrix is consistent with what can be obtained with
+
+ \verbatim embed:rst
+ .. code-block:: python
+
+     numpy.cov(
+        [ds.GetRasterBand(n + 1).ReadAsArray().ravel() for n in range(ds.RasterCount)]
+     )
+ \endverbatim
+
+ Otherwise a value of nDeltaDegreeOfFreedom=0 can be used if they are considered
+ to be the whole population.
+
+ If STATISTICS_COVARIANCES metadata items are available in band metadata,
+ this method uses them.
+ Otherwise, if bForce is true, ComputeInterBandCovarianceMatrix() is called.
+ Otherwise, if bForce is false, an empty vector is returned
+
+ @param bApproxOK Whether it is acceptable to use a subsample of values in
+                  ComputeInterBandCovarianceMatrix().
+                  Defaults to false.
+ @param bForce Whether ComputeInterBandCovarianceMatrix() should be called
+               when the STATISTICS_COVARIANCES metadata items are missing.
+               Defaults to false.
+ @param bWriteIntoMetadata Whether ComputeInterBandCovarianceMatrix() must
+                           write STATISTICS_COVARIANCES band metadata items.
+                           Defaults to true.
+ @param nDeltaDegreeOfFreedom Correction term to subtract in the final
+                              averaging phase of the covariance computation.
+                              Defaults to 1.
+ @param pfnProgress a function to call to report progress, or NULL.
+ @param pProgressData application data to pass to the progress function.
+
+ @return a vector of GetRasterCount() * GetRasterCount() values if successful,
+         in row-major order, or an empty vector in case of failure
+
+ @since 3.13
+
+ @see ComputeInterBandCovarianceMatrix()
+ */
+
+std::vector<double> GDALDataset::GetInterBandCovarianceMatrix(
+    bool bApproxOK, bool bForce, bool bWriteIntoMetadata,
+    int nDeltaDegreeOfFreedom, GDALProgressFunc pfnProgress,
+    void *pProgressData)
+{
+    std::vector<double> res;
+    if (nBands == 0)
+        return res;
+    if constexpr (sizeof(size_t) < sizeof(uint64_t))
+    {
+        // Check that nBands * nBands will not overflow size_t
+        if (static_cast<uint32_t>(nBands) >
+            std::numeric_limits<uint16_t>::max())
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Not enough memory to store result");
+            return res;
+        }
+    }
+    try
+    {
+        res.resize(static_cast<size_t>(nBands) * nBands);
+    }
+    catch (const std::exception &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Not enough memory to store result");
+        return res;
+    }
+
+    if (GetInterBandCovarianceMatrix(res.data(), res.size(), bApproxOK, bForce,
+                                     bWriteIntoMetadata, nDeltaDegreeOfFreedom,
+                                     pfnProgress, pProgressData) != CE_None)
+    {
+        res.clear();
+    }
+    return res;
+}
+
+/************************************************************************/
+/*              GDALDataset::GetInterBandCovarianceMatrix()             */
+/************************************************************************/
+
+/**
+ \brief Fetch or compute the covariance matrix between bands of this dataset.
+
+ The covariance indicates the level to which two bands vary together.
+
+ If we call \f$ v_i[y,x] \f$ the value of pixel at row=y and column=x for band i,
+ and \f$ mean_i \f$ the mean value of all pixels of band i, then
+
+ \f[
+    \mathrm{cov}[i,j] =
+    \frac{
+        \sum_{y,x} \left( v_i[y,x] - \mathrm{mean}_i \right)
+        \left( v_j[y,x] - \mathrm{mean}_j \right)
+    }{
+        \mathrm{pixel\_count} - \mathrm{nDeltaDegreeOfFreedom}
+    }
+ \f]
+
+ When there are no nodata values, \f$ pixel\_count = GetRasterXSize() * GetRasterYSize() \f$.
+ We can see that \f$ cov[i,j] = cov[j,i] \f$, and consequently the returned matrix
+ is symmetric.
+
+ A value of nDeltaDegreeOfFreedom=1 (the default) will return a unbiased estimate
+ if the pixels in bands are considered to be a sample of the whole population.
+ This is consistent with the default of
+ https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+ matrix is consistent with what can be obtained with
+
+ \verbatim embed:rst
+ .. code-block:: python
+
+     numpy.cov(
+        [ds.GetRasterBand(n + 1).ReadAsArray().ravel() for n in range(ds.RasterCount)]
+     )
+ \endverbatim
+
+ Otherwise a value of nDeltaDegreeOfFreedom=0 can be used if they are considered
+ to be the whole population.
+
+ The caller must provide an already allocated array in padfCovMatrix of size
+ at least GetRasterCount() * GetRasterCount().
+
+ If STATISTICS_COVARIANCES metadata items are available in band metadata,
+ this method uses them.
+ Otherwise, if bForce is true, ComputeInterBandCovarianceMatrix() is called.
+ Otherwise, if bForce is false, an empty vector is returned
+
+ This is the same as the C function GDALDatasetGetInterBandCovarianceMatrix()
+
+ @param padfCovMatrix Pointer to an already allocated output array, of size at least
+                      GetRasterCount() * GetRasterCount().
+ @param nSize Number of elements in output array.
+ @param bApproxOK Whether it is acceptable to use a subsample of values in
+                  ComputeInterBandCovarianceMatrix().
+                  Defaults to false.
+ @param bForce Whether ComputeInterBandCovarianceMatrix() should be called
+               when the STATISTICS_COVARIANCES metadata items are missing.
+               Defaults to false.
+ @param bWriteIntoMetadata Whether ComputeInterBandCovarianceMatrix() must
+                           write STATISTICS_COVARIANCES band metadata items.
+                           Defaults to true.
+ @param nDeltaDegreeOfFreedom Correction term to subtract in the final
+                              averaging phase of the covariance computation.
+                              Defaults to 1.
+ @param pfnProgress a function to call to report progress, or NULL.
+ @param pProgressData application data to pass to the progress function.
+
+ @return CE_None if successful, CE_Warning if values are not available in
+         metadata and bForce is false, or CE_Failure in case of failure
+
+ @since 3.13
+
+ @see ComputeInterBandCovarianceMatrix()
+ */
+
+CPLErr GDALDataset::GetInterBandCovarianceMatrix(
+    double *padfCovMatrix, size_t nSize, bool bApproxOK, bool bForce,
+    bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    if (nSize < static_cast<uint64_t>(nBands) * nBands)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "GetInterBandCovarianceMatrix(): too small result matrix provided");
+        return CE_Failure;
+    }
+
+    bool bGotFromMD = true;
+    size_t resIdx = 0;
+    for (int i = 0; bGotFromMD && i < nBands; ++i)
+    {
+        const char *pszCov =
+            papoBands[i]->GetMetadataItem("STATISTICS_COVARIANCES");
+        bGotFromMD = pszCov != nullptr;
+        if (bGotFromMD)
+        {
+            const CPLStringList aosTokens(CSLTokenizeString2(pszCov, ",", 0));
+            bGotFromMD = aosTokens.size() == nBands;
+            if (bGotFromMD)
+            {
+                for (const char *pszCoeff : aosTokens)
+                    padfCovMatrix[resIdx++] = CPLAtof(pszCoeff);
+            }
+        }
+    }
+    if (bGotFromMD)
+        return CE_None;
+
+    if (!bForce)
+        return CE_Warning;
+    return ComputeInterBandCovarianceMatrix(
+        padfCovMatrix, nSize, bApproxOK, bWriteIntoMetadata,
+        nDeltaDegreeOfFreedom, pfnProgress, pProgressData);
+}
+
+/************************************************************************/
+/*                  GDALDatasetGetInterBandCovarianceMatrix()           */
+/************************************************************************/
+
+/**
+ \brief Fetch or compute the covariance matrix between bands of this dataset.
+
+ The covariance indicates the level to which two bands vary together.
+
+ If we call \f$ v_i[y,x] \f$ the value of pixel at row=y and column=x for band i,
+ and \f$ mean_i \f$ the mean value of all pixels of band i, then
+
+ \f[
+    \mathrm{cov}[i,j] =
+    \frac{
+        \sum_{y,x} \left( v_i[y,x] - \mathrm{mean}_i \right)
+        \left( v_j[y,x] - \mathrm{mean}_j \right)
+    }{
+        \mathrm{pixel\_count} - \mathrm{nDeltaDegreeOfFreedom}
+    }
+ \f]
+
+ When there are no nodata values, \f$ pixel\_count = GetRasterXSize() * GetRasterYSize() \f$.
+ We can see that \f$ cov[i,j] = cov[j,i] \f$, and consequently the returned matrix
+ is symmetric.
+
+ A value of nDeltaDegreeOfFreedom=1 (the default) will return a unbiased estimate
+ if the pixels in bands are considered to be a sample of the whole population.
+ This is consistent with the default of
+ https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+ matrix is consistent with what can be obtained with
+
+ \verbatim embed:rst
+ .. code-block:: python
+
+     numpy.cov(
+        [ds.GetRasterBand(n + 1).ReadAsArray().ravel() for n in range(ds.RasterCount)]
+     )
+ \endverbatim
+
+ Otherwise a value of nDeltaDegreeOfFreedom=0 can be used if they are considered
+ to be the whole population.
+
+ The caller must provide an already allocated array in padfCovMatrix of size
+ at least GetRasterCount() * GetRasterCount().
+
+ If STATISTICS_COVARIANCES metadata items are available in band metadata,
+ this method uses them.
+ Otherwise, if bForce is true, GDALDatasetComputeInterBandCovarianceMatrix() is called.
+ Otherwise, if bForce is false, an empty vector is returned
+
+ This is the same as the C++ method GDALDataset::GetInterBandCovarianceMatrix()
+
+ @param hDS Dataset handle.
+ @param padfCovMatrix Pointer to an already allocated output array, of size at least
+                      GetRasterCount() * GetRasterCount().
+ @param nSize Number of elements in output array.
+ @param bApproxOK Whether it is acceptable to use a subsample of values in
+                  GDALDatasetComputeInterBandCovarianceMatrix().
+                  Defaults to false.
+ @param bForce Whether GDALDatasetComputeInterBandCovarianceMatrix() should be called
+               when the STATISTICS_COVARIANCES metadata items are missing.
+               Defaults to false.
+ @param bWriteIntoMetadata Whether GDALDatasetComputeInterBandCovarianceMatrix() must
+                           write STATISTICS_COVARIANCES band metadata items.
+                           Defaults to true.
+ @param nDeltaDegreeOfFreedom Correction term to subtract in the final
+                              averaging phase of the covariance computation.
+                              Defaults to 1.
+ @param pfnProgress a function to call to report progress, or NULL.
+ @param pProgressData application data to pass to the progress function.
+
+ @return CE_None if successful, CE_Warning if values are not available in
+         metadata and bForce is false, or CE_Failure in case of failure
+
+ @since 3.13
+
+ @see GDALDatasetComputeInterBandCovarianceMatrix()
+ */
+CPLErr GDALDatasetGetInterBandCovarianceMatrix(
+    GDALDatasetH hDS, double *padfCovMatrix, size_t nSize, bool bApproxOK,
+    bool bForce, bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    VALIDATE_POINTER1(hDS, __func__, CE_Failure);
+    VALIDATE_POINTER1(padfCovMatrix, __func__, CE_Failure);
+    return GDALDataset::FromHandle(hDS)->GetInterBandCovarianceMatrix(
+        padfCovMatrix, nSize, bApproxOK, bForce, bWriteIntoMetadata,
+        nDeltaDegreeOfFreedom, pfnProgress, pProgressData);
+}
+
+/************************************************************************/
+/*              GDALDataset::ComputeInterBandCovarianceMatrix()         */
+/************************************************************************/
+
+/**
+ \brief Compute the covariance matrix between bands of this dataset.
+
+ The covariance indicates the level to which two bands vary together.
+
+ If we call \f$ v_i[y,x] \f$ the value of pixel at row=y and column=x for band i,
+ and \f$ mean_i \f$ the mean value of all pixels of band i, then
+
+ \f[
+    \mathrm{cov}[i,j] =
+    \frac{
+        \sum_{y,x} \left( v_i[y,x] - \mathrm{mean}_i \right)
+        \left( v_j[y,x] - \mathrm{mean}_j \right)
+    }{
+        \mathrm{pixel\_count} - \mathrm{nDeltaDegreeOfFreedom}
+    }
+ \f]
+
+ When there are no nodata values, \f$ pixel\_count = GetRasterXSize() * GetRasterYSize() \f$.
+ We can see that \f$ cov[i,j] = cov[j,i] \f$, and consequently the returned matrix
+ is symmetric.
+
+ A value of nDeltaDegreeOfFreedom=1 (the default) will return a unbiased estimate
+ if the pixels in bands are considered to be a sample of the whole population.
+ This is consistent with the default of
+ https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+ matrix is consistent with what can be obtained with
+
+ \verbatim embed:rst
+ .. code-block:: python
+
+     numpy.cov(
+        [ds.GetRasterBand(n + 1).ReadAsArray().ravel() for n in range(ds.RasterCount)]
+     )
+ \endverbatim
+
+ Otherwise a value of nDeltaDegreeOfFreedom=0 can be used if they are considered
+ to be the whole population.
+
+ This method recomputes the covariance matrix, even if STATISTICS_COVARIANCES
+ metadata items are available in bands. See GetInterBandCovarianceMatrix()
+ to use them.
+
+ @param bApproxOK Whether it is acceptable to use a subsample of values.
+                  Defaults to false.
+ @param bWriteIntoMetadata Whether this method must write
+                           STATISTICS_COVARIANCES band metadata items.
+                           Defaults to true.
+ @param nDeltaDegreeOfFreedom Correction term to subtract in the final
+                              averaging phase of the covariance computation.
+                              Defaults to 1.
+ @param pfnProgress a function to call to report progress, or NULL.
+ @param pProgressData application data to pass to the progress function.
+
+ @return a vector of GetRasterCount() * GetRasterCount() values if successful,
+         in row-major order, or an empty vector in case of failure
+
+ @since 3.13
+
+ @see GetInterBandCovarianceMatrix()
+ */
+std::vector<double> GDALDataset::ComputeInterBandCovarianceMatrix(
+    bool bApproxOK, bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    std::vector<double> res;
+    if (nBands == 0)
+        return res;
+    if constexpr (sizeof(size_t) < sizeof(uint64_t))
+    {
+        // Check that nBands * nBands will not overflow size_t
+        if (static_cast<uint32_t>(nBands) >
+            std::numeric_limits<uint16_t>::max())
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Not enough memory to store result");
+            return res;
+        }
+    }
+    try
+    {
+        res.resize(static_cast<size_t>(nBands) * nBands);
+    }
+    catch (const std::exception &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Not enough memory to store result");
+        return res;
+    }
+
+    if (ComputeInterBandCovarianceMatrix(
+            res.data(), res.size(), bApproxOK, bWriteIntoMetadata,
+            nDeltaDegreeOfFreedom, pfnProgress, pProgressData) != CE_None)
+        res.clear();
+    return res;
+}
+
+/************************************************************************/
+/*              GDALDataset::ComputeInterBandCovarianceMatrix()         */
+/************************************************************************/
+
+/**
+ \brief Compute the covariance matrix between bands of this dataset.
+
+ The covariance indicates the level to which two bands vary together.
+
+ If we call \f$ v_i[y,x] \f$ the value of pixel at row=y and column=x for band i,
+ and \f$ mean_i \f$ the mean value of all pixels of band i, then
+
+ \f[
+    \mathrm{cov}[i,j] =
+    \frac{
+        \sum_{y,x} \left( v_i[y,x] - \mathrm{mean}_i \right)
+        \left( v_j[y,x] - \mathrm{mean}_j \right)
+    }{
+        \mathrm{pixel\_count} - \mathrm{nDeltaDegreeOfFreedom}
+    }
+ \f]
+
+ When there are no nodata values, \f$ pixel\_count = GetRasterXSize() * GetRasterYSize() \f$.
+ We can see that \f$ cov[i,j] = cov[j,i] \f$, and consequently the returned matrix
+ is symmetric.
+
+ A value of nDeltaDegreeOfFreedom=1 (the default) will return a unbiased estimate
+ if the pixels in bands are considered to be a sample of the whole population.
+ This is consistent with the default of
+ https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+ matrix is consistent with what can be obtained with
+
+ \verbatim embed:rst
+ .. code-block:: python
+
+     numpy.cov(
+        [ds.GetRasterBand(n + 1).ReadAsArray().ravel() for n in range(ds.RasterCount)]
+     )
+ \endverbatim
+
+ Otherwise a value of nDeltaDegreeOfFreedom=0 can be used if they are considered
+ to be the whole population.
+
+ The caller must provide an already allocated array in padfCovMatrix of size
+ at least GetRasterCount() * GetRasterCount().
+
+ This method recomputes the covariance matrix, even if STATISTICS_COVARIANCES
+ metadata items are available in bands. See GetInterBandCovarianceMatrix()
+ to use them.
+
+ This method is the same as the C function GDALDatasetComputeInterBandCovarianceMatrix()
+
+ @param padfCovMatrix Pointer to an already allocated output array, of size at least
+                      GetRasterCount() * GetRasterCount().
+ @param nSize Number of elements in output array.
+ @param bApproxOK Whether it is acceptable to use a subsample of values.
+                  Defaults to false.
+ @param bWriteIntoMetadata Whether this method must write
+                           STATISTICS_COVARIANCES band metadata items.
+                           Defaults to true.
+ @param nDeltaDegreeOfFreedom Correction term to subtract in the final
+                              averaging phase of the covariance computation.
+                              Defaults to 1.
+ @param pfnProgress a function to call to report progress, or NULL.
+ @param pProgressData application data to pass to the progress function.
+
+ @return CE_None if successful, or CE_Failure in case of failure
+
+ @since 3.13
+
+ @see GetInterBandCovarianceMatrix()
+ */
+CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
+    double *padfCovMatrix, size_t nSize, bool bApproxOK,
+    bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    if (nSize < static_cast<uint64_t>(nBands) * nBands)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ComputeInterBandCovarianceMatrix(): too small result matrix "
+                 "provided");
+        return CE_Failure;
+    }
+
+    if (nBands == 0)
+        return CE_None;
+
+    if (!pfnProgress)
+        pfnProgress = GDALDummyProgress;
+
+    // The following number accounts for:
+    // - computation of mean for nBands bands
+    // - computation of half of the covariance matrix, as it is symmetric.
+    const double dfStepCount =
+        nBands + static_cast<double>(nBands) * (nBands + 1) / 2;
+
+    std::vector<double> adfBandMean(nBands, 0);
+    double dfStepCur = 0;
+    for (int i = 0; i < nBands; ++i, ++dfStepCur)
+    {
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+            pScaledProgressArg(
+                GDALCreateScaledProgress(dfStepCur / dfStepCount,
+                                         (dfStepCur + 1) / dfStepCount,
+                                         pfnProgress, pProgressData),
+                GDALDestroyScaledProgress);
+
+        if (papoBands[i]->ComputeStatistics(
+                bApproxOK, nullptr, nullptr, &adfBandMean[i], nullptr,
+                GDALScaledProgress, pScaledProgressArg.get()) != CE_None)
+        {
+            return CE_Failure;
+        }
+    }
+
+    std::vector<double> adfTempValues;
+    for (int i = 0; i < nBands; ++i)
+    {
+        // The covariance matrix is symmetric. So start at i
+        for (int j = i; j < nBands; ++j, ++dfStepCur)
+        {
+            std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+                pScaledProgressArg(
+                    GDALCreateScaledProgress(dfStepCur / dfStepCount,
+                                             (dfStepCur + 1) / dfStepCount,
+                                             pfnProgress, pProgressData),
+                    GDALDestroyScaledProgress);
+
+            const auto nLastErrorCount = CPLGetErrorCounter();
+            const double dfCovariance =
+                papoBands[i]->ComputeInterBandCovariance(
+                    papoBands[j], bApproxOK, nDeltaDegreeOfFreedom,
+                    &adfBandMean[i], &adfBandMean[j], &adfTempValues,
+                    GDALScaledProgress, pScaledProgressArg.get());
+            if (std::isnan(dfCovariance) &&
+                CPLGetErrorCounter() != nLastErrorCount)
+            {
+                return CE_Failure;
+            }
+
+            padfCovMatrix[static_cast<size_t>(i) * nBands + j] = dfCovariance;
+            padfCovMatrix[static_cast<size_t>(j) * nBands + i] = dfCovariance;
+        }
+    }
+
+    if (bWriteIntoMetadata)
+    {
+        std::string osStr;
+        size_t idx = 0;
+        for (int i = 0; i < nBands; ++i)
+        {
+            osStr.clear();
+            for (int j = 0; j < nBands; ++j, ++idx)
+            {
+                if (j > 0)
+                    osStr += ',';
+                osStr += CPLSPrintf("%.17g", padfCovMatrix[idx]);
+            }
+            papoBands[i]->SetMetadataItem("STATISTICS_COVARIANCES",
+                                          osStr.c_str());
+        }
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*               GDALDatasetComputeInterBandCovarianceMatrix()          */
+/************************************************************************/
+
+/**
+ \brief Compute the covariance matrix between bands of this dataset.
+
+ The covariance indicates the level to which two bands vary together.
+
+ If we call \f$ v_i[y,x] \f$ the value of pixel at row=y and column=x for band i,
+ and \f$ mean_i \f$ the mean value of all pixels of band i, then
+
+ \f[
+    \mathrm{cov}[i,j] =
+    \frac{
+        \sum_{y,x} \left( v_i[y,x] - \mathrm{mean}_i \right)
+        \left( v_j[y,x] - \mathrm{mean}_j \right)
+    }{
+        \mathrm{pixel\_count} - \mathrm{nDeltaDegreeOfFreedom}
+    }
+ \f]
+
+ When there are no nodata values, \f$ pixel\_count = GetRasterXSize() * GetRasterYSize() \f$.
+ We can see that \f$ cov[i,j] = cov[j,i] \f$, and consequently the returned matrix
+ is symmetric.
+
+ A value of nDeltaDegreeOfFreedom=1 (the default) will return a unbiased estimate
+ if the pixels in bands are considered to be a sample of the whole population.
+ This is consistent with the default of
+ https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+ matrix is consistent with what can be obtained with
+
+ \verbatim embed:rst
+ .. code-block:: python
+
+     numpy.cov(
+        [ds.GetRasterBand(n + 1).ReadAsArray().ravel() for n in range(ds.RasterCount)]
+     )
+ \endverbatim
+
+ Otherwise a value of nDeltaDegreeOfFreedom=0 can be used if they are considered
+ to be the whole population.
+
+ The caller must provide an already allocated array in padfCovMatrix of size
+ at least GDALGetRasterCount() * GDALGetRasterCount().
+
+ This method recomputes the covariance matrix, even if STATISTICS_COVARIANCES
+ metadata items are available in bands. See GDALDatasetGetInterBandCovarianceMatrix()
+ to use them.
+
+ This function is the same as the C++ method GDALDataset::ComputeInterBandCovarianceMatrix()
+
+ @param hDS Dataset handle.
+ @param padfCovMatrix Pointer to an already allocated output array, of size at least
+                      GetRasterCount() * GetRasterCount().
+ @param nSize Number of elements in output array.
+ @param bApproxOK Whether it is acceptable to use a subsample of values.
+                  Defaults to false.
+ @param bWriteIntoMetadata Whether this method must write
+                           STATISTICS_COVARIANCES band metadata items.
+                           Defaults to true.
+ @param nDeltaDegreeOfFreedom Correction term to subtract in the final
+                              averaging phase of the covariance computation.
+                              Defaults to 1.
+ @param pfnProgress a function to call to report progress, or NULL.
+ @param pProgressData application data to pass to the progress function.
+
+ @return CE_None if successful, or CE_Failure in case of failure
+
+ @since 3.13
+
+ @see GDALDatasetGetInterBandCovarianceMatrix()
+ */
+CPLErr GDALDatasetComputeInterBandCovarianceMatrix(
+    GDALDatasetH hDS, double *padfCovMatrix, size_t nSize, bool bApproxOK,
+    bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    VALIDATE_POINTER1(hDS, __func__, CE_Failure);
+    VALIDATE_POINTER1(padfCovMatrix, __func__, CE_Failure);
+    return GDALDataset::FromHandle(hDS)->ComputeInterBandCovarianceMatrix(
+        padfCovMatrix, nSize, bApproxOK, bWriteIntoMetadata,
+        nDeltaDegreeOfFreedom, pfnProgress, pProgressData);
 }

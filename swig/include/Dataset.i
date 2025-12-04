@@ -735,6 +735,61 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     DisableAsyncReaderWrapper(ario);
   }
 
+#ifdef SWIGPYTHON
+%feature ("kwargs") GetInterBandCovarianceMatrix;
+  void GetInterBandCovarianceMatrix(CPLErr *peErr, int *nRows, int *nCols, double **pMatrix,
+                                    bool approx_ok = false,
+                                    bool force = false,
+                                    bool write_into_metadata = true,
+                                    int delta_degree_of_freedom = 1,
+                                    GDALProgressFunc callback = nullptr,
+                                    void *callback_data = nullptr)
+  {
+    if (GDALGetRasterCount(self) == 0)
+    {
+        *peErr = CE_Failure;
+        CPLError(CE_Failure, CPLE_AppDefined, "Zero band dataset");
+        return;
+    }
+    *nRows = GDALGetRasterCount(self);
+    *nCols = GDALGetRasterCount(self);
+    *pMatrix = static_cast<double*>(VSI_MALLOC3_VERBOSE(*nRows, *nCols, sizeof(double)));
+    if (!(*pMatrix))
+        *peErr = CE_Failure;
+    else
+        *peErr = GDALDatasetGetInterBandCovarianceMatrix(
+                self, *pMatrix, static_cast<size_t>(*nRows) * (*nCols),
+                approx_ok, force, write_into_metadata, delta_degree_of_freedom,
+                callback, callback_data);
+  }
+
+%feature ("kwargs") ComputeInterBandCovarianceMatrix;
+  void ComputeInterBandCovarianceMatrix(CPLErr *peErr, int *nRows, int *nCols, double **pMatrix,
+                                        bool approx_ok = false,
+                                        bool write_into_metadata = true,
+                                        int delta_degree_of_freedom = 1,
+                                        GDALProgressFunc callback = nullptr,
+                                        void *callback_data = nullptr)
+  {
+    if (GDALGetRasterCount(self) == 0)
+    {
+        *peErr = CE_Failure;
+        CPLError(CE_Failure, CPLE_AppDefined, "Zero band dataset");
+        return;
+    }
+    *nRows = GDALGetRasterCount(self);
+    *nCols = GDALGetRasterCount(self);
+    *pMatrix = static_cast<double*>(VSI_MALLOC3_VERBOSE(*nRows, *nCols, sizeof(double)));
+    if (!(*pMatrix))
+        *peErr = CE_Failure;
+    else
+        *peErr = GDALDatasetComputeInterBandCovarianceMatrix(
+                self, *pMatrix, static_cast<size_t>(*nRows) * (*nCols),
+                approx_ok, write_into_metadata, delta_degree_of_freedom,
+                callback, callback_data);
+  }
+#endif
+
 %feature( "kwargs" ) GetVirtualMem;
 %newobject GetVirtualMem;
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };

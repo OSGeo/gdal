@@ -502,6 +502,14 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                      double *pdfMax, double *pdfMean,
                                      double *pdfStdDev, GDALProgressFunc,
                                      void *pProgressData);
+
+    double ComputeInterBandCovariance(
+        GDALRasterBand *poOtherBand, bool bApproxOK = false,
+        int nDeltaDegreeOfFreedom = 1, const double *pdfThisBandMean = nullptr,
+        const double *pdfOtherBandMean = nullptr,
+        std::vector<double> *padfTempVector = nullptr,
+        GDALProgressFunc = nullptr, void *pProgressData = nullptr);
+
     virtual CPLErr SetStatistics(double dfMin, double dfMax, double dfMean,
                                  double dfStdDev);
     virtual CPLErr ComputeRasterMinMax(int bApproxOK, double *adfMinMax);
