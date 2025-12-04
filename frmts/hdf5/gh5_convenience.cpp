@@ -13,6 +13,8 @@
 #include "cpl_float.h"
 #include "gh5_convenience.h"
 
+#include <limits>
+
 /************************************************************************/
 /*                    GH5_FetchAttribute(CPLString)                     */
 /************************************************************************/
@@ -464,7 +466,8 @@ bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, int nValue)
     }
     else if (hEnumType < 0 && H5Tequal(hAttrNativeType, H5T_NATIVE_UINT8))
     {
-        if (nValue < 0 || nValue >= 255)
+        if (nValue < 0 ||
+            nValue > static_cast<int>(std::numeric_limits<uint8_t>::max()))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Attribute %s has value %d which is not in the range of a "
@@ -479,7 +482,8 @@ bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, int nValue)
     }
     else if (hEnumType < 0 && H5Tequal(hAttrNativeType, H5T_NATIVE_UINT16))
     {
-        if (nValue < 0 || nValue >= 65536)
+        if (nValue < 0 ||
+            nValue >= static_cast<int>(std::numeric_limits<uint16_t>::max()))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Attribute %s has value %d which is not in the range of a "
