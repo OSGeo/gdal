@@ -439,7 +439,8 @@ retry_read_header:
                 return nullptr;
             }
             psFile->pachTRE = pachNewTRE;
-            memcpy(psFile->pachTRE + psFile->nTREBytes, pachHeader + nOffset, nXHDL);
+            memcpy(psFile->pachTRE + psFile->nTREBytes, pachHeader + nOffset,
+                   nXHDL);
             psFile->nTREBytes += nXHDL;
         }
     }
