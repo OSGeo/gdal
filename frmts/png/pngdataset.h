@@ -128,7 +128,7 @@ class PNGDataset final : public GDALPamDataset
     PNGDataset();
     ~PNGDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,

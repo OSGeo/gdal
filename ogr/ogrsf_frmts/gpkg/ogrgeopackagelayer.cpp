@@ -1005,7 +1005,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn(const char *pszLayerName,
     }
 #endif
 
-    bool bGeometryColumnGuessed = false;
+    [[maybe_unused]] bool bGeometryColumnGuessed = false;
     for (int iCol = 0; iCol < nRawColumns; iCol++)
     {
         OGRFieldDefn oField(SQLUnescape(sqlite3_column_name(hStmt, iCol)),

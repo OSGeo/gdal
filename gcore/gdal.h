@@ -1294,7 +1294,12 @@ GDALDriverH CPL_DLL CPL_STDCALL GDALGetDatasetDriver(GDALDatasetH);
 char CPL_DLL **CPL_STDCALL GDALGetFileList(GDALDatasetH);
 void CPL_DLL GDALDatasetMarkSuppressOnClose(GDALDatasetH);
 CPLErr CPL_DLL CPL_STDCALL GDALClose(GDALDatasetH);
+CPLErr CPL_DLL GDALCloseEx(GDALDatasetH hDS, GDALProgressFunc pfnProgress,
+                           void *pProgressData);
+bool CPL_DLL GDALDatasetGetCloseReportsProgress(GDALDatasetH hDS);
 CPLErr CPL_DLL GDALDatasetRunCloseWithoutDestroying(GDALDatasetH hDS);
+CPLErr CPL_DLL GDALDatasetRunCloseWithoutDestroyingEx(
+    GDALDatasetH hDS, GDALProgressFunc pfnProgress, void *pProgressData);
 int CPL_DLL CPL_STDCALL GDALGetRasterXSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterYSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterCount(GDALDatasetH);

@@ -12540,3 +12540,78 @@ def test_tiff_write_rat(tmp_vsimem, GTIFF_WRITE_RAT_TO_PAM):
             assert got_rat.GetValueAsBoolean(0, 3)
             assert got_rat.GetValueAsString(0, 4) == "2025-12-31T23:58:59.500+01:15"
             assert got_rat.GetValueAsString(0, 5) == "POINT (1 2)"
+
+
+###############################################################################
+
+
+def test_tiff_cog_layout(tmp_vsimem):
+
+    # Non tiled file is not COG
+    gdal.Translate(tmp_vsimem / "out.tif", "data/byte.tif")
+    with gdal.Open("data/byte.tif") as ds:
+        assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") is None
+
+    # Tiled file <= 512x512 is COG
+    gdal.Translate(
+        tmp_vsimem / "out.tif",
+        "data/byte.tif",
+        width=512,
+        height=512,
+        creationOptions={"TILED": True},
+    )
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
+
+    # Tiled file <= 512x512 is COG
+    gdal.Translate(
+        tmp_vsimem / "out.tif",
+        "data/byte.tif",
+        width=512,
+        height=512,
+        creationOptions={"TILED": True, "BIGTIFF": "YES"},
+    )
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
+
+    # Tiled file > 512x512 without overviews is not COG
+    gdal.Translate(
+        tmp_vsimem / "out.tif",
+        "data/byte.tif",
+        width=513,
+        creationOptions={"TILED": True},
+    )
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") is None
+
+    # Move IFD to end of file ==> not COG
+    ds = gdal.Translate(
+        tmp_vsimem / "out.tif", "data/byte.tif", creationOptions={"TILED": True}
+    )
+    ds.SetMetadataItem("foo", "bar")
+    ds.Close()
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") is None
+
+    # Tiled file > 512x512 with overviews, but not COG layout
+    ds = gdal.Translate(
+        tmp_vsimem / "out.tif",
+        "data/byte.tif",
+        width=513,
+        creationOptions={"TILED": True},
+    )
+    ds.BuildOverviews("NEAR", [2])
+    ds.Close()
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") is None
+
+    src_ds = gdal.Translate("", "data/byte.tif", width=513, format="MEM")
+    src_ds.BuildOverviews("NEAR", [2, 4])
+    with gdal.config_option("GTIFF_WRITE_COG_GHOST_AREA", "NO"):
+        gdal.Translate(
+            tmp_vsimem / "out.tif",
+            src_ds,
+            creationOptions={"TILED": True, "COPY_SRC_OVERVIEWS": True},
+        )
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"

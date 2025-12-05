@@ -112,10 +112,10 @@ OGRShapeDataSource::~OGRShapeDataSource()
 }
 
 /************************************************************************/
-/*                       OGRShapeDataSource::Close()                    */
+/*                       OGRShapeDataSource::Close()                   */
 /************************************************************************/
 
-CPLErr OGRShapeDataSource::Close()
+CPLErr OGRShapeDataSource::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

@@ -177,7 +177,7 @@ class OGRGMLDataSource final : public GDALDataset
     ~OGRGMLDataSource() override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
     bool Create(const char *pszFile, char **papszOptions);
 
     int GetLayerCount() const override

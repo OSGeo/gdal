@@ -1444,10 +1444,11 @@ GDALDatasetH GDALWarp(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
         auto hDriver = GDALGetDriverByName(psOptions->osFormat.c_str());
         if (hDriver != nullptr &&
-            GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) ==
-                nullptr &&
-            GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) !=
-                nullptr)
+            (EQUAL(psOptions->osFormat.c_str(), "COG") ||
+             (GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) ==
+                  nullptr &&
+              GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) !=
+                  nullptr)))
         {
             auto ret = GDALWarpIndirect(pszDest, hDriver, nSrcCount, pahSrcDS,
                                         psOptions, pbUsageError);

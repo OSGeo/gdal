@@ -58,7 +58,7 @@ class ISIS2Dataset final : public RawDataset
     const char *GetKeywordSub(const char *pszPath, int iSubscript,
                               const char *pszDefault = "");
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     CPL_DISALLOW_COPY_ASSIGN(ISIS2Dataset)
 
@@ -97,7 +97,7 @@ ISIS2Dataset::~ISIS2Dataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr ISIS2Dataset::Close()
+CPLErr ISIS2Dataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

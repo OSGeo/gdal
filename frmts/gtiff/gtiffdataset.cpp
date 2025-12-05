@@ -100,7 +100,8 @@ GTiffDataset::GTiffDataset()
       m_bLeaderSizeAsUInt4(false), m_bTrailerRepeatedLast4BytesRepeated(false),
       m_bMaskInterleavedWithImagery(false), m_bKnownIncompatibleEdition(false),
       m_bWriteKnownIncompatibleEdition(false), m_bHasUsedReadEncodedAPI(false),
-      m_bWriteCOGLayout(false), m_bTileInterleave(false)
+      m_bWriteCOGLayout(false), m_bTileInterleave(false),
+      m_bLayoutChecked(false)
 {
     // CPLDebug("GDAL", "sizeof(GTiffDataset) = %d bytes", static_cast<int>(
     //     sizeof(GTiffDataset)));
@@ -129,7 +130,7 @@ GTiffDataset::~GTiffDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr GTiffDataset::Close()
+CPLErr GTiffDataset::Close(GDALProgressFunc, void *)
 {
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
@@ -252,44 +253,30 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
     /* -------------------------------------------------------------------- */
     if (!m_poBaseDS)
     {
-        // Nullify m_nOverviewCount before deleting overviews, otherwise
+        if (!m_apoOverviewDS.empty())
+            bDroppedRef = true;
+        // Move m_apoOverviewDS to a temporary variable, otherwise
         // GTiffDataset::FlushDirectory() might try to access an overview
         // that is being deleted (#5580)
-        const int nOldOverviewCount = m_nOverviewCount;
-        m_nOverviewCount = 0;
-        for (int i = 0; i < nOldOverviewCount; ++i)
-        {
-            delete m_papoOverviewDS[i];
-            bDroppedRef = true;
-        }
+        auto apoTmpDS = std::move(m_apoOverviewDS);
+        apoTmpDS.clear();
 
-        for (int i = 0; i < m_nJPEGOverviewCountOri; ++i)
-        {
-            delete m_papoJPEGOverviewDS[i];
+        if (!m_apoJPEGOverviewDS.empty())
             bDroppedRef = true;
-        }
-        m_nJPEGOverviewCount = 0;
-        m_nJPEGOverviewCountOri = 0;
-        CPLFree(m_papoJPEGOverviewDS);
-        m_papoJPEGOverviewDS = nullptr;
+        m_apoJPEGOverviewDS.clear();
+    }
+    else
+    {
+        m_apoOverviewDS.clear();
     }
 
-    // If we are a mask dataset, we can have overviews, but we don't
-    // own them. We can only free the array, not the overviews themselves.
-    CPLFree(m_papoOverviewDS);
-    m_papoOverviewDS = nullptr;
-
-    // m_poMaskDS is owned by the main image and the overviews
-    // so because of the latter case, we can delete it even if
-    // we are not the base image.
     if (m_poMaskDS)
     {
-        // Nullify m_poMaskDS before deleting overviews, otherwise
+        // Move m_poMaskDS to a temporary variable, otherwise
         // GTiffDataset::FlushDirectory() might try to access it while being
         // deleted. (#5580)
-        auto poMaskDS = m_poMaskDS;
-        m_poMaskDS = nullptr;
-        delete poMaskDS;
+        auto poTmpDS = std::move(m_poMaskDS);
+        poTmpDS.reset();
         bDroppedRef = true;
     }
 
@@ -1122,9 +1109,9 @@ void GTiffDataset::ScanDirectories()
             if ((nSubType & FILETYPE_REDUCEDIMAGE) != 0 &&
                 (nSubType & FILETYPE_MASK) == 0 &&
                 ((nSubIFDs == 0 && iDirIndex != 1) || iSubIFD > 0) &&
-                m_nOverviewCount < 30 /* to avoid DoS */)
+                m_apoOverviewDS.size() < 30 /* to avoid DoS */)
             {
-                GTiffDataset *poODS = new GTiffDataset();
+                auto poODS = std::make_shared<GTiffDataset>();
                 poODS->ShareLockWithParentDataset(this);
                 poODS->SetStructuralMDFromParent(this);
                 if (m_bHasGotSiblingFiles)
@@ -1133,19 +1120,12 @@ void GTiffDataset::ScanDirectories()
                 poODS->m_osFilename = m_osFilename;
                 poODS->m_nColorTableMultiplier = m_nColorTableMultiplier;
                 if (poODS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF), nThisDir,
-                                      eAccess) != CE_None ||
-                    poODS->GetRasterCount() != GetRasterCount())
-                {
-                    delete poODS;
-                }
-                else
+                                      eAccess) == CE_None &&
+                    poODS->GetRasterCount() == GetRasterCount())
                 {
                     CPLDebug("GTiff", "Opened %dx%d overview.",
                              poODS->GetRasterXSize(), poODS->GetRasterYSize());
-                    ++m_nOverviewCount;
-                    m_papoOverviewDS = static_cast<GTiffDataset **>(CPLRealloc(
-                        m_papoOverviewDS, m_nOverviewCount * (sizeof(void *))));
-                    m_papoOverviewDS[m_nOverviewCount - 1] = poODS;
+                    m_apoOverviewDS.push_back(poODS);
                     poODS->m_poBaseDS = this;
                     poODS->m_bIsOverview = true;
 
@@ -1197,7 +1177,7 @@ void GTiffDataset::ScanDirectories()
                      ((nSubIFDs == 0 && iDirIndex != 1) || iSubIFD > 0) &&
                      m_poMaskDS == nullptr)
             {
-                m_poMaskDS = new GTiffDataset();
+                m_poMaskDS = std::make_shared<GTiffDataset>();
                 m_poMaskDS->ShareLockWithParentDataset(this);
                 m_poMaskDS->SetStructuralMDFromParent(this);
                 m_poMaskDS->m_osFilename = m_osFilename;
@@ -1222,8 +1202,7 @@ void GTiffDataset::ScanDirectories()
                     m_poMaskDS->GetRasterBand(1)->GetRasterDataType() !=
                         GDT_UInt8)
                 {
-                    delete m_poMaskDS;
-                    m_poMaskDS = nullptr;
+                    m_poMaskDS.reset();
                 }
                 else
                 {
@@ -1243,47 +1222,36 @@ void GTiffDataset::ScanDirectories()
                      (nSubType & FILETYPE_MASK) != 0 &&
                      ((nSubIFDs == 0 && iDirIndex != 1) || iSubIFD > 0))
             {
-                GTiffDataset *poDS = new GTiffDataset();
+                auto poDS = std::make_shared<GTiffDataset>();
                 poDS->ShareLockWithParentDataset(this);
                 poDS->SetStructuralMDFromParent(this);
                 poDS->m_osFilename = m_osFilename;
                 if (poDS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF), nThisDir,
-                                     eAccess) != CE_None ||
-                    poDS->GetRasterCount() == 0 ||
-                    poDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt8)
+                                     eAccess) == CE_None &&
+                    poDS->GetRasterCount() != 0 &&
+                    poDS->GetRasterBand(1)->GetRasterDataType() == GDT_UInt8)
                 {
-                    delete poDS;
-                }
-                else
-                {
-                    int i = 0;  // Used after for.
-                    for (; i < m_nOverviewCount; ++i)
+                    for (auto &poOvrDS : m_apoOverviewDS)
                     {
-                        auto poOvrDS = cpl::down_cast<GTiffDataset *>(
-                            GDALDataset::FromHandle(m_papoOverviewDS[i]));
                         if (poOvrDS->m_poMaskDS == nullptr &&
                             poDS->GetRasterXSize() ==
-                                m_papoOverviewDS[i]->GetRasterXSize() &&
+                                poOvrDS->GetRasterXSize() &&
                             poDS->GetRasterYSize() ==
-                                m_papoOverviewDS[i]->GetRasterYSize() &&
+                                poOvrDS->GetRasterYSize() &&
                             (poDS->GetRasterCount() == 1 ||
                              poDS->GetRasterCount() == GetRasterCount()))
                         {
                             CPLDebug(
                                 "GTiff", "Opened band mask for %dx%d overview.",
                                 poDS->GetRasterXSize(), poDS->GetRasterYSize());
-                            poDS->m_poImageryDS = poOvrDS;
-                            poOvrDS->m_poMaskDS = poDS;
+                            poDS->m_poImageryDS = poOvrDS.get();
                             poDS->m_bPromoteTo8Bits =
                                 CPLTestBool(CPLGetConfigOption(
                                     "GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
                             poDS->m_poBaseDS = this;
+                            poOvrDS->m_poMaskDS = std::move(poDS);
                             break;
                         }
-                    }
-                    if (i == m_nOverviewCount)
-                    {
-                        delete poDS;
                     }
                 }
             }
@@ -1374,35 +1342,25 @@ void GTiffDataset::ScanDirectories()
 
     // If we have a mask for the main image, loop over the overviews, and if
     // they have a mask, let's set this mask as an overview of the main mask.
-    if (m_poMaskDS != nullptr)
+    if (m_poMaskDS)
     {
-        for (int i = 0; i < m_nOverviewCount; ++i)
+        for (auto &poOvrDS : m_apoOverviewDS)
         {
-            if (cpl::down_cast<GTiffDataset *>(
-                    GDALDataset::FromHandle(m_papoOverviewDS[i]))
-                    ->m_poMaskDS != nullptr)
+            if (poOvrDS->m_poMaskDS)
             {
-                ++m_poMaskDS->m_nOverviewCount;
-                m_poMaskDS->m_papoOverviewDS =
-                    static_cast<GTiffDataset **>(CPLRealloc(
-                        m_poMaskDS->m_papoOverviewDS,
-                        m_poMaskDS->m_nOverviewCount * (sizeof(void *))));
-                m_poMaskDS->m_papoOverviewDS[m_poMaskDS->m_nOverviewCount - 1] =
-                    cpl::down_cast<GTiffDataset *>(
-                        GDALDataset::FromHandle(m_papoOverviewDS[i]))
-                        ->m_poMaskDS;
+                m_poMaskDS->m_apoOverviewDS.push_back(poOvrDS->m_poMaskDS);
             }
         }
     }
 
     // Assign color interpretation from main dataset
     const int l_nBands = GetRasterCount();
-    for (int iOvr = 0; iOvr < m_nOverviewCount; ++iOvr)
+    for (auto &poOvrDS : m_apoOverviewDS)
     {
         for (int i = 1; i <= l_nBands; i++)
         {
-            auto poBand = dynamic_cast<GTiffRasterBand *>(
-                m_papoOverviewDS[iOvr]->GetRasterBand(i));
+            auto poBand =
+                dynamic_cast<GTiffRasterBand *>(poOvrDS->GetRasterBand(i));
             if (poBand)
                 poBand->m_eBandInterp =
                     GetRasterBand(i)->GetColorInterpretation();

@@ -42,7 +42,7 @@ class NOAA_B_Dataset final : public RawDataset
 
     static int IdentifyEx(GDALOpenInfo *poOpenInfo, bool &bBigEndianOut);
 
-    CPLErr Close() override
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override
     {
         return GDALPamDataset::Close();
     }

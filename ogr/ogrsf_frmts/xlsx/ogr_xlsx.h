@@ -277,7 +277,7 @@ class OGRXLSXDataSource final : public GDALDataset
   public:
     explicit OGRXLSXDataSource(CSLConstList papszOpenOptionsIn);
     ~OGRXLSXDataSource() override;
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     int Open(const char *pszFilename, const char *pszPrefixedFilename,
              VSILFILE *fpWorkbook, VSILFILE *fpWorkbookRels,

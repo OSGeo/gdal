@@ -61,7 +61,7 @@ class DOQ2Dataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(DOQ2Dataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     DOQ2Dataset();
@@ -100,7 +100,7 @@ DOQ2Dataset::~DOQ2Dataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr DOQ2Dataset::Close()
+CPLErr DOQ2Dataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

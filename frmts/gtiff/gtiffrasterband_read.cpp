@@ -1426,9 +1426,9 @@ int GTiffRasterBand::GetOverviewCount()
 
     m_poGDS->ScanDirectories();
 
-    if (m_poGDS->m_nOverviewCount > 0)
+    if (!m_poGDS->m_apoOverviewDS.empty())
     {
-        return m_poGDS->m_nOverviewCount;
+        return static_cast<int>(m_poGDS->m_apoOverviewDS.size());
     }
 
     const int nOverviewCount = GDALRasterBand::GetOverviewCount();
@@ -1452,13 +1452,13 @@ GDALRasterBand *GTiffRasterBand::GetOverview(int i)
 {
     m_poGDS->ScanDirectories();
 
-    if (m_poGDS->m_nOverviewCount > 0)
+    if (!m_poGDS->m_apoOverviewDS.empty())
     {
         // Do we have internal overviews?
-        if (i < 0 || i >= m_poGDS->m_nOverviewCount)
+        if (i < 0 || static_cast<size_t>(i) >= m_poGDS->m_apoOverviewDS.size())
             return nullptr;
 
-        return m_poGDS->m_papoOverviewDS[i]->GetRasterBand(nBand);
+        return m_poGDS->m_apoOverviewDS[i]->GetRasterBand(nBand);
     }
 
     GDALRasterBand *const poOvrBand = GDALRasterBand::GetOverview(i);
@@ -1469,7 +1469,7 @@ GDALRasterBand *GTiffRasterBand::GetOverview(int i)
     // m_nJPEGOverviewVisibilityCounter, but it is also convenient to be able
     // to query them for testing purposes.
     if (i >= 0 && i < m_poGDS->GetJPEGOverviewCount())
-        return m_poGDS->m_papoJPEGOverviewDS[i]->GetRasterBand(nBand);
+        return m_poGDS->m_apoJPEGOverviewDS[i]->GetRasterBand(nBand);
 
     return nullptr;
 }
@@ -1555,7 +1555,7 @@ GDALRasterBand *GTiffRasterBand::GetMaskBand()
 bool GTiffRasterBand::IsMaskBand() const
 {
     return (m_poGDS->m_poImageryDS != nullptr &&
-            m_poGDS->m_poImageryDS->m_poMaskDS == m_poGDS) ||
+            m_poGDS->m_poImageryDS->m_poMaskDS.get() == m_poGDS) ||
            m_eBandInterp == GCI_AlphaBand ||
            m_poGDS->GetMetadataItem("INTERNAL_MASK_FLAGS_1") != nullptr;
 }

@@ -794,6 +794,8 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
     bool bIsYExtentSet = psOptions->bIsYExtentSet;
     CPLErr eErr = CE_None;
 
+    const bool bCloseReportsProgress = poDstDS->GetCloseReportsProgress();
+
     /* -------------------------------------------------------------------- */
     /*      Process SQL request.                                            */
     /* -------------------------------------------------------------------- */
@@ -808,6 +810,13 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
             return nullptr;
         }
 
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+            pScaledProgressArg(
+                GDALCreateScaledProgress(0.0, bCloseReportsProgress ? 0.5 : 1.0,
+                                         psOptions->pfnProgress,
+                                         psOptions->pProgressData),
+                GDALDestroyScaledProgress);
+
         // Custom layer will be rasterized in the first band.
         eErr = ProcessLayer(
             poLayer, poDstDS.get(), psOptions->poSpatialFilter.get(), nXSize,
@@ -815,7 +824,7 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
             dfYMax, psOptions->osBurnAttribute, psOptions->dfIncreaseBurnValue,
             psOptions->dfMultiplyBurnValue, psOptions->eOutputType,
             psOptions->eAlgorithm, psOptions->pOptions.get(), psOptions->bQuiet,
-            psOptions->pfnProgress, psOptions->pProgressData);
+            GDALScaledProgress, pScaledProgressArg.get());
 
         poSrcDS->ReleaseResultSet(poLayer);
     }
@@ -861,14 +870,21 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
                 osOutputSRS = poSRS->exportToWkt();
         }
 
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+            pScaledProgressArg(
+                GDALCreateScaledProgress(0.0, bCloseReportsProgress ? 0.5 : 1.0,
+                                         psOptions->pfnProgress,
+                                         psOptions->pProgressData),
+                GDALDestroyScaledProgress);
+
         eErr = ProcessLayer(
             poLayer, poDstDS.get(), psOptions->poSpatialFilter.get(), nXSize,
             nYSize, i + 1 + nBands - nLayerCount, bIsXExtentSet, bIsYExtentSet,
             dfXMin, dfXMax, dfYMin, dfYMax, psOptions->osBurnAttribute,
             psOptions->dfIncreaseBurnValue, psOptions->dfMultiplyBurnValue,
             psOptions->eOutputType, psOptions->eAlgorithm,
-            psOptions->pOptions.get(), psOptions->bQuiet,
-            psOptions->pfnProgress, psOptions->pProgressData);
+            psOptions->pOptions.get(), psOptions->bQuiet, GDALScaledProgress,
+            pScaledProgressArg.get());
         if (eErr != CE_None)
             break;
     }
@@ -895,6 +911,46 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
     if (eErr != CE_None)
     {
         return nullptr;
+    }
+
+    if (bCloseReportsProgress)
+    {
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+            pScaledProgressArg(
+                GDALCreateScaledProgress(0.5, 1.0, psOptions->pfnProgress,
+                                         psOptions->pProgressData),
+                GDALDestroyScaledProgress);
+
+        const bool bCanReopenWithCurrentDescription =
+            poDstDS->CanReopenWithCurrentDescription();
+
+        eErr = poDstDS->Close(GDALScaledProgress, pScaledProgressArg.get());
+        poDstDS.reset();
+        if (eErr != CE_None)
+            return nullptr;
+
+        if (bCanReopenWithCurrentDescription)
+        {
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                poDstDS.reset(GDALDataset::Open(pszDest,
+                                                GDAL_OF_RASTER | GDAL_OF_UPDATE,
+                                                nullptr, nullptr, nullptr));
+            }
+            if (!poDstDS)
+                poDstDS.reset(GDALDataset::Open(
+                    pszDest, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, nullptr,
+                    nullptr, nullptr));
+        }
+        else
+        {
+            struct DummyDataset final : public GDALDataset
+            {
+                DummyDataset() = default;
+            };
+
+            poDstDS = std::make_unique<DummyDataset>();
+        }
     }
 
     return GDALDataset::ToHandle(poDstDS.release());

@@ -57,7 +57,7 @@ class ISCEDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(ISCEDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     ISCEDataset();
@@ -160,7 +160,7 @@ ISCEDataset::~ISCEDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr ISCEDataset::Close()
+CPLErr ISCEDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

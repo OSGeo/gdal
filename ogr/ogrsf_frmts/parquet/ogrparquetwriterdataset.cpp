@@ -38,7 +38,7 @@ OGRParquetWriterDataset::~OGRParquetWriterDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr OGRParquetWriterDataset::Close()
+CPLErr OGRParquetWriterDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

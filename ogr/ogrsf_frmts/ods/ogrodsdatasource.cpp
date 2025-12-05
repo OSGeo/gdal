@@ -318,7 +318,7 @@ OGRODSDataSource::~OGRODSDataSource()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr OGRODSDataSource::Close()
+CPLErr OGRODSDataSource::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

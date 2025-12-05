@@ -154,7 +154,7 @@ int PDFWritableVectorDataset::GetLayerCount() const
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr PDFWritableVectorDataset::Close()
+CPLErr PDFWritableVectorDataset::Close(GDALProgressFunc, void *)
 {
     return PDFWritableVectorDataset::FlushCache(true);
 }

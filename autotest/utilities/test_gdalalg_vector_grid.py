@@ -572,3 +572,27 @@ def test_gdalalg_vector_grid_autocomplete():
         f"{gdal_path} completion gdal vector grid invdist last_word_is_complete=true"
     ).split(" ")
     assert out == [""]
+
+
+@pytest.mark.require_driver("COG")
+def test_gdalalg_vector_grid_to_cog(tmp_vsimem):
+
+    last_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= last_pct[0]
+        last_pct[0] = pct
+        return True
+
+    with gdal.alg.vector.grid.invdist(
+        input=get_src_ds(False),
+        output_format="COG",
+        output=tmp_vsimem / "out.tif",
+        size=[512, 512],
+        zfield="z",
+        progress=my_progress,
+    ) as alg:
+        assert last_pct[0] == 1
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).Checksum() == pytest.approx(6875, abs=3)
+        assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"

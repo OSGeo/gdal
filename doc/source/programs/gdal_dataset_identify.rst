@@ -27,9 +27,21 @@ Options
 
     Any file name or directory name. Required. May be repeated
 
-.. option:: -f, --of, --format, --output-format json|text
+.. option:: -o, --output <OUTPUT>
+
+    .. versionadded:: 3.13
+
+    Output filename. Not needed for JSON or text output where standard output
+    stream is used if not specified (or ``output-string`` argument when used from
+    API). Required otherwise. Note that this is not a positional argument, so the
+    ``-o`` or ``--output`` switch must be explicitly used.
+
+.. option:: -f, --of, --format, --output-format json|text|<OTHER-VECTOR-FORMAT>
 
     Which output format to use. Default is JSON, or text when invoked from command line.
+
+    Since GDAL 3.13, other GDAL vector formats with creation capabilities can
+    be used, in which case :option:`--output` must be specified.
 
 .. option:: -r, --recursive
 
@@ -39,6 +51,12 @@ Options
 
     Recursively scan folders for datasets, forcing recursion in folders
     recognized as valid formats.
+
+.. option:: --detailed
+
+    .. versionadded:: 3.13
+
+    Most verbose output. Reports the presence of georeferencing, if a GeoTIFF file is cloud optimized, etc.
 
 .. option:: --report-failures
 
@@ -88,3 +106,11 @@ Examples
         NE1_50M_SR_W/NE1_50M_SR_W.tif: GTiff
         NE1_50M_SR_W/ne1_50m_sub.tif: GTiff
         NE1_50M_SR_W/ne1_50m_sub2.tif: GTiff
+
+
+.. example::
+   :title: Recursively scan subfolders and report detailed information into a CSV file
+
+    .. code-block::
+
+        $ gdal dataset identify --output out.csv --detailed -r 50m_raster/

@@ -78,7 +78,7 @@ GDALHEIFDataset::~GDALHEIFDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr GDALHEIFDataset::Close()
+CPLErr GDALHEIFDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
 

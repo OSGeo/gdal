@@ -138,8 +138,8 @@ void GTIFFSetJpegQuality(GDALDatasetH hGTIFFDS, int nJpegQuality)
 
     poDS->ScanDirectories();
 
-    for (int i = 0; i < poDS->m_nOverviewCount; ++i)
-        poDS->m_papoOverviewDS[i]->m_nJpegQuality = poDS->m_nJpegQuality;
+    for (auto &poOvrDS : poDS->m_apoOverviewDS)
+        poOvrDS->m_nJpegQuality = poDS->m_nJpegQuality;
 }
 
 /************************************************************************/
@@ -158,8 +158,8 @@ void GTIFFSetWebPLevel(GDALDatasetH hGTIFFDS, int nWebpLevel)
 
     poDS->ScanDirectories();
 
-    for (int i = 0; i < poDS->m_nOverviewCount; ++i)
-        poDS->m_papoOverviewDS[i]->m_nWebPLevel = poDS->m_nWebPLevel;
+    for (auto &poOvrDS : poDS->m_apoOverviewDS)
+        poOvrDS->m_nWebPLevel = poDS->m_nWebPLevel;
 }
 
 /************************************************************************/
@@ -178,8 +178,8 @@ void GTIFFSetWebPLossless(GDALDatasetH hGTIFFDS, bool bWebpLossless)
 
     poDS->ScanDirectories();
 
-    for (int i = 0; i < poDS->m_nOverviewCount; ++i)
-        poDS->m_papoOverviewDS[i]->m_bWebPLossless = poDS->m_bWebPLossless;
+    for (auto &poOvrDS : poDS->m_apoOverviewDS)
+        poOvrDS->m_bWebPLossless = poDS->m_bWebPLossless;
 }
 
 /************************************************************************/
@@ -198,8 +198,8 @@ void GTIFFSetJpegTablesMode(GDALDatasetH hGTIFFDS, int nJpegTablesMode)
 
     poDS->ScanDirectories();
 
-    for (int i = 0; i < poDS->m_nOverviewCount; ++i)
-        poDS->m_papoOverviewDS[i]->m_nJpegTablesMode = poDS->m_nJpegTablesMode;
+    for (auto &poOvrDS : poDS->m_apoOverviewDS)
+        poOvrDS->m_nJpegTablesMode = poDS->m_nJpegTablesMode;
 }
 
 /************************************************************************/
@@ -218,8 +218,8 @@ void GTIFFSetZLevel(GDALDatasetH hGTIFFDS, int nZLevel)
 
     poDS->ScanDirectories();
 
-    for (int i = 0; i < poDS->m_nOverviewCount; ++i)
-        poDS->m_papoOverviewDS[i]->m_nZLevel = poDS->m_nZLevel;
+    for (auto &poOvrDS : poDS->m_apoOverviewDS)
+        poOvrDS->m_nZLevel = poDS->m_nZLevel;
 }
 
 /************************************************************************/
@@ -238,8 +238,8 @@ void GTIFFSetZSTDLevel(GDALDatasetH hGTIFFDS, int nZSTDLevel)
 
     poDS->ScanDirectories();
 
-    for (int i = 0; i < poDS->m_nOverviewCount; ++i)
-        poDS->m_papoOverviewDS[i]->m_nZSTDLevel = poDS->m_nZSTDLevel;
+    for (auto &poOvrDS : poDS->m_apoOverviewDS)
+        poOvrDS->m_nZSTDLevel = poDS->m_nZSTDLevel;
 }
 
 /************************************************************************/
@@ -259,11 +259,10 @@ void GTIFFSetMaxZError(GDALDatasetH hGTIFFDS, double dfMaxZError)
 
     poDS->ScanDirectories();
 
-    for (int i = 0; i < poDS->m_nOverviewCount; ++i)
+    for (auto &poOvrDS : poDS->m_apoOverviewDS)
     {
-        poDS->m_papoOverviewDS[i]->m_dfMaxZError = poDS->m_dfMaxZError;
-        poDS->m_papoOverviewDS[i]->m_dfMaxZErrorOverview =
-            poDS->m_dfMaxZErrorOverview;
+        poOvrDS->m_dfMaxZError = poDS->m_dfMaxZError;
+        poOvrDS->m_dfMaxZErrorOverview = poDS->m_dfMaxZErrorOverview;
     }
 }
 
@@ -285,10 +284,8 @@ void GTIFFSetJXLLossless(GDALDatasetH hGTIFFDS, bool bIsLossless)
 
     poDS->ScanDirectories();
 
-    for (int i = 0; i < poDS->m_nOverviewCount; ++i)
-    {
-        poDS->m_papoOverviewDS[i]->m_bJXLLossless = poDS->m_bJXLLossless;
-    }
+    for (auto &poOvrDS : poDS->m_apoOverviewDS)
+        poOvrDS->m_bJXLLossless = poDS->m_bJXLLossless;
 }
 
 /************************************************************************/
@@ -307,10 +304,8 @@ void GTIFFSetJXLEffort(GDALDatasetH hGTIFFDS, int nEffort)
 
     poDS->ScanDirectories();
 
-    for (int i = 0; i < poDS->m_nOverviewCount; ++i)
-    {
-        poDS->m_papoOverviewDS[i]->m_nJXLEffort = poDS->m_nJXLEffort;
-    }
+    for (auto &poOvrDS : poDS->m_apoOverviewDS)
+        poOvrDS->m_nJXLEffort = poDS->m_nJXLEffort;
 }
 
 /************************************************************************/
@@ -329,10 +324,8 @@ void GTIFFSetJXLDistance(GDALDatasetH hGTIFFDS, float fDistance)
 
     poDS->ScanDirectories();
 
-    for (int i = 0; i < poDS->m_nOverviewCount; ++i)
-    {
-        poDS->m_papoOverviewDS[i]->m_fJXLDistance = poDS->m_fJXLDistance;
-    }
+    for (auto &poOvrDS : poDS->m_apoOverviewDS)
+        poOvrDS->m_fJXLDistance = poDS->m_fJXLDistance;
 }
 
 /************************************************************************/
@@ -351,11 +344,8 @@ void GTIFFSetJXLAlphaDistance(GDALDatasetH hGTIFFDS, float fAlphaDistance)
 
     poDS->ScanDirectories();
 
-    for (int i = 0; i < poDS->m_nOverviewCount; ++i)
-    {
-        poDS->m_papoOverviewDS[i]->m_fJXLAlphaDistance =
-            poDS->m_fJXLAlphaDistance;
-    }
+    for (auto &poOvrDS : poDS->m_apoOverviewDS)
+        poOvrDS->m_fJXLAlphaDistance = poDS->m_fJXLAlphaDistance;
 }
 
 #endif  // HAVE_JXL

@@ -125,7 +125,7 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
   protected:
     int CloseDependentDatasets() override;
     VSILFILE *GetFileHandle() override;
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     JP2OPJLikeDataset();
