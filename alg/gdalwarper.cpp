@@ -1081,8 +1081,14 @@ const char *GDALWarpGetOptionList(void)
            "Numeric value or NO_DATA. This option forces the destination image "
            "to be initialized to the indicated value (for all bands) "
            "or indicates that it should be initialized to the NO_DATA value in "
-           "padfDstNoDataReal/padfDstNoDataImag. If this value is not set the "
+           "padfDstNoDataReal/padfDstNoDataImag. If this value is not set, the "
            "destination image will be read and overlaid.'/>"
+           "<Option name='RESET_DEST_PIXELS' type='boolean' description='"
+           "Whether the whole destination image must be re-initialized to the "
+           "destination nodata value of padfDstNoDataReal/padfDstNoDataImag "
+           "if set, or 0 otherwise. The main difference with INIT_DEST is that "
+           "it also affects regions not related to the source dataset.' "
+           "default='NO'/>"
            "<Option name='WRITE_FLUSH' type='boolean' description='"
            "This option forces a flush to disk of data after "
            "each chunk is processed. In some cases this helps ensure a serial "
@@ -1291,6 +1297,14 @@ const char *GDALWarpGetOptionList(void)
  * or indicates that it should be initialized to the NO_DATA value in
  * padfDstNoDataReal/padfDstNoDataImag. If this value isn't set the
  * destination image will be read and overlaid.</li>
+ *
+ * <li>RESET_DEST_PIXELS=YES/NO (since GDAL 3.13): Defaults to NO.
+ * Whether the whole destination image must be re-initialized to the
+ * destination nodata value of padfDstNoDataReal/padfDstNoDataImag if set,
+ * or 0 otherwise.
+ * The main difference with INIT_DEST is that it also affects regions
+ * not related to the source dataset.
+ * </li>
  *
  * <li>WRITE_FLUSH=YES/NO: This option forces a flush to disk of data after
  * each chunk is processed. In some cases this helps ensure a serial
