@@ -145,13 +145,13 @@ Examples
 --------
 
 .. example::
-   :title: Getting information on the file :file:`utmsmall.tif` as JSON output
+   :title: Getting information on the file :file:`utmsmall.tif` as text output
 
    .. command-output:: gdal raster info utmsmall.tif
       :cwd: ../../data
 
 .. example::
-   :title: Getting information on the file :file:`utmsmall.tif` as text output, including statistics
+   :title: Getting information on the file :file:`utmsmall.tif` as JSON output, including statistics
 
-   .. command-output:: gdal raster info --format=text --stats utmsmall.tif
+   .. command-output:: gdal raster info --format=JSON --stats utmsmall.tif
       :cwd: ../../data/with_stats

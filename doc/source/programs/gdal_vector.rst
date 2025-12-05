@@ -42,7 +42,7 @@ Examples
 --------
 
 .. example::
-   :title: Getting information on the file :file:`poly.gpkg` (with JSON output)
+   :title: Getting information on the file :file:`poly.gpkg` (with text output)
 
    .. code-block:: console
 
