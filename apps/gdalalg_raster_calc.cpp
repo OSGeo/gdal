@@ -649,6 +649,17 @@ static bool ParseSourceDescriptors(const std::vector<std::string> &inputs,
 
         std::string dsn =
             (pos == std::string::npos) ? input : input.substr(pos + 1);
+
+        if (!dsn.empty() && dsn.front() == '[' && dsn.back() == ']')
+        {
+            dsn = "{\"type\":\"gdal_streamed_alg\", \"command_line\":\"gdal "
+                  "raster pipeline " +
+                  CPLString(dsn.substr(1, dsn.size() - 2))
+                      .replaceAll('\\', "\\\\")
+                      .replaceAll('"', "\\\"") +
+                  "\"}";
+        }
+
         if (datasets.find(name) != datasets.end())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
