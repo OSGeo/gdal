@@ -369,3 +369,7 @@ for Bosnia and Herzegovina (country code "BA"), limited to the "county" subtype.
         for (const CPLXMLNode *psIter = psTreNode->psChild;
     for (const CPLXMLNode *psIter = psTreNode->psChild;
       gdal vector sql --oo MODEL=OeREBKRM09vs.imd --config OGR_STROKE_CURVE=TRUE --sql 'SELECT Rechtsstatus,publiziertAb,MetadatenGeobasisdaten,Eigentumsbeschraenkung,ZustaendigeStelle,Flaeche FROM "OeREBKRM09trsfr.Transferstruktur.Geometrie"' -f "ESRI Shapefile" ch.bazl.sicherheitszonenplan.oereb_20131118.xtf shpdir
+                (0, 2, "metres"),
+                (1, 2, "metres"),
+            {"depth", "depth", "metres", "1000000", "H5T_FLOAT",
+            {"uncertainty", "uncertainty", "metres", "1000000", "H5T_FLOAT",
