@@ -199,7 +199,7 @@ The following creation options are available:
       - ``surveyDateRange.dateEnd`` (date)
       - ``sourceSurveyID`` (string)
       - ``surveyAuthority`` (string)
-      - ``typeOfBathymetricEstimationUncertaint`` (enumeration)
+      - ``typeOfBathymetricEstimationUncertainty`` (enumeration)
 
 -  .. co:: COMPRESS
       :choices: NONE, DEFLATE

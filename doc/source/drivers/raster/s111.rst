@@ -21,7 +21,7 @@ cell in a raster grid area:
   clock-wise.
 
 Additional optional bands can be present to represent the speed uncertainty
-(in knots) and the direction uncertainty (in degree).s
+(in knots) and the direction uncertainty (in degree).
 
 When opening a S-111 file, no raster band is directly available. But a list of
 subdatasets will be reported, one for each timestamp available in the file.
@@ -163,7 +163,7 @@ The following creation options are available:
 -  .. co:: SURFACE_CURRENT_DEPTH
       :choices: <number>
 
-      "Depth/height value or layer thickness (m)
+      Depth/height value or layer thickness (m)
       This is a required creation option.
 
 -  .. co:: DATA_DYNAMICITY
