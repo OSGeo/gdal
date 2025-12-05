@@ -120,6 +120,11 @@ bool GDALRasterCleanCollarAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                     "Dataset should be opened in update mode");
         return false;
     }
+    if (!poDstDS && !m_outputDataset.IsNameSet() && m_update)
+    {
+        m_outputDataset.Set(poSrcDS);
+        poDstDS = poSrcDS;
+    }
 
     const bool dstDSWasNull = poDstDS == nullptr;
 

@@ -2577,13 +2577,6 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             }
             else if (onlyInputSpecifiedInUpdateAndOutputNotRequired)
             {
-                if (updateArg->GetMutualExclusionGroup().empty() ||
-                    outputArg->GetMutualExclusionGroup().empty() ||
-                    updateArg->GetMutualExclusionGroup() !=
-                        outputArg->GetMutualExclusionGroup())
-                {
-                    assignToOutputArg = true;
-                }
                 flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
             }
         }
@@ -2706,10 +2699,6 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                 {
                     outputArg->Get<GDALArgDatasetValue>().Set(poDS);
                 }
-                else if (onlyInputSpecifiedInUpdateAndOutputNotRequired)
-                {
-                    outputArg->Get<GDALArgDatasetValue>().Set(poDS);
-                }
             }
             val.SetDatasetOpenedByAlgorithm();
             val.Set(poDS);
@@ -2718,17 +2707,6 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         else
         {
             ret = false;
-        }
-    }
-    else if (onlyInputSpecifiedInUpdateAndOutputNotRequired &&
-             val.GetDatasetRef())
-    {
-        if (updateArg->GetMutualExclusionGroup().empty() ||
-            outputArg->GetMutualExclusionGroup().empty() ||
-            updateArg->GetMutualExclusionGroup() !=
-                outputArg->GetMutualExclusionGroup())
-        {
-            outputArg->Get<GDALArgDatasetValue>().Set(val.GetDatasetRef());
         }
     }
 
