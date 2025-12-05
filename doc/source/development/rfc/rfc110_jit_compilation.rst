@@ -1,16 +1,22 @@
 .. _rfc-110:
 
-=====================================================================
-RFC 110: Just-In-Time (JIT) compilation of expressions
-=====================================================================
+=============================================================================
+RFC 110: Just-In-Time (JIT) compilation of expressions (on hold, NOT adopted)
+=============================================================================
 
 ============== =============================================
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2025-11-25
-Status:        Draft
+Status:        Draft, on hold
 Target:        GDAL 3.13
 ============== =============================================
+
+.. warning::
+
+    This RFC has been put on hold. Its candidate implementation has NOT been
+    merged into the official GDAL source code.
+
 
 Summary
 -------
