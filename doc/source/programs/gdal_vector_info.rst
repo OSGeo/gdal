@@ -107,11 +107,11 @@ Examples
 .. example::
    :title: Getting information on the file :file:`poly.gpkg` (with text output), listing all features
 
-   .. command-output:: gdal vector info --format=text --features poly.gpkg
+   .. command-output:: gdal vector info --features poly.gpkg
       :cwd: ../../data
 
 .. example::
    :title: Getting information on the file :file:`poly.gpkg` (with JSON output)
 
-   .. command-output:: gdal vector info poly.gpkg
+   .. command-output:: gdal vector info --format=JSON poly.gpkg
       :cwd: ../../data

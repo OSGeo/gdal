@@ -19,7 +19,7 @@ Raster commands
 
     ==>
 
-    gdal raster info --format=text my.tif
+    gdal raster info my.tif
 
 
 * Converting a georeferenced netCDF file to cloud-optimized GeoTIFF
@@ -192,7 +192,7 @@ Vector commands
 
     ==>
 
-    gdal vector info --format=text my.gpkg
+    gdal vector info my.gpkg
 
 
 * Converting a shapefile to a GeoPackage
