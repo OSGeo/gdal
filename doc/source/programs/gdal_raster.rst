@@ -62,7 +62,7 @@ Examples
 --------
 
 .. example::
-   :title: Getting information on the file :file:`utm.tif` (with JSON output)
+   :title: Getting information on the file :file:`utm.tif` (with text output)
 
    .. code-block:: console
 

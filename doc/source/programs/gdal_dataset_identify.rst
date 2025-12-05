@@ -52,7 +52,7 @@ Examples
 
    .. code-block:: console
 
-       $ gdal dataset identify --of=text NE1_50M_SR_W.tif
+       $ gdal dataset identify NE1_50M_SR_W.tif
 
        NE1_50M_SR_W.tif: GTiff
 
@@ -61,7 +61,7 @@ Examples
 
    .. code-block:: console
 
-       $ gdal dataset identify NE1_50M_SR_W.tif
+       $ gdal dataset identify --of=JSON NE1_50M_SR_W.tif
 
    .. code-block:: json
 
@@ -77,7 +77,7 @@ Examples
 
     .. code-block::
 
-        $ gdal dataset identify --of=text -r 50m_raster/
+        $ gdal dataset identify -r 50m_raster/
 
         NE1_50M_SR_W/ne1_50m.jpg: JPEG
         NE1_50M_SR_W/ne1_50m.png: PNG
