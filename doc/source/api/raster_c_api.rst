@@ -22,3 +22,6 @@ gdal.h: Raster C API
      pDst
      SetMetadataItem
      nDatasetTypeFlag
+     nDeltaDegreeOfFreedom
+     padfCovMatrix
+
