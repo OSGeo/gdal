@@ -12175,6 +12175,12 @@ std::shared_ptr<GDALMDArray> GDALDataset::AsMDArray(CSLConstList papszOptions)
  Otherwise, if bForce is true, ComputeInterBandCovarianceMatrix() is called.
  Otherwise, if bForce is false, an empty vector is returned
 
+ @param nBandCount Zero for all bands, or number of values in panBandList.
+                   Defaults to 0.
+ @param panBandList nullptr for all bands if nBandCount == 0, or array of
+                    nBandCount values such as panBandList[i] is the index
+                    between 1 and GetRasterCount() of a band that must participated
+                    in the covariance computation. Defaults to nullptr.
  @param bApproxOK Whether it is acceptable to use a subsample of values in
                   ComputeInterBandCovarianceMatrix().
                   Defaults to false.
@@ -12190,7 +12196,7 @@ std::shared_ptr<GDALMDArray> GDALDataset::AsMDArray(CSLConstList papszOptions)
  @param pfnProgress a function to call to report progress, or NULL.
  @param pProgressData application data to pass to the progress function.
 
- @return a vector of GetRasterCount() * GetRasterCount() values if successful,
+ @return a vector of nBandCount * nBandCount values if successful,
          in row-major order, or an empty vector in case of failure
 
  @since 3.13
@@ -12199,17 +12205,18 @@ std::shared_ptr<GDALMDArray> GDALDataset::AsMDArray(CSLConstList papszOptions)
  */
 
 std::vector<double> GDALDataset::GetInterBandCovarianceMatrix(
-    bool bApproxOK, bool bForce, bool bWriteIntoMetadata,
-    int nDeltaDegreeOfFreedom, GDALProgressFunc pfnProgress,
-    void *pProgressData)
+    int nBandCount, const int *panBandList, bool bApproxOK, bool bForce,
+    bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    GDALProgressFunc pfnProgress, void *pProgressData)
 {
     std::vector<double> res;
-    if (nBands == 0)
+    const int nBandCountToUse = nBandCount == 0 ? nBands : nBandCount;
+    if (nBandCountToUse == 0)
         return res;
     if constexpr (sizeof(size_t) < sizeof(uint64_t))
     {
-        // Check that nBands * nBands will not overflow size_t
-        if (static_cast<uint32_t>(nBands) >
+        // Check that nBandCountToUse * nBandCountToUse will not overflow size_t
+        if (static_cast<uint32_t>(nBandCountToUse) >
             std::numeric_limits<uint16_t>::max())
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
@@ -12219,7 +12226,7 @@ std::vector<double> GDALDataset::GetInterBandCovarianceMatrix(
     }
     try
     {
-        res.resize(static_cast<size_t>(nBands) * nBands);
+        res.resize(static_cast<size_t>(nBandCountToUse) * nBandCountToUse);
     }
     catch (const std::exception &)
     {
@@ -12228,7 +12235,8 @@ std::vector<double> GDALDataset::GetInterBandCovarianceMatrix(
         return res;
     }
 
-    if (GetInterBandCovarianceMatrix(res.data(), res.size(), bApproxOK, bForce,
+    if (GetInterBandCovarianceMatrix(res.data(), res.size(), nBandCount,
+                                     panBandList, bApproxOK, bForce,
                                      bWriteIntoMetadata, nDeltaDegreeOfFreedom,
                                      pfnProgress, pProgressData) != CE_None)
     {
@@ -12281,7 +12289,7 @@ std::vector<double> GDALDataset::GetInterBandCovarianceMatrix(
  to be the whole population.
 
  The caller must provide an already allocated array in padfCovMatrix of size
- at least GetRasterCount() * GetRasterCount().
+ at least nBandCount * nBandCount.
 
  If STATISTICS_COVARIANCES metadata items are available in band metadata,
  this method uses them.
@@ -12290,9 +12298,15 @@ std::vector<double> GDALDataset::GetInterBandCovarianceMatrix(
 
  This is the same as the C function GDALDatasetGetInterBandCovarianceMatrix()
 
- @param padfCovMatrix Pointer to an already allocated output array, of size at least
-                      GetRasterCount() * GetRasterCount().
+ @param[out] padfCovMatrix Pointer to an already allocated output array, of size at least
+                      nBandCount * nBandCount.
  @param nSize Number of elements in output array.
+ @param nBandCount Zero for all bands, or number of values in panBandList.
+                   Defaults to 0.
+ @param panBandList nullptr for all bands if nBandCount == 0, or array of
+                    nBandCount values such as panBandList[i] is the index
+                    between 1 and GetRasterCount() of a band that must participated
+                    in the covariance computation. Defaults to nullptr.
  @param bApproxOK Whether it is acceptable to use a subsample of values in
                   ComputeInterBandCovarianceMatrix().
                   Defaults to false.
@@ -12317,24 +12331,55 @@ std::vector<double> GDALDataset::GetInterBandCovarianceMatrix(
  */
 
 CPLErr GDALDataset::GetInterBandCovarianceMatrix(
-    double *padfCovMatrix, size_t nSize, bool bApproxOK, bool bForce,
-    bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
-    GDALProgressFunc pfnProgress, void *pProgressData)
+    double *padfCovMatrix, size_t nSize, int nBandCount, const int *panBandList,
+    bool bApproxOK, bool bForce, bool bWriteIntoMetadata,
+    int nDeltaDegreeOfFreedom, GDALProgressFunc pfnProgress,
+    void *pProgressData)
 {
-    if (nSize < static_cast<uint64_t>(nBands) * nBands)
+    std::vector<int> anBandListTmp;  // keep in this scope
+    if (nBandCount == 0)
+    {
+        if (nBands == 0)
+            return CE_None;
+        for (int i = 0; i < nBands; ++i)
+            anBandListTmp.push_back(i + 1);
+        nBandCount = nBands;
+        panBandList = anBandListTmp.data();
+    }
+    else
+    {
+        if (nBandCount > nBands)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetInterBandCovarianceMatrix(): nBandCount > nBands");
+            return CE_Failure;
+        }
+        for (int i = 0; i < nBandCount; ++i)
+        {
+            if (panBandList[i] <= 0 || panBandList[i] > nBands)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "GetInterBandCovarianceMatrix(): invalid value "
+                         "panBandList[%d] = %d",
+                         i, panBandList[i]);
+                return CE_Failure;
+            }
+        }
+    }
+
+    if (nSize < static_cast<uint64_t>(nBandCount) * nBandCount)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "GetInterBandCovarianceMatrix(): too small result matrix provided");
         return CE_Failure;
     }
-
     bool bGotFromMD = true;
     size_t resIdx = 0;
-    for (int i = 0; bGotFromMD && i < nBands; ++i)
+    for (int i = 0; bGotFromMD && i < nBandCount; ++i)
     {
-        const char *pszCov =
-            papoBands[i]->GetMetadataItem("STATISTICS_COVARIANCES");
+        const char *pszCov = papoBands[panBandList[i] - 1]->GetMetadataItem(
+            "STATISTICS_COVARIANCES");
         bGotFromMD = pszCov != nullptr;
         if (bGotFromMD)
         {
@@ -12342,8 +12387,9 @@ CPLErr GDALDataset::GetInterBandCovarianceMatrix(
             bGotFromMD = aosTokens.size() == nBands;
             if (bGotFromMD)
             {
-                for (const char *pszCoeff : aosTokens)
-                    padfCovMatrix[resIdx++] = CPLAtof(pszCoeff);
+                for (int j = 0; j < nBandCount; ++j)
+                    padfCovMatrix[resIdx++] =
+                        CPLAtof(aosTokens[panBandList[j] - 1]);
             }
         }
     }
@@ -12353,8 +12399,8 @@ CPLErr GDALDataset::GetInterBandCovarianceMatrix(
     if (!bForce)
         return CE_Warning;
     return ComputeInterBandCovarianceMatrix(
-        padfCovMatrix, nSize, bApproxOK, bWriteIntoMetadata,
-        nDeltaDegreeOfFreedom, pfnProgress, pProgressData);
+        padfCovMatrix, nSize, nBandCount, panBandList, bApproxOK,
+        bWriteIntoMetadata, nDeltaDegreeOfFreedom, pfnProgress, pProgressData);
 }
 
 /************************************************************************/
@@ -12401,7 +12447,7 @@ CPLErr GDALDataset::GetInterBandCovarianceMatrix(
  to be the whole population.
 
  The caller must provide an already allocated array in padfCovMatrix of size
- at least GetRasterCount() * GetRasterCount().
+ at least nBandCount * nBandCount.
 
  If STATISTICS_COVARIANCES metadata items are available in band metadata,
  this method uses them.
@@ -12411,9 +12457,15 @@ CPLErr GDALDataset::GetInterBandCovarianceMatrix(
  This is the same as the C++ method GDALDataset::GetInterBandCovarianceMatrix()
 
  @param hDS Dataset handle.
- @param padfCovMatrix Pointer to an already allocated output array, of size at least
-                      GetRasterCount() * GetRasterCount().
+ @param[out] padfCovMatrix Pointer to an already allocated output array, of size at least
+                      nBandCount * nBandCount.
  @param nSize Number of elements in output array.
+ @param nBandCount Zero for all bands, or number of values in panBandList.
+                   Defaults to 0.
+ @param panBandList nullptr for all bands if nBandCount == 0, or array of
+                    nBandCount values such as panBandList[i] is the index
+                    between 1 and GetRasterCount() of a band that must participated
+                    in the covariance computation. Defaults to nullptr.
  @param bApproxOK Whether it is acceptable to use a subsample of values in
                   GDALDatasetComputeInterBandCovarianceMatrix().
                   Defaults to false.
@@ -12437,15 +12489,16 @@ CPLErr GDALDataset::GetInterBandCovarianceMatrix(
  @see GDALDatasetComputeInterBandCovarianceMatrix()
  */
 CPLErr GDALDatasetGetInterBandCovarianceMatrix(
-    GDALDatasetH hDS, double *padfCovMatrix, size_t nSize, bool bApproxOK,
-    bool bForce, bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    GDALDatasetH hDS, double *padfCovMatrix, size_t nSize, int nBandCount,
+    const int *panBandList, bool bApproxOK, bool bForce,
+    bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
     GDALProgressFunc pfnProgress, void *pProgressData)
 {
     VALIDATE_POINTER1(hDS, __func__, CE_Failure);
     VALIDATE_POINTER1(padfCovMatrix, __func__, CE_Failure);
     return GDALDataset::FromHandle(hDS)->GetInterBandCovarianceMatrix(
-        padfCovMatrix, nSize, bApproxOK, bForce, bWriteIntoMetadata,
-        nDeltaDegreeOfFreedom, pfnProgress, pProgressData);
+        padfCovMatrix, nSize, nBandCount, panBandList, bApproxOK, bForce,
+        bWriteIntoMetadata, nDeltaDegreeOfFreedom, pfnProgress, pProgressData);
 }
 
 /************************************************************************/
@@ -12495,6 +12548,12 @@ CPLErr GDALDatasetGetInterBandCovarianceMatrix(
  metadata items are available in bands. See GetInterBandCovarianceMatrix()
  to use them.
 
+ @param nBandCount Zero for all bands, or number of values in panBandList.
+                   Defaults to 0.
+ @param panBandList nullptr for all bands if nBandCount == 0, or array of
+                    nBandCount values such as panBandList[i] is the index
+                    between 1 and GetRasterCount() of a band that must participated
+                    in the covariance computation. Defaults to nullptr.
  @param bApproxOK Whether it is acceptable to use a subsample of values.
                   Defaults to false.
  @param bWriteIntoMetadata Whether this method must write
@@ -12506,7 +12565,7 @@ CPLErr GDALDatasetGetInterBandCovarianceMatrix(
  @param pfnProgress a function to call to report progress, or NULL.
  @param pProgressData application data to pass to the progress function.
 
- @return a vector of GetRasterCount() * GetRasterCount() values if successful,
+ @return a vector of nBandCount * nBandCount values if successful,
          in row-major order, or an empty vector in case of failure
 
  @since 3.13
@@ -12514,16 +12573,18 @@ CPLErr GDALDatasetGetInterBandCovarianceMatrix(
  @see GetInterBandCovarianceMatrix()
  */
 std::vector<double> GDALDataset::ComputeInterBandCovarianceMatrix(
-    bool bApproxOK, bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    int nBandCount, const int *panBandList, bool bApproxOK,
+    bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
     GDALProgressFunc pfnProgress, void *pProgressData)
 {
     std::vector<double> res;
-    if (nBands == 0)
+    const int nBandCountToUse = nBandCount == 0 ? nBands : nBandCount;
+    if (nBandCountToUse == 0)
         return res;
     if constexpr (sizeof(size_t) < sizeof(uint64_t))
     {
-        // Check that nBands * nBands will not overflow size_t
-        if (static_cast<uint32_t>(nBands) >
+        // Check that nBandCountToUse * nBandCountToUse will not overflow size_t
+        if (static_cast<uint32_t>(nBandCountToUse) >
             std::numeric_limits<uint16_t>::max())
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
@@ -12533,7 +12594,7 @@ std::vector<double> GDALDataset::ComputeInterBandCovarianceMatrix(
     }
     try
     {
-        res.resize(static_cast<size_t>(nBands) * nBands);
+        res.resize(static_cast<size_t>(nBandCountToUse) * nBandCountToUse);
     }
     catch (const std::exception &)
     {
@@ -12543,8 +12604,9 @@ std::vector<double> GDALDataset::ComputeInterBandCovarianceMatrix(
     }
 
     if (ComputeInterBandCovarianceMatrix(
-            res.data(), res.size(), bApproxOK, bWriteIntoMetadata,
-            nDeltaDegreeOfFreedom, pfnProgress, pProgressData) != CE_None)
+            res.data(), res.size(), nBandCount, panBandList, bApproxOK,
+            bWriteIntoMetadata, nDeltaDegreeOfFreedom, pfnProgress,
+            pProgressData) != CE_None)
         res.clear();
     return res;
 }
@@ -12593,17 +12655,25 @@ std::vector<double> GDALDataset::ComputeInterBandCovarianceMatrix(
  to be the whole population.
 
  The caller must provide an already allocated array in padfCovMatrix of size
- at least GetRasterCount() * GetRasterCount().
+ at least nBandCount * nBandCount.
 
  This method recomputes the covariance matrix, even if STATISTICS_COVARIANCES
  metadata items are available in bands. See GetInterBandCovarianceMatrix()
  to use them.
 
+ The implementation is optimized to minimize the amount of pixel reading.
+
  This method is the same as the C function GDALDatasetComputeInterBandCovarianceMatrix()
 
- @param padfCovMatrix Pointer to an already allocated output array, of size at least
-                      GetRasterCount() * GetRasterCount().
+ @param[out] padfCovMatrix Pointer to an already allocated output array, of size at least
+                      nBandCount * nBandCount.
  @param nSize Number of elements in output array.
+ @param nBandCount Zero for all bands, or number of values in panBandList.
+                   Defaults to 0.
+ @param panBandList nullptr for all bands if nBandCount == 0, or array of
+                    nBandCount values such as panBandList[i] is the index
+                    between 1 and GetRasterCount() of a band that must participated
+                    in the covariance computation. Defaults to nullptr.
  @param bApproxOK Whether it is acceptable to use a subsample of values.
                   Defaults to false.
  @param bWriteIntoMetadata Whether this method must write
@@ -12622,12 +12692,60 @@ std::vector<double> GDALDataset::ComputeInterBandCovarianceMatrix(
  @see GetInterBandCovarianceMatrix()
  */
 CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
-    double *padfCovMatrix, size_t nSize, bool bApproxOK,
-    bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    double *padfCovMatrix, size_t nSize, int nBandCount, const int *panBandList,
+    bool bApproxOK, bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
     GDALProgressFunc pfnProgress, void *pProgressData)
 {
-    const auto nEltCount = static_cast<size_t>(nBands) * nBands;
-    if (nSize < nEltCount)
+    std::vector<int> anBandListTmp;  // keep in this scope
+    if (nBandCount == 0)
+    {
+        if (nBands == 0)
+            return CE_None;
+        for (int i = 0; i < nBands; ++i)
+            anBandListTmp.push_back(i + 1);
+        nBandCount = nBands;
+        panBandList = anBandListTmp.data();
+    }
+    else
+    {
+        if (nBandCount > nBands)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "ComputeInterBandCovarianceMatrix(): nBandCount > nBands");
+            return CE_Failure;
+        }
+        for (int i = 0; i < nBandCount; ++i)
+        {
+            if (panBandList[i] <= 0 || panBandList[i] > nBands)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "ComputeInterBandCovarianceMatrix(): invalid value "
+                         "panBandList[%d] = %d",
+                         i, panBandList[i]);
+                return CE_Failure;
+            }
+        }
+
+        if (bWriteIntoMetadata)
+        {
+            bool bOK = nBandCount == nBands;
+            for (int i = 0; bOK && i < nBandCount; ++i)
+            {
+                bOK = (panBandList[i] == i + 1);
+            }
+            if (!bOK)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "ComputeInterBandCovarianceMatrix(): cannot write "
+                         "STATISTICS_COVARIANCES metadata since the input band "
+                         "list is not [1, 2, ... GetRasterCount()]");
+                return CE_Failure;
+            }
+        }
+    }
+
+    const auto nMatrixSize = static_cast<size_t>(nBandCount) * nBandCount;
+    if (nSize < nMatrixSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "ComputeInterBandCovarianceMatrix(): too small result matrix "
@@ -12635,18 +12753,18 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
         return CE_Failure;
     }
 
-    if (nBands == 0)
-        return CE_None;
-
     // Find appropriate overview dataset
-    if (bApproxOK && papoBands[0]->GetOverviewCount() > 0)
+    if (bApproxOK && papoBands[panBandList[0] - 1]->GetOverviewCount() > 0)
     {
         GDALDataset *poOvrDS = nullptr;
-        for (int i = 0; i < nBands; ++i)
+        for (int i = 0; i < nBandCount; ++i)
         {
-            auto poOvrBand = papoBands[i]->GetRasterSampleOverview(
+            const int nIdxBand = panBandList[i] - 1;
+            auto poOvrBand = papoBands[nIdxBand]->GetRasterSampleOverview(
                 GDALSTAT_APPROX_NUMSAMPLES);
-            if (poOvrBand == papoBands[i] || poOvrBand->GetBand() != i + 1)
+
+            if (poOvrBand == papoBands[i] ||
+                poOvrBand->GetBand() != panBandList[i])
             {
                 poOvrDS = nullptr;
                 break;
@@ -12668,8 +12786,8 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
         if (poOvrDS)
         {
             return poOvrDS->ComputeInterBandCovarianceMatrix(
-                padfCovMatrix, nSize, false, bWriteIntoMetadata,
-                nDeltaDegreeOfFreedom == 0 ? 1 : nDeltaDegreeOfFreedom,
+                padfCovMatrix, nSize, nBandCount, panBandList,
+                /* approx = */ false, bWriteIntoMetadata, nDeltaDegreeOfFreedom,
                 pfnProgress, pProgressData);
         }
     }
@@ -12685,10 +12803,10 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
 
     int nBlockXSize = 0;
     int nBlockYSize = 0;
-    papoBands[0]->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    papoBands[panBandList[0] - 1]->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
     if (static_cast<uint64_t>(nBlockXSize) * nBlockYSize >
-        std::numeric_limits<size_t>::max() / nBands)
+        std::numeric_limits<size_t>::max() / nBandCount)
     {
         ReportError(CE_Failure, CPLE_OutOfMemory,
                     "Not enough memory for intermediate computations");
@@ -12699,14 +12817,14 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
 
     try
     {
-        adfCount.resize(nEltCount);
-        adfMeanI.resize(nEltCount);
-        adfMeanJ.resize(nEltCount);
-        adfCurBlockAllBands.resize(nPixelsInBlock * nBands);
-        adfNoData.resize(nBands);
-        apoMaskBands.resize(nBands);
-        aabyCurBlockMask.resize(nBands);
-        pabyCurBlockMask.resize(nBands);
+        adfCount.resize(nMatrixSize);
+        adfMeanI.resize(nMatrixSize);
+        adfMeanJ.resize(nMatrixSize);
+        adfCurBlockAllBands.resize(nPixelsInBlock * nBandCount);
+        adfNoData.resize(nBandCount);
+        apoMaskBands.resize(nBandCount);
+        aabyCurBlockMask.resize(nBandCount);
+        pabyCurBlockMask.resize(nBandCount);
     }
     catch (const std::exception &)
     {
@@ -12716,18 +12834,19 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
     }
 
     bool bAllBandsSameMask = false;
-    for (int i = 0; i < nBands; ++i)
+    for (int i = 0; i < nBandCount; ++i)
     {
+        const auto poBand = papoBands[panBandList[i] - 1];
         int bHasNoData = FALSE;
-        adfNoData[i] = papoBands[i]->GetNoDataValue(&bHasNoData);
+        adfNoData[i] = poBand->GetNoDataValue(&bHasNoData);
         if (!bHasNoData)
         {
             adfNoData[i] = std::numeric_limits<double>::quiet_NaN();
 
-            if (papoBands[i]->GetMaskFlags() != GMF_ALL_VALID &&
-                papoBands[i]->GetColorInterpretation() != GCI_AlphaBand)
+            if (poBand->GetMaskFlags() != GMF_ALL_VALID &&
+                poBand->GetColorInterpretation() != GCI_AlphaBand)
             {
-                apoMaskBands[i] = papoBands[i]->GetMaskBand();
+                apoMaskBands[i] = poBand->GetMaskBand();
                 try
                 {
                     aabyCurBlockMask[i].resize(nPixelsInBlock);
@@ -12749,7 +12868,7 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
     }
     if (bAllBandsSameMask)
     {
-        for (int i = 1; i < nBands; ++i)
+        for (int i = 1; i < nBandCount; ++i)
         {
             apoMaskBands[i] = nullptr;
             aabyCurBlockMask[i].clear();
@@ -12762,15 +12881,16 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
         cpl::div_round_up(nRasterYSize, nBlockYSize);
     uint64_t nCurIter = 0;
 
-    for (const auto &window : papoBands[0]->IterateWindows())
+    // Iterate over all blocks
+    for (const auto &window : papoBands[panBandList[0] - 1]->IterateWindows())
     {
         const auto nThisBlockPixelCount =
             static_cast<size_t>(window.nXSize) * window.nYSize;
         CPLErr eErr = RasterIO(
             GF_Read, window.nXOff, window.nYOff, window.nXSize, window.nYSize,
             adfCurBlockAllBands.data(), window.nXSize, window.nYSize,
-            GDT_Float64, nBands, nullptr, 0, 0, 0, nullptr);
-        if (bAllBandsSameMask && eErr == CE_None)
+            GDT_Float64, nBandCount, panBandList, 0, 0, 0, nullptr);
+        if (eErr == CE_None && bAllBandsSameMask)
         {
             eErr = apoMaskBands[0]->RasterIO(
                 GF_Read, window.nXOff, window.nYOff, window.nXSize,
@@ -12779,7 +12899,7 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
         }
         else
         {
-            for (int i = 0; i < nBands && eErr == CE_None; ++i)
+            for (int i = 0; eErr == CE_None && i < nBandCount; ++i)
             {
                 if (apoMaskBands[i])
                 {
@@ -12793,12 +12913,13 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
         if (eErr != CE_None)
             return eErr;
 
-        for (int i = 0; i < nBands; ++i)
+        for (int i = 0; i < nBandCount; ++i)
         {
             // The covariance matrix is symmetric. So start at i
-            for (int j = i; j < nBands; ++j)
+            for (int j = i; j < nBandCount; ++j)
             {
-                const auto idxInMatrix = static_cast<size_t>(i) * nBands + j;
+                const auto idxInMatrix =
+                    static_cast<size_t>(i) * nBandCount + j;
                 double dfMeanI = adfMeanI[idxInMatrix];
                 double dfMeanJ = adfMeanJ[idxInMatrix];
                 double dfCount = adfCount[idxInMatrix];
@@ -12878,12 +12999,12 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
 
     // Finalize by dividing co-moments by the number of contributing values
     // (minus nDeltaDegreeOfFreedom) to compute final covariances.
-    for (int i = 0; i < nBands; ++i)
+    for (int i = 0; i < nBandCount; ++i)
     {
         // The covariance matrix is symmetric. So start at i
-        for (int j = i; j < nBands; ++j)
+        for (int j = i; j < nBandCount; ++j)
         {
-            const auto idxInMatrix = static_cast<size_t>(i) * nBands + j;
+            const auto idxInMatrix = static_cast<size_t>(i) * nBandCount + j;
             const double dfCovariance =
                 adfCount[idxInMatrix] <= nDeltaDegreeOfFreedom
                     ? std::numeric_limits<double>::quiet_NaN()
@@ -12892,12 +13013,14 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
 
             padfCovMatrix[idxInMatrix] = dfCovariance;
             // Fill lower triangle
-            padfCovMatrix[static_cast<size_t>(j) * nBands + i] = dfCovariance;
+            padfCovMatrix[static_cast<size_t>(j) * nBandCount + i] =
+                dfCovariance;
         }
     }
 
     if (bWriteIntoMetadata)
     {
+        CPLAssert(nBands == nBandCount);
         std::string osStr;
         size_t idx = 0;
         for (int i = 0; i < nBands; ++i)
@@ -12970,9 +13093,15 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
  This function is the same as the C++ method GDALDataset::ComputeInterBandCovarianceMatrix()
 
  @param hDS Dataset handle.
- @param padfCovMatrix Pointer to an already allocated output array, of size at least
-                      GetRasterCount() * GetRasterCount().
+ @param[out] padfCovMatrix Pointer to an already allocated output array, of size at least
+                      nBandCount * nBandCount.
  @param nSize Number of elements in output array.
+ @param nBandCount Zero for all bands, or number of values in panBandList.
+                   Defaults to 0.
+ @param panBandList nullptr for all bands if nBandCount == 0, or array of
+                    nBandCount values such as panBandList[i] is the index
+                    between 1 and GetRasterCount() of a band that must participated
+                    in the covariance computation. Defaults to nullptr.
  @param bApproxOK Whether it is acceptable to use a subsample of values.
                   Defaults to false.
  @param bWriteIntoMetadata Whether this method must write
@@ -12991,13 +13120,14 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
  @see GDALDatasetGetInterBandCovarianceMatrix()
  */
 CPLErr GDALDatasetComputeInterBandCovarianceMatrix(
-    GDALDatasetH hDS, double *padfCovMatrix, size_t nSize, bool bApproxOK,
-    bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
-    GDALProgressFunc pfnProgress, void *pProgressData)
+    GDALDatasetH hDS, double *padfCovMatrix, size_t nSize, int nBandCount,
+    const int *panBandList, bool bApproxOK, bool bWriteIntoMetadata,
+    int nDeltaDegreeOfFreedom, GDALProgressFunc pfnProgress,
+    void *pProgressData)
 {
     VALIDATE_POINTER1(hDS, __func__, CE_Failure);
     VALIDATE_POINTER1(padfCovMatrix, __func__, CE_Failure);
     return GDALDataset::FromHandle(hDS)->ComputeInterBandCovarianceMatrix(
-        padfCovMatrix, nSize, bApproxOK, bWriteIntoMetadata,
-        nDeltaDegreeOfFreedom, pfnProgress, pProgressData);
+        padfCovMatrix, nSize, nBandCount, panBandList, bApproxOK,
+        bWriteIntoMetadata, nDeltaDegreeOfFreedom, pfnProgress, pProgressData);
 }

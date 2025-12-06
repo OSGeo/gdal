@@ -1281,10 +1281,14 @@ def test_stats_GetInterBandCovarianceMatrix(tmp_vsimem):
             )
         ) == pytest.approx(list(chain.from_iterable(expected_cov_matrix)))
 
-    assert tab_pct[0] == 1.0
+        assert tab_pct[0] == 1.0
 
-    with gdal.Open(tmp_vsimem / "test.tif") as ds:
-        assert ds.GetInterBandCovarianceMatrix() is None
+        res = ds.GetInterBandCovarianceMatrix(
+            band_list=[2], force=True, write_into_metadata=False
+        )
+        assert res[0][0] == pytest.approx(expected_cov_matrix[1][1])
+
+    assert gdal.VSIStatL(tmp_vsimem / "test.tif.aux.xml") is None
 
 
 ###############################################################################
@@ -1293,8 +1297,29 @@ def test_stats_GetInterBandCovarianceMatrix(tmp_vsimem):
 def test_stats_GetInterBandCovarianceMatrix_edge_cases():
 
     ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
-    with pytest.raises(Exception, match="Zero band dataset"):
-        ds.GetInterBandCovarianceMatrix(force=True)
+    assert ds.GetInterBandCovarianceMatrix(force=True) == []
+
+
+###############################################################################
+
+
+def test_stats_GetInterBandCovarianceMatrix_errors_on_band_list():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    with pytest.raises(Exception, match=" invalid value"):
+        ds.GetInterBandCovarianceMatrix(band_list=[0])
+    with pytest.raises(Exception, match="invalid value"):
+        ds.GetInterBandCovarianceMatrix(band_list=[3])
+    with pytest.raises(Exception, match="nBandCount > nBands"):
+        ds.GetInterBandCovarianceMatrix(band_list=[1, 1, 1])
+    with pytest.raises(Exception, match="cannot write STATISTICS_COVARIANCES metadata"):
+        ds.GetInterBandCovarianceMatrix(
+            band_list=[1], force=True, write_into_metadata=True
+        )
+    with pytest.raises(Exception, match="cannot write STATISTICS_COVARIANCES metadata"):
+        ds.GetInterBandCovarianceMatrix(
+            band_list=[2, 1], force=True, write_into_metadata=True
+        )
 
 
 ###############################################################################
@@ -1362,10 +1387,14 @@ def test_stats_ComputeInterBandCovarianceMatrix(tmp_vsimem):
             )
         ) == pytest.approx(list(chain.from_iterable(expected_cov_matrix)))
 
-    assert tab_pct[0] == 1.0
+        assert tab_pct[0] == 1.0
 
-    with gdal.Open(tmp_vsimem / "test.tif") as ds:
-        assert ds.GetInterBandCovarianceMatrix() is None
+        res = ds.ComputeInterBandCovarianceMatrix(
+            band_list=[2], write_into_metadata=False
+        )
+        assert res[0][0] == pytest.approx(expected_cov_matrix[1][1])
+
+    assert gdal.VSIStatL(tmp_vsimem / "test.tif.aux.xml") is None
 
 
 ###############################################################################
@@ -1378,9 +1407,9 @@ def test_stats_ComputeInterBandCovarianceMatrix_overviews(tmp_vsimem):
     ds.Close()
 
     expected_cov_matrix = [
-        [2241.7474621754936, 2898.723016592399, 1010.1568325910154],
-        [2898.723016592399, 3900.259907723227, 1248.630954306772],
-        [1010.1568325910154, 1248.630954306772, 601.9344108086958],
+        [2241.747462182087, 2898.723016609931, 1010.1568325853924],
+        [2898.723016609931, 3900.2599077296286, 1248.6309543003213],
+        [1010.1568325853924, 1248.6309543003213, 601.9344108053141],
     ]
 
     with gdal.Open(tmp_vsimem / "test.tif") as ds:
@@ -1396,8 +1425,25 @@ def test_stats_ComputeInterBandCovarianceMatrix_overviews(tmp_vsimem):
 def test_stats_ComputeInterBandCovarianceMatrix_edge_cases():
 
     ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
-    with pytest.raises(Exception, match="Zero band dataset"):
-        ds.ComputeInterBandCovarianceMatrix()
+    assert ds.ComputeInterBandCovarianceMatrix() == []
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_errors_on_band_list():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    with pytest.raises(Exception, match=" invalid value"):
+        ds.ComputeInterBandCovarianceMatrix(band_list=[0])
+    with pytest.raises(Exception, match="invalid value"):
+        ds.ComputeInterBandCovarianceMatrix(band_list=[3])
+    with pytest.raises(Exception, match="nBandCount > nBands"):
+        ds.ComputeInterBandCovarianceMatrix(band_list=[1, 1, 1])
+    with pytest.raises(Exception, match="cannot write STATISTICS_COVARIANCES metadata"):
+        ds.ComputeInterBandCovarianceMatrix(band_list=[1], write_into_metadata=True)
+    with pytest.raises(Exception, match="cannot write STATISTICS_COVARIANCES metadata"):
+        ds.ComputeInterBandCovarianceMatrix(band_list=[2, 1], write_into_metadata=True)
 
 
 ###############################################################################
@@ -1490,34 +1536,14 @@ def test_stats_ComputeInterBandCovarianceMatrix_mask_band():
 ###############################################################################
 
 
-def test_stats_ComputeInterBandCovarianceMatrix_mask_band_per_dataset():
+def test_stats_ComputeInterBandCovarianceMatrix_interrupt():
 
-    ds = gdal.GetDriverByName("MEM").Create("", 4, 1, 2)
-    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x01\x02\x03\xFF")
-    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xFE\x03")
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xFF\xFF\x00\x00")
-
-    expected_cov_matrix = [[0.5, -0.5], [-0.5, 0.5]]
-
-    cov_matrix = ds.ComputeInterBandCovarianceMatrix()
-    assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
-        list(chain.from_iterable(expected_cov_matrix))
-    )
-
-
-###############################################################################
-
-
-@pytest.mark.slow()
-def test_stats_ComputeInterBandCovarianceMatrix_huge_mem_alloc():
-
-    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 50000)
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1000)
 
     def my_progress(pct, msg, user_data):
         return pct < 1e-2
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="User terminated"):
         ds.ComputeInterBandCovarianceMatrix(
             write_into_metadata=False, callback=my_progress
         )
