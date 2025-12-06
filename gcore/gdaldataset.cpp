@@ -12626,7 +12626,8 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
     bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
     GDALProgressFunc pfnProgress, void *pProgressData)
 {
-    if (nSize < static_cast<uint64_t>(nBands) * nBands)
+    const auto nEltCount = static_cast<size_t>(nBands) * nBands;
+    if (nSize < nEltCount)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "ComputeInterBandCovarianceMatrix(): too small result matrix "
@@ -12637,60 +12638,260 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
     if (nBands == 0)
         return CE_None;
 
-    if (!pfnProgress)
-        pfnProgress = GDALDummyProgress;
-
-    // The following number accounts for:
-    // - computation of mean for nBands bands
-    // - computation of half of the covariance matrix, as it is symmetric.
-    const double dfStepCount =
-        nBands + static_cast<double>(nBands) * (nBands + 1) / 2;
-
-    std::vector<double> adfBandMean(nBands, 0);
-    double dfStepCur = 0;
-    for (int i = 0; i < nBands; ++i, ++dfStepCur)
+    // Find appropriate overview dataset
+    if (bApproxOK && papoBands[0]->GetOverviewCount() > 0)
     {
-        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
-            pScaledProgressArg(
-                GDALCreateScaledProgress(dfStepCur / dfStepCount,
-                                         (dfStepCur + 1) / dfStepCount,
-                                         pfnProgress, pProgressData),
-                GDALDestroyScaledProgress);
-
-        if (papoBands[i]->ComputeStatistics(
-                bApproxOK, nullptr, nullptr, &adfBandMean[i], nullptr,
-                GDALScaledProgress, pScaledProgressArg.get()) != CE_None)
+        GDALDataset *poOvrDS = nullptr;
+        for (int i = 0; i < nBands; ++i)
         {
+            auto poOvrBand = papoBands[i]->GetRasterSampleOverview(
+                GDALSTAT_APPROX_NUMSAMPLES);
+            if (poOvrBand == papoBands[i] || poOvrBand->GetBand() != i + 1)
+            {
+                poOvrDS = nullptr;
+                break;
+            }
+            else if (i == 0)
+            {
+                if (poOvrBand->GetDataset() == this)
+                {
+                    break;
+                }
+                poOvrDS = poOvrBand->GetDataset();
+            }
+            else if (poOvrBand->GetDataset() != poOvrDS)
+            {
+                poOvrDS = nullptr;
+                break;
+            }
+        }
+        if (poOvrDS)
+        {
+            return poOvrDS->ComputeInterBandCovarianceMatrix(
+                padfCovMatrix, nSize, false, bWriteIntoMetadata,
+                nDeltaDegreeOfFreedom == 0 ? 1 : nDeltaDegreeOfFreedom,
+                pfnProgress, pProgressData);
+        }
+    }
+
+    std::vector<double> adfCount;
+    std::vector<double> adfMeanI;
+    std::vector<double> adfMeanJ;
+    std::vector<double> adfCurBlockAllBands;
+    std::vector<double> adfNoData;
+    std::vector<GDALRasterBand *> apoMaskBands;
+    std::vector<std::vector<GByte>> aabyCurBlockMask;
+    std::vector<std::vector<GByte> *> pabyCurBlockMask;
+
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
+    papoBands[0]->GetBlockSize(&nBlockXSize, &nBlockYSize);
+
+    if (static_cast<uint64_t>(nBlockXSize) * nBlockYSize >
+        std::numeric_limits<size_t>::max() / nBands)
+    {
+        ReportError(CE_Failure, CPLE_OutOfMemory,
+                    "Not enough memory for intermediate computations");
+        return CE_Failure;
+    }
+    const size_t nPixelsInBlock =
+        static_cast<size_t>(nBlockXSize) * nBlockYSize;
+
+    try
+    {
+        adfCount.resize(nEltCount);
+        adfMeanI.resize(nEltCount);
+        adfMeanJ.resize(nEltCount);
+        adfCurBlockAllBands.resize(nPixelsInBlock * nBands);
+        adfNoData.resize(nBands);
+        apoMaskBands.resize(nBands);
+        aabyCurBlockMask.resize(nBands);
+        pabyCurBlockMask.resize(nBands);
+    }
+    catch (const std::exception &)
+    {
+        ReportError(CE_Failure, CPLE_OutOfMemory,
+                    "Not enough memory for intermediate computations");
+        return CE_Failure;
+    }
+
+    bool bAllBandsSameMask = false;
+    for (int i = 0; i < nBands; ++i)
+    {
+        int bHasNoData = FALSE;
+        adfNoData[i] = papoBands[i]->GetNoDataValue(&bHasNoData);
+        if (!bHasNoData)
+        {
+            adfNoData[i] = std::numeric_limits<double>::quiet_NaN();
+
+            if (papoBands[i]->GetMaskFlags() != GMF_ALL_VALID &&
+                papoBands[i]->GetColorInterpretation() != GCI_AlphaBand)
+            {
+                apoMaskBands[i] = papoBands[i]->GetMaskBand();
+                try
+                {
+                    aabyCurBlockMask[i].resize(nPixelsInBlock);
+                }
+                catch (const std::exception &)
+                {
+                    ReportError(
+                        CE_Failure, CPLE_OutOfMemory,
+                        "Not enough memory for intermediate computations");
+                    return CE_Failure;
+                }
+                pabyCurBlockMask[i] = &aabyCurBlockMask[i];
+            }
+        }
+        if (i == 0)
+            bAllBandsSameMask = (apoMaskBands[0] != nullptr);
+        else if (bAllBandsSameMask)
+            bAllBandsSameMask = (apoMaskBands[i] == apoMaskBands[0]);
+    }
+    if (bAllBandsSameMask)
+    {
+        for (int i = 1; i < nBands; ++i)
+        {
+            apoMaskBands[i] = nullptr;
+            aabyCurBlockMask[i].clear();
+            pabyCurBlockMask[i] = pabyCurBlockMask[0];
+        }
+    }
+
+    const auto nIterCount =
+        static_cast<uint64_t>(cpl::div_round_up(nRasterXSize, nBlockXSize)) *
+        cpl::div_round_up(nRasterYSize, nBlockYSize);
+    uint64_t nCurIter = 0;
+
+    for (const auto &window : papoBands[0]->IterateWindows())
+    {
+        const auto nThisBlockPixelCount =
+            static_cast<size_t>(window.nXSize) * window.nYSize;
+        CPLErr eErr = RasterIO(
+            GF_Read, window.nXOff, window.nYOff, window.nXSize, window.nYSize,
+            adfCurBlockAllBands.data(), window.nXSize, window.nYSize,
+            GDT_Float64, nBands, nullptr, 0, 0, 0, nullptr);
+        if (bAllBandsSameMask && eErr == CE_None)
+        {
+            eErr = apoMaskBands[0]->RasterIO(
+                GF_Read, window.nXOff, window.nYOff, window.nXSize,
+                window.nYSize, aabyCurBlockMask[0].data(), window.nXSize,
+                window.nYSize, GDT_Byte, 0, 0, nullptr);
+        }
+        else
+        {
+            for (int i = 0; i < nBands && eErr == CE_None; ++i)
+            {
+                if (apoMaskBands[i])
+                {
+                    eErr = apoMaskBands[i]->RasterIO(
+                        GF_Read, window.nXOff, window.nYOff, window.nXSize,
+                        window.nYSize, aabyCurBlockMask[i].data(),
+                        window.nXSize, window.nYSize, GDT_Byte, 0, 0, nullptr);
+                }
+            }
+        }
+        if (eErr != CE_None)
+            return eErr;
+
+        for (int i = 0; i < nBands; ++i)
+        {
+            // The covariance matrix is symmetric. So start at i
+            for (int j = i; j < nBands; ++j)
+            {
+                const auto idxInMatrix = static_cast<size_t>(i) * nBands + j;
+                double dfMeanI = adfMeanI[idxInMatrix];
+                double dfMeanJ = adfMeanJ[idxInMatrix];
+                double dfCount = adfCount[idxInMatrix];
+                double dfAcc = nCurIter == 0 ? 0 : padfCovMatrix[idxInMatrix];
+
+                const bool bIsIntegerCaseNoMask =
+                    GDALDataTypeIsInteger(papoBands[i]->GetRasterDataType()) &&
+                    GDALDataTypeIsInteger(papoBands[j]->GetRasterDataType()) &&
+                    std::isnan(adfNoData[i]) && std::isnan(adfNoData[j]) &&
+                    !pabyCurBlockMask[i] && !pabyCurBlockMask[j];
+
+                // Online/single-pass/Welford's algorithm:
+                // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online
+                if (bIsIntegerCaseNoMask)
+                {
+                    for (size_t iPixel = 0; iPixel < nThisBlockPixelCount;
+                         ++iPixel)
+                    {
+                        const double dfI =
+                            adfCurBlockAllBands[i * nThisBlockPixelCount +
+                                                iPixel];
+                        const double dfJ =
+                            adfCurBlockAllBands[j * nThisBlockPixelCount +
+                                                iPixel];
+                        dfCount += 1;
+                        const double dfDeltaI = dfI - dfMeanI;
+                        const double dfInvCount = 1.0 / dfCount;
+                        dfMeanI += dfDeltaI * dfInvCount;
+                        dfMeanJ += (dfJ - dfMeanJ) * dfInvCount;
+                        dfAcc += dfDeltaI * (dfJ - dfMeanJ);
+                    }
+                }
+                else
+                {
+                    for (size_t iPixel = 0; iPixel < nThisBlockPixelCount;
+                         ++iPixel)
+                    {
+                        const double dfI =
+                            adfCurBlockAllBands[i * nThisBlockPixelCount +
+                                                iPixel];
+                        const double dfJ =
+                            adfCurBlockAllBands[j * nThisBlockPixelCount +
+                                                iPixel];
+                        if (!(std::isnan(dfI) || dfI == adfNoData[i] ||
+                              (pabyCurBlockMask[i] &&
+                               (*pabyCurBlockMask[i])[iPixel] == 0) ||
+                              std::isnan(dfJ) || dfJ == adfNoData[j] ||
+                              (pabyCurBlockMask[j] &&
+                               (*pabyCurBlockMask[j])[iPixel] == 0)))
+                        {
+                            dfCount += 1;
+                            const double dfDeltaI = dfI - dfMeanI;
+                            const double dfInvCount = 1.0 / dfCount;
+                            dfMeanI += dfDeltaI * dfInvCount;
+                            dfMeanJ += (dfJ - dfMeanJ) * dfInvCount;
+                            dfAcc += dfDeltaI * (dfJ - dfMeanJ);
+                        }
+                    }
+                }
+
+                adfMeanI[idxInMatrix] = dfMeanI;
+                adfMeanJ[idxInMatrix] = dfMeanJ;
+                adfCount[idxInMatrix] = dfCount;
+                padfCovMatrix[idxInMatrix] = dfAcc;
+            }
+        }
+
+        ++nCurIter;
+        if (pfnProgress &&
+            !pfnProgress(static_cast<double>(nCurIter) / nIterCount, "",
+                         pProgressData))
+        {
+            ReportError(CE_Failure, CPLE_UserInterrupt, "User terminated");
             return CE_Failure;
         }
     }
 
-    std::vector<double> adfTempValues;
+    // Finalize by dividing co-moments by the number of contributing values
+    // (minus nDeltaDegreeOfFreedom) to compute final covariances.
     for (int i = 0; i < nBands; ++i)
     {
         // The covariance matrix is symmetric. So start at i
-        for (int j = i; j < nBands; ++j, ++dfStepCur)
+        for (int j = i; j < nBands; ++j)
         {
-            std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
-                pScaledProgressArg(
-                    GDALCreateScaledProgress(dfStepCur / dfStepCount,
-                                             (dfStepCur + 1) / dfStepCount,
-                                             pfnProgress, pProgressData),
-                    GDALDestroyScaledProgress);
-
-            const auto nLastErrorCount = CPLGetErrorCounter();
+            const auto idxInMatrix = static_cast<size_t>(i) * nBands + j;
             const double dfCovariance =
-                papoBands[i]->ComputeInterBandCovariance(
-                    papoBands[j], bApproxOK, nDeltaDegreeOfFreedom,
-                    &adfBandMean[i], &adfBandMean[j], &adfTempValues,
-                    GDALScaledProgress, pScaledProgressArg.get());
-            if (std::isnan(dfCovariance) &&
-                CPLGetErrorCounter() != nLastErrorCount)
-            {
-                return CE_Failure;
-            }
+                adfCount[idxInMatrix] <= nDeltaDegreeOfFreedom
+                    ? std::numeric_limits<double>::quiet_NaN()
+                    : padfCovMatrix[idxInMatrix] /
+                          (adfCount[idxInMatrix] - nDeltaDegreeOfFreedom);
 
-            padfCovMatrix[static_cast<size_t>(i) * nBands + j] = dfCovariance;
+            padfCovMatrix[idxInMatrix] = dfCovariance;
+            // Fill lower triangle
             padfCovMatrix[static_cast<size_t>(j) * nBands + i] = dfCovariance;
         }
     }
