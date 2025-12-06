@@ -1411,7 +1411,7 @@ def test_stats_ComputeInterBandCovarianceMatrix_nodata():
     ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xFE\x03")
     ds.GetRasterBand(2).SetNoDataValue(254)
 
-    expected_cov_matrix = [[1, 0], [0, 1]]
+    expected_cov_matrix = [[1, -0.5], [-0.5, 1]]
 
     cov_matrix = ds.ComputeInterBandCovarianceMatrix()
     assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
@@ -1428,7 +1428,7 @@ def test_stats_ComputeInterBandCovarianceMatrix_nan_value():
     ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, struct.pack("f" * 4, 1, 2, 3, math.nan))
     ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, struct.pack("f" * 4, 2, 1, math.nan, 3))
 
-    expected_cov_matrix = [[1, 0], [0, 1]]
+    expected_cov_matrix = [[1, -0.5], [-0.5, 1]]
 
     cov_matrix = ds.ComputeInterBandCovarianceMatrix()
     assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
@@ -1462,8 +1462,8 @@ def test_stats_ComputeInterBandCovarianceMatrix_failed_to_compute_stats():
         0, 0, 2, 1, struct.pack("f" * 2, math.nan, math.nan)
     )
 
-    with pytest.raises(Exception, match="Failed to compute statistics"):
-        ds.ComputeInterBandCovarianceMatrix()
+    cov_matrix = ds.ComputeInterBandCovarianceMatrix()
+    assert math.isnan(cov_matrix[0][0])
 
 
 ###############################################################################
@@ -1479,7 +1479,26 @@ def test_stats_ComputeInterBandCovarianceMatrix_mask_band():
     ds.GetRasterBand(2).CreateMaskBand(0)
     ds.GetRasterBand(2).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xFF\xFF\x00\xFF")
 
-    expected_cov_matrix = [[1, 0], [0, 1]]
+    expected_cov_matrix = [[1, -0.5], [-0.5, 1]]
+
+    cov_matrix = ds.ComputeInterBandCovarianceMatrix()
+    assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
+        list(chain.from_iterable(expected_cov_matrix))
+    )
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_mask_band_per_dataset():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 4, 1, 2)
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x01\x02\x03\xFF")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xFE\x03")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xFF\xFF\x00\x00")
+
+    expected_cov_matrix = [[0.5, -0.5], [-0.5, 0.5]]
 
     cov_matrix = ds.ComputeInterBandCovarianceMatrix()
     assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
