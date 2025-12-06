@@ -26,7 +26,8 @@ Unlike :ref:`gdal_raster_polygonize`, adjacent pixels having the same values are
 
 This algorithm can be part of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeline`.
 
-The following options are available:
+Program-Specific Options
+------------------------
 
 .. option:: --geometry-type
 
@@ -47,6 +48,9 @@ The following options are available:
 .. option:: -b <band>
 
    Specifies the bands for which pixel values should be added as fields of the created features. By default, values will be added for all bands.
+
+Standard Options
+----------------
 
 .. include:: gdal_options/of_vector.rst
 

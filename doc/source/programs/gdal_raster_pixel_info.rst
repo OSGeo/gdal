@@ -34,21 +34,23 @@ The following items will be reported (when known):
 
 The following options are available:
 
-Standard options
-++++++++++++++++
-
-.. option:: -f, --of, --format, --output-format geojson|csv
-
-    Which output format to use. Default is GeoJSON.
-
-.. include:: gdal_options/oo.rst
-
-.. include:: gdal_options/if.rst
+Program-Specific Options
+------------------------
 
 .. option:: -b <band>
 
     Selects a band to query. Multiple bands can be listed. By default all
     bands are queried.
+
+.. option:: -f, --of, --format, --output-format geojson|csv
+
+    Which output format to use. Default is GeoJSON.
+
+.. option:: --ovr, --overview <index>
+
+    Query the (overview_level)th overview (overview_level=0 is the 1st overview),
+    instead of the base band. Note that the x,y location (if the coordinate system is
+    pixel/line) must still be given with respect to the base band.
 
 .. option:: -p, --pos, --position <column,line> or <X,Y>
 
@@ -91,11 +93,12 @@ Standard options
 
     - ``cubicspline`` applies a B-Spline convolution kernel.
 
-.. option:: --ovr, --overview <index>
+Standard Options
+----------------
 
-    Query the (overview_level)th overview (overview_level=0 is the 1st overview),
-    instead of the base band. Note that the x,y location (if the coordinate system is
-    pixel/line) must still be given with respect to the base band.
+.. include:: gdal_options/oo.rst
+
+.. include:: gdal_options/if.rst
 
 Examples
 --------

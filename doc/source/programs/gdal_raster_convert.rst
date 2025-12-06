@@ -23,16 +23,8 @@ Description
 :program:`gdal raster convert` can be used to convert raster data between
 different formats.
 
-The following options are available:
-
-Standard options
-++++++++++++++++
-
-.. include:: gdal_options/of_raster_create_copy.rst
-
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
+Standard Options
+----------------
 
 .. option:: --append
 
@@ -40,12 +32,15 @@ Standard options
     Only works with drivers that support adding subdatasets such as
     :ref:`raster.gtiff` and :ref:`raster.gpkg`
 
-Advanced options
-++++++++++++++++
+.. include:: gdal_options/co.rst
+
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/of_raster_create_copy.rst
 
 .. include:: gdal_options/oo.rst
 
-.. include:: gdal_options/if.rst
+.. include:: gdal_options/overwrite.rst
 
 Examples
 --------

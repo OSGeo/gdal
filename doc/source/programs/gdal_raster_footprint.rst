@@ -34,23 +34,32 @@ step to generate proper mask bands.
 
 Example footprint calculated with default options of :program:`gdal raster footprint`.
 
-The following options are available:
+Post-vectorization geometric operations are applied in the following order:
 
-.. include:: gdal_options/of_vector.rst
+* optional splitting (:option:`--split-multipolygons`)
+* optional densification (:option:`--densify-distance`)
+* optional reprojection (:option:`--dst-crs`)
+* optional filtering by minimum ring area (:option:`--min-ring-area`)
+* optional application of convex hull (:option:`--convex-hull`)
+* optional simplification (:option:`--simplify-tolerance`)
+* limitation of number of points (:option:`--max-points`)
 
-.. include:: gdal_options/co.rst
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/lco.rst
+.. versionadded:: 3.12
 
-.. option:: --output-layer <OUTPUT-LAYER>
+.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
 
-    Output layer name. Defaults to ``footprint``.
 
-.. include:: gdal_options/overwrite.rst
+Program-Specific Options
+------------------------
 
-.. option:: --append
+.. option:: --absolute-path
 
-    Whether appending features to existing layer(s) is allowed
+    Enables writing the absolute path of the input dataset. By default, the
+    filename is written in the location field exactly as specified on the
+    command line.
 
 .. option:: -b <band>
 
@@ -68,23 +77,6 @@ The following options are available:
     ``intersection`` means that a pixel is valid only if it is valid for all
     selected bands.
 
-.. option:: --overview <index>
-
-   To specify which overview level of source file must be used, when overviews
-   are available on the source raster. By default the full resolution level is
-   used. The index is 0-based, that is 0 means the first overview level.
-   This option is mutually exclusive with :option:`--src-nodata`.
-
-.. option:: --src-nodata <value>
-
-    Set nodata values for input bands (different values can be supplied for each band).
-    If a single value is specified, it applies to all selected bands.
-    If more than one value is supplied, there should be as many values as the number
-    of selected bands, and all values should be quoted to keep them
-    together as a single operating system argument.
-    If the option is not specified, the intrinsic mask band of each selected
-    bands will be used.
-
 .. option:: --coordinate-system pixel|georeferenced
 
     Target coordinate system. By default if the input dataset is georeferenced,
@@ -92,20 +84,6 @@ The following options are available:
     as coordinates in the CRS of the raster (or the one specified with :option:`--dst-crs`).
     If specifying ``pixel``, the coordinates of the footprint geometry are
     column and line indices.
-
-.. option:: --dst-crs <CRS_DEF>
-
-    Target CRS of the output file.  The <CRS_DEF> may be any of
-    the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing
-    the WKT.
-    Specifying this option implies ``--coordinate-system=georeferenced``.
-    The footprint is reprojected from the CRS of the source raster to the
-    specified CRS.
-
-.. option:: --split-multipolygons
-
-    When specified, multipolygons are split as several features each with one
-    single polygon.
 
 .. option:: --convex-hull
 
@@ -119,6 +97,51 @@ The following options are available:
     or otherwise in georeferenced units of the source raster.
     This option is applied before the reprojection implied by :option:`--dst-crs`.
 
+.. option:: --dst-crs <CRS_DEF>
+
+    Target CRS of the output file.  The <CRS_DEF> may be any of
+    the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing
+    the WKT.
+    Specifying this option implies ``--coordinate-system=georeferenced``.
+    The footprint is reprojected from the CRS of the source raster to the
+    specified CRS.
+
+.. option:: --location-field <field_name>
+
+    Specifies the name of the field in the resulting vector dataset where the
+    path of the input dataset will be stored. The default field name is
+    "location". To prevent writing the path of the input dataset, use
+    :option:`--no-location-field`
+
+.. option:: --max-points <value>|unlimited
+
+    Maximum number of points of each output geometry (not counting the closing
+    point of each ring, which is always identical to the first point).
+    The default value is 100. ``unlimited`` can be used to remove that limitation.
+
+.. option:: --min-ring-area <value>
+
+    Minimum value for the area of a ring
+    The unit of the area is in square pixels if :option:`--coordinate-system` equals ``pixel``,
+    or otherwise in georeferenced units of the target vector dataset.
+    This option is applied after the reprojection implied by :option:`--dst-crs`
+
+.. option:: --no-location-field
+
+    Turns off the writing of the path of the input dataset as a field in the
+    output vector dataset.
+
+.. option:: --output-layer <OUTPUT-LAYER>
+
+    Output layer name. Defaults to ``footprint``.
+
+.. option:: --overview <index>
+
+   To specify which overview level of source file must be used, when overviews
+   are available on the source raster. By default the full resolution level is
+   used. The index is 0-based, that is 0 means the first overview level.
+   This option is mutually exclusive with :option:`--src-nodata`.
+
 .. option:: --simplify-tolerance <value>
 
     The specified value of this option is the tolerance used to merge
@@ -128,53 +151,35 @@ The following options are available:
     or otherwise in georeferenced units of the target vector dataset.
     This option is applied after the reprojection implied by :option:`--dst-crs`.
 
-.. option:: --min-ring-area <value>
+.. option:: --split-multipolygons
 
-    Minimum value for the area of a ring
-    The unit of the area is in square pixels if :option:`--coordinate-system` equals ``pixel``,
-    or otherwise in georeferenced units of the target vector dataset.
-    This option is applied after the reprojection implied by :option:`--dst-crs`
+    When specified, multipolygons are split as several features each with one
+    single polygon.
 
-.. option:: --max-points <value>|unlimited
+.. option:: --src-nodata <value>
 
-    Maximum number of points of each output geometry (not counting the closing
-    point of each ring, which is always identical to the first point).
-    The default value is 100. ``unlimited`` can be used to remove that limitation.
+    Set nodata values for input bands (different values can be supplied for each band).
+    If a single value is specified, it applies to all selected bands.
+    If more than one value is supplied, there should be as many values as the number
+    of selected bands, and all values should be quoted to keep them
+    together as a single operating system argument.
+    If the option is not specified, the intrinsic mask band of each selected
+    bands will be used.
 
-.. option:: --location-field <field_name>
+Standard Options
+----------------
 
-    Specifies the name of the field in the resulting vector dataset where the
-    path of the input dataset will be stored. The default field name is
-    "location". To prevent writing the path of the input dataset, use
-    :option:`--no-location-field`
+.. option:: --append
 
-.. option:: --no-location-field
+    Whether appending features to existing layer(s) is allowed
 
-    Turns off the writing of the path of the input dataset as a field in the
-    output vector dataset.
+.. include:: gdal_options/co.rst
 
-.. option:: --absolute-path
+.. include:: gdal_options/lco.rst
 
-    Enables writing the absolute path of the input dataset. By default, the
-    filename is written in the location field exactly as specified on the
-    command line.
+.. include:: gdal_options/of_vector.rst
 
-Post-vectorization geometric operations are applied in the following order:
-
-* optional splitting (:option:`--split-multipolygons`)
-* optional densification (:option:`--densify-distance`)
-* optional reprojection (:option:`--dst-crs`)
-* optional filtering by minimum ring area (:option:`--min-ring-area`)
-* optional application of convex hull (:option:`--convex-hull`)
-* optional simplification (:option:`--simplify-tolerance`)
-* limitation of number of points (:option:`--max-points`)
-
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
-
-.. versionadded:: 3.12
-
-.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+.. include:: gdal_options/overwrite.rst
 
 Examples
 --------

@@ -33,17 +33,20 @@ Synopsis
 
 .. program-output:: gdal raster pipeline --help-doc=materialize
 
-Options
--------
+Program-Specific Options
+------------------------
 
 .. option:: --output <OUTPUT>
 
    Optional dataset name. When specified, it is not removed at the end of the
    process.
 
-.. include:: gdal_options/of_raster_create_copy.rst
+Standard Options
+----------------
 
 .. include:: gdal_options/co.rst
+
+.. include:: gdal_options/of_raster_create_copy.rst
 
 .. include:: gdal_options/overwrite.rst
 

@@ -50,23 +50,8 @@ step of a pipeline.
 
 The following options are available:
 
-Standard options
-++++++++++++++++
-
-.. option:: -f, --of, --format, --output-format json|text
-
-    Which output format to use. Default is JSON, and starting with GDAL 3.12,
-    text when invoked from command line.
-
-.. option:: --mm, --min-max
-
-    Force computation of the actual min/max values for each band in the
-    dataset.
-
-.. option:: --stats
-
-    Read and display image statistics. Force computation if no
-    statistics are stored in an image.
+Program-Specific Options
+------------------------
 
 .. option:: --approx-stats
 
@@ -75,39 +60,18 @@ Standard options
     based on overviews or a subset of all tiles. Useful if you are in a
     hurry and don't need precise stats.
 
-.. option:: --hist
-
-    Report histogram information for all bands.
-
-Advanced options
-++++++++++++++++
-
-.. include:: gdal_options/oo.rst
-
-.. include:: gdal_options/if.rst
-
-.. option:: --no-gcp
-
-    Suppress ground control points list printing. It may be useful for
-    datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
-    which contain thousands of them.
-
-.. option:: --no-md
-
-    Suppress metadata printing. Some datasets may contain a lot of
-    metadata strings.
-
-.. option:: --no-ct
-
-    Suppress printing of color table.
-
-.. option:: --no-fl
-
-    Only display the first file of the file list.
-
 .. option:: --checksum
 
     Force computation of the checksum for each band in the dataset.
+
+.. option:: -f, --of, --format, --output-format json|text
+
+    Which output format to use. Default is JSON, and starting with GDAL 3.12,
+    text when invoked from command line.
+
+.. option:: --hist
+
+    Report histogram information for all bands.
 
 .. option:: --list-mdd
 
@@ -121,8 +85,33 @@ Advanced options
 
     ``all`` Report metadata for all domains.
 
-Esoteric options
-++++++++++++++++
+.. option:: --mm, --min-max
+
+    Force computation of the actual min/max values for each band in the
+    dataset.
+
+.. option:: --no-ct
+
+    Suppress printing of color table.
+
+.. option:: --no-fl
+
+    Only display the first file of the file list.
+
+.. option:: --no-gcp
+
+    Suppress ground control points list printing. It may be useful for
+    datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
+    which contain thousands of them.
+
+.. option:: --no-mask
+
+    Suppress band mask printing. Is implied if :option:`--no-nodata` is specified.
+
+.. option:: --no-md
+
+    Suppress metadata printing. Some datasets may contain a lot of
+    metadata strings.
 
 .. option:: --no-nodata
 
@@ -131,15 +120,24 @@ Esoteric options
     Can be useful for example when querying a remove GRIB2 dataset that has an
     index .idx side-car file, together with :option:`--no-md`
 
-.. option:: --no-mask
 
-    Suppress band mask printing. Is implied if :option:`--no-nodata` is specified.
+.. option:: --stats
+
+    Read and display image statistics. Force computation if no
+    statistics are stored in an image.
 
 .. option:: --subdataset <n>
 
     If the input dataset contains several subdatasets read and display
     a subdataset with specified ``n`` number (starting from 1).
     This is an alternative of giving the full subdataset name.
+
+Standard Options
+----------------
+
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/oo.rst
 
 Examples
 --------

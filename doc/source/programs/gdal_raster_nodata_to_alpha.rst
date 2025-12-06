@@ -29,8 +29,14 @@ add it with the :option:`--nodata` option.
 This program is a no-op and can be safely used if the input dataset has no
 nodata value and :option:`--nodata` is not specified.
 
-Options
-+++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+
+
+Program-Specific Options
+------------------------
 
 .. option::  --nodata <NODATA>
 
@@ -39,16 +45,14 @@ Options
    When multiple values are specified, a pixel is considered as invalid only
    if it matches the nodata values on all bands.
 
+Standard Options
+----------------
+
 .. include:: gdal_options/co.rst
 
 .. include:: gdal_options/of_raster_create_copy.rst
 
 .. include:: gdal_options/ot.rst
-
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
-
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
 Examples
 --------

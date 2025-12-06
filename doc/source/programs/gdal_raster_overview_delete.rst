@@ -30,6 +30,9 @@ of a dataset.
     It might be needed for use :ref:`gdal_raster_convert` to create
     a new compact dataset.
 
+Program-Specific Options
+------------------------
+
 .. option:: --dataset <DATASET>
 
     Dataset name, to be updated in-place by default (unless :option:`--external` is specified). Required.
