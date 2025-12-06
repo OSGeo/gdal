@@ -106,6 +106,10 @@ Program-Specific Options
    End angle for visibility. Measured clockwise from 0 North, in degree.
    (Not supported in cumulative mode)
 
+.. option:: -z, --height <HEIGHT>
+
+   Observer height
+
 .. option:: --high-pitch <value>
 
    .. versionadded:: 3.12
@@ -203,7 +207,13 @@ Program-Specific Options
 Standard Options
 ----------------
 
+.. include:: gdal_options/append_raster.rst
+
 .. include:: gdal_options/co.rst
+
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/oo.rst
 
 .. include:: gdal_options/of_raster_create_copy.rst
 

@@ -303,14 +303,18 @@ The :option:`--url` option is also used to substitute ``${URL}`` in the template
 Standard Options
 ----------------
 
+.. include:: gdal_options/co.rst
+
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/oo.rst
+
 .. option:: -f, --of, --format, --output-format <OUTPUT-FORMAT>
 
     Which output raster format to use. Allowed values may be given by
     ``gdal --formats | grep raster | grep rw | sort``
 
     Defaults to PNG.
-
-.. include:: gdal_options/co.rst
 
 
 Examples

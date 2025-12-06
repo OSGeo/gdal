@@ -65,7 +65,7 @@ Advanced options
 
 .. include:: gdal_options/oo.rst
 
-.. include:: gdal_options/output-oo.rst
+.. include:: gdal_options/output_oo.rst
 
 
 .. GDALG output (on-the-fly / streamed dataset)

@@ -29,35 +29,52 @@ This algorithm can be part of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeli
 Program-Specific Options
 ------------------------
 
+.. option:: -b, --band <band>
+
+   Specifies the bands for which pixel values should be added as fields of the created features. By default, values will be added for all bands.
+
 .. option:: --geometry-type
 
    Specifies the geometry type of the created features. Options available are "none" (default), "point", or "polygon".
-
-.. option:: --skip-nodata
-
-   If set, no features will be emitted for pixels equal to the NoData value.
-
-.. option:: --include-xy
-
-   If set, ``CENTER_X`` and ``CENTER_Y`` fields will be added with the center coordinates of each pixel.
 
 .. option:: --include-row-col
 
    If set, ``ROW`` and ``COL`` fields will be added with the cell positions.
 
-.. option:: -b <band>
+.. option:: --include-xy
 
-   Specifies the bands for which pixel values should be added as fields of the created features. By default, values will be added for all bands.
+   If set, ``CENTER_X`` and ``CENTER_Y`` fields will be added with the center coordinates of each pixel.
+
+.. option:: --output-layer
+
+   Provides a name for the output vector layer. Defaults to "pixels".
+
+.. option:: --skip-nodata
+
+   If set, no features will be emitted for pixels equal to the NoData value.
 
 Standard Options
 ----------------
 
-.. include:: gdal_options/of_vector.rst
+.. include:: gdal_options/append_vector.rst
 
 .. include:: gdal_options/co.rst
 
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/lco.rst
+
+.. include:: gdal_options/oo.rst
+
+.. include:: gdal_options/of_vector.rst
+
+.. include:: gdal_options/output_oo.rst
+
 .. include:: gdal_options/overwrite.rst
 
+.. include:: gdal_options/overwrite_layer.rst
+
+.. include:: gdal_options/update.rst
 
 Examples
 --------

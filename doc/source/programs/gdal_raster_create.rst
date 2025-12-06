@@ -114,15 +114,17 @@ Program-Specific Options
 Standard Options
 ----------------
 
-.. option:: --append
-
-    Append the new raster as a new subdataset to existing output file.
-    Only works with drivers that support adding subdatasets such as
-    :ref:`raster.gtiff` and :ref:`raster.gpkg`
+.. include:: gdal_options/append_raster.rst
 
 .. include:: gdal_options/co.rst
 
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/oo.rst
+
 .. include:: gdal_options/ot.rst
+
+.. include:: gdal_options/of_raster_create.rst
 
 .. include:: gdal_options/overwrite.rst
 

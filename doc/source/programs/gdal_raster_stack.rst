@@ -51,7 +51,7 @@ Program-Specific Options
     When writing a VRT file, enables writing the absolute path of the input datasets. By default, input
     filenames are written in a relative way with respect to the VRT filename (when possible).
 
-.. option:: -b <band>
+.. option:: -b, --band <band>
 
     Select an input <band> to be processed. Bands are numbered from 1.
     If input bands not set all bands will be added to the output.
@@ -118,7 +118,13 @@ Program-Specific Options
 Standard Options
 ----------------
 
+.. include:: gdal_options/append_raster.rst
+
 .. include:: gdal_options/co.rst
+
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/oo.rst
 
 .. include:: gdal_options/of_raster_create_copy.rst
 

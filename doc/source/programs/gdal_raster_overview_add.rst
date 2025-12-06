@@ -126,6 +126,12 @@ Program-Specific Options
 
     ``mode`` selects the value which appears most often of all the sampled points.
 
+Standard Options
+----------------
+
+.. include:: gdal_options/co.rst
+
+.. include:: gdal_options/oo.rst
 
 Examples
 --------

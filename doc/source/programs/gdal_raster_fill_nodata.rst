@@ -37,7 +37,7 @@ This subcommand is also available as a potential step of :ref:`gdal_raster_pipel
 Program-Specific Options
 ------------------------
 
-.. option:: -b <BAND>
+.. option:: -b, --band <BAND>
 
     Select an input <BAND> to be processed. Bands are numbered from 1.
     Default is the first band of the input dataset.
@@ -69,7 +69,13 @@ Program-Specific Options
 Standard Options
 ----------------
 
+.. include:: gdal_options/append_raster.rst
+
 .. include:: gdal_options/co.rst
+
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/oo.rst
 
 .. include:: gdal_options/of_raster_create_copy.rst
 

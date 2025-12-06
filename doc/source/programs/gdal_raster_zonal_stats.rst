@@ -109,6 +109,10 @@ This algorithm can be part of a :ref:`gdal_pipeline`.
 Program-Specific Options
 ------------------------
 
+.. option:: --band, -b <BAND>
+
+   Input band(s) to be processed.
+
 .. option:: --chunk-size <MEMORY>
 
    Defines the maximum size of raster chunks to read. May be expressed as either an amount of memory (500 MB, 2 GB, etc.) or as a percentage of
@@ -151,6 +155,35 @@ Program-Specific Options
 .. option:: --zones-layer <ZONES-LAYER>
 
    Specifies the feature layer from which zones can be read.
+
+Standard Options
+----------------
+
+.. include:: gdal_options/append_vector.rst
+
+.. include:: gdal_options/co_vector.rst
+
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/lco.rst
+
+.. include:: gdal_options/oo.rst
+
+.. include:: gdal_options/of_vector.rst
+
+.. include:: gdal_options/output_layer.rst
+
+.. include:: gdal_options/output_oo.rst
+
+.. include:: gdal_options/overwrite.rst
+
+.. include:: gdal_options/overwrite_layer.rst
+
+.. include:: gdal_options/skip_errors.rst
+
+.. include:: gdal_options/update.rst
+
+.. include:: gdal_options/upsert.rst
    
 Examples
 --------

@@ -86,11 +86,13 @@ Standard Options
 
 .. include:: gdal_options/if.rst
 
-.. include:: options/lco.rst
+.. include:: gdal_options/lco.rst
 
 .. include:: gdal_options/of_vector.rst
 
 .. include:: gdal_options/oo.rst
+
+.. include:: gdal_options/output_oo.rst
 
 .. include:: gdal_options/overwrite.rst
 

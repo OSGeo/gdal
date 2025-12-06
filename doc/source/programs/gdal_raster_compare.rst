@@ -95,6 +95,13 @@ Program-Specific Options
 
     Whether to ignore comparison of all subdatasets that are part of the dataset.
 
+Standard Options
+----------------
+
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/oo.rst
+
 Examples
 --------
 

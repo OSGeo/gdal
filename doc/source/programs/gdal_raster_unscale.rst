@@ -51,7 +51,13 @@ This subcommand is also available as a potential step of :ref:`gdal_raster_pipel
 Standard Options
 ----------------
 
+.. include:: gdal_options/append_raster.rst
+
 .. include:: gdal_options/co.rst
+
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/oo.rst
 
 .. include:: gdal_options/ot.rst
 

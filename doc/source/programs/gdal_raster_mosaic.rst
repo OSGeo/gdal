@@ -69,7 +69,7 @@ Program-Specific Options
     255 in areas with source raster. The effect is that a RGBA viewer will render
     the areas without source rasters as transparent and areas with source rasters as opaque.
 
-.. option:: -b <band>
+.. option:: -b, --band <band>
 
     Select an input <band> to be processed. Bands are numbered from 1.
     If input bands not set all bands will be added to the output.
@@ -151,7 +151,13 @@ Program-Specific Options
 Standard Options
 ----------------
 
+.. include:: gdal_options/append_raster.rst
+
 .. include:: gdal_options/co.rst
+
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/oo.rst
 
 .. include:: gdal_options/of_raster_create_copy.rst
 

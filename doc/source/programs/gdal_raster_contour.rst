@@ -82,13 +82,13 @@ Program-Specific Options
 
     Provides a name for the output vector layer. Defaults to "contour".
 
-.. option:: --src-nodata <SRCNODATA>
-
-    Input pixel value to treat as 'nodata'.
-
 .. option:: -p, --polygonize
 
     Create polygons instead of lines.
+
+.. option:: --src-nodata <SRCNODATA>
+
+    Input pixel value to treat as 'nodata'.
 
 Standard Options
 ----------------
@@ -97,11 +97,13 @@ Standard Options
 
 .. include:: gdal_options/if.rst
 
-.. include:: options/lco.rst
-
-.. include:: gdal_options/of_vector.rst
+.. include:: gdal_options/lco.rst
 
 .. include:: gdal_options/oo.rst
+
+.. include:: gdal_options/output_oo.rst
+
+.. include:: gdal_options/of_vector.rst
 
 .. include:: gdal_options/overwrite.rst
 

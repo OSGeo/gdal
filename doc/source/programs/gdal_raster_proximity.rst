@@ -73,6 +73,8 @@ Program-Specific Options
 Standard Options
 ----------------
 
+.. include:: gdal_options/append_raster.rst
+
 .. include:: gdal_options/co.rst
 
 .. include:: gdal_options/if.rst

@@ -105,6 +105,11 @@ Program-Specific Options
     By default all existing overview levels will be refreshed, unless explicit
     levels are specified. See :example:`refresh-vrt`.
 
+Standard Options
+----------------
+
+.. include:: gdal_options/oo.rst
+
 Examples
 --------
 

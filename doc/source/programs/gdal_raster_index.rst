@@ -139,18 +139,14 @@ Program-Specific Options
     ``auto``, ``WKT``, ``EPSG``, ``PROJ``.
     This option should be used together with :option:`--source-crs-field-name`.
 
+Standard Options
+----------------
 
-
-Standard options
-++++++++++++++++
-
-.. option:: --append
-
-    Whether appending features to the existing output vector layer is allowed.
+.. include:: gdal_options/append_vector.rst
 
 .. include:: gdal_options/co.rst
 
-.. include:: options/lco.rst
+.. include:: gdal_options/lco.rst
 
 .. include:: gdal_options/of_vector.rst
 

@@ -73,7 +73,7 @@ Advanced options
 
 .. include:: gdal_options/oo.rst
 
-.. include:: gdal_options/output-oo.rst
+.. include:: gdal_options/output_oo.rst
 
 .. include:: gdal_options/if.rst
 

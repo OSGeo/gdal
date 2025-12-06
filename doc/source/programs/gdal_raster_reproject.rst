@@ -174,7 +174,7 @@ Program-Specific Options
     Alignment means that xmin / resx, ymin / resy,
     xmax / resx and ymax / resy are integer values.
 
-.. option:: --to <NAME>=<VALUE>
+.. option:: --to, --transform-option <NAME>=<VALUE>
 
     Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
     See :cpp:func:`GDALCreateRPCTransformerV2()` for RPC specific options.
@@ -190,7 +190,13 @@ Program-Specific Options
 Standard Options
 ----------------
 
+.. include:: gdal_options/append_raster.rst
+
 .. include:: gdal_options/co.rst
+
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/oo.rst
 
 .. include:: gdal_options/of_raster_create_copy.rst
 

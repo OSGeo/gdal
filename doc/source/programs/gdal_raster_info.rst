@@ -77,7 +77,7 @@ Program-Specific Options
 
     List all metadata domains available for the dataset.
 
-.. option:: --mdd <domain>|all
+.. option:: --mdd, --metadata-domain <domain>|all
 
     adds metadata using:
 

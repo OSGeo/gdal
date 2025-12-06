@@ -61,7 +61,7 @@ Program-Specific Options
     filename is written in the location field exactly as specified on the
     command line.
 
-.. option:: -b <band>
+.. option:: -b, --band <band>
 
     Select an input <band> to be processed. Bands are numbered from 1.
     Multiple :option:`-b` switches may be used to select a set of input bands.
@@ -169,13 +169,15 @@ Program-Specific Options
 Standard Options
 ----------------
 
-.. option:: --append
-
-    Whether appending features to existing layer(s) is allowed
+.. include:: gdal_options/append_vector.rst
 
 .. include:: gdal_options/co.rst
 
+.. include:: gdal_options/if.rst
+
 .. include:: gdal_options/lco.rst
+
+.. include:: gdal_options/oo.rst
 
 .. include:: gdal_options/of_vector.rst
 

@@ -65,7 +65,7 @@ Program-Specific Options
 
     Do not update existing overviews.
 
-.. option:: --to <NAME>=<VALUE>
+.. option:: --to, --transform-option <NAME>=<VALUE>
 
     Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
     See :cpp:func:`GDALCreateRPCTransformerV2()` for RPC specific options.
@@ -76,6 +76,13 @@ Program-Specific Options
 
     Set a warp option.  The :cpp:member:`GDALWarpOptions::papszWarpOptions` docs show all options.
     Multiple options may be listed.
+
+Program-Specific Options
+------------------------
+
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/oo.rst
 
 Examples
 --------
