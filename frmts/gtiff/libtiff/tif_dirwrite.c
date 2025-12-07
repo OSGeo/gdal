@@ -712,6 +712,14 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
             }
             if (TIFFFieldSet(tif, FIELD_STRIPBYTECOUNTS))
             {
+                /*  Check td_stripbytecount_p for NULL pointer (bug#749) */
+                if (tif->tif_dir.td_stripbytecount_p == NULL)
+                {
+                    TIFFErrorExtR(
+                        tif, module,
+                        "StripByteCount array is not set, pointer is NULL");
+                    goto bad;
+                }
                 if (!isTiled(tif))
                 {
                     if (!TIFFWriteDirectoryTagLongLong8Array(
@@ -731,6 +739,14 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
             }
             if (TIFFFieldSet(tif, FIELD_STRIPOFFSETS))
             {
+                /*  Check td_stripoffset_p for NULL pointer (bug#749) */
+                if (tif->tif_dir.td_stripoffset_p == NULL)
+                {
+                    TIFFErrorExtR(
+                        tif, module,
+                        "StripByteOffset array is not set, pointer is NULL");
+                    goto bad;
+                }
                 if (!isTiled(tif))
                 {
                     /* td_stripoffset_p might be NULL in an odd OJPEG case. See

@@ -3175,6 +3175,19 @@ static int PickContigCase(TIFFRGBAImage *img)
                     uint16_t SubsamplingVer;
                     TIFFGetFieldDefaulted(img->tif, TIFFTAG_YCBCRSUBSAMPLING,
                                           &SubsamplingHor, &SubsamplingVer);
+                    /* Validate that the image dimensions are compatible with
+                    the subsampling block. All putcontig8bitYCbCrXYtile routines
+                    assume width >= X and height >= Y. */
+                    if (img->width < SubsamplingHor ||
+                        img->height < SubsamplingVer)
+                    {
+                        TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
+                                      "YCbCr subsampling (%u,%u) incompatible "
+                                      "with image size %ux%u",
+                                      SubsamplingHor, SubsamplingVer,
+                                      img->width, img->height);
+                        return (0);
+                    }
                     switch ((SubsamplingHor << 4) | SubsamplingVer)
                     {
                         case 0x44:

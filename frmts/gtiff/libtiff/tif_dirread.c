@@ -3283,13 +3283,37 @@ TIFFReadDirEntryPersampleShort(TIFF *tif, TIFFDirEntry *direntry,
     uint16_t *m;
     uint16_t *na;
     uint16_t nb;
-    if (direntry->tdir_count < (uint64_t)tif->tif_dir.td_samplesperpixel)
-        return (TIFFReadDirEntryErrCount);
+    if (direntry->tdir_count != (uint64_t)tif->tif_dir.td_samplesperpixel)
+    {
+        const TIFFField *fip = TIFFFieldWithTag(tif, direntry->tdir_tag);
+        if (direntry->tdir_count < (uint64_t)tif->tif_dir.td_samplesperpixel)
+        {
+            TIFFWarningExtR(
+                tif, "TIFFReadDirEntryPersampleShort",
+                "Tag %s entry count is %" PRIu64
+                " , whereas it should be SamplesPerPixel=%d. Assuming that "
+                "missing entries are all at the value of the first one",
+                fip ? fip->field_name : "unknown tagname", direntry->tdir_count,
+                tif->tif_dir.td_samplesperpixel);
+        }
+        else
+        {
+            TIFFWarningExtR(tif, "TIFFReadDirEntryPersampleShort",
+                            "Tag %s entry count is %" PRIu64
+                            " , whereas it should be SamplesPerPixel=%d. "
+                            "Ignoring extra entries",
+                            fip ? fip->field_name : "unknown tagname",
+                            direntry->tdir_count,
+                            tif->tif_dir.td_samplesperpixel);
+        }
+    }
     err = TIFFReadDirEntryShortArray(tif, direntry, &m);
     if (err != TIFFReadDirEntryErrOk || m == NULL)
         return (err);
     na = m;
     nb = tif->tif_dir.td_samplesperpixel;
+    if (direntry->tdir_count < nb)
+        nb = (uint16_t)direntry->tdir_count;
     *value = *na++;
     nb--;
     while (nb > 0)

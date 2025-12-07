@@ -1282,7 +1282,8 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif)
     sp->cinfo.d.data_precision = td->td_bitspersample;
     sp->cinfo.d.bits_in_jsample = td->td_bitspersample;
 #else
-    if (sp->cinfo.d.data_precision != td->td_bitspersample)
+    if (td->td_bitspersample != BITS_IN_JSAMPLE ||
+        sp->cinfo.d.data_precision != td->td_bitspersample)
     {
         TIFFErrorExtR(tif, module, "Improper JPEG data precision");
         return (0);
