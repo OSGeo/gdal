@@ -12618,6 +12618,107 @@ std::vector<double> GDALDataset::ComputeInterBandCovarianceMatrix(
 }
 
 /************************************************************************/
+/*                     MultiplyAByTransposeAUpperTriangle()             */
+/************************************************************************/
+
+// Compute res = A * A.transpose(), by filling only the upper triangle.
+// Do that in a cache friendly way.
+template <class T>
+// CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW because it seems the uses of openmp-simd
+// causes that to happen
+static CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW void
+MultiplyAByTransposeAUpperTriangle([[maybe_unused]] int nNumThreads,
+                                   const T *A,  // rows * cols
+                                   T *res,      // rows * rows
+                                   int rows, size_t cols)
+{
+    constexpr int BLOCK_SIZE = 64;
+    constexpr size_t BLOCK_SIZE_COLS = 256;
+    constexpr T ZERO{0};
+
+    std::fill(res, res + static_cast<size_t>(rows) * rows, ZERO);
+
+#ifdef HAVE_OPENMP
+#pragma omp parallel for schedule(static) num_threads(nNumThreads)
+#endif
+    for (int64_t ii64 = 0; ii64 < rows; ii64 += BLOCK_SIZE)
+    {
+        const int ii = static_cast<int>(ii64);
+        const int i_end = ii + std::min(BLOCK_SIZE, rows - ii);
+        for (int jj = ii; jj < rows;
+             jj += std::min(BLOCK_SIZE, rows - jj))  // upper triangle
+        {
+            const int j_end = jj + std::min(BLOCK_SIZE, rows - jj);
+            for (size_t cc = 0; cc < cols; /* increment done at end of loop */)
+            {
+                const size_t c_end = cc + std::min(BLOCK_SIZE_COLS, cols - cc);
+
+                for (int i = ii; i < i_end; ++i)
+                {
+                    const T *const Ai = &A[i * cols];
+                    int j = std::max(i, jj);
+                    for (; j < j_end - 7; j += 8)
+                    {
+                        const T *const Ajp0 = A + (j + 0) * cols;
+                        const T *const Ajp1 = A + (j + 1) * cols;
+                        const T *const Ajp2 = A + (j + 2) * cols;
+                        const T *const Ajp3 = A + (j + 3) * cols;
+                        const T *const Ajp4 = A + (j + 4) * cols;
+                        const T *const Ajp5 = A + (j + 5) * cols;
+                        const T *const Ajp6 = A + (j + 6) * cols;
+                        const T *const Ajp7 = A + (j + 7) * cols;
+
+                        T dfSum0 = ZERO, dfSum1 = ZERO, dfSum2 = ZERO,
+                          dfSum3 = ZERO, dfSum4 = ZERO, dfSum5 = ZERO,
+                          dfSum6 = ZERO, dfSum7 = ZERO;
+#ifdef HAVE_OPENMP_SIMD
+#pragma omp simd reduction(+ : dfSum0, dfSum1, dfSum2, dfSum3, dfSum4, dfSum5, dfSum6, dfSum7)
+#endif
+                        for (size_t c = cc; c < c_end; ++c)
+                        {
+                            dfSum0 += Ai[c] * Ajp0[c];
+                            dfSum1 += Ai[c] * Ajp1[c];
+                            dfSum2 += Ai[c] * Ajp2[c];
+                            dfSum3 += Ai[c] * Ajp3[c];
+                            dfSum4 += Ai[c] * Ajp4[c];
+                            dfSum5 += Ai[c] * Ajp5[c];
+                            dfSum6 += Ai[c] * Ajp6[c];
+                            dfSum7 += Ai[c] * Ajp7[c];
+                        }
+
+                        res[static_cast<size_t>(i) * rows + j + 0] += dfSum0;
+                        res[static_cast<size_t>(i) * rows + j + 1] += dfSum1;
+                        res[static_cast<size_t>(i) * rows + j + 2] += dfSum2;
+                        res[static_cast<size_t>(i) * rows + j + 3] += dfSum3;
+                        res[static_cast<size_t>(i) * rows + j + 4] += dfSum4;
+                        res[static_cast<size_t>(i) * rows + j + 5] += dfSum5;
+                        res[static_cast<size_t>(i) * rows + j + 6] += dfSum6;
+                        res[static_cast<size_t>(i) * rows + j + 7] += dfSum7;
+                    }
+                    for (; j < j_end; ++j)
+                    {
+                        const T *const Aj = A + j * cols;
+
+                        T dfSum = ZERO;
+#ifdef HAVE_OPENMP_SIMD
+#pragma omp simd reduction(+ : dfSum)
+#endif
+                        for (size_t c = cc; c < c_end; ++c)
+                        {
+                            dfSum += Ai[c] * Aj[c];
+                        }
+
+                        res[static_cast<size_t>(i) * rows + j] += dfSum;
+                    }
+                }
+
+                cc = c_end;
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                 ComputeInterBandCovarianceMatrixInternal()           */
 /************************************************************************/
 
@@ -12636,6 +12737,10 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
     // We use the padfCovMatrix to accumulate co-moments
     // Dimension = nBandCount * nBandCount
     double *const padfComomentMatrix = padfCovMatrix;
+
+    // Matrix of  nBandCount * nBandCount storing co-moments, in optimized
+    // case when the block has no nodata value
+    std::vector<T> adfCurBlockComomentMatrix;
 
     // Count number of valid values in padfComomentMatrix for each (i,j) tuple
     // Updated while iterating over blocks
@@ -12706,6 +12811,8 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
         anCount.resize(nMatrixSize);
         adfMean.resize(nMatrixSize);
         anCountMean.resize(nMatrixSize);
+
+        adfCurBlockComomentMatrix.resize(nMatrixSize);
 
         anMapLinearIdxToIJ.resize(kMax);
 
@@ -12796,8 +12903,8 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
         cpl::div_round_up(poDS->GetRasterYSize(), nBlockYSize);
     uint64_t nCurIter = 0;
 
-#ifdef HAVE_OPENMP
     int nNumThreads = 1;
+#ifdef HAVE_OPENMP
     if (nBandCount >= 100)
     {
         const int nNumCPUs = CPLGetNumCPUs();
@@ -12848,6 +12955,7 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
 
         // Compute the mean of all bands for this block
         constexpr auto ZERO = static_cast<T>(0);
+        bool bNoBandHasNodata = false;
         for (int i = 0; i < nBandCount; ++i)
         {
             T dfSum = 0;
@@ -12869,6 +12977,8 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
             }
             adfCurBlockMean[i] = nCount > 0 ? dfSum / nCount : ZERO;
             anCurBlockCount[i] = nCount;
+            bNoBandHasNodata = (i == 0 || bNoBandHasNodata) &&
+                               (nCount == nThisBlockPixelCount);
         }
 
         // Modify the pixel values to shift them by minus the mean
@@ -12883,99 +12993,13 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
             }
         }
 
-#ifdef HAVE_OPENMP
-#pragma omp parallel for schedule(static) num_threads(nNumThreads)
-#endif
-        for (MySignedSize_t k = 0; k < kMax; ++k)
+        // Update padfComomentMatrix, anCount, adfMean, anCountMean
+        // from dfComoment, nCount, adfCurBlockMean, anCurBlockCount
+        const auto UpdateGlobalValues =
+            [&anCount, &adfMean, &anCountMean, &adfCurBlockMean,
+             &anCurBlockCount, padfComomentMatrix,
+             nBandCount](int i, int j, size_t nCount, T dfComoment)
         {
-            int i, j;
-            std::tie(i, j) = anMapLinearIdxToIJ[k];
-
-            // Now compute the moment of (i, j), but just for this block
-            size_t nCount = 0;
-            T dfComoment = 0;
-            const T *padfI =
-                adfCurBlockPixelsAllBands.data() + i * nThisBlockPixelCount;
-            const T *padfJ =
-                adfCurBlockPixelsAllBands.data() + j * nThisBlockPixelCount;
-
-            // Use https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Two-pass
-            // for the current block
-            if ((anCurBlockCount[i] == nThisBlockPixelCount &&
-                 anCurBlockCount[j] == nThisBlockPixelCount) ||
-                (bNoneHasMaskOrNodata && bIsAllInteger))
-            {
-                // Most optimized code path: integer, no nodata, no mask
-#ifdef HAVE_OPENMP_SIMD
-#pragma omp simd reduction(+ : dfComoment)
-#endif
-                for (size_t iPixel = 0; iPixel < nThisBlockPixelCount; ++iPixel)
-                {
-                    dfComoment += padfI[iPixel] * padfJ[iPixel];
-                }
-                nCount = nThisBlockPixelCount;
-            }
-            else if (bNoneHasMaskOrNodata)
-            {
-                // Floating-point code path with no nodata and no mask
-#ifdef HAVE_OPENMP_SIMD
-#pragma omp simd reduction(+ : dfComoment)
-#endif
-                for (size_t iPixel = 0; iPixel < nThisBlockPixelCount; ++iPixel)
-                {
-                    const T dfAcc = padfI[iPixel] * padfJ[iPixel];
-                    const bool bIsValid = !std::isnan(dfAcc);
-                    nCount += bIsValid;
-                    dfComoment += bIsValid ? dfAcc : ZERO;
-                }
-            }
-            else if (!std::isnan(adfNoData[i]) && !std::isnan(adfNoData[j]))
-            {
-                // Code path when there are both nodata values
-                const T shiftedNoDataI = adfNoData[i] - adfCurBlockMean[i];
-                const T shiftedNoDataJ = adfNoData[j] - adfCurBlockMean[j];
-
-#ifdef HAVE_OPENMP_SIMD
-#pragma omp simd reduction(+ : dfComoment)
-#endif
-                for (size_t iPixel = 0; iPixel < nThisBlockPixelCount; ++iPixel)
-                {
-                    const T dfI = padfI[iPixel];
-                    const T dfJ = padfJ[iPixel];
-                    const T dfAcc = dfI * dfJ;
-                    const bool bIsValid = !std::isnan(dfAcc) &&
-                                          dfI != shiftedNoDataI &&
-                                          dfJ != shiftedNoDataJ;
-                    nCount += bIsValid;
-                    dfComoment += bIsValid ? dfAcc : ZERO;
-                }
-            }
-            else
-            {
-                // Generic code path
-                const T shiftedNoDataI = adfNoData[i] - adfCurBlockMean[i];
-                const T shiftedNoDataJ = adfNoData[j] - adfCurBlockMean[j];
-
-#ifdef HAVE_OPENMP_SIMD
-#pragma omp simd reduction(+ : dfComoment)
-#endif
-                for (size_t iPixel = 0; iPixel < nThisBlockPixelCount; ++iPixel)
-                {
-                    const T dfI = padfI[iPixel];
-                    const T dfJ = padfJ[iPixel];
-                    const T dfAcc = dfI * dfJ;
-                    const bool bIsValid = !std::isnan(dfAcc) &&
-                                          dfI != shiftedNoDataI &&
-                                          dfJ != shiftedNoDataJ &&
-                                          (!pabyCurBlockMask[i] ||
-                                           (*pabyCurBlockMask[i])[iPixel]) &&
-                                          (!pabyCurBlockMask[j] ||
-                                           (*pabyCurBlockMask[j])[iPixel]);
-                    nCount += bIsValid;
-                    dfComoment += bIsValid ? dfAcc : ZERO;
-                }
-            }
-
             const auto idxInMatrixI = static_cast<size_t>(i) * nBandCount + j;
             const auto idxInMatrixJ = static_cast<size_t>(j) * nBandCount + i;
 
@@ -13007,11 +13031,12 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
                     (static_cast<double>(anCount[idxInMatrixI]) *
                      static_cast<double>(nCount) /
                      static_cast<double>(anCount[idxInMatrixI] + nCount));
+
+                anCount[idxInMatrixI] += nCount;
             }
-            anCount[idxInMatrixI] += nCount;
 
             // Update means
-            if (anCountMean[idxInMatrixI] + anCurBlockCount[i] > 0)
+            if (anCurBlockCount[i] > 0)
             {
                 adfMean[idxInMatrixI] +=
                     (adfCurBlockMean[i] - adfMean[idxInMatrixI]) *
@@ -13019,21 +13044,144 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
                         static_cast<double>(anCurBlockCount[i]) /
                         static_cast<double>(anCountMean[idxInMatrixI] +
                                             anCurBlockCount[i]));
-            }
-            anCountMean[idxInMatrixI] += anCurBlockCount[i];
 
-            if (idxInMatrixI != idxInMatrixJ)
+                anCountMean[idxInMatrixI] += anCurBlockCount[i];
+            }
+
+            if (idxInMatrixI != idxInMatrixJ && anCurBlockCount[j] > 0)
             {
-                if (anCountMean[idxInMatrixJ] + anCurBlockCount[j] > 0)
-                {
-                    adfMean[idxInMatrixJ] +=
-                        (adfCurBlockMean[j] - adfMean[idxInMatrixJ]) *
-                        static_cast<T>(
-                            static_cast<double>(anCurBlockCount[j]) /
-                            static_cast<double>(anCountMean[idxInMatrixJ] +
-                                                anCurBlockCount[j]));
-                }
+                adfMean[idxInMatrixJ] +=
+                    (adfCurBlockMean[j] - adfMean[idxInMatrixJ]) *
+                    static_cast<T>(
+                        static_cast<double>(anCurBlockCount[j]) /
+                        static_cast<double>(anCountMean[idxInMatrixJ] +
+                                            anCurBlockCount[j]));
+
                 anCountMean[idxInMatrixJ] += anCurBlockCount[j];
+            }
+        };
+
+        if (bNoBandHasNodata)
+        {
+            // Optimized code path where there are no invalid value in the
+            // current block
+
+            MultiplyAByTransposeAUpperTriangle(
+                nNumThreads, adfCurBlockPixelsAllBands.data(),
+                adfCurBlockComomentMatrix.data(), nBandCount,
+                nThisBlockPixelCount);
+
+            for (int i = 0; i < nBandCount; ++i)
+            {
+                for (int j = i; j < nBandCount; ++j)
+                {
+                    const auto idxInMatrixI =
+                        static_cast<size_t>(i) * nBandCount + j;
+                    UpdateGlobalValues(i, j, nThisBlockPixelCount,
+                                       adfCurBlockComomentMatrix[idxInMatrixI]);
+                }
+            }
+        }
+        else
+        {
+#ifdef HAVE_OPENMP
+#pragma omp parallel for schedule(static) num_threads(nNumThreads)
+#endif
+            for (MySignedSize_t k = 0; k < kMax; ++k)
+            {
+                int i, j;
+                std::tie(i, j) = anMapLinearIdxToIJ[k];
+
+                // Now compute the moment of (i, j), but just for this block
+                size_t nCount = 0;
+                T dfComoment = 0;
+                const T *padfI =
+                    adfCurBlockPixelsAllBands.data() + i * nThisBlockPixelCount;
+                const T *padfJ =
+                    adfCurBlockPixelsAllBands.data() + j * nThisBlockPixelCount;
+
+                // Use https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Two-pass
+                // for the current block
+                if ((anCurBlockCount[i] == nThisBlockPixelCount &&
+                     anCurBlockCount[j] == nThisBlockPixelCount) ||
+                    (bNoneHasMaskOrNodata && bIsAllInteger))
+                {
+                    // Most optimized code path: integer, no nodata, no mask
+#ifdef HAVE_OPENMP_SIMD
+#pragma omp simd reduction(+ : dfComoment)
+#endif
+                    for (size_t iPixel = 0; iPixel < nThisBlockPixelCount;
+                         ++iPixel)
+                    {
+                        dfComoment += padfI[iPixel] * padfJ[iPixel];
+                    }
+                    nCount = nThisBlockPixelCount;
+                }
+                else if (bNoneHasMaskOrNodata)
+                {
+                    // Floating-point code path with no nodata and no mask
+#ifdef HAVE_OPENMP_SIMD
+#pragma omp simd reduction(+ : dfComoment)
+#endif
+                    for (size_t iPixel = 0; iPixel < nThisBlockPixelCount;
+                         ++iPixel)
+                    {
+                        const T dfAcc = padfI[iPixel] * padfJ[iPixel];
+                        const bool bIsValid = !std::isnan(dfAcc);
+                        nCount += bIsValid;
+                        dfComoment += bIsValid ? dfAcc : ZERO;
+                    }
+                }
+                else if (!std::isnan(adfNoData[i]) && !std::isnan(adfNoData[j]))
+                {
+                    // Code path when there are both nodata values
+                    const T shiftedNoDataI = adfNoData[i] - adfCurBlockMean[i];
+                    const T shiftedNoDataJ = adfNoData[j] - adfCurBlockMean[j];
+
+#ifdef HAVE_OPENMP_SIMD
+#pragma omp simd reduction(+ : dfComoment)
+#endif
+                    for (size_t iPixel = 0; iPixel < nThisBlockPixelCount;
+                         ++iPixel)
+                    {
+                        const T dfI = padfI[iPixel];
+                        const T dfJ = padfJ[iPixel];
+                        const T dfAcc = dfI * dfJ;
+                        const bool bIsValid = !std::isnan(dfAcc) &&
+                                              dfI != shiftedNoDataI &&
+                                              dfJ != shiftedNoDataJ;
+                        nCount += bIsValid;
+                        dfComoment += bIsValid ? dfAcc : ZERO;
+                    }
+                }
+                else
+                {
+                    // Generic code path
+                    const T shiftedNoDataI = adfNoData[i] - adfCurBlockMean[i];
+                    const T shiftedNoDataJ = adfNoData[j] - adfCurBlockMean[j];
+
+#ifdef HAVE_OPENMP_SIMD
+#pragma omp simd reduction(+ : dfComoment)
+#endif
+                    for (size_t iPixel = 0; iPixel < nThisBlockPixelCount;
+                         ++iPixel)
+                    {
+                        const T dfI = padfI[iPixel];
+                        const T dfJ = padfJ[iPixel];
+                        const T dfAcc = dfI * dfJ;
+                        const bool bIsValid =
+                            !std::isnan(dfAcc) && dfI != shiftedNoDataI &&
+                            dfJ != shiftedNoDataJ &&
+                            (!pabyCurBlockMask[i] ||
+                             (*pabyCurBlockMask[i])[iPixel]) &&
+                            (!pabyCurBlockMask[j] ||
+                             (*pabyCurBlockMask[j])[iPixel]);
+                        nCount += bIsValid;
+                        dfComoment += bIsValid ? dfAcc : ZERO;
+                    }
+                }
+
+                UpdateGlobalValues(i, j, nCount, dfComoment);
             }
         }
 
