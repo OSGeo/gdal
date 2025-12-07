@@ -616,7 +616,6 @@ GDALPipelineAlgorithm::GetUsageForCLI(bool shortUsage,
     if (!m_helpDocCategory.empty() && m_helpDocCategory != "main")
     {
         auto alg = GetStepAlg(m_helpDocCategory);
-        std::string ret;
         if (alg)
         {
             alg->SetCallPath({CPLString(m_helpDocCategory)

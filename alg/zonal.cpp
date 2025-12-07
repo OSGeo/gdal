@@ -509,7 +509,6 @@ class GDALZonalStatsImpl
 
         CPLStringList aosOptions;
         aosOptions.AddNameValue("IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING", "1");
-        std::vector<const OGRSpatialReference *> inputSRS;
 
         if (poRastSRS && poZonesSRS &&
             !poRastSRS->IsSame(poZonesSRS, aosOptions.List()))
