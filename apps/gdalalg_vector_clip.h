@@ -33,6 +33,12 @@ class GDALVectorClipAlgorithm /* non final */
 
     explicit GDALVectorClipAlgorithm(bool standaloneStep = false);
 
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return !m_bbox.empty() || !m_geometry.empty() ||
+               !m_likeDataset.GetDatasetRef();
+    }
+
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 

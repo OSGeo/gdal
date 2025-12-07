@@ -182,10 +182,54 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 }  // namespace
 
 /************************************************************************/
+/*                  GDALVectorClipAlgorithmLayerChangeExtent            */
+/************************************************************************/
+
+namespace
+{
+class GDALVectorClipAlgorithmLayerChangeExtent final
+    : public GDALVectorPipelinePassthroughLayer
+{
+  public:
+    GDALVectorClipAlgorithmLayerChangeExtent(OGRLayer &oSrcLayer,
+                                             const OGREnvelope &sLayerEnvelope)
+        : GDALVectorPipelinePassthroughLayer(oSrcLayer),
+          m_sLayerEnvelope(sLayerEnvelope)
+    {
+    }
+
+    OGRErr IGetExtent(int /*iGeomField*/, OGREnvelope *psExtent,
+                      bool /* bForce */) override
+    {
+        if (m_sLayerEnvelope.IsInit())
+        {
+            *psExtent = m_sLayerEnvelope;
+            return OGRERR_NONE;
+        }
+        else
+        {
+            return OGRERR_FAILURE;
+        }
+    }
+
+    int TestCapability(const char *pszCap) const override
+    {
+        if (EQUAL(pszCap, OLCFastGetExtent))
+            return true;
+        return m_srcLayer.TestCapability(pszCap);
+    }
+
+  private:
+    const OGREnvelope m_sLayerEnvelope;
+};
+
+}  // namespace
+
+/************************************************************************/
 /*                 GDALVectorClipAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALVectorClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
+bool GDALVectorClipAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
@@ -206,6 +250,94 @@ bool GDALVectorClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
             bSrcLayerHasSRS = true;
             break;
         }
+    }
+
+    if (m_bbox.empty() && m_geometry.empty() &&
+        m_likeDataset.GetDatasetRef() == nullptr)
+    {
+        auto outDS =
+            std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
+
+        bool ret = true;
+        int64_t nTotalFeatures = 0;
+        if (ctxt.m_pfnProgress)
+        {
+            for (int i = 0; ret && i < nLayerCount; ++i)
+            {
+                auto poSrcLayer = poSrcDS->GetLayer(i);
+                ret = (poSrcLayer != nullptr);
+                if (ret)
+                {
+                    if (m_activeLayer.empty() ||
+                        m_activeLayer == poSrcLayer->GetDescription())
+                    {
+                        if (poSrcLayer->TestCapability(OLCFastFeatureCount))
+                        {
+                            const auto nFC = poSrcLayer->GetFeatureCount(false);
+                            if (nFC < 0)
+                            {
+                                nTotalFeatures = 0;
+                                break;
+                            }
+                            nTotalFeatures += nFC;
+                        }
+                    }
+                }
+            }
+        }
+
+        int64_t nFeatureCounter = 0;
+        for (int i = 0; ret && i < nLayerCount; ++i)
+        {
+            auto poSrcLayer = poSrcDS->GetLayer(i);
+            ret = (poSrcLayer != nullptr);
+            if (ret)
+            {
+                if (m_activeLayer.empty() ||
+                    m_activeLayer == poSrcLayer->GetDescription())
+                {
+                    OGREnvelope sLayerEnvelope, sFeatureEnvelope;
+                    for (auto &&poFeature : poSrcLayer)
+                    {
+                        const auto poGeom = poFeature->GetGeometryRef();
+                        if (poGeom && !poGeom->IsEmpty())
+                        {
+                            poGeom->getEnvelope(&sFeatureEnvelope);
+                            sLayerEnvelope.Merge(sFeatureEnvelope);
+                        }
+
+                        ++nFeatureCounter;
+                        if (nTotalFeatures > 0 && ctxt.m_pfnProgress &&
+                            !ctxt.m_pfnProgress(
+                                static_cast<double>(nFeatureCounter) /
+                                    static_cast<double>(nTotalFeatures),
+                                "", ctxt.m_pProgressData))
+                        {
+                            ReportError(CE_Failure, CPLE_UserInterrupt,
+                                        "Interrupted by user");
+                            return false;
+                        }
+                    }
+                    outDS->AddLayer(
+                        *poSrcLayer,
+                        std::make_unique<
+                            GDALVectorClipAlgorithmLayerChangeExtent>(
+                            *poSrcLayer, sLayerEnvelope));
+                }
+                else
+                {
+                    outDS->AddLayer(
+                        *poSrcLayer,
+                        std::make_unique<GDALVectorPipelinePassthroughLayer>(
+                            *poSrcLayer));
+                }
+            }
+        }
+
+        if (ret)
+            m_outputDataset.Set(std::move(outDS));
+
+        return ret;
     }
 
     auto [poClipGeom, errMsg] = GetClipGeometry();

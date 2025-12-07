@@ -886,15 +886,46 @@ def test_gdalalg_vector_clip_like_raster_srs():
     assert out_lyr.GetNextFeature() is None
 
 
-def test_gdalalg_vector_clip_missing_arg(tmp_vsimem):
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_clip_no_arg(tmp_vsimem):
 
-    out_filename = str(tmp_vsimem / "out.shp")
+    src_ds = gdal.GetDriverByName("GPKG").CreateVector(tmp_vsimem / "in.gpkg")
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,1 0,0 0))"))
+    src_lyr.CreateFeature(f)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((10 0,10 1,11 1,11 0,10 0))"))
+    src_lyr.CreateFeature(f)
+    src_lyr.DeleteFeature(f.GetFID())
+    assert src_lyr.GetExtent() == (0, 11, 0, 1)
+    src_ds.CreateLayer("empty_layer")
 
-    clip = get_clip_alg()
-    with pytest.raises(
-        Exception, match="clip: --bbox, --geometry or --like must be specified"
-    ):
-        clip.ParseRunAndFinalize(["../ogr/data/poly.shp", out_filename])
+    with gdal.alg.vector.clip(input=src_ds, output="", output_format="MEM") as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayerByName("test")
+        assert lyr.GetExtent() == (0, 1, 0, 1)
+        assert lyr.GetFeatureCount() == 1
+        lyr = ds.GetLayerByName("empty_layer")
+        assert lyr.GetExtent(can_return_null=True) is None
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    with gdal.alg.vector.clip(
+        input=src_ds, output="", output_format="MEM", progress=my_progress
+    ) as alg:
+        assert tab_pct[0] == 1.0
+        ds = alg.Output()
+        lyr = ds.GetLayerByName("test")
+        assert lyr.GetExtent() == (0, 1, 0, 1)
+        assert lyr.GetFeatureCount() == 1
+        lyr = ds.GetLayerByName("empty_layer")
+        assert lyr.GetExtent(can_return_null=True) is None
 
 
 def test_gdalalg_vector_clip_geometry_invalid():

@@ -23,7 +23,9 @@ Description
 :program:`gdal vector clip` can be used to clip a vector dataset using
 georeferenced coordinates.
 
-Either :option:`--bbox`, :option:`--geometry` or :option:`--like` must be specified.
+Starting with GDAL 3.13, if none of :option:`--bbox`, :option:`--geometry` or :option:`--like`
+is specified, the extent of output layer(s) is adjusted to fit exactly the
+actual extent of input layer(s).
 
 ``clip`` can also be used as a step of :ref:`gdal_vector_pipeline`.
 
