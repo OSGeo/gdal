@@ -12636,7 +12636,10 @@ MultiplyAByTransposeAUpperTriangle([[maybe_unused]] int nNumThreads,
     constexpr size_t BLOCK_SIZE_COLS = 256;
     constexpr T ZERO{0};
 
-    std::fill(res, res + static_cast<size_t>(rows) * rows, ZERO);
+    if constexpr (!std::is_same_v<T, double>)
+    {
+        std::fill(res, res + static_cast<size_t>(rows) * rows, ZERO);
+    }
 
 #ifdef HAVE_OPENMP
 #pragma omp parallel for schedule(static) num_threads(nNumThreads)
@@ -12740,7 +12743,8 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
 
     // Matrix of  nBandCount * nBandCount storing co-moments, in optimized
     // case when the block has no nodata value
-    std::vector<T> adfCurBlockComomentMatrix;
+    // Only used if T != double
+    [[maybe_unused]] std::vector<T> aCurBlockComomentMatrix;
 
     // Count number of valid values in padfComomentMatrix for each (i,j) tuple
     // Updated while iterating over blocks
@@ -12812,7 +12816,10 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
         adfMean.resize(nMatrixSize);
         anCountMean.resize(nMatrixSize);
 
-        adfCurBlockComomentMatrix.resize(nMatrixSize);
+        if constexpr (!std::is_same_v<T, double>)
+        {
+            aCurBlockComomentMatrix.resize(nMatrixSize);
+        }
 
         anMapLinearIdxToIJ.resize(kMax);
 
@@ -12831,6 +12838,11 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
                           "Not enough memory for intermediate computations");
         return CE_Failure;
     }
+
+    constexpr T ZERO{0};
+    std::fill(padfComomentMatrix,
+              padfComomentMatrix + static_cast<size_t>(nBandCount) * nBandCount,
+              0);
 
     {
         MySignedSize_t nLinearIdx = 0;
@@ -12954,7 +12966,6 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
             return eErr;
 
         // Compute the mean of all bands for this block
-        constexpr auto ZERO = static_cast<T>(0);
         bool bNoBandHasNodata = false;
         for (int i = 0; i < nBandCount; ++i)
         {
@@ -13017,8 +13028,6 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
             // It is not obvious (to me) what should be the correct behavior.
             // The current approach has the benefit to avoid recomputing
             // the mean for each (i,j) tuple, but only for all i.
-            if (anCount[idxInMatrixI] == 0)
-                padfComomentMatrix[idxInMatrixI] = 0;
             if (nCount > 0)
             {
                 padfComomentMatrix[idxInMatrixI] +=
@@ -13066,19 +13075,36 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
             // Optimized code path where there are no invalid value in the
             // current block
 
-            MultiplyAByTransposeAUpperTriangle(
-                nNumThreads, adfCurBlockPixelsAllBands.data(),
-                adfCurBlockComomentMatrix.data(), nBandCount,
-                nThisBlockPixelCount);
+            if constexpr (!std::is_same_v<T, double>)
+            {
+                MultiplyAByTransposeAUpperTriangle(
+                    nNumThreads, adfCurBlockPixelsAllBands.data(),
+                    aCurBlockComomentMatrix.data(), nBandCount,
+                    nThisBlockPixelCount);
+            }
+            else
+            {
+                MultiplyAByTransposeAUpperTriangle(
+                    nNumThreads, adfCurBlockPixelsAllBands.data(),
+                    padfComomentMatrix, nBandCount, nThisBlockPixelCount);
+            }
 
             for (int i = 0; i < nBandCount; ++i)
             {
                 for (int j = i; j < nBandCount; ++j)
                 {
-                    const auto idxInMatrixI =
-                        static_cast<size_t>(i) * nBandCount + j;
-                    UpdateGlobalValues(i, j, nThisBlockPixelCount,
-                                       adfCurBlockComomentMatrix[idxInMatrixI]);
+                    if constexpr (!std::is_same_v<T, double>)
+                    {
+                        const auto idxInMatrixI =
+                            static_cast<size_t>(i) * nBandCount + j;
+                        UpdateGlobalValues(
+                            i, j, nThisBlockPixelCount,
+                            aCurBlockComomentMatrix[idxInMatrixI]);
+                    }
+                    else
+                    {
+                        UpdateGlobalValues(i, j, nThisBlockPixelCount, ZERO);
+                    }
                 }
             }
         }
