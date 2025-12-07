@@ -4098,10 +4098,8 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     }
 
     // Create a layer with a single feature in it
-    std::shared_ptr<MVTTileLayer> poLayer =
-        std::shared_ptr<MVTTileLayer>(new MVTTileLayer());
-    std::shared_ptr<MVTTileLayerFeature> poGPBFeature =
-        std::shared_ptr<MVTTileLayerFeature>(new MVTTileLayerFeature());
+    auto poLayer = std::make_shared<MVTTileLayer>();
+    auto poGPBFeature = std::make_shared<MVTTileLayerFeature>();
     poLayer->addFeature(poGPBFeature);
 
     OGRwkbGeometryType eGeomType = wkbFlatten(poGeom->getGeometryType());
@@ -5078,7 +5076,7 @@ std::string OGRMVTWriterDataset::EncodeTile(
                 std::max(nZ, poLayerProperties->m_nMaxZoom);
         }
 
-        std::shared_ptr<MVTTileLayer> poTargetLayer(new MVTTileLayer());
+        auto poTargetLayer = std::make_shared<MVTTileLayer>();
         oTargetTile.addLayer(poTargetLayer);
         poTargetLayer->setName(pszLayerName);
         poTargetLayer->setVersion(m_nMVTVersion);
@@ -5213,8 +5211,7 @@ std::string OGRMVTWriterDataset::EncodeTile(
             auto oIter = oMapLayerNameToTargetLayer.find(pszLayerName);
             if (oIter == oMapLayerNameToTargetLayer.end())
             {
-                poTargetLayer =
-                    std::shared_ptr<MVTTileLayer>(new MVTTileLayer());
+                poTargetLayer = std::make_shared<MVTTileLayer>();
                 TargetTileLayerProps props;
                 props.m_poLayer = poTargetLayer;
                 oTargetTile.addLayer(poTargetLayer);
@@ -5288,7 +5285,7 @@ std::string OGRMVTWriterDataset::RecodeTileLowerResolution(
         sqlite3_bind_int(hStmtRows, 3, nY);
         sqlite3_bind_text(hStmtRows, 4, pszLayerName, -1, SQLITE_STATIC);
 
-        std::shared_ptr<MVTTileLayer> poTargetLayer(new MVTTileLayer());
+        auto poTargetLayer = std::make_shared<MVTTileLayer>();
         oTargetTile.addLayer(poTargetLayer);
         poTargetLayer->setName(pszLayerName);
         poTargetLayer->setVersion(m_nMVTVersion);
@@ -5881,8 +5878,7 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer *poLayer,
 
     if (!m_bReuseTempFile)
     {
-        auto poFeatureContent =
-            std::shared_ptr<OGRMVTFeatureContent>(new OGRMVTFeatureContent());
+        auto poFeatureContent = std::make_shared<OGRMVTFeatureContent>();
         auto poSharedGeom = std::shared_ptr<OGRGeometry>(poGeom->clone());
 
         poFeatureContent->nFID = poFeature->GetFID();

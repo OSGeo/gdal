@@ -225,8 +225,7 @@ static OSRAxisMappingStrategy GetDefaultAxisMappingStrategy()
 }
 
 OGRSpatialReference::Private::Private(OGRSpatialReference *poSelf)
-    : m_poSelf(poSelf),
-      m_poListener(std::shared_ptr<Listener>(new Listener(this)))
+    : m_poSelf(poSelf), m_poListener(std::make_shared<Listener>(this))
 {
     // Get the default value for m_axisMappingStrategy from the
     // OSR_DEFAULT_AXIS_MAPPING_STRATEGY configuration option, if set.
