@@ -818,7 +818,6 @@ class OGRProjCT final : public OGRCoordinateTransformation
     void ComputeThreshold();
     void DetectWebMercatorToWGS84();
 
-    OGRProjCT(const OGRProjCT &other);
     OGRProjCT &operator=(const OGRProjCT &) = delete;
 
     static CTCacheKey
@@ -835,6 +834,7 @@ class OGRProjCT final : public OGRCoordinateTransformation
   public:
     OGRProjCT();
     ~OGRProjCT() override;
+    OGRProjCT(const OGRProjCT &other);
 
     int Initialize(const OGRSpatialReference *poSource, const char *pszSrcSRS,
                    const OGRSpatialReference *poTarget,
@@ -3638,7 +3638,7 @@ int OGRProjCT::TransformBounds(const double xmin, const double ymin,
 
 OGRCoordinateTransformation *OGRProjCT::Clone() const
 {
-    std::unique_ptr<OGRProjCT> poNewCT(new OGRProjCT(*this));
+    auto poNewCT = std::make_unique<OGRProjCT>(*this);
 #if (PROJ_VERSION_MAJOR * 10000 + PROJ_VERSION_MINOR * 100 +                   \
      PROJ_VERSION_PATCH) < 80001
     // See https://github.com/OSGeo/PROJ/pull/2582

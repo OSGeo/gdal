@@ -1974,10 +1974,9 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
                     continue;
                 }
             }
-            auto poLayer =
-                std::unique_ptr<OGCAPITiledLayer>(new OGCAPITiledLayer(
-                    this, bInvertAxis, osVectorURL, osVectorURL == osMVT_URL,
-                    tileMatrix, eGeomType));
+            auto poLayer = std::make_unique<OGCAPITiledLayer>(
+                this, bInvertAxis, osVectorURL, osVectorURL == osMVT_URL,
+                tileMatrix, eGeomType);
             poLayer->SetMinMaxXY(minCol, minRow, maxCol, maxRow);
             poLayer->SetExtent(dfXMin, dfYMin, dfXMax, dfYMax);
             if (bGotSchema)

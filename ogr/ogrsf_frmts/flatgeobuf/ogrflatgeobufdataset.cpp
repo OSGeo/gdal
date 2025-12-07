@@ -237,8 +237,8 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    auto poDS = std::unique_ptr<OGRFlatGeobufDataset>(new OGRFlatGeobufDataset(
-        poOpenInfo->pszFilename, isDir, false, bUpdate));
+    auto poDS = std::make_unique<OGRFlatGeobufDataset>(poOpenInfo->pszFilename,
+                                                       isDir, false, bUpdate);
 
     if (poOpenInfo->bIsDirectory)
     {

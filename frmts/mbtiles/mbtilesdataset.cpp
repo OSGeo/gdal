@@ -1973,11 +1973,10 @@ void MBTilesDataset::InitVector(double dfMinX, double dfMinY, double dfMaxX,
             CPLJSONArray oAttributesFromTileStats =
                 OGRMVTFindAttributesFromTileStat(oTileStatLayers,
                                                  oId.ToString().c_str());
-            m_apoLayers.push_back(
-                std::unique_ptr<OGRLayer>(new MBTilesVectorLayer(
-                    this, oId.ToString().c_str(), oFields,
-                    oAttributesFromTileStats, bJsonField, dfMinX, dfMinY,
-                    dfMaxX, dfMaxY, eGeomType, bZoomLevelFromSpatialFilter)));
+            m_apoLayers.push_back(std::make_unique<MBTilesVectorLayer>(
+                this, oId.ToString().c_str(), oFields, oAttributesFromTileStats,
+                bJsonField, dfMinX, dfMinY, dfMaxX, dfMaxY, eGeomType,
+                bZoomLevelFromSpatialFilter));
         }
     }
 }

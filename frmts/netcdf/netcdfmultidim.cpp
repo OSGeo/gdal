@@ -2417,9 +2417,8 @@ static bool GetCompoundDataType(int gid, int nVarType,
                 "Non native GDAL type found in a component of a compound type");
             return false;
         }
-        auto comp = std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
+        comps.emplace_back(std::make_unique<GDALEDTComponent>(
             std::string(field_name), field_offset, *subDt));
-        comps.emplace_back(std::move(comp));
     }
     dt.reset(new GDALExtendedDataType(
         GDALExtendedDataType::Create(szName, compoundsize, std::move(comps))));

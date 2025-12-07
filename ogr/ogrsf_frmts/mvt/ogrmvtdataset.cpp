@@ -2787,12 +2787,11 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                             CPLJSONObject oFields;
                             oFields.Deinit();
                             poDS->m_apoLayers.push_back(
-                                std::unique_ptr<OGRLayer>(
-                                    new OGRMVTDirectoryLayer(
-                                        poDS, poTileLayer->GetName(),
-                                        poOpenInfo->pszFilename, oFields,
-                                        CPLJSONArray(), bJsonField, wkbUnknown,
-                                        nullptr)));
+                                std::make_unique<OGRMVTDirectoryLayer>(
+                                    poDS, poTileLayer->GetName(),
+                                    poOpenInfo->pszFilename, oFields,
+                                    CPLJSONArray(), bJsonField, wkbUnknown,
+                                    nullptr));
                             poLayer = poDS->m_apoLayers.back().get();
                             poLDefn = poLayer->GetLayerDefn();
                             poLDefn->SetGeomType(eTileGeomType);
@@ -2929,11 +2928,10 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                 OGRMVTFindAttributesFromTileStat(oTileStatLayers,
                                                  oId.ToString().c_str());
 
-            poDS->m_apoLayers.push_back(
-                std::unique_ptr<OGRLayer>(new OGRMVTDirectoryLayer(
-                    poDS, oId.ToString().c_str(), poOpenInfo->pszFilename,
-                    oFields, oAttributesFromTileStats, bJsonField, eGeomType,
-                    (bExtentValid) ? &sExtent : nullptr)));
+            poDS->m_apoLayers.push_back(std::make_unique<OGRMVTDirectoryLayer>(
+                poDS, oId.ToString().c_str(), poOpenInfo->pszFilename, oFields,
+                oAttributesFromTileStats, bJsonField, eGeomType,
+                (bExtentValid) ? &sExtent : nullptr));
         }
     }
 
