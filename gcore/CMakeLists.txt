@@ -212,6 +212,10 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
   gdal_target_link_libraries(gcore PRIVATE psapi)
 endif ()
 
+if (HAVE_OPENMP_SIMD)
+    target_compile_definitions(gcore PRIVATE HAVE_OPENMP_SIMD)
+endif()
+
 include(TargetPublicHeader)
 target_public_header(
   TARGET

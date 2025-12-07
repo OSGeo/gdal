@@ -427,6 +427,12 @@ if(OGR_ENABLE_DRIVER_TAB AND
     option(OGR_ENABLE_DRIVER_TAB_PLUGIN "Set ON to build OGR MapInfo TAB and MIF/MID driver as plugin" ON)
 endif()
 
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-fopenmp-simd HAVE_OPENMP_SIMD)
+if (HAVE_OPENMP_SIMD)
+  add_compile_options("-fopenmp-simd")
+endif()
+
 # Precompiled header
 if (USE_PRECOMPILED_HEADERS)
   include(GdalStandardIncludes)
