@@ -65,6 +65,7 @@ def test_gdalalg_vector_check_geometry(alg, polys):
     dst_ds = alg["output"].GetDataset()
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetName() == "error_location"
+    assert dst_lyr.GetLayerDefn().GetGeomType() == ogr.wkbPoint
 
     errors = [f for f in dst_lyr]
 
