@@ -23,82 +23,36 @@ Description
 :program:`gdal vector convert` can be used to convert data data between
 different formats.
 
-The following options are available:
+Standard Options
+----------------
 
-Standard options
-++++++++++++++++
-
-.. include:: gdal_options/of_vector.rst
+.. include:: gdal_options/append_vector.rst
 
 .. include:: gdal_options/co_vector.rst
 
+.. include:: gdal_options/if.rst
+
+.. include:: gdal_options/input_layer.rst
+
 .. include:: gdal_options/lco.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. option:: --update
-
-    Whether the output dataset must be opened in update mode. Implies that
-    it already exists. This mode is useful when adding new layer(s) to an
-    already existing dataset.
-
-.. option:: --overwrite-layer
-
-    Whether overwriting existing layer(s) is allowed.
-
-.. option:: --append
-
-    Whether appending features to existing layer(s) is allowed
-
-.. option:: -l, --layer <LAYER>
-
-    Name of one or more layers to inspect.  If no layer names are passed, then
-    all layers will be selected.
-
-.. option:: --output-layer <OUTPUT-LAYER>
-
-    Output layer name. Can only be used to rename a layer, if there is a single
-    input layer.
-
-.. option:: --skip-errors
-
-    .. versionadded:: 3.12
-
-    Whether failures to write feature(s) should be ignored. Note that this option
-    sets the size of the transaction unit to one feature at a time, which may
-    cause severe slowdown when inserting into databases.
-
-Advanced options
-++++++++++++++++
 
 .. include:: gdal_options/oo.rst
 
+.. include:: gdal_options/of_vector.rst
+
+.. include:: gdal_options/output_layer.rst
+
 .. include:: gdal_options/output_oo.rst
 
-.. include:: gdal_options/if.rst
+.. include:: gdal_options/overwrite.rst
 
-.. option:: --upsert
+.. include:: gdal_options/overwrite_layer.rst
 
-    .. versionadded:: 3.12
+.. include:: gdal_options/skip_errors.rst
 
-    Variant of :option:`--append` where the :cpp:func:`OGRLayer::UpsertFeature`
-    operation is used to insert or update features instead of appending with
-    :cpp:func:`OGRLayer::CreateFeature`.
+.. include:: gdal_options/update.rst
 
-    This is currently implemented only in a few drivers:
-    :ref:`vector.gpkg`, :ref:`vector.elasticsearch` and :ref:`vector.mongodbv3`
-    (drivers that implement upsert expose the :c:macro:`GDAL_DCAP_UPSERT`
-    capability).
-
-    The upsert operation uses the FID of the input feature, when it is set
-    (and the FID column name is not the empty string),
-    as the key to update existing features. It is crucial to make sure that
-    the FID in the source and target layers are consistent.
-
-    For the GPKG driver, it is also possible to upsert features whose FID is unset
-    or non-significant (the ``--unset-fid`` option of :ref:`gdal_vector_edit`
-    can be used to ignore the FID from the source feature), when there is a
-    UNIQUE column that is not the integer primary key.
+.. include:: gdal_options/upsert.rst
 
 Examples
 --------
