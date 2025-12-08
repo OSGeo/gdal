@@ -3276,6 +3276,7 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     /*      generic handling.                                               */
     /* -------------------------------------------------------------------- */
     bool bUseGenericHandling = false;
+    bool bUseRRD = false;
     CPLStringList aosOptions(papszOptions);
 
     const char *pszLocation = CSLFetchNameValue(papszOptions, "LOCATION");
@@ -3296,12 +3297,13 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     else if (pszLocation && EQUAL(pszLocation, "RRD"))
     {
         bUseGenericHandling = true;
+        bUseRRD = true;
         aosOptions.SetNameValue("USE_RRD", "YES");
     }
     // Legacy
-    else if (CPLTestBool(
-                 CSLFetchNameValueDef(papszOptions, "USE_RRD",
-                                      CPLGetConfigOption("USE_RRD", "NO"))) ||
+    else if ((bUseRRD = CPLTestBool(
+                  CSLFetchNameValueDef(papszOptions, "USE_RRD",
+                                       CPLGetConfigOption("USE_RRD", "NO")))) ||
              CPLTestBool(CSLFetchNameValueDef(
                  papszOptions, "TIFF_USE_OVR",
                  CPLGetConfigOption("TIFF_USE_OVR", "NO"))))
@@ -3331,7 +3333,7 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             return CE_Failure;
         }
 
-        if (!m_bWriteEmptyTiles)
+        if (!m_bWriteEmptyTiles && !bUseRRD)
         {
             aosOptions.SetNameValue("SPARSE_OK", "YES");
         }
