@@ -2292,9 +2292,12 @@ def test_cog_write_complex(tmp_vsimem):
 def test_cog_create(tmp_vsimem):
 
     ds = gdal.GetDriverByName("COG").Create(
-        tmp_vsimem / "out.tif", 1, 1, options=["COMPRESS=LZW", "PREDICTOR=YES"]
+        tmp_vsimem / "out.tif", 2, 1, 3, options=["COMPRESS=LZW", "PREDICTOR=YES"]
     )
     assert ds.GetDriver().ShortName == "COG"
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 1
+    assert ds.RasterCount == 3
     assert ds.GetCloseReportsProgress()
     ds.GetRasterBand(1).Fill(1)
 
@@ -2309,7 +2312,10 @@ def test_cog_create(tmp_vsimem):
     assert tab_pct[0] == 1.0
 
     with gdal.Open(tmp_vsimem / "out.tif") as src_ds:
-        assert src_ds.GetRasterBand(1).Checksum() == 1
+        assert src_ds.RasterXSize == 2
+        assert src_ds.RasterYSize == 1
+        assert src_ds.RasterCount == 3
+        assert src_ds.GetRasterBand(1).Checksum() == 2
         assert src_ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
         assert src_ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
         assert src_ds.GetMetadataItem("PREDICTOR", "IMAGE_STRUCTURE") == "2"
