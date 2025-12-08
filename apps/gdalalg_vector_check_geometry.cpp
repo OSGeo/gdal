@@ -64,6 +64,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
           m_srcGeomField(srcGeomField), m_skipValid(skipValid)
     {
         m_defn->Reference();
+        m_defn->SetGeomType(wkbPoint);
 
         if (!srcFieldIndices.empty())
         {
