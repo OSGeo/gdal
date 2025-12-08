@@ -138,22 +138,42 @@ GDALGeosNonStreamingAlgorithmDataset::GDALGeosNonStreamingAlgorithmDataset()
 
 GDALGeosNonStreamingAlgorithmDataset::~GDALGeosNonStreamingAlgorithmDataset()
 {
+    Cleanup();
+    if (m_poGeosContext != nullptr)
+    {
+        finishGEOS_r(m_poGeosContext);
+    }
+}
+
+void GDALGeosNonStreamingAlgorithmDataset::Cleanup()
+{
+    m_apoFeatures.clear();
+
     if (m_poGeosContext != nullptr)
     {
         for (auto &poGeom : m_apoGeosInputs)
         {
             GEOSGeom_destroy_r(m_poGeosContext, poGeom);
         }
+        m_apoGeosInputs.clear();
 
-        GEOSGeom_destroy_r(m_poGeosContext, m_poGeosResultAsCollection);
+        if (m_poGeosContext != nullptr)
+        {
+            GEOSGeom_destroy_r(m_poGeosContext, m_poGeosResultAsCollection);
+            m_poGeosResultAsCollection = nullptr;
+        }
 
         for (size_t i = 0; i < m_nGeosResultSize; i++)
         {
             GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[i]);
         }
+        m_nGeosResultSize = 0;
 
-        GEOSFree_r(m_poGeosContext, m_papoGeosResults);
-        finishGEOS_r(m_poGeosContext);
+        if (m_papoGeosResults != nullptr)
+        {
+            GEOSFree_r(m_poGeosContext, m_papoGeosResults);
+            m_papoGeosResults = nullptr;
+        }
     }
 }
 
@@ -314,6 +334,8 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
 bool GDALGeosNonStreamingAlgorithmDataset::Process(OGRLayer &srcLayer,
                                                    OGRLayer &dstLayer)
 {
+    Cleanup();
+
     bool sameDefn = dstLayer.GetLayerDefn()->IsSame(srcLayer.GetLayerDefn());
 
     if (!ConvertInputsToGeos(srcLayer, dstLayer, sameDefn))
