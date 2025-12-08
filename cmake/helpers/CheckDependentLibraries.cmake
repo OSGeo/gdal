@@ -435,9 +435,7 @@ define_find_package2(JXL_THREADS jxl/resizable_parallel_runner.h jxl_threads PKG
 gdal_check_package(JXL_THREADS "JPEG-XL threading" CAN_DISABLE)
 
 # Failure at execution on testperf_gdal_minmax_element with ICC
-if (NOT (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM"))
-  gdal_check_package(OpenMP "Whether GDAL should use OpenMP" COMPONENTS "C" CAN_DISABLE)
-endif()
+gdal_check_package(OpenMP "Whether GDAL should use OpenMP" COMPONENTS "C" CAN_DISABLE)
 
 gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)
 gdal_check_package(basisu "Enable BASISU driver" CONFIG CAN_DISABLE)
