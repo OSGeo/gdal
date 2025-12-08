@@ -32,6 +32,7 @@
 #include <utility>
 
 #include "cpl_conv.h"
+#include "cpl_cpu_features.h"
 #include "cpl_error.h"
 #include "cpl_hash_set.h"
 #include "cpl_multiproc.h"
@@ -45,6 +46,12 @@
 #include "gdal_abstractbandblockcache.h"
 #include "gdalantirecursion.h"
 #include "gdal_dataset.h"
+#include "gdal_matrix.hpp"
+
+#ifdef CAN_DETECT_AVX2_FMA_AT_RUNTIME
+#include "gdal_matrix_avx2_fma.h"
+#endif
+
 #include "gdalsubdatasetinfo.h"
 #include "gdal_typetraits.h"
 
@@ -12618,110 +12625,6 @@ std::vector<double> GDALDataset::ComputeInterBandCovarianceMatrix(
 }
 
 /************************************************************************/
-/*                     MultiplyAByTransposeAUpperTriangle()             */
-/************************************************************************/
-
-// Compute res = A * A.transpose(), by filling only the upper triangle.
-// Do that in a cache friendly way.
-template <class T>
-// CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW because it seems the uses of openmp-simd
-// causes that to happen
-static CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW void
-MultiplyAByTransposeAUpperTriangle([[maybe_unused]] int nNumThreads,
-                                   const T *A,  // rows * cols
-                                   T *res,      // rows * rows
-                                   int rows, size_t cols)
-{
-    constexpr int BLOCK_SIZE = 64;
-    constexpr size_t BLOCK_SIZE_COLS = 256;
-    constexpr T ZERO{0};
-
-    if constexpr (!std::is_same_v<T, double>)
-    {
-        std::fill(res, res + static_cast<size_t>(rows) * rows, ZERO);
-    }
-
-#ifdef HAVE_OPENMP
-#pragma omp parallel for schedule(static) num_threads(nNumThreads)
-#endif
-    for (int64_t ii64 = 0; ii64 < rows; ii64 += BLOCK_SIZE)
-    {
-        const int ii = static_cast<int>(ii64);
-        const int i_end = ii + std::min(BLOCK_SIZE, rows - ii);
-        for (int jj = ii; jj < rows;
-             jj += std::min(BLOCK_SIZE, rows - jj))  // upper triangle
-        {
-            const int j_end = jj + std::min(BLOCK_SIZE, rows - jj);
-            for (size_t cc = 0; cc < cols; /* increment done at end of loop */)
-            {
-                const size_t c_end = cc + std::min(BLOCK_SIZE_COLS, cols - cc);
-
-                for (int i = ii; i < i_end; ++i)
-                {
-                    const T *const Ai = &A[i * cols];
-                    int j = std::max(i, jj);
-                    for (; j < j_end - 7; j += 8)
-                    {
-                        const T *const Ajp0 = A + (j + 0) * cols;
-                        const T *const Ajp1 = A + (j + 1) * cols;
-                        const T *const Ajp2 = A + (j + 2) * cols;
-                        const T *const Ajp3 = A + (j + 3) * cols;
-                        const T *const Ajp4 = A + (j + 4) * cols;
-                        const T *const Ajp5 = A + (j + 5) * cols;
-                        const T *const Ajp6 = A + (j + 6) * cols;
-                        const T *const Ajp7 = A + (j + 7) * cols;
-
-                        T dfSum0 = ZERO, dfSum1 = ZERO, dfSum2 = ZERO,
-                          dfSum3 = ZERO, dfSum4 = ZERO, dfSum5 = ZERO,
-                          dfSum6 = ZERO, dfSum7 = ZERO;
-#ifdef HAVE_OPENMP_SIMD
-#pragma omp simd reduction(+ : dfSum0, dfSum1, dfSum2, dfSum3, dfSum4, dfSum5, dfSum6, dfSum7)
-#endif
-                        for (size_t c = cc; c < c_end; ++c)
-                        {
-                            dfSum0 += Ai[c] * Ajp0[c];
-                            dfSum1 += Ai[c] * Ajp1[c];
-                            dfSum2 += Ai[c] * Ajp2[c];
-                            dfSum3 += Ai[c] * Ajp3[c];
-                            dfSum4 += Ai[c] * Ajp4[c];
-                            dfSum5 += Ai[c] * Ajp5[c];
-                            dfSum6 += Ai[c] * Ajp6[c];
-                            dfSum7 += Ai[c] * Ajp7[c];
-                        }
-
-                        res[static_cast<size_t>(i) * rows + j + 0] += dfSum0;
-                        res[static_cast<size_t>(i) * rows + j + 1] += dfSum1;
-                        res[static_cast<size_t>(i) * rows + j + 2] += dfSum2;
-                        res[static_cast<size_t>(i) * rows + j + 3] += dfSum3;
-                        res[static_cast<size_t>(i) * rows + j + 4] += dfSum4;
-                        res[static_cast<size_t>(i) * rows + j + 5] += dfSum5;
-                        res[static_cast<size_t>(i) * rows + j + 6] += dfSum6;
-                        res[static_cast<size_t>(i) * rows + j + 7] += dfSum7;
-                    }
-                    for (; j < j_end; ++j)
-                    {
-                        const T *const Aj = A + j * cols;
-
-                        T dfSum = ZERO;
-#ifdef HAVE_OPENMP_SIMD
-#pragma omp simd reduction(+ : dfSum)
-#endif
-                        for (size_t c = cc; c < c_end; ++c)
-                        {
-                            dfSum += Ai[c] * Aj[c];
-                        }
-
-                        res[static_cast<size_t>(i) * rows + j] += dfSum;
-                    }
-                }
-
-                cc = c_end;
-            }
-        }
-    }
-}
-
-/************************************************************************/
 /*                 ComputeInterBandCovarianceMatrixInternal()           */
 /************************************************************************/
 
@@ -12930,6 +12833,12 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
     }
 #endif
 
+#ifdef CAN_DETECT_AVX2_FMA_AT_RUNTIME
+    const bool bHasAVX2_FMA = CPLHaveRuntimeAVX() &&
+                              __builtin_cpu_supports("avx2") &&
+                              __builtin_cpu_supports("fma");
+#endif
+
     // Iterate over all blocks
     for (const auto &window : papoBands[panBandList[0] - 1]->IterateWindows())
     {
@@ -13096,14 +13005,25 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
 
             if constexpr (!std::is_same_v<T, double>)
             {
-                MultiplyAByTransposeAUpperTriangle(
+                std::fill(aCurBlockComomentMatrix.begin(),
+                          aCurBlockComomentMatrix.end(), ZERO);
+
+                GDALMatrixMultiplyAByTransposeAUpperTriangle(
                     nNumThreads, adfCurBlockPixelsAllBands.data(),
                     aCurBlockComomentMatrix.data(), nBandCount,
                     nThisBlockPixelCount);
             }
+#ifdef CAN_DETECT_AVX2_FMA_AT_RUNTIME
+            else if (bHasAVX2_FMA)
+            {
+                GDALMatrixMultiplyAByTransposeAUpperTriangle_AVX2_FMA(
+                    nNumThreads, adfCurBlockPixelsAllBands.data(),
+                    padfComomentMatrix, nBandCount, nThisBlockPixelCount);
+            }
+#endif
             else
             {
-                MultiplyAByTransposeAUpperTriangle(
+                GDALMatrixMultiplyAByTransposeAUpperTriangle(
                     nNumThreads, adfCurBlockPixelsAllBands.data(),
                     padfComomentMatrix, nBandCount, nThisBlockPixelCount);
             }

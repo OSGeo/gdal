@@ -78,6 +78,7 @@ function(check_compiler_machine_option outvar feature)
             "sse4a" "ammintrin.h"
             "avx" "immintrin.h"
             "avx2" "immintrin.h"
+            "fma" "immintrin.h"
             "fma4" "x86intrin.h"
             "xop" "x86intrin.h")
         set(_header FALSE)
