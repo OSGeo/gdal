@@ -1501,6 +1501,35 @@ def test_stats_ComputeInterBandCovarianceMatrix_nan_result():
 ###############################################################################
 
 
+def test_stats_ComputeInterBandCovarianceMatrix_whole_block_nodata():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 3, 2, gdal.GDT_Float32)
+    ds.GetRasterBand(1).WriteRaster(
+        0, 0, 2, 1, struct.pack("f" * 2, math.nan, math.nan)
+    )
+    ds.GetRasterBand(1).WriteRaster(0, 1, 2, 1, struct.pack("f" * 2, 0, 1))
+    ds.GetRasterBand(1).WriteRaster(
+        0, 2, 2, 1, struct.pack("f" * 2, math.nan, math.nan)
+    )
+    ds.GetRasterBand(2).WriteRaster(
+        0, 0, 2, 1, struct.pack("f" * 2, math.nan, math.nan)
+    )
+    ds.GetRasterBand(2).WriteRaster(0, 1, 2, 1, struct.pack("f" * 2, 1, 0))
+    ds.GetRasterBand(2).WriteRaster(
+        0, 2, 2, 1, struct.pack("f" * 2, math.nan, math.nan)
+    )
+
+    expected_cov_matrix = [[0.5, -0.5], [-0.5, 0.5]]
+
+    cov_matrix = ds.ComputeInterBandCovarianceMatrix()
+    assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
+        list(chain.from_iterable(expected_cov_matrix))
+    )
+
+
+###############################################################################
+
+
 def test_stats_ComputeInterBandCovarianceMatrix_failed_to_compute_stats():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 1, gdal.GDT_Float32)

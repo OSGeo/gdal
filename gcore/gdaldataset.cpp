@@ -12966,6 +12966,7 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
             return eErr;
 
         // Compute the mean of all bands for this block
+        bool bAllBandsAreAllNodata = false;
         bool bNoBandHasNodata = false;
         for (int i = 0; i < nBandCount; ++i)
         {
@@ -12988,19 +12989,24 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
             }
             adfCurBlockMean[i] = nCount > 0 ? dfSum / nCount : ZERO;
             anCurBlockCount[i] = nCount;
+            bAllBandsAreAllNodata =
+                (i == 0 || bAllBandsAreAllNodata) && (nCount == 0);
             bNoBandHasNodata = (i == 0 || bNoBandHasNodata) &&
                                (nCount == nThisBlockPixelCount);
         }
 
         // Modify the pixel values to shift them by minus the mean
-        for (int i = 0; i < nBandCount; ++i)
+        if (!bAllBandsAreAllNodata)
         {
-            T *padfI =
-                adfCurBlockPixelsAllBands.data() + i * nThisBlockPixelCount;
-            const T dfMeanI = adfCurBlockMean[i];
-            for (size_t iPixel = 0; iPixel < nThisBlockPixelCount; ++iPixel)
+            for (int i = 0; i < nBandCount; ++i)
             {
-                padfI[iPixel] -= dfMeanI;
+                T *padfI =
+                    adfCurBlockPixelsAllBands.data() + i * nThisBlockPixelCount;
+                const T dfMeanI = adfCurBlockMean[i];
+                for (size_t iPixel = 0; iPixel < nThisBlockPixelCount; ++iPixel)
+                {
+                    padfI[iPixel] -= dfMeanI;
+                }
             }
         }
 
@@ -13070,7 +13076,20 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
             }
         };
 
-        if (bNoBandHasNodata)
+        if (bAllBandsAreAllNodata)
+        {
+            // Optimized code path where all values in the current block
+            // are invalid
+
+            for (int i = 0; i < nBandCount; ++i)
+            {
+                for (int j = i; j < nBandCount; ++j)
+                {
+                    UpdateGlobalValues(i, j, 0, ZERO);
+                }
+            }
+        }
+        else if (bNoBandHasNodata)
         {
             // Optimized code path where there are no invalid value in the
             // current block
