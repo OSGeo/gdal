@@ -89,6 +89,7 @@ be on the right, i.e. a line string goes clockwise around a top.
 
     Elevation interval between contours.
     Must specify either :option:`-i` or :option:`-fl` or :option:`-e`.
+    The first contour will be generated at the first multiple of ``interval`` which is greater than the raster minimum value.
 
 .. option:: -off <offset>
 
