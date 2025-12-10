@@ -203,7 +203,7 @@ def test_gdalalg_vector_sql_no_result_set(tmp_vsimem):
 
 
 @pytest.mark.require_driver("GPKG")
-def test_gdalalg_vector_sql_update(tmp_vsimem):
+def test_gdalalg_vector_sql_update_without_output(tmp_vsimem):
 
     out_filename = tmp_vsimem / "poly.gpkg"
 
@@ -219,6 +219,38 @@ def test_gdalalg_vector_sql_update(tmp_vsimem):
 
     with gdal.OpenEx(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 9
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_sql_overwrite_layer(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "poly.gpkg"
+
+    gdal.VectorTranslate(out_filename, "../ogr/data/poly.shp")
+
+    with pytest.raises(
+        Exception,
+        match="already exists. You may specify the --overwrite/--overwrite-layer/--append/--update option",
+    ):
+        gdal.Run(
+            "vector",
+            "sql",
+            input="../ogr/data/poly.shp",
+            output=out_filename,
+            sql="SELECT * FROM poly",
+        )
+
+    gdal.Run(
+        "vector",
+        "sql",
+        input="../ogr/data/poly.shp",
+        output=out_filename,
+        sql="SELECT * FROM poly LIMIT 1",
+        overwrite_layer=True,
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 1
 
 
 @pytest.mark.require_driver("GPKG")
