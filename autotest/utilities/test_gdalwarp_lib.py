@@ -13,6 +13,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import array
 import collections
 import json
 import shutil
@@ -4771,3 +4772,38 @@ def test_gdalwarp_lib_mask_band_and_src_nodata():
     ):
         out_ds = gdal.Warp("", src_ds, options="-f MEM -dstnodata 5")
         assert out_ds.GetRasterBand(1).ReadRaster() == b"\x05"
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/13539
+
+
+def test_gdalwarp_lib_sum_preserving_non_discontinuity(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "in.tif", 17857, 8472, 1, gdal.GDT_Float64
+    )
+    src_ds.GetRasterBand(1).SetNoDataValue(float("nan"))
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+
+    dstX = 2231
+    dstY = 2208
+    srcX = dstX * 2
+    srcY = dstY * 2
+    src_val = 1.5
+    src_ds.WriteRaster(srcX, srcY, 2, 2, struct.pack("d", src_val) * (2 * 2))
+
+    # When the bug occurred, this pixel (among others) was erroneously taken
+    # into account
+    src_ds.WriteRaster(4461, 4236, 1, 1, struct.pack("d", 1e300))
+
+    out_ds = gdal.Warp("", src_ds, options="-of VRT -tr 2 2 -r sum -wm 60")
+    out_xoff = 1116
+    out_yoff = 2118
+    out_xsize = 1116
+    out_ysize = 1059
+    got_data = out_ds.ReadRaster(out_xoff, out_yoff, out_xsize, out_ysize)
+    assert (
+        array.array("d", got_data)[(dstY - out_yoff) * out_xsize + (dstX - out_xoff)]
+        == 4 * src_val
+    )
