@@ -192,7 +192,6 @@ cellsize     1
         f.write(content)
 
     dstfilename = str(tmp_vsimem / "test_contour_1.shp")
-    dstfilename = str("/tmp/test_contour_1.shp")
 
     options_args = {
         "elevationName": "ELEV",
