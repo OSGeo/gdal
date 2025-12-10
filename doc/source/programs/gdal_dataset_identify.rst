@@ -12,7 +12,7 @@
 
 .. Index:: gdal dataset identify
 
-:program:`gdal manage-dataset identify` reports the name of drivers that can open one or
+:program:`gdal dataset identify` reports the name of drivers that can open one or
 several dataset(s).
 
 Synopsis
