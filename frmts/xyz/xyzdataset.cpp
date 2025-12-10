@@ -1108,10 +1108,10 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                             {
                                 eDT = GDT_Float32;
                             }
-                            else if ((eDT == GDT_UInt8 || eDT == GDT_Int16)
-                                     // cppcheck-suppress
-                                     // knownConditionTrueFalse
-                                     && (nZ < 0 || nZ > 255))
+                            else if (
+                                (eDT == GDT_UInt8 || eDT == GDT_Int16)
+                                // cppcheck-suppress knownConditionTrueFalse
+                                && (nZ < 0 || nZ > 255))
                             {
                                 if (nZ < -32768 || nZ > 32767)
                                     eDT = GDT_Int32;
