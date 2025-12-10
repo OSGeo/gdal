@@ -44,7 +44,7 @@ class GDALRasterCalcAlgorithm : public GDALRasterPipelineStepAlgorithm
     bool m_flatten{false};
     std::string m_type{};
     std::string m_nodata{};
-    bool m_noCheckSRS{false};
+    bool m_noCheckCRS{false};
     bool m_noCheckExtent{false};
     bool m_noCheckExpression{false};
     bool m_propagateNoData{false};

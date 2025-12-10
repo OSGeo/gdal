@@ -33,7 +33,7 @@
 struct GDALCalcOptions
 {
     GDALDataType dstType{GDT_Unknown};
-    bool checkSRS{true};
+    bool checkCRS{true};
     bool checkExtent{true};
 };
 
@@ -220,7 +220,7 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
             ds->GetGeoTransform(source.gt);
         }
 
-        if (options.checkSRS && out.srs)
+        if (options.checkCRS && out.srs)
         {
             const OGRSpatialReference *srs = ds->GetSpatialRef();
             srsMismatch = srs && !srs->IsSame(out.srs.get());
@@ -878,9 +878,10 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm(bool standaloneStep) noexcept
 
     AddOutputDataTypeArg(&m_type);
 
-    AddArg("no-check-srs", 0,
-           _("Do not check consistency of input spatial reference systems"),
-           &m_noCheckSRS);
+    AddArg("no-check-crs", 0,
+           _("Do not check consistency of input coordinate reference systems"),
+           &m_noCheckCRS)
+        .AddHiddenAlias("no-check-srs");
     AddArg("no-check-extent", 0, _("Do not check consistency of input extents"),
            &m_noCheckExtent);
 
@@ -955,7 +956,7 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     GDALCalcOptions options;
     options.checkExtent = !m_noCheckExtent;
-    options.checkSRS = !m_noCheckSRS;
+    options.checkCRS = !m_noCheckCRS;
     if (!m_type.empty())
     {
         options.dstType = GDALGetDataTypeByName(m_type.c_str());
