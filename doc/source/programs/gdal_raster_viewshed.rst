@@ -207,17 +207,19 @@ Program-Specific Options
 Standard Options
 ----------------
 
-.. include:: gdal_options/append_raster.rst
+.. collapse:: details
 
-.. include:: gdal_options/co.rst
+    .. include:: gdal_options/append_raster.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/co.rst
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_options/of_raster_create_copy.rst
+    .. include:: gdal_options/oo.rst
 
-.. include:: gdal_options/overwrite.rst
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

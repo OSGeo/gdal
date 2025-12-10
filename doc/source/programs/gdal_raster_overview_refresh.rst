@@ -108,7 +108,9 @@ Program-Specific Options
 Standard Options
 ----------------
 
-.. include:: gdal_options/oo.rst
+.. collapse:: Details
+
+    .. include:: gdal_options/oo.rst
 
 Examples
 --------

@@ -83,19 +83,21 @@ Program-Specific Options
 Standard Options
 ----------------
 
-.. include:: gdal_options/co.rst
+.. collapse:: Details
 
-.. include:: gdal_options/of_raster_create.rst
+    .. include:: gdal_options/co.rst
 
-.. include:: gdal_options/overwrite.rst
+    .. include:: gdal_options/of_raster_create.rst
 
-.. option:: --update
+    .. include:: gdal_options/overwrite.rst
 
-    If only an input dataset is specified, ask for it to be opened in update mode
-    If an output dataset is specified, ask for it to be opened in update mode
-    (this implies that it already exists).
-    Note that updating an existing dataset may lead to file size increase if
-    the dataset is compressed, and/or quality loss if lossy compression is used.
+    .. option:: --update
+
+        If only an input dataset is specified, ask for it to be opened in update mode
+        If an output dataset is specified, ask for it to be opened in update mode
+        (this implies that it already exists).
+        Note that updating an existing dataset may lead to file size increase if
+        the dataset is compressed, and/or quality loss if lossy compression is used.
 
 
 Examples

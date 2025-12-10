@@ -159,25 +159,27 @@ Advanced options
 Standard Options
 ----------------
 
-.. include:: gdal_options/append_vector.rst
+.. collapse:: Details
 
-.. include:: gdal_options/co_vector.rst
+    .. include:: gdal_options/append_vector.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/co_vector.rst
 
-.. include:: gdal_options/lco.rst
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/lco.rst
 
-.. include:: gdal_options/of_vector.rst
+    .. include:: gdal_options/oo.rst
 
-.. include:: gdal_options/output_layer.rst
+    .. include:: gdal_options/of_vector.rst
 
-.. include:: gdal_options/overwrite.rst
+    .. include:: gdal_options/output_layer.rst
 
-.. include:: gdal_options/overwrite_layer.rst
+    .. include:: gdal_options/overwrite.rst
 
-.. include:: gdal_options/update.rst
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/update.rst
 
 Examples
 --------

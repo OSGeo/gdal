@@ -129,9 +129,11 @@ Program-Specific Options
 Standard Options
 ----------------
 
-.. include:: gdal_options/co.rst
+.. collapse:: Details
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/oo.rst
 
 Examples
 --------

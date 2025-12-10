@@ -43,11 +43,13 @@ Program-Specific Options
 Standard Options
 ----------------
 
-.. include:: gdal_options/co_vector.rst
+.. collapse:: Details
 
-.. include:: gdal_options/lco.rst
+    .. include:: gdal_options/co_vector.rst
 
-.. include:: gdal_options/overwrite.rst
+    .. include:: gdal_options/lco.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

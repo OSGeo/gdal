@@ -142,28 +142,30 @@ Program-Specific Options
 Standard Options
 ----------------
 
-.. include:: gdal_options/append_vector.rst
+.. collapse:: Details
 
-.. include:: gdal_options/co.rst
+    .. include:: gdal_options/append_vector.rst
 
-.. include:: gdal_options/lco.rst
+    .. include:: gdal_options/co.rst
 
-.. include:: gdal_options/of_vector.rst
+    .. include:: gdal_options/lco.rst
 
-.. option:: --nln, --output-layer <LAYER>
+    .. include:: gdal_options/of_vector.rst
 
-    Provides a name for the output vector layer.
+    .. option:: --nln, --output-layer <LAYER>
 
-.. include:: gdal_options/overwrite.rst
+        Provides a name for the output vector layer.
 
-.. option:: --overwrite-layer
+    .. include:: gdal_options/overwrite.rst
 
-    Whether overwriting the existing output vector layer is allowed.
+    .. option:: --overwrite-layer
 
-.. option:: --update
+        Whether overwriting the existing output vector layer is allowed.
 
-    Whether the output dataset must be opened in update mode. Implies that
-    it already exists.
+    .. option:: --update
+
+        Whether the output dataset must be opened in update mode. Implies that
+        it already exists.
 
 Examples
 --------

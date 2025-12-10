@@ -121,27 +121,29 @@ Program-Specific Options
 Standard Options
 ----------------
 
-.. option:: --append
+.. collapse:: Details
 
-    Whether the output directory must be opened in append mode. Implies that
-    it already exists and that the output format supports appending.
+    .. option:: --append
 
-    This mode is useful when adding new features to an already an existing
-    partitioned dataset.
+        Whether the output directory must be opened in append mode. Implies that
+        it already exists and that the output format supports appending.
 
-.. include:: gdal_options/co_vector.rst
+        This mode is useful when adding new features to an already an existing
+        partitioned dataset.
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/co_vector.rst
 
-.. include:: gdal_options/lco.rst
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/lco.rst
 
-.. include:: gdal_options/of_vector.rst
+    .. include:: gdal_options/oo.rst
 
-.. include:: gdal_options/overwrite.rst
+    .. include:: gdal_options/of_vector.rst
 
-.. include:: gdal_options/skip_errors.rst
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/skip_errors.rst
 
 Examples
 --------
