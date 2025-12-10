@@ -199,3 +199,13 @@ Examples
     .. code-block:: bash
 
         gdal vector rasterize --burn 255,0,0 --ot Byte --size 1000,1000 -l footprints footprints.shp mask.tif
+
+.. example::
+    :title: Burn a shapefile into a raster using a specific where condition to select features, and restrict the extent to the one of selected features
+
+    .. code-block:: bash
+
+        gdal pipeline read /vsizip/vsicurl/https://www2.census.gov/geo/tiger/TIGER2025/STATE/tl_2025_us_state.zip ! \
+                        filter --where  "stusps = 'CA'" --update-extent ! \
+                        rasterize  --burn 1 --size 1500,1500 --datatype Byte ! \
+                        write out.png --overwrite
