@@ -69,6 +69,8 @@ Standard options
 .. option:: --interval <INTERVAL>
 
     Elevation interval between contours. Mutually exclusive with :option:`--levels`, :option:`--exp-base`.
+    The first contour will be generated at the first multiple of ``INTERVAL`` which is greater than the raster minimum value.
+
 
 .. option:: --levels <LEVELS>
 
