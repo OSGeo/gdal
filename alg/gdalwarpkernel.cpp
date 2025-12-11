@@ -8534,7 +8534,9 @@ static void GWKSumPreservingThread(void *pData)
                 // Detect pixel that likely cross the anti-meridian and
                 // introduce a discontinuity when reprojected.
 
-                if (getInsideXSign(adfX0[iX]) !=
+                if (std::fabs(adfX0[iX] - adfX0[iX + 1]) > 2 * poWK->dfXScale &&
+                    std::fabs(adfX1[iX] - adfX1[iX + 1]) > 2 * poWK->dfXScale &&
+                    getInsideXSign(adfX0[iX]) !=
                         getInsideXSign(adfX0[iX + 1]) &&
                     getInsideXSign(adfX0[iX]) == getInsideXSign(adfX1[iX]) &&
                     getInsideXSign(adfX0[iX + 1]) ==
@@ -8542,6 +8544,16 @@ static void GWKSumPreservingThread(void *pData)
                     (adfY1[iX] - adfY0[iX]) * (adfY1[iX + 1] - adfY0[iX + 1]) >
                         0)
                 {
+#ifdef DEBUG_VERBOSE
+                    CPLDebug(
+                        "WARP",
+                        "Discontinuity for iSrcX=%d, iSrcY=%d, dest corners:"
+                        "X0[iX]=%f X0[iX+1]=%f X1[iX]=%f X1[iX+1]=%f,"
+                        "Y0[iX]=%f Y0[iX+1]=%f Y1[iX]=%f Y1[iX+1]=%f",
+                        iX + poWK->nSrcXOff, iY + poWK->nSrcYOff, adfX0[iX],
+                        adfX0[iX + 1], adfX1[iX], adfX1[iX + 1], adfY0[iX],
+                        adfY0[iX + 1], adfY1[iX], adfY1[iX + 1]);
+#endif
                     double dfXMidReprojectedLeftTop = 0;
                     double dfXMidReprojectedRightTop = 0;
                     double dfYMidReprojectedTop = 0;
@@ -8843,6 +8855,19 @@ static void GWKSumPreservingThread(void *pData)
                 }
                 if (dfWeight > 0.0)
                 {
+#ifdef DEBUG_VERBOSE
+#if defined(DST_X) && defined(DST_Y)
+                    if (iDstX + poWK->nDstXOff == DST_X &&
+                        iDstY + poWK->nDstYOff == DST_Y)
+                    {
+                        CPLDebug("WARP",
+                                 "iSrcX = %d, iSrcY = %d, weight =%.17g",
+                                 sp.iSrcX + poWK->nSrcXOff,
+                                 sp.iSrcY + poWK->nSrcYOff, dfWeight);
+                    }
+#endif
+#endif
+
                     const GPtrDiff_t iSrcOffset =
                         sp.iSrcX +
                         static_cast<GPtrDiff_t>(sp.iSrcY) * nSrcXSize;
@@ -8872,6 +8897,16 @@ static void GWKSumPreservingThread(void *pData)
                         {
                             continue;
                         }
+#ifdef DEBUG_VERBOSE
+#if defined(DST_X) && defined(DST_Y)
+                        if (iDstX + poWK->nDstXOff == DST_X &&
+                            iDstY + poWK->nDstYOff == DST_Y)
+                        {
+                            CPLDebug("WARP", "value * weight = %.17g",
+                                     dfRealValue * dfWeight);
+                        }
+#endif
+#endif
 
                         adfRealValue[iBand] += dfRealValue * dfWeight;
                         adfImagValue[iBand] += dfImagValue * dfWeight;
