@@ -2058,8 +2058,8 @@ static GDALDataset *VSICryptOpen(GDALOpenInfo *poOpenInfo)
 void VSIInstallCryptFileHandler(void)
 
 {
-    VSIFileManager::InstallHandler(VSICRYPT_PREFIX,
-                                   new VSICryptFilesystemHandler);
+    VSIFileManager::InstallHandler(
+        VSICRYPT_PREFIX, std::make_shared<VSICryptFilesystemHandler>());
 
 #ifdef VSICRYPT_DRIVER
     if (GDALGetDriverByName("VSICRYPT") != nullptr)
@@ -2114,8 +2114,8 @@ VSIVirtualHandleUniquePtr VSIDummyCryptFilesystemHandler::Open(
 
 void VSIInstallCryptFileHandler(void)
 {
-    VSIFileManager::InstallHandler(VSICRYPT_PREFIX,
-                                   new VSIDummyCryptFilesystemHandler);
+    VSIFileManager::InstallHandler(
+        VSICRYPT_PREFIX, std::make_shared<VSIDummyCryptFilesystemHandler>());
 }
 
 void VSISetCryptKey(const GByte * /* pabyKey */, int /* nKeySize */)

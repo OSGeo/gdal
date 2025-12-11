@@ -426,7 +426,7 @@ void VSIPMTilesRegister()
     if (VSIFileManager::GetHandler("/vsipmtiles/") ==
         VSIFileManager::GetHandler("/"))
     {
-        VSIFileManager::InstallHandler("/vsipmtiles/",
-                                       new VSIPMTilesFilesystemHandler());
+        VSIFileManager::InstallHandler(
+            "/vsipmtiles/", std::make_shared<VSIPMTilesFilesystemHandler>());
     }
 }

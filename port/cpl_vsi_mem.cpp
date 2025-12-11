@@ -1164,8 +1164,8 @@ GIntBig VSIMemFilesystemHandler::GetDiskFreeSpace(const char * /*pszDirname*/)
 
 void VSIInstallMemFileHandler()
 {
-    VSIFileManager::InstallHandler("/vsimem/",
-                                   new VSIMemFilesystemHandler("/vsimem/"));
+    VSIFileManager::InstallHandler(
+        "/vsimem/", std::make_shared<VSIMemFilesystemHandler>("/vsimem/"));
 }
 
 /************************************************************************/

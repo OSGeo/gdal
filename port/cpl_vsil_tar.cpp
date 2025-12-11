@@ -624,5 +624,6 @@ VSITarFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
 
 void VSIInstallTarFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsitar/", new VSITarFilesystemHandler());
+    VSIFileManager::InstallHandler("/vsitar/",
+                                   std::make_shared<VSITarFilesystemHandler>());
 }

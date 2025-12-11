@@ -1421,7 +1421,8 @@ std::string VSIUnixStdioFilesystemHandler::GetCanonicalFilename(
 void VSIInstallLargeFileHandler()
 
 {
-    VSIFileManager::InstallHandler("", new VSIUnixStdioFilesystemHandler());
+    VSIFileManager::InstallHandler(
+        "", std::make_shared<VSIUnixStdioFilesystemHandler>());
 }
 
 #endif  // ndef WIN32

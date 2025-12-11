@@ -2598,8 +2598,8 @@ bool VSIAzureHandle::IsDirectoryFromExists(const char * /*pszVerb*/,
 
 void VSIInstallAzureFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsiaz/",
-                                   new cpl::VSIAzureFSHandler("/vsiaz/"));
+    VSIFileManager::InstallHandler(
+        "/vsiaz/", std::make_shared<cpl::VSIAzureFSHandler>("/vsiaz/"));
 }
 
 #endif /* HAVE_CURL */
