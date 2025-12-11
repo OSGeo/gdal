@@ -312,6 +312,7 @@ unset-layer-metadata
 unset-metadata
 unset-metadata-domain
 update
+update-extent
 upsert
 url
 use-source-timestamp

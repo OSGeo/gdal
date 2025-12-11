@@ -51,6 +51,13 @@ Standard options
 
     Attribute query (like SQL WHERE).
 
+.. option:: --update-extent
+
+    Update layer extent to take into account the filter(s). Otherwise the layer
+    extent will generally be the one of the source layer before applying the
+    filter(s). Note that using this option requires doing a full scan of the
+    filtered layers.
+
 
 Advanced options
 ++++++++++++++++
