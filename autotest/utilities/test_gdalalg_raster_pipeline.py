@@ -304,7 +304,7 @@ def test_gdalalg_raster_pipeline_write_write():
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="pipeline: First step should be 'read', 'calc', 'mosaic' or 'stack'",
+        match="pipeline: First step should be 'read'",
     ):
         pipeline.ParseRunAndFinalize(
             ["write", "/vsimem/out.tif", "!", "write", "/vsimem/out.tif"]

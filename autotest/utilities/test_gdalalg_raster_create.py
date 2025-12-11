@@ -524,3 +524,26 @@ def test_gdalalg_raster_create_empty_bbox():
         match="0 value has been specified for argument 'bbox', whereas exactly 4 were expected",
     ):
         alg.Run()
+
+
+def test_gdalalg_raster_create_pipeline_first_step():
+
+    with gdal.Run(
+        "raster pipeline",
+        output_format="MEM",
+        pipeline="create --bbox -10,-10,10,10 --size 2,2 ! write",
+    ) as alg:
+        assert alg.Output().GetGeoTransform() == (-10, 10, 0, 10, 0, -10)
+
+
+def test_gdalalg_raster_create_pipeline_middle_step():
+
+    with gdal.Run(
+        "raster pipeline",
+        output_format="MEM",
+        pipeline="read ../gcore/data/byte.tif ! create --burn 7 ! write",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.RasterXSize == 20
+        assert ds.RasterYSize == 20
+        assert ds.GetRasterBand(1).ComputeRasterMinMax() == (7, 7)

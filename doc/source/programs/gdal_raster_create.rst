@@ -38,6 +38,8 @@ can be useful to create a file of minimum size.`
 :program:`gdal raster create` can be used also in special cases, like creating
 a PDF file from a XML composition file.
 
+Since GDAL 3.13, ``create`` can also be used as a step of :ref:`gdal_raster_pipeline`.
+
 Options
 +++++++
 
