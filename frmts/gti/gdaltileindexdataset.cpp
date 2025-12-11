@@ -347,6 +347,9 @@ class GDALTileIndexDataset final : public GDALPamDataset
     //! Whereas the multi-threading rendering code path must be used. Updated by CollectSources().
     bool m_bLastMustUseMultiThreading = false;
 
+    //! Whether the GTI file is a STAC collection
+    bool m_bSTACCollection = false;
+
     //! From a source dataset name, return its SourceDesc description structure.
     bool GetSourceDesc(const std::string &osTileName, SourceDesc &oSourceDesc,
                        std::mutex *pMutex);
@@ -398,6 +401,7 @@ class GDALTileIndexDataset final : public GDALPamDataset
         GDALTileIndexDataset::QueueWorkingStates *poQueueWorkingStates =
             nullptr;
         int nBandNrMax = 0;
+        bool bSTACCollection = false;
 
         int nXOff = 0;
         int nYOff = 0;
@@ -594,9 +598,11 @@ GDALTileIndexDataset::GDALTileIndexDataset()
 /************************************************************************/
 
 static std::string GetAbsoluteFileName(const char *pszTileName,
-                                       const char *pszVRTName)
+                                       const char *pszVRTName,
+                                       bool bIsStacCollection)
 {
-    std::string osRet = VSIURIToVSIPath(pszTileName);
+    std::string osRet =
+        bIsStacCollection ? VSIURIToVSIPath(pszTileName) : pszTileName;
     if (osRet != pszTileName)
         return osRet;
 
@@ -969,12 +975,14 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             // Is this a https://stac-utils.github.io/stac-geoparquet/latest/spec/stac-geoparquet-spec ?
             if (poLayerDefn->GetFieldIndex("assets.data.href") >= 0)
             {
+                m_bSTACCollection = true;
                 osLocationFieldName = "assets.data.href";
                 CPLDebug("GTI", "Using %s as location field",
                          osLocationFieldName.c_str());
             }
             else if (poLayerDefn->GetFieldIndex("assets.image.href") >= 0)
             {
+                m_bSTACCollection = true;
                 osLocationFieldName = "assets.image.href";
                 CPLDebug("GTI", "Using %s as location field",
                          osLocationFieldName.c_str());
@@ -982,6 +990,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             else if (poLayerDefn->GetFieldIndex("stac_version") >= 0 ||
                      poLayerDefn->GetFieldIndex("stac_extensions") >= 0)
             {
+                m_bSTACCollection = true;
                 const int nFieldCount = poLayerDefn->GetFieldCount();
                 // Look for "assets.xxxxx.href" fields
                 int nAssetCount = 0;
@@ -1231,6 +1240,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     std::string osAssetName;
     if (bIsStacGeoParquet)
     {
+        m_bSTACCollection = true;
         osAssetName = osLocationFieldName.substr(
             strlen("assets."),
             osLocationFieldName.size() - strlen("assets.") - strlen(".href"));
@@ -1448,8 +1458,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
 
         const char *pszTileName =
             poFeature->GetFieldAsString(m_nLocationFieldIndex);
-        const std::string osTileName(
-            GetAbsoluteFileName(pszTileName, poOpenInfo->pszFilename));
+        const std::string osTileName(GetAbsoluteFileName(
+            pszTileName, poOpenInfo->pszFilename, m_bSTACCollection));
         pszTileName = osTileName.c_str();
 
         auto poTileDS = std::shared_ptr<GDALDataset>(
@@ -3455,8 +3465,8 @@ GDALTileIndexDataset::GetSourcesMoreRecentThan(int64_t mTime)
 
         const char *pszTileName =
             poFeature->GetFieldAsString(m_nLocationFieldIndex);
-        std::string osTileName(
-            GetAbsoluteFileName(pszTileName, GetDescription()));
+        std::string osTileName(GetAbsoluteFileName(
+            pszTileName, GetDescription(), m_bSTACCollection));
         VSIStatBufL sStatSource;
         if (VSIStatL(osTileName.c_str(), &sStatSource) != 0 ||
             sStatSource.st_mtime <= mTime)
@@ -3931,8 +3941,8 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
         auto &poFeature = m_aoSourceDesc[i].poFeature;
         const char *pszTileName =
             poFeature->GetFieldAsString(m_nLocationFieldIndex);
-        const std::string osTileName(
-            GetAbsoluteFileName(pszTileName, GetDescription()));
+        const std::string osTileName(GetAbsoluteFileName(
+            pszTileName, GetDescription(), m_bSTACCollection));
 
         SourceDesc oSourceDesc;
         if (!GetSourceDesc(osTileName, oSourceDesc, nullptr))
@@ -4806,6 +4816,7 @@ CPLErr GDALTileIndexDataset::IRasterIO(
             for (auto &oSourceDesc : m_aoSourceDesc)
             {
                 auto psJob = new RasterIOJob();
+                psJob->bSTACCollection = m_bSTACCollection;
                 psJob->poDS = this;
                 psJob->pbSuccess = &bSuccess;
                 psJob->poErrorAccumulator = &oErrorAccumulator;
@@ -4895,7 +4906,8 @@ void GDALTileIndexDataset::RasterIOJob::Func(void *pData)
     if (*psJob->pbSuccess)
     {
         const std::string osTileName(GetAbsoluteFileName(
-            psJob->osTileName.c_str(), psJob->poDS->GetDescription()));
+            psJob->osTileName.c_str(), psJob->poDS->GetDescription(),
+            psJob->bSTACCollection));
 
         SourceDesc oSourceDesc;
 
