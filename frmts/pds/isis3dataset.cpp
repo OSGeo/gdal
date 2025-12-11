@@ -183,7 +183,7 @@ class ISIS3Dataset final : public RawDataset
     CPL_DISALLOW_COPY_ASSIGN(ISIS3Dataset)
 
   protected:
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     ISIS3Dataset();
@@ -1277,7 +1277,7 @@ ISIS3Dataset::~ISIS3Dataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr ISIS3Dataset::Close()
+CPLErr ISIS3Dataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

@@ -801,7 +801,7 @@ OGRFlatGeobufLayer::~OGRFlatGeobufLayer()
         VSIFree(m_headerBuf);
 }
 
-CPLErr OGRFlatGeobufLayer::Close()
+CPLErr OGRFlatGeobufLayer::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
 

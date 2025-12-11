@@ -14,6 +14,7 @@
 #include "gtiffdataset.h"
 #include "gtiffrasterband.h"
 #include "gtiffoddbitsband.h"
+#include "gtiffjpegoverviewds.h"
 
 #include <cassert>
 #include <cerrno>
@@ -2225,26 +2226,20 @@ CPLErr GTiffDataset::FlushDirectory()
     const auto ReloadAllOtherDirectories = [this]()
     {
         const auto poBaseDS = m_poBaseDS ? m_poBaseDS : this;
-        if (poBaseDS->m_papoOverviewDS)
+        for (auto &poOvrDS : poBaseDS->m_apoOverviewDS)
         {
-            for (int i = 0; i < poBaseDS->m_nOverviewCount; ++i)
+            if (poOvrDS->m_bCrystalized && poOvrDS.get() != this)
             {
-                if (poBaseDS->m_papoOverviewDS[i]->m_bCrystalized &&
-                    poBaseDS->m_papoOverviewDS[i] != this)
-                {
-                    poBaseDS->m_papoOverviewDS[i]->ReloadDirectory(true);
-                }
+                poOvrDS->ReloadDirectory(true);
+            }
 
-                if (poBaseDS->m_papoOverviewDS[i]->m_poMaskDS &&
-                    poBaseDS->m_papoOverviewDS[i]->m_poMaskDS != this &&
-                    poBaseDS->m_papoOverviewDS[i]->m_poMaskDS->m_bCrystalized)
-                {
-                    poBaseDS->m_papoOverviewDS[i]->m_poMaskDS->ReloadDirectory(
-                        true);
-                }
+            if (poOvrDS->m_poMaskDS && poOvrDS->m_poMaskDS.get() != this &&
+                poOvrDS->m_poMaskDS->m_bCrystalized)
+            {
+                poOvrDS->m_poMaskDS->ReloadDirectory(true);
             }
         }
-        if (poBaseDS->m_poMaskDS && poBaseDS->m_poMaskDS != this &&
+        if (poBaseDS->m_poMaskDS && poBaseDS->m_poMaskDS.get() != this &&
             poBaseDS->m_poMaskDS->m_bCrystalized)
         {
             poBaseDS->m_poMaskDS->ReloadDirectory(true);
@@ -2400,14 +2395,13 @@ CPLErr GTiffDataset::CleanOverviews()
     /* -------------------------------------------------------------------- */
     std::vector<toff_t> anOvDirOffsets;
 
-    for (int i = 0; i < m_nOverviewCount; ++i)
+    for (auto &poOvrDS : m_apoOverviewDS)
     {
-        anOvDirOffsets.push_back(m_papoOverviewDS[i]->m_nDirOffset);
-        if (m_papoOverviewDS[i]->m_poMaskDS)
-            anOvDirOffsets.push_back(
-                m_papoOverviewDS[i]->m_poMaskDS->m_nDirOffset);
-        delete m_papoOverviewDS[i];
+        anOvDirOffsets.push_back(poOvrDS->m_nDirOffset);
+        if (poOvrDS->m_poMaskDS)
+            anOvDirOffsets.push_back(poOvrDS->m_poMaskDS->m_nDirOffset);
     }
+    m_apoOverviewDS.clear();
 
     /* -------------------------------------------------------------------- */
     /*      Loop through all the directories, translating the offsets       */
@@ -2446,15 +2440,9 @@ CPLErr GTiffDataset::CleanOverviews()
         anOvDirIndexes.pop_back();
     }
 
-    CPLFree(m_papoOverviewDS);
-    m_nOverviewCount = 0;
-    m_papoOverviewDS = nullptr;
-
     if (m_poMaskDS)
     {
-        CPLFree(m_poMaskDS->m_papoOverviewDS);
-        m_poMaskDS->m_nOverviewCount = 0;
-        m_poMaskDS->m_papoOverviewDS = nullptr;
+        m_poMaskDS->m_apoOverviewDS.clear();
     }
 
     if (!SetDirectory())
@@ -2471,9 +2459,6 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
                                                 int l_nJpegQuality,
                                                 CSLConstList papszOptions)
 {
-    if (m_nOverviewCount == 127)
-        return CE_Failure;
-
     const auto GetOptionValue =
         [papszOptions](const char *pszOptionKey, const char *pszConfigOptionKey,
                        const char **ppszKeyUsed = nullptr)
@@ -2586,7 +2571,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     }
 #endif
 
-    GTiffDataset *poODS = new GTiffDataset();
+    auto poODS = std::make_shared<GTiffDataset>();
     poODS->ShareLockWithParentDataset(this);
     poODS->eAccess = GA_Update;
     poODS->m_osFilename = m_osFilename;
@@ -2623,7 +2608,6 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     if (poODS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF), nOverviewOffset,
                           GA_Update) != CE_None)
     {
-        delete poODS;
         return CE_Failure;
     }
 
@@ -2639,12 +2623,10 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     // Do that now that m_nCompression is set
     poODS->RestoreVolatileParameters(poODS->m_hTIFF);
 
-    ++m_nOverviewCount;
-    m_papoOverviewDS = static_cast<GTiffDataset **>(
-        CPLRealloc(m_papoOverviewDS, m_nOverviewCount * (sizeof(void *))));
-    m_papoOverviewDS[m_nOverviewCount - 1] = poODS;
     poODS->m_poBaseDS = this;
     poODS->m_bIsOverview = true;
+
+    m_apoOverviewDS.push_back(std::move(poODS));
     return CE_None;
 }
 
@@ -2863,7 +2845,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset *poSrcDS,
                                                      int nOverviews)
 {
     CPLAssert(poSrcDS->GetRasterCount() != 0);
-    CPLAssert(m_nOverviewCount == 0);
+    CPLAssert(m_apoOverviewDS.empty());
 
     ScanDirectories();
 
@@ -2984,18 +2966,18 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
         else
             nMaskOvrCompression = COMPRESSION_PACKBITS;
 
-        for (int i = 0; i < m_nOverviewCount; ++i)
+        for (auto &poOvrDS : m_apoOverviewDS)
         {
-            if (m_papoOverviewDS[i]->m_poMaskDS == nullptr)
+            if (poOvrDS->m_poMaskDS == nullptr)
             {
                 const toff_t nOverviewOffset = GTIFFWriteDirectory(
                     m_hTIFF, FILETYPE_REDUCEDIMAGE | FILETYPE_MASK,
-                    m_papoOverviewDS[i]->nRasterXSize,
-                    m_papoOverviewDS[i]->nRasterYSize, 1, PLANARCONFIG_CONTIG,
-                    1, nOvrBlockXSize, nOvrBlockYSize, TRUE,
-                    nMaskOvrCompression, PHOTOMETRIC_MASK, SAMPLEFORMAT_UINT,
-                    PREDICTOR_NONE, nullptr, nullptr, nullptr, 0, nullptr, "",
-                    nullptr, nullptr, nullptr, nullptr, m_bWriteCOGLayout);
+                    poOvrDS->nRasterXSize, poOvrDS->nRasterYSize, 1,
+                    PLANARCONFIG_CONTIG, 1, nOvrBlockXSize, nOvrBlockYSize,
+                    TRUE, nMaskOvrCompression, PHOTOMETRIC_MASK,
+                    SAMPLEFORMAT_UINT, PREDICTOR_NONE, nullptr, nullptr,
+                    nullptr, 0, nullptr, "", nullptr, nullptr, nullptr, nullptr,
+                    m_bWriteCOGLayout);
 
                 if (nOverviewOffset == 0)
                 {
@@ -3003,31 +2985,25 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                     continue;
                 }
 
-                GTiffDataset *poODS = new GTiffDataset();
-                poODS->eAccess = GA_Update;
-                poODS->ShareLockWithParentDataset(this);
-                poODS->m_osFilename = m_osFilename;
-                if (poODS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF),
-                                      nOverviewOffset, GA_Update) != CE_None)
+                auto poMaskODS = std::make_shared<GTiffDataset>();
+                poMaskODS->eAccess = GA_Update;
+                poMaskODS->ShareLockWithParentDataset(this);
+                poMaskODS->m_osFilename = m_osFilename;
+                if (poMaskODS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF),
+                                          nOverviewOffset,
+                                          GA_Update) != CE_None)
                 {
-                    delete poODS;
                     eErr = CE_Failure;
                 }
                 else
                 {
-                    poODS->m_bPromoteTo8Bits = CPLTestBool(CPLGetConfigOption(
-                        "GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
-                    poODS->m_poBaseDS = this;
-                    poODS->m_poImageryDS = m_papoOverviewDS[i];
-                    m_papoOverviewDS[i]->m_poMaskDS = poODS;
-                    ++m_poMaskDS->m_nOverviewCount;
-                    m_poMaskDS->m_papoOverviewDS =
-                        static_cast<GTiffDataset **>(CPLRealloc(
-                            m_poMaskDS->m_papoOverviewDS,
-                            m_poMaskDS->m_nOverviewCount * (sizeof(void *))));
-                    m_poMaskDS
-                        ->m_papoOverviewDS[m_poMaskDS->m_nOverviewCount - 1] =
-                        poODS;
+                    poMaskODS->m_bPromoteTo8Bits =
+                        CPLTestBool(CPLGetConfigOption(
+                            "GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
+                    poMaskODS->m_poBaseDS = this;
+                    poMaskODS->m_poImageryDS = poOvrDS.get();
+                    poOvrDS->m_poMaskDS = poMaskODS;
+                    m_poMaskDS->m_apoOverviewDS.push_back(std::move(poMaskODS));
                 }
             }
         }
@@ -3085,7 +3061,8 @@ GTiffDataset::AddOverviews(const std::vector<GDALDataset *> &apoSrcOvrDSIn,
     // Make implicit JPEG overviews invisible, but do not destroy
     // them in case they are already used (not sure that the client
     // has the right to do that). Behavior maybe undefined in GDAL API.
-    m_nJPEGOverviewCount = 0;
+    std::swap(m_apoJPEGOverviewDSOld, m_apoJPEGOverviewDS);
+    m_apoJPEGOverviewDS.clear();
 
     FlushDirectory();
 
@@ -3155,12 +3132,10 @@ GTiffDataset::AddOverviews(const std::vector<GDALDataset *> &apoSrcOvrDSIn,
     for (const auto *poSrcOvrDS : apoSrcOvrDS)
     {
         bool bFound = false;
-        for (int i = 0; i < m_nOverviewCount && eErr == CE_None; ++i)
+        for (auto &poOvrDS : m_apoOverviewDS)
         {
-            const GTiffDataset *poExistingODS = m_papoOverviewDS[i];
-            if (poExistingODS->GetRasterXSize() ==
-                    poSrcOvrDS->GetRasterXSize() &&
-                poExistingODS->GetRasterYSize() == poSrcOvrDS->GetRasterYSize())
+            if (poOvrDS->GetRasterXSize() == poSrcOvrDS->GetRasterXSize() &&
+                poOvrDS->GetRasterYSize() == poSrcOvrDS->GetRasterYSize())
             {
                 bFound = true;
                 break;
@@ -3220,18 +3195,16 @@ GTiffDataset::AddOverviews(const std::vector<GDALDataset *> &apoSrcOvrDSIn,
     for (auto *poSrcOvrDS : apoSrcOvrDS)
     {
         GDALDataset *poDstOvrDS = nullptr;
-        for (int i = 0; i < m_nOverviewCount && eErr == CE_None; ++i)
+        for (auto &poOvrDS : m_apoOverviewDS)
         {
-            GTiffDataset *poExistingODS = m_papoOverviewDS[i];
-            if (poExistingODS->GetRasterXSize() ==
-                    poSrcOvrDS->GetRasterXSize() &&
-                poExistingODS->GetRasterYSize() == poSrcOvrDS->GetRasterYSize())
+            if (poOvrDS->GetRasterXSize() == poSrcOvrDS->GetRasterXSize() &&
+                poOvrDS->GetRasterYSize() == poSrcOvrDS->GetRasterYSize())
             {
-                poDstOvrDS = poExistingODS;
+                poDstOvrDS = poOvrDS.get();
                 break;
             }
         }
-        if (poDstOvrDS)
+        if (eErr == CE_None && poDstOvrDS)
         {
             const double dfThisPixels =
                 static_cast<double>(poSrcOvrDS->GetRasterXSize()) *
@@ -3269,7 +3242,8 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     // Make implicit JPEG overviews invisible, but do not destroy
     // them in case they are already used (not sure that the client
     // has the right to do that.  Behavior maybe undefined in GDAL API.
-    m_nJPEGOverviewCount = 0;
+    std::swap(m_apoJPEGOverviewDSOld, m_apoJPEGOverviewDS);
+    m_apoJPEGOverviewDS.clear();
 
     /* -------------------------------------------------------------------- */
     /*      If RRD or external OVR overviews requested, then invoke         */
@@ -3325,7 +3299,7 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
 
     if (bUseGenericHandling)
     {
-        if (m_nOverviewCount != 0)
+        if (!m_apoOverviewDS.empty())
         {
             ReportError(CE_Failure, CPLE_NotSupported,
                         "Cannot add external overviews when there are already "
@@ -3372,7 +3346,7 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     /* -------------------------------------------------------------------- */
     if (nOverviews == 0)
     {
-        if (m_nOverviewCount == 0)
+        if (m_apoOverviewDS.empty())
             return GDALDataset::IBuildOverviews(
                 pszResampling, nOverviews, panOverviewList, nBandsIn,
                 panBandList, pfnProgress, pProgressData, papszOptions);
@@ -3459,10 +3433,8 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     std::vector<bool> abRequireNewOverview(nOverviews, true);
     for (int i = 0; i < nOverviews && eErr == CE_None; ++i)
     {
-        for (int j = 0; j < m_nOverviewCount && eErr == CE_None; ++j)
+        for (auto &poODS : m_apoOverviewDS)
         {
-            GTiffDataset *poODS = m_papoOverviewDS[j];
-
             const int nOvFactor =
                 GDALComputeOvFactor(poODS->GetRasterXSize(), GetRasterXSize(),
                                     poODS->GetRasterYSize(), GetRasterYSize());
@@ -3548,28 +3520,24 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
 
     if (bHasInternalMask)
     {
-        int nMaskOverviews = 0;
-
-        GDALRasterBand **papoOverviewBands = static_cast<GDALRasterBand **>(
-            CPLCalloc(sizeof(void *), m_nOverviewCount));
-        for (int i = 0; i < m_nOverviewCount; ++i)
+        std::vector<GDALRasterBandH> ahOverviewBands;
+        for (auto &poOvrDS : m_apoOverviewDS)
         {
-            if (m_papoOverviewDS[i]->m_poMaskDS != nullptr)
+            if (poOvrDS->m_poMaskDS != nullptr)
             {
-                papoOverviewBands[nMaskOverviews++] =
-                    m_papoOverviewDS[i]->m_poMaskDS->GetRasterBand(1);
+                ahOverviewBands.push_back(GDALRasterBand::ToHandle(
+                    poOvrDS->m_poMaskDS->GetRasterBand(1)));
             }
         }
 
         void *pScaledProgressData = GDALCreateScaledProgress(
             0, 1.0 / (nBands + 1), pfnProgress, pProgressData);
         eErr = GDALRegenerateOverviewsEx(
-            m_poMaskDS->GetRasterBand(1), nMaskOverviews,
-            reinterpret_cast<GDALRasterBandH *>(papoOverviewBands),
+            m_poMaskDS->GetRasterBand(1),
+            static_cast<int>(ahOverviewBands.size()), ahOverviewBands.data(),
             pszResampling, GDALScaledProgress, pScaledProgressData,
             papszOptions);
         GDALDestroyScaledProgress(pScaledProgressData);
-        CPLFree(papoOverviewBands);
     }
     else if (bHasExternalMask)
     {
@@ -6816,7 +6784,7 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Create the new GTiffDataset object.                             */
     /* -------------------------------------------------------------------- */
-    GTiffDataset *poDS = new GTiffDataset();
+    auto poDS = std::make_unique<GTiffDataset>();
     poDS->m_hTIFF = l_hTIFF;
     poDS->m_fpL = l_fpL;
     const bool bSuppressASAP = CPLTestBool(
@@ -6831,7 +6799,6 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
         if (poDS->m_fpToWrite == nullptr)
         {
             VSIUnlink(l_osTmpFilename);
-            delete poDS;
             return nullptr;
         }
     }
@@ -6881,7 +6848,6 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     if (!poDS->ComputeBlocksPerColRowAndBand(l_nBands))
     {
         poDS->m_fpL->CancelCreation();
-        delete poDS;
         return nullptr;
     }
 
@@ -7005,11 +6971,13 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
             poDS->m_nBitsPerSample == 32 || poDS->m_nBitsPerSample == 64 ||
             poDS->m_nBitsPerSample == 128)
         {
-            poDS->SetBand(iBand + 1, new GTiffRasterBand(poDS, iBand + 1));
+            poDS->SetBand(iBand + 1, std::make_unique<GTiffRasterBand>(
+                                         poDS.get(), iBand + 1));
         }
         else
         {
-            poDS->SetBand(iBand + 1, new GTiffOddBitsBand(poDS, iBand + 1));
+            poDS->SetBand(iBand + 1, std::make_unique<GTiffOddBitsBand>(
+                                         poDS.get(), iBand + 1));
             poDS->GetRasterBand(iBand + 1)->SetMetadataItem(
                 "NBITS", CPLString().Printf("%d", poDS->m_nBitsPerSample),
                 "IMAGE_STRUCTURE");
@@ -7023,9 +6991,9 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     else
         poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
 
-    poDS->oOvManager.Initialize(poDS, pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -7901,7 +7869,8 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             osHiddenStructuralMD += "MASK_INTERLEAVED_WITH_IMAGERY=YES\n";
         }
     }
-    if (!osHiddenStructuralMD.empty())
+    if (!osHiddenStructuralMD.empty() &&
+        CPLTestBool(CPLGetConfigOption("GTIFF_WRITE_COG_GHOST_AREA", "YES")))
     {
         const int nHiddenMDSize = static_cast<int>(osHiddenStructuralMD.size());
         osHiddenStructuralMD =
@@ -8233,7 +8202,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    GTiffDataset *poDS = new GTiffDataset();
+    auto poDS = std::make_unique<GTiffDataset>();
     const bool bSuppressASAP =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "@SUPPRESS_ASAP", "NO"));
     if (bSuppressASAP)
@@ -8261,7 +8230,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                          ) != CE_None)
     {
         l_fpL->CancelCreation();
-        delete poDS;
+        poDS.reset();
         if (bStreaming)
             VSIUnlink(l_osTmpFilename);
         return nullptr;
@@ -8285,7 +8254,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         }
     }
 
-    poDS->oOvManager.Initialize(poDS, pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), pszFilename);
 
     if (bStreaming)
     {
@@ -8411,12 +8380,12 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     if (!bHasWrittenMDInGeotiffTAG && !bStreaming)
     {
         GTiffDataset::WriteMetadata(
-            poDS, l_hTIFF, true, eProfile, pszFilename, papszOptions,
+            poDS.get(), l_hTIFF, true, eProfile, pszFilename, papszOptions,
             true /* don't write RPC and IMD file again */);
     }
 
     if (!bStreaming)
-        GTiffDataset::WriteRPC(poDS, l_hTIFF, true, eProfile, pszFilename,
+        GTiffDataset::WriteRPC(poDS.get(), l_hTIFF, true, eProfile, pszFilename,
                                papszOptions,
                                true /* write only in PAM AND if needed */);
 
@@ -8589,13 +8558,11 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             if (!poMaskOvrDS)
             {
                 l_fpL->CancelCreation();
-                delete poDS;
                 return nullptr;
             }
             if (poMaskOvrDS->GetRasterCount() != 1)
             {
                 l_fpL->CancelCreation();
-                delete poDS;
                 return nullptr;
             }
         }
@@ -8627,26 +8594,27 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             TIFFForceStrileArrayWriting(poDS->m_poMaskDS->m_hTIFF);
         }
 
-        for (int i = 0; i < poDS->m_nOverviewCount; i++)
+        for (auto &poIterOvrDS : poDS->m_apoOverviewDS)
         {
-            TIFFForceStrileArrayWriting(poDS->m_papoOverviewDS[i]->m_hTIFF);
+            TIFFForceStrileArrayWriting(poIterOvrDS->m_hTIFF);
 
-            if (poDS->m_papoOverviewDS[i]->m_poMaskDS)
+            if (poIterOvrDS->m_poMaskDS)
             {
-                TIFFForceStrileArrayWriting(
-                    poDS->m_papoOverviewDS[i]->m_poMaskDS->m_hTIFF);
+                TIFFForceStrileArrayWriting(poIterOvrDS->m_poMaskDS->m_hTIFF);
             }
         }
 
         if (eErr == CE_None && nSrcOverviews)
         {
-            if (poDS->m_nOverviewCount != nSrcOverviews)
+            if (poDS->m_apoOverviewDS.size() !=
+                static_cast<size_t>(nSrcOverviews))
             {
                 ReportError(
                     pszFilename, CE_Failure, CPLE_AppDefined,
                     "Did only manage to instantiate %d overview levels, "
                     "whereas source contains %d",
-                    poDS->m_nOverviewCount, nSrcOverviews);
+                    static_cast<int>(poDS->m_apoOverviewDS.size()),
+                    nSrcOverviews);
                 eErr = CE_Failure;
             }
 
@@ -8682,7 +8650,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             for (int iOvrLevel = nSrcOverviews - 1;
                  eErr == CE_None && iOvrLevel >= 0; --iOvrLevel)
             {
-                auto poDstDS = poDS->m_papoOverviewDS[iOvrLevel];
+                auto poDstDS = poDS->m_apoOverviewDS[iOvrLevel].get();
 
                 // Create a fake dataset with the source overview level so that
                 // GDALDatasetCopyWholeRaster can cope with it.
@@ -8774,8 +8742,8 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
 #ifdef HAVE_LIBJPEG
     if (bCopyFromJPEG)
     {
-        eErr = GTIFF_CopyFromJPEG(poDS, poSrcDS, pfnProgress, pProgressData,
-                                  bTryCopy);
+        eErr = GTIFF_CopyFromJPEG(poDS.get(), poSrcDS, pfnProgress,
+                                  pProgressData, bTryCopy);
 
         // In case of failure in the decompression step, try normal copy.
         if (bTryCopy)
@@ -8786,7 +8754,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
 #ifdef JPEG_DIRECT_COPY
     if (bDirectCopyFromJPEG)
     {
-        eErr = GTIFF_DirectCopyFromJPEG(poDS, poSrcDS, pfnProgress,
+        eErr = GTIFF_DirectCopyFromJPEG(poDS.get(), poSrcDS, pfnProgress,
                                         pProgressData, bTryCopy);
 
         // In case of failure in the reading step, try normal copy.
@@ -8929,7 +8897,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                                              pfnProgress, pProgressData);
             }
 
-            eErr = CopyImageryAndMask(poDS, poSrcDS,
+            eErr = CopyImageryAndMask(poDS.get(), poSrcDS,
                                       poSrcDS->GetRasterBand(1)->GetMaskBand(),
                                       GDALScaledProgress, pScaledData);
             if (poDS->m_poMaskDS)
@@ -8939,10 +8907,10 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         }
         else
         {
-            eErr = GDALDatasetCopyWholeRaster(
-                /* (GDALDatasetH) */ poSrcDS,
-                /* (GDALDatasetH) */ poDS, papszCopyWholeRasterOptions,
-                GDALScaledProgress, pScaledData);
+            eErr = GDALDatasetCopyWholeRaster(GDALDataset::ToHandle(poSrcDS),
+                                              GDALDataset::ToHandle(poDS.get()),
+                                              papszCopyWholeRasterOptions,
+                                              GDALScaledProgress, pScaledData);
         }
     }
 
@@ -8963,9 +8931,9 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         }
         else
         {
-            eErr =
-                GDALDriver::DefaultCopyMasks(poSrcDS, poDS, bStrict, nullptr,
-                                             GDALScaledProgress, pScaledData);
+            eErr = GDALDriver::DefaultCopyMasks(poSrcDS, poDS.get(), bStrict,
+                                                nullptr, GDALScaledProgress,
+                                                pScaledData);
         }
         GDALDestroyScaledProgress(pScaledData);
     }
@@ -8987,8 +8955,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         if (CPLTestBool(CPLGetConfigOption("GTIFF_DELETE_ON_ERROR", "YES")))
         {
             l_fpL->CancelCreation();
-            delete poDS;
-            poDS = nullptr;
+            poDS.reset();
 
             if (!bStreaming)
             {
@@ -8998,12 +8965,11 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         }
         else
         {
-            delete poDS;
-            poDS = nullptr;
+            poDS.reset();
         }
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -9448,7 +9414,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
         if (nOffset == 0)
             return CE_Failure;
 
-        m_poMaskDS = new GTiffDataset();
+        m_poMaskDS = std::make_shared<GTiffDataset>();
         m_poMaskDS->eAccess = GA_Update;
         m_poMaskDS->m_poBaseDS = this;
         m_poMaskDS->m_poImageryDS = this;
@@ -9456,15 +9422,8 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
         m_poMaskDS->m_osFilename = m_osFilename;
         m_poMaskDS->m_bPromoteTo8Bits = CPLTestBool(
             CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
-        if (m_poMaskDS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF), nOffset,
-                                   GA_Update) != CE_None)
-        {
-            delete m_poMaskDS;
-            m_poMaskDS = nullptr;
-            return CE_Failure;
-        }
-
-        return CE_None;
+        return m_poMaskDS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF), nOffset,
+                                      GA_Update);
     }
 
     return GDALPamDataset::CreateMaskBand(nFlagsIn);

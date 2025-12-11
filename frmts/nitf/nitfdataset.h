@@ -135,7 +135,7 @@ class NITFDataset final : public GDALPamDataset
     NITFDataset();
     ~NITFDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize, GDALDataType eDT,

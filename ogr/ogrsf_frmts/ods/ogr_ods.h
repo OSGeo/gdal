@@ -229,7 +229,7 @@ class OGRODSDataSource final : public GDALDataset
   public:
     explicit OGRODSDataSource(CSLConstList papszOpenOptionsIn);
     ~OGRODSDataSource() override;
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     int Open(const char *pszFilename, VSILFILE *fpContentIn,
              VSILFILE *fpSettingsIn, int bUpdatableIn);

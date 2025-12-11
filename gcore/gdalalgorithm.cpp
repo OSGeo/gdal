@@ -4100,6 +4100,16 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
         const auto Validate =
             [this, &arg, bStreamAllowed, bGDALGAllowed](const std::string &val)
         {
+            if (const auto extraFormats =
+                    arg.GetMetadataItem(GAAMDI_EXTRA_FORMATS))
+            {
+                for (const auto &extraFormat : *extraFormats)
+                {
+                    if (EQUAL(val.c_str(), extraFormat.c_str()))
+                        return true;
+                }
+            }
+
             if (bStreamAllowed && EQUAL(val.c_str(), "stream"))
                 return true;
 
@@ -4265,6 +4275,8 @@ std::vector<std::string> GDALAlgorithm::FormatAutoCompleteFunction(
     const auto allowedFormats = arg.GetMetadataItem(GAAMDI_ALLOWED_FORMATS);
     const auto excludedFormats = arg.GetMetadataItem(GAAMDI_EXCLUDED_FORMATS);
     const auto caps = arg.GetMetadataItem(GAAMDI_REQUIRED_CAPABILITIES);
+    if (auto extraFormats = arg.GetMetadataItem(GAAMDI_EXTRA_FORMATS))
+        res = std::move(*extraFormats);
     for (int i = 0; i < poDM->GetDriverCount(); ++i)
     {
         auto poDriver = poDM->GetDriver(i);

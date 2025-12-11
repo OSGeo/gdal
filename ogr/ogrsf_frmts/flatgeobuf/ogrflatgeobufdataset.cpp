@@ -197,7 +197,7 @@ OGRFlatGeobufDataset::~OGRFlatGeobufDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr OGRFlatGeobufDataset::Close()
+CPLErr OGRFlatGeobufDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

@@ -402,7 +402,12 @@ GDALDataset::~GDALDataset()
  * If a driver implements this method, it must also call it from its
  * dataset destructor.
  *
- * This is the equivalent of C function GDALDatasetRunCloseWithoutDestroying().
+ * Starting with GDAL 3.13, this function may report progress if a progress
+ * callback if provided in the pfnProgress argument and if the dataset returns
+ * true for GDALDataset::GetCloseReportsProgress()
+ *
+ * This is the equivalent of C function GDALDatasetRunCloseWithoutDestroying()
+ * or GDALDatasetRunCloseWithoutDestroyingEx()
  *
  * A typical implementation might look as the following
  * \code{.cpp}
@@ -428,7 +433,7 @@ GDALDataset::~GDALDataset()
  *     }
  *  }
  *
- *  CPLErr MyDataset::Close()
+ *  CPLErr MyDataset::Close(GDALProgressFunc pfnProgress, void* pProgressData)
  *  {
  *      CPLErr eErr = CE_None;
  *      if( nOpenFlags != OPEN_FLAGS_CLOSED )
@@ -452,10 +457,17 @@ GDALDataset::~GDALDataset()
  *  }
  * \endcode
  *
+ * @param pfnProgress (since GDAL 3.13) Progress callback, or nullptr
+ * @param pProgressData (since GDAL 3.13) User data of progress callback, or nullptr
+ * @return CE_None if no error
+ *
  * @since GDAL 3.7
  */
-CPLErr GDALDataset::Close()
+CPLErr GDALDataset::Close(GDALProgressFunc pfnProgress, void *pProgressData)
 {
+    (void)pfnProgress;
+    (void)pProgressData;
+
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
         // Call UnregisterFromSharedDataset() before altering nOpenFlags
@@ -506,12 +518,116 @@ CPLErr GDALDataset::Close()
  * @return CE_None if no error
  *
  * @since GDAL 3.12
- * @see GDALClose()
+ * @see GDALClose(), GDALDatasetRunCloseWithoutDestroyingEx()
  */
 CPLErr GDALDatasetRunCloseWithoutDestroying(GDALDatasetH hDS)
 {
     VALIDATE_POINTER1(hDS, __func__, CE_Failure);
     return GDALDataset::FromHandle(hDS)->Close();
+}
+
+/************************************************************************/
+/*                  GDALDatasetRunCloseWithoutDestroyingEx()            */
+/************************************************************************/
+
+/** Run the Close() method, without running destruction of the object.
+ *
+ * This ensures that content that should be written to file is written and
+ * that all file descriptors are closed.
+ *
+ * Note that this is different from GDALClose() which also destroys
+ * the underlying C++ object. GDALClose() or GDALReleaseDataset() are actually
+ * the only functions that can be safely called on the dataset handle after
+ * this function has been called.
+ *
+ * Most users want to use GDALClose() or GDALReleaseDataset() rather than
+ * this function.
+ *
+ * This function may report progress if a progress
+ * callback if provided in the pfnProgress argument and if the dataset returns
+ * true for GDALDataset::GetCloseReportsProgress()
+ *
+ * This function is equivalent to the C++ method GDALDataset:Close()
+ *
+ * @param hDS dataset handle.
+ * @param pfnProgress Progress callback, or nullptr
+ * @param pProgressData User data of progress callback, or nullptr
+ *
+ * @return CE_None if no error
+ *
+ * @since GDAL 3.13
+ * @see GDALClose()
+ */
+CPLErr GDALDatasetRunCloseWithoutDestroyingEx(GDALDatasetH hDS,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData)
+{
+    VALIDATE_POINTER1(hDS, __func__, CE_Failure);
+    return GDALDataset::FromHandle(hDS)->Close(pfnProgress, pProgressData);
+}
+
+/************************************************************************/
+/*                         GetCloseReportsProgress()                    */
+/************************************************************************/
+
+/** Returns whether the Close() operation will report progress / is a potential
+ * lengthy operation.
+ *
+ * At time of writing, only the COG driver will return true, if the dataset
+ * has been created through the GDALDriver::Create() interface.
+ *
+ * This method is equivalent to the C function GDALDatasetGetCloseReportsProgress()
+ *
+ * @return true if the Close() operation will report progress
+ * @since GDAL 3.13
+ * @see Close()
+ */
+bool GDALDataset::GetCloseReportsProgress() const
+{
+    return false;
+}
+
+/************************************************************************/
+/*                   GDALDatasetGetCloseReportsProgress()               */
+/************************************************************************/
+
+/** Returns whether the Close() operation will report progress / is a potential
+ * lengthy operation.
+ *
+ * This function is equivalent to the C++ method GDALDataset::GetCloseReportsProgress()
+ *
+ * @param hDS dataset handle.
+ * @return CE_None if no error
+ *
+ * @return true if the Close() operation will report progress
+ * @since GDAL 3.13
+ * @see GDALClose()
+ */
+bool GDALDatasetGetCloseReportsProgress(GDALDatasetH hDS)
+{
+    VALIDATE_POINTER1(hDS, __func__, false);
+    return GDALDataset::FromHandle(hDS)->GetCloseReportsProgress();
+}
+
+/************************************************************************/
+/*                   CanReopenWithCurrentDescription()                  */
+/************************************************************************/
+
+/** Returns whether, once this dataset is closed, it can be re-opened with
+ * Open() using the current value of GetDescription()
+ *
+ * The default implementation returns true. Some drivers, like MVT in Create()
+ * mode, can return false. Some drivers return true, but the re-opened dataset
+ * may be opened by another driver (e.g. the COG driver will return true, but
+ * the driver used for re-opening is GTiff).
+ *
+ * @return true if the dataset can be re-opened using the value as
+ *         GetDescription() as connection string for Open()
+ * @since GDAL 3.13
+ */
+bool GDALDataset::CanReopenWithCurrentDescription() const
+{
+    return true;
 }
 
 /************************************************************************/
@@ -4469,14 +4585,50 @@ GDALDatasetH CPL_STDCALL GDALOpenShared(const char *pszFilename,
  * For shared datasets (opened with GDALOpenShared()) the dataset is
  * dereferenced, and closed only if the referenced count has dropped below 1.
  *
- * @param hDS The dataset to close.  May be cast from a "GDALDataset *".
+ * @param hDS The dataset to close, or nullptr.
  * @return CE_None in case of success (return value since GDAL 3.7). On a
  * shared dataset whose reference count is not dropped below 1, CE_None will
  * be returned.
+ *
+ * @see GDALCloseEx()
  */
 
 CPLErr CPL_STDCALL GDALClose(GDALDatasetH hDS)
 
+{
+    return GDALCloseEx(hDS, nullptr, nullptr);
+}
+
+/************************************************************************/
+/*                             GDALCloseEx()                            */
+/************************************************************************/
+
+/**
+ * \brief Close GDAL dataset.
+ *
+ * For non-shared datasets (opened with GDALOpen()) the dataset is closed
+ * using the C++ "delete" operator, recovering all dataset related resources.
+ * For shared datasets (opened with GDALOpenShared()) the dataset is
+ * dereferenced, and closed only if the referenced count has dropped below 1.
+ *
+ * This function may report progress if a progress
+ * callback if provided in the pfnProgress argument and if the dataset returns
+ * true for GDALDataset::GetCloseReportsProgress()
+
+ * @param hDS The dataset to close, or nullptr
+ * @param pfnProgress Progress callback, or nullptr
+ * @param pProgressData User data of progress callback, or nullptr
+ *
+ * @return CE_None in case of success. On a
+ * shared dataset whose reference count is not dropped below 1, CE_None will
+ * be returned.
+ *
+ * @since GDAL 3.13
+ * @see GDALClose()
+ */
+
+CPLErr GDALCloseEx(GDALDatasetH hDS, GDALProgressFunc pfnProgress,
+                   void *pProgressData)
 {
     if (!hDS)
         return CE_None;
@@ -4499,22 +4651,9 @@ CPLErr CPL_STDCALL GDALClose(GDALDatasetH hDS)
          */
         if (poDS->Dereference() > 0)
             return CE_None;
-
-        CPLErr eErr = poDS->Close();
-        delete poDS;
-
-#ifdef OGRAPISPY_ENABLED
-        if (bOGRAPISpyEnabled)
-            OGRAPISpyPostClose();
-#endif
-
-        return eErr;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      This is not shared dataset, so directly delete it.              */
-    /* -------------------------------------------------------------------- */
-    CPLErr eErr = poDS->Close();
+    CPLErr eErr = poDS->Close(pfnProgress, pProgressData);
     delete poDS;
 
 #ifdef OGRAPISPY_ENABLED

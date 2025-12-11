@@ -223,7 +223,12 @@ class CPL_DLL GDALDataset : public GDALMajorObject
   public:
     ~GDALDataset() override;
 
-    virtual CPLErr Close();
+    virtual CPLErr Close(GDALProgressFunc pfnProgress = nullptr,
+                         void *pProgressData = nullptr);
+
+    virtual bool GetCloseReportsProgress() const;
+
+    virtual bool CanReopenWithCurrentDescription() const;
 
     int GetRasterXSize() const;
     int GetRasterYSize() const;

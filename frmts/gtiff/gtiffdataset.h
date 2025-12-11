@@ -26,8 +26,6 @@
 #include "gt_wkt_srs.h"  // GTIFFKeysFlavorEnum
 #include "tiffio.h"      // TIFF*
 
-class GTiffJPEGOverviewDS;
-
 enum class GTiffProfile : GByte
 {
     BASELINE,
@@ -123,18 +121,19 @@ class GTiffDataset final : public GDALPamDataset
     TIFF *m_hTIFF = nullptr;
     VSILFILE *m_fpL = nullptr;
     VSILFILE *m_fpToWrite = nullptr;
-    GTiffDataset **m_papoOverviewDS = nullptr;
-    GTiffDataset *m_poMaskDS = nullptr;  // For a non-mask dataset, points to
-                                         // the corresponding (internal) mask
-    GDALDataset *m_poExternalMaskDS =
-        nullptr;  // Points to a dataset within m_poMaskExtOvrDS
-    GTiffDataset *m_poImageryDS = nullptr;  // For a mask dataset, points to the
-                                            // corresponding imagery dataset
-    GTiffDataset *m_poBaseDS =
-        nullptr;  // For an overview or mask dataset, points to the root dataset
-    std::unique_ptr<GDALDataset>
-        m_poMaskExtOvrDS{};  // Used with MASK_OVERVIEW_DATASET open option
-    GTiffJPEGOverviewDS **m_papoJPEGOverviewDS = nullptr;
+    std::vector<std::shared_ptr<GTiffDataset>> m_apoOverviewDS{};
+    // For a non-mask dataset, points to the corresponding (internal) mask
+    std::shared_ptr<GTiffDataset> m_poMaskDS{};
+    // Points to a dataset within m_poMaskExtOvrDS
+    GDALDataset *m_poExternalMaskDS = nullptr;
+    // For a mask dataset, points to the corresponding imagery dataset
+    GTiffDataset *m_poImageryDS = nullptr;
+    // For an overview or mask dataset, points to the root dataset
+    GTiffDataset *m_poBaseDS = nullptr;
+    // Used with MASK_OVERVIEW_DATASET open option
+    std::unique_ptr<GDALDataset> m_poMaskExtOvrDS{};
+    std::vector<std::unique_ptr<GTiffJPEGOverviewDS>> m_apoJPEGOverviewDS{};
+    std::vector<std::unique_ptr<GTiffJPEGOverviewDS>> m_apoJPEGOverviewDSOld{};
     std::vector<gdal::GCP> m_aoGCPs{};
     std::unique_ptr<GDALColorTable> m_poColorTable{};
     char **m_papszMetadataFiles = nullptr;
@@ -206,14 +205,9 @@ class GTiffDataset final : public GDALPamDataset
     uint16_t m_nSampleFormat = 0;
     uint16_t m_nCompression = 0;
 
-    signed char m_nOverviewCount = 0;
-
     // If > 0, the implicit JPEG overviews are visible through
     // GetOverviewCount().
     signed char m_nJPEGOverviewVisibilityCounter = 0;
-    // Currently visible overviews. Generally == nJPEGOverviewCountOri.
-    signed char m_nJPEGOverviewCount = -1;
-    signed char m_nJPEGOverviewCountOri = 0;  // Size of papoJPEGOverviewDS.
     signed char m_nPAMGeorefSrcIndex = -1;
     signed char m_nINTERNALGeorefSrcIndex = -1;
     signed char m_nTABFILEGeorefSrcIndex = -1;
@@ -308,6 +302,7 @@ class GTiffDataset final : public GDALPamDataset
     bool m_bHasUsedReadEncodedAPI : 1;  // for debugging
     bool m_bWriteCOGLayout : 1;
     bool m_bTileInterleave : 1;
+    bool m_bLayoutChecked : 1;
 
     void ScanDirectories();
     bool ReadStrile(int nBlockId, void *pOutputBuffer,
@@ -450,6 +445,8 @@ class GTiffDataset final : public GDALPamDataset
                           int nBufXSize, int nBufYSize, const int *panBandMap,
                           int nBandCount, GDALRasterIOExtraArg *psExtraArg);
 
+    bool CheckCOGLayout();
+
     static void ThreadDecompressionFunc(void *pData);
 
     static GTIF *GTIFNew(TIFF *hTIFF);
@@ -465,7 +462,7 @@ class GTiffDataset final : public GDALPamDataset
     GTiffDataset();
     ~GTiffDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;

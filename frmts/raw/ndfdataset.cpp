@@ -35,7 +35,7 @@ class NDFDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(NDFDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     NDFDataset();
@@ -77,7 +77,7 @@ NDFDataset::~NDFDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr NDFDataset::Close()
+CPLErr NDFDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

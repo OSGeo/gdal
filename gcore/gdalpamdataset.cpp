@@ -157,7 +157,7 @@ GDALPamDataset::~GDALPamDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr GDALPamDataset::Close()
+CPLErr GDALPamDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

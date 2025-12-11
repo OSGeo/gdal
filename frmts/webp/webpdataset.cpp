@@ -49,7 +49,7 @@ class WEBPDataset final : public GDALPamDataset
     WEBPDataset();
     ~WEBPDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     char **GetFileList() override;
 
@@ -183,7 +183,7 @@ WEBPDataset::~WEBPDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr WEBPDataset::Close()
+CPLErr WEBPDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
 

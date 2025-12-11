@@ -859,7 +859,7 @@ CPLErr TileDBRasterDataset::AddDimensions(tiledb::Domain &domain,
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr TileDBRasterDataset::Close()
+CPLErr TileDBRasterDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
