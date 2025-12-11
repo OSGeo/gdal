@@ -6676,12 +6676,13 @@ ComputeStatisticsFloat32_SSE2(const float *pafData,
             fMin = std::min(fMin, afMin[i]);
             fMax = std::max(fMax, afMax[i]);
             const auto nNewValidCount = nBlockValidCount + nValidVectorCount;
+            fBlockM2 += afM2[i];
             if (afMean[i] != fBlockMean)
             {
                 const float fDelta = afMean[i] - fBlockMean;
                 fBlockMean += fDelta * nValidVectorCount / nNewValidCount;
-                fBlockM2 += afM2[i] + fDelta * fDelta * nBlockValidCount *
-                                          nValidVectorCount / nNewValidCount;
+                fBlockM2 += fDelta * fDelta * nBlockValidCount *
+                            nValidVectorCount / nNewValidCount;
             }
             nBlockValidCount = nNewValidCount;
         }
@@ -6851,13 +6852,13 @@ ComputeStatisticsFloat64_SSE2(const double *padfData,
             dfMin = std::min(dfMin, adfMin[i]);
             dfMax = std::max(dfMax, adfMax[i]);
             const auto dfNewValidCount = dfBlockValidCount + dfValidVectorCount;
+            dfBlockM2 += adfM2[i];
             if (adfMean[i] != dfBlockMean)
             {
                 const double dfDelta = adfMean[i] - dfBlockMean;
                 dfBlockMean += dfDelta * dfValidVectorCount / dfNewValidCount;
-                dfBlockM2 += adfM2[i] + dfDelta * dfDelta * dfBlockValidCount *
-                                            dfValidVectorCount /
-                                            dfNewValidCount;
+                dfBlockM2 += dfDelta * dfDelta * dfBlockValidCount *
+                             dfValidVectorCount / dfNewValidCount;
             }
             dfBlockValidCount = dfNewValidCount;
         }
@@ -7516,13 +7517,13 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                     // using https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
                     const auto nNewValidCount = nValidCount + nBlockValidCount;
                     const double dfBlockMean = static_cast<double>(fBlockMean);
+                    const double dfBlockM2 = static_cast<double>(fBlockM2);
+                    dfM2 += dfBlockM2;
                     if (dfBlockMean != dfMean)
                     {
-                        const double dfBlockM2 = static_cast<double>(fBlockM2);
                         if (nValidCount == 0)
                         {
                             dfMean = dfBlockMean;
-                            dfM2 = dfBlockM2;
                         }
                         else
                         {
@@ -7533,10 +7534,9 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                 static_cast<double>(nNewValidCount);
                             dfMean +=
                                 dfDelta * (dfBlockValidCount / dfNewValidCount);
-                            dfM2 += dfBlockM2 +
-                                    dfDelta * dfDelta *
-                                        static_cast<double>(nValidCount) *
-                                        dfBlockValidCount / dfNewValidCount;
+                            dfM2 += dfDelta * dfDelta *
+                                    static_cast<double>(nValidCount) *
+                                    dfBlockValidCount / dfNewValidCount;
                         }
                     }
                     nValidCount = nNewValidCount;
@@ -7664,12 +7664,12 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                     // using https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
                     const auto nNewValidCount =
                         nValidCount + static_cast<int>(dfBlockValidCount);
+                    dfM2 += dfBlockM2;
                     if (dfBlockMean != dfMean)
                     {
                         if (nValidCount == 0)
                         {
                             dfMean = dfBlockMean;
-                            dfM2 = dfBlockM2;
                         }
                         else
                         {
@@ -7678,10 +7678,9 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                 static_cast<double>(nNewValidCount);
                             dfMean +=
                                 dfDelta * (dfBlockValidCount / dfNewValidCount);
-                            dfM2 += dfBlockM2 +
-                                    dfDelta * dfDelta *
-                                        static_cast<double>(nValidCount) *
-                                        dfBlockValidCount / dfNewValidCount;
+                            dfM2 += dfDelta * dfDelta *
+                                    static_cast<double>(nValidCount) *
+                                    dfBlockValidCount / dfNewValidCount;
                         }
                     }
                     nValidCount = nNewValidCount;
