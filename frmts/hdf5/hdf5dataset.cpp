@@ -1460,7 +1460,7 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
         }
 
         HDF5EOSParser::GridMetadata oGridMetadata;
-        HDF5EOSParser::SwathDataFieldMetadata oSwathDataFieldMetadata;
+        HDF5EOSParser::SwathFieldMetadata oSwathFieldMetadata;
         if (m_oHDFEOSParser.GetDataModel() == HDF5EOSParser::DataModel::GRID &&
             m_oHDFEOSParser.GetGridMetadata(poRootGroup->pszUnderscorePath,
                                             oGridMetadata) &&
@@ -1506,29 +1506,24 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
         }
         else if (m_oHDFEOSParser.GetDataModel() ==
                      HDF5EOSParser::DataModel::SWATH &&
-                 m_oHDFEOSParser.GetSwathDataFieldMetadata(
-                     poRootGroup->pszUnderscorePath, oSwathDataFieldMetadata) &&
-                 static_cast<int>(
-                     oSwathDataFieldMetadata.aoDimensions.size()) ==
+                 m_oHDFEOSParser.GetSwathFieldMetadata(
+                     poRootGroup->pszUnderscorePath, oSwathFieldMetadata) &&
+                 static_cast<int>(oSwathFieldMetadata.aoDimensions.size()) ==
                      poRootGroup->nRank &&
-                 oSwathDataFieldMetadata.iXDim >= 0 &&
-                 oSwathDataFieldMetadata.iYDim >= 0)
+                 oSwathFieldMetadata.iXDim >= 0 &&
+                 oSwathFieldMetadata.iYDim >= 0)
         {
             const std::string &osXDimName =
-                oSwathDataFieldMetadata
-                    .aoDimensions[oSwathDataFieldMetadata.iXDim]
+                oSwathFieldMetadata.aoDimensions[oSwathFieldMetadata.iXDim]
                     .osName;
             const int nXDimSize =
-                oSwathDataFieldMetadata
-                    .aoDimensions[oSwathDataFieldMetadata.iXDim]
+                oSwathFieldMetadata.aoDimensions[oSwathFieldMetadata.iXDim]
                     .nSize;
             const std::string &osYDimName =
-                oSwathDataFieldMetadata
-                    .aoDimensions[oSwathDataFieldMetadata.iYDim]
+                oSwathFieldMetadata.aoDimensions[oSwathFieldMetadata.iYDim]
                     .osName;
             const int nYDimSize =
-                oSwathDataFieldMetadata
-                    .aoDimensions[oSwathDataFieldMetadata.iYDim]
+                oSwathFieldMetadata.aoDimensions[oSwathFieldMetadata.iYDim]
                     .nSize;
             switch (poRootGroup->nRank)
             {
@@ -1539,14 +1534,14 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
                 case 3:
                 {
                     const std::string &osOtherDimName =
-                        oSwathDataFieldMetadata
-                            .aoDimensions[oSwathDataFieldMetadata.iOtherDim]
+                        oSwathFieldMetadata
+                            .aoDimensions[oSwathFieldMetadata.iOtherDim]
                             .osName;
                     const int nOtherDimSize =
-                        oSwathDataFieldMetadata
-                            .aoDimensions[oSwathDataFieldMetadata.iOtherDim]
+                        oSwathFieldMetadata
+                            .aoDimensions[oSwathFieldMetadata.iOtherDim]
                             .nSize;
-                    if (oSwathDataFieldMetadata.iOtherDim == 0)
+                    if (oSwathFieldMetadata.iOtherDim == 0)
                     {
                         osStr.Printf("(%s=%d)x(%s=%d)x(%s=%d)",
                                      osOtherDimName.c_str(), nOtherDimSize,
