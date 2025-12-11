@@ -6372,7 +6372,7 @@ struct curl_slist *VSICurlSetCreationHeadersFromOptions(
  */
 void VSIInstallCurlFileHandler(void)
 {
-    VSIFilesystemHandler *poHandler = new cpl::VSICurlFilesystemHandler;
+    auto poHandler = std::make_shared<cpl::VSICurlFilesystemHandler>();
     VSIFileManager::InstallHandler("/vsicurl/", poHandler);
     VSIFileManager::InstallHandler("/vsicurl?", poHandler);
 }

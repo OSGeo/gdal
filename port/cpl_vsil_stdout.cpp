@@ -450,8 +450,9 @@ int VSIStdoutRedirectFilesystemHandler::Stat(const char * /* pszFilename */,
 void VSIInstallStdoutHandler()
 
 {
-    VSIFileManager::InstallHandler("/vsistdout/",
-                                   new VSIStdoutFilesystemHandler);
-    VSIFileManager::InstallHandler("/vsistdout_redirect/",
-                                   new VSIStdoutRedirectFilesystemHandler);
+    VSIFileManager::InstallHandler(
+        "/vsistdout/", std::make_shared<VSIStdoutFilesystemHandler>());
+    VSIFileManager::InstallHandler(
+        "/vsistdout_redirect/",
+        std::make_shared<VSIStdoutRedirectFilesystemHandler>());
 }

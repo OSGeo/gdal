@@ -3292,7 +3292,8 @@ const char *VSIGZipFilesystemHandler::GetOptions()
 
 void VSIInstallGZipFileHandler()
 {
-    VSIFileManager::InstallHandler("/vsigzip/", new VSIGZipFilesystemHandler);
+    VSIFileManager::InstallHandler(
+        "/vsigzip/", std::make_shared<VSIGZipFilesystemHandler>());
 }
 
 //! @cond Doxygen_Suppress
@@ -4954,7 +4955,8 @@ void VSIZipWriteHandle::StartNewFile(VSIZipWriteHandle *poSubFile)
 
 void VSIInstallZipFileHandler()
 {
-    VSIFileManager::InstallHandler("/vsizip/", new VSIZipFilesystemHandler());
+    VSIFileManager::InstallHandler("/vsizip/",
+                                   std::make_shared<VSIZipFilesystemHandler>());
 }
 
 /************************************************************************/

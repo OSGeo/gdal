@@ -1816,7 +1816,7 @@ void VSIInstallKerchunkJSONRefFileSystem()
     // cppcheck-suppress knownConditionTrueFalse
     if (!VSIKerchunkJSONRefFileSystem::IsFileSystemInstantiated())
     {
-        auto fs = std::make_unique<VSIKerchunkJSONRefFileSystem>().release();
+        auto fs = std::make_shared<VSIKerchunkJSONRefFileSystem>();
         VSIFileManager::InstallHandler(JSON_REF_FS_PREFIX, fs);
         VSIFileManager::InstallHandler(JSON_REF_CACHED_FS_PREFIX, fs);
     }

@@ -5393,8 +5393,8 @@ bool VSIS3Handle::CanRestartOnError(const char *pszErrorMsg,
  */
 void VSIInstallS3FileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsis3/",
-                                   new cpl::VSIS3FSHandler("/vsis3/"));
+    VSIFileManager::InstallHandler(
+        "/vsis3/", std::make_shared<cpl::VSIS3FSHandler>("/vsis3/"));
 }
 
 #endif /* HAVE_CURL */

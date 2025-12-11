@@ -1203,7 +1203,8 @@ retry:
 void VSIInstallWebHdfsHandler(void)
 {
     VSIFileManager::InstallHandler(
-        "/vsiwebhdfs/", new cpl::VSIWebHDFSFSHandler("/vsiwebhdfs/"));
+        "/vsiwebhdfs/",
+        std::make_shared<cpl::VSIWebHDFSFSHandler>("/vsiwebhdfs/"));
 }
 
 #endif /* HAVE_CURL */
