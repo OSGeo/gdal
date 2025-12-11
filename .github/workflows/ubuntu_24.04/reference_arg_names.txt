@@ -179,8 +179,8 @@ mitre-limit
 mode
 multi
 no-alpha
+no-check-crs
 no-check-extent
-no-check-srs
 no-clip
 no-ct
 no-edges

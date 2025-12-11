@@ -37,7 +37,7 @@ Starting with GDAL 3.12, it is also possible to use a :ref:`VRT C++ pixel functi
 The inputs should have the same spatial reference system and should cover the same spatial extent but are not required to have the same
 spatial resolution. The spatial extent check can be disabled with :option:`--no-check-extent`,
 in which case the inputs must have the same dimensions. The spatial reference system check can be
-disabled with :option:`--no-check-srs`.
+disabled with :option:`--no-check-crs`.
 
 Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeline`.
 
@@ -117,7 +117,7 @@ The following options are available:
     Do not verify that the input rasters have the same spatial extent. The input rasters will instead be required to
     have the same dimensions. The geotransform of the first input will be assigned to the output.
 
-.. option:: --no-check-srs
+.. option:: --no-check-crs
 
     Do not check the spatial reference systems of the inputs for consistency. All inputs will be assumed to have the
     spatial reference system of the first input, and this spatial reference system will be used for the output.
