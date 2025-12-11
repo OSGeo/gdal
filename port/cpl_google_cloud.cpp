@@ -85,7 +85,10 @@ struct GOA2ManagerCache
  * This does a very quick check without network access.
  * Note: only works for Linux GCE instances.
  *
- * @return true if the current machine is surely a GCE instance.
+ * Also detects Google Cloud Run services, jobs, and worker pools on all
+ * platforms.
+ *
+ * @return true if the current machine is surely a GCE instance or Cloud Run.
  */
 bool CPLIsMachineForSureGCEInstance()
 {
@@ -93,6 +96,18 @@ bool CPLIsMachineForSureGCEInstance()
     {
         return true;
     }
+
+    // Check for Google Cloud Run environment
+    // Cloud Run services set K_SERVICE
+    // Cloud Run jobs set CLOUD_RUN_JOB
+    // Cloud Run worker pools set CLOUD_RUN_WORKER_POOL
+    if (CPLGetConfigOption("K_SERVICE", nullptr) != nullptr ||
+        CPLGetConfigOption("CLOUD_RUN_JOB", nullptr) != nullptr ||
+        CPLGetConfigOption("CLOUD_RUN_WORKER_POOL", nullptr) != nullptr)
+    {
+        return true;
+    }
+
 #ifdef __linux
     // If /sys/class/dmi/id/product_name exists, it contains "Google Compute
     // Engine"
@@ -131,7 +146,10 @@ bool CPLIsMachineForSureGCEInstance()
  * machine is effectively a GCE instance, metadata.google.internal must be
  * queried.
  *
- * @return true if the current machine is potentially a GCE instance.
+ * Also detects Google Cloud Run services, jobs, and worker pools.
+ *
+ * @return true if the current machine is potentially a GCE instance or Cloud
+ * Run.
  */
 bool CPLIsMachinePotentiallyGCEInstance()
 {
