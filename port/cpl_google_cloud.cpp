@@ -98,10 +98,7 @@ bool CPLIsMachineForSureGCEInstance()
     }
 
     // Check for Google Cloud Run environment
-    // Cloud Run services set K_SERVICE
-    // Cloud Run jobs set CLOUD_RUN_JOB
-    // Cloud Run worker pools set CLOUD_RUN_WORKER_POOL
-    if (CPLGetConfigOption("K_SERVICE", nullptr) != nullptr ||
+    if (CPLGetConfigOption("CLOUD_RUN_TIMEOUT_SECONDS", nullptr) != nullptr ||
         CPLGetConfigOption("CLOUD_RUN_JOB", nullptr) != nullptr ||
         CPLGetConfigOption("CLOUD_RUN_WORKER_POOL", nullptr) != nullptr)
     {
@@ -153,6 +150,16 @@ bool CPLIsMachineForSureGCEInstance()
  */
 bool CPLIsMachinePotentiallyGCEInstance()
 {
+    // Check for Google Cloud Run environment first (platform-independent)
+    // This must be done before platform-specific checks to ensure Cloud Run
+    // detection works on all platforms.
+    if (CPLGetConfigOption("CLOUD_RUN_TIMEOUT_SECONDS", nullptr) != nullptr ||
+        CPLGetConfigOption("CLOUD_RUN_JOB", nullptr) != nullptr ||
+        CPLGetConfigOption("CLOUD_RUN_WORKER_POOL", nullptr) != nullptr)
+    {
+        return true;
+    }
+
 #ifdef __linux
     bool bIsMachinePotentialGCEInstance = true;
     if (CPLTestBool(CPLGetConfigOption("CPL_GCE_CHECK_LOCAL_FILES", "YES")))

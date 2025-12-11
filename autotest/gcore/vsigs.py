@@ -1811,9 +1811,19 @@ def test_vsigs_read_credentials_gce_expiration(gs_test_config, webserver_port):
 
 
 ###############################################################################
-# Test Cloud Run service detection
-@pytest.mark.skipif(sys.platform not in ("linux", "win32"), reason="Incorrect platform")
-def test_vsigs_read_credentials_cloudrun_service(gs_test_config, webserver_port):
+# Test Cloud Run environment detection (services, jobs, and worker pools)
+# Cloud Run detection is platform-independent (works on all platforms)
+@pytest.mark.parametrize(
+    "env_var,env_value,description",
+    [
+        ("CLOUD_RUN_TIMEOUT_SECONDS", "300", "Cloud Run service"),
+        ("CLOUD_RUN_JOB", "test-job", "Cloud Run job"),
+        ("CLOUD_RUN_WORKER_POOL", "test-worker-pool", "Cloud Run worker pool"),
+    ],
+)
+def test_vsigs_read_credentials_cloudrun(
+    gs_test_config, webserver_port, env_var, env_value, description
+):
 
     gdal.VSICurlClearCache()
 
@@ -1823,128 +1833,8 @@ def test_vsigs_read_credentials_cloudrun_service(gs_test_config, webserver_port)
             "CPL_GCE_CREDENTIALS_URL": "http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token"
             % webserver_port,
             "CPL_GCE_CHECK_LOCAL_FILES": "NO",
-            # Simulate Cloud Run service environment
-            "K_SERVICE": "test-service",
-        },
-        thread_local=False,
-    ):
-
-        def method(request):
-            if "Authorization" not in request.headers:
-                sys.stderr.write("Bad headers: %s\n" % str(request.headers))
-                request.send_response(403)
-                return
-            expected_authorization = "Bearer ACCESS_TOKEN"
-            if request.headers["Authorization"] != expected_authorization:
-                sys.stderr.write(
-                    "Bad Authorization: '%s'\n" % str(request.headers["Authorization"])
-                )
-                request.send_response(403)
-                return
-
-            request.send_response(200)
-            request.send_header("Content-type", "text/plain")
-            request.send_header("Content-Length", 3)
-            request.end_headers()
-            request.wfile.write("""foo""".encode("ascii"))
-
-        handler = webserver.SequentialHandler()
-        handler.add(
-            "GET",
-            "/computeMetadata/v1/instance/service-accounts/default/token",
-            200,
-            {},
-            """{
-                    "access_token" : "ACCESS_TOKEN",
-                    "token_type" : "Bearer",
-                    "expires_in" : 3600,
-                    }""",
-        )
-        handler.add("GET", "/gs_fake_bucket/resource", custom_method=method)
-        with webserver.install_http_handler(handler):
-            f = open_for_read("/vsigs/gs_fake_bucket/resource")
-            assert f is not None
-            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
-            gdal.VSIFCloseL(f)
-
-        assert data == "foo"
-
-
-###############################################################################
-# Test Cloud Run job detection
-@pytest.mark.skipif(sys.platform not in ("linux", "win32"), reason="Incorrect platform")
-def test_vsigs_read_credentials_cloudrun_job(gs_test_config, webserver_port):
-
-    gdal.VSICurlClearCache()
-
-    with gdaltest.config_options(
-        {
-            "CPL_GS_CREDENTIALS_FILE": "",
-            "CPL_GCE_CREDENTIALS_URL": "http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token"
-            % webserver_port,
-            "CPL_GCE_CHECK_LOCAL_FILES": "NO",
-            # Simulate Cloud Run job environment
-            "CLOUD_RUN_JOB": "test-job",
-        },
-        thread_local=False,
-    ):
-
-        def method(request):
-            if "Authorization" not in request.headers:
-                sys.stderr.write("Bad headers: %s\n" % str(request.headers))
-                request.send_response(403)
-                return
-            expected_authorization = "Bearer ACCESS_TOKEN"
-            if request.headers["Authorization"] != expected_authorization:
-                sys.stderr.write(
-                    "Bad Authorization: '%s'\n" % str(request.headers["Authorization"])
-                )
-                request.send_response(403)
-                return
-
-            request.send_response(200)
-            request.send_header("Content-type", "text/plain")
-            request.send_header("Content-Length", 3)
-            request.end_headers()
-            request.wfile.write("""foo""".encode("ascii"))
-
-        handler = webserver.SequentialHandler()
-        handler.add(
-            "GET",
-            "/computeMetadata/v1/instance/service-accounts/default/token",
-            200,
-            {},
-            """{
-                    "access_token" : "ACCESS_TOKEN",
-                    "token_type" : "Bearer",
-                    "expires_in" : 3600,
-                    }""",
-        )
-        handler.add("GET", "/gs_fake_bucket/resource", custom_method=method)
-        with webserver.install_http_handler(handler):
-            f = open_for_read("/vsigs/gs_fake_bucket/resource")
-            assert f is not None
-            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
-            gdal.VSIFCloseL(f)
-
-        assert data == "foo"
-
-
-###############################################################################
-# Test Cloud Run worker pool detection
-@pytest.mark.skipif(sys.platform not in ("linux", "win32"), reason="Incorrect platform")
-def test_vsigs_read_credentials_cloudrun_worker_pool(gs_test_config, webserver_port):
-
-    gdal.VSICurlClearCache()
-
-    with gdaltest.config_options(
-        {
-            "CPL_GS_CREDENTIALS_FILE": "",
-            "CPL_GCE_CREDENTIALS_URL": "http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token"
-            % webserver_port,
-            "CPL_GCE_CHECK_LOCAL_FILES": "NO",
-            # Simulate Cloud Run worker pool environment
-            "CLOUD_RUN_WORKER_POOL": "test-worker-pool",
+            # Simulate Cloud Run environment
+            env_var: env_value,
         },
         thread_local=False,
     ):
