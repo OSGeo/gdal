@@ -46,12 +46,11 @@ Examples
 --------
 
 .. example::
-   :title: Sort geometries according to the Hilbert code of their bounding box center
+   :title: Create a cloud-optimized Shapefile
 
    .. code-block:: bash
 
-        $ gdal vector sort in.gpkg out.gpkg --method hilbert
-
+        $ gdal vector sort in.gpkg out.shp --method hilbert --lco SPATIAL_INDEX=YES
 
 .. below is an allow-list for spelling checker.
 
