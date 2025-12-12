@@ -56,3 +56,5 @@ Examples
 
 .. spelling:word-list::
         Hilbert
+        hilbert
+        strtree
