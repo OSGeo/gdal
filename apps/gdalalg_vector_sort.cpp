@@ -42,7 +42,7 @@ GDALVectorSortAlgorithm::GDALVectorSortAlgorithm(bool standaloneStep)
 // null geometries.
 constexpr uint32_t CPL_HILBERT_MAX = (1 << 16) - 2;
 
-std::uint32_t CPLHilbertCode(std::uint32_t x, std::uint32_t y)
+static std::uint32_t CPLHilbertCode(std::uint32_t x, std::uint32_t y)
 {
     // Based on public domain code at
     // https://github.com/rawrunprotected/hilbert_curves
@@ -103,7 +103,8 @@ std::uint32_t CPLHilbertCode(std::uint32_t x, std::uint32_t y)
     return value;
 }
 
-std::uint32_t CPLHilbertCode(const OGREnvelope &oDomain, double dfX, double dfY)
+static std::uint32_t CPLHilbertCode(const OGREnvelope &oDomain, double dfX,
+                                    double dfY)
 {
     uint32_t x = 0;
     uint32_t y = 0;
@@ -322,7 +323,13 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &)
     {
         // Already checked for invalid method at arg parsing stage.
         CPLAssert(m_sortMethod == "strtree");
+#ifdef HAVE_GEOS
         poDstDS = std::make_unique<GDALVectorSTRTreeSortDataset>();
+#else
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "--method strtree requires a GDAL build against the GEOS library.");
+#endif
     }
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
