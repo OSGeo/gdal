@@ -387,51 +387,62 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
 }
 
 /******************************************************************************/
-/*                          GDALFloatEquals()                                 */
-/* Code from:                                                                 */
+/*                       GDALFloatAlmostEquals()                              */
+/* Code (originally) from:                                                    */
 /* http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm  */
 /******************************************************************************/
-GBool GDALFloatEquals(float A, float B)
+
+template <typename FloatType, typename IntType>
+static inline bool GDALFloatAlmostEquals(FloatType A, FloatType B,
+                                         unsigned maxUlps)
 {
+    static_assert(sizeof(FloatType) == sizeof(IntType));
     // This function will allow maxUlps-1 floats between A and B.
-    const int maxUlps = MAX_ULPS;
 
     // Make sure maxUlps is non-negative and small enough that the default NAN
     // won't compare as equal to anything.
-#if MAX_ULPS <= 0 || MAX_ULPS >= 4 * 1024 * 1024
-#error "Invalid MAX_ULPS"
-#endif
+    if (maxUlps >= 4 * 1024 * 1024)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid maxUlps");
+        return false;
+    }
 
-    // This assignation could violate strict aliasing. It causes a warning with
-    // gcc -O2. Use of memcpy preferred. Credits for Even Rouault. Further info
-    // at http://trac.osgeo.org/gdal/ticket/4005#comment:6
-    int aInt = 0;
-    memcpy(&aInt, &A, 4);
+    const auto MapToInteger = [](FloatType x)
+    {
+        IntType i = 0;
+        memcpy(&i, &x, sizeof(i));
 
-    // Make aInt lexicographically ordered as a twos-complement int.
-    if (aInt < 0)
-        aInt = INT_MIN - aInt;
+        constexpr int NBITS = 8 * static_cast<int>(sizeof(i)) - 1;
+        constexpr IntType SHIFT = (static_cast<IntType>(1) << NBITS);
 
-    // Make bInt lexicographically ordered as a twos-complement int.
-    int bInt = 0;
-    memcpy(&bInt, &B, 4);
+        // Make i lexicographically ordered with negative values
+        // remapped to the [0, SHIFT[ range and positive values in the
+        // [SHIFT, UINT_MAX[ range
+        if ((i >> NBITS) != 0)
+            i = SHIFT - (i & ~SHIFT);
+        else
+            i += SHIFT;
+        return i;
+    };
 
-    if (bInt < 0)
-        bInt = INT_MIN - bInt;
-#ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
-    const int intDiff =
-        abs(static_cast<int>(static_cast<GUIntBig>(static_cast<GIntBig>(aInt) -
-                                                   static_cast<GIntBig>(bInt)) &
-                             0xFFFFFFFFU));
-#else
-    // To make -ftrapv happy we compute the diff on larger type and
-    // cast down later.
-    const int intDiff = abs(static_cast<int>(static_cast<GIntBig>(aInt) -
-                                             static_cast<GIntBig>(bInt)));
-#endif
-    if (intDiff <= maxUlps)
-        return true;
-    return false;
+    const auto aInt = MapToInteger(A);
+    const auto bInt = MapToInteger(B);
+
+    return ((aInt > bInt) ? aInt - bInt : bInt - aInt) <= maxUlps;
+}
+
+bool GDALFloatAlmostEquals(float A, float B, unsigned maxUlps)
+{
+    return GDALFloatAlmostEquals<float, uint32_t>(A, B, maxUlps);
+}
+
+/******************************************************************************/
+/*                         GDALDoubleAlmostEquals()                           */
+/******************************************************************************/
+
+bool GDALDoubleAlmostEquals(double A, double B, unsigned maxUlps)
+{
+    return GDALFloatAlmostEquals<double, uint64_t>(A, B, maxUlps);
 }
 
 /************************************************************************/
@@ -449,7 +460,7 @@ GBool GDALFloatEquals(float A, float B)
  * Note that currently the source pixel band values are read into a
  * signed 64bit integer buffer (Int64), so floating point or complex
  * bands will be implicitly truncated before processing. If you want to use a
- * version using 32bit float buffers, see GDALFPolygonize().
+ * version using 32bit or 64bit float buffers, see GDALFPolygonize().
  *
  * Polygon features will be created on the output layer, with polygon
  * geometries representing the polygons.  The polygon geometries will be
@@ -529,7 +540,8 @@ CPLErr CPL_STDCALL GDALPolygonize(GDALRasterBandH hSrcBand,
  * labeled with the pixel value in an attribute.  Optionally a mask band
  * can be provided to determine which pixels are eligible for processing.
  *
- * The source pixel band values are read into a 32bit float buffer. If you want
+ * The source pixel band values are read into a 32-bit float buffer, or 64-bit
+ * float if the source band is 64-bit float itself. If you want
  * to use a (probably faster) version using signed 32bit integer buffer, see
  * GDALPolygonize().
  *
@@ -595,7 +607,16 @@ CPLErr CPL_STDCALL GDALFPolygonize(GDALRasterBandH hSrcBand,
                                    void *pProgressArg)
 
 {
-    return GDALPolygonizeT<float, FloatEqualityTest>(
-        hSrcBand, hMaskBand, hOutLayer, iPixValField, papszOptions, pfnProgress,
-        pProgressArg, GDT_Float32);
+    if (GDALGetRasterDataType(hSrcBand) == GDT_Float64)
+    {
+        return GDALPolygonizeT<double, DoubleEqualityTest>(
+            hSrcBand, hMaskBand, hOutLayer, iPixValField, papszOptions,
+            pfnProgress, pProgressArg, GDT_Float64);
+    }
+    else
+    {
+        return GDALPolygonizeT<float, FloatEqualityTest>(
+            hSrcBand, hMaskBand, hOutLayer, iPixValField, papszOptions,
+            pfnProgress, pProgressArg, GDT_Float32);
+    }
 }
