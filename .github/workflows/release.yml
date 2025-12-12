@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  PROJ_VERSION: "9.7.0"
+  PROJ_VERSION: "9.7.1"
 
 jobs:
   safety_checks:
