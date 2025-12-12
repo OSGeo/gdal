@@ -122,14 +122,10 @@ bool CreateDstFeatures(
     for (size_t iSrcFeature : sortedIndices)
     {
         OGRFeature *poSrcFeature = srcFeatures[iSrcFeature].get();
+        poSrcFeature->SetFDefnUnsafe(dstLayer.GetLayerDefn());
+        poSrcFeature->SetFID(OGRNullFID);
 
-        // Tried just using poSrcFeature->SetFDefnUnsafe and plugging
-        // directly into CreateFeature, but this resulted in the order
-        // of the input features being preserved.
-
-        OGRFeature f(dstLayer.GetLayerDefn());
-        f.SetFrom(poSrcFeature);
-        if (dstLayer.CreateFeature(&f) != OGRERR_NONE)
+        if (dstLayer.CreateFeature(poSrcFeature) != OGRERR_NONE)
         {
             return false;
         }
