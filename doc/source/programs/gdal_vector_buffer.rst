@@ -29,8 +29,14 @@ expanding it. A negative distance may shrink a polygon completely, in which case
 POLYGON EMPTY is returned. For points and lines negative distances always return
 empty results.
 
-See https://postgis.net/docs/ST_Buffer.html for graphical illustrations of the
+See the `PostGIS ST_Buffer docs <https://postgis.net/docs/ST_Buffer.html>`__ for graphical illustrations of the
 effect of the different parameters.
+
+The output dataset is always written as ``MULTIPOLYGON``, even when the input contains only simple ``POLYGON`` geometries.
+Note that negative buffer distances may also produce ``MULTIPOLYGON`` results.
+
+Using a buffer distance of 0 can sometimes repair invalid geometries, but the recommended approach is
+to use :program:`gdal vector make-valid` for reliable geometry validation and repair.
 
 This command can also be used as a step of :ref:`gdal_vector_pipeline`.
 
@@ -100,10 +106,11 @@ Standard options
 
 .. option:: --side both|left|right
 
-    Sets whether the computed buffer should be single-sided or on both side (default).
+    Sets whether the computed buffer should be single-sided or on both sides (default).
 
-    ``left`` (resp. ``right``) means that buffer is on the left-hand
-     (resp. right-hand) side of the line when following it in the order of its vertices.
+   ``left`` indicates that the buffer is generated on the left-hand side of the line,
+   and ``right`` indicates that the buffer is generated on the right-hand side of the line,
+   determined by the order of the line's vertices (i.e., the direction in which the line is drawn).
 
     Single-side buffering is only applicable to LINESTRING geometry and does not
     affect POINT or POLYGON geometries, and the end cap style is forced to square.
@@ -132,6 +139,60 @@ Examples
 
         $ gdal vector buffer --distance=1000 in.gpkg out.gpkg --overwrite
 
+.. example::
+   :title: Buffer a point dataset
+
+   .. code-block:: bash
+
+        # image on the left
+        $ gdal vector buffer --distance=20 --quadrant-segments=20 points.gpkg point_buffers.gpkg --overwrite --output-layer "point-20-segments"
+
+        # image on the right
+        $ gdal vector buffer --distance=20 --quadrant-segments=4 points.gpkg point_buffers.gpkg --output-layer "point-4-segments" --append
+
+   .. figure:: ../../images/programs/gdal_vector_buffer_points_example.webp
+
+      Example output. Centre points are shown in black, and the polygon vertices as light-blue points.
+
+.. example::
+   :title: Buffer lines to the left and right of a line using different join and end styles
+
+   .. code-block:: bash
+
+        # image on the left
+        $ gdal vector buffer --distance=10 --endcap-style=flat --side=left --join-style=mitre --mitre-limit=2 lines.gpkg line-buffer-endcap.gpkg --output-layer="buffer-left" --overwrite
+
+        # image on the right
+        $ gdal vector buffer --distance=10 --endcap-style=square --side=right --join-style=bevel lines.gpkg line-buffer-endcap.gpkg --output-layer="buffer-right" --append
+
+   .. figure:: ../../images/programs/gdal_vector_buffer_left_right.webp
+
+      Example output. Original lines are black and buffers in light-pink.
+
+.. example::
+   :title: Clip and buffer a zipped line dataset as part of a pipeline
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal vector pipeline \
+        ! read "/vsizip/TRONCON_VOIE_PARIS.zip" \
+        ! clip --bbox 647903,6863599,648703,6864399 \
+        ! buffer --distance=5 \
+        ! write line-buffer.gpkg --overwrite
+
+      .. code-tab:: powershell
+
+        gdal vector pipeline `
+        ! read "/vsizip/TRONCON_VOIE_PARIS.zip" `
+        ! clip --bbox 647903,6863599,648703,6864399 `
+        ! buffer --distance=5 `
+        ! write line-buffer.gpkg --overwrite
+
+   .. figure:: ../../images/programs/gdal_vector_buffer_pipeline.webp
+
+      Example output. Original lines are black and buffers in light-pink.
 
 .. below is an allow-list for spelling checker.
 
