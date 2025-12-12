@@ -733,6 +733,21 @@ CPLErr CPL_DLL GDALZonalStats(GDALDatasetH hSrcDS, GDALDatasetH hWeightsDS,
                               CSLConstList papszOptions,
                               GDALProgressFunc pfnProgress, void *pProgressArg);
 
+/************************************************************************/
+/*  Hilbert encoding                                                    */
+/************************************************************************/
+
+/** Provides a Hilbert code describing the location of a specified point within
+ * a specified spatial extent.
+ *
+ * @param poDomain The domain to be covered by the Hilbert curve.
+ * @param dfX X coordinate of the point to encode
+ * @param dfY Y coordinate of the point to encode
+ * @return Hilbert-encoded point.
+ */
+uint32_t CPL_DLL GDALHilbertCode(const OGREnvelope *poDomain, double dfX,
+                                 double dfY);
+
 CPL_C_END
 
 #endif /* ndef GDAL_ALG_H_INCLUDED */
