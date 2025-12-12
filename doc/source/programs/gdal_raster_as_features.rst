@@ -67,3 +67,13 @@ Examples
                 reclassify -m "[-inf, 150)=1; DEFAULT=NO_DATA" !
                 as-features --geometry-type point --skip-nodata ! 
                 write out.shp
+
+
+.. example::
+   :title: Create a polygon grid dividing the globe into 1-degree chunks
+   
+   .. code-block:: bash
+
+       gdal pipeline create --bbox -180,-90,180,90 --size 360,180 ! 
+                as-features --geometry-type polygon !
+                write grid.shp

@@ -32,7 +32,7 @@ Synopsis
 .. program-output:: gdal raster pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (exclamation mark) character.
-The first step must be ``read``, ``calc``, ``mosaic`` or ``stack``,
+The first step must be ``read``, ``calc``, ``create``, ``mosaic`` or ``stack``,
 and the last one ``write``, ``info`` or ``tile``.
 Each step has its own positional or non-positional arguments.
 Apart from ``read``, ``calc``, ``mosaic``, ``stack``, ``compare``, ``info``, ``tile`` and ``write``,
@@ -49,6 +49,12 @@ Potential steps are:
 .. program-output:: gdal raster pipeline --help-doc=calc
 
 Details for options can be found in :ref:`gdal_raster_calc`.
+
+* create
+
+.. program-output:: gdal raster pipeline --help-doc=create
+
+Details for options can be found in :ref:`gdal_raster_create`.
 
 * mosaic
 
