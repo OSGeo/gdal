@@ -13,6 +13,7 @@
 
 import random
 
+import ogrtest
 import pytest
 
 from osgeo import gdal, ogr
@@ -23,10 +24,15 @@ def alg():
     return gdal.GetGlobalAlgorithmRegistry()["vector"]["sort"]
 
 
-pytestmark = pytest.mark.require_geos
+@pytest.fixture(params=("hilbert", "strtree"))
+def method(request):
+
+    if request.param == "strtree" and not ogrtest.have_geos():
+        pytest.skip("GEOS not available")
+
+    yield request.param
 
 
-@pytest.mark.parametrize("method", ("hilbert", "strtree"))
 def test_gdalalg_vector_sort(alg, method):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
@@ -37,7 +43,6 @@ def test_gdalalg_vector_sort(alg, method):
     ny = 8
 
     points = []
-
     i = 0
 
     for y in range(ny):
@@ -81,18 +86,89 @@ def test_gdalalg_vector_sort(alg, method):
         for i in range(20):
             assert points_sorted[i][1] <= 20
 
-    # TODO: remove/disable code below this point
-    # with gdal.GetDriverByName("ESRI Shapefile").CreateVector(f"/tmp/out_{method}.shp") as ds:
-    #    lyr = ds.CreateLayer("line", geom_type=ogr.wkbLineString)
 
-    #    feature = ogr.Feature(lyr.GetLayerDefn())
+def test_gdalalg_vector_sort_no_geometry_field(alg, method):
 
-    #    geom = ogr.Geometry(ogr.wkbLineString)
+    n_features = 20
 
-    #    for f in dst_lyr:
-    #        g = f.GetGeometryRef()
-    #        geom.AddPoint_2D(*g.GetPoint_2D())
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("points", geom_type=ogr.wkbNone)
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
 
-    #    feature.SetGeometryDirectly(geom)
+    for i in range(n_features):
+        feature = ogr.Feature(src_lyr.GetLayerDefn())
+        feature["id"] = i
+        src_lyr.CreateFeature(feature)
 
-    #    lyr.CreateFeature(feature)
+    alg["input"] = src_ds
+    alg["method"] = method
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg.Output()
+
+    assert dst_ds.GetLayerCount() == 1
+
+    dst_lyr = dst_ds.GetLayer(0)
+
+    assert dst_lyr.GetFeatureCount() == n_features
+
+    for i, feature in enumerate(dst_lyr):
+        assert feature["id"] == i
+
+
+@pytest.mark.parametrize("geom_type", ("null", "empty"))
+def test_gdalalg_vector_sort_null_empty_geometry(alg, method, geom_type):
+
+    nx, ny = 8, 8
+    n_empty = 4
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("points", geom_type=ogr.wkbPoint)
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+
+    points = []
+    i = 0
+
+    for y in range(ny):
+        for x in range(nx):
+            points.append((i, x, y))
+            i += 1
+
+    for i in range(n_empty):
+        points.append((i, None, None))
+        i += 1
+
+    random.Random(802).shuffle(points)
+
+    for i, x, y in points:
+        feature = ogr.Feature(src_lyr.GetLayerDefn())
+        feature["id"] = i
+
+        geom = ogr.Geometry(ogr.wkbPoint)
+        if x is not None:
+            geom.AddPoint_2D(x, y)
+
+        if x is not None or geom_type != "null":
+            feature.SetGeometryDirectly(geom)
+
+        src_lyr.CreateFeature(feature)
+
+    alg["input"] = src_ds
+    alg["method"] = method
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg.Output()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    assert dst_lyr.GetFeatureCount() == len(points)
+    features = [f for f in dst_lyr]
+
+    for feature in features[-n_empty:]:
+        if geom_type == "empty":
+            assert feature.GetGeometryRef().IsEmpty()
+        else:
+            assert feature.GetGeometryRef() is None

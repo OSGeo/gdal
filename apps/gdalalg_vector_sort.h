@@ -29,7 +29,7 @@ class GDALVectorSortAlgorithm : public GDALVectorPipelineStepAlgorithm
   public:
     static constexpr const char *NAME = "sort";
     static constexpr const char *DESCRIPTION =
-        "Spatially order the features a layer";
+        "Spatially order the features in a layer";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_sort.html";
 
     explicit GDALVectorSortAlgorithm(bool standaloneStep = false);

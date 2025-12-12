@@ -36,7 +36,9 @@ GDALVectorSortAlgorithm::GDALVectorSortAlgorithm(bool standaloneStep)
         .SetDefault(m_sortMethod);
 }
 
-constexpr uint32_t CPL_HILBERT_MAX = (1 << 16) - 1;
+// Subtract 1 from the theoretical max, reserving that number for empty or
+// null geometries.
+constexpr uint32_t CPL_HILBERT_MAX = (1 << 16) - 2;
 
 std::uint32_t CPLHilbertCode(std::uint32_t x, std::uint32_t y)
 {
@@ -158,7 +160,7 @@ class GDALVectorHilbertSortDataset
             const OGRFeature *poFeature = features[i].get();
             const OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
-            if (poGeom != nullptr)
+            if (poGeom != nullptr && !poGeom->IsEmpty())
             {
                 poGeom->getEnvelope(&envelopes[i]);
                 oLayerExtent.Merge(envelopes[i]);
@@ -176,6 +178,11 @@ class GDALVectorHilbertSortDataset
                 double dfX, dfY;
                 envelopes[i].Center(dfX, dfY);
                 hilbertCodes[i].second = CPLHilbertCode(oLayerExtent, dfX, dfY);
+            }
+            else
+            {
+                hilbertCodes[i].second =
+                    std::numeric_limits<std::uint32_t>::max();
             }
         }
 
@@ -236,7 +243,8 @@ class GDALVectorSTRTreeSortDataset
         {
             const OGRFeature *poFeature = features[i].get();
             const OGRGeometry *poGeom = poFeature->GetGeometryRef();
-            if (poGeom == nullptr)
+
+            if (poGeom == nullptr || poGeom->IsEmpty())
             {
                 nullIndices.push_back(i);
                 continue;
@@ -321,22 +329,18 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &)
                       poSrcLayer->GetDescription()) != m_inputLayerNames.end())
         {
             const auto poSrcLayerDefn = poSrcLayer->GetLayerDefn();
-            if (poSrcLayerDefn->GetGeomFieldCount() == 0)
+            if (poSrcLayerDefn->GetGeomFieldCount() > 0)
             {
-                if (m_inputLayerNames.empty())
-                    continue;
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Specified layer '%s' has no geometry field",
-                            poSrcLayer->GetDescription());
-                return false;
+                // FIXME geom-field
+                if (!poDstDS->AddProcessedLayer(*poSrcLayer,
+                                                *poSrcLayer->GetLayerDefn()))
+                {
+                    return false;
+                }
             }
-
-            // FIXME geom-field
-
-            if (!poDstDS->AddProcessedLayer(*poSrcLayer,
-                                            *poSrcLayer->GetLayerDefn()))
+            else if (m_inputLayerNames.empty())
             {
-                return false;
+                poDstDS->AddPassThroughLayer(*poSrcLayer);
             }
         }
     }
