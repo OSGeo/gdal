@@ -192,7 +192,20 @@ class GDALVectorSTRTreeSortDataset
             GEOSGeom_destroy_r(m_geosContext, poEnv);
         }
 
+#if GEOS_VERSION_MAJOR > 3 ||                                                  \
+    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12)
         GEOSSTRtree_build_r(m_geosContext, poTree.get());
+#else
+        if (!features.empty())
+        {
+            // Perform a dummy query to force tree construction.
+            GEOSGeometry *poEnv = CreateGEOSEnvelope(oGeomExtent);
+            GEOSSTRtree_query_r(
+                m_geosContext, poTree.get(), poEnv, [](void *, void *) {},
+                nullptr);
+            GEOSGeom_destroy_r(m_geosContext, poEnv);
+        }
+#endif
 
         GEOSSTRtree_iterate_r(
             m_geosContext, poTree.get(),
