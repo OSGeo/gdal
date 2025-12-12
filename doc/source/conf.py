@@ -936,6 +936,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_sort",
+        "gdal-vector-sort",
+        "Spatially sort a vector dataset",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector_buffer",
         "gdal-vector-buffer",
         "Compute a buffer around geometries of a vector dataset",
