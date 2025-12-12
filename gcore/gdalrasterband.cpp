@@ -6507,11 +6507,7 @@ void GDALRasterBand::SetValidPercent(GUIntBig nSampleCount,
 
 #ifdef __AVX2__
 
-#define setzero_si _mm256_setzero_si256
-#define setzero_ps _mm256_setzero_ps
 #define set1_ps _mm256_set1_ps
-#define set1_epi32 _mm256_set1_epi32
-#define add_epi32 _mm256_add_epi32
 #define loadu_ps _mm256_loadu_ps
 #define or_ps _mm256_or_ps
 #define min_ps _mm256_min_ps
@@ -6520,177 +6516,18 @@ void GDALRasterBand::SetValidPercent(GUIntBig nSampleCount,
 #define cmpneq_ps(x, y) _mm256_cmp_ps((x), (y), _CMP_NEQ_OQ)
 #define cmpunord_ps(x, y) _mm256_cmp_ps((x), (y), _CMP_UNORD_Q)
 #define movemask_ps _mm256_movemask_ps
-#define add_ps _mm256_add_ps
-#define sub_ps _mm256_sub_ps
-#define mul_ps _mm256_mul_ps
-#define div_ps _mm256_div_ps
 #define storeu_ps _mm256_storeu_ps
-#define cvtepi32_ps _mm256_cvtepi32_ps
-#define cvtsi_si32(x) _mm256_extract_epi32((x), 0)
-#define blendv_ps _mm256_blendv_ps
-#ifdef __FMA__
-#define fmadd_ps _mm256_fmadd_ps
-#else
-#define fmadd_ps(a, b, c) add_ps(mul_ps((a), (b)), (c))
-#endif
+#define cvtps_lo_pd(x) _mm256_cvtps_pd(_mm256_extractf128_ps((x), 0))
+#define cvtps_hi_pd(x) _mm256_cvtps_pd(_mm256_extractf128_ps((x), 1))
 
-#else
+#define unpacklo_ps _mm256_unpacklo_ps
+#define castps_pd _mm256_castps_pd
 
-#define setzero_si _mm_setzero_si128
-#define setzero_ps _mm_setzero_ps
-#define set1_ps _mm_set1_ps
-#define set1_epi32 _mm_set1_epi32
-#define add_epi32 _mm_add_epi32
-#define loadu_ps _mm_loadu_ps
-#define or_ps _mm_or_ps
-#define min_ps _mm_min_ps
-#define max_ps _mm_max_ps
-#define cmpeq_ps _mm_cmpeq_ps
-#define cmpneq_ps _mm_cmpneq_ps
-#define cmpunord_ps _mm_cmpunord_ps
-#define movemask_ps _mm_movemask_ps
-#define add_ps _mm_add_ps
-#define sub_ps _mm_sub_ps
-#define mul_ps _mm_mul_ps
-#define div_ps _mm_div_ps
-#define storeu_ps _mm_storeu_ps
-#define cvtepi32_ps _mm_cvtepi32_ps
-#define cvtsi_si32 _mm_cvtsi128_si32
-#ifdef __FMA__
-#define fmadd_ps _mm_fmadd_ps
-#else
-#define fmadd_ps(a, b, c) add_ps(mul_ps((a), (b)), (c))
-#endif
-
-inline __m128 blendv_ps(__m128 a, __m128 b, __m128 mask)
+inline __m256 dup_hi_ps(__m256 x)
 {
-#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-    return _mm_blendv_ps(a, b, mask);
-#else
-    return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
-#endif
+    const __m256i idx = _mm256_set_epi32(7, 7, 6, 6, 5, 5, 4, 4);
+    return _mm256_permutevar8x32_ps(x, idx);
 }
-#endif
-
-template <bool CHECK_MIN_NOT_SAME_AS_MAX, bool HAS_NODATA>
-#if defined(__GNUC__)
-__attribute__((noinline))
-#endif
-static int
-ComputeStatisticsFloat32_SSE2(const float *pafData,
-                              [[maybe_unused]] float fNoDataValue, int iX,
-                              int nCount, float &fMin, float &fMax,
-                              float &fBlockMean, float &fBlockM2,
-                              int &nBlockValidCount)
-{
-    auto vValidCount = setzero_si();
-    const auto vOne = set1_epi32(1);
-    [[maybe_unused]] const auto vNoData = set1_ps(fNoDataValue);
-
-    auto vMin_lo = set1_ps(fMin);
-    auto vMax_lo = set1_ps(fMax);
-    auto vMean_lo = setzero_ps();
-    auto vM2_lo = setzero_ps();
-
-    auto vMin_hi = vMin_lo;
-    auto vMax_hi = vMax_lo;
-    auto vMean_hi = setzero_ps();
-    auto vM2_hi = setzero_ps();
-
-    constexpr int VALS_PER_LOOP =
-        2 * static_cast<int>(sizeof(vOne) / sizeof(float));
-    for (; iX <= nCount - VALS_PER_LOOP; iX += VALS_PER_LOOP)
-    {
-        const auto vValues_lo = loadu_ps(pafData + iX);
-        const auto vValues_hi = loadu_ps(pafData + iX + VALS_PER_LOOP / 2);
-        // Check if there's at least one NaN in both vectors
-        auto isNaNOrNoData = cmpunord_ps(vValues_lo, vValues_hi);
-        if constexpr (HAS_NODATA)
-        {
-            isNaNOrNoData =
-                or_ps(isNaNOrNoData, or_ps(cmpeq_ps(vValues_lo, vNoData),
-                                           cmpeq_ps(vValues_hi, vNoData)));
-        }
-        if (movemask_ps(isNaNOrNoData))
-        {
-            break;
-        }
-
-        vValidCount = add_epi32(vValidCount, vOne);
-        const auto vValidCountFloat32 = cvtepi32_ps(vValidCount);
-
-        vMin_lo = min_ps(vMin_lo, vValues_lo);
-        vMax_lo = max_ps(vMax_lo, vValues_lo);
-        const auto vDelta_lo = sub_ps(vValues_lo, vMean_lo);
-        const auto vNewMean_lo =
-            add_ps(vMean_lo, div_ps(vDelta_lo, vValidCountFloat32));
-        if constexpr (CHECK_MIN_NOT_SAME_AS_MAX)
-        {
-            const auto vMinNotSameAsMax_lo = cmpneq_ps(vMin_lo, vMax_lo);
-            vMean_lo = blendv_ps(vMin_lo, vNewMean_lo, vMinNotSameAsMax_lo);
-            const auto vNewM2_lo =
-                fmadd_ps(vDelta_lo, sub_ps(vValues_lo, vMean_lo), vM2_lo);
-            vM2_lo = blendv_ps(vM2_lo, vNewM2_lo, vMinNotSameAsMax_lo);
-        }
-        else
-        {
-            vMean_lo = vNewMean_lo;
-            vM2_lo = fmadd_ps(vDelta_lo, sub_ps(vValues_lo, vMean_lo), vM2_lo);
-        }
-
-        vMin_hi = min_ps(vMin_hi, vValues_hi);
-        vMax_hi = max_ps(vMax_hi, vValues_hi);
-        const auto vDelta_hi = sub_ps(vValues_hi, vMean_hi);
-        const auto vNewMean_hi =
-            add_ps(vMean_hi, div_ps(vDelta_hi, vValidCountFloat32));
-        if constexpr (CHECK_MIN_NOT_SAME_AS_MAX)
-        {
-            const auto vMinNotSameAsMax_hi = cmpneq_ps(vMin_hi, vMax_hi);
-            vMean_hi = blendv_ps(vMin_hi, vNewMean_hi, vMinNotSameAsMax_hi);
-            const auto vNewM2_hi =
-                fmadd_ps(vDelta_hi, sub_ps(vValues_hi, vMean_hi), vM2_hi);
-            vM2_hi = blendv_ps(vM2_hi, vNewM2_hi, vMinNotSameAsMax_hi);
-        }
-        else
-        {
-            vMean_hi = vNewMean_hi;
-            vM2_hi = fmadd_ps(vDelta_hi, sub_ps(vValues_hi, vMean_hi), vM2_hi);
-        }
-    }
-    const int nValidVectorCount = cvtsi_si32(vValidCount);
-    if (nValidVectorCount)
-    {
-        float afMin[VALS_PER_LOOP], afMax[VALS_PER_LOOP], afMean[VALS_PER_LOOP],
-            afM2[VALS_PER_LOOP];
-        storeu_ps(afMin, vMin_lo);
-        storeu_ps(afMax, vMax_lo);
-        storeu_ps(afMean, vMean_lo);
-        storeu_ps(afM2, vM2_lo);
-        storeu_ps(afMin + VALS_PER_LOOP / 2, vMin_hi);
-        storeu_ps(afMax + VALS_PER_LOOP / 2, vMax_hi);
-        storeu_ps(afMean + VALS_PER_LOOP / 2, vMean_hi);
-        storeu_ps(afM2 + VALS_PER_LOOP / 2, vM2_hi);
-
-        for (int i = 0; i < VALS_PER_LOOP; ++i)
-        {
-            fMin = std::min(fMin, afMin[i]);
-            fMax = std::max(fMax, afMax[i]);
-            const auto nNewValidCount = nBlockValidCount + nValidVectorCount;
-            if (afMean[i] != fBlockMean)
-            {
-                const float fDelta = afMean[i] - fBlockMean;
-                fBlockMean += fDelta * nValidVectorCount / nNewValidCount;
-                fBlockM2 += afM2[i] + fDelta * fDelta * nBlockValidCount *
-                                          nValidVectorCount / nNewValidCount;
-            }
-            nBlockValidCount = nNewValidCount;
-        }
-    }
-
-    return iX;
-}
-
-#ifdef __AVX2__
 
 #define setzero_pd _mm256_setzero_pd
 #define set1_pd _mm256_set1_pd
@@ -6716,6 +6553,22 @@ ComputeStatisticsFloat32_SSE2(const float *pafData,
 #endif
 
 #else
+
+#define set1_ps _mm_set1_ps
+#define loadu_ps _mm_loadu_ps
+#define or_ps _mm_or_ps
+#define min_ps _mm_min_ps
+#define max_ps _mm_max_ps
+#define cmpeq_ps _mm_cmpeq_ps
+#define cmpneq_ps _mm_cmpneq_ps
+#define cmpunord_ps _mm_cmpunord_ps
+#define movemask_ps _mm_movemask_ps
+#define storeu_ps _mm_storeu_ps
+#define cvtps_lo_pd(x) _mm_cvtps_pd((x))
+#define cvtps_hi_pd(x) _mm_cvtps_pd(_mm_movehl_ps((x), (x)))
+#define unpacklo_ps _mm_unpacklo_ps
+#define castps_pd _mm_castps_pd
+#define dup_hi_ps(x) _mm_unpackhi_ps((x), (x))
 
 #define setzero_pd _mm_setzero_pd
 #define set1_pd _mm_set1_pd
@@ -6748,6 +6601,127 @@ inline __m128d blendv_pd(__m128d a, __m128d b, __m128d mask)
 #endif
 }
 #endif
+
+#define dup_lo_ps(x) unpacklo_ps((x), (x))
+
+template <bool CHECK_MIN_NOT_SAME_AS_MAX, bool HAS_NODATA>
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static int
+ComputeStatisticsFloat32_SSE2(const float *pafData,
+                              [[maybe_unused]] float fNoDataValue, int iX,
+                              int nCount, float &fMin, float &fMax,
+                              double &dfBlockMean, double &dfBlockM2,
+                              double &dfBlockValidCount)
+{
+    auto vValidCount = setzero_pd();
+    const auto vOne = set1_pd(1);
+    [[maybe_unused]] const auto vNoData = set1_ps(fNoDataValue);
+
+    auto vMin = set1_ps(fMin);
+    auto vMax = set1_ps(fMax);
+
+    auto vMean_lo = setzero_pd();
+    auto vM2_lo = setzero_pd();
+
+    auto vMean_hi = setzero_pd();
+    auto vM2_hi = setzero_pd();
+
+    constexpr int VALS_PER_LOOP =
+        static_cast<int>(sizeof(vOne) / sizeof(float));
+    for (; iX <= nCount - VALS_PER_LOOP; iX += VALS_PER_LOOP)
+    {
+        const auto vValues = loadu_ps(pafData + iX);
+
+        auto isNaNOrNoData = cmpunord_ps(vValues, vValues);
+        if constexpr (HAS_NODATA)
+        {
+            isNaNOrNoData = or_ps(isNaNOrNoData, cmpeq_ps(vValues, vNoData));
+        }
+        if (movemask_ps(isNaNOrNoData))
+        {
+            break;
+        }
+
+        vMin = min_ps(vMin, vValues);
+        vMax = max_ps(vMax, vValues);
+
+        const auto vValues_lo = cvtps_lo_pd(vValues);
+        const auto vValues_hi = cvtps_hi_pd(vValues);
+        [[maybe_unused]] const auto vMinNotSameAsMax = cmpneq_ps(vMin, vMax);
+
+        vValidCount = add_pd(vValidCount, vOne);
+        const auto vInvValidCount = div_pd(vOne, vValidCount);
+
+        const auto vDelta_lo = sub_pd(vValues_lo, vMean_lo);
+        const auto vNewMean_lo = fmadd_pd(vDelta_lo, vInvValidCount, vMean_lo);
+        if constexpr (CHECK_MIN_NOT_SAME_AS_MAX)
+        {
+            const auto vMinNotSameAsMax_lo =
+                castps_pd(dup_lo_ps(vMinNotSameAsMax));
+            vMean_lo = blendv_pd(vValues_lo, vNewMean_lo, vMinNotSameAsMax_lo);
+            const auto vNewM2_lo =
+                fmadd_pd(vDelta_lo, sub_pd(vValues_lo, vMean_lo), vM2_lo);
+            vM2_lo = blendv_pd(vM2_lo, vNewM2_lo, vMinNotSameAsMax_lo);
+        }
+        else
+        {
+            vMean_lo = vNewMean_lo;
+            vM2_lo = fmadd_pd(vDelta_lo, sub_pd(vValues_lo, vMean_lo), vM2_lo);
+        }
+
+        const auto vDelta_hi = sub_pd(vValues_hi, vMean_hi);
+        const auto vNewMean_hi = fmadd_pd(vDelta_hi, vInvValidCount, vMean_hi);
+        if constexpr (CHECK_MIN_NOT_SAME_AS_MAX)
+        {
+            const auto vMinNotSameAsMax_hi =
+                castps_pd(dup_hi_ps(vMinNotSameAsMax));
+            vMean_hi = blendv_pd(vValues_hi, vNewMean_hi, vMinNotSameAsMax_hi);
+            const auto vNewM2_hi =
+                fmadd_pd(vDelta_hi, sub_pd(vValues_hi, vMean_hi), vM2_hi);
+            vM2_hi = blendv_pd(vM2_hi, vNewM2_hi, vMinNotSameAsMax_hi);
+        }
+        else
+        {
+            vMean_hi = vNewMean_hi;
+            vM2_hi = fmadd_pd(vDelta_hi, sub_pd(vValues_hi, vMean_hi), vM2_hi);
+        }
+    }
+    const double dfValidVectorCount = cvtsd_f64(vValidCount);
+    if (dfValidVectorCount > 0)
+    {
+        float afMin[VALS_PER_LOOP], afMax[VALS_PER_LOOP];
+        storeu_ps(afMin, vMin);
+        storeu_ps(afMax, vMax);
+        for (int i = 0; i < VALS_PER_LOOP; ++i)
+        {
+            fMin = std::min(fMin, afMin[i]);
+            fMax = std::max(fMax, afMax[i]);
+        }
+
+        double adfMean[VALS_PER_LOOP], adfM2[VALS_PER_LOOP];
+        storeu_pd(adfMean, vMean_lo);
+        storeu_pd(adfM2, vM2_lo);
+        storeu_pd(adfMean + VALS_PER_LOOP / 2, vMean_hi);
+        storeu_pd(adfM2 + VALS_PER_LOOP / 2, vM2_hi);
+        for (int i = 0; i < VALS_PER_LOOP; ++i)
+        {
+            const auto dfNewValidCount = dfBlockValidCount + dfValidVectorCount;
+            dfBlockM2 += adfM2[i];
+            if (adfMean[i] != dfBlockMean)
+            {
+                const double dfDelta = adfMean[i] - dfBlockMean;
+                dfBlockMean += dfDelta * dfValidVectorCount / dfNewValidCount;
+                dfBlockM2 += dfDelta * dfDelta * dfBlockValidCount *
+                             dfValidVectorCount / dfNewValidCount;
+            }
+            dfBlockValidCount = dfNewValidCount;
+        }
+    }
+
+    return iX;
+}
 
 template <bool CHECK_MIN_NOT_SAME_AS_MAX, bool HAS_NODATA>
 #if defined(__GNUC__)
@@ -6851,13 +6825,13 @@ ComputeStatisticsFloat64_SSE2(const double *padfData,
             dfMin = std::min(dfMin, adfMin[i]);
             dfMax = std::max(dfMax, adfMax[i]);
             const auto dfNewValidCount = dfBlockValidCount + dfValidVectorCount;
+            dfBlockM2 += adfM2[i];
             if (adfMean[i] != dfBlockMean)
             {
                 const double dfDelta = adfMean[i] - dfBlockMean;
                 dfBlockMean += dfDelta * dfValidVectorCount / dfNewValidCount;
-                dfBlockM2 += adfM2[i] + dfDelta * dfDelta * dfBlockValidCount *
-                                            dfValidVectorCount /
-                                            dfNewValidCount;
+                dfBlockM2 += dfDelta * dfDelta * dfBlockValidCount *
+                             dfValidVectorCount / dfNewValidCount;
             }
             dfBlockValidCount = dfNewValidCount;
         }
@@ -7400,13 +7374,13 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             {
                 const bool bHasNoData = sNoDataValues.bGotFloatNoDataValue &&
                                         !std::isnan(sNoDataValues.fNoDataValue);
-                float fBlockMean = 0.0f;
-                float fBlockM2 = 0.0f;
-                int nBlockValidCount = 0;
+                double dfBlockMean = 0;
+                double dfBlockM2 = 0;
+                double dfBlockValidCount = 0;
                 for (int iY = 0; iY < nYCheck; iY++)
                 {
                     const int iOffset = iY * nBlockXSize;
-                    if (nBlockValidCount && fMin != fMax)
+                    if (dfBlockValidCount > 0 && fMin != fMax)
                     {
                         int iX = 0;
 #if (defined(__x86_64__) || defined(_M_X64))
@@ -7417,7 +7391,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                 /* bHasNoData = */ true>(
                                 static_cast<const float *>(pData) + iOffset,
                                 sNoDataValues.fNoDataValue, iX, nXCheck, fMin,
-                                fMax, fBlockMean, fBlockM2, nBlockValidCount);
+                                fMax, dfBlockMean, dfBlockM2,
+                                dfBlockValidCount);
                         }
                         else
                         {
@@ -7426,7 +7401,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                 /* bHasNoData = */ false>(
                                 static_cast<const float *>(pData) + iOffset,
                                 sNoDataValues.fNoDataValue, iX, nXCheck, fMin,
-                                fMax, fBlockMean, fBlockM2, nBlockValidCount);
+                                fMax, dfBlockMean, dfBlockM2,
+                                dfBlockValidCount);
                         }
 #endif
                         for (; iX < nXCheck; iX++)
@@ -7439,17 +7415,17 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                 continue;
                             fMin = std::min(fMin, fValue);
                             fMax = std::max(fMax, fValue);
-                            ++nBlockValidCount;
-                            const float fDelta = fValue - fBlockMean;
-                            fBlockMean +=
-                                fDelta / static_cast<float>(nBlockValidCount);
-                            fBlockM2 += fDelta * (fValue - fBlockMean);
+                            dfBlockValidCount += 1.0;
+                            const double dfValue = static_cast<double>(fValue);
+                            const double dfDelta = dfValue - dfBlockMean;
+                            dfBlockMean += dfDelta / dfBlockValidCount;
+                            dfBlockM2 += dfDelta * (dfValue - dfBlockMean);
                         }
                     }
                     else
                     {
                         int iX = 0;
-                        if (nBlockValidCount == 0)
+                        if (dfBlockValidCount == 0)
                         {
                             for (; iX < nXCheck; iX++)
                             {
@@ -7461,8 +7437,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                     continue;
                                 fMin = std::min(fMin, fValue);
                                 fMax = std::max(fMax, fValue);
-                                nBlockValidCount = 1;
-                                fBlockMean = fValue;
+                                dfBlockValidCount = 1;
+                                dfBlockMean = static_cast<double>(fValue);
                                 iX++;
                                 break;
                             }
@@ -7475,7 +7451,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                 /* bHasNoData = */ true>(
                                 static_cast<const float *>(pData) + iOffset,
                                 sNoDataValues.fNoDataValue, iX, nXCheck, fMin,
-                                fMax, fBlockMean, fBlockM2, nBlockValidCount);
+                                fMax, dfBlockMean, dfBlockM2,
+                                dfBlockValidCount);
                         }
                         else
                         {
@@ -7484,7 +7461,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                 /* bHasNoData = */ false>(
                                 static_cast<const float *>(pData) + iOffset,
                                 sNoDataValues.fNoDataValue, iX, nXCheck, fMin,
-                                fMax, fBlockMean, fBlockM2, nBlockValidCount);
+                                fMax, dfBlockMean, dfBlockM2,
+                                dfBlockValidCount);
                         }
 #endif
                         for (; iX < nXCheck; iX++)
@@ -7497,46 +7475,43 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                 continue;
                             fMin = std::min(fMin, fValue);
                             fMax = std::max(fMax, fValue);
-                            ++nBlockValidCount;
+                            dfBlockValidCount += 1.0;
                             if (fMin != fMax)
                             {
-                                const float fDelta = fValue - fBlockMean;
-                                fBlockMean += fDelta / static_cast<float>(
-                                                           nBlockValidCount);
-                                fBlockM2 += fDelta * (fValue - fBlockMean);
+                                const double dfValue =
+                                    static_cast<double>(fValue);
+                                const double dfDelta = dfValue - dfBlockMean;
+                                dfBlockMean += dfDelta / dfBlockValidCount;
+                                dfBlockM2 += dfDelta * (dfValue - dfBlockMean);
                             }
                         }
                     }
                 }
 
-                if (nBlockValidCount)
+                if (dfBlockValidCount > 0)
                 {
                     // Update the global mean and M2 (the difference of the
                     // square to the mean) from the values of the block
                     // using https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
-                    const auto nNewValidCount = nValidCount + nBlockValidCount;
-                    const double dfBlockMean = static_cast<double>(fBlockMean);
+                    const auto nNewValidCount =
+                        nValidCount + static_cast<int>(dfBlockValidCount);
+                    dfM2 += dfBlockM2;
                     if (dfBlockMean != dfMean)
                     {
-                        const double dfBlockM2 = static_cast<double>(fBlockM2);
                         if (nValidCount == 0)
                         {
                             dfMean = dfBlockMean;
-                            dfM2 = dfBlockM2;
                         }
                         else
                         {
-                            const double dfBlockValidCount =
-                                static_cast<double>(nBlockValidCount);
                             const double dfDelta = dfBlockMean - dfMean;
                             const double dfNewValidCount =
                                 static_cast<double>(nNewValidCount);
                             dfMean +=
                                 dfDelta * (dfBlockValidCount / dfNewValidCount);
-                            dfM2 += dfBlockM2 +
-                                    dfDelta * dfDelta *
-                                        static_cast<double>(nValidCount) *
-                                        dfBlockValidCount / dfNewValidCount;
+                            dfM2 += dfDelta * dfDelta *
+                                    static_cast<double>(nValidCount) *
+                                    dfBlockValidCount / dfNewValidCount;
                         }
                     }
                     nValidCount = nNewValidCount;
@@ -7664,12 +7639,12 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                     // using https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
                     const auto nNewValidCount =
                         nValidCount + static_cast<int>(dfBlockValidCount);
+                    dfM2 += dfBlockM2;
                     if (dfBlockMean != dfMean)
                     {
                         if (nValidCount == 0)
                         {
                             dfMean = dfBlockMean;
-                            dfM2 = dfBlockM2;
                         }
                         else
                         {
@@ -7678,10 +7653,9 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                 static_cast<double>(nNewValidCount);
                             dfMean +=
                                 dfDelta * (dfBlockValidCount / dfNewValidCount);
-                            dfM2 += dfBlockM2 +
-                                    dfDelta * dfDelta *
-                                        static_cast<double>(nValidCount) *
-                                        dfBlockValidCount / dfNewValidCount;
+                            dfM2 += dfDelta * dfDelta *
+                                    static_cast<double>(nValidCount) *
+                                    dfBlockValidCount / dfNewValidCount;
                         }
                     }
                     nValidCount = nNewValidCount;
