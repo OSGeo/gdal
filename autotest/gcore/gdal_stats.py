@@ -1070,7 +1070,7 @@ def test_stats_float32_nan(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPTIM):
     if GDAL_STATS_USE_FLOAT32_OPTIM == "NO":
         assert got_stats == expected_stats
     else:
-        assert got_stats == pytest.approx(expected_stats, rel=1e-5)
+        assert got_stats == pytest.approx(expected_stats, rel=1e-15)
 
 
 ###############################################################################
@@ -1098,7 +1098,44 @@ def test_stats_float32_nan_with_nodata(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPTIM)
     if GDAL_STATS_USE_FLOAT32_OPTIM == "NO":
         assert got_stats == expected_stats
     else:
-        assert got_stats == pytest.approx(expected_stats, rel=1e-5)
+        assert got_stats == pytest.approx(expected_stats, rel=1e-15)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("GDAL_STATS_USE_FLOAT32_OPTIM", [None, "NO"])
+def test_stats_float32_check_bugfix_13543(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPTIM):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    nCols = 500
+    nRows = 500
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "tmp.tif",
+        nCols,
+        nRows,
+        1,
+        gdal.GDT_Float32,
+        options={"TILED": "YES"},
+    )
+
+    # A ramp array
+    (x, y) = np.mgrid[:nRows, :nCols]
+    ramp = ((x + y) * 100.0 / (nRows - 1 + nCols - 1)).astype(np.float32)
+
+    band = ds.GetRasterBand(1)
+    band.WriteArray(ramp)
+
+    with gdal.config_option(
+        "GDAL_STATS_USE_FLOAT32_OPTIM", GDAL_STATS_USE_FLOAT32_OPTIM
+    ):
+        (minVal, maxVal, mean, stddev) = band.ComputeStatistics(approx_ok=False)
+    npStd = ramp.std(dtype=np.float64)
+
+    assert npStd == pytest.approx(20.45328026221, rel=1e-12)
+    assert stddev == pytest.approx(20.45328026221, rel=1e-12)
 
 
 ###############################################################################
@@ -1150,3 +1187,40 @@ def test_stats_float64_nan_with_nodata(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM)
         assert got_stats == expected_stats
     else:
         assert got_stats == pytest.approx(expected_stats, rel=1e-15)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("GDAL_STATS_USE_FLOAT64_OPTIM", [None, "NO"])
+def test_stats_float64_check_bugfix_13543(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    nCols = 500
+    nRows = 500
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "tmp.tif",
+        nCols,
+        nRows,
+        1,
+        gdal.GDT_Float64,
+        options={"TILED": "YES"},
+    )
+
+    # A ramp array
+    (x, y) = np.mgrid[:nRows, :nCols]
+    ramp = ((x + y) * 100.0 / (nRows - 1 + nCols - 1)).astype(np.float64)
+
+    band = ds.GetRasterBand(1)
+    band.WriteArray(ramp)
+
+    with gdal.config_option(
+        "GDAL_STATS_USE_FLOAT64_OPTIM", GDAL_STATS_USE_FLOAT64_OPTIM
+    ):
+        (minVal, maxVal, mean, stddev) = band.ComputeStatistics(approx_ok=False)
+    npStd = ramp.std()
+
+    assert npStd == pytest.approx(20.453280258841, rel=1e-14)
+    assert stddev == pytest.approx(20.453280258841, rel=1e-14)
