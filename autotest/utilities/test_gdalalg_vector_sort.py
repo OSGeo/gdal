@@ -172,3 +172,53 @@ def test_gdalalg_vector_sort_null_empty_geometry(alg, method, geom_type):
             assert feature.GetGeometryRef().IsEmpty()
         else:
             assert feature.GetGeometryRef() is None
+
+
+def test_gdalalg_vector_sort_invalid_method(alg):
+
+    with pytest.raises(Exception, match="Invalid value .* argument 'method'"):
+        alg["method"] = "does_not_exist"
+
+
+@pytest.mark.parametrize("geometry_field", ("", "swapped_geom"))
+def test_gdalalg_vector_sort_multiple_geom_fields(alg, geometry_field):
+
+    poly_ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
+
+    ds = gdal.GetDriverByName("MEM").CreateVector("")
+    lyr = ds.CreateLayer("source", geom_type=ogr.wkbPolygon)
+    lyr.CreateField(ogr.FieldDefn("EAS_ID", ogr.OFTInteger64))
+    lyr.CreateGeomField(ogr.GeomFieldDefn("swapped_geom", ogr.wkbPolygon))
+
+    for f in poly_ds.GetLayer(0):
+        f_out = ogr.Feature(lyr.GetLayerDefn())
+        f_out["EAS_ID"] = f["EAS_ID"]
+        f_out.SetGeomField(0, f.GetGeometryRef())
+
+        g1 = f.GetGeometryRef().Clone()
+        g1.SwapXY()
+        f_out.SetGeomField(1, g1)
+
+        lyr.CreateFeature(f_out)
+
+    alg["input"] = ds
+    alg["geometry-field"] = "does_not_exist"
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    with pytest.raises(Exception, match="Specified geometry field .* does not exist"):
+        alg.Run()
+
+    alg["geometry-field"] = geometry_field
+
+    assert alg.Run()
+
+    dst_ds = alg.Output()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    f = dst_lyr.GetNextFeature()
+
+    if geometry_field == "swapped_geom":
+        assert f["EAS_ID"] == 158
+    else:
+        assert f["EAS_ID"] == 173

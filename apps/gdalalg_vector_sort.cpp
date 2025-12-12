@@ -31,6 +31,8 @@ GDALVectorSortAlgorithm::GDALVectorSortAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
+    AddArg("geometry-field", 0, _("Name of geometry field to use in sort"),
+           &m_geomField);
     AddArg("method", 0, _("Geometry sorting algorithm"), &m_sortMethod)
         .SetChoices("hilbert", "strtree")
         .SetDefault(m_sortMethod);
@@ -143,7 +145,8 @@ class GDALVectorHilbertSortDataset
     using GDALVectorNonStreamingAlgorithmDataset::
         GDALVectorNonStreamingAlgorithmDataset;
 
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) override
+    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer,
+                 int geomFieldIndex) override
     {
         std::vector<std::unique_ptr<OGRFeature>> features;
 
@@ -156,9 +159,9 @@ class GDALVectorHilbertSortDataset
         std::vector<OGREnvelope> envelopes(features.size());
         for (size_t i = 0; i < features.size(); i++)
         {
-            // TODO GeomFieldRef
             const OGRFeature *poFeature = features[i].get();
-            const OGRGeometry *poGeom = poFeature->GetGeometryRef();
+            const OGRGeometry *poGeom =
+                poFeature->GetGeomFieldRef(geomFieldIndex);
 
             if (poGeom != nullptr && !poGeom->IsEmpty())
             {
@@ -219,7 +222,8 @@ class GDALVectorSTRTreeSortDataset
         }
     }
 
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) override
+    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer,
+                 int geomFieldIndex) override
     {
         std::vector<std::unique_ptr<OGRFeature>> features;
         std::vector<size_t> sortedIndices;
@@ -242,7 +246,8 @@ class GDALVectorSTRTreeSortDataset
         for (size_t i = 0; i < features.size(); i++)
         {
             const OGRFeature *poFeature = features[i].get();
-            const OGRGeometry *poGeom = poFeature->GetGeometryRef();
+            const OGRGeometry *poGeom =
+                poFeature->GetGeomFieldRef(geomFieldIndex);
 
             if (poGeom == nullptr || poGeom->IsEmpty())
             {
@@ -313,13 +318,11 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &)
     {
         poDstDS = std::make_unique<GDALVectorHilbertSortDataset>();
     }
-    else if (m_sortMethod == "strtree")
-    {
-        poDstDS = std::make_unique<GDALVectorSTRTreeSortDataset>();
-    }
     else
     {
-        // error
+        // Already checked for invalid method at arg parsing stage.
+        CPLAssert(m_sortMethod == "strtree");
+        poDstDS = std::make_unique<GDALVectorSTRTreeSortDataset>();
     }
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
@@ -331,9 +334,24 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &)
             const auto poSrcLayerDefn = poSrcLayer->GetLayerDefn();
             if (poSrcLayerDefn->GetGeomFieldCount() > 0)
             {
-                // FIXME geom-field
+                const int geomFieldIndex =
+                    m_geomField.empty() ? 0
+                                        : poSrcLayerDefn->GetGeomFieldIndex(
+                                              m_geomField.c_str());
+
+                if (geomFieldIndex == -1)
+                {
+                    ReportError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Specified geometry field '%s' does not exist in "
+                        "layer '%s'",
+                        m_geomField.c_str(), poSrcLayer->GetDescription());
+                    return false;
+                }
+
                 if (!poDstDS->AddProcessedLayer(*poSrcLayer,
-                                                *poSrcLayer->GetLayerDefn()))
+                                                *poSrcLayer->GetLayerDefn(),
+                                                geomFieldIndex))
                 {
                     return false;
                 }

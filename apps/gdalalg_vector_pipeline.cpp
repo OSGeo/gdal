@@ -528,7 +528,7 @@ GDALVectorNonStreamingAlgorithmDataset::
 /************************************************************************/
 
 bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
-    OGRLayer &srcLayer, OGRFeatureDefn &dstDefn)
+    OGRLayer &srcLayer, OGRFeatureDefn &dstDefn, int geomFieldIndex)
 {
     CPLStringList aosOptions;
     if (srcLayer.TestCapability(OLCStringsAsUTF8))
@@ -539,7 +539,7 @@ bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
     OGRMemLayer *poDstLayer = m_ds->CreateLayer(dstDefn, aosOptions.List());
     m_layers.push_back(poDstLayer);
 
-    const bool bRet = Process(srcLayer, *poDstLayer);
+    const bool bRet = Process(srcLayer, *poDstLayer, geomFieldIndex);
     poDstLayer->SetUpdatable(false);
     return bRet;
 }
@@ -547,7 +547,7 @@ bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
 bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
     OGRLayer &srcLayer)
 {
-    return AddProcessedLayer(srcLayer, *srcLayer.GetLayerDefn());
+    return AddProcessedLayer(srcLayer, *srcLayer.GetLayerDefn(), 0);
 }
 
 /************************************************************************/

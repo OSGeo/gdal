@@ -37,6 +37,7 @@ class GDALVectorSortAlgorithm : public GDALVectorPipelineStepAlgorithm
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
+    std::string m_geomField{};
     std::string m_sortMethod{"hilbert"};
 };
 

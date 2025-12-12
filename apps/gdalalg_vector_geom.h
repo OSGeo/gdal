@@ -207,7 +207,8 @@ class GDALGeosNonStreamingAlgorithmDataset
 
     CPL_DISALLOW_COPY_ASSIGN(GDALGeosNonStreamingAlgorithmDataset)
 
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) override;
+    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer,
+                 int geomFieldIndex) override;
 
     virtual bool ProcessGeos() = 0;
 
@@ -217,11 +218,6 @@ class GDALGeosNonStreamingAlgorithmDataset
     /// Whether empty result features should be excluded from the output
     virtual bool SkipEmpty() const = 0;
 
-    void SetSourceGeometryField(int i)
-    {
-        m_sourceGeometryField = i;
-    }
-
   protected:
     GEOSContextHandle_t m_poGeosContext{nullptr};
     std::vector<GEOSGeometry *> m_apoGeosInputs{};
@@ -230,7 +226,7 @@ class GDALGeosNonStreamingAlgorithmDataset
 
   private:
     bool ConvertInputsToGeos(OGRLayer &srcLayer, OGRLayer &dstLayer,
-                             bool sameDefn);
+                             int geomFieldIndex, bool sameDefn);
 
     bool ConvertOutputsFromGeos(OGRLayer &dstLayer);
 
@@ -238,7 +234,6 @@ class GDALGeosNonStreamingAlgorithmDataset
 
     std::vector<std::unique_ptr<OGRFeature>> m_apoFeatures{};
     unsigned int m_nGeosResultSize{0};
-    int m_sourceGeometryField{0};
 };
 
 #endif
