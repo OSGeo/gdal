@@ -259,7 +259,7 @@ def test_algorithm_arg_set_int():
 
 def test_algorithm_arg_set_real():
     reg = gdal.GetGlobalAlgorithmRegistry()
-    alg = reg["vector"]["geom"]["simplify"]
+    alg = reg["vector"]["simplify"]
 
     alg["tolerance"] = 1
     assert alg["tolerance"] == 1

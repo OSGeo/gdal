@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "geom" step of "vector pipeline", or "gdal vector geom" standalone
+ * Purpose:  Base classes for some geometry-related vector algorithms
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -17,54 +17,6 @@
 #include "ogr_geos.h"
 
 //! @cond Doxygen_Suppress
-
-/************************************************************************/
-/*                       GDALVectorGeomAlgorithm                        */
-/************************************************************************/
-
-class GDALVectorGeomAlgorithm /* non final */
-    : public GDALVectorPipelineStepAlgorithm
-{
-  public:
-    static constexpr const char *NAME = "geom";
-    static constexpr const char *DESCRIPTION =
-        "Geometry operations on a vector dataset.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vector_geom.html";
-
-    explicit GDALVectorGeomAlgorithm(bool standaloneStep = false);
-
-  private:
-    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
-
-    void WarnIfDeprecated() override;
-
-    /** Register the sub-algorithm of type MyAlgorithm.
-     */
-    template <class MyAlgorithm> bool RegisterSubAlgorithm(bool standalone)
-    {
-        GDALAlgorithmRegistry::AlgInfo info;
-        info.m_name = MyAlgorithm::NAME;
-        info.m_aliases = MyAlgorithm::GetAliasesStatic();
-        info.m_creationFunc = [standalone]() -> std::unique_ptr<GDALAlgorithm>
-        { return std::make_unique<MyAlgorithm>(standalone); };
-        return GDALAlgorithm::RegisterSubAlgorithm(info);
-    }
-};
-
-/************************************************************************/
-/*                    GDALVectorGeomAlgorithmStandalone                 */
-/************************************************************************/
-
-class GDALVectorGeomAlgorithmStandalone final : public GDALVectorGeomAlgorithm
-{
-  public:
-    GDALVectorGeomAlgorithmStandalone()
-        : GDALVectorGeomAlgorithm(/* standaloneStep = */ true)
-    {
-    }
-
-    ~GDALVectorGeomAlgorithmStandalone() override;
-};
 
 /************************************************************************/
 /*                    GDALVectorGeomAbstractAlgorithm                   */
