@@ -266,6 +266,7 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &)
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "--method strtree requires a GDAL build against the GEOS library.");
+        return false;
 #endif
     }
 
