@@ -137,14 +137,14 @@ std::unique_ptr<OGRFeature> GDALVectorBufferAlgorithmLayer::TranslateFeature(
                                               m_aosBufferOptions.List()));
                 if (poGeom)
                 {
-                    const auto poGeomFielDefn =
+                    const auto poGeomFieldDefn =
                         m_poFeatureDefn->GetGeomFieldDefn(i);
                     poGeom.reset(OGRGeometryFactory::forceTo(
-                        poGeom.release(), poGeomFielDefn->GetType()));
+                        poGeom.release(), poGeomFieldDefn->GetType()));
                     if (poGeom)
                     {
                         poGeom->assignSpatialReference(
-                            poGeomFielDefn->GetSpatialRef());
+                            poGeomFieldDefn->GetSpatialRef());
                         poSrcFeature->SetGeomField(i, std::move(poGeom));
                     }
                 }
