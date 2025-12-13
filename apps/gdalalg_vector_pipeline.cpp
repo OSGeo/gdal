@@ -22,7 +22,6 @@
 #include "gdalalg_vector_edit.h"
 #include "gdalalg_vector_explode_collections.h"
 #include "gdalalg_vector_filter.h"
-#include "gdalalg_vector_geom.h"
 #include "gdalalg_vector_info.h"
 #include "gdalalg_vector_limit.h"
 #include "gdalalg_vector_make_point.h"
@@ -166,7 +165,6 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
         addSuffixIfNeeded(GDALVectorReprojectAlgorithm::NAME));
 
     registry.Register<GDALVectorFilterAlgorithm>();
-    registry.Register<GDALVectorGeomAlgorithm>();
     registry.Register<GDALVectorLimitAlgorithm>();
     registry.Register<GDALVectorMakePointAlgorithm>();
     registry.Register<GDALVectorMakeValidAlgorithm>();
