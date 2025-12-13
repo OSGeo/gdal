@@ -77,6 +77,9 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CENTER_LONG", // from ogrct.cpp
    "CHECK_DISK_FREE_SPACE", // from gtiffdataset_write.cpp
    "CHECK_WITH_INVERT_PROJ", // from gdaltransformer.cpp, gdalwarp_lib.cpp, gdalwarpoperation.cpp, ogrct.cpp
+   "CLOUD_RUN_JOB", // from cpl_google_cloud.cpp
+   "CLOUD_RUN_TIMEOUT_SECONDS", // from cpl_google_cloud.cpp
+   "CLOUD_RUN_WORKER_POOL", // from cpl_google_cloud.cpp
    "COG_DELETE_TEMP_FILES", // from cogdriver.cpp
    "COG_TMP_COMPRESSION", // from cogdriver.cpp
    "COMPRESS_GEOM", // from ogrsqlitelayer.cpp
