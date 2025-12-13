@@ -10,7 +10,7 @@ S102 -- S-102 Bathymetric Surface Product
 
 .. versionadded:: 3.8
 
-This driver provides read-only support for bathymetry data in the S-102 format,
+This driver provides support for bathymetry data in the S-102 format,
 which is a specific product profile in an HDF5 file.
 
 S-102 files have two image bands representing depth (band 1),
@@ -25,15 +25,19 @@ Georeferencing is reported.
 
 Nodata, minimum and maximum values for each band are also reported.
 
-Supported versions of the specification are S-102 v2.1, v2.2 and v3.0.
+For reading, supported versions of the specification are S-102 v2.1, v2.2 and v3.0.
 
 Since GDAL 3.12, multiple feature instance groups per dataset (to encode grids
 using different vertical datums) are supported. In that case, each feature
 instance group is exposed as a GDAL subdataset, whose name is of the form
 ``S102:"{filename.h5}":BathymetricCoverage.{XX}``.
 
+Write support for S-102 v3.0 has been added in GDAL 3.13
+
 Driver capabilities
 -------------------
+
+.. supports_createcopy::
 
 .. supports_georeferencing::
 
@@ -83,6 +87,178 @@ dataset is exposed as a
 GDAL Raster Attribute Table associated to the GDAL raster band. The pixel
 values of the raster match the ``id`` column of the Raster Attribute Table.
 
+Write support
+-------------
+
+.. versionadded:: 3.13
+
+Creation of a S-102 v3.0 dataset from another existing GDAL supported dataset is
+possible using the :cpp:func:`GDALDriver::CreateCopy` function, or utilities
+like :ref:`gdal_translate` or :ref:`gdal_raster_convert`. The input dataset
+must have one or two bands. The first band must represent depths (positive values
+are down below the vertical datum surface) in meters, and the optional second band
+must contain the uncertainty value in meters. If the first band has a description
+"elevation" (typically for BAG datasets), elevations will be automatically converted
+to depths by negating the sign of source values.
+
+The input dataset must be in the following CRS:
+
+- WGS 84 longitude/latitude (EPSG:4326)
+- Any of the 60 north/south UTM projected CRS over WGS 84 (EPSG:32601 to 32660, or 32701 to 32760)
+- "WGS 84 / UPS North (E,N)" (EPSG:5041)
+- "WGS 84 / UPS South (E,N)" (EPSG:5042)
+
+If several vertical datums are needed, the :co:`APPEND_SUBDATASET` creation option
+can be set to ``YES`` to add an extra feature instance group ("BathymetricCoverage.XX")
+to an existing S-102 dataset.
+
+The following creation options are available:
+
+-  .. co:: VERTICAL_DATUM
+      :choices: <string>
+
+      Vertical datum. This is a required creation option.
+
+      Possible values are either a S100 vertical datum numeric code in the
+      1 to 30 range, or value 44. Or their string meaning or abbreviation among
+      the following list:
+
+      - 1: ``meanLowWaterSprings`` / ``MLWS``
+      - 2: ``meanLowerLowWaterSprings``
+      - 3: ``meanSeaLevel`` / ``MSL``
+      - 4: ``lowestLowWater``
+      - 5: ``meanLowWater`` / ``MLW``
+      - 6: ``lowestLowWaterSprings``
+      - 7: ``approximateMeanLowWaterSprings``
+      - 8: ``indianSpringLowWater``
+      - 9: ``lowWaterSprings``
+      - 10: ``approximateLowestAstronomicalTide``
+      - 11: ``nearlyLowestLowWater``
+      - 12: ``meanLowerLowWater`` / ``MLLW``
+      - 13: ``lowWater`` / ``LW``
+      - 14: ``approximateMeanLowWater``
+      - 15: ``approximateMeanLowerLowWater``
+      - 16: ``meanHighWater`` / ``MHW``
+      - 17: ``meanHighWaterSprings`` / ``MHWS``
+      - 18: ``highWater`` / ``HW``
+      - 19: ``approximateMeanSeaLevel``
+      - 20: ``highWaterSprings``
+      - 21: ``meanHigherHighWater`` / ``MHHW``
+      - 22: ``equinoctialSpringLowWater``
+      - 23: ``lowestAstronomicalTide`` / ``LAT``
+      - 24: ``localDatum``
+      - 25: ``internationalGreatLakesDatum1985``
+      - 26: ``meanWaterLevel``
+      - 27: ``lowerLowWaterLargeTide``
+      - 28: ``higherHighWaterLargeTide``
+      - 29: ``nearlyHighestHighWater``
+      - 30: ``highestAstronomicalTide`` / ``HAT``
+      - 44: ``balticSeaChartDatum2000``
+
+-  .. co:: ISSUE_DATE
+      :choices: <string> as <YYYYMMDD>
+
+      If not specified, defaults to the current date.
+
+-  .. co:: ISSUE_TIME
+      :choices: <string>
+
+      Issue time as <hhmmssZ> or <hhmmss[+-]HHMM>
+
+-  .. co:: HORIZONTAL_POSITION_UNCERTAINTY
+      :choices: <number>
+
+      Horizontal position uncertainty in meter
+
+-  .. co:: VERTICAL_UNCERTAINTY
+      :choices: <number>
+
+      Vertical uncertainty in meter
+
+-  .. co:: QUALITY_DATASET
+      :choices: <string>
+
+      Path to a dataset with the quality of bathymetric coverage (spatial metadata).
+
+      This must point to a GDAL recognized dataset, with a single band of an
+      integer data type, containing quality codes. The band must be associated
+      with a raster attribute table, with an integer column named ``id`` for each
+      value in the band pixels, and optional columns among the ones allowed by
+      the S-102 specification:
+
+      - ``dataAssessment`` (uint8)
+      - ``featuresDetected.leastDepthOfDetectedFeaturesMeasured`` (boolean)
+      - ``featuresDetected.significantFeaturesDetected`` (boolean)
+      - ``featuresDetected.sizeOfFeaturesDetected`` (float32)
+      - ``featureSizeVar`` (float32)
+      - ``fullSeafloorCoverageAchieved`` (boolean)
+      - ``bathyCoverage`` (boolean)
+      - ``zoneOfConfidence.horizontalPositionUncertainty.uncertaintyFixed`` (float32)
+      - ``zoneOfConfidence.horizontalPositionUncertainty.uncertaintyVariableFactor`` (float32)
+      - ``surveyDateRange.dateStart`` (date)
+      - ``surveyDateRange.dateEnd`` (date)
+      - ``sourceSurveyID`` (string)
+      - ``surveyAuthority`` (string)
+      - ``typeOfBathymetricEstimationUncertainty`` (enumeration)
+
+-  .. co:: COMPRESS
+      :choices: NONE, DEFLATE
+      :default: DEFLATE
+
+      Compression for elevation and uncertainty grids.
+
+-  .. co:: ZLEVEL
+      :choices: 1-9
+      :default: 6
+
+      Deflate compression level.
+
+-  .. co:: BLOCK_SIZE
+      :choices: <integer>
+
+      Chunking size of the HDF5 arrays. Default
+      to 100, or the maximum dimension of the raster if smaller than 100.
+
+-  .. co:: APPEND_SUBDATASET
+      :choices: YES, NO
+      :default: NO
+
+      Whether to append the new dataset to an existing S-102 dataset as
+      an extra feature instance group ("BathymetricCoverage.XX")
+
+
+Validation script
+-----------------
+
+.. versionadded:: 3.13
+
+The Python script :source_file:`swig/python/gdal-utils/osgeo_utils/samples/validate_s102.py`
+can be used to validate the conformity of a S-102 v3.0 dataset against the specification.
+It requires the `h5py <https://www.h5py.org/>`__ Python module to be installed
+(typically through "pip install h5py")
+
+Its usage is:
+
+::
+
+    $ python validate_s102.py 102TESTXXXX.h5
+
+
+Note that the GDAL S-102 reader is more tolerant that the validation script and
+can read files with slight non-conformities.
+
+
+Examples
+--------
+
+-  Converting a GeoTIFF with depth and uncertainty and another one with
+   quality information to a S-102 dataset
+
+   ::
+
+      $ gdal_translate depth_uncertainty.tif 102TESTXXXX.h5 -of S102 -co VERTICAL_DATUM=MMLW -co QUALITY_DATASET=quality.tif
+
+
 See Also
 --------
 
@@ -91,3 +267,12 @@ See Also
 -  :ref:`BAG driver <raster.bag>`
 -  :ref:`S-104 driver <raster.s104>`
 -  :ref:`S-111 driver <raster.s111>`
+
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    hhmmssZ
+    hhmmss
+    HHMM
