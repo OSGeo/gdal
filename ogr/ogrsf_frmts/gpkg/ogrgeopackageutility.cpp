@@ -468,6 +468,47 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen,
     /* Header size in byte stream */
     poHeader->nHeaderLen = 8 + 8 * 2 * nEnvelopeDim;
 
+#ifdef DEBUG_VERBOSE
+    std::string s;
+    for (size_t i = poHeader->nHeaderLen; i < nGpkgLen; ++i)
+    {
+        s += CPLSPrintf("%02X ", pabyGpkg[i]);
+    }
+    CPLDebug("GPKG", "Bytes after GPKG header: %s", s.c_str());
+#endif
+
+    // Workaround for a Spatialite bug. The CastToXYZ() function, when
+    // called on an empty geometry, and EnableGpkgMode() is enabled,
+    // returns an empty geometry, not tagged as such, but with an invalid
+    // bounding box.
+    // Cf https://github.com/OSGeo/gdal/issues/13557
+    if (!poHeader->bEmpty && poHeader->bExtentHasXY &&
+        poHeader->nHeaderLen == 40 &&
+        poHeader->MinX == std::numeric_limits<double>::max() &&
+        poHeader->MaxX == -std::numeric_limits<double>::max() &&
+        poHeader->MinY == std::numeric_limits<double>::max() &&
+        poHeader->MaxY == -std::numeric_limits<double>::max() &&
+        // CastToXYZ(POLYGON EMPTY) returns just the GPKG header for some reason
+        (nGpkgLen == 40 ||
+         // CastToXYZ(LINESTRING EMPTY) returns a LINESTRING Z EMPTY
+         (nGpkgLen == 49 &&
+          memcmp(pabyGpkg + 40, "\x01\xEA\x03\x00\x00\x00\x00\x00\x00", 9) ==
+              0) ||
+         // CastToXYZ(POINT EMPTY) returns a Point Z (NaN NaN 0)
+         // CastToXYZ(POINT Z EMPTY) returns a Point Z (NaN NaN NaN)
+         (nGpkgLen == 69 && memcmp(pabyGpkg + 40,
+                                   "\x01"
+                                   "\xE9\x03\x00\x00"
+                                   "\x00\x00\x00\x00\x00\x00\xF8\x7F"
+                                   "\x00\x00\x00\x00\x00\x00\xF8\x7F",
+                                   21) == 0)))
+    {
+        CPLDebugOnce("GPKG",
+                     "Work arounding a Spatialite bug with empty geometries");
+        poHeader->bEmpty = true;
+        poHeader->bExtentHasXY = false;
+    }
+
     return OGRERR_NONE;
 }
 

@@ -11248,3 +11248,45 @@ def test_ogr_gpkg_append_to_layer_feature_count_int64_max(tmp_vsimem):
             assert not f.IsFieldSetAndNotNull("feature_count")
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 2
+
+
+###############################################################################
+# Test workaround for https://github.com/OSGeo/gdal/issues/13557
+
+
+@pytest.mark.parametrize(
+    "wkt",
+    [
+        "POINT EMPTY",
+        "POINT Z EMPTY",
+        "LINESTRING EMPTY",
+        "LINESTRING Z EMPTY",
+        "POLYGON EMPTY",
+        "POLYGON Z EMPTY",
+        "MULTIPOINT EMPTY",
+        "MULTIPOINT Z EMPTY",
+        "MULTILINESTRING EMPTY",
+        "MULTILINESTRING Z EMPTY",
+        "MULTIPOLYGON EMPTY",
+        "MULTIPOLYGON Z EMPTY",
+        "GEOMETRYCOLLECTION EMPTY",
+        "GEOMETRYCOLLECTION Z EMPTY",
+    ],
+)
+def test_ogr_gpkg_st_minx_on_CastToXYZ_on_empty_geometry(tmp_vsimem, wkt):
+
+    with ogr.GetDriverByName("GPKG").CreateDataSource(tmp_vsimem / "test.gpkg") as ds:
+        lyr = ds.CreateLayer("test")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+        lyr.CreateFeature(f)
+        f = None
+
+        if not _has_spatialite_4_3_or_later(ds):
+            ds = None
+            pytest.skip("Spatialite missing or too old")
+
+    with ogr.Open(tmp_vsimem / "test.gpkg") as ds:
+        with ds.ExecuteSQL("SELECT ST_MinX(CastToXYZ(geom)) FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) is None
