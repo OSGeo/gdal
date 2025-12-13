@@ -85,6 +85,7 @@ extensions = [
     "cli_example",
     "doctestplus_gdal",
     "source_file",
+    "sphinx.ext.imgconverter",
     "sphinx.ext.napoleon",
     "sphinxcontrib.jquery",
     "sphinxcontrib_programoutput_gdal",
