@@ -31,14 +31,18 @@ resolution is preserved. Bounds are rounded to match whole pixel locations
 
 ``clip`` can also be used as a step of :ref:`gdal_raster_pipeline`.
 
-Standard options
-++++++++++++++++
+Program-Specific Options
+------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. option:: --add-alpha
 
-.. include:: gdal_options/co.rst
+    Adds an alpha mask band to the destination when the source raster has none.
 
-.. include:: gdal_options/overwrite.rst
+.. option:: --allow-bbox-outside-source
+
+    If set, allows the bounds indicated by :option:`--bbox` to cover an extent that is greater
+    than the input dataset. Output pixels from areas beyond the input extent will be set to
+    zero or the NoData value of the input dataset.
 
 .. option:: --bbox <xmin>,<ymin>,<xmax>,<ymax>
 
@@ -59,17 +63,6 @@ Standard options
     Note that specifying :option:`--bbox-crs` does not cause the raster to be reprojected.
     Instead, the bounds are reprojected from the bbox-crs to the CRS of the
     input dataset.
-
-.. option:: --window <column>,<line>,<width>,<height>
-
-    .. versionadded:: 3.12
-
-    Selects a subwindow from the source image for copying based on pixel/line
-    location. Pixel/line offsets (``column`` and ``line``) are measured from the
-    left and top of the image.
-    If the subwindow extends beyond the bounds of the source dataset,
-    output pixels will be written with a value of zero, unless a NoData value is
-    defined either the source dataset.
 
 .. option:: --geometry <WKT_or_GeoJSON>
 
@@ -107,6 +100,11 @@ Standard options
     is none.
     Mutually exclusive with :option:`--bbox` and :option:`--geometry`.
 
+.. option:: --like-layer <LAYER-NAME>
+
+    Select the named layer from the vector clip dataset.
+    Mutually exclusive with :option:`--like-sql`
+
 .. option:: --like-sql <SELECT-STATEMENT>
 
     Select desired geometries from the vector clip dataset using an SQL query.
@@ -114,11 +112,6 @@ Standard options
     The SQL dialect used will be the default one of the ``like`` dataset (OGR SQL
     for Shapefile, SQLite for GeoPackage, PostgreSQL for PostGIS, etc.).
     Mutually exclusive with :option:`--like-layer` and :option:`--like-where`
-
-.. option:: --like-layer <LAYER-NAME>
-
-    Select the named layer from the vector clip dataset.
-    Mutually exclusive with :option:`--like-sql`
 
 .. option:: --like-where <WHERE-EXPRESSION>
 
@@ -130,22 +123,31 @@ Standard options
     For :option:`--geometry` and :option:`--like`, only consider the bounding box
     of the geometry.
 
-.. option:: --allow-bbox-outside-source
+.. option:: --window <column>,<line>,<width>,<height>
 
-    If set, allows the bounds indicated by :option:`--bbox` to cover an extent that is greater
-    than the input dataset. Output pixels from areas beyond the input extent will be set to
-    zero or the NoData value of the input dataset.
+    .. versionadded:: 3.12
 
-.. option:: --add-alpha
+    Selects a subwindow from the source image for copying based on pixel/line
+    location. Pixel/line offsets (``column`` and ``line``) are measured from the
+    left and top of the image.
+    If the subwindow extends beyond the bounds of the source dataset,
+    output pixels will be written with a value of zero, unless a NoData value is
+    defined either the source dataset.
 
-    Adds an alpha mask band to the destination when the source raster has none.
+Standard Options
+----------------
 
-Advanced options
-++++++++++++++++
+.. collapse:: Details
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/co.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

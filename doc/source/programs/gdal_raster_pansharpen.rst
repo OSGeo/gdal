@@ -33,15 +33,44 @@ All bands should be in the same coordinate reference system.
 
 More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
 
-Options
--------
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-The following options are available:
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+
+Program-Specific Options
+------------------------
+
+.. option:: --bit-depth <val>
+
+    Specify the bit depth of the panchromatic and spectral bands (e.g.
+    12). If not specified, the NBITS metadata item from the panchromatic
+    band will be used if it exists.
 
 .. option:: -i, --panchromatic, --input <INPUT>
 
     Dataset with panchromatic band. [required]
 
+.. option:: -j, --num-threads <value>
+
+    Specify number of threads to use to do the resampling and
+    pan-sharpening itself. Can be an integer number or ``ALL_CPUS`` (the default)
+
+.. option:: --nodata <val>
+
+    Specify nodata value for bands. Used for the resampling and
+    pan-sharpening computation itself. If not set, deduced from the
+    input bands, provided they have a consistent setting.
+
+.. option:: -r, --resampling nearest|bilinear|cubic|cubicspline|lanczos|average
+
+    Select a resampling algorithm. ``cubic`` is the default.
+
+.. option:: --spatial-extent-adjustment union|intersection|none|none-without-warning
+
+    Select behavior when bands have not the same extent. See
+    *SpatialExtentAdjustment* documentation in :ref:`gdal_vrttut_pansharpen`
+    ``union`` is the default.
 .. option:: --spectral <spectral_dataset>[,band=<num>]
 
     Dataset with one or several spectral bands. [required]
@@ -51,49 +80,27 @@ The following options are available:
     Otherwise, only the specified (num)th band. The same dataset can be
     repeated several times.
 
-.. include:: gdal_options/of_raster_create_copy.rst
-
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
-
 .. option::  --weights <WEIGHTS>
 
     Specify a weight for the computation of the pseudo panchromatic
     value. There must be as many values as input spectral bands.
 
-.. option:: -r, --resampling nearest|bilinear|cubic|cubicspline|lanczos|average
+Standard Options
+----------------
 
-    Select a resampling algorithm. ``cubic`` is the default.
+.. collapse:: Details
 
-.. option:: --bit-depth <val>
+    .. include:: gdal_options/append_raster.rst
 
-    Specify the bit depth of the panchromatic and spectral bands (e.g.
-    12). If not specified, the NBITS metadata item from the panchromatic
-    band will be used if it exists.
+    .. include:: gdal_options/co.rst
 
-.. option:: --nodata <val>
+    .. include:: gdal_options/if.rst
 
-    Specify nodata value for bands. Used for the resampling and
-    pan-sharpening computation itself. If not set, deduced from the
-    input bands, provided they have a consistent setting.
+    .. include:: gdal_options/oo.rst
 
-.. option:: --spatial-extent-adjustment union|intersection|none|none-without-warning
+    .. include:: gdal_options/of_raster_create_copy.rst
 
-    Select behavior when bands have not the same extent. See
-    *SpatialExtentAdjustment* documentation in :ref:`gdal_vrttut_pansharpen`
-    ``union`` is the default.
-
-.. option:: -j, --num-threads <value>
-
-    Specify number of threads to use to do the resampling and
-    pan-sharpening itself. Can be an integer number or ``ALL_CPUS`` (the default)
-
-
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
-
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

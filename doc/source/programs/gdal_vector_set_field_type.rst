@@ -24,25 +24,24 @@ Description
 
 ``set-field-type`` can also be used as a step of :ref:`gdal_vector_pipeline`.
 
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-Standard options
-++++++++++++++++
+.. include:: gdal_cli_include/gdalg_vector_compatible.rst
 
-.. include:: gdal_options/of_vector.rst
-
-.. include:: gdal_options/co_vector.rst
-
-.. include:: gdal_options/lco.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. include:: gdal_options/active_layer.rst
+Program-Specific Options
+------------------------
 
 .. option:: --field-name <FIELD-NAME>
 
     The name of the field to modify.
 
     Mutually exclusive with :option:`--src-field-type`. One of them is required.
+
+.. option:: --field-type, --dst-field-type <FIELD-TYPE>
+
+    The new field type. Valid values are: ``Integer``, ``IntegerList``, ``Real``, ``RealList``, ``String``, ``StringList``, ``Binary``,  ` ``Date``, ``Time``, ``DateTime``, ``Integer64``, ``Integer64List``.
+    A field subtype can be specified instead of a field type. Valid values are: ``Boolean``, ``Int16``, ``Float32``, ``JSON``, ``UUID``. The field type will be derived from the subtype.
 
 .. option:: --src-field-type <FIELD-TYPE>
 
@@ -52,26 +51,40 @@ Standard options
 
     Mutually exclusive with :option:`--field-name`. One of them is required.
 
-.. option:: --field-type, --dst-field-type <FIELD-TYPE>
+Standard Options
+----------------
 
-    The new field type. Valid values are: ``Integer``, ``IntegerList``, ``Real``, ``RealList``, ``String``, ``StringList``, ``Binary``,  ` ``Date``, ``Time``, ``DateTime``, ``Integer64``, ``Integer64List``.
-    A field subtype can be specified instead of a field type. Valid values are: ``Boolean``, ``Int16``, ``Float32``, ``JSON``, ``UUID``. The field type will be derived from the subtype.
+.. collapse:: Details
 
+    .. include:: gdal_options/active_layer.rst
 
-Advanced options
-++++++++++++++++
+    .. include:: gdal_options/append_vector.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/co_vector.rst
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_options/output-oo.rst
+    .. include:: gdal_options/input_layer.rst
 
+    .. include:: gdal_options/lco.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/oo.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/output_layer.rst
+
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst
 
 Examples
 --------

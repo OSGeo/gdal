@@ -32,10 +32,15 @@ unless :option:`--no-update-overviews` is specified.
 Starting with GDAL 3.13, :program:`gdal raster update` can be used as a
 step of a pipeline, with the input dataset being the output of the previous step.
 
-Standard options
-++++++++++++++++
+Program-Specific Options
+------------------------
 
-.. include:: gdal_options/warp_resampling.rst
+.. option:: --et, --error-threshold <ERROR-THRESHOLD>
+
+    Error threshold for transformation approximation, expressed as a number of
+    input pixels. Defaults to 0.125 pixels unless the ``RPC_DEM`` transformer
+    option is specified, in which case an exact transformer, i.e.
+    ``--error-threshold=0``, will be used.
 
 .. option:: --geometry <WKT_or_GeoJSON>
 
@@ -60,25 +65,24 @@ Standard options
 
     Do not update existing overviews.
 
-Advanced options
-++++++++++++++++
+.. option:: --to, --transform-option <NAME>=<VALUE>
+
+    Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
+    See :cpp:func:`GDALCreateRPCTransformerV2()` for RPC specific options.
+
+.. include:: gdal_options/warp_resampling.rst
 
 .. option:: --wo, --warp-option <NAME>=<VALUE>
 
     Set a warp option.  The :cpp:member:`GDALWarpOptions::papszWarpOptions` docs show all options.
     Multiple options may be listed.
 
-.. option:: --to <NAME>=<VALUE>
+Program-Specific Options
+------------------------
 
-    Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
-    See :cpp:func:`GDALCreateRPCTransformerV2()` for RPC specific options.
+.. include:: gdal_options/if.rst
 
-.. option:: --et, --error-threshold <ERROR-THRESHOLD>
-
-    Error threshold for transformation approximation, expressed as a number of
-    input pixels. Defaults to 0.125 pixels unless the ``RPC_DEM`` transformer
-    option is specified, in which case an exact transformer, i.e.
-    ``--error-threshold=0``, will be used.
+.. include:: gdal_options/oo.rst
 
 Examples
 --------

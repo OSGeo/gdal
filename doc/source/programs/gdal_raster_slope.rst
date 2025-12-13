@@ -55,18 +55,29 @@ by using scale=370400 (if elevation is in feet) or scale=111120 (if elevation is
 meters).  For locations not near the equator, the :option:`--xscale` value can be taken as
 the :option:`--yscale` value multiplied by the cosine of the mean latitude of the raster.
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/co.rst
 
-.. include:: gdal_options/overwrite.rst
+Program-Specific Options
+------------------------
 
 .. option:: -b, --band <BAND>
 
     Index (starting at 1) of the band to which the slope must be computed.
+
+.. option:: --gradient-alg Horn|ZevenbergenThorne
+
+    Algorithm used to compute terrain gradient. The default is ``Horn``.
+    The literature suggests Zevenbergen & Thorne to be more suited to smooth
+    landscapes, whereas Horn's formula to perform better on rougher terrain.
+
+.. option:: --no-edges
+
+    Do not try to interpolate values at dataset edges or close to nodata values
+
 
 .. option:: --unit degree|percent
 
@@ -102,21 +113,24 @@ Standard options
 
     If :option:`--yscale` is specified, :option:`--xscale` must also be specified.
 
-.. option:: --gradient-alg Horn|ZevenbergenThorne
 
-    Algorithm used to compute terrain gradient. The default is ``Horn``.
-    The literature suggests Zevenbergen & Thorne to be more suited to smooth
-    landscapes, whereas Horn's formula to perform better on rougher terrain.
+Standard Options
+----------------
 
-.. option:: --no-edges
+.. collapse:: Details
 
-    Do not try to interpolate values at dataset edges or close to nodata values
+    .. include:: gdal_options/append_raster.rst
 
+    .. include:: gdal_options/co.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
+
 
 Examples
 --------

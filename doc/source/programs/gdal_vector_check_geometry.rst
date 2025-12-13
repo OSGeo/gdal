@@ -43,37 +43,67 @@ Validity/simplicity checking is performed by the GEOS library and should be cons
    Curved geometries are linearized before converting to GEOS. Linearized geometries may be valid/simple where the original geometries are not,
    and vice-versa.
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+
+Program-Specific Options
+------------------------
 
 .. option:: --geometry-field
 
    Specify the name of the geometry field to test, for layers having multiple geometry fields. By default the first
    geometry field will be used.
 
+.. option:: --include-field
+
+   .. versionadded:: 3.12.1
+
+   Optional field(s) to copy from the input features to the output.
+
 .. option:: --include-valid
 
    Include features for valid/simple geometries in the output, maintaining 1:1 correspondence between input and output features.
 
-.. include:: gdal_options/of_vector.rst
+.. include:: gdal_options/input_layer.rst
 
-.. include:: gdal_options/co_vector.rst
+.. option:: --output-layer
 
-.. include:: options/lco.rst
+   Specifies the name of the layer to which features will be written. If not
+   specified and there is a single input layer, the name "error_location" will
+   be used. If not specified and there are multiple input layers, features
+   for each input layer will be written to a separate output layer in the
+   format "error_location_{INPUT_LAYER}".
 
-.. include:: gdal_options/overwrite.rst
+Standard Options
+----------------
 
-Advanced options
-++++++++++++++++
+.. collapse:: Details
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/append_vector.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/co_vector.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+    .. include:: gdal_options/lco.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst
 
 Examples
 --------

@@ -55,22 +55,62 @@ by using scale=370400 (if elevation is in feet) or scale=111120 (if elevation is
 meters).  For locations not near the equator, the :option:`--xscale` value can be taken as
 the :option:`--yscale` value multiplied by the cosine of the mean latitude of the raster.
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/co.rst
 
-.. include:: gdal_options/overwrite.rst
+Program-Specific Options
+------------------------
+
+.. option:: --altitude <ALTITUDE>
+
+    Altitude of the light, in degrees. 90 if the light comes from above the
+    DEM, 0 if it is raking light. The default value is 45 degree.
+
+    This option is mutually exclusive with ``--variant=Igor``.
+
+.. option:: --azimuth <AZIMUTH>
+
+    Azimuth of the light, in degrees. 0 if it comes from the top of the raster,
+    90 from the east, ... The default value, 315, should rarely be changed as it
+    is the value generally used to generate shaded maps.
+
+    This option is mutually exclusive with ``--variant=multidirectional``.
 
 .. option:: -b, --band <BAND>
 
     Index (starting at 1) of the band to which the hillshade must be computed.
 
-.. option:: -z, --zfactor <ZFACTOR>
+.. option:: --gradient-alg Horn|ZevenbergenThorne
 
-    Vertical exaggeration used to pre-multiply the elevations
+    Algorithm used to compute terrain gradient. The default is ``Horn``.
+    The literature suggests Zevenbergen & Thorne to be more suited to smooth
+    landscapes, whereas Horn's formula to perform better on rougher terrain.
+
+.. option:: --no-edges
+
+    Do not try to interpolate values at dataset edges or close to nodata values
+
+.. option:: --variant regular|combined|multidirectional|Igor
+
+    Variant of the hillshading algorithm:
+
+    - ``regular``: the hillshade values combines the computed slope with the
+      azimuth and altitude of the illumination according to:
+
+        .. math::
+            {Hillshade} = 1 + 254.0 * ((\sin(altitude) * cos(slope)) + (cos(altitude) * sin(slope) * cos(azimuth - \frac{\pi}{2} - aspect)))
+
+    - ``combined``: combined shading, a combination of slope and oblique shading.
+    - ``multidirectional``: multidirectional shading, a combination of hillshading
+      illuminated from 225 deg, 270 deg, 315 deg, and 360 deg azimuth.
+      Applies the formula of http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf
+    - ``Igor``: shading which tries to minimize effects on other map features
+      beneath. Igor's hillshading uses formula from Maperitive:
+      http://maperitive.net/docs/Commands/GenerateReliefImageIgor.html
+
 
 .. option:: --xscale <scale>
 
@@ -106,54 +146,28 @@ Standard options
 
     If :option:`--yscale` is specified, :option:`--xscale` must also be specified.
 
-.. option:: --azimuth <AZIMUTH>
 
-    Azimuth of the light, in degrees. 0 if it comes from the top of the raster,
-    90 from the east, ... The default value, 315, should rarely be changed as it
-    is the value generally used to generate shaded maps.
+.. option:: -z, --zfactor <ZFACTOR>
 
-    This option is mutually exclusive with ``--variant=multidirectional``.
+    Vertical exaggeration used to pre-multiply the elevations
 
-.. option:: --altitude <ALTITUDE>
+Standard Options
+----------------
 
-    Altitude of the light, in degrees. 90 if the light comes from above the
-    DEM, 0 if it is raking light. The default value is 45 degree.
+.. collapse:: Details
 
-    This option is mutually exclusive with ``--variant=Igor``.
+    .. include:: gdal_options/append_raster.rst
 
-.. option:: --gradient-alg Horn|ZevenbergenThorne
+    .. include:: gdal_options/co.rst
 
-    Algorithm used to compute terrain gradient. The default is ``Horn``.
-    The literature suggests Zevenbergen & Thorne to be more suited to smooth
-    landscapes, whereas Horn's formula to perform better on rougher terrain.
+    .. include:: gdal_options/if.rst
 
-.. option:: --variant regular|combined|multidirectional|Igor
+    .. include:: gdal_options/oo.rst
 
-    Variant of the hillshading algorithm:
+    .. include:: gdal_options/of_raster_create_copy.rst
 
-    - ``regular``: the hillshade values combines the computed slope with the
-      azimuth and altitude of the illumination according to:
+    .. include:: gdal_options/overwrite.rst
 
-        .. math::
-            {Hillshade} = 1 + 254.0 * ((\sin(altitude) * cos(slope)) + (cos(altitude) * sin(slope) * cos(azimuth - \frac{\pi}{2} - aspect)))
-
-    - ``combined``: combined shading, a combination of slope and oblique shading.
-    - ``multidirectional``: multidirectional shading, a combination of hillshading
-      illuminated from 225 deg, 270 deg, 315 deg, and 360 deg azimuth.
-      Applies the formula of http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf
-    - ``Igor``: shading which tries to minimize effects on other map features
-      beneath. Igor's hillshading uses formula from Maperitive:
-      http://maperitive.net/docs/Commands/GenerateReliefImageIgor.html
-
-.. option:: --no-edges
-
-    Do not try to interpolate values at dataset edges or close to nodata values
-
-
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
-
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
 Examples
 --------

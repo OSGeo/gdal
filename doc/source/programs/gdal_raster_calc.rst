@@ -41,18 +41,13 @@ disabled with :option:`--no-check-crs`.
 
 Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeline`.
 
-The following options are available:
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. option:: -i [<name>=]<input>
-
-    Select an input dataset to be processed. If more than one input dataset is provided,
-    each dataset must be prefixed with a name to which it will will be referenced in :option:`--calc`.
+Program-Specific Options
+------------------------
 
 .. option:: --calc
 
@@ -89,6 +84,7 @@ The following options are available:
     Arguments to functions are passed within parentheses, like ``sum(k=1)``,
     ``min(propagateNoData=true)`` or ``interpolate_linear(t0=1,dt=1,t=10)``.
 
+
 .. option:: --dialect muparser|builtin
 
     .. versionadded:: 3.12
@@ -111,6 +107,11 @@ The following options are available:
 
     And ``--flatten --dialect=builtin --calc mean`` will compute a single band
     with the average of all 4 input bands.
+
+.. option:: -i [<name>=]<input>
+
+    Select an input dataset to be processed. If more than one input dataset is provided,
+    each dataset must be prefixed with a name to which it will will be referenced in :option:`--calc`.
 
 .. option:: --no-check-extent
 
@@ -136,10 +137,24 @@ The following options are available:
 
     If set, a NoData value in any input dataset used an in expression will cause the output value to be NoData.
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+Standard Options
+----------------
 
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+.. collapse:: Details
+
+    .. include:: gdal_options/append_raster.rst
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/ot.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

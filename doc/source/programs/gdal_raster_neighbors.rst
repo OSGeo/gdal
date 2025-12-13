@@ -41,16 +41,14 @@ This algorithm can be part of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeli
 
       Raster dataset before (left) and after (right) summation with a 3x3 equal-weight kernel. NoData values are considered zero for the purpose of the summation. Edge cells are replicated where the kernel window extends beyond the edge of the dataset.
 
-Options
--------
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-The following options are available:
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/of_raster_create_copy.rst
 
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
+Program-Specific Options
+------------------------
 
 .. option:: --band <BAND>
 
@@ -107,18 +105,6 @@ The following options are available:
     If :option:`--kernel` is specified several times, there will one output band for each
     combination of kernel and input band.
 
-.. option:: --size <SIZE>
-
-    Size of the kernel. Odd number between 3 and 99.
-
-    .. note:: Computation time is proportional to the square of the kernel size.
-
-    For kernels ``edge1``, ``edge2``, ``sharpen``, ``u``, ``v``, ``gaussian``, ``equal``, defaults to 3.
-
-    For kernel ``unsharp-masking``, defaults to 5.
-
-    For kernels specified through their coefficient values, it is deduced from the shape of the matrix.
-
 .. option:: --method sum|mean|min|max|stddev|median|mode
 
     Function to apply to the weighted source pixels in the neighborhood defined by the kernel.
@@ -145,11 +131,36 @@ The following options are available:
     :option:`--nodata` is not specified, :program:`gdal raster neighbors` will use a NoData value from the first
     source dataset to have one.
 
+.. option:: --size <SIZE>
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    Size of the kernel. Odd number between 3 and 99.
 
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+    .. note:: Computation time is proportional to the square of the kernel size.
+
+    For kernels ``edge1``, ``edge2``, ``sharpen``, ``u``, ``v``, ``gaussian``, ``equal``, defaults to 3.
+
+    For kernel ``unsharp-masking``, defaults to 5.
+
+    For kernels specified through their coefficient values, it is deduced from the shape of the matrix.
+
+Standard Options
+----------------
+
+.. collapse:: Details
+
+    .. include:: gdal_options/append_raster.rst
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/ot.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

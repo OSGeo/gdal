@@ -32,14 +32,13 @@ is also available.
 
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
+Program-Specific Options
+------------------------
 
 .. option:: --input <INPUT>
 
@@ -47,9 +46,13 @@ Standard options
 
    When using the ``hsv-value`` blending operator, this must be a three-band or four-band Byte raster.
 
-.. option:: --overlay <OVERLAY>
+.. option:: --opacity <OPACITY>
 
-   Name of the overlay dataset. Required
+    Opacity to use when blending the overlay dataset, as a percentage
+    between 0 and 100. 0 means that the overlay dataset is considered fully
+    transparent. 100 means that the overlay dataset is blended at the maximum
+    of its alpha channel.
+    Defaults to 100.
 
 .. option:: --operator src-over|hsv-value
 
@@ -102,19 +105,28 @@ Standard options
       If the the alpha channel of the input dataset is present, it is preserved unchanged.
 
 
-.. option:: --opacity <OPACITY>
+.. option:: --overlay <OVERLAY>
 
-    Opacity to use when blending the overlay dataset, as a percentage
-    between 0 and 100. 0 means that the overlay dataset is considered fully
-    transparent. 100 means that the overlay dataset is blended at the maximum
-    of its alpha channel.
-    Defaults to 100.
+   Name of the overlay dataset. Required
 
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+Standard Options
+----------------
 
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+.. collapse:: Details
+
+    .. include:: gdal_options/append_raster.rst
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
+
 
 Examples
 --------

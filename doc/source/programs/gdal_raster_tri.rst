@@ -34,18 +34,13 @@ compute values at image edges or if a nodata value is found in the 3x3 window,
 by interpolating missing values, unless :option:`--no-edges` is specified, in
 which case a 1-pixel border around the image will be set with the nodata value.
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. option:: -b, --band <BAND>
-
-    Index (starting at 1) of the band to which the TRI must be computed.
+Program-Specific Options
+------------------------
 
 .. option:: --algorithm Riley|Wilson
 
@@ -60,15 +55,30 @@ Standard options
       surrounding cells. This is recommended for bathymetric use cases.
       It is implemented from Wilson et al. 2007, Marine Geodesy 30:3-35.
 
+.. option:: -b, --band <BAND>
+
+    Index (starting at 1) of the band to which the TRI must be computed.
+
 .. option:: --no-edges
 
     Do not try to interpolate values at dataset edges or close to nodata values
 
+Standard Options
+----------------
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+.. collapse:: details
 
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+    .. include:: gdal_options/append_raster.rst
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

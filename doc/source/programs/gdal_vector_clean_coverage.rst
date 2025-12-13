@@ -32,8 +32,17 @@ requires loading the entire dataset into memory at once.
 
 .. note:: This command requires a GDAL build against the GEOS library (version 3.14 or greater).
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+
+Program-Specific Options
+------------------------
+
+.. option:: --input-layer
+
+   Specifies the name of the layer to process. By default, all layers will be processed.
 
 .. option:: --maximum-gap-width <MAXIMUM-GAP-WIDTH>
 
@@ -62,6 +71,12 @@ Standard options
         .. figure:: ../../images/programs/gdal_vector_clean_coverage_merge_max_area.svg
 
            Polygon dataset before cleaning (left), after cleaning with "longest-border" merge strategy (center) and ``--merge-strategy max-area`` (right).
+
+.. option:: --output-layer
+
+   Specifies the name of the layer to which features will be written.
+   By default, the names of the output layers will be the same as the
+   names of the input layers.
    
 .. option:: --snapping-distance <SNAPPING-DISTANCE>
 
@@ -76,27 +91,36 @@ Standard options
            Polygon dataset before cleaning (left), after cleaning with default snapping distance (center), and a more aggressive ``--snapping-distance 0.2`` (right). Note the movement in the
            upper-left corner of the polygon on the right.
 
-.. include:: gdal_options/active_layer.rst
+Standard Options
+----------------
 
-.. include:: gdal_options/of_vector.rst
+.. collapse:: Details
 
-.. include:: gdal_options/co_vector.rst
+    .. include:: gdal_options/active_layer.rst
 
-.. include:: options/lco.rst
+    .. include:: gdal_options/append_vector.rst
 
-.. include:: gdal_options/overwrite.rst
+    .. include:: gdal_options/co_vector.rst
 
-Advanced options
-++++++++++++++++
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/lco.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/oo.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/of_vector.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst
 
 Examples
 --------

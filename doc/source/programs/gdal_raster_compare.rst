@@ -40,17 +40,17 @@ This program can also be used as the last step of a :ref:`raster pipeline <gdal_
 
 The following options are available:
 
-Options
-+++++++
-
-.. option:: --reference <reference-dataset>
-
-    The dataset that is considered correct, referred to as the reference dataset.
+Program-Specific Options
+------------------------
 
 .. option:: --input <input-dataset>
 
     The dataset being compared to the reference dataset, referred to as the input
     dataset.
+
+.. option:: --reference <reference-dataset>
+
+    The dataset that is considered correct, referred to as the reference dataset.
 
 .. option:: --skip-all-optional
 
@@ -67,9 +67,9 @@ Options
 
     Whether to skip exact comparison of binary content.
 
-.. option:: --skip-overview
+.. option:: --skip-crs
 
-    Whether to skip comparison of overviews.
+    Whether to skip comparison of coordinate reference systems (CRS).
 
 .. option:: --skip-geolocation
 
@@ -83,18 +83,26 @@ Options
 
     Whether to skip comparison of metadata
 
+.. option:: --skip-overview
+
+    Whether to skip comparison of overviews.
+
 .. option:: --skip-rpc
 
     Whether to skip comparison of Rational Polynomial Coefficients (RPC) metadata domain.
-
-.. option:: --skip-crs
-
-    Whether to skip comparison of coordinate reference systems (CRS).
 
 .. option:: --skip-subdataset
 
     Whether to ignore comparison of all subdatasets that are part of the dataset.
 
+Standard Options
+----------------
+
+.. collapse:: Details
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
 
 Examples
 --------
