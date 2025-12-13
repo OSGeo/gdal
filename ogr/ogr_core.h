@@ -186,7 +186,7 @@ extern "C++"
             return MaxY - MinY;
         }
 
-        /** Return the center point of the envelope. Envelope must be inistialized, */
+        /** Return the center point of the envelope. Envelope must be initialized. */
         void Center(double &dfX, double &dfY) const
         {
             dfX = MinX + Width() / 2;
