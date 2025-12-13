@@ -55,7 +55,7 @@ content into a TIF file.
 
 To convert a .tpkx file to a GeoTIFF:
 
-``gdal_translate -outsize 1024 1024 "/path/to/my.tpkx output.tif``
+``gdal_translate -outsize 1024 1024 /path/to/my.tpkx output.tif``
 
 Features and Limitations
 ________________________
