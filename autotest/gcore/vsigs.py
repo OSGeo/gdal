@@ -414,7 +414,9 @@ def test_vsigs_open_after_config_option_change(gs_test_config, webserver_port):
     ):
         handler = webserver.SequentialHandler()
         handler.add(
-            "GET", "/test_vsigs_open_after_config_option_change/?delimiter=%2F", 403
+            "GET",
+            "/test_vsigs_open_after_config_option_change/?delimiter=%2F&list-type=2",
+            403,
         )
         handler.add("GET", "/test_vsigs_open_after_config_option_change/test.bin", 403)
         with webserver.install_http_handler(handler):
@@ -439,7 +441,7 @@ def test_vsigs_open_after_config_option_change(gs_test_config, webserver_port):
         handler = webserver.SequentialHandler()
         handler.add(
             "GET",
-            "/test_vsigs_open_after_config_option_change/?delimiter=%2F",
+            "/test_vsigs_open_after_config_option_change/?delimiter=%2F&list-type=2",
             200,
             {"Content-type": "application/xml"},
             """<?xml version="1.0" encoding="UTF-8"?>
@@ -478,13 +480,13 @@ def test_vsigs_readdir(gs_test_config, webserver_port):
         handler = webserver.SequentialHandler()
         handler.add(
             "GET",
-            "/gs_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F",
+            "/gs_fake_bucket2/?delimiter=%2F&list-type=2&prefix=a_dir%2F",
             200,
             {"Content-type": "application/xml"},
             """<?xml version="1.0" encoding="UTF-8"?>
                         <ListBucketResult>
                             <Prefix>a_dir/</Prefix>
-                            <NextMarker>bla</NextMarker>
+                            <NextContinuationToken>bla</NextContinuationToken>
                             <Contents>
                                 <Key>a_dir/resource3.bin</Key>
                                 <LastModified>1970-01-01T00:00:01.000Z</LastModified>
@@ -495,7 +497,7 @@ def test_vsigs_readdir(gs_test_config, webserver_port):
         )
         handler.add(
             "GET",
-            "/gs_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F",
+            "/gs_fake_bucket2/?continuation-token=bla&delimiter=%2F&list-type=2&prefix=a_dir%2F",
             200,
             {"Content-type": "application/xml"},
             """<?xml version="1.0" encoding="UTF-8"?>
@@ -656,7 +658,9 @@ def test_vsigs_fake_rename(gs_test_config, webserver_port):
         )
         handler.add("GET", "/test/target.txt", 404)
         handler.add(
-            "GET", "/test/?delimiter=%2F&max-keys=100&prefix=target.txt%2F", 200
+            "GET",
+            "/test/?delimiter=%2F&list-type=2&max-keys=100&prefix=target.txt%2F",
+            200,
         )
 
         def method(request):
@@ -1889,7 +1893,7 @@ def test_vsigs_rmdirrecursive_empty_dir(gs_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/test_vsigs_rmdirrecursive_empty_dir/?prefix=empty_dir%2F",
+        "/test_vsigs_rmdirrecursive_empty_dir/?list-type=2&prefix=empty_dir%2F",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
