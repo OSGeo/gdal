@@ -157,6 +157,7 @@ nitpick_ignore = [
     ("cpp:identifier", "tm"),
     ("cpp:identifier", "TRUE"),
     ("cpp:identifier", "uint8_t"),
+    ("cpp:identifier", "uint32_t"),
     ("cpp:identifier", "uint64_t"),
     ("cpp:identifier", "va_list"),
     # ODBC specific
@@ -934,6 +935,13 @@ man_pages = [
         "gdal-vector-simplify",
         "Simplify geometries of a vector dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_sort",
+        "gdal-vector-sort",
+        "Spatially sort a vector dataset",
+        [author_dbaston],
         1,
     ),
     (

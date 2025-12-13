@@ -152,9 +152,7 @@ bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 poSrcLayerDefn->GetGeomFieldDefn(geomFieldIndex)
                     ->GetSpatialRef());
 
-            poDstDS->SetSourceGeometryField(geomFieldIndex);
-
-            if (!poDstDS->AddProcessedLayer(*poSrcLayer, defn))
+            if (!poDstDS->AddProcessedLayer(*poSrcLayer, defn, geomFieldIndex))
             {
                 return false;
             }

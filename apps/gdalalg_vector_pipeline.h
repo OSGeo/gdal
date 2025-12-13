@@ -278,10 +278,12 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
     GDALVectorNonStreamingAlgorithmDataset();
     ~GDALVectorNonStreamingAlgorithmDataset() override;
 
-    virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) = 0;
+    virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer,
+                         int geomFieldIndex) = 0;
 
     bool AddProcessedLayer(OGRLayer &srcLayer);
-    bool AddProcessedLayer(OGRLayer &srcLayer, OGRFeatureDefn &dstDefn);
+    bool AddProcessedLayer(OGRLayer &srcLayer, OGRFeatureDefn &dstDefn,
+                           int geomFieldIndex);
     void AddPassThroughLayer(OGRLayer &oLayer);
     int GetLayerCount() const final override;
     OGRLayer *GetLayer(int idx) const final override;

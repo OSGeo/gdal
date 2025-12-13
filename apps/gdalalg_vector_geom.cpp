@@ -178,12 +178,11 @@ void GDALGeosNonStreamingAlgorithmDataset::Cleanup()
 }
 
 bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
-    OGRLayer &srcLayer, OGRLayer &dstLayer, bool sameDefn)
+    OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex, bool sameDefn)
 {
     for (auto &feature : srcLayer)
     {
-        const OGRGeometry *poSrcGeom =
-            feature->GetGeomFieldRef(m_sourceGeometryField);
+        const OGRGeometry *poSrcGeom = feature->GetGeomFieldRef(geomFieldIndex);
 
         if (PolygonsOnly())
         {
@@ -332,13 +331,14 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
 }
 
 bool GDALGeosNonStreamingAlgorithmDataset::Process(OGRLayer &srcLayer,
-                                                   OGRLayer &dstLayer)
+                                                   OGRLayer &dstLayer,
+                                                   int geomFieldIndex)
 {
     Cleanup();
 
     bool sameDefn = dstLayer.GetLayerDefn()->IsSame(srcLayer.GetLayerDefn());
 
-    if (!ConvertInputsToGeos(srcLayer, dstLayer, sameDefn))
+    if (!ConvertInputsToGeos(srcLayer, dstLayer, geomFieldIndex, sameDefn))
     {
         return false;
     }
