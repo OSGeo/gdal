@@ -87,7 +87,8 @@ struct VSIDIRS3 final : public VSIDIRS3Like
 
     bool IssueListDir() override;
     bool
-    AnalyseS3FileList(const std::string &osBaseURL, const char *pszXML,
+    AnalyseS3FileList(bool bIsListObjectV2, const std::string &osBaseURL,
+                      const char *pszXML,
                       const std::set<std::string> &oSetIgnoredStorageClasses,
                       bool &bIsTruncated);
 };
@@ -172,7 +173,7 @@ void VSIDIRWithMissingDirSynthesis::SynthetizeMissingDirectories(
 /************************************************************************/
 
 bool VSIDIRS3::AnalyseS3FileList(
-    const std::string &osBaseURL, const char *pszXML,
+    bool bIsListObjectV2, const std::string &osBaseURL, const char *pszXML,
     const std::set<std::string> &oSetIgnoredStorageClasses, bool &bIsTruncated)
 {
 #if DEBUG_VERBOSE
@@ -263,7 +264,8 @@ bool VSIDIRS3::AnalyseS3FileList(
                         pszKey);
                     continue;
                 }
-                if (bIsTruncated && nRecurseDepth < 0 && pszKey)
+                if (!bIsListObjectV2 && bIsTruncated && nRecurseDepth < 0 &&
+                    pszKey)
                 {
                     osNextMarker = pszKey;
                 }
@@ -437,16 +439,17 @@ bool VSIDIRS3::AnalyseS3FileList(
             }
         }
 
-        if (nRecurseDepth == 0)
+        if (bIsListObjectV2)
+        {
+            if (const char *pszNextContinuationToken = CPLGetXMLValue(
+                    psListBucketResult, "NextContinuationToken", nullptr))
+            {
+                osNextMarker = pszNextContinuationToken;
+            }
+        }
+        else if (nRecurseDepth == 0)
         {
             osNextMarker = CPLGetXMLValue(psListBucketResult, "NextMarker", "");
-        }
-
-        // ListObjectsV2 uses NextContinuationToken instead of NextMarker
-        if (const char *pszNextContinuationToken = CPLGetXMLValue(
-                psListBucketResult, "NextContinuationToken", nullptr))
-        {
-            osNextMarker = pszNextContinuationToken;
         }
     }
     else if (psListAllMyBucketsResultBuckets != nullptr)
@@ -620,7 +623,7 @@ bool VSIDIRS3::IssueListDir()
         {
             bool bIsTruncated;
             bool ret = AnalyseS3FileList(
-                osBaseURL, requestHelper.sWriteFuncData.pBuffer,
+                bUseV2, osBaseURL, requestHelper.sWriteFuncData.pBuffer,
                 VSICurlFilesystemHandlerBase::GetS3IgnoredStorageClasses(),
                 bIsTruncated);
 
@@ -734,7 +737,7 @@ bool VSICurlFilesystemHandlerBase::AnalyseS3FileList(
 {
     VSIDIRS3 oDir(std::string(), this);
     oDir.nMaxFiles = nMaxFiles;
-    bool ret = oDir.AnalyseS3FileList(osBaseURL, pszXML,
+    bool ret = oDir.AnalyseS3FileList(/* bUseV2 = */ false, osBaseURL, pszXML,
                                       oSetIgnoredStorageClasses, bIsTruncated);
     for (const auto &entry : oDir.aoEntries)
     {

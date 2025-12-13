@@ -6592,6 +6592,7 @@ def test_vsis3_list_directory_bucket(aws_test_config, webserver_port):
                 <LastModified>1970-01-01T00:00:01.000Z</LastModified>
                 <Size>123456</Size>
             </Contents>
+            <NextMarker>do_not_use_me</NextMarker> <!-- Apache Ozone includes both NextMarker and NextContinuationToken -->
             <NextContinuationToken>next_continuation_token</NextContinuationToken>
         </ListBucketResult>
         """,
