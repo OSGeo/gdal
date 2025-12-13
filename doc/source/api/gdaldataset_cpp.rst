@@ -52,3 +52,6 @@ GDALRelationship class
 .. spelling:word-list::
      GetMetadataItem
      CREATIONOPTIONLIST
+     nDeltaDegreeOfFreedom
+     padfCovMatrix
+

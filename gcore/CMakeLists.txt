@@ -212,6 +212,33 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
   gdal_target_link_libraries(gcore PRIVATE psapi)
 endif ()
 
+if (GDAL_USE_OPENMP AND OpenMP_C_LIBRARIES)
+    gdal_target_link_libraries(gcore PRIVATE ${OpenMP_C_LIBRARIES})
+endif()
+
+# Build some files with AVX2 and FMA, if those are not by default enabled,
+# and detect at runtime if we can use them
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$" AND
+    (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM" OR
+     CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
+     (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 9)) AND
+    HAVE_AVX2_AT_COMPILE_TIME AND
+    HAVE_FMA_AT_COMPILE_TIME AND
+    (NOT HAVE_AVX2_FMA_WITHOUT_FLAG) AND
+    (NOT "${GDAL_AVX2_FLAG}" STREQUAL "") AND (NOT "${GDAL_FMA_FLAG}" STREQUAL ""))
+
+  target_compile_definitions(gcore PRIVATE CAN_DETECT_AVX2_FMA_AT_RUNTIME)
+
+  add_library(gcore_avx2_fma OBJECT gdal_matrix_avx2_fma.cpp)
+  add_dependencies(gcore_avx2_fma generate_gdal_version_h)
+  target_compile_options(gcore_avx2_fma PRIVATE ${WFLAG_DOUBLE_PROMOTION})
+  gdal_standard_includes(gcore_avx2_fma)
+  set_property(TARGET gcore_avx2_fma PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+  set_property(TARGET gcore_avx2_fma PROPERTY COMPILE_FLAGS ${GDAL_AVX2_FLAG})
+  set_property(TARGET gcore_avx2_fma PROPERTY COMPILE_FLAGS ${GDAL_FMA_FLAG})
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore_avx2_fma>)
+endif ()
+
 include(TargetPublicHeader)
 target_public_header(
   TARGET

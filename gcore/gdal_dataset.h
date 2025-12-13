@@ -516,6 +516,31 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                 GDALProgressFunc pfnProgress,
                                 void *pProgressData, CSLConstList papszOptions);
 
+    CPLErr GetInterBandCovarianceMatrix(
+        double *padfCovMatrix, size_t nSize, int nBandCount = 0,
+        const int *panBandList = nullptr, bool bApproxOK = false,
+        bool bForce = false, bool bWriteIntoMetadata = true,
+        int nDeltaDegreeOfFreedom = 1, GDALProgressFunc pfnProgress = nullptr,
+        void *pProgressData = nullptr);
+
+    std::vector<double> GetInterBandCovarianceMatrix(
+        int nBandCount = 0, const int *panBandList = nullptr,
+        bool bApproxOK = false, bool bForce = false,
+        bool bWriteIntoMetadata = true, int nDeltaDegreeOfFreedom = 1,
+        GDALProgressFunc pfnProgress = nullptr, void *pProgressData = nullptr);
+
+    CPLErr ComputeInterBandCovarianceMatrix(
+        double *padfCovMatrix, size_t nSize, int nBandCount = 0,
+        const int *panBandList = nullptr, bool bApproxOK = false,
+        bool bWriteIntoMetadata = true, int nDeltaDegreeOfFreedom = 1,
+        GDALProgressFunc pfnProgress = nullptr, void *pProgressData = nullptr);
+
+    std::vector<double> ComputeInterBandCovarianceMatrix(
+        int nBandCount = 0, const int *panBandList = nullptr,
+        bool bApproxOK = false, bool bWriteIntoMetadata = true,
+        int nDeltaDegreeOfFreedom = 1, GDALProgressFunc pfnProgress = nullptr,
+        void *pProgressData = nullptr);
+
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
                      ...) const CPL_PRINT_FUNC_FORMAT(4, 5);

@@ -686,7 +686,15 @@ template <> __m128i compeq<uint64_t>(__m128i a, __m128i b)
 #endif
 }
 
-template <> __m128i compeq<int64_t>(__m128i a, __m128i b)
+template <>
+#if defined(__INTEL_CLANG_COMPILER) &&                                         \
+    !(defined(__SSE4_1__) || defined(__AVX__))
+// ICC 2024 has a bug with the following code when -fiopenmp is enabled.
+// Disabling inlining works around it...
+__attribute__((noinline))
+#endif
+__m128i
+compeq<int64_t>(__m128i a, __m128i b)
 {
     return compeq<uint64_t>(a, b);
 }

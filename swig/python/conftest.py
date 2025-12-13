@@ -94,6 +94,7 @@ files = {
     "byte.tif": "autotest/gcore/data/byte.tif",
     "my.tif": "autotest/gcore/data/byte.tif",
     "in.tif": "autotest/gcore/data/byte.tif",
+    "rgbsmall.tif": "autotest/gcore/data/rgbsmall.tif",
     "poly.shp": "autotest/ogr/data/poly.shp",
     "testrat.tif": "autotest/gcore/data/gtiff/testrat.tif",
 }
