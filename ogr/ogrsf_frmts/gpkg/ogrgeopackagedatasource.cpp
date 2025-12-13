@@ -14,6 +14,7 @@
 #include "ogr_geopackage.h"
 #include "ogr_p.h"
 #include "ogr_swq.h"
+#include "gdal_alg.h"
 #include "gdalwarper.h"
 #include "gdal_utils.h"
 #include "ogrgeopackageutility.h"
@@ -9309,7 +9310,7 @@ static void GPKG_ogr_layer_Extent(sqlite3_context *pContext, int /*argc*/,
     }
 
     OGREnvelope sExtent;
-    if (poLayer->GetExtent(&sExtent) != OGRERR_NONE)
+    if (poLayer->GetExtent(&sExtent, true) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s: Cannot fetch layer extent",
                  "ogr_layer_Extent");
@@ -9338,6 +9339,153 @@ static void GPKG_ogr_layer_Extent(sqlite3_context *pContext, int /*argc*/,
     }
     sqlite3_result_blob(pContext, pabyDestBLOB, static_cast<int>(nBLOBDestLen),
                         VSIFree);
+}
+
+/************************************************************************/
+/*                     GPKG_ST_Hilbert_X_Y_TableName()                  */
+/************************************************************************/
+
+static void GPKG_ST_Hilbert_X_Y_TableName(sqlite3_context *pContext,
+                                          [[maybe_unused]] int argc,
+                                          sqlite3_value **argv)
+{
+    CPLAssert(argc == 3);
+    const double dfX = sqlite3_value_double(argv[0]);
+    const double dfY = sqlite3_value_double(argv[1]);
+
+    if (sqlite3_value_type(argv[2]) != SQLITE_TEXT)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s: Invalid argument type for 3rd argument. Text expected",
+                 "ST_Hilbert()");
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    const char *pszLayerName =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[2]));
+    GDALGeoPackageDataset *poDS =
+        static_cast<GDALGeoPackageDataset *>(sqlite3_user_data(pContext));
+    OGRLayer *poLayer = poDS->GetLayerByName(pszLayerName);
+    if (!poLayer)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: unknown layer '%s'",
+                 "ST_Hilbert()", pszLayerName);
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    OGREnvelope sExtent;
+    if (poLayer->GetExtent(&sExtent, true) != OGRERR_NONE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: Cannot fetch layer extent",
+                 "ST_Hilbert()");
+        sqlite3_result_null(pContext);
+        return;
+    }
+    if (!(dfX >= sExtent.MinX && dfY >= sExtent.MinY && dfX <= sExtent.MaxX &&
+          dfY <= sExtent.MaxY))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "ST_Hilbert(): (%g, %g) is not within passed bounding box",
+                 dfX, dfY);
+        sqlite3_result_null(pContext);
+        return;
+    }
+    sqlite3_result_int64(pContext, GDALHilbertCode(&sExtent, dfX, dfY));
+}
+
+/************************************************************************/
+/*                     GPKG_ST_Hilbert_Geom_BBOX()                      */
+/************************************************************************/
+
+static void GPKG_ST_Hilbert_Geom_BBOX(sqlite3_context *pContext, int argc,
+                                      sqlite3_value **argv)
+{
+    CPLAssert(argc == 5);
+    GPkgHeader sHeader;
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    const double dfX = (sHeader.MinX + sHeader.MaxX) / 2;
+    const double dfY = (sHeader.MinY + sHeader.MaxY) / 2;
+
+    OGREnvelope sExtent;
+    sExtent.MinX = sqlite3_value_double(argv[1]);
+    sExtent.MinY = sqlite3_value_double(argv[2]);
+    sExtent.MaxX = sqlite3_value_double(argv[3]);
+    sExtent.MaxY = sqlite3_value_double(argv[4]);
+    if (!(dfX >= sExtent.MinX && dfY >= sExtent.MinY && dfX <= sExtent.MaxX &&
+          dfY <= sExtent.MaxY))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "ST_Hilbert(): (%g, %g) is not within passed bounding box",
+                 dfX, dfY);
+        sqlite3_result_null(pContext);
+        return;
+    }
+    sqlite3_result_int64(pContext, GDALHilbertCode(&sExtent, dfX, dfY));
+}
+
+/************************************************************************/
+/*                     GPKG_ST_Hilbert_Geom_TableName()                 */
+/************************************************************************/
+
+static void GPKG_ST_Hilbert_Geom_TableName(sqlite3_context *pContext, int argc,
+                                           sqlite3_value **argv)
+{
+    CPLAssert(argc == 2);
+    GPkgHeader sHeader;
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    const double dfX = (sHeader.MinX + sHeader.MaxX) / 2;
+    const double dfY = (sHeader.MinY + sHeader.MaxY) / 2;
+
+    if (sqlite3_value_type(argv[1]) != SQLITE_TEXT)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s: Invalid argument type for 2nd argument. Text expected",
+                 "ST_Hilbert()");
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    const char *pszLayerName =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[1]));
+    GDALGeoPackageDataset *poDS =
+        static_cast<GDALGeoPackageDataset *>(sqlite3_user_data(pContext));
+    OGRLayer *poLayer = poDS->GetLayerByName(pszLayerName);
+    if (!poLayer)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: unknown layer '%s'",
+                 "ST_Hilbert()", pszLayerName);
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    OGREnvelope sExtent;
+    if (poLayer->GetExtent(&sExtent, true) != OGRERR_NONE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: Cannot fetch layer extent",
+                 "ST_Hilbert()");
+        sqlite3_result_null(pContext);
+        return;
+    }
+    if (!(dfX >= sExtent.MinX && dfY >= sExtent.MinY && dfX <= sExtent.MaxX &&
+          dfY <= sExtent.MaxY))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "ST_Hilbert(): (%g, %g) is not within passed bounding box",
+                 dfX, dfY);
+        sqlite3_result_null(pContext);
+        return;
+    }
+    sqlite3_result_int64(pContext, GDALHilbertCode(&sExtent, dfX, dfY));
 }
 
 /************************************************************************/
@@ -9481,6 +9629,21 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                             GPKG_ogr_layer_Extent, nullptr, nullptr);
 
     m_pSQLFunctionData = OGRSQLiteRegisterSQLFunctionsCommon(hDB);
+
+    // ST_Hilbert() inspired from https://duckdb.org/docs/stable/core_extensions/spatial/functions#st_hilbert
+    // Override the generic version of OGRSQLiteRegisterSQLFunctionsCommon()
+
+    // X,Y,table_name
+    sqlite3_create_function(hDB, "ST_Hilbert", 2 + 1, UTF8_INNOCUOUS, this,
+                            GPKG_ST_Hilbert_X_Y_TableName, nullptr, nullptr);
+
+    // geometry,minX,minY,maxX,maxY
+    sqlite3_create_function(hDB, "ST_Hilbert", 1 + 4, UTF8_INNOCUOUS, nullptr,
+                            GPKG_ST_Hilbert_Geom_BBOX, nullptr, nullptr);
+
+    // geometry,table_name
+    sqlite3_create_function(hDB, "ST_Hilbert", 1 + 1, UTF8_INNOCUOUS, this,
+                            GPKG_ST_Hilbert_Geom_TableName, nullptr, nullptr);
 }
 
 /************************************************************************/
