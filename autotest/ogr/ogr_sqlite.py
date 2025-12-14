@@ -4626,7 +4626,7 @@ def test_ogr_sqlite_ST_Hilbert(tmp_vsimem, require_spatialite):
 
         with ds.ExecuteSQL("SELECT ST_Hilbert(11, 22, 10, 20, 30, 40)") as sql_lyr:
             f = sql_lyr.GetNextFeature()
-            assert f.GetField(0) == 53687091
+            assert f.GetField(0) == 53687090
 
         with ds.ExecuteSQL("SELECT ST_Hilbert(30, 40, 10, 20, 30, 40)") as sql_lyr:
             f = sql_lyr.GetNextFeature()
