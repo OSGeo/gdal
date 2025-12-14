@@ -19,6 +19,7 @@
 #include "gdalalg_vector_buffer.h"
 #include "gdalalg_vector_swap_xy.h"
 
+#include <algorithm>
 #include <cinttypes>
 
 //! @cond Doxygen_Suppress
@@ -178,8 +179,16 @@ void GDALGeosNonStreamingAlgorithmDataset::Cleanup()
 }
 
 bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
-    OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex, bool sameDefn)
+    OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex, bool sameDefn,
+    GDALProgressFunc pfnProgress, void *pProgressData)
 {
+    const GIntBig nLayerFeatures = srcLayer.TestCapability(OLCFastFeatureCount)
+                                       ? srcLayer.GetFeatureCount(false)
+                                       : -1;
+    const double dfInvLayerFeatures =
+        1.0 / std::max(1.0, static_cast<double>(nLayerFeatures));
+    const double dfProgressRatio = dfInvLayerFeatures * 0.5;
+
     for (auto &feature : srcLayer)
     {
         const OGRGeometry *poSrcGeom = feature->GetGeomFieldRef(geomFieldIndex);
@@ -239,13 +248,23 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
             newFeature->SetFID(feature->GetFID());
             m_apoFeatures.push_back(std::move(newFeature));
         }
+
+        if (pfnProgress && nLayerFeatures > 0 &&
+            !pfnProgress(static_cast<double>(m_apoFeatures.size()) *
+                             dfProgressRatio,
+                         "", pProgressData))
+        {
+            ReportError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
+            return false;
+        }
     }
 
     return true;
 }
 
 bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
-    OGRLayer &dstLayer)
+    OGRLayer &dstLayer, GDALProgressFunc pfnProgress, void *pProgressData,
+    double dfProgressStart, double dfProgressRatio)
 {
     const OGRSpatialReference *poResultSRS =
         dstLayer.GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
@@ -325,6 +344,15 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
         }
 
         m_apoFeatures[i].reset();
+
+        if (pfnProgress &&
+            !pfnProgress(dfProgressStart +
+                             static_cast<double>(i) * dfProgressRatio,
+                         "", pProgressData))
+        {
+            ReportError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
+            return false;
+        }
     }
 
     return true;
@@ -332,13 +360,17 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
 
 bool GDALGeosNonStreamingAlgorithmDataset::Process(OGRLayer &srcLayer,
                                                    OGRLayer &dstLayer,
-                                                   int geomFieldIndex)
+                                                   int geomFieldIndex,
+                                                   GDALProgressFunc pfnProgress,
+                                                   void *pProgressData)
 {
     Cleanup();
 
-    bool sameDefn = dstLayer.GetLayerDefn()->IsSame(srcLayer.GetLayerDefn());
+    const bool sameDefn =
+        dstLayer.GetLayerDefn()->IsSame(srcLayer.GetLayerDefn());
 
-    if (!ConvertInputsToGeos(srcLayer, dstLayer, geomFieldIndex, sameDefn))
+    if (!ConvertInputsToGeos(srcLayer, dstLayer, geomFieldIndex, sameDefn,
+                             pfnProgress, pProgressData))
     {
         return false;
     }
@@ -348,7 +380,15 @@ bool GDALGeosNonStreamingAlgorithmDataset::Process(OGRLayer &srcLayer,
         return false;
     }
 
-    return ConvertOutputsFromGeos(dstLayer);
+    const GIntBig nLayerFeatures = srcLayer.TestCapability(OLCFastFeatureCount)
+                                       ? srcLayer.GetFeatureCount(false)
+                                       : -1;
+    const double dfProgressStart = nLayerFeatures > 0 ? 0.5 : 0.0;
+    const double dfProgressRatio =
+        (nLayerFeatures > 0 ? 0.5 : 1.0) /
+        std::max(1.0, static_cast<double>(m_apoFeatures.size()));
+    return ConvertOutputsFromGeos(dstLayer, pfnProgress, pProgressData,
+                                  dfProgressStart, dfProgressRatio);
 }
 
 #endif

@@ -99,37 +99,51 @@ class GDALVectorSimplifyCoverageOutputDataset final
 GDALVectorSimplifyCoverageOutputDataset::
     ~GDALVectorSimplifyCoverageOutputDataset() = default;
 
-bool GDALVectorSimplifyCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
+bool GDALVectorSimplifyCoverageAlgorithm::RunStep(
+    GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     auto poDstDS =
         std::make_unique<GDALVectorSimplifyCoverageOutputDataset>(m_opts);
 
-    bool bFoundActiveLayer = false;
+    GDALVectorAlgorithmLayerProgressHelper progressHelper(ctxt);
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {
         if (m_activeLayer.empty() ||
             m_activeLayer == poSrcLayer->GetDescription())
         {
-            if (!poDstDS->AddProcessedLayer(*poSrcLayer))
-            {
-                return false;
-            }
-            bFoundActiveLayer = true;
+            progressHelper.AddProcessedLayer(*poSrcLayer);
         }
         else
         {
-            poDstDS->AddPassThroughLayer(*poSrcLayer);
+            progressHelper.AddPassThroughLayer(*poSrcLayer);
         }
     }
 
-    if (!bFoundActiveLayer)
+    if (!progressHelper.HasProcessedLayers())
     {
         ReportError(CE_Failure, CPLE_AppDefined,
                     "Specified layer '%s' was not found",
                     m_activeLayer.c_str());
         return false;
+    }
+
+    for (auto [poSrcLayer, bProcessed, layerProgressFunc, layerProgressData] :
+         progressHelper)
+    {
+        if (bProcessed)
+        {
+            if (!poDstDS->AddProcessedLayer(*poSrcLayer, layerProgressFunc,
+                                            layerProgressData.get()))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            poDstDS->AddPassThroughLayer(*poSrcLayer);
+        }
     }
 
     m_outputDataset.Set(std::move(poDstDS));

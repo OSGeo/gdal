@@ -207,8 +207,8 @@ class GDALGeosNonStreamingAlgorithmDataset
 
     CPL_DISALLOW_COPY_ASSIGN(GDALGeosNonStreamingAlgorithmDataset)
 
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer,
-                 int geomFieldIndex) override;
+    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex,
+                 GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     virtual bool ProcessGeos() = 0;
 
@@ -226,9 +226,13 @@ class GDALGeosNonStreamingAlgorithmDataset
 
   private:
     bool ConvertInputsToGeos(OGRLayer &srcLayer, OGRLayer &dstLayer,
-                             int geomFieldIndex, bool sameDefn);
+                             int geomFieldIndex, bool sameDefn,
+                             GDALProgressFunc pfnProgress, void *pProgressData);
 
-    bool ConvertOutputsFromGeos(OGRLayer &dstLayer);
+    bool ConvertOutputsFromGeos(OGRLayer &dstLayer,
+                                GDALProgressFunc pfnProgress,
+                                void *pProgressData, double dfProgressStart,
+                                double dfProgressRatio);
 
     void Cleanup();
 

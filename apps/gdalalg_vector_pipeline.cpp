@@ -528,7 +528,8 @@ GDALVectorNonStreamingAlgorithmDataset::
 /************************************************************************/
 
 bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
-    OGRLayer &srcLayer, OGRFeatureDefn &dstDefn, int geomFieldIndex)
+    OGRLayer &srcLayer, OGRFeatureDefn &dstDefn, int geomFieldIndex,
+    GDALProgressFunc pfnProgress, void *pProgressData)
 {
     CPLStringList aosOptions;
     if (srcLayer.TestCapability(OLCStringsAsUTF8))
@@ -539,15 +540,17 @@ bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
     OGRMemLayer *poDstLayer = m_ds->CreateLayer(dstDefn, aosOptions.List());
     m_layers.push_back(poDstLayer);
 
-    const bool bRet = Process(srcLayer, *poDstLayer, geomFieldIndex);
+    const bool bRet = Process(srcLayer, *poDstLayer, geomFieldIndex,
+                              pfnProgress, pProgressData);
     poDstLayer->SetUpdatable(false);
     return bRet;
 }
 
 bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
-    OGRLayer &srcLayer)
+    OGRLayer &srcLayer, GDALProgressFunc pfnProgress, void *pProgressData)
 {
-    return AddProcessedLayer(srcLayer, *srcLayer.GetLayerDefn(), 0);
+    return AddProcessedLayer(srcLayer, *srcLayer.GetLayerDefn(), 0, pfnProgress,
+                             pProgressData);
 }
 
 /************************************************************************/
@@ -597,6 +600,102 @@ int GDALVectorNonStreamingAlgorithmDataset::TestCapability(
     }
 
     return m_ds->TestCapability(pszCap);
+}
+
+/************************************************************************/
+/*               GDALVectorAlgorithmLayerProgressHelper()               */
+/************************************************************************/
+
+GDALVectorAlgorithmLayerProgressHelper::GDALVectorAlgorithmLayerProgressHelper(
+    GDALProgressFunc pfnProgress, void *pProgressData)
+    : m_pfnProgress(pfnProgress), m_pProgressData(pProgressData)
+{
+}
+
+/************************************************************************/
+/*               GDALVectorAlgorithmLayerProgressHelper()               */
+/************************************************************************/
+
+GDALVectorAlgorithmLayerProgressHelper::GDALVectorAlgorithmLayerProgressHelper(
+    const GDALPipelineStepRunContext &ctxt)
+    : GDALVectorAlgorithmLayerProgressHelper(ctxt.m_pfnProgress,
+                                             ctxt.m_pProgressData)
+{
+}
+
+/************************************************************************/
+/*     GDALVectorAlgorithmLayerProgressHelper::AddProcessedLayer()      */
+/************************************************************************/
+
+void GDALVectorAlgorithmLayerProgressHelper::AddProcessedLayer(
+    OGRLayer &srcLayer)
+{
+    m_apoSrcLayers.emplace_back(&srcLayer, true);
+    if (m_pfnProgress && m_nTotalFeatures >= 0 &&
+        srcLayer.TestCapability(OLCFastFeatureCount))
+    {
+        const auto nLayerFeatures = srcLayer.GetFeatureCount(false);
+        if (nLayerFeatures < 0)
+            m_nTotalFeatures = -1;
+        else
+            m_nTotalFeatures += nLayerFeatures;
+        m_anFeatures.push_back(nLayerFeatures);
+    }
+    else
+    {
+        m_anFeatures.push_back(-1);
+        m_nTotalFeatures = -1;
+    }
+}
+
+/************************************************************************/
+/*     GDALVectorAlgorithmLayerProgressHelper::AddPassThroughLayer()    */
+/************************************************************************/
+
+void GDALVectorAlgorithmLayerProgressHelper::AddPassThroughLayer(
+    OGRLayer &srcLayer)
+{
+    m_apoSrcLayers.emplace_back(&srcLayer, false);
+}
+
+/************************************************************************/
+/*     GDALVectorAlgorithmLayerProgressHelper::iterator::operator*()    */
+/************************************************************************/
+
+GDALVectorAlgorithmLayerProgressHelper::iterator::value_type
+GDALVectorAlgorithmLayerProgressHelper::iterator::operator*() const
+{
+    const double dfProgressStart =
+        m_helper.m_anFeatures.empty() ? 0
+        : m_helper.m_nTotalFeatures > 0
+            ? static_cast<double>(m_nFeatureIdx) /
+                  static_cast<double>(m_helper.m_nTotalFeatures)
+            : static_cast<double>(m_nProcessedLayerIdx) /
+                  std::max(1.0,
+                           static_cast<double>(m_helper.m_anFeatures.size()));
+    const double dfProgressEnd =
+        m_helper.m_anFeatures.empty() ? 0
+        : m_helper.m_nTotalFeatures > 0
+            ? static_cast<double>(m_nFeatureIdx +
+                                  m_helper.m_anFeatures[m_nProcessedLayerIdx]) /
+                  static_cast<double>(m_helper.m_nTotalFeatures)
+            : static_cast<double>(m_nProcessedLayerIdx + 1) /
+                  std::max(1.0,
+                           static_cast<double>(m_helper.m_anFeatures.size()));
+
+    progress_data_unique_ptr pScaledProgressData(nullptr,
+                                                 GDALDestroyScaledProgress);
+    if (m_helper.m_pfnProgress && m_helper.m_apoSrcLayers[m_nLayerIdx].second)
+    {
+        pScaledProgressData.reset(GDALCreateScaledProgress(
+            dfProgressStart, dfProgressEnd, m_helper.m_pfnProgress,
+            m_helper.m_pProgressData));
+    }
+
+    return value_type(m_helper.m_apoSrcLayers[m_nLayerIdx].first,
+                      m_helper.m_apoSrcLayers[m_nLayerIdx].second,
+                      m_helper.m_pfnProgress ? GDALScaledProgress : nullptr,
+                      std::move(pScaledProgressData));
 }
 
 //! @endcond
