@@ -103,7 +103,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get install -y dvipng latexmk texlive-latex-base \
-          texlive-latex-extra git latex-cjk-all texlive-lang-all tex-gyre
+          texlive-latex-extra git latex-cjk-all texlive-lang-all tex-gyre imagemagick
 
       - name: Run mkgdaldist
         shell: bash -l {0}
