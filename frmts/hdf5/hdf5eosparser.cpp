@@ -476,9 +476,9 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                     if (bValid)
                     {
                         if (osGeoFieldName == "Longitude")
-                            aoLongitudeDimensions = aoDimensions;
+                            aoLongitudeDimensions = std::move(aoDimensions);
                         else if (osGeoFieldName == "Latitude")
-                            aoLatitudeDimensions = aoDimensions;
+                            aoLatitudeDimensions = std::move(aoDimensions);
                     }
                 }
             }

@@ -1179,11 +1179,19 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
     {
         if (!psOptions->bResampleAlgSpecifiedByUser && nSrcCount > 0)
         {
-            GDALGetWarpResampleAlg(
-                COGGetResampling(GDALDataset::FromHandle(pahSrcDS[0]),
-                                 aosCreateOptions.List())
-                    .c_str(),
-                psOptions->eResampleAlg);
+            try
+            {
+                GDALGetWarpResampleAlg(
+                    COGGetResampling(GDALDataset::FromHandle(pahSrcDS[0]),
+                                     aosCreateOptions.List())
+                        .c_str(),
+                    psOptions->eResampleAlg);
+            }
+            catch (const std::invalid_argument &)
+            {
+                // Cannot happen actually. Coverity Scan false positive...
+                CPLAssert(false);
+            }
         }
         return true;
     }

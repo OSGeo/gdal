@@ -215,15 +215,15 @@ class CPL_DLL OGRArrowArrayHelper
         {
             constexpr uint32_t INT32_MAX_AS_UINT32 =
                 static_cast<uint32_t>(std::numeric_limits<int32_t>::max());
-            if (nCurLength > INT32_MAX_AS_UINT32 ||
-                nLen > INT32_MAX_AS_UINT32 - nCurLength)
+            if (!(nCurLength <= INT32_MAX_AS_UINT32 &&
+                  nLen <= INT32_MAX_AS_UINT32 - nCurLength))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Too large string or binary content");
                 return nullptr;
             }
             uint32_t nNewSize = nCurLength + static_cast<uint32_t>(nLen);
-            if ((nMaxAlloc >> 31) == 0)
+            if (nMaxAlloc <= INT32_MAX_AS_UINT32)
             {
                 const uint32_t nDoubleSize = 2U * nMaxAlloc;
                 if (nNewSize < nDoubleSize)

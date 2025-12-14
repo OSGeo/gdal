@@ -6364,7 +6364,8 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
             {
                 vsi_l_offset nOffset = 0;
                 vsi_l_offset nSize = 0;
-                IsBlockAvailable(0, &nOffset, &nSize, nullptr);
+                CPL_IGNORE_RET_VAL(
+                    IsBlockAvailable(0, &nOffset, &nSize, nullptr));
                 if (nSize > 0)
                 {
                     const std::string osSubfile(
