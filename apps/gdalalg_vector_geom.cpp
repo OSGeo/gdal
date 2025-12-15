@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "geom" step of "vector pipeline", or "gdal vector geom" standalone
+ * Purpose:  Base classes for some geometry-related vector algorithms
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -11,13 +11,6 @@
  ****************************************************************************/
 
 #include "gdalalg_vector_geom.h"
-#include "gdalalg_vector_set_geom_type.h"
-#include "gdalalg_vector_explode_collections.h"
-#include "gdalalg_vector_make_valid.h"
-#include "gdalalg_vector_segmentize.h"
-#include "gdalalg_vector_simplify.h"
-#include "gdalalg_vector_buffer.h"
-#include "gdalalg_vector_swap_xy.h"
 
 #include <cinttypes>
 
@@ -26,49 +19,6 @@
 #ifndef _
 #define _(x) (x)
 #endif
-
-/************************************************************************/
-/*           GDALVectorGeomAlgorithm::GDALVectorGeomAlgorithm()         */
-/************************************************************************/
-
-GDALVectorGeomAlgorithm::GDALVectorGeomAlgorithm(bool standaloneStep)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      /* standaloneStep = */ false)
-{
-    m_hidden = true;
-
-    RegisterSubAlgorithm<GDALVectorSetGeomTypeAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorExplodeCollectionsAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorMakeValidAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorSegmentizeAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorSimplifyAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorBufferAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorSwapXYAlgorithm>(standaloneStep);
-}
-
-/************************************************************************/
-/*              GDALVectorGeomAlgorithm::WarnIfDeprecated()             */
-/************************************************************************/
-
-void GDALVectorGeomAlgorithm::WarnIfDeprecated()
-{
-    ReportError(CE_Warning, CPLE_AppDefined,
-                "'gdal vector geom' is deprecated in GDAL 3.12, and will be "
-                "removed in GDAL 3.13. Is subcommands are directly available "
-                "under 'gdal vector'");
-}
-
-/************************************************************************/
-/*                GDALVectorGeomAlgorithm::RunStep()                    */
-/************************************************************************/
-
-bool GDALVectorGeomAlgorithm::RunStep(GDALPipelineStepRunContext &)
-{
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "The Run() method should not be called directly on the \"gdal "
-             "vector geom\" program.");
-    return false;
-}
 
 /************************************************************************/
 /*                 GDALVectorGeomAbstractAlgorithm()                    */
@@ -121,9 +71,6 @@ bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     return true;
 }
-
-GDALVectorGeomAlgorithmStandalone::~GDALVectorGeomAlgorithmStandalone() =
-    default;
 
 #ifdef HAVE_GEOS
 
