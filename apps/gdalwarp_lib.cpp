@@ -1230,7 +1230,18 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
                                      dfMinY, dfMaxX, dfMaxY))
     {
         if (!psOptions->bResampleAlgSpecifiedByUser)
-            GDALGetWarpResampleAlg(osResampling, psOptions->eResampleAlg);
+        {
+            try
+            {
+                GDALGetWarpResampleAlg(osResampling, psOptions->eResampleAlg);
+            }
+            catch (const std::invalid_argument &)
+            {
+                // Cannot happen actually. Coverity Scan false positive...
+                CPLAssert(false);
+            }
+        }
+
         psOptions->dfMinX = dfMinX;
         psOptions->dfMinY = dfMinY;
         psOptions->dfMaxX = dfMaxX;

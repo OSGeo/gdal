@@ -12928,6 +12928,7 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
                         "Not enough memory for intermediate computations");
                     return CE_Failure;
                 }
+                // coverity[escape]
                 pabyCurBlockMask[i] = &aabyCurBlockMask[i];
             }
         }
