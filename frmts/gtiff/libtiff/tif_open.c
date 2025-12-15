@@ -308,6 +308,7 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
     TIFF *tif;
     int m;
     const char *cp;
+    tmsize_t size_to_alloc;
 
     /* The following are configuration checks. They should be redundant, but
      * should not compile to any actual code in an optimised release build
@@ -340,7 +341,7 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
     m = _TIFFgetMode(opts, clientdata, mode, module);
     if (m == -1)
         goto bad2;
-    tmsize_t size_to_alloc = (tmsize_t)(sizeof(TIFF) + strlen(name) + 1);
+    size_to_alloc = (tmsize_t)(sizeof(TIFF) + strlen(name) + 1);
     if (opts && opts->max_single_mem_alloc > 0 &&
         size_to_alloc > opts->max_single_mem_alloc)
     {

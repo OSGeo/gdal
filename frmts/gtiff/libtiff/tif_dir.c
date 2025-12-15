@@ -121,7 +121,7 @@ static void setDoubleArrayOneValue(TIFF *tif, double **vpp, double value,
 {
     if (*vpp)
         _TIFFfreeExt(tif, *vpp);
-    *vpp = _TIFFmallocExt(tif, nmemb * sizeof(double));
+    *vpp = (double *)_TIFFmallocExt(tif, nmemb * sizeof(double));
     if (*vpp)
     {
         while (nmemb--)
@@ -1751,7 +1751,7 @@ int TIFFCreateGPSDirectory(TIFF *tif)
  */
 int TIFFDefaultDirectory(TIFF *tif)
 {
-    register TIFFDirectory *td = &tif->tif_dir;
+    TIFFDirectory *td = &tif->tif_dir;
     const TIFFFieldArray *tiffFieldArray;
 
     tiffFieldArray = _TIFFGetFields();

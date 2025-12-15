@@ -682,7 +682,7 @@ static const TIFFField zipFields[] = {
 static void *TIFF_zalloc(void *opaque, unsigned int items, unsigned int size)
 {
     static const char module[] = "TIFF_zalloc";
-    TIFF *tif = opaque;
+    TIFF *tif = (TIFF *)opaque;
 
     if (items > ~(size_t)0 / size)
     {

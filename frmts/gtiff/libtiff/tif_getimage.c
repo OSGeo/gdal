@@ -3311,7 +3311,7 @@ static int BuildMapUaToAa(TIFFRGBAImage *img)
     uint8_t *m;
     uint16_t na, nv;
     assert(img->UaToAa == NULL);
-    img->UaToAa = _TIFFmallocExt(img->tif, 65536);
+    img->UaToAa = (uint8_t *)_TIFFmallocExt(img->tif, 65536);
     if (img->UaToAa == NULL)
     {
         TIFFErrorExtR(img->tif, module, "Out of memory");
@@ -3332,7 +3332,7 @@ static int BuildMapBitdepth16To8(TIFFRGBAImage *img)
     uint8_t *m;
     uint32_t n;
     assert(img->Bitdepth16To8 == NULL);
-    img->Bitdepth16To8 = _TIFFmallocExt(img->tif, 65536);
+    img->Bitdepth16To8 = (uint8_t *)_TIFFmallocExt(img->tif, 65536);
     if (img->Bitdepth16To8 == NULL)
     {
         TIFFErrorExtR(img->tif, module, "Out of memory");

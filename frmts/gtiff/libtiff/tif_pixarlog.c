@@ -120,8 +120,8 @@ static float LogK1, LogK2;
 static void horizontalAccumulateF(uint16_t *wp, int n, int stride, float *op,
                                   float *ToLinearF)
 {
-    register unsigned int cr, cg, cb, ca, mask;
-    register float t0, t1, t2, t3;
+    unsigned int cr, cg, cb, ca, mask;
+    float t0, t1, t2, t3;
 
     if (n >= stride)
     {
@@ -191,8 +191,8 @@ static void horizontalAccumulateF(uint16_t *wp, int n, int stride, float *op,
 static void horizontalAccumulate12(uint16_t *wp, int n, int stride, int16_t *op,
                                    float *ToLinearF)
 {
-    register unsigned int cr, cg, cb, ca, mask;
-    register float t0, t1, t2, t3;
+    unsigned int cr, cg, cb, ca, mask;
+    float t0, t1, t2, t3;
 
 #define SCALE12 2048.0F
 #define CLAMP12(t) (((t) < 3071) ? (uint16_t)(t) : 3071)
@@ -267,7 +267,7 @@ static void horizontalAccumulate12(uint16_t *wp, int n, int stride, int16_t *op,
 static void horizontalAccumulate16(uint16_t *wp, int n, int stride,
                                    uint16_t *op, uint16_t *ToLinear16)
 {
-    register unsigned int cr, cg, cb, ca, mask;
+    unsigned int cr, cg, cb, ca, mask;
 
     if (n >= stride)
     {
@@ -327,7 +327,7 @@ static void horizontalAccumulate16(uint16_t *wp, int n, int stride,
 static void horizontalAccumulate11(uint16_t *wp, int n, int stride,
                                    uint16_t *op)
 {
-    register unsigned int cr, cg, cb, ca, mask;
+    unsigned int cr, cg, cb, ca, mask;
 
     if (n >= stride)
     {
@@ -389,7 +389,7 @@ static void horizontalAccumulate11(uint16_t *wp, int n, int stride,
 static void horizontalAccumulate8(uint16_t *wp, int n, int stride,
                                   unsigned char *op, unsigned char *ToLinear8)
 {
-    register unsigned int cr, cg, cb, ca, mask;
+    unsigned int cr, cg, cb, ca, mask;
 
     if (n >= stride)
     {
@@ -446,8 +446,8 @@ static void horizontalAccumulate8abgr(uint16_t *wp, int n, int stride,
                                       unsigned char *op,
                                       unsigned char *ToLinear8)
 {
-    register unsigned int cr, cg, cb, ca, mask;
-    register unsigned char t0, t1, t2, t3;
+    unsigned int cr, cg, cb, ca, mask;
+    unsigned char t0, t1, t2, t3;
 
     if (n >= stride)
     {
@@ -1146,7 +1146,7 @@ static void horizontalDifferenceF(float *ip, int n, int stride, uint16_t *wp,
 static void horizontalDifference16(unsigned short *ip, int n, int stride,
                                    unsigned short *wp, uint16_t *From14)
 {
-    register int r1, g1, b1, a1, r2, g2, b2, a2, mask;
+    int r1, g1, b1, a1, r2, g2, b2, a2, mask;
 
 /* assumption is unsigned pixel values */
 #undef CLAMP
@@ -1222,7 +1222,7 @@ static void horizontalDifference16(unsigned short *ip, int n, int stride,
 static void horizontalDifference8(unsigned char *ip, int n, int stride,
                                   unsigned short *wp, uint16_t *From8)
 {
-    register int r1, g1, b1, a1, r2, g2, b2, a2, mask;
+    int r1, g1, b1, a1, r2, g2, b2, a2, mask;
 
 #undef CLAMP
 #define CLAMP(v) (From8[(v)])

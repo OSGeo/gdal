@@ -40,16 +40,26 @@
  *       values accordingly.
  */
 
-/* const object should be initialized */
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4132)
-#endif
+/* Forward declarations - definition follows after field arrays.
+ * Note: In C, we can forward declare static const objects and define them later.
+ * In C++, we need extern for the declaration, then define without extern.
+ * Since these are only used within this file via pointers, we use a workaround
+ * that works in both C and C++: declare as extern here, define as static later,
+ * but actually we need a different approach for C++ compatibility.
+ *
+ * For C/C++ compatibility, we define a simple struct that holds the pointer
+ * and initialize it after the arrays are defined.
+ */
+#ifdef __cplusplus
+/* C++ doesn't allow forward declaration of const objects, so we use extern */
+extern const TIFFFieldArray tiffFieldArray;
+extern const TIFFFieldArray exifFieldArray;
+extern const TIFFFieldArray gpsFieldArray;
+#else
+/* C allows this pattern */
 static const TIFFFieldArray tiffFieldArray;
 static const TIFFFieldArray exifFieldArray;
 static const TIFFFieldArray gpsFieldArray;
-#ifdef _MSC_VER
-#pragma warning(pop)
 #endif
 /*--: Rational2Double: --
  * The Rational2Double upgraded libtiff functionality allows the definition and
@@ -479,12 +489,22 @@ static const TIFFField gpsFields[] = {
     {GPSTAG_GPSHPOSITIONINGERROR, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_DOUBLE,  FIELD_CUSTOM, 1, 0, "HorizontalPositioningError", NULL}};
 /* clang-format on */ /* was off for better readability of tag comments */
 
+#ifdef __cplusplus
+/* In C++, the forward declaration used extern, so definitions must not be static */
+const TIFFFieldArray tiffFieldArray = {
+    tfiatImage, 0, TIFFArrayCount(tiffFields), (TIFFField *)tiffFields};
+const TIFFFieldArray exifFieldArray = {
+    tfiatExif, 0, TIFFArrayCount(exifFields), (TIFFField *)exifFields};
+const TIFFFieldArray gpsFieldArray = {
+    tfiatGps, 0, TIFFArrayCount(gpsFields), (TIFFField *)gpsFields};
+#else
 static const TIFFFieldArray tiffFieldArray = {
     tfiatImage, 0, TIFFArrayCount(tiffFields), (TIFFField *)tiffFields};
 static const TIFFFieldArray exifFieldArray = {
     tfiatExif, 0, TIFFArrayCount(exifFields), (TIFFField *)exifFields};
 static const TIFFFieldArray gpsFieldArray = {
     tfiatGps, 0, TIFFArrayCount(gpsFields), (TIFFField *)gpsFields};
+#endif
 
 /*
  *  We have our own local lfind() equivalent to avoid subtle differences
@@ -523,7 +543,7 @@ void _TIFFSetupFields(TIFF *tif, const TIFFFieldArray *fieldarray)
             {
                 if (fld->field_bit == FIELD_CUSTOM && TIFFFieldIsAnonymous(fld))
                 {
-                    _TIFFfreeExt(tif, fld->field_name);
+                    _TIFFfreeExt(tif, (void *)fld->field_name);
                     /* caution: tif_fields[i] must not be the beginning of a
                      * fields-array. Otherwise the following tags are also freed
                      * with the first free().
@@ -795,7 +815,7 @@ int TIFFFieldSetGetCountSize(const TIFFField *fip)
 
 const TIFFField *TIFFFindField(TIFF *tif, uint32_t tag, TIFFDataType dt)
 {
-    TIFFField key = {0, 0, 0, TIFF_NOTYPE, 0, 0, 0, 0, 0, NULL, NULL};
+    TIFFField key = {0, 0, 0, TIFF_NOTYPE, 0, TIFF_SETGET_UNDEFINED, 0, 0, 0, NULL, NULL};
     TIFFField *pkey = &key;
     const TIFFField **ret;
     if (tif->tif_foundfield && tif->tif_foundfield->field_tag == tag &&
@@ -819,7 +839,7 @@ const TIFFField *TIFFFindField(TIFF *tif, uint32_t tag, TIFFDataType dt)
 static const TIFFField *_TIFFFindFieldByName(TIFF *tif, const char *field_name,
                                              TIFFDataType dt)
 {
-    TIFFField key = {0, 0, 0, TIFF_NOTYPE, 0, 0, 0, 0, 0, NULL, NULL};
+    TIFFField key = {0, 0, 0, TIFF_NOTYPE, 0, TIFF_SETGET_UNDEFINED, 0, 0, 0, NULL, NULL};
     TIFFField *pkey = &key;
     const TIFFField **ret;
     if (tif->tif_foundfield &&
@@ -962,8 +982,8 @@ TIFFField *_TIFFCreateAnonField(TIFF *tif, uint32_t tag,
     fld->field_bit = FIELD_CUSTOM;
     fld->field_oktochange = TRUE;
     fld->field_passcount = TRUE;
-    fld->field_name = (char *)_TIFFmallocExt(tif, 32);
-    if (fld->field_name == NULL)
+    char *field_name_buf = (char *)_TIFFmallocExt(tif, 32);
+    if (field_name_buf == NULL)
     {
         _TIFFfreeExt(tif, fld);
         return NULL;
@@ -976,7 +996,8 @@ TIFFField *_TIFFCreateAnonField(TIFF *tif, uint32_t tag,
      * Update:
      *   This special sign is replaced by fld->field_anonymous  flag.
      */
-    (void)snprintf(fld->field_name, 32, "Tag %d", (int)tag);
+    (void)snprintf(field_name_buf, 32, "Tag %d", (int)tag);
+    fld->field_name = field_name_buf;
 
     return fld;
 }

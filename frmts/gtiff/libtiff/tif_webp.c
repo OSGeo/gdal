@@ -246,7 +246,7 @@ static int TWebPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
                 sp->pBuffer = NULL;
             }
 
-            sp->pBuffer = _TIFFmallocExt(tif, buffer_size);
+            sp->pBuffer = (uint8_t *)_TIFFmallocExt(tif, buffer_size);
             if (!sp->pBuffer)
             {
                 TIFFErrorExtR(tif, module, "Cannot allocate buffer");
@@ -623,7 +623,7 @@ static int TWebPPreEncode(TIFF *tif, uint16_t s)
         sp->pBuffer = NULL;
     }
 
-    sp->pBuffer = _TIFFmallocExt(tif, sp->buffer_size);
+    sp->pBuffer = (uint8_t *)_TIFFmallocExt(tif, sp->buffer_size);
     if (!sp->pBuffer)
     {
         TIFFErrorExtR(tif, module, "Cannot allocate buffer");
