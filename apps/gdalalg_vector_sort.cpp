@@ -12,6 +12,7 @@
 
 #include "gdalalg_vector_sort.h"
 
+#include "cpl_enumerate.h"
 #include "cpl_error.h"
 #include "gdal_alg.h"
 #include "gdal_priv.h"
@@ -110,9 +111,8 @@ class GDALVectorHilbertSortDataset
         OGREnvelope oLayerExtent;
 
         std::vector<OGREnvelope> envelopes(features.size());
-        for (size_t i = 0; i < features.size(); i++)
+        for (const auto &[i, poFeature] : cpl::enumerate(features))
         {
-            const OGRFeature *poFeature = features[i].get();
             const OGRGeometry *poGeom =
                 poFeature->GetGeomFieldRef(geomFieldIndex);
 
@@ -220,9 +220,8 @@ class GDALVectorSTRTreeSortDataset
 
         OGREnvelope oGeomExtent;
         std::vector<size_t> nullIndices;
-        for (size_t i = 0; i < features.size(); i++)
+        for (const auto &[i, poFeature] : cpl::enumerate(features))
         {
-            const OGRFeature *poFeature = features[i].get();
             const OGRGeometry *poGeom =
                 poFeature->GetGeomFieldRef(geomFieldIndex);
 
