@@ -156,6 +156,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", // from cpl_vsil_s3.cpp, ogrgeopackagedatasource.cpp, ogrlibkmldatasource.cpp, ogrsqlitedatasource.cpp
    "CPL_VSIL_ZIP_ALLOWED_EXTENSIONS", // from cpl_vsil_gzip.cpp
    "CPL_VSIS3_CREATE_DIR_OBJECT", // from cpl_vsil_s3.cpp
+   "CPL_VSIS3_LIST_OBJECTS_VERSION", // from cpl_vsil_s3.cpp
    "CPL_VSIS3_LIST_UPLOADS_MAX", // from cpl_vsil_s3.cpp
    "CPL_VSIS3_UNLINK_BATCH_SIZE", // from cpl_vsil_s3.cpp
    "CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE", // from cpl_vsil_s3.cpp
