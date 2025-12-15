@@ -21,7 +21,7 @@
 
 // Compute res = A * A.transpose(), by filling only the upper triangle.
 // Do that in a cache friendly way.
-// We accumulate values into the output array, so genrally the caller must
+// We accumulate values into the output array, so generally the caller must
 // have make sure to zero-initialize it before (unless they want to add into it)
 template <class T>
 // CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW because it seems the uses of openmp-simd
