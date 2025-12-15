@@ -159,7 +159,16 @@ def test_gdalalg_vector_sort_null_empty_geometry(alg, method, geom_type):
     alg["method"] = method
     alg["output-format"] = "stream"
 
-    assert alg.Run()
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    assert alg.Run(my_progress)
+
+    assert tab_pct[0] == 1.0
 
     dst_ds = alg.Output()
     dst_lyr = dst_ds.GetLayer(0)

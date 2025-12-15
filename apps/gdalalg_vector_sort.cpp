@@ -20,6 +20,7 @@
 
 #include "ogr_geos.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <limits>
 
@@ -45,7 +46,9 @@ namespace
 
 bool CreateDstFeatures(
     const std::vector<std::unique_ptr<OGRFeature>> &srcFeatures,
-    const std::vector<size_t> &sortedIndices, OGRLayer &dstLayer)
+    const std::vector<size_t> &sortedIndices, OGRLayer &dstLayer,
+    GDALProgressFunc pfnProgress, void *pProgressData, double dfProgressStart,
+    double dfProgressRatio)
 {
     for (size_t iSrcFeature : sortedIndices)
     {
@@ -55,6 +58,15 @@ bool CreateDstFeatures(
 
         if (dstLayer.CreateFeature(poSrcFeature) != OGRERR_NONE)
         {
+            return false;
+        }
+        if (pfnProgress &&
+            !pfnProgress(dfProgressStart +
+                             static_cast<double>(dstLayer.GetFeatureCount()) *
+                                 dfProgressRatio,
+                         "", pProgressData))
+        {
+            CPLError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
             return false;
         }
     }
@@ -69,14 +81,31 @@ class GDALVectorHilbertSortDataset
     using GDALVectorNonStreamingAlgorithmDataset::
         GDALVectorNonStreamingAlgorithmDataset;
 
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer,
-                 int geomFieldIndex) override
+    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex,
+                 GDALProgressFunc pfnProgress, void *pProgressData) override
     {
         std::vector<std::unique_ptr<OGRFeature>> features;
 
+        const GIntBig nLayerFeatures =
+            srcLayer.TestCapability(OLCFastFeatureCount)
+                ? srcLayer.GetFeatureCount(false)
+                : -1;
+        const double dfInvLayerFeatures =
+            1.0 / std::max(1.0, static_cast<double>(nLayerFeatures));
+        const double dfFirstPhaseProgressRatio =
+            dfInvLayerFeatures * (2.0 / 3.0);
         for (auto &feature : srcLayer)
         {
             features.emplace_back(feature.release());
+            if (pfnProgress && nLayerFeatures > 0 &&
+                !pfnProgress(static_cast<double>(features.size()) *
+                                 dfFirstPhaseProgressRatio,
+                             "", pProgressData))
+            {
+                ReportError(CE_Failure, CPLE_UserInterrupt,
+                            "Interrupted by user");
+                return false;
+            }
         }
         OGREnvelope oLayerExtent;
 
@@ -124,7 +153,13 @@ class GDALVectorHilbertSortDataset
             sortedIndices.push_back(sItem.first);
         }
 
-        return CreateDstFeatures(features, sortedIndices, dstLayer);
+        const double dfProgressStart = nLayerFeatures > 0 ? 2.0 / 3.0 : 0.0;
+        const double dfProgressRatio =
+            (nLayerFeatures > 0 ? 1.0 / 3.0 : 1.0) /
+            std::max(1.0, static_cast<double>(features.size()));
+        return CreateDstFeatures(features, sortedIndices, dstLayer, pfnProgress,
+                                 pProgressData, dfProgressStart,
+                                 dfProgressRatio);
     }
 
   private:
@@ -147,15 +182,32 @@ class GDALVectorSTRTreeSortDataset
         }
     }
 
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer,
-                 int geomFieldIndex) override
+    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex,
+                 GDALProgressFunc pfnProgress, void *pProgressData) override
     {
         std::vector<std::unique_ptr<OGRFeature>> features;
         std::vector<size_t> sortedIndices;
 
+        const GIntBig nLayerFeatures =
+            srcLayer.TestCapability(OLCFastFeatureCount)
+                ? srcLayer.GetFeatureCount(false)
+                : -1;
+        const double dfInvLayerFeatures =
+            1.0 / std::max(1.0, static_cast<double>(nLayerFeatures));
+        const double dfFirstPhaseProgressRatio =
+            dfInvLayerFeatures * (2.0 / 3.0);
         for (auto &feature : srcLayer)
         {
             features.emplace_back(feature.release());
+            if (pfnProgress && nLayerFeatures > 0 &&
+                !pfnProgress(static_cast<double>(features.size()) *
+                                 dfFirstPhaseProgressRatio,
+                             "", pProgressData))
+            {
+                ReportError(CE_Failure, CPLE_UserInterrupt,
+                            "Interrupted by user");
+                return false;
+            }
         }
         // TODO: variant of this fn returning unique_ptr
         m_geosContext = OGRGeometry::createGEOSContext();
@@ -221,7 +273,13 @@ class GDALVectorSTRTreeSortDataset
             sortedIndices.push_back(nullInd);
         }
 
-        return CreateDstFeatures(features, sortedIndices, dstLayer);
+        const double dfProgressStart = nLayerFeatures > 0 ? 2.0 / 3.0 : 0.0;
+        const double dfProgressRatio =
+            (nLayerFeatures > 0 ? 1.0 / 3.0 : 1.0) /
+            std::max(1.0, static_cast<double>(features.size()));
+        return CreateDstFeatures(features, sortedIndices, dstLayer, pfnProgress,
+                                 pProgressData, dfProgressStart,
+                                 dfProgressRatio);
     }
 
   private:
@@ -247,7 +305,7 @@ class GDALVectorSTRTreeSortDataset
 
 }  // namespace
 
-bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &)
+bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     std::unique_ptr<GDALVectorNonStreamingAlgorithmDataset> poDstDS;
@@ -270,6 +328,8 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &)
 #endif
     }
 
+    GDALVectorAlgorithmLayerProgressHelper progressHelper(ctxt);
+
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {
         if (m_inputLayerNames.empty() ||
@@ -279,32 +339,45 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &)
             const auto poSrcLayerDefn = poSrcLayer->GetLayerDefn();
             if (poSrcLayerDefn->GetGeomFieldCount() > 0)
             {
-                const int geomFieldIndex =
-                    m_geomField.empty() ? 0
-                                        : poSrcLayerDefn->GetGeomFieldIndex(
-                                              m_geomField.c_str());
-
-                if (geomFieldIndex == -1)
-                {
-                    ReportError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Specified geometry field '%s' does not exist in "
-                        "layer '%s'",
-                        m_geomField.c_str(), poSrcLayer->GetDescription());
-                    return false;
-                }
-
-                if (!poDstDS->AddProcessedLayer(*poSrcLayer,
-                                                *poSrcLayer->GetLayerDefn(),
-                                                geomFieldIndex))
-                {
-                    return false;
-                }
+                progressHelper.AddProcessedLayer(*poSrcLayer);
             }
-            else if (m_inputLayerNames.empty())
+            else
             {
-                poDstDS->AddPassThroughLayer(*poSrcLayer);
+                progressHelper.AddPassThroughLayer(*poSrcLayer);
             }
+        }
+    }
+
+    for (auto [poSrcLayer, bProcessed, layerProgressFunc, layerProgressData] :
+         progressHelper)
+    {
+        if (bProcessed)
+        {
+            const auto poSrcLayerDefn = poSrcLayer->GetLayerDefn();
+            const int geomFieldIndex =
+                m_geomField.empty()
+                    ? 0
+                    : poSrcLayerDefn->GetGeomFieldIndex(m_geomField.c_str());
+
+            if (geomFieldIndex == -1)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Specified geometry field '%s' does not exist in "
+                            "layer '%s'",
+                            m_geomField.c_str(), poSrcLayer->GetDescription());
+                return false;
+            }
+
+            if (!poDstDS->AddProcessedLayer(
+                    *poSrcLayer, *poSrcLayer->GetLayerDefn(), geomFieldIndex,
+                    layerProgressFunc, layerProgressData.get()))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            poDstDS->AddPassThroughLayer(*poSrcLayer);
         }
     }
 
