@@ -10,6 +10,7 @@ autotest/cpp/gdal_unit_test --gtest_filter=-test_cpl.CPLSpawn:test_cpl.CPLGetCur
 rm -f autotest/gcore/vsiaz.py
 rm -f autotest/gcore/vsis3.py
 rm -f autotest/gcore/vsizip.py
+rm -f autotest/gcore/vsioss.py
 
 pytest autotest/alg -k "not test_warp_52 and not test_warp_rpc_source_has_geotransform"
 # Excluded tests starting at test_tiff_read_multi_threaded are due to lack of virtual memory
