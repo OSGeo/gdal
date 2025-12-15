@@ -148,6 +148,43 @@ Spatialite, are also available :
 The raster SQL functions mentioned at :ref:`raster.gpkg.raster`
 are also available.
 
+Since GDAL 3.13, ``ST_Hilbert`` is available. It encodes a (x, y) pair as the
+Hilbert curve index (32-bit unsigned integer), for a curve covering the given
+bounding box.
+
+Four variants are available:
+
+- ``ST_Hilbert(x, y, min_x, min_y, max_x, max_y)``, where (x, y) is the point of
+  interest, and (min_x, min_y, max_x, max_y) a bounding box that contains the point.
+
+- ``ST_Hilbert(x, y, layer_name)``, where (x, y) is the point of
+  interest, and ``layer_name`` the name of a layer whose extent is used as the
+  bounding box for the computation.
+
+- ``ST_Hilbert(geometry, min_x, min_y, max_x, max_y)``, where geometry is a
+  geometry, and (min_x, min_y, max_x, max_y) a bounding box that contains the
+  geometry. The center of the bounding box of the geometry is used as the point
+  to encode.
+
+- ``ST_Hilbert(geometry, layer_name)``, where geometry is a
+  geometry, and ``layer_name`` the name of a layer whose extent is used as the
+  bounding box for the computation.
+  The center of the bounding box of the geometry is used as the point to encode.
+
+This is typically used to spatially sort a set of geometries. Note that the
+:ref:`gdal_vector_sort` program can also be used for that purpose.
+
+::
+
+    gdal vector sql --sql="SELECT * FROM cities ORDER BY ST_Hilbert(geometry, 'cities')" \
+                    --input=cities.gpkg --output=sorted_cities.parquet
+
+or
+
+::
+
+    gdal vector sort --method=hilbert --input=cities.gpkg --output=sorted_cities.parquet
+
 Link with Spatialite
 ~~~~~~~~~~~~~~~~~~~~
 

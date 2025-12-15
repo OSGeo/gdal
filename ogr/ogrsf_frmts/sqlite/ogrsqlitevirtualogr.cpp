@@ -1952,9 +1952,10 @@ static const struct sqlite3_module sOGR2SQLITEModule = {
 
 static OGRLayer *OGR2SQLITE_GetLayer(const char *pszFuncName,
                                      sqlite3_context *pContext, int argc,
-                                     sqlite3_value **argv)
+                                     sqlite3_value **argv,
+                                     int iLayerNameArg = 0)
 {
-    if (argc != 1)
+    if (argc <= iLayerNameArg)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s: %s(): %s", "VirtualOGR",
                  pszFuncName, "Invalid number of arguments");
@@ -1962,7 +1963,7 @@ static OGRLayer *OGR2SQLITE_GetLayer(const char *pszFuncName,
         return nullptr;
     }
 
-    if (sqlite3_value_type(argv[0]) != SQLITE_TEXT)
+    if (sqlite3_value_type(argv[iLayerNameArg]) != SQLITE_TEXT)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s: %s(): %s", "VirtualOGR",
                  pszFuncName, "Invalid argument type");
@@ -1971,7 +1972,7 @@ static OGRLayer *OGR2SQLITE_GetLayer(const char *pszFuncName,
     }
 
     const char *pszVTableName =
-        reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[iLayerNameArg]));
 
     OGR2SQLITEModule *poModule =
         static_cast<OGR2SQLITEModule *>(sqlite3_user_data(pContext));
@@ -1979,8 +1980,8 @@ static OGRLayer *OGR2SQLITE_GetLayer(const char *pszFuncName,
     OGRLayer *poLayer = poModule->GetLayerForVTable(SQLUnescape(pszVTableName));
     if (poLayer == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s: %s(): %s", "VirtualOGR",
-                 pszFuncName, "Unknown virtual table");
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: %s(): %s '%s'", "VirtualOGR",
+                 pszFuncName, "unknown layer", pszVTableName);
         sqlite3_result_null(pContext);
         return nullptr;
     }
@@ -2108,6 +2109,164 @@ static void OGR2SQLITE_ogr_layer_FeatureCount(sqlite3_context *pContext,
         return;
 
     sqlite3_result_int64(pContext, poLayer->GetFeatureCount());
+}
+
+/************************************************************************/
+/*                  OGR2SQLITE_ST_Hilbert_X_Y_TableName()               */
+/************************************************************************/
+
+static void OGR2SQLITE_ST_Hilbert_X_Y_TableName(sqlite3_context *pContext,
+                                                int argc, sqlite3_value **argv)
+{
+    CPLAssert(argc == 3);
+    const double dfX = sqlite3_value_double(argv[0]);
+    const double dfY = sqlite3_value_double(argv[1]);
+
+    OGRLayer *poLayer =
+        OGR2SQLITE_GetLayer("ST_Hilbert", pContext, argc, argv, 2);
+    if (poLayer == nullptr)
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    OGREnvelope sExtent;
+    if (poLayer->GetExtent(&sExtent, true) != OGRERR_NONE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: Cannot fetch layer extent",
+                 "ST_Hilbert()");
+        sqlite3_result_null(pContext);
+        return;
+    }
+    if (!(dfX >= sExtent.MinX && dfY >= sExtent.MinY && dfX <= sExtent.MaxX &&
+          dfY <= sExtent.MaxY))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "ST_Hilbert(): (%g, %g) is not within passed bounding box",
+                 dfX, dfY);
+        sqlite3_result_null(pContext);
+        return;
+    }
+    sqlite3_result_int64(pContext, GDALHilbertCode(&sExtent, dfX, dfY));
+}
+
+/************************************************************************/
+/*                      OGR2SQLITE_GetGeom()                            */
+/************************************************************************/
+
+static std::unique_ptr<OGRGeometry>
+OGR2SQLITE_GetGeom(sqlite3_context * /*pContext*/, int /* argc */,
+                   sqlite3_value **argv, int *pnSRSId, int iGeomArg)
+{
+    if (sqlite3_value_type(argv[iGeomArg]) != SQLITE_BLOB)
+    {
+        return nullptr;
+    }
+
+    const GByte *pabySLBLOB =
+        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[iGeomArg]));
+    int nBLOBLen = sqlite3_value_bytes(argv[iGeomArg]);
+    OGRGeometry *poGeom = nullptr;
+    if (OGRSQLiteLayer::ImportSpatiaLiteGeometry(pabySLBLOB, nBLOBLen, &poGeom,
+                                                 pnSRSId) != OGRERR_NONE)
+    {
+        delete poGeom;
+        return nullptr;
+    }
+
+    return std::unique_ptr<OGRGeometry>(poGeom);
+}
+
+/************************************************************************/
+/*                     OGR2SQLITE_ST_Hilbert_Geom_BBOX()                */
+/************************************************************************/
+
+static void OGR2SQLITE_ST_Hilbert_Geom_BBOX(sqlite3_context *pContext, int argc,
+                                            sqlite3_value **argv)
+{
+    CPLAssert(argc == 5);
+    auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr, 0);
+    if (!poGeom || poGeom->IsEmpty())
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    OGREnvelope sGeomEnvelope;
+    poGeom->getEnvelope(&sGeomEnvelope);
+    const double dfX = (sGeomEnvelope.MinX + sGeomEnvelope.MaxX) / 2;
+    const double dfY = (sGeomEnvelope.MinY + sGeomEnvelope.MaxY) / 2;
+
+    OGREnvelope sExtent;
+    sExtent.MinX = sqlite3_value_double(argv[1]);
+    sExtent.MinY = sqlite3_value_double(argv[2]);
+    sExtent.MaxX = sqlite3_value_double(argv[3]);
+    sExtent.MaxY = sqlite3_value_double(argv[4]);
+    if (!(dfX >= sExtent.MinX && dfY >= sExtent.MinY && dfX <= sExtent.MaxX &&
+          dfY <= sExtent.MaxY))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "ST_Hilbert(): (%g, %g) is not within passed bounding box",
+                 dfX, dfY);
+        sqlite3_result_null(pContext);
+        return;
+    }
+    sqlite3_result_int64(pContext, GDALHilbertCode(&sExtent, dfX, dfY));
+}
+
+/************************************************************************/
+/*                 OGR2SQLITE_ST_Hilbert_Geom_TableName()               */
+/************************************************************************/
+
+static void OGR2SQLITE_ST_Hilbert_Geom_TableName(sqlite3_context *pContext,
+                                                 int argc, sqlite3_value **argv)
+{
+    CPLAssert(argc == 2);
+    auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr, 0);
+    if (!poGeom || poGeom->IsEmpty())
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    OGREnvelope sGeomEnvelope;
+    poGeom->getEnvelope(&sGeomEnvelope);
+    const double dfX = (sGeomEnvelope.MinX + sGeomEnvelope.MaxX) / 2;
+    const double dfY = (sGeomEnvelope.MinY + sGeomEnvelope.MaxY) / 2;
+
+    if (sqlite3_value_type(argv[1]) != SQLITE_TEXT)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s: Invalid argument type for 2nd argument. Text expected",
+                 "ST_Hilbert()");
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    OGRLayer *poLayer =
+        OGR2SQLITE_GetLayer("ST_Hilbert", pContext, argc, argv, 1);
+    if (poLayer == nullptr)
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    OGREnvelope sExtent;
+    if (poLayer->GetExtent(&sExtent, true) != OGRERR_NONE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: Cannot fetch layer extent",
+                 "ST_Hilbert()");
+        sqlite3_result_null(pContext);
+        return;
+    }
+    if (!(dfX >= sExtent.MinX && dfY >= sExtent.MinY && dfX <= sExtent.MaxX &&
+          dfY <= sExtent.MaxY))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "ST_Hilbert(): (%g, %g) is not within passed bounding box",
+                 dfX, dfY);
+        sqlite3_result_null(pContext);
+        return;
+    }
+    sqlite3_result_int64(pContext, GDALHilbertCode(&sExtent, dfX, dfY));
 }
 
 /************************************************************************/
@@ -2694,6 +2853,16 @@ static const struct sqlite3_module sOGR2SQLITESpatialIndex = {
 /*                              Setup()                                 */
 /************************************************************************/
 
+#ifndef SQLITE_DETERMINISTIC
+#define SQLITE_DETERMINISTIC 0
+#endif
+
+#ifndef SQLITE_INNOCUOUS
+#define SQLITE_INNOCUOUS 0
+#endif
+
+#define UTF8_INNOCUOUS (SQLITE_UTF8 | SQLITE_DETERMINISTIC | SQLITE_INNOCUOUS)
+
 int OGR2SQLITEModule::Setup(sqlite3 *hDBIn)
 {
     hDB = hDBIn;
@@ -2731,6 +2900,20 @@ int OGR2SQLITEModule::Setup(sqlite3 *hDBIn)
                                  nullptr, nullptr);
     if (rc != SQLITE_OK)
         return FALSE;
+
+    // X,Y,table_name
+    sqlite3_create_function(hDB, "ST_Hilbert", 2 + 1, UTF8_INNOCUOUS, this,
+                            OGR2SQLITE_ST_Hilbert_X_Y_TableName, nullptr,
+                            nullptr);
+
+    // geometry,minX,minY,maxX,maxY
+    sqlite3_create_function(hDB, "ST_Hilbert", 1 + 4, UTF8_INNOCUOUS, nullptr,
+                            OGR2SQLITE_ST_Hilbert_Geom_BBOX, nullptr, nullptr);
+
+    // geometry,table_name
+    sqlite3_create_function(hDB, "ST_Hilbert", 1 + 1, UTF8_INNOCUOUS, this,
+                            OGR2SQLITE_ST_Hilbert_Geom_TableName, nullptr,
+                            nullptr);
 
     SetHandleSQLFunctions(OGRSQLiteRegisterSQLFunctions(hDB));
 

@@ -82,10 +82,10 @@ uint32_t GDALHilbertCode(const OGREnvelope *poDomain, double dfX, double dfY)
     uint32_t x = 0;
     uint32_t y = 0;
     if (poDomain->Width() != 0.0)
-        x = static_cast<uint32_t>(std::floor(
+        x = static_cast<uint32_t>(std::round(
             GDAL_HILBERT_MAX * (dfX - poDomain->MinX) / poDomain->Width()));
     if (poDomain->Height() != 0.0)
-        y = static_cast<uint32_t>(std::floor(
+        y = static_cast<uint32_t>(std::round(
             GDAL_HILBERT_MAX * (dfY - poDomain->MinY) / poDomain->Height()));
     return GDALHilbertCode(x, y);
 }
