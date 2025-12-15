@@ -434,7 +434,9 @@ gdal_check_package(JXL "JPEG-XL compression" CAN_DISABLE)
 define_find_package2(JXL_THREADS jxl/resizable_parallel_runner.h jxl_threads PKGCONFIG_NAME libjxl_threads)
 gdal_check_package(JXL_THREADS "JPEG-XL threading" CAN_DISABLE)
 
-# unused for now gdal_check_package(OpenMP "")
+# Failure at execution on testperf_gdal_minmax_element with ICC
+gdal_check_package(OpenMP "Whether GDAL should use OpenMP" COMPONENTS "C" CAN_DISABLE)
+
 gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)
 gdal_check_package(basisu "Enable BASISU driver" CONFIG CAN_DISABLE)
 gdal_check_package(IDB "enable ogr_IDB driver" CAN_DISABLE)

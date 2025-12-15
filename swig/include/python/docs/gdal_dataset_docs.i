@@ -304,7 +304,7 @@ See :cpp:func:`GDALDataset::GetExtent`
 Parameters
 ----------
 srs : SpatialReference, optional
-   Optional spatial reference in which the bounds should be 
+   Optional spatial reference in which the bounds should be
    returned. Defaults to ``None``.
 
 Returns
@@ -323,7 +323,7 @@ Examples
 >>> # Get extent in US National Atlas Equal Area
 >>> with gdal.Open('byte.tif') as ds:
 ...     ds.GetExtent(osr.SpatialReference(epsg=9311))
-... 
+...
 (-1621603.0, -1620214.9, -1064263.1, -1062837.1)
 
 See Also
@@ -353,7 +353,7 @@ Examples
 --------
 >>> with gdal.Open('byte.tif') as ds:
 ...     ds.GetExtentWGS84LongLat()
-... 
+...
 (-117.642, -117.629, 33.892, 33.902)
 
 See Also
