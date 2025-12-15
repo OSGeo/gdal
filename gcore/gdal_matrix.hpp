@@ -84,14 +84,16 @@ GDALMatrixMultiplyAByTransposeAUpperTriangle([[maybe_unused]] int nNumThreads,
                             dfSum7 += Ai[c] * Ajp7[c];
                         }
 
-                        res[static_cast<size_t>(i) * rows + j + 0] += dfSum0;
-                        res[static_cast<size_t>(i) * rows + j + 1] += dfSum1;
-                        res[static_cast<size_t>(i) * rows + j + 2] += dfSum2;
-                        res[static_cast<size_t>(i) * rows + j + 3] += dfSum3;
-                        res[static_cast<size_t>(i) * rows + j + 4] += dfSum4;
-                        res[static_cast<size_t>(i) * rows + j + 5] += dfSum5;
-                        res[static_cast<size_t>(i) * rows + j + 6] += dfSum6;
-                        res[static_cast<size_t>(i) * rows + j + 7] += dfSum7;
+                        const auto nResOffset =
+                            static_cast<size_t>(i) * rows + j;
+                        res[nResOffset + 0] += dfSum0;
+                        res[nResOffset + 1] += dfSum1;
+                        res[nResOffset + 2] += dfSum2;
+                        res[nResOffset + 3] += dfSum3;
+                        res[nResOffset + 4] += dfSum4;
+                        res[nResOffset + 5] += dfSum5;
+                        res[nResOffset + 6] += dfSum6;
+                        res[nResOffset + 7] += dfSum7;
                     }
                     for (; j < j_end; ++j)
                     {

@@ -12192,7 +12192,7 @@ std::shared_ptr<GDALMDArray> GDALDataset::AsMDArray(CSLConstList papszOptions)
                    Defaults to 0.
  @param panBandList nullptr for all bands if nBandCount == 0, or array of
                     nBandCount values such as panBandList[i] is the index
-                    between 1 and GetRasterCount() of a band that must participated
+                    between 1 and GetRasterCount() of a band that must be used
                     in the covariance computation. Defaults to nullptr.
  @param bApproxOK Whether it is acceptable to use a subsample of values in
                   ComputeInterBandCovarianceMatrix().
@@ -12318,7 +12318,7 @@ std::vector<double> GDALDataset::GetInterBandCovarianceMatrix(
                    Defaults to 0.
  @param panBandList nullptr for all bands if nBandCount == 0, or array of
                     nBandCount values such as panBandList[i] is the index
-                    between 1 and GetRasterCount() of a band that must participated
+                    between 1 and GetRasterCount() of a band that must be used
                     in the covariance computation. Defaults to nullptr.
  @param bApproxOK Whether it is acceptable to use a subsample of values in
                   ComputeInterBandCovarianceMatrix().
@@ -12477,7 +12477,7 @@ CPLErr GDALDataset::GetInterBandCovarianceMatrix(
                    Defaults to 0.
  @param panBandList nullptr for all bands if nBandCount == 0, or array of
                     nBandCount values such as panBandList[i] is the index
-                    between 1 and GetRasterCount() of a band that must participated
+                    between 1 and GetRasterCount() of a band that must be used
                     in the covariance computation. Defaults to nullptr.
  @param bApproxOK Whether it is acceptable to use a subsample of values in
                   GDALDatasetComputeInterBandCovarianceMatrix().
@@ -12565,7 +12565,7 @@ CPLErr GDALDatasetGetInterBandCovarianceMatrix(
                    Defaults to 0.
  @param panBandList nullptr for all bands if nBandCount == 0, or array of
                     nBandCount values such as panBandList[i] is the index
-                    between 1 and GetRasterCount() of a band that must participated
+                    between 1 and GetRasterCount() of a band that must be used
                     in the covariance computation. Defaults to nullptr.
  @param bApproxOK Whether it is acceptable to use a subsample of values.
                   Defaults to false.
@@ -13249,7 +13249,7 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
                    Defaults to 0.
  @param panBandList nullptr for all bands if nBandCount == 0, or array of
                     nBandCount values such as panBandList[i] is the index
-                    between 1 and GetRasterCount() of a band that must participated
+                    between 1 and GetRasterCount() of a band that must be used
                     in the covariance computation. Defaults to nullptr.
  @param bApproxOK Whether it is acceptable to use a subsample of values.
                   Defaults to false.
@@ -13478,7 +13478,7 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
                    Defaults to 0.
  @param panBandList nullptr for all bands if nBandCount == 0, or array of
                     nBandCount values such as panBandList[i] is the index
-                    between 1 and GetRasterCount() of a band that must participated
+                    between 1 and GetRasterCount() of a band that must be used
                     in the covariance computation. Defaults to nullptr.
  @param bApproxOK Whether it is acceptable to use a subsample of values.
                   Defaults to false.
