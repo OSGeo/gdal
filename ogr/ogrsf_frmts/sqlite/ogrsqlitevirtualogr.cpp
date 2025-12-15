@@ -1980,8 +1980,8 @@ static OGRLayer *OGR2SQLITE_GetLayer(const char *pszFuncName,
     OGRLayer *poLayer = poModule->GetLayerForVTable(SQLUnescape(pszVTableName));
     if (poLayer == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s: %s(): %s", "VirtualOGR",
-                 pszFuncName, "Unknown virtual table");
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: %s(): %s '%s'", "VirtualOGR",
+                 pszFuncName, "unknown layer", pszVTableName);
         sqlite3_result_null(pContext);
         return nullptr;
     }

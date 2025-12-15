@@ -4670,7 +4670,7 @@ def test_ogr_sqlite_ST_Hilbert(tmp_vsimem, require_spatialite):
             f = sql_lyr.GetNextFeature()
             assert f.GetField(0) == 2863311528
 
-        with pytest.raises(Exception, match="Unknown virtual table"):
+        with pytest.raises(Exception, match="unknown layer 'non_existing'"):
             with ds.ExecuteSQL("SELECT ST_Hilbert(10, 20, 'non_existing')") as sql_lyr:
                 pass
 
@@ -4750,7 +4750,7 @@ def test_ogr_sqlite_ST_Hilbert(tmp_vsimem, require_spatialite):
             f = sql_lyr.GetNextFeature()
             assert f.GetField(0) is None
 
-        with pytest.raises(Exception, match="Unknown virtual table"):
+        with pytest.raises(Exception, match="unknown layer 'non_existing'"):
             with ds.ExecuteSQL(
                 "SELECT ST_Hilbert(geometry, 'non_existing') FROM test"
             ) as sql_lyr:
