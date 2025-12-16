@@ -46,6 +46,11 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
         The date tied to spatial coordinates in a dynamic reference frame, used to account for positional changes over time (e.g., due to tectonic motion).
 
+    CPL
+
+        Common Portability Library. Part of the C API that provides convenience
+        functions to provide independence from the operating systems on which GDAL runs
+
     Credentials
 
         Information (such as a username and password or tokens) used to verify the identity of a user or system for authentication and access control.
@@ -54,6 +59,11 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
         Coordinate Reference System. A system that maps spatial data coordinates to real-world locations,
         combining a coordinate system with a reference surface like a projection or :term:`ellipsoid`.
+
+    CSL
+
+        C-String List. Prefix used by a number of functions in the C API, that deal with
+        an array of NUL-terminated strings, the array itself being terminated by a NULL pointer.
 
     curl
 
@@ -196,6 +206,16 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
         .. seealso::
             https://www.ogc.org/
 
+    OGR
+
+        Open GIS Reference. OGR used to stand for OpenGIS Simple Features Reference
+        Implementation. However, since OGR is not fully compliant with the
+        OpenGIS Simple Feature specification and is not approved as a reference
+        implementation of the spec the name was changed to OGR Simple Features Library.
+        The only meaning of OGR in this name is historical. OGR is also the
+        prefix used everywhere in the source of the library for vector related
+        functionality.
+
     OSR
 
         OGR Spatial Reference (OSR) - module that handles spatial reference systems and coordinate transformations.
@@ -288,7 +308,7 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
     UTF8
 
         A character encoding that represents text using one to four bytes per character, and capable of encoding all Unicode characters. Also
-        referred to a UTF-8. 
+        referred to a UTF-8.
 
     VRT
 
