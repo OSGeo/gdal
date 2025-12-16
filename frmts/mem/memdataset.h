@@ -256,6 +256,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     // Only use it in the lifetime of a function where the list of features
     // doesn't change.
     IOGRMemLayerFeatureIterator *GetIterator();
+    void PrepareCreateFeature(OGRFeature *poFeature);
 
   protected:
     OGRFeature *GetFeatureRef(GIntBig nFeatureId);
@@ -272,8 +273,14 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     OGRErr SetNextByIndex(GIntBig nIndex) override;
 
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
+
+    OGRErr SetFeature(std::unique_ptr<OGRFeature> poFeature,
+                      GIntBig *pnFID = nullptr);
     OGRErr ISetFeature(OGRFeature *poFeature) override;
+
+    OGRErr CreateFeature(std::unique_ptr<OGRFeature> poFeature);
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
+
     OGRErr IUpsertFeature(OGRFeature *poFeature) override;
     OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                           const int *panUpdatedFieldsIdx,
@@ -289,7 +296,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
         return m_poFeatureDefn;
     }
 
-    GIntBig GetFeatureCount(int) override;
+    GIntBig GetFeatureCount(int = true) override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;

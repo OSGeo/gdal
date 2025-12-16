@@ -1045,7 +1045,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
         auto poFeature =
             std::make_unique<OGRFeature>(poMemLayer->GetLayerDefn());
         poFeature->SetGeometryDirectly(poMP.release());
-        CPL_IGNORE_RET_VAL(poMemLayer->CreateFeature(poFeature.get()));
+        CPL_IGNORE_RET_VAL(poMemLayer->CreateFeature(std::move(poFeature)));
     }
 
     for (auto &&poFeature : poMemLayer.get())

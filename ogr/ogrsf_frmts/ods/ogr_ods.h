@@ -76,6 +76,7 @@ class OGRODSLayer final : public OGRMemLayer
     /* For external usage. Mess with FID */
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    using OGRLayer::CreateFeature;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                           const int *panUpdatedFieldsIdx,

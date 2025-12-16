@@ -1505,14 +1505,14 @@ OGRGeometry *PDFDataset::ParseContent(
 
                 if (bEmitFeature && poCurLayer != nullptr)
                 {
-                    OGRGeometry *poGeom =
-                        BuildGeometry(oCoords, bHasFoundFill, bHasMultiPart);
+                    auto poGeom = std::unique_ptr<OGRGeometry>(
+                        BuildGeometry(oCoords, bHasFoundFill, bHasMultiPart));
                     bHasFoundFill = FALSE;
                     bHasMultiPart = FALSE;
                     if (poGeom)
                     {
-                        OGRFeature *poFeature =
-                            new OGRFeature(poCurLayer->GetLayerDefn());
+                        auto poFeature = std::make_unique<OGRFeature>(
+                            poCurLayer->GetLayerDefn());
                         if (m_bSetStyle)
                         {
                             OGRwkbGeometryType eType =
@@ -1551,10 +1551,9 @@ OGRGeometry *PDFDataset::ParseContent(
                         }
                         poGeom->assignSpatialReference(
                             poCurLayer->GetSpatialRef());
-                        poFeature->SetGeometryDirectly(poGeom);
+                        poFeature->SetGeometry(std::move(poGeom));
                         CPL_IGNORE_RET_VAL(
-                            poCurLayer->CreateFeature(poFeature));
-                        delete poFeature;
+                            poCurLayer->CreateFeature(std::move(poFeature)));
                     }
 
                     oCoords.resize(0);

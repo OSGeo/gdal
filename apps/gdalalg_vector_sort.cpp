@@ -45,19 +45,19 @@ GDALVectorSortAlgorithm::GDALVectorSortAlgorithm(bool standaloneStep)
 namespace
 {
 
-bool CreateDstFeatures(
-    const std::vector<std::unique_ptr<OGRFeature>> &srcFeatures,
-    const std::vector<size_t> &sortedIndices, OGRLayer &dstLayer,
-    GDALProgressFunc pfnProgress, void *pProgressData, double dfProgressStart,
-    double dfProgressRatio)
+bool CreateDstFeatures(std::vector<std::unique_ptr<OGRFeature>> &srcFeatures,
+                       const std::vector<size_t> &sortedIndices,
+                       OGRMemLayer &dstLayer, GDALProgressFunc pfnProgress,
+                       void *pProgressData, double dfProgressStart,
+                       double dfProgressRatio)
 {
     for (size_t iSrcFeature : sortedIndices)
     {
-        OGRFeature *poSrcFeature = srcFeatures[iSrcFeature].get();
+        auto &poSrcFeature = srcFeatures[iSrcFeature];
         poSrcFeature->SetFDefnUnsafe(dstLayer.GetLayerDefn());
         poSrcFeature->SetFID(OGRNullFID);
 
-        if (dstLayer.CreateFeature(poSrcFeature) != OGRERR_NONE)
+        if (dstLayer.CreateFeature(std::move(poSrcFeature)) != OGRERR_NONE)
         {
             return false;
         }
@@ -82,7 +82,7 @@ class GDALVectorHilbertSortDataset
     using GDALVectorNonStreamingAlgorithmDataset::
         GDALVectorNonStreamingAlgorithmDataset;
 
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex,
+    bool Process(OGRLayer &srcLayer, OGRMemLayer &dstLayer, int geomFieldIndex,
                  GDALProgressFunc pfnProgress, void *pProgressData) override
     {
         std::vector<std::unique_ptr<OGRFeature>> features;
@@ -182,7 +182,7 @@ class GDALVectorSTRTreeSortDataset
         }
     }
 
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex,
+    bool Process(OGRLayer &srcLayer, OGRMemLayer &dstLayer, int geomFieldIndex,
                  GDALProgressFunc pfnProgress, void *pProgressData) override
     {
         std::vector<std::unique_ptr<OGRFeature>> features;

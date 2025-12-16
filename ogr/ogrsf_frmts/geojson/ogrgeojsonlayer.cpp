@@ -540,7 +540,7 @@ OGRErr OGRGeoJSONLayer::SyncToDisk()
 /*                           AddFeature                                 */
 /************************************************************************/
 
-void OGRGeoJSONLayer::AddFeature(OGRFeature *poFeature)
+void OGRGeoJSONLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature)
 {
     GIntBig nFID = poFeature->GetFID();
 
@@ -587,7 +587,7 @@ void OGRGeoJSONLayer::AddFeature(OGRFeature *poFeature)
 
     const bool bIsUpdatable = IsUpdatable();
     SetUpdatable(true);  // Temporary toggle on updatable flag.
-    CPL_IGNORE_RET_VAL(OGRMemLayer::SetFeature(poFeature));
+    CPL_IGNORE_RET_VAL(OGRMemLayer::SetFeature(std::move(poFeature)));
     SetUpdatable(bIsUpdatable);
     SetUpdated(false);
 }
