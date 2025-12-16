@@ -79,6 +79,13 @@ Program-Specific Options
     - ``dataset`` means that the position is a georeferenced
       coordinate expressed in the CRS of the dataset.
 
+.. option:: --promote-pixel-value-to-z
+
+    .. versionadded:: 3.13
+
+    Whether to set the pixel value as Z component of GeoJSON geometry.
+    Only applies if a single band is selected, and for GeoJSON output format.
+
 .. option:: -r, --resampling nearest|bilinear|cubic|cubicspline
 
     Select a sampling algorithm. The default is ``nearest``.
