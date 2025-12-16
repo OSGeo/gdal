@@ -56,10 +56,17 @@ extern const TIFFFieldArray tiffFieldArray;
 extern const TIFFFieldArray exifFieldArray;
 extern const TIFFFieldArray gpsFieldArray;
 #else
-/* C allows this pattern */
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4132)
+#endif
+/* C allows this pattern (although MSVC complains...) */
 static const TIFFFieldArray tiffFieldArray;
 static const TIFFFieldArray exifFieldArray;
 static const TIFFFieldArray gpsFieldArray;
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 #endif
 /*--: Rational2Double: --
  * The Rational2Double upgraded libtiff functionality allows the definition and
