@@ -4808,6 +4808,7 @@ def test_gdalwarp_lib_sum_preserving_non_discontinuity(tmp_vsimem):
         == 4 * src_val
     )
 
+
 ###############################################################################
 # Test RESET_DEST_PIXELS warping option
 
