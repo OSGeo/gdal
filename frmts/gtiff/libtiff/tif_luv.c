@@ -909,7 +909,7 @@ static int oog_encode(double u, double v) /* encode out-of-gamut chroma */
 {
     static int oog_table[NANGLES];
     static int initialized = 0;
-    register int i;
+    int i;
 
     if (!initialized)
     { /* set up perimeter table */
