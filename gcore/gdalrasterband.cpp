@@ -4963,7 +4963,7 @@ CPLErr GDALRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
     if (*ppanHistogram == nullptr)
     {
         ReportError(CE_Failure, CPLE_OutOfMemory,
-                    "Out of memory in InitBlockInfo().");
+                    "Out of memory in GetDefaultHistogram().");
         return CE_Failure;
     }
 
