@@ -291,6 +291,11 @@ BMPRasterBand::BMPRasterBand(BMPDataset *poDSIn, int nBandIn)
     nBand = nBandIn;
     eDataType = GDT_UInt8;
 
+    if (poDSIn->sInfoHeader.iBitCount < 8)
+        SetMetadataItem("NBITS",
+                        CPLSPrintf("%d", poDSIn->sInfoHeader.iBitCount),
+                        "IMAGE_STRUCTURE");
+
     // We will read one scanline per time. Scanlines in BMP aligned at 4-byte
     // boundary
     nBlockXSize = poDS->GetRasterXSize();
@@ -717,6 +722,13 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
         CPLError(CE_Failure, CPLE_NotSupported, "Invalid header");
         return;
     }
+
+    if (poDSIn->sInfoHeader.iClrUsed <= 2)
+        SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE");
+    else if (poDSIn->sInfoHeader.iClrUsed <= 4)
+        SetMetadataItem("NBITS", "2", "IMAGE_STRUCTURE");
+    else if (poDSIn->sInfoHeader.iClrUsed <= 16)
+        SetMetadataItem("NBITS", "4", "IMAGE_STRUCTURE");
 
     const GUInt32 iComprSize = static_cast<GUInt32>(
         poDSIn->m_nFileSize - poDSIn->sFileHeader.iOffBits);
