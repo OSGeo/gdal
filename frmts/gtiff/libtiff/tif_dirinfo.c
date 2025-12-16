@@ -41,11 +41,12 @@
  */
 
 /* Forward declarations - definition follows after field arrays.
- * Note: In C, we can forward declare static const objects and define them later.
- * In C++, we need extern for the declaration, then define without extern.
- * Since these are only used within this file via pointers, we use a workaround
- * that works in both C and C++: declare as extern here, define as static later,
- * but actually we need a different approach for C++ compatibility.
+ * Note: In C, we can forward declare static const objects and define them
+ * later. In C++, we need extern for the declaration, then define without
+ * extern. Since these are only used within this file via pointers, we use a
+ * workaround that works in both C and C++: declare as extern here, define as
+ * static later, but actually we need a different approach for C++
+ * compatibility.
  *
  * For C/C++ compatibility, we define a simple struct that holds the pointer
  * and initialize it after the arrays are defined.
@@ -497,13 +498,14 @@ static const TIFFField gpsFields[] = {
 /* clang-format on */ /* was off for better readability of tag comments */
 
 #ifdef __cplusplus
-/* In C++, the forward declaration used extern, so definitions must not be static */
+/* In C++, the forward declaration used extern, so definitions must not be
+ * static */
 const TIFFFieldArray tiffFieldArray = {
     tfiatImage, 0, TIFFArrayCount(tiffFields), (TIFFField *)tiffFields};
-const TIFFFieldArray exifFieldArray = {
-    tfiatExif, 0, TIFFArrayCount(exifFields), (TIFFField *)exifFields};
-const TIFFFieldArray gpsFieldArray = {
-    tfiatGps, 0, TIFFArrayCount(gpsFields), (TIFFField *)gpsFields};
+const TIFFFieldArray exifFieldArray = {tfiatExif, 0, TIFFArrayCount(exifFields),
+                                       (TIFFField *)exifFields};
+const TIFFFieldArray gpsFieldArray = {tfiatGps, 0, TIFFArrayCount(gpsFields),
+                                      (TIFFField *)gpsFields};
 #else
 static const TIFFFieldArray tiffFieldArray = {
     tfiatImage, 0, TIFFArrayCount(tiffFields), (TIFFField *)tiffFields};
@@ -822,7 +824,8 @@ int TIFFFieldSetGetCountSize(const TIFFField *fip)
 
 const TIFFField *TIFFFindField(TIFF *tif, uint32_t tag, TIFFDataType dt)
 {
-    TIFFField key = {0, 0, 0, TIFF_NOTYPE, 0, TIFF_SETGET_UNDEFINED, 0, 0, 0, NULL, NULL};
+    TIFFField key = {0, 0, 0, TIFF_NOTYPE, 0,   TIFF_SETGET_UNDEFINED,
+                     0, 0, 0, NULL,        NULL};
     TIFFField *pkey = &key;
     const TIFFField **ret;
     if (tif->tif_foundfield && tif->tif_foundfield->field_tag == tag &&
@@ -846,7 +849,8 @@ const TIFFField *TIFFFindField(TIFF *tif, uint32_t tag, TIFFDataType dt)
 static const TIFFField *_TIFFFindFieldByName(TIFF *tif, const char *field_name,
                                              TIFFDataType dt)
 {
-    TIFFField key = {0, 0, 0, TIFF_NOTYPE, 0, TIFF_SETGET_UNDEFINED, 0, 0, 0, NULL, NULL};
+    TIFFField key = {0, 0, 0, TIFF_NOTYPE, 0,   TIFF_SETGET_UNDEFINED,
+                     0, 0, 0, NULL,        NULL};
     TIFFField *pkey = &key;
     const TIFFField **ret;
     if (tif->tif_foundfield &&

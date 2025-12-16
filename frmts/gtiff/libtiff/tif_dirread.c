@@ -3286,7 +3286,12 @@ TIFFReadDirEntryPersampleShort(TIFF *tif, TIFFDirEntry *direntry,
     if (direntry->tdir_count != (uint64_t)tif->tif_dir.td_samplesperpixel)
     {
         const TIFFField *fip = TIFFFieldWithTag(tif, direntry->tdir_tag);
-        if (direntry->tdir_count < (uint64_t)tif->tif_dir.td_samplesperpixel)
+        if (direntry->tdir_count == 0)
+        {
+            return TIFFReadDirEntryErrCount;
+        }
+        else if (direntry->tdir_count <
+                 (uint64_t)tif->tif_dir.td_samplesperpixel)
         {
             TIFFWarningExtR(
                 tif, "TIFFReadDirEntryPersampleShort",
