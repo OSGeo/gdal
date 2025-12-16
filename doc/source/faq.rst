@@ -29,27 +29,17 @@ OGR used to be a separate vector IO library inspired by OpenGIS Simple Features 
 What does OGR stand for?
 +++++++++++++++++++++++++
 
-OGR used to stand for OpenGIS Simple Features Reference Implementation. However, since OGR is not fully compliant with the OpenGIS Simple Feature specification and is not approved as a reference implementation of the spec the name was changed to OGR Simple Features Library. The only meaning of OGR in this name is historical. OGR is also the prefix used everywhere in the source of the library for class names, filenames, etc.
+See :term:`OGR`.
 
 What does CPL stand for?
 +++++++++++++++++++++++++
 
-Common Portability Library. Think of it as GDAL internal cross-platform standard library. Back in the early days of GDAL development, when cross-platform development as well as compatibility and standard conformance of compilers was a challenge (or PITA), CPL proved necessary for smooth portability of GDAL/OGR.
-
-CPL, or parts of it, is used by some projects external to GDAL (eg. MITAB, libgeotiff).
+See :term:`CPL`.
 
 What does VSI stand for?
 +++++++++++++++++++++++++
 
-Virtual System Interface. This is the name of the input/output abstraction layer
-that is implemented by different Virtual File Systems (VFS) to provide access
-to regular files, in-memory files, network accessible files, compressed files, etc.
-
-See :ref:`virtual_file_systems` for a list of the available VFS.
-
-The VSI functions retain exactly the same calling pattern as the original
-Standard C functions they relate to, for the parts where they are common, and
-also extend it to provide more specialized functionality.
+See :term:`VSI`.
 
 When was the GDAL project started?
 ++++++++++++++++++++++++++++++++++

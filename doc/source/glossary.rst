@@ -49,7 +49,12 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
     CPL
 
         Common Portability Library. Part of the C API that provides convenience
-        functions to provide independence from the operating systems on which GDAL runs
+        functions to provide independence from the operating systems on which GDAL runs.
+        Back in the early days of GDAL development, when cross-platform development
+        as well as compatibility and standard conformance of compilers was a challenge,
+        CPL proved necessary for smooth portability of GDAL/OGR.
+
+        CPL, or parts of it, is used by some projects external to GDAL (eg. MITAB, libgeotiff).
 
     Credentials
 
@@ -320,8 +325,13 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
     VSI
 
-        Virtual System Interface. An interface for accessing files and datasets in non-filesystem locations, such as
-        in-memory files, zip files, and over network protocols.
+        Virtual System Interface. This is the name of the input/output abstraction layer
+        that is implemented by different Virtual File Systems (VFS) to provide access
+        to regular files, in-memory files, network accessible files, compressed files, etc.
+
+        The VSI functions retain exactly the same calling pattern as the original
+        Standard C functions they relate to, for the parts where they are common, and
+        also extend it to provide more specialized functionality.
 
         .. seealso::
             :ref:`virtual_file_systems`.
