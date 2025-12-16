@@ -831,13 +831,13 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
                 unsigned int iLength = pabyComprBuf[i++];
                 if (j == iUncomprSize)
                     break;
-                while (iLength > 0 && j < iUncomprSize && i < iComprSize)
+                for (unsigned k = 0;
+                     k < iLength && j < iUncomprSize && i < iComprSize; k++)
                 {
-                    if (iLength & 0x01)
-                        pabyUncomprBuf[j++] = (pabyComprBuf[i] & 0xF0) >> 4;
-                    else
+                    if (k & 0x01)
                         pabyUncomprBuf[j++] = pabyComprBuf[i] & 0x0F;
-                    iLength--;
+                    else
+                        pabyUncomprBuf[j++] = (pabyComprBuf[i] & 0xF0) >> 4;
                 }
                 i++;
             }
