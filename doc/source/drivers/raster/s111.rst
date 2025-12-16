@@ -10,15 +10,18 @@ S111 -- S-111 Surface Currents Product
 
 .. versionadded:: 3.9
 
-This driver provides read-only support for surface currents in the S-111 format,
+This driver provides support for surface currents in the S-111 format,
 which is a specific product profile in an HDF5 file.
 
-S-111 files have two image bands representing the following values for each
+S-111 files have at a minimum two image bands representing the following values for each
 cell in a raster grid area:
 
 - surface current speed (band 1), in knots
 - surface current direction (band 2), in degree measured from true north
   clock-wise.
+
+Additional optional bands can be present to represent the speed uncertainty
+(in knots) and the direction uncertainty (in degree).
 
 When opening a S-111 file, no raster band is directly available. But a list of
 subdatasets will be reported, one for each timestamp available in the file.
@@ -30,13 +33,17 @@ Georeferencing is reported.
 
 Note that the driver currently only supports regularly gridded S111 datasets.
 
-Since GDAL 3.12, multiple feature instance groups per dataset (to encode grids
-using different vertical datums) are supported. In that case, each feature
+Since GDAL 3.12, multiple feature instance groups per dataset are supported.
+In that case, each feature
 instance group and timestamp group is exposed as a GDAL subdataset, whose name
 is of the form ``S111:"{filename.h5}":SurfaceCurrent.{XX}:Group_{YYY}``.
 
+Write support for S-111 v2.0 has been added in GDAL 3.13
+
 Driver capabilities
 -------------------
+
+.. supports_createcopy::
 
 .. supports_georeferencing::
 
@@ -60,6 +67,248 @@ The following open options are supported:
      exposed by the driver by setting this option to NO (in which case the
      6th term of the geotransform matrix will be positive)
 
+Write support
+-------------
+
+.. versionadded:: 3.13
+
+Creation of a S-111 v2.0 dataset from another existing GDAL supported dataset is
+possible using the :cpp:func:`GDALDriver::CreateCopy` function, or utilities
+like :ref:`gdal_translate` or :ref:`gdal_raster_convert`. The input dataset
+must have two or four bands. The first band must contain the surface current
+speed in knot, and the second band must contain the surface current direction,
+in degree measured from true north clock-wise, between 0 and 359.9.
+
+The third and fourth bands when present must contain respectively the uncertainty
+of the speed (in knot) and the uncertainty of the direction (in degree)
+
+If several grids are available at different timestamps, they can be provided with
+the :co:`DATASETS` creation option, possibly with the  :co:`DATASETS_TIME_POINT` creation option
+if the datasets do not have a ``timePoint`` metadata item.
+
+If several feature instances are needed, the :co:`APPEND_SUBDATASET` creation option
+can be set to ``YES`` to add an extra feature instance group ("SurfaceCurrent.XX")
+to an existing S-111 dataset.
+
+The following creation options are available:
+
+-  .. co:: TIME_POINT
+      :choices: <string>
+
+      Timestamp as YYYYMMDDTHHMMSSZ format (required).
+
+-  .. co:: DEPTH_TYPE
+      :choices: ``heightOrDepth`` or ``layerAverage``
+
+      Type of depth (required). When selecting ``heightOrDepth``, the interpretation depends on the VERTICAL_CS value.
+
+-  .. co:: VERTICAL_DATUM
+      :choices: <string>
+
+      Vertical datum. This is a required creation option when ``DEPTH_TYPE=heightOrDepth``.
+
+      Possible values are either:
+
+      - a S100 vertical datum. Expressed as numeric code in the
+        1 to 30 range, or value 44, 46, 47, 48, 49. Or their string meaning or
+        abbreviation among
+        the following list:
+
+          * 1: ``meanLowWaterSprings`` / ``MLWS``
+          * 2: ``meanLowerLowWaterSprings``
+          * 3: ``meanSeaLevel`` / ``MSL``
+          * 4: ``lowestLowWater``
+          * 5: ``meanLowWater`` / ``MLW``
+          * 6: ``lowestLowWaterSprings``
+          * 7: ``approximateMeanLowWaterSprings``
+          * 8: ``indianSpringLowWater``
+          * 9: ``lowWaterSprings``
+          * 10: ``approximateLowestAstronomicalTide``
+          * 11: ``nearlyLowestLowWater``
+          * 12: ``meanLowerLowWater`` / ``MLLW``
+          * 13: ``lowWater`` / ``LW``
+          * 14: ``approximateMeanLowWater``
+          * 15: ``approximateMeanLowerLowWater``
+          * 16: ``meanHighWater`` / ``MHW``
+          * 17: ``meanHighWaterSprings`` / ``MHWS``
+          * 18: ``highWater`` / ``HW``
+          * 19: ``approximateMeanSeaLevel``
+          * 20: ``highWaterSprings``
+          * 21: ``meanHigherHighWater`` / ``MHHW``
+          * 22: ``equinoctialSpringLowWater``
+          * 23: ``lowestAstronomicalTide`` / ``LAT``
+          * 24: ``localDatum``
+          * 25: ``internationalGreatLakesDatum1985``
+          * 26: ``meanWaterLevel``
+          * 27: ``lowerLowWaterLargeTide``
+          * 28: ``higherHighWaterLargeTide``
+          * 29: ``nearlyHighestHighWater``
+          * 30: ``highestAstronomicalTide`` / ``HAT``
+          * 44: ``balticSeaChartDatum2000``
+          * 46: ``internationalGreatLakesDatum2020``
+          * 47: ``seaFloor``
+          * 48: ``seaSurface``
+          * 49: ``hydrographicZero``
+
+      - an EPSG vertical datum code
+
+-  .. co:: VERTICAL_CS
+      :choices: DEPTH or HEIGHT
+
+      Vertical coordinate system. This is a required creation option when ``DEPTH_TYPE=heightOrDepth``.
+
+      Depth is the down direction relative to the vertical datum surface, with meter unit.
+      Height is the up direction relative to the vertical datum surface, with meter unit.
+
+-  .. co:: SURFACE_CURRENT_DEPTH
+      :choices: <number>
+
+      Depth/height value or layer thickness (m)
+      This is a required creation option.
+
+-  .. co:: DATA_DYNAMICITY
+      :choices: observation, astronomicalPrediction, analysisOrHybrid or hydrodynamicForecast
+
+      Classification of data according to the relationship between the time of
+      its collection, generation, or calculation of generation parameters,
+      in relation to the time of publication of the dataset.
+      This is a required creation option.
+
+-  .. co:: DATASETS
+      :choices: <string>
+
+      Comma-separated list of datasets at different timestamps. If each dataset
+      does not have a ``timePoint`` metadata item, the :co:`DATASETS_TIME_POINT`
+      creation option must be specified.
+
+      The source dataset may or may not be put in the DATASETS creation option.
+
+-  .. co:: DATASETS_TIME_POINT
+      :choices: <string>
+
+      Comma-separated list of different timestamps. If must have the same number
+      of values as the :co:`DATASETS` creation option.
+      Each time point value must be specified as a ``YYYYMMDDTHHMMSSZ`` timestamp.
+
+-  .. co:: ISSUE_DATE
+      :choices: <string> as <YYYYMMDD>
+
+      If not specified, defaults to the current date.
+
+-  .. co:: ISSUE_TIME
+      :choices: <string>
+
+      Issue time as <hhmmssZ> or <hhmmss[+-]HHMM>
+
+      If not specified, defaults to the current time (in Z timezone).
+
+-  .. co:: DATASET_DELIVERY_INTERVAL
+      :choices: <string>
+
+      Expected time interval between availability of successive datasets for
+      time-varying data.
+      Must be formatted as ``PnYnMnDTnHnMnS`` (ISO-8601 duration)
+
+-  .. co:: TIME_RECORD_INTERVAL
+      :choices: <number>
+
+      Interval in seconds between time records.
+
+-  .. co:: COMMON_POINT_RULE
+      :choices: average, low, high, all
+      :default: high
+
+      Procedure used for evaluating the coverage at a position that falls on
+      the boundary or in an area of overlap between geographic objects.
+
+-  .. co:: UNCERTAINTY_SPEED
+      :choices: <number>
+
+      Uncertainty of speeds in knot
+
+-  .. co:: UNCERTAINTY_DIRECTION
+      :choices: <number>
+
+      Uncertainty of direction angles in degree
+
+-  .. co:: HORIZONTAL_POSITION_UNCERTAINTY
+      :choices: <number>
+
+      Horizontal position uncertainty in meter
+
+-  .. co:: VERTICAL_UNCERTAINTY
+      :choices: <number>
+
+      Vertical uncertainty in meter
+
+-  .. co:: TIME_UNCERTAINTY
+      :choices: <number>
+
+      Time uncertainty in second
+
+-  .. co:: COMPRESS
+      :choices: NONE, DEFLATE
+      :default: DEFLATE
+
+      Compression for elevation and uncertainty grids.
+
+-  .. co:: ZLEVEL
+      :choices: 1-9
+      :default: 6
+
+      Deflate compression level.
+
+-  .. co:: BLOCK_SIZE
+      :choices: <integer>
+
+      Chunking size of the HDF5 arrays. Default
+      to 100, or the maximum dimension of the raster if smaller than 100.
+
+-  .. co:: APPEND_SUBDATASET
+      :choices: YES, NO
+      :default: NO
+
+      Whether to append the new dataset to an existing S-104 dataset as
+      an extra feature instance group ("SurfaceCurrent.XX")
+
+
+Validation script
+-----------------
+
+.. versionadded:: 3.13
+
+The Python script :source_file:`swig/python/gdal-utils/osgeo_utils/samples/validate_s111.py`
+can be used to validate the conformity of a S-111 v2.0 dataset against the specification.
+It requires the `h5py <https://www.h5py.org/>`__ Python module to be installed
+(typically through "pip install h5py")
+
+Its usage is:
+
+::
+
+    $ python validate_s111.py 111TESTXXXX.h5
+
+
+Note that the GDAL S-111 reader is more tolerant that the validation script and
+can read files with slight non-conformities.
+
+
+Examples
+--------
+
+-  Converting a GeoTIFF with surface current speed and direction, with the minimum required metadata items:
+
+   ::
+
+      $ gdal_translate current_speed_and_direction.tif 111TESTXXXX.h5 -of S111 \
+          -co TIME_POINT=20251105T012600Z \
+          -co DEPTH_TYPE=1 \
+          -co VERTICAL_DATUM=MMLW \
+          -co VERTICAL_CS=HEIGHT \
+          -co SURFACE_CURRENT_DEPTH=0.2 \
+          -co DATA_DYNAMICITY=hydrodynamicForecast
+
+
 See Also
 --------
 
@@ -68,3 +317,11 @@ See Also
 -  :ref:`BAG driver <raster.bag>`
 -  :ref:`S-102 driver <raster.s102>`
 -  :ref:`S-104 driver <raster.s104>`
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    hhmmssZ
+    hhmmss
+    HHMM

@@ -2243,8 +2243,12 @@ lbl_next_depth:
             --anStackCount[iDim];
             if (anStackCount[iDim] == 0)
                 break;
-            pabyDstBufferStack[iDim] +=
-                bufferStride[iDim] * nBufferDataTypeSize;
+            if (bufferStride[iDim] >= 0)
+                pabyDstBufferStack[iDim] +=
+                    bufferStride[iDim] * nBufferDataTypeSize;
+            else
+                pabyDstBufferStack[iDim] -=
+                    (-bufferStride[iDim]) * nBufferDataTypeSize;
             pabySrcBufferStack[iDim] += anSrcStride[iDim];
         }
     }

@@ -13,6 +13,8 @@
 #include "cpl_float.h"
 #include "gh5_convenience.h"
 
+#include <limits>
+
 /************************************************************************/
 /*                    GH5_FetchAttribute(CPLString)                     */
 /************************************************************************/
@@ -292,22 +294,6 @@ GDALDataType GH5_GetDataType(hid_t TypeID)
 bool GH5_CreateAttribute(hid_t loc_id, const char *pszAttrName, hid_t TypeID,
                          unsigned nMaxLen)
 {
-#ifdef notdef_write_variable_length_string
-    if (TypeID == H5T_C_S1)
-    {
-        hsize_t dims[1] = {1};
-        hid_t dataspace = H5Screate_simple(1, dims, nullptr);
-        hid_t type = H5Tcopy(TypeID);
-        H5Tset_size(type, H5T_VARIABLE);
-        hid_t att =
-            H5Acreate(loc_id, pszAttrName, type, dataspace, H5P_DEFAULT);
-        H5Tclose(type);
-        H5Aclose(att);
-        H5Sclose(dataspace);
-        return true;
-    }
-#endif
-
     hid_t hDataSpace = H5Screate(H5S_SCALAR);
     if (hDataSpace < 0)
         return false;
@@ -321,7 +307,12 @@ bool GH5_CreateAttribute(hid_t loc_id, const char *pszAttrName, hid_t TypeID,
 
     if (TypeID == H5T_C_S1)
     {
-        if (H5Tset_size(hDataType, nMaxLen) < 0)
+        if (nMaxLen == VARIABLE_LENGTH)
+        {
+            H5Tset_size(hDataType, H5T_VARIABLE);
+            H5Tset_strpad(hDataType, H5T_STR_NULLTERM);
+        }
+        else if (H5Tset_size(hDataType, nMaxLen) < 0)
         {
             H5Tclose(hDataType);
             H5Sclose(hDataSpace);
@@ -368,11 +359,10 @@ bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName,
     bool bSuccess = false;
     if (H5Tget_class(hAttrNativeType) == H5T_STRING)
     {
-#ifdef notdef_write_variable_length_string
-        bSuccess = H5Awrite(hAttr, hDataType, &pszValue) >= 0;
-#else
-        bSuccess = H5Awrite(hAttr, hDataType, pszValue) >= 0;
-#endif
+        if (H5Tis_variable_str(hAttrNativeType) > 0)
+            bSuccess = H5Awrite(hAttr, hDataType, &pszValue) >= 0;
+        else
+            bSuccess = H5Awrite(hAttr, hDataType, pszValue) >= 0;
     }
     else
     {
@@ -433,6 +423,113 @@ bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, double dfValue)
 /*                        GH5_WriteAttribute()                          */
 /************************************************************************/
 
+bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, int nValue)
+{
+
+    hid_t hAttr = H5Aopen_name(loc_id, pszAttrName);
+    if (hAttr < 0)
+        return false;
+
+    hid_t hDataType = H5Aget_type(hAttr);
+    if (hDataType < 0)
+    {
+        H5Aclose(hAttr);
+        return false;
+    }
+
+    hid_t hEnumType = -1;
+    if (H5Tget_class(hDataType) == H5T_ENUM)
+    {
+        hEnumType = hDataType;
+        hDataType = H5Tget_super(hDataType);
+    }
+
+    hid_t hAttrNativeType = H5Tget_native_type(hDataType, H5T_DIR_DEFAULT);
+    bool bSuccess = false;
+    if (hEnumType < 0 && H5Tequal(hAttrNativeType, H5T_NATIVE_INT))
+    {
+        bSuccess = H5Awrite(hAttr, hAttrNativeType, &nValue) >= 0;
+    }
+    else if (hEnumType < 0 && H5Tequal(hAttrNativeType, H5T_NATIVE_UINT))
+    {
+        if (nValue < 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Attribute %s has value %d which is negative but the type "
+                     "is uint",
+                     pszAttrName, nValue);
+        }
+        else
+        {
+            bSuccess = H5Awrite(hAttr, hAttrNativeType, &nValue) >= 0;
+        }
+    }
+    else if (hEnumType < 0 && H5Tequal(hAttrNativeType, H5T_NATIVE_UINT8))
+    {
+        if (nValue < 0 ||
+            nValue > static_cast<int>(std::numeric_limits<uint8_t>::max()))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Attribute %s has value %d which is not in the range of a "
+                     "uint8",
+                     pszAttrName, nValue);
+        }
+        else
+        {
+            uint8_t nUint8 = static_cast<uint8_t>(nValue);
+            bSuccess = H5Awrite(hAttr, hAttrNativeType, &nUint8) >= 0;
+        }
+    }
+    else if (hEnumType < 0 && H5Tequal(hAttrNativeType, H5T_NATIVE_UINT16))
+    {
+        if (nValue < 0 ||
+            nValue >= static_cast<int>(std::numeric_limits<uint16_t>::max()))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Attribute %s has value %d which is not in the range of a "
+                     "uint16",
+                     pszAttrName, nValue);
+        }
+        else
+        {
+            uint16_t nUint16 = static_cast<uint16_t>(nValue);
+            bSuccess = H5Awrite(hAttr, hAttrNativeType, &nUint16) >= 0;
+        }
+    }
+    else if (hEnumType >= 0 && H5Tequal(hAttrNativeType, H5T_NATIVE_UINT8))
+    {
+        if (nValue < 0 || nValue > 255)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Attribute %s has value %d which is not in the range of a "
+                     "uint8",
+                     pszAttrName, nValue);
+        }
+        else
+        {
+            uint8_t nUint8 = static_cast<uint8_t>(nValue);
+            bSuccess = H5Awrite(hAttr, hEnumType, &nUint8) >= 0;
+        }
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Attribute %s is not of type int/uint", pszAttrName);
+    }
+
+    H5Tclose(hAttrNativeType);
+    H5Aclose(hAttr);
+    H5Tclose(hDataType);
+    if (hEnumType >= 0)
+        H5Tclose(hEnumType);
+
+    return bSuccess;
+}
+
+/************************************************************************/
+/*                        GH5_WriteAttribute()                          */
+/************************************************************************/
+
 bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, unsigned nValue)
 {
 
@@ -447,12 +544,32 @@ bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, unsigned nValue)
         return false;
     }
 
+    hid_t hEnumType = -1;
+    if (H5Tget_class(hDataType) == H5T_ENUM)
+    {
+        hEnumType = hDataType;
+        hDataType = H5Tget_super(hDataType);
+    }
+
     hid_t hAttrNativeType = H5Tget_native_type(hDataType, H5T_DIR_DEFAULT);
     bool bSuccess = false;
-    if (H5Tequal(hAttrNativeType, H5T_NATIVE_INT) ||
-        H5Tequal(hAttrNativeType, H5T_NATIVE_UINT))
+    if (H5Tequal(hAttrNativeType, H5T_NATIVE_UINT))
     {
         bSuccess = H5Awrite(hAttr, hAttrNativeType, &nValue) >= 0;
+    }
+    else if (H5Tequal(hAttrNativeType, H5T_NATIVE_INT))
+    {
+        if (nValue > static_cast<unsigned>(INT_MAX))
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Attribute %s has value %u which does not fit on a signed int",
+                pszAttrName, nValue);
+        }
+        else
+        {
+            bSuccess = H5Awrite(hAttr, hAttrNativeType, &nValue) >= 0;
+        }
     }
     else
     {
@@ -463,6 +580,8 @@ bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, unsigned nValue)
     H5Tclose(hAttrNativeType);
     H5Aclose(hAttr);
     H5Tclose(hDataType);
+    if (hEnumType >= 0)
+        H5Tclose(hEnumType);
 
     return bSuccess;
 }
