@@ -909,6 +909,7 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
     }
     /* Validate that we have read all compressed data (we tolerate missing */
     /* end of image marker) and that we have filled all uncompressed data */
+    /* i will be odd if and only if we saw the End of Image marker above */
     if (j < iUncomprSize || (i + 1 != iComprSize && i + 2 != iComprSize))
     {
         CPLFree(pabyUncomprBuf);
