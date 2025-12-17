@@ -138,6 +138,15 @@ grid using gdalwarp before using gdaldem.
 
         Generate a map of roughness from any GDAL-supported elevation raster.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    - :ref:`gdal_raster_aspect`
+    - :ref:`gdal_raster_color_map`
+    - :ref:`gdal_raster_hillshade`
+    - :ref:`gdal_raster_slope`
+    - :ref:`gdal_raster_tpi`
+    - :ref:`gdal_raster_tri`
+
 The following general options are available:
 
 .. include:: options/help_and_help_general.rst

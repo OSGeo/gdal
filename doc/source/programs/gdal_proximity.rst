@@ -35,6 +35,11 @@ raster for which the raster pixel value is in the set of target pixel values.
 
     gdal_proximity is a Python utility, and is only available if GDAL Python bindings are available.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_proximity`.
+
+
 .. program:: gdal_proximity
 
 .. include:: options/help_and_help_general.rst
