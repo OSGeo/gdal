@@ -47,6 +47,10 @@ It works only with raster formats that support update access to existing dataset
 
     gdal_edit is a Python utility, and is only available if GDAL Python bindings are available.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_edit`.
+
 .. include:: options/help_and_help_general.rst
 
 .. option:: -ro

@@ -24,6 +24,10 @@ their spatial extents. This is primarily intended to be used with
 `MapServer <http://mapserver.org/>`__ for tiled access to layers using
 the OGR connection type.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_vector_index`.
+
 .. program:: ogrtindex
 
 .. include:: options/help_and_help_general.rst
