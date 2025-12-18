@@ -11950,4 +11950,4 @@ Python bindings:
 
 # GDAL 2.x and older
 
-Consult [NEWS-2.x.md](NEW-2.x.md)
+Consult [NEWS-2.x.md](NEWS-2.x.md)
