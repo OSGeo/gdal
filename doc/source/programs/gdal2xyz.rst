@@ -38,6 +38,10 @@ The :program:`gdal2xyz` utility can be used to translate a raster file into xyz 
 
     gdal2xyz is a Python utility, and is only available if GDAL Python bindings are available.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_convert` with ``--of XYZ``.
+
 .. program:: gdal2xyz
 
 .. include:: options/help_and_help_general.rst

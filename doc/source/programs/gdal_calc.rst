@@ -32,6 +32,10 @@ but no projection checking is performed (unless the :option:`--projectionCheck` 
 
     gdal_calc is a Python utility, and is only available if GDAL Python bindings are available.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_calc`.
+
 .. include:: options/help_and_help_general.rst
 
 .. option:: --calc=<expression>

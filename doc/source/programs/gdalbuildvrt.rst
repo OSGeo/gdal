@@ -51,6 +51,10 @@ entries in the tile index will be added to the VRT.
     :ref:`gdaltindex` utility to generate a tile index compatible with the
     :ref:`GTI <raster.gti>` driver.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_mosaic` and :ref:`gdal_raster_stack`.
+
 .. program:: gdalbuildvrt
 
 With :option:`-separate`, each input goes into a separate band in the VRT dataset. Otherwise,

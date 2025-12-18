@@ -22,6 +22,16 @@ The :program:`gdal_translate` utility can be used to convert raster data between
 different formats, potentially performing some operations like subsetting,
 resampling, and rescaling pixels in the process.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    * :ref:`gdal_raster_convert` for format translation.
+    * :ref:`gdal_raster_clip` for spatial subsetting.
+    * :ref:`gdal_raster_nodata_to_alpha` to add an alpha channel from nodata values.
+    * :ref:`gdal_raster_resize` for image resizing.
+    * :ref:`gdal_raster_scale` to scale pixel values.
+    * :ref:`gdal_raster_set_type` to change the band data type.
+
+
 .. program:: gdal_translate
 
 .. include:: options/help_and_help_general.rst

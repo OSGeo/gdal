@@ -26,6 +26,11 @@ in-place.
 On the fly reprojection of vector data to the coordinate system of the
 raster data is supported.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_vector_rasterize`.
+
+
 .. program:: gdal_rasterize
 
 .. include:: options/help_and_help_general.rst

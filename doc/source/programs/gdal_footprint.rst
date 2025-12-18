@@ -28,6 +28,10 @@ corresponding to areas where pixels are valid, and write to an output vector fil
 The :program:`nearblack` utility may be run as a pre-processing step to generate
 proper mask bands.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_footprint`.
+
 
 .. program:: gdal_footprint
 

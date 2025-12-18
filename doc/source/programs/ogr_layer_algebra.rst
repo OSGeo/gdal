@@ -37,6 +37,10 @@ input source and a method source and generates the output of the operation in th
 
     ogr_layer_algebra is a Python utility, and is only available if GDAL Python bindings are available.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_vector_layer_algebra`.
+
 .. program:: ogr_layer_algebra
 
 .. include:: options/help_and_help_general.rst

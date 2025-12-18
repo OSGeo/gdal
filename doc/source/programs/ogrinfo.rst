@@ -23,6 +23,10 @@ The :program:`ogrinfo` program lists various information about an OGR-supported 
 source to stdout (the terminal). By executing SQL statements it is also possible to
 edit data.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_vector_info`.
+
 .. program:: ogrinfo
 
 .. include:: options/help_and_help_general.rst

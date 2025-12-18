@@ -43,6 +43,9 @@ The :program:`sozip` utility can be used to:
 - validate a SOZip file
 - convert an existing Zip file in a SOZip optimized one
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_vsi_sozip`.
 
 .. program:: sozip
 
