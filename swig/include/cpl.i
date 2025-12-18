@@ -226,10 +226,7 @@ void CPLPopErrorHandler();
 
 void CPLErrorReset();
 void VSICurlClearCache();
-
-%apply Pointer NONNULL {const char *utf8_path};
 void VSICurlPartialClearCache( const char* utf8_path );
-%clear (const char *utf8_path);
 
 #ifndef SWIGJAVA
 %feature( "kwargs" ) EscapeString;
