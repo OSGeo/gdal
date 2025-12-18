@@ -10,6 +10,7 @@ gdal_sieve
 
 .. Index:: gdal_sieve
 
+
 Synopsis
 --------
 
@@ -37,3 +38,8 @@ Additional details on the algorithm are available in the :cpp:func:`GDALSieveFil
 .. note::
 
     gdal_sieve is a Python utility, and is only available if GDAL Python bindings are available.
+
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_sieve`.
+

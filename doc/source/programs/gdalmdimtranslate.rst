@@ -24,6 +24,10 @@ Description
 different formats, and/or can perform selective conversion of specific arrays
 and groups, and/or subsetting operations.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_mdim_convert`.
+
 The following command line parameters can appear in any order.
 
 .. program:: gdalmdimtranslate

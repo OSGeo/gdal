@@ -24,6 +24,10 @@ is often used to "fix up" lossy compressed air photos so that color pixels can b
 treated as transparent when mosaicing. The output format must use lossless compression
 if either alpha band or mask band is not set.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_clean_collar`.
+
 .. program:: nearblack
 
 .. include:: options/help_and_help_general.rst
