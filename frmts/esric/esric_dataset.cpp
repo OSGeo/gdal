@@ -127,8 +127,6 @@ struct Bundle
         index.resize(BSZ * BSZ);
         if (3 != u32lat(header) || 5 != u32lat(header + 12) ||
             40 != u32lat(header + 32) || 0 != u32lat(header + 36) ||
-            (!isTpkx &&
-             BSZ * BSZ != u32lat(header + 4)) || /* skip this check for tpkx */
             BSZ * BSZ * 8 != u32lat(header + 60) ||
             index.size() != fh->Read(index.data(), 8, index.size()))
         {
@@ -145,7 +143,6 @@ struct Bundle
     std::vector<GUInt64> index{};
     VSIVirtualHandleUniquePtr fh{};
     bool isV2 = false;
-    bool isTpkx = false;
     CPLString name{};
     const size_t BSZ = 128;
 };
@@ -515,11 +512,6 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         }
         // Keep 4 bundle files open
         bundles.resize(4);
-        // Set the tile package flag in the bundles
-        for (auto &bundle : bundles)
-        {
-            bundle.isTpkx = true;
-        }
     }
     catch (CPLString &err)
     {
