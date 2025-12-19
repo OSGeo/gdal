@@ -19,7 +19,7 @@ add_gdal_driver(
           pdfwritabledataset.cpp
           pdfcreatefromcomposition.cpp
   CORE_SOURCES pdfdrivercore.cpp
-  SKIP_GDAL_PRIV_HEADER
+  SKIP_GDAL_PRIV_HEADER  # because we may need to use C++20
   PLUGIN_CAPABLE
   NO_SHARED_SYMBOL_WITH_CORE)
 
