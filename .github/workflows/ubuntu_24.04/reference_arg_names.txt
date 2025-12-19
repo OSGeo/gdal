@@ -233,6 +233,7 @@ position-crs
 power
 preserve-boundary
 profile
+promote-pixel-value-to-z
 propagate-nodata
 quadrant-segments
 radius
