@@ -1404,6 +1404,87 @@ OGRErr OGR_L_SetFeature(OGRLayerH hLayer, OGRFeatureH hFeat)
 }
 
 /************************************************************************/
+/*                             SetFeature()                              */
+/************************************************************************/
+
+/**
+ \brief Rewrite/replace an existing feature, transferring ownership
+        of the feature to the layer
+
+ This method will write a feature to the layer, based on the feature id
+ within the OGRFeature.
+
+ Use OGRLayer::TestCapability(OLCRandomWrite) to establish if this layer
+ supports random access writing via SetFeature().
+
+ The way unset fields in the provided poFeature are processed is driver dependent:
+ <ul>
+ <li>
+ SQL based drivers which implement SetFeature() through SQL UPDATE will skip
+ unset fields, and thus the content of the existing feature will be preserved.
+ </li>
+ <li>
+ The shapefile driver will write a NULL value in the DBF file.
+ </li>
+ <li>
+ The GeoJSON driver will take into account unset fields to remove the corresponding
+ JSON member.
+ </li>
+ </ul>
+
+ Drivers should specialize the ISetFeatureUniqPtr() method.
+
+ To set a feature, but create it if it doesn't exist see OGRLayer::UpsertFeature().
+
+ @param poFeature the feature to write.
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+
+ @see UpdateFeature(), CreateFeature(), UpsertFeature()
+ @since 3.13
+*/
+
+OGRErr OGRLayer::SetFeature(std::unique_ptr<OGRFeature> poFeature)
+
+{
+    ConvertGeomsIfNecessary(poFeature.get());
+    return ISetFeatureUniqPtr(std::move(poFeature));
+}
+
+/************************************************************************/
+/*                           ISetFeatureUniqPtr()                       */
+/************************************************************************/
+
+/**
+ \brief Rewrite/replace an existing feature, transferring ownership
+        of the feature to the layer
+
+ WARNING: if drivers implement this method, they *MUST* also implement
+ ISetFeature()
+
+ This method is implemented by drivers and not called directly. User code should
+ use SetFeature() instead.
+
+ This method will write a feature to the layer, based on the feature id
+ within the OGRFeature.
+
+ @param poFeature the feature to write.
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+
+ @see SetFeature()
+ @since 3.13
+*/
+
+OGRErr OGRLayer::ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature)
+
+{
+    return ISetFeature(poFeature.get());
+}
+
+/************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
@@ -1443,7 +1524,7 @@ OGRErr OGRLayer::CreateFeature(OGRFeature *poFeature)
 /**
  \brief Create and write a new feature within a layer.
 
- This method is implemented by drivers  and not called directly. User code should
+ This method is implemented by drivers and not called directly. User code should
  use CreateFeature() instead.
 
  The passed feature is written to the layer as a new feature, rather than
@@ -1504,6 +1585,80 @@ OGRErr OGR_L_CreateFeature(OGRLayerH hLayer, OGRFeatureH hFeat)
 
     return OGRLayer::FromHandle(hLayer)->CreateFeature(
         OGRFeature::FromHandle(hFeat));
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+/**
+ \brief Create and write a new feature within a layer, transferring ownership
+        of the feature to the layer
+
+ The passed feature is written to the layer as a new feature, rather than
+ overwriting an existing one.  If the feature has a feature id other than
+ OGRNullFID, then the native implementation may use that as the feature id
+ of the new feature, but not necessarily.  Upon successful return the
+ passed feature will have been updated with the new feature id.
+
+ Drivers should specialize the ICreateFeatureUniqPtr() method.
+
+ To create a feature, but set it if it exists see OGRLayer::UpsertFeature().
+
+ @param poFeature the feature to write to disk.
+ @param[out] pnFID Pointer to an integer that will receive the potentially
+             updated FID
+
+ @return OGRERR_NONE on success.
+
+ @see SetFeature(), UpdateFeature(), UpsertFeature()
+ @since 3.13
+*/
+
+OGRErr OGRLayer::CreateFeature(std::unique_ptr<OGRFeature> poFeature,
+                               GIntBig *pnFID)
+
+{
+    ConvertGeomsIfNecessary(poFeature.get());
+    return ICreateFeatureUniqPtr(std::move(poFeature), pnFID);
+}
+
+/************************************************************************/
+/*                         ICreateFeatureUniqPtr()                      */
+/************************************************************************/
+
+/**
+ \brief Create and write a new feature within a layer, transferring ownership
+        of the feature to the layer
+
+ WARNING: if drivers implement this method, they *MUST* also implement
+ ICreateFeature()
+
+ The passed feature is written to the layer as a new feature, rather than
+ overwriting an existing one.  If the feature has a feature id other than
+ OGRNullFID, then the native implementation may use that as the feature id
+ of the new feature, but not necessarily.  Upon successful return the
+ passed feature will have been updated with the new feature id.
+
+ @param poFeature the feature to write to disk.
+ @param[out] pnFID Pointer to an integer that will receive the potentially
+             updated FID
+
+ @return OGRERR_NONE on success.
+
+ @see ICreateFeature()
+ @see CreateFeature(std::unique_ptr<OGRFeature> , GIntBig*)
+ @since 3.13
+*/
+
+OGRErr OGRLayer::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                                       GIntBig *pnFID)
+
+{
+    const OGRErr eErr = ICreateFeature(poFeature.get());
+    if (pnFID)
+        *pnFID = poFeature->GetFID();
+    return eErr;
 }
 
 /************************************************************************/

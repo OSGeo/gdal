@@ -206,7 +206,7 @@ OGRFeature *OGRWarpedLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                             ISetFeature()                             */
+/*                             ISetFeature()                            */
 /************************************************************************/
 
 OGRErr OGRWarpedLayer::ISetFeature(OGRFeature *poFeature)
@@ -220,7 +220,20 @@ OGRErr OGRWarpedLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                            ICreateFeature()                           */
+/*                          ISetFeatureUniqPtr()                        */
+/************************************************************************/
+
+OGRErr OGRWarpedLayer::ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature)
+{
+    auto poFeatureNew = WarpedFeatureToSrcFeature(std::move(poFeature));
+    if (!poFeatureNew)
+        return OGRERR_FAILURE;
+
+    return m_poDecoratedLayer->SetFeature(std::move(poFeatureNew));
+}
+
+/************************************************************************/
+/*                            ICreateFeature()                          */
 /************************************************************************/
 
 OGRErr OGRWarpedLayer::ICreateFeature(OGRFeature *poFeature)
@@ -231,6 +244,21 @@ OGRErr OGRWarpedLayer::ICreateFeature(OGRFeature *poFeature)
         return OGRERR_FAILURE;
 
     return m_poDecoratedLayer->CreateFeature(poFeatureNew.get());
+}
+
+/************************************************************************/
+/*                          ICreateFeatureUniqPtr()                     */
+/************************************************************************/
+
+OGRErr
+OGRWarpedLayer::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                                      GIntBig *pnFID)
+{
+    auto poFeatureNew = WarpedFeatureToSrcFeature(std::move(poFeature));
+    if (!poFeatureNew)
+        return OGRERR_FAILURE;
+
+    return m_poDecoratedLayer->CreateFeature(std::move(poFeatureNew), pnFID);
 }
 
 /************************************************************************/

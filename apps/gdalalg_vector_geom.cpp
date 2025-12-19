@@ -211,7 +211,7 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
 }
 
 bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
-    OGRMemLayer &dstLayer, GDALProgressFunc pfnProgress, void *pProgressData,
+    OGRLayer &dstLayer, GDALProgressFunc pfnProgress, void *pProgressData,
     double dfProgressStart, double dfProgressRatio)
 {
     const OGRSpatialReference *poResultSRS =
@@ -310,7 +310,7 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
 }
 
 bool GDALGeosNonStreamingAlgorithmDataset::Process(OGRLayer &srcLayer,
-                                                   OGRMemLayer &dstLayer,
+                                                   OGRLayer &dstLayer,
                                                    int geomFieldIndex,
                                                    GDALProgressFunc pfnProgress,
                                                    void *pProgressData)

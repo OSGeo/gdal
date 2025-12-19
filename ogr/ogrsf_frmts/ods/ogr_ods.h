@@ -76,8 +76,8 @@ class OGRODSLayer final : public OGRMemLayer
     /* For external usage. Mess with FID */
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
-    using OGRLayer::CreateFeature;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature) override;
     OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                           const int *panUpdatedFieldsIdx,
                           int nUpdatedGeomFieldsCount,
@@ -104,6 +104,8 @@ class OGRODSLayer final : public OGRMemLayer
     }
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                                 GIntBig *pnFID) override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override

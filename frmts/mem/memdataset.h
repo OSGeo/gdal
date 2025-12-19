@@ -257,6 +257,8 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     // doesn't change.
     IOGRMemLayerFeatureIterator *GetIterator();
     void PrepareCreateFeature(OGRFeature *poFeature);
+    OGRErr SetFeatureInternal(std::unique_ptr<OGRFeature> poFeature,
+                              GIntBig *pnFID = nullptr);
 
   protected:
     OGRFeature *GetFeatureRef(GIntBig nFeatureId);
@@ -274,11 +276,11 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
 
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    OGRErr SetFeature(std::unique_ptr<OGRFeature> poFeature,
-                      GIntBig *pnFID = nullptr);
+    OGRErr ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
 
-    OGRErr CreateFeature(std::unique_ptr<OGRFeature> poFeature);
+    OGRErr ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                                 GIntBig *pnFID = nullptr) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     OGRErr IUpsertFeature(OGRFeature *poFeature) override;

@@ -237,18 +237,34 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
         return OGRERR_FAILURE;
 
     GIntBig nFID = poFeature->GetFID();
-    OGRErr eErr =
-        SetFeature(std::unique_ptr<OGRFeature>(poFeature->Clone()), &nFID);
+    OGRErr eErr = SetFeatureInternal(
+        std::unique_ptr<OGRFeature>(poFeature->Clone()), &nFID);
     poFeature->SetFID(nFID);
     return eErr;
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                         ISetFeatureUniqPtr()                         */
 /************************************************************************/
 
-OGRErr OGRMemLayer::SetFeature(std::unique_ptr<OGRFeature> poFeature,
-                               GIntBig *pnFID)
+OGRErr OGRMemLayer::ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature)
+
+{
+    if (!m_bUpdatable)
+        return OGRERR_FAILURE;
+
+    if (poFeature == nullptr)
+        return OGRERR_FAILURE;
+
+    return SetFeatureInternal(std::move(poFeature));
+}
+
+/************************************************************************/
+/*                         SetFeatureInternal()                         */
+/************************************************************************/
+
+OGRErr OGRMemLayer::SetFeatureInternal(std::unique_ptr<OGRFeature> poFeature,
+                                       GIntBig *pnFID)
 {
     // If we don't have a FID, find one available
     GIntBig nFID = poFeature->GetFID();
@@ -458,22 +474,26 @@ OGRErr OGRMemLayer::ICreateFeature(OGRFeature *poFeature)
 
     PrepareCreateFeature(poFeature);
 
-    // Prevent calling ISetFeature() from derived classes
-    return OGRMemLayer::ISetFeature(poFeature);
+    GIntBig nFID = poFeature->GetFID();
+    const OGRErr eErr = SetFeatureInternal(
+        std::unique_ptr<OGRFeature>(poFeature->Clone()), &nFID);
+    poFeature->SetFID(nFID);
+    return eErr;
 }
 
 /************************************************************************/
-/*                            CreateFeature()                           */
+/*                        ICreateFeatureUniqPtr()                       */
 /************************************************************************/
 
-OGRErr OGRMemLayer::CreateFeature(std::unique_ptr<OGRFeature> poFeature)
+OGRErr OGRMemLayer::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                                          GIntBig *pnFID)
 {
     if (!m_bUpdatable)
         return OGRERR_FAILURE;
 
     PrepareCreateFeature(poFeature.get());
 
-    return OGRMemLayer::SetFeature(std::move(poFeature));
+    return SetFeatureInternal(std::move(poFeature), pnFID);
 }
 
 /************************************************************************/

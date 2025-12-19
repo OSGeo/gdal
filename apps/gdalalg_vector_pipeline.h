@@ -15,7 +15,6 @@
 
 #include "gdalalgorithm.h"
 #include "gdalalg_abstract_pipeline.h"
-#include "memdataset.h"
 
 #include "ogrsf_frmts.h"
 #include "ogrlayerwithtranslatefeature.h"
@@ -382,7 +381,7 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
     GDALVectorNonStreamingAlgorithmDataset();
     ~GDALVectorNonStreamingAlgorithmDataset() override;
 
-    virtual bool Process(OGRLayer &srcLayer, OGRMemLayer &dstLayer,
+    virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer,
                          int geomFieldIndex, GDALProgressFunc pfnProgress,
                          void *pProgressData) = 0;
 
