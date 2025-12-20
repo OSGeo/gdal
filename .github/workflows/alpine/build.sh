@@ -46,6 +46,8 @@ apps/gdal --json-usage > out.json
 export PYTHON_CMD=python3
 $PYTHON_CMD -m venv myvenv
 source myvenv/bin/activate
+# Works around install issue with 0.18.17 with free-threading python: https://sourceforge.net/p/ruamel-yaml/tickets/554/
+$PYTHON_CMD -m pip install -U ruamel.yaml==0.18.16
 $PYTHON_CMD -m pip install -U check-jsonschema
 check-jsonschema --schemafile data/gdal_algorithm.schema.json out.json
 
