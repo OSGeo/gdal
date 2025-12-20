@@ -200,8 +200,23 @@ class CPL_DLL OGRArrowArrayHelper
             const int TZOffsetMS = TZOffset * 60 * 1000;
             nVal -= TZOffsetMS;
         }
-        static_cast<int64_t *>(const_cast<void *>(psArray->buffers[1]))[iFeat] =
-            nVal;
+        if (psArray->n_children == 2)
+        {
+            static_cast<int64_t *>(const_cast<void *>(
+                psArray->children[0]->buffers[1]))[iFeat] = nVal;
+            const int nOffsetMinutes =
+                ogrField.Date.TZFlag > OGR_TZFLAG_MIXED_TZ
+                    ? (ogrField.Date.TZFlag - OGR_TZFLAG_UTC) * 15
+                    : 0;
+            static_cast<int16_t *>(
+                const_cast<void *>(psArray->children[1]->buffers[1]))[iFeat] =
+                static_cast<int16_t>(nOffsetMinutes);
+        }
+        else
+        {
+            static_cast<int64_t *>(
+                const_cast<void *>(psArray->buffers[1]))[iFeat] = nVal;
+        }
     }
 
     static GByte *GetPtrForStringOrBinary(struct ArrowArray *psArray, int iFeat,

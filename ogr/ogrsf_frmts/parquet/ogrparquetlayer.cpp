@@ -1472,19 +1472,40 @@ void OGRParquetLayer::CreateFieldFromSchema(
         case arrow::Type::STRUCT:
         {
             const auto subfields = field->Flatten();
-            auto newpath = path;
-            newpath.push_back(0);
-            for (int j = 0; j < static_cast<int>(subfields.size()); j++)
+            const std::string osExtensionName =
+                GetFieldExtensionName(field, type, GetDriverUCName().c_str());
+            if (osExtensionName == EXTENSION_NAME_ARROW_TIMESTAMP_WITH_OFFSET &&
+                subfields.size() == 2 &&
+                subfields[0]->name() ==
+                    field->name() + "." + ATSWO_TIMESTAMP_FIELD_NAME &&
+                subfields[0]->type()->id() == arrow::Type::TIMESTAMP &&
+                subfields[1]->name() ==
+                    field->name() + "." + ATSWO_OFFSET_MINUTES_FIELD_NAME &&
+                subfields[1]->type()->id() == arrow::Type::INT16)
             {
-                const auto &subfield = subfields[j];
-                bParquetColValid =
-                    CheckMatchArrowParquetColumnNames(iParquetCol, subfield);
-                if (!bParquetColValid)
-                    m_bHasMissingMappingToParquet = true;
-                newpath.back() = j;
-                CreateFieldFromSchema(subfield, bParquetColValid, iParquetCol,
-                                      newpath,
-                                      oMapFieldNameToGDALSchemaFieldDefn);
+                oField.SetType(OFTDateTime);
+                oField.SetTZFlag(OGR_TZFLAG_MIXED_TZ);
+                oField.SetNullable(field->nullable());
+                m_poFeatureDefn->AddFieldDefn(&oField);
+                m_anMapFieldIndexToArrowColumn.push_back(path);
+                m_apoArrowDataTypes.push_back(std::move(type));
+            }
+            else
+            {
+                auto newpath = path;
+                newpath.push_back(0);
+                for (int j = 0; j < static_cast<int>(subfields.size()); j++)
+                {
+                    const auto &subfield = subfields[j];
+                    bParquetColValid = CheckMatchArrowParquetColumnNames(
+                        iParquetCol, subfield);
+                    if (!bParquetColValid)
+                        m_bHasMissingMappingToParquet = true;
+                    newpath.back() = j;
+                    CreateFieldFromSchema(subfield, bParquetColValid,
+                                          iParquetCol, newpath,
+                                          oMapFieldNameToGDALSchemaFieldDefn);
+                }
             }
             return;  // return intended, not break
         }

@@ -4723,3 +4723,85 @@ def test_ogr_parquet_lists_as_string_json():
     assert f["list_float64"] == "[null,7.5,8.5,9.5]"
     assert f["list_string"] == "[null]"
     assert f["fixed_size_list_float64"] == "[8.0,9.0]"
+
+
+###############################################################################
+
+# Test support for https://github.com/apache/arrow/blob/main/docs/source/format/CanonicalExtensions.rst#timestamp-with-offset
+
+
+@pytest.mark.parametrize("OGR2OGR_USE_ARROW_API", ["YES", "NO"])
+@pytest.mark.parametrize("TIMESTAMP_WITH_OFFSET", ["AUTO", "YES", "NO"])
+def test_ogr_parquet_timestamp_with_offset(
+    tmp_vsimem, OGR2OGR_USE_ARROW_API, TIMESTAMP_WITH_OFFSET
+):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
+    fld_defn.SetTZFlag(ogr.TZFLAG_MIXED_TZ)
+    src_lyr.CreateField(fld_defn)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+
+    f["id"] = 1
+    f["dt"] = "2025-12-20T12:34:56+0345"
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["id"] = 2
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["id"] = 3
+    f["dt"] = "2025-12-20T12:34:56-0745"
+    src_lyr.CreateFeature(f)
+
+    # Test without timezone
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["id"] = 4
+    f["dt"] = "2025-12-20T22:30:56"
+    src_lyr.CreateFeature(f)
+
+    with gdal.config_option(
+        "OGR2OGR_USE_ARROW_API", OGR2OGR_USE_ARROW_API
+    ), gdal.quiet_errors():
+        gdal.VectorTranslate(
+            tmp_vsimem / "out.parquet",
+            src_ds,
+            layerCreationOptions=["TIMESTAMP_WITH_OFFSET=" + TIMESTAMP_WITH_OFFSET],
+        )
+
+    with ogr.Open(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(1)
+        assert fld_defn.GetType() == ogr.OFTDateTime
+        if TIMESTAMP_WITH_OFFSET == "NO" and OGR2OGR_USE_ARROW_API == "NO":
+            assert fld_defn.GetTZFlag() == ogr.TZFLAG_UNKNOWN
+        else:
+            assert fld_defn.GetTZFlag() == ogr.TZFLAG_MIXED_TZ
+
+        f = lyr.GetNextFeature()
+        assert f["id"] == 1
+        if TIMESTAMP_WITH_OFFSET == "NO" and OGR2OGR_USE_ARROW_API == "NO":
+            assert f["dt"] == "2025/12/20 08:49:56"
+        else:
+            assert f["dt"] == "2025/12/20 12:34:56+0345"
+
+        f = lyr.GetNextFeature()
+        assert f["id"] == 2
+        assert f["dt"] is None
+
+        f = lyr.GetNextFeature()
+        assert f["id"] == 3
+        if TIMESTAMP_WITH_OFFSET == "NO" and OGR2OGR_USE_ARROW_API == "NO":
+            assert f["dt"] == "2025/12/20 20:19:56"
+        else:
+            assert f["dt"] == "2025/12/20 12:34:56-0745"
+
+        f = lyr.GetNextFeature()
+        assert f["id"] == 4
+        if TIMESTAMP_WITH_OFFSET == "NO" and OGR2OGR_USE_ARROW_API == "NO":
+            assert f["dt"] == "2025/12/20 22:30:56"
+        else:
+            assert f["dt"] == "2025/12/20 22:30:56+00"

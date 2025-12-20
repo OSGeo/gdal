@@ -352,8 +352,6 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
     //! Whether to write "geo" footer metadata;
     bool m_bWriteGeoMetadata = true;
 
-    CPLStringList m_aosCreationOptions{};
-
     bool IsFileWriterCreated() const override
     {
         return m_poFileWriter != nullptr;
