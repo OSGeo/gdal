@@ -5994,7 +5994,7 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer *poLayer,
 
 int OGRMVTWriterDataset::TestCapability(const char *pszCap) const
 {
-    if (EQUAL(pszCap, ODsCCreateLayer))
+    if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCRandomLayerWrite))
         return true;
     return false;
 }
