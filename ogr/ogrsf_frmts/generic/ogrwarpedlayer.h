@@ -41,8 +41,9 @@ class CPL_DLL OGRWarpedLayer final : public OGRLayerDecorator,
 
     OGRGeometryFactory::TransformWithOptionsCache m_transformCacheForward{};
     OGRGeometryFactory::TransformWithOptionsCache m_transformCacheReverse{};
-    OGRCoordinateTransformation *m_poCT = nullptr;
-    OGRCoordinateTransformation *m_poReversedCT = nullptr; /* may be NULL */
+    std::unique_ptr<OGRCoordinateTransformation> m_poCT{};
+    /* may be NULL */
+    std::unique_ptr<OGRCoordinateTransformation> m_poReversedCT{};
     OGRSpatialReference *m_poSRS = nullptr;
 
     OGREnvelope sStaticEnvelope{};
@@ -56,12 +57,12 @@ class CPL_DLL OGRWarpedLayer final : public OGRLayerDecorator,
     WarpedFeatureToSrcFeature(std::unique_ptr<OGRFeature> poFeature);
 
   public:
-    OGRWarpedLayer(
-        OGRLayer *poDecoratedLayer, int iGeomField, int bTakeOwnership,
-        OGRCoordinateTransformation
-            *poCT, /* must NOT be NULL, ownership acquired by OGRWarpedLayer */
-        OGRCoordinateTransformation *
-            poReversedCT /* may be NULL, ownership acquired by OGRWarpedLayer */);
+    OGRWarpedLayer(OGRLayer *poDecoratedLayer, int iGeomField,
+                   int bTakeLayerOwnership,
+                   /* must NOT be NULL */
+                   std::unique_ptr<OGRCoordinateTransformation> poCT,
+                   /* may be NULL */
+                   std::unique_ptr<OGRCoordinateTransformation> poReversedCT);
     ~OGRWarpedLayer() override;
 
     void TranslateFeature(

@@ -57,18 +57,9 @@ OGRGeomFieldDefn::OGRGeomFieldDefn(const char *pszNameIn,
  */
 
 OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn *poPrototype)
+    : OGRGeomFieldDefn(*poPrototype)
 
 {
-    Initialize(poPrototype->GetNameRef(), poPrototype->GetType());
-    const OGRSpatialReference *poSRSSrc = poPrototype->GetSpatialRef();
-    if (poSRSSrc)
-    {
-        OGRSpatialReference *l_poSRS = poSRSSrc->Clone();
-        SetSpatialRef(l_poSRS);
-        l_poSRS->Release();
-    }
-    SetNullable(poPrototype->IsNullable());
-    SetCoordinatePrecision(poPrototype->GetCoordinatePrecision());
 }
 
 /************************************************************************/
@@ -121,23 +112,41 @@ OGRGeomFieldDefn::~OGRGeomFieldDefn()
 }
 
 /************************************************************************/
-/*                          OGRGeomFieldDefn::OGRGeomFieldDefn()        */
+/*                   OGRGeomFieldDefn::OGRGeomFieldDefn()               */
 /************************************************************************/
 
 /**
- * @brief OGRGeomFieldDefn::OGRGeomFieldDefn Copy constructor
+ * @brief Copy constructor
  * @param oOther the OGRGeomFieldDefn to copy.
  * @since GDAL 3.11
  */
 OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn &oOther)
     : pszName(CPLStrdup(oOther.pszName)), eGeomType(oOther.eGeomType),
       poSRS(nullptr), bIgnore(oOther.bIgnore), bNullable(oOther.bNullable),
+      m_bSealed(false), m_oCoordPrecision(oOther.m_oCoordPrecision)
+{
+    if (auto poSrcSRS = oOther.GetSpatialRef())
+    {
+        poSRS = poSrcSRS->Clone();
+    }
+}
+
+/************************************************************************/
+/*                   OGRGeomFieldDefn::OGRGeomFieldDefn()               */
+/************************************************************************/
+
+/**
+ * @brief Move constructor
+ * @param oOther the OGRGeomFieldDefn to move.
+ * @since GDAL 3.13
+ */
+OGRGeomFieldDefn::OGRGeomFieldDefn(OGRGeomFieldDefn &&oOther)
+    : pszName(oOther.pszName), eGeomType(oOther.eGeomType), poSRS(oOther.poSRS),
+      bIgnore(oOther.bIgnore), bNullable(oOther.bNullable),
       m_bSealed(oOther.m_bSealed), m_oCoordPrecision(oOther.m_oCoordPrecision)
 {
-    if (oOther.poSRS)
-    {
-        poSRS = oOther.poSRS->Clone();
-    }
+    oOther.pszName = nullptr;
+    oOther.poSRS = nullptr;
 }
 
 /************************************************************************/
@@ -162,6 +171,31 @@ OGRGeomFieldDefn &OGRGeomFieldDefn::operator=(const OGRGeomFieldDefn &oOther)
         if (poSRS)
             const_cast<OGRSpatialReference *>(poSRS)->Dereference();
         poSRS = oOther.poSRS;
+        bNullable = oOther.bNullable;
+        m_oCoordPrecision = oOther.m_oCoordPrecision;
+        m_bSealed = oOther.m_bSealed;
+        bIgnore = oOther.bIgnore;
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*                          OGRGeomFieldDefn::operator=()               */
+/************************************************************************/
+
+/**
+ * Move assignment operator
+ * @param oOther the OGRGeomFieldDefn to move.
+ * @return a reference to the current object.
+ * @since GDAL 3.13
+ */
+OGRGeomFieldDefn &OGRGeomFieldDefn::operator=(OGRGeomFieldDefn &&oOther)
+{
+    if (&oOther != this)
+    {
+        std::swap(pszName, oOther.pszName);
+        eGeomType = oOther.eGeomType;
+        std::swap(poSRS, oOther.poSRS);
         bNullable = oOther.bNullable;
         m_oCoordPrecision = oOther.m_oCoordPrecision;
         m_bSealed = oOther.m_bSealed;

@@ -33,10 +33,15 @@ class CPL_DLL OGRUnionLayerGeomFieldDefn final : public OGRGeomFieldDefn
     OGREnvelope sStaticEnvelope{};
 
     OGRUnionLayerGeomFieldDefn(const char *pszName, OGRwkbGeometryType eType);
-    explicit OGRUnionLayerGeomFieldDefn(const OGRGeomFieldDefn *poSrc);
-    explicit OGRUnionLayerGeomFieldDefn(
-        const OGRUnionLayerGeomFieldDefn *poSrc);
+    explicit OGRUnionLayerGeomFieldDefn(const OGRGeomFieldDefn &oSrc);
+    OGRUnionLayerGeomFieldDefn(const OGRUnionLayerGeomFieldDefn &oSrc);
+    OGRUnionLayerGeomFieldDefn(OGRUnionLayerGeomFieldDefn &&) = default;
     ~OGRUnionLayerGeomFieldDefn() override;
+
+    OGRUnionLayerGeomFieldDefn &
+    operator=(const OGRUnionLayerGeomFieldDefn &) = delete;
+    OGRUnionLayerGeomFieldDefn &
+    operator=(OGRUnionLayerGeomFieldDefn &&) = delete;
 };
 
 /************************************************************************/
@@ -105,10 +110,9 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     std::vector<Layer> m_apoSrcLayers{};
 
     mutable OGRFeatureDefn *poFeatureDefn = nullptr;
-    int nFields = 0;
-    OGRFieldDefn **papoFields = nullptr;
-    int nGeomFields = 0;
-    OGRUnionLayerGeomFieldDefn **papoGeomFields = nullptr;
+    std::vector<std::unique_ptr<OGRFieldDefn>> apoFields{};
+    std::vector<std::unique_ptr<OGRUnionLayerGeomFieldDefn>> apoGeomFields{};
+    bool bUseGeomFields = true;
     FieldUnionStrategy eFieldStrategy = FIELD_UNION_ALL_LAYERS;
     CPLString osSourceLayerFieldName{};
 
@@ -163,10 +167,13 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     /* and before any virtual method */
     void SetFields(
         FieldUnionStrategy eFieldStrategy, int nFields,
-        OGRFieldDefn **papoFields, /* duplicated by the method */
+        const OGRFieldDefn *paoFields, /* duplicated by the method */
         int nGeomFields, /* maybe -1 to explicitly disable geometry fields */
-        OGRUnionLayerGeomFieldDefn *
-            *papoGeomFields /* duplicated by the method */);
+        const OGRUnionLayerGeomFieldDefn
+            *paoGeomFields /* duplicated by the method */);
+    void SetFields(FieldUnionStrategy eFieldStrategy,
+                   const OGRFeatureDefn *poFeatureDefnIn);
+
     void SetSourceLayerFieldName(const char *pszSourceLayerFieldName);
     void SetPreserveSrcFID(int bPreserveSrcFID);
     void SetFeatureCount(int nFeatureCount);
