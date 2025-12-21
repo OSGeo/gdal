@@ -1639,6 +1639,25 @@ def test_stats_ComputeInterBandCovarianceMatrix_mask_band():
 ###############################################################################
 
 
+def test_stats_ComputeInterBandCovarianceMatrix_all_bands_same_mask():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 4, 1, 2)
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x01\x02\x03\xFF")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xFE\x03")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xFF\xFF\x00\x00")
+
+    expected_cov_matrix = [[0.5, -0.5], [-0.5, 0.5]]
+
+    cov_matrix = ds.ComputeInterBandCovarianceMatrix()
+    assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
+        list(chain.from_iterable(expected_cov_matrix))
+    )
+
+
+###############################################################################
+
+
 def test_stats_ComputeInterBandCovarianceMatrix_interrupt():
 
     ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1000)
