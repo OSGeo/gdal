@@ -580,7 +580,7 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
         {
             const auto &apoUncertaintyDims =
                 poUncertaintyDataset->GetDimensions();
-            const auto oUncertaintyType = poUncertaintyDataset->GetDataType();
+            const auto &oUncertaintyType = poUncertaintyDataset->GetDataType();
             if (apoUncertaintyDims.size() == 1 &&
                 apoUncertaintyDims[0]->GetSize() == 1 &&
                 oUncertaintyType.GetClass() == GEDTC_COMPOUND)
@@ -1228,7 +1228,7 @@ bool S104Creator::WriteUncertaintyDataset()
     hsize_t count[1] = {1};
     const char *pszName = "uncertainty";
     GByte abyValues[sizeof(char *) + sizeof(float)];
-    memcpy(abyValues, &pszName, sizeof(char **));
+    memcpy(abyValues, &pszName, sizeof(char *));
     const char *pszUncertainty = m_aosOptions.FetchNameValueDef(
         "UNCERTAINTY", m_poSrcDS->GetMetadataItem("uncertainty"));
     float fVal =

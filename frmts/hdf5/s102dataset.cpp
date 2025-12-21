@@ -1447,13 +1447,13 @@ bool S102Creator::WriteFeatureAttributeTable(
     bRet = bRet && hParams;
     if (bRet)
     {
-        H5_CHECK(H5Pset_layout(hParams, H5D_CHUNKED));
+        bRet = H5_CHECK(H5Pset_layout(hParams, H5D_CHUNKED)) >= 0;
         hsize_t chunk_size[] = {static_cast<hsize_t>(1)};
-        H5_CHECK(H5Pset_chunk(hParams, 1, chunk_size));
+        bRet = bRet && H5_CHECK(H5Pset_chunk(hParams, 1, chunk_size)) >= 0;
         hDatasetID.reset(
             H5_CHECK(H5Dcreate(m_featureGroup, "featureAttributeTable",
                                hDataType, hDataSpace, hParams)));
-        bRet = hDatasetID;
+        bRet = bRet && hDatasetID;
     }
     if (bRet)
     {
