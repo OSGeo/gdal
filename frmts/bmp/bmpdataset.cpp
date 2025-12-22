@@ -901,7 +901,9 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
                         else
                             pabyUncomprBuf[j++] = (pabyComprBuf[i] & 0xF0) >> 4;
                     }
-                    if (i & 0x01)
+                    if ((iLength + 1) & 0x02) /* iLength%4 = 1 or 2 */
+                        i++;
+                    if (iLength & 0x01) /* iLength%4 = 1 (again) or 3 */
                         i++;
                 }
             }

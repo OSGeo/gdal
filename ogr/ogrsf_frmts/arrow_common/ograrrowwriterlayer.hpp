@@ -667,7 +667,7 @@ inline void OGRArrowWriterLayer::FinalizeSchema()
     {
         if (m_anTZFlag[i] >= OGR_TZFLAG_MIXED_TZ)
         {
-            const int nOffset = m_anTZFlag[i] == OGR_TZFLAG_UTC
+            const int nOffset = m_anTZFlag[i] == OGR_TZFLAG_MIXED_TZ
                                     ? 0
                                     : (m_anTZFlag[i] - OGR_TZFLAG_UTC) * 15;
             int nHours = static_cast<int>(nOffset / 60);  // Round towards zero.

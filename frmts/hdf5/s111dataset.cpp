@@ -1377,7 +1377,7 @@ bool S111Creator::WriteUncertaintyDataset()
         float fVal = pszVal ? static_cast<float>(CPLAtof(pszVal)) : -1.0f;
         CPL_LSBPTR32(&fVal);
         memcpy(abyValues + sizeof(char *) + sizeof(float), &pszName,
-               sizeof(char **));
+               sizeof(char *));
         memcpy(abyValues + sizeof(char *) + sizeof(float) + sizeof(char *),
                &fVal, sizeof(fVal));
     }
