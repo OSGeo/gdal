@@ -537,8 +537,7 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
             case 'O':
                 if (m == O_RDONLY)
                     tif->tif_flags |=
-                        (TIFF_LAZYSTRILELOAD_ASKED |
-                         TIFF_DEFERSTRILELOAD);
+                        (TIFF_LAZYSTRILELOAD_ASKED | TIFF_DEFERSTRILELOAD);
                 break;
         }
 

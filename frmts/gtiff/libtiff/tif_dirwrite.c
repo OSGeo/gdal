@@ -948,7 +948,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                                 TIFFGetField(tif, o->field_tag, &pa, &pb);
                                 if (!TIFFWriteDirectoryTagUndefinedArray(
                                         tif, &ndir, dir, (uint16_t)o->field_tag,
-                                        pa, pb))
+                                        pa, (uint8_t *)pb))
                                     goto bad;
                             }
                             break;
@@ -976,61 +976,61 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                 case TIFF_ASCII:
                     if (!TIFFWriteDirectoryTagAscii(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (char *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_UNDEFINED:
                     if (!TIFFWriteDirectoryTagUndefinedArray(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (uint8_t *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_BYTE:
                     if (!TIFFWriteDirectoryTagByteArray(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (uint8_t *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_SBYTE:
                     if (!TIFFWriteDirectoryTagSbyteArray(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (int8_t *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_SHORT:
                     if (!TIFFWriteDirectoryTagShortArray(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (uint16_t *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_SSHORT:
                     if (!TIFFWriteDirectoryTagSshortArray(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (int16_t *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_LONG:
                     if (!TIFFWriteDirectoryTagLongArray(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (uint32_t *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_SLONG:
                     if (!TIFFWriteDirectoryTagSlongArray(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (int32_t *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_LONG8:
                     if (!TIFFWriteDirectoryTagLong8Array(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (uint64_t *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_SLONG8:
                     if (!TIFFWriteDirectoryTagSlong8Array(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (int64_t *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_RATIONAL:
@@ -1045,7 +1045,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                     {
                         if (!TIFFWriteDirectoryTagRationalDoubleArray(
                                 tif, &ndir, dir, tag, count,
-                                tif->tif_dir.td_customValues[m].value))
+                                (double *)tif->tif_dir.td_customValues[m].value))
                             goto bad;
                     }
                     else
@@ -1053,7 +1053,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                         /*-- default should be tv_size == 4 */
                         if (!TIFFWriteDirectoryTagRationalArray(
                                 tif, &ndir, dir, tag, count,
-                                tif->tif_dir.td_customValues[m].value))
+                                (float *)tif->tif_dir.td_customValues[m].value))
                             goto bad;
                         /*-- ToDo: After Testing, this should be removed and
                          * tv_size==4 should be set as default. */
@@ -1080,7 +1080,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                     {
                         if (!TIFFWriteDirectoryTagSrationalDoubleArray(
                                 tif, &ndir, dir, tag, count,
-                                tif->tif_dir.td_customValues[m].value))
+                                (double *)tif->tif_dir.td_customValues[m].value))
                             goto bad;
                     }
                     else
@@ -1088,7 +1088,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                         /*-- default should be tv_size == 4 */
                         if (!TIFFWriteDirectoryTagSrationalArray(
                                 tif, &ndir, dir, tag, count,
-                                tif->tif_dir.td_customValues[m].value))
+                                (float *)tif->tif_dir.td_customValues[m].value))
                             goto bad;
                         /*-- ToDo: After Testing, this should be removed and
                          * tv_size==4 should be set as default. */
@@ -1106,25 +1106,25 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                 case TIFF_FLOAT:
                     if (!TIFFWriteDirectoryTagFloatArray(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (float *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_DOUBLE:
                     if (!TIFFWriteDirectoryTagDoubleArray(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (double *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_IFD:
                     if (!TIFFWriteDirectoryTagIfdArray(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (uint32_t *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 case TIFF_IFD8:
                     if (!TIFFWriteDirectoryTagIfdIfd8Array(
                             tif, &ndir, dir, tag, count,
-                            tif->tif_dir.td_customValues[m].value))
+                            (uint64_t *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
                 default:
@@ -3600,13 +3600,13 @@ int _TIFFRewriteField(TIFF *tif, uint16_t tag, TIFFDataType in_datatype,
         if (in_datatype == TIFF_LONG8 &&
             (entry_type == TIFF_SHORT || entry_type == TIFF_LONG ||
              entry_type == TIFF_LONG8))
-            datatype = entry_type;
+            datatype = (TIFFDataType)entry_type;
         else if (in_datatype == TIFF_SLONG8 &&
                  (entry_type == TIFF_SLONG || entry_type == TIFF_SLONG8))
-            datatype = entry_type;
+            datatype = (TIFFDataType)entry_type;
         else if (in_datatype == TIFF_IFD8 &&
                  (entry_type == TIFF_IFD || entry_type == TIFF_IFD8))
-            datatype = entry_type;
+            datatype = (TIFFDataType)entry_type;
         else
             datatype = in_datatype;
     }

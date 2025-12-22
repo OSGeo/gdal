@@ -2708,7 +2708,7 @@ static int jpeg_read_scanlines_encap(OJPEGState *sp,
         return 0;
     else
     {
-        jpeg_read_scanlines(cinfo, scanlines, max_lines);
+        jpeg_read_scanlines(cinfo, (JSAMPARRAY)scanlines, max_lines);
         return 1;
     }
 }
@@ -2723,7 +2723,7 @@ static int jpeg_read_raw_data_encap(OJPEGState *sp,
         return 0;
     else
     {
-        jpeg_read_raw_data(cinfo, data, max_lines);
+        jpeg_read_raw_data(cinfo, (JSAMPIMAGE)data, max_lines);
         return 1;
     }
 }

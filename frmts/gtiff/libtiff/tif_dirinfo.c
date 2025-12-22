@@ -57,15 +57,27 @@ extern const TIFFFieldArray tiffFieldArray;
 extern const TIFFFieldArray exifFieldArray;
 extern const TIFFFieldArray gpsFieldArray;
 #else
-#ifdef _MSC_VER
+/* C allows forward declaration of const objects, but C++ doesn't.
+ * We disable the C++-compat warning for this section since these circular
+ * dependencies are unavoidable with static initialization. */
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++-compat"
+#elif defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4132)
 #endif
-/* C allows this pattern (although MSVC complains...) */
 static const TIFFFieldArray tiffFieldArray;
 static const TIFFFieldArray exifFieldArray;
 static const TIFFFieldArray gpsFieldArray;
-#ifdef _MSC_VER
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#elif defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(_MSC_VER)
 #pragma warning(pop)
 #endif
 #endif
@@ -507,12 +519,25 @@ const TIFFFieldArray exifFieldArray = {tfiatExif, 0, TIFFArrayCount(exifFields),
 const TIFFFieldArray gpsFieldArray = {tfiatGps, 0, TIFFArrayCount(gpsFields),
                                       (TIFFField *)gpsFields};
 #else
+/* Suppress C++-compat warning for the definitions as well */
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++-compat"
+#endif
 static const TIFFFieldArray tiffFieldArray = {
     tfiatImage, 0, TIFFArrayCount(tiffFields), (TIFFField *)tiffFields};
 static const TIFFFieldArray exifFieldArray = {
     tfiatExif, 0, TIFFArrayCount(exifFields), (TIFFField *)exifFields};
 static const TIFFFieldArray gpsFieldArray = {
     tfiatGps, 0, TIFFArrayCount(gpsFields), (TIFFField *)gpsFields};
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#elif defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #endif
 
 /*

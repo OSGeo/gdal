@@ -1260,7 +1260,7 @@ TIFFReadDirEntryArrayWithLimit(TIFF *tif, TIFFDirEntry *direntry,
     void *data;
     uint64_t target_count64;
     int original_datasize_clamped;
-    typesize = TIFFDataWidth(direntry->tdir_type);
+    typesize = TIFFDataWidth((TIFFDataType)direntry->tdir_type);
 
     target_count64 =
         (direntry->tdir_count > maxcount) ? maxcount : direntry->tdir_count;
@@ -4115,7 +4115,7 @@ static int ByteCountLooksBad(TIFF *tif)
  */
 static bool EvaluateIFDdatasizeReading(TIFF *tif, TIFFDirEntry *dp)
 {
-    const uint64_t data_width = TIFFDataWidth(dp->tdir_type);
+    const uint64_t data_width = TIFFDataWidth((TIFFDataType)dp->tdir_type);
     if (data_width != 0 && dp->tdir_count > UINT64_MAX / data_width)
     {
         TIFFErrorExtR(tif, "EvaluateIFDdatasizeReading",
