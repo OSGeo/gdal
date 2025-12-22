@@ -5663,3 +5663,17 @@ def test_tiff_read_multithreaded_read_missing_tilebytecounts_and_offsets():
         match="missing_tilebytecounts_and_offsets.tif: Error while getting location of block 0",
     ):
         ds.ReadRaster()
+
+
+###############################################################################
+
+
+def test_tiff_read_ossfuzz_470691578():
+
+    if not check_libtiff_internal_or_at_least(4, 7, 2):
+        pytest.skip()
+
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
+        ds = gdal.Open("data/gtiff/ossfuzz_470691578.tif")
+        ds.GetRasterBand(1).GetOverviewCount()
+        assert ds.GetRasterBand(1).Checksum() == -1
