@@ -5708,3 +5708,17 @@ def test_tiff_read_envi_hdr():
             == "0.400"
         )
     assert gdal.VSIStatL("data/gtiff/byte_envi.bin.aux.xml") is None
+
+
+###############################################################################
+
+
+def test_tiff_read_ossfuzz_470691578():
+
+    if not check_libtiff_internal_or_at_least(4, 7, 2):
+        pytest.skip()
+
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
+        ds = gdal.Open("data/gtiff/ossfuzz_470691578.tif")
+        ds.GetRasterBand(1).GetOverviewCount()
+        assert ds.GetRasterBand(1).Checksum() == -1
