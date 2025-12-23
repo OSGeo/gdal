@@ -216,6 +216,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
     OGRMVTDataset *m_poDS;
     int m_nZ = 0;
     bool m_bUseReadDir = true;
+    bool m_bAddTileFields = false;
     CPLString m_osDirName;
     CPLStringList m_aosDirContent;
     CPLString m_aosSubDirName;
@@ -223,6 +224,8 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
     bool m_bEOF = false;
     int m_nXIndex = 0;
     int m_nYIndex = 0;
+    int m_nTileX = -1;
+    int m_nTileY = -1;
     GDALDataset *m_poCurrentTile = nullptr;
     bool m_bJsonField = false;
     GIntBig m_nFIDBase = 0;
@@ -1483,6 +1486,20 @@ OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
 
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSRS());
 
+    m_bAddTileFields =
+        CPLTestBool(CPLGetConfigOption("OGR_MVT_ADD_TILE_FIELDS", "NO"));
+
+    if (m_bAddTileFields)
+    {
+        OGRFieldDefn oFieldTileZ("tile_z", OFTInteger);
+        OGRFieldDefn oFieldTileX("tile_x", OFTInteger);
+        OGRFieldDefn oFieldTileY("tile_y", OFTInteger);
+
+        m_poFeatureDefn->AddFieldDefn(&oFieldTileZ);
+        m_poFeatureDefn->AddFieldDefn(&oFieldTileX);
+        m_poFeatureDefn->AddFieldDefn(&oFieldTileY);
+    }
+
     if (m_bJsonField)
     {
         OGRFieldDefn oFieldDefnId("mvt_id", OFTInteger64);
@@ -1664,12 +1681,12 @@ void OGRMVTDirectoryLayer::OpenTile()
             OGRMVTDataset::Open(&oOpenInfo, /* bRecurseAllowed = */ false);
         CSLDestroy(oOpenInfo.papszOpenOptions);
 
-        int nX = (m_bUseReadDir || !m_aosDirContent.empty())
-                     ? atoi(m_aosDirContent[m_nXIndex])
-                     : m_nXIndex;
-        int nY =
+        m_nTileX = (m_bUseReadDir || !m_aosDirContent.empty())
+                       ? atoi(m_aosDirContent[m_nXIndex])
+                       : m_nXIndex;
+        m_nTileY =
             m_bUseReadDir ? atoi(m_aosSubDirContent[m_nYIndex]) : m_nYIndex;
-        m_nFIDBase = (static_cast<GIntBig>(nX) << m_nZ) | nY;
+        m_nFIDBase = (static_cast<GIntBig>(m_nTileX) << m_nZ) | m_nTileY;
     }
 }
 
@@ -1872,6 +1889,12 @@ OGRFeature *OGRMVTDirectoryLayer::GetNextRawFeature()
             OGRFeature *poFeature = CreateFeatureFrom(poUnderlyingFeature);
             poFeature->SetFID(m_nFIDBase +
                               (poUnderlyingFeature->GetFID() << (2 * m_nZ)));
+            if (m_bAddTileFields)
+            {
+                poFeature->SetField("tile_z", m_nZ);
+                poFeature->SetField("tile_x", m_nTileX);
+                poFeature->SetField("tile_y", m_nTileY);
+            }
             delete poUnderlyingFeature;
             return poFeature;
         }
