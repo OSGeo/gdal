@@ -644,34 +644,50 @@ int VSIMkdir(const char *pszPathname, long mode)
 
 int VSIMkdirRecursive(const char *pszPathname, long mode)
 {
-    if (pszPathname == nullptr || pszPathname[0] == '\0' ||
-        strncmp("/", pszPathname, 2) == 0)
-    {
+    if (!pszPathname)
         return -1;
-    }
 
-    const CPLString osPathname(pszPathname);
+    const std::string osPathnameOri(pszPathname);
+    if (osPathnameOri.empty() || osPathnameOri == "/")
+        return -1;
+
     VSIStatBufL sStat;
-    if (VSIStatL(osPathname, &sStat) == 0)
+    if (VSIStatL(osPathnameOri.c_str(), &sStat) == 0)
     {
         return VSI_ISDIR(sStat.st_mode) ? 0 : -1;
     }
-    const std::string osParentPath(CPLGetPathSafe(osPathname));
 
-    // Prevent crazy paths from recursing forever.
-    if (osParentPath == osPathname ||
-        osParentPath.length() >= osPathname.length())
+    std::string osCurrentPath(osPathnameOri);
+    std::vector<std::string> aosQueue;
+    while (true)
     {
-        return -1;
+        std::string osParentPath(CPLGetPathSafe(osCurrentPath.c_str()));
+
+        // Prevent crazy paths from recursing forever.
+        if (osParentPath.length() >= osCurrentPath.length())
+        {
+            break;
+        }
+
+        if (!osParentPath.empty() &&
+            VSIStatL(osParentPath.c_str(), &sStat) != 0)
+        {
+            osCurrentPath = std::move(osParentPath);
+            aosQueue.push_back(osCurrentPath);
+        }
+        else
+        {
+            break;
+        }
     }
 
-    if (!osParentPath.empty() && VSIStatL(osParentPath.c_str(), &sStat) != 0)
+    for (auto oIter = aosQueue.rbegin(); oIter != aosQueue.rend(); ++oIter)
     {
-        if (VSIMkdirRecursive(osParentPath.c_str(), mode) != 0)
+        if (VSIMkdir(oIter->c_str(), mode) != 0)
             return -1;
     }
 
-    return VSIMkdir(osPathname, mode);
+    return VSIMkdir(osPathnameOri.c_str(), mode);
 }
 
 /************************************************************************/
