@@ -216,7 +216,6 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
     OGRMVTDataset *m_poDS;
     int m_nZ = 0;
     bool m_bUseReadDir = true;
-    bool m_bAddTileFields = false;
     CPLString m_osDirName;
     CPLStringList m_aosDirContent;
     CPLString m_aosSubDirName;
@@ -228,6 +227,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
     int m_nTileY = -1;
     GDALDataset *m_poCurrentTile = nullptr;
     bool m_bJsonField = false;
+    bool m_bAddTileFields = false;
     GIntBig m_nFIDBase = 0;
     OGREnvelope m_sExtent;
     int m_nFilterMinX = 0;
@@ -246,7 +246,8 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
                          const char *pszDirectoryName,
                          const CPLJSONObject &oFields,
                          const CPLJSONArray &oAttributesFromTileStats,
-                         bool bJsonField, OGRwkbGeometryType eGeomType,
+                         bool bJsonField, bool bAddTileFields,
+                         OGRwkbGeometryType eGeomType,
                          const OGREnvelope *psExtent);
     ~OGRMVTDirectoryLayer() override;
 
@@ -1476,8 +1477,10 @@ static CPLStringList StripDummyEntries(const CPLStringList &aosInput)
 OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
     OGRMVTDataset *poDS, const char *pszLayerName, const char *pszDirectoryName,
     const CPLJSONObject &oFields, const CPLJSONArray &oAttributesFromTileStats,
-    bool bJsonField, OGRwkbGeometryType eGeomType, const OGREnvelope *psExtent)
-    : m_poDS(poDS), m_osDirName(pszDirectoryName), m_bJsonField(bJsonField)
+    bool bJsonField, bool bAddTileFields, OGRwkbGeometryType eGeomType,
+    const OGREnvelope *psExtent)
+    : m_poDS(poDS), m_osDirName(pszDirectoryName), m_bJsonField(bJsonField),
+      m_bAddTileFields(bAddTileFields)
 {
     m_poFeatureDefn = new OGRFeatureDefn(pszLayerName);
     SetDescription(m_poFeatureDefn->GetName());
@@ -1485,9 +1488,6 @@ OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
     m_poFeatureDefn->Reference();
 
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSRS());
-
-    m_bAddTileFields =
-        CPLTestBool(CPLGetConfigOption("OGR_MVT_ADD_TILE_FIELDS", "NO"));
 
     if (m_bAddTileFields)
     {
@@ -2643,6 +2643,10 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                                                    "TILE_EXTENSION", "pbf"));
     bool bJsonField =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "JSON_FIELD", false);
+
+    bool bAddTileFields =
+        CPLFetchBool(poOpenInfo->papszOpenOptions, "ADD_TILE_FIELDS", false);
+
     VSIStatBufL sStat;
 
     bool bMetadataFileExists = false;
@@ -2813,8 +2817,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                                 std::make_unique<OGRMVTDirectoryLayer>(
                                     poDS, poTileLayer->GetName(),
                                     poOpenInfo->pszFilename, oFields,
-                                    CPLJSONArray(), bJsonField, wkbUnknown,
-                                    nullptr));
+                                    CPLJSONArray(), bJsonField, bAddTileFields,
+                                    wkbUnknown, nullptr));
                             poLayer = poDS->m_apoLayers.back().get();
                             poLDefn = poLayer->GetLayerDefn();
                             poLDefn->SetGeomType(eTileGeomType);
@@ -2953,7 +2957,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
 
             poDS->m_apoLayers.push_back(std::make_unique<OGRMVTDirectoryLayer>(
                 poDS, oId.ToString().c_str(), poOpenInfo->pszFilename, oFields,
-                oAttributesFromTileStats, bJsonField, eGeomType,
+                oAttributesFromTileStats, bJsonField, bAddTileFields, eGeomType,
                 (bExtentValid) ? &sExtent : nullptr));
         }
     }
