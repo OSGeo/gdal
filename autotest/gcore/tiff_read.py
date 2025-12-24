@@ -3804,15 +3804,30 @@ def test_tiff_read_toomanyblocks_separate():
 def test_tiff_read_size_of_stripbytecount_lower_than_stripcount():
 
     ds = gdal.Open("data/size_of_stripbytecount_lower_than_stripcount.tif")
-    # There are 3 strips but StripByteCounts has just two elements;
+    # There are 3 strips but StripByteCounts and StripOffsets have just two elements
     assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_OFFSET_0_1", "TIFF") == "171"
     assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_SIZE_0_1", "TIFF") == "1"
     assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_OFFSET_0_2", "TIFF") is None
     assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_SIZE_0_2", "TIFF") is None
 
     ds = gdal.Open("data/size_of_stripbytecount_at_1_and_lower_than_stripcount.tif")
-    # There are 3 strips but StripByteCounts has just one element;
+    # There are 3 strips but StripByteCounts and StripOffsets have just one element
     assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_SIZE_0_0", "TIFF") == "1"
+
+
+###############################################################################
+# Test reading images where the number of items in StripByteCounts and
+# StripOffsets are not the same
+
+
+def test_tiff_read_stripbytecounts_count_not_same_as_stripoffsets_count():
+
+    if not check_libtiff_internal_or_at_least(4, 7, 2):
+        pytest.skip()
+
+    ds = gdal.Open("data/stripbytecounts_count_not_same_as_stripoffsets_count.tif")
+    assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF") is None
+    assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_SIZE_0_0", "TIFF") is None
 
 
 ###############################################################################

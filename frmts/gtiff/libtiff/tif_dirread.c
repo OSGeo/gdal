@@ -4313,7 +4313,7 @@ int TIFFReadDirectory(TIFF *tif)
     tif->tif_flags &= ~TIFF_CHOPPEDUPARRAYS;
 
     /* When changing directory, in deferred strile loading mode, we must also
-     * unset the TIFF_LAZYSTRILELOAD_DONE bit if it was initally set,
+     * unset the TIFF_LAZYSTRILELOAD_DONE bit if it was initially set,
      * to make sure the strile offset/bytecount are read again (when they fit
      * in the tag data area).
      */
@@ -8315,6 +8315,20 @@ static uint64_t _TIFFGetStrileOffsetOrByteCountValue(TIFF *tif, uint32_t strile,
     TIFFDirectory *td = &tif->tif_dir;
     if (pbErr)
         *pbErr = 0;
+
+    /* Check that StripOffsets and StripByteCounts tags have the same number
+     * of declared entries. Otherwise we might take the "dirent->tdir_count <=
+     * 4" code path for one of them, and the other code path for the other one,
+     * which will lead to inconsistencies and potential out-of-bounds reads.
+     */
+    if (td->td_stripoffset_entry.tdir_count !=
+        td->td_stripbytecount_entry.tdir_count)
+    {
+        if (pbErr)
+            *pbErr = 1;
+        return 0;
+    }
+
     if ((tif->tif_flags & TIFF_DEFERSTRILELOAD) &&
         !(tif->tif_flags & TIFF_CHOPPEDUPARRAYS))
     {
