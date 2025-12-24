@@ -267,10 +267,9 @@ class GDALVectorSTRTreeSortDataset
             },
             &sortedIndices);
 
-        for (size_t nullInd : nullIndices)
-        {
-            sortedIndices.push_back(nullInd);
-        }
+        sortedIndices.insert(sortedIndices.end(), nullIndices.begin(),
+                             nullIndices.end());
+        nullIndices.clear();
 
         const double dfProgressStart = nLayerFeatures > 0 ? 2.0 / 3.0 : 0.0;
         const double dfProgressRatio =
