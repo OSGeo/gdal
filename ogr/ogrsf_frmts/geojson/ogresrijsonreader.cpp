@@ -390,13 +390,12 @@ bool OGRESRIJSONReader::ParseField(json_object *poObj)
 /*                           AddFeature                                 */
 /************************************************************************/
 
-bool OGRESRIJSONReader::AddFeature(OGRFeature *poFeature)
+bool OGRESRIJSONReader::AddFeature(std::unique_ptr<OGRFeature> poFeature)
 {
     if (nullptr == poFeature)
         return false;
 
-    poLayer_->AddFeature(poFeature);
-    delete poFeature;
+    poLayer_->AddFeature(std::move(poFeature));
 
     return true;
 }
@@ -558,9 +557,9 @@ OGRGeoJSONLayer *OGRESRIJSONReader::ReadFeatureCollection(json_object *poObj)
             if (poObjFeature != nullptr &&
                 json_object_get_type(poObjFeature) == json_type_object)
             {
-                OGRFeature *poFeature =
-                    OGRESRIJSONReader::ReadFeature(poObjFeature);
-                AddFeature(poFeature);
+                auto poFeature = std::unique_ptr<OGRFeature>(
+                    OGRESRIJSONReader::ReadFeature(poObjFeature));
+                AddFeature(std::move(poFeature));
             }
         }
     }

@@ -82,7 +82,7 @@ void OGRJSONFGMemLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature)
 
     const bool bIsUpdatable = IsUpdatable();
     SetUpdatable(true);  // Temporary toggle on updatable flag.
-    CPL_IGNORE_RET_VAL(OGRMemLayer::SetFeature(poFeature.get()));
+    CPL_IGNORE_RET_VAL(OGRMemLayer::SetFeature(std::move(poFeature)));
     SetUpdatable(bIsUpdatable);
     SetUpdated(false);
 }

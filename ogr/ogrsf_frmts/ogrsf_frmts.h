@@ -115,7 +115,12 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRErr ISetSpatialFilter(int iGeomField, const OGRGeometry *);
 
     virtual OGRErr ISetFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
+    virtual OGRErr
+        ISetFeatureUniqPtr(std::unique_ptr<OGRFeature>) CPL_WARN_UNUSED_RESULT;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
+    virtual OGRErr
+    ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                          GIntBig *pnFID = nullptr) CPL_WARN_UNUSED_RESULT;
     virtual OGRErr IUpsertFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
     virtual OGRErr
     IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
@@ -228,7 +233,11 @@ class CPL_DLL OGRLayer : public GDALMajorObject
                                  CSLConstList papszOptions = nullptr);
 
     OGRErr SetFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
+    OGRErr
+    SetFeature(std::unique_ptr<OGRFeature> poFeature) CPL_WARN_UNUSED_RESULT;
     OGRErr CreateFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
+    OGRErr CreateFeature(std::unique_ptr<OGRFeature> poFeature,
+                         GIntBig *pnFID = nullptr) CPL_WARN_UNUSED_RESULT;
     OGRErr UpsertFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
     OGRErr UpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                          const int *panUpdatedFieldsIdx,

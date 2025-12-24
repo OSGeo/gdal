@@ -104,11 +104,28 @@ OGRErr OGRLayerDecorator::ISetFeature(OGRFeature *poFeature)
     return m_poDecoratedLayer->SetFeature(poFeature);
 }
 
+OGRErr
+OGRLayerDecorator::ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature)
+{
+    if (!m_poDecoratedLayer)
+        return OGRERR_FAILURE;
+    return m_poDecoratedLayer->SetFeature(std::move(poFeature));
+}
+
 OGRErr OGRLayerDecorator::ICreateFeature(OGRFeature *poFeature)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;
     return m_poDecoratedLayer->CreateFeature(poFeature);
+}
+
+OGRErr
+OGRLayerDecorator::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                                         GIntBig *pnFID)
+{
+    if (!m_poDecoratedLayer)
+        return OGRERR_FAILURE;
+    return m_poDecoratedLayer->CreateFeature(std::move(poFeature), pnFID);
 }
 
 OGRErr OGRLayerDecorator::IUpsertFeature(OGRFeature *poFeature)

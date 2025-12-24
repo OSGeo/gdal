@@ -337,7 +337,7 @@ OGRFeature *OGRProxiedLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                             ISetFeature()                             */
+/*                             ISetFeature()                            */
 /************************************************************************/
 
 OGRErr OGRProxiedLayer::ISetFeature(OGRFeature *poFeature)
@@ -348,7 +348,19 @@ OGRErr OGRProxiedLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                            ICreateFeature()                           */
+/*                        ISetFeatureUniqPtr()                          */
+/************************************************************************/
+
+OGRErr
+OGRProxiedLayer::ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature)
+{
+    if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
+        return OGRERR_FAILURE;
+    return poUnderlyingLayer->SetFeature(std::move(poFeature));
+}
+
+/************************************************************************/
+/*                            ICreateFeature()                          */
 /************************************************************************/
 
 OGRErr OGRProxiedLayer::ICreateFeature(OGRFeature *poFeature)
@@ -356,6 +368,19 @@ OGRErr OGRProxiedLayer::ICreateFeature(OGRFeature *poFeature)
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return OGRERR_FAILURE;
     return poUnderlyingLayer->CreateFeature(poFeature);
+}
+
+/************************************************************************/
+/*                         ICreateFeatureUniqPtr()                      */
+/************************************************************************/
+
+OGRErr
+OGRProxiedLayer::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                                       GIntBig *pnFID)
+{
+    if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
+        return OGRERR_FAILURE;
+    return poUnderlyingLayer->CreateFeature(std::move(poFeature), pnFID);
 }
 
 /************************************************************************/

@@ -1057,27 +1057,30 @@ OGRLayer *OGRADBCDataset::GetLayerByName(const char *pszName)
                                             osTableType != "index" &&
                                             osTableType != "trigger")
                                         {
-                                            OGRFeature oFeat(
-                                                poTableListLayer
-                                                    ->GetLayerDefn());
+                                            auto poFeat =
+                                                std::make_unique<OGRFeature>(
+                                                    poTableListLayer
+                                                        ->GetLayerDefn());
                                             if (pszCatalogName)
-                                                oFeat.SetField("catalog_name",
-                                                               pszCatalogName);
+                                                poFeat->SetField(
+                                                    "catalog_name",
+                                                    pszCatalogName);
                                             if (oSchema.GetObj("schema_name")
                                                     .IsValid())
-                                                oFeat.SetField(
+                                                poFeat->SetField(
                                                     "schema_name",
                                                     osSchemaName.c_str());
-                                            oFeat.SetField("table_name",
-                                                           osTableName.c_str());
+                                            poFeat->SetField(
+                                                "table_name",
+                                                osTableName.c_str());
                                             if (oTable.GetObj("table_type")
                                                     .IsValid())
-                                                oFeat.SetField(
+                                                poFeat->SetField(
                                                     "table_type",
                                                     osTableType.c_str());
                                             CPL_IGNORE_RET_VAL(
                                                 poTableListLayer->CreateFeature(
-                                                    &oFeat));
+                                                    std::move(poFeat)));
                                         }
                                     }
                                 }

@@ -104,7 +104,7 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     // OGRGeoJSONLayer Interface
     //
     void SetFIDColumn(const char *pszFIDColumn);
-    void AddFeature(OGRFeature *poFeature);
+    void AddFeature(std::unique_ptr<OGRFeature> poFeature);
     void DetectGeometryType();
 
     void IncFeatureCount()

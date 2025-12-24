@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_vector_geom.h"
+#include "cpl_enumerate.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -236,7 +237,7 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
     CPLAssert(m_apoFeatures.size() == m_nGeosResultSize);
 
     // Create features with the modified geometries
-    for (size_t i = 0; i < m_apoFeatures.size(); i++)
+    for (const auto &[i, poFeature] : cpl::enumerate(m_apoFeatures))
     {
         GEOSGeometry *poGeosResult = m_papoGeosResults[i];
 #else
@@ -244,6 +245,7 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
         GEOSGetNumGeometries_r(m_poGeosContext, m_poGeosResultAsCollection);
     for (decltype(nGeoms) i = 0; i < nGeoms; i++)
     {
+        auto &poFeature = m_apoFeatures[i];
         GEOSGeometry *poGeosResult = const_cast<GEOSGeometry *>(
             GEOSGetGeometryN_r(m_poGeosContext, m_poGeosResultAsCollection, i));
 #endif
@@ -282,15 +284,17 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
         if (!skipFeature)
         {
             poResultGeom->assignSpatialReference(poResultSRS);
-            m_apoFeatures[i]->SetGeometry(std::move(poResultGeom));
+            poFeature->SetGeometry(std::move(poResultGeom));
 
-            if (dstLayer.CreateFeature(m_apoFeatures[i].get()) != CE_None)
+            if (dstLayer.CreateFeature(std::move(poFeature)) != CE_None)
             {
                 return false;
             }
         }
-
-        m_apoFeatures[i].reset();
+        else
+        {
+            poFeature.reset();
+        }
 
         if (pfnProgress &&
             !pfnProgress(dfProgressStart +

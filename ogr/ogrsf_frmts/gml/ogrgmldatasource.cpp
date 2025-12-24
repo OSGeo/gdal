@@ -719,10 +719,9 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
             m_oStandaloneGeomSRS.IsEmpty() ? nullptr : &m_oStandaloneGeomSRS,
             m_poStandaloneGeom->getGeometryType());
         papoLayers[0] = poLayer;
-        OGRFeature *poFeature = new OGRFeature(poLayer->GetLayerDefn());
-        poFeature->SetGeometryDirectly(m_poStandaloneGeom.release());
-        CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-        delete poFeature;
+        auto poFeature = std::make_unique<OGRFeature>(poLayer->GetLayerDefn());
+        poFeature->SetGeometry(std::move(m_poStandaloneGeom));
+        CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
         poLayer->SetUpdatable(false);
         VSIFCloseL(fp);
         return true;

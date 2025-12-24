@@ -101,6 +101,7 @@ class OGRXLSXLayer final : public OGRMemLayer
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature) override;
     OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                           const int *panUpdatedFieldsIdx,
                           int nUpdatedGeomFieldsCount,
@@ -115,6 +116,8 @@ class OGRXLSXLayer final : public OGRMemLayer
     }
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                                 GIntBig *pnFID) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
