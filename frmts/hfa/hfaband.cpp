@@ -511,7 +511,8 @@ CPLErr HFABand::LoadExternalBlockInfo()
     }
 
     if (VSIFSeekL(fpExternal,
-                  poDMS->GetBigIntField("layerStackValidFlagsOffset"),
+                  static_cast<vsi_l_offset>(
+                      poDMS->GetBigIntField("layerStackValidFlagsOffset")),
                   SEEK_SET) < 0 ||
         VSIFReadL(pabyBlockMap, nBytesPerRow * nBlocksPerColumn + 20, 1,
                   fpExternal) != 1)
@@ -1993,9 +1994,11 @@ CPLErr HFABand::SetPCT(int nColors, const double *padfRed,
         poEdsc_Column->SetIntField("maxNumChars", 0);
 
         // Write the data out.
-        const int nOffset = HFAAllocateSpace(psInfo, 8 * nColors);
+        const auto nOffset = HFAAllocateSpace(psInfo, 8 * nColors);
+        if (nOffset > static_cast<unsigned>(INT_MAX))
+            return CE_Failure;
 
-        poEdsc_Column->SetIntField("columnDataPtr", nOffset);
+        poEdsc_Column->SetIntField("columnDataPtr", static_cast<int>(nOffset));
 
         double *padfFileData =
             static_cast<double *>(CPLMalloc(nColors * sizeof(double)));

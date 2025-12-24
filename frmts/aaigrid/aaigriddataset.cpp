@@ -1178,7 +1178,8 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
         }
         (pabyChunk.get())[nChunkSize] = '\0';
 
-        if (VSIFSeekL(poDS->fp, nStartOfData, SEEK_SET) < 0)
+        if (VSIFSeekL(poDS->fp, static_cast<vsi_l_offset>(nStartOfData),
+                      SEEK_SET) < 0)
         {
             return nullptr;
         }

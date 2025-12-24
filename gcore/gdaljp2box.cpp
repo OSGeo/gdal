@@ -51,7 +51,7 @@ GDALJP2Box::~GDALJP2Box()
 /*                             SetOffset()                              */
 /************************************************************************/
 
-int GDALJP2Box::SetOffset(GIntBig nNewOffset)
+int GDALJP2Box::SetOffset(vsi_l_offset nNewOffset)
 
 {
     szBoxType[0] = '\0';
@@ -167,7 +167,8 @@ int GDALJP2Box::ReadBox()
         if (VSIFSeekL(fpVSIL, 0, SEEK_END) != 0)
             return FALSE;
         nBoxLength = VSIFTellL(fpVSIL) - nBoxOffset;
-        if (VSIFSeekL(fpVSIL, nDataOffset, SEEK_SET) != 0)
+        if (VSIFSeekL(fpVSIL, static_cast<vsi_l_offset>(nDataOffset),
+                      SEEK_SET) != 0)
             return FALSE;
     }
 
@@ -216,7 +217,8 @@ GByte *GDALJP2Box::ReadBoxData()
         return nullptr;
     }
 
-    if (VSIFSeekL(fpVSIL, nDataOffset, SEEK_SET) != 0)
+    if (VSIFSeekL(fpVSIL, static_cast<vsi_l_offset>(nDataOffset), SEEK_SET) !=
+        0)
         return nullptr;
 
     char *pszData = static_cast<char *>(

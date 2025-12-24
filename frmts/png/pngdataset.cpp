@@ -539,7 +539,7 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
         {
             // CPLDebug("PNG", "Skipping chunk %s of size %u", szChunkName,
             // nChunkSize);
-            VSIFSeekL(fpImage, nChunkSize, SEEK_CUR);
+            VSIFSeekL(fpImage, static_cast<vsi_l_offset>(nChunkSize), SEEK_CUR);
         }
         VSIFSeekL(fpImage, 4, SEEK_CUR);  // CRC
     }

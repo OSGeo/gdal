@@ -80,7 +80,7 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
 {
     char *pachHeader;
     NITFFile *psFile;
-    int nHeaderLen, nOffset, nHeaderLenOffset;
+    int nHeaderLen, nOffset;
     GUIntBig nNextData;
     char szTemp[128], achFSDWNG[6];
     GIntBig currentPos;
@@ -115,13 +115,13 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
     /* -------------------------------------------------------------------- */
     /*      Get header length.                                              */
     /* -------------------------------------------------------------------- */
-    if (STARTS_WITH_CI(szTemp, "NITF01.") ||
-        STARTS_WITH_CI(achFSDWNG, "999998"))
-        nHeaderLenOffset = 394;
-    else
-        nHeaderLenOffset = 354;
+    const int nHeaderLenOffset = (STARTS_WITH_CI(szTemp, "NITF01.") ||
+                                  STARTS_WITH_CI(achFSDWNG, "999998"))
+                                     ? 394
+                                     : 354;
 
-    if (VSIFSeekL(fp, nHeaderLenOffset, SEEK_SET) != 0 ||
+    if (VSIFSeekL(fp, static_cast<vsi_l_offset>(nHeaderLenOffset), SEEK_SET) !=
+            0 ||
         VSIFReadL(szTemp, 1, 6, fp) != 6)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -135,7 +135,7 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
     szTemp[6] = '\0';
     nHeaderLen = atoi(szTemp);
 
-    if (VSIFSeekL(fp, nHeaderLen, SEEK_SET) != 0)
+    if (VSIFSeekL(fp, static_cast<vsi_l_offset>(nHeaderLen), SEEK_SET) != 0)
         currentPos = 0;
     else
         currentPos = VSIFTellL(fp);
@@ -2688,7 +2688,7 @@ static char **NITFGenericMetadataReadTREInternal(
     }
 
     int nRPFLocationId = 0;
-    uint32_t nRPFLocationOffset = 0;
+    vsi_l_offset nRPFLocationOffset = 0;
     uint32_t nRPFLocationSize = 0;
 
     for (const CPLXMLNode *psIter = psTreNode->psChild;
@@ -2981,8 +2981,8 @@ static char **NITFGenericMetadataReadTREInternal(
                     }
                     else if (EQUAL(pszName, "COMPONENT_LOCATION"))
                     {
-                        nRPFLocationOffset = static_cast<uint32_t>(
-                            strtoul(pszValue, nullptr, 10));
+                        nRPFLocationOffset =
+                            std::strtoull(pszValue, nullptr, 10);
                     }
                 }
 

@@ -287,7 +287,7 @@ CPLErr RIKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         return CE_None;
     }
 
-    VSIFSeekL(poRDS->fp, nBlockOffset, SEEK_SET);
+    VSIFSeekL(poRDS->fp, static_cast<vsi_l_offset>(nBlockOffset), SEEK_SET);
 
     /* -------------------------------------------------------------------- */
     /*      Read uncompressed block.                                        */

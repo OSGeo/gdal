@@ -81,7 +81,8 @@ class CPL_ODLL DDFModule
     void Dump(FILE *fp);
 
     DDFRecord *ReadRecord();
-    void Rewind(long nOffset = -1);
+    void Rewind(long) = delete;
+    void Rewind(vsi_l_offset nOffset = static_cast<vsi_l_offset>(-1));
 
     const DDFFieldDefn *FindFieldDefn(const char *) const;
 
@@ -170,7 +171,7 @@ class CPL_ODLL DDFModule
   private:
     VSILFILE *fpDDF;
     int bReadOnly;
-    long nFirstRecordOffset;
+    vsi_l_offset nFirstRecordOffset;
 
     char _interchangeLevel;
     char _inlineCodeExtensionIndicator;

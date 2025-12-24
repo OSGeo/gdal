@@ -3510,7 +3510,9 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
     if (fpTemp == nullptr)
         return false;
     // The seek is needed for /vsistdin/ that has some rewind capabilities.
-    if (VSIFSeekL(poOpenInfo->fpL, poOpenInfo->nHeaderBytes, SEEK_SET) != 0)
+    if (VSIFSeekL(poOpenInfo->fpL,
+                  static_cast<vsi_l_offset>(poOpenInfo->nHeaderBytes),
+                  SEEK_SET) != 0)
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
         return false;

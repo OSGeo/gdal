@@ -148,6 +148,43 @@ VSILFILE CPL_DLL *VSIFOpenEx2L(const char *, const char *, int,
 int CPL_DLL VSIFCloseL(VSILFILE *) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL VSIFSeekL(VSILFILE *, vsi_l_offset,
                       int) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+#ifdef GDAL_COMPILATION
+#ifdef __cplusplus
+
+/*! @cond Doxygen_Suppress */
+CPL_C_END
+
+int VSIFSeekL(VSILFILE *, int &, int) = delete;
+int VSIFSeekL(VSILFILE *, const int &, int) = delete;
+int VSIFSeekL(VSILFILE *, unsigned &, int) = delete;
+int VSIFSeekL(VSILFILE *, const unsigned &, int) = delete;
+
+inline int VSIFSeekL(VSILFILE *f, int &&nOffset, int nWhence)
+{
+    return VSIFSeekL(f, static_cast<vsi_l_offset>(nOffset), nWhence);
+}
+
+template <typename T>
+inline std::enable_if_t<
+    std::is_same_v<T, uint64_t> && !std::is_same_v<uint64_t, vsi_l_offset>, int>
+VSIFSeekL(VSILFILE *f, T nOffset, int nWhence)
+{
+    return VSIFSeekL(f, static_cast<vsi_l_offset>(nOffset), nWhence);
+}
+
+template <typename T>
+inline std::enable_if_t<std::is_same_v<T, size_t> &&
+                            !std::is_same_v<T, uint64_t> &&
+                            !std::is_same_v<size_t, unsigned> &&
+                            !std::is_same_v<size_t, vsi_l_offset>,
+                        int>
+VSIFSeekL(VSILFILE *f, T, int) = delete;
+
+CPL_C_START
+
+/*! @endcond */
+#endif
+#endif
 vsi_l_offset CPL_DLL VSIFTellL(VSILFILE *) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL VSIRewindL(VSILFILE *);
 size_t CPL_DLL VSIFReadL(void *, size_t, size_t,

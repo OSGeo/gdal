@@ -964,7 +964,7 @@ CPLErr MRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
         return CE_Failure;
     }
 
-    VSIFSeekL(srcfd, tinfo.offset, SEEK_SET);
+    VSIFSeekL(srcfd, static_cast<vsi_l_offset>(tinfo.offset), SEEK_SET);
     if (tinfo.size !=
         GIntBig(VSIFReadL(buf, 1, static_cast<size_t>(tinfo.size), srcfd)))
     {
@@ -1077,7 +1077,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     }
 
     // This part is not thread safe, but it is what GDAL expects
-    VSIFSeekL(dfp, tinfo.offset, SEEK_SET);
+    VSIFSeekL(dfp, static_cast<vsi_l_offset>(tinfo.offset), SEEK_SET);
     if (1 != VSIFReadL(data, static_cast<size_t>(tinfo.size), 1, dfp))
     {
         CPLFree(data);

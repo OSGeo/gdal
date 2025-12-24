@@ -19,10 +19,11 @@
 // Commented out the unused defines.
 // #define BIB_OFFSET   0  /* Bytes in burst, valid only for ScanSAR */
 // #define RSRI_OFFSET  4  /* Range Sample Relative Index */
-constexpr int RS_OFFSET = 8; /* Range Samples, the length of a range line */
+constexpr vsi_l_offset RS_OFFSET =
+    8; /* Range Samples, the length of a range line */
 // #define AS_OFFSET    12 /* Azimuth Samples, the length of an azimuth column
 // */ #define BI_OFFSET    16 /* Burst Index, the index number of the burst */
-constexpr int RTNB_OFFSET =
+constexpr vsi_l_offset RTNB_OFFSET =
     20; /* Rangeline total number of bytes, incl. annot. */
 // #define TNL_OFFSET   24 /* Total Number of Lines */
 constexpr int MAGIC1_OFFSET = 28;         /* Magic number 1: 0x43534152 */

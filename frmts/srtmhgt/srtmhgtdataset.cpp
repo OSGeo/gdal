@@ -119,7 +119,7 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     VSIFSeekL(poGDS->fpImage,
-              static_cast<size_t>(nBlockYOff) * nBlockXSize * nDTSize,
+              static_cast<vsi_l_offset>(nBlockYOff) * nBlockXSize * nDTSize,
               SEEK_SET);
     VSIFReadL((unsigned char *)pImage, nBlockXSize, nDTSize, poGDS->fpImage);
 #ifdef CPL_LSB
@@ -143,7 +143,7 @@ CPLErr SRTMHGTRasterBand::IWriteBlock(int /*nBlockXOff*/, int nBlockYOff,
 
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     VSIFSeekL(poGDS->fpImage,
-              static_cast<size_t>(nBlockYOff) * nBlockXSize * nDTSize,
+              static_cast<vsi_l_offset>(nBlockYOff) * nBlockXSize * nDTSize,
               SEEK_SET);
 
 #ifdef CPL_LSB

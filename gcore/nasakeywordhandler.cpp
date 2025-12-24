@@ -71,7 +71,7 @@ NASAKeywordHandler::~NASAKeywordHandler()
 /*                               Ingest()                               */
 /************************************************************************/
 
-bool NASAKeywordHandler::Ingest(VSILFILE *fp, int nOffset)
+bool NASAKeywordHandler::Ingest(VSILFILE *fp, vsi_l_offset nOffset)
 
 {
     /* -------------------------------------------------------------------- */
