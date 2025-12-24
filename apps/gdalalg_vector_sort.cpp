@@ -51,6 +51,7 @@ bool CreateDstFeatures(std::vector<std::unique_ptr<OGRFeature>> &srcFeatures,
                        void *pProgressData, double dfProgressStart,
                        double dfProgressRatio)
 {
+    uint64_t nCounter = 0;
     for (size_t iSrcFeature : sortedIndices)
     {
         auto &poSrcFeature = srcFeatures[iSrcFeature];
@@ -63,8 +64,7 @@ bool CreateDstFeatures(std::vector<std::unique_ptr<OGRFeature>> &srcFeatures,
         }
         if (pfnProgress &&
             !pfnProgress(dfProgressStart +
-                             static_cast<double>(dstLayer.GetFeatureCount()) *
-                                 dfProgressRatio,
+                             static_cast<double>(++nCounter) * dfProgressRatio,
                          "", pProgressData))
         {
             CPLError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
