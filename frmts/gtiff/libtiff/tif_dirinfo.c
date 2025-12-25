@@ -678,7 +678,7 @@ void _TIFFPrintFieldInfo(TIFF *tif, FILE *fd)
     for (i = 0; i < tif->tif_nfields; i++)
     {
         const TIFFField *fip = tif->tif_fields[i];
-        fprintf(fd, "field[%2d] %5lu, %2d, %2d, %d, %2d, %5s, %5s, %s\n",
+        fprintf(fd, "field[%2d] %5lu, %2d, %2d, %u, %2d, %5s, %5s, %s\n",
                 (int)i, (unsigned long)fip->field_tag, fip->field_readcount,
                 fip->field_writecount, fip->field_type, fip->field_bit,
                 fip->field_oktochange ? "TRUE" : "FALSE",

@@ -249,7 +249,7 @@ void TIFFUnRegisterCODEC(TIFFCodec *c)
 }
 
 /************************************************************************/
-/*                       TIFFGetConfisuredCODECs()                      */
+/*                       TIFFGetConfiguredCODECs()                      */
 /************************************************************************/
 
 /**
@@ -260,7 +260,7 @@ void TIFFUnRegisterCODEC(TIFFCodec *c)
  * or NULL if function failed.
  */
 
-TIFFCodec *TIFFGetConfiguredCODECs()
+TIFFCodec *TIFFGetConfiguredCODECs(void)
 {
     int i = 1;
     codec_t *cd;

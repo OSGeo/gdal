@@ -775,7 +775,7 @@ static int LogLuvEncodeTile(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
 #define TIFF_RAND_MAX 32767
 
 // From POSIX.1-2001 as an example of an implementation of rand()
-static uint32_t _TIFFRand()
+static uint32_t _TIFFRand(void)
 {
     static uint32_t nCounter = 0;
     if (!nCounter)
@@ -785,7 +785,7 @@ static uint32_t _TIFFRand()
         (uint32_t)(((uint64_t)(nCounter)*1103515245U + 12345U) & UINT32_MAX);
     nCounter = nCounterLocal;
     return (nCounterLocal / 65536U) % (TIFF_RAND_MAX + 1);
-};
+}
 
 static int tiff_itrunc(double x, int m)
 {

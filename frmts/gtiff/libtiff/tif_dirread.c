@@ -5822,7 +5822,7 @@ int _TIFFCheckDirNumberAndOffset(TIFF *tif, tdir_t dirn, uint64_t diroff)
     {
         TIFFErrorExtR(tif, "_TIFFCheckDirNumberAndOffset",
                       "Cannot handle more than %u TIFF directories",
-                      TIFF_MAX_DIR_COUNT);
+                      (unsigned)TIFF_MAX_DIR_COUNT);
         return 0;
     }
 

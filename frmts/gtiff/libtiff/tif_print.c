@@ -744,7 +744,7 @@ static void _TIFFprintAsciiBounded(FILE *fd, const char *cp, size_t max_chars)
         if (*tp)
             fprintf(fd, "\\%c", *tp);
         else
-            fprintf(fd, "\\%03o", *cp & 0xff);
+            fprintf(fd, "\\%03o", (unsigned int)(*cp & 0xff));
     }
 }
 

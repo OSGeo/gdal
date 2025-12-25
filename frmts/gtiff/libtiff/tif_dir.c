@@ -754,7 +754,7 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
             if (tv_size == 0)
             {
                 status = 0;
-                TIFFErrorExtR(tif, module, "%s: Bad field type %d for \"%s\"",
+                TIFFErrorExtR(tif, module, "%s: Bad field type %u for \"%s\"",
                               tif->tif_name, fip->field_type, fip->field_name);
                 goto end;
             }
@@ -808,7 +808,7 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
                 {
                     TIFFWarningExtR(tif, module,
                                     "%s: Null count for \"%s\" (type "
-                                    "%d, writecount %d, passcount %d)",
+                                    "%u, writecount %d, passcount %d)",
                                     tif->tif_name, fip->field_name,
                                     fip->field_type, fip->field_writecount,
                                     fip->field_passcount);
@@ -860,7 +860,7 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
                                         tif, module,
                                         "%s: Bad LONG8 value %" PRIu64
                                         " at %d. array position for \"%s\" tag "
-                                        "%d in ClassicTIFF. Tag won't be "
+                                        "%u in ClassicTIFF. Tag won't be "
                                         "written to file",
                                         tif->tif_name, pui64[i], i,
                                         fip->field_name, tag);
@@ -880,7 +880,7 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
                                         tif, module,
                                         "%s: Bad SLONG8 value %" PRIi64
                                         " at %d. array position for \"%s\" tag "
-                                        "%d in ClassicTIFF. Tag won't be "
+                                        "%u in ClassicTIFF. Tag won't be "
                                         "written to file",
                                         tif->tif_name, pi64[i], i,
                                         fip->field_name, tag);
@@ -948,7 +948,7 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
                                 TIFFErrorExtR(
                                     tif, module,
                                     "%s: Bad LONG8 or IFD8 value %" PRIu64
-                                    " for \"%s\" tag %d in ClassicTIFF. Tag "
+                                    " for \"%s\" tag %u in ClassicTIFF. Tag "
                                     "won't be written to file",
                                     tif->tif_name, v2, fip->field_name, tag);
                                 goto badvalueifd8long8;
@@ -967,7 +967,7 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
                                 TIFFErrorExtR(
                                     tif, module,
                                     "%s: Bad SLONG8 value %" PRIi64
-                                    " for \"%s\" tag %d in ClassicTIFF. Tag "
+                                    " for \"%s\" tag %u in ClassicTIFF. Tag "
                                     "won't be written to file",
                                     tif->tif_name, v2, fip->field_name, tag);
                                 goto badvalueifd8long8;

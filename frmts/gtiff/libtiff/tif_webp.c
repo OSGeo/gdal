@@ -710,7 +710,7 @@ static int TWebPPostEncode(TIFF *tif)
                 break;
             default:
                 TIFFErrorExtR(tif, module,
-                              "WebPEncode returned an unknown error code: %d",
+                              "WebPEncode returned an unknown error code: %u",
                               sp->sPicture.error_code);
                 pszErrorMsg = "Unknown WebP error type.";
                 break;
