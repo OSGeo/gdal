@@ -27,6 +27,7 @@
  * Scanline-oriented Read Support
  */
 #include "tiffiop.h"
+#include <limits.h>
 #include <stdio.h>
 
 int TIFFFillStrip(TIFF *tif, uint32_t strip);
@@ -220,8 +221,16 @@ static int TIFFFillStripPartial(TIFF *tif, int strip, tmsize_t read_ahead,
     /*
     ** Seek to the point in the file where more data should be read.
     */
-    read_offset = TIFFGetStrileOffset(tif, strip) + tif->tif_rawdataoff +
-                  tif->tif_rawdataloaded;
+    read_offset = TIFFGetStrileOffset(tif, strip);
+    if (read_offset > UINT64_MAX - tif->tif_rawdataoff ||
+        read_offset + tif->tif_rawdataoff > UINT64_MAX - tif->tif_rawdataloaded)
+    {
+        TIFFErrorExtR(tif, module,
+                      "Seek error at scanline %" PRIu32 ", strip %d",
+                      tif->tif_row, strip);
+        return 0;
+    }
+    read_offset += tif->tif_rawdataoff + tif->tif_rawdataloaded;
 
     if (!SeekOK(tif, read_offset))
     {
@@ -611,7 +620,8 @@ tmsize_t _TIFFReadEncodedStripAndAllocBuffer(TIFF *tif, uint32_t strip,
     }
     _TIFFmemset(*buf, 0, bufsizetoalloc);
 
-    if ((*tif->tif_decodestrip)(tif, (uint8_t *)*buf, this_stripsize, plane) <= 0)
+    if ((*tif->tif_decodestrip)(tif, (uint8_t *)*buf, this_stripsize, plane) <=
+        0)
         return ((tmsize_t)(-1));
     (*tif->tif_postdecode)(tif, (uint8_t *)*buf, this_stripsize);
     return (this_stripsize);
