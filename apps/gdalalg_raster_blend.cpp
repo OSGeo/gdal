@@ -702,11 +702,6 @@ BlendSrcOverRGBA_SSE2(const GByte *CPL_RESTRICT pabyR,
         auto dstA_lo = _mm_add_epi16(overlayA_lo, srcAMul255MinusOverlayA_lo);
         auto dstA_hi = _mm_add_epi16(overlayA_hi, srcAMul255MinusOverlayA_hi);
 
-        // The & 0xff should not be necessary. This is mostly a safety
-        // belt if the above math yields a result outside [0, 255]...
-        dstA_lo = _mm_and_si128(dstA_lo, r255);
-        dstA_hi = _mm_and_si128(dstA_hi, r255);
-
         // This would be the equivalent of a "_mm_i16gather_epi16" operation
         // which does not exist...
         // invDstA_{i} = [tabInvDstASigned[dstA_{i}] for i in range(8)]
