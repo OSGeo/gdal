@@ -131,33 +131,7 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
 
         OGRFeatureDefn *poBaseLayerDefn = poBaseLayer->GetLayerDefn();
 
-        const int nFields = poBaseLayerDefn->GetFieldCount();
-        OGRFieldDefn **papoFields = static_cast<OGRFieldDefn **>(
-            CPLRealloc(nullptr, sizeof(OGRFieldDefn *) * nFields));
-        for (int i = 0; i < nFields; ++i)
-        {
-            papoFields[i] = poBaseLayerDefn->GetFieldDefn(i);
-        }
-
-        const int nGeomFields = poBaseLayerDefn->GetGeomFieldCount();
-        OGRUnionLayerGeomFieldDefn **papoGeomFields =
-            static_cast<OGRUnionLayerGeomFieldDefn **>(CPLRealloc(
-                nullptr, sizeof(OGRUnionLayerGeomFieldDefn *) * nGeomFields));
-        for (int i = 0; i < nGeomFields; ++i)
-        {
-            papoGeomFields[i] = new OGRUnionLayerGeomFieldDefn(
-                poBaseLayerDefn->GetGeomFieldDefn(i));
-        }
-
-        poLayer->SetFields(FIELD_FROM_FIRST_LAYER, nFields, papoFields,
-                           nGeomFields, papoGeomFields);
-
-        for (int i = 0; i < nGeomFields; ++i)
-        {
-            delete papoGeomFields[i];
-        }
-        CPLFree(papoGeomFields);
-        CPLFree(papoFields);
+        poLayer->SetFields(FIELD_FROM_FIRST_LAYER, poBaseLayerDefn);
 
         papoLayers.push_back({OGRLVBAG::LayerType::LYR_RAW,
                               OGRLayerUniquePtr{poLayer.release()}});
