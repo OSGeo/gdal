@@ -18,6 +18,7 @@
 #include "jpgdataset.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cstddef>
 #include <cstdio>
@@ -149,7 +150,7 @@ void JPGDatasetCommon::ReadImageStructureMetadata()
     const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
 
     GByte abyChunkHeader[4];
-    int nChunkLoc = 2;
+    vsi_l_offset nChunkLoc = 2;
     constexpr GByte MARKER_QUANT_TABLE = 0xDB;
     struct CPLMD5Context context;
     CPLMD5Init(&context);
@@ -331,7 +332,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
     constexpr int APP1_XMP_SIGNATURE_LEN =
         static_cast<int>(sizeof(APP1_XMP_SIGNATURE));
     GByte abyChunkHeader[JFIF_MARKER_SIZE + APP1_XMP_SIGNATURE_LEN] = {};
-    int nChunkLoc = 2;
+    vsi_l_offset nChunkLoc = 2;
     bool bFoundXMP = false;
 
     while (true)
@@ -433,7 +434,7 @@ void JPGDatasetCommon::ReadDJIMetadata()
 
     const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
 
-    int nChunkLoc = 2;
+    vsi_l_offset nChunkLoc = 2;
     // size of APP1 segment marker"
     GByte abyChunkHeader[4];
 
@@ -552,7 +553,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
     // Save current position to avoid disturbing JPEG stream decoding.
     const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
 
-    int nChunkLoc = 2;
+    vsi_l_offset nChunkLoc = 2;
     // size of APP1 segment marker + size of "FLIR\0"
     GByte abyChunkHeader[4 + 5];
     std::vector<GByte> abyFLIR;
@@ -1198,7 +1199,7 @@ void JPGDatasetCommon::ReadICCProfile()
 
     // Search for APP2 chunk.
     GByte abyChunkHeader[18] = {};
-    int nChunkLoc = 2;
+    vsi_l_offset nChunkLoc = 2;
     bool bOk = true;
 
     while (true)
@@ -1378,10 +1379,9 @@ void JPGDatasetCommon::ReadICCProfile()
 /************************************************************************/
 bool JPGDatasetCommon::EXIFInit(VSILFILE *fp)
 {
-    if (nTiffDirStart == 0)
-        return false;
-    if (nTiffDirStart > 0)
-        return true;
+    if (m_bTiffDirStartInit)
+        return nTiffDirStart > 0;
+    m_bTiffDirStartInit = true;
     nTiffDirStart = 0;
 
 #ifdef CPL_MSB
@@ -1392,7 +1392,7 @@ bool JPGDatasetCommon::EXIFInit(VSILFILE *fp)
 
     // Search for APP1 chunk.
     GByte abyChunkHeader[10] = {};
-    int nChunkLoc = 2;
+    vsi_l_offset nChunkLoc = 2;
 
     while (true)
     {
@@ -1431,17 +1431,19 @@ bool JPGDatasetCommon::EXIFInit(VSILFILE *fp)
                 STARTS_WITH(reinterpret_cast<char *>(abyChunkHeader) + 4,
                             "Exif"))
             {
-                if (nTIFFHEADER < 0)
+                if (nTIFFHEADER == 0)
                 {
                     nTIFFHEADER = nChunkLoc + 10;
                 }
                 else
                 {
-                    CPLDebug(
-                        "JPEG",
-                        "Another Exif directory found at offset %u. Ignoring "
-                        "it and only taking into account the one at offset %u",
-                        unsigned(nChunkLoc + 10), unsigned(nTIFFHEADER));
+                    CPLDebug("JPEG",
+                             "Another Exif directory found at offset %" PRIu64
+                             ". Ignoring "
+                             "it and only taking into account the one at "
+                             "offset %" PRIu64,
+                             static_cast<uint64_t>(nChunkLoc + 10),
+                             static_cast<uint64_t>(nTIFFHEADER));
                 }
             }
         }
@@ -1449,7 +1451,7 @@ bool JPGDatasetCommon::EXIFInit(VSILFILE *fp)
         nChunkLoc += 2 + nChunkLength;
     }
 
-    if (nTIFFHEADER < 0)
+    if (nTIFFHEADER == 0)
         return false;
 
     // Read TIFF header.
@@ -1897,8 +1899,7 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
 
     // Read number of entry in directory.
     GUInt16 nEntryCount = 0;
-    if (nTiffDirStart > (INT_MAX - nTIFFHEADER) ||
-        VSIFSeekL(m_fpImage, nTiffDirStart + nTIFFHEADER, SEEK_SET) != 0 ||
+    if (VSIFSeekL(m_fpImage, nTiffDirStart + nTIFFHEADER, SEEK_SET) != 0 ||
         VSIFReadL(&nEntryCount, 1, sizeof(GUInt16), m_fpImage) !=
             sizeof(GUInt16))
     {
@@ -1921,7 +1922,10 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
     }
 
     // Skip EXIF entries.
-    VSIFSeekL(m_fpImage, nEntryCount * sizeof(GDALEXIFTIFFDirEntry), SEEK_CUR);
+    VSIFSeekL(
+        m_fpImage,
+        static_cast<vsi_l_offset>(nEntryCount * sizeof(GDALEXIFTIFFDirEntry)),
+        SEEK_CUR);
 
     // Read offset of next directory (IFD1).
     GUInt32 nNextDirOff = 0;
@@ -1930,7 +1934,7 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
         return nullptr;
     if (bSwabflag)
         CPL_SWAP32PTR(&nNextDirOff);
-    if (nNextDirOff == 0 || nNextDirOff > UINT_MAX - nTIFFHEADER)
+    if (nNextDirOff == 0)
         return nullptr;
 
     // Seek to IFD1.
@@ -1939,8 +1943,8 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
             sizeof(GUInt16))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Error reading IFD1 Directory count at %d.",
-                 nTIFFHEADER + nNextDirOff);
+                 "Error reading IFD1 Directory count at %" PRIu64 ".",
+                 static_cast<uint64_t>(nTIFFHEADER + nNextDirOff));
         return nullptr;
     }
 
@@ -2012,14 +2016,15 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
     }
     if (nCompression != 6 || nImageWidth >= nRasterXSize ||
         nImageHeight >= nRasterYSize || nJpegIFOffset == 0 ||
-        nJpegIFOffset > UINT_MAX - nTIFFHEADER ||
+        nTIFFHEADER > UINT_MAX || nJpegIFOffset > UINT_MAX - nTIFFHEADER ||
         static_cast<int>(nJpegIFByteCount) <= 0)
     {
         return nullptr;
     }
 
     const char *pszSubfile =
-        CPLSPrintf("JPEG_SUBFILE:%u,%d,%s", nTIFFHEADER + nJpegIFOffset,
+        CPLSPrintf("JPEG_SUBFILE:%u,%d,%s",
+                   static_cast<unsigned>(nTIFFHEADER + nJpegIFOffset),
                    nJpegIFByteCount, GetDescription());
     JPGDatasetOpenArgs sArgs;
     sArgs.pszFilename = pszSubfile;
@@ -3502,7 +3507,7 @@ void JPGDatasetCommon::CheckForMask()
     // Go to the end of the file, pull off four bytes, and see if
     // it is plausibly the size of the real image data.
     VSIFSeekL(m_fpImage, 0, SEEK_END);
-    GIntBig nFileSize = VSIFTellL(m_fpImage);
+    const auto nFileSize = VSIFTellL(m_fpImage);
     VSIFSeekL(m_fpImage, nFileSize - 4, SEEK_SET);
 
     GUInt32 nImageSize = 0;
@@ -3516,7 +3521,8 @@ void JPGDatasetCommon::CheckForMask()
     {
         // If that seems okay, seek back, and verify that just preceding
         // the bitmask is an apparent end-of-jpeg-data marker.
-        VSIFSeekL(m_fpImage, nImageSize - 2, SEEK_SET);
+        VSIFSeekL(m_fpImage, static_cast<vsi_l_offset>(nImageSize - 2),
+                  SEEK_SET);
         VSIFReadL(abyEOD, 2, 1, m_fpImage);
         if (abyEOD[0] == 0xff && abyEOD[1] == 0xd9)
         {
@@ -3700,7 +3706,9 @@ CPLErr JPGDatasetCommon::ReadCompressedData(
                 if (nImageSize > 2 && nImageSize >= nFileSize / 2 &&
                     nImageSize < nFileSize - 4)
                 {
-                    VSIFSeekL(m_fpImage, nImageSize - 2, SEEK_SET);
+                    VSIFSeekL(m_fpImage,
+                              static_cast<vsi_l_offset>(nImageSize - 2),
+                              SEEK_SET);
                     GByte abyTwoBytes[2];
                     if (VSIFReadL(abyTwoBytes, 2, 1, m_fpImage) == 1 &&
                         abyTwoBytes[0] == 0xFF && abyTwoBytes[1] == 0xD9)

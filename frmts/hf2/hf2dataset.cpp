@@ -580,7 +580,7 @@ GDALDataset *HF2Dataset::Open(GDALOpenInfo *poOpenInfo)
         else
         {
             CPLDebug("HF2", "Skipping block %s", szBlockName);
-            VSIFSeekL(fp, nBlockSize, SEEK_CUR);
+            VSIFSeekL(fp, static_cast<vsi_l_offset>(nBlockSize), SEEK_CUR);
         }
     }
 

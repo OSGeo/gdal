@@ -1034,7 +1034,7 @@ static int GDALPdfiumGetBlock(void *param, unsigned long position,
                               unsigned char *pBuf, unsigned long size)
 {
     VSILFILE *fp = static_cast<VSILFILE *>(param);
-    VSIFSeekL(fp, position, SEEK_SET);
+    VSIFSeekL(fp, static_cast<vsi_l_offset>(position), SEEK_SET);
     return VSIFReadL(pBuf, size, 1, fp) == 1;
 }
 

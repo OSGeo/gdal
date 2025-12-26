@@ -50,7 +50,7 @@ class OGRPDSLayer final : public OGRLayer,
     std::string osTableID;
     VSILFILE *fpPDS;
     int nRecords;
-    int nStartBytes;
+    vsi_l_offset nStartBytes;
     int nRecordSize;
     GByte *pabyRecord;
     int nNextFID;
@@ -68,7 +68,7 @@ class OGRPDSLayer final : public OGRLayer,
     OGRPDSLayer(const std::string &osTableID, const char *pszLayerName,
                 VSILFILE *fp, const std::string &osLabelFilename,
                 const std::string &osStructureFilename, int nRecords,
-                int nStartBytes, int nRecordSize, GByte *pabyRecord,
+                vsi_l_offset nStartBytes, int nRecordSize, GByte *pabyRecord,
                 bool bIsASCII);
     ~OGRPDSLayer() override;
 

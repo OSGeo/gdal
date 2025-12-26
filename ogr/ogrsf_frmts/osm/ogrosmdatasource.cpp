@@ -1121,8 +1121,10 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
                         COMPRESS_SIZE_FROM_BYTE(psBucket->u.panSectorSize[k]);
             }
 
-            VSIFSeekL(m_fpNodes, psBucket->nOff + nOffFromBucketStart,
-                      SEEK_SET);
+            VSIFSeekL(
+                m_fpNodes,
+                static_cast<vsi_l_offset>(psBucket->nOff + nOffFromBucketStart),
+                SEEK_SET);
             if (nSectorSize == SECTOR_SIZE)
             {
                 if (VSIFReadL(m_pabySector, 1, static_cast<size_t>(SECTOR_SIZE),
@@ -1249,8 +1251,9 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
         if (nNewOffset - nOldOffset >= knDISK_SECTOR_SIZE)
         {
             // Align on 4096 boundary to be glibc caching friendly
-            const GIntBig nAlignedNewPos =
-                nNewOffset & ~(static_cast<GIntBig>(knDISK_SECTOR_SIZE) - 1);
+            const vsi_l_offset nAlignedNewPos =
+                nNewOffset &
+                ~(static_cast<vsi_l_offset>(knDISK_SECTOR_SIZE) - 1);
             VSIFSeekL(m_fpNodes, nAlignedNewPos, SEEK_SET);
             nValidBytes =
                 VSIFReadL(abyDiskSector, 1, knDISK_SECTOR_SIZE, m_fpNodes);

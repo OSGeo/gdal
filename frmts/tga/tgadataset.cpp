@@ -390,7 +390,7 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                 if (pImage == nullptr)
                 {
                     VSIFSeekL(poGDS->m_fpImage,
-                              static_cast<size_t>(nPixelsToFill) *
+                              static_cast<vsi_l_offset>(nPixelsToFill) *
                                   nBytesPerPixel,
                               SEEK_CUR);
                 }
@@ -593,7 +593,7 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
         VSIFReadL(abyTail, 1, 26, poOpenInfo->fpL);
         if (memcmp(abyTail + 8, "TRUEVISION-XFILE.\x00", 18) == 0)
         {
-            const unsigned nExtensionAreaOffset = CPL_LSBUINT32PTR(abyTail);
+            const vsi_l_offset nExtensionAreaOffset = CPL_LSBUINT32PTR(abyTail);
             if (nExtensionAreaOffset > 0)
             {
                 VSIFSeekL(poOpenInfo->fpL, nExtensionAreaOffset, SEEK_SET);

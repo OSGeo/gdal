@@ -121,7 +121,7 @@ void GDALPamProxyDB::LoadDB()
         return;
     }
     const int nBufLength = static_cast<int>(VSIFTellL(fpDB) - nHeaderSize);
-    if (VSIFSeekL(fpDB, nHeaderSize, SEEK_SET) != 0)
+    if (VSIFSeekL(fpDB, static_cast<vsi_l_offset>(nHeaderSize), SEEK_SET) != 0)
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpDB));
         return;

@@ -135,7 +135,8 @@ CPLErr GFFRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
     long nOffset = poGDS->nLength;
 
     VSIFSeekL(poGDS->fp,
-              nOffset + (poGDS->GetRasterXSize() * nBlockYOff * (nSampleSize)),
+              nOffset + (static_cast<vsi_l_offset>(poGDS->GetRasterXSize()) *
+                         nBlockYOff * (nSampleSize)),
               SEEK_SET);
 
     /* Ingest entire range line */

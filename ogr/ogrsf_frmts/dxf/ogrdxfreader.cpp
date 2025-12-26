@@ -282,7 +282,9 @@ int OGRDXFReaderBinary::ReadValue(char *pszValueBuffer, int nValueBufferSize)
 {
     if (VSIFTellL(fp) == 0)
     {
-        VSIFSeekL(fp, AUTOCAD_BINARY_DXF_SIGNATURE.size(), SEEK_SET);
+        VSIFSeekL(
+            fp, static_cast<vsi_l_offset>(AUTOCAD_BINARY_DXF_SIGNATURE.size()),
+            SEEK_SET);
     }
     if (VSIFTellL(fp) == AUTOCAD_BINARY_DXF_SIGNATURE.size())
     {
@@ -295,7 +297,9 @@ int OGRDXFReaderBinary::ReadValue(char *pszValueBuffer, int nValueBufferSize)
             return -1;
         }
         m_bIsR12 = memcmp(abyZeroSection, "\x00SECTION", 8) == 0;
-        VSIFSeekL(fp, AUTOCAD_BINARY_DXF_SIGNATURE.size(), SEEK_SET);
+        VSIFSeekL(
+            fp, static_cast<vsi_l_offset>(AUTOCAD_BINARY_DXF_SIGNATURE.size()),
+            SEEK_SET);
     }
 
     m_nPrevPos = VSIFTellL(fp);

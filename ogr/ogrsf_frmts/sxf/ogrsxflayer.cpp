@@ -117,7 +117,7 @@ bool OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode,
             {
                 SXFRecordAttributeInfo stAttrInfo;
                 bool bAddField = false;
-                size_t nCurrOff = 0;
+                vsi_l_offset nCurrOff = 0;
                 int nReadObj =
                     static_cast<int>(VSIFReadL(&stAttrInfo, 4, 1, fpSXF));
                 if (nReadObj == 1)

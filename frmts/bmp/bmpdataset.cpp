@@ -633,7 +633,10 @@ CPLErr BMPRasterBand::SetColorTable(GDALColorTable *poColorTable)
                 (GByte)oEntry.c3;  // Blue
         }
 
-        VSIFSeekL(poGDS->fp, BFH_SIZE + poGDS->sInfoHeader.iSize, SEEK_SET);
+        VSIFSeekL(
+            poGDS->fp,
+            static_cast<vsi_l_offset>(BFH_SIZE + poGDS->sInfoHeader.iSize),
+            SEEK_SET);
         if (VSIFWriteL(poGDS->pabyColorTable, 1,
                        static_cast<size_t>(poGDS->nColorElems) *
                            poGDS->sInfoHeader.iClrUsed,
@@ -754,7 +757,9 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
         return;
     }
 
-    if (VSIFSeekL(poDSIn->fp, poDSIn->sFileHeader.iOffBits, SEEK_SET) != 0 ||
+    if (VSIFSeekL(poDSIn->fp,
+                  static_cast<vsi_l_offset>(poDSIn->sFileHeader.iOffBits),
+                  SEEK_SET) != 0 ||
         VSIFReadL(pabyComprBuf, 1, iComprSize, poDSIn->fp) < iComprSize)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -1146,7 +1151,7 @@ GDALDataset *BMPDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
 
-    VSIFSeekL(poDS->fp, BFH_SIZE, SEEK_SET);
+    VSIFSeekL(poDS->fp, BFH_SIZE + 0, SEEK_SET);
     VSIFReadL(&poDS->sInfoHeader.iSize, 1, 4, poDS->fp);
 #ifdef CPL_MSB
     CPL_SWAP32PTR(&poDS->sInfoHeader.iSize);

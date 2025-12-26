@@ -90,7 +90,7 @@ class NITFDataset final : public GDALPamDataset
     bool InitializeTREMetadata(bool bValidate);
     void InitializeImageStructureMetadata();
 
-    GIntBig *panJPEGBlockOffset = nullptr;
+    vsi_l_offset *panJPEGBlockOffset = nullptr;
     GByte *pabyJPEGBlock = nullptr;
     int nQLevel = 0;
 

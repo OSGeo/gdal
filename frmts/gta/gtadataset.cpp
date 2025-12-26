@@ -193,7 +193,7 @@ class GTAIO final : public gta::custom_io
     void seek(intmax_t offset, int whence, bool *error) throw() override
     {
         int r;
-        r = VSIFSeekL(fp, offset, whence);
+        r = VSIFSeekL(fp, static_cast<vsi_l_offset>(offset), whence);
         if (r != 0)
         {
             errno = EIO;

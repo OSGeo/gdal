@@ -335,7 +335,9 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                  dfMinYShape > m_sFilterEnvelope.MaxY))
             {
                 nNextFID++;
-                VSIFSeekL(fp, sizeof(OGRRawPoint) * nNodes, SEEK_CUR);
+                VSIFSeekL(
+                    fp, static_cast<vsi_l_offset>(sizeof(OGRRawPoint)) * nNodes,
+                    SEEK_CUR);
                 continue;
             }
 
@@ -423,8 +425,10 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                  dfMinYShape > m_sFilterEnvelope.MaxY))
             {
                 VSIFSeekL(fp,
-                          sizeof(unsigned int) * nParts +
-                              sizeof(OGRRawPoint) * nTotalNodes,
+                          static_cast<vsi_l_offset>(sizeof(unsigned int)) *
+                                  nParts +
+                              static_cast<vsi_l_offset>(sizeof(OGRRawPoint)) *
+                                  nTotalNodes,
                           SEEK_CUR);
                 nNextFID++;
                 continue;
