@@ -10,7 +10,9 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalgorithm.h"
+//! @cond Doxygen_Suppress
+
+#include "gdalalg_mdim.h"
 
 #include "gdalalg_mdim_info.h"
 #include "gdalalg_mdim_convert.h"
@@ -26,32 +28,19 @@
 /*                         GDALMdimAlgorithm                            */
 /************************************************************************/
 
-class GDALMdimAlgorithm final : public GDALAlgorithm
+GDALMdimAlgorithm::GDALMdimAlgorithm()
+    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-  public:
-    static constexpr const char *NAME = "mdim";
-    static constexpr const char *DESCRIPTION = "Multidimensional commands.";
-    static constexpr const char *HELP_URL = "/programs/gdal_mdim.html";
+    AddArg("drivers", 0,
+           _("Display multidimensional driver list as JSON document"),
+           &m_drivers);
 
-    GDALMdimAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
-    {
-        AddArg("drivers", 0,
-               _("Display multidimensional driver list as JSON document"),
-               &m_drivers);
+    AddOutputStringArg(&m_output);
 
-        AddOutputStringArg(&m_output);
-
-        RegisterSubAlgorithm<GDALMdimInfoAlgorithm>();
-        RegisterSubAlgorithm<GDALMdimConvertAlgorithm>();
-        RegisterSubAlgorithm<GDALMdimMosaicAlgorithm>();
-    }
-
-  private:
-    std::string m_output{};
-    bool m_drivers = false;
-
-    bool RunImpl(GDALProgressFunc, void *) override;
-};
+    RegisterSubAlgorithm<GDALMdimInfoAlgorithm>();
+    RegisterSubAlgorithm<GDALMdimConvertAlgorithm>();
+    RegisterSubAlgorithm<GDALMdimMosaicAlgorithm>();
+}
 
 bool GDALMdimAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
@@ -69,4 +58,4 @@ bool GDALMdimAlgorithm::RunImpl(GDALProgressFunc, void *)
     }
 }
 
-GDAL_STATIC_REGISTER_ALG(GDALMdimAlgorithm);
+//! @endcond

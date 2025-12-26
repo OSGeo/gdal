@@ -3170,17 +3170,6 @@ class CPL_DLL GDALGlobalAlgorithmRegistry final : public GDALAlgorithmRegistry
     const Node *GetNodeFromPath(const std::vector<std::string> &path) const;
 };
 
-/************************************************************************/
-/*                  GDAL_STATIC_REGISTER_ALG()                          */
-/************************************************************************/
-
-/** Static registration of an algorithm by its class name (which must implement
- * GDALAlgorithm)
- */
-#define GDAL_STATIC_REGISTER_ALG(MyAlgorithm)                                  \
-    static bool MyAlgorithm##_static_registration =                            \
-        GDALGlobalAlgorithmRegistry::GetSingleton().Register<MyAlgorithm>()
-
 #endif  // #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && (defined(DOXYGEN_SKIP) || __cplusplus >= 201703L || _MSC_VER >= 1920)
 
 #endif  // GDAL_ALGORITHM_CPP_INCLUDED
