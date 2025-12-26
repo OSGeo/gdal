@@ -6603,20 +6603,21 @@ void GTiffDataset::LoadEXIFMetadata()
 
     if (TIFFGetField(m_hTIFF, TIFFTAG_EXIFIFD, &nOffset))
     {
-        int nExifOffset = static_cast<int>(nOffset);
-        int nInterOffset = 0;
-        int nGPSOffset = 0;
-        EXIFExtractMetadata(papszMetadata, fp, static_cast<int>(nOffset),
+        uint32_t nExifOffset = static_cast<unsigned>(nOffset);
+        uint32_t nInterOffset = 0;
+        uint32_t nGPSOffset = 0;
+        EXIFExtractMetadata(papszMetadata, fp, static_cast<uint32_t>(nOffset),
                             bSwabflag, 0, nExifOffset, nInterOffset,
                             nGPSOffset);
     }
 
     if (TIFFGetField(m_hTIFF, TIFFTAG_GPSIFD, &nOffset))
     {
-        int nExifOffset = 0;  // TODO(b/28199387): Refactor to simplify casting.
-        int nInterOffset = 0;
-        int nGPSOffset = static_cast<int>(nOffset);
-        EXIFExtractMetadata(papszMetadata, fp, static_cast<int>(nOffset),
+        uint32_t nExifOffset =
+            0;  // TODO(b/28199387): Refactor to simplify casting.
+        uint32_t nInterOffset = 0;
+        uint32_t nGPSOffset = static_cast<uint32_t>(nOffset);
+        EXIFExtractMetadata(papszMetadata, fp, static_cast<uint32_t>(nOffset),
                             bSwabflag, 0, nExifOffset, nInterOffset,
                             nGPSOffset);
     }
