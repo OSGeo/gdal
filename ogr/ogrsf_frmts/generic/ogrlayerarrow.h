@@ -24,7 +24,16 @@ constexpr const char *ARROW_EXTENSION_NAME_KEY = "ARROW:extension:name";
 constexpr const char *ARROW_EXTENSION_METADATA_KEY = "ARROW:extension:metadata";
 constexpr const char *EXTENSION_NAME_OGC_WKB = "ogc.wkb";
 constexpr const char *EXTENSION_NAME_GEOARROW_WKB = "geoarrow.wkb";
+
+// Cf https://github.com/apache/arrow/blob/main/docs/source/format/CanonicalExtensions.rst#json
 constexpr const char *EXTENSION_NAME_ARROW_JSON = "arrow.json";
+
+// Cf https://github.com/apache/arrow/blob/main/docs/source/format/CanonicalExtensions.rst#timestamp-with-offset
+constexpr const char *EXTENSION_NAME_ARROW_TIMESTAMP_WITH_OFFSET =
+    "arrow.timestamp_with_offset";
+// ATSWO = Arrow TimeStamp With Offset
+constexpr const char *ATSWO_TIMESTAMP_FIELD_NAME = "timestamp";
+constexpr const char *ATSWO_OFFSET_MINUTES_FIELD_NAME = "offset_minutes";
 
 // GetArrowStream(GAS) options
 constexpr const char *GAS_OPT_DATETIME_AS_STRING = "DATETIME_AS_STRING";
