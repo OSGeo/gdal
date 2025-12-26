@@ -27,11 +27,14 @@
 // Same default as libheif encoder example
 constexpr int DEFAULT_QUALITY = 50;
 
-static CPLErr mapColourInterpretation(GDALColorInterp colourInterpretation,
-                                      heif_channel *channel)
+static CPLErr mapColorInterpretation(GDALColorInterp colourInterpretation,
+                                     heif_channel *channel)
 {
     switch (colourInterpretation)
     {
+        case GCI_GrayIndex:
+            *channel = heif_channel_Y;
+            return CE_None;
         case GCI_RedBand:
             *channel = heif_channel_R;
             return CE_None;
@@ -148,10 +151,10 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
         pfnProgress = GDALDummyProgress;
 
     int nBands = poSrcDS->GetRasterCount();
-    if ((nBands != 3) && (nBands != 4))
+    if ((nBands != 1) && (nBands != 3) && (nBands != 4))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Driver only supports source dataset with 3 or 4 bands.");
+                 "Driver only supports source dataset with 1, 3 or 4 bands.");
         return nullptr;
     }
     // TODO: more sanity checks
@@ -173,10 +176,17 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
     setEncoderParameters(encoder, papszOptions);
 
     heif_image *image;
+    heif_colorspace colorspace = heif_colorspace_RGB;
+    heif_chroma chroma = heif_chroma_444;
+    const int width = poSrcDS->GetRasterXSize();
+    const int height = poSrcDS->GetRasterYSize();
 
-    err =
-        heif_image_create(poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-                          heif_colorspace_RGB, heif_chroma_444, &image);
+    if (nBands == 1)
+    {
+        colorspace = heif_colorspace_monochrome;
+        chroma = heif_chroma_monochrome;
+    }
+    err = heif_image_create(width, height, colorspace, chroma, &image);
     if (err.code)
     {
         heif_encoder_release(encoder);
@@ -197,19 +207,18 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
             return nullptr;
         }
         heif_channel channel;
-        auto mapError =
-            mapColourInterpretation(poBand->GetColorInterpretation(), &channel);
+        GDALColorInterp ci = poBand->GetColorInterpretation();
+        auto mapError = mapColorInterpretation(ci, &channel);
         if (mapError != CE_None)
         {
             heif_image_release(image);
             heif_encoder_release(encoder);
             heif_context_free(ctx);
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Driver does not support bands other than RGBA yet.");
+                     "Unsupported Color Interpretation %d.", ci);
             return nullptr;
         }
-        err = heif_image_add_plane(image, channel, poSrcDS->GetRasterXSize(),
-                                   poSrcDS->GetRasterYSize(), 8);
+        err = heif_image_add_plane(image, channel, width, height, 8);
         if (err.code)
         {
             heif_image_release(image);
@@ -221,10 +230,8 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
         }
         int stride;
         uint8_t *p = heif_image_get_plane(image, channel, &stride);
-        auto eErr = poBand->RasterIO(
-            GF_Read, 0, 0, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-            p, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), GDT_UInt8,
-            0, stride, nullptr);
+        auto eErr = poBand->RasterIO(GF_Read, 0, 0, width, height, p, width,
+                                     height, GDT_UInt8, 0, stride, nullptr);
 
         if (eErr != CE_None)
         {
