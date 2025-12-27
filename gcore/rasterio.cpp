@@ -5686,7 +5686,10 @@ bool GDALBufferHasOnlyNoData(const void *pBuffer, double dfNoDataValue,
     {
         const GByte *pabyBuffer = static_cast<const GByte *>(pBuffer);
         const size_t nSize =
-            (nWidth * nHeight * nComponents * nBitsPerSample + 7) / 8;
+            static_cast<size_t>((static_cast<uint64_t>(nWidth) * nHeight *
+                                     nComponents * nBitsPerSample +
+                                 7) /
+                                8);
         size_t i = 0;
         const size_t nInitialIters =
             std::min(sizeof(WordType) -
