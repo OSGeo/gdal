@@ -1564,6 +1564,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
                 if (TIFFjpeg_read_scanlines(sp, &line_work_buf, 1) != 1)
                 {
                     memset(buf, 0, (size_t)cc);
+                    _TIFFfreeExt(tif, line_work_buf);
                     return (0);
                 }
 
