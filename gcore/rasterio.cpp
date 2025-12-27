@@ -3509,10 +3509,14 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
 /************************************************************************/
 
 template <class T, int srcStride, int dstStride>
-static inline void GDALUnrolledCopyGeneric(T *CPL_RESTRICT pDest,
-                                           const T *CPL_RESTRICT pSrc,
-                                           GPtrDiff_t nIters)
+#if defined(__GNUC__) && defined(__AVX2__)
+__attribute__((optimize("tree-vectorize")))
+#endif
+static inline void
+GDALUnrolledCopyGeneric(T *CPL_RESTRICT pDest, const T *CPL_RESTRICT pSrc,
+                        GPtrDiff_t nIters)
 {
+#if !(defined(__GNUC__) && defined(__AVX2__))
     if (nIters >= 16)
     {
         for (GPtrDiff_t i = nIters / 16; i != 0; i--)
@@ -3538,6 +3542,9 @@ static inline void GDALUnrolledCopyGeneric(T *CPL_RESTRICT pDest,
         }
         nIters = nIters % 16;
     }
+#else
+#pragma GCC unroll 4
+#endif
     for (GPtrDiff_t i = 0; i < nIters; i++)
     {
         pDest[i * dstStride] = *pSrc;
@@ -3553,7 +3560,31 @@ static inline void GDALUnrolledCopy(T *CPL_RESTRICT pDest,
     GDALUnrolledCopyGeneric<T, srcStride, dstStride>(pDest, pSrc, nIters);
 }
 
-#ifdef HAVE_SSE2
+#if defined(__AVX2__) && defined(HAVE_SSSE3_AT_COMPILE_TIME) &&                \
+    (defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS))
+
+template <>
+void GDALUnrolledCopy<GByte, 3, 1>(GByte *CPL_RESTRICT pDest,
+                                   const GByte *CPL_RESTRICT pSrc,
+                                   GPtrDiff_t nIters)
+{
+    if (nIters > 16)
+    {
+        // The SSSE3 variant is slightly faster than what the gcc autovectorizer
+        // generates
+        GDALUnrolledCopy_GByte_3_1_SSSE3(pDest, pSrc, nIters);
+    }
+    else
+    {
+        for (GPtrDiff_t i = 0; i < nIters; i++)
+        {
+            pDest[i] = *pSrc;
+            pSrc += 3;
+        }
+    }
+}
+
+#elif defined(HAVE_SSE2) && !(defined(__GNUC__) && defined(__AVX2__))
 
 template <>
 void GDALUnrolledCopy<GByte, 2, 1>(GByte *CPL_RESTRICT pDest,
@@ -3591,6 +3622,92 @@ void GDALUnrolledCopy<GByte, 2, 1>(GByte *CPL_RESTRICT pDest,
     }
 }
 
+static void GDALUnrolledCopy_GByte_3_1_SSE2(GByte *CPL_RESTRICT pDest,
+                                            const GByte *CPL_RESTRICT pSrc,
+                                            GPtrDiff_t nIters)
+{
+    decltype(nIters) i = 0;
+    const __m128i xmm_mask_ori = _mm_set_epi32(0, 0, 0, 255);
+    // If we were sure that there would always be 2 trailing bytes, we could
+    // check against nIters - 15
+    for (; i < nIters - 16; i += 16)
+    {
+        __m128i xmm0 =
+            _mm_loadu_si128(reinterpret_cast<__m128i const *>(pSrc + 0));
+        __m128i xmm1 =
+            _mm_loadu_si128(reinterpret_cast<__m128i const *>(pSrc + 16));
+        __m128i xmm2 =
+            _mm_loadu_si128(reinterpret_cast<__m128i const *>(pSrc + 32));
+
+        auto xmm_mask0 = xmm_mask_ori;
+        auto xmm_mask1 = _mm_slli_si128(xmm_mask_ori, 6);
+        auto xmm_mask2 = _mm_slli_si128(xmm_mask_ori, 11);
+
+        auto xmm = _mm_and_si128(xmm0, xmm_mask0);
+        auto xmm_res1 = _mm_and_si128(_mm_slli_si128(xmm1, 4), xmm_mask1);
+
+        xmm_mask0 = _mm_slli_si128(xmm_mask0, 1);
+        xmm_mask1 = _mm_slli_si128(xmm_mask1, 1);
+        xmm0 = _mm_srli_si128(xmm0, 2);
+        xmm = _mm_or_si128(xmm, _mm_and_si128(xmm0, xmm_mask0));
+        xmm_res1 = _mm_or_si128(
+            xmm_res1, _mm_and_si128(_mm_slli_si128(xmm1, 2), xmm_mask1));
+
+        xmm_mask0 = _mm_slli_si128(xmm_mask0, 1);
+        xmm_mask1 = _mm_slli_si128(xmm_mask1, 1);
+        xmm0 = _mm_srli_si128(xmm0, 2);
+        xmm = _mm_or_si128(xmm, _mm_and_si128(xmm0, xmm_mask0));
+        xmm_res1 = _mm_or_si128(xmm_res1, _mm_and_si128(xmm1, xmm_mask1));
+
+        xmm_mask0 = _mm_slli_si128(xmm_mask0, 1);
+        xmm_mask1 = _mm_slli_si128(xmm_mask1, 1);
+        xmm0 = _mm_srli_si128(xmm0, 2);
+        xmm = _mm_or_si128(xmm, _mm_and_si128(xmm0, xmm_mask0));
+        xmm_res1 = _mm_or_si128(
+            xmm_res1, _mm_and_si128(_mm_srli_si128(xmm1, 2), xmm_mask1));
+
+        xmm_mask0 = _mm_slli_si128(xmm_mask0, 1);
+        xmm_mask1 = _mm_slli_si128(xmm_mask1, 1);
+        xmm0 = _mm_srli_si128(xmm0, 2);
+        xmm = _mm_or_si128(xmm, _mm_and_si128(xmm0, xmm_mask0));
+        xmm_res1 = _mm_or_si128(
+            xmm_res1, _mm_and_si128(_mm_srli_si128(xmm1, 4), xmm_mask1));
+        xmm = _mm_or_si128(xmm, xmm_res1);
+
+        xmm_mask0 = _mm_slli_si128(xmm_mask0, 1);
+        xmm0 = _mm_srli_si128(xmm0, 2);
+        xmm = _mm_or_si128(xmm, _mm_and_si128(xmm0, xmm_mask0));
+
+        xmm = _mm_or_si128(xmm,
+                           _mm_and_si128(_mm_slli_si128(xmm2, 10), xmm_mask2));
+
+        xmm_mask2 = _mm_slli_si128(xmm_mask2, 1);
+        xmm = _mm_or_si128(xmm,
+                           _mm_and_si128(_mm_slli_si128(xmm2, 8), xmm_mask2));
+
+        xmm_mask2 = _mm_slli_si128(xmm_mask2, 1);
+        xmm = _mm_or_si128(xmm,
+                           _mm_and_si128(_mm_slli_si128(xmm2, 6), xmm_mask2));
+
+        xmm_mask2 = _mm_slli_si128(xmm_mask2, 1);
+        xmm = _mm_or_si128(xmm,
+                           _mm_and_si128(_mm_slli_si128(xmm2, 4), xmm_mask2));
+
+        xmm_mask2 = _mm_slli_si128(xmm_mask2, 1);
+        xmm = _mm_or_si128(xmm,
+                           _mm_and_si128(_mm_slli_si128(xmm2, 2), xmm_mask2));
+
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(pDest + i), xmm);
+
+        pSrc += 3 * 16;
+    }
+    for (; i < nIters; i++)
+    {
+        pDest[i] = *pSrc;
+        pSrc += 3;
+    }
+}
+
 #ifdef HAVE_SSSE3_AT_COMPILE_TIME
 
 template <>
@@ -3598,16 +3715,36 @@ void GDALUnrolledCopy<GByte, 3, 1>(GByte *CPL_RESTRICT pDest,
                                    const GByte *CPL_RESTRICT pSrc,
                                    GPtrDiff_t nIters)
 {
-    if (nIters > 16 && CPLHaveRuntimeSSSE3())
+    if (nIters > 16)
     {
-        GDALUnrolledCopy_GByte_3_1_SSSE3(pDest, pSrc, nIters);
+        if (CPLHaveRuntimeSSSE3())
+        {
+            GDALUnrolledCopy_GByte_3_1_SSSE3(pDest, pSrc, nIters);
+        }
+        else
+        {
+            GDALUnrolledCopy_GByte_3_1_SSE2(pDest, pSrc, nIters);
+        }
     }
     else
     {
-        GDALUnrolledCopyGeneric<GByte, 3, 1>(pDest, pSrc, nIters);
+        for (GPtrDiff_t i = 0; i < nIters; i++)
+        {
+            pDest[i] = *pSrc;
+            pSrc += 3;
+        }
     }
 }
 
+#else
+
+template <>
+void GDALUnrolledCopy<GByte, 3, 1>(GByte *CPL_RESTRICT pDest,
+                                   const GByte *CPL_RESTRICT pSrc,
+                                   GPtrDiff_t nIters)
+{
+    GDALUnrolledCopy_GByte_3_1_SSE2(pDest, pSrc, nIters);
+}
 #endif
 
 template <>
