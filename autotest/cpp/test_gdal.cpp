@@ -3051,6 +3051,80 @@ TEST_F(test_gdal, GDALBufferHasOnlyNoData)
                                  int nBitsPerSample,
                                  GDALBufferSampleFormat nSampleFormat);
      */
+
+    {
+        std::vector<GByte> abyBuffer(100);
+        EXPECT_TRUE(
+            GDALBufferHasOnlyNoData(abyBuffer.data(), 0.0, abyBuffer.size(), 1,
+                                    abyBuffer.size(), 1, 8, GSF_UNSIGNED_INT));
+
+        for (auto &v : abyBuffer)
+        {
+            v = 1;
+            EXPECT_FALSE(GDALBufferHasOnlyNoData(
+                abyBuffer.data(), 0.0, abyBuffer.size(), 1, abyBuffer.size(), 1,
+                8, GSF_UNSIGNED_INT));
+            v = 0;
+        }
+    }
+
+    {
+        std::vector<GFloat16> afBuffer(100);
+        afBuffer[0] = static_cast<GFloat16>(-0.0f);
+        afBuffer[50] = static_cast<GFloat16>(-0.0f);
+        afBuffer.back() = static_cast<GFloat16>(-0.0f);
+        EXPECT_TRUE(GDALBufferHasOnlyNoData(afBuffer.data(), 0.0,
+                                            afBuffer.size(), 1, afBuffer.size(),
+                                            1, 16, GSF_FLOATING_POINT));
+
+        for (auto &v : afBuffer)
+        {
+            v = static_cast<GFloat16>(1.0f);
+            EXPECT_FALSE(GDALBufferHasOnlyNoData(
+                afBuffer.data(), 0.0, afBuffer.size(), 1, afBuffer.size(), 1,
+                16, GSF_FLOATING_POINT));
+            v = static_cast<GFloat16>(0.0f);
+        }
+    }
+
+    {
+        std::vector<float> afBuffer(100);
+        afBuffer[0] = -0.0f;
+        afBuffer[50] = -0.0f;
+        afBuffer.back() = -0.0f;
+        EXPECT_TRUE(GDALBufferHasOnlyNoData(afBuffer.data(), 0.0,
+                                            afBuffer.size(), 1, afBuffer.size(),
+                                            1, 32, GSF_FLOATING_POINT));
+
+        for (auto &v : afBuffer)
+        {
+            v = 1.0f;
+            EXPECT_FALSE(GDALBufferHasOnlyNoData(
+                afBuffer.data(), 0.0, afBuffer.size(), 1, afBuffer.size(), 1,
+                32, GSF_FLOATING_POINT));
+            v = 0.0f;
+        }
+    }
+
+    {
+        std::vector<double> adfBuffer(100);
+        adfBuffer[0] = -0;
+        adfBuffer[50] = -0;
+        adfBuffer.back() = -0;
+        EXPECT_TRUE(GDALBufferHasOnlyNoData(
+            adfBuffer.data(), 0.0, adfBuffer.size(), 1, adfBuffer.size(), 1, 64,
+            GSF_FLOATING_POINT));
+
+        for (auto &v : adfBuffer)
+        {
+            v = 1.0;
+            EXPECT_FALSE(GDALBufferHasOnlyNoData(
+                adfBuffer.data(), 0.0, adfBuffer.size(), 1, adfBuffer.size(), 1,
+                64, GSF_FLOATING_POINT));
+            v = 0.0;
+        }
+    }
+
     EXPECT_TRUE(
         GDALBufferHasOnlyNoData("\x00", 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT));
     EXPECT_TRUE(
@@ -3124,6 +3198,20 @@ TEST_F(test_gdal, GDALBufferHasOnlyNoData)
                                          GSF_SIGNED_INT));
     EXPECT_TRUE(!GDALBufferHasOnlyNoData(&int32val, 0x80000000, 1, 1, 1, 1, 32,
                                          GSF_SIGNED_INT));
+
+    GFloat16 float16val = static_cast<GFloat16>(-1);
+    EXPECT_TRUE(GDALBufferHasOnlyNoData(&float16val, -1.0, 1, 1, 1, 1, 16,
+                                        GSF_FLOATING_POINT));
+    EXPECT_TRUE(!GDALBufferHasOnlyNoData(&float16val, 0.0, 1, 1, 1, 1, 16,
+                                         GSF_FLOATING_POINT));
+    EXPECT_TRUE(!GDALBufferHasOnlyNoData(&float16val, 1e50, 1, 1, 1, 1, 16,
+                                         GSF_FLOATING_POINT));
+
+    GFloat16 float16nan = cpl::NumericLimits<GFloat16>::quiet_NaN();
+    EXPECT_TRUE(GDALBufferHasOnlyNoData(&float16nan, float16nan, 1, 1, 1, 1, 16,
+                                        GSF_FLOATING_POINT));
+    EXPECT_TRUE(!GDALBufferHasOnlyNoData(&float16nan, 0.0, 1, 1, 1, 1, 16,
+                                         GSF_FLOATING_POINT));
 
     float float32val = -1;
     EXPECT_TRUE(GDALBufferHasOnlyNoData(&float32val, -1.0, 1, 1, 1, 1, 32,

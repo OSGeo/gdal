@@ -5827,12 +5827,6 @@ bool GDALBufferHasOnlyNoData(const void *pBuffer, double dfNoDataValue,
 {
     // In the case where the nodata is 0, we can compare several bytes at
     // once. Select the largest natural integer type for the architecture.
-#if SIZEOF_VOIDP >= 8 || defined(__x86_64__)
-    // We test __x86_64__ for x32 arch where SIZEOF_VOIDP == 4
-    typedef std::uint64_t WordType;
-#else
-    typedef std::uint32_t WordType;
-#endif
     if (dfNoDataValue == 0.0 && nWidth == nLineStride &&
         // Do not use this optimized code path for floating point numbers,
         // as it can't detect negative zero.
@@ -5844,13 +5838,65 @@ bool GDALBufferHasOnlyNoData(const void *pBuffer, double dfNoDataValue,
                                      nComponents * nBitsPerSample +
                                  7) /
                                 8);
-        size_t i = 0;
+#ifdef HAVE_SSE2
+        size_t n = nSize;
+        // Align to 16 bytes
+        while ((reinterpret_cast<uintptr_t>(pabyBuffer) & 15) != 0 && n > 0)
+        {
+            --n;
+            if (*pabyBuffer)
+                return false;
+            pabyBuffer++;
+        }
+
+        const auto zero = _mm_setzero_si128();
+        constexpr int UNROLLING = 4;
+        while (n >= UNROLLING * sizeof(zero))
+        {
+            const auto v0 = _mm_load_si128(reinterpret_cast<const __m128i *>(
+                pabyBuffer + 0 * sizeof(zero)));
+            const auto v1 = _mm_load_si128(reinterpret_cast<const __m128i *>(
+                pabyBuffer + 1 * sizeof(zero)));
+            const auto v2 = _mm_load_si128(reinterpret_cast<const __m128i *>(
+                pabyBuffer + 2 * sizeof(zero)));
+            const auto v3 = _mm_load_si128(reinterpret_cast<const __m128i *>(
+                pabyBuffer + 3 * sizeof(zero)));
+            const auto v =
+                _mm_or_si128(_mm_or_si128(v0, v1), _mm_or_si128(v2, v3));
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+            if (!_mm_test_all_zeros(v, v))
+#else
+            if (_mm_movemask_epi8(_mm_cmpeq_epi8(v, zero)) != 0xFFFF)
+#endif
+            {
+                return false;
+            }
+            pabyBuffer += UNROLLING * sizeof(zero);
+            n -= UNROLLING * sizeof(zero);
+        }
+
+        while (n > 0)
+        {
+            --n;
+            if (*pabyBuffer)
+                return false;
+            pabyBuffer++;
+        }
+#else
+#if SIZEOF_VOIDP >= 8 || defined(__x86_64__)
+        // We test __x86_64__ for x32 arch where SIZEOF_VOIDP == 4
+        typedef std::uint64_t WordType;
+#else
+        typedef std::uint32_t WordType;
+#endif
+
         const size_t nInitialIters =
             std::min(sizeof(WordType) -
                          static_cast<size_t>(
                              reinterpret_cast<std::uintptr_t>(pabyBuffer) %
                              sizeof(WordType)),
                      nSize);
+        size_t i = 0;
         for (; i < nInitialIters; i++)
         {
             if (pabyBuffer[i])
@@ -5866,8 +5912,107 @@ bool GDALBufferHasOnlyNoData(const void *pBuffer, double dfNoDataValue,
             if (pabyBuffer[i])
                 return false;
         }
+#endif
         return true;
     }
+
+#ifdef HAVE_SSE2
+    else if (dfNoDataValue == 0.0 && nWidth == nLineStride &&
+             nBitsPerSample == 32 && nSampleFormat == GSF_FLOATING_POINT)
+    {
+        const auto signMask = _mm_set1_epi32(0x7FFFFFFF);
+        const auto zero = _mm_setzero_si128();
+        const GByte *pabyBuffer = static_cast<const GByte *>(pBuffer);
+        const size_t n = nWidth * nHeight * nComponents;
+
+        size_t i = 0;
+        constexpr int UNROLLING = 4;
+        constexpr size_t VALUES_PER_ITER =
+            UNROLLING * sizeof(zero) / sizeof(float);
+        for (; i + VALUES_PER_ITER <= n; i += VALUES_PER_ITER)
+        {
+            const auto v0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                pabyBuffer + 0 * sizeof(zero)));
+            const auto v1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                pabyBuffer + 1 * sizeof(zero)));
+            const auto v2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                pabyBuffer + 2 * sizeof(zero)));
+            const auto v3 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                pabyBuffer + 3 * sizeof(zero)));
+            auto v = _mm_or_si128(_mm_or_si128(v0, v1), _mm_or_si128(v2, v3));
+            // Clear the sign bit (makes -0.0 become +0.0)
+            v = _mm_and_si128(v, signMask);
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+            if (!_mm_test_all_zeros(v, v))
+#else
+            if (_mm_movemask_epi8(_mm_cmpeq_epi8(v, zero)) != 0xFFFF)
+#endif
+            {
+                return false;
+            }
+            pabyBuffer += UNROLLING * sizeof(zero);
+        }
+
+        for (; i < n; i++)
+        {
+            uint32_t bits;
+            memcpy(&bits, pabyBuffer, sizeof(bits));
+            pabyBuffer += sizeof(bits);
+            if ((bits & 0x7FFFFFFF) != 0)
+                return false;
+        }
+
+        return true;
+    }
+
+    else if (dfNoDataValue == 0.0 && nWidth == nLineStride &&
+             nBitsPerSample == 64 && nSampleFormat == GSF_FLOATING_POINT)
+    {
+        const auto signMask = _mm_set1_epi64x(0x7FFFFFFFFFFFFFFFLL);
+        const auto zero = _mm_setzero_si128();
+        const GByte *pabyBuffer = static_cast<const GByte *>(pBuffer);
+        const size_t n = nWidth * nHeight * nComponents;
+
+        size_t i = 0;
+        constexpr int UNROLLING = 4;
+        constexpr size_t VALUES_PER_ITER =
+            UNROLLING * sizeof(zero) / sizeof(double);
+        for (; i + VALUES_PER_ITER <= n; i += VALUES_PER_ITER)
+        {
+            const auto v0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                pabyBuffer + 0 * sizeof(zero)));
+            const auto v1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                pabyBuffer + 1 * sizeof(zero)));
+            const auto v2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                pabyBuffer + 2 * sizeof(zero)));
+            const auto v3 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                pabyBuffer + 3 * sizeof(zero)));
+            auto v = _mm_or_si128(_mm_or_si128(v0, v1), _mm_or_si128(v2, v3));
+            // Clear the sign bit (makes -0.0 become +0.0)
+            v = _mm_and_si128(v, signMask);
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+            if (!_mm_test_all_zeros(v, v))
+#else
+            if (_mm_movemask_epi8(_mm_cmpeq_epi8(v, zero)) != 0xFFFF)
+#endif
+            {
+                return false;
+            }
+            pabyBuffer += UNROLLING * sizeof(zero);
+        }
+
+        for (; i < n; i++)
+        {
+            uint64_t bits;
+            memcpy(&bits, pabyBuffer, sizeof(bits));
+            pabyBuffer += sizeof(bits);
+            if ((bits & 0x7FFFFFFFFFFFFFFFULL) != 0)
+                return false;
+        }
+
+        return true;
+    }
+#endif
 
     if (nBitsPerSample == 8 && nSampleFormat == GSF_UNSIGNED_INT)
     {
