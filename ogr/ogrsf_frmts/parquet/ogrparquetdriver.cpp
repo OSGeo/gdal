@@ -1037,7 +1037,6 @@ class OGRParquetCreateMetadataFileAlgorithm final : public GDALAlgorithm
                 .SetPositional()
                 .SetAutoOpenDataset(false)
                 .SetDatasetInputFlags(GADV_NAME)
-                .SetMinCount(1)
                 .SetRequired();
         SetAutoCompleteFunctionForFilename(inputArg, GDAL_OF_VECTOR);
 
@@ -1104,7 +1103,8 @@ bool OGRParquetCreateMetadataFileAlgorithm::RunImpl(
                     m_output.GetName().c_str(), "wb");
                 if (fp == nullptr)
                 {
-                    ReportError(CE_Failure, CPLE_FileIO, "Cannot create %s",
+                    ReportError(CE_Failure, CPLE_FileIO,
+                                "OpenStatic() failed: cannot create %s",
                                 m_output.GetName().c_str());
                     return false;
                 }
@@ -1120,8 +1120,10 @@ bool OGRParquetCreateMetadataFileAlgorithm::RunImpl(
                     std::move(schemaNode));
                 if (!writer)
                 {
-                    ReportError(CE_Failure, CPLE_FileIO, "Cannot create %s",
-                                m_output.GetName().c_str());
+                    ReportError(
+                        CE_Failure, CPLE_FileIO,
+                        "ParquetFileWriter::Open() failed: cannot create %s",
+                        m_output.GetName().c_str());
                     return false;
                 }
                 // Close it and now re-open it to gets its metadata object

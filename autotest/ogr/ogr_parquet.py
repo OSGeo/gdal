@@ -4870,7 +4870,10 @@ def test_ogr_parquet_create_metadata_file_alg(tmp_vsimem):
     gdal.Unlink(tmp_vsimem / "partitioned_hive/_metadata")
     assert gdal.VSIStatL(tmp_vsimem / "partitioned_hive/_metadata") is None
 
-    with pytest.raises(Exception, match="Cannot create i_do/not_exist/_metadata"):
+    with pytest.raises(
+        Exception,
+        match=r"OpenStatic\(\) failed: cannot create i_do/not_exist/_metadata",
+    ):
         gdal.alg.driver.parquet.create_metadata_file(
             input=[
                 tmp_vsimem / "partitioned_hive/foo=bar/part.0.parquet",

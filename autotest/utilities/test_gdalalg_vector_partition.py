@@ -527,10 +527,29 @@ def test_gdalalg_vector_partition_parquet(tmp_vsimem):
 
         assert lyr.GetNextFeature() is None
 
+    assert gdal.VSIStatL(tmp_vsimem / "out/test/_metadata") is not None
+
     if _has_arrow_dataset():
         with ogr.Open("PARQUET:" + str(tmp_vsimem) + "/out/test") as ds:
             lyr = ds.GetLayer(0)
             assert lyr.GetFeatureCount() == 3
+
+            with ds.ExecuteSQL(
+                "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+            ) as sql_lyr:
+                set_files = [f.GetField(0) for f in sql_lyr]
+                assert set_files == [str(tmp_vsimem / "out/test/_metadata")]
+
+            lyr.SetAttributeFilter("str_field = 'two'")
+            assert lyr.GetFeatureCount() == 1
+
+            with ds.ExecuteSQL(
+                "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+            ) as sql_lyr:
+                set_files = [f.GetField(0) for f in sql_lyr]
+                assert set_files == [
+                    str(tmp_vsimem / "out/test/str_field=two/part_0000000001.parquet")
+                ]
 
 
 @pytest.mark.require_driver("Parquet")

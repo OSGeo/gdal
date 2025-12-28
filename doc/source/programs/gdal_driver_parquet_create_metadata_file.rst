@@ -37,7 +37,7 @@ Description
 -----------
 
 Creates a :file:`_metadata` Parquet metadata-only file that contains the schema
-of partitioned Parquet files and the path to them.
+of the partitioned Parquet files and the path to them.
 
 This program is automatically called by :ref:`gdal_vector_partition` for a Parquet
 output.
