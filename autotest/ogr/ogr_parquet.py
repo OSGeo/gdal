@@ -4778,7 +4778,6 @@ def test_ogr_parquet_lists_as_string_json():
 
 
 ###############################################################################
-
 # Test support for https://github.com/apache/arrow/blob/main/docs/source/format/CanonicalExtensions.rst#timestamp-with-offset
 
 
@@ -4857,3 +4856,129 @@ def test_ogr_parquet_timestamp_with_offset(
             assert f["dt"] == "2025/12/20 22:30:56"
         else:
             assert f["dt"] == "2025/12/20 22:30:56+00"
+
+
+###############################################################################
+
+
+def test_ogr_parquet_create_metadata_file_alg(tmp_vsimem):
+
+    assert gdal.alg.vsi.copy(
+        source="data/parquet/partitioned_hive", destination=tmp_vsimem, recursive=True
+    )
+    assert gdal.VSIStatL(tmp_vsimem / "partitioned_hive/_metadata") is not None
+    gdal.Unlink(tmp_vsimem / "partitioned_hive/_metadata")
+    assert gdal.VSIStatL(tmp_vsimem / "partitioned_hive/_metadata") is None
+
+    with pytest.raises(Exception, match="Cannot create i_do/not_exist/_metadata"):
+        gdal.alg.driver.parquet.create_metadata_file(
+            input=[
+                tmp_vsimem / "partitioned_hive/foo=bar/part.0.parquet",
+                tmp_vsimem / "partitioned_hive/foo=baz/part.1.parquet",
+            ],
+            output="i_do/not_exist/_metadata",
+        )
+
+    with pytest.raises(Exception, match="Cannot infer relative path"):
+        gdal.alg.driver.parquet.create_metadata_file(
+            input=[
+                tmp_vsimem / "partitioned_hive/foo=bar/part.0.parquet",
+                tmp_vsimem / "partitioned_hive/foo=baz/part.1.parquet",
+            ],
+            output=tmp_vsimem / "unrelated/_metadata",
+        )
+
+    with pytest.raises(Exception, match=r"OpenInputFile\(\) failed"):
+        gdal.alg.driver.parquet.create_metadata_file(
+            input=[tmp_vsimem / "partitioned_hive/foo=bar/i_do_not_exist.parquet"],
+            output=tmp_vsimem / "partitioned_hive/_metadata",
+        )
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "partitioned_hive/not_a_parquet_file.bin", b"foo"
+    )
+
+    with pytest.raises(Exception, match=r"Invalid: Parquet file"):
+        gdal.alg.driver.parquet.create_metadata_file(
+            input=[tmp_vsimem / "partitioned_hive/not_a_parquet_file.bin"],
+            output=tmp_vsimem / "partitioned_hive/_metadata",
+            overwrite=True,
+        )
+
+    assert gdal.alg.driver.parquet.create_metadata_file(
+        input=[
+            tmp_vsimem / "partitioned_hive/foo=bar/part.0.parquet",
+            tmp_vsimem / "partitioned_hive/foo=baz/part.1.parquet",
+        ],
+        output=tmp_vsimem / "partitioned_hive/_metadata",
+        overwrite=True,
+    )
+
+    assert ogr.Open(tmp_vsimem / "partitioned_hive/_metadata")
+
+    gdal.Unlink(tmp_vsimem / "partitioned_hive/_metadata")
+    assert gdal.VSIStatL(tmp_vsimem / "partitioned_hive/_metadata") is None
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    assert gdal.alg.driver.parquet.create_metadata_file(
+        input=[
+            tmp_vsimem / "partitioned_hive/foo=bar/part.0.parquet",
+            tmp_vsimem / "partitioned_hive/foo=baz/part.1.parquet",
+        ],
+        output=tmp_vsimem / "partitioned_hive/_metadata",
+        progress=my_progress,
+    )
+
+    assert tab_pct[0] == 1.0
+
+    assert ogr.Open(tmp_vsimem / "partitioned_hive/_metadata")
+
+    if _has_arrow_dataset():
+
+        ds = ogr.Open(tmp_vsimem / "partitioned_hive")
+
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == [str(tmp_vsimem / "partitioned_hive/_metadata")]
+
+        lyr = ds.GetLayer(0)
+        lyr.SetAttributeFilter("foo = 'baz'")
+        assert lyr.GetFeatureCount() == 3
+
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == [
+                str(tmp_vsimem / "partitioned_hive/foo=baz/part.1.parquet")
+            ]
+
+
+###############################################################################
+
+
+def test_ogr_parquet_create_metadata_file_alg_incompatible_schemas(tmp_vsimem):
+
+    with gdal.GetDriverByName("PARQUET").CreateVector(tmp_vsimem / "one.parquet") as ds:
+        lyr = ds.CreateLayer("test")
+        lyr.CreateField(ogr.FieldDefn("foo"))
+
+    with gdal.GetDriverByName("PARQUET").CreateVector(tmp_vsimem / "two.parquet") as ds:
+        lyr = ds.CreateLayer("test")
+        lyr.CreateField(ogr.FieldDefn("bar"))
+
+    with pytest.raises(
+        Exception, match="Parquet exception: AppendRowGroups requires equal schemas"
+    ):
+        gdal.alg.driver.parquet.create_metadata_file(
+            input=[tmp_vsimem / "one.parquet", tmp_vsimem / "two.parquet"],
+            output=tmp_vsimem / "_metadata",
+        )
