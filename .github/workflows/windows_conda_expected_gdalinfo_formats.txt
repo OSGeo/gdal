@@ -132,6 +132,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   STACTA -raster- (rovs): Spatio-Temporal Asset Catalog Tiled Assets (*.json)
   STACIT -raster- (rovs): Spatio-Temporal Asset Catalog Items
   GDALG -raster,vector- (rov): GDAL Streamed Algorithm driver (*.gdalg.json)
+  E57 -raster- (rovs): ASTM E57 3D file format (image part) (*.e57)
   NSIDCbin -raster- (rov): NSIDC Sea Ice Concentrations binary (.bin) (*.bin)
   GPKG -raster,vector- (rw+uvs): GeoPackage (*.gpkg, *.gpkg.zip)
   OpenFileGDB -raster,vector- (rw+uv): ESRI FileGeodatabase (using OpenFileGDB) (*.gdb)

@@ -1,0 +1,38 @@
+.. _raster.e57:
+
+================================================================================
+E57: ASTM E57 3D file format (image part)
+================================================================================
+
+.. versionadded:: 3.13
+
+.. shortname:: E57
+
+.. built_in_by_default:: but the JPEG or PNG drivers must be available.
+
+This is a read-only driver that reads 2D images potentially included in a
+ASTM E57 3D file.
+
+It does NOT read the point cloud part of such files. For that, you may use
+`PDAL's E57 reader <https://pdal.io/en/stable/stages/readers.e57.html>`__.
+
+Masks are combined with the JPEG/PNG image and reported as GDAL mask bands.
+
+If a single JPEG or PNG image is included in the file, it is directly reported.
+Otherwise if there are multiple images, opening the .e57 file will report several
+subdatasets, whose connection string is of the form ``E57:"{filename.e57}":{image_name}``.
+
+The XML descriptor contained in a E57 file can be accessed in the ``xml:E57``
+metadata domain.
+
+Checksums at end of E57 physical pages are not verified.
+
+Driver capabilities
+-------------------
+
+.. supports_virtualio::
+
+See Also
+--------
+
+- `ASTM Standard Specification for 3D Imaging Data Exchange, Version 1.0 <https://store.astm.org/e2807-11r19e01.html>`__
