@@ -6477,6 +6477,13 @@ void RegisterOGRMVT()
         "establish the layer schemas' default='1000'/>"
         "  <Option name='JSON_FIELD' type='boolean' description='For tilesets, "
         "whether to put all attributes as a serialized JSon dictionary'/>"
+        "  <Option name='ADD_TILE_FIELDS' type='boolean' description='For "
+        "tilesets, "
+        "whether to add fields \"tile_z\", \"tile_x\", \"tile_y\" to each "
+        "layer, "
+        "containing the Z/X/Y coordinates of the tile from which the feature "
+        "originates.' "
+        "default='NO'/>"
         "</OpenOptionList>");
 
     poDriver->pfnIdentify = OGRMVTDriverIdentify;

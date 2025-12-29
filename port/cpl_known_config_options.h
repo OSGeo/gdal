@@ -766,7 +766,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_LVBAG_MAX_OPENED", // from ogrlvbagdatasource.cpp
    "OGR_MONGODB_SPAT_INDEX_TYPE", // from ogrmongodbv3driver.cpp
    "OGR_MULTIPATCH_OMIT_Z", // from ogrpgeogeometry.cpp
-   "OGR_MVT_ADD_TILE_FIELDS", // from ogrmvtdataset.cpp
    "OGR_MVT_CLIP", // from ogrmvtdataset.cpp
    "OGR_MVT_ENFORE_EXTERNAL_RING_IS_CLOCKWISE", // from ogrmvtdataset.cpp
    "OGR_MVT_REMOVE_TEMP_FILE", // from ogrmvtdataset.cpp
