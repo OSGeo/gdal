@@ -3092,6 +3092,7 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
 #ifdef D_LOSSLESS_SUPPORTED
     sArgs.bIsLossless = JPEGDatasetIsJPEGLS(poOpenInfo);
 #endif
+    sArgs.papszOpenOptions = poOpenInfo->papszOpenOptions;
 
     auto poJPG_DS = JPGDataset::Open(&sArgs);
     auto poDS = std::unique_ptr<GDALDataset>(poJPG_DS);
@@ -3523,6 +3524,17 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
 
     // Initialize any PAM information.
     poDS->SetDescription(pszFilename);
+
+    if (const char *pszPhysicalFilename =
+            CSLFetchNameValue(psArgs->papszOpenOptions, "PHYSICAL_FILENAME"))
+    {
+        poDS->SetPhysicalFilename(pszPhysicalFilename);
+        if (const char *pszSubdatasetName =
+                CSLFetchNameValue(psArgs->papszOpenOptions, "SUBDATASET_NAME"))
+        {
+            poDS->SetSubdatasetName(pszSubdatasetName);
+        }
+    }
 
     if (nScaleFactor == 1 && bDoPAMInitialize)
     {

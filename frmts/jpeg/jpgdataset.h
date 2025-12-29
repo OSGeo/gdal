@@ -87,6 +87,7 @@ struct JPGDatasetOpenArgs
     bool bDoPAMInitialize = false;
     bool bUseInternalOverviews = false;
     bool bIsLossless = false;
+    CSLConstList papszOpenOptions = nullptr;
 };
 
 class JPGDatasetCommon;
