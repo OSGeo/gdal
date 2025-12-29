@@ -68,10 +68,20 @@ typedef struct
 #pragma warning(disable : 4611)
 #endif
 
+class JPGVSIFileMultiplexerHandler;
+
+struct JPGVSIFileMultiplexerCommon
+{
+    std::shared_ptr<VSIVirtualHandle> m_poUnderlyingHandle{};
+    JPGVSIFileMultiplexerHandler *m_poCurrentOwner = nullptr;
+    int m_nSubscribers = 0;
+};
+
 struct JPGDatasetOpenArgs
 {
     const char *pszFilename = nullptr;
-    VSILFILE *fpLin = nullptr;
+    std::shared_ptr<JPGVSIFileMultiplexerCommon> poCommon{};
+    VSIVirtualHandleUniquePtr fp{};
     CSLConstList papszSiblingFiles = nullptr;
     int nScaleFactor = 1;
     bool bDoPAMInitialize = false;
@@ -158,7 +168,8 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     GDALGeoTransform m_gt{};
     std::vector<gdal::GCP> m_aoGCPs{};
 
-    VSILFILE *m_fpImage{};
+    std::shared_ptr<JPGVSIFileMultiplexerCommon> m_poCommon{};
+    VSIVirtualHandleUniquePtr m_fpImage{};
     GUIntBig nSubfileOffset{};
 
     int nLoadedScanline{-1};
