@@ -84,6 +84,27 @@ Program-Specific Options
     Arguments to functions are passed within parentheses, like ``sum(k=1)``,
     ``min(propagateNoData=true)`` or ``interpolate_linear(t0=1,dt=1,t=10)``.
 
+    Built-in variables
+    ^^^^^^^^^^^^^^^^^^
+
+    The following built-in variables are available in expressions:
+
+    - ``_CENTER_X_``: X coordinate of the pixel center, expressed in the dataset CRS
+    - ``_CENTER_Y_``: Y coordinate of the pixel center, expressed in the dataset CRS
+
+    These variables are useful for calculations that depend on spatial position,
+    such as latitude-based corrections, solar angle approximations, or zonal masks.
+
+    Example:
+
+    ::
+
+        gdal raster calc -i A=input.tif \
+            --calc="sin(_CENTER_Y_ * 0.0174533)" \
+            -o output.tif
+
+    Note: To work with longitude/latitude values, the input dataset must be in a
+    geographic coordinate reference system (for example, EPSG:4326).
 
 .. option:: --dialect muparser|builtin
 
