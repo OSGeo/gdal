@@ -581,7 +581,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get install -y -V libarrow-compute${ARROW_SOVERSION}
 
 # Install libduckdb
-ARG DUCKDB_VERSION=v1.4.2
+ARG DUCKDB_VERSION=v1.4.3
 RUN if test "$(uname -p)" = "x86_64"; then \
     curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-amd64.zip \
     && unzip libduckdb-linux-amd64.zip libduckdb.so \
