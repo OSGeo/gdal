@@ -7340,12 +7340,13 @@ static void GWKAverageOrModeThread(void *pData)
     else if (poWK->eResample == GRA_Percentile)
     {
         const char* pszPercentile =
-            CPLGetConfigOption("GDAL_WARP_PERCENTILE", nullptr);
+            CSLFetchNameValue(poWK->papszWarpOptions, "PERCENTILE");
+
         if (!pszPercentile)
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                     "Percentile resampling selected but "
-                    "GDAL_WARP_PERCENTILE is not set");
+                    "PERCENTILE warping option is not set");
             return;
         }
 
@@ -7353,7 +7354,7 @@ static void GWKAverageOrModeThread(void *pData)
         if (dfPercentile <= 0.0 || dfPercentile >= 100.0)
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
-                    "Invalid GDAL_WARP_PERCENTILE value: %s",
+                    "Invalid PERCENTILE value: %s",
                     pszPercentile);
             return;
         }
