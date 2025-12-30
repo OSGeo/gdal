@@ -1649,7 +1649,7 @@ enum OrganizePolygonMethod
 OGRGeometry *OGRGeometryFactory::organizePolygons(OGRGeometry **papoPolygons,
                                                   int nPolygonCount,
                                                   int *pbIsValidGeometry,
-                                                  const char **papszOptions)
+                                                  CSLConstList papszOptions)
 {
     if (nPolygonCount == 0)
     {

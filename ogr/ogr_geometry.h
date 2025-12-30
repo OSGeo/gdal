@@ -4274,7 +4274,7 @@ class CPL_DLL OGRGeometryFactory
     static OGRGeometry *organizePolygons(OGRGeometry **papoPolygons,
                                          int nPolygonCount,
                                          int *pbResultValidGeometry,
-                                         const char **papszOptions = nullptr);
+                                         CSLConstList papszOptions = nullptr);
     static bool haveGEOS();
 
     /** Opaque class used as argument to transformWithOptions() */
