@@ -419,12 +419,12 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
             }
 
             int isValidGeometry = FALSE;
-            const char *papszOptions[] = {
+            const char *const apszOptions[] = {
                 bUseSlowMethod ? "METHOD=DEFAULT" : "METHOD=ONLY_CCW", nullptr};
             OGRGeometry **tabGeom =
                 reinterpret_cast<OGRGeometry **>(tabPolygons);
             poOGR = OGRGeometryFactory::organizePolygons(
-                tabGeom, psShape->nParts, &isValidGeometry, papszOptions);
+                tabGeom, psShape->nParts, &isValidGeometry, apszOptions);
 
             if (!isValidGeometry)
             {

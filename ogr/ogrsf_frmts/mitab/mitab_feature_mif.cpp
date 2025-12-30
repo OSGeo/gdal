@@ -1083,10 +1083,10 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     else if (numLineSections > 1)
     {
         int isValidGeometry = FALSE;
-        const char *papszOptions[] = {"METHOD=DEFAULT", nullptr};
+        const char *const apszOptions[] = {"METHOD=DEFAULT", nullptr};
         poGeometry.reset(OGRGeometryFactory::organizePolygons(
             reinterpret_cast<OGRGeometry **>(tabPolygons), numLineSections,
-            &isValidGeometry, papszOptions));
+            &isValidGeometry, apszOptions));
 
         if (!isValidGeometry)
         {

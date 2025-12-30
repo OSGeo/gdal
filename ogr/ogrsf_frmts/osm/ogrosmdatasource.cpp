@@ -2373,7 +2373,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(const OSMRelation *psRelation,
     if (nPolys > 0)
     {
         int bIsValidGeometry = FALSE;
-        const char *apszOptions[2] = {"METHOD=DEFAULT", nullptr};
+        const char *const apszOptions[2] = {"METHOD=DEFAULT", nullptr};
         auto poGeom =
             std::unique_ptr<OGRGeometry>(OGRGeometryFactory::organizePolygons(
                 apoPolygons.data(), nPolys, &bIsValidGeometry, apszOptions));

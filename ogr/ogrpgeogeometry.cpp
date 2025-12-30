@@ -2743,11 +2743,11 @@ OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
                     if (tabPolygons != nullptr)
                     {
                         int isValidGeometry = FALSE;
-                        const char *papszOptions[] = {"METHOD=ONLY_CCW",
-                                                      nullptr};
+                        const char *const apszOptions[] = {"METHOD=ONLY_CCW",
+                                                           nullptr};
                         poOGR = OGRGeometryFactory::organizePolygons(
                             reinterpret_cast<OGRGeometry **>(tabPolygons),
-                            nParts, &isValidGeometry, papszOptions);
+                            nParts, &isValidGeometry, apszOptions);
 
                         if (!isValidGeometry)
                         {
@@ -2820,14 +2820,14 @@ OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
                         int isValidGeometry = FALSE;
                         // The outer ring is supposed to be clockwise oriented
                         // If it is not, then use the default/slow method.
-                        const char *papszOptions[] = {
+                        const char *const apszOptions[] = {
                             !(tabPolygons[0]->getExteriorRing()->isClockwise())
                                 ? "METHOD=DEFAULT"
                                 : "METHOD=ONLY_CCW",
                             nullptr};
                         poOGR = OGRGeometryFactory::organizePolygons(
                             reinterpret_cast<OGRGeometry **>(tabPolygons),
-                            nParts, &isValidGeometry, papszOptions);
+                            nParts, &isValidGeometry, apszOptions);
 
                         if (!isValidGeometry)
                         {
