@@ -7337,14 +7337,38 @@ static void GWKAverageOrModeThread(void *pData)
     {
         quant = 0.75f;
     }
+    else if (poWK->eResample == GRA_Percentile)
+    {
+        const char* pszPercentile =
+            CPLGetConfigOption("GDAL_WARP_PERCENTILE", nullptr);
+        if (!pszPercentile)
+        {
+            CPLError(CE_Fatal, CPLE_AppDefined,
+                    "Percentile resampling selected but "
+                    "GDAL_WARP_PERCENTILE is not set");
+            return;
+        }
+
+        const double dfPercentile = CPLAtof(pszPercentile);
+        if (dfPercentile <= 0.0 || dfPercentile >= 100.0)
+        {
+            CPLError(CE_Fatal, CPLE_AppDefined,
+                    "Invalid GDAL_WARP_PERCENTILE value: %s",
+                    pszPercentile);
+            return;
+        }
+
+        quant = static_cast<float>(dfPercentile / 100.0);
+    }
     else if (poWK->eResample != GRA_Average && poWK->eResample != GRA_RMS &&
-             poWK->eResample != GRA_Min && poWK->eResample != GRA_Max)
+            poWK->eResample != GRA_Min && poWK->eResample != GRA_Max)
     {
         // Other resample algorithms not permitted here.
         CPLError(CE_Fatal, CPLE_AppDefined,
-                 "GDALWarpKernel():GWKAverageOrModeThread() ERROR, "
-                 "illegal resample");
+                "GDALWarpKernel():GWKAverageOrModeThread() ERROR, "
+                "illegal resample");
     }
+
 
     CPLDebug("GDAL", "GDALWarpKernel():GWKAverageOrModeThread()");
 
