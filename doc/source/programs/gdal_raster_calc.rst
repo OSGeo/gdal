@@ -91,18 +91,13 @@ Program-Specific Options
 
     - ``_CENTER_X_``: X coordinate of the pixel center, expressed in the dataset CRS
     - ``_CENTER_Y_``: Y coordinate of the pixel center, expressed in the dataset CRS
+    - ``NODATA``: Boolean value indicating whether the current pixel is NoData
 
     These variables are useful for calculations that depend on spatial position,
     such as latitude-based corrections, solar angle approximations, or zonal masks.
 
-    Example:
-
-    ::
-
-        gdal raster calc -i A=input.tif \
-            --calc="sin(_CENTER_Y_ * 0.0174533)" \
-            -o output.tif
-
+    See :example:`raster-calc-center-y` for a usage example.
+ 
     Note: To work with longitude/latitude values, the input dataset must be in a
     geographic coordinate reference system (for example, EPSG:4326).
 
@@ -228,3 +223,15 @@ Examples
    .. code-block:: bash
 
        gdal raster calc -i "SLOPE=[ read dem.tif ! slope ]" -i "ASPECT=[ read dem.tif ! aspect ]" -o result.tif --calc "(SLOPE >= 2) ? ASPECT : -9999" --nodata -9999
+
+
+.. example::
+   :title: Latitude-based calculation using CENTER_Y
+   :id: raster-calc-center-y
+
+   .. code-block:: bash
+
+       gdal raster calc -i A=input.tif \
+           --calc="sin(_CENTER_Y_ * 0.0174533)" \
+           -o output.tif
+
