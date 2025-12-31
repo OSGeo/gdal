@@ -24,51 +24,41 @@ Description
 
 Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline`.
 
-The following options are available:
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-Standard options
-++++++++++++++++
+.. versionadded:: 3.12
 
+.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
 
-.. include:: gdal_options/of_vector.rst
-
-.. include:: gdal_options/co.rst
-
-.. include:: options/lco.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. option:: -b, --band <BAND>
-
-    Picks a particular band to get the DEM from. Defaults to band 1.
-
-.. option:: --nln, --output-layer <OUTPUT-LAYER>
-
-    Provides a name for the output vector layer. Defaults to "contour".
-
-.. option:: --elevation-name <ELEVATION-NAME>
-
-    Provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached. Ignored in polygonal contouring (-p) mode.
-
-.. option:: --min-name <MIN-NAME>
-
-    Provides a name for the attribute in which to put the minimum elevation. If not provided no minimum elevation attribute is attached. Ignored in polygonal contouring (-p) mode.
-
-.. option:: --max-name <MAX-NAME>
-
-    Provides a name for the attribute in which to put the maximum elevation. If not provided no maximum elevation attribute is attached. Ignored in polygonal contouring (-p) mode.
+Program-Specific Options
+------------------------
 
 .. option:: --3d
 
     Forces the production of 3D vectors instead of 2D. Includes elevation at every vertex.
 
-.. option:: --src-nodata <SRCNODATA>
+.. option:: -b, --band <BAND>
 
-    Input pixel value to treat as 'nodata'.
+    Picks a particular band to get the DEM from. Defaults to band 1.
+
+.. option:: --elevation-name <ELEVATION-NAME>
+
+    Provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached. Ignored in polygonal contouring (-p) mode.
+
+.. option:: -e, --exp-base <EXP-BASE>
+
+    Generate levels on an exponential scale: base ^ k, for k an integer. Mutually exclusive with :option:`--interval`, :option:`--levels`.
+
+.. option:: --group-transactions <GROUP-TRANSACTIONS>
+
+    Group n features per transaction (default 100 000).
 
 .. option:: --interval <INTERVAL>
 
     Elevation interval between contours. Mutually exclusive with :option:`--levels`, :option:`--exp-base`.
+    The first contour will be generated at the first multiple of ``INTERVAL`` which is greater than the raster minimum value.
+
 
 .. option:: --levels <LEVELS>
 
@@ -76,36 +66,48 @@ Standard options
     When `--polygonize` is used, the specified values are used as bounds of the generated polygons.
     Mutually exclusive with :option:`--interval`, :option:`--exp-base`.
 
-.. option:: -e, --exp-base <EXP-BASE>
+.. option:: --max-name <MAX-NAME>
 
-    Generate levels on an exponential scale: base ^ k, for k an integer. Mutually exclusive with :option:`--interval`, :option:`--levels`.
+    Provides a name for the attribute in which to put the maximum elevation. If not provided no maximum elevation attribute is attached. Ignored in polygonal contouring (-p) mode.
+
+.. option:: --min-name <MIN-NAME>
+
+    Provides a name for the attribute in which to put the minimum elevation. If not provided no minimum elevation attribute is attached. Ignored in polygonal contouring (-p) mode.
 
 .. option:: --off, --offset <OFFSET>
 
     Offset from zero relative to which to interpret intervals.
 
+.. option:: --nln, --output-layer <OUTPUT-LAYER>
+
+    Provides a name for the output vector layer. Defaults to "contour".
+
 .. option:: -p, --polygonize
 
     Create polygons instead of lines.
 
-.. option:: --group-transactions <GROUP-TRANSACTIONS>
+.. option:: --src-nodata <SRCNODATA>
 
-    Group n features per transaction (default 100 000).
+    Input pixel value to treat as 'nodata'.
 
-Advanced options
-++++++++++++++++
+Standard Options
+----------------
 
-.. include:: gdal_options/oo.rst
+.. collapse:: Details
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/co.rst
 
+    .. include:: gdal_options/if.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/lco.rst
 
-.. versionadded:: 3.12
+    .. include:: gdal_options/oo.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

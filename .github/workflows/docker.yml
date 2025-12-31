@@ -39,9 +39,9 @@ jobs:
         run: |
           echo "PUSH_PACKAGES=true" >> $GITHUB_ENV
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       - name: Set up Docker
-        uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4.4.0
+        uses: docker/setup-docker-action@e61617a16c407a86262fb923c35a616ddbe070b3 # v4.6.0
         with:
           daemon-config: |
             {
@@ -127,9 +127,9 @@ jobs:
       PUSH_PACKAGES: false
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       - name: Set up Docker
-        uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4.4.0
+        uses: docker/setup-docker-action@e61617a16c407a86262fb923c35a616ddbe070b3 # v4.6.0
         with:
           daemon-config: |
             {

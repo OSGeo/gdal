@@ -2577,13 +2577,6 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             }
             else if (onlyInputSpecifiedInUpdateAndOutputNotRequired)
             {
-                if (updateArg->GetMutualExclusionGroup().empty() ||
-                    outputArg->GetMutualExclusionGroup().empty() ||
-                    updateArg->GetMutualExclusionGroup() !=
-                        outputArg->GetMutualExclusionGroup())
-                {
-                    assignToOutputArg = true;
-                }
                 flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
             }
         }
@@ -2706,10 +2699,6 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                 {
                     outputArg->Get<GDALArgDatasetValue>().Set(poDS);
                 }
-                else if (onlyInputSpecifiedInUpdateAndOutputNotRequired)
-                {
-                    outputArg->Get<GDALArgDatasetValue>().Set(poDS);
-                }
             }
             val.SetDatasetOpenedByAlgorithm();
             val.Set(poDS);
@@ -2718,17 +2707,6 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         else
         {
             ret = false;
-        }
-    }
-    else if (onlyInputSpecifiedInUpdateAndOutputNotRequired &&
-             val.GetDatasetRef())
-    {
-        if (updateArg->GetMutualExclusionGroup().empty() ||
-            outputArg->GetMutualExclusionGroup().empty() ||
-            updateArg->GetMutualExclusionGroup() !=
-                outputArg->GetMutualExclusionGroup())
-        {
-            outputArg->Get<GDALArgDatasetValue>().Set(val.GetDatasetRef());
         }
     }
 
@@ -4122,6 +4100,16 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
         const auto Validate =
             [this, &arg, bStreamAllowed, bGDALGAllowed](const std::string &val)
         {
+            if (const auto extraFormats =
+                    arg.GetMetadataItem(GAAMDI_EXTRA_FORMATS))
+            {
+                for (const auto &extraFormat : *extraFormats)
+                {
+                    if (EQUAL(val.c_str(), extraFormat.c_str()))
+                        return true;
+                }
+            }
+
             if (bStreamAllowed && EQUAL(val.c_str(), "stream"))
                 return true;
 
@@ -4287,6 +4275,8 @@ std::vector<std::string> GDALAlgorithm::FormatAutoCompleteFunction(
     const auto allowedFormats = arg.GetMetadataItem(GAAMDI_ALLOWED_FORMATS);
     const auto excludedFormats = arg.GetMetadataItem(GAAMDI_EXCLUDED_FORMATS);
     const auto caps = arg.GetMetadataItem(GAAMDI_REQUIRED_CAPABILITIES);
+    if (auto extraFormats = arg.GetMetadataItem(GAAMDI_EXTRA_FORMATS))
+        res = std::move(*extraFormats);
     for (int i = 0; i < poDM->GetDriverCount(); ++i)
     {
         auto poDriver = poDM->GetDriver(i);
@@ -4414,9 +4404,10 @@ GDALAlgorithm::AddOutputDataTypeArg(std::string *pValue,
             .AddAlias("ot")
             .AddAlias("datatype")
             .AddMetadataItem("type", {"GDALDataType"})
-            .SetChoices("Byte", "Int8", "UInt16", "Int16", "UInt32", "Int32",
+            .SetChoices("UInt8", "Int8", "UInt16", "Int16", "UInt32", "Int32",
                         "UInt64", "Int64", "CInt16", "CInt32", "Float16",
-                        "Float32", "Float64", "CFloat32", "CFloat64");
+                        "Float32", "Float64", "CFloat32", "CFloat64")
+            .SetHiddenChoices("Byte");
     return arg;
 }
 
@@ -4704,8 +4695,7 @@ GDALAlgorithm::AddGeometryTypeArg(std::string *pValue, const char *helpMessage)
 
 /* static */
 void GDALAlgorithm::SetAutoCompleteFunctionForLayerName(
-    GDALInConstructionAlgorithmArg &layerArg,
-    GDALInConstructionAlgorithmArg &datasetArg)
+    GDALInConstructionAlgorithmArg &layerArg, GDALAlgorithmArg &datasetArg)
 {
     CPLAssert(datasetArg.GetType() == GAAT_DATASET ||
               datasetArg.GetType() == GAAT_DATASET_LIST);

@@ -118,7 +118,7 @@ def check_tms(sub):
     ]
     assert gt == pytest.approx(expected_gt, abs=0.00001), f"Wrong geotransform. {gt}"
     assert ds.GetRasterBand(1).GetOverviewCount() > 0, "No overviews!"
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte, "Wrong band data type."
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8, "Wrong band data type."
 
 
 ###############################################################################

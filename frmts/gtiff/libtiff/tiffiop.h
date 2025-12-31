@@ -143,13 +143,18 @@ struct tiff
     0x800000U /* read buffer (tif_rawdata) points into mmap() memory */
 #define TIFF_DEFERSTRILELOAD                                                   \
     0x1000000U /* defer strip/tile offset/bytecount array loading. */
-#define TIFF_LAZYSTRILELOAD                                                    \
-    0x2000000U /* lazy/ondemand loading of strip/tile offset/bytecount values. \
-                  Only used if TIFF_DEFERSTRILELOAD is set and in read-only    \
-                  mode */
+#define TIFF_LAZYSTRILELOAD_DONE                                               \
+    0x2000000U /* set when lazy/ondemand loading of strip/tile                 \
+                  offset/bytecount values has been done. Only used if          \
+                  TIFF_DEFERSTRILELOAD is set and in read-only mode */
 #define TIFF_CHOPPEDUPARRAYS                                                   \
     0x4000000U /* set when allocChoppedUpStripArrays() has modified strip      \
                   array */
+#define TIFF_LAZYSTRILELOAD_ASKED                                              \
+    0x8000000U /* set when lazy/ondemand loading of strip/tile                 \
+                  offset/bytecount values has been requested on opening ('O'   \
+                  flag) */
+
     uint64_t tif_diroff;     /* file offset of current directory */
     uint64_t tif_nextdiroff; /* file offset of following directory */
     uint64_t tif_lastdiroff; /* file offset of last directory written so far */

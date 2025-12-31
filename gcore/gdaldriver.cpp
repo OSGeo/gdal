@@ -2378,14 +2378,23 @@ int GDALValidateOptions(const char *pszOptionList,
                 {
                     break;
                 }
-                const char *pszAlias = CPLGetXMLValue(
-                    psChildNode, "alias",
-                    CPLGetXMLValue(psChildNode, "deprecated_alias", ""));
-                if (EQUAL(pszAlias, pszKey))
+                const char *pszAlias =
+                    CPLGetXMLValue(psChildNode, "alias", nullptr);
+                const char *pszDeprecatedAlias =
+                    pszAlias ? nullptr
+                             : CPLGetXMLValue(psChildNode, "deprecated_alias",
+                                              nullptr);
+                if (!pszAlias && pszDeprecatedAlias)
+                    pszAlias = pszDeprecatedAlias;
+                if (pszAlias && EQUAL(pszAlias, pszKey))
                 {
-                    CPLDebug("GDAL",
-                             "Using deprecated alias '%s'. New name is '%s'",
-                             pszAlias, pszOptionName);
+                    if (pszDeprecatedAlias)
+                    {
+                        CPLDebug(
+                            "GDAL",
+                            "Using deprecated alias '%s'. New name is '%s'",
+                            pszAlias, pszOptionName);
+                    }
                     break;
                 }
             }

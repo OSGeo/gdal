@@ -309,7 +309,7 @@ def test_sentinel2_l1c_4():
     band = ds.GetRasterBand(1)
     assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    assert band.DataType == gdal.GDT_Byte
+    assert band.DataType == gdal.GDT_UInt8
 
 
 ###############################################################################
@@ -2648,7 +2648,7 @@ def test_sentinel2_l1c_safe_compact_3():
     band = ds.GetRasterBand(1)
     assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    assert band.DataType == gdal.GDT_Byte
+    assert band.DataType == gdal.GDT_UInt8
 
 
 ###############################################################################

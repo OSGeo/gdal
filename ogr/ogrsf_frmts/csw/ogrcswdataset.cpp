@@ -565,6 +565,8 @@ GDALDataset *OGRCSWLayer::FetchGetRecords()
         OGRLayer *poLyr = l_poBaseDS->CreateLayer("records");
         OGRFieldDefn oField("raw_xml", OFTString);
         CPL_IGNORE_RET_VAL(poLyr->CreateField(&oField));
+        std::unique_ptr<OGRGML_SRSCache, decltype(&OGRGML_SRSCache_Destroy)>
+            srsCache{OGRGML_SRSCache_Create(), OGRGML_SRSCache_Destroy};
         for (CPLXMLNode *psIter = psSearchResults->psChild; psIter;
              psIter = psIter->psNext)
         {
@@ -629,8 +631,9 @@ GDALDataset *OGRCSWLayer::FetchGetRecords()
                     CPLFree(psBBox->pszValue);
                     psBBox->pszValue = CPLStrdup("gml:Envelope");
                     CPLString osSRS = CPLGetXMLValue(psBBox, "crs", "");
-                    OGRGeometry *poGeom = GML2OGRGeometry_XMLNode(
-                        psBBox, FALSE, 0, 0, false, true, false);
+                    OGRGeometry *poGeom =
+                        GML2OGRGeometry_XMLNode(psBBox, FALSE, srsCache.get(),
+                                                0, 0, false, true, false);
                     if (poGeom)
                     {
                         bool bLatLongOrder = true;

@@ -427,3 +427,24 @@ def test_polygonize_8():
         wkt
         == "POLYGON ((1 4,1 3,0 3,0 1,1 1,1 0,3 0,3 1,4 1,4 3,3 3,3 4,1 4),(1 3,3 3,3 1,1 1,1 3))"
     )
+
+
+###############################################################################
+# Test 64-bit float raster
+
+
+def test_polygonize_64bit_float():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 3, 1, gdal.GDT_Float64)
+    src_ds.WriteRaster(1, 1, 1, 1, struct.pack("d", 1.234567890123))
+
+    mem_layer = src_ds.CreateLayer("res", None, ogr.wkbPolygon)
+    fd = ogr.FieldDefn("DN", ogr.OFTReal)
+    mem_layer.CreateField(fd)
+
+    # run the algorithm.
+    result = gdal.FPolygonize(src_ds.GetRasterBand(1), None, mem_layer, 0, [])
+    assert result == 0, "Polygonize failed"
+
+    feature = mem_layer.GetNextFeature()
+    assert feature.GetField("DN") == 1.234567890123

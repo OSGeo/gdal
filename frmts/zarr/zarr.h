@@ -1378,17 +1378,13 @@ class ZarrV3CodecBytes final : public ZarrV3Codec
         return m_bLittle;
     }
 
-#if CPL_IS_LSB
     bool IsNoOp() const override
     {
-        return m_oInputArrayMetadata.oElt.nativeSize == 1 || m_bLittle;
+        if constexpr (CPL_IS_LSB)
+            return m_oInputArrayMetadata.oElt.nativeSize == 1 || m_bLittle;
+        else
+            return m_oInputArrayMetadata.oElt.nativeSize == 1 || !m_bLittle;
     }
-#else
-    bool IsNoOp() const override
-    {
-        return m_oInputArrayMetadata.oElt.nativeSize == 1 || !m_bLittle;
-    }
-#endif
 
     std::unique_ptr<ZarrV3Codec> Clone() const override;
 

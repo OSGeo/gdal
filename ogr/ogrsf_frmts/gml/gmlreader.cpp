@@ -1295,7 +1295,8 @@ bool GMLReader::PrescanForSchema(bool bGetExtents, bool bOnlyDetectSRS)
 
     m_nHasSequentialLayers = TRUE;
 
-    void *hCacheSRS = GML_BuildOGRGeometryFromList_CreateCache();
+    std::unique_ptr<OGRGML_SRSCache, decltype(&OGRGML_SRSCache_Destroy)>
+        poSRSCache{OGRGML_SRSCache_Create(), OGRGML_SRSCache_Destroy};
 
     std::string osWork;
 
@@ -1383,7 +1384,7 @@ bool GMLReader::PrescanForSchema(bool bGetExtents, bool bOnlyDetectSRS)
                 OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
                     myGeometryList, true, m_bInvertAxisOrderIfLatLong, nullptr,
                     m_bConsiderEPSGAsURN, m_eSwapCoordinates,
-                    m_bGetSecondaryGeometryOption, hCacheSRS,
+                    m_bGetSecondaryGeometryOption, poSRSCache.get(),
                     m_bFaceHoleNegative);
                 if (poGeometry == nullptr)
                     continue;
@@ -1456,8 +1457,6 @@ bool GMLReader::PrescanForSchema(bool bGetExtents, bool bOnlyDetectSRS)
 
         delete poFeature;
     }
-
-    GML_BuildOGRGeometryFromList_DestroyCache(hCacheSRS);
 
     if (bGetExtents && m_bCanUseGlobalSRSName && m_pszGlobalSRSName &&
         !bFoundPerFeatureSRSName && m_bInvertAxisOrderIfLatLong &&

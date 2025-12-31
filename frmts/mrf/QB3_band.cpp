@@ -28,7 +28,7 @@ CPLErr QB3_Band::Compress(buf_mgr &dst, buf_mgr &src)
 
     switch (img.dt)
     {
-        case (GDT_Byte):
+        case (GDT_UInt8):
             pQB3 = CREATE_QB3(QB3_U8);
             break;
         case (GDT_Int16):

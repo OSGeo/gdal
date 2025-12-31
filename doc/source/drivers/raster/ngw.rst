@@ -244,7 +244,7 @@ read-only metadata items *creation_date*, *resource_type* and
 Examples
 --------
 
-Read datasource contensts (1730 is resource group identifier):
+Read datasource contents (1730 is resource group identifier):
 
 ::
 

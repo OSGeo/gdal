@@ -871,26 +871,7 @@ def test_gdalalg_vector_pipeline_reproject_proj_string(tmp_vsimem):
         ), lyr.GetSpatialRef().ExportToWkt(["FORMAT=WKT2"])
 
 
-def test_gdalalg_vector_pipeline_geom_unknown_subalgorithm():
-
-    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
-
-    alg = get_pipeline_alg()
-
-    alg["input"] = src_ds
-    alg["output"] = ""
-    alg["output-format"] = "stream"
-
-    with pytest.raises(
-        Exception,
-        match="pipeline: 'unknown-subalgorithm' is a unknown sub-algorithm of 'geom'",
-    ):
-        alg.ParseCommandLineArguments(
-            ["read", "!", "geom", "unknown-subalgorithm", "!", "write"]
-        )
-
-
-def test_gdalalg_vector_pipeline_geom_set_type():
+def test_gdalalg_vector_pipeline_set_type():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
@@ -906,7 +887,7 @@ def test_gdalalg_vector_pipeline_geom_set_type():
     alg["output-format"] = "stream"
 
     assert alg.ParseCommandLineArguments(
-        ["read", "!", "geom", "set-type", "--geometry-type=POINTZ", "!", "write"]
+        ["read", "!", "set-type", "--geometry-type=POINTZ", "!", "write"]
     )
 
     assert alg.Run()

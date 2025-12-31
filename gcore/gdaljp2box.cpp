@@ -45,7 +45,6 @@ GDALJP2Box::~GDALJP2Box()
 {
     // Do not close fpVSIL. Ownership remains to the caller of GDALJP2Box
     // constructor
-    CPLFree(pabyData);
 }
 
 /************************************************************************/
@@ -326,12 +325,13 @@ void GDALJP2Box::SetType(const char *pszType)
 
 GByte *GDALJP2Box::GetWritableBoxData() const
 {
+    CPLAssert(static_cast<GUInt32>(nBoxLength) == 8 + abyData.size());
     GByte *pabyRet =
         static_cast<GByte *>(CPLMalloc(static_cast<GUInt32>(nBoxLength)));
     const GUInt32 nLBox = CPL_MSBWORD32(static_cast<GUInt32>(nBoxLength));
     memcpy(pabyRet, &nLBox, sizeof(GUInt32));
     memcpy(pabyRet + 4, szBoxType, 4);
-    memcpy(pabyRet + 8, pabyData, static_cast<GUInt32>(nBoxLength) - 8);
+    memcpy(pabyRet + 8, abyData.data(), abyData.size());
     return pabyRet;
 }
 
@@ -342,10 +342,7 @@ GByte *GDALJP2Box::GetWritableBoxData() const
 void GDALJP2Box::SetWritableData(int nLength, const GByte *pabyDataIn)
 
 {
-    CPLFree(pabyData);
-
-    pabyData = static_cast<GByte *>(CPLMalloc(nLength));
-    memcpy(pabyData, pabyDataIn, nLength);
+    abyData.assign(pabyDataIn, pabyDataIn + nLength);
 
     nBoxOffset = -9;  // Virtual offsets for data length computation.
     nDataOffset = -1;
@@ -360,16 +357,15 @@ void GDALJP2Box::SetWritableData(int nLength, const GByte *pabyDataIn)
 void GDALJP2Box::AppendWritableData(int nLength, const void *pabyDataIn)
 
 {
-    if (pabyData == nullptr)
+    if (abyData.empty())
     {
         nBoxOffset = -9;  // Virtual offsets for data length computation.
         nDataOffset = -1;
         nBoxLength = 8;
     }
 
-    pabyData = static_cast<GByte *>(
-        CPLRealloc(pabyData, static_cast<size_t>(GetDataLength() + nLength)));
-    memcpy(pabyData + GetDataLength(), pabyDataIn, nLength);
+    abyData.insert(abyData.end(), static_cast<const GByte *>(pabyDataIn),
+                   static_cast<const GByte *>(pabyDataIn) + nLength);
 
     nBoxLength += nLength;
 }
@@ -461,8 +457,8 @@ GDALJP2Box *GDALJP2Box::CreateSuperBox(const char *pszType, int nCount,
         memcpy(pabyNext, papoBoxes[iBox]->szBoxType, 4);
         pabyNext += 4;
 
-        memcpy(pabyNext, papoBoxes[iBox]->pabyData,
-               static_cast<int>(papoBoxes[iBox]->GetDataLength()));
+        memcpy(pabyNext, papoBoxes[iBox]->abyData.data(),
+               papoBoxes[iBox]->abyData.size());
         pabyNext += papoBoxes[iBox]->GetDataLength();
     }
 
@@ -488,7 +484,7 @@ GDALJP2Box *GDALJP2Box::CreateLblBox(const char *pszLabel)
 {
     GDALJP2Box *const poBox = new GDALJP2Box();
     poBox->SetType("lbl ");
-    poBox->SetWritableData(static_cast<int>(strlen(pszLabel) + 1),
+    poBox->SetWritableData(static_cast<int>(strlen(pszLabel)),
                            reinterpret_cast<const GByte *>(pszLabel));
 
     return poBox;
@@ -504,12 +500,12 @@ GDALJP2Box *GDALJP2Box::CreateLabelledXMLAssoc(const char *pszLabel,
 {
     GDALJP2Box oLabel;
     oLabel.SetType("lbl ");
-    oLabel.SetWritableData(static_cast<int>(strlen(pszLabel) + 1),
+    oLabel.SetWritableData(static_cast<int>(strlen(pszLabel)),
                            reinterpret_cast<const GByte *>(pszLabel));
 
     GDALJP2Box oXML;
     oXML.SetType("xml ");
-    oXML.SetWritableData(static_cast<int>(strlen(pszXML) + 1),
+    oXML.SetWritableData(static_cast<int>(strlen(pszXML)),
                          reinterpret_cast<const GByte *>(pszXML));
 
     GDALJP2Box *aoList[2] = {&oLabel, &oXML};
@@ -530,6 +526,8 @@ GDALJP2Box *GDALJP2Box::CreateJUMBFDescriptionBox(const GByte *pabyUUIDType,
 
     poBox->AppendWritableData(16, pabyUUIDType);
     poBox->AppendUInt8(3);  // requestable field
+    // +1 since NUL terminated byte required in the JUMBF spec
+    // cf other implementation at https://gitlab.com/wg1/jpeg-systems/reference-software/jumbf-reference-implementation-2/-/blame/main/dbench_jumbf/src/db_jumbf_desc_box.cpp?ref_type=heads#L169
     const size_t nLabelLen = strlen(pszLabel) + 1;
     poBox->AppendWritableData(static_cast<int>(nLabelLen), pszLabel);
 

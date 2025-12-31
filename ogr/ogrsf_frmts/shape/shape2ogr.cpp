@@ -27,6 +27,8 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_minixml.h"
+#include "cpl_vsi_virtual.h"
 #include "ogr_core.h"
 #include "ogr_feature.h"
 #include "ogr_geometry.h"
@@ -1089,7 +1091,7 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
 /************************************************************************/
 
 OGRFeatureDefn *SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP,
-                                      DBFHandle hDBF,
+                                      DBFHandle hDBF, VSILFILE *fpSHPXML,
                                       const char *pszSHPEncoding,
                                       int bAdjustType)
 
@@ -1099,6 +1101,102 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP,
 
     OGRFeatureDefn *const poDefn = new OGRFeatureDefn(pszName);
     poDefn->Reference();
+
+    // Parse .shp.xml side car if available, to get long field names and aliases
+    // but only if they are consistent with the number of DBF fields and their
+    // content.
+    std::vector<OGRFieldDefn> aFieldsFromSHPXML;
+    if (fpSHPXML)
+    {
+        fpSHPXML->Seek(0, SEEK_END);
+        const auto nSize = fpSHPXML->Tell();
+        if (nSize < 10 * 1024 * 1024)
+        {
+            fpSHPXML->Seek(0, SEEK_SET);
+            GByte *pabyOut = nullptr;
+            if (VSIIngestFile(fpSHPXML, nullptr, &pabyOut, nullptr, -1))
+            {
+                const char *pszXML = reinterpret_cast<char *>(pabyOut);
+                CPLXMLTreeCloser oTree(CPLParseXMLString(pszXML));
+                if (oTree)
+                {
+                    const CPLXMLNode *psFields =
+                        CPLGetXMLNode(oTree.get(), "=metadata.eainfo.detailed");
+                    int iField = 0;
+                    for (const CPLXMLNode *psIter = psFields ? psFields->psChild
+                                                             : nullptr;
+                         psIter; psIter = psIter->psNext)
+                    {
+                        if (psIter->eType != CXT_Element ||
+                            strcmp(psIter->pszValue, "attr") != 0)
+                            continue;
+                        const char *pszType =
+                            CPLGetXMLValue(psIter, "attrtype", "");
+                        if (strcmp(pszType, "OID") == 0 ||
+                            strcmp(pszType, "Geometry") == 0)
+                            continue;
+                        const char *pszLabel =
+                            CPLGetXMLValue(psIter, "attrlabl", "");
+                        if (iField == nFieldCount)
+                        {
+                            CPLDebug("Shape",
+                                     "More fields in .shp.xml than in .dbf");
+                            aFieldsFromSHPXML.clear();
+                            break;
+                        }
+
+                        char szFieldNameFromDBF[XBASE_FLDNAME_LEN_READ + 1] =
+                            {};
+                        int nWidth = 0;
+                        int nPrecision = 0;
+                        CPL_IGNORE_RET_VAL(
+                            DBFGetFieldInfo(hDBF, iField, szFieldNameFromDBF,
+                                            &nWidth, &nPrecision));
+                        std::string osFieldNameFromDBF(szFieldNameFromDBF);
+                        if (strlen(pszSHPEncoding) > 0)
+                        {
+                            char *pszUTF8Field =
+                                CPLRecode(szFieldNameFromDBF, pszSHPEncoding,
+                                          CPL_ENC_UTF8);
+                            osFieldNameFromDBF = pszUTF8Field;
+                            CPLFree(pszUTF8Field);
+                        }
+                        // Check that field names are consistent
+                        if ((strlen(pszLabel) < 10 &&
+                             pszLabel != osFieldNameFromDBF) ||
+                            (strlen(pszLabel) >= 10 &&
+                             osFieldNameFromDBF.size() >= 10 &&
+                             strncmp(pszLabel, osFieldNameFromDBF.c_str(), 5) !=
+                                 0))
+                        {
+                            CPLDebug("Shape",
+                                     "For field at index %d, mismatch between "
+                                     ".shp.xml name (%s) vs .dbf name (%s)",
+                                     iField, pszLabel, szFieldNameFromDBF);
+                            aFieldsFromSHPXML.clear();
+                            break;
+                        }
+
+                        OGRFieldDefn oField(pszLabel, OFTMaxType);
+                        const char *pszAlias =
+                            CPLGetXMLValue(psIter, "attalias", "");
+                        if (pszAlias[0] && strcmp(pszLabel, pszAlias) != 0)
+                            oField.SetAlternativeName(pszAlias);
+                        const char *pszWidth =
+                            CPLGetXMLValue(psIter, "attwidth", "");
+                        if (strcmp(pszType, "Integer") == 0 &&
+                            strcmp(pszWidth, "4") == 0)
+                            oField.SetType(OFTInteger);
+                        aFieldsFromSHPXML.push_back(std::move(oField));
+                        ++iField;
+                    }
+                    if (iField != nFieldCount)
+                        aFieldsFromSHPXML.clear();
+                }
+            }
+            CPLFree(pabyOut);
+        }
+    }
 
     for (int iField = 0; iField < nFieldCount; iField++)
     {
@@ -1110,7 +1208,11 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP,
             DBFGetFieldInfo(hDBF, iField, szFieldName, &nWidth, &nPrecision);
 
         OGRFieldDefn oField("", OFTInteger);
-        if (strlen(pszSHPEncoding) > 0)
+        if (!aFieldsFromSHPXML.empty())
+        {
+            oField = aFieldsFromSHPXML[iField];
+        }
+        else if (strlen(pszSHPEncoding) > 0)
         {
             char *const pszUTF8Field =
                 CPLRecode(szFieldName, pszSHPEncoding, CPL_ENC_UTF8);
@@ -1139,7 +1241,13 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP,
         {
             nAdjustableFields += (nPrecision == 0);
             if (nPrecision == 0 && nWidth < 19)
-                oField.SetType(OFTInteger64);
+            {
+                if (!aFieldsFromSHPXML.empty() &&
+                    aFieldsFromSHPXML[iField].GetType() == OFTInteger)
+                    oField.SetType(OFTInteger);
+                else
+                    oField.SetType(OFTInteger64);
+            }
             else
                 oField.SetType(OFTReal);
         }

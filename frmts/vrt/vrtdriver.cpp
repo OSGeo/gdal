@@ -280,7 +280,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     auto poVRTDS = VRTDataset::CreateVRTDataset(
         pszFilename, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), 0,
-        GDT_Byte, papszOptions);
+        GDT_UInt8, papszOptions);
     if (poVRTDS == nullptr)
         return nullptr;
 

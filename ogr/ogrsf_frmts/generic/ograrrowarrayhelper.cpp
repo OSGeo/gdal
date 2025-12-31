@@ -62,6 +62,17 @@ int OGRArrowArrayHelper::GetMaxFeaturesInBatch(
 /*                       OGRArrowArrayHelper()                          */
 /************************************************************************/
 
+OGRArrowArrayHelper::OGRArrowArrayHelper(struct ArrowArray *out_array,
+                                         int nMaxBatchSize)
+    : m_nMaxBatchSize(nMaxBatchSize), m_out_array(out_array)
+{
+    m_anArrowFieldMaxAlloc.resize(static_cast<size_t>(out_array->n_children));
+}
+
+/************************************************************************/
+/*                       OGRArrowArrayHelper()                          */
+/************************************************************************/
+
 OGRArrowArrayHelper::OGRArrowArrayHelper(
     GDALDataset *poDS, OGRFeatureDefn *poFeatureDefn,
     const CPLStringList &aosArrowArrayStreamOptions,

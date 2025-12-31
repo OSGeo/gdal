@@ -269,7 +269,7 @@ class TileDBRasterDataset final : public TileDBDataset
     CPLErr TryLoadXML(CSLConstList papszSiblingFiles = nullptr) override;
     CPLErr TrySaveXML() override;
     char **GetMetadata(const char *pszDomain) override;
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
     int CloseDependentDatasets() override;
     CPLErr FlushCache(bool bAtClosing) override;
 

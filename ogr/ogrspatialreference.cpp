@@ -225,8 +225,7 @@ static OSRAxisMappingStrategy GetDefaultAxisMappingStrategy()
 }
 
 OGRSpatialReference::Private::Private(OGRSpatialReference *poSelf)
-    : m_poSelf(poSelf),
-      m_poListener(std::shared_ptr<Listener>(new Listener(this)))
+    : m_poSelf(poSelf), m_poListener(std::make_shared<Listener>(this))
 {
     // Get the default value for m_axisMappingStrategy from the
     // OSR_DEFAULT_AXIS_MAPPING_STRATEGY configuration option, if set.
@@ -7314,7 +7313,7 @@ OGRErr OSRSetHOM2PNO(OGRSpatialReferenceH hSRS, double dfCenterLat,
  * @param dfCenterLong Longitude of the projection origin.
  * @param dfAzimuth Azimuth, measured clockwise from North, of the projection
  * centerline.
- * @param dfScale Scale factor on the initiali line
+ * @param dfScale Scale factor on the initial line
  * @param dfFalseEasting False easting.
  * @param dfFalseNorthing False northing.
  *

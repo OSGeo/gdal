@@ -40,7 +40,10 @@ class CPL_DLL OGRLayerDecorator : virtual public OGRLayer
     OGRErr SetNextByIndex(GIntBig nIndex) override;
     OGRFeature *GetFeature(GIntBig nFID) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                                 GIntBig *pnFID) override;
     OGRErr IUpsertFeature(OGRFeature *poFeature) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
     OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,

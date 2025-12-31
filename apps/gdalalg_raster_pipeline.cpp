@@ -19,6 +19,7 @@
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
 #include "gdalalg_raster_compare.h"
+#include "gdalalg_raster_create.h"
 #include "gdalalg_raster_edit.h"
 #include "gdalalg_raster_fill_nodata.h"
 #include "gdalalg_raster_hillshade.h"
@@ -45,6 +46,7 @@
 #include "gdalalg_raster_tpi.h"
 #include "gdalalg_raster_tri.h"
 #include "gdalalg_raster_unscale.h"
+#include "gdalalg_raster_update.h"
 #include "gdalalg_raster_viewshed.h"
 #include "gdalalg_tee.h"
 
@@ -169,6 +171,7 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
         addSuffixIfNeeded(GDALRasterReadAlgorithm::NAME));
 
     registry.Register<GDALRasterCalcAlgorithm>();
+    registry.Register<GDALRasterCreateAlgorithm>();
 
     registry.Register<GDALRasterNeighborsAlgorithm>();
 
@@ -222,6 +225,8 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALRasterTPIAlgorithm>();
     registry.Register<GDALRasterTRIAlgorithm>();
     registry.Register<GDALRasterUnscaleAlgorithm>();
+    registry.Register<GDALRasterUpdateAlgorithm>(
+        addSuffixIfNeeded(GDALRasterUpdateAlgorithm::NAME));
     registry.Register<GDALRasterViewshedAlgorithm>();
     registry.Register<GDALTeeRasterAlgorithm>(
         addSuffixIfNeeded(GDALTeeRasterAlgorithm::NAME));

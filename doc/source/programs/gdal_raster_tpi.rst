@@ -35,14 +35,14 @@ compute values at image edges or if a nodata value is found in the 3x3 window,
 by interpolating missing values, unless :option:`--no-edges` is specified, in
 which case a 1-pixel border around the image will be set with the nodata value.
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/co.rst
 
-.. include:: gdal_options/overwrite.rst
+Program-Specific Options
+------------------------
 
 .. option:: -b, --band <BAND>
 
@@ -53,10 +53,22 @@ Standard options
     Do not try to interpolate values at dataset edges or close to nodata values
 
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+Standard Options
+----------------
 
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+.. collapse:: Details
+
+    .. include:: gdal_options/append_raster.rst
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

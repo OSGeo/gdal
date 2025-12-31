@@ -10,18 +10,23 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 #include "gdalalg_dataset_identify.h"
 
 #include "cpl_string.h"
-
-//! @cond Doxygen_Suppress
+#include "gdal_dataset.h"
+#include "gdal_driver.h"
+#include "gdal_drivermanager.h"
+#include "gdal_rasterband.h"
+#include "ogrsf_frmts.h"
 
 #ifndef _
 #define _(x) (x)
 #endif
 
 /************************************************************************/
-/*                       GDALDatasetIdentifyAlgorithm()                 */
+/*                     GDALDatasetIdentifyAlgorithm()                   */
 /************************************************************************/
 
 GDALDatasetIdentifyAlgorithm::GDALDatasetIdentifyAlgorithm()
@@ -30,11 +35,25 @@ GDALDatasetIdentifyAlgorithm::GDALDatasetIdentifyAlgorithm()
     AddProgressArg();
 
     auto &arg = AddArg("filename", 0, _("File or directory name"), &m_filename)
+                    .AddAlias(GDAL_ARG_NAME_INPUT)
                     .SetPositional()
                     .SetRequired();
     SetAutoCompleteFunctionForFilename(arg, 0);
 
-    AddOutputFormatArg(&m_format).SetChoices("json", "text");
+    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR,
+                        /* positionalAndRequired = */ false)
+        .SetDatasetInputFlags(GADV_NAME);
+
+    AddOutputFormatArg(&m_format)
+        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
+                         {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE})
+        .AddMetadataItem(GAAMDI_EXTRA_FORMATS, {"json", "text"});
+
+    AddCreationOptionsArg(&m_creationOptions);
+    AddLayerCreationOptionsArg(&m_layerCreationOptions);
+    AddArg(GDAL_ARG_NAME_OUTPUT_LAYER, 'l', _("Output layer name"),
+           &m_outputLayerName);
+    AddOverwriteArg(&m_overwrite);
 
     AddArg("recursive", 'r', _("Recursively scan files/folders for datasets"),
            &m_recursive);
@@ -43,6 +62,11 @@ GDALDatasetIdentifyAlgorithm::GDALDatasetIdentifyAlgorithm()
            _("Recursively scan folders for datasets, forcing "
              "recursion in folders recognized as valid formats"),
            &m_forceRecursive);
+
+    AddArg("detailed", 0,
+           _("Most detailed output. Reports the presence of georeferencing, "
+             "if a GeoTIFF file is cloud optimized, etc."),
+           &m_detailed);
 
     AddArg("report-failures", 0,
            _("Report failures if file type is unidentified"),
@@ -53,12 +77,20 @@ GDALDatasetIdentifyAlgorithm::GDALDatasetIdentifyAlgorithm()
 }
 
 /************************************************************************/
+/*                    ~GDALDatasetIdentifyAlgorithm()                   */
+/************************************************************************/
+
+GDALDatasetIdentifyAlgorithm::~GDALDatasetIdentifyAlgorithm() = default;
+
+/************************************************************************/
 /*                GDALDatasetIdentifyAlgorithm::Print()                 */
 /************************************************************************/
 
 void GDALDatasetIdentifyAlgorithm::Print(const char *str)
 {
-    if (m_stdout)
+    if (m_fpOut)
+        m_fpOut->Write(str, 1, strlen(str));
+    else if (m_stdout)
         fwrite(str, 1, strlen(str), stdout);
     else
         m_output += str;
@@ -96,7 +128,73 @@ bool GDALDatasetIdentifyAlgorithm::Process(const char *pszTarget,
         hDriver = GDALIdentifyDriver(pszTarget, papszSiblingList);
     }
 
-    if (m_format == "json")
+    const char *pszDriverName = hDriver ? GDALGetDriverShortName(hDriver) : "";
+
+    CPLStringList aosFileList;
+    std::string osLayout;
+    bool bHasCRS = false;
+    bool bHasGeoTransform = false;
+    bool bHasOverview = false;
+    if (hDriver && m_detailed)
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        const char *const apszDriver[] = {pszDriverName, nullptr};
+        auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+            pszTarget, 0, apszDriver, nullptr, papszSiblingList));
+        if (poDS)
+        {
+            if (EQUAL(pszDriverName, "GTiff"))
+            {
+                if (const char *pszLayout =
+                        poDS->GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE"))
+                {
+                    osLayout = pszLayout;
+                }
+            }
+
+            aosFileList.Assign(poDS->GetFileList(),
+                               /* bTakeOwnership = */ true);
+            bHasCRS = poDS->GetSpatialRef() != nullptr;
+            GDALGeoTransform gt;
+            bHasGeoTransform = poDS->GetGeoTransform(gt) == CE_None;
+            bHasOverview = (poDS->GetRasterCount() &&
+                            poDS->GetRasterBand(1)->GetOverviewCount() > 0);
+        }
+    }
+
+    if (m_poLayer)
+    {
+        OGRFeature oFeature(m_poLayer->GetLayerDefn());
+        oFeature.SetField("filename", pszTarget);
+        if (hDriver)
+        {
+            oFeature.SetField("driver", pszDriverName);
+
+            if (m_detailed)
+            {
+                if (!osLayout.empty())
+                    oFeature.SetField("layout", osLayout.c_str());
+
+                if (!aosFileList.empty())
+                {
+                    oFeature.SetField("file_list", aosFileList.List());
+                }
+
+                oFeature.SetField("has_crs", bHasCRS);
+                oFeature.SetField("has_geotransform", bHasGeoTransform);
+                oFeature.SetField("has_overview", bHasOverview);
+            }
+
+            if (m_poLayer->CreateFeature(&oFeature) != OGRERR_NONE)
+                return false;
+        }
+        else if (m_reportFailures)
+        {
+            if (m_poLayer->CreateFeature(&oFeature) != OGRERR_NONE)
+                return false;
+        }
+    }
+    else if (m_format == "json")
     {
         if (hDriver)
         {
@@ -105,6 +203,43 @@ bool GDALDatasetIdentifyAlgorithm::Process(const char *pszTarget,
             m_oWriter.Add(pszTarget);
             m_oWriter.AddObjKey("driver");
             m_oWriter.Add(GDALGetDriverShortName(hDriver));
+            if (m_detailed)
+            {
+                if (!osLayout.empty())
+                {
+                    m_oWriter.AddObjKey("layout");
+                    m_oWriter.Add(osLayout);
+                }
+
+                if (!aosFileList.empty())
+                {
+                    m_oWriter.AddObjKey("file_list");
+                    m_oWriter.StartArray();
+                    for (const char *pszFilename : aosFileList)
+                    {
+                        m_oWriter.Add(pszFilename);
+                    }
+                    m_oWriter.EndArray();
+                }
+
+                if (bHasCRS)
+                {
+                    m_oWriter.AddObjKey("has_crs");
+                    m_oWriter.Add(true);
+                }
+
+                if (bHasGeoTransform)
+                {
+                    m_oWriter.AddObjKey("has_geotransform");
+                    m_oWriter.Add(true);
+                }
+
+                if (bHasOverview)
+                {
+                    m_oWriter.AddObjKey("has_overview");
+                    m_oWriter.Add(true);
+                }
+            }
             m_oWriter.EndObj();
         }
         else if (m_reportFailures)
@@ -120,10 +255,41 @@ bool GDALDatasetIdentifyAlgorithm::Process(const char *pszTarget,
     else
     {
         if (hDriver)
-            Print(CPLSPrintf("%s: %s\n", pszTarget,
-                             GDALGetDriverShortName(hDriver)));
+        {
+            Print(pszTarget);
+            Print(": ");
+            Print(pszDriverName);
+            if (m_detailed)
+            {
+                if (!osLayout.empty())
+                {
+                    Print(", layout=");
+                    Print(osLayout.c_str());
+                }
+                if (aosFileList.size() > 1)
+                {
+                    Print(", has side-car files");
+                }
+                if (bHasCRS)
+                {
+                    Print(", has CRS");
+                }
+                if (bHasGeoTransform)
+                {
+                    Print(", has geotransform");
+                }
+                if (bHasOverview)
+                {
+                    Print(", has overview(s)");
+                }
+            }
+            Print("\n");
+        }
         else if (m_reportFailures)
-            Print(CPLSPrintf("%s: unrecognized\n", pszTarget));
+        {
+            Print(pszTarget);
+            Print(": unrecognized\n");
+        }
     }
 
     bool ret = true;
@@ -165,8 +331,129 @@ bool GDALDatasetIdentifyAlgorithm::Process(const char *pszTarget,
 bool GDALDatasetIdentifyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                            void *pProgressData)
 {
-    if (m_format.empty())
+    if (m_format.empty() && m_outputDataset.GetName().empty())
         m_format = IsCalledFromCommandLine() ? "text" : "json";
+
+    if (m_format == "text" || m_format == "json")
+    {
+        if (!m_outputDataset.GetName().empty())
+        {
+            m_fpOut = VSIFilesystemHandler::OpenStatic(
+                m_outputDataset.GetName().c_str(), "wb");
+            if (!m_fpOut)
+            {
+                ReportError(CE_Failure, CPLE_FileIO, "Cannot create '%s'",
+                            m_outputDataset.GetName().c_str());
+                return false;
+            }
+        }
+    }
+    else
+    {
+        if (m_outputDataset.GetName().empty() && m_format != "MEM")
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "'output' argument must be specified for non-text or "
+                        "non-json output");
+            return false;
+        }
+
+        if (m_format.empty())
+        {
+            const CPLStringList aosFormats(GDALGetOutputDriversForDatasetName(
+                m_outputDataset.GetName().c_str(), GDAL_OF_VECTOR,
+                /* bSingleMatch = */ true,
+                /* bEmitWarning = */ true));
+            if (aosFormats.size() != 1)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Cannot guess driver for %s",
+                            m_outputDataset.GetName().c_str());
+                return false;
+            }
+            m_format = aosFormats[0];
+        }
+
+        auto poOutDrv =
+            GetGDALDriverManager()->GetDriverByName(m_format.c_str());
+        if (!poOutDrv)
+        {
+            // shouldn't happen given checks done in GDALAlgorithm unless
+            // someone deregister the driver between ParseCommandLineArgs() and
+            // Run()
+            ReportError(CE_Failure, CPLE_AppDefined, "Driver %s does not exist",
+                        m_format.c_str());
+            return false;
+        }
+
+        m_poOutDS.reset(poOutDrv->Create(
+            m_outputDataset.GetName().c_str(), 0, 0, 0, GDT_Unknown,
+            CPLStringList(m_creationOptions).List()));
+        if (!m_poOutDS)
+            return false;
+
+        if (m_outputLayerName.empty())
+        {
+            if (EQUAL(poOutDrv->GetDescription(), "ESRI Shapefile"))
+                m_outputLayerName =
+                    CPLGetBasenameSafe(m_outputDataset.GetName().c_str());
+            else
+                m_outputLayerName = "output";
+        }
+
+        m_poLayer = m_poOutDS->CreateLayer(
+            m_outputLayerName.c_str(), nullptr,
+            CPLStringList(m_layerCreationOptions).List());
+        if (!m_poLayer)
+            return false;
+
+        bool ret = true;
+        {
+            OGRFieldDefn oFieldDefn("filename", OFTString);
+            ret = m_poLayer->CreateField(&oFieldDefn) == OGRERR_NONE;
+        }
+
+        {
+            OGRFieldDefn oFieldDefn("driver", OFTString);
+            ret = ret && m_poLayer->CreateField(&oFieldDefn) == OGRERR_NONE;
+        }
+
+        if (m_detailed)
+        {
+            {
+                OGRFieldDefn oFieldDefn("layout", OFTString);
+                ret = ret && m_poLayer->CreateField(&oFieldDefn) == OGRERR_NONE;
+            }
+            {
+                const char *pszSupportedFieldTypes =
+                    poOutDrv->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES);
+                OGRFieldDefn oFieldDefn(
+                    "file_list", (pszSupportedFieldTypes &&
+                                  strstr(pszSupportedFieldTypes, "StringList"))
+                                     ? OFTStringList
+                                     : OFTString);
+                ret = ret && m_poLayer->CreateField(&oFieldDefn) == OGRERR_NONE;
+            }
+            {
+                OGRFieldDefn oFieldDefn("has_crs", OFTInteger);
+                oFieldDefn.SetSubType(OFSTBoolean);
+                ret = ret && m_poLayer->CreateField(&oFieldDefn) == OGRERR_NONE;
+            }
+            {
+                OGRFieldDefn oFieldDefn("has_geotransform", OFTInteger);
+                oFieldDefn.SetSubType(OFSTBoolean);
+                ret = ret && m_poLayer->CreateField(&oFieldDefn) == OGRERR_NONE;
+            }
+            {
+                OGRFieldDefn oFieldDefn("has_overview", OFTInteger);
+                oFieldDefn.SetSubType(OFSTBoolean);
+                ret = ret && m_poLayer->CreateField(&oFieldDefn) == OGRERR_NONE;
+            }
+        }
+
+        if (!ret)
+            return false;
+    }
 
     if (m_format == "json")
         m_oWriter.StartArray();
@@ -189,6 +476,15 @@ bool GDALDatasetIdentifyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     if (m_format == "json")
         m_oWriter.EndArray();
+
+    if (!m_output.empty())
+    {
+        GetArg(GDAL_ARG_NAME_OUTPUT_STRING)->Set(m_output);
+    }
+    else
+    {
+        m_outputDataset.Set(std::move(m_poOutDS));
+    }
 
     return ret;
 }

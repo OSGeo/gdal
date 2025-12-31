@@ -300,7 +300,7 @@ def test_stacta_with_raster_extension_nominal(filename):
         assert band.GetMetadataItem("name") == "B1"
     if filename == "data/stacta/test_stac_1_1.json":
         assert band.GetMetadata_Dict() == {"common_name": "nir", "name": "B1"}
-    assert band.DataType == gdal.GDT_Byte
+    assert band.DataType == gdal.GDT_UInt8
     assert band.GetNoDataValue() == 1
     assert band.GetOffset() == 1.2
     assert band.GetScale() == 10

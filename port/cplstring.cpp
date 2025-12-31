@@ -445,6 +445,48 @@ CPLString CPLString::URLEncode() const
 }
 
 /************************************************************************/
+/*                          SQLQuotedIdentifier()                       */
+/************************************************************************/
+
+/** Returns a string between double quotes and with all double quotes
+ * inside the string are escaped by being doubled.
+ *
+ * Aimed at being used for SQL identifiers (table names, column names, etc.).
+ *
+ * @since 3.13
+ */
+CPLString CPLString::SQLQuotedIdentifier() const
+{
+    CPLString ret("\"");
+    CPLString tmp(*this);
+    tmp.replaceAll('"', "\"\"");
+    ret += tmp;
+    ret += '"';
+    return ret;
+}
+
+/************************************************************************/
+/*                           SQLQuotedLiteral()                         */
+/************************************************************************/
+
+/** Returns a string between single quotes and with all single quotes
+ * inside the string are escaped by being doubled.
+ *
+ * Aimed at being used for SQL literal strings.
+ *
+ * @since 3.13
+ */
+CPLString CPLString::SQLQuotedLiteral() const
+{
+    CPLString ret("'");
+    CPLString tmp(*this);
+    tmp.replaceAll('\'', "''");
+    ret += tmp;
+    ret += '\'';
+    return ret;
+}
+
+/************************************************************************/
 /*                         CPLURLGetValue()                             */
 /************************************************************************/
 

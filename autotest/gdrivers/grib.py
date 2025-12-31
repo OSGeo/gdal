@@ -1813,7 +1813,7 @@ def test_grib_grib2_write_temperatures():
 
 
 @pytest.mark.parametrize(
-    "datatype", [gdal.GDT_Byte, gdal.GDT_Float32], ids=gdal.GetDataTypeName
+    "datatype", [gdal.GDT_UInt8, gdal.GDT_Float32], ids=gdal.GetDataTypeName
 )
 def test_grib_grib2_write_nodata(datatype):
 
@@ -1840,7 +1840,7 @@ def test_grib_grib2_write_nodata(datatype):
 
 
 @pytest.mark.parametrize(
-    "datatype", [gdal.GDT_Byte, gdal.GDT_Float32], ids=gdal.GetDataTypeName
+    "datatype", [gdal.GDT_UInt8, gdal.GDT_Float32], ids=gdal.GetDataTypeName
 )
 def test_grib_grib2_write_nodata_only(datatype):
 
@@ -1863,14 +1863,14 @@ def test_grib_grib2_write_nodata_only(datatype):
     gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
 
     ds = gdal.Open(tmpfilename)
-    if datatype == gdal.GDT_Byte:
+    if datatype == gdal.GDT_UInt8:
         assert ds.GetRasterBand(1).GetNoDataValue() == 12
     else:
         assert ds.GetRasterBand(1).GetNoDataValue() == pytest.approx(12.3, rel=1e-4)
     got_vals = struct.unpack(4 * "d", ds.ReadRaster())
     ds = None
     gdal.Unlink(tmpfilename)
-    if datatype == gdal.GDT_Byte:
+    if datatype == gdal.GDT_UInt8:
         expected_vals = (12, 12, 12, 12)
     else:
         expected_vals = (12.3, 12.3, 12.3, 12.3)
@@ -1881,7 +1881,7 @@ def test_grib_grib2_write_nodata_only(datatype):
 
 
 @pytest.mark.parametrize(
-    "datatype", [gdal.GDT_Byte, gdal.GDT_Float32], ids=gdal.GetDataTypeName
+    "datatype", [gdal.GDT_UInt8, gdal.GDT_Float32], ids=gdal.GetDataTypeName
 )
 def test_grib_grib2_write_full_OneData(datatype):
 
@@ -1908,7 +1908,7 @@ def test_grib_grib2_write_full_OneData(datatype):
     got_vals = struct.unpack(4 * "d", ds.ReadRaster())
     ds = None
     gdal.Unlink(tmpfilename)
-    if datatype == gdal.GDT_Byte:
+    if datatype == gdal.GDT_UInt8:
         expected_vals = (25, 25, 25, 25)
     else:
         expected_vals = (25.4, 25.4, 25.4, 25.4)

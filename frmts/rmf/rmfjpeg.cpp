@@ -93,7 +93,7 @@ size_t RMFDataset::JPEGDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
     size_t nRet;
     int aBandMap[RMF_JPEG_BAND_COUNT] = {3, 2, 1};
     eErr = GDALDatasetRasterIO(hTile, GF_Read, 0, 0, nImageWidth, nImageHeight,
-                               pabyOut, nImageWidth, nImageHeight, GDT_Byte,
+                               pabyOut, nImageWidth, nImageHeight, GDT_UInt8,
                                nBandCount, aBandMap, nBandCount,
                                nRawXSize * nBandCount, 1);
     if (CE_None != eErr)
@@ -134,7 +134,7 @@ size_t RMFDataset::JPEGCompress(const GByte *pabyIn, GUInt32 nSizeIn,
         return 0;
     }
 
-    const GDALDataType eType = GDT_Byte;
+    const GDALDataType eType = GDT_UInt8;
     auto poMemDS = std::unique_ptr<MEMDataset>(
         MEMDataset::Create("", nRawXSize, nRawYSize, 0, eType, nullptr));
 

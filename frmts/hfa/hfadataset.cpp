@@ -1906,7 +1906,7 @@ HFARasterBand::HFARasterBand(HFADataset *poDSIn, int nBandIn, int iOverview)
         case EPT_u2:
         case EPT_u4:
         case EPT_u8:
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             break;
 
         case EPT_s8:
@@ -1946,7 +1946,7 @@ HFARasterBand::HFARasterBand(HFADataset *poDSIn, int nBandIn, int iOverview)
             break;
 
         default:
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             // This should really report an error, but this isn't
             // so easy from within constructors.
             CPLDebug("GDAL", "Unsupported pixel type in HFARasterBand: %d.",
@@ -5007,7 +5007,7 @@ GDALDataset *HFADataset::Create(const char *pszFilenameIn, int nXSize,
     EPTType eHfaDataType;
     switch (eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             if (nBits == 1)
                 eHfaDataType = EPT_u1;
             else if (nBits == 2)
@@ -5229,7 +5229,7 @@ GDALDataset *HFADataset::CreateCopy(const char *pszFilename,
     // If we have PIXELTYPE metadata in the source, pass it
     // through as a creation option.
     if (CSLFetchNameValue(papszOptions, "PIXELTYPE") == nullptr &&
-        nBandCount > 0 && eType == GDT_Byte)
+        nBandCount > 0 && eType == GDT_UInt8)
     {
         auto poSrcBand = poSrcDS->GetRasterBand(1);
         poSrcBand->EnablePixelTypeSignedByteWarning(false);

@@ -21,6 +21,11 @@ Description
 The :program:`gdaladdo` utility can be used to build or rebuild overview images for
 most supported file formats with one of several downsampling algorithms.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_overview_add`, :ref:`gdal_raster_overview_delete`
+    and :ref:`gdal_raster_overview_refresh`.
+
 .. program:: gdaladdo
 
 .. include:: options/help_and_help_general.rst

@@ -231,6 +231,7 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
   add_test(NAME java_OSRTransform COMMAND ${JAVA_RUN} OSRTransform)
   add_test(NAME java_gdalmajorobject COMMAND ${JAVA_RUN} gdalmajorobject)
   add_test(NAME java_GDALTestIO COMMAND ${JAVA_RUN} GDALTestIO)
+  add_test(NAME java_GDALTestVSI COMMAND ${JAVA_RUN} GDALTestVSI)
   add_test(NAME java_GDALTestMultiDim COMMAND ${JAVA_RUN} GDALTestMultiDim)
   add_test(NAME java_GDALContour COMMAND ${JAVA_RUN} GDALContour -i 1 tmp_test/byte.tif tmp_test/contour.shp)
   add_test(NAME java_testgetpoints COMMAND ${JAVA_RUN} testgetpoints)
@@ -252,6 +253,7 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
           java_OSRTransform
           java_gdalmajorobject
           java_GDALTestIO
+          java_GDALTestVSI
           java_GDALTestMultiDim
           java_GDALContour
           java_testgetpoints

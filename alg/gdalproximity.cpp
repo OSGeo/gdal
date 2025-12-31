@@ -252,7 +252,7 @@ CPLErr CPL_STDCALL GDALComputeProximity(GDALRasterBandH hSrcBand,
     GInt32 *panSrcScanline = nullptr;
     bool bTempFileAlreadyDeleted = false;
 
-    if (eProxType == GDT_Byte || eProxType == GDT_UInt16 ||
+    if (eProxType == GDT_UInt8 || eProxType == GDT_UInt16 ||
         eProxType == GDT_UInt32)
     {
         GDALDriverH hDriver = GDALGetDriverByName("GTiff");

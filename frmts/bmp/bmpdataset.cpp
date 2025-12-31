@@ -289,7 +289,12 @@ BMPRasterBand::BMPRasterBand(BMPDataset *poDSIn, int nBandIn)
 {
     poDS = poDSIn;
     nBand = nBandIn;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
+
+    if (poDSIn->sInfoHeader.iBitCount < 8)
+        SetMetadataItem("NBITS",
+                        CPLSPrintf("%d", poDSIn->sInfoHeader.iBitCount),
+                        "IMAGE_STRUCTURE");
 
     // We will read one scanline per time. Scanlines in BMP aligned at 4-byte
     // boundary
@@ -718,6 +723,13 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
         return;
     }
 
+    if (poDSIn->sInfoHeader.iClrUsed <= 2)
+        SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE");
+    else if (poDSIn->sInfoHeader.iClrUsed <= 4)
+        SetMetadataItem("NBITS", "2", "IMAGE_STRUCTURE");
+    else if (poDSIn->sInfoHeader.iClrUsed <= 16)
+        SetMetadataItem("NBITS", "4", "IMAGE_STRUCTURE");
+
     const GUInt32 iComprSize = static_cast<GUInt32>(
         poDSIn->m_nFileSize - poDSIn->sFileHeader.iOffBits);
     const GUInt32 iUncomprSize =
@@ -831,13 +843,13 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
                 unsigned int iLength = pabyComprBuf[i++];
                 if (j == iUncomprSize)
                     break;
-                while (iLength > 0 && j < iUncomprSize && i < iComprSize)
+                for (unsigned k = 0;
+                     k < iLength && j < iUncomprSize && i < iComprSize; k++)
                 {
-                    if (iLength & 0x01)
-                        pabyUncomprBuf[j++] = (pabyComprBuf[i] & 0xF0) >> 4;
-                    else
+                    if (k & 0x01)
                         pabyUncomprBuf[j++] = pabyComprBuf[i] & 0x0F;
-                    iLength--;
+                    else
+                        pabyUncomprBuf[j++] = (pabyComprBuf[i] & 0xF0) >> 4;
                 }
                 i++;
             }
@@ -889,7 +901,9 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
                         else
                             pabyUncomprBuf[j++] = (pabyComprBuf[i] & 0xF0) >> 4;
                     }
-                    if (i & 0x01)
+                    if ((iLength + 1) & 0x02) /* iLength%4 = 1 or 2 */
+                        i++;
+                    if (iLength & 0x01) /* iLength%4 = 1 (again) or 3 */
                         i++;
                 }
             }
@@ -897,6 +911,7 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
     }
     /* Validate that we have read all compressed data (we tolerate missing */
     /* end of image marker) and that we have filled all uncompressed data */
+    /* i will be odd if and only if we saw the End of Image marker above */
     if (j < iUncomprSize || (i + 1 != iComprSize && i + 2 != iComprSize))
     {
         CPLFree(pabyUncomprBuf);
@@ -1413,7 +1428,7 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 char **papszOptions)
 
 {
-    if (eType != GDT_Byte)
+    if (eType != GDT_UInt8)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create BMP dataset with an illegal\n"

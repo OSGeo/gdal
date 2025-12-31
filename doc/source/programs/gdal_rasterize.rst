@@ -26,6 +26,11 @@ in-place.
 On the fly reprojection of vector data to the coordinate system of the
 raster data is supported.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_vector_rasterize`.
+
+
 .. program:: gdal_rasterize
 
 .. include:: options/help_and_help_general.rst
@@ -166,6 +171,8 @@ raster data is supported.
 
     Set output file size in pixels and lines. Note that :option:`-ts` cannot be used with
     :option:`-tr`
+    If one of the two values is set to 0, it will be computed from the other value in order to
+    preserve the aspect ratio.
 
 .. option:: -ot <type>
 

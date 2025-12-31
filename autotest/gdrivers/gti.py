@@ -19,6 +19,7 @@ import struct
 import gdaltest
 import ogrtest
 import pytest
+import webserver
 
 from osgeo import gdal, ogr
 
@@ -329,7 +330,7 @@ def test_gti_prototype_tile_wrong_gt_5th_value(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_gti_prototype_tile_wrong_gt_6th_value(tmp_vsimem):
+def test_gti_prototype_tile_wrong_gt_2nd_value(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
     protods_filename = str(tmp_vsimem / "protods_filename.tif")
@@ -346,7 +347,7 @@ def test_gti_prototype_tile_wrong_gt_6th_value(tmp_vsimem):
     lyr.CreateFeature(f)
     del index_ds
 
-    with pytest.raises(Exception, match="6th value of GeoTransform"):
+    with pytest.raises(Exception, match="2nd value of GeoTransform"):
         gdal.Open(index_filename)
 
 
@@ -367,6 +368,28 @@ def test_gti_no_extent(tmp_vsimem):
 
     with pytest.raises(Exception, match="Cannot get layer extent"):
         gdal.Open(index_filename)
+
+
+def test_gti_south_up(tmp_vsimem):
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    protods_filename = str(tmp_vsimem / "protods_filename.tif")
+    with gdal.GetDriverByName("GTiff").Create(protods_filename, 1, 2) as ds:
+        ds.SetGeoTransform([0, 1, 0, 10, 0, 1])
+        ds.WriteRaster(0, 0, 1, 2, b"\x01\x02")
+
+    index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
+    lyr = index_ds.CreateLayer("index")
+    lyr.CreateField(ogr.FieldDefn("location"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["location"] = protods_filename
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 10,0 12,1 12,1 12,0 12))"))
+    lyr.CreateFeature(f)
+    del index_ds
+
+    ds = gdal.Open(index_filename)
+    assert ds.GetGeoTransform() == (0, 1, 0, 12, 0, -1)
+    assert ds.ReadRaster() == b"\x02\x01"
 
 
 def test_gti_too_big_x(tmp_vsimem):
@@ -3191,3 +3214,58 @@ def test_gti_sql(tmp_vsimem):
         )
     with pytest.raises(Exception, match="syntax error"):
         gti_ds.GetRasterBand(1).ComputeRasterMinMax()
+
+
+###############################################################################
+
+
+@pytest.fixture(scope="module")
+def server():
+
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    if port == 0:
+        pytest.skip()
+
+    import collections
+
+    WebServer = collections.namedtuple("WebServer", "process port")
+
+    yield WebServer(process, port)
+
+    # Clearcache needed to close all connections, since the Python server
+    # can only handle one connection at a time
+    gdal.VSICurlClearCache()
+
+    webserver.server_stop(process, port)
+
+
+###############################################################################
+
+
+@pytest.mark.require_curl()
+@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_driver("CSV")
+def test_gti_non_rewriting_of_url(server, tmp_vsimem):
+    """Check fix for https://github.com/OSGeo/gdal/issues/12900#issuecomment-3637663699"""
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.csv",
+        f'location,WKT\n"http://localhost:{server.port}/test.tif","POLYGON((0 0,0 1,1 1,1 0))"',
+    )
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "test.tif", 1, 1) as ds:
+        ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+        ds.GetRasterBand(1).Fill(1)
+
+    with gdal.VSIFile(tmp_vsimem / "test.tif", "rb") as f:
+        content = f.read()
+
+    handler = webserver.SequentialHandler()
+    # Check that we get a GET request for the full file (ie using the HTTP driver)
+    # and not a /vsicurl/ range request
+    handler.add("GET", "/test.tif", 200, {}, content, unexpected_headers=["Range"])
+    handler.add("GET", "/test.tif", 200, {}, content, unexpected_headers=["Range"])
+
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        ds = gdal.Open(f"GTI:{tmp_vsimem}/test.csv")
+        assert ds.GetRasterBand(1).Checksum() == 1

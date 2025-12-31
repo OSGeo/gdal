@@ -434,6 +434,8 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
             const auto oGeoFields = oSwath.GetObj("GeoField");
             std::vector<Dimension> aoLongitudeDimensions;
             std::vector<Dimension> aoLatitudeDimensions;
+
+            // First pass to create dimensions
             for (const auto &oGeoField : oGeoFields.GetChildren())
             {
                 if (oGeoField.GetType() == CPLJSONObject::Type::Object)
@@ -473,20 +475,110 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                     }
                     if (bValid)
                     {
-                        SwathGeolocationFieldMetadata oMetadata;
-                        oMetadata.poSwathMetadata = poSwathMetadataRef;
-
                         if (osGeoFieldName == "Longitude")
-                            aoLongitudeDimensions = aoDimensions;
+                            aoLongitudeDimensions = std::move(aoDimensions);
                         else if (osGeoFieldName == "Latitude")
-                            aoLatitudeDimensions = aoDimensions;
+                            aoLatitudeDimensions = std::move(aoDimensions);
+                    }
+                }
+            }
 
-                        oMetadata.aoDimensions = std::move(aoDimensions);
+            // Second pass to register field
+            for (const auto &oGeoField : oGeoFields.GetChildren())
+            {
+                if (oGeoField.GetType() == CPLJSONObject::Type::Object)
+                {
+                    const auto osGeoFieldName =
+                        oGeoField.GetString("GeoFieldName");
+                    const auto oDimList = oGeoField.GetArray("DimList");
+                    bool bValid = true;
+                    SwathFieldMetadata oMetadata;
+                    oMetadata.poSwathMetadata = poSwathMetadataRef;
+                    for (int j = 0; j < oDimList.Size(); ++j)
+                    {
+                        const auto osDimensionName = oDimList[j].ToString();
+                        const auto oIter = oMapDimensionNameToSize.find(
+                            osDimensionName.c_str());
+                        if (oIter == oMapDimensionNameToSize.end())
+                        {
+                            bValid = false;
+                            break;
+                        }
+                        Dimension oDim;
+                        oDim.osName = std::move(osDimensionName);
+                        oDim.nSize = oIter->second;
+                        oMetadata.aoDimensions.push_back(std::move(oDim));
+                    }
+                    if (bValid)
+                    {
+                        if (oMetadata.aoDimensions.size() >= 2 &&
+                            aoLongitudeDimensions.size() == 2 &&
+                            aoLongitudeDimensions == aoLatitudeDimensions)
+                        {
+                            int i = 0;
+                            std::string osDataXDimName;
+                            std::string osDataYDimName;
+                            for (const auto &oDimSwath : oMetadata.aoDimensions)
+                            {
+                                auto oIter =
+                                    oMapDataDimensionToGeoDimension.find(
+                                        oDimSwath.osName);
+                                if (oIter !=
+                                    oMapDataDimensionToGeoDimension.end())
+                                {
+                                    const auto &osGeoDimName = oIter->second;
+                                    if (osGeoDimName ==
+                                        aoLongitudeDimensions[0].osName)
+                                    {
+                                        osDataYDimName = oDimSwath.osName;
+                                        oMetadata.iYDim = i;
+                                    }
+                                    else if (osGeoDimName ==
+                                             aoLongitudeDimensions[1].osName)
+                                    {
+                                        osDataXDimName = oDimSwath.osName;
+                                        oMetadata.iXDim = i;
+                                    }
+                                }
+                                else
+                                {
+                                    oMetadata.iOtherDim = i;
+                                }
+                                ++i;
+                            }
+                            if (oMetadata.iXDim >= 0 && oMetadata.iYDim >= 0)
+                            {
+                                oMetadata.osLongitudeSubdataset =
+                                    "//HDFEOS/SWATHS/" + osSwathName +
+                                    "/Geolocation_Fields/Longitude";
+                                oMetadata.osLatitudeSubdataset =
+                                    "//HDFEOS/SWATHS/" + osSwathName +
+                                    "/Geolocation_Fields/Latitude";
+
+                                for (const auto &oDimMap : aoDimensionMaps)
+                                {
+                                    if (oDimMap.osDataDimName == osDataYDimName)
+                                    {
+                                        oMetadata.nLineOffset = oDimMap.nOffset;
+                                        oMetadata.nLineStep =
+                                            oDimMap.nIncrement;
+                                    }
+                                    else if (oDimMap.osDataDimName ==
+                                             osDataXDimName)
+                                    {
+                                        oMetadata.nPixelOffset =
+                                            oDimMap.nOffset;
+                                        oMetadata.nPixelStep =
+                                            oDimMap.nIncrement;
+                                    }
+                                }
+                            }
+                        }
 
                         const std::string osSubdatasetName =
                             "//HDFEOS/SWATHS/" + osSwathName +
                             "/Geolocation_Fields/" + osGeoFieldName;
-                        m_oMapSubdatasetNameToSwathGeolocationFieldMetadata
+                        m_oMapSubdatasetNameToSwathFieldMetadata
                             [osSubdatasetName] = std::move(oMetadata);
                     }
                 }
@@ -500,7 +592,7 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                     const auto osDataFieldName =
                         oDataField.GetString("DataFieldName");
                     const auto oDimList = oDataField.GetArray("DimList");
-                    SwathDataFieldMetadata oMetadata;
+                    SwathFieldMetadata oMetadata;
                     oMetadata.poSwathMetadata = poSwathMetadataRef;
                     bool bValid = oDimList.Size() > 0;
                     for (int j = 0; j < oDimList.Size(); ++j)
@@ -584,7 +676,7 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                             }
                         }
 
-                        m_oMapSubdatasetNameToSwathDataFieldMetadata
+                        m_oMapSubdatasetNameToSwathFieldMetadata
                             ["//HDFEOS/SWATHS/" + osSwathName +
                              "/Data_Fields/" + osDataFieldName] =
                                 std::move(oMetadata);
@@ -610,34 +702,18 @@ bool HDF5EOSParser::GetSwathMetadata(const std::string &osSwathName,
 }
 
 /************************************************************************/
-/*                      GetSwathDataFieldMetadata()                     */
+/*                        GetSwathFieldMetadata()                       */
 /************************************************************************/
 
-bool HDF5EOSParser::GetSwathDataFieldMetadata(
+bool HDF5EOSParser::GetSwathFieldMetadata(
     const char *pszSubdatasetName,
-    SwathDataFieldMetadata &swathDataFieldMetadataOut) const
+    SwathFieldMetadata &swathFieldMetadataOut) const
 {
     const auto oIter =
-        m_oMapSubdatasetNameToSwathDataFieldMetadata.find(pszSubdatasetName);
-    if (oIter == m_oMapSubdatasetNameToSwathDataFieldMetadata.end())
+        m_oMapSubdatasetNameToSwathFieldMetadata.find(pszSubdatasetName);
+    if (oIter == m_oMapSubdatasetNameToSwathFieldMetadata.end())
         return false;
-    swathDataFieldMetadataOut = oIter->second;
-    return true;
-}
-
-/************************************************************************/
-/*                    GetSwathGeolocationFieldMetadata()                */
-/************************************************************************/
-
-bool HDF5EOSParser::GetSwathGeolocationFieldMetadata(
-    const char *pszSubdatasetName,
-    SwathGeolocationFieldMetadata &swathGeolocationFieldMetadataOut) const
-{
-    const auto oIter = m_oMapSubdatasetNameToSwathGeolocationFieldMetadata.find(
-        pszSubdatasetName);
-    if (oIter == m_oMapSubdatasetNameToSwathGeolocationFieldMetadata.end())
-        return false;
-    swathGeolocationFieldMetadataOut = oIter->second;
+    swathFieldMetadataOut = oIter->second;
     return true;
 }
 

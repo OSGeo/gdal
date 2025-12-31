@@ -128,7 +128,8 @@ rm -rf proj
 git clone --depth 1 https://github.com/OSGeo/PROJ proj
 
 rm -rf curl
-git clone --depth 1 https://github.com/curl/curl.git curl
+# Pin to 8.17.0 as later versions require openssl 3.0 that Ubuntu 20.04 doesn't provide
+git clone --depth 1 --branch curl-8_17_0 https://github.com/curl/curl.git curl
 
 rm -rf netcdf-c-4.7.4
 # fix_stack_read_overflow_ncindexlookup.patch: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=39189

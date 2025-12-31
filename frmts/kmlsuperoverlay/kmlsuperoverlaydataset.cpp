@@ -50,14 +50,14 @@ static void GenerateTiles(const std::string &filename, CPL_UNUSED int zoom,
         bands = 3;
 
     auto poTmpDataset = std::unique_ptr<GDALDataset>(
-        MEMDataset::Create("", dxsize, dysize, bands, GDT_Byte, nullptr));
+        MEMDataset::Create("", dxsize, dysize, bands, GDT_UInt8, nullptr));
 
     if (!isJpegDriver)  // Jpeg dataset only has one or three bands
     {
         if (bands < 4)  // add transparency to files with one band or three
                         // bands
         {
-            poTmpDataset->AddBand(GDT_Byte);
+            poTmpDataset->AddBand(GDT_UInt8);
             alphaBand =
                 poTmpDataset->GetRasterBand(poTmpDataset->GetRasterCount());
         }
@@ -84,7 +84,7 @@ static void GenerateTiles(const std::string &filename, CPL_UNUSED int zoom,
             int yOffset = ry + row * rowOffset;
             CPLErr errTest = poBand->RasterIO(
                 GF_Read, rx, yOffset, rxsize, rowOffset, abyScanline.data(),
-                dxsize, 1, GDT_Byte, 0, 0, nullptr);
+                dxsize, 1, GDT_UInt8, 0, 0, nullptr);
 
             const bool bReadFailed = (errTest == CE_Failure);
             if (bReadFailed)
@@ -114,7 +114,7 @@ static void GenerateTiles(const std::string &filename, CPL_UNUSED int zoom,
                 GDALRasterBand *poBandtmp = poTmpDataset->GetRasterBand(band);
                 CPL_IGNORE_RET_VAL(poBandtmp->RasterIO(
                     GF_Write, 0, row, dxsize, 1, abyScanline.data(), dxsize, 1,
-                    GDT_Byte, 0, 0, nullptr));
+                    GDT_UInt8, 0, 0, nullptr));
             }
         }
 
@@ -137,7 +137,7 @@ static void GenerateTiles(const std::string &filename, CPL_UNUSED int zoom,
 
                 CPL_IGNORE_RET_VAL(alphaBand->RasterIO(
                     GF_Write, 0, row, dxsize, 1, abyScanline.data(), dxsize, 1,
-                    GDT_Byte, 0, 0, nullptr));
+                    GDT_UInt8, 0, 0, nullptr));
             }
         }
     }
@@ -485,7 +485,7 @@ int KmlSuperOverlayReadDataset::DetectTransparency(int rxsize, int rysize,
                 int yOffset = ry + row * rowOffset;
                 CPL_IGNORE_RET_VAL(poBand->RasterIO(
                     GF_Read, rx, yOffset, rxsize, rowOffset, abyScanline.data(),
-                    dxsize, 1, GDT_Byte, 0, 0, nullptr));
+                    dxsize, 1, GDT_UInt8, 0, 0, nullptr));
                 for (int i = 0; i < dxsize; i++)
                 {
                     if (abyScanline[i] == noDataValue)
@@ -514,7 +514,7 @@ int KmlSuperOverlayReadDataset::DetectTransparency(int rxsize, int rysize,
                 int yOffset = ry + row * rowOffset;
                 CPL_IGNORE_RET_VAL(poBand->RasterIO(
                     GF_Read, rx, yOffset, rxsize, rowOffset, abyScanline.data(),
-                    dxsize, 1, GDT_Byte, 0, 0, nullptr));
+                    dxsize, 1, GDT_UInt8, 0, 0, nullptr));
                 for (int i = 0; i < dxsize; i++)
                 {
                     if (abyScanline[i] == 255)
@@ -1091,7 +1091,7 @@ KmlSuperOverlayRasterBand::KmlSuperOverlayRasterBand(
 {
     nRasterXSize = poDSIn->nRasterXSize;
     nRasterYSize = poDSIn->nRasterYSize;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     nBlockXSize = 256;
     nBlockYSize = 256;
 }
@@ -1470,7 +1470,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO(
 
             for (int iBandIdx = 0; iBandIdx < 4; iBandIdx++)
             {
-                poVRTDS->AddBand(GDT_Byte, nullptr);
+                poVRTDS->AddBand(GDT_UInt8, nullptr);
 
                 auto poVRTBand = static_cast<VRTSourcedRasterBand *>(
                     poVRTDS->GetRasterBand(iBandIdx + 1));
@@ -1574,7 +1574,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO(
             GByte nVal = (nBand == 4) ? 255 : 0;
             for (int j = 0; j < nBufYSize; j++)
             {
-                GDALCopyWords(&nVal, GDT_Byte, 0,
+                GDALCopyWords(&nVal, GDT_UInt8, 0,
                               static_cast<GByte *>(pData) + j * nLineSpace +
                                   iBandIdx * nBandSpace,
                               eBufType, static_cast<int>(nPixelSpace),
@@ -2132,7 +2132,7 @@ KmlSingleDocRasterRasterBand::KmlSingleDocRasterRasterBand(
     nBand = nBandIn;
     nBlockXSize = poDSIn->nTileSize;
     nBlockYSize = poDSIn->nTileSize;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 }
 
 /************************************************************************/
@@ -2194,8 +2194,8 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         else
         {
             eErr = poImageDS->GetRasterBand(1)->RasterIO(
-                GF_Read, 0, 0, nXSize, nYSize, pImage, nXSize, nYSize, GDT_Byte,
-                1, nBlockXSize, nullptr);
+                GF_Read, 0, 0, nXSize, nYSize, pImage, nXSize, nYSize,
+                GDT_UInt8, 1, nBlockXSize, nullptr);
 
             /* Expand color table */
             if (eErr == CE_None && poColorTable != nullptr)
@@ -2232,7 +2232,7 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     else if (nBand <= poImageDS->GetRasterCount())
     {
         eErr = poImageDS->GetRasterBand(nBand)->RasterIO(
-            GF_Read, 0, 0, nXSize, nYSize, pImage, nXSize, nYSize, GDT_Byte, 1,
+            GF_Read, 0, 0, nXSize, nYSize, pImage, nXSize, nYSize, GDT_UInt8, 1,
             nBlockXSize, nullptr);
     }
     else if (nBand == 4 && poImageDS->GetRasterCount() == 3)
@@ -2576,7 +2576,7 @@ GDALDataset *KmlSingleOverlayRasterDataset::Open(const char *pszFilename,
         poImageDS->GetRasterXSize(), poImageDS->GetRasterYSize());
     for (int i = 1; i <= poImageDS->GetRasterCount(); ++i)
     {
-        poDS->AddBand(GDT_Byte, nullptr);
+        poDS->AddBand(GDT_UInt8, nullptr);
 
         auto poImageBand = poImageDS->GetRasterBand(i);
         auto poVRTBand =

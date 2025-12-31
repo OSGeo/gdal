@@ -27,7 +27,7 @@ def test_reproject_1():
     src_ds = gdal.Open("../gcore/data/byte.tif")
 
     dst_ds = drv.Create(
-        "tmp/byte.tif", src_ds.RasterXSize, src_ds.RasterYSize, gdal.GDT_Byte
+        "tmp/byte.tif", src_ds.RasterXSize, src_ds.RasterYSize, gdal.GDT_UInt8
     )
     dst_ds.SetProjection(src_ds.GetProjectionRef())
     dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
@@ -61,7 +61,7 @@ def test_reproject_2():
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("../gcore/data/byte.tif")
 
-    dst_ds = drv.Create("tmp/byte_4326.tif", 22, 18, gdal.GDT_Byte)
+    dst_ds = drv.Create("tmp/byte_4326.tif", 22, 18, gdal.GDT_UInt8)
     dst_ds.SetGeoTransform(
         [
             -117.641169915168746,

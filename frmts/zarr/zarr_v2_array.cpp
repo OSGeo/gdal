@@ -1121,12 +1121,12 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject &obj,
             if (chType == 'b' && nBytes == 1)  // boolean
             {
                 elt.nativeType = DtypeElt::NativeType::BOOLEAN;
-                eDT = GDT_Byte;
+                eDT = GDT_UInt8;
             }
             else if (chType == 'u' && nBytes == 1)
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
-                eDT = GDT_Byte;
+                eDT = GDT_UInt8;
             }
             else if (chType == 'i' && nBytes == 1)
             {

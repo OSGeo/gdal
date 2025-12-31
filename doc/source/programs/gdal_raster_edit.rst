@@ -24,15 +24,28 @@ Description
 
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
-.. option:: --dataset <DATASET>
+Program-Specific Options
+------------------------
 
-    Dataset name, to be updated in-place, unless :option:`--auxiliary` is set. Required.
+.. option:: --approx-stats
+
+    Compute raster band statistics for all bands. They may be computed
+    based on overviews or a subset of all tiles. Useful if you are in a
+    hurry and don't need precise stats.
+
+    .. note:: This option is not available when the command is part of a pipeline.
 
 .. option:: --auxiliary
 
     Force opening the dataset in read-only mode. For drivers that implement the
     Persistent Auxiliary Metadata (PAM) mechanism, changes will be
     saved in an auxiliary side car file of extension ``.aux.xml``.
+
+.. option:: --bbox <xmin>,<ymin>,<xmax>,ymax>
+
+    Override the spatial bounding box, in CRS units, without reprojecting or subsetting.
+    'x' is longitude values for geographic CRS and easting for projected CRS.
+    'y' is latitude values for geographic CRS and northing for projected CRS.
 
 .. option:: --crs <CRS>
 
@@ -47,35 +60,9 @@ This subcommand is also available as a potential step of :ref:`gdal_raster_pipel
 
     Note that the spatial extent is also left unchanged.
 
-.. option:: --bbox <xmin>,<ymin>,<xmax>,ymax>
+.. option:: --dataset <DATASET>
 
-    Override the spatial bounding box, in CRS units, without reprojecting or subsetting.
-    'x' is longitude values for geographic CRS and easting for projected CRS.
-    'y' is latitude values for geographic CRS and northing for projected CRS.
-
-.. option:: --nodata <value>
-
-    Override nodata value.
-
-    ``null`` or ``none`` can be specified to unset an existing nodata value.
-
-.. option:: --metadata <KEY>=<VALUE>
-
-    Add/update metadata item, at the dataset level. May be repeated.
-
-.. option:: --unset-metadata <KEY>
-
-    Remove metadata item, at the dataset level. May be repeated.
-
-.. option:: --unset-metadata-domain <DOMAIN>
-
-    .. versionadded:: 3.12
-
-    Remove metadata domain, at the dataset level. May be repeated.
-
-.. option:: --stats
-
-    Compute raster band statistics for all bands.
+    Dataset name, to be updated in-place, unless :option:`--auxiliary` is set. Required.
 
 .. option:: --gcp <GCP>
 
@@ -90,19 +77,36 @@ This subcommand is also available as a potential step of :ref:`gdal_raster_pipel
     a single layer with the following required fields ``column``, ``line``, ``x``, ``y``,
     and optionally ``id``, ``info`` and ``z``.
 
-.. option:: --approx-stats
-
-    Compute raster band statistics for all bands. They may be computed
-    based on overviews or a subset of all tiles. Useful if you are in a
-    hurry and don't need precise stats.
-
-    .. note:: This option is not available when the command is part of a pipeline.
-
 .. option:: --hist
 
     Compute histogram information for all bands.
 
     .. note:: This option is not available when the command is part of a pipeline.
+
+.. option:: --metadata <KEY>=<VALUE>
+
+    Add/update metadata item, at the dataset level. May be repeated.
+
+.. option:: --nodata <value>
+
+    Override nodata value.
+
+    ``null`` or ``none`` can be specified to unset an existing nodata value.
+
+.. option:: --stats
+
+    Compute raster band statistics for all bands.
+
+
+.. option:: --unset-metadata <KEY>
+
+    Remove metadata item, at the dataset level. May be repeated.
+
+.. option:: --unset-metadata-domain <DOMAIN>
+
+    .. versionadded:: 3.12
+
+    Remove metadata domain, at the dataset level. May be repeated.
 
 
 Examples

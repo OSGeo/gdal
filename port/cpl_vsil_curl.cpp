@@ -1363,31 +1363,35 @@ retry:
             }
         }
 
-        curl_off_t nSizeTmp = 0;
-        const CURLcode code = curl_easy_getinfo(
-            hCurlHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &nSizeTmp);
-        CPL_IGNORE_RET_VAL(dfSize);
-        dfSize = static_cast<double>(nSizeTmp);
-        if (code == 0)
+        if (response_code < 400)
         {
-            oFileProp.eExists = EXIST_YES;
-            if (dfSize < 0)
+            curl_off_t nSizeTmp = 0;
+            const CURLcode code = curl_easy_getinfo(
+                hCurlHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &nSizeTmp);
+            CPL_IGNORE_RET_VAL(dfSize);
+            dfSize = static_cast<double>(nSizeTmp);
+            if (code == 0)
             {
-                if (osVerb == "HEAD" && !bRetryWithGet && response_code == 200)
+                oFileProp.eExists = EXIST_YES;
+                if (dfSize < 0)
                 {
-                    CPLDebug(
-                        poFS->GetDebugKey(),
-                        "HEAD did not provide file size. Retrying with GET");
-                    bRetryWithGet = true;
-                    CPLFree(sWriteFuncData.pBuffer);
-                    CPLFree(sWriteFuncHeaderData.pBuffer);
-                    curl_easy_cleanup(hCurlHandle);
-                    goto retry;
+                    if (osVerb == "HEAD" && !bRetryWithGet &&
+                        response_code == 200)
+                    {
+                        CPLDebug(poFS->GetDebugKey(),
+                                 "HEAD did not provide file size. Retrying "
+                                 "with GET");
+                        bRetryWithGet = true;
+                        CPLFree(sWriteFuncData.pBuffer);
+                        CPLFree(sWriteFuncHeaderData.pBuffer);
+                        curl_easy_cleanup(hCurlHandle);
+                        goto retry;
+                    }
+                    oFileProp.fileSize = 0;
                 }
-                oFileProp.fileSize = 0;
+                else
+                    oFileProp.fileSize = static_cast<GUIntBig>(dfSize);
             }
-            else
-                oFileProp.fileSize = static_cast<GUIntBig>(dfSize);
         }
 
         if (sWriteFuncHeaderData.pBuffer != nullptr &&
@@ -1605,7 +1609,8 @@ retry:
         // directory, curl will retry with an URL with slash added.
         if (!osEffectiveURL.empty() &&
             strncmp(osURL.c_str(), osEffectiveURL.c_str(), osURL.size()) == 0 &&
-            osEffectiveURL[osURL.size()] == '/')
+            osEffectiveURL[osURL.size()] == '/' &&
+            oFileProp.eExists != EXIST_NO)
         {
             oFileProp.eExists = EXIST_YES;
             oFileProp.fileSize = 0;
@@ -3953,10 +3958,11 @@ void VSICurlFilesystemHandlerBase::AddRegion(const char *pszURL,
 {
     CPLMutexHolder oHolder(&hMutex);
 
-    std::shared_ptr<std::string> value(new std::string());
+    auto value = std::make_shared<std::string>();
     value->assign(pData, nSize);
     GetRegionCache()->insert(
-        FilenameOffsetPair(std::string(pszURL), nFileOffsetStart), value);
+        FilenameOffsetPair(std::string(pszURL), nFileOffsetStart),
+        std::move(value));
 }
 
 /************************************************************************/
@@ -6366,7 +6372,7 @@ struct curl_slist *VSICurlSetCreationHeadersFromOptions(
  */
 void VSIInstallCurlFileHandler(void)
 {
-    VSIFilesystemHandler *poHandler = new cpl::VSICurlFilesystemHandler;
+    auto poHandler = std::make_shared<cpl::VSICurlFilesystemHandler>();
     VSIFileManager::InstallHandler("/vsicurl/", poHandler);
     VSIFileManager::InstallHandler("/vsicurl?", poHandler);
 }

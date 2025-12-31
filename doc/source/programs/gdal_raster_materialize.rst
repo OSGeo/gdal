@@ -26,24 +26,31 @@ current directory if not specified, and is deleted when the pipeline finishes.
 The user can also select another format, or specify an explicit filename,
 in which case the materialized dataset is not deleted when the pipeline finishes.
 
+.. note:: VRT output is not compatible with materialize
+
 Synopsis
 --------
 
 .. program-output:: gdal raster pipeline --help-doc=materialize
 
-Options
--------
+Program-Specific Options
+------------------------
 
 .. option:: --output <OUTPUT>
 
    Optional dataset name. When specified, it is not removed at the end of the
    process.
 
-.. include:: gdal_options/of_raster_create_copy.rst
+Standard Options
+----------------
 
-.. include:: gdal_options/co.rst
+.. collapse:: Details
 
-.. include:: gdal_options/overwrite.rst
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------
@@ -55,3 +62,20 @@ Examples
 
         $ gdal pipeline ! read in.tif ! reproject --dst-crs=EPSG:32632 ! \
                         ! materialize ! contour --interval=10 ! write out.gpkg --overwrite
+
+
+.. example::
+   :title: How to use materialize for Cloud Optimized GeoTIFF (COG)
+
+    Usually when you want load COG data, you are not loading the whole data but instead on certain region and using lower resolution for fast analysis.
+    Therefore, after using command `read`, it is not supposed to be materialize right away because it mean it will download the whole thing into the memory/disk.
+    Instead, you could use command `reproject` and use `--bbox` to limit the region of interest and set `--size` or `--resolution` to use lower resolution overview.
+
+   .. code-block:: bash
+
+        $ gdal pipeline ! read /vsicurl/https://some.storage.com/mydata/landcover.tif \
+                        ! reproject -r mode -d EPSG:4326 --bbox=112,2,116,4.5 --bbox-crs=EPSG:4326 --size=3000,3000 \
+                        ! materialize \
+                        ! zonal-stats --zones=/vsicurl/https://some.storage.com/mydata/adm_level4.fgb --stat=values \
+                        ! write out.geojson
+

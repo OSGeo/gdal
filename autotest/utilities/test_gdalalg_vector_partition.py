@@ -395,7 +395,7 @@ def test_gdalalg_vector_partition_errors(tmp_vsimem):
 
     with pytest.raises(
         Exception,
-        match="Field 'real_field' not valid for partitioning. Only fields of type String, Integer or Integer64 are accepted",
+        match="Field 'real_field' not valid for partitioning",
     ):
         gdal.Run(
             "vector",
@@ -1046,3 +1046,148 @@ def test_gdalalg_vector_partition_pattern_error(tmp_vsimem):
         match=r"Number of digits in part number specifiation should be in \[1,10\] range",
     ):
         alg["pattern"] = "%11d"
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_partition_geometry(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    lyr = src_ds.CreateLayer("test")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,0 0))"))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT Z (1 2 3)"))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT M (1 2 4)"))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT ZM (1 2 3 4)"))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    gdal.alg.vector.partition(
+        input=src_ds,
+        output=tmp_vsimem / "out",
+        output_format="GPKG",
+        field="OGR_GEOMETRY",
+    )
+
+    with ogr.Open(
+        tmp_vsimem / "out/test/OGR_GEOMETRY=POLYGON/part_0000000001.gpkg"
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeomType() == ogr.wkbPolygon
+        assert lyr.GetFeatureCount() == 1
+        assert (
+            lyr.GetFeature(0).GetGeometryRef().ExportToIsoWkt()
+            == "POLYGON ((0 0,0 1,1 1,0 0))"
+        )
+
+    with ogr.Open(
+        tmp_vsimem / "out/test/OGR_GEOMETRY=POINT/part_0000000001.gpkg"
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        assert lyr.GetFeatureCount() == 2
+        assert lyr.GetFeature(1).GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+        assert lyr.GetFeature(2).GetGeometryRef().ExportToIsoWkt() == "POINT (3 4)"
+
+    with ogr.Open(
+        tmp_vsimem / "out/test/OGR_GEOMETRY=POINTZ/part_0000000001.gpkg"
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeomType() == ogr.wkbPoint25D
+        assert lyr.GetFeatureCount() == 1
+        assert lyr.GetFeature(3).GetGeometryRef().ExportToIsoWkt() == "POINT Z (1 2 3)"
+
+    with ogr.Open(
+        tmp_vsimem / "out/test/OGR_GEOMETRY=POINTM/part_0000000001.gpkg"
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeomType() == ogr.wkbPointM
+        assert lyr.GetFeatureCount() == 1
+        assert lyr.GetFeature(4).GetGeometryRef().ExportToIsoWkt() == "POINT M (1 2 4)"
+
+    with ogr.Open(
+        tmp_vsimem / "out/test/OGR_GEOMETRY=POINTZM/part_0000000001.gpkg"
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeomType() == ogr.wkbPointZM
+        assert lyr.GetFeatureCount() == 1
+        assert (
+            lyr.GetFeature(5).GetGeometryRef().ExportToIsoWkt() == "POINT ZM (1 2 3 4)"
+        )
+
+    with ogr.Open(
+        tmp_vsimem
+        / "out/test/OGR_GEOMETRY=__HIVE_DEFAULT_PARTITION__/part_0000000001.gpkg"
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeomType() == ogr.wkbNone
+        assert lyr.GetFeatureCount() == 1
+        assert lyr.GetFeature(6).GetGeometryRef() is None
+
+
+@pytest.mark.require_driver("SQLite")
+def test_gdalalg_vector_partition_geometry_multi_geom_fields(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    lyr = src_ds.CreateLayer("test")
+    lyr.CreateGeomField(ogr.GeomFieldDefn("aux_geom", ogr.wkbUnknown))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeomField(0, ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,0 0))"))
+    f.SetGeomField(1, ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeomField(0, ogr.CreateGeometryFromWkt("POINT (3 4)"))
+    f.SetGeomField(1, ogr.CreateGeometryFromWkt("LINESTRING (5 6,7 8)"))
+    lyr.CreateFeature(f)
+
+    gdal.alg.vector.partition(
+        input=src_ds,
+        output=tmp_vsimem / "out",
+        output_format="SQLite",
+        field="aux_geom",
+    )
+
+    with ogr.Open(tmp_vsimem / "out/test/aux_geom=POINT/part_0000000001.sqlite") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbUnknown
+        assert lyr.GetLayerDefn().GetGeomFieldDefn(1).GetType() == ogr.wkbPoint
+        assert lyr.GetFeatureCount() == 1
+        assert (
+            lyr.GetFeature(0).GetGeomFieldRef(0).ExportToIsoWkt()
+            == "POLYGON ((0 0,0 1,1 1,0 0))"
+        )
+        assert lyr.GetFeature(0).GetGeomFieldRef(1).ExportToIsoWkt() == "POINT (1 2)"
+
+    with ogr.Open(
+        tmp_vsimem / "out/test/aux_geom=LINESTRING/part_0000000001.sqlite"
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbUnknown
+        assert lyr.GetLayerDefn().GetGeomFieldDefn(1).GetType() == ogr.wkbLineString
+        assert lyr.GetFeatureCount() == 1
+        assert lyr.GetFeature(1).GetGeomFieldRef(0).ExportToIsoWkt() == "POINT (3 4)"
+        assert (
+            lyr.GetFeature(1).GetGeomFieldRef(1).ExportToIsoWkt()
+            == "LINESTRING (5 6,7 8)"
+        )

@@ -1041,6 +1041,62 @@ GetBufferAsCharPtrGIntBigSize( PyObject* input, GIntBig *nLen, char **pBuf, int 
   }
   $result = out;
 }
+
+/*
+ * Typemap argout used in Dataset::GetInterBandCovarianceMatrix()
+ */
+%typemap(in,numinputs=0) (CPLErr *peErr, int *nRows, int *nCols, double **pMatrix) (CPLErr eErr = CE_None, int nRows = 0, int nCols = 0, double *pMatrix = NULL)
+{
+  /* %typemap(in,numinputs=0) (CPLErr *peErr, int *nRows, int *nCols, double **pMatrix) (int *nRows, int *nCols, double *pMatrix) */
+  $1 = &eErr;
+  $2 = &nRows;
+  $3 = &nCols;
+  $4 = &pMatrix;
+}
+
+%typemap(argout) (CPLErr *peErr, int *nRows, int *nCols, double **pMatrix)
+{
+  /* %typemap(argout) (CPLErr *peErr, int *nRows, int *nCols, double **pMatrix) (int *nRows, int *nCols, double *pMatrix) */
+  Py_DECREF($result);
+  $result = NULL;
+  if (*$1 == CE_Failure)
+  {
+      PyErr_SetString( PyExc_RuntimeError, CPLGetLastErrorMsg() );
+      SWIG_fail;
+  }
+  if (*$1 == CE_Warning)
+  {
+      $result = Py_None;
+      Py_INCREF($result);
+  }
+  else
+  {
+      PyObject *rows = PyList_New( *$2 );
+      if (!rows)
+      {
+          CPLFree(*$4);
+          SWIG_fail;
+      }
+      for (int iRow=0; iRow<*$2; iRow++)
+      {
+          PyObject *cols = PyList_New( *$3 );
+          if( !cols ) {
+              Py_DECREF(rows);
+              CPLFree(*$4);
+              SWIG_fail;
+          }
+          for(int iCol=0; iCol<*$3; iCol++ )
+          {
+              PyObject *val = PyFloat_FromDouble((*$4)[(size_t)iRow * (*$3) + iCol]);
+              PyList_SetItem( cols, iCol, val );
+          }
+          PyList_SetItem( rows, iRow, cols );
+      }
+      CPLFree(*$4);
+      $result = rows;
+  }
+}
+
 /*
  * Typemap argout of GDAL_GCP* used in Dataset::GetGCPs( )
  */

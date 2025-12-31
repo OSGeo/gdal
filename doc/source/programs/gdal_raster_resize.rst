@@ -25,14 +25,29 @@ changing the georeferenced extents.
 
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/co.rst
+Program-Specific Options
+------------------------
 
-.. include:: gdal_options/overwrite.rst
+.. option:: -r, --resampling <RESAMPLING>
+
+    Resampling method to use. Available methods are:
+
+    ``nearest``: nearest neighbour resampling (default, fastest algorithm, worst interpolation quality).
+
+    ``bilinear``: bilinear resampling.
+
+    ``cubic``: cubic resampling.
+
+    ``cubicspline``: cubic spline resampling.
+
+    ``lanczos``: Lanczos windowed sinc resampling.
+
+    ``average``: average resampling, computes the weighted average of all non-NODATA contributing pixels.
 
 .. option:: --resolution <xres>,<yres>
 
@@ -51,27 +66,24 @@ Standard options
 
     Mutually exclusive with :option:`--resolution`.
 
-.. option:: -r, --resampling <RESAMPLING>
 
-    Resampling method to use. Available methods are:
+Standard Options
+----------------
 
-    ``nearest``: nearest neighbour resampling (default, fastest algorithm, worst interpolation quality).
+.. collapse:: Details
 
-    ``bilinear``: bilinear resampling.
+    .. include:: gdal_options/append_raster.rst
 
-    ``cubic``: cubic resampling.
+    .. include:: gdal_options/co.rst
 
-    ``cubicspline``: cubic spline resampling.
+    .. include:: gdal_options/if.rst
 
-    ``lanczos``: Lanczos windowed sinc resampling.
+    .. include:: gdal_options/oo.rst
 
-    ``average``: average resampling, computes the weighted average of all non-NODATA contributing pixels.
+    .. include:: gdal_options/of_raster_create_copy.rst
 
+    .. include:: gdal_options/overwrite.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
-
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
 Examples
 --------

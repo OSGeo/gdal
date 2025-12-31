@@ -913,7 +913,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         CPLFree(panImageTmp);
     } /* Ticket #2104: Support for ScanSAR products */
 
-    else if (this->m_eOriginalType == GDT_Byte)
+    else if (this->m_eOriginalType == GDT_UInt8)
     {
         GByte *pabyImageTmp =
             static_cast<GByte *>(VSI_MALLOC2_VERBOSE(nBlockXSize, nBlockYSize));
@@ -922,7 +922,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         eErr = m_poBandDataset->RasterIO(
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
             nRequestXSize, nRequestYSize, pabyImageTmp, nRequestXSize,
-            nRequestYSize, GDT_Byte, 1, nullptr, 1, nBlockXSize, 0, nullptr);
+            nRequestYSize, GDT_UInt8, 1, nullptr, 1, nBlockXSize, 0, nullptr);
 
         /* iterate over detected values */
         for (int i = 0; i < nRequestYSize; i++)

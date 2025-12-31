@@ -801,7 +801,7 @@ OGRFlatGeobufLayer::~OGRFlatGeobufLayer()
         VSIFree(m_headerBuf);
 }
 
-CPLErr OGRFlatGeobufLayer::Close()
+CPLErr OGRFlatGeobufLayer::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
 
@@ -854,9 +854,7 @@ OGRErr OGRFlatGeobufLayer::readFeatureOffset(uint64_t index,
             return CPLErrorIO("seeking feature offset");
         if (VSIFReadL(&featureOffset, sizeof(uint64_t), 1, m_poFp) != 1)
             return CPLErrorIO("reading feature offset");
-#if !CPL_IS_LSB
         CPL_LSBPTR64(&featureOffset);
-#endif
         return OGRERR_NONE;
     }
     catch (const std::exception &e)

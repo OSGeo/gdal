@@ -143,7 +143,7 @@ int GTIFF_CanDirectCopyFromJPEG(GDALDataset *poSrcDS,
             papszCreateOptions =
                 CSLSetNameValue(papszCreateOptions, "PHOTOMETRIC", NULL);
 
-        if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
+        if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt8)
             papszCreateOptions =
                 CSLSetNameValue(papszCreateOptions, "NBITS", "12");
         else
@@ -325,7 +325,7 @@ int GTIFF_CanCopyFromJPEG(GDALDataset *poSrcDS, char **&papszCreateOptions)
 
     if ((nBlockXSize == nXSize || (nBlockXSize % nMCUSize) == 0) &&
         (nBlockYSize == nYSize || (nBlockYSize % nMCUSize) == 0) &&
-        poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte &&
+        poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_UInt8 &&
         CSLFetchNameValue(papszCreateOptions, "NBITS") == nullptr &&
         CSLFetchNameValue(papszCreateOptions, "JPEG_QUALITY") == nullptr)
     {

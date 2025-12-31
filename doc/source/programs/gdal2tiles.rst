@@ -57,6 +57,9 @@ can publish a picture without proper georeferencing too.
 
     gdal2tiles is a Python utility, and is only available if GDAL Python bindings are available.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_tile`
 
 .. program:: gdal2tiles
 

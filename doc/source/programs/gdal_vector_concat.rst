@@ -50,33 +50,35 @@ a given destination CRS.
 
 This command can also be used as the first step of :ref:`gdal_vector_pipeline`.
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_vector.rst
+.. include:: gdal_cli_include/gdalg_vector_compatible.rst
 
-.. include:: gdal_options/co_vector.rst
 
-.. include:: gdal_options/overwrite.rst
+Program-Specific Options
+------------------------
 
-.. option:: --update
+.. option:: -d, --dst-crs <SRC-CRS>
 
-    Whether the output dataset must be opened in update mode. Implies that
-    it already exists. This mode is useful when adding new layer(s) to an
-    already existing dataset.
+    Set destination spatial reference.
 
-.. option:: --overwrite-layer
+    .. include:: options/srs_def_gdalwarp.rst
 
-    Whether overwriting existing layer(s) is allowed.
+.. option:: --field-strategy union|intersection
 
-.. option:: --append
+    Determines how the schema of the target layer is built from the schemas of
+    the input layers:
 
-    Whether appending features to existing layer(s) is allowed
+    - ``union`` (default) to use a super-set of all the fields from all source layers.
 
-.. option:: -l, --layer, --input-layer <LAYER>
+    - ``intersection`` to use a sub-set of all the common fields from all
+      source layers.
 
-    Name of one or more layers to inspect.  If no layer names are passed, then
-    all layers will be selected.
+.. option:: --mode merge-per-layer-name|stack|single
+
+    Determine the strategy to create output layers from source layers. See
+    introductory paragraph for more details.
 
 .. option:: --output-layer <OUTPUT-LAYER>
 
@@ -97,17 +99,6 @@ Standard options
     -  ``{LAYER_NAME}``: name of the source layer
     -  ``{LAYER_INDEX}``: index of the source layer
 
-.. option:: --mode merge-per-layer-name|stack|single
-
-    Determine the strategy to create output layers from source layers. See
-    introductory paragraph for more details.
-
-.. option:: --source-layer-field-name <SOURCE-LAYER-FIELD-NAME>
-
-    If specified, the schema of the target layer will be extended with a field
-    whose name is the value of this option and whose content is
-    determined :option:`--source-layer-field-content`.
-
 .. option:: --source-layer-field-content <SOURCE-LAYER-FIELD-CONTENT>
 
     If specified, the schema of the target layer will be extended with a new field
@@ -115,15 +106,12 @@ Standard options
     or ``source_ds_lyr`` otherwise), whose content is determined by the specified
     template (see :option:`--output-layer` for variables that can be used).
 
-.. option:: --field-strategy union|intersection
+.. option:: --source-layer-field-name <SOURCE-LAYER-FIELD-NAME>
 
-    Determines how the schema of the target layer is built from the schemas of
-    the input layers:
+    If specified, the schema of the target layer will be extended with a field
+    whose name is the value of this option and whose content is
+    determined :option:`--source-layer-field-content`.
 
-    - ``union`` (default) to use a super-set of all the fields from all source layers.
-
-    - ``intersection`` to use a sub-set of all the common fields from all
-      source layers.
 
 .. option:: -s, --src-crs <SRC-CRS>
 
@@ -132,17 +120,36 @@ Standard options
 
     .. include:: options/srs_def_gdalwarp.rst
 
-.. option:: -d, --dst-crs <SRC-CRS>
+Standard Options
+----------------
 
-    Set destination spatial reference.
+.. collapse:: Details
 
-    .. include:: options/srs_def_gdalwarp.rst
+    .. include:: gdal_options/append_vector.rst
 
+    .. include:: gdal_options/co_vector.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+    .. include:: gdal_options/input_layer.rst
+
+    .. include:: gdal_options/lco.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst
 
 Examples
 --------

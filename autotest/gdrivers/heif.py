@@ -176,7 +176,7 @@ def test_heif_tiled():
     assert ds.RasterXSize == 30
     assert ds.RasterYSize == 20
     assert ds.RasterCount == 3
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     assert ds.GetRasterBand(1).GetBlockSize() == [15, 5]
     assert ds.GetRasterBand(2).GetBlockSize() == [15, 5]
     assert ds.GetRasterBand(3).GetBlockSize() == [15, 5]
@@ -595,7 +595,7 @@ def test_heif_network_read(tmp_vsimem):
 
 
 def make_data():
-    ds = gdal.GetDriverByName("MEM").Create("", 300, 200, 3, gdal.GDT_Byte)
+    ds = gdal.GetDriverByName("MEM").Create("", 300, 200, 3, gdal.GDT_UInt8)
 
     ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_RedBand)
     ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
@@ -609,7 +609,7 @@ def make_data():
     rgb_bytes = array.array("B", red_green_blue).tobytes()
     for line in range(100):
         ds.WriteRaster(
-            0, line, 300, 1, rgb_bytes, buf_type=gdal.GDT_Byte, band_list=[1, 2, 3]
+            0, line, 300, 1, rgb_bytes, buf_type=gdal.GDT_UInt8, band_list=[1, 2, 3]
         )
     black_white = ([0xFF] * 150 + [0x00] * 150) * 3
     black_white_bytes = array.array("B", black_white).tobytes()
@@ -620,7 +620,7 @@ def make_data():
             300,
             1,
             black_white_bytes,
-            buf_type=gdal.GDT_Byte,
+            buf_type=gdal.GDT_UInt8,
             band_list=[1, 2, 3],
         )
 
@@ -629,7 +629,7 @@ def make_data():
 
 
 def make_data_with_alpha():
-    ds = gdal.GetDriverByName("MEM").Create("", 300, 200, 4, gdal.GDT_Byte)
+    ds = gdal.GetDriverByName("MEM").Create("", 300, 200, 4, gdal.GDT_UInt8)
 
     ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_RedBand)
     ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
@@ -645,7 +645,7 @@ def make_data_with_alpha():
     rgba_bytes = array.array("B", red_green_blue_alpha).tobytes()
     for line in range(100):
         ds.WriteRaster(
-            0, line, 300, 1, rgba_bytes, buf_type=gdal.GDT_Byte, band_list=[1, 2, 3, 4]
+            0, line, 300, 1, rgba_bytes, buf_type=gdal.GDT_UInt8, band_list=[1, 2, 3, 4]
         )
     black_white = ([0xFF] * 150 + [0x00] * 150) * 4
     black_white_bytes = array.array("B", black_white).tobytes()
@@ -656,7 +656,7 @@ def make_data_with_alpha():
             300,
             1,
             black_white_bytes,
-            buf_type=gdal.GDT_Byte,
+            buf_type=gdal.GDT_UInt8,
             band_list=[1, 2, 3, 4],
         )
 

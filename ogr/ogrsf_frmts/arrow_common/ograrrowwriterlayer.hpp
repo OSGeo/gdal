@@ -33,7 +33,7 @@ static constexpr int TZFLAG_UNINITIALIZED = -1;
         if (!(status).ok())                                                    \
         {                                                                      \
             CPLError(CE_Failure, CPLE_AppDefined, "%s failed",                 \
-                     ARROW_STRINGIFY(status));                                 \
+                     (status).message().c_str());                              \
             return (ret_value);                                                \
         }                                                                      \
     } while (false)
@@ -593,10 +593,9 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             auto bbox_field_xmax(arrow::field("xmax", arrow::float32(), false));
             auto bbox_field_ymax(arrow::field("ymax", arrow::float32(), false));
             auto bbox_field(arrow::field(
-                CPLGetConfigOption("OGR_PARQUET_COVERING_BBOX_NAME",
-                                   std::string(poGeomFieldDefn->GetNameRef())
-                                       .append("_bbox")
-                                       .c_str()),
+                m_oBBoxStructFieldName.empty()
+                    ? std::string(poGeomFieldDefn->GetNameRef()).append("_bbox")
+                    : m_oBBoxStructFieldName,
                 arrow::struct_(
                     {std::move(bbox_field_xmin), std::move(bbox_field_ymin),
                      std::move(bbox_field_xmax), std::move(bbox_field_ymax)}),
@@ -668,7 +667,7 @@ inline void OGRArrowWriterLayer::FinalizeSchema()
     {
         if (m_anTZFlag[i] >= OGR_TZFLAG_MIXED_TZ)
         {
-            const int nOffset = m_anTZFlag[i] == OGR_TZFLAG_UTC
+            const int nOffset = m_anTZFlag[i] == OGR_TZFLAG_MIXED_TZ
                                     ? 0
                                     : (m_anTZFlag[i] - OGR_TZFLAG_UTC) * 15;
             int nHours = static_cast<int>(nOffset / 60);  // Round towards zero.
@@ -873,7 +872,8 @@ inline bool OGRArrowWriterLayer::CreateFieldFromArrowSchema(
     if (!result.ok())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "CreateFieldFromArrowSchema() failed");
+                 "CreateFieldFromArrowSchema() failed: %s",
+                 result.status().message().c_str());
         return false;
     }
     m_apoFieldsFromArrowSchema.emplace_back(std::move(*result));

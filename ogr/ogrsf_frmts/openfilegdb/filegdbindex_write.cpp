@@ -421,6 +421,23 @@ void FileGDBTable::ComputeOptimalSpatialIndexGridResolution()
 }
 
 /************************************************************************/
+/*                     SortByAscendingValuesAndOID()                    */
+/************************************************************************/
+
+// recent libc++ std::sort() involve unsigned integer overflow in some
+// situation
+template <class ValueOIDPair>
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW static void
+SortByAscendingValuesAndOID(std::vector<ValueOIDPair> &asValues)
+{
+    std::sort(asValues.begin(), asValues.end(),
+              [](const ValueOIDPair &a, const ValueOIDPair &b) {
+                  return a.first < b.first ||
+                         (a.first == b.first && a.second < b.second);
+              });
+}
+
+/************************************************************************/
 /*                           WriteIndex()                               */
 /************************************************************************/
 
@@ -476,11 +493,7 @@ static bool WriteIndex(
     }
 
     // Sort by ascending values, and for same value by ascending OID
-    std::sort(asValues.begin(), asValues.end(),
-              [](const ValueOIDPair &a, const ValueOIDPair &b) {
-                  return a.first < b.first ||
-                         (a.first == b.first && a.second < b.second);
-              });
+    SortByAscendingValuesAndOID(asValues);
 
     bool bRet = true;
     std::vector<GByte> abyPage;

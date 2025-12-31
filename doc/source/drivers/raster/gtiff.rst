@@ -337,6 +337,9 @@ suffix to the option name, but this is now considered a legacy behavior.
       :default: OFF
 
       When set to ON, blocks whose pixels are all at nodata (or 0 if no nodata is defined)
+      are not written in the file. Sparse files have 0 tile/strip offsets for
+      blocks never written and save space; however, most non-GDAL packages
+      cannot read such files.
 
 
 Overviews and nodata masks
@@ -1302,6 +1305,9 @@ the default behavior of the GTiff driver.
       :since: 3.4.1
 
       When set to ON, blocks whose pixels are all at nodata (or 0 if no nodata is defined)
+      are not written in the file. Sparse files have 0 tile/strip offsets for
+      blocks never written and save space; however, most non-GDAL packages
+      cannot read such files.
 
 -  .. config:: GDAL_TIFF_INTERNAL_MASK
       :choices: TRUE, FALSE

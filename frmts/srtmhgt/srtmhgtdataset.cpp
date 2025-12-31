@@ -172,7 +172,7 @@ CPLErr SRTMHGTRasterBand::IWriteBlock(int /*nBlockXOff*/, int nBlockYOff,
 double SRTMHGTRasterBand::GetNoDataValue(int *pbSuccess)
 
 {
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
         return GDALPamRasterBand::GetNoDataValue(pbSuccess);
 
     if (pbSuccess)
@@ -446,7 +446,7 @@ GDALPamDataset *SRTMHGTDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
             break;
         case 3601 * 3601:
             numPixels_x = numPixels_y = 3601;
-            eDT = GDT_Byte;
+            eDT = GDT_UInt8;
             break;
         case 3601 * 3601 * 2:
             numPixels_x = numPixels_y = 3601;
@@ -465,7 +465,7 @@ GDALPamDataset *SRTMHGTDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 
     poDS->eAccess = poOpenInfo->eAccess;
 #ifdef CPL_LSB
-    if (poDS->eAccess == GA_Update && eDT != GDT_Byte)
+    if (poDS->eAccess == GA_Update && eDT != GDT_UInt8)
     {
         poDS->pabyBuffer =
             static_cast<GByte *>(CPLMalloc(numPixels_x * sizeof(eDT)));

@@ -52,10 +52,9 @@
 
 int GTiffDataset::GetJPEGOverviewCount()
 {
-    if (m_nJPEGOverviewCount >= 0)
-        return m_nJPEGOverviewCount;
+    if (!m_apoJPEGOverviewDS.empty())
+        return static_cast<int>(m_apoJPEGOverviewDS.size());
 
-    m_nJPEGOverviewCount = 0;
     if (m_poBaseDS || eAccess != GA_ReadOnly ||
         m_nCompression != COMPRESSION_JPEG ||
         (nRasterXSize < 256 && nRasterYSize < 256) ||
@@ -76,15 +75,16 @@ int GTiffDataset::GetJPEGOverviewCount()
 
     // libjpeg-6b only supports 2, 4 and 8 scale denominators.
     // TODO: Later versions support more.
+    int nJPEGOverviewCount = 0;
     for (signed char i = 2; i >= 0; i--)
     {
         if (nRasterXSize >= (256 << i) || nRasterYSize >= (256 << i))
         {
-            m_nJPEGOverviewCount = i + 1;
+            nJPEGOverviewCount = i + 1;
             break;
         }
     }
-    if (m_nJPEGOverviewCount == 0)
+    if (nJPEGOverviewCount == 0)
         return 0;
 
     // Get JPEG tables.
@@ -97,7 +97,6 @@ int GTiffDataset::GetJPEGOverviewCount()
             nJPEGTableSize > INT_MAX ||
             static_cast<GByte *>(pJPEGTable)[nJPEGTableSize - 1] != 0xD9)
         {
-            m_nJPEGOverviewCount = 0;
             return 0;
         }
         nJPEGTableSize--;  // Remove final 0xD9.
@@ -108,17 +107,13 @@ int GTiffDataset::GetJPEGOverviewCount()
         nJPEGTableSize = 2;
     }
 
-    m_papoJPEGOverviewDS = static_cast<GTiffJPEGOverviewDS **>(
-        CPLMalloc(sizeof(GTiffJPEGOverviewDS *) * m_nJPEGOverviewCount));
-    for (int i = 0; i < m_nJPEGOverviewCount; ++i)
+    for (int i = 0; i < nJPEGOverviewCount; ++i)
     {
-        m_papoJPEGOverviewDS[i] = new GTiffJPEGOverviewDS(
-            this, i + 1, pJPEGTable, static_cast<int>(nJPEGTableSize));
+        m_apoJPEGOverviewDS.emplace_back(std::make_unique<GTiffJPEGOverviewDS>(
+            this, i + 1, pJPEGTable, static_cast<int>(nJPEGTableSize)));
     }
 
-    m_nJPEGOverviewCountOri = m_nJPEGOverviewCount;
-
-    return m_nJPEGOverviewCount;
+    return nJPEGOverviewCount;
 }
 
 /************************************************************************/
@@ -1084,7 +1079,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
 
     if (m_nPlanarConfig == PLANARCONFIG_CONTIG &&
         (nBands == 3 || nBands == 4) && nBands == nBandCount &&
-        (sContext.eDT == GDT_Byte || sContext.eDT == GDT_Int16 ||
+        (sContext.eDT == GDT_UInt8 || sContext.eDT == GDT_Int16 ||
          sContext.eDT == GDT_UInt16))
     {
         if (sContext.bSkipBlockCache)
@@ -1133,7 +1128,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
         {
             sContext.bCacheAllBands = true;
             if ((nBands == 3 || nBands == 4) &&
-                (sContext.eDT == GDT_Byte || sContext.eDT == GDT_Int16 ||
+                (sContext.eDT == GDT_UInt8 || sContext.eDT == GDT_Int16 ||
                  sContext.eDT == GDT_UInt16))
             {
                 sContext.bUseDeinterleaveOptimBlockCache = true;
@@ -3123,7 +3118,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
             // Other optimization: no resampling, no data type change,
             // data type is Byte/Int8.
             else if (nBufXSize == nXSize && eDataType == eBufType &&
-                     (eDataType == GDT_Byte || eDataType == GDT_Int8))
+                     (eDataType == GDT_UInt8 || eDataType == GDT_Int8))
             {
                 GByte *pabySrcData = static_cast<GByte *>(ppData[iSrcY]);
                 GByte *pabyDstData =
@@ -3141,8 +3136,8 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                     for (int iBand = 0; iBand < nBandCount; ++iBand)
                     {
                         GDALCopyWords(
-                            pabySrcData + iBand, GDT_Byte, nSrcPixelSize,
-                            pabyDstData + iBand * nBandSpace, GDT_Byte,
+                            pabySrcData + iBand, GDT_UInt8, nSrcPixelSize,
+                            pabyDstData + iBand * nBandSpace, GDT_UInt8,
                             static_cast<int>(nPixelSpace), nBufXSize);
                     }
                 }
@@ -3155,7 +3150,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                         static_cast<GByte *>(ppData[iSrcY]) + iBand * nDTSize;
                     GByte *pabyDstData = static_cast<GByte *>(pData) +
                                          iBand * nBandSpace + iY * nLineSpace;
-                    if ((eDataType == GDT_Byte && eBufType == GDT_Byte) ||
+                    if ((eDataType == GDT_UInt8 && eBufType == GDT_UInt8) ||
                         (eDataType == GDT_Int8 && eBufType == GDT_Int8))
                     {
                         double dfSrcX = 0.5 * dfSrcXInc;
@@ -3532,11 +3527,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
     GByte *pabyBuffer = static_cast<GByte *>(
         VSIGetMemFileBuffer(osTmpFilename, &nDataLength, FALSE));
     const bool bLittleEndian = (pabyBuffer[0] == 'I');
-#if CPL_IS_LSB
-    const bool bSwap = !bLittleEndian;
-#else
-    const bool bSwap = bLittleEndian;
-#endif
+    const bool bSwap = CPL_IS_LSB ^ bLittleEndian;
     const bool bBigTIFF = pabyBuffer[2] == 43 || pabyBuffer[3] == 43;
     vsi_l_offset nMaxOffset = 0;
     if (bBigTIFF)
@@ -3730,7 +3721,7 @@ bool GTiffDataset::AssociateExternalMask()
     if (m_poMaskExtOvrDS->GetRasterBand(1)->GetOverviewCount() !=
         GetRasterBand(1)->GetOverviewCount())
         return false;
-    if (m_papoOverviewDS == nullptr)
+    if (m_apoOverviewDS.empty())
         return false;
     if (m_poMaskDS)
         return false;
@@ -3738,20 +3729,22 @@ bool GTiffDataset::AssociateExternalMask()
         m_poMaskExtOvrDS->GetRasterYSize() != nRasterYSize)
         return false;
     m_poExternalMaskDS = m_poMaskExtOvrDS.get();
-    for (int i = 0; i < m_nOverviewCount; i++)
+    int i = 0;
+    for (auto &poOvrDS : m_apoOverviewDS)
     {
-        if (m_papoOverviewDS[i]->m_poMaskDS)
+        if (poOvrDS->m_poMaskDS)
             return false;
-        m_papoOverviewDS[i]->m_poExternalMaskDS =
+        poOvrDS->m_poExternalMaskDS =
             m_poMaskExtOvrDS->GetRasterBand(1)->GetOverview(i)->GetDataset();
-        if (!m_papoOverviewDS[i]->m_poExternalMaskDS)
+        if (!poOvrDS->m_poExternalMaskDS)
             return false;
-        auto poOvrBand = m_papoOverviewDS[i]->GetRasterBand(1);
-        if (m_papoOverviewDS[i]->m_poExternalMaskDS->GetRasterXSize() !=
+        auto poOvrBand = poOvrDS->GetRasterBand(1);
+        if (poOvrDS->m_poExternalMaskDS->GetRasterXSize() !=
                 poOvrBand->GetXSize() ||
-            m_papoOverviewDS[i]->m_poExternalMaskDS->GetRasterYSize() !=
+            poOvrDS->m_poExternalMaskDS->GetRasterYSize() !=
                 poOvrBand->GetYSize())
             return false;
+        ++i;
     }
     return true;
 }
@@ -3868,7 +3861,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    GTiffDataset *poDS = new GTiffDataset();
+    auto poDS = std::make_unique<GTiffDataset>();
     poDS->SetDescription(pszFilename);
     poDS->m_osFilename = pszFilename;
     poDS->m_fpL = poOpenInfo->fpL;
@@ -3939,7 +3932,6 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
                          "to YES.",
                          pszFilename);
                 XTIFFClose(l_hTIFF);
-                delete poDS;
                 return nullptr;
             }
             poDS->m_oGTiffMDMD.SetMetadataItem("LAYOUT", "COG",
@@ -3966,7 +3958,6 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
                          poOpenInfo->eAccess, bAllowRGBAInterface,
                          true) != CE_None)
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -4003,7 +3994,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Initialize info for external overviews.                         */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo, pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo, pszFilename);
 
     // For backward compatibility, in case GTIFF_POINT_GEO_IGNORE is defined
     // load georeferencing right now so as to not require it to be defined
@@ -4013,7 +4004,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->LoadGeoreferencingAndPamIfNeeded();
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -4221,6 +4212,63 @@ void GTiffDataset::LookForProjectionFromGeoTIFF()
 }
 
 /************************************************************************/
+/*               GetSidecarFilenameWithReplacedExtension()    ¨         */
+/************************************************************************/
+
+std::string
+GTiffDataset::GetSidecarFilenameWithReplacedExtension(const char *pszExt)
+{
+    if (!GDALCanFileAcceptSidecarFile(m_osFilename.c_str()))
+        return std::string();
+
+    CSLConstList papszSiblingFiles = GetSiblingFiles();
+    const std::string osSidecarFilenameLowerCaseExt = CPLResetExtensionSafe(
+        m_osFilename.c_str(), CPLString(pszExt).tolower());
+
+    if (papszSiblingFiles && GDALCanReliablyUseSiblingFileList(
+                                 osSidecarFilenameLowerCaseExt.c_str()))
+    {
+        const int iSibling = CSLFindString(
+            papszSiblingFiles,
+            CPLGetFilename(osSidecarFilenameLowerCaseExt.c_str()));
+        if (iSibling >= 0)
+        {
+            std::string osRet = m_osFilename.c_str();
+            osRet.resize(m_osFilename.size() -
+                         strlen(CPLGetFilename(m_osFilename.c_str())));
+            osRet += papszSiblingFiles[iSibling];
+            return osRet;
+        }
+        else
+        {
+            return std::string();
+        }
+    }
+
+    VSIStatBufL sStatBuf;
+    bool bGotSidecar = VSIStatExL(osSidecarFilenameLowerCaseExt.c_str(),
+                                  &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
+
+    if (bGotSidecar)
+    {
+        return osSidecarFilenameLowerCaseExt;
+    }
+    else if (VSIIsCaseSensitiveFS(osSidecarFilenameLowerCaseExt.c_str()))
+    {
+        const std::string osSidecarFilenameUppercaseExt = CPLResetExtensionSafe(
+            m_osFilename.c_str(), CPLString(pszExt).toupper());
+        bGotSidecar = VSIStatExL(osSidecarFilenameUppercaseExt.c_str(),
+                                 &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
+        if (bGotSidecar)
+        {
+            return osSidecarFilenameUppercaseExt;
+        }
+    }
+
+    return std::string();
+}
+
+/************************************************************************/
 /*                      LookForProjectionFromXML()                      */
 /************************************************************************/
 
@@ -4229,60 +4277,10 @@ void GTiffDataset::LookForProjectionFromXML()
     if (m_poBaseDS != nullptr)
         return;
 
-    CSLConstList papszSiblingFiles = GetSiblingFiles();
-
-    if (!GDALCanFileAcceptSidecarFile(m_osFilename.c_str()))
-        return;
-
-    const std::string osXMLFilenameLowerCase =
-        CPLResetExtensionSafe(m_osFilename.c_str(), "xml");
-
-    CPLString osXMLFilename;
-    if (papszSiblingFiles &&
-        GDALCanReliablyUseSiblingFileList(osXMLFilenameLowerCase.c_str()))
-    {
-        const int iSibling = CSLFindString(
-            papszSiblingFiles, CPLGetFilename(osXMLFilenameLowerCase.c_str()));
-        if (iSibling >= 0)
-        {
-            osXMLFilename = m_osFilename.c_str();
-            osXMLFilename.resize(m_osFilename.size() -
-                                 strlen(CPLGetFilename(m_osFilename.c_str())));
-            osXMLFilename += papszSiblingFiles[iSibling];
-        }
-        else
-        {
-            return;
-        }
-    }
-
+    const std::string osXMLFilename =
+        GetSidecarFilenameWithReplacedExtension("xml");
     if (osXMLFilename.empty())
-    {
-        VSIStatBufL sStatBuf;
-        bool bGotXML = VSIStatExL(osXMLFilenameLowerCase.c_str(), &sStatBuf,
-                                  VSI_STAT_EXISTS_FLAG) == 0;
-
-        if (bGotXML)
-        {
-            osXMLFilename = osXMLFilenameLowerCase;
-        }
-        else if (VSIIsCaseSensitiveFS(osXMLFilenameLowerCase.c_str()))
-        {
-            const std::string osXMLFilenameUpperCase =
-                CPLResetExtensionSafe(m_osFilename.c_str(), "XML");
-            bGotXML = VSIStatExL(osXMLFilenameUpperCase.c_str(), &sStatBuf,
-                                 VSI_STAT_EXISTS_FLAG) == 0;
-            if (bGotXML)
-            {
-                osXMLFilename = osXMLFilenameUpperCase;
-            }
-        }
-
-        if (osXMLFilename.empty())
-        {
-            return;
-        }
-    }
+        return;
 
     GByte *pabyRet = nullptr;
     vsi_l_offset nSize = 0;
@@ -4383,7 +4381,7 @@ void GTiffDataset::ApplyPamInfo()
     {
         m_aoGCPs = gdal::GCP::fromC(GDALPamDataset::GetGCPs(), nPamGCPCount);
 
-        // Invalidate Geotransorm got from less prioritary sources
+        // Invalidate Geotransorm got from less priority sources
         if (!m_aoGCPs.empty() && m_bGeoTransformValid && !bGotGTFromPAM &&
             m_nPAMGeorefSrcIndex == 0)
         {
@@ -4481,7 +4479,7 @@ void GTiffDataset::ApplyPamInfo()
                             /* Y = */ adfTargetGCPs[2 * i + 1]);
                     }
 
-                    // Invalidate Geotransform got from less prioritary sources
+                    // Invalidate Geotransform got from less priority sources
                     if (!m_aoGCPs.empty() && m_bGeoTransformValid &&
                         !bGotGTFromPAM && m_nPAMGeorefSrcIndex == 0)
                     {
@@ -4674,7 +4672,7 @@ GDALDataset *GTiffDataset::OpenDir(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    GTiffDataset *poDS = new GTiffDataset();
+    auto poDS = std::make_unique<GTiffDataset>();
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->m_osFilename = pszFilename;
     poDS->m_fpL = l_fpL;
@@ -4694,11 +4692,10 @@ GDALDataset *GTiffDataset::OpenDir(GDALOpenInfo *poOpenInfo)
     if (poDS->OpenOffset(l_hTIFF, nOffset, poOpenInfo->eAccess,
                          bAllowRGBAInterface, true) != CE_None)
     {
-        delete poDS;
         return nullptr;
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -5247,17 +5244,23 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
     for (int iBand = 0; iBand < nBands; ++iBand)
     {
         if (bTreatAsRGBA)
-            SetBand(iBand + 1, new GTiffRGBABand(this, iBand + 1));
+            SetBand(iBand + 1,
+                    std::make_unique<GTiffRGBABand>(this, iBand + 1));
         else if (m_bTreatAsSplitBitmap)
-            SetBand(iBand + 1, new GTiffSplitBitmapBand(this, iBand + 1));
+            SetBand(iBand + 1,
+                    std::make_unique<GTiffSplitBitmapBand>(this, iBand + 1));
         else if (m_bTreatAsSplit)
-            SetBand(iBand + 1, new GTiffSplitBand(this, iBand + 1));
+            SetBand(iBand + 1,
+                    std::make_unique<GTiffSplitBand>(this, iBand + 1));
         else if (bTreatAsBitmap)
-            SetBand(iBand + 1, new GTiffBitmapBand(this, iBand + 1));
+            SetBand(iBand + 1,
+                    std::make_unique<GTiffBitmapBand>(this, iBand + 1));
         else if (bTreatAsOdd)
-            SetBand(iBand + 1, new GTiffOddBitsBand(this, iBand + 1));
+            SetBand(iBand + 1,
+                    std::make_unique<GTiffOddBitsBand>(this, iBand + 1));
         else
-            SetBand(iBand + 1, new GTiffRasterBand(this, iBand + 1));
+            SetBand(iBand + 1,
+                    std::make_unique<GTiffRasterBand>(this, iBand + 1));
     }
 
     if (GetRasterBand(1)->GetRasterDataType() == GDT_Unknown)
@@ -5422,7 +5425,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
     else
         m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
 
-    if ((GetRasterBand(1)->GetRasterDataType() == GDT_Byte &&
+    if ((GetRasterBand(1)->GetRasterDataType() == GDT_UInt8 &&
          m_nBitsPerSample != 8) ||
         (GetRasterBand(1)->GetRasterDataType() == GDT_UInt16 &&
          m_nBitsPerSample != 16) ||
@@ -6302,6 +6305,7 @@ char **GTiffDataset::GetMetadata(const char *pszDomain)
     if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
     {
         GTiffDataset::GetMetadataItem("COMPRESSION_REVERSIBILITY", pszDomain);
+        GTiffDataset::GetMetadataItem("LAYOUT", pszDomain);
     }
     else
     {
@@ -6360,7 +6364,8 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
             {
                 vsi_l_offset nOffset = 0;
                 vsi_l_offset nSize = 0;
-                IsBlockAvailable(0, &nOffset, &nSize, nullptr);
+                CPL_IGNORE_RET_VAL(
+                    IsBlockAvailable(0, &nOffset, &nSize, nullptr));
                 if (nSize > 0)
                 {
                     const std::string osSubfile(
@@ -6384,6 +6389,18 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
                                 "IMAGE_STRUCTURE");
                     }
                 }
+            }
+        }
+
+        if (!m_bLayoutChecked && m_poBaseDS == nullptr)
+        {
+            m_bLayoutChecked = true;
+            const char *pszLayout =
+                m_oGTiffMDMD.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE");
+            if (eAccess == GA_ReadOnly && !pszLayout && CheckCOGLayout())
+            {
+                m_oGTiffMDMD.SetMetadataItem("LAYOUT", "COG",
+                                             "IMAGE_STRUCTURE");
             }
         }
     }
@@ -6664,6 +6681,54 @@ void GTiffDataset::LoadMetadata()
             CSLDestroy(papszRPCMD);
         }
     }
+}
+
+/************************************************************************/
+/*                        LoadENVIHdrIfNeeded()                         */
+/************************************************************************/
+
+void GTiffDataset::LoadENVIHdrIfNeeded()
+{
+    if (m_bENVIHdrTried || m_poBaseDS)
+        return;
+    m_bENVIHdrTried = true;
+
+    const std::string osHdrFilename =
+        GetSidecarFilenameWithReplacedExtension("hdr");
+    if (osHdrFilename.empty())
+        return;
+
+    auto fp = VSIFilesystemHandler::OpenStatic(osHdrFilename.c_str(), "rb");
+    if (!fp)
+        return;
+
+    constexpr int MAX_LINE_SIZE = 10000;
+
+    // Check line is "ENVI"
+    const char *pszFirstLine = CPLReadLine2L(fp.get(), MAX_LINE_SIZE, nullptr);
+    if (!pszFirstLine || !EQUAL(pszFirstLine, "ENVI"))
+        return;
+
+    VSIRewindL(fp.get());
+
+    const CPLStringList aosHeaders(GDALReadENVIHeader(fp.get()));
+
+    // Basic check to verify the .hdr file is indeed related to the GeoTIFF one
+    if (atoi(aosHeaders.FetchNameValueDef("samples", "0")) != nRasterXSize ||
+        atoi(aosHeaders.FetchNameValueDef("lines", "0")) != nRasterYSize ||
+        !EQUAL(aosHeaders.FetchNameValueDef("file_type", ""), "TIFF"))
+    {
+        return;
+    }
+
+    m_bENVIHdrFound = true;
+
+    const char *const apszOptions[] = {
+        "APPLY_DEFAULT_BANDS=NO",        "APPLY_CLASS_LOOKUP=NO",
+        "APPLY_DATA_IGNORE_VALUE=NO",    "SET_BAND_NAME=NO",
+        "SET_DATASET_LEVEL_METADATA=NO", nullptr,
+    };
+    GDALApplyENVIHeaders(this, aosHeaders, apszOptions);
 }
 
 /************************************************************************/
@@ -7175,4 +7240,68 @@ void *GTiffDataset::CacheMultiRange(int nXOff, int nYOff, int nXSize,
         }
     }
     return pBufferedData;
+}
+
+/************************************************************************/
+/*                         CheckCOGLayout()                             */
+/************************************************************************/
+
+bool GTiffDataset::CheckCOGLayout()
+{
+    bool bRet = CPL_TO_BOOL(TIFFIsTiled(m_hTIFF));
+    const bool bNeedsOverviews = (nRasterXSize > 512 || nRasterYSize > 512);
+    if (bNeedsOverviews)
+        ScanDirectories();
+    bRet = bRet && !(m_apoOverviewDS.empty() && bNeedsOverviews);
+#ifdef TIFFLIB_MAJOR_VERSION
+    // TIFFIsBigTIFF() added in libtiff 4.4
+    const uint64_t nExpectedDirOffset = TIFFIsBigTIFF(m_hTIFF) ? 16 : 8;
+#else
+    GByte abyData[4] = {0, 0, 0, 0};
+    {
+        const auto nCurFPOffset = VSIFTellL(m_fpL);
+        VSIFSeekL(m_fpL, 0, SEEK_SET);
+        CPL_IGNORE_RET_VAL(VSIFReadL(abyData, 1, sizeof(abyData), m_fpL));
+        VSIFSeekL(m_fpL, nCurFPOffset, SEEK_SET);
+    }
+    const uint64_t nExpectedDirOffset =
+        (abyData[2] == 0x2B || abyData[3] == 0x2B) ? 16 : 8;
+#endif
+    bRet = bRet && (m_nDirOffset == nExpectedDirOffset);
+    uint64_t nLastIFDOffset = nExpectedDirOffset;
+    int nLastXSize = nRasterXSize;
+    int nLastYSize = nRasterYSize;
+    for (const auto &poOvrDS : m_apoOverviewDS)
+    {
+        bRet = bRet && poOvrDS->m_nDirOffset > nLastIFDOffset;
+        bRet = bRet && poOvrDS->nRasterXSize <= nLastXSize;
+        bRet = bRet && poOvrDS->nRasterYSize <= nLastYSize;
+        bRet = bRet && CPL_TO_BOOL(TIFFIsTiled(poOvrDS->m_hTIFF));
+        nLastXSize = poOvrDS->nRasterXSize;
+        nLastYSize = poOvrDS->nRasterYSize;
+        nLastIFDOffset = poOvrDS->m_nDirOffset;
+    }
+    uint64_t nDataOffset = nLastIFDOffset;
+    for (auto iter = m_apoOverviewDS.rbegin();
+         bRet && iter != m_apoOverviewDS.rend(); ++iter)
+    {
+        bRet = CPL_TO_BOOL(TIFFIsTiled((*iter)->m_hTIFF));
+        vsi_l_offset nOffset = 0;
+        vsi_l_offset nSize = 0;
+        if ((*iter)->IsBlockAvailable(0, &nOffset, &nSize, nullptr))
+        {
+            bRet = bRet && nOffset > nDataOffset;
+            nDataOffset = nOffset;
+        }
+    }
+    if (!m_apoOverviewDS.empty())
+    {
+        vsi_l_offset nOffset = 0;
+        vsi_l_offset nSize = 0;
+        if (IsBlockAvailable(0, &nOffset, &nSize, nullptr))
+        {
+            bRet = bRet && nOffset > nDataOffset;
+        }
+    }
+    return bRet;
 }

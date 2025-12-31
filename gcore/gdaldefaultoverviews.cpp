@@ -1442,7 +1442,7 @@ CPLErr GDALDefaultOverviews::CreateMaskBand(int nFlags, int nBand)
         osMskFilename.Printf("%s.msk", poDS->GetDescription());
         poMaskDS =
             poDr->Create(osMskFilename, poDS->GetRasterXSize(),
-                         poDS->GetRasterYSize(), nBands, GDT_Byte, papszOpt);
+                         poDS->GetRasterYSize(), nBands, GDT_UInt8, papszOpt);
         CSLDestroy(papszOpt);
 
         if (poMaskDS == nullptr)  // Presumably error already issued.

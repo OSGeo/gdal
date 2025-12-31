@@ -180,6 +180,11 @@ class GDALTest:
                 # Copy all files in /vsimem/
                 mainfile_dirname = os.path.dirname(fl[0])
                 for filename in fl:
+
+                    # Avoid the ENVI driver to trigger when copying a unrelated .hdr file
+                    if self.drivername.lower() == "gtiff" and filename.endswith(".hdr"):
+                        continue
+
                     target_filename = (
                         "/vsimem/tmp_testOpen/" + filename[len(mainfile_dirname) + 1 :]
                     )

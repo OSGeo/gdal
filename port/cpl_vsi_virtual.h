@@ -542,8 +542,9 @@ class CPL_DLL VSIFilesystemHandler
 class CPL_DLL VSIFileManager
 {
   private:
-    VSIFilesystemHandler *poDefaultHandler = nullptr;
-    std::map<std::string, VSIFilesystemHandler *> oHandlers{};
+    std::shared_ptr<VSIFilesystemHandler> m_poDefaultHandler{};
+    std::map<std::string, std::shared_ptr<VSIFilesystemHandler>>
+        m_apoHandlers{};
 
     VSIFileManager();
 
@@ -556,7 +557,10 @@ class CPL_DLL VSIFileManager
 
     static VSIFilesystemHandler *GetHandler(const char *);
     static void InstallHandler(const std::string &osPrefix,
-                               VSIFilesystemHandler *);
+                               const std::shared_ptr<VSIFilesystemHandler> &);
+    static void InstallHandler(const std::string &osPrefix,
+                               VSIFilesystemHandler *)
+        CPL_WARN_DEPRECATED("Use version with std::shared_ptr<> instead");
     static void RemoveHandler(const std::string &osPrefix);
 
     static char **GetPrefixes();

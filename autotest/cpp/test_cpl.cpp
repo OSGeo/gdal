@@ -20,6 +20,7 @@
 #include "gdal_unit_test.h"
 
 #include "cpl_compressor.h"
+#include "cpl_enumerate.h"
 #include "cpl_error.h"
 #include "cpl_float.h"
 #include "cpl_hash_set.h"
@@ -5663,6 +5664,32 @@ TEST_F(test_cpl, CPLHasUnbalancedPathTraversal)
     EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../b/../.."));
     EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../b/../../"));
     EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a\\..\\..\\"));
+}
+
+TEST_F(test_cpl, cpl_enumerate)
+{
+    {
+        size_t expectedIdx = 0;
+        const int tab[] = {3, 1, 2};
+        for (auto [idx, val] : cpl::enumerate(tab))
+        {
+            EXPECT_EQ(idx, expectedIdx);
+            EXPECT_EQ(val, tab[idx]);
+            ++expectedIdx;
+        }
+        EXPECT_EQ(expectedIdx, 3U);
+    }
+    {
+        int tab[] = {3, 1, 2};
+        for (auto [idx, val] : cpl::enumerate(tab))
+        {
+            (void)idx;
+            ++val;
+        }
+        EXPECT_EQ(tab[0], 4);
+        EXPECT_EQ(tab[1], 2);
+        EXPECT_EQ(tab[2], 3);
+    }
 }
 
 }  // namespace

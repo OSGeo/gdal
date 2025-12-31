@@ -230,69 +230,6 @@ void Realloc(T &buf, size_t size1, size_t size2, bool &success)
     buf.reset(newBuf);
 }
 
-#ifdef HAVE_GEOS
-// This function has nothing to do with GEOS, but if GEOS is not available it
-// will not be used, triggering an error under  -Wunused-function.
-
-// Trim a window so that it does not include any pixels outside a specified window.
-static void TrimWindow(GDALRasterWindow &window,
-                       const GDALRasterWindow &trimWindow)
-{
-    if (window.nXOff < trimWindow.nXOff)
-    {
-        window.nXSize -= (trimWindow.nXOff - window.nXOff);
-        window.nXOff = trimWindow.nXOff;
-    }
-    if (window.nYOff < trimWindow.nYOff)
-    {
-        window.nYSize -= (trimWindow.nYOff - window.nYOff);
-        window.nYOff = trimWindow.nYOff;
-    }
-    auto trimWindowXMax = trimWindow.nXOff + trimWindow.nXSize;
-    if (window.nXOff + window.nXSize > trimWindowXMax)
-    {
-        window.nXSize = trimWindowXMax - window.nXOff;
-    }
-    auto trimWindowYMax = trimWindow.nYOff + trimWindow.nYSize;
-    if (window.nYOff + window.nYSize > trimWindowYMax)
-    {
-        window.nYSize = trimWindowYMax - window.nYOff;
-    }
-}
-#endif
-
-// Trim a window so that it does not include any pixels outside the raster extent.
-static void TrimWindowToRaster(GDALRasterWindow &window,
-                               const GDALDataset &rast)
-{
-    const int nXSize = rast.GetRasterXSize();
-    const int nYSize = rast.GetRasterYSize();
-
-    if (window.nXOff < 0)
-    {
-        window.nXSize += window.nXOff;
-        window.nXOff = 0;
-    }
-    else if (window.nXOff >= nXSize)
-    {
-        window.nXOff = 0;
-        window.nXSize = 0;
-    }
-
-    if (window.nYOff < 0)
-    {
-        window.nYSize += window.nYOff;
-        window.nYOff = 0;
-    }
-    else if (window.nYOff >= nYSize)
-    {
-        window.nYOff = 0;
-        window.nYSize = 0;
-    }
-    window.nXSize = std::max(0, std::min(window.nXSize, nXSize - window.nXOff));
-    window.nYSize = std::max(0, std::min(window.nYSize, nYSize - window.nYOff));
-}
-
 static void CalculateCellCenters(const GDALRasterWindow &window,
                                  const GDALGeoTransform &gt, double *padfX,
                                  double *padfY)
@@ -359,7 +296,7 @@ class GDALZonalStatsImpl
         : m_src(src), m_weights(weights), m_dst(dst), m_zones(zones),
           m_coverageDataType(options.pixels == GDALZonalStatsOptions::FRACTIONAL
                                  ? GDT_Float32
-                                 : GDT_Byte),
+                                 : GDT_UInt8),
           m_options(options),
           m_maxCells(options.memory /
                      std::max(1, GDALGetDataTypeSizeBytes(m_workingDataType)))
@@ -572,7 +509,6 @@ class GDALZonalStatsImpl
 
         CPLStringList aosOptions;
         aosOptions.AddNameValue("IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING", "1");
-        std::vector<const OGRSpatialReference *> inputSRS;
 
         if (poRastSRS && poZonesSRS &&
             !poRastSRS->IsSame(poZonesSRS, aosOptions.List()))
@@ -1250,7 +1186,7 @@ class GDALZonalStatsImpl
                     return false;
                 }
                 if (!ReadWindow(*poWeightsBand->GetMaskBand(), oWindow,
-                                m_pabyWeightsMaskBuf.get(), GDT_Byte))
+                                m_pabyWeightsMaskBuf.get(), GDT_UInt8))
                 {
                     return false;
                 }
@@ -1396,7 +1332,7 @@ class GDALZonalStatsImpl
 
                 const OGRGeometry *poGeom = features.back()->GetGeometryRef();
 
-                if (poGeom == nullptr)
+                if (poGeom == nullptr || poGeom->IsEmpty())
                 {
                     continue;
                 }
@@ -1442,11 +1378,11 @@ class GDALZonalStatsImpl
             const size_t nWindowSize =
                 static_cast<size_t>(oChunkWindow.nXSize) *
                 static_cast<size_t>(oChunkWindow.nYSize);
+            const OGREnvelope oChunkExtent = ToEnvelope(oChunkWindow);
 
             aiHits.clear();
 
             {
-                OGREnvelope oChunkExtent = ToEnvelope(oChunkWindow);
                 GEOSGeometry *poEnv = CreateGEOSEnvelope(oChunkExtent);
                 if (poEnv == nullptr)
                 {
@@ -1517,7 +1453,7 @@ class GDALZonalStatsImpl
                         return false;
                     }
                     if (!ReadWindow(*poWeightsBand->GetMaskBand(), oChunkWindow,
-                                    m_pabyWeightsMaskBuf.get(), GDT_Byte))
+                                    m_pabyWeightsMaskBuf.get(), GDT_UInt8))
                     {
                         return false;
                     }
@@ -1541,22 +1477,36 @@ class GDALZonalStatsImpl
                     OGREnvelope oGeomExtent;
                     for (const void *hit : aiHits)
                     {
-                        size_t iHit = reinterpret_cast<size_t>(hit);
+                        const size_t iHit = reinterpret_cast<size_t>(hit);
+                        const auto poGeom = features[iHit]->GetGeometryRef();
 
                         // Trim the chunk window to the portion that intersects
                         // the geometry being processed.
-                        features[iHit]->GetGeometryRef()->getEnvelope(
-                            &oGeomExtent);
+                        poGeom->getEnvelope(&oGeomExtent);
+                        oGeomExtent.Intersect(oChunkExtent);
                         if (!m_srcInvGT.Apply(oGeomExtent, oGeomWindow))
                         {
                             return false;
                         }
-                        TrimWindow(oGeomWindow, oChunkWindow);
-                        OGREnvelope oTrimmedEnvelope = ToEnvelope(oGeomWindow);
+                        oGeomWindow.nXOff =
+                            std::max(oGeomWindow.nXOff, oChunkWindow.nXOff);
+                        oGeomWindow.nYOff =
+                            std::max(oGeomWindow.nYOff, oChunkWindow.nYOff);
+                        oGeomWindow.nXSize =
+                            std::min(oGeomWindow.nXSize,
+                                     oChunkWindow.nXOff + oChunkWindow.nXSize -
+                                         oGeomWindow.nXOff);
+                        oGeomWindow.nYSize =
+                            std::min(oGeomWindow.nYSize,
+                                     oChunkWindow.nYOff + oChunkWindow.nYSize -
+                                         oGeomWindow.nYOff);
+                        if (oGeomWindow.nXSize <= 0 || oGeomWindow.nYSize <= 0)
+                            continue;
+                        const OGREnvelope oTrimmedEnvelope =
+                            ToEnvelope(oGeomWindow);
 
                         if (!CalculateCoverage(
-                                features[iHit]->GetGeometryRef(),
-                                oTrimmedEnvelope, oGeomWindow.nXSize,
+                                poGeom, oTrimmedEnvelope, oGeomWindow.nXSize,
                                 oGeomWindow.nYSize, m_pabyCoverageBuf.get()))
                         {
                             return false;
@@ -1673,15 +1623,22 @@ class GDALZonalStatsImpl
             return false;
         size_t i = 0;
         auto nFeatures = poSrcLayer->GetFeatureCount();
+        GDALRasterWindow oRasterWindow;
+        oRasterWindow.nXOff = 0;
+        oRasterWindow.nYOff = 0;
+        oRasterWindow.nXSize = m_src.GetRasterXSize();
+        oRasterWindow.nYSize = m_src.GetRasterYSize();
+        const OGREnvelope oRasterExtent = ToEnvelope(oRasterWindow);
 
         for (const auto &poFeature : *poSrcLayer)
         {
             const auto *poGeom = poFeature->GetGeometryRef();
 
-            if (poGeom == nullptr)
+            oWindow.nXSize = 0;
+            oWindow.nYSize = 0;
+            if (poGeom == nullptr || poGeom->IsEmpty())
             {
-                oWindow.nXSize = 0;
-                oWindow.nYSize = 0;
+                // do nothing
             }
             else if (poGeom->getDimension() != 2)
             {
@@ -1692,13 +1649,26 @@ class GDALZonalStatsImpl
             else
             {
                 poGeom->getEnvelope(&oGeomExtent);
-
-                if (!m_srcInvGT.Apply(oGeomExtent, oWindow))
+                if (oGeomExtent.Intersects(oRasterExtent))
                 {
-                    return false;
+                    oGeomExtent.Intersect(oRasterExtent);
+                    if (!m_srcInvGT.Apply(oGeomExtent, oWindow))
+                    {
+                        return false;
+                    }
+                    oWindow.nXOff =
+                        std::max(oWindow.nXOff, oRasterWindow.nXOff);
+                    oWindow.nYOff =
+                        std::max(oWindow.nYOff, oRasterWindow.nYOff);
+                    oWindow.nXSize =
+                        std::min(oWindow.nXSize, oRasterWindow.nXOff +
+                                                     oRasterWindow.nXSize -
+                                                     oWindow.nXOff);
+                    oWindow.nYSize =
+                        std::min(oWindow.nYSize, oRasterWindow.nYOff +
+                                                     oRasterWindow.nYSize -
+                                                     oWindow.nYOff);
                 }
-
-                TrimWindowToRaster(oWindow, m_src);
             }
 
             std::unique_ptr<OGRFeature> poDstFeature(
@@ -1814,7 +1784,7 @@ class GDALZonalStatsImpl
                         }
                         if (!ReadWindow(*poWeightsBand->GetMaskBand(),
                                         oSubWindow, m_pabyWeightsMaskBuf.get(),
-                                        GDT_Byte))
+                                        GDT_UInt8))
                         {
                             return false;
                         }
@@ -1935,7 +1905,8 @@ class GDALZonalStatsImpl
             oCoverageGT.xscale = m_srcGT.xscale;
             oCoverageGT.xrot = 0;
 
-            oCoverageGT.yorig = oSnappedGeomExtent.MaxY;
+            oCoverageGT.yorig = m_srcGT.yscale < 0 ? oSnappedGeomExtent.MaxY
+                                                   : oSnappedGeomExtent.MinY;
             oCoverageGT.yscale = m_srcGT.yscale;
             oCoverageGT.yrot = 0;
 
@@ -1994,7 +1965,7 @@ class GDALZonalStatsImpl
 
     const GDALDataType m_coverageDataType;
     const GDALDataType m_workingDataType = GDT_Float64;
-    const GDALDataType m_maskDataType = GDT_Byte;
+    const GDALDataType m_maskDataType = GDT_UInt8;
     static constexpr GDALDataType m_zonesDataType = GDT_Float64;
 
     GDALGeoTransform m_srcGT{};

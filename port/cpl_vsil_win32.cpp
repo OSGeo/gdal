@@ -1848,7 +1848,8 @@ std::string VSIWin32FilesystemHandler::GetCanonicalFilename(
 void VSIInstallLargeFileHandler()
 
 {
-    VSIFileManager::InstallHandler("", new VSIWin32FilesystemHandler);
+    VSIFileManager::InstallHandler(
+        "", std::make_shared<VSIWin32FilesystemHandler>());
 }
 
 #endif /* def WIN32 */

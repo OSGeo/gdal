@@ -1477,12 +1477,12 @@ bool GRIB2Section567Writer::WriteIEEE(GDALProgressFunc pfnProgress,
 static GDALDataset *WrapArrayAsMemDataset(int nXSize, int nYSize,
                                           GDALDataType eReducedDT, void *pData)
 {
-    CPLAssert(eReducedDT == GDT_Byte || eReducedDT == GDT_UInt16);
+    CPLAssert(eReducedDT == GDT_UInt8 || eReducedDT == GDT_UInt16);
     auto poMEMDS =
         MEMDataset::Create("", nXSize, nYSize, 0, eReducedDT, nullptr);
     GByte *pabyData = static_cast<GByte *>(pData);
 #ifdef CPL_MSB
-    if (eReducedDT == GDT_Byte)
+    if (eReducedDT == GDT_UInt8)
         pabyData++;
 #endif
     auto hBand =
@@ -1637,7 +1637,7 @@ bool GRIB2Section567Writer::WritePNG()
     CPLStringList aosPNGOptions;
     aosPNGOptions.SetNameValue("NBITS", CPLSPrintf("%d", m_nBits));
 
-    const GDALDataType eReducedDT = (m_nBits <= 8) ? GDT_Byte : GDT_UInt16;
+    const GDALDataType eReducedDT = (m_nBits <= 8) ? GDT_UInt8 : GDT_UInt16;
     GDALDataset *poMEMDS =
         WrapArrayAsMemDataset(m_nXSize, m_nYSize, eReducedDT, panData);
 
@@ -1823,7 +1823,7 @@ bool GRIB2Section567Writer::WriteJPEG2000(char **papszOptions)
     }
     aosJ2KOptions.SetNameValue("NBITS", CPLSPrintf("%d", m_nBits));
 
-    const GDALDataType eReducedDT = (m_nBits <= 8) ? GDT_Byte : GDT_UInt16;
+    const GDALDataType eReducedDT = (m_nBits <= 8) ? GDT_UInt8 : GDT_UInt16;
     GDALDataset *poMEMDS =
         WrapArrayAsMemDataset(m_nXSize, m_nYSize, eReducedDT, panData);
 
@@ -1897,7 +1897,7 @@ bool GRIB2Section567Writer::Write(float fValOffset, char **papszOptions,
         JPEG2000
     } GRIBDataEncoding;
 
-    if (m_eDT != GDT_Byte && m_eDT != GDT_UInt16 && m_eDT != GDT_Int16 &&
+    if (m_eDT != GDT_UInt8 && m_eDT != GDT_UInt16 && m_eDT != GDT_Int16 &&
         m_eDT != GDT_UInt32 && m_eDT != GDT_Int32 && m_eDT != GDT_Float32 &&
         m_eDT != GDT_Float64)
     {

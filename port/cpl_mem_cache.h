@@ -37,7 +37,6 @@
 #include <list>
 #include <mutex>
 #include <stdexcept>
-#include <thread>
 #include <unordered_map>
 
 namespace lru11

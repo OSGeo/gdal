@@ -1179,11 +1179,19 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
     {
         if (!psOptions->bResampleAlgSpecifiedByUser && nSrcCount > 0)
         {
-            GDALGetWarpResampleAlg(
-                COGGetResampling(GDALDataset::FromHandle(pahSrcDS[0]),
-                                 aosCreateOptions.List())
-                    .c_str(),
-                psOptions->eResampleAlg);
+            try
+            {
+                GDALGetWarpResampleAlg(
+                    COGGetResampling(GDALDataset::FromHandle(pahSrcDS[0]),
+                                     aosCreateOptions.List())
+                        .c_str(),
+                    psOptions->eResampleAlg);
+            }
+            catch (const std::invalid_argument &)
+            {
+                // Cannot happen actually. Coverity Scan false positive...
+                CPLAssert(false);
+            }
         }
         return true;
     }
@@ -1222,7 +1230,18 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
                                      dfMinY, dfMaxX, dfMaxY))
     {
         if (!psOptions->bResampleAlgSpecifiedByUser)
-            GDALGetWarpResampleAlg(osResampling, psOptions->eResampleAlg);
+        {
+            try
+            {
+                GDALGetWarpResampleAlg(osResampling, psOptions->eResampleAlg);
+            }
+            catch (const std::invalid_argument &)
+            {
+                // Cannot happen actually. Coverity Scan false positive...
+                CPLAssert(false);
+            }
+        }
+
         psOptions->dfMinX = dfMinX;
         psOptions->dfMinY = dfMinY;
         psOptions->dfMaxX = dfMaxX;
@@ -1444,10 +1463,11 @@ GDALDatasetH GDALWarp(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
         auto hDriver = GDALGetDriverByName(psOptions->osFormat.c_str());
         if (hDriver != nullptr &&
-            GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) ==
-                nullptr &&
-            GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) !=
-                nullptr)
+            (EQUAL(psOptions->osFormat.c_str(), "COG") ||
+             (GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) ==
+                  nullptr &&
+              GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) !=
+                  nullptr)))
         {
             auto ret = GDALWarpIndirect(pszDest, hDriver, nSrcCount, pahSrcDS,
                                         psOptions, pbUsageError);
@@ -2791,6 +2811,10 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                     "Set SOURCE_EXTRA=5 warping options due to TPS warping");
             }
         }
+
+        if (iSrc > 0)
+            psOptions->aosWarpOptions.SetNameValue("RESET_DEST_PIXELS",
+                                                   nullptr);
 
         /* --------------------------------------------------------------------
          */

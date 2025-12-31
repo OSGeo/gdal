@@ -32,7 +32,7 @@ class GSCDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(GSCDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     GSCDataset() = default;
@@ -57,7 +57,7 @@ GSCDataset::~GSCDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr GSCDataset::Close()
+CPLErr GSCDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

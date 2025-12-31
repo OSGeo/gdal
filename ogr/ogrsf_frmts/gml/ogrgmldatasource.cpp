@@ -94,7 +94,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
 /*                                 Close()                              */
 /************************************************************************/
 
-CPLErr OGRGMLDataSource::Close()
+CPLErr OGRGMLDataSource::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -719,10 +719,9 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
             m_oStandaloneGeomSRS.IsEmpty() ? nullptr : &m_oStandaloneGeomSRS,
             m_poStandaloneGeom->getGeometryType());
         papoLayers[0] = poLayer;
-        OGRFeature *poFeature = new OGRFeature(poLayer->GetLayerDefn());
-        poFeature->SetGeometryDirectly(m_poStandaloneGeom.release());
-        CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-        delete poFeature;
+        auto poFeature = std::make_unique<OGRFeature>(poLayer->GetLayerDefn());
+        poFeature->SetGeometry(std::move(m_poStandaloneGeom));
+        CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
         poLayer->SetUpdatable(false);
         VSIFCloseL(fp);
         return true;
@@ -3415,8 +3414,13 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
                 CPLErrorReset();
                 if (psTree)
                 {
-                    m_poStandaloneGeom.reset(GML2OGRGeometry_XMLNode(
-                        psTree, false, 0, 0, false, true, false));
+                    std::unique_ptr<OGRGML_SRSCache,
+                                    decltype(&OGRGML_SRSCache_Destroy)>
+                        srsCache{OGRGML_SRSCache_Create(),
+                                 OGRGML_SRSCache_Destroy};
+                    m_poStandaloneGeom.reset(
+                        GML2OGRGeometry_XMLNode(psTree, false, srsCache.get(),
+                                                0, 0, false, true, false));
 
                     if (m_poStandaloneGeom)
                     {

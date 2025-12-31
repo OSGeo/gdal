@@ -580,6 +580,6 @@ char **VSISparseFileFilesystemHandler::ReadDirEx(const char * /* pszPath */,
 
 void VSIInstallSparseFileHandler()
 {
-    VSIFileManager::InstallHandler("/vsisparse/",
-                                   new VSISparseFileFilesystemHandler);
+    VSIFileManager::InstallHandler(
+        "/vsisparse/", std::make_shared<VSISparseFileFilesystemHandler>());
 }

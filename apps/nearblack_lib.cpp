@@ -172,7 +172,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
         }
 
         hDstDS = GDALCreate(hDriver, pszDest, nXSize, nYSize, nDstBands,
-                            GDT_Byte, psOptions->aosCreationOptions.List());
+                            GDT_UInt8, psOptions->aosCreationOptions.List());
         if (hDstDS == nullptr)
         {
             return nullptr;
@@ -291,10 +291,10 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
     for (int iBand = 0; iBand < nBands; iBand++)
     {
         GDALRasterBandH hBand = GDALGetRasterBand(hSrcDataset, iBand + 1);
-        if (GDALGetRasterDataType(hBand) != GDT_Byte)
+        if (GDALGetRasterDataType(hBand) != GDT_UInt8)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Band %d is not of type GDT_Byte. "
+                     "Band %d is not of type GDT_UInt8. "
                      "It can lead to unexpected results.",
                      iBand + 1);
         }
@@ -399,7 +399,7 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
     {
         CPLErr eErr = GDALDatasetRasterIO(
             hSrcDataset, GF_Read, 0, iLine, nXSize, 1, pabyLine, nXSize, 1,
-            GDT_Byte, nBands, nullptr, nDstBands, nXSize * nDstBands, 1);
+            GDT_UInt8, nBands, nullptr, nDstBands, nXSize * nDstBands, 1);
         if (eErr != CE_None)
         {
             return false;
@@ -435,7 +435,7 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
                     iLine);
 
         eErr = GDALDatasetRasterIO(hDstDS, GF_Write, 0, iLine, nXSize, 1,
-                                   pabyLine, nXSize, 1, GDT_Byte, nDstBands,
+                                   pabyLine, nXSize, 1, GDT_UInt8, nDstBands,
                                    nullptr, nDstBands, nXSize * nDstBands, 1);
 
         if (eErr != CE_None)
@@ -448,7 +448,7 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
         if (bSetMask)
         {
             eErr = GDALRasterIO(hMaskBand, GF_Write, 0, iLine, nXSize, 1,
-                                pabyMask, nXSize, 1, GDT_Byte, 0, 0);
+                                pabyMask, nXSize, 1, GDT_UInt8, 0, 0);
             if (eErr != CE_None)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
@@ -473,8 +473,8 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
     for (iLine = nYSize - 1; hDstDS != nullptr && iLine >= 0; iLine--)
     {
         CPLErr eErr = GDALDatasetRasterIO(
-            hDstDS, GF_Read, 0, iLine, nXSize, 1, pabyLine, nXSize, 1, GDT_Byte,
-            nDstBands, nullptr, nDstBands, nXSize * nDstBands, 1);
+            hDstDS, GF_Read, 0, iLine, nXSize, 1, pabyLine, nXSize, 1,
+            GDT_UInt8, nDstBands, nullptr, nDstBands, nXSize * nDstBands, 1);
         if (eErr != CE_None)
         {
             return false;
@@ -485,7 +485,7 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
         if (bSetMask)
         {
             eErr = GDALRasterIO(hMaskBand, GF_Read, 0, iLine, nXSize, 1,
-                                pabyMask, nXSize, 1, GDT_Byte, 0, 0);
+                                pabyMask, nXSize, 1, GDT_UInt8, 0, 0);
             if (eErr != CE_None)
             {
                 return false;
@@ -506,7 +506,7 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
                     nYSize - 1 - iLine);
 
         eErr = GDALDatasetRasterIO(hDstDS, GF_Write, 0, iLine, nXSize, 1,
-                                   pabyLine, nXSize, 1, GDT_Byte, nDstBands,
+                                   pabyLine, nXSize, 1, GDT_UInt8, nDstBands,
                                    nullptr, nDstBands, nXSize * nDstBands, 1);
         if (eErr != CE_None)
         {
@@ -518,7 +518,7 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
         if (bSetMask)
         {
             eErr = GDALRasterIO(hMaskBand, GF_Write, 0, iLine, nXSize, 1,
-                                pabyMask, nXSize, 1, GDT_Byte, 0, 0);
+                                pabyMask, nXSize, 1, GDT_UInt8, 0, 0);
             if (eErr != CE_None)
             {
                 return false;

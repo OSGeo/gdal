@@ -153,7 +153,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
   public:
     ~GDALPamDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     CPLErr FlushCache(bool bAtClosing) override;
 

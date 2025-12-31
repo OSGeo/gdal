@@ -14,6 +14,10 @@ cat found_formats.txt
 cat ../.github/workflows/ubuntu_24.04/expected_gdalinfo_formats.txt ../.github/workflows/ubuntu_24.04/expected_ogrinfo_formats.txt > expected_formats.txt
 diff -u expected_formats.txt found_formats.txt
 
+# Check that we don't introduce unexpected argument names in algorithms
+../scripts/collect_arg_names.sh > arg_names.txt
+diff -u arg_names.txt ../.github/workflows/ubuntu_24.04/reference_arg_names.txt >/dev/null || (echo "Unexpected argument names found in algorithms. If intended, update .github/workflows/ubuntu_24.04/reference_arg_names.txt:"; diff -u arg_names.txt ../.github/workflows/ubuntu_24.04/reference_arg_names.txt; /bin/false)
+
 # Test development launcher script
 gdal_edit --version
 

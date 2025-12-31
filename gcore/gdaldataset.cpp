@@ -16,19 +16,23 @@
 #include <array>
 #include <cassert>
 #include <climits>
+#include <cmath>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <mutex>
 #include <new>
 #include <set>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 #include "cpl_conv.h"
+#include "cpl_cpu_features.h"
 #include "cpl_error.h"
 #include "cpl_hash_set.h"
 #include "cpl_multiproc.h"
@@ -42,7 +46,14 @@
 #include "gdal_abstractbandblockcache.h"
 #include "gdalantirecursion.h"
 #include "gdal_dataset.h"
+#include "gdal_matrix.hpp"
+
+#ifdef CAN_DETECT_AVX2_FMA_AT_RUNTIME
+#include "gdal_matrix_avx2_fma.h"
+#endif
+
 #include "gdalsubdatasetinfo.h"
+#include "gdal_typetraits.h"
 
 #include "ogr_api.h"
 #include "ogr_attrind.h"
@@ -65,6 +76,10 @@
 
 #ifdef SQLITE_ENABLED
 #include "../sqlite/ogrsqliteexecutesql.h"
+#endif
+
+#ifdef HAVE_OPENMP
+#include <omp.h>
 #endif
 
 extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
@@ -402,7 +417,12 @@ GDALDataset::~GDALDataset()
  * If a driver implements this method, it must also call it from its
  * dataset destructor.
  *
- * This is the equivalent of C function GDALDatasetRunCloseWithoutDestroying().
+ * Starting with GDAL 3.13, this function may report progress if a progress
+ * callback if provided in the pfnProgress argument and if the dataset returns
+ * true for GDALDataset::GetCloseReportsProgress()
+ *
+ * This is the equivalent of C function GDALDatasetRunCloseWithoutDestroying()
+ * or GDALDatasetRunCloseWithoutDestroyingEx()
  *
  * A typical implementation might look as the following
  * \code{.cpp}
@@ -428,7 +448,7 @@ GDALDataset::~GDALDataset()
  *     }
  *  }
  *
- *  CPLErr MyDataset::Close()
+ *  CPLErr MyDataset::Close(GDALProgressFunc pfnProgress, void* pProgressData)
  *  {
  *      CPLErr eErr = CE_None;
  *      if( nOpenFlags != OPEN_FLAGS_CLOSED )
@@ -452,10 +472,17 @@ GDALDataset::~GDALDataset()
  *  }
  * \endcode
  *
+ * @param pfnProgress (since GDAL 3.13) Progress callback, or nullptr
+ * @param pProgressData (since GDAL 3.13) User data of progress callback, or nullptr
+ * @return CE_None if no error
+ *
  * @since GDAL 3.7
  */
-CPLErr GDALDataset::Close()
+CPLErr GDALDataset::Close(GDALProgressFunc pfnProgress, void *pProgressData)
 {
+    (void)pfnProgress;
+    (void)pProgressData;
+
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
         // Call UnregisterFromSharedDataset() before altering nOpenFlags
@@ -506,12 +533,116 @@ CPLErr GDALDataset::Close()
  * @return CE_None if no error
  *
  * @since GDAL 3.12
- * @see GDALClose()
+ * @see GDALClose(), GDALDatasetRunCloseWithoutDestroyingEx()
  */
 CPLErr GDALDatasetRunCloseWithoutDestroying(GDALDatasetH hDS)
 {
     VALIDATE_POINTER1(hDS, __func__, CE_Failure);
     return GDALDataset::FromHandle(hDS)->Close();
+}
+
+/************************************************************************/
+/*                  GDALDatasetRunCloseWithoutDestroyingEx()            */
+/************************************************************************/
+
+/** Run the Close() method, without running destruction of the object.
+ *
+ * This ensures that content that should be written to file is written and
+ * that all file descriptors are closed.
+ *
+ * Note that this is different from GDALClose() which also destroys
+ * the underlying C++ object. GDALClose() or GDALReleaseDataset() are actually
+ * the only functions that can be safely called on the dataset handle after
+ * this function has been called.
+ *
+ * Most users want to use GDALClose() or GDALReleaseDataset() rather than
+ * this function.
+ *
+ * This function may report progress if a progress
+ * callback if provided in the pfnProgress argument and if the dataset returns
+ * true for GDALDataset::GetCloseReportsProgress()
+ *
+ * This function is equivalent to the C++ method GDALDataset:Close()
+ *
+ * @param hDS dataset handle.
+ * @param pfnProgress Progress callback, or nullptr
+ * @param pProgressData User data of progress callback, or nullptr
+ *
+ * @return CE_None if no error
+ *
+ * @since GDAL 3.13
+ * @see GDALClose()
+ */
+CPLErr GDALDatasetRunCloseWithoutDestroyingEx(GDALDatasetH hDS,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData)
+{
+    VALIDATE_POINTER1(hDS, __func__, CE_Failure);
+    return GDALDataset::FromHandle(hDS)->Close(pfnProgress, pProgressData);
+}
+
+/************************************************************************/
+/*                         GetCloseReportsProgress()                    */
+/************************************************************************/
+
+/** Returns whether the Close() operation will report progress / is a potential
+ * lengthy operation.
+ *
+ * At time of writing, only the COG driver will return true, if the dataset
+ * has been created through the GDALDriver::Create() interface.
+ *
+ * This method is equivalent to the C function GDALDatasetGetCloseReportsProgress()
+ *
+ * @return true if the Close() operation will report progress
+ * @since GDAL 3.13
+ * @see Close()
+ */
+bool GDALDataset::GetCloseReportsProgress() const
+{
+    return false;
+}
+
+/************************************************************************/
+/*                   GDALDatasetGetCloseReportsProgress()               */
+/************************************************************************/
+
+/** Returns whether the Close() operation will report progress / is a potential
+ * lengthy operation.
+ *
+ * This function is equivalent to the C++ method GDALDataset::GetCloseReportsProgress()
+ *
+ * @param hDS dataset handle.
+ * @return CE_None if no error
+ *
+ * @return true if the Close() operation will report progress
+ * @since GDAL 3.13
+ * @see GDALClose()
+ */
+bool GDALDatasetGetCloseReportsProgress(GDALDatasetH hDS)
+{
+    VALIDATE_POINTER1(hDS, __func__, false);
+    return GDALDataset::FromHandle(hDS)->GetCloseReportsProgress();
+}
+
+/************************************************************************/
+/*                   CanReopenWithCurrentDescription()                  */
+/************************************************************************/
+
+/** Returns whether, once this dataset is closed, it can be re-opened with
+ * Open() using the current value of GetDescription()
+ *
+ * The default implementation returns true. Some drivers, like MVT in Create()
+ * mode, can return false. Some drivers return true, but the re-opened dataset
+ * may be opened by another driver (e.g. the COG driver will return true, but
+ * the driver used for re-opening is GTiff).
+ *
+ * @return true if the dataset can be re-opened using the value as
+ *         GetDescription() as connection string for Open()
+ * @since GDAL 3.13
+ */
+bool GDALDataset::CanReopenWithCurrentDescription() const
+{
+    return true;
 }
 
 /************************************************************************/
@@ -4469,14 +4600,50 @@ GDALDatasetH CPL_STDCALL GDALOpenShared(const char *pszFilename,
  * For shared datasets (opened with GDALOpenShared()) the dataset is
  * dereferenced, and closed only if the referenced count has dropped below 1.
  *
- * @param hDS The dataset to close.  May be cast from a "GDALDataset *".
+ * @param hDS The dataset to close, or nullptr.
  * @return CE_None in case of success (return value since GDAL 3.7). On a
  * shared dataset whose reference count is not dropped below 1, CE_None will
  * be returned.
+ *
+ * @see GDALCloseEx()
  */
 
 CPLErr CPL_STDCALL GDALClose(GDALDatasetH hDS)
 
+{
+    return GDALCloseEx(hDS, nullptr, nullptr);
+}
+
+/************************************************************************/
+/*                             GDALCloseEx()                            */
+/************************************************************************/
+
+/**
+ * \brief Close GDAL dataset.
+ *
+ * For non-shared datasets (opened with GDALOpen()) the dataset is closed
+ * using the C++ "delete" operator, recovering all dataset related resources.
+ * For shared datasets (opened with GDALOpenShared()) the dataset is
+ * dereferenced, and closed only if the referenced count has dropped below 1.
+ *
+ * This function may report progress if a progress
+ * callback if provided in the pfnProgress argument and if the dataset returns
+ * true for GDALDataset::GetCloseReportsProgress()
+
+ * @param hDS The dataset to close, or nullptr
+ * @param pfnProgress Progress callback, or nullptr
+ * @param pProgressData User data of progress callback, or nullptr
+ *
+ * @return CE_None in case of success. On a
+ * shared dataset whose reference count is not dropped below 1, CE_None will
+ * be returned.
+ *
+ * @since GDAL 3.13
+ * @see GDALClose()
+ */
+
+CPLErr GDALCloseEx(GDALDatasetH hDS, GDALProgressFunc pfnProgress,
+                   void *pProgressData)
 {
     if (!hDS)
         return CE_None;
@@ -4499,22 +4666,9 @@ CPLErr CPL_STDCALL GDALClose(GDALDatasetH hDS)
          */
         if (poDS->Dereference() > 0)
             return CE_None;
-
-        CPLErr eErr = poDS->Close();
-        delete poDS;
-
-#ifdef OGRAPISPY_ENABLED
-        if (bOGRAPISpyEnabled)
-            OGRAPISpyPostClose();
-#endif
-
-        return eErr;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      This is not shared dataset, so directly delete it.              */
-    /* -------------------------------------------------------------------- */
-    CPLErr eErr = poDS->Close();
+    CPLErr eErr = poDS->Close(pfnProgress, pProgressData);
     delete poDS;
 
 #ifdef OGRAPISPY_ENABLED
@@ -12123,4 +12277,1375 @@ std::shared_ptr<GDALMDArray> GDALDataset::AsMDArray(CSLConstList papszOptions)
         return nullptr;
     }
     return GDALMDArrayFromDataset::Create(this, papszOptions);
+}
+
+/************************************************************************/
+/*              GDALDataset::GetInterBandCovarianceMatrix()             */
+/************************************************************************/
+
+/**
+ \brief Fetch or compute the covariance matrix between bands of this dataset.
+
+ The covariance indicates the level to which two bands vary together.
+
+ If we call \f$ v_i[y,x] \f$ the value of pixel at row=y and column=x for band i,
+ and \f$ mean_i \f$ the mean value of all pixels of band i, then
+
+ \f[
+    \mathrm{cov}[i,j] =
+    \frac{
+        \sum_{y,x} \left( v_i[y,x] - \mathrm{mean}_i \right)
+        \left( v_j[y,x] - \mathrm{mean}_j \right)
+    }{
+        \mathrm{pixel\_count} - \mathrm{nDeltaDegreeOfFreedom}
+    }
+ \f]
+
+ When there are no nodata values, \f$ pixel\_count = GetRasterXSize() * GetRasterYSize() \f$.
+ We can see that \f$ cov[i,j] = cov[j,i] \f$, and consequently the returned matrix
+ is symmetric.
+
+ A value of nDeltaDegreeOfFreedom=1 (the default) will return a unbiased estimate
+ if the pixels in bands are considered to be a sample of the whole population.
+ This is consistent with the default of
+ https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+ matrix is consistent with what can be obtained with
+
+ \verbatim embed:rst
+ .. code-block:: python
+
+     numpy.cov(
+        [ds.GetRasterBand(n + 1).ReadAsArray().ravel() for n in range(ds.RasterCount)]
+     )
+ \endverbatim
+
+ Otherwise a value of nDeltaDegreeOfFreedom=0 can be used if they are considered
+ to be the whole population.
+
+ If STATISTICS_COVARIANCES metadata items are available in band metadata,
+ this method uses them.
+ Otherwise, if bForce is true, ComputeInterBandCovarianceMatrix() is called.
+ Otherwise, if bForce is false, an empty vector is returned
+
+ @param nBandCount Zero for all bands, or number of values in panBandList.
+                   Defaults to 0.
+ @param panBandList nullptr for all bands if nBandCount == 0, or array of
+                    nBandCount values such as panBandList[i] is the index
+                    between 1 and GetRasterCount() of a band that must be used
+                    in the covariance computation. Defaults to nullptr.
+ @param bApproxOK Whether it is acceptable to use a subsample of values in
+                  ComputeInterBandCovarianceMatrix().
+                  Defaults to false.
+ @param bForce Whether ComputeInterBandCovarianceMatrix() should be called
+               when the STATISTICS_COVARIANCES metadata items are missing.
+               Defaults to false.
+ @param bWriteIntoMetadata Whether ComputeInterBandCovarianceMatrix() must
+                           write STATISTICS_COVARIANCES band metadata items.
+                           Defaults to true.
+ @param nDeltaDegreeOfFreedom Correction term to subtract in the final
+                              averaging phase of the covariance computation.
+                              Defaults to 1.
+ @param pfnProgress a function to call to report progress, or NULL.
+ @param pProgressData application data to pass to the progress function.
+
+ @return a vector of nBandCount * nBandCount values if successful,
+         in row-major order, or an empty vector in case of failure
+
+ @since 3.13
+
+ @see ComputeInterBandCovarianceMatrix()
+ */
+
+std::vector<double> GDALDataset::GetInterBandCovarianceMatrix(
+    int nBandCount, const int *panBandList, bool bApproxOK, bool bForce,
+    bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    std::vector<double> res;
+    const int nBandCountToUse = nBandCount == 0 ? nBands : nBandCount;
+    if (nBandCountToUse == 0)
+        return res;
+    if constexpr (sizeof(size_t) < sizeof(uint64_t))
+    {
+        // Check that nBandCountToUse * nBandCountToUse will not overflow size_t
+        if (static_cast<uint32_t>(nBandCountToUse) >
+            std::numeric_limits<uint16_t>::max())
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Not enough memory to store result");
+            return res;
+        }
+    }
+    try
+    {
+        res.resize(static_cast<size_t>(nBandCountToUse) * nBandCountToUse);
+    }
+    catch (const std::exception &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Not enough memory to store result");
+        return res;
+    }
+
+    if (GetInterBandCovarianceMatrix(res.data(), res.size(), nBandCount,
+                                     panBandList, bApproxOK, bForce,
+                                     bWriteIntoMetadata, nDeltaDegreeOfFreedom,
+                                     pfnProgress, pProgressData) != CE_None)
+    {
+        res.clear();
+    }
+    return res;
+}
+
+/************************************************************************/
+/*              GDALDataset::GetInterBandCovarianceMatrix()             */
+/************************************************************************/
+
+/**
+ \brief Fetch or compute the covariance matrix between bands of this dataset.
+
+ The covariance indicates the level to which two bands vary together.
+
+ If we call \f$ v_i[y,x] \f$ the value of pixel at row=y and column=x for band i,
+ and \f$ mean_i \f$ the mean value of all pixels of band i, then
+
+ \f[
+    \mathrm{cov}[i,j] =
+    \frac{
+        \sum_{y,x} \left( v_i[y,x] - \mathrm{mean}_i \right)
+        \left( v_j[y,x] - \mathrm{mean}_j \right)
+    }{
+        \mathrm{pixel\_count} - \mathrm{nDeltaDegreeOfFreedom}
+    }
+ \f]
+
+ When there are no nodata values, \f$ pixel\_count = GetRasterXSize() * GetRasterYSize() \f$.
+ We can see that \f$ cov[i,j] = cov[j,i] \f$, and consequently the returned matrix
+ is symmetric.
+
+ A value of nDeltaDegreeOfFreedom=1 (the default) will return a unbiased estimate
+ if the pixels in bands are considered to be a sample of the whole population.
+ This is consistent with the default of
+ https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+ matrix is consistent with what can be obtained with
+
+ \verbatim embed:rst
+ .. code-block:: python
+
+     numpy.cov(
+        [ds.GetRasterBand(n + 1).ReadAsArray().ravel() for n in range(ds.RasterCount)]
+     )
+ \endverbatim
+
+ Otherwise a value of nDeltaDegreeOfFreedom=0 can be used if they are considered
+ to be the whole population.
+
+ The caller must provide an already allocated array in padfCovMatrix of size
+ at least nBandCount * nBandCount.
+
+ If STATISTICS_COVARIANCES metadata items are available in band metadata,
+ this method uses them.
+ Otherwise, if bForce is true, ComputeInterBandCovarianceMatrix() is called.
+ Otherwise, if bForce is false, an empty vector is returned
+
+ This is the same as the C function GDALDatasetGetInterBandCovarianceMatrix()
+
+ @param[out] padfCovMatrix Pointer to an already allocated output array, of size at least
+                      nBandCount * nBandCount.
+ @param nSize Number of elements in output array.
+ @param nBandCount Zero for all bands, or number of values in panBandList.
+                   Defaults to 0.
+ @param panBandList nullptr for all bands if nBandCount == 0, or array of
+                    nBandCount values such as panBandList[i] is the index
+                    between 1 and GetRasterCount() of a band that must be used
+                    in the covariance computation. Defaults to nullptr.
+ @param bApproxOK Whether it is acceptable to use a subsample of values in
+                  ComputeInterBandCovarianceMatrix().
+                  Defaults to false.
+ @param bForce Whether ComputeInterBandCovarianceMatrix() should be called
+               when the STATISTICS_COVARIANCES metadata items are missing.
+               Defaults to false.
+ @param bWriteIntoMetadata Whether ComputeInterBandCovarianceMatrix() must
+                           write STATISTICS_COVARIANCES band metadata items.
+                           Defaults to true.
+ @param nDeltaDegreeOfFreedom Correction term to subtract in the final
+                              averaging phase of the covariance computation.
+                              Defaults to 1.
+ @param pfnProgress a function to call to report progress, or NULL.
+ @param pProgressData application data to pass to the progress function.
+
+ @return CE_None if successful, CE_Warning if values are not available in
+         metadata and bForce is false, or CE_Failure in case of failure
+
+ @since 3.13
+
+ @see ComputeInterBandCovarianceMatrix()
+ */
+
+CPLErr GDALDataset::GetInterBandCovarianceMatrix(
+    double *padfCovMatrix, size_t nSize, int nBandCount, const int *panBandList,
+    bool bApproxOK, bool bForce, bool bWriteIntoMetadata,
+    int nDeltaDegreeOfFreedom, GDALProgressFunc pfnProgress,
+    void *pProgressData)
+{
+    std::vector<int> anBandListTmp;  // keep in this scope
+    if (nBandCount == 0)
+    {
+        if (nBands == 0)
+            return CE_None;
+        for (int i = 0; i < nBands; ++i)
+            anBandListTmp.push_back(i + 1);
+        nBandCount = nBands;
+        panBandList = anBandListTmp.data();
+    }
+    else
+    {
+        if (nBandCount > nBands)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetInterBandCovarianceMatrix(): nBandCount > nBands");
+            return CE_Failure;
+        }
+        for (int i = 0; i < nBandCount; ++i)
+        {
+            if (panBandList[i] <= 0 || panBandList[i] > nBands)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "GetInterBandCovarianceMatrix(): invalid value "
+                         "panBandList[%d] = %d",
+                         i, panBandList[i]);
+                return CE_Failure;
+            }
+        }
+    }
+
+    if (nSize < static_cast<uint64_t>(nBandCount) * nBandCount)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "GetInterBandCovarianceMatrix(): too small result matrix provided");
+        return CE_Failure;
+    }
+    bool bGotFromMD = true;
+    size_t resIdx = 0;
+    for (int i = 0; bGotFromMD && i < nBandCount; ++i)
+    {
+        const char *pszCov = papoBands[panBandList[i] - 1]->GetMetadataItem(
+            "STATISTICS_COVARIANCES");
+        bGotFromMD = pszCov != nullptr;
+        if (bGotFromMD)
+        {
+            const CPLStringList aosTokens(CSLTokenizeString2(pszCov, ",", 0));
+            bGotFromMD = aosTokens.size() == nBands;
+            if (bGotFromMD)
+            {
+                for (int j = 0; j < nBandCount; ++j)
+                    padfCovMatrix[resIdx++] =
+                        CPLAtof(aosTokens[panBandList[j] - 1]);
+            }
+        }
+    }
+    if (bGotFromMD)
+        return CE_None;
+
+    if (!bForce)
+        return CE_Warning;
+    return ComputeInterBandCovarianceMatrix(
+        padfCovMatrix, nSize, nBandCount, panBandList, bApproxOK,
+        bWriteIntoMetadata, nDeltaDegreeOfFreedom, pfnProgress, pProgressData);
+}
+
+/************************************************************************/
+/*                  GDALDatasetGetInterBandCovarianceMatrix()           */
+/************************************************************************/
+
+/**
+ \brief Fetch or compute the covariance matrix between bands of this dataset.
+
+ The covariance indicates the level to which two bands vary together.
+
+ If we call \f$ v_i[y,x] \f$ the value of pixel at row=y and column=x for band i,
+ and \f$ mean_i \f$ the mean value of all pixels of band i, then
+
+ \f[
+    \mathrm{cov}[i,j] =
+    \frac{
+        \sum_{y,x} \left( v_i[y,x] - \mathrm{mean}_i \right)
+        \left( v_j[y,x] - \mathrm{mean}_j \right)
+    }{
+        \mathrm{pixel\_count} - \mathrm{nDeltaDegreeOfFreedom}
+    }
+ \f]
+
+ When there are no nodata values, \f$ pixel\_count = GetRasterXSize() * GetRasterYSize() \f$.
+ We can see that \f$ cov[i,j] = cov[j,i] \f$, and consequently the returned matrix
+ is symmetric.
+
+ A value of nDeltaDegreeOfFreedom=1 (the default) will return a unbiased estimate
+ if the pixels in bands are considered to be a sample of the whole population.
+ This is consistent with the default of
+ https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+ matrix is consistent with what can be obtained with
+
+ \verbatim embed:rst
+ .. code-block:: python
+
+     numpy.cov(
+        [ds.GetRasterBand(n + 1).ReadAsArray().ravel() for n in range(ds.RasterCount)]
+     )
+ \endverbatim
+
+ Otherwise a value of nDeltaDegreeOfFreedom=0 can be used if they are considered
+ to be the whole population.
+
+ The caller must provide an already allocated array in padfCovMatrix of size
+ at least nBandCount * nBandCount.
+
+ If STATISTICS_COVARIANCES metadata items are available in band metadata,
+ this method uses them.
+ Otherwise, if bForce is true, GDALDatasetComputeInterBandCovarianceMatrix() is called.
+ Otherwise, if bForce is false, an empty vector is returned
+
+ This is the same as the C++ method GDALDataset::GetInterBandCovarianceMatrix()
+
+ @param hDS Dataset handle.
+ @param[out] padfCovMatrix Pointer to an already allocated output array, of size at least
+                      nBandCount * nBandCount.
+ @param nSize Number of elements in output array.
+ @param nBandCount Zero for all bands, or number of values in panBandList.
+                   Defaults to 0.
+ @param panBandList nullptr for all bands if nBandCount == 0, or array of
+                    nBandCount values such as panBandList[i] is the index
+                    between 1 and GetRasterCount() of a band that must be used
+                    in the covariance computation. Defaults to nullptr.
+ @param bApproxOK Whether it is acceptable to use a subsample of values in
+                  GDALDatasetComputeInterBandCovarianceMatrix().
+                  Defaults to false.
+ @param bForce Whether GDALDatasetComputeInterBandCovarianceMatrix() should be called
+               when the STATISTICS_COVARIANCES metadata items are missing.
+               Defaults to false.
+ @param bWriteIntoMetadata Whether GDALDatasetComputeInterBandCovarianceMatrix() must
+                           write STATISTICS_COVARIANCES band metadata items.
+                           Defaults to true.
+ @param nDeltaDegreeOfFreedom Correction term to subtract in the final
+                              averaging phase of the covariance computation.
+                              Defaults to 1.
+ @param pfnProgress a function to call to report progress, or NULL.
+ @param pProgressData application data to pass to the progress function.
+
+ @return CE_None if successful, CE_Warning if values are not available in
+         metadata and bForce is false, or CE_Failure in case of failure
+
+ @since 3.13
+
+ @see GDALDatasetComputeInterBandCovarianceMatrix()
+ */
+CPLErr GDALDatasetGetInterBandCovarianceMatrix(
+    GDALDatasetH hDS, double *padfCovMatrix, size_t nSize, int nBandCount,
+    const int *panBandList, bool bApproxOK, bool bForce,
+    bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    VALIDATE_POINTER1(hDS, __func__, CE_Failure);
+    VALIDATE_POINTER1(padfCovMatrix, __func__, CE_Failure);
+    return GDALDataset::FromHandle(hDS)->GetInterBandCovarianceMatrix(
+        padfCovMatrix, nSize, nBandCount, panBandList, bApproxOK, bForce,
+        bWriteIntoMetadata, nDeltaDegreeOfFreedom, pfnProgress, pProgressData);
+}
+
+/************************************************************************/
+/*              GDALDataset::ComputeInterBandCovarianceMatrix()         */
+/************************************************************************/
+
+/**
+ \brief Compute the covariance matrix between bands of this dataset.
+
+ The covariance indicates the level to which two bands vary together.
+
+ If we call \f$ v_i[y,x] \f$ the value of pixel at row=y and column=x for band i,
+ and \f$ mean_i \f$ the mean value of all pixels of band i, then
+
+ \f[
+    \mathrm{cov}[i,j] =
+    \frac{
+        \sum_{y,x} \left( v_i[y,x] - \mathrm{mean}_i \right)
+        \left( v_j[y,x] - \mathrm{mean}_j \right)
+    }{
+        \mathrm{pixel\_count} - \mathrm{nDeltaDegreeOfFreedom}
+    }
+ \f]
+
+ When there are no nodata values, \f$ pixel\_count = GetRasterXSize() * GetRasterYSize() \f$.
+ We can see that \f$ cov[i,j] = cov[j,i] \f$, and consequently the returned matrix
+ is symmetric.
+
+ A value of nDeltaDegreeOfFreedom=1 (the default) will return a unbiased estimate
+ if the pixels in bands are considered to be a sample of the whole population.
+ This is consistent with the default of
+ https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+ matrix is consistent with what can be obtained with
+
+ \verbatim embed:rst
+ .. code-block:: python
+
+     numpy.cov(
+        [ds.GetRasterBand(n + 1).ReadAsArray().ravel() for n in range(ds.RasterCount)]
+     )
+ \endverbatim
+
+ Otherwise a value of nDeltaDegreeOfFreedom=0 can be used if they are considered
+ to be the whole population.
+
+ This method recomputes the covariance matrix, even if STATISTICS_COVARIANCES
+ metadata items are available in bands. See GetInterBandCovarianceMatrix()
+ to use them.
+
+ @param nBandCount Zero for all bands, or number of values in panBandList.
+                   Defaults to 0.
+ @param panBandList nullptr for all bands if nBandCount == 0, or array of
+                    nBandCount values such as panBandList[i] is the index
+                    between 1 and GetRasterCount() of a band that must be used
+                    in the covariance computation. Defaults to nullptr.
+ @param bApproxOK Whether it is acceptable to use a subsample of values.
+                  Defaults to false.
+ @param bWriteIntoMetadata Whether this method must write
+                           STATISTICS_COVARIANCES band metadata items.
+                           Defaults to true.
+ @param nDeltaDegreeOfFreedom Correction term to subtract in the final
+                              averaging phase of the covariance computation.
+                              Defaults to 1.
+ @param pfnProgress a function to call to report progress, or NULL.
+ @param pProgressData application data to pass to the progress function.
+
+ @return a vector of nBandCount * nBandCount values if successful,
+         in row-major order, or an empty vector in case of failure
+
+ @since 3.13
+
+ @see GetInterBandCovarianceMatrix()
+ */
+std::vector<double> GDALDataset::ComputeInterBandCovarianceMatrix(
+    int nBandCount, const int *panBandList, bool bApproxOK,
+    bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    std::vector<double> res;
+    const int nBandCountToUse = nBandCount == 0 ? nBands : nBandCount;
+    if (nBandCountToUse == 0)
+        return res;
+    if constexpr (sizeof(size_t) < sizeof(uint64_t))
+    {
+        // Check that nBandCountToUse * nBandCountToUse will not overflow size_t
+        if (static_cast<uint32_t>(nBandCountToUse) >
+            std::numeric_limits<uint16_t>::max())
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Not enough memory to store result");
+            return res;
+        }
+    }
+    try
+    {
+        res.resize(static_cast<size_t>(nBandCountToUse) * nBandCountToUse);
+    }
+    catch (const std::exception &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Not enough memory to store result");
+        return res;
+    }
+
+    if (ComputeInterBandCovarianceMatrix(
+            res.data(), res.size(), nBandCount, panBandList, bApproxOK,
+            bWriteIntoMetadata, nDeltaDegreeOfFreedom, pfnProgress,
+            pProgressData) != CE_None)
+        res.clear();
+    return res;
+}
+
+/************************************************************************/
+/*                 ComputeInterBandCovarianceMatrixInternal()           */
+/************************************************************************/
+
+template <class T>
+// CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW because it seems the uses of openmp-simd
+// causes that to happen
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW static CPLErr
+ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
+                                         double *padfCovMatrix, int nBandCount,
+                                         const int *panBandList,
+                                         GDALRasterBand *const *papoBands,
+                                         int nDeltaDegreeOfFreedom,
+                                         GDALProgressFunc pfnProgress,
+                                         void *pProgressData)
+{
+    // We use the padfCovMatrix to accumulate co-moments
+    // Dimension = nBandCount * nBandCount
+    double *const padfComomentMatrix = padfCovMatrix;
+
+    // Matrix of  nBandCount * nBandCount storing co-moments, in optimized
+    // case when the block has no nodata value
+    // Only used if T != double
+    [[maybe_unused]] std::vector<T> aCurBlockComomentMatrix;
+
+    // Count number of valid values in padfComomentMatrix for each (i,j) tuple
+    // Updated while iterating over blocks
+    // Dimension = nBandCount * nBandCount
+    std::vector<uint64_t> anCount;
+
+    // Mean of bands, for each (i,j) tuple.
+    // Updated while iterating over blocks.
+    // This is a matrix rather than a vector due to the fact when need to update
+    // it in sync with padfComomentMatrix
+    // Dimension = nBandCount * nBandCount
+    std::vector<T> adfMean;
+
+    // Number of valid values when computing adfMean, for each (i,j) tuple.
+    // Updated while iterating over blocks.
+    // This is a matrix rather than a vector due to the fact when need to update
+    // it in sync with padfComomentMatrix
+    // Dimension = nBandCount * nBandCount
+    std::vector<uint64_t> anCountMean;
+
+    // Mean of values for each band i. Refreshed for each block.
+    // Dimension = nBandCount
+    std::vector<T> adfCurBlockMean;
+
+    // Number of values participating to the mean for each band i.
+    // Refreshed for each block. Dimension = nBandCount
+    std::vector<size_t> anCurBlockCount;
+
+    // Pixel values for all selected values for the current block
+    // Dimension = nBlockXSize * nBlockYSize * nBandCount
+    std::vector<T> adfCurBlockPixelsAllBands;
+
+    // Vector of nodata values for all bands. Dimension = nBandCount
+    std::vector<T> adfNoData;
+
+    // Vector of mask bands for all bands. Dimension = nBandCount
+    std::vector<GDALRasterBand *> apoMaskBands;
+
+    // Vector of vector of mask values. Dimension = nBandCount
+    std::vector<std::vector<GByte>> aabyCurBlockMask;
+
+    // Vector of pointer to vector of mask values. Dimension = nBandCount
+    std::vector<std::vector<GByte> *> pabyCurBlockMask;
+
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
+    papoBands[panBandList[0] - 1]->GetBlockSize(&nBlockXSize, &nBlockYSize);
+
+    if (static_cast<uint64_t>(nBlockXSize) * nBlockYSize >
+        std::numeric_limits<size_t>::max() / nBandCount)
+    {
+        poDS->ReportError(CE_Failure, CPLE_OutOfMemory,
+                          "Not enough memory for intermediate computations");
+        return CE_Failure;
+    }
+    const size_t nPixelsInBlock =
+        static_cast<size_t>(nBlockXSize) * nBlockYSize;
+
+    // Allocate temporary matrices and vectors
+    const auto nMatrixSize = static_cast<size_t>(nBandCount) * nBandCount;
+
+    using MySignedSize_t = std::make_signed_t<size_t>;
+    const auto kMax =
+        static_cast<MySignedSize_t>(nBandCount) * (nBandCount + 1) / 2;
+    std::vector<std::pair<int, int>> anMapLinearIdxToIJ;
+    try
+    {
+        anCount.resize(nMatrixSize);
+        adfMean.resize(nMatrixSize);
+        anCountMean.resize(nMatrixSize);
+
+        if constexpr (!std::is_same_v<T, double>)
+        {
+            aCurBlockComomentMatrix.resize(nMatrixSize);
+        }
+
+        anMapLinearIdxToIJ.resize(kMax);
+
+        adfCurBlockPixelsAllBands.resize(nPixelsInBlock * nBandCount);
+
+        adfCurBlockMean.resize(nBandCount);
+        anCurBlockCount.resize(nBandCount);
+        adfNoData.resize(nBandCount);
+        apoMaskBands.resize(nBandCount);
+        aabyCurBlockMask.resize(nBandCount);
+        pabyCurBlockMask.resize(nBandCount);
+    }
+    catch (const std::exception &)
+    {
+        poDS->ReportError(CE_Failure, CPLE_OutOfMemory,
+                          "Not enough memory for intermediate computations");
+        return CE_Failure;
+    }
+
+    constexpr T ZERO{0};
+    std::fill(padfComomentMatrix,
+              padfComomentMatrix + static_cast<size_t>(nBandCount) * nBandCount,
+              0);
+
+    {
+        MySignedSize_t nLinearIdx = 0;
+        for (int i = 0; i < nBandCount; ++i)
+        {
+            for (int j = i; j < nBandCount; ++j)
+            {
+                anMapLinearIdxToIJ[nLinearIdx] = {i, j};
+                ++nLinearIdx;
+            }
+        }
+    }
+
+    // Fetch nodata values and mask bands
+    bool bAllBandsSameMask = false;
+    bool bIsAllInteger = false;
+    bool bNoneHasMaskOrNodata = false;
+    for (int i = 0; i < nBandCount; ++i)
+    {
+        const auto poBand = papoBands[panBandList[i] - 1];
+        bIsAllInteger = (i == 0 || bIsAllInteger) &&
+                        GDALDataTypeIsInteger(poBand->GetRasterDataType());
+        int bHasNoData = FALSE;
+        double dfNoData = poBand->GetNoDataValue(&bHasNoData);
+        if (!bHasNoData)
+        {
+            dfNoData = std::numeric_limits<double>::quiet_NaN();
+
+            if (poBand->GetMaskFlags() != GMF_ALL_VALID &&
+                poBand->GetColorInterpretation() != GCI_AlphaBand)
+            {
+                apoMaskBands[i] = poBand->GetMaskBand();
+                try
+                {
+                    aabyCurBlockMask[i].resize(nPixelsInBlock);
+                }
+                catch (const std::exception &)
+                {
+                    poDS->ReportError(
+                        CE_Failure, CPLE_OutOfMemory,
+                        "Not enough memory for intermediate computations");
+                    return CE_Failure;
+                }
+                // coverity[escape]
+                pabyCurBlockMask[i] = &aabyCurBlockMask[i];
+            }
+        }
+        adfNoData[i] = static_cast<T>(dfNoData);
+        if (i == 0)
+            bAllBandsSameMask = (apoMaskBands[0] != nullptr);
+        else if (bAllBandsSameMask)
+            bAllBandsSameMask = (apoMaskBands[i] == apoMaskBands[0]);
+
+        bNoneHasMaskOrNodata = (i == 0 || bNoneHasMaskOrNodata) &&
+                               std::isnan(dfNoData) &&
+                               apoMaskBands[i] == nullptr;
+    }
+    if (bAllBandsSameMask)
+    {
+        for (int i = 1; i < nBandCount; ++i)
+        {
+            apoMaskBands[i] = nullptr;
+            aabyCurBlockMask[i].clear();
+            pabyCurBlockMask[i] = pabyCurBlockMask[0];
+        }
+    }
+
+    const auto nIterCount =
+        static_cast<uint64_t>(
+            cpl::div_round_up(poDS->GetRasterXSize(), nBlockXSize)) *
+        cpl::div_round_up(poDS->GetRasterYSize(), nBlockYSize);
+    uint64_t nCurIter = 0;
+
+    int nNumThreads = 1;
+#ifdef HAVE_OPENMP
+    if (nBandCount >= 100)
+    {
+        const int nNumCPUs = CPLGetNumCPUs();
+        nNumThreads = std::max(1, nNumCPUs / 2);
+        const char *pszThreads =
+            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+        if (pszThreads && !EQUAL(pszThreads, "ALL_CPUS"))
+        {
+            nNumThreads = std::clamp(atoi(pszThreads), 1, nNumCPUs);
+        }
+    }
+#endif
+
+#ifdef CAN_DETECT_AVX2_FMA_AT_RUNTIME
+    const bool bHasAVX2_FMA = CPLHaveRuntimeAVX() &&
+                              __builtin_cpu_supports("avx2") &&
+                              __builtin_cpu_supports("fma");
+#endif
+
+    // Iterate over all blocks
+    for (const auto &window : papoBands[panBandList[0] - 1]->IterateWindows())
+    {
+        const auto nThisBlockPixelCount =
+            static_cast<size_t>(window.nXSize) * window.nYSize;
+
+        // Extract pixel values and masks
+        CPLErr eErr = poDS->RasterIO(
+            GF_Read, window.nXOff, window.nYOff, window.nXSize, window.nYSize,
+            adfCurBlockPixelsAllBands.data(), window.nXSize, window.nYSize,
+            gdal::CXXTypeTraits<T>::gdal_type, nBandCount, panBandList, 0, 0, 0,
+            nullptr);
+        if (eErr == CE_None && bAllBandsSameMask)
+        {
+            eErr = apoMaskBands[0]->RasterIO(
+                GF_Read, window.nXOff, window.nYOff, window.nXSize,
+                window.nYSize, aabyCurBlockMask[0].data(), window.nXSize,
+                window.nYSize, GDT_Byte, 0, 0, nullptr);
+        }
+        else
+        {
+            for (int i = 0; eErr == CE_None && i < nBandCount; ++i)
+            {
+                if (apoMaskBands[i])
+                {
+                    eErr = apoMaskBands[i]->RasterIO(
+                        GF_Read, window.nXOff, window.nYOff, window.nXSize,
+                        window.nYSize, aabyCurBlockMask[i].data(),
+                        window.nXSize, window.nYSize, GDT_Byte, 0, 0, nullptr);
+                }
+            }
+        }
+        if (eErr != CE_None)
+            return eErr;
+
+        // Compute the mean of all bands for this block
+        bool bAllBandsAreAllNodata = false;
+        bool bNoBandHasNodata = false;
+        for (int i = 0; i < nBandCount; ++i)
+        {
+            T dfSum = 0;
+            size_t nCount = 0;
+            const T dfNoDataI = adfNoData[i];
+            const T *padfI =
+                adfCurBlockPixelsAllBands.data() + i * nThisBlockPixelCount;
+#ifdef HAVE_OPENMP_SIMD
+#pragma omp simd reduction(+ : dfSum)
+#endif
+            for (size_t iPixel = 0; iPixel < nThisBlockPixelCount; ++iPixel)
+            {
+                const T dfI = padfI[iPixel];
+                const bool bIsValid =
+                    !std::isnan(dfI) && dfI != dfNoDataI &&
+                    (!pabyCurBlockMask[i] || (*pabyCurBlockMask[i])[iPixel]);
+                nCount += bIsValid;
+                dfSum += bIsValid ? dfI : ZERO;
+            }
+            adfCurBlockMean[i] = nCount > 0 ? dfSum / nCount : ZERO;
+            anCurBlockCount[i] = nCount;
+            bAllBandsAreAllNodata =
+                (i == 0 || bAllBandsAreAllNodata) && (nCount == 0);
+            bNoBandHasNodata = (i == 0 || bNoBandHasNodata) &&
+                               (nCount == nThisBlockPixelCount);
+        }
+
+        // Modify the pixel values to shift them by minus the mean
+        if (!bAllBandsAreAllNodata)
+        {
+            for (int i = 0; i < nBandCount; ++i)
+            {
+                T *padfI =
+                    adfCurBlockPixelsAllBands.data() + i * nThisBlockPixelCount;
+                const T dfMeanI = adfCurBlockMean[i];
+                for (size_t iPixel = 0; iPixel < nThisBlockPixelCount; ++iPixel)
+                {
+                    padfI[iPixel] -= dfMeanI;
+                }
+            }
+        }
+
+        // Update padfComomentMatrix, anCount, adfMean, anCountMean
+        // from dfComoment, nCount, adfCurBlockMean, anCurBlockCount
+        const auto UpdateGlobalValues =
+            [&anCount, &adfMean, &anCountMean, &adfCurBlockMean,
+             &anCurBlockCount, padfComomentMatrix,
+             nBandCount](int i, int j, size_t nCount, T dfComoment)
+        {
+            const auto idxInMatrixI = static_cast<size_t>(i) * nBandCount + j;
+            const auto idxInMatrixJ = static_cast<size_t>(j) * nBandCount + i;
+
+            // Update the total comoment using last formula of paragraph
+            // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online :
+            // CoMoment(A+B) = CoMoment(A) + CoMoment(B) +
+            //                 (mean_I(A) - mean_I(B)) *
+            //                 (mean_J(A) - mean_J(B)) *
+            //                 (count(A) * count(B)) / (count(A) + count(B))
+            //
+            // There might be a small gotcha in the fact that the set of
+            // pixels on which the means are computed is not always the
+            // same as the the one on which the comoment is computed, if
+            // pixels are not valid/invalid at the same indices among bands
+            // It is not obvious (to me) what should be the correct behavior.
+            // The current approach has the benefit to avoid recomputing
+            // the mean for each (i,j) tuple, but only for all i.
+            if (nCount > 0)
+            {
+                padfComomentMatrix[idxInMatrixI] +=
+                    static_cast<double>(dfComoment);
+                padfComomentMatrix[idxInMatrixI] +=
+                    static_cast<double>(adfMean[idxInMatrixI] -
+                                        adfCurBlockMean[i]) *
+                    static_cast<double>(adfMean[idxInMatrixJ] -
+                                        adfCurBlockMean[j]) *
+                    (static_cast<double>(anCount[idxInMatrixI]) *
+                     static_cast<double>(nCount) /
+                     static_cast<double>(anCount[idxInMatrixI] + nCount));
+
+                anCount[idxInMatrixI] += nCount;
+            }
+
+            // Update means
+            if (anCurBlockCount[i] > 0)
+            {
+                adfMean[idxInMatrixI] +=
+                    (adfCurBlockMean[i] - adfMean[idxInMatrixI]) *
+                    static_cast<T>(
+                        static_cast<double>(anCurBlockCount[i]) /
+                        static_cast<double>(anCountMean[idxInMatrixI] +
+                                            anCurBlockCount[i]));
+
+                anCountMean[idxInMatrixI] += anCurBlockCount[i];
+            }
+
+            if (idxInMatrixI != idxInMatrixJ && anCurBlockCount[j] > 0)
+            {
+                adfMean[idxInMatrixJ] +=
+                    (adfCurBlockMean[j] - adfMean[idxInMatrixJ]) *
+                    static_cast<T>(
+                        static_cast<double>(anCurBlockCount[j]) /
+                        static_cast<double>(anCountMean[idxInMatrixJ] +
+                                            anCurBlockCount[j]));
+
+                anCountMean[idxInMatrixJ] += anCurBlockCount[j];
+            }
+        };
+
+        if (bAllBandsAreAllNodata)
+        {
+            // Optimized code path where all values in the current block
+            // are invalid
+
+            for (int i = 0; i < nBandCount; ++i)
+            {
+                for (int j = i; j < nBandCount; ++j)
+                {
+                    UpdateGlobalValues(i, j, 0, ZERO);
+                }
+            }
+        }
+        else if (bNoBandHasNodata)
+        {
+            // Optimized code path where there are no invalid value in the
+            // current block
+
+            if constexpr (!std::is_same_v<T, double>)
+            {
+                std::fill(aCurBlockComomentMatrix.begin(),
+                          aCurBlockComomentMatrix.end(), ZERO);
+
+                GDALMatrixMultiplyAByTransposeAUpperTriangle(
+                    nNumThreads, adfCurBlockPixelsAllBands.data(),
+                    aCurBlockComomentMatrix.data(), nBandCount,
+                    nThisBlockPixelCount);
+            }
+#ifdef CAN_DETECT_AVX2_FMA_AT_RUNTIME
+            else if (bHasAVX2_FMA)
+            {
+                GDALMatrixMultiplyAByTransposeAUpperTriangle_AVX2_FMA(
+                    nNumThreads, adfCurBlockPixelsAllBands.data(),
+                    padfComomentMatrix, nBandCount, nThisBlockPixelCount);
+            }
+#endif
+            else
+            {
+                GDALMatrixMultiplyAByTransposeAUpperTriangle(
+                    nNumThreads, adfCurBlockPixelsAllBands.data(),
+                    padfComomentMatrix, nBandCount, nThisBlockPixelCount);
+            }
+
+            for (int i = 0; i < nBandCount; ++i)
+            {
+                for (int j = i; j < nBandCount; ++j)
+                {
+                    if constexpr (!std::is_same_v<T, double>)
+                    {
+                        const auto idxInMatrixI =
+                            static_cast<size_t>(i) * nBandCount + j;
+                        UpdateGlobalValues(
+                            i, j, nThisBlockPixelCount,
+                            aCurBlockComomentMatrix[idxInMatrixI]);
+                    }
+                    else
+                    {
+                        UpdateGlobalValues(i, j, nThisBlockPixelCount, ZERO);
+                    }
+                }
+            }
+        }
+        else
+        {
+#ifdef HAVE_OPENMP
+#pragma omp parallel for schedule(static) num_threads(nNumThreads)
+#endif
+            for (MySignedSize_t k = 0; k < kMax; ++k)
+            {
+                int i, j;
+                std::tie(i, j) = anMapLinearIdxToIJ[k];
+
+                // Now compute the moment of (i, j), but just for this block
+                size_t nCount = 0;
+                T dfComoment = 0;
+                const T *padfI =
+                    adfCurBlockPixelsAllBands.data() + i * nThisBlockPixelCount;
+                const T *padfJ =
+                    adfCurBlockPixelsAllBands.data() + j * nThisBlockPixelCount;
+
+                // Use https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Two-pass
+                // for the current block
+                if ((anCurBlockCount[i] == nThisBlockPixelCount &&
+                     anCurBlockCount[j] == nThisBlockPixelCount) ||
+                    (bNoneHasMaskOrNodata && bIsAllInteger))
+                {
+                    // Most optimized code path: integer, no nodata, no mask
+#ifdef HAVE_OPENMP_SIMD
+#pragma omp simd reduction(+ : dfComoment)
+#endif
+                    for (size_t iPixel = 0; iPixel < nThisBlockPixelCount;
+                         ++iPixel)
+                    {
+                        dfComoment += padfI[iPixel] * padfJ[iPixel];
+                    }
+                    nCount = nThisBlockPixelCount;
+                }
+                else if (bNoneHasMaskOrNodata)
+                {
+                    // Floating-point code path with no nodata and no mask
+#ifdef HAVE_OPENMP_SIMD
+#pragma omp simd reduction(+ : dfComoment)
+#endif
+                    for (size_t iPixel = 0; iPixel < nThisBlockPixelCount;
+                         ++iPixel)
+                    {
+                        const T dfAcc = padfI[iPixel] * padfJ[iPixel];
+                        const bool bIsValid = !std::isnan(dfAcc);
+                        nCount += bIsValid;
+                        dfComoment += bIsValid ? dfAcc : ZERO;
+                    }
+                }
+                else if (!std::isnan(adfNoData[i]) && !std::isnan(adfNoData[j]))
+                {
+                    // Code path when there are both nodata values
+                    const T shiftedNoDataI = adfNoData[i] - adfCurBlockMean[i];
+                    const T shiftedNoDataJ = adfNoData[j] - adfCurBlockMean[j];
+
+#ifdef HAVE_OPENMP_SIMD
+#pragma omp simd reduction(+ : dfComoment)
+#endif
+                    for (size_t iPixel = 0; iPixel < nThisBlockPixelCount;
+                         ++iPixel)
+                    {
+                        const T dfI = padfI[iPixel];
+                        const T dfJ = padfJ[iPixel];
+                        const T dfAcc = dfI * dfJ;
+                        const bool bIsValid = !std::isnan(dfAcc) &&
+                                              dfI != shiftedNoDataI &&
+                                              dfJ != shiftedNoDataJ;
+                        nCount += bIsValid;
+                        dfComoment += bIsValid ? dfAcc : ZERO;
+                    }
+                }
+                else
+                {
+                    // Generic code path
+                    const T shiftedNoDataI = adfNoData[i] - adfCurBlockMean[i];
+                    const T shiftedNoDataJ = adfNoData[j] - adfCurBlockMean[j];
+
+#ifdef HAVE_OPENMP_SIMD
+#pragma omp simd reduction(+ : dfComoment)
+#endif
+                    for (size_t iPixel = 0; iPixel < nThisBlockPixelCount;
+                         ++iPixel)
+                    {
+                        const T dfI = padfI[iPixel];
+                        const T dfJ = padfJ[iPixel];
+                        const T dfAcc = dfI * dfJ;
+                        const bool bIsValid =
+                            !std::isnan(dfAcc) && dfI != shiftedNoDataI &&
+                            dfJ != shiftedNoDataJ &&
+                            (!pabyCurBlockMask[i] ||
+                             (*pabyCurBlockMask[i])[iPixel]) &&
+                            (!pabyCurBlockMask[j] ||
+                             (*pabyCurBlockMask[j])[iPixel]);
+                        nCount += bIsValid;
+                        dfComoment += bIsValid ? dfAcc : ZERO;
+                    }
+                }
+
+                UpdateGlobalValues(i, j, nCount, dfComoment);
+            }
+        }
+
+        ++nCurIter;
+        if (pfnProgress &&
+            !pfnProgress(static_cast<double>(nCurIter) / nIterCount, "",
+                         pProgressData))
+        {
+            poDS->ReportError(CE_Failure, CPLE_UserInterrupt,
+                              "User terminated");
+            return CE_Failure;
+        }
+    }
+
+    // Finalize by dividing co-moments by the number of contributing values
+    // (minus nDeltaDegreeOfFreedom) to compute final covariances.
+    for (int i = 0; i < nBandCount; ++i)
+    {
+        // The covariance matrix is symmetric. So start at i
+        for (int j = i; j < nBandCount; ++j)
+        {
+            const auto idxInMatrixI = static_cast<size_t>(i) * nBandCount + j;
+            const double dfCovariance =
+                (nDeltaDegreeOfFreedom < 0 ||
+                 anCount[idxInMatrixI] <=
+                     static_cast<uint64_t>(nDeltaDegreeOfFreedom))
+                    ? std::numeric_limits<double>::quiet_NaN()
+                    : padfComomentMatrix[idxInMatrixI] /
+                          static_cast<double>(anCount[idxInMatrixI] -
+                                              nDeltaDegreeOfFreedom);
+
+            padfCovMatrix[idxInMatrixI] = dfCovariance;
+            // Fill lower triangle
+            padfCovMatrix[static_cast<size_t>(j) * nBandCount + i] =
+                dfCovariance;
+        }
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*              GDALDataset::ComputeInterBandCovarianceMatrix()         */
+/************************************************************************/
+
+/**
+ \brief Compute the covariance matrix between bands of this dataset.
+
+ The covariance indicates the level to which two bands vary together.
+
+ If we call \f$ v_i[y,x] \f$ the value of pixel at row=y and column=x for band i,
+ and \f$ mean_i \f$ the mean value of all pixels of band i, then
+
+ \f[
+    \mathrm{cov}[i,j] =
+    \frac{
+        \sum_{y,x} \left( v_i[y,x] - \mathrm{mean}_i \right)
+        \left( v_j[y,x] - \mathrm{mean}_j \right)
+    }{
+        \mathrm{pixel\_count} - \mathrm{nDeltaDegreeOfFreedom}
+    }
+ \f]
+
+ When there are no nodata values, \f$ pixel\_count = GetRasterXSize() * GetRasterYSize() \f$.
+ We can see that \f$ cov[i,j] = cov[j,i] \f$, and consequently the returned matrix
+ is symmetric.
+
+ A value of nDeltaDegreeOfFreedom=1 (the default) will return a unbiased estimate
+ if the pixels in bands are considered to be a sample of the whole population.
+ This is consistent with the default of
+ https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+ matrix is consistent with what can be obtained with
+
+ \verbatim embed:rst
+ .. code-block:: python
+
+     numpy.cov(
+        [ds.GetRasterBand(n + 1).ReadAsArray().ravel() for n in range(ds.RasterCount)]
+     )
+ \endverbatim
+
+ Otherwise a value of nDeltaDegreeOfFreedom=0 can be used if they are considered
+ to be the whole population.
+
+ The caller must provide an already allocated array in padfCovMatrix of size
+ at least nBandCount * nBandCount.
+
+ This method recomputes the covariance matrix, even if STATISTICS_COVARIANCES
+ metadata items are available in bands. See GetInterBandCovarianceMatrix()
+ to use them.
+
+ The implementation is optimized to minimize the amount of pixel reading.
+
+ This method is the same as the C function GDALDatasetComputeInterBandCovarianceMatrix()
+
+ @param[out] padfCovMatrix Pointer to an already allocated output array, of size at least
+                      nBandCount * nBandCount.
+ @param nSize Number of elements in output array.
+ @param nBandCount Zero for all bands, or number of values in panBandList.
+                   Defaults to 0.
+ @param panBandList nullptr for all bands if nBandCount == 0, or array of
+                    nBandCount values such as panBandList[i] is the index
+                    between 1 and GetRasterCount() of a band that must be used
+                    in the covariance computation. Defaults to nullptr.
+ @param bApproxOK Whether it is acceptable to use a subsample of values.
+                  Defaults to false.
+ @param bWriteIntoMetadata Whether this method must write
+                           STATISTICS_COVARIANCES band metadata items.
+                           Defaults to true.
+ @param nDeltaDegreeOfFreedom Correction term to subtract in the final
+                              averaging phase of the covariance computation.
+                              Defaults to 1.
+ @param pfnProgress a function to call to report progress, or NULL.
+ @param pProgressData application data to pass to the progress function.
+
+ @return CE_None if successful, or CE_Failure in case of failure
+
+ @since 3.13
+
+ @see GetInterBandCovarianceMatrix()
+ */
+CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
+    double *padfCovMatrix, size_t nSize, int nBandCount, const int *panBandList,
+    bool bApproxOK, bool bWriteIntoMetadata, int nDeltaDegreeOfFreedom,
+    GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    std::vector<int> anBandListTmp;  // keep in this scope
+    if (nBandCount == 0)
+    {
+        if (nBands == 0)
+            return CE_None;
+        for (int i = 0; i < nBands; ++i)
+            anBandListTmp.push_back(i + 1);
+        nBandCount = nBands;
+        panBandList = anBandListTmp.data();
+    }
+    else
+    {
+        if (nBandCount > nBands)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "ComputeInterBandCovarianceMatrix(): nBandCount > nBands");
+            return CE_Failure;
+        }
+        for (int i = 0; i < nBandCount; ++i)
+        {
+            if (panBandList[i] <= 0 || panBandList[i] > nBands)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "ComputeInterBandCovarianceMatrix(): invalid value "
+                         "panBandList[%d] = %d",
+                         i, panBandList[i]);
+                return CE_Failure;
+            }
+        }
+
+        if (bWriteIntoMetadata)
+        {
+            bool bOK = nBandCount == nBands;
+            for (int i = 0; bOK && i < nBandCount; ++i)
+            {
+                bOK = (panBandList[i] == i + 1);
+            }
+            if (!bOK)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "ComputeInterBandCovarianceMatrix(): cannot write "
+                         "STATISTICS_COVARIANCES metadata since the input band "
+                         "list is not [1, 2, ... GetRasterCount()]");
+                return CE_Failure;
+            }
+        }
+    }
+
+    const auto nMatrixSize = static_cast<size_t>(nBandCount) * nBandCount;
+    if (nSize < nMatrixSize)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ComputeInterBandCovarianceMatrix(): too small result matrix "
+                 "provided");
+        return CE_Failure;
+    }
+
+    // Find appropriate overview dataset
+    GDALDataset *poActiveDS = this;
+    if (bApproxOK && papoBands[panBandList[0] - 1]->GetOverviewCount() > 0)
+    {
+        GDALDataset *poOvrDS = nullptr;
+        for (int i = 0; i < nBandCount; ++i)
+        {
+            const int nIdxBand = panBandList[i] - 1;
+            auto poOvrBand = papoBands[nIdxBand]->GetRasterSampleOverview(
+                GDALSTAT_APPROX_NUMSAMPLES);
+
+            if (poOvrBand == papoBands[i] ||
+                poOvrBand->GetBand() != panBandList[i])
+            {
+                poOvrDS = nullptr;
+                break;
+            }
+            else if (i == 0)
+            {
+                if (poOvrBand->GetDataset() == this)
+                {
+                    break;
+                }
+                poOvrDS = poOvrBand->GetDataset();
+            }
+            else if (poOvrBand->GetDataset() != poOvrDS)
+            {
+                poOvrDS = nullptr;
+                break;
+            }
+        }
+        if (poOvrDS)
+        {
+            poActiveDS = poOvrDS;
+        }
+    }
+
+#ifdef GDAL_COVARIANCE_CAN_USE_FLOAT32
+    const auto UseFloat32 = [](GDALDataType eDT)
+    {
+        return eDT == GDT_UInt8 || eDT == GDT_Int8 || eDT == GDT_UInt16 ||
+               eDT == GDT_Int16 || eDT == GDT_Float32;
+    };
+
+    bool bUseFloat32 = UseFloat32(
+        poActiveDS->GetRasterBand(panBandList[0])->GetRasterDataType());
+    for (int i = 1; bUseFloat32 && i < nBandCount; ++i)
+    {
+        bUseFloat32 = UseFloat32(
+            poActiveDS->GetRasterBand(panBandList[i])->GetRasterDataType());
+    }
+#endif
+
+    CPLErr eErr =
+#ifdef GDAL_COVARIANCE_CAN_USE_FLOAT32
+        bUseFloat32 ? ComputeInterBandCovarianceMatrixInternal<float>(
+                          poActiveDS, padfCovMatrix, nBandCount, panBandList,
+                          poActiveDS->papoBands, nDeltaDegreeOfFreedom,
+                          pfnProgress, pProgressData)
+                    :
+#endif
+                    ComputeInterBandCovarianceMatrixInternal<double>(
+                        poActiveDS, padfCovMatrix, nBandCount, panBandList,
+                        poActiveDS->papoBands, nDeltaDegreeOfFreedom,
+                        pfnProgress, pProgressData);
+
+    if (bWriteIntoMetadata && eErr == CE_None)
+    {
+        CPLAssert(nBands == nBandCount);
+        std::string osStr;
+        size_t idx = 0;
+        for (int i = 0; i < nBands; ++i)
+        {
+            osStr.clear();
+            for (int j = 0; j < nBands; ++j, ++idx)
+            {
+                if (j > 0)
+                    osStr += ',';
+                osStr += CPLSPrintf("%.17g", padfCovMatrix[idx]);
+            }
+            papoBands[i]->SetMetadataItem("STATISTICS_COVARIANCES",
+                                          osStr.c_str());
+        }
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*               GDALDatasetComputeInterBandCovarianceMatrix()          */
+/************************************************************************/
+
+/**
+ \brief Compute the covariance matrix between bands of this dataset.
+
+ The covariance indicates the level to which two bands vary together.
+
+ If we call \f$ v_i[y,x] \f$ the value of pixel at row=y and column=x for band i,
+ and \f$ mean_i \f$ the mean value of all pixels of band i, then
+
+ \f[
+    \mathrm{cov}[i,j] =
+    \frac{
+        \sum_{y,x} \left( v_i[y,x] - \mathrm{mean}_i \right)
+        \left( v_j[y,x] - \mathrm{mean}_j \right)
+    }{
+        \mathrm{pixel\_count} - \mathrm{nDeltaDegreeOfFreedom}
+    }
+ \f]
+
+ When there are no nodata values, \f$ pixel\_count = GetRasterXSize() * GetRasterYSize() \f$.
+ We can see that \f$ cov[i,j] = cov[j,i] \f$, and consequently the returned matrix
+ is symmetric.
+
+ A value of nDeltaDegreeOfFreedom=1 (the default) will return a unbiased estimate
+ if the pixels in bands are considered to be a sample of the whole population.
+ This is consistent with the default of
+ https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+ matrix is consistent with what can be obtained with
+
+ \verbatim embed:rst
+ .. code-block:: python
+
+     numpy.cov(
+        [ds.GetRasterBand(n + 1).ReadAsArray().ravel() for n in range(ds.RasterCount)]
+     )
+ \endverbatim
+
+ Otherwise a value of nDeltaDegreeOfFreedom=0 can be used if they are considered
+ to be the whole population.
+
+ The caller must provide an already allocated array in padfCovMatrix of size
+ at least GDALGetRasterCount() * GDALGetRasterCount().
+
+ This method recomputes the covariance matrix, even if STATISTICS_COVARIANCES
+ metadata items are available in bands. See GDALDatasetGetInterBandCovarianceMatrix()
+ to use them.
+
+ This function is the same as the C++ method GDALDataset::ComputeInterBandCovarianceMatrix()
+
+ @param hDS Dataset handle.
+ @param[out] padfCovMatrix Pointer to an already allocated output array, of size at least
+                      nBandCount * nBandCount.
+ @param nSize Number of elements in output array.
+ @param nBandCount Zero for all bands, or number of values in panBandList.
+                   Defaults to 0.
+ @param panBandList nullptr for all bands if nBandCount == 0, or array of
+                    nBandCount values such as panBandList[i] is the index
+                    between 1 and GetRasterCount() of a band that must be used
+                    in the covariance computation. Defaults to nullptr.
+ @param bApproxOK Whether it is acceptable to use a subsample of values.
+                  Defaults to false.
+ @param bWriteIntoMetadata Whether this method must write
+                           STATISTICS_COVARIANCES band metadata items.
+                           Defaults to true.
+ @param nDeltaDegreeOfFreedom Correction term to subtract in the final
+                              averaging phase of the covariance computation.
+                              Defaults to 1.
+ @param pfnProgress a function to call to report progress, or NULL.
+ @param pProgressData application data to pass to the progress function.
+
+ @return CE_None if successful, or CE_Failure in case of failure
+
+ @since 3.13
+
+ @see GDALDatasetGetInterBandCovarianceMatrix()
+ */
+CPLErr GDALDatasetComputeInterBandCovarianceMatrix(
+    GDALDatasetH hDS, double *padfCovMatrix, size_t nSize, int nBandCount,
+    const int *panBandList, bool bApproxOK, bool bWriteIntoMetadata,
+    int nDeltaDegreeOfFreedom, GDALProgressFunc pfnProgress,
+    void *pProgressData)
+{
+    VALIDATE_POINTER1(hDS, __func__, CE_Failure);
+    VALIDATE_POINTER1(padfCovMatrix, __func__, CE_Failure);
+    return GDALDataset::FromHandle(hDS)->ComputeInterBandCovarianceMatrix(
+        padfCovMatrix, nSize, nBandCount, panBandList, bApproxOK,
+        bWriteIntoMetadata, nDeltaDegreeOfFreedom, pfnProgress, pProgressData);
 }

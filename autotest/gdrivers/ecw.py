@@ -381,7 +381,7 @@ def test_ecw_11(tmp_path):
         pytest.skip("ECW write support not available")
 
     drv = gdal.GetDriverByName("NITF")
-    ds = drv.Create(tmp_path / "test_11.ntf", 200, 100, 3, gdal.GDT_Byte, ["ICORDS=G"])
+    ds = drv.Create(tmp_path / "test_11.ntf", 200, 100, 3, gdal.GDT_UInt8, ["ICORDS=G"])
     ds.SetGeoTransform((100, 0.1, 0.0, 30.0, 0.0, -0.1))
 
     my_list = list(range(200)) + list(range(20, 220)) + list(range(30, 230))

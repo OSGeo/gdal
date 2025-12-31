@@ -1967,7 +1967,8 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             step->m_inputDataset[0].Set(poCurDS);
         }
 
-        if (i + 1 < m_steps.size() && step->m_outputDataset.GetDatasetRef())
+        if (i + 1 < m_steps.size() && step->m_outputDataset.GetDatasetRef() &&
+            !step->OutputDatasetAllowedBeforeRunningStep())
         {
             // Shouldn't happen
             ReportError(CE_Failure, CPLE_AppDefined,

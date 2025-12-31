@@ -126,8 +126,8 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
 
         OGRLayer *poBaseLayer = papoSrcLayers[0];
 
-        auto poLayer = std::unique_ptr<OGRUnionLayer>{new OGRUnionLayer{
-            poBaseLayer->GetName(), nSrcLayers, papoSrcLayers, TRUE}};
+        auto poLayer = std::make_unique<OGRUnionLayer>(
+            poBaseLayer->GetName(), nSrcLayers, papoSrcLayers, TRUE);
 
         OGRFeatureDefn *poBaseLayerDefn = poBaseLayer->GetLayerDefn();
 

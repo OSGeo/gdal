@@ -1713,3 +1713,96 @@ def test_jsonfg_read_ogc_crs84():
     assert lyr.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [2, 1]
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (2 49)"
+
+
+###############################################################################
+
+
+def test_jsonfg_export_geom_to_json():
+
+    g = ogr.CreateGeometryFromWkt("POINT M(1 2 3)")
+    assert json.loads(g.ExportToJson()) == {"coordinates": [1.0, 2.0], "type": "Point"}
+    assert json.loads(g.ExportToJson({"ALLOW_MEASURE": True})) == {
+        "coordinates": [1.0, 2.0, 3.0],
+        "type": "Point",
+    }
+
+    g = ogr.CreateGeometryFromWkt("CIRCULARSTRING(0 0,1 1,2 0)")
+    assert json.loads(g.ExportToJson())["type"] == "LineString"
+    assert json.loads(g.ExportToJson({"ALLOW_CURVE": True})) == {
+        "coordinates": [[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
+        "type": "CircularString",
+    }
+
+    g = ogr.CreateGeometryFromWkt("POINT (49 2)")
+    srs = osr.SpatialReference(epsg=4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+    g.AssignSpatialReference(srs)
+    assert json.loads(g.ExportToJson()) == {"coordinates": [2.0, 49.0], "type": "Point"}
+    assert json.loads(g.ExportToJson({"COORDINATE_ORDER": "AUTHORITY_COMPLIANT"})) == {
+        "coordinates": [49.0, 2.0],
+        "type": "Point",
+    }
+
+    g = ogr.CreateGeometryFromWkt("POINT (49 2)")
+    srs = osr.SpatialReference(epsg=4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+    g.AssignSpatialReference(srs)
+    assert json.loads(g.ExportToJson()) == {"coordinates": [2.0, 49.0], "type": "Point"}
+    assert json.loads(
+        g.ExportToJson({"COORDINATE_ORDER": "TRADITIONAL_GIS_ORDER"})
+    ) == {
+        "coordinates": [2.0, 49.0],
+        "type": "Point",
+    }
+
+    g = ogr.CreateGeometryFromWkt("POINT (2 49)")
+    srs = osr.SpatialReference(epsg=4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    g.AssignSpatialReference(srs)
+    assert json.loads(g.ExportToJson()) == {"coordinates": [2.0, 49.0], "type": "Point"}
+    assert json.loads(g.ExportToJson({"COORDINATE_ORDER": "AUTHORITY_COMPLIANT"})) == {
+        "coordinates": [49.0, 2.0],
+        "type": "Point",
+    }
+
+    g = ogr.CreateGeometryFromWkt("POINT (2 49)")
+    srs = osr.SpatialReference(epsg=4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    g.AssignSpatialReference(srs)
+    assert json.loads(g.ExportToJson()) == {"coordinates": [2.0, 49.0], "type": "Point"}
+    assert json.loads(
+        g.ExportToJson({"COORDINATE_ORDER": "TRADITIONAL_GIS_ORDER"})
+    ) == {
+        "coordinates": [2.0, 49.0],
+        "type": "Point",
+    }
+
+    g = ogr.CreateGeometryFromWkt("POINT (500000 4500000)")
+    srs = osr.SpatialReference(epsg=32631)
+    srs.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+    g.AssignSpatialReference(srs)
+    assert json.loads(g.ExportToJson()) == {
+        "coordinates": [500000, 4500000],
+        "type": "Point",
+    }
+    assert json.loads(g.ExportToJson({"COORDINATE_ORDER": "AUTHORITY_COMPLIANT"})) == {
+        "coordinates": [500000, 4500000],
+        "type": "Point",
+    }
+
+    g = ogr.CreateGeometryFromWkt("POINT (500000 4500000)")
+    srs = osr.SpatialReference(epsg=32631)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    g.AssignSpatialReference(srs)
+    assert json.loads(g.ExportToJson()) == {
+        "coordinates": [500000, 4500000],
+        "type": "Point",
+    }
+    assert json.loads(g.ExportToJson({"COORDINATE_ORDER": "AUTHORITY_COMPLIANT"})) == {
+        "coordinates": [500000, 4500000],
+        "type": "Point",
+    }
+
+    with pytest.raises(Exception, match="Unsupported COORDINATE_ORDER='invalid'"):
+        g.ExportToJson({"COORDINATE_ORDER": "invalid"})

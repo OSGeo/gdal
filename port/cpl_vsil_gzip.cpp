@@ -464,8 +464,17 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandleUniquePtr poBaseHandleIn,
     else
     {
         if (m_poBaseHandle->Seek(0, SEEK_END) != 0)
+        {
             CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
-        m_compressed_size = m_poBaseHandle->Tell() - offset;
+            return;
+        }
+        const auto nFileSize = m_poBaseHandle->Tell();
+        if (nFileSize < offset)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "/vsizip/: invalid file offset");
+            return;
+        }
+        m_compressed_size = nFileSize - offset;
         compressed_size = m_compressed_size;
     }
     offsetEndCompressedData = offset + compressed_size;
@@ -3292,7 +3301,8 @@ const char *VSIGZipFilesystemHandler::GetOptions()
 
 void VSIInstallGZipFileHandler()
 {
-    VSIFileManager::InstallHandler("/vsigzip/", new VSIGZipFilesystemHandler);
+    VSIFileManager::InstallHandler(
+        "/vsigzip/", std::make_shared<VSIGZipFilesystemHandler>());
 }
 
 //! @cond Doxygen_Suppress
@@ -4954,7 +4964,8 @@ void VSIZipWriteHandle::StartNewFile(VSIZipWriteHandle *poSubFile)
 
 void VSIInstallZipFileHandler()
 {
-    VSIFileManager::InstallHandler("/vsizip/", new VSIZipFilesystemHandler());
+    VSIFileManager::InstallHandler("/vsizip/",
+                                   std::make_shared<VSIZipFilesystemHandler>());
 }
 
 /************************************************************************/

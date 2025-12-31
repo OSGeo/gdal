@@ -715,7 +715,7 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
             bool bUnsupported = false;
             switch (eDT)
             {
-                case GDT_Byte:
+                case GDT_UInt8:
                 {
                     elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
                     dtype.Set(dummy, "|u1");
@@ -1050,7 +1050,7 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
             {
                 case GDT_Unknown:
                     break;
-                case GDT_Byte:
+                case GDT_UInt8:
                     oFilter.Add("dtype", "u1");
                     break;
                 case GDT_Int8:

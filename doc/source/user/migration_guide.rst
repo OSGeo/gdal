@@ -4,6 +4,14 @@
 Migration guide
 ================================================================================
 
+From GDAL 3.12 to GDAL 3.13
+---------------------------
+
+- Changes impacting out-of-tree vector drivers:
+
+  * :cpp:func:`GDALDataset::Close` takes now 2 input parameters ``(GDALProgressFunc pfnProgress, void *pProgressData)``,
+    which may be nullptr.
+
 From GDAL 3.11 to GDAL 3.12
 ---------------------------
 

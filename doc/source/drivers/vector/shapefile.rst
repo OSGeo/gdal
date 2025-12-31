@@ -53,6 +53,9 @@ a full analysis based on topological relationships of the parts of the
 polygons so that the resulting polygons are correctly defined in the
 OGC Simple Feature convention.
 
+Starting with GDAL 3.13, ``.shp.xml`` side-car files are used to set field
+names potentially longer than 10 characters, and field aliases.
+
 Driver capabilities
 -------------------
 

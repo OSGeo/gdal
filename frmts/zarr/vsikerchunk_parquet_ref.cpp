@@ -842,7 +842,7 @@ void VSIInstallKerchunkParquetRefFileSystem()
     {
         VSIFileManager::InstallHandler(
             PARQUET_REF_FS_PREFIX,
-            std::make_unique<VSIKerchunkParquetRefFileSystem>().release());
+            std::make_shared<VSIKerchunkParquetRefFileSystem>());
     }
 }
 

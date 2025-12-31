@@ -58,26 +58,6 @@ struct BAGRefinementGrid
 constexpr float fDEFAULT_NODATA = 1000000.0f;
 
 /************************************************************************/
-/*                                h5check()                             */
-/************************************************************************/
-
-#ifdef DEBUG
-template <class T> static T h5check(T ret, const char *filename, int line)
-{
-    if (ret < 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "HDF5 API failed at %s:%d",
-                 filename, line);
-    }
-    return ret;
-}
-
-#define H5_CHECK(x) h5check(x, __FILE__, __LINE__)
-#else
-#define H5_CHECK(x) (x)
-#endif
-
-/************************************************************************/
 /* ==================================================================== */
 /*                               BAGDataset                             */
 /* ==================================================================== */
@@ -1052,7 +1032,7 @@ BAGResampledBand::BAGResampledBand(BAGDataset *poDSIn, int nBandIn,
     nBlockYSize = std::min(nBlockSize, poDS->GetRasterYSize());
     if (poDSIn->m_bMask)
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
     }
     else if (poDSIn->m_ePopulation == BAGDataset::Population::COUNT)
     {
@@ -2288,7 +2268,7 @@ BAGGeorefMDBand::BAGGeorefMDBand(const std::shared_ptr<GDALMDArray> &poValues,
     }
     else
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         m_poElevBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
 
@@ -2399,7 +2379,7 @@ BAGGeorefMDSuperGridBand::BAGGeorefMDSuperGridBand(
     }
     else
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         m_poElevBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
 }

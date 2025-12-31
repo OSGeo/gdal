@@ -1356,8 +1356,9 @@ char **CPLCorrespondingPaths(const char *pszOldFilename,
                 !EQUAL(osFilePath.c_str(), osOldPath.c_str()) ||
                 osFileName[osOldBasename.size()] != '.')
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Unable to rename fileset due irregular basenames.");
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Unable to copy/rename fileset due irregular basenames.");
                 return nullptr;
             }
         }
@@ -1377,7 +1378,7 @@ char **CPLCorrespondingPaths(const char *pszOldFilename,
         if (osOldExtra != osNewExtra)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unable to rename fileset due to irregular filename "
+                     "Unable to copy/rename fileset due to irregular filename "
                      "correspondence.");
             return nullptr;
         }

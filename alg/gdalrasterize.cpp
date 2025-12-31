@@ -216,7 +216,7 @@ static void gvBurnScanline(GDALRasterizeInfo *psInfo, int nY, int nXStart,
 
     switch (psInfo->eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             gvBurnScanlineBasic<GByte>(psInfo, nY, nXStart, nXEnd, dfVariant);
             break;
         case GDT_Int8:
@@ -350,7 +350,7 @@ static void gvBurnPoint(GDALRasterizeInfo *psInfo, int nY, int nX,
 
     switch (psInfo->eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             gvBurnPointBasic<GByte>(psInfo, nY, nX, dfVariant);
             break;
         case GDT_Int8:
@@ -937,7 +937,7 @@ static CPLErr GDALRasterizeGeometriesInternal(
  *     int nBufXSize      = 1024;
  *     int nBufYSize      = 1024;
  *     int nBandCount     = 1;
- *     GDALDataType eType = GDT_Byte;
+ *     GDALDataType eType = GDT_UInt8;
  *     int nDataTypeSize  = GDALGetDataTypeSizeBytes(eType);
  *
  *     void* pData = CPLCalloc( nBufXSize*nBufYSize*nBandCount, nDataTypeSize );
@@ -1263,7 +1263,7 @@ static CPLErr GDALRasterizeGeometriesInternal(
         const int nYBlocks = DIV_ROUND_UP(poBand->GetYSize(), nYBlockSize);
 
         const GDALDataType eType =
-            poBand->GetRasterDataType() == GDT_Byte ? GDT_Byte : GDT_Float64;
+            poBand->GetRasterDataType() == GDT_UInt8 ? GDT_UInt8 : GDT_Float64;
 
         const int nPixelSize = nBandCount * GDALGetDataTypeSizeBytes(eType);
 

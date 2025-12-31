@@ -90,9 +90,9 @@ def nitf_create(
     drv = gdal.GetDriverByName("NITF")
 
     if createcopy:
-        ds = gdal.GetDriverByName("MEM").Create("", 200, 100, nbands, gdal.GDT_Byte)
+        ds = gdal.GetDriverByName("MEM").Create("", 200, 100, nbands, gdal.GDT_UInt8)
     else:
-        ds = drv.Create(filename, 200, 100, nbands, gdal.GDT_Byte, creation_options)
+        ds = drv.Create(filename, 200, 100, nbands, gdal.GDT_UInt8, creation_options)
     ds.SetGeoTransform((100, 0.1, 0.0, 30.0, 0.0, -0.1))
 
     if set_inverted_color_interp:
@@ -379,7 +379,7 @@ def test_nitf_12():
 def test_nitf_13(tmp_path):
     drv = gdal.GetDriverByName("NITF")
     gdal.ErrorReset()
-    ds = drv.Create(tmp_path / "test_13.ntf", 200, 100, 1, gdal.GDT_Byte, ["ICORDS=S"])
+    ds = drv.Create(tmp_path / "test_13.ntf", 200, 100, 1, gdal.GDT_UInt8, ["ICORDS=S"])
     assert gdal.GetLastErrorMsg() == ""
     ds.SetGeoTransform((400000, 10, 0.0, 6000000, 0.0, -10))
     ds.SetProjection(
@@ -1126,7 +1126,7 @@ def test_nitf_29(tmp_path):
         1,
         1,
         1,
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         ["IREP=RGB/LUT", "LUT_SIZE=128"],
     )
 
@@ -1965,7 +1965,7 @@ def test_nitf_50(tmp_path):
     )
 
     ds.WriteRaster(
-        0, 0, 100, 100, "   ", 1, 1, buf_type=gdal.GDT_Byte, band_list=[1, 2, 3]
+        0, 0, 100, 100, "   ", 1, 1, buf_type=gdal.GDT_UInt8, band_list=[1, 2, 3]
     )
 
     ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_BlueBand)
@@ -6036,13 +6036,13 @@ def test_nitf_readSAR_IQ(tmp_vsimem):
     src_ds = gdal.Open("data/byte.tif")
     ds = gdal.Open("DERIVED_SUBDATASET:REAL:" + out_filename)
     assert (
-        ds.ReadRaster(0, 0, 40, 20, 20, 20, buf_type=gdal.GDT_Byte)
+        ds.ReadRaster(0, 0, 40, 20, 20, 20, buf_type=gdal.GDT_UInt8)
         == src_ds.ReadRaster()
     )
     ds = gdal.Open("DERIVED_SUBDATASET:IMAG:" + out_filename)
     mod_src_ds = gdal.Translate("", src_ds, options="-f MEM -scale 0 255 255 0")
     assert (
-        ds.ReadRaster(0, 0, 40, 20, 20, 20, buf_type=gdal.GDT_Byte)
+        ds.ReadRaster(0, 0, 40, 20, 20, 20, buf_type=gdal.GDT_UInt8)
         == mod_src_ds.ReadRaster()
     )
 

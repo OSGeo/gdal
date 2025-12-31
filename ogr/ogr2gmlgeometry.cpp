@@ -40,16 +40,10 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
+#include "gmlutils.h"
 
 constexpr int SRSDIM_LOC_GEOMETRY = 1 << 0;
 constexpr int SRSDIM_LOC_POSLIST = 1 << 1;
-
-enum GMLSRSNameFormat
-{
-    SRSNAME_SHORT,
-    SRSNAME_OGC_URN,
-    SRSNAME_OGC_URL
-};
 
 /************************************************************************/
 /*                        MakeGMLCoordinate()                           */
@@ -534,8 +528,8 @@ static void AppendGML3CoordinateList(const OGRSimpleCurve *poLine,
 static bool OGR2GML3GeometryAppend(
     const OGRGeometry *poGeometry, const OGRSpatialReference *poParentSRS,
     char **ppszText, size_t *pnLength, size_t *pnMaxLength, bool bIsSubGeometry,
-    GMLSRSNameFormat eSRSNameFormat, bool bCoordSwap, bool bLineStringAsCurve,
-    const char *pszGMLId, int nSRSDimensionLocFlags,
+    OGRGMLSRSNameFormat eSRSNameFormat, bool bCoordSwap,
+    bool bLineStringAsCurve, const char *pszGMLId, int nSRSDimensionLocFlags,
     bool bForceLineStringAsLinearRing, const char *pszNamespaceDecl,
     const char *pszOverriddenElementName, const OGRWktOptions &coordOpts)
 
@@ -1321,7 +1315,7 @@ char *OGR_G_ExportToGMLEx(OGRGeometryH hGeometry, char **papszOptions)
             CSLFetchNameValue(papszOptions, "GML3_LONGSRS");
         const char *pszSRSNameFormat =
             CSLFetchNameValue(papszOptions, "SRSNAME_FORMAT");
-        GMLSRSNameFormat eSRSNameFormat = SRSNAME_OGC_URN;
+        OGRGMLSRSNameFormat eSRSNameFormat = SRSNAME_OGC_URN;
         if (pszSRSNameFormat)
         {
             if (pszLongSRS)

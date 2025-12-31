@@ -1120,7 +1120,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 "@QUIET_DELETE_ON_CREATE_COPY", "NO");
         }
 
-        if (psOptions->bNoOverwrite && !EQUAL(pszDest, ""))
+        if (psOptions->bNoOverwrite && !EQUAL(pszDest, "") &&
+            !EQUAL(pszDest, "/vsistdout/"))
         {
             VSIStatBufL sStat;
             if (VSIStatL(pszDest, &sStat) == 0)
@@ -1131,13 +1132,23 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                          pszDest);
                 return nullptr;
             }
-            else if (std::unique_ptr<GDALDataset>(GDALDataset::Open(pszDest)))
+            else
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Dataset '%s' already exists. Specify the --overwrite "
-                         "option to overwrite it.",
-                         pszDest);
-                return nullptr;
+                bool bExists;
+                {
+                    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                    bExists = std::unique_ptr<GDALDataset>(
+                                  GDALDataset::Open(pszDest)) != nullptr;
+                }
+                if (bExists)
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Dataset '%s' already exists. Specify the --overwrite "
+                        "option to overwrite it.",
+                        pszDest);
+                    return nullptr;
+                }
             }
         }
 
@@ -1986,7 +1997,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         if (eOutputType == GDT_Unknown)
         {
             eBandType = poRealSrcBand->GetRasterDataType();
-            if (eBandType != GDT_Byte && psOptions->nRGBExpand != 0)
+            if (eBandType != GDT_UInt8 && psOptions->nRGBExpand != 0)
             {
                 // Use case of https://github.com/OSGeo/gdal/issues/9402
                 if (const auto poColorTable = poRealSrcBand->GetColorTable())
@@ -2012,7 +2023,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                                      "Using Byte output data type due to range "
                                      "of values in color table");
                         }
-                        eBandType = GDT_Byte;
+                        eBandType = GDT_UInt8;
                     }
                 }
                 eOutputType = eBandType;
@@ -2043,7 +2054,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                     std::uint64_t nDstMax = 0;
                     switch (eBandType)
                     {
-                        case GDT_Byte:
+                        case GDT_UInt8:
                             nDstMin = std::numeric_limits<std::uint8_t>::min();
                             nDstMax = std::numeric_limits<std::uint8_t>::max();
                             break;
@@ -2167,7 +2178,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         }
 
         // Preserve PIXELTYPE if no option change values
-        if (poSrcBand->GetRasterDataType() == GDT_Byte &&
+        if (poSrcBand->GetRasterDataType() == GDT_UInt8 &&
             psOptions->nRGBExpand == 0 && psOptions->asScaleParams.empty() &&
             !psOptions->bUnscale && psOptions->eOutputType == GDT_Unknown &&
             psOptions->osResampling.empty())
@@ -2280,7 +2291,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             {
                 switch (poVRTBand->GetRasterDataType())
                 {
-                    case GDT_Byte:
+                    case GDT_UInt8:
                         dfScaleDstMin = std::numeric_limits<uint8_t>::lowest();
                         dfScaleDstMax = std::numeric_limits<uint8_t>::max();
                         break;
@@ -2463,7 +2474,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             const char *pszPixelType =
                 psOptions->aosCreateOptions.FetchNameValue("PIXELTYPE");
             if (pszPixelType == nullptr &&
-                poVRTBand->GetRasterDataType() == GDT_Byte)
+                poVRTBand->GetRasterDataType() == GDT_UInt8)
             {
                 poVRTBand->EnablePixelTypeSignedByteWarning(false);
                 pszPixelType =

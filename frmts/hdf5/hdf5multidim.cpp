@@ -1247,7 +1247,7 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
         m_dt.GetComponents()[0]->GetType().GetNumericDataType() ==
             GDT_Float32 &&
         // In theory should be Byte, but 104US00_ches_dcf2_20190606T12Z.h5 uses Int32
-        (m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Byte ||
+        (m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_UInt8 ||
          m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Int32))
     {
         m_abyNoData.resize(m_dt.GetSize());
@@ -1504,9 +1504,7 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
         // Use HDF-EOS5 metadata if available to create dimensions
 
         HDF5EOSParser::GridDataFieldMetadata oGridDataFieldMetadata;
-        HDF5EOSParser::SwathDataFieldMetadata oSwathDataFieldMetadata;
-        HDF5EOSParser::SwathGeolocationFieldMetadata
-            oSwathGeolocationFieldMetadata;
+        HDF5EOSParser::SwathFieldMetadata oSwathFieldMetadata;
         const auto poHDF5EOSParser = m_poShared->GetHDF5EOSParser();
         // Build a "classic" subdataset name from group and array names
         const std::string osSubdatasetName(
@@ -1562,19 +1560,19 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             return;
         }
         else if (poHDF5EOSParser &&
-                 poHDF5EOSParser->GetSwathDataFieldMetadata(
-                     osSubdatasetName.c_str(), oSwathDataFieldMetadata) &&
-                 oSwathDataFieldMetadata.aoDimensions.size() ==
+                 poHDF5EOSParser->GetSwathFieldMetadata(
+                     osSubdatasetName.c_str(), oSwathFieldMetadata) &&
+                 oSwathFieldMetadata.aoDimensions.size() ==
                      static_cast<size_t>(nDims))
         {
             std::map<std::string, std::shared_ptr<GDALDimension>> oMap;
             const auto groupDims = m_poShared->GetEOSSwathDimensions(
-                oSwathDataFieldMetadata.poSwathMetadata->osSwathName);
+                oSwathFieldMetadata.poSwathMetadata->osSwathName);
             for (const auto &dim : groupDims)
             {
                 oMap[dim->GetName()] = dim;
             }
-            for (const auto &oDim : oSwathDataFieldMetadata.aoDimensions)
+            for (const auto &oDim : oSwathFieldMetadata.aoDimensions)
             {
                 auto oIter = oMap.find(oDim.osName);
                 // HDF5EOSParser guarantees that
@@ -1583,30 +1581,6 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
                 m_dims.emplace_back(poDim);
             }
 
-            return;
-        }
-        else if (poHDF5EOSParser &&
-                 poHDF5EOSParser->GetSwathGeolocationFieldMetadata(
-                     osSubdatasetName.c_str(),
-                     oSwathGeolocationFieldMetadata) &&
-                 oSwathGeolocationFieldMetadata.aoDimensions.size() ==
-                     static_cast<size_t>(nDims))
-        {
-            std::map<std::string, std::shared_ptr<GDALDimension>> oMap;
-            const auto groupDims = m_poShared->GetEOSSwathDimensions(
-                oSwathGeolocationFieldMetadata.poSwathMetadata->osSwathName);
-            for (const auto &dim : groupDims)
-            {
-                oMap[dim->GetName()] = dim;
-            }
-            for (const auto &oDim : oSwathGeolocationFieldMetadata.aoDimensions)
-            {
-                auto oIter = oMap.find(oDim.osName);
-                // HDF5EOSParser guarantees that
-                CPLAssert(oIter != oMap.end());
-                const auto &poDim = oIter->second;
-                m_dims.emplace_back(poDim);
-            }
             return;
         }
 
@@ -1749,34 +1723,35 @@ HDF5Array::GetCoordinateVariables() const
 {
     std::vector<std::shared_ptr<GDALMDArray>> ret;
 
-    HDF5EOSParser::SwathDataFieldMetadata oSwathDataFieldMetadata;
+    HDF5EOSParser::SwathFieldMetadata oSwathFieldMetadata;
     const auto poHDF5EOSParser = m_poShared->GetHDF5EOSParser();
     // Build a "classic" subdataset name from group and array names
     const std::string osSubdatasetName(
-        "/" +
-        CPLString(GetFullName()).replaceAll("Data Fields", "Data_Fields"));
+        "/" + CPLString(GetFullName())
+                  .replaceAll("Data Fields", "Data_Fields")
+                  .replaceAll("Geolocation Fields", "Geolocation_Fields"));
     if (poHDF5EOSParser &&
-        poHDF5EOSParser->GetSwathDataFieldMetadata(osSubdatasetName.c_str(),
-                                                   oSwathDataFieldMetadata) &&
-        oSwathDataFieldMetadata.aoDimensions.size() == GetDimensionCount())
+        poHDF5EOSParser->GetSwathFieldMetadata(osSubdatasetName.c_str(),
+                                               oSwathFieldMetadata) &&
+        oSwathFieldMetadata.aoDimensions.size() == GetDimensionCount())
     {
-        if (!oSwathDataFieldMetadata.osLongitudeSubdataset.empty() &&
-            oSwathDataFieldMetadata.nPixelOffset == 0 &&
-            oSwathDataFieldMetadata.nLineOffset == 0 &&
-            oSwathDataFieldMetadata.nPixelStep == 1 &&
-            oSwathDataFieldMetadata.nLineStep == 1)
+        if (!oSwathFieldMetadata.osLongitudeSubdataset.empty() &&
+            oSwathFieldMetadata.nPixelOffset == 0 &&
+            oSwathFieldMetadata.nLineOffset == 0 &&
+            oSwathFieldMetadata.nPixelStep == 1 &&
+            oSwathFieldMetadata.nLineStep == 1)
         {
             auto poRootGroup = m_poShared->GetRootGroup();
             if (poRootGroup)
             {
                 auto poLongitude = poRootGroup->OpenMDArrayFromFullname(
                     CPLString(
-                        oSwathDataFieldMetadata.osLongitudeSubdataset.substr(1))
+                        oSwathFieldMetadata.osLongitudeSubdataset.substr(1))
                         .replaceAll("Geolocation_Fields",
                                     "Geolocation Fields"));
                 auto poLatitude = poRootGroup->OpenMDArrayFromFullname(
                     CPLString(
-                        oSwathDataFieldMetadata.osLatitudeSubdataset.substr(1))
+                        oSwathFieldMetadata.osLatitudeSubdataset.substr(1))
                         .replaceAll("Geolocation_Fields",
                                     "Geolocation Fields"));
                 if (poLongitude && poLatitude)
@@ -2268,8 +2243,12 @@ lbl_next_depth:
             --anStackCount[iDim];
             if (anStackCount[iDim] == 0)
                 break;
-            pabyDstBufferStack[iDim] +=
-                bufferStride[iDim] * nBufferDataTypeSize;
+            if (bufferStride[iDim] >= 0)
+                pabyDstBufferStack[iDim] +=
+                    bufferStride[iDim] * nBufferDataTypeSize;
+            else
+                pabyDstBufferStack[iDim] -=
+                    (-bufferStride[iDim]) * nBufferDataTypeSize;
             pabySrcBufferStack[iDim] += anSrcStride[iDim];
         }
     }
@@ -2505,7 +2484,7 @@ GetHDF5DataTypeFromGDALDataType(const GDALExtendedDataType &dt, hid_t hNativeDT,
     hid_t hBufferType = H5I_INVALID_HID;
     switch (bufferDataType.GetNumericDataType())
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             hBufferType = H5Tcopy(H5T_NATIVE_UCHAR);
             break;
         case GDT_Int8:

@@ -591,10 +591,9 @@ static OGRLayerH OGRGeocodeMakeRawLayer(const char *pszContent)
     const OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
     OGRFieldDefn oFieldDefnRaw("raw", OFTString);
     poLayer->CreateField(&oFieldDefnRaw);
-    OGRFeature *poFeature = new OGRFeature(poFDefn);
+    auto poFeature = std::make_unique<OGRFeature>(poFDefn);
     poFeature->SetField("raw", pszContent);
-    CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-    delete poFeature;
+    CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
     return OGRLayer::ToHandle(poLayer);
 }
 
@@ -667,7 +666,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode *psSearchResults,
             double dfLon = 0.0;
 
             // Iteration to fill the feature.
-            OGRFeature *poFeature = new OGRFeature(poFDefn);
+            auto poFeature = std::make_unique<OGRFeature>(poFDefn);
 
             for (CPLXMLNode *psChild = psPlace->psChild; psChild != nullptr;
                  psChild = psChild->psNext)
@@ -729,8 +728,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode *psSearchResults,
                 bFoundLat)
                 poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-            delete poFeature;
+            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
         }
         psPlace = psPlace->psNext;
     }
@@ -820,7 +818,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(
     }
 
     // Second iteration to fill the feature.
-    OGRFeature *poFeature = new OGRFeature(poFDefn);
+    auto poFeature = std::make_unique<OGRFeature>(poFDefn);
     psChild = psResult->psChild;
     while (psChild != nullptr)
     {
@@ -867,8 +865,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(
     if (poFeature->GetGeometryRef() == nullptr && bFoundLon && bFoundLat)
         poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-    CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-    delete poFeature;
+    CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
 
     return OGRLayer::ToHandle(poLayer);
 }
@@ -938,7 +935,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode *psResultSet,
             double dfLon = 0.0;
 
             // Second iteration to fill the feature.
-            OGRFeature *poFeature = new OGRFeature(poFDefn);
+            auto poFeature = std::make_unique<OGRFeature>(poFDefn);
             for (CPLXMLNode *psChild = psPlace->psChild; psChild != nullptr;
                  psChild = psChild->psNext)
             {
@@ -1001,8 +998,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode *psResultSet,
             if (bFoundLon && bFoundLat)
                 poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-            delete poFeature;
+            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
         }
         psPlace = psPlace->psNext;
     }
@@ -1097,7 +1093,7 @@ static OGRLayerH OGRGeocodeBuildLayerBing(CPLXMLNode *psResponse,
             double dfLat = 0.0;
             double dfLon = 0.0;
 
-            OGRFeature *poFeature = new OGRFeature(poFDefn);
+            auto poFeature = std::make_unique<OGRFeature>(poFDefn);
             for (CPLXMLNode *psChild = psPlace->psChild; psChild != nullptr;
                  psChild = psChild->psNext)
             {
@@ -1166,8 +1162,7 @@ static OGRLayerH OGRGeocodeBuildLayerBing(CPLXMLNode *psResponse,
             if (bFoundLon && bFoundLat)
                 poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-            delete poFeature;
+            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
         }
         psPlace = psPlace->psNext;
     }

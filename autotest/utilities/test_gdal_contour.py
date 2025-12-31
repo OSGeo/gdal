@@ -107,11 +107,10 @@ def test_gdal_contour_1(gdal_contour_path, testdata_tif, tmp_path):
     ds = ogr.Open(contour_shp)
 
     expected_envelopes = [
-        [1.246875, 1.753125, 49.246875, 49.753125],
         [1.253125, 1.746875, 49.253125, 49.746875],
         [1.378125, 1.621875, 49.378125, 49.621875],
     ]
-    expected_height = [0, 10, 20]
+    expected_height = [10, 20]
 
     with ds.ExecuteSQL("select * from contour order by elev asc") as lyr:
 
@@ -401,7 +400,7 @@ def test_gdal_contour_fl_and_i(gdal_contour_path, testdata_tif, tmp_path):
 
     with ds.ExecuteSQL("select elev from contour order by elev asc") as lyr:
 
-        expected_heights = [0, 6, 10, 16, 20]
+        expected_heights = [6, 10, 16, 20]
 
         assert lyr.GetFeatureCount() == len(expected_heights)
 
@@ -491,7 +490,7 @@ def test_gdal_contour_fl_and_i_no_dups(gdal_contour_path, testdata_tif, tmp_path
 
     with ds.ExecuteSQL("select elev from contour order by elev asc") as lyr:
 
-        expected_heights = [0, 6, 10, 16, 20]
+        expected_heights = [6, 10, 16, 20]
 
         assert lyr.GetFeatureCount() == len(expected_heights)
 

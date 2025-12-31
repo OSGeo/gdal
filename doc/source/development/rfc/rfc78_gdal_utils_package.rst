@@ -15,7 +15,7 @@ Status:        Adopted, implemented in GDAL 3.3
 Summary
 -------
 
-This RFC suggests to put all the GDAL python modules (formly scripts), except from the GDAL core SWIG bindings,
+This RFC suggests to put all the GDAL python modules (formerly scripts), except from the GDAL core SWIG bindings,
 into their own distribution on pypi.
 The GDAL python sub-package `osgeo.utils` (introduced in GDAL 3.2) would be renamed into a package named `osgeo_utils`.
 

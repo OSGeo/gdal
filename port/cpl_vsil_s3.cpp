@@ -87,7 +87,8 @@ struct VSIDIRS3 final : public VSIDIRS3Like
 
     bool IssueListDir() override;
     bool
-    AnalyseS3FileList(const std::string &osBaseURL, const char *pszXML,
+    AnalyseS3FileList(bool bIsListObjectV2, const std::string &osBaseURL,
+                      const char *pszXML,
                       const std::set<std::string> &oSetIgnoredStorageClasses,
                       bool &bIsTruncated);
 };
@@ -172,7 +173,7 @@ void VSIDIRWithMissingDirSynthesis::SynthetizeMissingDirectories(
 /************************************************************************/
 
 bool VSIDIRS3::AnalyseS3FileList(
-    const std::string &osBaseURL, const char *pszXML,
+    bool bIsListObjectV2, const std::string &osBaseURL, const char *pszXML,
     const std::set<std::string> &oSetIgnoredStorageClasses, bool &bIsTruncated)
 {
 #if DEBUG_VERBOSE
@@ -263,7 +264,8 @@ bool VSIDIRS3::AnalyseS3FileList(
                         pszKey);
                     continue;
                 }
-                if (bIsTruncated && nRecurseDepth < 0 && pszKey)
+                if (!bIsListObjectV2 && bIsTruncated && nRecurseDepth < 0 &&
+                    pszKey)
                 {
                     osNextMarker = pszKey;
                 }
@@ -437,16 +439,17 @@ bool VSIDIRS3::AnalyseS3FileList(
             }
         }
 
-        if (nRecurseDepth == 0)
+        if (bIsListObjectV2)
+        {
+            if (const char *pszNextContinuationToken = CPLGetXMLValue(
+                    psListBucketResult, "NextContinuationToken", nullptr))
+            {
+                osNextMarker = pszNextContinuationToken;
+            }
+        }
+        else if (nRecurseDepth == 0)
         {
             osNextMarker = CPLGetXMLValue(psListBucketResult, "NextMarker", "");
-        }
-
-        // ListObjectsV2 uses NextContinuationToken instead of NextMarker
-        if (const char *pszNextContinuationToken = CPLGetXMLValue(
-                psListBucketResult, "NextContinuationToken", nullptr))
-        {
-            osNextMarker = pszNextContinuationToken;
         }
     }
     else if (psListAllMyBucketsResultBuckets != nullptr)
@@ -524,11 +527,13 @@ bool VSIDIRS3::IssueListDir()
 
     IVSIS3LikeHandleHelper *l_poHandlerHelper = poHandleHelper.get();
 
-    bool bUseV2 = false;
     auto poS3HandleHelper =
         dynamic_cast<VSIS3HandleHelper *>(poHandleHelper.get());
-    if (poS3HandleHelper)
-        bUseV2 = poS3HandleHelper->IsDirectoryBucket();
+    const bool bUseListObjectsV2 =
+        ((!osBucket.empty() || !m_osFilterPrefix.empty()) &&
+         EQUAL(CPLGetConfigOption("CPL_VSIS3_LIST_OBJECTS_VERSION", "2"),
+               "2")) ||
+        (poS3HandleHelper && poS3HandleHelper->IsDirectoryBucket());
 
     std::unique_ptr<VSIS3HandleHelper> poTmpHandleHelper;
     if (m_bRegularListingDone && m_bListBucket)
@@ -547,7 +552,7 @@ bool VSIDIRS3::IssueListDir()
     {
         l_poHandlerHelper->ResetQueryParameters();
         const std::string osBaseURL(l_poHandlerHelper->GetURL());
-        if (bUseV2)
+        if (bUseListObjectsV2)
             l_poHandlerHelper->AddQueryParameter("list-type", "2");
 
         CURL *hCurlHandle = curl_easy_init();
@@ -558,7 +563,8 @@ bool VSIDIRS3::IssueListDir()
                 l_poHandlerHelper->AddQueryParameter("delimiter", "/");
             if (!l_osNextMarker.empty())
                 l_poHandlerHelper->AddQueryParameter(
-                    bUseV2 ? "continuation-token" : "marker", l_osNextMarker);
+                    bUseListObjectsV2 ? "continuation-token" : "marker",
+                    l_osNextMarker);
             if (!osMaxKeys.empty())
                 l_poHandlerHelper->AddQueryParameter("max-keys", osMaxKeys);
             if (!osObjectKey.empty())
@@ -620,7 +626,8 @@ bool VSIDIRS3::IssueListDir()
         {
             bool bIsTruncated;
             bool ret = AnalyseS3FileList(
-                osBaseURL, requestHelper.sWriteFuncData.pBuffer,
+                bUseListObjectsV2, osBaseURL,
+                requestHelper.sWriteFuncData.pBuffer,
                 VSICurlFilesystemHandlerBase::GetS3IgnoredStorageClasses(),
                 bIsTruncated);
 
@@ -734,8 +741,9 @@ bool VSICurlFilesystemHandlerBase::AnalyseS3FileList(
 {
     VSIDIRS3 oDir(std::string(), this);
     oDir.nMaxFiles = nMaxFiles;
-    bool ret = oDir.AnalyseS3FileList(osBaseURL, pszXML,
-                                      oSetIgnoredStorageClasses, bIsTruncated);
+    bool ret =
+        oDir.AnalyseS3FileList(/* bUseListObjectsV2 = */ false, osBaseURL,
+                               pszXML, oSetIgnoredStorageClasses, bIsTruncated);
     for (const auto &entry : oDir.aoEntries)
     {
         osFileList.AddString(entry->pszName);
@@ -5393,8 +5401,8 @@ bool VSIS3Handle::CanRestartOnError(const char *pszErrorMsg,
  */
 void VSIInstallS3FileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsis3/",
-                                   new cpl::VSIS3FSHandler("/vsis3/"));
+    VSIFileManager::InstallHandler(
+        "/vsis3/", std::make_shared<cpl::VSIS3FSHandler>("/vsis3/"));
 }
 
 #endif /* HAVE_CURL */

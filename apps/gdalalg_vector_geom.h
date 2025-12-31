@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "geom" step of "vector pipeline", or "gdal vector geom" standalone
+ * Purpose:  Base classes for some geometry-related vector algorithms
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -17,54 +17,6 @@
 #include "ogr_geos.h"
 
 //! @cond Doxygen_Suppress
-
-/************************************************************************/
-/*                       GDALVectorGeomAlgorithm                        */
-/************************************************************************/
-
-class GDALVectorGeomAlgorithm /* non final */
-    : public GDALVectorPipelineStepAlgorithm
-{
-  public:
-    static constexpr const char *NAME = "geom";
-    static constexpr const char *DESCRIPTION =
-        "Geometry operations on a vector dataset.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vector_geom.html";
-
-    explicit GDALVectorGeomAlgorithm(bool standaloneStep = false);
-
-  private:
-    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
-
-    void WarnIfDeprecated() override;
-
-    /** Register the sub-algorithm of type MyAlgorithm.
-     */
-    template <class MyAlgorithm> bool RegisterSubAlgorithm(bool standalone)
-    {
-        GDALAlgorithmRegistry::AlgInfo info;
-        info.m_name = MyAlgorithm::NAME;
-        info.m_aliases = MyAlgorithm::GetAliasesStatic();
-        info.m_creationFunc = [standalone]() -> std::unique_ptr<GDALAlgorithm>
-        { return std::make_unique<MyAlgorithm>(standalone); };
-        return GDALAlgorithm::RegisterSubAlgorithm(info);
-    }
-};
-
-/************************************************************************/
-/*                    GDALVectorGeomAlgorithmStandalone                 */
-/************************************************************************/
-
-class GDALVectorGeomAlgorithmStandalone final : public GDALVectorGeomAlgorithm
-{
-  public:
-    GDALVectorGeomAlgorithmStandalone()
-        : GDALVectorGeomAlgorithm(/* standaloneStep = */ true)
-    {
-    }
-
-    ~GDALVectorGeomAlgorithmStandalone() override;
-};
 
 /************************************************************************/
 /*                    GDALVectorGeomAbstractAlgorithm                   */
@@ -207,12 +159,8 @@ class GDALGeosNonStreamingAlgorithmDataset
 
     CPL_DISALLOW_COPY_ASSIGN(GDALGeosNonStreamingAlgorithmDataset)
 
-    bool ConvertInputsToGeos(OGRLayer &srcLayer, OGRLayer &dstLayer,
-                             bool sameDefn);
-
-    bool ConvertOutputsFromGeos(OGRLayer &dstLayer);
-
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) override;
+    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex,
+                 GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     virtual bool ProcessGeos() = 0;
 
@@ -222,11 +170,6 @@ class GDALGeosNonStreamingAlgorithmDataset
     /// Whether empty result features should be excluded from the output
     virtual bool SkipEmpty() const = 0;
 
-    void SetSourceGeometryField(int i)
-    {
-        m_sourceGeometryField = i;
-    }
-
   protected:
     GEOSContextHandle_t m_poGeosContext{nullptr};
     std::vector<GEOSGeometry *> m_apoGeosInputs{};
@@ -234,9 +177,19 @@ class GDALGeosNonStreamingAlgorithmDataset
     GEOSGeometry **m_papoGeosResults{nullptr};
 
   private:
+    bool ConvertInputsToGeos(OGRLayer &srcLayer, OGRLayer &dstLayer,
+                             int geomFieldIndex, bool sameDefn,
+                             GDALProgressFunc pfnProgress, void *pProgressData);
+
+    bool ConvertOutputsFromGeos(OGRLayer &dstLayer,
+                                GDALProgressFunc pfnProgress,
+                                void *pProgressData, double dfProgressStart,
+                                double dfProgressRatio);
+
+    void Cleanup();
+
     std::vector<std::unique_ptr<OGRFeature>> m_apoFeatures{};
     unsigned int m_nGeosResultSize{0};
-    int m_sourceGeometryField{0};
 };
 
 #endif

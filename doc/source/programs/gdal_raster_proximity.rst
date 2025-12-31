@@ -27,31 +27,19 @@ target pixel values.
 
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. versionadded:: 3.12
 
-.. include:: gdal_options/co.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
 
-.. include:: gdal_options/overwrite.rst
-
-.. include:: gdal_options/ot.rst
+Program-Specific Options
+------------------------
 
 .. option:: -b, --band <BAND>
 
     Input band (1-based index)
-
-.. option:: --target-values <TARGET-VALUES>
-
-    A single value or a comma separated list of target pixel values in the source image
-    to be considered target pixels.
-    If not specified, all non-zero pixels will be considered target pixels.
-
-.. option:: --max-distance <MAX-DISTANCE>
-
-    Maximum distance to search for a target pixel. The NoData value will be output if no target pixel is found within this distance.
-    Distance is interpreted in pixels unless `--distance-units geo` is specified.
 
 .. option:: --distance-units <pixel|geo>
 
@@ -64,26 +52,40 @@ Standard options
     Define a fixed value to be written to output pixels that are within :option:`--max-distance`
     from the target pixels, instead of the actual distance.
 
+.. option:: --max-distance <MAX-DISTANCE>
+
+    Maximum distance to search for a target pixel. The NoData value will be output if no target pixel is found within this distance.
+    Distance is interpreted in pixels unless `--distance-units geo` is specified.
+
 .. option:: --nodata <NODATA>
 
     Nodata value for the output raster. If not specified, the NoData value of the input band will be used.
     If the output band does not have a NoData value, then the value 65535 will be used for floating point
     output types and the maximum value that can be stored will be used for the integer output types.
 
-Advanced options
-++++++++++++++++
 
-.. include:: gdal_options/oo.rst
+.. option:: --target-values <TARGET-VALUES>
+
+    A single value or a comma separated list of target pixel values in the source image
+    to be considered target pixels.
+    If not specified, all non-zero pixels will be considered target pixels.
+
+Standard Options
+----------------
+
+.. include:: gdal_options/append_raster.rst
+
+.. include:: gdal_options/co.rst
 
 .. include:: gdal_options/if.rst
 
+.. include:: gdal_options/oo.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+.. include:: gdal_options/of_raster_create_copy.rst
 
-.. versionadded:: 3.12
+.. include:: gdal_options/ot.rst
 
-.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
+.. include:: gdal_options/overwrite.rst
 
 
 Examples

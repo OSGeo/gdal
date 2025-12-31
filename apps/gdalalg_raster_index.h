@@ -62,6 +62,16 @@ class CPL_DLL GDALRasterIndexAlgorithm /* non final */
     std::string m_sourceCrsFormat = "auto";
     std::vector<std::string> m_metadata{};
     bool m_skipErrors = false;
+
+    static constexpr const char *PROFILE_NONE = "none";
+    static constexpr const char *PROFILE_STAC_GEOPARQUET = "STAC-GeoParquet";
+    std::string m_profile{PROFILE_NONE};
+    std::string m_baseUrl{};
+    static constexpr const char *ID_METHOD_FILENAME = "filename";
+    static constexpr const char *ID_METHOD_MD5 = "md5";
+    static constexpr const char *ID_METHOD_METADATA_ITEM = "metadata-item";
+    std::string m_idMethod{ID_METHOD_FILENAME};
+    std::string m_idMetadataItem{"id"};
 };
 
 //! @endcond

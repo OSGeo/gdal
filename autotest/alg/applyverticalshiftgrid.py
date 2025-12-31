@@ -32,7 +32,7 @@ def test_applyverticalshiftgrid_1():
     src_ds = gdal.Translate("", src_ds, format="MEM", width=20, height=40)
     grid_ds = gdal.Translate("", src_ds, format="MEM")
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
-    assert out_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert out_ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     assert out_ds.RasterXSize == src_ds.RasterXSize
     assert out_ds.RasterYSize == src_ds.RasterYSize
     assert out_ds.GetGeoTransform() == src_ds.GetGeoTransform()
@@ -77,14 +77,14 @@ def test_applyverticalshiftgrid_2():
         if i != 1:
             src_ds.SetProjection(sr.ExportToWkt())
         if i == 2:
-            src_ds.AddBand(gdal.GDT_Byte)
+            src_ds.AddBand(gdal.GDT_UInt8)
         grid_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
         if i != 3:
             grid_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
         if i != 4:
             grid_ds.SetProjection(sr.ExportToWkt())
         if i == 5:
-            grid_ds.AddBand(gdal.GDT_Byte)
+            grid_ds.AddBand(gdal.GDT_UInt8)
         with gdal.quiet_errors():
             out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
         assert out_ds is None, i

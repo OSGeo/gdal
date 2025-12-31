@@ -25,42 +25,20 @@ The program can reproject to any supported projection.
 
 This command can also be used as a step of :ref:`gdal_vector_pipeline`.
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_vector.rst
+.. include:: gdal_cli_include/gdalg_vector_compatible.rst
 
-.. include:: gdal_options/co_vector.rst
 
-.. include:: options/lco.rst
+Program-Specific Options
+------------------------
 
-.. include:: gdal_options/overwrite.rst
+.. option:: -d, --dst-crs <SRC-CRS>
 
-.. include:: gdal_options/active_layer.rst
+    Set destination spatial reference.
 
-.. option:: --update
-
-    Whether the output dataset must be opened in update mode. Implies that
-    it already exists. This mode is useful when adding new layer(s) to an
-    already existing dataset.
-
-.. option:: --overwrite-layer
-
-    Whether overwriting existing layer(s) is allowed.
-
-.. option:: --append
-
-    Whether appending features to existing layer(s) is allowed
-
-.. option:: -l, --layer <LAYER>
-
-    Name of one or more layers to inspect.  If no layer names are passed, then
-    all layers will be selected.
-
-.. option:: --output-layer <OUTPUT-LAYER>
-
-    Output layer name. Can only be used to rename a layer, if there is a single
-    input layer.
+    .. include:: gdal_options/srs_def_gdal_raster_reproject.rst
 
 .. option:: -s, --src-crs <SRC-CRS>
 
@@ -69,16 +47,40 @@ Standard options
 
     .. include:: gdal_options/srs_def_gdal_raster_reproject.rst
 
-.. option:: -d, --dst-crs <SRC-CRS>
+Standard Options
+----------------
 
-    Set destination spatial reference.
+.. collapse:: Details
 
-    .. include:: gdal_options/srs_def_gdal_raster_reproject.rst
+    .. include:: gdal_options/active_layer.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/append_vector.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+    .. include:: gdal_options/co_vector.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/input_layer.rst
+
+    .. include:: gdal_options/lco.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/output_layer.rst
+
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst
 
 Examples
 --------

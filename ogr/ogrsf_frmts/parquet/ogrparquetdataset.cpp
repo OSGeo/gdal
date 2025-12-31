@@ -40,7 +40,7 @@ OGRParquetDataset::~OGRParquetDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr OGRParquetDataset::Close()
+CPLErr OGRParquetDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -384,11 +384,10 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                     {
                         poMemLayer =
                             new OGRMemLayer("SELECT", nullptr, wkbNone);
-                        OGRFeature *poFeature =
-                            new OGRFeature(poMemLayer->GetLayerDefn());
+                        auto poFeature = std::make_unique<OGRFeature>(
+                            poMemLayer->GetLayerDefn());
                         CPL_IGNORE_RET_VAL(
-                            poMemLayer->CreateFeature(poFeature));
-                        delete poFeature;
+                            poMemLayer->CreateFeature(std::move(poFeature)));
                     }
 
                     const char *pszMinMaxFieldName =
@@ -403,10 +402,11 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                     oFieldDefn.SetSubType(eSubType);
                     poMemLayer->CreateField(&oFieldDefn);
 
-                    OGRFeature *poFeature = poMemLayer->GetFeature(0);
+                    auto poFeature =
+                        std::unique_ptr<OGRFeature>(poMemLayer->GetFeature(0));
                     poFeature->SetField(oFieldDefn.GetNameRef(), &sField);
-                    CPL_IGNORE_RET_VAL(poMemLayer->SetFeature(poFeature));
-                    delete poFeature;
+                    CPL_IGNORE_RET_VAL(
+                        poMemLayer->SetFeature(std::move(poFeature)));
                 }
                 if (i != oSelect.result_columns())
                 {

@@ -265,7 +265,7 @@ CPLErr PCRasterRasterBand::IWriteBlock(CPL_UNUSED int nBlockXoff,
 
     if (valuescale == VS_LDD)
     {
-        if ((d_create_in == GDT_Byte) || (d_create_in == GDT_Float32) ||
+        if ((d_create_in == GDT_UInt8) || (d_create_in == GDT_Float32) ||
             (d_create_in == GDT_Float64))
         {
             CPLError(CE_Failure, CPLE_NotSupported,

@@ -777,5 +777,4 @@ See Also:
    convention <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.5/build/cf-conventions.html>`__
 -  `NetCDF compiled
    libraries <http://www.unidata.ucar.edu/downloads/netcdf/index.jsp>`__
--  `NetCDF
-   Documentation <http://www.unidata.ucar.edu/software/netcdf/docs/>`__
+-  `NetCDF Documentation <https://www.unidata.ucar.edu/software/netcdf>`__

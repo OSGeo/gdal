@@ -30,26 +30,25 @@ The following groups of options can be combined together:
 -  :option:`--linear` / :option:`--curve`
 -  :option:`--dim`
 
-Standard options
-++++++++++++++++
 
-.. include:: gdal_options/of_vector.rst
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/co_vector.rst
+.. include:: gdal_cli_include/gdalg_vector_compatible.rst
 
-.. include:: options/lco.rst
+Program-Specific Options
+------------------------
 
-.. include:: gdal_options/overwrite.rst
+.. option:: --curve
 
-.. include:: gdal_options/active_layer.rst
+   Force geometries to curve geometry types. e.g. ``LINESTRING`` ==> ``COMPOUNDCURVE``
+   or ``POLYGON`` ==> ``CURVEPOLYGON``. Points are kept unmodified.
+   This option is mutually exclusive with :option:`--linear`.
 
-.. include:: gdal_options/active_geometry.rst
+.. option:: --dim
 
-.. option:: --layer-only
-
-    Only modify the layer geometry type. A typical use case is if the layer
-    geometry type is set to unknown and the user knows that the layer only
-    contains geometry of a given type.
+   Force geometries to the specified dimension (XY, XYZ, XYM, or XYZM). If the input geometry lacks Z or M components, they will be set to 0. This option
+   is mutually exclusive with :option:`--geometry-type`.
 
 .. option:: --feature-only
 
@@ -67,6 +66,21 @@ Standard options
    This option is mutually exclusive with :option:`--multi`, :option:`--single`,
    :option:`--linear`, :option:`--curve`, and :option:`--dim`.
 
+.. option:: --layer-only
+
+    Only modify the layer geometry type. A typical use case is if the layer
+    geometry type is set to unknown and the user knows that the layer only
+    contains geometry of a given type.
+
+.. option:: --linear
+
+   Force geometries to linear/non-curve geometry types, approximating arcs with
+   linear segments. The linear approximation can be controlled with configuration
+   options :config:`OGR_ARC_STEPSIZE` and :config:`OGR_ARC_MAX_GAP`
+   (specified using :option:`--config`).
+   e.g. ``COMPOUNDCURVE`` ==> ``LINESTRING``.
+   This option is mutually exclusive with :option:`--curve`.
+
 .. option:: --multi
 
    Force geometries to MULTI geometry types. e.g. ``POINT`` ==> ``MULTIPOINT``.
@@ -81,26 +95,6 @@ Standard options
    a (likely invalid according to OGC Simple Features rule) single polygon,
    merging all their rings.
 
-.. option:: --linear
-
-   Force geometries to linear/non-curve geometry types, approximating arcs with
-   linear segments. The linear approximation can be controlled with configuration
-   options :config:`OGR_ARC_STEPSIZE` and :config:`OGR_ARC_MAX_GAP`
-   (specified using :option:`--config`).
-   e.g. ``COMPOUNDCURVE`` ==> ``LINESTRING``.
-   This option is mutually exclusive with :option:`--curve`.
-
-.. option:: --curve
-
-   Force geometries to curve geometry types. e.g. ``LINESTRING`` ==> ``COMPOUNDCURVE``
-   or ``POLYGON`` ==> ``CURVEPOLYGON``. Points are kept unmodified.
-   This option is mutually exclusive with :option:`--linear`.
-
-.. option:: --dim
-
-   Force geometries to the specified dimension (XY, XYZ, XYM, or XYZM). If the input geometry lacks Z or M components, they will be set to 0. This option
-   is mutually exclusive with :option:`--geometry-type`.
-
 .. option:: --skip
 
    Skip feature when change of feature geometry type failed (e.g. attempting
@@ -111,17 +105,42 @@ Standard options
    :option:`--geometry-type`, or with any of :option:`--multi`, :option:`--single`,
    :option:`--linear`, and :option:`--curve`.
 
-Advanced options
-++++++++++++++++
+Standard Options
+----------------
 
-.. include:: gdal_options/oo.rst
+.. collapse:: Details
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/active_geometry.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/active_layer.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+    .. include:: gdal_options/append_vector.rst
+
+    .. include:: gdal_options/co_vector.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/input_layer.rst
+
+    .. include:: gdal_options/lco.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/output_layer.rst
+
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst
 
 Examples
 --------

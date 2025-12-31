@@ -217,10 +217,10 @@ void GDALJP2Metadata::CollectGMLData(GDALJP2Box *poGMLData)
 
             while (strlen(oSubChildBox.GetType()) > 0)
             {
-                if (EQUAL(oSubChildBox.GetType(), "lbl "))
+                if (EQUAL(oSubChildBox.GetType(), "lbl ") && !pszLabel)
                     pszLabel =
                         reinterpret_cast<char *>(oSubChildBox.ReadBoxData());
-                else if (EQUAL(oSubChildBox.GetType(), "xml "))
+                else if (EQUAL(oSubChildBox.GetType(), "xml ") && !pszXML)
                 {
                     pszXML =
                         reinterpret_cast<char *>(oSubChildBox.ReadBoxData());
@@ -3333,7 +3333,7 @@ GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(GDALDataset *poSrcDS,
 
     GDALJP2Box *poBox = new GDALJP2Box();
     poBox->SetType("xml ");
-    poBox->SetWritableData(static_cast<int>(strlen(pszXML) + 1),
+    poBox->SetWritableData(static_cast<int>(strlen(pszXML)),
                            reinterpret_cast<const GByte *>(pszXML));
     CPLFree(pszXML);
 
@@ -3362,7 +3362,7 @@ GDALJP2Box **GDALJP2Metadata::CreateXMLBoxes(GDALDataset *poSrcDS, int *pnBoxes)
                 GDALJP2Box *poBox = new GDALJP2Box();
                 poBox->SetType("xml ");
                 poBox->SetWritableData(
-                    static_cast<int>(strlen(*papszSrcMD) + 1),
+                    static_cast<int>(strlen(*papszSrcMD)),
                     reinterpret_cast<const GByte *>(*papszSrcMD));
                 papoBoxes = static_cast<GDALJP2Box **>(CPLRealloc(
                     papoBoxes, sizeof(GDALJP2Box *) * (*pnBoxes + 1)));
@@ -3385,7 +3385,7 @@ GDALJP2Box *GDALJP2Metadata::CreateXMPBox(GDALDataset *poSrcDS)
     if (papszSrcMD && *papszSrcMD)
     {
         poBox = GDALJP2Box::CreateUUIDBox(
-            xmp_uuid, static_cast<int>(strlen(*papszSrcMD) + 1),
+            xmp_uuid, static_cast<int>(strlen(*papszSrcMD)),
             reinterpret_cast<const GByte *>(*papszSrcMD));
     }
     return poBox;
@@ -3403,7 +3403,7 @@ GDALJP2Box *GDALJP2Metadata::CreateIPRBox(GDALDataset *poSrcDS)
     {
         poBox = new GDALJP2Box();
         poBox->SetType("jp2i");
-        poBox->SetWritableData(static_cast<int>(strlen(*papszSrcMD) + 1),
+        poBox->SetWritableData(static_cast<int>(strlen(*papszSrcMD)),
                                reinterpret_cast<const GByte *>(*papszSrcMD));
     }
     return poBox;

@@ -330,12 +330,11 @@ CPLErr VRTRawRasterBand::SetRawLink(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Work out if we are in native mode or not.                       */
     /* -------------------------------------------------------------------- */
-    RawRasterBand::ByteOrder eByteOrder =
-#if CPL_IS_LSB
-        RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
-#else
-        RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
-#endif
+    RawRasterBand::ByteOrder eByteOrder;
+    if constexpr (CPL_IS_LSB)
+        eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
+    else
+        eByteOrder = RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
 
     if (pszByteOrder != nullptr)
     {

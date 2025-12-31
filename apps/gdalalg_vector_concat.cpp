@@ -14,6 +14,7 @@
 #include "gdalalg_vector_write.h"
 
 #include "cpl_conv.h"
+#include "cpl_enumerate.h"
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 #include "ogrsf_frmts.h"
@@ -176,9 +177,9 @@ static std::string BuildLayerName(const std::string &layerNameTemplate,
     ret =
         ret.replaceAll("{DS_BASENAME}", !baseName.empty() ? baseName : dsName);
     ret = ret.replaceAll("{DS_NAME}", dsName);
-    ret = ret.replaceAll("{DS_INDEX}", CPLSPrintf("%d", dsIdx));
+    ret = ret.replaceAll("{DS_INDEX}", std::to_string(dsIdx).c_str());
     ret = ret.replaceAll("{LAYER_NAME}", lyrName);
-    ret = ret.replaceAll("{LAYER_INDEX}", CPLSPrintf("%d", lyrIdx));
+    ret = ret.replaceAll("{LAYER_INDEX}", std::to_string(lyrIdx).c_str());
 
     return std::string(std::move(ret));
 }
@@ -367,15 +368,15 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
         std::unique_ptr<OGRLayer *, VSIFreeReleaser> papoSrcLayers(
             static_cast<OGRLayer **>(
                 CPLCalloc(nLayerCount, sizeof(OGRLayer *))));
-        for (int i = 0; i < nLayerCount; ++i)
+        for (const auto [i, layer] : cpl::enumerate(listOfLayers))
         {
-            auto &srcDS = m_inputDataset[listOfLayers[i].iDS];
+            auto &srcDS = m_inputDataset[layer.iDS];
             GDALDataset *poSrcDS = srcDS.GetDatasetRef();
             std::unique_ptr<GDALDataset> poTmpDS;
             if (!poSrcDS)
             {
                 poTmpDS.reset(GDALDataset::Open(
-                    listOfLayers[i].osDatasetName.c_str(),
+                    layer.osDatasetName.c_str(),
                     GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
                     CPLStringList(m_inputFormats).List(),
                     CPLStringList(m_openOptions).List(), nullptr));
@@ -383,15 +384,15 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 if (!poSrcDS)
                     return false;
             }
-            OGRLayer *poSrcLayer = poSrcDS->GetLayer(listOfLayers[i].iLayer);
+            OGRLayer *poSrcLayer = poSrcDS->GetLayer(layer.iLayer);
 
             if (m_poLayerPool)
             {
                 auto pData = std::make_unique<PooledInitData>();
-                pData->osDatasetName = listOfLayers[i].osDatasetName;
+                pData->osDatasetName = layer.osDatasetName;
                 pData->pInputFormats = &m_inputFormats;
                 pData->pOpenOptions = &m_openOptions;
-                pData->iLayer = listOfLayers[i].iLayer;
+                pData->iLayer = layer.iLayer;
                 auto proxiedLayer = std::make_unique<OGRProxiedLayer>(
                     m_poLayerPool.get(), OpenProxiedLayer, ReleaseProxiedLayer,
                     FreeProxiedLayerUserData, pData.release());
@@ -426,14 +427,14 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
         // Auto-wrap source layers if needed
         if (!m_dstCrs.empty())
         {
-            for (int i = 0; i < nLayerCount; ++i)
+            for (int i = 0; ret && i < nLayerCount; ++i)
             {
                 const OGRSpatialReference *poSrcLayerCRS;
                 if (poSrcCRS)
                     poSrcLayerCRS = poSrcCRS.get();
                 else
                     poSrcLayerCRS = papoSrcLayers.get()[i]->GetSpatialRef();
-                if (!poSrcLayerCRS->IsSame(&oDstCRS))
+                if (poSrcLayerCRS && !poSrcLayerCRS->IsSame(&oDstCRS))
                 {
                     auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
                         OGRCreateCoordinateTransformation(poSrcLayerCRS,

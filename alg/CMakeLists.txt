@@ -30,6 +30,7 @@ add_library(
   gdalwarper.cpp
   gdalwarpkernel.cpp
   gdalwarpoperation.cpp
+  hilbert.cpp
   llrasterize.cpp
   los.cpp
   polygonize.cpp

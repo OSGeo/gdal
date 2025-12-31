@@ -139,3 +139,96 @@ cellsize     1
                 elev_values.append(f["ELEV"])
 
         assert elev_values == expected_elev_values, (elev_values, expected_elev_values)
+
+
+@pytest.mark.require_driver("AAIGRID")
+@pytest.mark.parametrize(
+    "first_value, expected_values",
+    [
+        (
+            0,
+            {
+                10.0: [
+                    "LINESTRING (3.49999990000002 0.0,3.49999990000002 0.5,3.5 0.50000009999998,4.0 0.50000009999998)"
+                ]
+            },
+        ),
+        (
+            -1,
+            {
+                0: [
+                    "LINESTRING (0.0 2.500000999998,0.5 2.500000999998,1.499999000002 3.5,1.499999000002 4.0)"
+                ],
+                10.0: [
+                    "LINESTRING (3.49999990000002 0.0,3.49999990000002 0.5,3.5 0.50000009999998,4.0 0.50000009999998)"
+                ],
+            },
+        ),
+        (
+            0.001,
+            {
+                10.0: [
+                    "LINESTRING (3.49999990000002 0.0,3.49999990000002 0.5,3.5 0.50000009999998,4.0 0.50000009999998)"
+                ]
+            },
+        ),
+    ],
+)
+def test_contour_min_value(tmp_vsimem, first_value, expected_values):
+
+    content = f"""ncols        4
+nrows        4
+xllcorner    0
+yllcorner    0
+cellsize     1
+{first_value} 0   0   0
+0   0    0   0.001
+0   0    0   0
+0   0    0   10"""
+
+    srcfilename = str(tmp_vsimem / "test_contour_1.asc")
+
+    with gdal.VSIFile(srcfilename, "wt+") as f:
+        f.write(content)
+
+    dstfilename = str(tmp_vsimem / "test_contour_1.shp")
+
+    options_args = {
+        "elevationName": "ELEV",
+        "interval": 10,
+    }
+
+    ogr_ds = gdal.Contour(dstfilename, srcfilename, **options_args)
+    assert ogr_ds is not None
+    lyr = ogr_ds.GetLayer(0)
+    assert lyr is not None
+
+    results = {}
+    elev_values = set()
+    for feat in lyr:
+        geom = feat.GetGeometryRef()
+        assert geom is not None
+        elev = feat.GetFieldAsDouble("ELEV")
+        elev_values.add(elev)
+        try:
+            results[elev].append(geom.ExportToWkt())
+        except KeyError:
+            results[elev] = [geom.ExportToWkt()]
+
+    assert results.keys() == expected_values.keys()
+
+    # Compare actual lines with expected ones, allow for some small numerical differences
+    for elev in expected_values.keys():
+        expected_contours = expected_values[elev]
+        actual_contours = results[elev]
+        assert len(expected_contours) == len(actual_contours)
+        for i in range(len(expected_contours)):
+            expected_contour = expected_contours[i]
+            actual_contour = actual_contours[i]
+            actual_xy = []
+            for xy in actual_contour[12:-1].split(","):
+                actual_xy.extend([float(k) for k in xy.split(" ")])
+            expected_xy = []
+            for xy in expected_contour[12:-1].split(","):
+                expected_xy.extend([float(k) for k in xy.split(" ")])
+            assert pytest.approx(actual_xy, rel=1e-8) == expected_xy

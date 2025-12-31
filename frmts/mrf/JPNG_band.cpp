@@ -185,7 +185,7 @@ JPNG_Band::JPNG_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
     : MRFRasterBand(pDS, image, b, level), rgb(FALSE), sameres(FALSE),
       optimize(false), JFIF(false)
 {  // Check error conditions
-    if (image.dt != GDT_Byte)
+    if (image.dt != GDT_UInt8)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Data type not supported by MRF JPNG");

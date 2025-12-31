@@ -1306,7 +1306,7 @@ CPLXMLNode *MRFDataset::BuildConfig()
         CPLCreateXMLElementAndValue(raster, "Compression", CompName(full.comp));
     }
 
-    if (full.dt != GDT_Byte)
+    if (full.dt != GDT_UInt8)
         CPLCreateXMLElementAndValue(raster, "DataType",
                                     GDALGetDataTypeName(full.dt));
 
@@ -1408,7 +1408,7 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
 {
     // We only need a basic initialization here, usually gets overwritten by the
     // image params
-    full.dt = GDT_Byte;
+    full.dt = GDT_UInt8;
     full.hasNoData = false;
     full.NoDataValue = 0;
     Quality = 85;
@@ -2034,7 +2034,7 @@ CPLErr MRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
 
             // Get the data mask as byte
             eErr = poSrcMask->RasterIO(GF_Read, col, row, nCols, nRows,
-                                       buffer_mask, nCols, nRows, GDT_Byte, 0,
+                                       buffer_mask, nCols, nRows, GDT_UInt8, 0,
                                        0, nullptr);
 
             if (eErr != CE_None)
@@ -2058,7 +2058,7 @@ CPLErr MRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
             // valid
             switch (eDT)
             {
-                case GDT_Byte:
+                case GDT_UInt8:
                     ZenFilter(reinterpret_cast<GByte *>(buffer), buffer_mask,
                               nPixelCount, nBandCount, bFirstBandOnly);
                     break;

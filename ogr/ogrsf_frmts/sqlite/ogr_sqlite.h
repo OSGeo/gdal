@@ -722,7 +722,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     bool OpenOrCreateDB(int flags, bool bRegisterOGR2SQLiteExtensions);
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     void PostInitSpatialite();
 

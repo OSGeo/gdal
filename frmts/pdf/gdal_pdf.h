@@ -321,6 +321,8 @@ class PDFDataset final : public GDALPamDataset
     std::vector<LayerStruct> m_oLayerNameSet{};
     CPLStringList m_aosLayerNames{};
 
+    void SortLayerList();
+
     struct LayerWithRef
     {
         CPLString osName{};
@@ -532,11 +534,20 @@ class PDFWritableVectorDataset final : public GDALDataset
     PDFWritableVectorDataset();
     ~PDFWritableVectorDataset() override;
 
+    bool CanReopenWithCurrentDescription() const override
+    {
+#ifdef HAVE_PDF_READ_SUPPORT
+        return true;
+#else
+        return false;
+#endif
+    }
+
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
     CPLErr FlushCache(bool bAtClosing) override;
 
     int GetLayerCount() const override;

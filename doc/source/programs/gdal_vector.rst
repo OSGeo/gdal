@@ -36,12 +36,13 @@ Available sub-commands
 - :ref:`gdal_vector_set_field_type`
 - :ref:`gdal_vector_set_geom_type`
 - :ref:`gdal_vector_sql`
+- :ref:`gdal_vector_update`
 
 Examples
 --------
 
 .. example::
-   :title: Getting information on the file :file:`poly.gpkg` (with JSON output)
+   :title: Getting information on the file :file:`poly.gpkg` (with text output)
 
    .. code-block:: console
 

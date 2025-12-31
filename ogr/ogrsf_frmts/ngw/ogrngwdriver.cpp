@@ -398,7 +398,7 @@ static GDALDataset *OGRNGWDriverCreateCopy(const char *pszFilename,
     bool bCreateStyle = true;
     if (osQMLPath.empty())
     {
-        if ((nBands == 3 || nBands == 4) && nDataType == GDT_Byte)
+        if ((nBands == 3 || nBands == 4) && nDataType == GDT_UInt8)
         {
             oResourceStyle.Add("cls", "raster_style");
         }

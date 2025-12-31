@@ -74,4 +74,4 @@ Examples
 
    .. code-block:: console
 
-       $ gdal vsi list -lR --of=text /vsigs/bucket
+       $ gdal vsi list -lR /vsigs/bucket

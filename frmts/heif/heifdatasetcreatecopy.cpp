@@ -188,7 +188,7 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
 
     for (auto &&poBand : poSrcDS->GetBands())
     {
-        if (poBand->GetRasterDataType() != GDT_Byte)
+        if (poBand->GetRasterDataType() != GDT_UInt8)
         {
             heif_image_release(image);
             heif_encoder_release(encoder);
@@ -223,7 +223,7 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
         uint8_t *p = heif_image_get_plane(image, channel, &stride);
         auto eErr = poBand->RasterIO(
             GF_Read, 0, 0, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-            p, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), GDT_Byte,
+            p, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), GDT_UInt8,
             0, stride, nullptr);
 
         if (eErr != CE_None)

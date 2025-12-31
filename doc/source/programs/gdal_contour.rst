@@ -32,6 +32,10 @@ raster elevation model (DEM).
 The contour line-strings are oriented consistently and the high side will
 be on the right, i.e. a line string goes clockwise around a top.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_contour`.
+
 .. program:: gdal_contour
 
 .. include:: options/help_and_help_general.rst
@@ -89,6 +93,7 @@ be on the right, i.e. a line string goes clockwise around a top.
 
     Elevation interval between contours.
     Must specify either :option:`-i` or :option:`-fl` or :option:`-e`.
+    The first contour will be generated at the first multiple of ``interval`` which is greater than the raster minimum value.
 
 .. option:: -off <offset>
 

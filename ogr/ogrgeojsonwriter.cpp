@@ -1762,9 +1762,14 @@ char *OGR_G_ExportToJson(OGRGeometryH hGeometry)
 /************************************************************************/
 
 /**
- * \brief Convert a geometry into GeoJSON format.
+ * \brief Convert a geometry into GeoJSON-style format.
  *
  * The returned string should be freed with CPLFree() when no longer required.
+ *
+ * If setting ALLOW_CURVE=YES and ALLOW_MEASURE=YES, the result is compatible
+ * of JSON-FG geometries. If there is a SRS attached to the geometry, and the
+ * geometry is aimed at being stored in the "place" member of JSON-FG features,
+ * then the COORDINATE_ORDER option must be set to AUTHORITY_COMPLIANT.
  *
  * The following options are supported :
  * <ul>
@@ -1774,8 +1779,26 @@ char *OGR_G_ExportToJson(OGRGeometryH hGeometry)
  * (added in GDAL 3.9)</li>
  * <li>Z_COORD_PRECISION=integer: number of decimal figures for Z coordinates
  * (added in GDAL 3.9)</li>
- * <li>SIGNIFICANT_FIGURES=number:
- * maximum number of significant figures (GDAL &gt;= 2.1).</li>
+ * <li>SIGNIFICANT_FIGURES=number: maximum number of significant figures.</li>
+ * <li>ALLOW_CURVE=YES/NO: whether curve geometries are allowed. When set to NO
+ * (its default value), they are converted to linear geometries first.
+ * Curves are not allowed in GeoJSON, but they are in JSON-FG geometries.
+ * (added in GDAL 3.12.1)</li>
+ * <li>ALLOW_MEASURE=YES/NO: whether the measure (M) component of geometries is
+ * allowed. When set to NO (its default value), it is dropped when present.
+ * Measures are not allowed in GeoJSON, but they are in JSON-FG geometries.
+ * (added in GDAL 3.12.1)</li>
+ * <li>COORDINATE_ORDER=TRADITIONAL_GIS_ORDER/AUTHORITY_COMPLIANT (added in GDAL 3.12.1):
+ * When a SRS is attached to the geometry, and AUTHORITY_COMPLIANT is used,
+ * the coordinates will be emitted in the order of the official SRS definition.
+ * When using TRADITIONAL_GIS_ORDER (the default), coordinates are emitted in
+ * longitude/easting first, latitude/northing second.
+ * When no SRS is attached, coordinates are emitted in the order they are set
+ * in the geometry.
+ * When this function is used to emit JSON-FG geometries stored in the "place"
+ * member, this option must be set to AUTHORITY_COMPLIANT if there is a SRS
+ * attached to the geometry.
+ * </li>
  * </ul>
  *
  * If XY_COORD_PRECISION or Z_COORD_PRECISION is specified, COORDINATE_PRECISION
@@ -1810,19 +1833,54 @@ char *OGR_G_ExportToJsonEx(OGRGeometryH hGeometry, char **papszOptions)
     oOptions.nZCoordPrecision = atoi(CSLFetchNameValueDef(
         papszOptions, "Z_COORD_PRECISION", pszCoordPrecision));
     oOptions.nSignificantFigures = nSignificantFigures;
+    oOptions.bAllowCurve =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "ALLOW_CURVE", "NO"));
+    oOptions.bAllowMeasure =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "ALLOW_MEASURE", "NO"));
 
-    // If the CRS has latitude, longitude (or northing, easting) axis order,
-    // and the data axis to SRS axis mapping doesn't change that order,
-    // then swap X and Y values.
     bool bHasSwappedXY = false;
-    const auto poSRS = poGeometry->getSpatialReference();
-    if (poSRS &&
-        (poSRS->EPSGTreatsAsLatLong() ||
-         poSRS->EPSGTreatsAsNorthingEasting()) &&
-        poSRS->GetDataAxisToSRSAxisMapping() == std::vector<int>{1, 2})
+    const char *pszCoordinateOrder = CSLFetchNameValueDef(
+        papszOptions, "COORDINATE_ORDER", "TRADITIONAL_GIS_ORDER");
+    if (EQUAL(pszCoordinateOrder, "TRADITIONAL_GIS_ORDER"))
     {
-        poGeometry->swapXY();
-        bHasSwappedXY = true;
+        // If the CRS has latitude, longitude (or northing, easting) axis order,
+        // and the data axis to SRS axis mapping doesn't change that order,
+        // then swap X and Y values.
+        const auto poSRS = poGeometry->getSpatialReference();
+        if (poSRS && (poSRS->EPSGTreatsAsLatLong() ||
+                      poSRS->EPSGTreatsAsNorthingEasting()))
+        {
+            auto anMapping =
+                std::vector<int>(poSRS->GetDataAxisToSRSAxisMapping());
+            anMapping.resize(2);
+            if (anMapping == std::vector<int>{1, 2})
+            {
+                poGeometry->swapXY();
+                bHasSwappedXY = true;
+            }
+        }
+    }
+    else if (EQUAL(pszCoordinateOrder, "AUTHORITY_COMPLIANT"))
+    {
+        const auto poSRS = poGeometry->getSpatialReference();
+        if (poSRS && (poSRS->EPSGTreatsAsLatLong() ||
+                      poSRS->EPSGTreatsAsNorthingEasting()))
+        {
+            auto anMapping =
+                std::vector<int>(poSRS->GetDataAxisToSRSAxisMapping());
+            anMapping.resize(2);
+            if (anMapping == std::vector<int>{2, 1})
+            {
+                poGeometry->swapXY();
+                bHasSwappedXY = true;
+            }
+        }
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported COORDINATE_ORDER='%s'", pszCoordinateOrder);
+        return nullptr;
     }
 
     json_object *poObj = OGRGeoJSONWriteGeometry(poGeometry, oOptions);

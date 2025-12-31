@@ -1,4 +1,4 @@
-.. option:: --co <NAME>=<VALUE>
+.. option:: --co, --creation-option <NAME>=<VALUE>
 
     Many formats have one or more optional creation options that can be
     used to control particulars about the file created. For instance,

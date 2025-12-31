@@ -37,7 +37,7 @@ class ROIPACDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(ROIPACDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     ROIPACDataset();
@@ -123,7 +123,7 @@ ROIPACDataset::~ROIPACDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr ROIPACDataset::Close()
+CPLErr ROIPACDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -304,7 +304,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else if (strcmp(pszExtension, "flg") == 0)
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         nBands = 1;
         eInterleave = PIXEL;
     }
@@ -595,7 +595,7 @@ GDALDataset *ROIPACDataset::Create(const char *pszFilename, int nXSize,
     }
     else if (strcmp(pszExtension, "flg") == 0)
     {
-        if (nBandsIn != 1 || eType != GDT_Byte)
+        if (nBandsIn != 1 || eType != GDT_UInt8)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Attempt to create ROI_PAC %s dataset with an illegal "

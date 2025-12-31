@@ -123,20 +123,27 @@ void CPCIDSKChannel::InvalidateOverviewInfo()
 }
 
 /************************************************************************/
-/*                         SortOverviewComp()                           */
+/*                           SortOverviews()                            */
 /************************************************************************/
 
-static bool SortOverviewComp(const std::string &first,
-                             const std::string &second)
+// recent libc++ std::sort() involve unsigned integer overflow in some
+// situation
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static void SortOverviews(std::vector<std::string>& keys)
 {
-    if( !STARTS_WITH(first.c_str(), "_Overview_") ||
-        !STARTS_WITH(second.c_str(), "_Overview_") )
-    {
-        return false;
-    }
-    int nFirst = atoi(first.c_str() + 10);
-    int nSecond = atoi(second.c_str() + 10);
-    return nFirst < nSecond;
+    std::sort(keys.begin(), keys.end(),
+              [] (const std::string &first,
+                             const std::string &second)
+                {
+                    if( !STARTS_WITH(first.c_str(), "_Overview_") ||
+                        !STARTS_WITH(second.c_str(), "_Overview_") )
+                    {
+                        return false;
+                    }
+                    int nFirst = atoi(first.c_str() + 10);
+                    int nSecond = atoi(second.c_str() + 10);
+                    return nFirst < nSecond;
+                });
 }
 
 /************************************************************************/
@@ -151,7 +158,7 @@ void CPCIDSKChannel::EstablishOverviewInfo() const
     overviews_initialized = true;
 
     std::vector<std::string> keys = GetMetadataKeys();
-    std::sort(keys.begin(), keys.end(), SortOverviewComp); // sort overviews
+    SortOverviews(keys);
     size_t i;
 
     for( i = 0; i < keys.size(); i++ )

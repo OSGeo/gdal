@@ -301,7 +301,7 @@ The following data members are inherited from GDALRasterBand, and should general
     nBlockXSize: The width of one block in this band.
     nBlockYSize: The height of one block in this band.
 
-The full set of possible GDALDataType values are declared in gdal.h, and include GDT_Byte, GDT_UInt16, GDT_Int16, and GDT_Float32. The block size is used to establish a natural or efficient block size to access the data with. For tiled datasets this will be the size of a tile, while for most other datasets it will be one scanline, as in this case.
+The full set of possible GDALDataType values are declared in gdal.h, and include GDT_UInt8, GDT_UInt16, GDT_Int16, and GDT_Float32. The block size is used to establish a natural or efficient block size to access the data with. For tiled datasets this will be the size of a tile, while for most other datasets it will be one scanline, as in this case.
 
 Next we see the implementation of the code that actually reads the image data, IReadBlock().
 
@@ -554,7 +554,7 @@ static GDALDataset *
             return NULL;
         }
 
-        if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte && bStrict )
+        if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt8 && bStrict )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                     "JPEG driver doesn't support data type %s. "
@@ -626,7 +626,7 @@ static GDALDataset *
                 GDALRasterBand * poBand = poSrcDS->GetRasterBand(iBand + 1);
                 const CPLErr eErr =
                     poBand->RasterIO(GF_Read, 0, iLine, nXSize, 1,
-                                    pabyScanline + iBand, nXSize, 1, GDT_Byte,
+                                    pabyScanline + iBand, nXSize, 1, GDT_UInt8,
                                     nBands, nBands * nXSize);
                 // TODO: Handle error.
             }
@@ -655,7 +655,7 @@ The following sample implement PCI .aux labeled raw raster creation. It follows 
                                     char ** /* papszParamList */ )
     {
         // Verify input options.
-        if( eType != GDT_Byte && eType != GDT_Float32 &&
+        if( eType != GDT_UInt8 && eType != GDT_Float32 &&
             eType != GDT_UInt16 && eType != GDT_Int16 )
         {
             CPLError(
@@ -767,19 +767,19 @@ The Open() method for the dataset then instantiates raster bands passing all the
     {
         poDS->SetBand(
             1, new RawRasterBand(poDS, 1, poDS->fpImage,
-                                iIn, 1, nWidth, GDT_Byte, TRUE));
+                                iIn, 1, nWidth, GDT_UInt8, TRUE));
     }
     else
     {
         poDS->SetBand(
             1, new RawRasterBand(poDS, 1, poDS->fpImage,
-                                iIn, 3, nWidth*3, GDT_Byte, TRUE));
+                                iIn, 3, nWidth*3, GDT_UInt8, TRUE));
         poDS->SetBand(
             2, new RawRasterBand(poDS, 2, poDS->fpImage,
-                                iIn+1, 3, nWidth*3, GDT_Byte, TRUE));
+                                iIn+1, 3, nWidth*3, GDT_UInt8, TRUE));
         poDS->SetBand(
             3, new RawRasterBand(poDS, 3, poDS->fpImage,
-                                iIn+2, 3, nWidth*3, GDT_Byte, TRUE));
+                                iIn+2, 3, nWidth*3, GDT_UInt8, TRUE));
     }
 
 The RawRasterBand takes the following arguments.
@@ -802,7 +802,7 @@ There are various other items in the GDAL data model, for which virtual methods 
 
 - Metadata: Name/value text values about a dataset or band. The GDALMajorObject (base class for GDALRasterBand and GDALDataset) has built-in support for holding metadata, so for read access it only needs to be set with calls to SetMetadataItem() during the Open(). The SAR_CEOS (frmts/ceos2/sar_ceosdataset.cpp) and GeoTIFF drivers are examples of drivers implementing readable metadata.
 
-- ColorTables: GDT_Byte raster bands can have color tables associated with them. The frmts/png/pngdataset.cpp driver contains an example of a format that supports colortables.
+- ColorTables: GDT_UInt8 raster bands can have color tables associated with them. The frmts/png/pngdataset.cpp driver contains an example of a format that supports colortables.
 
 - ColorInterpretation: The PNG driver contains an example of a driver that returns an indication of whether a band should be treated as a Red, Green, Blue, Alpha or Greyscale band.
 

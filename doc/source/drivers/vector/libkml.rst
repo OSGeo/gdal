@@ -80,16 +80,16 @@ element at the top Document level.
 
 - .. dsco:: AUTHOR_NAME
 
-     Specifieds the value of the ``<atom:name>`` element.
+     Specifies the value of the ``<atom:name>`` element.
 
 - .. dsco:: AUTHOR_URI
 
-     Specifieds the value of the ``<atom:uri>`` element.
+     Specifies the value of the ``<atom:uri>`` element.
      It should start with ``http://`` or ``https://``
 
 - .. dsco:: AUTHOR_EMAIL
 
-     Specifieds the value of the ``<atom:email>`` element.
+     Specifies the value of the ``<atom:email>`` element.
      It should include a ``@`` character.
 
 Additional dataset creation options affecting the top Document level:

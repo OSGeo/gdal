@@ -106,11 +106,43 @@ Supported stats
 
 This algorithm can be part of a :ref:`gdal_pipeline`.
 
-The following options are available:
+Program-Specific Options
+------------------------
+
+.. option:: --band, -b <BAND>
+
+   Input band(s) to be processed.
+
+.. option:: --chunk-size <MEMORY>
+
+   Defines the maximum size of raster chunks to read. May be expressed as either an amount of memory (500 MB, 2 GB, etc.) or as a percentage of
+   available RAM (e.g. 10%).
+
+.. option:: --include-field <INCLUDE-FIELD>
+
+   Specifies one or more fields from the zones to be copied to the output. Only
+   available when vector zones are used.
+
+.. option:: --pixels <PIXELS>
+
+   Method to determine which pixels should be included in the calculation: ``default``, ``all-touched``, or ``fractional``.
 
 .. option:: --stat <STAT>
 
    Specifies one or more of the :ref:`zonal-supported-stats` to compute for each zone.
+
+.. option:: --strategy <STRATEGY>
+
+   Specifies the the processing strategy (``raster`` or ``feature``), when vector zones are used.
+   In the default strategy (``--strategy feature``), GDAL will iterate over the features in the zone dataset, read the corresponding pixels from the raster, and write the statistics for that feature. This avoids the need to read the entire feature dataset into memory at once, but may cause the same pixels to be read multiple times if the polygon features are large or not ordered spatially. If ``--strategy raster`` is used, GDAL will iterate over chunks of the raster dataset, find corresponding polygon zones, and update the statistics for those features. (The size of the raster chunks can be controlled using :option:``--chunk-size``.) This ensures that raster pixels are only read once, but may cause the same features to be processed multiple times.
+
+.. option:: --weights <WEIGHTS>
+
+   Optional path to a dataset to use for weighting.
+
+.. option:: --weights-band <WEIGHTS-BAND>
+
+   Specifies the raster band from which weights can be read.
 
 .. option:: --zones <ZONES>
 
@@ -124,33 +156,37 @@ The following options are available:
 
    Specifies the feature layer from which zones can be read.
 
-.. option:: --weights <WEIGHTS>
+Standard Options
+----------------
 
-   Optional path to a dataset to use for weighting.
+.. collapse:: Details
 
-.. option:: --weights-band <WEIGHTS-BAND>
+    .. include:: gdal_options/append_vector.rst
 
-   Specifies the raster band from which weights can be read.
+    .. include:: gdal_options/co_vector.rst
 
-.. option:: --pixels <PIXELS>
+    .. include:: gdal_options/if.rst
 
-   Method to determine which pixels should be included in the calculation: ``default``, ``all-touched``, or ``fractional``.
-  
-.. option:: --chunk-size <MEMORY>
+    .. include:: gdal_options/lco.rst
 
-   Defines the maximum size of raster chunks to read. May be expressed as either an amount of memory (500 MB, 2 GB, etc.) or as a percentage of
-   available RAM (e.g. 10%).
+    .. include:: gdal_options/oo.rst
 
-.. option:: --strategy <STRATEGY>
+    .. include:: gdal_options/of_vector.rst
 
-   Specifies the the processing strategy (``raster`` or ``feature``), when vector zones are used.
-   In the default strategy (``--strategy feature``), GDAL will iterate over the features in the zone dataset, read the corresponding pixels from the raster, and write the statistics for that feature. This avoids the need to read the entire feature dataset into memory at once, but may cause the same pixels to be read multiple times if the polygon features are large or not ordered spatially. If ``--strategy raster`` is used, GDAL will iterate over chunks of the raster dataset, find corresponding polygon zones, and update the statistics for those features. (The size of the raster chunks can be controlled using :option:``--chunk-size``.) This ensures that raster pixels are only read once, but may cause the same features to be processed multiple times.
-   
-.. option:: --include-field <INCLUDE-FIELD>
+    .. include:: gdal_options/output_layer.rst
 
-   Specifies one or more fields from the zones to be copied to the output. Only
-   available when vector zones are used.
+    .. include:: gdal_options/output_oo.rst
 
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst
+       
 Examples
 --------
 

@@ -32,7 +32,7 @@ Synopsis
 .. program-output:: gdal raster pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (exclamation mark) character.
-The first step must be ``read``, ``calc``, ``mosaic`` or ``stack``,
+The first step must be ``read``, ``calc``, ``create``, ``mosaic`` or ``stack``,
 and the last one ``write``, ``info`` or ``tile``.
 Each step has its own positional or non-positional arguments.
 Apart from ``read``, ``calc``, ``mosaic``, ``stack``, ``compare``, ``info``, ``tile`` and ``write``,
@@ -49,6 +49,12 @@ Potential steps are:
 .. program-output:: gdal raster pipeline --help-doc=calc
 
 Details for options can be found in :ref:`gdal_raster_calc`.
+
+* create
+
+.. program-output:: gdal raster pipeline --help-doc=create
+
+Details for options can be found in :ref:`gdal_raster_create`.
 
 * mosaic
 
@@ -140,6 +146,12 @@ Details for options can be found in :ref:`gdal_raster_pansharpen`.
 
 Details for options can be found in :ref:`gdal_raster_proximity`.
 
+* reclassify
+
+.. program-output:: gdal raster pipeline --help-doc=reclassify
+
+Details for options can be found in :ref:`gdal_raster_reclassify`.
+
 * reproject
 
 .. program-output:: gdal raster pipeline --help-doc=reproject
@@ -211,6 +223,12 @@ Details for options can be found in :ref:`gdal_raster_tri`.
 .. program-output:: gdal raster pipeline --help-doc=unscale
 
 Details for options can be found in :ref:`gdal_raster_unscale`.
+
+* update
+
+.. program-output:: gdal raster pipeline --help-doc=update
+
+Details for options can be found in :ref:`gdal_raster_update`.
 
 * viewshed
 
@@ -330,7 +348,12 @@ Examples
 
       gdal raster pipeline ! mosaic input*.tif ! tile output_folder
 
+.. example::
+   :title: Reclassify GeoTIFF and render it as RGB image.
 
+   .. code-block:: bash
+
+      $ gdal raster pipeline ! read in.tif ! reclassify -m "[1,10]=1; [11,20]=2; [21,30]=3; DEFAULT=NO_DATA" --ot=Byte ! color-map --color-map=color_map.txt --color-selection=exact --add-alpha ! write -f WEBP rendered.webp
 
 .. below is an allow-list for spelling checker.
 

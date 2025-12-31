@@ -51,7 +51,8 @@ class OGRGMLLayer final : public OGRLayer
 
     GMLFeatureClass *poFClass;
 
-    void *hCacheSRS;
+    std::unique_ptr<OGRGML_SRSCache, decltype(&OGRGML_SRSCache_Destroy)>
+        m_srsCache{OGRGML_SRSCache_Create(), OGRGML_SRSCache_Destroy};
 
     bool bUseOldFIDFormat;
 
@@ -176,7 +177,7 @@ class OGRGMLDataSource final : public GDALDataset
     ~OGRGMLDataSource() override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
     bool Create(const char *pszFile, char **papszOptions);
 
     int GetLayerCount() const override

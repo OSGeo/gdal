@@ -85,8 +85,8 @@ static int ThunderSetupDecode(TIFF *tif)
 static int ThunderDecode(TIFF *tif, uint8_t *op0, tmsize_t maxpixels)
 {
     static const char module[] = "ThunderDecode";
-    register unsigned char *bp;
-    register tmsize_t cc;
+    unsigned char *bp;
+    tmsize_t cc;
     unsigned int lastpixel;
     tmsize_t npixels;
     uint8_t *op = op0;

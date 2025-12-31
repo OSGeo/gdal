@@ -325,7 +325,7 @@ static void ParseObject(const char *pszId, json_object *poObj,
         }
     }
 
-    OGRFeature *poFeature = new OGRFeature(poLayer->GetLayerDefn());
+    auto poFeature = std::make_unique<OGRFeature>(poLayer->GetLayerDefn());
     if (pszId != nullptr)
         poFeature->SetField("id", pszId);
 
@@ -340,8 +340,8 @@ static void ParseObject(const char *pszId, json_object *poObj,
         json_object_object_foreachC(poProperties, it)
         {
             const int nField = poFeature->GetFieldIndex(it.key);
-            OGRGeoJSONReaderSetField(poLayer, poFeature, nField, it.key, it.val,
-                                     false, 0);
+            OGRGeoJSONReaderSetField(poLayer, poFeature.get(), nField, it.key,
+                                     it.val, false, 0);
         }
     }
 
@@ -407,8 +407,7 @@ static void ParseObject(const char *pszId, json_object *poObj,
 
     if (poGeom != nullptr)
         poFeature->SetGeometryDirectly(poGeom);
-    poLayer->AddFeature(poFeature);
-    delete poFeature;
+    poLayer->AddFeature(std::move(poFeature));
 }
 
 /************************************************************************/

@@ -3,7 +3,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   GTI -raster- (rov): GDAL Raster Tile Index (*.gti.gpkg, *.gti.fgb, *.gti)
   SNAP_TIFF -raster- (rov): Sentinel Application Processing GeoTIFF
   GTiff -raster- (rw+uvs): GeoTIFF (*.tif, *.tiff)
-  COG -raster- (wv): Cloud optimized GeoTIFF generator (*.tif, *.tiff)
+  COG -raster- (w+v): Cloud optimized GeoTIFF generator (*.tif, *.tiff)
   LIBERTIFF -raster- (rov): GeoTIFF (using LIBERTIFF library) (*.tif, *.tiff)
   VRT -raster,multidimensional raster- (rw+uv): Virtual Raster (*.vrt)
   NITF -raster- (rw+uvs): National Imagery Transmission Format (*.ntf)
@@ -102,9 +102,9 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   USGSDEM -raster- (rov): USGS Optional ASCII DEM (and CDED) (*.dem)
   GXF -raster- (rov): GeoSoft Grid Exchange Format (*.gxf)
   BAG -raster,multidimensional raster,vector- (rw+v): Bathymetry Attributed Grid (*.bag)
-  S102 -raster,multidimensional raster- (rovs): S-102 Bathymetric Surface Product (*.h5)
-  S104 -raster,multidimensional raster- (rovs): S-104 Water Level Information for Surface Navigation Product (*.h5)
-  S111 -raster,multidimensional raster- (rovs): S-111 Surface Currents Product (*.h5)
+  S102 -raster,multidimensional raster- (rwvs): S-102 Bathymetric Surface Product (*.h5)
+  S104 -raster,multidimensional raster- (rwvs): S-104 Water Level Information for Surface Navigation Product (*.h5)
+  S111 -raster,multidimensional raster- (rwvs): S-111 Surface Currents Product (*.h5)
   HDF5 -raster,multidimensional raster- (rovs): Hierarchical Data Format Release 5 (*.h5, *.hdf5)
   HDF5Image -raster- (rov): HDF5 Dataset
   NWT_GRD -raster- (rw+v): Northwood Numeric Grid Format .grd/.tab (*.grd)
