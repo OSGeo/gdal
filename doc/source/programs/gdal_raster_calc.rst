@@ -91,7 +91,7 @@ Program-Specific Options
 
     - ``_CENTER_X_``: X coordinate of the pixel center, expressed in the dataset CRS
     - ``_CENTER_Y_``: Y coordinate of the pixel center, expressed in the dataset CRS
-    - ``NODATA``: Boolean value indicating whether the current pixel is NoData
+    - ``NODATA``: The output `NoData` value, if any.
 
     These variables are useful for calculations that depend on spatial position,
     such as latitude-based corrections, solar angle approximations, or zonal masks.
@@ -226,7 +226,7 @@ Examples
 
 
 .. example::
-   :title: Latitude-based calculation using CENTER_Y
+   :title: Latitude-based calculation using ``_CENTER_Y_``
    :id: raster-calc-center-y
 
    .. code-block:: bash
