@@ -226,7 +226,7 @@ Examples
 
 
 .. example::
-   :title: Latitude-based calculation using CENTER_Y
+   :title: Latitude-based calculation using ``_CENTER_Y_``
    :id: raster-calc-center-y
 
    .. code-block:: bash
