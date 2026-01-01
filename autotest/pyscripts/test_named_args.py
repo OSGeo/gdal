@@ -1,5 +1,11 @@
+"""
+Tests for exposing named arguments in GDAL Python bindings.
+"""
+
 import inspect
+
 from osgeo import gdal
+
 
 def test_OpenEx_named_arguments():
     sig = inspect.signature(gdal.OpenEx)
