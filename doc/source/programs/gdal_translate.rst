@@ -492,4 +492,5 @@ Examples
       $ gdal_translate -strict test.tif test.webp
 
       ERROR 6: WEBP driver doesn't support data type Int16.
-      Only eight bit byte bands supported.
+      Only Int8 bands supported.
+
