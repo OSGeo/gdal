@@ -107,3 +107,29 @@ elif this_python_version_will_be_deprecated_in_gdal_version:
 
     from warnings import warn
     warn(msg, DeprecationWarning)
+
+# ---------------------------------------------------------------------------
+# Python-friendly helpers
+# ---------------------------------------------------------------------------
+
+def OpenEx(
+    filename,
+    *,
+    flags=0,
+    allowed_drivers=None,
+    open_options=None,
+    sibling_files=None,
+):
+    """
+    Python-friendly wrapper around the SWIG-generated OpenEx function.
+
+    This exposes keyword-only arguments without relying on SWIG
+    signature introspection.
+    """
+    return _gdal.OpenEx(
+        filename,
+        flags,
+        allowed_drivers,
+        open_options,
+        sibling_files,
+    )
