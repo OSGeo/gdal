@@ -40,8 +40,21 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -strict
 
-    Don't be forgiving of mismatches and lost data when translating to the
-    output format.
+    Enable strict mode. In this mode, GDAL will fail instead of silently
+    performing operations that may lead to loss of information, such as
+    data type conversions that cannot be exactly preserved.
+
+    The exact behavior of this option is driver-dependent. Most raster
+    drivers use it to enforce strict preservation of the input data type
+    and will report an error if the requested operation cannot be performed
+    without data loss.
+
+    Example:
+
+    ::
+
+        gdal_translate -strict -ot Byte input.tif output.tif
+
 
 .. include:: options/if.rst
 
