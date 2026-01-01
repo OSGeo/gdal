@@ -450,15 +450,6 @@ This utility is also callable from C with :cpp:func:`GDALTranslate`.
 
 Examples
 --------
-.. example::
-   :title: Failing when strict mode prevents data loss
-
-   .. code-block:: bash
-
-      gdal_translate -strict -ot Byte input.tif output.tif
-
-   This command will fail if ``input.tif`` contains pixel values outside the
-   ``0–255`` range, instead of silently truncating or rescaling them.
 
 .. example::
    :title: Creating a tiled GeoTIFF
