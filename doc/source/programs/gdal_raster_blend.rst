@@ -30,6 +30,14 @@ by :ref:`gdal_raster_color_map` when using the ``hsv-value`` blending operator.
 The more standard ``src-over`` blending operator, which does "alpha blending"
 is also available.
 
+.. note::
+   The term *operator* is used in GDAL for historical reasons and corresponds
+   to what is commonly called *blend modes* in other GIS and graphics software
+   (for example QGIS, Photoshop, or ArcGIS).
+
+   In particular, the ``src-over`` operator corresponds to the *normal* blend
+   mode found in many other applications.
+
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 .. GDALG output (on-the-fly / streamed dataset)
