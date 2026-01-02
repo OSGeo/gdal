@@ -3526,8 +3526,9 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
     // Initialize any PAM information.
     poDS->SetDescription(pszFilename);
 
-    if (const char *pszPhysicalFilename =
-            CSLFetchNameValue(psArgs->papszOpenOptions, "PHYSICAL_FILENAME"))
+    const char *pszPhysicalFilename =
+        CSLFetchNameValue(psArgs->papszOpenOptions, "PHYSICAL_FILENAME");
+    if (pszPhysicalFilename)
     {
         poDS->SetPhysicalFilename(pszPhysicalFilename);
         if (const char *pszSubdatasetName =
@@ -3544,8 +3545,15 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
         else
             poDS->nPamFlags |= GPF_NOSAVE;
 
-        // Open (external) overviews.
-        poDS->oOvManager.Initialize(poDS, real_filename, papszSiblingFiles);
+        if (pszPhysicalFilename)
+        {
+            poDS->oOvManager.Initialize(poDS, ":::VIRTUAL:::");
+        }
+        else
+        {
+            // Open (external) overviews.
+            poDS->oOvManager.Initialize(poDS, real_filename, papszSiblingFiles);
+        }
 
         if (!bUseInternalOverviews)
             poDS->bHasInitInternalOverviews = true;

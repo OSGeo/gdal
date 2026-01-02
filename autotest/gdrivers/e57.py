@@ -136,3 +136,27 @@ def test_e57_errors(tmp_vsimem):
         except Exception:
             pass
         data[i] = original_byte_value
+
+
+def test_e57_overviews(tmp_vsimem):
+
+    filename = tmp_vsimem / "test.e57"
+    with gdal.VSIFile("data/e57/fake_two_images.e57", "rb") as f_in:
+        with gdal.VSIFile(filename, "wb") as f_out:
+            f_out.write(f_in.read())
+
+    with gdal.Open(f'E57:"{filename}":image') as ds:
+        ds.BuildOverviews("NEAR", [2])
+
+    assert gdal.VSIStatL(str(filename) + "_0.ovr")
+
+    with gdal.Open(f'E57:"{filename}":image') as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() == 1
+
+    with gdal.Open(f'E57:"{filename}":image2') as ds:
+        ds.BuildOverviews("NEAR", [2, 4])
+
+    assert gdal.VSIStatL(str(filename) + "_1.ovr")
+
+    with gdal.Open(f'E57:"{filename}":image2') as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() == 2
