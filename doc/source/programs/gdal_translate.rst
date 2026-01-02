@@ -483,7 +483,7 @@ Examples
    .. code-block:: bash
 
       gdal_translate -projwin -20037500 10037500 0 0 -outsize 100 100 frmt_wms_googlemaps_tms.xml junk.png
-.. example::
+.. example:: strict
    :title: Use of strict mode with unsupported data type
 
    .. code-block:: console
