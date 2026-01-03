@@ -1,4 +1,4 @@
-Erdas Imagine (.ige) – Large Raster Spill File
+Erdas Imagine (.ige)  Large Raster Spill File
 =============================================
 
 Overview
