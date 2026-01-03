@@ -31,9 +31,8 @@ The more standard ``src-over`` blending operator, which does "alpha blending"
 is also available.
 
 .. note::
-   The term *operator* is used in GDAL for historical reasons and corresponds
-   to what is commonly called *blend modes* in other GIS and graphics software
-   (for example QGIS, Photoshop, or ArcGIS).
+   The term *operator* corresponds to *blend modes* in other GIS and graphics
+   software (for example QGIS or Photoshop).
 
    In particular, the ``src-over`` operator corresponds to the *normal* blend
    mode found in many other applications.
