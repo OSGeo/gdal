@@ -99,6 +99,10 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
         {
             nTZFlagOverride = OGR_TZFLAG_UNKNOWN;
         }
+        else if (EQUAL(pszTZOverride, "mixed"))
+        {
+            nTZFlagOverride = OGR_TZFLAG_MIXED_TZ;
+        }
         else
         {
             // we don't really care about the actual timezone, since we
@@ -241,7 +245,61 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
                 {
                     if (!bDateTimeAsString)
                     {
-                        nEltSize = sizeof(int64_t);
+                        if (m_anTZFlags[i] == OGR_TZFLAG_MIXED_TZ)
+                        {
+                            psChild->n_buffers = 1;
+                            psChild->buffers = static_cast<const void **>(
+                                CPLCalloc(1, sizeof(void *)));
+
+                            psChild->n_children = 2;
+                            psChild->children =
+                                static_cast<struct ArrowArray **>(
+                                    CPLCalloc(2, sizeof(struct ArrowArray *)));
+
+                            // Create sub-child for timestamp in UTC
+                            psChild->children[0] =
+                                static_cast<struct ArrowArray *>(
+                                    CPLCalloc(1, sizeof(struct ArrowArray)));
+                            psChild->children[0]->release =
+                                OGRLayer::ReleaseArray;
+                            psChild->children[0]->length = m_nMaxBatchSize;
+                            psChild->children[0]->n_buffers = 2;
+                            psChild->children[0]->buffers =
+                                static_cast<const void **>(
+                                    CPLCalloc(2, sizeof(void *)));
+                            psChild->children[0]->buffers[1] =
+                                VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+                                    sizeof(int64_t) * m_nMaxBatchSize);
+                            if (psChild->children[0]->buffers[1] == nullptr)
+                                goto error;
+                            memset(const_cast<void *>(
+                                       psChild->children[0]->buffers[1]),
+                                   0, sizeof(int64_t) * m_nMaxBatchSize);
+
+                            // Create sub-child for offset to UTC in minutes
+                            psChild->children[1] =
+                                static_cast<struct ArrowArray *>(
+                                    CPLCalloc(1, sizeof(struct ArrowArray)));
+                            psChild->children[1]->release =
+                                OGRLayer::ReleaseArray;
+                            psChild->children[1]->length = m_nMaxBatchSize;
+                            psChild->children[1]->n_buffers = 2;
+                            psChild->children[1]->buffers =
+                                static_cast<const void **>(
+                                    CPLCalloc(2, sizeof(void *)));
+                            psChild->children[1]->buffers[1] =
+                                VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+                                    sizeof(int16_t) * m_nMaxBatchSize);
+                            if (psChild->children[1]->buffers[1] == nullptr)
+                                goto error;
+                            memset(const_cast<void *>(
+                                       psChild->children[1]->buffers[1]),
+                                   0, sizeof(int16_t) * m_nMaxBatchSize);
+                        }
+                        else
+                        {
+                            nEltSize = sizeof(int64_t);
+                        }
                         break;
                     }
                     else

@@ -1021,3 +1021,42 @@ def test_ogr_arrow_lists_as_string_json():
     assert f["list_float64"] == "[null,7.5,8.5,9.5]"
     assert f["list_string"] == "[null]"
     assert f["fixed_size_list_float64"] == "[8.0,9.0]"
+
+
+###############################################################################
+
+# Test support for https://github.com/apache/arrow/blob/main/docs/source/format/CanonicalExtensions.rst#timestamp-with-offset
+
+
+@pytest.mark.parametrize("OGR2OGR_USE_ARROW_API", ["YES", "NO"])
+def test_ogr_arrow_timestamp_with_offset(tmp_vsimem, OGR2OGR_USE_ARROW_API):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
+    fld_defn.SetTZFlag(ogr.TZFLAG_MIXED_TZ)
+    src_lyr.CreateField(fld_defn)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["id"] = 1
+    f["dt"] = "2025-12-20T12:34:56+0345"
+    src_lyr.CreateFeature(f)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["id"] = 2
+    f["dt"] = "2025-12-20T12:34:56-0745"
+    src_lyr.CreateFeature(f)
+
+    with gdal.config_option("OGR2OGR_USE_ARROW_API", OGR2OGR_USE_ARROW_API):
+        gdal.VectorTranslate(tmp_vsimem / "out.feather", src_ds, geometryType="POLYGON")
+
+    with ogr.Open(tmp_vsimem / "out.feather") as ds:
+        lyr = ds.GetLayer(0)
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(1)
+        assert fld_defn.GetType() == ogr.OFTDateTime
+        assert fld_defn.GetTZFlag() == ogr.TZFLAG_MIXED_TZ
+        f = lyr.GetNextFeature()
+        assert f["id"] == 1
+        assert f["dt"] == "2025/12/20 12:34:56+0345"
+        f = lyr.GetNextFeature()
+        assert f["id"] == 2
+        assert f["dt"] == "2025/12/20 12:34:56-0745"

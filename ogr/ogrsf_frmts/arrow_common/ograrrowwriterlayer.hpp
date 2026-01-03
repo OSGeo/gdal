@@ -275,6 +275,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 poFieldDomain = oIter->second.get();
             }
         }
+        const char *pszFieldMetadata = nullptr;
         switch (eDT)
         {
             case OFTInteger:
@@ -326,6 +327,8 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             case OFTWideString:
                 if ((eSubDT != OFSTNone && eSubDT != OFSTJSON) || nWidth > 0)
                     bNeedGDALSchema = true;
+                if (eSubDT == OFSTJSON)
+                    pszFieldMetadata = EXTENSION_NAME_ARROW_JSON;
                 dt = arrow::utf8();
                 break;
 
@@ -372,22 +375,44 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             case OFTDateTime:
             {
                 const int nTZFlag = poFieldDefn->GetTZFlag();
-                if (nTZFlag >= OGR_TZFLAG_MIXED_TZ)
+                const char *pszTIMESTAMP_WITH_OFFSET =
+                    m_aosCreationOptions.FetchNameValueDef(
+                        "TIMESTAMP_WITH_OFFSET", "AUTO");
+                if ((nTZFlag == OGR_TZFLAG_MIXED_TZ &&
+                     !EQUAL(pszTIMESTAMP_WITH_OFFSET, "NO")) ||
+                    EQUAL(pszTIMESTAMP_WITH_OFFSET, "YES"))
                 {
                     m_anTZFlag[i] = nTZFlag;
+                    std::vector<std::shared_ptr<arrow::Field>>
+                        tsWithOffsetFields{
+                            arrow::field(
+                                ATSWO_TIMESTAMP_FIELD_NAME,
+                                arrow::timestamp(arrow::TimeUnit::MILLI, "UTC"),
+                                false),
+                            arrow::field(ATSWO_OFFSET_MINUTES_FIELD_NAME,
+                                         arrow::int16(), false)};
+                    dt = arrow::struct_(std::move(tsWithOffsetFields));
+                    pszFieldMetadata =
+                        EXTENSION_NAME_ARROW_TIMESTAMP_WITH_OFFSET;
                 }
-                dt = arrow::timestamp(arrow::TimeUnit::MILLI);
+                else
+                {
+                    if (nTZFlag >= OGR_TZFLAG_MIXED_TZ)
+                    {
+                        m_anTZFlag[i] = nTZFlag;
+                    }
+                    dt = arrow::timestamp(arrow::TimeUnit::MILLI);
+                }
                 break;
             }
         }
 
         auto field = arrow::field(poFieldDefn->GetNameRef(), std::move(dt),
                                   poFieldDefn->IsNullable());
-        if (eDT == OFTString && eSubDT == OFSTJSON)
+        if (pszFieldMetadata)
         {
             auto kvMetadata = std::make_shared<arrow::KeyValueMetadata>();
-            kvMetadata->Append(ARROW_EXTENSION_NAME_KEY,
-                               EXTENSION_NAME_ARROW_JSON);
+            kvMetadata->Append(ARROW_EXTENSION_NAME_KEY, pszFieldMetadata);
             field = field->WithMetadata(kvMetadata);
         }
 
@@ -665,7 +690,11 @@ inline void OGRArrowWriterLayer::FinalizeSchema()
     int nArrowIdxFirstField = !m_osFIDColumn.empty() ? 1 : 0;
     for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
     {
-        if (m_anTZFlag[i] >= OGR_TZFLAG_MIXED_TZ)
+        const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
+        if (m_anTZFlag[i] >= OGR_TZFLAG_MIXED_TZ &&
+            poFieldDefn->GetTZFlag() != OGR_TZFLAG_MIXED_TZ &&
+            m_poSchema->field(nArrowIdxFirstField + i)->type()->id() !=
+                arrow::Type::STRUCT)
         {
             const int nOffset = m_anTZFlag[i] == OGR_TZFLAG_MIXED_TZ
                                     ? 0
@@ -677,7 +706,6 @@ inline void OGRArrowWriterLayer::FinalizeSchema()
                 CPLSPrintf("%c%02d:%02d", nOffset >= 0 ? '+' : '-',
                            std::abs(nHours), nMinutes);
             auto dt = arrow::timestamp(arrow::TimeUnit::MILLI, osTZ);
-            const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
             auto field = arrow::field(poFieldDefn->GetNameRef(), std::move(dt),
                                       poFieldDefn->IsNullable());
             auto result = m_poSchema->SetField(nArrowIdxFirstField + i, field);
@@ -1201,9 +1229,27 @@ inline void OGRArrowWriterLayer::CreateArrayBuilders()
                 break;
 
             case OFTDateTime:
-                builder = std::make_shared<arrow::TimestampBuilder>(
-                    arrow::timestamp(arrow::TimeUnit::MILLI), m_poMemoryPool);
+            {
+                const auto arrowType = m_poSchema->fields()[nArrowIdx]->type();
+                if (arrowType->id() == arrow::Type::STRUCT)
+                {
+                    builder = std::make_shared<arrow::StructBuilder>(
+                        arrowType, m_poMemoryPool,
+                        std::vector<std::shared_ptr<arrow::ArrayBuilder>>{
+                            std::make_shared<arrow::TimestampBuilder>(
+                                arrow::timestamp(arrow::TimeUnit::MILLI),
+                                m_poMemoryPool),
+                            std::make_shared<arrow::Int16Builder>(
+                                m_poMemoryPool)});
+                }
+                else
+                {
+                    builder = std::make_shared<arrow::TimestampBuilder>(
+                        arrow::timestamp(arrow::TimeUnit::MILLI),
+                        m_poMemoryPool);
+                }
                 break;
+            }
         }
         m_apoBuilders.emplace_back(builder);
     }
@@ -2255,10 +2301,30 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
                     const int nOffsetSec = (nTZFlag - OGR_TZFLAG_UTC) * 15 * 60;
                     nVal -= nOffsetSec;
                 }
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                    static_cast<arrow::TimestampBuilder *>(poBuilder)->Append(
-                        static_cast<int64_t>(
-                            (static_cast<double>(nVal) + fSec) * 1000 + 0.5)));
+                const int64_t nTimestamp = static_cast<int64_t>(
+                    (static_cast<double>(nVal) + fSec) * 1000 + 0.5);
+                auto structBuilder =
+                    dynamic_cast<arrow::StructBuilder *>(poBuilder);
+                if (structBuilder)
+                {
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        static_cast<arrow::TimestampBuilder *>(
+                            structBuilder->field_builder(0))
+                            ->Append(nTimestamp));
+                    const int16_t nUTCOffsetMin =
+                        static_cast<int16_t>((nTZFlag - OGR_TZFLAG_UTC) * 15);
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        static_cast<arrow::Int16Builder *>(
+                            structBuilder->field_builder(1))
+                            ->Append(nUTCOffsetMin));
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(structBuilder->Append());
+                }
+                else
+                {
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        static_cast<arrow::TimestampBuilder *>(poBuilder)
+                            ->Append(nTimestamp));
+                }
                 break;
             }
         }

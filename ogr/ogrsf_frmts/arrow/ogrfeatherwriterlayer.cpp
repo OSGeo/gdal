@@ -75,6 +75,8 @@ bool OGRFeatherWriterLayer::SetOptions(const std::string &osFilename,
                                        const OGRSpatialReference *poSpatialRef,
                                        OGRwkbGeometryType eGType)
 {
+    m_aosCreationOptions = papszOptions;
+
     const char *pszDefaultFormat =
         (EQUAL(CPLGetExtensionSafe(osFilename.c_str()).c_str(), "arrows") ||
          STARTS_WITH_CI(osFilename.c_str(), "/vsistdout"))
