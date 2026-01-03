@@ -2289,18 +2289,14 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     : std::unique_ptr<OGRMultiPolygon>(
                           poMS.release()->toMultiPolygon());
             const int nPolygonCount = poMPoly->getNumGeometries();
-            std::vector<OGRGeometry *> apoPolygons;
+            std::vector<std::unique_ptr<OGRGeometry>> apoPolygons;
             apoPolygons.reserve(nPolygonCount);
-            for (int i = 0; i < nPolygonCount; i++)
+            for (int i = nPolygonCount - 1; i >= 0; --i)
             {
-                apoPolygons.emplace_back(poMPoly->getGeometryRef(0));
-                poMPoly->removeGeometry(0, FALSE);
+                apoPolygons.push_back(poMPoly->stealGeometry(i));
             }
-            poMPoly.reset();
-            int bResultValidGeometry = FALSE;
-            return std::unique_ptr<OGRGeometry>(
-                OGRGeometryFactory::organizePolygons(
-                    apoPolygons.data(), nPolygonCount, &bResultValidGeometry));
+            std::reverse(apoPolygons.begin(), apoPolygons.end());
+            return OGRGeometryFactory::organizePolygons(apoPolygons);
         }
         else
         {

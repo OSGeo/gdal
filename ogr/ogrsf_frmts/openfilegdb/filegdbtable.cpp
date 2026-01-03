@@ -4117,46 +4117,36 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
                 pabyCur = pabyCurBackup;
             }
 
-            OGRLinearRing **papoRings = new OGRLinearRing *[nParts];
+            std::vector<std::unique_ptr<OGRLinearRing>> apoRings;
+            apoRings.reserve(nParts);
 
             dx = dy = dz = 0;
             for (i = 0; i < nParts; i++)
             {
-                FileGDBOGRLinearRing *poRing = new FileGDBOGRLinearRing();
-                papoRings[i] = poRing;
+                auto poRing = std::make_unique<FileGDBOGRLinearRing>();
                 poRing->setNumPoints(panPointCount[i], FALSE);
 
                 XYLineStringSetter lsSetter(poRing->GetPoints());
                 if (!ReadXYArray<XYLineStringSetter>(lsSetter, pabyCur, pabyEnd,
                                                      panPointCount[i], dx, dy))
                 {
-                    while (true)
-                    {
-                        delete papoRings[i];
-                        if (i == 0)
-                            break;
-                        i--;
-                    }
-                    delete[] papoRings;
                     // For some reason things that papoRings is leaking
                     // cppcheck-suppress memleak
                     returnError();
                 }
+                apoRings.push_back(std::move(poRing));
             }
 
             if (bHasZ)
             {
                 for (i = 0; i < nParts; i++)
                 {
-                    papoRings[i]->setCoordinateDimension(3);
+                    apoRings[i]->setCoordinateDimension(3);
 
-                    ZLineStringSetter lszSetter(papoRings[i]);
+                    ZLineStringSetter lszSetter(apoRings[i].get());
                     if (!ReadZArray<ZLineStringSetter>(
                             lszSetter, pabyCur, pabyEnd, panPointCount[i], dz))
                     {
-                        for (i = 0; i < nParts; i++)
-                            delete papoRings[i];
-                        delete[] papoRings;
                         returnError();
                     }
                 }
@@ -4176,36 +4166,33 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
                         while (i != 0)
                         {
                             --i;
-                            papoRings[i]->setMeasured(FALSE);
+                            apoRings[i]->setMeasured(FALSE);
                         }
                         break;
                     }
 
-                    papoRings[i]->setMeasured(TRUE);
+                    apoRings[i]->setMeasured(TRUE);
 
-                    MLineStringSetter lsmSetter(papoRings[i]);
+                    MLineStringSetter lsmSetter(apoRings[i].get());
                     if (!ReadMArray<MLineStringSetter>(
                             lsmSetter, pabyCur, pabyEnd, panPointCount[i], dm))
                     {
-                        for (i = 0; i < nParts; i++)
-                            delete papoRings[i];
-                        delete[] papoRings;
                         returnError();
                     }
                 }
             }
 
-            OGRGeometry *poRet = nullptr;
+            std::unique_ptr<OGRGeometry> poRet;
             if (nParts == 1)
             {
-                OGRPolygon *poPoly = new OGRPolygon();
-                poRet = poPoly;
-                poPoly->addRingDirectly(papoRings[0]);
+                auto poPoly = std::make_unique<OGRPolygon>();
+                poPoly->addRing(std::move(apoRings[0]));
+                poRet = std::move(poPoly);
             }
             else
             // Note: ASSUME_INNER_RINGS_IMMEDIATELY_AFTER_OUTER_RING is *not* defined
 #ifdef ASSUME_INNER_RINGS_IMMEDIATELY_AFTER_OUTER_RING
-                if (bUseOrganize || !(papoRings[0]->isClockwise()))
+                if (bUseOrganize || !(apoRings[0]->isClockwise()))
 #endif
             {
                 /* Slow method: we do a rather expensive topological analysis of
@@ -4224,18 +4211,15 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
                  * rings has its exterior ring with wrong orientation, hence
                  * we use the slowest but bullet-proof method.
                  */
-                OGRPolygon **papoPolygons = new OGRPolygon *[nParts];
+                std::vector<std::unique_ptr<OGRGeometry>> apoPolys;
+                apoPolys.reserve(nParts);
                 for (i = 0; i < nParts; i++)
                 {
-                    papoPolygons[i] = new OGRPolygon();
-                    papoPolygons[i]->addRingDirectly(papoRings[i]);
+                    auto poPoly = std::make_unique<OGRPolygon>();
+                    poPoly->addRing(std::move(apoRings[i]));
+                    apoPolys.push_back(std::move(poPoly));
                 }
-                delete[] papoRings;
-                papoRings = nullptr;
-                poRet = OGRGeometryFactory::organizePolygons(
-                    reinterpret_cast<OGRGeometry **>(papoPolygons), nParts,
-                    nullptr, nullptr);
-                delete[] papoPolygons;
+                poRet = OGRGeometryFactory::organizePolygons(apoPolys);
             }
 #ifdef ASSUME_INNER_RINGS_IMMEDIATELY_AFTER_OUTER_RING
             else
@@ -4243,45 +4227,56 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
                 /* Inner rings are CCW oriented and follow immediately the outer
                  */
                 /* ring (that is CW oriented) in which they are included */
-                OGRMultiPolygon *poMulti = NULL;
-                OGRPolygon *poCur = new OGRPolygon();
-                poRet = poCur;
+                std::unique_ptr<OGRMultiPolygon> poMulti;
+                auto poCur = std::make_unique<OGRPolygon>();
                 /* We have already checked that the first ring is CW */
-                poCur->addRingDirectly(papoRings[0]);
                 OGREnvelope sEnvelope;
-                papoRings[0]->getEnvelope(&sEnvelope);
+                apoRings[0]->getEnvelope(&sEnvelope);
+                poCur->addRing(std::move(apoRings[0]));
                 for (i = 1; i < nParts; i++)
                 {
-                    int bIsCW = papoRings[i]->isClockwise();
+                    const int bIsCW = apoRings[i]->isClockwise();
                     if (bIsCW)
                     {
-                        if (poMulti == NULL)
+                        if (poMulti == nullptr)
                         {
-                            poMulti = new OGRMultiPolygon();
-                            poRet = poMulti;
-                            poMulti->addGeometryDirectly(poCur);
+                            poMulti = std::make_unique<OGRMultiPolygon>();
+                            poMulti->addGeometry(std::move(poCur));
                         }
-                        poCur = new OGRPolygon();
-                        poMulti->addGeometryDirectly(poCur);
-                        poCur->addRingDirectly(papoRings[i]);
-                        papoRings[i]->getEnvelope(&sEnvelope);
+                        poCur = std::make_unique<OGRPolygon>();
+                        apoRings[i]->getEnvelope(&sEnvelope);
+                        poCur->addRing(std::move(apoRings[i]));
+                        poMulti->addGeometry(std::move(poCur));
                     }
                     else
                     {
-                        poCur->addRingDirectly(papoRings[i]);
                         OGRPoint oPoint;
-                        papoRings[i]->getPoint(0, &oPoint);
+                        apoRings[i]->getPoint(0, &oPoint);
+                        if (poCur)
+                        {
+                            poCur->addRing(std::move(apoRings[i]));
+                        }
+                        else
+                        {
+                            poMulti
+                                ->getGeometryRef(poMulti->getNumGeometries() -
+                                                 1)
+                                ->addRing(std::move(apoRings[i]));
+                        }
                         CPLAssert(oPoint.getX() >= sEnvelope.MinX &&
                                   oPoint.getX() <= sEnvelope.MaxX &&
                                   oPoint.getY() >= sEnvelope.MinY &&
                                   oPoint.getY() <= sEnvelope.MaxY);
                     }
                 }
+                if (poCur)
+                    poRet = std::move(poCur);
+                else
+                    poRet = std::move(poMulti);
             }
 #endif
 
-            delete[] papoRings;
-            return poRet;
+            return poRet.release();
         }
 
         case SHPT_MULTIPATCHM:

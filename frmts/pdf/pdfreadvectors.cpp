@@ -111,8 +111,6 @@ bool PDFDataset::OpenVectorLayers(GDALPDFDictionary *poPageDict)
 
 void PDFDataset::CleanupIntermediateResources()
 {
-    for (const auto &oIter : m_oMapMCID)
-        delete oIter.second;
     m_oMapMCID.clear();
 }
 
@@ -285,11 +283,12 @@ bool PDFDataset::ExploreTree(GDALPDFObject *poObj,
     if (poK->GetType() == PDFObjectType_Array)
     {
         GDALPDFArray *poArray = poK->GetArray();
-        if (poArray->GetLength() > 0 && poArray->Get(0) &&
-            poArray->Get(0)->GetType() == PDFObjectType_Dictionary &&
-            poArray->Get(0)->GetDictionary()->Get("K") != nullptr &&
-            poArray->Get(0)->GetDictionary()->Get("K")->GetType() ==
-                PDFObjectType_Int)
+        GDALPDFObject *poElt0;
+        GDALPDFObject *poElt0_K;
+        if (poArray->GetLength() > 0 && (poElt0 = poArray->Get(0)) &&
+            poElt0->GetType() == PDFObjectType_Dictionary &&
+            (poElt0_K = poElt0->GetDictionary()->Get("K")) &&
+            poElt0_K->GetType() == PDFObjectType_Int)
         {
             if (bDryRun)
             {
@@ -371,7 +370,7 @@ OGRGeometry *PDFDataset::GetGeometryFromMCID(int nMCID)
 {
     auto oMapIter = m_oMapMCID.find(nMCID);
     if (oMapIter != m_oMapMCID.end())
-        return oMapIter->second;
+        return oMapIter->second.get();
     else
         return nullptr;
 }
@@ -455,7 +454,7 @@ void PDFDataset::PDFCoordsToSRSCoords(double x, double y, double &X, double &Y)
 
 /* Return the center of a circle, or NULL if it is not recognized */
 
-static OGRPoint *PDFGetCircleCenter(OGRLineString *poLS)
+static std::unique_ptr<OGRPoint> PDFGetCircleCenter(OGRLineString *poLS)
 {
     if (poLS == nullptr || poLS->getNumPoints() != 1 + 4 * BEZIER_STEPS)
         return nullptr;
@@ -467,7 +466,7 @@ static OGRPoint *PDFGetCircleCenter(OGRLineString *poLS)
         fabs((poLS->getY(1 * BEZIER_STEPS) + poLS->getY(3 * BEZIER_STEPS)) / 2 -
              poLS->getY(0 * BEZIER_STEPS)) < EPSILON)
     {
-        return new OGRPoint(
+        return std::make_unique<OGRPoint>(
             (poLS->getX(0 * BEZIER_STEPS) + poLS->getX(2 * BEZIER_STEPS)) / 2,
             (poLS->getY(1 * BEZIER_STEPS) + poLS->getY(3 * BEZIER_STEPS)) / 2);
     }
@@ -480,7 +479,7 @@ static OGRPoint *PDFGetCircleCenter(OGRLineString *poLS)
 
 /* Return the center of a square, or NULL if it is not recognized */
 
-static OGRPoint *PDFGetSquareCenter(OGRLineString *poLS)
+static std::unique_ptr<OGRPoint> PDFGetSquareCenter(OGRLineString *poLS)
 {
     if (poLS == nullptr || poLS->getNumPoints() < 4 || poLS->getNumPoints() > 5)
         return nullptr;
@@ -490,8 +489,8 @@ static OGRPoint *PDFGetSquareCenter(OGRLineString *poLS)
         fabs(fabs(poLS->getX(0) - poLS->getX(1)) -
              fabs(poLS->getY(0) - poLS->getY(3))) < EPSILON)
     {
-        return new OGRPoint((poLS->getX(0) + poLS->getX(1)) / 2,
-                            (poLS->getY(0) + poLS->getY(3)) / 2);
+        return std::make_unique<OGRPoint>((poLS->getX(0) + poLS->getX(1)) / 2,
+                                          (poLS->getY(0) + poLS->getY(3)) / 2);
     }
     return nullptr;
 }
@@ -503,7 +502,7 @@ static OGRPoint *PDFGetSquareCenter(OGRLineString *poLS)
 /* Return the center of a equilateral triangle, or NULL if it is not recognized
  */
 
-static OGRPoint *PDFGetTriangleCenter(OGRLineString *poLS)
+static std::unique_ptr<OGRPoint> PDFGetTriangleCenter(OGRLineString *poLS)
 {
     if (poLS == nullptr || poLS->getNumPoints() < 3 || poLS->getNumPoints() > 4)
         return nullptr;
@@ -516,9 +515,9 @@ static OGRPoint *PDFGetTriangleCenter(OGRLineString *poLS)
                     SQUARE(poLS->getY(0) - poLS->getY(2));
     if (fabs(dfSqD1 - dfSqD2) < EPSILON && fabs(dfSqD2 - dfSqD3) < EPSILON)
     {
-        return new OGRPoint((poLS->getX(0) + poLS->getX(1) + poLS->getX(2)) / 3,
-                            (poLS->getY(0) + poLS->getY(1) + poLS->getY(2)) /
-                                3);
+        return std::make_unique<OGRPoint>(
+            (poLS->getX(0) + poLS->getX(1) + poLS->getX(2)) / 3,
+            (poLS->getY(0) + poLS->getY(1) + poLS->getY(2)) / 3);
     }
     return nullptr;
 }
@@ -529,7 +528,7 @@ static OGRPoint *PDFGetTriangleCenter(OGRLineString *poLS)
 
 /* Return the center of a 5-point star, or NULL if it is not recognized */
 
-static OGRPoint *PDFGetStarCenter(OGRLineString *poLS)
+static std::unique_ptr<OGRPoint> PDFGetStarCenter(OGRLineString *poLS)
 {
     if (poLS == nullptr || poLS->getNumPoints() < 10 ||
         poLS->getNumPoints() > 11)
@@ -566,12 +565,13 @@ static OGRPoint *PDFGetStarCenter(OGRLineString *poLS)
     }
     if (bOK)
     {
-        return new OGRPoint((poLS->getX(0) + poLS->getX(2) + poLS->getX(4) +
-                             poLS->getX(6) + poLS->getX(8)) /
-                                5,
-                            (poLS->getY(0) + poLS->getY(2) + poLS->getY(4) +
-                             poLS->getY(6) + poLS->getY(8)) /
-                                5);
+        return std::make_unique<OGRPoint>(
+            (poLS->getX(0) + poLS->getX(2) + poLS->getX(4) + poLS->getX(6) +
+             poLS->getX(8)) /
+                5,
+            (poLS->getY(0) + poLS->getY(2) + poLS->getY(4) + poLS->getY(6) +
+             poLS->getY(8)) /
+                5);
     }
     return nullptr;
 }
@@ -1583,17 +1583,18 @@ OGRGeometry *PDFDataset::ParseContent(
     if (bCollectAllObjects)
         return nullptr;
 
-    return BuildGeometry(oCoords, bHasFoundFill, bHasMultiPart);
+    return BuildGeometry(oCoords, bHasFoundFill, bHasMultiPart).release();
 }
 
 /************************************************************************/
 /*                           BuildGeometry()                            */
 /************************************************************************/
 
-OGRGeometry *PDFDataset::BuildGeometry(std::vector<double> &oCoords,
-                                       int bHasFoundFill, int bHasMultiPart)
+std::unique_ptr<OGRGeometry>
+PDFDataset::BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
+                          int bHasMultiPart)
 {
-    OGRGeometry *poGeom = nullptr;
+    std::unique_ptr<OGRGeometry> poGeom;
 
     if (!oCoords.size())
         return nullptr;
@@ -1602,33 +1603,24 @@ OGRGeometry *PDFDataset::BuildGeometry(std::vector<double> &oCoords,
     {
         double X, Y;
         PDFCoordsToSRSCoords(oCoords[0], oCoords[1], X, Y);
-        poGeom = new OGRPoint(X, Y);
+        poGeom = std::make_unique<OGRPoint>(X, Y);
     }
     else if (!bHasFoundFill)
     {
-        OGRLineString *poLS = nullptr;
-        OGRMultiLineString *poMLS = nullptr;
+        std::unique_ptr<OGRLineString> poLS;
+        std::unique_ptr<OGRMultiLineString> poMLS;
         if (bHasMultiPart)
         {
-            poMLS = new OGRMultiLineString();
-            poGeom = poMLS;
+            poMLS = std::make_unique<OGRMultiLineString>();
         }
 
         for (size_t i = 0; i < oCoords.size(); i += 2)
         {
             if (oCoords[i] == NEW_SUBPATH && oCoords[i + 1] == NEW_SUBPATH)
             {
-                if (poMLS)
-                {
-                    poLS = new OGRLineString();
-                    poMLS->addGeometryDirectly(poLS);
-                }
-                else
-                {
-                    delete poLS;
-                    poLS = new OGRLineString();
-                    poGeom = poLS;
-                }
+                if (poMLS && poLS && !poLS->IsEmpty())
+                    poMLS->addGeometry(std::move(poLS));
+                poLS = std::make_unique<OGRLineString>();
             }
             else if (oCoords[i] == CLOSE_SUBPATH &&
                      oCoords[i + 1] == CLOSE_SUBPATH)
@@ -1645,92 +1637,98 @@ OGRGeometry *PDFDataset::BuildGeometry(std::vector<double> &oCoords,
             {
                 /* Should not happen */
             }
-            else
+            else if (poLS)
             {
-                if (poLS)
-                {
-                    double X, Y;
-                    PDFCoordsToSRSCoords(oCoords[i], oCoords[i + 1], X, Y);
+                double X, Y;
+                PDFCoordsToSRSCoords(oCoords[i], oCoords[i + 1], X, Y);
 
-                    poLS->addPoint(X, Y);
-                }
+                poLS->addPoint(X, Y);
             }
         }
 
         // Recognize points as written by GDAL (ogr-sym-2 : circle (not filled))
-        OGRGeometry *poCenter = nullptr;
-        if (poCenter == nullptr && poLS != nullptr &&
-            poLS->getNumPoints() == 1 + BEZIER_STEPS * 4)
+        if (poLS != nullptr && poLS->getNumPoints() == 1 + BEZIER_STEPS * 4 &&
+            (poGeom = PDFGetCircleCenter(poLS.get())) != nullptr)
         {
-            poCenter = PDFGetCircleCenter(poLS);
+            // done
         }
 
         // Recognize points as written by GDAL (ogr-sym-4: square (not filled))
-        if (poCenter == nullptr && poLS != nullptr &&
-            (poLS->getNumPoints() == 4 || poLS->getNumPoints() == 5))
+        else if (poLS != nullptr &&
+                 (poLS->getNumPoints() == 4 || poLS->getNumPoints() == 5) &&
+                 (poGeom = PDFGetSquareCenter(poLS.get())) != nullptr)
         {
-            poCenter = PDFGetSquareCenter(poLS);
+            // done
         }
 
         // Recognize points as written by GDAL (ogr-sym-6: triangle (not
         // filled))
-        if (poCenter == nullptr && poLS != nullptr &&
-            (poLS->getNumPoints() == 3 || poLS->getNumPoints() == 4))
+        else if (poLS != nullptr &&
+                 (poLS->getNumPoints() == 3 || poLS->getNumPoints() == 4) &&
+                 (poGeom = PDFGetTriangleCenter(poLS.get())) != nullptr)
         {
-            poCenter = PDFGetTriangleCenter(poLS);
+            // done
         }
 
         // Recognize points as written by GDAL (ogr-sym-8: star (not filled))
-        if (poCenter == nullptr && poLS != nullptr &&
-            (poLS->getNumPoints() == 10 || poLS->getNumPoints() == 11))
+        else if (poLS != nullptr &&
+                 (poLS->getNumPoints() == 10 || poLS->getNumPoints() == 11) &&
+                 (poGeom = PDFGetStarCenter(poLS.get())) != nullptr)
         {
-            poCenter = PDFGetStarCenter(poLS);
+            // done
         }
-
-        if (poCenter == nullptr && poMLS != nullptr &&
-            poMLS->getNumGeometries() == 2)
+        else if (poMLS)
         {
-            const OGRLineString *poLS1 = poMLS->getGeometryRef(0);
-            const OGRLineString *poLS2 = poMLS->getGeometryRef(1);
+            if (poLS && !poLS->IsEmpty())
+                poMLS->addGeometry(std::move(poLS));
 
-            // Recognize points as written by GDAL (ogr-sym-0: cross (+) ).
-            if (poLS1->getNumPoints() == 2 && poLS2->getNumPoints() == 2 &&
-                poLS1->getY(0) == poLS1->getY(1) &&
-                poLS2->getX(0) == poLS2->getX(1) &&
-                fabs(fabs(poLS1->getX(0) - poLS1->getX(1)) -
-                     fabs(poLS2->getY(0) - poLS2->getY(1))) < EPSILON &&
-                fabs((poLS1->getX(0) + poLS1->getX(1)) / 2 - poLS2->getX(0)) <
-                    EPSILON &&
-                fabs((poLS2->getY(0) + poLS2->getY(1)) / 2 - poLS1->getY(0)) <
-                    EPSILON)
+            if (poMLS->getNumGeometries() == 2)
             {
-                poCenter = new OGRPoint(poLS2->getX(0), poLS1->getY(0));
+                const OGRLineString *poLS1 = poMLS->getGeometryRef(0);
+                const OGRLineString *poLS2 = poMLS->getGeometryRef(1);
+
+                // Recognize points as written by GDAL (ogr-sym-0: cross (+) ).
+                if (poLS1->getNumPoints() == 2 && poLS2->getNumPoints() == 2 &&
+                    poLS1->getY(0) == poLS1->getY(1) &&
+                    poLS2->getX(0) == poLS2->getX(1) &&
+                    fabs(fabs(poLS1->getX(0) - poLS1->getX(1)) -
+                         fabs(poLS2->getY(0) - poLS2->getY(1))) < EPSILON &&
+                    fabs((poLS1->getX(0) + poLS1->getX(1)) / 2 -
+                         poLS2->getX(0)) < EPSILON &&
+                    fabs((poLS2->getY(0) + poLS2->getY(1)) / 2 -
+                         poLS1->getY(0)) < EPSILON)
+                {
+                    poGeom = std::make_unique<OGRPoint>(poLS2->getX(0),
+                                                        poLS1->getY(0));
+                }
+                // Recognize points as written by GDAL (ogr-sym-1: diagcross (X) ).
+                else if (poLS1->getNumPoints() == 2 &&
+                         poLS2->getNumPoints() == 2 &&
+                         poLS1->getX(0) == poLS2->getX(0) &&
+                         poLS1->getY(0) == poLS2->getY(1) &&
+                         poLS1->getX(1) == poLS2->getX(1) &&
+                         poLS1->getY(1) == poLS2->getY(0) &&
+                         fabs(fabs(poLS1->getX(0) - poLS1->getX(1)) -
+                              fabs(poLS1->getY(0) - poLS1->getY(1))) < EPSILON)
+                {
+                    poGeom = std::make_unique<OGRPoint>(
+                        (poLS1->getX(0) + poLS1->getX(1)) / 2,
+                        (poLS1->getY(0) + poLS1->getY(1)) / 2);
+                }
             }
-            // Recognize points as written by GDAL (ogr-sym-1: diagcross (X) ).
-            else if (poLS1->getNumPoints() == 2 && poLS2->getNumPoints() == 2 &&
-                     poLS1->getX(0) == poLS2->getX(0) &&
-                     poLS1->getY(0) == poLS2->getY(1) &&
-                     poLS1->getX(1) == poLS2->getX(1) &&
-                     poLS1->getY(1) == poLS2->getY(0) &&
-                     fabs(fabs(poLS1->getX(0) - poLS1->getX(1)) -
-                          fabs(poLS1->getY(0) - poLS1->getY(1))) < EPSILON)
-            {
-                poCenter = new OGRPoint((poLS1->getX(0) + poLS1->getX(1)) / 2,
-                                        (poLS1->getY(0) + poLS1->getY(1)) / 2);
-            }
+
+            if (!poGeom)
+                poGeom = std::move(poMLS);
         }
-
-        if (poCenter)
+        else if (poLS)
         {
-            delete poGeom;
-            poGeom = poCenter;
+            poGeom = std::move(poLS);
         }
     }
     else
     {
-        OGRLinearRing *poLS = nullptr;
-        int nPolys = 0;
-        OGRGeometry **papoPoly = nullptr;
+        std::unique_ptr<OGRLinearRing> poLS;
+        std::vector<std::unique_ptr<OGRGeometry>> apoPolys;
 
         for (size_t i = 0; i < oCoords.size(); i += 2)
         {
@@ -1738,16 +1736,11 @@ OGRGeometry *PDFDataset::BuildGeometry(std::vector<double> &oCoords,
             {
                 if (poLS && poLS->getNumPoints() >= 3)
                 {
-                    OGRPolygon *poPoly = new OGRPolygon();
-                    poPoly->addRingDirectly(poLS);
-                    poLS = nullptr;
-
-                    papoPoly = static_cast<OGRGeometry **>(CPLRealloc(
-                        papoPoly, (nPolys + 1) * sizeof(OGRGeometry *)));
-                    papoPoly[nPolys++] = poPoly;
+                    auto poPoly = std::make_unique<OGRPolygon>();
+                    poPoly->addRing(std::move(poLS));
+                    apoPolys.push_back(std::move(poPoly));
                 }
-                delete poLS;
-                poLS = new OGRLinearRing();
+                poLS = std::make_unique<OGRLinearRing>();
             }
             else if ((oCoords[i] == CLOSE_SUBPATH &&
                       oCoords[i + 1] == CLOSE_SUBPATH) ||
@@ -1760,20 +1753,20 @@ OGRGeometry *PDFDataset::BuildGeometry(std::vector<double> &oCoords,
 
                     std::unique_ptr<OGRPoint> poCenter;
 
-                    if (nPolys == 0 && poLS &&
+                    if (apoPolys.empty() && poLS &&
                         poLS->getNumPoints() == 1 + BEZIER_STEPS * 4)
                     {
                         // Recognize points as written by GDAL (ogr-sym-3 :
                         // circle (filled))
-                        poCenter.reset(PDFGetCircleCenter(poLS));
+                        poCenter = PDFGetCircleCenter(poLS.get());
                     }
 
-                    if (nPolys == 0 && poCenter == nullptr && poLS &&
+                    if (apoPolys.empty() && poCenter == nullptr && poLS &&
                         poLS->getNumPoints() == 5)
                     {
                         // Recognize points as written by GDAL (ogr-sym-5:
                         // square (filled))
-                        poCenter.reset(PDFGetSquareCenter(poLS));
+                        poCenter = PDFGetSquareCenter(poLS.get());
 
                         /* ESRI points */
                         if (poCenter == nullptr && oCoords.size() == 14 &&
@@ -1782,46 +1775,39 @@ OGRGeometry *PDFDataset::BuildGeometry(std::vector<double> &oCoords,
                             poLS->getY(2) == poLS->getY(3) &&
                             poLS->getX(3) == poLS->getX(0))
                         {
-                            poCenter.reset(new OGRPoint(
+                            poCenter = std::make_unique<OGRPoint>(
                                 (poLS->getX(0) + poLS->getX(1)) / 2,
-                                (poLS->getY(0) + poLS->getY(2)) / 2));
+                                (poLS->getY(0) + poLS->getY(2)) / 2);
                         }
                     }
                     // Recognize points as written by GDAL (ogr-sym-7: triangle
                     // (filled))
-                    else if (nPolys == 0 && poLS && poLS->getNumPoints() == 4)
+                    else if (apoPolys.empty() && poLS &&
+                             poLS->getNumPoints() == 4)
                     {
-                        poCenter.reset(PDFGetTriangleCenter(poLS));
+                        poCenter = PDFGetTriangleCenter(poLS.get());
                     }
                     // Recognize points as written by GDAL (ogr-sym-9: star
                     // (filled))
-                    else if (nPolys == 0 && poLS && poLS->getNumPoints() == 11)
+                    else if (apoPolys.empty() && poLS &&
+                             poLS->getNumPoints() == 11)
                     {
-                        poCenter.reset(PDFGetStarCenter(poLS));
+                        poCenter = PDFGetStarCenter(poLS.get());
                     }
 
                     if (poCenter)
                     {
-                        delete poGeom;
-                        poGeom = poCenter.release();
+                        poGeom = std::move(poCenter);
                         break;
                     }
 
                     if (poLS->getNumPoints() >= 3)
                     {
-                        OGRPolygon *poPoly = new OGRPolygon();
-                        poPoly->addRingDirectly(poLS);
-                        poLS = nullptr;
-
-                        papoPoly = static_cast<OGRGeometry **>(CPLRealloc(
-                            papoPoly, (nPolys + 1) * sizeof(OGRGeometry *)));
-                        papoPoly[nPolys++] = poPoly;
+                        auto poPoly = std::make_unique<OGRPolygon>();
+                        poPoly->addRing(std::move(poLS));
+                        apoPolys.push_back(std::move(poPoly));
                     }
-                    else
-                    {
-                        delete poLS;
-                        poLS = nullptr;
-                    }
+                    poLS.reset();
                 }
             }
             else
@@ -1836,48 +1822,22 @@ OGRGeometry *PDFDataset::BuildGeometry(std::vector<double> &oCoords,
             }
         }
 
-        delete poLS;
-
-        int bIsValidGeometry;
-        if (nPolys == 2 &&
-            papoPoly[0]->toPolygon()->getNumInteriorRings() == 0 &&
-            papoPoly[1]->toPolygon()->getNumInteriorRings() == 0)
+        if (apoPolys.size() == 2 &&
+            apoPolys[0]->toPolygon()->getNumInteriorRings() == 0 &&
+            apoPolys[1]->toPolygon()->getNumInteriorRings() == 0)
         {
-            OGRLinearRing *poRing0 =
-                papoPoly[0]->toPolygon()->getExteriorRing();
-            OGRLinearRing *poRing1 =
-                papoPoly[1]->toPolygon()->getExteriorRing();
-            if (poRing0->getNumPoints() == poRing1->getNumPoints())
+            const auto poRing0 = apoPolys[0]->toPolygon()->getExteriorRing();
+            const auto poRing1 = apoPolys[1]->toPolygon()->getExteriorRing();
+            if (poRing0->Equals(poRing1))
             {
-                int bSameRing = TRUE;
-                for (int i = 0; i < poRing0->getNumPoints(); i++)
-                {
-                    if (poRing0->getX(i) != poRing1->getX(i))
-                    {
-                        bSameRing = FALSE;
-                        break;
-                    }
-                    if (poRing0->getY(i) != poRing1->getY(i))
-                    {
-                        bSameRing = FALSE;
-                        break;
-                    }
-                }
-
-                /* Just keep on ring if they are identical */
-                if (bSameRing)
-                {
-                    delete papoPoly[1];
-                    nPolys = 1;
-                }
+                /* Just keep one ring if they are identical */
+                apoPolys.resize(1);
             }
         }
-        if (nPolys)
+        if (!apoPolys.empty())
         {
-            poGeom = OGRGeometryFactory::organizePolygons(
-                papoPoly, nPolys, &bIsValidGeometry, nullptr);
+            poGeom = OGRGeometryFactory::organizePolygons(apoPolys);
         }
-        CPLFree(papoPoly);
     }
 
     return poGeom;
@@ -1963,16 +1923,16 @@ void PDFDataset::ExploreContents(GDALPDFObject *poObj,
                 }
             }
 
-            int nMCID = atoi(pszMCID + 6);
+            const int nMCID = atoi(pszMCID + 6);
             if (GetGeometryFromMCID(nMCID) == nullptr)
             {
-                OGRGeometry *poGeom = ParseContent(
+                auto poGeom = std::unique_ptr<OGRGeometry>(ParseContent(
                     pszStartParsing, poResources, false, !bMatchQ, bMatchQ,
-                    oMapPropertyToLayer, {}, GraphicState(), nullptr, 0);
+                    oMapPropertyToLayer, {}, GraphicState(), nullptr, 0));
                 if (poGeom != nullptr)
                 {
                     /* Save geometry in map */
-                    m_oMapMCID[nMCID] = poGeom;
+                    m_oMapMCID[nMCID] = std::move(poGeom);
                 }
             }
         }

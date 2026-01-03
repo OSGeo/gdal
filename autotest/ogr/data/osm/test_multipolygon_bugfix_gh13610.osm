@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="hand">
+ <bounds minlat="49" minlon="2" maxlat="50" maxlon="3"/>
+ <node id="1" lat="10" lon="0" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="2" lat="11" lon="0" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="3" lat="11" lon="1" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="4" lat="10" lon="1" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="5" lat="10.1" lon="0.1" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="6" lat="10.4" lon="0.1" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="7" lat="10.4" lon="0.9" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="8" lat="10.6" lon="0.9" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="9" lat="10.6" lon="0.1" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="10" lat="10.9" lon="0.1" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="11" lat="10.9" lon="0.9" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="12" lat="10.6" lon="0.9" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <way id="100" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <nd ref="1"/>
+  <nd ref="2"/>
+  <nd ref="3"/>
+  <nd ref="4"/>
+  <nd ref="1"/>
+ </way>
+ <way id="200" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <nd ref="5"/>
+  <nd ref="6"/>
+  <nd ref="7"/>
+ </way>
+ <way id="300" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <nd ref="7"/>
+  <nd ref="8"/>
+  <nd ref="5"/>
+ </way>
+ <way id="400" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <nd ref="9"/>
+  <nd ref="10"/>
+  <nd ref="11"/>
+ </way>
+ <way id="500" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <nd ref="11"/>
+  <nd ref="12"/>
+  <nd ref="9"/>
+ </way>
+ <relation id="1000" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <member type="way" ref="100" role="outer"/>
+  <member type="way" ref="200" role="inner"/>
+  <member type="way" ref="300" role="inner"/>
+  <member type="way" ref="400" role="inner"/>
+  <member type="way" ref="500" role="inner"/>
+  <tag k="type" v="multipolygon"/>
+ </relation>
+</osm>
