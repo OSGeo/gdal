@@ -449,8 +449,8 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
                         m_tempLayersKeeper.push_back(
                             std::make_unique<OGRWarpedLayer>(
                                 papoSrcLayers.get()[i], /* iGeomField = */ 0,
-                                /*bTakeOwnership = */ false, poCT.release(),
-                                poReversedCT.release()));
+                                /*bTakeOwnership = */ false, std::move(poCT),
+                                std::move(poReversedCT)));
                         papoSrcLayers.get()[i] =
                             m_tempLayersKeeper.back().get();
                     }

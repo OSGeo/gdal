@@ -353,8 +353,14 @@ class CPL_DLL OGRGeomFieldDefn
     // Copy constructor
     OGRGeomFieldDefn(const OGRGeomFieldDefn &oOther);
 
+    // Move constructor
+    OGRGeomFieldDefn(OGRGeomFieldDefn &&oOther);
+
     // Copy assignment operator
     OGRGeomFieldDefn &operator=(const OGRGeomFieldDefn &oOther);
+
+    // Move assignment operator
+    OGRGeomFieldDefn &operator=(OGRGeomFieldDefn &&oOther);
 
     void SetName(const char *);
 
