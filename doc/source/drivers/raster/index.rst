@@ -51,6 +51,7 @@ Raster drivers
    doq1
    doq2
    dted
+   e57
    ecrgtoc
    ecw
    eedai

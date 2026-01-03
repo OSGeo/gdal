@@ -13,6 +13,7 @@
 
 #include "gdal_priv.h"  // Must be included first for mingw VSIStatBufL.
 #include "cpl_port.h"
+#include "cpl_vsi_virtual.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -147,37 +148,67 @@ static GByte *GDALOpenInfoGetFileNotToOpen(const char *pszFilename,
 /** Constructor/
  * @param pszFilenameIn filename
  * @param nOpenFlagsIn open flags
- * @param papszSiblingsIn list of sibling files, or NULL.
+ * @param papszSiblingFilesIn list of sibling files, or NULL.
  */
 GDALOpenInfo::GDALOpenInfo(const char *pszFilenameIn, int nOpenFlagsIn,
-                           const char *const *papszSiblingsIn)
+                           const char *const *papszSiblingFilesIn)
     : pszFilename(CPLStrdup(pszFilenameIn)),
       osExtension(CPLGetExtensionSafe(pszFilenameIn)),
       eAccess(nOpenFlagsIn & GDAL_OF_UPDATE ? GA_Update : GA_ReadOnly),
       nOpenFlags(nOpenFlagsIn)
 {
-    if (STARTS_WITH(pszFilename, "MVT:/vsi"))
-        return;
-
 /* -------------------------------------------------------------------- */
 /*      Ensure that C: is treated as C:\ so we can stat it on           */
 /*      Windows.  Similar to what is done in CPLStat().                 */
 /* -------------------------------------------------------------------- */
 #ifdef _WIN32
-    if (strlen(pszFilenameIn) == 2 && pszFilenameIn[1] == ':')
+    if (strlen(pszFilename) == 2 && pszFilename[1] == ':')
     {
         char szAltPath[10];
 
-        strcpy(szAltPath, pszFilenameIn);
+        strcpy(szAltPath, pszFilename);
         strcat(szAltPath, "\\");
         CPLFree(pszFilename);
         pszFilename = CPLStrdup(szAltPath);
     }
 #endif  // WIN32
 
-    /* -------------------------------------------------------------------- */
-    /*      Collect information about the file.                             */
-    /* -------------------------------------------------------------------- */
+    Init(papszSiblingFilesIn, nullptr);
+}
+
+/************************************************************************/
+/*                            GDALOpenInfo()                            */
+/************************************************************************/
+
+/** Constructor/
+ * @param pszFilenameIn filename
+ * @param nOpenFlagsIn open flags
+ * @param poFile already opened file
+ * @since 3.13
+ */
+GDALOpenInfo::GDALOpenInfo(const char *pszFilenameIn, int nOpenFlagsIn,
+                           std::unique_ptr<VSIVirtualHandle> poFile)
+    : pszFilename(CPLStrdup(pszFilenameIn)),
+      osExtension(CPLGetExtensionSafe(pszFilenameIn)),
+      eAccess(nOpenFlagsIn & GDAL_OF_UPDATE ? GA_Update : GA_ReadOnly),
+      nOpenFlags(nOpenFlagsIn)
+{
+    Init(nullptr, std::move(poFile));
+}
+
+/************************************************************************/
+/*                                 Init()                               */
+/************************************************************************/
+
+void GDALOpenInfo::Init(const char *const *papszSiblingFilesIn,
+                        std::unique_ptr<VSIVirtualHandle> poFile)
+{
+    if (STARTS_WITH(pszFilename, "MVT:/vsi"))
+        return;
+
+        /* -------------------------------------------------------------------- */
+        /*      Collect information about the file.                             */
+        /* -------------------------------------------------------------------- */
 
 #if !defined(_WIN32)
     bool bHasRetried = false;
@@ -221,10 +252,10 @@ retry:  // TODO(schwehr): Stop using goto.
         bPotentialDirectory = true;
     }
 
-    if (bPotentialDirectory)
+    if (bPotentialDirectory && !poFile)
     {
         int nStatFlags = VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG;
-        if (nOpenFlagsIn & GDAL_OF_VERBOSE_ERROR)
+        if (nOpenFlags & GDAL_OF_VERBOSE_ERROR)
             nStatFlags |= VSI_STAT_SET_ERROR_FLAG;
 
         // For those special files, opening them with VSIFOpenL() might result
@@ -240,13 +271,22 @@ retry:  // TODO(schwehr): Stop using goto.
         }
     }
 
-    pabyHeader = GDALOpenInfoGetFileNotToOpen(pszFilename, &nHeaderBytes);
-
-    if (!bIsDirectory && pabyHeader == nullptr)
+    if (poFile)
     {
-        fpL = VSIFOpenExL(pszFilename, (eAccess == GA_Update) ? "r+b" : "rb",
-                          (nOpenFlagsIn & GDAL_OF_VERBOSE_ERROR) > 0);
+        fpL = poFile.release();
     }
+    else
+    {
+        pabyHeader = GDALOpenInfoGetFileNotToOpen(pszFilename, &nHeaderBytes);
+
+        if (!bIsDirectory && pabyHeader == nullptr)
+        {
+            fpL =
+                VSIFOpenExL(pszFilename, (eAccess == GA_Update) ? "r+b" : "rb",
+                            (nOpenFlags & GDAL_OF_VERBOSE_ERROR) > 0);
+        }
+    }
+
     if (pabyHeader)
     {
         bStatOK = TRUE;
@@ -311,7 +351,7 @@ retry:  // TODO(schwehr): Stop using goto.
                 CPLFree(pszFilename);
                 pszFilename = CPLStrdup(szPointerFilename);
                 osExtension = CPLGetExtensionSafe(pszFilename);
-                papszSiblingsIn = nullptr;
+                papszSiblingFilesIn = nullptr;
                 bHasRetried = true;
                 goto retry;
             }
@@ -323,9 +363,9 @@ retry:  // TODO(schwehr): Stop using goto.
     /*      Capture sibling list either from passed in values, or by        */
     /*      scanning for them only if requested through GetSiblingFiles().  */
     /* -------------------------------------------------------------------- */
-    if (papszSiblingsIn != nullptr)
+    if (papszSiblingFilesIn != nullptr)
     {
-        papszSiblingFiles = CSLDuplicate(papszSiblingsIn);
+        papszSiblingFiles = CSLDuplicate(papszSiblingFilesIn);
         bHasGotSiblingFiles = true;
     }
     else if (bStatOK && !bIsDirectory)

@@ -45,6 +45,7 @@ class GDALGroup;
 class GDALMDArray;
 class GDALRasterBand;
 class GDALRelationship;
+class GDALOpenInfo;
 
 //! @cond Doxygen_Suppress
 typedef struct GDALSQLParseInfo GDALSQLParseInfo;
@@ -591,6 +592,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                      papszAllowedDrivers, papszOpenOptions,
                                      papszSiblingFiles));
     }
+
+    static std::unique_ptr<GDALDataset>
+    Open(GDALOpenInfo *poOpenInfo,
+         const char *const *papszAllowedDrivers = nullptr,
+         const char *const *papszOpenOptions = nullptr);
 
     /** Object returned by GetFeatures() iterators */
     struct FeatureLayerPair
