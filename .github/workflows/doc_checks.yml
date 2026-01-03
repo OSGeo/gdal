@@ -107,7 +107,7 @@ jobs:
       shell: bash -l {0}
       run: |
         apt install -y dvipng latexmk texlive-latex-base \
-                       texlive-latex-extra git latex-cjk-all texlive-lang-all tex-gyre
+                       texlive-latex-extra git latex-cjk-all texlive-lang-all tex-gyre imagemagick
         cmake --build . --target latexpdf
       working-directory: build
 
