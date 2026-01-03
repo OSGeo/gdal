@@ -6869,7 +6869,7 @@ def test_nitf_read_rpfhdr_rpfimg():
         <field name="COMPONENT_LENGTH" value="96" />
         <field name="COMPONENT_LOCATION" value="1808" />
         <content ComponentName="CoverageSectionSubheader">
-          <field name="NORTHWEST_LONGITUDE" value="36.0001175"""
+          <field name="NORTHWEST_LATITUDE" value="36.0001175"""
         in md
     )
     assert (
