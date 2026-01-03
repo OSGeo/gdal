@@ -2486,18 +2486,34 @@ bool GDALGetWarpResampleAlg(const char *pszResampling,
         eResampleAlg = GRA_Q3;
     else if (EQUAL(pszResampling, "sum"))
         eResampleAlg = GRA_Sum;
-    else
+    else if ((pszResampling[0] == 'P' || pszResampling[0] == 'p') &&
+            CPLStrnlen(pszResampling, 16) > 1)
     {
-        if (bThrow)
+        const char* pszValue = pszResampling + 1;
+        char* pszEnd = nullptr;
+        const double dfPercentile = CPLStrtod(pszValue, &pszEnd);
+
+        if (pszEnd == pszValue || *pszEnd != '\0' ||
+            dfPercentile <= 0.0 || dfPercentile >= 100.0)
         {
-            throw std::invalid_argument("Unknown resampling method");
+            if (bThrow)
+            {
+                throw std::invalid_argument(
+                    "Invalid percentile resampling method");
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                        "Invalid percentile resampling method: %s.",
+                        pszResampling);
+                return false;
+            }
         }
-        else
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg,
-                     "Unknown resampling method: %s.", pszResampling);
-            return false;
-        }
+
+        eResampleAlg = GRA_Percentile;
+
+        // Store percentile for warp kernel
+        CPLSetConfigOption("GDAL_WARP_PERCENTILE",
+                        CPLSPrintf("%.17g", dfPercentile));
     }
-    return true;
 }
