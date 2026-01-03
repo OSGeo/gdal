@@ -34,29 +34,33 @@ int
 ";
 
 %feature("docstring")  ComputeBandStats "
+Compute statistics for a raster band.
 
-Computes the mean and standard deviation of values in this Band.
-See :cpp:func:`GDALComputeBandStats`.
+This method computes the mean and standard deviation of pixel values
+for the band.
+
+A sampling step can be used to skip rows for faster, approximate
+computation.
 
 Parameters
 ----------
 samplestep : int, default=1
-    Step between scanlines used to compute statistics.
+    Step between scanlines used to compute statistics. A value greater
+    than 1 will result in faster but approximate results.
 
 Returns
 -------
 tuple
-    tuple of length 2 with value of mean and standard deviation
+    A tuple of two values: (mean, std_dev).
 
-See Also
+Examples
 --------
-:py:meth:`ComputeRasterMinMax`
-:py:meth:`ComputeStatistics`
-:py:meth:`GetMaximum`
-:py:meth:`GetMinimum`
-:py:meth:`GetStatistics`
-:py:meth:`SetStatistics`
-";
+>>> from osgeo import gdal
+>>> ds = gdal.Open("example.tif")
+>>> band = ds.GetRasterBand(1)
+>>> mean, std = band.ComputeStatistics(False)
+>>> print(mean, std)
+
 
 %feature("docstring")  CreateMaskBand "
 
