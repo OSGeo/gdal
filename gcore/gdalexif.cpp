@@ -495,9 +495,10 @@ static int EXIF_TIFFDataWidth(int /* GDALEXIFTIFFDataType */ type)
 /*                                                                      */
 /*      Extract all entry from a IFD                                    */
 /************************************************************************/
-CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
-                           int bSwabflag, int nTIFFHEADER, int &nExifOffset,
-                           int &nInterOffset, int &nGPSOffset)
+CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, uint32_t nOffset,
+                           int bSwabflag, vsi_l_offset nTIFFHEADER,
+                           uint32_t &nExifOffset, uint32_t &nInterOffset,
+                           uint32_t &nGPSOffset)
 {
     /* -------------------------------------------------------------------- */
     /*      Read number of entry in directory                               */
@@ -505,8 +506,7 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
     GUInt16 nEntryCount;
     VSILFILE *const fp = static_cast<VSILFILE *>(fpInL);
 
-    if (nOffset > INT_MAX - nTIFFHEADER ||
-        VSIFSeekL(fp, nOffset + nTIFFHEADER, SEEK_SET) != 0 ||
+    if (VSIFSeekL(fp, nOffset + nTIFFHEADER, SEEK_SET) != 0 ||
         VSIFReadL(&nEntryCount, 1, sizeof(GUInt16), fp) != sizeof(GUInt16))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -639,25 +639,20 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
         /*      Save important directory tag offset */
         /* --------------------------------------------------------------------
          */
-
-        // Our current API uses int32 and not uint32
-        if (poTIFFDirEntry->tdir_offset < INT_MAX)
+        if (poTIFFDirEntry->tdir_tag == EXIFOFFSETTAG)
         {
-            if (poTIFFDirEntry->tdir_tag == EXIFOFFSETTAG)
-            {
-                nExifOffset = poTIFFDirEntry->tdir_offset;
-                continue;
-            }
-            else if (poTIFFDirEntry->tdir_tag == INTEROPERABILITYOFFSET)
-            {
-                nInterOffset = poTIFFDirEntry->tdir_offset;
-                continue;
-            }
-            else if (poTIFFDirEntry->tdir_tag == GPSOFFSETTAG)
-            {
-                nGPSOffset = poTIFFDirEntry->tdir_offset;
-                continue;
-            }
+            nExifOffset = poTIFFDirEntry->tdir_offset;
+            continue;
+        }
+        else if (poTIFFDirEntry->tdir_tag == INTEROPERABILITYOFFSET)
+        {
+            nInterOffset = poTIFFDirEntry->tdir_offset;
+            continue;
+        }
+        else if (poTIFFDirEntry->tdir_tag == GPSOFFSETTAG)
+        {
+            nGPSOffset = poTIFFDirEntry->tdir_offset;
+            continue;
         }
 
         /* ----------------------------------------------------------------- */

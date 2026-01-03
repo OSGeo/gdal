@@ -360,7 +360,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 #else
                 const bool bSwab = abyBoxBuffer[4] == 0x49;
 #endif
-                constexpr int nTIFFHEADER = 0;
+                constexpr uint32_t nTIFFHEADER = 0;
                 uint32_t nTiffDirStart;
                 memcpy(&nTiffDirStart, abyBoxBuffer.data() + 8,
                        sizeof(uint32_t));
@@ -371,9 +371,9 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
                 VSILFILE *fpEXIF =
                     VSIFileFromMemBuffer(nullptr, abyBoxBuffer.data() + 4,
                                          abyBoxBuffer.size() - 4, false);
-                int nExifOffset = 0;
-                int nInterOffset = 0;
-                int nGPSOffset = 0;
+                uint32_t nExifOffset = 0;
+                uint32_t nInterOffset = 0;
+                uint32_t nGPSOffset = 0;
                 char **papszEXIFMetadata = nullptr;
                 EXIFExtractMetadata(papszEXIFMetadata, fpEXIF, nTiffDirStart,
                                     bSwab, nTIFFHEADER, nExifOffset,
