@@ -42,15 +42,15 @@ Examples
 --------
 
 .. example::
-   :title: Copy recursively files from /vsis3/bucket/my_dir to local directory, creating a my_dir directory if it does not exist.
+   :title: Copy recursively files from /vsigs/bucket/my_dir to local directory, creating a my_dir directory if it does not exist.
 
    .. code-block:: console
 
-       $ gdal vsi copy -r /vsis3/bucket/my_dir .
+       $ gdal vsi copy -r /vsigs/bucket/my_dir .
 
 .. example::
-   :title: Copy recursively files from /vsis3/bucket/my_dir to local directory, *without* creating a my_dir directory, without progress bar
+   :title: Copy recursively files from /vsigs/bucket/my_dir to local directory, *without* creating a my_dir directory, without progress bar
 
    .. code-block:: console
 
-       $ gdal vsi copy --quiet -r /vsis3/bucket/my_dir/* .
+       $ gdal vsi copy --quiet -r /vsigs/bucket/my_dir/* .
