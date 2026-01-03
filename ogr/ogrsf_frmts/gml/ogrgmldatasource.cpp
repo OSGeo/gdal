@@ -121,7 +121,9 @@ CPLErr OGRGMLDataSource::Close(GDALProgressFunc, void *)
             InsertHeader();
 
             if (!bFpOutputIsNonSeekable && nBoundedByLocation != -1 &&
-                VSIFSeekL(fpOutput, nBoundedByLocation, SEEK_SET) == 0)
+                VSIFSeekL(fpOutput,
+                          static_cast<vsi_l_offset>(nBoundedByLocation),
+                          SEEK_SET) == 0)
             {
                 if (m_bWriteGlobalSRS && sBoundingRect.IsInit() &&
                     IsGML3Output())
@@ -3165,7 +3167,7 @@ void OGRGMLDataSource::InsertHeader()
         int nSchemaSize = static_cast<int>(VSIFTellL(fpSchema) - nSchemaStart);
         char *pszSchema = static_cast<char *>(CPLMalloc(nSchemaSize + 1));
 
-        VSIFSeekL(fpSchema, nSchemaStart, SEEK_SET);
+        VSIFSeekL(fpSchema, static_cast<vsi_l_offset>(nSchemaStart), SEEK_SET);
 
         VSIFReadL(pszSchema, 1, nSchemaSize, fpSchema);
         pszSchema[nSchemaSize] = '\0';
@@ -3193,7 +3195,8 @@ void OGRGMLDataSource::InsertHeader()
         CPLFree(pszChunk);
 
         // Write the schema in the opened slot.
-        VSIFSeekL(fpSchema, nSchemaInsertLocation, SEEK_SET);
+        VSIFSeekL(fpSchema, static_cast<vsi_l_offset>(nSchemaInsertLocation),
+                  SEEK_SET);
         VSIFWriteL(pszSchema, 1, nSchemaSize, fpSchema);
 
         VSIFSeekL(fpSchema, 0, SEEK_END);

@@ -571,7 +571,7 @@ int TABDATFile::CommitRecordToFile()
     {
         m_bWriteEOF = FALSE;
         char cEOF = 26;
-        if (VSIFSeekL(m_fp, 0L, SEEK_END) == 0)
+        if (VSIFSeekL(m_fp, 0, SEEK_END) == 0)
             VSIFWriteL(&cEOF, 1, 1, m_fp);
     }
 

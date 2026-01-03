@@ -55,7 +55,7 @@ class CPL_DLL GDALJP2Box
         m_bAllowGetFileSize = b;
     }
 
-    int SetOffset(GIntBig nNewOffset);
+    int SetOffset(vsi_l_offset nNewOffset);
     int ReadBox();
 
     int ReadFirst();

@@ -419,7 +419,8 @@ void GRIBRasterBand::FindPDSTemplateGRIB2()
                          iSubMessage);
                 return;
             }
-            if (VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0)
+            if (VSIFSeekL(poGDS->fp, static_cast<vsi_l_offset>(nSectSize - 5),
+                          SEEK_CUR) != 0)
             {
                 CPLDebug("GRIB",
                          "Cannot read past section for iSubMessage = %d",
@@ -459,7 +460,8 @@ void GRIBRasterBand::FindPDSTemplateGRIB2()
                      nCurSection);
             return;
         }
-        if (VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0 ||
+        if (VSIFSeekL(poGDS->fp, static_cast<vsi_l_offset>(nSectSize - 5),
+                      SEEK_CUR) != 0 ||
             VSIFReadL(abyHead, 5, 1, poGDS->fp) != 1)
         {
             CPLDebug("GRIB", "Cannot read section %d", nCurSection);
@@ -630,7 +632,8 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
         CPL_MSBPTR32(&nSectSize);
 
         if (nSectSize < 5 ||
-            VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0 ||
+            VSIFSeekL(poGDS->fp, static_cast<vsi_l_offset>(nSectSize - 5),
+                      SEEK_CUR) != 0 ||
             VSIFReadL(abyHead, 5, 1, poGDS->fp) != 1)
             break;
     }
@@ -755,7 +758,8 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
         }
         else if (nSectSize > 5)
         {
-            VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR);
+            VSIFSeekL(poGDS->fp, static_cast<vsi_l_offset>(nSectSize - 5),
+                      SEEK_CUR);
         }
     }
 

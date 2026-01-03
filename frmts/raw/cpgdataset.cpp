@@ -368,17 +368,20 @@ CPLErr CPGDataset::LoadStokesLine(int iLine, int bNativeOrder)
     /* -------------------------------------------------------------------- */
     if (eInterleave == Interleave::BIP)
     {
-        const int offset = nRasterXSize * iLine * nDataSize * 16;
+        const vsi_l_offset offset =
+            static_cast<vsi_l_offset>(nRasterXSize) * iLine * nDataSize * 16;
         const int nBytesToRead = nDataSize * nRasterXSize * 16;
         if ((VSIFSeekL(afpImage[0], offset, SEEK_SET) != 0) ||
             static_cast<int>(
                 VSIFReadL(reinterpret_cast<GByte *>(padfStokesMatrix), 1,
                           nBytesToRead, afpImage[0])) != nBytesToRead)
         {
-            CPLError(CE_Failure, CPLE_FileIO,
-                     "Error reading %d bytes of Stokes Convair at offset %d.\n"
-                     "Reading file %s failed.",
-                     nBytesToRead, offset, GetDescription());
+            CPLError(
+                CE_Failure, CPLE_FileIO,
+                "Error reading %d bytes of Stokes Convair at offset %" PRIu64
+                ".\n"
+                "Reading file %s failed.",
+                nBytesToRead, static_cast<uint64_t>(offset), GetDescription());
             CPLFree(padfStokesMatrix);
             padfStokesMatrix = nullptr;
             nLoadedStokesLine = -1;
@@ -389,8 +392,9 @@ CPLErr CPGDataset::LoadStokesLine(int iLine, int bNativeOrder)
     {
         for (int band_index = 0; band_index < 16; band_index++)
         {
-            const int offset =
-                nDataSize * (nRasterXSize * iLine + nRasterXSize * band_index);
+            const vsi_l_offset offset =
+                nDataSize * static_cast<vsi_l_offset>(nRasterXSize) *
+                (iLine + band_index);
             const int nBytesToRead = nDataSize * nRasterXSize;
             if ((VSIFSeekL(afpImage[0], offset, SEEK_SET) != 0) ||
                 static_cast<int>(
@@ -398,11 +402,12 @@ CPLErr CPGDataset::LoadStokesLine(int iLine, int bNativeOrder)
                                   padfStokesMatrix + nBytesToRead * band_index),
                               1, nBytesToRead, afpImage[0])) != nBytesToRead)
             {
-                CPLError(
-                    CE_Failure, CPLE_FileIO,
-                    "Error reading %d bytes of Stokes Convair at offset %d.\n"
-                    "Reading file %s failed.",
-                    nBytesToRead, offset, GetDescription());
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Error reading %d bytes of Stokes Convair at offset "
+                         "%" PRIu64 ".\n"
+                         "Reading file %s failed.",
+                         nBytesToRead, static_cast<uint64_t>(offset),
+                         GetDescription());
                 CPLFree(padfStokesMatrix);
                 padfStokesMatrix = nullptr;
                 nLoadedStokesLine = -1;
@@ -414,9 +419,9 @@ CPLErr CPGDataset::LoadStokesLine(int iLine, int bNativeOrder)
     {
         for (int band_index = 0; band_index < 16; band_index++)
         {
-            const int offset =
-                nDataSize * (nRasterXSize * iLine +
-                             nRasterXSize * nRasterYSize * band_index);
+            const vsi_l_offset offset =
+                nDataSize * nRasterXSize *
+                (iLine + static_cast<vsi_l_offset>(nRasterYSize) * band_index);
             const int nBytesToRead = nDataSize * nRasterXSize;
             if ((VSIFSeekL(afpImage[0], offset, SEEK_SET) != 0) ||
                 static_cast<int>(
@@ -424,11 +429,12 @@ CPLErr CPGDataset::LoadStokesLine(int iLine, int bNativeOrder)
                                   padfStokesMatrix + nBytesToRead * band_index),
                               1, nBytesToRead, afpImage[0])) != nBytesToRead)
             {
-                CPLError(
-                    CE_Failure, CPLE_FileIO,
-                    "Error reading %d bytes of Stokes Convair at offset %d.\n"
-                    "Reading file %s failed.",
-                    nBytesToRead, offset, GetDescription());
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Error reading %d bytes of Stokes Convair at offset "
+                         "%" PRIu64 ".\n"
+                         "Reading file %s failed.",
+                         nBytesToRead, static_cast<uint64_t>(offset),
+                         GetDescription());
                 CPLFree(padfStokesMatrix);
                 padfStokesMatrix = nullptr;
                 nLoadedStokesLine = -1;

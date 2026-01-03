@@ -88,7 +88,8 @@ int DGNResizeElement(DGNHandle hDGN, DGNElemCore *psElement, int nNewSize)
         vsi_l_offset nOldFLoc = VSIFTellL(psDGN->fp);
         unsigned char abyLeader[2];
 
-        if (VSIFSeekL(psDGN->fp, psElement->offset, SEEK_SET) != 0 ||
+        if (VSIFSeekL(psDGN->fp, vsi_l_offset(psElement->offset), SEEK_SET) !=
+                0 ||
             VSIFReadL(abyLeader, sizeof(abyLeader), 1, psDGN->fp) != 1)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -99,7 +100,8 @@ int DGNResizeElement(DGNHandle hDGN, DGNElemCore *psElement, int nNewSize)
 
         abyLeader[1] |= 0x80;
 
-        if (VSIFSeekL(psDGN->fp, psElement->offset, SEEK_SET) != 0 ||
+        if (VSIFSeekL(psDGN->fp, vsi_l_offset(psElement->offset), SEEK_SET) !=
+                0 ||
             VSIFWriteL(abyLeader, sizeof(abyLeader), 1, psDGN->fp) != 1 ||
             VSIFSeekL(psDGN->fp, nOldFLoc, SEEK_SET) != 0)
         {
@@ -219,7 +221,7 @@ int DGNWriteElement(DGNHandle hDGN, DGNElemCore *psElement)
     /* -------------------------------------------------------------------- */
     /*      Write out the element.                                          */
     /* -------------------------------------------------------------------- */
-    if (VSIFSeekL(psDGN->fp, psElement->offset, SEEK_SET) != 0 ||
+    if (VSIFSeekL(psDGN->fp, vsi_l_offset(psElement->offset), SEEK_SET) != 0 ||
         VSIFWriteL(psElement->raw_data, psElement->raw_bytes, 1, psDGN->fp) !=
             1)
     {

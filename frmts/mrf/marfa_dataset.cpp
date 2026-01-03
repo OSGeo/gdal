@@ -2348,7 +2348,7 @@ CPLErr MRFDataset::AddVersion()
     VSIFSeekL(l_ifp, 0, SEEK_SET);
     VSIFReadL(tbuff, 1, static_cast<size_t>(idxSize), l_ifp);
     verCount++;  // The one we write
-    VSIFSeekL(l_ifp, idxSize * verCount,
+    VSIFSeekL(l_ifp, static_cast<vsi_l_offset>(idxSize) * verCount,
               SEEK_SET);  // At the end, this can mess things up royally
     VSIFWriteL(tbuff, 1, static_cast<size_t>(idxSize), l_ifp);
     CPLFree(tbuff);
@@ -2588,7 +2588,7 @@ CPLErr MRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos,
         return CE_Failure;
     }
 
-    VSIFSeekL(l_ifp, offset, SEEK_SET);
+    VSIFSeekL(l_ifp, static_cast<vsi_l_offset>(offset), SEEK_SET);
     if (1 != VSIFReadL(&tinfo, sizeof(ILIdx), 1, l_ifp))
         return CE_Failure;
     // Convert them to native form
@@ -2632,7 +2632,7 @@ CPLErr MRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos,
         return CE_Failure;  // Source reported the error
     }
 
-    VSIFSeekL(srcidx, offset, SEEK_SET);
+    VSIFSeekL(srcidx, static_cast<vsi_l_offset>(offset), SEEK_SET);
     size = VSIFReadL(buffer, sizeof(ILIdx), static_cast<size_t>(size), srcidx);
     if (size != GIntBig(buf.size()))
     {
@@ -2648,7 +2648,7 @@ CPLErr MRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos,
     }
 
     // Write it in the right place in the local index file
-    VSIFSeekL(l_ifp, bias + offset, SEEK_SET);
+    VSIFSeekL(l_ifp, static_cast<vsi_l_offset>(bias + offset), SEEK_SET);
     size = VSIFWriteL(&buf[0], sizeof(ILIdx), static_cast<size_t>(size), l_ifp);
     if (size != GIntBig(buf.size()))
     {

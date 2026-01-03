@@ -285,7 +285,7 @@ class USGSDEMDataset final : public GDALPamDataset
 {
     friend class USGSDEMRasterBand;
 
-    int nDataStartOffset;
+    vsi_l_offset nDataStartOffset;
     GDALDataType eNaturalDataFormat;
 
     GDALGeoTransform m_gt{};

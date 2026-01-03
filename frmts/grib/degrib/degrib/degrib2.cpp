@@ -352,7 +352,7 @@ int FindGRIBMsg (VSILFILE *fp, int msgNum, sInt4 *offset, int *curMsg)
       } else {
          jump = gribLen - 16;
       }
-      VSIFSeekL(fp, jump, SEEK_CUR);
+      VSIFSeekL(fp, static_cast<vsi_l_offset>(jump), SEEK_CUR);
       *offset = *offset + gribLen + buffLen;
       cnt++;
    }

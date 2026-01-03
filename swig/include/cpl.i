@@ -929,7 +929,7 @@ if (offset < 0) {
     }
 }
 
-return VSIFSeekL(fp, offset, whence);
+return VSIFSeekL(fp, (vsi_l_offset)offset, whence);
 }
 }
 

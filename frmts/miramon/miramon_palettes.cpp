@@ -6,7 +6,7 @@
  *           either a color table or an attribute table, depending on the
  *           context.
  * Author:   Abel Pau
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2025, Xavier Pons
  *
@@ -378,7 +378,9 @@ CPLErr MMRPalettes::GetPaletteColors_DBF(const CPLString &os_Color_Paleta_DBF)
         }
     }
 
-    VSIFSeekL(oColorTable.pfDataBase, oColorTable.FirstRecordOffset, SEEK_SET);
+    VSIFSeekL(oColorTable.pfDataBase,
+              static_cast<vsi_l_offset>(oColorTable.FirstRecordOffset),
+              SEEK_SET);
     /*
         Each record's CLAUSIMBOL field doesn't match a pixel value present in the raster,
         and it's used only for discovering nodata value (blanc value).

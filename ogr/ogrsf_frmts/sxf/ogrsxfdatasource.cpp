@@ -1197,7 +1197,9 @@ void OGRSXFDataSource::CreateLayers(VSILFILE *fpRSC,
         GUInt16 nSemanticCount;
     };
 
-    VSIFSeekL(fpRSC, stRSCFileHeader.Layers.nOffset - sizeof(szLayersID),
+    VSIFSeekL(fpRSC,
+              static_cast<vsi_l_offset>(stRSCFileHeader.Layers.nOffset -
+                                        sizeof(szLayersID)),
               SEEK_SET);
     VSIFReadL(&szLayersID, sizeof(szLayersID), 1, fpRSC);
     vsi_l_offset nOffset = stRSCFileHeader.Layers.nOffset;
@@ -1273,7 +1275,9 @@ void OGRSXFDataSource::CreateLayers(VSILFILE *fpRSC,
         char szUnimportantSeg[14];
     };
 
-    VSIFSeekL(fpRSC, stRSCFileHeader.Objects.nOffset - sizeof(szObjectsID),
+    VSIFSeekL(fpRSC,
+              static_cast<vsi_l_offset>(stRSCFileHeader.Objects.nOffset -
+                                        sizeof(szObjectsID)),
               SEEK_SET);
     VSIFReadL(&szObjectsID, sizeof(szObjectsID), 1, fpRSC);
     nOffset = stRSCFileHeader.Objects.nOffset;
