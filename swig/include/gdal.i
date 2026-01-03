@@ -947,6 +947,7 @@ GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly
 
 %newobject OpenEx;
 #ifndef SWIGJAVA
+%feature("compactdefaultargs", "") OpenEx;
 %feature( "kwargs" ) OpenEx;
 #endif
 %apply (char **options) {char** allowed_drivers};
