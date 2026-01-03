@@ -10,54 +10,29 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 #include "cpl_error.h"
-#include "gdalalgorithm.h"
-#include "gdalalg_raster_convert.h"
-#include "gdalalg_vector_convert.h"
-#include "gdalalg_dispatcher.h"
+#include "gdalalg_convert.h"
 #include "gdal_priv.h"
 
 /************************************************************************/
 /*                        GDALConvertAlgorithm                          */
 /************************************************************************/
 
-class GDALConvertAlgorithm final
-    : public GDALDispatcherAlgorithm<GDALRasterConvertAlgorithm,
-                                     GDALVectorConvertAlgorithm>
+GDALConvertAlgorithm::GDALConvertAlgorithm()
+    : GDALDispatcherAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-  public:
-    static constexpr const char *NAME = "convert";
-    static constexpr const char *DESCRIPTION =
-        "Convert a dataset (shortcut for 'gdal raster convert' or "
-        "'gdal vector convert').";
-    static constexpr const char *HELP_URL = "/programs/gdal_convert.html";
+    // only for the help message
+    AddProgressArg();
+    AddOutputFormatArg(&m_format);
+    AddInputDatasetArg(&m_inputDataset);
+    AddOutputDatasetArg(&m_outputDataset);
 
-    static std::vector<std::string> GetAliasesStatic()
-    {
-        return {GDALAlgorithmRegistry::HIDDEN_ALIAS_SEPARATOR, "translate"};
-    }
-
-    GDALConvertAlgorithm()
-        : GDALDispatcherAlgorithm(NAME, DESCRIPTION, HELP_URL)
-    {
-        // only for the help message
-        AddProgressArg();
-        AddOutputFormatArg(&m_format);
-        AddInputDatasetArg(&m_inputDataset);
-        AddOutputDatasetArg(&m_outputDataset);
-
-        m_longDescription = "For all options, run 'gdal raster convert --help' "
-                            "or 'gdal vector convert --help'";
-    }
-
-    ~GDALConvertAlgorithm() override;
-
-  private:
-    std::string m_format{};
-    GDALArgDatasetValue m_inputDataset{};
-    GDALArgDatasetValue m_outputDataset{};
-};
+    m_longDescription = "For all options, run 'gdal raster convert --help' "
+                        "or 'gdal vector convert --help'";
+}
 
 GDALConvertAlgorithm::~GDALConvertAlgorithm() = default;
 
-GDAL_STATIC_REGISTER_ALG(GDALConvertAlgorithm);
+//! @endcond
