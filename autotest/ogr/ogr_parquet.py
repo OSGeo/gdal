@@ -1803,6 +1803,58 @@ def test_ogr_parquet_read_partitioned_hive(use_vsi, use_metadata_file, prefix):
             lyr.ResetReading()
 
 
+def test_ogr_parquet_read_partitioned_hive_filter():
+
+    with gdaltest.config_options({"OGR_PARQUET_USE_VSI": "YES"}):
+        ds = ogr.Open("data/parquet/partitioned_hive")
+        lyr = ds.GetLayer(0)
+
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == ["data/parquet/partitioned_hive/_metadata"]
+
+        lyr.SetAttributeFilter("foo = 'bar'")
+        assert lyr.GetFeatureCount() == 3
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == ["data/parquet/partitioned_hive/foo=bar/part.0.parquet"]
+
+        lyr.SetAttributeFilter("foo = 'baz' AND two = -5")
+        assert lyr.GetFeatureCount() == 1
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == ["data/parquet/partitioned_hive/foo=baz/part.1.parquet"]
+
+
+def test_ogr_parquet_read_partitioned_hive_integer_key():
+
+    with gdaltest.config_options({"OGR_PARQUET_USE_VSI": "YES"}):
+        ds = ogr.Open("data/parquet/partitioned_hive_integer_key")
+        lyr = ds.GetLayer(0)
+
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == ["data/parquet/partitioned_hive_integer_key/_metadata"]
+
+        lyr.SetAttributeFilter("year = 2022")
+        assert lyr.GetFeatureCount() == 2
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == [
+                "data/parquet/partitioned_hive_integer_key/year=2022/cffaf5cf4ab148d89a5a6047f2be2757-0.parquet"
+            ]
+
+
 ###############################################################################
 # Test reading a partitioned dataset with geo
 
