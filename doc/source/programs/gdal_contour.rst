@@ -69,11 +69,19 @@ be on the right, i.e. a line string goes clockwise around a top.
 
 .. option:: -inodata
 
-    Ignore any nodata value implied in the dataset - treat all values as valid.
+    Ignore any NoData value defined on the input dataset and treat all input
+    pixel values as valid.
 
 .. option:: -snodata <value>
 
-    Input pixel value to treat as "nodata".
+    Treat the specified input pixel value as NoData and ignore it when generating
+    contours.
+
+    
+    If both :option:`-inodata` and :option:`-snodata` are specified,
+    :option:`-snodata` takes precedence for explicitly defining which input
+    pixel values are ignored.
+
 
 .. option:: -f <format>
 
@@ -150,6 +158,18 @@ Examples
 
 .. example::
 
+    :title: Ignoring NoData values when generating contours
+
+    .. code-block:: bash
+
+        # Ignore the dataset's implicit NoData value
+        gdal_contour -inodata dem.tif contours.shp
+
+        # Ignore pixels with value 0, regardless of dataset NoData metadata
+        gdal_contour -snodata 0 dem.tif contours.shp
+
+.. example::
+
     :title: Creating contours from a DEM
 
     .. code-block::
@@ -215,7 +235,7 @@ Examples
     and produce a GeoJSON output with the contour min and max elevations in the ``min`` and ``max`` attributes.
 
 
-    If the minimum and maximum values from the raster are desired, the special values `MIN`` and `MAX``
+    If the minimum and maximum values from the raster are desired, the special values ``MIN`` and ``MAX``
     (case insensitive) can be used:
 
     .. code-block:: bash
