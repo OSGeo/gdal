@@ -201,7 +201,7 @@ Examples
    .. caution::
 
       If A and B inputs both have integer data types, integer division will be
-      performed.  To avoid this, you can convert of one of the operands to a
+      performed. To avoid this, you can convert one of the operands to a
       floating point type before the division operation.
 
       .. code-block:: bash
