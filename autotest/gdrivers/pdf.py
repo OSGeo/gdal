@@ -3152,3 +3152,68 @@ def test_pdf_create_copy_from_ysize_0(tmp_vsimem):
     src_ds = gdal.Open("../gdrivers/data/l1b/n12gac8bit_truncated_ysize_0_1band.l1b")
     with pytest.raises(Exception, match="nWidth == 0 || nHeight == 0 not supported"):
         gdal.GetDriverByName("PDF").CreateCopy(tmp_vsimem / "out.pdf", src_ds)
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.skipif(not have_read_support(), reason="no read support available")
+def test_pdf_dpi_save_to_pam(tmp_vsimem):
+
+    with gdal.VSIFile(tmp_vsimem / "test.pdf", "wb") as f:
+        f.write(open("data/pdf/test_ogc_bp.pdf", "rb").read())
+
+    with gdal.OpenEx(tmp_vsimem / "test.pdf", open_options=["DPI=144"]) as ds:
+        assert ds.RasterXSize == 40
+        assert ds.RasterYSize == 40
+        assert ds.GetRasterBand(1).XSize == 40
+        assert ds.GetRasterBand(1).YSize == 40
+        assert ds.GetMetadataItem("DPI") == "144"
+    assert gdal.VSIStatL(tmp_vsimem / "test.pdf.aux.xml") is None
+
+    with gdal.Open(tmp_vsimem / "test.pdf") as ds:
+        assert ds.RasterXSize == 20
+        assert ds.RasterYSize == 20
+        assert ds.GetRasterBand(1).XSize == 20
+        assert ds.GetRasterBand(1).YSize == 20
+        assert ds.GetMetadataItem("DPI") == "72"
+    assert gdal.VSIStatL(tmp_vsimem / "test.pdf.aux.xml") is None
+
+    with gdal.OpenEx(
+        tmp_vsimem / "test.pdf", open_options=["DPI=144", "SAVE_DPI_TO_PAM=YES"]
+    ) as ds:
+        assert ds.RasterXSize == 40
+        assert ds.RasterYSize == 40
+        assert ds.GetRasterBand(1).XSize == 40
+        assert ds.GetRasterBand(1).YSize == 40
+        assert ds.GetMetadataItem("DPI") == "144"
+    assert gdal.VSIStatL(tmp_vsimem / "test.pdf.aux.xml") is not None
+    with gdal.VSIFile(tmp_vsimem / "test.pdf.aux.xml", "rb") as f:
+        pam_content = f.read()
+    assert (
+        pam_content
+        == b"""<PAMDataset>\n  <Metadata>\n    <MDI key="DPI">144</MDI>\n  </Metadata>\n</PAMDataset>\n"""
+    )
+
+    with gdal.Open(tmp_vsimem / "test.pdf") as ds:
+        assert ds.RasterXSize == 40
+        assert ds.RasterYSize == 40
+        assert ds.GetRasterBand(1).XSize == 40
+        assert ds.GetRasterBand(1).YSize == 40
+        assert ds.GetMetadataItem("DPI") == "144"
+
+    with gdal.OpenEx(tmp_vsimem / "test.pdf", open_options=["DPI=72"]) as ds:
+        assert ds.RasterXSize == 20
+        assert ds.RasterYSize == 20
+        assert ds.GetRasterBand(1).XSize == 20
+        assert ds.GetRasterBand(1).YSize == 20
+        assert ds.GetMetadataItem("DPI") == "72"
+
+    with gdal.VSIFile(tmp_vsimem / "test.pdf.aux.xml", "rb") as f:
+        pam_content = f.read()
+    assert (
+        pam_content
+        == b"""<PAMDataset>\n  <Metadata>\n    <MDI key="DPI">144</MDI>\n  </Metadata>\n</PAMDataset>\n"""
+    )

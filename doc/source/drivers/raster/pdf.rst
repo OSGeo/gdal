@@ -132,6 +132,15 @@ Above configuration options are also available as open options.
 
       Equivalent of :config:`GDAL_PDF_DPI` configuration option
 
+-  .. oo:: SAVE_DPI_TO_PAM
+      :choices: YES, NO
+      :default: NO
+      :since: 3.13
+
+      Whether to save the DPI value provided with the :oo:`DPI` open option
+      into PAM (.aux.xml) metadata as the new default DPI that will be used
+      when re-opening the dataset.
+
 -  .. oo:: USER_PWD
 
       Equivalent of :config:`PDF_USER_PWD` configuration option

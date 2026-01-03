@@ -33,6 +33,9 @@ static const char *const szOpenOptionList =
 #endif
     "  <Option name='DPI' type='float' description='Resolution in Dot Per "
     "Inch' default='150' alt_config_option='GDAL_PDF_DPI'/>"
+    "  <Option name='SAVE_DPI_TO_PAM' type='boolean' description='"
+    "Whether to save user provided DPI into PAM (.aux.xml) metadata as the "
+    "new default DPI'/>"
     "  <Option name='USER_PWD' type='string' description='Password' "
     "alt_config_option='PDF_USER_PWD'/>"
 #ifdef HAVE_MULTIPLE_PDF_BACKENDS
