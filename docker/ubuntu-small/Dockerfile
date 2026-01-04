@@ -233,7 +233,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     # PROJ dependencies
     && apt-get install -y --no-install-recommends \
         libsqlite3-0 libtiff6 libcurl4 \
-        curl unzip ca-certificates \
+        unzip ca-certificates \
     # GDAL dependencies
     && apt-get install -y --no-install-recommends \
         bash-completion python3-numpy libpython3.12 \
