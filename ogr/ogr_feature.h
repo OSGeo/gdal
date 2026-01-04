@@ -1235,9 +1235,29 @@ class CPL_DLL OGRFeature
     //! @cond Doxygen_Suppress
     void SetFDefnUnsafe(OGRFeatureDefn *poNewFDefn);
     //! @endcond
-
+    /**
+ * Set feature geometry.
+ *
+ * @note This method does NOT check that the geometry type matches the
+ *       feature definition and will not return
+ *       OGRERR_UNSUPPORTED_GEOMETRY_TYPE.
+ */
     OGRErr SetGeometryDirectly(OGRGeometry *);
+    /**
+ * Set feature geometry.
+ *
+ * @note This method does NOT check that the geometry type matches the
+ *       feature definition and will not return
+ *       OGRERR_UNSUPPORTED_GEOMETRY_TYPE.
+ */
     OGRErr SetGeometry(const OGRGeometry *);
+    /**
+ * Set feature geometry.
+ *
+ * @note This method does NOT check that the geometry type matches the
+ *       feature definition and will not return
+ *       OGRERR_UNSUPPORTED_GEOMETRY_TYPE.
+ */
     OGRErr SetGeometry(std::unique_ptr<OGRGeometry>);
     OGRGeometry *GetGeometryRef();
     const OGRGeometry *GetGeometryRef() const;
