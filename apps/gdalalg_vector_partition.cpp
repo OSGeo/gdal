@@ -16,6 +16,7 @@
 #include "cpl_mem_cache.h"
 
 #include <algorithm>
+#include <set>
 #include <string_view>
 
 #ifndef _
@@ -791,8 +792,8 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         return false;
     }
 
-    if (EQUAL(poOutDriver->GetDescription(), "PARQUET") &&
-        m_scheme == SCHEME_HIVE)
+    const bool bParquetOutput = EQUAL(poOutDriver->GetDescription(), "PARQUET");
+    if (bParquetOutput && m_scheme == SCHEME_HIVE)
     {
         // Required for Parquet Hive partitioning
         m_omitPartitionedFields = true;
@@ -807,8 +808,7 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     // We don't have driver metadata for that (and that would be a bit
     // tricky because some formats are half-text/half-binary), so...
     const bool bOutputFormatIsBinary =
-        EQUAL(poOutDriver->GetDescription(), "PARQUET") ||
-        EQUAL(poOutDriver->GetDescription(), "GPKG") ||
+        bParquetOutput || EQUAL(poOutDriver->GetDescription(), "GPKG") ||
         EQUAL(poOutDriver->GetDescription(), "SQLite") ||
         EQUAL(poOutDriver->GetDescription(), "FlatGeoBuf");
 
@@ -1212,6 +1212,7 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 oSetKeys.clear();
         }
 
+        std::set<std::string> oSetOutputDatasets;
         auto oSetKeysIter = oSetKeys.begin();
         while (true)
         {
@@ -1258,6 +1259,12 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                         bUseTransactions, oCacheOutputLayer, outputLayer))
                 {
                     return false;
+                }
+
+                if (bParquetOutput)
+                {
+                    oSetOutputDatasets.insert(
+                        outputLayer->poDS->GetDescription());
                 }
 
                 if (m_appendLayer)
@@ -1332,6 +1339,33 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         oCacheOutputLayer.clear();
         if (CPLGetErrorCounter() != nCounter)
             return false;
+
+        // For Parquet output, create special "_metadata" file that contains
+        // the schema and references the individual files
+        if (bParquetOutput && !oSetOutputDatasets.empty())
+        {
+            auto poAlg =
+                GDALGlobalAlgorithmRegistry::GetSingleton().Instantiate(
+                    "driver", "parquet", "create-metadata-file");
+            if (poAlg)
+            {
+                auto inputArg = poAlg->GetArg(GDAL_ARG_NAME_INPUT);
+                auto outputArg = poAlg->GetArg(GDAL_ARG_NAME_OUTPUT);
+                if (inputArg && inputArg->GetType() == GAAT_DATASET_LIST &&
+                    outputArg && outputArg->GetType() == GAAT_DATASET)
+                {
+                    std::vector<std::string> asInputFilenames;
+                    asInputFilenames.insert(asInputFilenames.end(),
+                                            oSetOutputDatasets.begin(),
+                                            oSetOutputDatasets.end());
+                    inputArg->Set(asInputFilenames);
+                    outputArg->Set(CPLFormFilenameSafe(osLayerDir.c_str(),
+                                                       "_metadata", nullptr));
+                    if (!poAlg->Run())
+                        return false;
+                }
+            }
+        }
     }
 
     return true;

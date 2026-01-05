@@ -340,6 +340,7 @@ Driver specific commands
    gdal_driver_gpkg_repack
    gdal_driver_gti_create
    gdal_driver_openfilegdb_repack
+   gdal_driver_parquet_create_metadata_file
    gdal_driver_pdf_list_layers
 
 .. only:: html
@@ -347,6 +348,7 @@ Driver specific commands
     - :ref:`gdal_driver_gpkg_repack`: Repack/vacuum in-place a GeoPackage dataset
     - :ref:`gdal_driver_gti_create`: Create an index of raster datasets compatible of the GDAL Tile Index (GTI) driver
     - :ref:`gdal_driver_openfilegdb_repack`: Repack in-place a FileGeodabase dataset
+    - :ref:`gdal_driver_parquet_create_metadata_file`:  Create the _metadata file for a partitioned Parquet dataset
     - :ref:`gdal_driver_pdf_list_layers`: Return the list of layers of a PDF file.
 
 

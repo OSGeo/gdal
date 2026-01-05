@@ -129,6 +129,8 @@ void OGRParquetDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_REORDER_FIELDS, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
                               "Name Type WidthPrecision");
+
+    poDriver->DeclareAlgorithm({"create-metadata-file"});
 }
 
 /************************************************************************/
