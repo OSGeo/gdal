@@ -39,6 +39,8 @@
 
 #include "ogr_libkml.h"
 
+#include <set>
+
 void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
                kmldom::KmlFactory *poKmlFactory,
                kmldom::FeaturePtr poKmlPlacemark, int bUseSimpleField,
@@ -48,8 +50,10 @@ void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
  Function to read kml into ogr fields.
 ******************************************************************************/
 
-void kml2field(OGRFeature *poOgrFeat, kmldom::FeaturePtr poKmlFeature,
-               const fieldconfig &oFC);
+void kml2field(
+    OGRFeature *poOgrFeat, kmldom::FeaturePtr poKmlFeature,
+    const fieldconfig &oFC,
+    const std::map<std::string, int> &mapSimpleFieldNameToOgrFieldIx);
 
 /******************************************************************************
  Function create a simplefield from a FieldDefn.
@@ -64,7 +68,9 @@ kmldom::SimpleFieldPtr FieldDef2kml(const OGRFieldDefn *poOgrFieldDef,
 ******************************************************************************/
 
 void kml2FeatureDef(kmldom::SchemaPtr poKmlSchema,
-                    OGRFeatureDefn *poOgrFeatureDefn);
+                    OGRFeatureDefn *poOgrFeatureDefn,
+                    std::map<std::string, int> &mapSimpleFieldNameToOgrFieldIx,
+                    std::set<std::string> &oSetSimpleFields);
 
 int kmlAltitudeModeFromString(const char *pszAltitudeMode, int &isGX);
 
