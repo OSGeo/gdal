@@ -176,6 +176,12 @@ Examples
 
        gdal raster mosaic --hide-nodata --dst-nodata=0,0,255 doq/*.tif doq_index.vrt
 
+.. example::
+   :title: Create a Cloud Optimized GeoTIFF (COG) mosaic from all GeoTIFFs in a folder
+
+   .. code-block:: bash
+
+       gdal raster mosaic --output-format COG --creation-option BIGTIFF=YES *.tif mosaic.tif
 
 .. below is an allow-list for spelling checker.
 
