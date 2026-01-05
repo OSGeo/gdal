@@ -1383,6 +1383,17 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
                     psOtherSRS =
                         CPLGetXMLNode(psChildIter, "OtherCRS");  // WFS 2.0
 
+                const auto IsValidCRSName = [](const char *pszStr)
+                {
+                    // EPSG:404000 is a GeoServer joke to indicate a unknown SRS
+                    // https://osgeo-org.atlassian.net/browse/GEOS-8993
+                    return !EQUAL(pszStr, "EPSG:404000") &&
+                           !EQUAL(pszStr, "urn:ogc:def:crs:EPSG::404000");
+                };
+
+                if (pszDefaultSRS && !IsValidCRSName(pszDefaultSRS))
+                    pszDefaultSRS = nullptr;
+
                 std::vector<std::string> aosSupportedCRSList{};
                 OGRLayer::GetSupportedSRSListRetType apoSupportedCRSList;
                 if (psOtherSRS)
@@ -1413,7 +1424,7 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
                         {
                             const char *pszSRS =
                                 CPLGetXMLValue(psIter, "", nullptr);
-                            if (pszSRS)
+                            if (pszSRS && IsValidCRSName(pszSRS))
                             {
                                 auto poSRS = std::unique_ptr<
                                     OGRSpatialReference,
@@ -1493,10 +1504,7 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
                     pszDefaultSRS = osSRSName.c_str();
                 }
 
-                // EPSG:404000 is a GeoServer joke to indicate a unknown SRS
-                // https://osgeo-org.atlassian.net/browse/GEOS-8993
-                if (pszDefaultSRS && !EQUAL(pszDefaultSRS, "EPSG:404000") &&
-                    !EQUAL(pszDefaultSRS, "urn:ogc:def:crs:EPSG::404000"))
+                if (pszDefaultSRS)
                 {
                     OGRSpatialReference oSRS;
                     if (oSRS.SetFromUserInput(
