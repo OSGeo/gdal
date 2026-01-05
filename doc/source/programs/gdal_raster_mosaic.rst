@@ -47,41 +47,13 @@ changed in later versions.
 
 Stating with GDAL 3.12, this command can also be used as the first step of :ref:`gdal_raster_pipeline`.
 
-Options
-+++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-The following options are available:
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/of_raster_create_copy.rst
-
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. option:: -b <band>
-
-    Select an input <band> to be processed. Bands are numbered from 1.
-    If input bands not set all bands will be added to the output.
-    Multiple :option:`-b` switches may be used to select a set of input bands.
-
-.. option:: --resolution {<xres,yres>|same|highest|lowest|average}
-
-    In case the resolution of all input files is not the same, the :option:`--resolution` flag
-    enables the user to control the way the output resolution is computed.
-
-    `same`, the default, checks that all source rasters have the same resolution and errors out when this is not the case.
-
-    `highest` will pick the smallest values of pixel dimensions within the set of source rasters.
-
-    `lowest` will pick the largest values of pixel dimensions within the set of source rasters.
-
-    `average` will compute an average of pixel dimensions within the set of source rasters.
-
-    `common` determines the greatest common divisor of the source pixel dimensions, e.g. 0.2 for source pixel dimensions of 0.4 and 0.6.
-
-    <xres>,<yres>. The values must be expressed in georeferenced units.
-    Both must be positive values.
-
+Program-Specific Options
+------------------------
 
 .. option:: --absolute-path
 
@@ -89,6 +61,19 @@ The following options are available:
 
     When writing a VRT file, enables writing the absolute path of the input datasets. By default, input
     filenames are written in a relative way with respect to the VRT filename (when possible).
+
+.. option:: --add-alpha
+
+    Adds an alpha mask band to the output when the source raster have none. Mainly useful for RGB sources (or grey-level sources).
+    The alpha band is filled on-the-fly with the value 0 in areas without any source raster, and with value
+    255 in areas with source raster. The effect is that a RGBA viewer will render
+    the areas without source rasters as transparent and areas with source rasters as opaque.
+
+.. option:: -b, --band <band>
+
+    Select an input <band> to be processed. Bands are numbered from 1.
+    If input bands not set all bands will be added to the output.
+    Multiple :option:`-b` switches may be used to select a set of input bands.
 
 .. option:: --bbox <xmin>,<ymin>,<xmax>,<ymax>
 
@@ -98,20 +83,6 @@ The following options are available:
     pixels with a value of zero unless a NODATA value is specified using :option:`--dst-nodata`
     or an alpha mask band is added with :option:`--add-alpha`.
 
-.. option:: --target-aligned-pixels
-
-    (target aligned pixels) align
-    the coordinates of the extent of the output file to the values of the :option:`--resolution`,
-    such that the aligned extent includes the minimum extent.
-    Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
-
-.. option:: --src-nodata <value>[,<value>]...
-
-    Set nodata values for input bands (different values can be supplied for each band).
-    If the option is not specified, the intrinsic nodata settings on the source datasets
-    will be used (if they exist). The value set by this option is written in the NODATA element
-    of each ``ComplexSource`` element.
-
 .. option:: --dst-nodata <value>[,<value>]...
 
     Set nodata values at the output band level (different values can be supplied for each band).  If more
@@ -120,13 +91,6 @@ The following options are available:
     intrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
     is written in the ``NoDataValue`` element of each ``VRTRasterBand element``. Use a value of
     `None` to ignore intrinsic nodata settings on the source datasets.
-
-.. option:: --add-alpha
-
-    Adds an alpha mask band to the output when the source raster have none. Mainly useful for RGB sources (or grey-level sources).
-    The alpha band is filled on-the-fly with the value 0 in areas without any source raster, and with value
-    255 in areas with source raster. The effect is that a RGBA viewer will render
-    the areas without source rasters as transparent and areas with source rasters as opaque.
 
 .. option:: --hide-nodata
 
@@ -152,11 +116,54 @@ The following options are available:
 
     .. versionadded:: 3.12
 
+.. option:: --resolution {<xres,yres>|same|highest|lowest|average}
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    In case the resolution of all input files is not the same, the :option:`--resolution` flag
+    enables the user to control the way the output resolution is computed.
 
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+    `same`, the default, checks that all source rasters have the same resolution and errors out when this is not the case.
+
+    `highest` will pick the smallest values of pixel dimensions within the set of source rasters.
+
+    `lowest` will pick the largest values of pixel dimensions within the set of source rasters.
+
+    `average` will compute an average of pixel dimensions within the set of source rasters.
+
+    `common` determines the greatest common divisor of the source pixel dimensions, e.g. 0.2 for source pixel dimensions of 0.4 and 0.6.
+
+    <xres>,<yres>. The values must be expressed in georeferenced units.
+    Both must be positive values.
+
+.. option:: --src-nodata <value>[,<value>]...
+
+    Set nodata values for input bands (different values can be supplied for each band).
+    If the option is not specified, the intrinsic nodata settings on the source datasets
+    will be used (if they exist). The value set by this option is written in the NODATA element
+    of each ``ComplexSource`` element.
+
+.. option:: --target-aligned-pixels
+
+    (target aligned pixels) align
+    the coordinates of the extent of the output file to the values of the :option:`--resolution`,
+    such that the aligned extent includes the minimum extent.
+    Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
+
+Standard Options
+----------------
+
+.. collapse:: Details
+
+    .. include:: gdal_options/append_raster.rst
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

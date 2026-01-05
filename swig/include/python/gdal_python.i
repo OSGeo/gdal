@@ -2191,9 +2191,9 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 %}
 
 %feature("shadow") Close %{
-    def Close(self, *args):
+    def Close(self, callback=None, callback_data=None):
         r"""
-        Close(Dataset self) -> CPLErr
+        Close(Dataset self, callback=Callable|None, callback_data=any|None) -> CPLErr
 
         Closes opened dataset and releases allocated resources.
 
@@ -2208,17 +2208,28 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         In most cases, it is preferable to open or create a dataset
         using a context manager instead of calling :py:meth:`Close`
         directly.
+
+        This function may report progress if a progress
+        callback if provided and if the dataset returns True for
+        GetCloseReportsProgress()
+
+        Parameters
+        ----------
+        callback: Callable|None
+            Callable that accepts (pct: float, message: str, user_data) and returns bool
+        callback_data: any|None
+            User data to pass to the callback
         """
 
         self._invalidate_children()
         if self.GetRefCount() == 1 and self.thisown:
             try:
-                return _gdal.Dataset_Close(self, *args)
+                return _gdal.Dataset_Close(self, callback, callback_data)
             finally:
                 self.thisown = 0
                 self.this = None
         else:
-            return _gdal.Dataset__RunCloseWithoutDestroying(self, *args)
+            return _gdal.Dataset__RunCloseWithoutDestroying(self, callback, callback_data)
 %}
 
 %feature("shadow") ExecuteSQL %{
@@ -2351,6 +2362,204 @@ def ReleaseResultSet(self, sql_lyr):
     if sql_lyr:
         sql_lyr.thisown = None
         sql_lyr.this = None
+%}
+
+%feature("shadow") GetInterBandCovarianceMatrix %{
+def GetInterBandCovarianceMatrix(self,
+                             band_list=None,
+                             approx_ok=False,
+                             force=False,
+                             write_into_metadata=True,
+                             delta_degree_of_freedom=1,
+                             callback=None,
+                             callback_data=None):
+    """
+    Fetch or compute the covariance matrix between bands of this dataset.
+
+    The covariance indicates the level to which two bands vary together.
+
+    If we call :math:`v_i[y,x]` the value of pixel at row=y and column=x for band i,
+    and :math:`mean_i` the mean value of all pixels of band i, then
+
+    .. math::
+
+        \\mathrm{cov}\\left[i,j\\right] =
+        \\frac{
+            \\sum_{y,x} \\left( v_{i}[y,x] - \\mathrm{mean}_{i} \\right)
+            \\left( v_{j}[y,x] - \\mathrm{mean}_{j} \\right)
+        }{
+            \\mathrm{pixel\\_count} - \\mathrm{delta\\_degree\\_of\\_freedom}
+        }
+
+    When there are no nodata values, :math:`pixel\\_count = self.RasterXSize * self.RasterYSize`.
+    We can see that :math:`cov[i,j] = cov[j,i]`, and consequently the returned matrix
+    is symmetric.
+
+    A value of delta_degree_of_freedom=1 (the default) will return a unbiased estimate
+    if the pixels in bands are considered to be a sample of the whole population.
+    This is consistent with the default of
+    https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+    matrix is consistent with what can be obtained with
+
+    .. code-block:: python
+
+       numpy.cov(
+          [ds.GetRasterBand(band_nr).ReadAsArray().ravel() for band_nr in band_list]
+       )
+
+    Otherwise a value of delta_degree_of_freedom=0 can be used if they are considered
+    to be the whole population.
+
+    If STATISTICS_COVARIANCES metadata items are available in band metadata,
+    this method uses them.
+    Otherwise, if bForce is true, :py:meth:`ComputeInterBandCovarianceMatrix` is called.
+    Otherwise, if bForce is false, an empty vector is returned
+
+    Parameters
+    ----------
+    band_list: list[int], optional
+        If not specified, compute the covariance matrix of all bands of the dataset.
+        Otherwise compute it on the subset of bands specified by band_list.
+        Values in band_list must be between 1 and self.RasterCount.
+    approx_ok : bool, optional
+        Whether it is acceptable to use a subsample of values in
+        :py:meth:`ComputeInterBandCovarianceMatrix`
+    force : bool | None, optional
+        Whether :py:meth:`ComputeInterBandCovarianceMatrix` should be called
+        when the STATISTICS_COVARIANCES metadata items are missing.
+    write_into_metadata : bool, optional
+        Whether :py:meth:`ComputeInterBandCovarianceMatrix` must
+        write STATISTICS_COVARIANCES band metadata items.
+    delta_degree_of_freedom : int, optional
+        Correction term to subtract in the final averaging phase of the covariance computation.
+    callback : callable, optional
+        A progress callback function
+    callback_data : any, optional
+        Optional data to be passed to callback function
+
+    Returns
+    -------
+    List[List[float]]
+        a list of len(band_list) of lists of len(band_list) values (where len(band_list) == self.RasterCount if band_list not set)
+
+    Examples
+    --------
+    .. testsetup::
+       >>> ds = gdal.Open('rgbsmall.tif')
+
+    >>> print(ds.GetInterBandCovarianceMatrix(force=True))
+    [[2241.7045363745387, 2898.8196128051163, 1009.979953581434], [2898.8196128051163, 3900.269159023618, 1248.65396718687], [1009.979953581434, 1248.65396718687, 602.4703641456648]] # rtol: 1e-6
+    """
+
+    if band_list is None:
+        band_list = list(range(1, self.RasterCount + 1))
+    if not band_list:
+        return []
+    return _gdal.Dataset_GetInterBandCovarianceMatrix(
+              self,
+              nBandCount=band_list,
+              approx_ok=approx_ok,
+              force=force,
+              write_into_metadata=write_into_metadata,
+              delta_degree_of_freedom=delta_degree_of_freedom,
+              callback=callback,
+              callback_data=callback_data)
+%}
+
+
+%feature("shadow") ComputeInterBandCovarianceMatrix %{
+def ComputeInterBandCovarianceMatrix(self,
+                                     band_list=None,
+                                     approx_ok=False,
+                                     write_into_metadata=True,
+                                     delta_degree_of_freedom=1,
+                                     callback=None,
+                                     callback_data=None):
+    """
+    Compute the covariance matrix between bands of this dataset.
+
+    The covariance indicates the level to which two bands vary together.
+
+    If we call :math:`v_i[y,x]` the value of pixel at row=y and column=x for band i,
+    and :math:`mean_i` the mean value of all pixels of band i, then
+
+    .. math::
+
+        \\mathrm{cov}\\left[i,j\\right] =
+        \\frac{
+            \\sum_{y,x} \\left( v_{i}[y,x] - \\mathrm{mean}_{i} \\right)
+            \\left( v_{j}[y,x] - \\mathrm{mean}_{j} \\right)
+        }{
+            \\mathrm{pixel\\_count} - \\mathrm{delta\\_degree\\_of\\_freedom}
+        }
+
+    When there are no nodata values, :math:`pixel\\_count = self.RasterXSize * self.RasterYSize`.
+    We can see that :math:`cov[i,j] = cov[j,i]`, and consequently the returned matrix
+    is symmetric.
+
+    A value of delta_degree_of_freedom=1 (the default) will return a unbiased estimate
+    if the pixels in bands are considered to be a sample of the whole population.
+    This is consistent with the default of
+    https://numpy.org/doc/stable/reference/generated/numpy.cov.html and the returned
+    matrix is consistent with what can be obtained with
+
+    .. code-block:: python
+
+       numpy.cov(
+          [ds.GetRasterBand(band_nr).ReadAsArray().ravel() for band_nr in band_list]
+       )
+
+    Otherwise a value of delta_degree_of_freedom=0 can be used if they are considered
+    to be the whole population.
+
+    If STATISTICS_COVARIANCES metadata items are available in band metadata,
+    this method uses them.
+    Otherwise, if bForce is true, :py:meth:`ComputeInterBandCovarianceMatrix` is called.
+    Otherwise, if bForce is false, an empty vector is returned
+
+    Parameters
+    ----------
+    band_list: list[int], optional
+        If not specified, compute the covariance matrix of all bands of the dataset.
+        Otherwise compute it on the subset of bands specified by band_list.
+        Values in band_list must be between 1 and self.RasterCount.
+    approx_ok : bool, optional
+        Whether it is acceptable to use a subsample of values
+    write_into_metadata : bool, optional
+        Whether this method must write STATISTICS_COVARIANCES band metadata items.
+    delta_degree_of_freedom : int, optional
+        Correction term to subtract in the final averaging phase of the covariance computation.
+    callback : callable, optional
+        A progress callback function
+    callback_data : any, optional
+        Optional data to be passed to callback function
+
+    Returns
+    -------
+    List[List[float]]
+        a list of len(band_list) of lists of len(band_list) values (where len(band_list) == self.RasterCount if band_list not set)
+
+    Examples
+    --------
+    .. testsetup::
+       >>> ds = gdal.Open('rgbsmall.tif')
+
+    >>> print(ds.ComputeInterBandCovarianceMatrix())
+    [[2241.7045363745387, 2898.8196128051163, 1009.979953581434], [2898.8196128051163, 3900.269159023618, 1248.65396718687], [1009.979953581434, 1248.65396718687, 602.4703641456648]] # rtol: 1e-6
+    """
+
+    if band_list is None:
+        band_list = list(range(1, self.RasterCount + 1))
+    if not band_list:
+        return []
+    return _gdal.Dataset_ComputeInterBandCovarianceMatrix(
+              self,
+              nBandCount=band_list,
+              approx_ok=approx_ok,
+              write_into_metadata=write_into_metadata,
+              delta_degree_of_freedom=delta_degree_of_freedom,
+              callback=callback,
+              callback_data=callback_data)
 %}
 
 %feature("pythonappend") GetRasterBand %{

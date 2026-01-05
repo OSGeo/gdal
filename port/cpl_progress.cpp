@@ -135,9 +135,6 @@ void *CPL_STDCALL GDALCreateScaledProgress(double dfMin, double dfMax,
     GDALScaledProgressInfo *psInfo = static_cast<GDALScaledProgressInfo *>(
         CPLCalloc(sizeof(GDALScaledProgressInfo), 1));
 
-    if (std::abs(dfMin - dfMax) < 0.0000001)
-        dfMax = dfMin + 0.01;
-
     psInfo->pData = pData;
     psInfo->pfnProgress = pfnProgress;
     psInfo->dfMin = dfMin;

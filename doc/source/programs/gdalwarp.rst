@@ -23,6 +23,11 @@ utility. The program can reproject to any supported projection,
 and can also apply GCPs stored with the image if the image is "raw"
 with control information.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    * :ref:`gdal_raster_reproject` for reprojection
+    * :ref:`gdal_raster_update` to update the content of a raster with another one
+
 .. program:: gdalwarp
 
 .. include:: options/help_and_help_general.rst

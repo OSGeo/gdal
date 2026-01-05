@@ -108,7 +108,7 @@ NITFDataset::~NITFDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr NITFDataset::Close()
+CPLErr NITFDataset::Close(GDALProgressFunc, void *)
 {
     int bHasDroppedRef = FALSE;
     return NITFDataset::Close(bHasDroppedRef);
@@ -3742,9 +3742,9 @@ CPLErr NITFDataset::ScanJPEGBlocks()
     /* -------------------------------------------------------------------- */
     /*      Allocate offset array                                           */
     /* -------------------------------------------------------------------- */
-    panJPEGBlockOffset = static_cast<GIntBig *>(VSI_CALLOC_VERBOSE(
-        sizeof(GIntBig), static_cast<size_t>(psImage->nBlocksPerRow) *
-                             psImage->nBlocksPerColumn));
+    panJPEGBlockOffset = static_cast<vsi_l_offset *>(VSI_CALLOC_VERBOSE(
+        sizeof(vsi_l_offset), static_cast<size_t>(psImage->nBlocksPerRow) *
+                                  psImage->nBlocksPerColumn));
     if (panJPEGBlockOffset == nullptr)
     {
         return CE_Failure;
@@ -3873,9 +3873,10 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
              */
             /* --------------------------------------------------------------------
              */
-            panJPEGBlockOffset = static_cast<GIntBig *>(VSI_CALLOC_VERBOSE(
-                sizeof(GIntBig), static_cast<size_t>(psImage->nBlocksPerRow) *
-                                     psImage->nBlocksPerColumn));
+            panJPEGBlockOffset = static_cast<vsi_l_offset *>(
+                VSI_CALLOC_VERBOSE(sizeof(vsi_l_offset),
+                                   static_cast<size_t>(psImage->nBlocksPerRow) *
+                                       psImage->nBlocksPerColumn));
             if (panJPEGBlockOffset == nullptr)
             {
                 return CE_Failure;
@@ -3884,16 +3885,15 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
                  i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++)
             {
                 panJPEGBlockOffset[i] = psImage->panBlockStart[i];
-                if (panJPEGBlockOffset[i] != -1 &&
+                if (panJPEGBlockOffset[i] != static_cast<vsi_l_offset>(-1) &&
                     panJPEGBlockOffset[i] != UINT_MAX)
                 {
-                    GUIntBig nOffset = panJPEGBlockOffset[i];
+                    vsi_l_offset nOffset = panJPEGBlockOffset[i];
                     bool bError = false;
                     nQLevel = ScanJPEGQLevel(&nOffset, &bError);
                     /* The beginning of the JPEG stream should be the offset */
                     /* from the panBlockStart table */
-                    if (bError ||
-                        nOffset != static_cast<GUIntBig>(panJPEGBlockOffset[i]))
+                    if (bError || nOffset != panJPEGBlockOffset[i])
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "JPEG block doesn't start at expected offset");
@@ -3936,7 +3936,7 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
     /* -------------------------------------------------------------------- */
     const int iBlock = iBlockX + iBlockY * psImage->nBlocksPerRow;
 
-    if (panJPEGBlockOffset[iBlock] == -1 ||
+    if (panJPEGBlockOffset[iBlock] == static_cast<vsi_l_offset>(-1) ||
         panJPEGBlockOffset[iBlock] == UINT_MAX)
     {
         memset(pabyJPEGBlock, 0,
@@ -3946,7 +3946,7 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
     }
 
     CPLString osFilename;
-    osFilename.Printf("JPEG_SUBFILE:Q%d," CPL_FRMT_GIB ",%d,%s", nQLevel,
+    osFilename.Printf("JPEG_SUBFILE:Q%d," CPL_FRMT_GUIB ",%d,%s", nQLevel,
                       panJPEGBlockOffset[iBlock], 0, osNITFFilename.c_str());
 
     GDALDataset *poDS =
@@ -4083,7 +4083,7 @@ static const char *GDALToNITFDataType(GDALDataType eType)
 
     switch (eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         case GDT_UInt16:
         case GDT_UInt32:
             pszPVType = "INT";
@@ -4817,7 +4817,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             papszFullOptions = CSLSetNameValue(papszFullOptions, "IREPBAND",
                                                osIREPBAND.c_str());
         }
-        else if (poSrcDS->GetRasterCount() == 1 && eType == GDT_Byte &&
+        else if (poSrcDS->GetRasterCount() == 1 && eType == GDT_UInt8 &&
                  poBand1->GetColorTable() != nullptr)
         {
             papszFullOptions =
@@ -5874,7 +5874,7 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
         /*      Update CLEVEL.                                              */
         /* ---------------------------------------------------------------- */
         // Get existing CLEVEL
-        constexpr int OFFSET_CLEVEL = 9;
+        constexpr vsi_l_offset OFFSET_CLEVEL = 9;
         constexpr int SIZE_CLEVEL = 2;
         bOK &= VSIFSeekL(fpVSIL, OFFSET_CLEVEL, SEEK_SET) == 0;
         char szCLEVEL[SIZE_CLEVEL + 1] = {0};
@@ -5958,7 +5958,7 @@ static bool NITFWriteCGMSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     achNUMI[3] = '\0';
 
     // NUMI offset is at a fixed offset 363
-    const int nNumIOffset = 360;
+    const vsi_l_offset nNumIOffset = 360;
     bool bOK = VSIFSeekL(fpVSIL, nNumIOffset, SEEK_SET) == 0;
     bOK &= VSIFReadL(achNUMI, 3, 1, fpVSIL) == 1;
     const int nIM = atoi(achNUMI);
@@ -5967,7 +5967,7 @@ static bool NITFWriteCGMSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     // NUMS offset is NumI offset plus the size of NumI + size taken up each
     // the header data multiply by the number of data
 
-    const int nNumSOffset = nNumIOffset + 3 + nIM * (6 + 10);
+    const vsi_l_offset nNumSOffset = nNumIOffset + 3 + nIM * (6 + 10);
 
     /* -------------------------------------------------------------------- */
     /*      Confirm that the NUMS in the file header already matches the    */
@@ -6183,7 +6183,7 @@ static bool NITFWriteTextSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     char achNUMI[4];  // 3 digits plus null character
     achNUMI[3] = '\0';
     // NUMI offset is at a fixed offset 363
-    int nNumIOffset = 360;
+    vsi_l_offset nNumIOffset = 360;
     bool bOK = VSIFSeekL(fpVSIL, nNumIOffset, SEEK_SET) == 0;
     bOK &= VSIFReadL(achNUMI, 3, 1, fpVSIL) == 1;
     int nIM = atoi(achNUMI);
@@ -6192,7 +6192,7 @@ static bool NITFWriteTextSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     achNUMG[3] = '\0';
 
     // 3 for size of NUMI.  6 and 10 are the field size for LISH and LI
-    const int nNumGOffset = nNumIOffset + 3 + nIM * (6 + 10);
+    const vsi_l_offset nNumGOffset = nNumIOffset + 3 + nIM * (6 + 10);
     bOK &= VSIFSeekL(fpVSIL, nNumGOffset, SEEK_SET) == 0;
     bOK &= VSIFReadL(achNUMG, 3, 1, fpVSIL) == 1;
     const int nGS = atoi(achNUMG);
@@ -6200,7 +6200,7 @@ static bool NITFWriteTextSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     // NUMT offset
     // 3 for size of NUMG.  4 and 6 are filed size of LSSH and LS.
     // the last + 3 is for NUMX field, which is not used
-    const int nNumTOffset = nNumGOffset + 3 + nGS * (4 + 6) + 3;
+    const vsi_l_offset nNumTOffset = nNumGOffset + 3 + nGS * (4 + 6) + 3;
 
     /* -------------------------------------------------------------------- */
     /*      Confirm that the NUMT in the file header already matches the    */
@@ -6649,7 +6649,7 @@ static bool NITFWriteDES(const char *pszFilename, VSILFILE *&fpVSIL,
     char achNUMI[4];  // 3 digits plus null character
     achNUMI[3] = '\0';
     // NUMI offset is at a fixed offset 363
-    int nNumIOffset = 360;
+    vsi_l_offset nNumIOffset = 360;
     bool bOK = VSIFSeekL(fpVSIL, nNumIOffset, SEEK_SET) == 0;
     bOK &= VSIFReadL(achNUMI, 3, 1, fpVSIL) == 1;
     int nIM = atoi(achNUMI);
@@ -6658,7 +6658,7 @@ static bool NITFWriteDES(const char *pszFilename, VSILFILE *&fpVSIL,
     achNUMG[3] = '\0';
 
     // 3 for size of NUMI.  6 and 10 are the field size for LISH and LI
-    const int nNumGOffset = nNumIOffset + 3 + nIM * (6 + 10);
+    const vsi_l_offset nNumGOffset = nNumIOffset + 3 + nIM * (6 + 10);
     bOK &= VSIFSeekL(fpVSIL, nNumGOffset, SEEK_SET) == 0;
     bOK &= VSIFReadL(achNUMG, 3, 1, fpVSIL) == 1;
     const int nGS = atoi(achNUMG);
@@ -6666,7 +6666,7 @@ static bool NITFWriteDES(const char *pszFilename, VSILFILE *&fpVSIL,
     // NUMT offset
     // 3 for size of NUMG.  4 and 6 are the field size of LSSH and LS.
     // the last + 3 is for NUMX field, which is not used
-    const int nNumTOffset = nNumGOffset + 3 + nGS * (4 + 6) + 3;
+    const vsi_l_offset nNumTOffset = nNumGOffset + 3 + nGS * (4 + 6) + 3;
     char achNUMT[4];
     bOK &= VSIFSeekL(fpVSIL, nNumTOffset, SEEK_SET) == 0;
     bOK &= VSIFReadL(achNUMT, 3, 1, fpVSIL) == 1;
@@ -6675,7 +6675,7 @@ static bool NITFWriteDES(const char *pszFilename, VSILFILE *&fpVSIL,
 
     // NUMDES offset
     // 3 for size of NUMT. 4 and 5 are the field size of LTSH and LT.
-    const int nNumDESOffset = nNumTOffset + 3 + (4 + 5) * nNUMT;
+    const vsi_l_offset nNumDESOffset = nNumTOffset + 3 + (4 + 5) * nNUMT;
     char achNUMDES[4];
     bOK &= VSIFSeekL(fpVSIL, nNumDESOffset, SEEK_SET) == 0;
     bOK &= VSIFReadL(achNUMDES, 3, 1, fpVSIL) == 1;
@@ -6843,7 +6843,7 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
 #if defined(JPEG_LIB_MK1) || defined(JPEG_DUAL_MODE_8_12)
-    if (eDT != GDT_Byte && eDT != GDT_UInt16)
+    if (eDT != GDT_UInt8 && eDT != GDT_UInt16)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "JPEG driver doesn't support data type %s. "
@@ -6857,10 +6857,10 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
     if (eDT == GDT_UInt16 || eDT == GDT_Int16)
         eDT = GDT_UInt16;
     else
-        eDT = GDT_Byte;
+        eDT = GDT_UInt8;
 
 #else
-    if (eDT != GDT_Byte)
+    if (eDT != GDT_UInt8)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "JPEG driver doesn't support data type %s. "
@@ -6871,7 +6871,7 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
         return false;
     }
 
-    eDT = GDT_Byte;  // force to 8bit.
+    eDT = GDT_UInt8;  // force to 8bit.
 #endif
 
     /* -------------------------------------------------------------------- */

@@ -78,7 +78,7 @@ def test_gdalmdiminfo_lib_mem_dataset():
 
     dim1 = rg.CreateDimension("dim1", None, None, 3)
     ar = rg.CreateMDArray(
-        "ar_2d", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "ar_2d", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     ar.SetOffset(1)
     ar.SetScale(2)

@@ -79,7 +79,7 @@ void generate(int nBands, uint16_t nPhotometric, uint16_t nBitsPerSample)
             GDALDriver::FromHandle(GDALGetDriverByName("GTiff"))
                 ->Create(
                     osTmpFilename.c_str(), 16, 16, (nBands <= 4) ? nBands : 1,
-                    nBitsPerSample == 8 ? GDT_Byte : GDT_UInt16, papszOpts));
+                    nBitsPerSample == 8 ? GDT_UInt8 : GDT_UInt16, papszOpts));
         assert(poDS);
         poDS.reset();
         CPLPopErrorHandler();

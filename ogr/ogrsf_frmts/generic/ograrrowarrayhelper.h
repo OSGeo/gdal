@@ -200,8 +200,23 @@ class CPL_DLL OGRArrowArrayHelper
             const int TZOffsetMS = TZOffset * 60 * 1000;
             nVal -= TZOffsetMS;
         }
-        static_cast<int64_t *>(const_cast<void *>(psArray->buffers[1]))[iFeat] =
-            nVal;
+        if (psArray->n_children == 2)
+        {
+            static_cast<int64_t *>(const_cast<void *>(
+                psArray->children[0]->buffers[1]))[iFeat] = nVal;
+            const int nOffsetMinutes =
+                ogrField.Date.TZFlag > OGR_TZFLAG_MIXED_TZ
+                    ? (ogrField.Date.TZFlag - OGR_TZFLAG_UTC) * 15
+                    : 0;
+            static_cast<int16_t *>(
+                const_cast<void *>(psArray->children[1]->buffers[1]))[iFeat] =
+                static_cast<int16_t>(nOffsetMinutes);
+        }
+        else
+        {
+            static_cast<int64_t *>(
+                const_cast<void *>(psArray->buffers[1]))[iFeat] = nVal;
+        }
     }
 
     static GByte *GetPtrForStringOrBinary(struct ArrowArray *psArray, int iFeat,
@@ -213,16 +228,17 @@ class CPL_DLL OGRArrowArrayHelper
         const uint32_t nCurLength = static_cast<uint32_t>(panOffsets[iFeat]);
         if (nLen > nMaxAlloc - nCurLength)
         {
-            if (nLen >
-                static_cast<uint32_t>(std::numeric_limits<int32_t>::max()) -
-                    nCurLength)
+            constexpr uint32_t INT32_MAX_AS_UINT32 =
+                static_cast<uint32_t>(std::numeric_limits<int32_t>::max());
+            if (!(nCurLength <= INT32_MAX_AS_UINT32 &&
+                  nLen <= INT32_MAX_AS_UINT32 - nCurLength))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Too large string or binary content");
                 return nullptr;
             }
             uint32_t nNewSize = nCurLength + static_cast<uint32_t>(nLen);
-            if ((nMaxAlloc >> 31) == 0)
+            if (nMaxAlloc <= INT32_MAX_AS_UINT32)
             {
                 const uint32_t nDoubleSize = 2U * nMaxAlloc;
                 if (nNewSize < nDoubleSize)
@@ -240,6 +256,7 @@ class CPL_DLL OGRArrowArrayHelper
             }
             else
             {
+                // coverity[overflow_sink]
                 newBuffer = VSI_REALLOC_VERBOSE(
                     const_cast<void *>(psArray->buffers[2]), nNewSize);
                 if (newBuffer == nullptr)

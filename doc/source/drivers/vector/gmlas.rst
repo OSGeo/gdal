@@ -169,7 +169,7 @@ field with the XML definition of the GML geometry.
 Performance issues with large multi-layer GML files.
 ----------------------------------------------------
 
-Traditionnaly to read a OGR datasource, one iterate over layers with
+Traditionally to read a OGR datasource, one iterate over layers with
 GDALDataset::GetLayer(), and for each layer one iterate over features
 with OGRLayer::GetNextFeature(). While this approach still works for the
 GMLAS driver, it may result in very poor performance on big documents or
@@ -197,7 +197,7 @@ The following open options are supported:
 -  .. oo:: CONFIG_FILE
       :choices: <filename>, <xml>
 
-      finition: filename of a
+      filename of a
       XML configuration file conforming to the
       :source_file:`ogr/ogrsf_frmts/gmlas/data/gmlasconf.xsd`
       schema. It is also possible to provide the XML content directly

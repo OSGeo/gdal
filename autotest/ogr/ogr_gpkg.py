@@ -11248,3 +11248,203 @@ def test_ogr_gpkg_append_to_layer_feature_count_int64_max(tmp_vsimem):
             assert not f.IsFieldSetAndNotNull("feature_count")
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 2
+
+
+###############################################################################
+# Test workaround for https://github.com/OSGeo/gdal/issues/13557
+
+
+@pytest.mark.parametrize(
+    "wkt",
+    [
+        "POINT EMPTY",
+        "POINT Z EMPTY",
+        "LINESTRING EMPTY",
+        "LINESTRING Z EMPTY",
+        "POLYGON EMPTY",
+        "POLYGON Z EMPTY",
+        "MULTIPOINT EMPTY",
+        "MULTIPOINT Z EMPTY",
+        "MULTILINESTRING EMPTY",
+        "MULTILINESTRING Z EMPTY",
+        "MULTIPOLYGON EMPTY",
+        "MULTIPOLYGON Z EMPTY",
+        "GEOMETRYCOLLECTION EMPTY",
+        "GEOMETRYCOLLECTION Z EMPTY",
+    ],
+)
+def test_ogr_gpkg_st_minx_on_CastToXYZ_on_empty_geometry(tmp_vsimem, wkt):
+
+    with ogr.GetDriverByName("GPKG").CreateDataSource(tmp_vsimem / "test.gpkg") as ds:
+        lyr = ds.CreateLayer("test")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+        lyr.CreateFeature(f)
+        f = None
+
+        if not _has_spatialite_4_3_or_later(ds):
+            ds = None
+            pytest.skip("Spatialite missing or too old")
+
+    with ogr.Open(tmp_vsimem / "test.gpkg") as ds:
+        with ds.ExecuteSQL("SELECT ST_MinX(CastToXYZ(geom)) FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) is None
+
+
+###############################################################################
+# Test ST_Hilbert()
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_ST_Hilbert(tmp_vsimem):
+
+    with gdal.GetDriverByName("GPKG").CreateVector(tmp_vsimem / "tmp.gpkg") as ds:
+        lyr = ds.CreateLayer("test")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((10 20,10 21,11 21,10 20))"))
+        lyr.CreateFeature(f)
+
+    with ogr.Open(tmp_vsimem / "tmp.gpkg") as ds:
+
+        # Test ST_Hilbert(x, y, minx, miny, maxx, maxy)
+
+        with ds.ExecuteSQL("SELECT ST_Hilbert(10, 20, 10, 20, 30, 40)") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == 0
+
+        with ds.ExecuteSQL("SELECT ST_Hilbert(11, 22, 10, 20, 30, 40)") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == 53687090
+
+        with ds.ExecuteSQL("SELECT ST_Hilbert(30, 40, 10, 20, 30, 40)") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == 2863311528
+
+        with gdal.quiet_errors():
+            with ds.ExecuteSQL(
+                "SELECT ST_Hilbert(10-1e-3, 20, 10, 20, 30, 40)"
+            ) as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) is None
+
+        with gdal.quiet_errors():
+            with ds.ExecuteSQL(
+                "SELECT ST_Hilbert(10, 20-1e-3, 10, 20, 30, 40)"
+            ) as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) is None
+
+        with gdal.quiet_errors():
+            with ds.ExecuteSQL(
+                "SELECT ST_Hilbert(30+1e-3, 40, 10, 20, 30, 40)"
+            ) as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) is None
+
+        with gdal.quiet_errors():
+            with ds.ExecuteSQL(
+                "SELECT ST_Hilbert(30, 40+1e-3, 10, 20, 30, 40)"
+            ) as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) is None
+
+        # Test ST_Hilbert(x, y, layer_name)
+
+        with ds.ExecuteSQL("SELECT ST_Hilbert(10, 20, 'test')") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == 0
+
+        with ds.ExecuteSQL("SELECT ST_Hilbert(11, 21, 'test')") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == 2863311528
+
+        with pytest.raises(Exception, match="unknown layer 'non_existing'"):
+            with ds.ExecuteSQL("SELECT ST_Hilbert(10, 20, 'non_existing')") as sql_lyr:
+                pass
+
+        with pytest.raises(Exception, match="Invalid argument type for 3rd argument"):
+            with ds.ExecuteSQL("SELECT ST_Hilbert(10, 20, NULL)") as sql_lyr:
+                pass
+
+        with gdal.quiet_errors():
+            with ds.ExecuteSQL("SELECT ST_Hilbert(10-1e-3, 20, 'test')") as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) is None
+
+        with gdal.quiet_errors():
+            with ds.ExecuteSQL("SELECT ST_Hilbert(11+1e-3, 20, 'test')") as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) is None
+
+        with gdal.quiet_errors():
+            with ds.ExecuteSQL("SELECT ST_Hilbert(10, 20-1e-3, 'test')") as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) is None
+
+        with gdal.quiet_errors():
+            with ds.ExecuteSQL("SELECT ST_Hilbert(10, 21+1e-3, 'test')") as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) is None
+
+        # Test ST_Hilbert(geom, minx, miny, maxx, maxy)
+
+        with ds.ExecuteSQL(
+            "SELECT ST_Hilbert(geom, 10, 20, 11, 21) FROM test"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == 715827882
+
+        with ds.ExecuteSQL(
+            "SELECT ST_Hilbert(NULL, 10, 20, 11, 21) FROM test"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) is None
+
+        with gdal.quiet_errors():
+            with ds.ExecuteSQL(
+                "SELECT ST_Hilbert(geom, 10.5+1e-3, 20, 11, 21) FROM test"
+            ) as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) is None
+
+        with gdal.quiet_errors():
+            with ds.ExecuteSQL(
+                "SELECT ST_Hilbert(geom, 10, 20.5+1e-3, 11, 21) FROM test"
+            ) as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) is None
+
+        with gdal.quiet_errors():
+            with ds.ExecuteSQL(
+                "SELECT ST_Hilbert(geom, 10, 20, 10.5-1e-3, 21) FROM test"
+            ) as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) is None
+
+        with gdal.quiet_errors():
+            with ds.ExecuteSQL(
+                "SELECT ST_Hilbert(geom, 10, 20, 11, 20.5-1e-3) FROM test"
+            ) as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) is None
+
+        # Test ST_Hilbert(geom, layer_name)
+
+        with ds.ExecuteSQL("SELECT ST_Hilbert(geom, 'test') FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == 715827882
+
+        with ds.ExecuteSQL("SELECT ST_Hilbert(NULL, 'test') FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) is None
+
+        with pytest.raises(Exception, match="unknown layer 'non_existing'"):
+            with ds.ExecuteSQL(
+                "SELECT ST_Hilbert(geom, 'non_existing') FROM test"
+            ) as sql_lyr:
+                pass
+
+        with pytest.raises(Exception, match="Invalid argument type for 2nd argument"):
+            with ds.ExecuteSQL("SELECT ST_Hilbert(geom, NULL) FROM test") as sql_lyr:
+                pass

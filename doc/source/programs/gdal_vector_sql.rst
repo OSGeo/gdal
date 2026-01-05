@@ -27,16 +27,28 @@ Starting with GDAL 3.12, when using :option:`--update`, and without an output
 dataset specified, this can be used to execute statements that modify
 the input dataset, such as UPDATE, DELETE, etc.
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_vector.rst
+.. include:: gdal_cli_include/gdalg_vector_compatible.rst
 
-.. include:: gdal_options/co_vector.rst
+Program-Specific Options
+------------------------
 
-.. include:: options/lco.rst
+.. option:: --output-layer <OUTPUT-LAYER>
 
-.. include:: gdal_options/overwrite.rst
+    Output SQL layer name(s). If not specified, a generic layer name such as
+    "SELECT" may be generated.
+
+    Must be specified as many times as there are SQL statements, either as
+    several --output-layer arguments, or a single one with the layer names
+    combined with comma.
+
+.. option:: --quiet
+
+    .. versionadded:: 3.12
+
+    Silence potential information messages.
 
 .. option:: --sql <sql_statement>|@<filename>
 
@@ -49,39 +61,35 @@ Standard options
 .. include:: gdal_options/sql_dialect.rst
 
 
-.. option:: --output-layer <OUTPUT-LAYER>
+Standard Options
+----------------
 
-    Output SQL layer name(s). If not specified, a generic layer name such as
-    "SELECT" may be generated.
+.. collapse:: Details
 
-    Must be specified as many times as there are SQL statements, either as
-    several --output-layer arguments, or a single one with the layer names
-    combined with comma.
+    .. include:: gdal_options/append_vector.rst
 
-.. option:: --update
+    .. include:: gdal_options/co_vector.rst
 
-    .. versionadded:: 3.12
+    .. include:: gdal_options/if.rst
 
-    Open the (input) dataset in update mode. This option is mutually exclusive
-    with specifying an output dataset.
+    .. include:: gdal_options/lco.rst
 
-.. option:: --quiet
+    .. include:: gdal_options/oo.rst
 
-    .. versionadded:: 3.12
+    .. include:: gdal_options/of_vector.rst
 
-    Silence potential information messages.
+    .. include:: gdal_options/output_oo.rst
 
-Advanced options
-++++++++++++++++
+    .. include:: gdal_options/overwrite.rst
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/overwrite_layer.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/skip_errors.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/update.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+    .. include:: gdal_options/upsert.rst
+
 
 Examples
 --------

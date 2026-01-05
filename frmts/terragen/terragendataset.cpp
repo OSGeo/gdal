@@ -173,7 +173,7 @@ class TerragenDataset final : public GDALPamDataset
 
     bool skip(size_t n)
     {
-        return 0 == VSIFSeekL(m_fp, n, SEEK_CUR);
+        return 0 == VSIFSeekL(m_fp, static_cast<vsi_l_offset>(n), SEEK_CUR);
     }
 
     bool pad(size_t n)
@@ -257,10 +257,12 @@ CPLErr TerragenRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
      -------------------------------------------------------------------- */
     const size_t rowbytes = nBlockXSize * sizeof(GInt16);
 
-    if (0 != VSIFSeekL(ds.m_fp,
-                       ds.m_nDataOffset +
-                           (ds.GetRasterYSize() - 1 - nBlockYOff) * rowbytes,
-                       SEEK_SET))
+    if (0 !=
+        VSIFSeekL(ds.m_fp,
+                  ds.m_nDataOffset + static_cast<vsi_l_offset>(
+                                         ds.GetRasterYSize() - 1 - nBlockYOff) *
+                                         rowbytes,
+                  SEEK_SET))
     {
         CPLError(CE_Failure, CPLE_FileIO, "Terragen Seek failed:%s",
                  VSIStrerror(errno));
@@ -353,7 +355,9 @@ CPLErr TerragenRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
     if (0 == VSIFSeekL(ds.m_fp,
                        ds.m_nDataOffset +
                            // Terragen is Y inverted.
-                           (ds.GetRasterYSize() - 1 - nBlockYOff) * rowbytes,
+                           static_cast<vsi_l_offset>(ds.GetRasterYSize() - 1 -
+                                                     nBlockYOff) *
+                               rowbytes,
                        SEEK_SET))
     {
         // Convert each float32 to int16.

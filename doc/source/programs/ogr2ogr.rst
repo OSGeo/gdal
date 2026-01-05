@@ -23,6 +23,20 @@ formats. It can also perform various operations during the process, such as
 spatial or attribute selection, reducing the set of attributes, setting the
 output coordinate system or even reprojecting the features during translation.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    * :ref:`gdal_vector_clip` for spatial subsetting
+    * :ref:`gdal_vector_convert` for format translation
+    * :ref:`gdal_vector_explode_collections` to explode geometries of type collection
+    * :ref:`gdal_vector_make_valid` to fix geometry validity
+    * :ref:`gdal_vector_reproject` for reprojection
+    * :ref:`gdal_vector_segmentize` to segmentize geometries
+    * :ref:`gdal_vector_select` to select a subset of fields
+    * :ref:`gdal_vector_set_field_type` to change the type of an attribute field
+    * :ref:`gdal_vector_set_geom_type` to change the type of a geometry field
+    * :ref:`gdal_vector_simplify` to simplify geometries
+    * :ref:`gdal_vector_sql` to run SQL query
+
 .. program:: ogr2ogr
 
 .. include:: options/help_and_help_general.rst

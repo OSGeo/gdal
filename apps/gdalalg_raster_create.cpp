@@ -27,25 +27,24 @@
 /*           GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm()     */
 /************************************************************************/
 
-GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm(
+    bool standaloneStep) noexcept
+    : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      ConstructorOptions()
+                                          .SetStandaloneStep(standaloneStep)
+                                          .SetAddDefaultArguments(false)
+                                          .SetAutoOpenInputDatasets(true)
+                                          .SetInputDatasetAlias("like")
+                                          .SetInputDatasetRequired(false)
+                                          .SetInputDatasetMaxCount(1))
 {
-    AddProgressArg();
-    AddOutputFormatArg(&m_outputFormat)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE});
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER, false).AddAlias("like");
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
-    AddCreationOptionsArg(&m_creationOptions);
-    const char *exclusionGroup = "overwrite-append";
-    AddOverwriteArg(&m_overwrite).SetMutualExclusionGroup(exclusionGroup);
-    AddArg(GDAL_ARG_NAME_APPEND, 0,
-           _("Append as a subdataset to existing output"), &m_append)
-        .SetDefault(false)
-        .SetMutualExclusionGroup(exclusionGroup);
+    AddRasterInputArgs(false, false);
+    if (standaloneStep)
+    {
+        AddProgressArg();
+        AddRasterOutputArgs(false);
+    }
+
     AddArg("size", 0, _("Output size in pixels"), &m_size)
         .SetMinCount(2)
         .SetMaxCount(2)
@@ -81,29 +80,48 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm()
 }
 
 /************************************************************************/
-/*                  GDALRasterCreateAlgorithm::RunImpl()                */
+/*                  GDALRasterCreateAlgorithm::RunImpl()                  */
 /************************************************************************/
 
-bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc /* pfnProgress */,
-                                        void * /*pProgressData */)
+bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                        void *pProgressData)
+{
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunPreStepPipelineValidations() && RunStep(stepCtxt);
+}
+
+/************************************************************************/
+/*                  GDALRasterCreateAlgorithm::RunStep()                */
+/************************************************************************/
+
+bool GDALRasterCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
-    if (m_outputFormat.empty())
+    if (m_standaloneStep)
     {
-        const auto aosFormats =
-            CPLStringList(GDALGetOutputDriversForDatasetName(
-                m_outputDataset.GetName().c_str(), GDAL_OF_RASTER,
-                /* bSingleMatch = */ true,
-                /* bWarn = */ true));
-        if (aosFormats.size() != 1)
+        if (m_format.empty())
         {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Cannot guess driver for %s",
-                        m_outputDataset.GetName().c_str());
-            return false;
+            const auto aosFormats =
+                CPLStringList(GDALGetOutputDriversForDatasetName(
+                    m_outputDataset.GetName().c_str(), GDAL_OF_RASTER,
+                    /* bSingleMatch = */ true,
+                    /* bWarn = */ true));
+            if (aosFormats.size() != 1)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Cannot guess driver for %s",
+                            m_outputDataset.GetName().c_str());
+                return false;
+            }
+            m_format = aosFormats[0];
         }
-        m_outputFormat = aosFormats[0];
+    }
+    else
+    {
+        m_format = "MEM";
     }
 
     OGRSpatialReference oSRS;
@@ -111,7 +129,9 @@ bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc /* pfnProgress */,
     GDALGeoTransform gt;
     bool bGTValid = false;
 
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    GDALDataset *poSrcDS = m_inputDataset.empty()
+                               ? nullptr
+                               : m_inputDataset.front().GetDatasetRef();
     if (poSrcDS)
     {
         if (m_size.empty())
@@ -182,17 +202,16 @@ bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc /* pfnProgress */,
         return false;
     }
 
-    auto poDriver =
-        GetGDALDriverManager()->GetDriverByName(m_outputFormat.c_str());
+    auto poDriver = GetGDALDriverManager()->GetDriverByName(m_format.c_str());
     if (!poDriver)
     {
         // shouldn't happen given checks done in GDALAlgorithm
         ReportError(CE_Failure, CPLE_AppDefined, "Cannot find driver %s",
-                    m_outputFormat.c_str());
+                    m_format.c_str());
         return false;
     }
 
-    if (m_append)
+    if (m_appendRaster)
     {
         if (poDriver->GetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS) == nullptr)
         {
@@ -403,5 +422,8 @@ bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc /* pfnProgress */,
 
     return true;
 }
+
+GDALRasterCreateAlgorithmStandalone::~GDALRasterCreateAlgorithmStandalone() =
+    default;
 
 //! @endcond

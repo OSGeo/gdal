@@ -127,7 +127,13 @@ def parseOGRGeneralOptions():
 
 def getCompletionScript(name, optList):
     output = []
-    output.append("_" + name + "()\n")
+
+    if name.endswith(".py"):
+        func_name = name[0:-3]
+    else:
+        func_name = name
+
+    output.append("_" + func_name + "()\n")
     output.append("{\n")
     output.append("  COMPREPLY=()\n")
     output.append('  cur="${COMP_WORDS[$COMP_CWORD]}"\n')
@@ -230,7 +236,9 @@ def getCompletionScript(name, optList):
 
     output.append("  return 0\n")
     output.append("}\n")
-    output.append("complete -o default -F _" + name + " " + name + "\n")
+    output.append("complete -o default -F _" + func_name + " " + name + "\n")
+    if name.endswith(".py"):
+        output.append("complete -o default -F _" + func_name + " " + name[0:-3] + "\n")
 
     return output
 

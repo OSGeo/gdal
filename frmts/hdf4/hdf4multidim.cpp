@@ -979,7 +979,7 @@ class HDF4GRPalette final : public GDALAttribute
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4GRHandle> m_poGRHandle;
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
-    GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Byte);
+    GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_UInt8);
     int32 m_iPal = 0;
     int32 m_nValues = 0;
 
@@ -3191,7 +3191,7 @@ bool HDF4GRPalette::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
     GByte *pabyDstBuffer = static_cast<GByte *>(pDstBuffer);
     const size_t nBufferDataTypeSize = bufferDataType.GetSize();
-    const auto srcDt(GDALExtendedDataType::Create(GDT_Byte));
+    const auto srcDt(GDALExtendedDataType::Create(GDT_UInt8));
     for (size_t i = 0; i < count[0]; ++i)
     {
         size_t idx = static_cast<size_t>(arrayStartIdx[0] + i * arrayStep[0]);

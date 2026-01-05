@@ -1077,7 +1077,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
     int bHasAOI = FALSE;
     OGREnvelope sAOI;
     int nBands = 4;
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     CPLString osProjection;
     CPLString osExtraQueryParameters;
 

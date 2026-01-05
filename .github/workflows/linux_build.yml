@@ -186,7 +186,7 @@ jobs:
           sudo sysctl vm.mmap_rnd_bits=28
 
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Login to Docker Hub
         if: env.CONTAINER_REGISTRY == 'docker.io'
@@ -372,7 +372,7 @@ jobs:
             ${TEST_CMD}
 
       - name: Coveralls
-        uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
+        uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
         if: ${{ matrix.id == 'coverage' }}
         with:
           format: lcov
@@ -387,14 +387,14 @@ jobs:
           docker push ${CONTAINER_NAME_FULL}
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: ${{ matrix.id == 'coverage' }}
         with:
           name: coverage_index.html
           path: build-${{ matrix.id }}/coverage_html/index.html
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: ${{ matrix.id == 'coverage' }}
         with:
           name: HTML

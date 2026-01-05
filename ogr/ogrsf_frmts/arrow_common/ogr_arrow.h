@@ -376,7 +376,7 @@ class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
         OGRArrowDataset::Close();
     }
 
-    CPLErr Close() override
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override
     {
         m_poLayer.reset();
         m_poMemoryPool.reset();
@@ -479,6 +479,8 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
 #if ARROW_VERSION_MAJOR >= 21
     bool m_bUseArrowWKBExtension = false;
 #endif
+
+    CPLStringList m_aosCreationOptions{};
 
     static OGRArrowGeomEncoding
     GetPreciseArrowGeomEncoding(OGRArrowGeomEncoding eEncodingType,

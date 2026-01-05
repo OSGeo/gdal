@@ -45,14 +45,13 @@ GDALJP2Box::~GDALJP2Box()
 {
     // Do not close fpVSIL. Ownership remains to the caller of GDALJP2Box
     // constructor
-    CPLFree(pabyData);
 }
 
 /************************************************************************/
 /*                             SetOffset()                              */
 /************************************************************************/
 
-int GDALJP2Box::SetOffset(GIntBig nNewOffset)
+int GDALJP2Box::SetOffset(vsi_l_offset nNewOffset)
 
 {
     szBoxType[0] = '\0';
@@ -168,7 +167,8 @@ int GDALJP2Box::ReadBox()
         if (VSIFSeekL(fpVSIL, 0, SEEK_END) != 0)
             return FALSE;
         nBoxLength = VSIFTellL(fpVSIL) - nBoxOffset;
-        if (VSIFSeekL(fpVSIL, nDataOffset, SEEK_SET) != 0)
+        if (VSIFSeekL(fpVSIL, static_cast<vsi_l_offset>(nDataOffset),
+                      SEEK_SET) != 0)
             return FALSE;
     }
 
@@ -217,7 +217,8 @@ GByte *GDALJP2Box::ReadBoxData()
         return nullptr;
     }
 
-    if (VSIFSeekL(fpVSIL, nDataOffset, SEEK_SET) != 0)
+    if (VSIFSeekL(fpVSIL, static_cast<vsi_l_offset>(nDataOffset), SEEK_SET) !=
+        0)
         return nullptr;
 
     char *pszData = static_cast<char *>(
@@ -326,12 +327,13 @@ void GDALJP2Box::SetType(const char *pszType)
 
 GByte *GDALJP2Box::GetWritableBoxData() const
 {
+    CPLAssert(static_cast<GUInt32>(nBoxLength) == 8 + abyData.size());
     GByte *pabyRet =
         static_cast<GByte *>(CPLMalloc(static_cast<GUInt32>(nBoxLength)));
     const GUInt32 nLBox = CPL_MSBWORD32(static_cast<GUInt32>(nBoxLength));
     memcpy(pabyRet, &nLBox, sizeof(GUInt32));
     memcpy(pabyRet + 4, szBoxType, 4);
-    memcpy(pabyRet + 8, pabyData, static_cast<GUInt32>(nBoxLength) - 8);
+    memcpy(pabyRet + 8, abyData.data(), abyData.size());
     return pabyRet;
 }
 
@@ -342,10 +344,7 @@ GByte *GDALJP2Box::GetWritableBoxData() const
 void GDALJP2Box::SetWritableData(int nLength, const GByte *pabyDataIn)
 
 {
-    CPLFree(pabyData);
-
-    pabyData = static_cast<GByte *>(CPLMalloc(nLength));
-    memcpy(pabyData, pabyDataIn, nLength);
+    abyData.assign(pabyDataIn, pabyDataIn + nLength);
 
     nBoxOffset = -9;  // Virtual offsets for data length computation.
     nDataOffset = -1;
@@ -360,16 +359,15 @@ void GDALJP2Box::SetWritableData(int nLength, const GByte *pabyDataIn)
 void GDALJP2Box::AppendWritableData(int nLength, const void *pabyDataIn)
 
 {
-    if (pabyData == nullptr)
+    if (abyData.empty())
     {
         nBoxOffset = -9;  // Virtual offsets for data length computation.
         nDataOffset = -1;
         nBoxLength = 8;
     }
 
-    pabyData = static_cast<GByte *>(
-        CPLRealloc(pabyData, static_cast<size_t>(GetDataLength() + nLength)));
-    memcpy(pabyData + GetDataLength(), pabyDataIn, nLength);
+    abyData.insert(abyData.end(), static_cast<const GByte *>(pabyDataIn),
+                   static_cast<const GByte *>(pabyDataIn) + nLength);
 
     nBoxLength += nLength;
 }
@@ -461,8 +459,8 @@ GDALJP2Box *GDALJP2Box::CreateSuperBox(const char *pszType, int nCount,
         memcpy(pabyNext, papoBoxes[iBox]->szBoxType, 4);
         pabyNext += 4;
 
-        memcpy(pabyNext, papoBoxes[iBox]->pabyData,
-               static_cast<int>(papoBoxes[iBox]->GetDataLength()));
+        memcpy(pabyNext, papoBoxes[iBox]->abyData.data(),
+               papoBoxes[iBox]->abyData.size());
         pabyNext += papoBoxes[iBox]->GetDataLength();
     }
 

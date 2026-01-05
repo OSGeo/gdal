@@ -67,7 +67,9 @@ HFAEntry *HFAEntry::New(HFAInfo_t *psHFAIn, GUInt32 nPos, HFAEntry *poParentIn,
     // Read the entry information from the file.
     GInt32 anEntryNums[6] = {};
 
-    if (VSIFSeekL(poEntry->psHFA->fp, poEntry->nFilePos, SEEK_SET) == -1 ||
+    if (VSIFSeekL(poEntry->psHFA->fp,
+                  static_cast<vsi_l_offset>(poEntry->nFilePos),
+                  SEEK_SET) == -1 ||
         VSIFReadL(anEntryNums, sizeof(GInt32) * 6, 1, poEntry->psHFA->fp) < 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -425,7 +427,7 @@ void HFAEntry::LoadData()
         return;
     }
 
-    if (VSIFSeekL(psHFA->fp, nDataPos, SEEK_SET) < 0)
+    if (VSIFSeekL(psHFA->fp, static_cast<vsi_l_offset>(nDataPos), SEEK_SET) < 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "VSIFSeekL() failed in HFAEntry::LoadData().");
@@ -869,8 +871,11 @@ void HFAEntry::SetPosition()
     // Establish the location of this entry, and its data.
     if (nFilePos == 0)
     {
-        nFilePos =
+        const auto nFilePos64 =
             HFAAllocateSpace(psHFA, psHFA->nEntryHeaderLength + nDataSize);
+        if (nFilePos64 >= static_cast<unsigned>(INT_MAX))
+            return;
+        nFilePos = static_cast<int>(nFilePos64);
 
         if (nDataSize > 0)
             nDataPos = nFilePos + psHFA->nEntryHeaderLength;
@@ -912,7 +917,8 @@ CPLErr HFAEntry::FlushToDisk()
         // Write the Ehfa_Entry fields.
 
         // VSIFFlushL(psHFA->fp);
-        if (VSIFSeekL(psHFA->fp, nFilePos, SEEK_SET) != 0)
+        if (VSIFSeekL(psHFA->fp, static_cast<vsi_l_offset>(nFilePos),
+                      SEEK_SET) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed to seek to %d for writing, out of disk space?",
@@ -967,7 +973,8 @@ CPLErr HFAEntry::FlushToDisk()
         // VSIFFlushL(psHFA->fp);
         if (nDataSize > 0 && pabyData != nullptr)
         {
-            if (VSIFSeekL(psHFA->fp, nDataPos, SEEK_SET) != 0 ||
+            if (VSIFSeekL(psHFA->fp, static_cast<vsi_l_offset>(nDataPos),
+                          SEEK_SET) != 0 ||
                 VSIFWriteL(pabyData, nDataSize, 1, psHFA->fp) != 1)
             {
                 CPLError(CE_Failure, CPLE_FileIO,

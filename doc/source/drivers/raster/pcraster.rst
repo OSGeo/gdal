@@ -40,7 +40,7 @@ and cell representation is determined according to the following rules:
 
 =============== =================== ==========================
 Source type     Target value scale  Target cell representation
-GDT_Byte        VS_BOOLEAN          CR_UINT1
+GDT_UInt8       VS_BOOLEAN          CR_UINT1
 GDT_Int32       VS_NOMINAL          CR_INT4
 GDT_Float32     VS_SCALAR           CR_REAL4
 GDT_Float64     VS_SCALAR           CR_REAL4

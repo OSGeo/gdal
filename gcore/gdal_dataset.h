@@ -223,7 +223,12 @@ class CPL_DLL GDALDataset : public GDALMajorObject
   public:
     ~GDALDataset() override;
 
-    virtual CPLErr Close();
+    virtual CPLErr Close(GDALProgressFunc pfnProgress = nullptr,
+                         void *pProgressData = nullptr);
+
+    virtual bool GetCloseReportsProgress() const;
+
+    virtual bool CanReopenWithCurrentDescription() const;
 
     int GetRasterXSize() const;
     int GetRasterYSize() const;
@@ -510,6 +515,31 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual CPLErr AddOverviews(const std::vector<GDALDataset *> &apoSrcOvrDS,
                                 GDALProgressFunc pfnProgress,
                                 void *pProgressData, CSLConstList papszOptions);
+
+    CPLErr GetInterBandCovarianceMatrix(
+        double *padfCovMatrix, size_t nSize, int nBandCount = 0,
+        const int *panBandList = nullptr, bool bApproxOK = false,
+        bool bForce = false, bool bWriteIntoMetadata = true,
+        int nDeltaDegreeOfFreedom = 1, GDALProgressFunc pfnProgress = nullptr,
+        void *pProgressData = nullptr);
+
+    std::vector<double> GetInterBandCovarianceMatrix(
+        int nBandCount = 0, const int *panBandList = nullptr,
+        bool bApproxOK = false, bool bForce = false,
+        bool bWriteIntoMetadata = true, int nDeltaDegreeOfFreedom = 1,
+        GDALProgressFunc pfnProgress = nullptr, void *pProgressData = nullptr);
+
+    CPLErr ComputeInterBandCovarianceMatrix(
+        double *padfCovMatrix, size_t nSize, int nBandCount = 0,
+        const int *panBandList = nullptr, bool bApproxOK = false,
+        bool bWriteIntoMetadata = true, int nDeltaDegreeOfFreedom = 1,
+        GDALProgressFunc pfnProgress = nullptr, void *pProgressData = nullptr);
+
+    std::vector<double> ComputeInterBandCovarianceMatrix(
+        int nBandCount = 0, const int *panBandList = nullptr,
+        bool bApproxOK = false, bool bWriteIntoMetadata = true,
+        int nDeltaDegreeOfFreedom = 1, GDALProgressFunc pfnProgress = nullptr,
+        void *pProgressData = nullptr);
 
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,

@@ -479,7 +479,7 @@ CPLErr MRFDataset::PatchOverview(int BlockX, int BlockY, int Width, int Height,
 
                     switch (eDataType)
                     {
-                        case GDT_Byte:
+                        case GDT_UInt8:
                             resample(GByte);
                         case GDT_Int8:
                             resample(GInt8);
@@ -524,7 +524,7 @@ CPLErr MRFDataset::PatchOverview(int BlockX, int BlockY, int Width, int Height,
     break;
                     switch (eDataType)
                     {
-                        case GDT_Byte:
+                        case GDT_UInt8:
                             resample(GByte);
                         case GDT_Int8:
                             resample(GInt8);

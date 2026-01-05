@@ -105,8 +105,16 @@
  * surface or ground level respectively. Parameters dfTargetHeight, dfVisibleVal
  * and dfInvisibleVal will be ignored.
  *
- *
- * @param papszExtraOptions Future extra options. Must be set to NULL currently.
+ * @param papszExtraOptions Extra options to control the viewshed analysis.
+ * This is a NULL-terminated list of strings in "KEY=VALUE" format, or NULL for no options.
+ * The following keys are supported:
+ * <ul>
+ * <li><b>START_ANGLE</b>: Mask all cells outside of the arc ('start-angle', 'end-angle'). Clockwise degrees from north. Also used to clamp the extent of the output raster.</li>
+ * <li><b>END_ANGLE</b>:  Mask all cells outside of the arc ('start-angle', 'end-angle'). Clockwise degrees from north. Also used to clamp the extent of the output raster.</li>
+ * <li><b>LOW_PITCH</b>: Bound observable height to be no lower than the 'low-pitch' angle from the observer. Degrees from horizontal - positive is up. Must be less than 'high-pitch'.</li>
+ * <li><b>HIGH_PITCH</b>: Mark all cells out-of-range where the observable height would be higher than the 'high-pitch' angle from the observer. Degrees from horizontal - positive is up. Must be greater than 'low-pitch'.</li>
+ * </ul>
+ * If NULL, a 360-degree viewshed is calculated.
  *
  * @return not NULL output dataset on success (to be closed with GDALClose()) or
  * NULL if an error occurs.
@@ -187,6 +195,24 @@ GDALDatasetH GDALViewshedGenerate(
     oOpts.visibleVal = dfVisibleVal;
     oOpts.invisibleVal = dfInvisibleVal;
     oOpts.outOfRangeVal = dfOutOfRangeVal;
+
+    const char *pszStartAngle =
+        CSLFetchNameValue(papszExtraOptions, "START_ANGLE");
+    if (pszStartAngle)
+        oOpts.startAngle = CPLAtof(pszStartAngle);
+
+    const char *pszEndAngle = CSLFetchNameValue(papszExtraOptions, "END_ANGLE");
+    if (pszEndAngle)
+        oOpts.endAngle = CPLAtof(pszEndAngle);
+
+    const char *pszLowPitch = CSLFetchNameValue(papszExtraOptions, "LOW_PITCH");
+    if (pszLowPitch)
+        oOpts.lowPitch = CPLAtof(pszLowPitch);
+
+    const char *pszHighPitch =
+        CSLFetchNameValue(papszExtraOptions, "HIGH_PITCH");
+    if (pszHighPitch)
+        oOpts.highPitch = CPLAtof(pszHighPitch);
 
     gdal::viewshed::Viewshed v(oOpts);
 

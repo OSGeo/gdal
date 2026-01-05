@@ -510,7 +510,7 @@ static void InvertGeometries(GDALDatasetH hDstDS,
 /************************************************************************/
 
 static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
-                           GDALDatasetH hDstDS,
+                           GDALDataset *poDstDS,
                            const std::vector<int> &anBandList,
                            const std::vector<double> &adfBurnValues, bool b3D,
                            bool bInverse, const std::string &osBurnAttribute,
@@ -519,6 +519,8 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
                            void *pProgressData)
 
 {
+    GDALDatasetH hDstDS = GDALDataset::ToHandle(poDstDS);
+
     /* -------------------------------------------------------------------- */
     /*      Checkout that SRS are the same.                                 */
     /*      If -a_srs is specified, skip the test                           */
@@ -771,7 +773,7 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
 /*                  CreateOutputDataset()                               */
 /************************************************************************/
 
-static GDALDatasetH CreateOutputDataset(
+static std::unique_ptr<GDALDataset> CreateOutputDataset(
     const std::vector<OGRLayerH> &ahLayers, OGRSpatialReferenceH hSRS,
     OGREnvelope sEnvelop, GDALDriverH hDriver, const char *pszDest, int nXSize,
     int nYSize, double dfXRes, double dfYRes, bool bTargetAlignedPixels,
@@ -779,7 +781,6 @@ static GDALDatasetH CreateOutputDataset(
     const std::vector<double> &adfInitVals, const char *pszNoData)
 {
     bool bFirstLayer = true;
-    char *pszWKT = nullptr;
     const bool bBoundsSpecifiedByUser = sEnvelop.IsInit();
 
     for (unsigned int i = 0; i < ahLayers.size(); i++)
@@ -850,9 +851,6 @@ static GDALDatasetH CreateOutputDataset(
         return nullptr;
     }
 
-    double adfProjection[6] = {sEnvelop.MinX, dfXRes, 0.0,
-                               sEnvelop.MaxY, 0.0,    -dfYRes};
-
     if (nXSize == 0 && nYSize == 0)
     {
         // coverity[divide_by_zero]
@@ -873,43 +871,32 @@ static GDALDatasetH CreateOutputDataset(
         nYSize = static_cast<int>(dfYSize);
     }
 
-    GDALDatasetH hDstDS =
-        GDALCreate(hDriver, pszDest, nXSize, nYSize, nBandCount, eOutputType,
-                   papszCreationOptions);
-    if (hDstDS == nullptr)
+    auto poDstDS =
+        std::unique_ptr<GDALDataset>(GDALDriver::FromHandle(hDriver)->Create(
+            pszDest, nXSize, nYSize, nBandCount, eOutputType,
+            papszCreationOptions));
+    if (poDstDS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create %s", pszDest);
         return nullptr;
     }
 
-    GDALSetGeoTransform(hDstDS, adfProjection);
+    GDALGeoTransform gt = {sEnvelop.MinX, dfXRes, 0.0,
+                           sEnvelop.MaxY, 0.0,    -dfYRes};
+    poDstDS->SetGeoTransform(gt);
 
     if (hSRS)
-        OSRExportToWkt(hSRS, &pszWKT);
-    if (pszWKT)
-        GDALSetProjection(hDstDS, pszWKT);
-    CPLFree(pszWKT);
-
-    /*if( nBandCount == 3 || nBandCount == 4 )
-    {
-        for( int iBand = 0; iBand < nBandCount; iBand++ )
-        {
-            GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, iBand + 1);
-            GDALSetRasterColorInterpretation(hBand,
-    (GDALColorInterp)(GCI_RedBand + iBand));
-        }
-    }*/
+        poDstDS->SetSpatialRef(OGRSpatialReference::FromHandle(hSRS));
 
     if (pszNoData)
     {
         for (int iBand = 0; iBand < nBandCount; iBand++)
         {
-            GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, iBand + 1);
-            if (GDALGetRasterDataType(hBand) == GDT_Int64)
-                GDALSetRasterNoDataValueAsInt64(hBand,
-                                                CPLAtoGIntBig(pszNoData));
+            auto poBand = poDstDS->GetRasterBand(iBand + 1);
+            if (poBand->GetRasterDataType() == GDT_Int64)
+                poBand->SetNoDataValueAsInt64(CPLAtoGIntBig(pszNoData));
             else
-                GDALSetRasterNoDataValue(hBand, CPLAtof(pszNoData));
+                poBand->SetNoDataValue(CPLAtof(pszNoData));
         }
     }
 
@@ -919,12 +906,12 @@ static GDALDatasetH CreateOutputDataset(
              iBand < std::min(nBandCount, static_cast<int>(adfInitVals.size()));
              iBand++)
         {
-            GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, iBand + 1);
-            GDALFillRaster(hBand, adfInitVals[iBand], 0);
+            auto poBand = poDstDS->GetRasterBand(iBand + 1);
+            poBand->Fill(adfInitVals[iBand]);
         }
     }
 
-    return hDstDS;
+    return poDstDS;
 }
 
 /************************************************************************/
@@ -961,7 +948,9 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
                            const GDALRasterizeOptions *psOptionsIn,
                            int *pbUsageError)
 {
-    if (pszDest == nullptr && hDstDS == nullptr)
+    GDALDataset *poOutDS = GDALDataset::FromHandle(hDstDS);
+#define hDstDS no_longer_use_hDstDS
+    if (pszDest == nullptr && poOutDS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "pszDest == NULL && hDstDS == NULL");
@@ -978,7 +967,7 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
             *pbUsageError = TRUE;
         return nullptr;
     }
-    if (hDstDS != nullptr && psOptionsIn && psOptionsIn->bCreateOutput)
+    if (poOutDS != nullptr && psOptionsIn && psOptionsIn->bCreateOutput)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "hDstDS != NULL but options that imply creating a new dataset "
@@ -995,9 +984,9 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
     if (psOptionsIn)
         sOptions = *psOptionsIn;
 
-    const bool bCloseOutDSOnError = hDstDS == nullptr;
+    std::unique_ptr<GDALDataset> poNewOutDS;
     if (pszDest == nullptr)
-        pszDest = GDALGetDescription(hDstDS);
+        pszDest = poOutDS->GetDescription();
 
     if (sOptions.osSQL.empty() && sOptions.aosLayers.empty() &&
         GDALDatasetGetLayerCount(hSrcDataset) != 1)
@@ -1014,7 +1003,7 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
     /*      Open target raster file.  Eventually we will add optional       */
     /*      creation.                                                       */
     /* -------------------------------------------------------------------- */
-    const bool bCreateOutput = sOptions.bCreateOutput || hDstDS == nullptr;
+    const bool bCreateOutput = sOptions.bCreateOutput || poOutDS == nullptr;
 
     GDALDriverH hDriver = nullptr;
     if (bCreateOutput)
@@ -1176,10 +1165,6 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
 
         if (eErr == CE_Failure)
         {
-            if (bCloseOutDSOnError && hDstDS)
-            {
-                GDALClose(hDstDS);
-            }
             return nullptr;
         }
     }
@@ -1258,25 +1243,36 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
                 ahLayers.push_back(hLayer);
 
                 const GDALDataType eOutputType = GetOutputDataType(hLayer);
-                hDstDS = CreateOutputDataset(
+                poNewOutDS = CreateOutputDataset(
                     ahLayers, hSRS, sOptions.sEnvelop, hDriver, pszDest,
                     sOptions.nXSize, sOptions.nYSize, sOptions.dfXRes,
                     sOptions.dfYRes, sOptions.bTargetAlignedPixels,
                     static_cast<int>(sOptions.anBandList.size()), eOutputType,
                     sOptions.aosCreationOptions, sOptions.adfInitVals,
                     sOptions.osNoData.c_str());
-                if (hDstDS == nullptr)
+                if (poNewOutDS == nullptr)
                 {
                     GDALDatasetReleaseResultSet(hSrcDataset, hLayer);
                     return nullptr;
                 }
+                poOutDS = poNewOutDS.get();
             }
 
+            const bool bCloseReportsProgress =
+                bCreateOutput && poOutDS->GetCloseReportsProgress();
+
+            std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+                pScaledProgressArg(GDALCreateScaledProgress(
+                                       0.0, bCloseReportsProgress ? 0.5 : 1.0,
+                                       sOptions.pfnProgress,
+                                       sOptions.pProgressData),
+                                   GDALDestroyScaledProgress);
+
             eErr = ProcessLayer(
-                hLayer, hSRS != nullptr, hDstDS, sOptions.anBandList,
+                hLayer, hSRS != nullptr, poOutDS, sOptions.anBandList,
                 sOptions.adfBurnValues, sOptions.b3D, sOptions.bInverse,
                 sOptions.osBurnAttribute.c_str(), sOptions.aosRasterizeOptions,
-                sOptions.aosTO, sOptions.pfnProgress, sOptions.pProgressData);
+                sOptions.aosTO, GDALScaledProgress, pScaledProgressArg.get());
 
             GDALDatasetReleaseResultSet(hSrcDataset, hLayer);
         }
@@ -1286,7 +1282,7 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
     /*      Create output file if necessary.                                */
     /* -------------------------------------------------------------------- */
 
-    if (bCreateOutput && hDstDS == nullptr)
+    if (bCreateOutput && poOutDS == nullptr)
     {
         std::vector<OGRLayerH> ahLayers;
 
@@ -1323,18 +1319,22 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
             eOutputType = GDT_Float64;
         }
 
-        hDstDS = CreateOutputDataset(
+        poNewOutDS = CreateOutputDataset(
             ahLayers, hSRS, sOptions.sEnvelop, hDriver, pszDest,
             sOptions.nXSize, sOptions.nYSize, sOptions.dfXRes, sOptions.dfYRes,
             sOptions.bTargetAlignedPixels,
             static_cast<int>(sOptions.anBandList.size()), eOutputType,
             sOptions.aosCreationOptions, sOptions.adfInitVals,
             sOptions.osNoData.c_str());
-        if (hDstDS == nullptr)
+        if (poNewOutDS == nullptr)
         {
             return nullptr;
         }
+        poOutDS = poNewOutDS.get();
     }
+
+    const bool bCloseReportsProgress =
+        bCreateOutput && poOutDS->GetCloseReportsProgress();
 
     /* -------------------------------------------------------------------- */
     /*      Process each layer.                                             */
@@ -1369,29 +1369,74 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
             }
         }
 
-        void *pScaledProgress = GDALCreateScaledProgress(
-            0.0, 1.0 * (i + 1) / nLayerCount, sOptions.pfnProgress,
-            sOptions.pProgressData);
+        const double dfFactor = bCloseReportsProgress ? 0.5 : 1.0;
 
-        eErr = ProcessLayer(
-            hLayer, !sOptions.oOutputSRS.IsEmpty(), hDstDS, sOptions.anBandList,
-            sOptions.adfBurnValues, sOptions.b3D, sOptions.bInverse,
-            sOptions.osBurnAttribute.c_str(), sOptions.aosRasterizeOptions,
-            sOptions.aosTO, GDALScaledProgress, pScaledProgress);
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+            pScaledProgressArg(
+                GDALCreateScaledProgress(dfFactor * i / nLayerCount,
+                                         dfFactor * (i + 1) / nLayerCount,
+                                         sOptions.pfnProgress,
+                                         sOptions.pProgressData),
+                GDALDestroyScaledProgress);
 
-        GDALDestroyScaledProgress(pScaledProgress);
+        eErr = ProcessLayer(hLayer, !sOptions.oOutputSRS.IsEmpty(), poOutDS,
+                            sOptions.anBandList, sOptions.adfBurnValues,
+                            sOptions.b3D, sOptions.bInverse,
+                            sOptions.osBurnAttribute.c_str(),
+                            sOptions.aosRasterizeOptions, sOptions.aosTO,
+                            GDALScaledProgress, pScaledProgressArg.get());
         if (eErr != CE_None)
             break;
     }
 
     if (eErr != CE_None)
     {
-        if (bCloseOutDSOnError)
-            GDALClose(hDstDS);
         return nullptr;
     }
 
-    return hDstDS;
+    if (bCloseReportsProgress)
+    {
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+            pScaledProgressArg(GDALCreateScaledProgress(0.5, 1.0,
+                                                        sOptions.pfnProgress,
+                                                        sOptions.pProgressData),
+                               GDALDestroyScaledProgress);
+
+        const bool bCanReopenWithCurrentDescription =
+            poOutDS->CanReopenWithCurrentDescription();
+
+        eErr = poOutDS->Close(GDALScaledProgress, pScaledProgressArg.get());
+        poOutDS = nullptr;
+        if (eErr != CE_None)
+            return nullptr;
+
+        if (bCanReopenWithCurrentDescription)
+        {
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                poNewOutDS.reset(
+                    GDALDataset::Open(pszDest, GDAL_OF_RASTER | GDAL_OF_UPDATE,
+                                      nullptr, nullptr, nullptr));
+            }
+            if (!poNewOutDS)
+            {
+                poNewOutDS.reset(GDALDataset::Open(
+                    pszDest, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, nullptr,
+                    nullptr, nullptr));
+            }
+        }
+        else
+        {
+            struct DummyDataset final : public GDALDataset
+            {
+                DummyDataset() = default;
+            };
+
+            poNewOutDS = std::make_unique<DummyDataset>();
+        }
+    }
+
+    return poNewOutDS ? poNewOutDS.release() : poOutDS;
 }
 
 /************************************************************************/

@@ -104,8 +104,8 @@ MMRDataset::MMRDataset(GDALOpenInfo *poOpenInfo)
         if (!CreateRasterBands())
             return;
 
-        // Fills adfGeoTransform if documented. If not, then gets one from last band.
-        if (1 == UpdateGeoTransform())
+        // GeoTransform of a subdataset is always the same than the first band
+        if (m_pMMRRel->GetNBands() >= 1)
         {
             MMRBand *poBand = m_pMMRRel->GetBand(m_pMMRRel->GetNBands() - 1);
             if (poBand)

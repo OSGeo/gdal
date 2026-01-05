@@ -1167,9 +1167,15 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
                     // OK we have a problem: The allocated space is not big
                     // enough we need to re-allocate the space and update the
                     // pointers and copy across the old data.
-                    const int nNewOffset = HFAAllocateSpace(
+                    const auto nNewOffset64 = HFAAllocateSpace(
                         hHFA->papoBand[nBand - 1]->psInfo,
                         static_cast<unsigned>(nRows) * nNewMaxChars);
+                    if (nNewOffset64 > static_cast<unsigned>(INT_MAX))
+                    {
+                        CPLFree(pachColData);
+                        return CE_Failure;
+                    }
+                    const int nNewOffset = static_cast<int>(nNewOffset64);
                     char *pszBuffer = static_cast<char *>(
                         VSI_CALLOC_VERBOSE(1, nNewMaxChars));
                     if (!pszBuffer)
@@ -1431,9 +1437,14 @@ void HFARasterAttributeTable::SetRowCount(int iCount)
         for (int iCol = 0; iCol < static_cast<int>(aoFields.size()); iCol++)
         {
             // New space.
-            const int nNewOffset =
+            const auto nNewOffset64 =
                 HFAAllocateSpace(hHFA->papoBand[nBand - 1]->psInfo,
                                  iCount * aoFields[iCol].nElementSize);
+            if (nNewOffset64 >= static_cast<unsigned>(INT_MAX))
+            {
+                return;
+            }
+            const int nNewOffset = static_cast<int>(nNewOffset64);
 
             // Only need to bother if there are actually rows.
             if (nRows > 0)
@@ -1446,8 +1457,10 @@ void HFARasterAttributeTable::SetRowCount(int iCount)
                     return;
                 }
                 // Read old data.
-                if (VSIFSeekL(hHFA->fp, aoFields[iCol].nDataOffset, SEEK_SET) !=
-                        0 ||
+                if (VSIFSeekL(
+                        hHFA->fp,
+                        static_cast<vsi_l_offset>(aoFields[iCol].nDataOffset),
+                        SEEK_SET) != 0 ||
                     static_cast<int>(VSIFReadL(pData,
                                                aoFields[iCol].nElementSize,
                                                nRows, hHFA->fp)) != nRows)
@@ -1460,7 +1473,7 @@ void HFARasterAttributeTable::SetRowCount(int iCount)
                 }
 
                 // Write data - new space will be uninitialised.
-                if (VSIFSeekL(hHFA->fp, nNewOffset, SEEK_SET) != 0 ||
+                if (VSIFSeekL(hHFA->fp, nNewOffset64, SEEK_SET) != 0 ||
                     static_cast<int>(VSIFWriteL(pData,
                                                 aoFields[iCol].nElementSize,
                                                 nRows, hHFA->fp)) != nRows)
@@ -1687,9 +1700,11 @@ CPLErr HFARasterAttributeTable::CreateColumn(const char *pszFieldName,
 #endif
     }
 
-    const int nOffset = HFAAllocateSpace(hHFA->papoBand[nBand - 1]->psInfo,
-                                         nRows * nElementSize);
-    poColumn->SetIntField("columnDataPtr", nOffset);
+    const auto nOffset = HFAAllocateSpace(hHFA->papoBand[nBand - 1]->psInfo,
+                                          nRows * nElementSize);
+    if (nOffset > static_cast<unsigned>(INT_MAX))
+        return CE_Failure;
+    poColumn->SetIntField("columnDataPtr", static_cast<int>(nOffset));
 
     if (bConvertColors)
     {
@@ -1697,8 +1712,8 @@ CPLErr HFARasterAttributeTable::CreateColumn(const char *pszFieldName,
         eFieldType = GFT_Integer;
     }
 
-    AddColumn(pszFieldName, eFieldType, eFieldUsage, nOffset, nElementSize,
-              poColumn, false, bConvertColors);
+    AddColumn(pszFieldName, eFieldType, eFieldUsage, static_cast<int>(nOffset),
+              nElementSize, poColumn, false, bConvertColors);
 
     return CE_None;
 }
@@ -1906,7 +1921,7 @@ HFARasterBand::HFARasterBand(HFADataset *poDSIn, int nBandIn, int iOverview)
         case EPT_u2:
         case EPT_u4:
         case EPT_u8:
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             break;
 
         case EPT_s8:
@@ -1946,7 +1961,7 @@ HFARasterBand::HFARasterBand(HFADataset *poDSIn, int nBandIn, int iOverview)
             break;
 
         default:
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             // This should really report an error, but this isn't
             // so easy from within constructors.
             CPLDebug("GDAL", "Unsupported pixel type in HFARasterBand: %d.",
@@ -2190,7 +2205,7 @@ void HFARasterBand::ReadHistogramMetadata()
     }
 
     // Fetch the histogram values.
-    const int nOffset = poEntry->GetIntField("columnDataPtr");
+    const vsi_l_offset nOffset = poEntry->GetIntField("columnDataPtr");
     const char *pszType = poEntry->GetStringField("dataType");
     int nBinSize = 4;
 
@@ -3131,10 +3146,13 @@ CPLErr HFARasterBand::WriteNamedRAT(const char * /*pszName*/,
                              "WriteNamedRAT(): too much content");
                     return CE_Failure;
                 }
-                const int nOffset = HFAAllocateSpace(
+                const auto nOffset = HFAAllocateSpace(
                     hHFA->papoBand[nBand - 1]->psInfo,
                     static_cast<GUInt32>(nRowCount * sizeof(double)));
-                poColumn->SetIntField("columnDataPtr", nOffset);
+                if (nOffset > static_cast<unsigned>(INT_MAX))
+                    return CE_Failure;
+                poColumn->SetIntField("columnDataPtr",
+                                      static_cast<int>(nOffset));
                 poColumn->SetStringField("dataType", "real");
 
                 double *padfColData = static_cast<double *>(
@@ -3196,10 +3214,13 @@ CPLErr HFARasterBand::WriteNamedRAT(const char * /*pszName*/,
                     return CE_Failure;
                 }
 
-                const int nOffset =
+                const auto nOffset =
                     HFAAllocateSpace(hHFA->papoBand[nBand - 1]->psInfo,
                                      nRowCount * nMaxNumChars);
-                poColumn->SetIntField("columnDataPtr", nOffset);
+                if (nOffset > static_cast<unsigned>(INT_MAX))
+                    return CE_Failure;
+                poColumn->SetIntField("columnDataPtr",
+                                      static_cast<int>(nOffset));
                 poColumn->SetStringField("dataType", "string");
                 poColumn->SetIntField("maxNumChars", nMaxNumChars);
 
@@ -3240,10 +3261,13 @@ CPLErr HFARasterBand::WriteNamedRAT(const char * /*pszName*/,
                              "WriteNamedRAT(): too much content");
                     return CE_Failure;
                 }
-                const int nOffset = HFAAllocateSpace(
+                const auto nOffset = HFAAllocateSpace(
                     hHFA->papoBand[nBand - 1]->psInfo,
                     static_cast<GUInt32>(nRowCount * sizeof(GInt32)));
-                poColumn->SetIntField("columnDataPtr", nOffset);
+                if (nOffset > static_cast<unsigned>(INT_MAX))
+                    return CE_Failure;
+                poColumn->SetIntField("columnDataPtr",
+                                      static_cast<int>(nOffset));
                 poColumn->SetStringField("dataType", "integer");
 
                 GInt32 *panColData = static_cast<GInt32 *>(
@@ -5007,7 +5031,7 @@ GDALDataset *HFADataset::Create(const char *pszFilenameIn, int nXSize,
     EPTType eHfaDataType;
     switch (eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             if (nBits == 1)
                 eHfaDataType = EPT_u1;
             else if (nBits == 2)
@@ -5229,7 +5253,7 @@ GDALDataset *HFADataset::CreateCopy(const char *pszFilename,
     // If we have PIXELTYPE metadata in the source, pass it
     // through as a creation option.
     if (CSLFetchNameValue(papszOptions, "PIXELTYPE") == nullptr &&
-        nBandCount > 0 && eType == GDT_Byte)
+        nBandCount > 0 && eType == GDT_UInt8)
     {
         auto poSrcBand = poSrcDS->GetRasterBand(1);
         poSrcBand->EnablePixelTypeSignedByteWarning(false);

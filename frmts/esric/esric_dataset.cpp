@@ -127,8 +127,6 @@ struct Bundle
         index.resize(BSZ * BSZ);
         if (3 != u32lat(header) || 5 != u32lat(header + 12) ||
             40 != u32lat(header + 32) || 0 != u32lat(header + 36) ||
-            (!isTpkx &&
-             BSZ * BSZ != u32lat(header + 4)) || /* skip this check for tpkx */
             BSZ * BSZ * 8 != u32lat(header + 60) ||
             index.size() != fh->Read(index.data(), 8, index.size()))
         {
@@ -145,7 +143,6 @@ struct Bundle
     std::vector<GUInt64> index{};
     VSIVirtualHandleUniquePtr fh{};
     bool isV2 = false;
-    bool isTpkx = false;
     CPLString name{};
     const size_t BSZ = 128;
 };
@@ -515,11 +512,6 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         }
         // Keep 4 bundle files open
         bundles.resize(4);
-        // Set the tile package flag in the bundles
-        for (auto &bundle : bundles)
-        {
-            bundle.isTpkx = true;
-        }
     }
     catch (CPLString &err)
     {
@@ -923,8 +915,8 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     {
         // Expand color indexed to RGB(A)
         errcode = GDALDatasetRasterIO(
-            inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_Byte, 1,
-            usebands, parent->nBands, parent->nBands * TSZ, 1);
+            inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_UInt8,
+            1, usebands, parent->nBands, parent->nBands * TSZ, 1);
         if (CE_None == errcode)
         {
             GByte abyCT[4 * 256];
@@ -981,7 +973,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     else
     {
         errcode = GDALDatasetRasterIO(
-            inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_Byte,
+            inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_UInt8,
             bandcount, usebands, parent->nBands, parent->nBands * TSZ, 1);
     }
     GDALClose(inds);
@@ -1001,16 +993,16 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
             poBlock = band->GetLockedBlockRef(nBlockXOff, nBlockYOff, 1);
             if (poBlock != nullptr)
             {
-                GDALCopyWords(buffer.data() + iBand - 1, GDT_Byte,
-                              parent->nBands, poBlock->GetDataRef(), GDT_Byte,
+                GDALCopyWords(buffer.data() + iBand - 1, GDT_UInt8,
+                              parent->nBands, poBlock->GetDataRef(), GDT_UInt8,
                               1, TSZ * TSZ);
                 poBlock->DropLock();
             }
         }
         else
         {
-            GDALCopyWords(buffer.data() + iBand - 1, GDT_Byte, parent->nBands,
-                          pData, GDT_Byte, 1, TSZ * TSZ);
+            GDALCopyWords(buffer.data() + iBand - 1, GDT_UInt8, parent->nBands,
+                          pData, GDT_UInt8, 1, TSZ * TSZ);
         }
     }
 

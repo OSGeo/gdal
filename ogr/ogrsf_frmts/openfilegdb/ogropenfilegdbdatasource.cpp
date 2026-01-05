@@ -99,7 +99,7 @@ OGROpenFileGDBDataSource::~OGROpenFileGDBDataSource()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr OGROpenFileGDBDataSource::Close()
+CPLErr OGROpenFileGDBDataSource::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -1931,11 +1931,9 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                     {
                         poMemLayer =
                             new OGRMemLayer("SELECT", nullptr, wkbNone);
-                        OGRFeature *poFeature =
-                            new OGRFeature(poMemLayer->GetLayerDefn());
-                        CPL_IGNORE_RET_VAL(
-                            poMemLayer->CreateFeature(poFeature));
-                        delete poFeature;
+                        CPL_IGNORE_RET_VAL(poMemLayer->CreateFeature(
+                            std::make_unique<OGRFeature>(
+                                poMemLayer->GetLayerDefn())));
                     }
 
                     const char *pszMinMaxFieldName =
@@ -1952,10 +1950,11 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                     poMemLayer->CreateField(&oFieldDefn);
                     if (psField != nullptr)
                     {
-                        OGRFeature *poFeature = poMemLayer->GetFeature(0);
+                        auto poFeature = std::unique_ptr<OGRFeature>(
+                            poMemLayer->GetFeature(0));
                         poFeature->SetField(oFieldDefn.GetNameRef(), psField);
-                        CPL_IGNORE_RET_VAL(poMemLayer->SetFeature(poFeature));
-                        delete poFeature;
+                        CPL_IGNORE_RET_VAL(
+                            poMemLayer->SetFeature(std::move(poFeature)));
                     }
                 }
                 if (i != oSelect.result_columns())

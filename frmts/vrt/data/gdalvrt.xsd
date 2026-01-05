@@ -425,6 +425,7 @@
     <xs:simpleType name="DataTypeType">
         <xs:restriction base="xs:string">
             <xs:enumeration value="Byte"/>
+            <xs:enumeration value="UInt8"/>
             <xs:enumeration value="Int8"/>
             <xs:enumeration value="UInt16"/>
             <xs:enumeration value="Int16"/>

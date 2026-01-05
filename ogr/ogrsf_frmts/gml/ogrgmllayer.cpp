@@ -31,8 +31,6 @@ OGRGMLLayer::OGRGMLLayer(const char *pszName, bool bWriterIn,
           pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0))),
       bWriter(bWriterIn), poDS(poDSIn),
       poFClass(!bWriter ? poDS->GetReader()->GetClass(pszName) : nullptr),
-      // Reader's should get the corresponding GMLFeatureClass and cache it.
-      hCacheSRS(GML_BuildOGRGeometryFromList_CreateCache()),
       // Compatibility option. Not advertized, because hopefully won't be
       // needed. Just put here in case.
       bUseOldFIDFormat(
@@ -58,8 +56,6 @@ OGRGMLLayer::~OGRGMLLayer()
 
     if (poFeatureDefn)
         poFeatureDefn->Release();
-
-    GML_BuildOGRGeometryFromList_DestroyCache(hCacheSRS);
 }
 
 /************************************************************************/
@@ -325,7 +321,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                         poDS->GetInvertAxisOrderIfLatLong(), pszSRSName,
                         poDS->GetConsiderEPSGAsURN(),
                         poDS->GetSwapCoordinates(),
-                        poDS->GetSecondaryGeometryOption(), hCacheSRS,
+                        poDS->GetSecondaryGeometryOption(), m_srsCache.get(),
                         bFaceHoleNegative);
 
                     // Do geometry type changes if needed to match layer
@@ -380,7 +376,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                 papsGeometry, true, poDS->GetInvertAxisOrderIfLatLong(),
                 pszSRSName, poDS->GetConsiderEPSGAsURN(),
                 poDS->GetSwapCoordinates(), poDS->GetSecondaryGeometryOption(),
-                hCacheSRS, bFaceHoleNegative);
+                m_srsCache.get(), bFaceHoleNegative);
             CPLPopErrorHandler();
 
             // Do geometry type changes if needed to match layer geometry type.

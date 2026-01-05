@@ -124,6 +124,21 @@ The following layer creation options are supported:
      layer creation option of the Arrow driver (unless ``-lco FID=`` is used to
      set an empty name)
 
+- .. lco:: TIMESTAMP_WITH_OFFSET
+     :choices: AUTO, YES, NO
+     :default: AUTO
+     :since: 3.13
+
+     Whether OGR datetime fields should be written as Arrow timestamp with offset fields, following the
+     `Timestamp With Offset extension <https://github.com/apache/arrow/blob/main/docs/source/format/CanonicalExtensions.rst#timestamp-with-offset>`__ specification.
+     Such fields store both the datetime as a timestamp expressed in the UTC timezone and the
+     offset to UTC of the timezone in which the datetime is defined.
+     In AUTO mode, they are used as soon as a DateTime field reports a mixed
+     time zone flag (i.e. :cpp:func:`OGRFieldDefn::GetTZFlag` returns ``OGR_TZFLAG_MIXED_TZ``).
+     As few drivers are able to automatically set this flag, it may be useful
+     to override the flag by setting this option to YES. Setting it to NO forces the use
+     of a DateTime field with the UTC timezone.
+
 Conda-forge package
 -------------------
 

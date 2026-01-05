@@ -865,11 +865,10 @@ bool OGRGeoJSONReader::IngestAll(OGRGeoJSONLayer *poLayer)
     GIntBig nCounter = 0;
     while (true)
     {
-        OGRFeature *poFeature = GetNextFeature(poLayer);
+        auto poFeature = std::unique_ptr<OGRFeature>(GetNextFeature(poLayer));
         if (poFeature == nullptr)
             break;
-        poLayer->AddFeature(poFeature);
-        delete poFeature;
+        poLayer->AddFeature(std::move(poFeature));
         nCounter++;
         if (((nCounter % 10000) == 0 || nCounter == nTotalFeatureCount_) &&
             nTotalFeatureCount_ > 0)
@@ -1002,8 +1001,9 @@ void OGRGeoJSONReader::ReadLayer(OGRGeoJSONDataSource *poDS,
         GeoJSONObject::eMultiPolygon == objType ||
         GeoJSONObject::eGeometryCollection == objType)
     {
-        OGRGeometry *poGeometry = ReadGeometry(poObj, poLayer->GetSpatialRef());
-        if (!AddFeature(poLayer, poGeometry))
+        auto poGeometry = std::unique_ptr<OGRGeometry>(
+            ReadGeometry(poObj, poLayer->GetSpatialRef()));
+        if (!AddFeature(poLayer, std::move(poGeometry)))
         {
             CPLDebug("GeoJSON", "Translation of single geometry failed.");
             delete poLayer;
@@ -1016,8 +1016,9 @@ void OGRGeoJSONReader::ReadLayer(OGRGeoJSONDataSource *poDS,
     /* -------------------------------------------------------------------- */
     else if (GeoJSONObject::eFeature == objType)
     {
-        OGRFeature *poFeature = ReadFeature(poLayer, poObj, nullptr);
-        AddFeature(poLayer, poFeature);
+        auto poFeature =
+            std::unique_ptr<OGRFeature>(ReadFeature(poLayer, poObj, nullptr));
+        AddFeature(poLayer, std::move(poFeature));
     }
     /* -------------------------------------------------------------------- */
     /*      Translate multi-feature FeatureCollection object.               */
@@ -1913,7 +1914,7 @@ bool OGRGeoJSONUpdateLayerGeomType(bool &bFirstGeom,
 /************************************************************************/
 
 bool OGRGeoJSONReader::AddFeature(OGRGeoJSONLayer *poLayer,
-                                  OGRGeometry *poGeometry)
+                                  std::unique_ptr<OGRGeometry> poGeometry)
 {
     bool bAdded = false;
 
@@ -1921,10 +1922,10 @@ bool OGRGeoJSONReader::AddFeature(OGRGeoJSONLayer *poLayer,
 
     if (nullptr != poGeometry)
     {
-        OGRFeature *poFeature = new OGRFeature(poLayer->GetLayerDefn());
-        poFeature->SetGeometryDirectly(poGeometry);
+        auto poFeature = std::make_unique<OGRFeature>(poLayer->GetLayerDefn());
+        poFeature->SetGeometry(std::move(poGeometry));
 
-        bAdded = AddFeature(poLayer, poFeature);
+        bAdded = AddFeature(poLayer, std::move(poFeature));
     }
 
     return bAdded;
@@ -1935,13 +1936,12 @@ bool OGRGeoJSONReader::AddFeature(OGRGeoJSONLayer *poLayer,
 /************************************************************************/
 
 bool OGRGeoJSONReader::AddFeature(OGRGeoJSONLayer *poLayer,
-                                  OGRFeature *poFeature)
+                                  std::unique_ptr<OGRFeature> poFeature)
 {
     if (poFeature == nullptr)
         return false;
 
-    poLayer->AddFeature(poFeature);
-    delete poFeature;
+    poLayer->AddFeature(std::move(poFeature));
 
     return true;
 }
@@ -2439,8 +2439,9 @@ void OGRGeoJSONReader::ReadFeatureCollection(OGRGeoJSONLayer *poLayer,
         {
             json_object *poObjFeature =
                 json_object_array_get_idx(poObjFeatures, i);
-            OGRFeature *poFeature = ReadFeature(poLayer, poObjFeature, nullptr);
-            AddFeature(poLayer, poFeature);
+            auto poFeature = std::unique_ptr<OGRFeature>(
+                ReadFeature(poLayer, poObjFeature, nullptr));
+            AddFeature(poLayer, std::move(poFeature));
         }
     }
 

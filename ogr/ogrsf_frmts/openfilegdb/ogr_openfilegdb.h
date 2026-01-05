@@ -503,7 +503,7 @@ class OGROpenFileGDBDataSource final : public GDALDataset
 
     bool BackupSystemTablesForTransaction();
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     CPL_DISALLOW_COPY_ASSIGN(OGROpenFileGDBDataSource)
 

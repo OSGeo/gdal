@@ -7,7 +7,7 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.22
+ARG ALPINE_VERSION=3.23
 FROM alpine:${ALPINE_VERSION} AS builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -104,14 +104,14 @@ RUN if test "$(uname -m)" = "x86_64"; then ( \
     ); fi
 
 # Build hdf4
-ARG HDF4_VERSION=4.3.0
+ARG HDF4_VERSION=4.3.1
 RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     apk add --no-cache byacc flex libtirpc-dev \
     && mkdir hdf4 \
     && curl -L -fsS https://github.com/HDFGroup/hdf4/archive/refs/tags/hdf${HDF4_VERSION}.tar.gz \
         | tar xz -C hdf4 --strip-components=1 \
     && cd hdf4 \
-    && LDFLAGS=-ltirpc ./configure --prefix=/usr --enable-shared --disable-static \
+    && CFLAGS="-std=c99" LDFLAGS=-ltirpc ./configure --prefix=/usr --enable-shared --disable-static \
         --with-szlib=/usr --disable-fortran --disable-netcdf \
     && make -j$(nproc) \
     && make install \

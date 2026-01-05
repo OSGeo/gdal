@@ -14,6 +14,7 @@
 #include "ogr_geopackage.h"
 #include "ogr_p.h"
 #include "ogr_swq.h"
+#include "gdal_alg.h"
 #include "gdalwarper.h"
 #include "gdal_utils.h"
 #include "ogrgeopackageutility.h"
@@ -991,7 +992,7 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr GDALGeoPackageDataset::Close()
+CPLErr GDALGeoPackageDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -2369,7 +2370,7 @@ bool GDALGeoPackageDataset::InitRaster(
     {
         nBandCount = poParentDS->GetRasterCount();
     }
-    else if (m_eDT != GDT_Byte)
+    else if (m_eDT != GDT_UInt8)
     {
         if (pszBAND_COUNT != nullptr && !EQUAL(pszBAND_COUNT, "AUTO") &&
             !EQUAL(pszBAND_COUNT, "1"))
@@ -2464,10 +2465,10 @@ bool GDALGeoPackageDataset::AllocCachedTiles()
     const int nCacheCount = 4;
     /*
             (m_nShiftXPixelsMod != 0 || m_nShiftYPixelsMod != 0) ? 4 :
-            (GetUpdate() && m_eDT == GDT_Byte) ? 2 : 1;
+            (GetUpdate() && m_eDT == GDT_UInt8) ? 2 : 1;
     */
     m_pabyCachedTiles = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
-        cpl::fits_on<int>(nCacheCount * (m_eDT == GDT_Byte ? 4 : 1) *
+        cpl::fits_on<int>(nCacheCount * (m_eDT == GDT_UInt8 ? 4 : 1) *
                           m_nDTSize),
         nTileWidth, nTileHeight));
     if (m_pabyCachedTiles == nullptr)
@@ -3273,7 +3274,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     osInsertGpkgContentsFormatting += ",%d)";
     char *pszSQL = sqlite3_mprintf(
         osInsertGpkgContentsFormatting.c_str(), m_osRasterTable.c_str(),
-        (m_eDT == GDT_Byte) ? "tiles" : "2d-gridded-coverage",
+        (m_eDT == GDT_UInt8) ? "tiles" : "2d-gridded-coverage",
         m_osIdentifier.c_str(), m_osDescription.c_str(), dfGDALMinX, dfGDALMinY,
         dfGDALMaxX, dfGDALMaxY,
         pszCurrentDate ? pszCurrentDate
@@ -4788,7 +4789,7 @@ void GDALGeoPackageDataset::FlushMetadata()
             }
         }
         if (GetRasterCount() > 0 &&
-            GetRasterBand(1)->GetRasterDataType() == GDT_Byte)
+            GetRasterBand(1)->GetRasterDataType() == GDT_UInt8)
         {
             int bHasNoData = FALSE;
             const double dfNoDataValue =
@@ -4953,7 +4954,7 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
 
     if (nBandsIn != 0)
     {
-        if (eDT == GDT_Byte)
+        if (eDT == GDT_UInt8)
         {
             if (nBandsIn != 1 && nBandsIn != 2 && nBandsIn != 3 &&
                 nBandsIn != 4)
@@ -5142,7 +5143,7 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
                 "description TEXT";
         if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "CRS_WKT_EXTENSION",
                                              "NO")) ||
-            (nBandsIn != 0 && eDT != GDT_Byte))
+            (nBandsIn != 0 && eDT != GDT_UInt8))
         {
             m_bHasDefinition12_063 = true;
             osSQL += ", definition_12_063 TEXT NOT NULL";
@@ -5537,7 +5538,7 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
                 m_eTF = GPKG_TF_PNG;
         }
 
-        if (eDT != GDT_Byte)
+        if (eDT != GDT_UInt8)
         {
             if (!CreateTileGriddedTable(papszOptions))
                 return FALSE;
@@ -5647,7 +5648,7 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
         }
     }
 
-    if (bFileExists && nBandsIn > 0 && eDT == GDT_Byte)
+    if (bFileExists && nBandsIn > 0 && eDT == GDT_UInt8)
     {
         // If there was an ogr_empty_table table, we can remove it
         RemoveOGREmptyTable();
@@ -5964,7 +5965,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
                                                 pProgressData));
 
             if (poDS != nullptr &&
-                poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte &&
+                poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_UInt8 &&
                 nBands <= 3)
             {
                 poDS->m_nBandCountFromMetadata = nBands;
@@ -6192,7 +6193,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
     int nTargetBands = nBands;
     /* For grey level or RGB, if there's reprojection involved, add an alpha */
     /* channel */
-    if (eDT == GDT_Byte &&
+    if (eDT == GDT_UInt8 &&
         ((nBands == 1 &&
           poSrcDS->GetRasterBand(1)->GetColorTable() == nullptr) ||
          nBands == 3))
@@ -6249,7 +6250,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
     int bHasNoData = FALSE;
     double dfNoDataValue =
         poSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoData);
-    if (eDT != GDT_Byte && bHasNoData)
+    if (eDT != GDT_UInt8 && bHasNoData)
     {
         poDS->GetRasterBand(1)->SetNoDataValue(dfNoDataValue);
     }
@@ -9309,7 +9310,7 @@ static void GPKG_ogr_layer_Extent(sqlite3_context *pContext, int /*argc*/,
     }
 
     OGREnvelope sExtent;
-    if (poLayer->GetExtent(&sExtent) != OGRERR_NONE)
+    if (poLayer->GetExtent(&sExtent, true) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s: Cannot fetch layer extent",
                  "ogr_layer_Extent");
@@ -9338,6 +9339,153 @@ static void GPKG_ogr_layer_Extent(sqlite3_context *pContext, int /*argc*/,
     }
     sqlite3_result_blob(pContext, pabyDestBLOB, static_cast<int>(nBLOBDestLen),
                         VSIFree);
+}
+
+/************************************************************************/
+/*                     GPKG_ST_Hilbert_X_Y_TableName()                  */
+/************************************************************************/
+
+static void GPKG_ST_Hilbert_X_Y_TableName(sqlite3_context *pContext,
+                                          [[maybe_unused]] int argc,
+                                          sqlite3_value **argv)
+{
+    CPLAssert(argc == 3);
+    const double dfX = sqlite3_value_double(argv[0]);
+    const double dfY = sqlite3_value_double(argv[1]);
+
+    if (sqlite3_value_type(argv[2]) != SQLITE_TEXT)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s: Invalid argument type for 3rd argument. Text expected",
+                 "ST_Hilbert()");
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    const char *pszLayerName =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[2]));
+    GDALGeoPackageDataset *poDS =
+        static_cast<GDALGeoPackageDataset *>(sqlite3_user_data(pContext));
+    OGRLayer *poLayer = poDS->GetLayerByName(pszLayerName);
+    if (!poLayer)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: unknown layer '%s'",
+                 "ST_Hilbert()", pszLayerName);
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    OGREnvelope sExtent;
+    if (poLayer->GetExtent(&sExtent, true) != OGRERR_NONE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: Cannot fetch layer extent",
+                 "ST_Hilbert()");
+        sqlite3_result_null(pContext);
+        return;
+    }
+    if (!(dfX >= sExtent.MinX && dfY >= sExtent.MinY && dfX <= sExtent.MaxX &&
+          dfY <= sExtent.MaxY))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "ST_Hilbert(): (%g, %g) is not within passed bounding box",
+                 dfX, dfY);
+        sqlite3_result_null(pContext);
+        return;
+    }
+    sqlite3_result_int64(pContext, GDALHilbertCode(&sExtent, dfX, dfY));
+}
+
+/************************************************************************/
+/*                     GPKG_ST_Hilbert_Geom_BBOX()                      */
+/************************************************************************/
+
+static void GPKG_ST_Hilbert_Geom_BBOX(sqlite3_context *pContext, int argc,
+                                      sqlite3_value **argv)
+{
+    CPLAssert(argc == 5);
+    GPkgHeader sHeader;
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    const double dfX = (sHeader.MinX + sHeader.MaxX) / 2;
+    const double dfY = (sHeader.MinY + sHeader.MaxY) / 2;
+
+    OGREnvelope sExtent;
+    sExtent.MinX = sqlite3_value_double(argv[1]);
+    sExtent.MinY = sqlite3_value_double(argv[2]);
+    sExtent.MaxX = sqlite3_value_double(argv[3]);
+    sExtent.MaxY = sqlite3_value_double(argv[4]);
+    if (!(dfX >= sExtent.MinX && dfY >= sExtent.MinY && dfX <= sExtent.MaxX &&
+          dfY <= sExtent.MaxY))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "ST_Hilbert(): (%g, %g) is not within passed bounding box",
+                 dfX, dfY);
+        sqlite3_result_null(pContext);
+        return;
+    }
+    sqlite3_result_int64(pContext, GDALHilbertCode(&sExtent, dfX, dfY));
+}
+
+/************************************************************************/
+/*                     GPKG_ST_Hilbert_Geom_TableName()                 */
+/************************************************************************/
+
+static void GPKG_ST_Hilbert_Geom_TableName(sqlite3_context *pContext, int argc,
+                                           sqlite3_value **argv)
+{
+    CPLAssert(argc == 2);
+    GPkgHeader sHeader;
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    const double dfX = (sHeader.MinX + sHeader.MaxX) / 2;
+    const double dfY = (sHeader.MinY + sHeader.MaxY) / 2;
+
+    if (sqlite3_value_type(argv[1]) != SQLITE_TEXT)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s: Invalid argument type for 2nd argument. Text expected",
+                 "ST_Hilbert()");
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    const char *pszLayerName =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[1]));
+    GDALGeoPackageDataset *poDS =
+        static_cast<GDALGeoPackageDataset *>(sqlite3_user_data(pContext));
+    OGRLayer *poLayer = poDS->GetLayerByName(pszLayerName);
+    if (!poLayer)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: unknown layer '%s'",
+                 "ST_Hilbert()", pszLayerName);
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    OGREnvelope sExtent;
+    if (poLayer->GetExtent(&sExtent, true) != OGRERR_NONE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: Cannot fetch layer extent",
+                 "ST_Hilbert()");
+        sqlite3_result_null(pContext);
+        return;
+    }
+    if (!(dfX >= sExtent.MinX && dfY >= sExtent.MinY && dfX <= sExtent.MaxX &&
+          dfY <= sExtent.MaxY))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "ST_Hilbert(): (%g, %g) is not within passed bounding box",
+                 dfX, dfY);
+        sqlite3_result_null(pContext);
+        return;
+    }
+    sqlite3_result_int64(pContext, GDALHilbertCode(&sExtent, dfX, dfY));
 }
 
 /************************************************************************/
@@ -9481,6 +9629,21 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                             GPKG_ogr_layer_Extent, nullptr, nullptr);
 
     m_pSQLFunctionData = OGRSQLiteRegisterSQLFunctionsCommon(hDB);
+
+    // ST_Hilbert() inspired from https://duckdb.org/docs/stable/core_extensions/spatial/functions#st_hilbert
+    // Override the generic version of OGRSQLiteRegisterSQLFunctionsCommon()
+
+    // X,Y,table_name
+    sqlite3_create_function(hDB, "ST_Hilbert", 2 + 1, UTF8_INNOCUOUS, this,
+                            GPKG_ST_Hilbert_X_Y_TableName, nullptr, nullptr);
+
+    // geometry,minX,minY,maxX,maxY
+    sqlite3_create_function(hDB, "ST_Hilbert", 1 + 4, UTF8_INNOCUOUS, nullptr,
+                            GPKG_ST_Hilbert_Geom_BBOX, nullptr, nullptr);
+
+    // geometry,table_name
+    sqlite3_create_function(hDB, "ST_Hilbert", 1 + 1, UTF8_INNOCUOUS, this,
+                            GPKG_ST_Hilbert_Geom_TableName, nullptr, nullptr);
 }
 
 /************************************************************************/

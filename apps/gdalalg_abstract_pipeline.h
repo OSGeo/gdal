@@ -139,6 +139,7 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         bool standaloneStep = false;
         bool addDefaultArguments = true;
         bool autoOpenInputDatasets = true;
+        bool inputDatasetRequired = true;
         bool outputDatasetRequired = true;
         bool addInputLayerNameArgument = true;   // only for vector input
         bool addUpdateArgument = true;           // only for vector output
@@ -152,8 +153,6 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         std::string inputDatasetAlias{};
         std::string inputDatasetMetaVar = "INPUT";
         std::string outputDatasetHelpMsg{};
-        std::string updateMutualExclusionGroup{};
-        std::string outputDatasetMutualExclusionGroup{};
         std::string outputFormatCreateCapability = GDAL_DCAP_CREATECOPY;
 
         inline ConstructorOptions &SetStandaloneStep(bool b)
@@ -171,6 +170,12 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         inline ConstructorOptions &SetAddInputLayerNameArgument(bool b)
         {
             addInputLayerNameArgument = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetInputDatasetRequired(bool b)
+        {
+            inputDatasetRequired = b;
             return *this;
         }
 
@@ -213,20 +218,6 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         inline ConstructorOptions &SetOutputDatasetRequired(bool b)
         {
             outputDatasetRequired = b;
-            return *this;
-        }
-
-        inline ConstructorOptions &
-        SetUpdateMutualExclusionGroup(const std::string &s)
-        {
-            updateMutualExclusionGroup = s;
-            return *this;
-        }
-
-        inline ConstructorOptions &
-        SetOutputDatasetMutualExclusionGroup(const std::string &s)
-        {
-            outputDatasetMutualExclusionGroup = s;
             return *this;
         }
 

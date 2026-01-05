@@ -44,42 +44,24 @@ Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline`.
    In the figure on the right, :option:`--connect-diagonal-pixels`
    has been specified, and a single polygon has been created for pixels with value 4.
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
 
 
-.. include:: gdal_options/of_vector.rst
-
-.. include:: gdal_options/co.rst
-
-.. include:: options/lco.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. option:: --update
-
-    Whether the output dataset must be opened in update mode. Implies that
-    it already exists.
-
-.. option:: --overwrite-layer
-
-    Whether overwriting the existing output vector layer is allowed.
-
-.. option:: --append
-
-    Whether appending features to the existing output vector layer is allowed
-
-.. option:: -b, --band <BAND>
-
-    Picks a particular band to polygonize. Defaults to band 1.
-
-.. option:: --nln, --output-layer <OUTPUT-LAYER>
-
-    Provides a name for the output vector layer. Defaults to "polygonize".
+Program-Specific Options
+------------------------
 
 .. option:: --attribute-name <ELEVATION-NAME>
 
     The name of the field to create (defaults to "DN").
+
+.. option:: -b, --band <BAND>
+
+    Picks a particular band to polygonize. Defaults to band 1.
 
 .. option:: -c, --connect-diagonal-pixels
 
@@ -89,21 +71,34 @@ Standard options
     selected, the algorithm will also consider pixels at the corners as connected,
     which is the same as 8-connectivity.
 
+.. option:: --nln, --output-layer <OUTPUT-LAYER>
 
-Advanced options
-++++++++++++++++
+    Provides a name for the output vector layer. Defaults to "polygonize".
 
-.. include:: gdal_options/oo.rst
+Standard Options
+----------------
 
-.. include:: gdal_options/if.rst
+.. collapse:: Details
 
+    .. include:: gdal_options/append_vector.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/co.rst
 
-.. versionadded:: 3.12
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+    .. include:: gdal_options/lco.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/update.rst
 
 Examples
 --------

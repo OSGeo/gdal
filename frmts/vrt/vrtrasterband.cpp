@@ -62,7 +62,7 @@ void VRTRasterBand::Initialize(int nXSize, int nYSize)
     poDS = nullptr;
     nBand = 0;
     eAccess = GA_ReadOnly;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
@@ -91,7 +91,7 @@ CPLErr VRTRasterBand::CopyCommonInfoFrom(GDALRasterBand *poSrcBand)
     const char *pszNBits =
         poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
     SetMetadataItem("NBITS", pszNBits, "IMAGE_STRUCTURE");
-    if (poSrcBand->GetRasterDataType() == GDT_Byte)
+    if (poSrcBand->GetRasterDataType() == GDT_UInt8)
     {
         poSrcBand->EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =

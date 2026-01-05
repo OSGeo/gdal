@@ -3958,10 +3958,11 @@ void VSICurlFilesystemHandlerBase::AddRegion(const char *pszURL,
 {
     CPLMutexHolder oHolder(&hMutex);
 
-    std::shared_ptr<std::string> value(new std::string());
+    auto value = std::make_shared<std::string>();
     value->assign(pData, nSize);
     GetRegionCache()->insert(
-        FilenameOffsetPair(std::string(pszURL), nFileOffsetStart), value);
+        FilenameOffsetPair(std::string(pszURL), nFileOffsetStart),
+        std::move(value));
 }
 
 /************************************************************************/
@@ -6371,7 +6372,7 @@ struct curl_slist *VSICurlSetCreationHeadersFromOptions(
  */
 void VSIInstallCurlFileHandler(void)
 {
-    VSIFilesystemHandler *poHandler = new cpl::VSICurlFilesystemHandler;
+    auto poHandler = std::make_shared<cpl::VSICurlFilesystemHandler>();
     VSIFileManager::InstallHandler("/vsicurl/", poHandler);
     VSIFileManager::InstallHandler("/vsicurl?", poHandler);
 }

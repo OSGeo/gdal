@@ -224,7 +224,7 @@ OGRFeature *OGRMemLayer::GetFeature(GIntBig nFeatureId)
 }
 
 /************************************************************************/
-/*                             ISetFeature()                             */
+/*                             ISetFeature()                            */
 /************************************************************************/
 
 OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
@@ -236,6 +236,36 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
     if (poFeature == nullptr)
         return OGRERR_FAILURE;
 
+    GIntBig nFID = poFeature->GetFID();
+    OGRErr eErr = SetFeatureInternal(
+        std::unique_ptr<OGRFeature>(poFeature->Clone()), &nFID);
+    poFeature->SetFID(nFID);
+    return eErr;
+}
+
+/************************************************************************/
+/*                         ISetFeatureUniqPtr()                         */
+/************************************************************************/
+
+OGRErr OGRMemLayer::ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature)
+
+{
+    if (!m_bUpdatable)
+        return OGRERR_FAILURE;
+
+    if (poFeature == nullptr)
+        return OGRERR_FAILURE;
+
+    return SetFeatureInternal(std::move(poFeature));
+}
+
+/************************************************************************/
+/*                         SetFeatureInternal()                         */
+/************************************************************************/
+
+OGRErr OGRMemLayer::SetFeatureInternal(std::unique_ptr<OGRFeature> poFeature,
+                                       GIntBig *pnFID)
+{
     // If we don't have a FID, find one available
     GIntBig nFID = poFeature->GetFID();
     if (nFID == OGRNullFID)
@@ -264,31 +294,25 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
                  "negative FID are not supported");
         return OGRERR_FAILURE;
     }
-    else
+    else if (!m_bHasHoles)
     {
-        if (!m_bHasHoles)
+        // If the feature does not exist, set m_bHasHoles
+        if (m_papoFeatures != nullptr)
         {
-            // If the feature does not exist, set m_bHasHoles
-            if (m_papoFeatures != nullptr)
+            if (nFID >= m_nMaxFeatureCount || m_papoFeatures[nFID] == nullptr)
             {
-                if (nFID >= m_nMaxFeatureCount ||
-                    m_papoFeatures[nFID] == nullptr)
-                {
-                    m_bHasHoles = true;
-                }
-            }
-            else
-            {
-                FeatureIterator oIter = m_oMapFeatures.find(nFID);
-                if (oIter == m_oMapFeatures.end())
-                    m_bHasHoles = true;
+                m_bHasHoles = true;
             }
         }
+        else
+        {
+            FeatureIterator oIter = m_oMapFeatures.find(nFID);
+            if (oIter == m_oMapFeatures.end())
+                m_bHasHoles = true;
+        }
     }
-
-    auto poFeatureCloned = std::unique_ptr<OGRFeature>(poFeature->Clone());
-    if (poFeatureCloned == nullptr)
-        return OGRERR_FAILURE;
+    if (pnFID)
+        *pnFID = nFID;
 
     if (m_papoFeatures != nullptr && nFID > 100000 &&
         nFID > m_nMaxFeatureCount + 1000)
@@ -319,7 +343,7 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
 
     for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
     {
-        OGRGeometry *poGeom = poFeatureCloned->GetGeomFieldRef(i);
+        OGRGeometry *poGeom = poFeature->GetGeomFieldRef(i);
         if (poGeom != nullptr && poGeom->getSpatialReference() == nullptr)
         {
             poGeom->assignSpatialReference(
@@ -357,6 +381,7 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
                        static_cast<size_t>(nNewCount - m_nMaxFeatureCount));
             m_nMaxFeatureCount = nNewCount;
         }
+
 #ifdef DEBUG
         // Just to please Coverity. Cannot happen.
         if (m_papoFeatures == nullptr)
@@ -375,20 +400,20 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
             ++m_nFeatureCount;
         }
 
-        m_papoFeatures[nFID] = poFeatureCloned.release();
+        m_papoFeatures[nFID] = poFeature.release();
     }
     else
     {
         FeatureIterator oIter = m_oMapFeatures.find(nFID);
         if (oIter != m_oMapFeatures.end())
         {
-            oIter->second = std::move(poFeatureCloned);
+            oIter->second = std::move(poFeature);
         }
         else
         {
             try
             {
-                m_oMapFeatures[nFID] = std::move(poFeatureCloned);
+                m_oMapFeatures[nFID] = std::move(poFeature);
                 m_oMapFeaturesIter = m_oMapFeatures.end();
                 m_nFeatureCount++;
             }
@@ -407,15 +432,11 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                        PrepareCreateFeature()                        */
 /************************************************************************/
 
-OGRErr OGRMemLayer::ICreateFeature(OGRFeature *poFeature)
-
+void OGRMemLayer::PrepareCreateFeature(OGRFeature *poFeature)
 {
-    if (!m_bUpdatable)
-        return OGRERR_FAILURE;
-
     if (poFeature->GetFID() != OGRNullFID &&
         poFeature->GetFID() != m_iNextCreateFID)
         m_bHasHoles = true;
@@ -439,9 +460,40 @@ OGRErr OGRMemLayer::ICreateFeature(OGRFeature *poFeature)
                 poFeature->SetFID(OGRNullFID);
         }
     }
+}
 
-    // Prevent calling ISetFeature() from derived classes
-    return OGRMemLayer::ISetFeature(poFeature);
+/************************************************************************/
+/*                           ICreateFeature()                           */
+/************************************************************************/
+
+OGRErr OGRMemLayer::ICreateFeature(OGRFeature *poFeature)
+
+{
+    if (!m_bUpdatable)
+        return OGRERR_FAILURE;
+
+    PrepareCreateFeature(poFeature);
+
+    GIntBig nFID = poFeature->GetFID();
+    const OGRErr eErr = SetFeatureInternal(
+        std::unique_ptr<OGRFeature>(poFeature->Clone()), &nFID);
+    poFeature->SetFID(nFID);
+    return eErr;
+}
+
+/************************************************************************/
+/*                        ICreateFeatureUniqPtr()                       */
+/************************************************************************/
+
+OGRErr OGRMemLayer::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                                          GIntBig *pnFID)
+{
+    if (!m_bUpdatable)
+        return OGRERR_FAILURE;
+
+    PrepareCreateFeature(poFeature.get());
+
+    return SetFeatureInternal(std::move(poFeature), pnFID);
 }
 
 /************************************************************************/

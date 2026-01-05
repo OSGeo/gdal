@@ -390,7 +390,7 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                 if (pImage == nullptr)
                 {
                     VSIFSeekL(poGDS->m_fpImage,
-                              static_cast<size_t>(nPixelsToFill) *
+                              static_cast<vsi_l_offset>(nPixelsToFill) *
                                   nBytesPerPixel,
                               SEEK_CUR);
                 }
@@ -593,7 +593,7 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
         VSIFReadL(abyTail, 1, 26, poOpenInfo->fpL);
         if (memcmp(abyTail + 8, "TRUEVISION-XFILE.\x00", 18) == 0)
         {
-            const unsigned nExtensionAreaOffset = CPL_LSBUINT32PTR(abyTail);
+            const vsi_l_offset nExtensionAreaOffset = CPL_LSBUINT32PTR(abyTail);
             if (nExtensionAreaOffset > 0)
             {
                 VSIFSeekL(poOpenInfo->fpL, nExtensionAreaOffset, SEEK_SET);
@@ -700,9 +700,10 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
             delete poDS;
             return nullptr;
         }
-        poDS->SetBand(
-            1, new GDALTGARasterBand(
-                   poDS, 1, sHeader.nPixelDepth == 16 ? GDT_UInt16 : GDT_Byte));
+        poDS->SetBand(1, new GDALTGARasterBand(poDS, 1,
+                                               sHeader.nPixelDepth == 16
+                                                   ? GDT_UInt16
+                                                   : GDT_UInt8));
     }
     else
     {
@@ -718,7 +719,7 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
             sHeader.nPixelDepth == 16 ? 3 : (3 + (hasFourthChannel ? 1 : 0));
         for (int iBand = 1; iBand <= l_nBands; iBand++)
         {
-            poDS->SetBand(iBand, new GDALTGARasterBand(poDS, iBand, GDT_Byte));
+            poDS->SetBand(iBand, new GDALTGARasterBand(poDS, iBand, GDT_UInt8));
         }
     }
 

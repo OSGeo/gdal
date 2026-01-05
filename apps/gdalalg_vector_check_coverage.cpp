@@ -101,7 +101,7 @@ class GDALVectorCheckCoverageOutputDataset final
 GDALVectorCheckCoverageOutputDataset::~GDALVectorCheckCoverageOutputDataset() =
     default;
 
-bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
+bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     auto poDstDS = std::make_unique<GDALVectorCheckCoverageOutputDataset>(
@@ -110,6 +110,8 @@ bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
     const bool bSingleLayerOutput = m_inputLayerNames.empty()
                                         ? poSrcDS->GetLayerCount() == 1
                                         : m_inputLayerNames.size() == 1;
+
+    GDALVectorAlgorithmLayerProgressHelper progressHelper(ctxt);
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {
@@ -128,36 +130,42 @@ bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 return false;
             }
 
-            const int geomFieldIndex =
-                m_geomField.empty()
-                    ? 0
-                    : poSrcLayerDefn->GetGeomFieldIndex(m_geomField.c_str());
+            progressHelper.AddProcessedLayer(*poSrcLayer);
+        }
+    }
 
-            if (geomFieldIndex == -1)
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Specified geometry field '%s' does not exist in "
-                            "layer '%s'",
-                            m_geomField.c_str(), poSrcLayer->GetDescription());
-                return false;
-            }
+    for ([[maybe_unused]] auto [poSrcLayer, bProcessed, layerProgressFunc,
+                                layerProgressData] : progressHelper)
+    {
+        const auto poSrcLayerDefn = poSrcLayer->GetLayerDefn();
+        const int geomFieldIndex =
+            m_geomField.empty()
+                ? 0
+                : poSrcLayerDefn->GetGeomFieldIndex(m_geomField.c_str());
 
-            OGRFeatureDefn defn(bSingleLayerOutput
-                                    ? "invalid_edge"
-                                    : std::string("invalid_edge_")
-                                          .append(poSrcLayer->GetDescription())
-                                          .c_str());
-            defn.SetGeomType(wkbMultiLineString);
-            defn.GetGeomFieldDefn(0)->SetSpatialRef(
-                poSrcLayerDefn->GetGeomFieldDefn(geomFieldIndex)
-                    ->GetSpatialRef());
+        if (geomFieldIndex == -1)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Specified geometry field '%s' does not exist in "
+                        "layer '%s'",
+                        m_geomField.c_str(), poSrcLayer->GetDescription());
+            return false;
+        }
 
-            poDstDS->SetSourceGeometryField(geomFieldIndex);
+        OGRFeatureDefn defn(bSingleLayerOutput
+                                ? "invalid_edge"
+                                : std::string("invalid_edge_")
+                                      .append(poSrcLayer->GetDescription())
+                                      .c_str());
+        defn.SetGeomType(wkbMultiLineString);
+        defn.GetGeomFieldDefn(0)->SetSpatialRef(
+            poSrcLayerDefn->GetGeomFieldDefn(geomFieldIndex)->GetSpatialRef());
 
-            if (!poDstDS->AddProcessedLayer(*poSrcLayer, defn))
-            {
-                return false;
-            }
+        if (!poDstDS->AddProcessedLayer(*poSrcLayer, defn, geomFieldIndex,
+                                        layerProgressFunc,
+                                        layerProgressData.get()))
+        {
+            return false;
         }
     }
 

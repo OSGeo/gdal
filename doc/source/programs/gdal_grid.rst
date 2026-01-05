@@ -42,6 +42,10 @@ configuration option to parallelize the processing. The value to specify is
 the number of worker threads, or ``ALL_CPUS`` to use all the cores/CPUs of the
 computer.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_vector_grid`.
+
 .. program:: gdal_grid
 
 .. include:: options/help_and_help_general.rst

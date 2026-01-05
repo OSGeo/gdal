@@ -50,7 +50,7 @@ jobs:
           else
             export PRE_RELEASE="true"
           fi
-          echo "PRE_RELEASE"=$PRE_RELEASE" >> $GITHUB_OUTPUT
+          echo "PRE_RELEASE=$PRE_RELEASE" >> $GITHUB_OUTPUT
   mkgdaldist:
     runs-on: ubuntu-latest
     needs: safety_checks
@@ -66,7 +66,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       - name: Setup environment
         shell: bash -l {0}
         env:
@@ -116,34 +116,34 @@ jobs:
           fi
       - name: Upload tar.gz
         id: upload_tar_gz
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
           path: |
             gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
       - name: Upload tar.xz
         id: upload_tar_xz
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
           path: |
             gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
       - name: Upload zip
         id: upload_zip
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
           path: |
             gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
-      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+      - uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8 # v3.1.0
         with:
           subject-name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
           subject-digest: sha256:${{ steps.upload_tar_gz.outputs.artifact-digest }}
-      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+      - uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8 # v3.1.0
         with:
           subject-name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
           subject-digest: sha256:${{ steps.upload_tar_xz.outputs.artifact-digest }}
-      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+      - uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8 # v3.1.0
         with:
           subject-name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
           subject-digest: sha256:${{ steps.upload_zip.outputs.artifact-digest }}
@@ -161,7 +161,7 @@ jobs:
           python3 setup.py bdist_wheel
           cp dist/* ${{ github.workspace }}/dist
       - name: Upload bdist_wheel
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: gdal-utils whl
           path: |
@@ -178,7 +178,7 @@ jobs:
           python3 setup.py sdist
           cp dist/* ${{ github.workspace }}/dist
       - name: Upload sdist
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: gdal sdist
           path: |
@@ -224,9 +224,9 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       - name: Set up Docker
-        uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4.4.0
+        uses: docker/setup-docker-action@e61617a16c407a86262fb923c35a616ddbe070b3 # v4.6.0
         with:
           daemon-config: |
             {
@@ -243,7 +243,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Extract container metadata
         id: meta
-        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5.8.0
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           images: |
             ghcr.io/osgeo/gdal

@@ -52,12 +52,13 @@ it can be determined and the input driver supports writing. Otherwise,
 
 The following options are available:
 
-Standard options
-++++++++++++++++
+Program-Specific Options
+------------------------
 
-.. option:: --output <OUTPUT-DIRECTORY>
+.. option:: --feature-limit <FEATURE-LIMIT>
 
-    Root of the output directory. [required]
+    Maximum number of features per file. By default, unlimited. If the limit
+    is exceeded, several parts are created.
 
 .. option:: --field <FIELD-NAME>
 
@@ -72,25 +73,26 @@ Standard options
     geometry fields is done on the geometry type. This can be useful for file
     formats where a single geometry type per layer is allowed.
 
-.. include:: gdal_options/of_vector.rst
+.. option:: --max-file-size <MAX-FILE-SIZE>
 
-.. include:: gdal_options/co_vector.rst
+    Maximum file size (MB or GB suffix can be used). By default, unlimited.
+    If the limit is exceeded, several parts are created.
 
-.. include:: gdal_options/lco.rst
+    Note that the maximum file size is used as a hint, and might not be
+    strictly respected, because the evaluation of the file size corresponding
+    to a feature is based on a heuristics, as the file size itself cannot be
+    reliably used when it is under writing. In particular, the heuristics does
+    not assume any compression, so for compressed formats, the actual size of
+    a part can be significantly smaller than the specified limit.
 
-.. include:: gdal_options/overwrite.rst
+.. option:: --omit-partitioned-field
 
-.. option:: --append
+    Whether to omit partitioned fields from the target layer definition.
+    Automatically set for Parquet output format and Hive partitioning.
 
-    Whether the output directory must be opened in append mode. Implies that
-    it already exists and that the output format supports appending.
+.. option:: --output <OUTPUT-DIRECTORY>
 
-    This mode is useful when adding new features to an already an existing
-    partitioned dataset.
-
-.. option:: --scheme hive|flat
-
-    Partitioning scheme. Defaults to ``hive``.
+    Root of the output directory. [required]
 
 .. option:: --pattern <PATTERN>
 
@@ -111,40 +113,37 @@ Standard options
     Default values for the pattern are ``part_%010d`` for the hive scheme,
     and ``{LAYER_NAME}_{FIELD_VALUE}_%010d`` for the flat scheme.`
 
-.. option:: --feature-limit <FEATURE-LIMIT>
+.. option:: --scheme hive|flat
 
-    Maximum number of features per file. By default, unlimited. If the limit
-    is exceeded, several parts are created.
+    Partitioning scheme. Defaults to ``hive``.
 
-.. option:: --max-file-size <MAX-FILE-SIZE>
 
-    Maximum file size (MB or GB suffix can be used). By default, unlimited.
-    If the limit is exceeded, several parts are created.
+Standard Options
+----------------
 
-    Note that the maximum file size is used as a hint, and might not be
-    strictly respected, because the evaluation of the file size corresponding
-    to a feature is based on a heuristics, as the file size itself cannot be
-    reliably used when it is under writing. In particular, the heuristics does
-    not assume any compression, so for compressed formats, the actual size of
-    a part can be significantly smaller than the specified limit.
+.. collapse:: Details
 
-.. option:: --omit-partitioned-field
+    .. option:: --append
 
-    Whether to omit partitioned fields from the target layer definition.
-    Automatically set for Parquet output format and Hive partitioning.
+        Whether the output directory must be opened in append mode. Implies that
+        it already exists and that the output format supports appending.
 
-.. option:: --skip-errors
+        This mode is useful when adding new features to an already an existing
+        partitioned dataset.
 
-    Whether failures to write feature(s) should be ignored. Note that this option
-    sets the size of the transaction unit to one feature at a time, which may
-    cause severe slowdown when inserting into databases.
+    .. include:: gdal_options/co_vector.rst
 
-Advanced options
-++++++++++++++++
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/lco.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/skip_errors.rst
 
 Examples
 --------

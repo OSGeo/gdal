@@ -249,7 +249,8 @@ void Msg_reader_core::read_metadata_block(VSILFILE *fin)
     RADIOMETRIC_PROCESSING_RECORD rad;
     off_t offset = RADIOMETRICPROCESSING_RECORD_OFFSET + _f_header_offset +
                    sizeof(GP_PK_HEADER) + sizeof(GP_PK_SH1) + 1;
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fin, offset, SEEK_SET));
+    CPL_IGNORE_RET_VAL(
+        VSIFSeekL(fin, static_cast<vsi_l_offset>(offset), SEEK_SET));
     CPL_IGNORE_RET_VAL(
         VSIFReadL(&rad, sizeof(RADIOMETRIC_PROCESSING_RECORD), 1, fin));
     to_native(rad);
@@ -281,7 +282,8 @@ void Msg_reader_core::read_metadata_block(VSILFILE *fin)
     offset = RADIOMETRICPROCESSING_RECORD_OFFSET -
              IMAGEDESCRIPTION_RECORD_LENGTH + _f_header_offset +
              sizeof(GP_PK_HEADER) + sizeof(GP_PK_SH1) + 1;
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fin, offset, SEEK_SET));
+    CPL_IGNORE_RET_VAL(
+        VSIFSeekL(fin, static_cast<vsi_l_offset>(offset), SEEK_SET));
     CPL_IGNORE_RET_VAL(
         VSIFReadL(&idr, sizeof(IMAGE_DESCRIPTION_RECORD), 1, fin));
     to_native(idr);
@@ -329,7 +331,8 @@ void Msg_reader_core::read_metadata_block(VSILFILE *fin)
     GP_PK_SH1 sub_header;
     SUB_VISIRLINE visir_line;
 
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fin, _f_data_offset, SEEK_SET));
+    CPL_IGNORE_RET_VAL(
+        VSIFSeekL(fin, static_cast<vsi_l_offset>(_f_data_offset), SEEK_SET));
 
     _hrv_packet_size = 0;
     _interline_spacing = 0;
@@ -379,7 +382,7 @@ void Msg_reader_core::read_metadata_block(VSILFILE *fin)
         // skip over the actual line data
         CPL_IGNORE_RET_VAL(
             VSIFSeekL(fin,
-                      gp_header.packetLength -
+                      static_cast<vsi_l_offset>(gp_header.packetLength) -
                           (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1),
                       SEEK_CUR));
 
@@ -452,7 +455,7 @@ void Msg_reader_core::read_metadata_block(VSILFILE *fin)
                     // skip over the actual line data
                     CPL_IGNORE_RET_VAL(VSIFSeekL(
                         fin,
-                        gp_header.packetLength -
+                        static_cast<vsi_l_offset>(gp_header.packetLength) -
                             (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1),
                         SEEK_CUR));
 
@@ -464,7 +467,8 @@ void Msg_reader_core::read_metadata_block(VSILFILE *fin)
 
     TRAILER trailer;
 
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fin, _f_trailer_offset, SEEK_SET));
+    CPL_IGNORE_RET_VAL(
+        VSIFSeekL(fin, static_cast<vsi_l_offset>(_f_trailer_offset), SEEK_SET));
 
     if (VSIFReadL(&gp_header, sizeof(GP_PK_HEADER), 1, fin) != 1 ||
         VSIFReadL(&sub_header, sizeof(GP_PK_SH1), 1, fin) != 1 ||

@@ -10,8 +10,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 #include "cpl_error.h"
-#include "gdalalgorithm.h"
+#include "gdalalg_info.h"
 #include "gdalalg_raster_info.h"
 #include "gdalalg_vector_info.h"
 #include "gdalalg_dispatcher.h"
@@ -21,42 +23,23 @@
 /*                          GDALInfoAlgorithm                           */
 /************************************************************************/
 
-class GDALInfoAlgorithm final
-    : public GDALDispatcherAlgorithm<GDALRasterInfoAlgorithm,
-                                     GDALVectorInfoAlgorithm>
+GDALInfoAlgorithm::GDALInfoAlgorithm()
+    : GDALDispatcherAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-  public:
-    static constexpr const char *NAME = "info";
-    static constexpr const char *DESCRIPTION =
-        "Return information on a dataset (shortcut for 'gdal raster info' or "
-        "'gdal vector info').";
-    static constexpr const char *HELP_URL = "/programs/gdal_info.html";
+    // only for the help message
+    AddOutputFormatArg(&m_format).SetChoices("json", "text");
+    AddInputDatasetArg(&m_dataset);
 
-    GDALInfoAlgorithm() : GDALDispatcherAlgorithm(NAME, DESCRIPTION, HELP_URL)
-    {
-        // only for the help message
-        AddOutputFormatArg(&m_format).SetChoices("json", "text");
-        AddInputDatasetArg(&m_dataset);
+    m_longDescription = "For all options, run 'gdal raster info --help' or "
+                        "'gdal vector info --help'";
+}
 
-        m_longDescription = "For all options, run 'gdal raster info --help' or "
-                            "'gdal vector info --help'";
-    }
+bool GDALInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "The Run() method should not be called directly on the \"gdal "
+             "info\" program.");
+    return false;
+}
 
-    ~GDALInfoAlgorithm() override;
-
-  private:
-    std::string m_format{};
-    GDALArgDatasetValue m_dataset{};
-
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "The Run() method should not be called directly on the \"gdal "
-                 "info\" program.");
-        return false;
-    }
-};
-
-GDALInfoAlgorithm::~GDALInfoAlgorithm() = default;
-
-GDAL_STATIC_REGISTER_ALG(GDALInfoAlgorithm);
+//! @endcond

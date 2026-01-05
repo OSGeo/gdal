@@ -279,7 +279,7 @@ The RasterIO call takes the following arguments.
 
 Note that the same RasterIO() call is used to read, or write based on the setting of eRWFlag (either GF_Read or GF_Write). The nXOff, nYOff, nXSize, nYSize argument describe the window of raster data on disk to read (or write). It doesn't have to fall on tile boundaries though access may be more efficient if it does.
 
-The pData is the memory buffer the data is read into, or written from. It's real type must be whatever is passed as eBufType, such as GDT_Float32, or GDT_Byte. The RasterIO() call will take care of converting between the buffer's data type and the data type of the band. Note that when converting floating point data to integer RasterIO() rounds down, and when converting source values outside the legal range of the output the nearest legal value is used. This implies, for instance, that 16bit data read into a GDT_Byte buffer will map all values greater than 255 to 255, the data is not scaled!
+The pData is the memory buffer the data is read into, or written from. It's real type must be whatever is passed as eBufType, such as GDT_Float32, or GDT_UInt8. The RasterIO() call will take care of converting between the buffer's data type and the data type of the band. Note that when converting floating point data to integer RasterIO() rounds down, and when converting source values outside the legal range of the output the nearest legal value is used. This implies, for instance, that 16bit data read into a GDT_UInt8 buffer will map all values greater than 255 to 255, the data is not scaled!
 
 The nBufXSize and nBufYSize values describe the size of the buffer. When loading data at full resolution this would be the same as the window size. However, to load a reduced resolution overview this could be set to smaller than the window on disk. In this case the RasterIO() will utilize overviews to do the IO more efficiently if the overviews are suitable.
 
@@ -435,20 +435,20 @@ For situations in which you are not just exporting an existing file to a new fil
 
       GDALDataset *poDstDS;
       char **papszOptions = NULL;
-      poDstDS = poDriver->Create( pszDstFilename, 512, 512, 1, GDT_Byte,
+      poDstDS = poDriver->Create( pszDstFilename, 512, 512, 1, GDT_UInt8,
                                   papszOptions );
 
    .. code-tab:: c
 
       GDALDatasetH hDstDS;
       char **papszOptions = NULL;
-      hDstDS = GDALCreate( hDriver, pszDstFilename, 512, 512, 1, GDT_Byte,
+      hDstDS = GDALCreate( hDriver, pszDstFilename, 512, 512, 1, GDT_UInt8,
                           papszOptions );
 
    .. code-tab:: python
 
       dst_ds = driver.Create(dst_filename, xsize=512, ysize=512,
-                          bands=1, eType=gdal.GDT_Byte)
+                          bands=1, eType=gdal.GDT_UInt8)
 
 Once the dataset is successfully created, all appropriate metadata and raster data must be written to the file. What this is will vary according to usage, but a simple case with a projection, geotransform and raster data is covered here.
 
@@ -469,7 +469,7 @@ Once the dataset is successfully created, all appropriate metadata and raster da
       CPLFree( pszSRS_WKT );
       poBand = poDstDS->GetRasterBand(1);
       poBand->RasterIO( GF_Write, 0, 0, 512, 512,
-                      abyRaster, 512, 512, GDT_Byte, 0, 0 );
+                      abyRaster, 512, 512, GDT_UInt8, 0, 0 );
       /* Once we're done, close properly the dataset */
       GDALClose( (GDALDatasetH) poDstDS );
 
@@ -490,7 +490,7 @@ Once the dataset is successfully created, all appropriate metadata and raster da
       CPLFree( pszSRS_WKT );
       hBand = GDALGetRasterBand( hDstDS, 1 );
       GDALRasterIO( hBand, GF_Write, 0, 0, 512, 512,
-                  abyRaster, 512, 512, GDT_Byte, 0, 0 );
+                  abyRaster, 512, 512, GDT_UInt8, 0, 0 );
       /* Once we're done, close properly the dataset */
       GDALClose( hDstDS );
 

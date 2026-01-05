@@ -259,7 +259,7 @@ class OGRJSONFGDataset final : public GDALDataset
     OGRJSONFGDataset() = default;
     ~OGRJSONFGDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     bool Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType);
     bool Create(const char *pszName, CSLConstList papszOptions);

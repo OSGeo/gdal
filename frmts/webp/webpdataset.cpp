@@ -49,7 +49,7 @@ class WEBPDataset final : public GDALPamDataset
     WEBPDataset();
     ~WEBPDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     char **GetFileList() override;
 
@@ -105,7 +105,7 @@ WEBPRasterBand::WEBPRasterBand(WEBPDataset *poDSIn, int)
 {
     poDS = poDSIn;
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
@@ -183,7 +183,7 @@ WEBPDataset::~WEBPDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr WEBPDataset::Close()
+CPLErr WEBPDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
 
@@ -296,7 +296,8 @@ char **WEBPDataset::GetMetadata(const char *pszDomain)
                 if ((l_nFlags & 8) == 0)
                     break;
 
-                VSIFSeekL(fpImage, nChunkSize - 4, SEEK_CUR);
+                VSIFSeekL(fpImage, static_cast<vsi_l_offset>(nChunkSize - 4),
+                          SEEK_CUR);
 
                 bFirst = false;
             }
@@ -331,7 +332,8 @@ char **WEBPDataset::GetMetadata(const char *pszDomain)
                 break;
             }
             else
-                VSIFSeekL(fpImage, nChunkSize, SEEK_CUR);
+                VSIFSeekL(fpImage, static_cast<vsi_l_offset>(nChunkSize),
+                          SEEK_CUR);
         }
     }
 
@@ -416,7 +418,7 @@ CPLErr WEBPDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if ((eRWFlag == GF_Read) && (nBandCount == nBands) && (nXOff == 0) &&
         (nYOff == 0) && (nXSize == nBufXSize) && (nXSize == nRasterXSize) &&
         (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
-        (eBufType == GDT_Byte) && (pData != nullptr) &&
+        (eBufType == GDT_UInt8) && (pData != nullptr) &&
         IsAllBands(nBandCount, panBandMap))
     {
         if (Uncompress() != CE_None)
@@ -872,7 +874,7 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
 
     const GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
-    if (eDT != GDT_Byte)
+    if (eDT != GDT_UInt8)
     {
         CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                  "WEBP driver doesn't support data type %s. "
@@ -1046,7 +1048,7 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     CPLErr eErr =
         poSrcDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize, pabyBuffer, nXSize,
-                          nYSize, GDT_Byte, nBands, nullptr, nBands,
+                          nYSize, GDT_UInt8, nBands, nullptr, nBands,
                           static_cast<GSpacing>(nBands) * nXSize, 1, nullptr);
 
 /* -------------------------------------------------------------------- */

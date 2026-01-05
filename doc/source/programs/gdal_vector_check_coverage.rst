@@ -39,17 +39,18 @@ It is assumed that the individual polygons are themselves valid according to the
 
 .. note:: This command requires a GDAL build against the GEOS library (version 3.12 or greater).
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+
+Program-Specific Options
+------------------------
 
 .. option:: --geometry-field
 
    Specify the name of the geometry field to test, for layers having multiple geometry fields. By default the first
    geometry field will be used.
-
-.. option:: --include-valid
-
-   Include features for valid geometries in the output, maintaining 1:1 correspondence between input and output features.
 
 .. option:: --include-field
 
@@ -57,27 +58,51 @@ Standard options
 
    Optional field(s) to copy from the input features to the output.
 
+.. option:: --include-valid
+
+   Include features for valid geometries in the output, maintaining 1:1 correspondence between input and output features.
+
+.. option:: --input-layer
+
+   Specifies the name of the layer to process. By default, all layers will be processed.
+
+.. option:: --output-layer
+
+   Specifies the name of the layer to which features will be written. If not
+   specified and there is a single input layer, the name "invalid_edge" will
+   be used. If not specified and there are multiple input layers, features
+   for each input layer will be written to a separate output layer in the
+   format "invalid_edge_{INPUT_LAYER}".
+
 .. option:: --maximum-gap-width <MAXIMUM-GAP-WIDTH>
 
    Defines the largest area that should be considered a gap.
 
-.. include:: gdal_options/of_vector.rst
+Standard Options
+----------------
 
-.. include:: gdal_options/co_vector.rst
+.. collapse:: Details
 
-.. include:: options/lco.rst
+    .. include:: gdal_options/append_vector.rst
 
-.. include:: gdal_options/overwrite.rst
+    .. include:: gdal_options/co_vector.rst
 
-Advanced options
-++++++++++++++++
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/lco.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/oo.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/of_vector.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+    .. include:: gdal_options/output_oo.rst
 
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst

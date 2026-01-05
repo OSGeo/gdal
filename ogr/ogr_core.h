@@ -173,8 +173,26 @@ extern "C++"
         {
             return !(*this == other);
         }
-    };
 
+        /** Return the width of the envelope. Envelope must be initialized. */
+        double Width() const
+        {
+            return MaxX - MinX;
+        }
+
+        /** Return the height of the envelope. Envelope must be initialized. */
+        double Height() const
+        {
+            return MaxY - MinY;
+        }
+
+        /** Return the center point of the envelope. Envelope must be initialized. */
+        void Center(double &dfX, double &dfY) const
+        {
+            dfX = MinX + Width() / 2;
+            dfY = MinY + Height() / 2;
+        }
+    };
 }  // extern "C++"
 
 #else

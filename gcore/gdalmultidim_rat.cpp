@@ -66,7 +66,7 @@ class GDALRasterAttributeTableFromMDArrays final
         switch (m_apoArrays[iCol]->GetDataType().GetNumericDataType())
         {
             case GDT_Int8:
-            case GDT_Byte:
+            case GDT_UInt8:
             case GDT_UInt16:
             case GDT_Int16:
             case GDT_Int32:

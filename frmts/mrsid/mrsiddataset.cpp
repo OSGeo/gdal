@@ -735,7 +735,7 @@ GDALRasterBand *MrSIDRasterBand::GetOverview(int i)
 
 MrSIDDataset::MrSIDDataset(int bIsJPEG2000)
     : nBlockXSize(0), nBlockYSize(0), eSampleType(LTI_DATATYPE_UINT8),
-      eDataType(GDT_Byte), eColorSpace(LTI_COLORSPACE_INVALID)
+      eDataType(GDT_UInt8), eColorSpace(LTI_COLORSPACE_INVALID)
 {
     poStream = nullptr;
     poImageReader = nullptr;
@@ -1257,7 +1257,7 @@ CPLErr MrSIDDataset::OpenZoomLevel(lt_int32 iZoom)
         case LTI_DATATYPE_UINT8:
         case LTI_DATATYPE_SINT8:
         default:
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             break;
     }
 
@@ -3078,7 +3078,7 @@ LT_STATUS MrSIDDummyImageReader::initialize()
         case GDT_Float64:
             eSampleType = LTI_DATATYPE_FLOAT64;
             break;
-        case GDT_Byte:
+        case GDT_UInt8:
         default:
             eSampleType = LTI_DATATYPE_UINT8;
             break;

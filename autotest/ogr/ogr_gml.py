@@ -5385,3 +5385,50 @@ def test_ogr_gml_unique_fid_not_unique_no_numeric(tmp_vsimem):
     ds = ogr.Open(tmpname)
     lyr = ds.GetLayer(0)
     assert [f.GetFID() for f in lyr] == [2, 1, 3, 4]
+
+
+###############################################################################
+
+
+def test_ogr_gml_multiple_geom_elements_same_last_element(tmp_vsimem):
+
+    tmpname = tmp_vsimem / "test.xml"
+    with gdal.VSIFile(tmpname, "wb") as f:
+        f.write(
+            open("data/gml/multiple_geom_elements_same_last_element.gml", "rb").read()
+        )
+
+    # For historic reason, for "generic" behavior, when there are several
+    # geometry elements, we only take into account the last one
+    ds = ogr.Open(tmpname)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeometryColumn() == "secondGeom"
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (3 4)"
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (7 8)"
+
+
+###############################################################################
+
+
+def test_ogr_gml_multiple_geom_elements_different_last_element(tmp_vsimem):
+
+    tmpname = tmp_vsimem / "test.xml"
+    with gdal.VSIFile(tmpname, "wb") as f:
+        f.write(
+            open(
+                "data/gml/multiple_geom_elements_different_last_element.gml", "rb"
+            ).read()
+        )
+
+    # For historic reason, for "generic" behavior, when there are several
+    # geometry elements, we only take into account the last one, even if it
+    # is not the same among different features
+    ds = ogr.Open(tmpname)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeometryColumn() == ""
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (3 4)"
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (7 8)"

@@ -218,6 +218,7 @@ Vector commands
    gdal_vector_segmentize
    gdal_vector_set_field_type
    gdal_vector_set_geom_type
+   gdal_vector_sort
    gdal_vector_simplify
    gdal_vector_simplify_coverage
    gdal_vector_sql
@@ -255,6 +256,7 @@ Vector commands
     - :ref:`gdal_vector_set_geom_type`: Modify the geometry type of a vector dataset
     - :ref:`gdal_vector_simplify`: Simplify geometries of a vector dataset
     - :ref:`gdal_vector_simplify_coverage`: Simplify shared boundaries of a polygonal vector dataset
+    - :ref:`gdal_vector_sort`: Spatially sort a vector dataset
     - :ref:`gdal_vector_sql`: Apply SQL statement(s) to a dataset
     - :ref:`gdal_vector_swap_xy`: Swap X and Y coordinates of geometries of a vector dataset
     - :ref:`gdal_vector_update`: Update an existing vector dataset with an input vector dataset

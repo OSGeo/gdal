@@ -26,23 +26,28 @@ from valid pixels around the edges of the area.
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 (since GDAL 3.12)
 
-Options
--------
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-The following options are available:
+.. versionadded:: 3.12
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
 
-.. include:: gdal_options/co.rst
 
-.. include:: gdal_options/overwrite.rst
+Program-Specific Options
+------------------------
 
-.. option:: -b <BAND>
+.. option:: -b, --band <BAND>
 
     Select an input <BAND> to be processed. Bands are numbered from 1.
     Default is the first band of the input dataset.
 
-.. option:: -max-distance <MAX_DISTANCE>
+.. option:: --mask <MASK>
+
+    Use the first band of the specified file as a
+    validity mask (zero is invalid, non-zero is valid).
+
+.. option:: --max-distance <MAX_DISTANCE>
 
     Specifies the maximum distance (in pixels) that the algorithm will search
     out for values to interpolate. Default is 100 pixels.
@@ -60,17 +65,23 @@ The following options are available:
     weighting (`invdist`). It is also possible to choose a nearest
     neighbour (`nearest`) strategy.
 
-.. option:: --mask <MASK>
 
-    Use the first band of the specified file as a
-    validity mask (zero is invalid, non-zero is valid).
+Standard Options
+----------------
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+.. collapse:: Details
 
-.. versionadded:: 3.12
+    .. include:: gdal_options/append_raster.rst
 
-.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

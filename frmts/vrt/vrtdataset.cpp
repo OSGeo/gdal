@@ -2334,10 +2334,10 @@ GDALDataset *VRTDataset::GetSingleSimpleSource()
     bool bError = false;
     if (!poSource->GetSrcDstWindow(
             0, 0, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-            poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), &dfReqXOff,
-            &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff,
-            &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff, &nOutXSize,
-            &nOutYSize, bError))
+            poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
+            GRIORA_NearestNeighbour, &dfReqXOff, &dfReqYOff, &dfReqXSize,
+            &dfReqYSize, &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+            &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
         return nullptr;
 
     if (nReqXOff != 0 || nReqYOff != 0 ||
@@ -2387,11 +2387,11 @@ CPLErr VRTDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
     int nOutXSize = 0;
     int nOutYSize = 0;
     bool bError = false;
-    if (!poSource->GetSrcDstWindow(nXOff, nYOff, nXSize, nYSize, nBufXSize,
-                                   nBufYSize, &dfReqXOff, &dfReqYOff,
-                                   &dfReqXSize, &dfReqYSize, &nReqXOff,
-                                   &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff,
-                                   &nOutYOff, &nOutXSize, &nOutYSize, bError))
+    if (!poSource->GetSrcDstWindow(
+            nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+            GRIORA_NearestNeighbour, &dfReqXOff, &dfReqYOff, &dfReqXSize,
+            &dfReqYSize, &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+            &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
     {
         return bError ? CE_Failure : CE_None;
     }
@@ -3173,11 +3173,11 @@ bool VRTDataset::GetShiftedDataset(int nXOff, int nYOff, int nXSize, int nYSize,
     int nOutXSize = 0;
     int nOutYSize = 0;
     bool bError = false;
-    if (!poSource->GetSrcDstWindow(nXOff, nYOff, nXSize, nYSize, nXSize, nYSize,
-                                   &dfReqXOff, &dfReqYOff, &dfReqXSize,
-                                   &dfReqYSize, &nReqXOff, &nReqYOff,
-                                   &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
-                                   &nOutXSize, &nOutYSize, bError))
+    if (!poSource->GetSrcDstWindow(
+            nXOff, nYOff, nXSize, nYSize, nXSize, nYSize,
+            GRIORA_NearestNeighbour, &dfReqXOff, &dfReqYOff, &dfReqXSize,
+            &dfReqYSize, &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+            &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
         return false;
 
     if (nReqXSize != nXSize || nReqYSize != nYSize || nReqXSize != nOutXSize ||

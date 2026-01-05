@@ -237,7 +237,7 @@ better understand their meaning.
 -  **Corder**: Progression order. Defaults to "PRCL".
 -  **Cprecincts**: Precincts settings. Defaults to
    "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}".
--  **ORGgen_plt**: Whether to generate PLT markers (Paquet Length). Defaults to "yes".
+-  **ORGgen_plt**: Whether to generate PLT markers (Packet Length). Defaults to "yes".
 -  **ORGgen_tlm**: Whether to generate TLM markers (Tile Length). Kakadu SDK defaults used.
 -  **ORGtparts**: Kakadu SDK defaults used.
 -  **Cmodes**: Kakadu SDK defaults used.

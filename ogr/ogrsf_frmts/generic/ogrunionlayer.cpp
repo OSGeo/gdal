@@ -33,10 +33,10 @@ OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(const char *pszNameIn,
 /************************************************************************/
 
 OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
-    const OGRGeomFieldDefn *poSrc)
-    : OGRGeomFieldDefn(poSrc->GetNameRef(), poSrc->GetType())
+    const OGRGeomFieldDefn &oSrc)
+    : OGRGeomFieldDefn(oSrc)
 {
-    SetSpatialRef(poSrc->GetSpatialRef());
+    SetSpatialRef(oSrc.GetSpatialRef());
 }
 
 /************************************************************************/
@@ -44,21 +44,18 @@ OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
 /************************************************************************/
 
 OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
-    const OGRUnionLayerGeomFieldDefn *poSrc)
-    : OGRGeomFieldDefn(poSrc->GetNameRef(), poSrc->GetType()),
-      bGeomTypeSet(poSrc->bGeomTypeSet), bSRSSet(poSrc->bSRSSet)
+    const OGRUnionLayerGeomFieldDefn &oSrc)
+    : OGRGeomFieldDefn(oSrc), bGeomTypeSet(oSrc.bGeomTypeSet),
+      bSRSSet(oSrc.bSRSSet), sStaticEnvelope(oSrc.sStaticEnvelope)
 {
-    SetSpatialRef(poSrc->GetSpatialRef());
-    sStaticEnvelope = poSrc->sStaticEnvelope;
+    SetSpatialRef(oSrc.GetSpatialRef());
 }
 
 /************************************************************************/
 /*                     ~OGRUnionLayerGeomFieldDefn()                    */
 /************************************************************************/
 
-OGRUnionLayerGeomFieldDefn::~OGRUnionLayerGeomFieldDefn()
-{
-}
+OGRUnionLayerGeomFieldDefn::~OGRUnionLayerGeomFieldDefn() = default;
 
 /************************************************************************/
 /*                          OGRUnionLayer()                             */
@@ -90,13 +87,6 @@ OGRUnionLayer::~OGRUnionLayer()
 {
     m_apoSrcLayers.clear();
 
-    for (int i = 0; i < nFields; i++)
-        delete papoFields[i];
-    CPLFree(papoFields);
-    for (int i = 0; i < nGeomFields; i++)
-        delete papoGeomFields[i];
-    CPLFree(papoGeomFields);
-
     CPLFree(pszAttributeFilter);
     CPLFree(panMap);
 
@@ -111,30 +101,45 @@ OGRUnionLayer::~OGRUnionLayer()
 /************************************************************************/
 
 void OGRUnionLayer::SetFields(FieldUnionStrategy eFieldStrategyIn,
-                              int nFieldsIn, OGRFieldDefn **papoFieldsIn,
+                              int nFieldsIn, const OGRFieldDefn *paoFieldsIn,
                               int nGeomFieldsIn,
-                              OGRUnionLayerGeomFieldDefn **papoGeomFieldsIn)
+                              const OGRUnionLayerGeomFieldDefn *paoGeomFieldsIn)
 {
-    CPLAssert(nFields == 0);
+    CPLAssert(apoFields.empty());
     CPLAssert(poFeatureDefn == nullptr);
 
     eFieldStrategy = eFieldStrategyIn;
-    if (nFieldsIn)
+    for (int i = 0; i < nFieldsIn; i++)
     {
-        nFields = nFieldsIn;
-        papoFields = static_cast<OGRFieldDefn **>(
-            CPLMalloc(nFields * sizeof(OGRFieldDefn *)));
-        for (int i = 0; i < nFields; i++)
-            papoFields[i] = new OGRFieldDefn(papoFieldsIn[i]);
+        apoFields.push_back(std::make_unique<OGRFieldDefn>(paoFieldsIn[i]));
     }
-    nGeomFields = nGeomFieldsIn;
-    if (nGeomFields > 0)
+    bUseGeomFields = nGeomFieldsIn >= 0;
+    for (int i = 0; i < nGeomFieldsIn; i++)
     {
-        papoGeomFields = static_cast<OGRUnionLayerGeomFieldDefn **>(
-            CPLMalloc(nGeomFields * sizeof(OGRUnionLayerGeomFieldDefn *)));
-        for (int i = 0; i < nGeomFields; i++)
-            papoGeomFields[i] =
-                new OGRUnionLayerGeomFieldDefn(papoGeomFieldsIn[i]);
+        apoGeomFields.push_back(
+            std::make_unique<OGRUnionLayerGeomFieldDefn>(paoGeomFieldsIn[i]));
+    }
+}
+
+/************************************************************************/
+/*                              SetFields()                             */
+/************************************************************************/
+
+void OGRUnionLayer::SetFields(FieldUnionStrategy eFieldStrategyIn,
+                              const OGRFeatureDefn *poFeatureDefnIn)
+{
+    CPLAssert(apoFields.empty());
+    CPLAssert(poFeatureDefn == nullptr);
+
+    eFieldStrategy = eFieldStrategyIn;
+    for (const auto *poSrcFieldDefn : poFeatureDefnIn->GetFields())
+    {
+        apoFields.push_back(std::make_unique<OGRFieldDefn>(*poSrcFieldDefn));
+    }
+    for (const auto *poSrcGeomFieldDefn : poFeatureDefnIn->GetGeomFields())
+    {
+        apoGeomFields.push_back(
+            std::make_unique<OGRUnionLayerGeomFieldDefn>(*poSrcGeomFieldDefn));
     }
 }
 
@@ -231,16 +236,17 @@ const OGRFeatureDefn *OGRUnionLayer::GetLayerDefn() const
 
     if (eFieldStrategy == FIELD_SPECIFIED)
     {
-        for (int i = 0; i < nFields; i++)
-            poFeatureDefn->AddFieldDefn(papoFields[i]);
-        for (int i = 0; i < nGeomFields; i++)
+        for (const auto &poFieldDefn : apoFields)
+            poFeatureDefn->AddFieldDefn(poFieldDefn.get());
+        for (const auto &poGeomFieldDefnIn : apoGeomFields)
         {
             poFeatureDefn->AddGeomFieldDefn(
                 std::make_unique<OGRUnionLayerGeomFieldDefn>(
-                    papoGeomFields[i]));
+                    *(poGeomFieldDefnIn.get())));
             OGRUnionLayerGeomFieldDefn *poGeomFieldDefn =
                 cpl::down_cast<OGRUnionLayerGeomFieldDefn *>(
-                    poFeatureDefn->GetGeomFieldDefn(i));
+                    poFeatureDefn->GetGeomFieldDefn(
+                        poFeatureDefn->GetGeomFieldCount() - 1));
 
             if (poGeomFieldDefn->bGeomTypeSet == FALSE ||
                 poGeomFieldDefn->bSRSSet == FALSE)
@@ -266,7 +272,8 @@ const OGRFeatureDefn *OGRUnionLayer::GetLayerDefn() const
                             poGeomFieldDefn->bSRSSet = TRUE;
                             poGeomFieldDefn->SetSpatialRef(
                                 poSrcGeomFieldDefn->GetSpatialRef());
-                            if (i == 0 && poGlobalSRS == nullptr)
+                            if (poFeatureDefn->GetGeomFieldCount() == 1 &&
+                                poGlobalSRS == nullptr)
                             {
                                 poGlobalSRS =
                                     poSrcGeomFieldDefn->GetSpatialRef();
@@ -286,26 +293,26 @@ const OGRFeatureDefn *OGRUnionLayer::GetLayerDefn() const
     {
         const OGRFeatureDefn *poSrcFeatureDefn =
             m_apoSrcLayers[0]->GetLayerDefn();
-        const int nSrcFieldCount = poSrcFeatureDefn->GetFieldCount();
-        for (int i = 0; i < nSrcFieldCount; i++)
-            poFeatureDefn->AddFieldDefn(poSrcFeatureDefn->GetFieldDefn(i));
-        for (int i = 0;
-             nGeomFields != -1 && i < poSrcFeatureDefn->GetGeomFieldCount();
-             i++)
+        for (const auto *poSrcFieldDefn : poSrcFeatureDefn->GetFields())
+            poFeatureDefn->AddFieldDefn(poSrcFieldDefn);
+        if (bUseGeomFields)
         {
-            const OGRGeomFieldDefn *poFldDefn =
-                poSrcFeatureDefn->GetGeomFieldDefn(i);
-            poFeatureDefn->AddGeomFieldDefn(
-                std::make_unique<OGRUnionLayerGeomFieldDefn>(poFldDefn));
+            for (const auto *poSrcGeomFieldDefn :
+                 poSrcFeatureDefn->GetGeomFields())
+            {
+                poFeatureDefn->AddGeomFieldDefn(
+                    std::make_unique<OGRUnionLayerGeomFieldDefn>(
+                        *poSrcGeomFieldDefn));
+            }
         }
     }
     else if (eFieldStrategy == FIELD_UNION_ALL_LAYERS)
     {
-        if (nGeomFields == 1)
+        if (apoGeomFields.size() == 1)
         {
             poFeatureDefn->AddGeomFieldDefn(
                 std::make_unique<OGRUnionLayerGeomFieldDefn>(
-                    papoGeomFields[0]));
+                    *(apoGeomFields[0].get())));
         }
 
         int nDstFieldCount = 0;
@@ -341,7 +348,7 @@ const OGRFeatureDefn *OGRUnionLayer::GetLayerDefn() const
             }
 
             for (int i = 0;
-                 nGeomFields != -1 && i < poSrcFeatureDefn->GetGeomFieldCount();
+                 bUseGeomFields && i < poSrcFeatureDefn->GetGeomFieldCount();
                  i++)
             {
                 const OGRGeomFieldDefn *poSrcFieldDefn =
@@ -352,9 +359,9 @@ const OGRFeatureDefn *OGRUnionLayer::GetLayerDefn() const
                 {
                     poFeatureDefn->AddGeomFieldDefn(
                         std::make_unique<OGRUnionLayerGeomFieldDefn>(
-                            poSrcFieldDefn));
+                            *poSrcFieldDefn));
                     if (poFeatureDefn->GetGeomFieldCount() == 1 &&
-                        nGeomFields == 0 && GetSpatialRef() != nullptr)
+                        apoGeomFields.empty() && GetSpatialRef() != nullptr)
                     {
                         OGRUnionLayerGeomFieldDefn *poGeomFieldDefn =
                             cpl::down_cast<OGRUnionLayerGeomFieldDefn *>(
@@ -365,7 +372,7 @@ const OGRFeatureDefn *OGRUnionLayer::GetLayerDefn() const
                 }
                 else
                 {
-                    if (nIndex == 0 && nGeomFields == 1)
+                    if (nIndex == 0 && apoGeomFields.size() == 1)
                     {
                         OGRUnionLayerGeomFieldDefn *poGeomFieldDefn =
                             cpl::down_cast<OGRUnionLayerGeomFieldDefn *>(
@@ -391,22 +398,21 @@ const OGRFeatureDefn *OGRUnionLayer::GetLayerDefn() const
     {
         const OGRFeatureDefn *poSrcFeatureDefn =
             m_apoSrcLayers[0]->GetLayerDefn();
-        for (int i = 0; i < poSrcFeatureDefn->GetFieldCount(); i++)
-            poFeatureDefn->AddFieldDefn(poSrcFeatureDefn->GetFieldDefn(i));
-        for (int i = 0; i < poSrcFeatureDefn->GetGeomFieldCount(); i++)
+        for (const auto *poSrcFieldDefn : poSrcFeatureDefn->GetFields())
+            poFeatureDefn->AddFieldDefn(poSrcFieldDefn);
+        for (const auto *poSrcGeomFieldDefn : poSrcFeatureDefn->GetGeomFields())
         {
-            const OGRGeomFieldDefn *poFldDefn =
-                poSrcFeatureDefn->GetGeomFieldDefn(i);
             poFeatureDefn->AddGeomFieldDefn(
-                std::make_unique<OGRUnionLayerGeomFieldDefn>(poFldDefn));
+                std::make_unique<OGRUnionLayerGeomFieldDefn>(
+                    *poSrcGeomFieldDefn));
         }
 
         /* Remove any field that is not found in the source layers */
-        for (int iLayer = 1; iLayer < static_cast<int>(m_apoSrcLayers.size());
-             iLayer++)
+        auto oIterSrcLayer = std::next(m_apoSrcLayers.begin());
+        for (; oIterSrcLayer != m_apoSrcLayers.end(); ++oIterSrcLayer)
         {
             const OGRFeatureDefn *l_poSrcFeatureDefn =
-                m_apoSrcLayers[iLayer]->GetLayerDefn();
+                (*oIterSrcLayer)->GetLayerDefn();
             for (int i = iCompareFirstIndex; i < poFeatureDefn->GetFieldCount();
                  // No increment.
             )
@@ -458,11 +464,11 @@ const OGRFeatureDefn *OGRUnionLayer::GetLayerDefn() const
 
 OGRwkbGeometryType OGRUnionLayer::GetGeomType() const
 {
-    if (nGeomFields < 0)
+    if (!bUseGeomFields)
         return wkbNone;
-    if (nGeomFields >= 1 && papoGeomFields[0]->bGeomTypeSet)
+    if (!apoGeomFields.empty() && apoGeomFields[0]->bGeomTypeSet)
     {
-        return papoGeomFields[0]->GetType();
+        return apoGeomFields[0]->GetType();
     }
 
     return OGRLayer::GetGeomType();
@@ -678,7 +684,7 @@ void OGRUnionLayer::AutoWarpLayerIfNecessary(int iLayer)
                         m_apoSrcLayers[iLayer].reset(
                             std::make_unique<OGRWarpedLayer>(
                                 poSrcLayer, iSrcGeomField, bOwned,
-                                poCT.release(), poReversedCT.release()));
+                                std::move(poCT), std::move(poReversedCT)));
                     }
                     else
                     {
@@ -1115,10 +1121,10 @@ OGRErr OGRUnionLayer::IUpdateFeature(OGRFeature *poFeature,
 
 const OGRSpatialReference *OGRUnionLayer::GetSpatialRef() const
 {
-    if (nGeomFields < 0)
+    if (!bUseGeomFields)
         return nullptr;
-    if (nGeomFields >= 1 && papoGeomFields[0]->bSRSSet)
-        return papoGeomFields[0]->GetSpatialRef();
+    if (!apoGeomFields.empty() && apoGeomFields[0]->bSRSSet)
+        return apoGeomFields[0]->GetSpatialRef();
 
     if (poGlobalSRS == nullptr)
     {
@@ -1291,7 +1297,8 @@ int OGRUnionLayer::TestCapability(const char *pszCap) const
 
     if (EQUAL(pszCap, OLCFastGetExtent))
     {
-        if (nGeomFields >= 1 && papoGeomFields[0]->sStaticEnvelope.IsInit())
+        if (!apoGeomFields.empty() &&
+            apoGeomFields[0]->sStaticEnvelope.IsInit())
             return TRUE;
 
         for (int i = 0; i < static_cast<int>(m_apoSrcLayers.size()); i++)
@@ -1381,10 +1388,11 @@ int OGRUnionLayer::TestCapability(const char *pszCap) const
 OGRErr OGRUnionLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
                                  bool bForce)
 {
-    if (iGeomField >= 0 && iGeomField < nGeomFields &&
-        papoGeomFields[iGeomField]->sStaticEnvelope.IsInit())
+    if (iGeomField >= 0 &&
+        static_cast<size_t>(iGeomField) < apoGeomFields.size() &&
+        apoGeomFields[iGeomField]->sStaticEnvelope.IsInit())
     {
-        *psExtent = papoGeomFields[iGeomField]->sStaticEnvelope;
+        *psExtent = apoGeomFields[iGeomField]->sStaticEnvelope;
         return OGRERR_NONE;
     }
 

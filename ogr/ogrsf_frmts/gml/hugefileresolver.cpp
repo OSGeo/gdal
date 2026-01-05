@@ -102,23 +102,22 @@ struct huge_parent
 class huge_helper
 {
   public:
-    huge_helper()
-        : hDB(nullptr), hNodes(nullptr), hEdges(nullptr), nodeSrs(nullptr),
-          pFirst(nullptr), pLast(nullptr), pFirstHref(nullptr),
-          pLastHref(nullptr), pFirstParent(nullptr), pLastParent(nullptr)
-    {
-    }
+    huge_helper() = default;
+    huge_helper(const huge_helper &) = delete;
+    huge_helper &operator=(const huge_helper &) = delete;
 
-    sqlite3 *hDB;
-    sqlite3_stmt *hNodes;
-    sqlite3_stmt *hEdges;
-    CPLString *nodeSrs;
-    struct huge_tag *pFirst;
-    struct huge_tag *pLast;
-    struct huge_href *pFirstHref;
-    struct huge_href *pLastHref;
-    struct huge_parent *pFirstParent;
-    struct huge_parent *pLastParent;
+    sqlite3 *hDB = nullptr;
+    sqlite3_stmt *hNodes = nullptr;
+    sqlite3_stmt *hEdges = nullptr;
+    CPLString *nodeSrs = nullptr;
+    struct huge_tag *pFirst = nullptr;
+    struct huge_tag *pLast = nullptr;
+    struct huge_href *pFirstHref = nullptr;
+    struct huge_href *pLastHref = nullptr;
+    struct huge_parent *pFirstParent = nullptr;
+    struct huge_parent *pLastParent = nullptr;
+    std::unique_ptr<OGRGML_SRSCache, decltype(&OGRGML_SRSCache_Destroy)>
+        srsCache{OGRGML_SRSCache_Create(), OGRGML_SRSCache_Destroy};
 };
 
 static bool gmlHugeFileSQLiteInit(huge_helper *helper)
@@ -1009,7 +1008,7 @@ static int gmlHugeFindGmlId(const CPLXMLNode *psNode, CPLString **gmlId)
     return false;
 }
 
-static void gmlHugeFileNodeCoords(struct huge_tag *pItem,
+static void gmlHugeFileNodeCoords(huge_helper *helper, struct huge_tag *pItem,
                                   const CPLXMLNode *psNode,
                                   CPL_UNUSED CPLString **nodeSrs)
 {
@@ -1023,7 +1022,8 @@ static void gmlHugeFileNodeCoords(struct huge_tag *pItem,
         CPLCreateXMLNode(psTopoCurve, CXT_Element, "directedEdge");
     CPLXMLNode *psEdge = CPLCloneXMLTree(psNode);
     CPLAddXMLChild(psDirEdge, psEdge);
-    OGRGeometry *poTopoCurve = GML2OGRGeometry_XMLNode(psTopoCurve, FALSE);
+    OGRGeometry *poTopoCurve =
+        GML2OGRGeometry_XMLNode(psTopoCurve, FALSE, helper->srsCache.get());
     CPLDestroyXMLNode(psTopoCurve);
     if (poTopoCurve != nullptr)
     {
@@ -1177,7 +1177,8 @@ static void gmlHugeFileCheckXrefs(huge_helper *helper, const CPLXMLNode *psNode)
                     gmlHugeAddToHelper(helper, gmlId, gmlValue);
                 if (pItem != nullptr)
                 {
-                    gmlHugeFileNodeCoords(pItem, psNode, &(helper->nodeSrs));
+                    gmlHugeFileNodeCoords(helper, pItem, psNode,
+                                          &(helper->nodeSrs));
                 }
                 else
                 {

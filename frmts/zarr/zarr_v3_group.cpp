@@ -392,7 +392,7 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
     bool bUnsupported = false;
     switch (eDT)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         {
             elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
             dtype.Set(dummy, "uint8");

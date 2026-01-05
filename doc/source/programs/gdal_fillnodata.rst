@@ -31,6 +31,10 @@ nodata areas) by interpolating from valid pixels around the edges of the area.
 Additional details on the algorithm are available in the
 :cpp:func:`GDALFillNodata` docs.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_fill_nodata`.
+
 .. note::
 
     gdal_fillnodata is a Python utility, and is only available if GDAL Python bindings are available.

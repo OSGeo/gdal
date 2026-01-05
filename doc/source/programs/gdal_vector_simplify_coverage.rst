@@ -43,40 +43,59 @@ This command can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 .. note:: This command requires a GDAL build against the GEOS library (version 3.12 or greater).
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+
+Program-Specific Options
+------------------------
+
+.. option:: --preserve-boundary
+
+    Flag indicating whether to preserve (avoid simplifying) external boundaries.
+    This can be useful when simplifying a portion of a larger dataset.
 
 .. option:: --tolerance <TOLERANCE>
 
     Tolerance used for determining whether vertices should be removed.
     Specified in georeferenced units of the source layer.
 
-.. option:: --preserve-external-boundary
+Standard Options
+----------------
 
-    Flag indicating whether to preserve (avoid simplifying) external boundaries.
-    This can be useful when simplifying a portion of a larger dataset.
+.. collapse:: Details
 
-.. include:: gdal_options/active_layer.rst
+    .. include:: gdal_options/active_layer.rst
 
-.. include:: gdal_options/of_vector.rst
+    .. include:: gdal_options/append_vector.rst
 
-.. include:: gdal_options/co_vector.rst
+    .. include:: gdal_options/co_vector.rst
 
-.. include:: options/lco.rst
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_options/overwrite.rst
+    .. include:: gdal_options/input_layer.rst
 
-Advanced options
-++++++++++++++++
+    .. include:: gdal_options/lco.rst
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/oo.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/of_vector.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/output_layer.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst
+
 
 Examples
 --------
@@ -97,11 +116,6 @@ Examples
    .. code-block:: bash
 
        $ gdal vector pipeline ! read tl_2024_us_state.shp ! simplify-coverage --tolerance 2 ! set-geom-type --multi ! write out.gpkg --overwrite
-
-
-
-
-
 
 
 .. below is an allow-list for spelling checker.

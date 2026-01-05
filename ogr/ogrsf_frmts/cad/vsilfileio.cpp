@@ -77,7 +77,10 @@ int VSILFileIO::Seek(long offset, CADFileIO::SeekOrigin origin)
             break;
     }
 
-    return VSIFSeekL(m_oFileStream, offset, nWhence) == 0 ? 0 : 1;
+    return VSIFSeekL(m_oFileStream, static_cast<vsi_l_offset>(offset),
+                     nWhence) == 0
+               ? 0
+               : 1;
 }
 
 long int VSILFileIO::Tell()

@@ -47,7 +47,7 @@ class LCPDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(LCPDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     LCPDataset();
@@ -94,7 +94,7 @@ LCPDataset::~LCPDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr LCPDataset::Close()
+CPLErr LCPDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

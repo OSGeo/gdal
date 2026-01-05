@@ -58,8 +58,14 @@ These pixels may be converted unto NoData (``DEFAULT = NO_DATA``), some other co
    :program:`gdal raster reclassify` supports writing to VRT format; however, VRT
    files generated in this way can only be opened using GDAL 3.11 or greater.
 
-Options
-+++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+
+
+Program-Specific Options
+------------------------
 
 .. option:: -m, --mapping <MAPPING>
 
@@ -67,16 +73,24 @@ Options
    The mappings may either be provided as text (with each entry separate by a semicolon),
    or they may be read from a file using ``@filename.txt``.
 
-.. include:: gdal_options/co.rst
+Standard Options
+----------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. collapse:: Details
 
-.. include:: gdal_options/ot.rst
+    .. include:: gdal_options/append_raster.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/co.rst
 
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/ot.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

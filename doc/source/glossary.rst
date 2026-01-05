@@ -46,6 +46,16 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
         The date tied to spatial coordinates in a dynamic reference frame, used to account for positional changes over time (e.g., due to tectonic motion).
 
+    CPL
+
+        Common Portability Library. Part of the C API that provides convenience
+        functions to provide independence from the operating systems on which GDAL runs.
+        Back in the early days of GDAL development, when cross-platform development
+        as well as compatibility and standard conformance of compilers was a challenge,
+        CPL proved necessary for smooth portability of GDAL/OGR.
+
+        CPL, or parts of it, is used by some projects external to GDAL (eg. MITAB, libgeotiff).
+
     Credentials
 
         Information (such as a username and password or tokens) used to verify the identity of a user or system for authentication and access control.
@@ -54,6 +64,11 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
         Coordinate Reference System. A system that maps spatial data coordinates to real-world locations,
         combining a coordinate system with a reference surface like a projection or :term:`ellipsoid`.
+
+    CSL
+
+        C-String List. Prefix used by a number of functions in the C API, that deal with
+        an array of NUL-terminated strings, the array itself being terminated by a NULL pointer.
 
     curl
 
@@ -196,6 +211,16 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
         .. seealso::
             https://www.ogc.org/
 
+    OGR
+
+        Open GIS Reference. OGR used to stand for OpenGIS Simple Features Reference
+        Implementation. However, since OGR is not fully compliant with the
+        OpenGIS Simple Feature specification and is not approved as a reference
+        implementation of the spec the name was changed to OGR Simple Features Library.
+        The only meaning of OGR in this name is historical. OGR is also the
+        prefix used everywhere in the source of the library for vector related
+        functionality.
+
     OSR
 
         OGR Spatial Reference (OSR) - module that handles spatial reference systems and coordinate transformations.
@@ -267,6 +292,14 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
         Standard output stream used by programs to display output data, typically shown on the console or terminal.
 
+    strile
+
+        A combination of "strip" and "tile". It is a block of raster data stored in a TIFF file, either as a row of pixels (strip) or a square/rectangle (tile).
+        GDAL reads and writes each strile as a unit when working with Cloud Optimized GeoTIFFs (COGs).
+
+        .. seealso::
+            :ref:`raster.cog`.
+
     Swath
 
         A contiguous block or strip of raster data processed or read at one time.
@@ -288,7 +321,7 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
     UTF8
 
         A character encoding that represents text using one to four bytes per character, and capable of encoding all Unicode characters. Also
-        referred to a UTF-8. 
+        referred to a UTF-8.
 
     VRT
 
@@ -300,8 +333,13 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
     VSI
 
-        Virtual System Interface. An interface for accessing files and datasets in non-filesystem locations, such as
-        in-memory files, zip files, and over network protocols.
+        Virtual System Interface. This is the name of the input/output abstraction layer
+        that is implemented by different Virtual File Systems (VFS) to provide access
+        to regular files, in-memory files, network accessible files, compressed files, etc.
+
+        The VSI functions retain exactly the same calling pattern as the original
+        Standard C functions they relate to, for the parts where they are common, and
+        also extend it to provide more specialized functionality.
 
         .. seealso::
             :ref:`virtual_file_systems`.

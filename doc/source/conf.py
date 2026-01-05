@@ -91,6 +91,7 @@ extensions = [
     "sphinxcontrib.spelling",
     "myst_nb",
     "sphinx_tabs.tabs",
+    "sphinx_toolbox.collapse",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -156,6 +157,7 @@ nitpick_ignore = [
     ("cpp:identifier", "tm"),
     ("cpp:identifier", "TRUE"),
     ("cpp:identifier", "uint8_t"),
+    ("cpp:identifier", "uint32_t"),
     ("cpp:identifier", "uint64_t"),
     ("cpp:identifier", "va_list"),
     # ODBC specific
@@ -383,6 +385,9 @@ html_static_path = ["_static"]
 
 # For generated content and robots.txt
 html_extra_path = [os.path.join(build_dir, "html_extra"), "extra_path"]
+
+html_js_files = ["announcement.js"]
+html_css_files = ["announcement.css"]
 
 # If true, links to the reST sources are added to the pages.
 html_show_sourcelink = False
@@ -933,6 +938,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_sort",
+        "gdal-vector-sort",
+        "Spatially sort a vector dataset",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector_buffer",
         "gdal-vector-buffer",
         "Compute a buffer around geometries of a vector dataset",
@@ -942,7 +954,7 @@ man_pages = [
     (
         "programs/gdal_vector_swap_xy",
         "gdal-vector-swap-xy",
-        "Swap X and Y coordinates of geometries of a vector datasett",
+        "Swap X and Y coordinates of geometries of a vector dataset",
         [author_evenr],
         1,
     ),

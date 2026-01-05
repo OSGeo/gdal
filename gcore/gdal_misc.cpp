@@ -87,7 +87,7 @@ static int GetNonComplexDataTypeElementSizeBits(GDALDataType eDataType)
 {
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         case GDT_Int8:
             return 8;
 
@@ -262,7 +262,7 @@ GDALDataType CPL_STDCALL GDALFindDataType(int nBits, int bSigned, int bFloating,
             if (!bSigned)
             {
                 if (nBits <= 8)
-                    return GDT_Byte;
+                    return GDT_UInt8;
                 if (nBits <= 16)
                     return GDT_UInt16;
                 if (nBits <= 32)
@@ -367,7 +367,7 @@ GDALDataType CPL_STDCALL GDALFindDataTypeForValue(double dValue, int bComplex)
  * Returns the size of a GDT_* type in bytes.  In contrast,
  * GDALGetDataTypeSize() returns the size in <b>bits</b>.
  *
- * @param eDataType type, such as GDT_Byte.
+ * @param eDataType type, such as GDT_UInt8.
  * @return the number of bytes or zero if it is not recognised.
  */
 
@@ -376,7 +376,7 @@ int CPL_STDCALL GDALGetDataTypeSizeBytes(GDALDataType eDataType)
 {
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         case GDT_Int8:
             return 1;
 
@@ -419,7 +419,7 @@ int CPL_STDCALL GDALGetDataTypeSizeBytes(GDALDataType eDataType)
  * Returns the size of a GDT_* type in bits, <b>not bytes</b>!  Use
  * GDALGetDataTypeSizeBytes() for bytes.
  *
- * @param eDataType type, such as GDT_Byte.
+ * @param eDataType type, such as GDT_UInt8.
  * @return the number of bits or zero if it is not recognised.
  */
 
@@ -441,7 +441,7 @@ int CPL_STDCALL GDALGetDataTypeSizeBits(GDALDataType eDataType)
  * Use GDALGetDataTypeSizeBytes() for bytes.
  * Use GDALGetDataTypeSizeBits() for bits.
  *
- * @param eDataType type, such as GDT_Byte.
+ * @param eDataType type, such as GDT_UInt8.
  * @return the number of bits or zero if it is not recognised.
  */
 
@@ -475,7 +475,7 @@ int CPL_STDCALL GDALDataTypeIsComplex(GDALDataType eDataType)
         case GDT_CFloat64:
             return TRUE;
 
-        case GDT_Byte:
+        case GDT_UInt8:
         case GDT_Int8:
         case GDT_Int16:
         case GDT_UInt16:
@@ -518,7 +518,7 @@ int CPL_STDCALL GDALDataTypeIsFloating(GDALDataType eDataType)
         case GDT_CFloat64:
             return TRUE;
 
-        case GDT_Byte:
+        case GDT_UInt8:
         case GDT_Int8:
         case GDT_Int16:
         case GDT_UInt16:
@@ -544,7 +544,7 @@ int CPL_STDCALL GDALDataTypeIsFloating(GDALDataType eDataType)
 /**
  * \brief Is data type integer? (might be complex)
  *
- * @return TRUE if the passed type is integer (one of GDT_Byte, GDT_Int16,
+ * @return TRUE if the passed type is integer (one of GDT_UInt8, GDT_Int16,
  * GDT_UInt16, GDT_Int32, GDT_UInt32, GDT_CInt16, GDT_CInt32).
  */
 
@@ -553,7 +553,7 @@ int CPL_STDCALL GDALDataTypeIsInteger(GDALDataType eDataType)
 {
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         case GDT_Int8:
         case GDT_Int16:
         case GDT_UInt16:
@@ -594,7 +594,7 @@ int CPL_STDCALL GDALDataTypeIsSigned(GDALDataType eDataType)
 {
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         case GDT_UInt16:
         case GDT_UInt32:
         case GDT_UInt64:
@@ -702,7 +702,7 @@ int CPL_STDCALL GDALDataTypeIsConversionLossy(GDALDataType eTypeFrom,
  * \brief Get name of data type.
  *
  * Returns a symbolic name for the data type.  This is essentially the
- * the enumerated item name with the GDT_ prefix removed.  So GDT_Byte returns
+ * the enumerated item name with the GDT_ prefix removed.  So GDT_UInt8 returns
  * "Byte".  The returned strings are static strings and should not be modified
  * or freed by the application.  These strings are useful for reporting
  * datatypes in debug statements, errors and other user output.
@@ -720,7 +720,8 @@ const char *CPL_STDCALL GDALGetDataTypeName(GDALDataType eDataType)
         case GDT_Unknown:
             return "Unknown";
 
-        case GDT_Byte:
+        case GDT_UInt8:
+            // TODO: return UInt8 for GDAL 4 ?
             return "Byte";
 
         case GDT_Int8:
@@ -794,6 +795,9 @@ GDALDataType CPL_STDCALL GDALGetDataTypeByName(const char *pszName)
 {
     VALIDATE_POINTER1(pszName, "GDALGetDataTypeByName", GDT_Unknown);
 
+    if (EQUAL(pszName, "UInt8"))
+        return GDT_UInt8;
+
     for (int iType = 1; iType < GDT_TypeCount; iType++)
     {
         const auto eType = static_cast<GDALDataType>(iType);
@@ -855,7 +859,7 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
     bool bRounded = false;
     switch (eDT)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             ClampAndRound<GByte>(dfValue, bClamped, bRounded);
             break;
         case GDT_Int8:
@@ -970,7 +974,7 @@ bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
 {
     switch (eDT)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             return GDALIsValueExactAs<uint8_t>(dfValue);
         case GDT_Int8:
             return GDALIsValueExactAs<int8_t>(dfValue);
@@ -1025,7 +1029,7 @@ bool GDALIsValueInRangeOf(double dfValue, GDALDataType eDT)
 {
     switch (eDT)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             return GDALIsValueInRange<uint8_t>(dfValue);
         case GDT_Int8:
             return GDALIsValueInRange<int8_t>(dfValue);
@@ -1089,7 +1093,7 @@ GDALDataType CPL_STDCALL GDALGetNonComplexDataType(GDALDataType eDataType)
         case GDT_CFloat64:
             return GDT_Float64;
 
-        case GDT_Byte:
+        case GDT_UInt8:
         case GDT_UInt16:
         case GDT_UInt32:
         case GDT_UInt64:
@@ -1586,7 +1590,7 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
 
                 switch (poBlock->GetDataType())
                 {
-                    case GDT_Byte:
+                    case GDT_UInt8:
                         dfValue =
                             reinterpret_cast<const GByte *>(pDataRef)[iOffset];
                         break;
@@ -5554,7 +5558,7 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
     // specified data type and return a replacement value if it is, return
     // 0 otherwise.
     double dfReplacementVal = dfNoDataValue;
-    if (dt == GDT_Byte)
+    if (dt == GDT_UInt8)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
                                  cpl::NumericLimits<uint8_t>::lowest(),

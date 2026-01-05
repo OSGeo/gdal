@@ -30,86 +30,22 @@ It uses the method defined in [Wang2000]_ for a user defined point.
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 (since GDAL 3.12)
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. versionadded:: 3.12
 
-.. include:: gdal_options/co.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
 
-.. include:: gdal_options/overwrite.rst
+
+Program-Specific Options
+------------------------
 
 .. option:: -b, --band <band>
 
    Select an input band containing the DEM data. Bands are numbered from 1.
    Only a single band can be used. Only the part of the raster within the specified
    maximum distance around the observer point is processed.
-
-.. option:: --dst-nodata <value>
-
-   The value to be set for the cells in the output raster that have no data.
-
-   .. note::
-        Currently, no special processing of input cells at a nodata
-        value is done (which may result in erroneous results).
-
-.. option:: -p, --pos, --position <X,Y> or <X,Y,H>
-
-   The X,Y or X,Y,H(Height) position of the observer (in SRS units for X and Y,
-   and in the height unit of the DEM for H).
-   If the coordinate is outside of the raster, all space between the observer
-   and the raster is assumed not to occlude visibility of the raster. (Not supported in cumulative mode.)
-   If H is not specified, it defaults to 2.
-
-.. option:: --target-height <value>
-
-   The height of the target above the DEM surface in the height unit of the DEM. Default: 0
-
-.. option:: --max-distance <value>
-
-   Maximum distance from observer to compute visibility.
-   It is also used to clamp the extent of the output raster.
-   (Not supported in cumulative mode)
-
-.. option:: --min-distance <value>
-
-   .. versionadded:: 3.12
-
-   Minimum distance from observer to compute visibility.
-   Must be less than '--max-distance'
-   (Not supported in cumulative mode)
-
-.. option:: --start-angle <value>
-
-   .. versionadded:: 3.12
-
-   Start angle for visibility. Measured clockwise from 0 North, in degree.
-   (Not supported in cumulative mode)
-
-.. option:: --end-angle <value>
-
-   .. versionadded:: 3.12
-
-   End angle for visibility. Measured clockwise from 0 North, in degree.
-   (Not supported in cumulative mode)
-
-.. option:: --high-pitch <value>
-
-   .. versionadded:: 3.12
-
-   High angle for visibility. Measured up from 0 horizontal, in degree.
-   Input values above the high pitch are marked out of range.
-   Must be greater than '--low-pitch'.
-   (Not supported in cumulative mode)
-
-.. option:: --low-pitch <value>
-
-   .. versionadded:: 3.12
-
-   Low angle for visibility. Measured up from 0 horizontal, in degree.
-   Input cell values below the pitch are are clamped to be no lower
-   than the intersection of the angle.  Must be less than '--high-pitch'.
-   (Not supported in cumulative mode)
 
 .. option:: --curvature-coefficient <value>
 
@@ -154,18 +90,61 @@ Standard options
    Flat Earth        1                   0                    inf
    ================  ==================  ===================  =====================
 
+
+.. option:: --dst-nodata <value>
+
+   The value to be set for the cells in the output raster that have no data.
+
+   .. note::
+        Currently, no special processing of input cells at a nodata
+        value is done (which may result in erroneous results).
+
+.. option:: --end-angle <value>
+
+   .. versionadded:: 3.12
+
+   End angle for visibility. Measured clockwise from 0 North, in degree.
+   (Not supported in cumulative mode)
+
+.. option:: -z, --height <HEIGHT>
+
+   Observer height
+
+.. option:: --high-pitch <value>
+
+   .. versionadded:: 3.12
+
+   High angle for visibility. Measured up from 0 horizontal, in degree.
+   Input values above the high pitch are marked out of range.
+   Must be greater than '--low-pitch'.
+   (Not supported in cumulative mode)
+
 .. option:: --invisible-value <value>
 
    Pixel value to set for invisible areas. (Not supported in cumulative mode) Default: 0
 
-.. option:: --out-of-range-value <value>
+.. option:: --low-pitch <value>
 
-   Pixel value to set for the cells that fall outside of the range specified by
-   the observer location and the maximum distance. (Not supported in cumulative mode) Default: 0
+   .. versionadded:: 3.12
 
-.. option:: --visible-value <value>
+   Low angle for visibility. Measured up from 0 horizontal, in degree.
+   Input cell values below the pitch are are clamped to be no lower
+   than the intersection of the angle.  Must be less than '--high-pitch'.
+   (Not supported in cumulative mode)
 
-   Pixel value to set for visible areas. (Not supported in cumulative mode) Default: 255
+.. option:: --max-distance <value>
+
+   Maximum distance from observer to compute visibility.
+   It is also used to clamp the extent of the output raster.
+   (Not supported in cumulative mode)
+
+.. option:: --min-distance <value>
+
+   .. versionadded:: 3.12
+
+   Minimum distance from observer to compute visibility.
+   Must be less than '--max-distance'
+   (Not supported in cumulative mode)
 
 .. option:: --mode normal|DEM|ground|cumulative
 
@@ -186,22 +165,61 @@ Standard options
      where each cell represents the relative observability from a grid of observer points.
      See the :option:`--observer-spacing` option.
 
-.. option:: --observer-spacing <value>
-
-   Cell spacing between observers (only supported in cumulative mode).
-   Default: 10
-
 .. option:: -j, --num-threads <value>
 
    Number of jobs to run at once. (only supported in cumulative mode).
    Default: 3
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+.. option:: --observer-spacing <value>
 
-.. versionadded:: 3.12
+   Cell spacing between observers (only supported in cumulative mode).
+   Default: 10
 
-.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
+.. option:: --out-of-range-value <value>
+
+   Pixel value to set for the cells that fall outside of the range specified by
+   the observer location and the maximum distance. (Not supported in cumulative mode) Default: 0
+
+.. option:: -p, --pos, --position <X,Y> or <X,Y,H>
+
+   The X,Y or X,Y,H(Height) position of the observer (in SRS units for X and Y,
+   and in the height unit of the DEM for H).
+   If the coordinate is outside of the raster, all space between the observer
+   and the raster is assumed not to occlude visibility of the raster. (Not supported in cumulative mode.)
+   If H is not specified, it defaults to 2.
+
+.. option:: --start-angle <value>
+
+   .. versionadded:: 3.12
+
+   Start angle for visibility. Measured clockwise from 0 North, in degree.
+   (Not supported in cumulative mode)
+
+.. option:: --target-height <value>
+
+   The height of the target above the DEM surface in the height unit of the DEM. Default: 0
+
+.. option:: --visible-value <value>
+
+   Pixel value to set for visible areas. (Not supported in cumulative mode) Default: 255
+
+
+Standard Options
+----------------
+
+.. collapse:: details
+
+    .. include:: gdal_options/append_raster.rst
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

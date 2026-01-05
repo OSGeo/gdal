@@ -37,7 +37,7 @@ def test_gdalalg_raster_neighbors_kernel_sharpen(neighbors, kernel, checksum):
     assert neighbors.Run()
 
     out_ds = neighbors["output"].GetDataset()
-    out_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    out_ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     assert out_ds.GetRasterBand(1).Checksum() == checksum
 
 

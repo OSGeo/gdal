@@ -1,3 +1,156 @@
+# GDAL/OGR 3.12.1 Release Notes
+
+GDAL 3.12.1 is a bugfix release.
+
+## Build
+
+* mkgdaldist.sh: add pytest.ini to gdalautotest distribution
+
+## GDAL 3.12.1
+
+### Port
+
+* VSIZipFilesystemHandler::GetFileInfo(): extra sanity check to avoid later
+  huge memory allocations (ossfuzz#457877771)
+* /vsicurl/: fix a redirect to a URL ending with a slash followed by a 403
+
+### Algorithms
+
+* Rasterize: avoid integer overflows on huge geometry coordinates
+* GDALFPolygonize(): make it handle 64-bit float rasters on their native
+  precision, and not Float32 (#13526)
+
+### Core
+
+* GDALGeoTransform::Apply(const OGREnvelope &, GDALRasterWindow&): avoid
+  integer overflows
+* ComputeRasterMinMaxLocation(): fix on all inf/-inf rasters
+* GDALProxyPoolDataset::GetGCPSpatialRef(): fix nullptr dereference
+* Deferred plugin loading: add GDAL_DCAP_UPDATE to cached driver metadata items
+  in proxy driver, to avoid plugins to be unnecessarily loaded
+* GDALJP2Metadata::CollectGMLData(): avoid memory leak on malformed documents
+* JPEG2000 writer: remove NUL terminated byte at end of payload of 'lbl ' and
+  'xml ' boxes
+* ComputeStatistics(): fix imprecise result on stddev on Float64 with SSE2/AVX2
+  optimization (3.12.0 regression) (#13543)
+* ComputeStatistics(): increase precision for mean and stddev computation on
+  Float32 to Float64 (3.12.0 regression)
+
+### Raster utilities
+
+* gdalinfo -json output: fix stac:transform coefficient order (#13358)
+* gdalinfo -json: fix setting [stac][raster:bands][0][nodata] for
+  floating-point datasets
+* GDALZonalStats: Fix error for certain polygons outside raster extent (#13376)
+* gdal raster zonal-stats: avoid integer overflows on geometries with huge
+  coordinate values
+* gdal raster tile: fix stalling in --parallel-mode=spawn with CPL_DEBUG=ON on
+  Windows (#13390)
+* gdal mdim convert: fix specifying multiple values for --group, --subset,
+  --scale-axes
+* gdal raster convert: avoid error message when outputting to /vsistdout/ (#13400)
+* gdal raster calc / VRTDerivedRasterBand: fix computation/transfer data type
+  with ComplexSource (#13409)
+* gdal raster compare/info/tile: make them work properly in a pipeline where the
+  input dataset is provided not in the pipeline string
+* gdal vector make-valid: avoid skipping 3d geometries (#13425)
+* ogr2ogr/VectorTranslate: fix (and improve) selectFields support in Arrow code
+  path (#13401)
+* gdal vector check-geometry: add include-field option
+* gdal raster color-map/gdaldem color-relief: fix crash when color map is invalid
+  and outputting to a format without CreateCopy capability
+* GDALGeosNonStreamingAlgorithmDataset: Avoid crash with multiple input layers
+* gdal vector sql: fix --overwrite-layer (#13516)
+* gdal raster calc: allow to specify input files as nested pipelines (#13493)
+* gdalwarp: fix artifacts (related to chunked processing) when using -r sum
+  resampling (#13539)
+
+### Raster drivers
+
+GTI driver:
+ * accept tiles with south-up orientation (auto-warp them to north-up) (#13416)
+ * allow 'stac_extensions' field (in addition to 'stac_version') to be a marker
+   for STAC GeoParquet
+ * STAC GeoParquet: make it ready for top-level 'bands' object and eo v2.0 stac
+   extension
+ * only rewrite URLs (like gs:// --> /vsigs/) for a STAC collection catalog
+   (#12900)
+
+GTiff driver:
+ * avoid a warning to be emitted when created RRD overviews
+
+HDF5 driver:
+ * do not report GCPs on swath geolocation fields, but report GEOLOCATION
+
+netCDF driver:
+ * fix potential linking issue in GDAL_REGISTER_DRIVER_NETCDF_FOR_LATER_PLUGIN=ON
+   mode (#13410)
+
+NITF driver:
+ * fix reading extended header TREs (#13510)
+
+STACIT driver:
+ * do not emit initial pagination request with a '{}' body
+
+VRT driver:
+ * Add "name" attribute to source types in xml schema
+ * with nearest neighbor, round source coordinates as we do in generic
+   GDALRasterBand::IRasterIO() (#13464)
+ * disable multithreading on neighbouring sources not perfectly aligned on an
+   integer output coordinate, to avoid non deterministic pixel output
+
+Zarr driver:
+ * fix one way of opening Kerchunk Parquet reference stores
+ * avoid excessive processing time on corrupted NCZarr datasets
+   (ossfuzz#459241526)
+
+## OGR 3.12.1
+
+### Core
+
+* OGR_G_ExportToJson(): add ALLOW_MEASURE, ALLOW_CURVE, COORDINATE_ORDER
+  options (#13366)
+
+### OGRSpatialReference
+
+* OGRSpatialReference::FindBestMatch(): fix potential nullptr deref
+
+### Vector drivers
+
+GML driver:
+ * GML2OGRGeometry_XMLNode(): fix perf issue on srsName repeated many times
+   (ossfuzz#453226763)
+ * reader: fix reading 3D geometries with a 3D srsName but without
+   srsDimension='3'
+ * reader: set geometry column name when there are several geometry elements,
+   but the last one (whih is the one we read) is always the same
+
+GPKG driver:
+ * writer: avoid (non fatal) error message when creating a layer with a derived
+   geographic CRS
+
+Parquet driver:
+ * Arrow/Parquet: add a LISTS_AS_STRING_JSON=YES/NO open option (#13448)
+ * fix SetIgnoredFields() on files with fields of type list of structure
+   (#13338)
+
+Shapefile driver:
+ * reader/organizePolygons(): dramatically improve performance when input has
+   several 100,000 of rings (qgis/QGIS#63826)
+ * fix potential nullptr deref on corrupted CRS in GetSpatialRef()
+   (ossfuzz#458229990)
+
+## SWIG bindings
+
+* Increment FeatureDefn refcount on Feature.GetDefnRef
+* Python bindings: avoid warning with Python 3.14 when VSIFile constructor
+  throws an exception
+* Python bindings: add compatilibity with Python 3.13+ free-standing/no-gil
+  builds
+* Python bindings: add 'progress' keyword argument to gdal.alg.xxxx() methods
+* Python bindings: avoid gdal.alg.X public symbols to have non relevant
+  suggestions
+
 # GDAL/OGR 3.12.0 "Chicoutimi" Release Notes
 
 GDAL/OGR 3.12.0 is a feature release.
@@ -757,18 +910,6 @@ SQLite driver:
 * Docstring Updates for Stub Generation (#13198)
 * Utilities as a function: consistently handle options as string (#13274)
 
-# GDAL/OGR 3.11.4 Release Notes
-
-GDAL 3.11.4 is a bugfix release.
-
-## Build
-
-* Install missing symlinks for completions of a few missing utilities, and
-  remove ones that are no longer installed
-* CMake: fix checks for CMAKE_SYSTEM_PROCESSOR on non Windows platforms
-* Various compiler and cppcheck warning fixes
-* Add option to disable libavif version check
-
 # GDAL/OGR 3.11.5 Release Notes
 
 GDAL 3.11.5 is a bugfix release.
@@ -901,6 +1042,18 @@ WFS driver:
 
 * Guard against null input to SuggestedWarpOutput (#13054)
 * fix non-freeing of dataset created with CreateVector()
+
+# GDAL/OGR 3.11.4 Release Notes
+
+GDAL 3.11.4 is a bugfix release.
+
+## Build
+
+* Install missing symlinks for completions of a few missing utilities, and
+  remove ones that are no longer installed
+* CMake: fix checks for CMAKE_SYSTEM_PROCESSOR on non Windows platforms
+* Various compiler and cppcheck warning fixes
+* Add option to disable libavif version check
 
 ## GDAL 3.11.4
 
@@ -8278,7 +8431,7 @@ GTiff driver:
  * early checks for PREDICTOR settings, and update internal libtiff to support PREDICTOR=2 for 64-bit samples (rasterio/rasterio#2384)
  * remove limitation to 32,000 bytes when writing the GDAL metadata tag (#4116)
  * Create(): better detection of threshold when to switch to BigTIFF for tiled images (#5479)
- * unset geotransform from non-PAM source if PAM defines GCPs, and PAM is the prioritary source
+ * unset geotransform from non-PAM source if PAM defines GCPs, and PAM is the priority source
  * fix crash when building overviews and computing approx stats (#5580)
 
 HDF5 driver:
@@ -11797,4 +11950,4 @@ Python bindings:
 
 # GDAL 2.x and older
 
-Consult [NEWS-2.x.md](NEW-2.x.md)
+Consult [NEWS-2.x.md](NEWS-2.x.md)

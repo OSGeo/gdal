@@ -544,7 +544,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     # PROJ dependencies
     && apt-get install -y \
         libsqlite3-0 libtiff6 libcurl4 \
-        curl unzip ca-certificates \
+        unzip ca-certificates \
     # GDAL dependencies
     && apt-get install -y \
         bash-completion libopenjp2-7 libcairo2 python3-numpy \
@@ -571,8 +571,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     # Install JRE with --no-install-recommends, otherwise it draws default-jre, which draws systemd, which fails to install when running the arm64v8/ubuntu:24.04 image on a 64bit host
     && apt-get install -y --no-install-recommends openjdk-"$JAVA_VERSION"-jre \
     # Install Arrow C++
-    && apt-get install -y -V ca-certificates lsb-release \
+    && apt-get install -y -V curl ca-certificates lsb-release \
     && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && apt-get purge -y curl \
     && apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get update \
     && apt-get install -y -V libarrow${ARROW_SOVERSION} \
@@ -581,8 +582,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get install -y -V libarrow-compute${ARROW_SOVERSION}
 
 # Install libduckdb
-ARG DUCKDB_VERSION=v1.4.2
-RUN if test "$(uname -p)" = "x86_64"; then \
+ARG DUCKDB_VERSION=v1.4.3
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    export DEBIAN_FRONTEND=noninteractive \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && if test "$(uname -p)" = "x86_64"; then \
     curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-amd64.zip \
     && unzip libduckdb-linux-amd64.zip libduckdb.so \
     && mv libduckdb.so /usr/lib/x86_64-linux-gnu \
@@ -592,14 +598,16 @@ RUN if test "$(uname -p)" = "x86_64"; then \
     && unzip libduckdb-linux-arm64.zip libduckdb.so \
     && mv libduckdb.so /usr/lib/aarch64-linux-gnu \
     && rm -f libduckdb-linux-arm64.zip; \
-    fi
+    fi \
+    && apt-get purge -y curl
 
 ARG WITH_ORACLE=
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
   if test "$(uname -p)" = "x86_64"; then \
   if echo "$WITH_ORACLE" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
-      apt-get update \
+      export DEBIAN_FRONTEND=noninteractive \
+      && apt-get update \
       && apt-get install -y -V libaio1t64 \
       && ln -s libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1 \
   ) ; fi \

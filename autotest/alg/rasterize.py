@@ -31,7 +31,7 @@ def test_rasterize_1():
 
     # Create a memory raster to rasterize into.
 
-    target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
@@ -94,7 +94,7 @@ def test_rasterize_2():
 
     # Create a memory raster to rasterize into.
 
-    target_ds = gdal.GetDriverByName("MEM").Create("", 12, 12, 3, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 12, 12, 3, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
@@ -137,7 +137,7 @@ def test_rasterize_3():
 
     # Create a memory raster to rasterize into.
 
-    target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
 
     # Create a memory layer to rasterize from.
@@ -193,7 +193,7 @@ def test_rasterize_4():
     sr = osr.SpatialReference(sr_wkt)
 
     # Create a memory raster to rasterize into.
-    target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
@@ -249,7 +249,7 @@ def test_rasterize_5():
 
     # Create a memory raster to rasterize into.
 
-    target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
@@ -423,7 +423,7 @@ def test_rasterize_6():
     feature.SetGeometryDirectly(ogr.CreateGeometryFromWkb(wkb))
     layer.CreateFeature(feature)
 
-    mask_ds = gdal.GetDriverByName("Mem").Create("", 5000, 5000, 1, gdal.GDT_Byte)
+    mask_ds = gdal.GetDriverByName("Mem").Create("", 5000, 5000, 1, gdal.GDT_UInt8)
     mask_ds.SetGeoTransform([499000, 0.4, 0, 6095000, 0, -0.4])
     mask_ds.SetProjection(sr_wkt)
 
@@ -441,7 +441,7 @@ def test_rasterize_7():
     sr_wkt = 'LOCAL_CS["arbitrary"]'
 
     # Create a memory raster to rasterize into.
-    target_ds = gdal.GetDriverByName("MEM").Create("", 12, 12, 1, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 12, 12, 1, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
@@ -484,7 +484,7 @@ def test_rasterize_all_touched_issue_7523():
     sr = osr.SpatialReference(sr_wkt)
 
     # Create a memory raster to rasterize into.
-    target_ds = gdal.GetDriverByName("MEM").Create("", 3, 5, 1, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 3, 5, 1, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((475435, 5, 0, 424145, 0, -5))
     target_ds.SetProjection(sr_wkt)
 
@@ -553,7 +553,7 @@ def test_rasterize_merge_alg_add_multiple_segment_linestring():
     )
     layer.CreateFeature(feature)
 
-    ds = gdal.GetDriverByName("Mem").Create("", 10, 10, 1, gdal.GDT_Byte)
+    ds = gdal.GetDriverByName("Mem").Create("", 10, 10, 1, gdal.GDT_UInt8)
     ds.SetGeoTransform([0, 20, 0, 100, 0, -10])
     ds.SetProjection(sr_wkt)
 
@@ -799,7 +799,7 @@ def test_rasterize_merge_alg_add_polygon(wkt):
     feature.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
     layer.CreateFeature(feature)
 
-    ds = gdal.GetDriverByName("Mem").Create("", 5, 5, 1, gdal.GDT_Byte)
+    ds = gdal.GetDriverByName("Mem").Create("", 5, 5, 1, gdal.GDT_UInt8)
     ds.SetGeoTransform([-0.125, 0.25, 0, 1.125, 0, -0.25])
     ds.SetProjection(sr_wkt)
 
@@ -918,7 +918,7 @@ def test_rasterize_bugfix_gh8437(wkt, options, nbands):
     sr = osr.SpatialReference(sr_wkt)
 
     # Create a memory raster to rasterize into.
-    target_ds = gdal.GetDriverByName("MEM").Create("", 15, 15, nbands, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 15, 15, nbands, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((15, -1, 0, 15, 0, -1))
 
     target_ds.SetProjection(sr_wkt)
@@ -974,7 +974,7 @@ def test_rasterize_bugfix_gh8918(wkt):
     sr = osr.SpatialReference(sr_wkt)
 
     # Create a memory raster to rasterize into.
-    target_ds = gdal.GetDriverByName("MEM").Create("", 10, 10, 1, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 10, 10, 1, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((0, 1, 0, 0, 0, 1))
 
     target_ds.SetProjection(sr_wkt)
@@ -1010,7 +1010,7 @@ def test_rasterize_bugfix_gh12129():
     sr = osr.SpatialReference(sr_wkt)
 
     # Create a memory raster to rasterize into.
-    target_ds = gdal.GetDriverByName("MEM").Create("", 20, 16, 1, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 20, 16, 1, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((163600, 20, 0, 168000, 0, -20))
 
     target_ds.SetProjection(sr_wkt)
@@ -1048,7 +1048,7 @@ def test_rasterize_bugfix_gh12129():
 def test_rasterize_huge_geometry():
 
     # Create a memory raster to rasterize into.
-    target_ds = gdal.GetDriverByName("MEM").Create("", 20, 20, 1, gdal.GDT_Byte)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 20, 20, 1, gdal.GDT_UInt8)
     target_ds.SetGeoTransform((0, 1, 0, 0, 0, 1))
 
     v = 1e300

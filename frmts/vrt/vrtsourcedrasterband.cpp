@@ -228,9 +228,10 @@ bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
                 bool bError = false;
                 if (!poSimpleSource->GetSrcDstWindow(
                         dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
-                        &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                        &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff,
-                        &nOutYOff, &nOutXSize, &nOutYSize, bError))
+                        psExtraArg->eResampleAlg, &dfReqXOff, &dfReqYOff,
+                        &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff,
+                        &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                        &nOutXSize, &nOutYSize, bError))
                 {
                     continue;
                 }
@@ -343,10 +344,16 @@ bool VRTSourcedRasterBand::CanMultiThreadRasterIO(
             poSimpleSource->GetDstWindow(dfSourceXOff, dfSourceYOff,
                                          dfSourceXSize, dfSourceYSize);
             constexpr double EPSILON = 1e-1;
-            sSourceBounds.minx = dfSourceXOff + EPSILON;
-            sSourceBounds.miny = dfSourceYOff + EPSILON;
-            sSourceBounds.maxx = dfSourceXOff + dfSourceXSize - EPSILON;
-            sSourceBounds.maxy = dfSourceYOff + dfSourceYSize - EPSILON;
+            // We floor/ceil to detect potential overlaps of sources whose
+            // destination offset is not integer. Otherwise, in case of
+            // multithreading, this could cause one line to be written
+            // concurrently by multiple threads.
+            sSourceBounds.minx = std::floor(dfSourceXOff) + EPSILON;
+            sSourceBounds.miny = std::floor(dfSourceYOff) + EPSILON;
+            sSourceBounds.maxx =
+                std::ceil(dfSourceXOff + dfSourceXSize) - EPSILON;
+            sSourceBounds.maxy =
+                std::ceil(dfSourceYOff + dfSourceYSize) - EPSILON;
             iLastSource = iSource;
 
             if (hQuadTree)
@@ -399,7 +406,7 @@ struct VRTSourcedRasterBandRasterIOJob
     GDALDataType eBufType = GDT_Unknown;
     GSpacing nPixelSpace = 0;
     GSpacing nLineSpace = 0;
-    GDALRasterIOExtraArg *psExtraArg = nullptr;
+    GDALRasterIOExtraArg sExtraArg{};
     VRTSimpleSource *poSource = nullptr;
 
     static void Func(void *pData);
@@ -415,9 +422,8 @@ void VRTSourcedRasterBandRasterIOJob::Func(void *pData)
         static_cast<VRTSourcedRasterBandRasterIOJob *>(pData));
     if (*psJob->pbSuccess)
     {
-        GDALRasterIOExtraArg sArg = *(psJob->psExtraArg);
-        sArg.pfnProgress = nullptr;
-        sArg.pProgressData = nullptr;
+        psJob->sExtraArg.pfnProgress = nullptr;
+        psJob->sExtraArg.pProgressData = nullptr;
 
         std::unique_ptr<VRTSource::WorkingState> poWorkingState;
         {
@@ -435,7 +441,8 @@ void VRTSourcedRasterBandRasterIOJob::Func(void *pData)
                 psJob->eVRTBandDataType, psJob->nXOff, psJob->nYOff,
                 psJob->nXSize, psJob->nYSize, psJob->pData, psJob->nBufXSize,
                 psJob->nBufYSize, psJob->eBufType, psJob->nPixelSpace,
-                psJob->nLineSpace, &sArg, *(poWorkingState.get())) != CE_None)
+                psJob->nLineSpace, &psJob->sExtraArg,
+                *(poWorkingState.get())) != CE_None)
         {
             *psJob->pbSuccess = false;
         }
@@ -705,7 +712,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
                 psJob->eBufType = eBufType;
                 psJob->nPixelSpace = nPixelSpace;
                 psJob->nLineSpace = nLineSpace;
-                psJob->psExtraArg = psExtraArg;
+                psJob->sExtraArg = *psExtraArg;
                 psJob->poSource = poSimpleSource;
 
                 if (!oQueue->SubmitJob(VRTSourcedRasterBandRasterIOJob::Func,
@@ -813,9 +820,9 @@ int VRTSourcedRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
         bool bError = false;
         if (poSource->GetSrcDstWindow(
                 0, 0, GetXSize(), GetYSize(), GetXSize(), GetYSize(),
-                &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
-                &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
-                &nOutXSize, &nOutYSize, bError) &&
+                GRIORA_NearestNeighbour, &dfReqXOff, &dfReqYOff, &dfReqXSize,
+                &dfReqYSize, &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+                &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError) &&
             nReqXOff == 0 && nReqYOff == 0 && nReqXSize == GetXSize() &&
             nReqXSize == poBand->GetXSize() && nReqYSize == GetYSize() &&
             nReqYSize == poBand->GetYSize() && nOutXOff == 0 && nOutYOff == 0 &&
@@ -1105,7 +1112,7 @@ double VRTSourcedRasterBand::GetMinimum(int *pbSuccess)
         if (iSource == 0 || dfSourceMin < dfMin)
         {
             dfMin = dfSourceMin;
-            if (dfMin == 0 && eDataType == GDT_Byte)
+            if (dfMin == 0 && eDataType == GDT_UInt8)
                 break;
         }
         if (m_papoSources.size() > 1)
@@ -1183,7 +1190,7 @@ double VRTSourcedRasterBand::GetMaximum(int *pbSuccess)
         if (iSource == 0 || dfSourceMax > dfMax)
         {
             dfMax = dfSourceMax;
-            if (dfMax == 255.0 && eDataType == GDT_Byte)
+            if (dfMax == 255.0 && eDataType == GDT_UInt8)
                 break;
         }
         if (m_papoSources.size() > 1)
@@ -1285,9 +1292,9 @@ bool VRTSourcedRasterBand::
         bool bError = false;
         if (!poSimpleSource->GetSrcDstWindow(
                 0, 0, nRasterXSize, nRasterYSize, nRasterXSize, nRasterYSize,
-                &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
-                &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
-                &nOutXSize, &nOutYSize, bError) ||
+                GRIORA_NearestNeighbour, &dfReqXOff, &dfReqYOff, &dfReqXSize,
+                &dfReqYSize, &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+                &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError) ||
             nReqXOff != 0 || nReqYOff != 0 ||
             nReqXSize != poSimpleSourceBand->GetXSize() ||
             nReqYSize != poSimpleSourceBand->GetYSize() ||
@@ -1455,7 +1462,7 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
         }
 
         bool bSignedByte = false;
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
         {
             EnablePixelTypeSignedByteWarning(false);
             const char *pszPixelType =
@@ -1527,7 +1534,7 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
             }
 
             // Early exit if we know we reached theoretical bounds
-            if (eDataType == GDT_Byte && !bSignedByte && dfGlobalMin == 0.0 &&
+            if (eDataType == GDT_UInt8 && !bSignedByte && dfGlobalMin == 0.0 &&
                 dfGlobalMax == 255.0)
             {
                 break;
@@ -2864,11 +2871,11 @@ const char *VRTSourcedRasterBand::GetMetadataItem(const char *pszName,
             int nOutYSize = 0;
 
             bool bError = false;
-            if (!poSrc->GetSrcDstWindow(iPixel, iLine, 1, 1, 1, 1, &dfReqXOff,
-                                        &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                                        &nReqXOff, &nReqYOff, &nReqXSize,
-                                        &nReqYSize, &nOutXOff, &nOutYOff,
-                                        &nOutXSize, &nOutYSize, bError))
+            if (!poSrc->GetSrcDstWindow(
+                    iPixel, iLine, 1, 1, 1, 1, GRIORA_NearestNeighbour,
+                    &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
+                    &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                    &nOutXSize, &nOutYSize, bError))
             {
                 if (bError)
                 {

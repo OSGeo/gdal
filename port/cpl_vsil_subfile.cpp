@@ -506,6 +506,6 @@ char **VSISubFileFilesystemHandler::ReadDirEx(const char * /* pszPath */,
 
 void VSIInstallSubFileHandler()
 {
-    VSIFileManager::InstallHandler("/vsisubfile/",
-                                   new VSISubFileFilesystemHandler);
+    VSIFileManager::InstallHandler(
+        "/vsisubfile/", std::make_shared<VSISubFileFilesystemHandler>());
 }

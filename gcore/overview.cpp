@@ -170,7 +170,7 @@ static CPLErr GDALResampleChunk_Near(const GDALOverviewResampleArgs &args,
     {
         // For nearest resampling, as no computation is done, only the
         // size of the data type matters.
-        case GDT_Byte:
+        case GDT_UInt8:
         case GDT_Int8:
         {
             CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 1);
@@ -1380,7 +1380,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
             if (bSrcXSpacingIsTwo && nSrcYOff2 == nSrcYOff + 2 &&
                 pabyChunkNodataMask == nullptr)
             {
-                if constexpr (eWrkDataType == GDT_Byte ||
+                if constexpr (eWrkDataType == GDT_UInt8 ||
                               eWrkDataType == GDT_UInt16)
                 {
                     // Optimized case : no nodata, overview by a factor of 2 and
@@ -1391,7 +1391,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                             nChunkXSize;
                     int iDstPixel = 0;
 #ifdef USE_SSE2
-                    if constexpr (eWrkDataType == GDT_Byte)
+                    if constexpr (eWrkDataType == GDT_UInt8)
                     {
                         if constexpr (bQuadraticMean)
                         {
@@ -1799,7 +1799,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                             continue;
                         }
                     }
-                    if constexpr (eWrkDataType == GDT_Byte)
+                    if constexpr (eWrkDataType == GDT_UInt8)
                     {
                         T nVal;
                         if constexpr (bQuadraticMean)
@@ -1948,9 +1948,9 @@ GDALResampleChunk_AverageOrRMSInternal(const GDALOverviewResampleArgs &args,
     *peDstBufferDataType = args.eWrkDataType;
     switch (args.eWrkDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         {
-            return GDALResampleChunk_AverageOrRMS_T<GByte, int, GDT_Byte,
+            return GDALResampleChunk_AverageOrRMS_T<GByte, int, GDT_UInt8,
                                                     bQuadraticMean>(
                 args, static_cast<const GByte *>(pChunk), ppDstBuffer);
         }
@@ -2576,7 +2576,7 @@ static CPLErr GDALResampleChunk_ModeT(const GDALOverviewResampleArgs &args,
                     paDstScanline[iDstPixel - nDstXOff] = paVals[iMaxVal];
             }
             else if constexpr (std::is_same<T, GByte>::value)
-            // ( eSrcDataType == GDT_Byte && nEntryCount < 256 )
+            // ( eSrcDataType == GDT_UInt8 && nEntryCount < 256 )
             {
                 // So we go here for a paletted or non-paletted byte band.
                 // The input values are then between 0 and 255.
@@ -2645,7 +2645,7 @@ static CPLErr GDALResampleChunk_Mode(const GDALOverviewResampleArgs &args,
         // For mode resampling, as no computation is done, only the
         // size of the data type matters... except for Byte where we have
         // special processing. And for floating point values
-        case GDT_Byte:
+        case GDT_UInt8:
         {
             return GDALResampleChunk_ModeT(args,
                                            static_cast<const GByte *>(pChunk),
@@ -3398,7 +3398,7 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     // TODO: we should have some generic function to do this.
     Twork fDstMin = cpl::NumericLimits<Twork>::lowest();
     Twork fDstMax = cpl::NumericLimits<Twork>::max();
-    if (dstDataType == GDT_Byte)
+    if (dstDataType == GDT_UInt8)
     {
         fDstMin = std::numeric_limits<GByte>::min();
         fDstMax = std::numeric_limits<GByte>::max();
@@ -4166,7 +4166,7 @@ GDALResampleChunk_ConvolutionInternal(const GDALOverviewResampleArgs &args,
     // Cubic, etc... can have overshoots, so make sure we clamp values to the
     // maximum value if NBITS is set.
     if (eResample != GRA_Bilinear && args.nOvrNBITS > 0 &&
-        (args.eOvrDataType == GDT_Byte || args.eOvrDataType == GDT_UInt16 ||
+        (args.eOvrDataType == GDT_UInt8 || args.eOvrDataType == GDT_UInt16 ||
          args.eOvrDataType == GDT_UInt32))
     {
         int nBits = args.nOvrNBITS;
@@ -4187,7 +4187,7 @@ GDALResampleChunk_ConvolutionInternal(const GDALOverviewResampleArgs &args,
 
     switch (args.eWrkDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         {
             return GDALResampleChunk_ConvolutionT<GByte, float, GDT_Float32,
                                                   bKernelWithNegativeWeights,
@@ -4661,14 +4661,14 @@ GDALDataType GDALGetOvrWorkDataType(const char *pszResampling,
     {
         return eSrcDataType;
     }
-    else if (eSrcDataType == GDT_Byte &&
+    else if (eSrcDataType == GDT_UInt8 &&
              (STARTS_WITH_CI(pszResampling, "AVER") ||
               EQUAL(pszResampling, "RMS") || EQUAL(pszResampling, "CUBIC") ||
               EQUAL(pszResampling, "CUBICSPLINE") ||
               EQUAL(pszResampling, "LANCZOS") ||
               EQUAL(pszResampling, "BILINEAR") || EQUAL(pszResampling, "MODE")))
     {
-        return GDT_Byte;
+        return GDT_UInt8;
     }
     else if (eSrcDataType == GDT_UInt16 &&
              (STARTS_WITH_CI(pszResampling, "AVER") ||
@@ -4682,7 +4682,7 @@ GDALDataType GDALGetOvrWorkDataType(const char *pszResampling,
     else if (EQUAL(pszResampling, "GAUSS"))
         return GDT_Float64;
 
-    if (eSrcDataType == GDT_Byte || eSrcDataType == GDT_Int8 ||
+    if (eSrcDataType == GDT_UInt8 || eSrcDataType == GDT_Int8 ||
         eSrcDataType == GDT_UInt16 || eSrcDataType == GDT_Int16 ||
         eSrcDataType == GDT_Float32)
     {
@@ -5251,8 +5251,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         if (eErr == CE_None && bUseNoDataMask)
             eErr = poMaskBand->RasterIO(GF_Read, 0, nChunkYOffQueried, nWidth,
                                         nChunkYSizeQueried, pabyChunkNodataMask,
-                                        nWidth, nChunkYSizeQueried, GDT_Byte, 0,
-                                        0, nullptr);
+                                        nWidth, nChunkYSizeQueried, GDT_UInt8,
+                                        0, 0, nullptr);
 
         // Special case to promote 1bit data to 8bit 0/255 values.
         if (EQUAL(pszResampling, "AVERAGE_BIT2GRAYSCALE"))
@@ -5267,7 +5267,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
                         pafChunk[i] = 255.0f;
                 }
             }
-            else if (eWrkDataType == GDT_Byte)
+            else if (eWrkDataType == GDT_UInt8)
             {
                 GByte *pabyChunk = static_cast<GByte *>(pChunk);
                 for (size_t i = 0;
@@ -5316,7 +5316,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
                         pafChunk[i] = 255.0f;
                 }
             }
-            else if (eWrkDataType == GDT_Byte)
+            else if (eWrkDataType == GDT_UInt8)
             {
                 GByte *pabyChunk = static_cast<GByte *>(pChunk);
                 for (size_t i = 0;
@@ -6479,7 +6479,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                                 nChunkXSizeQueried, nChunkYSizeQueried,
                                 apabyChunkNoDataMask[iBand].get(),
                                 nChunkXSizeQueried, nChunkYSizeQueried,
-                                GDT_Byte, 0, 0, nullptr);
+                                GDT_UInt8, 0, 0, nullptr);
                         }
                     }
                 }

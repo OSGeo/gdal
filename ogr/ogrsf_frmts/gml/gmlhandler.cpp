@@ -1201,17 +1201,7 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName,
                 if (!poClass->IsSchemaLocked() &&
                     poClass->IsConsistentSingleGeomElemPath())
                 {
-                    const std::string &osGeomElemPath =
-                        poClass->GetSingleGeomElemPath();
-                    if (osGeomElemPath.empty())
-                    {
-                        poClass->SetSingleGeomElemPath(poState->osPath);
-                    }
-                    else if (poState->osPath != osGeomElemPath)
-                    {
-                        poClass->SetConsistentSingleGeomElemPath(false);
-                        poClass->SetSingleGeomElemPath(std::string());
-                    }
+                    m_osLastGeomPathInCurFeature = poState->osPath;
                 }
                 bReadGeometry = true;
             }
@@ -1957,6 +1947,25 @@ OGRErr GMLHandler::endElementFeature()
     /* -------------------------------------------------------------------- */
     if (m_nDepth == m_nDepthFeature)
     {
+        GMLReadState *poState = m_poReader->GetState();
+        GMLFeatureClass *poClass = poState->m_poFeature->GetClass();
+        if (!poClass->IsSchemaLocked() &&
+            poClass->IsConsistentSingleGeomElemPath())
+        {
+            const std::string &osGeomElemPath =
+                poClass->GetSingleGeomElemPath();
+            if (osGeomElemPath.empty())
+            {
+                poClass->SetSingleGeomElemPath(m_osLastGeomPathInCurFeature);
+            }
+            else if (m_osLastGeomPathInCurFeature != osGeomElemPath)
+            {
+                poClass->SetConsistentSingleGeomElemPath(false);
+                poClass->SetSingleGeomElemPath(std::string());
+            }
+        }
+
+        m_osLastGeomPathInCurFeature.clear();
         m_oMapElementToSubstitute.clear();
         m_poReader->PopState();
 

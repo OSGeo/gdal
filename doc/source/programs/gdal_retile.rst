@@ -47,6 +47,11 @@ If your number of input tiles exhausts the command line buffer, use the general
 
     gdal_retile is a Python utility, and is only available if GDAL Python bindings are available.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_tile` (partially equivalent).
+
+
 .. program:: gdal_retile
 
 .. include:: options/help_and_help_general.rst

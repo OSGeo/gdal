@@ -85,7 +85,10 @@ struct GOA2ManagerCache
  * This does a very quick check without network access.
  * Note: only works for Linux GCE instances.
  *
- * @return true if the current machine is surely a GCE instance.
+ * Also detects Google Cloud Run services, jobs, and worker pools on all
+ * platforms.
+ *
+ * @return true if the current machine is surely a GCE instance or Cloud Run.
  */
 bool CPLIsMachineForSureGCEInstance()
 {
@@ -93,6 +96,15 @@ bool CPLIsMachineForSureGCEInstance()
     {
         return true;
     }
+
+    // Check for Google Cloud Run environment
+    if (CPLGetConfigOption("CLOUD_RUN_TIMEOUT_SECONDS", nullptr) != nullptr ||
+        CPLGetConfigOption("CLOUD_RUN_JOB", nullptr) != nullptr ||
+        CPLGetConfigOption("CLOUD_RUN_WORKER_POOL", nullptr) != nullptr)
+    {
+        return true;
+    }
+
 #ifdef __linux
     // If /sys/class/dmi/id/product_name exists, it contains "Google Compute
     // Engine"
@@ -131,10 +143,23 @@ bool CPLIsMachineForSureGCEInstance()
  * machine is effectively a GCE instance, metadata.google.internal must be
  * queried.
  *
- * @return true if the current machine is potentially a GCE instance.
+ * Also detects Google Cloud Run services, jobs, and worker pools.
+ *
+ * @return true if the current machine is potentially a GCE instance or Cloud
+ * Run.
  */
 bool CPLIsMachinePotentiallyGCEInstance()
 {
+    // Check for Google Cloud Run environment first (platform-independent)
+    // This must be done before platform-specific checks to ensure Cloud Run
+    // detection works on all platforms.
+    if (CPLGetConfigOption("CLOUD_RUN_TIMEOUT_SECONDS", nullptr) != nullptr ||
+        CPLGetConfigOption("CLOUD_RUN_JOB", nullptr) != nullptr ||
+        CPLGetConfigOption("CLOUD_RUN_WORKER_POOL", nullptr) != nullptr)
+    {
+        return true;
+    }
+
 #ifdef __linux
     bool bIsMachinePotentialGCEInstance = true;
     if (CPLTestBool(CPLGetConfigOption("CPL_GCE_CHECK_LOCAL_FILES", "YES")))

@@ -414,7 +414,9 @@ def test_vsigs_open_after_config_option_change(gs_test_config, webserver_port):
     ):
         handler = webserver.SequentialHandler()
         handler.add(
-            "GET", "/test_vsigs_open_after_config_option_change/?delimiter=%2F", 403
+            "GET",
+            "/test_vsigs_open_after_config_option_change/?delimiter=%2F&list-type=2",
+            403,
         )
         handler.add("GET", "/test_vsigs_open_after_config_option_change/test.bin", 403)
         with webserver.install_http_handler(handler):
@@ -439,7 +441,7 @@ def test_vsigs_open_after_config_option_change(gs_test_config, webserver_port):
         handler = webserver.SequentialHandler()
         handler.add(
             "GET",
-            "/test_vsigs_open_after_config_option_change/?delimiter=%2F",
+            "/test_vsigs_open_after_config_option_change/?delimiter=%2F&list-type=2",
             200,
             {"Content-type": "application/xml"},
             """<?xml version="1.0" encoding="UTF-8"?>
@@ -478,13 +480,13 @@ def test_vsigs_readdir(gs_test_config, webserver_port):
         handler = webserver.SequentialHandler()
         handler.add(
             "GET",
-            "/gs_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F",
+            "/gs_fake_bucket2/?delimiter=%2F&list-type=2&prefix=a_dir%2F",
             200,
             {"Content-type": "application/xml"},
             """<?xml version="1.0" encoding="UTF-8"?>
                         <ListBucketResult>
                             <Prefix>a_dir/</Prefix>
-                            <NextMarker>bla</NextMarker>
+                            <NextContinuationToken>bla</NextContinuationToken>
                             <Contents>
                                 <Key>a_dir/resource3.bin</Key>
                                 <LastModified>1970-01-01T00:00:01.000Z</LastModified>
@@ -495,7 +497,7 @@ def test_vsigs_readdir(gs_test_config, webserver_port):
         )
         handler.add(
             "GET",
-            "/gs_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F",
+            "/gs_fake_bucket2/?continuation-token=bla&delimiter=%2F&list-type=2&prefix=a_dir%2F",
             200,
             {"Content-type": "application/xml"},
             """<?xml version="1.0" encoding="UTF-8"?>
@@ -656,7 +658,9 @@ def test_vsigs_fake_rename(gs_test_config, webserver_port):
         )
         handler.add("GET", "/test/target.txt", 404)
         handler.add(
-            "GET", "/test/?delimiter=%2F&max-keys=100&prefix=target.txt%2F", 200
+            "GET",
+            "/test/?delimiter=%2F&list-type=2&max-keys=100&prefix=target.txt%2F",
+            200,
         )
 
         def method(request):
@@ -1811,6 +1815,76 @@ def test_vsigs_read_credentials_gce_expiration(gs_test_config, webserver_port):
 
 
 ###############################################################################
+# Test Cloud Run environment detection (services, jobs, and worker pools)
+# Cloud Run detection is platform-independent (works on all platforms)
+@pytest.mark.parametrize(
+    "env_var,env_value,description",
+    [
+        ("CLOUD_RUN_TIMEOUT_SECONDS", "300", "Cloud Run service"),
+        ("CLOUD_RUN_JOB", "test-job", "Cloud Run job"),
+        ("CLOUD_RUN_WORKER_POOL", "test-worker-pool", "Cloud Run worker pool"),
+    ],
+)
+def test_vsigs_read_credentials_cloudrun(
+    gs_test_config, webserver_port, env_var, env_value, description
+):
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {
+            "CPL_GS_CREDENTIALS_FILE": "",
+            "CPL_GCE_CREDENTIALS_URL": "http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token"
+            % webserver_port,
+            "CPL_GCE_CHECK_LOCAL_FILES": "NO",
+            # Simulate Cloud Run environment
+            env_var: env_value,
+        },
+        thread_local=False,
+    ):
+
+        def method(request):
+            if "Authorization" not in request.headers:
+                sys.stderr.write("Bad headers: %s\n" % str(request.headers))
+                request.send_response(403)
+                return
+            expected_authorization = "Bearer ACCESS_TOKEN"
+            if request.headers["Authorization"] != expected_authorization:
+                sys.stderr.write(
+                    "Bad Authorization: '%s'\n" % str(request.headers["Authorization"])
+                )
+                request.send_response(403)
+                return
+
+            request.send_response(200)
+            request.send_header("Content-type", "text/plain")
+            request.send_header("Content-Length", 3)
+            request.end_headers()
+            request.wfile.write("""foo""".encode("ascii"))
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/computeMetadata/v1/instance/service-accounts/default/token",
+            200,
+            {},
+            """{
+                    "access_token" : "ACCESS_TOKEN",
+                    "token_type" : "Bearer",
+                    "expires_in" : 3600,
+                    }""",
+        )
+        handler.add("GET", "/gs_fake_bucket/resource", custom_method=method)
+        with webserver.install_http_handler(handler):
+            f = open_for_read("/vsigs/gs_fake_bucket/resource")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+            gdal.VSIFCloseL(f)
+
+        assert data == "foo"
+
+
+###############################################################################
 # Test RmdirRecursive() with an empty directory
 
 
@@ -1819,7 +1893,7 @@ def test_vsigs_rmdirrecursive_empty_dir(gs_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/test_vsigs_rmdirrecursive_empty_dir/?prefix=empty_dir%2F",
+        "/test_vsigs_rmdirrecursive_empty_dir/?list-type=2&prefix=empty_dir%2F",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>

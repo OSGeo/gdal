@@ -741,6 +741,6 @@ VSIVirtualHandle *VSICreateCachedFile(VSIVirtualHandle *poBaseHandle,
  */
 void VSIInstallCachedFileHandler(void)
 {
-    VSIFilesystemHandler *poHandler = new VSICachedFilesystemHandler;
-    VSIFileManager::InstallHandler("/vsicached?", poHandler);
+    VSIFileManager::InstallHandler(
+        "/vsicached?", std::make_shared<VSICachedFilesystemHandler>());
 }

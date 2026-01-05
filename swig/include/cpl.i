@@ -225,6 +225,8 @@ void CPLPopErrorHandler();
 #endif
 
 void CPLErrorReset();
+void VSICurlClearCache();
+void VSICurlPartialClearCache( const char* utf8_path );
 
 #ifndef SWIGJAVA
 %feature( "kwargs" ) EscapeString;
@@ -927,7 +929,7 @@ if (offset < 0) {
     }
 }
 
-return VSIFSeekL(fp, offset, whence);
+return VSIFSeekL(fp, (vsi_l_offset)offset, whence);
 }
 }
 
@@ -968,9 +970,6 @@ int     VSIFWriteL( const char *, int, int, VSILFILE *fp );
 /* VSIFReadL() handled specially in python/gdal_python.i */
 
 const char* CPLReadLineL(VSILFILE* fp);
-
-void VSICurlClearCache();
-void VSICurlPartialClearCache( const char* utf8_path );
 
 void VSINetworkStatsReset();
 retStringAndCPLFree* VSINetworkStatsGetAsSerializedJSON( char** options = NULL );

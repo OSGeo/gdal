@@ -10,7 +10,9 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalgorithm.h"
+//! @cond Doxygen_Suppress
+
+#include "gdalalg_vsi.h"
 
 #include "gdalalg_vsi_copy.h"
 #include "gdalalg_vsi_delete.h"
@@ -23,27 +25,16 @@
 /*                           GDALVSIAlgorithm                           */
 /************************************************************************/
 
-class GDALVSIAlgorithm final : public GDALAlgorithm
+GDALVSIAlgorithm::GDALVSIAlgorithm()
+    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-  public:
-    static constexpr const char *NAME = "vsi";
-    static constexpr const char *DESCRIPTION =
-        "GDAL Virtual System Interface (VSI) commands.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vsi.html";
-
-    GDALVSIAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
-    {
-        RegisterSubAlgorithm<GDALVSICopyAlgorithm>();
-        RegisterSubAlgorithm<GDALVSIDeleteAlgorithm>();
-        RegisterSubAlgorithm<GDALVSIListAlgorithm>();
-        RegisterSubAlgorithm<GDALVSIMoveAlgorithm>();
-        RegisterSubAlgorithm<GDALVSISyncAlgorithm>();
-        RegisterSubAlgorithm<GDALVSISOZIPAlgorithm>();
-    }
-
-  private:
-    bool RunImpl(GDALProgressFunc, void *) override;
-};
+    RegisterSubAlgorithm<GDALVSICopyAlgorithm>();
+    RegisterSubAlgorithm<GDALVSIDeleteAlgorithm>();
+    RegisterSubAlgorithm<GDALVSIListAlgorithm>();
+    RegisterSubAlgorithm<GDALVSIMoveAlgorithm>();
+    RegisterSubAlgorithm<GDALVSISyncAlgorithm>();
+    RegisterSubAlgorithm<GDALVSISOZIPAlgorithm>();
+}
 
 bool GDALVSIAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
@@ -53,4 +44,4 @@ bool GDALVSIAlgorithm::RunImpl(GDALProgressFunc, void *)
     return false;
 }
 
-GDAL_STATIC_REGISTER_ALG(GDALVSIAlgorithm);
+//! @endcond

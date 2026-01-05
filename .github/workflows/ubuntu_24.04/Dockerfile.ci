@@ -16,6 +16,7 @@ RUN apt-get update && \
     g++ \
     git \
     gpsbabel \
+    jq \
     libblosc-dev \
     libboost-dev \
     libcairo2-dev \

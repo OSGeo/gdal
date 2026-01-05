@@ -65,7 +65,7 @@ void MMRRasterBand::UpdateDataType()
         case MMDataType::DATATYPE_AND_COMPR_BIT:
         case MMDataType::DATATYPE_AND_COMPR_BYTE:
         case MMDataType::DATATYPE_AND_COMPR_BYTE_RLE:
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             break;
 
         case MMDataType::DATATYPE_AND_COMPR_UINTEGER:
@@ -96,7 +96,7 @@ void MMRRasterBand::UpdateDataType()
             break;
 
         default:
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             // This should really report an error, but this isn't
             // so easy from within constructors.
             CPLDebug("GDAL", "Unsupported pixel type in MMRRasterBand: %d.",
@@ -469,7 +469,8 @@ CPLErr MMRRasterBand::CreateRATFromDBF(const CPLString &osRELName,
         nNRATColumns++;
     }
 
-    VSIFSeekL(oAttributteTable.pfDataBase, oAttributteTable.FirstRecordOffset,
+    VSIFSeekL(oAttributteTable.pfDataBase,
+              static_cast<vsi_l_offset>(oAttributteTable.FirstRecordOffset),
               SEEK_SET);
     m_poDefaultRAT->SetRowCount(nNRATColumns);
 

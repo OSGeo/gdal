@@ -491,7 +491,7 @@ OGRMSSQLSpatialDataSource::ICreateLayer(const char *pszLayerName,
     else
         pszFIDColumnName = CPLStrdup(pszFIDColumnNameIn);
 
-    const bool bFID64 = CPLFetchBool(papszOptions, "FID64", FALSE);
+    const bool bFID64 = CPLFetchBool(papszOptions, "FID64", false);
     const char *pszFIDType = bFID64 ? "bigint" : "int";
 
     if (eType == wkbNone)

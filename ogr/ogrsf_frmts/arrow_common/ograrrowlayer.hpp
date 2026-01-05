@@ -291,21 +291,15 @@ OGRArrowLayer::IsHandledMapType(const std::shared_ptr<arrow::MapType> &mapType)
 }
 
 /************************************************************************/
-/*                        MapArrowTypeToOGR()                           */
+/*                        GetFieldExtensionName()                       */
 /************************************************************************/
 
-inline bool OGRArrowLayer::MapArrowTypeToOGR(
-    const std::shared_ptr<arrow::DataType> &typeIn,
-    const std::shared_ptr<arrow::Field> &field, OGRFieldDefn &oField,
-    OGRFieldType &eType, OGRFieldSubType &eSubType,
-    const std::vector<int> &path,
-    const std::map<std::string, std::unique_ptr<OGRFieldDefn>>
-        &oMapFieldNameToGDALSchemaFieldDefn)
+inline static std::string
+GetFieldExtensionName(const std::shared_ptr<arrow::Field> &field,
+                      std::shared_ptr<arrow::DataType> &type,
+                      const char *pszDebugKey)
 {
-    bool bTypeOK = false;
-
     std::string osExtensionName;
-    std::shared_ptr<arrow::DataType> type(typeIn);
     if (type->id() == arrow::Type::EXTENSION)
     {
         auto extensionType = cpl::down_cast<arrow::ExtensionType *>(type.get());
@@ -322,14 +316,34 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
     }
 
     if (!osExtensionName.empty() &&
-        osExtensionName != EXTENSION_NAME_ARROW_JSON)
+        osExtensionName != EXTENSION_NAME_ARROW_JSON &&
+        osExtensionName != EXTENSION_NAME_ARROW_TIMESTAMP_WITH_OFFSET)
     {
-        CPLDebug(GetDriverUCName().c_str(),
+        CPLDebug(pszDebugKey,
                  "Dealing with field %s of extension type %s as %s",
                  field->name().c_str(), osExtensionName.c_str(),
                  type->ToString().c_str());
     }
+    return osExtensionName;
+}
 
+/************************************************************************/
+/*                        MapArrowTypeToOGR()                           */
+/************************************************************************/
+
+inline bool OGRArrowLayer::MapArrowTypeToOGR(
+    const std::shared_ptr<arrow::DataType> &typeIn,
+    const std::shared_ptr<arrow::Field> &field, OGRFieldDefn &oField,
+    OGRFieldType &eType, OGRFieldSubType &eSubType,
+    const std::vector<int> &path,
+    const std::map<std::string, std::unique_ptr<OGRFieldDefn>>
+        &oMapFieldNameToGDALSchemaFieldDefn)
+{
+    bool bTypeOK = false;
+
+    std::shared_ptr<arrow::DataType> type(typeIn);
+    const std::string osExtensionName =
+        GetFieldExtensionName(field, type, GetDriverUCName().c_str());
     switch (type->id())
     {
         case arrow::Type::NA:
@@ -677,14 +691,34 @@ inline void OGRArrowLayer::CreateFieldFromSchema(
     if (type->id() == arrow::Type::STRUCT)
     {
         const auto subfields = field->Flatten();
-        auto newpath = path;
-        newpath.push_back(0);
-        for (int j = 0; j < static_cast<int>(subfields.size()); j++)
+        const std::string osExtensionName =
+            GetFieldExtensionName(field, type, GetDriverUCName().c_str());
+        if (osExtensionName == EXTENSION_NAME_ARROW_TIMESTAMP_WITH_OFFSET &&
+            subfields.size() == 2 &&
+            subfields[0]->name() ==
+                field->name() + "." + ATSWO_TIMESTAMP_FIELD_NAME &&
+            subfields[0]->type()->id() == arrow::Type::TIMESTAMP &&
+            subfields[1]->name() ==
+                field->name() + "." + ATSWO_OFFSET_MINUTES_FIELD_NAME &&
+            subfields[1]->type()->id() == arrow::Type::INT16)
         {
-            const auto &subfield = subfields[j];
-            newpath.back() = j;
-            CreateFieldFromSchema(subfield, newpath,
-                                  oMapFieldNameToGDALSchemaFieldDefn);
+            oField.SetType(OFTDateTime);
+            oField.SetTZFlag(OGR_TZFLAG_MIXED_TZ);
+            oField.SetNullable(field->nullable());
+            m_poFeatureDefn->AddFieldDefn(&oField);
+            m_anMapFieldIndexToArrowColumn.push_back(path);
+        }
+        else
+        {
+            auto newpath = path;
+            newpath.push_back(0);
+            for (int j = 0; j < static_cast<int>(subfields.size()); j++)
+            {
+                const auto &subfield = subfields[j];
+                newpath.back() = j;
+                CreateFieldFromSchema(subfield, newpath,
+                                      oMapFieldNameToGDALSchemaFieldDefn);
+            }
         }
     }
     else if (bTypeOK)
@@ -2220,22 +2254,56 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
 
         int j = 1;
         bool bSkipToNextField = false;
-        while (array->type_id() == arrow::Type::STRUCT)
+        if (array->type_id() == arrow::Type::STRUCT &&
+            m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime &&
+            m_poFeatureDefn->GetFieldDefn(i)->GetTZFlag() ==
+                OGR_TZFLAG_MIXED_TZ)
         {
-            const auto castArray =
+            const auto structArray =
                 static_cast<const arrow::StructArray *>(array);
-            const auto &subArrays = castArray->fields();
-            CPLAssert(
-                j < static_cast<int>(m_anMapFieldIndexToArrowColumn[i].size()));
-            const int iArrowSubcol = m_anMapFieldIndexToArrowColumn[i][j];
-            j++;
-            CPLAssert(iArrowSubcol < static_cast<int>(subArrays.size()));
-            array = GetStorageArray(subArrays[iArrowSubcol].get());
-            if (array->IsNull(nIdxInBatch))
+            const auto &subArrays = structArray->fields();
+            CPLAssert(subArrays.size() == 2);
+            const auto timestampType = static_cast<arrow::TimestampType *>(
+                subArrays[0]->data()->type.get());
+            const auto timestampArray =
+                static_cast<const arrow::TimestampArray *>(subArrays[0].get());
+            const int64_t timestamp = timestampArray->Value(nIdxInBatch);
+            const auto offsetMinutesArray =
+                static_cast<const arrow::Int16Array *>(subArrays[1].get());
+            const int nOffsetMinutes = offsetMinutesArray->Value(nIdxInBatch);
+            const int MAX_TIME_ZONE_HOUR = 14;
+            const int nTZFlag =
+                nOffsetMinutes >= -MAX_TIME_ZONE_HOUR * 60 &&
+                        nOffsetMinutes <= MAX_TIME_ZONE_HOUR * 60
+                    ? OGR_TZFLAG_UTC + nOffsetMinutes / 15
+                    : OGR_TZFLAG_UTC;
+            OGRField sField;
+            sField.Set.nMarker1 = OGRUnsetMarker;
+            sField.Set.nMarker2 = OGRUnsetMarker;
+            sField.Set.nMarker3 = OGRUnsetMarker;
+            TimestampToOGR(timestamp, timestampType, nTZFlag, &sField);
+            poFeature->SetField(i, &sField);
+            continue;
+        }
+        else
+        {
+            while (array->type_id() == arrow::Type::STRUCT)
             {
-                poFeature->SetFieldNull(i);
-                bSkipToNextField = true;
-                break;
+                const auto castArray =
+                    static_cast<const arrow::StructArray *>(array);
+                const auto &subArrays = castArray->fields();
+                CPLAssert(j < static_cast<int>(
+                                  m_anMapFieldIndexToArrowColumn[i].size()));
+                const int iArrowSubcol = m_anMapFieldIndexToArrowColumn[i][j];
+                j++;
+                CPLAssert(iArrowSubcol < static_cast<int>(subArrays.size()));
+                array = GetStorageArray(subArrays[iArrowSubcol].get());
+                if (array->IsNull(nIdxInBatch))
+                {
+                    poFeature->SetFieldNull(i);
+                    bSkipToNextField = true;
+                    break;
+                }
             }
         }
         if (bSkipToNextField)

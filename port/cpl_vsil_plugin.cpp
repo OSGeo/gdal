@@ -484,8 +484,8 @@ int VSIPluginFilesystemHandler::Rmdir(const char *pszDirname)
 int VSIInstallPluginHandler(const char *pszPrefix,
                             const VSIFilesystemPluginCallbacksStruct *poCb)
 {
-    VSIFilesystemHandler *poHandler =
-        new cpl::VSIPluginFilesystemHandler(pszPrefix, poCb);
+    auto poHandler =
+        std::make_shared<cpl::VSIPluginFilesystemHandler>(pszPrefix, poCb);
     // TODO: check pszPrefix starts and ends with a /
     VSIFileManager::InstallHandler(pszPrefix, poHandler);
     return 0;

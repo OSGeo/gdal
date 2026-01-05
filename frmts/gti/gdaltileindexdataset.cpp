@@ -347,6 +347,9 @@ class GDALTileIndexDataset final : public GDALPamDataset
     //! Whereas the multi-threading rendering code path must be used. Updated by CollectSources().
     bool m_bLastMustUseMultiThreading = false;
 
+    //! Whether the GTI file is a STAC collection
+    bool m_bSTACCollection = false;
+
     //! From a source dataset name, return its SourceDesc description structure.
     bool GetSourceDesc(const std::string &osTileName, SourceDesc &oSourceDesc,
                        std::mutex *pMutex);
@@ -398,6 +401,7 @@ class GDALTileIndexDataset final : public GDALPamDataset
         GDALTileIndexDataset::QueueWorkingStates *poQueueWorkingStates =
             nullptr;
         int nBandNrMax = 0;
+        bool bSTACCollection = false;
 
         int nXOff = 0;
         int nYOff = 0;
@@ -594,9 +598,11 @@ GDALTileIndexDataset::GDALTileIndexDataset()
 /************************************************************************/
 
 static std::string GetAbsoluteFileName(const char *pszTileName,
-                                       const char *pszVRTName)
+                                       const char *pszVRTName,
+                                       bool bIsStacCollection)
 {
-    std::string osRet = VSIURIToVSIPath(pszTileName);
+    std::string osRet =
+        bIsStacCollection ? VSIURIToVSIPath(pszTileName) : pszTileName;
     if (osRet != pszTileName)
         return osRet;
 
@@ -655,14 +661,9 @@ GTIDoPaletteExpansionIfNeeded(std::shared_ptr<GDALDataset> &poTileDS,
             GDALTranslate("", GDALDataset::ToHandle(poTileDS.get()), psOptions,
                           &bUsageError)));
         GDALTranslateOptionsFree(psOptions);
-        if (!poRGBDS)
-        {
-            return false;
-        }
-
-        poTileDS.reset(poRGBDS.release());
+        poTileDS = std::move(poRGBDS);
     }
-    return true;
+    return poTileDS != nullptr;
 }
 
 /************************************************************************/
@@ -969,12 +970,14 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             // Is this a https://stac-utils.github.io/stac-geoparquet/latest/spec/stac-geoparquet-spec ?
             if (poLayerDefn->GetFieldIndex("assets.data.href") >= 0)
             {
+                m_bSTACCollection = true;
                 osLocationFieldName = "assets.data.href";
                 CPLDebug("GTI", "Using %s as location field",
                          osLocationFieldName.c_str());
             }
             else if (poLayerDefn->GetFieldIndex("assets.image.href") >= 0)
             {
+                m_bSTACCollection = true;
                 osLocationFieldName = "assets.image.href";
                 CPLDebug("GTI", "Using %s as location field",
                          osLocationFieldName.c_str());
@@ -982,6 +985,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             else if (poLayerDefn->GetFieldIndex("stac_version") >= 0 ||
                      poLayerDefn->GetFieldIndex("stac_extensions") >= 0)
             {
+                m_bSTACCollection = true;
                 const int nFieldCount = poLayerDefn->GetFieldCount();
                 // Look for "assets.xxxxx.href" fields
                 int nAssetCount = 0;
@@ -1231,6 +1235,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     std::string osAssetName;
     if (bIsStacGeoParquet)
     {
+        m_bSTACCollection = true;
         osAssetName = osLocationFieldName.substr(
             strlen("assets."),
             osLocationFieldName.size() - strlen("assets.") - strlen(".href"));
@@ -1394,8 +1399,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                         m_poWarpedLayerKeeper =
                             std::make_unique<OGRWarpedLayer>(
                                 m_poLayer, /* iGeomField = */ 0,
-                                /* bTakeOwnership = */ false, poCT.release(),
-                                poInvCT.release());
+                                /* bTakeOwnership = */ false, std::move(poCT),
+                                std::move(poInvCT));
                         m_poLayer = m_poWarpedLayerKeeper.get();
                         poLayerDefn = m_poLayer->GetLayerDefn();
                     }
@@ -1448,8 +1453,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
 
         const char *pszTileName =
             poFeature->GetFieldAsString(m_nLocationFieldIndex);
-        const std::string osTileName(
-            GetAbsoluteFileName(pszTileName, poOpenInfo->pszFilename));
+        const std::string osTileName(GetAbsoluteFileName(
+            pszTileName, poOpenInfo->pszFilename, m_bSTACCollection));
         pszTileName = osTileName.c_str();
 
         auto poTileDS = std::shared_ptr<GDALDataset>(
@@ -1529,7 +1534,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                 return false;
             }
 
-            poTileDS.reset(poWarpDS.release());
+            poTileDS = std::move(poWarpDS);
             poTileSRS = poTileDS->GetSpatialRef();
             CPL_IGNORE_RET_VAL(poTileSRS);
         }
@@ -1754,7 +1759,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (aeDataTypes.empty() && !pszDataType)
     {
-        aeDataTypes.resize(nBandCount, GDT_Byte);
+        aeDataTypes.resize(nBandCount, GDT_UInt8);
     }
     else if (pszDataType)
     {
@@ -2260,7 +2265,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     if (bHasMaskBand)
     {
         m_poMaskBand = std::make_unique<GDALTileIndexBand>(
-            this, 0, GDT_Byte, nBlockXSize, nBlockYSize);
+            this, 0, GDT_UInt8, nBlockXSize, nBlockYSize);
     }
 
     if (dfOvrFactor == 1.0)
@@ -3455,8 +3460,8 @@ GDALTileIndexDataset::GetSourcesMoreRecentThan(int64_t mTime)
 
         const char *pszTileName =
             poFeature->GetFieldAsString(m_nLocationFieldIndex);
-        std::string osTileName(
-            GetAbsoluteFileName(pszTileName, GetDescription()));
+        std::string osTileName(GetAbsoluteFileName(
+            pszTileName, GetDescription(), m_bSTACCollection));
         VSIStatBufL sStatSource;
         if (VSIStatL(osTileName.c_str(), &sStatSource) != 0 ||
             sStatSource.st_mtime <= mTime)
@@ -3654,7 +3659,7 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
                 return false;
             }
 
-            poTileDS.reset(poWarpDS.release());
+            poTileDS = std::move(poWarpDS);
         }
 
         if (pMutex)
@@ -3922,7 +3927,7 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
         SortSourceDesc();
     }
 
-    // Try to find the last (most prioritary) fully opaque source covering
+    // Try to find the last (most priority) fully opaque source covering
     // the whole AOI. We only need to start rendering from it.
     size_t i = m_aoSourceDesc.size();
     while (i > 0)
@@ -3931,8 +3936,8 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
         auto &poFeature = m_aoSourceDesc[i].poFeature;
         const char *pszTileName =
             poFeature->GetFieldAsString(m_nLocationFieldIndex);
-        const std::string osTileName(
-            GetAbsoluteFileName(pszTileName, GetDescription()));
+        const std::string osTileName(GetAbsoluteFileName(
+            pszTileName, GetDescription(), m_bSTACCollection));
 
         SourceDesc oSourceDesc;
         if (!GetSourceDesc(osTileName, oSourceDesc, nullptr))
@@ -4135,7 +4140,7 @@ CompositeSrcWithMaskIntoDest(const int nOutXSize, const int nOutYSize,
                              const GByte *const pabyMask, GByte *const pabyDest)
 {
     size_t iMaskIdx = 0;
-    if (eBufType == GDT_Byte)
+    if (eBufType == GDT_UInt8)
     {
         // Optimization for byte case
         for (int iY = 0; iY < nOutYSize; iY++)
@@ -4219,7 +4224,7 @@ bool GDALTileIndexDataset::NeedInitBuffer(int nBandCount,
                                           const int *panBandMap) const
 {
     bool bNeedInitBuffer = true;
-    // If the last source (that is the most prioritary one) covers at least
+    // If the last source (that is the most priority one) covers at least
     // the window of interest and is fully opaque, then we don't need to
     // initialize the buffer, and can directly render that source.
     int bHasNoData = false;
@@ -4348,8 +4353,21 @@ CPLErr GDALTileIndexDataset::RenderSource(
 
     if (poTileDS->GetRasterCount() + 1 == nBandNrMax &&
         papoBands[nBandNrMax - 1]->GetColorInterpretation() == GCI_AlphaBand &&
-        papoBands[nBandNrMax - 1]->GetRasterDataType() == GDT_Byte)
+        papoBands[nBandNrMax - 1]->GetRasterDataType() == GDT_UInt8)
     {
+        GDALRasterIOExtraArg sExtraArg;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
+        {
+            // cppcheck-suppress redundantAssignment
+            sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
+        }
+        else
+        {
+            // cppcheck-suppress redundantAssignment
+            sExtraArg.eResampleAlg = m_eResampling;
+        }
+
         // Special case when there's typically a mix of RGB and RGBA source
         // datasets and we read a RGB one.
         for (int iBand = 0; iBand < nBandCount && eErr == CE_None; ++iBand)
@@ -4379,9 +4397,10 @@ CPLErr GDALTileIndexDataset::RenderSource(
                 poSource->SetRasterBand(poTileBand, false);
                 if (poSource->GetSrcDstWindow(
                         dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
-                        &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                        &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff,
-                        &nOutYOff, &nOutXSize, &nOutYSize, bError))
+                        sExtraArg.eResampleAlg, &dfReqXOff, &dfReqYOff,
+                        &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff,
+                        &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                        &nOutXSize, &nOutYSize, bError))
                 {
                     GByte *pabyOut =
                         static_cast<GByte *>(pData) +
@@ -4393,7 +4412,7 @@ CPLErr GDALTileIndexDataset::RenderSource(
                     for (int iY = 0; iY < nOutYSize; iY++)
                     {
                         GDALCopyWords(
-                            &n255, GDT_Byte, 0,
+                            &n255, GDT_UInt8, 0,
                             pabyOut + static_cast<GPtrDiff_t>(iY * nLineSpace),
                             eBufType, static_cast<int>(nPixelSpace), nOutXSize);
                     }
@@ -4411,19 +4430,6 @@ CPLErr GDALTileIndexDataset::RenderSource(
                         bHasNoData ? dfNoDataValue : VRT_NODATA_UNSET);
                 }
                 poSource->SetRasterBand(poTileBand, false);
-
-                GDALRasterIOExtraArg sExtraArg;
-                INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-                if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
-                {
-                    // cppcheck-suppress redundantAssignment
-                    sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
-                }
-                else
-                {
-                    // cppcheck-suppress redundantAssignment
-                    sExtraArg.eResampleAlg = m_eResampling;
-                }
 
                 GByte *pabyBandData =
                     static_cast<GByte *>(pData) + iBand * nBandSpace;
@@ -4464,14 +4470,28 @@ CPLErr GDALTileIndexDataset::RenderSource(
 
         auto poFirstTileBand = poTileDS->GetRasterBand(1);
         poSource->SetRasterBand(poFirstTileBand, false);
+
+        GDALRasterIOExtraArg sExtraArg;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        CPL_IGNORE_RET_VAL(sExtraArg.bFloatingPointWindowValidity);
+        CPL_IGNORE_RET_VAL(sExtraArg.eResampleAlg);
+        if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
+        {
+            sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
+        }
+        else
+        {
+            sExtraArg.eResampleAlg = m_eResampling;
+        }
+
         if (poSource->GetSrcDstWindow(
                 dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
-                &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
-                &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
-                &nOutXSize, &nOutYSize, bError))
+                sExtraArg.eResampleAlg, &dfReqXOff, &dfReqYOff, &dfReqXSize,
+                &dfReqYSize, &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+                &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
         {
             int iMaskBandIdx = -1;
-            if (eBufType == GDT_Byte && nBandNrMax == 0)
+            if (eBufType == GDT_UInt8 && nBandNrMax == 0)
             {
                 // when called from m_poMaskBand
                 iMaskBandIdx = 0;
@@ -4482,7 +4502,7 @@ CPLErr GDALTileIndexDataset::RenderSource(
                 // one of the queried bands of this request, we can save
                 // requesting it separately.
                 const int nMaskBandNr = oSourceDesc.poMaskBand->GetBand();
-                if (eBufType == GDT_Byte && nMaskBandNr >= 1 &&
+                if (eBufType == GDT_UInt8 && nMaskBandNr >= 1 &&
                     nMaskBandNr <= poTileDS->GetRasterCount() &&
                     poTileDS->GetRasterBand(nMaskBandNr) ==
                         oSourceDesc.poMaskBand)
@@ -4498,18 +4518,6 @@ CPLErr GDALTileIndexDataset::RenderSource(
                 }
             }
 
-            GDALRasterIOExtraArg sExtraArg;
-            INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-            if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
-            {
-                // cppcheck-suppress redundantAssignment
-                sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
-            }
-            else
-            {
-                // cppcheck-suppress redundantAssignment
-                sExtraArg.eResampleAlg = m_eResampling;
-            }
             sExtraArg.bFloatingPointWindowValidity = TRUE;
             sExtraArg.dfXOff = dfReqXOff;
             sExtraArg.dfYOff = dfReqYOff;
@@ -4535,7 +4543,7 @@ CPLErr GDALTileIndexDataset::RenderSource(
                 if (oSourceDesc.poMaskBand->RasterIO(
                         GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                         oSourceDesc.abyMask.data(), nOutXSize, nOutYSize,
-                        GDT_Byte, 0, 0, &sExtraArg) != CE_None)
+                        GDT_UInt8, 0, 0, &sExtraArg) != CE_None)
                 {
                     oSourceDesc.abyMask.clear();
                     return CE_Failure;
@@ -4803,6 +4811,7 @@ CPLErr GDALTileIndexDataset::IRasterIO(
             for (auto &oSourceDesc : m_aoSourceDesc)
             {
                 auto psJob = new RasterIOJob();
+                psJob->bSTACCollection = m_bSTACCollection;
                 psJob->poDS = this;
                 psJob->pbSuccess = &bSuccess;
                 psJob->poErrorAccumulator = &oErrorAccumulator;
@@ -4892,7 +4901,8 @@ void GDALTileIndexDataset::RasterIOJob::Func(void *pData)
     if (*psJob->pbSuccess)
     {
         const std::string osTileName(GetAbsoluteFileName(
-            psJob->osTileName.c_str(), psJob->poDS->GetDescription()));
+            psJob->osTileName.c_str(), psJob->poDS->GetDescription(),
+            psJob->bSTACCollection));
 
         SourceDesc oSourceDesc;
 

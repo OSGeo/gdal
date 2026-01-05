@@ -449,6 +449,19 @@ void OGRFeatherDriver::InitMetadata()
                                    "Name of the FID column to create");
     }
 
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "TIMESTAMP_WITH_OFFSET");
+        CPLAddXMLAttributeAndValue(psOption, "type", "string-select");
+        CPLAddXMLAttributeAndValue(psOption, "default", "AUTO");
+        CPLAddXMLAttributeAndValue(
+            psOption, "description",
+            "Whether timestamp with offset fields should be used");
+        CPLCreateXMLElementAndValue(psOption, "Value", "AUTO");
+        CPLCreateXMLElementAndValue(psOption, "Value", "YES");
+        CPLCreateXMLElementAndValue(psOption, "Value", "NO");
+    }
+
     char *pszXML = CPLSerializeXMLTree(oTree.get());
     GDALDriver::SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST, pszXML);
     CPLFree(pszXML);

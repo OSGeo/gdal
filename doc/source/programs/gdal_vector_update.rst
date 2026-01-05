@@ -38,16 +38,17 @@ will not be updated.
 :program:`gdal vector update` can be used as a
 step of a pipeline, with the input dataset being the output of the previous step.
 
-Options
-+++++++
+Program-Specific Options
+------------------------
 
 .. option:: --input-layer <INPUT-LAYER>
 
     Input layer name. Must be specified if the input dataset has several layers.
 
-.. option:: --output-layer <OUTPUT-LAYER>
+.. option:: --key <KEY>
 
-    Output layer name. Must be specified if the output dataset has several layers.
+    Field(s) used as a key to identify features. For multiple fields,
+    specify :option:`--key` multiple times.
 
 .. option:: --mode merge|update-only|append-only
 
@@ -62,10 +63,20 @@ Options
     When using the ``append-only`` mode, features found in both layers will *not* be updated,
     and features only found in the input layer will be created in the output layer.
 
-.. option:: --key <KEY>
+.. option:: --output-layer <OUTPUT-LAYER>
 
-    Field(s) used as a key to identify features. For multiple fields,
-    specify :option:`--key` multiple times.
+    Output layer name. Must be specified if the output dataset has several layers.
+
+Standard Options
+----------------
+
+.. collapse:: Details
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/output_oo.rst
 
 Examples
 --------

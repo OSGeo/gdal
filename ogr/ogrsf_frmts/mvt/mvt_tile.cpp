@@ -724,8 +724,7 @@ bool MVTTileLayer::read(const GByte **ppabyData, const GByte *pabyDataLimit)
                 unsigned int nFeatureLength = 0;
                 READ_SIZE(pabyData, pabyDataLimit, nFeatureLength);
                 const GByte *pabyDataFeatureEnd = pabyData + nFeatureLength;
-                std::shared_ptr<MVTTileLayerFeature> poFeature(
-                    new MVTTileLayerFeature());
+                auto poFeature = std::make_shared<MVTTileLayerFeature>();
                 addFeature(poFeature);
                 if (!poFeature->read(&pabyData, pabyDataFeatureEnd))
                     return false;
@@ -887,7 +886,7 @@ bool MVTTile::read(const GByte **ppabyData, const GByte *pabyDataLimit)
                 unsigned int nLayerSize = 0;
                 READ_SIZE(pabyData, pabyDataLimit, nLayerSize);
                 const GByte *pabyDataLimitLayer = pabyData + nLayerSize;
-                std::shared_ptr<MVTTileLayer> poLayer(new MVTTileLayer());
+                auto poLayer = std::make_shared<MVTTileLayer>();
                 addLayer(poLayer);
                 if (!poLayer->read(&pabyData, pabyDataLimitLayer))
                     return false;

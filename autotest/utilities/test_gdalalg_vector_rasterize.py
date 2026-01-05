@@ -530,7 +530,7 @@ def test_gdalalg_vector_rasterize(tmp_vsimem, create_empty_dataset, options, exp
         if create_empty_dataset:
             # Create a raster to rasterize into.
             target_ds = gdal.GetDriverByName("GTiff").Create(
-                output_tif, 12, 12, 3, gdal.GDT_Byte
+                output_tif, 12, 12, 3, gdal.GDT_UInt8
             )
             target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
 
@@ -588,7 +588,7 @@ def test_gdalalg_vector_rasterize_add_option(tmp_vsimem):
 
     # Create a raster to rasterize into.
     target_ds = gdal.GetDriverByName("GTiff").Create(
-        output_tif, 12, 12, 3, gdal.GDT_Byte
+        output_tif, 12, 12, 3, gdal.GDT_UInt8
     )
     target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
 
@@ -649,7 +649,7 @@ def test_gdalalg_vector_rasterize_dialect_warning(tmp_vsimem):
 
         # Create a raster to rasterize into.
         target_ds = gdal.GetDriverByName("GTiff").Create(
-            output_tif, 12, 12, 3, gdal.GDT_Byte
+            output_tif, 12, 12, 3, gdal.GDT_UInt8
         )
         target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
 
@@ -673,7 +673,7 @@ def test_gdalalg_vector_rasterize_overwrite(tmp_vsimem):
 
         # Create a raster to rasterize into.
         with gdal.GetDriverByName("GTiff").Create(
-            output_tif, 12, 12, 3, gdal.GDT_Byte
+            output_tif, 12, 12, 3, gdal.GDT_UInt8
         ) as target_ds:
             target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
 
@@ -714,3 +714,26 @@ def test_gdalalg_vector_rasterize_missing_size_and_res():
 
     with pytest.raises(Exception, match="--resolution.*or.*--size"):
         rasterize.Run()
+
+
+@pytest.mark.require_driver("COG")
+def test_gdalalg_vector_rasterize_to_cog(tmp_vsimem):
+
+    last_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= last_pct[0]
+        last_pct[0] = pct
+        return True
+
+    with gdal.alg.vector.rasterize(
+        input="../ogr/data/poly.shp",
+        output_format="COG",
+        output=tmp_vsimem / "out.tif",
+        size=[512, 512],
+        progress=my_progress,
+    ) as alg:
+        assert last_pct[0] == 1
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).Checksum() == 1842
+        assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"

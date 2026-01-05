@@ -94,7 +94,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
 /*                                 Close()                              */
 /************************************************************************/
 
-CPLErr OGRGMLDataSource::Close()
+CPLErr OGRGMLDataSource::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -121,7 +121,9 @@ CPLErr OGRGMLDataSource::Close()
             InsertHeader();
 
             if (!bFpOutputIsNonSeekable && nBoundedByLocation != -1 &&
-                VSIFSeekL(fpOutput, nBoundedByLocation, SEEK_SET) == 0)
+                VSIFSeekL(fpOutput,
+                          static_cast<vsi_l_offset>(nBoundedByLocation),
+                          SEEK_SET) == 0)
             {
                 if (m_bWriteGlobalSRS && sBoundingRect.IsInit() &&
                     IsGML3Output())
@@ -719,10 +721,9 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
             m_oStandaloneGeomSRS.IsEmpty() ? nullptr : &m_oStandaloneGeomSRS,
             m_poStandaloneGeom->getGeometryType());
         papoLayers[0] = poLayer;
-        OGRFeature *poFeature = new OGRFeature(poLayer->GetLayerDefn());
-        poFeature->SetGeometryDirectly(m_poStandaloneGeom.release());
-        CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-        delete poFeature;
+        auto poFeature = std::make_unique<OGRFeature>(poLayer->GetLayerDefn());
+        poFeature->SetGeometry(std::move(m_poStandaloneGeom));
+        CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
         poLayer->SetUpdatable(false);
         VSIFCloseL(fp);
         return true;
@@ -3166,7 +3167,7 @@ void OGRGMLDataSource::InsertHeader()
         int nSchemaSize = static_cast<int>(VSIFTellL(fpSchema) - nSchemaStart);
         char *pszSchema = static_cast<char *>(CPLMalloc(nSchemaSize + 1));
 
-        VSIFSeekL(fpSchema, nSchemaStart, SEEK_SET);
+        VSIFSeekL(fpSchema, static_cast<vsi_l_offset>(nSchemaStart), SEEK_SET);
 
         VSIFReadL(pszSchema, 1, nSchemaSize, fpSchema);
         pszSchema[nSchemaSize] = '\0';
@@ -3194,7 +3195,8 @@ void OGRGMLDataSource::InsertHeader()
         CPLFree(pszChunk);
 
         // Write the schema in the opened slot.
-        VSIFSeekL(fpSchema, nSchemaInsertLocation, SEEK_SET);
+        VSIFSeekL(fpSchema, static_cast<vsi_l_offset>(nSchemaInsertLocation),
+                  SEEK_SET);
         VSIFWriteL(pszSchema, 1, nSchemaSize, fpSchema);
 
         VSIFSeekL(fpSchema, 0, SEEK_END);
@@ -3415,8 +3417,13 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
                 CPLErrorReset();
                 if (psTree)
                 {
-                    m_poStandaloneGeom.reset(GML2OGRGeometry_XMLNode(
-                        psTree, false, 0, 0, false, true, false));
+                    std::unique_ptr<OGRGML_SRSCache,
+                                    decltype(&OGRGML_SRSCache_Destroy)>
+                        srsCache{OGRGML_SRSCache_Create(),
+                                 OGRGML_SRSCache_Destroy};
+                    m_poStandaloneGeom.reset(
+                        GML2OGRGeometry_XMLNode(psTree, false, srsCache.get(),
+                                                0, 0, false, true, false));
 
                     if (m_poStandaloneGeom)
                     {

@@ -421,7 +421,8 @@ static size_t CPLHTTPReadFunction(char *buffer, size_t size, size_t nitems,
 /************************************************************************/
 static int CPLHTTPSeekFunction(void *arg, curl_off_t offset, int origin)
 {
-    if (VSIFSeekL(static_cast<VSILFILE *>(arg), offset, origin) == 0)
+    if (VSIFSeekL(static_cast<VSILFILE *>(arg),
+                  static_cast<vsi_l_offset>(offset), origin) == 0)
         return CURL_SEEKFUNC_OK;
     else
         return CURL_SEEKFUNC_FAIL;

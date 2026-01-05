@@ -929,7 +929,7 @@ def test_envi_read_direct_access(byte_order):
         2,
         3,
         4,
-        buf_type=gdal.GDT_Byte,
+        buf_type=gdal.GDT_UInt8,
         buf_pixel_space=ds.RasterCount,
         buf_band_space=1,
     ) == src_ds.ReadRaster(
@@ -937,7 +937,7 @@ def test_envi_read_direct_access(byte_order):
         2,
         3,
         4,
-        buf_type=gdal.GDT_Byte,
+        buf_type=gdal.GDT_UInt8,
         buf_pixel_space=ds.RasterCount,
         buf_band_space=1,
     )
@@ -970,7 +970,7 @@ def test_envi_read_direct_access_update_scenario():
         0,
         ds.RasterXSize,
         ds.RasterYSize,
-        buf_type=gdal.GDT_Byte,
+        buf_type=gdal.GDT_UInt8,
         buf_pixel_space=ds.RasterCount,
         buf_band_space=1,
     ) == src_ds.ReadRaster(
@@ -978,7 +978,7 @@ def test_envi_read_direct_access_update_scenario():
         0,
         ds.RasterXSize,
         ds.RasterYSize,
-        buf_type=gdal.GDT_Byte,
+        buf_type=gdal.GDT_UInt8,
         buf_pixel_space=ds.RasterCount,
         buf_band_space=1,
     )

@@ -31,6 +31,7 @@ import os
 import shutil
 import struct
 import sys
+from itertools import chain
 
 import gdaltest
 import pytest
@@ -813,7 +814,7 @@ def test_stats_nodata_almost_max_float32():
 # Test STATISTICS_APPROXIMATE
 
 
-def test_stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt="B"):
+def test_stats_approx_stats_flag(dt=gdal.GDT_UInt8, struct_frmt="B"):
 
     ds = gdal.GetDriverByName("MEM").Create("", 2000, 2000, 1, dt)
     ds.GetRasterBand(1).WriteRaster(1000, 1000, 1, 1, struct.pack(struct_frmt * 1, 20))
@@ -914,8 +915,8 @@ def test_stats_clear():
 @pytest.mark.parametrize(
     "datatype,minval,maxval",
     [
-        (gdal.GDT_Byte, 1, 254),
-        (gdal.GDT_Byte, -127, 127),
+        (gdal.GDT_UInt8, 1, 254),
+        (gdal.GDT_UInt8, -127, 127),
         (gdal.GDT_UInt16, 1, 65535),
         (gdal.GDT_Int16, -32767, 32766),
         (gdal.GDT_UInt32, 1, (1 << 32) - 2),
@@ -943,7 +944,7 @@ def test_stats_computeminmax(datatype, minval, maxval, nodata):
     ds = gdal.GetDriverByName("MEM").Create("", 64, 1, 1, datatype)
     minval_mod = minval
     expected_minval = minval
-    if datatype == gdal.GDT_Byte and minval < 0:
+    if datatype == gdal.GDT_UInt8 and minval < 0:
         ds.GetRasterBand(1).SetMetadataItem(
             "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE"
         )
@@ -1070,7 +1071,7 @@ def test_stats_float32_nan(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPTIM):
     if GDAL_STATS_USE_FLOAT32_OPTIM == "NO":
         assert got_stats == expected_stats
     else:
-        assert got_stats == pytest.approx(expected_stats, rel=1e-5)
+        assert got_stats == pytest.approx(expected_stats, rel=1e-15)
 
 
 ###############################################################################
@@ -1098,7 +1099,44 @@ def test_stats_float32_nan_with_nodata(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPTIM)
     if GDAL_STATS_USE_FLOAT32_OPTIM == "NO":
         assert got_stats == expected_stats
     else:
-        assert got_stats == pytest.approx(expected_stats, rel=1e-5)
+        assert got_stats == pytest.approx(expected_stats, rel=1e-15)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("GDAL_STATS_USE_FLOAT32_OPTIM", [None, "NO"])
+def test_stats_float32_check_bugfix_13543(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPTIM):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    nCols = 500
+    nRows = 500
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "tmp.tif",
+        nCols,
+        nRows,
+        1,
+        gdal.GDT_Float32,
+        options={"TILED": "YES"},
+    )
+
+    # A ramp array
+    (x, y) = np.mgrid[:nRows, :nCols]
+    ramp = ((x + y) * 100.0 / (nRows - 1 + nCols - 1)).astype(np.float32)
+
+    band = ds.GetRasterBand(1)
+    band.WriteArray(ramp)
+
+    with gdal.config_option(
+        "GDAL_STATS_USE_FLOAT32_OPTIM", GDAL_STATS_USE_FLOAT32_OPTIM
+    ):
+        (minVal, maxVal, mean, stddev) = band.ComputeStatistics(approx_ok=False)
+    npStd = ramp.std(dtype=np.float64)
+
+    assert npStd == pytest.approx(20.45328026221, rel=1e-12)
+    assert stddev == pytest.approx(20.45328026221, rel=1e-12)
 
 
 ###############################################################################
@@ -1155,10 +1193,47 @@ def test_stats_float64_nan_with_nodata(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM)
 ###############################################################################
 
 
+@pytest.mark.parametrize("GDAL_STATS_USE_FLOAT64_OPTIM", [None, "NO"])
+def test_stats_float64_check_bugfix_13543(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    nCols = 500
+    nRows = 500
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "tmp.tif",
+        nCols,
+        nRows,
+        1,
+        gdal.GDT_Float64,
+        options={"TILED": "YES"},
+    )
+
+    # A ramp array
+    (x, y) = np.mgrid[:nRows, :nCols]
+    ramp = ((x + y) * 100.0 / (nRows - 1 + nCols - 1)).astype(np.float64)
+
+    band = ds.GetRasterBand(1)
+    band.WriteArray(ramp)
+
+    with gdal.config_option(
+        "GDAL_STATS_USE_FLOAT64_OPTIM", GDAL_STATS_USE_FLOAT64_OPTIM
+    ):
+        (minVal, maxVal, mean, stddev) = band.ComputeStatistics(approx_ok=False)
+    npStd = ramp.std()
+
+    assert npStd == pytest.approx(20.453280258841, rel=1e-14)
+    assert stddev == pytest.approx(20.453280258841, rel=1e-14)
+
+
+###############################################################################
+
+
 @pytest.mark.parametrize(
     "datatype",
     [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int8,
         gdal.GDT_UInt16,
         gdal.GDT_Int16,
@@ -1174,7 +1249,7 @@ def test_stats_float64_nan_with_nodata(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM)
 def test_stats_minmax_one_two(datatype):
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 1, datatype)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02", buf_type=gdal.GDT_Byte)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02", buf_type=gdal.GDT_UInt8)
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == (1.0, 2.0)
 
 
@@ -1184,7 +1259,7 @@ def test_stats_minmax_one_two(datatype):
 @pytest.mark.parametrize(
     "datatype",
     [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int8,
         gdal.GDT_UInt16,
         gdal.GDT_Int16,
@@ -1211,7 +1286,7 @@ def test_stats_minmax_all_invalid_nodata(datatype):
 @pytest.mark.parametrize(
     "datatype",
     [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int8,
         gdal.GDT_UInt16,
         gdal.GDT_Int16,
@@ -1230,3 +1305,367 @@ def test_stats_minmax_all_invalid_mask(datatype):
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     with pytest.raises(Exception, match="Failed to compute min/max"):
         ds.GetRasterBand(1).ComputeRasterMinMax()
+
+
+###############################################################################
+
+
+def test_stats_GetInterBandCovarianceMatrix(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.tif", open("data/rgbsmall.tif", "rb").read()
+    )
+
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        assert ds.GetInterBandCovarianceMatrix() is None
+    assert gdal.VSIStatL(tmp_vsimem / "test.tif.aux.xml") is None
+
+    expected_cov_matrix = [
+        [2241.7045363745387, 2898.8196128051163, 1009.979953581434],
+        [2898.8196128051163, 3900.269159023618, 1248.65396718687],
+        [1009.979953581434, 1248.65396718687, 602.4703641456648],
+    ]
+
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        assert list(
+            chain.from_iterable(ds.GetInterBandCovarianceMatrix(force=True))
+        ) == pytest.approx(list(chain.from_iterable(expected_cov_matrix)))
+    assert gdal.VSIStatL(tmp_vsimem / "test.tif.aux.xml") is not None
+
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        assert list(
+            chain.from_iterable(ds.GetInterBandCovarianceMatrix())
+        ) == pytest.approx(list(chain.from_iterable(expected_cov_matrix)))
+
+    gdal.Unlink(tmp_vsimem / "test.tif.aux.xml")
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        assert list(
+            chain.from_iterable(
+                ds.GetInterBandCovarianceMatrix(
+                    force=True, write_into_metadata=False, callback=my_progress
+                )
+            )
+        ) == pytest.approx(list(chain.from_iterable(expected_cov_matrix)))
+
+        assert tab_pct[0] == 1.0
+
+        res = ds.GetInterBandCovarianceMatrix(
+            band_list=[2], force=True, write_into_metadata=False
+        )
+        assert res[0][0] == pytest.approx(expected_cov_matrix[1][1])
+
+    assert gdal.VSIStatL(tmp_vsimem / "test.tif.aux.xml") is None
+
+
+###############################################################################
+
+
+def test_stats_GetInterBandCovarianceMatrix_edge_cases():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
+    assert ds.GetInterBandCovarianceMatrix(force=True) == []
+
+
+###############################################################################
+
+
+def test_stats_GetInterBandCovarianceMatrix_errors_on_band_list():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    with pytest.raises(Exception, match=" invalid value"):
+        ds.GetInterBandCovarianceMatrix(band_list=[0])
+    with pytest.raises(Exception, match="invalid value"):
+        ds.GetInterBandCovarianceMatrix(band_list=[3])
+    with pytest.raises(Exception, match="nBandCount > nBands"):
+        ds.GetInterBandCovarianceMatrix(band_list=[1, 1, 1])
+    with pytest.raises(Exception, match="cannot write STATISTICS_COVARIANCES metadata"):
+        ds.GetInterBandCovarianceMatrix(
+            band_list=[1], force=True, write_into_metadata=True
+        )
+    with pytest.raises(Exception, match="cannot write STATISTICS_COVARIANCES metadata"):
+        ds.GetInterBandCovarianceMatrix(
+            band_list=[2, 1], force=True, write_into_metadata=True
+        )
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.tif", open("data/rgbsmall.tif", "rb").read()
+    )
+
+    expected_cov_matrix = [
+        [2241.7045363745387, 2898.8196128051163, 1009.979953581434],
+        [2898.8196128051163, 3900.269159023618, 1248.65396718687],
+        [1009.979953581434, 1248.65396718687, 602.4703641456648],
+    ]
+
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        assert list(
+            chain.from_iterable(ds.ComputeInterBandCovarianceMatrix())
+        ) == pytest.approx(list(chain.from_iterable(expected_cov_matrix)))
+
+        # Check consistency with numpy.cov()
+        try:
+            import numpy
+
+            from osgeo import gdal_array  # noqa
+
+            has_numpy = True
+        except ImportError:
+            has_numpy = False
+        if has_numpy:
+            numpy_cov = numpy.cov(
+                [
+                    ds.GetRasterBand(n + 1).ReadAsArray().ravel()
+                    for n in range(ds.RasterCount)
+                ]
+            )
+            assert list(chain.from_iterable(numpy_cov)) == pytest.approx(
+                list(chain.from_iterable(expected_cov_matrix))
+            )
+
+    assert gdal.VSIStatL(tmp_vsimem / "test.tif.aux.xml") is not None
+
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        assert list(
+            chain.from_iterable(ds.GetInterBandCovarianceMatrix())
+        ) == pytest.approx(list(chain.from_iterable(expected_cov_matrix)))
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    gdal.Unlink(tmp_vsimem / "test.tif.aux.xml")
+
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        assert list(
+            chain.from_iterable(
+                ds.ComputeInterBandCovarianceMatrix(
+                    write_into_metadata=False, callback=my_progress
+                )
+            )
+        ) == pytest.approx(list(chain.from_iterable(expected_cov_matrix)))
+
+        assert tab_pct[0] == 1.0
+
+        res = ds.ComputeInterBandCovarianceMatrix(
+            band_list=[2], write_into_metadata=False
+        )
+        assert res[0][0] == pytest.approx(expected_cov_matrix[1][1])
+
+    assert gdal.VSIStatL(tmp_vsimem / "test.tif.aux.xml") is None
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_overviews(tmp_vsimem):
+
+    ds = gdal.Translate(tmp_vsimem / "test.tif", "data/rgbsmall.tif", width=1024)
+    ds.BuildOverviews("NEAR", [2])
+    ds.Close()
+
+    expected_cov_matrix = [
+        [2241.747462182087, 2898.723016609931, 1010.1568325853924],
+        [2898.723016609931, 3900.2599077296286, 1248.6309543003213],
+        [1010.1568325853924, 1248.6309543003213, 601.9344108053141],
+    ]
+
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        cov_matrix = ds.ComputeInterBandCovarianceMatrix(approx_ok=True)
+        assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
+            list(chain.from_iterable(expected_cov_matrix))
+        )
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_edge_cases():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
+    assert ds.ComputeInterBandCovarianceMatrix() == []
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_errors_on_band_list():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    with pytest.raises(Exception, match=" invalid value"):
+        ds.ComputeInterBandCovarianceMatrix(band_list=[0])
+    with pytest.raises(Exception, match="invalid value"):
+        ds.ComputeInterBandCovarianceMatrix(band_list=[3])
+    with pytest.raises(Exception, match="nBandCount > nBands"):
+        ds.ComputeInterBandCovarianceMatrix(band_list=[1, 1, 1])
+    with pytest.raises(Exception, match="cannot write STATISTICS_COVARIANCES metadata"):
+        ds.ComputeInterBandCovarianceMatrix(band_list=[1], write_into_metadata=True)
+    with pytest.raises(Exception, match="cannot write STATISTICS_COVARIANCES metadata"):
+        ds.ComputeInterBandCovarianceMatrix(band_list=[2, 1], write_into_metadata=True)
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_nodata():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 4, 1, 2)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x01\x02\x03\xFF")
+    ds.GetRasterBand(1).SetNoDataValue(255)
+    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xFE\x03")
+    ds.GetRasterBand(2).SetNoDataValue(254)
+
+    expected_cov_matrix = [[1, 0], [0, 1]]
+
+    cov_matrix = ds.ComputeInterBandCovarianceMatrix()
+    assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
+        list(chain.from_iterable(expected_cov_matrix))
+    )
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_nan_value():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 4, 1, 2, gdal.GDT_Float32)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, struct.pack("f" * 4, 1, 2, 3, math.nan))
+    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, struct.pack("f" * 4, 2, 1, math.nan, 3))
+
+    expected_cov_matrix = [[1, 0], [0, 1]]
+
+    cov_matrix = ds.ComputeInterBandCovarianceMatrix()
+    assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
+        list(chain.from_iterable(expected_cov_matrix))
+    )
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_nan_result():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2, gdal.GDT_Float32)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, struct.pack("f" * 2, 1, math.nan))
+    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, struct.pack("f" * 2, math.nan, 1))
+
+    cov_matrix = ds.ComputeInterBandCovarianceMatrix()
+    assert math.isnan(cov_matrix[0][0])
+    assert math.isnan(cov_matrix[0][1])
+    assert math.isnan(cov_matrix[1][0])
+    assert math.isnan(cov_matrix[1][1])
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_whole_block_nodata():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 3, 2, gdal.GDT_Float32)
+    ds.GetRasterBand(1).WriteRaster(
+        0, 0, 2, 1, struct.pack("f" * 2, math.nan, math.nan)
+    )
+    ds.GetRasterBand(1).WriteRaster(0, 1, 2, 1, struct.pack("f" * 2, 0, 1))
+    ds.GetRasterBand(1).WriteRaster(
+        0, 2, 2, 1, struct.pack("f" * 2, math.nan, math.nan)
+    )
+    ds.GetRasterBand(2).WriteRaster(
+        0, 0, 2, 1, struct.pack("f" * 2, math.nan, math.nan)
+    )
+    ds.GetRasterBand(2).WriteRaster(0, 1, 2, 1, struct.pack("f" * 2, 1, 0))
+    ds.GetRasterBand(2).WriteRaster(
+        0, 2, 2, 1, struct.pack("f" * 2, math.nan, math.nan)
+    )
+
+    expected_cov_matrix = [[0.5, -0.5], [-0.5, 0.5]]
+
+    cov_matrix = ds.ComputeInterBandCovarianceMatrix()
+    assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
+        list(chain.from_iterable(expected_cov_matrix))
+    )
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_failed_to_compute_stats():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 1, gdal.GDT_Float32)
+    ds.GetRasterBand(1).WriteRaster(
+        0, 0, 2, 1, struct.pack("f" * 2, math.nan, math.nan)
+    )
+
+    cov_matrix = ds.ComputeInterBandCovarianceMatrix()
+    assert math.isnan(cov_matrix[0][0])
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_mask_band():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 4, 1, 2)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x01\x02\x03\xFF")
+    ds.GetRasterBand(1).CreateMaskBand(0)
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xFF\xFF\xFF\x00")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xFE\x03")
+    ds.GetRasterBand(2).CreateMaskBand(0)
+    ds.GetRasterBand(2).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xFF\xFF\x00\xFF")
+
+    expected_cov_matrix = [[1, 0], [0, 1]]
+
+    cov_matrix = ds.ComputeInterBandCovarianceMatrix()
+    assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
+        list(chain.from_iterable(expected_cov_matrix))
+    )
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_all_bands_same_mask():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 4, 1, 2)
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x01\x02\x03\xFF")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xFE\x03")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xFF\xFF\x00\x00")
+
+    expected_cov_matrix = [[0.5, -0.5], [-0.5, 0.5]]
+
+    cov_matrix = ds.ComputeInterBandCovarianceMatrix()
+    assert list(chain.from_iterable(cov_matrix)) == pytest.approx(
+        list(chain.from_iterable(expected_cov_matrix))
+    )
+
+
+###############################################################################
+
+
+def test_stats_ComputeInterBandCovarianceMatrix_interrupt():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1000)
+
+    def my_progress(pct, msg, user_data):
+        return pct < 1e-2
+
+    with pytest.raises(Exception, match="User terminated"):
+        ds.ComputeInterBandCovarianceMatrix(
+            write_into_metadata=False, callback=my_progress
+        )

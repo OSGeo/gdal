@@ -25,6 +25,16 @@ of a dataset.
 By default all overviews are refreshed, but it is also possible to restrict
 the refreshed overviews by level and/or extent.
 
+Program-Specific Options
+------------------------
+
+.. option:: --bbox <xmin>,<ymin>,<xmax>,ymax>
+
+    This option performs a partial refresh of existing overviews, in the region
+    of interest specified by georeferenced coordinates, in CRS units.
+
+    'x' is longitude values for geographic CRS and easting for projected CRS.
+    'y' is latitude values for geographic CRS and northing for projected CRS.
 
 .. option:: --dataset <DATASET>
 
@@ -33,6 +43,23 @@ the refreshed overviews by level and/or extent.
 .. option:: --external
 
     Refresh external ``.ovr`` overviews.
+
+.. option:: --levels <level1,level2,...>
+
+    A list of overview levels to build. Each overview level must be an integer
+    value greater or equal to 2.
+
+    If not specified all existing overviews are refreshed.
+
+.. option:: --like <filename1>[,<filenameN>]...
+
+    This option performs a partial refresh of existing overviews, in the region
+    of interest specified by one or several filenames (names separated by comma).
+    Note that the filenames are only used to determine the regions of interest
+    to refresh. The reference source pixels are the one of the main dataset.
+    By default all existing overview levels will be refreshed, unless explicit
+    levels are specified. See :example:`refresh-tiff`.
+
 
 .. option:: --resampling {nearest|average|cubic|cubicspline|lanczos|bilinear|gauss|average_magphase|rms|mode}
 
@@ -68,30 +95,6 @@ the refreshed overviews by level and/or extent.
 
     ``mode`` selects the value which appears most often of all the sampled points.
 
-.. option:: --levels <level1,level2,...>
-
-    A list of overview levels to build. Each overview level must be an integer
-    value greater or equal to 2.
-
-    If not specified all existing overviews are refreshed.
-
-.. option:: --bbox <xmin>,<ymin>,<xmax>,ymax>
-
-    This option performs a partial refresh of existing overviews, in the region
-    of interest specified by georeferenced coordinates, in CRS units.
-
-    'x' is longitude values for geographic CRS and easting for projected CRS.
-    'y' is latitude values for geographic CRS and northing for projected CRS.
-
-.. option:: --like <filename1>[,<filenameN>]...
-
-    This option performs a partial refresh of existing overviews, in the region
-    of interest specified by one or several filenames (names separated by comma).
-    Note that the filenames are only used to determine the regions of interest
-    to refresh. The reference source pixels are the one of the main dataset.
-    By default all existing overview levels will be refreshed, unless explicit
-    levels are specified. See :example:`refresh-tiff`.
-
 .. option:: --use-source-timestamp
 
     This option performs a partial refresh of existing overviews of a
@@ -102,6 +105,12 @@ the refreshed overviews by level and/or extent.
     By default all existing overview levels will be refreshed, unless explicit
     levels are specified. See :example:`refresh-vrt`.
 
+Standard Options
+----------------
+
+.. collapse:: Details
+
+    .. include:: gdal_options/oo.rst
 
 Examples
 --------

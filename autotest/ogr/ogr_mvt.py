@@ -387,6 +387,36 @@ def test_ogr_mvt_tileset_json_field():
 ###############################################################################
 
 
+def test_ogr_mvt_add_tile_fields():
+
+    ds = gdal.OpenEx(
+        "data/mvt/point_polygon/1",
+        open_options=["METADATA_FILE=", "ADD_TILE_FIELDS=YES"],
+    )
+
+    lyr = ds.GetLayer(1)
+    defn = lyr.GetLayerDefn()
+
+    assert defn.GetFieldCount() == 5
+
+    expected_tiles = [
+        (1, 0, 0),
+        (1, 0, 1),
+        (1, 1, 0),
+        (1, 1, 1),
+    ]
+
+    for expected_z, expected_x, expected_y in expected_tiles:
+        f = lyr.GetNextFeature()
+        assert f is not None
+        assert f.GetFieldAsInteger("tile_z") == expected_z
+        assert f.GetFieldAsInteger("tile_x") == expected_x
+        assert f.GetFieldAsInteger("tile_y") == expected_y
+
+
+###############################################################################
+
+
 def test_ogr_mvt_open_variants():
 
     expected_geom = "MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119))"

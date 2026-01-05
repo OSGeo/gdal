@@ -34,22 +34,15 @@ effect of the different parameters.
 
 This command can also be used as a step of :ref:`gdal_vector_pipeline`.
 
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+
 .. note:: This command requires a GDAL build against the GEOS library.
 
-Standard options
-++++++++++++++++
-
-.. include:: gdal_options/of_vector.rst
-
-.. include:: gdal_options/co_vector.rst
-
-.. include:: options/lco.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. include:: gdal_options/active_layer.rst
-
-.. include:: gdal_options/active_geometry.rst
+Program-Specific Options
+------------------------
 
 .. option:: --distance <DISTANCE>
 
@@ -65,6 +58,12 @@ Standard options
 
     Sets the join style for outside (reflex) corners between line segments.
     Default is ``round``.
+
+.. option:: --input-layer <NAME>
+
+    Specifies one or more layer names to read and process. By default, all
+    layers will be read and processed. To read and write all layers but only
+    process a subset, use :option:`--active-layer`.
 
 .. option:: --mitre-limit <MITRE-LIMIT>
 
@@ -82,6 +81,11 @@ Standard options
     To prevent unreasonable geometry, the mitre limit
     allows controlling the maximum length of the join corner.
     Corners with a ratio which exceed the limit will be beveled.
+
+.. option:: --output-layer <NAME>
+
+   Name of the layer to which output should be written. If not specified,
+   the output layer will have the same name as the input layer.
 
 .. option:: --quadrant-segments <QUADRANT-SEGMENTS>
 
@@ -108,19 +112,39 @@ Standard options
     Single-side buffering is only applicable to LINESTRING geometry and does not
     affect POINT or POLYGON geometries, and the end cap style is forced to square.
 
+Standard Options
+----------------
 
-Advanced options
-++++++++++++++++
+.. collapse:: Details
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/append_vector.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/active_layer.rst
 
+    .. include:: gdal_options/active_geometry.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/co_vector.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/lco.rst
+       
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst
+
 
 Examples
 --------

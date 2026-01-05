@@ -77,6 +77,9 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CENTER_LONG", // from ogrct.cpp
    "CHECK_DISK_FREE_SPACE", // from gtiffdataset_write.cpp
    "CHECK_WITH_INVERT_PROJ", // from gdaltransformer.cpp, gdalwarp_lib.cpp, gdalwarpoperation.cpp, ogrct.cpp
+   "CLOUD_RUN_JOB", // from cpl_google_cloud.cpp
+   "CLOUD_RUN_TIMEOUT_SECONDS", // from cpl_google_cloud.cpp
+   "CLOUD_RUN_WORKER_POOL", // from cpl_google_cloud.cpp
    "COG_DELETE_TEMP_FILES", // from cogdriver.cpp
    "COG_TMP_COMPRESSION", // from cogdriver.cpp
    "COMPRESS_GEOM", // from ogrsqlitelayer.cpp
@@ -153,6 +156,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", // from cpl_vsil_s3.cpp, ogrgeopackagedatasource.cpp, ogrlibkmldatasource.cpp, ogrsqlitedatasource.cpp
    "CPL_VSIL_ZIP_ALLOWED_EXTENSIONS", // from cpl_vsil_gzip.cpp
    "CPL_VSIS3_CREATE_DIR_OBJECT", // from cpl_vsil_s3.cpp
+   "CPL_VSIS3_LIST_OBJECTS_VERSION", // from cpl_vsil_s3.cpp
    "CPL_VSIS3_LIST_UPLOADS_MAX", // from cpl_vsil_s3.cpp
    "CPL_VSIS3_UNLINK_BATCH_SIZE", // from cpl_vsil_s3.cpp
    "CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE", // from cpl_vsil_s3.cpp
@@ -345,7 +349,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_NETCDF_REPORT_EXTRA_DIM_VALUES", // from netcdfdataset.cpp
    "GDAL_NETCDF_VERIFY_DIMS", // from netcdfdataset.cpp
    "GDAL_NO_COSTLY_OVERVIEW", // from rasterio.cpp
-   "GDAL_NUM_THREADS", // from avifdataset.cpp, common.cpp, cpl_vsil_gzip.cpp, gdal_tps.cpp, gdalalgorithm.cpp, gdalgrid.cpp, gdalpansharpen.cpp, gdaltileindexdataset.cpp, gdalwarpkernel.cpp, gtiffdataset_write.cpp, jpegxl.cpp, libertiffdataset.cpp, ogr2ogr_lib.cpp, ogrmvtdataset.cpp, ogrparquetlayer.cpp, osm_parser.cpp, overview.cpp, rmfdataset.cpp, vrtdataset.cpp, zarr_array.cpp
+   "GDAL_NUM_THREADS", // from avifdataset.cpp, common.cpp, cpl_vsil_gzip.cpp, gdal_tps.cpp, gdalalgorithm.cpp, gdaldataset.cpp, gdalgrid.cpp, gdalpansharpen.cpp, gdaltileindexdataset.cpp, gdalwarpkernel.cpp, gtiffdataset_write.cpp, jpegxl.cpp, libertiffdataset.cpp, ogr2ogr_lib.cpp, ogrmvtdataset.cpp, ogrparquetlayer.cpp, osm_parser.cpp, overview.cpp, rmfdataset.cpp, vrtdataset.cpp, zarr_array.cpp
    "GDAL_OGCAPI_TILEMATRIXSET_LIMITS", // from gdalogcapidataset.cpp
    "GDAL_ONE_BIG_READ", // from jp2kakdataset.cpp, jpipkakdataset.cpp, mrsiddataset.cpp, rawdataset.cpp, wcsdataset.cpp
    "GDAL_OPEN_AFTER_COPY", // from jpgdataset.cpp, pngdataset.cpp
@@ -541,6 +545,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GTIFF_USE_MMAP", // from tifvsi.cpp
    "GTIFF_VIRTUAL_MEM_IO", // from gtiffdataset.cpp
    "GTIFF_WRITE_ANGULAR_PARAMS_IN_DEGREE", // from gt_wkt_srs.cpp
+   "GTIFF_WRITE_COG_GHOST_AREA", // from gtiffdataset_write.cpp
    "GTIFF_WRITE_IMAGE_STRUCTURE_METADATA", // from gtiffdataset_write.cpp
    "GTIFF_WRITE_RAT_TO_PAM", // from gtiffdataset_write.cpp, gtiffrasterband_write.cpp
    "GTIFF_WRITE_TOWGS84", // from gt_wkt_srs.cpp

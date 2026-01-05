@@ -237,9 +237,11 @@ CPLString GDALFindAssociatedFile(const char *pszBasename, const char *pszExt,
                                  CSLConstList papszSiblingFiles, int nFlags);
 
 CPLErr CPL_DLL EXIFExtractMetadata(char **&papszMetadata, void *fpL,
-                                   int nOffset, int bSwabflag, int nTIFFHEADER,
-                                   int &nExifOffset, int &nInterOffset,
-                                   int &nGPSOffset);
+                                   uint32_t nOffset, int bSwabflag,
+                                   vsi_l_offset nTIFFHEADER,
+                                   uint32_t &nExifOffset,
+                                   uint32_t &nInterOffset,
+                                   uint32_t &nGPSOffset);
 
 int GDALValidateOpenOptions(GDALDriverH hDriver,
                             const char *const *papszOptionOptions);

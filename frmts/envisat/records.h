@@ -26,8 +26,8 @@ extern "C"
     typedef enum
     {
         /*! Unknown or unspecified type */ EDT_Unknown = GDT_Unknown,
-        /*! Eight bit unsigned integer */ EDT_UByte = GDT_Byte,
-        /*! Eight bit signed integer */ EDT_SByte = GDT_TypeCount + 0,
+        /*! Eight bit unsigned integer */ EDT_UByte = GDT_UInt8,
+        /*! Eight bit signed integer */ EDT_SByte = GDT_Int8,
         /*! Sixteen bit unsigned integer */ EDT_UInt16 = GDT_UInt16,
         /*! Sixteen bit signed integer */ EDT_Int16 = GDT_Int16,
         /*! Thirty two bit unsigned integer */ EDT_UInt32 = GDT_UInt32,

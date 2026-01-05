@@ -42,38 +42,25 @@ This command is the reverse operation of :ref:`gdal_raster_unscale`.
 
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. include:: gdal_options/ot.rst
+Program-Specific Options
+------------------------
 
 .. option:: -b, --band <BAND>
 
     Index (starting at 1) of the band to which the scaling must be only applied.
 
-.. option:: --src-min <SRCMIN>
+.. option:: --dst-max <DSTMAX>
 
-    Minimum value of the source range. If not specified, it will be calculated from the input dataset.
-    This option must be used together with :option:`--src-max`.
-
-.. option:: --src-max <SRCMAX>
-
-    Maximum value of the source range. If not specified, it will be calculated from the source dataset.
-    This option must be used together with :option:`--src-min`.
+    Maximum value of the output range. This option must be used together with :option:`--dst-min`.
 
 .. option:: --dst-min <DSTMIN>
 
     Minimum value of the output range. This option must be used together with :option:`--dst-max`.
-
-.. option:: --dst-max <DSTMAX>
-
-    Maximum value of the output range. This option must be used together with :option:`--dst-min`.
 
 .. option:: --exponent <EXPONENT>
 
@@ -98,11 +85,35 @@ Standard options
     with non-linear scaling with a non-integer exponent will cause input values lower
     than the minimum value of the source range to be mapped to not-a-number.
 
+.. option:: --src-max <SRCMAX>
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    Maximum value of the source range. If not specified, it will be calculated from the source dataset.
+    This option must be used together with :option:`--src-min`.
 
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+.. option:: --src-min <SRCMIN>
+
+    Minimum value of the source range. If not specified, it will be calculated from the input dataset.
+    This option must be used together with :option:`--src-max`.
+
+Standard Options
+----------------
+
+.. collapse:: Details
+
+    .. include:: gdal_options/append_raster.rst
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/ot.rst
+
+    .. include:: gdal_options/overwrite.rst
+
 
 Examples
 --------

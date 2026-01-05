@@ -1030,7 +1030,7 @@ static const char *GetMarkerName(GByte byVal)
 /************************************************************************/
 
 static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
-                                      GIntBig nBoxDataOffset,
+                                      vsi_l_offset nBoxDataOffset,
                                       GIntBig nBoxDataLength,
                                       DumpContext *psDumpContext)
 {
@@ -1045,7 +1045,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
         return psCSBox;
     }
     GByte *pabyMarkerData = static_cast<GByte *>(CPLMalloc(65535 + 1));
-    GIntBig nNextTileOffset = 0;
+    vsi_l_offset nNextTileOffset = 0;
     int Csiz = -1;
     const auto lambdaPOCType = [](GByte v)
     {
@@ -1059,7 +1059,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
 
     while (psDumpContext->nCurLineCount <= psDumpContext->nMaxLineCount + 1)
     {
-        GIntBig nOffset = static_cast<GIntBig>(VSIFTellL(fp));
+        auto nOffset = VSIFTellL(fp);
         if (nBoxDataLength > 0 && nOffset == nBoxDataOffset + nBoxDataLength)
             break;
         if (VSIFReadL(abyMarker, 2, 1, fp) != 1)

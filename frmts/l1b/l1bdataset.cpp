@@ -395,7 +395,7 @@ L1BMaskBand::L1BMaskBand(L1BDataset *poDSIn)
               poDSIn->eL1BFormat == L1B_NOAA15_NOHDR);
 
     poDS = poDSIn;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     nRasterXSize = poDS->GetRasterXSize();
     nRasterYSize = poDS->GetRasterYSize();
@@ -855,15 +855,21 @@ int L1BDataset::FetchGCPs(GDAL_GCP *pasGCPListRow, GByte *pabyRecordHeader,
 
 void L1BDataset::ProcessRecordHeaders()
 {
+    if (nRasterYSize == 0)
+        return;
     void *pRecordHeader = CPLCalloc(1, nRecordDataStart);
 
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nDataStartOffset, SEEK_SET));
+    CPL_IGNORE_RET_VAL(
+        VSIFSeekL(fp, static_cast<vsi_l_offset>(nDataStartOffset), SEEK_SET));
     CPL_IGNORE_RET_VAL(VSIFReadL(pRecordHeader, 1, nRecordDataStart, fp));
 
     FetchTimeCode(&sStartTime, pRecordHeader, &eLocationIndicator);
 
-    CPL_IGNORE_RET_VAL(VSIFSeekL(
-        fp, nDataStartOffset + (nRasterYSize - 1) * nRecordSize, SEEK_SET));
+    CPL_IGNORE_RET_VAL(
+        VSIFSeekL(fp,
+                  nDataStartOffset +
+                      static_cast<vsi_l_offset>(nRasterYSize - 1) * nRecordSize,
+                  SEEK_SET));
     CPL_IGNORE_RET_VAL(VSIFReadL(pRecordHeader, 1, nRecordDataStart, fp));
 
     FetchTimeCode(&sStopTime, pRecordHeader, nullptr);
@@ -3091,7 +3097,7 @@ L1BCloudsRasterBand::L1BCloudsRasterBand(L1BCloudsDataset *poDSIn, int nBandIn)
     nBand = nBandIn;
     nRasterXSize = poDSIn->nRasterXSize;
     nRasterYSize = poDSIn->nRasterYSize;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     nBlockXSize = nRasterXSize;
     nBlockYSize = 1;
 }

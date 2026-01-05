@@ -738,8 +738,8 @@ bool VSISwiftHandle::Authenticate(const char *pszFilename)
  */
 void VSIInstallSwiftFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsiswift/",
-                                   new cpl::VSISwiftFSHandler("/vsiswift/"));
+    VSIFileManager::InstallHandler(
+        "/vsiswift/", std::make_shared<cpl::VSISwiftFSHandler>("/vsiswift/"));
 }
 
 #endif /* HAVE_CURL */
