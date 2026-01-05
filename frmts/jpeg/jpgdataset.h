@@ -171,12 +171,13 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     bool bHasReadDJIMetadata = false;
     bool bHasReadImageStructureMetadata = false;
     char **papszMetadata{};
-    int nExifOffset{-1};
-    int nInterOffset{-1};
-    int nGPSOffset{-1};
+    uint32_t nExifOffset{0};
+    uint32_t nInterOffset{0};
+    uint32_t nGPSOffset{0};
     bool bSwabflag{};
-    int nTiffDirStart{-1};
-    int nTIFFHEADER{-1};
+    bool m_bTiffDirStartInit = false;
+    uint32_t nTiffDirStart{0};
+    vsi_l_offset nTIFFHEADER{0};
     bool bHasDoneJpegCreateDecompress{};
     bool bHasDoneJpegStartDecompress{};
 

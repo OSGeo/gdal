@@ -460,15 +460,15 @@ void GDALHEIFDataset::ReadMetadata()
             constexpr bool bLSBPlatform = CPL_IS_LSB != 0;
             const bool bSwabflag = bLittleEndianTIFF != bLSBPlatform;
 
-            int nTIFFDirOff;
+            uint32_t nTIFFDirOff;
             memcpy(&nTIFFDirOff, &data[nTIFFFileOffset + 4], 4);
             if (bSwabflag)
             {
                 CPL_SWAP32PTR(&nTIFFDirOff);
             }
-            int nExifOffset = 0;
-            int nInterOffset = 0;
-            int nGPSOffset = 0;
+            uint32_t nExifOffset = 0;
+            uint32_t nInterOffset = 0;
+            uint32_t nGPSOffset = 0;
             EXIFExtractMetadata(papszMD, fpTemp, nTIFFDirOff, bSwabflag, 0,
                                 nExifOffset, nInterOffset, nGPSOffset);
             if (nExifOffset > 0)
