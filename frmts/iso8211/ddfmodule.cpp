@@ -689,10 +689,10 @@ void DDFModule::RemoveCloneRecord(DDFRecord *poRecordIn)
  * data record.  Otherwise it is an absolute byte offset in the file.
  */
 
-void DDFModule::Rewind(long nOffset)
+void DDFModule::Rewind(vsi_l_offset nOffset)
 
 {
-    if (nOffset == -1)
+    if (nOffset == static_cast<vsi_l_offset>(-1))
         nOffset = nFirstRecordOffset;
 
     if (fpDDF == nullptr)

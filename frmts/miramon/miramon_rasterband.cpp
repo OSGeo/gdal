@@ -469,7 +469,8 @@ CPLErr MMRRasterBand::CreateRATFromDBF(const CPLString &osRELName,
         nNRATColumns++;
     }
 
-    VSIFSeekL(oAttributteTable.pfDataBase, oAttributteTable.FirstRecordOffset,
+    VSIFSeekL(oAttributteTable.pfDataBase,
+              static_cast<vsi_l_offset>(oAttributteTable.FirstRecordOffset),
               SEEK_SET);
     m_poDefaultRAT->SetRowCount(nNRATColumns);
 

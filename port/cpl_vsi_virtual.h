@@ -48,6 +48,43 @@ struct CPL_DLL VSIVirtualHandle
 {
   public:
     virtual int Seek(vsi_l_offset nOffset, int nWhence) = 0;
+
+#ifdef GDAL_COMPILATION
+    /*! @cond Doxygen_Suppress */
+    inline int Seek(int &&nOffset, int nWhence)
+    {
+        return Seek(static_cast<vsi_l_offset>(nOffset), nWhence);
+    }
+
+    inline int Seek(unsigned &&nOffset, int nWhence)
+    {
+        return Seek(static_cast<vsi_l_offset>(nOffset), nWhence);
+    }
+
+    template <typename T>
+    inline std::enable_if_t<std::is_same_v<T, uint64_t> &&
+                                !std::is_same_v<uint64_t, vsi_l_offset>,
+                            int>
+    Seek(T nOffset, int nWhence)
+    {
+        return Seek(static_cast<vsi_l_offset>(nOffset), nWhence);
+    }
+
+    template <typename T>
+    inline std::enable_if_t<std::is_same_v<T, size_t> &&
+                                !std::is_same_v<T, uint64_t> &&
+                                !std::is_same_v<size_t, unsigned> &&
+                                !std::is_same_v<size_t, vsi_l_offset>,
+                            int>
+    Seek(T nOffset, int nWhence) = delete;
+
+    int Seek(int &nOffset, int nWhence) = delete;
+    int Seek(const int &nOffset, int nWhence) = delete;
+    int Seek(unsigned &nOffset, int nWhence) = delete;
+    int Seek(const unsigned &nOffset, int nWhence) = delete;
+/*! @endcond */
+#endif
+
     virtual vsi_l_offset Tell() = 0;
     virtual size_t Read(void *pBuffer, size_t nSize, size_t nCount) = 0;
     virtual int ReadMultiRange(int nRanges, void **ppData,

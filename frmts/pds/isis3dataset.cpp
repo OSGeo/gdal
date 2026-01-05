@@ -454,8 +454,8 @@ CPLErr ISISTiledBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
             poGDS->WriteLabel();
     }
 
-    const GIntBig nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
-                            nYBlock * m_nYTileOffset;
+    const vsi_l_offset nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
+                                 nYBlock * m_nYTileOffset;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     const size_t nBlockSize =
         static_cast<size_t>(nDTSize) * nBlockXSize * nBlockYSize;
@@ -550,8 +550,8 @@ CPLErr ISISTiledBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
                     poGDS->m_dfSrcNoData, m_dfNoData);
     }
 
-    const GIntBig nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
-                            nYBlock * m_nYTileOffset;
+    const vsi_l_offset nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
+                                 nYBlock * m_nYTileOffset;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     const size_t nBlockSize =
         static_cast<size_t>(nDTSize) * nBlockXSize * nBlockYSize;

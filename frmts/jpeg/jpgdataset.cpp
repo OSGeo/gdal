@@ -1922,7 +1922,10 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
     }
 
     // Skip EXIF entries.
-    VSIFSeekL(m_fpImage, nEntryCount * sizeof(GDALEXIFTIFFDirEntry), SEEK_CUR);
+    VSIFSeekL(
+        m_fpImage,
+        static_cast<vsi_l_offset>(nEntryCount * sizeof(GDALEXIFTIFFDirEntry)),
+        SEEK_CUR);
 
     // Read offset of next directory (IFD1).
     GUInt32 nNextDirOff = 0;
@@ -3504,7 +3507,7 @@ void JPGDatasetCommon::CheckForMask()
     // Go to the end of the file, pull off four bytes, and see if
     // it is plausibly the size of the real image data.
     VSIFSeekL(m_fpImage, 0, SEEK_END);
-    GIntBig nFileSize = VSIFTellL(m_fpImage);
+    const auto nFileSize = VSIFTellL(m_fpImage);
     VSIFSeekL(m_fpImage, nFileSize - 4, SEEK_SET);
 
     GUInt32 nImageSize = 0;
@@ -3518,7 +3521,8 @@ void JPGDatasetCommon::CheckForMask()
     {
         // If that seems okay, seek back, and verify that just preceding
         // the bitmask is an apparent end-of-jpeg-data marker.
-        VSIFSeekL(m_fpImage, nImageSize - 2, SEEK_SET);
+        VSIFSeekL(m_fpImage, static_cast<vsi_l_offset>(nImageSize - 2),
+                  SEEK_SET);
         VSIFReadL(abyEOD, 2, 1, m_fpImage);
         if (abyEOD[0] == 0xff && abyEOD[1] == 0xd9)
         {
@@ -3702,7 +3706,9 @@ CPLErr JPGDatasetCommon::ReadCompressedData(
                 if (nImageSize > 2 && nImageSize >= nFileSize / 2 &&
                     nImageSize < nFileSize - 4)
                 {
-                    VSIFSeekL(m_fpImage, nImageSize - 2, SEEK_SET);
+                    VSIFSeekL(m_fpImage,
+                              static_cast<vsi_l_offset>(nImageSize - 2),
+                              SEEK_SET);
                     GByte abyTwoBytes[2];
                     if (VSIFReadL(abyTwoBytes, 2, 1, m_fpImage) == 1 &&
                         abyTwoBytes[0] == 0xFF && abyTwoBytes[1] == 0xD9)

@@ -717,7 +717,8 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
                 atoi_nz(myCSLFetchNameValue(poDS->papszRDC, rdcLEGEND_CATS));
             if (nCatCount == 0)
                 dfMaxValue = 255;
-            VSIFSeekL(fpSMP, smpHEADERSIZE, SEEK_SET);
+            VSIFSeekL(fpSMP, static_cast<vsi_l_offset>(smpHEADERSIZE),
+                      SEEK_SET);
             GDALColorEntry oEntry;
             unsigned char aucRGB[3];
             int i = 0;
