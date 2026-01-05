@@ -2499,6 +2499,8 @@ ENVIRasterBand::ENVIRasterBand(GDALDataset *poDSIn, int nBandIn,
                     nLineOffsetIn, eDataTypeIn, eByteOrderIn,
                     RawRasterBand::OwnFP::NO)
 {
+    // ENVI datasets might be sparse (see #915)
+    bTruncatedFileAllowed = true;
 }
 
 /************************************************************************/
