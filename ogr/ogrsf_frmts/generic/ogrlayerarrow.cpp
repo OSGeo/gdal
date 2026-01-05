@@ -425,6 +425,9 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
         const auto eType = poFieldDefn->GetType();
         const auto eSubType = poFieldDefn->GetSubType();
         const char *item_format = nullptr;
+
+        std::vector<std::pair<std::string, std::string>> oMetadata;
+
         switch (eType)
         {
             case OFTInteger:
@@ -528,6 +531,7 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
                 const char *pszPrefix = "tsm:";
                 const char *pszTZOverride =
                     m_aosArrowArrayStreamOptions.FetchNameValue("TIMEZONE");
+                const int nTZFlag = poFieldDefn->GetTZFlag();
                 if (bDateTimeAsString)
                 {
                     psChild->format = "u";
@@ -536,6 +540,34 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
                 {
                     psChild->format = CPLStrdup(pszPrefix);
                 }
+                else if ((pszTZOverride && EQUAL(pszTZOverride, "mixed")) ||
+                         (!pszTZOverride && nTZFlag == OGR_TZFLAG_MIXED_TZ))
+                {
+                    oMetadata.emplace_back(
+                        std::pair(ARROW_EXTENSION_NAME_KEY,
+                                  EXTENSION_NAME_ARROW_TIMESTAMP_WITH_OFFSET));
+
+                    psChild->format = "+s";
+                    psChild->n_children = 2;
+                    psChild->children = static_cast<struct ArrowSchema **>(
+                        CPLCalloc(2, sizeof(struct ArrowSchema *)));
+
+                    // Create sub-child for timestamp in UTC
+                    psChild->children[0] = static_cast<struct ArrowSchema *>(
+                        CPLCalloc(1, sizeof(struct ArrowSchema)));
+                    psChild->children[0]->release = OGRLayer::ReleaseSchema;
+                    psChild->children[0]->name =
+                        CPLStrdup(ATSWO_TIMESTAMP_FIELD_NAME);
+                    psChild->children[0]->format = CPLStrdup("tsm:UTC");
+
+                    // Create sub-child for offset to UTC in minutes
+                    psChild->children[1] = static_cast<struct ArrowSchema *>(
+                        CPLCalloc(1, sizeof(struct ArrowSchema)));
+                    psChild->children[1]->release = OGRLayer::ReleaseSchema;
+                    psChild->children[1]->name =
+                        CPLStrdup(ATSWO_OFFSET_MINUTES_FIELD_NAME);
+                    psChild->children[1]->format = "s";
+                }
                 else if (pszTZOverride)
                 {
                     psChild->format = CPLStrdup(
@@ -543,9 +575,7 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
                 }
                 else
                 {
-                    const int nTZFlag = poFieldDefn->GetTZFlag();
-                    if (nTZFlag == OGR_TZFLAG_MIXED_TZ ||
-                        nTZFlag == OGR_TZFLAG_UTC)
+                    if (nTZFlag == OGR_TZFLAG_UTC)
                     {
                         psChild->format =
                             CPLStrdup(CPLSPrintf("%sUTC", pszPrefix));
@@ -578,8 +608,6 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
             psChild->children[0]->name = CPLStrdup("item");
             psChild->children[0]->format = item_format;
         }
-
-        std::vector<std::pair<std::string, std::string>> oMetadata;
 
         if (eType == OFTDateTime && bDateTimeAsString)
         {
@@ -1830,6 +1858,99 @@ FillDateTimeArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
+/*                   FillDateTimeArrayWithTimeZone()                    */
+/************************************************************************/
+
+static bool FillDateTimeArrayWithTimeZone(
+    struct ArrowArray *psChild,
+    std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+    const size_t nFeatureCountLimit, const bool bIsNullable, const int i,
+    int nFieldTZFlag)
+{
+    psChild->n_children = 2;
+    psChild->children = static_cast<struct ArrowArray **>(
+        CPLCalloc(2, sizeof(struct ArrowArray *)));
+    psChild->n_buffers = 1;
+    psChild->buffers = static_cast<const void **>(CPLCalloc(1, sizeof(void *)));
+    uint8_t *pabyValidity = nullptr;
+
+    // Create sub-array for timestamp in UTC
+    psChild->children[0] = static_cast<struct ArrowArray *>(
+        CPLCalloc(1, sizeof(struct ArrowArray)));
+    psChild->children[0]->n_buffers = 2;
+    psChild->children[0]->buffers =
+        static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
+    psChild->children[0]->release = OGRLayerDefaultReleaseArray;
+    int64_t *panTimestamps = static_cast<int64_t *>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int64_t) * nFeatureCountLimit));
+    if (panTimestamps == nullptr)
+        return false;
+    psChild->children[0]->buffers[1] = panTimestamps;
+
+    // Create sub-array for offset to UTC in minutes
+    psChild->children[1] = static_cast<struct ArrowArray *>(
+        CPLCalloc(1, sizeof(struct ArrowArray)));
+    psChild->children[1]->n_buffers = 2;
+    psChild->children[1]->buffers =
+        static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
+    psChild->children[1]->release = OGRLayerDefaultReleaseArray;
+    int16_t *panOffsetsMinutes = static_cast<int16_t *>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int16_t) * nFeatureCountLimit));
+    if (panOffsetsMinutes == nullptr)
+        return false;
+    psChild->children[1]->buffers[1] = panOffsetsMinutes;
+
+    struct tm brokenDown;
+    memset(&brokenDown, 0, sizeof(brokenDown));
+
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat)
+    {
+        auto &poFeature = apoFeatures[iFeat];
+        const auto psRawField = poFeature->GetRawFieldRef(i);
+        panTimestamps[iFeat] = 0;
+        panOffsetsMinutes[iFeat] = 0;
+        if (IsValidField(psRawField))
+        {
+            brokenDown.tm_year = psRawField->Date.Year - 1900;
+            brokenDown.tm_mon = psRawField->Date.Month - 1;
+            brokenDown.tm_mday = psRawField->Date.Day;
+            brokenDown.tm_hour = psRawField->Date.Hour;
+            brokenDown.tm_min = psRawField->Date.Minute;
+            brokenDown.tm_sec = static_cast<int>(psRawField->Date.Second);
+            auto nVal =
+                CPLYMDHMSToUnixTime(&brokenDown) * 1000 +
+                (static_cast<int>(psRawField->Date.Second * 1000 + 0.5f) %
+                 1000);
+            if (nFieldTZFlag >= OGR_TZFLAG_MIXED_TZ &&
+                psRawField->Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
+            {
+                // Convert for psRawField->Date.TZFlag to UTC
+                const int TZOffsetMinute =
+                    (psRawField->Date.TZFlag - OGR_TZFLAG_UTC) * 15;
+                const int TZOffsetMS = TZOffsetMinute * 60 * 1000;
+                nVal -= TZOffsetMS;
+
+                panOffsetsMinutes[iFeat] = static_cast<int16_t>(TZOffsetMinute);
+            }
+            panTimestamps[iFeat] = nVal;
+        }
+        else if (bIsNullable)
+        {
+            ++psChild->null_count;
+            if (pabyValidity == nullptr)
+            {
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
+                    return false;
+            }
+            UnsetBit(pabyValidity, iFeat);
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                   FillDateTimeArrayAsString()                        */
 /************************************************************************/
 
@@ -2027,6 +2148,7 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
     size_t nFeatureCount = oFeatureQueue.size();
     const uint32_t nMemLimit = OGRArrowArrayHelper::GetMemLimit();
+    std::set<int> anArrayIndicesOfStructDateTime;
     if (bIncludeFID)
     {
         out_array->children[iSchemaChild] = static_cast<struct ArrowArray *>(
@@ -2060,7 +2182,6 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         out_array->children[iSchemaChild] = static_cast<struct ArrowArray *>(
             CPLCalloc(1, sizeof(struct ArrowArray)));
         auto psChild = out_array->children[iSchemaChild];
-        ++iSchemaChild;
         psChild->release = OGRLayerDefaultReleaseArray;
         const bool bIsNullable = CPL_TO_BOOL(poFieldDefn->IsNullable());
         const auto eSubType = poFieldDefn->GetSubType();
@@ -2305,14 +2426,33 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                 }
                 else
                 {
-                    if (!FillDateTimeArray(psChild, oFeatureQueue,
-                                           nFeatureCount, bIsNullable, i,
-                                           poFieldDefn->GetTZFlag()))
+                    const char *pszTZOverride =
+                        m_aosArrowArrayStreamOptions.FetchNameValue("TIMEZONE");
+                    const int nTZFlag = poFieldDefn->GetTZFlag();
+                    if ((pszTZOverride && EQUAL(pszTZOverride, "mixed")) ||
+                        (!pszTZOverride && nTZFlag == OGR_TZFLAG_MIXED_TZ))
+
+                    {
+                        anArrayIndicesOfStructDateTime.insert(iSchemaChild);
+                        if (!FillDateTimeArrayWithTimeZone(
+                                psChild, oFeatureQueue, nFeatureCount,
+                                bIsNullable, i, nTZFlag))
+                        {
+                            goto error;
+                        }
+                    }
+                    else if (!FillDateTimeArray(psChild, oFeatureQueue,
+                                                nFeatureCount, bIsNullable, i,
+                                                nTZFlag))
+                    {
                         goto error;
+                    }
                 }
                 break;
             }
         }
+
+        ++iSchemaChild;
     }
     for (int i = 0; i < nGeomFieldCount; ++i)
     {
@@ -2354,6 +2494,13 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     for (int i = 0; i < out_array->n_children; ++i)
     {
         out_array->children[i]->length = nFeatureCount;
+        if (cpl::contains(anArrayIndicesOfStructDateTime, i))
+        {
+            for (int j = 0; j < out_array->children[i]->n_children; ++j)
+            {
+                out_array->children[i]->children[j]->length = nFeatureCount;
+            }
+        }
     }
 
     return 0;
@@ -2538,7 +2685,7 @@ From OGR using the Arrow C Stream data interface</a> tutorial.
  * </li>
  * <li>MAX_FEATURES_IN_BATCH=integer. Maximum number of features to retrieve in
  *     a ArrowArray batch. Defaults to 65 536.</li>
- * <li>TIMEZONE="unknown", "UTC", "(+|:)HH:MM" or any other value supported by
+ * <li>TIMEZONE="unknown", "mixed", "UTC", "(+|:)HH:MM" or any other value supported by
  *     Arrow. (GDAL >= 3.8)
  *     Override the timezone flag nominally provided by
  *     OGRFieldDefn::GetTZFlag(), and used for the Arrow field timezone
@@ -2548,7 +2695,12 @@ From OGR using the Arrow C Stream data interface</a> tutorial.
  *     OGRField::Date::TZFlag member at the OGRFeature level. The conversion
  *     to UTC of a OGRField::Date is only done if both the timezone indicated by
  *     OGRField::Date::TZFlag and the one at the OGRFieldDefn level (or set by
- *     this TIMEZONE option) are not unknown.</li>
+ *     this TIMEZONE option) are not unknown.
+ *     Since GDAL 3.13, "mixed" can be used to create an Arrow structure field,
+ *     following the "timestamp with offset" extension (https://github.com/apache/arrow/blob/main/docs/source/format/CanonicalExtensions.rst#timestamp-with-offset)
+ *     and storing both a UTC timestamp and the offset in minutes from the UTC
+ *     timezone.
+ * </li>
  * <li>DATETIME_AS_STRING=YES/NO. Defaults to NO. Added in GDAL 3.11.
  *     Whether DateTime fields should be returned as a (normally ISO-8601
  *     formatted) string by drivers. The aim is to be able to handle mixed
@@ -2744,7 +2896,7 @@ From OGR using the Arrow C Stream data interface</a> tutorial.
 YES.</li>
  * <li>MAX_FEATURES_IN_BATCH=integer. Maximum number of features to retrieve in
  *     a ArrowArray batch. Defaults to 65 536.</li>
- * <li>TIMEZONE="unknown", "UTC", "(+|:)HH:MM" or any other value supported by
+ * <li>TIMEZONE="unknown", "mixed", "UTC", "(+|:)HH:MM" or any other value supported by
  *     Arrow. (GDAL >= 3.8)
  *     Override the timezone flag nominally provided by
  *     OGRFieldDefn::GetTZFlag(), and used for the Arrow field timezone
@@ -2754,7 +2906,12 @@ YES.</li>
  *     OGRField::Date::TZFlag member at the OGRFeature level. The conversion
  *     to UTC of a OGRField::Date is only done if both the timezone indicated by
  *     OGRField::Date::TZFlag and the one at the OGRFieldDefn level (or set by
- *     this TIMEZONE option) are not unknown.</li>
+ *     this TIMEZONE option) are not unknown.
+ *     Since GDAL 3.13, "mixed" can be used to create an Arrow structure field,
+ *     following the "timestamp with offset" extension (https://github.com/apache/arrow/blob/main/docs/source/format/CanonicalExtensions.rst#timestamp-with-offset)
+ *     and storing both a UTC timestamp and the offset in minutes from the UTC
+ *     timezone.
+ * </li>
  * <li>DATETIME_AS_STRING=YES/NO. Defaults to NO. Added in GDAL 3.11.
  *     Whether DateTime fields should be returned as a (normally ISO-8601
  *     formatted) string by drivers. The aim is to be able to handle mixed
@@ -2896,6 +3053,28 @@ static const char *GetErrorIfUnsupportedDecimal(int nWidthInBytes,
 }
 
 /************************************************************************/
+/*                     IsArrowTimeStampWithOffsetField()                */
+/************************************************************************/
+
+static bool IsArrowTimeStampWithOffsetField(const struct ArrowSchema *schema)
+{
+    bool ret =
+        IsStructure(schema->format) && schema->n_children == 2 &&
+        IsTimestamp(schema->children[0]->format) &&
+        IsInt16(schema->children[1]->format) &&
+        strcmp(schema->children[0]->name, ATSWO_TIMESTAMP_FIELD_NAME) == 0 &&
+        strcmp(schema->children[1]->name, ATSWO_OFFSET_MINUTES_FIELD_NAME) == 0;
+    if (ret)
+    {
+        const auto oMetadata = OGRParseArrowMetadata(schema->metadata);
+        const auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
+        ret = oIter != oMetadata.end() &&
+              oIter->second == EXTENSION_NAME_ARROW_TIMESTAMP_WITH_OFFSET;
+    }
+    return ret;
+}
+
+/************************************************************************/
 /*                            IsHandledSchema()                         */
 /************************************************************************/
 
@@ -2906,6 +3085,12 @@ static bool IsHandledSchema(bool bTopLevel, const struct ArrowSchema *schema,
     const char *format = schema->format;
     if (IsStructure(format))
     {
+        if (IsArrowTimeStampWithOffsetField(schema) &&
+            aosUsedFields.FindString((osPrefix + schema->name).c_str()) >= 0)
+        {
+            return false;
+        }
+
         for (int64_t i = 0; i < schema->n_children; ++i)
         {
             if (!IsHandledSchema(/* bTopLevel = */ false,
@@ -6110,12 +6295,28 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
     const char *format = schema->format;
     if (IsStructure(format))
     {
-        const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
-        for (int64_t i = 0; i < schema->n_children; ++i)
+        if (IsArrowTimeStampWithOffsetField(schema))
         {
-            if (!CreateFieldFromArrowSchemaInternal(schema->children[i],
-                                                    osNewPrefix, papszOptions))
+            OGRFieldDefn oFieldDefn((osFieldPrefix + fieldName).c_str(),
+                                    OFTDateTime);
+            oFieldDefn.SetTZFlag(OGR_TZFLAG_MIXED_TZ);
+            auto poLayerDefn = GetLayerDefn();
+            const int nFieldCountBefore = poLayerDefn->GetFieldCount();
+            if (CreateField(&oFieldDefn) != OGRERR_NONE ||
+                nFieldCountBefore + 1 != poLayerDefn->GetFieldCount())
+            {
                 return false;
+            }
+        }
+        else
+        {
+            const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
+            for (int64_t i = 0; i < schema->n_children; ++i)
+            {
+                if (!CreateFieldFromArrowSchemaInternal(
+                        schema->children[i], osNewPrefix, papszOptions))
+                    return false;
+            }
         }
         return true;
     }
@@ -6514,17 +6715,46 @@ static bool BuildOGRFieldInfo(
     const char *format = schema->format;
     if (IsStructure(format))
     {
-        const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
-        for (int64_t i = 0; i < array->n_children; ++i)
+        if (IsArrowTimeStampWithOffsetField(schema))
         {
-            if (!BuildOGRFieldInfo(schema->children[i], array->children[i],
-                                   poFeatureDefn, osNewPrefix, aosNativeTypes,
-                                   bFallbackTypesUsed, asFieldInfo, pszFIDName,
-                                   pszGeomFieldName, poLayer,
-                                   oMapArrowFieldNameToOGRFieldName,
-                                   schemaFIDColumn, arrayFIDColumn))
+            FieldInfo sInfo;
+            sInfo.osName = fieldName;
+            sInfo.format = "+s";
+            sInfo.eNominalFieldType = OFTDateTime;
+            const std::string &osExpectedOGRFieldName =
+                [&oMapArrowFieldNameToOGRFieldName,
+                 &sInfo]() -> const std::string &
             {
-                return false;
+                const auto oIter =
+                    oMapArrowFieldNameToOGRFieldName.find(sInfo.osName);
+                if (oIter != oMapArrowFieldNameToOGRFieldName.end())
+                    return oIter->second;
+                return sInfo.osName;
+            }();
+            sInfo.iOGRFieldIdx =
+                poFeatureDefn->GetFieldIndex(osExpectedOGRFieldName.c_str());
+            if (sInfo.iOGRFieldIdx >= 0)
+            {
+                const auto eOGRType =
+                    poFeatureDefn->GetFieldDefn(sInfo.iOGRFieldIdx)->GetType();
+                sInfo.eTargetFieldType = eOGRType;
+            }
+            asFieldInfo.emplace_back(std::move(sInfo));
+        }
+        else
+        {
+            const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
+            for (int64_t i = 0; i < array->n_children; ++i)
+            {
+                if (!BuildOGRFieldInfo(
+                        schema->children[i], array->children[i], poFeatureDefn,
+                        osNewPrefix, aosNativeTypes, bFallbackTypesUsed,
+                        asFieldInfo, pszFIDName, pszGeomFieldName, poLayer,
+                        oMapArrowFieldNameToOGRFieldName, schemaFIDColumn,
+                        arrayFIDColumn))
+                {
+                    return false;
+                }
             }
         }
         return true;
@@ -7032,8 +7262,15 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
 {
     const char *fieldName = schema->name;
     const char *format = schema->format;
+    const int iArrowIdx = iArrowIdxInOut;
     if (IsStructure(format))
     {
+        if (asFieldInfo[iArrowIdx].eNominalFieldType == OFTDateTime)
+        {
+            ++iArrowIdxInOut;
+            return 0;
+        }
+
         size_t nRet = 0;
         for (int64_t i = 0; i < array->n_children; ++i)
         {
@@ -7044,7 +7281,6 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
         }
         return nRet;
     }
-    const int iArrowIdx = iArrowIdxInOut;
     ++iArrowIdxInOut;
 
     if (!asFieldInfo[iArrowIdx].bUseStringOptim)
@@ -7208,20 +7444,76 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
 {
     const char *fieldName = schema->name;
     const char *format = schema->format;
+    const int iArrowIdx = iArrowIdxInOut;
     if (IsStructure(format))
     {
-        const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
-        for (int64_t i = 0; i < array->n_children; ++i)
+        if (asFieldInfo[iArrowIdx].eNominalFieldType == OFTDateTime)
         {
-            if (!FillFeature(
-                    poLayer, schema->children[i], array->children[i],
-                    osNewPrefix, iFeature + static_cast<size_t>(array->offset),
-                    iArrowIdxInOut, asFieldInfo, oFeature, osWorkingBuffer))
-                return false;
+            ++iArrowIdxInOut;
+            const int iOGRFieldIdx = asFieldInfo[iArrowIdx].iOGRFieldIdx;
+
+            if (array->null_count != 0)
+            {
+                const uint8_t *pabyValidity =
+                    static_cast<const uint8_t *>(array->buffers[0]);
+                if (pabyValidity &&
+                    !TestBit(pabyValidity,
+                             static_cast<size_t>(iFeature + array->offset)))
+                {
+                    OGRField *psField = oFeature.GetRawFieldRef(iOGRFieldIdx);
+                    OGR_RawField_SetNull(psField);
+                }
+            }
+
+            const auto *panTimestamps =
+                static_cast<const int64_t *>(array->children[0]->buffers[1]);
+            int64_t nTimestamp = panTimestamps[iFeature + array->offset];
+            const auto *panOffsetsMinutes =
+                static_cast<const int16_t *>(array->children[1]->buffers[1]);
+            const int nOffsetMinute =
+                panOffsetsMinutes[iFeature + array->offset];
+            const int nTZFlag =
+                nOffsetMinute >= -14 * 60 && nOffsetMinute <= 14 * 60
+                    ? OGR_TZFLAG_UTC + nOffsetMinute / 15
+                    : OGR_TZFLAG_UTC;
+
+            const char *formatTS = schema->children[0]->format;
+            const int nInvFactorToSecond =
+                IsTimestampSeconds(formatTS)        ? 1
+                : IsTimestampMilliseconds(formatTS) ? 1000
+                : IsTimestampMicroseconds(formatTS) ? 1000 * 1000
+                : IsTimestampNanoseconds(formatTS)  ? 1000 * 1000 * 1000
+                                                    : 1;
+            double floatingPart = 0;
+            if (nInvFactorToSecond)
+            {
+                floatingPart = (nTimestamp % nInvFactorToSecond) /
+                               double(nInvFactorToSecond);
+                nTimestamp /= nInvFactorToSecond;
+            }
+            nTimestamp += (nTZFlag - OGR_TZFLAG_UTC) * 15 * 60;
+            struct tm dt;
+            CPLUnixTimeToYMDHMS(nTimestamp, &dt);
+            oFeature.SetField(iOGRFieldIdx, dt.tm_year + 1900, dt.tm_mon + 1,
+                              dt.tm_mday, dt.tm_hour, dt.tm_min,
+                              static_cast<float>(dt.tm_sec + floatingPart),
+                              nTZFlag);
+        }
+        else
+        {
+            const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
+            for (int64_t i = 0; i < array->n_children; ++i)
+            {
+                if (!FillFeature(poLayer, schema->children[i],
+                                 array->children[i], osNewPrefix,
+                                 iFeature + static_cast<size_t>(array->offset),
+                                 iArrowIdxInOut, asFieldInfo, oFeature,
+                                 osWorkingBuffer))
+                    return false;
+            }
         }
         return true;
     }
-    const int iArrowIdx = iArrowIdxInOut;
     ++iArrowIdxInOut;
     const int iOGRFieldIdx = asFieldInfo[iArrowIdx].iOGRFieldIdx;
 

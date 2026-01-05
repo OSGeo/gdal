@@ -480,6 +480,8 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     bool m_bUseArrowWKBExtension = false;
 #endif
 
+    CPLStringList m_aosCreationOptions{};
+
     static OGRArrowGeomEncoding
     GetPreciseArrowGeomEncoding(OGRArrowGeomEncoding eEncodingType,
                                 OGRwkbGeometryType eGType);
