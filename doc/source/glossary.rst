@@ -292,6 +292,14 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
         Standard output stream used by programs to display output data, typically shown on the console or terminal.
 
+    strile
+
+        A combination of "strip" and "tile". It is a block of raster data stored in a TIFF file, either as a row of pixels (strip) or a square/rectangle (tile).
+        GDAL reads and writes each strile as a unit when working with Cloud Optimized GeoTIFFs (COGs).
+
+        .. seealso::
+            :ref:`raster.cog`.
+
     Swath
 
         A contiguous block or strip of raster data processed or read at one time.
