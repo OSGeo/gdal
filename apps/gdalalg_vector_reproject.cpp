@@ -104,8 +104,8 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &)
                         *poSrcLayer,
                         std::make_unique<OGRWarpedLayer>(
                             poSrcLayer, /* iGeomField = */ 0,
-                            /*bTakeOwnership = */ false, poCT.release(),
-                            poReversedCT.release()));
+                            /*bTakeOwnership = */ false, std::move(poCT),
+                            std::move(poReversedCT)));
                 }
             }
             else
