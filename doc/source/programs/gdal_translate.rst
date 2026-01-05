@@ -40,8 +40,14 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -strict
 
-    Don't be forgiving of mismatches and lost data when translating to the
-    output format.
+    Enable strict mode. In this mode, GDAL will fail instead of silently
+    performing operations that may lead to loss of information, such as
+    data type conversions that cannot be exactly preserved.
+
+    The exact behavior of this option is driver-dependent. Most raster
+    drivers use it to enforce strict preservation of the input data type
+    and will report an error if the requested operation cannot be performed
+    without data loss. See :example:`strict`.
 
 .. include:: options/if.rst
 
@@ -474,3 +480,15 @@ Examples
    .. code-block:: bash
 
       gdal_translate -projwin -20037500 10037500 0 0 -outsize 100 100 frmt_wms_googlemaps_tms.xml junk.png
+
+
+.. example::
+   :title: Use of strict mode with unsupported data type
+   :id: strict
+
+   .. code-block:: console
+
+       $ gdal_create test.tif -bands 3 -ot Int16 -outsize 1 1
+       $ gdal_translate -strict test.tif test.webp
+       ERROR 6: WEBP driver doesn't support data type Int16.
+       Only UInt8 bands supported.
