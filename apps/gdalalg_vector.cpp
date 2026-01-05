@@ -10,7 +10,9 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalgorithm.h"
+//! @cond Doxygen_Suppress
+
+#include "gdalalg_vector.h"
 
 #include "gdalalg_vector_info.h"
 #include "gdalalg_vector_buffer.h"
@@ -53,59 +55,46 @@
 /*                         GDALVectorAlgorithm                          */
 /************************************************************************/
 
-class GDALVectorAlgorithm final : public GDALAlgorithm
+GDALVectorAlgorithm::GDALVectorAlgorithm()
+    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-  public:
-    static constexpr const char *NAME = "vector";
-    static constexpr const char *DESCRIPTION = "Vector commands.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vector.html";
+    AddArg("drivers", 0,
+           _("Display vector driver list as JSON document and exit"),
+           &m_drivers);
 
-    GDALVectorAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
-    {
-        AddArg("drivers", 0,
-               _("Display vector driver list as JSON document and exit"),
-               &m_drivers);
+    AddOutputStringArg(&m_output);
 
-        AddOutputStringArg(&m_output);
-
-        RegisterSubAlgorithm<GDALVectorInfoAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorBufferAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorCheckCoverageAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorCheckGeometryAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorCleanCoverageAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorClipAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorConcatAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorConvertAlgorithm>();
-        RegisterSubAlgorithm<GDALVectorEditAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorExplodeCollectionsAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorGridAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorRasterizeAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorPipelineAlgorithm>();
-        RegisterSubAlgorithm<GDALVectorFilterAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorIndexAlgorithm>();
-        RegisterSubAlgorithm<GDALVectorLayerAlgebraAlgorithm>();
-        RegisterSubAlgorithm<GDALVectorMakePointAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorMakeValidAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorPartitionAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorReprojectAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorSegmentizeAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorSelectAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorSetFieldTypeAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorSetGeomTypeAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorSimplifyAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorSimplifyCoverageAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorSortAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorSQLAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorUpdateAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorSwapXYAlgorithmStandalone>();
-    }
-
-  private:
-    std::string m_output{};
-    bool m_drivers = false;
-
-    bool RunImpl(GDALProgressFunc, void *) override;
-};
+    RegisterSubAlgorithm<GDALVectorInfoAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorBufferAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorCheckCoverageAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorCheckGeometryAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorCleanCoverageAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorClipAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorConcatAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorConvertAlgorithm>();
+    RegisterSubAlgorithm<GDALVectorEditAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorExplodeCollectionsAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorGridAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorRasterizeAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorPipelineAlgorithm>();
+    RegisterSubAlgorithm<GDALVectorFilterAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorIndexAlgorithm>();
+    RegisterSubAlgorithm<GDALVectorLayerAlgebraAlgorithm>();
+    RegisterSubAlgorithm<GDALVectorMakePointAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorMakeValidAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorPartitionAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorReprojectAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorSegmentizeAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorSelectAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorSetFieldTypeAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorSetGeomTypeAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorSimplifyAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorSimplifyCoverageAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorSortAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorSQLAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorUpdateAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorSwapXYAlgorithmStandalone>();
+}
 
 bool GDALVectorAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
@@ -123,4 +112,4 @@ bool GDALVectorAlgorithm::RunImpl(GDALProgressFunc, void *)
     }
 }
 
-GDAL_STATIC_REGISTER_ALG(GDALVectorAlgorithm);
+//! @endcond

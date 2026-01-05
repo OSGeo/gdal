@@ -12,6 +12,14 @@
 
 #include "gdalalgorithm.h"
 #include "gdalalg_main.h"
+#include "gdalalg_raster.h"
+#include "gdalalg_vector.h"
+#include "gdalalg_dataset.h"
+#include "gdalalg_mdim.h"
+#include "gdalalg_convert.h"
+#include "gdalalg_info.h"
+#include "gdalalg_pipeline.h"
+#include "gdalalg_vsi.h"
 
 #include "cpl_vsi.h"
 
@@ -135,7 +143,21 @@ GDALAlgorithmRegistry::InstantiateInternal(std::vector<std::string> &path)
     return Instantiate(path);
 }
 
-GDALGlobalAlgorithmRegistry::GDALGlobalAlgorithmRegistry() = default;
+/************************************************************************/
+/*        GDALGlobalAlgorithmRegistry::GDALGlobalAlgorithmRegistry()    */
+/************************************************************************/
+
+GDALGlobalAlgorithmRegistry::GDALGlobalAlgorithmRegistry()
+{
+    Register<GDALRasterAlgorithm>();
+    Register<GDALVectorAlgorithm>();
+    Register<GDALDatasetAlgorithm>();
+    Register<GDALMdimAlgorithm>();
+    Register<GDALConvertAlgorithm>();
+    Register<GDALInfoAlgorithm>();
+    Register<GDALPipelineAlgorithm>();
+    Register<GDALVSIAlgorithm>();
+}
 
 GDALGlobalAlgorithmRegistry::~GDALGlobalAlgorithmRegistry() = default;
 
