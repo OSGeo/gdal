@@ -15,6 +15,7 @@
 #include "gdalalg_dataset.h"
 
 #include "gdalalg_dataset_identify.h"
+#include "gdalalg_dataset_check.h"
 #include "gdalalg_dataset_copy.h"
 #include "gdalalg_dataset_rename.h"
 #include "gdalalg_dataset_delete.h"
@@ -27,6 +28,7 @@ GDALDatasetAlgorithm::GDALDatasetAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
     RegisterSubAlgorithm<GDALDatasetIdentifyAlgorithm>();
+    RegisterSubAlgorithm<GDALDatasetCheckAlgorithm>();
     RegisterSubAlgorithm<GDALDatasetCopyAlgorithm>();
     RegisterSubAlgorithm<GDALDatasetRenameAlgorithm>();
     RegisterSubAlgorithm<GDALDatasetDeleteAlgorithm>();

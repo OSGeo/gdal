@@ -448,6 +448,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_dataset_check",
+        "gdal-dataset-check",
+        "Check whether there are errors when reading the content of a dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_dataset_copy",
         "gdal-dataset-copy",
         "Copy files of a dataset",

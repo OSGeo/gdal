@@ -34,6 +34,7 @@ target_sources(appslib PRIVATE
   gdalalg_info.cpp
   gdalalg_dataset.cpp
   gdalalg_dataset_identify.cpp
+  gdalalg_dataset_check.cpp
   gdalalg_dataset_copy.cpp
   gdalalg_dataset_rename.cpp
   gdalalg_dataset_delete.cpp
