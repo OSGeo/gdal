@@ -179,6 +179,8 @@ Examples
 .. example::
    :title: Create a Cloud Optimized GeoTIFF (COG) mosaic from all GeoTIFFs in a folder
 
+   Because the size of the resulting GeoTIFF will be more than 4 GB, the :co:`drivers/raster/cog BIGTIFF=YES` creation option is used.
+
    .. code-block:: bash
 
        gdal raster mosaic --output-format COG --creation-option BIGTIFF=YES *.tif mosaic.tif
