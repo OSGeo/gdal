@@ -3,8 +3,9 @@
  * python specific code for gdal bindings.
  */
 
+// Disable C-style signatures in Python docstrings (see #12177)
+%feature("autodoc", "0");
 
-%feature("autodoc");
 
 %include "gdal_docs.i"
 %include "gdal_algorithm_docs.i"
