@@ -43,7 +43,7 @@ class GDALRasterViewshedAlgorithm /* non final */
     std::string m_outputMode = "normal";
     int m_band = 1;
     int m_numThreads = 3;
-    std::string m_sdFilename{};
+    GDALArgDatasetValue m_sdFilename{};
 
     // Work variables
     std::string m_numThreadsStr{};

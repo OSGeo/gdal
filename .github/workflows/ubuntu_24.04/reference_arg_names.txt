@@ -157,6 +157,7 @@ max-x
 max-y
 max-zoom
 maximum-gap-width
+maybe-visible-value
 merge-strategy
 metadata
 metadata-domain
@@ -248,6 +249,7 @@ resume
 return-code
 scale-axes
 scheme
+sd-filename
 side
 simplify-tolerance
 single

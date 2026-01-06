@@ -30,7 +30,7 @@ namespace viewshed
 //! @cond Doxygen_Suppress
 CPLErr DummyBand::IReadBlock(int, int, void *)
 {
-    return static_cast<CPLErr>(CPLE_NotSupported);
+    return CE_Failure;
 }
 
 //! @endcond
@@ -240,7 +240,7 @@ void ViewshedExecutor::setOutputNormal(Lines &lines, int pos, double dfZ)
 }
 
 /// Set the output Z value depending on the observable height and computation when
-/// making an SD pass.
+/// making an standard deviation pass.
 ///
 /// dfResult  Reference to the result cell
 /// dfCellVal  Reference to the current cell height. Replace with observable height.
@@ -289,18 +289,19 @@ bool ViewshedExecutor::readLine(int nLine, Lines &lines)
     {
         lines.input = lines.cur;
         double nodata = m_sdBand.GetNoDataValue();
-        int sdStatus = m_sdBand.RasterIO(
+        CPLErr sdStatus = m_sdBand.RasterIO(
             GF_Read, oOutExtent.xStart, nLine, oOutExtent.xSize(), 1,
             lines.sd.data(), oOutExtent.xSize(), 1, GDT_Float64, 0, 0, nullptr);
-        if (sdStatus)
+        if (sdStatus != CE_None)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "RasterIO error when reading SD band at position (%d,%d), "
+                     "RasterIO error when reading standard deviation band at "
+                     "position (%d,%d), "
                      "size (%d,%d)",
                      oOutExtent.xStart, nLine, oOutExtent.xSize(), 1);
             return false;
         }
-        // Set the SD to 1000 if nodata is found.
+        // Set the standard deviation to 1000 if nodata is found.
         for (size_t i = 0; i < lines.sd.size(); ++i)
             if (lines.sd[i] == nodata)
                 lines.sd[i] = 1000.0;
@@ -572,7 +573,7 @@ void ViewshedExecutor::processFirstLineTopOrBottom(const LineLimits &ll,
 /// Process the part of the first line to the left of the observer.
 ///
 /// @param ll      Line limits for masking.
-/// @param sdCalc  True when doing SD calculation.
+/// @param sdCalc  True when doing standard deviation calculation.
 /// @param lines   Raster lines to process.
 void ViewshedExecutor::processFirstLineLeft(const LineLimits &ll, Lines &lines,
                                             bool sdCalc)
@@ -795,7 +796,7 @@ void ViewshedExecutor::maskLineRight(std::vector<double> &vResult,
 /// Process the part of the first line to the right of the observer.
 ///
 /// @param ll  Line limits
-/// @param sdCalc  True when doing SD calcuation.
+/// @param sdCalc  True when doing standard deviation calcuation.
 /// @param lines  Raster lines to process.
 void ViewshedExecutor::processFirstLineRight(const LineLimits &ll, Lines &lines,
                                              bool sdCalc)
@@ -848,7 +849,7 @@ void ViewshedExecutor::processFirstLineRight(const LineLimits &ll, Lines &lines,
 /// @param nYOffset  Offset of the line being processed from the observer
 /// @param ll  Line limits
 /// @param lines  Raster lines to process.
-/// @param sdCalc  SD calculation indicator.
+/// @param sdCalc  standard deviation calculation indicator.
 void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
                                        Lines &lines, bool sdCalc)
 {
@@ -902,7 +903,7 @@ void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
 /// @param nYOffset  Offset of the line being processed from the observer
 /// @param ll  Line limits
 /// @param lines  Raster lines to process.
-/// @param sdCalc  SD calculation indicator.
+/// @param sdCalc  standard deviation calculation indicator.
 void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
                                         Lines &lines, bool sdCalc)
 {
@@ -1037,7 +1038,7 @@ bool ViewshedExecutor::processLine(int nLine, Lines &lines)
 
     process(false);
 
-    // Process SD mode
+    // Process standard deviation mode
     if (sdMode())
     {
         lines.prev = std::move(lines.prevTmp);
@@ -1199,7 +1200,7 @@ bool ViewshedExecutor::run()
 
 bool ViewshedExecutor::sdMode() const
 {
-    // If the SD band isn't a dummy band, we're in SD mode.
+    // If the standard deviation band isn't a dummy band, we're in SD mode.
     return dynamic_cast<DummyBand *>(&m_sdBand) == nullptr;
 }
 

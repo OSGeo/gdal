@@ -405,7 +405,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 /// Compute the viewshed of a raster band with .
 ///
 /// @param band  Pointer to the raster band to be processed.
-/// @param sdBand  Pointer to the SD raster band to be processed.
+/// @param sdBand  Pointer to the standard deviation (SD) raster band to be processed.
 /// @param pfnProgress  Pointer to the progress function. Can be null.
 /// @param pProgressArg  Argument passed to the progress function
 /// @return  True on success, false otherwise.
