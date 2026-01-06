@@ -386,6 +386,33 @@ bool NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
 
     SkipWhite();
 
+    const auto AddToCur = [&oCur, &osName](const CPLJSONObject &o)
+    {
+        auto oExistingObjForName = oCur[osName];
+        if (oExistingObjForName.IsValid())
+        {
+            if (oExistingObjForName["values"].GetType() ==
+                CPLJSONObject::Type::Array)
+            {
+                oExistingObjForName["values"].ToArray().Add(o);
+            }
+            else
+            {
+                CPLJSONArray ar;
+                ar.Add(oExistingObjForName);
+                ar.Add(o);
+                CPLJSONObject oObj;
+                oObj.Add("values", ar);
+                oCur.Delete(osName);
+                oCur[osName] = oObj;
+            }
+        }
+        else
+        {
+            oCur.Add(osName, o);
+        }
+    };
+
     // No units keyword?
     if (*pszHeaderNext != '<')
     {
@@ -393,23 +420,25 @@ bool NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
         {
             if (oArray.Size() > 0)
             {
-                oCur.Add(osName, oArray);
+                AddToCur(oArray);
             }
             else
             {
+                CPLJSONObject oObj;
                 if (bIsString)
                 {
-                    oCur.Add(osName, StripQuotesIfNeeded(
-                                         osValue, m_bStripSurroundingQuotes));
+                    oObj = CPLJSONObject(StripQuotesIfNeeded(
+                        osValue, m_bStripSurroundingQuotes));
                 }
                 else if (CPLGetValueType(osValue) == CPL_VALUE_INTEGER)
                 {
-                    oCur.Add(osName, atoi(osValue));
+                    oObj = CPLJSONObject(atoi(osValue));
                 }
                 else
                 {
-                    oCur.Add(osName, CPLAtof(osValue));
+                    oObj = CPLJSONObject(CPLAtof(osValue));
                 }
+                AddToCur(oObj);
             }
         }
         return true;
@@ -439,7 +468,6 @@ bool NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
         osUnit = osUnit.substr(0, osUnit.size() - 1);
 
     CPLJSONObject newObject;
-    oCur.Add(osName, newObject);
 
     if (oArray.Size() > 0)
     {
@@ -461,6 +489,7 @@ bool NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
         }
     }
     newObject.Add("unit", osUnit);
+    AddToCur(newObject);
 
     return true;
 }
