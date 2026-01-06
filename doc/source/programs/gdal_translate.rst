@@ -132,7 +132,7 @@ resampling, and rescaling pixels in the process.
 
     .. code-block:: console
 
-       gdal_translate -r bilinear input.tif resampled.tif
+       gdal_translate -r bilinear -outsize 50% 50% input.tif resampled.tif
 
     This is suitable for continuous data such as elevation or temperature when
     changing resolution.
@@ -215,15 +215,9 @@ resampling, and rescaling pixels in the process.
     by :option:`-a_nodata`. Alternatively, :program:`gdal_translate` can issue
     an error in this case if so directed by options :option:`-epo` or :option:`-eco`.
 
-    For example, to extract a spatial subset using projected coordinates:
+    For an example of extracting a spatial subset using projected coordinates,
+    see the Examples section below.
 
-    .. code-block:: console
-
-       gdal_translate -projwin -20037500 10037500 0 0 input.tif subset.tif
-
-    This uses georeferenced coordinates (upper-left and lower-right corners),
-    rather than pixel/line offsets.
-    
     .. note::
 
         Beginning with GDAL 3.11, the extent described by :option:`-projwin` will
