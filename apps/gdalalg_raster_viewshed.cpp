@@ -120,6 +120,12 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
         .SetDefault(m_opts.invisibleVal)
         .SetMinValueIncluded(0)
         .SetMaxValueIncluded(255);
+    AddArg("maybe-visible-value", 0,
+           _("Pixel value to set for potentially visible areas"),
+           &m_opts.maybeVisibleVal)
+        .SetDefault(m_opts.maybeVisibleVal)
+        .SetMinValueIncluded(0)
+        .SetMaxValueIncluded(255);
     AddArg("out-of-range-value", 0,
            _("Pixel value to set for the cells that fall outside of the range "
              "specified by the observer location and the maximum distance"),
