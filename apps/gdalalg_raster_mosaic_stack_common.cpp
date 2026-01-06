@@ -66,45 +66,42 @@ GDALRasterMosaicStackCommonAlgorithm::GDALRasterMosaicStackCommonAlgorithm(
         &m_writeAbsolutePaths,
         _("Whether the path to the input datasets should be stored as an "
           "absolute path"));
-    {
-        auto &arg =
-            AddArg("resolution", 0,
-                   _("Target resolution (in destination CRS units)"),
-                   &m_resolution)
-                .SetDefault("same")
-                .SetMetaVar("<xres>,<yres>|same|average|common|highest|lowest");
-        arg.AddValidationAction(
-            [this, &arg]()
+
+    auto &resArg =
+        AddArg("resolution", 0,
+               _("Target resolution (in destination CRS units)"), &m_resolution)
+            .SetDefault("same")
+            .SetMetaVar("<xres>,<yres>|same|average|common|highest|lowest");
+    resArg.AddValidationAction(
+        [this, &resArg]()
+        {
+            const std::string val = resArg.Get<std::string>();
+            if (val != "average" && val != "highest" && val != "lowest" &&
+                val != "same" && val != "common")
             {
-                const std::string val = arg.Get<std::string>();
-                if (val != "average" && val != "highest" && val != "lowest" &&
-                    val != "same" && val != "common")
+                const auto aosTokens =
+                    CPLStringList(CSLTokenizeString2(val.c_str(), ",", 0));
+                if (aosTokens.size() != 2 ||
+                    CPLGetValueType(aosTokens[0]) == CPL_VALUE_STRING ||
+                    CPLGetValueType(aosTokens[1]) == CPL_VALUE_STRING ||
+                    CPLAtof(aosTokens[0]) <= 0 || CPLAtof(aosTokens[1]) <= 0)
                 {
-                    const auto aosTokens =
-                        CPLStringList(CSLTokenizeString2(val.c_str(), ",", 0));
-                    if (aosTokens.size() != 2 ||
-                        CPLGetValueType(aosTokens[0]) == CPL_VALUE_STRING ||
-                        CPLGetValueType(aosTokens[1]) == CPL_VALUE_STRING ||
-                        CPLAtof(aosTokens[0]) <= 0 ||
-                        CPLAtof(aosTokens[1]) <= 0)
-                    {
-                        ReportError(
-                            CE_Failure, CPLE_AppDefined,
-                            "resolution: two comma separated positive "
-                            "values should be provided, or 'same', "
-                            "'average', 'common', 'highest' or 'lowest'");
-                        return false;
-                    }
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "resolution: two comma separated positive "
+                                "values should be provided, or 'same', "
+                                "'average', 'common', 'highest' or 'lowest'");
+                    return false;
                 }
-                return true;
-            });
-    }
+            }
+            return true;
+        });
+
     AddBBOXArg(&m_bbox, _("Target bounding box as xmin,ymin,xmax,ymax (in "
                           "destination CRS units)"));
-    AddArg("target-aligned-pixels", 0,
-           _("Round target extent to target resolution"),
-           &m_targetAlignedPixels)
-        .AddHiddenAlias("tap");
+    auto &tapArg = AddArg("target-aligned-pixels", 0,
+                          _("Round target extent to target resolution"),
+                          &m_targetAlignedPixels)
+                       .AddHiddenAlias("tap");
     AddArg("src-nodata", 0, _("Set nodata values for input bands."),
            &m_srcNoData)
         .SetMinCount(1)
@@ -116,6 +113,20 @@ GDALRasterMosaicStackCommonAlgorithm::GDALRasterMosaicStackCommonAlgorithm(
     AddArg("hide-nodata", 0,
            _("Makes the destination band not report the NoData."),
            &m_hideNoData);
+
+    AddValidationAction(
+        [this, &resArg, &tapArg]()
+        {
+            if (tapArg.IsExplicitlySet() && !resArg.IsExplicitlySet())
+            {
+                ReportError(
+                    CE_Failure, CPLE_IllegalArg,
+                    "Argument 'target-aligned-pixels' can only be specified if "
+                    "argument 'resolution' is also specified.");
+                return false;
+            }
+            return true;
+        });
 }
 
 /************************************************************************/
