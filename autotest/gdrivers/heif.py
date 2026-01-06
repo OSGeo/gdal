@@ -669,7 +669,7 @@ def make_data_gray():
 
     ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_GrayIndex)
 
-    gray = ([0xFF] * 150 + [0x00] * 150)
+    gray = [0xFF] * 150 + [0x00] * 150
     gray_bytes = array.array("B", gray).tobytes()
     for line in range(200):
         ds.WriteRaster(
@@ -678,6 +678,7 @@ def make_data_gray():
 
     assert ds.FlushCache() == gdal.CE_None
     return ds
+
 
 heif_codecs = ["AV1", "HEVC", "JPEG", "JPEG2000", "UNCOMPRESSED"]
 
@@ -715,6 +716,7 @@ def test_heif_create_copy_with_alpha(tmp_path, codec):
 
     assert result_ds
 
+
 @pytest.mark.parametrize("codec", heif_codecs)
 def test_heif_create_copy_gray(tmp_path, codec):
     if not _has_read_write_support_for(codec):
@@ -731,6 +733,7 @@ def test_heif_create_copy_gray(tmp_path, codec):
 
     assert result_ds
     pass
+
 
 def test_heif_create_copy_defaults(tmp_path):
     if not _has_read_write_support_for("HEVC"):
