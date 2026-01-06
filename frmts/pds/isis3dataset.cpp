@@ -3801,6 +3801,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
 
     std::vector<CPLJSONObject> aoChildren = oObj.GetChildren();
     size_t nMaxKeyLength = 0;
+    std::vector<std::pair<CPLString, CPLJSONObject>> aoChildren2;
     for (const CPLJSONObject &oChild : aoChildren)
     {
         const CPLString osKey = oChild.GetName();
@@ -3816,6 +3817,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
             eType == CPLJSONObject::Type::Double ||
             eType == CPLJSONObject::Type::Array)
         {
+            aoChildren2.emplace_back(osKey, oChild);
             if (osKey.size() > nMaxKeyLength)
             {
                 nMaxKeyLength = osKey.size();
@@ -3828,22 +3830,37 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
             if (oValue.IsValid() &&
                 oUnit.GetType() == CPLJSONObject::Type::String)
             {
+                aoChildren2.emplace_back(osKey, oChild);
                 if (osKey.size() > nMaxKeyLength)
                 {
                     nMaxKeyLength = osKey.size();
                 }
             }
+            else if (oChild.GetObj("values").GetType() ==
+                     CPLJSONObject::Type::Array)
+            {
+                if (osKey.size() > nMaxKeyLength)
+                {
+                    nMaxKeyLength = osKey.size();
+                }
+                for (const auto &oSubChild : oChild.GetObj("values").ToArray())
+                {
+                    aoChildren2.emplace_back(osKey, oSubChild);
+                }
+            }
+            else
+            {
+                aoChildren2.emplace_back(osKey, oChild);
+            }
+        }
+        else
+        {
+            aoChildren2.emplace_back(osKey, oChild);
         }
     }
 
-    for (const CPLJSONObject &oChild : aoChildren)
+    for (const auto &[osKey, oChild] : aoChildren2)
     {
-        const CPLString osKey = oChild.GetName();
-        if (EQUAL(osKey, "_type") || EQUAL(osKey, "_container_name") ||
-            EQUAL(osKey, "_filename") || EQUAL(osKey, "_data"))
-        {
-            continue;
-        }
         if (STARTS_WITH(osKey, "_comment"))
         {
             if (oChild.GetType() == CPLJSONObject::Type::String)
@@ -4026,7 +4043,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
                         VSIFPrintfL(fp, "\n");
                         for (size_t j = 0; j < nFirstPos; j++)
                         {
-                            const char chSpace = ' ';
+                            constexpr char chSpace = ' ';
                             VSIFWriteL(&chSpace, 1, 1, fp);
                         }
                         nCurPos = nFirstPos;
@@ -4037,8 +4054,8 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
 
                 if (eArrayItemType == CPLJSONObject::Type::Object)
                 {
-                    auto oValue = oItem["value"];
-                    auto oUnit = oItem["unit"];
+                    const auto oValue = oItem["value"];
+                    const auto oUnit = oItem["unit"];
                     if (oValue.IsValid() && oUnit.IsValid() &&
                         (oValue.GetType() == CPLJSONObject::Type::Integer ||
                          oValue.GetType() == CPLJSONObject::Type::Double))
