@@ -207,7 +207,7 @@ Program-Specific Options
 
 .. option:: --sd-filename <value>
 
-   Filename of raster containting standard deviations of the input raster values. The raster
+   Filename of raster containing standard deviations of the input raster values. The raster
    always comes from band 1 and the size must match that of the input raster.
 
 .. option:: --maybe-visible-value <value>
