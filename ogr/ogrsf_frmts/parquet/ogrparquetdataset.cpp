@@ -422,6 +422,27 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
         }
     }
 
+    else if (EQUAL(pszSQLCommand, "GET_SET_FILES_ASKED_TO_BE_OPEN") &&
+             pszDialect && EQUAL(pszDialect, "_DEBUG_"))
+    {
+        if (auto poFS = dynamic_cast<VSIArrowFileSystem *>(m_poFS.get()))
+        {
+            auto poMemLayer = std::make_unique<OGRMemLayer>(
+                "SET_FILES_ASKED_TO_BE_OPEN", nullptr, wkbNone);
+            OGRFieldDefn oFieldDefn("path", OFTString);
+            CPL_IGNORE_RET_VAL(poMemLayer->CreateField(&oFieldDefn));
+            for (const std::string &path : poFS->GetSetFilesAskedToOpen())
+            {
+                OGRFeature oFeature(poMemLayer->GetLayerDefn());
+                oFeature.SetField(0, path.c_str());
+                CPL_IGNORE_RET_VAL(poMemLayer->CreateFeature(&oFeature));
+            }
+            poFS->ResetSetFilesAskedToOpen();
+            return poMemLayer.release();
+        }
+        return nullptr;
+    }
+
     return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
 }
 
