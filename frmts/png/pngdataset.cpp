@@ -2061,14 +2061,16 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
             poDS->SetSubdatasetName(pszSubdatasetName);
         }
         poDS->TryLoadXML();
+
+        poDS->oOvManager.Initialize(poDS, ":::VIRTUAL:::");
     }
     else
     {
         poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
-    }
 
-    // Open overviews.
-    poDS->oOvManager.Initialize(poDS, poOpenInfo);
+        // Open overviews.
+        poDS->oOvManager.Initialize(poDS, poOpenInfo);
+    }
 
     // Used by JPEG FLIR
     poDS->m_bByteOrderIsLittleEndian = CPLTestBool(CSLFetchNameValueDef(

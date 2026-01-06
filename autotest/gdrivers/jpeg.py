@@ -56,6 +56,7 @@ def test_jpeg_2():
 
     ds = gdal.Open("data/jpeg/albania.jpg")
 
+    assert ds.GetMetadataDomainList() == ["IMAGE_STRUCTURE", "", "DERIVED_SUBDATASETS"]
     md = ds.GetMetadata()
 
     ds.GetFileList()
@@ -1692,7 +1693,9 @@ def test_jpeg_copy_mdd():
 
     gdal.GetDriverByName("JPEG").CreateCopy(filename, src_ds)
     ds = gdal.Open(filename)
-    assert set(ds.GetMetadataDomainList()) == set(["", "DERIVED_SUBDATASETS"])
+    assert set(ds.GetMetadataDomainList()) == set(
+        ["", "IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"]
+    )
     assert ds.GetMetadata_Dict() == {"FOO": "BAR"}
     assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {}
     ds = None
@@ -1710,7 +1713,7 @@ def test_jpeg_copy_mdd():
     )
     ds = gdal.Open(filename)
     assert set(ds.GetMetadataDomainList()) == set(
-        ["", "DERIVED_SUBDATASETS", "OTHER_DOMAIN"]
+        ["IMAGE_STRUCTURE", "", "DERIVED_SUBDATASETS", "OTHER_DOMAIN"]
     )
     assert ds.GetMetadata_Dict() == {"FOO": "BAR"}
     assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {"BAR": "BAZ"}
@@ -1775,7 +1778,11 @@ def test_jpeg_read_pix4d_xmp_crs_vertcs_orthometric():
     # exiftool "-xmp<=pix4d_xmp_crs_vertcs_orthometric.xml"  pix4d_xmp_crs_vertcs_orthometric.jpg
     # where pix4d_xmp_crs_vertcs_orthometric.xml is the XMP content
     ds = gdal.Open("data/jpeg/pix4d_xmp_crs_vertcs_orthometric.jpg")
-    assert ds.GetMetadataDomainList() == ["xml:XMP", "DERIVED_SUBDATASETS"]
+    assert ds.GetMetadataDomainList() == [
+        "xml:XMP",
+        "IMAGE_STRUCTURE",
+        "DERIVED_SUBDATASETS",
+    ]
     srs = ds.GetSpatialRef()
     assert srs.GetAuthorityCode("GEOGCS") == "6318"
     assert srs.GetAuthorityCode("VERT_CS") == "6360"
