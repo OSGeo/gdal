@@ -2243,3 +2243,54 @@ def test_isis3_gdalwarp(tmp_vsimem):
             "_type": "object",
         }
         assert j == expected_j
+
+
+def test_isis_unit_in_array(tmp_vsimem):
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "in.lbl",
+        """Object = IsisCube
+  Object = Core
+    StartByte = 1
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 1
+    End_Group
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+
+  Group = Test
+    TestMultiValue   = (2 <m>, "Hello World", 3.5 <r>, "This is not suffixed by <unit>")
+  End_Group
+
+End_Object
+
+End
+""",
+    )
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "in.bin", b"\x01")
+
+    with gdal.Open(tmp_vsimem / "in.lbl") as ds:
+        j = json.loads(ds.GetMetadata("json:ISIS3")[0])
+        assert j["IsisCube"]["Test"]["TestMultiValue"] == [
+            {"value": 2, "unit": "m"},
+            "Hello World",
+            {"value": 3.5, "unit": "r"},
+            "This is not suffixed by <unit>",
+        ]
+
+    gdal.Translate(tmp_vsimem / "out.lbl", tmp_vsimem / "in.lbl", format="ISIS3")
+
+    with gdal.VSIFile(tmp_vsimem / "out.lbl", "rb") as f:
+        data = f.read()
+    assert (
+        b'TestMultiValue = (2 <m>, "Hello World", 3.5 <r>, "This is not suffixed by <unit>")'
+        in data
+    )
