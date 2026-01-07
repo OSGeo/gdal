@@ -8,7 +8,7 @@ Clip a raster using a vector cutline
 
 .. code-block:: console
 
-   gdalwarp -cutline boundary.geojson -crop_to_cutline input.tif output.tif
+   gdal raster clip input.tif output.tif --cutline boundary.geojson
 
 **Using Python**
 
