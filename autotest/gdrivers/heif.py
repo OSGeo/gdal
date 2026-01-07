@@ -664,6 +664,22 @@ def make_data_with_alpha():
     return ds
 
 
+def make_data_gray():
+    ds = gdal.GetDriverByName("MEM").Create("", 300, 200, 1, gdal.GDT_UInt8)
+
+    ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_GrayIndex)
+
+    gray = [0xFF] * 150 + [0x00] * 150
+    gray_bytes = array.array("B", gray).tobytes()
+    for line in range(200):
+        ds.WriteRaster(
+            0, line, 300, 1, gray_bytes, buf_type=gdal.GDT_UInt8, band_list=[1]
+        )
+
+    assert ds.FlushCache() == gdal.CE_None
+    return ds
+
+
 heif_codecs = ["AV1", "HEVC", "JPEG", "JPEG2000", "UNCOMPRESSED"]
 
 
@@ -699,6 +715,24 @@ def test_heif_create_copy_with_alpha(tmp_path, codec):
     result_ds = gdal.Open(tempfile)
 
     assert result_ds
+
+
+@pytest.mark.parametrize("codec", heif_codecs)
+def test_heif_create_copy_gray(tmp_path, codec):
+    if not _has_read_write_support_for(codec):
+        pytest.skip(f"no support for codec {codec}")
+    tempfile = str(tmp_path / ("test_heif_create_copy_gray_" + codec + ".hif"))
+    input_ds = make_data_gray()
+
+    drv = gdal.GetDriverByName("HEIF")
+    result_ds = drv.CreateCopy(tempfile, input_ds, options=["CODEC=" + codec])
+
+    result_ds = None
+
+    result_ds = gdal.Open(tempfile)
+
+    assert result_ds
+    pass
 
 
 def test_heif_create_copy_defaults(tmp_path):
