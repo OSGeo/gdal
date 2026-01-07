@@ -61,14 +61,14 @@ static void RingStartEnd(SHPObject *psShape, int ring, int *start, int *end)
 /************************************************************************/
 /*                        CreateLinearRing                              */
 /************************************************************************/
-static OGRLinearRing *CreateLinearRing(SHPObject *psShape, int ring, bool bHasZ,
-                                       bool bHasM)
+static std::unique_ptr<OGRLinearRing>
+CreateLinearRing(SHPObject *psShape, int ring, bool bHasZ, bool bHasM)
 {
     int nRingStart = 0;
     int nRingEnd = 0;
     RingStartEnd(psShape, ring, &nRingStart, &nRingEnd);
 
-    OGRLinearRing *const poRing = new OGRLinearRing();
+    auto poRing = std::make_unique<OGRLinearRing>();
     if (!(nRingEnd >= nRingStart))
         return poRing;
 
@@ -300,20 +300,17 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
             OGRPolygon *poOGRPoly = new OGRPolygon();
             poOGR = poOGRPoly;
 
-            OGRLinearRing *poRing = CreateLinearRing(psShape, 0, bHasZ, bHasM);
-            poOGRPoly->addRingDirectly(poRing);
+            poOGRPoly->addRing(CreateLinearRing(psShape, 0, bHasZ, bHasM));
         }
         else
         {
-            OGRPolygon **tabPolygons = new OGRPolygon *[psShape->nParts];
-            tabPolygons[0] = new OGRPolygon();
-            auto poExteriorRing = CreateLinearRing(psShape, 0, bHasZ, bHasM);
-            tabPolygons[0]->addRingDirectly(poExteriorRing);
-            for (int iRing = 1; iRing < psShape->nParts; iRing++)
+            std::vector<std::unique_ptr<OGRGeometry>> apoPolygons;
+            apoPolygons.reserve(psShape->nParts);
+            for (int iRing = 0; iRing < psShape->nParts; iRing++)
             {
-                tabPolygons[iRing] = new OGRPolygon();
-                tabPolygons[iRing]->addRingDirectly(
-                    CreateLinearRing(psShape, iRing, bHasZ, bHasM));
+                auto poPoly = std::make_unique<OGRPolygon>();
+                poPoly->addRing(CreateLinearRing(psShape, iRing, bHasZ, bHasM));
+                apoPolygons.push_back(std::move(poPoly));
             }
 
             // Tries to detect bad geometries where a multi-part multipolygon is
@@ -326,7 +323,10 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                 bool bFoundCW = false;
                 for (int iRing = 1; iRing < psShape->nParts; iRing++)
                 {
-                    if (tabPolygons[iRing]->getExteriorRing()->isClockwise())
+                    if (apoPolygons[iRing]
+                            ->toPolygon()
+                            ->getExteriorRing()
+                            ->isClockwise())
                     {
                         bFoundCW = true;
                         break;
@@ -337,10 +337,12 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                     // Only inner rings
                     OGREnvelope sFirstEnvelope;
                     OGREnvelope sCurEnvelope;
+                    const OGRLinearRing *poExteriorRing =
+                        apoPolygons[0]->toPolygon()->getExteriorRing();
                     poExteriorRing->getEnvelope(&sFirstEnvelope);
                     for (int iRing = 1; iRing < psShape->nParts; iRing++)
                     {
-                        tabPolygons[iRing]->getEnvelope(&sCurEnvelope);
+                        apoPolygons[iRing]->getEnvelope(&sCurEnvelope);
                         if (!sFirstEnvelope.Intersects(sCurEnvelope))
                         {
                             // If the envelopes of the rings don't intersect,
@@ -355,7 +357,9 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                             // outer ring. If none are within it, then it is
                             // very likely a outer ring (or an invalid ring
                             // which is neither a outer nor a inner ring)
-                            auto poRing = tabPolygons[iRing]->getExteriorRing();
+                            const auto poRing = apoPolygons[iRing]
+                                                    ->toPolygon()
+                                                    ->getExteriorRing();
                             const auto nNumPoints = poRing->getNumPoints();
                             OGRPoint p;
                             OGRPoint leftPoint(
@@ -418,13 +422,12 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                 }
             }
 
-            int isValidGeometry = FALSE;
-            const char *papszOptions[] = {
+            bool isValidGeometry = false;
+            const char *const apszOptions[] = {
                 bUseSlowMethod ? "METHOD=DEFAULT" : "METHOD=ONLY_CCW", nullptr};
-            OGRGeometry **tabGeom =
-                reinterpret_cast<OGRGeometry **>(tabPolygons);
             poOGR = OGRGeometryFactory::organizePolygons(
-                tabGeom, psShape->nParts, &isValidGeometry, papszOptions);
+                        apoPolygons, &isValidGeometry, apszOptions)
+                        .release();
 
             if (!isValidGeometry)
             {
@@ -435,8 +438,6 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                     "All polygons will be contained in a multipolygon.",
                     iShape);
             }
-
-            delete[] tabPolygons;
         }
     }
 

@@ -1728,8 +1728,7 @@ PDFDataset::BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
     else
     {
         std::unique_ptr<OGRLinearRing> poLS;
-        int nPolys = 0;
-        OGRGeometry **papoPoly = nullptr;
+        std::vector<std::unique_ptr<OGRGeometry>> apoPolys;
 
         for (size_t i = 0; i < oCoords.size(); i += 2)
         {
@@ -1739,10 +1738,7 @@ PDFDataset::BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
                 {
                     auto poPoly = std::make_unique<OGRPolygon>();
                     poPoly->addRing(std::move(poLS));
-
-                    papoPoly = static_cast<OGRGeometry **>(CPLRealloc(
-                        papoPoly, (nPolys + 1) * sizeof(OGRGeometry *)));
-                    papoPoly[nPolys++] = poPoly.release();
+                    apoPolys.push_back(std::move(poPoly));
                 }
                 poLS = std::make_unique<OGRLinearRing>();
             }
@@ -1757,7 +1753,7 @@ PDFDataset::BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
 
                     std::unique_ptr<OGRPoint> poCenter;
 
-                    if (nPolys == 0 && poLS &&
+                    if (apoPolys.empty() && poLS &&
                         poLS->getNumPoints() == 1 + BEZIER_STEPS * 4)
                     {
                         // Recognize points as written by GDAL (ogr-sym-3 :
@@ -1765,7 +1761,7 @@ PDFDataset::BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
                         poCenter = PDFGetCircleCenter(poLS.get());
                     }
 
-                    if (nPolys == 0 && poCenter == nullptr && poLS &&
+                    if (apoPolys.empty() && poCenter == nullptr && poLS &&
                         poLS->getNumPoints() == 5)
                     {
                         // Recognize points as written by GDAL (ogr-sym-5:
@@ -1786,13 +1782,15 @@ PDFDataset::BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
                     }
                     // Recognize points as written by GDAL (ogr-sym-7: triangle
                     // (filled))
-                    else if (nPolys == 0 && poLS && poLS->getNumPoints() == 4)
+                    else if (apoPolys.empty() && poLS &&
+                             poLS->getNumPoints() == 4)
                     {
                         poCenter = PDFGetTriangleCenter(poLS.get());
                     }
                     // Recognize points as written by GDAL (ogr-sym-9: star
                     // (filled))
-                    else if (nPolys == 0 && poLS && poLS->getNumPoints() == 11)
+                    else if (apoPolys.empty() && poLS &&
+                             poLS->getNumPoints() == 11)
                     {
                         poCenter = PDFGetStarCenter(poLS.get());
                     }
@@ -1807,10 +1805,7 @@ PDFDataset::BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
                     {
                         auto poPoly = std::make_unique<OGRPolygon>();
                         poPoly->addRing(std::move(poLS));
-
-                        papoPoly = static_cast<OGRGeometry **>(CPLRealloc(
-                            papoPoly, (nPolys + 1) * sizeof(OGRGeometry *)));
-                        papoPoly[nPolys++] = poPoly.release();
+                        apoPolys.push_back(std::move(poPoly));
                     }
                     poLS.reset();
                 }
@@ -1827,46 +1822,22 @@ PDFDataset::BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
             }
         }
 
-        int bIsValidGeometry;
-        if (nPolys == 2 &&
-            papoPoly[0]->toPolygon()->getNumInteriorRings() == 0 &&
-            papoPoly[1]->toPolygon()->getNumInteriorRings() == 0)
+        if (apoPolys.size() == 2 &&
+            apoPolys[0]->toPolygon()->getNumInteriorRings() == 0 &&
+            apoPolys[1]->toPolygon()->getNumInteriorRings() == 0)
         {
-            OGRLinearRing *poRing0 =
-                papoPoly[0]->toPolygon()->getExteriorRing();
-            OGRLinearRing *poRing1 =
-                papoPoly[1]->toPolygon()->getExteriorRing();
-            if (poRing0->getNumPoints() == poRing1->getNumPoints())
+            const auto poRing0 = apoPolys[0]->toPolygon()->getExteriorRing();
+            const auto poRing1 = apoPolys[1]->toPolygon()->getExteriorRing();
+            if (poRing0->Equals(poRing1))
             {
-                int bSameRing = TRUE;
-                for (int i = 0; i < poRing0->getNumPoints(); i++)
-                {
-                    if (poRing0->getX(i) != poRing1->getX(i))
-                    {
-                        bSameRing = FALSE;
-                        break;
-                    }
-                    if (poRing0->getY(i) != poRing1->getY(i))
-                    {
-                        bSameRing = FALSE;
-                        break;
-                    }
-                }
-
-                /* Just keep on ring if they are identical */
-                if (bSameRing)
-                {
-                    delete papoPoly[1];
-                    nPolys = 1;
-                }
+                /* Just keep one ring if they are identical */
+                apoPolys.resize(1);
             }
         }
-        if (nPolys)
+        if (!apoPolys.empty())
         {
-            poGeom.reset(OGRGeometryFactory::organizePolygons(
-                papoPoly, nPolys, &bIsValidGeometry, nullptr));
+            poGeom = OGRGeometryFactory::organizePolygons(apoPolys);
         }
-        CPLFree(papoPoly);
     }
 
     return poGeom;
