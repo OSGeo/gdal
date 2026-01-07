@@ -74,7 +74,7 @@ class CPL_DLL GDALMultiDomainMetadata
     char **GetMetadata(const char *pszDomain = "");
     CPLErr SetMetadata(CSLConstList papszMetadata, const char *pszDomain = "");
     const char *GetMetadataItem(const char *pszName,
-                                const char *pszDomain = "");
+                                const char *pszDomain = "") const;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "");
 
