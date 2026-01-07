@@ -62,6 +62,62 @@ class GDALNullRasterBand final : public GDALRasterBand
   public:
     explicit GDALNullRasterBand(GDALDataType eDT);
 
+    CPLErr SetCategoryNames(CPL_UNUSED char **papszNames) override
+    {
+        return CE_None;
+    }
+
+    CPLErr SetNoDataValue(CPL_UNUSED double dfNoData) override
+    {
+        return CE_None;
+    }
+
+    CPLErr SetNoDataValueAsInt64(CPL_UNUSED int64_t nNoData) override
+    {
+        return CE_None;
+    }
+
+    CPLErr SetNoDataValueAsUInt64(CPL_UNUSED uint64_t nNoData) override
+    {
+        return CE_None;
+    }
+
+    CPLErr DeleteNoDataValue() override
+    {
+        return CE_None;
+    }
+
+    CPLErr SetColorTable(CPL_UNUSED GDALColorTable *poCT) override
+    {
+        return CE_None;
+    }
+
+    CPLErr
+    SetColorInterpretation(CPL_UNUSED GDALColorInterp eColorInterp) override
+    {
+        return CE_None;
+    }
+
+    CPLErr SetOffset(CPL_UNUSED double dfNewOffset) override
+    {
+        return CE_None;
+    }
+
+    CPLErr SetScale(CPL_UNUSED double dfNewScale) override
+    {
+        return CE_None;
+    }
+
+    CPLErr SetUnitType(CPL_UNUSED const char *pszNewValue) override
+    {
+        return CE_None;
+    }
+
+    CPLErr SetDefaultRAT(const GDALRasterAttributeTable *) override
+    {
+        return CE_None;
+    }
+
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IWriteBlock(int, int, void *) override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
