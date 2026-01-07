@@ -2323,19 +2323,46 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(const OSMRelation *psRelation,
         auto poPolyFromEdges = std::unique_ptr<OGRGeometry>(
             OGRGeometry::FromHandle(OGRBuildPolygonFromEdges(
                 OGRGeometry::ToHandle(&oMLS), TRUE, FALSE, 0, nullptr)));
-        if (poPolyFromEdges && poPolyFromEdges->getGeometryType() == wkbPolygon)
+
+        const auto AddPolygonDirectlyToPolyArray =
+            [&apoPolygons, &nPolys](OGRPolygon *poPoly)
         {
-            const OGRPolygon *poSuperPoly = poPolyFromEdges->toPolygon();
-            for (const OGRLinearRing *poRing : *poSuperPoly)
+            const int nRings =
+                poPoly->IsEmpty() ? 0 : 1 + poPoly->getNumInteriorRings();
+            for (int i = nRings - 1; i >= 0; --i)
             {
+                auto poRing = std::unique_ptr<OGRLinearRing>(
+                    i > 0 ? poPoly->getInteriorRing(i - 1)
+                          : poPoly->getExteriorRing());
+                poPoly->removeRing(i, /* bDelete = */ false);
                 if (poRing != nullptr && poRing->getNumPoints() >= 4 &&
                     poRing->getX(0) ==
                         poRing->getX(poRing->getNumPoints() - 1) &&
                     poRing->getY(0) == poRing->getY(poRing->getNumPoints() - 1))
                 {
-                    OGRPolygon *poPoly = new OGRPolygon();
-                    poPoly->addRing(poRing);
-                    apoPolygons[nPolys++] = poPoly;
+                    auto poNewPoly = std::make_unique<OGRPolygon>();
+                    poNewPoly->addRing(std::move(poRing));
+                    apoPolygons[nPolys++] = poNewPoly.release();
+                }
+            }
+        };
+
+        if (poPolyFromEdges)
+        {
+            if (poPolyFromEdges->getGeometryType() == wkbPolygon)
+            {
+                AddPolygonDirectlyToPolyArray(poPolyFromEdges->toPolygon());
+            }
+            else if (OGR_GT_IsSubClassOf(poPolyFromEdges->getGeometryType(),
+                                         wkbGeometryCollection))
+            {
+                auto poGC = poPolyFromEdges->toGeometryCollection();
+                for (auto *poPart : *poGC)
+                {
+                    if (poPart->getGeometryType() == wkbPolygon)
+                    {
+                        AddPolygonDirectlyToPolyArray(poPart->toPolygon());
+                    }
                 }
             }
         }
