@@ -3002,7 +3002,9 @@ bool GDALAlgorithm::ValidateArguments()
         }
 
         if (arg->IsExplicitlySet() && !arg->RunValidationActions())
+        {
             ret = false;
+        }
     }
 
     for (const auto &f : m_validationActions)
