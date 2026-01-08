@@ -551,7 +551,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
         CPL_PRINT_FUNC_FORMAT(4, 5);
 #endif
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
 // Only defined when Doxygen enabled
 #ifdef DOXYGEN_SKIP

@@ -188,7 +188,7 @@ class GDALTileIndexDataset final : public GDALPamDataset
                                 const char *pszDomain) override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain) override;
-    CPLErr SetMetadata(char **papszMD, const char *pszDomain) override;
+    CPLErr SetMetadata(CSLConstList papszMD, const char *pszDomain) override;
 
     void LoadOverviews();
 
@@ -534,7 +534,7 @@ class GDALTileIndexBand final : public GDALPamRasterBand
                                 const char *pszDomain) override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain) override;
-    CPLErr SetMetadata(char **papszMD, const char *pszDomain) override;
+    CPLErr SetMetadata(CSLConstList papszMD, const char *pszDomain) override;
 
   private:
     friend class GDALTileIndexDataset;
@@ -890,7 +890,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     // Try to get the metadata from an embedded xml:GTI domain
     if (!m_psXMLTree)
     {
-        char **papszMD = m_poLayer->GetMetadata("xml:GTI");
+        CSLConstList papszMD = m_poLayer->GetMetadata("xml:GTI");
         if (papszMD && papszMD[0])
         {
             m_psXMLTree.reset(CPLParseXMLString(papszMD[0]));
@@ -2476,7 +2476,8 @@ CPLErr GDALTileIndexDataset::SetMetadataItem(const char *pszName,
 /*                           SetMetadata()                              */
 /************************************************************************/
 
-CPLErr GDALTileIndexDataset::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr GDALTileIndexDataset::SetMetadata(CSLConstList papszMD,
+                                         const char *pszDomain)
 {
     if (m_bXMLUpdatable)
     {
@@ -2503,7 +2504,7 @@ CPLErr GDALTileIndexDataset::SetMetadata(char **papszMD, const char *pszDomain)
             }
 
             // Reinject band metadata
-            char **papszExistingLayerMD = m_poLayer->GetMetadata();
+            CSLConstList papszExistingLayerMD = m_poLayer->GetMetadata();
             for (int i = 0; papszExistingLayerMD && papszExistingLayerMD[i];
                  ++i)
             {
@@ -3255,7 +3256,8 @@ CPLErr GDALTileIndexBand::SetMetadataItem(const char *pszName,
 /*                           SetMetadata()                              */
 /************************************************************************/
 
-CPLErr GDALTileIndexBand::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr GDALTileIndexBand::SetMetadata(CSLConstList papszMD,
+                                      const char *pszDomain)
 {
     if (nBand > 0 && m_poDS->m_bXMLUpdatable)
     {
@@ -3269,7 +3271,8 @@ CPLErr GDALTileIndexBand::SetMetadata(char **papszMD, const char *pszDomain)
         if (!pszDomain || pszDomain[0] == 0)
         {
             // Reinject dataset metadata
-            char **papszLayerMD = m_poDS->m_poLayer->GetMetadata(pszDomain);
+            CSLConstList papszLayerMD =
+                m_poDS->m_poLayer->GetMetadata(pszDomain);
             for (const char *const *papszIter = papszLayerMD;
                  papszIter && *papszIter; ++papszIter)
             {

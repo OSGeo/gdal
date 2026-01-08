@@ -774,7 +774,7 @@ CPLErr PDS4Dataset::SetGeoTransform(const GDALGeoTransform &gt)
 /*                             SetMetadata()                            */
 /************************************************************************/
 
-CPLErr PDS4Dataset::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr PDS4Dataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 {
     if (m_bUseSrcLabel && eAccess == GA_Update && pszDomain != nullptr &&
         EQUAL(pszDomain, "xml:PDS4"))
@@ -4035,7 +4035,6 @@ void PDS4Dataset::CreateHeader(CPLXMLNode *psProduct,
     if (STARTS_WITH(psProduct->pszValue, "pds:"))
         osPrefix = "pds:";
 
-    OGREnvelope sExtent;
     if (m_oSRS.IsEmpty() && GetLayerCount() >= 1)
     {
         if (const auto poSRS = GetLayer(0)->GetSpatialRef())
@@ -5297,7 +5296,7 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
 
     if (poDS->m_bUseSrcLabel)
     {
-        char **papszMD_PDS4 = poSrcDS->GetMetadata("xml:PDS4");
+        CSLConstList papszMD_PDS4 = poSrcDS->GetMetadata("xml:PDS4");
         if (papszMD_PDS4 != nullptr)
         {
             poDS->SetMetadata(papszMD_PDS4, "xml:PDS4");
@@ -5323,7 +5322,7 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
 
         if (CPLFetchBool(papszOptions, "PROPAGATE_SRC_METADATA", true))
         {
-            char **papszISIS3MD = poSrcDS->GetMetadata("json:ISIS3");
+            CSLConstList papszISIS3MD = poSrcDS->GetMetadata("json:ISIS3");
             if (papszISIS3MD)
             {
                 poDS->SetMetadata(papszISIS3MD, "json:ISIS3");

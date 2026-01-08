@@ -225,7 +225,7 @@ char **CPL_STDCALL GDALGetMetadataDomainList(GDALMajorObjectH hObject)
  * @return NULL or a string list.
  */
 
-char **GDALMajorObject::GetMetadata(const char *pszDomain)
+CSLConstList GDALMajorObject::GetMetadata(const char *pszDomain)
 
 {
     return oMDMD.GetMetadata(pszDomain);
@@ -241,8 +241,8 @@ char **GDALMajorObject::GetMetadata(const char *pszDomain)
  * @see GDALMajorObject::GetMetadata()
  */
 
-char **CPL_STDCALL GDALGetMetadata(GDALMajorObjectH hObject,
-                                   const char *pszDomain)
+CSLConstList CPL_STDCALL GDALGetMetadata(GDALMajorObjectH hObject,
+                                         const char *pszDomain)
 
 {
     VALIDATE_POINTER1(hObject, "GDALGetMetadata", nullptr);
@@ -268,7 +268,7 @@ char **CPL_STDCALL GDALGetMetadata(GDALMajorObjectH hObject,
  * by the underlying object between sessions.
  */
 
-CPLErr GDALMajorObject::SetMetadata(char **papszMetadataIn,
+CPLErr GDALMajorObject::SetMetadata(CSLConstList papszMetadataIn,
                                     const char *pszDomain)
 
 {

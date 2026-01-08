@@ -167,7 +167,7 @@ class EnvisatDataset final : public RawDataset
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain) override;
+    CSLConstList GetMetadata(const char *pszDomain) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };
@@ -596,7 +596,7 @@ char **EnvisatDataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **EnvisatDataset::GetMetadata(const char *pszDomain)
+CSLConstList EnvisatDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain == nullptr || !STARTS_WITH_CI(pszDomain, "envisat-ds-"))

@@ -1072,7 +1072,7 @@ char **GTiffRasterBand::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **GTiffRasterBand::GetMetadata(const char *pszDomain)
+CSLConstList GTiffRasterBand::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE"))

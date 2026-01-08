@@ -80,7 +80,7 @@ class RRASTERDataset final : public RawDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
@@ -870,7 +870,8 @@ CPLErr RRASTERDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr RRASTERDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr RRASTERDataset::SetMetadata(CSLConstList papszMetadata,
+                                   const char *pszDomain)
 {
     if (pszDomain == nullptr || EQUAL(pszDomain, ""))
     {

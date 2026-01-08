@@ -82,7 +82,7 @@ class ECRGTOCDataset final : public GDALPamDataset
         CSLDestroy(papszFileList);
     }
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
     char **GetFileList() override
     {
@@ -200,7 +200,7 @@ void ECRGTOCDataset::AddSubDataset(const char *pszFilename,
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **ECRGTOCDataset::GetMetadata(const char *pszDomain)
+CSLConstList ECRGTOCDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))

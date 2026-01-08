@@ -282,7 +282,7 @@ GDALOrientedDataset::GDALOrientedDataset(
 /*                           GetMetadata()                              */
 /************************************************************************/
 
-char **GDALOrientedDataset::GetMetadata(const char *pszDomain)
+CSLConstList GDALOrientedDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain == nullptr || pszDomain[0] == '\0')
     {

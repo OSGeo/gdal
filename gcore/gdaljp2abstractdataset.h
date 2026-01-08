@@ -47,7 +47,7 @@ class CPL_DLL GDALJP2AbstractDataset : public GDALGeorefPamDataset
 
     char **GetFileList(void) override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 

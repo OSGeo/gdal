@@ -2464,7 +2464,7 @@ static int NITFFormatRPC00BCoefficient(char *pszBuffer, double dfVal,
 /*      Format the content of a RPC00B TRE from RPC metadata            */
 /************************************************************************/
 
-char *NITFFormatRPC00BFromMetadata(char **papszRPC, int *pbPrecisionLoss)
+char *NITFFormatRPC00BFromMetadata(CSLConstList papszRPC, int *pbPrecisionLoss)
 {
     GDALRPCInfoV2 sRPC;
     char *pszRPC00B;

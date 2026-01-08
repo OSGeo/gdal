@@ -1577,7 +1577,7 @@ class GDALCOGDriver final : public GDALDriver
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override;
 
-    char **GetMetadata(const char *pszDomain) override
+    CSLConstList GetMetadata(const char *pszDomain) override
     {
         std::lock_guard oLock(m_oMutex);
         InitializeCreationOptionList();

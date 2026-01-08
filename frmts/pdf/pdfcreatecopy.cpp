@@ -1038,7 +1038,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::SetXMP(GDALDataset *poSrcDS,
 
     if (poSrcDS && pszXMP == nullptr)
     {
-        char **papszXMP = poSrcDS->GetMetadata("xml:XMP");
+        CSLConstList papszXMP = poSrcDS->GetMetadata("xml:XMP");
         if (papszXMP != nullptr && papszXMP[0] != nullptr)
             pszXMP = papszXMP[0];
     }

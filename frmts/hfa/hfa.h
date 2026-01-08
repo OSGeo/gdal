@@ -203,7 +203,7 @@ void CPL_DLL HFADumpTree(HFAHandle, FILE *);
 void CPL_DLL HFADumpDictionary(HFAHandle, FILE *);
 CPLErr CPL_DLL HFAGetDataRange(HFAHandle, int, double *, double *);
 char CPL_DLL **HFAGetMetadata(HFAHandle hHFA, int nBand);
-CPLErr CPL_DLL HFASetMetadata(HFAHandle hHFA, int nBand, char **);
+CPLErr CPL_DLL HFASetMetadata(HFAHandle hHFA, int nBand, CSLConstList);
 char CPL_DLL **HFAGetClassNames(HFAHandle hHFA, int nBand);
 
 int CPL_DLL HFAReadXFormStack(HFAHandle psInfo,

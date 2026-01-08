@@ -90,7 +90,7 @@ class ERSDataset final : public RawDataset
     char **GetMetadataDomainList() override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -246,7 +246,7 @@ const char *ERSDataset::GetMetadataItem(const char *pszName,
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **ERSDataset::GetMetadata(const char *pszDomain)
+CSLConstList ERSDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "ERS"))

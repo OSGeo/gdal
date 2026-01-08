@@ -145,7 +145,7 @@ class SAR_CEOSDataset final : public GDALPamDataset
     const GDAL_GCP *GetGCPs() override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain) override;
+    CSLConstList GetMetadata(const char *pszDomain) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     char **GetFileList(void) override;
@@ -770,7 +770,7 @@ char **SAR_CEOSDataset::GetMetadataDomainList()
 /*      are not available.                                              */
 /************************************************************************/
 
-char **SAR_CEOSDataset::GetMetadata(const char *pszDomain)
+CSLConstList SAR_CEOSDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain == nullptr || !STARTS_WITH_CI(pszDomain, "ceos-"))

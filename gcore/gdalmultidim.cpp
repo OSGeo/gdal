@@ -8822,12 +8822,13 @@ class GDALDatasetFromArray final : public GDALPamDataset
         return m_poSRS.get();
     }
 
-    CPLErr SetMetadata(char **papszMetadata, const char *pszDomain) override
+    CPLErr SetMetadata(CSLConstList papszMetadata,
+                       const char *pszDomain) override
     {
         return m_oMDD.SetMetadata(papszMetadata, pszDomain);
     }
 
-    char **GetMetadata(const char *pszDomain) override
+    CSLConstList GetMetadata(const char *pszDomain) override
     {
         return m_oMDD.GetMetadata(pszDomain);
     }

@@ -301,7 +301,7 @@ class PostGISRasterDataset final : public VRTDataset
                               const char *, const char *);
     static CPLErr Delete(const char *);
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *) override;
+    CSLConstList GetMetadata(const char *) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;

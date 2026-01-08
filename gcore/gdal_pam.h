@@ -172,11 +172,11 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     CPLErr SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
                    const OGRSpatialReference *poSRS) override;
 
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 
@@ -348,7 +348,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     CPLErr SetDefaultHistogram(double dfMin, double dfMax, int nBuckets,
                                GUIntBig *panHistogram) override;
 
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;

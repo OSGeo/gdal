@@ -276,7 +276,7 @@ char **OGRWFSDataSource::GetMetadataDomainList()
 /*                           GetMetadata()                              */
 /************************************************************************/
 
-char **OGRWFSDataSource::GetMetadata(const char *pszDomain)
+CSLConstList OGRWFSDataSource::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "xml:capabilities"))
     {

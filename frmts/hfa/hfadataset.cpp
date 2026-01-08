@@ -2767,7 +2767,7 @@ CPLErr HFARasterBand::SetColorTable(GDALColorTable *poCTable)
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr HFARasterBand::SetMetadata(char **papszMDIn, const char *pszDomain)
+CPLErr HFARasterBand::SetMetadata(CSLConstList papszMDIn, const char *pszDomain)
 
 {
     bMetadataDirty = true;
@@ -4766,7 +4766,7 @@ CPLErr HFADataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr HFADataset::SetMetadata(char **papszMDIn, const char *pszDomain)
+CPLErr HFADataset::SetMetadata(CSLConstList papszMDIn, const char *pszDomain)
 
 {
     bMetadataDirty = true;

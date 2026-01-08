@@ -129,8 +129,8 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     CPLErr SetColorInterpretation(GDALColorInterp) override;
 
     char **GetMetadataDomainList() override final;
-    CPLErr SetMetadata(char **, const char * = "") override final;
-    char **GetMetadata(const char *pszDomain = "") override final;
+    CPLErr SetMetadata(CSLConstList, const char * = "") override final;
+    CSLConstList GetMetadata(const char *pszDomain = "") override final;
     CPLErr SetMetadataItem(const char *, const char *,
                            const char * = "") override final;
     virtual const char *

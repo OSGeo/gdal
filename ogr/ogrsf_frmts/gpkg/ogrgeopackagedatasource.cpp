@@ -4090,7 +4090,7 @@ bool GDALGeoPackageDataset::HasQGISLayerStyles() const
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **GDALGeoPackageDataset::GetMetadata(const char *pszDomain)
+CSLConstList GDALGeoPackageDataset::GetMetadata(const char *pszDomain)
 
 {
     pszDomain = CheckMetadataDomain(pszDomain);
@@ -4696,24 +4696,24 @@ void GDALGeoPackageDataset::FlushMetadata()
     }
 
     char **papszMDDup = nullptr;
-    for (char **papszIter = GDALGeoPackageDataset::GetMetadata();
-         papszIter && *papszIter; ++papszIter)
+    for (const char *pszKeyValue :
+         cpl::Iterate(GDALGeoPackageDataset::GetMetadata()))
     {
-        if (STARTS_WITH_CI(*papszIter, "IDENTIFIER="))
+        if (STARTS_WITH_CI(pszKeyValue, "IDENTIFIER="))
             continue;
-        if (STARTS_WITH_CI(*papszIter, "DESCRIPTION="))
+        if (STARTS_WITH_CI(pszKeyValue, "DESCRIPTION="))
             continue;
-        if (STARTS_WITH_CI(*papszIter, "ZOOM_LEVEL="))
+        if (STARTS_WITH_CI(pszKeyValue, "ZOOM_LEVEL="))
             continue;
-        if (STARTS_WITH_CI(*papszIter, "GPKG_METADATA_ITEM_"))
+        if (STARTS_WITH_CI(pszKeyValue, "GPKG_METADATA_ITEM_"))
             continue;
         if ((m_eTF == GPKG_TF_PNG_16BIT || m_eTF == GPKG_TF_TIFF_32BIT_FLOAT) &&
             !bCanWriteAreaOrPoint &&
-            STARTS_WITH_CI(*papszIter, GDALMD_AREA_OR_POINT))
+            STARTS_WITH_CI(pszKeyValue, GDALMD_AREA_OR_POINT))
         {
             continue;
         }
-        papszMDDup = CSLInsertString(papszMDDup, -1, *papszIter);
+        papszMDDup = CSLInsertString(papszMDDup, -1, pszKeyValue);
     }
 
     CPLXMLNode *psXMLNode = nullptr;
@@ -4806,7 +4806,7 @@ void GDALGeoPackageDataset::FlushMetadata()
             auto poBand =
                 cpl::down_cast<GDALGeoPackageRasterBand *>(GetRasterBand(i));
             poBand->AddImplicitStatistics(false);
-            char **papszMD = GetRasterBand(i)->GetMetadata();
+            CSLConstList papszMD = GetRasterBand(i)->GetMetadata();
             poBand->AddImplicitStatistics(true);
             if (papszMD)
             {
@@ -4823,12 +4823,12 @@ void GDALGeoPackageDataset::FlushMetadata()
 
     if (!m_osRasterTable.empty())
     {
-        char **papszGeopackageMD =
+        CSLConstList papszGeopackageMD =
             GDALGeoPackageDataset::GetMetadata("GEOPACKAGE");
 
         papszMDDup = nullptr;
-        for (char **papszIter = papszGeopackageMD; papszIter && *papszIter;
-             ++papszIter)
+        for (CSLConstList papszIter = papszGeopackageMD;
+             papszIter && *papszIter; ++papszIter)
         {
             papszMDDup = CSLInsertString(papszMDDup, -1, *papszIter);
         }
@@ -4866,8 +4866,8 @@ void GDALGeoPackageDataset::FlushMetadata()
         }
 
         papszMDDup = nullptr;
-        for (char **papszIter = poLayer->GetMetadata(); papszIter && *papszIter;
-             ++papszIter)
+        for (CSLConstList papszIter = poLayer->GetMetadata();
+             papszIter && *papszIter; ++papszIter)
         {
             if (STARTS_WITH_CI(*papszIter, "IDENTIFIER="))
                 continue;
@@ -4916,7 +4916,7 @@ const char *GDALGeoPackageDataset::GetMetadataItem(const char *pszName,
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr GDALGeoPackageDataset::SetMetadata(char **papszMetadata,
+CPLErr GDALGeoPackageDataset::SetMetadata(CSLConstList papszMetadata,
                                           const char *pszDomain)
 {
     pszDomain = CheckMetadataDomain(pszDomain);

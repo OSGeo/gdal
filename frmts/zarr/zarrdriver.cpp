@@ -141,7 +141,7 @@ const char *ZarrDataset::GetMetadataItem(const char *pszName,
 /*                             GetMetadata()                            */
 /************************************************************************/
 
-char **ZarrDataset::GetMetadata(const char *pszDomain)
+CSLConstList ZarrDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
         return m_aosSubdatasets.List();
@@ -764,7 +764,7 @@ class ZarrDriver final : public GDALDriver
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override;
 
-    char **GetMetadata(const char *pszDomain) override
+    CSLConstList GetMetadata(const char *pszDomain) override
     {
         std::lock_guard oLock(m_oMutex);
         InitMetadata();
@@ -1592,7 +1592,8 @@ CPLErr ZarrDataset::SetGeoTransform(const GDALGeoTransform &gt)
 /*                          SetMetadata()                               */
 /************************************************************************/
 
-CPLErr ZarrDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr ZarrDataset::SetMetadata(CSLConstList papszMetadata,
+                                const char *pszDomain)
 {
     if (nBands >= 1 && (pszDomain == nullptr || pszDomain[0] == '\0'))
     {

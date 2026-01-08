@@ -1029,7 +1029,7 @@ CPLErr GDALProxyPoolDataset::GetGeoTransform(GDALGeoTransform &gt) const
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **GDALProxyPoolDataset::GetMetadata(const char *pszDomain)
+CSLConstList GDALProxyPoolDataset::GetMetadata(const char *pszDomain)
 {
     if (metadataSet == nullptr)
         metadataSet =
@@ -1040,7 +1040,7 @@ char **GDALProxyPoolDataset::GetMetadata(const char *pszDomain)
     if (poUnderlyingDataset == nullptr)
         return nullptr;
 
-    char **papszUnderlyingMetadata =
+    CSLConstList papszUnderlyingMetadata =
         poUnderlyingDataset->GetMetadata(pszDomain);
 
     GetMetadataElt *pElt =
@@ -1346,7 +1346,7 @@ CPLErr GDALProxyPoolRasterBand::FlushCache(bool bAtClosing)
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **GDALProxyPoolRasterBand::GetMetadata(const char *pszDomain)
+CSLConstList GDALProxyPoolRasterBand::GetMetadata(const char *pszDomain)
 {
     if (metadataSet == nullptr)
         metadataSet =
@@ -1357,7 +1357,7 @@ char **GDALProxyPoolRasterBand::GetMetadata(const char *pszDomain)
     if (poUnderlyingRasterBand == nullptr)
         return nullptr;
 
-    char **papszUnderlyingMetadata =
+    CSLConstList papszUnderlyingMetadata =
         poUnderlyingRasterBand->GetMetadata(pszDomain);
 
     GetMetadataElt *pElt =

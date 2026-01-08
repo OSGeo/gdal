@@ -326,7 +326,7 @@ class PythonPluginLayer final : public OGRLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 };
 
 /************************************************************************/
@@ -1379,7 +1379,7 @@ static char **GetMetadata(PyObject *obj, const char *pszDomain)
 /*                          GetMetadata()                               */
 /************************************************************************/
 
-char **PythonPluginLayer::GetMetadata(const char *pszDomain)
+CSLConstList PythonPluginLayer::GetMetadata(const char *pszDomain)
 {
     GIL_Holder oHolder(false);
     if (pszDomain == nullptr)
@@ -1408,7 +1408,7 @@ class PythonPluginDataset final : public GDALDataset
 
     int GetLayerCount() const override;
     OGRLayer *GetLayer(int) const override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 };
 
 /************************************************************************/
@@ -1527,7 +1527,7 @@ OGRLayer *PythonPluginDataset::GetLayer(int idx) const
 /*                          GetMetadata()                               */
 /************************************************************************/
 
-char **PythonPluginDataset::GetMetadata(const char *pszDomain)
+CSLConstList PythonPluginDataset::GetMetadata(const char *pszDomain)
 {
     GIL_Holder oHolder(false);
     if (pszDomain == nullptr)

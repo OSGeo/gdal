@@ -1970,7 +1970,7 @@ char **SAFEDataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **SAFEDataset::GetMetadata(const char *pszDomain)
+CSLConstList SAFEDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
         return papszSubDatasets;

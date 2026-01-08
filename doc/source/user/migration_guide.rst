@@ -12,6 +12,11 @@ From GDAL 3.12 to GDAL 3.13
   * :cpp:func:`GDALDataset::Close` takes now 2 input parameters ``(GDALProgressFunc pfnProgress, void *pProgressData)``,
     which may be nullptr.
 
+- Changes impacting C++ users:
+
+  * :cpp:func:`GDALMajorObject::SetMetadata` now takes a ``CSLConstList`` argument.
+  * :cpp:func:`GDALMajorObject::GetMetadata` now returns a ``CSLConstList`` argument.
+
 From GDAL 3.11 to GDAL 3.12
 ---------------------------
 

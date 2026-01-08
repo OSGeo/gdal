@@ -106,7 +106,7 @@ NITFProxyPamRasterBand::~NITFProxyPamRasterBand()
     }
 }
 
-char **NITFProxyPamRasterBand::GetMetadata(const char *pszDomain)
+CSLConstList NITFProxyPamRasterBand::GetMetadata(const char *pszDomain)
 {
     GDALRasterBand *_poSrcBand = RefUnderlyingRasterBand();
     if (_poSrcBand)

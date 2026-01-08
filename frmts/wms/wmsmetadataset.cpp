@@ -204,7 +204,7 @@ char **GDALWMSMetaDataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **GDALWMSMetaDataset::GetMetadata(const char *pszDomain)
+CSLConstList GDALWMSMetaDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))

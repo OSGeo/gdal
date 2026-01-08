@@ -107,7 +107,7 @@ class GDAL_E57Dataset final : public GDALProxyDataset
         return papszList;
     }
 
-    char **GetMetadata(const char *pszDomain) override
+    CSLConstList GetMetadata(const char *pszDomain) override
     {
         if (!pszDomain || pszDomain[0] == 0)
         {

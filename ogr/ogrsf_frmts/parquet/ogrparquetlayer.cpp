@@ -2876,7 +2876,7 @@ const char *OGRParquetLayer::GetMetadataItem(const char *pszName,
 /*                           GetMetadata()                              */
 /************************************************************************/
 
-char **OGRParquetLayer::GetMetadata(const char *pszDomain)
+CSLConstList OGRParquetLayer::GetMetadata(const char *pszDomain)
 {
     // Mostly for unit test purposes
     if (pszDomain != nullptr && EQUAL(pszDomain, "_PARQUET_METADATA_"))

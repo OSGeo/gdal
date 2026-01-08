@@ -65,7 +65,7 @@ class Sentinel3_SRAL_MWR_Layer final : public OGRLayer
     OGRFeature *GetFeature(GIntBig nFID) override;
     GIntBig GetFeatureCount(int bForce) override;
     int TestCapability(const char *pszCap) const override;
-    char **GetMetadata(const char *pszDomain) override;
+    CSLConstList GetMetadata(const char *pszDomain) override;
     const char *GetMetadataItem(const char *pszKey,
                                 const char *pszDomain) override;
 };
@@ -211,7 +211,7 @@ Sentinel3_SRAL_MWR_Layer::~Sentinel3_SRAL_MWR_Layer()
 /*                           GetMetadata()                              */
 /************************************************************************/
 
-char **Sentinel3_SRAL_MWR_Layer::GetMetadata(const char *pszDomain)
+CSLConstList Sentinel3_SRAL_MWR_Layer::GetMetadata(const char *pszDomain)
 {
     if (pszDomain == nullptr || EQUAL(pszDomain, ""))
         return m_aosMetadata.List();
