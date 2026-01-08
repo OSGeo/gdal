@@ -116,6 +116,7 @@ CPLErr VRTRawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     }
 
     m_poRawRaster->SetAccess(eAccess);
+    m_poRawRaster->SetTruncatedFileAllowed(eAccess == GA_Update);
 
     return m_poRawRaster->RasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
                                    nBufXSize, nBufYSize, eBufType, nPixelSpace,

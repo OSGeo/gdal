@@ -56,7 +56,7 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
                                int nPixelOffsetIn, int nLineOffsetIn,
                                GDALDataType eDataTypeIn,
                                RawRasterBand::ByteOrder eByteOrderIn,
-                               int nBitsIn)
+                               int nBitsIn, bool bTruncatedFileAllowedIn)
     : RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
                     nLineOffsetIn, eDataTypeIn, eByteOrderIn,
                     RawRasterBand::OwnFP::NO),
@@ -65,6 +65,7 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
       dfStdDev(0.0), minmaxmeanstddev(0)
 {
     m_bValid = RawRasterBand::IsValid();
+    bTruncatedFileAllowed = bTruncatedFileAllowedIn;
 
     EHdrDataset *poEDS = cpl::down_cast<EHdrDataset *>(poDS);
 
@@ -1299,7 +1300,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             chByteOrder == 'I' || chByteOrder == 'L'
                 ? RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
                 : RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
-            nBits);
+            nBits, /* bTruncatedFileAllowed = */ !bFileSizeCheck);
         if (!poBand->IsValid())
             return nullptr;
 
