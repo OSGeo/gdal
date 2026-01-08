@@ -1041,6 +1041,62 @@ GetBufferAsCharPtrGIntBigSize( PyObject* input, GIntBig *nLen, char **pBuf, int 
   }
   $result = out;
 }
+
+/*
+ * Typemap argout used in Dataset::GetInterBandCovarianceMatrix()
+ */
+%typemap(in,numinputs=0) (CPLErr *peErr, int *nRows, int *nCols, double **pMatrix) (CPLErr eErr = CE_None, int nRows = 0, int nCols = 0, double *pMatrix = NULL)
+{
+  /* %typemap(in,numinputs=0) (CPLErr *peErr, int *nRows, int *nCols, double **pMatrix) (int *nRows, int *nCols, double *pMatrix) */
+  $1 = &eErr;
+  $2 = &nRows;
+  $3 = &nCols;
+  $4 = &pMatrix;
+}
+
+%typemap(argout) (CPLErr *peErr, int *nRows, int *nCols, double **pMatrix)
+{
+  /* %typemap(argout) (CPLErr *peErr, int *nRows, int *nCols, double **pMatrix) (int *nRows, int *nCols, double *pMatrix) */
+  Py_DECREF($result);
+  $result = NULL;
+  if (*$1 == CE_Failure)
+  {
+      PyErr_SetString( PyExc_RuntimeError, CPLGetLastErrorMsg() );
+      SWIG_fail;
+  }
+  if (*$1 == CE_Warning)
+  {
+      $result = Py_None;
+      Py_INCREF($result);
+  }
+  else
+  {
+      PyObject *rows = PyList_New( *$2 );
+      if (!rows)
+      {
+          CPLFree(*$4);
+          SWIG_fail;
+      }
+      for (int iRow=0; iRow<*$2; iRow++)
+      {
+          PyObject *cols = PyList_New( *$3 );
+          if( !cols ) {
+              Py_DECREF(rows);
+              CPLFree(*$4);
+              SWIG_fail;
+          }
+          for(int iCol=0; iCol<*$3; iCol++ )
+          {
+              PyObject *val = PyFloat_FromDouble((*$4)[(size_t)iRow * (*$3) + iCol]);
+              PyList_SetItem( cols, iCol, val );
+          }
+          PyList_SetItem( rows, iRow, cols );
+      }
+      CPLFree(*$4);
+      $result = rows;
+  }
+}
+
 /*
  * Typemap argout of GDAL_GCP* used in Dataset::GetGCPs( )
  */
@@ -1692,11 +1748,11 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 
   if( psXMLTree != NULL && psXMLTree->psNext != NULL )
   {
-	CPLXMLNode *psFirst = psXMLTree;
+    CPLXMLNode *psFirst = psXMLTree;
 
-	/* create a "pseudo" root if we have multiple elements */
+    /* create a "pseudo" root if we have multiple elements */
         psXMLTree = CPLCreateXMLNode( NULL, CXT_Element, "" );
-	psXMLTree->psChild = psFirst;
+    psXMLTree->psChild = psFirst;
         bFakeRoot = TRUE;
   }
 
@@ -1715,7 +1771,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 }
 
 /* ==================================================================== */
-/*	Support function for progress callbacks to python.                  */
+/* Support function for progress callbacks to python.                   */
 /* ==================================================================== */
 
 /*  The following scary, scary, voodoo -- hobu                          */
@@ -1855,7 +1911,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 {
     /* %typemap(out) ( GUInt32 )  */
 
-	$1 = 0;
+    $1 = 0;
 
 }
 
@@ -1863,7 +1919,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 {
     /* %typemap(out) ( GUInt32 )  */
 
-	$result = PyLong_FromUnsignedLong($1);
+    $result = PyLong_FromUnsignedLong($1);
 
 }
 
@@ -1872,8 +1928,8 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     /* %typemap(in) ( GUInt32 )  */
 
     if (PyLong_Check($input) || PyInt_Check($input)) {
-		$1 = PyLong_AsUnsignedLong($input);
-	}
+        $1 = PyLong_AsUnsignedLong($input);
+    }
 
 }
 
@@ -3593,6 +3649,52 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
 %typemap(freearg) (int iLength, double *pdfData)
 {
   /* %typemap(freearg) (int iLength, double *pdfData) */
+  CPLFree($2);
+}
+
+/***************************************************
+ * Typemap for RasterAttributeTable.ReadValuesIOAsBoolean()
+ ***************************************************/
+
+%typemap(in,numinputs=1) (int iLength, bool *pbData) (int iLength)
+{
+  /* %typemap(in,numinputs=1) (int iLength, bool *pbData) (int iLength) */
+  if ( !PyArg_Parse($input,"i",&iLength) ) {
+    PyErr_SetString(PyExc_TypeError, "not a integer");
+    SWIG_fail;
+  }
+  if( iLength <= 0 )
+  {
+      PyErr_SetString(PyExc_TypeError, "invalid length");
+      SWIG_fail;
+  }
+  $1 = iLength;
+  $2 = (bool*)VSICalloc(iLength, sizeof(bool));
+  if( !$2 )
+  {
+      PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+      SWIG_fail;
+  }
+}
+
+%typemap(argout) (int iLength, bool *pbData)
+{
+  /* %typemap(argout) (int iLength, bool *pbData) */
+  Py_DECREF($result);
+  PyObject *out = PyList_New( $1 );
+  if( !out ) {
+      SWIG_fail;
+  }
+  for( int i=0; i<$1; i++ ) {
+    PyObject *val = PyBool_FromLong( ($2)[i] );
+    PyList_SetItem( out, i, val );
+  }
+  $result = out;
+}
+
+%typemap(freearg) (int iLength, bool *pbData)
+{
+  /* %typemap(freearg) (int iLength, bool *pbData) */
   CPLFree($2);
 }
 

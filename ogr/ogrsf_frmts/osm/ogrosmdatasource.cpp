@@ -1121,8 +1121,10 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
                         COMPRESS_SIZE_FROM_BYTE(psBucket->u.panSectorSize[k]);
             }
 
-            VSIFSeekL(m_fpNodes, psBucket->nOff + nOffFromBucketStart,
-                      SEEK_SET);
+            VSIFSeekL(
+                m_fpNodes,
+                static_cast<vsi_l_offset>(psBucket->nOff + nOffFromBucketStart),
+                SEEK_SET);
             if (nSectorSize == SECTOR_SIZE)
             {
                 if (VSIFReadL(m_pabySector, 1, static_cast<size_t>(SECTOR_SIZE),
@@ -1249,8 +1251,9 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
         if (nNewOffset - nOldOffset >= knDISK_SECTOR_SIZE)
         {
             // Align on 4096 boundary to be glibc caching friendly
-            const GIntBig nAlignedNewPos =
-                nNewOffset & ~(static_cast<GIntBig>(knDISK_SECTOR_SIZE) - 1);
+            const vsi_l_offset nAlignedNewPos =
+                nNewOffset &
+                ~(static_cast<vsi_l_offset>(knDISK_SECTOR_SIZE) - 1);
             VSIFSeekL(m_fpNodes, nAlignedNewPos, SEEK_SET);
             nValidBytes =
                 VSIFReadL(abyDiskSector, 1, knDISK_SECTOR_SIZE, m_fpNodes);
@@ -2244,8 +2247,8 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(const OSMRelation *psRelation,
     }
 
     OGRMultiLineString oMLS;
-    std::vector<OGRGeometry *> apoPolygons(psRelation->nMembers);
-    int nPolys = 0;
+    std::vector<std::unique_ptr<OGRGeometry>> apoPolygons;
+    apoPolygons.reserve(psRelation->nMembers);
 
     if (pnTags != nullptr)
         *pnTags = 0;
@@ -2278,18 +2281,18 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(const OSMRelation *psRelation,
                               m_asLonLatCache, nullptr, nullptr, nullptr);
             }
 
-            OGRLineString *poLS = nullptr;
+            std::unique_ptr<OGRLineString> poLS;
+            std::unique_ptr<OGRLinearRing> poRing;
+            OGRLineString *poLSRaw;
 
-            if (!m_asLonLatCache.empty() &&
-                m_asLonLatCache.front().nLon == m_asLonLatCache.back().nLon &&
-                m_asLonLatCache.front().nLat == m_asLonLatCache.back().nLat)
+            const bool bIsPoly =
+                (!m_asLonLatCache.empty() &&
+                 m_asLonLatCache.front().nLon == m_asLonLatCache.back().nLon &&
+                 m_asLonLatCache.front().nLat == m_asLonLatCache.back().nLat);
+            if (bIsPoly)
             {
-                OGRPolygon *poPoly = new OGRPolygon();
-                OGRLinearRing *poRing = new OGRLinearRing();
-                poPoly->addRingDirectly(poRing);
-                apoPolygons[nPolys++] = poPoly;
-                poLS = poRing;
-
+                poRing = std::make_unique<OGRLinearRing>();
+                poLSRaw = poRing.get();
                 if (strcmp(psRelation->pasMembers[i].pszRole, "outer") == 0)
                 {
                     sqlite3_bind_int64(m_hDeletePolygonsStandaloneStmt, 1,
@@ -2301,16 +2304,27 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(const OSMRelation *psRelation,
             }
             else
             {
-                poLS = new OGRLineString();
-                oMLS.addGeometryDirectly(poLS);
+                poLS = std::make_unique<OGRLineString>();
+                poLSRaw = poLS.get();
             }
 
             const int nPoints = static_cast<int>(m_asLonLatCache.size());
-            poLS->setNumPoints(nPoints, /*bZeroizeNewContent=*/false);
+            poLSRaw->setNumPoints(nPoints, /*bZeroizeNewContent=*/false);
             for (int j = 0; j < nPoints; j++)
             {
-                poLS->setPoint(j, INT_TO_DBL(m_asLonLatCache[j].nLon),
-                               INT_TO_DBL(m_asLonLatCache[j].nLat));
+                poLSRaw->setPoint(j, INT_TO_DBL(m_asLonLatCache[j].nLon),
+                                  INT_TO_DBL(m_asLonLatCache[j].nLat));
+            }
+
+            if (poRing)
+            {
+                auto poPoly = std::make_unique<OGRPolygon>();
+                poPoly->addRing(std::move(poRing));
+                apoPolygons.push_back(std::move(poPoly));
+            }
+            else
+            {
+                oMLS.addGeometry(std::move(poLS));
             }
         }
     }
@@ -2320,19 +2334,46 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(const OSMRelation *psRelation,
         auto poPolyFromEdges = std::unique_ptr<OGRGeometry>(
             OGRGeometry::FromHandle(OGRBuildPolygonFromEdges(
                 OGRGeometry::ToHandle(&oMLS), TRUE, FALSE, 0, nullptr)));
-        if (poPolyFromEdges && poPolyFromEdges->getGeometryType() == wkbPolygon)
+
+        const auto AddPolygonDirectlyToPolyArray =
+            [&apoPolygons](OGRPolygon *poPoly)
         {
-            const OGRPolygon *poSuperPoly = poPolyFromEdges->toPolygon();
-            for (const OGRLinearRing *poRing : *poSuperPoly)
+            const int nRings =
+                poPoly->IsEmpty() ? 0 : 1 + poPoly->getNumInteriorRings();
+            for (int i = nRings - 1; i >= 0; --i)
             {
+                auto poRing = std::unique_ptr<OGRLinearRing>(
+                    i > 0 ? poPoly->getInteriorRing(i - 1)
+                          : poPoly->getExteriorRing());
+                poPoly->removeRing(i, /* bDelete = */ false);
                 if (poRing != nullptr && poRing->getNumPoints() >= 4 &&
                     poRing->getX(0) ==
                         poRing->getX(poRing->getNumPoints() - 1) &&
                     poRing->getY(0) == poRing->getY(poRing->getNumPoints() - 1))
                 {
-                    OGRPolygon *poPoly = new OGRPolygon();
-                    poPoly->addRing(poRing);
-                    apoPolygons[nPolys++] = poPoly;
+                    auto poNewPoly = std::make_unique<OGRPolygon>();
+                    poNewPoly->addRing(std::move(poRing));
+                    apoPolygons.push_back(std::move(poNewPoly));
+                }
+            }
+        };
+
+        if (poPolyFromEdges)
+        {
+            if (poPolyFromEdges->getGeometryType() == wkbPolygon)
+            {
+                AddPolygonDirectlyToPolyArray(poPolyFromEdges->toPolygon());
+            }
+            else if (OGR_GT_IsSubClassOf(poPolyFromEdges->getGeometryType(),
+                                         wkbGeometryCollection))
+            {
+                auto poGC = poPolyFromEdges->toGeometryCollection();
+                for (auto *poPart : *poGC)
+                {
+                    if (poPart->getGeometryType() == wkbPolygon)
+                    {
+                        AddPolygonDirectlyToPolyArray(poPart->toPolygon());
+                    }
                 }
             }
         }
@@ -2340,14 +2381,11 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(const OSMRelation *psRelation,
 
     std::unique_ptr<OGRGeometry> poRet;
 
-    if (nPolys > 0)
+    if (!apoPolygons.empty())
     {
-        int bIsValidGeometry = FALSE;
-        const char *apszOptions[2] = {"METHOD=DEFAULT", nullptr};
-        auto poGeom =
-            std::unique_ptr<OGRGeometry>(OGRGeometryFactory::organizePolygons(
-                apoPolygons.data(), nPolys, &bIsValidGeometry, apszOptions));
-
+        const char *const apszOptions[] = {"METHOD=DEFAULT", nullptr};
+        auto poGeom = OGRGeometryFactory::organizePolygons(apoPolygons, nullptr,
+                                                           apszOptions);
         if (poGeom && poGeom->getGeometryType() == wkbPolygon)
         {
             auto poMulti = std::make_unique<OGRMultiPolygon>();

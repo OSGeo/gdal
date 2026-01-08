@@ -31,41 +31,78 @@ If the coverage is valid, the output dataset will be empty unless :option:`--inc
 
 It is assumed that the individual polygons are themselves valid according to the :term:`OGC` Simple Features standard. This can be checked by :ref:`gdal_vector_check_geometry`.
 
+.. only:: html
+
+   .. figure:: ../../images/programs/gdal_vector_check_coverage.svg
+
+      Polygon dataset (left) and locations of invalid coverage edges (right).
+
 .. note:: This command requires a GDAL build against the GEOS library (version 3.12 or greater).
-
-Standard options
-++++++++++++++++
-
-.. option:: --geometry-field
-
-   Specify the name of the geometry field to test, for layers having multiple geometry fields. By default the first
-   geometry field will be used.
-
-.. option:: --include-valid
-
-   Include features for valid geometries in the output, maintaining 1:1 correspondence between input and output features.
-
-.. option:: --maximum-gap-width <MAXIMUM-GAP-WIDTH>
-
-   Defines the largest area that should be considered a gap.
-
-.. include:: gdal_options/of_vector.rst
-
-.. include:: gdal_options/co_vector.rst
-
-.. include:: options/lco.rst
-
-.. include:: gdal_options/overwrite.rst
-
-Advanced options
-++++++++++++++++
-
-.. include:: gdal_options/oo.rst
-
-.. include:: gdal_options/if.rst
 
 .. GDALG output (on-the-fly / streamed dataset)
 .. --------------------------------------------
 
 .. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
 
+Program-Specific Options
+------------------------
+
+.. option:: --geometry-field
+
+   Specify the name of the geometry field to test, for layers having multiple geometry fields. By default the first
+   geometry field will be used.
+
+.. option:: --include-field
+
+   .. versionadded:: 3.12.1
+
+   Optional field(s) to copy from the input features to the output.
+
+.. option:: --include-valid
+
+   Include features for valid geometries in the output, maintaining 1:1 correspondence between input and output features.
+
+.. option:: --input-layer
+
+   Specifies the name of the layer to process. By default, all layers will be processed.
+
+.. option:: --output-layer
+
+   Specifies the name of the layer to which features will be written. If not
+   specified and there is a single input layer, the name "invalid_edge" will
+   be used. If not specified and there are multiple input layers, features
+   for each input layer will be written to a separate output layer in the
+   format "invalid_edge_{INPUT_LAYER}".
+
+.. option:: --maximum-gap-width <MAXIMUM-GAP-WIDTH>
+
+   Defines the largest area that should be considered a gap.
+
+Standard Options
+----------------
+
+.. collapse:: Details
+
+    .. include:: gdal_options/append_vector.rst
+
+    .. include:: gdal_options/co_vector.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/lco.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst

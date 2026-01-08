@@ -73,6 +73,19 @@ with single-quote characters:
 
     gdalmdiminfo 'ZARR:"/vsicurl/https://example.org/foo.zarr"'
 
+Zarr stores without directory listing
+-------------------------------------
+
+.. versionadded:: 3.12
+
+Sometimes remote Zarr stores don't have a reliable directory listing. In such
+cases, one can point to one of the following metadata files for GDAL to detect
+the correct driver to open the Zarr store:
+
+- :file:`zarr.json`
+- :file:`.zmetadata`
+- :file:`.zgroup`
+- :file:`.zarray`
 
 Kerchunk reference stores
 -------------------------
@@ -615,6 +628,14 @@ Get information on the dataset using the multidimensional tools:
 ::
 
     gdalmdiminfo my.zarr
+
+
+Get information on the dataset using the multidimensional tools when there is no
+directory listing available or reliable:
+
+::
+
+    gdalmdiminfo /vsicurl/https://example.com/my.zarr/.zmetadata
 
 
 Convert a netCDF file to ZARR using the multidimensional tools:

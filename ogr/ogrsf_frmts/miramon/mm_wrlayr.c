@@ -3854,6 +3854,9 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
     {
         MM_FILE_OFFSET nNodeOffset, nArcOffset;
         MM_INTERNAL_FID nArcElemCount, nNodeElemCount;
+        GInt32 nLastZCount = 0;
+        MM_FILE_OFFSET nLastOffsetZ = 0;
+        MM_INTERNAL_FID nLastElemCount = 0;
         nNodeOffset = pFlushNL->TotalSavedBytes + pFlushNL->nNumBytes;
         nArcOffset = pMMArc->nOffsetArc;
 
@@ -3956,25 +3959,44 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
                         return MM_STOP_WRITING_FEATURES;
                     }
 
-                    if (pZDesc[nArcElemCount - 1].nZCount < 0)
+                    if (nIPart == 0)
+                    {
+                        nLastZCount = pZDesc[nArcElemCount - 1].nZCount;
+                        nLastOffsetZ = pZDesc[nArcElemCount - 1].nOffsetZ;
+                    }
+
+                    if (nLastZCount < 0)
                     {
                         // One altitude was written on last element
                         if (MMCheckVersionFor3DOffset(
                                 hMiraMonLayer, nArcElemCount + 1, nArcOffset,
-                                pZDesc[nArcElemCount - 1].nOffsetZ +
-                                    sizeof(*pZ)))
+                                nLastOffsetZ + sizeof(*pZ)))
                             return MM_STOP_WRITING_FEATURES;
+
+                        // For the next iteration in this multipart feature
+                        nLastOffsetZ += sizeof(*pZ);
                     }
                     else
                     {
                         // One for each vertice altitude was written on last element
+                        if (nIPart == 0)
+                        {
+                            nLastElemCount = (pMMArc->pArcHeader +
+                                              pArcTopHeader->nElemCount - 1)
+                                                 ->nElemCount;
+                        }
+                        else
+                        {
+                            nLastElemCount += hMMFeature->pNCoordRing[nIPart];
+                        }
+
                         if (MMCheckVersionFor3DOffset(
                                 hMiraMonLayer, nArcElemCount + 1, nArcOffset,
-                                pZDesc[nArcElemCount - 1].nOffsetZ +
-                                    sizeof(*pZ) * (pMMArc->pArcHeader +
-                                                   (nArcElemCount - 1))
-                                                      ->nElemCount))
+                                nLastOffsetZ + sizeof(*pZ) * nLastElemCount))
                             return MM_STOP_WRITING_FEATURES;
+
+                        // For the next iteration in this multipart feature
+                        nLastOffsetZ += sizeof(*pZ) * nLastElemCount;
                     }
                 }
             }
@@ -4293,9 +4315,6 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 pZDesc[pArcTopHeader->nElemCount].nOffsetZ = 0;
             else
             {
-                pLastArcHeader =
-                    pMMArc->pArcHeader + pArcTopHeader->nElemCount - 1;
-
                 if (pZDesc[pArcTopHeader->nElemCount - 1].nZCount < 0)
                 {
                     pZDesc[pArcTopHeader->nElemCount].nOffsetZ =
@@ -4304,6 +4323,9 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 }
                 else
                 {
+                    pLastArcHeader =
+                        pMMArc->pArcHeader + pArcTopHeader->nElemCount - 1;
+
                     pZDesc[pArcTopHeader->nElemCount].nOffsetZ =
                         pZDesc[pArcTopHeader->nElemCount - 1].nOffsetZ +
                         sizeof(*pZ) * (pLastArcHeader->nElemCount);

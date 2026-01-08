@@ -99,6 +99,13 @@ void GDALRegister_HDF5()
 
     poDriver->pfnOpen = HDF5Dataset::Open;
     poDriver->pfnUnloadDriver = HDF5DatasetDriverUnload;
+
+#if (defined(H5_VERS_MAJOR) &&                                                 \
+     (H5_VERS_MAJOR >= 2 || (H5_VERS_MAJOR == 1 && H5_VERS_MINOR > 10) ||      \
+      (H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 10 && H5_VERS_RELEASE >= 5)))
+    poDriver->SetMetadataItem("HAVE_H5Dget_chunk_info", "YES");
+#endif
+
     GetGDALDriverManager()->RegisterDriver(poDriver);
 
 #ifdef HDF5_PLUGIN
@@ -158,7 +165,7 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
             return GDT_Int8;
         else if (H5Tequal(H5T_NATIVE_CHAR, TypeID) ||
                  H5Tequal(H5T_NATIVE_UCHAR, TypeID))
-            return GDT_Byte;
+            return GDT_UInt8;
         else if (H5Tequal(H5T_NATIVE_SHORT, TypeID))
             return GDT_Int16;
         else if (H5Tequal(H5T_NATIVE_USHORT, TypeID))
@@ -1453,7 +1460,7 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
         }
 
         HDF5EOSParser::GridMetadata oGridMetadata;
-        HDF5EOSParser::SwathDataFieldMetadata oSwathDataFieldMetadata;
+        HDF5EOSParser::SwathFieldMetadata oSwathFieldMetadata;
         if (m_oHDFEOSParser.GetDataModel() == HDF5EOSParser::DataModel::GRID &&
             m_oHDFEOSParser.GetGridMetadata(poRootGroup->pszUnderscorePath,
                                             oGridMetadata) &&
@@ -1499,29 +1506,24 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
         }
         else if (m_oHDFEOSParser.GetDataModel() ==
                      HDF5EOSParser::DataModel::SWATH &&
-                 m_oHDFEOSParser.GetSwathDataFieldMetadata(
-                     poRootGroup->pszUnderscorePath, oSwathDataFieldMetadata) &&
-                 static_cast<int>(
-                     oSwathDataFieldMetadata.aoDimensions.size()) ==
+                 m_oHDFEOSParser.GetSwathFieldMetadata(
+                     poRootGroup->pszUnderscorePath, oSwathFieldMetadata) &&
+                 static_cast<int>(oSwathFieldMetadata.aoDimensions.size()) ==
                      poRootGroup->nRank &&
-                 oSwathDataFieldMetadata.iXDim >= 0 &&
-                 oSwathDataFieldMetadata.iYDim >= 0)
+                 oSwathFieldMetadata.iXDim >= 0 &&
+                 oSwathFieldMetadata.iYDim >= 0)
         {
             const std::string &osXDimName =
-                oSwathDataFieldMetadata
-                    .aoDimensions[oSwathDataFieldMetadata.iXDim]
+                oSwathFieldMetadata.aoDimensions[oSwathFieldMetadata.iXDim]
                     .osName;
             const int nXDimSize =
-                oSwathDataFieldMetadata
-                    .aoDimensions[oSwathDataFieldMetadata.iXDim]
+                oSwathFieldMetadata.aoDimensions[oSwathFieldMetadata.iXDim]
                     .nSize;
             const std::string &osYDimName =
-                oSwathDataFieldMetadata
-                    .aoDimensions[oSwathDataFieldMetadata.iYDim]
+                oSwathFieldMetadata.aoDimensions[oSwathFieldMetadata.iYDim]
                     .osName;
             const int nYDimSize =
-                oSwathDataFieldMetadata
-                    .aoDimensions[oSwathDataFieldMetadata.iYDim]
+                oSwathFieldMetadata.aoDimensions[oSwathFieldMetadata.iYDim]
                     .nSize;
             switch (poRootGroup->nRank)
             {
@@ -1532,14 +1534,14 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
                 case 3:
                 {
                     const std::string &osOtherDimName =
-                        oSwathDataFieldMetadata
-                            .aoDimensions[oSwathDataFieldMetadata.iOtherDim]
+                        oSwathFieldMetadata
+                            .aoDimensions[oSwathFieldMetadata.iOtherDim]
                             .osName;
                     const int nOtherDimSize =
-                        oSwathDataFieldMetadata
-                            .aoDimensions[oSwathDataFieldMetadata.iOtherDim]
+                        oSwathFieldMetadata
+                            .aoDimensions[oSwathFieldMetadata.iOtherDim]
                             .nSize;
-                    if (oSwathDataFieldMetadata.iOtherDim == 0)
+                    if (oSwathFieldMetadata.iOtherDim == 0)
                     {
                         osStr.Printf("(%s=%d)x(%s=%d)x(%s=%d)",
                                      osOtherDimName.c_str(), nOtherDimSize,

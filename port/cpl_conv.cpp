@@ -675,7 +675,6 @@ const char *CPLReadLineL(VSILFILE *fp)
  * from the file or NULL if the end of file was encountered or the maximum
  * number of characters allowed reached.
  *
- * @since GDAL 1.7.0
  */
 
 const char *CPLReadLine2L(VSILFILE *fp, int nMaxCars,
@@ -704,7 +703,6 @@ const char *CPLReadLine2L(VSILFILE *fp, int nMaxCars,
  * from the file or NULL if the end of file was encountered or the maximum
  * number of characters allowed reached.
  *
- * @since GDAL 2.3.0
  */
 const char *CPLReadLine3L(VSILFILE *fp, int nMaxCars, int *pnBufLength,
                           CPL_UNUSED CSLConstList papszOptions)
@@ -1016,7 +1014,6 @@ GUIntBig CPLScanUIntBig(const char *pszString, int nMaxLength)
  *
  * @param pszString String containing 64 bit signed integer.
  * @return 64 bit signed integer.
- * @since GDAL 2.0
  */
 
 GIntBig CPLAtoGIntBig(const char *pszString)
@@ -1062,7 +1059,6 @@ static int CPLAtoGIntBigExHasOverflow(const char *pszString, GIntBig nVal)
  * @param pbOverflow Pointer to an integer to store if an overflow occurred, or
  *        NULL
  * @return 64 bit signed integer.
- * @since GDAL 2.0
  */
 
 GIntBig CPLAtoGIntBigEx(const char *pszString, int bWarn, int *pbOverflow)
@@ -1744,7 +1740,6 @@ const char *CPL_STDCALL CPLGetConfigOption(const char *pszKey,
  * CPLSetThreadLocalConfigOption() will *not* be listed.
  *
  * @return a copy of the list, to be freed with CSLDestroy().
- * @since GDAL 2.2
  */
 char **CPLGetConfigOptions(void)
 {
@@ -1770,7 +1765,6 @@ char **CPLGetConfigOptions(void)
  *
  * @param papszConfigOptions the new list (or NULL).
  *
- * @since GDAL 2.2
  */
 void CPLSetConfigOptions(const char *const *papszConfigOptions)
 {
@@ -2173,7 +2167,6 @@ void CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
  * CPLSetConfigOption() will *not* be listed.
  *
  * @return a copy of the list, to be freed with CSLDestroy().
- * @since GDAL 2.2
  */
 char **CPLGetThreadLocalConfigOptions(void)
 {
@@ -2203,7 +2196,6 @@ char **CPLGetThreadLocalConfigOptions(void)
  *
  * @param papszConfigOptions the new list (or NULL).
  *
- * @since GDAL 2.2
  */
 void CPLSetThreadLocalConfigOptions(const char *const *papszConfigOptions)
 {

@@ -235,6 +235,8 @@ OGRLIBKMLLayer::OGRLIBKMLLayer(
 
         bool bCanSetKmlSchema = true;
 
+        std::set<std::string> oSetSimpleFields;
+
         /***** get the schema if the layer is a Document *****/
         if (m_poKmlLayer->IsA(kmldom::Type_Document))
         {
@@ -255,7 +257,9 @@ OGRLIBKMLLayer::OGRLIBKMLLayer(
                     {
                         m_poKmlSchema = nullptr;
                     }
-                    kml2FeatureDef(std::move(schema), m_poOgrFeatureDefn);
+                    kml2FeatureDef(std::move(schema), m_poOgrFeatureDefn,
+                                   m_oMapSimpleFieldNameToOgrFieldIx,
+                                   oSetSimpleFields);
                 }
             }
         }
@@ -344,8 +348,11 @@ OGRLIBKMLLayer::OGRLIBKMLLayer(
                                         {
                                             m_poKmlSchema = nullptr;
                                         }
-                                        kml2FeatureDef(std::move(schema),
-                                                       m_poOgrFeatureDefn);
+                                        kml2FeatureDef(
+                                            std::move(schema),
+                                            m_poOgrFeatureDefn,
+                                            m_oMapSimpleFieldNameToOgrFieldIx,
+                                            oSetSimpleFields);
                                     }
                                 }
                             }
@@ -364,14 +371,31 @@ OGRLIBKMLLayer::OGRLIBKMLLayer(
                                         std::string(data->get_name());
                                     if (bLaunderFieldNames)
                                         osName = LaunderFieldNames(osName);
-                                    if (m_poOgrFeatureDefn->GetFieldIndex(
-                                            osName) < 0)
+
+                                    int counter = 2;
+                                    const std::string osNameRadix = osName;
+                                    const CPLString osNameLower =
+                                        CPLString(osName).tolower();
+                                    if (cpl::contains(oSetSimpleFields,
+                                                      osNameLower))
+                                        continue;
+                                    oSetSimpleFields.insert(osNameLower);
+
+                                    m_oMapSimpleFieldNameToOgrFieldIx
+                                        [osNameRadix] =
+                                            m_poOgrFeatureDefn->GetFieldCount();
+
+                                    while (m_poOgrFeatureDefn->GetFieldIndex(
+                                               osName.c_str()) >= 0)
                                     {
-                                        OGRFieldDefn oOgrField(osName,
-                                                               OFTString);
-                                        m_poOgrFeatureDefn->AddFieldDefn(
-                                            &oOgrField);
+                                        osName = osNameRadix +
+                                                 std::to_string(counter);
+                                        ++counter;
                                     }
+
+                                    OGRFieldDefn oOgrField(osName, OFTString);
+                                    m_poOgrFeatureDefn->AddFieldDefn(
+                                        &oOgrField);
                                 }
                             }
                         }
@@ -447,7 +471,8 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature()
         {
             case kmldom::Type_Placemark:
                 poOgrFeature = kml2feat(AsPlacemark(poKmlFeature), m_poOgrDS,
-                                        this, m_poOgrFeatureDefn, m_poOgrSRS);
+                                        this, m_poOgrFeatureDefn, m_poOgrSRS,
+                                        m_oMapSimpleFieldNameToOgrFieldIx);
                 break;
 
             case kmldom::Type_GroundOverlay:
@@ -455,7 +480,8 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature()
                 {
                     poOgrFeature = kmlgroundoverlay2feat(
                         AsGroundOverlay(poKmlFeature), m_poOgrDS, this,
-                        m_poOgrFeatureDefn, m_poOgrSRS);
+                        m_poOgrFeatureDefn, m_poOgrSRS,
+                        m_oMapSimpleFieldNameToOgrFieldIx);
                 }
                 break;
 

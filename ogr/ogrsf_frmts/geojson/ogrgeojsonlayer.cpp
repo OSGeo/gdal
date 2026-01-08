@@ -362,7 +362,15 @@ OGRErr OGRGeoJSONLayer::ICreateFeature(OGRFeature *poFeature)
                 }
                 json_object *poObj =
                     OGRGeoJSONWriteFeature(poFeature, oWriteOptions_);
-                VSIFPrintfL(fp, "%s", json_object_to_json_string(poObj));
+
+                const char *pszJson = json_object_to_json_string_ext(
+                    poObj, JSON_C_TO_STRING_PLAIN
+#ifdef JSON_C_TO_STRING_NOSLASHESCAPE
+                               | JSON_C_TO_STRING_NOSLASHESCAPE
+#endif
+                );
+
+                VSIFPrintfL(fp, "%s", pszJson);
                 json_object_put(poObj);
 
                 if (poFeature->GetFID() == OGRNullFID)
@@ -532,7 +540,7 @@ OGRErr OGRGeoJSONLayer::SyncToDisk()
 /*                           AddFeature                                 */
 /************************************************************************/
 
-void OGRGeoJSONLayer::AddFeature(OGRFeature *poFeature)
+void OGRGeoJSONLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature)
 {
     GIntBig nFID = poFeature->GetFID();
 
@@ -579,7 +587,7 @@ void OGRGeoJSONLayer::AddFeature(OGRFeature *poFeature)
 
     const bool bIsUpdatable = IsUpdatable();
     SetUpdatable(true);  // Temporary toggle on updatable flag.
-    CPL_IGNORE_RET_VAL(OGRMemLayer::SetFeature(poFeature));
+    CPL_IGNORE_RET_VAL(OGRMemLayer::SetFeature(std::move(poFeature)));
     SetUpdatable(bIsUpdatable);
     SetUpdated(false);
 }

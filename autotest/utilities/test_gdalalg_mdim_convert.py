@@ -129,17 +129,6 @@ def test_gdalalg_mdim_convert_group(tmp_vsimem):
   <Group name="/">
     <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
     <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
-    <Array name="array_in_subgroup">
-      <DataType>Int32</DataType>
-      <DimensionRef ref="latitude" />
-      <DimensionRef ref="longitude" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/my_subgroup/array_in_subgroup</SourceArray>
-        <SourceSlab offset="0,0" count="10,10" step="1,1" />
-        <DestSlab offset="0,0" />
-      </Source>
-    </Array>
     <Array name="latitude">
       <DataType>Float32</DataType>
       <DimensionRef ref="latitude" />
@@ -158,6 +147,17 @@ def test_gdalalg_mdim_convert_group(tmp_vsimem):
         <SourceArray>/longitude</SourceArray>
         <SourceSlab offset="0" count="10" step="1" />
         <DestSlab offset="0" />
+      </Source>
+    </Array>
+    <Array name="array_in_subgroup">
+      <DataType>Int32</DataType>
+      <DimensionRef ref="latitude" />
+      <DimensionRef ref="longitude" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/my_subgroup/array_in_subgroup</SourceArray>
+        <SourceSlab offset="0,0" count="10,10" step="1,1" />
+        <DestSlab offset="0,0" />
       </Source>
     </Array>
   </Group>
@@ -214,19 +214,6 @@ def test_gdalalg_mdim_convert_subset(tmp_vsimem):
         <DestSlab offset="0" />
       </Source>
     </Array>
-    <Array name="my_variable_with_time_decreasing">
-      <DataType>Int32</DataType>
-      <DimensionRef ref="time_decreasing" />
-      <DimensionRef ref="latitude" />
-      <DimensionRef ref="longitude" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/my_variable_with_time_decreasing</SourceArray>
-        <SourceView>[:,1:9:1,:]</SourceView>
-        <SourceSlab offset="0,0,0" count="4,8,10" step="1,1,1" />
-        <DestSlab offset="0,0,0" />
-      </Source>
-    </Array>
     <Array name="my_variable_with_time_increasing">
       <DataType>Int32</DataType>
       <DimensionRef ref="latitude" />
@@ -247,16 +234,6 @@ def test_gdalalg_mdim_convert_subset(tmp_vsimem):
         <Value>2012-01-01</Value>
       </Attribute>
     </Array>
-    <Array name="time_decreasing">
-      <DataType>String</DataType>
-      <DimensionRef ref="time_decreasing" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/time_decreasing</SourceArray>
-        <SourceSlab offset="0" count="4" step="1" />
-        <DestSlab offset="0" />
-      </Source>
-    </Array>
     <Array name="time_increasing">
       <DataType>String</DataType>
       <Source>
@@ -272,6 +249,29 @@ def test_gdalalg_mdim_convert_subset(tmp_vsimem):
         <DataType>String</DataType>
         <Value>2012-01-01</Value>
       </Attribute>
+    </Array>
+    <Array name="my_variable_with_time_decreasing">
+      <DataType>Int32</DataType>
+      <DimensionRef ref="time_decreasing" />
+      <DimensionRef ref="latitude" />
+      <DimensionRef ref="longitude" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/my_variable_with_time_decreasing</SourceArray>
+        <SourceView>[:,1:9:1,:]</SourceView>
+        <SourceSlab offset="0,0,0" count="4,8,10" step="1,1,1" />
+        <DestSlab offset="0,0,0" />
+      </Source>
+    </Array>
+    <Array name="time_decreasing">
+      <DataType>String</DataType>
+      <DimensionRef ref="time_decreasing" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/time_decreasing</SourceArray>
+        <SourceSlab offset="0" count="4" step="1" />
+        <DestSlab offset="0" />
+      </Source>
     </Array>
     <Group name="my_subgroup">
       <Array name="array_in_subgroup">
@@ -328,6 +328,16 @@ def test_gdalalg_mdim_convert_scaleaxes(tmp_vsimem):
     <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
     <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="5" indexingVariable="longitude" />
     <Dimension name="time_increasing" type="TEMPORAL" size="4" indexingVariable="time_increasing" />
+    <Array name="time_increasing">
+      <DataType>String</DataType>
+      <DimensionRef ref="time_increasing" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/time_increasing</SourceArray>
+        <SourceSlab offset="0" count="4" step="1" />
+        <DestSlab offset="0" />
+      </Source>
+    </Array>
     <Array name="latitude">
       <DataType>Float32</DataType>
       <DimensionRef ref="latitude" />
@@ -360,16 +370,6 @@ def test_gdalalg_mdim_convert_scaleaxes(tmp_vsimem):
         <SourceView>[:,:,0:10:2]</SourceView>
         <SourceSlab offset="0,0,0" count="4,10,5" step="1,1,1" />
         <DestSlab offset="0,0,0" />
-      </Source>
-    </Array>
-    <Array name="time_increasing">
-      <DataType>String</DataType>
-      <DimensionRef ref="time_increasing" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/time_increasing</SourceArray>
-        <SourceSlab offset="0" count="4" step="1" />
-        <DestSlab offset="0" />
       </Source>
     </Array>
   </Group>

@@ -947,13 +947,12 @@ struct curl_slist *VSIGSHandle::GetCurlHeaders(const std::string &osVerb,
  See :ref:`/vsigs/ documentation <vsigs>`
  \endverbatim
 
- @since GDAL 2.2
  */
 
 void VSIInstallGSFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsigs/",
-                                   new cpl::VSIGSFSHandler("/vsigs/"));
+    VSIFileManager::InstallHandler(
+        "/vsigs/", std::make_shared<cpl::VSIGSFSHandler>("/vsigs/"));
 }
 
 #endif /* HAVE_CURL */

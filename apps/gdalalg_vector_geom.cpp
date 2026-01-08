@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "geom" step of "vector pipeline", or "gdal vector geom" standalone
+ * Purpose:  Base classes for some geometry-related vector algorithms
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -11,14 +11,9 @@
  ****************************************************************************/
 
 #include "gdalalg_vector_geom.h"
-#include "gdalalg_vector_set_geom_type.h"
-#include "gdalalg_vector_explode_collections.h"
-#include "gdalalg_vector_make_valid.h"
-#include "gdalalg_vector_segmentize.h"
-#include "gdalalg_vector_simplify.h"
-#include "gdalalg_vector_buffer.h"
-#include "gdalalg_vector_swap_xy.h"
+#include "cpl_enumerate.h"
 
+#include <algorithm>
 #include <cinttypes>
 
 //! @cond Doxygen_Suppress
@@ -26,49 +21,6 @@
 #ifndef _
 #define _(x) (x)
 #endif
-
-/************************************************************************/
-/*           GDALVectorGeomAlgorithm::GDALVectorGeomAlgorithm()         */
-/************************************************************************/
-
-GDALVectorGeomAlgorithm::GDALVectorGeomAlgorithm(bool standaloneStep)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      /* standaloneStep = */ false)
-{
-    m_hidden = true;
-
-    RegisterSubAlgorithm<GDALVectorSetGeomTypeAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorExplodeCollectionsAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorMakeValidAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorSegmentizeAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorSimplifyAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorBufferAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorSwapXYAlgorithm>(standaloneStep);
-}
-
-/************************************************************************/
-/*              GDALVectorGeomAlgorithm::WarnIfDeprecated()             */
-/************************************************************************/
-
-void GDALVectorGeomAlgorithm::WarnIfDeprecated()
-{
-    ReportError(CE_Warning, CPLE_AppDefined,
-                "'gdal vector geom' is deprecated in GDAL 3.12, and will be "
-                "removed in GDAL 3.13. Is subcommands are directly available "
-                "under 'gdal vector'");
-}
-
-/************************************************************************/
-/*                GDALVectorGeomAlgorithm::RunStep()                    */
-/************************************************************************/
-
-bool GDALVectorGeomAlgorithm::RunStep(GDALPipelineStepRunContext &)
-{
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "The Run() method should not be called directly on the \"gdal "
-             "vector geom\" program.");
-    return false;
-}
 
 /************************************************************************/
 /*                 GDALVectorGeomAbstractAlgorithm()                    */
@@ -122,9 +74,6 @@ bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &)
     return true;
 }
 
-GDALVectorGeomAlgorithmStandalone::~GDALVectorGeomAlgorithmStandalone() =
-    default;
-
 #ifdef HAVE_GEOS
 
 /************************************************************************/
@@ -138,32 +87,59 @@ GDALGeosNonStreamingAlgorithmDataset::GDALGeosNonStreamingAlgorithmDataset()
 
 GDALGeosNonStreamingAlgorithmDataset::~GDALGeosNonStreamingAlgorithmDataset()
 {
+    Cleanup();
+    if (m_poGeosContext != nullptr)
+    {
+        finishGEOS_r(m_poGeosContext);
+    }
+}
+
+void GDALGeosNonStreamingAlgorithmDataset::Cleanup()
+{
+    m_apoFeatures.clear();
+
     if (m_poGeosContext != nullptr)
     {
         for (auto &poGeom : m_apoGeosInputs)
         {
             GEOSGeom_destroy_r(m_poGeosContext, poGeom);
         }
+        m_apoGeosInputs.clear();
 
-        GEOSGeom_destroy_r(m_poGeosContext, m_poGeosResultAsCollection);
+        if (m_poGeosContext != nullptr)
+        {
+            GEOSGeom_destroy_r(m_poGeosContext, m_poGeosResultAsCollection);
+            m_poGeosResultAsCollection = nullptr;
+        }
 
         for (size_t i = 0; i < m_nGeosResultSize; i++)
         {
             GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[i]);
         }
+        m_nGeosResultSize = 0;
 
-        GEOSFree_r(m_poGeosContext, m_papoGeosResults);
-        finishGEOS_r(m_poGeosContext);
+        if (m_papoGeosResults != nullptr)
+        {
+            GEOSFree_r(m_poGeosContext, m_papoGeosResults);
+            m_papoGeosResults = nullptr;
+        }
     }
 }
 
 bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
-    OGRLayer &srcLayer, OGRLayer &dstLayer, bool sameDefn)
+    OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex, bool sameDefn,
+    GDALProgressFunc pfnProgress, void *pProgressData)
 {
+    const GIntBig nLayerFeatures = srcLayer.TestCapability(OLCFastFeatureCount)
+                                       ? srcLayer.GetFeatureCount(false)
+                                       : -1;
+    const double dfInvLayerFeatures =
+        1.0 / std::max(1.0, static_cast<double>(nLayerFeatures));
+    const double dfProgressRatio = dfInvLayerFeatures * 0.5;
+
     for (auto &feature : srcLayer)
     {
-        const OGRGeometry *poSrcGeom =
-            feature->GetGeomFieldRef(m_sourceGeometryField);
+        const OGRGeometry *poSrcGeom = feature->GetGeomFieldRef(geomFieldIndex);
 
         if (PolygonsOnly())
         {
@@ -220,13 +196,23 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
             newFeature->SetFID(feature->GetFID());
             m_apoFeatures.push_back(std::move(newFeature));
         }
+
+        if (pfnProgress && nLayerFeatures > 0 &&
+            !pfnProgress(static_cast<double>(m_apoFeatures.size()) *
+                             dfProgressRatio,
+                         "", pProgressData))
+        {
+            ReportError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
+            return false;
+        }
     }
 
     return true;
 }
 
 bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
-    OGRLayer &dstLayer)
+    OGRLayer &dstLayer, GDALProgressFunc pfnProgress, void *pProgressData,
+    double dfProgressStart, double dfProgressRatio)
 {
     const OGRSpatialReference *poResultSRS =
         dstLayer.GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
@@ -251,7 +237,7 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
     CPLAssert(m_apoFeatures.size() == m_nGeosResultSize);
 
     // Create features with the modified geometries
-    for (size_t i = 0; i < m_apoFeatures.size(); i++)
+    for (const auto &[i, poFeature] : cpl::enumerate(m_apoFeatures))
     {
         GEOSGeometry *poGeosResult = m_papoGeosResults[i];
 #else
@@ -259,6 +245,7 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
         GEOSGetNumGeometries_r(m_poGeosContext, m_poGeosResultAsCollection);
     for (decltype(nGeoms) i = 0; i < nGeoms; i++)
     {
+        auto &poFeature = m_apoFeatures[i];
         GEOSGeometry *poGeosResult = const_cast<GEOSGeometry *>(
             GEOSGetGeometryN_r(m_poGeosContext, m_poGeosResultAsCollection, i));
 #endif
@@ -297,26 +284,44 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
         if (!skipFeature)
         {
             poResultGeom->assignSpatialReference(poResultSRS);
-            m_apoFeatures[i]->SetGeometry(std::move(poResultGeom));
+            poFeature->SetGeometry(std::move(poResultGeom));
 
-            if (dstLayer.CreateFeature(m_apoFeatures[i].get()) != CE_None)
+            if (dstLayer.CreateFeature(std::move(poFeature)) != CE_None)
             {
                 return false;
             }
         }
+        else
+        {
+            poFeature.reset();
+        }
 
-        m_apoFeatures[i].reset();
+        if (pfnProgress &&
+            !pfnProgress(dfProgressStart +
+                             static_cast<double>(i) * dfProgressRatio,
+                         "", pProgressData))
+        {
+            ReportError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
+            return false;
+        }
     }
 
     return true;
 }
 
 bool GDALGeosNonStreamingAlgorithmDataset::Process(OGRLayer &srcLayer,
-                                                   OGRLayer &dstLayer)
+                                                   OGRLayer &dstLayer,
+                                                   int geomFieldIndex,
+                                                   GDALProgressFunc pfnProgress,
+                                                   void *pProgressData)
 {
-    bool sameDefn = dstLayer.GetLayerDefn()->IsSame(srcLayer.GetLayerDefn());
+    Cleanup();
 
-    if (!ConvertInputsToGeos(srcLayer, dstLayer, sameDefn))
+    const bool sameDefn =
+        dstLayer.GetLayerDefn()->IsSame(srcLayer.GetLayerDefn());
+
+    if (!ConvertInputsToGeos(srcLayer, dstLayer, geomFieldIndex, sameDefn,
+                             pfnProgress, pProgressData))
     {
         return false;
     }
@@ -326,7 +331,15 @@ bool GDALGeosNonStreamingAlgorithmDataset::Process(OGRLayer &srcLayer,
         return false;
     }
 
-    return ConvertOutputsFromGeos(dstLayer);
+    const GIntBig nLayerFeatures = srcLayer.TestCapability(OLCFastFeatureCount)
+                                       ? srcLayer.GetFeatureCount(false)
+                                       : -1;
+    const double dfProgressStart = nLayerFeatures > 0 ? 0.5 : 0.0;
+    const double dfProgressRatio =
+        (nLayerFeatures > 0 ? 0.5 : 1.0) /
+        std::max(1.0, static_cast<double>(m_apoFeatures.size()));
+    return ConvertOutputsFromGeos(dstLayer, pfnProgress, pProgressData,
+                                  dfProgressStart, dfProgressRatio);
 }
 
 #endif

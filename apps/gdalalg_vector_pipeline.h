@@ -20,6 +20,7 @@
 #include "ogrlayerwithtranslatefeature.h"
 
 #include <map>
+#include <tuple>
 #include <vector>
 
 //! @cond Doxygen_Suppress
@@ -148,8 +149,141 @@ class GDALVectorPipelineAlgorithm final : public GDALAbstractPipelineAlgorithm
     std::unique_ptr<GDALAbstractPipelineAlgorithm>
     CreateNestedPipeline() const override
     {
-        return std::make_unique<GDALVectorPipelineAlgorithm>();
+        auto pipeline = std::make_unique<GDALVectorPipelineAlgorithm>();
+        pipeline->m_bInnerPipeline = true;
+        return pipeline;
     }
+};
+
+/************************************************************************/
+/*                  GDALVectorOutputDataset                             */
+/************************************************************************/
+
+class GDALVectorOutputDataset final : public GDALDataset
+{
+
+  public:
+    int GetLayerCount() const override
+    {
+        return static_cast<int>(m_layers.size());
+    }
+
+    const OGRLayer *GetLayer(int idx) const override
+    {
+        return m_layers[idx].get();
+    }
+
+    int TestCapability(const char *) const override;
+
+    void AddLayer(std::unique_ptr<OGRLayer> layer)
+    {
+        m_layers.emplace_back(std::move(layer));
+    }
+
+  private:
+    std::vector<std::unique_ptr<OGRLayer>> m_layers{};
+};
+
+/************************************************************************/
+/*                  GDALVectorAlgorithmLayerProgressHelper              */
+/************************************************************************/
+
+/**
+ * This class helps doing progress report for algorithm iterating over layers
+ * of the source dataset.
+ */
+class GDALVectorAlgorithmLayerProgressHelper
+{
+  public:
+    /** Constructor */
+    GDALVectorAlgorithmLayerProgressHelper(GDALProgressFunc pfnProgress,
+                                           void *pProgressData);
+    /** Constructor */
+    explicit GDALVectorAlgorithmLayerProgressHelper(
+        const GDALPipelineStepRunContext &ctxt);
+
+    /** Register the passed layer as a layer that will be processed. */
+    void AddProcessedLayer(OGRLayer &srcLayer);
+
+    /** Register the passed layer as a layer that will be forwarded without
+     * processing. */
+    void AddPassThroughLayer(OGRLayer &srcLayer);
+
+    //! @cond Doxygen_Suppress
+    class iterator
+    {
+      public:
+        explicit iterator(const GDALVectorAlgorithmLayerProgressHelper &helper,
+                          bool start)
+            : m_helper(helper),
+              m_nLayerIdx(start ? 0 : m_helper.m_apoSrcLayers.size())
+        {
+        }
+
+        inline bool operator==(const iterator &other) const
+        {
+            return m_nLayerIdx == other.m_nLayerIdx;
+        }
+
+        inline bool operator!=(const iterator &other) const
+        {
+            return m_nLayerIdx != other.m_nLayerIdx;
+        }
+
+        inline iterator &operator++()
+        {
+            if (!m_helper.m_anFeatures.empty())
+                m_nFeatureIdx += m_helper.m_anFeatures[m_nProcessedLayerIdx];
+            if (m_helper.m_apoSrcLayers[m_nLayerIdx].second)
+                ++m_nProcessedLayerIdx;
+            ++m_nLayerIdx;
+            return *this;
+        }
+
+        using progress_data_unique_ptr =
+            std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>;
+        using value_type = std::tuple<OGRLayer *, bool, GDALProgressFunc,
+                                      progress_data_unique_ptr>;
+
+        value_type operator*() const;
+
+      private:
+        const GDALVectorAlgorithmLayerProgressHelper &m_helper;
+        size_t m_nLayerIdx = 0;
+        size_t m_nProcessedLayerIdx = 0;
+        GIntBig m_nFeatureIdx = 0;
+    };
+
+    //! @endcond
+
+    /** Start of an iterator over layers registered with AddProcessedLayer()
+     * and AddUnprocessedLayer() */
+    iterator begin() const
+    {
+        return iterator(*this, true);
+    }
+
+    /** End of an iterator over layers registered with AddProcessedLayer()
+     * and AddUnprocessedLayer() */
+    iterator end() const
+    {
+        return iterator(*this, false);
+    }
+
+    /** Return if AddProcessedLayer() has been called at least once. */
+    bool HasProcessedLayers() const
+    {
+        return !m_anFeatures.empty();
+    }
+
+  private:
+    GDALProgressFunc m_pfnProgress = nullptr;
+    void *m_pProgressData = nullptr;
+    int64_t m_nTotalFeatures = 0;
+    std::vector<std::pair<OGRLayer *, bool>> m_apoSrcLayers{};
+    std::vector<int64_t> m_anFeatures{};
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorAlgorithmLayerProgressHelper)
 };
 
 /************************************************************************/
@@ -172,6 +306,11 @@ class GDALVectorPipelineOutputLayer /* non final */
 
     OGRLayer &m_srcLayer;
 
+    void FailTranslation()
+    {
+        m_translateError = true;
+    }
+
   public:
     void ResetReading() override;
     OGRFeature *GetNextRawFeature();
@@ -179,6 +318,7 @@ class GDALVectorPipelineOutputLayer /* non final */
   private:
     std::vector<std::unique_ptr<OGRFeature>> m_pendingFeatures{};
     size_t m_idxInPendingFeatures = 0;
+    bool m_translateError = false;
 };
 
 /************************************************************************/
@@ -202,6 +342,18 @@ class GDALVectorPipelinePassthroughLayer /* non final */
     int TestCapability(const char *pszCap) const override
     {
         return m_srcLayer.TestCapability(pszCap);
+    }
+
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override
+    {
+        return m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
+    }
+
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                        bool bForce) override
+    {
+        return m_srcLayer.GetExtent3D(iGeomField, psExtent, bForce);
     }
 
     void TranslateFeature(
@@ -229,10 +381,15 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
     GDALVectorNonStreamingAlgorithmDataset();
     ~GDALVectorNonStreamingAlgorithmDataset() override;
 
-    virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) = 0;
+    virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer,
+                         int geomFieldIndex, GDALProgressFunc pfnProgress,
+                         void *pProgressData) = 0;
 
-    bool AddProcessedLayer(OGRLayer &srcLayer);
-    bool AddProcessedLayer(OGRLayer &srcLayer, OGRFeatureDefn &dstDefn);
+    bool AddProcessedLayer(OGRLayer &srcLayer, GDALProgressFunc pfnProgress,
+                           void *pProgressData);
+    bool AddProcessedLayer(OGRLayer &srcLayer, OGRFeatureDefn &dstDefn,
+                           int geomFieldIndex, GDALProgressFunc pfnProgress,
+                           void *pProgressData);
     void AddPassThroughLayer(OGRLayer &oLayer);
     int GetLayerCount() const final override;
     OGRLayer *GetLayer(int idx) const final override;

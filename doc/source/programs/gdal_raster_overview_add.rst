@@ -29,8 +29,23 @@ of the step, and can potentially be materialized in the final write step, when
 writing a GeoTIFF file with the COPY_SRC_OVERVIEWS creation option, or when writing
 to a COG (Cloud Optimized GeoTIFF) file.
 
-Options
-+++++++
+Program-Specific Options
+------------------------
+
+.. option:: --co <NAME>=<VALUE>
+
+    .. versionadded:: 3.12
+
+    Overview creation options. May be repeated.
+
+    Many formats have one or more optional creation options that can be
+    used to control particulars about the created overviews. Options available
+    can be obtained by looking at the ``OverviewCreationOptionList`` returned
+    by ``gdal --format <FORMAT-NAME>``.
+
+    Most formats will support external overviews in a GeoTIFF file in a
+    side-car file of extension ``.ovr``. You can consult the
+    :ref:`overview creation options for GeoTIFF <raster.gtiff-overview-creation-options>`.
 
 .. option:: --dataset <DATASET>
 
@@ -41,6 +56,27 @@ Options
 
     Create external ``.ovr`` overviews as GeoTIFF files.
     Not available when run as a pipeline step.
+
+.. option:: --levels <level1,level2,...>
+
+    A list of overview levels to build. Each overview level must be an integer
+    value greater or equal to 2.
+
+    When explicit levels are not specified,
+
+    -  If there are already existing overviews, the corresponding levels will be
+       used to refresh them if no explicit levels are specified.
+
+    - Otherwise, appropriate overview power-of-two factors will be selected
+      until the smallest overview is smaller than the value of the
+      :option:`--min-size` switch.
+
+    Mutually exclusive with :option:`--overview-src`
+
+.. option:: --min-size <val>
+
+    Maximum width or height of the smallest overview level. Only taken into
+    account if explicit levels are not specified. Defaults to 256.
 
 .. option::  --overview-src <INPUT>
 
@@ -90,41 +126,14 @@ Options
 
     ``mode`` selects the value which appears most often of all the sampled points.
 
-.. option:: --levels <level1,level2,...>
+Standard Options
+----------------
 
-    A list of overview levels to build. Each overview level must be an integer
-    value greater or equal to 2.
+.. collapse:: Details
 
-    When explicit levels are not specified,
+    .. include:: gdal_options/co.rst
 
-    -  If there are already existing overviews, the corresponding levels will be
-       used to refresh them if no explicit levels are specified.
-
-    - Otherwise, appropriate overview power-of-two factors will be selected
-      until the smallest overview is smaller than the value of the
-      :option:`--min-size` switch.
-
-    Mutually exclusive with :option:`--overview-src`
-
-.. option:: --min-size <val>
-
-    Maximum width or height of the smallest overview level. Only taken into
-    account if explicit levels are not specified. Defaults to 256.
-
-.. option:: --co <NAME>=<VALUE>
-
-    .. versionadded:: 3.12
-
-    Overview creation options. May be repeated.
-
-    Many formats have one or more optional creation options that can be
-    used to control particulars about the created overviews. Options available
-    can be obtained by looking at the ``OverviewCreationOptionList`` returned
-    by ``gdal --format <FORMAT-NAME>``.
-
-    Most formats will support external overviews in a GeoTIFF file in a
-    side-car file of extension ``.ovr``. You can consult the
-    :ref:`overview creation options for GeoTIFF <raster.gtiff-overview-creation-options>`.
+    .. include:: gdal_options/oo.rst
 
 Examples
 --------

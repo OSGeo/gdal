@@ -32,19 +32,24 @@ Synopsis
 
 .. program-output:: gdal vector pipeline --help-doc=materialize
 
-Options
--------
+Program-Specific Options
+------------------------
 
 .. option:: --output <OUTPUT>
 
    Optional dataset name. When specified, it is not removed at the end of the
    process.
 
-.. include:: gdal_options/co_vector.rst
+Standard Options
+----------------
 
-.. include:: gdal_options/lco.rst
+.. collapse:: Details
 
-.. include:: gdal_options/overwrite.rst
+    .. include:: gdal_options/co_vector.rst
+
+    .. include:: gdal_options/lco.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

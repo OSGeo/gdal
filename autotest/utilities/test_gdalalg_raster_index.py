@@ -11,12 +11,13 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
 import os
 
 import gdaltest
 import pytest
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 
 def get_alg():
@@ -235,7 +236,7 @@ def test_gdalalg_raster_index_crs():
     )
 
 
-def test_gdalalg_raster_error():
+def test_gdalalg_raster_index_error():
 
     alg = get_alg()
     alg["input"] = "/i/do/not/exist"
@@ -247,7 +248,7 @@ def test_gdalalg_raster_error():
         alg.Run()
 
 
-def test_gdalalg_raster_skip_errors_with_crs():
+def test_gdalalg_raster_index_skip_errors_with_crs():
 
     alg = get_alg()
     alg["input"] = "/i/do/not/exist"
@@ -263,7 +264,7 @@ def test_gdalalg_raster_skip_errors_with_crs():
     assert lyr.GetFeatureCount() == 0
 
 
-def test_gdalalg_raster_skip_errors_without_crs():
+def test_gdalalg_raster_index_skip_errors_without_crs():
 
     alg = get_alg()
     alg["input"] = "/i/do/not/exist"
@@ -276,3 +277,248 @@ def test_gdalalg_raster_skip_errors_without_crs():
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 0
+
+
+@pytest.mark.require_driver("PARQUET")
+@pytest.mark.require_driver("GTI")
+def test_gdalalg_raster_index_stac_geoparquet(tmp_vsimem):
+
+    gdal.alg.raster.index(
+        input="../gdrivers/data/small_world.tif",
+        output=tmp_vsimem / "out.parquet",
+        profile="STAC-GeoParquet",
+    )
+
+    with ogr.Open(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["id"] == "small_world.tif"
+        assert f["stac_extensions"] == [
+            "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
+            "https://stac-extensions.github.io/eo/v2.0.0/schema.json",
+        ]
+        assert json.loads(f["links"]) == []
+        assert f["assets.image.href"] == "../gdrivers/data/small_world.tif"
+        assert f["assets.image.roles"] == ["data"]
+        assert f["assets.image.title"] is None
+        assert f["assets.image.type"] == "image/tiff; application=geotiff"
+        assert json.loads(f["bands"]) == [
+            {
+                "name": "Band 1",
+                "eo:common_name": "red",
+                "eo:center_wavelength": None,
+                "eo:full_width_half_max": None,
+                "nodata": None,
+                "data_type": "uint8",
+                "unit": None,
+            },
+            {
+                "name": "Band 2",
+                "eo:common_name": "green",
+                "eo:center_wavelength": None,
+                "eo:full_width_half_max": None,
+                "nodata": None,
+                "data_type": "uint8",
+                "unit": None,
+            },
+            {
+                "name": "Band 3",
+                "eo:common_name": "blue",
+                "eo:center_wavelength": None,
+                "eo:full_width_half_max": None,
+                "nodata": None,
+                "data_type": "uint8",
+                "unit": None,
+            },
+        ]
+        assert f["proj:code"] == "EPSG:4326"
+        assert f["proj:wkt2"] is None
+        assert f["proj:projjson"] is None
+        assert f["proj:bbox"] == [-180, -90, 180, 90]
+        assert f["proj:shape"] == [200, 400]
+        assert f["proj:transform"] == [0.9, 0, -180, 0, -0.9, 90, 0, 0, 1]
+        assert (
+            f.GetGeometryRef().ExportToWkt()
+            == "POLYGON ((-180 90,-180 -90,180 -90,180 90,-180 90))"
+        )
+
+    with gdal.Open("GTI:" + str(tmp_vsimem / "out.parquet")) as ds:
+        assert ds.GetRasterBand(1).GetDescription() == "Band 1"
+
+
+@pytest.mark.require_driver("PARQUET")
+def test_gdalalg_raster_index_stac_geoparquet_band_metadata(tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in.tif", 1, 1) as ds:
+        ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+        b = ds.GetRasterBand(1)
+        b.SetDescription("my band")
+        b.SetUnitType("meter")
+        b.SetNoDataValue(1)
+        b.SetMetadataItem("CENTRAL_WAVELENGTH_UM", "1.5", "IMAGERY")
+        b.SetMetadataItem("FWHM_UM", "0.5", "IMAGERY")
+
+    gdal.alg.raster.index(
+        input=tmp_vsimem / "in.tif",
+        output=tmp_vsimem / "out.parquet",
+        profile="STAC-GeoParquet",
+    )
+
+    with ogr.Open(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert json.loads(f["bands"]) == [
+            {
+                "data_type": "uint8",
+                "eo:center_wavelength": 1.5,
+                "eo:common_name": None,
+                "eo:full_width_half_max": 0.5,
+                "name": "my band",
+                "nodata": "1",
+                "unit": "meter",
+            },
+        ]
+
+    if gdal.GetDriverByName("GTI"):
+        with gdal.Open("GTI:" + str(tmp_vsimem / "out.parquet")) as ds:
+            assert ds.GetRasterBand(1).GetMetadata_Dict("IMAGERY") == {
+                "CENTRAL_WAVELENGTH_UM": "1.5",
+                "FWHM_UM": "0.5",
+            }
+
+
+@pytest.mark.require_driver("PARQUET")
+def test_gdalalg_raster_index_stac_geoparquet_md5(tmp_vsimem):
+
+    gdal.alg.raster.index(
+        input="../gcore/data/byte.tif",
+        output=tmp_vsimem / "out.parquet",
+        profile="STAC-GeoParquet",
+        id_method="md5",
+    )
+
+    with ogr.Open(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["id"] == "5B76BD92A47DE21AB2263A317E0B139C-byte.tif"
+
+
+@pytest.mark.require_driver("PARQUET")
+def test_gdalalg_raster_index_stac_geoparquet_id_metadata_item(tmp_vsimem):
+
+    gdal.alg.raster.index(
+        input="../gcore/data/byte.tif",
+        output=tmp_vsimem / "out.parquet",
+        profile="STAC-GeoParquet",
+        id_metadata_item="AREA_OR_POINT",
+    )
+
+    with ogr.Open(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["id"] == "Area"
+
+
+@pytest.mark.require_driver("PARQUET")
+def test_gdalalg_raster_index_stac_geoparquet_base_url(tmp_vsimem):
+
+    gdal.alg.raster.index(
+        input="../gcore/data/byte.tif",
+        output=tmp_vsimem / "out.parquet",
+        profile="STAC-GeoParquet",
+        base_url="http://example.com",
+    )
+
+    with ogr.Open(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+        f = lyr.GetNextFeature()
+        assert f["assets.image.href"] == "http://example.com/byte.tif"
+
+
+@pytest.mark.require_driver("PARQUET")
+def test_gdalalg_raster_index_stac_geoparquet_batch_size(tmp_vsimem):
+
+    with gdal.config_option("GDAL_RASTER_INDEX_BATCH_SIZE", "1"):
+        gdal.alg.raster.index(
+            input=["../gcore/data/byte.tif", "../gcore/data/uint16.tif"],
+            output=tmp_vsimem / "out.parquet",
+            profile="STAC-GeoParquet",
+            absolute_path=True,
+        )
+
+    with ogr.Open(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["assets.image.href"].startswith("file://")
+        assert f["assets.image.href"].endswith("byte.tif")
+        f = lyr.GetNextFeature()
+        assert f["assets.image.href"].startswith("file://")
+        assert f["assets.image.href"].endswith("uint16.tif")
+
+
+@pytest.mark.require_driver("PARQUET")
+def test_gdalalg_raster_index_stac_geoparquet_no_proj_code(tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in.tif", 1, 1) as ds:
+        ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+        srs = osr.SpatialReference()
+        srs.SetFromUserInput("+proj=longlat +ellps=GRS80")
+        ds.SetSpatialRef(srs)
+
+    gdal.alg.raster.index(
+        input=tmp_vsimem / "in.tif",
+        output=tmp_vsimem / "out.parquet",
+        profile="STAC-GeoParquet",
+    )
+
+    with ogr.Open(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["proj:code"] is None
+        assert f["proj:wkt2"].startswith("GEOGCRS[")
+        assert json.loads(f["proj:projjson"])["type"] == "GeographicCRS"
+
+
+@pytest.mark.require_driver("PARQUET")
+def test_gdalalg_raster_index_stac_geoparquet_error_not_parquet(tmp_vsimem):
+
+    with pytest.raises(
+        Exception,
+        match="STAC-GeoParquet profile is only compatible with Parquet output format",
+    ):
+        gdal.alg.raster.index(
+            input="../gcore/data/byte.tif",
+            output=tmp_vsimem / "out.gpkg",
+            profile="STAC-GeoParquet",
+        )
+
+
+@pytest.mark.require_driver("PARQUET")
+def test_gdalalg_raster_index_stac_geoparquet_error_not_parquet_bis(tmp_vsimem):
+
+    with pytest.raises(
+        Exception,
+        match="STAC-GeoParquet profile is only compatible with Parquet output format",
+    ):
+        gdal.alg.raster.index(
+            input="../gcore/data/byte.tif",
+            output=tmp_vsimem / "out.parquet",
+            profile="STAC-GeoParquet",
+            output_format="GPKG",
+        )
+
+
+@pytest.mark.require_driver("PARQUET")
+def test_gdalalg_raster_index_stac_geoparquet_error_not_epsg_4326(tmp_vsimem):
+
+    with pytest.raises(
+        Exception,
+        match="STAC-GeoParquet profile is only compatible with --dst-crs=EPSG:4326",
+    ):
+        gdal.alg.raster.index(
+            input="../gcore/data/byte.tif",
+            output=tmp_vsimem / "out.parquet",
+            profile="STAC-GeoParquet",
+            dst_crs="EPSG:3857",
+        )

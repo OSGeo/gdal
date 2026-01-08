@@ -2054,13 +2054,12 @@ static GDALDataset *VSICryptOpen(GDALOpenInfo *poOpenInfo)
  * VSISetCryptKey() to set the key might make it a bit more complicated to spy
  * the key.  But, as said initially, this is in no way a perfect protection.
  *
- * @since GDAL 2.1.0
  */
 void VSIInstallCryptFileHandler(void)
 
 {
-    VSIFileManager::InstallHandler(VSICRYPT_PREFIX,
-                                   new VSICryptFilesystemHandler);
+    VSIFileManager::InstallHandler(
+        VSICRYPT_PREFIX, std::make_shared<VSICryptFilesystemHandler>());
 
 #ifdef VSICRYPT_DRIVER
     if (GDALGetDriverByName("VSICRYPT") != nullptr)
@@ -2115,8 +2114,8 @@ VSIVirtualHandleUniquePtr VSIDummyCryptFilesystemHandler::Open(
 
 void VSIInstallCryptFileHandler(void)
 {
-    VSIFileManager::InstallHandler(VSICRYPT_PREFIX,
-                                   new VSIDummyCryptFilesystemHandler);
+    VSIFileManager::InstallHandler(
+        VSICRYPT_PREFIX, std::make_shared<VSIDummyCryptFilesystemHandler>());
 }
 
 void VSISetCryptKey(const GByte * /* pabyKey */, int /* nKeySize */)
@@ -2126,7 +2125,7 @@ void VSISetCryptKey(const GByte * /* pabyKey */, int /* nKeySize */)
 
 #endif  // HAVE_CRYPTOPP
 
-// Below is only useful if using as a plugin over GDAL >= 2.0.
+// Below is only useful if using as a plugin.
 #ifdef VSICRYPT_AUTOLOAD
 
 CPL_C_START

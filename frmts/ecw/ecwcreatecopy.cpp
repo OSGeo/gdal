@@ -510,7 +510,7 @@ CPLErr GDALECWCompressor::Initialize(
 
     switch (eWorkDT)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
 #if ECWSDK_VERSION >= 50
             psClient->nCellBitDepth = 8;
 #endif
@@ -1131,7 +1131,7 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         }
     }
 #endif
-    if (!(eType == GDT_Byte ||
+    if (!(eType == GDT_UInt8 ||
 #if ECWSDK_VERSION >= 50
           (bECWV3 && eType == GDT_UInt16) ||
 #endif
@@ -1171,7 +1171,7 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                          "for %s. \n",
                          GDALGetDataTypeName(eType));
 
-            eType = GDT_Byte;
+            eType = GDT_UInt8;
         }
     }
 
@@ -1322,7 +1322,7 @@ GDALDataset *ECWCreateCopyECW(const char *pszFilename, GDALDataset *poSrcDS,
 #endif
 
     GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    if (eDataType != GDT_Byte
+    if (eDataType != GDT_UInt8
 #if ECWSDK_VERSION >= 50
         && !(bECWV3 && (eDataType == GDT_UInt16))
 #endif
@@ -1406,7 +1406,7 @@ GDALDataset *ECWCreateCopyJPEG2000(const char *pszFilename,
     }
 
     GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    if (eDataType != GDT_Byte && eDataType != GDT_Int16 &&
+    if (eDataType != GDT_UInt8 && eDataType != GDT_Int16 &&
         eDataType != GDT_UInt16 && eDataType != GDT_Int32 &&
         eDataType != GDT_UInt32 && eDataType != GDT_Float32
 #if ECWSDK_VERSION >= 40

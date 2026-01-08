@@ -213,7 +213,11 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
             aosOptions.AddString(osWKT.c_str());
         }
 
-        if (!m_allowExtentOutsideSource)
+        if (m_allowExtentOutsideSource)
+        {
+            aosOptions.AddString("--no-warn-about-outside-window");
+        }
+        else
         {
             // Unless we've specifically allowed the bounding box to extend beyond
             // the source raster, raise an error.

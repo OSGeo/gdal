@@ -12,17 +12,17 @@ The driver supports both reading and writing (including create, delete,
 and copy) SAGA GIS binary grids. SAGA binary grid datasets are made of
 an ASCII header (.SGRD) and a binary data (.SDAT) file with a common
 basename. The .SDAT file should be selected to access the dataset.
-Starting with GDAL 2.3, the driver can read compressed .sg-grd-z files
+The driver can read compressed .sg-grd-z files
 that are ZIP archives with .sgrd, .sdat and .prj files.
 
 The driver supports reading the following SAGA datatypes (in brackets
-the corresponding GDAL types): BIT (GDT_Byte), BYTE_UNSIGNED (GDT_Byte),
-BYTE (GDT_Byte), SHORTINT_UNSIGNED (GDT_UInt16), SHORTINT (GDT_Int16),
+the corresponding GDAL types): BIT (GDT_UInt8), BYTE_UNSIGNED (GDT_UInt8),
+BYTE (GDT_UInt8), SHORTINT_UNSIGNED (GDT_UInt16), SHORTINT (GDT_Int16),
 INTEGER_UNSIGNED (GDT_UInt32), INTEGER (GDT_Int32), FLOAT (GDT_Float32)
 and DOUBLE (GDT_Float64).
 
 The driver supports writing the following SAGA datatypes: BYTE_UNSIGNED
-(GDT_Byte), SHORTINT_UNSIGNED (GDT_UInt16), SHORTINT (GDT_Int16),
+(GDT_UInt8), SHORTINT_UNSIGNED (GDT_UInt16), SHORTINT (GDT_Int16),
 INTEGER_UNSIGNED (GDT_UInt32), INTEGER (GDT_Int32), FLOAT (GDT_Float32)
 and DOUBLE (GDT_Float64).
 

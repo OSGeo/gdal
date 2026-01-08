@@ -54,123 +54,123 @@ OGRGMLASDataSource::OGRGMLASDataSource()
     // Initialize m_poFieldsMetadataLayer
     {
         OGRFieldDefn oFieldDefn(szLAYER_NAME, OFTString);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_INDEX, OFTInteger);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_NAME, OFTString);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_XPATH, OFTString);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_TYPE, OFTString);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_IS_LIST, OFTInteger);
         oFieldDefn.SetSubType(OFSTBoolean);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_MIN_OCCURS, OFTInteger);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_MAX_OCCURS, OFTInteger);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_REPETITION_ON_SEQUENCE, OFTInteger);
         oFieldDefn.SetSubType(OFSTBoolean);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_DEFAULT_VALUE, OFTString);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_FIXED_VALUE, OFTString);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_CATEGORY, OFTString);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_RELATED_LAYER, OFTString);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_JUNCTION_LAYER, OFTString);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szFIELD_DOCUMENTATION, OFTString);
-        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->CreateField(&oFieldDefn));
     }
 
     // Initialize m_poLayersMetadataLayer
     {
         OGRFieldDefn oFieldDefn(szLAYER_NAME, OFTString);
-        m_poLayersMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poLayersMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szLAYER_XPATH, OFTString);
-        m_poLayersMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poLayersMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szLAYER_CATEGORY, OFTString);
-        m_poLayersMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poLayersMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szLAYER_PKID_NAME, OFTString);
-        m_poLayersMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poLayersMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szLAYER_PARENT_PKID_NAME, OFTString);
-        m_poLayersMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poLayersMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szLAYER_DOCUMENTATION, OFTString);
-        m_poLayersMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poLayersMetadataLayer->CreateField(&oFieldDefn));
     }
 
     // Initialize m_poRelationshipsLayer
     {
         OGRFieldDefn oFieldDefn(szPARENT_LAYER, OFTString);
-        m_poRelationshipsLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poRelationshipsLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szPARENT_PKID, OFTString);
-        m_poRelationshipsLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poRelationshipsLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szPARENT_ELEMENT_NAME, OFTString);
-        m_poRelationshipsLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poRelationshipsLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szCHILD_LAYER, OFTString);
-        m_poRelationshipsLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poRelationshipsLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szCHILD_PKID, OFTString);
-        m_poRelationshipsLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poRelationshipsLayer->CreateField(&oFieldDefn));
     }
 
     // Initialize m_poOtherMetadataLayer
     {
         OGRFieldDefn oFieldDefn(szKEY, OFTString);
-        m_poOtherMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poOtherMetadataLayer->CreateField(&oFieldDefn));
     }
     {
         OGRFieldDefn oFieldDefn(szVALUE, OFTString);
-        m_poOtherMetadataLayer->CreateField(&oFieldDefn);
+        CPL_IGNORE_RET_VAL(m_poOtherMetadataLayer->CreateField(&oFieldDefn));
     }
 }
 

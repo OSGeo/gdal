@@ -22,6 +22,16 @@ The :program:`gdal_translate` utility can be used to convert raster data between
 different formats, potentially performing some operations like subsetting,
 resampling, and rescaling pixels in the process.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    * :ref:`gdal_raster_convert` for format translation.
+    * :ref:`gdal_raster_clip` for spatial subsetting.
+    * :ref:`gdal_raster_nodata_to_alpha` to add an alpha channel from nodata values.
+    * :ref:`gdal_raster_resize` for image resizing.
+    * :ref:`gdal_raster_scale` to scale pixel values.
+    * :ref:`gdal_raster_set_type` to change the band data type.
+
+
 .. program:: gdal_translate
 
 .. include:: options/help_and_help_general.rst
@@ -30,8 +40,14 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -strict
 
-    Don't be forgiving of mismatches and lost data when translating to the
-    output format.
+    Enable strict mode. In this mode, GDAL will fail instead of silently
+    performing operations that may lead to loss of information, such as
+    data type conversions that cannot be exactly preserved.
+
+    The exact behavior of this option is driver-dependent. Most raster
+    drivers use it to enforce strict preservation of the input data type
+    and will report an error if the requested operation cannot be performed
+    without data loss. See :example:`strict`.
 
 .. include:: options/if.rst
 
@@ -202,12 +218,12 @@ resampling, and rescaling pixels in the process.
         be transformed into the dataset SRS and used to select a subwindow.
         Before GDAL 3.11, only the two corner points were transformed into the
         dataset SRS, and these two transformed points were used to define an extent
-        in the dataset SRS. Depending on the SRS involved, the subwindow selected in 
+        in the dataset SRS. Depending on the SRS involved, the subwindow selected in
         GDAL 3.11 may be substantially larger than in previous versions.
 
     .. note::
 
-        When using nearest-neighbor resampling, the window specified by 
+        When using nearest-neighbor resampling, the window specified by
         :option:`-projwin` is expanded (rounded, for GDAL < 3.11) if necessary
         to match input pixel boundaries. For other resampling algorithms, the window
         is not modified.
@@ -259,8 +275,6 @@ resampling, and rescaling pixels in the process.
     ``gdal_translate input.tif tmp.vrt -a_scale scale -a_offset offset`` followed by
     ``gdal_translate tmp.vrt output.tif -unscale``
 
-    .. versionadded:: 2.3
-
 .. option:: -a_offset <value>
 
     Set band offset value. No modification of pixel values is done.
@@ -269,8 +283,6 @@ resampling, and rescaling pixels in the process.
     apply a (offset, scale) tuple, for the equivalent of the 2 steps:
     ``gdal_translate input.tif tmp.vrt -a_scale scale -a_offset offset`` followed by
     ``gdal_translate tmp.vrt output.tif -unscale``
-
-    .. versionadded:: 2.3
 
 .. option:: -a_ullr <ulx> <uly> <lrx> <lry>
 
@@ -303,14 +315,10 @@ resampling, and rescaling pixels in the process.
     Override the color interpretation of band X (where X is a valid band number,
     starting at 1)
 
-    .. versionadded:: 2.3
-
 .. option:: -colorinterp {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...},...
 
     Override the color interpretation of all specified bands. For
     example -colorinterp red,green,blue,alpha for a 4 band output dataset.
-
-    .. versionadded:: 2.3
 
 .. option:: -mo <META-TAG>=<VALUE>
 
@@ -438,8 +446,6 @@ C API
 
 This utility is also callable from C with :cpp:func:`GDALTranslate`.
 
-.. versionadded:: 2.1
-
 Examples
 --------
 
@@ -474,3 +480,15 @@ Examples
    .. code-block:: bash
 
       gdal_translate -projwin -20037500 10037500 0 0 -outsize 100 100 frmt_wms_googlemaps_tms.xml junk.png
+
+
+.. example::
+   :title: Use of strict mode with unsupported data type
+   :id: strict
+
+   .. code-block:: console
+
+       $ gdal_create test.tif -bands 3 -ot Int16 -outsize 1 1
+       $ gdal_translate -strict test.tif test.webp
+       ERROR 6: WEBP driver doesn't support data type Int16.
+       Only UInt8 bands supported.

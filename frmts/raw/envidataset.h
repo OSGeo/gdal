@@ -64,7 +64,6 @@ class ENVIDataset final : public RawDataset
 
     Interleave eInterleave = Interleave::BSQ;
 
-    bool ReadHeader(VSILFILE *);
     bool ProcessMapinfo(const char *);
     void ProcessRPCinfo(const char *, int, int);
     void ProcessGeoPoints(const char *);
@@ -91,7 +90,7 @@ class ENVIDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(ENVIDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     ENVIDataset();

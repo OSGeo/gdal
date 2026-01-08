@@ -68,17 +68,16 @@ this:
        GRIB_PDS_TEMPLATE_NUMBERS=5 7 2 0 0 0 0 0 1 0 0 0 0 1 0 31 1 29 67 140 2 0 0 238 217
        GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES=5 7 2 0 0 0 0 1 0 1 31 285 17292 2 61145
 
-GRIB_DISCIPLINE was added in GDAL 2.3.0 and is the
+GRIB_DISCIPLINE is the
 `Discipline <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table0-0.shtml>`__
 field of the Section 0 of the message.
 
-GRIB_IDS was added in GDAL 2.3.0 and is the `identification
+GRIB_IDS is the `identification
 section <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table0-0.shtml>`__
 / Section 1 of the message.
 
-GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES was added in GDAL 2.3.0, and use
-template definitions to assemble several bytes that make a template item
-into a 16 or 32 bit signed/unsigned integers, whereas
+GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES use template definitions to assemble several
+bytes that make a template item into a 16 or 32 bit signed/unsigned integers, whereas
 GRIB_PDS_TEMPLATE_NUMBERS expose raw bytes
 
 Driver capabilities
@@ -151,8 +150,7 @@ The following open options are supported:
 GRIB2 write support
 -------------------
 
-GRIB2 write support is available since GDAL 2.3.0, through the
-CreateCopy() / gdal_translate interface.
+GRIB2 write support is available through the CreateCopy() / gdal_translate interface.
 
 Each band of the input dataset is translated as a GRIB2 message, and all
 of them are concatenated in a single file, conforming to the usual

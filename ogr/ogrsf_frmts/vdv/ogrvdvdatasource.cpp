@@ -116,7 +116,7 @@ static void OGRVDVParseAtrFrm(OGRLayer *poLayer, OGRFeatureDefn *poFeatureDefn,
         oFieldDefn.SetSubType(eSubType);
         oFieldDefn.SetWidth(nWidth);
         if (poLayer)
-            poLayer->CreateField(&oFieldDefn);
+            CPL_IGNORE_RET_VAL(poLayer->CreateField(&oFieldDefn));
         else if (poFeatureDefn)
             poFeatureDefn->AddFieldDefn(&oFieldDefn);
         else

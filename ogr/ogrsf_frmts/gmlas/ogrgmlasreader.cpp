@@ -930,7 +930,7 @@ void GMLASReader::PushFeatureReady(std::unique_ptr<OGRFeature> &&poFeature,
                                    OGRGMLASLayer *poLayer)
 {
 #ifdef DEBUG_VERBOSE
-    CPLDebug("GMLAS", "PushFeatureReady(%p / %s / %s)", poFeature,
+    CPLDebug("GMLAS", "PushFeatureReady(%p / %s / %s)", poFeature.get(),
              poFeature->GetDefnRef()->GetName(), poLayer->GetName());
 #endif
 

@@ -34,7 +34,7 @@ if (MSVC)
       /wd4351
       /wd4611)
   set(GDAL_CXX_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS})
-  add_compile_options(/EHsc)
+  add_compile_options(/EHsc /Zc:__cplusplus)
 
   # The following are extra disables that can be applied to external source not under our control that we wish to use
   # less stringent warnings with.

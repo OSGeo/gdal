@@ -24,6 +24,10 @@ is often used to "fix up" lossy compressed air photos so that color pixels can b
 treated as transparent when mosaicing. The output format must use lossless compression
 if either alpha band or mask band is not set.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_clean_collar`.
+
 .. program:: nearblack
 
 .. include:: options/help_and_help_general.rst
@@ -35,8 +39,7 @@ if either alpha band or mask band is not set.
 .. option:: -of <format>
 
     Select the output format.
-    Starting with GDAL 2.3, if not specified, the format is guessed from the extension (previously
-    was ERDAS Imagine .img).
+    If not specified, the format is guessed from the extension.
     Use the short format name (GTiff for GeoTIFF for example).
 
 .. option:: -co <NAME>=<VALUE>
@@ -119,6 +122,4 @@ C API
 -----
 
 This utility is also callable from C with :cpp:func:`GDALNearblack`.
-
-.. versionadded:: 2.1
 

@@ -36,6 +36,7 @@ class GDALRasterResizeAlgorithm /* non final */
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::vector<std::string> m_size{};
+    std::vector<double> m_resolution{};
     std::string m_resampling{};
 };
 

@@ -3,8 +3,6 @@
 MVT: Mapbox Vector Tiles
 ========================
 
-.. versionadded:: 2.3
-
 .. shortname:: MVT
 
 .. build_dependencies:: (requires SQLite and GEOS for write support)
@@ -225,6 +223,15 @@ The following open options are available:
       For tilesets
       without metadata file, maximum number of tiles to use to establish
       the layer schemas.
+
+   .. oo:: ADD_TILE_FIELDS
+      :choices: YES, NO
+      :default: NO
+      :since: 3.13
+
+      Whether to add fields 'tile_z', 'tile_x', 'tile_y' to each layer,
+      containing the Z/X/Y coordinates of the tile from which the feature
+      originates.
 
 Creation issues
 ---------------

@@ -41,30 +41,8 @@ GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()
         "detailed", 0,
         _("Most verbose output. Report attribute data types and array values."),
         &m_detailed);
-    {
-        auto &arg = AddArg("array", 0,
-                           _("Name of the array, used to restrict the output "
-                             "to the specified array."),
-                           &m_array);
-
-        arg.SetAutoCompleteFunction(
-            [this](const std::string &)
-            {
-                std::vector<std::string> ret;
-
-                if (auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-                        m_dataset.GetName().c_str(), GDAL_OF_MULTIDIM_RASTER,
-                        nullptr, nullptr, nullptr)))
-                {
-                    if (auto poRG = poDS->GetRootGroup())
-                    {
-                        ret = poRG->GetMDArrayFullNamesRecursive();
-                    }
-                }
-
-                return ret;
-            });
-    }
+    AddArrayNameArg(&m_array, _("Name of the array, used to restrict the "
+                                "output to the specified array."));
 
     AddArg("limit", 0,
            _("Number of values in each dimension that is used to limit the "

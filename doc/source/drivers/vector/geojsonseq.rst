@@ -3,8 +3,6 @@
 GeoJSONSeq: sequence of GeoJSON features
 ========================================
 
-.. versionadded:: 2.4
-
 .. shortname:: GeoJSONSeq
 
 .. built_in_by_default::

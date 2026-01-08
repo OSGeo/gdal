@@ -4,8 +4,6 @@
 AmigoCloud
 ================================================================================
 
-.. versionadded:: 2.1.0
-
 .. shortname:: AmigoCloud
 
 .. build_dependencies:: libcurl

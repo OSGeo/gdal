@@ -183,7 +183,7 @@ class ISIS3Dataset final : public RawDataset
     CPL_DISALLOW_COPY_ASSIGN(ISIS3Dataset)
 
   protected:
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     ISIS3Dataset();
@@ -454,8 +454,8 @@ CPLErr ISISTiledBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
             poGDS->WriteLabel();
     }
 
-    const GIntBig nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
-                            nYBlock * m_nYTileOffset;
+    const vsi_l_offset nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
+                                 nYBlock * m_nYTileOffset;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     const size_t nBlockSize =
         static_cast<size_t>(nDTSize) * nBlockXSize * nBlockYSize;
@@ -476,7 +476,7 @@ CPLErr ISISTiledBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
         return CE_Failure;
     }
 
-    if (!m_bNativeOrder && eDataType != GDT_Byte)
+    if (!m_bNativeOrder && eDataType != GDT_UInt8)
         GDALSwapWords(pImage, nDTSize, nBlockXSize * nBlockYSize, nDTSize);
 
     return CE_None;
@@ -503,7 +503,7 @@ static void RemapNoDataT(T *pBuffer, int nItems, T srcNoData, T dstNoData)
 static void RemapNoData(GDALDataType eDataType, void *pBuffer, int nItems,
                         double dfSrcNoData, double dfDstNoData)
 {
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         RemapNoDataT(reinterpret_cast<GByte *>(pBuffer), nItems,
                      static_cast<GByte>(dfSrcNoData),
@@ -550,8 +550,8 @@ CPLErr ISISTiledBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
                     poGDS->m_dfSrcNoData, m_dfNoData);
     }
 
-    const GIntBig nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
-                            nYBlock * m_nYTileOffset;
+    const vsi_l_offset nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
+                                 nYBlock * m_nYTileOffset;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     const size_t nBlockSize =
         static_cast<size_t>(nDTSize) * nBlockXSize * nBlockYSize;
@@ -590,7 +590,7 @@ CPLErr ISISTiledBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
         return CE_Failure;
     }
 
-    if (!m_bNativeOrder && eDataType != GDT_Byte)
+    if (!m_bNativeOrder && eDataType != GDT_UInt8)
         GDALSwapWords(pImage, nDTSize, nBlockXSize * nBlockYSize, nDTSize);
 
     if (VSIFWriteL(pImage, 1, nBlockSize, m_fpVSIL) != nBlockSize)
@@ -601,7 +601,7 @@ CPLErr ISISTiledBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
         return CE_Failure;
     }
 
-    if (!m_bNativeOrder && eDataType != GDT_Byte)
+    if (!m_bNativeOrder && eDataType != GDT_UInt8)
         GDALSwapWords(pImage, nDTSize, nBlockXSize * nBlockYSize, nDTSize);
 
     return CE_None;
@@ -1142,7 +1142,7 @@ CPLErr ISIS3WrapperRasterBand::IRasterIO(
 ISISMaskBand::ISISMaskBand(GDALRasterBand *poBaseBand)
     : m_poBaseBand(poBaseBand), m_pBuffer(nullptr)
 {
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     nRasterXSize = poBaseBand->GetXSize();
     nRasterYSize = poBaseBand->GetYSize();
@@ -1221,7 +1221,7 @@ CPLErr ISISMaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
     }
 
     GByte *pabyDst = static_cast<GByte *>(pImage);
-    if (eSrcDT == GDT_Byte)
+    if (eSrcDT == GDT_UInt8)
     {
         FillMask<GByte>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
                         ISIS3_NULL1, LOW_REPR_SAT1, LOW_INSTR_SAT1,
@@ -1277,7 +1277,7 @@ ISIS3Dataset::~ISIS3Dataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr ISIS3Dataset::Close()
+CPLErr ISIS3Dataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -1873,13 +1873,13 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     const int nBands = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Bands"));
 
     /****** Grab format type - ISIS3 only supports 8,U16,S16,32 *****/
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     double dfNoData = 0.0;
 
     const char *itype = poDS->GetKeyword("IsisCube.Core.Pixels.Type");
     if (EQUAL(itype, "UnsignedByte"))
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         dfNoData = ISIS3_NULL1;
     }
     else if (EQUAL(itype, "UnsignedWord"))
@@ -2797,7 +2797,7 @@ void ISIS3Dataset::BuildLabel()
     CPLJSONObject oPixels = GetOrCreateJSONObject(oCore, "Pixels");
     oPixels.Set("_type", "group");
     const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
-    oPixels.Set("Type", (eDT == GDT_Byte)     ? "UnsignedByte"
+    oPixels.Set("Type", (eDT == GDT_UInt8)    ? "UnsignedByte"
                         : (eDT == GDT_UInt16) ? "UnsignedWord"
                         : (eDT == GDT_Int16)  ? "SignedWord"
                                               : "Real");
@@ -3790,16 +3790,18 @@ CPLString ISIS3Dataset::SerializeAsPDL(const CPLJSONObject &oObj)
 /*                      SerializeAsPDL()                                */
 /************************************************************************/
 
+constexpr size_t WIDTH = 79;
+
 void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
                                   int nDepth)
 {
     CPLString osIndentation;
     for (int i = 0; i < nDepth; i++)
         osIndentation += "  ";
-    const size_t WIDTH = 79;
 
     std::vector<CPLJSONObject> aoChildren = oObj.GetChildren();
     size_t nMaxKeyLength = 0;
+    std::vector<std::pair<CPLString, CPLJSONObject>> aoChildren2;
     for (const CPLJSONObject &oChild : aoChildren)
     {
         const CPLString osKey = oChild.GetName();
@@ -3815,6 +3817,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
             eType == CPLJSONObject::Type::Double ||
             eType == CPLJSONObject::Type::Array)
         {
+            aoChildren2.emplace_back(osKey, oChild);
             if (osKey.size() > nMaxKeyLength)
             {
                 nMaxKeyLength = osKey.size();
@@ -3827,22 +3830,37 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
             if (oValue.IsValid() &&
                 oUnit.GetType() == CPLJSONObject::Type::String)
             {
+                aoChildren2.emplace_back(osKey, oChild);
                 if (osKey.size() > nMaxKeyLength)
                 {
                     nMaxKeyLength = osKey.size();
                 }
             }
+            else if (oChild.GetObj("values").GetType() ==
+                     CPLJSONObject::Type::Array)
+            {
+                if (osKey.size() > nMaxKeyLength)
+                {
+                    nMaxKeyLength = osKey.size();
+                }
+                for (const auto &oSubChild : oChild.GetObj("values").ToArray())
+                {
+                    aoChildren2.emplace_back(osKey, oSubChild);
+                }
+            }
+            else
+            {
+                aoChildren2.emplace_back(osKey, oChild);
+            }
+        }
+        else
+        {
+            aoChildren2.emplace_back(osKey, oChild);
         }
     }
 
-    for (const CPLJSONObject &oChild : aoChildren)
+    for (const auto &[osKey, oChild] : aoChildren2)
     {
-        const CPLString osKey = oChild.GetName();
-        if (EQUAL(osKey, "_type") || EQUAL(osKey, "_container_name") ||
-            EQUAL(osKey, "_filename") || EQUAL(osKey, "_data"))
-        {
-            continue;
-        }
         if (STARTS_WITH(osKey, "_comment"))
         {
             if (oChild.GetType() == CPLJSONObject::Type::String)
@@ -4009,11 +4027,70 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
             VSIFPrintfL(fp, "%s%s%s = (", osIndentation.c_str(), osKey.c_str(),
                         osPadding.c_str());
             size_t nCurPos = nFirstPos;
+
             for (int idx = 0; idx < nLength; idx++)
             {
                 CPLJSONObject oItem = oArrayItem[idx];
                 const auto eArrayItemType = oItem.GetType();
-                if (eArrayItemType == CPLJSONObject::Type::String)
+
+                const auto outputArrayVal =
+                    [fp, idx, nFirstPos, &nCurPos](const std::string &osVal)
+                {
+                    const size_t nValLen = osVal.size();
+                    if (nFirstPos < WIDTH && idx > 0 &&
+                        nCurPos + nValLen > WIDTH)
+                    {
+                        VSIFPrintfL(fp, "\n");
+                        for (size_t j = 0; j < nFirstPos; j++)
+                        {
+                            constexpr char chSpace = ' ';
+                            VSIFWriteL(&chSpace, 1, 1, fp);
+                        }
+                        nCurPos = nFirstPos;
+                    }
+                    VSIFPrintfL(fp, "%s", osVal.c_str());
+                    nCurPos += nValLen;
+                };
+
+                if (eArrayItemType == CPLJSONObject::Type::Object)
+                {
+                    const auto oValue = oItem["value"];
+                    const auto oUnit = oItem["unit"];
+                    if (oValue.IsValid() && oUnit.IsValid() &&
+                        (oValue.GetType() == CPLJSONObject::Type::Integer ||
+                         oValue.GetType() == CPLJSONObject::Type::Double))
+                    {
+                        if (oValue.GetType() == CPLJSONObject::Type::Integer)
+                        {
+                            const int nVal = oValue.ToInteger();
+                            outputArrayVal(CPLSPrintf(
+                                "%d <%s>", nVal, oUnit.ToString().c_str()));
+                        }
+                        else
+                        {
+                            const double dfVal = oValue.ToDouble();
+                            if (dfVal >= INT_MIN && dfVal <= INT_MAX &&
+                                static_cast<int>(dfVal) == dfVal)
+                            {
+                                outputArrayVal(CPLSPrintf(
+                                    "%d.0 <%s>", static_cast<int>(dfVal),
+                                    oUnit.ToString().c_str()));
+                            }
+                            else
+                            {
+                                outputArrayVal(
+                                    CPLSPrintf("%.17g <%s>", dfVal,
+                                               oUnit.ToString().c_str()));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Invalid JSON object");
+                    }
+                }
+                else if (eArrayItemType == CPLJSONObject::Type::String)
                 {
                     CPLString osVal = oItem.ToString();
                     const char *pszVal = osVal.c_str();
@@ -4063,21 +4140,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
                 else if (eArrayItemType == CPLJSONObject::Type::Integer)
                 {
                     const int nVal = oItem.ToInteger();
-                    const char *pszVal = CPLSPrintf("%d", nVal);
-                    const size_t nValLen = strlen(pszVal);
-                    if (nFirstPos < WIDTH && idx > 0 &&
-                        nCurPos + nValLen > WIDTH)
-                    {
-                        VSIFPrintfL(fp, "\n");
-                        for (size_t j = 0; j < nFirstPos; j++)
-                        {
-                            const char chSpace = ' ';
-                            VSIFWriteL(&chSpace, 1, 1, fp);
-                        }
-                        nCurPos = nFirstPos;
-                    }
-                    VSIFPrintfL(fp, "%d", nVal);
-                    nCurPos += nValLen;
+                    outputArrayVal(CPLSPrintf("%d", nVal));
                 }
                 else if (eArrayItemType == CPLJSONObject::Type::Double)
                 {
@@ -4092,20 +4155,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
                     {
                         osVal = CPLSPrintf("%.17g", dfVal);
                     }
-                    const size_t nValLen = osVal.size();
-                    if (nFirstPos < WIDTH && idx > 0 &&
-                        nCurPos + nValLen > WIDTH)
-                    {
-                        VSIFPrintfL(fp, "\n");
-                        for (size_t j = 0; j < nFirstPos; j++)
-                        {
-                            const char chSpace = ' ';
-                            VSIFWriteL(&chSpace, 1, 1, fp);
-                        }
-                        nCurPos = nFirstPos;
-                    }
-                    VSIFPrintfL(fp, "%s", osVal.c_str());
-                    nCurPos += nValLen;
+                    outputArrayVal(osVal);
                 }
                 if (idx < nLength - 1)
                 {
@@ -4126,7 +4176,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
                                   int nYSize, int nBandsIn, GDALDataType eType,
                                   char **papszOptions)
 {
-    if (eType != GDT_Byte && eType != GDT_UInt16 && eType != GDT_Int16 &&
+    if (eType != GDT_UInt8 && eType != GDT_UInt16 && eType != GDT_Int16 &&
         eType != GDT_Float32)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported data type");
@@ -4289,7 +4339,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
         poDS->m_osGDALHistory =
             CSLFetchNameValueDef(papszOptions, "GDAL_HISTORY", "");
     }
-    const double dfNoData = (eType == GDT_Byte)     ? ISIS3_NULL1
+    const double dfNoData = (eType == GDT_UInt8)    ? ISIS3_NULL1
                             : (eType == GDT_UInt16) ? ISIS3_NULLU2
                             : (eType == GDT_Int16)
                                 ? ISIS3_NULL2

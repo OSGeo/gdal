@@ -86,7 +86,7 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(CPLXMLNode *psLTree,
     if (!EQUAL(psLTree->pszValue, "OGRVRTWarpedLayer"))
         return nullptr;
 
-    OGRLayer *poSrcLayer = nullptr;
+    std::unique_ptr<OGRLayer> poSrcLayer;
 
     for (CPLXMLNode *psSubNode = psLTree->psChild; psSubNode != nullptr;
          psSubNode = psSubNode->psNext)
@@ -94,8 +94,8 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(CPLXMLNode *psLTree,
         if (psSubNode->eType != CXT_Element)
             continue;
 
-        poSrcLayer = InstantiateLayer(psSubNode, pszVRTDirectory, bUpdate,
-                                      nRecLevel + 1);
+        poSrcLayer.reset(InstantiateLayer(psSubNode, pszVRTDirectory, bUpdate,
+                                          nRecLevel + 1));
         if (poSrcLayer != nullptr)
             break;
     }
@@ -112,7 +112,6 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(CPLXMLNode *psLTree,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing TargetSRS element within OGRVRTWarpedLayer");
-        delete poSrcLayer;
         return nullptr;
     }
 
@@ -128,94 +127,80 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(CPLXMLNode *psLTree,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot find source geometry field '%s'",
                      pszGeomFieldName);
-            delete poSrcLayer;
             return nullptr;
         }
     }
 
-    const OGRSpatialReference *poSrcSRS = nullptr;
+    std::unique_ptr<OGRSpatialReference> poSrcSRS;
     const char *pszSourceSRS = CPLGetXMLValue(psLTree, "SrcSRS", nullptr);
 
     if (pszSourceSRS == nullptr)
     {
         if (iGeomField < poSrcLayer->GetLayerDefn()->GetGeomFieldCount())
         {
-            poSrcSRS = poSrcLayer->GetLayerDefn()
-                           ->GetGeomFieldDefn(iGeomField)
-                           ->GetSpatialRef();
-            if (poSrcSRS != nullptr)
-                poSrcSRS = poSrcSRS->Clone();
+            const auto *poSrcLayerSRS = poSrcLayer->GetLayerDefn()
+                                            ->GetGeomFieldDefn(iGeomField)
+                                            ->GetSpatialRef();
+            if (poSrcLayerSRS)
+                poSrcSRS.reset(poSrcLayerSRS->Clone());
         }
     }
     else
     {
-        auto poSrcSRSNonConst = new OGRSpatialReference();
-        poSrcSRSNonConst->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if (poSrcSRSNonConst->SetFromUserInput(
+        poSrcSRS = std::make_unique<OGRSpatialReference>();
+        poSrcSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poSrcSRS->SetFromUserInput(
                 pszSourceSRS,
                 OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
             OGRERR_NONE)
         {
-            delete poSrcSRSNonConst;
-        }
-        else
-        {
-            poSrcSRS = poSrcSRSNonConst;
+            poSrcSRS.reset();
         }
     }
 
     if (poSrcSRS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Failed to import source SRS");
-        delete poSrcLayer;
         return nullptr;
     }
 
-    OGRSpatialReference *poTargetSRS = new OGRSpatialReference();
+    auto poTargetSRS = std::make_unique<OGRSpatialReference>();
     poTargetSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if (poTargetSRS->SetFromUserInput(
             pszTargetSRS,
             OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
         OGRERR_NONE)
     {
-        delete poTargetSRS;
-        poTargetSRS = nullptr;
+        poTargetSRS.reset();
     }
 
     if (poTargetSRS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Failed to import target SRS");
-        delete poSrcSRS;
-        delete poSrcLayer;
         return nullptr;
     }
 
-    if (pszSourceSRS == nullptr && poSrcSRS->IsSame(poTargetSRS))
+    if (pszSourceSRS == nullptr && poSrcSRS->IsSame(poTargetSRS.get()))
     {
-        delete poSrcSRS;
-        delete poTargetSRS;
-        return poSrcLayer;
+        return poSrcLayer.release();
     }
 
-    OGRCoordinateTransformation *poCT =
-        OGRCreateCoordinateTransformation(poSrcSRS, poTargetSRS);
-    OGRCoordinateTransformation *poReversedCT =
-        poCT != nullptr
-            ? OGRCreateCoordinateTransformation(poTargetSRS, poSrcSRS)
-            : nullptr;
-
-    delete poSrcSRS;
-    delete poTargetSRS;
+    std::unique_ptr<OGRCoordinateTransformation> poCT(
+        OGRCreateCoordinateTransformation(poSrcSRS.get(), poTargetSRS.get()));
+    std::unique_ptr<OGRCoordinateTransformation> poReversedCT(
+        poCT != nullptr ? OGRCreateCoordinateTransformation(poTargetSRS.get(),
+                                                            poSrcSRS.get())
+                        : nullptr);
 
     if (poCT == nullptr)
     {
-        delete poSrcLayer;
         return nullptr;
     }
 
     // Build the OGRWarpedLayer.
-    OGRWarpedLayer *poLayer =
-        new OGRWarpedLayer(poSrcLayer, iGeomField, TRUE, poCT, poReversedCT);
+    auto poLayer = std::make_unique<OGRWarpedLayer>(
+        poSrcLayer.release(), iGeomField, TRUE, std::move(poCT),
+        std::move(poReversedCT));
 
     // Set Extent if provided.
     const char *pszExtentXMin = CPLGetXMLValue(psLTree, "ExtentXMin", nullptr);
@@ -229,7 +214,7 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(CPLXMLNode *psLTree,
                            CPLAtof(pszExtentXMax), CPLAtof(pszExtentYMax));
     }
 
-    return poLayer;
+    return poLayer.release();
 }
 
 /************************************************************************/
@@ -297,10 +282,8 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(CPLXMLNode *psLTree,
     }
 
     // Find field declarations.
-    OGRFieldDefn **papoFields = nullptr;
-    int nFields = 0;
-    OGRUnionLayerGeomFieldDefn **papoGeomFields = nullptr;
-    int nGeomFields = 0;
+    std::vector<OGRFieldDefn> aoFields;
+    std::vector<OGRUnionLayerGeomFieldDefn> aoGeomFields;
 
     for (CPLXMLNode *psSubNode = psLTree->psChild; psSubNode != nullptr;
          psSubNode = psSubNode->psNext)
@@ -366,10 +349,7 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(CPLXMLNode *psLTree,
             }
             oFieldDefn.SetPrecision(nPrecision);
 
-            papoFields = static_cast<OGRFieldDefn **>(
-                CPLRealloc(papoFields, sizeof(OGRFieldDefn *) * (nFields + 1)));
-            papoFields[nFields] = new OGRFieldDefn(&oFieldDefn);
-            nFields++;
+            aoFields.emplace_back(&oFieldDefn);
         }
         else if (EQUAL(psSubNode->pszValue, "GeometryField"))
         {
@@ -382,7 +362,7 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(CPLXMLNode *psLTree,
             }
 
             pszGType = CPLGetXMLValue(psSubNode, "GeometryType", nullptr);
-            if (pszGType == nullptr && nGeomFields == 0)
+            if (pszGType == nullptr && aoGeomFields.empty())
                 pszGType = CPLGetXMLValue(psLTree, "GeometryType", nullptr);
             OGRwkbGeometryType eGeomType = wkbUnknown;
             bool bGeomTypeSet = false;
@@ -400,7 +380,7 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(CPLXMLNode *psLTree,
             }
 
             const char *pszSRS = CPLGetXMLValue(psSubNode, "SRS", nullptr);
-            if (pszSRS == nullptr && nGeomFields == 0)
+            if (pszSRS == nullptr && aoGeomFields.empty())
                 pszSRS = CPLGetXMLValue(psLTree, "LayerSRS", nullptr);
             OGRSpatialReference *poSRS = nullptr;
             bool bSRSSet = false;
@@ -426,15 +406,15 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(CPLXMLNode *psLTree,
                 }
             }
 
-            OGRUnionLayerGeomFieldDefn *poFieldDefn =
-                new OGRUnionLayerGeomFieldDefn(l_pszName, eGeomType);
+            aoGeomFields.emplace_back(l_pszName, eGeomType);
+            OGRUnionLayerGeomFieldDefn &oFieldDefn = aoGeomFields.back();
             if (poSRS != nullptr)
             {
-                poFieldDefn->SetSpatialRef(poSRS);
+                oFieldDefn.SetSpatialRef(poSRS);
                 poSRS->Dereference();
             }
-            poFieldDefn->bGeomTypeSet = bGeomTypeSet;
-            poFieldDefn->bSRSSet = bSRSSet;
+            oFieldDefn.bGeomTypeSet = bGeomTypeSet;
+            oFieldDefn.bSRSSet = bSRSSet;
 
             const char *pszExtentXMin =
                 CPLGetXMLValue(psSubNode, "ExtentXMin", nullptr);
@@ -447,18 +427,11 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(CPLXMLNode *psLTree,
             if (pszExtentXMin != nullptr && pszExtentYMin != nullptr &&
                 pszExtentXMax != nullptr && pszExtentYMax != nullptr)
             {
-                poFieldDefn->sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
-                poFieldDefn->sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
-                poFieldDefn->sStaticEnvelope.MaxX = CPLAtof(pszExtentXMax);
-                poFieldDefn->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
+                oFieldDefn.sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
+                oFieldDefn.sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
+                oFieldDefn.sStaticEnvelope.MaxX = CPLAtof(pszExtentXMax);
+                oFieldDefn.sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
             }
-
-            papoGeomFields =
-                static_cast<OGRUnionLayerGeomFieldDefn **>(CPLRealloc(
-                    papoGeomFields,
-                    sizeof(OGRUnionLayerGeomFieldDefn *) * (nGeomFields + 1)));
-            papoGeomFields[nGeomFields] = poFieldDefn;
-            nGeomFields++;
         }
     }
 
@@ -468,35 +441,29 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(CPLXMLNode *psLTree,
     const char *pszExtentXMax = CPLGetXMLValue(psLTree, "ExtentXMax", nullptr);
     const char *pszExtentYMax = CPLGetXMLValue(psLTree, "ExtentYMax", nullptr);
 
-    if (eGlobalGeomType != wkbNone && nGeomFields == 0 &&
+    if (eGlobalGeomType != wkbNone && aoGeomFields.empty() &&
         (bGlobalGeomTypeSet || bGlobalSRSSet ||
          (pszExtentXMin != nullptr && pszExtentYMin != nullptr &&
           pszExtentXMax != nullptr && pszExtentYMax != nullptr)))
     {
-        OGRUnionLayerGeomFieldDefn *poFieldDefn =
-            new OGRUnionLayerGeomFieldDefn("", eGlobalGeomType);
+        aoGeomFields.emplace_back("", eGlobalGeomType);
+        auto &oFieldDefn = aoGeomFields.back();
         if (poGlobalSRS != nullptr)
         {
-            poFieldDefn->SetSpatialRef(poGlobalSRS);
+            oFieldDefn.SetSpatialRef(poGlobalSRS);
             poGlobalSRS->Dereference();
             poGlobalSRS = nullptr;
         }
-        poFieldDefn->bGeomTypeSet = bGlobalGeomTypeSet;
-        poFieldDefn->bSRSSet = bGlobalSRSSet;
+        oFieldDefn.bGeomTypeSet = bGlobalGeomTypeSet;
+        oFieldDefn.bSRSSet = bGlobalSRSSet;
         if (pszExtentXMin != nullptr && pszExtentYMin != nullptr &&
             pszExtentXMax != nullptr && pszExtentYMax != nullptr)
         {
-            poFieldDefn->sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
-            poFieldDefn->sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
-            poFieldDefn->sStaticEnvelope.MaxX = CPLAtof(pszExtentXMax);
-            poFieldDefn->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
+            oFieldDefn.sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
+            oFieldDefn.sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
+            oFieldDefn.sStaticEnvelope.MaxX = CPLAtof(pszExtentXMax);
+            oFieldDefn.sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
         }
-
-        papoGeomFields = static_cast<OGRUnionLayerGeomFieldDefn **>(
-            CPLRealloc(papoGeomFields, sizeof(OGRUnionLayerGeomFieldDefn *) *
-                                           (nGeomFields + 1)));
-        papoGeomFields[nGeomFields] = poFieldDefn;
-        nGeomFields++;
     }
     else
     {
@@ -528,12 +495,6 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(CPLXMLNode *psLTree,
     if (nSrcLayers == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find source layers");
-        for (int iField = 0; iField < nFields; iField++)
-            delete papoFields[iField];
-        CPLFree(papoFields);
-        for (int iField = 0; iField < nGeomFields; iField++)
-            delete papoGeomFields[iField];
-        CPLFree(papoGeomFields);
         return nullptr;
     }
 
@@ -573,7 +534,7 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(CPLXMLNode *psLTree,
                      pszFieldStrategy);
         }
     }
-    if (nFields != 0 || nGeomFields > 1)
+    if (!aoFields.empty() || aoGeomFields.size() > 1)
     {
         if (pszFieldStrategy != nullptr)
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -582,17 +543,12 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(CPLXMLNode *psLTree,
         eFieldStrategy = FIELD_SPECIFIED;
     }
 
-    poLayer->SetFields(
-        eFieldStrategy, nFields, papoFields,
-        (nGeomFields == 0 && eGlobalGeomType == wkbNone) ? -1 : nGeomFields,
-        papoGeomFields);
-
-    for (int iField = 0; iField < nFields; iField++)
-        delete papoFields[iField];
-    CPLFree(papoFields);
-    for (int iField = 0; iField < nGeomFields; iField++)
-        delete papoGeomFields[iField];
-    CPLFree(papoGeomFields);
+    poLayer->SetFields(eFieldStrategy, static_cast<int>(aoFields.size()),
+                       aoFields.data(),
+                       (aoGeomFields.empty() && eGlobalGeomType == wkbNone)
+                           ? -1
+                           : static_cast<int>(aoGeomFields.size()),
+                       aoGeomFields.data());
 
     // Set FeatureCount if provided.
     const char *pszFeatureCount =

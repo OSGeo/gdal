@@ -44,11 +44,6 @@ def main(argv=None):
     global nFetchFID
     global papszOptions
 
-    version_num = int(gdal.VersionInfo("VERSION_NUM"))
-    if version_num < 1800:  # because of ogr.GetFieldTypeName
-        print("ERROR: Python bindings of GDAL 1.8.0 or later required")
-        return 1
-
     pszWHERE = None
     pszDataSource = None
     papszLayers = None

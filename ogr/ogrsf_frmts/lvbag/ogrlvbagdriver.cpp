@@ -80,7 +80,7 @@ GDALDataset *OGRLVBAGDriverOpen(GDALOpenInfo *poOpenInfo)
     }
 
     const char *pszFilename = poOpenInfo->pszFilename;
-    auto poDS = std::unique_ptr<OGRLVBAGDataSource>{new OGRLVBAGDataSource{}};
+    auto poDS = std::make_unique<OGRLVBAGDataSource>();
     poDS->SetDescription(pszFilename);
 
     if (!poOpenInfo->bIsDirectory && poOpenInfo->fpL != nullptr)

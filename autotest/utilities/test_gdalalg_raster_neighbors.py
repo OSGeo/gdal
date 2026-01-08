@@ -25,17 +25,20 @@ def neighbors():
     return raster.InstantiateSubAlgorithm("neighbors")
 
 
-def test_gdalalg_raster_neighbors_kernel_sharpen(neighbors):
+@pytest.mark.parametrize(
+    "kernel,checksum", [("sharpen", 4252), ("edge1", 2278), ("edge2", 2311)]
+)
+def test_gdalalg_raster_neighbors_kernel_sharpen(neighbors, kernel, checksum):
 
     neighbors["input"] = "../gcore/data/byte.tif"
-    neighbors["kernel"] = "sharpen"
+    neighbors["kernel"] = kernel
     neighbors["output-format"] = "MEM"
     neighbors["datatype"] = "Byte"
     assert neighbors.Run()
 
     out_ds = neighbors["output"].GetDataset()
-    out_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
-    assert out_ds.GetRasterBand(1).Checksum() == 4252
+    out_ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
+    assert out_ds.GetRasterBand(1).Checksum() == checksum
 
 
 def test_gdalalg_raster_neighbors_kernel_manual(neighbors):
@@ -67,16 +70,18 @@ def test_gdalalg_raster_neighbors_kernel_manual2(neighbors):
     assert out_ds.GetRasterBand(2).Checksum() == 4672
 
 
-def test_gdalalg_raster_neighbors_error_band_not_specified(neighbors):
+def test_gdalalg_raster_neighbors_multible_band(neighbors):
 
     neighbors["input"] = "../gdrivers/data/small_world.tif"
     neighbors["kernel"] = "sharpen"
     neighbors["output-format"] = "MEM"
-    with pytest.raises(
-        Exception,
-        match="'band' argument should be specified given input dataset has several bands",
-    ):
-        neighbors.Run()
+    assert neighbors.Run()
+
+    out_ds = neighbors["output"].GetDataset()
+    assert out_ds.RasterCount == 3
+    assert out_ds.GetRasterBand(1).Checksum() == 31543
+    assert out_ds.GetRasterBand(2).Checksum() == 35728
+    assert out_ds.GetRasterBand(3).Checksum() == 32040
 
 
 def test_gdalalg_raster_neighbors_mean(neighbors):
@@ -509,3 +514,29 @@ def test_gdalalg_raster_neighbors_complete():
         f"{gdal_path} completion gdal raster neighbors --kernel ["
     ).split(" ")
     assert "sharpen" not in out
+
+
+def test_gdalalg_raster_neighbors_custom_kernel_0_sum(neighbors):
+
+    neighbors["input"] = "../gcore/data/byte.tif"
+    neighbors["kernel"] = [[0, -0.04, 0], [-0.04, 0.16, -0.04], [0, -0.04, 0]]
+    neighbors["output-format"] = "MEM"
+    assert neighbors.Run()
+
+    out_ds = neighbors.Output()
+    assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == pytest.approx(
+        (-7.56, 12.24)
+    )
+
+
+def test_gdalalg_raster_neighbors_custom_kernel_0_sum_error(neighbors):
+
+    neighbors["input"] = "../gcore/data/byte.tif"
+    neighbors["kernel"] = [[0, -0.04, 0], [-0.04, 0.16, -0.04], [0, -0.04, 0]]
+    neighbors["method"] = "mean"
+    neighbors["output-format"] = "MEM"
+    with pytest.raises(
+        Exception,
+        match="Specifying method = 'mean' for a kernel whose sum of coefficients is zero is not allowed. Use 'sum' instead",
+    ):
+        neighbors.Run()

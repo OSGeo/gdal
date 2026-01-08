@@ -1026,6 +1026,25 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                 }
             }
 
+            if (aosArrayCO.FetchNameValue("BLOCKSIZE") == nullptr)
+            {
+                const auto anBlockSize = srcArray->GetBlockSize();
+                std::string osBlockSize;
+                for (auto v : anBlockSize)
+                {
+                    if (v == 0)
+                    {
+                        osBlockSize.clear();
+                        break;
+                    }
+                    if (!osBlockSize.empty())
+                        osBlockSize += ',';
+                    osBlockSize += std::to_string(v);
+                }
+                if (!osBlockSize.empty())
+                    aosArrayCO.SetNameValue("BLOCKSIZE", osBlockSize.c_str());
+            }
+
             auto oIterDimName =
                 mapSrcVariableNameToIndexedDimName.find(srcArray->GetName());
             const auto &srcArrayType = srcArray->GetDataType();
@@ -1067,7 +1086,7 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
 
                 switch (eAutoScaleType)
                 {
-                    case GDT_Byte:
+                    case GDT_UInt8:
                         setDTMinMax(GByte);
                         break;
                     case GDT_Int8:
@@ -1328,7 +1347,7 @@ GDALGroup::OpenAttributeFromFullname(const std::string &osFullName,
  * Otherwise the search will start from the group identified by osStartingPath,
  * and an array whose name is osName will be looked for in this group (if
  * osStartingPath is empty or "/", then the current group is used). If there
- * is no match, then a recursive descendent search will be made in its
+ * is no match, then a recursive descendant search will be made in its
  * subgroups. If there is no match in the subgroups, then the parent (if
  * existing) of the group pointed by osStartingPath will be used as the new
  * starting point for the search.
@@ -1728,7 +1747,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
         {
             case GDT_Unknown:
                 break;
-            case GDT_Byte:
+            case GDT_UInt8:
                 str = CPLSPrintf("%d", *static_cast<const GByte *>(pSrc));
                 break;
             case GDT_Int8:
@@ -2401,7 +2420,7 @@ GUInt64 GDALAbstractMDArray::GetTotalElementsCount() const
  *
  * This method is used by GetProcessingChunkSize().
  *
- * Pedantic note: the returned type is GUInt64, so in the highly unlikeley
+ * Pedantic note: the returned type is GUInt64, so in the highly unlikely
  * theoretical case of a 32-bit platform, this might exceed its size_t
  * allocation capabilities.
  *
@@ -5447,17 +5466,23 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
             }
             GUInt64 nEndIdx = endIdx;
             nEndIdx = EQUAL(pszEnd, "") ? (!bPosIncr ? 0 : nDimSize) : nEndIdx;
-            if ((bPosIncr && range.m_nStartIdx >= nEndIdx) ||
-                (!bPosIncr && range.m_nStartIdx <= nEndIdx))
+            if (pszStart[0] || pszEnd[0])
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Output dimension of size 0 is not allowed");
-                return nullptr;
+                if ((bPosIncr && range.m_nStartIdx >= nEndIdx) ||
+                    (!bPosIncr && range.m_nStartIdx <= nEndIdx))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Output dimension of size 0 is not allowed");
+                    return nullptr;
+                }
             }
             int inc = (EQUAL(pszEnd, "") && !bPosIncr) ? 1 : 0;
             const auto nAbsIncr = std::abs(range.m_nIncr);
             const GUInt64 newSize =
-                bPosIncr
+                (pszStart[0] == 0 && pszEnd[0] == 0 &&
+                 range.m_nStartIdx == nEndIdx)
+                    ? 1
+                : bPosIncr
                     ? DIV_ROUND_UP(nEndIdx - range.m_nStartIdx, nAbsIncr)
                     : DIV_ROUND_UP(inc + range.m_nStartIdx - nEndIdx, nAbsIncr);
             const auto &poSrcDim = srcDims[nCurSrcDim];
@@ -6710,7 +6735,7 @@ class GDALMDArrayMask final : public GDALPamMDArray
 {
   private:
     std::shared_ptr<GDALMDArray> m_poParent{};
-    GDALExtendedDataType m_dt{GDALExtendedDataType::Create(GDT_Byte)};
+    GDALExtendedDataType m_dt{GDALExtendedDataType::Create(GDT_UInt8)};
     double m_dfMissingValue = 0.0;
     bool m_bHasMissingValue = false;
     double m_dfFillValue = 0.0;
@@ -6912,8 +6937,9 @@ bool GDALMDArrayMask::Init(CSLConstList papszOptions)
         {
             const auto eType = poFlagValues->GetDataType().GetNumericDataType();
             // We could support Int64 or UInt64, but more work...
-            if (eType != GDT_Byte && eType != GDT_Int8 && eType != GDT_UInt16 &&
-                eType != GDT_Int16 && eType != GDT_UInt32 && eType != GDT_Int32)
+            if (eType != GDT_UInt8 && eType != GDT_Int8 &&
+                eType != GDT_UInt16 && eType != GDT_Int16 &&
+                eType != GDT_UInt32 && eType != GDT_Int32)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Unsupported data type for flag_values attribute: %s",
@@ -6926,8 +6952,9 @@ bool GDALMDArrayMask::Init(CSLConstList papszOptions)
         {
             const auto eType = poFlagMasks->GetDataType().GetNumericDataType();
             // We could support Int64 or UInt64, but more work...
-            if (eType != GDT_Byte && eType != GDT_Int8 && eType != GDT_UInt16 &&
-                eType != GDT_Int16 && eType != GDT_UInt32 && eType != GDT_Int32)
+            if (eType != GDT_UInt8 && eType != GDT_Int8 &&
+                eType != GDT_UInt16 && eType != GDT_Int16 &&
+                eType != GDT_UInt32 && eType != GDT_Int32)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Unsupported data type for flag_masks attribute: %s",
@@ -7089,7 +7116,7 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         GByte abyOne[16];  // 16 is sizeof GDT_CFloat64
         CPLAssert(nBufferDTSize <= 16);
         const GByte flag = 1;
-        GDALCopyWords64(&flag, GDT_Byte, 0, abyOne,
+        GDALCopyWords64(&flag, GDT_UInt8, 0, abyOne,
                         bufferDataType.GetNumericDataType(), 0, 1);
 
     lbl_next_depth:
@@ -7154,7 +7181,7 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
     switch (oTmpBufferDT.GetNumericDataType())
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             ReadInternal<GByte>(count, bufferStride, bufferDataType, pDstBuffer,
                                 pTempBuffer, oTmpBufferDT,
                                 tmpBufferStrideVector);
@@ -8755,7 +8782,7 @@ class GDALDatasetFromArray final : public GDALPamDataset
 
     ~GDALDatasetFromArray() override;
 
-    CPLErr Close() override
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override
     {
         CPLErr eErr = CE_None;
         if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -12910,7 +12937,7 @@ double GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int *pbHasValue,
  *
  * This method is used by GetProcessingChunkSize().
  *
- * Pedantic note: the returned type is GUInt64, so in the highly unlikeley
+ * Pedantic note: the returned type is GUInt64, so in the highly unlikely
  * theoretical case of a 32-bit platform, this might exceed its size_t
  * allocation capabilities.
  *
@@ -15099,4 +15126,251 @@ GDALMDIAsAttribute::GetDimensions() const
     return m_dims;
 }
 
+/************************************************************************/
+/*           GDALMDArrayRawBlockInfo::~GDALMDArrayRawBlockInfo()        */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo::~GDALMDArrayRawBlockInfo()
+{
+    clear();
+}
+
+/************************************************************************/
+/*                     GDALMDArrayRawBlockInfo::clear()                 */
+/************************************************************************/
+
+void GDALMDArrayRawBlockInfo::clear()
+{
+    CPLFree(pszFilename);
+    pszFilename = nullptr;
+    CSLDestroy(papszInfo);
+    papszInfo = nullptr;
+    nOffset = 0;
+    nSize = 0;
+    CPLFree(pabyInlineData);
+    pabyInlineData = nullptr;
+}
+
+/************************************************************************/
+/*            GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo()        */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo(
+    const GDALMDArrayRawBlockInfo &other)
+    : pszFilename(other.pszFilename ? CPLStrdup(other.pszFilename) : nullptr),
+      nOffset(other.nOffset), nSize(other.nSize),
+      papszInfo(CSLDuplicate(other.papszInfo)), pabyInlineData(nullptr)
+{
+    if (other.pabyInlineData)
+    {
+        pabyInlineData = static_cast<GByte *>(
+            VSI_MALLOC_VERBOSE(static_cast<size_t>(other.nSize)));
+        if (pabyInlineData)
+            memcpy(pabyInlineData, other.pabyInlineData,
+                   static_cast<size_t>(other.nSize));
+    }
+}
+
+/************************************************************************/
+/*                GDALMDArrayRawBlockInfo::operator=()                  */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo &
+GDALMDArrayRawBlockInfo::operator=(const GDALMDArrayRawBlockInfo &other)
+{
+    if (this != &other)
+    {
+        CPLFree(pszFilename);
+        pszFilename =
+            other.pszFilename ? CPLStrdup(other.pszFilename) : nullptr;
+        nOffset = other.nOffset;
+        nSize = other.nSize;
+        CSLDestroy(papszInfo);
+        papszInfo = CSLDuplicate(other.papszInfo);
+        CPLFree(pabyInlineData);
+        pabyInlineData = nullptr;
+        if (other.pabyInlineData)
+        {
+            pabyInlineData = static_cast<GByte *>(
+                VSI_MALLOC_VERBOSE(static_cast<size_t>(other.nSize)));
+            if (pabyInlineData)
+                memcpy(pabyInlineData, other.pabyInlineData,
+                       static_cast<size_t>(other.nSize));
+        }
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*            GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo()        */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo(
+    GDALMDArrayRawBlockInfo &&other)
+    : pszFilename(other.pszFilename), nOffset(other.nOffset),
+      nSize(other.nSize), papszInfo(other.papszInfo),
+      pabyInlineData(other.pabyInlineData)
+{
+    other.pszFilename = nullptr;
+    other.papszInfo = nullptr;
+    other.pabyInlineData = nullptr;
+}
+
+/************************************************************************/
+/*                GDALMDArrayRawBlockInfo::operator=()                  */
+/************************************************************************/
+
+GDALMDArrayRawBlockInfo &
+GDALMDArrayRawBlockInfo::operator=(GDALMDArrayRawBlockInfo &&other)
+{
+    if (this != &other)
+    {
+        std::swap(pszFilename, other.pszFilename);
+        nOffset = other.nOffset;
+        nSize = other.nSize;
+        std::swap(papszInfo, other.papszInfo);
+        std::swap(pabyInlineData, other.pabyInlineData);
+    }
+    return *this;
+}
+
 //! @endcond
+
+/************************************************************************/
+/*                       GDALMDArray::GetRawBlockInfo()                 */
+/************************************************************************/
+
+/** Return information on a raw block.
+ *
+ * The block coordinates must be between 0 and
+ * (GetDimensions()[i]->GetSize() / GetBlockSize()[i]) - 1, for all i between
+ * 0 and GetDimensionCount()-1.
+ *
+ * If the queried block has valid coordinates but is missing in the dataset,
+ * all fields of info will be set to 0/nullptr, but the function will return
+ * true.
+ *
+ * This method is only implemented by a subset of drivers. The base
+ * implementation just returns false and empty info.
+ *
+ * The values returned in psBlockInfo->papszInfo are driver dependent.
+ *
+ * For multi-byte data types, drivers should return a "ENDIANNESS" key whose
+ * value is "LITTLE" or "BIG".
+ *
+ * For HDF5 and netCDF 4, the potential keys are "COMPRESSION" (possible values
+ * "DEFLATE" or "SZIP") and "FILTER" (if several filters, names are
+ * comma-separated)
+ *
+ * For ZARR, the potential keys are "COMPRESSOR" (value is the JSON encoded
+ * content from the array definition), "FILTERS" (for Zarr V2, value is JSON
+ * encoded content) and "TRANSPOSE_ORDER" (value is a string like
+ * "[idx0,...,idxN]" with the permutation).
+ *
+ * For VRT, the potential keys are the ones of the underlying source(s). Note
+ * that GetRawBlockInfo() on VRT only works when the VRT declares a block size,
+ * that for each queried VRT block, there is one and only one source that
+ * is used to fill the VRT block and that the block size of this source is
+ * exactly the one of the VRT block.
+ *
+ * This is the same as C function GDALMDArrayGetRawBlockInfo().
+ *
+ * @param panBlockCoordinates array of GetDimensionCount() values with the block
+ *                            coordinates.
+ * @param[out] info structure to fill with block information.
+ * @return true in case of success, or false if an error occurs.
+ * @since 3.12
+ */
+bool GDALMDArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
+                                  GDALMDArrayRawBlockInfo &info) const
+{
+    (void)panBlockCoordinates;
+    info.clear();
+    return false;
+}
+
+/************************************************************************/
+/*                      GDALMDArrayGetRawBlockInfo()                    */
+/************************************************************************/
+
+/** Return information on a raw block.
+ *
+ * The block coordinates must be between 0 and
+ * (GetDimensions()[i]->GetSize() / GetBlockSize()[i]) - 1, for all i between
+ * 0 and GetDimensionCount()-1.
+ *
+ * If the queried block has valid coordinates but is missing in the dataset,
+ * all fields of info will be set to 0/nullptr, but the function will return
+ * true.
+ *
+ * This method is only implemented by a subset of drivers. The base
+ * implementation just returns false and empty info.
+ *
+ * The values returned in psBlockInfo->papszInfo are driver dependent.
+ *
+ * For multi-byte data types, drivers should return a "ENDIANNESS" key whose
+ * value is "LITTLE" or "BIG".
+ *
+ * For HDF5 and netCDF 4, the potential keys are "COMPRESSION" (possible values
+ * "DEFLATE" or "SZIP") and "FILTER" (if several filters, names are
+ * comma-separated)
+ *
+ * For ZARR, the potential keys are "COMPRESSOR" (value is the JSON encoded
+ * content from the array definition), "FILTERS" (for Zarr V2, value is JSON
+ * encoded content) and "TRANSPOSE_ORDER" (value is a string like
+ * "[idx0,...,idxN]" with the permutation).
+ *
+ * For VRT, the potential keys are the ones of the underlying source(s). Note
+ * that GetRawBlockInfo() on VRT only works when the VRT declares a block size,
+ * that for each queried VRT block, there is one and only one source that
+ * is used to fill the VRT block and that the block size of this source is
+ * exactly the one of the VRT block.
+ *
+ * This is the same as C++ method GDALMDArray::GetRawBlockInfo().
+ *
+ * @param hArray handle to array.
+ * @param panBlockCoordinates array of GetDimensionCount() values with the block
+ *                            coordinates.
+ * @param[out] psBlockInfo structure to fill with block information.
+ *                         Must be allocated with GDALMDArrayRawBlockInfoCreate(),
+ *                         and freed with GDALMDArrayRawBlockInfoRelease().
+ * @return true in case of success, or false if an error occurs.
+ * @since 3.12
+ */
+bool GDALMDArrayGetRawBlockInfo(GDALMDArrayH hArray,
+                                const uint64_t *panBlockCoordinates,
+                                GDALMDArrayRawBlockInfo *psBlockInfo)
+{
+    VALIDATE_POINTER1(hArray, __func__, false);
+    VALIDATE_POINTER1(panBlockCoordinates, __func__, false);
+    VALIDATE_POINTER1(psBlockInfo, __func__, false);
+    return hArray->m_poImpl->GetRawBlockInfo(panBlockCoordinates, *psBlockInfo);
+}
+
+/************************************************************************/
+/*                    GDALMDArrayRawBlockInfoCreate()                   */
+/************************************************************************/
+
+/** Allocate a new instance of GDALMDArrayRawBlockInfo.
+ *
+ * Returned pointer must be freed with GDALMDArrayRawBlockInfoRelease().
+ *
+ * @since 3.12
+ */
+GDALMDArrayRawBlockInfo *GDALMDArrayRawBlockInfoCreate(void)
+{
+    return new GDALMDArrayRawBlockInfo();
+}
+
+/************************************************************************/
+/*                    GDALMDArrayRawBlockInfoRelease()                  */
+/************************************************************************/
+
+/** Free an instance of GDALMDArrayRawBlockInfo.
+ *
+ * @since 3.12
+ */
+void GDALMDArrayRawBlockInfoRelease(GDALMDArrayRawBlockInfo *psBlockInfo)
+{
+    delete psBlockInfo;
+}

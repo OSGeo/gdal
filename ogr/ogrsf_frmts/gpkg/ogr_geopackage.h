@@ -287,7 +287,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     std::map<std::string, std::unique_ptr<GDALDataset>> m_oCachedRasterDS{};
 
     bool CloseDB();
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALGeoPackageDataset)
 
@@ -339,6 +339,12 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     GetFieldDomain(const std::string &name) const override;
     bool AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                         std::string &failureReason) override;
+
+    bool UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
+                           std::string &failureReason) override;
+
+    bool DeleteFieldDomain(const std::string &name,
+                           std::string &failureReason) override;
 
     bool AddRelationship(std::unique_ptr<GDALRelationship> &&relationship,
                          std::string &failureReason) override;

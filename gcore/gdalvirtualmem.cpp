@@ -42,7 +42,7 @@ class GDALVirtualMem
     // int nYSize;
     coord_type nBufXSize = 0;
     coord_type nBufYSize = 0;
-    GDALDataType eBufType = GDT_Byte;
+    GDALDataType eBufType = GDT_UInt8;
     int nBandCount = 0;
     int *panBandMap = nullptr;
     int nPixelSpace = 0;
@@ -876,7 +876,6 @@ GDALGetVirtualMem(GDALDatasetH hDS, GDALRasterBandH hBand, GDALRWFlag eRWFlag,
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
  *         or NULL in case of failure.
  *
- * @since GDAL 1.11
  */
 
 CPLVirtualMem *GDALDatasetGetVirtualMem(
@@ -994,7 +993,6 @@ CPLVirtualMem *GDALDatasetGetVirtualMem(
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
  *         or NULL in case of failure.
  *
- * @since GDAL 1.11
  */
 
 CPLVirtualMem *GDALRasterBandGetVirtualMem(
@@ -1023,7 +1021,7 @@ class GDALTiledVirtualMem
     int nYSize = 0;
     int nTileXSize = 0;
     int nTileYSize = 0;
-    GDALDataType eBufType = GDT_Byte;
+    GDALDataType eBufType = GDT_UInt8;
     int nBandCount = 0;
     int *panBandMap = nullptr;
     GDALTileOrganization eTileOrganization = GTO_TIP;
@@ -1411,7 +1409,6 @@ static CPLVirtualMem *GDALGetTiledVirtualMem(
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
  *         or NULL in case of failure.
  *
- * @since GDAL 1.11
  */
 
 CPLVirtualMem *GDALDatasetGetTiledVirtualMem(
@@ -1517,7 +1514,6 @@ CPLVirtualMem *GDALDatasetGetTiledVirtualMem(
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
  *         or NULL in case of failure.
  *
- * @since GDAL 1.11
  */
 
 CPLVirtualMem *GDALRasterBandGetTiledVirtualMem(

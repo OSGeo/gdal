@@ -280,7 +280,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     auto poVRTDS = VRTDataset::CreateVRTDataset(
         pszFilename, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), 0,
-        GDT_Byte, papszOptions);
+        GDT_UInt8, papszOptions);
     if (poVRTDS == nullptr)
         return nullptr;
 
@@ -565,6 +565,13 @@ void GDALRegister_VRT()
                                       ocoList.c_str());
         }
     }
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,
+        "<MultiDimArrayCreationOptionList>"
+        "   <Option name='BLOCKSIZE' type='int' description='Block size in "
+        "pixels'/>"
+        "</MultiDimArrayCreationOptionList>");
 
     poDriver->pfnCreateCopy = VRTCreateCopy;
     poDriver->pfnCreate = VRTDataset::Create;

@@ -624,7 +624,7 @@ OGRErr OGR_SRSNode::exportToPrettyWkt(char **ppszResult, int nDepth) const
  *
  * @return OGRERR_NONE if import succeeds, or OGRERR_CORRUPT_DATA if it
  * fails for any reason.
- * @deprecated GDAL 2.3. Use importFromWkt(const char**) instead.
+ * @deprecated Use importFromWkt(const char**) instead.
  */
 
 OGRErr OGR_SRSNode::importFromWkt(char **ppszInput)
@@ -649,7 +649,6 @@ OGRErr OGR_SRSNode::importFromWkt(char **ppszInput)
  * @return OGRERR_NONE if import succeeds, or OGRERR_CORRUPT_DATA if it
  * fails for any reason.
  *
- * @since GDAL 2.3
  */
 
 OGRErr OGR_SRSNode::importFromWkt(const char **ppszInput)

@@ -33,9 +33,8 @@ This utility will attach a color table file from an input raster file or a color
 
 .. option:: -of <format>
 
-    Select the output format. Starting with
-    GDAL 2.3, if not specified, the format is guessed from the extension (previously
-    was GTiff). Use the short format name.
+    Select the output format. If not specified, the format is guessed from the
+    extension. Use the short format name.
 
 .. option:: <palette_file>
 

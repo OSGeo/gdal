@@ -18,14 +18,14 @@ Fetch the feature count in this layer.
 For more details: :cpp:func:`OGR_L_GetFeatureCount`
 
 Parameters
------------
-force: int
+----------
+force : int
     Flag indicating whether the count should be computed even if
     it is expensive.
 
 Returns
---------
-int:
+-------
+int
     Feature count, -1 if count not known.
 ";
 
@@ -40,22 +40,20 @@ For more details:
 .. warning:: Check the return order of the bounds.
 
 Parameters
------------
-force: int, default=False
+----------
+force : int, default=False
     Flag indicating whether the extent should be computed even if
     it is expensive.
-can_return_null: int, default=False
+can_return_null : int, default=False
     Whether None can be returned in the response.
-geom_field: int, default=0
+geom_field : int, default=0
     The index of the geometry field on which to compute the extent.
     Can be iterated over using :py:func:`range` and :py:func:`GetGeomFieldCount`.
 
 Returns
---------
-minx: float
-maxx: float
-miny: float
-maxy: float
+-------
+tuple of float
+    (minx, maxx, miny, maxy)
 ";
 
 
@@ -65,14 +63,14 @@ Set a new attribute query.
 For more details: :cpp:func:`OGR_L_SetAttributeFilter`
 
 Parameters
------------
-filter_string: str
+----------
+filter_string : str
     query in restricted SQL WHERE format, or None to clear the
     current query.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` if successfully installed,
     or an error code if the query expression is in error,
     or some other failure occurs.
@@ -91,13 +89,13 @@ Sequential reads (with :py:func:`GetNextFeature`) are generally
 considered interrupted by a :py:func:`GetFeature` call.
 
 Parameters
------------
-fid: int
+----------
+fid : int
     The feature id of the feature to read.
 
 Returns
---------
-Feature:
+-------
+Feature
     A new feature now owned by the caller, or None on failure.
     The returned feature should be deleted with :py:func:`Destroy`.
 ";
@@ -108,13 +106,13 @@ Move read cursor to the nIndex'th feature in the current resultset.
 For more details: :cpp:func:`OGR_L_SetNextByIndex`
 
 Parameters
------------
-new_index: int
+----------
+new_index : int
     The index indicating how many steps into the result set to seek.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success or an error code.
 ";
 
@@ -124,8 +122,8 @@ Fetch the next available feature from this layer.
 For more details: :cpp:func:`OGR_L_GetNextFeature`
 
 Returns
---------
-Feature:
+-------
+Feature
     A feature or None if no more features are available.
 ";
 
@@ -137,13 +135,13 @@ For more details: :cpp:func:`OGR_L_SetFeature`
 To set a feature, but create it if it doesn't exist see :py:meth:`.Layer.UpsertFeature`.
 
 Parameters
------------
-feature: Feature
+----------
+feature : Feature
     The feature to write.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` if the operation works,
     otherwise an appropriate error code
     (e.g :py:const:`osgeo.ogr.OGRERR_NON_EXISTING_FEATURE` if the
@@ -158,13 +156,13 @@ For more details: :cpp:func:`OGR_L_CreateFeature`
 To create a feature, but set it if it exists see :py:meth:`.Layer.UpsertFeature`.
 
 Parameters
------------
-feature: Feature
+----------
+feature : Feature
     The feature to write to disk.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success.
 ";
 
@@ -174,13 +172,13 @@ Rewrite an existing feature or create a new feature within a layer.
 For more details: :cpp:func:`OGR_L_UpsertFeature`
 
 Parameters
------------
-feature: Feature
+----------
+feature : Feature
     The feature to write to disk.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success.
 ";
 
@@ -190,16 +188,16 @@ Create a new field on a layer.
 For more details: :cpp:func:`OGR_L_CreateField`
 
 Parameters
------------
-field_def: FieldDefn
+----------
+field_def : FieldDefn
     The field definition to write to disk.
-approx_ok: bool, default=True
+approx_ok : bool, default=True
     If True, the field may be created in a slightly different
     form depending on the limitations of the format driver.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success.
 ";
 
@@ -209,13 +207,13 @@ Delete an existing field on a layer.
 For more details: :cpp:func:`OGR_L_DeleteField`
 
 Parameters
------------
-iField: int
+----------
+iField : int
     index of the field to delete.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success.
 ";
 
@@ -225,15 +223,15 @@ Reorder all the fields of a layer.
 For more details: :cpp:func:`OGR_L_ReorderFields`
 
 Parameters
------------
-nList: list[int]
+----------
+nList : list[int]
     A list of GetLayerDefn().GetFieldCount()
     elements which is a permutation of
     [0, GetLayerDefn().GetFieldCount()-1].
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success.
 ";
 
@@ -243,17 +241,17 @@ Reorder an existing field on a layer.
 For more details: :cpp:func:`OGR_L_ReorderField`
 
 Parameters
------------
-iOldFieldPos: int
+----------
+iOldFieldPos : int
     previous position of the field to move. Must be in the
     range [0,GetFieldCount()-1].
-iNewFieldPos: int
+iNewFieldPos : int
     new position of the field to move. Must be in the range
     [0,GetFieldCount()-1].
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success.
 ";
 
@@ -263,12 +261,12 @@ Alter the definition of an existing field on a layer.
 For more details: :cpp:func:`OGR_L_AlterFieldDefn`
 
 Parameters
------------
-iField: int
+----------
+iField : int
     index of the field whose definition must be altered.
-field_def: FieldDefn
+field_def : FieldDefn
     new field definition
-nFlags: int
+nFlags : int
     Combination of
     :py:const:`osgeo.ogr.ALTER_NAME_FLAG`,
     :py:const:`osgeo.ogr.ALTER_TYPE_FLAG`,
@@ -280,8 +278,8 @@ nFlags: int
     into account.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success.
 ";
 
@@ -291,16 +289,16 @@ Create a new geometry field on a layer.
 For more details: :cpp:func:`OGR_L_CreateGeomField`
 
 Parameters
------------
-field_def: GeomFieldDefn
+----------
+field_def : GeomFieldDefn
     The geometry field definition to write to disk.
-approx_ok: bool, default=True
+approx_ok : bool, default=True
     If True, the field may be created in a slightly different
     form depending on the limitations of the format driver.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success.
 ";
 
@@ -310,8 +308,8 @@ For datasources which support transactions, this creates a transaction.
 For more details: :cpp:func:`OGR_L_StartTransaction`
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success.
 ";
 
@@ -321,8 +319,8 @@ For datasources which support transactions, this commits a transaction.
 For more details: :cpp:func:`OGR_L_CommitTransaction`
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success.
 ";
 
@@ -332,8 +330,8 @@ Roll back a datasource to its state before the start of the current transaction.
 For more details: :cpp:func:`OGR_L_RollbackTransaction`
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success.
 ";
 
@@ -343,8 +341,8 @@ Fetch the schema information for this layer.
 For more details: :cpp:func:`OGR_L_GetLayerDefn`
 
 Returns
---------
-FeatureDefn:
+-------
+FeatureDefn
     The feature definition.
 ";
 
@@ -354,8 +352,8 @@ Find the index of field in a layer.
 For more details: :cpp:func:`OGR_L_FindFieldIndex`
 
 Returns
---------
-int:
+-------
+int
     field index, or -1 if the field doesn't exist
 ";
 
@@ -365,9 +363,9 @@ Fetch the spatial reference system for this layer.
 For more details: :cpp:func:`OGR_L_GetSpatialRef`
 
 Returns
---------
-SpatialReference:
-    spatial reference, or None if there isn't one.
+-------
+SpatialReference
+    spatial reference, or ``None`` if there isn't one.
 ";
 
 %feature("docstring")  TestCapability "
@@ -376,15 +374,15 @@ Test if this layer supported the named capability.
 For more details: :cpp:func:`OGR_L_TestCapability`
 
 Parameters
------------
-cap: str
+----------
+cap : str
     The name of the capability to test. These can
     be found in the `osgeo.ogr` namespace. For example,
     :py:const:`osgeo.ogr.OLCRandomRead`.
 
 Returns
---------
-int:
+-------
+int
     True if the layer has the requested capability, or False otherwise.
     Will return False for any unrecognized capabilities.
 ";
@@ -395,8 +393,8 @@ This function returns the current spatial filter for this layer.
 For more details: :cpp:func:`OGR_L_GetSpatialFilter`
 
 Returns
---------
-Geometry:
+-------
+Geometry
     The spatial filter geometry.
 ";
 
@@ -409,10 +407,10 @@ For more details:
 - :cpp:func:`OGR_L_SetSpatialFilterEx`
 
 Parameters
------------
-iGeomField: int, optional
+----------
+iGeomField : int, optional
     index of the geometry field on which the spatial filter operates.
-filter: Geometry
+filter : Geometry
     The geometry to use as a filtering region. None may
     be passed indicating that the current spatial filter should be
     cleared, but no new one instituted.
@@ -428,16 +426,16 @@ For more details:
 - :cpp:func:`OGR_L_SetSpatialFilterRectEx`
 
 Parameters
------------
-iGeomField: int, optional
+----------
+iGeomField : int, optional
     index of the geometry field on which the spatial filter operates.
-minx: float
+minx : float
     the minimum X coordinate for the rectangular region.
-miny: float
+miny : float
     the minimum Y coordinate for the rectangular region.
-maxx: float
+maxx : float
     the maximum X coordinate for the rectangular region.
-maxy: float
+maxy : float
     the maximum Y coordinate for the rectangular region.
 ";
 
@@ -454,8 +452,8 @@ Flush pending changes to disk.
 For more details: :cpp:func:`OGR_L_SyncToDisk`
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` if no error occurs
     (even if nothing is done) or an error code.
 ";
@@ -466,13 +464,13 @@ Delete feature from layer.
 For more details: :cpp:func:`OGR_L_DeleteFeature`
 
 Parameters
------------
-fid: int
+----------
+fid : int
     The feature id to be deleted from the layer
 
 Returns
---------
-int:
+-------
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` if the operation works,
     otherwise an appropriate error code
     (e.g :py:const:`osgeo.ogr.OGRERR_NON_EXISTING_FEATURE`)
@@ -490,8 +488,8 @@ used as the FID column, or \'\' if not supported.
 For more details: :cpp:func:`OGR_L_GetFIDColumn`
 
 Returns
---------
-str:
+-------
+str
     fid column name.
 ";
 
@@ -502,8 +500,8 @@ used as the geometry column, or \'\' if not supported.
 For more details: :cpp:func:`OGR_L_GetGeometryColumn`
 
 Returns
---------
-str:
+-------
+str
     geometry column name.
 ";
 
@@ -531,8 +529,8 @@ Return the layer name.
 For more details: :cpp:func:`OGR_L_GetName`
 
 Returns
---------
-str:
+-------
+str
     The layer name
 ";
 
@@ -542,8 +540,8 @@ Return the layer geometry type.
 For more details: :cpp:func:`OGR_L_GetGeomType`
 
 Returns
---------
-int:
+-------
+int
     The geometry type code. The types can be found with
     'osgeo.ogr.wkb' prefix. For example :py:const:`osgeo.ogr.wkbPolygon`.
 ";
@@ -555,14 +553,14 @@ layer.
 For more details: :cpp:func:`OGR_L_SetIgnoredFields`
 
 Parameters
------------
-options: list[str]
+----------
+options : list[str]
     A list of field names.
     If an empty list is passed, the ignored list is cleared.
 
 Returns
 -------
-int:
+int
     :py:const:`osgeo.ogr.OGRERR_NONE` if all field names have been resolved
     (even if the driver does not support this method)
 ";
@@ -574,23 +572,23 @@ Intersection of two layers.
 For more details: :cpp:func:`OGR_L_Intersection`
 
 Parameters
------------
-method_layer: Layer
+----------
+method_layer : Layer
     the method layer. Should not be None.
-result_layer: Layer
+result_layer : Layer
     the layer where the features resulting from the
     operation are inserted. Should not be None.
-options: list[str], optional
+options : list[str], optional
     List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].
-callback: Callable, optional
+callback : callable, optional
     a GDALProgressFunc() compatible callback function for
-    reporting progress or None.
-callback_data:
+    reporting progress or ``None``.
+callback_data : any
     Argument to be passed to 'callback'. May be None.
 
 Returns
 -------
-int:
+int
     An error code if there was an error or the execution was interrupted,
     :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.
 ";
@@ -603,23 +601,23 @@ For more details: :cpp:func:`OGR_L_Union`
 The first geometry field is always used.
 
 Parameters
------------
-method_layer: Layer
+----------
+method_layer : Layer
     the method layer. Should not be None.
-result_layer: Layer
+result_layer : Layer
     the layer where the features resulting from the
     operation are inserted. Should not be None.
-options: list[str], optional
+options : list[str], optional
     List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].
-callback: Callable, optional
+callback : callable, optional
     a GDALProgressFunc() compatible callback function for
-    reporting progress or None.
-callback_data:
+    reporting progress or ``None``.
+callback_data : any
     Argument to be passed to 'callback'. May be None.
 
 Returns
 -------
-int:
+int
     An error code if there was an error or the execution was interrupted,
     :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.
 ";
@@ -630,23 +628,23 @@ Symmetrical difference of two layers.
 For more details: :cpp:func:`OGR_L_SymDifference`
 
 Parameters
------------
-method_layer: Layer
+----------
+method_layer : Layer
     the method layer. Should not be None.
-result_layer: Layer
+result_layer : Layer
     the layer where the features resulting from the
     operation are inserted. Should not be None.
-options: list[str], optional
+options : list[str], optional
     List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].
-callback: Callable, optional
+callback : callable, optional
     a GDALProgressFunc() compatible callback function for
-    reporting progress or None.
-callback_data:
+    reporting progress or ``None``.
+callback_data : any
     Argument to be passed to 'callback'. May be None.
 
 Returns
 -------
-int:
+int
     An error code if there was an error or the execution was interrupted,
     :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.
 ";
@@ -657,23 +655,23 @@ Identify the features of this layer with the ones from the identity layer.
 For more details: :cpp:func:`OGR_L_Identity`
 
 Parameters
------------
-method_layer: Layer
+----------
+method_layer : Layer
     the method layer. Should not be None.
-result_layer: Layer
+result_layer : Layer
     the layer where the features resulting from the
     operation are inserted. Should not be None.
-options: list[str], optional
+options : list[str], optional
     List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].
-callback: Callable, optional
+callback : callable, optional
     a GDALProgressFunc() compatible callback function for
-    reporting progress or None.
-callback_data:
+    reporting progress or ``None``.
+callback_data : any
     Argument to be passed to 'callback'. May be None.
 
 Returns
 -------
-int:
+int
     An error code if there was an error or the execution was interrupted,
     :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.
 ";
@@ -684,23 +682,23 @@ Update this layer with features from the update layer.
 For more details: :cpp:func:`OGR_L_Update`
 
 Parameters
------------
-method_layer: Layer
+----------
+method_layer : Layer
     the method layer. Should not be None.
-result_layer: Layer
+result_layer : Layer
     the layer where the features resulting from the
     operation are inserted. Should not be None.
-options: list[str], optional
+options : list[str], optional
     List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].
-callback: Callable, optional
+callback : Callable, optional
     a GDALProgressFunc() compatible callback function for
     reporting progress or None.
-callback_data:
+callback_data : any
     Argument to be passed to 'callback'. May be None.
 
 Returns
 -------
-int:
+int
     An error code if there was an error or the execution was interrupted,
     :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.
 ";
@@ -711,23 +709,23 @@ Clip off areas that are not covered by the method layer.
 For more details: :cpp:func:`OGR_L_Clip`
 
 Parameters
------------
-method_layer: Layer
+----------
+method_layer : Layer
     the method layer. Should not be None.
-result_layer: Layer
+result_layer : Layer
     the layer where the features resulting from the
     operation are inserted. Should not be None.
-options: list[str], optional
+options : list[str], optional
     List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].
-callback: Callable, optional
+callback : callable, optional
     a GDALProgressFunc() compatible callback function for
-    reporting progress or None.
-callback_data:
+    reporting progress or ``None``.
+callback_data : any
     Argument to be passed to 'callback'. May be None.
 
 Returns
 -------
-int:
+int
     An error code if there was an error or the execution was interrupted,
     :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.
 ";
@@ -738,23 +736,23 @@ Remove areas that are covered by the method layer.
 For more details: :cpp:func:`OGR_L_Erase`
 
 Parameters
------------
-method_layer: Layer
+----------
+method_layer : Layer
     the method layer. Should not be None.
-result_layer: Layer
+result_layer : Layer
     the layer where the features resulting from the
     operation are inserted. Should not be None.
-options: list[str], optional
+options : list[str], optional
     List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].
-callback: Callable, optional
+callback : callable, optional
     a GDALProgressFunc() compatible callback function for
-    reporting progress or None.
-callback_data:
+    reporting progress or ``None``.
+callback_data : any
     Argument to be passed to 'callback'. May be None.
 
 Returns
 -------
-int:
+int
     An error code if there was an error or the execution was interrupted,
     :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.
 ";
@@ -765,22 +763,22 @@ Get actual geometry types found in features.
 For more details: :cpp:func:`OGR_L_GetGeometryTypes`
 
 Parameters
------------
-geom_field: int, optional
+----------
+geom_field : int, optional
     index of the geometry field
-flags: int, optional
+flags : int, optional
     0, or a combination of :py:const:`osgeo.ogr.GGT_COUNT_NOT_NEEDED`,
     :py:const:`osgeo.ogr.GGT_STOP_IF_MIXED` and
     :py:const:`osgeo.ogr.GGT_GEOMCOLLECTIONZ_TINZ`
-callback: Callable, optional
+callback : callable, optional
     a GDALProgressFunc() compatible callback function for
     cancellation or None.
-callback_data:
+callback_data : any
     Argument to be passed to 'callback'. May be None.
 
 Returns
 -------
-dict:
+dict
     A dictionary whose keys are :py:const:`osgeo.ogr.wkbXXXX` constants and
     values the corresponding number of geometries of that type in the layer.
 ";
@@ -792,8 +790,8 @@ For more details: :cpp:func:`OGR_L_GetDataset`
 
 Returns
 -------
-Dataset:
-    Dataset or None
+Dataset or None
+    A dataset if successful, or ``None`` on failure.
 ";
 
 }

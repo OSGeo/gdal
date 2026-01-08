@@ -103,7 +103,7 @@ Main impacts are:
   (the C API for those methods uses ``int`` and not ``GBool``)
 
 * GIntBig/GInt64 was aliased to ``long long`` and GUIntBig/GUInt64 to
-  ```unsigned long long``. While ``int64_t`` and ``long long`` have in practice
+  ``unsigned long long``. While ``int64_t`` and ``long long`` have in practice
   same width and signedness, they are formally different data types.
   For scalar usage of those types, compilers shouldn't warn.
   But for usage of those types as pointers, compilers warn in C

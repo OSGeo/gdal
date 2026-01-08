@@ -392,8 +392,7 @@ void OGRJSONCollectionStreamingParser::String(std::string_view sValue)
             AppendObject(json_object_new_string_len(
                 sValue.data(), static_cast<int>(sValue.size())));
         else
-            CPLError(
-                CE_Failure, CPLE_NotSupported,
+            EmitException(
                 "OGRJSONCollectionStreamingParser::String(): too large string");
     }
 }
@@ -402,6 +401,8 @@ void OGRJSONCollectionStreamingParser::String(std::string_view sValue)
 /*                              Number()                                */
 /************************************************************************/
 
+// recent libc++ std::from_chars() involve unsigned integer overflow
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 void OGRJSONCollectionStreamingParser::Number(std::string_view sValue)
 {
     if (m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize)
@@ -462,8 +463,8 @@ void OGRJSONCollectionStreamingParser::Number(std::string_view sValue)
             }
             else
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Unrecognized number: %s",
-                         std::string(sValue).c_str());
+                EmitException(
+                    ("Unrecognized number: " + std::string(sValue)).c_str());
             }
         }
         else
@@ -478,8 +479,8 @@ void OGRJSONCollectionStreamingParser::Number(std::string_view sValue)
             }
             else
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Unrecognized number: %s",
-                         std::string(sValue).c_str());
+                EmitException(
+                    ("Unrecognized number: " + std::string(sValue)).c_str());
             }
         }
     }

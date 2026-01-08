@@ -2052,7 +2052,7 @@ const char *GDALGetGenImgProjTranformerOptionList(void)
  * operations that are not the "best" if resources (typically grids) needed
  * to use them are missing. It will then fallback to other coordinate operations
  * that have a lesser accuracy, for example using Helmert transformations,
- * or in the absence of such operations, to ones with potential very rought
+ * or in the absence of such operations, to ones with potential very rough
  * accuracy, using "ballpark" transformations
  * (see https://proj.org/glossary.html).
  * When calling this method with YES, PROJ will only consider the
@@ -2658,7 +2658,7 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     /*      Setup reprojection.                                             */
     /* -------------------------------------------------------------------- */
 
-    if (CPLFetchBool(papszOptions, "STRIP_VERT_CS", false))
+    if (CPLFetchBool(papszOptions, "@STRIP_VERT_CS", false))
     {
         if (oSrcSRS.IsCompound())
         {
@@ -3078,6 +3078,10 @@ int GDALGenImgProjTransform(void *pTransformArgIn, int bDstToSrc,
                             int nPointCount, double *padfX, double *padfY,
                             double *padfZ, int *panSuccess)
 {
+    // Sanity check (see issue GH #13498)
+    if (nullptr == pTransformArgIn)
+        return FALSE;
+
     GDALGenImgProjTransformInfo *psInfo =
         static_cast<GDALGenImgProjTransformInfo *>(pTransformArgIn);
 
@@ -3533,7 +3537,7 @@ void *GDALCreateReprojectionTransformer(const char *pszSrcWKT,
  * operations that are not the "best" if resources (typically grids) needed
  * to use them are missing. It will then fallback to other coordinate operations
  * that have a lesser accuracy, for example using Helmert transformations,
- * or in the absence of such operations, to ones with potential very rought
+ * or in the absence of such operations, to ones with potential very rough
  * accuracy, using "ballpark" transformations
  * (see https://proj.org/glossary.html).
  * When calling this method with YES, PROJ will only consider the

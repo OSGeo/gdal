@@ -51,7 +51,7 @@ json_object *CPL_json_object_object_get(struct json_object *obj,
                                         const char *key)
 {
     json_object *poRet = nullptr;
-    json_object_object_get_ex(obj, key, &poRet);
+    CPL_IGNORE_RET_VAL(json_object_object_get_ex(obj, key, &poRet));
     return poRet;
 }
 

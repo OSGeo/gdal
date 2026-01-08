@@ -19,6 +19,7 @@ import struct
 import gdaltest
 import ogrtest
 import pytest
+import webserver
 
 from osgeo import gdal, ogr
 
@@ -329,7 +330,7 @@ def test_gti_prototype_tile_wrong_gt_5th_value(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_gti_prototype_tile_wrong_gt_6th_value(tmp_vsimem):
+def test_gti_prototype_tile_wrong_gt_2nd_value(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
     protods_filename = str(tmp_vsimem / "protods_filename.tif")
@@ -346,7 +347,7 @@ def test_gti_prototype_tile_wrong_gt_6th_value(tmp_vsimem):
     lyr.CreateFeature(f)
     del index_ds
 
-    with pytest.raises(Exception, match="6th value of GeoTransform"):
+    with pytest.raises(Exception, match="2nd value of GeoTransform"):
         gdal.Open(index_filename)
 
 
@@ -367,6 +368,28 @@ def test_gti_no_extent(tmp_vsimem):
 
     with pytest.raises(Exception, match="Cannot get layer extent"):
         gdal.Open(index_filename)
+
+
+def test_gti_south_up(tmp_vsimem):
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    protods_filename = str(tmp_vsimem / "protods_filename.tif")
+    with gdal.GetDriverByName("GTiff").Create(protods_filename, 1, 2) as ds:
+        ds.SetGeoTransform([0, 1, 0, 10, 0, 1])
+        ds.WriteRaster(0, 0, 1, 2, b"\x01\x02")
+
+    index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
+    lyr = index_ds.CreateLayer("index")
+    lyr.CreateField(ogr.FieldDefn("location"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["location"] = protods_filename
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 10,0 12,1 12,1 12,0 12))"))
+    lyr.CreateFeature(f)
+    del index_ds
+
+    ds = gdal.Open(index_filename)
+    assert ds.GetGeoTransform() == (0, 1, 0, 12, 0, -1)
+    assert ds.ReadRaster() == b"\x02\x01"
 
 
 def test_gti_too_big_x(tmp_vsimem):
@@ -2949,6 +2972,36 @@ def test_gti_read_multi_threaded_disabled_because_truncated_source(tmp_vsimem):
 
 
 ###############################################################################
+# Test non existing source
+
+
+def test_gti_read_non_existing_source(tmp_vsimem):
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", width=2048, format="MEM"
+    )
+    left_filename = str(tmp_vsimem / "left.tif")
+    gdal.Translate(left_filename, src_ds, srcWin=[0, 0, 1024, 1024])
+    right_filename = str(tmp_vsimem / "right.tif")
+    gdal.Translate(right_filename, src_ds, srcWin=[1024, 0, 1024, 1024])
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(
+        index_filename, [gdal.Open(left_filename), gdal.Open(right_filename)]
+    )
+    del index_ds
+
+    gdal.Unlink(right_filename)
+
+    vrt_ds = gdal.Open(index_filename)
+
+    with gdal.config_option("GDAL_NUM_THREADS", "1"), gdaltest.error_raised(
+        gdal.CE_Failure
+    ), gdaltest.disable_exceptions():
+        assert vrt_ds.ReadRaster() is None
+
+
+###############################################################################
 
 
 @pytest.mark.require_curl()
@@ -3044,3 +3097,175 @@ def test_gti_tile_001():
     assert out_ds.GetRasterBand(2).ComputeRasterMinMax() == (1000, 1000)
     assert out_ds.GetRasterBand(3).ComputeRasterMinMax() == (1000, 1000)
     assert out_ds.GetRasterBand(4).ComputeRasterMinMax() == (65535, 65535)
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("SQLite")
+def test_gti_sql(tmp_vsimem):
+
+    if "SPATIALITE" not in gdal.GetDriverByName("SQLite").GetMetadataItem(
+        gdal.DMD_CREATIONOPTIONLIST
+    ):
+        pytest.skip("Spatialite support missing")
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "red.tif", 1, 1, 3) as ds:
+        ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+        ds.GetRasterBand(1).Fill(255)
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "green.tif", 1, 1, 3) as ds:
+        ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+        ds.GetRasterBand(2).Fill(255)
+
+    with gdal.GetDriverByName("SQLite").CreateVector(
+        tmp_vsimem / "index.db", options=["SPATIALITE=YES"]
+    ) as sqlite_ds:
+        lyr = sqlite_ds.CreateLayer("tileindex", geom_type=ogr.wkbPolygon)
+        lyr.CreateField(ogr.FieldDefn("location"))
+        lyr.CreateField(ogr.FieldDefn("tile_id", ogr.OFTInteger))
+        lyr.CreateField(ogr.FieldDefn("version", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["location"] = tmp_vsimem / "red.tif"
+        f["tile_id"] = 10
+        f["version"] = 2
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))"))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["location"] = tmp_vsimem / "green.tif"
+        f["tile_id"] = 10
+        f["version"] = 1
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))"))
+        lyr.CreateFeature(f)
+
+    xml_content = f"""<GDALTileIndexDataset>
+  <IndexDataset>{tmp_vsimem}/index.db</IndexDataset>
+  <SQL>WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id) SELECT * FROM tileindex INNER JOIN target_version ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version</SQL>
+  <MinX>0</MinX>
+  <MinY>0</MinY>
+  <MaxX>1</MaxX>
+  <MaxY>1</MaxY>
+</GDALTileIndexDataset>"""
+
+    gti_ds = gdal.Open(xml_content)
+    if ogrtest.have_geos():
+        (flags, pct) = gti_ds.GetRasterBand(1).GetDataCoverageStatus(
+            0, 0, gti_ds.RasterXSize, gti_ds.RasterYSize
+        )
+        assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+    assert gti_ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255)
+    assert gti_ds.GetRasterBand(2).ComputeRasterMinMax() == (0, 0)
+    assert gti_ds.GetRasterBand(3).ComputeRasterMinMax() == (0, 0)
+
+    xml_content = f"""<GDALTileIndexDataset>
+  <IndexDataset>{tmp_vsimem}/index.db</IndexDataset>
+  <SQL>WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id) SELECT * FROM tileindex INNER JOIN target_version ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version</SQL>
+  <SpatialSQL>WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id) SELECT * FROM tileindex INNER JOIN target_version ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version INNER JOIN idx_tileindex_geometry ON tileindex.ogc_fid = idx_tileindex_geometry.pkid WHERE idx_tileindex_geometry.xmin &lt;= {{XMAX}} and idx_tileindex_geometry.ymin &lt;= {{YMAX}} and idx_tileindex_geometry.xmax &gt;= {{XMIN}} and idx_tileindex_geometry.ymax &gt;= {{YMIN}}</SpatialSQL>
+  <MinX>0</MinX>
+  <MinY>0</MinY>
+  <MaxX>1</MaxX>
+  <MaxY>1</MaxY>
+</GDALTileIndexDataset>"""
+
+    gti_ds = gdal.Open(xml_content)
+    if ogrtest.have_geos():
+        (flags, pct) = gti_ds.GetRasterBand(1).GetDataCoverageStatus(
+            0, 0, gti_ds.RasterXSize, gti_ds.RasterYSize
+        )
+        assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+    assert gti_ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255)
+    assert gti_ds.GetRasterBand(2).ComputeRasterMinMax() == (0, 0)
+    assert gti_ds.GetRasterBand(3).ComputeRasterMinMax() == (0, 0)
+
+    gti_ds = gdal.OpenEx(
+        f"GTI:{tmp_vsimem}/index.db",
+        open_options=[
+            "SQL=WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id) SELECT * FROM tileindex INNER JOIN target_version ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version",
+            "SPATIAL_SQL=WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id) SELECT * FROM tileindex INNER JOIN target_version ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version INNER JOIN idx_tileindex_geometry ON tileindex.ogc_fid = idx_tileindex_geometry.pkid WHERE idx_tileindex_geometry.xmin <= {XMAX} and idx_tileindex_geometry.ymin <= {YMAX} and idx_tileindex_geometry.xmax >= {XMIN} and idx_tileindex_geometry.ymax >= {YMIN}",
+            "MINX=0",
+            "MINY=0",
+            "MAXX=1",
+            "MAXY=1",
+        ],
+    )
+    assert gti_ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255)
+    assert gti_ds.GetRasterBand(2).ComputeRasterMinMax() == (0, 0)
+    assert gti_ds.GetRasterBand(3).ComputeRasterMinMax() == (0, 0)
+
+    # Invalid SQL
+    with pytest.raises(Exception, match="syntax error"):
+        gdal.OpenEx(f"GTI:{tmp_vsimem}/index.db", open_options=["SQL=invalid"])
+
+    # Invalid Spatial SQL
+    gti_ds = gdal.OpenEx(
+        f"GTI:{tmp_vsimem}/index.db",
+        open_options=[
+            "SQL=SELECT * FROM tileindex",
+            "SPATIAL_SQL=invalid",
+            "MINX=0",
+            "MINY=0",
+            "MAXX=1",
+            "MAXY=1",
+        ],
+    )
+    with pytest.raises(Exception, match="syntax error"):
+        gti_ds.GetRasterBand(1).GetDataCoverageStatus(
+            0, 0, gti_ds.RasterXSize, gti_ds.RasterYSize
+        )
+    with pytest.raises(Exception, match="syntax error"):
+        gti_ds.GetRasterBand(1).ComputeRasterMinMax()
+
+
+###############################################################################
+
+
+@pytest.fixture(scope="module")
+def server():
+
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    if port == 0:
+        pytest.skip()
+
+    import collections
+
+    WebServer = collections.namedtuple("WebServer", "process port")
+
+    yield WebServer(process, port)
+
+    # Clearcache needed to close all connections, since the Python server
+    # can only handle one connection at a time
+    gdal.VSICurlClearCache()
+
+    webserver.server_stop(process, port)
+
+
+###############################################################################
+
+
+@pytest.mark.require_curl()
+@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_driver("CSV")
+def test_gti_non_rewriting_of_url(server, tmp_vsimem):
+    """Check fix for https://github.com/OSGeo/gdal/issues/12900#issuecomment-3637663699"""
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.csv",
+        f'location,WKT\n"http://localhost:{server.port}/test.tif","POLYGON((0 0,0 1,1 1,1 0))"',
+    )
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "test.tif", 1, 1) as ds:
+        ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+        ds.GetRasterBand(1).Fill(1)
+
+    with gdal.VSIFile(tmp_vsimem / "test.tif", "rb") as f:
+        content = f.read()
+
+    handler = webserver.SequentialHandler()
+    # Check that we get a GET request for the full file (ie using the HTTP driver)
+    # and not a /vsicurl/ range request
+    handler.add("GET", "/test.tif", 200, {}, content, unexpected_headers=["Range"])
+    handler.add("GET", "/test.tif", 200, {}, content, unexpected_headers=["Range"])
+
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        ds = gdal.Open(f"GTI:{tmp_vsimem}/test.csv")
+        assert ds.GetRasterBand(1).Checksum() == 1

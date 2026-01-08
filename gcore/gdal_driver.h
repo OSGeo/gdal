@@ -32,7 +32,6 @@ class GDALOpenInfo;
 /**
  * Enumeration used by GDALDriver::pfnIdentify().
  *
- * @since GDAL 2.1
  */
 typedef enum
 {
@@ -307,7 +306,6 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     //! @endcond
 
     /** Convert a GDALDriver* to a GDALDriverH.
-     * @since GDAL 2.3
      */
     static inline GDALDriverH ToHandle(GDALDriver *poDriver)
     {
@@ -315,7 +313,6 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     }
 
     /** Convert a GDALDriverH to a GDALDriver*.
-     * @since GDAL 2.3
      */
     static inline GDALDriver *FromHandle(GDALDriverH hDriver)
     {

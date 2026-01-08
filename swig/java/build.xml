@@ -13,7 +13,8 @@
 			</filterchain>
 		</loadfile>
 		<echo message="version = ${version}"/>
-		<property name="mvn.dir" value="${build_dir}/build/maven"/>
+        <property name="mvn.base_dir" value="${build_dir}/build/maven"/>
+		<property name="mvn.dir" value="${mvn.base_dir}/org/gdal/gdal/${version}"/>
 		<property name="mvn.base" value="gdal-${version}"/>
 		<property name="source_apps" value="apps"/>
 	</target>
@@ -67,6 +68,18 @@
 		<jar destfile="${mvn.dir}/${mvn.base}-sources.jar" basedir="${build_dir}"
 		     includes="org/**/*.java"/>
 
+		<antcall target="checksums">
+			<param name="file" value="${mvn.dir}/${mvn.base}.pom"/>
+		</antcall>
+		<antcall target="checksums">
+			<param name="file" value="${mvn.dir}/${mvn.base}.jar"/>
+		</antcall>
+		<antcall target="checksums">
+			<param name="file" value="${mvn.dir}/${mvn.base}-javadoc.jar"/>
+		</antcall>
+		<antcall target="checksums">
+			<param name="file" value="${mvn.dir}/${mvn.base}-sources.jar"/>
+		</antcall>
         </target>
 
 
@@ -87,11 +100,15 @@
 			<param name="file" value="${mvn.dir}/${mvn.base}-sources.jar"/>
 		</antcall>
 
-		<!-- bundle into single jar for deployment -->
-		<delete file="${mvn.dir}/bundle.jar"/>
-		<jar destfile="${mvn.dir}/bundle.jar" basedir="${mvn.dir}"
-		     includes="${mvn.base}*"/>
+		<!-- bundle into single zip for deployment -->
+		<delete file="${build_dir}/bundle.zip"/>
+		<zip destfile="${build_dir}/bundle.zip" basedir="${mvn.base_dir}"/>
         </target>
+
+    <target name="checksums" description="Compute .md5 and .sha1 files">
+        <checksum file="${file}" algorithm="MD5" fileext=".md5"/>
+        <checksum file="${file}" algorithm="SHA-1" fileext=".sha1"/>
+    </target>
 
 	<target name="sign_file" description="Helper target to gpg sign a file">
 		<fail unless="gpg.key" message="system property gpg.key required"/>

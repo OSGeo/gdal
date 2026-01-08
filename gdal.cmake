@@ -6,8 +6,8 @@
 # a new member or virtual function in a public C++ class, etc.
 # This will typically happen for each GDAL feature release (change of X or Y in
 # a X.Y.Z numbering scheme), but should not happen for a bugfix release (change of Z)
-# Previous value: 37 for GDAL 3.11
-set(GDAL_SOVERSION 37)
+# Previous value: 38 for GDAL 3.12
+set(GDAL_SOVERSION 38)
 
 # Switches to control build targets(cached)
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
@@ -425,6 +425,23 @@ if(OGR_ENABLE_DRIVER_TAB AND
    NOT DEFINED OGR_ENABLE_DRIVER_TAB_PLUGIN AND
    GDAL_ENABLE_PLUGINS_NO_DEPS)
     option(OGR_ENABLE_DRIVER_TAB_PLUGIN "Set ON to build OGR MapInfo TAB and MIF/MID driver as plugin" ON)
+endif()
+
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-fopenmp-simd HAVE_OPENMP_SIMD)
+
+if (GDAL_USE_OPENMP)
+  add_compile_definitions(HAVE_OPENMP)
+  add_compile_options(${OpenMP_C_FLAGS})
+  if (OpenMP_C_INCLUDE_DIRS)
+    include_directories(${OpenMP_C_INCLUDE_DIRS})
+  endif()
+  if (HAVE_OPENMP_SIMD AND NOT MSVC)
+    add_compile_definitions(HAVE_OPENMP_SIMD)
+  endif()
+elseif (HAVE_OPENMP_SIMD)
+  add_compile_definitions(HAVE_OPENMP_SIMD)
+  add_compile_options("-fopenmp-simd")
 endif()
 
 # Precompiled header

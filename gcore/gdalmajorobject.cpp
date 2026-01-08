@@ -138,7 +138,6 @@ void CPL_STDCALL GDALSetDescription(GDALMajorObjectH hObject,
  *
  * @return NULL or a string list. Must be freed with CSLDestroy()
  *
- * @since GDAL 1.11
  */
 
 char **GDALMajorObject::GetMetadataDomainList()
@@ -162,7 +161,6 @@ char **GDALMajorObject::GetMetadataDomainList()
  *
  * @return NULL or a string list. Must be freed with CSLDestroy()
  *
- * @since GDAL 1.11
  */
 
 char **GDALMajorObject::BuildMetadataDomainList(char **papszList,
@@ -195,7 +193,6 @@ char **GDALMajorObject::BuildMetadataDomainList(char **papszList,
  *
  * @see GDALMajorObject::GetMetadataDomainList()
  *
- * @since GDAL 1.11
  */
 
 char **CPL_STDCALL GDALGetMetadataDomainList(GDALMajorObjectH hObject)

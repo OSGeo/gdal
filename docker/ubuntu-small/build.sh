@@ -38,16 +38,15 @@ fi
 
 "${SCRIPT_DIR}/../util.sh" "$@" --test-python
 
-if test "${HAS_PLATFORM}" = "0" -a "${HAS_RELEASE}" = "0" -a "x${TARGET_IMAGE}" = "xosgeo/gdal:ubuntu-small"; then
+if test "${HAS_PLATFORM}" = "0" && test "${HAS_RELEASE}" = "0" && test "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-small"; then
  "${SCRIPT_DIR}/../util.sh" --platform linux/arm64 "$@" --test-python
 
- if test "$HAS_PUSH" = "1"; then
+  if test "${HAS_PUSH}" = "1" && test -z "${CI}"; then
    DOCKER_REPO=$(cat /tmp/gdal_docker_repo.txt)
 
    docker manifest rm ${DOCKER_REPO}/${TARGET_IMAGE}-latest || /bin/true
-   docker manifest create ${DOCKER_REPO}/${TARGET_IMAGE}-latest \
-     --amend ${DOCKER_REPO}/${TARGET_IMAGE}-latest-amd64 \
-     --amend ${DOCKER_REPO}/${TARGET_IMAGE}-latest-arm64
-   docker manifest push ${DOCKER_REPO}/${TARGET_IMAGE}-latest
+   docker buildx imagetools create -t ${DOCKER_REPO}/${TARGET_IMAGE}-latest \
+   ${DOCKER_REPO}/${TARGET_IMAGE}-latest-amd64 \
+   ${DOCKER_REPO}/${TARGET_IMAGE}-latest-arm64
  fi
 fi

@@ -61,7 +61,7 @@ the calibration LUT applied will fail.
 One caveat worth noting is that the RADARSAT-2 driver will supply the
 calibrated data as GDT_Float32 or GDT_CFloat32 depending on the type of
 calibration selected. The uncalibrated data is provided as
-GDT_Int16/GDT_Byte/GDT_CInt16, also depending on the type of product
+GDT_Int16/GDT_UInt8/GDT_CInt16, also depending on the type of product
 selected.
 
 See Also

@@ -21,9 +21,7 @@ Driver capabilities
 
 .. supports_georeferencing::
 
-.. versionadded:: 2.4
-
-    .. supports_virtualio::
+.. supports_virtualio::
 
 Multiple Image Handling (Subdatasets)
 -------------------------------------

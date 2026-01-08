@@ -2048,13 +2048,6 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
     if (pszDescription != nullptr)
         poLayer->SetForcedDescription(pszDescription);
 
-    /* HSTORE_COLUMNS existed at a time during GDAL 1.10dev */
-    const char *pszHSTOREColumns =
-        CSLFetchNameValue(papszOptions, "HSTORE_COLUMNS");
-    if (pszHSTOREColumns != nullptr)
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "HSTORE_COLUMNS not recognized. Use COLUMN_TYPES instead.");
-
     const char *pszOverrideColumnTypes =
         CSLFetchNameValue(papszOptions, "COLUMN_TYPES");
     poLayer->SetOverrideColumnTypes(pszOverrideColumnTypes);

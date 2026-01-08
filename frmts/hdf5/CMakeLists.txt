@@ -38,6 +38,8 @@ if(NOT TARGET gdal_HDF5)
     return()
 endif()
 
+gdal_target_link_libraries(gdal_HDF5 PRIVATE PROJ::proj)
+
 if (EMBED_RESOURCE_FILES)
     add_driver_embedded_resources(gdal_HDF5 GDAL_ENABLE_DRIVER_HDF5_PLUGIN embedded_resources.c)
 endif()

@@ -875,7 +875,7 @@ CPLErr ECWRasterBand::OldIRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /* -------------------------------------------------------------------- */
     const int nRawPixelSize = GDALGetDataTypeSizeBytes(poGDS->eRasterDataType);
 
-    int bDirect = nPixelSpace == 1 && eBufType == GDT_Byte &&
+    int bDirect = nPixelSpace == 1 && eBufType == GDT_UInt8 &&
                   nNewXSize == nBufXSize && nNewYSize == nBufYSize;
     if (!bDirect)
         pabyWorkBuffer =
@@ -1093,7 +1093,7 @@ ECWDataset::ECWDataset(int bIsJPEG2000In)
     poFileView = nullptr;
     bWinActive = FALSE;
     panWinBandList = nullptr;
-    eRasterDataType = GDT_Byte;
+    eRasterDataType = GDT_UInt8;
     papszGMLMetadata = nullptr;
 
     bHdrDirty = FALSE;
@@ -2829,7 +2829,7 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
     switch (poDS->psFileInfo->eCellType)
     {
         case NCSCT_UINT8:
-            poDS->eRasterDataType = GDT_Byte;
+            poDS->eRasterDataType = GDT_UInt8;
             break;
 
         case NCSCT_UINT16:

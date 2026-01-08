@@ -580,7 +580,7 @@ bool ZarrV3CodecBytes::Encode(const ZarrByteVectorQuickResize &abySrc,
     if (abySrc.size() < nEltCount * nNativeSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "ZarrV3CodecTranspose::Encode(): input buffer too small");
+                 "ZarrV3CodecBytes::Encode(): input buffer too small");
         return false;
     }
     CPLAssert(abySrc.size() >= nEltCount * nNativeSize);
@@ -677,19 +677,6 @@ ZarrV3CodecTranspose::GetConfiguration(const std::vector<int> &anOrder)
 }
 
 /************************************************************************/
-/*                           GetConfiguration()                         */
-/************************************************************************/
-
-/* static */ CPLJSONObject
-ZarrV3CodecTranspose::GetConfiguration(const std::string &osOrder)
-{
-    CPLJSONObject oConfig;
-    CPLJSONArray oOrder;
-    oConfig.Add("order", osOrder);
-    return oConfig;
-}
-
-/************************************************************************/
 /*                ZarrV3CodecTranspose::InitFromConfiguration()         */
 /************************************************************************/
 
@@ -726,6 +713,7 @@ bool ZarrV3CodecTranspose::InitFromConfiguration(
     const int nDims = static_cast<int>(oInputArrayMetadata.anBlockSizes.size());
     if (oOrder.GetType() == CPLJSONObject::Type::String)
     {
+        // Deprecated
         const auto osOrder = oOrder.ToString();
         if (osOrder == "C")
         {
@@ -841,9 +829,16 @@ bool ZarrV3CodecTranspose::Transpose(const ZarrByteVectorQuickResize &abySrc,
         size_t dst_inc_offset = 0;
     };
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     std::vector<Stack> stack(nDims);
     stack.emplace_back(
         Stack());  // to make gcc 9.3 -O2 -Wnull-dereference happy
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
     if (!bEncodeDirection)
     {
@@ -989,12 +984,9 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
     std::string osLastCodec;
 
     const auto InsertImplicitEndianCodecIfNeeded =
-        [
-#if !CPL_IS_LSB
-            this,
-#endif
-            &oInputArrayMetadata, &eLastType, &osLastCodec]()
+        [this, &oInputArrayMetadata, &eLastType, &osLastCodec]()
     {
+        CPL_IGNORE_RET_VAL(this);
         if (eLastType == ZarrV3Codec::IOType::ARRAY &&
             oInputArrayMetadata.oElt.nativeSize > 1)
         {
@@ -1009,10 +1001,11 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
             oInputArrayMetadata = std::move(oOutputArrayMetadata);
             eLastType = poEndianCodec->GetOutputType();
             osLastCodec = poEndianCodec->GetName();
-#if !CPL_IS_LSB
-            // Insert a little endian codec if we are on a big endian target
-            m_apoCodecs.emplace_back(std::move(poEndianCodec));
-#endif
+            if constexpr (!CPL_IS_LSB)
+            {
+                // Insert a little endian codec if we are on a big endian target
+                m_apoCodecs.emplace_back(std::move(poEndianCodec));
+            }
         }
     };
 

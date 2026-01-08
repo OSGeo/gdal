@@ -31,12 +31,12 @@ maxSearchDist : float
     the maximum number of pixels to search in all directions to find values to interpolate from.
 smoothingIterations : int
     the number of 3x3 smoothing filter passes to run (0 or more)
-options : dict/list, optional
+options : dict or list, optional
     A dict or list of name=value options. Available options are
     described in :cpp:func:`GDALFillNodata`.
-callback : function, optional
+callback : callable, optional
    A progress callback function
-callback_data: optional
+callback_data : any, optional
    Optional data to be passed to callback function
 
 Returns
@@ -84,7 +84,7 @@ Both input coordinates must be within the raster coordinate bounds.
 
 Parameters
 ----------
-band : gdal.RasterBand
+band : Band
     The band to read the DEM data from. This must NOT be null.
 xA : int
     The X location (raster column) of the first point to check on the raster.
@@ -98,15 +98,19 @@ yB : int
     The Y location (raster row) of the second point to check on the raster.
 zB : float
     The Z location (height) of the second point to check.
-options : dict/list, optional
+options : dict or list, optional
     A dict or list of name=value of options for the line of sight algorithm (currently ignored).
 
 Returns
 -------
-collections.namedtuple(is_visible: bool, col_intersection: int, row_intersection: int)
-    is_visible is True if the two points are within Line of Sight.
-    col_intersection is the raster column index where the LOS line intersects with terrain (will be set in the future, currently set to -1).
-    row_intersection is the raster row index where the LOS line intersects with terrain (will be set in the future, currently set to -1).
+tuple
+    A named tuple with the following fields:
+
+    - ``is_visible`` (bool): True if the two points are within Line of Sight.
+    - ``col_intersection`` (int): Raster column index where the LOS line intersects terrain.
+      Will be set in the future; currently -1.
+    - ``row_intersection`` (int): Raster row index where the LOS line intersects terrain.
+      Will be set in the future; currently -1.
 ";
 
 // gdal.ReprojectImage

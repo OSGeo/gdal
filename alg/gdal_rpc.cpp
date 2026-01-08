@@ -726,7 +726,7 @@ void *GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPCInfo, int bReversed,
  * will not avoid all error, but will cause the operation to run for the maximum
  * number of iterations.
  *
- * Starting with GDAL 2.1, debugging of the RPC inverse transformer can be done
+ * Debugging of the RPC inverse transformer can be done
  * by setting the RPC_INVERSE_VERBOSE configuration option to YES (in which case
  * extra debug information will be displayed in the "RPC" debug category, so
  * requiring CPL_DEBUG to be also set) and/or by setting RPC_INVERSE_LOG to a
@@ -773,16 +773,16 @@ void *GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPCInfo, int bReversed,
  * a geoid to the heights with respect to the WGS84 ellipsoid. When this is
  * enabled, the GTIFF_REPORT_COMPD_CS configuration option will be also set
  * temporarily so as to get the vertical information from GeoTIFF
- * files. Defaults to TRUE. (GDAL >= 2.1.0)</li>
+ * files. Defaults to TRUE.</li>
  *
  * <li> RPC_PIXEL_ERROR_THRESHOLD: overrides the dfPixErrThreshold parameter, ie
   the error (measured in pixels) allowed in the
  * iterative solution of pixel/line to lat/long computations (the other way
- * is always exact given the equations).  (GDAL >= 2.1.0)</li>
+ * is always exact given the equations).</li>
  *
  * <li> RPC_MAX_ITERATIONS: maximum number of iterations allowed in the
  * iterative solution of pixel/line to lat/long computations. Default value is
- * 10 in the absence of a DEM, or 20 if there is a DEM.  (GDAL >= 2.1.0)</li>
+ * 10 in the absence of a DEM, or 20 if there is a DEM.</li>
  *
  * <li> RPC_FOOTPRINT: WKT or GeoJSON polygon (in long / lat coordinate space)
  * with a validity footprint for the RPC. Any coordinate transformation that
@@ -802,7 +802,7 @@ void *GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPCInfo, int bReversed,
  *
  * @param dfPixErrThreshold the error (measured in pixels) allowed in the
  * iterative solution of pixel/line to lat/long computations (the other way
- * is always exact given the equations). Starting with GDAL 2.1, this may also
+ * is always exact given the equations). This may also
  * be set through the RPC_PIXEL_ERROR_THRESHOLD transformer option.
  * If a negative or null value is provided, then this defaults to 0.1 pixel.
  *

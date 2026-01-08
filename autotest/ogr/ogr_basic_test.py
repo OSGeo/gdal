@@ -1130,6 +1130,41 @@ def test_feature_use_after_destroy():
         feature.DumpReadable()
 
 
+def test_feature_defn_use_after_feature_delete():
+
+    defn = ogr.FeatureDefn("mydef")
+    feature = ogr.Feature(defn)
+    del defn
+
+    defn2 = feature.GetDefnRef()
+    del feature
+
+    assert defn2.GetName() == "mydef"
+
+
+def test_layer_get_defn_refcount():
+
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayer(0)
+
+    for i in range(10):
+        defn = lyr.GetLayerDefn()
+
+    assert defn.GetReferenceCount() == 2
+
+
+def test_feature_get_defn_refcount():
+
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayer(0)
+    feature = lyr.GetNextFeature()
+
+    for i in range(10):
+        defn = feature.GetDefnRef()
+
+    assert defn.GetReferenceCount() == 3
+
+
 @pytest.mark.parametrize("destroy_method", ("del", "Destroy"))
 def test_geom_use_after_feature_delete_1(destroy_method):
 

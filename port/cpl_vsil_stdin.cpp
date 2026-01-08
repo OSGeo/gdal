@@ -671,12 +671,11 @@ int VSIStdinFilesystemHandler::Stat(const char *pszFilename,
  See :ref:`/vsistdin/ documentation <vsistdin>`
  \endverbatim
 
- @since GDAL 1.8.0
  */
 void VSIInstallStdinHandler()
 
 {
-    auto poHandler = new VSIStdinFilesystemHandler;
+    auto poHandler = std::make_shared<VSIStdinFilesystemHandler>();
     VSIFileManager::InstallHandler("/vsistdin/", poHandler);
     VSIFileManager::InstallHandler("/vsistdin?", poHandler);
 }

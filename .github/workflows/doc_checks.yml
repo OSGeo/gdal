@@ -24,7 +24,7 @@ jobs:
     container: ubuntu:24.04
 
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
     - name: Setup environment
       shell: bash -l {0}
       env:
@@ -36,6 +36,8 @@ jobs:
           . doc_env/bin/activate
           python3 -m pip install -r doc/requirements.txt
           python3 -m pip install setuptools
+          python3 -m pip install pytest
+          python3 -m pip install docstub
           echo PATH=$PATH >> $GITHUB_ENV
 
     - name: Build GDAL
@@ -73,16 +75,30 @@ jobs:
         if find . -name '*.rst' | xargs grep "\.\.warning"; then echo 'Wrong annotation. Should be .. warning'; false; fi
         if find . -name '*.rst' | xargs grep "\.\.codeblock"; then echo 'Wrong annotation. Should be .. codeblock'; false; fi
       working-directory: ./doc
+
     - name: Doxygen
       shell: bash -l {0}
       run: |
         cmake --build . --target doxygen_xml
       working-directory: build
+
+    - name: Test documentation examples
+      shell: bash -l {0}
+      run: |
+          ctest -V -R doc-examples --output-on-failure
+      working-directory: build
+
     - name: Spelling
       shell: bash -l {0}
       run: |
         python3 -c 'from osgeo import gdal'
         ctest -V -R spelling --output-on-failure
+      working-directory: build
+
+    - name: Docstub annotations
+      shell: bash -l {0}
+      run: |
+        ctest -V -R docstub-annotations --output-on-failure
       working-directory: build
 
     # ReadTheDocs pull requests do not build PDF, but we can break it though,
@@ -96,7 +112,7 @@ jobs:
       working-directory: build
 
     - name: Upload PDF
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: gdal.pdf
         path: build/doc/build/latex/gdal.pdf

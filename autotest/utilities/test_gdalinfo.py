@@ -991,7 +991,7 @@ def test_gdalinfo_stac_json(gdalinfo_path, tmp_path):
 
     if osr.GetPROJVersionMajor() >= 7:
         assert isinstance(stac["proj:projjson"], dict)
-    assert stac["proj:transform"] == [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
+    assert stac["proj:transform"] == [60.0, 0.0, 440720.0, 0.0, -60.0, 3751320.0]
 
     assert len(stac["raster:bands"]) == 1
     raster_band = stac["raster:bands"][0]

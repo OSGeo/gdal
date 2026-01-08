@@ -21,8 +21,8 @@ Description
 -----------
 
 :program:`gdal vector partition` dispatches features into different
-files, depending on the values the feature take on a subset of fields specified
-by the user.
+files, depending on the values the feature take on a subset of attribute or
+geometry fields specified by the user.
 
 Two partitioning schemes are available:
 
@@ -52,40 +52,47 @@ it can be determined and the input driver supports writing. Otherwise,
 
 The following options are available:
 
-Standard options
-++++++++++++++++
+Program-Specific Options
+------------------------
 
-.. option:: --output <OUTPUT-DIRECTORY>
+.. option:: --feature-limit <FEATURE-LIMIT>
 
-    Root of the output directory. [required]
+    Maximum number of features per file. By default, unlimited. If the limit
+    is exceeded, several parts are created.
 
 .. option:: --field <FIELD-NAME>
 
     Fields(s) on which to partition. [required]
 
-    Only fields of type String, Integer and Integer64 are allowed.
+    Only attribute fields of type String, Integer and Integer64 are allowed.
     The order into which fields are specified matter to determine the directory
     hierarchy.
 
-.. include:: gdal_options/of_vector.rst
+    Starting with GDAL 3.13, geometry field names can be specified (``OGR_GEOMETRY``
+    being the generic name for the first geometry field). Partitioning on
+    geometry fields is done on the geometry type. This can be useful for file
+    formats where a single geometry type per layer is allowed.
 
-.. include:: gdal_options/co_vector.rst
+.. option:: --max-file-size <MAX-FILE-SIZE>
 
-.. include:: gdal_options/lco.rst
+    Maximum file size (MB or GB suffix can be used). By default, unlimited.
+    If the limit is exceeded, several parts are created.
 
-.. include:: gdal_options/overwrite.rst
+    Note that the maximum file size is used as a hint, and might not be
+    strictly respected, because the evaluation of the file size corresponding
+    to a feature is based on a heuristics, as the file size itself cannot be
+    reliably used when it is under writing. In particular, the heuristics does
+    not assume any compression, so for compressed formats, the actual size of
+    a part can be significantly smaller than the specified limit.
 
-.. option:: --append
+.. option:: --omit-partitioned-field
 
-    Whether the output directory must be opened in append mode. Implies that
-    it already exists and that the output format supports appending.
+    Whether to omit partitioned fields from the target layer definition.
+    Automatically set for Parquet output format and Hive partitioning.
 
-    This mode is useful when adding new features to an already an existing
-    partitioned dataset.
+.. option:: --output <OUTPUT-DIRECTORY>
 
-.. option:: --scheme hive|flat
-
-    Partitioning scheme. Defaults to ``hive``.
+    Root of the output directory. [required]
 
 .. option:: --pattern <PATTERN>
 
@@ -106,40 +113,37 @@ Standard options
     Default values for the pattern are ``part_%010d`` for the hive scheme,
     and ``{LAYER_NAME}_{FIELD_VALUE}_%010d`` for the flat scheme.`
 
-.. option:: --feature-limit <FEATURE-LIMIT>
+.. option:: --scheme hive|flat
 
-    Maximum number of features per file. By default, unlimited. If the limit
-    is exceeded, several parts are created.
+    Partitioning scheme. Defaults to ``hive``.
 
-.. option:: --max-file-size <MAX-FILE-SIZE>
 
-    Maximum file size (MB or GB suffix can be used). By default, unlimited.
-    If the limit is exceeded, several parts are created.
+Standard Options
+----------------
 
-    Note that the maximum file size is used as a hint, and might not be
-    strictly respected, because the evaluation of the file size corresponding
-    to a feature is based on a heuristics, as the file size itself cannot be
-    reliably used when it is under writing. In particular, the heuristics does
-    not assume any compression, so for compressed formats, the actual size of
-    a part can be significantly smaller than the specified limit.
+.. collapse:: Details
 
-.. option:: --omit-partitioned-field
+    .. option:: --append
 
-    Whether to omit partitioned fields from the target layer definition.
-    Automatically set for Parquet output format and Hive partitioning.
+        Whether the output directory must be opened in append mode. Implies that
+        it already exists and that the output format supports appending.
 
-.. option:: --skip-errors
+        This mode is useful when adding new features to an already an existing
+        partitioned dataset.
 
-    Whether failures to write feature(s) should be ignored. Note that this option
-    sets the size of the transaction unit to one feature at a time, which may
-    cause severe slowdown when inserting into databases.
+    .. include:: gdal_options/co_vector.rst
 
-Advanced options
-++++++++++++++++
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/lco.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/skip_errors.rst
 
 Examples
 --------
@@ -157,3 +161,10 @@ Examples
    .. code-block:: bash
 
         $ gdal pipeline ! read world_cities.gpkg ! filter --where "pop > 1e6" ! partition out_directory --field country --format GPKG --scheme flat
+
+.. example::
+   :title: Create multiple Shapefiles, one for each geometry type, from a GeoPackage file, by grouping together POLYGON/MULTIPOLYGON or LINESTRING/MULTILINESTRING.
+
+   .. code-block:: bash
+
+        $ gdal vector pipeline ! read input.gpkg ! set-geom-type --multi ! partition out_directory --scheme flat --field OGR_GEOMETRY --format "ESRI Shapefile"

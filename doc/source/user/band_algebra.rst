@@ -98,7 +98,7 @@ Examples
                 auto& R = *(poDS->GetRasterBand(1));
                 auto& G = *(poDS->GetRasterBand(2));
                 auto& B = *(poDS->GetRasterBand(3));
-                auto graylevel = (0.299 * R + 0.587 * G + 0.114 * B).AsType(GDT_Byte);
+                auto graylevel = (0.299 * R + 0.587 * G + 0.114 * B).AsType(GDT_UInt8);
 
                 auto poGTiffDrv = GetGDALDriverManager()->GetDriverByName("GTiff");
                 std::unique_ptr<GDALDataset>(
@@ -116,7 +116,7 @@ Examples
                R = ds.GetRasterBand(1)
                G = ds.GetRasterBand(2)
                B = ds.GetRasterBand(3)
-               graylevel = (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_Byte)
+               graylevel = (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_UInt8)
                gdal.GetDriverByName("GTiff").CreateCopy("graylevel.tif", graylevel)
 
 

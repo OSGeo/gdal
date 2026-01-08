@@ -109,6 +109,34 @@ static void DumpDataType(const GDALExtendedDataType &dt,
                                 serializer.Add(
                                     poRAT->GetValueAsString(iRow, iCol));
                                 break;
+                            case GFT_Boolean:
+                                serializer.Add(
+                                    poRAT->GetValueAsBoolean(iRow, iCol));
+                                break;
+                            case GFT_DateTime:
+                            {
+                                const auto sDateTime =
+                                    poRAT->GetValueAsDateTime(iRow, iCol);
+                                serializer.Add(
+                                    GDALRasterAttributeTable::DateTimeToString(
+                                        sDateTime));
+                                break;
+                            }
+                            case GFT_WKBGeometry:
+                            {
+                                size_t nWKBSize = 0;
+                                const GByte *pabyWKB =
+                                    poRAT->GetValueAsWKBGeometry(iRow, iCol,
+                                                                 nWKBSize);
+                                std::string osWKT =
+                                    GDALRasterAttributeTable::WKBGeometryToWKT(
+                                        pabyWKB, nWKBSize);
+                                if (osWKT.empty())
+                                    serializer.AddNull();
+                                else
+                                    serializer.Add(osWKT);
+                                break;
+                            }
                         }
                     }
                 }
@@ -181,7 +209,7 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *bytes,
 {
     switch (eDT)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             DumpValue<GByte>(serializer, bytes);
             break;
         case GDT_Int8:

@@ -68,15 +68,26 @@ typedef struct
 #pragma warning(disable : 4611)
 #endif
 
+class JPGVSIFileMultiplexerHandler;
+
+struct JPGVSIFileMultiplexerCommon
+{
+    std::shared_ptr<VSIVirtualHandle> m_poUnderlyingHandle{};
+    JPGVSIFileMultiplexerHandler *m_poCurrentOwner = nullptr;
+    int m_nSubscribers = 0;
+};
+
 struct JPGDatasetOpenArgs
 {
     const char *pszFilename = nullptr;
-    VSILFILE *fpLin = nullptr;
+    std::shared_ptr<JPGVSIFileMultiplexerCommon> poCommon{};
+    VSIVirtualHandleUniquePtr fp{};
     CSLConstList papszSiblingFiles = nullptr;
     int nScaleFactor = 1;
     bool bDoPAMInitialize = false;
     bool bUseInternalOverviews = false;
     bool bIsLossless = false;
+    CSLConstList papszOpenOptions = nullptr;
 };
 
 class JPGDatasetCommon;
@@ -158,7 +169,8 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     GDALGeoTransform m_gt{};
     std::vector<gdal::GCP> m_aoGCPs{};
 
-    VSILFILE *m_fpImage{};
+    std::shared_ptr<JPGVSIFileMultiplexerCommon> m_poCommon{};
+    VSIVirtualHandleUniquePtr m_fpImage{};
     GUIntBig nSubfileOffset{};
 
     int nLoadedScanline{-1};
@@ -171,12 +183,13 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     bool bHasReadDJIMetadata = false;
     bool bHasReadImageStructureMetadata = false;
     char **papszMetadata{};
-    int nExifOffset{-1};
-    int nInterOffset{-1};
-    int nGPSOffset{-1};
+    uint32_t nExifOffset{0};
+    uint32_t nInterOffset{0};
+    uint32_t nGPSOffset{0};
     bool bSwabflag{};
-    int nTiffDirStart{-1};
-    int nTIFFHEADER{-1};
+    bool m_bTiffDirStartInit = false;
+    uint32_t nTiffDirStart{0};
+    vsi_l_offset nTIFFHEADER{0};
     bool bHasDoneJpegCreateDecompress{};
     bool bHasDoneJpegStartDecompress{};
 
@@ -210,7 +223,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     void ReadThermalMetadata();
     void ReadFLIRMetadata();
     void ReadDJIMetadata();
-    GDALDataset *OpenRawThermalImage();
+    GDALDataset *OpenRawThermalImage(const char *pszConnectionString);
 
     bool bHasCheckedForMask{};
     JPGMaskBand *poMaskBand{};
@@ -241,7 +254,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     JPGDatasetCommon();
     ~JPGDatasetCommon() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                      GDALDataType, int, BANDMAP_TYPE, GSpacing nPixelSpace,

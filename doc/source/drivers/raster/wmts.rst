@@ -6,8 +6,6 @@ WMTS -- OGC Web Map Tile Service
 
 .. shortname:: WMTS
 
-.. versionadded:: 2.1
-
 .. build_dependencies:: libcurl
 
 Access to WMTS layers is possible with the GDAL WMTS
@@ -409,7 +407,7 @@ It is important that there be no spaces or other content before the
 | </GDAL_WMTS>                      |                                   |
 +-----------------------------------+-----------------------------------+
 
-Starting with GDAL 2.3, additional HTTP headers can be sent by setting the
+Additional HTTP headers can be sent by setting the
 :config:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text
 file with “key: value” HTTP headers.
 

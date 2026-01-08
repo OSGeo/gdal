@@ -35,19 +35,30 @@
 /*        GDALRasterUpdateAlgorithm::GDALRasterUpdateAlgorithm()        */
 /************************************************************************/
 
-GDALRasterUpdateAlgorithm::GDALRasterUpdateAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALRasterUpdateAlgorithm::GDALRasterUpdateAlgorithm(bool standaloneStep)
+    : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      ConstructorOptions()
+                                          .SetStandaloneStep(standaloneStep)
+                                          .SetInputDatasetMaxCount(1)
+                                          .SetAddDefaultArguments(false)
+                                          .SetInputDatasetAlias("dataset"))
 {
     AddProgressArg();
 
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
+    if (standaloneStep)
+    {
+        AddRasterInputArgs(/* openForMixedRasterVector = */ false,
+                           /* hiddenForCLI = */ false);
+    }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
 
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER)
         .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
 
+    m_update = true;
     AddUpdateArg(&m_update).SetDefault(true).SetHidden();
 
     AddArg("geometry", 0, _("Clipping geometry (WKT or GeoJSON)"), &m_geometry)
@@ -66,13 +77,12 @@ GDALRasterUpdateAlgorithm::GDALRasterUpdateAlgorithm()
 }
 
 /************************************************************************/
-/*                GDALRasterUpdateAlgorithm::RunImpl()                  */
+/*                GDALRasterUpdateAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALRasterUpdateAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                        void *pProgressData)
+bool GDALRasterUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &stepCtxt)
 {
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
 
     auto poDstDS = m_outputDataset.GetDatasetRef();
@@ -204,6 +214,8 @@ bool GDALRasterUpdateAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     {
         std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
             nullptr, GDALDestroyScaledProgress);
+        auto pfnProgress = stepCtxt.m_pfnProgress;
+        void *pProgressData = stepCtxt.m_pProgressData;
         if (pfnProgress)
         {
             pScaledData.reset(
@@ -238,5 +250,21 @@ bool GDALRasterUpdateAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     return bOK;
 }
+
+/************************************************************************/
+/*                GDALRasterUpdateAlgorithm::RunImpl()                  */
+/************************************************************************/
+
+bool GDALRasterUpdateAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                        void *pProgressData)
+{
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunStep(stepCtxt);
+}
+
+GDALRasterUpdateAlgorithmStandalone::~GDALRasterUpdateAlgorithmStandalone() =
+    default;
 
 //! @endcond

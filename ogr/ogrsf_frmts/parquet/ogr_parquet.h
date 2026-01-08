@@ -121,6 +121,9 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     std::map<int, GeomColBBOXParquet>
         m_oMapGeomFieldIndexToGeomColBBOXParquet{};
 
+    //! GDAL creation options that were used to create the file (if done by GDAL)
+    CPLStringList m_aosCreationOptions{};
+
     void EstablishFeatureDefn();
     void ProcessGeometryColumnCovering(
         const std::shared_ptr<arrow::Field> &field,
@@ -179,10 +182,8 @@ class OGRParquetLayer final : public OGRParquetLayerBase
         return m_poArrowReader.get();
     }
 
-    const std::vector<int> &GetMapFieldIndexToParquetColumn() const
-    {
-        return m_anMapFieldIndexToParquetColumn;
-    }
+    std::vector<int>
+    GetParquetColumnIndicesForArrowField(const std::string &field_name) const;
 
     const std::vector<std::shared_ptr<arrow::DataType>> &
     GetArrowFieldTypes() const
@@ -193,6 +194,11 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     int GetFIDParquetColumn() const
     {
         return m_iFIDParquetColumn;
+    }
+
+    const CPLStringList &GetCreationOptions() const
+    {
+        return m_aosCreationOptions;
     }
 
     static constexpr int OGR_FID_INDEX = -2;
@@ -297,11 +303,10 @@ class OGRParquetDataset final : public OGRArrowDataset
     std::shared_ptr<arrow::fs::FileSystem> m_poFS{};
 
   public:
-    explicit OGRParquetDataset(
-        const std::shared_ptr<arrow::MemoryPool> &poMemoryPool);
+    explicit OGRParquetDataset();
     ~OGRParquetDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,
@@ -314,6 +319,10 @@ class OGRParquetDataset final : public OGRArrowDataset
     {
         m_poFS = fs;
     }
+
+    std::unique_ptr<OGRParquetLayer>
+    CreateReaderLayer(const std::string &osFilename, VSILFILE *&fpIn,
+                      CSLConstList papszOpenOptionsIn);
 };
 
 /************************************************************************/
@@ -386,9 +395,8 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
 
     CPLErr SetMetadata(char **papszMetadata, const char *pszDomain) override;
 
-    bool SetOptions(CSLConstList papszOptions,
-                    const OGRSpatialReference *poSpatialRef,
-                    OGRwkbGeometryType eGType);
+    bool SetOptions(const OGRGeomFieldDefn *poSrcGeomFieldDefn,
+                    CSLConstList papszOptions);
 
     OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                            int bApproxOK = TRUE) override;
@@ -459,7 +467,7 @@ class OGRParquetWriterDataset final : public GDALPamDataset
         return m_poMemoryPool.get();
     }
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int idx) const override;

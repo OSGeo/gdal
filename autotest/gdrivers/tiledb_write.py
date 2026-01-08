@@ -83,7 +83,7 @@ def test_tiledb_write_update(tmp_path, mode):
 
     dsname = str(tmp_path / "tiledb_update")
     new_ds = gdaltest.tiledb_drv.Create(
-        dsname, 20, 20, 1, gdal.GDT_Byte, options=options
+        dsname, 20, 20, 1, gdal.GDT_UInt8, options=options
     )
     new_ds.GetRasterBand(1).WriteArray(np.zeros((20, 20)))
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
@@ -252,7 +252,7 @@ def test_tiledb_write_history(tmp_path, mode):
 
     dsname = str(tmp_path / "tiledb_versioning")
     new_ds = gdaltest.tiledb_drv.Create(
-        dsname, 20, 20, 1, gdal.GDT_Byte, options=options
+        dsname, 20, 20, 1, gdal.GDT_UInt8, options=options
     )
     new_ds.GetRasterBand(1).WriteArray(np.zeros((20, 20)))
 
@@ -296,7 +296,7 @@ def test_tiledb_write_history(tmp_path, mode):
 @pytest.mark.parametrize(
     "outputType",
     [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int8,
         gdal.GDT_UInt16,
         gdal.GDT_Int16,
@@ -335,10 +335,10 @@ def test_tiledb_read_arbitrary_array(outputType, tmp_path):
 @pytest.mark.parametrize(
     "outputType, nodata, expected_nodata",
     [
-        (gdal.GDT_Byte, 1, 1),
-        (gdal.GDT_Byte, -1, 255),
-        (gdal.GDT_Byte, 256, 255),
-        (gdal.GDT_Byte, 1.5, 255),
+        (gdal.GDT_UInt8, 1, 1),
+        (gdal.GDT_UInt8, -1, 255),
+        (gdal.GDT_UInt8, 256, 255),
+        (gdal.GDT_UInt8, 1.5, 255),
         (gdal.GDT_Int8, -1, -1),
         (gdal.GDT_UInt16, 1, 1),
         (gdal.GDT_Int16, -1, -1),

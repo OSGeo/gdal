@@ -1233,13 +1233,24 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
             szBuf[pField->nCount] = '\0';
             break;
         case EDT_UByte:
+            for (i = 0; i < pField->nCount; ++i)
+            {
+                if (i > 0)
+                    szBuf[nOffset++] = ' ';
+                ret = snprintf(szBuf + nOffset, nBufLen - nOffset, "%d",
+                               ((const unsigned char *)pData)[i]);
+                if (ret < 0 || ret >= (int)nBufLen - nOffset)
+                    return CE_Failure;
+                nOffset += ret;
+            }
+            break;
         case EDT_SByte:
             for (i = 0; i < pField->nCount; ++i)
             {
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
                 ret = snprintf(szBuf + nOffset, nBufLen - nOffset, "%d",
-                               ((const char *)pData)[i]);
+                               ((const signed char *)pData)[i]);
                 if (ret < 0 || ret >= (int)nBufLen - nOffset)
                     return CE_Failure;
                 nOffset += ret;

@@ -6,9 +6,9 @@ Python proxy of an :cpp:class:`OGRFeature`.
 %feature("docstring")  OGRFeatureShadow "
 
 Parameters
------------
-feature_def:
-    :py:class:`FeatureDefn` to which the feature will adhere.
+----------
+feature_def : FeatureDefn
+    The feature definition to which the feature will adhere.
 ";
 
 %feature("docstring")  Clone "
@@ -16,7 +16,7 @@ Duplicate a Feature.
 See :cpp:func:`OGRFeature::Clone`.
 
 Returns
---------
+-------
 Feature
 ";
 
@@ -32,7 +32,7 @@ See :cpp:func:`OGRFeature::DumpReadable`.
 
 Examples
 --------
->>> with gdal.OpenEx('data/poly.shp') as ds:
+>>> with gdal.OpenEx('poly.shp', gdal.OF_VECTOR) as ds:
 ...     lyr = ds.GetLayer(0)
 ...     feature = lyr.GetNextFeature()
 ...     feature.DumpReadable()
@@ -41,7 +41,7 @@ OGRFeature(poly):0
   AREA (Real) = 215229.266
   EAS_ID (Integer64) = 168
   PRFEDEA (String) = 35043411
-  POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5))
+  POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5)) # no-check
 ";
 
 %feature("docstring")  DumpReadableAsString "
@@ -65,12 +65,12 @@ same :py:class:`FeatureDefn`, have the same field values, and the same geometry
 See :cpp:func:`OGRFeature::Equal`.
 
 Parameters
------------
+----------
 feature : Feature
     feature to test this one against
 
 Returns
---------
+-------
 bool
 ";
 
@@ -81,7 +81,7 @@ Fill unset fields with default values that might be defined.
 See :cpp:func:`OGRFeature::FillUnsetWithDefault`.
 
 Parameters
------------
+----------
 bNotNullableOnly : bool
     if we should fill only unset fields with a not-null
     constraint.
@@ -96,7 +96,7 @@ Fetch the :py:class:`FeatureDefn` associated with this Feature.
 See :cpp:func:`OGRFeature::GetDefnRef()`.
 
 Returns
---------
+-------
 FeatureDefn
 ";
 
@@ -107,7 +107,7 @@ See :cpp:func:`OGRFeature::GetFID`
 
 Returns
 -------
-int:
+int
     feature id or :py:const:`NullFID` if none has been assigned.
 ";
 
@@ -122,14 +122,14 @@ This method only works for :py:const:`OFTBinary` and :py:const:`OFTString` field
 See :cpp:func:`OGRFeature::GetFieldAsBinary`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
+-------
 bytearray
 ";
 
@@ -143,14 +143,14 @@ and :py:const:`OFTDateTime` fields.
 See :cpp:func:`OGRFeature::GetFieldAsDateTime`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
+-------
 list
     list containing [ year, month, day, hour, minute, second, timezone flag ]
 
@@ -164,14 +164,14 @@ Examples
 >>> defn.AddFieldDefn(ogr.FieldDefn('utc', ogr.OFTDateTime))
 >>> feature = ogr.Feature(defn)
 >>> feature['unknown'] = datetime.now()
->>> feature['local'] = datetime.now(ZoneInfo('Canada/Eastern'))
+>>> feature['local'] = datetime.now(ZoneInfo('America/Toronto'))
 >>> feature['utc'] = datetime.now(ZoneInfo('UTC'))
 >>> feature.GetFieldAsDateTime('unknown')
-[2024, 3, 15, 20, 34, 52.594173431396484, 0]
+[2024, 3, 15, 20, 34, 52.594173431396484, 0] # random
 >>> feature.GetFieldAsDateTime('local')
-[2024, 3, 15, 20, 34, 52.59502410888672, 84]
+[2024, 3, 15, 20, 34, 52.59502410888672, 84] # random
 >>> feature.GetFieldAsDateTime('utc')
-[2024, 3, 16, 0, 34, 52.59580993652344, 100]
+[2024, 3, 16, 0, 34, 52.59580993652344, 100] # random
 
 See Also
 --------
@@ -188,15 +188,15 @@ result in a return value of zero.
 See :cpp:func:`OGRFeature::GetFieldAsDouble`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
-float:
+-------
+float
     the field value.
 ";
 
@@ -209,8 +209,8 @@ Currently this function only works for :py:const:`OFTRealList` fields.
 See :cpp:func:`OGRFeature::GetFieldAsDoubleList`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
@@ -242,12 +242,12 @@ See :cpp:func:`OGRFeature::GetFieldAsISO8601DateTime`.
 .. versionadded:: 3.7
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
-options : dict / str
+options : dict or str
     Not currently used.
 ";
 
@@ -262,15 +262,15 @@ errors will result in a return value of zero.
 See :cpp:func:`OGRFeature::GetFieldAsInteger`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
-int:
+-------
+int
     the field value.
 
 Examples
@@ -300,15 +300,15 @@ value of zero.
 See :cpp:func:`OGRFeature::GetFieldAsInteger64`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
-int:
+-------
+int
     the field value.
 ";
 
@@ -320,15 +320,15 @@ Currently this function only works for :py:const:`OFTInteger64List` fields.
 See :cpp:func:`OGRFeature::GetFieldAsInteger64List`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
-list:
+-------
+list
     the field value.
 ";
 
@@ -342,15 +342,15 @@ This function is the same as the C++ method
 :cpp:func:`OGRFeature::GetFieldAsIntegerList`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
-list:
+-------
+list
     the field value.
 ";
 
@@ -363,15 +363,15 @@ Other field types, or errors will result in a return value of zero.
 See :cpp:func:`OGRFeature::GetFieldAsString`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
-str:
+-------
+str
     the field value.
 ";
 
@@ -384,15 +384,15 @@ Currently this method only works for :py:const:`OFTStringList` fields.
 See :cpp:func:`OGRFeature::GetFieldAsStringList`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
-list:
+-------
+list
     the field value.
 ";
 
@@ -404,8 +404,8 @@ the field count for the :py:class:`FeatureDefn`.
 See :cpp:func:`OGRFeature::GetFieldCount`.
 
 Returns
---------
-int:
+-------
+int
     count of fields.
 ";
 
@@ -416,14 +416,14 @@ Fetch definition for this field.
 See :cpp:func:`OGRFeature::GetFieldDefnRef`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
+-------
 FieldDefn
     a reference to the field definition. This reference should
     not be modified.
@@ -436,13 +436,13 @@ Fetch the field index given field name.
 See :cpp:func:`OGRFeature::GetFieldIndex`.
 
 Parameters
------------
-field_name:
+----------
+field_name : str
     the name of the field to search for.
 
 Returns
---------
-int:
+-------
+int
     the field index, or -1 if no matching field is found.
 ";
 
@@ -451,14 +451,14 @@ int:
 Return the type of the given field.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
+-------
 int
     field type code (e.g., :py:const:`OFTInteger`)
 ";
@@ -471,8 +471,8 @@ the same as the geometry field count for the :py:class:`FeatureDefn`.
 See :cpp:func:`OGRFeature::GetGeomFieldCount`.
 
 Returns
---------
-int:
+-------
+int
     count of geometry fields.
 ";
 
@@ -483,15 +483,15 @@ Fetch definition for this geometry field.
 See :cpp:func:`OGRFeature::GetGeomFieldDefnRef`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
-GeomFieldDefn:
+-------
+GeomFieldDefn
     a reference to the field definition.
     Should not be deleted or modified.
 ";
@@ -503,13 +503,13 @@ Fetch the geometry field index given geometry field name.
 See :cpp:func:`OGRFeature::GetGeomFieldIndex`.
 
 Parameters
------------
-field_name:
+----------
+field_name : str
     the name of the geometry field to search for.
 
 Returns
---------
-int:
+-------
+int
     the geometry field index, or -1 if no matching geometry field is found.
 ";
 
@@ -520,8 +520,8 @@ Fetch a feature :py:class:`Geometry`.
 See :cpp:func:`OGRFeature::GetGeomFieldRef`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
@@ -543,8 +543,8 @@ See :cpp:func:`OGRFeature::GetGeometryRef`
 The :py:func:`Feature.geometry` method is also available as an alias of :py:func:`Feature.GetGeometryRef`.
 
 Returns
---------
-Geometry:
+-------
+Geometry
     the geometry, or None.
 ";
 
@@ -571,7 +571,7 @@ See :cpp:func:`OGRFeature::GetNativeData` and :ref:`rfc-60`.
 
 Returns
 -------
-str:
+str
     a string with the native data, or ``None``.
 ";
 
@@ -587,8 +587,8 @@ data. It follows the IANA RFC 2045
 See :cpp:func:`OGRFeature::GetNativeMediaType` and :ref:`rfc-60`.
 
 Returns
---------
-str:
+-------
+str
     a string with the native media type, or ``None``.
 ";
 
@@ -603,7 +603,7 @@ it.
 See :cpp:func:`OGRFeature::GetStyleString`.
 
 Returns
---------
+-------
 str or None
 ";
 
@@ -614,15 +614,15 @@ Test if a field is null.
 See :cpp:func:OGRFeature::`IsFieldNull`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
-bool:
+-------
+bool
     ``True`` if the field is null, otherwise ``False``
 ";
 
@@ -633,15 +633,15 @@ Test if a field has ever been assigned a value or not.
 See :cpp:func:`OGRFeature::IsFieldSet`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
-bool:
+-------
+bool
     ``True`` if the field has been set, otherwise ``False``.
 ";
 
@@ -652,15 +652,15 @@ Test if a field is set and not null.
 See :cpp:func:`OGRFeature::IsFieldSetAndNotNull`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
-bool:
+-------
+bool
     ``True`` if the field is set and not null, otherwise ``False``.
 ";
 
@@ -676,13 +676,13 @@ indicating that the feature id is unknown.
 See :cpp:func:`OGRFeature::SetFID`.
 
 Parameters
------------
-fid:
+----------
+fid : int
     the new feature identifier value to assign.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`OGRERR_NONE` on success, or some other value on failure.
 ";
 
@@ -704,7 +704,7 @@ afterwards. Or if this is a new feature, :py:meth:`Layer.CreateFeature` must be
 used afterwards.
 
 Parameters
------------
+----------
 id : int
     the field to set, from 0 to :py:meth:`GetFieldCount`-1.
 nList : list
@@ -727,7 +727,7 @@ afterwards. Or if this is a new feature, :py:meth:`Layer.CreateFeature` must be
 used afterwards.
 
 Parameters
------------
+----------
 id : int
     the field to set, from 0 to :py:meth:`GetFieldCount`-1.
 nList : list
@@ -750,7 +750,7 @@ afterwards. Or if this is a new feature, :py:meth:`Layer.CreateFeature` must be
 used afterwards.
 
 Parameters
------------
+----------
 id : int
     the field to set, from 0 to :py:meth:`GetFieldCount`-1.
 nList : list
@@ -764,8 +764,8 @@ Clear a field, marking it as null.
 See :cpp:func:`OGRFeature::SetFieldNull`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
@@ -791,12 +791,12 @@ afterwards. Or if this is a new feature, :py:meth:`Layer.CreateFeature` must be
 used afterwards.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
-value:
+value : any
     the value to assign.
 ";
 
@@ -815,12 +815,12 @@ afterwards. Or if this is a new feature, :py:meth:`Layer.CreateFeature` must be
 used afterwards.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
-value:
+value : any
     the value to assign.
 ";
 
@@ -836,7 +836,7 @@ function conversion rules will be applied as needed.
 See :cpp:func:`OGRFeature::SetFrom`.
 
 Parameters
------------
+----------
 other : Feature
     feature from which geometry and field values will be copied.
 forgiving : bool, default = True
@@ -844,8 +844,8 @@ forgiving : bool, default = True
     output fields matching some of the source fields.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`OGRERR_NONE` if the operation succeeds, even if some values are not
     transferred, otherwise an error code.
 ";
@@ -866,7 +866,7 @@ names don't match.
 See :cpp:func:`OGRFeature::SetFrom`.
 
 Parameters
------------
+----------
 other : Feature
     handle to the feature from which geometry, and field
     values will be copied.
@@ -881,8 +881,8 @@ nList : list
     source feature.
 
 Returns
---------
-OGRErr:
+-------
+int
     :py:const:`OGRERR_NONE` if the operation succeeds, even if some values are not
     transferred, otherwise an error code.
 ";
@@ -898,8 +898,8 @@ ownership of the passed geometry, but instead makes a copy of it.
 See :cpp:func:`OGRFeature::SetGeomField`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Geometry field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
@@ -907,8 +907,8 @@ geom : Geometry
     handle to the new geometry to apply to feature.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`OGRERR_NONE` if successful, or
     :py:const:`OGR_UNSUPPORTED_GEOMETRY_TYPE` if the geometry type is illegal for
     the :py:class:`FeatureDefn` (checking not yet implemented).
@@ -933,13 +933,13 @@ afterwards. Or if this is a new feature, :py:meth:`Layer.CreateFeature` must be
 used afterwards.
 
 Parameters
------------
+----------
 geom : Geometry
     new geometry to apply to feature.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`OGRERR_NONE` if successful, or
     :py:const:`OGR_UNSUPPORTED_GEOMETRY_TYPE` if the geometry type is illegal for
     the :py:class:`FeatureDefn` (checking not yet implemented).
@@ -959,7 +959,7 @@ indicated by :py:meth:`GetNativeMediaType`.
 See :cpp:func:`OGRFeature::SetNativeData` and :ref:`rfc-60`.
 
 Parameters
------------
+----------
 nativeData : str
     a string with the native data, or ``None``
 ";
@@ -976,7 +976,7 @@ data. It follows the IANA RFC 2045
 See :cpp:func:`OGRFeature::SetNativeMediaType` and :ref:`rfc-60`.
 
 Parameters
------------
+----------
 nativeMediaType : str
     a string with the native media type, or ``None``
 ";
@@ -988,7 +988,7 @@ Set feature style string.
 See :cpp:func:`OGRFeature::SetStyleString`.
 
 Parameters
------------
+----------
 the_string : str
     the style string to apply to this feature
 ";
@@ -1000,8 +1000,8 @@ Clear a field, marking it as unset.
 See :cpp:func:`OGRFeature::UnsetField`.
 
 Parameters
------------
-fld_index : int / str
+----------
+fld_index : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
@@ -1021,7 +1021,7 @@ conservative (if it fails, then it will fail for all interpretations).
 See :cpp:func:`OGRFeature::Validate`.
 
 Parameters
------------
+----------
 flags : int, default = :py:const:`F_VAL_ALL`
     One or more of :py:const:`OGR_F_VAL_NULL`,
     :py:const:`OGR_F_VAL_GEOM_TYPE`, py:const:`OGR_F_VAL_WIDTH` and
@@ -1032,7 +1032,7 @@ bEmitError : bool, default = True
 
 Returns
 -------
-int:
+int
     TRUE if all enabled validation tests pass.
 ";
 

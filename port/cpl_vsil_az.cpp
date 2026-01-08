@@ -2594,13 +2594,12 @@ bool VSIAzureHandle::IsDirectoryFromExists(const char * /*pszVerb*/,
  See :ref:`/vsiaz/ documentation <vsiaz>`
  \endverbatim
 
- @since GDAL 2.3
  */
 
 void VSIInstallAzureFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsiaz/",
-                                   new cpl::VSIAzureFSHandler("/vsiaz/"));
+    VSIFileManager::InstallHandler(
+        "/vsiaz/", std::make_shared<cpl::VSIAzureFSHandler>("/vsiaz/"));
 }
 
 #endif /* HAVE_CURL */

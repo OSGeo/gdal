@@ -531,5 +531,6 @@ int VSIOCILobHandle::Close()
  */
 void VSIInstallOCILobHandler()
 {
-    VSIFileManager::InstallHandler("/vsiocilob/", new WSIOCILobFSHandle);
+    VSIFileManager::InstallHandler("/vsiocilob/",
+                                   std::make_shared<WSIOCILobFSHandle>());
 }

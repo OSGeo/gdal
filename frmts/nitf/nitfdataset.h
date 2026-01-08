@@ -90,7 +90,7 @@ class NITFDataset final : public GDALPamDataset
     bool InitializeTREMetadata(bool bValidate);
     void InitializeImageStructureMetadata();
 
-    GIntBig *panJPEGBlockOffset = nullptr;
+    vsi_l_offset *panJPEGBlockOffset = nullptr;
     GByte *pabyJPEGBlock = nullptr;
     int nQLevel = 0;
 
@@ -135,7 +135,7 @@ class NITFDataset final : public GDALPamDataset
     NITFDataset();
     ~NITFDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize, GDALDataType eDT,

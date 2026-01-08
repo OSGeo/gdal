@@ -29,11 +29,6 @@
 
 /**
  * \brief Copy constructor.
- *
- * Note: before GDAL 2.1, only the default implementation of the constructor
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRCurvePolygon::OGRCurvePolygon(const OGRCurvePolygon &) = default;
@@ -44,11 +39,6 @@ OGRCurvePolygon::OGRCurvePolygon(const OGRCurvePolygon &) = default;
 
 /**
  * \brief Assignment operator.
- *
- * Note: before GDAL 2.1, only the default implementation of the operator
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRCurvePolygon &OGRCurvePolygon::operator=(const OGRCurvePolygon &other)
@@ -570,8 +560,6 @@ std::string OGRCurvePolygon::exportToWkt(const OGRWktOptions &opts,
  *                     Unused for now. Must be set to NULL.
  *
  * @return a linestring
- *
- * @since OGR 2.0
  */
 
 OGRPolygon *

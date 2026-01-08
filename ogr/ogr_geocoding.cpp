@@ -230,7 +230,6 @@ static bool OGRGeocodeHasStringValidFormat(const char *pszQueryTemplate)
  * @return a handle that should be freed with OGRGeocodeDestroySession(), or
  *         NULL in case of failure.
  *
- * @since GDAL 1.10
  */
 /* clang-format on */
 
@@ -366,7 +365,6 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char **papszOptions)
 
  * @param hSession the handle to destroy.
  *
- * @since GDAL 1.10
  */
 void OGRGeocodeDestroySession(OGRGeocodingSessionH hSession)
 {
@@ -498,9 +496,12 @@ static OGRLayer *OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
         if (poLayer != nullptr)
         {
             OGRFieldDefn oFieldDefnURL(FIELD_URL, OFTString);
-            poLayer->CreateField(&oFieldDefnURL);
             OGRFieldDefn oFieldDefnBlob(FIELD_BLOB, OFTString);
-            poLayer->CreateField(&oFieldDefnBlob);
+            if (poLayer->CreateField(&oFieldDefnURL) != OGRERR_NONE ||
+                poLayer->CreateField(&oFieldDefnBlob) != OGRERR_NONE)
+            {
+                return nullptr;
+            }
             if (EQUAL(osExt, "SQLITE") ||
                 STARTS_WITH_CI(hSession->pszCacheFilename, "PG:"))
             {
@@ -590,10 +591,9 @@ static OGRLayerH OGRGeocodeMakeRawLayer(const char *pszContent)
     const OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
     OGRFieldDefn oFieldDefnRaw("raw", OFTString);
     poLayer->CreateField(&oFieldDefnRaw);
-    OGRFeature *poFeature = new OGRFeature(poFDefn);
+    auto poFeature = std::make_unique<OGRFeature>(poFDefn);
     poFeature->SetField("raw", pszContent);
-    CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-    delete poFeature;
+    CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
     return OGRLayer::ToHandle(poLayer);
 }
 
@@ -666,7 +666,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode *psSearchResults,
             double dfLon = 0.0;
 
             // Iteration to fill the feature.
-            OGRFeature *poFeature = new OGRFeature(poFDefn);
+            auto poFeature = std::make_unique<OGRFeature>(poFDefn);
 
             for (CPLXMLNode *psChild = psPlace->psChild; psChild != nullptr;
                  psChild = psChild->psNext)
@@ -728,8 +728,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode *psSearchResults,
                 bFoundLat)
                 poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-            delete poFeature;
+            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
         }
         psPlace = psPlace->psNext;
     }
@@ -819,7 +818,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(
     }
 
     // Second iteration to fill the feature.
-    OGRFeature *poFeature = new OGRFeature(poFDefn);
+    auto poFeature = std::make_unique<OGRFeature>(poFDefn);
     psChild = psResult->psChild;
     while (psChild != nullptr)
     {
@@ -866,8 +865,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(
     if (poFeature->GetGeometryRef() == nullptr && bFoundLon && bFoundLat)
         poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-    CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-    delete poFeature;
+    CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
 
     return OGRLayer::ToHandle(poLayer);
 }
@@ -937,7 +935,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode *psResultSet,
             double dfLon = 0.0;
 
             // Second iteration to fill the feature.
-            OGRFeature *poFeature = new OGRFeature(poFDefn);
+            auto poFeature = std::make_unique<OGRFeature>(poFDefn);
             for (CPLXMLNode *psChild = psPlace->psChild; psChild != nullptr;
                  psChild = psChild->psNext)
             {
@@ -1000,8 +998,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode *psResultSet,
             if (bFoundLon && bFoundLat)
                 poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-            delete poFeature;
+            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
         }
         psPlace = psPlace->psNext;
     }
@@ -1096,7 +1093,7 @@ static OGRLayerH OGRGeocodeBuildLayerBing(CPLXMLNode *psResponse,
             double dfLat = 0.0;
             double dfLon = 0.0;
 
-            OGRFeature *poFeature = new OGRFeature(poFDefn);
+            auto poFeature = std::make_unique<OGRFeature>(poFDefn);
             for (CPLXMLNode *psChild = psPlace->psChild; psChild != nullptr;
                  psChild = psChild->psNext)
             {
@@ -1165,8 +1162,7 @@ static OGRLayerH OGRGeocodeBuildLayerBing(CPLXMLNode *psResponse,
             if (bFoundLon && bFoundLat)
                 poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
 
-            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
-            delete poFeature;
+            CPL_IGNORE_RET_VAL(poLayer->CreateFeature(std::move(poFeature)));
         }
         psPlace = psPlace->psNext;
     }
@@ -1402,7 +1398,6 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
  * @return a OGR layer with the result(s), or NULL in case of error.
  *         The returned layer must be freed with OGRGeocodeFreeResult().
  *
- * @since GDAL 1.10
  */
 /* clang-format on */
 
@@ -1549,7 +1544,6 @@ static CPLString OGRGeocodeReverseSubstitute(CPLString osURL, double dfLon,
  * @return a OGR layer with the result(s), or NULL in case of error.
  *         The returned layer must be freed with OGRGeocodeFreeResult().
  *
- * @since GDAL 1.10
  */
 /* clang-format on */
 
@@ -1592,7 +1586,6 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession, double dfLon,
  * @param hLayer the layer returned by OGRGeocode() or OGRGeocodeReverse()
  *               to destroy.
  *
- * @since GDAL 1.10
  */
 void OGRGeocodeFreeResult(OGRLayerH hLayer)
 {

@@ -74,16 +74,20 @@ The GTI driver accepts different types of connection strings:
 
   For example: ``tileindex.gti``
 
+.. _raster.gti.stac_geoparquet:
+
 STAC GeoParquet support
 -----------------------
 
 .. versionadded:: 3.10
 
-The driver can support `STAC GeoParquet catalogs <https://stac-utils.github.io/stac-geoparquet/latest/spec/stac-geoparquet-spec>`_,
+The driver can support `STAC GeoParquet catalogs <https://radiantearth.github.io/stac-geoparquet-spec/latest/>`_,
 provided GDAL is built with :ref:`vector.parquet` support.
 It can make use of fields (``proj:code``, ``proj:epsg``, ``proj:wkt2``, or ``proj:projson``) and ``proj:transform`` from the
 `Projection Extension Specification <https://github.com/stac-extensions/projection/>`_,
 to correctly infer the appropriate projection and resolution.
+
+Since GDAL 3.13, program :ref:`gdal_raster_index` can generate such catalogs with the ``--profile STAC-GeoParquet`` option.
 
 Example of a valid connection string: ``GTI:/vsicurl/https://github.com/stac-utils/stac-geoparquet/raw/main/tests/data/naip.parquet``
 
@@ -259,6 +263,37 @@ In addition to those layer metadata items, the dataset-level metadata item
 ``TILE_INDEX_LAYER`` may be set to indicate, for dataset with multiple layers,
 which one should be used as the tile index layer.
 
+Since GDAL 3.12, the dataset-level metadata item ``TILE_INDEX_SQL`` can be used
+to specify a SQL request that returns a result set, in addition to or in replacement
+to ``TILE_INDEX_LAYER``. The dataset-level metadata item ``TILE_INDEX_SPATIAL_SQL``
+can be used as a complement to ``TILE_INDEX_SQL`` for a SQL request that contains
+placeholders ``{XMIN}``, ``{YMIN}``, ``{XMAX}``, ``{YMAX}`` that are substituted
+at runtime with the coordinates of the requested area of interest.
+
+For example, given a ``tileindex`` table with fields ``location``, ``tile_id``
+and ``version``, where several features may have the same ``tile_id`` value, but
+with different ``version``, the following SQL request (to be used for example
+in a Spatialite or GeoPackage database) can be use to always select tiles with
+the latest version:
+
+::
+
+    WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id)
+    SELECT * FROM tileindex INNER JOIN target_version
+    ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version
+
+And in a Spatialite database, the following can be used as the ``TILE_INDEX_SPATIAL_SQL``:
+
+::
+
+    WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id)
+    SELECT * FROM tileindex INNER JOIN target_version
+    ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version
+    INNER JOIN idx_tileindex_geometry ON tileindex.ogc_fid = idx_tileindex_geometry.pkid
+    WHERE idx_tileindex_geometry.xmin <= {XMAX} and idx_tileindex_geometry.ymin <= {YMAX} AND
+          idx_tileindex_geometry.xmax >= {XMIN} and idx_tileindex_geometry.ymax >= {YMIN}
+
+
 Alternatively to setting those metadata items individually, the corresponding
 information can be grouped together in a GTI XML document, attached in the
 ``xml:GTI`` metadata domain of the layer (for drivers that support alternate
@@ -267,7 +302,7 @@ metadata domains such as GeoPackage)
 GTI XML format
 ----------------
 
-A `XML schema of the GDAL GTI format <https://raw.githubusercontent.com/OSGeo/gdal/master/data/gdaltileindex.xsd>`_
+A XML schema of the GDAL GTI format (:source_file:`frmts/gti/data/gdaltileindex.xsd`)
 is available.
 
 The following artificial example contains all potential elements and attributes.
@@ -279,6 +314,8 @@ mentioned in the previous section.
     <GDALTileIndexDataset>
         <IndexDataset>PG:dbname=my_db</IndexDataset>   <!-- required for standalone XML GTI files. Ignored if embedded in the xml:GTI metadata domain of the layer  -->
         <IndexLayer>my_layer</IndexLayer>              <!-- optional, but required if there are multiple layers in IndexDataset -->
+        <SQL>SQL statement</SQL>                       <!-- optional (since 3.12). Complement or replacement to IndexLayer -->
+        <SpatialSQL>SQL statement</SpatialSQL>         <!-- optional (since 3.12). Complement to SQL -->
         <Filter>pub_date >= '2023/12/01'</Filter>      <!-- optional -->
         <SortField>pub_date</SortField>                <!-- optional -->
         <SortFieldAsc>true</SortFieldAsc>              <!-- optional -->
@@ -406,6 +443,25 @@ also defined as layer metadata items or in the .gti XML file
       For dataset with multiple layers, indicates which one should be used as
       the tile index layer.
       Same role as the TILE_INDEX_LAYER dataset level metadata item
+
+
+-  .. oo:: SQL
+      :choices: <string>
+      :since: 3.12
+
+      SQL request that returns a result set, in addition to or in replacement
+      to LAYER.
+      Same role as the TILE_INDEX_SQL dataset level metadata item.
+
+
+-  .. oo:: SPATIAL_SQL
+      :choices: <string>
+      :since: 3.12
+
+      SQL request that contains placeholders ``{XMIN}``, ``{YMIN}``, ``{XMAX}``, ``{YMAX}``
+      that are substituted at runtime with the coordinates of the requested area of interest.
+      Complement to :oo:`SQL`.
+      Same role as the TILE_INDEX_SPATIAL_SQL dataset level metadata item.
 
 
 -  .. oo:: LOCATION_FIELD

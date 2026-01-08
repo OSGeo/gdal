@@ -58,6 +58,9 @@ static void ods_formulaerror( ods_formula_parse_context * /* context */,
 %left ODST_AND
 %left ODST_IF
 
+%left ODST_EQ ODST_NE
+%left ODST_LT ODST_LE ODST_GT ODST_GE
+
 %left '+' '-' '&'
 %left '*' '/' '%'
 %left ODST_UMINUS
@@ -162,67 +165,46 @@ value_expr:
             $$ = $2;
         }
 
-    | value_expr '=' value_expr
+    | value_expr ODST_EQ value_expr
         {
             $$ = new ods_formula_node( ODS_EQ );
             $$->PushSubExpression( $1 );
             $$->PushSubExpression( $3 );
         }
 
-    | value_expr '<' '>' value_expr
+    | value_expr ODST_NE value_expr
         {
             $$ = new ods_formula_node( ODS_NE );
             $$->PushSubExpression( $1 );
-            $$->PushSubExpression( $4 );
+            $$->PushSubExpression( $3 );
         }
 
-    | value_expr '!' '=' value_expr
-        {
-            $$ = new ods_formula_node( ODS_NE );
-            $$->PushSubExpression( $1 );
-            $$->PushSubExpression( $4 );
-        }
-
-    | value_expr '<' value_expr
+    | value_expr ODST_LT value_expr
         {
             $$ = new ods_formula_node( ODS_LT );
             $$->PushSubExpression( $1 );
             $$->PushSubExpression( $3 );
         }
 
-    | value_expr '>' value_expr
+    | value_expr ODST_GT value_expr
         {
             $$ = new ods_formula_node( ODS_GT );
             $$->PushSubExpression( $1 );
             $$->PushSubExpression( $3 );
         }
 
-    | value_expr '<' '=' value_expr
+    | value_expr ODST_LE value_expr
         {
             $$ = new ods_formula_node( ODS_LE );
             $$->PushSubExpression( $1 );
-            $$->PushSubExpression( $4 );
+            $$->PushSubExpression( $3 );
         }
 
-    | value_expr '=' '<' value_expr
-        {
-            $$ = new ods_formula_node( ODS_LE );
-            $$->PushSubExpression( $1 );
-            $$->PushSubExpression( $4 );
-        }
-
-    | value_expr '=' '>' value_expr
-        {
-            $$ = new ods_formula_node( ODS_LE );
-            $$->PushSubExpression( $1 );
-            $$->PushSubExpression( $4 );
-        }
-
-    | value_expr '>' '=' value_expr
+    | value_expr ODST_GE value_expr
         {
             $$ = new ods_formula_node( ODS_GE );
             $$->PushSubExpression( $1 );
-            $$->PushSubExpression( $4 );
+            $$->PushSubExpression( $3 );
         }
 
     | '-' value_expr %prec ODST_UMINUS

@@ -387,8 +387,7 @@ most other parts of OGR SQL.
 LIMIT and OFFSET
 ++++++++++++++++
 
-Starting with GDAL 2.2, the ``LIMIT`` clause can be used to limit the
-number of features returned. For example
+The ``LIMIT`` clause can be used to limit the number of features returned. For example
 
 .. code-block::
 
@@ -438,7 +437,7 @@ Wildcards are also somewhat more involved.  All fields from the primary table
 (**city** in this case) and the secondary table (**nation** in this
 case) may be selected using the usual ``*`` wildcard.  But the fields of
 just one of the primary or secondary table may be selected by prefixing the
-asterix with the table name.
+asterisk with the table name.
 
 The field names in the resulting query layer will be qualified by the table
 name, if the table name is given as a qualifier in the field list.  In addition

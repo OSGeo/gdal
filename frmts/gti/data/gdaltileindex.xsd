@@ -21,6 +21,8 @@
                     <xs:element name="IndexDataset" type="xs:string"/>
 
                     <xs:element name="IndexLayer" type="xs:string"/>
+                    <xs:element name="SQL" type="xs:string"/>
+                    <xs:element name="SpatialSQL" type="xs:string"/>
                     <xs:element name="Filter" type="xs:string"/>
 
                     <xs:element name="LocationField" type="xs:string" default="location"/>

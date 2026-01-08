@@ -23,7 +23,6 @@ CPL_C_START
  *
  * GDAL pansharpening related entry points and definitions.
  *
- * @since GDAL 2.1
  */
 
 /** Pansharpening algorithms.

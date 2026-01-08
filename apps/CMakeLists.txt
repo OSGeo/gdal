@@ -34,6 +34,7 @@ target_sources(appslib PRIVATE
   gdalalg_info.cpp
   gdalalg_dataset.cpp
   gdalalg_dataset_identify.cpp
+  gdalalg_dataset_check.cpp
   gdalalg_dataset_copy.cpp
   gdalalg_dataset_rename.cpp
   gdalalg_dataset_delete.cpp
@@ -41,6 +42,7 @@ target_sources(appslib PRIVATE
   gdalalg_mdim.cpp
   gdalalg_mdim_info.cpp
   gdalalg_mdim_convert.cpp
+  gdalalg_mdim_mosaic.cpp
   gdalalg_pipeline.cpp
   gdalalg_raster.cpp
   gdalalg_raster_info.cpp
@@ -91,10 +93,10 @@ target_sources(appslib PRIVATE
   gdalalg_raster_update.cpp
   gdalalg_raster_viewshed.cpp
   gdalalg_raster_write.cpp
+  gdalalg_raster_zonal_stats.cpp
   gdalalg_tee.cpp
   gdalalg_vector.cpp
   gdalalg_vector_info.cpp
-  gdalalg_vector_change_field_type.cpp
   gdalalg_vector_check_coverage.cpp
   gdalalg_vector_check_geometry.cpp
   gdalalg_vector_clip.cpp
@@ -107,6 +109,8 @@ target_sources(appslib PRIVATE
   gdalalg_vector_read.cpp
   gdalalg_vector_filter.cpp
   gdalalg_vector_geom.cpp
+  gdalalg_vector_limit.cpp
+  gdalalg_vector_make_point.cpp
   gdalalg_vector_set_geom_type.cpp
   gdalalg_vector_explode_collections.cpp
   gdalalg_vector_make_valid.cpp
@@ -128,7 +132,10 @@ target_sources(appslib PRIVATE
   gdalalg_vector_partition.cpp
   gdalalg_vector_reproject.cpp
   gdalalg_vector_select.cpp
+  gdalalg_vector_set_field_type.cpp
+  gdalalg_vector_sort.cpp
   gdalalg_vector_sql.cpp
+  gdalalg_vector_update.cpp
   gdalalg_vector_write.cpp
   gdalalg_vsi.cpp
   gdalalg_vsi_copy.cpp
@@ -327,19 +334,25 @@ if (BUILD_APPS)
   if(NOT MSVC AND CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(multireadtest PRIVATE ${CMAKE_THREAD_LIBS_INIT})
   endif()
-  add_executable(test_ogrsf test_ogrsf.cpp)
+  if(BUILD_TESTING)
+    add_executable(test_ogrsf test_ogrsf.cpp)
+  endif()
   add_executable(testreprojmulti EXCLUDE_FROM_ALL testreprojmulti.cpp)
 
+  set(APPS_NON_DEFAULT_TARGETS
+      dumpoverviews
+      gdal2ogr
+      gdalasyncread
+      gdaltorture
+      gdalflattenmask
+      multireadtest
+      testreprojmulti)
+  if(BUILD_TESTING)
+    list(APPEND APPS_NON_DEFAULT_TARGETS test_ogrsf)
+  endif()
   foreach (
     UTILCMD IN
-    ITEMS dumpoverviews
-          gdal2ogr
-          gdalasyncread
-          gdaltorture
-          gdalflattenmask
-          multireadtest
-          test_ogrsf
-          testreprojmulti)
+    ITEMS ${APPS_NON_DEFAULT_TARGETS})
     if (WIN32)
         target_sources(${UTILCMD} PRIVATE longpathaware.manifest)
     endif()

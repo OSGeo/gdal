@@ -1780,6 +1780,38 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                         static_cast<GIntBig>(nBlockActualXSize) * nBands));
             }
         }
+        else if (!bSeparate && nBands == nBandCount &&
+                 nBufTypeSize == nBandSpace &&
+                 eBufType == papoBands[0]->GetRasterDataType() &&
+                 nPixelSpace > nBandSpace * nBandCount &&
+                 nLineSpace >= nPixelSpace * nBlockXSize &&
+                 IsContiguousBandMap())
+        {
+            // Optimization for typically reading a pixel-interleaved RGB buffer
+            // into a pixel-interleaved RGBA buffer
+            for (int iY = 0; iY < nBlockActualYSize; ++iY)
+            {
+                GByte *const pabyDst = pabyBlockData + iY * nLineSpace;
+                const GByte *const pabySrc =
+                    abyDecompressedStrile.data() +
+                    nNativeDTSize * iY * nBlockXSize * nBands;
+                if (nBands == 3 && nPixelSpace == 4 && nBufTypeSize == 1)
+                {
+                    for (int iX = 0; iX < nBlockActualXSize; ++iX)
+                    {
+                        memcpy(pabyDst + iX * 4, pabySrc + iX * 3, 3);
+                    }
+                }
+                else
+                {
+                    for (int iX = 0; iX < nBlockActualXSize; ++iX)
+                    {
+                        memcpy(pabyDst + iX * nPixelSpace,
+                               pabySrc + iX * nBands, nBands * nBufTypeSize);
+                    }
+                }
+            }
+        }
         else
         {
             // General case
@@ -1795,7 +1827,8 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                                 (iY * nBlockXSize * nSrcPixels + iSrcBand),
                         eNativeDT, static_cast<int>(nSrcPixels * nNativeDTSize),
                         pabyBlockData + iBand * nBandSpace + iY * nLineSpace,
-                        eBufType, nBufTypeSize, nBlockActualXSize);
+                        eBufType, static_cast<int>(nPixelSpace),
+                        nBlockActualXSize);
                 }
             }
         }
@@ -1848,10 +1881,10 @@ GDALDataType LIBERTIFFDataset::ComputeGDALDataType() const
                  m_image->planarConfiguration() ==
                      LIBERTIFF_NS::PlanarConfiguration::Separate))
             {
-                eDT = GDT_Byte;
+                eDT = GDT_UInt8;
             }
             else if (m_image->bitsPerSample() == 8)
-                eDT = GDT_Byte;
+                eDT = GDT_UInt8;
             else if (m_image->bitsPerSample() == 16)
                 eDT = GDT_UInt16;
             else if (m_image->bitsPerSample() == 32)
@@ -2355,7 +2388,7 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
                 "IMAGE_STRUCTURE");
         }
 
-        if (l_nBands == 1 && eDT == GDT_Byte)
+        if (l_nBands == 1 && eDT == GDT_UInt8)
         {
             poBand->ReadColorMap();
         }
@@ -2588,7 +2621,7 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
                         poMaskDS->GetRasterYSize() ==
                             poLastNonMaskDS->nRasterYSize &&
                         poMaskDS->GetRasterBand(1)->GetRasterDataType() ==
-                            GDT_Byte)
+                            GDT_UInt8)
                     {
                         poMaskDS->m_bExpand1To255 = true;
                         poLastNonMaskDS->m_poMaskDS = std::move(poMaskDS);

@@ -278,7 +278,7 @@ OGRErr OSRSetStatePlaneWithUnits(OGRSpatialReferenceH hSRS, int nZone,
  *
  * This method is the same as the C function OSRAutoIdentifyEPSG().
  *
- * Since GDAL 2.3, the FindMatches() method can also be used for improved
+ * The FindMatches() method can also be used for improved
  * matching by researching the EPSG catalog.
  *
  * @return OGRERR_NONE or OGRERR_UNSUPPORTED_SRS.
@@ -402,7 +402,7 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
  *
  * This function is the same as OGRSpatialReference::AutoIdentifyEPSG().
  *
- * Since GDAL 2.3, the OSRFindMatches() function can also be used for improved
+ * The OSRFindMatches() function can also be used for improved
  * matching by researching the EPSG catalog.
  *
  */

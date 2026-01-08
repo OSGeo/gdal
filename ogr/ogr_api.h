@@ -677,7 +677,6 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature(OGRLayerH) CPL_WARN_UNUSED_RESULT;
  *              inside the macro body.
  * @param hLayer layer to iterate over.
  *
- * @since GDAL 2.3
  */
 #define OGR_FOR_EACH_FEATURE_BEGIN(hFeat, hLayer)                              \
     {                                                                          \
@@ -870,7 +869,7 @@ OGRDataSourceH CPL_DLL OGRGetOpenDS(int iDS);
 
 void CPL_DLL OGRRegisterAll(void);
 
-/** Clean-up all drivers (including raster ones starting with GDAL 2.0.
+/** Clean-up all drivers, including raster ones.
  * See GDALDestroyDriverManager() */
 void CPL_DLL OGRCleanupAll(void);
 

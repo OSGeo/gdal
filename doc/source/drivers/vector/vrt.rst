@@ -106,7 +106,7 @@ layer name, and may have the following subelements:
   FID of features should be derived. If not provided, the FID of the
   source features will be used directly.
 
-  Logic for GDAL >= 2.4: Different situations are possible:
+  Different situations are possible:
 
   -  .. code-block:: XML
 
@@ -137,11 +137,6 @@ layer name, and may have the following subelements:
      A FID column will be reported as dest_field_name with the content
      of the implicit source FID column. The FID value of VRT features
      is the FID value of the source features.
-
-  Logic for GDAL < 2.4: The layer will report the FID column name only
-  if it is also reported as a regular field.
-  A "name" attribute can be specified on the FID element so that the FID
-  column name is always reported.
 
 - **Style** (optional): Name of the attribute column from which the style
   of features should be derived. If not provided, the style of the source

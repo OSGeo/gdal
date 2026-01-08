@@ -1973,11 +1973,10 @@ void MBTilesDataset::InitVector(double dfMinX, double dfMinY, double dfMaxX,
             CPLJSONArray oAttributesFromTileStats =
                 OGRMVTFindAttributesFromTileStat(oTileStatLayers,
                                                  oId.ToString().c_str());
-            m_apoLayers.push_back(
-                std::unique_ptr<OGRLayer>(new MBTilesVectorLayer(
-                    this, oId.ToString().c_str(), oFields,
-                    oAttributesFromTileStats, bJsonField, dfMinX, dfMinY,
-                    dfMaxX, dfMaxY, eGeomType, bZoomLevelFromSpatialFilter)));
+            m_apoLayers.push_back(std::make_unique<MBTilesVectorLayer>(
+                this, oId.ToString().c_str(), oFields, oAttributesFromTileStats,
+                bJsonField, dfMinX, dfMinY, dfMaxX, dfMaxY, eGeomType,
+                bZoomLevelFromSpatialFilter));
         }
     }
 }
@@ -2543,7 +2542,7 @@ static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, GDALDatasetH &hDS,
 
     if ((nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4) ||
         GDALGetRasterXSize(hDSTile) != GDALGetRasterYSize(hDSTile) ||
-        GDALGetRasterDataType(GDALGetRasterBand(hDSTile, 1)) != GDT_Byte)
+        GDALGetRasterDataType(GDALGetRasterBand(hDSTile, 1)) != GDT_UInt8)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unsupported tile characteristics");
@@ -2965,7 +2964,7 @@ bool MBTilesDataset::CreateInternal(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn, GDALDataType eDT,
                                     char **papszOptions)
 {
-    if (eDT != GDT_Byte)
+    if (eDT != GDT_UInt8)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Only Byte supported");
         return false;
@@ -3349,7 +3348,7 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
     }
 
     GDALDataset *poDS = Create(pszFilename, nXSize, nYSize, nTargetBands,
-                               GDT_Byte, papszOptions);
+                               GDT_UInt8, papszOptions);
     if (poDS == nullptr)
     {
         CSLDestroy(papszTO);
@@ -3386,7 +3385,7 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
     GDALWarpOptions *psWO = GDALCreateWarpOptions();
 
     psWO->papszWarpOptions = CSLSetNameValue(nullptr, "OPTIMIZE_SIZE", "YES");
-    psWO->eWorkingDataType = GDT_Byte;
+    psWO->eWorkingDataType = GDT_UInt8;
 
     psWO->eResampleAlg = eResampleAlg;
 

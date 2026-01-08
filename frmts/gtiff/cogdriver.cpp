@@ -12,9 +12,11 @@
 
 #include "cpl_port.h"
 
+#include "gdal_proxy.h"
 #include "gdal_priv.h"
 #include "gdal_frmts.h"
 #include "gtiff.h"
+#include "gtiffdataset.h"
 #include "gt_overview.h"
 #include "gdal_utils.h"
 #include "gdalwarper.h"
@@ -703,9 +705,11 @@ struct GDALCOGCreator final
 
     ~GDALCOGCreator();
 
-    GDALDataset *Create(const char *pszFilename, GDALDataset *const poSrcDS,
-                        char **papszOptions, GDALProgressFunc pfnProgress,
-                        void *pProgressData);
+    std::unique_ptr<GDALDataset> Create(const char *pszFilename,
+                                        GDALDataset *const poSrcDS,
+                                        CSLConstList papszOptions,
+                                        GDALProgressFunc pfnProgress,
+                                        void *pProgressData);
 };
 
 /************************************************************************/
@@ -744,11 +748,10 @@ GDALCOGCreator::~GDALCOGCreator()
 /*                    GDALCOGCreator::Create()                          */
 /************************************************************************/
 
-GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
-                                    GDALDataset *const poSrcDS,
-                                    char **papszOptions,
-                                    GDALProgressFunc pfnProgress,
-                                    void *pProgressData)
+std::unique_ptr<GDALDataset>
+GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
+                       CSLConstList papszOptions, GDALProgressFunc pfnProgress,
+                       void *pProgressData)
 {
     if (pfnProgress == nullptr)
         pfnProgress = GDALDummyProgress;
@@ -1388,9 +1391,9 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
                             CSLFetchNameValue(papszOptions, "@SUPPRESS_ASAP"));
 
     CPLDebug("COG", "Generating final product: start");
-    auto poRet =
+    auto poRet = std::unique_ptr<GDALDataset>(
         poGTiffDrv->CreateCopy(pszFilename, poCurDS, false, aosOptions.List(),
-                               GDALScaledProgress, pScaledProgress);
+                               GDALScaledProgress, pScaledProgress));
 
     GDALDestroyScaledProgress(pScaledProgress);
 
@@ -1407,8 +1410,145 @@ static GDALDataset *COGCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressData)
 {
-    return GDALCOGCreator().Create(pszFilename, poSrcDS, papszOptions,
-                                   pfnProgress, pProgressData);
+    return GDALCOGCreator()
+        .Create(pszFilename, poSrcDS, papszOptions, pfnProgress, pProgressData)
+        .release();
+}
+
+/************************************************************************/
+/*                              COGProxyDataset                         */
+/************************************************************************/
+
+class COGProxyDataset final : public GDALProxyDataset
+{
+  public:
+    COGProxyDataset(GDALDriver *poCOGDriver, const char *pszFilename,
+                    CSLConstList papszOptions,
+                    std::unique_ptr<GDALDataset> poGTiffTmpDS)
+        : m_poCOGDriver(poCOGDriver), m_osFilename(pszFilename),
+          m_aosOptions(papszOptions), m_poGTiffTmpDS(std::move(poGTiffTmpDS))
+    {
+        eAccess = GA_Update;
+        nRasterXSize = m_poGTiffTmpDS->GetRasterXSize();
+        nRasterYSize = m_poGTiffTmpDS->GetRasterYSize();
+        nBands = m_poGTiffTmpDS->GetRasterCount();
+        papoBands = static_cast<GDALRasterBand **>(
+            CPLMalloc(sizeof(GDALRasterBand *) * nBands));
+        for (int i = 0; i < nBands; ++i)
+            papoBands[i] = m_poGTiffTmpDS->GetRasterBand(i + 1);
+    }
+
+    ~COGProxyDataset() override;
+
+    CPLErr Close(GDALProgressFunc pfnProgress = nullptr,
+                 void *pProgressData = nullptr) override;
+
+    bool GetCloseReportsProgress() const override
+    {
+        return true;
+    }
+
+    GDALDriver *GetDriver() override
+    {
+        return m_poCOGDriver;
+    }
+
+  protected:
+    GDALDataset *RefUnderlyingDataset() const override
+    {
+        return m_poGTiffTmpDS.get();
+    }
+
+  private:
+    GDALDriver *const m_poCOGDriver;
+    const std::string m_osFilename;
+    const CPLStringList m_aosOptions;
+    std::unique_ptr<GDALDataset> m_poGTiffTmpDS;
+
+    CPL_DISALLOW_COPY_ASSIGN(COGProxyDataset)
+};
+
+/************************************************************************/
+/*                    COGProxyDataset::~COGProxyDataset()               */
+/************************************************************************/
+
+COGProxyDataset::~COGProxyDataset()
+{
+    COGProxyDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr COGProxyDataset::Close(GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (IsMarkedSuppressOnClose())
+        {
+            m_poGTiffTmpDS->MarkSuppressOnClose();
+        }
+        else if (!GDALCOGCreator().Create(
+                     m_osFilename.c_str(), m_poGTiffTmpDS.get(),
+                     m_aosOptions.List(), pfnProgress, pProgressData))
+
+        {
+            eErr = CE_Failure;
+        }
+
+        eErr = GDAL::Combine(eErr, m_poGTiffTmpDS->Close());
+        m_poGTiffTmpDS.reset();
+
+        CPLFree(papoBands);
+        papoBands = nullptr;
+        nBands = 0;
+
+        eErr = GDAL::Combine(eErr, GDALDataset::Close());
+    }
+    return eErr;
+}
+
+/************************************************************************/
+/*                              COGCreate()                             */
+/************************************************************************/
+
+static GDALDataset *COGCreate(const char *pszFilename, int nXSize, int nYSize,
+                              int nBands, GDALDataType eType,
+                              char **papszOptions)
+{
+    const std::string osTmpFile(GetTmpFilename(pszFilename, "create.tif"));
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME", "YES");
+    aosOptions.SetNameValue("@SUPPRESS_ASAP", "YES");
+    aosOptions.SetNameValue("TILED", "YES");
+    const char *pszBlockSize =
+        CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", "512");
+    aosOptions.SetNameValue("BLOCKXSIZE", pszBlockSize);
+    aosOptions.SetNameValue("BLOCKYSIZE", pszBlockSize);
+
+    bool bHasLZW = false;
+    bool bHasDEFLATE = false;
+    bool bHasLZMA = false;
+    bool bHasZSTD = false;
+    bool bHasJPEG = false;
+    bool bHasWebP = false;
+    bool bHasLERC = false;
+    CPL_IGNORE_RET_VAL(GTiffGetCompressValues(bHasLZW, bHasDEFLATE, bHasLZMA,
+                                              bHasZSTD, bHasJPEG, bHasWebP,
+                                              bHasLERC, true /* bForCOG */));
+    aosOptions.SetNameValue("COMPRESS", bHasZSTD ? "ZSTD" : "LZW");
+
+    auto poGTiffTmpDS = std::unique_ptr<GDALDataset>(GTiffDataset::Create(
+        osTmpFile.c_str(), nXSize, nYSize, nBands, eType, aosOptions.List()));
+    if (!poGTiffTmpDS)
+        return nullptr;
+
+    auto poCOGDriver = GetGDALDriverManager()->GetDriverByName("COG");
+    return std::make_unique<COGProxyDataset>(
+               poCOGDriver, pszFilename, papszOptions, std::move(poGTiffTmpDS))
+        .release();
 }
 
 /************************************************************************/
@@ -1691,6 +1831,7 @@ void GDALRegister_COG()
     poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");
 
     poDriver->pfnCreateCopy = COGCreateCopy;
+    poDriver->pfnCreate = COGCreate;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

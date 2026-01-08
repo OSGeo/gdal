@@ -32,14 +32,31 @@ requires loading the entire dataset into memory at once.
 
 .. note:: This command requires a GDAL build against the GEOS library (version 3.14 or greater).
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+
+Program-Specific Options
+------------------------
+
+.. option:: --input-layer
+
+   Specifies the name of the layer to process. By default, all layers will be processed.
 
 .. option:: --maximum-gap-width <MAXIMUM-GAP-WIDTH>
 
     Defines the largest area that should be considered a "gap" and merged into
     an adjacent polygon. Gaps will be merged unless a circle with radius larger 
-    than the specified tolerance can be inscribed within the gap.
+    than the specified tolerance can be inscribed within the gap. The default
+    maximum gap width is zero, meaning that gaps are not closed.
+
+    .. only:: html
+
+       .. figure:: ../../images/programs/gdal_vector_clean_coverage_close_gaps.svg
+
+          Polygon dataset before cleaning (left), after cleaning with default parameters (center),
+          and after cleaning with ``--maximum-gap-width 1`` (right).
 
 .. option:: --merge-strategy <MERGE-STRATEGY>
 
@@ -49,33 +66,61 @@ Standard options
     - min-area: add areas to the smallest adjacent polygon
     - min-index: add areas to the adjacent polygon that was read first
 
+    .. only:: html
+
+        .. figure:: ../../images/programs/gdal_vector_clean_coverage_merge_max_area.svg
+
+           Polygon dataset before cleaning (left), after cleaning with "longest-border" merge strategy (center) and ``--merge-strategy max-area`` (right).
+
+.. option:: --output-layer
+
+   Specifies the name of the layer to which features will be written.
+   By default, the names of the output layers will be the same as the
+   names of the input layers.
+   
 .. option:: --snapping-distance <SNAPPING-DISTANCE>
 
     Controls the node snapping step, when nearby vertices are snapped together.
     By default, an automatic snapping distance is determined based on an
     analysis of the input. Set to zero to turn off all snapping.
 
-.. include:: gdal_options/active_layer.rst
+    .. only:: html
 
-.. include:: gdal_options/of_vector.rst
+        .. figure:: ../../images/programs/gdal_vector_clean_coverage_snap_distance.svg
 
-.. include:: gdal_options/co_vector.rst
+           Polygon dataset before cleaning (left), after cleaning with default snapping distance (center), and a more aggressive ``--snapping-distance 0.2`` (right). Note the movement in the
+           upper-left corner of the polygon on the right.
 
-.. include:: options/lco.rst
+Standard Options
+----------------
 
-.. include:: gdal_options/overwrite.rst
+.. collapse:: Details
 
-Advanced options
-++++++++++++++++
+    .. include:: gdal_options/active_layer.rst
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/append_vector.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/co_vector.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/if.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+    .. include:: gdal_options/lco.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst
 
 Examples
 --------

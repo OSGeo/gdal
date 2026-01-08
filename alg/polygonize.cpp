@@ -52,7 +52,7 @@ static CPLErr GPMaskImageData(GDALRasterBandH hMaskBand, GByte *pabyMaskLine,
 
 {
     const CPLErr eErr = GDALRasterIO(hMaskBand, GF_Read, 0, iY, nXSize, 1,
-                                     pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0);
+                                     pabyMaskLine, nXSize, 1, GDT_UInt8, 0, 0);
     if (eErr != CE_None)
         return eErr;
 
@@ -72,7 +72,7 @@ static CPLErr GPMaskImageData(GDALRasterBandH hMaskBand, GByte *pabyMaskLine,
 template <class DataType, class EqualityTest>
 static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
                               GDALRasterBandH hMaskBand, OGRLayerH hOutLayer,
-                              int iPixValField, char **papszOptions,
+                              int iPixValField, CSLConstList papszOptions,
                               GDALProgressFunc pfnProgress, void *pProgressArg,
                               GDALDataType eDT)
 
@@ -135,35 +135,30 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
     /*      Get the geotransform, if there is one, so we can convert the    */
     /*      vectors into georeferenced coordinates.                         */
     /* -------------------------------------------------------------------- */
-    double adfGeoTransform[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    GDALGeoTransform gt;
     bool bGotGeoTransform = false;
     const char *pszDatasetForGeoRef =
         CSLFetchNameValue(papszOptions, "DATASET_FOR_GEOREF");
     if (pszDatasetForGeoRef)
     {
-        GDALDatasetH hSrcDS = GDALOpen(pszDatasetForGeoRef, GA_ReadOnly);
-        if (hSrcDS)
+        auto poSrcDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+            pszDatasetForGeoRef, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
+        if (poSrcDS)
         {
-            bGotGeoTransform =
-                GDALGetGeoTransform(hSrcDS, adfGeoTransform) == CE_None;
-            GDALClose(hSrcDS);
+            bGotGeoTransform = poSrcDS->GetGeoTransform(gt) == CE_None;
         }
     }
     else
     {
-        GDALDatasetH hSrcDS = GDALGetBandDataset(hSrcBand);
-        if (hSrcDS)
-            bGotGeoTransform =
-                GDALGetGeoTransform(hSrcDS, adfGeoTransform) == CE_None;
+        auto poSrcDS = GDALRasterBand::FromHandle(hSrcBand)->GetDataset();
+        if (poSrcDS)
+        {
+            bGotGeoTransform = poSrcDS->GetGeoTransform(gt) == CE_None;
+        }
     }
     if (!bGotGeoTransform)
     {
-        adfGeoTransform[0] = 0;
-        adfGeoTransform[1] = 1;
-        adfGeoTransform[2] = 0;
-        adfGeoTransform[3] = 0;
-        adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = 1;
+        gt = GDALGeoTransform();
     }
 
     /* -------------------------------------------------------------------- */
@@ -234,8 +229,9 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
     GDALRasterPolygonEnumeratorT<DataType, EqualityTest> oSecondEnum(
         nConnectedness);
 
-    OGRPolygonWriter<DataType> oPolygonWriter{hOutLayer, iPixValField,
-                                              adfGeoTransform};
+    OGRPolygonWriter<DataType> oPolygonWriter{
+        hOutLayer, iPixValField, gt,
+        atoi(CSLFetchNameValueDef(papszOptions, "COMMIT_INTERVAL", "100000"))};
     Polygonizer<GInt32, DataType> oPolygonizer{-1, &oPolygonWriter};
     TwoArm *paoLastLineArm =
         static_cast<TwoArm *>(VSI_CALLOC_VERBOSE(sizeof(TwoArm), nXSize + 2));
@@ -373,6 +369,9 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         }
     }
 
+    if (!oPolygonWriter.Finalize())
+        eErr = CE_Failure;
+
     /* -------------------------------------------------------------------- */
     /*      Cleanup                                                         */
     /* -------------------------------------------------------------------- */
@@ -388,51 +387,62 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
 }
 
 /******************************************************************************/
-/*                          GDALFloatEquals()                                 */
-/* Code from:                                                                 */
+/*                       GDALFloatAlmostEquals()                              */
+/* Code (originally) from:                                                    */
 /* http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm  */
 /******************************************************************************/
-GBool GDALFloatEquals(float A, float B)
+
+template <typename FloatType, typename IntType>
+static inline bool GDALFloatAlmostEquals(FloatType A, FloatType B,
+                                         unsigned maxUlps)
 {
+    static_assert(sizeof(FloatType) == sizeof(IntType));
     // This function will allow maxUlps-1 floats between A and B.
-    const int maxUlps = MAX_ULPS;
 
     // Make sure maxUlps is non-negative and small enough that the default NAN
     // won't compare as equal to anything.
-#if MAX_ULPS <= 0 || MAX_ULPS >= 4 * 1024 * 1024
-#error "Invalid MAX_ULPS"
-#endif
+    if (maxUlps >= 4 * 1024 * 1024)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid maxUlps");
+        return false;
+    }
 
-    // This assignation could violate strict aliasing. It causes a warning with
-    // gcc -O2. Use of memcpy preferred. Credits for Even Rouault. Further info
-    // at http://trac.osgeo.org/gdal/ticket/4005#comment:6
-    int aInt = 0;
-    memcpy(&aInt, &A, 4);
+    const auto MapToInteger = [](FloatType x)
+    {
+        IntType i = 0;
+        memcpy(&i, &x, sizeof(i));
 
-    // Make aInt lexicographically ordered as a twos-complement int.
-    if (aInt < 0)
-        aInt = INT_MIN - aInt;
+        constexpr int NBITS = 8 * static_cast<int>(sizeof(i)) - 1;
+        constexpr IntType SHIFT = (static_cast<IntType>(1) << NBITS);
 
-    // Make bInt lexicographically ordered as a twos-complement int.
-    int bInt = 0;
-    memcpy(&bInt, &B, 4);
+        // Make i lexicographically ordered with negative values
+        // remapped to the [0, SHIFT[ range and positive values in the
+        // [SHIFT, UINT_MAX[ range
+        if ((i >> NBITS) != 0)
+            i = SHIFT - (i & ~SHIFT);
+        else
+            i += SHIFT;
+        return i;
+    };
 
-    if (bInt < 0)
-        bInt = INT_MIN - bInt;
-#ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
-    const int intDiff =
-        abs(static_cast<int>(static_cast<GUIntBig>(static_cast<GIntBig>(aInt) -
-                                                   static_cast<GIntBig>(bInt)) &
-                             0xFFFFFFFFU));
-#else
-    // To make -ftrapv happy we compute the diff on larger type and
-    // cast down later.
-    const int intDiff = abs(static_cast<int>(static_cast<GIntBig>(aInt) -
-                                             static_cast<GIntBig>(bInt)));
-#endif
-    if (intDiff <= maxUlps)
-        return true;
-    return false;
+    const auto aInt = MapToInteger(A);
+    const auto bInt = MapToInteger(B);
+
+    return ((aInt > bInt) ? aInt - bInt : bInt - aInt) <= maxUlps;
+}
+
+bool GDALFloatAlmostEquals(float A, float B, unsigned maxUlps)
+{
+    return GDALFloatAlmostEquals<float, uint32_t>(A, B, maxUlps);
+}
+
+/******************************************************************************/
+/*                         GDALDoubleAlmostEquals()                           */
+/******************************************************************************/
+
+bool GDALDoubleAlmostEquals(double A, double B, unsigned maxUlps)
+{
+    return GDALFloatAlmostEquals<double, uint64_t>(A, B, maxUlps);
 }
 
 /************************************************************************/
@@ -450,7 +460,7 @@ GBool GDALFloatEquals(float A, float B)
  * Note that currently the source pixel band values are read into a
  * signed 64bit integer buffer (Int64), so floating point or complex
  * bands will be implicitly truncated before processing. If you want to use a
- * version using 32bit float buffers, see GDALFPolygonize().
+ * version using 32bit or 64bit float buffers, see GDALFPolygonize().
  *
  * Polygon features will be created on the output layer, with polygon
  * geometries representing the polygons.  The polygon geometries will be
@@ -489,6 +499,14 @@ GBool GDALFloatEquals(float A, float B)
  * <li>DATASET_FOR_GEOREF=dataset_name: Name of a dataset from which to read
  * the geotransform. This useful if hSrcBand has no related dataset, which is
  * typical for mask bands.</li>
+ * <li>COMMIT_INTERVAL=num:
+ * (GDAL >= 3.12) Interval in number of features at which transactions must be
+ * flushed. A value of 0 means that no transactions are opened.
+ * A negative value means a single transaction.
+ * The default value is 100000.
+ * The function takes care of issuing the starting transaction and committing
+ * the final one.
+ * </li>
  * </ul>
  * @param pfnProgress callback for reporting algorithm progress matching the
  * GDALProgressFunc() semantics.  May be NULL.
@@ -522,7 +540,8 @@ CPLErr CPL_STDCALL GDALPolygonize(GDALRasterBandH hSrcBand,
  * labeled with the pixel value in an attribute.  Optionally a mask band
  * can be provided to determine which pixels are eligible for processing.
  *
- * The source pixel band values are read into a 32bit float buffer. If you want
+ * The source pixel band values are read into a 32-bit float buffer, or 64-bit
+ * float if the source band is 64-bit float itself. If you want
  * to use a (probably faster) version using signed 32bit integer buffer, see
  * GDALPolygonize().
  *
@@ -563,6 +582,14 @@ CPLErr CPL_STDCALL GDALPolygonize(GDALRasterBandH hSrcBand,
  * <li>DATASET_FOR_GEOREF=dataset_name: Name of a dataset from which to read
  * the geotransform. This useful if hSrcBand has no related dataset, which is
  * typical for mask bands.</li>
+ * <li>COMMIT_INTERVAL=num:
+ * (GDAL >= 3.12) Interval in number of features at which transactions must be
+ * flushed. A value of 0 means that no transactions are opened.
+ * A negative value means a single transaction.
+ * The default value is 100000.
+ * The function takes care of issuing the starting transaction and committing
+ * the final one.
+ * </li>
  * </ul>
  * @param pfnProgress callback for reporting algorithm progress matching the
  * GDALProgressFunc() semantics.  May be NULL.
@@ -570,7 +597,6 @@ CPLErr CPL_STDCALL GDALPolygonize(GDALRasterBandH hSrcBand,
  *
  * @return CE_None on success or CE_Failure on a failure.
  *
- * @since GDAL 1.9.0
  */
 
 CPLErr CPL_STDCALL GDALFPolygonize(GDALRasterBandH hSrcBand,
@@ -581,7 +607,16 @@ CPLErr CPL_STDCALL GDALFPolygonize(GDALRasterBandH hSrcBand,
                                    void *pProgressArg)
 
 {
-    return GDALPolygonizeT<float, FloatEqualityTest>(
-        hSrcBand, hMaskBand, hOutLayer, iPixValField, papszOptions, pfnProgress,
-        pProgressArg, GDT_Float32);
+    if (GDALGetRasterDataType(hSrcBand) == GDT_Float64)
+    {
+        return GDALPolygonizeT<double, DoubleEqualityTest>(
+            hSrcBand, hMaskBand, hOutLayer, iPixValField, papszOptions,
+            pfnProgress, pProgressArg, GDT_Float64);
+    }
+    else
+    {
+        return GDALPolygonizeT<float, FloatEqualityTest>(
+            hSrcBand, hMaskBand, hOutLayer, iPixValField, papszOptions,
+            pfnProgress, pProgressArg, GDT_Float32);
+    }
 }

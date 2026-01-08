@@ -44,7 +44,7 @@ class GenBinDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(GenBinDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     GenBinDataset();
@@ -97,7 +97,7 @@ GenBinBitRasterBand::GenBinBitRasterBand(GenBinDataset *poDSIn, int nBitsIn)
     poDS = poDSIn;
     nBand = 1;
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
@@ -213,7 +213,7 @@ GenBinDataset::~GenBinDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr GenBinDataset::Close()
+CPLErr GenBinDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -540,7 +540,7 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Figure out the data type.                                       */
     /* -------------------------------------------------------------------- */
     const char *pszDataType = CSLFetchNameValue(papszHdr, "DATATYPE");
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     int nBits = -1;  // Only needed for partial byte types
 
     if (pszDataType == nullptr)

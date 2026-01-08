@@ -224,7 +224,6 @@ static const char *const aszMonthStr[] = {"Jan", "Feb", "Mar", "Apr",
  * if invalid/unset), or NULL
  * @return TRUE if parsing is successful
  *
- * @since GDAL 2.3
  */
 int CPLParseRFC822DateTime(const char *pszRFC822DateTime, int *pnYear,
                            int *pnMonth, int *pnDay, int *pnHour, int *pnMinute,

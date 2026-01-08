@@ -97,7 +97,7 @@ Standard options
     <group_spec> may be just a group name, potentially using a fully qualified
     syntax (/group/subgroup/subsubgroup_name). Or it can be a combination of options
     with the syntax:
-    name={src_group_name}[,dstname={dst_group_name}][,recursive=no]
+    ``name={src_group_name}[,dstname={dst_group_name}][,recursive=no]``
 
 .. option:: --subset <subset_spec>
 
@@ -107,17 +107,21 @@ Standard options
     <subset_spec> follows exactly the `OGC WCS 2.0 KVP encoding <https://portal.opengeospatial.org/files/09-147r3>`__
     for subsetting.
 
-    That is dim_name(min_val,max_val) or dim_name(sliced_val)
-    The first syntax will subset the dimension dim_name to values in the
+    That is ``dim_name(min_val,max_val)`` or ``dim_name(sliced_val)``
+    The first syntax will subset the dimension ``dim_name`` to values in the
     [min_val,max_val] range. The second syntax will slice the dimension dim_name
     to value sliced_val (and this dimension will be removed from the arrays
     that reference to it)
 
+    Beware that dimension name is case sensitive.
+
+    Several subsetting operations along different dimensions can be specified by repeating the option.
+
     Using --subset is incompatible with specifying a *view* option in --array.
 
-    See :example:`mdim-convert-subset-1`.
+    See :example:`mdim-convert-subset-1` or :example:`mdim-convert-subset-2`.
 
-.. option:: -scaleaxes <scaleaxes_spec>
+.. option:: --scale-axes <scaleaxes_spec>
 
     Applies a integral scale factor to one or several dimensions, that is
     extract 1 value every N values (without resampling).
@@ -127,9 +131,11 @@ Standard options
     `OGC WCS 2.0 Scaling Extension <https://portal.opengeospatial.org/files/12-039>`__,
     but limited to integer scale factors.
 
-    That is <dim1_name>(<scale_factor>)[,<dim2_name>(<scale_factor>)]...
+    That is ``<dim1_name>(<scale_factor>)``.
 
-    Using --scaleaxes is incompatible with specifying a *view* option in --array.
+    Several scaling operations along different dimensions can be specified by repeating the option.
+
+    Using --scale-axes is incompatible with specifying a *view* option in --array.
 
     See :example:`mdim-convert-subsample-1`.
 
@@ -165,12 +171,20 @@ Examples
        gdal mdim convert in.nc out.tif --subset "time(\"2010-01-01\")" --array temperature
 
 .. example::
-   :title: Subsample along X and Y axis
+   :title: Extract a a 3D chunk from a time-indexed GRIB file into a multiband GeoTIFF.
+   :id: mdim-convert-subset-2
+
+   .. code-block:: bash
+
+       gdal mdim convert /vsicurl/https://tgftp.nws.noaa.gov/SL.us008001/ST.opnl/DF.gr2/DC.ndfd/AR.conus/VP.001-003/ds.qpf.bin tst.tif --subset "TIME(1763164800,1763251200)" --array QPF_0-SFC --co COMPRESS=DEFLATE
+
+.. example::
+   :title: Subsample along x and y axis
    :id: mdim-convert-subsample-1
 
    .. code-block:: bash
 
-       gdal mdim convert in.nc out.nc --scaleaxes "X(2),Y(2)"
+       gdal mdim convert in.nc out.nc --scale-axes "x(2),y(2)"
 
 .. example::
    :title: Reorder the values of an array

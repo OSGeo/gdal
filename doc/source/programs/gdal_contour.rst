@@ -32,6 +32,10 @@ raster elevation model (DEM).
 The contour line-strings are oriented consistently and the high side will
 be on the right, i.e. a line string goes clockwise around a top.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_contour`.
+
 .. program:: gdal_contour
 
 .. include:: options/help_and_help_general.rst
@@ -52,15 +56,11 @@ be on the right, i.e. a line string goes clockwise around a top.
     of contour polygon. If not provided no minimum elevation attribute
     is attached. Ignored in default line contouring mode.
 
-    .. versionadded:: 2.4.0
-
 .. option:: -amax <name>
 
     Provides a name for the attribute in which to put the maximum elevation of
     contour polygon. If not provided no maximum elevation attribute is attached.
     Ignored in default line contouring mode.
-
-    .. versionadded:: 2.4.0
 
 .. option:: -3d
 
@@ -79,8 +79,6 @@ be on the right, i.e. a line string goes clockwise around a top.
 
     Create output in a particular format.
 
-    .. versionadded:: 2.3.0
-
         If not specified, the format is guessed from the extension (previously was ESRI Shapefile).
 
 .. option:: -dsco <NAME>=<VALUE>
@@ -95,6 +93,7 @@ be on the right, i.e. a line string goes clockwise around a top.
 
     Elevation interval between contours.
     Must specify either :option:`-i` or :option:`-fl` or :option:`-e`.
+    The first contour will be generated at the first multiple of ``interval`` which is greater than the raster minimum value.
 
 .. option:: -off <offset>
 
@@ -112,8 +111,6 @@ be on the right, i.e. a line string goes clockwise around a top.
     Generate levels on an exponential scale: `base ^ k`, for `k` an integer.
     Must specify either -i or -fl or -e.
 
-    .. versionadded:: 2.4.0
-
 .. option:: -nln <name>
 
     Provide a name for the output vector layer. Defaults to "contour".
@@ -129,9 +126,6 @@ be on the right, i.e. a line string goes clockwise around a top.
     The minimum and maximum values from the raster are not automatically added to
     the fixed levels list but the special values ``MIN`` and ``MAX`` (case insensitive)
     can be used to include them.
-
-
-    .. versionadded:: 2.4.0
 
 .. option:: -gt <n>
 

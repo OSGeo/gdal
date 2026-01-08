@@ -9,10 +9,9 @@ SRTMHGT -- SRTM HGT Format
 .. built_in_by_default::
 
 The SRTM HGT driver currently supports the reading of SRTM-3 and SRTM-1
-V2 (HGT) files. The files must be named like NXXEYYY.hgt, or starting
-with GDAL 2.1.2, NXXEYYY[.something].hgt
+V2 (HGT) files. The files must be named like NXXEYYY.hgt or NXXEYYY[.something].hgt
 
-Starting with GDAL 2.2, the driver can directly read .hgt.zip files
+The driver can directly read .hgt.zip files
 provided that they are named like NXXEYYY[.something].hgt.zip and
 contain a NXXEYYY.hgt file. For previous versions, use
 /vsizip//path/to/NXXEYYY[.something].hgt.zip/NXXEYYY.hgt syntax

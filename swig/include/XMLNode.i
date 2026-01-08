@@ -42,7 +42,6 @@ typedef struct CPLXMLNode
         return CPLParseXMLString( pszString );
     }
 
-    /* Interface method added for GDAL 1.7.0 */
     CPLXMLNode(CPLXMLNodeType eType, const char *pszText )
     {
         return CPLCreateXMLNode(NULL, eType, pszText);
@@ -53,7 +52,6 @@ typedef struct CPLXMLNode
         CPLDestroyXMLNode( self );
     }
 
-    /* Interface method added for GDAL 1.7.0 */
 #ifdef SWIGJAVA
     %newobject ParseXMLFile;
     static CPLXMLNode* ParseXMLFile( const char *pszFilename )
@@ -71,7 +69,6 @@ typedef struct CPLXMLNode
         return CPLSerializeXMLTree( self );
     }
 
-    /* Interface method added for GDAL 1.7.0 */
 #if defined(SWIGJAVA) || defined(SWIGCSHARP)
     retStringAndCPLFree * toString()
     {
@@ -140,7 +137,6 @@ typedef struct CPLXMLNode
     }
 #endif
 
-    /* Interface method added for GDAL 1.7.0 */
     %newobject Clone;
     CPLXMLNode *Clone()
     {

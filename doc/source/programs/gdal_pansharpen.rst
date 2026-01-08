@@ -8,8 +8,6 @@ gdal_pansharpen
 
     Perform a pansharpen operation.
 
-    (Since GDAL 2.1)
-
 .. Index:: gdal_pansharpen
 
 Synopsis
@@ -40,13 +38,17 @@ More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
 
     gdal_pansharpen is a Python utility, and is only available if GDAL Python bindings are available.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_pansharpen`.
+
+
 .. include:: options/help_and_help_general.rst
 
 .. option:: -of <format>
 
-    Select the output format. Starting with GDAL 2.3, if not specified,
-    the format is guessed from the extension (previously was ``GTiff``). Use
-    the short format name. ``VRT`` can also be used.
+    Select the output format. If not specified, the format is guessed from the
+    extension. Use the short format name. ``VRT`` can also be used.
 
 .. option:: -b <band>
 

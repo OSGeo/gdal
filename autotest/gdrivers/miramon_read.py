@@ -23,7 +23,7 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_driver("MiraMonRaster")
 
 gdal_to_struct = {
-    gdal.GDT_Byte: ("B", 1),
+    gdal.GDT_UInt8: ("B", 1),
     gdal.GDT_UInt16: ("H", 2),
     gdal.GDT_Int16: ("h", 2),
     gdal.GDT_UInt32: ("I", 4),
@@ -562,6 +562,19 @@ def test_miramon_subdatasets_detection(
 
 ###### Testing color table
 init_list_color_tables = [
+    (
+        "data/miramon/normal/byte_2x3_6_categsI.rel",
+        1,  # band index
+        {  # color table
+            0: (0, 0, 255, 255),
+            1: (0, 255, 255, 255),
+            2: (0, 255, 0, 255),
+            3: (255, 255, 0, 255),
+            4: (255, 0, 0, 255),
+            5: (255, 0, 255, 255),
+        },
+        "25831",  # reference system
+    ),
     (
         "data/miramon/palettes/Constant/byte_2x3_6_categsI.rel",
         1,  # band index

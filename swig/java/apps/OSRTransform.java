@@ -47,7 +47,6 @@ public class OSRTransform {
 			/* -------------------------------------------------------------------- */
 			/*      making the transform                                            */
 			/* -------------------------------------------------------------------- */
-            /* New in GDAL 1.10. Before was "new CoordinateTransformation(srs,dst)". */
 			CoordinateTransformation ct = CoordinateTransformation.CreateCoordinateTransformation(src, dst);
 			double[] p = new double[3];
 			p[0] = 19; p[1] = 47; p[2] = 0;
@@ -61,7 +60,7 @@ public class OSRTransform {
 			System.out.println("Error occurred: " + e.getMessage());
 			System.exit(-1);
 		}
-		
+
 		testTransformPointWithErrorCode();
 		testTransformPointsWithErrorCodes();
 		testSetDesiredAccuracy();

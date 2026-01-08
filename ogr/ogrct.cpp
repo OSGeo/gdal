@@ -818,7 +818,6 @@ class OGRProjCT final : public OGRCoordinateTransformation
     void ComputeThreshold();
     void DetectWebMercatorToWGS84();
 
-    OGRProjCT(const OGRProjCT &other);
     OGRProjCT &operator=(const OGRProjCT &) = delete;
 
     static CTCacheKey
@@ -835,6 +834,7 @@ class OGRProjCT final : public OGRCoordinateTransformation
   public:
     OGRProjCT();
     ~OGRProjCT() override;
+    OGRProjCT(const OGRProjCT &other);
 
     int Initialize(const OGRSpatialReference *poSource, const char *pszSrcSRS,
                    const OGRSpatialReference *poTarget,
@@ -983,7 +983,6 @@ OCTDestroyCoordinateTransformation(OGRCoordinateTransformationH hCT)
  *
  * @param poCT the object to delete
  *
- * @since GDAL 1.7.0
  */
 
 void OGRCoordinateTransformation::DestroyCT(OGRCoordinateTransformation *poCT)
@@ -2381,7 +2380,7 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
     bool bDebugCT = CPLTestBool(CPLGetConfigOption("OGR_CT_DEBUG", "NO"));
     if (bDebugCT)
     {
-        CPLDebug("OGRCT", "count = %d", nCount);
+        CPLDebug("OGRCT", "count = %u", static_cast<unsigned>(nCount));
         for (size_t i = 0; i < nCount; ++i)
         {
             CPLDebug("OGRCT", "  x[%d] = %.16g y[%d] = %.16g", int(i), x[i],
@@ -3639,7 +3638,7 @@ int OGRProjCT::TransformBounds(const double xmin, const double ymin,
 
 OGRCoordinateTransformation *OGRProjCT::Clone() const
 {
-    std::unique_ptr<OGRProjCT> poNewCT(new OGRProjCT(*this));
+    auto poNewCT = std::make_unique<OGRProjCT>(*this);
 #if (PROJ_VERSION_MAJOR * 10000 + PROJ_VERSION_MINOR * 100 +                   \
      PROJ_VERSION_PATCH) < 80001
     // See https://github.com/OSGeo/PROJ/pull/2582

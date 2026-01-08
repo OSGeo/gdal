@@ -225,6 +225,8 @@ void CPLPopErrorHandler();
 #endif
 
 void CPLErrorReset();
+void VSICurlClearCache();
+void VSICurlPartialClearCache( const char* utf8_path );
 
 #ifndef SWIGJAVA
 %feature( "kwargs" ) EscapeString;
@@ -568,7 +570,7 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 #endif
 
 %apply Pointer NONNULL {const char * pszFilename};
-/* Added in GDAL 1.7.0 */
+
 
 #if defined(SWIGPYTHON)
 
@@ -621,7 +623,6 @@ VSI_RETVAL wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, cons
 #endif
 #endif
 
-/* Added in GDAL 1.7.0 */
 VSI_RETVAL VSIUnlink(const char * utf8_path );
 
 %rename (UnlinkBatch) wrapper_VSIUnlinkBatch;
@@ -646,7 +647,6 @@ bool wrapper_VSIUnlinkBatch(char** files)
 }
 %clear (char **files);
 
-/* Added in GDAL 1.7.0 */
 /* Thread support is necessary for binding languages with threaded GC */
 /* even if the user doesn't explicitly use threads */
 %inline {
@@ -659,11 +659,9 @@ int wrapper_HasThreadSupport()
 %rename (GetCurrentThreadCount) CPLGetCurrentThreadCount();
 int CPLGetCurrentThreadCount();
 
-/* Added for GDAL 1.8 */
 VSI_RETVAL VSIMkdir(const char *utf8_path, int mode );
 VSI_RETVAL VSIRmdir(const char *utf8_path );
 
-/* Added for GDAL 2.3 */
 VSI_RETVAL VSIMkdirRecursive(const char *utf8_path, int mode );
 VSI_RETVAL VSIRmdirRecursive(const char *utf8_path );
 
@@ -780,9 +778,7 @@ char** VSIGetFileSystemsPrefixes();
 
 const char* VSIGetFileSystemOptions(const char * utf8_path);
 
-
-/* Added for GDAL 1.8
-
+/*
    We do not bother renaming the VSI*L api as this wrapping is not
    considered "official", or available for use by application code.
    It is just for some testing stuff.
@@ -933,7 +929,7 @@ if (offset < 0) {
     }
 }
 
-return VSIFSeekL(fp, offset, whence);
+return VSIFSeekL(fp, (vsi_l_offset)offset, whence);
 }
 }
 
@@ -974,9 +970,6 @@ int     VSIFWriteL( const char *, int, int, VSILFILE *fp );
 /* VSIFReadL() handled specially in python/gdal_python.i */
 
 const char* CPLReadLineL(VSILFILE* fp);
-
-void VSICurlClearCache();
-void VSICurlPartialClearCache( const char* utf8_path );
 
 void VSINetworkStatsReset();
 retStringAndCPLFree* VSINetworkStatsGetAsSerializedJSON( char** options = NULL );

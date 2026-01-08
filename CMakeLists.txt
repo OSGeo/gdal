@@ -46,6 +46,7 @@ if (USE_PRECOMPILED_HEADERS AND MSVC)
 endif()
 
 include(Ccache)
+include(CheckCXXSourceCompiles)
 
 #
 if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i586|i686|x86|AMD64)")
@@ -95,15 +96,34 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i586|i686|x86|AMD64)")
   check_compiler_machine_option(flag AVX2)
   if (NOT ${flag} STREQUAL "")
     set(HAVE_AVX2_AT_COMPILE_TIME 1)
+    if (NOT HAVE_SSSE3_AT_COMPILE_TIME)
+        set(HAVE_SSSE3_AT_COMPILE_TIME 1)
+        add_definitions(-DHAVE_SSSE3_AT_COMPILE_TIME)
+    endif()
     if (NOT ${flag} STREQUAL " ")
       set(GDAL_AVX2_FLAG ${flag})
     endif ()
   endif ()
 
+  check_compiler_machine_option(flag FMA)
+  if (NOT ${flag} STREQUAL "")
+    set(HAVE_FMA_AT_COMPILE_TIME 1)
+    if (NOT ${flag} STREQUAL " ")
+      set(GDAL_FMA_FLAG ${flag})
+    endif ()
+  endif ()
+
+  check_cxx_source_compiles("
+    #include <immintrin.h>
+    int main() {
+        __m256d a,b,c;
+        c = _mm256_fmadd_pd(a,b,c);
+        return 0;
+    }" HAVE_AVX2_FMA_WITHOUT_FLAG)
+
 else()
 
   # Check ability to use Arm Neon optimizations
-  include(CheckCXXSourceCompiles)
   include(CMakePushCheckState)
   cmake_push_check_state(RESET)
   set(CMAKE_REQUIRED_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/gcore")
@@ -240,6 +260,7 @@ endif()
 
 if (SWIG_FOUND AND (Python_Interpreter_FOUND OR Python_FOUND))
   option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
+  option(BUILD_PYTHON_STUBS "Generate Python stub files for Python binding" OFF)
 else()
   option(BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
 endif()

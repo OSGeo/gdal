@@ -20,6 +20,7 @@ API
        raster_c_api
        vector_c_api
        gdal_alg
+       cli_algorithm_c
        ogr_srs_api
        gdal_utils
 
@@ -82,6 +83,7 @@ API
    .. toctree::
        :maxdepth: 1
 
+       cli_algorithm_cpp
        cpl_cpp
        gnm_cpp
 

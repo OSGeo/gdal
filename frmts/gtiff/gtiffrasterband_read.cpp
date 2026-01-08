@@ -25,6 +25,7 @@
 #include "cpl_vsi_virtual.h"
 #include "fetchbufferdirectio.h"
 #include "gdal_priv.h"
+#include "gdal_mdreader.h"
 #include "gtiff.h"
 #include "tifvsi.h"
 
@@ -35,14 +36,30 @@
 GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
 
 {
-    if (m_poRAT || m_poGDS->m_poBaseDS != nullptr)
+    if (m_poGDS->m_poBaseDS != nullptr)
         return m_poRAT.get();
 
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
-    auto poRAT = GDALPamRasterBand::GetDefaultRAT();
-    if (poRAT)
-        return poRAT;
 
+    // RAT from PAM has priority over RAT in GDAL_METADATA TIFF tag
+    if (!m_bRATTriedReadingFromPAM)
+    {
+        m_bRATTriedReadingFromPAM = true;
+        auto poRAT = GDALPamRasterBand::GetDefaultRAT();
+        if (poRAT)
+        {
+            m_bRATSet = true;
+            m_poRAT.reset(poRAT->Clone());
+            return m_poRAT.get();
+        }
+    }
+
+    if (m_bRATSet)
+        return m_poRAT.get();
+
+    m_bRATSet = true;
+
+    // Try reading from a .vat.dbf side car file
     if (!GDALCanFileAcceptSidecarFile(m_poGDS->m_osFilename.c_str()))
         return nullptr;
     const std::string osVATDBF = m_poGDS->m_osFilename + ".vat.dbf";
@@ -275,7 +292,7 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         const bool bOneByteCopy =
             (eDataType == eBufType &&
-             (eDataType == GDT_Byte || eDataType == GDT_Int8));
+             (eDataType == GDT_UInt8 || eDataType == GDT_Int8));
         for (int iY = 0; iY < nBufYSize; ++iY)
         {
             const int iSrcY = nBufYSize <= nYSize
@@ -835,7 +852,7 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         if (nBand == 1 && !m_poGDS->m_bLoadingOtherBands &&
             eAccess == GA_ReadOnly &&
             (m_poGDS->nBands == 3 || m_poGDS->nBands == 4) &&
-            ((eDataType == GDT_Byte && m_poGDS->m_nBitsPerSample == 8) ||
+            ((eDataType == GDT_UInt8 && m_poGDS->m_nBitsPerSample == 8) ||
              (eDataType == GDT_Int16 && m_poGDS->m_nBitsPerSample == 16) ||
              (eDataType == GDT_UInt16 && m_poGDS->m_nBitsPerSample == 16)) &&
             static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
@@ -1046,6 +1063,8 @@ char **GTiffRasterBand::GetMetadataDomainList()
 {
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
 
+    m_poGDS->LoadENVIHdrIfNeeded();
+
     return CSLDuplicate(m_oGTiffMDMD.GetDomainList());
 }
 
@@ -1059,6 +1078,12 @@ char **GTiffRasterBand::GetMetadata(const char *pszDomain)
     if (pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE"))
     {
         m_poGDS->LoadGeoreferencingAndPamIfNeeded();
+
+        m_poGDS->LoadENVIHdrIfNeeded();
+    }
+    else if (EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
+    {
+        m_poGDS->LoadENVIHdrIfNeeded();
     }
 
     return m_oGTiffMDMD.GetMetadata(pszDomain);
@@ -1075,6 +1100,12 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
     if (pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE"))
     {
         m_poGDS->LoadGeoreferencingAndPamIfNeeded();
+
+        m_poGDS->LoadENVIHdrIfNeeded();
+    }
+    else if (EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
+    {
+        m_poGDS->LoadENVIHdrIfNeeded();
     }
 
     if (pszName != nullptr && pszDomain != nullptr && EQUAL(pszDomain, "TIFF"))
@@ -1159,7 +1190,7 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
 
     const char *pszRet = m_oGTiffMDMD.GetMetadataItem(pszName, pszDomain);
 
-    if (pszRet == nullptr && eDataType == GDT_Byte && pszName && pszDomain &&
+    if (pszRet == nullptr && eDataType == GDT_UInt8 && pszName && pszDomain &&
         EQUAL(pszDomain, "IMAGE_STRUCTURE") && EQUAL(pszName, "PIXELTYPE"))
     {
         // to get a chance of emitting the warning about this legacy usage
@@ -1395,9 +1426,9 @@ int GTiffRasterBand::GetOverviewCount()
 
     m_poGDS->ScanDirectories();
 
-    if (m_poGDS->m_nOverviewCount > 0)
+    if (!m_poGDS->m_apoOverviewDS.empty())
     {
-        return m_poGDS->m_nOverviewCount;
+        return static_cast<int>(m_poGDS->m_apoOverviewDS.size());
     }
 
     const int nOverviewCount = GDALRasterBand::GetOverviewCount();
@@ -1421,13 +1452,13 @@ GDALRasterBand *GTiffRasterBand::GetOverview(int i)
 {
     m_poGDS->ScanDirectories();
 
-    if (m_poGDS->m_nOverviewCount > 0)
+    if (!m_poGDS->m_apoOverviewDS.empty())
     {
         // Do we have internal overviews?
-        if (i < 0 || i >= m_poGDS->m_nOverviewCount)
+        if (i < 0 || static_cast<size_t>(i) >= m_poGDS->m_apoOverviewDS.size())
             return nullptr;
 
-        return m_poGDS->m_papoOverviewDS[i]->GetRasterBand(nBand);
+        return m_poGDS->m_apoOverviewDS[i]->GetRasterBand(nBand);
     }
 
     GDALRasterBand *const poOvrBand = GDALRasterBand::GetOverview(i);
@@ -1438,7 +1469,7 @@ GDALRasterBand *GTiffRasterBand::GetOverview(int i)
     // m_nJPEGOverviewVisibilityCounter, but it is also convenient to be able
     // to query them for testing purposes.
     if (i >= 0 && i < m_poGDS->GetJPEGOverviewCount())
-        return m_poGDS->m_papoJPEGOverviewDS[i]->GetRasterBand(nBand);
+        return m_poGDS->m_apoJPEGOverviewDS[i]->GetRasterBand(nBand);
 
     return nullptr;
 }
@@ -1524,7 +1555,7 @@ GDALRasterBand *GTiffRasterBand::GetMaskBand()
 bool GTiffRasterBand::IsMaskBand() const
 {
     return (m_poGDS->m_poImageryDS != nullptr &&
-            m_poGDS->m_poImageryDS->m_poMaskDS == m_poGDS) ||
+            m_poGDS->m_poImageryDS->m_poMaskDS.get() == m_poGDS) ||
            m_eBandInterp == GCI_AlphaBand ||
            m_poGDS->GetMetadataItem("INTERNAL_MASK_FLAGS_1") != nullptr;
 }

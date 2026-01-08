@@ -15,14 +15,14 @@
 #ifndef DEGRIB2_H
 #define DEGRIB2_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
 #include <stdio.h>
 /* Include type.h for uChar and sChar */
 #include "type.h"
 #include "meta.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 
 /* The IS_dataType is used to organize and allocate all the arrays that the

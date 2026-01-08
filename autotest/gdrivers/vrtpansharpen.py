@@ -847,7 +847,7 @@ def test_vrtpansharpen_1():
 
     # Unsupported
     with gdal.quiet_errors():
-        ret = vrt_ds.AddBand(gdal.GDT_Byte)
+        ret = vrt_ds.AddBand(gdal.GDT_UInt8)
     assert ret != 0
 
 
@@ -1296,7 +1296,7 @@ def test_vrtpansharpen_5():
         )
 
         vrt_ds = gdal.Open(xml)
-        data = vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Byte)
+        data = vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_UInt8)
         tmp_ds = gdal.GetDriverByName("MEM").Create("", 800, 400, 1)
         tmp_ds.WriteRaster(0, 0, 800, 400, data)
         cs = tmp_ds.GetRasterBand(1).Checksum()
@@ -1322,8 +1322,8 @@ def test_vrtpansharpen_6():
     # i = 0: VRT has <BitDepth>7</BitDepth>
     # i = 1: bands have NBITS=7 and VRT <BitDepth>7</BitDepth>
     # i = 2: bands have NBITS=7
-    for dt in [gdal.GDT_Byte, gdal.GDT_UInt16]:
-        if dt == gdal.GDT_Byte:
+    for dt in [gdal.GDT_UInt8, gdal.GDT_UInt16]:
+        if dt == gdal.GDT_UInt8:
             nbits = 7
         elif dt == gdal.GDT_UInt16:
             nbits = 12
@@ -1385,7 +1385,7 @@ def test_vrtpansharpen_6():
             ) == str(nbits)
 
             ar = vrt_ds.GetRasterBand(1).ReadAsArray()
-            if dt == gdal.GDT_Byte:
+            if dt == gdal.GDT_UInt8:
                 expected_ar = [95, 111, 127, 127, 127, 127, 111, 95]
             elif dt == gdal.GDT_UInt16:
                 expected_ar = [3040, 3560, 4095, 4095, 4095, 4095, 3560, 3040]
@@ -2256,6 +2256,7 @@ def test_vrtpansharpen_nodata_overviews():
     )
     assert vrt_ds
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert vrt_ds.GetRasterBand(1).GetOverview(0).GetNoDataValue() == 0
     vrt_ds = None
 
     gdal.Unlink("/vsimem/pan.tif")
@@ -2401,13 +2402,13 @@ def test_vrtpansharpen_open_options_input_bands():
 def test_vrtpansharpen_slightly_different_extent(tmp_vsimem):
 
     ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/pan.tif", 1000, 1000, 1, gdal.GDT_Byte
+        "/vsimem/pan.tif", 1000, 1000, 1, gdal.GDT_UInt8
     )
     ds.SetGeoTransform([0, 1.0 / 1000, 0, 0, 0, -1.0 / 1000])
     ds.GetRasterBand(1).Fill(30)
     ds = None
     ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/ms.tif", 500, 500, 2, gdal.GDT_Byte
+        "/vsimem/ms.tif", 500, 500, 2, gdal.GDT_UInt8
     )
     ds.SetGeoTransform(
         [0, 1.0 / 500 - 1.0 / 300000, 0, 0, 0, -(1.0 / 500 - 1.0 / 300000)]

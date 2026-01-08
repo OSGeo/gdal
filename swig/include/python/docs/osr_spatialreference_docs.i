@@ -6,7 +6,7 @@ unless exactly one of the following parameters is provided.
 
 Parameters
 ----------
-name : str / dict, optional
+name : str or dict, optional
     SRS description in a format understood by :py:meth:`SetFromUserInput`.
 epsg : int, optional
     EPSG CRS code, as understood by :py:meth:`ImportFromEPSG`
@@ -77,7 +77,7 @@ See :cpp:func:`OGRSpatialReference::exportToPROJJSON`.
 
 Parameters
 ----------
-options : list/dict
+options : list or dict
     Options to control the format of the output. See :cpp:func:`OGRSpatialReference::exportToPROJJSON`.
 
 Returns
@@ -117,7 +117,8 @@ target_key : str
 
 Returns
 -------
-str or ``None`` on failure
+str or None
+    Returns a string on success or ``None`` on failure.
 
 Examples
 --------
@@ -808,7 +809,7 @@ See :cpp:func:`OGRSpatialReference::IsSame`.
 Parameters
 ----------
 rhs : SpatialReference
-options : list/dict
+options : list or dict
 
 Returns
 -------
@@ -826,7 +827,7 @@ See :cpp:func:`OGRSpatialReference::IsSameGeogCS`.
 Parameters
 ----------
 rhs : SpatialReference
-options : list/dict
+options : list or dict
 
 Returns
 -------
@@ -844,7 +845,7 @@ See :cpp:func:`OGRSpatialReference::IsSameVertCS`.
 Parameters
 ----------
 rhs : SpatialReference
-options : list/dict
+options : list or dict
 
 Returns
 -------
@@ -877,8 +878,8 @@ See :cpp:func:`OGRSpatialReference::StripVertical`.
 
 Returns
 -------
-OGRErr:
-    :py:const:`OGRERR_NONE` if the operation succeeds
+int
+    :py:const:`OGRERR_NONE` on success, or an error code on failure
 ";
 
 }

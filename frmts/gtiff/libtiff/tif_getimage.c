@@ -617,7 +617,7 @@ int TIFFRGBAImageGet(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
                       "Error in TIFFRGBAImageGet: row offset %d exceeds "
-                      "image height %d",
+                      "image height %u",
                       img->row_offset, img->height);
         return 0;
     }
@@ -757,7 +757,7 @@ static int gtTileContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Error in gtTileContig: column offset %d exceeds "
-                      "image width %d",
+                      "image width %u",
                       img->col_offset, img->width);
         return 0;
     }
@@ -930,7 +930,7 @@ static int gtTileSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Error in gtTileSeparate: column offset %d exceeds "
-                      "image width %d",
+                      "image width %u",
                       img->col_offset, img->width);
         return 0;
     }
@@ -1161,7 +1161,7 @@ static int gtStripContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Error in gtStripContig: column offset %d exceeds "
-                      "image width %d",
+                      "image width %u",
                       img->col_offset, imagewidth);
         return 0;
     }
@@ -1306,7 +1306,7 @@ static int gtStripSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Error in gtStripSeparate: column offset %d exceeds "
-                      "image width %d",
+                      "image width %u",
                       img->col_offset, imagewidth);
         return 0;
     }
@@ -3175,6 +3175,19 @@ static int PickContigCase(TIFFRGBAImage *img)
                     uint16_t SubsamplingVer;
                     TIFFGetFieldDefaulted(img->tif, TIFFTAG_YCBCRSUBSAMPLING,
                                           &SubsamplingHor, &SubsamplingVer);
+                    /* Validate that the image dimensions are compatible with
+                    the subsampling block. All putcontig8bitYCbCrXYtile routines
+                    assume width >= X and height >= Y. */
+                    if (img->width < SubsamplingHor ||
+                        img->height < SubsamplingVer)
+                    {
+                        TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
+                                      "YCbCr subsampling (%u,%u) incompatible "
+                                      "with image size %ux%u",
+                                      SubsamplingHor, SubsamplingVer,
+                                      img->width, img->height);
+                        return (0);
+                    }
                     switch ((SubsamplingHor << 4) | SubsamplingVer)
                     {
                         case 0x44:
@@ -3298,7 +3311,7 @@ static int BuildMapUaToAa(TIFFRGBAImage *img)
     uint8_t *m;
     uint16_t na, nv;
     assert(img->UaToAa == NULL);
-    img->UaToAa = _TIFFmallocExt(img->tif, 65536);
+    img->UaToAa = (uint8_t *)_TIFFmallocExt(img->tif, 65536);
     if (img->UaToAa == NULL)
     {
         TIFFErrorExtR(img->tif, module, "Out of memory");
@@ -3319,7 +3332,7 @@ static int BuildMapBitdepth16To8(TIFFRGBAImage *img)
     uint8_t *m;
     uint32_t n;
     assert(img->Bitdepth16To8 == NULL);
-    img->Bitdepth16To8 = _TIFFmallocExt(img->tif, 65536);
+    img->Bitdepth16To8 = (uint8_t *)_TIFFmallocExt(img->tif, 65536);
     if (img->Bitdepth16To8 == NULL)
     {
         TIFFErrorExtR(img->tif, module, "Out of memory");

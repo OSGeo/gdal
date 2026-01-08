@@ -435,7 +435,6 @@ char *CPLRecodeFromWCharStub(const wchar_t *pwszSource,
  * @return the zero terminated wchar_t string (to be freed with CPLFree()) or
  * NULL on error.
  *
- * @since GDAL 1.6.0
  */
 
 wchar_t *CPLRecodeToWCharStub(const char *pszSource, const char *pszSrcEncoding,
@@ -497,7 +496,6 @@ wchar_t *CPLRecodeToWCharStub(const char *pszSource, const char *pszSrcEncoding,
  *             the string length. In which case it must be null terminated.
  * @return TRUE if the string is encoded as UTF-8. FALSE otherwise
  *
- * @since GDAL 1.7.0
  */
 int CPLIsUTF8(const char *pabyData, int nLen)
 {

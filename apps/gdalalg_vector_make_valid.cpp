@@ -94,8 +94,7 @@ std::unique_ptr<OGRFeature> GDALVectorMakeValidAlgorithmLayer::TranslateFeature(
         {
             auto poGeom =
                 std::unique_ptr<OGRGeometry>(poSrcFeature->StealGeometry(i));
-            if (poGeom && poGeom->getCoordinateDimension() == 2 &&
-                !poGeom->IsValid())
+            if (poGeom && !poGeom->IsValid())
             {
                 const bool bIsGeomCollection =
                     wkbFlatten(poGeom->getGeometryType()) ==

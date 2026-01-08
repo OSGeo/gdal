@@ -49,6 +49,23 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Open options
+------------
+
+|about-open-options|
+The following open options are supported:
+
+- .. oo:: LISTS_AS_STRING_JSON
+     :choices: YES, NO
+     :default: NO
+     :since: 3.12.1
+
+     Whether lists of strings/integers/reals should be reported as String(JSON)
+     fields rather than String/Integer[64]/RealList.
+     Useful when null values in such lists must be exactly mapped as such,
+     instead of being omitted (for lists of strings), or set to 0 (for list of
+     boolean, integer or real).
+
 Creation issues
 ---------------
 
@@ -106,6 +123,21 @@ The following layer creation options are supported:
      FID column, this FID column name will be automatically used to set the FID
      layer creation option of the Arrow driver (unless ``-lco FID=`` is used to
      set an empty name)
+
+- .. lco:: TIMESTAMP_WITH_OFFSET
+     :choices: AUTO, YES, NO
+     :default: AUTO
+     :since: 3.13
+
+     Whether OGR datetime fields should be written as Arrow timestamp with offset fields, following the
+     `Timestamp With Offset extension <https://github.com/apache/arrow/blob/main/docs/source/format/CanonicalExtensions.rst#timestamp-with-offset>`__ specification.
+     Such fields store both the datetime as a timestamp expressed in the UTC timezone and the
+     offset to UTC of the timezone in which the datetime is defined.
+     In AUTO mode, they are used as soon as a DateTime field reports a mixed
+     time zone flag (i.e. :cpp:func:`OGRFieldDefn::GetTZFlag` returns ``OGR_TZFLAG_MIXED_TZ``).
+     As few drivers are able to automatically set this flag, it may be useful
+     to override the flag by setting this option to YES. Setting it to NO forces the use
+     of a DateTime field with the UTC timezone.
 
 Conda-forge package
 -------------------

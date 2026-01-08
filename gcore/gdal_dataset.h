@@ -45,6 +45,7 @@ class GDALGroup;
 class GDALMDArray;
 class GDALRasterBand;
 class GDALRelationship;
+class GDALOpenInfo;
 
 //! @cond Doxygen_Suppress
 typedef struct GDALSQLParseInfo GDALSQLParseInfo;
@@ -223,7 +224,12 @@ class CPL_DLL GDALDataset : public GDALMajorObject
   public:
     ~GDALDataset() override;
 
-    virtual CPLErr Close();
+    virtual CPLErr Close(GDALProgressFunc pfnProgress = nullptr,
+                         void *pProgressData = nullptr);
+
+    virtual bool GetCloseReportsProgress() const;
+
+    virtual bool CanReopenWithCurrentDescription() const;
 
     int GetRasterXSize() const;
     int GetRasterYSize() const;
@@ -511,6 +517,31 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                 GDALProgressFunc pfnProgress,
                                 void *pProgressData, CSLConstList papszOptions);
 
+    CPLErr GetInterBandCovarianceMatrix(
+        double *padfCovMatrix, size_t nSize, int nBandCount = 0,
+        const int *panBandList = nullptr, bool bApproxOK = false,
+        bool bForce = false, bool bWriteIntoMetadata = true,
+        int nDeltaDegreeOfFreedom = 1, GDALProgressFunc pfnProgress = nullptr,
+        void *pProgressData = nullptr);
+
+    std::vector<double> GetInterBandCovarianceMatrix(
+        int nBandCount = 0, const int *panBandList = nullptr,
+        bool bApproxOK = false, bool bForce = false,
+        bool bWriteIntoMetadata = true, int nDeltaDegreeOfFreedom = 1,
+        GDALProgressFunc pfnProgress = nullptr, void *pProgressData = nullptr);
+
+    CPLErr ComputeInterBandCovarianceMatrix(
+        double *padfCovMatrix, size_t nSize, int nBandCount = 0,
+        const int *panBandList = nullptr, bool bApproxOK = false,
+        bool bWriteIntoMetadata = true, int nDeltaDegreeOfFreedom = 1,
+        GDALProgressFunc pfnProgress = nullptr, void *pProgressData = nullptr);
+
+    std::vector<double> ComputeInterBandCovarianceMatrix(
+        int nBandCount = 0, const int *panBandList = nullptr,
+        bool bApproxOK = false, bool bWriteIntoMetadata = true,
+        int nDeltaDegreeOfFreedom = 1, GDALProgressFunc pfnProgress = nullptr,
+        void *pProgressData = nullptr);
+
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
                      ...) const CPL_PRINT_FUNC_FORMAT(4, 5);
@@ -536,7 +567,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     std::shared_ptr<GDALMDArray> AsMDArray(CSLConstList papszOptions = nullptr);
 
     /** Convert a GDALDataset* to a GDALDatasetH.
-     * @since GDAL 2.3
      */
     static inline GDALDatasetH ToHandle(GDALDataset *poDS)
     {
@@ -544,7 +574,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     }
 
     /** Convert a GDALDatasetH to a GDALDataset*.
-     * @since GDAL 2.3
      */
     static inline GDALDataset *FromHandle(GDALDatasetH hDS)
     {
@@ -552,7 +581,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     }
 
     /** @see GDALOpenEx().
-     * @since GDAL 2.3
      */
     static GDALDataset *Open(const char *pszFilename,
                              unsigned int nOpenFlags = 0,
@@ -564,6 +592,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                      papszAllowedDrivers, papszOpenOptions,
                                      papszSiblingFiles));
     }
+
+    static std::unique_ptr<GDALDataset>
+    Open(GDALOpenInfo *poOpenInfo,
+         const char *const *papszAllowedDrivers = nullptr,
+         const char *const *papszOpenOptions = nullptr);
 
     /** Object returned by GetFeatures() iterators */
     struct FeatureLayerPair
@@ -607,7 +640,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual bool IsLayerPrivate(int iLayer) const;
 
     /** Class returned by GetLayers() that acts as a range of layers.
-     * @since GDAL 2.3
      */
     class CPL_DLL Layers
     {
@@ -621,7 +653,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
       public:
         /** Layer iterator.
-         * @since GDAL 2.3
          */
         class CPL_DLL Iterator
         {
@@ -920,7 +951,6 @@ struct CPL_DLL GDALDatasetUniquePtrReleaser
 /** Unique pointer type for GDALDataset.
  * Appropriate for use on datasets open in non-shared mode and onto which
  * reference counter has not been manually modified.
- * @since GDAL 2.3
  */
 using GDALDatasetUniquePtr =
     std::unique_ptr<GDALDataset, GDALDatasetUniquePtrDeleter>;

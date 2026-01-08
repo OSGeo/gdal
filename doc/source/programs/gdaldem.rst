@@ -138,6 +138,15 @@ grid using gdalwarp before using gdaldem.
 
         Generate a map of roughness from any GDAL-supported elevation raster.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    - :ref:`gdal_raster_aspect`
+    - :ref:`gdal_raster_color_map`
+    - :ref:`gdal_raster_hillshade`
+    - :ref:`gdal_raster_slope`
+    - :ref:`gdal_raster_tpi`
+    - :ref:`gdal_raster_tri`
+
 The following general options are available:
 
 .. include:: options/help_and_help_general.rst
@@ -153,8 +162,6 @@ The following general options are available:
 .. option:: -of <format>
 
     Select the output format.
-
-    .. versionadded:: 2.3.0
 
         If not specified, the format is guessed from the extension
         (previously was :ref:`raster.gtiff`). Use the short format name.
@@ -267,8 +274,6 @@ The following specific options are available :
 .. option:: -multidirectional
 
     multidirectional shading, a combination of hillshading illuminated from 225 deg, 270 deg, 315 deg, and 360 deg azimuth.
-
-    .. versionadded:: 2.2
 
 .. option:: -igor
 
@@ -500,8 +505,6 @@ C API
 -----
 
 This utility is also callable from C with :cpp:func:`GDALDEMProcessing`.
-
-.. versionadded:: 2.1
 
 Authors
 -------

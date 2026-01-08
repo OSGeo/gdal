@@ -1340,8 +1340,13 @@ int VSIWin32FilesystemHandler::Rename(const char *oldpath, const char *newpath,
     std::error_code ec{};
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
+#if __cplusplus >= 202002L
+        std::filesystem::rename(reinterpret_cast<const char8_t *>(oldpath),
+                                reinterpret_cast<const char8_t *>(newpath), ec);
+#else
         std::filesystem::rename(std::filesystem::u8path(oldpath),
                                 std::filesystem::u8path(newpath), ec);
+#endif
     }
     else
     {
@@ -1485,6 +1490,8 @@ struct VSIDIRWin32 final : public VSIDIR
     struct DIR
     {
         intptr_t handle = -1;
+
+        DIR() = default;
 
         ~DIR()
         {
@@ -1841,7 +1848,8 @@ std::string VSIWin32FilesystemHandler::GetCanonicalFilename(
 void VSIInstallLargeFileHandler()
 
 {
-    VSIFileManager::InstallHandler("", new VSIWin32FilesystemHandler);
+    VSIFileManager::InstallHandler(
+        "", std::make_shared<VSIWin32FilesystemHandler>());
 }
 
 #endif /* def WIN32 */

@@ -109,7 +109,10 @@ CPLErr VRTDataset::FlushCache(bool bAtClosing)
 
 {
     if (m_poRootGroup)
+    {
+        m_poRootGroup->SetVRTPath(CPLGetPathSafe(GetDescription()));
         return m_poRootGroup->Serialize() ? CE_None : CE_Failure;
+    }
     else
         return VRTFlushCacheStruct<VRTDataset>::FlushCache(*this, bAtClosing);
 }
@@ -2331,10 +2334,10 @@ GDALDataset *VRTDataset::GetSingleSimpleSource()
     bool bError = false;
     if (!poSource->GetSrcDstWindow(
             0, 0, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-            poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), &dfReqXOff,
-            &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff,
-            &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff, &nOutXSize,
-            &nOutYSize, bError))
+            poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
+            GRIORA_NearestNeighbour, &dfReqXOff, &dfReqYOff, &dfReqXSize,
+            &dfReqYSize, &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+            &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
         return nullptr;
 
     if (nReqXOff != 0 || nReqYOff != 0 ||
@@ -2384,11 +2387,11 @@ CPLErr VRTDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
     int nOutXSize = 0;
     int nOutYSize = 0;
     bool bError = false;
-    if (!poSource->GetSrcDstWindow(nXOff, nYOff, nXSize, nYSize, nBufXSize,
-                                   nBufYSize, &dfReqXOff, &dfReqYOff,
-                                   &dfReqXSize, &dfReqYSize, &nReqXOff,
-                                   &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff,
-                                   &nOutYOff, &nOutXSize, &nOutYSize, bError))
+    if (!poSource->GetSrcDstWindow(
+            nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+            GRIORA_NearestNeighbour, &dfReqXOff, &dfReqYOff, &dfReqXSize,
+            &dfReqYSize, &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+            &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
     {
         return bError ? CE_Failure : CE_None;
     }
@@ -2817,9 +2820,9 @@ static bool CheckBandForOverview(GDALRasterBand *poBand,
     {
         return false;
     }
-    GDALRasterBand *poSrcBand = poBand->GetBand() == 0
-                                    ? poSource->GetMaskBandMainBand()
-                                    : poSource->GetRasterBand();
+    GDALRasterBand *poSrcBand = poSource->GetMaskBandMainBand();
+    if (!poSrcBand)
+        poSrcBand = poSource->GetRasterBand();
     if (poSrcBand == nullptr)
         return false;
 
@@ -2976,13 +2979,6 @@ void VRTDataset::BuildVirtualOverviews()
             }
             if (poNewSource)
             {
-                auto poNewSourceBand = poVRTBand->GetBand() == 0
-                                           ? poNewSource->GetMaskBandMainBand()
-                                           : poNewSource->GetRasterBand();
-                CPLAssert(poNewSourceBand);
-                auto poNewSourceBandDS = poNewSourceBand->GetDataset();
-                if (poNewSourceBandDS)
-                    poNewSourceBandDS->Reference();
                 poOvrVRTBand->AddSource(std::move(poNewSource));
             }
 
@@ -3177,11 +3173,11 @@ bool VRTDataset::GetShiftedDataset(int nXOff, int nYOff, int nXSize, int nYSize,
     int nOutXSize = 0;
     int nOutYSize = 0;
     bool bError = false;
-    if (!poSource->GetSrcDstWindow(nXOff, nYOff, nXSize, nYSize, nXSize, nYSize,
-                                   &dfReqXOff, &dfReqYOff, &dfReqXSize,
-                                   &dfReqYSize, &nReqXOff, &nReqYOff,
-                                   &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
-                                   &nOutXSize, &nOutYSize, bError))
+    if (!poSource->GetSrcDstWindow(
+            nXOff, nYOff, nXSize, nYSize, nXSize, nYSize,
+            GRIORA_NearestNeighbour, &dfReqXOff, &dfReqYOff, &dfReqXSize,
+            &dfReqYSize, &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+            &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
         return false;
 
     if (nReqXSize != nXSize || nReqYSize != nYSize || nReqXSize != nOutXSize ||

@@ -68,14 +68,14 @@ template <> struct CXXTypeTraits<int8_t>
 
 template <> struct CXXTypeTraits<uint8_t>
 {
-    static constexpr GDALDataType gdal_type = GDT_Byte;
+    static constexpr GDALDataType gdal_type = GDT_UInt8;
     static constexpr size_t size = sizeof(uint8_t);
     static constexpr OGRFieldType ogr_type = OFTInteger;
     static constexpr OGRFieldSubType ogr_subtype = OFSTNone;
 
     static inline GDALExtendedDataType GetExtendedDataType()
     {
-        return GDALExtendedDataType::Create(GDT_Byte);
+        return GDALExtendedDataType::Create(GDT_UInt8);
     }
 };
 
@@ -282,7 +282,7 @@ template <> struct GDALDataTypeTraits<GDT_Int8>
     }
 };
 
-template <> struct GDALDataTypeTraits<GDT_Byte>
+template <> struct GDALDataTypeTraits<GDT_UInt8>
 {
     typedef uint8_t type;
     static constexpr size_t size = sizeof(uint8_t);
@@ -291,7 +291,7 @@ template <> struct GDALDataTypeTraits<GDT_Byte>
 
     static inline GDALExtendedDataType GetExtendedDataType()
     {
-        return GDALExtendedDataType::Create(GDT_Byte);
+        return GDALExtendedDataType::Create(GDT_UInt8);
     }
 };
 
@@ -468,7 +468,7 @@ inline OGRFieldType GetOGRFieldType(const GDALDataType gdal_type)
 {
     switch (gdal_type)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         case GDT_Int8:
         case GDT_Int16:
         case GDT_Int32:

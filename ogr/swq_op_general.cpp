@@ -331,7 +331,7 @@ static const char *OGRFormatDate(const OGRField *psField)
     return CPLSPrintf("%04d/%02d/%02d %02d:%02d:%06.3f", psField->Date.Year,
                       psField->Date.Month, psField->Date.Day,
                       psField->Date.Hour, psField->Date.Minute,
-                      psField->Date.Second);
+                      static_cast<double>(psField->Date.Second));
 }
 
 #ifdef __GNUC__

@@ -19,7 +19,7 @@ extension), provided they contain a .gdb directory at their first level.
 A specific .gdbtable file (including "system" tables) can also be opened
 directly.
 
-Curve in geometries are supported with GDAL >= 2.2.
+Curve in geometries are supported.
 
 Write and update capabilities are supported since GDAL >= 3.6
 

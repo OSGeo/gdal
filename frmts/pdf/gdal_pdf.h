@@ -249,7 +249,8 @@ class PDFDataset final : public GDALPamDataset
     int m_nBlockYSize = 0;
     int CheckTiledRaster();
 
-    void GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands);
+    void GuessDPIAndBandCount(GDALPDFDictionary *poPageDict, double &dfPI,
+                              int &nBandsGuessed);
     void FindXMP(GDALPDFObject *poObj);
     void ParseInfo(GDALPDFObject *poObj);
 
@@ -321,6 +322,8 @@ class PDFDataset final : public GDALPamDataset
     std::vector<LayerStruct> m_oLayerNameSet{};
     CPLStringList m_aosLayerNames{};
 
+    void SortLayerList();
+
     struct LayerWithRef
     {
         CPLString osName{};
@@ -355,7 +358,7 @@ class PDFDataset final : public GDALPamDataset
     double m_dfPageHeight = 0;
     void PDFCoordsToSRSCoords(double x, double y, double &X, double &Y);
 
-    std::map<int, OGRGeometry *> m_oMapMCID{};
+    std::map<int, std::unique_ptr<OGRGeometry>> m_oMapMCID{};
     void CleanupIntermediateResources();
 
     std::map<CPLString, int> m_oMapOperators{};
@@ -398,8 +401,9 @@ class PDFDataset final : public GDALPamDataset
         const std::map<std::pair<int, int>, OGRPDFLayer *> &oMapNumGenToLayer,
         const GraphicState &graphicStateIn, OGRPDFLayer *poCurLayer,
         int nRecLevel);
-    OGRGeometry *BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
-                               int bHasMultiPart);
+    std::unique_ptr<OGRGeometry> BuildGeometry(std::vector<double> &oCoords,
+                                               int bHasFoundFill,
+                                               int bHasMultiPart);
 
     bool OpenVectorLayers(GDALPDFDictionary *poPageDict);
 
@@ -493,6 +497,8 @@ class PDFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
     CPLErr IReadBlockFromTile(int, int, void *);
 
+    void SetSize(int nXSize, int nYSize);
+
   public:
     PDFRasterBand(PDFDataset *, int, int);
     ~PDFRasterBand() override;
@@ -532,11 +538,20 @@ class PDFWritableVectorDataset final : public GDALDataset
     PDFWritableVectorDataset();
     ~PDFWritableVectorDataset() override;
 
+    bool CanReopenWithCurrentDescription() const override
+    {
+#ifdef HAVE_PDF_READ_SUPPORT
+        return true;
+#else
+        return false;
+#endif
+    }
+
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
     CPLErr FlushCache(bool bAtClosing) override;
 
     int GetLayerCount() const override;

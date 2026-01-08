@@ -688,27 +688,38 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
         if (bJson)
         {
             json_object *poGeoTransform = json_object_new_array();
-            // Deep copy wasn't working on the array, for some reason, so we
-            // build the geotransform STAC array at the same time.
-            json_object *poStacGeoTransform = json_object_new_array();
 
             for (int i = 0; i < 6; i++)
             {
                 json_object *poGeoTransformCoefficient =
                     json_object_new_double_with_precision(adfGeoTransform[i],
                                                           16);
-                json_object *poStacGeoTransformCoefficient =
-                    json_object_new_double_with_precision(adfGeoTransform[i],
-                                                          16);
-
                 json_object_array_add(poGeoTransform,
                                       poGeoTransformCoefficient);
-                json_object_array_add(poStacGeoTransform,
-                                      poStacGeoTransformCoefficient);
             }
 
             json_object_object_add(poJsonObject, "geoTransform",
                                    poGeoTransform);
+
+            json_object *poStacGeoTransform = json_object_new_array();
+            json_object_array_add(
+                poStacGeoTransform,
+                json_object_new_double_with_precision(adfGeoTransform[1], 16));
+            json_object_array_add(
+                poStacGeoTransform,
+                json_object_new_double_with_precision(adfGeoTransform[2], 16));
+            json_object_array_add(
+                poStacGeoTransform,
+                json_object_new_double_with_precision(adfGeoTransform[0], 16));
+            json_object_array_add(
+                poStacGeoTransform,
+                json_object_new_double_with_precision(adfGeoTransform[4], 16));
+            json_object_array_add(
+                poStacGeoTransform,
+                json_object_new_double_with_precision(adfGeoTransform[5], 16));
+            json_object_array_add(
+                poStacGeoTransform,
+                json_object_new_double_with_precision(adfGeoTransform[3], 16));
             json_object_object_add(poStac, "proj:transform",
                                    poStacGeoTransform);
         }
@@ -1062,7 +1073,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
             const char *stacDataType = nullptr;
             switch (eDT)
             {
-                case GDT_Byte:
+                case GDT_UInt8:
                     stacDataType = "uint8";
                     break;
                 case GDT_Int8:
@@ -1507,9 +1518,13 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                             ? json_object_new_int(static_cast<int>(dfNoData))
                             : gdal_json_object_new_double_significant_digits(
                                   dfNoData, nSignificantDigits);
-                    json_object *poStacNoDataValue = nullptr;
-                    json_object_deep_copy(poNoDataValue, &poStacNoDataValue,
-                                          nullptr);
+                    json_object *poStacNoDataValue =
+                        (GDALDataTypeIsInteger(eDT) && dfNoData >= INT_MIN &&
+                         dfNoData <= INT_MAX &&
+                         static_cast<int>(dfNoData) == dfNoData)
+                            ? json_object_new_int(static_cast<int>(dfNoData))
+                            : gdal_json_object_new_double_significant_digits(
+                                  dfNoData, nSignificantDigits);
                     json_object_object_add(poStacRasterBand, "nodata",
                                            poStacNoDataValue);
                     json_object_object_add(poBand, "noDataValue",

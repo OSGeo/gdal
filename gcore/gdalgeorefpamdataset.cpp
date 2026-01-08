@@ -298,7 +298,7 @@ CPLErr GDALGeorefPamDataset::GetGeoTransform(GDALGeoTransform &gt) const
 /************************************************************************/
 /*                     GetPAMGeorefSrcIndex()                           */
 /*                                                                      */
-/*      Get priority index of PAM (the lower, the more prioritary)      */
+/*      Get priority index of PAM (the lower, the more priority)      */
 /************************************************************************/
 int GDALGeorefPamDataset::GetPAMGeorefSrcIndex() const
 {

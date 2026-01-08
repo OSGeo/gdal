@@ -50,7 +50,7 @@ Scope
   contribution and guide the proponent through the steps to make it accepted:
   identifying issues reported by Continuous Integration, asking for new tests
   to be developed whenever possible, etc. When the contributor is not in capacity
-  to polish his/her contribution, the co-maintainer may do it themself.
+  to polish his/her contribution, the co-maintainer may do it themselves.
 - Ensuring that fixes that are appropriate for backporting in stable branch /
   branches are backported.
 - Monitoring of project communication channels (mailing list, IRC, Slack

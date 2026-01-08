@@ -454,7 +454,9 @@ CPLErr GSAGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             }
 
             /* End of buffer, could be interrupting a number */
-            if (VSIFSeekL(poGDS->fp, VSIFTellL(poGDS->fp) + szStart - szEnd,
+            if (VSIFSeekL(poGDS->fp,
+                          static_cast<vsi_l_offset>(VSIFTellL(poGDS->fp) +
+                                                    szStart - szEnd),
                           SEEK_SET) != 0)
             {
                 VSIFree(szLineBuf);

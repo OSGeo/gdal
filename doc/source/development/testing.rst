@@ -133,7 +133,7 @@ framework since :ref:`rfc-72`.
 Test cases should be written in a way where they are independent from other
 ones, so they can potentially be run in a isolated way or in parallel of other
 test cases. In particular temporary files should be created with a name that
-cannot conflict with other tests: preferably use pytest's ```tmp_path`` fixture <https://docs.pytest.org/en/7.1.x/how-to/tmp_path.html#the-tmp-path-fixture>`__.
+cannot conflict with other tests: preferably use pytest's ``tmp_path`` fixture <https://docs.pytest.org/en/7.1.x/how-to/tmp_path.html#the-tmp-path-fixture>`__.
 
 Use ``@pytest.mark.require_driver(driver_name)`` as an annotation for a test
 case that requires an optional driver to be present.
@@ -156,7 +156,7 @@ e.g.:
 
 .. code-block:: python
 
-    @pytest.mark.parametrize("dt,expected_size", [(gdal.GDT_Byte, 1),
+    @pytest.mark.parametrize("dt,expected_size", [(gdal.GDT_UInt8, 1),
                                                   (gdal.GDT_UInt16, 2)]
     def test_datatypesize(dt,expected_size):
         assert gdal.GetDataTypeSizeBytes(dt) == expected_size
@@ -166,7 +166,7 @@ instead of
 .. code-block:: python
 
     def test_datatypesize_DO_NOT_DO_THAT():
-        for dt, expected_size in [(gdal.GDT_Byte, 1), (gdal.GDT_UInt16, 2)]:
+        for dt, expected_size in [(gdal.GDT_UInt8, 1), (gdal.GDT_UInt16, 2)]:
             assert gdal.GetDataTypeSizeBytes(dt) == expected_size
 
 
@@ -243,9 +243,9 @@ GoogleTest also offers capabilities for parametrized tests. For example:
         static std::vector<std::tuple<GDALDataType, GDALDataType>> GetTupleValues()
         {
             std::vector<std::tuple<GDALDataType, GDALDataType>> ret;
-            for( GDALDataType eIn = GDT_Byte; eIn < GDT_TypeCount; eIn = static_cast<GDALDataType>(eIn + 1) )
+            for( GDALDataType eIn = GDT_UInt8; eIn < GDT_TypeCount; eIn = static_cast<GDALDataType>(eIn + 1) )
             {
-                for( GDALDataType eOut = GDT_Byte; eOut < GDT_TypeCount; eOut = static_cast<GDALDataType>(eOut + 1) )
+                for( GDALDataType eOut = GDT_UInt8; eOut < GDT_TypeCount; eOut = static_cast<GDALDataType>(eOut + 1) )
                 {
                     ret.emplace_back(std::make_tuple(eIn, eOut));
                 }

@@ -246,26 +246,6 @@ def test_gdalalg_vector_info_dialect():
     assert j["layers"][0]["features"][0]["properties"]["version"].startswith("3.")
 
 
-@pytest.mark.require_driver("GPKG")
-def test_gdalalg_vector_info_update(tmp_vsimem):
-
-    out_filename = tmp_vsimem / "poly.gpkg"
-
-    gdal.VectorTranslate(out_filename, "../ogr/data/poly.shp")
-
-    with gdaltest.error_raised(gdal.CE_Warning, match="deprecated"):
-        gdal.Run(
-            "vector",
-            "info",
-            update=True,
-            dataset=out_filename,
-            sql="DELETE FROM poly WHERE EAS_ID=170",
-        )
-
-    with gdal.OpenEx(out_filename) as ds:
-        assert ds.GetLayer(0).GetFeatureCount() == 9
-
-
 def test_gdalalg_vector_info_sql_where_mutually_exclusive():
 
     with pytest.raises(Exception, match="mutually exclusive"):
@@ -276,3 +256,11 @@ def test_gdalalg_vector_info_sql_where_mutually_exclusive():
             sql="select * from path",
             where="1=1",
         )
+
+
+def test_gdalalg_vector_info_in_pipeline():
+
+    with gdal.alg.vector.pipeline(pipeline="read data/path.shp ! info") as alg:
+        j = alg.Output()
+        assert j["layers"][0]["name"] == "path"
+        assert "features" not in j["layers"][0]

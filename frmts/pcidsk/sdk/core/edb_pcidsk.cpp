@@ -69,7 +69,7 @@ EDBFile *PCIDSK::DefaultOpenEDB( const std::string& filename, const std::string&
 /*                               Close()                                */
 /************************************************************************/
 
-int PCIDSK_EDBFile::Close() const
+int PCIDSK_EDBFile::Close()const
 
 {
     if( file != nullptr )

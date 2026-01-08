@@ -74,7 +74,6 @@ extern int CPLIsUTF8Stub(const char *, int);
  *
  * @return a NULL terminated string which should be freed with CPLFree().
  *
- * @since GDAL 1.6.0
  */
 
 char CPL_DLL *CPLRecode(const char *pszSource, const char *pszSrcEncoding,
@@ -159,7 +158,6 @@ char CPL_DLL *CPLRecode(const char *pszSource, const char *pszSrcEncoding,
  * @return a zero terminated multi-byte string which should be freed with
  * CPLFree(), or NULL if an error occurs.
  *
- * @since GDAL 1.6.0
  */
 
 char CPL_DLL *CPLRecodeFromWChar(const wchar_t *pwszSource,
@@ -216,7 +214,6 @@ char CPL_DLL *CPLRecodeFromWChar(const wchar_t *pwszSource,
  * @return the zero terminated wchar_t string (to be freed with CPLFree()) or
  * NULL on error.
  *
- * @since GDAL 1.6.0
  */
 
 wchar_t CPL_DLL *CPLRecodeToWChar(const char *pszSource,
@@ -295,7 +292,6 @@ bool CPLIsASCII(const char *pabyData, size_t nLen)
  *
  * @return a new string that must be freed with CPLFree().
  *
- * @since GDAL 1.7.0
  */
 char *CPLForceToASCII(const char *pabyData, int nLen, char chReplacementChar)
 {

@@ -23,6 +23,10 @@ an attribute containing the filename, and a polygon geometry outlining the
 raster.  This output is suitable for use with `MapServer <http://mapserver.org/>`__ as a raster
 tileindex, or as input for the :ref:`GTI <raster.gti>` driver.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_index`.
+
 .. program:: gdaltindex
 
 .. include:: options/help_and_help_general.rst
@@ -72,9 +76,8 @@ tileindex, or as input for the :ref:`GTI <raster.gti>` driver.
 
 .. option:: -of <output_format>
 
-    The OGR format of the output tile index file. Starting with
-    GDAL 2.3, if not specified, the format is guessed from the extension (previously
-    was ESRI Shapefile).
+    The OGR format of the output tile index file. If not specified, the format
+    is guessed from the extension.
 
 .. option:: -tileindex <field_name>
 

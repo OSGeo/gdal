@@ -44,6 +44,15 @@ void OGRDataSource::DestroyDataSource(OGRDataSource *poDS)
 /*                           OGR_DS_Destroy()                           */
 /************************************************************************/
 
+/**
+  \brief Closes opened datasource and releases allocated resources.
+
+   This method is the same as the C++ method OGRDataSource::DestroyDataSource().
+
+  @deprecated Use GDALClose()
+
+  @param hDS handle to allocated datasource object.
+*/
 void OGR_DS_Destroy(OGRDataSourceH hDS)
 
 {
@@ -105,6 +114,58 @@ int OGR_DS_GetSummaryRefCount(OGRDataSourceH hDataSource)
 /*                         OGR_DS_CreateLayer()                         */
 /************************************************************************/
 
+/**
+\brief This function attempts to create a new layer on the data source with the indicated name, coordinate system, geometry type.
+
+The papszOptions argument
+can be used to control driver specific creation options.  These options are
+normally documented in the format specific documentation.
+
+@deprecated Use GDALDatasetCreateLayer()
+
+ @param hDS The dataset handle.
+ @param pszName the name for the new layer.  This should ideally not
+match any existing layer on the datasource.
+ @param hSpatialRef handle to the coordinate system to use for the new layer,
+or NULL if no coordinate system is available. The driver might only increase
+the reference counter of the object to take ownership, and not make a full copy,
+so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
+are done with the object.
+ @param eType the geometry type for the layer.  Use wkbUnknown if there
+are no constraints on the types geometry to be written.
+ @param papszOptions a StringList of name=value options.  Options are driver
+specific.
+
+ @return NULL is returned on failure, or a new OGRLayer handle on success.
+
+<b>Example:</b>
+
+\code
+#include "ogrsf_frmts.h"
+#include "cpl_string.h"
+
+...
+
+OGRLayerH *hLayer;
+char     **papszOptions;
+
+if( OGR_DS_TestCapability( hDS, ODsCCreateLayer ) )
+{
+    ...
+}
+
+papszOptions = CSLSetNameValue( papszOptions, "DIM", "2" );
+hLayer = OGR_DS_CreateLayer( hDS, "NewLayer", NULL, wkbUnknown,
+                             papszOptions );
+CSLDestroy( papszOptions );
+
+if( hLayer == NULL )
+{
+    ...
+}
+\endcode
+*/
+
 OGRLayerH OGR_DS_CreateLayer(OGRDataSourceH hDS, const char *pszName,
                              OGRSpatialReferenceH hSpatialRef,
                              OGRwkbGeometryType eType, char **papszOptions)
@@ -136,6 +197,27 @@ OGRLayerH OGR_DS_CreateLayer(OGRDataSourceH hDS, const char *pszName,
 /*                          OGR_DS_CopyLayer()                          */
 /************************************************************************/
 
+/**
+ \brief Duplicate an existing layer.
+
+ This function creates a new layer, duplicate the field definitions of the
+ source layer and then duplicate each features of the source layer.
+ The papszOptions argument
+ can be used to control driver specific creation options.  These options are
+ normally documented in the format specific documentation.
+ The source layer may come from another dataset.
+
+ @deprecated Use GDALDatasetCopyLayer()
+
+ @param hDS handle to the data source where to create the new layer
+ @param hSrcLayer handle to the source layer.
+ @param pszNewName the name of the layer to create.
+ @param papszOptions a StringList of name=value options.  Options are driver
+                     specific.
+
+ @return a handle to the layer, or NULL if an error occurs.
+*/
+
 OGRLayerH OGR_DS_CopyLayer(OGRDataSourceH hDS, OGRLayerH hSrcLayer,
                            const char *pszNewName, char **papszOptions)
 
@@ -151,6 +233,21 @@ OGRLayerH OGR_DS_CopyLayer(OGRDataSourceH hDS, OGRLayerH hSrcLayer,
 /************************************************************************/
 /*                         OGR_DS_DeleteLayer()                         */
 /************************************************************************/
+
+/**
+ \brief Delete the indicated layer from the datasource.
+
+ If this method is supported
+ the ODsCDeleteLayer capability will test TRUE on the OGRDataSource.
+
+ @deprecated Use GDALDatasetDeleteLayer()
+
+ @param hDS handle to the datasource
+ @param iLayer the index of the layer to delete.
+
+ @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
+ layers is not supported for this datasource.
+*/
 
 OGRErr OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer)
 
@@ -170,6 +267,21 @@ OGRErr OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer)
 /************************************************************************/
 /*                       OGR_DS_GetLayerByName()                        */
 /************************************************************************/
+
+/**
+ \brief Fetch a layer by name.
+
+ The returned layer remains owned by the
+ OGRDataSource and should not be deleted by the application.
+
+ @deprecated Use GDALDatasetGetLayerByName()
+
+ @param hDS handle to the data source from which to get the layer.
+ @param pszLayerName Layer the layer name of the layer to fetch.
+
+ @return a handle to the layer, or NULL if the layer is not found
+ or an error occurs.
+*/
 
 OGRLayerH OGR_DS_GetLayerByName(OGRDataSourceH hDS, const char *pszLayerName)
 
@@ -191,6 +303,37 @@ OGRLayerH OGR_DS_GetLayerByName(OGRDataSourceH hDS, const char *pszLayerName)
 /************************************************************************/
 /*                         OGR_DS_ExecuteSQL()                          */
 /************************************************************************/
+
+/**
+ \brief Execute an SQL statement against the data store.
+
+ The result of an SQL query is either NULL for statements that are in error,
+ or that have no results set, or an OGRLayer handle representing a results
+ set from the query.  Note that this OGRLayer is in addition to the layers
+ in the data store and must be destroyed with
+ OGR_DS_ReleaseResultSet() before the data source is closed
+ (destroyed).
+
+ For more information on the SQL dialect supported internally by OGR
+ review the <a href="https://gdal.org/user/ogr_sql_dialect.html">OGR SQL</a> document.  Some drivers (i.e.
+ Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
+
+ The <a href="https://gdal.org/user/sql_sqlite_dialect.html">SQLITE dialect</a>
+ can also be used.
+
+ @deprecated Use GDALDatasetExecuteSQL()
+
+ @param hDS handle to the data source on which the SQL query is executed.
+ @param pszStatement the SQL statement to execute.
+ @param hSpatialFilter handle to a geometry which represents a spatial filter. Can be NULL.
+ @param pszDialect allows control of the statement dialect. If set to NULL, the
+OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
+unless OGRSQL is explicitly passed as the dialect. The SQLITE dialect
+can also be used.
+
+ @return a handle to a OGRLayer containing the results of the query.
+ Deallocate with OGR_DS_ReleaseResultSet().
+*/
 
 OGRLayerH OGR_DS_ExecuteSQL(OGRDataSourceH hDS, const char *pszStatement,
                             OGRGeometryH hSpatialFilter, const char *pszDialect)
@@ -216,6 +359,21 @@ OGRLayerH OGR_DS_ExecuteSQL(OGRDataSourceH hDS, const char *pszStatement,
 /*                      OGR_DS_ReleaseResultSet()                       */
 /************************************************************************/
 
+/**
+ \brief Release results of OGR_DS_ExecuteSQL().
+
+ This function should only be used to deallocate OGRLayers resulting from
+ an OGR_DS_ExecuteSQL() call on the same OGRDataSource.
+ Failure to deallocate a results set before destroying the OGRDataSource
+ may cause errors.
+
+ @deprecated Use GDALDatasetReleaseResultSet()
+
+ @param hDS a handle to the data source on which was executed an
+ SQL query.
+ @param hLayer handle to the result of a previous OGR_DS_ExecuteSQL() call.
+*/
+
 void OGR_DS_ReleaseResultSet(OGRDataSourceH hDS, OGRLayerH hLayer)
 
 {
@@ -235,6 +393,34 @@ void OGR_DS_ReleaseResultSet(OGRDataSourceH hDS, OGRLayerH hLayer)
 /*                       OGR_DS_TestCapability()                        */
 /************************************************************************/
 
+/**
+ \brief Test if capability is available.
+
+ One of the following data source capability names can be passed into this
+ function, and a TRUE or FALSE value will be returned indicating whether
+ or not the capability is available for this object.
+
+ <ul>
+  <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.
+  <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
+  <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
+        datasource support CreateGeomField() just after layer creation.<p>
+  <li> <b>ODsCCurveGeometries</b>: True if this datasource supports writing curve geometries.
+                                   In that case, OLCCurveGeometries must also be declared in layers of that dataset.<p>
+  <p>
+ </ul>
+
+ The \#define macro forms of the capability names should be used in preference
+ to the strings themselves to avoid misspelling.
+
+ @deprecated Use GDALDatasetTestCapability()
+
+ @param hDS handle to the data source against which to test the capability.
+ @param pszCapability the capability to test.
+
+ @return TRUE if capability available otherwise FALSE.
+*/
+
 int OGR_DS_TestCapability(OGRDataSourceH hDS, const char *pszCapability)
 
 {
@@ -248,6 +434,15 @@ int OGR_DS_TestCapability(OGRDataSourceH hDS, const char *pszCapability)
 /*                        OGR_DS_GetLayerCount()                        */
 /************************************************************************/
 
+/**
+ \brief Get the number of layers in this data source.
+
+ @deprecated Use GDALDatasetGetLayerCount()
+
+ @param hDS handle to the data source from which to get the number of layers.
+ @return layer count.
+
+*/
 int OGR_DS_GetLayerCount(OGRDataSourceH hDS)
 
 {
@@ -264,6 +459,21 @@ int OGR_DS_GetLayerCount(OGRDataSourceH hDS)
 /************************************************************************/
 /*                          OGR_DS_GetLayer()                           */
 /************************************************************************/
+
+/**
+ \brief Fetch a layer by index.
+
+ The returned layer remains owned by the
+ OGRDataSource and should not be deleted by the application.
+
+ @deprecated Use GDALDatasetGetLayer()
+
+ @param hDS handle to the data source from which to get the layer.
+ @param iLayer a layer number between 0 and OGR_DS_GetLayerCount()-1.
+
+ @return a handle to the layer, or NULL if iLayer is out of range
+ or an error occurs.
+*/
 
 OGRLayerH OGR_DS_GetLayer(OGRDataSourceH hDS, int iLayer)
 
@@ -285,6 +495,21 @@ OGRLayerH OGR_DS_GetLayer(OGRDataSourceH hDS, int iLayer)
 /************************************************************************/
 /*                           OGR_DS_GetName()                           */
 /************************************************************************/
+
+/**
+ \brief Returns the name of the data source.
+
+  This string should be sufficient to
+ open the data source if passed to the same OGRSFDriver that this data
+ source was opened with, but it need not be exactly the same string that
+ was used to open the data source.  Normally this is a filename.
+
+ @deprecated Use GDALGetDescription()
+
+ @param hDS handle to the data source to get the name from.
+ @return pointer to an internal name string which should not be modified
+ or freed by the caller.
+*/
 
 const char *OGR_DS_GetName(OGRDataSourceH hDS)
 
@@ -313,6 +538,19 @@ OGRErr OGR_DS_SyncToDisk(OGRDataSourceH hDS)
 /************************************************************************/
 /*                          OGR_DS_GetDriver()                          */
 /************************************************************************/
+
+/**
+\brief Returns the driver that the dataset was opened with.
+
+NOTE: It is *NOT* safe to cast the returned handle to
+OGRSFDriver*. If a C++ object is needed, the handle should be cast to GDALDriver*.
+
+@deprecated Use GDALGetDatasetDriver()
+
+@param hDS handle to the datasource
+@return NULL if driver info is not available, or pointer to a driver owned
+by the OGRSFDriverManager.
+*/
 
 OGRSFDriverH OGR_DS_GetDriver(OGRDataSourceH hDS)
 

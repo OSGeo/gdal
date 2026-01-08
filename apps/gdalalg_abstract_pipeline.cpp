@@ -17,6 +17,7 @@
 #include "gdalalg_abstract_pipeline.h"
 #include "gdalalg_raster_read.h"
 #include "gdalalg_raster_write.h"
+#include "gdalalg_vector_read.h"
 #include "gdalalg_tee.h"
 
 #include <algorithm>
@@ -129,7 +130,7 @@ bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
     if (forAutoComplete)
         return true;
 
-    if (!m_bExpectWriteStep)
+    if (m_eLastStepAsWrite == StepConstraint::CAN_NOT_BE)
     {
         if (steps.back()->CanBeLastStep() && !steps.back()->CanBeMiddleStep())
         {
@@ -142,32 +143,42 @@ bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
 
     for (size_t i = 1; i < steps.size() - 1; ++i)
     {
-        if (m_bExpectReadStep && steps[i]->CanBeFirstStep() &&
-            !steps[i]->CanBeMiddleStep())
+        if (!steps[i]->CanBeMiddleStep())
         {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Only first step can be '%s'",
-                        steps[i]->GetName().c_str());
-            return false;
-        }
-        else if (m_bExpectWriteStep && steps[i]->CanBeLastStep() &&
-                 !steps[i]->CanBeMiddleStep())
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Only last step can be '%s'",
-                        steps[i]->GetName().c_str());
-            return false;
-        }
-        else if (!steps[i]->CanBeMiddleStep())
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "'%s' is not allowed as an intermediate step",
-                        steps[i]->GetName().c_str());
-            return false;
+            if (steps[i]->CanBeFirstStep() && m_bExpectReadStep)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Only first step can be '%s'",
+                            steps[i]->GetName().c_str());
+            }
+            else if (steps[i]->CanBeLastStep() &&
+                     m_eLastStepAsWrite != StepConstraint::CAN_NOT_BE)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Only last step can be '%s'",
+                            steps[i]->GetName().c_str());
+            }
+            else
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "'%s' is not allowed as an intermediate step",
+                            steps[i]->GetName().c_str());
+                return false;
+            }
         }
     }
 
-    if (m_bExpectWriteStep && !steps.back()->CanBeLastStep())
+    if (steps.size() >= 2 && steps.back()->CanBeFirstStep() &&
+        !steps.back()->CanBeLastStep())
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "'%s' is only allowed as a first step",
+                    steps.back()->GetName().c_str());
+        return false;
+    }
+
+    if (m_eLastStepAsWrite == StepConstraint::MUST_BE &&
+        !steps.back()->CanBeLastStep())
     {
         std::set<CPLString> setLastStepNames;
         for (const auto &stepName : GetStepRegistry().GetNames())
@@ -229,6 +240,11 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
     const std::vector<std::string> &argsIn, bool forAutoComplete)
 {
     std::vector<std::string> args = argsIn;
+
+    if (IsCalledFromCommandLine())
+    {
+        m_eLastStepAsWrite = StepConstraint::MUST_BE;
+    }
 
     if (args.size() == 1 && (args[0] == "-h" || args[0] == "--help" ||
                              args[0] == "help" || args[0] == "--json-usage"))
@@ -410,6 +426,14 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
     {
         std::string arg(argIn);
 
+        // If outputting to stdout, automatically turn off progress bar
+        if (arg == "/vsistdout/")
+        {
+            auto quietArg = GetArg(GDAL_ARG_NAME_QUIET);
+            if (quietArg && quietArg->GetType() == GAAT_BOOLEAN)
+                quietArg->Set(true);
+        }
+
         auto &curStep = steps.back();
 
         if (nNestLevel > 0)
@@ -576,24 +600,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
     if (!steps.back().alg)
         steps.pop_back();
 
-    // Automatically add a final write step if none in m_executionForStreamOutput
-    // mode
-    if (m_executionForStreamOutput && m_bExpectWriteStep && !steps.empty() &&
-        steps.back().alg->GetName() !=
-            std::string(GDALRasterWriteAlgorithm::NAME)
-                .append(bIsGenericPipeline ? RASTER_SUFFIX : ""))
-    {
-        steps.resize(steps.size() + 1);
-        steps.back().alg =
-            GetStepAlg(std::string(GDALRasterWriteAlgorithm::NAME)
-                           .append(bIsGenericPipeline ? RASTER_SUFFIX : ""));
-        steps.back().args.push_back(
-            std::string("--").append(GDAL_ARG_NAME_OUTPUT_FORMAT));
-        steps.back().args.push_back("stream");
-        steps.back().args.push_back("streamed_dataset");
-    }
-
-    else if (runExistingPipeline)
+    if (runExistingPipeline)
     {
         // Add a final "write" step if there is no explicit allowed last step
         if (!steps.empty() && !steps.back().alg->CanBeLastStep())
@@ -641,7 +648,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         }
     }
 
-    if (m_bExpectWriteStep)
+    if (m_eLastStepAsWrite == StepConstraint::MUST_BE)
     {
         if (!m_bExpectReadStep)
         {
@@ -649,7 +656,8 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
             {
                 ReportError(
                     CE_Failure, CPLE_AppDefined,
-                    "At least one step must be provided in an inner pipeline.");
+                    "At least one step must be provided in %s pipeline.",
+                    m_bInnerPipeline ? "an inner" : "a");
                 return false;
             }
         }
@@ -679,18 +687,20 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
     {
         if (steps.empty())
         {
-            ReportError(
-                CE_Failure, CPLE_AppDefined,
-                "At least one step must be provided in an inner pipeline.");
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "At least one step must be provided in %s pipeline.",
+                        m_bInnerPipeline ? "an inner" : "a");
             return false;
         }
 
-        if (steps.back().alg->CanBeLastStep() &&
+        if (m_eLastStepAsWrite == StepConstraint::CAN_NOT_BE &&
+            steps.back().alg->CanBeLastStep() &&
             !steps.back().alg->CanBeMiddleStep())
         {
             ReportError(CE_Failure, CPLE_AppDefined,
-                        "Last step in an inner pipeline must not be a "
-                        "write-like step.");
+                        "Last step in %s pipeline must not be a "
+                        "write-like step.",
+                        m_bInnerPipeline ? "an inner" : "a");
             return false;
         }
     }
@@ -750,7 +760,8 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         }
     };
 
-    if (m_bExpectWriteStep && steps.back().alg->CanBeLastStep())
+    if (m_eLastStepAsWrite != StepConstraint::CAN_NOT_BE &&
+        steps.back().alg->CanBeLastStep())
     {
         SetWriteArgFromPipeline();
     }
@@ -1081,7 +1092,91 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         inputArg->GetType() == GAAT_DATASET_LIST &&
         inputArg->Get<std::vector<GDALArgDatasetValue>>().size() == 1)
     {
-        steps.front().alg->ProcessDatasetArg(inputArg, steps.back().alg.get());
+        int nCountChangeFieldTypeStepsToBeRemoved = 0;
+        std::string osTmpJSONFilename;
+
+        // Check if there are steps like change-field-type just after the read
+        // step. If so, we can convert them into a OGR_SCHEMA open option for
+        // drivers that support it.
+        auto &inputVals = inputArg->Get<std::vector<GDALArgDatasetValue>>();
+        if (!inputVals[0].GetDatasetRef() && steps.size() >= 2 &&
+            steps[0].alg->GetName() == GDALVectorReadAlgorithm::NAME &&
+            !steps.back().alg->IsGDALGOutput())
+        {
+            auto openOptionArgs =
+                steps.front().alg->GetArg(GDAL_ARG_NAME_OPEN_OPTION);
+            if (openOptionArgs && !openOptionArgs->IsExplicitlySet() &&
+                openOptionArgs->GetType() == GAAT_STRING_LIST)
+            {
+                const auto &openOptionVals =
+                    openOptionArgs->Get<std::vector<std::string>>();
+                if (CPLStringList(openOptionVals)
+                        .FetchNameValue("OGR_SCHEMA") == nullptr)
+                {
+                    CPLJSONArray oLayers;
+                    for (size_t iStep = 1; iStep < steps.size(); ++iStep)
+                    {
+                        auto oObj =
+                            steps[iStep].alg->Get_OGR_SCHEMA_OpenOption_Layer();
+                        if (!oObj.IsValid())
+                            break;
+                        oLayers.Add(oObj);
+                        ++nCountChangeFieldTypeStepsToBeRemoved;
+                    }
+
+                    if (nCountChangeFieldTypeStepsToBeRemoved > 0)
+                    {
+                        CPLJSONDocument oDoc;
+                        oDoc.GetRoot().Set("layers", oLayers);
+                        osTmpJSONFilename =
+                            VSIMemGenerateHiddenFilename(nullptr);
+                        // CPLDebug("GDAL", "OGR_SCHEMA: %s", oDoc.SaveAsString().c_str());
+                        oDoc.Save(osTmpJSONFilename);
+
+                        openOptionArgs->Set(std::vector<std::string>{
+                            std::string("@OGR_SCHEMA=")
+                                .append(osTmpJSONFilename)});
+                    }
+                }
+            }
+        }
+
+        const bool bOK = steps.front().alg->ProcessDatasetArg(
+                             inputArg, steps.back().alg.get()) ||
+                         forAutoComplete;
+
+        if (!osTmpJSONFilename.empty())
+            VSIUnlink(osTmpJSONFilename.c_str());
+
+        if (!bOK)
+        {
+            return false;
+        }
+
+        // Now check if the driver of the input dataset actually supports
+        // the OGR_SCHEMA open option. If so, we can remove the steps from
+        // the pipeline
+        if (nCountChangeFieldTypeStepsToBeRemoved)
+        {
+            if (auto poDS = inputVals[0].GetDatasetRef())
+            {
+                if (auto poDriver = poDS->GetDriver())
+                {
+                    const char *pszOpenOptionList =
+                        poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST);
+                    if (pszOpenOptionList &&
+                        strstr(pszOpenOptionList, "OGR_SCHEMA"))
+                    {
+                        CPLDebug("GDAL",
+                                 "Merging %d step(s) as OGR_SCHEMA open option",
+                                 nCountChangeFieldTypeStepsToBeRemoved);
+                        steps.erase(steps.begin() + 1,
+                                    steps.begin() + 1 +
+                                        nCountChangeFieldTypeStepsToBeRemoved);
+                    }
+                }
+            }
+        }
     }
 
     if (bIsGenericPipeline)
@@ -1139,7 +1234,8 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
 
                 steps[i].alg = std::move(newAlg);
 
-                if (i == steps.size() - 1 && m_bExpectWriteStep)
+                if (i == steps.size() - 1 &&
+                    m_eLastStepAsWrite != StepConstraint::CAN_NOT_BE)
                 {
                     SetWriteArgFromPipeline();
                 }
@@ -1204,7 +1300,7 @@ std::string GDALAbstractPipelineAlgorithm::BuildNestedPipeline(
     if (curAlg->GetName() == GDALTeeStepAlgorithmAbstract::NAME)
         nestedPipeline->m_bExpectReadStep = false;
     else
-        nestedPipeline->m_bExpectWriteStep = false;
+        nestedPipeline->m_eLastStepAsWrite = StepConstraint::CAN_NOT_BE;
     nestedPipeline->m_executionForStreamOutput = m_executionForStreamOutput;
     nestedPipeline->SetReferencePathForRelativePaths(
         GetReferencePathForRelativePaths());
@@ -1846,15 +1942,10 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     GDALProgressFunc pfnProgress = ctxt.m_pfnProgress;
     void *pProgressData = ctxt.m_pProgressData;
-    if (IsCalledFromCommandLine() && !m_steps.empty())
+    if (IsCalledFromCommandLine() && HasOutputString())
     {
-        auto stepOutputStringArg =
-            m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
-        if (stepOutputStringArg && stepOutputStringArg->IsOutput())
-        {
-            pfnProgress = nullptr;
-            pProgressData = nullptr;
-        }
+        pfnProgress = nullptr;
+        pProgressData = nullptr;
     }
 
     for (size_t i = 0; i < m_steps.size(); ++i)
@@ -1876,7 +1967,8 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             step->m_inputDataset[0].Set(poCurDS);
         }
 
-        if (i + 1 < m_steps.size() && step->m_outputDataset.GetDatasetRef())
+        if (i + 1 < m_steps.size() && step->m_outputDataset.GetDatasetRef() &&
+            !step->OutputDatasetAllowedBeforeRunningStep())
         {
             // Shouldn't happen
             ReportError(CE_Failure, CPLE_AppDefined,
@@ -1932,33 +2024,44 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             return false;
         }
 
+        m_output += step->GetOutputString();
+
         if (bCanHandleNextStep)
         {
             ++i;
         }
     }
 
-    if (pfnProgress &&
-        m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_STRING) == nullptr)
+    if (pfnProgress && m_output.empty())
         pfnProgress(1.0, "", pProgressData);
 
-    if (!m_steps.back()->m_output.empty())
+    if (!m_output.empty())
     {
-        auto stepOutputStringArg =
-            m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
-        if (stepOutputStringArg && stepOutputStringArg->IsOutput())
-        {
-            auto outputStringArg = GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
-            if (outputStringArg && outputStringArg->GetType() == GAAT_STRING)
-                outputStringArg->Set(m_steps.back()->m_output);
-        }
+        auto outputStringArg = GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
+        if (outputStringArg && outputStringArg->GetType() == GAAT_STRING)
+            outputStringArg->Set(m_output);
     }
-    else if (ret && !m_outputDataset.GetDatasetRef())
+
+    if (ret && poCurDS && !m_outputDataset.GetDatasetRef())
     {
         m_outputDataset.Set(poCurDS);
     }
 
     return ret;
+}
+
+/************************************************************************/
+/*             GDALAbstractPipelineAlgorithm::HasOutputString()         */
+/************************************************************************/
+
+bool GDALAbstractPipelineAlgorithm::HasOutputString() const
+{
+    for (const auto &step : m_steps)
+    {
+        if (step->HasOutputString())
+            return true;
+    }
+    return false;
 }
 
 /************************************************************************/

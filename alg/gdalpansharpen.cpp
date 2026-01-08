@@ -47,7 +47,6 @@
  * @return a newly allocated pansharpening option structure that must be freed
  * with GDALDestroyPansharpenOptions().
  *
- * @since GDAL 2.1
  */
 
 GDALPansharpenOptions *GDALCreatePansharpenOptions()
@@ -68,7 +67,6 @@ GDALPansharpenOptions *GDALCreatePansharpenOptions()
  * @param psOptions a pansharpening option structure allocated with
  * GDALCreatePansharpenOptions()
  *
- * @since GDAL 2.1
  */
 
 void GDALDestroyPansharpenOptions(GDALPansharpenOptions *psOptions)
@@ -92,7 +90,6 @@ void GDALDestroyPansharpenOptions(GDALPansharpenOptions *psOptions)
  * @return a newly allocated pansharpening option structure that must be freed
  * with GDALDestroyPansharpenOptions().
  *
- * @since GDAL 2.1
  */
 
 GDALPansharpenOptions *
@@ -362,7 +359,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
     if (psOptionsIn->nBitDepth)
     {
         if (psOptionsIn->nBitDepth < 0 || psOptionsIn->nBitDepth > 31 ||
-            (eWorkDataType == GDT_Byte && psOptionsIn->nBitDepth > 8) ||
+            (eWorkDataType == GDT_UInt8 && psOptionsIn->nBitDepth > 8) ||
             (eWorkDataType == GDT_UInt16 && psOptionsIn->nBitDepth > 16))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -377,7 +374,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
     if (psOptions->nBitDepth == GDALGetDataTypeSizeBits(eWorkDataType))
         psOptions->nBitDepth = 0;
     if (psOptions->nBitDepth &&
-        !(eWorkDataType == GDT_Byte || eWorkDataType == GDT_UInt16 ||
+        !(eWorkDataType == GDT_UInt8 || eWorkDataType == GDT_UInt16 ||
           eWorkDataType == GDT_UInt32 || eWorkDataType == GDT_UInt64))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -956,7 +953,7 @@ CPLErr GDALPansharpenOperation::WeightedBrovey(
 {
     switch (eBufDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
                            static_cast<GByte *>(pDataBuf), nValues, nBandValues,
                            nMaxValue);
@@ -1042,7 +1039,7 @@ CPLErr GDALPansharpenOperation::WeightedBrovey(
 {
     switch (eBufDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             WeightedBrovey3<WorkDataType, GByte, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer,
                 static_cast<GByte *>(pDataBuf), nValues, nBandValues, 0);
@@ -1161,7 +1158,6 @@ static void ClampValues(T *panBuffer, size_t nValues, T nMaxVal)
  *
  * @return CE_None in case of success, CE_Failure in case of failure.
  *
- * @since GDAL 2.1
  */
 CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                                               int nYSize, void *pDataBuf,
@@ -1175,7 +1171,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
         GDALRasterBand::FromHandle(psOptions->hPanchroBand);
     GDALDataType eWorkDataType = poPanchroBand->GetRasterDataType();
 #ifdef LIMIT_TYPES
-    if (eWorkDataType != GDT_Byte && eWorkDataType != GDT_UInt16)
+    if (eWorkDataType != GDT_UInt8 && eWorkDataType != GDT_UInt16)
         eWorkDataType = GDT_Float64;
 #endif
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eWorkDataType);
@@ -1499,7 +1495,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                 nBandBitDepth = atoi(pszNBITS);
             if (nBandBitDepth < nBitDepth)
             {
-                if (eWorkDataType == GDT_Byte && nBitDepth >= 0 &&
+                if (eWorkDataType == GDT_UInt8 && nBitDepth >= 0 &&
                     nBitDepth <= 8)
                 {
                     ClampValues(
@@ -1539,7 +1535,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
     void *pDataBufOri = pDataBuf;
     // CFloat64 is the query type used by gdallocationinfo...
 #ifdef LIMIT_TYPES
-    if (eBufDataType != GDT_Byte && eBufDataType != GDT_UInt16)
+    if (eBufDataType != GDT_UInt8 && eBufDataType != GDT_UInt16)
 #else
     if (eBufDataType == GDT_CFloat64)
 #endif
@@ -1739,7 +1735,7 @@ CPLErr GDALPansharpenOperation::PansharpenChunk(
 
     switch (eWorkDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             eErr = WeightedBrovey(
                 static_cast<const GByte *>(pPanBuffer),
                 static_cast<const GByte *>(pUpsampledSpectralBuffer), pDataBuf,
@@ -1853,7 +1849,6 @@ GDALPansharpenOptions *GDALPansharpenOperation::GetOptions()
  * GDALCreatePansharpenOptions(). It is duplicated by this function.
  * @return a valid pansharpening operation handle, or NULL in case of failure.
  *
- * @since GDAL 2.1
  */
 
 GDALPansharpenOperationH
@@ -1874,7 +1869,6 @@ GDALCreatePansharpenOperation(const GDALPansharpenOptions *psOptions)
  *
  * @param hOperation a valid pansharpening operation.
  *
- * @since GDAL 2.1
  */
 
 void GDALDestroyPansharpenOperation(GDALPansharpenOperationH hOperation)
@@ -1909,7 +1903,6 @@ void GDALDestroyPansharpenOperation(GDALPansharpenOperationH hOperation)
  *
  * @return CE_None in case of success, CE_Failure in case of failure.
  *
- * @since GDAL 2.1
  */
 CPLErr GDALPansharpenProcessRegion(GDALPansharpenOperationH hOperation,
                                    int nXOff, int nYOff, int nXSize, int nYSize,

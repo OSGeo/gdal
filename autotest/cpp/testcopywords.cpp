@@ -599,6 +599,13 @@ TEST_F(TestCopyWords, GDT_Float16only)
     FROM_R(intype, 33000, GDT_CFloat64, 32992);
     FROM_R(intype, -33000, GDT_CFloat64, -32992);
 
+    FROM_R_F(GDT_Float32, std::numeric_limits<float>::min(), GDT_Float16, 0);
+    FROM_R_F(GDT_Float32, -std::numeric_limits<float>::min(), GDT_Float16, 0);
+    // smallest positive subnormal float16 number
+    FROM_R_F(GDT_Float32, 0.000000059604645f, GDT_Float16, 0.000000059604645f);
+    FROM_R_F(GDT_Float32, 65504.0f, GDT_Float16, 65504.0f);
+    FROM_R_F(GDT_Float32, 65535.0f, GDT_Float16,
+             std::numeric_limits<double>::infinity());
     FROM_R_F(GDT_Float32, std::numeric_limits<float>::max(), GDT_Float16,
              std::numeric_limits<double>::infinity());
     FROM_R_F(GDT_Float32, -std::numeric_limits<float>::max(), GDT_Float16,

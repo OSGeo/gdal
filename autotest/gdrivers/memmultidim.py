@@ -90,7 +90,7 @@ def test_mem_md_subgroup():
     assert subsubg is not None
     assert subsubg.GetFullName() == "/subgroup/subsubgroup"
 
-    subg.CreateMDArray("myarray", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    subg.CreateMDArray("myarray", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
     array = rg.OpenMDArrayFromFullname("/subgroup/myarray")
     assert array is not None
     assert array.GetFullName() == "/subgroup/myarray"
@@ -109,7 +109,7 @@ def test_mem_md_array_unnamed_array():
     drv = gdal.GetDriverByName("MEM")
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
-    edt = gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    edt = gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     with gdal.quiet_errors():
         assert not rg.CreateMDArray("", [], edt)
 
@@ -120,11 +120,11 @@ def test_mem_md_array_duplicated_array_name():
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
     assert rg.CreateMDArray(
-        "same_name", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "same_name", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     with gdal.quiet_errors():
         assert not rg.CreateMDArray(
-            "same_name", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "same_name", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
 
 
@@ -177,7 +177,7 @@ def test_mem_md_array_single_dim():
     dims = rg.GetDimensions()
     assert len(dims) == 1
     myarray = rg.CreateMDArray(
-        "myarray", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "myarray", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     assert myarray
     assert myarray.GetName() == "myarray"
@@ -233,7 +233,7 @@ def test_mem_md_array_single_dim():
     assert myarray.AdviseRead() == gdal.CE_None
 
     attr = myarray.CreateAttribute(
-        "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     assert attr
     assert attr.GetFullName() == "/myarray/attr"
@@ -316,16 +316,16 @@ def test_mem_md_array_string():
 
 def test_mem_md_datatypes():
 
-    dt_byte = gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    dt_byte = gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     assert dt_byte.GetClass() == gdal.GEDTC_NUMERIC
     assert dt_byte.GetName() == ""
-    assert dt_byte.GetNumericDataType() == gdal.GDT_Byte
+    assert dt_byte.GetNumericDataType() == gdal.GDT_UInt8
     assert dt_byte.GetSize() == 1
     assert dt_byte.CanConvertTo(dt_byte)
     with pytest.raises(Exception):
         assert dt_byte.CanConvertTo(None)
-    assert dt_byte == gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-    assert not dt_byte != gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    assert dt_byte == gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
+    assert not dt_byte != gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     assert dt_byte.Equals(dt_byte)
     with pytest.raises(Exception):
         assert dt_byte.Equals(None)
@@ -518,7 +518,7 @@ def test_mem_md_array_3_dim():
     dim1 = rg.CreateDimension("dim1", None, None, 3)
     dim2 = rg.CreateDimension("dim2", None, None, 4)
     myarray = rg.CreateMDArray(
-        "myarray", [dim0, dim1, dim2], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "myarray", [dim0, dim1, dim2], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     assert myarray
     assert myarray.GetName() == "myarray"
@@ -546,7 +546,7 @@ def test_mem_md_array_3_dim():
         [2, 3, 4],
         [1, 1, 1],
         [12, 4, 1],
-        gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+        gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
     )
     assert got_data == data
 
@@ -658,7 +658,7 @@ def test_mem_md_array_read_write_errors():
     dim1 = rg.CreateDimension("dim1", None, None, 3)
     dim2 = rg.CreateDimension("dim2", None, None, 4)
     myarray = rg.CreateMDArray(
-        "myarray", [dim0, dim1, dim2], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "myarray", [dim0, dim1, dim2], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     assert myarray
 
@@ -737,7 +737,7 @@ def test_mem_md_array_invalid_args():
     drv = gdal.GetDriverByName("MEM")
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
-    edt = gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    edt = gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     dim = rg.CreateDimension("dim0", None, None, 1)
     with pytest.raises(TypeError):
         rg.CreateMDArray("myarray", None, edt)
@@ -759,7 +759,7 @@ def test_mem_md_array_too_large():
     dim = rg.CreateDimension("dim0", None, None, (1 << 64) - 1)
     with gdal.quiet_errors():
         assert not rg.CreateMDArray(
-            "myarray", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "myarray", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
 
 
@@ -773,7 +773,7 @@ def test_mem_md_array_too_large_overflow_dim():
     dim2 = rg.CreateDimension("dim2", None, None, 1 << 25)
     with gdal.quiet_errors():
         assert not rg.CreateMDArray(
-            "myarray", [dim0, dim1, dim2], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "myarray", [dim0, dim1, dim2], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
 
 
@@ -787,7 +787,7 @@ def test_mem_md_array_30dim():
         dim = rg.CreateDimension("dim%d" % i, None, None, 1 + (i % 2))
         dims.append(dim)
     myarray = rg.CreateMDArray(
-        "myarray", dims, gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "myarray", dims, gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     assert myarray
     assert myarray.GetDimensionCount() == 30
@@ -806,7 +806,7 @@ def test_mem_md_array_32dim():
         dim = rg.CreateDimension("dim%d" % i, None, None, 1 + (i % 2))
         dims.append(dim)
     myarray = rg.CreateMDArray(
-        "myarray", dims, gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "myarray", dims, gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     assert len(myarray.Read()) == 2**16
 
@@ -930,7 +930,7 @@ def test_mem_md_array_attribute():
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
     myarray = rg.CreateMDArray(
-        "myarray", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "myarray", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
 
     float64dt = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
@@ -958,15 +958,30 @@ def test_mem_md_array_slice():
     dim_3 = rg.CreateDimension("dim_3", None, None, 3)
     dim_4 = rg.CreateDimension("dim_4", None, None, 4)
 
-    ar = rg.CreateMDArray("nodim", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar = rg.CreateMDArray("nodim", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
     assert ar.Write(struct.pack("B", 1)) == gdal.CE_None
     with gdal.quiet_errors():
         assert not ar[:]
 
+    dim_1 = rg.CreateDimension("dim_1", None, None, 1)
     ar = rg.CreateMDArray(
-        "array", [dim_2, dim_3, dim_4], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "array_1", [dim_1], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
-    data = array.array("B", list(range(24))).tobytes()
+    data = b"\xFE"
+    assert ar.Write(data) == gdal.CE_None
+    assert ar[:].Read() == data
+    assert ar[0:1].Read() == data
+    assert ar[0].Read() == data
+    assert ar[::-1].Read() == data
+    with gdaltest.error_raised(
+        gdal.CE_Failure, "Output dimension of size 0 is not allowed"
+    ):
+        ar[0:0]
+
+    ar = rg.CreateMDArray(
+        "array", [dim_2, dim_3, dim_4], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
+    )
+    data = array.array("B", list(range(2 * 3 * 4))).tobytes()
     assert ar.Write(data) == gdal.CE_None
 
     with pytest.raises(Exception):
@@ -1266,11 +1281,11 @@ def test_mem_md_array_as_classic_dataset():
     dim_y_var.Write(struct.pack("d" * 2, 10, 8))
     dim_y.SetIndexingVariable(dim_y_var)
 
-    ar = rg.CreateMDArray("nodim", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar = rg.CreateMDArray("nodim", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
     with gdal.quiet_errors():
         assert not ar.AsClassicDataset(0, 0)
 
-    ar = rg.CreateMDArray("1d", [dim_x], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar = rg.CreateMDArray("1d", [dim_x], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
     with gdal.quiet_errors():
         assert not ar.AsClassicDataset(1, 0)
     ds = ar.AsClassicDataset(0, 0)
@@ -1563,7 +1578,7 @@ def test_mem_md_array_single_dim_non_contiguous_copy():
     spacing = 63
     data = array.array("B", list(range(nvalues))).tobytes()
     for t in (
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_Int32,
         gdal.GDT_Float64,
@@ -1575,12 +1590,12 @@ def test_mem_md_array_single_dim_non_contiguous_copy():
         ar = rg.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(t))
         assert ar
         assert (
-            ar.Write(data, buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+            ar.Write(data, buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
             == gdal.CE_None
         )
         got_data = ar.Read(
             buffer_stride=[spacing],
-            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
         )
         assert len(got_data) == (nvalues - 1) * spacing + 1
         got_data = struct.unpack("B" * len(got_data), got_data)
@@ -1594,7 +1609,7 @@ def test_mem_md_array_get_unscaled_0dim():
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
     myarray = rg.CreateMDArray(
-        "myarray", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "myarray", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     assert myarray
 
@@ -1678,7 +1693,7 @@ def test_mem_md_array_get_unscaled_0dim_non_matching_nodata():
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
     myarray = rg.CreateMDArray(
-        "myarray", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "myarray", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     assert myarray
 
@@ -1714,7 +1729,7 @@ def test_mem_md_array_get_unscaled_0dim_matching_nodata():
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
     myarray = rg.CreateMDArray(
-        "myarray", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "myarray", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     assert myarray
 
@@ -1775,7 +1790,7 @@ def test_mem_md_array_get_unscaled_3dim():
     dim1 = rg.CreateDimension("dim1", None, None, 3)
     dim2 = rg.CreateDimension("dim2", None, None, 4)
     myarray = rg.CreateMDArray(
-        "myarray", [dim0, dim1, dim2], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "myarray", [dim0, dim1, dim2], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     assert myarray
 
@@ -1935,7 +1950,7 @@ def test_mem_md_array_get_mask():
     assert [x.GetSize() for x in mask.GetDimensions()] == [
         x.GetSize() for x in myarray.GetDimensions()
     ]
-    assert mask.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+    assert mask.GetDataType().GetNumericDataType() == gdal.GDT_UInt8
     # Case when we don't need to read the underlying array at all: the mask is always valid
     assert [x for x in struct.unpack("B" * 24, mask.Read())] == [1] * 24
     assert [x for x in struct.unpack("B" * 24, mask.Read(buffer_stride=[1, 2, 6]))] == [
@@ -2000,7 +2015,7 @@ def test_mem_md_array_get_mask():
     ] == expected_data
 
     # Test missing_value, _FillValue, valid_min, valid_max
-    bytedt = gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    bytedt = gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     attr = myarray.CreateAttribute("missing_value", [1], bytedt)
     assert attr.Write(8) == gdal.CE_None
     attr = myarray.CreateAttribute("_FillValue", [1], bytedt)
@@ -2062,8 +2077,8 @@ def test_mem_md_array_get_mask():
 
     # Test all data types
     for dt, v, nv, expected in [
-        (gdal.GDT_Byte, 1, 1, [1, 0]),
-        (gdal.GDT_Byte, 1, 1.5, [1, 1]),
+        (gdal.GDT_UInt8, 1, 1, [1, 0]),
+        (gdal.GDT_UInt8, 1, 1.5, [1, 1]),
         (gdal.GDT_Int16, 1, 1, [1, 0]),
         (gdal.GDT_UInt16, 1, 1, [1, 0]),
         (gdal.GDT_Int32, 1, 1, [1, 0]),
@@ -2711,25 +2726,25 @@ def test_mem_md_rename_group():
     rg = ds.GetRootGroup()
     group = rg.CreateGroup("group")
     group_attr = group.CreateAttribute(
-        "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     rg.CreateGroup("other_group")
     dim = group.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
-    ar = group.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar = group.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
     ar_attr = ar.CreateAttribute(
-        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
 
     subgroup = group.CreateGroup("subgroup")
     subgroup.CreateGroup("subsubgroup")
     subgroup_attr = subgroup.CreateAttribute(
-        "subgroup_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "subgroup_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     subgroup_ar = subgroup.CreateMDArray(
-        "subgroup_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "subgroup_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     subgroup_ar_attr = subgroup_ar.CreateAttribute(
-        "subgroup_ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "subgroup_ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
 
     # Cannot rename root group
@@ -2787,7 +2802,7 @@ def test_mem_md_rename_dimension():
     rg = ds.GetRootGroup()
     dim = rg.CreateDimension("dim", "unspecified type", "unspecified direction", 2)
     rg.CreateDimension("other_dim", "unspecified type", "unspecified direction", 2)
-    ar = rg.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar = rg.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
 
     # Empty name
     with pytest.raises(Exception):
@@ -2818,14 +2833,14 @@ def test_mem_md_rename_attribute():
     rg = ds.GetRootGroup()
     subg = rg.CreateGroup("group")
     subg_attr = subg.CreateAttribute(
-        "subg_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "subg_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     subg.CreateAttribute(
-        "subg_other_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "subg_other_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
-    ar = subg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-    attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-    ar.CreateAttribute("other_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar = subg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
+    attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
+    ar.CreateAttribute("other_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
 
     # Empty name
     with pytest.raises(Exception):
@@ -2865,9 +2880,9 @@ def test_mem_md_rename_array():
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
     subg = rg.CreateGroup("group")
-    ar = subg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-    subg.CreateMDArray("other_array", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-    attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar = subg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
+    subg.CreateMDArray("other_array", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
+    attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
 
     # Empty name
     with pytest.raises(Exception):
@@ -2897,11 +2912,11 @@ def test_mem_md_delete_group():
 
     group = rg.CreateGroup("group")
     group_attr = group.CreateAttribute(
-        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
-    ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
     ar_attr = ar.CreateAttribute(
-        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     subgroup = group.CreateGroup("subgroup")
 
@@ -2937,9 +2952,9 @@ def test_mem_md_delete_array():
     rg = ds.GetRootGroup()
 
     group = rg.CreateGroup("group")
-    ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
     ar_attr = ar.CreateAttribute(
-        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
 
     with pytest.raises(Exception, match="is not an array"):
@@ -2966,7 +2981,7 @@ def test_mem_md_delete_group_attribute():
 
     group = rg.CreateGroup("group")
     group_attr = group.CreateAttribute(
-        "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
 
     with pytest.raises(Exception, match="is not an attribute"):
@@ -2989,9 +3004,9 @@ def test_mem_md_delete_array_attribute():
     rg = ds.GetRootGroup()
 
     group = rg.CreateGroup("group")
-    ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
     ar_attr = ar.CreateAttribute(
-        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
 
     with pytest.raises(Exception, match="is not an attribute"):
@@ -3013,16 +3028,16 @@ def test_mem_md_GetMDArrayFullNamesRecursive():
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
 
-    rg.CreateMDArray("ar0", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    rg.CreateMDArray("ar0", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
 
     group = rg.CreateGroup("group")
-    group.CreateMDArray("ar1", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    group.CreateMDArray("ar1", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
 
     subgroup = group.CreateGroup("subgroup")
-    subgroup.CreateMDArray("ar2", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    subgroup.CreateMDArray("ar2", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
 
     group2 = rg.CreateGroup("group2")
-    group2.CreateMDArray("ar3", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    group2.CreateMDArray("ar3", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
 
     assert rg.GetMDArrayFullNamesRecursive() == [
         "/ar0",

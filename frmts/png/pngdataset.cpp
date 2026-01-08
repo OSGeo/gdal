@@ -100,7 +100,7 @@ PNGRasterBand::PNGRasterBand(PNGDataset *poDSIn, int nBandIn)
     if (poDSIn->nBitDepth == 16)
         eDataType = GDT_UInt16;
     else
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
 
     nBlockXSize = poDSIn->nRasterXSize;
 #ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
@@ -336,7 +336,7 @@ PNGDataset::~PNGDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr PNGDataset::Close()
+CPLErr PNGDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
 
@@ -539,7 +539,7 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
         {
             // CPLDebug("PNG", "Skipping chunk %s of size %u", szChunkName,
             // nChunkSize);
-            VSIFSeekL(fpImage, nChunkSize, SEEK_CUR);
+            VSIFSeekL(fpImage, static_cast<vsi_l_offset>(nChunkSize), SEEK_CUR);
         }
         VSIFSeekL(fpImage, 4, SEEK_CUR);  // CRC
     }
@@ -970,8 +970,8 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
                     apDestBuffers[1] = pabyDest + nBandSpace;
                     apDestBuffers[2] = pabyDest + 2 * nBandSpace;
                     apDestBuffers[3] = pabyDest + 3 * nBandSpace;
-                    GDALDeinterleave(pabyOutputLine, GDT_Byte, nBands,
-                                     apDestBuffers, GDT_Byte, nRasterXSize);
+                    GDALDeinterleave(pabyOutputLine, GDT_UInt8, nBands,
+                                     apDestBuffers, GDT_UInt8, nRasterXSize);
                 }
                 else if (nPixelSpace <= nBands && nBandSpace > nBands)
                 {
@@ -980,8 +980,8 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
                     {
                         GByte *pabyDest2 = pabyDest + iBand * nBandSpace;
                         const GByte *pabyScanline2 = pabyOutputLine + iBand;
-                        GDALCopyWords(pabyScanline2, GDT_Byte, nBands,
-                                      pabyDest2, GDT_Byte,
+                        GDALCopyWords(pabyScanline2, GDT_UInt8, nBands,
+                                      pabyDest2, GDT_UInt8,
                                       static_cast<int>(nPixelSpace),
                                       nRasterXSize);
                     }
@@ -1012,8 +1012,8 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
                 {
                     // Cache friendly way for typical band interleaved case.
                     GDALDeinterleave(
-                        pabyOutputLine, GDT_Byte, nBands,
-                        reinterpret_cast<void **>(apabyDestBuffers), GDT_Byte,
+                        pabyOutputLine, GDT_UInt8, nBands,
+                        reinterpret_cast<void **>(apabyDestBuffers), GDT_UInt8,
                         nRasterXSize);
                 }
                 else
@@ -1061,7 +1061,7 @@ CPLErr PNGDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if ((eRWFlag == GF_Read) && (nBandCount == nBands) && (nXOff == 0) &&
         (nYOff == 0) && (nXSize == nBufXSize) && (nXSize == nRasterXSize) &&
         (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
-        (eBufType == GDT_Byte) &&
+        (eBufType == GDT_UInt8) &&
         (eBufType == GetRasterBand(1)->GetRasterDataType()) &&
         (pData != nullptr) && IsAllBands(nBands, panBandMap))
     {
@@ -1138,8 +1138,9 @@ CPLErr PNGDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                         apDestBuffers[1] = pabyDest + nBandSpace;
                         apDestBuffers[2] = pabyDest + 2 * nBandSpace;
                         apDestBuffers[3] = pabyDest + 3 * nBandSpace;
-                        GDALDeinterleave(pabyScanline, GDT_Byte, nBands,
-                                         apDestBuffers, GDT_Byte, nRasterXSize);
+                        GDALDeinterleave(pabyScanline, GDT_UInt8, nBands,
+                                         apDestBuffers, GDT_UInt8,
+                                         nRasterXSize);
                     }
                     else if (nPixelSpace <= nBands && nBandSpace > nBands)
                     {
@@ -1148,8 +1149,8 @@ CPLErr PNGDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                         {
                             GByte *pabyDest2 = pabyDest + iBand * nBandSpace;
                             const GByte *pabyScanline2 = pabyScanline + iBand;
-                            GDALCopyWords(pabyScanline2, GDT_Byte, nBands,
-                                          pabyDest2, GDT_Byte,
+                            GDALCopyWords(pabyScanline2, GDT_UInt8, nBands,
+                                          pabyDest2, GDT_UInt8,
                                           static_cast<int>(nPixelSpace),
                                           nXSize);
                         }
@@ -1195,7 +1196,7 @@ CPLErr PNGRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if ((eRWFlag == GF_Read) && (nXOff == 0) && (nYOff == 0) &&
         (nXSize == nBufXSize) && (nXSize == nRasterXSize) &&
         (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
-        (eBufType == GDT_Byte) && (eBufType == eDataType))
+        (eBufType == GDT_UInt8) && (eBufType == eDataType))
     {
         bool bBlockAlreadyLoaded = false;
         if (nBlockYSize > 1)
@@ -2046,10 +2047,30 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
 
     // Initialize any PAM information.
     poDS->SetDescription(poOpenInfo->pszFilename);
-    poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
 
-    // Open overviews.
-    poDS->oOvManager.Initialize(poDS, poOpenInfo);
+    const char *pszPhysicalFileName =
+        CSLFetchNameValue(poOpenInfo->papszOpenOptions, "PHYSICAL_FILENAME");
+    if (pszPhysicalFileName)
+    {
+        // Code path used by JPGDatasetCommon::OpenRawThermalImage()
+        poDS->SetPhysicalFilename(pszPhysicalFileName);
+        const char *pszSubdatasetName =
+            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SUBDATASET_NAME");
+        if (pszSubdatasetName)
+        {
+            poDS->SetSubdatasetName(pszSubdatasetName);
+        }
+        poDS->TryLoadXML();
+
+        poDS->oOvManager.Initialize(poDS, ":::VIRTUAL:::");
+    }
+    else
+    {
+        poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
+
+        // Open overviews.
+        poDS->oOvManager.Initialize(poDS, poOpenInfo);
+    }
 
     // Used by JPEG FLIR
     poDS->m_bByteOrderIsLittleEndian = CPLTestBool(CSLFetchNameValueDef(
@@ -2279,7 +2300,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte &&
+    if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt8 &&
         poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt16)
     {
         CPLError(
@@ -2335,7 +2356,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     GDALDataType eType;
     if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt16)
     {
-        eType = GDT_Byte;
+        eType = GDT_UInt8;
         nBitDepth = 8;
         if (nBands == 1)
         {
@@ -2356,7 +2377,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     }
 
     const char *pszNbits = CSLFetchNameValue(papszOptions, "NBITS");
-    if (eType == GDT_Byte && pszNbits != nullptr)
+    if (eType == GDT_UInt8 && pszNbits != nullptr)
     {
         nBitDepth = atoi(pszNbits);
         if (!(nBitDepth == 1 || nBitDepth == 2 || nBitDepth == 4 ||
@@ -3268,7 +3289,7 @@ GDALDataset *PNGDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBands, GDALDataType eType,
                                 char **papszOptions)
 {
-    if (eType != GDT_Byte && eType != GDT_UInt16)
+    if (eType != GDT_UInt8 && eType != GDT_UInt16)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -3330,7 +3351,7 @@ GDALDataset *PNGDataset::Create(const char *pszFilename, int nXSize, int nYSize,
             break;
     }
 
-    poDS->m_nBitDepth = (eType == GDT_Byte ? 8 : 16);
+    poDS->m_nBitDepth = (eType == GDT_UInt8 ? 8 : 16);
 
     poDS->m_pabyBuffer = reinterpret_cast<GByte *>(
         CPLMalloc(nBands * nXSize * poDS->m_nBitDepth / 8));

@@ -84,4 +84,4 @@ class GDALVectorPartitionAlgorithmStandalone final
 
 //! @endcond
 
-#endif /* GDALALG_VECTOR_FILTER_INCLUDED */
+#endif /* GDALALG_VECTOR_PARTITION_INCLUDED */

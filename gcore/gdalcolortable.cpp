@@ -446,7 +446,6 @@ void CPL_STDCALL GDALCreateColorRamp(GDALColorTableH hTable, int nStartIndex,
  *
  * @param poOtherCT other color table to be compared to.
  * @return TRUE if both color tables are identical.
- * @since GDAL 2.0
  */
 
 int GDALColorTable::IsSame(const GDALColorTable *poOtherCT) const

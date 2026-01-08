@@ -12,15 +12,18 @@
 
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
+#include "cpl_enumerate.h"
 
 #include <algorithm>
 #include <map>
 #include <mutex>
 #include <tuple>
 
+#include "gdalalgorithm.h"
 #include "ogr_parquet.h"
 #include "ogrparquetdrivercore.h"
 #include "memdataset.h"
+#include "ogreditablelayer.h"
 
 #include "../arrow_common/ograrrowrandomaccessfile.h"
 #include "../arrow_common/vsiarrowfilesystem.hpp"
@@ -43,11 +46,8 @@ static GDALDataset *OpenFromDatasetFactory(
     std::shared_ptr<arrow::dataset::Dataset> dataset;
     PARQUET_ASSIGN_OR_THROW(dataset, factory->Finish());
 
-    auto poMemoryPool = std::shared_ptr<arrow::MemoryPool>(
-        arrow::MemoryPool::CreateDefault().release());
-
     const bool bIsVSI = STARTS_WITH(osBasePath.c_str(), "/vsi");
-    auto poDS = std::make_unique<OGRParquetDataset>(poMemoryPool);
+    auto poDS = std::make_unique<OGRParquetDataset>();
     auto poLayer = std::make_unique<OGRParquetDatasetLayer>(
         poDS.get(), CPLGetBasenameSafe(osBasePath.c_str()).c_str(), bIsVSI,
         dataset, papszOpenOptions);
@@ -224,9 +224,9 @@ static GDALDataset *BuildMemDatasetWithRowGroupExtents(OGRParquetLayer *poLayer)
             poTmpSRS->Release();
         if (!poMemLayer)
             return nullptr;
-        poMemLayer->CreateField(
+        CPL_IGNORE_RET_VAL(poMemLayer->CreateField(
             std::make_unique<OGRFieldDefn>("feature_count", OFTInteger64)
-                .get());
+                .get()));
 
         const auto metadata =
             poLayer->GetReader()->parquet_reader()->metadata();
@@ -306,14 +306,230 @@ static GDALDataset *BuildMemDatasetWithRowGroupExtents(OGRParquetLayer *poLayer)
 }
 
 /************************************************************************/
+/*                     OGRParquetEditableLayerSynchronizer              */
+/************************************************************************/
+
+class OGRParquetEditableLayer;
+
+class OGRParquetEditableLayerSynchronizer final
+    : public IOGREditableLayerSynchronizer
+{
+    OGRParquetDataset *const m_poDS;
+    OGRParquetEditableLayer *const m_poEditableLayer;
+    const std::string m_osFilename;
+    const CPLStringList m_aosOpenOptions;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRParquetEditableLayerSynchronizer)
+
+  public:
+    OGRParquetEditableLayerSynchronizer(
+        OGRParquetDataset *poDS, OGRParquetEditableLayer *poEditableLayer,
+        const std::string &osFilename, CSLConstList papszOpenOptions)
+        : m_poDS(poDS), m_poEditableLayer(poEditableLayer),
+          m_osFilename(osFilename),
+          m_aosOpenOptions(CSLDuplicate(papszOpenOptions))
+    {
+    }
+
+    OGRErr EditableSyncToDisk(OGRLayer *poEditableLayer,
+                              OGRLayer **ppoDecoratedLayer) override;
+};
+
+/************************************************************************/
+/*                        OGRParquetEditableLayer                       */
+/************************************************************************/
+
+class OGRParquetEditableLayer final : public IOGRArrowLayer,
+                                      public OGREditableLayer
+{
+  public:
+    OGRParquetEditableLayer(OGRParquetDataset *poDS,
+                            const std::string &osFilename,
+                            std::unique_ptr<OGRParquetLayer> poParquetLayer,
+                            CSLConstList papszOpenOptions)
+        : OGREditableLayer(poParquetLayer.get(), false,
+                           new OGRParquetEditableLayerSynchronizer(
+                               poDS, this, osFilename, papszOpenOptions),
+                           false),
+          m_poParquetLayer(std::move(poParquetLayer))
+    {
+    }
+
+    ~OGRParquetEditableLayer() override
+    {
+        SyncToDisk();
+        delete m_poSynchronizer;
+        m_poSynchronizer = nullptr;
+    }
+
+    OGRLayer *GetLayer() override;
+
+    OGRParquetLayer *GetUnderlyingArrowLayer() override
+    {
+        return m_poParquetLayer.get();
+    }
+
+    void
+    SetUnderlyingArrowLayer(std::unique_ptr<OGRParquetLayer> poParquetLayer)
+    {
+        m_poParquetLayer = std::move(poParquetLayer);
+    }
+
+  private:
+    std::unique_ptr<OGRParquetLayer> m_poParquetLayer{};
+};
+
+/************************************************************************/
+/*                 OGRParquetEditableLayer::GetLayer()                  */
+/************************************************************************/
+
+OGRLayer *OGRParquetEditableLayer::GetLayer()
+{
+    return this;
+}
+
+/************************************************************************/
+/*      OGRParquetEditableLayerSynchronizer::EditableSyncToDisk()       */
+/************************************************************************/
+
+OGRErr OGRParquetEditableLayerSynchronizer::EditableSyncToDisk(
+    OGRLayer *poEditableLayer, OGRLayer **ppoDecoratedLayer)
+{
+    CPLAssert(*ppoDecoratedLayer ==
+              m_poEditableLayer->GetUnderlyingArrowLayer());
+
+    const std::string osTmpFilename = m_osFilename + ".tmp.parquet";
+    try
+    {
+        std::shared_ptr<arrow::io::OutputStream> out_file;
+        if (STARTS_WITH(osTmpFilename.c_str(), "/vsi") ||
+            CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_VSI", "YES")))
+        {
+            VSIVirtualHandleUniquePtr fp =
+                VSIFilesystemHandler::OpenStatic(osTmpFilename.c_str(), "wb");
+            if (fp == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s",
+                         osTmpFilename.c_str());
+                return OGRERR_FAILURE;
+            }
+            out_file = std::make_shared<OGRArrowWritableFile>(std::move(fp));
+        }
+        else
+        {
+            PARQUET_ASSIGN_OR_THROW(
+                out_file, arrow::io::FileOutputStream::Open(osTmpFilename));
+        }
+
+        OGRParquetWriterDataset writerDS(out_file);
+
+        auto poParquetLayer = m_poEditableLayer->GetUnderlyingArrowLayer();
+        CPLStringList aosCreationOptions(poParquetLayer->GetCreationOptions());
+        const char *pszFIDColumn = poParquetLayer->GetFIDColumn();
+        if (pszFIDColumn[0])
+            aosCreationOptions.SetNameValue("FID", pszFIDColumn);
+        const char *pszEdges = poParquetLayer->GetMetadataItem("EDGES");
+        if (pszEdges)
+            aosCreationOptions.SetNameValue("EDGES", pszEdges);
+        auto poWriterLayer = writerDS.CreateLayer(
+            CPLGetBasenameSafe(m_osFilename.c_str()).c_str(),
+            poParquetLayer->GetGeomType() == wkbNone
+                ? nullptr
+                : poParquetLayer->GetLayerDefn()->GetGeomFieldDefn(0),
+            aosCreationOptions.List());
+        if (!poWriterLayer)
+            return OGRERR_FAILURE;
+
+        // Create target fields from source fields
+        for (const auto poSrcFieldDefn :
+             poEditableLayer->GetLayerDefn()->GetFields())
+        {
+            if (poWriterLayer->CreateField(poSrcFieldDefn) != OGRERR_NONE)
+                return OGRERR_FAILURE;
+        }
+
+        // Disable all filters and backup them.
+        const char *pszQueryStringConst = poEditableLayer->GetAttrQueryString();
+        const std::string osQueryString =
+            pszQueryStringConst ? pszQueryStringConst : "";
+        poEditableLayer->SetAttributeFilter(nullptr);
+
+        const int iFilterGeomIndexBak = poEditableLayer->GetGeomFieldFilter();
+        std::unique_ptr<OGRGeometry> poFilterGeomBak;
+        if (const OGRGeometry *poFilterGeomSrc =
+                poEditableLayer->GetSpatialFilter())
+            poFilterGeomBak.reset(poFilterGeomSrc->clone());
+        poEditableLayer->SetSpatialFilter(nullptr);
+
+        bool bError = false;
+
+        // Copy all features
+        for (auto &&poSrcFeature : *poEditableLayer)
+        {
+            OGRFeature oDstFeature(poWriterLayer->GetLayerDefn());
+            oDstFeature.SetFrom(poSrcFeature.get());
+            oDstFeature.SetFID(poSrcFeature->GetFID());
+            if (poWriterLayer->CreateFeature(&oDstFeature) != OGRERR_NONE)
+            {
+                bError = true;
+                break;
+            }
+        }
+
+        // Restore filters.
+        if (!osQueryString.empty())
+            poEditableLayer->SetAttributeFilter(osQueryString.c_str());
+        poEditableLayer->SetSpatialFilter(iFilterGeomIndexBak,
+                                          poFilterGeomBak.get());
+
+        // Flush and close file
+        if (bError || writerDS.Close() != CE_None)
+            return OGRERR_FAILURE;
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Parquet exception: %s",
+                 e.what());
+        return OGRERR_FAILURE;
+    }
+
+    // Close original Parquet file
+    m_poEditableLayer->SetUnderlyingArrowLayer(nullptr);
+    *ppoDecoratedLayer = nullptr;
+
+    // Backup original file, and rename new file into it
+    const std::string osTmpOriFilename = m_osFilename + ".ogr_bak";
+    if (VSIRename(m_osFilename.c_str(), osTmpOriFilename.c_str()) != 0 ||
+        VSIRename(osTmpFilename.c_str(), m_osFilename.c_str()) != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot rename files");
+        return OGRERR_FAILURE;
+    }
+    // Remove backup file
+    VSIUnlink(osTmpOriFilename.c_str());
+
+    // Re-open parquet file
+    VSILFILE *fp = nullptr;
+    auto poParquetLayer =
+        m_poDS->CreateReaderLayer(m_osFilename, fp, m_aosOpenOptions.List());
+    if (!poParquetLayer)
+    {
+        return OGRERR_FAILURE;
+    }
+
+    // Update adapters
+    *ppoDecoratedLayer = poParquetLayer.get();
+    m_poEditableLayer->SetUnderlyingArrowLayer(std::move(poParquetLayer));
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
 {
-    if (poOpenInfo->eAccess == GA_Update)
-        return nullptr;
-
 #if ARROW_VERSION_MAJOR >= 21
     // Register geoarrow.wkb extension if not already done
     if (!arrow::GetExtensionType(EXTENSION_NAME_GEOARROW_WKB) &&
@@ -366,6 +582,9 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
             // If there's a _metadata file, then use it to avoid listing files
             try
             {
+                if (poOpenInfo->eAccess == GA_Update)
+                    return nullptr;
+
                 return OpenParquetDatasetWithMetadata(
                     osBasePath, "_metadata", osQueryParameters,
                     poOpenInfo->papszOpenOptions);
@@ -414,6 +633,9 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
             {
                 try
                 {
+                    if (poOpenInfo->eAccess == GA_Update)
+                        return nullptr;
+
                     return OpenParquetDatasetWithoutMetadata(
                         osBasePath, osQueryParameters,
                         poOpenInfo->papszOpenOptions);
@@ -448,133 +670,26 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
         osFilename = poOpenInfo->pszFilename + strlen("PARQUET:");
     }
 
-    try
-    {
-        std::shared_ptr<arrow::io::RandomAccessFile> infile;
-        if (STARTS_WITH(osFilename.c_str(), "/vsi") ||
-            CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_VSI", "NO")))
-        {
-            VSIVirtualHandleUniquePtr fp(poOpenInfo->fpL);
-            poOpenInfo->fpL = nullptr;
-            if (fp == nullptr)
-            {
-                fp.reset(VSIFOpenL(osFilename.c_str(), "rb"));
-                if (fp == nullptr)
-                    return nullptr;
-            }
-            infile = std::make_shared<OGRArrowRandomAccessFile>(osFilename,
-                                                                std::move(fp));
-        }
-        else
-        {
-            PARQUET_ASSIGN_OR_THROW(infile,
-                                    arrow::io::ReadableFile::Open(osFilename));
-        }
-
-        // Open Parquet file reader
-        std::unique_ptr<parquet::arrow::FileReader> arrow_reader;
-        auto poMemoryPool = std::shared_ptr<arrow::MemoryPool>(
-            arrow::MemoryPool::CreateDefault().release());
-
-        const int nNumCPUs = OGRParquetLayerBase::GetNumCPUs();
-        const char *pszUseThreads =
-            CPLGetConfigOption("OGR_PARQUET_USE_THREADS", nullptr);
-        if (!pszUseThreads && nNumCPUs > 1)
-        {
-            pszUseThreads = "YES";
-        }
-        const bool bUseThreads = pszUseThreads && CPLTestBool(pszUseThreads);
-
-        const char *pszParquetBatchSize =
-            CPLGetConfigOption("OGR_PARQUET_BATCH_SIZE", nullptr);
-
-#if ARROW_VERSION_MAJOR >= 21
-        parquet::arrow::FileReaderBuilder fileReaderBuilder;
-        {
-            auto st = fileReaderBuilder.Open(std::move(infile));
-            if (!st.ok())
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "parquet::arrow::FileReaderBuilder::Open() failed: %s",
-                         st.message().c_str());
-                return nullptr;
-            }
-        }
-        fileReaderBuilder.memory_pool(poMemoryPool.get());
-        parquet::ArrowReaderProperties fileReaderProperties;
-        fileReaderProperties.set_arrow_extensions_enabled(CPLTestBool(
-            CPLGetConfigOption("OGR_PARQUET_ENABLE_ARROW_EXTENSIONS", "YES")));
-        if (pszParquetBatchSize)
-        {
-            fileReaderProperties.set_batch_size(
-                CPLAtoGIntBig(pszParquetBatchSize));
-        }
-        if (bUseThreads)
-        {
-            fileReaderProperties.set_use_threads(true);
-        }
-        fileReaderBuilder.properties(fileReaderProperties);
-        {
-            auto res = fileReaderBuilder.Build();
-            if (!res.ok())
-            {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "parquet::arrow::FileReaderBuilder::Build() failed: %s",
-                    res.status().message().c_str());
-                return nullptr;
-            }
-            arrow_reader = std::move(*res);
-        }
-#elif ARROW_VERSION_MAJOR >= 19
-        PARQUET_ASSIGN_OR_THROW(
-            arrow_reader,
-            parquet::arrow::OpenFile(std::move(infile), poMemoryPool.get()));
-#else
-        auto st = parquet::arrow::OpenFile(std::move(infile),
-                                           poMemoryPool.get(), &arrow_reader);
-        if (!st.ok())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "parquet::arrow::OpenFile() failed: %s",
-                     st.message().c_str());
-            return nullptr;
-        }
-#endif
-
-#if ARROW_VERSION_MAJOR < 21
-        if (pszParquetBatchSize)
-        {
-            arrow_reader->set_batch_size(CPLAtoGIntBig(pszParquetBatchSize));
-        }
-
-        if (bUseThreads)
-        {
-            arrow_reader->set_use_threads(true);
-        }
-#endif
-
-        auto poDS = std::make_unique<OGRParquetDataset>(poMemoryPool);
-        auto poLayer = std::make_unique<OGRParquetLayer>(
-            poDS.get(), CPLGetBasenameSafe(osFilename.c_str()).c_str(),
-            std::move(arrow_reader), poOpenInfo->papszOpenOptions);
-
-        // For debug purposes: return a layer with the extent of each row group
-        if (CPLTestBool(
-                CPLGetConfigOption("OGR_PARQUET_SHOW_ROW_GROUP_EXTENT", "NO")))
-        {
-            return BuildMemDatasetWithRowGroupExtents(poLayer.get());
-        }
-
-        poDS->SetLayer(std::move(poLayer));
-        return poDS.release();
-    }
-    catch (const std::exception &e)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Parquet exception: %s",
-                 e.what());
+    auto poDS = std::make_unique<OGRParquetDataset>();
+    auto poLayer = poDS->CreateReaderLayer(osFilename, poOpenInfo->fpL,
+                                           poOpenInfo->papszOpenOptions);
+    if (!poLayer)
         return nullptr;
+
+    // For debug purposes: return a layer with the extent of each row group
+    if (CPLTestBool(
+            CPLGetConfigOption("OGR_PARQUET_SHOW_ROW_GROUP_EXTENT", "NO")))
+    {
+        return BuildMemDatasetWithRowGroupExtents(poLayer.get());
     }
+
+    if (poOpenInfo->eAccess == GA_Update)
+        poDS->SetLayer(std::make_unique<OGRParquetEditableLayer>(
+            poDS.get(), osFilename, std::move(poLayer),
+            poOpenInfo->papszOpenOptions));
+    else
+        poDS->SetLayer(std::move(poLayer));
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -845,6 +960,16 @@ void OGRParquetDriver::InitMetadata()
         CPLCreateXMLElementAndValue(psOption, "Value", "NO");
     }
 
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "COVERING_BBOX_NAME");
+        CPLAddXMLAttributeAndValue(psOption, "type", "string");
+        CPLAddXMLAttributeAndValue(psOption, "description",
+                                   "Name of the bounding box of "
+                                   "geometries. If not same, "
+                                   "equals to {'GEOMETRY_NAME}_bbox'");
+    }
+
 #if ARROW_VERSION_MAJOR >= 21
     {
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
@@ -871,9 +996,226 @@ void OGRParquetDriver::InitMetadata()
                                    "the bounding box of their geometries");
     }
 
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "TIMESTAMP_WITH_OFFSET");
+        CPLAddXMLAttributeAndValue(psOption, "type", "string-select");
+        CPLAddXMLAttributeAndValue(psOption, "default", "AUTO");
+        CPLAddXMLAttributeAndValue(
+            psOption, "description",
+            "Whether timestamp with offset fields should be used");
+        CPLCreateXMLElementAndValue(psOption, "Value", "AUTO");
+        CPLCreateXMLElementAndValue(psOption, "Value", "YES");
+        CPLCreateXMLElementAndValue(psOption, "Value", "NO");
+    }
+
     char *pszXML = CPLSerializeXMLTree(oTree.get());
     GDALDriver::SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST, pszXML);
     CPLFree(pszXML);
+}
+
+/************************************************************************/
+/*               OGRParquetCreateMetadataFileAlgorithm()                */
+/************************************************************************/
+
+#ifndef _
+#define _(x) x
+#endif
+
+class OGRParquetCreateMetadataFileAlgorithm final : public GDALAlgorithm
+{
+  public:
+    OGRParquetCreateMetadataFileAlgorithm()
+        : GDALAlgorithm(
+              "create-metadata-file",
+              "Create the _metadata file for a partitioned Parquet dataset",
+              "/programs/gdal_driver_parquet_create_metadata_file.html")
+    {
+        auto &inputArg =
+            AddArg(GDAL_ARG_NAME_INPUT, 0, _("Input Parquet datasets"),
+                   &m_input, GDAL_OF_VECTOR)
+                .SetPositional()
+                .SetAutoOpenDataset(false)
+                .SetDatasetInputFlags(GADV_NAME)
+                .SetRequired();
+        SetAutoCompleteFunctionForFilename(inputArg, GDAL_OF_VECTOR);
+
+        auto &outputArg =
+            AddArg(GDAL_ARG_NAME_OUTPUT, 0, _("Output Parquet dataset"),
+                   &m_output, GDAL_OF_VECTOR)
+                .SetPositional()
+                .SetIsOutput(true)
+                .SetDatasetInputFlags(GADV_NAME)
+                .SetDatasetOutputFlags(0)
+                .SetRequired();
+        SetAutoCompleteFunctionForFilename(outputArg, GDAL_OF_VECTOR);
+
+        AddOverwriteArg(&m_overwrite);
+    }
+
+  protected:
+    bool RunImpl(GDALProgressFunc, void *) override;
+
+  private:
+    std::vector<GDALArgDatasetValue> m_input{};
+    GDALArgDatasetValue m_output{};
+    bool m_overwrite = false;
+};
+
+/************************************************************************/
+/*            OGRParquetCreateMetadataFileAlgorithm::RunImpl()          */
+/************************************************************************/
+
+bool OGRParquetCreateMetadataFileAlgorithm::RunImpl(
+    GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    try
+    {
+        const std::string osOutputDir =
+            CPLGetPathSafe(m_output.GetName().c_str());
+        auto fs =
+            std::make_shared<VSIArrowFileSystem>("PARQUET", std::string());
+
+        std::shared_ptr<parquet::FileMetaData> outputMetadata;
+
+        // Iterate over input Parquet files
+        for (const auto &[i, input] : cpl::enumerate(m_input))
+        {
+            std::shared_ptr<arrow::io::RandomAccessFile> inputFile;
+            PARQUET_ASSIGN_OR_THROW(inputFile,
+                                    fs->OpenInputFile(input.GetName()));
+            auto reader =
+                parquet::ParquetFileReader::Open(std::move(inputFile));
+            if (!reader)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined, "Cannot open %s",
+                            input.GetName().c_str());
+                return false;
+            }
+
+            auto inputMetadata = reader->metadata();
+            CPLAssert(inputMetadata);
+
+            if (!outputMetadata)
+            {
+                // Opens a file descriptor on the output dataset
+                VSIVirtualHandleUniquePtr fp = VSIFilesystemHandler::OpenStatic(
+                    m_output.GetName().c_str(), "wb");
+                if (fp == nullptr)
+                {
+                    ReportError(CE_Failure, CPLE_FileIO,
+                                "OpenStatic() failed: cannot create %s",
+                                m_output.GetName().c_str());
+                    return false;
+                }
+
+                // We need to create an empty Parquet file to be able to
+                // get its ParquetMetadata
+                auto schemaNode =
+                    std::dynamic_pointer_cast<parquet::schema::GroupNode>(
+                        inputMetadata->schema()->schema_root());
+                CPLAssert(schemaNode);
+                auto writer = parquet::ParquetFileWriter::Open(
+                    std::make_shared<OGRArrowWritableFile>(std::move(fp)),
+                    std::move(schemaNode));
+                if (!writer)
+                {
+                    ReportError(
+                        CE_Failure, CPLE_FileIO,
+                        "ParquetFileWriter::Open() failed: cannot create %s",
+                        m_output.GetName().c_str());
+                    return false;
+                }
+                // Close it and now re-open it to gets its metadata object
+                writer->Close();
+
+                PARQUET_ASSIGN_OR_THROW(
+                    inputFile, fs->OpenInputFile(m_output.GetName().c_str()));
+                auto readerMetadataFile =
+                    parquet::ParquetFileReader::Open(std::move(inputFile));
+                if (!readerMetadataFile)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined, "Cannot open %s",
+                                m_output.GetName().c_str());
+                    return false;
+                }
+
+                outputMetadata = readerMetadataFile->metadata();
+                CPLAssert(outputMetadata);
+            }
+
+            int bGotRelative = false;
+            const std::string osRelativePath(CPLExtractRelativePath(
+                osOutputDir.c_str(), input.GetName().c_str(), &bGotRelative));
+            if (!bGotRelative)
+            {
+                ReportError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Cannot infer relative path of '%s' with respect to '%s'",
+                    input.GetName().c_str(), osOutputDir.c_str());
+                return false;
+            }
+
+            // Add the row groups from the current input file to the output
+            // metadata, and set the appropriate relative path.
+            inputMetadata->set_file_path(osRelativePath);
+            outputMetadata->AppendRowGroups(*inputMetadata);
+
+            if (pfnProgress &&
+                !pfnProgress(static_cast<double>(i + 1) /
+                                 static_cast<double>(m_input.size()),
+                             "", pProgressData))
+            {
+                ReportError(CE_Failure, CPLE_UserInterrupt,
+                            "Interrupted by user");
+                return false;
+            }
+        }
+
+        auto fp =
+            VSIFilesystemHandler::OpenStatic(m_output.GetName().c_str(), "wb");
+        if (fp == nullptr)
+        {
+            ReportError(CE_Failure, CPLE_FileIO, "Cannot create %s",
+                        m_output.GetName().c_str());
+            return false;
+        }
+        OGRArrowWritableFile out_file(std::move(fp));
+        parquet::WriteMetaDataFile(*outputMetadata, &out_file);
+        auto status = out_file.Close();
+        if (!status.ok())
+        {
+            ReportError(CE_Failure, CPLE_FileIO, "Cannot close %s: %s",
+                        m_output.GetName().c_str(), status.message().c_str());
+            return false;
+        }
+
+        return true;
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Parquet exception: %s",
+                 e.what());
+        return false;
+    }
+}
+
+/************************************************************************/
+/*                 OGRParquetDriverInstantiateAlgorithm()               */
+/************************************************************************/
+
+static GDALAlgorithm *
+OGRParquetDriverInstantiateAlgorithm(const std::vector<std::string> &aosPath)
+{
+    if (aosPath.size() == 1 && aosPath[0] == "create-metadata-file")
+    {
+        return std::make_unique<OGRParquetCreateMetadataFileAlgorithm>()
+            .release();
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 /************************************************************************/
@@ -890,6 +1232,8 @@ void RegisterOGRParquet()
 
     poDriver->pfnOpen = OGRParquetDriverOpen;
     poDriver->pfnCreate = OGRParquetDriverCreate;
+
+    poDriver->pfnInstantiateAlgorithm = OGRParquetDriverInstantiateAlgorithm;
 
     poDriver->SetMetadataItem("ARROW_VERSION", ARROW_VERSION_STRING);
 #ifdef GDAL_USE_ARROWDATASET

@@ -2,15 +2,18 @@ import os
 import pathlib
 
 import geopandas as gpd
+import matplotlib.colors
 import matplotlib.patheffects as pe
 import matplotlib.pyplot as pyplot
 import numpy as np
 import pytest
 
-from osgeo import gdal, gdal_array
+from osgeo import gdal, gdal_array, ogr, osr
 
 IMAGE_ROOT = os.path.join(os.path.dirname(__file__), "images")
 DATA_DIR = pathlib.Path(os.path.join(os.path.dirname(__file__), "data"))
+
+GDAL_GREEN_BLUE = matplotlib.colors.ListedColormap(["#71c9f1", "#359946"])
 
 
 def print_cell_values(ax, data):
@@ -27,6 +30,30 @@ def print_cell_values(ax, data):
                 fontweight="bold",
                 path_effects=[pe.withStroke(linewidth=3, foreground="white")],
             )
+
+
+def wkt_ds(fname, wkts, *, geom_type=None, epsg=None):
+
+    ds = gdal.GetDriverByName("ESRI Shapefile").CreateVector(fname)
+
+    lyr = ds.CreateLayer(
+        "polys",
+        osr.SpatialReference(epsg=epsg) if epsg else None,
+        geom_type=geom_type if geom_type else ogr.wkbUnknown,
+    )
+
+    if type(wkts) is str:
+        wkts = [wkts]
+
+    for i, wkt in enumerate(wkts):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        geom = ogr.CreateGeometryFromWkt(wkt)
+        assert geom
+        f.SetGeometry(geom)
+        f.SetFID(i + 1)
+        lyr.CreateFeature(f)
+
+    return ds
 
 
 def test_gdal_raster_footprint(tmp_path):
@@ -56,6 +83,49 @@ def test_gdal_raster_footprint(tmp_path):
 
     plt.savefig(
         f"{IMAGE_ROOT}/programs/gdal_raster_footprint.png",
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
+def test_gdal_raster_neighbors():
+    nodata = -999
+    data_raw = np.arange(9, dtype=np.int16).reshape(3, 3)
+    data_raw[2, 2] = nodata
+    data = np.ma.masked_array(data_raw, data_raw == nodata)
+
+    plt, (ax, ax2) = pyplot.subplots(1, 2, figsize=(15, 6))
+
+    for x in (ax, ax2):
+        x.set_aspect("equal", adjustable="box")
+        x.set_xticks([], [])
+        x.set_yticks([], [])
+        x.grid(color="black", linewidth=2)
+        x.invert_yaxis()
+
+    ds = gdal_array.OpenArray(data)
+    ds.GetRasterBand(1).SetNoDataValue(nodata)
+
+    alg = gdal.Run(
+        "raster neighbors",
+        input=ds,
+        output_format="MEM",
+        method="sum",
+        size=3,
+        kernel="equal",
+    )
+
+    data_out = alg["output"].GetDataset().ReadAsMaskedArray()
+
+    alg.Finalize()
+
+    ax.pcolor(data, cmap=pyplot.get_cmap("viridis"))
+    print_cell_values(ax, data)
+    ax2.pcolor(data_out, cmap=pyplot.get_cmap("viridis"))
+    print_cell_values(ax2, data_out)
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_raster_neighbors.svg",
         bbox_inches="tight",
         transparent=True,
     )
@@ -158,6 +228,127 @@ def test_gdal_raster_reclassify():
     )
 
 
+def test_gdal_raster_zonal_stats(tmp_path):
+
+    raster_fname = DATA_DIR / "fortune.tif"
+    vector_fname = DATA_DIR / "fortune_subd.geojson"
+
+    output_fname = tmp_path / "out.dbf"
+
+    alg = gdal.Run(
+        "raster zonal-stats",
+        input=raster_fname,
+        zones=vector_fname,
+        output=output_fname,
+        stat="mean",
+        include_field="csduid",
+    )
+    alg.Finalize()
+
+    with gdal.Open(raster_fname) as ds:
+        fortune = ds.ReadAsMaskedArray()
+        xmin, dx, _, ymax, _, dy = ds.GetGeoTransform()
+        nx = ds.RasterXSize
+        ny = ds.RasterYSize
+        extent = [xmin, xmin + nx * dx, ymax + dy * ny, ymax]
+
+    plt, (ax, ax2) = pyplot.subplots(1, 2, figsize=(12, 5), sharex=True, sharey=True)
+    ax.set_axis_off()
+    ax2.set_axis_off()
+
+    vmin, vmax = np.quantile(fortune.compressed(), [0.01, 0.99])
+
+    ax.imshow(fortune, extent=extent, vmin=vmin, vmax=vmax)
+
+    vector_gdf = gpd.read_file(vector_fname)
+    vector_gdf.boundary.plot(ax=ax, edgecolor="black", linewidth=1, aspect="equal")
+
+    stats_df = gpd.read_file(output_fname)
+    stats_df.drop("geometry", axis=1, inplace=True)
+
+    vector_gdf.merge(stats_df, on="csduid").plot(
+        ax=ax2, aspect="equal", column="mean", vmin=vmin, vmax=vmax
+    )
+    vector_gdf.boundary.plot(ax=ax2, edgecolor="black", linewidth=1, aspect="equal")
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_raster_zonal_stats.jpg",
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
+def test_gdal_vector_check_coverage(tmp_path):
+
+    src_fname = tmp_path / "src.shp"
+    dst_fname = tmp_path / "dst.shp"
+
+    wkt_ds(
+        src_fname,
+        [
+            "POLYGON ((0 0, 5 0, 5 4, 4.5 5, 5 9, 5 10, 0 10, 0 0))",
+            "POLYGON ((5 0, 10 0, 10 10, 5.1 10, 5 9, 5 3, 4.5 0, 5 0))",
+        ],
+    )
+
+    alg = gdal.Run("vector check-coverage", input=src_fname, output=dst_fname)
+    alg.Finalize()
+
+    plt, (ax, ax2) = pyplot.subplots(1, 2, figsize=(12, 5))
+
+    ax.set_axis_off()
+    ax2.set_axis_off()
+
+    src_gdf = gpd.read_file(src_fname)
+    src_gdf.plot(
+        ax=ax, alpha=0.5, edgecolor="black", column="FID", cmap=GDAL_GREEN_BLUE
+    )
+
+    dst_gdf = gpd.read_file(dst_fname)
+    dst_gdf.plot(ax=ax2, aspect="equal", alpha=0.5, column="FID", cmap=GDAL_GREEN_BLUE)
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_vector_check_coverage.svg",
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
+def test_gdal_vector_check_geometry(tmp_path):
+
+    cases = {
+        "poly": "POLYGON ((0 0, 5 0, 0 10, 5 10, 0 0))",
+        "multipoly": "MULTIPOLYGON (((0 0, 5 0, 5 3, 0 3, 0 0)), ((2 2, 3 2, 3 10, 2 10, 2 2)))",
+        "line": "LINESTRING (5 10, 0 5, 5 0, 2.5 0, 2.5 10)",
+    }
+
+    for k, v in cases.items():
+        src_fname = tmp_path / f"{k}.shp"
+        dst_fname = tmp_path / f"{k}_out.shp"
+
+        wkt_ds(src_fname, [v])
+
+        alg = gdal.Run("vector check-geometry", input=src_fname, output=dst_fname)
+        alg.Finalize()
+
+    plt, ax = pyplot.subplots(1, len(cases), figsize=(12, 5))
+
+    for i, (k, v) in enumerate(cases.items()):
+        ax[i].set_axis_off()
+
+        src_gdf = gpd.read_file(tmp_path / f"{k}.shp")
+        src_gdf.plot(ax=ax[i], alpha=0.5, cmap=GDAL_GREEN_BLUE)
+
+        dst_gdf = gpd.read_file(tmp_path / f"{k}_out.shp")
+        dst_gdf.plot(ax=ax[i], alpha=1.0, color="black")
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_vector_check_geometry.svg",
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
 @pytest.mark.parametrize(
     "operation",
     ("erase", "identity", "intersection", "sym-difference", "union", "update", "clip"),
@@ -217,6 +408,61 @@ def test_gdal_vector_simplify(tmp_path):
 
     plt.savefig(
         f"{IMAGE_ROOT}/programs/gdal_vector_simplify.svg",
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "case,opts",
+    [
+        ("close_gaps", {"maximum-gap-width": 1}),
+        ("merge_max_area", {"merge-strategy": "max-area"}),
+        ("snap_distance", {"snapping-distance": 0.1}),
+    ],
+)
+def test_gdal_vector_clean_coverage(tmp_path, case, opts):
+
+    src_fname = tmp_path / "src.shp"
+    dst1_fname = tmp_path / "dst1.shp"
+    dst2_fname = tmp_path / "dst2.shp"
+
+    wkt_ds(
+        src_fname,
+        [
+            "POLYGON ((0 0, 5 0, 5 4, 4.5 5, 5 9, 5 10, 0 10, 0 0))",
+            "POLYGON ((5 0, 10 0, 10 10, 5.1 10, 5 9, 5 3, 4.5 0, 5 0))",
+        ],
+    )
+
+    # run with default options
+    alg = gdal.Run("vector clean-coverage", input=src_fname, output=dst1_fname)
+
+    opts["input"] = src_fname
+    opts["output"] = dst2_fname
+
+    alg = gdal.Run("vector clean-coverage", opts)
+    alg.Finalize()
+
+    plt, (ax, ax2, ax3) = pyplot.subplots(1, 3, figsize=(12, 5))
+
+    src_gdf = gpd.read_file(src_fname)
+    src_gdf.plot(
+        ax=ax, alpha=0.5, edgecolor="black", column="FID", cmap=GDAL_GREEN_BLUE
+    )
+
+    dst1_gdf = gpd.read_file(dst1_fname)
+    dst1_gdf.plot(
+        ax=ax2, alpha=0.5, edgecolor="black", column="FID", cmap=GDAL_GREEN_BLUE
+    )
+
+    dst2_gdf = gpd.read_file(dst2_fname)
+    dst2_gdf.plot(
+        ax=ax3, alpha=0.5, edgecolor="black", column="FID", cmap=GDAL_GREEN_BLUE
+    )
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_vector_clean_coverage_{case}.svg",
         bbox_inches="tight",
         transparent=True,
     )

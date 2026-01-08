@@ -1409,8 +1409,10 @@ int64_t GDALPDFStreamPoppler::GetLength(int64_t nMaxSize)
     if (m_nLength >= 0)
         return m_nLength;
 
-#if POPPLER_MAJOR_VERSION > 25 ||                                              \
-    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+#if POPPLER_MAJOR_VERSION > 25
+    if (!m_poStream->rewind())
+        return 0;
+#elif POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2
     if (!m_poStream->reset())
         return 0;
 #else
@@ -1437,7 +1439,12 @@ int64_t GDALPDFStreamPoppler::GetLength(int64_t nMaxSize)
 
 static char *GooStringToCharStart(GooString &gstr)
 {
-    auto nLength = gstr.getLength();
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 10)
+    const auto nLength = gstr.size();
+#else
+    const auto nLength = gstr.getLength();
+#endif
     if (nLength)
     {
         char *pszContent = static_cast<char *>(VSI_MALLOC_VERBOSE(nLength + 1));
@@ -1483,8 +1490,10 @@ int64_t GDALPDFStreamPoppler::GetRawLength()
         return m_nRawLength;
 
     auto undecodeStream = m_poStream->getUndecodedStream();
-#if POPPLER_MAJOR_VERSION > 25 ||                                              \
-    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+#if POPPLER_MAJOR_VERSION > 25
+    if (!undecodeStream->rewind())
+        return 0;
+#elif POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2
     if (!undecodeStream->reset())
         return 0;
 #else
@@ -1514,7 +1523,12 @@ char *GDALPDFStreamPoppler::GetRawBytes()
                  "GDALPDFStreamPoppler::GetRawBytes(): %s", e.what());
         return nullptr;
     }
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 10)
+    m_nRawLength = gstr.size();
+#else
     m_nRawLength = gstr.getLength();
+#endif
     return GooStringToCharStart(gstr);
 }
 
@@ -1737,7 +1751,8 @@ const char *GDALPDFObjectPodofo::GetTypeNameNative()
 {
     try
     {
-        return m_po->GetDataTypeString();
+        osStr = m_po->GetDataTypeString();
+        return osStr.c_str();
     }
     catch (PoDoFo::PdfError &oError)
     {
@@ -1967,7 +1982,8 @@ std::map<CPLString, GDALPDFObject *> &GDALPDFDictionaryPodofo::GetValues()
     (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
     for (const auto &oIter : *m_poDict)
     {
-        Get(oIter.first.GetString().c_str());
+        const std::string osTmp(oIter.first.GetString());
+        Get(osTmp.c_str());
     }
 #else
     for (const auto &oIter : m_poDict->GetKeys())

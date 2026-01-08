@@ -31,7 +31,21 @@
 CPLErr GTiffRasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
 {
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
-    return GDALPamRasterBand::SetDefaultRAT(poRAT);
+    m_bRATSet = true;
+    m_bRATTriedReadingFromPAM = true;
+    if (poRAT)
+        m_poRAT.reset(poRAT->Clone());
+    else
+        m_poRAT.reset();
+    const bool bWriteToPAM =
+        CPLTestBool(CPLGetConfigOption("GTIFF_WRITE_RAT_TO_PAM", "NO"));
+    if (!bWriteToPAM)
+        m_poGDS->m_bMetadataChanged = true;
+    if (bWriteToPAM || GDALPamRasterBand::GetDefaultRAT())
+    {
+        return GDALPamRasterBand::SetDefaultRAT(poRAT);
+    }
+    return CE_None;
 }
 
 /************************************************************************/
@@ -583,7 +597,7 @@ CPLErr GTiffRasterBand::SetColorTable(GDALColorTable *poCT)
             return CE_Failure;
         }
 
-        if (eDataType != GDT_Byte && eDataType != GDT_UInt16)
+        if (eDataType != GDT_UInt8 && eDataType != GDT_UInt16)
         {
             ReportError(
                 CE_Failure, CPLE_NotSupported,
@@ -626,7 +640,7 @@ CPLErr GTiffRasterBand::SetColorTable(GDALColorTable *poCT)
     {
         int nColors = 65536;
 
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
             nColors = 256;
 
         unsigned short *panTRed = static_cast<unsigned short *>(

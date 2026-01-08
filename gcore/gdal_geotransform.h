@@ -16,6 +16,10 @@
 
 #include "gdal.h"
 
+#include <utility>
+
+class GDALRasterWindow;
+
 /* ******************************************************************** */
 /*                             GDALGeoTransform                         */
 /* ******************************************************************** */
@@ -34,7 +38,7 @@
  *
  * @since 3.12
  */
-class GDALGeoTransform
+class CPL_DLL GDALGeoTransform
 {
   public:
     // NOTE to GDAL developers: do not reorder those coefficients!
@@ -149,6 +153,46 @@ class GDALGeoTransform
         GDALApplyGeoTransform(data(), dfPixel, dfLine, pdfGeoX, pdfGeoY);
     }
 
+    /** Apply a (inverse) geotransform to an OGREnvelope in georeferenced coordinates.
+     *
+     * @param env An envelope in georeferenced coordinates
+     * @param[out] window A window in pixel/line coordinates
+     * @return true if the geotransform was successfully applied
+     */
+    bool Apply(const OGREnvelope &env, GDALRasterWindow &window) const;
+
+    /** Apply a geotransform to a GDALRasterWindow in pixel/line coordinates.
+     *
+     * @param window A window in pixel/line coordinates
+     * @param[out] env An envelope in georeferenced coordinates
+     * @return true if the geotransform was successfully applied
+     */
+    bool Apply(const GDALRasterWindow &window, OGREnvelope &env) const;
+
+    /**
+     * Apply GeoTransform to x/y coordinate.
+     *
+     * Applies the following computation, converting a (pixel, line) coordinate
+     * into a georeferenced (geo_x, geo_y) location.
+     * \code{.c}
+     *  out.first = padfGeoTransform[0] + dfPixel * padfGeoTransform[1]
+     *                                   + dfLine  * padfGeoTransform[2];
+     *  out.second = padfGeoTransform[3] + dfPixel * padfGeoTransform[4]
+     *                                   + dfLine  * padfGeoTransform[5];
+     * \endcode
+     *
+     * @param dfPixel Input pixel position.
+     * @param dfLine Input line position.
+     * @return output location as a (geo_x, geo_y) pair
+     */
+
+    inline std::pair<double, double> Apply(double dfPixel, double dfLine) const
+    {
+        double dfOutX, dfOutY;
+        GDALApplyGeoTransform(data(), dfPixel, dfLine, &dfOutX, &dfOutY);
+        return {dfOutX, dfOutY};
+    }
+
     /**
      * Invert Geotransform.
      *
@@ -177,6 +221,13 @@ class GDALGeoTransform
         xrot *= dfYRatio;
         yrot *= dfXRatio;
         yscale *= dfYRatio;
+    }
+
+    /** Check whether the geotransform has a rotation component.
+     */
+    inline bool IsAxisAligned() const
+    {
+        return xrot == 0 && yrot == 0;
     }
 };
 

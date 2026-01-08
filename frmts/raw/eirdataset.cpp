@@ -43,7 +43,7 @@ class EIRDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(EIRDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     EIRDataset();
@@ -83,7 +83,7 @@ EIRDataset::~EIRDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr EIRDataset::Close()
+CPLErr EIRDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -274,7 +274,7 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
     int nBands = 1;
     int nSkipBytes = 0;
     int nLineCount = 0;
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     int nBits = 8;
     char chByteOrder = 'M';
     char szLayout[10] = "BIL";
@@ -347,7 +347,7 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
                 EQUAL(aosTokens[1], "U4") || EQUAL(aosTokens[1], "U8"))
             {
                 nBits = 8;
-                eDataType = GDT_Byte;
+                eDataType = GDT_UInt8;
             }
             else if (EQUAL(aosTokens[1], "U16"))
             {

@@ -431,7 +431,6 @@ public:
     return OSRGetAngularUnits( self, 0 );
   }
 
-  // Added in GDAL 2.1
   const char* GetAngularUnitsName()
   {
     char *name = 0;
@@ -495,7 +494,6 @@ public:
     return pArea;
   }
 
-  /* Added in GDAL 2.1 */
   const char *GetAxisName( const char *target_key, int iAxis ) {
     return OSRGetAxis( self, target_key, iAxis, NULL );
   }
@@ -505,7 +503,6 @@ public:
     return OSRGetAxesCount(self);
   }
 
-  /* Added in GDAL 2.1 */
   OGRAxisOrientation GetAxisOrientation( const char *target_key, int iAxis ) {
     OGRAxisOrientation orientation = OAO_Other;
     OSRGetAxis( self, target_key, iAxis, &orientation );
@@ -1409,7 +1406,6 @@ void TransformBounds(
 } /*extend */
 };
 
-/* New in GDAL 1.10 */
 %newobject CreateCoordinateTransformation;
 %inline %{
   OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options = NULL ) {

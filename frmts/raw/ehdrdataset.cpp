@@ -56,7 +56,7 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
                                int nPixelOffsetIn, int nLineOffsetIn,
                                GDALDataType eDataTypeIn,
                                RawRasterBand::ByteOrder eByteOrderIn,
-                               int nBitsIn)
+                               int nBitsIn, bool bTruncatedFileAllowedIn)
     : RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
                     nLineOffsetIn, eDataTypeIn, eByteOrderIn,
                     RawRasterBand::OwnFP::NO),
@@ -65,6 +65,7 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
       dfStdDev(0.0), minmaxmeanstddev(0)
 {
     m_bValid = RawRasterBand::IsValid();
+    bTruncatedFileAllowed = bTruncatedFileAllowedIn;
 
     EHdrDataset *poEDS = cpl::down_cast<EHdrDataset *>(poDS);
 
@@ -355,7 +356,7 @@ EHdrDataset::~EHdrDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr EHdrDataset::Close()
+CPLErr EHdrDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -984,7 +985,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     double dfNoData = 0.0;
     int nLineCount = 0;
     int bNoDataSet = FALSE;
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     int nBits = -1;
     char chByteOrder = 'M';
     char chPixelType = 'N';  // Not defined.
@@ -1212,7 +1213,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         if (chPixelType == 'S')
             eDataType = GDT_Int8;
         else
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
         nBits = 8;
     }
     else if (nBits == -1)
@@ -1224,7 +1225,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         }
         else
         {
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             nBits = 8;
         }
     }
@@ -1299,7 +1300,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             chByteOrder == 'I' || chByteOrder == 'L'
                 ? RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
                 : RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
-            nBits);
+            nBits, /* bTruncatedFileAllowed = */ !bFileSizeCheck);
         if (!poBand->IsValid())
             return nullptr;
 
@@ -1647,7 +1648,7 @@ GDALDataset *EHdrDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    if (eType != GDT_Byte && eType != GDT_Int8 && eType != GDT_Float32 &&
+    if (eType != GDT_UInt8 && eType != GDT_Int8 && eType != GDT_Float32 &&
         eType != GDT_UInt16 && eType != GDT_Int16 && eType != GDT_Int32 &&
         eType != GDT_UInt32)
     {
@@ -1732,7 +1733,7 @@ GDALDataset *EHdrDataset::Create(const char *pszFilename, int nXSize,
         bOK &= VSIFPrintfL(fp, "PIXELTYPE      FLOAT\n") >= 0;
     else if (eType == GDT_Int8 || eType == GDT_Int16 || eType == GDT_Int32)
         bOK &= VSIFPrintfL(fp, "PIXELTYPE      SIGNEDINT\n") >= 0;
-    else if (eType == GDT_Byte && EQUAL(pszPixelType, "SIGNEDBYTE"))
+    else if (eType == GDT_UInt8 && EQUAL(pszPixelType, "SIGNEDBYTE"))
         bOK &= VSIFPrintfL(fp, "PIXELTYPE      SIGNEDINT\n") >= 0;
     else
         bOK &= VSIFPrintfL(fp, "PIXELTYPE      UNSIGNEDINT\n") >= 0;
@@ -1779,7 +1780,7 @@ GDALDataset *EHdrDataset::CreateCopy(const char *pszFilename,
             poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
     }
 
-    if (poSrcBand->GetRasterDataType() == GDT_Byte &&
+    if (poSrcBand->GetRasterDataType() == GDT_UInt8 &&
         CSLFetchNameValue(papszOptions, "PIXELTYPE") == nullptr)
     {
         poSrcBand->EnablePixelTypeSignedByteWarning(false);

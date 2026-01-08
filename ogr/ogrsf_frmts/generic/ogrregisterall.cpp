@@ -17,6 +17,11 @@
 /*                           OGRRegisterAll()                           */
 /************************************************************************/
 
+/**
+  \brief Register all drivers.
+
+   @deprecated Use GDALAllRegister()
+*/
 void OGRRegisterAll()
 {
     GDALAllRegister();

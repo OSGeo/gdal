@@ -35,6 +35,7 @@ pytestmark = pytest.mark.require_driver("BMP")
 init_list = [
     ("1bit.bmp", 200),
     ("4bit_pal.bmp", 2587),
+    ("4bit_rle4.bmp", 2587),
     ("8bit_pal.bmp", 4672),
     ("byte_rle8.bmp", 4672),
     ("bmp/red_rgb_1x1.bmp", 3),

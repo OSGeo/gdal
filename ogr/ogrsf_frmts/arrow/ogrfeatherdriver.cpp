@@ -234,7 +234,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
             osLayername = "layer";
         auto poLayer = std::make_unique<OGRFeatherLayer>(
             poDS.get(), osLayername.c_str(), infile, bSeekable, options,
-            poRecordBatchStreamReader);
+            poRecordBatchStreamReader, poOpenInfo->papszOpenOptions);
         poDS->SetLayer(std::move(poLayer));
 
         // Pre-load field domains, as this depends on the first record batch
@@ -270,7 +270,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
         auto poRecordBatchReader = *result;
         auto poLayer = std::make_unique<OGRFeatherLayer>(
             poDS.get(), CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str(),
-            poRecordBatchReader);
+            poRecordBatchReader, poOpenInfo->papszOpenOptions);
         poDS->SetLayer(std::move(poLayer));
     }
     return poDS.release();
@@ -447,6 +447,19 @@ void OGRFeatherDriver::InitMetadata()
         CPLAddXMLAttributeAndValue(psOption, "type", "string");
         CPLAddXMLAttributeAndValue(psOption, "description",
                                    "Name of the FID column to create");
+    }
+
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "TIMESTAMP_WITH_OFFSET");
+        CPLAddXMLAttributeAndValue(psOption, "type", "string-select");
+        CPLAddXMLAttributeAndValue(psOption, "default", "AUTO");
+        CPLAddXMLAttributeAndValue(
+            psOption, "description",
+            "Whether timestamp with offset fields should be used");
+        CPLCreateXMLElementAndValue(psOption, "Value", "AUTO");
+        CPLCreateXMLElementAndValue(psOption, "Value", "YES");
+        CPLCreateXMLElementAndValue(psOption, "Value", "NO");
     }
 
     char *pszXML = CPLSerializeXMLTree(oTree.get());

@@ -137,7 +137,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int nRasterXSize = 0;
     int nRasterYSize = 0;
 
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     GDALAccess eAccess = GA_ReadOnly;
 
     /* stuff related to blocking, and raster cache */
@@ -609,7 +609,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     class CPL_DLL WindowIteratorWrapper
     {
       public:
-        explicit WindowIteratorWrapper(const GDALRasterBand &band);
+        explicit WindowIteratorWrapper(const GDALRasterBand &band,
+                                       size_t maxSize);
+
+        uint64_t count() const;
 
         WindowIterator begin() const;
 
@@ -624,7 +627,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     //! @endcond
 
-    WindowIteratorWrapper IterateWindows() const;
+    WindowIteratorWrapper IterateWindows(size_t maxSize = 0) const;
 
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
@@ -638,7 +641,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     //! @endcond
 
     /** Convert a GDALRasterBand* to a GDALRasterBandH.
-     * @since GDAL 2.3
      */
     static inline GDALRasterBandH ToHandle(GDALRasterBand *poBand)
     {
@@ -646,7 +648,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     }
 
     /** Convert a GDALRasterBandH to a GDALRasterBand*.
-     * @since GDAL 2.3
      */
     static inline GDALRasterBand *FromHandle(GDALRasterBandH hBand)
     {

@@ -70,7 +70,7 @@ class GDALAVIFDataset final : public GDALPamDataset
 
     ~GDALAVIFDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     static GDALPamDataset *OpenStaticPAM(GDALOpenInfo *poOpenInfo);
 
@@ -162,7 +162,7 @@ GDALAVIFDataset::~GDALAVIFDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr GDALAVIFDataset::Close()
+CPLErr GDALAVIFDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
 
@@ -532,7 +532,7 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
     }
 
     const auto eDataType =
-        (m_decoder->image->depth <= 8) ? GDT_Byte : GDT_UInt16;
+        (m_decoder->image->depth <= 8) ? GDT_UInt8 : GDT_UInt16;
     const int l_nBands = m_decoder->image->yuvFormat == AVIF_PIXEL_FORMAT_YUV400
                              ? (m_decoder->alphaPresent ? 2 : 1)
                          : m_decoder->alphaPresent ? 4
@@ -592,16 +592,16 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
         VSILFILE *fpEXIF =
             VSIFileFromMemBuffer(nullptr, m_decoder->image->exif.data,
                                  m_decoder->image->exif.size, false);
-        int nExifOffset = 0;
-        int nInterOffset = 0;
-        int nGPSOffset = 0;
+        uint32_t nExifOffset = 0;
+        uint32_t nInterOffset = 0;
+        uint32_t nGPSOffset = 0;
         char **papszEXIFMetadata = nullptr;
 #ifdef CPL_LSB
         const bool bSwab = m_decoder->image->exif.data[0] == 0x4d;
 #else
         const bool bSwab = m_decoder->image->exif.data[0] == 0x49;
 #endif
-        constexpr int nTIFFHEADER = 0;
+        constexpr uint32_t nTIFFHEADER = 0;
         uint32_t nTiffDirStart;
         memcpy(&nTiffDirStart, m_decoder->image->exif.data + 4,
                sizeof(uint32_t));
@@ -743,7 +743,7 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
     }
 
     const auto eDT = poFirstBand->GetRasterDataType();
-    if (eDT != GDT_Byte && eDT != GDT_UInt16)
+    if (eDT != GDT_UInt8 && eDT != GDT_UInt16)
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
@@ -751,7 +751,7 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    int nBits = eDT == GDT_Byte ? 8 : 12;
+    int nBits = eDT == GDT_UInt8 ? 8 : 12;
     const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
     if (pszNBITS)
     {
@@ -765,7 +765,7 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
             nBits = atoi(pszNBITS);
         }
     }
-    if ((eDT == GDT_Byte && nBits != 8) ||
+    if ((eDT == GDT_UInt8 && nBits != 8) ||
         (eDT == GDT_UInt16 && nBits != 10 && nBits != 12))
     {
         CPLError(CE_Failure, CPLE_FileIO,

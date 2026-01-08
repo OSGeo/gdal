@@ -68,7 +68,7 @@ static PyObject *GDALCreateNumpyArray(PyObject *pCreateArray, void *pBuffer,
     const char *pszDataType = nullptr;
     switch (eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             pszDataType = "uint8";
             break;
         case GDT_Int8:
@@ -1098,7 +1098,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         GDALDataType eAllSrcType = GDT_Unknown;
         for (auto &poSource : m_papoSources)
         {
-            if (poSource->GetType() == VRTSimpleSource::GetTypeStatic())
+            if (poSource->IsSimpleSource())
             {
                 const auto poSS =
                     static_cast<VRTSimpleSource *>(poSource.get());
@@ -1122,9 +1122,9 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         }
 
         if (eAllSrcType != GDT_Unknown)
-            eSrcType = eAllSrcType;
+            eSrcType = GDALDataTypeUnion(eAllSrcType, eDataType);
         else
-            eSrcType = eBufType;
+            eSrcType = GDALDataTypeUnion(GDT_Float64, eDataType);
     }
     const int nSrcTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
 
@@ -1202,9 +1202,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                 static_cast<VRTSimpleSource *>(m_papoSources[iSource].get());
             if (!poSource->GetSrcDstWindow(
                     nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
-                    &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
-                    &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
-                    &nOutXSize, &nOutYSize, bError))
+                    psExtraArg->eResampleAlg, &dfReqXOff, &dfReqYOff,
+                    &dfReqXSize, &dfReqYSize, &nReqXOff, &nReqYOff, &nReqXSize,
+                    &nReqYSize, &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize,
+                    bError))
             {
                 if (bError)
                 {

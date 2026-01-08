@@ -3051,6 +3051,80 @@ TEST_F(test_gdal, GDALBufferHasOnlyNoData)
                                  int nBitsPerSample,
                                  GDALBufferSampleFormat nSampleFormat);
      */
+
+    {
+        std::vector<GByte> abyBuffer(100);
+        EXPECT_TRUE(
+            GDALBufferHasOnlyNoData(abyBuffer.data(), 0.0, abyBuffer.size(), 1,
+                                    abyBuffer.size(), 1, 8, GSF_UNSIGNED_INT));
+
+        for (auto &v : abyBuffer)
+        {
+            v = 1;
+            EXPECT_FALSE(GDALBufferHasOnlyNoData(
+                abyBuffer.data(), 0.0, abyBuffer.size(), 1, abyBuffer.size(), 1,
+                8, GSF_UNSIGNED_INT));
+            v = 0;
+        }
+    }
+
+    {
+        std::vector<GFloat16> afBuffer(100);
+        afBuffer[0] = static_cast<GFloat16>(-0.0f);
+        afBuffer[50] = static_cast<GFloat16>(-0.0f);
+        afBuffer.back() = static_cast<GFloat16>(-0.0f);
+        EXPECT_TRUE(GDALBufferHasOnlyNoData(afBuffer.data(), 0.0,
+                                            afBuffer.size(), 1, afBuffer.size(),
+                                            1, 16, GSF_FLOATING_POINT));
+
+        for (auto &v : afBuffer)
+        {
+            v = static_cast<GFloat16>(1.0f);
+            EXPECT_FALSE(GDALBufferHasOnlyNoData(
+                afBuffer.data(), 0.0, afBuffer.size(), 1, afBuffer.size(), 1,
+                16, GSF_FLOATING_POINT));
+            v = static_cast<GFloat16>(0.0f);
+        }
+    }
+
+    {
+        std::vector<float> afBuffer(100);
+        afBuffer[0] = -0.0f;
+        afBuffer[50] = -0.0f;
+        afBuffer.back() = -0.0f;
+        EXPECT_TRUE(GDALBufferHasOnlyNoData(afBuffer.data(), 0.0,
+                                            afBuffer.size(), 1, afBuffer.size(),
+                                            1, 32, GSF_FLOATING_POINT));
+
+        for (auto &v : afBuffer)
+        {
+            v = 1.0f;
+            EXPECT_FALSE(GDALBufferHasOnlyNoData(
+                afBuffer.data(), 0.0, afBuffer.size(), 1, afBuffer.size(), 1,
+                32, GSF_FLOATING_POINT));
+            v = 0.0f;
+        }
+    }
+
+    {
+        std::vector<double> adfBuffer(100);
+        adfBuffer[0] = -0;
+        adfBuffer[50] = -0;
+        adfBuffer.back() = -0;
+        EXPECT_TRUE(GDALBufferHasOnlyNoData(
+            adfBuffer.data(), 0.0, adfBuffer.size(), 1, adfBuffer.size(), 1, 64,
+            GSF_FLOATING_POINT));
+
+        for (auto &v : adfBuffer)
+        {
+            v = 1.0;
+            EXPECT_FALSE(GDALBufferHasOnlyNoData(
+                adfBuffer.data(), 0.0, adfBuffer.size(), 1, adfBuffer.size(), 1,
+                64, GSF_FLOATING_POINT));
+            v = 0.0;
+        }
+    }
+
     EXPECT_TRUE(
         GDALBufferHasOnlyNoData("\x00", 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT));
     EXPECT_TRUE(
@@ -3124,6 +3198,20 @@ TEST_F(test_gdal, GDALBufferHasOnlyNoData)
                                          GSF_SIGNED_INT));
     EXPECT_TRUE(!GDALBufferHasOnlyNoData(&int32val, 0x80000000, 1, 1, 1, 1, 32,
                                          GSF_SIGNED_INT));
+
+    GFloat16 float16val = static_cast<GFloat16>(-1);
+    EXPECT_TRUE(GDALBufferHasOnlyNoData(&float16val, -1.0, 1, 1, 1, 1, 16,
+                                        GSF_FLOATING_POINT));
+    EXPECT_TRUE(!GDALBufferHasOnlyNoData(&float16val, 0.0, 1, 1, 1, 1, 16,
+                                         GSF_FLOATING_POINT));
+    EXPECT_TRUE(!GDALBufferHasOnlyNoData(&float16val, 1e50, 1, 1, 1, 1, 16,
+                                         GSF_FLOATING_POINT));
+
+    GFloat16 float16nan = cpl::NumericLimits<GFloat16>::quiet_NaN();
+    EXPECT_TRUE(GDALBufferHasOnlyNoData(&float16nan, float16nan, 1, 1, 1, 1, 16,
+                                        GSF_FLOATING_POINT));
+    EXPECT_TRUE(!GDALBufferHasOnlyNoData(&float16nan, 0.0, 1, 1, 1, 1, 16,
+                                         GSF_FLOATING_POINT));
 
     float float32val = -1;
     EXPECT_TRUE(GDALBufferHasOnlyNoData(&float32val, -1.0, 1, 1, 1, 1, 32,
@@ -6049,65 +6137,344 @@ TEST_F(test_gdal, GDALRasterBand_window_iterator)
     std::unique_ptr<GDALDataset> poDS(poDrv->Create(
         tmpFilename.c_str(), 1050, 600, 1, GDT_Byte, aosOptions.List()));
     GDALRasterBand *poBand = poDS->GetRasterBand(1);
-    std::vector<GDALRasterWindow> windows(poBand->IterateWindows().begin(),
-                                          poBand->IterateWindows().end());
     poDS->MarkSuppressOnClose();
 
-    ASSERT_EQ(windows.size(), 9);
+    // iterate on individual blocks
+    for (size_t sz : {0, 256 * 512 - 1})
+    {
+        std::vector<GDALRasterWindow> windows(
+            poBand->IterateWindows(sz).begin(),
+            poBand->IterateWindows(sz).end());
 
-    // top-left
-    EXPECT_EQ(windows[0].nXOff, 0);
-    EXPECT_EQ(windows[0].nYOff, 0);
-    EXPECT_EQ(windows[0].nXSize, 512);
-    EXPECT_EQ(windows[0].nYSize, 256);
+        ASSERT_EQ(windows.size(), 9);
 
-    // top-middle
-    EXPECT_EQ(windows[1].nXOff, 512);
-    EXPECT_EQ(windows[1].nYOff, 0);
-    EXPECT_EQ(windows[1].nXSize, 512);
-    EXPECT_EQ(windows[1].nYSize, 256);
+        // top-left
+        EXPECT_EQ(windows[0].nXOff, 0);
+        EXPECT_EQ(windows[0].nYOff, 0);
+        EXPECT_EQ(windows[0].nXSize, 512);
+        EXPECT_EQ(windows[0].nYSize, 256);
 
-    // top-right
-    EXPECT_EQ(windows[2].nXOff, 1024);
-    EXPECT_EQ(windows[2].nYOff, 0);
-    EXPECT_EQ(windows[2].nXSize, 1050 - 1024);
-    EXPECT_EQ(windows[2].nYSize, 256);
+        // top-middle
+        EXPECT_EQ(windows[1].nXOff, 512);
+        EXPECT_EQ(windows[1].nYOff, 0);
+        EXPECT_EQ(windows[1].nXSize, 512);
+        EXPECT_EQ(windows[1].nYSize, 256);
 
-    // middle-left
-    EXPECT_EQ(windows[3].nXOff, 0);
-    EXPECT_EQ(windows[3].nYOff, 256);
-    EXPECT_EQ(windows[3].nXSize, 512);
-    EXPECT_EQ(windows[3].nYSize, 256);
+        // top-right
+        EXPECT_EQ(windows[2].nXOff, 1024);
+        EXPECT_EQ(windows[2].nYOff, 0);
+        EXPECT_EQ(windows[2].nXSize, 1050 - 1024);
+        EXPECT_EQ(windows[2].nYSize, 256);
 
-    // middle-middle
-    EXPECT_EQ(windows[4].nXOff, 512);
-    EXPECT_EQ(windows[4].nYOff, 256);
-    EXPECT_EQ(windows[4].nXSize, 512);
-    EXPECT_EQ(windows[4].nYSize, 256);
+        // middle-left
+        EXPECT_EQ(windows[3].nXOff, 0);
+        EXPECT_EQ(windows[3].nYOff, 256);
+        EXPECT_EQ(windows[3].nXSize, 512);
+        EXPECT_EQ(windows[3].nYSize, 256);
 
-    // middle-right
-    EXPECT_EQ(windows[5].nXOff, 1024);
-    EXPECT_EQ(windows[5].nYOff, 256);
-    EXPECT_EQ(windows[5].nXSize, 1050 - 1024);
-    EXPECT_EQ(windows[5].nYSize, 256);
+        // middle-middle
+        EXPECT_EQ(windows[4].nXOff, 512);
+        EXPECT_EQ(windows[4].nYOff, 256);
+        EXPECT_EQ(windows[4].nXSize, 512);
+        EXPECT_EQ(windows[4].nYSize, 256);
 
-    // bottom-left
-    EXPECT_EQ(windows[6].nXOff, 0);
-    EXPECT_EQ(windows[6].nYOff, 512);
-    EXPECT_EQ(windows[6].nXSize, 512);
-    EXPECT_EQ(windows[6].nYSize, 600 - 512);
+        // middle-right
+        EXPECT_EQ(windows[5].nXOff, 1024);
+        EXPECT_EQ(windows[5].nYOff, 256);
+        EXPECT_EQ(windows[5].nXSize, 1050 - 1024);
+        EXPECT_EQ(windows[5].nYSize, 256);
 
-    // bottom-middle
-    EXPECT_EQ(windows[7].nXOff, 512);
-    EXPECT_EQ(windows[7].nYOff, 512);
-    EXPECT_EQ(windows[7].nXSize, 512);
-    EXPECT_EQ(windows[7].nYSize, 600 - 512);
+        // bottom-left
+        EXPECT_EQ(windows[6].nXOff, 0);
+        EXPECT_EQ(windows[6].nYOff, 512);
+        EXPECT_EQ(windows[6].nXSize, 512);
+        EXPECT_EQ(windows[6].nYSize, 600 - 512);
 
-    // bottom-right
-    EXPECT_EQ(windows[8].nXOff, 1024);
-    EXPECT_EQ(windows[8].nYOff, 512);
-    EXPECT_EQ(windows[8].nXSize, 1050 - 1024);
-    EXPECT_EQ(windows[8].nYSize, 600 - 512);
+        // bottom-middle
+        EXPECT_EQ(windows[7].nXOff, 512);
+        EXPECT_EQ(windows[7].nYOff, 512);
+        EXPECT_EQ(windows[7].nXSize, 512);
+        EXPECT_EQ(windows[7].nYSize, 600 - 512);
+
+        // bottom-right
+        EXPECT_EQ(windows[8].nXOff, 1024);
+        EXPECT_EQ(windows[8].nYOff, 512);
+        EXPECT_EQ(windows[8].nXSize, 1050 - 1024);
+        EXPECT_EQ(windows[8].nYSize, 600 - 512);
+    }
+
+    // iterate on single rows of blocks
+    for (size_t sz : {1050 * 256, 1050 * 511})
+    {
+        std::vector<GDALRasterWindow> windows(
+            poBand->IterateWindows(sz).begin(),
+            poBand->IterateWindows(sz).end());
+
+        ASSERT_EQ(windows.size(), 3);
+
+        // top
+        EXPECT_EQ(windows[0].nXOff, 0);
+        EXPECT_EQ(windows[0].nYOff, 0);
+        EXPECT_EQ(windows[0].nXSize, 1050);
+        EXPECT_EQ(windows[0].nYSize, 256);
+
+        // middle
+        EXPECT_EQ(windows[1].nXOff, 0);
+        EXPECT_EQ(windows[1].nYOff, 256);
+        EXPECT_EQ(windows[1].nXSize, 1050);
+        EXPECT_EQ(windows[1].nYSize, 256);
+
+        // bottom
+        EXPECT_EQ(windows[2].nXOff, 0);
+        EXPECT_EQ(windows[2].nYOff, 512);
+        EXPECT_EQ(windows[2].nXSize, 1050);
+        EXPECT_EQ(windows[2].nYSize, 600 - 512);
+    }
+
+    // iterate on batches of rows of blocks
+    {
+        auto sz = 1050 * 512;
+
+        std::vector<GDALRasterWindow> windows(
+            poBand->IterateWindows(sz).begin(),
+            poBand->IterateWindows(sz).end());
+
+        ASSERT_EQ(windows.size(), 2);
+
+        // top
+        EXPECT_EQ(windows[0].nXOff, 0);
+        EXPECT_EQ(windows[0].nYOff, 0);
+        EXPECT_EQ(windows[0].nXSize, 1050);
+        EXPECT_EQ(windows[0].nYSize, 512);
+
+        // bottom
+        EXPECT_EQ(windows[1].nXOff, 0);
+        EXPECT_EQ(windows[1].nYOff, 512);
+        EXPECT_EQ(windows[1].nXSize, 1050);
+        EXPECT_EQ(windows[1].nYSize, 600 - 512);
+    }
+}
+
+TEST_F(test_gdal, GDALMDArrayRawBlockInfo)
+{
+    GDALMDArrayRawBlockInfo info;
+    {
+        GDALMDArrayRawBlockInfo info2(info);
+        EXPECT_EQ(info2.nOffset, 0);
+        EXPECT_EQ(info2.nSize, 0);
+        EXPECT_EQ(info2.pszFilename, nullptr);
+        EXPECT_EQ(info2.papszInfo, nullptr);
+        EXPECT_EQ(info2.pabyInlineData, nullptr);
+    }
+
+    {
+        GDALMDArrayRawBlockInfo info2;
+        info2 = info;
+        EXPECT_EQ(info2.nOffset, 0);
+        EXPECT_EQ(info2.nSize, 0);
+        EXPECT_EQ(info2.pszFilename, nullptr);
+        EXPECT_EQ(info2.papszInfo, nullptr);
+        EXPECT_EQ(info2.pabyInlineData, nullptr);
+
+        info2 = std::move(info);
+        EXPECT_EQ(info2.nOffset, 0);
+        EXPECT_EQ(info2.nSize, 0);
+        EXPECT_EQ(info2.pszFilename, nullptr);
+        EXPECT_EQ(info2.papszInfo, nullptr);
+        EXPECT_EQ(info2.pabyInlineData, nullptr);
+
+        const auto pinfo2 = &info2;
+        info2 = *pinfo2;
+        EXPECT_EQ(info2.nOffset, 0);
+        EXPECT_EQ(info2.nSize, 0);
+        EXPECT_EQ(info2.pszFilename, nullptr);
+        EXPECT_EQ(info2.papszInfo, nullptr);
+        EXPECT_EQ(info2.pabyInlineData, nullptr);
+    }
+
+    {
+        GDALMDArrayRawBlockInfo info2(std::move(info));
+        EXPECT_EQ(info2.nOffset, 0);
+        EXPECT_EQ(info2.nSize, 0);
+        EXPECT_EQ(info2.pszFilename, nullptr);
+        EXPECT_EQ(info2.papszInfo, nullptr);
+        EXPECT_EQ(info2.pabyInlineData, nullptr);
+    }
+
+    info.nOffset = 1;
+    info.nSize = 2;
+    info.pszFilename = CPLStrdup("filename");
+    info.papszInfo = CSLSetNameValue(nullptr, "key", "value");
+    info.pabyInlineData =
+        static_cast<GByte *>(CPLMalloc(static_cast<size_t>(info.nSize)));
+    info.pabyInlineData[0] = 1;
+    info.pabyInlineData[1] = 2;
+
+    {
+        GDALMDArrayRawBlockInfo info2;
+        info2 = info;
+        EXPECT_EQ(info2.nOffset, info.nOffset);
+        EXPECT_EQ(info2.nSize, info.nSize);
+        EXPECT_STREQ(info2.pszFilename, info.pszFilename);
+        EXPECT_TRUE(info2.papszInfo != nullptr);
+        EXPECT_STREQ(info2.papszInfo[0], "key=value");
+        EXPECT_TRUE(info2.papszInfo[1] == nullptr);
+        ASSERT_NE(info2.pabyInlineData, nullptr);
+        EXPECT_EQ(info2.pabyInlineData[0], 1);
+        EXPECT_EQ(info2.pabyInlineData[1], 2);
+    }
+
+    {
+        GDALMDArrayRawBlockInfo info2(info);
+        EXPECT_EQ(info2.nOffset, info.nOffset);
+        EXPECT_EQ(info2.nSize, info.nSize);
+        EXPECT_STREQ(info2.pszFilename, info.pszFilename);
+        EXPECT_TRUE(info2.papszInfo != nullptr);
+        EXPECT_STREQ(info2.papszInfo[0], "key=value");
+        EXPECT_TRUE(info2.papszInfo[1] == nullptr);
+        ASSERT_NE(info2.pabyInlineData, nullptr);
+        EXPECT_EQ(info2.pabyInlineData[0], 1);
+        EXPECT_EQ(info2.pabyInlineData[1], 2);
+    }
+
+    {
+        GDALMDArrayRawBlockInfo info2;
+        info2 = info;
+        EXPECT_EQ(info2.nOffset, info.nOffset);
+        EXPECT_EQ(info2.nSize, info.nSize);
+        EXPECT_STREQ(info2.pszFilename, info.pszFilename);
+        EXPECT_TRUE(info2.papszInfo != nullptr);
+        EXPECT_STREQ(info2.papszInfo[0], "key=value");
+        EXPECT_TRUE(info2.papszInfo[1] == nullptr);
+        ASSERT_NE(info2.pabyInlineData, nullptr);
+        EXPECT_EQ(info2.pabyInlineData[0], 1);
+        EXPECT_EQ(info2.pabyInlineData[1], 2);
+
+        const auto pinfo2 = &info2;
+        info2 = *pinfo2;
+        EXPECT_EQ(info2.nOffset, info.nOffset);
+        EXPECT_EQ(info2.nSize, info.nSize);
+        EXPECT_STREQ(info2.pszFilename, info.pszFilename);
+        EXPECT_TRUE(info2.papszInfo != nullptr);
+        EXPECT_STREQ(info2.papszInfo[0], "key=value");
+        EXPECT_TRUE(info2.papszInfo[1] == nullptr);
+        ASSERT_NE(info2.pabyInlineData, nullptr);
+        EXPECT_EQ(info2.pabyInlineData[0], 1);
+        EXPECT_EQ(info2.pabyInlineData[1], 2);
+    }
+
+    {
+        GDALMDArrayRawBlockInfo infoCopy(info);
+        GDALMDArrayRawBlockInfo info2(std::move(info));
+        info = infoCopy;
+
+        // to avoid Coverity warng that the above copy assignment could be a
+        // moved one...
+        infoCopy.nOffset = 1;
+        CPL_IGNORE_RET_VAL(infoCopy.nOffset);
+
+        EXPECT_EQ(info2.nOffset, info.nOffset);
+        EXPECT_EQ(info2.nSize, info.nSize);
+        EXPECT_STREQ(info2.pszFilename, info.pszFilename);
+        EXPECT_TRUE(info2.papszInfo != nullptr);
+        EXPECT_STREQ(info2.papszInfo[0], "key=value");
+        EXPECT_TRUE(info2.papszInfo[1] == nullptr);
+        ASSERT_NE(info2.pabyInlineData, nullptr);
+        EXPECT_EQ(info2.pabyInlineData[0], 1);
+        EXPECT_EQ(info2.pabyInlineData[1], 2);
+    }
+
+    {
+        GDALMDArrayRawBlockInfo infoCopy(info);
+        GDALMDArrayRawBlockInfo info2;
+        info2 = std::move(info);
+        info = infoCopy;
+
+        // to avoid Coverity warng that the above copy assignment could be a
+        // moved one...
+        infoCopy.nOffset = 1;
+        CPL_IGNORE_RET_VAL(infoCopy.nOffset);
+
+        EXPECT_EQ(info2.nOffset, info.nOffset);
+        EXPECT_EQ(info2.nSize, info.nSize);
+        EXPECT_STREQ(info2.pszFilename, info.pszFilename);
+        EXPECT_TRUE(info2.papszInfo != nullptr);
+        EXPECT_STREQ(info2.papszInfo[0], "key=value");
+        EXPECT_TRUE(info2.papszInfo[1] == nullptr);
+        ASSERT_NE(info2.pabyInlineData, nullptr);
+        EXPECT_EQ(info2.pabyInlineData[0], 1);
+        EXPECT_EQ(info2.pabyInlineData[1], 2);
+    }
+}
+
+TEST_F(test_gdal, GDALGeoTransform)
+{
+    GDALGeoTransform gt{5, 6, 0, 7, 0, -8};
+
+    OGREnvelope initEnv;
+    initEnv.MinX = -1;
+    initEnv.MinY = -2;
+    initEnv.MaxX = 3;
+    initEnv.MaxY = 4;
+
+    {
+        GDALRasterWindow window;
+        EXPECT_TRUE(gt.Apply(initEnv, window));
+        EXPECT_EQ(window.nXOff, -1);
+        EXPECT_EQ(window.nYOff, -25);
+        EXPECT_EQ(window.nXSize, 24);
+        EXPECT_EQ(window.nYSize, 48);
+    }
+
+    {
+        gt[5] = -gt[5];
+        GDALRasterWindow window;
+        EXPECT_TRUE(gt.Apply(initEnv, window));
+        gt[5] = -gt[5];
+        EXPECT_EQ(window.nXOff, -1);
+        EXPECT_EQ(window.nYOff, -9);
+        EXPECT_EQ(window.nXSize, 24);
+        EXPECT_EQ(window.nYSize, 48);
+    }
+
+    {
+        gt[1] = -gt[1];
+        GDALRasterWindow window;
+        EXPECT_TRUE(gt.Apply(initEnv, window));
+        gt[1] = -gt[1];
+        EXPECT_EQ(window.nXOff, -13);
+        EXPECT_EQ(window.nYOff, -25);
+        EXPECT_EQ(window.nXSize, 24);
+        EXPECT_EQ(window.nYSize, 48);
+    }
+
+    {
+        OGREnvelope env(initEnv);
+        env.MinX *= 1e10;
+        GDALRasterWindow window;
+        EXPECT_FALSE(gt.Apply(env, window));
+    }
+
+    {
+        OGREnvelope env(initEnv);
+        env.MinY *= 1e10;
+        GDALRasterWindow window;
+        EXPECT_FALSE(gt.Apply(env, window));
+    }
+
+    {
+        OGREnvelope env(initEnv);
+        env.MaxX *= 1e10;
+        GDALRasterWindow window;
+        EXPECT_FALSE(gt.Apply(env, window));
+    }
+
+    {
+        OGREnvelope env(initEnv);
+        env.MaxY *= 1e10;
+        GDALRasterWindow window;
+        EXPECT_FALSE(gt.Apply(env, window));
+    }
 }
 
 }  // namespace

@@ -39,8 +39,6 @@ static bool str_equal(const char *_s1, const char *_s2)
 /* ==================================================================== */
 /************************************************************************/
 
-constexpr size_t kMaxTagNameLen = 63;
-
 enum
 {
     // Leveller coordsys types.
@@ -962,9 +960,10 @@ bool LevellerDataset::write_tag(const char *pszTag, double d)
 
 bool LevellerDataset::write_tag(const char *pszTag, const char *psz)
 {
+    constexpr size_t kMaxTagNameLen = 63;
     CPLAssert(strlen(pszTag) <= kMaxTagNameLen);
 
-    char sz[kMaxTagNameLen + 1];
+    char sz[kMaxTagNameLen + 2];
     snprintf(sz, sizeof(sz), "%sl", pszTag);
     const size_t len = strlen(psz);
 

@@ -442,50 +442,22 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
     osFilename = VSIFileManager::GetHandler(osFilename.c_str())
                      ->GetStreamingFilename(osFilename);
 
-    const auto CheckTilePresence =
-        [this, &osFilename, &tileIndices, &bMissingTileOut]()
-    {
-        CPL_IGNORE_RET_VAL(osFilename);
-        auto poTilePresenceArray = OpenTilePresenceCache(false);
-        if (poTilePresenceArray)
-        {
-            std::vector<GUInt64> anTileIdx(m_aoDims.size());
-            const std::vector<size_t> anCount(m_aoDims.size(), 1);
-            const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
-            const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
-            const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
-            for (size_t i = 0; i < m_aoDims.size(); ++i)
-            {
-                anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
-            }
-            GByte byValue = 0;
-            if (poTilePresenceArray->Read(
-                    anTileIdx.data(), anCount.data(), anArrayStep.data(),
-                    anBufferStride.data(), eByteDT, &byValue) &&
-                byValue == 0)
-            {
-                CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
-                             osFilename.c_str());
-                bMissingTileOut = true;
-                return true;
-            }
-        }
-        return false;
-    };
-
     // First if we have a tile presence cache, check tile presence from it
     bool bEarlyRet;
     if (bUseMutex)
     {
         std::lock_guard<std::mutex> oLock(m_oMutex);
-        bEarlyRet = CheckTilePresence();
+        bEarlyRet = IsTileMissingFromCacheInfo(osFilename, tileIndices);
     }
     else
     {
-        bEarlyRet = CheckTilePresence();
+        bEarlyRet = IsTileMissingFromCacheInfo(osFilename, tileIndices);
     }
     if (bEarlyRet)
+    {
+        bMissingTileOut = true;
         return true;
+    }
 
     VSILFILE *fp = nullptr;
     // This is the number of files returned in a S3 directory listing operation
@@ -1149,12 +1121,12 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject &obj,
             if (chType == 'b' && nBytes == 1)  // boolean
             {
                 elt.nativeType = DtypeElt::NativeType::BOOLEAN;
-                eDT = GDT_Byte;
+                eDT = GDT_UInt8;
             }
             else if (chType == 'u' && nBytes == 1)
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
-                eDT = GDT_Byte;
+                eDT = GDT_UInt8;
             }
             else if (chType == 'i' && nBytes == 1)
             {
@@ -1500,7 +1472,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 else
                 {
                     if ((cpl::starts_with(osDirName, JSON_REF_FS_PREFIX) ||
-                         cpl::starts_with(osDirName, JSON_REF_FS_PREFIX)) &&
+                         cpl::starts_with(osDirName, PARQUET_REF_FS_PREFIX)) &&
                         osDirName.back() == '}')
                     {
                         break;
@@ -2037,7 +2009,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
 }
 
 /************************************************************************/
-/*                    ZarrV2Group::SetCompressorJson()                  */
+/*                    ZarrV2Array::SetCompressorJson()                  */
 /************************************************************************/
 
 void ZarrV2Array::SetCompressorJson(const CPLJSONObject &oCompressor)
@@ -2049,7 +2021,7 @@ void ZarrV2Array::SetCompressorJson(const CPLJSONObject &oCompressor)
 }
 
 /************************************************************************/
-/*                     ZarrV2Group::SetFilters()                        */
+/*                     ZarrV2Array::SetFilters()                        */
 /************************************************************************/
 
 void ZarrV2Array::SetFilters(const CPLJSONArray &oFiltersArray)
@@ -2058,4 +2030,39 @@ void ZarrV2Array::SetFilters(const CPLJSONArray &oFiltersArray)
     if (oFiltersArray.Size() > 0)
         m_aosStructuralInfo.SetNameValue("FILTERS",
                                          oFiltersArray.ToString().c_str());
+}
+
+/************************************************************************/
+/*                   ZarrV2Array::GetRawBlockInfoInfo()                 */
+/************************************************************************/
+
+CPLStringList ZarrV2Array::GetRawBlockInfoInfo() const
+{
+    CPLStringList aosInfo(m_aosStructuralInfo);
+    if (!m_aoDtypeElts.empty() && m_aoDtypeElts[0].nativeSize > 1 &&
+        m_aoDtypeElts[0].nativeType != DtypeElt::NativeType::STRING_ASCII &&
+        m_aoDtypeElts[0].nativeType != DtypeElt::NativeType::STRING_UNICODE)
+    {
+        if (m_aoDtypeElts[0].needByteSwapping ^ CPL_IS_LSB)
+            aosInfo.SetNameValue("ENDIANNESS", "LITTLE");
+        else
+            aosInfo.SetNameValue("ENDIANNESS", "BIG");
+    }
+    if (m_bFortranOrder)
+    {
+        const int nDims = static_cast<int>(m_aoDims.size());
+        if (nDims > 1)
+        {
+            std::string osOrder("[");
+            for (int i = 0; i < nDims; ++i)
+            {
+                if (i > 0)
+                    osOrder += ',';
+                osOrder += std::to_string(nDims - 1 - i);
+            }
+            osOrder += ']';
+            aosInfo.SetNameValue("TRANSPOSE_ORDER", osOrder.c_str());
+        }
+    }
+    return aosInfo;
 }

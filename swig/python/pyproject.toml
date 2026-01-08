@@ -43,3 +43,18 @@ Documentation = "https://gdal.org"
 Repository = "https://github.com/OSGeo/GDAL.git"
 Changelog = "https://github.com/OSGeo/gdal/blob/master/NEWS.md"
 Issues = "https://github.com/OSGeo/gdal/issues"
+
+[tool.docstub.types]
+datetime = "datetime.datetime"
+CoordinateTransform = "osgeo.osr.CoordinateTransform"
+CoordinateTransformation = "osgeo.osr.CoordinateTransformation"
+Dataset = "osgeo.gdal.Dataset"
+Driver = "osgeo.gdal.Driver"
+Feature = "osgeo.ogr.Feature"
+FieldDomain = "osgeo.ogr.FieldDomain"
+GeomFieldDefn = "osgeo.ogr.GeomFieldDefn"
+Layer = "osgeo.ogr.Layer"
+StyleTable = "osgeo.ogr.StyleTable"
+SpatialReference = "osgeo.osr.SpatialReference"
+Transformer = "osgeo.gdal.Transformer"
+

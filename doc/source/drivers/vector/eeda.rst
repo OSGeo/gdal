@@ -3,8 +3,6 @@
 Google Earth Engine Data API
 ============================
 
-.. versionadded:: 2.4
-
 .. shortname:: EEDA
 
 .. build_dependencies:: libcurl

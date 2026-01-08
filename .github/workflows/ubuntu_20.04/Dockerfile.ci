@@ -91,7 +91,7 @@ RUN apt-get update -y \
   && rm -rf /var/lib/apt/lists/*
 
 # Build likbkea
-ENV KEA_VERSION=1.4.13
+ENV KEA_VERSION=1.6.2
 RUN wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
     && unzip -q kealib-${KEA_VERSION}.zip \
     && rm -f kealib-${KEA_VERSION}.zip \

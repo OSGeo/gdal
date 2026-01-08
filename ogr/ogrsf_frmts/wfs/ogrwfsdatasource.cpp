@@ -244,7 +244,7 @@ OGRLayer *OGRWFSDataSource::GetLayerByName(const char *pszNameIn)
         poLayerGetCapabilitiesLayer = poLayerGetCapabilitiesDS->CreateLayer(
             "WFSGetCapabilities", nullptr, wkbNone, nullptr);
         OGRFieldDefn oFDefn("content", OFTString);
-        poLayerGetCapabilitiesLayer->CreateField(&oFDefn);
+        CPL_IGNORE_RET_VAL(poLayerGetCapabilitiesLayer->CreateField(&oFDefn));
         OGRFeature *poFeature =
             new OGRFeature(poLayerGetCapabilitiesLayer->GetLayerDefn());
         poFeature->SetField(0, osGetCapabilities);
@@ -1383,6 +1383,17 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
                     psOtherSRS =
                         CPLGetXMLNode(psChildIter, "OtherCRS");  // WFS 2.0
 
+                const auto IsValidCRSName = [](const char *pszStr)
+                {
+                    // EPSG:404000 is a GeoServer joke to indicate a unknown SRS
+                    // https://osgeo-org.atlassian.net/browse/GEOS-8993
+                    return !EQUAL(pszStr, "EPSG:404000") &&
+                           !EQUAL(pszStr, "urn:ogc:def:crs:EPSG::404000");
+                };
+
+                if (pszDefaultSRS && !IsValidCRSName(pszDefaultSRS))
+                    pszDefaultSRS = nullptr;
+
                 std::vector<std::string> aosSupportedCRSList{};
                 OGRLayer::GetSupportedSRSListRetType apoSupportedCRSList;
                 if (psOtherSRS)
@@ -1413,7 +1424,7 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
                         {
                             const char *pszSRS =
                                 CPLGetXMLValue(psIter, "", nullptr);
-                            if (pszSRS)
+                            if (pszSRS && IsValidCRSName(pszSRS))
                             {
                                 auto poSRS = std::unique_ptr<
                                     OGRSpatialReference,
@@ -1493,10 +1504,7 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
                     pszDefaultSRS = osSRSName.c_str();
                 }
 
-                // EPSG:404000 is a GeoServer joke to indicate a unknown SRS
-                // https://osgeo-org.atlassian.net/browse/GEOS-8993
-                if (pszDefaultSRS && !EQUAL(pszDefaultSRS, "EPSG:404000") &&
-                    !EQUAL(pszDefaultSRS, "urn:ogc:def:crs:EPSG::404000"))
+                if (pszDefaultSRS)
                 {
                     OGRSpatialReference oSRS;
                     if (oSRS.SetFromUserInput(
@@ -2295,20 +2303,13 @@ OGRLayer *OGRWFSDataSource::ExecuteSQL(const char *pszSQLCommand,
         OGRLayer *poMEMLayer =
             poMEMDS->CreateLayer("FID_LIST", nullptr, wkbNone, nullptr);
         OGRFieldDefn oFDefn("gml_id", OFTString);
-        poMEMLayer->CreateField(&oFDefn);
+        CPL_IGNORE_RET_VAL(poMEMLayer->CreateField(&oFDefn));
 
-        const std::vector<CPLString> &aosFIDList =
-            poLayer->GetLastInsertedFIDList();
-        std::vector<CPLString>::const_iterator oIter = aosFIDList.begin();
-        std::vector<CPLString>::const_iterator oEndIter = aosFIDList.end();
-        while (oIter != oEndIter)
+        for (const auto &osFID : poLayer->GetLastInsertedFIDList())
         {
-            const CPLString &osFID = *oIter;
-            OGRFeature *poFeature = new OGRFeature(poMEMLayer->GetLayerDefn());
-            poFeature->SetField(0, osFID);
-            CPL_IGNORE_RET_VAL(poMEMLayer->CreateFeature(poFeature));
-            delete poFeature;
-            ++oIter;
+            OGRFeature oFeature(poMEMLayer->GetLayerDefn());
+            oFeature.SetField(0, osFID);
+            CPL_IGNORE_RET_VAL(poMEMLayer->CreateFeature(&oFeature));
         }
 
         OGRLayer *poResLayer =

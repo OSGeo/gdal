@@ -1803,6 +1803,58 @@ def test_ogr_parquet_read_partitioned_hive(use_vsi, use_metadata_file, prefix):
             lyr.ResetReading()
 
 
+def test_ogr_parquet_read_partitioned_hive_filter():
+
+    with gdaltest.config_options({"OGR_PARQUET_USE_VSI": "YES"}):
+        ds = ogr.Open("data/parquet/partitioned_hive")
+        lyr = ds.GetLayer(0)
+
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == ["data/parquet/partitioned_hive/_metadata"]
+
+        lyr.SetAttributeFilter("foo = 'bar'")
+        assert lyr.GetFeatureCount() == 3
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == ["data/parquet/partitioned_hive/foo=bar/part.0.parquet"]
+
+        lyr.SetAttributeFilter("foo = 'baz' AND two = -5")
+        assert lyr.GetFeatureCount() == 1
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == ["data/parquet/partitioned_hive/foo=baz/part.1.parquet"]
+
+
+def test_ogr_parquet_read_partitioned_hive_integer_key():
+
+    with gdaltest.config_options({"OGR_PARQUET_USE_VSI": "YES"}):
+        ds = ogr.Open("data/parquet/partitioned_hive_integer_key")
+        lyr = ds.GetLayer(0)
+
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == ["data/parquet/partitioned_hive_integer_key/_metadata"]
+
+        lyr.SetAttributeFilter("year = 2022")
+        assert lyr.GetFeatureCount() == 2
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == [
+                "data/parquet/partitioned_hive_integer_key/year=2022/cffaf5cf4ab148d89a5a6047f2be2757-0.parquet"
+            ]
+
+
 ###############################################################################
 # Test reading a partitioned dataset with geo
 
@@ -3841,6 +3893,29 @@ def test_ogr_parquet_sort_by_bbox(tmp_vsimem):
 
 
 ###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("GPKG")
+def test_ogr_parquet_sort_by_bbox__empty_layer(tmp_vsimem):
+    """Test fix for https://github.com/OSGeo/gdal/issues/13328"""
+
+    outfilename = str(tmp_vsimem / "test_ogr_parquet_sort_by_bbox_empty_layer.parquet")
+    ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
+
+    ds.CreateLayer(
+        "test",
+        geom_type=ogr.wkbPoint,
+        options=["SORT_BY_BBOX=YES", "FID=fid"],
+    )
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 0
+
+
+###############################################################################
 # Check GeoArrow struct encoding
 
 
@@ -3864,7 +3939,9 @@ def test_ogr_parquet_sort_by_bbox(tmp_vsimem):
     ],
 )
 @pytest.mark.parametrize("check_with_pyarrow", [True, False])
-@pytest.mark.parametrize("covering_bbox", [True, False])
+@pytest.mark.parametrize(
+    "covering_bbox,covering_bbox_name", [(True, None), (True, "bbox"), (False, None)]
+)
 @gdaltest.enable_exceptions()
 def test_ogr_parquet_geoarrow(
     tmp_vsimem,
@@ -3872,6 +3949,7 @@ def test_ogr_parquet_geoarrow(
     wkt,
     check_with_pyarrow,
     covering_bbox,
+    covering_bbox_name,
     with_arrow_dataset_or_not,
 ):
 
@@ -3885,13 +3963,16 @@ def test_ogr_parquet_geoarrow(
 
     ds = ogr.GetDriverByName("Parquet").CreateDataSource(filename)
 
+    options = {
+        "GEOMETRY_ENCODING": "GEOARROW",
+        "WRITE_COVERING_BBOX": "YES" if covering_bbox else "NO",
+    }
+    if covering_bbox_name:
+        options["COVERING_BBOX_NAME"] = covering_bbox_name
     lyr = ds.CreateLayer(
         "test",
         geom_type=geom.GetGeometryType(),
-        options=[
-            "GEOMETRY_ENCODING=GEOARROW",
-            "WRITE_COVERING_BBOX=" + ("YES" if covering_bbox else "NO"),
-        ],
+        options=options,
     )
     lyr.CreateField(ogr.FieldDefn("foo"))
 
@@ -3960,6 +4041,14 @@ def test_ogr_parquet_geoarrow(
     ds = ogr.Open(filename_to_open)
     lyr = ds.GetLayer(0)
     check(lyr)
+
+    if covering_bbox and not with_arrow_dataset_or_not:
+        geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+        assert geo is not None
+        j = json.loads(geo)
+        assert j["columns"]["geometry"]["covering"]["bbox"]["xmin"][0] == (
+            covering_bbox_name if covering_bbox_name else "geometry_bbox"
+        )
 
     if (
         covering_bbox
@@ -4440,3 +4529,459 @@ def test_ogr_parquet_test_ogrsf_parquet_geometry():
 
     assert "INFO" in ret
     assert "ERROR" not in ret
+
+
+###############################################################################
+
+
+def test_ogr_parquet_update(tmp_path):
+
+    with gdal.GetDriverByName("PARQUET").CreateVector(tmp_path / "test.parquet") as ds:
+        lyr = ds.CreateLayer(
+            "test", geom_type=ogr.wkbPoint, srs=osr.SpatialReference(epsg=32631)
+        )
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        f["int"] = 123
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+
+    with ogr.Open(tmp_path / "test.parquet", gdal.GA_Update) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata("_GDAL_CREATION_OPTIONS_") == {}
+        assert lyr.GetFIDColumn() == ""
+        assert lyr.GetGeometryColumn() == "geometry"
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.TestCapability(ogr.OLCSequentialWrite)
+        assert lyr.TestCapability(ogr.OLCRandomWrite)
+        assert lyr.TestCapability(ogr.OLCCreateField)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "bar"
+        f["int"] = 456
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr.CreateFeature(f)
+        assert lyr.GetFeatureCount() == 2
+
+    with ogr.Open(tmp_path / "test.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata("_GDAL_CREATION_OPTIONS_") == {}
+        assert lyr.GetFIDColumn() == ""
+        assert lyr.GetGeometryColumn() == "geometry"
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.GetFeatureCount() == 2
+        f = lyr.GetNextFeature()
+        assert f["str"] == "foo"
+        assert f["int"] == 123
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+        f = lyr.GetNextFeature()
+        assert f["str"] == "bar"
+        assert f["int"] == 456
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"
+
+    with ogr.Open(tmp_path / "test.parquet", gdal.GA_Update) as ds:
+        lyr = ds.GetLayer(0)
+        lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
+        f = lyr.GetNextFeature()
+        f["real"] = 1.5
+        lyr.SetFeature(f)
+
+    with ogr.Open(tmp_path / "test.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 2
+        f = lyr.GetNextFeature()
+        assert f["str"] == "foo"
+        assert f["int"] == 123
+        assert f["real"] == 1.5
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        ret = gdaltest.runexternal(
+            test_cli_utilities.get_test_ogrsf_path() + f" {tmp_path}/test.parquet"
+        )
+
+        assert "INFO" in ret
+        assert "ERROR" not in ret
+
+
+###############################################################################
+
+
+def test_ogr_parquet_update_with_creation_options_implicit(tmp_path):
+
+    with gdal.GetDriverByName("PARQUET").CreateVector(tmp_path / "test.parquet") as ds:
+        lyr = ds.CreateLayer(
+            "test",
+            geom_type=ogr.wkbPoint,
+            srs=osr.SpatialReference(epsg=32631),
+            options=["FID=my_fid", "GEOMETRY_NAME=my_geom", "EDGES=SPHERICAL"],
+        )
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        f["int"] = 123
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+
+    with ogr.Open(tmp_path / "test.parquet", gdal.GA_Update) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata("_GDAL_CREATION_OPTIONS_") == {}
+        assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
+        assert lyr.GetFIDColumn() == "my_fid"
+        assert lyr.GetGeometryColumn() == "my_geom"
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "bar"
+        f["int"] = 456
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr.CreateFeature(f)
+        assert lyr.GetFeatureCount() == 2
+
+    with ogr.Open(tmp_path / "test.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata("_GDAL_CREATION_OPTIONS_") == {}
+        assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
+        assert lyr.GetFIDColumn() == "my_fid"
+        assert lyr.GetGeometryColumn() == "my_geom"
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.GetFeatureCount() == 2
+        f = lyr.GetNextFeature()
+        assert f["str"] == "foo"
+        assert f["int"] == 123
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+        f = lyr.GetNextFeature()
+        assert f["str"] == "bar"
+        assert f["int"] == 456
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"
+
+
+###############################################################################
+
+
+def test_ogr_parquet_update_with_creation_options_explicit(tmp_path):
+
+    with gdal.GetDriverByName("PARQUET").CreateVector(tmp_path / "test.parquet") as ds:
+        lyr = ds.CreateLayer(
+            "test",
+            geom_type=ogr.wkbPoint,
+            srs=osr.SpatialReference(epsg=32631),
+            options=["ROW_GROUP_SIZE=1"],
+        )
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        f["int"] = 123
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+
+    with ogr.Open(tmp_path / "test.parquet", gdal.GA_Update) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata("_GDAL_CREATION_OPTIONS_") == {"ROW_GROUP_SIZE": "1"}
+        assert lyr.GetMetadataItem("NUM_ROW_GROUPS", "_PARQUET_") == "1"
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "bar"
+        f["int"] = 456
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr.CreateFeature(f)
+        assert lyr.GetFeatureCount() == 2
+
+    with ogr.Open(tmp_path / "test.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata("_GDAL_CREATION_OPTIONS_") == {"ROW_GROUP_SIZE": "1"}
+        assert lyr.GetMetadataItem("NUM_ROW_GROUPS", "_PARQUET_") == "2"
+        assert lyr.GetFeatureCount() == 2
+        f = lyr.GetNextFeature()
+        assert f["str"] == "foo"
+        assert f["int"] == 123
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+        f = lyr.GetNextFeature()
+        assert f["str"] == "bar"
+        assert f["int"] == 456
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"
+
+
+###############################################################################
+
+
+def test_ogr_parquet_arrow_stream_list_of_struct_ignored_fields():
+    pytest.importorskip("pyarrow")
+
+    ds = ogr.Open("data/parquet/test_list_of_struct.parquet")
+    lyr = ds.GetLayer(0)
+    lyr.SetIgnoredFields(["OGR_GEOMETRY"])
+    stream = lyr.GetArrowStreamAsPyArrow()
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    assert len(batches[0].field("col_flat")) == 3
+    assert len(batches[0].field("col_nested")) == 3
+    assert batches[0].field("col_flat")[0].as_py() == 0
+    assert batches[0].field("col_flat")[1].as_py() == 1
+    assert batches[0].field("col_flat")[2].as_py() == 2
+    assert batches[0].field("col_nested")[0].as_py() == [
+        {"a": 1, "b": 2},
+        {"a": 1, "b": 2},
+    ]
+    assert batches[0].field("col_nested")[1].as_py() == [
+        {"a": 1, "b": 2},
+        {"a": 1, "b": 2},
+    ]
+    assert batches[0].field("col_nested")[2].as_py() == [
+        {"a": 1, "b": 2},
+        {"a": 1, "b": 2},
+    ]
+
+
+###############################################################################
+
+
+def test_ogr_parquet_lists_as_string_json():
+
+    ds = gdal.OpenEx(
+        "data/parquet/test.parquet", open_options=["LISTS_AS_STRING_JSON=YES"]
+    )
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("list_boolean")).GetType()
+        == ogr.OFTString
+    )
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("list_boolean")).GetSubType()
+        == ogr.OFSTJSON
+    )
+    assert (
+        lyr_defn.GetFieldDefn(
+            lyr_defn.GetFieldIndex("fixed_size_list_float64")
+        ).GetType()
+        == ogr.OFTString
+    )
+    assert (
+        lyr_defn.GetFieldDefn(
+            lyr_defn.GetFieldIndex("fixed_size_list_float64")
+        ).GetSubType()
+        == ogr.OFSTJSON
+    )
+    f = lyr.GetFeature(4)
+    assert f["list_boolean"] == "[null,false,true,false]"
+    assert f["list_uint8"] == "[null,7,8,9]"
+    assert f["list_int64"] == "[null,7,8,9]"
+    assert f["list_float64"] == "[null,7.5,8.5,9.5]"
+    assert f["list_string"] == "[null]"
+    assert f["fixed_size_list_float64"] == "[8.0,9.0]"
+
+
+###############################################################################
+# Test support for https://github.com/apache/arrow/blob/main/docs/source/format/CanonicalExtensions.rst#timestamp-with-offset
+
+
+@pytest.mark.parametrize("OGR2OGR_USE_ARROW_API", ["YES", "NO"])
+@pytest.mark.parametrize("TIMESTAMP_WITH_OFFSET", ["AUTO", "YES", "NO"])
+def test_ogr_parquet_timestamp_with_offset(
+    tmp_vsimem, OGR2OGR_USE_ARROW_API, TIMESTAMP_WITH_OFFSET
+):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
+    fld_defn.SetTZFlag(ogr.TZFLAG_MIXED_TZ)
+    src_lyr.CreateField(fld_defn)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+
+    f["id"] = 1
+    f["dt"] = "2025-12-20T12:34:56+0345"
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["id"] = 2
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["id"] = 3
+    f["dt"] = "2025-12-20T12:34:56-0745"
+    src_lyr.CreateFeature(f)
+
+    # Test without timezone
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["id"] = 4
+    f["dt"] = "2025-12-20T22:30:56"
+    src_lyr.CreateFeature(f)
+
+    with gdal.config_option(
+        "OGR2OGR_USE_ARROW_API", OGR2OGR_USE_ARROW_API
+    ), gdal.quiet_errors():
+        gdal.VectorTranslate(
+            tmp_vsimem / "out.parquet",
+            src_ds,
+            layerCreationOptions=["TIMESTAMP_WITH_OFFSET=" + TIMESTAMP_WITH_OFFSET],
+        )
+
+    with ogr.Open(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(1)
+        assert fld_defn.GetType() == ogr.OFTDateTime
+        if TIMESTAMP_WITH_OFFSET == "NO" and OGR2OGR_USE_ARROW_API == "NO":
+            assert fld_defn.GetTZFlag() == ogr.TZFLAG_UNKNOWN
+        else:
+            assert fld_defn.GetTZFlag() == ogr.TZFLAG_MIXED_TZ
+
+        f = lyr.GetNextFeature()
+        assert f["id"] == 1
+        if TIMESTAMP_WITH_OFFSET == "NO" and OGR2OGR_USE_ARROW_API == "NO":
+            assert f["dt"] == "2025/12/20 08:49:56"
+        else:
+            assert f["dt"] == "2025/12/20 12:34:56+0345"
+
+        f = lyr.GetNextFeature()
+        assert f["id"] == 2
+        assert f["dt"] is None
+
+        f = lyr.GetNextFeature()
+        assert f["id"] == 3
+        if TIMESTAMP_WITH_OFFSET == "NO" and OGR2OGR_USE_ARROW_API == "NO":
+            assert f["dt"] == "2025/12/20 20:19:56"
+        else:
+            assert f["dt"] == "2025/12/20 12:34:56-0745"
+
+        f = lyr.GetNextFeature()
+        assert f["id"] == 4
+        if TIMESTAMP_WITH_OFFSET == "NO" and OGR2OGR_USE_ARROW_API == "NO":
+            assert f["dt"] == "2025/12/20 22:30:56"
+        else:
+            assert f["dt"] == "2025/12/20 22:30:56+00"
+
+
+###############################################################################
+
+
+def test_ogr_parquet_create_metadata_file_alg(tmp_vsimem):
+
+    assert gdal.alg.vsi.copy(
+        source="data/parquet/partitioned_hive", destination=tmp_vsimem, recursive=True
+    )
+    assert gdal.VSIStatL(tmp_vsimem / "partitioned_hive/_metadata") is not None
+    gdal.Unlink(tmp_vsimem / "partitioned_hive/_metadata")
+    assert gdal.VSIStatL(tmp_vsimem / "partitioned_hive/_metadata") is None
+
+    with pytest.raises(
+        Exception,
+        match=r"OpenStatic\(\) failed: cannot create i_do/not_exist/_metadata",
+    ):
+        gdal.alg.driver.parquet.create_metadata_file(
+            input=[
+                tmp_vsimem / "partitioned_hive/foo=bar/part.0.parquet",
+                tmp_vsimem / "partitioned_hive/foo=baz/part.1.parquet",
+            ],
+            output="i_do/not_exist/_metadata",
+        )
+
+    with pytest.raises(Exception, match="Cannot infer relative path"):
+        gdal.alg.driver.parquet.create_metadata_file(
+            input=[
+                tmp_vsimem / "partitioned_hive/foo=bar/part.0.parquet",
+                tmp_vsimem / "partitioned_hive/foo=baz/part.1.parquet",
+            ],
+            output=tmp_vsimem / "unrelated/_metadata",
+        )
+
+    with pytest.raises(Exception, match=r"OpenInputFile\(\) failed"):
+        gdal.alg.driver.parquet.create_metadata_file(
+            input=[tmp_vsimem / "partitioned_hive/foo=bar/i_do_not_exist.parquet"],
+            output=tmp_vsimem / "partitioned_hive/_metadata",
+        )
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "partitioned_hive/not_a_parquet_file.bin", b"foo"
+    )
+
+    with pytest.raises(Exception, match=r"Invalid: Parquet file"):
+        gdal.alg.driver.parquet.create_metadata_file(
+            input=[tmp_vsimem / "partitioned_hive/not_a_parquet_file.bin"],
+            output=tmp_vsimem / "partitioned_hive/_metadata",
+            overwrite=True,
+        )
+
+    assert gdal.alg.driver.parquet.create_metadata_file(
+        input=[
+            tmp_vsimem / "partitioned_hive/foo=bar/part.0.parquet",
+            tmp_vsimem / "partitioned_hive/foo=baz/part.1.parquet",
+        ],
+        output=tmp_vsimem / "partitioned_hive/_metadata",
+        overwrite=True,
+    )
+
+    assert ogr.Open(tmp_vsimem / "partitioned_hive/_metadata")
+
+    gdal.Unlink(tmp_vsimem / "partitioned_hive/_metadata")
+    assert gdal.VSIStatL(tmp_vsimem / "partitioned_hive/_metadata") is None
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    assert gdal.alg.driver.parquet.create_metadata_file(
+        input=[
+            tmp_vsimem / "partitioned_hive/foo=bar/part.0.parquet",
+            tmp_vsimem / "partitioned_hive/foo=baz/part.1.parquet",
+        ],
+        output=tmp_vsimem / "partitioned_hive/_metadata",
+        progress=my_progress,
+    )
+
+    assert tab_pct[0] == 1.0
+
+    assert ogr.Open(tmp_vsimem / "partitioned_hive/_metadata")
+
+    if _has_arrow_dataset():
+
+        ds = ogr.Open(tmp_vsimem / "partitioned_hive")
+
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == [str(tmp_vsimem / "partitioned_hive/_metadata")]
+
+        lyr = ds.GetLayer(0)
+        lyr.SetAttributeFilter("foo = 'baz'")
+        assert lyr.GetFeatureCount() == 3
+
+        with ds.ExecuteSQL(
+            "GET_SET_FILES_ASKED_TO_BE_OPEN", dialect="_DEBUG_"
+        ) as sql_lyr:
+            set_files = [f.GetField(0) for f in sql_lyr]
+            assert set_files == [
+                str(tmp_vsimem / "partitioned_hive/foo=baz/part.1.parquet")
+            ]
+
+
+###############################################################################
+
+
+def test_ogr_parquet_create_metadata_file_alg_incompatible_schemas(tmp_vsimem):
+
+    with gdal.GetDriverByName("PARQUET").CreateVector(tmp_vsimem / "one.parquet") as ds:
+        lyr = ds.CreateLayer("test")
+        lyr.CreateField(ogr.FieldDefn("foo"))
+
+    with gdal.GetDriverByName("PARQUET").CreateVector(tmp_vsimem / "two.parquet") as ds:
+        lyr = ds.CreateLayer("test")
+        lyr.CreateField(ogr.FieldDefn("bar"))
+
+    with pytest.raises(
+        Exception, match="Parquet exception: AppendRowGroups requires equal schemas"
+    ):
+        gdal.alg.driver.parquet.create_metadata_file(
+            input=[tmp_vsimem / "one.parquet", tmp_vsimem / "two.parquet"],
+            output=tmp_vsimem / "_metadata",
+        )

@@ -80,11 +80,11 @@ def test_gdalalg_dataset_overwrite_existing_dataset_directory(tmp_vsimem):
         "dataset",
         "copy",
         source="../gcore/data/byte.tif",
-        destination=tmp_vsimem / "out.gdb",
+        destination=tmp_vsimem / "out.gdb/byte.tif",
         overwrite=True,
     )
 
-    with gdal.Open(tmp_vsimem / "out.gdb") as ds:
+    with gdal.Open(tmp_vsimem / "out.gdb/byte.tif") as ds:
         assert ds.GetDriver().GetDescription() == "GTiff"
 
 

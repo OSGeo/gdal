@@ -99,6 +99,8 @@ class IVSIS3LikeHandleHelper
 
 enum class AWSCredentialsSource
 {
+    UNINITIALIZED,
+    NO_SIGN_REQUEST,
     REGULAR,       // credentials from env variables or ~/.aws/crediential
     EC2,           // credentials from EC2 private networking
     WEB_IDENTITY,  // credentials from Web Identity Token
@@ -110,6 +112,9 @@ enum class AWSCredentialsSource
     // and
     // https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_request.html
     SSO,  // credentials from Single-Sign On
+    // credentials from credential_process command
+    // See https://docs.aws.amazon.com/sdkref/latest/guide/feature-process-credentials.html
+    CREDENTIAL_PROCESS,
 };
 
 class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
@@ -144,6 +149,10 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
         std::string &osAccessKeyId, std::string &osSessionToken,
         std::string &osRegion);
 
+    static bool GetOrRefreshTemporaryCredentialsFromProcess(
+        bool bForceRefresh, std::string &osSecretAccessKey,
+        std::string &osAccessKeyId, std::string &osSessionToken);
+
     static bool GetConfigurationFromAssumeRoleWithWebIdentity(
         bool bForceRefresh, const std::string &osPathForOption,
         const std::string &osRoleArnIn,
@@ -166,7 +175,7 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
         std::string &osMFASerial, std::string &osRoleSessionName,
         std::string &osWebIdentityTokenFile, std::string &osSSOStartURL,
         std::string &osSSOAccountID, std::string &osSSORoleName,
-        std::string &osSSOSession);
+        std::string &osSSOSession, std::string &osCredentialProcess);
 
     static bool GetConfiguration(const std::string &osPathForOption,
                                  CSLConstList papszOptions,

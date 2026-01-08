@@ -184,9 +184,6 @@ def validate(ds, check_tiled=True, full_check=False):
         file is not a Tiff.
     """
 
-    if int(gdal.VersionInfo("VERSION_NUM")) < 2020000:
-        raise ValidateCloudOptimizedGeoTIFFException("GDAL 2.2 or above required")
-
     unicode_type = type("".encode("utf-8").decode("utf-8"))
     if isinstance(ds, (str, unicode_type)):
         gdal.PushErrorHandler()

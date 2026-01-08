@@ -275,6 +275,11 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         }
     }
 
+    if (m_tap)
+    {
+        aosOptions.AddString("-tap");
+    }
+
     if (m_targetResolution.size())
     {
         aosOptions.AddString("-tr");
@@ -283,19 +288,21 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             aosOptions.AddString(CPLSPrintf("%.17g", targetResolution));
         }
     }
-
-    if (m_tap)
-    {
-        aosOptions.AddString("-tap");
-    }
-
-    if (m_targetSize.size())
+    else if (m_targetSize.size())
     {
         aosOptions.AddString("-ts");
         for (int targetSize : m_targetSize)
         {
             aosOptions.AddString(CPLSPrintf("%d", targetSize));
         }
+    }
+    else if (m_outputDataset.GetDatasetRef() == nullptr)
+    {
+        ReportError(
+            CE_Failure, CPLE_AppDefined,
+            "Must specify output resolution (--resolution) or size (--size) "
+            "when writing rasterized features to a new dataset.");
+        return false;
     }
 
     if (!m_outputType.empty())
@@ -323,6 +330,7 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
 
         GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
+
         auto poRetDS = GDALDataset::FromHandle(GDALRasterize(
             outputFilename.c_str(), hDstDS, hSrcDS, psOptions.get(), nullptr));
         bOK = poRetDS != nullptr;

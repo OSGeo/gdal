@@ -188,7 +188,7 @@
                 <xs:annotation>
                   <xs:documentation>
                     Whether xsi:nil="true" should be mapped from/to the OGR
-                    null field state (new in GDAL 2.2). If set to false, then
+                    null field state. If set to false, then
                     a XXX_nil field will be added when necessary. If set to true,
                     then unset and null states are used (but this is not very
                     convenient when converting to SQL databases where both states

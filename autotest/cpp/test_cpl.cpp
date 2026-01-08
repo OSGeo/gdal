@@ -20,6 +20,7 @@
 #include "gdal_unit_test.h"
 
 #include "cpl_compressor.h"
+#include "cpl_enumerate.h"
 #include "cpl_error.h"
 #include "cpl_float.h"
 #include "cpl_hash_set.h"
@@ -48,6 +49,12 @@
 #include <limits>
 #include <fstream>
 #include <string>
+
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
+
+#include "test_data.h"
 
 #include "gtest_include.h"
 
@@ -5433,6 +5440,20 @@ TEST_F(test_cpl, VSIGlob)
     VSIUnlink(osFilenameWithSpecialChars.c_str());
     VSIUnlink(osFilename2.c_str());
     VSIUnlink(osFilenameRadix.c_str());
+
+#if !defined(_WIN32)
+    {
+        std::string osCurDir;
+        osCurDir.resize(4096);
+        getcwd(&osCurDir[0], osCurDir.size());
+        osCurDir.resize(strlen(osCurDir.c_str()));
+        ASSERT_EQ(chdir(TUT_ROOT_DATA_DIR), 0);
+        CPLStringList aosRes(VSIGlob("byte*.tif", nullptr, nullptr, nullptr));
+        chdir(osCurDir.c_str());
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], "byte.tif");
+    }
+#endif
 }
 
 TEST_F(test_cpl, CPLGreatestCommonDivisor)
@@ -5643,6 +5664,32 @@ TEST_F(test_cpl, CPLHasUnbalancedPathTraversal)
     EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../b/../.."));
     EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../b/../../"));
     EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a\\..\\..\\"));
+}
+
+TEST_F(test_cpl, cpl_enumerate)
+{
+    {
+        size_t expectedIdx = 0;
+        const int tab[] = {3, 1, 2};
+        for (auto [idx, val] : cpl::enumerate(tab))
+        {
+            EXPECT_EQ(idx, expectedIdx);
+            EXPECT_EQ(val, tab[idx]);
+            ++expectedIdx;
+        }
+        EXPECT_EQ(expectedIdx, 3U);
+    }
+    {
+        int tab[] = {3, 1, 2};
+        for (auto [idx, val] : cpl::enumerate(tab))
+        {
+            (void)idx;
+            ++val;
+        }
+        EXPECT_EQ(tab[0], 4);
+        EXPECT_EQ(tab[1], 2);
+        EXPECT_EQ(tab[2], 3);
+    }
 }
 
 }  // namespace

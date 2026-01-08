@@ -35,7 +35,7 @@ to do bulk insertion. This is for example the case of WFS, CartoDB, GFT,
 GME. For some of them, it could rather be at dataset level too since
 potentially multiple layer modifications could be stacked together.
 
-Furthermode some use cases require updating several layers consistently,
+Furthermore some use cases require updating several layers consistently,
 hence the need for a real database level transaction abstraction.
 
 The current situation of various drivers is the following (some of the

@@ -218,7 +218,7 @@ def test_band_arithmetic_rgb_to_greylevel_subfunc():
         R = ds.GetRasterBand(1)
         G = ds.GetRasterBand(2)
         B = ds.GetRasterBand(3)
-        return (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_Byte)
+        return (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_UInt8)
 
     assert greylevel().Checksum() == 21466
 
@@ -229,7 +229,7 @@ def test_band_arithmetic_rgb_to_greylevel_with():
         R = ds.GetRasterBand(1)
         G = ds.GetRasterBand(2)
         B = ds.GetRasterBand(3)
-        greylevel = (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_Byte)
+        greylevel = (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_UInt8)
         assert greylevel.Checksum() == 21466
 
 
@@ -239,7 +239,7 @@ def test_band_arithmetic_rgb_to_greylevel_with_error():
         R = ds.GetRasterBand(1)
         G = ds.GetRasterBand(2)
         B = ds.GetRasterBand(3)
-        greylevel = (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_Byte)
+        greylevel = (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_UInt8)
 
     with pytest.raises(Exception):
         greylevel.Checksum()
@@ -255,7 +255,7 @@ def test_band_arithmetic_rgb_to_greylevel_using_numpy_array():
         R = ds.GetRasterBand(1)
         G = ds.GetRasterBand(2).ReadAsArray()
         B = ds.GetRasterBand(3).ReadAsArray()
-        return (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_Byte)
+        return (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_UInt8)
 
     assert greylevel().Checksum() == 21466
 
@@ -274,7 +274,7 @@ def test_band_arithmetic_minimum():
         return gdal.minimum(R, G)
 
     res = get()
-    assert res.DataType == gdal.GDT_Byte
+    assert res.DataType == gdal.GDT_UInt8
     assert res.ComputeRasterMinMax(False) == (2, 2)
 
 
@@ -288,7 +288,7 @@ def test_band_arithmetic_minimum_with_constant():
         return gdal.minimum(R, 3, G)
 
     res = get()
-    assert res.DataType == gdal.GDT_Byte
+    assert res.DataType == gdal.GDT_UInt8
     assert res.ComputeRasterMinMax(False) == (2, 2)
 
 
@@ -329,7 +329,7 @@ def test_band_arithmetic_maximum():
         return gdal.maximum(R, G)
 
     res = get()
-    assert res.DataType == gdal.GDT_Byte
+    assert res.DataType == gdal.GDT_UInt8
     assert res.ComputeRasterMinMax(False) == (4, 4)
 
 
@@ -343,7 +343,7 @@ def test_band_arithmetic_maximum_with_constant():
         return gdal.maximum(R, 3, G)
 
     res = get()
-    assert res.DataType == gdal.GDT_Byte
+    assert res.DataType == gdal.GDT_UInt8
     assert res.ComputeRasterMinMax(False) == (4, 4)
 
 
@@ -380,7 +380,7 @@ def test_band_arithmetic_rgb_to_greylevel_vrt(tmp_vsimem):
         R = ds.GetRasterBand(1)
         G = ds.GetRasterBand(2)
         B = ds.GetRasterBand(3)
-        greylevel = (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_Byte)
+        greylevel = (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_UInt8)
         gdal.GetDriverByName("VRT").CreateCopy(tmp_vsimem / "out.vrt", greylevel)
 
     ds = gdal.Open(tmp_vsimem / "out.vrt")
@@ -426,7 +426,7 @@ def test_band_arithmetic_add_nodata():
 
     res = get()
     assert res.GetNoDataValue() == 1
-    assert res.ReadRaster(buf_type=gdal.GDT_Byte) == b"\x01\x06"
+    assert res.ReadRaster(buf_type=gdal.GDT_UInt8) == b"\x01\x06"
 
 
 def test_band_arithmetic_add_nodata_nan():
@@ -691,19 +691,19 @@ def test_band_arithmetic_ternary():
     elseBand = ds.GetRasterBand(3)
     elseBand.Fill(3)
 
-    assert gdal.where(cond, then, elseBand).DataType == gdal.GDT_Byte
+    assert gdal.where(cond, then, elseBand).DataType == gdal.GDT_UInt8
     assert gdal.where(cond, then, elseBand).ComputeRasterMinMax(False)[0] == 2
 
-    assert gdal.where(cond, 10, elseBand).DataType == gdal.GDT_Byte
+    assert gdal.where(cond, 10, elseBand).DataType == gdal.GDT_UInt8
     assert gdal.where(cond, 10, elseBand).ComputeRasterMinMax(False)[0] == 10
 
     assert gdal.where(cond, 10, 11).ComputeRasterMinMax(False)[0] == 10
 
     cond.Fill(0)
-    assert gdal.where(cond, then, elseBand).DataType == gdal.GDT_Byte
+    assert gdal.where(cond, then, elseBand).DataType == gdal.GDT_UInt8
     assert gdal.where(cond, then, elseBand).ComputeRasterMinMax(False)[0] == 3
 
-    assert gdal.where(cond, then, 11).DataType == gdal.GDT_Byte
+    assert gdal.where(cond, then, 11).DataType == gdal.GDT_UInt8
     assert gdal.where(cond, then, 11).ComputeRasterMinMax(False)[0] == 11
 
     assert gdal.where(cond, 10, 11).ComputeRasterMinMax(False)[0] == 11

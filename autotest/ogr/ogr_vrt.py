@@ -2903,9 +2903,8 @@ def test_ogr_vrt_33m(ogr_vrt_33, tmp_path):
         ret = gdaltest.runexternal(
             test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_33.vrt"
         )
-        os.unlink(tmp_path / "ogr_vrt_33.vrt")
-
-        assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+        assert "INFO" in ret
+        assert "ERROR" not in ret
 
     ds = ogr.Open(ogr_vrt_33)
     sql_lyr = ds.ExecuteSQL("SELECT * FROM test UNION ALL SELECT * FROM test2")
@@ -3447,3 +3446,55 @@ def test_ogr_vrt_srcregion_and_point_filter():
 
     lyr.SetSpatialFilter(None)
     assert lyr.GetFeatureCount() == 10
+
+
+###############################################################################
+# Test GetFeature() optimization even when bSrcPreserveFID == false
+
+
+def test_ogr_vrt_getfeature_optimization(tmp_path):
+
+    for iSrc in range(5):
+        with ogr.GetDriverByName("ESRI Shapefile").CreateVector(
+            tmp_path / f"src{iSrc}.dbf"
+        ) as ds:
+            lyr = ds.CreateLayer(f"src{iSrc}", geom_type=ogr.wkbNone)
+            lyr.CreateField(ogr.FieldDefn("i", ogr.OFTInteger))
+            for i in range(10 - iSrc):
+                f = ogr.Feature(lyr.GetLayerDefn())
+                f["i"] = iSrc * 10 + i
+                lyr.CreateFeature(f)
+
+    ds = ogr.Open(
+        f"""<OGRVRTDataSource>
+                 <OGRVRTUnionLayer name="test">
+                    <OGRVRTLayer name="src0">
+                        <SrcDataSource>{tmp_path}/src0.dbf</SrcDataSource>
+                    </OGRVRTLayer>
+                    <OGRVRTLayer name="src1">
+                        <SrcDataSource>{tmp_path}/src1.dbf</SrcDataSource>
+                    </OGRVRTLayer>
+                    <OGRVRTLayer name="src2">
+                        <SrcDataSource>{tmp_path}/src2.dbf</SrcDataSource>
+                    </OGRVRTLayer>
+                    <OGRVRTLayer name="src3">
+                        <SrcDataSource>{tmp_path}/src3.dbf</SrcDataSource>
+                    </OGRVRTLayer>
+                    <OGRVRTLayer name="src4">
+                        <SrcDataSource>{tmp_path}/src4.dbf</SrcDataSource>
+                    </OGRVRTLayer>
+                </OGRVRTUnionLayer>
+</OGRVRTDataSource>"""
+    )
+
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCRandomRead) == 0
+    m = {}
+    for f in lyr:
+        m[f["i"]] = f.GetFID()
+    assert lyr.TestCapability(ogr.OLCRandomRead) == 1
+    for iFID in range(lyr.GetFeatureCount() - 1, 0, -1):
+        f = lyr.GetFeature(iFID)
+        assert m[f["i"]] == f.GetFID()
+    lyr.SetAttributeFilter("1=0")
+    assert lyr.TestCapability(ogr.OLCRandomRead) == 0

@@ -92,3 +92,29 @@ def test_gdalalg_raster_convert_failed_append(tmp_vsimem):
         match="Subdataset creation not supported for driver HFA",
     ):
         convert.ParseRunAndFinalize(["data/utmsmall.tif", out_filename, "--append"])
+
+
+def test_gdalalg_raster_convert_comma_in_filename(tmp_vsimem):
+
+    gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "a,b.tif", 1, 1)
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    convert = get_convert_alg()
+    assert convert.ParseRunAndFinalize([tmp_vsimem / "a,b.tif", out_filename])
+
+
+@pytest.mark.require_driver("XYZ")
+def test_gdalalg_raster_convert_to_vsistdout(tmp_vsimem):
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} raster convert --of XYZ ../gcore/data/byte.tif /vsistdout/"
+    )
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.xyz", out)
+    assert gdal.Open(tmp_vsimem / "test.xyz")
+    assert err == ""

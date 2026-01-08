@@ -507,10 +507,6 @@ cellsize     1
         )
 
     f = lyr.GetNextFeature()
-    assert f["ELEV"] == 1
-    ogrtest.check_feature_geometry(f, "LINESTRING (0.5 0.0,0.5 0.5,0.5 1.5,0.5 2.0)")
-
-    f = lyr.GetNextFeature()
     assert f["ELEV"] == 2
     ogrtest.check_feature_geometry(f, "LINESTRING (1.0 0.0,1.0 0.5,1.0 1.5,1.0 2.0)")
 

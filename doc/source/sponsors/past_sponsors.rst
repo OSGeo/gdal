@@ -12,7 +12,6 @@ the Sponsorship program:
 - Aerometrex
 - Amazon Web Services
 - FrontierSI
-- Google
 - Koordinates
 - L3Harris Geospatial
 - Mapgears

@@ -25,6 +25,10 @@ from its dimensions, band count and set various parameters, such as CRS,
 geotransform, nodata value, metadata. It can be used also in special cases,
 like creating a PDF file from a XML composition file.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_create`.
+
 .. program:: gdal_create
 
 .. include:: options/help_and_help_general.rst

@@ -23,6 +23,10 @@ raster dataset.
 
 The following command line parameters can appear in any order
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_info`.
+
 .. program:: gdalinfo
 
 .. include:: options/help_and_help_general.rst
@@ -170,8 +174,6 @@ C API
 -----
 
 This utility is also callable from C with :cpp:func:`GDALInfo`.
-
-.. versionadded:: 2.1
 
 Examples
 --------

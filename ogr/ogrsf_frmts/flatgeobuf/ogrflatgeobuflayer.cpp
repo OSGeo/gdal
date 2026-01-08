@@ -801,7 +801,7 @@ OGRFlatGeobufLayer::~OGRFlatGeobufLayer()
         VSIFree(m_headerBuf);
 }
 
-CPLErr OGRFlatGeobufLayer::Close()
+CPLErr OGRFlatGeobufLayer::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
 
@@ -854,9 +854,7 @@ OGRErr OGRFlatGeobufLayer::readFeatureOffset(uint64_t index,
             return CPLErrorIO("seeking feature offset");
         if (VSIFReadL(&featureOffset, sizeof(uint64_t), 1, m_poFp) != 1)
             return CPLErrorIO("reading feature offset");
-#if !CPL_IS_LSB
         CPL_LSBPTR64(&featureOffset);
-#endif
         return OGRERR_NONE;
     }
     catch (const std::exception &e)
@@ -917,8 +915,8 @@ OGRErr OGRFlatGeobufLayer::readIndex()
     if (featuresCount == 0)
         return OGRERR_NONE;
 
-    if (VSIFSeekL(m_poFp, sizeof(magicbytes), SEEK_SET) ==
-        -1)  // skip magic bytes
+    if (VSIFSeekL(m_poFp, static_cast<vsi_l_offset>(sizeof(magicbytes)),
+                  SEEK_SET) == -1)  // skip magic bytes
         return CPLErrorIO("seeking past magic bytes");
     uoffset_t headerSize;
     if (VSIFReadL(&headerSize, sizeof(uoffset_t), 1, m_poFp) != 1)
@@ -937,7 +935,7 @@ OGRErr OGRFlatGeobufLayer::readIndex()
             NodeItem n{env.MinX, env.MinY, env.MaxX, env.MaxY, 0};
             CPLDebugOnly("FlatGeobuf", "Spatial index search on %f,%f,%f,%f",
                          env.MinX, env.MinY, env.MaxX, env.MaxY);
-            const auto treeOffset =
+            const vsi_l_offset treeOffset =
                 sizeof(magicbytes) + sizeof(uoffset_t) + headerSize;
             const auto readNode =
                 [this, treeOffset](uint8_t *buf, size_t i, size_t s)

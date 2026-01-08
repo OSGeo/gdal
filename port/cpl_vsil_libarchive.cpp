@@ -613,7 +613,7 @@ VSILibArchiveFilesystemHandler::CreateReader(const char *pszArchiveFileName)
 void VSIInstall7zFileHandler(void)
 {
     VSIFileManager::InstallHandler(
-        "/vsi7z/", new VSILibArchiveFilesystemHandler("/vsi7z"));
+        "/vsi7z/", std::make_shared<VSILibArchiveFilesystemHandler>("/vsi7z"));
 }
 
 /************************************************************************/
@@ -632,7 +632,8 @@ void VSIInstall7zFileHandler(void)
 void VSIInstallRarFileHandler(void)
 {
     VSIFileManager::InstallHandler(
-        "/vsirar/", new VSILibArchiveFilesystemHandler("/vsirar"));
+        "/vsirar/",
+        std::make_shared<VSILibArchiveFilesystemHandler>("/vsirar"));
 }
 
 #endif

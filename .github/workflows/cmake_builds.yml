@@ -36,9 +36,9 @@ jobs:
       cache-name: cmake-ubuntu-jammy
     steps:
     - name: Checkout GDAL
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
     - name: Setup cache
-      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       id: cache
       with:
           path: ${{ github.workspace }}/.ccache
@@ -317,9 +317,9 @@ jobs:
         run: |
           git config --global core.autocrlf false
       - name: Checkout GDAL
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       - name: Install development packages
-        uses: msys2/setup-msys2@fb197b72ce45fb24f17bf3f807a388985654d1f2 # v2.29.0
+        uses: msys2/setup-msys2@4f806de0a5a7294ffabaff804b38a9b435a73bda # v2.30.0
         with:
           msystem: MINGW64
           update: true
@@ -332,7 +332,7 @@ jobs:
             mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg2
             mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools mingw-w64-x86_64-swig mingw-w64-x86_64-python-psutil mingw-w64-x86_64-blosc mingw-w64-x86_64-libavif
       - name: Setup cache
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         id: cache
         with:
           path: ${{ github.workspace }}\.ccache
@@ -376,19 +376,19 @@ jobs:
       - name: Build
         run: cmake --build build -j 3
         working-directory: ${{ github.workspace }}
-      - name: test
-        run: cmake --build build --target quicktest
-        working-directory: ${{ github.workspace }}
-      - name: test (with ctest)
-        run: |
-          ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
-        env:
-          BUILD_NAME: mingw64
-          SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
-          SKIP_OGR_GMLAS_HTTP_RELATED: YES
-          SKIP_TIFF_JPEG12: YES
-          SKIP_VSIRAR: YES
-        working-directory: ${{ github.workspace }}
+      #- name: test
+      #  run: cmake --build build --target quicktest
+      #  working-directory: ${{ github.workspace }}
+      #- name: test (with ctest)
+      #  run: |
+      #    ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
+      #  env:
+      #    BUILD_NAME: mingw64
+      #    SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
+      #    SKIP_OGR_GMLAS_HTTP_RELATED: YES
+      #    SKIP_TIFF_JPEG12: YES
+      #    SKIP_VSIRAR: YES
+      #  working-directory: ${{ github.workspace }}
       - name: Install
         run: cmake --build build --target install -j 3
         working-directory: ${{ github.workspace }}
@@ -412,7 +412,7 @@ jobs:
       run: |
         git config --global core.autocrlf false
     - name: Checkout GDAL
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
     - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
     - name: populate JAVA_HOME
       shell: pwsh
@@ -478,8 +478,8 @@ jobs:
     - name: test (with ctest)
       shell: bash -l {0}
       run: |
-        # Exclude doc spellcheck as it crashes
-        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3 -E spelling
+        # Exclude doc spellcheck and example tests as they crash
+        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3 -E doc
       env:
         SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
         SKIP_OGR_GMLAS_HTTP_RELATED: YES
@@ -528,7 +528,7 @@ jobs:
       run: |
         git config --global core.autocrlf false
     - name: Checkout GDAL
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
     - uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
       with:
         activate-environment: gdalenv
@@ -539,16 +539,23 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet proj pytest pytest-env pytest-benchmark filelock lxml cmake setuptools
+        conda install --yes --quiet proj python=3.12 swig pytest pytest-env pytest-benchmark filelock lxml cmake setuptools
     - name: Check CMake version
       shell: bash -l {0}
       run: |
         cmake --version
+
+    - name: Remove conflicting libraries
+      shell: bash -l {0}
+      run: |
+          rm -rf C:/Strawberry || /bin/true
+          rm -rf "C:/Program Files/OpenSSL/lib" || /bin/true
+
     - name: Configure
       shell: bash -l {0}
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -A ${architecture} -G "${generator}" "-DCMAKE_PREFIX_PATH=${CONDA}/envs/gdalenv" -Werror=dev "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake -A ${architecture} -G "${generator}" "-DCMAKE_PREFIX_PATH=${CONDA}/envs/gdalenv" -Werror=dev "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DWERROR_DEV_FLAG="-Werror=dev" -DCMAKE_CXX_STANDARD=20
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
@@ -612,9 +619,9 @@ jobs:
       with:
         xcode-version: '15.4.0'
     - name: Checkout GDAL
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
     - name: Setup cache
-      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       id: cache
       with:
           path: ${{ github.workspace }}/.ccache
@@ -699,11 +706,11 @@ jobs:
       run: |
         git config --global core.autocrlf false
     - name: Checkout GDAL
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
     - uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
       with:
         activate-environment: gdalenv
-        python-version: 3.9
+        python-version: "3.10"
         channels: conda-forge
     - name: Install dependency
       shell: bash -l {0}

@@ -2362,7 +2362,7 @@ def test_ogr_libkml_create_field_id_integer(tmp_vsimem):
     with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
-        assert f["id"] == "1"
+        assert f["id"] == "test.1"
 
 
 ###############################################################################
@@ -2406,3 +2406,16 @@ def test_ogr_libkml_creation_illegal_layer_name(tmp_vsimem):
     ds = ogr.GetDriverByName("LIBKML").CreateDataSource(tmp_vsimem / "out")
     with pytest.raises(Exception, match="Illegal character"):
         ds.CreateLayer("illegal/with/slash")
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/13590
+
+
+def test_ogr_libkml_read_simple_field_ID():
+
+    ds = ogr.Open("data/kml/ID_simple_field.kml")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["id"] == "test.1"
+    assert f["ID2"] == 32

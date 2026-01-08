@@ -457,9 +457,12 @@ bool SetupCache(std::string &cache, bool clear)
     return true;
 }
 
-static bool CompareStrings(const std::string &a, const std::string &b)
+// recent libc++ std::sort() involve unsigned integer overflow in some
+// situation
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static void SortStringList(std::vector<std::string> &strList)
 {
-    return a.compare(b) < 0;
+    std::sort(strList.begin(), strList.end());
 }
 
 std::vector<std::string> ReadCache(const std::string &cache)
@@ -483,7 +486,7 @@ std::vector<std::string> ReadCache(const std::string &cache)
         }
         CSLDestroy(data);
     }
-    std::sort(contents.begin(), contents.end(), CompareStrings);
+    SortStringList(contents);
     return contents;
 }
 

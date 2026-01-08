@@ -202,7 +202,6 @@ void CPLHashSetDestroy(CPLHashSet *set)
  * provided at the creation of the hash set.
  *
  * @param set the hash set
- * @since GDAL 2.1
  */
 
 void CPLHashSetClear(CPLHashSet *set)
@@ -470,7 +469,6 @@ int CPLHashSetRemove(CPLHashSet *set, const void *elt)
  * @param elt the new element to remove from the hash set
  *
  * @return TRUE if the element was in the hash set
- * @since GDAL 2.1
  */
 
 int CPLHashSetRemoveDeferRehash(CPLHashSet *set, const void *elt)

@@ -207,8 +207,8 @@ CPLErr HF2RasterBand::IReadBlock(int nBlockXOff, int nLineYOff, void *pImage)
                 double dfVal = nVal * (double)fScale + fOff;
                 if (dfVal > std::numeric_limits<float>::max())
                     dfVal = std::numeric_limits<float>::max();
-                else if (dfVal < std::numeric_limits<float>::min())
-                    dfVal = std::numeric_limits<float>::min();
+                else if (dfVal < std::numeric_limits<float>::lowest())
+                    dfVal = std::numeric_limits<float>::lowest();
                 pafBlockData[nxoff * nBlockXSize + j * nRasterXSize + 0] =
                     static_cast<float>(dfVal);
                 for (int i = 1; i < nTileWidth; i++)
@@ -232,8 +232,8 @@ CPLErr HF2RasterBand::IReadBlock(int nBlockXOff, int nLineYOff, void *pImage)
                     dfVal = nVal * (double)fScale + fOff;
                     if (dfVal > std::numeric_limits<float>::max())
                         dfVal = std::numeric_limits<float>::max();
-                    else if (dfVal < std::numeric_limits<float>::min())
-                        dfVal = std::numeric_limits<float>::min();
+                    else if (dfVal < std::numeric_limits<float>::lowest())
+                        dfVal = std::numeric_limits<float>::lowest();
                     pafBlockData[nxoff * nBlockXSize + j * nRasterXSize + i] =
                         static_cast<float>(dfVal);
                 }
@@ -580,7 +580,7 @@ GDALDataset *HF2Dataset::Open(GDALOpenInfo *poOpenInfo)
         else
         {
             CPLDebug("HF2", "Skipping block %s", szBlockName);
-            VSIFSeekL(fp, nBlockSize, SEEK_CUR);
+            VSIFSeekL(fp, static_cast<vsi_l_offset>(nBlockSize), SEEK_CUR);
         }
     }
 
@@ -765,7 +765,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
     GDALDataType eSrcDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     GDALDataType eReqDT;
     float fVertPres = (float)0.01;
-    if (eSrcDT == GDT_Byte || eSrcDT == GDT_Int16)
+    if (eSrcDT == GDT_UInt8 || eSrcDT == GDT_Int16)
     {
         fVertPres = 1;
         eReqDT = GDT_Int16;

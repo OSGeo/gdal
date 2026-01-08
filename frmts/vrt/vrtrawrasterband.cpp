@@ -116,6 +116,7 @@ CPLErr VRTRawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     }
 
     m_poRawRaster->SetAccess(eAccess);
+    m_poRawRaster->SetTruncatedFileAllowed(eAccess == GA_Update);
 
     return m_poRawRaster->RasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
                                    nBufXSize, nBufYSize, eBufType, nPixelSpace,
@@ -330,12 +331,11 @@ CPLErr VRTRawRasterBand::SetRawLink(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Work out if we are in native mode or not.                       */
     /* -------------------------------------------------------------------- */
-    RawRasterBand::ByteOrder eByteOrder =
-#if CPL_IS_LSB
-        RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
-#else
-        RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
-#endif
+    RawRasterBand::ByteOrder eByteOrder;
+    if constexpr (CPL_IS_LSB)
+        eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
+    else
+        eByteOrder = RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
 
     if (pszByteOrder != nullptr)
     {

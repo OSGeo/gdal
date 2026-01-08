@@ -777,3 +777,47 @@ def test_vsikerchunk_json_ref_create_copy(tmp_vsimem):
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("x")
     assert ar.Read() == b"\x01"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "ref_filename,expected_filename",
+    [
+        (
+            "data/zarr/kerchunk_json/json_ref_v0_min/ref.json",
+            "data/zarr/kerchunk_json/json_ref_v0_min/0.bin",
+        ),
+        (
+            "data/zarr/kerchunk_json/json_ref_v1_min/ref.json",
+            "data/zarr/kerchunk_json/json_ref_v1_min/0.bin",
+        ),
+    ],
+)
+def test_vsikerchunk_json_ref_GetFileMetadata(ref_filename, expected_filename):
+
+    assert gdal.GetFileMetadata("/vsikerchunk_json_ref/", None) == {}
+    with pytest.raises(Exception, match="Invalid /vsikerchunk_json_ref/ syntax"):
+        assert gdal.GetFileMetadata("/vsikerchunk_json_ref/", "CHUNK_INFO")
+    with pytest.raises(Exception, match="Invalid /vsikerchunk_json_ref/ syntax"):
+        assert gdal.GetFileMetadata("/vsikerchunk_json_ref/{foo", "CHUNK_INFO")
+    assert (
+        gdal.GetFileMetadata("/vsikerchunk_json_ref{/i_do/not/exist}", "CHUNK_INFO")
+        == {}
+    )
+    assert (
+        gdal.GetFileMetadata(
+            "/vsikerchunk_json_ref/{" + ref_filename + "}/non_existing", "CHUNK_INFO"
+        )
+        == {}
+    )
+    got_md = gdal.GetFileMetadata(
+        "/vsikerchunk_json_ref/{" + ref_filename + "}/x/0", "CHUNK_INFO"
+    )
+    got_md["FILENAME"] = got_md["FILENAME"].replace("\\", "/")
+    assert got_md == {
+        "FILENAME": expected_filename,
+        "OFFSET": "0",
+        "SIZE": "1",
+    }

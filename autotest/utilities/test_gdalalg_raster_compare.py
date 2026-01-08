@@ -417,9 +417,9 @@ def test_gdalalg_raster_compare_geotransform():
 @pytest.mark.parametrize(
     "dt,stype,v1,v2",
     [
-        (gdal.GDT_Byte, "B", 255, 255),
-        (gdal.GDT_Byte, "B", 255, 0),
-        (gdal.GDT_Byte, "B", 0, 255),
+        (gdal.GDT_UInt8, "B", 255, 255),
+        (gdal.GDT_UInt8, "B", 255, 0),
+        (gdal.GDT_UInt8, "B", 0, 255),
         (gdal.GDT_Int8, "b", 127, 127),
         (gdal.GDT_Int8, "b", -128, -128),
         (gdal.GDT_Int8, "b", 127, -128),
@@ -557,7 +557,7 @@ def test_gdalalg_raster_compare_pixel(dt, stype, v1, v2, band_interleaved):
 def test_gdalalg_raster_compare_pixel_interleaved_progress():
 
     ds = gdal.GetDriverByName("MEM").Create(
-        "", 1, 1, 16, gdal.GDT_Byte, options=["INTERLEAVE=PIXEL"]
+        "", 1, 1, 16, gdal.GDT_UInt8, options=["INTERLEAVE=PIXEL"]
     )
 
     tab_pct = [0]
@@ -582,7 +582,7 @@ def test_gdalalg_raster_compare_pixel_interleaved_progress():
 def test_gdalalg_raster_compare_pixel_interleaved_progress_interrupted():
 
     ds = gdal.GetDriverByName("MEM").Create(
-        "", 1, 1, 16, gdal.GDT_Byte, options=["INTERLEAVE=PIXEL"]
+        "", 1, 1, 16, gdal.GDT_UInt8, options=["INTERLEAVE=PIXEL"]
     )
 
     tab_pct = [0]
@@ -659,7 +659,7 @@ def test_gdalalg_raster_compare_height():
 
 def test_gdalalg_raster_compare_type():
 
-    input_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Byte)
+    input_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_UInt8)
     ref_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Int16)
 
     with gdal.Run(
@@ -1155,3 +1155,12 @@ def test_gdalalg_raster_compare_subdataset_progress():
         assert alg["output-string"] == ""
 
     assert tab_pct[0] == 1.0
+
+
+def test_gdalalg_raster_compare_same_file_pipeline():
+
+    with gdal.alg.raster.pipeline(
+        input="../gcore/data/byte.tif",
+        pipeline="read ! compare --reference ../gcore/data/byte.tif",
+    ) as alg:
+        assert alg["output-string"] == ""

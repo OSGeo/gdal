@@ -48,6 +48,12 @@ def check_python_bindings():
             os.path.dirname(__file__), os.pardir, os.pardir, "VERSION"
         )
         doc_version = open(version_file).read().strip()
+        doc_version_stripped = doc_version
+        for suffix in ["dev", "beta"]:
+            pos_suffix = doc_version_stripped.find(suffix)
+            if pos_suffix > 0:
+                doc_version_stripped = doc_version_stripped[0:pos_suffix]
+
         gdal_version = gdal.__version__
         gdal_version_stripped = gdal_version
         for suffix in ["dev", "beta"]:
@@ -55,9 +61,9 @@ def check_python_bindings():
             if pos_suffix > 0:
                 gdal_version_stripped = gdal_version_stripped[0:pos_suffix]
 
-        if doc_version.strip() != gdal_version_stripped:
+        if doc_version_stripped != gdal_version_stripped:
             logger.warn(
-                f"Building documentation for GDAL {doc_version} but osgeo.gdal module has version {gdal_version}. Python API documentation may be incorrect."
+                f"Building documentation for GDAL {doc_version_stripped} but osgeo.gdal module has version {gdal_version_stripped}. Python API documentation may be incorrect."
             )
 
 
@@ -77,6 +83,7 @@ extensions = [
     "configoptions",
     "driverproperties",
     "cli_example",
+    "doctestplus_gdal",
     "source_file",
     "sphinx.ext.napoleon",
     "sphinxcontrib.jquery",
@@ -84,6 +91,7 @@ extensions = [
     "sphinxcontrib.spelling",
     "myst_nb",
     "sphinx_tabs.tabs",
+    "sphinx_toolbox.collapse",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -149,6 +157,7 @@ nitpick_ignore = [
     ("cpp:identifier", "tm"),
     ("cpp:identifier", "TRUE"),
     ("cpp:identifier", "uint8_t"),
+    ("cpp:identifier", "uint32_t"),
     ("cpp:identifier", "uint64_t"),
     ("cpp:identifier", "va_list"),
     # ODBC specific
@@ -287,14 +296,20 @@ nitpick_ignore_regex = [
     (".*", "classGDALColorReliefDataset"),
     (".*", "classGDALColorReliefRasterBand"),
     (".*", "classGDALComputedDataset"),
+    (".*", "classGDALDatasetAlgorithm"),
     (".*", "classGDALFootprintCombinedMaskBand"),
     (".*", "classGDALFootprintMaskBand"),
     (".*", "classGDALGeneric3x3Dataset"),
     (".*", "classGDALGeneric3x3RasterBand"),
+    (".*", "classGDALInConstructionAlgorithmArg"),
     (".*", "classGDALMDArrayFromDataset"),
     (".*", "classGDALMDArrayFromRasterBand"),
     (".*", "classGDALMDArrayMeshGrid"),
     (".*", "classGDALMDArrayResampledDatasetRasterBand"),
+    (".*", "classGDALMdimAlgorithm"),
+    (".*", "classGDALRasterAlgorithm"),
+    (".*", "classGDALVectorAlgorithm"),
+    (".*", "classGDALVSIAlgorithm"),
     (".*", "classOGRPointIterator_.*"),
     (".*", "classGDALOverviewDataset"),
     (".*", "classGDALPamDataset"),
@@ -371,6 +386,9 @@ html_static_path = ["_static"]
 # For generated content and robots.txt
 html_extra_path = [os.path.join(build_dir, "html_extra"), "extra_path"]
 
+html_js_files = ["announcement.js"]
+html_css_files = ["announcement.css"]
+
 # If true, links to the reST sources are added to the pages.
 html_show_sourcelink = False
 
@@ -430,6 +448,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_dataset_check",
+        "gdal-dataset-check",
+        "Check whether there are errors when reading the content of a dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_dataset_copy",
         "gdal-dataset-copy",
         "Copy files of a dataset",
@@ -468,6 +493,13 @@ man_pages = [
         "programs/gdal_mdim_convert",
         "gdal-mdim-convert",
         "Convert a multidimensional dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_mdim_mosaic",
+        "gdal-mdim-mosaic",
+        "Build a mosaic, either virtual (VRT) or materialized, from multidimensional datasets",
         [author_evenr],
         1,
     ),
@@ -801,6 +833,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_zonal_stats",
+        "gdal-raster-zonal-stats",
+        "Compute raster zonal statistics.",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector",
         "gdal-vector",
         "Entry point for vector commands",
@@ -844,7 +883,7 @@ man_pages = [
     ),
     (
         "programs/gdal_vector_concat",
-        "gdal-vector_concat",
+        "gdal-vector-concat",
         "Concatenate vector datasets",
         [author_evenr],
         1,
@@ -864,23 +903,9 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_vector_change_field_type",
-        "gdal-vector-change-field-type",
-        "Change the type of a field of a vector dataset",
-        [author_elpaso],
-        1,
-    ),
-    (
         "programs/gdal_vector_filter",
         "gdal-vector-filter",
         "Filter a vector dataset",
-        [author_evenr],
-        1,
-    ),
-    (
-        "programs/gdal_vector_set_geom_type",
-        "gdal-vector-set-geom-type",
-        "Modify the geometry type of a vector dataset",
         [author_evenr],
         1,
     ),
@@ -889,6 +914,13 @@ man_pages = [
         "gdal-vector-explode-collections",
         "Explode geometries of type collection of a vector dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_make_point",
+        "gdal-vector-make-point",
+        "Create point features from attribute fields",
+        [author_dbaston],
         1,
     ),
     (
@@ -913,6 +945,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_sort",
+        "gdal-vector-sort",
+        "Spatially sort a vector dataset",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector_buffer",
         "gdal-vector-buffer",
         "Compute a buffer around geometries of a vector dataset",
@@ -922,7 +961,7 @@ man_pages = [
     (
         "programs/gdal_vector_swap_xy",
         "gdal-vector-swap-xy",
-        "Swap X and Y coordinates of geometries of a vector datasett",
+        "Swap X and Y coordinates of geometries of a vector dataset",
         [author_evenr],
         1,
     ),
@@ -934,9 +973,9 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_index_index",
-        "gdal-index-index",
-        "Create a vector index of index datasets",
+        "programs/gdal_vector_index",
+        "gdal-vector-index",
+        "Create a vector index of vector datasets",
         [author_evenr],
         1,
     ),
@@ -976,9 +1015,30 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_set_field_type",
+        "gdal-vector-set-field-type",
+        "Modify the type of a field of a vector dataset",
+        [author_elpaso],
+        1,
+    ),
+    (
+        "programs/gdal_vector_set_geom_type",
+        "gdal-vector-set-geom-type",
+        "Modify the geometry type of a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector_sql",
         "gdal-vector-sql",
         "Apply SQL statement(s) to a dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_update",
+        "gdal-vector-update",
+        "Update an existing vector dataset with an input vector dataset",
         [author_evenr],
         1,
     ),

@@ -27,40 +27,8 @@ This is often used to "fix up" lossy compressed air photos so that color pixels 
 treated as transparent when mosaicing. The output format must use lossless compression
 if either alpha band or mask band is not set.
 
-Standard options
-++++++++++++++++
-
-.. include:: gdal_options/of_raster_create.rst
-
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. option:: --update
-
-    If only an input dataset is specified, ask for it to be opened in update mode
-    If an output dataset is specified, ask for it to be opened in update mode
-    (this implies that it already exists).
-    Note that updating an existing dataset may lead to file size increase if
-    the dataset is compressed, and/or quality loss if lossy compression is used.
-
-.. option:: --color <c1>,<c2>,<c3>...<cn>|black|white
-
-    Search for pixels near the specified color. May be specified multiple times.
-    When this option is specified, the pixels that are considered as the collar are set to 0,
-    unless only white is specified, in which case there are set to 255.
-
-.. option:: --color-threshold <val>
-
-    Select how far from black, white or custom colors the pixel values can be
-    and still considered near black, white or custom color. Defaults to 15.
-
-.. option:: --pixel-distance <val>
-
-    Number of consecutive transparent pixels that can be encountered before the
-    giving up search inwards. Said otherwise, the collar will be extended by
-    this number of pixels.
-    Defaults to 2.
+Program-Specific Options
+------------------------
 
 .. option:: --add-alpha
 
@@ -91,6 +59,45 @@ Standard options
     algorithm and will work with concave areas. It requires creating a temporary
     dataset and is slower than ``twopasses``. When a non-zero value for :option:`--pixel-distance`
     is used, ``twopasses`` is actually called as an initial step of ``floodfill``.
+
+
+.. option:: --color <c1>,<c2>,<c3>...<cn>|black|white
+
+    Search for pixels near the specified color. May be specified multiple times.
+    When this option is specified, the pixels that are considered as the collar are set to 0,
+    unless only white is specified, in which case there are set to 255.
+
+.. option:: --color-threshold <val>
+
+    Select how far from black, white or custom colors the pixel values can be
+    and still considered near black, white or custom color. Defaults to 15.
+
+.. option:: --pixel-distance <val>
+
+    Number of consecutive transparent pixels that can be encountered before the
+    giving up search inwards. Said otherwise, the collar will be extended by
+    this number of pixels.
+    Defaults to 2.
+
+
+Standard Options
+----------------
+
+.. collapse:: Details
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/of_raster_create.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. option:: --update
+
+        If only an input dataset is specified, ask for it to be opened in update mode
+        If an output dataset is specified, ask for it to be opened in update mode
+        (this implies that it already exists).
+        Note that updating an existing dataset may lead to file size increase if
+        the dataset is compressed, and/or quality loss if lossy compression is used.
 
 
 Examples
