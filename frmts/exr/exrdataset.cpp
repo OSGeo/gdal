@@ -1469,11 +1469,11 @@ class GDALEXRWritableDataset final : public GDALPamDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
-    CPLErr SetMetadata(char **, const char * = "") override;
+    CPLErr SetMetadata(CSLConstList, const char * = "") override;
     CPLErr SetMetadataItem(const char *, const char *,
                            const char * = "") override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 };
@@ -1529,7 +1529,7 @@ CPLErr GDALEXRWritableDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                             SetMetadata()                            */
 /************************************************************************/
 
-CPLErr GDALEXRWritableDataset::SetMetadata(char **papszMD,
+CPLErr GDALEXRWritableDataset::SetMetadata(CSLConstList papszMD,
                                            const char *pszDomain)
 {
     if (pszDomain == nullptr || pszDomain[0] == 0)
@@ -1578,7 +1578,7 @@ CPLErr GDALEXRWritableDataset::SetMetadataItem(const char *pszName,
 /*                             GetMetadata()                            */
 /************************************************************************/
 
-char **GDALEXRWritableDataset::GetMetadata(const char *pszDomain)
+CSLConstList GDALEXRWritableDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain == nullptr || pszDomain[0] == 0)
     {

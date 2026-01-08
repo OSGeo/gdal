@@ -940,7 +940,7 @@ void GDALDriver::DefaultCopyMetadata(GDALDataset *poSrcDS, GDALDataset *poDstDS,
             if ((!papszSrcMDD || CSLFindString(papszSrcMDD, pszDomain) >= 0) &&
                 CSLFindString(papszExcludedDomains, pszDomain) < 0)
             {
-                char **papszMD = poSrcDS->GetMetadata(pszDomain);
+                CSLConstList papszMD = poSrcDS->GetMetadata(pszDomain);
                 if (papszMD)
                     poDstDS->SetMetadata(papszMD, pszDomain);
             }

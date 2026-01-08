@@ -270,7 +270,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     const OGRSpatialReference *GetSpatialRef() const override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 
@@ -432,7 +432,7 @@ class GDALJPGDriver final : public GDALDriver
   public:
     GDALJPGDriver() = default;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 

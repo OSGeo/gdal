@@ -375,7 +375,7 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
     }
 
     // Write the metadata that was read into the ENVI domain.
-    char **papszENVIMetadata = GetMetadata("ENVI");
+    CSLConstList papszENVIMetadata = GetMetadata("ENVI");
     if (CSLFetchNameValue(papszENVIMetadata, "default bands") == nullptr &&
         CSLFetchNameValue(papszENVIMetadata, "default_bands") == nullptr)
     {
@@ -1103,7 +1103,8 @@ void ENVIDataset::SetDescription(const char *pszDescription)
 /*                             SetMetadata()                            */
 /************************************************************************/
 
-CPLErr ENVIDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr ENVIDataset::SetMetadata(CSLConstList papszMetadata,
+                                const char *pszDomain)
 {
     if (pszDomain && (EQUAL(pszDomain, "RPC") || EQUAL(pszDomain, "ENVI")))
     {

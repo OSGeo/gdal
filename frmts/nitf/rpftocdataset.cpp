@@ -77,7 +77,7 @@ class RPFTOCDataset final : public GDALPamDataset
         CSLDestroy(papszFileList);
     }
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
     char **GetFileList() override
     {
@@ -714,7 +714,7 @@ void RPFTOCDataset::AddSubDataset(const char *pszFilename,
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **RPFTOCDataset::GetMetadata(const char *pszDomain)
+CSLConstList RPFTOCDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))

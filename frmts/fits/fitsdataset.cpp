@@ -95,7 +95,7 @@ class FITSDataset final : public GDALPamDataset
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
-    char **GetMetadata(const char *papszDomain = nullptr) override;
+    CSLConstList GetMetadata(const char *papszDomain = nullptr) override;
 
     int GetLayerCount() const override
     {
@@ -949,7 +949,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
                                                      "AT_FIELD_CREATION"),
               "AT_FIRST_FEATURE_CREATION");
 
-    char **papszMD = GetMetadata();
+    CSLConstList papszMD = GetMetadata();
     bool bFirstMD = true;
 
     std::map<CPLString, std::map<CPLString, CPLString>> oMapColNameToMetadata;
@@ -1887,7 +1887,7 @@ FITSDataset::~FITSDataset()
                          "Couldn't move to HDU %d in FITS file %s (%d).\n",
                          m_hduNum, GetDescription(), status);
             }
-            char **metaData = FITSDataset::GetMetadata();
+            CSLConstList metaData = FITSDataset::GetMetadata();
             int count = CSLCount(metaData);
             for (int i = 0; i < count; ++i)
             {
@@ -2262,7 +2262,7 @@ void FITSDataset::LoadMetadata(GDALMajorObject *poTarget)
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **FITSDataset::GetMetadata(const char *pszDomain)
+CSLConstList FITSDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))

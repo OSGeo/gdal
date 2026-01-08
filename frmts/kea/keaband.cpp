@@ -472,7 +472,7 @@ const char *KEARasterBand::GetMetadataItem(const char *pszName,
 }
 
 // get all the metadata as a CSLStringList
-char **KEARasterBand::GetMetadata(const char *pszDomain)
+CSLConstList KEARasterBand::GetMetadata(const char *pszDomain)
 {
     // only deal with 'default' domain - no geolocation etc
     if ((pszDomain != nullptr) && (*pszDomain != '\0'))
@@ -485,7 +485,8 @@ char **KEARasterBand::GetMetadata(const char *pszDomain)
 }
 
 // set the metadata as a CSLStringList
-CPLErr KEARasterBand::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr KEARasterBand::SetMetadata(CSLConstList papszMetadata,
+                                  const char *pszDomain)
 {
     CPLMutexHolderD(&m_hMutex);
     // only deal with 'default' domain - no geolocation etc

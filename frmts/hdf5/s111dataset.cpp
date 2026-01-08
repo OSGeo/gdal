@@ -92,7 +92,7 @@ class S111RasterBand final : public GDALProxyRasterBand
         return m_poRAT.get();
     }
 
-    char **GetMetadata(const char *pszDomain) override
+    CSLConstList GetMetadata(const char *pszDomain) override
     {
         // Short-circuit GDALProxyRasterBand...
         return GDALRasterBand::GetMetadata(pszDomain);

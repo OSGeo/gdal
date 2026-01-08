@@ -164,10 +164,10 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_None, FlushCache, (bool bAtClosing),
                         (bAtClosing))
 
 D_PROXY_METHOD_WITH_RET(char **, nullptr, GetMetadataDomainList, (), ())
-D_PROXY_METHOD_WITH_RET(char **, nullptr, GetMetadata, (const char *pszDomain),
-                        (pszDomain))
+D_PROXY_METHOD_WITH_RET(CSLConstList, nullptr, GetMetadata,
+                        (const char *pszDomain), (pszDomain))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadata,
-                        (char **papszMetadata, const char *pszDomain),
+                        (CSLConstList papszMetadata, const char *pszDomain),
                         (papszMetadata, pszDomain))
 D_PROXY_METHOD_WITH_RET(const char *, nullptr, GetMetadataItem,
                         (const char *pszName, const char *pszDomain),
@@ -351,10 +351,10 @@ int GDALProxyRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
 }
 
 RB_PROXY_METHOD_WITH_RET(char **, nullptr, GetMetadataDomainList, (), ())
-RB_PROXY_METHOD_WITH_RET(char **, nullptr, GetMetadata, (const char *pszDomain),
-                         (pszDomain))
+RB_PROXY_METHOD_WITH_RET(CSLConstList, nullptr, GetMetadata,
+                         (const char *pszDomain), (pszDomain))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadata,
-                         (char **papszMetadata, const char *pszDomain),
+                         (CSLConstList papszMetadata, const char *pszDomain),
                          (papszMetadata, pszDomain))
 
 const char *GDALProxyRasterBand::GetMetadataItem(const char *pszKey,

@@ -4104,7 +4104,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         else if (EQUAL(papszArgv[iArg], "--format"))
         {
             GDALDriverH hDriver;
-            char **papszMD;
 
             if (iArg + 1 >= nArgc)
             {
@@ -4131,7 +4130,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                    GDALGetDriverShortName(hDriver));
             printf(/*ok*/ "  Long Name: %s\n", GDALGetDriverLongName(hDriver));
 
-            papszMD = GDALGetMetadata(hDriver, nullptr);
+            CSLConstList papszMD = GDALGetMetadata(hDriver, nullptr);
             if (CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
                 printf("  Supports: Raster\n"); /*ok*/
             if (CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER, false))
@@ -4268,7 +4267,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             }
 
             bool bFirstOtherOption = true;
-            for (char **papszIter = papszMD; papszIter && *papszIter;
+            for (CSLConstList papszIter = papszMD; papszIter && *papszIter;
                  ++papszIter)
             {
                 if (!STARTS_WITH(*papszIter, "DCAP_") &&

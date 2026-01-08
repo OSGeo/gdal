@@ -1273,7 +1273,8 @@ void CPL_DLL GDALComposeHomographies(const double *padfHomography1,
 /* ==================================================================== */
 
 char CPL_DLL **CPL_STDCALL GDALGetMetadataDomainList(GDALMajorObjectH hObject);
-char CPL_DLL **CPL_STDCALL GDALGetMetadata(GDALMajorObjectH, const char *);
+CSLConstList CPL_DLL CPL_STDCALL GDALGetMetadata(GDALMajorObjectH,
+                                                 const char *);
 CPLErr CPL_DLL CPL_STDCALL GDALSetMetadata(GDALMajorObjectH, CSLConstList,
                                            const char *);
 const char CPL_DLL *CPL_STDCALL GDALGetMetadataItem(GDALMajorObjectH,

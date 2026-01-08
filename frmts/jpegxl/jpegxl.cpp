@@ -84,7 +84,7 @@ class JPEGXLDataset final : public GDALJP2AbstractDataset
     CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain) override;
+    CSLConstList GetMetadata(const char *pszDomain) override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override;
 
@@ -1007,7 +1007,7 @@ char **JPEGXLDataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **JPEGXLDataset::GetMetadata(const char *pszDomain)
+CSLConstList JPEGXLDataset::GetMetadata(const char *pszDomain)
 {
 #ifdef HAVE_JXL_BOX_API
     if (pszDomain != nullptr && EQUAL(pszDomain, "xml:XMP") && !m_osXMP.empty())
@@ -1760,11 +1760,11 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     // to main domain.
     const bool bWriteExifMetadata =
         CPLFetchBool(papszOptions, "WRITE_EXIF_METADATA", true);
-    char **papszEXIF = poSrcDS->GetMetadata("EXIF");
+    CSLConstList papszEXIF = poSrcDS->GetMetadata("EXIF");
     bool bEXIFFromMainDomain = false;
     if (papszEXIF == nullptr && bWriteExifMetadata)
     {
-        char **papszMetadata = poSrcDS->GetMetadata();
+        CSLConstList papszMetadata = poSrcDS->GetMetadata();
         for (CSLConstList papszIter = papszMetadata; papszIter && *papszIter;
              ++papszIter)
         {
@@ -1779,14 +1779,14 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
 
     // Write "xml " box with xml:XMP metadata
     const bool bWriteXMP = CPLFetchBool(papszOptions, "WRITE_XMP", true);
-    char **papszXMP = poSrcDS->GetMetadata("xml:XMP");
+    CSLConstList papszXMP = poSrcDS->GetMetadata("xml:XMP");
 
     const bool bWriteGeoJP2 = CPLFetchBool(papszOptions, "WRITE_GEOJP2", true);
     GDALGeoTransform gt;
     const bool bHasGeoTransform = poSrcDS->GetGeoTransform(gt) == CE_None;
     const OGRSpatialReference *poSRS = poSrcDS->GetSpatialRef();
     const int nGCPCount = poSrcDS->GetGCPCount();
-    char **papszRPCMD = poSrcDS->GetMetadata("RPC");
+    CSLConstList papszRPCMD = poSrcDS->GetMetadata("RPC");
     std::unique_ptr<GDALJP2Box> poJUMBFBox;
     if (bWriteGeoJP2 &&
         (poSRS != nullptr || bHasGeoTransform || nGCPCount || papszRPCMD))
@@ -1969,10 +1969,11 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
                         abyData.insert(
                             abyData.begin() + nInsertPos, abySizeAndBoxName,
                             abySizeAndBoxName + sizeof(abySizeAndBoxName));
-                        abyData.insert(abyData.begin() + nInsertPos + 8,
-                                       reinterpret_cast<GByte *>(papszXMP[0]),
-                                       reinterpret_cast<GByte *>(papszXMP[0]) +
-                                           nXMPLen);
+                        abyData.insert(
+                            abyData.begin() + nInsertPos + 8,
+                            reinterpret_cast<const GByte *>(papszXMP[0]),
+                            reinterpret_cast<const GByte *>(papszXMP[0]) +
+                                nXMPLen);
                         nInsertPos += 8 + nXMPLen;
                     }
                     else

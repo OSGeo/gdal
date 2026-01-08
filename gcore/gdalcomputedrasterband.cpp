@@ -68,7 +68,7 @@ class GDALComputedDataset final : public GDALDataset
         return m_oVRTDS.GetSpatialRef();
     }
 
-    char **GetMetadata(const char *pszDomain) override
+    CSLConstList GetMetadata(const char *pszDomain) override
     {
         return m_oVRTDS.GetMetadata(pszDomain);
     }

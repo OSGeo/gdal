@@ -423,7 +423,7 @@ char **OGRPGTableLayer::GetMetadataDomainList()
 /*                              GetMetadata()                           */
 /************************************************************************/
 
-char **OGRPGTableLayer::GetMetadata(const char *pszDomain)
+CSLConstList OGRPGTableLayer::GetMetadata(const char *pszDomain)
 {
     LoadMetadata();
 
@@ -476,7 +476,7 @@ const char *OGRPGTableLayer::GetMetadataItem(const char *pszName,
 /*                              SetMetadata()                           */
 /************************************************************************/
 
-CPLErr OGRPGTableLayer::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr OGRPGTableLayer::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 {
     LoadMetadata();
 
@@ -3878,7 +3878,7 @@ OGRErr OGRPGTableLayer::RunDeferredCreationIfNecessary()
         }
     }
 
-    char **papszMD = OGRLayer::GetMetadata();
+    CSLConstList papszMD = OGRLayer::GetMetadata();
     if (papszMD != nullptr)
         SetMetadata(papszMD);
 

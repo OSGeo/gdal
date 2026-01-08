@@ -361,7 +361,7 @@ static CPLString GetSrcDSProjection(GDALDatasetH hDS, CSLConstList papszTO)
     }
 
     const char *pszMethod = FetchSrcMethod(papszTO);
-    char **papszMD = nullptr;
+    CSLConstList papszMD = nullptr;
     const OGRSpatialReferenceH hSRS = GDALGetSpatialRef(hDS);
     const char *pszGeolocationDataset =
         CSLFetchNameValueDef(papszTO, "SRC_GEOLOC_ARRAY",
@@ -1864,7 +1864,7 @@ static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                 "WARP",
                 "Copying metadata from first source to destination dataset");
             /* copy dataset-level metadata */
-            char **papszMetadata = GDALGetMetadata(hSrcDS, nullptr);
+            CSLConstList papszMetadata = GDALGetMetadata(hSrcDS, nullptr);
 
             char **papszMetadataNew = nullptr;
             for (int i = 0;
@@ -1903,7 +1903,8 @@ static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                 EQUAL(psOptions->osFormat.c_str(), "GTIFF") ||
                 EQUAL(psOptions->osFormat.c_str(), "COG"))
             {
-                char **papszMD_ISIS3 = GDALGetMetadata(hSrcDS, "json:ISIS3");
+                CSLConstList papszMD_ISIS3 =
+                    GDALGetMetadata(hSrcDS, "json:ISIS3");
                 if (papszMD_ISIS3 != nullptr && papszMD_ISIS3[0])
                 {
                     std::string osJSON = papszMD_ISIS3[0];
@@ -1918,13 +1919,14 @@ static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             }
             else if (EQUAL(psOptions->osFormat.c_str(), "PDS4"))
             {
-                char **papszMD_PDS4 = GDALGetMetadata(hSrcDS, "xml:PDS4");
+                CSLConstList papszMD_PDS4 = GDALGetMetadata(hSrcDS, "xml:PDS4");
                 if (papszMD_PDS4 != nullptr)
                     GDALSetMetadata(hDstDS, papszMD_PDS4, "xml:PDS4");
             }
             else if (EQUAL(psOptions->osFormat.c_str(), "VICAR"))
             {
-                char **papszMD_VICAR = GDALGetMetadata(hSrcDS, "json:VICAR");
+                CSLConstList papszMD_VICAR =
+                    GDALGetMetadata(hSrcDS, "json:VICAR");
                 if (papszMD_VICAR != nullptr)
                     GDALSetMetadata(hDstDS, papszMD_VICAR, "json:VICAR");
             }

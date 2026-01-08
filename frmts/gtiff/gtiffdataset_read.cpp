@@ -6301,7 +6301,7 @@ char **GTiffDataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **GTiffDataset::GetMetadata(const char *pszDomain)
+CSLConstList GTiffDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))

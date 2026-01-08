@@ -1284,7 +1284,7 @@ char **VICARDataset::GetMetadataDomainList()
 /*                             GetMetadata()                            */
 /************************************************************************/
 
-char **VICARDataset::GetMetadata(const char *pszDomain)
+CSLConstList VICARDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "json:VICAR"))
     {
@@ -1318,7 +1318,7 @@ void VICARDataset::InvalidateLabel()
 /*                             SetMetadata()                            */
 /************************************************************************/
 
-CPLErr VICARDataset::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr VICARDataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 {
     if (m_bUseSrcLabel && eAccess == GA_Update && pszDomain != nullptr &&
         EQUAL(pszDomain, "json:VICAR"))
@@ -3365,7 +3365,7 @@ GDALDataset *VICARDataset::CreateCopy(const char *pszFilename,
 
     if (poDS->m_bUseSrcLabel && !poDS->m_oSrcJSonLabel.IsValid())
     {
-        char **papszMD_VICAR = poSrcDS->GetMetadata("json:VICAR");
+        CSLConstList papszMD_VICAR = poSrcDS->GetMetadata("json:VICAR");
         if (papszMD_VICAR != nullptr)
         {
             poDS->SetMetadata(papszMD_VICAR, "json:VICAR");

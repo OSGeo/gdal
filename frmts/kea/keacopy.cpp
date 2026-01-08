@@ -336,7 +336,7 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO,
 static void KEACopyMetadata(GDALMajorObject *pObject,
                             kealib::KEAImageIO *pImageIO, int nBand)
 {
-    char **ppszMetadata = pObject->GetMetadata();
+    CSLConstList ppszMetadata = pObject->GetMetadata();
     if (ppszMetadata != nullptr)
     {
         int nCount = 0;

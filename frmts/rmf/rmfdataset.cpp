@@ -3394,7 +3394,8 @@ CPLErr RMFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
     return GDALDataset::SetMetadataItem(pszName, pszValue, pszDomain);
 }
 
-CPLErr RMFDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr RMFDataset::SetMetadata(CSLConstList papszMetadata,
+                               const char *pszDomain)
 {
     if (GetAccess() == GA_Update)
     {

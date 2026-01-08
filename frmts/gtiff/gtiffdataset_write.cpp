@@ -4302,7 +4302,7 @@ void GTiffDataset::WriteRPC(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     /*      Handle RPC data written to TIFF RPCCoefficient tag, RPB file,   */
     /*      RPCTEXT file or PAM.                                            */
     /* -------------------------------------------------------------------- */
-    char **papszRPCMD = poSrcDS->GetMetadata(MD_DOMAIN_RPC);
+    CSLConstList papszRPCMD = poSrcDS->GetMetadata(MD_DOMAIN_RPC);
     if (papszRPCMD != nullptr)
     {
         bool bRPCSerializedOtherWay = false;
@@ -4395,7 +4395,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                 // Propagate ISIS3 or VICAR metadata
                 for (const char *pszMDD : {"json:ISIS3", "json:VICAR"})
                 {
-                    char **papszMD = poSrcDS->GetMetadata(pszMDD);
+                    CSLConstList papszMD = poSrcDS->GetMetadata(pszMDD);
                     if (papszMD)
                     {
                         l_oMDMD.SetMetadata(papszMD, pszMDD);
@@ -4432,12 +4432,10 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         WriteRPC(poSrcDS, l_hTIFF, bSrcIsGeoTIFF, eProfile, pszTIFFFilename,
                  papszCreationOptions);
 
-        /* --------------------------------------------------------------------
-         */
+        /* ------------------------------------------------------------------ */
         /*      Handle metadata data written to an IMD file. */
-        /* --------------------------------------------------------------------
-         */
-        char **papszIMDMD = poSrcDS->GetMetadata(MD_DOMAIN_IMD);
+        /* ------------------------------------------------------------------ */
+        CSLConstList papszIMDMD = poSrcDS->GetMetadata(MD_DOMAIN_IMD);
         if (papszIMDMD != nullptr)
         {
             GDALWriteIMDFile(pszTIFFFilename, papszIMDMD);
@@ -8066,7 +8064,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Copy xml:XMP data                                               */
     /* -------------------------------------------------------------------- */
-    char **papszXMP = poSrcDS->GetMetadata("xml:XMP");
+    CSLConstList papszXMP = poSrcDS->GetMetadata("xml:XMP");
     if (papszXMP != nullptr && *papszXMP != nullptr)
     {
         int nTagSize = static_cast<int>(strlen(*papszXMP));
@@ -8329,7 +8327,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     /*      totally.  So we have to merge it.                               */
     /* -------------------------------------------------------------------- */
 
-    char **papszSRC_MD = poSrcDS->GetMetadata();
+    CSLConstList papszSRC_MD = poSrcDS->GetMetadata();
     char **papszDST_MD = CSLDuplicate(poDS->GetMetadata());
 
     papszDST_MD = CSLMerge(papszDST_MD, papszSRC_MD);
@@ -8366,7 +8364,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     if (CPLTestBool(CPLGetConfigOption("ESRI_XML_PAM", "NO")))
     {
-        char **papszESRIMD = poSrcDS->GetMetadata("xml:ESRI");
+        CSLConstList papszESRIMD = poSrcDS->GetMetadata("xml:ESRI");
         if (papszESRIMD)
         {
             poDS->SetMetadata(papszESRIMD, "xml:ESRI");
@@ -9192,7 +9190,7 @@ CPLErr GTiffDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 /************************************************************************/
 /*                            SetMetadata()                             */
 /************************************************************************/
-CPLErr GTiffDataset::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr GTiffDataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 
 {
     LoadGeoreferencingAndPamIfNeeded();

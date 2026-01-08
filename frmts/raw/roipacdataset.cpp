@@ -752,7 +752,7 @@ CPLErr ROIPACDataset::FlushCache(bool bAtClosing)
     /* -------------------------------------------------------------------- */
     /*      Metadata stored in the ROI_PAC domain.                          */
     /* -------------------------------------------------------------------- */
-    char **papszROIPACMetadata = GetMetadata("ROI_PAC");
+    CSLConstList papszROIPACMetadata = GetMetadata("ROI_PAC");
     for (int i = 0; i < CSLCount(papszROIPACMetadata); i++)
     {
         /* Get the tokens from the metadata item */

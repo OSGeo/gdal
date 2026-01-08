@@ -130,7 +130,7 @@ GDALDataset *DerivedDataset::Open(GDALOpenInfo *poOpenInfo)
     // Transfer metadata
     poDS->SetMetadata(poTmpDS->GetMetadata());
 
-    char **papszRPC = poTmpDS->GetMetadata("RPC");
+    CSLConstList papszRPC = poTmpDS->GetMetadata("RPC");
     if (papszRPC)
     {
         poDS->SetMetadata(papszRPC, "RPC");

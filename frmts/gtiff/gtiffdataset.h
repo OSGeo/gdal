@@ -552,8 +552,8 @@ class GTiffDataset final : public GDALPamDataset
     CPLErr FlushCache(bool bAtClosing) override;
 
     char **GetMetadataDomainList() override;
-    CPLErr SetMetadata(char **, const char * = "") override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList, const char * = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *, const char *,
                            const char * = "") override;
     virtual const char *GetMetadataItem(const char *pszName,

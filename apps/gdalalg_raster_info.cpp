@@ -147,7 +147,7 @@ bool GDALRasterInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     if (m_subDS > 0)
     {
-        char **papszSubdatasets = GDALGetMetadata(hDS, "SUBDATASETS");
+        CSLConstList papszSubdatasets = GDALGetMetadata(hDS, "SUBDATASETS");
         const int nSubdatasets = CSLCount(papszSubdatasets) / 2;
         if (m_subDS > nSubdatasets)
         {

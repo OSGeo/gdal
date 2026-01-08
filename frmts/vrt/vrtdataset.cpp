@@ -182,7 +182,7 @@ CPLErr VRTFlushCacheStruct<T>::FlushCache(T &obj, bool bAtClosing)
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **VRTDataset::GetMetadata(const char *pszDomain)
+CSLConstList VRTDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "xml:VRT"))
     {
@@ -775,7 +775,8 @@ CPLErr VRTDataset::GetGeoTransform(GDALGeoTransform &gt) const
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr VRTDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr VRTDataset::SetMetadata(CSLConstList papszMetadata,
+                               const char *pszDomain)
 
 {
     SetNeedsFlush();
@@ -1175,7 +1176,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                          "'sd'");
                 return nullptr;
             }
-            char **papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
+            CSLConstList papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
             int nSubdatasets = CSLCount(papszSubdatasets);
 
             if (nSubdatasets > 0)

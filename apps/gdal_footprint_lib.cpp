@@ -591,7 +591,7 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
         /*      Find the output driver. */
         /* ----------------------------------------------------------------- */
         hDriver = GDALGetDriverByName(osFormat.c_str());
-        char **papszDriverMD =
+        CSLConstList papszDriverMD =
             hDriver ? GDALGetMetadata(hDriver, nullptr) : nullptr;
         if (hDriver == nullptr ||
             !CPLTestBool(CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_VECTOR,

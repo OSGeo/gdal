@@ -1280,7 +1280,7 @@ bool OGRParquetWriterLayer::IsArrowSchemaSupported(
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr OGRParquetWriterLayer::SetMetadata(char **papszMetadata,
+CPLErr OGRParquetWriterLayer::SetMetadata(CSLConstList papszMetadata,
                                           const char *pszDomain)
 {
     if (!pszDomain || !EQUAL(pszDomain, "SHAPEFILE"))

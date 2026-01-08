@@ -718,7 +718,7 @@ const char *KEADataset::GetMetadataItem(const char *pszName,
 }
 
 // get the whole metadata as CSLStringList - note may be thread safety issues
-char **KEADataset::GetMetadata(const char *pszDomain)
+CSLConstList KEADataset::GetMetadata(const char *pszDomain)
 {
     // only deal with 'default' domain - no geolocation etc
     if ((pszDomain != nullptr) && (*pszDomain != '\0'))
@@ -728,7 +728,8 @@ char **KEADataset::GetMetadata(const char *pszDomain)
 }
 
 // set the whole metadata as a CSLStringList
-CPLErr KEADataset::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr KEADataset::SetMetadata(CSLConstList papszMetadata,
+                               const char *pszDomain)
 {
     CPLMutexHolderD(&m_hMutex);
     // only deal with 'default' domain - no geolocation etc

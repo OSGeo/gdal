@@ -219,7 +219,8 @@ MAIN_START(argc, argv)
         }
         else
         {
-            char **papszSubdatasets = GDALGetMetadata(hDataset, "SUBDATASETS");
+            CSLConstList papszSubdatasets =
+                GDALGetMetadata(hDataset, "SUBDATASETS");
             const int nSubdatasets = CSLCount(papszSubdatasets) / 2;
             char *pszSubDest = static_cast<char *>(
                 CPLMalloc(strlen(sOptionsForBinary.osDest.c_str()) + 32));

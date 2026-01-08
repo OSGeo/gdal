@@ -200,8 +200,9 @@ class ISIS3Dataset final : public RawDataset
     char **GetFileList() override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList papszMD,
+                       const char *pszDomain = "") override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 
@@ -1440,7 +1441,7 @@ char **ISIS3Dataset::GetMetadataDomainList()
 /*                             GetMetadata()                            */
 /************************************************************************/
 
-char **ISIS3Dataset::GetMetadata(const char *pszDomain)
+CSLConstList ISIS3Dataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "json:ISIS3"))
     {
@@ -1607,7 +1608,7 @@ void ISIS3Dataset::InvalidateLabel()
 /*                             SetMetadata()                            */
 /************************************************************************/
 
-CPLErr ISIS3Dataset::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr ISIS3Dataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 {
     if (m_bUseSrcLabel && eAccess == GA_Update && pszDomain != nullptr &&
         EQUAL(pszDomain, "json:ISIS3"))
@@ -4475,7 +4476,7 @@ GDALDataset *ISIS3Dataset::CreateCopy(const char *pszFilename,
 
     if (poDS->m_bUseSrcLabel)
     {
-        char **papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
+        CSLConstList papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
         if (papszMD_ISIS3 != nullptr)
         {
             poDS->SetMetadata(papszMD_ISIS3, "json:ISIS3");

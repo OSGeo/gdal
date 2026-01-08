@@ -917,7 +917,7 @@ static bool IsGdalinfoInteractive()
 /************************************************************************/
 /*                             GetMetaData()                            */
 /************************************************************************/
-char **GRIBRasterBand::GetMetadata(const char *pszDomain)
+CSLConstList GRIBRasterBand::GetMetadata(const char *pszDomain)
 {
     FindMetaData();
     if ((pszDomain == nullptr || pszDomain[0] == 0) && m_nGribVersion == 2 &&
@@ -2891,7 +2891,7 @@ class GDALGRIBDriver final : public GDALDriver
   public:
     GDALGRIBDriver() = default;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override;
 };
@@ -2998,7 +2998,7 @@ void GDALGRIBDriver::InitializeMetadata()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **GDALGRIBDriver::GetMetadata(const char *pszDomain)
+CSLConstList GDALGRIBDriver::GetMetadata(const char *pszDomain)
 {
     std::lock_guard oLock(m_oMutex);
     if (pszDomain == nullptr || EQUAL(pszDomain, ""))

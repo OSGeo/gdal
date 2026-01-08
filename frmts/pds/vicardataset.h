@@ -109,8 +109,9 @@ class VICARDataset final : public RawDataset
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList papszMD,
+                       const char *pszDomain = "") override;
 
     int GetLayerCount() const override
     {

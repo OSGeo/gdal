@@ -2774,7 +2774,7 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
     {
         CPLString oName;
         oName.Printf("xml:BOX_%d", iBox);
-        char **papszMD = poSrcDS->GetMetadata(oName);
+        CSLConstList papszMD = poSrcDS->GetMetadata(oName);
 
         if (papszMD == nullptr || CSLCount(papszMD) != 1)
             break;
@@ -2782,8 +2782,9 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
         GDALJP2Box *poXMLBox = new GDALJP2Box();
 
         poXMLBox->SetType("xml ");
-        poXMLBox->SetWritableData(static_cast<int>(strlen(papszMD[0]) + 1),
-                                  reinterpret_cast<GByte *>(papszMD[0]));
+        poXMLBox->SetWritableData(
+            static_cast<int>(strlen(papszMD[0]) + 1),
+            reinterpret_cast<GByte *>(const_cast<char *>(papszMD[0])));
         JP2KAKWriteBox(&family, poXMLBox);
     }
 

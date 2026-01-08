@@ -76,7 +76,7 @@ class DIMAPDataset final : public GDALPamDataset
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain) override;
+    CSLConstList GetMetadata(const char *pszDomain) override;
     char **GetFileList() override;
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
@@ -169,7 +169,7 @@ char **DIMAPDataset::GetMetadataDomainList()
 /*      metadata as xml.                                                */
 /************************************************************************/
 
-char **DIMAPDataset::GetMetadata(const char *pszDomain)
+CSLConstList DIMAPDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain && EQUAL(pszDomain, "xml:dimap"))

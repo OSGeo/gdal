@@ -103,8 +103,8 @@ class CPL_DLL OGRMutexedLayer final : public OGRLayerDecorator
 
     OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMetadata,
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;

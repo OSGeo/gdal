@@ -1284,7 +1284,7 @@ void JPGDatasetCommon::LoadForMetadataDomain(const char *pszDomain)
 /************************************************************************/
 /*                           GetMetadata()                              */
 /************************************************************************/
-char **JPGDatasetCommon::GetMetadata(const char *pszDomain)
+CSLConstList JPGDatasetCommon::GetMetadata(const char *pszDomain)
 {
     LoadForMetadataDomain(pszDomain);
     return GDALPamDataset::GetMetadata(pszDomain);
@@ -4523,7 +4523,7 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
                     CPLFetchBool(papszOptions, "WRITE_EXIF_METADATA", true);
                 if (bWriteExifMetadata)
                 {
-                    char **papszEXIF_MD = poSrcDS->GetMetadata("EXIF");
+                    CSLConstList papszEXIF_MD = poSrcDS->GetMetadata("EXIF");
                     if (papszEXIF_MD == nullptr)
                     {
                         papszEXIF_MD = poSrcDS->GetMetadata();
@@ -4610,7 +4610,7 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 
                 const bool bWriteXMP =
                     CPLFetchBool(papszOptions, "WRITE_XMP", true);
-                char **papszXMP =
+                CSLConstList papszXMP =
                     bWriteXMP ? poSrcDS->GetMetadata("xml:XMP") : nullptr;
                 if (papszXMP && papszXMP[0])
                 {
@@ -5245,12 +5245,11 @@ GDALDataset *JPGDataset::CreateCopyStage2(
 
             char **papszExcludedDomains =
                 CSLAddString(nullptr, "COLOR_PROFILE");
-            char **papszMD = poSrcDS->GetMetadata();
+            CSLConstList papszMD = poSrcDS->GetMetadata();
             bool bOnlyEXIF = true;
-            for (char **papszIter = papszMD; papszIter && *papszIter;
-                 ++papszIter)
+            for (const char *pszKeyValue : cpl::Iterate(papszMD))
             {
-                if (!STARTS_WITH_CI(*papszIter, "EXIF_"))
+                if (!STARTS_WITH_CI(pszKeyValue, "EXIF_"))
                 {
                     bOnlyEXIF = false;
                     break;
@@ -5282,7 +5281,7 @@ GDALDataset *JPGDataset::CreateCopyStage2(
 
 #if !defined(JPGDataset)
 
-char **GDALJPGDriver::GetMetadata(const char *pszDomain)
+CSLConstList GDALJPGDriver::GetMetadata(const char *pszDomain)
 {
     std::lock_guard oLock(m_oMutex);
     InitializeMetadata();

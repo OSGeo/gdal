@@ -1800,7 +1800,7 @@ GDALDataset *MRFDataset::CreateCopy(const char *pszFilename,
                 poDS->vMax.push_back(dfData);
 
             // Copy the band metadata, PAM will handle it
-            char **meta = srcBand->GetMetadata("IMAGE_STRUCTURE");
+            CSLConstList meta = srcBand->GetMetadata("IMAGE_STRUCTURE");
             if (CSLCount(meta))
                 mBand->SetMetadata(meta, "IMAGE_STRUCTURE");
 

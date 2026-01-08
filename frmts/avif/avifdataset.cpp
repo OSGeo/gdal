@@ -958,7 +958,7 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
     if (CPLTestBool(
             CSLFetchNameValueDef(papszOptions, "WRITE_EXIF_METADATA", "YES")))
     {
-        char **papszEXIFMD = poSrcDS->GetMetadata("EXIF");
+        CSLConstList papszEXIFMD = poSrcDS->GetMetadata("EXIF");
         if (papszEXIFMD)
         {
             GUInt32 nDataSize = 0;
@@ -1095,7 +1095,7 @@ class GDALAVIFDriver final : public GDALDriver
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 
-    char **GetMetadata(const char *pszDomain) override
+    CSLConstList GetMetadata(const char *pszDomain) override
     {
         std::lock_guard oLock(m_oMutex);
         InitMetadata();
