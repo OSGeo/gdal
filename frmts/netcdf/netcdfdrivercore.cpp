@@ -12,6 +12,8 @@
 
 #include "ogrsf_frmts.h"
 #include "gdal_priv.h"
+#include "gdalplugindriverproxy.h"
+#include "gdalsubdatasetinfo.h"
 
 #include "netcdfdrivercore.h"
 

@@ -22,6 +22,7 @@
 #include "cpl_config.h"
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
+#include "gdal_abstractbandblockcache.h"
 
 //! @cond Doxygen_Suppress
 

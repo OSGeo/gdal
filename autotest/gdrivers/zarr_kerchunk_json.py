@@ -245,16 +245,14 @@ def test_zarr_kerchunk_json_fail_exception(
         """{".zgroup": {"zarr_format":2}, "foo":["https://localhost:1/",0,1]}""",
     ],
 )
-def test_zarr_kerchunk_json_open_fail_no_exception(tmp_vsimem, content):
+def test_zarr_kerchunk_json_open_fail(tmp_vsimem, content):
 
     json_filename = str(tmp_vsimem / "test.json")
     gdal.FileFromMemBuffer(json_filename, content)
 
-    with gdal.quiet_errors():
-        assert (
-            gdal.VSIFOpenL("/vsikerchunk_json_ref/{" + json_filename + "}/foo", "rb")
-            is None
-        )
+    with pytest.raises(Exception):
+        with gdal.VSIFile("/vsikerchunk_json_ref/{" + json_filename + "}/foo", "rb"):
+            pass
 
 
 ###############################################################################

@@ -12,6 +12,10 @@
 
 #include "gifabstractdataset.h"
 
+#include "gdal_colortable.h"
+#include "gdal_openinfo.h"
+#include "gdal_cpp_functions.h"
+
 /************************************************************************/
 /* ==================================================================== */
 /*                         GIFAbstractDataset                           */

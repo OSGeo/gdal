@@ -13,6 +13,7 @@
 
 #include "cpl_http.h"
 #include "gdal_pam.h"
+#include "gdal_rasterblock.h"
 
 #include <algorithm>
 

@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"
+#include "gdal_frmts.h"
 #include "cpl_http.h"
 #include "cpl_conv.h"
 #include "ogrlibjsonutils.h"
@@ -20,8 +21,6 @@
 #include <vector>
 #include <map>
 #include <limits>
-
-extern "C" void GDALRegister_EEDAI();
 
 static const int DEFAULT_BLOCK_SIZE = 256;
 

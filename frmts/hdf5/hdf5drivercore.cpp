@@ -12,6 +12,10 @@
 
 #include "hdf5drivercore.h"
 
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
+#include "gdalsubdatasetinfo.h"
+
 #include <algorithm>
 #include <cctype>
 

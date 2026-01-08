@@ -1719,7 +1719,10 @@ void OGRElasticLayer::BuildFeature(OGRFeature *poFeature, json_object *poSource,
                 }
                 else
                 {
-                    poGeom = OGRGeoJSONReadGeometry(it.val);
+                    poGeom = OGRGeoJSONReadGeometry(
+                                 it.val, /* bHasM = */ false,
+                                 /* OGRSpatialReference* = */ nullptr)
+                                 .release();
                 }
             }
             else if (json_object_get_type(it.val) == json_type_string)

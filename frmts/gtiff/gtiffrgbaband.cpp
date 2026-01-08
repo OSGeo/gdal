@@ -15,6 +15,7 @@
 #include "gtiffdataset.h"
 
 #include "tiffio.h"
+#include "gdal_priv.h"
 
 /************************************************************************/
 /*                           GTiffRGBABand()                            */

@@ -10,13 +10,12 @@
  ****************************************************************************/
 
 #include "heifdataset.h"
+#include "gdal_frmts.h"
 
 #include "cpl_vsi_virtual.h"
 
 #include <algorithm>
 #include <cinttypes>
-
-extern "C" void CPL_DLL GDALRegister_HEIF();
 
 /************************************************************************/
 /*                       GDALHEIFRasterBand                             */

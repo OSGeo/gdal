@@ -46,6 +46,8 @@ class CPL_DLL OGRGeoJSONWriteOptions
     OGRFieldType eForcedIDFieldType = OFTString;
     bool bAllowNonFiniteValues = false;
     bool bAutodetectJsonStrings = true;
+    bool bAllowCurve = false;
+    bool bAllowMeasure = false;
 
     void SetRFC7946Settings();
     void SetIDOptions(CSLConstList papszOptions);

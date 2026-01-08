@@ -9,6 +9,7 @@
 
 #include "cpl_minixml.h"
 #include "gdal.h"
+#include "gdal_frmts.h"
 #include "gdal_priv.h"
 #include "gdal_proxy.h"
 #include "../vrt/vrtdataset.h"

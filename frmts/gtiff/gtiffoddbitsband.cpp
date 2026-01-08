@@ -13,6 +13,7 @@
 
 #include "gtiffoddbitsband.h"
 
+#include "gdal_priv.h"
 #include "cpl_float.h"  // CPLFloatToHalf()
 #include "gtiffdataset.h"
 #include "tiffio.h"

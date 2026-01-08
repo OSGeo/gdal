@@ -11,10 +11,7 @@
 #include "cpl_json_header.h"
 
 #include "ogr_api.h"
-
-class OGRGeometry;
-class OGRPolygon;
-class OGRSpatialReference;
+#include "ogr_geometry.h"
 
 /************************************************************************/
 /*                           GeoJSONObject                              */
@@ -32,6 +29,11 @@ struct GeoJSONObject
         eMultiLineString = wkbMultiLineString,
         eMultiPolygon = wkbMultiPolygon,
         eGeometryCollection = wkbGeometryCollection,
+        eCircularString = wkbCircularString,  // JSON-FG extension
+        eCompoundCurve = wkbCompoundCurve,    // JSON-FG extension
+        eCurvePolygon = wkbCurvePolygon,      // JSON-FG extension
+        eMultiCurve = wkbMultiCurve,          // JSON-FG extension
+        eMultiSurface = wkbMultiSurface,      // JSON-FG extension
         eFeature,
         eFeatureCollection
     };
@@ -39,7 +41,8 @@ struct GeoJSONObject
     enum CoordinateDimension
     {
         eMinCoordinateDimension = 2,
-        eMaxCoordinateDimension = 3
+        eMaxCoordinateDimensionGeoJSON = 3,
+        eMaxCoordinateDimensionJSONFG = 4,
     };
 };
 
@@ -49,14 +52,19 @@ struct GeoJSONObject
 
 GeoJSONObject::Type CPL_DLL OGRGeoJSONGetType(json_object *poObj);
 
-OGRwkbGeometryType CPL_DLL OGRGeoJSONGetOGRGeometryType(json_object *poObj);
+bool CPL_DLL OGRJSONFGHasMeasure(json_object *poObj, bool bUpperLevelMValue);
 
-OGRGeometry CPL_DLL *
-OGRGeoJSONReadGeometry(json_object *poObj,
-                       const OGRSpatialReference *poParentSRS = nullptr);
+OGRwkbGeometryType CPL_DLL OGRGeoJSONGetOGRGeometryType(json_object *poObj,
+                                                        bool bHasM);
+
+std::unique_ptr<OGRGeometry>
+    CPL_DLL OGRGeoJSONReadGeometry(json_object *poObj, bool bHasM,
+                                   const OGRSpatialReference *poParentSRS);
+
 OGRSpatialReference CPL_DLL *OGRGeoJSONReadSpatialReference(json_object *poObj);
 
-OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw = false);
+std::unique_ptr<OGRPolygon> OGRGeoJSONReadPolygon(json_object *poObj,
+                                                  bool bHasM, bool bRaw);
 
 const char *OGRGeoJSONGetGeometryName(OGRGeometry const *poGeometry);
 

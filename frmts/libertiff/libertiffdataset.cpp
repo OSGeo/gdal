@@ -25,6 +25,7 @@
 #include <mutex>
 #include <type_traits>
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_mdreader.h"
 #include "gdal_interpolateatpoint.h"

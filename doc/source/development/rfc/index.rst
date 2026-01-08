@@ -115,3 +115,4 @@ RFC list
     rfc106_update_metadata
     rfc107_igetextent_isetspatialfilter
     rfc108_driver_removal_3_11
+    rfc109_gdal_cpp_api

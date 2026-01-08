@@ -12,7 +12,7 @@ GDALAttribute C++ API
 Include file
 ------------
 
-:source_file:`gcore/gdal_priv.h`
+:source_file:`gcore/gdal_multidim.h`
 
 GDALAttribute class
 -------------------

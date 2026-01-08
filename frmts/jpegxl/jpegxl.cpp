@@ -11,6 +11,8 @@
  ****************************************************************************/
 
 #include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "gdal_frmts.h"
 #include "gdalexif.h"
 #include "gdaljp2metadata.h"
 #include "gdaljp2abstractdataset.h"

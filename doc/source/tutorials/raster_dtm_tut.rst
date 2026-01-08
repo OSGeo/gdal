@@ -130,7 +130,7 @@ When using ``ogr2ogr`` it's also important to set the geometry type with ``-nlt 
 
 The image below shows the polygon downloaded from the WFS server overlaid on the raster tile index. We will
 clip the tiled raster using this polygon to create a new  **clipped.tif** file using :ref:`gdal_raster_clip` for the CLI approach,
-and :ref:`gdalwarp` for the traditional method. 
+and :ref:`gdalwarp` for the traditional method.
 
 .. image:: ../../images/tutorials/clip.png
 
@@ -240,12 +240,12 @@ To make the background transparent, include the ``-alpha`` (traditional) or ``--
 
 .. image:: ../../images/tutorials/color.png
 
-To finish, we'll use a new tool introduced in GDAL 3.12  - :ref:`gdal_raster_color_merge`  to blend the color map with the previously created hillshade image.
+To finish, we'll use a new tool introduced in GDAL 3.12  - :ref:`gdal_raster_blend` -  to blend the color map with the previously created hillshade image.
 This command is available only through the new GDAL CLI.
 
 .. code-block:: bash
 
-    gdal raster color-merge --grayscale=hillshade.tif color.tif color-hillshade.png --overwrite
+    gdal raster blend --operator=hsv-value --grayscale=hillshade.tif color.tif color-hillshade.png --overwrite
 
 .. image:: ../../images/tutorials/color-hillshade.png
 

@@ -25,6 +25,7 @@ Authors:  Lucian Plesea
 #include "LERCV1/Lerc1Image.h"
 
 #include "gdal_priv_templates.hpp"
+#include "gdal_openinfo.h"
 
 // Requires lerc at least 2v4, where the c_api changed, but there is no good way
 // to check

@@ -68,6 +68,12 @@ Details for options can be found in :ref:`gdal_raster_stack`.
 
 Details for options can be found in :ref:`gdal_raster_aspect`.
 
+* blend
+
+.. program-output:: gdal raster pipeline --help-doc=blend
+
+Details for options can be found in :ref:`gdal_raster_blend`.
+
 * clip
 
 .. program-output:: gdal raster pipeline --help-doc=clip
@@ -79,12 +85,6 @@ Details for options can be found in :ref:`gdal_raster_clip`.
 .. program-output:: gdal raster pipeline --help-doc=color-map
 
 Details for options can be found in :ref:`gdal_raster_color_map`.
-
-* color-merge
-
-.. program-output:: gdal raster pipeline --help-doc=color-merge
-
-Details for options can be found in :ref:`gdal_raster_color_merge`.
 
 * edit
 

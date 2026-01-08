@@ -12,6 +12,8 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
+#include "cpl_minixml.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"

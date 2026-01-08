@@ -13,6 +13,7 @@
 #ifndef DOXYGEN_SKIP
 
 #include "cpl_mem_cache.h"
+#include "cpl_multiproc.h"
 #include "gdal_proxy.h"
 #include "gdal_rat.h"
 #include "gdal_priv.h"

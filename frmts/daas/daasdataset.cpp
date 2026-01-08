@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "cpl_http.h"
+#include "cpl_multiproc.h"  // CPLSleep
 #include "gdal_frmts.h"
 #include "gdal_alg.h"
 #include "gdal_priv.h"

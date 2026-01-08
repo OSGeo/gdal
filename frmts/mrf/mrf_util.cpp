@@ -52,16 +52,13 @@
 #include <algorithm>
 #include <limits>
 #include "mrfdrivercore.h"
+#include "gdal_frmts.h"
 
 // LERC and QB3 only work on little endian machines
 #if defined(WORDS_BIGENDIAN)
 #undef LERC
 #undef QB3_SUPPORT
 #endif
-
-CPL_C_START
-void GDALRegister_mrf(void);
-CPL_C_END
 
 NAMESPACE_MRF_START
 
@@ -576,12 +573,12 @@ int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess)
 NAMESPACE_MRF_END
 
 /************************************************************************/
-/*                          GDALRegister_mrf()                          */
+/*                          GDALRegister_MRF()                          */
 /************************************************************************/
 
 USING_NAMESPACE_MRF
 
-void GDALRegister_mrf()
+void GDALRegister_MRF()
 {
     if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
@@ -691,11 +688,4 @@ void GDALRegister_mrf()
     driver->pfnCreate = MRFDataset::Create;
     driver->pfnDelete = MRFDataset::Delete;
     GetGDALDriverManager()->RegisterDriver(driver);
-}
-
-extern "C" void CPL_DLL GDALRegister_MRF(void);
-
-void GDALRegister_MRF()
-{
-    GDALRegister_mrf();
 }

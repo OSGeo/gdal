@@ -15,6 +15,7 @@
 
 #include "cpl_json.h"
 #include "cpl_mem_cache.h"
+#include "cpl_vsi_error.h"
 #include "cpl_vsi_virtual.h"
 
 #include "gdal_priv.h"
@@ -552,7 +553,15 @@ VSIVirtualHandleUniquePtr VSIKerchunkParquetRefFileSystem::Open(
                              osPath.c_str());
                 CPLConfigOptionSetter oSetter("GDAL_DISABLE_READDIR_ON_OPEN",
                                               "EMPTY_DIR", false);
-                return VSIFilesystemHandler::OpenStatic(osPath.c_str(), "rb");
+                auto fp = VSIFilesystemHandler::OpenStatic(osPath.c_str(), "rb",
+                                                           true);
+                if (!fp)
+                {
+                    if (!VSIToCPLError(CE_Failure, CPLE_FileIO))
+                        CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s",
+                                 osPath.c_str());
+                }
+                return fp;
             }
         }
 

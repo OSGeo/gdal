@@ -14,6 +14,7 @@
 #include "gtiffsplitbitmapband.h"
 
 #include "gtiffdataset.h"
+#include "gdal_priv.h"
 
 #include "cpl_error_internal.h"
 

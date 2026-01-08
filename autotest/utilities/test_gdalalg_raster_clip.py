@@ -104,6 +104,52 @@ def test_gdalalg_raster_clip_like():
     assert ds.GetRasterBand(1).Checksum() == 3695
 
 
+@pytest.mark.require_driver("PostgreSQL")
+def test_gdalalg_raster_clip_like_postgis():
+
+    val = gdal.GetConfigOption("OGR_PG_CONNECTION_STRING", None)
+    if val is not None:
+        pg_connection_string = val
+    else:
+        pg_connection_string = "dbname=autotest"
+
+    try:
+        pg_ds = gdal.OpenEx(
+            "PG:" + pg_connection_string, gdal.OF_VECTOR | gdal.OF_UPDATE
+        )
+        pg_ds.CreateLayer("test_gdalalg_raster_clip_like_postgis_one")
+        pg_ds.CreateLayer("test_gdalalg_raster_clip_like_postgis_two")
+        pg_ds.Close()
+
+    except RuntimeError:
+        if val is None:
+            pytest.skip(
+                f"OGR_PG_CONNECTION_STRING not specified; Postgres is not available using default connection string {pg_connection_string}"
+            )
+        else:
+            pytest.skip(
+                f"Postgres is not available using supplied OGR_PG_CONNECTION_STRING {pg_connection_string}"
+            )
+
+    try:
+        alg = get_alg()
+        alg["input"] = "../gcore/data/byte.tif"
+        alg["output"] = ""
+        alg["output-format"] = "MEM"
+        alg["like"] = "PG:" + pg_connection_string
+        with pytest.raises(
+            Exception,
+            match="Only single layer dataset can be specified with --like when neither --like-layer or --like-sql have been specified",
+        ):
+            alg.Run()
+    finally:
+        pg_ds = gdal.OpenEx(
+            "PG:" + pg_connection_string, gdal.OF_VECTOR | gdal.OF_UPDATE
+        )
+        pg_ds.ExecuteSQL("DROP TABLE test_gdalalg_raster_clip_like_postgis_one CASCADE")
+        pg_ds.ExecuteSQL("DROP TABLE test_gdalalg_raster_clip_like_postgis_two CASCADE")
+
+
 def test_gdalalg_raster_clip_like_error(tmp_vsimem):
 
     alg = get_alg()

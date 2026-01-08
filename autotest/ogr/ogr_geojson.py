@@ -5947,3 +5947,53 @@ def test_ogr_geojson_sqlite_dialect_id_property():
             f = sql_lyr.GetNextFeature()
             assert f["id"] == 5
             assert f["foo"] == "bar"
+
+
+def test_ogr_geojson_invalid_number(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "out.json",
+        """{
+        "type": "FeatureCollection",
+        "features": [
+            {"type": "Feature", "properties": {"foo": 12345678123456781234567812345678}, "geometry": null}
+        ]
+    }""",
+    )
+
+    with ogr.Open(tmp_vsimem / "out.json") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["foo"] == float(12345678123456781234567812345678)
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "out.json",
+        """{
+        "type": "FeatureCollection",
+        "features": [
+            {"type": "Feature", "properties": {"foo": 123456781234567-81234567812345678}, "geometry": null}
+        ]
+    }""",
+    )
+    with ogr.Open(tmp_vsimem / "out.json") as ds:
+        lyr = ds.GetLayer(0)
+        with pytest.raises(
+            Exception, match="Unrecognized number: 123456781234567-81234567812345678"
+        ):
+            lyr.GetNextFeature()
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "out.json",
+        """{
+        "type": "FeatureCollection",
+        "features": [
+            {"type": "Feature", "properties": {"foo": 12345678.1234567-81234567812345678}, "geometry": null}
+        ]
+    }""",
+    )
+    with ogr.Open(tmp_vsimem / "out.json") as ds:
+        lyr = ds.GetLayer(0)
+        with pytest.raises(
+            Exception, match="Unrecognized number: 12345678.1234567-81234567812345678"
+        ):
+            lyr.GetNextFeature()

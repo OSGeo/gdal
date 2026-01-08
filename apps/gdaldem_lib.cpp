@@ -3634,6 +3634,39 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 
     GDALDEMProcessingOptions *psOptions = psOptionsToFree.get();
 
+    double adfGeoTransform[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+    // Keep that variable in that scope.
+    // A reference on that dataset will be taken by GDALGeneric3x3Dataset
+    // (and released at its destruction) if we go to that code path, and
+    // GDALWarp() (actually the VRTWarpedDataset) will itself take a reference
+    // on hSrcDataset.
+    std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser> poTmpSrcDS;
+
+    if (GDALGetGeoTransform(hSrcDataset, adfGeoTransform) == CE_None &&
+        // For following modes, detect non north-up datasets and autowarp
+        // them so they are north-up oriented.
+        (((eUtilityMode == ASPECT || eUtilityMode == TRI ||
+           eUtilityMode == TPI) &&
+          (adfGeoTransform[2] != 0 || adfGeoTransform[4] != 0 ||
+           adfGeoTransform[5] > 0)) ||
+         // For following modes, detect rotated datasets and autowarp
+         // them so they are north-up oriented. (south-up are fine for those)
+         ((eUtilityMode == SLOPE || eUtilityMode == HILL_SHADE) &&
+          (adfGeoTransform[2] != 0 || adfGeoTransform[4] != 0))))
+    {
+        const char *const apszWarpOptions[] = {"-of", "VRT", nullptr};
+        GDALWarpAppOptions *psWarpOptions = GDALWarpAppOptionsNew(
+            const_cast<char **>(apszWarpOptions), nullptr);
+        poTmpSrcDS.reset(GDALDataset::FromHandle(
+            GDALWarp("", nullptr, 1, &hSrcDataset, psWarpOptions, nullptr)));
+        GDALWarpAppOptionsFree(psWarpOptions);
+        if (!poTmpSrcDS)
+            return nullptr;
+        hSrcDataset = GDALDataset::ToHandle(poTmpSrcDS.get());
+        GDALGetGeoTransform(hSrcDataset, adfGeoTransform);
+    }
+
     const int nXSize = GDALGetRasterXSize(hSrcDataset);
     const int nYSize = GDALGetRasterYSize(hSrcDataset);
 
@@ -3730,11 +3763,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         return nullptr;
     }
 
-    double adfGeoTransform[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
     GDALRasterBandH hSrcBand = GDALGetRasterBand(hSrcDataset, psOptions->nBand);
-
-    GDALGetGeoTransform(hSrcDataset, adfGeoTransform);
 
     CPLString osFormat;
     if (psOptions->osFormat.empty())

@@ -1261,7 +1261,7 @@ int OGRParseDate(const char *pszInput, OGRField *psField, int nOptions)
                 return FALSE;
             const double dfSeconds = CPLAtof(pszInput);
             // We accept second=60 for leap seconds
-            if (dfSeconds > 60.0)
+            if (dfSeconds >= 61.0)
                 return FALSE;
             psField->Date.Second = static_cast<float>(dfSeconds);
 

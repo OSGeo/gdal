@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "cpl_http.h"
+#include "cpl_multiproc.h"  // CPLSleep
 #include "eeda.h"
 #include "ogrlibjsonutils.h"
 

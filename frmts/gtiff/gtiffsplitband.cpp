@@ -14,6 +14,7 @@
 #include "gtiffsplitband.h"
 
 #include "gtiffdataset.h"
+#include "gdal_priv.h"
 
 /************************************************************************/
 /*                           GTiffSplitBand()                           */

@@ -811,7 +811,7 @@ def test_gdalalg_pipeline_nested_nominal():
 
     with gdal.Run(
         "pipeline",
-        pipeline="read ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! color-merge --grayscale [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] ! write --of MEM unnamed",
+        pipeline="read ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! blend --operator=hsv-value --overlay [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] ! write --of MEM unnamed",
     ) as alg:
         ds = alg.Output()
         assert ds.RasterCount == 3
@@ -827,7 +827,7 @@ def test_gdalalg_pipeline_nested_serialize_to_gdalg(tmp_vsimem):
     out_filename = tmp_vsimem / "out.gdalg.json"
     gdal.Run(
         "pipeline",
-        pipeline=f"read ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! color-merge --grayscale [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] ! write {out_filename}",
+        pipeline=f"read ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! blend --operator=hsv-value --overlay [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] ! write {out_filename}",
     )
 
     with gdal.VSIFile(out_filename, "rb") as f:
@@ -840,7 +840,7 @@ def test_gdalalg_pipeline_nested_serialize_to_gdalg(tmp_vsimem):
 
     del j["gdal_version"]
     assert j == {
-        "command_line": "gdal pipeline read --input ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! color-merge --grayscale [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ]",
+        "command_line": "gdal pipeline read --input ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! blend --overlay [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] --operator hsv-value",
         "relative_paths_relative_to_this_file": False,
         "type": "gdal_streamed_alg",
     }

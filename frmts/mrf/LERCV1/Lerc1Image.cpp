@@ -537,7 +537,9 @@ bool Lerc1Image::getwh(const Byte *pByte, size_t nBytes, int &width,
         return false;
     RDVAR(pByte, version);
     RDVAR(pByte, type);
+    // cppcheck-suppress bufferAccessOutOfBounds
     RDVAR(pByte, height);
+    // cppcheck-suppress bufferAccessOutOfBounds
     RDVAR(pByte, width);
     RDVAR(pByte, maxZErrorInFile);
     (void)pByte;

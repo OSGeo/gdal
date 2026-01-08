@@ -21,6 +21,7 @@
 #include "cpl_mem_cache.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "gdal_priv.h"
 #include "vrtdataset.h"
 
 VRTMDArraySource::~VRTMDArraySource() = default;

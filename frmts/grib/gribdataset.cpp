@@ -49,7 +49,7 @@ CPL_C_START
 CPL_C_END
 #include "gdal.h"
 #include "gdal_frmts.h"
-#include "gdal_pam.h"
+#include "gdal_pam_multidim.h"
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "memdataset.h"

@@ -23,6 +23,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_http.h"
+#include "cpl_multiproc.h"  // CPLSleep()
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "cpl_vsi_error.h"

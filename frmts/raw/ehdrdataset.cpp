@@ -13,6 +13,7 @@
 
 #include "cpl_port.h"
 #include "ehdrdataset.h"
+#include "gdal_priv.h"
 #include "rawdataset.h"
 
 #include <algorithm>

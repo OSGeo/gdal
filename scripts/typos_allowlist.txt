@@ -68,7 +68,7 @@ ogr2ogr --config OGR_STROKE_CURVE TRUE -SQL 'SELECT Rechtsstatus,publiziertAb,Me
     lyr = ds.GetLayerByName("OeREBKRM09trsfr.Transferstruktur.Geometrie")
    /* 130 */ {"MSLET", "Mean Sea Level Pressure (NAM Model Reduction)", "Pa", UC_NONE},
       addSimpleType(&oTypes, "INST_EFFEKT", "installertEffekt", OFTInteger);
-            const char sText[] = "infinit";
+    ErrorCase("infinit");
     if (EQUAL(pszFormat, "DOUB"))
             pszFormat = "DOUB";
 * gdal2tiles.py: add --xyz option to generate tiles in the OSM Slippy Map standard (#2098)

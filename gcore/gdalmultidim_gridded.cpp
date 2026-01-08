@@ -14,7 +14,7 @@
 #include "gdal_alg.h"
 #include "gdalgrid.h"
 #include "gdal_priv.h"
-#include "gdal_pam.h"
+#include "gdal_pam_multidim.h"
 #include "ogrsf_frmts.h"
 #include "memdataset.h"
 

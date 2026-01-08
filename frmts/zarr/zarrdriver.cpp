@@ -16,6 +16,8 @@
 
 #include "cpl_minixml.h"
 
+#include "gdal_frmts.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>

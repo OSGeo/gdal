@@ -148,7 +148,62 @@ void GMLPropertyDefn::AnalysePropertyValue(const GMLProperty *psGMLProperty,
             }
             else
             {
-                m_eType = GMLPT_String;
+                const auto IsDigitLowerOrEqual = [](char c, int max)
+                { return c >= '0' && c <= '0' + max; };
+
+                if ((m_eType == GMLPT_Untyped || m_eType == GMLPT_DateTime ||
+                     m_eType == GMLPT_Date) &&
+                    IsDigitLowerOrEqual(pszValue[0], 9) &&
+                    IsDigitLowerOrEqual(pszValue[1], 9) &&
+                    IsDigitLowerOrEqual(pszValue[2], 9) &&
+                    IsDigitLowerOrEqual(pszValue[3], 9) && pszValue[4] == '-' &&
+                    IsDigitLowerOrEqual(pszValue[5], 1) &&
+                    IsDigitLowerOrEqual(pszValue[6], 9) && pszValue[7] == '-' &&
+                    IsDigitLowerOrEqual(pszValue[8], 3) &&
+                    IsDigitLowerOrEqual(pszValue[9], 9))
+                {
+                    if (pszValue[10] == 'T' &&
+                        IsDigitLowerOrEqual(pszValue[11], 2) &&
+                        IsDigitLowerOrEqual(pszValue[12], 9) &&
+                        pszValue[13] == ':' &&
+                        IsDigitLowerOrEqual(pszValue[14], 5) &&
+                        IsDigitLowerOrEqual(pszValue[15], 9) &&
+                        pszValue[16] == ':' &&
+                        IsDigitLowerOrEqual(pszValue[17], 6) &&
+                        IsDigitLowerOrEqual(pszValue[18], 9) &&
+                        (pszValue[19] == '\0' || pszValue[19] == '.' ||
+                         pszValue[19] == 'Z' || pszValue[19] == '+' ||
+                         pszValue[19] == '-'))
+                    {
+                        m_eType = GMLPT_DateTime;
+                    }
+                    else if (pszValue[10] == '\0')
+                    {
+                        if (m_eType != GMLPT_DateTime)
+                            m_eType = GMLPT_Date;
+                    }
+                    else
+                    {
+                        m_eType = GMLPT_String;
+                    }
+                }
+                else if ((m_eType == GMLPT_Untyped || m_eType == GMLPT_Time) &&
+                         IsDigitLowerOrEqual(pszValue[0], 2) &&
+                         IsDigitLowerOrEqual(pszValue[1], 9) &&
+                         pszValue[2] == ':' &&
+                         IsDigitLowerOrEqual(pszValue[3], 5) &&
+                         IsDigitLowerOrEqual(pszValue[4], 9) &&
+                         pszValue[5] == ':' &&
+                         IsDigitLowerOrEqual(pszValue[6], 6) &&
+                         IsDigitLowerOrEqual(pszValue[7], 9) &&
+                         (pszValue[8] == '\0' || pszValue[8] == '.'))
+                {
+                    m_eType = GMLPT_Time;
+                }
+                else
+                {
+                    m_eType = GMLPT_String;
+                }
             }
         }
         else

@@ -36,7 +36,8 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
 #include "fetchbufferdirectio.h"
-#include "gdal_mdreader.h"          // GDALWriteRPCTXTFile()
+#include "gdal_mdreader.h"  // GDALWriteRPCTXTFile()
+#include "gdal_priv.h"
 #include "gdal_priv_templates.hpp"  // GDALIsValueInRange<>
 #include "gdal_thread_pool.h"       // GDALGetGlobalThreadPool()
 #include "geovalues.h"              // RasterPixelIsPoint

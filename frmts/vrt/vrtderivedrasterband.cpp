@@ -14,9 +14,11 @@
 
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_priv.h"
 #include "vrtdataset.h"
 #include "cpl_multiproc.h"
 #include "gdalpython.h"
+#include "gdalantirecursion.h"
 
 #include <algorithm>
 #include <array>

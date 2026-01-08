@@ -605,7 +605,7 @@ void CPL_STDCALL GDALAllRegister()
 #endif
 
 #ifdef FRMT_mrf
-    GDALRegister_mrf();
+    GDALRegister_MRF();
 #endif
 
 #ifdef FRMT_tiledb

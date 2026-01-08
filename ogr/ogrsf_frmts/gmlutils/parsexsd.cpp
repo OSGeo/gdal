@@ -129,7 +129,7 @@ static bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         return true;
     }
 
-    else if (EQUAL(pszBase, "dateTime"))
+    else if (EQUAL(pszBase, "dateTime") || EQUAL(pszBase, "TimeInstantType"))
     {
         *pGMLType = GMLPT_DateTime;
         return true;
@@ -425,7 +425,8 @@ static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 gmlType = GMLPT_Date;
             else if (EQUAL(pszStrippedNSType, "time"))
                 gmlType = GMLPT_Time;
-            else if (EQUAL(pszStrippedNSType, "dateTime"))
+            else if (EQUAL(pszStrippedNSType, "dateTime") ||
+                     EQUAL(pszStrippedNSType, "TimeInstantType"))
                 gmlType = GMLPT_DateTime;
             else if (EQUAL(pszStrippedNSType, "real") ||
                      EQUAL(pszStrippedNSType, "double") ||

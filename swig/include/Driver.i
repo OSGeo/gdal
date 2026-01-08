@@ -57,7 +57,7 @@ public:
     return ds;
   }
 
-%newobject Create;
+%newobject CreateVector;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CreateVector;
 #endif

@@ -7989,6 +7989,7 @@ inline bool ReadFloat32(const GByte *&pabyIter, const GByte *pabyEnd,
 {
     if (pabyIter + sizeof(fVal) > pabyEnd)
         return false;
+    // cppcheck-suppress bufferAccessOutOfBounds
     memcpy(&fVal, pabyIter, sizeof(fVal));
     CPL_LSBPTR32(&fVal);
     pabyIter += sizeof(fVal);

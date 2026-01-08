@@ -3534,3 +3534,35 @@ def test_ogr_gmlas_citygml_lod2_no_schema_location():
                 pytest.skip(f"cannot open {url}")
 
     assert ds.GetLayerCount() == 1537
+
+
+###############################################################################
+
+
+@pytest.mark.require_curl()
+def test_ogr_gmlas_datetime(tmp_vsimem):
+
+    ds = ogr.Open("GMLAS:data/gml/datetime.gml")
+    lyr = ds.GetLayer("test")
+    f = lyr.GetNextFeature()
+    lyr_defn = lyr.GetLayerDefn()
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("time")).GetType() == ogr.OFTTime
+    )
+    assert f["time"] == "23:59:60"
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("date")).GetType() == ogr.OFTDate
+    )
+    assert f["date"] == "9999/12/31"
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("datetime")).GetType()
+        == ogr.OFTDateTime
+    )
+    assert f["datetime"] == "9999/12/31 23:59:60.999"
+    assert (
+        lyr_defn.GetFieldDefn(
+            lyr_defn.GetFieldIndex("dtintimeposition_timeposition")
+        ).GetType()
+        == ogr.OFTDateTime
+    )
+    assert f["dtintimeposition_timeposition"] == "9999/12/31 23:59:60.999"

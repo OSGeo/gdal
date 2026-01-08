@@ -9,6 +9,14 @@
 GDALAbstractMDArray C++ API
 ================================================================================
 
+Include file
+------------
+
+:source_file:`gcore/gdal_multidim.h`
+
+GDALAbstractMDArray class
+-------------------------
+
 .. doxygenclass:: GDALAbstractMDArray
    :project: api
    :members:

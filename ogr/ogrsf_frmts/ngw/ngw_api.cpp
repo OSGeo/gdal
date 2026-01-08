@@ -14,6 +14,7 @@
 #include "ogr_ngw.h"
 
 #include "cpl_http.h"
+#include "cpl_multiproc.h"  // CPLSleep()
 
 #include <limits>
 

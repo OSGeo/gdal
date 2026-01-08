@@ -14,6 +14,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdal_priv.h"
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
+
 #include "nitfdrivercore.h"
 
 /************************************************************************/

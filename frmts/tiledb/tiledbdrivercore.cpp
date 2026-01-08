@@ -13,6 +13,12 @@
 #define INCLUDE_ONLY_TILEDB_VERSION
 #include "include_tiledb.h"
 
+#include "gdal_frmts.h"
+
+#ifdef PLUGIN_FILENAME
+#include "gdalplugindriverproxy.h"
+#endif
+
 #include "tiledbdrivercore.h"
 
 /************************************************************************/

@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdalsubdatasetinfo.h"
 #include "ogr_geopackage.h"
 
 #include "tilematrixset.hpp"

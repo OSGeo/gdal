@@ -510,7 +510,6 @@ bool ZarrV2Group::InitFromZGroup(const CPLJSONObject &obj)
         }
 
         // add regular arrays
-        std::set<std::string> oSetRegularArrayNames;
         for (const auto &var : vars)
         {
             const auto osVarName = var.ToString();

@@ -12,6 +12,7 @@
 
 #include "cpl_vsi_error.h"
 #include "gdal_proxy.h"
+#include "gdal_frmts.h"
 #include "rawdataset.h"
 #include "vrtdataset.h"
 #include "ogrsf_frmts.h"
@@ -38,8 +39,6 @@
     "preserve this behavior."
 
 #define CURRENT_CART_VERSION "1O00_1970"
-
-extern "C" void GDALRegister_PDS4();
 
 /************************************************************************/
 /*                        PDS4WrapperRasterBand()                      */

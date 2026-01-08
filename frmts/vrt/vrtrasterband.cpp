@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "gdal.h"
+#include "gdalantirecursion.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
 #include "cpl_conv.h"

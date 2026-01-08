@@ -7,6 +7,9 @@
  *
  */
 
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
+
 #include "keadrivercore.h"
 #include "libkea_headers.h"
 

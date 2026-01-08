@@ -14,6 +14,10 @@
 #include "cpl_vsi_virtual.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gdal_driver.h"
+#include "gdal_drivermanager.h"
+#include "gdal_openinfo.h"
+#include "gdal_cpp_functions.h"
 #include "ogr_srs_api.h"
 
 #define HEADER_SIZE (4 * 8 + 3 * 4)

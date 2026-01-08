@@ -27,8 +27,6 @@
 #include <vector>
 #include <limits>
 
-extern "C" void GDALRegister_WMTS();
-
 // g++ -g -Wall -fPIC frmts/wmts/wmtsdataset.cpp -shared -o gdal_WMTS.so -Iport
 // -Igcore -Iogr -Iogr/ogrsf_frmts -L. -lgdal
 

@@ -14,7 +14,6 @@
 
 #include "cpl_port.h"
 #include "cpl_float.h"
-#include "gdal_priv.h"
 
 #include <cassert>
 #include <climits>
@@ -38,7 +37,10 @@
 #include "cpl_virtualmem.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
+#include "gdal_abstractbandblockcache.h"
+#include "gdalantirecursion.h"
 #include "gdal_rat.h"
+#include "gdal_rasterband.h"
 #include "gdal_priv_templates.hpp"
 #include "gdal_interpolateatpoint.h"
 #include "gdal_minmax_element.hpp"
@@ -1796,6 +1798,18 @@ void GDALRasterBand::AddBlockToFreeList(GDALRasterBlock *poBlock)
 {
     CPLAssert(poBandBlockCache && poBandBlockCache->IsInitOK());
     return poBandBlockCache->AddBlockToFreeList(poBlock);
+}
+
+//! @endcond
+
+/************************************************************************/
+/*                           HasDirtyBlocks()                           */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+bool GDALRasterBand::HasDirtyBlocks() const
+{
+    return poBandBlockCache && poBandBlockCache->HasDirtyBlocks();
 }
 
 //! @endcond

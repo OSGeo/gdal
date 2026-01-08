@@ -387,7 +387,7 @@ def test_gdal_vector_layer_algebra_output_driver_not_existing(tmp_vsimem):
     drv = gdal.GetDriverByName("ESRI Shapefile")
     drv.Deregister()
     try:
-        with pytest.raises(Exception, match="Driver ESRI Shapefile does not exist"):
+        with pytest.raises(Exception, match="Driver 'ESRI Shapefile' does not exist"):
             alg.Run()
     finally:
         drv.Register()

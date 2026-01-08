@@ -37,6 +37,7 @@
 #include "gdal_priv.h"
 #include "gdal_proxy.h"
 #include "gdal_priv_templates.hpp"
+#include "gdalsubdatasetinfo.h"
 
 /*! @cond Doxygen_Suppress */
 

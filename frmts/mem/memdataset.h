@@ -22,6 +22,9 @@
 #include <memory>
 
 CPL_C_START
+
+void CPL_DLL GDALRegister_MEM();
+
 /* Caution: if changing this prototype, also change in
    swig/include/gdal_python.i where it is redefined */
 GDALRasterBandH CPL_DLL MEMCreateRasterBand(GDALDataset *, int, GByte *,

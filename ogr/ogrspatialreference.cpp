@@ -4883,6 +4883,52 @@ OGRErr OGRSpatialReference::importFromCRSURL(const char *pszURL)
 {
     TAKE_OPTIONAL_LOCK();
 
+#if !PROJ_AT_LEAST_VERSION(9, 1, 0)
+    if (strcmp(pszURL, "http://www.opengis.net/def/crs/OGC/0/CRS84h") == 0)
+    {
+        PJ *obj = proj_create(
+            d->getPROJContext(),
+            "GEOGCRS[\"WGS 84 longitude-latitude-height\",\n"
+            "    ENSEMBLE[\"World Geodetic System 1984 ensemble\",\n"
+            "        MEMBER[\"World Geodetic System 1984 (Transit)\"],\n"
+            "        MEMBER[\"World Geodetic System 1984 (G730)\"],\n"
+            "        MEMBER[\"World Geodetic System 1984 (G873)\"],\n"
+            "        MEMBER[\"World Geodetic System 1984 (G1150)\"],\n"
+            "        MEMBER[\"World Geodetic System 1984 (G1674)\"],\n"
+            "        MEMBER[\"World Geodetic System 1984 (G1762)\"],\n"
+            "        MEMBER[\"World Geodetic System 1984 (G2139)\"],\n"
+            "        MEMBER[\"World Geodetic System 1984 (G2296)\"],\n"
+            "        ELLIPSOID[\"WGS 84\",6378137,298.257223563,\n"
+            "            LENGTHUNIT[\"metre\",1]],\n"
+            "        ENSEMBLEACCURACY[2.0]],\n"
+            "    PRIMEM[\"Greenwich\",0,\n"
+            "        ANGLEUNIT[\"degree\",0.0174532925199433]],\n"
+            "    CS[ellipsoidal,3],\n"
+            "        AXIS[\"geodetic longitude (Lon)\",east,\n"
+            "            ORDER[1],\n"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433]],\n"
+            "        AXIS[\"geodetic latitude (Lat)\",north,\n"
+            "            ORDER[2],\n"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433]],\n"
+            "        AXIS[\"ellipsoidal height (h)\",up,\n"
+            "            ORDER[3],\n"
+            "            LENGTHUNIT[\"metre\",1]],\n"
+            "    USAGE[\n"
+            "        SCOPE[\"3D system frequently used in GIS, Web APIs and "
+            "Web applications\"],\n"
+            "        AREA[\"World.\"],\n"
+            "        BBOX[-90,-180,90,180]],\n"
+            "    ID[\"OGC\",\"CRS84h\"]]");
+        if (!obj)
+        {
+            return OGRERR_FAILURE;
+        }
+        Clear();
+        d->setPjCRS(obj);
+        return OGRERR_NONE;
+    }
+#endif
+
 #if PROJ_AT_LEAST_VERSION(8, 1, 0)
     if (strlen(pszURL) >= 10000)
     {

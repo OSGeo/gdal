@@ -11,6 +11,8 @@
  ****************************************************************************/
 
 #include "zarrdrivercore.h"
+#include "gdal_frmts.h"
+#include "gdalplugindriverproxy.h"
 
 #include "vsikerchunk.h"
 #include "vsikerchunk_inline.hpp"
