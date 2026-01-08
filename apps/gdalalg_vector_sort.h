@@ -44,6 +44,7 @@ class GDALVectorSortAlgorithm : public GDALVectorPipelineStepAlgorithm
 
     std::string m_geomField{};
     std::string m_sortMethod{"hilbert"};
+    bool m_useTempfile{false};
 };
 
 /************************************************************************/

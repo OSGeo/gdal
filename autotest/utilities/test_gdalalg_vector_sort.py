@@ -33,7 +33,13 @@ def method(request):
     yield request.param
 
 
-def test_gdalalg_vector_sort(alg, method):
+@pytest.fixture(params=(True, False))
+def use_tempfile(request):
+
+    yield request.param
+
+
+def test_gdalalg_vector_sort(alg, method, use_tempfile):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     src_lyr = src_ds.CreateLayer("points", geom_type=ogr.wkbPoint)
@@ -65,6 +71,7 @@ def test_gdalalg_vector_sort(alg, method):
     alg["input"] = src_ds
     alg["method"] = method
     alg["output-format"] = "stream"
+    alg["use-tempfile"] = use_tempfile
 
     assert alg.Run()
 
@@ -87,7 +94,7 @@ def test_gdalalg_vector_sort(alg, method):
             assert points_sorted[i][1] <= 20
 
 
-def test_gdalalg_vector_sort_no_geometry_field(alg, method):
+def test_gdalalg_vector_sort_no_geometry_field(alg, method, use_tempfile):
 
     n_features = 20
 
@@ -103,6 +110,7 @@ def test_gdalalg_vector_sort_no_geometry_field(alg, method):
     alg["input"] = src_ds
     alg["method"] = method
     alg["output-format"] = "stream"
+    alg["use-tempfile"] = use_tempfile
 
     assert alg.Run()
 
@@ -119,7 +127,7 @@ def test_gdalalg_vector_sort_no_geometry_field(alg, method):
 
 
 @pytest.mark.parametrize("geom_type", ("null", "empty"))
-def test_gdalalg_vector_sort_null_empty_geometry(alg, method, geom_type):
+def test_gdalalg_vector_sort_null_empty_geometry(alg, method, geom_type, use_tempfile):
 
     nx, ny = 8, 8
     n_empty = 4
@@ -158,6 +166,7 @@ def test_gdalalg_vector_sort_null_empty_geometry(alg, method, geom_type):
     alg["input"] = src_ds
     alg["method"] = method
     alg["output-format"] = "stream"
+    alg["use-tempfile"] = use_tempfile
 
     tab_pct = [0]
 
