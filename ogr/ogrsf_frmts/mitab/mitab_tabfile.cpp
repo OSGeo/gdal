@@ -537,6 +537,17 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
     }
 
     /*-----------------------------------------------------------------
+     * Set BOUNDS metadata
+     *----------------------------------------------------------------*/
+    {
+        OGREnvelope e;
+        GetBounds(e.MinX, e.MinY, e.MaxX, e.MaxY, 1);
+        const char *pszBounds = CPLSPrintf("%.17g,%.17g,%.17g,%.17g", e.MinX,
+                                           e.MinY, e.MaxX, e.MaxY);
+        SetMetadataItem("BOUNDS", pszBounds);
+    }
+
+    /*-----------------------------------------------------------------
      * Initializing the attribute index (.IND) support
      *----------------------------------------------------------------*/
     bool bHasIndex = false;
@@ -2473,6 +2484,17 @@ int TABFile::SetBounds(double dXMin, double dYMin, double dXMax, double dYMax)
     if (m_poMAPFile && m_nLastFeatureId < 1)
     {
         m_poMAPFile->SetCoordsysBounds(dXMin, dYMin, dXMax, dYMax);
+
+        /*-----------------------------------------------------------------
+         * Set BOUNDS metadata
+         *----------------------------------------------------------------*/
+        {
+            OGREnvelope e;
+            GetBounds(e.MinX, e.MinY, e.MaxX, e.MaxY, 1);
+            const char *pszBounds = CPLSPrintf("%.17g,%.17g,%.17g,%.17g",
+                                               e.MinX, e.MinY, e.MaxX, e.MaxY);
+            SetMetadataItem("BOUNDS", pszBounds);
+        }
 
         m_bBoundsSet = TRUE;
     }
