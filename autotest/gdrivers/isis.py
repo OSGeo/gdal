@@ -2243,3 +2243,119 @@ def test_isis3_gdalwarp(tmp_vsimem):
             "_type": "object",
         }
         assert j == expected_j
+
+
+def test_isis_unit_in_array(tmp_vsimem):
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "in.lbl",
+        """Object = IsisCube
+  Object = Core
+    StartByte = 1
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 1
+    End_Group
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+
+  Group = Test
+    TestMultiValue   = (2 <m>, "Hello World", 3.5 <r>, "This is not suffixed by <unit>")
+  End_Group
+
+End_Object
+
+End
+""",
+    )
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "in.bin", b"\x01")
+
+    with gdal.Open(tmp_vsimem / "in.lbl") as ds:
+        j = json.loads(ds.GetMetadata("json:ISIS3")[0])
+        assert j["IsisCube"]["Test"]["TestMultiValue"] == [
+            {"value": 2, "unit": "m"},
+            "Hello World",
+            {"value": 3.5, "unit": "r"},
+            "This is not suffixed by <unit>",
+        ]
+
+    gdal.Translate(tmp_vsimem / "out.lbl", tmp_vsimem / "in.lbl", format="ISIS3")
+
+    with gdal.VSIFile(tmp_vsimem / "out.lbl", "rb") as f:
+        data = f.read()
+    assert (
+        b'TestMultiValue = (2 <m>, "Hello World", 3.5 <r>, "This is not suffixed by <unit>")'
+        in data
+    )
+
+
+def test_isis_duplicated_keyword(tmp_vsimem):
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "in.lbl",
+        """Object = IsisCube
+  Object = Core
+    StartByte = 1
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 1
+    End_Group
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+
+  Group = Test
+    TestRepeated1 = 1
+    TestRepeated1 = 2
+    TestRepeated1 = 3
+    TestRepeated2 = 1 <m>
+    TestRepeated2 = 2 <cm>
+    TestRepeated3 = (1, 2)
+    TestRepeated3 = 3
+    TestRepeated4 = (1 <m>, 2)
+    TestRepeated4 = 3
+  End_Group
+
+End_Object
+
+End
+""",
+    )
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "in.bin", b"\x01")
+
+    with gdal.Open(tmp_vsimem / "in.lbl") as ds:
+        j = json.loads(ds.GetMetadata("json:ISIS3")[0])
+        assert j["IsisCube"]["Test"]["TestRepeated1"] == {
+            "values": [1, 2, 3],
+        }
+        assert j["IsisCube"]["Test"]["TestRepeated2"] == {
+            "values": [{"value": 1, "unit": "m"}, {"value": 2, "unit": "cm"}],
+        }
+        assert j["IsisCube"]["Test"]["TestRepeated3"] == {
+            "values": [[1, 2], 3],
+        }
+        assert j["IsisCube"]["Test"]["TestRepeated4"] == {
+            "values": [[{"value": 1, "unit": "m"}, 2], 3],
+        }
+
+    gdal.Translate(tmp_vsimem / "out.lbl", tmp_vsimem / "in.lbl", format="ISIS3")
+
+    with gdal.VSIFile(tmp_vsimem / "out.lbl", "rb") as f:
+        data = f.read()
+    assert b"TestRepeated1 = 1\n    TestRepeated1 = 2\n" in data
+    assert b"TestRepeated2 = 1 <m>\n    TestRepeated2 = 2 <cm>\n" in data
+    assert b"TestRepeated3 = (1, 2)\n    TestRepeated3 = 3\n" in data
+    assert b"TestRepeated4 = (1 <m>, 2)\n    TestRepeated4 = 3\n" in data

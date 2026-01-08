@@ -3790,16 +3790,18 @@ CPLString ISIS3Dataset::SerializeAsPDL(const CPLJSONObject &oObj)
 /*                      SerializeAsPDL()                                */
 /************************************************************************/
 
+constexpr size_t WIDTH = 79;
+
 void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
                                   int nDepth)
 {
     CPLString osIndentation;
     for (int i = 0; i < nDepth; i++)
         osIndentation += "  ";
-    const size_t WIDTH = 79;
 
     std::vector<CPLJSONObject> aoChildren = oObj.GetChildren();
     size_t nMaxKeyLength = 0;
+    std::vector<std::pair<CPLString, CPLJSONObject>> aoChildren2;
     for (const CPLJSONObject &oChild : aoChildren)
     {
         const CPLString osKey = oChild.GetName();
@@ -3815,6 +3817,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
             eType == CPLJSONObject::Type::Double ||
             eType == CPLJSONObject::Type::Array)
         {
+            aoChildren2.emplace_back(osKey, oChild);
             if (osKey.size() > nMaxKeyLength)
             {
                 nMaxKeyLength = osKey.size();
@@ -3827,22 +3830,37 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
             if (oValue.IsValid() &&
                 oUnit.GetType() == CPLJSONObject::Type::String)
             {
+                aoChildren2.emplace_back(osKey, oChild);
                 if (osKey.size() > nMaxKeyLength)
                 {
                     nMaxKeyLength = osKey.size();
                 }
             }
+            else if (oChild.GetObj("values").GetType() ==
+                     CPLJSONObject::Type::Array)
+            {
+                if (osKey.size() > nMaxKeyLength)
+                {
+                    nMaxKeyLength = osKey.size();
+                }
+                for (const auto &oSubChild : oChild.GetObj("values").ToArray())
+                {
+                    aoChildren2.emplace_back(osKey, oSubChild);
+                }
+            }
+            else
+            {
+                aoChildren2.emplace_back(osKey, oChild);
+            }
+        }
+        else
+        {
+            aoChildren2.emplace_back(osKey, oChild);
         }
     }
 
-    for (const CPLJSONObject &oChild : aoChildren)
+    for (const auto &[osKey, oChild] : aoChildren2)
     {
-        const CPLString osKey = oChild.GetName();
-        if (EQUAL(osKey, "_type") || EQUAL(osKey, "_container_name") ||
-            EQUAL(osKey, "_filename") || EQUAL(osKey, "_data"))
-        {
-            continue;
-        }
         if (STARTS_WITH(osKey, "_comment"))
         {
             if (oChild.GetType() == CPLJSONObject::Type::String)
@@ -4009,11 +4027,70 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
             VSIFPrintfL(fp, "%s%s%s = (", osIndentation.c_str(), osKey.c_str(),
                         osPadding.c_str());
             size_t nCurPos = nFirstPos;
+
             for (int idx = 0; idx < nLength; idx++)
             {
                 CPLJSONObject oItem = oArrayItem[idx];
                 const auto eArrayItemType = oItem.GetType();
-                if (eArrayItemType == CPLJSONObject::Type::String)
+
+                const auto outputArrayVal =
+                    [fp, idx, nFirstPos, &nCurPos](const std::string &osVal)
+                {
+                    const size_t nValLen = osVal.size();
+                    if (nFirstPos < WIDTH && idx > 0 &&
+                        nCurPos + nValLen > WIDTH)
+                    {
+                        VSIFPrintfL(fp, "\n");
+                        for (size_t j = 0; j < nFirstPos; j++)
+                        {
+                            constexpr char chSpace = ' ';
+                            VSIFWriteL(&chSpace, 1, 1, fp);
+                        }
+                        nCurPos = nFirstPos;
+                    }
+                    VSIFPrintfL(fp, "%s", osVal.c_str());
+                    nCurPos += nValLen;
+                };
+
+                if (eArrayItemType == CPLJSONObject::Type::Object)
+                {
+                    const auto oValue = oItem["value"];
+                    const auto oUnit = oItem["unit"];
+                    if (oValue.IsValid() && oUnit.IsValid() &&
+                        (oValue.GetType() == CPLJSONObject::Type::Integer ||
+                         oValue.GetType() == CPLJSONObject::Type::Double))
+                    {
+                        if (oValue.GetType() == CPLJSONObject::Type::Integer)
+                        {
+                            const int nVal = oValue.ToInteger();
+                            outputArrayVal(CPLSPrintf(
+                                "%d <%s>", nVal, oUnit.ToString().c_str()));
+                        }
+                        else
+                        {
+                            const double dfVal = oValue.ToDouble();
+                            if (dfVal >= INT_MIN && dfVal <= INT_MAX &&
+                                static_cast<int>(dfVal) == dfVal)
+                            {
+                                outputArrayVal(CPLSPrintf(
+                                    "%d.0 <%s>", static_cast<int>(dfVal),
+                                    oUnit.ToString().c_str()));
+                            }
+                            else
+                            {
+                                outputArrayVal(
+                                    CPLSPrintf("%.17g <%s>", dfVal,
+                                               oUnit.ToString().c_str()));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Invalid JSON object");
+                    }
+                }
+                else if (eArrayItemType == CPLJSONObject::Type::String)
                 {
                     CPLString osVal = oItem.ToString();
                     const char *pszVal = osVal.c_str();
@@ -4063,21 +4140,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
                 else if (eArrayItemType == CPLJSONObject::Type::Integer)
                 {
                     const int nVal = oItem.ToInteger();
-                    const char *pszVal = CPLSPrintf("%d", nVal);
-                    const size_t nValLen = strlen(pszVal);
-                    if (nFirstPos < WIDTH && idx > 0 &&
-                        nCurPos + nValLen > WIDTH)
-                    {
-                        VSIFPrintfL(fp, "\n");
-                        for (size_t j = 0; j < nFirstPos; j++)
-                        {
-                            const char chSpace = ' ';
-                            VSIFWriteL(&chSpace, 1, 1, fp);
-                        }
-                        nCurPos = nFirstPos;
-                    }
-                    VSIFPrintfL(fp, "%d", nVal);
-                    nCurPos += nValLen;
+                    outputArrayVal(CPLSPrintf("%d", nVal));
                 }
                 else if (eArrayItemType == CPLJSONObject::Type::Double)
                 {
@@ -4092,20 +4155,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
                     {
                         osVal = CPLSPrintf("%.17g", dfVal);
                     }
-                    const size_t nValLen = osVal.size();
-                    if (nFirstPos < WIDTH && idx > 0 &&
-                        nCurPos + nValLen > WIDTH)
-                    {
-                        VSIFPrintfL(fp, "\n");
-                        for (size_t j = 0; j < nFirstPos; j++)
-                        {
-                            const char chSpace = ' ';
-                            VSIFWriteL(&chSpace, 1, 1, fp);
-                        }
-                        nCurPos = nFirstPos;
-                    }
-                    VSIFPrintfL(fp, "%s", osVal.c_str());
-                    nCurPos += nValLen;
+                    outputArrayVal(osVal);
                 }
                 if (idx < nLength - 1)
                 {
