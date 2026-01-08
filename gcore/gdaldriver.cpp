@@ -1672,7 +1672,8 @@ CPLErr GDALDriver::Delete(const char *pszFilename)
     /* -------------------------------------------------------------------- */
     /*      Collect file list.                                              */
     /* -------------------------------------------------------------------- */
-    GDALDatasetH hDS = GDALOpenEx(pszFilename, 0, nullptr, nullptr, nullptr);
+    GDALDatasetH hDS = GDALOpenEx(pszFilename, GDAL_OF_VERBOSE_ERROR, nullptr,
+                                  nullptr, nullptr);
 
     if (hDS == nullptr)
     {
