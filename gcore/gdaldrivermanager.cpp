@@ -1325,7 +1325,7 @@ DEFINE_DRIVER_METHOD_GET_CALLBACK(GetInstantiateAlgorithmCallback,
 
 //! @endcond
 
-char **GDALPluginDriverProxy::GetMetadata(const char *pszDomain)
+CSLConstList GDALPluginDriverProxy::GetMetadata(const char *pszDomain)
 {
     auto poRealDriver = GetRealDriver();
     if (!poRealDriver)

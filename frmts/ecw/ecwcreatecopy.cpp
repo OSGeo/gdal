@@ -81,7 +81,7 @@ class GDALECWCompressor final : public CNCSFile
                       const OGRSpatialReference *poSRS,
                       const GDALGeoTransform &gt, int nGCPCount,
                       const GDAL_GCP *pasGCPList, int bIsJPEG2000,
-                      int bPixelIsPoint, char **papszRPCMD,
+                      int bPixelIsPoint, CSLConstList papszRPCMD,
                       GDALDataset *poSrcDS = nullptr);
     CPLErr CloseDown();
 
@@ -383,7 +383,8 @@ CPLErr GDALECWCompressor::Initialize(
     int nBands, const char *const *papszBandDescriptions, int bRGBColorSpace,
     GDALDataType eType, const OGRSpatialReference *poSRS,
     const GDALGeoTransform &gt, int nGCPCount, const GDAL_GCP *pasGCPList,
-    int bIsJPEG2000, int bPixelIsPoint, char **papszRPCMD, GDALDataset *poSrcDS)
+    int bIsJPEG2000, int bPixelIsPoint, CSLConstList papszRPCMD,
+    GDALDataset *poSrcDS)
 
 {
 /* -------------------------------------------------------------------- */

@@ -356,12 +356,12 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     CPLErr GetGeoTransform(GDALGeoTransform &) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &) override;
 
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 
@@ -874,7 +874,8 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL : public GDALRasterBand
     char **GetCategoryNames() override;
     CPLErr SetCategoryNames(char **) override;
 
-    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList papszMD,
+                       const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
 
@@ -977,8 +978,8 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
     char **GetMetadataDomainList() override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
-    char **GetMetadata(const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMetadata,
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
@@ -1330,8 +1331,8 @@ class VRTDriver final : public GDALDriver
     char **papszSourceParsers;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMetadata,
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
 
     VRTSource *ParseSource(const CPLXMLNode *psSrc, const char *pszVRTPath,

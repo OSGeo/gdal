@@ -168,7 +168,7 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     OGRErr SetIgnoredFields(CSLConstList papszFields) override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     OGRErr SetNextByIndex(GIntBig nIndex) override;
 
     bool GetArrowStream(struct ArrowArrayStream *out_stream,
@@ -393,7 +393,8 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
         const std::shared_ptr<arrow::io::OutputStream> &poOutputStream,
         const char *pszLayerName);
 
-    CPLErr SetMetadata(char **papszMetadata, const char *pszDomain) override;
+    CPLErr SetMetadata(CSLConstList papszMetadata,
+                       const char *pszDomain) override;
 
     bool SetOptions(const OGRGeomFieldDefn *poSrcGeomFieldDefn,
                     CSLConstList papszOptions);

@@ -175,7 +175,7 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
     /* -------------------------------------------------------------------- */
     if (CPLTestBool(CPLGetConfigOption("ESRI_XML_PAM", "NO")))
     {
-        char **papszESRIMD = GTiffDataset::GetMetadata("xml:ESRI");
+        CSLConstList papszESRIMD = GTiffDataset::GetMetadata("xml:ESRI");
         if (papszESRIMD)
         {
             GDALPamDataset::SetMetadata(papszESRIMD, "xml:ESRI");

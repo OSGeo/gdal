@@ -143,7 +143,7 @@ class GRIBRasterBand final : public GDALPamRasterBand
     const char *GetDescription() const override;
 
     double GetNoDataValue(int *pbSuccess = nullptr) override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 

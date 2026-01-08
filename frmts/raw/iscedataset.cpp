@@ -251,7 +251,7 @@ CPLErr ISCEDataset::FlushCache(bool bAtClosing)
     /* -------------------------------------------------------------------- */
     /*      Then, add the ISCE domain metadata.                             */
     /* -------------------------------------------------------------------- */
-    char **papszISCEMetadata = GetMetadata("ISCE");
+    CSLConstList papszISCEMetadata = GetMetadata("ISCE");
     for (int i = 0; i < CSLCount(papszISCEMetadata); i++)
     {
         /* Get the tokens from the metadata item */

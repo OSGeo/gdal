@@ -108,7 +108,7 @@ class MBTilesDataset final : public GDALPamDataset,
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 
@@ -1336,7 +1336,7 @@ char **MBTilesDataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **MBTilesDataset::GetMetadata(const char *pszDomain)
+CSLConstList MBTilesDataset::GetMetadata(const char *pszDomain)
 {
     if (hDS == nullptr || (pszDomain != nullptr && !EQUAL(pszDomain, "")))
         return GDALPamDataset::GetMetadata(pszDomain);
@@ -1345,7 +1345,7 @@ char **MBTilesDataset::GetMetadata(const char *pszDomain)
         return aosList.List();
 
     bFetchedMetadata = true;
-    aosList = CPLStringList(GDALPamDataset::GetMetadata(), FALSE);
+    aosList = CPLStringList(GDALPamDataset::GetMetadata());
 
     OGRLayerH hSQLLyr = GDALDatasetExecuteSQL(
         hDS, "SELECT name, value FROM metadata WHERE name != 'json' LIMIT 1000",

@@ -1794,7 +1794,7 @@ char **PNGDataset::GetMetadataDomainList()
 /*                           GetMetadata()                              */
 /************************************************************************/
 
-char **PNGDataset::GetMetadata(const char *pszDomain)
+CSLConstList PNGDataset::GetMetadata(const char *pszDomain)
 {
     if (fpImage == nullptr)
         return nullptr;
@@ -2799,7 +2799,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     }
     if (bWriteMetadataAsText)
     {
-        char **papszSrcMD = poSrcDS->GetMetadata();
+        CSLConstList papszSrcMD = poSrcDS->GetMetadata();
         for (; papszSrcMD && *papszSrcMD; papszSrcMD++)
         {
             char *pszKey = nullptr;

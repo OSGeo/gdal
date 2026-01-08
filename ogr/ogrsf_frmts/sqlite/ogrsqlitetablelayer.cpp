@@ -241,7 +241,7 @@ const char *OGRSQLiteTableLayer::GetName() const
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **OGRSQLiteTableLayer::GetMetadata(const char *pszDomain)
+CSLConstList OGRSQLiteTableLayer::GetMetadata(const char *pszDomain)
 
 {
     // Update GetMetadataItem() optimization that skips calling GetMetadata()

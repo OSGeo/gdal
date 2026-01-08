@@ -2924,7 +2924,7 @@ const char *VRTSourcedRasterBand::GetMetadataItem(const char *pszName,
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **VRTSourcedRasterBand::GetMetadata(const char *pszDomain)
+CSLConstList VRTSourcedRasterBand::GetMetadata(const char *pszDomain)
 
 {
     /* ==================================================================== */
@@ -3052,7 +3052,7 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem(const char *pszName,
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr VRTSourcedRasterBand::SetMetadata(char **papszNewMD,
+CPLErr VRTSourcedRasterBand::SetMetadata(CSLConstList papszNewMD,
                                          const char *pszDomain)
 
 {

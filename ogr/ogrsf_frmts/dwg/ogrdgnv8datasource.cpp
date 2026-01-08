@@ -318,7 +318,7 @@ char **OGRDGNV8DataSource::GetMetadataDomainList()
 /*                          GetMetadata()                              */
 /************************************************************************/
 
-char **OGRDGNV8DataSource::GetMetadata(const char *pszDomain)
+CSLConstList OGRDGNV8DataSource::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "DGN"))
     {

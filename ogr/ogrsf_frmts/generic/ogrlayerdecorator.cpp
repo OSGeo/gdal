@@ -332,14 +332,14 @@ OGRErr OGRLayerDecorator::SetIgnoredFields(CSLConstList papszFields)
     return m_poDecoratedLayer->SetIgnoredFields(papszFields);
 }
 
-char **OGRLayerDecorator::GetMetadata(const char *pszDomain)
+CSLConstList OGRLayerDecorator::GetMetadata(const char *pszDomain)
 {
     if (!m_poDecoratedLayer)
         return nullptr;
     return m_poDecoratedLayer->GetMetadata(pszDomain);
 }
 
-CPLErr OGRLayerDecorator::SetMetadata(char **papszMetadata,
+CPLErr OGRLayerDecorator::SetMetadata(CSLConstList papszMetadata,
                                       const char *pszDomain)
 {
     if (!m_poDecoratedLayer)

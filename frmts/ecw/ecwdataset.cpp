@@ -1468,7 +1468,8 @@ CPLErr ECWDataset::SetMetadataItem(const char *pszName, const char *pszValue,
 /*                              SetMetadata()                           */
 /************************************************************************/
 
-CPLErr ECWDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr ECWDataset::SetMetadata(CSLConstList papszMetadata,
+                               const char *pszDomain)
 {
     /* The bPreventCopyingSomeMetadata is set by ECWCreateCopy() */
     /* just before calling poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT ); */
@@ -1476,7 +1477,7 @@ CPLErr ECWDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
         (pszDomain == nullptr || EQUAL(pszDomain, "")))
     {
         char **papszMetadataDup = nullptr;
-        char **papszIter = papszMetadata;
+        CSLConstList papszIter = papszMetadata;
         while (*papszIter)
         {
             char *pszKey = nullptr;
@@ -1543,7 +1544,7 @@ CPLErr ECWDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
     )
     {
         CPLStringList osNewMetadata;
-        char **papszIter = papszMetadata;
+        CSLConstList papszIter = papszMetadata;
         while (papszIter && *papszIter)
         {
             if (STARTS_WITH(*papszIter, "PROJ=") ||
@@ -3269,7 +3270,7 @@ const char *ECWDataset::GetMetadataItem(const char *pszName,
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **ECWDataset::GetMetadata(const char *pszDomain)
+CSLConstList ECWDataset::GetMetadata(const char *pszDomain)
 
 {
     if (!bIsJPEG2000 && pszDomain != nullptr && EQUAL(pszDomain, "ECW"))

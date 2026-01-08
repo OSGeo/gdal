@@ -562,7 +562,7 @@ class OGROpenFileGDBDataSource final : public GDALDataset
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
     bool AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                         std::string &failureReason) override;

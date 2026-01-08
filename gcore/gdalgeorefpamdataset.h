@@ -58,10 +58,10 @@ class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;

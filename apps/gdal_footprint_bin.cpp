@@ -113,7 +113,8 @@ MAIN_START(argc, argv)
         GDALDriverManager *poDM = GetGDALDriverManager();
         GDALDriver *poDriver =
             poDM->GetDriverByName(sOptionsForBinary.osFormat.c_str());
-        char **papszDriverMD = (poDriver) ? poDriver->GetMetadata() : nullptr;
+        CSLConstList papszDriverMD =
+            (poDriver) ? poDriver->GetMetadata() : nullptr;
         if (poDriver == nullptr ||
             !CPLTestBool(CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_VECTOR,
                                               "FALSE")) ||

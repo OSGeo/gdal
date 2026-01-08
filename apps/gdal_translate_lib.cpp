@@ -1166,7 +1166,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         }
     }
 
-    char **papszDriverMD = GDALGetMetadata(hDriver, nullptr);
+    CSLConstList papszDriverMD = GDALGetMetadata(hDriver, nullptr);
 
     if (!CPLTestBool(
             CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER, "FALSE")))
@@ -1773,7 +1773,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     }
 
     /* ISIS3 metadata preservation */
-    char **papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
+    CSLConstList papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
     if (papszMD_ISIS3 != nullptr && papszMD_ISIS3[0])
     {
         std::string osJSON = papszMD_ISIS3[0];
@@ -1797,7 +1797,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     // PDS4 -> PDS4 special case
     if (EQUAL(psOptions->osFormat.c_str(), "PDS4"))
     {
-        char **papszMD_PDS4 = poSrcDS->GetMetadata("xml:PDS4");
+        CSLConstList papszMD_PDS4 = poSrcDS->GetMetadata("xml:PDS4");
         if (papszMD_PDS4 != nullptr)
             poVDS->SetMetadata(papszMD_PDS4, "xml:PDS4");
     }
@@ -1805,7 +1805,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     // VICAR -> VICAR special case
     if (EQUAL(psOptions->osFormat.c_str(), "VICAR"))
     {
-        char **papszMD_VICAR = poSrcDS->GetMetadata("json:VICAR");
+        CSLConstList papszMD_VICAR = poSrcDS->GetMetadata("json:VICAR");
         if (papszMD_VICAR != nullptr)
             poVDS->SetMetadata(papszMD_VICAR, "json:VICAR");
     }
@@ -1813,7 +1813,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     // Copy XMP metadata
     if (!psOptions->bNoXMP)
     {
-        char **papszXMP = poSrcDS->GetMetadata("xml:XMP");
+        CSLConstList papszXMP = poSrcDS->GetMetadata("xml:XMP");
         if (papszXMP != nullptr && *papszXMP != nullptr)
         {
             poVDS->SetMetadata(papszXMP, "xml:XMP");
@@ -1826,7 +1826,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     if (bSpatialArrangementPreserved)
     {
-        char **papszMD = poSrcDS->GetMetadata("RPC");
+        CSLConstList papszMD = poSrcDS->GetMetadata("RPC");
         if (papszMD != nullptr)
             poVDS->SetMetadata(papszMD, "RPC");
 
@@ -1836,19 +1836,17 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     }
     else
     {
-        char **papszMD = poSrcDSOri->GetMetadata("RPC");
-        if (papszMD != nullptr)
+        CPLStringList aosMD(poSrcDSOri->GetMetadata("RPC"));
+        if (!aosMD.empty())
         {
-            papszMD = CSLDuplicate(papszMD);
-
             double dfSAMP_OFF =
-                CPLAtof(CSLFetchNameValueDef(papszMD, "SAMP_OFF", "0"));
+                CPLAtof(aosMD.FetchNameValueDef("SAMP_OFF", "0"));
             double dfLINE_OFF =
-                CPLAtof(CSLFetchNameValueDef(papszMD, "LINE_OFF", "0"));
+                CPLAtof(aosMD.FetchNameValueDef("LINE_OFF", "0"));
             double dfSAMP_SCALE =
-                CPLAtof(CSLFetchNameValueDef(papszMD, "SAMP_SCALE", "1"));
+                CPLAtof(aosMD.FetchNameValueDef("SAMP_SCALE", "1"));
             double dfLINE_SCALE =
-                CPLAtof(CSLFetchNameValueDef(papszMD, "LINE_SCALE", "1"));
+                CPLAtof(aosMD.FetchNameValueDef("LINE_SCALE", "1"));
 
             dfSAMP_OFF -= srcWinOri.dfXOff;
             dfLINE_OFF -= srcWinOri.dfYOff;
@@ -1876,19 +1874,18 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
 
             CPLString osField;
             osField.Printf("%.15g", dfLINE_OFF);
-            papszMD = CSLSetNameValue(papszMD, "LINE_OFF", osField);
+            aosMD.SetNameValue("LINE_OFF", osField);
 
             osField.Printf("%.15g", dfSAMP_OFF);
-            papszMD = CSLSetNameValue(papszMD, "SAMP_OFF", osField);
+            aosMD.SetNameValue("SAMP_OFF", osField);
 
             osField.Printf("%.15g", dfLINE_SCALE);
-            papszMD = CSLSetNameValue(papszMD, "LINE_SCALE", osField);
+            aosMD.SetNameValue("LINE_SCALE", osField);
 
             osField.Printf("%.15g", dfSAMP_SCALE);
-            papszMD = CSLSetNameValue(papszMD, "SAMP_SCALE", osField);
+            aosMD.SetNameValue("SAMP_SCALE", osField);
 
-            poVDS->SetMetadata(papszMD, "RPC");
-            CSLDestroy(papszMD);
+            poVDS->SetMetadata(aosMD.List(), "RPC");
         }
     }
 
@@ -2447,7 +2444,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 psOptions->adfExponent.empty() &&
                 EQUAL(psOptions->osFormat.c_str(), "GRIB"))
             {
-                char **papszMD_GRIB = poSrcBand->GetMetadata("GRIB");
+                CSLConstList papszMD_GRIB = poSrcBand->GetMetadata("GRIB");
                 if (papszMD_GRIB != nullptr)
                     poVRTBand->SetMetadata(papszMD_GRIB, "GRIB");
             }
@@ -2705,7 +2702,7 @@ static void CopyBandInfo(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
     }
     else
     {
-        char **papszMetadata = poSrcBand->GetMetadata();
+        CSLConstList papszMetadata = poSrcBand->GetMetadata();
         char **papszMetadataNew = nullptr;
         for (int i = 0; papszMetadata != nullptr && papszMetadata[i] != nullptr;
              i++)

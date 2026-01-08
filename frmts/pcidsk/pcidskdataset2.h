@@ -74,8 +74,8 @@ class PCIDSK2Dataset final : public GDALPamDataset
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     char **GetMetadataDomainList() override;
-    CPLErr SetMetadata(char **, const char *) override;
-    char **GetMetadata(const char *) override;
+    CPLErr SetMetadata(CSLConstList, const char *) override;
+    CSLConstList GetMetadata(const char *) override;
     CPLErr SetMetadataItem(const char *, const char *, const char *) override;
     const char *GetMetadataItem(const char *, const char *) override;
 
@@ -144,8 +144,8 @@ class PCIDSK2Band final : public GDALPamRasterBand
     void SetDescription(const char *) override;
 
     char **GetMetadataDomainList() override;
-    CPLErr SetMetadata(char **, const char *) override;
-    char **GetMetadata(const char *) override;
+    CPLErr SetMetadata(CSLConstList, const char *) override;
+    CSLConstList GetMetadata(const char *) override;
     CPLErr SetMetadataItem(const char *, const char *, const char *) override;
     const char *GetMetadataItem(const char *, const char *) override;
 

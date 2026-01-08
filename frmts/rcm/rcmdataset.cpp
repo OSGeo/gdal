@@ -2549,7 +2549,7 @@ char **RCMDataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **RCMDataset::GetMetadata(const char *pszDomain)
+CSLConstList RCMDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS") &&

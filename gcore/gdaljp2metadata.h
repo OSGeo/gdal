@@ -206,7 +206,7 @@ class CPL_DLL GDALJP2Metadata
     void SetSpatialRef(const OGRSpatialReference *poSRS);
     void SetGeoTransform(const GDALGeoTransform &gt);
     void SetGCPs(int, const GDAL_GCP *);
-    void SetRPCMD(char **papszRPCMDIn);
+    void SetRPCMD(CSLConstList papszRPCMDIn);
 
     GDALJP2Box *CreateJP2GeoTIFF();
     GDALJP2Box *CreateGMLJP2(int nXSize, int nYSize);

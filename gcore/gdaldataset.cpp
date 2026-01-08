@@ -5169,7 +5169,7 @@ void GDALDataset::ReportErrorV(const char *pszDSName, CPLErr eErrClass,
 /************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
-char **GDALDataset::GetMetadata(const char *pszDomain)
+CSLConstList GDALDataset::GetMetadata(const char *pszDomain)
 {
 #ifndef WITHOUT_DERIVED
     if (pszDomain != nullptr && EQUAL(pszDomain, "DERIVED_SUBDATASETS"))
@@ -6281,7 +6281,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
 
     if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "COPY_MD", "YES")))
     {
-        char **papszMD = poSrcLayer->GetMetadata();
+        CSLConstList papszMD = poSrcLayer->GetMetadata();
         if (papszMD)
             poDstLayer->SetMetadata(papszMD);
     }

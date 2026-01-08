@@ -525,7 +525,7 @@ class OGRWFSDataSource final : public GDALDataset
     }
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 };
 
 #endif /* ndef OGR_WFS_H_INCLUDED */

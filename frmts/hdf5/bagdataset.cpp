@@ -177,7 +177,7 @@ class BAGDataset final : public GDALPamDataset
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
     int GetLayerCount() const override
     {
@@ -4975,7 +4975,7 @@ char **BAGDataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **BAGDataset::GetMetadata(const char *pszDomain)
+CSLConstList BAGDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "xml:BAG"))

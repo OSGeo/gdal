@@ -297,11 +297,11 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
     char **GetFileList(void) override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
     char **GetMetadataDomainList() override;
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
@@ -547,10 +547,10 @@ class GDALGeoPackageRasterBand final : public GDALGPKGMBTilesLikeRasterBand
 
     CPLErr SetNoDataValue(double dfNoDataValue) override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
@@ -941,12 +941,12 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                                                   const char *pszGeomColName);
     CPLString ReturnSQLDropSpatialIndexTriggers();
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
     char **GetMetadataDomainList() override;
 
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;

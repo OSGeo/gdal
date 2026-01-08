@@ -2107,7 +2107,7 @@ static void GDALInfoPrintMetadata(const GDALInfoOptions *psOptions,
     const bool bMDIsJson =
         pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "json:");
 
-    char **papszMetadata = GDALGetMetadata(hObject, pszDomain);
+    CSLConstList papszMetadata = GDALGetMetadata(hObject, pszDomain);
     if (papszMetadata != nullptr && *papszMetadata != nullptr)
     {
         json_object *poDomain = (bJsonOutput && !bIsxml && !bMDIsJson)

@@ -135,7 +135,7 @@ class WCSDataset CPL_NON_FINAL : public GDALPamDataset
     char **GetFileList(void) override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain) override;
+    CSLConstList GetMetadata(const char *pszDomain) override;
 };
 
 class WCSDataset100 final : public WCSDataset

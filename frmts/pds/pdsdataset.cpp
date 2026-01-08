@@ -109,7 +109,7 @@ class PDSDataset final : public RawDataset
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
@@ -1631,7 +1631,7 @@ char **PDSDataset::GetMetadataDomainList()
 /*                             GetMetadata()                            */
 /************************************************************************/
 
-char **PDSDataset::GetMetadata(const char *pszDomain)
+CSLConstList PDSDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "json:PDS"))
     {

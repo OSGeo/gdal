@@ -836,7 +836,7 @@ const char *OGRFeatherLayer::GetMetadataItem(const char *pszName,
 /*                           GetMetadata()                              */
 /************************************************************************/
 
-char **OGRFeatherLayer::GetMetadata(const char *pszDomain)
+CSLConstList OGRFeatherLayer::GetMetadata(const char *pszDomain)
 {
     // Mostly for unit test purposes
     if (pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_METADATA_"))

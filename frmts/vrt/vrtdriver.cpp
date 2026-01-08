@@ -69,7 +69,7 @@ char **VRTDriver::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **VRTDriver::GetMetadata(const char *pszDomain)
+CSLConstList VRTDriver::GetMetadata(const char *pszDomain)
 
 {
     std::lock_guard oLock(m_oMutex);
@@ -83,7 +83,7 @@ char **VRTDriver::GetMetadata(const char *pszDomain)
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr VRTDriver::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr VRTDriver::SetMetadata(CSLConstList papszMetadata, const char *pszDomain)
 
 {
     std::lock_guard oLock(m_oMutex);
@@ -322,7 +322,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         {
             if (!papszSrcMDD || CSLFindString(papszSrcMDD, pszDomain) >= 0)
             {
-                char **papszMD = poSrcDS->GetMetadata(pszDomain);
+                CSLConstList papszMD = poSrcDS->GetMetadata(pszDomain);
                 if (papszMD)
                     poVRTDS->SetMetadata(papszMD, pszDomain);
             }

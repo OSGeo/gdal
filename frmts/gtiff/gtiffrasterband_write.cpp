@@ -282,7 +282,7 @@ CPLErr GTiffRasterBand::SetUnitType(const char *pszNewValue)
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr GTiffRasterBand::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr GTiffRasterBand::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 
 {
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();

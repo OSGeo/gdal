@@ -331,7 +331,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
 /*                             GetMetadata()                            */
 /************************************************************************/
 
-char **OGRPLScenesDataV1Layer::GetMetadata(const char *pszDomain)
+CSLConstList OGRPLScenesDataV1Layer::GetMetadata(const char *pszDomain)
 {
     if (pszDomain == nullptr || EQUAL(pszDomain, ""))
     {

@@ -2603,7 +2603,7 @@ static CPLErr HFASetGDALMetadata(HFAHandle hHFA, int nBand, char **papszMD)
 /*                           HFASetMetadata()                           */
 /************************************************************************/
 
-CPLErr HFASetMetadata(HFAHandle hHFA, int nBand, char **papszMD)
+CPLErr HFASetMetadata(HFAHandle hHFA, int nBand, CSLConstList papszMD)
 
 {
     char **papszGDALMD = nullptr;

@@ -1282,7 +1282,7 @@ bool OGROpenFileGDBDataSource::IsLayerPrivate(int iLayer) const
 /*                           GetMetadata()                             */
 /***********************************************************************/
 
-char **OGROpenFileGDBDataSource::GetMetadata(const char *pszDomain)
+CSLConstList OGROpenFileGDBDataSource::GetMetadata(const char *pszDomain)
 {
     if (pszDomain && EQUAL(pszDomain, "SUBDATASETS"))
         return m_aosSubdatasets.List();

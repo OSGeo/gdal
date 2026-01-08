@@ -1526,7 +1526,8 @@ CPLErr GDALPamDataset::SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr GDALPamDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr GDALPamDataset::SetMetadata(CSLConstList papszMetadata,
+                                   const char *pszDomain)
 
 {
     PamInitialize();
@@ -1632,7 +1633,7 @@ const char *GDALPamDataset::GetMetadataItem(const char *pszName,
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **GDALPamDataset::GetMetadata(const char *pszDomain)
+CSLConstList GDALPamDataset::GetMetadata(const char *pszDomain)
 
 {
     // if( pszDomain == nullptr || !EQUAL(pszDomain,"ProxyOverviewRequest") )
@@ -1719,7 +1720,7 @@ CPLErr GDALPamDataset::TryLoadAux(CSLConstList papszSiblingFiles)
     /*      Apply metadata. We likely ought to be merging this in rather    */
     /*      than overwriting everything that was there.                     */
     /* -------------------------------------------------------------------- */
-    char **papszMD = poAuxDS->GetMetadata();
+    CSLConstList papszMD = poAuxDS->GetMetadata();
     if (CSLCount(papszMD) > 0)
     {
         char **papszMerged = CSLMerge(CSLDuplicate(GetMetadata()), papszMD);

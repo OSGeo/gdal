@@ -448,7 +448,7 @@ bool GTIFFIsStandardColorInterpretation(GDALDatasetH hSrcDS,
 /*      http://geotiff.maptools.org/rpc_prop.html                       */
 /************************************************************************/
 
-void GTiffDatasetWriteRPCTag(TIFF *hTIFF, char **papszRPCMD)
+void GTiffDatasetWriteRPCTag(TIFF *hTIFF, CSLConstList papszRPCMD)
 
 {
     GDALRPCInfoV2 sRPC;
