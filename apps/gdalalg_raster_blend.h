@@ -18,6 +18,41 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
+/*                        CompositionMode                               */
+/************************************************************************/
+
+//! Blend composition modes (aka: operators)
+enum class CompositionMode : unsigned
+{
+    SRC_OVER = 0,
+    HSV_VALUE,
+    MULTIPLY,
+    LAST_  //! last fake value for iteration
+};
+
+//! Returns the text identifier of the composition mode
+const char *CompositionModeToString(CompositionMode mode);
+
+//! Returns a list of all modes string identifiers
+std::vector<std::string> CompositionModesIdentifiers();
+
+//! Parses a composition mode from its string identifier
+CompositionMode CompositionModeFromString(const std::string &str);
+
+//! Returns the minimum number of bands required for the given composition mode
+int MinBandCountForCompositionMode(CompositionMode mode);
+
+/**
+ *  Returns the maximum umber of bands allowed for the given composition mode
+ *  (-1 means no limit)
+ */
+int MaxBandCountForCompositionMode(CompositionMode mode);
+
+//! Checks whether the number of bands is compatible with the given composition mode
+bool BandCountIsCompatibleWithCompositionMode(int bandCount,
+                                              CompositionMode mode);
+
+/************************************************************************/
 /*                       GDALRasterBlendAlgorithm                       */
 /************************************************************************/
 
@@ -37,7 +72,8 @@ class GDALRasterBlendAlgorithm /* non final*/
     bool ValidateGlobal();
 
     GDALArgDatasetValue m_overlayDataset{};
-    std::string m_operator{};
+    CompositionMode m_operator{};
+    std::string m_operatorIdentifier{};
     static constexpr int OPACITY_INPUT_RANGE = 100;
     int m_opacity = OPACITY_INPUT_RANGE;
 };

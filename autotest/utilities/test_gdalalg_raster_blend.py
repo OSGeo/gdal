@@ -293,7 +293,8 @@ def test_gdalalg_raster_blend_invalid_input_ds():
     input_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
     grayscale_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     with pytest.raises(
-        Exception, match="Operator hsv-value requires a 3-band or 4-band input dataset"
+        Exception,
+        match=r"Input dataset has 2 band\(s\), but operator hsv-value requires between 3 and 4 bands",
     ):
         gdal.Run(
             "raster",
@@ -748,3 +749,250 @@ def test_gdalalg_raster_blend_src_over_stefan_full_rgba():
             36167,
             12963,
         ]
+
+
+@pytest.mark.parametrize("invert_bands", [False, True])
+@pytest.mark.parametrize(
+    "opacity,r,g,b,a,overlay_r,overlay_g,overlay_b,overlay_a,expected_r,expected_g,expected_b,expected_a",
+    [
+        (100, 128, 128, 128, 255, 10, 20, 30, 255, 5, 10, 15, 255),
+        (100, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255),
+        (100, 128, 128, 128, 255, 2, 2, 2, 255, 1, 1, 1, 255),
+        (100, 255, 255, 255, 255, 1, 2, 3, 255, 1, 2, 3, 255),
+        (100, 127, 128, 129, 255, 255, 255, 255, 255, 127, 128, 129, 255),
+        (50, 10, 20, 30, 255, 255, 255, 255, 255, 5, 10, 15, 255),
+    ],
+)
+def test_gdalalg_raster_blend_multiply_4bands_over_4bands(
+    invert_bands,
+    opacity,
+    r,
+    g,
+    b,
+    a,
+    overlay_r,
+    overlay_g,
+    overlay_b,
+    overlay_a,
+    expected_r,
+    expected_g,
+    expected_b,
+    expected_a,
+):
+    rgba_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 4)
+    rgba_ds.GetRasterBand(1).Fill(r)
+    rgba_ds.GetRasterBand(2).Fill(g)
+    rgba_ds.GetRasterBand(3).Fill(b)
+    rgba_ds.GetRasterBand(4).Fill(a)
+
+    overlay_rgba_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 4)
+    overlay_rgba_ds.GetRasterBand(1).Fill(overlay_r)
+    overlay_rgba_ds.GetRasterBand(2).Fill(overlay_g)
+    overlay_rgba_ds.GetRasterBand(3).Fill(overlay_b)
+    overlay_rgba_ds.GetRasterBand(4).Fill(overlay_a)
+
+    with gdal.Run(
+        "raster",
+        "blend",
+        input=rgba_ds if not invert_bands else rgba_ds,
+        overlay=overlay_rgba_ds if not invert_bands else overlay_rgba_ds,
+        output_format="stream",
+        opacity=opacity,
+        operator="multiply",
+    ) as alg:
+        out_ds = alg.Output()
+        assert out_ds.RasterCount == 4
+        for y in range(2):
+            for x in range(2):
+                assert struct.unpack("B" * 4, out_ds.ReadRaster(x, y, 1, 1)) == (
+                    expected_r,
+                    expected_g,
+                    expected_b,
+                    expected_a,
+                )
+
+        # Trigger the other code path by reading subsampled data
+        subsampled_r = out_ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
+        assert struct.unpack("B", subsampled_r) == (expected_r,)
+        subsampled = out_ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1)
+        assert struct.unpack("B", subsampled) == (expected_g,)
+        subsampled = out_ds.GetRasterBand(3).ReadRaster(0, 0, 1, 1)
+        assert struct.unpack("B", subsampled) == (expected_b,)
+        subsampled = out_ds.GetRasterBand(4).ReadRaster(0, 0, 1, 1)
+        assert struct.unpack("B", subsampled) == (expected_a,)
+
+
+@pytest.mark.parametrize("invert_bands", [False, True])
+@pytest.mark.parametrize(
+    "opacity,r,g,b,a,overlay_value,overlay_alpha,expected_r,expected_g,expected_b,expected_a",
+    [
+        (100, 0, 0, 0, 255, 255, 255, 0, 0, 0, 255),
+        (100, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255),
+        (100, 128, 128, 128, 255, 255, 255, 128, 128, 128, 255),
+        (100, 10, 20, 30, 255, 128, 255, 5, 10, 15, 255),
+    ],
+)
+def test_gdalalg_raster_blend_multiply_2bands_over_4bands(
+    invert_bands,
+    opacity,
+    r,
+    g,
+    b,
+    a,
+    overlay_value,
+    overlay_alpha,
+    expected_r,
+    expected_g,
+    expected_b,
+    expected_a,
+):
+    rgba_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 4)
+    rgba_ds.GetRasterBand(1).Fill(r)
+    rgba_ds.GetRasterBand(2).Fill(g)
+    rgba_ds.GetRasterBand(3).Fill(b)
+    rgba_ds.GetRasterBand(4).Fill(a)
+
+    overlay_rgba_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 2)
+    overlay_rgba_ds.GetRasterBand(1).Fill(overlay_value)
+    overlay_rgba_ds.GetRasterBand(2).Fill(overlay_alpha)
+
+    with gdal.Run(
+        "raster",
+        "blend",
+        input=rgba_ds if not invert_bands else rgba_ds,
+        overlay=overlay_rgba_ds if not invert_bands else overlay_rgba_ds,
+        output_format="stream",
+        opacity=opacity,
+        operator="multiply",
+    ) as alg:
+        out_ds = alg.Output()
+        assert out_ds.RasterCount == 4
+        for y in range(2):
+            for x in range(2):
+                assert struct.unpack("B" * 4, out_ds.ReadRaster(x, y, 1, 1)) == (
+                    expected_r,
+                    expected_g,
+                    expected_b,
+                    expected_a,
+                )
+
+
+@pytest.mark.parametrize("invert_bands", [False, True])
+@pytest.mark.parametrize(
+    "opacity,value,alpha,overlay_value,overlay_alpha,expected_gray_value,expected_alpha_value",
+    [
+        (100, 0, 0, 0, 0, 0, 255),
+        (100, 255, 255, 255, 255, 255, 255),
+        (100, 128, 255, 10, 255, 5, 255),
+    ],
+)
+def test_gdalalg_raster_blend_multiply_2bands_over_2bands(
+    invert_bands,
+    opacity,
+    value,
+    alpha,
+    overlay_value,
+    overlay_alpha,
+    expected_gray_value,
+    expected_alpha_value,
+):
+    rgba_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 2)
+    rgba_ds.GetRasterBand(1).Fill(value)
+    rgba_ds.GetRasterBand(2).Fill(alpha)
+
+    grayscale_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 2)
+    grayscale_ds.GetRasterBand(1).Fill(overlay_value)
+    grayscale_ds.GetRasterBand(2).Fill(overlay_alpha)
+
+    with gdal.Run(
+        "raster",
+        "blend",
+        input=rgba_ds if not invert_bands else rgba_ds,
+        overlay=grayscale_ds if not invert_bands else grayscale_ds,
+        output_format="stream",
+        opacity=opacity,
+        operator="multiply",
+    ) as alg:
+        out_ds = alg.Output()
+        assert out_ds.RasterCount == 2
+        # Check all pixels
+        for y in range(2):
+            for x in range(2):
+                assert struct.unpack("B" * 2, out_ds.ReadRaster(x, y, 1, 1)) == (
+                    expected_gray_value,
+                    expected_alpha_value,
+                )
+
+
+@pytest.mark.parametrize("invert_bands", [False, True])
+@pytest.mark.parametrize(
+    "opacity,value,alpha,overlay_value,expected_value,expected_alpha",
+    [
+        (100, 0, 0, 0, 0, 255),
+        (100, 255, 255, 255, 255, 255),
+        (100, 128, 255, 10, 5, 255),
+    ],
+)
+def test_gdalalg_raster_blend_multiply_1band_over_2bands(
+    invert_bands, opacity, value, alpha, overlay_value, expected_value, expected_alpha
+):
+    rgba_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 2)
+    rgba_ds.GetRasterBand(1).Fill(value)
+    rgba_ds.GetRasterBand(2).Fill(alpha)
+
+    grayscale_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 1)
+    grayscale_ds.GetRasterBand(1).Fill(overlay_value)
+
+    with gdal.Run(
+        "raster",
+        "blend",
+        input=rgba_ds if not invert_bands else rgba_ds,
+        overlay=grayscale_ds if not invert_bands else grayscale_ds,
+        output_format="stream",
+        opacity=opacity,
+        operator="multiply",
+    ) as alg:
+        out_ds = alg.Output()
+        assert out_ds.RasterCount == 2
+        for y in range(2):
+            for x in range(2):
+                assert struct.unpack("B" * 2, out_ds.ReadRaster(x, y, 1, 1)) == (
+                    expected_value,
+                    expected_alpha,
+                )
+
+
+@pytest.mark.parametrize("invert_bands", [False, True])
+@pytest.mark.parametrize(
+    "opacity,value,overlay_value,expected_value",
+    [
+        (100, 0, 0, 0),
+        (100, 255, 255, 255),
+        (100, 128, 10, 5),
+    ],
+)
+def test_gdalalg_raster_blend_multiply_1band_over_1band(
+    invert_bands, opacity, value, overlay_value, expected_value
+):
+    rgba_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 1)
+    rgba_ds.GetRasterBand(1).Fill(value)
+
+    grayscale_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 1)
+    grayscale_ds.GetRasterBand(1).Fill(overlay_value)
+
+    with gdal.Run(
+        "raster",
+        "blend",
+        input=rgba_ds if not invert_bands else rgba_ds,
+        overlay=grayscale_ds if not invert_bands else grayscale_ds,
+        output_format="stream",
+        opacity=opacity,
+        operator="multiply",
+    ) as alg:
+        out_ds = alg.Output()
+        assert out_ds.RasterCount == 1
+        for y in range(2):
+            for x in range(2):
+                assert struct.unpack("B" * 1, out_ds.ReadRaster(x, y, 1, 1)) == (
+                    expected_value,
+                )
