@@ -19,6 +19,7 @@
 #include <mutex>
 #include <queue>
 
+#include "cpl_json.h"
 #include "cpl_mem_cache.h"
 #include "cpl_worker_thread_pool.h"  // CPLJobQueue, CPLWorkerThreadPool
 #include "fetchbufferdirectio.h"
@@ -156,6 +157,9 @@ class GTiffDataset final : public GDALPamDataset
     char *m_pszTmpFilename = nullptr;
     char *m_pszGeorefFilename = nullptr;
     char *m_pszXMLFilename = nullptr;
+
+    CPLJSONObject m_oISIS3Metadata{};
+    std::map<std::string, std::string> m_oMapISIS3MetadataItems{};
 
     GDALGeoTransform m_gt{};
     double m_dfMaxZError = 0.0;
