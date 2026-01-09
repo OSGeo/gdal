@@ -143,7 +143,7 @@ Program-Specific Options
 
 .. option:: --tap, --target-aligned-pixels
 
-    (target aligned pixels) Align the coordinates of the extent of the output file to the values of the -tr, such that the aligned extent includes the minimum extent. Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
+    (target aligned pixels) Align the coordinates of the extent of the output file to the values of `--resolution`, such that the aligned extent includes the minimum extent. Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
 
 .. option:: --transformer-option <NAME>=<VALUE>
 
