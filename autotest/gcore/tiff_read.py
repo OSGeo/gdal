@@ -5634,6 +5634,30 @@ def test_tiff_read_vat_dbf_boolean_datetime(tmp_vsimem):
 
 
 ###############################################################################
+def test_tiff_read_json_ISIS3(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.tif")
+    with gdal.GetDriverByName("GTiff").Create(filename, 1, 1) as ds:
+        ds.SetMetadata('{"foo":{"bar":"baz"}}', "json:ISIS3")
+
+    with gdal.Open(filename) as ds:
+        assert ds.GetMetadata("json:ISIS3")[0] == '{"foo":{"bar":"baz"}}'
+
+    with gdal.Open(filename) as ds:
+        assert ds.GetMetadataItem("foo", "json:ISIS3") == '{ "bar": "baz" }'
+        # Hit cache
+        assert ds.GetMetadataItem("foo", "json:ISIS3") == '{ "bar": "baz" }'
+        assert ds.GetMetadataItem("bar", "json:ISIS3") is None
+
+        # Invalidate cached items
+        ds.SetMetadata('{"bar":{"foo":"baz"}}', "json:ISIS3")
+        assert ds.GetMetadataItem("foo", "json:ISIS3") is None
+
+        with pytest.raises(Exception):
+            ds.SetMetadataItem("foo", '{"bar":"baz"}', "json:ISIS3")
+
+
+###############################################################################
 
 
 def test_tiff_read_corrupted_lzw():
