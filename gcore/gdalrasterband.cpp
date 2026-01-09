@@ -46,6 +46,10 @@
 #include "gdal_minmax_element.hpp"
 #include "gdalmultidim_priv.h"
 
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#endif
+
 #if defined(__AVX2__) || defined(__FMA__)
 #include <immintrin.h>
 #endif
@@ -5740,7 +5744,8 @@ template <class T, bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternal
     }
 };
 
-#if (defined(__x86_64__) || defined(_M_X64)) &&                                \
+#if (defined(__x86_64__) || defined(_M_X64) ||                                 \
+     defined(USE_NEON_OPTIMIZATIONS)) &&                                       \
     (defined(__GNUC__) || defined(_MSC_VER))
 
 #include "gdal_avx2_emulation.hpp"
@@ -6503,7 +6508,7 @@ void GDALRasterBand::SetValidPercent(GUIntBig nSampleCount,
 
 //! @endcond
 
-#if (defined(__x86_64__) || defined(_M_X64))
+#if defined(__x86_64__) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
 
 #ifdef __AVX2__
 
@@ -7331,7 +7336,7 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             CPLTestBool(
                 CPLGetConfigOption("GDAL_STATS_USE_FLOAT32_OPTIM", "YES"));
 
-#if (defined(__x86_64__) || defined(_M_X64))
+#if defined(__x86_64__) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
         const bool bFloat64Optim =
             eDataType == GDT_Float64 && !pabyMaskData &&
             nBlockXSize < std::numeric_limits<int>::max() / nBlockYSize &&
@@ -7518,7 +7523,7 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 }
             }
 
-#if (defined(__x86_64__) || defined(_M_X64))
+#if defined(__x86_64__) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
             else if (bFloat64Optim)
             {
                 const bool bHasNoData =
@@ -7661,7 +7666,7 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                     nValidCount = nNewValidCount;
                 }
             }
-#endif  // (defined(__x86_64__) || defined(_M_X64))
+#endif  // #if defined(__x86_64__) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
 
             else
             {
