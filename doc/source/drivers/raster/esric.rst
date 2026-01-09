@@ -133,11 +133,8 @@ ________________________
    different color representations.
 
 -  A cache can exceed the maximum size supported by GDAL, which
-   is INT32_MAX, in either dimension. This driver will generate
-   an error when opening such caches. Removing the
-   **LODInfo** nodes with the highest **LevelID** from the conf.xml
-   file until the raster size drops below INT32_MAX is a possible
-   workaround, but the highest resolution levels will not be read.
+   is INT32_MAX, in either dimension. This driver will ignore
+   resolution levels that exceeds the raster size limit.
 
 Open options
 ------------

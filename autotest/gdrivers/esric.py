@@ -231,3 +231,27 @@ def test_tpkx_default_full_extent(extent_source):
     assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]
     assert ds.GetRasterBand(1).Checksum() == 59047
     assert ds.GetRasterBand(1).GetOverviewCount() == 3
+
+
+###############################################################################
+# Test that LODs that exceeds GDAL raster size limit is ignored
+
+
+def test_tpkx_ignores_oversized_lod():
+    try:
+        ds = gdal.OpenEx("data/esric/oversizedLOD/root.json")
+    except Exception as e:
+        pytest.fail(f"Failed to open tpkx config: {e}")
+
+    assert ds.RasterXSize == 331811062
+    assert ds.RasterYSize == 251764360
+
+
+def test_esric_ignores_oversized_lod():
+    try:
+        ds = gdal.OpenEx("data/esric/oversizedLOD/conf.xml")
+    except Exception as e:
+        pytest.fail(f"Failed to open esric config: {e}")
+
+    assert ds.RasterXSize == 1073741824
+    assert ds.RasterYSize == 1073741824

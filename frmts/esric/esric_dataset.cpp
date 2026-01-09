@@ -255,6 +255,19 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
         if (TSZ < 0 || TSZ > 8192)
             throw CPLString("Unsupported TileCols value");
 
+        double minx = CPLAtof(CPLGetXMLValue(TCI, "TileOrigin.X", "-180"));
+        double maxy = CPLAtof(CPLGetXMLValue(TCI, "TileOrigin.Y", "90"));
+        // Assume symmetric coverage, check custom end
+        double maxx = -minx;
+        double miny = -maxy;
+        const char *pszmaxx = CPLGetXMLValue(TCI, "TileEnd.X", nullptr);
+        const char *pszminy = CPLGetXMLValue(TCI, "TileEnd.Y", nullptr);
+        if (pszmaxx && pszminy)
+        {
+            maxx = CPLAtof(pszmaxx);
+            miny = CPLAtof(pszminy);
+        }
+
         CPLXMLNode *LODInfo = CPLGetXMLNode(TCI, "LODInfos.LODInfo");
         double res = 0;
         while (LODInfo)
@@ -262,9 +275,24 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
             res = CPLAtof(CPLGetXMLValue(LODInfo, "Resolution", "0"));
             if (!(res > 0))
                 throw CPLString("Can't parse resolution for LOD");
-            resolutions.push_back(res);
+
+            double dxsz = (maxx - minx) / res;
+            double dysz = (maxy - miny) / res;
+            if (dxsz < 1 || dxsz > INT32_MAX || dysz < 1 || dysz > INT32_MAX)
+            {
+                CPLDebug("ESRIC",
+                         "Skipping resolution %.10f: raster size exceeds the "
+                         "GDAL limit",
+                         res);
+            }
+            else
+            {
+                resolutions.push_back(res);
+            }
+
             LODInfo = LODInfo->psNext;
         }
+
         sort(resolutions.begin(), resolutions.end());
         if (resolutions.empty())
             throw CPLString("Can't parse LODInfos");
@@ -278,27 +306,13 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
         // resolution is the smallest figure
         res = resolutions[0];
         m_gt = GDALGeoTransform();
-        m_gt[0] = CPLAtof(CPLGetXMLValue(TCI, "TileOrigin.X", "-180"));
-        m_gt[3] = CPLAtof(CPLGetXMLValue(TCI, "TileOrigin.Y", "90"));
+        m_gt[0] = minx;
+        m_gt[3] = maxy;
         m_gt[1] = res;
         m_gt[5] = -res;
 
-        // Assume symmetric coverage, check custom end
-        double maxx = -m_gt[0];
-        double miny = -m_gt[3];
-        const char *pszmaxx = CPLGetXMLValue(TCI, "TileEnd.X", nullptr);
-        const char *pszminy = CPLGetXMLValue(TCI, "TileEnd.Y", nullptr);
-        if (pszmaxx && pszminy)
-        {
-            maxx = CPLAtof(pszmaxx);
-            miny = CPLAtof(pszminy);
-        }
-
-        double dxsz = (maxx - m_gt[0]) / res;
-        double dysz = (m_gt[3] - miny) / res;
-        if (dxsz < 1 || dxsz > INT32_MAX || dysz < 1 || dysz > INT32_MAX)
-            throw CPLString("Too many levels, resulting raster size exceeds "
-                            "the GDAL limit");
+        double dxsz = (maxx - minx) / res;
+        double dysz = (maxy - miny) / res;
 
         nRasterXSize = int(dxsz);
         nRasterYSize = int(dysz);
@@ -395,6 +409,12 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         if (TSZ < 0 || TSZ > 8192)
             throw CPLString("Unsupported tileInfo/rows value");
 
+        double minx = oRoot.GetDouble("tileInfo/origin/x");
+        double maxy = oRoot.GetDouble("tileInfo/origin/y");
+        // Assume symmetric coverage
+        double maxx = -minx;
+        double miny = -maxy;
+
         const auto oLODs = oRoot.GetArray("tileInfo/lods");
         double res = 0;
         // we need to skip levels that don't have bundle files
@@ -407,6 +427,18 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
             res = oLOD.GetDouble("resolution");
             if (!(res > 0))
                 throw CPLString("Can't parse resolution for LOD");
+
+            double dxsz = (maxx - minx) / res;
+            double dysz = (maxy - miny) / res;
+            if (dxsz < 1 || dxsz > INT32_MAX || dysz < 1 || dysz > INT32_MAX)
+            {
+                CPLDebug("ESRIC",
+                         "Skipping LOD with resolution %.10f: raster size "
+                         "exceeds the GDAL limit",
+                         res);
+                continue;
+            }
+
             const int level = oLOD.GetInteger("level");
             if (level >= m_nMinLOD && level <= maxLOD)
             {
@@ -429,20 +461,13 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         // resolution is the smallest figure
         res = resolutions[0];
         m_gt = GDALGeoTransform();
-        m_gt[0] = oRoot.GetDouble("tileInfo/origin/x");
-        m_gt[3] = oRoot.GetDouble("tileInfo/origin/y");
+        m_gt[0] = minx;
+        m_gt[3] = maxy;
         m_gt[1] = res;
         m_gt[5] = -res;
 
-        // Assume symmetric coverage
-        double maxx = -m_gt[0];
-        double miny = -m_gt[3];
-
-        double dxsz = (maxx - m_gt[0]) / res;
-        double dysz = (m_gt[3] - miny) / res;
-        if (dxsz < 1 || dxsz > INT32_MAX || dysz < 1 || dysz > INT32_MAX)
-            throw CPLString("Too many levels, resulting raster size exceeds "
-                            "the GDAL limit");
+        double dxsz = (maxx - minx) / res;
+        double dysz = (maxy - miny) / res;
 
         nRasterXSize = int(dxsz);
         nRasterYSize = int(dysz);
