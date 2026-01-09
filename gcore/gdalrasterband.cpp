@@ -4010,13 +4010,13 @@ GDALDatasetH CPL_STDCALL GDALGetBandDataset(GDALRasterBandH hBand)
 }
 
 /************************************************************************/
-/*                        ComputeFloat16NoDataValue()                     */
+/*                      ComputeFloat16NoDataValue()                     */
 /************************************************************************/
 
 static inline void ComputeFloat16NoDataValue(GDALDataType eDataType,
                                              double dfNoDataValue,
                                              int &bGotNoDataValue,
-                                             GFloat16 &fNoDataValue,
+                                             GFloat16 &hfNoDataValue,
                                              bool &bGotFloat16NoDataValue)
 {
     if (eDataType == GDT_Float16 && bGotNoDataValue)
@@ -4024,7 +4024,7 @@ static inline void ComputeFloat16NoDataValue(GDALDataType eDataType,
         dfNoDataValue = GDALAdjustNoDataCloseToFloatMax(dfNoDataValue);
         if (GDALIsValueInRange<GFloat16>(dfNoDataValue))
         {
-            fNoDataValue = static_cast<GFloat16>(dfNoDataValue);
+            hfNoDataValue = static_cast<GFloat16>(dfNoDataValue);
             bGotFloat16NoDataValue = true;
             bGotNoDataValue = false;
         }
@@ -4050,6 +4050,24 @@ static inline void ComputeFloatNoDataValue(GDALDataType eDataType,
             bGotFloatNoDataValue = true;
             bGotNoDataValue = false;
         }
+    }
+    else if (eDataType == GDT_Int16 && bGotNoDataValue &&
+             GDALIsValueExactAs<int16_t>(dfNoDataValue))
+    {
+        fNoDataValue = static_cast<float>(dfNoDataValue);
+        bGotFloatNoDataValue = true;
+    }
+    else if (eDataType == GDT_UInt16 && bGotNoDataValue &&
+             GDALIsValueExactAs<uint16_t>(dfNoDataValue))
+    {
+        fNoDataValue = static_cast<float>(dfNoDataValue);
+        bGotFloatNoDataValue = true;
+    }
+    else if (eDataType == GDT_Float16 && bGotNoDataValue &&
+             GDALIsValueExactAs<GFloat16>(dfNoDataValue))
+    {
+        fNoDataValue = static_cast<float>(dfNoDataValue);
+        bGotFloatNoDataValue = true;
     }
 }
 
@@ -6609,12 +6627,16 @@ inline __m128d blendv_pd(__m128d a, __m128d b, __m128d mask)
 
 #define dup_lo_ps(x) unpacklo_ps((x), (x))
 
-template <bool CHECK_MIN_NOT_SAME_AS_MAX, bool HAS_NODATA>
+/************************************************************************/
+/*                   ComputeStatisticsFloat32_SSE2()                    */
+/************************************************************************/
+
+template <bool HAS_NAN, bool CHECK_MIN_NOT_SAME_AS_MAX, bool HAS_NODATA>
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
 static int
-ComputeStatisticsFloat32_SSE2(const float *pafData,
+ComputeStatisticsFloat32_SSE2(const float *const pafData,
                               [[maybe_unused]] float fNoDataValue, int iX,
                               int nCount, float &fMin, float &fMax,
                               double &dfBlockMean, double &dfBlockM2,
@@ -6639,14 +6661,25 @@ ComputeStatisticsFloat32_SSE2(const float *pafData,
     {
         const auto vValues = loadu_ps(pafData + iX);
 
-        auto isNaNOrNoData = cmpunord_ps(vValues, vValues);
-        if constexpr (HAS_NODATA)
+        if constexpr (HAS_NAN)
         {
-            isNaNOrNoData = or_ps(isNaNOrNoData, cmpeq_ps(vValues, vNoData));
+            auto isNaNOrNoData = cmpunord_ps(vValues, vValues);
+            if constexpr (HAS_NODATA)
+            {
+                isNaNOrNoData =
+                    or_ps(isNaNOrNoData, cmpeq_ps(vValues, vNoData));
+            }
+            if (movemask_ps(isNaNOrNoData))
+            {
+                break;
+            }
         }
-        if (movemask_ps(isNaNOrNoData))
+        else if constexpr (HAS_NODATA)
         {
-            break;
+            if (movemask_ps(cmpeq_ps(vValues, vNoData)))
+            {
+                break;
+            }
         }
 
         vMin = min_ps(vMin, vValues);
@@ -6727,6 +6760,10 @@ ComputeStatisticsFloat32_SSE2(const float *pafData,
 
     return iX;
 }
+
+/************************************************************************/
+/*                   ComputeStatisticsFloat64_SSE2()                    */
+/************************************************************************/
 
 template <bool CHECK_MIN_NOT_SAME_AS_MAX, bool HAS_NODATA>
 #if defined(__GNUC__)
@@ -6846,6 +6883,125 @@ ComputeStatisticsFloat64_SSE2(const double *padfData,
 }
 
 #endif
+
+/************************************************************************/
+/*                   ComputeBlockStatisticsFloat32()                    */
+/************************************************************************/
+
+template <bool HAS_NAN, bool HAS_NODATA>
+static void ComputeBlockStatisticsFloat32(
+    const float *const pafSrcData, const int nBlockXSize, const int nXCheck,
+    const int nYCheck, const GDALNoDataValues &sNoDataValues, float &fMinInOut,
+    float &fMaxInOut, double &dfBlockMeanInOut, double &dfBlockM2InOut,
+    double &dfBlockValidCountInOut)
+{
+    float fMin = fMinInOut;
+    float fMax = fMaxInOut;
+    double dfBlockMean = dfBlockMeanInOut;
+    double dfBlockM2 = dfBlockM2InOut;
+    double dfBlockValidCount = dfBlockValidCountInOut;
+
+    for (int iY = 0; iY < nYCheck; iY++)
+    {
+        const int iOffset = iY * nBlockXSize;
+        if (dfBlockValidCount > 0 && fMin != fMax)
+        {
+            int iX = 0;
+#if defined(__x86_64__) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
+            iX = ComputeStatisticsFloat32_SSE2<HAS_NAN,
+                                               /* bCheckMinEqMax = */ false,
+                                               HAS_NODATA>(
+                pafSrcData + iOffset, sNoDataValues.fNoDataValue, iX, nXCheck,
+                fMin, fMax, dfBlockMean, dfBlockM2, dfBlockValidCount);
+#endif
+            for (; iX < nXCheck; iX++)
+            {
+                const float fValue = pafSrcData[iOffset + iX];
+                if constexpr (HAS_NAN)
+                {
+                    if (std::isnan(fValue))
+                        continue;
+                }
+                if constexpr (HAS_NODATA)
+                {
+                    if (fValue == sNoDataValues.fNoDataValue)
+                        continue;
+                }
+                fMin = std::min(fMin, fValue);
+                fMax = std::max(fMax, fValue);
+                dfBlockValidCount += 1.0;
+                const double dfValue = static_cast<double>(fValue);
+                const double dfDelta = dfValue - dfBlockMean;
+                dfBlockMean += dfDelta / dfBlockValidCount;
+                dfBlockM2 += dfDelta * (dfValue - dfBlockMean);
+            }
+        }
+        else
+        {
+            int iX = 0;
+            if (dfBlockValidCount == 0)
+            {
+                for (; iX < nXCheck; iX++)
+                {
+                    const float fValue = pafSrcData[iOffset + iX];
+                    if constexpr (HAS_NAN)
+                    {
+                        if (std::isnan(fValue))
+                            continue;
+                    }
+                    if constexpr (HAS_NODATA)
+                    {
+                        if (fValue == sNoDataValues.fNoDataValue)
+                            continue;
+                    }
+                    fMin = std::min(fMin, fValue);
+                    fMax = std::max(fMax, fValue);
+                    dfBlockValidCount = 1;
+                    dfBlockMean = static_cast<double>(fValue);
+                    iX++;
+                    break;
+                }
+            }
+#if defined(__x86_64__) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
+            iX = ComputeStatisticsFloat32_SSE2<HAS_NAN,
+                                               /* bCheckMinEqMax = */ true,
+                                               HAS_NODATA>(
+                pafSrcData + iOffset, sNoDataValues.fNoDataValue, iX, nXCheck,
+                fMin, fMax, dfBlockMean, dfBlockM2, dfBlockValidCount);
+#endif
+            for (; iX < nXCheck; iX++)
+            {
+                const float fValue = pafSrcData[iOffset + iX];
+                if constexpr (HAS_NAN)
+                {
+                    if (std::isnan(fValue))
+                        continue;
+                }
+                if constexpr (HAS_NODATA)
+                {
+                    if (fValue == sNoDataValues.fNoDataValue)
+                        continue;
+                }
+                fMin = std::min(fMin, fValue);
+                fMax = std::max(fMax, fValue);
+                dfBlockValidCount += 1.0;
+                if (fMin != fMax)
+                {
+                    const double dfValue = static_cast<double>(fValue);
+                    const double dfDelta = dfValue - dfBlockMean;
+                    dfBlockMean += dfDelta / dfBlockValidCount;
+                    dfBlockM2 += dfDelta * (dfValue - dfBlockMean);
+                }
+            }
+        }
+    }
+
+    fMinInOut = fMin;
+    fMaxInOut = fMax;
+    dfBlockMeanInOut = dfBlockMean;
+    dfBlockM2InOut = dfBlockM2;
+    dfBlockValidCountInOut = dfBlockValidCount;
+}
 
 /************************************************************************/
 /*                         ComputeStatistics()                          */
@@ -7330,11 +7486,20 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
 
         float fMin = std::numeric_limits<float>::infinity();
         float fMax = -std::numeric_limits<float>::infinity();
-        const bool bFloat32Optim =
-            eDataType == GDT_Float32 && !pabyMaskData &&
+        bool bFloat32Optim =
+            (eDataType == GDT_Int16 || eDataType == GDT_UInt16 ||
+             eDataType == GDT_Float16 || eDataType == GDT_Float32) &&
+            !pabyMaskData &&
             nBlockXSize < std::numeric_limits<int>::max() / nBlockYSize &&
             CPLTestBool(
                 CPLGetConfigOption("GDAL_STATS_USE_FLOAT32_OPTIM", "YES"));
+        std::unique_ptr<float, VSIFreeReleaser> pafTemp;
+        if (bFloat32Optim && eDataType != GDT_Float32)
+        {
+            pafTemp.reset(static_cast<float *>(
+                VSIMalloc(sizeof(float) * nBlockXSize * nBlockYSize)));
+            bFloat32Optim = pafTemp != nullptr;
+        }
 
 #if defined(__x86_64__) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
         const bool bFloat64Optim =
@@ -7365,131 +7530,79 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 return CE_Failure;
             }
 
-            GDALRasterBlock *const poBlock =
-                GetLockedBlockRef(iXBlock, iYBlock);
-            if (poBlock == nullptr)
+            GDALRasterBlock *poBlock = nullptr;
+            if (pafTemp)
             {
-                CPLFree(pabyMaskData);
-                return CE_Failure;
+                if (RasterIO(GF_Read, iXBlock * nBlockXSize,
+                             iYBlock * nBlockYSize, nXCheck, nYCheck,
+                             pafTemp.get(), nXCheck, nYCheck, GDT_Float32, 0,
+                             static_cast<GSpacing>(nBlockXSize * sizeof(float)),
+                             nullptr) != CE_None)
+                {
+                    CPLFree(pabyMaskData);
+                    return CE_Failure;
+                }
+            }
+            else
+            {
+                poBlock = GetLockedBlockRef(iXBlock, iYBlock);
+                if (poBlock == nullptr)
+                {
+                    CPLFree(pabyMaskData);
+                    return CE_Failure;
+                }
             }
 
-            const void *const pData = poBlock->GetDataRef();
+            const void *const pData =
+                poBlock ? poBlock->GetDataRef() : pafTemp.get();
 
             if (bFloat32Optim)
             {
+                const float *const pafSrcData =
+                    static_cast<const float *>(pData);
+
                 const bool bHasNoData = sNoDataValues.bGotFloatNoDataValue &&
                                         !std::isnan(sNoDataValues.fNoDataValue);
                 double dfBlockMean = 0;
                 double dfBlockM2 = 0;
                 double dfBlockValidCount = 0;
-                for (int iY = 0; iY < nYCheck; iY++)
+
+                if (GDALDataTypeIsInteger(eDataType))
                 {
-                    const int iOffset = iY * nBlockXSize;
-                    if (dfBlockValidCount > 0 && fMin != fMax)
+                    if (bHasNoData)
                     {
-                        int iX = 0;
-#if (defined(__x86_64__) || defined(_M_X64))
-                        if (bHasNoData)
-                        {
-                            iX = ComputeStatisticsFloat32_SSE2<
-                                /* bCheckMinEqMax = */ false,
-                                /* bHasNoData = */ true>(
-                                static_cast<const float *>(pData) + iOffset,
-                                sNoDataValues.fNoDataValue, iX, nXCheck, fMin,
-                                fMax, dfBlockMean, dfBlockM2,
-                                dfBlockValidCount);
-                        }
-                        else
-                        {
-                            iX = ComputeStatisticsFloat32_SSE2<
-                                /* bCheckMinEqMax = */ false,
-                                /* bHasNoData = */ false>(
-                                static_cast<const float *>(pData) + iOffset,
-                                sNoDataValues.fNoDataValue, iX, nXCheck, fMin,
-                                fMax, dfBlockMean, dfBlockM2,
-                                dfBlockValidCount);
-                        }
-#endif
-                        for (; iX < nXCheck; iX++)
-                        {
-                            const float fValue =
-                                static_cast<const float *>(pData)[iOffset + iX];
-                            if (std::isnan(fValue) ||
-                                (bHasNoData &&
-                                 fValue == sNoDataValues.fNoDataValue))
-                                continue;
-                            fMin = std::min(fMin, fValue);
-                            fMax = std::max(fMax, fValue);
-                            dfBlockValidCount += 1.0;
-                            const double dfValue = static_cast<double>(fValue);
-                            const double dfDelta = dfValue - dfBlockMean;
-                            dfBlockMean += dfDelta / dfBlockValidCount;
-                            dfBlockM2 += dfDelta * (dfValue - dfBlockMean);
-                        }
+                        ComputeBlockStatisticsFloat32</* HAS_NAN = */ false,
+                                                      /* HAS_NODATA = */ true>(
+                            pafSrcData, nBlockXSize, nXCheck, nYCheck,
+                            sNoDataValues, fMin, fMax, dfBlockMean, dfBlockM2,
+                            dfBlockValidCount);
                     }
                     else
                     {
-                        int iX = 0;
-                        if (dfBlockValidCount == 0)
-                        {
-                            for (; iX < nXCheck; iX++)
-                            {
-                                const float fValue = static_cast<const float *>(
-                                    pData)[iOffset + iX];
-                                if (std::isnan(fValue) ||
-                                    (bHasNoData &&
-                                     fValue == sNoDataValues.fNoDataValue))
-                                    continue;
-                                fMin = std::min(fMin, fValue);
-                                fMax = std::max(fMax, fValue);
-                                dfBlockValidCount = 1;
-                                dfBlockMean = static_cast<double>(fValue);
-                                iX++;
-                                break;
-                            }
-                        }
-#if (defined(__x86_64__) || defined(_M_X64))
-                        if (bHasNoData)
-                        {
-                            iX = ComputeStatisticsFloat32_SSE2<
-                                /* bCheckMinEqMax = */ true,
-                                /* bHasNoData = */ true>(
-                                static_cast<const float *>(pData) + iOffset,
-                                sNoDataValues.fNoDataValue, iX, nXCheck, fMin,
-                                fMax, dfBlockMean, dfBlockM2,
-                                dfBlockValidCount);
-                        }
-                        else
-                        {
-                            iX = ComputeStatisticsFloat32_SSE2<
-                                /* bCheckMinEqMax = */ true,
-                                /* bHasNoData = */ false>(
-                                static_cast<const float *>(pData) + iOffset,
-                                sNoDataValues.fNoDataValue, iX, nXCheck, fMin,
-                                fMax, dfBlockMean, dfBlockM2,
-                                dfBlockValidCount);
-                        }
-#endif
-                        for (; iX < nXCheck; iX++)
-                        {
-                            const float fValue =
-                                static_cast<const float *>(pData)[iOffset + iX];
-                            if (std::isnan(fValue) ||
-                                (bHasNoData &&
-                                 fValue == sNoDataValues.fNoDataValue))
-                                continue;
-                            fMin = std::min(fMin, fValue);
-                            fMax = std::max(fMax, fValue);
-                            dfBlockValidCount += 1.0;
-                            if (fMin != fMax)
-                            {
-                                const double dfValue =
-                                    static_cast<double>(fValue);
-                                const double dfDelta = dfValue - dfBlockMean;
-                                dfBlockMean += dfDelta / dfBlockValidCount;
-                                dfBlockM2 += dfDelta * (dfValue - dfBlockMean);
-                            }
-                        }
+                        ComputeBlockStatisticsFloat32</* HAS_NAN = */ false,
+                                                      /* HAS_NODATA = */ false>(
+                            pafSrcData, nBlockXSize, nXCheck, nYCheck,
+                            sNoDataValues, fMin, fMax, dfBlockMean, dfBlockM2,
+                            dfBlockValidCount);
+                    }
+                }
+                else
+                {
+                    if (bHasNoData)
+                    {
+                        ComputeBlockStatisticsFloat32</* HAS_NAN = */ true,
+                                                      /* HAS_NODATA = */ true>(
+                            pafSrcData, nBlockXSize, nXCheck, nYCheck,
+                            sNoDataValues, fMin, fMax, dfBlockMean, dfBlockM2,
+                            dfBlockValidCount);
+                    }
+                    else
+                    {
+                        ComputeBlockStatisticsFloat32</* HAS_NAN = */ true,
+                                                      /* HAS_NODATA = */ false>(
+                            pafSrcData, nBlockXSize, nXCheck, nYCheck,
+                            sNoDataValues, fMin, fMax, dfBlockMean, dfBlockM2,
+                            dfBlockValidCount);
                     }
                 }
 
@@ -7760,7 +7873,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
 
             nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
 
-            poBlock->DropLock();
+            if (poBlock)
+                poBlock->DropLock();
 
             if (!pfnProgress(
                     static_cast<double>(iSampleBlock) /
