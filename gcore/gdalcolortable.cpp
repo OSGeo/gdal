@@ -744,11 +744,26 @@ static bool GDALFindNamedColor(const char *pszColorName, int *pnR, int *pnG,
 std::vector<GDALColorAssociation> GDALLoadTextColorMap(const char *pszFilename,
                                                        GDALRasterBand *poBand)
 {
-    auto fpColorFile = VSIVirtualHandleUniquePtr(VSIFOpenL(pszFilename, "rt"));
+    auto fpColorFile = VSIVirtualHandleUniquePtr(VSIFOpenL(pszFilename, "rb"));
     if (fpColorFile == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s", pszFilename);
         return {};
+    }
+
+    // Detect UTF-16 BOM (common on Windows)
+    unsigned char bom[2] = {0, 0};
+    if (fpColorFile->Read(bom, 1, 2) == 2)
+    {
+        if ((bom[0] == 0xFF && bom[1] == 0xFE) ||
+            (bom[0] == 0xFE && bom[1] == 0xFF))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Color map file must be UTF-8 encoded, not UTF-16: %s",
+                     pszFilename);
+            return {};
+        }
+        fpColorFile->Seek(0, SEEK_SET);
     }
 
     std::vector<GDALColorAssociation> asColorAssociation;
