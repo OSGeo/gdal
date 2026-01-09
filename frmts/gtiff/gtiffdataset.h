@@ -19,6 +19,7 @@
 #include <mutex>
 #include <queue>
 
+#include "cpl_json.h"
 #include "cpl_mem_cache.h"
 #include "cpl_worker_thread_pool.h"  // CPLJobQueue, CPLWorkerThreadPool
 #include "fetchbufferdirectio.h"
@@ -184,6 +185,9 @@ class GTiffDataset final : public GDALPamDataset
     int m_nLastWrittenBlockId = -1;  // used for m_bStreamingOut
     int m_nRefBaseMapping = 0;
     int m_nDisableMultiThreadedRead = 0;
+
+    CPLJSONObject m_oISIS3Metadata{};
+    std::map<std::string, std::string> m_oMapISIS3MetadataItems{};
 
   public:
     static constexpr int DEFAULT_COLOR_TABLE_MULTIPLIER_257 = 257;
