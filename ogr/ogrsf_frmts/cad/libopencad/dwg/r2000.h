@@ -180,7 +180,7 @@ protected:
                                      CADBuffer &buffer );
     CADImageDefReactorObject * getImageDefReactor( unsigned int dObjectSize,
                                                    CADBuffer &buffer );
-    void fillCommonEntityHandleData(CADEntityObject * pEnt, CADBuffer &buffer);
+    static void fillCommonEntityHandleData(CADEntityObject * pEnt, CADBuffer &buffer);
     unsigned short validateEntityCRC(CADBuffer& buffer, unsigned int dObjectSize,
                                      const char * entityName = "ENTITY",
                                      bool bSwapEndianness = false );
