@@ -164,7 +164,7 @@ bool GDALRasterViewshedAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     GDALRasterBandH sdBand = nullptr;
     if (GetArg("sd-filename")->IsExplicitlySet())
     {
-        GDALDatasetH ds = GDALOpen(m_sdFilename.c_str(), GA_ReadOnly);
+        GDALDatasetH ds = GDALOpen(m_sdFilename.GetName().c_str(), GA_ReadOnly);
         sdDataset.reset(GDALDataset::FromHandle(ds));
         sdBand = sdDataset->GetRasterBand(1);
     }

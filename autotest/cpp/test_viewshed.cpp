@@ -1010,19 +1010,18 @@ TEST(Viewshed, sd_2)
                 }
         }
     }
-    /**
     // Right, up
     {
         // clang-format off
         const int xlen = 8;
         const int ylen = 2;
-        std::array<float, xlen * ylen> in
+        std::array<double, xlen * ylen> in
         {
             0, 1.1, 1.4, 3.1, 1.5, 2.7, 3.7, 7.5,  // Row 0
             0, 1,   1,   3.1, 1.5, 2.7, 3.7, 7.5   // Row 1
         };
 
-        std::array<float, xlen * ylen> sd
+        std::array<double, xlen * ylen> sd
         {
             1, 100, .1, 100, .1, .1, 100, .1,  // Row 0
             1, 100, .1, 100, .1, .1, 100, .1   // Row 1
@@ -1064,13 +1063,13 @@ TEST(Viewshed, sd_2)
         // clang-format off
         const int xlen = 8;
         const int ylen = 2;
-        std::array<float, xlen * ylen> in
+        std::array<double, xlen * ylen> in
         {
             7.5, 3.7, 2.7, 1.5, 3.1, 1,   1,   0, // Row 0
             7.5, 3.7, 2.7, 1.5, 3.1, 1.4, 1.1, 0  // Row 1
         };
 
-        std::array<float, xlen * ylen> sd
+        std::array<double, xlen * ylen> sd
         {
             .1, 100, .1, .1, 100, .1, 100, 1,  // Row 0
             .1, 100, .1, .1, 100, .1, 100, 1   // Row 1
@@ -1112,13 +1111,13 @@ TEST(Viewshed, sd_2)
         // clang-format off
         const int xlen = 8;
         const int ylen = 2;
-        std::array<float, xlen * ylen> in
+        std::array<double, xlen * ylen> in
         {
             7.5, 3.7, 2.7, 1.5, 3.1, 1.4, 1.1, 0, // Row 0
             7.5, 3.7, 2.7, 1.5, 3.1, 1,   1,   0  // Row 1
         };
 
-        std::array<float, xlen * ylen> sd
+        std::array<double, xlen * ylen> sd
         {
             .1, 100, .1, .1, 100, .1, 100, 1,  // Row 0
             .1, 100, .1, .1, 100, .1, 100, 1   // Row 1
@@ -1154,7 +1153,6 @@ TEST(Viewshed, sd_2)
                 }
         }
     }
-**/
 }
 
 }  // namespace viewshed
