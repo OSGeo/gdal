@@ -1473,6 +1473,38 @@ template <> double GWKClampValueT<double, double>(double dfValue)
 /*                             AvoidNoData()                            */
 /************************************************************************/
 
+template <class T> inline void AvoidNoData(T *pDst, GPtrDiff_t iDstOffset)
+{
+    if constexpr (cpl::NumericLimits<T>::is_integer)
+    {
+        if (pDst[iDstOffset] == static_cast<T>(cpl::NumericLimits<T>::lowest()))
+        {
+            pDst[iDstOffset] =
+                static_cast<T>(cpl::NumericLimits<T>::lowest() + 1);
+        }
+        else
+            pDst[iDstOffset]--;
+    }
+    else
+    {
+        if (pDst[iDstOffset] == cpl::NumericLimits<T>::max())
+        {
+            using std::nextafter;
+            pDst[iDstOffset] = nextafter(pDst[iDstOffset], static_cast<T>(0));
+        }
+        else
+        {
+            using std::nextafter;
+            pDst[iDstOffset] =
+                nextafter(pDst[iDstOffset], cpl::NumericLimits<T>::max());
+        }
+    }
+}
+
+/************************************************************************/
+/*                             AvoidNoData()                            */
+/************************************************************************/
+
 template <class T>
 inline void AvoidNoData(const GDALWarpKernel *poWK, int iBand,
                         GPtrDiff_t iDstOffset)
@@ -1483,32 +1515,7 @@ inline void AvoidNoData(const GDALWarpKernel *poWK, int iBand,
     if (poWK->padfDstNoDataReal != nullptr &&
         poWK->padfDstNoDataReal[iBand] == static_cast<double>(pDst[iDstOffset]))
     {
-        if constexpr (cpl::NumericLimits<T>::is_integer)
-        {
-            if (pDst[iDstOffset] ==
-                static_cast<T>(cpl::NumericLimits<T>::lowest()))
-            {
-                pDst[iDstOffset] =
-                    static_cast<T>(cpl::NumericLimits<T>::lowest() + 1);
-            }
-            else
-                pDst[iDstOffset]--;
-        }
-        else
-        {
-            if (pDst[iDstOffset] == cpl::NumericLimits<T>::max())
-            {
-                using std::nextafter;
-                pDst[iDstOffset] =
-                    nextafter(pDst[iDstOffset], static_cast<T>(0));
-            }
-            else
-            {
-                using std::nextafter;
-                pDst[iDstOffset] =
-                    nextafter(pDst[iDstOffset], cpl::NumericLimits<T>::max());
-            }
-        }
+        AvoidNoData(pDst, iDstOffset);
 
         if (!poWK->bWarnedAboutDstNoDataReplacement)
         {
@@ -1526,13 +1533,125 @@ inline void AvoidNoData(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
+/*                       GWKAvoidNoDataMultiBand()                      */
+/************************************************************************/
+
+template <class T>
+static void GWKAvoidNoDataMultiBand(const GDALWarpKernel *poWK,
+                                    GPtrDiff_t iDstOffset)
+{
+    T **ppDst = reinterpret_cast<T **>(poWK->papabyDstImage);
+    if (poWK->padfDstNoDataReal != nullptr)
+    {
+        for (int iBand = 0; iBand < poWK->nBands; ++iBand)
+        {
+            if (poWK->padfDstNoDataReal[iBand] !=
+                static_cast<double>(ppDst[iBand][iDstOffset]))
+                return;
+        }
+        for (int iBand = 0; iBand < poWK->nBands; ++iBand)
+        {
+            AvoidNoData(ppDst[iBand], iDstOffset);
+        }
+
+        if (!poWK->bWarnedAboutDstNoDataReplacement)
+        {
+            const_cast<GDALWarpKernel *>(poWK)
+                ->bWarnedAboutDstNoDataReplacement = true;
+            std::string valueSrc, valueDst;
+            for (int iBand = 0; iBand < poWK->nBands; ++iBand)
+            {
+                if (!valueSrc.empty())
+                {
+                    valueSrc += ',';
+                    valueDst += ',';
+                }
+                valueSrc += CPLSPrintf("%g", poWK->padfDstNoDataReal[iBand]);
+                valueDst += CPLSPrintf(
+                    "%g", static_cast<double>(ppDst[iBand][iDstOffset]));
+            }
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Value %s in the source dataset has been changed to %s "
+                     "in the destination dataset to avoid being treated as "
+                     "NoData. To avoid this, select a different NoData value "
+                     "for the destination dataset.",
+                     valueSrc.c_str(), valueDst.c_str());
+        }
+    }
+}
+
+/************************************************************************/
+/*                       GWKAvoidNoDataMultiBand()                      */
+/************************************************************************/
+
+static void GWKAvoidNoDataMultiBand(const GDALWarpKernel *poWK,
+                                    GPtrDiff_t iDstOffset)
+{
+    switch (poWK->eWorkingDataType)
+    {
+        case GDT_UInt8:
+            GWKAvoidNoDataMultiBand<std::uint8_t>(poWK, iDstOffset);
+            break;
+
+        case GDT_Int8:
+            GWKAvoidNoDataMultiBand<std::int8_t>(poWK, iDstOffset);
+            break;
+
+        case GDT_Int16:
+            GWKAvoidNoDataMultiBand<std::int16_t>(poWK, iDstOffset);
+            break;
+
+        case GDT_UInt16:
+            GWKAvoidNoDataMultiBand<std::uint16_t>(poWK, iDstOffset);
+            break;
+
+        case GDT_Int32:
+            GWKAvoidNoDataMultiBand<std::int32_t>(poWK, iDstOffset);
+            break;
+
+        case GDT_UInt32:
+            GWKAvoidNoDataMultiBand<std::uint32_t>(poWK, iDstOffset);
+            break;
+
+        case GDT_Int64:
+            GWKAvoidNoDataMultiBand<std::int64_t>(poWK, iDstOffset);
+            break;
+
+        case GDT_UInt64:
+            GWKAvoidNoDataMultiBand<std::uint64_t>(poWK, iDstOffset);
+            break;
+
+        case GDT_Float16:
+            GWKAvoidNoDataMultiBand<GFloat16>(poWK, iDstOffset);
+            break;
+
+        case GDT_Float32:
+            GWKAvoidNoDataMultiBand<float>(poWK, iDstOffset);
+            break;
+
+        case GDT_Float64:
+            GWKAvoidNoDataMultiBand<double>(poWK, iDstOffset);
+            break;
+
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat16:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            break;
+    }
+}
+
+/************************************************************************/
 /*                         GWKSetPixelValueRealT()                      */
 /************************************************************************/
 
 template <class T>
 static bool GWKSetPixelValueRealT(const GDALWarpKernel *poWK, int iBand,
                                   GPtrDiff_t iDstOffset, double dfDensity,
-                                  T value)
+                                  T value, bool bAvoidNoDataSingleBand)
 {
     T *pDst = reinterpret_cast<T *>(poWK->papabyDstImage[iBand]);
 
@@ -1586,7 +1705,8 @@ static bool GWKSetPixelValueRealT(const GDALWarpKernel *poWK, int iBand,
         pDst[iDstOffset] = value;
     }
 
-    AvoidNoData<T>(poWK, iBand, iDstOffset);
+    if (bAvoidNoDataSingleBand)
+        AvoidNoData<T>(poWK, iBand, iDstOffset);
 
     return true;
 }
@@ -1597,7 +1717,8 @@ static bool GWKSetPixelValueRealT(const GDALWarpKernel *poWK, int iBand,
 
 template <class T>
 inline void ClampRoundAndAvoidNoData(const GDALWarpKernel *poWK, int iBand,
-                                     GPtrDiff_t iDstOffset, double dfReal)
+                                     GPtrDiff_t iDstOffset, double dfReal,
+                                     bool bAvoidNoDataSingleBand)
 {
     GByte *pabyDst = poWK->papabyDstImage[iBand];
     T *pDst = reinterpret_cast<T *>(pabyDst);
@@ -1619,7 +1740,8 @@ inline void ClampRoundAndAvoidNoData(const GDALWarpKernel *poWK, int iBand,
         pDst[iDstOffset] = static_cast<T>(dfReal);
     }
 
-    AvoidNoData<T>(poWK, iBand, iDstOffset);
+    if (bAvoidNoDataSingleBand)
+        AvoidNoData<T>(poWK, iBand, iDstOffset);
 }
 
 /************************************************************************/
@@ -1628,7 +1750,8 @@ inline void ClampRoundAndAvoidNoData(const GDALWarpKernel *poWK, int iBand,
 
 static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
                              GPtrDiff_t iDstOffset, double dfDensity,
-                             double dfReal, double dfImag)
+                             double dfReal, double dfImag,
+                             bool bAvoidNoDataSingleBand)
 
 {
     GByte *pabyDst = poWK->papabyDstImage[iBand];
@@ -1778,49 +1901,58 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
     switch (poWK->eWorkingDataType)
     {
         case GDT_UInt8:
-            ClampRoundAndAvoidNoData<GByte>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GByte>(poWK, iBand, iDstOffset, dfReal,
+                                            bAvoidNoDataSingleBand);
             break;
 
         case GDT_Int8:
-            ClampRoundAndAvoidNoData<GInt8>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GInt8>(poWK, iBand, iDstOffset, dfReal,
+                                            bAvoidNoDataSingleBand);
             break;
 
         case GDT_Int16:
-            ClampRoundAndAvoidNoData<GInt16>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GInt16>(poWK, iBand, iDstOffset, dfReal,
+                                             bAvoidNoDataSingleBand);
             break;
 
         case GDT_UInt16:
-            ClampRoundAndAvoidNoData<GUInt16>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GUInt16>(poWK, iBand, iDstOffset, dfReal,
+                                              bAvoidNoDataSingleBand);
             break;
 
         case GDT_UInt32:
-            ClampRoundAndAvoidNoData<GUInt32>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GUInt32>(poWK, iBand, iDstOffset, dfReal,
+                                              bAvoidNoDataSingleBand);
             break;
 
         case GDT_Int32:
-            ClampRoundAndAvoidNoData<GInt32>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GInt32>(poWK, iBand, iDstOffset, dfReal,
+                                             bAvoidNoDataSingleBand);
             break;
 
         case GDT_UInt64:
-            ClampRoundAndAvoidNoData<std::uint64_t>(poWK, iBand, iDstOffset,
-                                                    dfReal);
+            ClampRoundAndAvoidNoData<std::uint64_t>(
+                poWK, iBand, iDstOffset, dfReal, bAvoidNoDataSingleBand);
             break;
 
         case GDT_Int64:
-            ClampRoundAndAvoidNoData<std::int64_t>(poWK, iBand, iDstOffset,
-                                                   dfReal);
+            ClampRoundAndAvoidNoData<std::int64_t>(
+                poWK, iBand, iDstOffset, dfReal, bAvoidNoDataSingleBand);
             break;
 
         case GDT_Float16:
-            ClampRoundAndAvoidNoData<GFloat16>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GFloat16>(poWK, iBand, iDstOffset, dfReal,
+                                               bAvoidNoDataSingleBand);
             break;
 
         case GDT_Float32:
-            ClampRoundAndAvoidNoData<float>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<float>(poWK, iBand, iDstOffset, dfReal,
+                                            bAvoidNoDataSingleBand);
             break;
 
         case GDT_Float64:
-            ClampRoundAndAvoidNoData<double>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<double>(poWK, iBand, iDstOffset, dfReal,
+                                             bAvoidNoDataSingleBand);
             break;
 
         case GDT_CInt16:
@@ -1904,7 +2036,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
 
 static bool GWKSetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
                                  GPtrDiff_t iDstOffset, double dfDensity,
-                                 double dfReal)
+                                 double dfReal, bool bAvoidNoDataSingleBand)
 
 {
     GByte *pabyDst = poWK->papabyDstImage[iBand];
@@ -2012,49 +2144,58 @@ static bool GWKSetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
     switch (poWK->eWorkingDataType)
     {
         case GDT_UInt8:
-            ClampRoundAndAvoidNoData<GByte>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GByte>(poWK, iBand, iDstOffset, dfReal,
+                                            bAvoidNoDataSingleBand);
             break;
 
         case GDT_Int8:
-            ClampRoundAndAvoidNoData<GInt8>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GInt8>(poWK, iBand, iDstOffset, dfReal,
+                                            bAvoidNoDataSingleBand);
             break;
 
         case GDT_Int16:
-            ClampRoundAndAvoidNoData<GInt16>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GInt16>(poWK, iBand, iDstOffset, dfReal,
+                                             bAvoidNoDataSingleBand);
             break;
 
         case GDT_UInt16:
-            ClampRoundAndAvoidNoData<GUInt16>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GUInt16>(poWK, iBand, iDstOffset, dfReal,
+                                              bAvoidNoDataSingleBand);
             break;
 
         case GDT_UInt32:
-            ClampRoundAndAvoidNoData<GUInt32>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GUInt32>(poWK, iBand, iDstOffset, dfReal,
+                                              bAvoidNoDataSingleBand);
             break;
 
         case GDT_Int32:
-            ClampRoundAndAvoidNoData<GInt32>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GInt32>(poWK, iBand, iDstOffset, dfReal,
+                                             bAvoidNoDataSingleBand);
             break;
 
         case GDT_UInt64:
-            ClampRoundAndAvoidNoData<std::uint64_t>(poWK, iBand, iDstOffset,
-                                                    dfReal);
+            ClampRoundAndAvoidNoData<std::uint64_t>(
+                poWK, iBand, iDstOffset, dfReal, bAvoidNoDataSingleBand);
             break;
 
         case GDT_Int64:
-            ClampRoundAndAvoidNoData<std::int64_t>(poWK, iBand, iDstOffset,
-                                                   dfReal);
+            ClampRoundAndAvoidNoData<std::int64_t>(
+                poWK, iBand, iDstOffset, dfReal, bAvoidNoDataSingleBand);
             break;
 
         case GDT_Float16:
-            ClampRoundAndAvoidNoData<GFloat16>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<GFloat16>(poWK, iBand, iDstOffset, dfReal,
+                                               bAvoidNoDataSingleBand);
             break;
 
         case GDT_Float32:
-            ClampRoundAndAvoidNoData<float>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<float>(poWK, iBand, iDstOffset, dfReal,
+                                            bAvoidNoDataSingleBand);
             break;
 
         case GDT_Float64:
-            ClampRoundAndAvoidNoData<double>(poWK, iBand, iDstOffset, dfReal);
+            ClampRoundAndAvoidNoData<double>(poWK, iBand, iDstOffset, dfReal,
+                                             bAvoidNoDataSingleBand);
             break;
 
         case GDT_CInt16:
@@ -5263,6 +5404,10 @@ static void GWKGeneralCaseThread(void *pData)
                   poWK->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT_PIPELINE",
                   "1.0"))
             : 0.0;
+    const bool bAvoidNoDataSingleBand =
+        poWK->nBands == 1 ||
+        !CPLTestBool(CSLFetchNameValueDef(poWK->papszWarpOptions,
+                                          "UNIFIED_SRC_NODATA", "FALSE"));
 
     int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize;
@@ -5472,11 +5617,17 @@ static void GWKGeneralCaseThread(void *pData)
                 /* --------------------------------------------------------------------
                  */
                 GWKSetPixelValue(poWK, iBand, iDstOffset, dfBandDensity,
-                                 dfValueReal, dfValueImag);
+                                 dfValueReal, dfValueImag,
+                                 bAvoidNoDataSingleBand);
             }
 
             if (!bHasFoundDensity)
                 continue;
+
+            if (!bAvoidNoDataSingleBand)
+            {
+                GWKAvoidNoDataMultiBand(poWK, iDstOffset);
+            }
 
             /* --------------------------------------------------------------------
              */
@@ -5539,6 +5690,10 @@ static void GWKRealCaseThread(void *pData)
                   poWK->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT_PIPELINE",
                   "1.0"))
             : 0.0;
+    const bool bAvoidNoDataSingleBand =
+        poWK->nBands == 1 ||
+        !CPLTestBool(CSLFetchNameValueDef(poWK->papszWarpOptions,
+                                          "UNIFIED_SRC_NODATA", "FALSE"));
 
     /* -------------------------------------------------------------------- */
     /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -5778,11 +5933,16 @@ static void GWKRealCaseThread(void *pData)
                 /* --------------------------------------------------------------------
                  */
                 GWKSetPixelValueReal(poWK, iBand, iDstOffset, dfBandDensity,
-                                     dfValueReal);
+                                     dfValueReal, bAvoidNoDataSingleBand);
             }
 
             if (!bHasFoundDensity)
                 continue;
+
+            if (!bAvoidNoDataSingleBand)
+            {
+                GWKAvoidNoDataMultiBand(poWK, iDstOffset);
+            }
 
             /* --------------------------------------------------------------------
              */
@@ -6235,6 +6395,10 @@ template <class T> static void GWKNearestThread(void *pData)
                   poWK->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT_PIPELINE",
                   "1.0"))
             : 0.0;
+    const bool bAvoidNoDataSingleBand =
+        poWK->nBands == 1 ||
+        !CPLTestBool(CSLFetchNameValueDef(poWK->papszWarpOptions,
+                                          "UNIFIED_SRC_NODATA", "FALSE"));
 
     const int nDstXSize = poWK->nDstXSize;
     const int nSrcXSize = poWK->nSrcXSize;
@@ -6379,7 +6543,8 @@ template <class T> static void GWKNearestThread(void *pData)
                     }
 
                     GWKSetPixelValueRealT(poWK, iBand, iDstOffset,
-                                          dfBandDensity, value);
+                                          dfBandDensity, value,
+                                          bAvoidNoDataSingleBand);
                 }
             }
 
@@ -6388,6 +6553,12 @@ template <class T> static void GWKNearestThread(void *pData)
             /*      Mark this pixel valid/opaque in the output. */
             /* --------------------------------------------------------------------
              */
+
+            if (!bAvoidNoDataSingleBand)
+            {
+                GWKAvoidNoDataMultiBand(poWK, iDstOffset);
+            }
+
             GWKOverlayDensity(poWK, iDstOffset, dfDensity);
 
             if (poWK->panDstValid != nullptr)
@@ -6763,6 +6934,10 @@ template <class T> static void GWKModeRealType(GWKJobStruct *psJob)
         poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
     const double dfErrorThreshold = CPLAtof(
         CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
+    const bool bAvoidNoDataSingleBand =
+        poWK->nBands == 1 ||
+        !CPLTestBool(CSLFetchNameValueDef(poWK->papszWarpOptions,
+                                          "UNIFIED_SRC_NODATA", "FALSE"));
 
     const int nXMargin =
         2 * std::max(1, static_cast<int>(std::ceil(1. / poWK->dfXScale)));
@@ -6904,12 +7079,18 @@ template <class T> static void GWKModeRealType(GWKJobStruct *psJob)
                 if (bHasFoundDensity)
                 {
                     GWKSetPixelValueRealT(poWK, iBand, iDstOffset,
-                                          dfBandDensity, nVal);
+                                          dfBandDensity, nVal,
+                                          bAvoidNoDataSingleBand);
                 }
             }
 
             if (!bHasFoundDensity)
                 continue;
+
+            if (!bAvoidNoDataSingleBand)
+            {
+                GWKAvoidNoDataMultiBand(poWK, iDstOffset);
+            }
 
             /* --------------------------------------------------------------------
              */
@@ -6967,6 +7148,10 @@ static void GWKModeComplexType(GWKJobStruct *psJob)
                   poWK->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT_PIPELINE",
                   "1.0"))
             : 0.0;
+    const bool bAvoidNoDataSingleBand =
+        poWK->nBands == 1 ||
+        !CPLTestBool(CSLFetchNameValueDef(poWK->papszWarpOptions,
+                                          "UNIFIED_SRC_NODATA", "FALSE"));
 
     double *padfRealVals = nullptr;
     double *padfImagVals = nullptr;
@@ -7174,12 +7359,18 @@ static void GWKModeComplexType(GWKJobStruct *psJob)
                 if (bHasFoundDensity)
                 {
                     GWKSetPixelValue(poWK, iBand, iDstOffset, dfBandDensity,
-                                     dfValueReal, dfValueImag);
+                                     dfValueReal, dfValueImag,
+                                     bAvoidNoDataSingleBand);
                 }
             }
 
             if (!bHasFoundDensity)
                 continue;
+
+            if (!bAvoidNoDataSingleBand)
+            {
+                GWKAvoidNoDataMultiBand(poWK, iDstOffset);
+            }
 
             /* --------------------------------------------------------------------
              */
@@ -7236,6 +7427,10 @@ static void GWKAverageOrModeThread(void *pData)
                   poWK->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT_PIPELINE",
                   "1.0"))
             : 0.0;
+    const bool bAvoidNoDataSingleBand =
+        poWK->nBands == 1 ||
+        !CPLTestBool(CSLFetchNameValueDef(poWK->papszWarpOptions,
+                                          "UNIFIED_SRC_NODATA", "FALSE"));
 
     const int nDstXSize = poWK->nDstXSize;
     const int nSrcXSize = poWK->nSrcXSize;
@@ -7552,7 +7747,12 @@ static void GWKAverageOrModeThread(void *pData)
                         GWKSetPixelValue(
                             poWK, iBand, iDstOffset, /* dfBandDensity = */ 1.0,
                             poWK->m_aadfExcludedValues[iExcludedValue][iBand],
-                            0);
+                            0, bAvoidNoDataSingleBand);
+                    }
+
+                    if (!bAvoidNoDataSingleBand)
+                    {
+                        GWKAvoidNoDataMultiBand(poWK, iDstOffset);
                     }
                 }
                 else if (dfTotalWeightRegular > 0)
@@ -7563,7 +7763,13 @@ static void GWKAverageOrModeThread(void *pData)
                     {
                         GWKSetPixelValue(poWK, iBand, iDstOffset,
                                          /* dfBandDensity = */ 1.0,
-                                         adfValueAveraged[iBand], 0);
+                                         adfValueAveraged[iBand], 0,
+                                         bAvoidNoDataSingleBand);
+                    }
+
+                    if (!bAvoidNoDataSingleBand)
+                    {
+                        GWKAvoidNoDataMultiBand(poWK, iDstOffset);
                     }
                 }
 
@@ -8009,12 +8215,18 @@ static void GWKAverageOrModeThread(void *pData)
                     // or fix gdalwarp crop_to_cutline to crop partially
                     // overlapping pixels.
                     GWKSetPixelValue(poWK, iBand, iDstOffset, dfBandDensity,
-                                     dfValueReal, dfValueImag);
+                                     dfValueReal, dfValueImag,
+                                     bAvoidNoDataSingleBand);
                 }
             }
 
             if (!bHasFoundDensity)
                 continue;
+
+            if (!bAvoidNoDataSingleBand)
+            {
+                GWKAvoidNoDataMultiBand(poWK, iDstOffset);
+            }
 
             /* --------------------------------------------------------------------
              */
@@ -8350,6 +8562,10 @@ static void GWKSumPreservingThread(void *pData)
         // for debug/testing purposes
         CPLTestBool(
             CPLGetConfigOption("GDAL_WARP_USE_AFFINE_OPTIMIZATION", "YES"));
+    const bool bAvoidNoDataSingleBand =
+        poWK->nBands == 1 ||
+        !CPLTestBool(CSLFetchNameValueDef(poWK->papszWarpOptions,
+                                          "UNIFIED_SRC_NODATA", "FALSE"));
 
     const int nDstXSize = poWK->nDstXSize;
     const int nSrcXSize = poWK->nSrcXSize;
@@ -8937,13 +9153,19 @@ static void GWKSumPreservingThread(void *pData)
                         bHasFoundDensity = true;
                         GWKSetPixelValue(poWK, iBand, iDstOffset, dfBandDensity,
                                          adfRealValue[iBand],
-                                         adfImagValue[iBand]);
+                                         adfImagValue[iBand],
+                                         bAvoidNoDataSingleBand);
                     }
                 }
             }
 
             if (!bHasFoundDensity)
                 continue;
+
+            if (!bAvoidNoDataSingleBand)
+            {
+                GWKAvoidNoDataMultiBand(poWK, iDstOffset);
+            }
 
             /* --------------------------------------------------------------------
              */
