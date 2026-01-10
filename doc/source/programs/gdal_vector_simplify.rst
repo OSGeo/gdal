@@ -34,9 +34,7 @@ happen. To perform simplification that preserves shared boundaries between geome
 
 This command can also be used as a step of :ref:`gdal_vector_pipeline`.
 
-.. only:: html
-
-   .. figure:: ../../images/programs/gdal_vector_simplify.svg
+.. figure:: ../../images/programs/gdal_vector_simplify.svg
 
    Line dataset before (left) and after (right) simplification with :program:`gdal vector simplify`.
 

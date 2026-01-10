@@ -86,6 +86,7 @@ extensions = [
     "doctestplus_gdal",
     "source_file",
     "sphinx.ext.napoleon",
+    "sphinxcontrib.cairosvgconverter",
     "sphinxcontrib.jquery",
     "sphinxcontrib_programoutput_gdal",
     "sphinxcontrib.spelling",

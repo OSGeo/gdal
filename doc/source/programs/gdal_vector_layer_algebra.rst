@@ -49,36 +49,28 @@ Program-Specific Options
         A union is a set of features, which represent areas that are in either of the operand layers.
         The operation is symmetric, and input and method layers can be interchanged.
 
-        .. only:: html
-
-           .. image:: ../../images/programs/gdal_vector_layer_algebra_union.svg
+        .. image:: ../../images/programs/gdal_vector_layer_algebra_union.svg
 
     * ``intersection``
 
         An intersection is a set of features, which represent the common areas of two layers.
         The operation is symmetric, and input and method layers can be interchanged.
 
-        .. only:: html
-
-           .. image:: ../../images/programs/gdal_vector_layer_algebra_intersection.svg
+        .. image:: ../../images/programs/gdal_vector_layer_algebra_intersection.svg
 
     * ``sym-difference``
 
         A symmetric difference is a set of features, which represent areas that are in operand layers but which do not intersect.
         The operation is symmetric, and input and method layers can be interchanged.
 
-        .. only:: html
-
-           .. image:: ../../images/programs/gdal_vector_layer_algebra_sym_difference.svg
+        .. image:: ../../images/programs/gdal_vector_layer_algebra_sym_difference.svg
 
     * ``identity``
 
         The identity method identifies features in the input layer with features in the method layer possibly splitting features into several features.
         By default the result layer has attributes from both operand layers.
 
-        .. only:: html
-
-           .. image:: ../../images/programs/gdal_vector_layer_algebra_identity.svg
+        .. image:: ../../images/programs/gdal_vector_layer_algebra_identity.svg
 
 
     * ``update``
@@ -86,18 +78,14 @@ Program-Specific Options
         The update method creates a layer, which add features into the input layer from the method layer possibly cutting features in the input layer.
         By default the result layer has attributes only from the input layer.
 
-        .. only:: html
-
-           .. image:: ../../images/programs/gdal_vector_layer_algebra_update.svg
+        .. image:: ../../images/programs/gdal_vector_layer_algebra_update.svg
 
     * ``clip``
 
         The clip method creates a layer, which has features from the input layer clipped to the areas of the features in the method layer.
         By default the result layer has attributes of the input layer.
 
-        .. only:: html
-
-           .. image:: ../../images/programs/gdal_vector_layer_algebra_clip.svg
+        .. image:: ../../images/programs/gdal_vector_layer_algebra_clip.svg
 
 
     * ``erase``
@@ -105,9 +93,7 @@ Program-Specific Options
         The erase method creates a layer, which has features from the input layer whose areas are erased by the features in the method layer.
         By default the result layer has attributes of the input layer.
 
-        .. only:: html
-
-           .. image:: ../../images/programs/gdal_vector_layer_algebra_erase.svg
+        .. image:: ../../images/programs/gdal_vector_layer_algebra_erase.svg
 
 .. option:: --method-layer <METHOD-LAYER>
 

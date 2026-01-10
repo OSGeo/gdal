@@ -32,11 +32,9 @@ The following checks are performed, depending on the input geometry type:
 
 Validity/simplicity checking is performed by the GEOS library and should be consistent with results of software such as PostGIS, QGIS, and shapely that also use that library. GEOS does not consider repeated points to be a cause of invalidity or non-simplicity.
 
-.. only:: html
+.. figure:: ../../images/programs/gdal_vector_check_geometry.svg
 
-   .. figure:: ../../images/programs/gdal_vector_check_geometry.svg
-
-      Error locations reported by :program:`gdal vector check-geometry` for Polygon, MultiPolyon, and LineString inputs.
+   Error locations reported by :program:`gdal vector check-geometry` for Polygon, MultiPolyon, and LineString inputs.
 
 .. warning::
 
