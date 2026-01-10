@@ -4,7 +4,6 @@
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
 set -e
-set -x
 
 if test "${SCRIPT_DIR}" = ""; then
     echo "SCRIPT_DIR not defined"
