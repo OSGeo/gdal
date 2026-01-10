@@ -2341,17 +2341,17 @@ GDALDataset *GRIBDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
         // does not return the offset to the real start of the message
         GByte abyHeader[1024 + 1];
         VSIFSeekL(poShared->m_fp, psInv->start, SEEK_SET);
-        size_t nRead =
-            VSIFReadL(abyHeader, 1, sizeof(abyHeader) - 1, poShared->m_fp);
+        const int nRead = static_cast<int>(
+            VSIFReadL(abyHeader, 1, sizeof(abyHeader) - 1, poShared->m_fp));
         abyHeader[nRead] = 0;
         // Find the real offset of the fist message
-        const char *pasHeader = reinterpret_cast<char *>(abyHeader);
+        const char *pszHeader = reinterpret_cast<char *>(abyHeader);
         int nOffsetFirstMessage = 0;
-        for (int j = 0; j < poOpenInfo->nHeaderBytes - 3; j++)
+        for (int j = 0; j + 4 <= nRead; j++)
         {
-            if (STARTS_WITH_CI(pasHeader + j, "GRIB")
+            if (STARTS_WITH_CI(pszHeader + j, "GRIB")
 #ifdef ENABLE_TDLP
-                || STARTS_WITH_CI(pasHeader + j, "TDLP")
+                || STARTS_WITH_CI(pszHeader + j, "TDLP")
 #endif
             )
             {
