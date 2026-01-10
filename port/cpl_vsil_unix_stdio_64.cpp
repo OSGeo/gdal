@@ -1,13 +1,12 @@
 /**********************************************************************
  *
  * Project:  CPL - Common Portability Library
- * Purpose:  Implement VSI large file api for Unix platforms with fseek64()
- *           and ftell64() such as IRIX.
+ * Purpose:  Implement VSI large file api for Unix platforms
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  **********************************************************************
  * Copyright (c) 2001, Frank Warmerdam
- * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2010-2026, Even Rouault <even dot rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************
@@ -24,6 +23,7 @@
 #if !defined(_WIN32)
 
 // #define VSI_COUNT_BYTES_READ
+// #define VSI_DEBUG
 
 // Some unusual filesystems do not work if _FORTIFY_SOURCE in GCC or
 // clang is used within this source file, especially if techniques
@@ -72,6 +72,8 @@
 #include <limits.h>
 #endif
 
+#include <algorithm>
+#include <array>
 #include <limits>
 #include <new>
 
@@ -206,21 +208,44 @@ class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
 
 class VSIUnixStdioHandle final : public VSIVirtualHandle
 {
+  public:
+    enum class AccessMode : unsigned char
+    {
+        NORMAL,
+        READ_ONLY,
+        WRITE_ONLY,
+        // In a+ mode, disable any optimization since the behavior of the file
+        // pointer on Mac and other BSD system is to have a seek() to the end of
+        // file and thus a call to our Seek(0, SEEK_SET) before a read will be a
+        // no-op.
+        APPEND_READ_WRITE,
+    };
+
+  private:
     friend class VSIUnixStdioFilesystemHandler;
     CPL_DISALLOW_COPY_ASSIGN(VSIUnixStdioHandle)
 
     int fd = -1;
-    vsi_l_offset m_nOffset = 0;
-    bool bReadOnly = true;
-    bool bLastOpWrite = false;
-    bool bLastOpRead = false;
+    vsi_l_offset m_nFilePos = 0;  // Logical/user position
+    static constexpr size_t BUFFER_SIZE = 4096;
+    std::array<GByte, BUFFER_SIZE> m_abyBuffer{};
+    // For read operations, current position within m_abyBuffer
+    // This implies that m_nFilePos - m_nBufferCurPos + m_nBufferSize is the
+    //current real/kernel file position.
+    size_t m_nBufferCurPos = 0;  // Current position within m_abyBuffer
+    // Number of valid bytes in m_abyBuffer (both for read and write buffering)
+    size_t m_nBufferSize = 0;
+    bool m_bBufferDirty = false;
+    const AccessMode eAccessMode;
+    enum class Operation : unsigned char
+    {
+        NONE,
+        READ,
+        WRITE
+    };
+    Operation eLastOp = Operation::NONE;
     bool bAtEOF = false;
     bool bError = false;
-    // In a+ mode, disable any optimization since the behavior of the file
-    // pointer on Mac and other BSD system is to have a seek() to the end of
-    // file and thus a call to our Seek(0, SEEK_SET) before a read will be a
-    // no-op.
-    bool bModeAppendReadWrite = false;
 #ifdef VSI_COUNT_BYTES_READ
     vsi_l_offset nTotalBytesRead = 0;
     VSIUnixStdioFilesystemHandler *poFS = nullptr;
@@ -236,7 +261,7 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
 
   public:
     VSIUnixStdioHandle(VSIUnixStdioFilesystemHandler *poFSIn, int fdIn,
-                       bool bReadOnlyIn, bool bModeAppendReadWriteIn);
+                       AccessMode eAccessModeIn);
     ~VSIUnixStdioHandle() override;
 
     int Seek(vsi_l_offset nOffsetIn, int nWhence) override;
@@ -275,9 +300,8 @@ VSIUnixStdioHandle::VSIUnixStdioHandle(
     CPL_UNUSED
 #endif
         VSIUnixStdioFilesystemHandler *poFSIn,
-    int fdIn, bool bReadOnlyIn, bool bModeAppendReadWriteIn)
-    : fd(fdIn), bReadOnly(bReadOnlyIn),
-      bModeAppendReadWrite(bModeAppendReadWriteIn)
+    int fdIn, AccessMode eAccessModeIn)
+    : fd(fdIn), eAccessMode(eAccessModeIn)
 #ifdef VSI_COUNT_BYTES_READ
       ,
       poFS(poFSIn)
@@ -310,10 +334,11 @@ int VSIUnixStdioHandle::Close()
     poFS->AddToTotal(nTotalBytesRead);
 #endif
 
-    int ret = 0;
+    int ret = VSIUnixStdioHandle::Flush();
 
 #ifdef __linux
-    if (!m_bCancelCreation && !m_osFilename.empty() && m_bUnlinkedFile)
+    if (ret == 0 && !m_bCancelCreation && !m_osFilename.empty() &&
+        m_bUnlinkedFile)
     {
         ret = fsync(fd);
         if (ret == 0)
@@ -381,32 +406,13 @@ void VSIUnixStdioHandle::CancelCreation()
 int VSIUnixStdioHandle::Seek(vsi_l_offset nOffsetIn, int nWhence)
 {
     bAtEOF = false;
+    bError = false;
 
     // Seeks that do nothing are still surprisingly expensive with MSVCRT.
     // try and short circuit if possible.
-    if (!bModeAppendReadWrite && nWhence == SEEK_SET && nOffsetIn == m_nOffset)
+    if (eAccessMode != AccessMode::APPEND_READ_WRITE && nWhence == SEEK_SET &&
+        nOffsetIn == m_nFilePos)
         return 0;
-
-    // On a read-only file, we can avoid a lseek() system call to be issued
-    // if the next position to seek to is within the buffered page.
-    if (bReadOnly && nWhence == SEEK_SET)
-    {
-        const int l_PAGE_SIZE = 4096;
-        if (nOffsetIn > m_nOffset && nOffsetIn < l_PAGE_SIZE + m_nOffset)
-        {
-            const int nDiff = static_cast<int>(nOffsetIn - m_nOffset);
-            // Do not zero-initialize the buffer. We don't read from it
-            GByte abyTemp[l_PAGE_SIZE];
-            const ssize_t nRead = read(fd, abyTemp, nDiff);
-            if (nRead == nDiff)
-            {
-                m_nOffset = nOffsetIn;
-                bLastOpWrite = false;
-                bLastOpRead = false;
-                return 0;
-            }
-        }
-    }
 
 #if !defined(UNIX_STDIO_64) && SIZEOF_UNSIGNED_LONG == 4
     if (nOffsetIn > static_cast<vsi_l_offset>(std::numeric_limits<long>::max()))
@@ -418,46 +424,83 @@ int VSIUnixStdioHandle::Seek(vsi_l_offset nOffsetIn, int nWhence)
     }
 #endif
 
-    const vsi_l_offset nOffset = VSI_LSEEK64(fd, nOffsetIn, nWhence);
-    const int nError = errno;
+    if (eLastOp == Operation::WRITE)
+    {
+        eLastOp = Operation::NONE;
 
-#ifdef VSI_DEBUG
+        if (m_bBufferDirty && Flush() < 0)
+            return -1;
 
-    if (nWhence == SEEK_SET)
-    {
-        VSIDebug3("VSIUnixStdioHandle::Seek(%d," CPL_FRMT_GUIB
-                  ",SEEK_SET) = %" PRId64,
-                  fd, nOffsetIn, static_cast<int64_t>(nOffset));
+        const auto nNewPos = VSI_LSEEK64(fd, nOffsetIn, nWhence);
+        if (nNewPos < 0)
+        {
+            bError = true;
+            return -1;
+        }
+
+        m_nFilePos = nNewPos;
+        m_nBufferCurPos = 0;
+        m_nBufferSize = 0;
     }
-    else if (nWhence == SEEK_END)
-    {
-        VSIDebug3("VSIUnixStdioHandle::Seek(%d," CPL_FRMT_GUIB
-                  ",SEEK_END) = %" PRId64,
-                  fd, nOffsetIn, static_cast<int64_t>(nOffset));
-    }
-    else if (nWhence == SEEK_CUR)
-    {
-        VSIDebug3("VSIUnixStdioHandle::Seek(%d," CPL_FRMT_GUIB
-                  ",SEEK_CUR) = %" PRId64,
-                  fd, nOffsetIn, static_cast<int64_t>(nOffset));
-    }
+
     else
     {
-        VSIDebug4("VSIUnixStdioHandle::Seek(%d," CPL_FRMT_GUIB
-                  ",%d-Unknown) = %" PRId64,
-                  fd, nOffsetIn, nWhence, static_cast<int64_t>(nOffset));
+        eLastOp = Operation::READ;
+
+        vsi_l_offset nTargetPos;
+
+        // Compute absolute target position
+        switch (nWhence)
+        {
+            case SEEK_SET:
+                nTargetPos = nOffsetIn;
+                break;
+            case SEEK_CUR:
+                nTargetPos = m_nFilePos + nOffsetIn;
+                break;
+            case SEEK_END:
+            {
+                const auto nNewPos = VSI_LSEEK64(fd, nOffsetIn, SEEK_END);
+                if (nNewPos < 0)
+                {
+                    bError = true;
+                    return -1;
+                }
+                nTargetPos = nNewPos;
+                break;
+            }
+            default:
+                return -1;
+        }
+
+        // Compute absolute position of the current buffer
+        const auto nBufStartOffset = m_nFilePos - m_nBufferCurPos;
+        const auto nBufEndOffset = nBufStartOffset + m_nBufferSize;
+
+        if (nTargetPos >= nBufStartOffset && nTargetPos < nBufEndOffset)
+        {
+            // Seek inside current buffer - adjust buffer pos only
+            m_nBufferCurPos = static_cast<size_t>(nTargetPos - nBufStartOffset);
+            m_nFilePos = nTargetPos;
+        }
+        else
+        {
+            // Outside buffer, do real seek and invalidate buffer
+            const auto nNewPos = VSI_LSEEK64(fd, nTargetPos, SEEK_SET);
+            if (nNewPos < 0)
+            {
+                bError = true;
+                return -1;
+            }
+
+            m_nFilePos = nNewPos;
+            m_nBufferCurPos = 0;
+            m_nBufferSize = 0;
+        }
     }
 
-#endif
-
-    errno = nError;
-
-    if (nOffset == static_cast<vsi_l_offset>(-1))
-        return -1;
-
-    m_nOffset = nOffset;
-    bLastOpWrite = false;
-    bLastOpRead = false;
+    VSIDebug4("VSIUnixStdioHandle::Seek(%d," CPL_FRMT_GUIB ", %d) = %" PRIu64,
+              fd, nOffsetIn, nWhence, static_cast<uint64_t>(m_nFilePos));
 
     return 0;
 }
@@ -469,7 +512,7 @@ int VSIUnixStdioHandle::Seek(vsi_l_offset nOffsetIn, int nWhence)
 vsi_l_offset VSIUnixStdioHandle::Tell()
 
 {
-    return m_nOffset;
+    return m_nFilePos;
 }
 
 /************************************************************************/
@@ -481,6 +524,34 @@ int VSIUnixStdioHandle::Flush()
 {
     VSIDebug1("VSIUnixStdioHandle::Flush(%d)", fd);
 
+    if (m_bBufferDirty)
+    {
+        m_bBufferDirty = false;
+
+        // Sync kernel offset to our logical position before writing
+        if (VSI_LSEEK64(fd, m_nFilePos - m_nBufferSize, SEEK_SET) < 0)
+        {
+            return EOF;
+        }
+
+        size_t nOff = 0;
+        while (m_nBufferSize > 0)
+        {
+            errno = 0;
+            const auto nWritten =
+                write(fd, m_abyBuffer.data() + nOff, m_nBufferSize);
+            if (nWritten < 0)
+            {
+                if (errno == EINTR)
+                    continue;
+                return EOF;
+            }
+            CPLAssert(static_cast<size_t>(nWritten) <= m_nBufferSize);
+            nOff += nWritten;
+            m_nBufferSize -= nWritten;
+        }
+    }
+
     return 0;
 }
 
@@ -491,8 +562,14 @@ int VSIUnixStdioHandle::Flush()
 size_t VSIUnixStdioHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 
 {
-    if (nSize == 0 || nCount == 0)
+    if (nSize == 0 || nCount == 0 || bAtEOF)
         return 0;
+    if (eAccessMode == AccessMode::WRITE_ONLY)
+    {
+        bError = true;
+        errno = EINVAL;
+        return 0;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      If a fwrite() is followed by an fread(), the POSIX rules are    */
@@ -501,59 +578,99 @@ size_t VSIUnixStdioHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
     /*      keep careful track of what happened last to know if we          */
     /*      skipped a flushing seek that we may need to do now.             */
     /* -------------------------------------------------------------------- */
-    if (!bModeAppendReadWrite && bLastOpWrite)
+    if (eLastOp == Operation::WRITE)
     {
-        if (VSI_LSEEK64(fd, m_nOffset, SEEK_SET) != 0)
+        if (m_bBufferDirty && Flush() < 0)
         {
-            VSIDebug1("Write calling seek failed. %d", m_nOffset);
+            bError = true;
+            return -1;
         }
+        if (VSI_LSEEK64(fd, m_nFilePos, SEEK_SET) < 0)
+        {
+            bError = true;
+            return -1;
+        }
+        m_nBufferCurPos = 0;
+        m_nBufferSize = 0;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Perform the read.                                               */
-    /* -------------------------------------------------------------------- */
-    size_t nRead = 0;
-    size_t nRemaining = nSize * nCount;
-    while (true)
+    const size_t nTotal = nSize * nCount;
+    size_t nBytesRead = 0;
+    GByte *const pabyDest = static_cast<GByte *>(pBuffer);
+
+    while (nBytesRead < nTotal)
     {
-        errno = 0;
-        const ssize_t nResult =
-            read(fd, static_cast<GByte *>(pBuffer) + nRead, nRemaining);
-        if (nResult < 0)
+        size_t nAvailInBuffer = m_nBufferSize - m_nBufferCurPos;
+
+        // If buffer is empty
+        if (nAvailInBuffer == 0)
         {
-            if (errno == EINTR)
-                continue;
-            bError = true;
-            return nRead / nSize;
+            size_t nRemaining = nTotal - nBytesRead;
+            if (nRemaining >= BUFFER_SIZE)
+            {
+                // Bypass buffer if large request
+                errno = 0;
+                const ssize_t nBytesReadThisTime =
+                    read(fd, pabyDest + nBytesRead, nRemaining);
+                if (nBytesReadThisTime <= 0)
+                {
+                    if (nBytesReadThisTime == 0)
+                        bAtEOF = true;
+                    else if (errno == EINTR)
+                        continue;
+                    else
+                        bError = true;
+                    break;
+                }
+                m_nFilePos += nBytesReadThisTime;
+                nBytesRead += nBytesReadThisTime;
+            }
+            else
+            {
+                // Small request: Refill internal buffer
+                errno = 0;
+                const ssize_t nBytesReadThisTime =
+                    read(fd, m_abyBuffer.data(), BUFFER_SIZE);
+                if (nBytesReadThisTime <= 0)
+                {
+                    if (nBytesReadThisTime == 0)
+                        bAtEOF = true;
+                    else if (errno == EINTR)
+                        continue;
+                    else
+                        bError = true;
+                    break;
+                }
+                m_nBufferCurPos = 0;
+                m_nBufferSize = nBytesReadThisTime;
+                nAvailInBuffer = nBytesReadThisTime;
+            }
         }
-        m_nOffset += nResult;
-        nRead += nResult;
-        nRemaining -= nResult;
-        if (nRemaining == 0 || nResult == 0)
-            break;
+
+        // Copy from buffer to user
+        const size_t nToCopy = std::min(nTotal - nBytesRead, nAvailInBuffer);
+        memcpy(pabyDest + nBytesRead, m_abyBuffer.data() + m_nBufferCurPos,
+               nToCopy);
+        nBytesRead += nToCopy;
+        m_nBufferCurPos += nToCopy;
+        m_nFilePos += nToCopy;
     }
 
 #ifdef VSI_DEBUG
     const int nError = errno;
     VSIDebug4("VSIUnixStdioHandle::Read(%d,%ld,%ld) = %" PRId64, fd,
               static_cast<long>(nSize), static_cast<long>(nCount),
-              static_cast<int64_t>(nRead));
+              static_cast<int64_t>(nBytesRead / nSize));
     errno = nError;
 #endif
 
+    eLastOp = Operation::READ;
+
 #ifdef VSI_COUNT_BYTES_READ
-    nTotalBytesRead += nRead;
+    nTotalBytesRead += nBytesRead;
 #endif
 
-    bLastOpWrite = false;
-    bLastOpRead = true;
-
-    if (nRead != nSize * nCount)
-    {
-        bAtEOF = true;
-    }
-
-    return nRead / nSize;
+    return nBytesRead / nSize;
 }
 
 /************************************************************************/
@@ -566,6 +683,12 @@ size_t VSIUnixStdioHandle::Write(const void *pBuffer, size_t nSize,
 {
     if (nSize == 0 || nCount == 0)
         return 0;
+    if (eAccessMode == AccessMode::READ_ONLY)
+    {
+        bError = true;
+        errno = EINVAL;
+        return 0;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      If a fwrite() is followed by an fread(), the POSIX rules are    */
@@ -574,55 +697,68 @@ size_t VSIUnixStdioHandle::Write(const void *pBuffer, size_t nSize,
     /*      keep careful track of what happened last to know if we          */
     /*      skipped a flushing seek that we may need to do now.             */
     /* -------------------------------------------------------------------- */
-    if (!bModeAppendReadWrite && bLastOpRead)
+    if (eLastOp == Operation::READ)
     {
-        if (VSI_LSEEK64(fd, m_nOffset, SEEK_SET) != 0)
+        if (VSI_LSEEK64(fd, m_nFilePos, SEEK_SET) < 0)
         {
-            VSIDebug1("Write calling seek failed. %d", m_nOffset);
-        }
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Perform the write.                                              */
-    /* -------------------------------------------------------------------- */
-    size_t nWritten = 0;
-    size_t nRemaining = nSize * nCount;
-    while (true)
-    {
-        errno = 0;
-        const ssize_t nResult = write(
-            fd, static_cast<const GByte *>(pBuffer) + nWritten, nRemaining);
-        if (nResult < 0)
-        {
-            if (errno == EINTR)
-                continue;
             bError = true;
-            return nWritten / nSize;
+            return -1;
         }
-        m_nOffset += nResult;
-        nWritten += nResult;
-        nRemaining -= nResult;
-        if (nRemaining == 0 || nResult == 0)
-            break;
+        m_nBufferCurPos = 0;
+        m_nBufferSize = 0;
     }
 
-#if VSI_DEBUG
-    const int nError = errno;
+    const size_t nTotal = nSize * nCount;
+    size_t nBytesWritten = 0;
+    const GByte *const pabySrc = static_cast<const GByte *>(pBuffer);
+    while (nBytesWritten < nTotal)
+    {
+        const size_t nRemaining = nTotal - nBytesWritten;
 
+        // Bypass buffer if request > BUFFER_SIZE
+        if (m_nBufferSize == 0 && nRemaining >= BUFFER_SIZE)
+        {
+            const auto nWritten =
+                write(fd, pabySrc + nBytesWritten, nRemaining);
+            if (nWritten < 0)
+            {
+                bError = true;
+                break;
+            }
+            CPLAssert(static_cast<size_t>(nWritten) <= nRemaining);
+            m_nFilePos += nWritten;
+            nBytesWritten += nWritten;
+            continue;
+        }
+
+        // Small request: Fill internal buffer
+        const size_t nFreeSpaceInBuffer = BUFFER_SIZE - m_nBufferSize;
+        const size_t nToCopy = std::min(nRemaining, nFreeSpaceInBuffer);
+        memcpy(m_abyBuffer.data() + m_nBufferSize, pabySrc + nBytesWritten,
+               nToCopy);
+
+        nBytesWritten += nToCopy;
+        m_nBufferSize += nToCopy;
+        m_nFilePos += nToCopy;
+        m_bBufferDirty = true;
+
+        if (m_nBufferSize == BUFFER_SIZE && Flush() < 0)
+        {
+            break;
+        }
+    }
+
+#ifdef VSI_DEBUG
+    const int nError = errno;
     VSIDebug4("VSIUnixStdioHandle::Write(%d,%ld,%ld) = %" PRId64, fd,
               static_cast<long>(nSize), static_cast<long>(nCount),
-              static_cast<int64_t>(nWritten));
-
+              static_cast<int64_t>(nBytesWritten / nSize));
     errno = nError;
 #endif
 
-    /* -------------------------------------------------------------------- */
-    /*      Update current offset.                                          */
-    /* -------------------------------------------------------------------- */
-    bLastOpWrite = true;
-    bLastOpRead = false;
+    eLastOp = Operation::WRITE;
 
-    return nWritten / nSize;
+    return nBytesWritten / nSize;
 }
 
 /************************************************************************/
@@ -802,18 +938,26 @@ VSIUnixStdioFilesystemHandler::Open(const char *pszFilename,
 {
     int flags = O_RDONLY;
     int fd;
+    using AccessMode = VSIUnixStdioHandle::AccessMode;
+    AccessMode eAccessMode = AccessMode::NORMAL;
     if (strchr(pszAccess, 'w'))
     {
         if (strchr(pszAccess, '+'))
             flags = O_CREAT | O_TRUNC | O_RDWR;
         else
+        {
+            eAccessMode = AccessMode::WRITE_ONLY;
             flags = O_CREAT | O_TRUNC | O_WRONLY;
+        }
         fd = VSI_OPEN64(pszFilename, flags, 0664);
     }
     else if (strchr(pszAccess, 'a'))
     {
         if (strchr(pszAccess, '+'))
+        {
+            eAccessMode = AccessMode::APPEND_READ_WRITE;
             flags = O_CREAT | O_RDWR;
+        }
         else
             flags = O_CREAT | O_WRONLY;
         fd = VSI_OPEN64(pszFilename, flags, 0664);
@@ -822,6 +966,8 @@ VSIUnixStdioFilesystemHandler::Open(const char *pszFilename,
     {
         if (strchr(pszAccess, '+'))
             flags = O_RDWR;
+        else
+            eAccessMode = AccessMode::READ_ONLY;
         fd = VSI_OPEN64(pszFilename, flags);
     }
     const int nError = errno;
@@ -839,12 +985,7 @@ VSIUnixStdioFilesystemHandler::Open(const char *pszFilename,
         return nullptr;
     }
 
-    const bool bReadOnly =
-        strcmp(pszAccess, "rb") == 0 || strcmp(pszAccess, "r") == 0;
-    const bool bModeAppendReadWrite =
-        strcmp(pszAccess, "a+b") == 0 || strcmp(pszAccess, "a+") == 0;
-    auto poHandle = std::make_unique<VSIUnixStdioHandle>(this, fd, bReadOnly,
-                                                         bModeAppendReadWrite);
+    auto poHandle = std::make_unique<VSIUnixStdioHandle>(this, fd, eAccessMode);
     poHandle->m_osFilename = pszFilename;
 
     errno = nError;
@@ -856,7 +997,8 @@ VSIUnixStdioFilesystemHandler::Open(const char *pszFilename,
     /*      If VSI_CACHE is set we want to use a cached reader instead      */
     /*      of more direct io on the underlying file.                       */
     /* -------------------------------------------------------------------- */
-    if (bReadOnly && CPLTestBool(CPLGetConfigOption("VSI_CACHE", "FALSE")))
+    if (eAccessMode == AccessMode::READ_ONLY &&
+        CPLTestBool(CPLGetConfigOption("VSI_CACHE", "FALSE")))
     {
         return VSIVirtualHandleUniquePtr(
             VSICreateCachedFile(poHandle.release()));
@@ -899,7 +1041,7 @@ VSIUnixStdioFilesystemHandler::CreateOnlyVisibleAtCloseTime(
     }
 
     auto poHandle = std::make_unique<VSIUnixStdioHandle>(
-        this, fd, /* bReadOnly = */ false, /* bModeAppendReadWrite = */ false);
+        this, fd, VSIUnixStdioHandle::AccessMode::NORMAL);
     poHandle->m_osFilename = pszFilename;
     poHandle->m_bUnlinkedFile = true;
     return VSIVirtualHandleUniquePtr(poHandle.release());
@@ -915,7 +1057,7 @@ VSIUnixStdioFilesystemHandler::CreateOnlyVisibleAtCloseTime(
             pszFilename, bEmulationAllowed, papszOptions);
     }
     auto poHandle = std::make_unique<VSIUnixStdioHandle>(
-        this, fd, /* bReadOnly = */ false, /* bModeAppendReadWrite = */ false);
+        this, fd, VSIUnixStdioHandle::AccessMode::NORMAL);
     poHandle->m_osTmpFilename = std::move(osTmpFilename);
     poHandle->m_osFilename = pszFilename;
     return VSIVirtualHandleUniquePtr(poHandle.release());
