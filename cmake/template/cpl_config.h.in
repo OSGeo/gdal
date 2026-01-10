@@ -145,17 +145,14 @@
 /* Define to 1 if you have fseek64, ftell64 */
 #cmakedefine UNIX_STDIO_64 1
 
-/* Define to name of 64bit fopen function */
-#cmakedefine VSI_FOPEN64 @VSI_FOPEN64@
+/* Define to name of 64bit open function */
+#cmakedefine VSI_OPEN64 @VSI_OPEN64@
 
 /* Define to name of 64bit ftruncate function */
 #cmakedefine VSI_FTRUNCATE64 @VSI_FTRUNCATE64@
 
-/* Define to name of 64bit fseek func */
-#cmakedefine VSI_FSEEK64 @VSI_FSEEK64@
-
-/* Define to name of 64bit ftell func */
-#cmakedefine VSI_FTELL64 @VSI_FTELL64@
+/* Define to name of 64bit lseek func */
+#cmakedefine VSI_LSEEK64 @VSI_LSEEK64@
 
 /* Define to name of 64bit stat function */
 #cmakedefine VSI_STAT64 @VSI_STAT64@
