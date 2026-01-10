@@ -94,6 +94,7 @@ curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.t
 
     ninja
     DESTDIR="/build" ninja install
+    rm /build${PROJ_INSTALL_PREFIX}/lib/pkgconfig/proj.pc
 
     cd ..
 
