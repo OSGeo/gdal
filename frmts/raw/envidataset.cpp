@@ -432,21 +432,20 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
     for (int i = 0; i < count; i++)
     {
         // Split the entry into two parts at the = character.
-        char *pszEntry = papszENVIMetadata[i];
-        char **papszTokens = CSLTokenizeString2(
-            pszEntry, "=", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+        const char *pszEntry = papszENVIMetadata[i];
+        const CPLStringList aosTokens(CSLTokenizeString2(
+            pszEntry, "=", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
 
-        if (CSLCount(papszTokens) != 2)
+        if (aosTokens.size() != 2)
         {
             CPLDebug("ENVI",
                      "Line of header file could not be split at = into "
                      "two elements: %s",
                      papszENVIMetadata[i]);
-            CSLDestroy(papszTokens);
             continue;
         }
         // Replace _'s in the string with spaces
-        std::string poKey(papszTokens[0]);
+        std::string poKey(aosTokens[0]);
         std::replace(poKey.begin(), poKey.end(), '_', ' ');
 
         // Don't write it out if it is one of the bits of metadata that is
@@ -460,11 +459,9 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
             poKey == "data ignore value" || poKey == "data offset values" ||
             poKey == "data gain values" || poKey == "coordinate system string")
         {
-            CSLDestroy(papszTokens);
             continue;
         }
-        bOK &= VSIFPrintfL(fp, "%s = %s\n", poKey.c_str(), papszTokens[1]) >= 0;
-        CSLDestroy(papszTokens);
+        bOK &= VSIFPrintfL(fp, "%s = %s\n", poKey.c_str(), aosTokens[1]) >= 0;
     }
 
     if (!bOK)
@@ -914,107 +911,75 @@ void ENVIDataset::WriteProjectionInfo()
 /************************************************************************/
 
 bool ENVIDataset::ParseRpcCoeffsMetaDataString(const char *psName,
-                                               char **papszVal, int &idx)
+                                               CPLStringList &aosVal)
 {
     // Separate one string with 20 coefficients into an array of 20 strings.
     const char *psz20Vals = GetMetadataItem(psName, "RPC");
     if (!psz20Vals)
         return false;
 
-    char **papszArr = CSLTokenizeString2(psz20Vals, " ", 0);
-    if (!papszArr)
-        return false;
-
+    const CPLStringList aosArr(CSLTokenizeString2(psz20Vals, " ", 0));
     int x = 0;
-    while ((x < 20) && (papszArr[x] != nullptr))
+    while ((x < 20) && (x < aosArr.size()))
     {
-        papszVal[idx++] = CPLStrdup(papszArr[x]);
+        aosVal.push_back(aosArr[x]);
         x++;
     }
 
-    CSLDestroy(papszArr);
-
     return x == 20;
-}
-
-static char *CPLStrdupIfNotNull(const char *pszString)
-{
-    if (!pszString)
-        return nullptr;
-
-    return CPLStrdup(pszString);
 }
 
 /************************************************************************/
 /*                          WriteRpcInfo()                              */
 /************************************************************************/
 
-// TODO: This whole function needs to be cleaned up.
 bool ENVIDataset::WriteRpcInfo()
 {
     // Write out 90 rpc coeffs into the envi header plus 3 envi specific rpc
     // values returns 0 if the coeffs are not present or not valid.
-    int idx = 0;
-    // TODO(schwehr): Make 93 a constant.
-    char *papszVal[93] = {nullptr};
+    CPLStringList aosVal;
 
-    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LINE_OFF", "RPC"));
-    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("SAMP_OFF", "RPC"));
-    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LAT_OFF", "RPC"));
-    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LONG_OFF", "RPC"));
-    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("HEIGHT_OFF", "RPC"));
-    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LINE_SCALE", "RPC"));
-    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("SAMP_SCALE", "RPC"));
-    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LAT_SCALE", "RPC"));
-    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LONG_SCALE", "RPC"));
-    papszVal[idx++] =
-        CPLStrdupIfNotNull(GetMetadataItem("HEIGHT_SCALE", "RPC"));
-
-    bool bRet = false;
-
-    for (int x = 0; x < 10; x++)  // If we do not have 10 values we return 0.
+    for (const char *pszItem : {"LINE_OFF", "SAMP_OFF", "LAT_OFF", "LONG_OFF",
+                                "HEIGHT_OFF", "LINE_SCALE", "SAMP_SCALE",
+                                "LAT_SCALE", "LONG_SCALE", "HEIGHT_SCALE"})
     {
-        if (!papszVal[x])
-            goto end;
+        const char *pszValue = GetMetadataItem(pszItem, "RPC");
+        if (!pszValue)
+            return false;
+        aosVal.push_back(pszValue);
     }
 
-    if (!ParseRpcCoeffsMetaDataString("LINE_NUM_COEFF", papszVal, idx))
-        goto end;
-
-    if (!ParseRpcCoeffsMetaDataString("LINE_DEN_COEFF", papszVal, idx))
-        goto end;
-
-    if (!ParseRpcCoeffsMetaDataString("SAMP_NUM_COEFF", papszVal, idx))
-        goto end;
-
-    if (!ParseRpcCoeffsMetaDataString("SAMP_DEN_COEFF", papszVal, idx))
-        goto end;
-
-    papszVal[idx++] =
-        CPLStrdupIfNotNull(GetMetadataItem("TILE_ROW_OFFSET", "RPC"));
-    papszVal[idx++] =
-        CPLStrdupIfNotNull(GetMetadataItem("TILE_COL_OFFSET", "RPC"));
-    papszVal[idx++] =
-        CPLStrdupIfNotNull(GetMetadataItem("ENVI_RPC_EMULATION", "RPC"));
-    CPLAssert(idx == 93);
-    for (int x = 90; x < 93; x++)
+    if (!ParseRpcCoeffsMetaDataString("LINE_NUM_COEFF", aosVal) ||
+        !ParseRpcCoeffsMetaDataString("LINE_DEN_COEFF", aosVal) ||
+        !ParseRpcCoeffsMetaDataString("SAMP_NUM_COEFF", aosVal) ||
+        !ParseRpcCoeffsMetaDataString("SAMP_DEN_COEFF", aosVal))
     {
-        if (!papszVal[x])
-            goto end;
+        return false;
     }
+
+    for (const char *pszItem :
+         {"TILE_ROW_OFFSET", "TILE_COL_OFFSET", "ENVI_RPC_EMULATION"})
+    {
+        const char *pszValue = GetMetadataItem(pszItem, "RPC");
+        if (!pszValue)
+            return false;
+        aosVal.push_back(pszValue);
+    }
+
+    CPLAssert(aosVal.size() == 93);
 
     // All the needed 93 values are present so write the rpcs into the envi
     // header.
-    bRet = true;
+    bool bRet = true;
     {
         int x = 1;
         bRet &= VSIFPrintfL(fp, "rpc info = {\n") >= 0;
         for (int iR = 0; iR < 93; iR++)
         {
-            if (papszVal[iR][0] == '-')
-                bRet &= VSIFPrintfL(fp, " %s", papszVal[iR]) >= 0;
+            if (aosVal[iR][0] == '-')
+                bRet &= VSIFPrintfL(fp, " %s", aosVal[iR]) >= 0;
             else
-                bRet &= VSIFPrintfL(fp, "  %s", papszVal[iR]) >= 0;
+                bRet &= VSIFPrintfL(fp, "  %s", aosVal[iR]) >= 0;
 
             if (iR < 92)
                 bRet &= VSIFPrintfL(fp, ",") >= 0;
@@ -1028,11 +993,6 @@ bool ENVIDataset::WriteRpcInfo()
         }
     }
     bRet &= VSIFPrintfL(fp, "}\n") >= 0;
-
-    // TODO(schwehr): Rewrite without goto.
-end:
-    for (int i = 0; i < idx; i++)
-        CPLFree(papszVal[i]);
 
     return bRet;
 }
@@ -1185,10 +1145,10 @@ CPLErr ENVIDataset::SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
 /*      white space.                                                    */
 /************************************************************************/
 
-char **ENVIDataset::SplitList(const char *pszCleanInput)
+CPLStringList ENVIDataset::SplitList(const char *pszCleanInput)
 
 {
-    return GDALENVISplitList(pszCleanInput).StealList();
+    return GDALENVISplitList(pszCleanInput);
 }
 
 /************************************************************************/
@@ -1247,7 +1207,8 @@ void ENVIDataset::SetENVIDatum(OGRSpatialReference *poSRS,
 /*                           SetENVIEllipse()                           */
 /************************************************************************/
 
-void ENVIDataset::SetENVIEllipse(OGRSpatialReference *poSRS, char **papszPI_EI)
+void ENVIDataset::SetENVIEllipse(OGRSpatialReference *poSRS,
+                                 CSLConstList papszPI_EI)
 
 {
     const double dfA = CPLAtofM(papszPI_EI[0]);
@@ -1270,58 +1231,57 @@ void ENVIDataset::SetENVIEllipse(OGRSpatialReference *poSRS, char **papszPI_EI)
 bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
 
 {
-    char **papszFields = SplitList(pszMapinfo);
+    const CPLStringList aosFields(SplitList(pszMapinfo));
     const char *pszUnits = nullptr;
     double dfRotation = 0.0;
     bool bUpsideDown = false;
-    const int nCount = CSLCount(papszFields);
+    const int nCount = aosFields.size();
 
     if (nCount < 7)
     {
-        CSLDestroy(papszFields);
         return false;
     }
 
     // Retrieve named values
     for (int i = 0; i < nCount; ++i)
     {
-        if (STARTS_WITH(papszFields[i], "units="))
+        if (STARTS_WITH(aosFields[i], "units="))
         {
-            pszUnits = papszFields[i] + strlen("units=");
+            pszUnits = aosFields[i] + strlen("units=");
         }
-        else if (STARTS_WITH(papszFields[i], "rotation="))
+        else if (STARTS_WITH(aosFields[i], "rotation="))
         {
-            dfRotation = CPLAtof(papszFields[i] + strlen("rotation="));
+            dfRotation = CPLAtof(aosFields[i] + strlen("rotation="));
             bUpsideDown = fabs(dfRotation) == 180.0;
             dfRotation *= kdfDegToRad * -1.0;
         }
     }
 
     // Check if we have coordinate system string, and if so parse it.
-    char **papszCSS = nullptr;
+    CPLStringList aosCSS;
     const char *pszCSS = m_aosHeader["coordinate_system_string"];
     if (pszCSS != nullptr)
     {
-        papszCSS = CSLTokenizeString2(pszCSS, "{}", CSLT_PRESERVEQUOTES);
+        aosCSS = CSLTokenizeString2(pszCSS, "{}", CSLT_PRESERVEQUOTES);
     }
 
     // Check if we have projection info, and if so parse it.
-    char **papszPI = nullptr;
+    CPLStringList aosPI;
     int nPICount = 0;
     const char *pszPI = m_aosHeader["projection_info"];
     if (pszPI != nullptr)
     {
-        papszPI = SplitList(pszPI);
-        nPICount = CSLCount(papszPI);
+        aosPI = SplitList(pszPI);
+        nPICount = aosPI.size();
     }
 
     // Capture geotransform.
-    const double xReference = CPLAtof(papszFields[1]);
-    const double yReference = CPLAtof(papszFields[2]);
-    const double pixelEasting = CPLAtof(papszFields[3]);
-    const double pixelNorthing = CPLAtof(papszFields[4]);
-    const double xPixelSize = CPLAtof(papszFields[5]);
-    const double yPixelSize = CPLAtof(papszFields[6]);
+    const double xReference = CPLAtof(aosFields[1]);
+    const double yReference = CPLAtof(aosFields[2]);
+    const double pixelEasting = CPLAtof(aosFields[3]);
+    const double pixelNorthing = CPLAtof(aosFields[4]);
+    const double xPixelSize = CPLAtof(aosFields[5]);
+    const double yPixelSize = CPLAtof(aosFields[6]);
 
     m_gt[0] = pixelEasting - (xReference - 1) * xPixelSize;
     m_gt[1] = cos(dfRotation) * xPixelSize;
@@ -1341,97 +1301,97 @@ bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
     // Capture projection.
     OGRSpatialReference oSRS;
     bool bGeogCRSSet = false;
-    if (oSRS.importFromESRI(papszCSS) != OGRERR_NONE)
+    if (oSRS.importFromESRI(aosCSS.List()) != OGRERR_NONE)
     {
         oSRS.Clear();
 
-        if (STARTS_WITH_CI(papszFields[0], "UTM") && nCount >= 9)
+        if (STARTS_WITH_CI(aosFields[0], "UTM") && nCount >= 9)
         {
-            oSRS.SetUTM(atoi(papszFields[7]), !EQUAL(papszFields[8], "South"));
-            if (nCount >= 10 && strstr(papszFields[9], "=") == nullptr)
-                SetENVIDatum(&oSRS, papszFields[9]);
+            oSRS.SetUTM(atoi(aosFields[7]), !EQUAL(aosFields[8], "South"));
+            if (nCount >= 10 && strstr(aosFields[9], "=") == nullptr)
+                SetENVIDatum(&oSRS, aosFields[9]);
             else
                 oSRS.SetWellKnownGeogCS("NAD27");
             bGeogCRSSet = true;
         }
-        else if (STARTS_WITH_CI(papszFields[0], "State Plane (NAD 27)") &&
+        else if (STARTS_WITH_CI(aosFields[0], "State Plane (NAD 27)") &&
                  nCount > 7)
         {
-            oSRS.SetStatePlane(ITTVISToUSGSZone(atoi(papszFields[7])), FALSE);
+            oSRS.SetStatePlane(ITTVISToUSGSZone(atoi(aosFields[7])), FALSE);
             bGeogCRSSet = true;
         }
-        else if (STARTS_WITH_CI(papszFields[0], "State Plane (NAD 83)") &&
+        else if (STARTS_WITH_CI(aosFields[0], "State Plane (NAD 83)") &&
                  nCount > 7)
         {
-            oSRS.SetStatePlane(ITTVISToUSGSZone(atoi(papszFields[7])), TRUE);
+            oSRS.SetStatePlane(ITTVISToUSGSZone(atoi(aosFields[7])), TRUE);
             bGeogCRSSet = true;
         }
-        else if (STARTS_WITH_CI(papszFields[0], "Geographic Lat") && nCount > 7)
+        else if (STARTS_WITH_CI(aosFields[0], "Geographic Lat") && nCount > 7)
         {
-            if (strstr(papszFields[7], "=") == nullptr)
-                SetENVIDatum(&oSRS, papszFields[7]);
+            if (strstr(aosFields[7], "=") == nullptr)
+                SetENVIDatum(&oSRS, aosFields[7]);
             else
                 oSRS.SetWellKnownGeogCS("WGS84");
             bGeogCRSSet = true;
         }
-        else if (nPICount > 8 && atoi(papszPI[0]) == 3)  // TM
+        else if (nPICount > 8 && atoi(aosPI[0]) == 3)  // TM
         {
-            oSRS.SetTM(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
-                       CPLAtofM(papszPI[7]), CPLAtofM(papszPI[5]),
-                       CPLAtofM(papszPI[6]));
+            oSRS.SetTM(CPLAtofM(aosPI[3]), CPLAtofM(aosPI[4]),
+                       CPLAtofM(aosPI[7]), CPLAtofM(aosPI[5]),
+                       CPLAtofM(aosPI[6]));
         }
-        else if (nPICount > 8 && atoi(papszPI[0]) == 4)
+        else if (nPICount > 8 && atoi(aosPI[0]) == 4)
         {
             // Lambert Conformal Conic
-            oSRS.SetLCC(CPLAtofM(papszPI[7]), CPLAtofM(papszPI[8]),
-                        CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
-                        CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]));
+            oSRS.SetLCC(CPLAtofM(aosPI[7]), CPLAtofM(aosPI[8]),
+                        CPLAtofM(aosPI[3]), CPLAtofM(aosPI[4]),
+                        CPLAtofM(aosPI[5]), CPLAtofM(aosPI[6]));
         }
-        else if (nPICount > 10 && atoi(papszPI[0]) == 5)
+        else if (nPICount > 10 && atoi(aosPI[0]) == 5)
         {
             // Oblique Merc (2 point).
-            oSRS.SetHOM2PNO(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
-                            CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]),
-                            CPLAtofM(papszPI[7]), CPLAtofM(papszPI[10]),
-                            CPLAtofM(papszPI[8]), CPLAtofM(papszPI[9]));
+            oSRS.SetHOM2PNO(CPLAtofM(aosPI[3]), CPLAtofM(aosPI[4]),
+                            CPLAtofM(aosPI[5]), CPLAtofM(aosPI[6]),
+                            CPLAtofM(aosPI[7]), CPLAtofM(aosPI[10]),
+                            CPLAtofM(aosPI[8]), CPLAtofM(aosPI[9]));
         }
-        else if (nPICount > 8 && atoi(papszPI[0]) == 6)  // Oblique Merc
+        else if (nPICount > 8 && atoi(aosPI[0]) == 6)  // Oblique Merc
         {
-            oSRS.SetHOM(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
-                        CPLAtofM(papszPI[5]), 0.0, CPLAtofM(papszPI[8]),
-                        CPLAtofM(papszPI[6]), CPLAtofM(papszPI[7]));
+            oSRS.SetHOM(CPLAtofM(aosPI[3]), CPLAtofM(aosPI[4]),
+                        CPLAtofM(aosPI[5]), 0.0, CPLAtofM(aosPI[8]),
+                        CPLAtofM(aosPI[6]), CPLAtofM(aosPI[7]));
         }
-        else if (nPICount > 8 && atoi(papszPI[0]) == 7)  // Stereographic
+        else if (nPICount > 8 && atoi(aosPI[0]) == 7)  // Stereographic
         {
-            oSRS.SetStereographic(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
-                                  CPLAtofM(papszPI[7]), CPLAtofM(papszPI[5]),
-                                  CPLAtofM(papszPI[6]));
+            oSRS.SetStereographic(CPLAtofM(aosPI[3]), CPLAtofM(aosPI[4]),
+                                  CPLAtofM(aosPI[7]), CPLAtofM(aosPI[5]),
+                                  CPLAtofM(aosPI[6]));
         }
-        else if (nPICount > 8 && atoi(papszPI[0]) == 9)  // Albers Equal Area
+        else if (nPICount > 8 && atoi(aosPI[0]) == 9)  // Albers Equal Area
         {
-            oSRS.SetACEA(CPLAtofM(papszPI[7]), CPLAtofM(papszPI[8]),
-                         CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
-                         CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]));
+            oSRS.SetACEA(CPLAtofM(aosPI[7]), CPLAtofM(aosPI[8]),
+                         CPLAtofM(aosPI[3]), CPLAtofM(aosPI[4]),
+                         CPLAtofM(aosPI[5]), CPLAtofM(aosPI[6]));
         }
-        else if (nPICount > 6 && atoi(papszPI[0]) == 10)  // Polyconic
+        else if (nPICount > 6 && atoi(aosPI[0]) == 10)  // Polyconic
         {
-            oSRS.SetPolyconic(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
-                              CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]));
+            oSRS.SetPolyconic(CPLAtofM(aosPI[3]), CPLAtofM(aosPI[4]),
+                              CPLAtofM(aosPI[5]), CPLAtofM(aosPI[6]));
         }
-        else if (nPICount > 6 && atoi(papszPI[0]) == 11)  // LAEA
+        else if (nPICount > 6 && atoi(aosPI[0]) == 11)  // LAEA
         {
-            oSRS.SetLAEA(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
-                         CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]));
+            oSRS.SetLAEA(CPLAtofM(aosPI[3]), CPLAtofM(aosPI[4]),
+                         CPLAtofM(aosPI[5]), CPLAtofM(aosPI[6]));
         }
-        else if (nPICount > 6 && atoi(papszPI[0]) == 12)  // Azimuthal Equid.
+        else if (nPICount > 6 && atoi(aosPI[0]) == 12)  // Azimuthal Equid.
         {
-            oSRS.SetAE(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
-                       CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]));
+            oSRS.SetAE(CPLAtofM(aosPI[3]), CPLAtofM(aosPI[4]),
+                       CPLAtofM(aosPI[5]), CPLAtofM(aosPI[6]));
         }
-        else if (nPICount > 6 && atoi(papszPI[0]) == 31)  // Polar Stereographic
+        else if (nPICount > 6 && atoi(aosPI[0]) == 31)  // Polar Stereographic
         {
-            oSRS.SetPS(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]), 1.0,
-                       CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]));
+            oSRS.SetPS(CPLAtofM(aosPI[3]), CPLAtofM(aosPI[4]), 1.0,
+                       CPLAtofM(aosPI[5]), CPLAtofM(aosPI[6]));
         }
     }
     else
@@ -1439,13 +1399,11 @@ bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
         bGeogCRSSet = CPL_TO_BOOL(oSRS.IsProjected());
     }
 
-    CSLDestroy(papszCSS);
-
     // Still lots more that could be added for someone with the patience.
 
     // Fallback to localcs if we don't recognise things.
     if (oSRS.IsEmpty())
-        oSRS.SetLocalCS(papszFields[0]);
+        oSRS.SetLocalCS(aosFields[0]);
 
     // Try to set datum from projection info line if we have a
     // projected coordinate system without a GEOGCS explicitly set.
@@ -1455,13 +1413,13 @@ bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
         int iDatum = nPICount - 1;
 
         // Ignore units= items.
-        if (strstr(papszPI[iDatum], "=") != nullptr)
+        if (strstr(aosPI[iDatum], "=") != nullptr)
             iDatum--;
 
         // Skip past the name.
         iDatum--;
 
-        const CPLString osDatumName = papszPI[iDatum];
+        const CPLString osDatumName = aosPI[iDatum];
         if (osDatumName.find_first_of("abcdefghijklmnopqrstuvwxyz"
                                       "ABCDEFGHIJKLMNOPQRSTUVWXYZ") !=
             CPLString::npos)
@@ -1470,7 +1428,7 @@ bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
         }
         else
         {
-            SetENVIEllipse(&oSRS, papszPI + 1);
+            SetENVIEllipse(&oSRS, aosPI + 1);
         }
     }
 
@@ -1535,8 +1493,6 @@ bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
     }
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-    CSLDestroy(papszFields);
-    CSLDestroy(papszPI);
     return true;
 }
 
@@ -1550,87 +1506,86 @@ bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
 void ENVIDataset::ProcessRPCinfo(const char *pszRPCinfo, int numCols,
                                  int numRows)
 {
-    char **papszFields = SplitList(pszRPCinfo);
-    const int nCount = CSLCount(papszFields);
+    const CPLStringList aosFields(SplitList(pszRPCinfo));
+    const int nCount = aosFields.size();
 
     if (nCount < 90)
     {
-        CSLDestroy(papszFields);
         return;
     }
 
     char sVal[1280] = {'\0'};
-    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(papszFields[0]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[0]));
     SetMetadataItem("LINE_OFF", sVal, "RPC");
-    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(papszFields[5]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[5]));
     SetMetadataItem("LINE_SCALE", sVal, "RPC");
-    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(papszFields[1]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[1]));
     SetMetadataItem("SAMP_OFF", sVal, "RPC");
-    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(papszFields[6]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[6]));
     SetMetadataItem("SAMP_SCALE", sVal, "RPC");
-    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(papszFields[2]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[2]));
     SetMetadataItem("LAT_OFF", sVal, "RPC");
-    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(papszFields[7]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[7]));
     SetMetadataItem("LAT_SCALE", sVal, "RPC");
-    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(papszFields[3]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[3]));
     SetMetadataItem("LONG_OFF", sVal, "RPC");
-    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(papszFields[8]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[8]));
     SetMetadataItem("LONG_SCALE", sVal, "RPC");
-    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(papszFields[4]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[4]));
     SetMetadataItem("HEIGHT_OFF", sVal, "RPC");
-    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(papszFields[9]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[9]));
     SetMetadataItem("HEIGHT_SCALE", sVal, "RPC");
 
     sVal[0] = '\0';
     for (int i = 0; i < 20; i++)
         CPLsnprintf(sVal + strlen(sVal), sizeof(sVal) - strlen(sVal), "%.16g ",
-                    CPLAtof(papszFields[10 + i]));
+                    CPLAtof(aosFields[10 + i]));
     SetMetadataItem("LINE_NUM_COEFF", sVal, "RPC");
 
     sVal[0] = '\0';
     for (int i = 0; i < 20; i++)
         CPLsnprintf(sVal + strlen(sVal), sizeof(sVal) - strlen(sVal), "%.16g ",
-                    CPLAtof(papszFields[30 + i]));
+                    CPLAtof(aosFields[30 + i]));
     SetMetadataItem("LINE_DEN_COEFF", sVal, "RPC");
 
     sVal[0] = '\0';
     for (int i = 0; i < 20; i++)
         CPLsnprintf(sVal + strlen(sVal), sizeof(sVal) - strlen(sVal), "%.16g ",
-                    CPLAtof(papszFields[50 + i]));
+                    CPLAtof(aosFields[50 + i]));
     SetMetadataItem("SAMP_NUM_COEFF", sVal, "RPC");
 
     sVal[0] = '\0';
     for (int i = 0; i < 20; i++)
         CPLsnprintf(sVal + strlen(sVal), sizeof(sVal) - strlen(sVal), "%.16g ",
-                    CPLAtof(papszFields[70 + i]));
+                    CPLAtof(aosFields[70 + i]));
     SetMetadataItem("SAMP_DEN_COEFF", sVal, "RPC");
 
     CPLsnprintf(sVal, sizeof(sVal), "%.16g",
-                CPLAtof(papszFields[3]) - CPLAtof(papszFields[8]));
+                CPLAtof(aosFields[3]) - CPLAtof(aosFields[8]));
     SetMetadataItem("MIN_LONG", sVal, "RPC");
 
     CPLsnprintf(sVal, sizeof(sVal), "%.16g",
-                CPLAtof(papszFields[3]) + CPLAtof(papszFields[8]));
+                CPLAtof(aosFields[3]) + CPLAtof(aosFields[8]));
     SetMetadataItem("MAX_LONG", sVal, "RPC");
 
     CPLsnprintf(sVal, sizeof(sVal), "%.16g",
-                CPLAtof(papszFields[2]) - CPLAtof(papszFields[7]));
+                CPLAtof(aosFields[2]) - CPLAtof(aosFields[7]));
     SetMetadataItem("MIN_LAT", sVal, "RPC");
 
     CPLsnprintf(sVal, sizeof(sVal), "%.16g",
-                CPLAtof(papszFields[2]) + CPLAtof(papszFields[7]));
+                CPLAtof(aosFields[2]) + CPLAtof(aosFields[7]));
     SetMetadataItem("MAX_LAT", sVal, "RPC");
 
     if (nCount == 93)
     {
-        SetMetadataItem("TILE_ROW_OFFSET", papszFields[90], "RPC");
-        SetMetadataItem("TILE_COL_OFFSET", papszFields[91], "RPC");
-        SetMetadataItem("ENVI_RPC_EMULATION", papszFields[92], "RPC");
+        SetMetadataItem("TILE_ROW_OFFSET", aosFields[90], "RPC");
+        SetMetadataItem("TILE_COL_OFFSET", aosFields[91], "RPC");
+        SetMetadataItem("ENVI_RPC_EMULATION", aosFields[92], "RPC");
     }
 
     // Handle the chipping case where the image is a subset.
-    const double rowOffset = (nCount == 93) ? CPLAtof(papszFields[90]) : 0;
-    const double colOffset = (nCount == 93) ? CPLAtof(papszFields[91]) : 0;
+    const double rowOffset = (nCount == 93) ? CPLAtof(aosFields[90]) : 0;
+    const double colOffset = (nCount == 93) ? CPLAtof(aosFields[91]) : 0;
     if (rowOffset != 0.0 || colOffset != 0.0)
     {
         SetMetadataItem("ICHIP_SCALE_FACTOR", "1");
@@ -1661,7 +1616,6 @@ void ENVIDataset::ProcessRPCinfo(const char *pszRPCinfo, int numCols,
         SetMetadataItem("ICHIP_FI_ROW_21", sVal);
         SetMetadataItem("ICHIP_FI_ROW_22", sVal);
     }
-    CSLDestroy(papszFields);
 }
 
 /************************************************************************/
@@ -1698,12 +1652,11 @@ const GDAL_GCP *ENVIDataset::GetGCPs()
 
 void ENVIDataset::ProcessGeoPoints(const char *pszGeoPoints)
 {
-    char **papszFields = SplitList(pszGeoPoints);
-    const int nCount = CSLCount(papszFields);
+    const CPLStringList aosFields(SplitList(pszGeoPoints));
+    const int nCount = aosFields.size();
 
     if ((nCount % 4) != 0)
     {
-        CSLDestroy(papszFields);
         return;
     }
     m_asGCPs.resize(nCount / 4);
@@ -1714,13 +1667,12 @@ void ENVIDataset::ProcessGeoPoints(const char *pszGeoPoints)
     for (int i = 0; i < static_cast<int>(m_asGCPs.size()); i++)
     {
         // Subtract 1 to pixel and line for ENVI convention
-        m_asGCPs[i].dfGCPPixel = CPLAtof(papszFields[i * 4 + 0]) - 1;
-        m_asGCPs[i].dfGCPLine = CPLAtof(papszFields[i * 4 + 1]) - 1;
-        m_asGCPs[i].dfGCPY = CPLAtof(papszFields[i * 4 + 2]);
-        m_asGCPs[i].dfGCPX = CPLAtof(papszFields[i * 4 + 3]);
+        m_asGCPs[i].dfGCPPixel = CPLAtof(aosFields[i * 4 + 0]) - 1;
+        m_asGCPs[i].dfGCPLine = CPLAtof(aosFields[i * 4 + 1]) - 1;
+        m_asGCPs[i].dfGCPY = CPLAtof(aosFields[i * 4 + 2]);
+        m_asGCPs[i].dfGCPX = CPLAtof(aosFields[i * 4 + 3]);
         m_asGCPs[i].dfGCPZ = 0;
     }
-    CSLDestroy(papszFields);
 }
 
 static unsigned byteSwapUInt(unsigned swapMe)
@@ -2243,13 +2195,14 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     const char *pszMajorFrameOffset = poDS->m_aosHeader["major_frame_offsets"];
     if (pszMajorFrameOffset != nullptr)
     {
-        char **papszMajorFrameOffsets = poDS->SplitList(pszMajorFrameOffset);
+        const CPLStringList aosMajorFrameOffsets(
+            poDS->SplitList(pszMajorFrameOffset));
 
-        const int nTempCount = CSLCount(papszMajorFrameOffsets);
+        const int nTempCount = aosMajorFrameOffsets.size();
         if (nTempCount == 2)
         {
-            int nOffset1 = atoi(papszMajorFrameOffsets[0]);
-            int nOffset2 = atoi(papszMajorFrameOffsets[1]);
+            int nOffset1 = atoi(aosMajorFrameOffsets[0]);
+            int nOffset2 = atoi(aosMajorFrameOffsets[1]);
             if (nOffset1 >= 0 && nOffset2 >= 0 &&
                 nHeaderSize < INT_MAX - nOffset1 &&
                 nOffset1 < INT_MAX - nOffset2 &&
@@ -2259,7 +2212,6 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                 nLineOffset += nOffset1 + nOffset2;
             }
         }
-        CSLDestroy(papszMajorFrameOffsets);
     }
 
     // Currently each ENVIRasterBand allocates nPixelOffset * nRasterXSize bytes
@@ -2295,14 +2247,12 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         char **pTmp = poDS->m_aosHeader.List();
         while (*pTmp != nullptr)
         {
-            char **pTokens = CSLTokenizeString2(
-                *pTmp, "=", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
-            if (pTokens[0] != nullptr && pTokens[1] != nullptr &&
-                pTokens[2] == nullptr)
+            const CPLStringList aosTokens(CSLTokenizeString2(
+                *pTmp, "=", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+            if (aosTokens.size() == 2)
             {
-                poDS->SetMetadataItem(pTokens[0], pTokens[1], "ENVI");
+                poDS->SetMetadataItem(aosTokens[0], aosTokens[1], "ENVI");
             }
-            CSLDestroy(pTokens);
             pTmp++;
         }
     }

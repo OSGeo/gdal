@@ -72,10 +72,10 @@ class ENVIDataset final : public RawDataset
     static float byteSwapFloat(float);
     static double byteSwapDouble(double);
     static void SetENVIDatum(OGRSpatialReference *, const char *);
-    static void SetENVIEllipse(OGRSpatialReference *, char **);
+    static void SetENVIEllipse(OGRSpatialReference *, CSLConstList papszPI_EI);
     void WriteProjectionInfo();
-    bool ParseRpcCoeffsMetaDataString(const char *psName, char *papszVal[],
-                                      int &idx);
+    bool ParseRpcCoeffsMetaDataString(const char *psName,
+                                      CPLStringList &aosVal);
     bool WriteRpcInfo();
     bool WritePseudoGcpInfo();
 
@@ -84,7 +84,7 @@ class ENVIDataset final : public RawDataset
         bFillFile = true;
     }
 
-    static char **SplitList(const char *);
+    static CPLStringList SplitList(const char *);
 
     static int GetEnviType(GDALDataType eType);
 
