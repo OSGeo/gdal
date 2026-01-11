@@ -87,4 +87,4 @@ Examples
 
    .. code-block:: console
 
-       $ gdal vsi sync -r my_directory/ /vsis3/bucket/my_directory
+       $ gdal vsi sync -r my_directory/ /vsigs/bucket/my_directory

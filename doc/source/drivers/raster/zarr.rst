@@ -365,8 +365,8 @@ The following dataset open options are available:
       listing has been established, the open option no longer needs to be specified.
       Note: the runtime of this option can be in minutes or more for large datasets
       stored on remote file systems. And for network file systems, this will rarely
-      work for /vsicurl/ itself, but more cloud-based file systems (such as /vsis3/,
-      /vsigs/, /vsiaz/, etc) which have a dedicated directory listing operation.
+      work for /vsicurl/ itself, but more cloud-based file systems (such as /vsigs/)
+      which have a dedicated directory listing operation.
 
 -  .. oo:: CACHE_KERCHUNK_JSON
       :choices: YES, NO
