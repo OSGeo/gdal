@@ -7589,8 +7589,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             }
 
             int nNewChunkXSize = nChunkXSize;
-            if (!bApproxOK && nThreads > 1 && poDS && poDS->GetDriver() &&
-                EQUAL(poDS->GetDriver()->GetDescription(), "GTiff"))
+            if (!bApproxOK && nThreads > 1 &&
+                MayMultiBlockReadingBeMultiThreaded())
             {
                 const int64_t nRAMAmount = CPLGetUsablePhysicalRAM() / 10;
                 const size_t nChunkPixels =
