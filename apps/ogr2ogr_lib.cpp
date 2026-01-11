@@ -1909,7 +1909,7 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
 
     if (psOptions->bSkipFailures)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-skipfailures");
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "--skip-failures");
         return nullptr;
     }
     if (psOptions->nLayerTransaction >= 0)
@@ -1946,7 +1946,7 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
     }
     if (!psOptions->osNewLayerName.empty())
     {
-        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-nln");
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "--layer-name");
         return nullptr;
     }
     if (psOptions->bSelFieldsSet)
