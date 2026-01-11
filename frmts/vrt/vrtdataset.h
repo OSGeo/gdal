@@ -970,6 +970,8 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
                      GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
+    bool MayMultiBlockReadingBeMultiThreaded() const override;
+
     virtual int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
                                        int nYSize, int nMaskFlagStop,
                                        double *pdfDataPct) override;
