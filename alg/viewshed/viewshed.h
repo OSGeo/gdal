@@ -53,6 +53,10 @@ class Viewshed
                      GDALProgressFunc pfnProgress = GDALDummyProgress,
                      void *pProgressArg = nullptr);
 
+    CPL_DLL bool run(GDALRasterBandH hBand, GDALRasterBandH hSdBand,
+                     GDALProgressFunc pfnProgress = GDALDummyProgress,
+                     void *pProgressArg = nullptr);
+
     /**
      * Fetch a pointer to the created raster band.
      *
@@ -69,6 +73,7 @@ class Viewshed
     Window oCurExtent{};
     DatasetPtr poDstDS{};
     GDALRasterBand *pSrcBand = nullptr;
+    GDALRasterBand *pSdBand = nullptr;
 
     DatasetPtr execute(int nX, int nY, const std::string &outFilename);
     void setOutput(double &dfResult, double &dfCellVal, double dfZ);
