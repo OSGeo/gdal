@@ -1909,7 +1909,11 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
 
     if (psOptions->bSkipFailures)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-skipfailures");
+        CPLError(
+            CE_Failure, CPLE_NotSupported, szErrorMsg,
+            psOptions->bInvokedFromGdalVectorConvert
+                ? "--skip-failures"
+                : "-skipfailures");
         return nullptr;
     }
     if (psOptions->nLayerTransaction >= 0)
@@ -3472,11 +3476,12 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 {
                     CPLError(
                         CE_Failure, CPLE_AppDefined,
-                        "Terminating translation prematurely after failed\n"
-                        "translation of layer %s (use -skipfailures to skip "
-                        "errors)",
+                        psOptions->bInvokedFromGdalVectorConvert
+                            ? "Terminating translation prematurely after failed\n"
+                            "translation of layer %s (use --skip-failures to skip errors)"
+                            : "Terminating translation prematurely after failed\n"
+                            "translation of layer %s (use -skipfailures to skip errors)",
                         poFeatureLayer->GetName());
-
                     nRetCode = 1;
                     break;
                 }
@@ -3743,12 +3748,14 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                                         pProgressArg.get(), psOptions.get())) &&
                 !psOptions->bSkipFailures)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Terminating translation prematurely after failed\n"
-                         "translation of layer %s (use -skipfailures to skip "
-                         "errors)",
-                         poLayer->GetName());
-
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    psOptions->bInvokedFromGdalVectorConvert
+                        ? "Terminating translation prematurely after failed\n"
+                          "translation of layer %s (use --skip-failures to skip errors)"
+                        : "Terminating translation prematurely after failed\n"
+                          "translation of layer %s (use -skipfailures to skip errors)",
+                    poLayer->GetName());
                 nRetCode = 1;
             }
 
