@@ -16,6 +16,7 @@ GDAL
     User <user/index>
     api/index
     tutorials/index
+    cookbook/index
     development/index
     community/index
     sponsors/index
