@@ -35,9 +35,7 @@ Simplification is performed using the Visvalingam-Whyatt algorithm.
 
 This command can also be used as a step of :ref:`gdal_vector_pipeline`.
 
-.. only:: html
-
-   .. figure:: ../../images/programs/gdal_vector_simplify_coverage.svg
+.. figure:: ../../images/programs/gdal_vector_simplify_coverage.svg
 
    Polygon dataset before (left) and after (right) simplification with :program:`gdal vector simplify-coverage`.
 
