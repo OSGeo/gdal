@@ -87,7 +87,7 @@ Examples
    .. code-block:: bash
 
        gdal pipeline read input.tif ! 
-                reclassify -m "[-inf, 150)=1; DEFAULT=NO_DATA" !
+                reclassify -m "[-inf, 150]=1; DEFAULT=NO_DATA" !
                 as-features --geometry-type point --skip-nodata ! 
                 write out.shp
 

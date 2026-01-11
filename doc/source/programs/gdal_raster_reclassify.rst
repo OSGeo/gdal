@@ -49,7 +49,7 @@ These pixels may be converted unto NoData (``DEFAULT = NO_DATA``), some other co
 
 .. figure:: ../../images/programs/gdal_raster_reclassify.svg
 
-   Raster dataset before (left) and after (right) reclassification with :program:`gdal raster reclassify --mapping "[1,3]= 101; [4, 5)= 102; 7=102; NO_DATA=103; DEFAULT=NO_DATA"`.
+   Raster dataset before (left) and after (right) reclassification with :program:`gdal raster reclassify --mapping "[1,3]= 101; [4, 5]= 102; 7=102; NO_DATA=103; DEFAULT=NO_DATA"`.
 
 .. note::
 
