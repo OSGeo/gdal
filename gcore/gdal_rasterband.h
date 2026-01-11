@@ -629,6 +629,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     WindowIteratorWrapper IterateWindows(size_t maxSize = 0) const;
 
+    virtual bool MayMultiBlockReadingBeMultiThreaded() const;
+
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
                      ...) const CPL_PRINT_FUNC_FORMAT(4, 5);

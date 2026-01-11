@@ -458,6 +458,25 @@ void VRTSourcedRasterBandRasterIOJob::Func(void *pData)
 }
 
 /************************************************************************/
+/*                  MayMultiBlockReadingBeMultiThreaded()               */
+/************************************************************************/
+
+bool VRTSourcedRasterBand::MayMultiBlockReadingBeMultiThreaded() const
+{
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    int nContributingSources = 0;
+    auto l_poDS = dynamic_cast<VRTDataset *>(poDS);
+    return l_poDS &&
+           CanIRasterIOBeForwardedToEachSource(GF_Read, 0, 0, nRasterXSize,
+                                               nRasterYSize, nRasterXSize,
+                                               nRasterYSize, &sExtraArg) &&
+           CanMultiThreadRasterIO(0, 0, nRasterXSize, nRasterYSize,
+                                  nContributingSources) &&
+           nContributingSources > 1 && VRTDataset::GetNumThreads(l_poDS) > 1;
+}
+
+/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 

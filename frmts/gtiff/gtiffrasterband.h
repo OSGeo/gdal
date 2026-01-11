@@ -161,6 +161,8 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
                                GUIntBig **ppanHistogram, int bForce,
                                GDALProgressFunc,
                                void *pProgressData) override final;
+
+    bool MayMultiBlockReadingBeMultiThreaded() const override final;
 };
 
 #endif  //  GTIFFRASTERBAND_H_INCLUDED

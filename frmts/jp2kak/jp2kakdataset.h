@@ -137,6 +137,8 @@ class JP2KAKRasterBand final : public GDALPamRasterBand
     GDALColorInterp GetColorInterpretation() override;
     GDALColorTable *GetColorTable() override;
 
+    bool MayMultiBlockReadingBeMultiThreaded() const override;
+
     // Internal.
 
     void ApplyPalette(jp2_palette oJP2Palette);

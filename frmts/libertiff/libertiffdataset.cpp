@@ -363,6 +363,12 @@ class LIBERTIFFBand final : public GDALPamRasterBand
                                           bWriteDirtyBlock);
     }
 
+    bool MayMultiBlockReadingBeMultiThreaded() const override
+    {
+        return cpl::down_cast<LIBERTIFFDataset *>(poDS)->m_poThreadPool !=
+               nullptr;
+    }
+
   protected:
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
 

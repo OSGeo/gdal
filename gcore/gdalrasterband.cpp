@@ -10786,6 +10786,26 @@ GDALRasterBand::IterateWindows(size_t maxSize) const
 }
 
 /************************************************************************/
+/*                  MayMultiBlockReadingBeMultiThreaded()               */
+/************************************************************************/
+
+/** Return whether a RasterIO(GF_Read) request spanning over multiple
+ * blocks may be accelerated internally using multi-threading.
+ *
+ * This can be used to determine the best chunk size to read a raster band.
+ *
+ * Note that such optimizations may require that the window is perfectly aligned
+ * on block boundaries and does not involve resampling or data type translation
+ * occurs, etc.
+ *
+ * @since GDAL 3.13
+ */
+bool GDALRasterBand::MayMultiBlockReadingBeMultiThreaded() const
+{
+    return false;
+}
+
+/************************************************************************/
 /*                     GDALMDArrayFromRasterBand                        */
 /************************************************************************/
 

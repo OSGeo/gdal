@@ -218,6 +218,17 @@ GTiffRasterBand::~GTiffRasterBand()
 }
 
 /************************************************************************/
+/*                  MayMultiBlockReadingBeMultiThreaded()               */
+/************************************************************************/
+
+bool GTiffRasterBand::MayMultiBlockReadingBeMultiThreaded() const
+{
+    return m_poGDS->m_nDisableMultiThreadedRead == 0 &&
+           m_poGDS->m_poThreadPool != nullptr &&
+           m_poGDS->IsMultiThreadedReadCompatible();
+}
+
+/************************************************************************/
 /*                            IRasterIO()                               */
 /************************************************************************/
 
