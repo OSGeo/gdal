@@ -642,6 +642,7 @@ static bool
 GTIDoPaletteExpansionIfNeeded(std::shared_ptr<GDALDataset> &poTileDS,
                               int nBandCount)
 {
+    bool bRet = true;
     if (poTileDS->GetRasterCount() == 1 &&
         (nBandCount == 3 || nBandCount == 4) &&
         poTileDS->GetRasterBand(1)->GetColorTable() != nullptr)
@@ -661,9 +662,10 @@ GTIDoPaletteExpansionIfNeeded(std::shared_ptr<GDALDataset> &poTileDS,
             GDALTranslate("", GDALDataset::ToHandle(poTileDS.get()), psOptions,
                           &bUsageError)));
         GDALTranslateOptionsFree(psOptions);
+        bRet = poRGBDS != nullptr;
         poTileDS = std::move(poRGBDS);
     }
-    return poTileDS != nullptr;
+    return bRet;
 }
 
 /************************************************************************/

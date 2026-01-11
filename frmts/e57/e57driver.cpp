@@ -216,7 +216,7 @@ class GDAL_E57FileHandle final : public VSIVirtualHandle
             return 0;
         }
         const size_t nToReadTotal = nSize * nCount;
-        if (nToReadTotal == 0)
+        if (nSize == 0 || nCount == 0)
             return 0;
 
         // Align our raw file pointer to the physical location of the current
@@ -518,7 +518,7 @@ GDALDataset *GDAL_E57Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     constexpr size_t SIZEOF_E57_FILE_HEADER = 48;
     if (xmlLogicalLength > filePhysicalLength ||
-        xmlLogicalLength > std::numeric_limits<size_t>::max() ||
+        xmlLogicalLength > std::numeric_limits<size_t>::max() - 1 ||
         xmlPhysicalOffset < SIZEOF_E57_FILE_HEADER ||
         xmlPhysicalOffset > filePhysicalLength - xmlLogicalLength)
     {

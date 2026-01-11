@@ -404,7 +404,7 @@ bool NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
                 CPLJSONObject oObj;
                 oObj.Add("values", ar);
                 oCur.Delete(osName);
-                oCur[osName] = oObj;
+                oCur[osName] = std::move(oObj);
             }
         }
         else

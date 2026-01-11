@@ -1366,7 +1366,7 @@ bool S111Creator::WriteUncertaintyDataset()
             m_poSrcDS->GetMetadataItem("uncertaintySurfaceCurrentSpeed"));
         float fVal = pszVal ? static_cast<float>(CPLAtof(pszVal)) : -1.0f;
         CPL_LSBPTR32(&fVal);
-        memcpy(abyValues, &pszName, sizeof(char **));
+        memcpy(abyValues, &pszName, sizeof(char *));
         memcpy(abyValues + sizeof(char *), &fVal, sizeof(fVal));
     }
     {

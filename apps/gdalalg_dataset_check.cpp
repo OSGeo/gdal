@@ -456,7 +456,8 @@ bool GDALDatasetCheckAlgorithm::CheckDataset(GDALDataset *poDS,
                 nProgress += nPixels;
                 if (pfnProgress &&
                     !pfnProgress(static_cast<double>(nProgress) /
-                                     static_cast<double>(nTotalContent),
+                                     static_cast<double>(
+                                         std::max<GIntBig>(1, nTotalContent)),
                                  "", pProgressData))
                 {
                     ReportError(CE_Failure, CPLE_UserInterrupt,
@@ -505,7 +506,8 @@ bool GDALDatasetCheckAlgorithm::CheckDataset(GDALDataset *poDS,
                         static_cast<GIntBig>(oWindow.nXSize) * oWindow.nYSize;
                     if (pfnProgress &&
                         !pfnProgress(static_cast<double>(nProgress) /
-                                         static_cast<double>(nTotalContent),
+                                         static_cast<double>(std::max<GIntBig>(
+                                             1, nTotalContent)),
                                      "", pProgressData))
                     {
                         ReportError(CE_Failure, CPLE_UserInterrupt,
