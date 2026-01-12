@@ -35,6 +35,8 @@ class GDALDatasetCheckAlgorithm final : public GDALAlgorithm
 
   private:
     GDALArgDatasetValue m_input{};
+    std::vector<std::string> m_openOptions{};
+    std::vector<std::string> m_inputFormats{};
     int m_retCode = 0;
 
     bool CheckDataset(GDALDataset *poDS, bool bRasterOnly, GDALProgressFunc,
