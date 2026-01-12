@@ -115,7 +115,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                     static_cast<const GByte *>(pImage) + iPixel;
                 auto iByteOffset = iBitOffset / 8;
                 int iX = 0;  // Used after for.
-                for (; iX + 7 < nBlockXSize; iX += 8, iByteOffset++)
+                for (; iX < nBlockXSize - 7; iX += 8, iByteOffset++)
                 {
                     int nRes = (!(!pabySrc[iX + 0])) << 7;
                     nRes |= (!(!pabySrc[iX + 1])) << 6;
@@ -558,6 +558,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         // Translate 1bit data to eight bit.
         const GByte *CPL_RESTRICT pabySrc = m_poGDS->m_pabyBlockBuf;
         GByte *CPL_RESTRICT pabyDest = static_cast<GByte *>(pImage);
+        const int nSrcInc = cpl::div_round_up(nBlockXSize, 8);
 
         for (int iLine = 0; iLine < nBlockYSize; ++iLine)
         {
@@ -571,7 +572,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 GDALExpandPackedBitsToByteAt0Or1(pabySrc, pabyDest,
                                                  nBlockXSize);
             }
-            pabySrc += (nBlockXSize + 7) / 8;
+            pabySrc += nSrcInc;
             pabyDest += nBlockXSize;
         }
     }

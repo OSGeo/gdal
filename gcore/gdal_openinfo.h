@@ -19,6 +19,8 @@
 
 #include "gdal.h"
 
+struct VSIVirtualHandle;
+
 /* ******************************************************************** */
 /*                             GDALOpenInfo                             */
 /* ******************************************************************** */
@@ -30,10 +32,15 @@ class CPL_DLL GDALOpenInfo
     char **papszSiblingFiles = nullptr;
     int nHeaderBytesTried = 0;
 
+    void Init(const char *const *papszSiblingFilesIn,
+              std::unique_ptr<VSIVirtualHandle> poFile);
+
   public:
     GDALOpenInfo(const char *pszFile, int nOpenFlagsIn,
-                 const char *const *papszSiblingFiles = nullptr);
-    ~GDALOpenInfo(void);
+                 const char *const *papszSiblingFilesIn = nullptr);
+    GDALOpenInfo(const char *pszFile, int nOpenFlagsIn,
+                 std::unique_ptr<VSIVirtualHandle> poFile);
+    ~GDALOpenInfo();
 
     /** Filename */
     char *pszFilename = nullptr;

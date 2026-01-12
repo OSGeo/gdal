@@ -2229,7 +2229,15 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         }
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nLines64;
+        if (nBands > 1)
+        {
+            if (nLineOffset > std::numeric_limits<int>::max() / nLines64)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
+                return nullptr;
+            }
+            nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nLines64;
+        }
     }
 
     const char *pszMajorFrameOffset = poDS->m_aosHeader["major_frame_offsets"];
@@ -2499,6 +2507,8 @@ ENVIRasterBand::ENVIRasterBand(GDALDataset *poDSIn, int nBandIn,
                     nLineOffsetIn, eDataTypeIn, eByteOrderIn,
                     RawRasterBand::OwnFP::NO)
 {
+    // ENVI datasets might be sparse (see #915)
+    bTruncatedFileAllowed = true;
 }
 
 /************************************************************************/

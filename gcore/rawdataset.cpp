@@ -16,6 +16,7 @@
 #include "rawdataset.h"
 
 #include <cassert>
+#include <cinttypes>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -381,6 +382,12 @@ void RawRasterBand::SetAccess(GDALAccess eAccessIn)
 CPLErr RawRasterBand::FlushCache(bool bAtClosing)
 
 {
+    if (bAtClosing)
+    {
+        if (bFlushCacheAtClosingHasRun)
+            return CE_None;
+        bFlushCacheAtClosingHasRun = true;
+    }
     CPLErr eErr = GDALRasterBand::FlushCache(bAtClosing);
     if (eErr != CE_None)
     {
@@ -597,9 +604,7 @@ CPLErr RawRasterBand::AccessLine(int iLine)
     const size_t nBytesActuallyRead = Read(pLineBuffer, 1, nBytesToRead);
     if (nBytesActuallyRead < nBytesToRead)
     {
-        if (poDS != nullptr && poDS->GetAccess() == GA_ReadOnly &&
-            // ENVI datasets might be sparse (see #915)
-            poDS->GetMetadata("ENVI") == nullptr)
+        if (!bTruncatedFileAllowed)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Failed to read scanline %d.",
                      iLine);
@@ -928,9 +933,18 @@ CPLErr RawRasterBand::AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize,
     const size_t nBytesActuallyRead = Read(pData, 1, nBlockSize);
     if (nBytesActuallyRead < nBlockSize)
     {
-
-        memset(static_cast<GByte *>(pData) + nBytesActuallyRead, 0,
-               nBlockSize - nBytesActuallyRead);
+        if (!bTruncatedFileAllowed)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Failed to read block at offset %" PRIu64,
+                     static_cast<uint64_t>(nBlockOff));
+            return CE_Failure;
+        }
+        else
+        {
+            memset(static_cast<GByte *>(pData) + nBytesActuallyRead, 0,
+                   nBlockSize - nBytesActuallyRead);
+        }
     }
 
     // Byte swap the interesting data, if required.

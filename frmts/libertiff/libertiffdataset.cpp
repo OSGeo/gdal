@@ -1342,8 +1342,9 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
             static_cast<size_t>(m_image->isTiled() ? nBlockYSize
                                                    : nBlockActualYSize) *
             nBlockXSize;
-        const int nLineSizeBytes =
-            m_image->bitsPerSample() == 1 ? (nBlockXSize + 7) / 8 : nBlockXSize;
+        const int nLineSizeBytes = m_image->bitsPerSample() == 1
+                                       ? cpl::div_round_up(nBlockXSize, 8)
+                                       : nBlockXSize;
         const size_t nActualUncompressedSize =
             nNativeDTSize *
             static_cast<size_t>(m_image->isTiled() ? nBlockYSize
@@ -1616,6 +1617,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
         {
             const GByte *CPL_RESTRICT pabySrc = abyDecompressedStrile.data();
             GByte *CPL_RESTRICT pabyDst = bufferForOneBitExpansion.data();
+            const int nSrcInc = cpl::div_round_up(nBlockXSize, 8);
             for (int iY = 0; iY < nBlockActualYSize; ++iY)
             {
                 if (m_bExpand1To255)
@@ -1628,7 +1630,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                     GDALExpandPackedBitsToByteAt0Or1(pabySrc, pabyDst,
                                                      nBlockXSize);
                 }
-                pabySrc += (nBlockXSize + 7) / 8;
+                pabySrc += nSrcInc;
                 pabyDst += nBlockXSize;
             }
 
@@ -1797,14 +1799,16 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                     nNativeDTSize * iY * nBlockXSize * nBands;
                 if (nBands == 3 && nPixelSpace == 4 && nBufTypeSize == 1)
                 {
-                    for (int iX = 0; iX < nBlockActualXSize; ++iX)
+                    for (size_t iX = 0;
+                         iX < static_cast<size_t>(nBlockActualXSize); ++iX)
                     {
                         memcpy(pabyDst + iX * 4, pabySrc + iX * 3, 3);
                     }
                 }
                 else
                 {
-                    for (int iX = 0; iX < nBlockActualXSize; ++iX)
+                    for (size_t iX = 0;
+                         iX < static_cast<size_t>(nBlockActualXSize); ++iX)
                     {
                         memcpy(pabyDst + iX * nPixelSpace,
                                pabySrc + iX * nBands, nBands * nBufTypeSize);
@@ -1823,8 +1827,9 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                 {
                     GDALCopyWords64(
                         abyDecompressedStrile.data() +
-                            nNativeDTSize *
-                                (iY * nBlockXSize * nSrcPixels + iSrcBand),
+                            nNativeDTSize * (static_cast<size_t>(iY) *
+                                                 nBlockXSize * nSrcPixels +
+                                             iSrcBand),
                         eNativeDT, static_cast<int>(nSrcPixels * nNativeDTSize),
                         pabyBlockData + iBand * nBandSpace + iY * nLineSpace,
                         eBufType, static_cast<int>(nPixelSpace),

@@ -3,7 +3,8 @@
  * python specific code for ogr bindings.
  */
 
-%feature("autodoc");
+// Disable C-style signatures in Python docstrings (see #12177)
+%feature("autodoc", "0");
 
 %init %{
   // Will be turned on for GDAL 4.0

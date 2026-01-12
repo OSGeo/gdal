@@ -1099,17 +1099,21 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
             bool bBreak = false;
             if (nNextTileOffset == 0)
             {
-                nMarkerSize =
-                    (nBoxDataOffset + nBoxDataLength - 2) - nOffset - 2;
-                if (VSIFSeekL(fp, nBoxDataOffset + nBoxDataLength - 2,
-                              SEEK_SET) != 0 ||
-                    VSIFReadL(abyMarker, 2, 1, fp) != 1 ||
-                    abyMarker[0] != 0xFF || abyMarker[1] != 0xD9)
+                const auto nPos = nBoxDataOffset + nBoxDataLength - 2;
+                if (nPos >= nOffset + 2)
                 {
-                    /* autotest/gdrivers/data/rgb16_ecwsdk.jp2 does not end */
-                    /* with a EOC... */
-                    nMarkerSize += 2;
-                    bBreak = true;
+                    nMarkerSize =
+                        (nBoxDataOffset + nBoxDataLength - 2) - (nOffset + 2);
+                    if (VSIFSeekL(fp, nBoxDataOffset + nBoxDataLength - 2,
+                                  SEEK_SET) != 0 ||
+                        VSIFReadL(abyMarker, 2, 1, fp) != 1 ||
+                        abyMarker[0] != 0xFF || abyMarker[1] != 0xD9)
+                    {
+                        /* autotest/gdrivers/data/rgb16_ecwsdk.jp2 does not end */
+                        /* with a EOC... */
+                        nMarkerSize += 2;
+                        bBreak = true;
+                    }
                 }
             }
             else if (nNextTileOffset >= nOffset + 2)

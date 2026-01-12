@@ -4968,6 +4968,20 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             }
         }
 
+        // For a MapInfo -> MapInfo translation, preserve the layer bounds.
+        if (m_poSrcDS->GetDriver() == m_poDstDS->GetDriver() &&
+            EQUAL(m_poDstDS->GetDriver()->GetDescription(), "MapInfo File") &&
+            (m_poOutputSRS == nullptr || !m_bTransform) &&
+            CSLFetchNameValue(m_papszLCO, "BOUNDS") == nullptr)
+        {
+            if (const char *pszBounds = poSrcLayer->GetMetadataItem("BOUNDS"))
+            {
+                CPLDebug("GDALVectorTranslate", "Setting -lco BOUNDS=%s",
+                         pszBounds);
+                aosLCOTemp.SetNameValue("BOUNDS", pszBounds);
+            }
+        }
+
         // If bAddOverwriteLCO is ON (set up when overwriting a CARTO layer),
         // set OVERWRITE to YES so the new layer overwrites the old one
         if (bAddOverwriteLCO)
@@ -5099,7 +5113,24 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                     !EQUAL(pszMD, "SUBDATASETS"))
                 {
                     if (char **papszMD = poSrcLayer->GetMetadata(pszMD))
-                        poDstLayer->SetMetadata(papszMD, pszMD);
+                    {
+                        // MapInfo: Avoid overwriting the "BOUNDS" metadata on the output layer
+                        // with the value from the source layer. If the value should be
+                        // propagated, it will have been done via a layer creation option already.
+                        if (pszMD[0] == '\0' &&
+                            EQUAL(m_poDstDS->GetDriverName(), "MapInfo File"))
+                        {
+                            const char *pszBounds =
+                                aosLCOTemp.FetchNameValue("BOUNDS");
+                            CPLStringList aosTmpMD(CSLDuplicate(papszMD), true);
+                            aosTmpMD.SetNameValue("BOUNDS", pszBounds);
+                            poDstLayer->SetMetadata(aosTmpMD.List(), pszMD);
+                        }
+                        else
+                        {
+                            poDstLayer->SetMetadata(papszMD, pszMD);
+                        }
+                    }
                 }
             }
         }

@@ -47,9 +47,7 @@ If this is not desired, the input range ``DEFAULT`` can be used to specify an ou
 value for pixels not covered by any other input range.
 These pixels may be converted unto NoData (``DEFAULT = NO_DATA``), some other constant value (e.g., ``DEFAULT = 50``), or left unmodified (``DEFAULT = PASS_THROUGH``).
 
-.. only:: html
-
-   .. figure:: ../../images/programs/gdal_raster_reclassify.svg
+.. figure:: ../../images/programs/gdal_raster_reclassify.svg
 
    Raster dataset before (left) and after (right) reclassification with :program:`gdal raster reclassify --mapping "[1,3]= 101; [4, 5)= 102; 7=102; NO_DATA=103; DEFAULT=NO_DATA"`.
 

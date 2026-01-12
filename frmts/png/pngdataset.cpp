@@ -457,9 +457,9 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
     }
 
     const auto nPosBefore = VSIFTellL(fpImage);
-    VSIFSeekL(fpImage, 8, SEEK_SET);
+    bError = VSIFSeekL(fpImage, 8, SEEK_SET) != 0;
     // Iterate over PNG chunks
-    while (true)
+    while (!bError)
     {
         uint32_t nChunkSize;
         if (VSIFReadL(&nChunkSize, sizeof(nChunkSize), 1, fpImage) == 0)
@@ -492,9 +492,17 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
             if (nCompressedDataSize + nChunkSize > 100 * 1024 * 1024)
             {
                 const auto nCurPos = VSIFTellL(fpImage);
-                VSIFSeekL(fpImage, 0, SEEK_END);
+                if (VSIFSeekL(fpImage, 0, SEEK_END) != 0)
+                {
+                    bError = true;
+                    break;
+                }
                 const auto nSize = VSIFTellL(fpImage);
-                VSIFSeekL(fpImage, nCurPos, SEEK_SET);
+                if (VSIFSeekL(fpImage, nCurPos, SEEK_SET) != 0)
+                {
+                    bError = true;
+                    break;
+                }
                 if (nSize < 100 * 1024 * 1024)
                 {
                     CPLError(CE_Failure, CPLE_OutOfMemory,
@@ -539,11 +547,12 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
         {
             // CPLDebug("PNG", "Skipping chunk %s of size %u", szChunkName,
             // nChunkSize);
-            VSIFSeekL(fpImage, static_cast<vsi_l_offset>(nChunkSize), SEEK_CUR);
+            bError = VSIFSeekL(fpImage, static_cast<vsi_l_offset>(nChunkSize),
+                               SEEK_CUR) != 0;
         }
-        VSIFSeekL(fpImage, 4, SEEK_CUR);  // CRC
+        bError = bError || VSIFSeekL(fpImage, 4, SEEK_CUR) != 0;  // CRC
     }
-    VSIFSeekL(fpImage, nPosBefore, SEEK_SET);
+    bError = VSIFSeekL(fpImage, nPosBefore, SEEK_SET) != 0 || bError;
     if (bError)
         return CE_Failure;
 
@@ -1351,7 +1360,7 @@ void PNGDataset::Restart()
 
     psPNGInfo = png_create_info_struct(hPNG);
 
-    VSIFSeekL(fpImage, 0, SEEK_SET);
+    CPL_IGNORE_RET_VAL(VSIFSeekL(fpImage, 0, SEEK_SET));
     png_set_read_fn(hPNG, fpImage, png_vsi_read_data);
     png_read_info(hPNG, psPNGInfo);
 
@@ -1614,10 +1623,10 @@ void PNGDataset::CollectXMPMetadata()
     const vsi_l_offset nCurOffset = VSIFTellL(fpImage);
 
     vsi_l_offset nOffset = 8;
-    VSIFSeekL(fpImage, nOffset, SEEK_SET);
+    bool bError = VSIFSeekL(fpImage, nOffset, SEEK_SET) != 0;
 
     // Loop over chunks.
-    while (true)
+    while (!bError)
     {
         int nLength;
 
@@ -1672,7 +1681,7 @@ void PNGDataset::CollectXMPMetadata()
         else
         {
             nOffset += nLength;
-            VSIFSeekL(fpImage, nOffset, SEEK_SET);
+            bError = VSIFSeekL(fpImage, nOffset, SEEK_SET) != 0;
         }
 
         nOffset += 4;
@@ -1681,7 +1690,7 @@ void PNGDataset::CollectXMPMetadata()
             break;
     }
 
-    VSIFSeekL(fpImage, nCurOffset, SEEK_SET);
+    CPL_IGNORE_RET_VAL(VSIFSeekL(fpImage, nCurOffset, SEEK_SET));
 
     bHasReadXMPMetadata = TRUE;
 }
@@ -2061,14 +2070,16 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
             poDS->SetSubdatasetName(pszSubdatasetName);
         }
         poDS->TryLoadXML();
+
+        poDS->oOvManager.Initialize(poDS, ":::VIRTUAL:::");
     }
     else
     {
         poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
-    }
 
-    // Open overviews.
-    poDS->oOvManager.Initialize(poDS, poOpenInfo);
+        // Open overviews.
+        poDS->oOvManager.Initialize(poDS, poOpenInfo);
+    }
 
     // Used by JPEG FLIR
     poDS->m_bByteOrderIsLittleEndian = CPLTestBool(CSLFetchNameValueDef(

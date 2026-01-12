@@ -35,11 +35,9 @@ in the neighborhood defined by the kernel, source nodata values are ignored.
 
 This algorithm can be part of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeline`.
 
-.. only:: html
+.. figure:: ../../images/programs/gdal_raster_neighbors.svg
 
-   .. figure:: ../../images/programs/gdal_raster_neighbors.svg
-
-      Raster dataset before (left) and after (right) summation with a 3x3 equal-weight kernel. NoData values are considered zero for the purpose of the summation. Edge cells are replicated where the kernel window extends beyond the edge of the dataset.
+   Raster dataset before (left) and after (right) summation with a 3x3 equal-weight kernel. NoData values are considered zero for the purpose of the summation. Edge cells are replicated where the kernel window extends beyond the edge of the dataset.
 
 .. GDALG output (on-the-fly / streamed dataset)
 .. --------------------------------------------

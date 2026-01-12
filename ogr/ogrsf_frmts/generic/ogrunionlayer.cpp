@@ -43,6 +43,7 @@ OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
 /*                      OGRUnionLayerGeomFieldDefn()                    */
 /************************************************************************/
 
+// cppcheck-suppress missingMemberCopy
 OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
     const OGRUnionLayerGeomFieldDefn &oSrc)
     : OGRGeomFieldDefn(oSrc), bGeomTypeSet(oSrc.bGeomTypeSet),

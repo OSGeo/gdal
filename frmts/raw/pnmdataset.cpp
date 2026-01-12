@@ -44,6 +44,7 @@ class PNMDataset final : public RawDataset
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
+    static GDALDataset *OpenInternal(GDALOpenInfo *, bool bInCreation);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
                                char **papszOptions);
@@ -134,6 +135,17 @@ int PNMDataset::Identify(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 GDALDataset *PNMDataset::Open(GDALOpenInfo *poOpenInfo)
+
+{
+    return OpenInternal(poOpenInfo, false);
+}
+
+/************************************************************************/
+/*                            OpenInternal()                            */
+/************************************************************************/
+
+GDALDataset *PNMDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
+                                      bool bInCreation)
 
 {
     /* -------------------------------------------------------------------- */
@@ -258,6 +270,7 @@ GDALDataset *PNMDataset::Open(GDALOpenInfo *poOpenInfo)
                 RawRasterBand::OwnFP::NO);
             if (!poBand)
                 return nullptr;
+            poBand->SetTruncatedFileAllowed(bInCreation);
             poBand->SetColorInterpretation(
                 static_cast<GDALColorInterp>(GCI_RedBand + i));
             poDS->SetBand(i + 1, std::move(poBand));
@@ -383,7 +396,7 @@ GDALDataset *PNMDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
-    return Open(&oOpenInfo);
+    return OpenInternal(&oOpenInfo, true);
 }
 
 /************************************************************************/

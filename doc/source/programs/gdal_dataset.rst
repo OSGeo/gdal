@@ -26,6 +26,7 @@ Available sub-commands
 ----------------------
 
 - :ref:`gdal_dataset_identify`: Identify driver opening dataset(s)
+- :ref:`gdal_dataset_check`: Check whether there are errors when reading the content of a dataset.
 - :ref:`gdal_dataset_copy`: Copy files of a dataset.
 - :ref:`gdal_dataset_rename`: Rename files of a dataset.
 - :ref:`gdal_dataset_delete`: Delete dataset(s)

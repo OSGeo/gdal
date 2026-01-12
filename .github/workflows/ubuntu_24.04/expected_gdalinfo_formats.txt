@@ -133,6 +133,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   STACIT -raster- (rovs): Spatio-Temporal Asset Catalog Items
   JPEGXL -raster- (rwv): JPEG-XL (*.jxl)
   GDALG -raster,vector- (rov): GDAL Streamed Algorithm driver (*.gdalg.json)
+  E57 -raster- (rovs): ASTM E57 3D file format (image part) (*.e57)
   GPKG -raster,vector- (rw+uvs): GeoPackage (*.gpkg, *.gpkg.zip)
   SQLite -raster,vector- (rw+uvs): SQLite / Spatialite / RasterLite2 (*.sqlite, *.db)
   OpenFileGDB -raster,vector- (rw+uv): ESRI FileGeodatabase (using OpenFileGDB) (*.gdb)

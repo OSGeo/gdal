@@ -589,6 +589,63 @@ Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 7
 
 
 ###############################################################################
+# Test BOUNDS metadata item
+
+
+def test_ogr_mitab_bounds_metadata(tmp_vsimem):
+
+    bounds = "475000,4760000,482000,4770000"
+
+    ds = gdal.VectorTranslate(
+        tmp_vsimem / "poly.tab",
+        "data/poly.shp",
+        layerCreationOptions={"BOUNDS": bounds},
+    )
+
+    assert ds.GetLayer(0).GetMetadataItem("BOUNDS") == bounds
+
+    ds.Close()
+
+    with ogr.Open(tmp_vsimem / "poly.tab") as ds:
+        assert ds.GetLayer(0).GetMetadataItem("BOUNDS") == bounds
+
+    # custom bounds are preserved with TAB->TAB translation
+    ds2 = gdal.VectorTranslate(tmp_vsimem / "poly2.tab", tmp_vsimem / "poly.tab")
+    assert ds2.GetLayer(0).GetMetadataItem("BOUNDS") == bounds
+
+    # bounds invalidated if we reproject
+    ds3 = gdal.VectorTranslate(
+        tmp_vsimem / "poly3.tab",
+        tmp_vsimem / "poly.tab",
+        dstSRS="EPSG:4326",
+        reproject=True,
+    )
+    assert ds3.GetLayer(0).GetMetadataItem("BOUNDS") != bounds
+
+
+@pytest.mark.require_geos()
+def test_ogr_mitab_bounds_metadata_pipeline(tmp_vsimem):
+
+    pipeline = gdal.Algorithm("vector", "pipeline")
+
+    src_fname = "/vsizip/data/mitab/all_geoms_block_32256.zip"
+    dst_fname = tmp_vsimem / "out.tab"
+
+    with gdal.OpenEx(src_fname) as src_ds:
+        src_bounds = src_ds.GetLayer(0).GetMetadataItem("BOUNDS")
+        assert src_bounds
+
+    assert pipeline.ParseRunAndFinalize(
+        ["read", src_fname, "!", "buffer", 20, "!", "write", dst_fname]
+    )
+
+    with gdal.OpenEx(dst_fname) as dst_ds:
+        dst_bounds = dst_ds.GetLayer(0).GetMetadataItem("BOUNDS")
+        assert dst_bounds
+        assert dst_bounds != src_bounds
+
+
+###############################################################################
 # Create .tab without explicit field
 
 

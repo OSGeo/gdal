@@ -4050,15 +4050,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
 {
     VALIDATE_POINTER1(pszFilename, "GDALOpen", nullptr);
 
-    // Hack for the ZARR driver. We translate the CACHE_KERCHUNK_JSON
-    // into VSIKERCHUNK_USE_CACHE config option
-    std::unique_ptr<CPLConfigOptionSetter> poVSIKERCHUNK_USE_CACHESetter;
-    if (CPLFetchBool(papszOpenOptions, "CACHE_KERCHUNK_JSON", false))
-    {
-        poVSIKERCHUNK_USE_CACHESetter = std::make_unique<CPLConfigOptionSetter>(
-            "VSIKERCHUNK_USE_CACHE", "YES", false);
-    }
-
     // Do some sanity checks on incompatible flags with thread-safe mode.
     if ((nOpenFlags & GDAL_OF_THREAD_SAFE) != 0)
     {
@@ -4112,17 +4103,93 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
         }
     }
 
-    GDALDriverManager *poDM = GetGDALDriverManager();
-    // CPLLocaleC  oLocaleForcer;
-
     CPLErrorReset();
     VSIErrorReset();
-    CPLAssert(nullptr != poDM);
 
     // Build GDALOpenInfo just now to avoid useless file stat'ing if a
     // shared dataset was asked before.
-    GDALOpenInfo oOpenInfo(pszFilename, nOpenFlags,
-                           const_cast<char **>(papszSiblingFiles));
+    GDALOpenInfo oOpenInfo(pszFilename, nOpenFlags, papszSiblingFiles);
+
+    return GDALDataset::Open(&oOpenInfo, papszAllowedDrivers, papszOpenOptions)
+        .release();
+}
+
+/************************************************************************/
+/*                       GDALDataset::Open()                            */
+/************************************************************************/
+
+/**
+ * \brief Open a raster or vector file as a GDALDataset.
+ *
+ * This function will use the passed open info on each registered GDALDriver in
+ * turn.
+ * The first successful open will result in a returned dataset.  If all
+ * drivers fail then NULL is returned and an error is issued.
+ *
+ * Several recommendations :
+ * <ul>
+ * <li>If you open a dataset object with GDAL_OF_UPDATE access, it is not
+ * recommended to open a new dataset on the same underlying file.</li>
+ * <li>The returned dataset should only be accessed by one thread at a time. If
+ * you want to use it from different threads, you must add all necessary code
+ * (mutexes, etc.)  to avoid concurrent use of the object. (Some drivers, such
+ * as GeoTIFF, maintain internal state variables that are updated each time a
+ * new block is read, thus preventing concurrent use.) </li>
+ * </ul>
+ *
+ * For drivers supporting the VSI virtual file API, it is possible to open a
+ * file in a .zip archive (see VSIInstallZipFileHandler()), in a
+ * .tar/.tar.gz/.tgz archive (see VSIInstallTarFileHandler()) or on a HTTP / FTP
+ * server (see VSIInstallCurlFileHandler())
+ *
+ * @param poOpenInfo a pointer to an open info instance. Must NOT be NULL,
+ * and the GDAL_OF_SHARED flag must NOT be set in poOpenInfo->nOpenFlags.
+ * If shared dataset is needed, use GDALOpenEx() or the other variant of
+ * GDALDataset::Open()
+ *
+ * @param papszAllowedDrivers NULL to consider all candidate drivers, or a NULL
+ * terminated list of strings with the driver short names that must be
+ * considered.
+ *
+ * @param papszOpenOptions NULL, or a NULL terminated list of strings with open
+ * options passed to candidate drivers. An option exists for all drivers,
+ * OVERVIEW_LEVEL=level, to select a particular overview level of a dataset.
+ * The level index starts at 0. The level number can be suffixed by "only" to
+ * specify that only this overview level must be visible, and not sub-levels.
+ * Open options are validated by default, and a warning is emitted in case the
+ * option is not recognized. In some scenarios, it might be not desirable (e.g.
+ * when not knowing which driver will open the file), so the special open option
+ * VALIDATE_OPEN_OPTIONS can be set to NO to avoid such warnings. Alternatively,
+ * that it may not cause a warning if the driver doesn't declare this option.
+ * OVERVIEW_LEVEL=NONE is supported to indicate that
+ * no overviews should be exposed.
+ *
+ * @return A GDALDataset unique pointer or NULL on failure.
+ *
+ * @since 3.13
+ */
+
+std::unique_ptr<GDALDataset>
+GDALDataset::Open(GDALOpenInfo *poOpenInfo,
+                  const char *const *papszAllowedDrivers,
+                  const char *const *papszOpenOptions)
+{
+    // Hack for the ZARR driver. We translate the CACHE_KERCHUNK_JSON
+    // into VSIKERCHUNK_USE_CACHE config option
+    std::unique_ptr<CPLConfigOptionSetter> poVSIKERCHUNK_USE_CACHESetter;
+    if (CPLFetchBool(papszOpenOptions, "CACHE_KERCHUNK_JSON", false))
+    {
+        poVSIKERCHUNK_USE_CACHESetter = std::make_unique<CPLConfigOptionSetter>(
+            "VSIKERCHUNK_USE_CACHE", "YES", false);
+    }
+
+    GDALDriverManager *poDM = GetGDALDriverManager();
+
+    CPLAssert(nullptr != poDM);
+
+    GDALOpenInfo &oOpenInfo = *poOpenInfo;
+    const char *pszFilename = poOpenInfo->pszFilename;
+    const int nOpenFlags = poOpenInfo->nOpenFlags;
     oOpenInfo.papszAllowedDrivers = papszAllowedDrivers;
 
     GDALAntiRecursionStruct &sAntiRecursion = GetAntiRecursionOpen();
@@ -4446,7 +4513,7 @@ retry:
                 }
             }
 
-            return poDS;
+            return std::unique_ptr<GDALDataset>(poDS);
         }
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION

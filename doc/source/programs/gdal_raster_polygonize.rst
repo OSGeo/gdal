@@ -34,9 +34,7 @@ details on the algorithm.
 
 Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline`.
 
-.. only:: html
-
-   .. figure:: ../../images/programs/gdal_raster_polygonize.svg
+.. figure:: ../../images/programs/gdal_raster_polygonize.svg
 
    Polygonization of a 3x3 raster input. The middle figure shows the default behavior,
    where separate polygons are created for pixel regions that are connected only to

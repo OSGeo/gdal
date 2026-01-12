@@ -878,7 +878,7 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     {
         CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                  "WEBP driver doesn't support data type %s. "
-                 "Only eight bit byte bands supported.",
+                 "Only UInt8 bands supported.",
                  GDALGetDataTypeName(
                      poSrcDS->GetRasterBand(1)->GetRasterDataType()));
 

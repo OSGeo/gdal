@@ -4271,10 +4271,21 @@ class CPL_DLL OGRGeometryFactory
 
     static OGRGeometry *removeLowerDimensionSubGeoms(const OGRGeometry *poGeom);
 
+    static std::unique_ptr<OGRGeometry>
+    organizePolygons(std::vector<std::unique_ptr<OGRGeometry>> &apoPolygons,
+                     bool *pbResultValidGeometry = nullptr,
+                     CSLConstList papszOptions = nullptr);
+
     static OGRGeometry *organizePolygons(OGRGeometry **papoPolygons,
                                          int nPolygonCount,
                                          int *pbResultValidGeometry,
-                                         const char **papszOptions = nullptr);
+                                         CSLConstList papszOptions = nullptr)
+#ifndef DOXYGEN_SKIP
+        CPL_WARN_DEPRECATED("Use variant that accepts a "
+                            "std::vector<std::unique_ptr<OGRGeometry>>&")
+#endif
+            ;
+
     static bool haveGEOS();
 
     /** Opaque class used as argument to transformWithOptions() */

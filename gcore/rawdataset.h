@@ -111,6 +111,8 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
     bool bLoadedScanlineDirty = false;  // true when the buffer has
                                         // modified content that needs to
                                         // be pushed to disk
+    bool bFlushCacheAtClosingHasRun = false;
+    bool bTruncatedFileAllowed = false;
 
     GDALColorTable *poCT{};
     GDALColorInterp eInterp = GCI_Undefined;
@@ -234,6 +236,11 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
     int GetOwnsFP() const
     {
         return bOwnsFP;
+    }
+
+    void SetTruncatedFileAllowed(bool allowed)
+    {
+        bTruncatedFileAllowed = allowed;
     }
 
   private:

@@ -147,7 +147,8 @@ class EHdrRasterBand final : public RawRasterBand
     EHdrRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
                    vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
                    GDALDataType eDataType,
-                   RawRasterBand::ByteOrder eByteOrderIn, int nBits);
+                   RawRasterBand::ByteOrder eByteOrderIn, int nBits,
+                   bool bTruncatedFileAllowedIn);
 
     bool IsValid() const
     {

@@ -377,7 +377,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     static constexpr int FIRST_CUSTOM_SRSID = 100000;
 
     int GetSrsId(const OGRSpatialReference *poSRS);
-    const char *GetSrsName(const OGRSpatialReference &oSRS);
+    static const char *GetSrsName(const OGRSpatialReference &oSRS);
     std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
     GetSpatialRef(int iSrsId, bool bFallbackToEPSG = false,
                   bool bEmitErrorIfNotFound = true);
@@ -1017,7 +1017,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr SaveExtent();
     OGRErr SaveTimestamp();
     OGRErr BuildColumns();
-    bool IsGeomFieldSet(OGRFeature *poFeature);
+    static bool IsGeomFieldSet(OGRFeature *poFeature);
     std::string FeatureGenerateUpdateSQL(const OGRFeature *poFeature) const;
     std::string FeatureGenerateUpdateSQL(
         const OGRFeature *poFeature, int nUpdatedFieldsCount,

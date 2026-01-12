@@ -31,11 +31,9 @@ If the coverage is valid, the output dataset will be empty unless :option:`--inc
 
 It is assumed that the individual polygons are themselves valid according to the :term:`OGC` Simple Features standard. This can be checked by :ref:`gdal_vector_check_geometry`.
 
-.. only:: html
+.. figure:: ../../images/programs/gdal_vector_check_coverage.svg
 
-   .. figure:: ../../images/programs/gdal_vector_check_coverage.svg
-
-      Polygon dataset (left) and locations of invalid coverage edges (right).
+   Polygon dataset (left) and locations of invalid coverage edges (right).
 
 .. note:: This command requires a GDAL build against the GEOS library (version 3.12 or greater).
 
