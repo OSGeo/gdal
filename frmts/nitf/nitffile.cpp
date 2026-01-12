@@ -569,6 +569,13 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
                  nBands);
         return FALSE;
     }
+    if (nLines > 99999999 || nPixels > 99999999)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "NITF does not support image whose dimension is larger than "
+                 "99999999");
+        return FALSE;
+    }
 
     if (pszIC == nullptr)
         pszIC = "NC";
