@@ -1826,3 +1826,25 @@ def test_jpeg_create_copy_only_visible_at_close_time(tmp_path):
 
     with gdal.Open(out_filename) as ds:
         ds.GetRasterBand(1).Checksum()
+
+
+###############################################################################
+
+
+def test_jpeg_optimized_rasterio():
+
+    ds = gdal.Open("data/jpeg/rgbsmall_rgb.jpg")
+    assert ds.ReadRaster() == b"".join(
+        [ds.GetRasterBand(i + 1).ReadRaster() for i in range(3)]
+    )
+
+    assert ds.ReadRaster(
+        buf_obj=bytearray(b"\x00" * (50 * 50 * 3 * 2)), buf_pixel_space=2
+    ) == b"".join(
+        [
+            ds.GetRasterBand(i + 1).ReadRaster(
+                buf_obj=bytearray(b"\x00" * (50 * 50 * 2)), buf_pixel_space=2
+            )
+            for i in range(3)
+        ]
+    )

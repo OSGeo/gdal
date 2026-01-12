@@ -3012,14 +3012,27 @@ CPLErr JPGDatasetCommon::IRasterIO(
                 CPLErr tmpError = LoadScanline(y);
                 if (tmpError != CE_None)
                     return tmpError;
-                for (int x = 0; x < nXSize; ++x)
+
+                if (nPixelSpace == 1 && nBandSpace >= nXSize * nYSize)
                 {
-                    pabyData[(y * nLineSpace) + (x * nPixelSpace)] =
-                        m_pabyScanline[x * 3];
-                    pabyData[(y * nLineSpace) + (x * nPixelSpace) +
-                             nBandSpace] = m_pabyScanline[x * 3 + 1];
-                    pabyData[(y * nLineSpace) + (x * nPixelSpace) +
-                             2 * nBandSpace] = m_pabyScanline[x * 3 + 2];
+                    void *apDestBuffers[3] = {
+                        pabyData + y * nLineSpace + 0 * nBandSpace,
+                        pabyData + y * nLineSpace + 1 * nBandSpace,
+                        pabyData + y * nLineSpace + 2 * nBandSpace};
+                    GDALDeinterleave(m_pabyScanline, GDT_UInt8, 3,
+                                     apDestBuffers, GDT_UInt8, nXSize);
+                }
+                else
+                {
+                    for (int x = 0; x < nXSize; ++x)
+                    {
+                        pabyData[(y * nLineSpace) + (x * nPixelSpace)] =
+                            m_pabyScanline[x * 3];
+                        pabyData[(y * nLineSpace) + (x * nPixelSpace) +
+                                 nBandSpace] = m_pabyScanline[x * 3 + 1];
+                        pabyData[(y * nLineSpace) + (x * nPixelSpace) +
+                                 2 * nBandSpace] = m_pabyScanline[x * 3 + 2];
+                    }
                 }
             }
         }
