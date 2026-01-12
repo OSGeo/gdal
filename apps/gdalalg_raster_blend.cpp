@@ -755,8 +755,8 @@ static void BlendMultiply_Generic(
     const GByte *CPL_RESTRICT pabyOverlayG,
     const GByte *CPL_RESTRICT pabyOverlayB,
     const GByte *CPL_RESTRICT pabyOverlayA, GByte *CPL_RESTRICT pabyDst,
-    [[maybe_unused]] GSpacing nPixelSpace, GSpacing nBandSpace, int i, int N,
-    GByte nOpacity)
+    [[maybe_unused]] GSpacing nPixelSpace, GSpacing nBandSpace, size_t i,
+    size_t N, GByte nOpacity)
 {
     // TODO: optimize for the various cases (with/without alpha, grayscale/RGB)
     // Determine the number of output bands
