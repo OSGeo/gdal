@@ -75,7 +75,7 @@ Standard options
    Input multidimensional dataset names. Required.
 
    Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used for input dataset
-   names, even on files located on network file systems such as /vsigs/.
+   names, even on files located on network file systems such as ``/vsigs/``.
    Alternatively if a input dataset name is prefixed by the `@` character, it will
    be assumed to contain the list of actual dataset names (one per line) to use
    as input datasets.
