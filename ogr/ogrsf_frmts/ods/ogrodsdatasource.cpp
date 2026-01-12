@@ -725,7 +725,7 @@ void OGRODSDataSource::DetectHeaderLine()
         bFirstLineIsHeaders = true;
     }
     else if (bHeaderLineCandidate && !apoFirstLineTypes.empty() &&
-             apoFirstLineTypes.size() == apoCurLineTypes.size() &&
+             apoFirstLineTypes.size() >= apoCurLineTypes.size() &&
              nCountTextOnCurLine != apoFirstLineTypes.size() &&
              nCountNonEmptyOnCurLine != 0)
     {
