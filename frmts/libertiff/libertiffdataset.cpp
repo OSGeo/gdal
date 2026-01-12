@@ -1799,14 +1799,16 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                     nNativeDTSize * iY * nBlockXSize * nBands;
                 if (nBands == 3 && nPixelSpace == 4 && nBufTypeSize == 1)
                 {
-                    for (int iX = 0; iX < nBlockActualXSize; ++iX)
+                    for (size_t iX = 0;
+                         iX < static_cast<size_t>(nBlockActualXSize); ++iX)
                     {
                         memcpy(pabyDst + iX * 4, pabySrc + iX * 3, 3);
                     }
                 }
                 else
                 {
-                    for (int iX = 0; iX < nBlockActualXSize; ++iX)
+                    for (size_t iX = 0;
+                         iX < static_cast<size_t>(nBlockActualXSize); ++iX)
                     {
                         memcpy(pabyDst + iX * nPixelSpace,
                                pabySrc + iX * nBands, nBands * nBufTypeSize);
@@ -1825,8 +1827,9 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                 {
                     GDALCopyWords64(
                         abyDecompressedStrile.data() +
-                            nNativeDTSize *
-                                (iY * nBlockXSize * nSrcPixels + iSrcBand),
+                            nNativeDTSize * (static_cast<size_t>(iY) *
+                                                 nBlockXSize * nSrcPixels +
+                                             iSrcBand),
                         eNativeDT, static_cast<int>(nSrcPixels * nNativeDTSize),
                         pabyBlockData + iBand * nBandSpace + iY * nLineSpace,
                         eBufType, static_cast<int>(nPixelSpace),
