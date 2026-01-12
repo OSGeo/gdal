@@ -6577,6 +6577,39 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
         }
     }
 
+    else if (pszName && pszDomain && EQUAL(pszDomain, "json:ISIS3"))
+    {
+        auto oIter = m_oMapISIS3MetadataItems.find(pszName);
+        if (oIter != m_oMapISIS3MetadataItems.end())
+        {
+            return oIter->second.c_str();
+        }
+        else
+        {
+            if (!m_oISIS3Metadata.IsValid())
+            {
+                CSLConstList papszMD = m_oGTiffMDMD.GetMetadata(pszDomain);
+                if (papszMD && papszMD[0])
+                {
+                    CPLJSONDocument oDoc;
+                    if (oDoc.LoadMemory(papszMD[0]))
+                    {
+                        m_oISIS3Metadata = oDoc.GetRoot();
+                    }
+                }
+            }
+            CPLJSONObject obj = m_oISIS3Metadata[pszName];
+            if (obj.IsValid())
+            {
+                return m_oMapISIS3MetadataItems
+                    .insert(std::pair<std::string, std::string>(pszName,
+                                                                obj.ToString()))
+                    .first->second.c_str();
+            }
+            return nullptr;
+        }
+    }
+
     return m_oGTiffMDMD.GetMetadataItem(pszName, pszDomain);
 }
 
