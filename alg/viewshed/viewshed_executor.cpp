@@ -234,8 +234,10 @@ void ViewshedExecutor::setOutputNormal(Lines &lines, int pos, double dfZ)
             result += adjustment;
     }
     else
-        result = (cur + oOpts.targetHeight < dfZ) ? oOpts.invisibleVal
-                                                  : oOpts.visibleVal;
+    {
+        double cellHeight = cur + oOpts.targetHeight;
+        result = (cellHeight < dfZ) ? oOpts.invisibleVal : oOpts.visibleVal;
+    }
     cur = std::max(cur, dfZ);
 }
 
@@ -287,7 +289,6 @@ bool ViewshedExecutor::readLine(int nLine, Lines &lines)
 
     if (sdMode())
     {
-        lines.input = lines.cur;
         double nodata = m_sdBand.GetNoDataValue();
         CPLErr sdStatus = m_sdBand.RasterIO(
             GF_Read, oOutExtent.xStart, nLine, oOutExtent.xSize(), 1,
@@ -490,6 +491,11 @@ bool ViewshedExecutor::processFirstLine(Lines &lines)
         m_dfZObserver += lines.cur[m_nX];
 
     LineLimits ll = adjustHeight(nYOffset, lines);
+
+    std::vector<double> savedInput;
+    if (sdMode())
+        savedInput = lines.cur;
+
     if (oCurExtent.containsX(m_nX))
     {
         if (ll.leftMin != ll.rightMin)
@@ -517,7 +523,7 @@ bool ViewshedExecutor::processFirstLine(Lines &lines)
     lines.prev = lines.cur;
     if (sdMode())
     {
-        lines.cur = std::move(lines.input);
+        lines.cur = std::move(savedInput);
         process(true);
         lines.prevTmp = lines.cur;
     }
@@ -1013,6 +1019,10 @@ bool ViewshedExecutor::processLine(int nLine, Lines &lines)
     // Adjust height of the read line.
     LineLimits ll = adjustHeight(nYOffset, lines);
 
+    std::vector<double> savedLine;
+    if (sdMode())
+        savedLine = lines.cur;
+
     auto process = [this, nYOffset, &ll, &lines](bool sdCalc)
     {
         CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
@@ -1043,7 +1053,7 @@ bool ViewshedExecutor::processLine(int nLine, Lines &lines)
     {
         lines.prev = std::move(lines.prevTmp);
         lines.prevTmp = std::move(lines.cur);
-        lines.cur = std::move(lines.input);
+        lines.cur = std::move(savedLine);
         // Handle initial position on the line.
         if (!masked && oCurExtent.containsX(m_nX))
         {
