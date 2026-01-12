@@ -134,7 +134,7 @@ ________________________
 
 -  A cache can exceed the maximum size supported by GDAL, which
    is INT32_MAX, in either dimension. This driver will ignore
-   resolution levels that exceeds the raster size limit.
+   resolution levels that exceed the raster size limit.
 
 Open options
 ------------
