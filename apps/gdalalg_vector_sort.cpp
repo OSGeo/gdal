@@ -69,10 +69,9 @@ class GDALFileFeatureStore : public GDALFeatureStore
 {
   public:
     GDALFileFeatureStore()
+        : m_fileName(CPLGenerateTempFilenameSafe(nullptr)),
+          m_file(VSIFOpenL(m_fileName.c_str(), "wb+"))
     {
-        m_fileName = CPLGenerateTempFilenameSafe(nullptr);
-        m_file = VSIFOpenL(m_fileName.c_str(), "wb+");
-
         if (m_file == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
