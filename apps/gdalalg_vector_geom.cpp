@@ -258,27 +258,43 @@ std::unique_ptr<OGRFeature>
 GDALGeosNonStreamingAlgorithmLayer::GetNextProcessedFeature()
 {
     GEOSGeometry *poGeosResult = nullptr;
-    while (poGeosResult == nullptr && m_readPos < m_nGeosResultSize)
+#ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+    size_t ngeoms = m_nGeosResultSize;
+#else
+    size_t ngeoms = static_cast<size_t>(
+        GEOSGetNumGeometries_r(m_poGeosContext, m_poGeosResultAsCollection));
+#endif
+
+    while (poGeosResult == nullptr && m_readPos < ngeoms)
     {
 #ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
         poGeosResult = m_papoGeosResults[m_readPos];
+#else
+        poGeosResult = const_cast<GEOSGeometry *>(GEOSGetGeometryN_r(
+            m_poGeosContext, m_poGeosResultAsCollection, m_readPos));
+#endif
 
         const bool skipFeature =
             SkipEmpty() && GEOSisEmpty_r(m_poGeosContext, poGeosResult);
 
         if (skipFeature)
         {
+#ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
             GEOSGeom_destroy_r(m_poGeosContext, poGeosResult);
             m_papoGeosResults[m_readPos] = nullptr;
+#endif
             poGeosResult = nullptr;
         }
 
         m_readPos++;
     }
-#endif
 
     if (poGeosResult == nullptr)
     {
+#ifndef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+        GEOSGeom_destroy_r(m_poGeosContext, m_poGeosResultAsCollection);
+        m_poGeosResultAsCollection = nullptr;
+#endif
         return nullptr;
     }
 
