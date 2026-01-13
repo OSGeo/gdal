@@ -39,7 +39,7 @@
 /************************************************************************/
 /*                        CompositionModes                              */
 /************************************************************************/
-std::map<CompositionMode, std::string> CompositionModes()
+static std::map<CompositionMode, std::string> CompositionModes()
 {
     return {
         {CompositionMode::SRC_OVER, "src-over"},
