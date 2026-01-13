@@ -11,7 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import numpy as np
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -275,6 +275,11 @@ def test_gdalalg_raster_mode_ground(viewshed_input):
 
 
 def test_gdalalg_raster_sd(viewshed_input, viewshed_sd_input):
+
+    # Some test configurations don't support numpy. This will skip those
+    # configurations.
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
 
     alg = get_alg()
     alg["input"] = viewshed_input
