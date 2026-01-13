@@ -1327,9 +1327,19 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
         return true;
     }
 
-    std::vector<GByte> &abyDecompressedStrile = tlsState.m_decompressedBuffer;
+    GByte *pabyDecompressedStrile = nullptr;
     const size_t nNativeDTSize =
         static_cast<size_t>(GDALGetDataTypeSizeBytes(eNativeDT));
+
+    const auto IsContiguousBandMap = [nBandCount, panBandMap]()
+    {
+        for (int i = 0; i < nBandCount; ++i)
+        {
+            if (panBandMap[i] != i + 1)
+                return false;
+        }
+        return true;
+    };
 
     if (curStrileIdx != tlsState.m_curStrileIdx)
     {
@@ -1338,36 +1348,59 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
 
         // Overflow in multiplication checked in Open() method
         const int nComponentsPerPixel = bSeparate ? 1 : nBands;
+        const int nActualLineCount =
+            m_image->isTiled() ? nBlockYSize : nBlockActualYSize;
         const size_t nActualPixelCount =
-            static_cast<size_t>(m_image->isTiled() ? nBlockYSize
-                                                   : nBlockActualYSize) *
-            nBlockXSize;
+            static_cast<size_t>(nActualLineCount) * nBlockXSize;
         const int nLineSizeBytes = m_image->bitsPerSample() == 1
                                        ? cpl::div_round_up(nBlockXSize, 8)
                                        : nBlockXSize;
         const size_t nActualUncompressedSize =
-            nNativeDTSize *
-            static_cast<size_t>(m_image->isTiled() ? nBlockYSize
-                                                   : nBlockActualYSize) *
+            nNativeDTSize * static_cast<size_t>(nActualLineCount) *
             nLineSizeBytes * nComponentsPerPixel;
 
-        // Allocate buffer for decompressed strile
-        if (abyDecompressedStrile.empty())
+        const bool bCanDecompressDirectlyIntoOutputBuffer =
+            pabyBlockData != nullptr && m_image->bitsPerSample() != 1 &&
+            eBufType == eNativeDT &&
+            nPixelSpace ==
+                static_cast<GSpacing>(nNativeDTSize) * nComponentsPerPixel &&
+            (nActualLineCount == 1 ||
+             nLineSpace == nPixelSpace * nBlockXSize) &&
+            ((bSeparate && nBandCount == 1) ||
+             (!bSeparate && nBandCount == nBands &&
+              (nBands == 1 ||
+               (nBandSpace == static_cast<GSpacing>(nNativeDTSize) &&
+                IsContiguousBandMap()))));
+
+        if (bCanDecompressDirectlyIntoOutputBuffer)
         {
-            const size_t nMaxUncompressedSize =
-                nNativeDTSize * nBlockXSize * nBlockYSize * nComponentsPerPixel;
-            try
+            // Use directly output buffer to decompress strile
+            pabyDecompressedStrile = pabyBlockData;
+        }
+        else
+        {
+            // Allocate buffer for decompressed strile
+            std::vector<GByte> &abyDecompressedStrile =
+                tlsState.m_decompressedBuffer;
+            if (abyDecompressedStrile.empty())
             {
-                abyDecompressedStrile.resize(nMaxUncompressedSize);
-                if (m_image->bitsPerSample() == 1)
-                    bufferForOneBitExpansion.resize(nMaxUncompressedSize);
+                const size_t nMaxUncompressedSize = nNativeDTSize *
+                                                    nBlockXSize * nBlockYSize *
+                                                    nComponentsPerPixel;
+                try
+                {
+                    abyDecompressedStrile.resize(nMaxUncompressedSize);
+                    if (m_image->bitsPerSample() == 1)
+                        bufferForOneBitExpansion.resize(nMaxUncompressedSize);
+                }
+                catch (const std::exception &)
+                {
+                    CPLError(CE_Failure, CPLE_OutOfMemory,
+                             "Out of memory allocating temporary buffer");
+                    return false;
+                }
             }
-            catch (const std::exception &)
-            {
-                CPLError(CE_Failure, CPLE_OutOfMemory,
-                         "Out of memory allocating temporary buffer");
-                return false;
-            }
+            pabyDecompressedStrile = abyDecompressedStrile.data();
         }
 
         if (m_image->compression() != LIBERTIFF_NS::Compression::None)
@@ -1476,7 +1509,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                 if ((tlsState.m_tiff.tif_predecode &&
                      tlsState.m_tiff.tif_predecode(&tlsState.m_tiff, 0) == 0) ||
                     tlsState.m_tiff.tif_decodestrip(
-                        &tlsState.m_tiff, abyDecompressedStrile.data(),
+                        &tlsState.m_tiff, pabyDecompressedStrile,
                         nActualUncompressedSize, 0) == 0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -1546,8 +1579,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                 }
                 if (poTmpDS->GetRasterCount() != nComponentsPerPixel ||
                     poTmpDS->GetRasterXSize() != nBlockXSize ||
-                    poTmpDS->GetRasterYSize() !=
-                        (m_image->isTiled() ? nBlockYSize : nBlockActualYSize))
+                    poTmpDS->GetRasterYSize() != nActualLineCount)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "%s blob has no expected dimensions (%dx%d "
@@ -1555,16 +1587,15 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                              "whereas %d expected)",
                              drvName, poTmpDS->GetRasterXSize(),
                              poTmpDS->GetRasterYSize(), nBlockXSize,
-                             m_image->isTiled() ? nBlockYSize
-                                                : nBlockActualYSize,
-                             poTmpDS->GetRasterCount(), nComponentsPerPixel);
+                             nActualLineCount, poTmpDS->GetRasterCount(),
+                             nComponentsPerPixel);
                     return false;
                 }
                 GDALRasterIOExtraArg sExtraArg;
                 INIT_RASTERIO_EXTRA_ARG(sExtraArg);
                 if (poTmpDS->RasterIO(
                         GF_Read, 0, 0, poTmpDS->GetRasterXSize(),
-                        poTmpDS->GetRasterYSize(), abyDecompressedStrile.data(),
+                        poTmpDS->GetRasterYSize(), pabyDecompressedStrile,
                         poTmpDS->GetRasterXSize(), poTmpDS->GetRasterYSize(),
                         eNativeDT, poTmpDS->GetRasterCount(), nullptr,
                         nNativeDTSize * nComponentsPerPixel,
@@ -1579,7 +1610,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
             else
             {
                 CPLAssert(m_decompressor);
-                void *output_data = abyDecompressedStrile.data();
+                void *output_data = pabyDecompressedStrile;
                 size_t output_size = nActualUncompressedSize;
                 if (!m_decompressor->pfnFunc(
                         abyCompressedStrile.data(), size, &output_data,
@@ -1590,7 +1621,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                              "Decompression failed");
                     return false;
                 }
-                CPLAssert(output_data == abyDecompressedStrile.data());
+                CPLAssert(output_data == pabyDecompressedStrile);
             }
         }
         else
@@ -1603,8 +1634,8 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
             }
 
             bool ok = true;
-            m_image->readContext()->read(offset, size,
-                                         abyDecompressedStrile.data(), ok);
+            m_image->readContext()->read(offset, size, pabyDecompressedStrile,
+                                         ok);
             if (!ok)
             {
                 CPLError(CE_Failure, CPLE_FileIO,
@@ -1615,6 +1646,8 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
 
         if (m_image->bitsPerSample() == 1)
         {
+            std::vector<GByte> &abyDecompressedStrile =
+                tlsState.m_decompressedBuffer;
             const GByte *CPL_RESTRICT pabySrc = abyDecompressedStrile.data();
             GByte *CPL_RESTRICT pabyDst = bufferForOneBitExpansion.data();
             const int nSrcInc = cpl::div_round_up(nBlockXSize, 8);
@@ -1635,6 +1668,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
             }
 
             std::swap(abyDecompressedStrile, bufferForOneBitExpansion);
+            pabyDecompressedStrile = abyDecompressedStrile.data();
         }
         else if (m_image->compression() == LIBERTIFF_NS::Compression::None ||
                  m_image->compression() == LIBERTIFF_NS::Compression::LZW ||
@@ -1645,14 +1679,14 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
             {
                 if (GDALDataTypeIsComplex(eNativeDT))
                 {
-                    GDALSwapWordsEx(abyDecompressedStrile.data(),
+                    GDALSwapWordsEx(pabyDecompressedStrile,
                                     static_cast<int>(nNativeDTSize) / 2,
                                     nActualPixelCount * nComponentsPerPixel * 2,
                                     static_cast<int>(nNativeDTSize) / 2);
                 }
                 else
                 {
-                    GDALSwapWordsEx(abyDecompressedStrile.data(),
+                    GDALSwapWordsEx(pabyDecompressedStrile,
                                     static_cast<int>(nNativeDTSize),
                                     nActualPixelCount * nComponentsPerPixel,
                                     static_cast<int>(nNativeDTSize));
@@ -1663,9 +1697,9 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
             {
                 for (int iY = 0; iY < nBlockActualYSize; ++iY)
                 {
-                    auto ptr =
-                        abyDecompressedStrile.data() +
-                        nNativeDTSize * iY * nBlockXSize * nComponentsPerPixel;
+                    auto ptr = pabyDecompressedStrile + nNativeDTSize * iY *
+                                                            nBlockXSize *
+                                                            nComponentsPerPixel;
                     if (nNativeDTSize == sizeof(uint8_t))
                     {
                         HorizPredictorDecode<uint8_t>(ptr, nBlockXSize,
@@ -1696,9 +1730,9 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
             {
                 for (int iY = 0; iY < nBlockActualYSize; ++iY)
                 {
-                    auto ptr =
-                        abyDecompressedStrile.data() +
-                        nNativeDTSize * iY * nBlockXSize * nComponentsPerPixel;
+                    auto ptr = pabyDecompressedStrile + nNativeDTSize * iY *
+                                                            nBlockXSize *
+                                                            nComponentsPerPixel;
                     bool ok = true;
                     if (nNativeDTSize == sizeof(uint32_t))
                     {
@@ -1723,21 +1757,18 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                 }
             }
         }
+
+        if (bCanDecompressDirectlyIntoOutputBuffer)
+            return true;
+    }
+    else
+    {
+        pabyDecompressedStrile = tlsState.m_decompressedBuffer.data();
     }
 
     // Copy decompress strile into user buffer
     if (pabyBlockData)
     {
-        const auto IsContiguousBandMap = [nBandCount, panBandMap]()
-        {
-            for (int i = 0; i < nBandCount; ++i)
-            {
-                if (panBandMap[i] != i + 1)
-                    return false;
-            }
-            return true;
-        };
-
         const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
         if (!bSeparate && nBands > 1 && nBands == nBandCount &&
             nBufTypeSize == nPixelSpace && IsContiguousBandMap())
@@ -1759,7 +1790,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                             static_cast<GByte *>(apabyDest[iBand]) + nLineSpace;
                     }
                 }
-                GDALDeinterleave(abyDecompressedStrile.data() +
+                GDALDeinterleave(pabyDecompressedStrile +
                                      nNativeDTSize * iY * nBlockXSize * nBands,
                                  eNativeDT, nBands, apabyDest.data(), eBufType,
                                  nBlockActualXSize);
@@ -1774,7 +1805,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
             for (int iY = 0; iY < nBlockActualYSize; ++iY)
             {
                 GDALCopyWords64(
-                    abyDecompressedStrile.data() +
+                    pabyDecompressedStrile +
                         nNativeDTSize * iY * nBlockXSize * nBands,
                     eNativeDT, static_cast<int>(nNativeDTSize),
                     pabyBlockData + iY * nLineSpace, eBufType, nBufTypeSize,
@@ -1795,7 +1826,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
             {
                 GByte *const pabyDst = pabyBlockData + iY * nLineSpace;
                 const GByte *const pabySrc =
-                    abyDecompressedStrile.data() +
+                    pabyDecompressedStrile +
                     nNativeDTSize * iY * nBlockXSize * nBands;
                 if (nBands == 3 && nPixelSpace == 4 && nBufTypeSize == 1)
                 {
@@ -1826,7 +1857,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
                 for (int iY = 0; iY < nBlockActualYSize; ++iY)
                 {
                     GDALCopyWords64(
-                        abyDecompressedStrile.data() +
+                        pabyDecompressedStrile +
                             nNativeDTSize * (static_cast<size_t>(iY) *
                                                  nBlockXSize * nSrcPixels +
                                              iSrcBand),

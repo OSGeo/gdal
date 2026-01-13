@@ -921,3 +921,82 @@ def test_libertiff_corrupted_lzw():
     ds = libertiff_open("data/gtiff/lzw_corrupted.tif")
     with pytest.raises(Exception):
         ds.ReadRaster()
+
+
+def test_libertiff_non_direct_decompression_non_matching_data_type(tmp_vsimem):
+
+    filename = tmp_vsimem / "test.tif"
+    with gdal.GetDriverByName("GTiff").Create(filename, 2, 1, 1, gdal.GDT_Int16) as ds:
+        ds.GetRasterBand(1).Fill(-1)
+
+    ds = libertiff_open(filename)
+    assert (
+        ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_UInt16) == b"\x00\x00\x00\x00"
+    )
+
+
+def test_libertiff_non_direct_decompression_non_matching_pixel_space(tmp_vsimem):
+
+    filename = tmp_vsimem / "test.tif"
+    with gdal.GetDriverByName("GTiff").Create(filename, 2, 1, 1, gdal.GDT_Int16) as ds:
+        ds.GetRasterBand(1).Fill(-1)
+
+    ds = libertiff_open(filename)
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            buf_obj=bytearray(b"\x00" * 8), buf_pixel_space=4
+        )
+        == b"\xff\xff\x00\x00\xff\xff\x00\x00"
+    )
+
+
+def test_libertiff_non_direct_decompression_non_matching_line_space(tmp_vsimem):
+
+    filename = tmp_vsimem / "test.tif"
+    with gdal.GetDriverByName("GTiff").Create(filename, 1, 2, 1, gdal.GDT_Int16) as ds:
+        ds.GetRasterBand(1).Fill(-1)
+
+    ds = libertiff_open(filename)
+    assert (
+        ds.GetRasterBand(1).ReadRaster(buf_obj=bytearray(b"\x00" * 8), buf_line_space=4)
+        == b"\xff\xff\x00\x00\xff\xff\x00\x00"
+    )
+
+
+@pytest.mark.parametrize("interleave", ["PIXEL", "BAND"])
+def test_libertiff_non_direct_decompression_non_matching_band_space(
+    tmp_vsimem, interleave
+):
+
+    filename = tmp_vsimem / "test.tif"
+    with gdal.GetDriverByName("GTiff").Create(
+        filename, 1, 1, 2, gdal.GDT_Int16, options=["INTERLEAVE=" + interleave]
+    ) as ds:
+        ds.GetRasterBand(1).Fill(-1)
+        ds.GetRasterBand(2).Fill(0x1111)
+
+    ds = libertiff_open(filename)
+    assert (
+        ds.ReadRaster() == b"\xff\xff\x11\x11"
+    )  # optimized in INTERLEAVE=PIXEL case, but not in BAND one
+    assert (
+        ds.ReadRaster(buf_obj=bytearray(b"\x00" * 8), buf_band_space=4)
+        == b"\xff\xff\x00\x00\x11\x11\x00\x00"
+    )
+
+
+@pytest.mark.parametrize("interleave", ["PIXEL", "BAND"])
+def test_libertiff_non_direct_decompression_non_matching_band_list(
+    tmp_vsimem, interleave
+):
+
+    filename = tmp_vsimem / "test.tif"
+    with gdal.GetDriverByName("GTiff").Create(
+        filename, 1, 1, 2, gdal.GDT_Int16, options=["INTERLEAVE=" + interleave]
+    ) as ds:
+        ds.GetRasterBand(1).Fill(-1)
+        ds.GetRasterBand(2).Fill(0x1111)
+
+    ds = libertiff_open(filename)
+    assert ds.ReadRaster(band_list=[1]) == b"\xff\xff"
+    assert ds.ReadRaster(band_list=[2, 1]) == b"\x11\x11\xff\xff"
