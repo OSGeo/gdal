@@ -122,7 +122,7 @@ struct VSILibArchiveClientData
         auto poClientData = static_cast<VSILibArchiveClientData *>(pClientData);
         *ppBuffer = poClientData->m_abyBuffer.data();
         return static_cast<la_ssize_t>(poClientData->m_poBaseHandle->Read(
-            poClientData->m_abyBuffer.data(), 1,
+            poClientData->m_abyBuffer.data(),
             poClientData->m_abyBuffer.size()));
     }
 
@@ -375,7 +375,7 @@ class VSILibArchiveHandler final : public VSIVirtualHandle
     {
     }
 
-    size_t Read(void *pBuffer, size_t nSize, size_t nCount) override;
+    size_t Read(void *pBuffer, size_t nBytes) override;
     int Seek(vsi_l_offset nOffset, int nWhence) override;
 
     vsi_l_offset Tell() override
@@ -383,7 +383,7 @@ class VSILibArchiveHandler final : public VSIVirtualHandle
         return m_nOffset;
     }
 
-    size_t Write(const void *, size_t, size_t) override
+    size_t Write(const void *, size_t) override
     {
         return 0;
     }
@@ -415,9 +415,9 @@ class VSILibArchiveHandler final : public VSIVirtualHandle
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSILibArchiveHandler::Read(void *pBuffer, size_t nSize, size_t nCount)
+size_t VSILibArchiveHandler::Read(void *pBuffer, size_t nBytes)
 {
-    if (m_bError || nSize == 0 || nCount == 0)
+    if (m_bError || nBytes == 0)
         return 0;
     const auto nFileSize = m_poReader->GetFileSize();
     if (m_nOffset == nFileSize)
@@ -425,9 +425,8 @@ size_t VSILibArchiveHandler::Read(void *pBuffer, size_t nSize, size_t nCount)
         m_bEOF = true;
         return 0;
     }
-    size_t nToRead = nSize * nCount;
     auto pArchive = m_poReader->GetArchiveHandler();
-    auto nReadUnsigned = archive_read_data(pArchive, pBuffer, nToRead);
+    auto nReadUnsigned = archive_read_data(pArchive, pBuffer, nBytes);
     if (nReadUnsigned < 0)
     {
         m_bError = true;
@@ -435,7 +434,7 @@ size_t VSILibArchiveHandler::Read(void *pBuffer, size_t nSize, size_t nCount)
         return 0;
     }
     const auto nRead = static_cast<size_t>(nReadUnsigned);
-    if (nRead < nToRead)
+    if (nRead < nBytes)
     {
         if (m_nOffset + nRead == nFileSize)
             m_bEOF = true;
@@ -443,7 +442,7 @@ size_t VSILibArchiveHandler::Read(void *pBuffer, size_t nSize, size_t nCount)
             m_bError = true;
     }
     m_nOffset += nRead;
-    return nRead / nSize;
+    return nRead;
 }
 
 /************************************************************************/
@@ -486,7 +485,7 @@ int VSILibArchiveHandler::Seek(vsi_l_offset nOffset, int nWhence)
     {
         size_t nToRead = static_cast<size_t>(
             std::min<vsi_l_offset>(abyBuffer.size(), nNewOffset - m_nOffset));
-        if (Read(abyBuffer.data(), 1, nToRead) != nToRead)
+        if (Read(abyBuffer.data(), nToRead) != nToRead)
             break;
     }
 

@@ -74,8 +74,8 @@ class VSISparseFileHandle final : public VSIVirtualHandle
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;
-    size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
-    size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    size_t Read(void *pBuffer, size_t nBytes) override;
+    size_t Write(const void *pBuffer, size_t nBytes) override;
     void ClearErr() override;
     int Eof() override;
     int Error() override;
@@ -200,7 +200,7 @@ vsi_l_offset VSISparseFileHandle::Tell()
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSISparseFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
+size_t VSISparseFileHandle::Read(void *pBuffer, size_t nBytes)
 
 {
     if (nCurOffset >= nOverallLength)
@@ -223,7 +223,7 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
             break;
     }
 
-    size_t nBytesRequested = nSize * nCount;
+    size_t nBytesRequested = nBytes;
     if (nBytesRequested == 0)
     {
         return 0;
@@ -242,7 +242,7 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
     {
         memset(pBuffer, 0, nBytesRequested);
         nCurOffset += nBytesRequested;
-        return nBytesRequested / nSize;
+        return nBytesRequested;
     }
 
     /* -------------------------------------------------------------------- */
@@ -265,7 +265,7 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
         bEOF = false;
         const size_t nBytesRead = this->Read(static_cast<char *>(pBuffer) +
                                                  nBytesRequested - nExtraBytes,
-                                             1, nExtraBytes);
+                                             nExtraBytes);
         nCurOffset = nCurOffsetSave;
         bEOF = bEOFSave;
         if (nBytesRead < nExtraBytes)
@@ -314,10 +314,10 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
             }
         }
 
-        if (VSIFSeekL(aoRegions[iRegion].fp,
-                      nCurOffset - aoRegions[iRegion].nDstOffset +
-                          aoRegions[iRegion].nSrcOffset,
-                      SEEK_SET) != 0)
+        if (aoRegions[iRegion].fp->Seek(nCurOffset -
+                                            aoRegions[iRegion].nDstOffset +
+                                            aoRegions[iRegion].nSrcOffset,
+                                        SEEK_SET) != 0)
         {
             bError = true;
             return 0;
@@ -325,10 +325,9 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 
         m_poFS->IncRecCounter();
         const size_t nBytesRead =
-            VSIFReadL(pBuffer, 1, static_cast<size_t>(nBytesRequested),
-                      aoRegions[iRegion].fp);
+            aoRegions[iRegion].fp->Read(pBuffer, nBytesRequested);
         m_poFS->DecRecCounter();
-        if (nBytesRead < static_cast<size_t>(nBytesRequested))
+        if (nBytesRead < nBytesRequested)
         {
             // A short read in a region of a sparse file is always an error
             bError = true;
@@ -339,7 +338,7 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 
     nCurOffset += nBytesReturnCount;
 
-    return nBytesReturnCount / nSize;
+    return nBytesReturnCount;
 }
 
 /************************************************************************/
@@ -347,7 +346,7 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 /************************************************************************/
 
 size_t VSISparseFileHandle::Write(const void * /* pBuffer */,
-                                  size_t /* nSize */, size_t /* nCount */)
+                                  size_t /* nBytes */)
 {
     errno = EBADF;
     return 0;

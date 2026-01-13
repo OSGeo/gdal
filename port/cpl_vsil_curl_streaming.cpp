@@ -339,8 +339,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;
-    size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
-    size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    size_t Read(void *pBuffer, size_t nBytes) override;
+    size_t Write(const void *pBuffer, size_t nBytes) override;
     void ClearErr() override;
     int Error() override;
     int Eof() override;
@@ -750,7 +750,7 @@ bool VSICurlStreamingHandle::Exists(const char *pszFilename,
         }
 
         char chFirstByte = '\0';
-        int bExists = (Read(&chFirstByte, 1, 1) == 1);
+        int bExists = (Read(&chFirstByte, 1) == 1);
 
         FileProp cachedFileProp;
         m_poFS->GetCachedFileProp(m_pszURL, cachedFileProp);
@@ -1183,10 +1183,9 @@ void VSICurlStreamingHandle::PutRingBufferInCache()
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
-                                    size_t const nMemb)
+size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nBytes)
 {
-    const size_t nBufferRequestSize = nSize * nMemb;
+    const size_t nBufferRequestSize = nBytes;
     const vsi_l_offset curOffsetOri = curOffset;
     const vsi_l_offset nRingBufferFileOffsetOri = nRingBufferFileOffset;
     if (nBufferRequestSize == 0)
@@ -1369,8 +1368,8 @@ retry:
         CPLDebug("VSICURL", "Read(%d) = %d",
                  static_cast<int>(nBufferRequestSize),
                  static_cast<int>(nBufferRequestSize - nRemaining));
-    size_t nRet = (nBufferRequestSize - nRemaining) / nSize;
-    if (nRet < nMemb)
+    size_t nRet = nBufferRequestSize - nRemaining;
+    if (nRet < nBytes)
         bEOF = true;
 
     // Give a chance to specialized filesystem to deal with errors to redirect
@@ -1386,7 +1385,7 @@ retry:
         size_t nErrorBufferSize = std::min(nErrorBufferMaxSize, nRead);
         memcpy(pabyErrorBuffer.get(), pBuffer, nErrorBufferSize);
         if (nRead < nErrorBufferMaxSize)
-            nErrorBufferSize += Read(pabyErrorBuffer.get() + nRead, 1,
+            nErrorBufferSize += Read(pabyErrorBuffer.get() + nRead,
                                      nErrorBufferMaxSize - nRead);
         (pabyErrorBuffer.get())[nErrorBufferSize] = 0;
         StopDownload();
@@ -1479,7 +1478,7 @@ void VSICurlStreamingHandle::AddRegion(vsi_l_offset nFileOffsetStart,
 /************************************************************************/
 
 size_t VSICurlStreamingHandle::Write(const void * /* pBuffer */,
-                                     size_t /* nSize */, size_t /* nMemb */)
+                                     size_t /* nBytes */)
 {
     return 0;
 }

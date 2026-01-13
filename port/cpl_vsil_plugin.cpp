@@ -43,10 +43,9 @@ vsi_l_offset VSIPluginHandle::Tell()
     return poFS->Tell(cbData);
 }
 
-size_t VSIPluginHandle::Read(void *const pBuffer, size_t const nSize,
-                             size_t const nMemb)
+size_t VSIPluginHandle::Read(void *const pBuffer, size_t const nBytes)
 {
-    return poFS->Read(cbData, pBuffer, nSize, nMemb);
+    return poFS->Read(cbData, pBuffer, nBytes);
 }
 
 int VSIPluginHandle::Eof()
@@ -90,9 +89,9 @@ VSIRangeStatus VSIPluginHandle::GetRangeStatus(vsi_l_offset nOffset,
     return poFS->GetRangeStatus(cbData, nOffset, nLength);
 }
 
-size_t VSIPluginHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
+size_t VSIPluginHandle::Write(const void *pBuffer, size_t nBytes)
 {
-    return poFS->Write(cbData, pBuffer, nSize, nCount);
+    return poFS->Write(cbData, pBuffer, nBytes);
 }
 
 int VSIPluginHandle::Flush()
@@ -209,11 +208,11 @@ vsi_l_offset VSIPluginFilesystemHandler::Tell(void *pFile)
 }
 
 size_t VSIPluginFilesystemHandler::Read(void *pFile, void *pBuffer,
-                                        size_t nSize, size_t nCount)
+                                        size_t nBytes)
 {
     if (m_cb->read != nullptr)
     {
-        return m_cb->read(pFile, pBuffer, nSize, nCount);
+        return m_cb->read(pFile, pBuffer, 1, nBytes);
     }
     CPLError(CE_Failure, CPLE_AppDefined, "Read not implemented for %s plugin",
              m_Prefix);
@@ -388,11 +387,11 @@ int VSIPluginFilesystemHandler::Close(void *pFile)
 }
 
 size_t VSIPluginFilesystemHandler::Write(void *pFile, const void *psBuffer,
-                                         size_t nSize, size_t nCount)
+                                         size_t nBytes)
 {
     if (m_cb->write != nullptr)
     {
-        return m_cb->write(pFile, psBuffer, nSize, nCount);
+        return m_cb->write(pFile, psBuffer, 1, nBytes);
     }
     CPLError(CE_Failure, CPLE_AppDefined, "Write not implemented for %s plugin",
              m_Prefix);

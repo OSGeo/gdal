@@ -266,8 +266,8 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
 
     int Seek(vsi_l_offset nOffsetIn, int nWhence) override;
     vsi_l_offset Tell() override;
-    size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
-    size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    size_t Read(void *pBuffer, size_t nBytes) override;
+    size_t Write(const void *pBuffer, size_t nBytes) override;
     void ClearErr() override;
     int Eof() override;
     int Error() override;
@@ -559,10 +559,10 @@ int VSIUnixStdioHandle::Flush()
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSIUnixStdioHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
+size_t VSIUnixStdioHandle::Read(void *pBuffer, size_t nBytes)
 
 {
-    if (nSize == 0 || nCount == 0 || bAtEOF)
+    if (nBytes == 0 || bAtEOF)
         return 0;
     if (eAccessMode == AccessMode::WRITE_ONLY)
     {
@@ -594,7 +594,7 @@ size_t VSIUnixStdioHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
         m_nBufferSize = 0;
     }
 
-    const size_t nTotal = nSize * nCount;
+    const size_t nTotal = nBytes;
     size_t nBytesRead = 0;
     GByte *const pabyDest = static_cast<GByte *>(pBuffer);
 
@@ -658,9 +658,8 @@ size_t VSIUnixStdioHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 
 #ifdef VSI_DEBUG
     const int nError = errno;
-    VSIDebug4("VSIUnixStdioHandle::Read(%d,%ld,%ld) = %" PRId64, fd,
-              static_cast<long>(nSize), static_cast<long>(nCount),
-              static_cast<int64_t>(nBytesRead / nSize));
+    VSIDebug4("VSIUnixStdioHandle::Read(%d,%%ld) = %" PRId64, fd,
+              static_cast<long>(nBytes), static_cast<int64_t>(nBytesRead));
     errno = nError;
 #endif
 
@@ -670,18 +669,17 @@ size_t VSIUnixStdioHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
     nTotalBytesRead += nBytesRead;
 #endif
 
-    return nBytesRead / nSize;
+    return nBytesRead;
 }
 
 /************************************************************************/
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIUnixStdioHandle::Write(const void *pBuffer, size_t nSize,
-                                 size_t nCount)
+size_t VSIUnixStdioHandle::Write(const void *pBuffer, size_t nBytes)
 
 {
-    if (nSize == 0 || nCount == 0)
+    if (nBytes == 0)
         return 0;
     if (eAccessMode == AccessMode::READ_ONLY)
     {
@@ -708,7 +706,7 @@ size_t VSIUnixStdioHandle::Write(const void *pBuffer, size_t nSize,
         m_nBufferSize = 0;
     }
 
-    const size_t nTotal = nSize * nCount;
+    const size_t nTotal = nBytes;
     size_t nBytesWritten = 0;
     const GByte *const pabySrc = static_cast<const GByte *>(pBuffer);
     while (nBytesWritten < nTotal)
@@ -750,15 +748,14 @@ size_t VSIUnixStdioHandle::Write(const void *pBuffer, size_t nSize,
 
 #ifdef VSI_DEBUG
     const int nError = errno;
-    VSIDebug4("VSIUnixStdioHandle::Write(%d,%ld,%ld) = %" PRId64, fd,
-              static_cast<long>(nSize), static_cast<long>(nCount),
-              static_cast<int64_t>(nBytesWritten / nSize));
+    VSIDebug4("VSIUnixStdioHandle::Write(%d,%ld) = %" PRId64, fd,
+              static_cast<long>(nBytes), static_cast<int64_t>(nBytesWritten));
     errno = nError;
 #endif
 
     eLastOp = Operation::WRITE;
 
-    return nBytesWritten / nSize;
+    return nBytesWritten;
 }
 
 /************************************************************************/
