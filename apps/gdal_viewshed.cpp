@@ -258,8 +258,6 @@ void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
         opts.nodataVal = 0;
 }
 
-}  // unnamed namespace
-
 bool run(gdal::Options &localOpts, bool adjustCurveCoeff)
 {
     viewshed::Options &opts = localOpts.opts;
@@ -335,6 +333,7 @@ bool run(gdal::Options &localOpts, bool adjustCurveCoeff)
     return bSuccess;
 }
 
+}  // unnamed namespace
 }  // namespace gdal
 
 /************************************************************************/
