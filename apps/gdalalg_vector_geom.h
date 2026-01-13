@@ -140,7 +140,7 @@ class GDALVectorGeomOneToOneAlgorithmLayer /* non final */
 #ifdef HAVE_GEOS
 
 /************************************************************************/
-/*                    GDALGeosNonStreamingAlgorithmLayer              */
+/*                     GDALGeosNonStreamingAlgorithmLayer               */
 /************************************************************************/
 
 /** A GDALGeosNonStreamingAlgorithmLayer manages the work of reading features

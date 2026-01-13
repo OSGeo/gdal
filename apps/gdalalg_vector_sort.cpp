@@ -148,13 +148,13 @@ class GDALFileFeatureStore : public GDALFeatureStore
   private:
     struct Loc
     {
-        std::size_t offset;
+        vsi_l_offset offset;
         std::size_t size;
     };
 
     std::string m_fileName{};
     const OGRFeatureDefn *m_defn{nullptr};
-    std::size_t m_fileSize{0};
+    vsi_l_offset m_fileSize{0};
     VSILFILE *m_file{nullptr};
     std::vector<Loc> m_locs{};
     std::vector<GByte> m_buf{};

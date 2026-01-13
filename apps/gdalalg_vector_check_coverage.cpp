@@ -53,7 +53,7 @@ class GDALVectorCheckCoverageOutputLayer final
   public:
     explicit GDALVectorCheckCoverageOutputLayer(OGRLayer &srcLayer,
                                                 int geomFieldIndex,
-                                                const std::string name,
+                                                const std::string &name,
                                                 double maximumGapWidth,
                                                 bool includeValid)
         : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),

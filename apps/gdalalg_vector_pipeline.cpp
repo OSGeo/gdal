@@ -631,7 +631,7 @@ void GDALVectorAlgorithmLayerProgressHelper::AddPassThroughLayer(
 }
 
 /************************************************************************/
-/*                 GDALVectorNonStreamingAlgorithmLayer()             */
+/*                  GDALVectorNonStreamingAlgorithmLayer()              */
 /************************************************************************/
 
 /** Create a GDALVectorNonStreamingAlgorithmLayer. The progress callbacks
