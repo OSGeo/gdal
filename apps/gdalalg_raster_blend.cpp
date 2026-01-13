@@ -36,23 +36,34 @@
 #define _(x) (x)
 #endif
 
+/************************************************************************/
+/*                        CompositionModes                              */
+/************************************************************************/
+std::map<CompositionMode, std::string> CompositionModes()
+{
+    return {
+        {CompositionMode::SRC_OVER, "src-over"},
+        {CompositionMode::HSV_VALUE, "hsv-value"},
+        {CompositionMode::MULTIPLY, "multiply"},
+    };
+}
+
 /**************************************************************************/
 /*                    CompositionModeToString()                           */
 /**************************************************************************/
 
 const char *CompositionModeToString(CompositionMode mode)
 {
-    switch (mode)
+    const auto &modes = CompositionModes();
+    const auto iter = modes.find(mode);
+    if (iter != modes.end())
     {
-        case CompositionMode::SRC_OVER:
-            return "src-over";
-        case CompositionMode::HSV_VALUE:
-            return "hsv-value";
-        case CompositionMode::MULTIPLY:
-            return "multiply";
-        default:
-            throw std::invalid_argument("Invalid composition mode");
+        return iter->second.c_str();
     }
+    CPLError(CE_Failure, CPLE_IllegalArg,
+             "Invalid composition mode value: %d, returning 'src-over'",
+             static_cast<int>(mode));
+    return "src-over";
 }
 
 /************************************************************************/
@@ -61,13 +72,13 @@ const char *CompositionModeToString(CompositionMode mode)
 
 std::vector<std::string> CompositionModesIdentifiers()
 {
-    std::vector<std::string> result;
-    for (int i = 0; i < static_cast<int>(CompositionMode::LAST_); ++i)
+    const auto &modes = CompositionModes();
+    std::vector<std::string> identifiers;
+    for (const auto &pair : modes)
     {
-        const auto mode = static_cast<CompositionMode>(i);
-        result.push_back(CompositionModeToString(mode));
+        identifiers.push_back(pair.second);
     }
-    return result;
+    return identifiers;
 }
 
 /************************************************************************/
@@ -76,15 +87,18 @@ std::vector<std::string> CompositionModesIdentifiers()
 
 CompositionMode CompositionModeFromString(const std::string &str)
 {
-    for (int i = 0; i < static_cast<int>(CompositionMode::LAST_); ++i)
+    const auto &modes = CompositionModes();
+    auto iter =
+        std::find_if(modes.begin(), modes.end(),
+                     [&str](const auto &pair) { return pair.second == str; });
+    if (iter != modes.end())
     {
-        const auto mode = static_cast<CompositionMode>(i);
-        if (str == CompositionModeToString(mode))
-        {
-            return mode;
-        }
+        return iter->first;
     }
-    throw std::invalid_argument("Invalid composition mode: " + str);
+    CPLError(CE_Failure, CPLE_IllegalArg,
+             "Invalid composition identifier: %s, returning SRC_OVER",
+             str.c_str());
+    return CompositionMode::SRC_OVER;
 }
 
 /************************************************************************/
@@ -98,9 +112,12 @@ int MinBandCountForCompositionMode(CompositionMode mode)
     {
         case CompositionMode::HSV_VALUE:
             return 3;
-        default:
+        case CompositionMode::SRC_OVER:
+        case CompositionMode::MULTIPLY:
             return 1;
     }
+    // unreachable...
+    return 1;
 }
 
 /************************************************************************/
@@ -114,9 +131,13 @@ int MaxBandCountForCompositionMode(CompositionMode mode)
 {
     switch (mode)
     {
-        default:
+        case CompositionMode::SRC_OVER:
+        case CompositionMode::HSV_VALUE:
+        case CompositionMode::MULTIPLY:
             return 4;
     }
+    // unreachable...
+    return 4;
 }
 
 /************************************************************************/
@@ -127,13 +148,9 @@ int MaxBandCountForCompositionMode(CompositionMode mode)
 bool BandCountIsCompatibleWithCompositionMode(int bandCount,
                                               CompositionMode mode)
 {
-    if (mode == CompositionMode::LAST_)
-    {
-        throw std::invalid_argument("Invalid composition mode");
-    }
     const int minBands = MinBandCountForCompositionMode(mode);
     const int maxBands = MaxBandCountForCompositionMode(mode);
-    return bandCount >= minBands && (maxBands < 0 || bandCount <= maxBands);
+    return minBands <= bandCount && bandCount <= maxBands;
 }
 
 /************************************************************************/
@@ -799,7 +816,7 @@ static void BlendMultiply_Generic(
                                      dInv_OverlayA_Div255 * pabyOverlayB[i])
                 : nOverlayR;
 
-        const GByte nDstR = static_cast<GByte>(nR * nOverlayR / 255.0);
+        const GByte nDstR = static_cast<GByte>((nR * nOverlayR + 255) / 256);
         pabyDst[i] = nDstR;
 
         // Grayscale with alpha
@@ -814,9 +831,11 @@ static void BlendMultiply_Generic(
             // RBG and RGBA
             if (nOutputBands >= 3)
             {
-                const GByte nDstG = static_cast<GByte>((nG * nOverlayG + 255) / 256);
+                const GByte nDstG =
+                    static_cast<GByte>((nG * nOverlayG + 255) / 256);
                 pabyDst[i + nBandSpace] = nDstG;
-                const GByte nDstB = static_cast<GByte>((nB * nOverlayB  + 255) / 256);
+                const GByte nDstB =
+                    static_cast<GByte>((nB * nOverlayB + 255) / 256);
                 pabyDst[i + 2 * nBandSpace] = nDstB;
             }
 
@@ -1471,7 +1490,7 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                         pabyOverlayB, pabyOverlayA, byteBuffer.data(),
                         nPixelSpace, 1, nSrcIdx, 1,
                         static_cast<GByte>(m_oBlendDataset.m_opacity255Scale));
-                    // Copy the content of buffer to destination
+
                     pabyDst[nDstOffset] = byteBuffer[nBand - 1];
                 }
             }
