@@ -525,30 +525,11 @@ GDALVectorNonStreamingAlgorithmDataset::
 /*    GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer()       */
 /************************************************************************/
 
-bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
-    OGRLayer &srcLayer, OGRFeatureDefn &dstDefn, int geomFieldIndex,
-    GDALProgressFunc pfnProgress, void *pProgressData)
+void GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
+    std::unique_ptr<OGRLayer> layer)
 {
-    CPLStringList aosOptions;
-    if (srcLayer.TestCapability(OLCStringsAsUTF8))
-    {
-        aosOptions.AddNameValue("ADVERTIZE_UTF8", "TRUE");
-    }
-
-    OGRMemLayer *poDstLayer = m_ds->CreateLayer(dstDefn, aosOptions.List());
-    m_layers.push_back(poDstLayer);
-
-    const bool bRet = Process(srcLayer, *poDstLayer, geomFieldIndex,
-                              pfnProgress, pProgressData);
-    poDstLayer->SetUpdatable(false);
-    return bRet;
-}
-
-bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
-    OGRLayer &srcLayer, GDALProgressFunc pfnProgress, void *pProgressData)
-{
-    return AddProcessedLayer(srcLayer, *srcLayer.GetLayerDefn(), 0, pfnProgress,
-                             pProgressData);
+    m_owned_layers.emplace_back(std::move(layer));
+    m_layers.push_back(m_owned_layers.back().get());
 }
 
 /************************************************************************/
@@ -558,9 +539,9 @@ bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
 void GDALVectorNonStreamingAlgorithmDataset::AddPassThroughLayer(
     OGRLayer &oLayer)
 {
-    m_passthrough_layers.push_back(
+    m_owned_layers.push_back(
         std::make_unique<GDALVectorPipelinePassthroughLayer>(oLayer));
-    m_layers.push_back(m_passthrough_layers.back().get());
+    m_layers.push_back(m_owned_layers.back().get());
 }
 
 /************************************************************************/
@@ -654,6 +635,53 @@ void GDALVectorAlgorithmLayerProgressHelper::AddPassThroughLayer(
     OGRLayer &srcLayer)
 {
     m_apoSrcLayers.emplace_back(&srcLayer, false);
+}
+
+/************************************************************************/
+/*                 GDALVectorNonStreamingAlgorithmLayer()             */
+/************************************************************************/
+
+/** Create a GDALVectorNonStreamingAlgorithmLayer. The progress callbacks
+ *  provided here will be forwarded on to the Process() method in the
+ *  implementing class.
+ */
+GDALVectorNonStreamingAlgorithmLayer::GDALVectorNonStreamingAlgorithmLayer(
+    OGRLayer &srcLayer, int geomFieldIndex, GDALProgressFunc pfnProgress,
+    void *pProgressData)
+    : m_srcLayer(srcLayer), m_geomFieldIndex(geomFieldIndex),
+      m_progress(pfnProgress), m_progressData(pProgressData)
+{
+}
+
+/************************************************************************/
+/*          GDALVectorNonStreamingAlgorithmLayer::ResetReading()        */
+/************************************************************************/
+
+void GDALVectorNonStreamingAlgorithmLayer::ResetReading()
+{
+    m_processed = false;
+    m_srcLayer.ResetReading();
+}
+
+/************************************************************************/
+/*        GDALVectorNonStreamingAlgorithmLayer::GetNextRawFeature()     */
+/************************************************************************/
+
+OGRFeature *GDALVectorNonStreamingAlgorithmLayer::GetNextRawFeature()
+{
+    if (!m_processed)
+    {
+        if (Process(m_progress, m_progressData))
+        {
+            m_processed = true;
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
+    return GetNextProcessedFeature().release();
 }
 
 /************************************************************************/

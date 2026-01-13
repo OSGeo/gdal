@@ -76,16 +76,26 @@ bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
 #ifdef HAVE_GEOS
 
+// GEOSGeom_releaseCollection allows us to take ownership of the contents of
+// a GeometryCollection. We can then incrementally free the geometries as
+// we write them to features. It requires GEOS >= 3.12.
+#if GEOS_VERSION_MAJOR > 3 ||                                                  \
+    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12)
+#define GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+#endif
+
 /************************************************************************/
-/*                    GDALGeosNonStreamingAlgorithmDataset              */
+/*                    GDALGeosNonStreamingAlgorithmLayer              */
 /************************************************************************/
 
-GDALGeosNonStreamingAlgorithmDataset::GDALGeosNonStreamingAlgorithmDataset()
-    : m_poGeosContext{OGRGeometry::createGEOSContext()}
+GDALGeosNonStreamingAlgorithmLayer::GDALGeosNonStreamingAlgorithmLayer(
+    OGRLayer &srcLayer, int geomFieldIndex)
+    : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
+      m_poGeosContext{OGRGeometry::createGEOSContext()}
 {
 }
 
-GDALGeosNonStreamingAlgorithmDataset::~GDALGeosNonStreamingAlgorithmDataset()
+GDALGeosNonStreamingAlgorithmLayer::~GDALGeosNonStreamingAlgorithmLayer()
 {
     Cleanup();
     if (m_poGeosContext != nullptr)
@@ -94,8 +104,9 @@ GDALGeosNonStreamingAlgorithmDataset::~GDALGeosNonStreamingAlgorithmDataset()
     }
 }
 
-void GDALGeosNonStreamingAlgorithmDataset::Cleanup()
+void GDALGeosNonStreamingAlgorithmLayer::Cleanup()
 {
+    m_readPos = 0;
     m_apoFeatures.clear();
 
     if (m_poGeosContext != nullptr)
@@ -106,7 +117,7 @@ void GDALGeosNonStreamingAlgorithmDataset::Cleanup()
         }
         m_apoGeosInputs.clear();
 
-        if (m_poGeosContext != nullptr)
+        if (m_poGeosResultAsCollection != nullptr)
         {
             GEOSGeom_destroy_r(m_poGeosContext, m_poGeosResultAsCollection);
             m_poGeosResultAsCollection = nullptr;
@@ -114,7 +125,10 @@ void GDALGeosNonStreamingAlgorithmDataset::Cleanup()
 
         for (size_t i = 0; i < m_nGeosResultSize; i++)
         {
-            GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[i]);
+            if (m_papoGeosResults[i] != nullptr)
+            {
+                GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[i]);
+            }
         }
         m_nGeosResultSize = 0;
 
@@ -126,9 +140,9 @@ void GDALGeosNonStreamingAlgorithmDataset::Cleanup()
     }
 }
 
-bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
-    OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex, bool sameDefn,
-    GDALProgressFunc pfnProgress, void *pProgressData)
+bool GDALGeosNonStreamingAlgorithmLayer::ConvertInputsToGeos(
+    OGRLayer &srcLayer, int geomFieldIndex, GDALProgressFunc pfnProgress,
+    void *pProgressData)
 {
     const GIntBig nLayerFeatures = srcLayer.TestCapability(OLCFastFeatureCount)
                                        ? srcLayer.GetFeatureCount(false)
@@ -136,6 +150,8 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
     const double dfInvLayerFeatures =
         1.0 / std::max(1.0, static_cast<double>(nLayerFeatures));
     const double dfProgressRatio = dfInvLayerFeatures * 0.5;
+
+    const bool sameDefn = GetLayerDefn()->IsSame(srcLayer.GetLayerDefn());
 
     for (auto &feature : srcLayer)
     {
@@ -184,14 +200,13 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
 
         if (sameDefn)
         {
-            feature->SetFDefnUnsafe(dstLayer.GetLayerDefn());
+            feature->SetFDefnUnsafe(GetLayerDefn());
             m_apoFeatures.push_back(
                 std::unique_ptr<OGRFeature>(feature.release()));
         }
         else
         {
-            auto newFeature =
-                std::make_unique<OGRFeature>(dstLayer.GetLayerDefn());
+            auto newFeature = std::make_unique<OGRFeature>(GetLayerDefn());
             newFeature->SetFrom(feature.get(), true);
             newFeature->SetFID(feature->GetFID());
             m_apoFeatures.push_back(std::move(newFeature));
@@ -202,7 +217,7 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
                              dfProgressRatio,
                          "", pProgressData))
         {
-            ReportError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
+            CPLError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
             return false;
         }
     }
@@ -210,118 +225,13 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
     return true;
 }
 
-bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
-    OGRLayer &dstLayer, GDALProgressFunc pfnProgress, void *pProgressData,
-    double dfProgressStart, double dfProgressRatio)
-{
-    const OGRSpatialReference *poResultSRS =
-        dstLayer.GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
-
-// GEOSGeom_releaseCollection allows us to take ownership of the contents of
-// a GeometryCollection. We can then incrementally free the geometries as
-// we write them to features. It requires GEOS >= 3.12.
-#if GEOS_VERSION_MAJOR > 3 ||                                                  \
-    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12)
-#define GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
-#endif
-
-    const auto eLayerGeomType = dstLayer.GetLayerDefn()->GetGeomType();
-
-#ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
-    m_nGeosResultSize =
-        GEOSGetNumGeometries_r(m_poGeosContext, m_poGeosResultAsCollection);
-    m_papoGeosResults = GEOSGeom_releaseCollection_r(
-        m_poGeosContext, m_poGeosResultAsCollection, &m_nGeosResultSize);
-    GEOSGeom_destroy_r(m_poGeosContext, m_poGeosResultAsCollection);
-    m_poGeosResultAsCollection = nullptr;
-    CPLAssert(m_apoFeatures.size() == m_nGeosResultSize);
-
-    // Create features with the modified geometries
-    for (const auto &[i, poFeature] : cpl::enumerate(m_apoFeatures))
-    {
-        GEOSGeometry *poGeosResult = m_papoGeosResults[i];
-#else
-    auto nGeoms =
-        GEOSGetNumGeometries_r(m_poGeosContext, m_poGeosResultAsCollection);
-    for (decltype(nGeoms) i = 0; i < nGeoms; i++)
-    {
-        auto &poFeature = m_apoFeatures[i];
-        GEOSGeometry *poGeosResult = const_cast<GEOSGeometry *>(
-            GEOSGetGeometryN_r(m_poGeosContext, m_poGeosResultAsCollection, i));
-#endif
-        std::unique_ptr<OGRGeometry> poResultGeom;
-
-        bool skipFeature =
-            SkipEmpty() && GEOSisEmpty_r(m_poGeosContext, poGeosResult);
-
-        if (!skipFeature)
-        {
-            poResultGeom.reset(OGRGeometryFactory::createFromGEOS(
-                m_poGeosContext, poGeosResult));
-
-            if (poResultGeom && eLayerGeomType != wkbUnknown &&
-                wkbFlatten(poResultGeom->getGeometryType()) !=
-                    wkbFlatten(eLayerGeomType))
-            {
-                poResultGeom.reset(OGRGeometryFactory::forceTo(
-                    poResultGeom.release(), eLayerGeomType));
-            }
-
-            if (poResultGeom == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to convert result from GEOS");
-                return false;
-            }
-        }
-
-#ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
-        GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[i]);
-        m_papoGeosResults[i] = nullptr;
-#undef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
-#endif
-
-        if (!skipFeature)
-        {
-            poResultGeom->assignSpatialReference(poResultSRS);
-            poFeature->SetGeometry(std::move(poResultGeom));
-
-            if (dstLayer.CreateFeature(std::move(poFeature)) != CE_None)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            poFeature.reset();
-        }
-
-        if (pfnProgress &&
-            !pfnProgress(dfProgressStart +
-                             static_cast<double>(i) * dfProgressRatio,
-                         "", pProgressData))
-        {
-            ReportError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool GDALGeosNonStreamingAlgorithmDataset::Process(OGRLayer &srcLayer,
-                                                   OGRLayer &dstLayer,
-                                                   int geomFieldIndex,
-                                                   GDALProgressFunc pfnProgress,
-                                                   void *pProgressData)
+bool GDALGeosNonStreamingAlgorithmLayer::Process(GDALProgressFunc pfnProgress,
+                                                 void *pProgressData)
 {
     Cleanup();
 
-    const bool sameDefn =
-        dstLayer.GetLayerDefn()->IsSame(srcLayer.GetLayerDefn());
-
-    if (!ConvertInputsToGeos(srcLayer, dstLayer, geomFieldIndex, sameDefn,
-                             pfnProgress, pProgressData))
+    // FIXME pass on progress callback
+    if (!ConvertInputsToGeos(m_srcLayer, m_geomFieldIndex, nullptr, nullptr))
     {
         return false;
     }
@@ -331,17 +241,82 @@ bool GDALGeosNonStreamingAlgorithmDataset::Process(OGRLayer &srcLayer,
         return false;
     }
 
-    const GIntBig nLayerFeatures = srcLayer.TestCapability(OLCFastFeatureCount)
-                                       ? srcLayer.GetFeatureCount(false)
-                                       : -1;
-    const double dfProgressStart = nLayerFeatures > 0 ? 0.5 : 0.0;
-    const double dfProgressRatio =
-        (nLayerFeatures > 0 ? 0.5 : 1.0) /
-        std::max(1.0, static_cast<double>(m_apoFeatures.size()));
-    return ConvertOutputsFromGeos(dstLayer, pfnProgress, pProgressData,
-                                  dfProgressStart, dfProgressRatio);
+#ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+    m_nGeosResultSize =
+        GEOSGetNumGeometries_r(m_poGeosContext, m_poGeosResultAsCollection);
+    m_papoGeosResults = GEOSGeom_releaseCollection_r(
+        m_poGeosContext, m_poGeosResultAsCollection, &m_nGeosResultSize);
+    GEOSGeom_destroy_r(m_poGeosContext, m_poGeosResultAsCollection);
+    m_poGeosResultAsCollection = nullptr;
+    CPLAssert(m_apoFeatures.size() == m_nGeosResultSize);
+#endif
+
+    return true;
 }
 
+std::unique_ptr<OGRFeature>
+GDALGeosNonStreamingAlgorithmLayer::GetNextProcessedFeature()
+{
+    GEOSGeometry *poGeosResult = nullptr;
+    while (poGeosResult == nullptr && m_readPos < m_nGeosResultSize)
+    {
+#ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+        poGeosResult = m_papoGeosResults[m_readPos];
+
+        const bool skipFeature =
+            SkipEmpty() && GEOSisEmpty_r(m_poGeosContext, poGeosResult);
+
+        if (skipFeature)
+        {
+            GEOSGeom_destroy_r(m_poGeosContext, poGeosResult);
+            m_papoGeosResults[m_readPos] = nullptr;
+            poGeosResult = nullptr;
+        }
+
+        m_readPos++;
+    }
+#endif
+
+    if (poGeosResult == nullptr)
+    {
+        return nullptr;
+    }
+
+    const auto eLayerGeomType = GetLayerDefn()->GetGeomType();
+
+    std::unique_ptr<OGRGeometry> poResultGeom(
+        OGRGeometryFactory::createFromGEOS(m_poGeosContext, poGeosResult));
+
+    if (poResultGeom && eLayerGeomType != wkbUnknown &&
+        wkbFlatten(poResultGeom->getGeometryType()) !=
+            wkbFlatten(eLayerGeomType))
+    {
+        poResultGeom.reset(OGRGeometryFactory::forceTo(poResultGeom.release(),
+                                                       eLayerGeomType));
+    }
+
+    if (poResultGeom == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to convert result from GEOS");
+        return nullptr;
+    }
+
+#ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+    GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[m_readPos - 1]);
+    m_papoGeosResults[m_readPos - 1] = nullptr;
+#endif
+
+    poResultGeom->assignSpatialReference(
+        GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef());
+
+    auto poFeature = std::make_unique<OGRFeature>(GetLayerDefn());
+    poFeature->SetGeometry(std::move(poResultGeom));
+
+    return poFeature;
+}
+
+#undef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
 #endif
 
 //! @endcond

@@ -49,6 +49,9 @@ GDALVectorSortAlgorithm::GDALVectorSortAlgorithm(bool standaloneStep)
 namespace
 {
 
+/// Simple container allowing to store features and retrieve each one _a single
+/// time_ using a random access pattern. The number of stored features does not
+/// need to be known at construction time.
 class GDALFeatureStore
 {
   public:
@@ -57,8 +60,11 @@ class GDALFeatureStore
     virtual std::unique_ptr<OGRFeature> Load(std::size_t i) = 0;
 
     virtual bool Store(std::unique_ptr<OGRFeature> f) = 0;
+
+    virtual std::size_t Size() const = 0;
 };
 
+/// FeatureStore backed by a temporary file on disk.
 class GDALFileFeatureStore : public GDALFeatureStore
 {
   public:
@@ -70,7 +76,10 @@ class GDALFileFeatureStore : public GDALFeatureStore
 
     ~GDALFileFeatureStore() override
     {
-        const_cast<OGRFeatureDefn *>(m_defn)->Release();
+        if (m_defn != nullptr)
+        {
+            const_cast<OGRFeatureDefn *>(m_defn)->Release();
+        }
         VSIUnlink(m_fileName.c_str());
     }
 
@@ -95,6 +104,11 @@ class GDALFileFeatureStore : public GDALFeatureStore
         }
 
         return poFeature;
+    }
+
+    size_t Size() const override
+    {
+        return m_locs.size();
     }
 
     bool Store(std::unique_ptr<OGRFeature> f) override
@@ -148,93 +162,127 @@ class GDALFileFeatureStore : public GDALFeatureStore
     CPL_DISALLOW_COPY_ASSIGN(GDALFileFeatureStore)
 };
 
+/// FeatureStore backed by a std::vector.
 class GDALMemFeatureStore : public GDALFeatureStore
 {
   public:
+    std::unique_ptr<OGRFeature> Load(std::size_t i) override
+    {
+        return std::move(m_features[i]);
+    }
+
+    size_t Size() const override
+    {
+        return m_features.size();
+    }
+
     bool Store(std::unique_ptr<OGRFeature> f) override
     {
         m_features.push_back(std::move(f));
         return true;
     }
 
-    std::unique_ptr<OGRFeature> Load(std::size_t i) override
-    {
-        return std::move(m_features[i]);
-    }
-
   private:
     std::vector<std::unique_ptr<OGRFeature>> m_features{};
 };
 
-bool CreateDstFeatures(GDALFeatureStore &srcFeatures,
-                       const std::vector<size_t> &sortedIndices,
-                       OGRLayer &dstLayer, GDALProgressFunc pfnProgress,
-                       void *pProgressData, double dfProgressStart,
-                       double dfProgressRatio)
-{
-    uint64_t nCounter = 0;
-    for (size_t iSrcFeature : sortedIndices)
-    {
-        auto poSrcFeature = srcFeatures.Load(iSrcFeature);
-        poSrcFeature->SetFDefnUnsafe(dstLayer.GetLayerDefn());
-        poSrcFeature->SetFID(OGRNullFID);
-
-        if (dstLayer.CreateFeature(std::move(poSrcFeature)) != OGRERR_NONE)
-        {
-            return false;
-        }
-        if (pfnProgress &&
-            !pfnProgress(dfProgressStart +
-                             static_cast<double>(++nCounter) * dfProgressRatio,
-                         "", pProgressData))
-        {
-            CPLError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
-            return false;
-        }
-    }
-
-    return true;
-}
-
-class GDALVectorHilbertSortDataset
-    : public GDALVectorNonStreamingAlgorithmDataset
+/**
+ * This base class provides common functionality for layers representing different
+ * sorting algorithms. An implementation's Process() method should:
+ * - read the input features and transfer them to the feature store
+ * - populate the m_sortedIndices vector
+ */
+class GDALVectorSortedLayer : public GDALVectorNonStreamingAlgorithmLayer
 {
   public:
-    GDALVectorHilbertSortDataset(bool processInMemory)
-        : m_processInMemory(processInMemory)
+    const OGRFeatureDefn *GetLayerDefn() const override
+    {
+        return m_srcLayer.GetLayerDefn();
+    }
+
+    int TestCapability(const char *) const override
+    {
+        return false;
+    }
+
+    GIntBig GetFeatureCount(int bForce) override
+    {
+        if (!m_poAttrQuery && !m_poFilterGeom)
+        {
+            return m_srcLayer.GetFeatureCount(bForce);
+        }
+
+        return OGRLayer::GetFeatureCount(bForce);
+    }
+
+    std::unique_ptr<OGRFeature> GetNextProcessedFeature() override
+    {
+        CPLAssert(m_sortedIndices.size() == m_store->Size());
+
+        if (m_readPos < m_store->Size())
+        {
+            return m_store->Load(m_sortedIndices[m_readPos++]);
+        }
+
+        return nullptr;
+    }
+
+    GDALVectorSortedLayer(OGRLayer &srcLayer, int geomFieldIndex,
+                          GDALProgressFunc progress, void *progressData,
+                          bool processInMemory)
+        : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex,
+                                               progress, progressData),
+          m_store(nullptr), m_processInMemory(processInMemory), m_readPos(0)
     {
     }
 
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex,
-                 GDALProgressFunc pfnProgress, void *pProgressData) override
+  protected:
+    void Init()
     {
+        if (m_processInMemory)
+        {
+            m_store = std::make_unique<GDALMemFeatureStore>();
+        }
+        else
+        {
+            m_store = std::make_unique<GDALFileFeatureStore>();
+        }
+
+        m_readPos = 0;
+    }
+
+    std::unique_ptr<GDALFeatureStore> m_store;
+    std::vector<size_t> m_sortedIndices{};
+
+  private:
+    bool m_processInMemory;
+    size_t m_readPos;
+};
+
+class GDALVectorHilbertSortLayer : public GDALVectorSortedLayer
+{
+  public:
+    using GDALVectorSortedLayer::GDALVectorSortedLayer;
+
+    bool Process(GDALProgressFunc pfnProgress, void *pProgressData) override
+    {
+        Init();
+
         const GIntBig nLayerFeatures =
-            srcLayer.TestCapability(OLCFastFeatureCount)
-                ? srcLayer.GetFeatureCount(false)
+            m_srcLayer.TestCapability(OLCFastFeatureCount)
+                ? m_srcLayer.GetFeatureCount(false)
                 : -1;
         const double dfInvLayerFeatures =
             1.0 / std::max(1.0, static_cast<double>(nLayerFeatures));
         const double dfFirstPhaseProgressRatio =
             dfInvLayerFeatures * (2.0 / 3.0);
 
-        std::unique_ptr<GDALFeatureStore> store;
-        if (m_processInMemory)
-        {
-            store = std::make_unique<GDALMemFeatureStore>();
-        }
-        else
-        {
-            store = std::make_unique<GDALFileFeatureStore>();
-        }
-
-        (srcLayer.GetLayerDefn());
-
         std::vector<OGREnvelope> envelopes;
         OGREnvelope oLayerExtent;
-        for (auto &poFeature : srcLayer)
+        for (auto &poFeature : m_srcLayer)
         {
             const OGRGeometry *poGeom =
-                poFeature->GetGeomFieldRef(geomFieldIndex);
+                poFeature->GetGeomFieldRef(m_geomFieldIndex);
 
             envelopes.emplace_back();
 
@@ -244,7 +292,8 @@ class GDALVectorHilbertSortDataset
                 oLayerExtent.Merge(envelopes.back());
             }
 
-            if (!store->Store(std::unique_ptr<OGRFeature>(poFeature.release())))
+            if (!m_store->Store(
+                    std::unique_ptr<OGRFeature>(poFeature.release())))
             {
                 return false;
             }
@@ -254,8 +303,7 @@ class GDALVectorHilbertSortDataset
                                  dfFirstPhaseProgressRatio,
                              "", pProgressData))
             {
-                ReportError(CE_Failure, CPLE_UserInterrupt,
-                            "Interrupted by user");
+                CPLError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
                 return false;
             }
         }
@@ -284,39 +332,25 @@ class GDALVectorHilbertSortDataset
                   [](const auto &a, const auto &b)
                   { return a.second < b.second; });
 
-        std::vector<size_t> sortedIndices;
         for (const auto &sItem : hilbertCodes)
         {
-            sortedIndices.push_back(sItem.first);
+            m_sortedIndices.push_back(sItem.first);
         }
 
-        const double dfProgressStart = nLayerFeatures > 0 ? 2.0 / 3.0 : 0.0;
-        const double dfProgressRatio =
-            (nLayerFeatures > 0 ? 1.0 / 3.0 : 1.0) /
-            std::max(1.0, static_cast<double>(envelopes.size()));
-
-        return CreateDstFeatures(*store, sortedIndices, dstLayer, pfnProgress,
-                                 pProgressData, dfProgressStart,
-                                 dfProgressRatio);
+        return true;
     }
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorHilbertSortDataset)
-
-    bool m_processInMemory;
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorHilbertSortLayer)
 };
 
 #ifdef HAVE_GEOS
-class GDALVectorSTRTreeSortDataset
-    : public GDALVectorNonStreamingAlgorithmDataset
+class GDALVectorSTRTreeSortLayer : public GDALVectorSortedLayer
 {
   public:
-    GDALVectorSTRTreeSortDataset(bool processInMemory)
-        : m_processInMemory(processInMemory)
-    {
-    }
+    using GDALVectorSortedLayer::GDALVectorSortedLayer;
 
-    ~GDALVectorSTRTreeSortDataset() override
+    ~GDALVectorSTRTreeSortLayer() override
     {
         if (m_geosContext)
         {
@@ -329,27 +363,18 @@ class GDALVectorSTRTreeSortDataset
         }
     }
 
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex,
-                 GDALProgressFunc pfnProgress, void *pProgressData) override
+    bool Process(GDALProgressFunc pfnProgress, void *pProgressData) override
     {
+        Init();
+
         const GIntBig nLayerFeatures =
-            srcLayer.TestCapability(OLCFastFeatureCount)
-                ? srcLayer.GetFeatureCount(false)
+            m_srcLayer.TestCapability(OLCFastFeatureCount)
+                ? m_srcLayer.GetFeatureCount(false)
                 : -1;
         const double dfInvLayerFeatures =
             1.0 / std::max(1.0, static_cast<double>(nLayerFeatures));
         const double dfFirstPhaseProgressRatio =
             dfInvLayerFeatures * (2.0 / 3.0);
-
-        std::unique_ptr<GDALFeatureStore> store;
-        if (m_processInMemory)
-        {
-            store = std::make_unique<GDALMemFeatureStore>();
-        }
-        else
-        {
-            store = std::make_unique<GDALFileFeatureStore>();
-        }
 
         // TODO: variant of this fn returning unique_ptr
         m_geosContext = OGRGeometry::createGEOSContext();
@@ -358,11 +383,11 @@ class GDALVectorSTRTreeSortDataset
         OGREnvelope oGeomExtent;
         std::vector<size_t> nullIndices;
         std::size_t i = 0;
-        for (auto &poFeature : srcLayer)
+        for (auto &poFeature : m_srcLayer)
         {
 
             const OGRGeometry *poGeom =
-                poFeature->GetGeomFieldRef(geomFieldIndex);
+                poFeature->GetGeomFieldRef(m_geomFieldIndex);
 
             if (poGeom == nullptr || poGeom->IsEmpty())
             {
@@ -377,7 +402,8 @@ class GDALVectorSTRTreeSortDataset
                 }
             }
 
-            if (!store->Store(std::unique_ptr<OGRFeature>(poFeature.release())))
+            if (!m_store->Store(
+                    std::unique_ptr<OGRFeature>(poFeature.release())))
             {
                 return false;
             }
@@ -388,25 +414,18 @@ class GDALVectorSTRTreeSortDataset
                 !pfnProgress(static_cast<double>(i) * dfFirstPhaseProgressRatio,
                              "", pProgressData))
             {
-                ReportError(CE_Failure, CPLE_UserInterrupt,
-                            "Interrupted by user");
+                CPLError(CE_Failure, CPLE_UserInterrupt, "Interrupted by user");
                 return false;
             }
         }
 
         BuildTree();
 
-        std::vector<size_t> sortedIndices = ReadTreeIndices();
-        sortedIndices.insert(sortedIndices.end(), nullIndices.begin(),
-                             nullIndices.end());
+        m_sortedIndices = ReadTreeIndices();
+        m_sortedIndices.insert(m_sortedIndices.end(), nullIndices.begin(),
+                               nullIndices.end());
 
-        const double dfProgressStart = nLayerFeatures > 0 ? 2.0 / 3.0 : 0.0;
-        const double dfProgressRatio =
-            (nLayerFeatures > 0 ? 1.0 / 3.0 : 1.0) /
-            std::max(1.0, static_cast<double>(sortedIndices.size()));
-        return CreateDstFeatures(*store, sortedIndices, dstLayer, pfnProgress,
-                                 pProgressData, dfProgressStart,
-                                 dfProgressRatio);
+        return true;
     }
 
   private:
@@ -474,9 +493,8 @@ class GDALVectorSTRTreeSortDataset
 
     GEOSContextHandle_t m_geosContext{nullptr};
     GEOSSTRtree *m_poTree{nullptr};
-    bool m_processInMemory;
 
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorSTRTreeSortDataset)
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorSTRTreeSortLayer)
 };
 #endif
 
@@ -485,27 +503,7 @@ class GDALVectorSTRTreeSortDataset
 bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
-    std::unique_ptr<GDALVectorNonStreamingAlgorithmDataset> poDstDS;
-
-    if (m_sortMethod == "hilbert")
-    {
-        poDstDS =
-            std::make_unique<GDALVectorHilbertSortDataset>(!m_useTempfile);
-    }
-    else
-    {
-        // Already checked for invalid method at arg parsing stage.
-        CPLAssert(m_sortMethod == "strtree");
-#ifdef HAVE_GEOS
-        poDstDS =
-            std::make_unique<GDALVectorSTRTreeSortDataset>(!m_useTempfile);
-#else
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "--method strtree requires a GDAL build against the GEOS library.");
-        return false;
-#endif
-    }
+    auto poDstDS = std::make_unique<GDALVectorNonStreamingAlgorithmDataset>();
 
     GDALVectorAlgorithmLayerProgressHelper progressHelper(ctxt);
 
@@ -547,12 +545,36 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 return false;
             }
 
-            if (!poDstDS->AddProcessedLayer(
-                    *poSrcLayer, *poSrcLayer->GetLayerDefn(), geomFieldIndex,
-                    layerProgressFunc, layerProgressData.get()))
+            std::unique_ptr<OGRLayer> layer;
+
+            // FIXME progress info does not exist at the time the callback
+            // is executed
+            layerProgressFunc = nullptr;
+            layerProgressData = nullptr;
+
+            if (m_sortMethod == "hilbert")
             {
-                return false;
+                layer = std::make_unique<GDALVectorHilbertSortLayer>(
+                    *poSrcLayer, geomFieldIndex, layerProgressFunc,
+                    layerProgressData.get(), !m_useTempfile);
             }
+            else
+            {
+                // Already checked for invalid method at arg parsing stage.
+                CPLAssert(m_sortMethod == "strtree");
+#ifdef HAVE_GEOS
+                layer = std::make_unique<GDALVectorSTRTreeSortLayer>(
+                    *poSrcLayer, geomFieldIndex, layerProgressFunc,
+                    layerProgressData.get(), !m_useTempfile);
+#else
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "--method strtree requires a GDAL build against the "
+                         "GEOS library.");
+                return false;
+#endif
+            }
+
+            poDstDS->AddProcessedLayer(std::move(layer));
         }
         else
         {
