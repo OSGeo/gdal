@@ -15,6 +15,7 @@
 
 #include "cpl_conv.h"
 #include "gdal_priv.h"
+#include "gdal_utils.h"
 
 #include <algorithm>
 #include <array>
@@ -1457,10 +1458,10 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 pabyA = m_oBlendDataset.m_abyBuffer.data() + nPixelCount * 3;
             }
 
+            // Retrieve single band value as R
             const GByte *pabyOverlayR =
-                nOverlayCount >= 3 ? m_oBlendDataset.m_abyBuffer.data() +
-                                         nPixelCount * nColorCount
-                                   : nullptr;
+                m_oBlendDataset.m_abyBuffer.data() + nPixelCount * nColorCount;
+
             const GByte *pabyOverlayG =
                 nOverlayCount >= 3 ? m_oBlendDataset.m_abyBuffer.data() +
                                          nPixelCount * (nColorCount + 1)
@@ -1819,7 +1820,7 @@ bool GDALRasterBlendAlgorithm::ValidateGlobal()
 /*                 GDALRasterBlendAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALRasterBlendAlgorithm::RunStep(GDALPipelineStepRunContext &)
+bool GDALRasterBlendAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
@@ -1827,11 +1828,73 @@ bool GDALRasterBlendAlgorithm::RunStep(GDALPipelineStepRunContext &)
     auto poOverlayDS = m_overlayDataset.GetDatasetRef();
     CPLAssert(poOverlayDS);
 
+    // If any of the dataset single band has a color table implicitly convert it to RGBA by calling
+    // GDALTranslate with -expand RGBA
+    auto convertToRGBAifNeeded =
+        [this, &ctxt](GDALDataset *&poDS,
+                      std::unique_ptr<GDALDataset> &ds) -> bool
+    {
+        if (poDS->GetRasterCount() == 1 &&
+            poDS->GetRasterBand(1)->GetColorTable() != nullptr)
+        {
+            CPLStringList aosOptions;
+            aosOptions.AddString("-of");
+            aosOptions.AddString("VRT");
+            aosOptions.AddString("-expand");
+            aosOptions.AddString("RGBA");
+            GDALTranslateOptions *translateOptions =
+                GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+
+            if (ctxt.m_poNextUsableStep)
+            {
+                GDALTranslateOptionsSetProgress(
+                    translateOptions, ctxt.m_pfnProgress, ctxt.m_pProgressData);
+            }
+            ds.reset(GDALDataset::FromHandle(GDALTranslate(
+                "", GDALDataset::ToHandle(poDS), translateOptions, nullptr)));
+
+            GDALTranslateOptionsFree(translateOptions);
+
+            if (ds != nullptr)
+            {
+                poDS = ds.get();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    if (!convertToRGBAifNeeded(poSrcDS, m_poTmpSrcDS))
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Conversion of source dataset color table to RGBA failed");
+        return false;
+    }
+
+    if (!convertToRGBAifNeeded(poOverlayDS, m_poTmpOverlayDS))
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Conversion of overlay dataset color table to RGBA failed");
+        return false;
+    }
+
     if (!ValidateGlobal())
         return false;
 
     const int nOpacity255Scale =
         (m_opacity * 255 + OPACITY_INPUT_RANGE / 2) / OPACITY_INPUT_RANGE;
+
+    // Multiply is symmetric regarding the two inputs but BlendDataset assume RGB(A) is in the source
+    // (and not in the overlay).
+    if (m_operator == CompositionMode::MULTIPLY &&
+        (poSrcDS->GetRasterCount() < poOverlayDS->GetRasterCount()))
+    {
+        std::swap(poSrcDS, poOverlayDS);
+    }
 
     m_outputDataset.Set(std::make_unique<BlendDataset>(
         *poSrcDS, *poOverlayDS, m_operator, nOpacity255Scale));
