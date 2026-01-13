@@ -94,7 +94,7 @@ class CALSRasterBand final : public GDALPamRasterBand
         return GCI_PaletteIndex;
     }
 
-    char **GetMetadata(const char *pszDomain) override
+    CSLConstList GetMetadata(const char *pszDomain) override
     {
         return poUnderlyingBand->GetMetadata(pszDomain);
     }

@@ -126,7 +126,8 @@ CPLErr VRTRasterBand::CopyCommonInfoFrom(GDALRasterBand *poSrcBand)
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr VRTRasterBand::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr VRTRasterBand::SetMetadata(CSLConstList papszMetadata,
+                                  const char *pszDomain)
 
 {
     cpl::down_cast<VRTDataset *>(poDS)->SetNeedsFlush();

@@ -130,7 +130,7 @@ class RS2Dataset final : public GDALPamDataset
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     char **GetFileList(void) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
@@ -1630,7 +1630,7 @@ char **RS2Dataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **RS2Dataset::GetMetadata(const char *pszDomain)
+CSLConstList RS2Dataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS") &&

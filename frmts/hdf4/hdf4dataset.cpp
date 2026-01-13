@@ -83,7 +83,7 @@ char **HDF4Dataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **HDF4Dataset::GetMetadata(const char *pszDomain)
+CSLConstList HDF4Dataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))

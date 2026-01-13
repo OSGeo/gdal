@@ -473,7 +473,7 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
 {
     GDALDataset *poDS = GDALDataset::FromHandle(hDS);
     const char *dsFileName = poDS->GetDescription();
-    char **papszMetadata = poDS->GetMetadata("SUBDATASETS");
+    CSLConstList papszMetadata = poDS->GetMetadata("SUBDATASETS");
     if (CSLCount(papszMetadata) > 0 && poDS->GetRasterCount() == 0)
     {
         ppszInputFilenames = static_cast<char **>(CPLRealloc(
@@ -883,7 +883,7 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                     asBandProperties[j].osDescription = "";
                 }
                 // same for metadata
-                const CPLStringList aosMD(poBand->GetMetadata(), false);
+                const CPLStringList aosMD(poBand->GetMetadata());
                 std::vector<std::string> keysToErase;
                 for (const auto &[pszKey, pszValue] :
                      cpl::IterateNameValue(aosMD))

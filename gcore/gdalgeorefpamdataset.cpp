@@ -53,7 +53,7 @@ GDALGeorefPamDataset::~GDALGeorefPamDataset()
 /*                          GetMetadata()                               */
 /************************************************************************/
 
-char **GDALGeorefPamDataset::GetMetadata(const char *pszDomain)
+CSLConstList GDALGeorefPamDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "RPC"))
     {
@@ -62,7 +62,7 @@ char **GDALGeorefPamDataset::GetMetadata(const char *pszDomain)
             ((m_papszRPC != nullptr && nPAMIndex < m_nRPCGeorefSrcIndex) ||
              m_nRPCGeorefSrcIndex < 0 || m_papszRPC == nullptr))
         {
-            char **papszMD = GDALPamDataset::GetMetadata(pszDomain);
+            CSLConstList papszMD = GDALPamDataset::GetMetadata(pszDomain);
             if (papszMD)
                 return papszMD;
         }
@@ -130,7 +130,7 @@ CPLErr GDALGeorefPamDataset::TryLoadXML(CSLConstList papszSiblingFiles)
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr GDALGeorefPamDataset::SetMetadata(char **papszMetadata,
+CPLErr GDALGeorefPamDataset::SetMetadata(CSLConstList papszMetadata,
                                          const char *pszDomain)
 {
     if (m_bPAMLoaded && (pszDomain == nullptr || EQUAL(pszDomain, "")))
@@ -151,7 +151,7 @@ CPLErr GDALGeorefPamDataset::SetMetadataItem(const char *pszName,
 {
     if (m_bPAMLoaded && (pszDomain == nullptr || EQUAL(pszDomain, "")))
     {
-        char **papszMD = GetMetadata();
+        CSLConstList papszMD = GetMetadata();
         if (papszMD != m_papszMainMD)
         {
             CSLDestroy(m_papszMainMD);

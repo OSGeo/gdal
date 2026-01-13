@@ -1022,13 +1022,11 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
             osFormat = sOptions.osFormat;
         }
 
-        /* --------------------------------------------------------------------
-         */
+        /* ------------------------------------------------------------------ */
         /*      Find the output driver. */
-        /* --------------------------------------------------------------------
-         */
+        /* ------------------------------------------------------------------ */
         hDriver = GDALGetDriverByName(osFormat);
-        char **papszDriverMD =
+        CSLConstList papszDriverMD =
             hDriver ? GDALGetMetadata(hDriver, nullptr) : nullptr;
         if (hDriver == nullptr)
         {

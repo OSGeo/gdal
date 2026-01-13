@@ -1280,7 +1280,7 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(CSLConstList /*papszSiblingFiles*/,
 /*                             GetMetadata()                            */
 /************************************************************************/
 
-char **TileDBRasterDataset::GetMetadata(const char *pszDomain)
+CSLConstList TileDBRasterDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
@@ -1459,7 +1459,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
     tiledb::ArraySchema schema = poDS->m_array->schema();
 
-    char **papszStructMeta = poDS->GetMetadata("IMAGE_STRUCTURE");
+    CSLConstList papszStructMeta = poDS->GetMetadata("IMAGE_STRUCTURE");
     const char *pszXSize = CSLFetchNameValue(papszStructMeta, "X_SIZE");
     if (pszXSize)
     {
@@ -1716,7 +1716,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         }
         else
         {
-            char **papszMeta = poDS->GetMetadata("SUBDATASETS");
+            CSLConstList papszMeta = poDS->GetMetadata("SUBDATASETS");
             if (papszMeta != nullptr)
             {
                 if ((CSLCount(papszMeta) / 2) == 1)
@@ -2664,7 +2664,7 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    char **papszSrcSubDatasets = poSrcDS->GetMetadata("SUBDATASETS");
+    CSLConstList papszSrcSubDatasets = poSrcDS->GetMetadata("SUBDATASETS");
 
     if (papszSrcSubDatasets == nullptr)
     {

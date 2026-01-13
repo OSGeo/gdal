@@ -3830,7 +3830,7 @@ void GDALGeoPackageRasterBand::LoadBandMetadata()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **GDALGeoPackageRasterBand::GetMetadata(const char *pszDomain)
+CSLConstList GDALGeoPackageRasterBand::GetMetadata(const char *pszDomain)
 {
     GDALGeoPackageDataset *poGDS =
         cpl::down_cast<GDALGeoPackageDataset *>(poDS);
@@ -3968,7 +3968,7 @@ const char *GDALGeoPackageRasterBand::GetMetadataItem(const char *pszName,
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr GDALGeoPackageRasterBand::SetMetadata(char **papszMetadata,
+CPLErr GDALGeoPackageRasterBand::SetMetadata(CSLConstList papszMetadata,
                                              const char *pszDomain)
 {
     GDALGeoPackageDataset *poGDS =

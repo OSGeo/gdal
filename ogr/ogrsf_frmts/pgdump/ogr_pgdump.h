@@ -174,7 +174,8 @@ class OGRPGDumpLayer final : public OGRLayer
 
     OGRFeature *GetNextFeature() override;
 
-    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList papszMD,
+                       const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
 

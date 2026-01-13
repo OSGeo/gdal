@@ -939,7 +939,7 @@ CPLErr HDF4ImageDataset::FlushCache(bool bAtClosing)
     // Store all metadata from source dataset as HDF attributes
     if (GetMetadata())
     {
-        char **papszMeta = GetMetadata();
+        CSLConstList papszMeta = GetMetadata();
 
         while (*papszMeta)
         {

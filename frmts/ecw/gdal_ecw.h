@@ -598,14 +598,14 @@ class CPL_DLL ECWDataset final : public GDALJP2AbstractDataset
     char **GetMetadataDomainList() override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
 
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,

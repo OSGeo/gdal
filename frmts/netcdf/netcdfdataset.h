@@ -565,11 +565,12 @@ class netCDFDataset final : public GDALPamDataset
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *) override;
+    CSLConstList GetMetadata(const char *) override;
 
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList papszMD,
+                       const char *pszDomain = "") override;
 
     int TestCapability(const char *pszCap) const override;
 

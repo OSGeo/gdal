@@ -47,7 +47,7 @@ class SNAPTIFFDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 
@@ -628,7 +628,7 @@ void SNAPTIFFDataset::ReadSRS()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **SNAPTIFFDataset::GetMetadata(const char *pszDomain)
+CSLConstList SNAPTIFFDataset::GetMetadata(const char *pszDomain)
 {
     if (!m_bIsGeolocArray)
     {

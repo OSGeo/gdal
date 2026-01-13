@@ -1926,7 +1926,8 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             }
         }
         poDriver = GDALDriver::FromHandle(GDALGetDriverByName(osFormat));
-        char **papszDriverMD = poDriver ? poDriver->GetMetadata() : nullptr;
+        CSLConstList papszDriverMD =
+            poDriver ? poDriver->GetMetadata() : nullptr;
         if (poDriver == nullptr ||
             (!CPLTestBool(CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER,
                                                "FALSE")) &&

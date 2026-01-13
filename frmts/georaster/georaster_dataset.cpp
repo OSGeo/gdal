@@ -1542,7 +1542,7 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
     //      Copy RPC
     // --------------------------------------------------------------------
 
-    char **papszRPCMetadata = GDALGetMetadata(poSrcDS, "RPC");
+    CSLConstList papszRPCMetadata = GDALGetMetadata(poSrcDS, "RPC");
 
     if (papszRPCMetadata != nullptr)
     {
@@ -2557,7 +2557,7 @@ char **GeoRasterDataset::GetMetadataDomainList()
 //                                                                GetMetadata()
 //  ---------------------------------------------------------------------------
 
-char **GeoRasterDataset::GetMetadata(const char *pszDomain)
+CSLConstList GeoRasterDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
         return papszSubdatasets;

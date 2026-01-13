@@ -479,7 +479,7 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount,
     {
         if (poContainer)
         {
-            if (char **papszMD = poContainer->GetMetadata())
+            if (CSLConstList papszMD = poContainer->GetMetadata())
             {
                 for (CSLConstList papszIter = papszMD; *papszIter; ++papszIter)
                 {

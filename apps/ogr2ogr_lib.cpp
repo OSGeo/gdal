@@ -2791,7 +2791,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             return nullptr;
         }
 
-        char **papszDriverMD = poDriver->GetMetadata();
+        CSLConstList papszDriverMD = poDriver->GetMetadata();
         if (!CPLTestBool(
                 CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_VECTOR, "FALSE")))
         {
@@ -2901,7 +2901,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             const CPLStringList aosDomains(poDS->GetMetadataDomainList());
             for (const char *pszMD : aosDomains)
             {
-                if (char **papszMD = poDS->GetMetadata(pszMD))
+                if (CSLConstList papszMD = poDS->GetMetadata(pszMD))
                     poODS->SetMetadata(papszMD, pszMD);
             }
         }
@@ -5112,7 +5112,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 if (!EQUAL(pszMD, "IMAGE_STRUCTURE") &&
                     !EQUAL(pszMD, "SUBDATASETS"))
                 {
-                    if (char **papszMD = poSrcLayer->GetMetadata(pszMD))
+                    if (CSLConstList papszMD = poSrcLayer->GetMetadata(pszMD))
                     {
                         // MapInfo: Avoid overwriting the "BOUNDS" metadata on the output layer
                         // with the value from the source layer. If the value should be

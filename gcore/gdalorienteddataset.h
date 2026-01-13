@@ -56,7 +56,7 @@ class CPL_DLL GDALOrientedDataset : public GDALDataset
         return m_poSrcDS->GetMetadataDomainList();
     }
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 

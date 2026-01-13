@@ -220,7 +220,7 @@ class GDALThreadSafeDataset final : public GDALProxyDataset
             ->GetMetadataItem(pszName, pszDomain);
     }
 
-    char **GetMetadata(const char *pszDomain = "") override
+    CSLConstList GetMetadata(const char *pszDomain = "") override
     {
         std::lock_guard oGuard(m_oPrototypeDSMutex);
         return const_cast<GDALDataset *>(m_poPrototypeDS)
@@ -355,7 +355,7 @@ class GDALThreadSafeRasterBand final : public GDALProxyRasterBand
             ->GetMetadataItem(pszName, pszDomain);
     }
 
-    char **GetMetadata(const char *pszDomain = "") override
+    CSLConstList GetMetadata(const char *pszDomain = "") override
     {
         std::lock_guard oGuard(m_poTSDS->m_oPrototypeDSMutex);
         return const_cast<GDALRasterBand *>(m_poPrototypeBand)

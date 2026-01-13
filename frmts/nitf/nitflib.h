@@ -342,7 +342,7 @@ typedef struct
     double SAMP_DEN_COEFF[20];
 } NITFRPC00BInfo;
 
-char *NITFFormatRPC00BFromMetadata(char **papszRPC, int *pbPrecisionLoss);
+char *NITFFormatRPC00BFromMetadata(CSLConstList papszRPC, int *pbPrecisionLoss);
 int NITFDeserializeRPC00B(const GByte *pabyTRE, NITFRPC00BInfo *psRPC,
                           int bIsRPC00A);
 

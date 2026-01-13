@@ -276,13 +276,14 @@ class netCDFRasterBand final : public GDALPamRasterBand
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IWriteBlock(int, int, void *) override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList papszMD,
+                       const char *pszDomain = "") override;
 };
 
 /************************************************************************/
@@ -1121,7 +1122,7 @@ netCDFRasterBand::~netCDFRasterBand()
 /*                          GetMetadata()                               */
 /************************************************************************/
 
-char **netCDFRasterBand::GetMetadata(const char *pszDomain)
+CSLConstList netCDFRasterBand::GetMetadata(const char *pszDomain)
 {
     if (!m_bCreateMetadataFromOtherVarsDone)
         CreateMetadataFromOtherVars();
@@ -1185,7 +1186,8 @@ CPLErr netCDFRasterBand::SetMetadataItem(const char *pszName,
 /*                          SetMetadata()                               */
 /************************************************************************/
 
-CPLErr netCDFRasterBand::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr netCDFRasterBand::SetMetadata(CSLConstList papszMD,
+                                     const char *pszDomain)
 {
     if (GetAccess() == GA_Update &&
         (pszDomain == nullptr || pszDomain[0] == '\0'))
@@ -2976,7 +2978,7 @@ char **netCDFDataset::GetMetadataDomainList()
 /************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
-char **netCDFDataset::GetMetadata(const char *pszDomain)
+CSLConstList netCDFDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
         return papszSubDatasets;
@@ -3031,7 +3033,7 @@ CPLErr netCDFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
 /*                          SetMetadata()                               */
 /************************************************************************/
 
-CPLErr netCDFDataset::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr netCDFDataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 {
     if (GetAccess() == GA_Update &&
         (pszDomain == nullptr || pszDomain[0] == '\0'))
@@ -9771,7 +9773,7 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     // Copy GeoTransform and Projection.
 
     // Copy geolocation info.
-    char **papszGeolocationInfo = poSrcDS->GetMetadata("GEOLOCATION");
+    CSLConstList papszGeolocationInfo = poSrcDS->GetMetadata("GEOLOCATION");
     if (papszGeolocationInfo != nullptr)
         poDS->GDALPamDataset::SetMetadata(papszGeolocationInfo, "GEOLOCATION");
 
@@ -10283,7 +10285,7 @@ class GDALnetCDFDriver final : public GDALDriver
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override;
 
-    char **GetMetadata(const char *pszDomain) override
+    CSLConstList GetMetadata(const char *pszDomain) override
     {
         std::lock_guard oLock(m_oMutex);
         InitializeDCAPVirtualIO();

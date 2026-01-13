@@ -6110,7 +6110,7 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **OGRGeoPackageTableLayer::GetMetadata(const char *pszDomain)
+CSLConstList OGRGeoPackageTableLayer::GetMetadata(const char *pszDomain)
 
 {
     if (!m_bFeatureDefnCompleted)
@@ -6288,7 +6288,7 @@ char **OGRGeoPackageTableLayer::GetMetadataDomainList()
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr OGRGeoPackageTableLayer::SetMetadata(char **papszMetadata,
+CPLErr OGRGeoPackageTableLayer::SetMetadata(CSLConstList papszMetadata,
                                             const char *pszDomain)
 {
     GetMetadata(); /* force loading from storage if needed */

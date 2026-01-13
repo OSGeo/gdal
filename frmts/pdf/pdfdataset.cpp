@@ -7356,7 +7356,7 @@ char **PDFDataset::GetMetadataDomainList()
 /*                           GetMetadata()                              */
 /************************************************************************/
 
-char **PDFDataset::GetMetadata(const char *pszDomain)
+CSLConstList PDFDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "EMBEDDED_METADATA"))
     {
@@ -7390,8 +7390,8 @@ char **PDFDataset::GetMetadata(const char *pszDomain)
     }
     if (pszDomain == nullptr || EQUAL(pszDomain, ""))
     {
-        char **papszPAMMD = GDALPamDataset::GetMetadata(pszDomain);
-        for (char **papszIter = papszPAMMD; papszIter && *papszIter;
+        CSLConstList papszPAMMD = GDALPamDataset::GetMetadata(pszDomain);
+        for (CSLConstList papszIter = papszPAMMD; papszIter && *papszIter;
              ++papszIter)
         {
             char *pszKey = nullptr;
@@ -7417,7 +7417,8 @@ char **PDFDataset::GetMetadata(const char *pszDomain)
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr PDFDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr PDFDataset::SetMetadata(CSLConstList papszMetadata,
+                               const char *pszDomain)
 {
     if (pszDomain == nullptr || EQUAL(pszDomain, ""))
     {

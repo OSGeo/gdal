@@ -110,8 +110,9 @@ CPLErr GDALMultiDomainMetadata::SetMetadata(CSLConstList papszMetadata,
 /*                          GetMetadataItem()                           */
 /************************************************************************/
 
-const char *GDALMultiDomainMetadata::GetMetadataItem(const char *pszName,
-                                                     const char *pszDomain)
+const char *
+GDALMultiDomainMetadata::GetMetadataItem(const char *pszName,
+                                         const char *pszDomain) const
 
 {
     const auto oIter = oMetadata.find(SanitizeDomain(pszDomain));

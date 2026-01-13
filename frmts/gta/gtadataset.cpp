@@ -1441,24 +1441,25 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             sizeof(papszMetadataDomains) / sizeof(papszMetadataDomains[0]);
         for (size_t iDomain = 0; iDomain < nMetadataDomains; iDomain++)
         {
-            char **papszMetadata =
+            CSLConstList papszMetadata =
                 poSrcDS->GetMetadata(papszMetadataDomains[iDomain]);
             if (papszMetadata)
             {
                 for (int i = 0; papszMetadata[i]; i++)
                 {
-                    char *pEqualSign = strchr(papszMetadata[i], '=');
+                    const char *pEqualSign = strchr(papszMetadata[i], '=');
                     if (pEqualSign && pEqualSign - papszMetadata[i] > 0)
                     {
-                        *pEqualSign = '\0';
+                        const std::string osVal(
+                            papszMetadata[i],
+                            static_cast<size_t>(pEqualSign - papszMetadata[i]));
                         oHeader.global_taglist().set(
                             CPLSPrintf("GDAL/META/%s/%s",
                                        papszMetadataDomains[iDomain]
                                            ? papszMetadataDomains[iDomain]
                                            : "DEFAULT",
-                                       papszMetadata[i]),
+                                       osVal.c_str()),
                             pEqualSign + 1);
-                        *pEqualSign = '=';
                     }
                 }
             }
@@ -1518,24 +1519,27 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             }
             for (size_t iDomain = 0; iDomain < nMetadataDomains; iDomain++)
             {
-                char **papszBandMetadata =
+                CSLConstList papszBandMetadata =
                     poSrcBand->GetMetadata(papszMetadataDomains[iDomain]);
                 if (papszBandMetadata)
                 {
                     for (int i = 0; papszBandMetadata[i]; i++)
                     {
-                        char *pEqualSign = strchr(papszBandMetadata[i], '=');
+                        const char *pEqualSign =
+                            strchr(papszBandMetadata[i], '=');
                         if (pEqualSign && pEqualSign - papszBandMetadata[i] > 0)
                         {
-                            *pEqualSign = '\0';
+                            const std::string osVal(
+                                papszBandMetadata[i],
+                                static_cast<size_t>(pEqualSign -
+                                                    papszBandMetadata[i]));
                             oHeader.component_taglist(iBand).set(
                                 CPLSPrintf("GDAL/META/%s/%s",
                                            papszMetadataDomains[iDomain]
                                                ? papszMetadataDomains[iDomain]
                                                : "DEFAULT",
-                                           papszBandMetadata[i]),
+                                           osVal.c_str()),
                                 pEqualSign + 1);
-                            *pEqualSign = '=';
                         }
                     }
                 }

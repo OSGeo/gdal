@@ -154,7 +154,7 @@ class OGRPLScenesDataV1Layer final : public OGRLayer
     const OGRFeatureDefn *GetLayerDefn() const override;
     GIntBig GetFeatureCount(int bForce = FALSE) override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 

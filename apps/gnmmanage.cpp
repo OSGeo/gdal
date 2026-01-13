@@ -91,7 +91,7 @@ static void Usage(bool bIsError, const char *pszAdditionalMsg, bool bShort,
         GDALDriverH hDriver = GDALGetDriver(iDr);
 
         const char *pszRFlag = "", *pszWFlag, *pszVirtualIO, *pszSubdatasets;
-        char **papszMD = GDALGetMetadata(hDriver, nullptr);
+        CSLConstList papszMD = GDALGetMetadata(hDriver, nullptr);
 
         if (CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
             continue;
@@ -561,7 +561,7 @@ MAIN_START(nArgc, papszArgv)
         }
         else
         {
-            char **papszMD = poDriver->GetMetadata();
+            CSLConstList papszMD = poDriver->GetMetadata();
 
             if (!CPLFetchBool(papszMD, GDAL_DCAP_GNM, false))
                 Usage(true, "not a GNM driver");

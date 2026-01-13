@@ -3281,7 +3281,7 @@ void NITFDataset::InitializeImageStructureMetadata()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **NITFDataset::GetMetadata(const char *pszDomain)
+CSLConstList NITFDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "NITF_METADATA"))
@@ -4711,7 +4711,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     const bool bUseSrcNITFMetadata =
         CPLFetchBool(papszOptions, "USE_SRC_NITF_METADATA", true);
-    char **papszSrcMD = poSrcDS->GetMetadata();
+    CSLConstList papszSrcMD = poSrcDS->GetMetadata();
 
     for (int iMD = 0; bUseSrcNITFMetadata && papszSrcMD && papszSrcMD[iMD];
          iMD++)
@@ -5163,7 +5163,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     if (!bUseSrcNITFMetadata)
         nGCIFFlags &= ~GCIF_METADATA;
 
-    char **papszRPC = poSrcDS->GetMetadata("RPC");
+    CSLConstList papszRPC = poSrcDS->GetMetadata("RPC");
     if (papszRPC != nullptr && bUseSrcNITFMetadata &&
         CPLFetchBool(papszFullOptions, "RPC00B", true))
     {
@@ -5708,12 +5708,12 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             {
                 char **papszNewMD = CSLDuplicate(poDstDS->GetMetadata());
                 bool bAdded = false;
-                for (char **papszIter = papszSrcMD; *papszIter; ++papszIter)
+                for (const char *pszKeyValue : cpl::Iterate(papszSrcMD))
                 {
-                    if (!STARTS_WITH(*papszIter, "NITF_"))
+                    if (!STARTS_WITH(pszKeyValue, "NITF_"))
                     {
                         bAdded = true;
-                        papszNewMD = CSLAddString(papszNewMD, *papszIter);
+                        papszNewMD = CSLAddString(papszNewMD, pszKeyValue);
                     }
                 }
                 if (bAdded)
@@ -7201,7 +7201,7 @@ class NITFDriver final : public GDALDriver
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override;
 
-    char **GetMetadata(const char *pszDomain) override
+    CSLConstList GetMetadata(const char *pszDomain) override
     {
         std::lock_guard oLock(m_oMutex);
         InitCreationOptionList();
