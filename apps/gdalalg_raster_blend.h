@@ -27,8 +27,10 @@ enum class CompositionMode : unsigned
     SRC_OVER = 0,
     HSV_VALUE,
     MULTIPLY,
-    LAST_  //! last fake value for iteration
 };
+
+//! Returns a map of all composition modes to their string identifiers
+static std::map<CompositionMode, std::string> CompositionModes();
 
 //! Returns the text identifier of the composition mode
 const char *CompositionModeToString(CompositionMode mode);
