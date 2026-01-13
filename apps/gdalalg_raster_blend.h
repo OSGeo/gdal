@@ -30,7 +30,7 @@ enum class CompositionMode : unsigned
 };
 
 //! Returns a map of all composition modes to their string identifiers
-static std::map<CompositionMode, std::string> CompositionModes();
+std::map<CompositionMode, std::string> CompositionModes();
 
 //! Returns the text identifier of the composition mode
 const char *CompositionModeToString(CompositionMode mode);
