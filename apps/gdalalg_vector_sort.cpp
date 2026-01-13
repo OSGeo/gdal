@@ -72,6 +72,18 @@ class GDALFileFeatureStore : public GDALFeatureStore
     {
         m_fileName = CPLGenerateTempFilenameSafe(nullptr);
         m_file = VSIFOpenL(m_fileName.c_str(), "wb+");
+
+        if (m_file == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to create temporary file");
+        }
+        else
+        {
+            // Unlink immediately so that the file is cleaned up if the process is killed
+            // (at least on Linux)
+            VSIUnlink(m_fileName.c_str());
+        }
     }
 
     ~GDALFileFeatureStore() override
@@ -126,6 +138,8 @@ class GDALFileFeatureStore : public GDALFeatureStore
 
         if (!f->SerializeToBinary(m_buf))
         {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to serialize feature to buffer");
             return false;
         }
 
@@ -137,6 +151,8 @@ class GDALFileFeatureStore : public GDALFeatureStore
         auto nBytesWritten = VSIFWriteL(m_buf.data(), 1, m_buf.size(), m_file);
         if (nBytesWritten != m_buf.size())
         {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to write feature to temporary file");
             return false;
         }
 
