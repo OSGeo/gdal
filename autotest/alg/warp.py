@@ -2003,14 +2003,103 @@ def test_warp_nodata_substitution(dt, expected_val, resampling):
     src_ds = gdal.GetDriverByName("MEM").Create("", 4, 4, 1, dt)
     src_ds.SetGeoTransform([1, 1, 0, 1, 0, 1])
 
-    out_ds = gdal.Warp(
-        "",
-        src_ds,
-        options=f"-of MEM -dstnodata 0 -r {resampling}",
-    )
+    with gdaltest.error_raised(gdal.CE_Warning):
+        out_ds = gdal.Warp(
+            "",
+            src_ds,
+            options=f"-of MEM -dstnodata 0 -r {resampling}",
+        )
     assert (
         struct.unpack("d", out_ds.ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Float64))[0]
         == expected_val
+    )
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 4, 4, 2, dt)
+    src_ds.SetGeoTransform([1, 1, 0, 1, 0, 1])
+    src_ds.GetRasterBand(2).Fill(1)
+
+    with gdaltest.error_raised(gdal.CE_Warning):
+        out_ds = gdal.Warp(
+            "",
+            src_ds,
+            options=f"-of MEM -dstnodata 0 -r {resampling}",
+        )
+    assert (
+        struct.unpack(
+            "d",
+            out_ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Float64),
+        )[0]
+        == expected_val
+    )
+    assert (
+        struct.unpack(
+            "d",
+            out_ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Float64),
+        )[0]
+        == 1
+    )
+
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options=f"-of MEM -dstnodata 0 -r {resampling} -wo UNIFIED_SRC_NODATA=YES",
+    )
+    assert (
+        struct.unpack(
+            "d",
+            out_ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Float64),
+        )[0]
+        == 0
+    )
+    assert (
+        struct.unpack(
+            "d",
+            out_ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Float64),
+        )[0]
+        == 1
+    )
+
+    src_ds.GetRasterBand(2).Fill(0)
+
+    with gdaltest.error_raised(gdal.CE_Warning):
+        out_ds = gdal.Warp(
+            "",
+            src_ds,
+            options=f"-of MEM -dstnodata 0 -r {resampling} -wo UNIFIED_SRC_NODATA=YES",
+        )
+    assert (
+        struct.unpack(
+            "d",
+            out_ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Float64),
+        )[0]
+        == expected_val
+    )
+    assert (
+        struct.unpack(
+            "d",
+            out_ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Float64),
+        )[0]
+        == expected_val
+    )
+
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options=f"-of MEM -srcnodata 0 -dstnodata 0 -r {resampling} -wo UNIFIED_SRC_NODATA=YES",
+    )
+    assert (
+        struct.unpack(
+            "d",
+            out_ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Float64),
+        )[0]
+        == 0
+    )
+    assert (
+        struct.unpack(
+            "d",
+            out_ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Float64),
+        )[0]
+        == 0
     )
 
 
