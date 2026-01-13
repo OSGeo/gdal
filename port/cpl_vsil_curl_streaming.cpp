@@ -16,6 +16,7 @@
 #include "cpl_vsil_curl_class.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <map>
 
 #include "cpl_aws.h"
@@ -790,7 +791,7 @@ size_t VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count,
         FileProp cachedFileProp;
         m_poFS->GetCachedFileProp(m_pszURL, cachedFileProp);
         cachedFileProp.fileSize = fileSize = nCandidateFileSize;
-        bHasCandidateFileSize = TRUE;
+        bHasComputedFileSize = TRUE;
         cachedFileProp.bHasComputedFileSize = bHasComputedFileSize;
         m_poFS->SetCachedFileProp(m_pszURL, cachedFileProp);
         if (ENABLE_DEBUG)
@@ -1206,7 +1207,10 @@ retry:
 
     if (bHasComputedFileSizeLocal && curOffset >= fileSizeLocal)
     {
-        CPLDebug("VSICURL", "Read attempt beyond end of file");
+        CPLDebug("VSICURL",
+                 "Read attempt beyond end of file (%" PRIu64 " >= %" PRIu64 ")",
+                 static_cast<uint64_t>(curOffset),
+                 static_cast<uint64_t>(fileSizeLocal));
         bEOF = true;
     }
     if (bEOF)
