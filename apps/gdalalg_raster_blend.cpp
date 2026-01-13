@@ -814,9 +814,9 @@ static void BlendMultiply_Generic(
             // RBG and RGBA
             if (nOutputBands >= 3)
             {
-                const GByte nDstG = static_cast<GByte>(nG * nOverlayG / 255.0);
+                const GByte nDstG = static_cast<GByte>((nG * nOverlayG + 255) / 256);
                 pabyDst[i + nBandSpace] = nDstG;
-                const GByte nDstB = static_cast<GByte>(nB * nOverlayB / 255.0);
+                const GByte nDstB = static_cast<GByte>((nB * nOverlayB  + 255) / 256);
                 pabyDst[i + 2 * nBandSpace] = nDstB;
             }
 
