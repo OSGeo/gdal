@@ -328,7 +328,7 @@ bool run(gdal::Options &localOpts, bool adjustCurveCoeff)
             bSuccess = oViewshed.run(
                 hBand, localOpts.bQuiet ? GDALDummyProgress : GDALTermProgress);
         std::unique_ptr<GDALDataset> dstDs = oViewshed.output();
-        bSuccess = (dstDs->Close() == CE_None);
+        bSuccess = bSuccess && (dstDs->Close() == CE_None);
     }
     return bSuccess;
 }
