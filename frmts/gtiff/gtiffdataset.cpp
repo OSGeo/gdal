@@ -532,6 +532,7 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         if (pBufferedData)
             cachedRangesReleaser =
                 std::make_unique<ReleaseCachedRanges>(m_hTIFF, pBufferedData);
+        CPL_IGNORE_RET_VAL(cachedRangesReleaser);
     }
     else if (bCanUseMultiThreadedRead)
     {
