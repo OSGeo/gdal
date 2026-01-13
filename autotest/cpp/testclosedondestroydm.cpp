@@ -31,7 +31,6 @@ static void OpenJPEG2000(const char *pszFilename)
     const char *const apszDrivers[] = {"JP2ECW",   "JP2OpenJPEG", "JPEG2000",
                                        "JP2MrSID", "JP2KAK",      "JP2Lura"};
     GDALDriverH aphDrivers[N_DRIVERS];
-    GDALDatasetH hDS;
     int i, j;
 
     for (i = 0; i < N_DRIVERS; i++)
@@ -48,12 +47,14 @@ static void OpenJPEG2000(const char *pszFilename)
             GDALDeregisterDriver(aphDrivers[j]);
         }
 
-        hDS = GDALOpen(pszFilename, GA_ReadOnly);
+        GDALDatasetH hDS = GDALOpen(pszFilename, GA_ReadOnly);
         if (!EQUAL(apszDrivers[i], "JP2Lura") &&
             !EQUAL(apszDrivers[i], "JPEG2000"))
         {
             ASSERT_TRUE(hDS != nullptr);
         }
+        if (hDS)
+            GDALGetRasterCount(hDS);
         for (j = 0; j < N_DRIVERS; j++)
         {
             if (i == j || aphDrivers[j] == nullptr)
@@ -74,6 +75,12 @@ TEST(testclosedondestroydm, test)
         CPLSetConfigOption("GDAL_SKIP", CPLSPrintf("%s GIF", pszGDAL_SKIP));
 
     GDALAllRegister();
+
+    const auto DoSomethingWithDataset = [](GDALDatasetH hDS)
+    {
+        if (hDS)
+            GDALGetRasterCount(hDS);
+    };
 
     {
         auto hDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
@@ -96,7 +103,8 @@ TEST(testclosedondestroydm, test)
                               GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
     }
 
-    CPL_IGNORE_RET_VAL(GDALOpen(GDRIVERS_DIR "data/nitf/A.TOC", GA_ReadOnly));
+    DoSomethingWithDataset(
+        GDALOpen(GDRIVERS_DIR "data/nitf/A.TOC", GA_ReadOnly));
 
     {
         auto hDS =
@@ -270,26 +278,28 @@ TEST(testclosedondestroydm, test)
                           GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
     }
 
-    CPL_IGNORE_RET_VAL(GDALOpenShared(GCORE_DATA_DIR "byte.tif", GA_ReadOnly));
+    DoSomethingWithDataset(
+        GDALOpenShared(GCORE_DATA_DIR "byte.tif", GA_ReadOnly));
 
-    CPL_IGNORE_RET_VAL(GDALOpenShared(GCORE_DATA_DIR "byte.tif", GA_ReadOnly));
+    DoSomethingWithDataset(
+        GDALOpenShared(GCORE_DATA_DIR "byte.tif", GA_ReadOnly));
 
-    CPL_IGNORE_RET_VAL(
+    DoSomethingWithDataset(
         GDALOpenShared(GDRIVERS_DIR "data/sid/mercator.sid", GA_ReadOnly));
 
-    CPL_IGNORE_RET_VAL(
+    DoSomethingWithDataset(
         GDALOpen("RASTERLITE:" GDRIVERS_DIR
                  "data/rasterlite/rasterlite_pyramids.sqlite,table=test",
                  GA_ReadOnly));
 
-    CPL_IGNORE_RET_VAL(GDALOpen(
+    DoSomethingWithDataset(GDALOpen(
         "RASTERLITE:" GDRIVERS_DIR
         "data/rasterlite/rasterlite_pyramids.sqlite,table=test,level=1",
         GA_ReadOnly));
 
     OpenJPEG2000(GDRIVERS_DIR "data/jpeg2000/rgbwcmyk01_YeGeo_kakadu.jp2");
 
-    CPL_IGNORE_RET_VAL(
+    DoSomethingWithDataset(
         GDALOpen(GDRIVERS_DIR "tmp/cache/Europe 2001_OZF.map", GA_ReadOnly));
 
     CPLDebug("TEST", "Call GDALDestroyDriverManager()");

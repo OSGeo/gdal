@@ -3013,7 +3013,8 @@ CPLErr JPGDatasetCommon::IRasterIO(
                 if (tmpError != CE_None)
                     return tmpError;
 
-                if (nPixelSpace == 1 && nBandSpace >= nXSize * nYSize)
+                if (nPixelSpace == 1 &&
+                    nBandSpace >= static_cast<GSpacing>(nXSize) * nYSize)
                 {
                     void *apDestBuffers[3] = {
                         pabyData + y * nLineSpace + 0 * nBandSpace,
