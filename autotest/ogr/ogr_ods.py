@@ -509,3 +509,16 @@ def test_ogr_ods_read_ods_prefix():
         tmpfilename, open("data/ods/multiple_text_p_elements.ods", "rb").read()
     ):
         assert ogr.Open("ODS:" + tmpfilename) is not None
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/13687
+
+
+def test_ogr_ods_read_first_line_3_cols_second_line_2_cols():
+
+    ds = ogr.Open("data/ods/first_line_3_cols_second_line_2_cols.ods")
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldCount() == 3
+    assert lyr_defn.GetFieldDefn(0).GetName() == "primo"
