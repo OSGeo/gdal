@@ -510,7 +510,6 @@ const OGRFeatureDefn *GDALVectorPipelinePassthroughLayer::GetLayerDefn() const
 /************************************************************************/
 
 GDALVectorNonStreamingAlgorithmDataset::GDALVectorNonStreamingAlgorithmDataset()
-    : m_ds(MEMDataset::Create("", 0, 0, 0, GDT_Unknown, nullptr))
 {
 }
 
@@ -570,15 +569,9 @@ OGRLayer *GDALVectorNonStreamingAlgorithmDataset::GetLayer(int idx) const
 /*    GDALVectorNonStreamingAlgorithmDataset::TestCapability()          */
 /************************************************************************/
 
-int GDALVectorNonStreamingAlgorithmDataset::TestCapability(
-    const char *pszCap) const
+int GDALVectorNonStreamingAlgorithmDataset::TestCapability(const char *) const
 {
-    if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer))
-    {
-        return false;
-    }
-
-    return m_ds->TestCapability(pszCap);
+    return false;
 }
 
 /************************************************************************/

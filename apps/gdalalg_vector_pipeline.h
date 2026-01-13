@@ -368,8 +368,6 @@ class GDALVectorPipelinePassthroughLayer /* non final */
 /*                 GDALVectorNonStreamingAlgorithmDataset               */
 /************************************************************************/
 
-class MEMDataset;
-
 /**
  * Dataset used to read all input features into memory and perform some
  * processing.
@@ -392,7 +390,6 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
   private:
     std::vector<std::unique_ptr<OGRLayer>> m_owned_layers{};
     std::vector<OGRLayer *> m_layers{};
-    std::unique_ptr<MEMDataset> m_ds{};
 };
 
 /************************************************************************/
