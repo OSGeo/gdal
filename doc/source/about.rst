@@ -10,13 +10,6 @@ GDAL is a translator library for raster and vector geospatial data formats that 
 
 .. only:: html
 
-.. note::
-
-    The GDAL project is currently soliciting feedback to help focus activities.
-    We would highly appreciate you fill in the `survey <https://gdal.org/survey/>`__ that will
-    provide guidance about priorities for the program's resources (open until end of December 2025).
-    Five T-shirts will be distributed to randomly chosen respondents who leave their email!
-
    |offline-download|
 
 .. image:: ../images/OSGeo_project.png
