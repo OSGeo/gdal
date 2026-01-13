@@ -432,14 +432,16 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (nBufXSize < nXSize && nBufYSize < nYSize)
     {
         int bTried = FALSE;
+        std::unique_ptr<JPEGOverviewVisibilitySetter> setter;
         if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
-            ++m_nJPEGOverviewVisibilityCounter;
+        {
+            setter = MakeJPEGOverviewVisible();
+            CPL_IGNORE_RET_VAL(setter);
+        }
         const CPLErr eErr = TryOverviewRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
             eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace,
             nBandSpace, psExtraArg, &bTried);
-        if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
-            --m_nJPEGOverviewVisibilityCounter;
         if (bTried)
             return eErr;
     }
@@ -483,7 +485,28 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
     }
 
-    void *pBufferedData = nullptr;
+    struct ReleaseCachedRanges
+    {
+        TIFF *hTIFF_ = nullptr;
+        void *pBufferedData_ = nullptr;
+
+        explicit ReleaseCachedRanges(TIFF *hTIFFIn, void *pBufferedData)
+            : hTIFF_(hTIFFIn), pBufferedData_(pBufferedData)
+        {
+        }
+
+        ~ReleaseCachedRanges()
+        {
+            VSIFree(pBufferedData_);
+            VSI_TIFFSetCachedRanges(TIFFClientdata(hTIFF_), 0, nullptr, nullptr,
+                                    nullptr);
+        }
+        CPL_DISALLOW_COPY_ASSIGN(ReleaseCachedRanges)
+    };
+
+    std::unique_ptr<ReleaseCachedRanges>
+        cachedRangesReleaser;  // keep in this scope
+
     const auto poFirstBand = cpl::down_cast<GTiffRasterBand *>(papoBands[0]);
     const auto eDataType = poFirstBand->GetRasterDataType();
 
@@ -492,6 +515,7 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         !(bCanUseMultiThreadedRead &&
           VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF))->HasPRead()))
     {
+        void *pBufferedData = nullptr;
         if (nBands == 1 || m_nPlanarConfig == PLANARCONFIG_CONTIG)
         {
             const int nBandOne = 1;
@@ -505,6 +529,9 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 CacheMultiRange(nXOff, nYOff, nXSize, nYSize, nBufXSize,
                                 nBufYSize, panBandMap, nBandCount, psExtraArg);
         }
+        if (pBufferedData)
+            cachedRangesReleaser =
+                std::make_unique<ReleaseCachedRanges>(m_hTIFF, pBufferedData);
     }
     else if (bCanUseMultiThreadedRead)
     {
@@ -660,23 +687,16 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
     }
 
+    std::unique_ptr<JPEGOverviewVisibilitySetter> setter;
     if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
-        ++m_nJPEGOverviewVisibilityCounter;
-    const CPLErr eErr = GDALPamDataset::IRasterIO(
-        eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
-        eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace,
-        psExtraArg);
-    if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
-        m_nJPEGOverviewVisibilityCounter--;
-
-    if (pBufferedData)
     {
-        VSIFree(pBufferedData);
-        VSI_TIFFSetCachedRanges(TIFFClientdata(m_hTIFF), 0, nullptr, nullptr,
-                                nullptr);
+        setter = MakeJPEGOverviewVisible();
+        CPL_IGNORE_RET_VAL(setter);
     }
-
-    return eErr;
+    return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize, eBufType,
+                                     nBandCount, panBandMap, nPixelSpace,
+                                     nLineSpace, nBandSpace, psExtraArg);
 }
 
 /************************************************************************/

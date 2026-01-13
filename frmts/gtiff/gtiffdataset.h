@@ -185,6 +185,29 @@ class GTiffDataset final : public GDALPamDataset
     int m_nRefBaseMapping = 0;
     int m_nDisableMultiThreadedRead = 0;
 
+    struct JPEGOverviewVisibilitySetter
+    {
+        signed char &nCounter_;
+
+        explicit JPEGOverviewVisibilitySetter(signed char &nCounter)
+            : nCounter_(nCounter)
+        {
+            ++nCounter_;
+        }
+
+        ~JPEGOverviewVisibilitySetter()
+        {
+            --nCounter_;
+        }
+    };
+
+    std::unique_ptr<JPEGOverviewVisibilitySetter>
+    MakeJPEGOverviewVisible() CPL_WARN_UNUSED_RESULT
+    {
+        return std::make_unique<JPEGOverviewVisibilitySetter>(
+            m_nJPEGOverviewVisibilityCounter);
+    }
+
   public:
     static constexpr int DEFAULT_COLOR_TABLE_MULTIPLIER_257 = 257;
 
