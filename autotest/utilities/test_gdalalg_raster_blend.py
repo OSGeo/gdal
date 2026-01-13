@@ -761,6 +761,8 @@ def test_gdalalg_raster_blend_src_over_stefan_full_rgba():
         (100, 255, 255, 255, 255, 1, 2, 3, 255, 1, 2, 3, 255),
         (100, 127, 128, 129, 255, 255, 255, 255, 255, 127, 128, 129, 255),
         (50, 10, 20, 30, 255, 255, 255, 255, 255, 5, 10, 15, 255),
+        # Test with alpha not 255
+        (100, 128, 128, 128, 127, 10, 20, 30, 255, 3, 5, 8, 255),
     ],
 )
 def test_gdalalg_raster_blend_multiply_4bands_over_4bands(
