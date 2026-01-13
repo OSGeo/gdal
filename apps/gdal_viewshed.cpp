@@ -260,48 +260,6 @@ void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
 
 }  // unnamed namespace
 
-struct ScopedDataset
-{
-    ScopedDataset() : m_ds(nullptr)
-    {
-    }
-
-    ScopedDataset(GDALDatasetH ds) : m_ds(ds)
-    {
-    }
-
-    ~ScopedDataset()
-    {
-        if (m_ds)
-            GDALClose(m_ds);
-    }
-
-    ScopedDataset &operator=(GDALDatasetH ds)
-    {
-        if (m_ds)
-            GDALClose(m_ds);
-        m_ds = ds;
-        return *this;
-    }
-
-    operator GDALDatasetH() const
-    {
-        return m_ds;
-    }
-
-    operator bool() const
-    {
-        return m_ds != nullptr;
-    }
-
-    bool operator!() const
-    {
-        return m_ds == nullptr;
-    }
-
-    GDALDatasetH m_ds;
-};
-
 bool run(gdal::Options &localOpts, bool adjustCurveCoeff)
 {
     viewshed::Options &opts = localOpts.opts;
@@ -309,12 +267,12 @@ bool run(gdal::Options &localOpts, bool adjustCurveCoeff)
     /* -------------------------------------------------------------------- */
     /*      Open source raster file.                                        */
     /* -------------------------------------------------------------------- */
-    ScopedDataset srcDs =
-        GDALOpen(localOpts.osSrcFilename.c_str(), GA_ReadOnly);
+    std::unique_ptr<GDALDataset> srcDs(GDALDataset::Open(
+        localOpts.osSrcFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_READONLY));
     if (!srcDs)
         exit(2);
 
-    GDALRasterBandH hBand = GDALGetRasterBand(srcDs, localOpts.nBandIn);
+    GDALRasterBand *hBand = srcDs->GetRasterBand(localOpts.nBandIn);
     if (hBand == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -325,16 +283,17 @@ bool run(gdal::Options &localOpts, bool adjustCurveCoeff)
     /* -------------------------------------------------------------------- */
     /*      Open source SD raster file.                                     */
     /* -------------------------------------------------------------------- */
-    ScopedDataset sdDs;
-    GDALRasterBandH hSdBand = nullptr;
+    std::unique_ptr<GDALDataset> sdDs;
+    GDALRasterBand *hSdBand = nullptr;
 
     if (localOpts.osSdFilename.size())
     {
-        sdDs = GDALOpen(localOpts.osSdFilename.c_str(), GA_ReadOnly);
+        sdDs.reset(GDALDataset::Open(localOpts.osSdFilename.c_str(),
+                                     GDAL_OF_RASTER | GDAL_OF_READONLY));
         if (!sdDs)
             exit(2);
 
-        hSdBand = GDALGetRasterBand(sdDs, 1);
+        hSdBand = sdDs->GetRasterBand(1);
         if (hSdBand == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -344,7 +303,8 @@ bool run(gdal::Options &localOpts, bool adjustCurveCoeff)
     }
 
     if (adjustCurveCoeff)
-        opts.curveCoeff = viewshed::adjustCurveCoeff(opts.curveCoeff, srcDs);
+        opts.curveCoeff = viewshed::adjustCurveCoeff(
+            opts.curveCoeff, GDALDataset::ToHandle(srcDs.get()));
 
     /* -------------------------------------------------------------------- */
     /*      Invoke.                                                         */
@@ -369,9 +329,8 @@ bool run(gdal::Options &localOpts, bool adjustCurveCoeff)
         else
             bSuccess = oViewshed.run(
                 hBand, localOpts.bQuiet ? GDALDummyProgress : GDALTermProgress);
-        ScopedDataset dstDs =
-            GDALDataset::FromHandle(oViewshed.output().release());
-        bSuccess = dstDs;
+        std::unique_ptr<GDALDataset> dstDs = oViewshed.output();
+        bSuccess = (dstDs->Close() == CE_None);
     }
     return bSuccess;
 }
