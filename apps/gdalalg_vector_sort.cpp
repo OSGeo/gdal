@@ -90,6 +90,11 @@ class GDALFileFeatureStore : public GDALFeatureStore
         {
             const_cast<OGRFeatureDefn *>(m_defn)->Release();
         }
+        if (m_file != nullptr)
+        {
+            VSIFCloseL(m_file);
+        }
+
         VSIUnlink(m_fileName.c_str());
     }
 
