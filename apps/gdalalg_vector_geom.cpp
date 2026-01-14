@@ -313,10 +313,10 @@ GDALGeosNonStreamingAlgorithmLayer::GetNextProcessedFeature()
     poResultGeom->assignSpatialReference(
         GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef());
 
-    auto poFeature = std::make_unique<OGRFeature>(GetLayerDefn());
+    auto poFeature = m_apoFeatures[m_readPos - 1].get();
     poFeature->SetGeometry(std::move(poResultGeom));
 
-    return poFeature;
+    return std::unique_ptr<OGRFeature>(poFeature->Clone());
 }
 
 #undef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
