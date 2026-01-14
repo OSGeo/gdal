@@ -7,7 +7,7 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG PROJ_INSTALL_PREFIX=/usr/local
+ARG PROJ_INSTALL_PREFIX=/usr/local/gdal-internal
 ARG BASE_IMAGE=ubuntu:24.04
 ARG TARGET_BASE_IMAGE=ubuntu:24.04
 
@@ -181,13 +181,13 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     && mkdir build \
     && cd build \
     # -Wno-psabi avoid 'note: parameter passing for argument of type 'std::pair<double, double>' when C++17 is enabled changed to match C++14 in GCC 10.1' on arm64
-    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -Wno-psabi' \
+    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -Wno-psabi' LDFLAGS="-Wl,-rpath=${PROJ_INSTALL_PREFIX}/lib" \
        cmake .. \
         -G Ninja \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DGDAL_FIND_PACKAGE_PROJ_MODE=MODULE \
-        -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX-/usr/local}/include" \
-        -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX-/usr/local}/lib/libinternalproj.so" \
+        -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX}/include" \
+        -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so" \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON ${GDAL_CMAKE_EXTRA_OPTS} \
         -DBUILD_TESTING=OFF \
@@ -216,8 +216,7 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/${GCC_ARCH}-linux-gnu/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_version_changing/usr/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done \
-    && rm /build${PROJ_INSTALL_PREFIX}/lib/pkgconfig/proj.pc
+    && for i in /build_gdal_version_changing/usr/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
 FROM $TARGET_BASE_IMAGE AS runner
@@ -271,6 +270,7 @@ RUN ldconfig
 RUN echo "source /usr/share/bash-completion/bash_completion" >> /root/.bashrc
 
 # Set tcmalloc as the allocator to improve multi-threaded performance
-ENV LD_PRELOAD=libtcmalloc_minimal.so.4
+ENV LD_PRELOAD=libtcmalloc_minimal.so.4 \
+    PATH="${PATH}:/usr/local/gdal-internal/bin"
 
 CMD ["/bin/bash", "-l"]

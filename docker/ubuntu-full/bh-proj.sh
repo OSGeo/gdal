@@ -39,7 +39,7 @@ curl -Lo - -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
     cmake . \
         -G Ninja \
         -DBUILD_SHARED_LIBS=ON \
-        -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX:-/usr/local} \
+        -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX} \
         -DBUILD_TESTING=OFF \
         $PROJ_DB_CACHE_PARAM
 
