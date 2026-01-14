@@ -483,7 +483,7 @@ ARG WITH_DEBUG_SYMBOLS=no
 
 # Refresh grids
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
-ARG PROJ_INSTALL_PREFIX=/usr/local
+ARG PROJ_INSTALL_PREFIX=/usr/local/gdal-internal
 COPY ./bh-proj.sh /buildscripts/bh-proj.sh
 # We build PROJ a first time, just to build the projsync utility if grids need
 # to be refreshed. We will rebuild just afterwards, but depending on the
@@ -499,7 +499,7 @@ RUN --mount=type=cache,id=ubuntu-full-proj,target=$HOME/.cache \
       . /buildscripts/bh-set-envvars.sh \
       && rm -f /tmp/proj_grids/proj_grids_not_included \
       && DESTDIR=/build_tmp_proj /buildscripts/bh-proj.sh \
-      && LD_LIBRARY_PATH=/build_tmp_proj/usr/local/lib /build_tmp_proj/usr/local/bin/projsync --target-dir /tmp/proj_grids --all \
+      && LD_LIBRARY_PATH=/build_tmp_proj/${PROJ_INSTALL_PREFIX}/lib /build_tmp_proj/${PROJ_INSTALL_PREFIX}/bin/projsync --target-dir /tmp/proj_grids --all \
       && rm -rf /build_tmp_proj \
     ); fi
 
@@ -618,7 +618,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 COPY --from=builder  /build_thirdparty/opt/ /opt/
 
-ARG PROJ_INSTALL_PREFIX=/usr/local
+ARG PROJ_INSTALL_PREFIX=/usr/local/gdal-internal
 COPY --from=builder  /tmp/proj_grids/* ${PROJ_INSTALL_PREFIX}/share/proj/
 
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
@@ -641,6 +641,7 @@ RUN ogrinfo ADBC::memory: -oo ADBC_DRIVER=libduckdb.so -oo PRELUDE_STATEMENTS="I
 RUN echo "source /usr/share/bash-completion/bash_completion" >> /root/.bashrc
 
 # Set tcmalloc as the allocator to improve multi-threaded performance
-ENV LD_PRELOAD=libtcmalloc_minimal.so.4
+ENV LD_PRELOAD=libtcmalloc_minimal.so.4 \
+    PATH="${PATH}:/usr/local/gdal-internal/bin"
 
 CMD ["/bin/bash", "-l"]
