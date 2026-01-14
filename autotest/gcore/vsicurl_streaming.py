@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import threading
 import time
 
@@ -368,3 +369,25 @@ def test_vsicurl_streaming_retry_in_middle_failed(webserver_port):
                 assert gdal.VSIFEofL(f)
             finally:
                 gdal.VSIFCloseL(f)
+
+
+###############################################################################
+#
+
+
+def test_vsicurl_streaming_cached_file_size(webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET", "/test.bin", 200, {"Content-Length": 1024 * 1024}, b"x" * (1024 * 1024)
+    )
+
+    with webserver.install_http_handler(handler):
+        with gdal.VSIFile(
+            f"/vsicurl_streaming/http://localhost:{webserver_port}/test.bin", "rb"
+        ) as f:
+            assert f.read(1) == b"x"
+            f.seek(0, os.SEEK_END)
+            assert f.tell() == 1024 * 1024
