@@ -42,6 +42,11 @@ Program-Specific Options
    * hilbert : default method. Geometries are sorted according to the Hilbert code of the center point of their bounding box
    * strtree : Geometries are sorted by constructing a sort-tile-recursive tree using the GEOS library and performing a depth-first iteration.
 
+.. option:: --use-tempfile
+
+   Write the input features to a temporary file from which they can be read in sorted order. Avoids the need to load the entire
+   input layer into memory.
+
 Examples
 --------
 
