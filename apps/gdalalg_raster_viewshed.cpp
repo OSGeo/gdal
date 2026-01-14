@@ -45,8 +45,10 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
         .SetRepeatedArgAllowed(false);
     AddArg("height", 'z', _("Observer height"), &m_opts.observer.z);
 
-    AddArg("sd-filename", 0, _("Filename of standard-deviation raster"),
-           &m_sdFilename);
+    auto &sdFilenameArg =
+        AddArg("sd-filename", 0, _("Filename of standard-deviation raster"),
+               &m_sdFilename, GDAL_OF_RASTER);
+    SetAutoCompleteFunctionForFilename(sdFilenameArg, GDAL_OF_RASTER);
 
     AddArg("target-height", 0,
            _("Height of the target above the DEM surface in the height unit of "
@@ -160,13 +162,17 @@ bool GDALRasterViewshedAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     CPLAssert(poSrcDS);
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
-    std::unique_ptr<GDALDataset> sdDataset;
     GDALRasterBandH sdBand = nullptr;
-    if (GetArg("sd-filename")->IsExplicitlySet())
+    if (auto sdDataset = m_sdFilename.GetDatasetRef())
     {
-        GDALDatasetH ds = GDALOpen(m_sdFilename.GetName().c_str(), GA_ReadOnly);
-        sdDataset.reset(GDALDataset::FromHandle(ds));
-        sdBand = sdDataset->GetRasterBand(1);
+        if (sdDataset->GetRasterCount() == 0)
+        {
+            ReportError(
+                CE_Failure, CPLE_AppDefined,
+                "The standard deviation dataset must have one raster band");
+            return false;
+        }
+        sdBand = GDALRasterBand::FromHandle(sdDataset->GetRasterBand(1));
     }
 
     if (GetArg("height")->IsExplicitlySet())
