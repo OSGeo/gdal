@@ -12,7 +12,6 @@
 
 #include "gdalalg_vector_sort.h"
 
-#include "cpl_enumerate.h"
 #include "cpl_error.h"
 #include "gdal_alg.h"
 #include "gdal_priv.h"
@@ -405,7 +404,7 @@ class GDALVectorSTRTreeSortLayer : public GDALVectorSortedLayer
 
         OGREnvelope oGeomExtent;
         std::vector<size_t> nullIndices;
-        std::size_t i = 0;
+        std::uintptr_t i = 0;
         for (auto &poFeature : m_srcLayer)
         {
 
@@ -457,7 +456,7 @@ class GDALVectorSTRTreeSortLayer : public GDALVectorSortedLayer
     }
 
   private:
-    bool InsertIntoTree(const OGREnvelope &oGeomExtent, size_t i)
+    bool InsertIntoTree(const OGREnvelope &oGeomExtent, std::uintptr_t i)
     {
         GEOSGeometry *poEnv = CreateGEOSEnvelope(oGeomExtent);
         if (poEnv == nullptr)
@@ -504,7 +503,7 @@ class GDALVectorSTRTreeSortLayer : public GDALVectorSortedLayer
             [](void *item, void *userData)
             {
                 static_cast<std::vector<size_t> *>(userData)->push_back(
-                    reinterpret_cast<size_t>(item));
+                    reinterpret_cast<std::uintptr_t>(item));
             },
             &sortedIndices);
 
