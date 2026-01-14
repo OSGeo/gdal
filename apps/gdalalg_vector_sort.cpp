@@ -471,22 +471,28 @@ class GDALVectorSTRTreeSortLayer : public GDALVectorSortedLayer
         return true;
     }
 
-    void BuildTree()
+    bool BuildTree()
     {
 #if GEOS_VERSION_MAJOR > 3 ||                                                  \
     (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12)
         GEOSSTRtree_build_r(m_geosContext, m_poTree);
 #else
-        if (!features.empty())
+        if (m_store->Size() > 0)
         {
             // Perform a dummy query to force tree construction.
-            GEOSGeometry *poEnv = CreateGEOSEnvelope(oGeomExtent);
+            OGREnvelope oExtent;
+            oExtent.MinX = oExtent.MaxX = oExtent.MinY = oExtent.MaxY = 0;
+            GEOSGeometry *poEnv = CreateGEOSEnvelope(oExtent);
+            if (poEnv == nullptr)
+            {
+                return false;
+            }
             GEOSSTRtree_query_r(
-                m_geosContext, poTree.get(), poEnv, [](void *, void *) {},
-                nullptr);
+                m_geosContext, m_poTree, poEnv, [](void *, void *) {}, nullptr);
             GEOSGeom_destroy_r(m_geosContext, poEnv);
         }
 #endif
+        return true;
     }
 
     std::vector<size_t> ReadTreeIndices()
