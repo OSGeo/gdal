@@ -177,7 +177,7 @@ def test_gdalalg_vector_sort_null_empty_geometry(alg, method, geom_type, use_tem
 
     assert alg.Run(my_progress)
 
-    # assert tab_pct[0] == 1.0
+    assert tab_pct[0] == 1.0
 
     dst_ds = alg.Output()
     dst_lyr = dst_ds.GetLayer(0)

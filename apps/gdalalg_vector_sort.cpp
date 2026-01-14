@@ -183,7 +183,7 @@ class GDALMemFeatureStore : public GDALFeatureStore
   public:
     std::unique_ptr<OGRFeature> Load(std::size_t i) override
     {
-        return std::move(m_features[i]);
+        return std::unique_ptr<OGRFeature>(m_features[i]->Clone());
     }
 
     size_t Size() const override
@@ -211,10 +211,8 @@ class GDALVectorSortedLayer : public GDALVectorNonStreamingAlgorithmLayer
 {
   public:
     GDALVectorSortedLayer(OGRLayer &srcLayer, int geomFieldIndex,
-                          GDALProgressFunc progress, void *progressData,
                           bool processInMemory)
-        : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex,
-                                               progress, progressData),
+        : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
           m_store(nullptr), m_processInMemory(processInMemory), m_readPos(0)
     {
     }
@@ -249,6 +247,11 @@ class GDALVectorSortedLayer : public GDALVectorNonStreamingAlgorithmLayer
         }
 
         return nullptr;
+    }
+
+    void ResetReading() override
+    {
+        m_readPos = 0;
     }
 
   protected:
@@ -352,6 +355,11 @@ class GDALVectorHilbertSortLayer : public GDALVectorSortedLayer
             m_sortedIndices.push_back(sItem.first);
         }
 
+        if (pfnProgress)
+        {
+            pfnProgress(1.0, "", pProgressData);
+        }
+
         return true;
     }
 
@@ -439,6 +447,11 @@ class GDALVectorSTRTreeSortLayer : public GDALVectorSortedLayer
         m_sortedIndices = ReadTreeIndices();
         m_sortedIndices.insert(m_sortedIndices.end(), nullIndices.begin(),
                                nullIndices.end());
+
+        if (pfnProgress)
+        {
+            pfnProgress(1.0, "", pProgressData);
+        }
 
         return true;
     }
@@ -560,13 +573,12 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 return false;
             }
 
-            std::unique_ptr<OGRLayer> layer;
+            std::unique_ptr<GDALVectorSortedLayer> layer;
 
             if (m_sortMethod == "hilbert")
             {
                 layer = std::make_unique<GDALVectorHilbertSortLayer>(
-                    *poSrcLayer, geomFieldIndex, layerProgressFunc,
-                    layerProgressData.get(), !m_useTempfile);
+                    *poSrcLayer, geomFieldIndex, !m_useTempfile);
             }
             else
             {
@@ -574,8 +586,7 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 CPLAssert(m_sortMethod == "strtree");
 #ifdef HAVE_GEOS
                 layer = std::make_unique<GDALVectorSTRTreeSortLayer>(
-                    *poSrcLayer, geomFieldIndex, layerProgressFunc,
-                    layerProgressData.get(), !m_useTempfile);
+                    *poSrcLayer, geomFieldIndex, !m_useTempfile);
 #else
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "--method strtree requires a GDAL build against the "
@@ -584,8 +595,11 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 #endif
             }
 
-            poDstDS->AddProcessedLayer(std::move(layer),
-                                       std::move(layerProgressData));
+            if (!poDstDS->AddProcessedLayer(std::move(layer), layerProgressFunc,
+                                            layerProgressData.get()))
+            {
+                return false;
+            }
         }
         else
         {

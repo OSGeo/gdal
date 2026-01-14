@@ -89,10 +89,8 @@ bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &)
 /************************************************************************/
 
 GDALGeosNonStreamingAlgorithmLayer::GDALGeosNonStreamingAlgorithmLayer(
-    OGRLayer &srcLayer, int geomFieldIndex, GDALProgressFunc pfnProgress,
-    void *pProgressData)
-    : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex,
-                                           pfnProgress, pProgressData),
+    OGRLayer &srcLayer, int geomFieldIndex)
+    : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
       m_poGeosContext{OGRGeometry::createGEOSContext()}
 {
 }
@@ -281,10 +279,6 @@ GDALGeosNonStreamingAlgorithmLayer::GetNextProcessedFeature()
 
         if (skipFeature)
         {
-#ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
-            GEOSGeom_destroy_r(m_poGeosContext, poGeosResult);
-            m_papoGeosResults[m_readPos] = nullptr;
-#endif
             poGeosResult = nullptr;
         }
 
@@ -293,10 +287,6 @@ GDALGeosNonStreamingAlgorithmLayer::GetNextProcessedFeature()
 
     if (poGeosResult == nullptr)
     {
-#ifndef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
-        GEOSGeom_destroy_r(m_poGeosContext, m_poGeosResultAsCollection);
-        m_poGeosResultAsCollection = nullptr;
-#endif
         return nullptr;
     }
 
@@ -320,11 +310,6 @@ GDALGeosNonStreamingAlgorithmLayer::GetNextProcessedFeature()
         return nullptr;
     }
 
-#ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
-    GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[m_readPos - 1]);
-    m_papoGeosResults[m_readPos - 1] = nullptr;
-#endif
-
     poResultGeom->assignSpatialReference(
         GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef());
 
@@ -335,6 +320,12 @@ GDALGeosNonStreamingAlgorithmLayer::GetNextProcessedFeature()
 }
 
 #undef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+
+void GDALGeosNonStreamingAlgorithmLayer::ResetReading()
+{
+    m_readPos = 0;
+}
+
 #endif
 
 //! @endcond

@@ -51,12 +51,12 @@ class GDALVectorCheckCoverageOutputLayer final
     : public GDALGeosNonStreamingAlgorithmLayer
 {
   public:
-    explicit GDALVectorCheckCoverageOutputLayer(
-        OGRLayer &srcLayer, int geomFieldIndex, const std::string &name,
-        GDALProgressFunc progressFunc, void *progressData,
-        double maximumGapWidth, bool includeValid)
-        : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex,
-                                             progressFunc, progressData),
+    explicit GDALVectorCheckCoverageOutputLayer(OGRLayer &srcLayer,
+                                                int geomFieldIndex,
+                                                const std::string &name,
+                                                double maximumGapWidth,
+                                                bool includeValid)
+        : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
           m_defn(OGRFeatureDefn::CreateFeatureDefn(name.c_str())),
           m_maximumGapWidth(maximumGapWidth), m_includeValid(includeValid)
     {
@@ -186,11 +186,14 @@ bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                                           .append(poSrcLayer->GetDescription());
 
         auto poLayer = std::make_unique<GDALVectorCheckCoverageOutputLayer>(
-            *poSrcLayer, geomFieldIndex, layerName, layerProgressFunc,
-            layerProgressData.get(), m_maximumGapWidth, m_includeValid);
+            *poSrcLayer, geomFieldIndex, layerName, m_maximumGapWidth,
+            m_includeValid);
 
-        poDstDS->AddProcessedLayer(std::move(poLayer),
-                                   std::move(layerProgressData));
+        if (!poDstDS->AddProcessedLayer(std::move(poLayer), layerProgressFunc,
+                                        layerProgressData.get()))
+        {
+            return false;
+        }
     }
 
     m_outputDataset.Set(std::move(poDstDS));

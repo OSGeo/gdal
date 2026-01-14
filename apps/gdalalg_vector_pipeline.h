@@ -365,39 +365,6 @@ class GDALVectorPipelinePassthroughLayer /* non final */
 };
 
 /************************************************************************/
-/*                 GDALVectorNonStreamingAlgorithmDataset               */
-/************************************************************************/
-
-/**
- * Dataset used to read all input features into memory and perform some
- * processing.
- */
-class GDALVectorNonStreamingAlgorithmDataset /* non final */
-    : public GDALDataset
-{
-  public:
-    using ProgressDataPtr =
-        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>;
-
-    GDALVectorNonStreamingAlgorithmDataset();
-    ~GDALVectorNonStreamingAlgorithmDataset() override;
-
-    void AddProcessedLayer(std::unique_ptr<OGRLayer> srcLayer,
-                           ProgressDataPtr progressData);
-
-    void AddPassThroughLayer(OGRLayer &oLayer);
-
-    int GetLayerCount() const final override;
-    OGRLayer *GetLayer(int idx) const final override;
-    int TestCapability(const char *pszCap) const override;
-
-  private:
-    std::vector<std::unique_ptr<OGRLayer>> m_owned_layers{};
-    std::vector<OGRLayer *> m_layers{};
-    std::vector<ProgressDataPtr> m_progressData{};
-};
-
-/************************************************************************/
 /*                 GDALVectorNonStreamingAlgorithmLayer                 */
 /************************************************************************/
 
@@ -414,9 +381,10 @@ class GDALVectorNonStreamingAlgorithmLayer
       public OGRGetNextFeatureThroughRaw<GDALVectorNonStreamingAlgorithmLayer>
 {
   public:
-    GDALVectorNonStreamingAlgorithmLayer(OGRLayer &srcLayer, int geomFieldIndex,
-                                         GDALProgressFunc pfnProgress = nullptr,
-                                         void *pProgressData = nullptr);
+    GDALVectorNonStreamingAlgorithmLayer(OGRLayer &srcLayer,
+                                         int geomFieldIndex);
+
+    ~GDALVectorNonStreamingAlgorithmLayer() override;
 
     const char *GetDescription() const override
     {
@@ -427,8 +395,6 @@ class GDALVectorNonStreamingAlgorithmLayer
 
     virtual std::unique_ptr<OGRFeature> GetNextProcessedFeature() = 0;
 
-    void ResetReading() override;
-
     OGRFeature *GetNextRawFeature();
 
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALVectorNonStreamingAlgorithmLayer)
@@ -438,11 +404,38 @@ class GDALVectorNonStreamingAlgorithmLayer
     int m_geomFieldIndex{0};
 
   private:
-    GDALProgressFunc m_progress{nullptr};
-    void *m_progressData{nullptr};
-    bool m_processed{false};
-
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorNonStreamingAlgorithmLayer)
+};
+
+/************************************************************************/
+/*                 GDALVectorNonStreamingAlgorithmDataset               */
+/************************************************************************/
+
+/**
+ * Dataset used to read all input features into memory and perform some
+ * processing.
+ */
+class GDALVectorNonStreamingAlgorithmDataset /* non final */
+    : public GDALDataset
+{
+  public:
+    GDALVectorNonStreamingAlgorithmDataset();
+    ~GDALVectorNonStreamingAlgorithmDataset() override;
+
+    /** Add a layer to the dataset and perform the associated processing. */
+    bool AddProcessedLayer(
+        std::unique_ptr<GDALVectorNonStreamingAlgorithmLayer> srcLayer,
+        GDALProgressFunc progressFunc, void *progressData);
+
+    void AddPassThroughLayer(OGRLayer &oLayer);
+
+    int GetLayerCount() const final override;
+    OGRLayer *GetLayer(int idx) const final override;
+    int TestCapability(const char *pszCap) const override;
+
+  private:
+    std::vector<std::unique_ptr<OGRLayer>> m_owned_layers{};
+    std::vector<OGRLayer *> m_layers{};
 };
 
 /************************************************************************/

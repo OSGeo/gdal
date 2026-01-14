@@ -524,13 +524,19 @@ GDALVectorNonStreamingAlgorithmDataset::
 /*    GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer()       */
 /************************************************************************/
 
-void GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
-    std::unique_ptr<OGRLayer> layer,
-    std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> progressData)
+bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
+    std::unique_ptr<GDALVectorNonStreamingAlgorithmLayer> layer,
+    GDALProgressFunc progressFn, void *progressData)
 {
+    if (!layer->Process(progressFn, progressData))
+    {
+        return false;
+    }
+
     m_owned_layers.emplace_back(std::move(layer));
     m_layers.push_back(m_owned_layers.back().get());
-    m_progressData.push_back(std::move(progressData));
+
+    return true;
 }
 
 /************************************************************************/
@@ -636,27 +642,18 @@ void GDALVectorAlgorithmLayerProgressHelper::AddPassThroughLayer(
 /*                  GDALVectorNonStreamingAlgorithmLayer()              */
 /************************************************************************/
 
-/** Create a GDALVectorNonStreamingAlgorithmLayer. The progress callbacks
- *  provided here will be forwarded on to the Process() method in the
- *  implementing class.
- */
 GDALVectorNonStreamingAlgorithmLayer::GDALVectorNonStreamingAlgorithmLayer(
-    OGRLayer &srcLayer, int geomFieldIndex, GDALProgressFunc pfnProgress,
-    void *pProgressData)
-    : m_srcLayer(srcLayer), m_geomFieldIndex(geomFieldIndex),
-      m_progress(pfnProgress), m_progressData(pProgressData)
+    OGRLayer &srcLayer, int geomFieldIndex)
+    : m_srcLayer(srcLayer), m_geomFieldIndex(geomFieldIndex)
 {
 }
 
 /************************************************************************/
-/*          GDALVectorNonStreamingAlgorithmLayer::ResetReading()        */
+/*                 ~GDALVectorNonStreamingAlgorithmLayer()              */
 /************************************************************************/
 
-void GDALVectorNonStreamingAlgorithmLayer::ResetReading()
-{
-    m_processed = false;
-    m_srcLayer.ResetReading();
-}
+GDALVectorNonStreamingAlgorithmLayer::~GDALVectorNonStreamingAlgorithmLayer() =
+    default;
 
 /************************************************************************/
 /*        GDALVectorNonStreamingAlgorithmLayer::GetNextRawFeature()     */
@@ -664,18 +661,6 @@ void GDALVectorNonStreamingAlgorithmLayer::ResetReading()
 
 OGRFeature *GDALVectorNonStreamingAlgorithmLayer::GetNextRawFeature()
 {
-    if (!m_processed)
-    {
-        if (Process(m_progress, m_progressData))
-        {
-            m_processed = true;
-        }
-        else
-        {
-            return nullptr;
-        }
-    }
-
     return GetNextProcessedFeature().release();
 }
 

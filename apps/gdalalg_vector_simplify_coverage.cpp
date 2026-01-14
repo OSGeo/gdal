@@ -52,11 +52,9 @@ class GDALVectorSimplifyCoverageOutputLayer final
 {
   public:
     GDALVectorSimplifyCoverageOutputLayer(
-        OGRLayer &srcLayer, int geomFieldIndex, GDALProgressFunc progressFunc,
-        void *progressData,
+        OGRLayer &srcLayer, int geomFieldIndex,
         const GDALVectorSimplifyCoverageAlgorithm::Options &opts)
-        : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex,
-                                             progressFunc, progressData),
+        : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
           m_opts(opts)
     {
     }
@@ -165,11 +163,14 @@ bool GDALVectorSimplifyCoverageAlgorithm::RunStep(
             constexpr int geomFieldIndex = 0;  // TODO: parameterize
             auto poLayer =
                 std::make_unique<GDALVectorSimplifyCoverageOutputLayer>(
-                    *poSrcLayer, geomFieldIndex, layerProgressFunc,
-                    layerProgressData.get(), m_opts);
+                    *poSrcLayer, geomFieldIndex, m_opts);
 
-            poDstDS->AddProcessedLayer(std::move(poLayer),
-                                       std::move(layerProgressData));
+            if (!poDstDS->AddProcessedLayer(std::move(poLayer),
+                                            layerProgressFunc,
+                                            layerProgressData.get()))
+            {
+                return false;
+            }
         }
         else
         {

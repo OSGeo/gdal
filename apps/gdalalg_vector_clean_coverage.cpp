@@ -15,7 +15,6 @@
 #include "cpl_error.h"
 #include "gdal_priv.h"
 #include "gdalalg_vector_geom.h"
-#include "ogr_geometry.h"
 #include "ogr_geos.h"
 #include "ogrsf_frmts.h"
 
@@ -56,11 +55,9 @@ class GDALVectorCleanCoverageOutputLayer final
 {
   public:
     GDALVectorCleanCoverageOutputLayer(
-        OGRLayer &srcLayer, int geomFieldIndex, GDALProgressFunc progressFunc,
-        void *progressData,
+        OGRLayer &srcLayer, int geomFieldIndex,
         const GDALVectorCleanCoverageAlgorithm::Options &opts)
-        : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex,
-                                             progressFunc, progressData),
+        : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
           m_opts(opts), m_cleanParams(GetCoverageCleanParams())
     {
     }
@@ -232,11 +229,14 @@ bool GDALVectorCleanCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             constexpr int geomFieldIndex = 0;  // TODO parameterize
 
             auto poLayer = std::make_unique<GDALVectorCleanCoverageOutputLayer>(
-                *poSrcLayer, geomFieldIndex, layerProgressFunc,
-                layerProgressData.get(), m_opts);
+                *poSrcLayer, geomFieldIndex, m_opts);
 
-            poDstDS->AddProcessedLayer(std::move(poLayer),
-                                       std::move(layerProgressData));
+            if (!poDstDS->AddProcessedLayer(std::move(poLayer),
+                                            layerProgressFunc,
+                                            layerProgressData.get()))
+            {
+                return false;
+            }
         }
         else
         {

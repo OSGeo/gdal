@@ -145,7 +145,7 @@ class GDALVectorGeomOneToOneAlgorithmLayer /* non final */
 
 /** A GDALGeosNonStreamingAlgorithmLayer manages the work of reading features
  *  from an input layer, converting OGR geometries into GEOS geometries,
- *  applying a GEOS function, and writing result to an output layer. It is
+ *  applying a GEOS function, and creating OGRFeatures for the results. It
  *  appropriate only for GEOS algorithms that operate on all input geometries
  *  at a single time.
  */
@@ -153,11 +153,11 @@ class GDALGeosNonStreamingAlgorithmLayer
     : public GDALVectorNonStreamingAlgorithmLayer
 {
   public:
-    GDALGeosNonStreamingAlgorithmLayer(OGRLayer &srcLayer, int geomFieldIndex,
-                                       GDALProgressFunc pfnProgress,
-                                       void *pProgressData);
+    GDALGeosNonStreamingAlgorithmLayer(OGRLayer &srcLayer, int geomFieldIndex);
 
     ~GDALGeosNonStreamingAlgorithmLayer() override;
+
+    void ResetReading() override;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALGeosNonStreamingAlgorithmLayer)
 
