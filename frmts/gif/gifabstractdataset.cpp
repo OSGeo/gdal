@@ -438,7 +438,7 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(GIFAbstractDataset *poDSIn,
         unsigned char *pExtData = reinterpret_cast<unsigned char *>(
             psImage->ExtensionBlocks[iExtBlock].Bytes);
 
-        /* check if transparant color flag is set */
+        /* check if transparent color flag is set */
         if (!(pExtData[0] & 0x1))
             continue;
 
