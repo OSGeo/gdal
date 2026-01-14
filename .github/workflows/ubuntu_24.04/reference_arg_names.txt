@@ -317,6 +317,7 @@ update-extent
 upsert
 url
 use-source-timestamp
+use-tempfile
 variant
 visible-value
 warp-option
