@@ -27,6 +27,9 @@ enum class CompositionMode : unsigned
     SRC_OVER = 0,
     HSV_VALUE,
     MULTIPLY,
+    SCREEN,
+    OVERLAY,
+    HARD_LIGHT,
 };
 
 //! Returns a map of all composition modes to their string identifiers
@@ -53,6 +56,9 @@ int MaxBandCountForCompositionMode(CompositionMode mode);
 //! Checks whether the number of bands is compatible with the given composition mode
 bool BandCountIsCompatibleWithCompositionMode(int bandCount,
                                               CompositionMode mode);
+
+//! Calculate alpha from alpha_final = alpha_overlay + alpha_source - alpha_overlay * alpha_source
+inline GByte ComputeCompositeAlpha(GByte alphaSource, GByte alphaOverlay);
 
 /************************************************************************/
 /*                       GDALRasterBlendAlgorithm                       */
