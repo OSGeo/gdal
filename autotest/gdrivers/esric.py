@@ -237,21 +237,37 @@ def test_tpkx_default_full_extent(extent_source):
 # Test that LODs that exceeds GDAL raster size limit is ignored
 
 
-def test_tpkx_ignores_oversized_lod():
-    try:
-        ds = gdal.OpenEx("data/esric/oversizedLOD/root.json")
-    except Exception as e:
-        pytest.fail(f"Failed to open tpkx config: {e}")
+@pytest.mark.parametrize("ignore_oversized_lods", [None, "YES", "NO"])
+def test_tpkx_ignores_oversized_lod(ignore_oversized_lods):
+    open_options = {}
+    if ignore_oversized_lods is not None:
+        open_options["IGNORE_OVERSIZED_LODS"] = ignore_oversized_lods
 
+    if ignore_oversized_lods in (None, "NO"):
+        with pytest.raises(RuntimeError):
+            ds = gdal.OpenEx(
+                "data/esric/oversizedLOD/root.json", open_options=open_options
+            )
+        return
+
+    ds = gdal.OpenEx("data/esric/oversizedLOD/root.json", open_options=open_options)
+    assert ds is not None, "Dataset failed to open"
     assert ds.RasterXSize == 331811062
     assert ds.RasterYSize == 251764360
 
 
-def test_esric_ignores_oversized_lod():
-    try:
-        ds = gdal.OpenEx("data/esric/oversizedLOD/conf.xml")
-    except Exception as e:
-        pytest.fail(f"Failed to open esric config: {e}")
+@pytest.mark.parametrize("ignore_oversized_lods", [None, "YES", "NO"])
+def test_esric_ignores_oversized_lod(ignore_oversized_lods):
+    open_options = {}
+    if ignore_oversized_lods is not None:
+        open_options["IGNORE_OVERSIZED_LODS"] = ignore_oversized_lods
 
+    if ignore_oversized_lods in (None, "NO"):
+        with pytest.raises(RuntimeError):
+            gdal.OpenEx("data/esric/oversizedLOD/conf.xml", open_options=open_options)
+        return
+
+    ds = gdal.OpenEx("data/esric/oversizedLOD/conf.xml", open_options=open_options)
+    assert ds is not None, "Dataset failed to open"
     assert ds.RasterXSize == 1073741824
     assert ds.RasterYSize == 1073741824
