@@ -203,6 +203,17 @@ Program-Specific Options
 
    Pixel value to set for visible areas. (Not supported in cumulative mode) Default: 255
 
+  .. versionadded:: 3.13
+
+.. option:: --sd-filename <value>
+
+   Filename of raster containing standard deviations of the input raster values. The raster
+   always comes from band 1 and the size must match that of the input raster.
+
+.. option:: --maybe-visible-value <value>
+
+   Pixel value to set for visible areas. (Not supported in cumulative mode) Default: 255
+
 
 Standard Options
 ----------------
