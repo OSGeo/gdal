@@ -5,7 +5,7 @@
  * Author:   Daniel Baston
  *
  ******************************************************************************
- * Copyright (c) 2025, ISciences LLC
+ * Copyright (c) 2025-2026, ISciences LLC
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
@@ -210,6 +210,15 @@ class GDALMemFeatureStore : public GDALFeatureStore
 class GDALVectorSortedLayer : public GDALVectorNonStreamingAlgorithmLayer
 {
   public:
+    GDALVectorSortedLayer(OGRLayer &srcLayer, int geomFieldIndex,
+                          GDALProgressFunc progress, void *progressData,
+                          bool processInMemory)
+        : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex,
+                                               progress, progressData),
+          m_store(nullptr), m_processInMemory(processInMemory), m_readPos(0)
+    {
+    }
+
     const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_srcLayer.GetLayerDefn();
@@ -240,15 +249,6 @@ class GDALVectorSortedLayer : public GDALVectorNonStreamingAlgorithmLayer
         }
 
         return nullptr;
-    }
-
-    GDALVectorSortedLayer(OGRLayer &srcLayer, int geomFieldIndex,
-                          GDALProgressFunc progress, void *progressData,
-                          bool processInMemory)
-        : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex,
-                                               progress, progressData),
-          m_store(nullptr), m_processInMemory(processInMemory), m_readPos(0)
-    {
     }
 
   protected:
@@ -562,11 +562,6 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
             std::unique_ptr<OGRLayer> layer;
 
-            // FIXME progress info does not exist at the time the callback
-            // is executed
-            layerProgressFunc = nullptr;
-            layerProgressData = nullptr;
-
             if (m_sortMethod == "hilbert")
             {
                 layer = std::make_unique<GDALVectorHilbertSortLayer>(
@@ -589,7 +584,8 @@ bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 #endif
             }
 
-            poDstDS->AddProcessedLayer(std::move(layer));
+            poDstDS->AddProcessedLayer(std::move(layer),
+                                       std::move(layerProgressData));
         }
         else
         {

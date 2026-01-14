@@ -525,10 +525,12 @@ GDALVectorNonStreamingAlgorithmDataset::
 /************************************************************************/
 
 void GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
-    std::unique_ptr<OGRLayer> layer)
+    std::unique_ptr<OGRLayer> layer,
+    std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> progressData)
 {
     m_owned_layers.emplace_back(std::move(layer));
     m_layers.push_back(m_owned_layers.back().get());
+    m_progressData.push_back(std::move(progressData));
 }
 
 /************************************************************************/

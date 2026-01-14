@@ -89,8 +89,10 @@ bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &)
 /************************************************************************/
 
 GDALGeosNonStreamingAlgorithmLayer::GDALGeosNonStreamingAlgorithmLayer(
-    OGRLayer &srcLayer, int geomFieldIndex)
-    : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
+    OGRLayer &srcLayer, int geomFieldIndex, GDALProgressFunc pfnProgress,
+    void *pProgressData)
+    : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex,
+                                           pfnProgress, pProgressData),
       m_poGeosContext{OGRGeometry::createGEOSContext()}
 {
 }
@@ -230,8 +232,8 @@ bool GDALGeosNonStreamingAlgorithmLayer::Process(GDALProgressFunc pfnProgress,
 {
     Cleanup();
 
-    // FIXME pass on progress callback
-    if (!ConvertInputsToGeos(m_srcLayer, m_geomFieldIndex, nullptr, nullptr))
+    if (!ConvertInputsToGeos(m_srcLayer, m_geomFieldIndex, pfnProgress,
+                             pProgressData))
     {
         return false;
     }

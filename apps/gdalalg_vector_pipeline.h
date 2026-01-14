@@ -376,10 +376,14 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
     : public GDALDataset
 {
   public:
+    using ProgressDataPtr =
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>;
+
     GDALVectorNonStreamingAlgorithmDataset();
     ~GDALVectorNonStreamingAlgorithmDataset() override;
 
-    void AddProcessedLayer(std::unique_ptr<OGRLayer> srcLayer);
+    void AddProcessedLayer(std::unique_ptr<OGRLayer> srcLayer,
+                           ProgressDataPtr progressData);
 
     void AddPassThroughLayer(OGRLayer &oLayer);
 
@@ -390,6 +394,7 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
   private:
     std::vector<std::unique_ptr<OGRLayer>> m_owned_layers{};
     std::vector<OGRLayer *> m_layers{};
+    std::vector<ProgressDataPtr> m_progressData{};
 };
 
 /************************************************************************/

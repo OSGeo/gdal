@@ -151,7 +151,7 @@ void *CPL_STDCALL GDALCreateScaledProgress(double dfMin, double dfMax,
  * \brief Cleanup scaled progress handle.
  *
  * This function cleans up the data associated with a scaled progress function
- * as returned by GADLCreateScaledProgress().
+ * as returned by GDALCreateScaledProgress().
  *
  * @param pData scaled progress handle returned by GDALCreateScaledProgress().
  */

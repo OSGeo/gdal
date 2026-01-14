@@ -153,7 +153,9 @@ class GDALGeosNonStreamingAlgorithmLayer
     : public GDALVectorNonStreamingAlgorithmLayer
 {
   public:
-    GDALGeosNonStreamingAlgorithmLayer(OGRLayer &srcLayer, int geomFieldIndex);
+    GDALGeosNonStreamingAlgorithmLayer(OGRLayer &srcLayer, int geomFieldIndex,
+                                       GDALProgressFunc pfnProgress,
+                                       void *pProgressData);
 
     ~GDALGeosNonStreamingAlgorithmLayer() override;
 

@@ -51,17 +51,36 @@ GDALVectorCleanCoverageAlgorithm::GDALVectorCleanCoverageAlgorithm(
     (GEOS_VERSION_MAJOR > 3 ||                                                 \
      (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 14))
 
-class GDALVectorCleanCoverageOutputDataset final
-    : public GDALGeosNonStreamingAlgorithmDataset
+class GDALVectorCleanCoverageOutputLayer final
+    : public GDALGeosNonStreamingAlgorithmLayer
 {
   public:
-    GDALVectorCleanCoverageOutputDataset(
+    GDALVectorCleanCoverageOutputLayer(
+        OGRLayer &srcLayer, int geomFieldIndex, GDALProgressFunc progressFunc,
+        void *progressData,
         const GDALVectorCleanCoverageAlgorithm::Options &opts)
-        : m_opts(opts), m_cleanParams(GetCoverageCleanParams())
+        : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex,
+                                             progressFunc, progressData),
+          m_opts(opts), m_cleanParams(GetCoverageCleanParams())
     {
     }
 
-    ~GDALVectorCleanCoverageOutputDataset() override;
+    ~GDALVectorCleanCoverageOutputLayer() override;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
+    {
+        return m_srcLayer.GetLayerDefn();
+    }
+
+    int TestCapability(const char *pszCap) const override
+    {
+        if (EQUAL(pszCap, OLCFastFeatureCount))
+        {
+            return m_srcLayer.TestCapability(pszCap);
+        }
+
+        return false;
+    }
 
     GEOSCoverageCleanParams *GetCoverageCleanParams() const
     {
@@ -162,14 +181,14 @@ class GDALVectorCleanCoverageOutputDataset final
         return m_poGeosResultAsCollection != nullptr;
     }
 
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorCleanCoverageOutputDataset)
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorCleanCoverageOutputLayer)
 
   private:
     const GDALVectorCleanCoverageAlgorithm::Options &m_opts;
     GEOSCoverageCleanParams *m_cleanParams;
 };
 
-GDALVectorCleanCoverageOutputDataset::~GDALVectorCleanCoverageOutputDataset()
+GDALVectorCleanCoverageOutputLayer::~GDALVectorCleanCoverageOutputLayer()
 {
     if (m_poGeosContext != nullptr)
     {
@@ -180,8 +199,7 @@ GDALVectorCleanCoverageOutputDataset::~GDALVectorCleanCoverageOutputDataset()
 bool GDALVectorCleanCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
-    auto poDstDS =
-        std::make_unique<GDALVectorCleanCoverageOutputDataset>(m_opts);
+    auto poDstDS = std::make_unique<GDALVectorNonStreamingAlgorithmDataset>();
 
     GDALVectorAlgorithmLayerProgressHelper progressHelper(ctxt);
 
@@ -211,11 +229,14 @@ bool GDALVectorCleanCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     {
         if (bProcessed)
         {
-            if (!poDstDS->AddProcessedLayer(*poSrcLayer, layerProgressFunc,
-                                            layerProgressData.get()))
-            {
-                return false;
-            }
+            constexpr int geomFieldIndex = 0;  // TODO parameterize
+
+            auto poLayer = std::make_unique<GDALVectorCleanCoverageOutputLayer>(
+                *poSrcLayer, geomFieldIndex, layerProgressFunc,
+                layerProgressData.get(), m_opts);
+
+            poDstDS->AddProcessedLayer(std::move(poLayer),
+                                       std::move(layerProgressData));
         }
         else
         {
