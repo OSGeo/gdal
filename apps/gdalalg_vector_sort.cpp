@@ -226,8 +226,19 @@ class GDALVectorSortedLayer : public GDALVectorNonStreamingAlgorithmLayer
         return m_srcLayer.GetLayerDefn();
     }
 
-    int TestCapability(const char *) const override
+    int TestCapability(const char *pszCap) const override
     {
+        if (EQUAL(pszCap, OLCFastFeatureCount) ||
+            EQUAL(pszCap, OLCFastGetExtent) ||
+            EQUAL(pszCap, OLCFastGetExtent3D) ||
+            EQUAL(pszCap, OLCStringsAsUTF8) || EQUAL(pszCap, OLCIgnoreFields) ||
+            EQUAL(pszCap, OLCCurveGeometries) ||
+            EQUAL(pszCap, OLCMeasuredGeometries) ||
+            EQUAL(pszCap, OLCZGeometries))
+        {
+            return m_srcLayer.TestCapability(pszCap);
+        }
+
         return false;
     }
 
