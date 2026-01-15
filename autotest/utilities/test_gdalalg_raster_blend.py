@@ -1136,6 +1136,9 @@ def test_gdalalg_raster_blend_multiply_1band_paletted_over_1band(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
         (100, (128, 128, 128, 255), (10, 20, 30, 255), (133, 138, 143, 255)),
+        (100, (120, 100, 80, 255), (100, 150, 200, 255), (173, 191, 217, 255)),
+        (100, (120, 100, 80, 255), (0, 0, 0, 255), (120, 100, 80, 255)),
+        (100, (120, 100, 80, 255), (255, 255, 255, 255), (255, 255, 255, 255)),
     ],
 )
 def test_gdalalg_raster_blend_screen_4bands_over_4bands(
@@ -1146,31 +1149,33 @@ def test_gdalalg_raster_blend_screen_4bands_over_4bands(
     )
 
 
-@pytest.mark.parametrize("invert_bands", [False])
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
-        (100, (128, 128, 128, 255), (10, 20, 30, 255), (133, 138, 143, 255)),
+        (100, (10, 20, 30, 255), (128, 128, 128, 255), (10, 20, 30, 255)),
+        (100, (128, 128, 128, 255), (10, 20, 30, 255), (14, 24, 34, 255)),
+        (100, (64, 192, 128, 255), (180, 50, 200, 255), (90, 157, 203, 255)),
     ],
 )
 def test_gdalalg_raster_blend_overlay_4bands_over_4bands(
-    invert_bands, opacity, rgba, overlay_rgba, expected_rgba
+    opacity, rgba, overlay_rgba, expected_rgba
 ):
     generic_raster_blend_4bands_over_4bands(
-        "overlay", invert_bands, opacity, rgba, overlay_rgba, expected_rgba
+        "overlay", False, opacity, rgba, overlay_rgba, expected_rgba
     )
 
 
-@pytest.mark.parametrize("invert_bands", [False])
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
-        (100, (128, 128, 128, 255), (10, 20, 30, 255), (14, 24, 34, 255)),
+        (100, (10, 20, 30, 255), (128, 128, 128, 255), (14, 24, 34, 255)),
+        (100, (128, 128, 128, 255), (10, 20, 30, 255), (10, 20, 30, 255)),
     ],
 )
 def test_gdalalg_raster_blend_hard_light_4bands_over_4bands(
-    invert_bands, opacity, rgba, overlay_rgba, expected_rgba
+    opacity, rgba, overlay_rgba, expected_rgba
 ):
+
     generic_raster_blend_4bands_over_4bands(
-        "hard-light", invert_bands, opacity, rgba, overlay_rgba, expected_rgba
+        "hard-light", False, opacity, rgba, overlay_rgba, expected_rgba
     )
