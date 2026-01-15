@@ -60,6 +60,9 @@ bool BandCountIsCompatibleWithCompositionMode(int bandCount,
 //! Calculate alpha from alpha_final = alpha_overlay + alpha_source - alpha_overlay * alpha_source
 inline GByte ComputeCompositeAlpha(GByte alphaSource, GByte alphaOverlay);
 
+//! Returns TRUE if the mode is commutative
+bool IsCommutativeMode(CompositionMode mode);
+
 /************************************************************************/
 /*                       GDALRasterBlendAlgorithm                       */
 /************************************************************************/

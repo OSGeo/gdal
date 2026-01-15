@@ -174,6 +174,14 @@ GByte ComputeCompositeAlpha(GByte sourceAlpha, GByte overlayAlpha)
                               (sourceAlpha * overlayAlpha + 255) / 256);
 }
 
+/*************************************************************************/
+/*                   IsCommutativeMode()                                 */
+/*************************************************************************/
+bool IsCommutativeMode(CompositionMode mode)
+{
+    return mode == CompositionMode::MULTIPLY || mode == CompositionMode::SCREEN;
+}
+
 /************************************************************************/
 /*         GDALRasterBlendAlgorithm::GDALRasterBlendAlgorithm()         */
 /************************************************************************/
@@ -963,6 +971,7 @@ static void BlendOverlay_Generic(
 {
 
     // Generic formulas from Mapserver
+    // Where "D" is destination, "S" is source (overlay)
     // if 2.Dca < Da
     //   Dca' = 2.Sca.Dca + Sca.(1 - Da) + Dca.(1 - Sa)
     // otherwise
