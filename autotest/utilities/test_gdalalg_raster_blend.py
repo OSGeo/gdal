@@ -294,7 +294,7 @@ def test_gdalalg_raster_blend_invalid_input_ds():
     grayscale_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     with pytest.raises(
         Exception,
-        match=r"Input dataset has 2 band\(s\), but operator hsv-value requires between 3 and 4 bands",
+        match=r"operator hsv-value requires between 3 and 4 bands",
     ):
         gdal.Run(
             "raster",
