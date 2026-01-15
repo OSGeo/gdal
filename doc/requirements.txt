@@ -5,7 +5,9 @@ fsspec
 numpy
 sphinx
 sphinx-tabs
-sphinx-toolbox
+# Required minimum version for allowing manpage builds
+# Cf https://github.com/sphinx-toolbox/sphinx-toolbox/pull/205
+sphinx-toolbox >= 4.1.2
 sphinxcontrib-bibtex
 sphinxcontrib-jquery
 # Hopefully temporary pin of sphinx-rtd-theme, needed for correct behavior of version switching, as well as a forked doc/source/_static/js/version.js
