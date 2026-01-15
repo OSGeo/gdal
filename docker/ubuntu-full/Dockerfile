@@ -522,6 +522,10 @@ ARG GDAL_REPOSITORY=OSGeo/gdal
 COPY ./bh-gdal.sh /buildscripts/bh-gdal.sh
 RUN --mount=type=cache,id=ubuntu-full-gdal,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
+    # Forcefully remove the development files for libproj so GDAL cannot
+    # include the wrong header. This is the last step of the build container,
+    # so we can break things without anything else suffering.
+    && dpkg --force depends -r libproj-dev \
     && /buildscripts/bh-gdal.sh
 
 RUN mkdir -p /build_thirdparty/opt

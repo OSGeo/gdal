@@ -147,6 +147,10 @@ ARG GDAL_REPOSITORY=OSGeo/gdal
 
 RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
+    # Forcefully remove the development files for libproj so GDAL cannot
+    # include the wrong header. This is the last step of the build container,
+    # so we can break things without anything else suffering.
+    && dpkg --force depends -r libproj-dev \
     && if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
