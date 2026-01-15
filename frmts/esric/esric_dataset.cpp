@@ -279,7 +279,10 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo, bool ignoreOversizedLods)
 
             double dxsz = (maxx - minx) / res;
             double dysz = (maxy - miny) / res;
-            if (dxsz < 1 || dxsz > INT32_MAX || dysz < 1 || dysz > INT32_MAX)
+            // Allow size just above INT32_MAX to handle FP rounding. Actual size is later clamped to INT32_MAX
+            double maxRasterSize = static_cast<double>(INT32_MAX) + 2;
+            if (dxsz < 1 || dxsz > maxRasterSize || dysz < 1 ||
+                dysz > maxRasterSize)
             {
                 if (ignoreOversizedLods)
                 {
@@ -326,8 +329,8 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo, bool ignoreOversizedLods)
         double dxsz = (maxx - minx) / res;
         double dysz = (maxy - miny) / res;
 
-        nRasterXSize = int(dxsz);
-        nRasterYSize = int(dysz);
+        nRasterXSize = int(std::min(dxsz, double(INT32_MAX)));
+        nRasterYSize = int(std::min(dysz, double(INT32_MAX)));
 
         SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
         compression =
@@ -447,7 +450,10 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot,
 
             double dxsz = (maxx - minx) / res;
             double dysz = (maxy - miny) / res;
-            if (dxsz < 1 || dxsz > INT32_MAX || dysz < 1 || dysz > INT32_MAX)
+            // Allow size just above INT32_MAX to handle FP rounding. Actual size is later clamped to INT32_MAX
+            double maxRasterSize = static_cast<double>(INT32_MAX) + 2;
+            if (dxsz < 1 || dxsz > maxRasterSize || dysz < 1 ||
+                dysz > maxRasterSize)
             {
                 if (ignoreOversizedLods)
                 {
@@ -492,8 +498,8 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot,
         double dxsz = (maxx - minx) / res;
         double dysz = (maxy - miny) / res;
 
-        nRasterXSize = int(dxsz);
-        nRasterYSize = int(dysz);
+        nRasterXSize = int(std::min(dxsz, double(INT32_MAX)));
+        nRasterYSize = int(std::min(dysz, double(INT32_MAX)));
 
         SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
         compression = oRoot.GetString("tileImageInfo/format");

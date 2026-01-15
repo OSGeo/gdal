@@ -148,6 +148,11 @@
             <Scale>70.5310735</Scale>
             <Resolution>0.01866138385297604</Resolution>
         </LODInfo>
+        <LODInfo xsi:type="typens:LODInfo">
+            <LevelID>24</LevelID>
+            <Scale>35.26553675</Scale>
+            <Resolution>0.00933069192648802</Resolution>
+        </LODInfo>
     </LODInfos>
     </TileCacheInfo>
     <TileImageInfo xsi:type="typens:TileImageInfo">

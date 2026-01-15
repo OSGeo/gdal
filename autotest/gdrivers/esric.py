@@ -252,8 +252,8 @@ def test_tpkx_ignores_oversized_lod(ignore_oversized_lods):
 
     ds = gdal.OpenEx("data/esric/oversizedLOD/root.json", open_options=open_options)
     assert ds is not None, "Dataset failed to open"
-    assert ds.RasterXSize == 331811062
-    assert ds.RasterYSize == 251764360
+    assert ds.RasterXSize == 2147483647
+    assert ds.RasterYSize == 2147483647
 
 
 @pytest.mark.parametrize("ignore_oversized_lods", [None, "YES", "NO"])
@@ -269,5 +269,5 @@ def test_esric_ignores_oversized_lod(ignore_oversized_lods):
 
     ds = gdal.OpenEx("data/esric/oversizedLOD/conf.xml", open_options=open_options)
     assert ds is not None, "Dataset failed to open"
-    assert ds.RasterXSize == 1073741824
-    assert ds.RasterYSize == 1073741824
+    assert ds.RasterXSize == 2147483647
+    assert ds.RasterYSize == 2147483647
