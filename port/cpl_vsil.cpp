@@ -2974,7 +2974,7 @@ int VSIFCloseL(VSILFILE *fp)
  *
  * Analog of the POSIX fseek() call.
  *
- * Caution: vsi_l_offset is a unsigned type, so SEEK_CUR can only be used
+ * Caution: vsi_l_offset is an unsigned type, so SEEK_CUR can only be used
  * for positive seek. If negative seek is needed, use
  * VSIFSeekL( fp, VSIFTellL(fp) + negative_offset, SEEK_SET ).
  *
@@ -2982,7 +2982,7 @@ int VSIFCloseL(VSILFILE *fp)
  * @param nOffset offset in bytes.
  * @param nWhence one of SEEK_SET, SEEK_CUR or SEEK_END.
  *
- * @return 0 on success or -1 one failure.
+ * @return 0 on success or -1 on failure.
  */
 
 int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)

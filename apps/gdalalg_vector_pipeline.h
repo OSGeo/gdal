@@ -365,10 +365,51 @@ class GDALVectorPipelinePassthroughLayer /* non final */
 };
 
 /************************************************************************/
-/*                 GDALVectorNonStreamingAlgorithmDataset               */
+/*                 GDALVectorNonStreamingAlgorithmLayer                 */
 /************************************************************************/
 
-class MEMDataset;
+/**
+ * This class represents a layer for algorithms that process vector data
+ * in a non-streaming manner.
+ *
+ * Implementations must override the following methods:
+ * - Process(), which is called when the first feature is read
+ * - GetNextProcessedFeature() method which provides features in sequential order
+ */
+class GDALVectorNonStreamingAlgorithmLayer
+    : public OGRLayer,
+      public OGRGetNextFeatureThroughRaw<GDALVectorNonStreamingAlgorithmLayer>
+{
+  public:
+    GDALVectorNonStreamingAlgorithmLayer(OGRLayer &srcLayer,
+                                         int geomFieldIndex);
+
+    ~GDALVectorNonStreamingAlgorithmLayer() override;
+
+    const char *GetDescription() const override
+    {
+        return GetName();
+    }
+
+    virtual bool Process(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
+
+    virtual std::unique_ptr<OGRFeature> GetNextProcessedFeature() = 0;
+
+    OGRFeature *GetNextRawFeature();
+
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALVectorNonStreamingAlgorithmLayer)
+
+  protected:
+    OGRLayer &m_srcLayer;
+    int m_geomFieldIndex{0};
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorNonStreamingAlgorithmLayer)
+};
+
+/************************************************************************/
+/*                 GDALVectorNonStreamingAlgorithmDataset               */
+/************************************************************************/
 
 /**
  * Dataset used to read all input features into memory and perform some
@@ -381,24 +422,20 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
     GDALVectorNonStreamingAlgorithmDataset();
     ~GDALVectorNonStreamingAlgorithmDataset() override;
 
-    virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer,
-                         int geomFieldIndex, GDALProgressFunc pfnProgress,
-                         void *pProgressData) = 0;
+    /** Add a layer to the dataset and perform the associated processing. */
+    bool AddProcessedLayer(
+        std::unique_ptr<GDALVectorNonStreamingAlgorithmLayer> srcLayer,
+        GDALProgressFunc progressFunc, void *progressData);
 
-    bool AddProcessedLayer(OGRLayer &srcLayer, GDALProgressFunc pfnProgress,
-                           void *pProgressData);
-    bool AddProcessedLayer(OGRLayer &srcLayer, OGRFeatureDefn &dstDefn,
-                           int geomFieldIndex, GDALProgressFunc pfnProgress,
-                           void *pProgressData);
     void AddPassThroughLayer(OGRLayer &oLayer);
+
     int GetLayerCount() const final override;
     OGRLayer *GetLayer(int idx) const final override;
     int TestCapability(const char *pszCap) const override;
 
   private:
-    std::vector<std::unique_ptr<OGRLayer>> m_passthrough_layers{};
+    std::vector<std::unique_ptr<OGRLayer>> m_owned_layers{};
     std::vector<OGRLayer *> m_layers{};
-    std::unique_ptr<MEMDataset> m_ds{};
 };
 
 /************************************************************************/

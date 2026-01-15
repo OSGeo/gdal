@@ -47,17 +47,38 @@ GDALVectorCheckCoverageAlgorithm::GDALVectorCheckCoverageAlgorithm(
     (GEOS_VERSION_MAJOR > 3 ||                                                 \
      (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12))
 
-class GDALVectorCheckCoverageOutputDataset final
-    : public GDALGeosNonStreamingAlgorithmDataset
+class GDALVectorCheckCoverageOutputLayer final
+    : public GDALGeosNonStreamingAlgorithmLayer
 {
   public:
-    explicit GDALVectorCheckCoverageOutputDataset(double maximumGapWidth,
-                                                  bool includeValid)
-        : m_maximumGapWidth(maximumGapWidth), m_includeValid(includeValid)
+    explicit GDALVectorCheckCoverageOutputLayer(OGRLayer &srcLayer,
+                                                int geomFieldIndex,
+                                                const std::string &name,
+                                                double maximumGapWidth,
+                                                bool includeValid)
+        : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
+          m_defn(OGRFeatureDefn::CreateFeatureDefn(name.c_str())),
+          m_maximumGapWidth(maximumGapWidth), m_includeValid(includeValid)
     {
+        m_defn->Reference();
+
+        const OGRFeatureDefn *poSrcLayerDefn = srcLayer.GetLayerDefn();
+        m_defn->SetGeomType(wkbMultiLineString);
+        m_defn->GetGeomFieldDefn(0)->SetSpatialRef(
+            poSrcLayerDefn->GetGeomFieldDefn(geomFieldIndex)->GetSpatialRef());
     }
 
-    ~GDALVectorCheckCoverageOutputDataset() override;
+    ~GDALVectorCheckCoverageOutputLayer() override;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
+    {
+        return m_defn;
+    }
+
+    int TestCapability(const char *) const override
+    {
+        return false;
+    }
 
     bool PolygonsOnly() const override
     {
@@ -94,18 +115,25 @@ class GDALVectorCheckCoverageOutputDataset final
     }
 
   private:
+    OGRFeatureDefn *m_defn;
     const double m_maximumGapWidth;
     const bool m_includeValid;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorCheckCoverageOutputLayer)
 };
 
-GDALVectorCheckCoverageOutputDataset::~GDALVectorCheckCoverageOutputDataset() =
-    default;
+GDALVectorCheckCoverageOutputLayer::~GDALVectorCheckCoverageOutputLayer()
+{
+    if (m_defn != nullptr)
+    {
+        m_defn->Release();
+    }
+}
 
 bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
-    auto poDstDS = std::make_unique<GDALVectorCheckCoverageOutputDataset>(
-        m_maximumGapWidth, m_includeValid);
+    auto poDstDS = std::make_unique<GDALVectorNonStreamingAlgorithmDataset>();
 
     const bool bSingleLayerOutput = m_inputLayerNames.empty()
                                         ? poSrcDS->GetLayerCount() == 1
@@ -152,17 +180,16 @@ bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             return false;
         }
 
-        OGRFeatureDefn defn(bSingleLayerOutput
-                                ? "invalid_edge"
-                                : std::string("invalid_edge_")
-                                      .append(poSrcLayer->GetDescription())
-                                      .c_str());
-        defn.SetGeomType(wkbMultiLineString);
-        defn.GetGeomFieldDefn(0)->SetSpatialRef(
-            poSrcLayerDefn->GetGeomFieldDefn(geomFieldIndex)->GetSpatialRef());
+        std::string layerName = bSingleLayerOutput
+                                    ? "invalid_edge"
+                                    : std::string("invalid_edge_")
+                                          .append(poSrcLayer->GetDescription());
 
-        if (!poDstDS->AddProcessedLayer(*poSrcLayer, defn, geomFieldIndex,
-                                        layerProgressFunc,
+        auto poLayer = std::make_unique<GDALVectorCheckCoverageOutputLayer>(
+            *poSrcLayer, geomFieldIndex, layerName, m_maximumGapWidth,
+            m_includeValid);
+
+        if (!poDstDS->AddProcessedLayer(std::move(poLayer), layerProgressFunc,
                                         layerProgressData.get()))
         {
             return false;

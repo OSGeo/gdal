@@ -510,7 +510,6 @@ const OGRFeatureDefn *GDALVectorPipelinePassthroughLayer::GetLayerDefn() const
 /************************************************************************/
 
 GDALVectorNonStreamingAlgorithmDataset::GDALVectorNonStreamingAlgorithmDataset()
-    : m_ds(MEMDataset::Create("", 0, 0, 0, GDT_Unknown, nullptr))
 {
 }
 
@@ -526,29 +525,18 @@ GDALVectorNonStreamingAlgorithmDataset::
 /************************************************************************/
 
 bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
-    OGRLayer &srcLayer, OGRFeatureDefn &dstDefn, int geomFieldIndex,
-    GDALProgressFunc pfnProgress, void *pProgressData)
+    std::unique_ptr<GDALVectorNonStreamingAlgorithmLayer> layer,
+    GDALProgressFunc progressFn, void *progressData)
 {
-    CPLStringList aosOptions;
-    if (srcLayer.TestCapability(OLCStringsAsUTF8))
+    if (!layer->Process(progressFn, progressData))
     {
-        aosOptions.AddNameValue("ADVERTIZE_UTF8", "TRUE");
+        return false;
     }
 
-    OGRMemLayer *poDstLayer = m_ds->CreateLayer(dstDefn, aosOptions.List());
-    m_layers.push_back(poDstLayer);
+    m_owned_layers.emplace_back(std::move(layer));
+    m_layers.push_back(m_owned_layers.back().get());
 
-    const bool bRet = Process(srcLayer, *poDstLayer, geomFieldIndex,
-                              pfnProgress, pProgressData);
-    poDstLayer->SetUpdatable(false);
-    return bRet;
-}
-
-bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
-    OGRLayer &srcLayer, GDALProgressFunc pfnProgress, void *pProgressData)
-{
-    return AddProcessedLayer(srcLayer, *srcLayer.GetLayerDefn(), 0, pfnProgress,
-                             pProgressData);
+    return true;
 }
 
 /************************************************************************/
@@ -558,9 +546,9 @@ bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
 void GDALVectorNonStreamingAlgorithmDataset::AddPassThroughLayer(
     OGRLayer &oLayer)
 {
-    m_passthrough_layers.push_back(
+    m_owned_layers.push_back(
         std::make_unique<GDALVectorPipelinePassthroughLayer>(oLayer));
-    m_layers.push_back(m_passthrough_layers.back().get());
+    m_layers.push_back(m_owned_layers.back().get());
 }
 
 /************************************************************************/
@@ -589,15 +577,9 @@ OGRLayer *GDALVectorNonStreamingAlgorithmDataset::GetLayer(int idx) const
 /*    GDALVectorNonStreamingAlgorithmDataset::TestCapability()          */
 /************************************************************************/
 
-int GDALVectorNonStreamingAlgorithmDataset::TestCapability(
-    const char *pszCap) const
+int GDALVectorNonStreamingAlgorithmDataset::TestCapability(const char *) const
 {
-    if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer))
-    {
-        return false;
-    }
-
-    return m_ds->TestCapability(pszCap);
+    return false;
 }
 
 /************************************************************************/
@@ -654,6 +636,32 @@ void GDALVectorAlgorithmLayerProgressHelper::AddPassThroughLayer(
     OGRLayer &srcLayer)
 {
     m_apoSrcLayers.emplace_back(&srcLayer, false);
+}
+
+/************************************************************************/
+/*                  GDALVectorNonStreamingAlgorithmLayer()              */
+/************************************************************************/
+
+GDALVectorNonStreamingAlgorithmLayer::GDALVectorNonStreamingAlgorithmLayer(
+    OGRLayer &srcLayer, int geomFieldIndex)
+    : m_srcLayer(srcLayer), m_geomFieldIndex(geomFieldIndex)
+{
+}
+
+/************************************************************************/
+/*                 ~GDALVectorNonStreamingAlgorithmLayer()              */
+/************************************************************************/
+
+GDALVectorNonStreamingAlgorithmLayer::~GDALVectorNonStreamingAlgorithmLayer() =
+    default;
+
+/************************************************************************/
+/*        GDALVectorNonStreamingAlgorithmLayer::GetNextRawFeature()     */
+/************************************************************************/
+
+OGRFeature *GDALVectorNonStreamingAlgorithmLayer::GetNextRawFeature()
+{
+    return GetNextProcessedFeature().release();
 }
 
 /************************************************************************/

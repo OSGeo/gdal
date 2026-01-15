@@ -140,27 +140,30 @@ class GDALVectorGeomOneToOneAlgorithmLayer /* non final */
 #ifdef HAVE_GEOS
 
 /************************************************************************/
-/*                    GDALGeosNonStreamingAlgorithmDataset              */
+/*                     GDALGeosNonStreamingAlgorithmLayer               */
 /************************************************************************/
 
-/** A GDALGeosNonStreamingAlgorithmDataset manages the work of reading features
+/** A GDALGeosNonStreamingAlgorithmLayer manages the work of reading features
  *  from an input layer, converting OGR geometries into GEOS geometries,
- *  applying a GEOS function, and writing result to an output layer. It is
+ *  applying a GEOS function, and creating OGRFeatures for the results. It
  *  appropriate only for GEOS algorithms that operate on all input geometries
  *  at a single time.
  */
-class GDALGeosNonStreamingAlgorithmDataset
-    : public GDALVectorNonStreamingAlgorithmDataset
+class GDALGeosNonStreamingAlgorithmLayer
+    : public GDALVectorNonStreamingAlgorithmLayer
 {
   public:
-    GDALGeosNonStreamingAlgorithmDataset();
+    GDALGeosNonStreamingAlgorithmLayer(OGRLayer &srcLayer, int geomFieldIndex);
 
-    ~GDALGeosNonStreamingAlgorithmDataset() override;
+    ~GDALGeosNonStreamingAlgorithmLayer() override;
 
-    CPL_DISALLOW_COPY_ASSIGN(GDALGeosNonStreamingAlgorithmDataset)
+    void ResetReading() override;
 
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer, int geomFieldIndex,
-                 GDALProgressFunc pfnProgress, void *pProgressData) override;
+    CPL_DISALLOW_COPY_ASSIGN(GDALGeosNonStreamingAlgorithmLayer)
+
+    bool Process(GDALProgressFunc pfnProgress, void *pProgressData) override;
+
+    std::unique_ptr<OGRFeature> GetNextProcessedFeature() override;
 
     virtual bool ProcessGeos() = 0;
 
@@ -177,19 +180,14 @@ class GDALGeosNonStreamingAlgorithmDataset
     GEOSGeometry **m_papoGeosResults{nullptr};
 
   private:
-    bool ConvertInputsToGeos(OGRLayer &srcLayer, OGRLayer &dstLayer,
-                             int geomFieldIndex, bool sameDefn,
+    bool ConvertInputsToGeos(OGRLayer &srcLayer, int geomFieldIndex,
                              GDALProgressFunc pfnProgress, void *pProgressData);
-
-    bool ConvertOutputsFromGeos(OGRLayer &dstLayer,
-                                GDALProgressFunc pfnProgress,
-                                void *pProgressData, double dfProgressStart,
-                                double dfProgressRatio);
 
     void Cleanup();
 
     std::vector<std::unique_ptr<OGRFeature>> m_apoFeatures{};
     unsigned int m_nGeosResultSize{0};
+    unsigned int m_readPos{0};
 };
 
 #endif

@@ -47,17 +47,44 @@ GDALVectorSimplifyCoverageAlgorithm::GDALVectorSimplifyCoverageAlgorithm(
     (GEOS_VERSION_MAJOR > 3 ||                                                 \
      (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12))
 
-class GDALVectorSimplifyCoverageOutputDataset final
-    : public GDALGeosNonStreamingAlgorithmDataset
+class GDALVectorSimplifyCoverageOutputLayer final
+    : public GDALGeosNonStreamingAlgorithmLayer
 {
   public:
-    GDALVectorSimplifyCoverageOutputDataset(
+    GDALVectorSimplifyCoverageOutputLayer(
+        OGRLayer &srcLayer, int geomFieldIndex,
         const GDALVectorSimplifyCoverageAlgorithm::Options &opts)
-        : m_opts(opts)
+        : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
+          m_opts(opts)
     {
     }
 
-    ~GDALVectorSimplifyCoverageOutputDataset() override;
+    ~GDALVectorSimplifyCoverageOutputLayer() override;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
+    {
+        return m_srcLayer.GetLayerDefn();
+    }
+
+    GIntBig GetFeatureCount(int bForce) override
+    {
+        if (!m_poAttrQuery && !m_poFilterGeom)
+        {
+            return m_srcLayer.GetFeatureCount(bForce);
+        }
+
+        return OGRLayer::GetFeatureCount(bForce);
+    }
+
+    int TestCapability(const char *pszCap) const override
+    {
+        if (EQUAL(pszCap, OLCFastFeatureCount))
+        {
+            return m_srcLayer.TestCapability(pszCap);
+        }
+
+        return false;
+    }
 
     bool PolygonsOnly() const override
     {
@@ -91,20 +118,19 @@ class GDALVectorSimplifyCoverageOutputDataset final
     }
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorSimplifyCoverageOutputDataset)
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorSimplifyCoverageOutputLayer)
 
     const GDALVectorSimplifyCoverageAlgorithm::Options &m_opts;
 };
 
-GDALVectorSimplifyCoverageOutputDataset::
-    ~GDALVectorSimplifyCoverageOutputDataset() = default;
+GDALVectorSimplifyCoverageOutputLayer::
+    ~GDALVectorSimplifyCoverageOutputLayer() = default;
 
 bool GDALVectorSimplifyCoverageAlgorithm::RunStep(
     GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
-    auto poDstDS =
-        std::make_unique<GDALVectorSimplifyCoverageOutputDataset>(m_opts);
+    auto poDstDS = std::make_unique<GDALVectorNonStreamingAlgorithmDataset>();
 
     GDALVectorAlgorithmLayerProgressHelper progressHelper(ctxt);
 
@@ -134,7 +160,13 @@ bool GDALVectorSimplifyCoverageAlgorithm::RunStep(
     {
         if (bProcessed)
         {
-            if (!poDstDS->AddProcessedLayer(*poSrcLayer, layerProgressFunc,
+            constexpr int geomFieldIndex = 0;  // TODO: parameterize
+            auto poLayer =
+                std::make_unique<GDALVectorSimplifyCoverageOutputLayer>(
+                    *poSrcLayer, geomFieldIndex, m_opts);
+
+            if (!poDstDS->AddProcessedLayer(std::move(poLayer),
+                                            layerProgressFunc,
                                             layerProgressData.get()))
             {
                 return false;
