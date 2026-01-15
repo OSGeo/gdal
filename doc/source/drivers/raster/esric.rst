@@ -133,11 +133,9 @@ ________________________
    different color representations.
 
 -  A cache can exceed the maximum size supported by GDAL, which
-   is INT32_MAX, in either dimension. This driver will generate
-   an error when opening such caches. Removing the
-   **LODInfo** nodes with the highest **LevelID** from the conf.xml
-   file until the raster size drops below INT32_MAX is a possible
-   workaround, but the highest resolution levels will not be read.
+   is INT32_MAX, in either dimension. By default, the driver will
+   return an error when opening such caches unless the following open 
+   option is specified: ``IGNORE_OVERSIZED_LODS=YES``.
 
 Open options
 ------------
@@ -157,6 +155,15 @@ The following open options are available:
       in the "initialExtent" element of the root.json file.
       ``TILING_SCHEME`` will return the extent of the whole tiling scheme, which
       is typically world coverage.
+
+-  .. oo:: IGNORE_OVERSIZED_LODS
+      :choices: YES, NO
+      :default: NO
+      :since: 3.13
+
+      Whether to ignore LODs whose computed raster size exceeds the maximum size
+      supported by GDAL (INT32_MAX). By default, an error will be returned when attempting
+      to open such datasets. When set to ``YES``, such LODs are ignored.
 
 See Also
 --------
