@@ -101,6 +101,18 @@ jobs:
         ctest -V -R docstub-annotations --output-on-failure
       working-directory: build
 
+    - name: Sphinx man page documentation
+      shell: bash -l {0}
+      run: |
+        cmake --build . --target man
+      working-directory: build
+
+    - name: Upload man pages
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: manpages
+        path: build/doc/build/man/
+
     # ReadTheDocs pull requests do not build PDF, but we can break it though,
     # so build it here
     - name: PDF build
