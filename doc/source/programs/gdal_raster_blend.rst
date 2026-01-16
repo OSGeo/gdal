@@ -263,14 +263,67 @@ Program-Specific Options
 
         Alpha channel is computed as:
 
-            .. math::
+        .. math::
 
-                output_{A} = overlay_{A} + input_{A} - overlay_{A} * input_{A}
+            output_{A} = overlay_{A} + input_{A} - overlay_{A} * input_{A}
 
 
     - ``color-dodge`` Divides the input layer by the inverted overlay layer. This lightens the input layer depending on the value of the overlay layer: the brighter the overlay layer, the more its color affects the input layer. Blending any color with white gives white. Blending with black does not change the image.
 
-    
+        .. note::
+            - all values are normalized to [0,1] range.
+            - default alpha value is set to 1.0 if no alpha channel is present.
+
+        Given :math:`overlay_{C}` the value of one of the red, green or blue
+        component of the overlay dataset,
+        :math:`overlay_{A}` the value of the alpha component of the overlay dataset premultiplied by :option:`--opacity`,
+        :math:`input_{C}` the value of the corresponding component of the input dataset,
+        :math:`input_{A}` the value of the alpha component of the input dataset
+        and :math:`opacity`, the value of :option:`--opacity`, the resulting
+        component :math:`output_{C}` is:
+
+        If the :math:`overlay_{C} * input_{A}` is greater than or equal to
+        :math:`overlay_{A} * input_{A}` then:
+
+        .. math::
+
+            output_{C} = overlay_{A} * input_{A} + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+        If the :math:`overlay_{C} * input_{A}` is less than
+        :math:`overlay_{A} * input_{A}` then:
+
+        .. math::
+
+            output_{C} = input_{C} * overlay_{A} / (1 - overlay_{C} / overlay_{A}) + overlay_{C} * (1 - input_{A}) + input_{C} * (1 - overlay_{A})
+
+    - ``color-burn`` Divides the inverted input layer by the overlay layer, and then inverts the result. This darkens the overlay layer increasing the contrast to reflect the color of the input layer. The darker the input layer, the more its color is used.
+
+        .. note::
+            - all values are normalized to [0,1] range.
+            - default alpha value is set to 1.0 if no alpha channel is present.
+
+        Given :math:`overlay_{C}` the value of one of the red, green or blue
+        component of the overlay dataset,
+        :math:`overlay_{A}` the value of the alpha component of the overlay dataset premultiplied by :option:`--opacity`,
+        :math:`input_{C}` the value of the corresponding component of the input dataset,
+        :math:`input_{A}` the value of the alpha component of the input dataset
+        and :math:`opacity`, the value of :option:`--opacity`, the resulting
+        component :math:`output_{C}` is:
+
+            If the :math:`overlay_{C} * input_{A}` is greater than or equal to
+            :math:`overlay_{A} * input_{A}` then:
+
+            .. math::
+
+                output_{C} = overlay_{A} * input_{A} + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+            If the :math:`overlay_{C} * input_{A}` is greater than
+            :math:`overlay_{A} * input_{A}` then:
+
+            .. math::
+
+                output_{C} = input_{C} * overlay_{A} / (1 - overlay_{C} / overlay_{A}) + overlay_{C} * (1 - input_{A}) + input_{C} * (1 - overlay_{A})
+
 
 .. option:: --overlay <OVERLAY>
 
