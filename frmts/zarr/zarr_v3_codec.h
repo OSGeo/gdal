@@ -78,6 +78,17 @@ class ZarrV3Codec CPL_NON_FINAL
     virtual bool Decode(const ZarrByteVectorQuickResize &abySrc,
                         ZarrByteVectorQuickResize &abyDst) const = 0;
 
+    /** Partial decoding.
+     * anStartIdx[i]: coordinate in pixel, within the array of an outer chunk,
+     * that is < m_oInputArrayMetadata.anBlockSizes[i]
+     * anCount[i]: number of pixels to extract <= m_oInputArrayMetadata.anBlockSizes[i]
+     */
+    virtual bool DecodePartial(VSIVirtualHandle *poFile,
+                               const ZarrByteVectorQuickResize &abySrc,
+                               ZarrByteVectorQuickResize &abyDst,
+                               std::vector<size_t> &anStartIdx,
+                               std::vector<size_t> &anCount);
+
     const std::string &GetName() const
     {
         return m_osName;
@@ -86,6 +97,19 @@ class ZarrV3Codec CPL_NON_FINAL
     const CPLJSONObject &GetConfiguration() const
     {
         return m_oConfiguration;
+    }
+
+    virtual std::vector<size_t>
+    GetInnerMostBlockSize(const std::vector<size_t> &input) const
+    {
+        return input;
+    }
+
+    virtual void ChangeArrayShapeForward(std::vector<size_t> &anStartIdx,
+                                         std::vector<size_t> &anCount)
+    {
+        (void)anStartIdx;
+        (void)anCount;
     }
 };
 
@@ -299,6 +323,40 @@ class ZarrV3CodecTranspose final : public ZarrV3Codec
                 ZarrByteVectorQuickResize &abyDst) const override;
     bool Decode(const ZarrByteVectorQuickResize &abySrc,
                 ZarrByteVectorQuickResize &abyDst) const override;
+
+    bool DecodePartial(VSIVirtualHandle *poFile,
+                       const ZarrByteVectorQuickResize &abySrc,
+                       ZarrByteVectorQuickResize &abyDst,
+                       std::vector<size_t> &anStartIdx,
+                       std::vector<size_t> &anCount) override;
+
+    std::vector<size_t>
+    GetInnerMostBlockSize(const std::vector<size_t> &input) const override;
+
+    template <class T>
+    inline void Reorder1DForward(std::vector<T> &vector) const
+    {
+        std::vector<T> res;
+        for (int idx : m_anOrder)
+            res.push_back(vector[idx]);
+        vector = std::move(res);
+    }
+
+    template <class T>
+    inline void Reorder1DInverse(std::vector<T> &vector) const
+    {
+        std::vector<T> res;
+        for (int idx : m_anReverseOrder)
+            res.push_back(vector[idx]);
+        vector = std::move(res);
+    }
+
+    void ChangeArrayShapeForward(std::vector<size_t> &anStartIdx,
+                                 std::vector<size_t> &anCount) override
+    {
+        Reorder1DForward(anStartIdx);
+        Reorder1DForward(anCount);
+    }
 };
 
 /************************************************************************/
@@ -385,6 +443,15 @@ class ZarrV3CodecShardingIndexed final : public ZarrV3Codec
                 ZarrByteVectorQuickResize &abyDst) const override;
     bool Decode(const ZarrByteVectorQuickResize &abySrc,
                 ZarrByteVectorQuickResize &abyDst) const override;
+
+    bool DecodePartial(VSIVirtualHandle *poFile,
+                       const ZarrByteVectorQuickResize &abySrc,
+                       ZarrByteVectorQuickResize &abyDst,
+                       std::vector<size_t> &anStartIdx,
+                       std::vector<size_t> &anCount) override;
+
+    std::vector<size_t>
+    GetInnerMostBlockSize(const std::vector<size_t> &input) const override;
 };
 
 /************************************************************************/
@@ -397,6 +464,7 @@ class ZarrV3CodecSequence
     std::vector<std::unique_ptr<ZarrV3Codec>> m_apoCodecs{};
     CPLJSONObject m_oCodecArray{};
     ZarrByteVectorQuickResize m_abyTmp{};
+    bool m_bPartialDecodingPossible = false;
 
     bool AllocateBuffer(ZarrByteVectorQuickResize &abyBuffer, size_t nEltCount);
 
@@ -409,7 +477,8 @@ class ZarrV3CodecSequence
     // This method is not thread safe due to cloning a JSON object
     std::unique_ptr<ZarrV3CodecSequence> Clone() const;
 
-    bool InitFromJson(const CPLJSONObject &oCodecs);
+    bool InitFromJson(const CPLJSONObject &oCodecs,
+                      ZarrArrayMetadata &oOutputArrayMetadata);
 
     const CPLJSONObject &GetJSon() const
     {
@@ -421,8 +490,26 @@ class ZarrV3CodecSequence
         return m_apoCodecs;
     }
 
+    bool SupportsPartialDecoding() const
+    {
+        return m_bPartialDecodingPossible;
+    }
+
     bool Encode(ZarrByteVectorQuickResize &abyBuffer);
     bool Decode(ZarrByteVectorQuickResize &abyBuffer);
+
+    /** Partial decoding.
+     * anStartIdx[i]: coordinate in pixel, within the array of an outer chunk,
+     * that is < m_oInputArrayMetadata.anBlockSizes[i]
+     * anCount[i]: number of pixels to extract <= m_oInputArrayMetadata.anBlockSizes[i]
+     */
+    bool DecodePartial(VSIVirtualHandle *poFile,
+                       ZarrByteVectorQuickResize &abyBuffer,
+                       const std::vector<size_t> &anStartIdx,
+                       const std::vector<size_t> &anCount);
+
+    std::vector<size_t>
+    GetInnerMostBlockSize(const std::vector<size_t> &anOuterBlockSize) const;
 };
 
 #endif

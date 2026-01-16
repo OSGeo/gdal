@@ -1,0 +1,58 @@
+{
+  "shape": [
+    2,
+    2
+  ],
+  "data_type": "int64",
+  "chunk_grid": {
+    "name": "regular",
+    "configuration": {
+      "chunk_shape": [
+        2,
+        4
+      ]
+    }
+  },
+  "chunk_key_encoding": {
+    "name": "default",
+    "configuration": {
+      "separator": "/"
+    }
+  },
+  "fill_value": 0,
+  "codecs": [
+    {
+      "name": "sharding_indexed",
+      "configuration": {
+        "chunk_shape": [
+          1,
+          2
+        ],
+        "codecs": [
+          {
+            "name": "bytes",
+            "configuration": {
+              "endian": "big"
+            }
+          }
+        ],
+        "index_codecs": [
+          {
+            "name": "bytes",
+            "configuration": {
+              "endian": "big"
+            }
+          }
+        ],
+        "index_location": "end"
+      }
+    },
+    {
+      "name": "crc32c"
+    }
+  ],
+  "attributes": {},
+  "zarr_format": 3,
+  "node_type": "array",
+  "storage_transformers": []
+}

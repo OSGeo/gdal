@@ -22,6 +22,7 @@ std::unique_ptr<ZarrV3CodecSequence> ZarrV3CodecSequence::Clone() const
     for (const auto &poCodec : m_apoCodecs)
         poClone->m_apoCodecs.emplace_back(poCodec->Clone());
     poClone->m_oCodecArray = m_oCodecArray.Clone();
+    poClone->m_bPartialDecodingPossible = m_bPartialDecodingPossible;
     return poClone;
 }
 
@@ -29,7 +30,8 @@ std::unique_ptr<ZarrV3CodecSequence> ZarrV3CodecSequence::Clone() const
 /*                    ZarrV3CodecSequence::InitFromJson()               */
 /************************************************************************/
 
-bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
+bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
+                                       ZarrArrayMetadata &oOutputArrayMetadata)
 {
     if (oCodecs.GetType() != CPLJSONObject::Type::Array)
     {
@@ -68,6 +70,8 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
         }
     };
 
+    bool bShardingFound = false;
+    std::vector<size_t> anBlockSizesBeforeSharding;
     for (const auto &oCodec : oCodecsArray)
     {
         if (oCodec.GetType() != CPLJSONObject::Type::Object)
@@ -88,6 +92,13 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
             poCodec = std::make_unique<ZarrV3CodecBytes>();
         else if (osName == ZarrV3CodecTranspose::NAME)
             poCodec = std::make_unique<ZarrV3CodecTranspose>();
+        else if (osName == ZarrV3CodecCRC32C::NAME)
+            poCodec = std::make_unique<ZarrV3CodecCRC32C>();
+        else if (osName == ZarrV3CodecShardingIndexed::NAME)
+        {
+            bShardingFound = true;
+            poCodec = std::make_unique<ZarrV3CodecShardingIndexed>();
+        }
         else
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Unsupported codec: %s",
@@ -111,6 +122,10 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
         }
 
         ZarrArrayMetadata oStepOutputArrayMetadata;
+        if (osName == ZarrV3CodecShardingIndexed::NAME)
+        {
+            anBlockSizesBeforeSharding = oInputArrayMetadata.anBlockSizes;
+        }
         if (!poCodec->InitFromConfiguration(oCodec["configuration"],
                                             oInputArrayMetadata,
                                             oStepOutputArrayMetadata,
@@ -126,9 +141,27 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
             m_apoCodecs.emplace_back(std::move(poCodec));
     }
 
+    if (bShardingFound)
+    {
+        m_bPartialDecodingPossible =
+            (m_apoCodecs.back()->GetName() == ZarrV3CodecShardingIndexed::NAME);
+        if (!m_bPartialDecodingPossible)
+        {
+            m_bPartialDecodingPossible = false;
+            // This is not an implementation limitation, but the result of a
+            // badly thought dataset. Zarr-Python also emits a similar warning.
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Sharding codec found, but not in last position. Consequently "
+                "partial shard decoding will not be possible");
+            oInputArrayMetadata.anBlockSizes = anBlockSizesBeforeSharding;
+        }
+    }
+
     InsertImplicitEndianCodecIfNeeded();
 
     m_oCodecArray = oCodecs.Clone();
+    oOutputArrayMetadata = std::move(oInputArrayMetadata);
     return true;
 }
 
@@ -210,4 +243,61 @@ bool ZarrV3CodecSequence::Decode(ZarrByteVectorQuickResize &abyBuffer)
         std::swap(abyBuffer, m_abyTmp);
     }
     return true;
+}
+
+/************************************************************************/
+/*                ZarrV3CodecSequence::DecodePartial()                  */
+/************************************************************************/
+
+bool ZarrV3CodecSequence::DecodePartial(VSIVirtualHandle *poFile,
+                                        ZarrByteVectorQuickResize &abyBuffer,
+                                        const std::vector<size_t> &anStartIdxIn,
+                                        const std::vector<size_t> &anCountIn)
+{
+    CPLAssert(anStartIdxIn.size() == m_oInputArrayMetadata.anBlockSizes.size());
+    CPLAssert(anStartIdxIn.size() == anCountIn.size());
+
+    if (!AllocateBuffer(abyBuffer, MultiplyElements(anCountIn)))
+        return false;
+
+    // anStartIdxIn and anCountIn are expressed in the shape *before* encoding
+    // We need to apply the potential transpositions before submitting them
+    // to the decoder of the Array->Bytes decoder
+    std::vector<size_t> anStartIdx(anStartIdxIn);
+    std::vector<size_t> anCount(anCountIn);
+    for (auto &poCodec : m_apoCodecs)
+    {
+        poCodec->ChangeArrayShapeForward(anStartIdx, anCount);
+    }
+
+    for (auto iter = m_apoCodecs.rbegin(); iter != m_apoCodecs.rend(); ++iter)
+    {
+        const auto &poCodec = *iter;
+
+        if (!poCodec->DecodePartial(poFile, abyBuffer, m_abyTmp, anStartIdx,
+                                    anCount))
+            return false;
+        std::swap(abyBuffer, m_abyTmp);
+    }
+    return true;
+}
+
+/************************************************************************/
+/*           ZarrV3CodecSequence::GetInnerMostBlockSize()               */
+/************************************************************************/
+
+std::vector<size_t> ZarrV3CodecSequence::GetInnerMostBlockSize(
+    const std::vector<size_t> &anOuterBlockSize) const
+{
+    auto chunkSize = anOuterBlockSize;
+    for (auto iter = m_apoCodecs.rbegin(); iter != m_apoCodecs.rend(); ++iter)
+    {
+        const auto &poCodec = *iter;
+        if (m_bPartialDecodingPossible ||
+            poCodec->GetName() != ZarrV3CodecShardingIndexed::NAME)
+        {
+            chunkSize = poCodec->GetInnerMostBlockSize(chunkSize);
+        }
+    }
+    return chunkSize;
 }

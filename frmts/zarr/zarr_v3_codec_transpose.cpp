@@ -160,6 +160,19 @@ bool ZarrV3CodecTranspose::InitFromConfiguration(
 }
 
 /************************************************************************/
+/*              ZarrV3CodecTranspose::GetInnerMostBlockSize()           */
+/************************************************************************/
+
+std::vector<size_t> ZarrV3CodecTranspose::GetInnerMostBlockSize(
+    const std::vector<size_t> &anInnerBlockSize) const
+{
+    std::vector<size_t> ret;
+    for (int idx : m_anReverseOrder)
+        ret.push_back(anInnerBlockSize[idx]);
+    return ret;
+}
+
+/************************************************************************/
 /*                   ZarrV3CodecTranspose::Clone()                      */
 /************************************************************************/
 
@@ -323,4 +336,24 @@ bool ZarrV3CodecTranspose::Decode(const ZarrByteVectorQuickResize &abySrc,
     CPLAssert(!IsNoOp());
 
     return Transpose(abySrc, abyDst, false, m_oInputArrayMetadata.anBlockSizes);
+}
+
+/************************************************************************/
+/*                   ZarrV3CodecTranspose::DecodePartial()              */
+/************************************************************************/
+
+bool ZarrV3CodecTranspose::DecodePartial(
+    VSIVirtualHandle * /* poFile */, const ZarrByteVectorQuickResize &abySrc,
+    ZarrByteVectorQuickResize &abyDst, std::vector<size_t> &anStartIdx,
+    std::vector<size_t> &anCount)
+{
+    CPLAssert(anStartIdx.size() == m_oInputArrayMetadata.anBlockSizes.size());
+    CPLAssert(anStartIdx.size() == anCount.size());
+
+    Reorder1DInverse(anStartIdx);
+    Reorder1DInverse(anCount);
+
+    // Note that we don't need to take anStartIdx into account for the
+    // transpose operation, as abySrc corresponds to anStartIdx.
+    return Transpose(abySrc, abyDst, false, anCount);
 }
