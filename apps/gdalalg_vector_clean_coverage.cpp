@@ -226,7 +226,7 @@ bool GDALVectorCleanCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     {
         if (bProcessed)
         {
-            constexpr int geomFieldIndex = 0;  // TODO parameterize
+            constexpr int geomFieldIndex = 0;  // TODO parametrize
 
             auto poLayer = std::make_unique<GDALVectorCleanCoverageOutputLayer>(
                 *poSrcLayer, geomFieldIndex, m_opts);

@@ -160,7 +160,7 @@ bool GDALVectorSimplifyCoverageAlgorithm::RunStep(
     {
         if (bProcessed)
         {
-            constexpr int geomFieldIndex = 0;  // TODO: parameterize
+            constexpr int geomFieldIndex = 0;  // TODO: parametrize
             auto poLayer =
                 std::make_unique<GDALVectorSimplifyCoverageOutputLayer>(
                     *poSrcLayer, geomFieldIndex, m_opts);
