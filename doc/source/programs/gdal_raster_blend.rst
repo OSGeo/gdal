@@ -54,7 +54,7 @@ Program-Specific Options
     of its alpha channel.
     Defaults to 100.
 
-.. option:: --operator src-over|hsv-value|multiply|screen|overlay|hard-light
+.. option:: --operator src-over|hsv-value|multiply|screen|overlay|hard-light|lighten|darken
 
     Select the blending operator, which defines how the overlay dataset is
     blended into the input dataset. Defaults to ``src-over``.
@@ -218,6 +218,55 @@ Program-Specific Options
             .. math::
 
                 output_{A} = overlay_{A} + input_{A} - overlay_{A} * input_{A}
+
+    - ``darken`` Creates a image that retains the smallest components of the overlay and input pixels. If the overlay pixel has the components r1, g1, and b1, and the input pixel has r2, g2, b2, the resultant pixel is [min(r1,r2), min(g1,g2), min(b1,b2)]
+
+        .. note::
+            - all values are normalized to [0,1] range.
+            - default alpha value is set to 1.0 if no alpha channel is present.
+
+        Given :math:`overlay_{C}` the value of one of the red, green or blue
+        component of the overlay dataset,
+        :math:`overlay_{A}` the value of the alpha component of the overlay dataset premultiplied by :option:`--opacity`,
+        :math:`input_{C}` the value of the corresponding component of the input dataset,
+        :math:`input_{A}` the value of the alpha component of the input dataset
+        and :math:`opacity`, the value of :option:`--opacity`, the resulting
+        component :math:`output_{C}` is:
+
+        .. math::
+
+            output_{C} = min(overlay_{C}, input_{C}) + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+        Alpha channel is computed as:
+
+            .. math::
+
+                output_{A} = overlay_{A} + input_{A} - overlay_{A} * input_{A}
+
+    - ``lighten`` Lighten has the opposite action of Darken. It selects the maximum of each component from the overlay and input pixels. If the overlay pixel has the components r1, g1, and b1, and the input pixel has r2, g2, b2, the resultant pixel is [max(r1,r2), max(g1,g2), max(b1,b2)]
+
+        .. note::
+            - all values are normalized to [0,1] range.
+            - default alpha value is set to 1.0 if no alpha channel is present.
+
+        Given :math:`overlay_{C}` the value of one of the red, green or blue
+        component of the overlay dataset,
+        :math:`overlay_{A}` the value of the alpha component of the overlay dataset premultiplied by :option:`--opacity`,
+        :math:`input_{C}` the value of the corresponding component of the input dataset,
+        :math:`input_{A}` the value of the alpha component of the input dataset
+        and :math:`opacity`, the value of :option:`--opacity`, the resulting
+        component :math:`output_{C}` is:
+
+        .. math::
+
+            output_{C} = max(overlay_{C}, input_{C}) + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+        Alpha channel is computed as:
+
+            .. math::
+
+                output_{A} = overlay_{A} + input_{A} - overlay_{A} * input_{A}
+
 
 
 .. option:: --overlay <OVERLAY>
