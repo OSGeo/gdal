@@ -16,6 +16,9 @@ DATA_DIR = pathlib.Path(os.path.join(os.path.dirname(__file__), "data"))
 GDAL_GREEN_BLUE = matplotlib.colors.ListedColormap(["#71c9f1", "#359946"])
 
 
+matplotlib.use("Agg")  # use a non-GUI backend
+
+
 def print_cell_values(ax, data):
     for y in range(data.shape[0]):
         for x in range(data.shape[1]):
@@ -212,9 +215,9 @@ def test_gdal_raster_reclassify():
         output_format="MEM",
         mapping="[1,3]= 101; [4, 5)= 102; 7=102; NO_DATA=103; DEFAULT=NO_DATA",
     )
-    alg.Finalize()
 
     data_out = alg["output"].GetDataset().ReadAsMaskedArray()
+    alg.Finalize()
 
     ax.pcolor(data, cmap=pyplot.get_cmap("Purples"))
     print_cell_values(ax, data)
@@ -264,7 +267,7 @@ def test_gdal_raster_zonal_stats(tmp_path):
     vector_gdf.boundary.plot(ax=ax, edgecolor="black", linewidth=1, aspect="equal")
 
     stats_df = gpd.read_file(output_fname)
-    stats_df.drop("geometry", axis=1, inplace=True)
+    stats_df.drop("geometry", axis=1, inplace=True, errors="ignore")
 
     vector_gdf.merge(stats_df, on="csduid").plot(
         ax=ax2, aspect="equal", column="mean", vmin=vmin, vmax=vmax
@@ -323,8 +326,8 @@ def test_gdal_vector_check_geometry(tmp_path):
     }
 
     for k, v in cases.items():
-        src_fname = tmp_path / f"{k}.shp"
-        dst_fname = tmp_path / f"{k}_out.shp"
+        src_fname = tmp_path / f"{k}.gpkg"
+        dst_fname = tmp_path / f"{k}_out.gpkg"
 
         wkt_ds(src_fname, [v])
 
@@ -355,9 +358,9 @@ def test_gdal_vector_check_geometry(tmp_path):
 )
 def test_gdal_vector_layer_algebra(tmp_path, operation):
 
-    squares_fname = DATA_DIR / "squares.shp"
-    circle_fname = DATA_DIR / "circle.shp"
-    result_fname = tmp_path / "out.shp"
+    squares_fname = DATA_DIR / "squares.geojson"
+    circle_fname = DATA_DIR / "circle.geojson"
+    result_fname = tmp_path / "out.geojson"
 
     alg = gdal.Run(
         "vector layer-algebra",
