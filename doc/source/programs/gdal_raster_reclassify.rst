@@ -23,6 +23,23 @@ Description
 :program:`gdal raster reclassify` reclassifies values in an input dataset.
 A file (or string) specifies the mapping of input pixel values or ranges to output files.
 
+Ranges of values can be specified using brackets:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Notation
+     - Meaning
+   * - ``[a,b]``
+     - Closed interval, includes both ``a`` and ``b``
+   * - ``[a,b)``
+     - Left-closed, right-open, includes ``a`` but excludes ``b``
+   * - ``(a,b]``
+     - Left-open, right-closed, excludes ``a`` but includes ``b``
+   * - ``(a,b)``
+     - Open interval, excludes both ``a`` and ``b``
+
 An example file is shown below.
 
 ::
@@ -31,15 +48,17 @@ An example file is shown below.
    0       = 10      # land
    [2,4]   = 20      # freshwater
    1       = 40      # ocean
+   (4,6]   = 50      # forest (excludes 4, includes 5 and 6)
    NO_DATA = NO_DATA # leave NoData pixels unmodified
 
-(The ``#`` character indicates a comment that is ignored by the parser but
+The ``#`` character indicates a comment that is ignored by the parser but
 can make the file easier to read.)
 In this case:
 
 - input values of 0 will be output as 10
 - input values between 2 and 4 (inclusive) will be output as 20
 - input values of 1 will be output as 40
+- input values between 5 and 6 will be output as 50 (4 is excluded)
 - NoData values will be preserved as NoData
 
 The presence of any other values in the input will cause an error.
