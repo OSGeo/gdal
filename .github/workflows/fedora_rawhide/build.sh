@@ -3,6 +3,9 @@
 set -e
 
 # Disable Curl because network based tests fail since b259dc5f54cf6a1f6ba5fb5bb4484c051d1e7142
+
+# FIXME: GDAL_USE_LIBKML=OFF because of https://github.com/OSGeo/gdal/issues/13709
+
 cmake ${GDAL_SOURCE_DIR:=..} \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
   -DCMAKE_C_COMPILER=clang \
@@ -16,6 +19,7 @@ cmake ${GDAL_SOURCE_DIR:=..} \
   -DEMBED_RESOURCE_FILES=ON \
   -DCMAKE_INSTALL_PREFIX=/usr \
   -DGDAL_USE_CURL=OFF \
+  -DGDAL_USE_LIBKML=OFF \
   -DWERROR_DEV_FLAG="-Werror=dev"
 make -j$(nproc)
 make -j$(nproc) install DESTDIR=/tmp/install-gdal
