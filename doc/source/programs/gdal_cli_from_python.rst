@@ -65,6 +65,18 @@ will be called at the exit of the context manager.
                   dst_crs="EPSG:4326") as alg:
         values = alg.Output().ReadAsArray()
 
+When not using a context manager, :py:meth:`osgeo.gdal.Algorithm.Finalize` can be called directly to close
+any outputs of the algorithm and release memory. In that case, the output dataset must not be used afterward.
+
+.. code-block:: python
+
+    >>> alg = gdal.Run("raster reproject", input=src_ds, output_format="MEM",
+                   dst_crs="EPSG:4326")
+    >>> alg.Finalize()
+    >>> alg.Output().ReadAsMaskedArray()
+    AttributeError: 'NoneType' object has no attribute 'ReadAsMaskedArray'
+
+
 ``gdal.alg`` module
 -------------------
 
