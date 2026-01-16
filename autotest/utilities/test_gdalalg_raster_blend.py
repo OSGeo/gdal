@@ -753,7 +753,7 @@ def test_gdalalg_raster_blend_src_over_stefan_full_rgba():
 
 def generic_raster_blend_4bands_over_4bands(
     operator,
-    invert_bands,
+    swap_inputs,
     opacity,
     rgba,
     overlay_rgba,
@@ -779,8 +779,8 @@ def generic_raster_blend_4bands_over_4bands(
     with gdal.Run(
         "raster",
         "blend",
-        input=rgba_ds if not invert_bands else overlay_rgba_ds,
-        overlay=overlay_rgba_ds if not invert_bands else rgba_ds,
+        input=rgba_ds if not swap_inputs else overlay_rgba_ds,
+        overlay=overlay_rgba_ds if not swap_inputs else rgba_ds,
         output_format="stream",
         opacity=opacity,
         operator=operator,
@@ -807,7 +807,7 @@ def generic_raster_blend_4bands_over_4bands(
         assert struct.unpack("B", subsampled) == (expected_a,)
 
 
-@pytest.mark.parametrize("invert_bands", [False, True])
+@pytest.mark.parametrize("swap_inputs", [False, True])
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
@@ -822,16 +822,16 @@ def generic_raster_blend_4bands_over_4bands(
     ],
 )
 def test_gdalalg_raster_blend_multiply_4bands_over_4bands(
-    invert_bands,
+    swap_inputs,
     opacity,
     rgba,
     overlay_rgba,
     expected_rgba,
 ):
 
-    # Skip if invert_bands is True and the opacity is != 100, as the inputs differ and
+    # Skip if swap_inputs is True and the opacity is != 100, as the inputs differ and
     # the test is not symmetric anymore
-    if invert_bands and opacity != 100:
+    if swap_inputs and opacity != 100:
         return
 
     r, g, b, a = rgba
@@ -845,7 +845,7 @@ def test_gdalalg_raster_blend_multiply_4bands_over_4bands(
         print("expected_rgba:", expected_rgba)
         print("opacity:", opacity)
 
-        if not invert_bands:
+        if not swap_inputs:
             overlay_a = overlay_a * opacity / 100
             print("overlay_a:", overlay_a)
         else:
@@ -883,7 +883,7 @@ def test_gdalalg_raster_blend_multiply_4bands_over_4bands(
 
     generic_raster_blend_4bands_over_4bands(
         "multiply",
-        invert_bands,
+        swap_inputs,
         opacity,
         rgba,
         overlay_rgba,
@@ -891,7 +891,7 @@ def test_gdalalg_raster_blend_multiply_4bands_over_4bands(
     )
 
 
-@pytest.mark.parametrize("invert_bands", [False, True])
+@pytest.mark.parametrize("swap_inputs", [False, True])
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_value_alpha,expected_rgba",
     [
@@ -902,7 +902,7 @@ def test_gdalalg_raster_blend_multiply_4bands_over_4bands(
     ],
 )
 def test_gdalalg_raster_blend_multiply_2bands_over_4bands(
-    invert_bands,
+    swap_inputs,
     opacity,
     rgba,
     overlay_value_alpha,
@@ -925,8 +925,8 @@ def test_gdalalg_raster_blend_multiply_2bands_over_4bands(
     with gdal.Run(
         "raster",
         "blend",
-        input=rgba_ds if not invert_bands else overlay_rgba_ds,
-        overlay=overlay_rgba_ds if not invert_bands else rgba_ds,
+        input=rgba_ds if not swap_inputs else overlay_rgba_ds,
+        overlay=overlay_rgba_ds if not swap_inputs else rgba_ds,
         output_format="stream",
         opacity=opacity,
         operator="multiply",
@@ -943,7 +943,7 @@ def test_gdalalg_raster_blend_multiply_2bands_over_4bands(
                 )
 
 
-@pytest.mark.parametrize("invert_bands", [False, True])
+@pytest.mark.parametrize("swap_inputs", [False, True])
 @pytest.mark.parametrize(
     "opacity,value_alpha,overlay_value_alpha,expected_value_alpha",
     [
@@ -953,7 +953,7 @@ def test_gdalalg_raster_blend_multiply_2bands_over_4bands(
     ],
 )
 def test_gdalalg_raster_blend_multiply_2bands_over_2bands(
-    invert_bands,
+    swap_inputs,
     opacity,
     value_alpha,
     overlay_value_alpha,
@@ -974,8 +974,8 @@ def test_gdalalg_raster_blend_multiply_2bands_over_2bands(
     with gdal.Run(
         "raster",
         "blend",
-        input=rgba_ds if not invert_bands else rgba_ds,
-        overlay=grayscale_ds if not invert_bands else grayscale_ds,
+        input=rgba_ds if not swap_inputs else rgba_ds,
+        overlay=grayscale_ds if not swap_inputs else grayscale_ds,
         output_format="stream",
         opacity=opacity,
         operator="multiply",
@@ -991,7 +991,7 @@ def test_gdalalg_raster_blend_multiply_2bands_over_2bands(
                 )
 
 
-@pytest.mark.parametrize("invert_bands", [False, True])
+@pytest.mark.parametrize("swap_inputs", [False, True])
 @pytest.mark.parametrize(
     "opacity,value_alpha,overlay_value,expected_value_alpha",
     [
@@ -1001,7 +1001,7 @@ def test_gdalalg_raster_blend_multiply_2bands_over_2bands(
     ],
 )
 def test_gdalalg_raster_blend_multiply_1band_over_2bands(
-    invert_bands, opacity, value_alpha, overlay_value, expected_value_alpha
+    swap_inputs, opacity, value_alpha, overlay_value, expected_value_alpha
 ):
     value, alpha = value_alpha
     expected_value, expected_alpha = expected_value_alpha
@@ -1016,8 +1016,8 @@ def test_gdalalg_raster_blend_multiply_1band_over_2bands(
     with gdal.Run(
         "raster",
         "blend",
-        input=rgba_ds if not invert_bands else grayscale_ds,
-        overlay=grayscale_ds if not invert_bands else rgba_ds,
+        input=rgba_ds if not swap_inputs else grayscale_ds,
+        overlay=grayscale_ds if not swap_inputs else rgba_ds,
         output_format="stream",
         opacity=opacity,
         operator="multiply",
@@ -1032,7 +1032,7 @@ def test_gdalalg_raster_blend_multiply_1band_over_2bands(
                 )
 
 
-@pytest.mark.parametrize("invert_bands", [False, True])
+@pytest.mark.parametrize("swap_inputs", [False, True])
 @pytest.mark.parametrize(
     "opacity,value,overlay_value,expected_value",
     [
@@ -1042,7 +1042,7 @@ def test_gdalalg_raster_blend_multiply_1band_over_2bands(
     ],
 )
 def test_gdalalg_raster_blend_multiply_1band_over_1band(
-    invert_bands, opacity, value, overlay_value, expected_value
+    swap_inputs, opacity, value, overlay_value, expected_value
 ):
     grayscale_1_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 1)
     grayscale_1_ds.GetRasterBand(1).Fill(value)
@@ -1053,8 +1053,8 @@ def test_gdalalg_raster_blend_multiply_1band_over_1band(
     with gdal.Run(
         "raster",
         "blend",
-        input=grayscale_1_ds if not invert_bands else grayscale_ds,
-        overlay=grayscale_ds if not invert_bands else grayscale_1_ds,
+        input=grayscale_1_ds if not swap_inputs else grayscale_ds,
+        overlay=grayscale_ds if not swap_inputs else grayscale_1_ds,
         output_format="stream",
         opacity=opacity,
         operator="multiply",
@@ -1068,7 +1068,7 @@ def test_gdalalg_raster_blend_multiply_1band_over_1band(
                 )
 
 
-@pytest.mark.parametrize("invert_bands", [False, True])
+@pytest.mark.parametrize("swap_inputs", [False, True])
 @pytest.mark.parametrize(
     "opacity,paletted_value,overlay_value,expected_rgba",
     [
@@ -1078,7 +1078,7 @@ def test_gdalalg_raster_blend_multiply_1band_over_1band(
     ],
 )
 def test_gdalalg_raster_blend_multiply_1band_paletted_over_1band(
-    invert_bands,
+    swap_inputs,
     opacity,
     paletted_value,
     overlay_value,
@@ -1103,8 +1103,8 @@ def test_gdalalg_raster_blend_multiply_1band_paletted_over_1band(
     with gdal.Run(
         "raster",
         "blend",
-        input=paletted_ds if not invert_bands else grayscale_ds,
-        overlay=grayscale_ds if not invert_bands else paletted_ds,
+        input=paletted_ds if not swap_inputs else grayscale_ds,
+        overlay=grayscale_ds if not swap_inputs else paletted_ds,
         output_format="stream",
         opacity=opacity,
         operator="multiply",
@@ -1131,7 +1131,7 @@ def test_gdalalg_raster_blend_multiply_1band_paletted_over_1band(
         assert struct.unpack("B", subsampled) == (expected_a,)
 
 
-@pytest.mark.parametrize("invert_bands", [False, True])
+@pytest.mark.parametrize("swap_inputs", [False, True])
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
@@ -1142,10 +1142,10 @@ def test_gdalalg_raster_blend_multiply_1band_paletted_over_1band(
     ],
 )
 def test_gdalalg_raster_blend_screen_4bands_over_4bands(
-    invert_bands, opacity, rgba, overlay_rgba, expected_rgba
+    swap_inputs, opacity, rgba, overlay_rgba, expected_rgba
 ):
     generic_raster_blend_4bands_over_4bands(
-        "screen", invert_bands, opacity, rgba, overlay_rgba, expected_rgba
+        "screen", swap_inputs, opacity, rgba, overlay_rgba, expected_rgba
     )
 
 
@@ -1179,3 +1179,71 @@ def test_gdalalg_raster_blend_hard_light_4bands_over_4bands(
     generic_raster_blend_4bands_over_4bands(
         "hard-light", False, opacity, rgba, overlay_rgba, expected_rgba
     )
+
+
+@pytest.mark.parametrize("swap_inputs", [False, True])
+@pytest.mark.parametrize(
+    "opacity,rgba,overlay_rgba,expected_rgba",
+    [
+        (100, (128, 128, 128, 255), (10, 20, 30, 255), (128, 128, 128, 255)),
+        (100, (10, 20, 30, 255), (128, 128, 128, 255), (128, 128, 128, 255)),
+        (100, (10, 200, 30, 128), (128, 50, 128, 128), (133, 225, 143, 192)),
+    ],
+)
+def test_gdalalg_raster_blend_lighten_4bands_over_4bands(
+    swap_inputs, opacity, rgba, overlay_rgba, expected_rgba
+):
+
+    generic_raster_blend_4bands_over_4bands(
+        "lighten", swap_inputs, opacity, rgba, overlay_rgba, expected_rgba
+    )
+
+
+@pytest.mark.parametrize("swap_inputs", [False])
+@pytest.mark.parametrize(
+    "opacity,rgba,overlay_rgba,expected_rgba",
+    [
+        (100, (128, 128, 128, 255), (10, 20, 30, 255), (10, 20, 30, 255)),
+        (100, (10, 20, 30, 255), (128, 128, 128, 255), (10, 20, 30, 255)),
+        (100, (200, 50, 200, 128), (128, 200, 128, 128), (228, 150, 228, 192)),
+    ],
+)
+def test_gdalalg_raster_blend_darken_4bands_over_4bands(
+    swap_inputs, opacity, rgba, overlay_rgba, expected_rgba
+):
+
+    generic_raster_blend_4bands_over_4bands(
+        "darken", swap_inputs, opacity, rgba, overlay_rgba, expected_rgba
+    )
+
+
+@pytest.mark.parametrize("blend_mode", ["darken", "lighten"])
+@pytest.mark.parametrize("swap_inputs", [False, True])
+@pytest.mark.parametrize(
+    "input_bands,overlay_bands",
+    [
+        (4, 2),
+        (3, 2),
+        (4, 1),
+        (3, 1),
+    ],
+)
+def test_gdalalg_raster_blend_darken_lighten_invalid_input(
+    blend_mode, swap_inputs, input_bands, overlay_bands
+):
+
+    rgba_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, input_bands)
+    overlay_rgba_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, overlay_bands)
+
+    with pytest.raises(
+        Exception,
+        match=r"the source dataset and overlay dataset must have the same number of bands",
+    ):
+        gdal.Run(
+            "raster",
+            "blend",
+            operator=blend_mode,
+            input=rgba_ds if not swap_inputs else overlay_rgba_ds,
+            overlay=overlay_rgba_ds if not swap_inputs else rgba_ds,
+            output_format="stream",
+        )

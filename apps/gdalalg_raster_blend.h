@@ -30,13 +30,15 @@ enum class CompositionMode : unsigned
     SCREEN,
     OVERLAY,
     HARD_LIGHT,
+    DARKEN,
+    LIGHTEN,
 };
 
 //! Returns a map of all composition modes to their string identifiers
 std::map<CompositionMode, std::string> CompositionModes();
 
 //! Returns the text identifier of the composition mode
-const char *CompositionModeToString(CompositionMode mode);
+std::string CompositionModeToString(CompositionMode mode);
 
 //! Returns a list of all modes string identifiers
 std::vector<std::string> CompositionModesIdentifiers();
@@ -59,9 +61,6 @@ bool BandCountIsCompatibleWithCompositionMode(int bandCount,
 
 //! Calculate alpha from alpha_final = alpha_overlay + alpha_source - alpha_overlay * alpha_source
 inline GByte ComputeCompositeAlpha(GByte alphaSource, GByte alphaOverlay);
-
-//! Returns TRUE if the mode is commutative
-bool IsCommutativeMode(CompositionMode mode);
 
 /************************************************************************/
 /*                       GDALRasterBlendAlgorithm                       */
