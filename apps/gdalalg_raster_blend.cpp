@@ -58,13 +58,13 @@ std::map<CompositionMode, std::string> CompositionModes()
 /*                    CompositionModeToString()                           */
 /**************************************************************************/
 
-const char *CompositionModeToString(CompositionMode mode)
+std::string CompositionModeToString(CompositionMode mode)
 {
     const auto &modes = CompositionModes();
-    const auto iter = modes.find(mode);
+    const auto &iter = modes.find(mode);
     if (iter != modes.end())
     {
-        return iter->second.c_str();
+        return iter->second;
     }
     CPLError(CE_Failure, CPLE_IllegalArg,
              "Invalid composition mode value: %d, returning 'src-over'",
@@ -2316,14 +2316,14 @@ bool GDALRasterBlendAlgorithm::ValidateGlobal()
                             "Input dataset has %d band(s), but operator %s "
                             "requires between %d and %d bands",
                             poSrcDS->GetRasterCount(),
-                            CompositionModeToString(m_operator),
+                            CompositionModeToString(m_operator).c_str(),
                             minRequiredBands, maxRequiredBands);
             else
                 ReportError(CE_Failure, CPLE_IllegalArg,
                             "Input dataset has %d band(s), but operator %s "
                             "requires %d bands",
                             poSrcDS->GetRasterCount(),
-                            CompositionModeToString(m_operator),
+                            CompositionModeToString(m_operator).c_str(),
                             minRequiredBands);
             return false;
         }
