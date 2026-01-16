@@ -6,11 +6,11 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2025-10-28T08:43:51.193577</dc:date>
+    <dc:date>2026-01-19T18:07:13.394635</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.10.3, https://matplotlib.org/</dc:title>
+      <dc:title>Matplotlib v3.10.1+dfsg1, https://matplotlib.org/</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -46,56 +46,56 @@ L 118.08 118.08
 L 118.08 7.2 
 L 7.2 7.2 
 z
-" clip-path="url(#p89df409bfb)" style="fill: #440154"/>
+" clip-path="url(#p86000dbb41)" style="fill: #440154"/>
     <path d="M 118.08 7.2 
 L 118.08 118.08 
 L 228.96 118.08 
 L 228.96 7.2 
 L 118.08 7.2 
 z
-" clip-path="url(#p89df409bfb)" style="fill: #46327e"/>
+" clip-path="url(#p86000dbb41)" style="fill: #46327e"/>
     <path d="M 228.96 7.2 
 L 228.96 118.08 
 L 339.84 118.08 
 L 339.84 7.2 
 L 228.96 7.2 
 z
-" clip-path="url(#p89df409bfb)" style="fill: #365c8d"/>
+" clip-path="url(#p86000dbb41)" style="fill: #365c8d"/>
     <path d="M 7.2 118.08 
 L 7.2 228.96 
 L 118.08 228.96 
 L 118.08 118.08 
 L 7.2 118.08 
 z
-" clip-path="url(#p89df409bfb)" style="fill: #277f8e"/>
+" clip-path="url(#p86000dbb41)" style="fill: #277f8e"/>
     <path d="M 118.08 118.08 
 L 118.08 228.96 
 L 228.96 228.96 
 L 228.96 118.08 
 L 118.08 118.08 
 z
-" clip-path="url(#p89df409bfb)" style="fill: #1fa187"/>
+" clip-path="url(#p86000dbb41)" style="fill: #1fa187"/>
     <path d="M 228.96 118.08 
 L 228.96 228.96 
 L 339.84 228.96 
 L 339.84 118.08 
 L 228.96 118.08 
 z
-" clip-path="url(#p89df409bfb)" style="fill: #4ac16d"/>
+" clip-path="url(#p86000dbb41)" style="fill: #4ac16d"/>
     <path d="M 7.2 228.96 
 L 7.2 339.84 
 L 118.08 339.84 
 L 118.08 228.96 
 L 7.2 228.96 
 z
-" clip-path="url(#p89df409bfb)" style="fill: #a0da39"/>
+" clip-path="url(#p86000dbb41)" style="fill: #a0da39"/>
     <path d="M 118.08 228.96 
 L 118.08 339.84 
 L 228.96 339.84 
 L 228.96 228.96 
 L 118.08 228.96 
 z
-" clip-path="url(#p89df409bfb)" style="fill: #fde725"/>
+" clip-path="url(#p86000dbb41)" style="fill: #fde725"/>
    </g>
    <g id="matplotlib.axis_1"/>
    <g id="matplotlib.axis_2"/>
@@ -779,56 +779,56 @@ L 574.625455 118.08
 L 574.625455 7.2 
 L 463.745455 7.2 
 z
-" clip-path="url(#pd22f47ff02)" style="fill: #440154"/>
+" clip-path="url(#p13680d716e)" style="fill: #440154"/>
     <path d="M 574.625455 7.2 
 L 574.625455 118.08 
 L 685.505455 118.08 
 L 685.505455 7.2 
 L 574.625455 7.2 
 z
-" clip-path="url(#pd22f47ff02)" style="fill: #443983"/>
+" clip-path="url(#p13680d716e)" style="fill: #443983"/>
     <path d="M 685.505455 7.2 
 L 685.505455 118.08 
 L 796.385455 118.08 
 L 796.385455 7.2 
 L 685.505455 7.2 
 z
-" clip-path="url(#pd22f47ff02)" style="fill: #31688e"/>
+" clip-path="url(#p13680d716e)" style="fill: #31688e"/>
     <path d="M 463.745455 118.08 
 L 463.745455 228.96 
 L 574.625455 228.96 
 L 574.625455 118.08 
 L 463.745455 118.08 
 z
-" clip-path="url(#pd22f47ff02)" style="fill: #21918c"/>
+" clip-path="url(#p13680d716e)" style="fill: #21918c"/>
     <path d="M 574.625455 118.08 
 L 574.625455 228.96 
 L 685.505455 228.96 
 L 685.505455 118.08 
 L 574.625455 118.08 
 z
-" clip-path="url(#pd22f47ff02)" style="fill: #26828e"/>
+" clip-path="url(#p13680d716e)" style="fill: #26828e"/>
     <path d="M 685.505455 118.08 
 L 685.505455 228.96 
 L 796.385455 228.96 
 L 796.385455 118.08 
 L 685.505455 118.08 
 z
-" clip-path="url(#pd22f47ff02)" style="fill: #2b758e"/>
+" clip-path="url(#p13680d716e)" style="fill: #2b758e"/>
     <path d="M 463.745455 228.96 
 L 463.745455 339.84 
 L 574.625455 339.84 
 L 574.625455 228.96 
 L 463.745455 228.96 
 z
-" clip-path="url(#pd22f47ff02)" style="fill: #fde725"/>
+" clip-path="url(#p13680d716e)" style="fill: #fde725"/>
     <path d="M 574.625455 228.96 
 L 574.625455 339.84 
 L 685.505455 339.84 
 L 685.505455 228.96 
 L 574.625455 228.96 
 z
-" clip-path="url(#pd22f47ff02)" style="fill: #4ec36b"/>
+" clip-path="url(#p13680d716e)" style="fill: #4ec36b"/>
    </g>
    <g id="matplotlib.axis_3"/>
    <g id="matplotlib.axis_4"/>
@@ -2401,10 +2401,10 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="p89df409bfb">
+  <clipPath id="p86000dbb41">
    <rect x="7.2" y="7.2" width="332.64" height="332.64"/>
   </clipPath>
-  <clipPath id="pd22f47ff02">
+  <clipPath id="p13680d716e">
    <rect x="463.745455" y="7.2" width="332.64" height="332.64"/>
   </clipPath>
  </defs>

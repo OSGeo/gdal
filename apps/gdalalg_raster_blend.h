@@ -32,6 +32,8 @@ enum class CompositionMode : unsigned
     HARD_LIGHT,
     DARKEN,
     LIGHTEN,
+    COLOR_DODGE,
+    COLOR_BURN,
 };
 
 //! Returns a map of all composition modes to their string identifiers
@@ -59,9 +61,6 @@ int MaxBandCountForCompositionMode(CompositionMode mode);
 bool BandCountIsCompatibleWithCompositionMode(int bandCount,
                                               CompositionMode mode);
 
-//! Calculate alpha from alpha_final = alpha_overlay + alpha_source - alpha_overlay * alpha_source
-inline GByte ComputeCompositeAlpha(GByte alphaSource, GByte alphaOverlay);
-
 /************************************************************************/
 /*                       GDALRasterBlendAlgorithm                       */
 /************************************************************************/
@@ -86,8 +85,8 @@ class GDALRasterBlendAlgorithm /* non final*/
     std::string m_operatorIdentifier{};
     static constexpr int OPACITY_INPUT_RANGE = 100;
     int m_opacity = OPACITY_INPUT_RANGE;
-    std::unique_ptr<GDALDataset> m_poTmpSrcDS{};
-    std::unique_ptr<GDALDataset> m_poTmpOverlayDS{};
+    GDALDatasetUniquePtr m_poTmpSrcDS{};
+    GDALDatasetUniquePtr m_poTmpOverlayDS{};
 };
 
 /************************************************************************/
