@@ -87,6 +87,14 @@ the correct driver to open the Zarr store:
 - :file:`.zgroup`
 - :file:`.zarray`
 
+Sharding support
+----------------
+
+.. versionadded:: 3.13
+
+`Zarr v3 sharding <https://zarr-specs.readthedocs.io/en/latest/v3/codecs/sharding-indexed/index.html>`__
+is supported in read-only since GDAL 3.13.
+
 Kerchunk reference stores
 -------------------------
 
@@ -669,3 +677,4 @@ See Also:
 
 .. spelling:word-list::
     Kerchunk
+    Sharding
