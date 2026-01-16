@@ -1459,7 +1459,7 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /************************************************************************/
 
     else if ((m_operator == CompositionMode::MULTIPLY ||
-              m_operator == CompositionMode::SCREEN ||
+              m_operator == CompositionMode::OVERLAY ||
               m_operator == CompositionMode::SCREEN ||
               m_operator == CompositionMode::HARD_LIGHT) &&
              eRWFlag == GF_Read && eBufType == GDT_UInt8 &&
