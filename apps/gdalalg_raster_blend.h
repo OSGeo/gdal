@@ -32,6 +32,8 @@ enum class CompositionMode : unsigned
     HARD_LIGHT,
     DARKEN,
     LIGHTEN,
+    COLOR_DODGE,
+    COLOR_BURN,
 };
 
 //! Returns a map of all composition modes to their string identifiers

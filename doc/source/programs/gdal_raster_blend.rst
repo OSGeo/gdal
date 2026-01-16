@@ -268,6 +268,9 @@ Program-Specific Options
                 output_{A} = overlay_{A} + input_{A} - overlay_{A} * input_{A}
 
 
+    - ``color-dodge`` Divides the input layer by the inverted overlay layer. This lightens the input layer depending on the value of the overlay layer: the brighter the overlay layer, the more its color affects the input layer. Blending any color with white gives white. Blending with black does not change the image.
+
+    
 
 .. option:: --overlay <OVERLAY>
 
