@@ -9016,6 +9016,37 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT(GDALRasterBandH hBand,
 }
 
 /************************************************************************/
+/*                             HasNoData()                              */
+/************************************************************************/
+
+bool GDALRasterBand::HasNoData() const
+{
+    int bHaveNoDataRaw = FALSE;
+    bool bHaveNoData = false;
+    GDALRasterBand *poThis = const_cast<GDALRasterBand *>(this);
+    if (eDataType == GDT_Int64)
+    {
+        CPL_IGNORE_RET_VAL(poThis->GetNoDataValueAsInt64(&bHaveNoDataRaw));
+        bHaveNoData = CPL_TO_BOOL(bHaveNoDataRaw);
+    }
+    else if (eDataType == GDT_UInt64)
+    {
+        CPL_IGNORE_RET_VAL(poThis->GetNoDataValueAsUInt64(&bHaveNoDataRaw));
+        bHaveNoData = CPL_TO_BOOL(bHaveNoDataRaw);
+    }
+    else
+    {
+        const double dfNoDataValue = poThis->GetNoDataValue(&bHaveNoDataRaw);
+        if (bHaveNoDataRaw &&
+            GDALNoDataMaskBand::IsNoDataInRange(dfNoDataValue, eDataType))
+        {
+            bHaveNoData = true;
+        }
+    }
+    return bHaveNoData;
+}
+
+/************************************************************************/
 /*                            GetMaskBand()                             */
 /************************************************************************/
 
@@ -9072,32 +9103,6 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT(GDALRasterBandH hBand,
 GDALRasterBand *GDALRasterBand::GetMaskBand()
 
 {
-    const auto HasNoData = [this]()
-    {
-        int bHaveNoDataRaw = FALSE;
-        bool bHaveNoData = false;
-        if (eDataType == GDT_Int64)
-        {
-            CPL_IGNORE_RET_VAL(GetNoDataValueAsInt64(&bHaveNoDataRaw));
-            bHaveNoData = CPL_TO_BOOL(bHaveNoDataRaw);
-        }
-        else if (eDataType == GDT_UInt64)
-        {
-            CPL_IGNORE_RET_VAL(GetNoDataValueAsUInt64(&bHaveNoDataRaw));
-            bHaveNoData = CPL_TO_BOOL(bHaveNoDataRaw);
-        }
-        else
-        {
-            const double dfNoDataValue = GetNoDataValue(&bHaveNoDataRaw);
-            if (bHaveNoDataRaw &&
-                GDALNoDataMaskBand::IsNoDataInRange(dfNoDataValue, eDataType))
-            {
-                bHaveNoData = true;
-            }
-        }
-        return bHaveNoData;
-    };
-
     if (poMask != nullptr)
     {
         if (poMask.IsOwned())
@@ -9597,6 +9602,78 @@ bool GDALIsMaskBand(GDALRasterBandH hBand)
 GDALMaskValueRange GDALRasterBand::GetMaskValueRange() const
 {
     return GMVR_UNKNOWN;
+}
+
+/************************************************************************/
+/*                      HasConflictingMaskSources()                     */
+/************************************************************************/
+
+/**
+ * \brief Returns whether a raster band has conflicting mask sources.
+ *
+ * That is, if more than one of the following conditions is met:
+ * - it has a binary mask band (that is not an alpha band)
+ * - it has an external mask flags (.msk file)
+ * - it has a nodata value
+ * - it belongs to a dataset with the NODATA_VALUES metadata item set
+ * - it belongs to a dataset that has a band with a GCI_AlphaBand color interpretation
+ *
+ * @param[out] posDetailMessage Pointer to a string that will contain the
+ *                              details of the conflict.
+ * @param bMentionPrioritarySource Whether the mask source used should be
+ *                                 mentioned in *posDetailMessage.
+ * @since GDAL 3.13.0
+ */
+
+bool GDALRasterBand::HasConflictingMaskSources(
+    std::string *posDetailMessage, bool bMentionPrioritarySource) const
+{
+    const bool bHasExternalMask = poDS && poDS->oOvManager.HaveMaskFile();
+    const bool bHasBinaryMaskBand =
+        ((const_cast<GDALRasterBand *>(this)->GetMaskFlags() &
+          (GMF_ALL_VALID | GMF_NODATA | GMF_ALPHA)) == 0) &&
+        (!bHasExternalMask || poDS->oOvManager.GetMaskBand(nBand) != this);
+    const bool bHasNoData = HasNoData();
+    const bool bHasNODATA_VALUES =
+        poDS && poDS->GetMetadataItem("NODATA_VALUES");
+    const bool bHasAlphaBand =
+        poDS &&
+        poDS->GetRasterBand(poDS->GetRasterCount())->GetColorInterpretation() ==
+            GCI_AlphaBand;
+    const bool abMaskSources[] = {bHasBinaryMaskBand, bHasExternalMask,
+                                  bHasNoData, bHasNODATA_VALUES, bHasAlphaBand};
+    const size_t nCount =
+        std::count(std::begin(abMaskSources), std::end(abMaskSources), true);
+    if (nCount >= 2)
+    {
+        if (posDetailMessage)
+        {
+            *posDetailMessage = "Raster band ";
+            *posDetailMessage += std::to_string(nBand);
+            if (poDS && poDS->GetDescription()[0])
+            {
+                *posDetailMessage += " of dataset ";
+                *posDetailMessage += poDS->GetDescription();
+            }
+            *posDetailMessage += " has several conflicting mask sources:\n";
+            if (bHasExternalMask)
+                *posDetailMessage += "- internal binary mask band\n";
+            if (bHasExternalMask)
+                *posDetailMessage += "- external mask band (.msk)\n";
+            if (bHasNoData)
+                *posDetailMessage += "- nodata value\n";
+            if (bHasNODATA_VALUES)
+                *posDetailMessage += "- NODATA_VALUES dataset metadata item\n";
+            if (bHasAlphaBand)
+                *posDetailMessage +=
+                    "- related to a raster band that is an alpha band\n";
+            if (bMentionPrioritarySource)
+                *posDetailMessage +=
+                    "Only the first listed one will be taken into account.";
+        }
+        return true;
+    }
+    return false;
 }
 
 /************************************************************************/

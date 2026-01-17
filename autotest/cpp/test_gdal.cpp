@@ -6477,4 +6477,72 @@ TEST_F(test_gdal, GDALGeoTransform)
     }
 }
 
+TEST_F(test_gdal, GDALRasterBand_HasConflictingMaskSources)
+{
+    auto poMemDrv = GetGDALDriverManager()->GetDriverByName("MEM");
+    if (!poMemDrv)
+    {
+        GTEST_SKIP() << "MEM driver missing";
+    }
+    else
+    {
+        {
+            auto poDS = std::unique_ptr<GDALDataset>(
+                poMemDrv->Create("", 1, 1, 1, GDT_Byte, nullptr));
+            poDS->GetRasterBand(1)->SetNoDataValue(1);
+
+            EXPECT_FALSE(poDS->GetRasterBand(1)->HasConflictingMaskSources());
+        }
+
+        {
+            auto poDS = std::unique_ptr<GDALDataset>(
+                poMemDrv->Create("", 1, 1, 1, GDT_Byte, nullptr));
+            poDS->CreateMaskBand(GMF_PER_DATASET);
+
+            EXPECT_FALSE(poDS->GetRasterBand(1)->HasConflictingMaskSources());
+        }
+
+        {
+            auto poDS = std::unique_ptr<GDALDataset>(
+                poMemDrv->Create("", 1, 1, 2, GDT_Byte, nullptr));
+            poDS->GetRasterBand(2)->SetColorInterpretation(GCI_AlphaBand);
+
+            EXPECT_FALSE(poDS->GetRasterBand(1)->HasConflictingMaskSources());
+        }
+
+        {
+            auto poDS = std::unique_ptr<GDALDataset>(
+                poMemDrv->Create("", 1, 1, 1, GDT_Byte, nullptr));
+            poDS->SetMetadataItem("NODATA_VALUES", "0");
+
+            EXPECT_FALSE(poDS->GetRasterBand(1)->HasConflictingMaskSources());
+        }
+
+        for (int i = 0; i < 4; ++i)
+        {
+            for (int j = i + 1; j < 4; ++j)
+            {
+                auto poDS = std::unique_ptr<GDALDataset>(
+                    poMemDrv->Create("", 1, 1, 2, GDT_Byte, nullptr));
+                if (i == 0)
+                    poDS->GetRasterBand(1)->SetNoDataValue(1);
+                if (i == 1 || j == 1)
+                    poDS->GetRasterBand(1)->CreateMaskBand(0);
+                if (i == 2 || j == 2)
+                    poDS->GetRasterBand(2)->SetColorInterpretation(
+                        GCI_AlphaBand);
+                if (i == 3 || j == 3)
+                    poDS->SetMetadataItem("NODATA_VALUES", "0");
+
+                EXPECT_TRUE(
+                    poDS->GetRasterBand(1)->HasConflictingMaskSources());
+                std::string osMsg;
+                EXPECT_TRUE(
+                    poDS->GetRasterBand(1)->HasConflictingMaskSources(&osMsg));
+                EXPECT_TRUE(!osMsg.empty());
+            }
+        }
+    }
+}
+
 }  // namespace

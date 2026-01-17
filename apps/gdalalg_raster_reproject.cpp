@@ -207,6 +207,7 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     CPLStringList aosOptions;
     std::string outputFilename;
+
     if (ctxt.m_poNextUsableStep)
     {
         CPLAssert(CanHandleNextStep(ctxt.m_poNextUsableStep));

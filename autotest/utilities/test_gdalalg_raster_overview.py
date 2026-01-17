@@ -491,3 +491,19 @@ def test_gdalalg_overview_add_in_pipeline(tmp_vsimem):
         assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1192
 
     assert src_ds.GetRasterBand(1).GetOverviewCount() == 0
+
+
+###############################################################################
+
+
+def test_gdalalg_overview_add_warn_conflicting_mask_sources():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("foo", 20, 20, 2)
+    src_ds.GetRasterBand(1).SetNoDataValue(255)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="Raster band 1 of dataset foo has several conflicting mask sources:\n- nodata value\n- related to a raster band that is an alpha band\nOnly the nodata value will be taken into account",
+    ):
+        gdal.alg.raster.overview.add(input=src_ds, levels=[2, 4], resampling="average")
