@@ -14,8 +14,13 @@ From GDAL 3.12 to GDAL 3.13
 
 - Changes impacting C++ users:
 
-  * :cpp:func:`GDALMajorObject::SetMetadata` now takes a ``CSLConstList`` argument.
-  * :cpp:func:`GDALMajorObject::GetMetadata` now returns a ``CSLConstList`` argument.
+  * :cpp:func:`GDALMajorObject::SetMetadata` now takes a ``CSLConstList`` argument
+    (this does not require code changes but is an opportunity for users to have better const safety)
+  * :cpp:func:`GDALMajorObject::GetMetadata` and :cpp:func:`GDALGetMetadata`
+    now return a ``CSLConstList`` argument.
+    This will require users that stored the return value of those functions in
+    ``char **`` to use ``CSLConstList`` instead. Such change is compatible with
+    earlier GDAL versions.
 
 From GDAL 3.11 to GDAL 3.12
 ---------------------------
