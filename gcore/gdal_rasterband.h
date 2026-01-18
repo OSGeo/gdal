@@ -122,6 +122,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
         GSpacing nPixelSpace, GSpacing nLineSpace,
         GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
+    CPL_INTERNAL bool HasNoData() const;
+
   protected:
     GDALRasterBand();
     explicit GDALRasterBand(int bForceCachedIO);
@@ -552,6 +554,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr CreateMaskBand(int nFlagsIn);
     virtual bool IsMaskBand() const;
     virtual GDALMaskValueRange GetMaskValueRange() const;
+    bool HasConflictingMaskSources(std::string *posDetailMessage = nullptr,
+                                   bool bMentionPrioritarySource = true) const;
 
     virtual CPLVirtualMem *
     GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
