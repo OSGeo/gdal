@@ -497,7 +497,14 @@ static void DatasetPixelComparison(std::vector<std::string> &aosReport,
     std::vector<Tdiff> maxDiffValue(nBands, 0);
     std::vector<uint64_t> countDiffPixels(nBands, 0);
 
-    for (const auto &window : poRefDS->GetRasterBand(1)->IterateWindows())
+    size_t nMaxSize = 0;
+    const GIntBig nUsableRAM = CPLGetUsablePhysicalRAM() / 10;
+    if (nUsableRAM > 0)
+        nMaxSize = static_cast<size_t>(nUsableRAM);
+
+    for (const auto &window : GDALRasterBand::WindowIteratorWrapper(
+             *(poRefDS->GetRasterBand(1)), *(poInputDS->GetRasterBand(1)),
+             nMaxSize))
     {
         const size_t nValCount =
             static_cast<size_t>(window.nXSize) * window.nYSize;
@@ -758,7 +765,13 @@ static void ComparePixels(std::vector<std::string> &aosReport,
 
     constexpr int nValPerPixel = bIsComplex ? 2 : 1;
 
-    for (const auto &window : poRefBand->IterateWindows())
+    size_t nMaxSize = 0;
+    const GIntBig nUsableRAM = CPLGetUsablePhysicalRAM() / 10;
+    if (nUsableRAM > 0)
+        nMaxSize = static_cast<size_t>(nUsableRAM);
+
+    for (const auto &window : GDALRasterBand::WindowIteratorWrapper(
+             *poRefBand, *poInputBand, nMaxSize))
     {
         const size_t nValCount =
             static_cast<size_t>(window.nXSize) * window.nYSize;
