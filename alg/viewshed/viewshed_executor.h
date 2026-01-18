@@ -92,6 +92,7 @@ class ViewshedExecutor
     GDALRasterBand &m_srcBand;
     GDALRasterBand &m_sdBand;
     GDALRasterBand &m_dstBand;
+    const bool m_hasSdBand;
     double m_noDataValue = 0;
     bool m_hasNoData = false;
     bool m_emitWarningIfNoData = false;
@@ -144,7 +145,11 @@ class ViewshedExecutor
     void applyPitchMask(std::vector<double> &vResult,
                         const std::vector<double> &vPitchMaskVal);
     void calcTestAngles();
-    bool sdMode() const;
+
+    inline bool sdMode() const
+    {
+        return m_hasSdBand;
+    }
 };
 
 }  // namespace viewshed

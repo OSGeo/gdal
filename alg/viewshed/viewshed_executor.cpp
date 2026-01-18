@@ -152,9 +152,12 @@ ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
                                    const Window &curExtent, const Options &opts,
                                    Progress &progress, bool emitWarningIfNoData)
     : m_pool(4), m_dummyBand(), m_srcBand(srcBand), m_sdBand(sdBand),
-      m_dstBand(dstBand), m_emitWarningIfNoData(emitWarningIfNoData),
-      oOutExtent(outExtent), oCurExtent(curExtent),
-      m_nX(nX - oOutExtent.xStart), m_nY(nY), oOpts(opts), oProgress(progress),
+      m_dstBand(dstBand),
+      // If the standard deviation band isn't a dummy band, we're in SD mode.
+      m_hasSdBand(dynamic_cast<DummyBand *>(&m_sdBand) == nullptr),
+      m_emitWarningIfNoData(emitWarningIfNoData), oOutExtent(outExtent),
+      oCurExtent(curExtent), m_nX(nX - oOutExtent.xStart), m_nY(nY),
+      oOpts(opts), oProgress(progress),
       m_dfMinDistance2(opts.minDistance * opts.minDistance),
       m_dfMaxDistance2(opts.maxDistance * opts.maxDistance)
 {
@@ -1206,12 +1209,6 @@ bool ViewshedExecutor::run()
             }
         });
     return true;
-}
-
-bool ViewshedExecutor::sdMode() const
-{
-    // If the standard deviation band isn't a dummy band, we're in SD mode.
-    return dynamic_cast<DummyBand *>(&m_sdBand) == nullptr;
 }
 
 }  // namespace viewshed
