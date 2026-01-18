@@ -20,7 +20,16 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
 #include <type_traits>
+
+#if defined(__x86_64__) || defined(_M_X64)
+#define USE_SSE2
+#include <emmintrin.h>
+#elif defined(USE_NEON_OPTIMIZATIONS)
+#define USE_SSE2
+#include "include_sse2neon.h"
+#endif
 
 //! @cond Doxygen_Suppress
 
@@ -343,7 +352,86 @@ static void CompareVectors(size_t nValCount, const T *refValues,
     else
     {
         static_assert(sizeof(Tdiff) == sizeof(T));
-        for (size_t i = 0; i < nValCount; ++i)
+        size_t i = 0;
+#ifdef USE_SSE2
+        if constexpr (std::is_same_v<T, float>)
+        {
+            static_assert(std::is_same_v<T, Tdiff>);
+
+            auto vMaxDiff = _mm_setzero_ps();
+
+            // Mask for absolute value (clears the sign bit)
+            const auto absMask = _mm_castsi128_ps(
+                _mm_set1_epi32(std::numeric_limits<int32_t>::max()));
+
+            constexpr size_t VALS_PER_REG = sizeof(vMaxDiff) / sizeof(T);
+            while (i + VALS_PER_REG <= nValCount)
+            {
+                auto vCountDiff = _mm_setzero_si128();
+
+                // We can do a maximum of std::numeric_limits<uint32_t>::max()
+                // accumulations into vCountDiff
+                const size_t nInnerLimit = [i, nValCount](size_t valsPerReg)
+                {
+                    if constexpr (sizeof(size_t) > sizeof(uint32_t))
+                    {
+                        return std::min(
+                            nValCount - valsPerReg,
+                            i + std::numeric_limits<uint32_t>::max() *
+                                    valsPerReg);
+                    }
+                    else
+                    {
+                        return nValCount - valsPerReg;
+                    }
+                }(VALS_PER_REG);
+
+                for (; i <= nInnerLimit; i += VALS_PER_REG)
+                {
+                    const auto a = _mm_loadu_ps(refValues + i);
+                    const auto b = _mm_loadu_ps(inputValues + i);
+
+                    // Compute absolute value of difference
+                    const auto absDiff = _mm_and_ps(_mm_sub_ps(a, b), absMask);
+
+                    // Update vMaxDiff
+                    const auto aIsNan = _mm_cmpunord_ps(a, a);
+                    const auto bIsNan = _mm_cmpunord_ps(b, b);
+                    const auto valNotEqual = _mm_andnot_ps(
+                        _mm_or_ps(aIsNan, bIsNan), _mm_cmpneq_ps(a, b));
+                    vMaxDiff =
+                        _mm_max_ps(vMaxDiff, _mm_and_ps(absDiff, valNotEqual));
+
+                    // Update vCountDiff
+                    const auto nanMisMatch = _mm_xor_ps(aIsNan, bIsNan);
+                    // if nanMisMatch OR (both values not NaN and a != b)
+                    const auto maskIsDiff = _mm_or_ps(nanMisMatch, valNotEqual);
+                    const auto shiftedMaskDiff =
+                        _mm_srli_epi32(_mm_castps_si128(maskIsDiff), 31);
+                    vCountDiff = _mm_add_epi32(vCountDiff, shiftedMaskDiff);
+                }
+
+                // Horizontal add into countDiffPixels
+                uint32_t anCountDiff[VALS_PER_REG];
+                _mm_storeu_si128(reinterpret_cast<__m128i *>(anCountDiff),
+                                 vCountDiff);
+                for (size_t j = 0; j < VALS_PER_REG; ++j)
+                {
+                    countDiffPixels += anCountDiff[j];
+                }
+            }
+
+            // Horizontal max into maxDiffValue
+            float afMaxDiffValue[VALS_PER_REG];
+            _mm_storeu_ps(afMaxDiffValue, vMaxDiff);
+            for (size_t j = 0; j < VALS_PER_REG; ++j)
+            {
+                CPLAssert(!std::isnan(afMaxDiffValue[j]));
+                maxDiffValue = std::max(maxDiffValue, afMaxDiffValue[j]);
+            }
+        }
+#endif
+        for (; i < nValCount; ++i)
         {
             if constexpr (bIsFloatingPoint)
             {
