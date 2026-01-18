@@ -508,8 +508,22 @@ static void DatasetPixelComparison(std::vector<std::string> &aosReport,
     {
         const size_t nValCount =
             static_cast<size_t>(window.nXSize) * window.nYSize;
-        refValues.resize(nValCount * nValPerPixel * nBands);
-        inputValues.resize(nValCount * nValPerPixel * nBands);
+        const size_t nArraySize = nValCount * nValPerPixel * nBands;
+        try
+        {
+            if (refValues.size() < nArraySize)
+            {
+                refValues.resize(nArraySize);
+                inputValues.resize(nArraySize);
+            }
+        }
+        catch (const std::exception &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating temporary arrays");
+            aosReport.push_back("Out of memory allocating temporary arrays");
+            return;
+        }
 
         if (poRefDS->RasterIO(GF_Read, window.nXOff, window.nYOff,
                               window.nXSize, window.nYSize, refValues.data(),
@@ -775,8 +789,22 @@ static void ComparePixels(std::vector<std::string> &aosReport,
     {
         const size_t nValCount =
             static_cast<size_t>(window.nXSize) * window.nYSize;
-        refValues.resize(nValCount * nValPerPixel);
-        inputValues.resize(nValCount * nValPerPixel);
+        const size_t nArraySize = nValCount * nValPerPixel;
+        try
+        {
+            if (refValues.size() < nArraySize)
+            {
+                refValues.resize(nArraySize);
+                inputValues.resize(nArraySize);
+            }
+        }
+        catch (const std::exception &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating temporary arrays");
+            aosReport.push_back("Out of memory allocating temporary arrays");
+            return;
+        }
 
         if (poRefBand->RasterIO(GF_Read, window.nXOff, window.nYOff,
                                 window.nXSize, window.nYSize, refValues.data(),
