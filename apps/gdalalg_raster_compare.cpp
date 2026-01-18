@@ -299,6 +299,11 @@ void GDALRasterCompareAlgorithm::GeoTransformComparison(
     }
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC push_options
+#pragma GCC optimize("O3")
+#endif
+
 /************************************************************************/
 /*                                 Diff()                               */
 /************************************************************************/
@@ -317,8 +322,7 @@ static void CompareVectors(size_t nValCount, const T *refValues,
                            const T *inputValues, uint64_t &countDiffPixels,
                            Tdiff &maxDiffValue)
 {
-    constexpr bool bIsFloatingPoint =
-        std::is_same_v<T, float> || std::is_same_v<T, double>;
+    constexpr bool bIsFloatingPoint = std::is_floating_point_v<T>;
     if constexpr (bIsComplex)
     {
         for (size_t i = 0; i < nValCount; ++i)
@@ -431,11 +435,11 @@ static void CompareVectors(size_t nValCount, const T *refValues,
             }
         }
 #endif
-        for (; i < nValCount; ++i)
+        if constexpr (bIsFloatingPoint)
         {
-            if constexpr (bIsFloatingPoint)
+            static_assert(std::is_same_v<T, Tdiff>);
+            for (; i < nValCount; ++i)
             {
-                static_assert(std::is_same_v<T, Tdiff>);
                 if (std::isnan(refValues[i]))
                 {
                     if (!std::isnan(inputValues[i]))
@@ -453,18 +457,56 @@ static void CompareVectors(size_t nValCount, const T *refValues,
                 {
                     continue;
                 }
-            }
 
-            const Tdiff diff = refValues[i] >= inputValues[i]
-                                   ? Diff(static_cast<Tdiff>(refValues[i]),
-                                          static_cast<Tdiff>(inputValues[i]))
-                                   : Diff(static_cast<Tdiff>(inputValues[i]),
-                                          static_cast<Tdiff>(refValues[i]));
-            if (diff > 0)
+                const Tdiff diff =
+                    refValues[i] >= inputValues[i]
+                        ? Diff(static_cast<Tdiff>(refValues[i]),
+                               static_cast<Tdiff>(inputValues[i]))
+                        : Diff(static_cast<Tdiff>(inputValues[i]),
+                               static_cast<Tdiff>(refValues[i]));
+                if (diff > 0)
+                {
+                    ++countDiffPixels;
+                    if (diff > maxDiffValue)
+                        maxDiffValue = diff;
+                }
+            }
+        }
+        else
+        {
+            static_assert(std::is_unsigned_v<Tdiff>);
+            while (i < nValCount)
             {
-                ++countDiffPixels;
-                if (diff > maxDiffValue)
-                    maxDiffValue = diff;
+                // Autovectorizer friendly inner loop (GCC, clang, ICX),
+                // by making sure it increases countDiffLocal on the same size
+                // as Tdiff.
+
+                Tdiff countDiffLocal = 0;
+                const size_t innerLimit = [i, nValCount]()
+                {
+                    if constexpr (sizeof(Tdiff) < sizeof(size_t))
+                    {
+                        return std::min(nValCount - 1,
+                                        i + std::numeric_limits<Tdiff>::max());
+                    }
+                    else
+                    {
+                        (void)i;
+                        return nValCount - 1;
+                    }
+                }();
+                for (; i <= innerLimit; ++i)
+                {
+                    const Tdiff diff =
+                        refValues[i] >= inputValues[i]
+                            ? Diff(static_cast<Tdiff>(refValues[i]),
+                                   static_cast<Tdiff>(inputValues[i]))
+                            : Diff(static_cast<Tdiff>(inputValues[i]),
+                                   static_cast<Tdiff>(refValues[i]));
+                    countDiffLocal += (diff > 0);
+                    maxDiffValue = std::max(maxDiffValue, diff);
+                }
+                countDiffPixels += countDiffLocal;
             }
         }
     }
@@ -950,6 +992,10 @@ static void ComparePixels(std::vector<std::string> &aosReport,
             break;
     }
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC pop_options
+#endif
 
 /************************************************************************/
 /*              GDALRasterCompareAlgorithm::BandComparison()            */
