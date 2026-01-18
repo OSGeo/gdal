@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <type_traits>
 
 //! @cond Doxygen_Suppress
 
@@ -710,8 +711,23 @@ static void ComparePixels(std::vector<std::string> &aosReport,
     {
         aosReport.push_back(
             bandId + ": pixels differing: " + std::to_string(countDiffPixels));
-        aosReport.push_back(bandId + ": maximum pixel value difference: " +
-                            std::to_string(maxDiffValue));
+
+        std::string reportMessage(bandId);
+        reportMessage += ": maximum pixel value difference: ";
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            if (std::isinf(maxDiffValue))
+                reportMessage += "inf";
+            else if (std::isnan(maxDiffValue))
+                reportMessage += "nan";
+            else
+                reportMessage += std::to_string(maxDiffValue);
+        }
+        else
+        {
+            reportMessage += std::to_string(maxDiffValue);
+        }
+        aosReport.push_back(reportMessage);
     }
 }
 
