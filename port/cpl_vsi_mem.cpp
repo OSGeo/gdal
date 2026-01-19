@@ -161,8 +161,8 @@ class VSIMemHandle final : public VSIVirtualHandle
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;
-    size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
-    size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    size_t Read(void *pBuffer, size_t nBytes) override;
+    size_t Write(const void *pBuffer, size_t nBytes) override;
     void ClearErr() override;
     int Error() override;
     int Eof() override;
@@ -418,20 +418,13 @@ vsi_l_offset VSIMemHandle::Tell()
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSIMemHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
+size_t VSIMemHandle::Read(void *pBuffer, size_t nBytesToRead)
 
 {
     const vsi_l_offset nOffset = m_nOffset;
 
-    size_t nBytesToRead = nSize * nCount;
     if (nBytesToRead == 0)
         return 0;
-
-    if (nCount > 0 && nBytesToRead / nCount != nSize)
-    {
-        bEOF = true;
-        return 0;
-    }
 
     if (!m_bReadAllowed)
     {
@@ -440,10 +433,12 @@ size_t VSIMemHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
     }
 
     bool bEOFTmp = bEOF;
+    size_t nBytesRead = nBytesToRead;
+
     // Do not access/modify bEOF under the lock to avoid confusing Coverity
     // Scan since we access it in other methods outside of the lock.
     const auto DoUnderLock =
-        [this, nOffset, pBuffer, nSize, &nBytesToRead, &nCount, &bEOFTmp]
+        [this, nOffset, pBuffer, &nBytesToRead, &nBytesRead, &bEOFTmp]
     {
         CPL_SHARED_LOCK oLock(poFile->m_oMutex);
 
@@ -454,14 +449,12 @@ size_t VSIMemHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
         }
         if (nBytesToRead + nOffset > poFile->nLength)
         {
-            nBytesToRead = static_cast<size_t>(poFile->nLength - nOffset);
-            nCount = nBytesToRead / nSize;
+            nBytesRead = static_cast<size_t>(poFile->nLength - nOffset);
             bEOFTmp = true;
         }
 
         if (nBytesToRead)
-            memcpy(pBuffer, poFile->pabyData + nOffset,
-                   static_cast<size_t>(nBytesToRead));
+            memcpy(pBuffer, poFile->pabyData + nOffset, nBytesRead);
         return true;
     };
 
@@ -470,9 +463,9 @@ size_t VSIMemHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
     if (!bRet)
         return 0;
 
-    m_nOffset += nBytesToRead;
+    m_nOffset += nBytesRead;
 
-    return nCount;
+    return nBytesRead;
 }
 
 /************************************************************************/
@@ -500,7 +493,7 @@ size_t VSIMemHandle::PRead(void *pBuffer, size_t nSize,
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIMemHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
+size_t VSIMemHandle::Write(const void *pBuffer, size_t nBytesToWrite)
 
 {
     const vsi_l_offset nOffset = m_nOffset;
@@ -511,15 +504,9 @@ size_t VSIMemHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
         return 0;
     }
 
-    const size_t nBytesToWrite = nSize * nCount;
-
     {
         CPL_EXCLUSIVE_LOCK oLock(poFile->m_oMutex);
 
-        if (nCount > 0 && nBytesToWrite / nCount != nSize)
-        {
-            return 0;
-        }
         if (nBytesToWrite + nOffset < nBytesToWrite)
         {
             return 0;
@@ -539,7 +526,7 @@ size_t VSIMemHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 
     m_nOffset += nBytesToWrite;
 
-    return nCount;
+    return nBytesToWrite;
 }
 
 /************************************************************************/

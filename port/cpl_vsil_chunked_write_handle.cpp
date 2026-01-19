@@ -127,8 +127,7 @@ vsi_l_offset VSIChunkedWriteHandle::Tell()
 /*                               Read()                                 */
 /************************************************************************/
 
-size_t VSIChunkedWriteHandle::Read(void * /* pBuffer */, size_t /* nSize */,
-                                   size_t /* nMemb */)
+size_t VSIChunkedWriteHandle::Read(void * /* pBuffer */, size_t /* nBytes */)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "Read not supported on writable %s files",
@@ -172,15 +171,15 @@ size_t VSIChunkedWriteHandle::ReadCallBackBufferChunked(char *buffer,
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIChunkedWriteHandle::Write(const void *pBuffer, size_t nSize,
-                                    size_t nMemb)
+size_t VSIChunkedWriteHandle::Write(const void *pBuffer, size_t nBytes)
 {
     if (m_bError)
         return 0;
 
-    const size_t nBytesToWrite = nSize * nMemb;
+    const size_t nBytesToWrite = nBytes;
     if (nBytesToWrite == 0)
         return 0;
+    size_t nRet = nBytes;
 
     if (m_hCurlMulti == nullptr)
     {
@@ -366,7 +365,7 @@ size_t VSIChunkedWriteHandle::Write(const void *pBuffer, size_t nSize,
                              static_cast<int>(response_code),
                              m_osCurlErrBuf.c_str());
                     bRetry = false;
-                    nMemb = 0;
+                    nRet = 0;
                 }
 
                 curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
@@ -384,7 +383,7 @@ size_t VSIChunkedWriteHandle::Write(const void *pBuffer, size_t nSize,
 
     m_nCurOffset += nBytesToWrite;
 
-    return nMemb;
+    return nRet;
 }
 
 /************************************************************************/

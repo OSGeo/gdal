@@ -1007,8 +1007,7 @@ vsi_l_offset VSIMultipartWriteHandle::Tell()
 /*                               Read()                                 */
 /************************************************************************/
 
-size_t VSIMultipartWriteHandle::Read(void * /* pBuffer */, size_t /* nSize */,
-                                     size_t /* nMemb */)
+size_t VSIMultipartWriteHandle::Read(void * /* pBuffer */, size_t /* nBytes */)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "Read not supported on writable %s files",
@@ -1271,13 +1270,12 @@ std::string IVSIS3LikeFSHandlerWithMultipartUpload::UploadPart(
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIMultipartWriteHandle::Write(const void *pBuffer, size_t nSize,
-                                      size_t nMemb)
+size_t VSIMultipartWriteHandle::Write(const void *pBuffer, size_t nBytes)
 {
     if (m_bError)
         return 0;
 
-    size_t nBytesToWrite = nSize * nMemb;
+    size_t nBytesToWrite = nBytes;
     if (nBytesToWrite == 0)
         return 0;
 
@@ -1312,7 +1310,7 @@ size_t VSIMultipartWriteHandle::Write(const void *pBuffer, size_t nSize,
             m_nBufferOff = 0;
         }
     }
-    return nMemb;
+    return nBytes;
 }
 
 /************************************************************************/

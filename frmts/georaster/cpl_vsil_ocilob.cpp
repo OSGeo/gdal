@@ -63,8 +63,8 @@ class VSIOCILobHandle final : public VSIVirtualHandle
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;
-    size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
-    size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    size_t Read(void *pBuffer, size_t nBytes) override;
+    size_t Write(const void *pBuffer, size_t nBytes) override;
     int Eof() override;
 
     int Error() override
@@ -454,10 +454,8 @@ vsi_l_offset VSIOCILobHandle::Tell()
 //                                                                       Read()
 // ----------------------------------------------------------------------------
 
-size_t VSIOCILobHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
+size_t VSIOCILobHandle::Read(void *pBuffer, size_t nBytes)
 {
-    GUIntBig nBytes = (nSize * nCount);
-
     if (nBytes == 0)
     {
         return 0;
@@ -469,17 +467,15 @@ size_t VSIOCILobHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 
     nCurOff += (GUIntBig)nRead;
 
-    return (size_t)(nRead / nSize);
+    return (size_t)nRead;
 }
 
 // ----------------------------------------------------------------------------
 //                                                                      Write()
 // ----------------------------------------------------------------------------
 
-size_t VSIOCILobHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
+size_t VSIOCILobHandle::Write(const void *pBuffer, size_t nBytes)
 {
-    GUIntBig nBytes = (nSize * nCount);
-
     if (nBytes == 0)
     {
         return 0;
@@ -491,7 +487,7 @@ size_t VSIOCILobHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 
     nCurOff += (GUIntBig)nWrite;
 
-    return (size_t)(nWrite / nSize);
+    return (size_t)(nWrite);
 }
 
 // ----------------------------------------------------------------------------

@@ -132,9 +132,9 @@ class JPGVSIFileMultiplexerHandler final : public VSIVirtualHandle
 
     vsi_l_offset Tell() override;
 
-    size_t Read(void *pBuffer, size_t nSize, size_t nCount) override;
+    size_t Read(void *pBuffer, size_t nBytes) override;
 
-    size_t Write(const void *, size_t, size_t) override;
+    size_t Write(const void *, size_t) override;
 
     void ClearErr() override;
 
@@ -227,15 +227,14 @@ vsi_l_offset JPGVSIFileMultiplexerHandler::Tell()
     return m_nCurPos;
 }
 
-size_t JPGVSIFileMultiplexerHandler::Read(void *pBuffer, size_t nSize,
-                                          size_t nCount)
+size_t JPGVSIFileMultiplexerHandler::Read(void *pBuffer, size_t nBytes)
 {
     auto &fp = m_poCommon->m_poUnderlyingHandle;
     if (m_poCommon->m_poCurrentOwner != this)
     {
         fp->Seek(m_nCurPos, SEEK_SET);
     }
-    const size_t nRet = fp->Read(pBuffer, nSize, nCount);
+    const size_t nRet = fp->Read(pBuffer, nBytes);
     m_nCurPos = fp->Tell();
     m_bEOF = fp->Eof();
     m_bError = fp->Error();
@@ -244,7 +243,7 @@ size_t JPGVSIFileMultiplexerHandler::Read(void *pBuffer, size_t nSize,
     return nRet;
 }
 
-size_t JPGVSIFileMultiplexerHandler::Write(const void *, size_t, size_t)
+size_t JPGVSIFileMultiplexerHandler::Write(const void *, size_t)
 {
     return 0;
 }
