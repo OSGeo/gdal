@@ -70,6 +70,18 @@ int JP2OPJLikeRasterBand<CODEC, BASE>::HasArbitraryOverviews()
 }
 
 /************************************************************************/
+/*                  MayMultiBlockReadingBeMultiThreaded()               */
+/************************************************************************/
+
+template <typename CODEC, typename BASE>
+bool JP2OPJLikeRasterBand<CODEC, BASE>::MayMultiBlockReadingBeMultiThreaded()
+    const
+{
+    auto poGDS = cpl::down_cast<JP2OPJLikeDataset<CODEC, BASE> *>(poDS);
+    return poGDS->GetNumThreads() > 1;
+}
+
+/************************************************************************/
 /*                      ~JP2OPJLikeRasterBand()                         */
 /************************************************************************/
 

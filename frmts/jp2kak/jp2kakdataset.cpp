@@ -436,6 +436,16 @@ CPLErr JP2KAKRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
+/*                  MayMultiBlockReadingBeMultiThreaded()               */
+/************************************************************************/
+
+bool JP2KAKRasterBand::MayMultiBlockReadingBeMultiThreaded() const
+{
+    auto poGDS = cpl::down_cast<JP2KAKDataset *>(poDS);
+    return poGDS->poThreadEnv != nullptr;
+}
+
+/************************************************************************/
 /*                            ApplyPalette()                            */
 /************************************************************************/
 
