@@ -184,6 +184,7 @@ no-check-crs
 no-check-extent
 no-clip
 no-ct
+no-dither
 no-edges
 no-fl
 no-gcp

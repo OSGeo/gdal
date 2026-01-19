@@ -121,18 +121,19 @@ def test_gdalalg_raster_rgb_to_palette_not_byte(tmp_vsimem):
 
 def test_gdalalg_raster_rgb_to_palette_4_bands(tmp_vsimem):
 
-    with gdaltest.error_raised(gdal.CE_Warning):
-        with gdal.Run(
-            get_alg(),
-            input="../gcore/data/stefan_full_rgba.tif",
-            output=tmp_vsimem / "out.tif",
-        ) as alg:
-            ds = alg.Output()
-            assert ds.RasterCount == 1
-            ct = ds.GetRasterBand(1).GetColorTable()
-            assert ct.GetCount() == 256
-            assert ct.GetColorEntry(0) == (32, 12, 24, 255)
-            assert ds.GetRasterBand(1).Checksum() == 41712
+    with gdal.Run(
+        get_alg(),
+        input="../gcore/data/stefan_full_rgba.tif",
+        output=tmp_vsimem / "out.tif",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.RasterCount == 1
+        ct = ds.GetRasterBand(1).GetColorTable()
+        assert ct.GetCount() == 256
+        assert ct.GetColorEntry(0) == (0, 0, 0, 0)
+        assert ct.GetColorEntry(1) == (80, 188, 8, 255)
+        assert ct.GetColorEntry(255) == (248, 216, 56, 255)
+        assert ds.GetRasterBand(1).Checksum() == 19683
 
 
 def test_gdalalg_raster_rgb_to_palette_no_color_interp(tmp_vsimem):
@@ -268,3 +269,63 @@ def test_gdalalg_raster_rgb_to_palette_cannot_create_temp_file(tmp_vsimem):
     ):
         with pytest.raises(Exception):
             gdal.Run(get_alg(), input=src_ds, output=tmp_vsimem / "out.tif")
+
+
+def test_gdalalg_raster_nodata(tmp_vsimem):
+
+    src_ds = gdal.Translate(
+        tmp_vsimem / "in.tif",
+        "../gcore/data/stefan_full_rgba.tif",
+        options="-b 1 -b 2 -b 3 -a_nodata 0",
+    )
+
+    with gdal.Run(
+        get_alg(), input=src_ds, output=tmp_vsimem / "out.tif", dst_nodata=255
+    ) as alg:
+        ds = alg.Output()
+        assert ds.RasterCount == 1
+        ct = ds.GetRasterBand(1).GetColorTable()
+        assert ct.GetCount() == 256
+        assert ct.GetColorEntry(0) == (224, 88, 0, 255)
+        assert ct.GetColorEntry(254) == (252, 120, 96, 255)
+        assert ct.GetColorEntry(255) == (0, 0, 0, 0)
+        assert ds.GetRasterBand(1).Checksum() == 33355
+        assert ds.GetRasterBand(1).GetNoDataValue() == 255
+
+    with gdal.Run(
+        get_alg(),
+        input=src_ds,
+        output=tmp_vsimem / "out.tif",
+        dst_nodata=0,
+        overwrite=True,
+    ) as alg:
+        ds = alg.Output()
+        assert ds.RasterCount == 1
+        ct = ds.GetRasterBand(1).GetColorTable()
+        assert ct.GetCount() == 256
+        assert ct.GetColorEntry(0) == (0, 0, 0, 0)
+        assert ct.GetColorEntry(1) == (224, 88, 0, 255)
+        assert ct.GetColorEntry(255) == (252, 120, 96, 255)
+        assert ds.GetRasterBand(1).Checksum() == 27863
+        assert ds.GetRasterBand(1).GetNoDataValue() == 0
+
+
+def test_gdalalg_raster_rgb_to_palette_no_dither(tmp_vsimem):
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    with gdal.Run(
+        get_alg(), input=src_ds, output=tmp_vsimem / "out.tif", no_dither=True
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).Checksum() == 4419
+
+
+@pytest.mark.slow()
+def test_gdalalg_raster_rgb_to_palette_bit_depth_8(tmp_vsimem):
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    with gdal.Run(
+        get_alg(), input=src_ds, output=tmp_vsimem / "out.tif", bit_depth=8
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).Checksum() == 7593
