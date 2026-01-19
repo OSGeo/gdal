@@ -40,7 +40,7 @@ OGRFeatherWriterDataset::~OGRFeatherWriterDataset()
 /*                                Close()                               */
 /************************************************************************/
 
-CPLErr OGRFeatherWriterDataset::Close()
+CPLErr OGRFeatherWriterDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

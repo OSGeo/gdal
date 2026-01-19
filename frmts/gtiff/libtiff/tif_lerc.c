@@ -440,12 +440,12 @@ static int LERCPreDecode(TIFF *tif, uint16_t s)
     if (infoArray[0] != (unsigned)sp->lerc_version)
     {
         TIFFWarningExtR(tif, module,
-                        "Unexpected version number: %d. Expected: %d",
+                        "Unexpected version number: %u. Expected: %d",
                         infoArray[0], sp->lerc_version);
     }
     if (infoArray[1] != (unsigned)lerc_data_type)
     {
-        TIFFErrorExtR(tif, module, "Unexpected dataType: %d. Expected: %d",
+        TIFFErrorExtR(tif, module, "Unexpected dataType: %u. Expected: %d",
                       infoArray[1], lerc_data_type);
         return 0;
     }
@@ -458,7 +458,7 @@ static int LERCPreDecode(TIFF *tif, uint16_t s)
     {
         if (nFoundDims != 1 && nFoundDims != (unsigned)ndims)
         {
-            TIFFErrorExtR(tif, module, "Unexpected nDim: %d. Expected: 1 or %d",
+            TIFFErrorExtR(tif, module, "Unexpected nDim: %u. Expected: 1 or %d",
                           nFoundDims, ndims);
             return 0;
         }
@@ -467,20 +467,20 @@ static int LERCPreDecode(TIFF *tif, uint16_t s)
 #endif
         if (nFoundDims != (unsigned)ndims)
     {
-        TIFFErrorExtR(tif, module, "Unexpected nDim: %d. Expected: %d",
+        TIFFErrorExtR(tif, module, "Unexpected nDim: %u. Expected: %d",
                       nFoundDims, ndims);
         return 0;
     }
 
     if (infoArray[3] != sp->segment_width)
     {
-        TIFFErrorExtR(tif, module, "Unexpected nCols: %d. Expected: %du",
+        TIFFErrorExtR(tif, module, "Unexpected nCols: %u. Expected: %u",
                       infoArray[3], sp->segment_width);
         return 0;
     }
     if (infoArray[4] != sp->segment_height)
     {
-        TIFFErrorExtR(tif, module, "Unexpected nRows: %d. Expected: %u",
+        TIFFErrorExtR(tif, module, "Unexpected nRows: %u. Expected: %u",
                       infoArray[4], sp->segment_height);
         return 0;
     }
@@ -504,21 +504,21 @@ static int LERCPreDecode(TIFF *tif, uint16_t s)
 #endif
         if (nFoundBands != td->td_samplesperpixel)
         {
-            TIFFErrorExtR(tif, module, "Unexpected nBands: %d. Expected: %d",
+            TIFFErrorExtR(tif, module, "Unexpected nBands: %u. Expected: %d",
                           nFoundBands, td->td_samplesperpixel);
             return 0;
         }
     }
     else if (nFoundBands != 1)
     {
-        TIFFErrorExtR(tif, module, "Unexpected nBands: %d. Expected: %d",
+        TIFFErrorExtR(tif, module, "Unexpected nBands: %u. Expected: %d",
                       nFoundBands, 1);
         return 0;
     }
 
     if (infoArray[7] != lerc_data_size)
     {
-        TIFFErrorExtR(tif, module, "Unexpected blobSize: %d. Expected: %u",
+        TIFFErrorExtR(tif, module, "Unexpected blobSize: %u. Expected: %u",
                       infoArray[7], lerc_data_size);
         return 0;
     }

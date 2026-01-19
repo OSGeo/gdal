@@ -215,6 +215,24 @@ def test_gdalalg_raster_mosaic_target_aligned_pixels():
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.3, 0.0, 49.2, 0.0, -0.6))
 
 
+def test_gdalalg_raster_mosaic_target_aligned_pixels_error():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src1_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
+    src2_ds.SetGeoTransform([3, 0.5, 0, 49, 0, -0.5])
+
+    alg = get_mosaic_alg()
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output-format"] = "stream"
+    alg["target-aligned-pixels"] = True
+    with pytest.raises(
+        Exception,
+        match="Argument 'target-aligned-pixels' can only be specified if argument 'resolution' is also specified",
+    ):
+        alg.Run()
+
+
 def test_gdalalg_raster_mosaic_resolution_same_default():
 
     src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)

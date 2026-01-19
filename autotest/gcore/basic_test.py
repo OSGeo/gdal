@@ -651,7 +651,7 @@ def test_gdal_setgcpspatialref():
 
 def test_gdal_getdatatypename():
 
-    assert gdal.GetDataTypeName(gdal.GDT_Byte) == "Byte"
+    assert gdal.GetDataTypeName(gdal.GDT_UInt8) == "Byte"
     with pytest.raises(Exception):
         gdal.GetDataTypeName(-1)
     with pytest.raises(Exception):
@@ -763,7 +763,7 @@ def test_gdal_EscapeString_errors():
 
 def test_gdal_DataTypeUnion():
 
-    assert gdal.DataTypeUnion(gdal.GDT_Byte, gdal.GDT_UInt16) == gdal.GDT_UInt16
+    assert gdal.DataTypeUnion(gdal.GDT_UInt8, gdal.GDT_UInt16) == gdal.GDT_UInt16
 
 
 def test_exceptionmanager():
@@ -1001,10 +1001,29 @@ def test_ComputeMinMaxLocation():
         and ret.maxY == 18
     )
 
-    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Float64)
+
+@pytest.mark.parametrize(
+    "datatype", [gdal.GDT_Float16, gdal.GDT_Float32, gdal.GDT_Float64]
+)
+def test_ComputeMinMaxLocation_nan(datatype):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, datatype)
     ds.GetRasterBand(1).Fill(float("nan"))
     ret = ds.GetRasterBand(1).ComputeMinMaxLocation()
     assert ret is None
+
+
+@pytest.mark.parametrize("value", [float("inf"), float("-inf")])
+@pytest.mark.parametrize(
+    "datatype", [gdal.GDT_Float16, gdal.GDT_Float32, gdal.GDT_Float64]
+)
+def test_ComputeMinMaxLocation_inf(value, datatype):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, datatype)
+    ds.GetRasterBand(1).Fill(value)
+    ret = ds.GetRasterBand(1).ComputeMinMaxLocation()
+    assert ret.min == value and ret.max == value
+    assert ret.minX == 0 and ret.minY == 0 and ret.maxX == 0 and ret.maxY == 0
 
 
 def test_create_numpy_types():
@@ -1161,3 +1180,14 @@ def test_basic_get_extent_rotated():
         assert ds.GetExtent() == pytest.approx(
             (1840900, 1841030, 1143870, 1144000), abs=4
         )
+
+
+def test_basic_GetDataTypeByName():
+
+    assert gdal.GetDataTypeByName("Byte") == gdal.GDT_Byte
+    assert gdal.GetDataTypeByName("Byte") == gdal.GDT_UInt8
+    assert gdal.GetDataTypeByName("UInt8") == gdal.GDT_Byte
+    assert gdal.GetDataTypeByName("UInt8") == gdal.GDT_UInt8
+
+    # For now, to avoid breaking backwards compatibility
+    assert gdal.GetDataTypeName(gdal.GDT_UInt8) == "Byte"

@@ -3313,7 +3313,7 @@ char **PostGISRasterDataset::GetMetadataDomainList()
  * TODO: Add more options (the result of
  * calling ST_Metadata, for example)
  *****************************************/
-char **PostGISRasterDataset::GetMetadata(const char *pszDomain)
+CSLConstList PostGISRasterDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
         return papszSubdatasets;

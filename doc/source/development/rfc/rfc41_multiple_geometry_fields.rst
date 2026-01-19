@@ -241,7 +241,7 @@ Impact on OGRLayer class :
    GetGeomField(0)->GetSpatialRef() returning NULL. The test_ogrsf
    utility will check and warn about this. Update of existing drivers
    will be made progressively. In the mean time, using
-   OGRLayer::GetSpatialRef() will be advized to get the SRS of the first
+   OGRLayer::GetSpatialRef() will be advised to get the SRS of the first
    geometry field in a reliable way.
 
 -  add :
@@ -337,7 +337,7 @@ returned by GetNextFeature()) :
 
 This would lead, for legacy code, to geometry being handled as regular
 field. We could imagine that GetFieldAsString() converts the geometry as
-WKT, but it is doubtfull that this would really be desired.
+WKT, but it is doubtful that this would really be desired.
 Fundamentally, the handling of attribute and geometry fields is
 different in most use cases.
 

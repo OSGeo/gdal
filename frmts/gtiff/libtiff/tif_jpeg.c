@@ -174,6 +174,10 @@ typedef struct jpeg_error_mgr jpeg_error_mgr;
  *     so we can safely cast JPEGState* -> jpeg_xxx_struct*
  *     and vice versa!
  */
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4324) /* structure padding due to alignment */
+#endif
 typedef struct
 {
     union
@@ -209,6 +213,9 @@ typedef struct
 
     int encode_raw_error;
 } JPEGState;
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #define JState(tif) ((JPEGState *)(tif)->tif_data)
 
@@ -1016,7 +1023,7 @@ JPEGFixupTagsSubsamplingReadByte(struct JPEGFixupTagsSubsamplingData *data,
         assert(m < 0x80000000UL);
         if (TIFFReadFile(data->tif, data->buffer, (tmsize_t)m) != (tmsize_t)m)
             return (0);
-        data->buffercurrentbyte = data->buffer;
+        data->buffercurrentbyte = (uint8_t *)data->buffer;
         data->bufferbytesleft = m;
         data->fileoffset += m;
         data->filebytesleft -= m;
@@ -1282,7 +1289,8 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif)
     sp->cinfo.d.data_precision = td->td_bitspersample;
     sp->cinfo.d.bits_in_jsample = td->td_bitspersample;
 #else
-    if (sp->cinfo.d.data_precision != td->td_bitspersample)
+    if (td->td_bitspersample != BITS_IN_JSAMPLE ||
+        sp->cinfo.d.data_precision != td->td_bitspersample)
     {
         TIFFErrorExtR(tif, module, "Improper JPEG data precision");
         return (0);
@@ -1556,6 +1564,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
                 if (TIFFjpeg_read_scanlines(sp, &line_work_buf, 1) != 1)
                 {
                     memset(buf, 0, (size_t)cc);
+                    _TIFFfreeExt(tif, line_work_buf);
                     return (0);
                 }
 
@@ -1660,9 +1669,9 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
         int samples_per_clump = sp->samplesperclump;
 
 #if defined(JPEG_LIB_MK1_OR_12BIT)
-        tmpbuf = _TIFFmallocExt(tif, sizeof(unsigned short) *
-                                         sp->cinfo.d.output_width *
-                                         sp->cinfo.d.num_components);
+        tmpbuf = (unsigned short *)_TIFFmallocExt(
+            tif, sizeof(unsigned short) * sp->cinfo.d.output_width *
+                     sp->cinfo.d.num_components);
         if (tmpbuf == NULL)
         {
             TIFFErrorExtR(tif, "JPEGDecodeRaw", "Out of memory");

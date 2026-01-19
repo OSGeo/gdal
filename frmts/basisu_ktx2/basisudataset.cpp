@@ -177,7 +177,7 @@ BASISURasterBand::BASISURasterBand(BASISUDataset *poDSIn, int nBandIn)
     nRasterYSize = poDSIn->GetRasterYSize();
     nBlockXSize = nRasterXSize;
     nBlockYSize = 1;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     SetColorInterpretation(
         static_cast<GDALColorInterp>(GCI_RedBand + nBandIn - 1));
 }
@@ -197,7 +197,7 @@ CPLErr BASISURasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
 
     GDALCopyWords(static_cast<GByte *>(decoded_data) +
                       nBlockYOff * nLineStride + nBand - 1,
-                  GDT_Byte, 4, pImage, GDT_Byte, 1, nBlockXSize);
+                  GDT_UInt8, 4, pImage, GDT_UInt8, 1, nBlockXSize);
     return CE_None;
 }
 

@@ -69,6 +69,31 @@ DatasetPtr runViewshed(const int8_t *in, int xlen, int ylen,
     return v.output();
 }
 
+DatasetPtr runViewshed(const double *in, const double *sd, int xlen, int ylen,
+                       const Options &opts)
+{
+    Viewshed v(opts);
+
+    GDALDriver *driver = (GDALDriver *)GDALGetDriverByName("MEM");
+    GDALDataset *dataset =
+        driver->Create("", xlen, ylen, 2, GDT_Float32, nullptr);
+    EXPECT_TRUE(dataset);
+    dataset->SetGeoTransform(identity.data());
+    GDALRasterBand *band = dataset->GetRasterBand(1);
+    EXPECT_TRUE(band);
+    CPLErr err = band->RasterIO(GF_Write, 0, 0, xlen, ylen, (void *)in, xlen,
+                                ylen, GDT_Float64, 0, 0, nullptr);
+    EXPECT_EQ(err, CE_None);
+    GDALRasterBand *sdBand = dataset->GetRasterBand(2);
+    EXPECT_TRUE(sdBand);
+    err = sdBand->RasterIO(GF_Write, 0, 0, xlen, ylen, (void *)sd, xlen, ylen,
+                           GDT_Float64, 0, 0, nullptr);
+    EXPECT_EQ(err, CE_None);
+
+    EXPECT_TRUE(v.run(band, sdBand));
+    return v.output();
+}
+
 }  // namespace
 
 TEST(Viewshed, min_max_mask)
@@ -97,7 +122,7 @@ TEST(Viewshed, min_max_mask)
                                 xOutLen, yOutLen, GDT_Int8, 0, 0, nullptr);
     EXPECT_EQ(err, CE_None);
 
-    // clang-format off
+    //clang-format off
     std::array<int8_t, 13 * 13> expected{
         0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
         0,   0,   0,   0,   0,   0,   127, 0,   0,   0,   0,   0,   0,
@@ -111,9 +136,8 @@ TEST(Viewshed, min_max_mask)
         0,   127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0,
         0,   127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0,
         0,   0,   127, 127, 127, 127, 127, 127, 127, 127, 127, 0,   0,
-        0,   0,   0,   127, 127, 127, 127, 127, 127, 127, 0,   0,   0
-    };
-    // clang-format on
+        0,   0,   0,   127, 127, 127, 127, 127, 127, 127, 0,   0,   0};
+    //clang-format on
 
     int8_t *o = out.data();
     int8_t *e = expected.data();
@@ -177,8 +201,7 @@ TEST(Viewshed, angle)
         127, 127, 127, 0,   0,   0,
         127, 127, 0,   0,   0,   0,
         127, 127, 0,   0,   0,   0,
-        127, 0,   0,   0,   0,   0
-    };
+        127, 0,   0,   0,   0,   0};
     // clang-format on
 
     int8_t *o = out.data();
@@ -235,15 +258,17 @@ TEST(Viewshed, angle2)
 
     // clang-format off
     std::array<int8_t, 11 * 11> expected{
-        0,   0,   0,   0,   0,   127, 127, 127, 127, 127, 127, 0,   0,   0,
-        0,   0,   127, 127, 127, 127, 127, 127, 127, 0,   0,   0,   0,   127,
-        127, 127, 127, 127, 127, 127, 127, 127, 0,   0,   127, 127, 127, 127,
-        127, 127, 127, 127, 127, 127, 0,   127, 127, 127, 127, 127, 127, 127,
-        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
-        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
-        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
-        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
-        127, 127, 127, 127, 127, 127, 127, 127, 127,
+        0,   0,   0,   0,   0,   127, 127, 127, 127, 127, 127,
+        0,   0,   0,    0,  0,   127, 127, 127, 127, 127, 127,
+        127, 0,   0,   0,   0,   127, 127, 127, 127, 127, 127,
+        127, 127, 127, 0,   0,   127, 127, 127, 127, 127, 127,
+        127, 127, 127, 127, 0,   127, 127, 127, 127, 127, 127,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127
     };
     // clang-format on
 
@@ -317,7 +342,8 @@ TEST(Viewshed, high_mask)
     {
         for (int x = 0; x < 15; ++x)
         {
-            EXPECT_EQ(*e, *o);
+            EXPECT_EQ(*e, *o) << "X/Y exp/act = " << x << "/" << y << "/"
+                              << (int)*e << "/" << (int)*o << "!\n";
             e++;
             o++;
         }
@@ -768,6 +794,364 @@ TEST(Viewshed, oor_below)
 
         for (size_t i = 0; i < out.size(); ++i)
             EXPECT_DOUBLE_EQ(out[i], expected[i]);
+    }
+}
+
+// Test a handling of SD raster right and left.
+TEST(Viewshed, sd)
+{
+    {
+        // clang-format off
+        const int xlen = 8;
+        const int ylen = 1;
+        std::array<double, xlen * ylen> in
+        {
+            0, 1, 1, 3.1, 1.5, 2.7, 3.7, 7.5
+        };
+
+        std::array<double, xlen * ylen> sd
+        {
+            1, 100, .1, 100, .1, .1, 100, .1
+        };
+        // clang-format on
+
+        {
+            Options opts = stdOptions(0, 0);
+            opts.outputMode = OutputMode::Normal;
+            DatasetPtr ds = runViewshed(in.data(), sd.data(), xlen, ylen, opts);
+            GDALRasterBand *band = ds->GetRasterBand(1);
+            std::array<double, xlen * ylen> out;
+            CPLErr err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(),
+                                        xlen, ylen, GDT_Float64, 0, 0, nullptr);
+
+            EXPECT_EQ(err, CE_None);
+
+            // clang-format off
+            std::array<double, xlen * ylen> expected
+            {
+                255, 255, 2, 255, 0, 2, 2, 255
+            };
+            // clang-format on
+
+            for (size_t i = 0; i < out.size(); ++i)
+                EXPECT_DOUBLE_EQ(out[i], expected[i])
+                    << "Error at position " << i << ".";
+        }
+    }
+    {
+        // clang-format off
+        const int xlen = 8;
+        const int ylen = 1;
+        std::array<double, xlen * ylen> in
+        {
+            7.5, 3.7, 2.7, 1.5, 3.1, 1, 1, 0
+        };
+
+        std::array<double, xlen * ylen> sd
+        {
+            .1, 100, .1, .1, 100, .1, 100, 1
+        };
+        // clang-format on
+
+        {
+            Options opts = stdOptions(7, 0);
+            opts.outputMode = OutputMode::Normal;
+            DatasetPtr ds = runViewshed(in.data(), sd.data(), xlen, ylen, opts);
+            GDALRasterBand *band = ds->GetRasterBand(1);
+            std::array<double, xlen * ylen> out;
+            CPLErr err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(),
+                                        xlen, ylen, GDT_Float64, 0, 0, nullptr);
+
+            EXPECT_EQ(err, CE_None);
+
+            // clang-format off
+            std::array<double, xlen * ylen> expected
+            {
+                255, 2, 2, 0, 255, 2, 255, 255
+            };
+            // clang-format on
+
+            for (size_t i = 0; i < out.size(); ++i)
+                EXPECT_DOUBLE_EQ(out[i], expected[i])
+                    << "Error at position " << i << ".";
+        }
+    }
+}
+
+// Test a handling of SD raster up and down.
+TEST(Viewshed, sd_up_down)
+{
+    // Up.
+    {
+        // clang-format off
+        const int xlen = 1;
+        const int ylen = 8;
+        std::array<double, xlen * ylen> in
+        {
+            0, 1, 1, 3.1, 1.5, 2.7, 3.7, 7.5
+        };
+
+        std::array<double, xlen * ylen> sd
+        {
+            1, 100, .1, 100, .1, .1, 100, .1
+        };
+        // clang-format on
+
+        {
+            Options opts = stdOptions(0, 0);
+            opts.outputMode = OutputMode::Normal;
+            DatasetPtr ds = runViewshed(in.data(), sd.data(), xlen, ylen, opts);
+            GDALRasterBand *band = ds->GetRasterBand(1);
+            std::array<double, xlen * ylen> out;
+            CPLErr err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(),
+                                        xlen, ylen, GDT_Float64, 0, 0, nullptr);
+
+            EXPECT_EQ(err, CE_None);
+
+            // clang-format off
+            std::array<double, xlen * ylen> expected
+            {
+                255, 255, 2, 255, 0, 2, 2, 255
+            };
+            // clang-format on
+
+            for (size_t i = 0; i < out.size(); ++i)
+                EXPECT_DOUBLE_EQ(out[i], expected[i])
+                    << "Error at position " << i << ".";
+        }
+    }
+    // Down.
+    {
+        // clang-format off
+        const int xlen = 1;
+        const int ylen = 8;
+        std::array<double, xlen * ylen> in
+        {
+            7.5, 3.7, 2.7, 1.5, 3.1, 1, 1, 0
+        };
+
+        std::array<double, xlen * ylen> sd
+        {
+            .1, 100, .1, .1, 100, .1, 100, 1
+        };
+        // clang-format on
+
+        {
+            Options opts = stdOptions(0, 7);
+            opts.outputMode = OutputMode::Normal;
+            DatasetPtr ds = runViewshed(in.data(), sd.data(), xlen, ylen, opts);
+            GDALRasterBand *band = ds->GetRasterBand(1);
+            std::array<double, xlen * ylen> out;
+            CPLErr err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(),
+                                        xlen, ylen, GDT_Float64, 0, 0, nullptr);
+
+            EXPECT_EQ(err, CE_None);
+
+            // clang-format off
+            std::array<double, xlen * ylen> expected
+            {
+                255, 2, 2, 0, 255, 2, 255, 255
+            };
+            // clang-format on
+
+            for (size_t i = 0; i < out.size(); ++i)
+                EXPECT_DOUBLE_EQ(out[i], expected[i]);
+        }
+    }
+}
+
+// Test SD raster
+TEST(Viewshed, sd_2)
+{
+    // Right, down
+    {
+        // clang-format off
+        const int xlen = 8;
+        const int ylen = 2;
+        std::array<double, xlen * ylen> in
+        {
+            0, 1,   1,   3.1, 1.5, 2.7, 3.7, 7.5,  // Row 0
+            0, 1.1, 1.4, 3.1, 1.5, 2.7, 3.7, 7.5   // Row 1
+        };
+
+        std::array<double, xlen * ylen> sd
+        {
+            1, 100, .1, 100, .1, .1, 100, .1,  // Row 0
+            1, 100, .1, 100, .1, .1, 100, .1   // Row 1
+        };
+        // clang-format on
+
+        {
+            Options opts = stdOptions(0, 0);
+            opts.outputMode = OutputMode::Normal;
+            DatasetPtr ds = runViewshed(in.data(), sd.data(), xlen, ylen, opts);
+            GDALRasterBand *band = ds->GetRasterBand(1);
+            std::array<double, xlen * ylen> out;
+            CPLErr err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(),
+                                        xlen, ylen, GDT_Float64, 0, 0, nullptr);
+
+            EXPECT_EQ(err, CE_None);
+
+            // clang-format off
+            std::array<double, xlen * ylen> expected
+            {
+                255, 255, 2, 255, 0, 2, 2, 255,
+                255, 255, 2, 2,   0, 0, 2, 255
+            };
+            // clang-format on
+
+            size_t i = 0;
+            for (int y = 0; y < ylen; y++)
+                for (int x = 0; x < xlen; x++)
+                {
+                    EXPECT_DOUBLE_EQ(out[i], expected[i])
+                        << "Mismatch at (" << x << ", " << y << ")";
+                    i++;
+                }
+        }
+    }
+    // Right, up
+    {
+        // clang-format off
+        const int xlen = 8;
+        const int ylen = 2;
+        std::array<double, xlen * ylen> in
+        {
+            0, 1.1, 1.4, 3.1, 1.5, 2.7, 3.7, 7.5,  // Row 0
+            0, 1,   1,   3.1, 1.5, 2.7, 3.7, 7.5   // Row 1
+        };
+
+        std::array<double, xlen * ylen> sd
+        {
+            1, 100, .1, 100, .1, .1, 100, .1,  // Row 0
+            1, 100, .1, 100, .1, .1, 100, .1   // Row 1
+        };
+        // clang-format on
+
+        {
+            Options opts = stdOptions(0, 1);
+            opts.outputMode = OutputMode::Normal;
+            DatasetPtr ds = runViewshed(in.data(), sd.data(), xlen, ylen, opts);
+            GDALRasterBand *band = ds->GetRasterBand(1);
+            std::array<double, xlen * ylen> out;
+            CPLErr err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(),
+                                        xlen, ylen, GDT_Float64, 0, 0, nullptr);
+
+            EXPECT_EQ(err, CE_None);
+
+            // clang-format off
+            std::array<double, xlen * ylen> expected
+            {
+                255, 255, 2, 2,   0, 0, 2, 255,
+                255, 255, 2, 255, 0, 2, 2, 255
+            };
+            // clang-format on
+
+            size_t i = 0;
+            for (int y = 0; y < ylen; y++)
+                for (int x = 0; x < xlen; x++)
+                {
+                    EXPECT_DOUBLE_EQ(out[i], expected[i])
+                        << "Mismatch at (" << x << ", " << y << ")";
+                    i++;
+                }
+        }
+    }
+
+    // Left, down
+    {
+        // clang-format off
+        const int xlen = 8;
+        const int ylen = 2;
+        std::array<double, xlen * ylen> in
+        {
+            7.5, 3.7, 2.7, 1.5, 3.1, 1,   1,   0, // Row 0
+            7.5, 3.7, 2.7, 1.5, 3.1, 1.4, 1.1, 0  // Row 1
+        };
+
+        std::array<double, xlen * ylen> sd
+        {
+            .1, 100, .1, .1, 100, .1, 100, 1,  // Row 0
+            .1, 100, .1, .1, 100, .1, 100, 1   // Row 1
+        };
+        // clang-format on
+
+        {
+            Options opts = stdOptions(7, 0);
+            opts.outputMode = OutputMode::Normal;
+            DatasetPtr ds = runViewshed(in.data(), sd.data(), xlen, ylen, opts);
+            GDALRasterBand *band = ds->GetRasterBand(1);
+            std::array<double, xlen * ylen> out;
+            CPLErr err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(),
+                                        xlen, ylen, GDT_Float64, 0, 0, nullptr);
+
+            EXPECT_EQ(err, CE_None);
+
+            // clang-format off
+            std::array<double, xlen * ylen> expected
+            {
+                255, 2, 2, 0, 255, 2, 255, 255,  // Row 0
+                255, 2, 0, 0, 2,   2, 255, 255   // Row 1
+            };
+            // clang-format on
+
+            size_t i = 0;
+            for (int y = 0; y < ylen; y++)
+                for (int x = 0; x < xlen; x++)
+                {
+                    EXPECT_DOUBLE_EQ(out[i], expected[i])
+                        << "Mismatch at (" << x << ", " << y << ")";
+                    i++;
+                }
+        }
+    }
+
+    // Left, up
+    {
+        // clang-format off
+        const int xlen = 8;
+        const int ylen = 2;
+        std::array<double, xlen * ylen> in
+        {
+            7.5, 3.7, 2.7, 1.5, 3.1, 1.4, 1.1, 0, // Row 0
+            7.5, 3.7, 2.7, 1.5, 3.1, 1,   1,   0  // Row 1
+        };
+
+        std::array<double, xlen * ylen> sd
+        {
+            .1, 100, .1, .1, 100, .1, 100, 1,  // Row 0
+            .1, 100, .1, .1, 100, .1, 100, 1   // Row 1
+        };
+        // clang-format on
+
+        {
+            Options opts = stdOptions(7, 1);
+            opts.outputMode = OutputMode::Normal;
+            DatasetPtr ds = runViewshed(in.data(), sd.data(), xlen, ylen, opts);
+            GDALRasterBand *band = ds->GetRasterBand(1);
+            std::array<double, xlen * ylen> out;
+            CPLErr err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(),
+                                        xlen, ylen, GDT_Float64, 0, 0, nullptr);
+
+            EXPECT_EQ(err, CE_None);
+
+            // clang-format off
+            std::array<double, xlen * ylen> expected
+            {
+                255, 2, 0, 0, 2,   2, 255, 255,  // Row 0
+                255, 2, 2, 0, 255, 2, 255, 255   // Row 1
+            };
+            // clang-format on
+
+            size_t i = 0;
+            for (int y = 0; y < ylen; y++)
+                for (int x = 0; x < xlen; x++)
+                {
+                    EXPECT_DOUBLE_EQ(out[i], expected[i])
+                        << "Mismatch at (" << x << ", " << y << ")";
+                    i++;
+                }
+        }
     }
 }
 

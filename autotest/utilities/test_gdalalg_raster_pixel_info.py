@@ -469,6 +469,20 @@ def test_gdalalg_raster_pixel_info_files():
     }
 
 
+def test_gdalalg_raster_pixel_info_promote_pixel_value_to_z():
+
+    alg = get_alg()
+    alg["dataset"] = "../gcore/data/byte.vrt"
+    alg["position"] = [5, 10]
+    alg["promote-pixel-value-to-z"] = True
+    assert alg.Run()
+    j = json.loads(alg["output-string"])
+    assert j["features"][0]["geometry"] == {
+        "type": "Point",
+        "coordinates": [441020.0, 3750720.0, 132.0],
+    }
+
+
 @pytest.fixture()
 def gdal_path():
     return test_cli_utilities.get_gdal_path()

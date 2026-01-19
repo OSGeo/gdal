@@ -1245,7 +1245,8 @@ OGRErr OGRNGWLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
 /*
  * SetMetadata()
  */
-CPLErr OGRNGWLayer::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr OGRNGWLayer::SetMetadata(CSLConstList papszMetadata,
+                                const char *pszDomain)
 {
     bNeedSyncStructure = true;
     return OGRLayer::SetMetadata(papszMetadata, pszDomain);

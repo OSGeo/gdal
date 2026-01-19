@@ -51,7 +51,7 @@ def test_tiff_write_icc():
     options = ["SOURCE_ICC_PROFILE=" + icc]
 
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte, options)
+    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
 
     # Check with dataset from Create()
     md = ds.GetMetadata("COLOR_PROFILE")
@@ -100,7 +100,7 @@ def test_tiff_copy_icc():
     options = ["SOURCE_ICC_PROFILE=" + icc]
 
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte, options)
+    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
     ds2 = driver.CreateCopy("tmp/icc_test2.tiff", ds)
 
     # Check with dataset from CreateCopy()
@@ -137,7 +137,7 @@ def test_tiff_copy_options_icc():
     options = ["SOURCE_ICC_PROFILE=" + icc]
 
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte)
+    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
     ds2 = driver.CreateCopy("tmp/icc_test2.tiff", ds, options=options)
 
     # Check with dataset from CreateCopy()
@@ -189,7 +189,7 @@ def test_tiff_copy_options_colorimetric_data():
     ]
 
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte)
+    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
 
     # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy("tmp/icc_test2.tiff", ds, options=options)
@@ -283,7 +283,7 @@ def test_tiff_copy_colorimetric_data():
     ]
 
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte, options)
+    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
     ds = None
     ds = gdal.Open("tmp/icc_test.tiff")
 
@@ -364,7 +364,7 @@ def test_tiff_update_icc():
 
     # Create dummy file
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte)
+    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
     ds = None
 
     ds = gdal.Open("tmp/icc_test.tiff", gdal.GA_Update)
@@ -400,7 +400,7 @@ def test_tiff_update_colorimetric():
 
     # Create dummy file
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte)
+    ds = driver.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
     ds = None
 
     ds = gdal.Open("tmp/icc_test.tiff", gdal.GA_Update)

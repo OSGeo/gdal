@@ -28,8 +28,21 @@ step of a pipeline.
 
 The following options are available:
 
-Standard options
-++++++++++++++++
+Program-Specific Options
+------------------------
+
+.. option:: --dialect <dialect>
+
+    SQL dialect. In some cases can be used to use (unoptimized) :ref:`ogr_sql_dialect` instead
+    of the native SQL of an RDBMS by passing the ``OGRSQL`` dialect value.
+    The :ref:`sql_sqlite_dialect` can be selected with the ``SQLITE``
+    and ``INDIRECT_SQLITE`` dialect values, and this can be used with any datasource.
+
+.. option:: --features
+
+    List all features by default, unless limited with :option:`--limit`.
+    Beware of RAM consumption on large layers when using JSON output.
+    This option is mutually exclusive with the :option:`--summary` option.
 
 .. option:: -f, --of, --format, --output-format json|text
 
@@ -40,17 +53,6 @@ Standard options
 
     Name of one or more layers to inspect. If no layer names are passed and
     :option:`--sql` is not specified, then all layers will be selected.
-
-.. option:: --summary
-
-    Print a summary with the list of layers and the geometry type of each layer.
-    This option is mutually exclusive with the :option:`--features` option.
-
-.. option:: --features
-
-    List all features by default, unless limited with :option:`--limit`.
-    Beware of RAM consumption on large layers when using JSON output.
-    This option is mutually exclusive with the :option:`--summary` option.
 
 .. option:: --limit <FEATURE-COUNT>
 
@@ -71,6 +73,11 @@ Standard options
 
     This option is mutually exclusive with the :option:`--where` option.
 
+.. option:: --summary
+
+    Print a summary with the list of layers and the geometry type of each layer.
+    This option is mutually exclusive with the :option:`--features` option.
+
 .. option:: --where <WHERE>|@<filename>
 
     An attribute query in a restricted form of the queries used in the SQL
@@ -86,20 +93,14 @@ Standard options
 
     This option is mutually exclusive with the :option:`--sql` option.
 
-.. option:: --dialect <dialect>
+Standard Options
+----------------
 
-    SQL dialect. In some cases can be used to use (unoptimized) :ref:`ogr_sql_dialect` instead
-    of the native SQL of an RDBMS by passing the ``OGRSQL`` dialect value.
-    The :ref:`sql_sqlite_dialect` can be selected with the ``SQLITE``
-    and ``INDIRECT_SQLITE`` dialect values, and this can be used with any datasource.
+.. collapse:: Details
 
+    .. include:: gdal_options/oo.rst
 
-Advanced options
-++++++++++++++++
-
-.. include:: gdal_options/oo.rst
-
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/if.rst
 
 Examples
 --------
@@ -107,11 +108,11 @@ Examples
 .. example::
    :title: Getting information on the file :file:`poly.gpkg` (with text output), listing all features
 
-   .. command-output:: gdal vector info --format=text --features poly.gpkg
+   .. command-output:: gdal vector info --features poly.gpkg
       :cwd: ../../data
 
 .. example::
    :title: Getting information on the file :file:`poly.gpkg` (with JSON output)
 
-   .. command-output:: gdal vector info poly.gpkg
+   .. command-output:: gdal vector info --format=JSON poly.gpkg
       :cwd: ../../data

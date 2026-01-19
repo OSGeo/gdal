@@ -308,7 +308,7 @@ GDALDataset *NSIDCbinDataset::Open(GDALOpenInfo *poOpenInfo)
 
     auto poBand = std::make_unique<NSIDCbinRasterBand>(
         poDS.get(), 1, poDS->fp, 300, nBytesPerSample, poDS->nRasterXSize,
-        GDT_Byte);
+        GDT_UInt8);
     if (!poBand->IsValid())
         return nullptr;
     poDS->SetBand(1, std::move(poBand));

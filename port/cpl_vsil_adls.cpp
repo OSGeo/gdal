@@ -2188,7 +2188,8 @@ bool VSIADLSHandle::CanRestartOnError(const char *pszErrorMsg,
 
 void VSIInstallADLSFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsiadls/", new cpl::VSIADLSFSHandler);
+    VSIFileManager::InstallHandler("/vsiadls/",
+                                   std::make_shared<cpl::VSIADLSFSHandler>());
 }
 
 #endif /* HAVE_CURL */

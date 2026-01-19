@@ -33,10 +33,15 @@ class CPL_DLL OGRUnionLayerGeomFieldDefn final : public OGRGeomFieldDefn
     OGREnvelope sStaticEnvelope{};
 
     OGRUnionLayerGeomFieldDefn(const char *pszName, OGRwkbGeometryType eType);
-    explicit OGRUnionLayerGeomFieldDefn(const OGRGeomFieldDefn *poSrc);
-    explicit OGRUnionLayerGeomFieldDefn(
-        const OGRUnionLayerGeomFieldDefn *poSrc);
+    explicit OGRUnionLayerGeomFieldDefn(const OGRGeomFieldDefn &oSrc);
+    OGRUnionLayerGeomFieldDefn(const OGRUnionLayerGeomFieldDefn &oSrc);
+    OGRUnionLayerGeomFieldDefn(OGRUnionLayerGeomFieldDefn &&) = default;
     ~OGRUnionLayerGeomFieldDefn() override;
+
+    OGRUnionLayerGeomFieldDefn &
+    operator=(const OGRUnionLayerGeomFieldDefn &) = delete;
+    OGRUnionLayerGeomFieldDefn &
+    operator=(OGRUnionLayerGeomFieldDefn &&) = delete;
 };
 
 /************************************************************************/
@@ -105,10 +110,9 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     std::vector<Layer> m_apoSrcLayers{};
 
     mutable OGRFeatureDefn *poFeatureDefn = nullptr;
-    int nFields = 0;
-    OGRFieldDefn **papoFields = nullptr;
-    int nGeomFields = 0;
-    OGRUnionLayerGeomFieldDefn **papoGeomFields = nullptr;
+    std::vector<std::unique_ptr<OGRFieldDefn>> apoFields{};
+    std::vector<std::unique_ptr<OGRUnionLayerGeomFieldDefn>> apoGeomFields{};
+    bool bUseGeomFields = true;
     FieldUnionStrategy eFieldStrategy = FIELD_UNION_ALL_LAYERS;
     CPLString osSourceLayerFieldName{};
 
@@ -117,6 +121,7 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     GIntBig nFeatureCount = -1;
 
     int iCurLayer = -1;
+    bool m_bHasAlreadyIteratedOverFeatures = false;
     char *pszAttributeFilter = nullptr;
     int nNextFID = 0;
     int *panMap = nullptr;
@@ -126,8 +131,22 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
 
     std::mutex m_oMutex{};
 
+    /* Map from target FID to (source layer, source FID) */
+    struct FIDRange
+    {
+        GIntBig nDstFIDStart = 0;
+        GIntBig nFIDCount = 0;
+        GIntBig nSrcFIDStart = 0;
+        int nLayerIdx = 0;
+    };
+
+    std::vector<FIDRange> m_fidRanges{};
+    bool m_fidRangesInvalid = false;
+    bool m_fidRangesComplete = false;
+
     void AutoWarpLayerIfNecessary(int iSubLayer);
-    OGRFeature *TranslateFromSrcLayer(OGRFeature *poSrcFeature);
+    std::unique_ptr<OGRFeature> TranslateFromSrcLayer(OGRFeature *poSrcFeature,
+                                                      GIntBig nFID);
     void ApplyAttributeFilterToSrcLayer(int iSubLayer);
     int GetAttrFilterPassThroughValue() const;
     void ConfigureActiveLayer();
@@ -148,10 +167,13 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     /* and before any virtual method */
     void SetFields(
         FieldUnionStrategy eFieldStrategy, int nFields,
-        OGRFieldDefn **papoFields, /* duplicated by the method */
+        const OGRFieldDefn *paoFields, /* duplicated by the method */
         int nGeomFields, /* maybe -1 to explicitly disable geometry fields */
-        OGRUnionLayerGeomFieldDefn *
-            *papoGeomFields /* duplicated by the method */);
+        const OGRUnionLayerGeomFieldDefn
+            *paoGeomFields /* duplicated by the method */);
+    void SetFields(FieldUnionStrategy eFieldStrategy,
+                   const OGRFeatureDefn *poFeatureDefnIn);
+
     void SetSourceLayerFieldName(const char *pszSourceLayerFieldName);
     void SetPreserveSrcFID(int bPreserveSrcFID);
     void SetFeatureCount(int nFeatureCount);

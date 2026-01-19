@@ -176,6 +176,28 @@ OGRErr OGRXLSXLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
+/*                       ISetFeatureUniqPtr()                           */
+/************************************************************************/
+
+OGRErr OGRXLSXLayer::ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature)
+{
+    const GIntBig nFIDOrigin = poFeature->GetFID();
+    if (nFIDOrigin > 0)
+    {
+        const GIntBig nFIDMemLayer = TranslateFIDToMemLayer(nFIDOrigin);
+        if (!GetFeatureRef(nFIDMemLayer))
+            return OGRERR_NON_EXISTING_FEATURE;
+        poFeature->SetFID(nFIDMemLayer);
+    }
+    else
+    {
+        return OGRERR_NON_EXISTING_FEATURE;
+    }
+    SetUpdated();
+    return OGRMemLayer::ISetFeatureUniqPtr(std::move(poFeature));
+}
+
+/************************************************************************/
 /*                         IUpdateFeature()                             */
 /************************************************************************/
 
@@ -224,6 +246,38 @@ OGRErr OGRXLSXLayer::ICreateFeature(OGRFeature *poFeature)
     poFeature->SetFID(OGRNullFID);
     OGRErr eErr = OGRMemLayer::ICreateFeature(poFeature);
     poFeature->SetFID(TranslateFIDFromMemLayer(poFeature->GetFID()));
+    return eErr;
+}
+
+/************************************************************************/
+/*                       ICreateFeatureUniqPtr()                        */
+/************************************************************************/
+
+OGRErr
+OGRXLSXLayer::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                                    GIntBig *pnFID)
+{
+    const GIntBig nFIDOrigin = poFeature->GetFID();
+    if (nFIDOrigin > 0)
+    {
+        const GIntBig nFIDModified = TranslateFIDToMemLayer(nFIDOrigin);
+        if (GetFeatureRef(nFIDModified))
+        {
+            SetUpdated();
+            poFeature->SetFID(nFIDModified);
+            OGRErr eErr = OGRMemLayer::ISetFeatureUniqPtr(std::move(poFeature));
+            if (pnFID)
+                *pnFID = nFIDOrigin;
+            return eErr;
+        }
+    }
+    SetUpdated();
+    poFeature->SetFID(OGRNullFID);
+    GIntBig nNewFID = OGRNullFID;
+    const OGRErr eErr =
+        OGRMemLayer::ICreateFeatureUniqPtr(std::move(poFeature), &nNewFID);
+    if (pnFID)
+        *pnFID = TranslateFIDFromMemLayer(nNewFID);
     return eErr;
 }
 
@@ -292,7 +346,7 @@ OGRXLSXDataSource::~OGRXLSXDataSource()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr OGRXLSXDataSource::Close()
+CPLErr OGRXLSXDataSource::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

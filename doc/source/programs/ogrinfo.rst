@@ -23,6 +23,10 @@ The :program:`ogrinfo` program lists various information about an OGR-supported 
 source to stdout (the terminal). By executing SQL statements it is also possible to
 edit data.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_vector_info`.
+
 .. program:: ogrinfo
 
 .. include:: options/help_and_help_general.rst
@@ -57,9 +61,6 @@ edit data.
     significantly faster for some formats (for example OSM, GMLAS).
     -rl cannot be used with -sql.
 
-
-    .. versionadded:: 2.2
-
 .. option:: -so
 
     Summary Only: suppress listing of individual features and show only
@@ -93,7 +94,7 @@ edit data.
 
     An attribute query in a restricted form of the queries used in the SQL
     `WHERE` statement. Only features matching the attribute query will be
-    reported. Starting with GDAL 2.1, the ``@<filename>`` syntax can be used to
+    reported. The ``@<filename>`` syntax can be used to
     indicate that the content is in the pointed filename.
 
     Example of ``-where`` and quoting:
@@ -106,8 +107,8 @@ edit data.
 
 .. option:: -sql <statement>|@<filename>
 
-    Execute the indicated SQL statement and return the result. Starting with
-    GDAL 2.1, the ``@<filename>`` syntax can be used to indicate that the content is
+    Execute the indicated SQL statement and return the result.
+    The ``@<filename>`` syntax can be used to indicate that the content is
     in the pointed filename (e.g ``@my_select.txt`` where my_select.txt is a file
     in the current directory). Data can also be edited with SQL INSERT, UPDATE,
     DELETE, DROP TABLE, ALTER TABLE etc. Editing capabilities depend on the selected
@@ -154,8 +155,7 @@ edit data.
     ``SUMMARY``, only a summary of the geometry will be displayed. If set to
     ``YES`` or ``ISO_WKT``, the geometry will be reported in full OGC WKT format.
     If set to ``WKT`` the geometry will be reported in legacy ``WKT``. Default
-    value is ``YES``. (WKT and ``ISO_WKT`` are available starting with GDAL 2.1,
-    which also changes the default to ISO_WKT)
+    value is ``YES``.
 
 .. include:: options/oo_vector.rst
 

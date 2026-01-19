@@ -75,6 +75,7 @@ class OGRLIBKMLLayer final : public OGRLayer,
     bool m_bAllReadAtLeastOnce = false;
     std::map<GIntBig, std::string> m_oMapOGRIdToKmlId{};
     std::map<std::string, GIntBig> m_oMapKmlIdToOGRId{};
+    std::map<std::string, int> m_oMapSimpleFieldNameToOgrFieldIx{};
 
     void ScanAllFeatures();
     OGRFeature *GetNextRawFeature();

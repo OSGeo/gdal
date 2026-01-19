@@ -4104,7 +4104,7 @@ def test_gpkg_byte_nodata_value(band_count):
     gdal.Unlink(filename)
 
     ds = gdaltest.gpkg_dr.Create(
-        filename, 1, 1, band_count, gdal.GDT_Byte, options=["TILE_FORMAT=PNG"]
+        filename, 1, 1, band_count, gdal.GDT_UInt8, options=["TILE_FORMAT=PNG"]
     )
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     with gdal.quiet_errors():
@@ -4311,7 +4311,7 @@ def test_gpkg_gti_gpkg_ext(tmp_vsimem):
 # Test rename a raster table with SQL
 
 
-@pytest.mark.parametrize("data_type", [gdal.GDT_Byte, gdal.GDT_UInt16])
+@pytest.mark.parametrize("data_type", [gdal.GDT_UInt8, gdal.GDT_UInt16])
 def test_gpkg_rename_raster_table(data_type, tmp_vsimem):
 
     test_layer_path = str(tmp_vsimem / "test_gpkg_rename_raster_table.gpkg")

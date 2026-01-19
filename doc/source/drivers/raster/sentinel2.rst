@@ -9,8 +9,7 @@ SENTINEL2 -- Sentinel-2 Products
 .. built_in_by_default:: This driver is built-in by default, but requires a JPEG2000 capable driver to read the imagery
 
 Driver for Sentinel-2 Level-1B, Level-1C and Level-2A products.
-Starting with GDAL 2.1.3, Level-1C with "Safe Compact" encoding
-are also supported.
+Level-1C with "Safe Compact" encoding are also supported.
 
 The SENTINEL2 driver will be used if the main metadata .xml file at the
 root of a SENTINEL2 data product is opened (whose name is typically

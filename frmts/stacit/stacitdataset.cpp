@@ -790,6 +790,7 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLJSONObject oBody;
     bool bMerge = false;
     int nLoops = 0;
+    oBody.Deinit();
     do
     {
         ++nLoops;
@@ -803,7 +804,7 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
         if (STARTS_WITH(osCurFilename, "http://") ||
             STARTS_WITH(osCurFilename, "https://"))
         {
-            // Cf // Cf https://github.com/radiantearth/stac-api-spec/tree/release/v1.0.0/item-search#pagination
+            // Cf https://github.com/radiantearth/stac-api-spec/tree/release/v1.0.0/item-search#pagination
             CPLStringList aosOptions;
             if (oBody.IsValid() &&
                 oBody.GetType() == CPLJSONObject::Type::Object)

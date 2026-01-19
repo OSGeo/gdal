@@ -1793,14 +1793,21 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                 for (int i = 0; i < poGDS->GetRasterCount(); i++)
                 {
                     GDALRasterBand *poSrcBand = poGDS->GetRasterBand(i + 1);
-                    GDALRasterBand *poBand = new VRTPansharpenedRasterBand(
+                    auto poBand = std::make_unique<VRTPansharpenedRasterBand>(
                         poOvrDS.get(), i + 1, poSrcBand->GetRasterDataType());
                     const char *pszNBITS =
                         poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
                     if (pszNBITS)
                         poBand->SetMetadataItem("NBITS", pszNBITS,
                                                 "IMAGE_STRUCTURE");
-                    poOvrDS->SetBand(i + 1, poBand);
+                    int bHasNoData = FALSE;
+                    const double dfNoData =
+                        poSrcBand->GetNoDataValue(&bHasNoData);
+                    if (bHasNoData)
+                        poBand->SetNoDataValue(dfNoData);
+                    poBand->SetColorInterpretation(
+                        poSrcBand->GetColorInterpretation());
+                    poOvrDS->SetBand(i + 1, std::move(poBand));
                 }
 
                 std::unique_ptr<GDALPansharpenOptions,

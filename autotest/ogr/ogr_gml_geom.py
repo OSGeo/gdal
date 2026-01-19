@@ -174,6 +174,20 @@ def test_gml_posList_line3d_2():
 
 
 ###############################################################################
+# Test GML 3.x "posList" element for a 3D linestring, without explicit srsDimension
+# but with srsName
+
+
+def test_gml_posList_line3d_srsName_only():
+
+    gml = '<LineString srsName="http://www.opengis.net/def/crs/EPSG/0/4979"><posList xmlns:foo="http://bar">49 2 10 50 3 11</posList></LineString>'
+
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    assert geom.ExportToWkt() == "LINESTRING (49 2 10,50 3 11)"
+
+
+###############################################################################
 # Test GML 3.x "polygon" element for a point.
 
 
@@ -3035,7 +3049,7 @@ def test_gml_write_gml_ns():
 def test_gml_read_gml_ArcByCenterPoint_projected_crs_northing_easting():
 
     g = ogr.CreateGeometryFromGML(
-        """<gml:Surface srsName="EPSG:2326" srsDimension="2">
+        """<gml:Surface srsName="urn:ogc:def:crs:EPSG::2326" srsDimension="2">
     <gml:patches>
     <gml:PolygonPatch>
     <gml:exterior>

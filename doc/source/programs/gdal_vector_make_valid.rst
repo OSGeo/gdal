@@ -31,20 +31,20 @@ It can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 .. note:: This command requires a GDAL build against the GEOS library.
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_vector.rst
+.. include:: gdal_cli_include/gdalg_vector_compatible.rst
 
-.. include:: gdal_options/co_vector.rst
+Program-Specific Options
+------------------------
 
-.. include:: options/lco.rst
+.. option:: --keep-lower-dim
 
-.. include:: gdal_options/overwrite.rst
-
-.. include:: gdal_options/active_layer.rst
-
-.. include:: gdal_options/active_geometry.rst
+   Keep components of lower dimension after MakeValid(). For example, MakeValid() may
+   return a GeometryCollection of a Polygon and a LineString from a Polygon input.
+   By default only the Polygon would be returned. Setting this option will return
+   the GeometryCollection.
 
 .. option:: --method=linework|structure
 
@@ -58,32 +58,42 @@ Standard options
    rings valid then merges shells and subtracts holes from shells to generate
    valid result. It assumes that holes and shells are correctly categorized.
 
-.. option:: --keep-lower-dim
+Standard Options
+----------------
 
-   Keep components of lower dimension after MakeValid(). For example, MakeValid() may
-   return a GeometryCollection of a Polygon and a LineString from a Polygon input.
-   By default only the Polygon would be returned. Setting this option will return
-   the GeometryCollection.
+.. collapse:: Details
 
-Advanced options
-++++++++++++++++
+    .. include:: gdal_options/active_geometry.rst
 
-.. include:: gdal_options/oo.rst
+    .. include:: gdal_options/active_layer.rst
 
-.. include:: gdal_options/if.rst
+    .. include:: gdal_options/append_vector.rst
 
-GDALG output (on-the-fly / streamed dataset)
---------------------------------------------
+    .. include:: gdal_options/co_vector.rst
 
-This program supports serializing the command line as a JSON file using the ``GDALG`` output format.
-The resulting file can then be opened as a vector dataset using the
-:ref:`vector.gdalg` driver, and apply the specified pipeline in a on-the-fly /
-streamed way.
+    .. include:: gdal_options/if.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/input_layer.rst
 
-.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+    .. include:: gdal_options/lco.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/output_layer.rst
+
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst
 
 Examples
 --------

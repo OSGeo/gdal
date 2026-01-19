@@ -30,7 +30,7 @@ CFLAGS="-Wextra -Werror" CXXFLAGS="-Wextra -Werror" cmake .. \
          -DCMAKE_UNITY_BUILD=ON
 
 echo "Check that GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS:BOOL=ON"
-(grep "GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS:BOOL=ON" CMakeCache.txt > /dev/null && echo "yes") || (echo "Missing" && /bin/false)
+(grep "GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS:BOOL=ON" CMakeCache.txt > /dev/null && echo "yes") || (echo "Missing"; clang -c ../gcore/include_sse2neon.h; clang++ -c ../gcore/include_sse2neon.h; /bin/false)
 
 NPROC=$(sysctl -n hw.ncpu)
 echo "NPROC=${NPROC}"

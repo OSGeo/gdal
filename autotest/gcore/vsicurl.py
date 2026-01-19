@@ -926,6 +926,8 @@ def test_vsicurl_test_fallback_from_head_to_get(server):
 
 def test_vsicurl_test_parse_html_filelist_apache(server):
 
+    gdal.VSICurlClearCache()
+
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
@@ -969,6 +971,43 @@ def test_vsicurl_test_parse_html_filelist_apache(server):
             )
             is None
         )
+
+
+###############################################################################
+
+
+def test_vsicurl_test_parse_html_filelist_nginx_cdn(server):
+
+    gdal.VSICurlClearCache()
+
+    # Format of https://cdn.star.nesdis.noaa.gov/GOES18/ABI/MESO/M1/GEOCOLOR/
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/mydir/",
+        200,
+        {},
+        """<html>
+<head><title>Index of /ma-cdn02/mydir/</title></head>
+<body>
+<h1>Index of /ma-cdn02/mydir/</h1><hr><pre><a href="../">../</a>
+<a href="1000x1000.jpg">1000x1000.jpg</a>                                      28-Oct-2025 18:48              665983
+<a href="2000x2000.jpg">2000x2000.jpg</a>                                      28-Oct-2025 18:48             2013236
+</pre><hr></body>
+</html>
+
+""",
+    )
+    with webserver.install_http_handler(handler):
+        fl = gdal.ReadDir("/vsicurl/http://localhost:%d/mydir" % server.port)
+    assert fl == ["1000x1000.jpg", "2000x2000.jpg"]
+
+    stat = gdal.VSIStatL(
+        "/vsicurl/http://localhost:%d/mydir/1000x1000.jpg" % server.port
+    )
+    assert stat
+    assert stat.size == 665983
 
 
 ###############################################################################
@@ -1703,3 +1742,27 @@ def test_VSIFOpenExL_CACHE_NO(server):
 
         with gdal.VSIFile(filename, "rb", False, {"CACHE": "NO"}) as f:
             assert f.read() == b"1234"
+
+
+###############################################################################
+# Test redirection to a URL ending with a slash, followed by a 403
+
+
+def test_vsicurl_test_redirect_301_to_url_ending_slash_and_then_403(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/test_redirect",
+        301,
+        {"Location": "http://localhost:%d/test_redirect/" % server.port},
+    )
+    handler.add("HEAD", "/test_redirect/", 403)
+
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        assert (
+            gdal.VSIStatL("/vsicurl/http://localhost:%d/test_redirect" % server.port)
+            is None
+        )

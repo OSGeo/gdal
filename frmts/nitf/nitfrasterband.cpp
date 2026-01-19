@@ -106,7 +106,7 @@ NITFProxyPamRasterBand::~NITFProxyPamRasterBand()
     }
 }
 
-char **NITFProxyPamRasterBand::GetMetadata(const char *pszDomain)
+CSLConstList NITFProxyPamRasterBand::GetMetadata(const char *pszDomain)
 {
     GDALRasterBand *_poSrcBand = RefUnderlyingRasterBand();
     if (_poSrcBand)
@@ -376,7 +376,7 @@ NITFRasterBand::NITFRasterBand(NITFDataset *poDSIn, int nBandIn)
     /*      Translate data type(s).                                         */
     /* -------------------------------------------------------------------- */
     if (psImage->nBitsPerSample <= 8)
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
     else if (psImage->nBitsPerSample == 16 && EQUAL(psImage->szPVType, "SI"))
         eDataType = GDT_Int16;
     else if (psImage->nBitsPerSample == 16)

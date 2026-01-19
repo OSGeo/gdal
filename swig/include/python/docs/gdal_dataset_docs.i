@@ -16,7 +16,10 @@ Not implemented by all drivers. See :cpp:func:`GDALDataset::AbortSQL`.
 
 Returns
 -------
-:py:const:`ogr.OGRERR_NONE` on success or :py:const:`ogr.OGRERR_UNSUPPORTED_OPERATION` if AbortSQL is not supported for this dataset.
+int
+    :py:const:`ogr.OGRERR_NONE` on success, or
+    :py:const:`ogr.OGRERR_UNSUPPORTED_OPERATION` if AbortSQL is not supported
+    for this dataset.
 ";
 
 
@@ -27,15 +30,15 @@ Adds a band to a :py:class:`Dataset`.
 Not supported by all drivers.
 
 Parameters
------------
-datatype: int
+----------
+datatype : int
     the data type of the pixels in the new band
-options: dict/list
+options : dict or list, optional
     an optional dict or list of format-specific ``NAME=VALUE`` option strings.
 
 Returns
 -------
-int:
+int
    :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
 
 Examples
@@ -57,12 +60,12 @@ Only a few drivers support this operation. See :cpp:func:`GDALDataset::AddFieldD
 
 Parameters
 ----------
-fieldDomain : ogr.FieldDomain
-              The field domain to add
+fieldDomain : FieldDomain
+    The field domain to add
 
 Returns
---------
-bool:
+-------
+bool
     ``True`` if the field domain was added, ``False`` in case of error.
 
 
@@ -81,7 +84,7 @@ relationship : Relationship
 
 Returns
 -------
-bool:
+bool
     ``True`` if the field domain was added, ``False`` in case of error.
 
 ";
@@ -107,16 +110,18 @@ resampling : str, optional
 overviewlist : list
              A list of overview levels (decimation factors) to build, or an
              empty list to clear existing overviews.
-callback : function, optional
+callback : callable, optional
              A progress callback function
-callback_data: optional
+callback_data : any, optional
              Optional data to be passed to callback function
-options : dict/list, optional
+options : dict or list, optional
              A dict or list of key=value options
 
 Returns
 -------
-:py:const:`CE_Failure` if an error occurs, otherwise :py:const:`CE_None`.
+int
+    :py:const:`CE_Failure` if an error occurs, otherwise
+    :py:const:`CE_None`.
 
 Examples
 --------
@@ -170,16 +175,17 @@ See :cpp:func:`GDALDataset::CopyLayer`.
 
 Parameters
 ----------
-src_layer : ogr.Layer
+src_layer : Layer
             source layer
 new_name : str
            name of the layer to create
-options : dict/list
+options : dict or list
           a dict or list of name=value driver-specific creation options
 
 Returns
 -------
-ogr.Layer, or ``None`` if an error occurs
+Layer or None
+    A layer if successful, or ``None`` if an error occurs.
 ";
 
 %feature("docstring") CreateLayer "
@@ -188,21 +194,22 @@ Create a new layer in a vector Dataset.
 
 Parameters
 ----------
-name : string
+name : str
        the name for the new layer.  This should ideally not
        match any existing layer on the datasource.
-srs : osr.SpatialReference, default=None
-      the coordinate system to use for the new layer, or ``None`` if
-      no coordinate system is available.
+srs : SpatialReference, optional
+      The coordinate system to use for the new layer,
+      or ``None`` if no coordinate system is available. Defaults to ``None``.
 geom_type : int, default = :py:const:`ogr.wkbUnknown`
       geometry type for the layer.  Use :py:const:`ogr.wkbUnknown` if there
       are no constraints on the types geometry to be written.
-options : dict/list, optional
+options : dict or list, optional
       Driver-specific dict or list of name=value options
 
 Returns
 -------
-ogr.Layer or ``None`` on failure.
+Layer or None
+    The layer object if successful, or ``None`` on failure.
 
 
 Examples
@@ -296,9 +303,9 @@ See :cpp:func:`GDALDataset::GetExtent`
 
 Parameters
 ----------
-srs : osr.SpatialReference, default=None
-   Optional spatial reference in which the bounds should be 
-   returned
+srs : SpatialReference, optional
+   Optional spatial reference in which the bounds should be
+   returned. Defaults to ``None``.
 
 Returns
 -------
@@ -316,8 +323,8 @@ Examples
 >>> # Get extent in US National Atlas Equal Area
 >>> with gdal.Open('byte.tif') as ds:
 ...     ds.GetExtent(osr.SpatialReference(epsg=9311))
-... 
-(-1621602.9829031324, -1620214.937944802, -1064263.0904900103, -1062837.1327964044)
+...
+(-1621603.0, -1620214.9, -1064263.1, -1062837.1)
 
 See Also
 --------
@@ -337,7 +344,7 @@ See :cpp:func:`GDALDataset::GetExtentWGS84LongLat`
 .. warning:: Check the return order of the bounds.
 
 Returns
---------
+-------
 tuple or None
     tuple of (minlon, maxlon, minlat, maxlat) or None if the extent cannot be
     determined in WGS84
@@ -346,8 +353,8 @@ Examples
 --------
 >>> with gdal.Open('byte.tif') as ds:
 ...     ds.GetExtentWGS84LongLat()
-... 
-(-117.64204279334717, -117.6289845627537, 33.891546129503816, 33.90243533203516)
+...
+(-117.642, -117.629, 33.892, 33.902)
 
 See Also
 --------
@@ -362,12 +369,13 @@ Get a field domain from its name.
 
 Parameters
 ----------
-name: str
+name : str
       The name of the field domain
 
 Returns
 -------
-ogr.FieldDomain, or ``None`` if it is not found.
+FieldDomain or None
+    An FieldDomain instance if found, or ``None`` if it is not found.
 ";
 
 %feature("docstring")  GetFieldDomainNames "
@@ -376,13 +384,14 @@ Get a list of the names of all field domains stored in the dataset.
 
 Parameters
 ----------
-options: dict/list, optional
+options : dict or list, optional
          Driver-specific options determining how attributes should
          be retrieved.
 
 Returns
 -------
-list, or ``None`` if no field domains are stored in the dataset.
+list or None
+    ``None`` if no field domains are stored in the dataset.
 ";
 
 %feature("docstring")  GetFileList "
@@ -397,7 +406,7 @@ See :cpp:func:`GDALGetFileList`.
 Get number of GCPs. See :cpp:func:`GDALGetGCPCount`.
 
 Returns
---------
+-------
 int
 
 ";
@@ -407,8 +416,8 @@ int
 Return a WKT representation of the GCP spatial reference.
 
 Returns
---------
-string
+-------
+str
 
 ";
 
@@ -425,7 +434,7 @@ See :cpp:func:`GDALGetGCPSpatialRef`
 Get the GCPs. See :cpp:func:`GDALGetGCPs`.
 
 Returns
---------
+-------
 tuple
     a tuple of :py:class:`GCP` objects.
 
@@ -442,8 +451,8 @@ index : int
 
 Returns
 -------
-ogr.Layer
-
+Layer or None
+    An layer if successful, or ``None`` on error.
 ";
 
 
@@ -457,7 +466,8 @@ layer_name : str
 
 Returns
 -------
-ogr.Layer
+Layer or None
+    A layer if successful, or ``None`` on error.
 
 ";
 
@@ -484,7 +494,7 @@ See :cpp:func:`GDALDataset::GetNextFeature`.
 
 Returns
 -------
-ogr.Feature
+Feature
 
 ";
 
@@ -516,14 +526,14 @@ Fetch the affine transformation coefficients.
 See :cpp:func:`GDALGetGeoTransform`.
 
 Parameters
------------
+----------
 can_return_null : bool, default=False
     if ``True``, return ``None`` instead of the default transformation
     if the transformation for this :py:class:`Dataset` has not been defined.
 
 Returns
 -------
-tuple:
+tuple
     a 6-member tuple representing the transformation coefficients
 
 
@@ -534,13 +544,13 @@ tuple:
 Fetch a :py:class:`Band` band from a :py:class:`Dataset`. See :cpp:func:`GDALGetRasterBand`.
 
 Parameters
------------
+----------
 nBand : int
     the index of the band to fetch, from 1 to :py:attr:`RasterCount`
 
 Returns
---------
-Band:
+-------
+Band
     the :py:class:`Band`, or ``None`` on error.
 
 ";
@@ -560,7 +570,7 @@ Get a list of the names of all relationships stored in the dataset.
 
 Parameters
 ----------
-options : dict/list, optional
+options : dict or list, optional
     driver-specific options determining how the relationships should be retrieved
 
 ";
@@ -581,8 +591,8 @@ Group
 Fetch the spatial reference for this dataset.
 
 Returns
---------
-osr.SpatialReference
+-------
+SpatialReference
 
 ";
 
@@ -592,7 +602,7 @@ Returns dataset style table.
 
 Returns
 -------
-ogr.StyleTable
+StyleTable
 
 ";
 
@@ -670,7 +680,8 @@ argin : tuple
 
 Returns
 -------
-:py:const:`CE_Failure` if an error occurs, otherwise :py:const:`CE_None`.
+int
+   :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
 
 ";
 
@@ -682,12 +693,13 @@ See :cpp:func:`GDALDataset::SetProjection`.
 
 Parameters
 ----------
-prj:
+prj : str
    The projection string in OGC WKT or PROJ.4 format
 
 Returns
 -------
-:py:const:`CE_Failure` if an error occurs, otherwise :py:const:`CE_None`.
+int
+   :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
 
 ";
 
@@ -701,7 +713,8 @@ srs : SpatialReference
 
 Returns
 -------
-:py:const:`CE_Failure` if an error occurs, otherwise :py:const:`CE_None`.
+int
+   :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
 
 ";
 
@@ -711,7 +724,7 @@ Set dataset style table
 
 Parameters
 ----------
-table : ogr.StyleTable
+table : StyleTable
 ";
 
 %feature("docstring")  StartTransaction "
@@ -759,11 +772,11 @@ Update an existing field domain by replacing its definition.
 
 The existing field domain with matching name will be replaced.
 
-Requires the :py:const:`ogr.ODsCUpdateFieldDomain` datasset capability.
+Requires the :py:const:`ogr.ODsCUpdateFieldDomain` dataset capability.
 
 Parameters
 ----------
-fieldDomain : ogr.FieldDomain
+fieldDomain : FieldDomain
     Updated field domain.
 
 Returns

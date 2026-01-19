@@ -260,16 +260,14 @@ dataset has a file hierarchy, with the following structure:
     /{z}/{x}/: Directory with tiles for zoom level z and x
     /{z}/{x}/{y}.{ext}: Tile data
 
-The :source_file:`swig/python/gdal-utils/osgeo_utils/samples/gdal_ls.py`
-and :source_file:`swig/python/gdal-utils/osgeo_utils/samples/gdal_cp.py`
-sample utilities can be used to explore and extract data from a PMTiles
-dataset
+:ref:`gdal_vsi_list` and :ref:`gdal_vsi_copy` utilities can be used to explore
+and extract data from a PMTiles dataset
 
 Listing the content of a dataset:
 
 .. code-block:: shell
 
-    python gdal_ls.py -lr "/vsipmtiles//vsicurl/https://protomaps.github.io/PMTiles/protomaps(vector)ODbL_firenze.pmtiles"
+    gdal vsi list -lR "/vsipmtiles//vsicurl/https://protomaps.github.io/PMTiles/protomaps(vector)ODbL_firenze.pmtiles"
 
 outputs:
 
@@ -291,7 +289,7 @@ Displaying the metadata JSON file:
 
 .. code-block:: shell
 
-    python swig/python/gdal-utils/osgeo_utils/samples/gdal_cp.py "/vsipmtiles//vsicurl/https://protomaps.github.io/PMTiles/protomaps(vector)ODbL_firenze.pmtiles/metadata.json" /vsistdout/ | jq .
+    gdal vsi copy "/vsipmtiles//vsicurl/https://protomaps.github.io/PMTiles/protomaps(vector)ODbL_firenze.pmtiles/metadata.json" /vsistdout/ | jq .
 
 outputs:
 
@@ -335,7 +333,7 @@ Extracting all content in a local directory:
 
 .. code-block:: shell
 
-    python swig/python/gdal-utils/osgeo_utils/samples/gdal_cp.py -r "/vsipmtiles//vsicurl/https://protomaps.github.io/PMTiles/protomaps(vector)ODbL_firenze.pmtiles" out_pmtiles
+    gdal vsi copy -r "/vsipmtiles//vsicurl/https://protomaps.github.io/PMTiles/protomaps(vector)ODbL_firenze.pmtiles" out_pmtiles
 
 Examples
 --------

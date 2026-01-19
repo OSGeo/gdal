@@ -28,7 +28,7 @@ Open options
 ------------
 
 |about-open-options|
-Starting with GDAL 2.3, the following open options can be specified:
+The following open options can be specified:
 
 -  .. oo:: SUPPRESS_GEOMETRY
       :choices: YES, NO
@@ -138,9 +138,9 @@ The driver supports reading files managed by VSI Virtual File System
 API, which include "regular" files, as well as files in the /vsizip/,
 /vsigzip/, and /vsicurl/ read-only domains.
 
-Since GDAL 2.2 also a full path to the backend SQLite database can be
-used as an datasource. By default, such datasource is read by SQLite
-driver. If configuration option :config:`OGR_VFK_DB_READ` =YES
+A full path to the backend SQLite database can also be used as an datasource.
+By default, such datasource is read by SQLite driver.
+If configuration option :config:`OGR_VFK_DB_READ` =YES
 is given, such datasource is opened by VFK driver instead.
 
 Layer names

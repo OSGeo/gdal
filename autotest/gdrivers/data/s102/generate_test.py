@@ -224,3 +224,239 @@ generate(
     with_uncertainty=False,
     nodata=0,
 )
+
+
+def generate_multiple_feature_instance_groups():
+    f = h5py.File(
+        os.path.join(os.path.dirname(__file__), "multiple_feature_instance_groups.h5"),
+        "w",
+    )
+    f.attrs["productSpecification"] = "INT.IHO.S-102.3.0.0"
+    f.attrs["issueDate"] = "2025-10-07"
+    f.attrs["issueTime"] = "12:34:56"
+    f.attrs["westBoundLongitude"] = -180.0
+    f.attrs["southBoundLatitude"] = -90.0
+    f.attrs["eastBoundLongitude"] = 180.0
+    f.attrs["northBoundLatitude"] = 90.0
+    f.attrs["geographicIdentifier"] = "world"
+    f.attrs["horizontalCRS"] = 4326
+    f.attrs["verticalCoordinateBase"] = 2
+    f.attrs["verticalCS"] = 6498
+    f.attrs["verticalDatum"] = 12
+    f.attrs["verticalDatumReference"] = 1
+
+    BathymetryCoverage = f.create_group("BathymetryCoverage")
+    BathymetryCoverage.attrs["dimension"] = 2
+    BathymetryCoverage.attrs["dataCodingFormat"] = 2
+    BathymetryCoverage.attrs["commonPointRule"] = 2
+    BathymetryCoverage.attrs["dataOffsetCode"] = 5
+    BathymetryCoverage.attrs["horizontalPositionUncertainty"] = 0
+    BathymetryCoverage.attrs["interpolationType"] = 1
+    BathymetryCoverage.attrs["numInstances"] = 2
+    BathymetryCoverage.attrs["sequencingRule.scanDirection"] = "Longitude, Latitude"
+    BathymetryCoverage.attrs["sequencingRule.type"] = 1
+    BathymetryCoverage.attrs["verticalUncertainty"] = 0
+
+    axisNames = BathymetryCoverage.create_dataset(
+        "axisNames",
+        (2,),
+        dtype=h5py.string_dtype(),
+    )
+    axisNames[...] = np.array(["Longitude", "Latitude"])
+
+    BathymetryCoverage_01 = BathymetryCoverage.create_group("BathymetryCoverage.01")
+
+    BathymetryCoverage_01_Group_001 = BathymetryCoverage_01.create_group("Group_001")
+
+    values_struct_type = np.dtype(
+        [
+            ("depth", "f4"),
+        ]
+    )
+    values = BathymetryCoverage_01_Group_001.create_dataset(
+        "values", (2, 4), dtype=values_struct_type
+    )
+    data = np.array(
+        [(0,), (1,), (2,), (3,), (4,), (5,), (6,), (7,)],
+        dtype=values_struct_type,
+    ).reshape(values.shape)
+    values[...] = data
+
+    BathymetryCoverage_01_Group_001.attrs["minimumUncertainty"] = np.float32(1e6)
+    BathymetryCoverage_01_Group_001.attrs["maximumUncertainty"] = np.float32(1e6)
+    BathymetryCoverage_01_Group_001.attrs["minimumDepth"] = np.float32(0)
+    BathymetryCoverage_01_Group_001.attrs["maximumDepth"] = np.float32(7)
+    BathymetryCoverage_01_Group_001.attrs["timePoint"] = "00010101T000000Z"
+
+    BathymetryCoverage_01.attrs["gridOriginLongitude"] = np.float64(-180)
+    BathymetryCoverage_01.attrs["gridOriginLatitude"] = np.float64(90)
+    BathymetryCoverage_01.attrs["gridSpacingLongitudinal"] = np.float64(90)
+    BathymetryCoverage_01.attrs["gridSpacingLatitudinal"] = np.float64(90)
+    BathymetryCoverage_01.attrs["numPointsLongitudinal"] = np.uint32(values.shape[1])
+    BathymetryCoverage_01.attrs["numPointsLatitudinal"] = np.uint32(values.shape[0])
+    BathymetryCoverage_01.attrs["numGRP"] = np.uint32(1)
+    BathymetryCoverage_01.attrs["startSequence"] = "0,0"
+    BathymetryCoverage_01.attrs["westBoundLongitude"] = -180.0
+    BathymetryCoverage_01.attrs["southBoundLatitude"] = -90.0
+    BathymetryCoverage_01.attrs["eastBoundLongitude"] = 180.0
+    BathymetryCoverage_01.attrs["northBoundLatitude"] = 90.0
+
+    BathymetryCoverage_02 = BathymetryCoverage.create_group("BathymetryCoverage.02")
+
+    BathymetryCoverage_02.attrs["gridOriginLongitude"] = np.float64(-180)
+    BathymetryCoverage_02.attrs["gridOriginLatitude"] = np.float64(90)
+    BathymetryCoverage_02.attrs["gridSpacingLongitudinal"] = np.float64(90)
+    BathymetryCoverage_02.attrs["gridSpacingLatitudinal"] = np.float64(90)
+    BathymetryCoverage_02.attrs["numPointsLongitudinal"] = np.uint32(values.shape[1])
+    BathymetryCoverage_02.attrs["numPointsLatitudinal"] = np.uint32(values.shape[0])
+    BathymetryCoverage_02.attrs["verticalDatum"] = 13
+    BathymetryCoverage_02.attrs["verticalDatumReference"] = 1
+    BathymetryCoverage_02.attrs["numGRP"] = np.uint32(1)
+    BathymetryCoverage_02.attrs["startSequence"] = "0,0"
+    BathymetryCoverage_02.attrs["westBoundLongitude"] = -180.0
+    BathymetryCoverage_02.attrs["southBoundLatitude"] = -90.0
+    BathymetryCoverage_02.attrs["eastBoundLongitude"] = 180.0
+    BathymetryCoverage_02.attrs["northBoundLatitude"] = 90.0
+    BathymetryCoverage_02_Group_001 = BathymetryCoverage_02.create_group("Group_001")
+
+    BathymetryCoverage_02_Group_001.attrs["minimumUncertainty"] = np.float32(1e6)
+    BathymetryCoverage_02_Group_001.attrs["maximumUncertainty"] = np.float32(1e6)
+    BathymetryCoverage_02_Group_001.attrs["minimumDepth"] = np.float32(0)
+    BathymetryCoverage_02_Group_001.attrs["maximumDepth"] = np.float32(70)
+    BathymetryCoverage_02_Group_001.attrs["timePoint"] = "00010101T000000Z"
+
+    values = BathymetryCoverage_02_Group_001.create_dataset(
+        "values", (2, 4), dtype=values_struct_type
+    )
+    data = np.array(
+        [(0,), (10,), (20,), (30,), (40,), (50,), (60,), (70,)],
+        dtype=values_struct_type,
+    ).reshape(values.shape)
+    values[...] = data
+
+    QualityOfBathymetryCoverage = f.create_group("QualityOfBathymetryCoverage")
+    QualityOfBathymetryCoverage.attrs["dimension"] = 2
+    QualityOfBathymetryCoverage.attrs["dataCodingFormat"] = 9
+    QualityOfBathymetryCoverage.attrs["commonPointRule"] = 1
+    QualityOfBathymetryCoverage.attrs["dataOffsetCode"] = 1
+    QualityOfBathymetryCoverage.attrs["horizontalPositionUncertainty"] = 0
+    QualityOfBathymetryCoverage.attrs["interpolationType"] = 1
+    QualityOfBathymetryCoverage.attrs["numInstances"] = 1
+    QualityOfBathymetryCoverage.attrs["sequencingRule.scanDirection"] = (
+        "Longitude, Latitude",
+    )
+    QualityOfBathymetryCoverage.attrs["sequencingRule.type"] = 1
+    QualityOfBathymetryCoverage.attrs["verticalUncertainty"] = 0
+
+    axisNames = QualityOfBathymetryCoverage.create_dataset(
+        "axisNames",
+        (2,),
+        dtype=h5py.string_dtype(),
+    )
+    axisNames[...] = np.array(["Longitude", "Latitude"])
+
+    quality01Group = QualityOfBathymetryCoverage.create_group(
+        "QualityOfBathymetryCoverage" + ".01"
+    )
+
+    for attr_name in (
+        "gridOriginLongitude",
+        "gridOriginLatitude",
+        "gridSpacingLongitudinal",
+        "gridSpacingLatitudinal",
+        "numPointsLongitudinal",
+        "numPointsLatitudinal",
+        "numGRP",
+        "startSequence",
+        "westBoundLongitude",
+        "southBoundLatitude",
+        "eastBoundLongitude",
+        "northBoundLatitude",
+    ):
+        quality01Group.attrs[attr_name] = BathymetryCoverage_01.attrs[attr_name]
+
+    Group_001 = quality01Group.create_group("Group_001")
+    values = Group_001.create_dataset("values", (2, 4), dtype=np.uint32)
+    data = np.array(
+        [1, 2, 3, 4, 5, 6, 7, 8],
+        dtype=np.uint32,
+    ).reshape(values.shape)
+    values[...] = data
+
+    featureAttributeTable_struct_type = np.dtype(
+        [
+            ("id", "u4"),
+        ]
+    )
+
+    featureAttributeTable = QualityOfBathymetryCoverage.create_dataset(
+        "featureAttributeTable", (8,), dtype=featureAttributeTable_struct_type
+    )
+
+    data = np.array(
+        [
+            (1,),
+            (2,),
+            (3,),
+            (4,),
+            (5,),
+            (6,),
+            (7,),
+            (8,),
+        ],
+        dtype=featureAttributeTable_struct_type,
+    )
+    featureAttributeTable[...] = data
+
+    group_f = f.create_group("Group_F")
+
+    GroupF_struct_type = np.dtype(
+        [
+            ("code", h5py.string_dtype()),
+            ("name", h5py.string_dtype()),
+            ("uom.name", h5py.string_dtype()),
+            ("fillValue", h5py.string_dtype()),
+            ("datatype", h5py.string_dtype()),
+            ("lower", h5py.string_dtype()),
+            ("upper", h5py.string_dtype()),
+            ("closure", h5py.string_dtype()),
+        ]
+    )
+    GroupFBathymetryCoverage = group_f.create_dataset(
+        "BathymetryCoverage",
+        (1,),
+        dtype=GroupF_struct_type,
+    )
+    GroupFBathymetryCoverage[...] = np.array(
+        [
+            (
+                "depth",
+                "depth",
+                "metres",
+                "1000000",
+                "H5T_FLOAT",
+                "0",
+                "70",
+                "closedInterval",
+            )
+        ],
+        dtype=GroupF_struct_type,
+    )
+
+    GroupFQuality = group_f.create_dataset(
+        "QualityOfBathymetryCoverage", (1,), dtype=GroupF_struct_type
+    )
+    GroupFQuality[...] = np.array(
+        [("iD", "ID", "", "0", "H5T_INTEGER", "1", "", "geSemiInterval")],
+        dtype=GroupF_struct_type,
+    )
+
+    featureCode = group_f.create_dataset(
+        "featureCode",
+        (2,),
+        dtype=h5py.string_dtype(),
+    )
+    featureCode[...] = np.array(["BathymetryCoverage", "QualityOfBathymetryCoverage"])
+
+
+generate_multiple_feature_instance_groups()

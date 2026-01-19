@@ -212,9 +212,11 @@ TIFFCodec *TIFFRegisterCODEC(uint16_t scheme, const char *name,
 
     if (cd != NULL)
     {
+        char *codec_name;
         cd->info = (TIFFCodec *)((uint8_t *)cd + sizeof(codec_t));
-        cd->info->name = (char *)((uint8_t *)cd->info + sizeof(TIFFCodec));
-        strcpy(cd->info->name, name);
+        codec_name = (char *)((uint8_t *)cd->info + sizeof(TIFFCodec));
+        strcpy(codec_name, name);
+        cd->info->name = codec_name;
         cd->info->scheme = scheme;
         cd->info->init = init;
         cd->next = registeredCODECS;
@@ -247,7 +249,7 @@ void TIFFUnRegisterCODEC(TIFFCodec *c)
 }
 
 /************************************************************************/
-/*                       TIFFGetConfisuredCODECs()                      */
+/*                       TIFFGetConfiguredCODECs()                      */
 /************************************************************************/
 
 /**
@@ -258,7 +260,7 @@ void TIFFUnRegisterCODEC(TIFFCodec *c)
  * or NULL if function failed.
  */
 
-TIFFCodec *TIFFGetConfiguredCODECs()
+TIFFCodec *TIFFGetConfiguredCODECs(void)
 {
     int i = 1;
     codec_t *cd;

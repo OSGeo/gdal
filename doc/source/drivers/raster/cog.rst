@@ -20,8 +20,28 @@ done, and also takes care of morphing the input dataset into the expected form
 when using some compression types (for example a RGBA dataset will be transparently
 converted to a RGB+mask dataset when selecting JPEG compression)
 
+This driver is nominally used through the :cpp:func:`GDALDriver::CreateCopy` method,
+that natively does not support random writing but requires a source dataset
+to be provided as input. During the writing process, if overviews are generated,
+they will be created in a temporary dataset, requiring storage capacity
+of roughly one third of the final file size, before being transferred to the
+output file.
+By default temporary files are created in the same directory as the final file,
+if the target file system supports random writing and if the :config:`CPL_TMPDIR`
+configuration option is not set.
+
+Starting with GDAL 3.13, the :cpp:func:`GDALDriver::Create` method is also implemented,
+by using a temporary GeoTIFF dataset, which means that at least twice the
+final size of the file of storage capacity is required. Note that as the
+temporary dataset uses lossless compression, if the final COG file uses lossy
+compression, more temporary storage may be needed.
+
 Driver capabilities
 -------------------
+
+.. supports_create::
+
+    .. versionadded:: 3.13
 
 .. supports_createcopy::
 
@@ -273,7 +293,7 @@ General creation options
       Create a file with less than 8 bits per sample by
       passing a value from 1 to 7. The apparent pixel type should be Byte.
       Values of n=9...15 (UInt16 type) and n=17...31
-      (UInt32 type) are also accepted. From GDAL 2.2, n=16 is accepted for
+      (UInt32 type) are also accepted. n=16 is accepted for
       Float32 type to generate half-precision floating point values.
 
 -  .. co:: PREDICTOR

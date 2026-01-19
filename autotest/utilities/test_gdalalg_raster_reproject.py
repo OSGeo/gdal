@@ -315,3 +315,35 @@ def test_gdalalg_raster_reproject_complete_dst_crs_iau_mars(tmp_path):
     )
     assert "Earth" not in out
     assert "Mars" in out
+
+
+def test_empty_bbox(tmp_vsimem):
+    """Test issue GH #13498, crashes when empty bbox and source has overviews"""
+
+    in_filename = str(tmp_vsimem / "test_empty_bbox_in.tif")
+    out_filename = str(tmp_vsimem / "test_empty_bbox_out.tif")
+
+    # To reproduce the issue, we need the code path that uses the overview
+    ds = gdal.GetDriverByName("GTiff").Create(in_filename, 100, 100, 1)
+    ds.SetProjection("EPSG:4269")
+    ds.SetGeoTransform([0, 0.005, 0, 0, 0, -0.005])
+    ds.FlushCache()
+    ds.BuildOverviews("NEAR", overviewlist=[2])
+    ds.FlushCache()
+    ds = None
+
+    alg = get_reproject_alg()
+    # This resulted in a crash before the fix
+    with pytest.raises(Exception, match="Invalid bounding box specified"):
+        alg.ParseRunAndFinalize(
+            [
+                in_filename,
+                "--bbox=-110,37,-110,37",
+                "--bbox-crs=EPSG:4269",
+                "--dst-crs=EPSG:4326",
+                "--overwrite",
+                "--of=COG",
+                "--co=COMPRESS=DEFLATE",
+                out_filename,
+            ],
+        )

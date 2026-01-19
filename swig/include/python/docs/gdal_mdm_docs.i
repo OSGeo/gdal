@@ -12,15 +12,15 @@ dimensions : list
     List of dimensions, ordered from the slowest varying
     dimension first to the fastest varying dimension last.
     Might be empty for a scalar array (if supported by driver)
-data_type: :py:class:`ExtendedDataType`
+data_type : :py:class:`ExtendedDataType`
     Attribute data type
-options: dict/list
-    an optional dict or list of driver specific ``NAME=VALUE`` option strings.
+options : dict or list, optional
+    dict or list of driver specific ``NAME=VALUE`` option strings.
 
 Returns
 -------
 
-Attribute:
+Attribute
     the new :py:class:`Attribute` or ``None`` on failure.
 
 Examples
@@ -48,17 +48,17 @@ name : str
     Dimension name
 dim_type : str
     Dimension type (might be empty, and ignored by drivers)
-direction: str
+direction : str
     Dimension direction (might be empty, and ignored by drivers)
 size : int
     Number of values indexed by this dimension. Should be > 0
-options: dict/list
-    an optional dict or list of driver specific ``NAME=VALUE`` option strings.
+options : dict or list, optional
+    dict or list of driver specific ``NAME=VALUE`` option strings.
 
 Returns
 -------
 
-Dimension:
+Dimension
     the new :py:class:`Dimension` or ``None`` on failure.
 
 Examples
@@ -94,15 +94,15 @@ dimensions : list
     List of dimensions, ordered from the slowest varying
     dimension first to the fastest varying dimension last.
     Might be empty for a scalar array (if supported by driver)
-data_type: :py:class:`ExtendedDataType`
+data_type : :py:class:`ExtendedDataType`
     Array data type
-options: dict/list
-    an optional dict or list of driver specific ``NAME=VALUE`` option strings.
+options : dict or list, optional
+    dict or list of driver specific ``NAME=VALUE`` option strings.
 
 Returns
 -------
 
-MDArray:
+MDArray
     the new :py:class:`MDArray` or ``None`` on failure.
 
 Examples

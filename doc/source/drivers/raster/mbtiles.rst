@@ -8,14 +8,11 @@ MBTiles
 
 .. build_dependencies:: libsqlite3
 
-The MBTiles driver allows reading rasters in
+The MBTiles driver allows reading, creating and modifying rasters in
 the MBTiles format, which is a specification for storing tiled map data
 in SQLite databases.
 
-Starting with GDAL 2.1, the MBTiles driver has creation and write
-support for MBTiles raster datasets.
-
-Starting with GDAL 2.3, the MBTiles driver has read and write support
+The MBTiles driver has read and write support
 for MBTiles vector datasets. For standalone Mapbox Vector Tile files or
 set of MVT files, see the :ref:`MVT <vector.mvt>` driver. Note: vector
 write support requires GDAL to be built with GEOS.
@@ -26,11 +23,11 @@ PNG drivers.
 The SRS is always the `Pseudo-Mercator <https://en.wikipedia.org/wiki/Web_Mercator_projection>`__
 (a.k.a Google Mercator) projection, EPSG:3857.
 
-Starting with GDAL 2.3, the driver will open a dataset as RGBA. For
+The driver will open a dataset as RGBA. For
 previous versions, the driver will try to determine the number of bands
 by probing the content of one tile. It is possible to alter this
 behavior by defining the :config:`MBTILES_BAND_COUNT` configuration option (or
-starting with GDAL 2.1, the :oo:`BAND_COUNT` open option) to the number of
+the :oo:`BAND_COUNT` open option) to the number of
 bands. The values supported are 1, 2, 3 or 4. Four band
 (Red,Green,Blue,Alpha) dataset gives the maximum compatibility with the
 various encodings of tiles that can be stored.
@@ -341,7 +338,7 @@ The following creation options are available:
 
          Whether to write the bounds 'metadata' item.
 
--  Vector only (GDAL >= 2.3):
+-  Vector only:
 
    -  .. co:: MINZOOM
          :choices: <integer>
@@ -513,7 +510,7 @@ BuildOverviews() with nOverviews=0)
 Vector tiles
 ------------
 
-Starting with GDAL 2.3, the MBTiles driver can read MBTiles files
+The MBTiles driver can read MBTiles files
 containing vector tiles conforming to the Mapbox Vector Tile format
 (format=pbf).
 

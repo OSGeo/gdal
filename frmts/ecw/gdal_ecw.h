@@ -196,7 +196,7 @@ class VSIIOStream final : public CNCSJPCIOStream
         lengthOfJPData = size;
         bWritable = bWrite;
         bSeekable = bSeekableIn;
-        VSIFSeekL(fpVSIL, startOfJPData, SEEK_SET);
+        VSIFSeekL(fpVSIL, static_cast<vsi_l_offset>(startOfJPData), SEEK_SET);
         m_Filename = CPLStrdup(pszFilename);
 
 #if ECWSDK_VERSION >= 55
@@ -268,16 +268,22 @@ class VSIIOStream final : public CNCSJPCIOStream
         switch (origin)
         {
             case START:
-                success =
-                    (0 == VSIFSeekL(fpVSIL, offset + startOfJPData, SEEK_SET));
+                success = (0 == VSIFSeekL(fpVSIL,
+                                          static_cast<vsi_l_offset>(offset) +
+                                              startOfJPData,
+                                          SEEK_SET));
                 break;
 
             case CURRENT:
-                success = (0 == VSIFSeekL(fpVSIL, offset, SEEK_CUR));
+                success =
+                    (0 == VSIFSeekL(fpVSIL, static_cast<vsi_l_offset>(offset),
+                                    SEEK_CUR));
                 break;
 
             case END:
-                success = (0 == VSIFSeekL(fpVSIL, offset, SEEK_END));
+                success =
+                    (0 == VSIFSeekL(fpVSIL, static_cast<vsi_l_offset>(offset),
+                                    SEEK_END));
                 break;
         }
         if (!success)
@@ -592,14 +598,14 @@ class CPL_DLL ECWDataset final : public GDALJP2AbstractDataset
     char **GetMetadataDomainList() override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
 
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,

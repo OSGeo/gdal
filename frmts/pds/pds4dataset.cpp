@@ -478,7 +478,7 @@ PDS4MaskBand::PDS4MaskBand(GDALRasterBand *poBaseBand,
                            const std::vector<double> &adfConstants)
     : m_poBaseBand(poBaseBand), m_pBuffer(nullptr), m_adfConstants(adfConstants)
 {
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     nRasterXSize = poBaseBand->GetXSize();
     nRasterYSize = poBaseBand->GetYSize();
@@ -564,7 +564,7 @@ CPLErr PDS4MaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
     }
 
     GByte *pabyDst = static_cast<GByte *>(pImage);
-    if (eSrcDT == GDT_Byte)
+    if (eSrcDT == GDT_UInt8)
     {
         FillMask<GByte>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
                         m_adfConstants);
@@ -640,7 +640,7 @@ PDS4Dataset::~PDS4Dataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr PDS4Dataset::Close()
+CPLErr PDS4Dataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -774,7 +774,7 @@ CPLErr PDS4Dataset::SetGeoTransform(const GDALGeoTransform &gt)
 /*                             SetMetadata()                            */
 /************************************************************************/
 
-CPLErr PDS4Dataset::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr PDS4Dataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 {
     if (m_bUseSrcLabel && eAccess == GA_Update && pszDomain != nullptr &&
         EQUAL(pszDomain, "xml:PDS4"))
@@ -1924,7 +1924,7 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             // Figure out data type
             const char *pszDataType =
                 CPLGetXMLValue(psSubIter, "Element_Array.data_type", "");
-            GDALDataType eDT = GDT_Byte;
+            GDALDataType eDT = GDT_UInt8;
             bool bLSBOrder = strstr(pszDataType, "LSB") != nullptr;
 
             // ComplexLSB16', 'ComplexLSB8', 'ComplexMSB16', 'ComplexMSB8',
@@ -1976,7 +1976,7 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             }
             else if (EQUAL(pszDataType, "UnsignedByte"))
             {
-                eDT = GDT_Byte;
+                eDT = GDT_UInt8;
             }
             else if (EQUAL(pszDataType, "UnsignedLSB2") ||
                      EQUAL(pszDataType, "UnsignedMSB2"))
@@ -3769,7 +3769,7 @@ void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
         psArray, CXT_Element, (osPrefix + "Element_Array").c_str());
     GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
     const char *pszDataType =
-        (eDT == GDT_Byte)     ? "UnsignedByte"
+        (eDT == GDT_UInt8)    ? "UnsignedByte"
         : (eDT == GDT_Int8)   ? "SignedByte"
         : (eDT == GDT_UInt16) ? "UnsignedLSB2"
         : (eDT == GDT_Int16)  ? (m_bIsLSB ? "SignedLSB2" : "SignedMSB2")
@@ -4035,7 +4035,6 @@ void PDS4Dataset::CreateHeader(CPLXMLNode *psProduct,
     if (STARTS_WITH(psProduct->pszValue, "pds:"))
         osPrefix = "pds:";
 
-    OGREnvelope sExtent;
     if (m_oSRS.IsEmpty() && GetLayerCount() >= 1)
     {
         if (const auto poSRS = GetLayer(0)->GetSpatialRef())
@@ -4762,7 +4761,7 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::CreateInternal(
     if (nXSize == 0)
         return nullptr;
 
-    if (!(eType == GDT_Byte || eType == GDT_Int8 || eType == GDT_Int16 ||
+    if (!(eType == GDT_UInt8 || eType == GDT_Int8 || eType == GDT_Int16 ||
           eType == GDT_UInt16 || eType == GDT_Int32 || eType == GDT_UInt32 ||
           eType == GDT_Int64 || eType == GDT_UInt64 || eType == GDT_Float32 ||
           eType == GDT_Float64 || eType == GDT_CFloat32 ||
@@ -5297,7 +5296,7 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
 
     if (poDS->m_bUseSrcLabel)
     {
-        char **papszMD_PDS4 = poSrcDS->GetMetadata("xml:PDS4");
+        CSLConstList papszMD_PDS4 = poSrcDS->GetMetadata("xml:PDS4");
         if (papszMD_PDS4 != nullptr)
         {
             poDS->SetMetadata(papszMD_PDS4, "xml:PDS4");
@@ -5323,7 +5322,7 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
 
         if (CPLFetchBool(papszOptions, "PROPAGATE_SRC_METADATA", true))
         {
-            char **papszISIS3MD = poSrcDS->GetMetadata("json:ISIS3");
+            CSLConstList papszISIS3MD = poSrcDS->GetMetadata("json:ISIS3");
             if (papszISIS3MD)
             {
                 poDS->SetMetadata(papszISIS3MD, "json:ISIS3");

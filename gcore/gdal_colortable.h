@@ -68,7 +68,6 @@ class CPL_DLL GDALColorTable
     LoadFromFile(const char *pszFilename);
 
     /** Convert a GDALColorTable* to a GDALRasterBandH.
-     * @since GDAL 2.3
      */
     static inline GDALColorTableH ToHandle(GDALColorTable *poCT)
     {
@@ -76,7 +75,6 @@ class CPL_DLL GDALColorTable
     }
 
     /** Convert a GDALColorTableH to a GDALColorTable*.
-     * @since GDAL 2.3
      */
     static inline GDALColorTable *FromHandle(GDALColorTableH hCT)
     {

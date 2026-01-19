@@ -731,6 +731,9 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
 
     if (CPLTestBool(CPLGetConfigOption("OGR_WFS_USE_STREAMING", "YES")))
     {
+        CPLConfigOptionSetter oDisableVSICACHE(
+            "VSI_CACHE", "FALSE", /* bSetOnlyIfUndefined = */ false);
+
         CPLString osStreamingName;
         if (STARTS_WITH(osURL, "/vsimem/") &&
             CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")))

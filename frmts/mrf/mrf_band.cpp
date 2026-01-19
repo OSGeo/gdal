@@ -129,7 +129,7 @@ static int isAllVal(GDALDataType gt, void *b, size_t bytecount, double ndv)
 
     switch (gt)
     {
-        TEST_T(GDT_Byte, GByte);
+        TEST_T(GDT_UInt8, GByte);
         TEST_T(GDT_Int8, GInt8);
         TEST_T(GDT_UInt16, GUInt16);
         TEST_T(GDT_Int16, GInt16);
@@ -577,7 +577,7 @@ CPLErr MRFRasterBand::FillBlock(void *buffer)
     size_t bsb = blockSizeBytes();
 
     // use memset for speed for bytes, or if nodata is zeros
-    if (0.0 == ndv || eDataType == GDT_Byte || eDataType == GDT_Int8)
+    if (0.0 == ndv || eDataType == GDT_UInt8 || eDataType == GDT_Int8)
     {
         memset(buffer, int(ndv), bsb);
         return CE_None;
@@ -964,7 +964,7 @@ CPLErr MRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
         return CE_Failure;
     }
 
-    VSIFSeekL(srcfd, tinfo.offset, SEEK_SET);
+    VSIFSeekL(srcfd, static_cast<vsi_l_offset>(tinfo.offset), SEEK_SET);
     if (tinfo.size !=
         GIntBig(VSIFReadL(buf, 1, static_cast<size_t>(tinfo.size), srcfd)))
     {
@@ -1077,7 +1077,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     }
 
     // This part is not thread safe, but it is what GDAL expects
-    VSIFSeekL(dfp, tinfo.offset, SEEK_SET);
+    VSIFSeekL(dfp, static_cast<vsi_l_offset>(tinfo.offset), SEEK_SET);
     if (1 != VSIFReadL(data, static_cast<size_t>(tinfo.size), 1, dfp))
     {
         CPLFree(data);

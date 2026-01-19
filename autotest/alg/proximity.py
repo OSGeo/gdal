@@ -26,7 +26,7 @@ def test_proximity_1():
     src_ds = gdal.Open("data/pat.tif")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/proximity_1.tif", 25, 25, 1, gdal.GDT_Byte)
+    dst_ds = drv.Create("tmp/proximity_1.tif", 25, 25, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.ComputeProximity(src_band, dst_band)
@@ -88,7 +88,7 @@ def test_proximity_3():
     src_ds = gdal.Open("data/pat.tif")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/proximity_3.tif", 25, 25, 1, gdal.GDT_Byte)
+    dst_ds = drv.Create("tmp/proximity_3.tif", 25, 25, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.ComputeProximity(

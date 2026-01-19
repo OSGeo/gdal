@@ -813,7 +813,7 @@ CPLErr GDALPamRasterBand::CloneInfo(GDALRasterBand *poSrcBand, int nCloneFlags)
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr GDALPamRasterBand::SetMetadata(char **papszMetadata,
+CPLErr GDALPamRasterBand::SetMetadata(CSLConstList papszMetadata,
                                       const char *pszDomain)
 
 {

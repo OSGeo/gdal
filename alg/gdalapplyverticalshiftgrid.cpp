@@ -333,7 +333,6 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
  * @return a new dataset corresponding to hSrcDataset adjusted with
  * hGridDataset, or NULL. If not NULL, it must be closed with GDALClose().
  *
- * @since GDAL 2.2
  * @deprecated GDAL 3.4. Will be removed in GDAL 4.0. This function was used
  *             by gdalwarp initially, but is no longer needed.
  */
@@ -559,7 +558,6 @@ static CPLString GetProj4Filename(const char *pszFilename)
  *
  * @return a dataset. If not NULL, it must be closed with GDALClose().
  *
- * @since GDAL 2.2
  * @deprecated GDAL 3.4. Will be removed in GDAL 4.0. This function was used
  *             by gdalwarp initially, but is no longer needed.
  */

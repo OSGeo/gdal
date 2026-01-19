@@ -35,6 +35,11 @@ class GDALVectorCheckCoverageAlgorithm : public GDALVectorPipelineStepAlgorithm
 
     explicit GDALVectorCheckCoverageAlgorithm(bool standaloneStep = false);
 
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 

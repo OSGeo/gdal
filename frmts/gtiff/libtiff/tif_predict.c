@@ -1099,7 +1099,7 @@ static void PredictorPrintDir(TIFF *tif, FILE *fd, long flags)
                 fprintf(fd, "floating point predictor ");
                 break;
         }
-        fprintf(fd, "%d (0x%x)\n", sp->predictor, sp->predictor);
+        fprintf(fd, "%d (0x%x)\n", sp->predictor, (unsigned)sp->predictor);
     }
     if (sp->printdir)
         (*sp->printdir)(tif, fd, flags);

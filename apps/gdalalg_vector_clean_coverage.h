@@ -36,6 +36,11 @@ class GDALVectorCleanCoverageAlgorithm : public GDALVectorPipelineStepAlgorithm
 
     explicit GDALVectorCleanCoverageAlgorithm(bool standaloneStep = false);
 
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
     struct Options
     {
         double snappingTolerance = -1;

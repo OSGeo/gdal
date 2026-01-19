@@ -323,7 +323,7 @@ class RMFDataset final : public GDALDataset
                      GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     // cppcheck-suppress functionStatic
     vsi_l_offset GetFileOffset(GUInt32 iRMFOffset) const;

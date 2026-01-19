@@ -35,12 +35,7 @@
 
 static inline bool OGRWKBNeedSwap(GByte b)
 {
-#if CPL_IS_LSB
-    const bool bNeedSwap = b == 0;
-#else
-    const bool bNeedSwap = b == 1;
-#endif
-    return bNeedSwap;
+    return b != CPL_IS_LSB;
 }
 
 /************************************************************************/

@@ -80,7 +80,8 @@ def test_gdalalg_vector_check_coverage_invalid_layer(alg, three_rectangles):
         assert alg.Run()
 
 
-def test_gdalalg_vector_check_geometry_two_layers(alg, three_rectangles):
+@pytest.mark.parametrize("input_layers", (1, 2))
+def test_gdalalg_vector_check_coverage_two_layers(alg, three_rectangles, input_layers):
 
     poly_ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
 
@@ -89,18 +90,32 @@ def test_gdalalg_vector_check_geometry_two_layers(alg, three_rectangles):
     ds.CopyLayer(three_rectangles.GetLayer(0), "poly2")
 
     alg["input"] = ds
-    alg["input-layer"] = "poly2"
     alg["output"] = ""
     alg["output-format"] = "stream"
+    if input_layers == 1:
+        alg["input-layer"] = "poly2"
+    else:
+        alg["input-layer"] = ["poly2", "poly1"]
 
     assert alg.Run()
 
     dst_ds = alg["output"].GetDataset()
-    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_ds.GetLayerCount() == input_layers
 
-    assert dst_lyr.GetFeatureCount() == 2
-    for f in dst_lyr:
-        assert f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiLineString
+    for i in range(input_layers):
+        dst_lyr = dst_ds.GetLayer(i)
+
+        errors = 2 if i == 0 else 0
+
+        if input_layers == 1:
+            assert dst_lyr.GetName() == "invalid_edge"
+        else:
+            assert dst_lyr.GetName() == f"invalid_edge_{alg['input-layer'][i]}"
+
+        assert dst_lyr.GetFeatureCount() == errors
+
+        for f in dst_lyr:
+            assert f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiLineString
 
     assert alg.Finalize()
 

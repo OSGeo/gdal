@@ -58,7 +58,7 @@ class ISIS2Dataset final : public RawDataset
     const char *GetKeywordSub(const char *pszPath, int iSubscript,
                               const char *pszDefault = "");
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     CPL_DISALLOW_COPY_ASSIGN(ISIS2Dataset)
 
@@ -97,7 +97,7 @@ ISIS2Dataset::~ISIS2Dataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr ISIS2Dataset::Close()
+CPLErr ISIS2Dataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -310,7 +310,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     /********   Grab format type - isis2 only supports 8,16,32 *******/
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     bool bNoDataSet = false;
     double dfNoData = 0.0;
 
@@ -318,7 +318,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     switch (itype)
     {
         case 1:
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             dfNoData = NULL1;
             bNoDataSet = true;
             break;

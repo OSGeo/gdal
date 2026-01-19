@@ -71,7 +71,7 @@ class LOSLASDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(LOSLASDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     LOSLASDataset();
@@ -118,7 +118,7 @@ LOSLASDataset::~LOSLASDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr LOSLASDataset::Close()
+CPLErr LOSLASDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

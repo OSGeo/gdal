@@ -137,7 +137,7 @@ C# Changes
 Tamas notes that in C# we normally convert the unicode C# strings into C
 string with the PtrToStringAnsi marshaller. Presumably we will need to
 use a utf-8 converter for all interface strings considered to be
-filenames. I would note this should also apploy to OGR string attribute
+filenames. I would note this should also apply to OGR string attribute
 values which are also intended to be treated as utf-8.
 
 (It is unclear who will take care of this aspect since the primary

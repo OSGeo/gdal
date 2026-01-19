@@ -11,6 +11,9 @@
  ****************************************************************************/
 
 #include "rat.h"
+#include "ogr_p.h"
+
+#include <cmath>
 
 /************************************************************************/
 /*                             CreateRAT()                              */
@@ -29,13 +32,34 @@ HDF5CreateRAT(const std::shared_ptr<GDALMDArray> &poValues,
         {
             if (GDALDataTypeIsInteger(
                     poComponent->GetType().GetNumericDataType()))
-                eType = GFT_Integer;
+            {
+                // S102 featureAttributeTable
+                if (poComponent->GetName() ==
+                        "featuresDetected."
+                        "leastDepthOfDetectedFeaturesMeasured" ||
+                    poComponent->GetName() ==
+                        "featuresDetected.significantFeaturesDetected" ||
+                    poComponent->GetName() == "fullSeafloorCoverageAchieved" ||
+                    poComponent->GetName() == "bathyCoverage")
+                {
+                    eType = GFT_Boolean;
+                }
+                else
+                {
+                    eType = GFT_Integer;
+                }
+            }
             else
                 eType = GFT_Real;
         }
         else
         {
-            eType = GFT_String;
+            // S102 featureAttributeTable
+            if (poComponent->GetName() == "surveyDateRange.dateStart" ||
+                poComponent->GetName() == "surveyDateRange.dateEnd")
+                eType = GFT_DateTime;
+            else
+                eType = GFT_String;
         }
         poRAT->CreateColumn(poComponent->GetName().c_str(), eType,
                             bFirstColIsMinMax && poRAT->GetColumnCount() == 0
@@ -58,7 +82,7 @@ HDF5CreateRAT(const std::shared_ptr<GDALMDArray> &poValues,
         for (const auto &poComponent : poComponents)
         {
             const auto eRATType = poRAT->GetTypeOfCol(iCol);
-            if (eRATType == GFT_Integer)
+            if (eRATType == GFT_Integer || eRATType == GFT_Boolean)
             {
                 int nValue = 0;
                 GDALCopyWords(&abyRow[poComponent->GetOffset()],
@@ -82,7 +106,48 @@ HDF5CreateRAT(const std::shared_ptr<GDALMDArray> &poValues,
                     &pszStr, GDALExtendedDataType::CreateString());
                 if (pszStr)
                 {
-                    poRAT->SetValue(iRow, iCol, pszStr);
+                    if (eRATType == GFT_DateTime)
+                    {
+                        GDALRATDateTime sDateTime;
+                        if (strlen(pszStr) == 8 &&
+                            sscanf(pszStr, "%04d%02d%02d", &(sDateTime.nYear),
+                                   &(sDateTime.nMonth), &(sDateTime.nDay)) == 3)
+                        {
+                            sDateTime.bPositiveTimeZone = true;
+                            sDateTime.bIsValid = true;
+                        }
+                        else
+                        {
+                            OGRField sField;
+                            if (OGRParseDate(pszStr, &sField, 0))
+                            {
+                                sDateTime.nYear = sField.Date.Year;
+                                sDateTime.nMonth = sField.Date.Month;
+                                sDateTime.nDay = sField.Date.Day;
+                                sDateTime.nHour = sField.Date.Hour;
+                                sDateTime.nMinute = sField.Date.Minute;
+                                sDateTime.fSecond = sField.Date.Second;
+                                sDateTime.bPositiveTimeZone =
+                                    sField.Date.TZFlag >= 100 ||
+                                    sField.Date.TZFlag <= 2;
+                                if (sField.Date.TZFlag > 2)
+                                {
+                                    sDateTime.nTimeZoneHour =
+                                        std::abs(sField.Date.TZFlag - 100) / 4;
+                                    sDateTime.nTimeZoneMinute =
+                                        (std::abs(sField.Date.TZFlag - 100) %
+                                         4) *
+                                        15;
+                                }
+                                sDateTime.bIsValid = true;
+                            }
+                        }
+                        poRAT->SetValue(iRow, iCol, sDateTime);
+                    }
+                    else
+                    {
+                        poRAT->SetValue(iRow, iCol, pszStr);
+                    }
                 }
                 CPLFree(pszStr);
             }

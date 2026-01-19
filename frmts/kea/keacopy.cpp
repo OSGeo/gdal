@@ -156,7 +156,11 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO,
                 case GFT_String:
                     field->dataType = kealib::kea_att_string;
                     break;
-                default:
+                case GFT_Boolean:
+                    field->dataType = kealib::kea_att_bool;
+                    break;
+                case GFT_DateTime:
+                case GFT_WKBGeometry:
                     // leave as "kea_att_string"
                     break;
             }
@@ -231,9 +235,10 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO,
         int numRows = gdalAtt->GetRowCount();
         keaAtt->addRows(numRows);
 
-        int *pnIntBuffer = new int[kealib::KEA_ATT_CHUNK_SIZE];
-        int64_t *pnInt64Buffer = new int64_t[kealib::KEA_ATT_CHUNK_SIZE];
-        double *pfDoubleBuffer = new double[kealib::KEA_ATT_CHUNK_SIZE];
+        bool *pbBuffer = nullptr;
+        int *pnIntBuffer = nullptr;
+        int64_t *pnInt64Buffer = nullptr;
+        double *pfDoubleBuffer = nullptr;
         for (int ni = 0; ni < numRows; ni += kealib::KEA_ATT_CHUNK_SIZE)
         {
             int nLength = kealib::KEA_ATT_CHUNK_SIZE;
@@ -247,7 +252,20 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO,
 
                 switch (field->dataType)
                 {
+                    case kealib::kea_att_bool:
+                        if (!pbBuffer)
+                            pbBuffer = new bool[kealib::KEA_ATT_CHUNK_SIZE];
+                        ((GDALRasterAttributeTable *)gdalAtt)
+                            ->ValuesIO(GF_Read, nj, ni, nLength, pbBuffer);
+                        keaAtt->setBoolFields(ni, nLength, field->idx,
+                                              pbBuffer);
+                        break;
                     case kealib::kea_att_int:
+                        if (!pnIntBuffer)
+                            pnIntBuffer = new int[kealib::KEA_ATT_CHUNK_SIZE];
+                        if (!pnInt64Buffer)
+                            pnInt64Buffer =
+                                new int64_t[kealib::KEA_ATT_CHUNK_SIZE];
                         ((GDALRasterAttributeTable *)gdalAtt)
                             ->ValuesIO(GF_Read, nj, ni, nLength, pnIntBuffer);
                         for (int i = 0; i < nLength; i++)
@@ -258,6 +276,9 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO,
                                              pnInt64Buffer);
                         break;
                     case kealib::kea_att_float:
+                        if (!pfDoubleBuffer)
+                            pfDoubleBuffer =
+                                new double[kealib::KEA_ATT_CHUNK_SIZE];
                         ((GDALRasterAttributeTable *)gdalAtt)
                             ->ValuesIO(GF_Read, nj, ni, nLength,
                                        pfDoubleBuffer);
@@ -293,6 +314,7 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO,
             }
         }
 
+        delete[] pbBuffer;
         delete[] pnIntBuffer;
         delete[] pnInt64Buffer;
         delete[] pfDoubleBuffer;
@@ -314,7 +336,7 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO,
 static void KEACopyMetadata(GDALMajorObject *pObject,
                             kealib::KEAImageIO *pImageIO, int nBand)
 {
-    char **ppszMetadata = pObject->GetMetadata();
+    CSLConstList ppszMetadata = pObject->GetMetadata();
     if (ppszMetadata != nullptr)
     {
         int nCount = 0;

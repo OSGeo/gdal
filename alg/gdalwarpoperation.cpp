@@ -723,6 +723,21 @@ GDALWarpOperation::Initialize(const GDALWarpOptions *psNewOptions,
         }
     }
 
+    if (eErr == CE_None && psOptions->hDstDS &&
+        CPLTestBool(CSLFetchNameValueDef(psOptions->papszWarpOptions,
+                                         "RESET_DEST_PIXELS", "NO")))
+    {
+        for (int i = 0; eErr == CE_None && i < psOptions->nBandCount; ++i)
+        {
+            eErr = GDALFillRaster(
+                GDALGetRasterBand(psOptions->hDstDS, psOptions->panDstBands[i]),
+                psOptions->padfDstNoDataReal ? psOptions->padfDstNoDataReal[i]
+                                             : 0.0,
+                psOptions->padfDstNoDataImag ? psOptions->padfDstNoDataImag[i]
+                                             : 0.0);
+        }
+    }
+
     return eErr;
 }
 
@@ -859,7 +874,7 @@ CPLErr GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
 
         GByte *pBandData = static_cast<GByte *>(pDstBuffer) + iBand * nBandSize;
 
-        if (psOptions->eWorkingDataType == GDT_Byte)
+        if (psOptions->eWorkingDataType == GDT_UInt8)
         {
             memset(pBandData,
                    std::max(

@@ -392,7 +392,7 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
     bool bUnsupported = false;
     switch (eDT)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         {
             elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
             dtype.Set(dummy, "uint8");
@@ -593,12 +593,18 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
 
     const bool bFortranOrder = EQUAL(
         CSLFetchNameValueDef(papszOptions, "CHUNK_MEMORY_LAYOUT", "C"), "F");
-    if (bFortranOrder)
+    if (bFortranOrder && aoDimensions.size() > 1)
     {
         CPLJSONObject oCodec;
         oCodec.Add("name", "transpose");
+        std::vector<int> anOrder;
+        const int nDims = static_cast<int>(aoDimensions.size());
+        for (int i = 0; i < nDims; ++i)
+        {
+            anOrder.push_back(nDims - 1 - i);
+        }
         oCodec.Add("configuration",
-                   ZarrV3CodecTranspose::GetConfiguration("F"));
+                   ZarrV3CodecTranspose::GetConfiguration(anOrder));
         oCodecs.Add(oCodec);
     }
 
@@ -730,7 +736,7 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
             "COMPRESSOR", oCodecs[oCodecs.Size() - 1].ToString().c_str());
     }
     if (poCodecs)
-        poArray->SetCodecs(std::move(poCodecs));
+        poArray->SetCodecs(oCodecs, std::move(poCodecs));
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
     if (!cpl::starts_with(osFilename, "/vsi") && !poArray->Flush())

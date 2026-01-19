@@ -3,8 +3,6 @@
 NGW -- NextGIS Web
 ==================
 
-.. versionadded:: 2.4
-
 .. shortname:: NGW
 
 .. build_dependencies:: libcurl
@@ -41,7 +39,7 @@ Driver
 ------
 
 The driver can connect to the services implementing the NextGIS Web REST API.
-NGW driver requires cURL support in GDAL and WMS driver. The driver supports 
+NGW driver requires cURL support in GDAL and WMS driver. The driver supports
 read and write operations.
 
 Dataset name syntax
@@ -95,7 +93,7 @@ The following configuration options are available:
 
       Comma separated extensions list. Available values are
       `description` and `attachment`. This needed to fill native data.
-      
+
 -  :copy-config:`NGW_CONNECTTIMEOUT`
 
 -  :copy-config:`NGW_TIMEOUT`
@@ -227,17 +225,17 @@ The following open options are available:
 
 -  .. oo:: CONNECTTIMEOUT
 
-      Maximum delay for the connection to be established before being aborted in 
+      Maximum delay for the connection to be established before being aborted in
       seconds.
 
 -  .. oo:: TIMEOUT
 
-      Maximum delay for the whole request to complete before being aborted in 
+      Maximum delay for the whole request to complete before being aborted in
       seconds.
 
 -  .. oo:: MAX_RETRY
 
-      Maximum number of retry attempts if a 429, 502, 503 or 504 HTTP error 
+      Maximum number of retry attempts if a 429, 502, 503 or 504 HTTP error
       occurs.
 
 -  .. oo:: RETRY_DELAY
@@ -295,22 +293,22 @@ The following dataset creation options are available:
 
 -  .. dsco:: CONNECTTIMEOUT
 
-      Maximum delay for the connection to be established before being aborted in 
+      Maximum delay for the connection to be established before being aborted in
       seconds.
 
 -  .. dsco:: TIMEOUT
 
-      Maximum delay for the whole request to complete before being aborted in 
+      Maximum delay for the whole request to complete before being aborted in
       seconds.
 
 -  .. dsco:: MAX_RETRY
 
-      Maximum number of retry attempts if a 429, 502, 503 or 504 HTTP error 
+      Maximum number of retry attempts if a 429, 502, 503 or 504 HTTP error
       occurs.
 
 -  .. dsco:: RETRY_DELAY
 
-      Number of seconds between retry attempts.      
+      Number of seconds between retry attempts.
 
 Layer creation options
 ----------------------
@@ -365,8 +363,8 @@ and `GetAlternativeNameRef`.
 Domains
 -------
 
-Driver supports only coded field domain. Since NGW does not support field types 
-in domains, three domains are created for each domain where keys can be 
+Driver supports only coded field domain. Since NGW does not support field types
+in domains, three domains are created for each domain where keys can be
 represented as numbers:
 
 -  domain_name with field type OFTString
@@ -375,7 +373,7 @@ represented as numbers:
 
 Deleting any of the three domains will delete the others.
 
-Also NGW does not support null as coded values. So the null will represent as 
+Also NGW does not support null as coded values. So the null will represent as
 empty string.
 
 
@@ -445,7 +443,7 @@ Read datasource contents (1730 is resource group identifier):
 
        ogrinfo -ro NGW:https://demo.nextgis.com/resource/1730
 
-Read layer details (`1730` is resource group identifier, `Parks` is vecror layer
+Read layer details (`1730` is resource group identifier, `Parks` is vector layer
 name):
 
 ::

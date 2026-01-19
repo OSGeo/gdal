@@ -12,7 +12,7 @@ Close any dataset arguments or outputs of the algorithm.
 
 Returns
 -------
-boolean
+bool
 
 };
 
@@ -25,8 +25,8 @@ Returns
 -------
 Algorithm
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg("raster")
 >>> alg.ParseCommandLineArguments(["convert" ,"--input", "byte.tif", "--output",  "/tmp/byte.png"])
 True
@@ -47,8 +47,8 @@ Returns
 -------
 AlgorithmArg
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster", "polygonize")
 >>> arg = alg.GetArg("connect-diagonal-pixels")
 >>> arg.GetDescription()
@@ -64,11 +64,12 @@ Returns
 -------
 list
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster", "convert")
->>> alg.GetArgNames()
-['help', 'help-doc', 'json-usage', 'config', 'quiet', 'progress', 'output-format', 'open-option', 'input-format', 'input', 'output', 'creation-option', 'overwrite', 'append']
+>>> sorted(alg.GetArgNames())
+['append', 'config', 'creation-option', ..., 'progress', 'quiet']
+
 
 };
 
@@ -86,8 +87,8 @@ Returns
 -------
 str
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster", "convert")
 >>> alg.GetDescription()
 'Convert a raster dataset.'
@@ -102,8 +103,8 @@ Returns
 -------
 str
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster", "convert")
 >>> alg.GetHelpFullURL()
 'https://gdal.org/programs/gdal_raster_convert.html'
@@ -124,8 +125,8 @@ Returns
 -------
 str
 
-Example
--------
+Examples
+--------
 >>> gdal.Algorithm("raster", "info").GetName()
 'info'
 
@@ -139,11 +140,11 @@ Returns
 -------
 list or None
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster")
 >>> alg.GetSubAlgorithmNames()
-['aspect', 'calc', 'clean-collar', 'clip', 'color-map', 'color-merge', 'contour', 'convert', 'create', 'edit', 'fill-nodata', 'footprint', 'hillshade', 'index', 'info', 'mosaic', 'nodata-to-alpha', 'overview', 'pansharpen', 'pipeline', 'pixel-info', 'polygonize', 'proximity', 'reclassify', 'reproject', 'resize', 'rgb-to-palette', 'roughness', 'scale', 'select', 'set-type', 'sieve', 'slope', 'stack', 'tile', 'tpi', 'tri', 'unscale', 'update', 'viewshed']
+['as-features', 'aspect', ..., 'viewshed', 'zonal-stats']
 
 };
 
@@ -155,8 +156,8 @@ Returns
 -------
 str
 
-Example
--------
+Examples
+--------
 >>> import json
 >>> import pprint
 >>> usage = json.loads(gdal.Algorithm("vector", "info").GetUsageAsJSON())
@@ -196,16 +197,16 @@ Example
                       'max_count': 2147483647,
                       'min_count': 0,
                       'name': 'input',
-                      'packed_values_allowed': True,
+                      'packed_values_allowed': False,
                       'repeated_arg_allowed': True,
                       'required': True,
                       'type': 'dataset_list'},
                      {'category': 'Base',
-                      'description': 'Layer name',
+                      'description': 'Input layer name',
                       'max_count': 2147483647,
                       'min_count': 0,
                       'mutual_exclusion_group': 'layer-sql',
-                      'name': 'layer',
+                      'name': 'input-layer',
                       'packed_values_allowed': True,
                       'repeated_arg_allowed': True,
                       'required': False,
@@ -253,12 +254,7 @@ Example
                       'description': 'SQL dialect',
                       'name': 'dialect',
                       'required': False,
-                      'type': 'string'},
-                     {'category': 'Base',
-                      'description': 'Open the dataset in update mode',
-                      'name': 'update',
-                      'required': False,
-                      'type': 'boolean'}],
+                      'type': 'string'}],
  'input_output_arguments': [],
  'name': 'info',
  'output_arguments': [{'category': 'Base',
@@ -282,8 +278,8 @@ Returns
 -------
 bool
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster")
 >>> alg.HasSubAlgorithms()
 True
@@ -301,11 +297,11 @@ Returns
 -------
 Algorithm or None
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("raster")
 >>> alg.InstantiateSubAlgorithm("convert")
-<osgeo.gdal.Algorithm; proxy of <Swig Object of type 'GDALAlgorithmHS *' at 0x7ca38a3eec40> >
+<osgeo.gdal.Algorithm; proxy of <Swig Object of type 'GDALAlgorithmHS *' at ...> >
 >>> subalg = alg.InstantiateSubAlgorithm("does_not_exist")
 
 };
@@ -324,8 +320,8 @@ Returns
 bool
     Whether the arguments were successfully parsed
 
-Example
--------
+Examples
+--------
 >>> alg = gdal.Algorithm("vector", "info")
 >>> alg.ParseCommandLineArguments(['poly.shp', '--format', 'text'])
 True
@@ -340,7 +336,7 @@ Parameters
 ----------
 args : list
     List of command line arguments
-callback : function
+callback : callable, optional
     Optional progress callback function
 callback_data
     Optional value to be provided as final argument to callback function
@@ -349,35 +345,6 @@ Returns
 -------
 bool
     ``True`` if the algorithm succeeded, ``False`` otherwise
-
-};
-
-%feature("docstring")  Run {
-
-Run an algorithm and report on its success or failure.
-
-Parameters
-----------
-callback : function
-    Optional progress callback function
-callback_data
-    Optional value to be provided as final argument to callback function
-
-Returns
--------
-bool
-    ``True`` if the algorithm succeeded, ``False`` otherwise
-
-Examples
---------
->>> alg = gdal.Algorithm("vector", "info")
->>> alg['input'] = 'poly.shp'
->>> alg.Run()
-True
->>> alg['input'] = 'does_not_exist.shp'
->>> alg.Run()
-ERROR 4: does_not_exist.shp: No such file or directory
-False
 
 };
 
@@ -431,7 +398,7 @@ Examples
 
 >>> subalg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg('raster').InstantiateSubAlgorithm('polygonize')
 >>> subalg.GetArgNames()
-['help', 'help-doc', 'json-usage', 'config', 'quiet', 'progress', 'output-format', 'open-option', 'input-format', 'input', 'output', 'creation-option', 'layer-creation-option', 'overwrite', 'update', 'overwrite-layer', 'append', 'layer', 'band', 'attribute-name', 'connect-diagonal-pixels']
+['help', 'help-doc', 'json-usage', 'config', 'quiet', 'progress', 'input-format', 'open-option', 'input', 'output-format', 'output-open-option', 'output', 'creation-option', 'layer-creation-option', 'overwrite', 'update', 'overwrite-layer', 'append', 'output-layer', 'band', 'attribute-name', 'connect-diagonal-pixels', 'commit-interval']
 
 };
 
@@ -459,8 +426,8 @@ Returns
 -------
 str
 
-Example
--------
+Examples
+--------
 >>> gdal.AlgorithmArgTypeName(gdal.GAAT_REAL)
 'real'
 
@@ -476,7 +443,7 @@ type : int
 
 Returns
 -------
-boolean
+bool
 
 Examples
 --------

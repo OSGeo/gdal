@@ -26,21 +26,28 @@ data type is "smaller" than the input one.
 
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
-Standard options
-++++++++++++++++
-
-.. include:: gdal_options/of_raster_create_copy.rst
-
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. include:: gdal_options/ot.rst
-
 .. GDALG output (on-the-fly / streamed dataset)
 .. --------------------------------------------
 
 .. include:: gdal_cli_include/gdalg_raster_compatible.rst
+
+
+Program-Specific Options
+------------------------
+
+.. include:: gdal_options/ot.rst
+
+Standard Options
+----------------
+
+.. collapse:: Details
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
+
 
 Examples
 --------

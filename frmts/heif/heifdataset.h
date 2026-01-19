@@ -82,7 +82,7 @@ class GDALHEIFDataset final : public GDALPamDataset
     GDALHEIFDataset();
     ~GDALHEIFDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     static GDALDataset *OpenHEIF(GDALOpenInfo *poOpenInfo);
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 12, 0)

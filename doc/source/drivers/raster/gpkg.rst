@@ -270,8 +270,7 @@ tiles will be stored as 32-bit PNG.
 Tiled gridded coverage data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Since GDAL 2.3, `tiled gridded coverage
-data <http://docs.opengeospatial.org/is/17-066r1/17-066r1.html#27>`__
+`tiled gridded coverage data <http://docs.opengeospatial.org/is/17-066r1/17-066r1.html#27>`__
 can be stored using PNG unsigned 16bit tiles (with potential offset and
 scaling so as to be able to represent floating point data) or TIFF
 32-bit floating-point LZW compressed tiles.
@@ -280,17 +279,6 @@ When converting a GDAL Int16 or UInt16 dataset, PNG tiles will be used.
 When converting a GDAL Float32 dataset, TIFF tiles will be used by
 default, unless PNG is explicitly selected, in which case scaling and
 offsetting will be automatically computed for each tile.
-
-.. warning::
-
-    The `tiled gridded
-    extension <http://www.geopackage.org/spec/#extension_tiled_gridded_elevation_data>`__
-    initially implemented in GDAL 2.2 was not officially adopted and had
-    been later reworked by OGC. The adopted `tiled gridded coverage
-    data <http://docs.opengeospatial.org/is/17-066r1/17-066r1.html#27>`__
-    has a few differences that will make GDAL 2.2 datasets not be compliant
-    with the final extension. GDAL 2.3 can open those GDAL 2.2-generated
-    files.
 
 .. _raster.gpkg.tiling_schemes:
 
@@ -731,10 +719,10 @@ Level of support of GeoPackage Extensions
      - Yes
    * - `WKT for Coordinate Reference Systems <http://www.geopackage.org/guidance/extensions/wkt_for_crs.md>`__ (WKT v2)
      - Yes
-     - Partially, since GDAL 2.2. GDAL can read databases using this extension. GDAL 3.0 brings support for the WKT v2 entry.
+     - Yes
    * - `Tiled Gridded Coverage Data <http://www.geopackage.org/guidance/extensions/tiled_gridded_coverage_data.html>`__
      - Yes
-     - Yes, since GDAL 2.3 (GDAL 2.2 supported a preliminary version of this extension)
+     - Yes
 
 Examples
 --------

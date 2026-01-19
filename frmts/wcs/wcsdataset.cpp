@@ -1513,14 +1513,14 @@ GDALDataset *WCSDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         WCSRasterBand *band = new WCSRasterBand(poDS, iBand + 1, -1);
         // copy band specific metadata to the band
-        char **md_from = poDS->GetMetadata("");
+        CSLConstList md_from = poDS->GetMetadata("");
         char **md_to = nullptr;
         if (md_from)
         {
             std::string our_key = CPLString().Printf("FIELD_%d_", iBand + 1);
-            for (char **from = md_from; *from != nullptr; ++from)
+            for (const char *pszKeyValue : cpl::Iterate(md_from))
             {
-                std::vector<std::string> kv = Split(*from, "=");
+                std::vector<std::string> kv = Split(pszKeyValue, "=");
                 if (kv.size() > 1 &&
                     STARTS_WITH(kv[0].c_str(), our_key.c_str()))
                 {
@@ -1661,7 +1661,7 @@ char **WCSDataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **WCSDataset::GetMetadata(const char *pszDomain)
+CSLConstList WCSDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain == nullptr || !EQUAL(pszDomain, "xml:CoverageOffering"))

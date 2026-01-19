@@ -176,7 +176,7 @@ The following array creation options are available:
 
 -  **COMPRESSION_LEVEL=int_value**: compression level
 
--  **IN_MEMORY=YES/NO**: hether the array should be only in-memory. Useful to
+-  **IN_MEMORY=YES/NO**: whether the array should be only in-memory. Useful to
    create an indexing variable that is serialized as a dimension label
 
 -  **TILEDB_TIMESTAMP=val**: Create array at this timestamp. Should be strictly greater than zero when set.

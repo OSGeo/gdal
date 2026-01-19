@@ -238,7 +238,6 @@ CPLString &CPLString::Recode(const char *pszSrcEncoding,
  * @param pos offset in the string at which the search starts.
  * @return the position of substring in the string or std::string::npos if not
  * found.
- * @since GDAL 1.9.0
  */
 
 size_t CPLString::ifind(const std::string &str, size_t pos) const
@@ -254,7 +253,6 @@ size_t CPLString::ifind(const std::string &str, size_t pos) const
  * @param nPos offset in the string at which the search starts.
  * @return the position of the substring in the string or std::string::npos if
  * not found.
- * @since GDAL 1.9.0
  */
 
 size_t CPLString::ifind(const char *s, size_t nPos) const
@@ -447,6 +445,48 @@ CPLString CPLString::URLEncode() const
 }
 
 /************************************************************************/
+/*                          SQLQuotedIdentifier()                       */
+/************************************************************************/
+
+/** Returns a string between double quotes and with all double quotes
+ * inside the string are escaped by being doubled.
+ *
+ * Aimed at being used for SQL identifiers (table names, column names, etc.).
+ *
+ * @since 3.13
+ */
+CPLString CPLString::SQLQuotedIdentifier() const
+{
+    CPLString ret("\"");
+    CPLString tmp(*this);
+    tmp.replaceAll('"', "\"\"");
+    ret += tmp;
+    ret += '"';
+    return ret;
+}
+
+/************************************************************************/
+/*                           SQLQuotedLiteral()                         */
+/************************************************************************/
+
+/** Returns a string between single quotes and with all single quotes
+ * inside the string are escaped by being doubled.
+ *
+ * Aimed at being used for SQL literal strings.
+ *
+ * @since 3.13
+ */
+CPLString CPLString::SQLQuotedLiteral() const
+{
+    CPLString ret("'");
+    CPLString tmp(*this);
+    tmp.replaceAll('\'', "''");
+    ret += tmp;
+    ret += '\'';
+    return ret;
+}
+
+/************************************************************************/
 /*                         CPLURLGetValue()                             */
 /************************************************************************/
 
@@ -456,7 +496,6 @@ CPLString CPLString::URLEncode() const
  * @param pszURL the URL.
  * @param pszKey the key to find.
  * @return the value of empty string if not found.
- * @since GDAL 1.9.0
  */
 CPLString CPLURLGetValue(const char *pszURL, const char *pszKey)
 {
@@ -489,7 +528,6 @@ CPLString CPLURLGetValue(const char *pszURL, const char *pszKey)
  * @param pszKey the key to find.
  * @param pszValue the value of the key (may be NULL to unset an existing KVP).
  * @return the modified URL.
- * @since GDAL 1.9.0
  */
 CPLString CPLURLAddKVP(const char *pszURL, const char *pszKey,
                        const char *pszValue)

@@ -26,34 +26,57 @@ Unlike :ref:`gdal_raster_polygonize`, adjacent pixels having the same values are
 
 This algorithm can be part of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeline`.
 
-The following options are available:
+Program-Specific Options
+------------------------
+
+.. option:: -b, --band <band>
+
+   Specifies the bands for which pixel values should be added as fields of the created features. By default, values will be added for all bands.
 
 .. option:: --geometry-type
 
    Specifies the geometry type of the created features. Options available are "none" (default), "point", or "polygon".
 
-.. option:: --skip-nodata
+.. option:: --include-row-col
 
-   If set, no features will be emitted for pixels equal to the NoData value.
+   If set, ``ROW`` and ``COL`` fields will be added with the cell positions.
 
 .. option:: --include-xy
 
    If set, ``CENTER_X`` and ``CENTER_Y`` fields will be added with the center coordinates of each pixel.
 
-.. option:: --include-row-col
+.. option:: --output-layer
 
-   If set, ``ROW`` and ``COL`` fields will be added with the cell positions.
+   Provides a name for the output vector layer. Defaults to "pixels".
 
-.. option:: -b <band>
+.. option:: --skip-nodata
 
-   Specifies the bands for which pixel values should be added as fields of the created features. By default, values will be added for all bands.
+   If set, no features will be emitted for pixels equal to the NoData value.
 
-.. include:: gdal_options/of_vector.rst
+Standard Options
+----------------
 
-.. include:: gdal_options/co.rst
+.. collapse:: Details
 
-.. include:: gdal_options/overwrite.rst
+   .. include:: gdal_options/append_vector.rst
 
+   .. include:: gdal_options/co.rst
+
+   .. include:: gdal_options/if.rst
+
+   .. include:: gdal_options/lco.rst
+
+   .. include:: gdal_options/oo.rst
+
+   .. include:: gdal_options/of_vector.rst
+
+   .. include:: gdal_options/output_oo.rst
+
+   .. include:: gdal_options/overwrite.rst
+
+   .. include:: gdal_options/overwrite_layer.rst
+
+   .. include:: gdal_options/update.rst
 
 Examples
 --------
@@ -67,3 +90,13 @@ Examples
                 reclassify -m "[-inf, 150)=1; DEFAULT=NO_DATA" !
                 as-features --geometry-type point --skip-nodata ! 
                 write out.shp
+
+
+.. example::
+   :title: Create a polygon grid dividing the globe into 1-degree chunks
+   
+   .. code-block:: bash
+
+       gdal pipeline create --bbox -180,-90,180,90 --size 360,180 ! 
+                as-features --geometry-type polygon !
+                write grid.shp

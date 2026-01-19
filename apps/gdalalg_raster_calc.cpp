@@ -33,7 +33,7 @@
 struct GDALCalcOptions
 {
     GDALDataType dstType{GDT_Unknown};
-    bool checkSRS{true};
+    bool checkCRS{true};
     bool checkExtent{true};
 };
 
@@ -220,7 +220,7 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
             ds->GetGeoTransform(source.gt);
         }
 
-        if (options.checkSRS && out.srs)
+        if (options.checkCRS && out.srs)
         {
             const OGRSpatialReference *srs = ds->GetSpatialRef();
             srsMismatch = srs && !srs->IsSame(out.srs.get());
@@ -649,6 +649,17 @@ static bool ParseSourceDescriptors(const std::vector<std::string> &inputs,
 
         std::string dsn =
             (pos == std::string::npos) ? input : input.substr(pos + 1);
+
+        if (!dsn.empty() && dsn.front() == '[' && dsn.back() == ']')
+        {
+            dsn = "{\"type\":\"gdal_streamed_alg\", \"command_line\":\"gdal "
+                  "raster pipeline " +
+                  CPLString(dsn.substr(1, dsn.size() - 2))
+                      .replaceAll('\\', "\\\\")
+                      .replaceAll('"', "\\\"") +
+                  "\"}";
+        }
+
         if (datasets.find(name) != datasets.end())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -867,9 +878,10 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm(bool standaloneStep) noexcept
 
     AddOutputDataTypeArg(&m_type);
 
-    AddArg("no-check-srs", 0,
-           _("Do not check consistency of input spatial reference systems"),
-           &m_noCheckSRS);
+    AddArg("no-check-crs", 0,
+           _("Do not check consistency of input coordinate reference systems"),
+           &m_noCheckCRS)
+        .AddHiddenAlias("no-check-srs");
     AddArg("no-check-extent", 0, _("Do not check consistency of input extents"),
            &m_noCheckExtent);
 
@@ -944,7 +956,7 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     GDALCalcOptions options;
     options.checkExtent = !m_noCheckExtent;
-    options.checkSRS = !m_noCheckSRS;
+    options.checkCRS = !m_noCheckCRS;
     if (!m_type.empty())
     {
         options.dstType = GDALGetDataTypeByName(m_type.c_str());
@@ -1088,7 +1100,7 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     VSIMemGenerateHiddenFilename("tmp.tif");
                 auto poDS = std::unique_ptr<GDALDataset>(
                     poGTIFFDrv->Create(osFilename.c_str(), 1, 1, maxSourceBands,
-                                       GDT_Byte, nullptr));
+                                       GDT_UInt8, nullptr));
                 if (poDS)
                     osTmpFilename = std::move(osFilename);
             }
@@ -1099,7 +1111,7 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     pixelFunctionArgs, options, maxSourceBands, osTmpFilename);
                 if (fakeVRT &&
                     fakeVRT->RasterIO(GF_Read, 0, 0, 1, 1, dummyData.data(), 1,
-                                      1, GDT_Byte, vrt->GetRasterCount(),
+                                      1, GDT_UInt8, vrt->GetRasterCount(),
                                       nullptr, 0, 0, 0, nullptr) != CE_None)
                 {
                     return false;

@@ -409,7 +409,7 @@ typedef enum
     /*! Average Distance (Data Metric) */ GGA_MetricAverageDistance = 8,
     /*! Average Distance Between Data Points (Data Metric) */
     GGA_MetricAverageDistancePts = 9,
-    /*! Linear interpolation (from Delaunay triangulation. Since GDAL 2.1 */
+    /*! Linear interpolation (from Delaunay triangulation. */
     GGA_Linear = 10,
     /*! Inverse distance to a power with nearest neighbor search for max points
      */
@@ -670,7 +670,7 @@ typedef struct
     int nFacets;             /**< number of facets */
     GDALTriFacet *pasFacets; /**< array of nFacets facets */
     GDALTriBarycentricCoefficients
-        *pasFacetCoefficients; /**< arra of nFacets barycentric coefficients */
+        *pasFacetCoefficients; /**< array of nFacets barycentric coefficients */
 } GDALTriangulation;
 
 int CPL_DLL GDALHasTriangulation(void);
@@ -723,6 +723,30 @@ GDALDatasetH CPL_DLL GDALApplyVerticalShiftGrid(GDALDatasetH hSrcDataset,
         "GDALApplyVerticalShiftGrid() will be removed in GDAL 4.0")
     /*! @endcond */
     ;
+
+/************************************************************************/
+/*  Zonal statistics interface                                          */
+/************************************************************************/
+
+CPLErr CPL_DLL GDALZonalStats(GDALDatasetH hSrcDS, GDALDatasetH hWeightsDS,
+                              GDALDatasetH hZonesDS, GDALDatasetH hOutDS,
+                              CSLConstList papszOptions,
+                              GDALProgressFunc pfnProgress, void *pProgressArg);
+
+/************************************************************************/
+/*  Hilbert encoding                                                    */
+/************************************************************************/
+
+/** Provides a Hilbert code describing the location of a specified point within
+ * a specified spatial extent.
+ *
+ * @param poDomain The domain to be covered by the Hilbert curve.
+ * @param dfX X coordinate of the point to encode
+ * @param dfY Y coordinate of the point to encode
+ * @return Hilbert-encoded point.
+ */
+uint32_t CPL_DLL GDALHilbertCode(const OGREnvelope *poDomain, double dfX,
+                                 double dfY);
 
 CPL_C_END
 

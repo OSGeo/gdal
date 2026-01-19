@@ -16,6 +16,7 @@
 #include "cpl_string.h"
 #include "cpl_time.h"
 
+#include <cstdlib>
 #include <limits>
 
 //! @cond Doxygen_Suppress

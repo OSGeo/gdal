@@ -98,7 +98,6 @@ typedef enum
  *
  * @return the page size.
  *
- * @since GDAL 1.11
  */
 size_t CPL_DLL CPLGetPageSize(void);
 
@@ -143,7 +142,6 @@ size_t CPL_DLL CPLGetPageSize(void);
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
  *         or NULL in case of failure.
  *
- * @since GDAL 1.11
  */
 
 CPLVirtualMem CPL_DLL *
@@ -156,7 +154,6 @@ CPLVirtualMemNew(size_t nSize, size_t nCacheSize, size_t nPageSizeHint,
 /** Return if virtual memory mapping of a file is available.
  *
  * @return TRUE if virtual memory mapping of a file is available.
- * @since GDAL 1.11
  */
 int CPL_DLL CPLIsVirtualMemFileMapAvailable(void);
 
@@ -171,8 +168,7 @@ int CPL_DLL CPLIsVirtualMemFileMapAvailable(void);
  * On Linux AMD64 platforms, the maximum value for nLength is 128 TB.
  * On Linux x86 platforms, the maximum value for nLength is 2 GB.
  *
- * Supported on Linux only in GDAL <= 2.0, and all POSIX systems supporting
- * mmap() in GDAL >= 2.1
+ * Supported on all POSIX systems supporting mmap().
  *
  * @param  fp       Virtual file handle.
  * @param  nOffset  Offset in the file to start the mapping from.
@@ -184,7 +180,6 @@ int CPL_DLL CPLIsVirtualMemFileMapAvailable(void);
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
  *         or NULL in case of failure.
  *
- * @since GDAL 1.11
  */
 CPLVirtualMem CPL_DLL *CPLVirtualMemFileMapNew(
     VSILFILE *fp, vsi_l_offset nOffset, vsi_l_offset nLength,
@@ -208,7 +203,6 @@ CPLVirtualMem CPL_DLL *CPLVirtualMemFileMapNew(
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
  *         or NULL in case of failure.
  *
- * @since GDAL 1.11
  */
 CPLVirtualMem CPL_DLL *CPLVirtualMemDerivedNew(
     CPLVirtualMem *pVMemBase, vsi_l_offset nOffset, vsi_l_offset nSize,
@@ -223,7 +217,6 @@ CPLVirtualMem CPL_DLL *CPLVirtualMemDerivedNew(
  *
  * @param ctxt context returned by CPLVirtualMemNew().
  *
- * @since GDAL 1.11
  */
 void CPL_DLL CPLVirtualMemFree(CPLVirtualMem *ctxt);
 
@@ -240,7 +233,6 @@ void CPL_DLL CPLVirtualMemFree(CPLVirtualMem *ctxt);
  * @param ctxt context returned by CPLVirtualMemNew().
  * @return the pointer to the start of a virtual memory mapping.
  *
- * @since GDAL 1.11
  */
 void CPL_DLL *CPLVirtualMemGetAddr(CPLVirtualMem *ctxt);
 
@@ -249,7 +241,6 @@ void CPL_DLL *CPLVirtualMemGetAddr(CPLVirtualMem *ctxt);
  * @param ctxt context returned by CPLVirtualMemNew().
  * @return the size of the virtual memory mapping.
  *
- * @since GDAL 1.11
  */
 size_t CPL_DLL CPLVirtualMemGetSize(CPLVirtualMem *ctxt);
 
@@ -258,7 +249,6 @@ size_t CPL_DLL CPLVirtualMemGetSize(CPLVirtualMem *ctxt);
  * @param ctxt context returned by CPLVirtualMemNew().
  * @return TRUE if the virtual memory mapping is a direct file mapping.
  *
- * @since GDAL 1.11
  */
 int CPL_DLL CPLVirtualMemIsFileMapping(CPLVirtualMem *ctxt);
 
@@ -267,7 +257,6 @@ int CPL_DLL CPLVirtualMemIsFileMapping(CPLVirtualMem *ctxt);
  * @param ctxt context returned by CPLVirtualMemNew().
  * @return the access mode of the virtual memory mapping.
  *
- * @since GDAL 1.11
  */
 CPLVirtualMemAccessMode CPL_DLL CPLVirtualMemGetAccessMode(CPLVirtualMem *ctxt);
 
@@ -279,7 +268,6 @@ CPLVirtualMemAccessMode CPL_DLL CPLVirtualMemGetAccessMode(CPLVirtualMem *ctxt);
  * @param ctxt context returned by CPLVirtualMemNew().
  * @return the page size
  *
- * @since GDAL 1.11
  */
 size_t CPL_DLL CPLVirtualMemGetPageSize(CPLVirtualMem *ctxt);
 
@@ -298,7 +286,6 @@ size_t CPL_DLL CPLVirtualMemGetPageSize(CPLVirtualMem *ctxt);
  * @return TRUE if this memory mapping can be accessed safely from concurrent
  *         threads.
  *
- * @since GDAL 1.11
  */
 int CPL_DLL CPLVirtualMemIsAccessThreadSafe(CPLVirtualMem *ctxt);
 
@@ -312,7 +299,6 @@ int CPL_DLL CPLVirtualMemIsAccessThreadSafe(CPLVirtualMem *ctxt);
  *
  * @param ctxt context returned by CPLVirtualMemNew().
  *
- * @since GDAL 1.11
  */
 void CPL_DLL CPLVirtualMemDeclareThread(CPLVirtualMem *ctxt);
 
@@ -326,7 +312,6 @@ void CPL_DLL CPLVirtualMemDeclareThread(CPLVirtualMem *ctxt);
  *
  * @param ctxt context returned by CPLVirtualMemNew().
  *
- * @since GDAL 1.11
  */
 void CPL_DLL CPLVirtualMemUnDeclareThread(CPLVirtualMem *ctxt);
 
@@ -345,7 +330,6 @@ void CPL_DLL CPLVirtualMemUnDeclareThread(CPLVirtualMem *ctxt);
  * @param nSize the size of the memory region.
  * @param bWriteOp set to TRUE if the memory are will be accessed in write mode.
  *
- * @since GDAL 1.11
  */
 void CPL_DLL CPLVirtualMemPin(CPLVirtualMem *ctxt, void *pAddr, size_t nSize,
                               int bWriteOp);
@@ -355,7 +339,6 @@ void CPL_DLL CPLVirtualMemPin(CPLVirtualMem *ctxt, void *pAddr, size_t nSize,
  * This function must be called after the last CPLVirtualMem object has
  * been freed.
  *
- * @since GDAL 2.0
  */
 void CPL_DLL CPLVirtualMemManagerTerminate(void);
 

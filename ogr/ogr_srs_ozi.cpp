@@ -35,16 +35,11 @@
  * This function will import projection definition in style, used by
  * OziExplorer software.
  *
- * Note: another version of this function with a different signature existed
- * in GDAL 1.X.
- *
  * @param hSRS spatial reference object.
  * @param papszLines Map file lines. This is an array of strings containing
  * the whole OziExplorer .MAP file. The array is terminated by a NULL pointer.
  *
  * @return OGRERR_NONE on success or an error code in case of failure.
- *
- * @since OGR 2.0
  */
 
 OGRErr OSRImportFromOzi(OGRSpatialReferenceH hSRS,
@@ -71,7 +66,6 @@ OGRErr OSRImportFromOzi(OGRSpatialReferenceH hSRS,
  *
  * @return OGRERR_NONE on success or an error code in case of failure.
  *
- * @since OGR 1.10
  */
 
 OGRErr OGRSpatialReference::importFromOzi(const char *const *papszLines)

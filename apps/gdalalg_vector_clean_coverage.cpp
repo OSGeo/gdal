@@ -15,7 +15,6 @@
 #include "cpl_error.h"
 #include "gdal_priv.h"
 #include "gdalalg_vector_geom.h"
-#include "ogr_geometry.h"
 #include "ogr_geos.h"
 #include "ogrsf_frmts.h"
 
@@ -51,17 +50,34 @@ GDALVectorCleanCoverageAlgorithm::GDALVectorCleanCoverageAlgorithm(
     (GEOS_VERSION_MAJOR > 3 ||                                                 \
      (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 14))
 
-class GDALVectorCleanCoverageOutputDataset final
-    : public GDALGeosNonStreamingAlgorithmDataset
+class GDALVectorCleanCoverageOutputLayer final
+    : public GDALGeosNonStreamingAlgorithmLayer
 {
   public:
-    GDALVectorCleanCoverageOutputDataset(
+    GDALVectorCleanCoverageOutputLayer(
+        OGRLayer &srcLayer, int geomFieldIndex,
         const GDALVectorCleanCoverageAlgorithm::Options &opts)
-        : m_opts(opts), m_cleanParams(GetCoverageCleanParams())
+        : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
+          m_opts(opts), m_cleanParams(GetCoverageCleanParams())
     {
     }
 
-    ~GDALVectorCleanCoverageOutputDataset() override;
+    ~GDALVectorCleanCoverageOutputLayer() override;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
+    {
+        return m_srcLayer.GetLayerDefn();
+    }
+
+    int TestCapability(const char *pszCap) const override
+    {
+        if (EQUAL(pszCap, OLCFastFeatureCount))
+        {
+            return m_srcLayer.TestCapability(pszCap);
+        }
+
+        return false;
+    }
 
     GEOSCoverageCleanParams *GetCoverageCleanParams() const
     {
@@ -162,14 +178,14 @@ class GDALVectorCleanCoverageOutputDataset final
         return m_poGeosResultAsCollection != nullptr;
     }
 
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorCleanCoverageOutputDataset)
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorCleanCoverageOutputLayer)
 
   private:
     const GDALVectorCleanCoverageAlgorithm::Options &m_opts;
     GEOSCoverageCleanParams *m_cleanParams;
 };
 
-GDALVectorCleanCoverageOutputDataset::~GDALVectorCleanCoverageOutputDataset()
+GDALVectorCleanCoverageOutputLayer::~GDALVectorCleanCoverageOutputLayer()
 {
     if (m_poGeosContext != nullptr)
     {
@@ -177,37 +193,55 @@ GDALVectorCleanCoverageOutputDataset::~GDALVectorCleanCoverageOutputDataset()
     }
 }
 
-bool GDALVectorCleanCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
+bool GDALVectorCleanCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
-    auto poDstDS =
-        std::make_unique<GDALVectorCleanCoverageOutputDataset>(m_opts);
+    auto poDstDS = std::make_unique<GDALVectorNonStreamingAlgorithmDataset>();
 
-    bool bFoundActiveLayer = false;
+    GDALVectorAlgorithmLayerProgressHelper progressHelper(ctxt);
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {
         if (m_activeLayer.empty() ||
             m_activeLayer == poSrcLayer->GetDescription())
         {
-            if (!poDstDS->AddProcessedLayer(*poSrcLayer))
-            {
-                return false;
-            }
-            bFoundActiveLayer = true;
+            progressHelper.AddProcessedLayer(*poSrcLayer);
         }
         else
         {
-            poDstDS->AddPassThroughLayer(*poSrcLayer);
+            progressHelper.AddPassThroughLayer(*poSrcLayer);
         }
     }
 
-    if (!bFoundActiveLayer)
+    if (!progressHelper.HasProcessedLayers())
     {
         ReportError(CE_Failure, CPLE_AppDefined,
                     "Specified layer '%s' was not found",
                     m_activeLayer.c_str());
         return false;
+    }
+
+    for (auto [poSrcLayer, bProcessed, layerProgressFunc, layerProgressData] :
+         progressHelper)
+    {
+        if (bProcessed)
+        {
+            constexpr int geomFieldIndex = 0;  // TODO parametrize
+
+            auto poLayer = std::make_unique<GDALVectorCleanCoverageOutputLayer>(
+                *poSrcLayer, geomFieldIndex, m_opts);
+
+            if (!poDstDS->AddProcessedLayer(std::move(poLayer),
+                                            layerProgressFunc,
+                                            layerProgressData.get()))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            poDstDS->AddPassThroughLayer(*poSrcLayer);
+        }
     }
 
     m_outputDataset.Set(std::move(poDstDS));

@@ -433,34 +433,42 @@ double CPLGreatestCommonDivisor(double a, double b)
 
     const double sign = std::signbit(a) ? -1 : 1;
 
-    const auto &frac_a = approx_a.value();
-    const auto &frac_b = approx_b.value();
-
-    const auto common_denom = std::lcm(frac_a.denom, frac_b.denom);
-
-    const auto num_a = static_cast<std::uint64_t>(
-        frac_a.num * std::round(common_denom / frac_a.denom));
-    const auto num_b = static_cast<std::uint64_t>(
-        frac_b.num * std::round(common_denom / frac_b.denom));
-
-    const auto common_num = std::gcd(num_a, num_b);
-
-    // Add std::numeric_limits<double>::min() to avoid Coverity Scan warning
-    // about div by zero
-    const auto common = sign * static_cast<double>(common_num) /
-                        (static_cast<double>(common_denom) +
-                         std::numeric_limits<double>::min());
-
-    const auto disaggregation_factor = std::max(a / common, b / common);
-    if (disaggregation_factor > 10000)
+    try
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Common resolution between %.18g and %.18g calculated at "
-                 "%.18g which "
-                 "would cause excessive disaggregation",
-                 a, b, common);
+        const auto &frac_a = approx_a.value();
+        const auto &frac_b = approx_b.value();
+
+        const auto common_denom = std::lcm(frac_a.denom, frac_b.denom);
+
+        const auto num_a = static_cast<std::uint64_t>(
+            frac_a.num * std::round(common_denom / frac_a.denom));
+        const auto num_b = static_cast<std::uint64_t>(
+            frac_b.num * std::round(common_denom / frac_b.denom));
+
+        const auto common_num = std::gcd(num_a, num_b);
+
+        // Add std::numeric_limits<double>::min() to avoid Coverity Scan warning
+        // about div by zero
+        const auto common = sign * static_cast<double>(common_num) /
+                            (static_cast<double>(common_denom) +
+                             std::numeric_limits<double>::min());
+
+        const auto disaggregation_factor = std::max(a / common, b / common);
+        if (disaggregation_factor > 10000)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Common resolution between %.18g and %.18g calculated at "
+                     "%.18g which "
+                     "would cause excessive disaggregation",
+                     a, b, common);
+            return 0;
+        }
+
+        return common;
+    }
+    catch (const std::bad_optional_access &)
+    {
+        // Cannot happen but makes Coverity Scan happy
         return 0;
     }
-
-    return common;
 }

@@ -783,7 +783,7 @@ GDALDataset *FASTDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 case 8:
                 default:
-                    poDS->eDataType = GDT_Byte;
+                    poDS->eDataType = GDT_UInt8;
                     break;
                 // For a strange reason, some Euromap products declare 10 bits
                 // output, but are 16 bits.
@@ -796,7 +796,7 @@ GDALDataset *FASTDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            poDS->eDataType = GDT_Byte;
+            poDS->eDataType = GDT_UInt8;
         }
     }
 

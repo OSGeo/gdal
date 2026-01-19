@@ -249,7 +249,7 @@ def test_gdalalg_raster_calc_output_type(calc, tmp_vsimem):
 
     dst_ds = calc["output"].GetDataset()
 
-    assert dst_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert dst_ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     assert np.all(dst_ds.ReadAsArray() == 100)
 
     assert calc.Finalize()
@@ -891,7 +891,7 @@ def test_gdalalg_raster_calc_dialect_builtin(calc, expression):
     assert ds.RasterCount == 1
 
     if expression in ("min", "max", "mode"):
-        assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     else:
         assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
 
@@ -1007,3 +1007,33 @@ def test_gdalalg_raster_calc_sum_builtin_two_bands_three_bands_fail(calc, tmp_vs
         match=r"Expression cannot operate on all bands of rasters with incompatible numbers of bands \(source B has 3 bands but expected to have 1 or 2 bands\)",
     ):
         calc.Run()
+
+
+def test_gdalalg_raster_calc_sum_float_input_with_nodata(calc, tmp_vsimem):
+
+    input = tmp_vsimem / "in.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(input, 1, 1, 1, gdal.GDT_Float32) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(0)
+        ds.GetRasterBand(1).Fill(0.1)
+
+    calc["input"] = [f"A={input}"]
+    calc["output-format"] = "MEM"
+    calc["calc"] = "A * 10"
+    calc["output-data-type"] = "Byte"
+    calc.Run()
+
+    out_ds = calc["output"].GetDataset()
+    assert out_ds.GetRasterBand(1).Checksum() == 1
+
+
+@pytest.mark.require_driver("GDALG")
+def test_gdalalg_raster_calc_input_pipeline(calc):
+
+    calc["input"] = "A=[ read ../gcore/data/byte.tif ! aspect ]"
+    calc["output-format"] = "MEM"
+    calc["calc"] = "A * 10"
+    calc.Run()
+
+    out_ds = calc["output"].GetDataset()
+    assert out_ds.GetRasterBand(1).Checksum() == 4692

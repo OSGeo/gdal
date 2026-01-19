@@ -66,7 +66,7 @@ class ADRGDataset final : public GDALPamDataset
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
     char **GetFileList() override;
 
@@ -110,7 +110,7 @@ ADRGRasterBand::ADRGRasterBand(ADRGDataset *poDSIn, int nBandIn)
     poDS = poDSIn;
     nBand = nBandIn;
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     nBlockXSize = 128;
     nBlockYSize = 128;
@@ -296,7 +296,7 @@ char **ADRGDataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **ADRGDataset::GetMetadata(const char *pszDomain)
+CSLConstList ADRGDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))

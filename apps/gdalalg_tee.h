@@ -40,27 +40,20 @@ class GDALTeeStepAlgorithmAbstract /* non final */
 
     virtual ~GDALTeeStepAlgorithmAbstract();
 
-    void CopyFilenameBindingsFrom(const GDALTeeStepAlgorithmAbstract *other)
-    {
-        m_oMapNameToAlg = other->m_oMapNameToAlg;
-    }
+    void CopyFilenameBindingsFrom(const GDALTeeStepAlgorithmAbstract *other);
 
     bool BindFilename(const std::string &filename,
-                      GDALPipelineStepAlgorithm *alg,
-                      const std::vector<std::string> &args)
-    {
-        if (cpl::contains(m_oMapNameToAlg, filename))
-            return false;
-        m_oMapNameToAlg[filename] = std::make_pair(alg, args);
-        return true;
-    }
+                      GDALAbstractPipelineAlgorithm *alg,
+                      const std::vector<std::string> &args);
+
+    bool HasOutputString() const;
 
   protected:
     GDALTeeStepAlgorithmAbstract() = default;
 
     std::vector<GDALArgDatasetValue> m_pipelines{};
-    std::map<std::string,
-             std::pair<GDALPipelineStepAlgorithm *, std::vector<std::string>>>
+    std::map<std::string, std::pair<GDALAbstractPipelineAlgorithm *,
+                                    std::vector<std::string>>>
         m_oMapNameToAlg{};
 };
 
@@ -92,6 +85,11 @@ class GDALTeeStepAlgorithmBase /* non final */
     bool GeneratesFilesFromUserInput() const override
     {
         return true;
+    }
+
+    bool HasOutputString() const override
+    {
+        return GDALTeeStepAlgorithmAbstract::HasOutputString();
     }
 
   protected:
@@ -189,10 +187,15 @@ bool GDALTeeStepAlgorithmBase<BaseStepAlgorithm, nDatasetType>::RunStep(
                     pfnProgress, pProgressData),
                 GDALDestroyScaledProgress);
 
+        if (this->IsCalledFromCommandLine())
+            subAlg->SetCalledFromCommandLine();
+
         bool ret = (subAlg->ParseCommandLineArguments(subAlgArgs) &&
                     subAlg->Run(pScaledProgress ? GDALScaledProgress : nullptr,
                                 pScaledProgress.get()) &&
                     subAlg->Finalize());
+
+        this->m_output += subAlg->GetOutputString();
 
         // Restore filters
         for (int i = 0; i < static_cast<int>(aosAttributeFilters.size()); ++i)

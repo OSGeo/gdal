@@ -112,7 +112,9 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
     memcpy(&locationSectionPhysicalLocation, tocHeader, sizeof(unsigned int));
     CPL_MSBPTR32(&locationSectionPhysicalLocation);
 
-    if (VSIFSeekL(fp, locationSectionPhysicalLocation, SEEK_SET) != 0)
+    if (VSIFSeekL(fp,
+                  static_cast<vsi_l_offset>(locationSectionPhysicalLocation),
+                  SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid TOC file. Unable to seek to "
@@ -180,8 +182,10 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
         return nullptr;
     }
 
-    if (VSIFSeekL(fp, boundaryRectangleSectionSubHeaderPhysIndex, SEEK_SET) !=
-        0)
+    if (VSIFSeekL(fp,
+                  static_cast<vsi_l_offset>(
+                      boundaryRectangleSectionSubHeaderPhysIndex),
+                  SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid TOC file. Unable to seek to "
@@ -200,7 +204,10 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
                      fp) == 1;
     CPL_MSBPTR16(&boundaryRectangleCount);
 
-    if (!bOK || VSIFSeekL(fp, boundaryRectangleTablePhysIndex, SEEK_SET) != 0)
+    if (!bOK ||
+        VSIFSeekL(fp,
+                  static_cast<vsi_l_offset>(boundaryRectangleTablePhysIndex),
+                  SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid TOC file. Unable to seek to "
@@ -395,7 +402,10 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
                  toc->entries[i].nHorizFrames);
     }
 
-    if (VSIFSeekL(fp, frameFileIndexSectionSubHeaderPhysIndex, SEEK_SET) != 0)
+    if (VSIFSeekL(
+            fp,
+            static_cast<vsi_l_offset>(frameFileIndexSectionSubHeaderPhysIndex),
+            SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid TOC file. Unable to seek to "

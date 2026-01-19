@@ -675,15 +675,15 @@ def test_gdalalg_raster_tile_too_large_virtual_daaset(tmp_vsimem):
 @pytest.mark.parametrize(
     "output_format,datatype,nbands,message",
     [
-        ("PNG", gdal.GDT_Byte, 5, "Only up to 4 bands supported for PNG"),
+        ("PNG", gdal.GDT_UInt8, 5, "Only up to 4 bands supported for PNG"),
         ("PNG", gdal.GDT_Int32, 1, "Only Byte and UInt16 data types supported for PNG"),
-        ("JPEG", gdal.GDT_Byte, 5, "Only up to 4 bands supported for JPEG"),
+        ("JPEG", gdal.GDT_UInt8, 5, "Only up to 4 bands supported for JPEG"),
         ("JPEG", gdal.GDT_Int32, 1, "Only Byte"),
-        ("WEBP", gdal.GDT_Byte, 1, "Only 3 or 4 bands supported for WEBP"),
+        ("WEBP", gdal.GDT_UInt8, 1, "Only 3 or 4 bands supported for WEBP"),
         ("WEBP", gdal.GDT_UInt16, 3, "Only Byte data type supported for WEBP"),
         (
             "GTX",
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             1,
             "Attempt to create gtx file with unsupported data type 'Byte'",
         ),
@@ -1066,9 +1066,12 @@ def test_gdalalg_raster_tile_spawn(tmp_path):
         last_pct[0] = pct
         return True
 
+    got_subprocess_debug_msg = [False]
     got_spurious = [False]
 
     def my_handler(errorClass, errno, msg):
+        if "gdal_raster_tile: subprocess 0: Generating tiles" in msg:
+            got_subprocess_debug_msg[0] = True
         if "Spurious" in msg:
             got_spurious[0] = True
         return
@@ -1096,6 +1099,7 @@ def test_gdalalg_raster_tile_spawn(tmp_path):
     assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) == 108
     assert gdal.VSIStatL(tmp_path / "log.txt") is not None
     assert got_spurious[0]
+    assert got_subprocess_debug_msg[0]
 
 
 @pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
@@ -2033,7 +2037,7 @@ def test_gdalalg_raster_tile_excluded_values_error(tmp_vsimem):
 
 def test_gdalalg_raster_tile_excluded_values(tmp_vsimem):
 
-    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 3, gdal.GDT_Byte)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 3, gdal.GDT_UInt8)
     src_ds.GetRasterBand(1).WriteRaster(
         0, 0, 2, 2, struct.pack("B" * 4, 10, 20, 30, 40)
     )
@@ -2073,7 +2077,7 @@ def test_gdalalg_raster_tile_excluded_values(tmp_vsimem):
 
 def test_gdalalg_raster_tile_nodata_values_pct_threshold(tmp_vsimem):
 
-    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 3, gdal.GDT_Byte)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 3, gdal.GDT_UInt8)
     for i in range(3):
         src_ds.GetRasterBand(i + 1).SetNoDataValue(20)
         src_ds.GetRasterBand(i + 1).WriteRaster(
@@ -2132,7 +2136,7 @@ def test_gdalalg_raster_tile_nodata_values_pct_threshold(tmp_vsimem):
 
 def test_gdalalg_raster_tile_red_tile_with_alpha(tmp_vsimem):
 
-    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 4, gdal.GDT_Byte)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 4, gdal.GDT_UInt8)
     src_ds.GetRasterBand(1).Fill(255)
     src_ds.GetRasterBand(2).Fill(0)
     src_ds.GetRasterBand(3).Fill(0)
@@ -2163,7 +2167,7 @@ def test_gdalalg_raster_tile_red_tile_with_alpha(tmp_vsimem):
 @pytest.mark.parametrize("nbands", [1, 2, 3, 4])
 def test_gdalalg_raster_tile_png_optim(tmp_vsimem, GDAL_RASTER_TILE_PNG_FILTER, nbands):
 
-    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, nbands, gdal.GDT_Byte)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, nbands, gdal.GDT_UInt8)
     if nbands == 2 or nbands == 4:
         src_ds.GetRasterBand(nbands).SetColorInterpretation(gdal.GCI_AlphaBand)
         src_ds.GetRasterBand(nbands).Fill(127)
@@ -2242,6 +2246,24 @@ def test_gdalalg_raster_tile_pipeline(tmp_path):
         gdal.Run(
             "raster pipeline",
             pipeline=f"mosaic ../gdrivers/data/small_world.tif ! tile {out_dirname} --min-zoom=0 --max-zoom=3",
+        )
+
+    assert len(gdal.ReadDirRecursive(out_dirname)) == 108
+
+
+def test_gdalalg_raster_tile_pipeline_input_ds(tmp_path):
+
+    out_dirname = tmp_path / "subdir"
+    with gdaltest.config_options(
+        {
+            "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN": "1",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+        }
+    ):
+        gdal.Run(
+            "raster pipeline",
+            input="../gdrivers/data/small_world.tif",
+            pipeline=f"read ! tile {out_dirname} --min-zoom=0 --max-zoom=3",
         )
 
     assert len(gdal.ReadDirRecursive(out_dirname)) == 108

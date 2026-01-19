@@ -230,7 +230,7 @@ class HKVDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(HKVDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     HKVDataset();
@@ -318,7 +318,7 @@ HKVDataset::~HKVDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr HKVDataset::Close()
+CPLErr HKVDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -843,7 +843,7 @@ GDALDataset *HKVDataset::Open(GDALOpenInfo *poOpenInfo)
 
     GDALDataType eType;
     if (nSize == 1)
-        eType = GDT_Byte;
+        eType = GDT_UInt8;
     else if (nSize == 2 && strstr(pszEncoding, "*unsigned") != nullptr)
         eType = GDT_UInt16;
     else if (nSize == 4 && bComplex)

@@ -765,6 +765,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_GDALG();
 #endif
 
+#ifdef FRMT_e57
+    GDALRegister_E57();
+#endif
+
     // NOTE: you need to generally insert your own driver before that line.
 
     // NOTE: frmts/drivers.ini in the same directory should be kept in same

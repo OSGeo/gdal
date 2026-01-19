@@ -42,22 +42,30 @@ This command is the reverse operation of :ref:`gdal_raster_scale`.
 
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
-Standard options
-++++++++++++++++
-
-.. include:: gdal_options/of_raster_create_copy.rst
-
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. include:: gdal_options/ot.rst
-
-
 .. GDALG output (on-the-fly / streamed dataset)
 .. --------------------------------------------
 
 .. include:: gdal_cli_include/gdalg_raster_compatible.rst
+
+
+Standard Options
+----------------
+
+.. collapse:: details
+
+    .. include:: gdal_options/append_raster.rst
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/ot.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

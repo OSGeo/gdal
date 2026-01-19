@@ -32,6 +32,10 @@ but no projection checking is performed (unless the :option:`--projectionCheck` 
 
     gdal_calc is a Python utility, and is only available if GDAL Python bindings are available.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_calc`.
+
 .. include:: options/help_and_help_general.rst
 
 .. option:: --calc=<expression>
@@ -197,7 +201,7 @@ Examples
    .. caution::
 
       If A and B inputs both have integer data types, integer division will be
-      performed.  To avoid this, you can convert of one of the operands to a
+      performed. To avoid this, you can convert one of the operands to a
       floating point type before the division operation.
 
       .. code-block:: bash

@@ -82,16 +82,10 @@ class HDF5EOSParser
         std::vector<Dimension> aoDimensions{};  // all dimensions of the swath
     };
 
-    struct SwathGeolocationFieldMetadata
+    struct SwathFieldMetadata
     {
         std::vector<Dimension>
-            aoDimensions{};  // dimensions of the geolocation field
-        const SwathMetadata *poSwathMetadata = nullptr;
-    };
-
-    struct SwathDataFieldMetadata
-    {
-        std::vector<Dimension> aoDimensions{};  // dimensions of the data field
+            aoDimensions{};  // dimensions of the geolocation/data field
         const SwathMetadata *poSwathMetadata = nullptr;
 
         int iXDim = -1;
@@ -121,12 +115,8 @@ class HDF5EOSParser
         GridDataFieldMetadata &gridDataFieldMetadataOut) const;
     bool GetSwathMetadata(const std::string &osSwathName,
                           SwathMetadata &swathMetadataOut) const;
-    bool GetSwathDataFieldMetadata(
-        const char *pszSubdatasetName,
-        SwathDataFieldMetadata &swathDataFieldMetadataOut) const;
-    bool GetSwathGeolocationFieldMetadata(
-        const char *pszSubdatasetName,
-        SwathGeolocationFieldMetadata &swathGeolocationFieldMetadataOut) const;
+    bool GetSwathFieldMetadata(const char *pszSubdatasetName,
+                               SwathFieldMetadata &swathFieldMetadataOut) const;
 
   private:
     DataModel m_eDataModel = DataModel::INVALID;
@@ -136,10 +126,8 @@ class HDF5EOSParser
         m_oMapSubdatasetNameToGridDataFieldMetadata{};
     std::map<std::string, std::unique_ptr<SwathMetadata>>
         m_oMapSwathNameToSwathMetadata{};
-    std::map<std::string, SwathDataFieldMetadata>
-        m_oMapSubdatasetNameToSwathDataFieldMetadata{};
-    std::map<std::string, SwathGeolocationFieldMetadata>
-        m_oMapSubdatasetNameToSwathGeolocationFieldMetadata{};
+    std::map<std::string, SwathFieldMetadata>
+        m_oMapSubdatasetNameToSwathFieldMetadata{};
 
     void ParseGridStructure(const CPLJSONObject &oGridStructure);
     void ParseSwathStructure(const CPLJSONObject &oSwathStructure);

@@ -31,7 +31,7 @@ objects in existence based on this :py:class:`FeatureDefn`. The
 See :cpp:func:`OGRFeatureDefn::AddFieldDefn`.
 
 Parameters
------------
+----------
 defn : FieldDefn
     the new field definition.
 ";
@@ -50,7 +50,7 @@ objects in existence based on this :py:class:`FeatureDefn`. The
 See :cpp:Func:`OGRFeatureDefn::AddGeomFieldDefn`.
 
 Parameters
------------
+----------
 defn : GeomFieldDefn
     new geometry field definition.
 ";
@@ -69,13 +69,13 @@ objects in existence based on this :py:class:`FeatureDefn`.
 See :cpp:func:`OGRFeatureDefn::DeleteGeomFieldDefn`.
 
 Parameters
------------
+----------
 idx : int
     the index of the geometry field definition.
 
 Returns
---------
-int:
+-------
+int
     :py:const:`OGRERR_NONE` in case of success.
 ";
 
@@ -86,8 +86,8 @@ Fetch number of fields on the passed feature definition.
 See :cpp:func:`OGRFeatureDefn::GetFieldCount`.
 
 Returns
---------
-int:
+-------
+int
     count of fields.
 ";
 
@@ -98,15 +98,15 @@ Fetch field definition of the passed feature definition.
 See :cpp:func:`OGRFeatureDefn::GetFieldDefn`.
 
 Parameters
------------
-i : int / str
+----------
+i : int or str
     Field name or 0-based numeric index. For repeated
     access, use of the numeric index avoids a lookup
     step.
 
 Returns
---------
-FieldDefn:
+-------
+FieldDefn
     internal field definition object or ``None`` if the field does not
     exist. This object should not be modified by the application.
 ";
@@ -121,13 +121,13 @@ The field index of the first field matching the passed field name
 See :cpp:func:`OGRFeatureDefn::GetFieldIndex`.
 
 Parameters
------------
+----------
 field_name : str
     the field name to search for.
 
 Returns
---------
-int:
+-------
+int
     the field index, or -1 if no match found.
 ";
 
@@ -138,8 +138,8 @@ Fetch number of geometry fields on the passed feature definition.
 See :cpp:func:`OGRFeatureDefn::GetGeomFieldCount`.
 
 Returns
---------
-int:
+-------
+int
     count of geometry fields.
 ";
 
@@ -150,13 +150,13 @@ Fetch geometry field definition of the passed feature definition.
 See :cpp:func:`OGRFeatureDefn::GetGeomFieldDefn`.
 
 Parameters
------------
+----------
 i : int
     the geometry field to fetch, between 0 and GetGeomFieldCount() - 1.
 
 Returns
---------
-GeomFieldDefn:
+-------
+GeomFieldDefn
     an internal field definition object or ``None`` if invalid
     index. This object should not be modified by the application.
 ";
@@ -171,13 +171,13 @@ passed field name (case insensitively) is returned.
 See :cpp:func:`OGRFeatureDefn::GetGeomFieldIndex`.
 
 Parameters
------------
+----------
 field_name : str
     the geometry field name to search for.
 
 Returns
---------
-int:
+-------
+int
     the geometry field index, or -1 if no match found.
 ";
 
@@ -190,8 +190,8 @@ This is equivalent to ``GetGeomFieldDefn(0).GetType()``.
 See :cpp:func:`OGRFeatureDefn::GetGeomType`.
 
 Returns
---------
-int :
+-------
+int
     the base type for all geometry related to this definition.
 ";
 
@@ -202,8 +202,8 @@ Get name of the :py:class:`FeatureDefn`.
 See :cpp:func:`OGRFeatureDefn::GetName`.
 
 Returns
---------
-str:
+-------
+str
     the name
 ";
 
@@ -214,8 +214,8 @@ Fetch current reference count.
 See :cpp:func:`OGRFeatureDefn::GetReferenceCount`.
 
 Returns
---------
-int:
+-------
+int
     the current reference count.
 ";
 
@@ -228,8 +228,8 @@ Equivalent to ``GetGeomFieldDefn(0).IsIgnored()``.
 See :cpp:func:`OGRFeatureDefn::IsGeometryIgnored`.
 
 Returns
---------
-int:
+-------
+int
     ignore state
 ";
 
@@ -238,13 +238,13 @@ int:
 Test if the feature definition is identical to the other one.
 
 Parameters
------------
+----------
 other_defn : FeatureDefn
     other feature definition to compare to.
 
 Returns
---------
-int:
+-------
+int
     1 if the feature definition is identical to the other one.
 ";
 
@@ -255,8 +255,8 @@ Determine whether the style can be omitted when fetching features.
 See :cpp:func:`OGRFeatureDefn::IsStyleIgnored`.
 
 Returns
---------
-int:
+-------
+int
     ignore state
 ";
 
@@ -275,7 +275,7 @@ after any :py:class:`Feature` objects have been created against this definition.
 See :cpp:func:`OGRFeatureDefn::SetGeomType`.
 
 Parameters
------------
+----------
 geom_type : int
     the new type to assign.
 ";
@@ -289,7 +289,7 @@ This is equivalent to ``GetGeomFieldDefn(0).SetIgnored()``.
 See :cpp:func:`OGRFeatureDefn::SetGeometryIgnored`.
 
 Parameters
------------
+----------
 bignored : bool
     ignore state
 ";
@@ -301,7 +301,7 @@ Set whether the style can be omitted when fetching features.
 See :cpp:func:`OGRFeatureDefn::SetStyleIgnored`.
 
 Parameters
------------
+----------
 bignored : bool
     ignore state
 ";

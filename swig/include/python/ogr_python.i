@@ -3,7 +3,8 @@
  * python specific code for ogr bindings.
  */
 
-%feature("autodoc");
+// Disable C-style signatures in Python docstrings (see #12177)
+%feature("autodoc", "0");
 
 #ifndef FROM_GDAL_I
 %init %{
@@ -197,17 +198,16 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
         Parameters
         ----------
-        requested_schema : PyCapsule, default None
-            The schema to which the stream should be casted, passed as a
-            PyCapsule containing a C ArrowSchema representation of the
-            requested schema.
-            Currently, this is not supported and will raise a
-            NotImplementedError if the schema is not None
+        requested_schema : object, optional
+            The schema to which the stream should be cast. Passed as a PyCapsule
+            containing a C ``ArrowSchema`` representation of the requested schema.
+            Currently, this is not supported and will raise a ``NotImplementedError``
+            if the schema is not ``None``. Defaults to ``None``.
 
         Returns
         -------
-        PyCapsule
-            A capsule containing a C ArrowArrayStream struct.
+        object
+            A PyCapsule containing a C ``ArrowArrayStream`` struct.
         """
 
         if requested_schema is not None:
@@ -223,11 +223,13 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
         Parameters
         ----------
-        options : List of strings or dict with options such as INCLUDE_FID=NO, MAX_FEATURES_IN_BATCH=<number>, etc.
-
+        options : list of str or dict, optional
+            Options such as ``INCLUDE_FID=NO``, ``MAX_FEATURES_IN_BATCH=<number>``, etc.
+        
         Returns
         -------
-        a proxy object which implements the __arrow_c_stream__() method
+        object
+            A proxy object that implements the ``__arrow_c_stream__()`` method.
         """
 
         class ArrowArrayStreamInterface:
@@ -248,17 +250,16 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
                 Parameters
                 ----------
-                requested_schema : PyCapsule, default None
-                    The schema to which the stream should be casted, passed as a
-                    PyCapsule containing a C ArrowSchema representation of the
-                    requested schema.
-                    Currently, this is not supported and will raise a
-                    NotImplementedError if the schema is not None
+               requested_schema : object, optional
+                   The schema to which the stream should be cast. Passed as a PyCapsule
+                   containing a C ``ArrowSchema`` representation of the requested schema.
+                   Currently, this is not supported and will raise a ``NotImplementedError``
+                   if the schema is not ``None``. Defaults to ``None``.
 
                 Returns
                 -------
-                PyCapsule
-                    A capsule containing a C ArrowArrayStream struct.
+                object
+                    A PyCapsule containing a C ``ArrowArrayStream`` struct.
                 """
                 if requested_schema is not None:
                     raise NotImplementedError("requested_schema != None not implemented")
@@ -422,19 +423,21 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
            Parameters
            ----------
-           obj:
+           obj : object
                Object implementing the __arrow_c_stream__ or __arrow_c_array__ interface
 
-           requested_schema: PyCapsule, object implementing __arrow_c_schema__ or None. Default None
-               The schema to which the stream should be casted, passed as a
-               PyCapsule containing a C ArrowSchema representation of the
-               requested schema, or an object implementing the __arrow_c_schema__ interface.
+           requested_schema : object, optional
+               The schema to which the stream should be casted. Passed as a PyCapsule
+               containing a C ArrowSchema representation of the requested schema, or
+               as an object implementing the ``__arrow_c_schema__`` interface.
+               Defaults to ``None``.
 
-           createFieldsFromSchema: boolean or None. Default to None
-               Whether OGRLayer::CreateFieldFromArrowSchema() should be called. If None
-               specified, it is called if no fields have been created yet
+           createFieldsFromSchema : bool or None, optional
+               Whether :py:meth:`Layer.CreateFieldFromArrowSchema` should be called.
+               If ``None`` is specified, it is called if no fields have been created yet.
+               Defaults to ``None``.
 
-           options: list of strings
+           options : list[str]
                Options to pass to OGRLayer::CreateFieldFromArrowSchema() and OGRLayer::WriteArrowBatch()
 
         """
@@ -615,14 +618,14 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
         Parameters
         ----------
-        fld_index : int / str
+        fld_index : int or str
             Field name or 0-based numeric index. For repeated
             access, use of the numeric index avoids a lookup
             step.
 
         Examples
         --------
-        >>> with gdal.OpenEx("data/poly.shp") as ds:
+        >>> with gdal.OpenEx("poly.shp", gdal.OF_VECTOR) as ds:
         ...     lyr = ds.GetLayer(0)
         ...     feature = lyr.GetNextFeature()
         ...     # name-based access
@@ -682,10 +685,10 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
         This function is the same as the C++ method :cpp:func:`OGRFeature::SetField`.
 
         Parameters
-        -----------
-        field_index_or_name:
+        ----------
+        field_index_or_name : int or str
             the field to set, from 0 to GetFieldCount()-1. Or the field name
-        values:
+        values : any
             the data to apply.
         """
 
@@ -758,9 +761,8 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
             The GetGeometryRef() method is also available as an alias of geometry()
 
             Returns
-            --------
-            Geometry:
-                the geometry, or None.
+            -------
+            Geometry or None
         """
 
         return self.GetGeometryRef()
@@ -780,12 +782,12 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
         ----------
         as_object : bool, default = False
             determines whether the returned value should be a Python object instead of a string.
-        options : dict/str
+        options : dict or str
             Options to pass to :py:func:`Geometry.ExportToJson`
 
         Returns
         -------
-        str / dict
+        str or dict
         """
         try:
             import simplejson
@@ -863,13 +865,13 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
         used afterwards.
 
         Parameters
-        -----------
+        ----------
         geom : Geometry
             geometry to apply to feature.
 
         Returns
-        --------
-        int:
+        -------
+        int
             :py:const:`OGRERR_NONE` if successful, or
             :py:const:`OGR_UNSUPPORTED_GEOMETRY_TYPE` if the geometry type is illegal for
             the :py:class:`FeatureDefn` (checking not yet implemented).
@@ -892,8 +894,8 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
         See :cpp:func:`OGRFeature::SetGeomFieldDirectly`.
 
         Parameters
-        -----------
-        fld_index : int / str
+        ----------
+        fld_index : int or str
             Geometry field name or 0-based numeric index. For repeated
             access, use of the numeric index avoids a lookup
             step.
@@ -901,8 +903,8 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
             handle to the new geometry to apply to feature.
 
         Returns
-        --------
-        int:
+        -------
+        int
             :py:const:`OGRERR_NONE` if successful, or
             :py:const:`OGR_UNSUPPORTED_GEOMETRY_TYPE` if the geometry type is illegal for
             the :py:class:`FeatureDefn` (checking not yet implemented).

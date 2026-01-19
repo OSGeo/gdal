@@ -105,8 +105,16 @@
  * surface or ground level respectively. Parameters dfTargetHeight, dfVisibleVal
  * and dfInvisibleVal will be ignored.
  *
- *
- * @param papszExtraOptions Future extra options. Must be set to NULL currently.
+ * @param papszExtraOptions Extra options to control the viewshed analysis.
+ * This is a NULL-terminated list of strings in "KEY=VALUE" format, or NULL for no options.
+ * The following keys are supported:
+ * <ul>
+ * <li><b>START_ANGLE</b>: Mask all cells outside of the arc ('start-angle', 'end-angle'). Clockwise degrees from north. Also used to clamp the extent of the output raster.</li>
+ * <li><b>END_ANGLE</b>:  Mask all cells outside of the arc ('start-angle', 'end-angle'). Clockwise degrees from north. Also used to clamp the extent of the output raster.</li>
+ * <li><b>LOW_PITCH</b>: Bound observable height to be no lower than the 'low-pitch' angle from the observer. Degrees from horizontal - positive is up. Must be less than 'high-pitch'.</li>
+ * <li><b>HIGH_PITCH</b>: Mark all cells out-of-range where the observable height would be higher than the 'high-pitch' angle from the observer. Degrees from horizontal - positive is up. Must be greater than 'low-pitch'.</li>
+ * </ul>
+ * If NULL, a 360-degree viewshed is calculated.
  *
  * @return not NULL output dataset on success (to be closed with GDALClose()) or
  * NULL if an error occurs.
@@ -187,6 +195,24 @@ GDALDatasetH GDALViewshedGenerate(
     oOpts.visibleVal = dfVisibleVal;
     oOpts.invisibleVal = dfInvisibleVal;
     oOpts.outOfRangeVal = dfOutOfRangeVal;
+
+    const char *pszStartAngle =
+        CSLFetchNameValue(papszExtraOptions, "START_ANGLE");
+    if (pszStartAngle)
+        oOpts.startAngle = CPLAtof(pszStartAngle);
+
+    const char *pszEndAngle = CSLFetchNameValue(papszExtraOptions, "END_ANGLE");
+    if (pszEndAngle)
+        oOpts.endAngle = CPLAtof(pszEndAngle);
+
+    const char *pszLowPitch = CSLFetchNameValue(papszExtraOptions, "LOW_PITCH");
+    if (pszLowPitch)
+        oOpts.lowPitch = CPLAtof(pszLowPitch);
+
+    const char *pszHighPitch =
+        CSLFetchNameValue(papszExtraOptions, "HIGH_PITCH");
+    if (pszHighPitch)
+        oOpts.highPitch = CPLAtof(pszHighPitch);
 
     gdal::viewshed::Viewshed v(oOpts);
 
@@ -373,6 +399,21 @@ bool Viewshed::calcExtents(int nX, int nY, const GDALGeoTransform &invGT)
 bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                    void *pProgressArg)
 {
+    return run(band, nullptr, pfnProgress, pProgressArg);
+}
+
+/// Compute the viewshed of a raster band with .
+///
+/// @param band  Pointer to the raster band to be processed.
+/// @param sdBand  Pointer to the standard deviation (SD) raster band to be processed.
+/// @param pfnProgress  Pointer to the progress function. Can be null.
+/// @param pProgressArg  Argument passed to the progress function
+/// @return  True on success, false otherwise.
+bool Viewshed::run(GDALRasterBandH band, GDALRasterBandH sdBand,
+                   GDALProgressFunc pfnProgress, void *pProgressArg)
+{
+    if (sdBand)
+        pSdBand = static_cast<GDALRasterBand *>(sdBand);
     pSrcBand = static_cast<GDALRasterBand *>(band);
 
     GDALGeoTransform fwdTransform, invTransform;
@@ -443,10 +484,20 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 
     // Execute the viewshed algorithm.
     GDALRasterBand *pDstBand = poDstDS->GetRasterBand(1);
-    ViewshedExecutor executor(*pSrcBand, *pDstBand, nX, nY, oOutExtent,
-                              oCurExtent, oOpts, oProgress,
-                              /* emitWarningIfNoData = */ true);
-    executor.run();
+    if (pSdBand)
+    {
+        ViewshedExecutor executor(*pSrcBand, *pSdBand, *pDstBand, nX, nY,
+                                  oOutExtent, oCurExtent, oOpts, oProgress,
+                                  /* emitWarningIfNoData = */ true);
+        executor.run();
+    }
+    else
+    {
+        ViewshedExecutor executor(*pSrcBand, *pDstBand, nX, nY, oOutExtent,
+                                  oCurExtent, oOpts, oProgress,
+                                  /* emitWarningIfNoData = */ true);
+        executor.run();
+    }
     oProgress.emit(1);
     return static_cast<bool>(poDstDS);
 }

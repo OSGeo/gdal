@@ -153,9 +153,8 @@ default reading mode that works per-layer might not work correctly,
 because too many features will accumulate in the layers before being
 consumed by the user application.
 
-Starting with GDAL 2.2, applications should use the
-``GDALDataset::GetNextFeature()`` API to iterate over features in the order
-they are produced.
+Applications should use the ``GDALDataset::GetNextFeature()`` API to iterate
+over features in the order they are produced.
 
 For earlier versions, for large files, applications should set the
 :config:`OGR_INTERLEAVED_READING=YES` configuration option to turn on a special

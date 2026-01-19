@@ -2020,7 +2020,6 @@ double OGRFastAtof(const char *pszStr)
  * @param panPermutation an array of nSize elements.
  * @param nSize size of the array.
  * @return OGRERR_NONE if panPermutation is a permutation of [0, nSize - 1].
- * @since OGR 1.9.0
  */
 OGRErr OGRCheckPermutation(const int *panPermutation, int nSize)
 {

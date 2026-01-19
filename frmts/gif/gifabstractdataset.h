@@ -59,7 +59,7 @@ class GIFAbstractDataset CPL_NON_FINAL : public GDALPamDataset
     const GDAL_GCP *GetGCPs() override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
     char **GetFileList() override;
 

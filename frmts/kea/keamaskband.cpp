@@ -23,7 +23,7 @@ KEAMaskBand::KEAMaskBand(GDALRasterBand *pParent, kealib::KEAImageIO *pImageIO,
     nRasterXSize = pParent->GetXSize();
     nRasterYSize = pParent->GetYSize();
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     pParent->GetBlockSize(&nBlockXSize, &nBlockYSize);
     eAccess = pParent->GetAccess();
 

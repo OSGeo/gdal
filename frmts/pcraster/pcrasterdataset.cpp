@@ -432,7 +432,7 @@ GDALDataset *PCRasterDataset::create(const char *filename, int nr_cols,
         return nullptr;
     }
 
-    if (gdalType != GDT_Byte && gdalType != GDT_Int32 &&
+    if (gdalType != GDT_UInt8 && gdalType != GDT_Int32 &&
         gdalType != GDT_Float32)
     {
         CPLError(CE_Failure, CPLE_AppDefined,

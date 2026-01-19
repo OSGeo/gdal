@@ -126,6 +126,7 @@ class GMLHandler /* non final */
     int m_nGeometryDepth = 0;
     bool m_bAlreadyFoundGeometry = false;
     int m_nGeometryPropertyIndex = 0;
+    std::string m_osLastGeomPathInCurFeature{};
     std::map<std::string, CPLXMLNode *> m_oMapElementToSubstitute{};
 
     int m_nDepth = 0;

@@ -135,9 +135,6 @@ void *CPL_STDCALL GDALCreateScaledProgress(double dfMin, double dfMax,
     GDALScaledProgressInfo *psInfo = static_cast<GDALScaledProgressInfo *>(
         CPLCalloc(sizeof(GDALScaledProgressInfo), 1));
 
-    if (std::abs(dfMin - dfMax) < 0.0000001)
-        dfMax = dfMin + 0.01;
-
     psInfo->pData = pData;
     psInfo->pfnProgress = pfnProgress;
     psInfo->dfMin = dfMin;
@@ -154,7 +151,7 @@ void *CPL_STDCALL GDALCreateScaledProgress(double dfMin, double dfMax,
  * \brief Cleanup scaled progress handle.
  *
  * This function cleans up the data associated with a scaled progress function
- * as returned by GADLCreateScaledProgress().
+ * as returned by GDALCreateScaledProgress().
  *
  * @param pData scaled progress handle returned by GDALCreateScaledProgress().
  */

@@ -56,8 +56,8 @@ class KEARasterBand CPL_NON_FINAL : public GDALRasterBand
                            const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
-    char **GetMetadata(const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMetadata,
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
 
     // virtual methods for the no data value

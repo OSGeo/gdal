@@ -73,7 +73,7 @@ def small_raw_vrt(tmp_path):
         "relativeToVRT=1",
     ]
 
-    result = ds.AddBand(gdal.GDT_Byte, options)
+    result = ds.AddBand(gdal.GDT_UInt8, options)
     assert result == gdal.CE_None, "AddBand() returned error code"
 
     band = ds.GetRasterBand(1)
@@ -136,7 +136,7 @@ def test_vrtrawlink_4(tmp_path, small_raw_vrt):
     byte_data = band_1.ReadRaster(0, 0, 31, 35)
 
     band = rawlink_ds.GetRasterBand(2)
-    band.WriteRaster(0, 0, 31, 35, byte_data, 31, 35, gdal.GDT_Byte)
+    band.WriteRaster(0, 0, 31, 35, byte_data, 31, 35, gdal.GDT_UInt8)
 
     rawlink_ds.FlushCache()
 

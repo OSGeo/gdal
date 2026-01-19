@@ -11,7 +11,9 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import copy
 import json
+import os
 import os.path
 import stat
 import sys
@@ -983,7 +985,9 @@ def test_vsis3_open_after_config_option_change(aws_test_config, webserver_port):
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
-    handler.add("GET", "/test_vsis3_change_config_options/?delimiter=%2F", 403)
+    handler.add(
+        "GET", "/test_vsis3_change_config_options/?delimiter=%2F&list-type=2", 403
+    )
     handler.add("GET", "/test_vsis3_change_config_options/test.bin", 403)
     with webserver.install_http_handler(handler):
         with gdal.quiet_errors():
@@ -1001,7 +1005,7 @@ def test_vsis3_open_after_config_option_change(aws_test_config, webserver_port):
         handler = webserver.SequentialHandler()
         handler.add(
             "GET",
-            "/test_vsis3_change_config_options/?delimiter=%2F",
+            "/test_vsis3_change_config_options/?delimiter=%2F&list-type=2",
             200,
             {"Content-type": "application/xml"},
             """<?xml version="1.0" encoding="UTF-8"?>
@@ -1066,7 +1070,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
                 response = """<?xml version="1.0" encoding="UTF-8"?>
                 <ListBucketResult>
                     <Prefix>a_dir with_space/</Prefix>
-                    <NextMarker>bla</NextMarker>
+                    <NextContinuationToken>bla</NextContinuationToken>
                     <Contents>
                         <Key>a_dir with_space/resource3 with_space.bin</Key>
                         <LastModified>1970-01-01T00:00:01.000Z</LastModified>
@@ -1086,17 +1090,17 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
 
     handler.add(
         "GET",
-        "/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%20with_space%2F",
+        "/s3_fake_bucket2/?delimiter=%2F&list-type=2&prefix=a_dir%20with_space%2F",
         custom_method=method,
     )
     handler.add(
         "GET",
-        "/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%20with_space%2F",
+        "/s3_fake_bucket2/?delimiter=%2F&list-type=2&prefix=a_dir%20with_space%2F",
         custom_method=method,
     )
     handler.add(
         "GET",
-        "/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%20with_space%2F",
+        "/s3_fake_bucket2/?delimiter=%2F&list-type=2&prefix=a_dir%20with_space%2F",
         custom_method=method,
     )
 
@@ -1153,7 +1157,10 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
 
     handler.add(
         "GET",
-        ("/s3_fake_bucket2/" "?delimiter=%2F&marker=bla&prefix=a_dir%20with_space%2F"),
+        (
+            "/s3_fake_bucket2/"
+            "?continuation-token=bla&delimiter=%2F&list-type=2&prefix=a_dir%20with_space%2F"
+        ),
         custom_method=method,
     )
 
@@ -1226,7 +1233,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     handler.add(
         "GET",
         (
-            "/s3_fake_bucket2/?delimiter=%2F&max-keys=100"
+            "/s3_fake_bucket2/?delimiter=%2F&list-type=2&max-keys=100"
             "&prefix=a_dir%20with_space%2Fresource3%20with_space.bin%2F"
         ),
         400,
@@ -1239,7 +1246,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F",
+        "/s3_fake_bucket2/?delimiter=%2F&list-type=2&prefix=a_dir%2F",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -1269,7 +1276,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F",
+        "/s3_fake_bucket2/?delimiter=%2F&list-type=2&prefix=a_dir%2F",
         200,
         {},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -1315,7 +1322,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F",
+        "/s3_fake_bucket2/?delimiter=%2F&list-type=2&prefix=a_dir%2F",
         200,
         {},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -1416,7 +1423,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
             if config_option_value is None:
                 handler.add(
                     "GET",
-                    "/s3_non_cached/?delimiter=%2F",
+                    "/s3_non_cached/?delimiter=%2F&list-type=2",
                     200,
                     {"Content-type": "application/xml"},
                     """<?xml version="1.0" encoding="UTF-8"?>
@@ -1575,12 +1582,12 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     )
     handler.add(
         "GET",
-        "/s3_test_temporary_redirect_read_dir/?delimiter=%2F",
+        "/s3_test_temporary_redirect_read_dir/?delimiter=%2F&list-type=2",
         custom_method=h.method_req_1,
     )
     handler.add(
         "GET",
-        "/s3_test_temporary_redirect_read_dir/?delimiter=%2F",
+        "/s3_test_temporary_redirect_read_dir/?delimiter=%2F&list-type=2",
         custom_method=h.method_req_2,
     )
 
@@ -1604,12 +1611,12 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     )
     handler.add(
         "GET",
-        "/s3_test_temporary_redirect_read_dir/?delimiter=%2F&prefix=test%2F",
+        "/s3_test_temporary_redirect_read_dir/?delimiter=%2F&list-type=2&prefix=test%2F",
         custom_method=h.method_req_1,
     )
     handler.add(
         "GET",
-        "/s3_test_temporary_redirect_read_dir/?delimiter=%2F&prefix=test%2F",
+        "/s3_test_temporary_redirect_read_dir/?delimiter=%2F&list-type=2&prefix=test%2F",
         custom_method=h.method_req_2,
     )
 
@@ -1627,7 +1634,7 @@ def test_vsis3_opendir(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/vsis3_opendir/",
+        "/vsis3_opendir/?list-type=2",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -1678,7 +1685,7 @@ def test_vsis3_opendir(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/vsis3_opendir/?delimiter=%2F",
+        "/vsis3_opendir/?delimiter=%2F&list-type=2",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -1719,7 +1726,7 @@ def test_vsis3_opendir(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/vsis3_opendir/?delimiter=%2F",
+        "/vsis3_opendir/?delimiter=%2F&list-type=2",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -1754,7 +1761,7 @@ def test_vsis3_opendir(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/vsis3_opendir/?delimiter=%2F&prefix=subdir%2F",
+        "/vsis3_opendir/?delimiter=%2F&list-type=2&prefix=subdir%2F",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -1782,7 +1789,7 @@ def test_vsis3_opendir(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/vsis3_opendir/?prefix=my_prefix",
+        "/vsis3_opendir/?list-type=2&prefix=my_prefix",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -1816,7 +1823,7 @@ def test_vsis3_opendir(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/vsis3_opendir/?prefix=some_dir%2Fmy_prefix",
+        "/vsis3_opendir/?list-type=2&prefix=some_dir%2Fmy_prefix",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -1885,7 +1892,7 @@ def test_vsis3_opendir_synthetize_missing_directory(aws_test_config, webserver_p
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/vsis3_opendir/?prefix=maindir%2F",
+        "/vsis3_opendir/?list-type=2&prefix=maindir%2F",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -2010,7 +2017,7 @@ def test_vsis3_opendir_from_prefix(aws_test_config, webserver_port):
     )
     handler.add(
         "GET",
-        "/bucket1/",
+        "/bucket1/?list-type=2",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -2032,7 +2039,7 @@ def test_vsis3_opendir_from_prefix(aws_test_config, webserver_port):
     )
     handler.add(
         "GET",
-        "/bucket2/",
+        "/bucket2/?list-type=2",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -2320,7 +2327,7 @@ def test_vsis3_put_invalidate(aws_test_config, webserver_port):
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
-    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F", 200)
+    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F&list-type=2", 200)
     handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"foo")
     handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"foo")
 
@@ -2352,7 +2359,7 @@ def test_vsis3_put_invalidate(aws_test_config, webserver_port):
             gdal.VSIFCloseL(f)
 
     handler = webserver.SequentialHandler()
-    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F", 200)
+    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F&list-type=2", 200)
     handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"barbaw")
     handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"barbaw")
 
@@ -2374,7 +2381,7 @@ def test_vsis3_copy_invalidate(aws_test_config, webserver_port, tmp_vsimem):
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
-    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F", 200)
+    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F&list-type=2", 200)
     handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"foo")
     handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"foo")
 
@@ -2404,7 +2411,7 @@ def test_vsis3_copy_invalidate(aws_test_config, webserver_port, tmp_vsimem):
         gdal.CopyFile(memfilename, "/vsis3/s3_fake_bucket3/test_put_invalidate.bin")
 
     handler = webserver.SequentialHandler()
-    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F", 200)
+    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F&list-type=2", 200)
     handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"barbaw")
     handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"barbaw")
 
@@ -2497,7 +2504,7 @@ def test_vsis3_5(aws_test_config, webserver_port):
     handler.add("GET", "/s3_delete_bucket/delete_file", 404, {"Connection": "close"})
     handler.add(
         "GET",
-        "/s3_delete_bucket/?delimiter=%2F&max-keys=100&prefix=delete_file%2F",
+        "/s3_delete_bucket/?delimiter=%2F&list-type=2&max-keys=100&prefix=delete_file%2F",
         404,
         {"Connection": "close"},
     )
@@ -2633,7 +2640,7 @@ def test_vsis3_rmdir_recursive(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/test_rmdir_recursive/?prefix=somedir%2F",
+        "/test_rmdir_recursive/?list-type=2&prefix=somedir%2F",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -2725,7 +2732,7 @@ def test_vsis3_rmdir_recursive_no_batch_deletion(aws_test_config, webserver_port
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/test_vsis3_rmdir_recursive_no_batch_deletion/?prefix=somedir%2F",
+        "/test_vsis3_rmdir_recursive_no_batch_deletion/?list-type=2&prefix=somedir%2F",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -2758,7 +2765,7 @@ def test_vsis3_rmdir_recursive_no_batch_deletion(aws_test_config, webserver_port
     handler.add("GET", "/test_vsis3_rmdir_recursive_no_batch_deletion/somedir/", 404)
     handler.add(
         "GET",
-        "/test_vsis3_rmdir_recursive_no_batch_deletion/?delimiter=%2F&max-keys=100&prefix=somedir%2F",
+        "/test_vsis3_rmdir_recursive_no_batch_deletion/?delimiter=%2F&list-type=2&max-keys=100&prefix=somedir%2F",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -3231,7 +3238,7 @@ def test_vsis3_7(aws_test_config, webserver_port):
     handler.add("GET", "/s3_bucket_test_mkdir/dir/", 404, {"Connection": "close"})
     handler.add(
         "GET",
-        "/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir%2F",
+        "/s3_bucket_test_mkdir/?delimiter=%2F&list-type=2&max-keys=100&prefix=dir%2F",
         404,
         {"Connection": "close"},
     )
@@ -3263,7 +3270,7 @@ def test_vsis3_7(aws_test_config, webserver_port):
     handler.add("GET", "/s3_bucket_test_mkdir/dir/", 404)
     handler.add(
         "GET",
-        "/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir%2F",
+        "/s3_bucket_test_mkdir/?delimiter=%2F&list-type=2&max-keys=100&prefix=dir%2F",
         404,
         {"Connection": "close"},
     )
@@ -3276,7 +3283,10 @@ def test_vsis3_7(aws_test_config, webserver_port):
     handler.add("GET", "/s3_bucket_test_mkdir/dir_nonempty/", 416)
     handler.add(
         "GET",
-        ("/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=100" "&prefix=dir_nonempty%2F"),
+        (
+            "/s3_bucket_test_mkdir/?delimiter=%2F&list-type=2&max-keys=100"
+            "&prefix=dir_nonempty%2F"
+        ),
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -3300,7 +3310,7 @@ def test_vsis3_7(aws_test_config, webserver_port):
     handler.add(
         "GET",
         (
-            "/s3_bucket_test_dir_stat/?delimiter=%2F&max-keys=100"
+            "/s3_bucket_test_dir_stat/?delimiter=%2F&list-type=2&max-keys=100"
             "&prefix=test_dir_stat%2F"
         ),
         200,
@@ -3325,7 +3335,7 @@ def test_vsis3_7(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/s3_bucket_test_readdir/?delimiter=%2F&prefix=test_dirread%2F",
+        "/s3_bucket_test_readdir/?delimiter=%2F&list-type=2&prefix=test_dirread%2F",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -3348,7 +3358,7 @@ def test_vsis3_7(aws_test_config, webserver_port):
     handler.add(
         "GET",
         (
-            "/s3_bucket_test_dir_stat_2/?delimiter=%2F&max-keys=100"
+            "/s3_bucket_test_dir_stat_2/?delimiter=%2F&list-type=2&max-keys=100"
             "&prefix=test_dir_stat%2F"
         ),
         200,
@@ -3373,7 +3383,7 @@ def test_vsis3_7(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/s3_bucket_test_readdir2/?delimiter=%2F&prefix=test_dirread%2F",
+        "/s3_bucket_test_readdir2/?delimiter=%2F&list-type=2&prefix=test_dirread%2F",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -3400,7 +3410,7 @@ def test_vsis3_8(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/vsis3_8/?delimiter=%2F",
+        "/vsis3_8/?delimiter=%2F&list-type=2",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -3449,7 +3459,11 @@ def test_vsis3_sync_etag(tmp_vsimem, aws_test_config, webserver_port):
     with gdal.quiet_errors():
         handler = webserver.SequentialHandler()
         handler.add("GET", "/do_not/exist", 404)
-        handler.add("GET", "/do_not/?delimiter=%2F&max-keys=100&prefix=exist%2F", 404)
+        handler.add(
+            "GET",
+            "/do_not/?delimiter=%2F&list-type=2&max-keys=100&prefix=exist%2F",
+            404,
+        )
         handler.add("PUT", "/do_not/exist", 404)
         with webserver.install_http_handler(handler):
             assert not gdal.Sync("vsifile.py", "/vsis3/do_not/exist", options=options)
@@ -3457,7 +3471,11 @@ def test_vsis3_sync_etag(tmp_vsimem, aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add("GET", "/out/", 200)
     handler.add("GET", "/out/testsync.txt", 404)
-    handler.add("GET", "/out/?delimiter=%2F&max-keys=100&prefix=testsync.txt%2F", 404)
+    handler.add(
+        "GET",
+        "/out/?delimiter=%2F&list-type=2&max-keys=100&prefix=testsync.txt%2F",
+        404,
+    )
 
     handler.add(
         "PUT",
@@ -3567,7 +3585,7 @@ def test_vsis3_sync_etag(tmp_vsimem, aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/out/",
+        "/out/?list-type=2",
         200,
         {},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -3705,7 +3723,7 @@ def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
     )
     handler.add(
         "GET",
-        "/out/?delimiter=%2F",
+        "/out/?delimiter=%2F&list-type=2",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -3799,7 +3817,7 @@ def test_vsis3_sync_implicit_directories(tmp_path, aws_test_config, webserver_po
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/mybucket/?prefix=subdir%2F",
+        "/mybucket/?list-type=2&prefix=subdir%2F",
         200,
         {},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -3819,7 +3837,7 @@ def test_vsis3_sync_implicit_directories(tmp_path, aws_test_config, webserver_po
     handler.add("GET", "/mybucket/subdir", 404)
     handler.add(
         "GET",
-        "/mybucket/?delimiter=%2F&max-keys=100&prefix=subdir%2F",
+        "/mybucket/?delimiter=%2F&list-type=2&max-keys=100&prefix=subdir%2F",
         200,
         {},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -3914,7 +3932,7 @@ def test_vsis3_sync_win32_special_filenames(aws_test_config, webserver_port, tmp
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/bucket/",
+        "/bucket/?list-type=2",
         200,
         {},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -3971,7 +3989,7 @@ def test_vsis3_sync_win32_special_filenames(aws_test_config, webserver_port, tmp
     )
     handler.add(
         "GET",
-        "/bucket/?delimiter=%2F&prefix=subdir%2F",
+        "/bucket/?delimiter=%2F&list-type=2&prefix=subdir%2F",
         200,
         {},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -4002,11 +4020,11 @@ def test_vsis3_sync_win32_special_filenames(aws_test_config, webserver_port, tmp
     # Local to S3
     gdal.VSICurlClearCache()
     handler = webserver.SequentialHandler()
-    handler.add("GET", "/out/", 404)
+    handler.add("GET", "/out/?list-type=2", 404)
     handler.add("GET", "/out/", 404)
     handler.add(
         "GET",
-        "/out/?delimiter=%2F&max-keys=100",
+        "/out/?delimiter=%2F&list-type=2&max-keys=100",
         200,
         {},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -4041,7 +4059,9 @@ def test_vsis3_fake_rename(aws_test_config, webserver_port):
         "foo",
     )
     handler.add("GET", "/test/target.txt", 404)
-    handler.add("GET", "/test/?delimiter=%2F&max-keys=100&prefix=target.txt%2F", 200)
+    handler.add(
+        "GET", "/test/?delimiter=%2F&list-type=2&max-keys=100&prefix=target.txt%2F", 200
+    )
     handler.add(
         "PUT",
         "/test/target.txt",
@@ -4070,7 +4090,7 @@ def test_vsis3_fake_rename_dir(aws_test_config, webserver_port):
     handler.add("GET", "/test/source_dir", 404)
     handler.add(
         "GET",
-        "/test/?delimiter=%2F&max-keys=100&prefix=source_dir%2F",
+        "/test/?delimiter=%2F&list-type=2&max-keys=100&prefix=source_dir%2F",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -4085,7 +4105,9 @@ def test_vsis3_fake_rename_dir(aws_test_config, webserver_port):
         """,
     )
     handler.add("GET", "/test/target_dir/", 404)
-    handler.add("GET", "/test/?delimiter=%2F&max-keys=100&prefix=target_dir%2F", 404)
+    handler.add(
+        "GET", "/test/?delimiter=%2F&list-type=2&max-keys=100&prefix=target_dir%2F", 404
+    )
 
     def method(request):
         if request.headers["Content-Length"] != "0":
@@ -4119,7 +4141,9 @@ def test_vsis3_fake_rename_dir(aws_test_config, webserver_port):
     handler.add("DELETE", "/test/source_dir/test.txt", 204)
 
     handler.add("GET", "/test/source_dir/", 404)
-    handler.add("GET", "/test/?delimiter=%2F&max-keys=100&prefix=source_dir%2F", 404)
+    handler.add(
+        "GET", "/test/?delimiter=%2F&list-type=2&max-keys=100&prefix=source_dir%2F", 404
+    )
 
     with webserver.install_http_handler(handler):
         assert gdal.Rename("/vsis3/test/source_dir", "/vsis3/test/target_dir") == 0
@@ -4166,9 +4190,13 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
 
     tab = [-1]
     handler = webserver.SequentialHandler()
-    handler.add("GET", "/test_bucket/?prefix=test%2F", 200)
+    handler.add("GET", "/test_bucket/?list-type=2&prefix=test%2F", 200)
     handler.add("GET", "/test_bucket/test", 404)
-    handler.add("GET", "/test_bucket/?delimiter=%2F&max-keys=100&prefix=test%2F", 200)
+    handler.add(
+        "GET",
+        "/test_bucket/?delimiter=%2F&list-type=2&max-keys=100&prefix=test%2F",
+        200,
+    )
     handler.add("GET", "/test_bucket/", 200)
     handler.add("GET", "/test_bucket/test/", 404)
     handler.add("PUT", "/test_bucket/test/", 200)
@@ -4245,9 +4273,13 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure(
     gdal.FileFromMemBuffer(tmp_vsimem / "test/foo", "foo\n")
 
     handler = webserver.SequentialHandler()
-    handler.add("GET", "/test_bucket/?prefix=test%2F", 200)
+    handler.add("GET", "/test_bucket/?list-type=2&prefix=test%2F", 200)
     handler.add("GET", "/test_bucket/test", 404)
-    handler.add("GET", "/test_bucket/?delimiter=%2F&max-keys=100&prefix=test%2F", 200)
+    handler.add(
+        "GET",
+        "/test_bucket/?delimiter=%2F&list-type=2&max-keys=100&prefix=test%2F",
+        200,
+    )
     handler.add("GET", "/test_bucket/", 200)
     handler.add("GET", "/test_bucket/test/", 404)
     handler.add("PUT", "/test_bucket/test/", 200)
@@ -4768,7 +4800,7 @@ def test_vsis3_no_useless_requests(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/no_useless_requests/?delimiter=%2F",
+        "/no_useless_requests/?delimiter=%2F&list-type=2",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -4868,7 +4900,10 @@ def test_vsis3_random_write_gtiff_create_copy(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add("GET", "/random_write/test.tif", 404, {})
     handler.add(
-        "GET", "/random_write/?delimiter=%2F&max-keys=100&prefix=test.tif%2F", 404, {}
+        "GET",
+        "/random_write/?delimiter=%2F&list-type=2&max-keys=100&prefix=test.tif%2F",
+        404,
+        {},
     )
 
     src_ds = gdal.Open("data/byte.tif")
@@ -4902,7 +4937,7 @@ def test_vsis3_random_write_on_existing_file(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/random_write/?delimiter=%2F",
+        "/random_write/?delimiter=%2F&list-type=2",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -4941,7 +4976,7 @@ def test_vsis3_random_write_on_existing_file_that_does_not_exist(
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/random_write/?delimiter=%2F",
+        "/random_write/?delimiter=%2F&list-type=2",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -5329,7 +5364,6 @@ def test_vsis3_read_credentials_ec2_imdsv2(aws_test_config, webserver_port):
         "AWS_ACCESS_KEY_ID": "",
         # Disable hypervisor related check to test if we are really on EC2
         "CPL_AWS_AUTODETECT_EC2": "NO",
-        "CPL_AWS_WEB_IDENTITY_ENABLE": "NO",
     }
 
     gdal.VSICurlClearCache()
@@ -5370,7 +5404,9 @@ def test_vsis3_read_credentials_ec2_imdsv2(aws_test_config, webserver_port):
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options, thread_local=False):
+        initial_options = copy.copy(options)
+        initial_options["CPL_AWS_WEB_IDENTITY_ENABLE"] = "NO"
+        with gdaltest.config_options(initial_options, thread_local=False):
             with gdaltest.config_option(
                 "CPL_AWS_EC2_API_ROOT_URL",
                 "http://localhost:%d" % webserver_port,
@@ -5564,13 +5600,30 @@ def test_vsis3_read_credentials_ec2_imdsv1(aws_test_config, webserver_port):
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options, thread_local=False):
+        initial_options = copy.copy(options)
+        initial_options["CPL_AWS_WEB_IDENTITY_ENABLE"] = "NO"
+        with gdaltest.config_options(initial_options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
         gdal.VSIFCloseL(f)
 
     assert data == "foo"
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket/bar", 200, {}, "bar")
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            # Set a fake URL to check that credentials re-use works
+            with gdaltest.config_option(
+                "CPL_AWS_EC2_API_ROOT_URL", "", thread_local=False
+            ):
+                f = open_for_read("/vsis3/s3_fake_bucket/bar")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "bar"
 
 
 ###############################################################################
@@ -5648,7 +5701,9 @@ def test_vsis3_read_credentials_ec2_expiration(aws_test_config, webserver_port):
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options, thread_local=False):
+        initial_options = copy.copy(options)
+        initial_options["CPL_AWS_WEB_IDENTITY_ENABLE"] = "NO"
+        with gdaltest.config_options(initial_options, thread_local=False):
             with gdaltest.config_option(
                 "CPL_AWS_EC2_API_ROOT_URL", valid_url, thread_local=False
             ):
@@ -5690,7 +5745,6 @@ def test_vsis3_read_credentials_AWS_CONTAINER_CREDENTIALS_FULL_URI(
         "AWS_ACCESS_KEY_ID": "",
         # Disable hypervisor related check to test if we are really on EC2
         "CPL_AWS_AUTODETECT_EC2": "NO",
-        "CPL_AWS_WEB_IDENTITY_ENABLE": "NO",
         "AWS_CONTAINER_CREDENTIALS_FULL_URI": f"http://localhost:{webserver_port}/AWS_CONTAINER_CREDENTIALS_FULL_URI",
     }
 
@@ -5715,13 +5769,30 @@ def test_vsis3_read_credentials_AWS_CONTAINER_CREDENTIALS_FULL_URI(
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options, thread_local=False):
+        initial_options = copy.copy(options)
+        initial_options["CPL_AWS_WEB_IDENTITY_ENABLE"] = "NO"
+        with gdaltest.config_options(initial_options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
         gdal.VSIFCloseL(f)
 
     assert data == "foo"
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket/bar", 200, {}, "bar")
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            # Set a fake URL to check that credentials re-use works
+            with gdaltest.config_option(
+                "CPL_AWS_EC2_API_ROOT_URL", "", thread_local=False
+            ):
+                f = open_for_read("/vsis3/s3_fake_bucket/bar")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "bar"
 
 
 ###############################################################################
@@ -5739,7 +5810,6 @@ def test_vsis3_read_credentials_AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE(
         "AWS_ACCESS_KEY_ID": "",
         # Disable hypervisor related check to test if we are really on EC2
         "CPL_AWS_AUTODETECT_EC2": "NO",
-        "CPL_AWS_WEB_IDENTITY_ENABLE": "NO",
         "AWS_CONTAINER_CREDENTIALS_FULL_URI": f"http://localhost:{webserver_port}/AWS_CONTAINER_CREDENTIALS_FULL_URI",
         "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE": f"{tmp_vsimem}/container_authorization_token_file",
         "AWS_CONTAINER_AUTHORIZATION_TOKEN": "invalid",
@@ -5769,13 +5839,30 @@ def test_vsis3_read_credentials_AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE(
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options, thread_local=False):
+        initial_options = copy.copy(options)
+        initial_options["CPL_AWS_WEB_IDENTITY_ENABLE"] = "NO"
+        with gdaltest.config_options(initial_options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
         gdal.VSIFCloseL(f)
 
     assert data == "foo"
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket/bar", 200, {}, "bar")
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            # Set a fake URL to check that credentials re-use works
+            with gdaltest.config_option(
+                "CPL_AWS_EC2_API_ROOT_URL", "", thread_local=False
+            ):
+                f = open_for_read("/vsis3/s3_fake_bucket/bar")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "bar"
 
 
 ###############################################################################
@@ -6344,7 +6431,7 @@ def test_vsis3_non_existing_file_GDAL_DISABLE_READDIR_ON_OPEN(
     handler.add("GET", "/test_bucket/non_existing.tif", 404)
     handler.add(
         "GET",
-        "/test_bucket/?delimiter=%2F&max-keys=100&prefix=non_existing.tif%2F",
+        "/test_bucket/?delimiter=%2F&list-type=2&max-keys=100&prefix=non_existing.tif%2F",
         200,
     )
     gdal.ErrorReset()
@@ -6538,6 +6625,7 @@ def test_vsis3_list_directory_bucket(aws_test_config, webserver_port):
                 <LastModified>1970-01-01T00:00:01.000Z</LastModified>
                 <Size>123456</Size>
             </Contents>
+            <NextMarker>do_not_use_me</NextMarker> <!-- Apache Ozone includes both NextMarker and NextContinuationToken -->
             <NextContinuationToken>next_continuation_token</NextContinuationToken>
         </ListBucketResult>
         """,
@@ -6821,3 +6909,275 @@ def test_vsis3_extra_1():
     gdal.VSIFCloseL(f)
 
     assert len(ret) == 1
+
+
+###############################################################################
+# Test credential_process authentication
+
+
+def test_vsis3_credential_process(
+    tmp_path, tmp_vsimem, aws_test_config, webserver_port
+):
+    script_content = """#!/usr/bin/env python3
+import json
+import sys
+credentials = {
+    "Version": "1",
+    "AccessKeyId": "AWS_ACCESS_KEY_ID",
+    "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+    "SessionToken": "AWS_SESSION_TOKEN",
+    "Expiration": "3000-01-01T12:00:00Z"
+}
+print(json.dumps(credentials))
+"""
+
+    script_path = tmp_path / "script.py"
+    with open(script_path, "wb") as f:
+        f.write(script_content.encode("utf-8"))
+
+    os.chmod(script_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+
+    options = {
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+        "AWS_SESSION_TOKEN": "",
+        "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
+        "CPL_AWS_AUTODETECT_EC2": "NO",
+    }
+
+    gdal.VSICurlClearCache()
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "aws_config",
+        f"""
+[default]
+credential_process = {sys.executable} {script_path}
+region = us-east-1
+""",
+    )
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/s3_fake_bucket/resource",
+        custom_method=get_s3_fake_bucket_resource_method_with_security_token,
+    )
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "foo"
+
+    # Given the expiration long in the uture, test that re-trying a request
+    # does not involve running the script
+    os.unlink(script_path)
+    gdal.VSICurlPartialClearCache("/vsis3/s3_fake_bucket/resource")
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/s3_fake_bucket/resource",
+        custom_method=get_s3_fake_bucket_resource_method_with_security_token,
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "foo"
+
+
+###############################################################################
+# Test credential_process authentication
+
+
+def test_vsis3_credential_process_expired(
+    tmp_path, tmp_vsimem, aws_test_config, webserver_port
+):
+    script_content = """#!/usr/bin/env python3
+import json
+import sys
+credentials = {
+    "Version": "1",
+    "AccessKeyId": "AWS_ACCESS_KEY_ID",
+    "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+    "SessionToken": "AWS_SESSION_TOKEN",
+    "Expiration": "2025-01-01T12:00:00Z"
+}
+print(json.dumps(credentials))
+"""
+
+    script_path = tmp_path / "script.py"
+    with open(script_path, "wb") as f:
+        f.write(script_content.encode("utf-8"))
+
+    os.chmod(script_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+
+    options = {
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+        "AWS_SESSION_TOKEN": "",
+        "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
+        "CPL_AWS_AUTODETECT_EC2": "NO",
+    }
+
+    gdal.VSICurlClearCache()
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "aws_config",
+        f"""
+[default]
+credential_process = {sys.executable} {script_path}
+region = us-east-1
+""",
+    )
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/s3_fake_bucket/resource",
+        custom_method=get_s3_fake_bucket_resource_method_with_security_token,
+    )
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "foo"
+
+    os.unlink(script_path)
+    gdal.VSICurlPartialClearCache("/vsis3/s3_fake_bucket/resource")
+
+    with gdaltest.config_options(options, thread_local=False), gdal.quiet_errors():
+        f = open_for_read("/vsis3/s3_fake_bucket/resource")
+    assert f is None
+
+
+###############################################################################
+# Test credential_process with invalid command
+
+
+def test_vsis3_credential_process_invalid_command(tmp_vsimem, aws_test_config):
+    options = {
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+        "AWS_SESSION_TOKEN": "",
+        "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
+        "CPL_AWS_AUTODETECT_EC2": "NO",
+    }
+
+    gdal.VSICurlClearCache()
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "aws_config",
+        """
+[default]
+credential_process = /nonexistent/command
+region = us-east-1
+""",
+    )
+
+    with gdaltest.config_options(options, thread_local=False):
+        with gdal.quiet_errors():
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is None
+
+
+###############################################################################
+# Test credential_process with invalid JSON
+
+
+def test_vsis3_credential_process_invalid_json(tmp_vsimem, aws_test_config):
+    script_content = """#!/usr/bin/env python3
+print('invalid json response')
+"""
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        f.write(script_content)
+        script_path = f.name
+
+    os.chmod(script_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+
+    try:
+        options = {
+            "AWS_SECRET_ACCESS_KEY": "",
+            "AWS_ACCESS_KEY_ID": "",
+            "AWS_SESSION_TOKEN": "",
+            "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
+            "CPL_AWS_AUTODETECT_EC2": "NO",
+        }
+
+        gdal.VSICurlClearCache()
+
+        gdal.FileFromMemBuffer(
+            tmp_vsimem / "aws_config",
+            f"""
+[default]
+credential_process = {sys.executable} {script_path}
+region = us-east-1
+""",
+        )
+
+        with gdaltest.config_options(options, thread_local=False):
+            with gdal.quiet_errors():
+                f = open_for_read("/vsis3/s3_fake_bucket/resource")
+            assert f is None
+
+    finally:
+        os.unlink(script_path)
+
+
+###############################################################################
+# Test credential_process with missing required fields
+
+
+def test_vsis3_credential_process_missing_fields(tmp_vsimem, aws_test_config):
+
+    script_content = """#!/usr/bin/env python3
+import json
+credentials = {"AccessKeyId": "test_key"}
+print(json.dumps(credentials))
+"""
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        f.write(script_content)
+        script_path = f.name
+
+    os.chmod(script_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+
+    try:
+        options = {
+            "AWS_SECRET_ACCESS_KEY": "",
+            "AWS_ACCESS_KEY_ID": "",
+            "AWS_SESSION_TOKEN": "",
+            "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
+            "CPL_AWS_AUTODETECT_EC2": "NO",
+        }
+
+        gdal.VSICurlClearCache()
+
+        gdal.FileFromMemBuffer(
+            tmp_vsimem / "aws_config",
+            f"""
+[default]
+credential_process = {sys.executable} {script_path}
+region = us-east-1
+""",
+        )
+
+        with gdaltest.config_options(options, thread_local=False):
+            with gdal.quiet_errors():
+                f = open_for_read("/vsis3/s3_fake_bucket/resource")
+            assert f is None
+
+    finally:
+        os.unlink(script_path)

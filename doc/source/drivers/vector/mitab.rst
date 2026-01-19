@@ -137,7 +137,7 @@ The following dataset creation options are supported:
       :since: 3.10
 
       Replaces all non alphanumeric characters in dataset's field names by
-      `_` (underscope). For recent MapInfo can be set to `NO`.
+      `_` (underscore). For recent MapInfo can be set to `NO`.
 
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -180,7 +180,7 @@ The following layer creation options are supported:
       :since: 3.10
 
       Replaces all non alphanumeric characters in layer's field names by
-      `_` (underscope). For recent MapInfo can be set to `NO`.
+      `_` (underscore). For recent MapInfo can be set to `NO`.
 
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~

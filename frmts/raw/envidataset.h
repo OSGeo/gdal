@@ -64,7 +64,6 @@ class ENVIDataset final : public RawDataset
 
     Interleave eInterleave = Interleave::BSQ;
 
-    bool ReadHeader(VSILFILE *);
     bool ProcessMapinfo(const char *);
     void ProcessRPCinfo(const char *, int, int);
     void ProcessGeoPoints(const char *);
@@ -73,10 +72,10 @@ class ENVIDataset final : public RawDataset
     static float byteSwapFloat(float);
     static double byteSwapDouble(double);
     static void SetENVIDatum(OGRSpatialReference *, const char *);
-    static void SetENVIEllipse(OGRSpatialReference *, char **);
+    static void SetENVIEllipse(OGRSpatialReference *, CSLConstList papszPI_EI);
     void WriteProjectionInfo();
-    bool ParseRpcCoeffsMetaDataString(const char *psName, char *papszVal[],
-                                      int &idx);
+    bool ParseRpcCoeffsMetaDataString(const char *psName,
+                                      CPLStringList &aosVal);
     bool WriteRpcInfo();
     bool WritePseudoGcpInfo();
 
@@ -85,13 +84,13 @@ class ENVIDataset final : public RawDataset
         bFillFile = true;
     }
 
-    static char **SplitList(const char *);
+    static CPLStringList SplitList(const char *);
 
     static int GetEnviType(GDALDataType eType);
 
     CPL_DISALLOW_COPY_ASSIGN(ENVIDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     ENVIDataset();
@@ -108,7 +107,7 @@ class ENVIDataset final : public RawDataset
 
     void SetDescription(const char *) override;
 
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;

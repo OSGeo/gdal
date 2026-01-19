@@ -937,3 +937,21 @@ def test_ogr_osmconf_ini():
             config.read_file(open(osmconf_ini_filename))
             assert "general" in config
             assert "closed_ways_are_polygons" in config["general"]
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/13610
+
+
+def test_ogr_osm_parse_complex_multipolygon():
+
+    if not ogrtest.osm_drv_parse_osm:
+        pytest.skip("Expat support missing")
+
+    ds = ogr.Open("data/osm/test_multipolygon_bugfix_gh13610.osm")
+    lyr = ds.GetLayerByName("multipolygons")
+    f = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(
+        f,
+        "MULTIPOLYGON (((0 10,0 11,1 11,1 10,0 10),(0.1 10.1,0.1 10.4,0.9 10.4,0.9 10.6,0.1 10.1),(0.1 10.6,0.1 10.9,0.9 10.9,0.9 10.6,0.1 10.6)))",
+    )

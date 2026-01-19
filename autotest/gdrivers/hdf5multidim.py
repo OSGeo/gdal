@@ -41,7 +41,7 @@ def test_hdf5_multidim_basic():
     assert len(dims) == 2
     assert dims[0].GetSize() == 6
     assert dims[1].GetSize() == 5
-    assert ar.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+    assert ar.GetDataType().GetNumericDataType() == gdal.GDT_UInt8
 
     got_data = ar.Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_UInt16))
     assert len(got_data) == 30 * 2
@@ -113,11 +113,11 @@ def test_hdf5_multidim_var_alldatatypes():
     rg = ds.GetRootGroup()
     assert rg
 
-    expected_vars = [  # ('char_var', gdal.GDT_Byte, (ord('x'),ord('y'))),
-        ("ubyte_var", gdal.GDT_Byte, (255, 254)),
+    expected_vars = [  # ('char_var', gdal.GDT_UInt8, (ord('x'),ord('y'))),
+        ("ubyte_var", gdal.GDT_UInt8, (255, 254)),
         # ("byte_var", gdal.GDT_Int16, (-128, -127)),
         # ("byte_unsigned_false_var", gdal.GDT_Int8, (-128, -127)),
-        # ('byte_unsigned_true_var', gdal.GDT_Byte, (128, 129)),
+        # ('byte_unsigned_true_var', gdal.GDT_UInt8, (128, 129)),
         ("ushort_var", gdal.GDT_UInt16, (65534, 65533)),
         ("short_var", gdal.GDT_Int16, (-32768, -32767)),
         ("uint_var", gdal.GDT_UInt32, (4294967294, 4294967293)),
@@ -140,7 +140,7 @@ def test_hdf5_multidim_var_alldatatypes():
         assert var
         assert var.GetDataType().GetClass() == gdal.GEDTC_NUMERIC, var_name
         assert var.GetDataType().GetNumericDataType() == dt, var_name
-        if dt == gdal.GDT_Byte:
+        if dt == gdal.GDT_UInt8:
             assert struct.unpack("B" * len(val), var.Read()) == val
         if dt == gdal.GDT_Int8:
             assert struct.unpack("b" * len(val), var.Read()) == val
@@ -460,7 +460,8 @@ def test_hdf5_multidim_attr_alldatatypes():
     assert map_attrs["attr_two_doubles"].ReadAsDouble() == 1.25125
 
     assert (
-        map_attrs["attr_enum_ubyte"].GetDataType().GetNumericDataType() == gdal.GDT_Byte
+        map_attrs["attr_enum_ubyte"].GetDataType().GetNumericDataType()
+        == gdal.GDT_UInt8
     )
     assert map_attrs["attr_enum_ubyte"].Read() == 1
 
@@ -546,7 +547,7 @@ def test_hdf5_multidim_read_missing_value_of_different_type_not_in_range():
         gdal.ErrorReset()
         var = rg.OpenMDArray("test")
         assert gdal.GetLastErrorMsg() != ""
-        assert var.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+        assert var.GetDataType().GetNumericDataType() == gdal.GDT_UInt8
         assert (
             var.GetAttribute("_FillValue").GetDataType().GetNumericDataType()
             == gdal.GDT_Float64
@@ -832,8 +833,109 @@ def test_hdf5_multidim_block_size_structural_info():
     ds = gdal.OpenEx("data/hdf5/deflate.h5", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     var = rg.OpenMDArray("Band1")
-    assert var.GetBlockSize() == [1, 2]
+    block_size = var.GetBlockSize()
+    assert block_size == [1, 2]
     assert var.GetStructuralInfo() == {"COMPRESSION": "DEFLATE", "FILTER": "SHUFFLE"}
+
+
+###############################################################################
+# Test GetRawBlockInfo()
+
+
+def test_hdf5_multidim_getrawblockinfo_chunked():
+
+    if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
+        pytest.skip("libhdf5 < 1.10.5")
+
+    ds = gdal.OpenEx("data/hdf5/deflate.h5", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray("Band1")
+    block_size = var.GetBlockSize()
+    assert block_size == [1, 2]
+    y_size = var.GetDimensions()[0].GetSize()
+    x_size = var.GetDimensions()[1].GetSize()
+
+    info = var.GetRawBlockInfo([0, 0])
+    assert info.GetOffset() == 13908
+    assert info.GetSize() == 10
+    assert info.GetFilename() == "data/hdf5/deflate.h5"
+    assert info.GetInfo() == ["COMPRESSION=DEFLATE", "FILTER=SHUFFLE"]
+
+    import zlib
+
+    for y in range(y_size // block_size[0]):
+        for x in range(x_size // block_size[1]):
+            info = var.GetRawBlockInfo([y, x])
+            with open(info.GetFilename(), "rb") as f:
+                f.seek(info.GetOffset(), 0)
+                data = f.read(info.GetSize())
+                data = zlib.decompress(data)
+                assert data == var.Read(
+                    array_start_idx=[y * block_size[0], x * block_size[1]],
+                    count=var.GetBlockSize(),
+                ), (y, x)
+
+    with pytest.raises(
+        Exception, match="Invalid number of values in block_coordinates argument"
+    ):
+        var.GetRawBlockInfo([])
+
+    assert var.GetRawBlockInfo([0, x_size // block_size[1] - 1]) is not None
+    with pytest.raises(
+        Exception, match=r"invalid block coordinate \(10\) for dimension 1"
+    ):
+        var.GetRawBlockInfo([0, x_size // block_size[1]])
+
+    assert var.GetRawBlockInfo([y_size // block_size[0] - 1, 0]) is not None
+    with pytest.raises(
+        Exception, match=r"invalid block coordinate \(20\) for dimension 0"
+    ):
+        var.GetRawBlockInfo([y_size // block_size[0], 0])
+
+
+###############################################################################
+# Test GetRawBlockInfo() on non-chunked file
+
+
+def test_hdf5_multidim_getrawblockinfo():
+
+    ds = gdal.OpenEx("data/hdf5/u8be.h5", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray("TestArray")
+    info = var.GetRawBlockInfo([0, 0])
+    assert info.GetOffset() == 2048
+    assert info.GetSize() == 30
+    assert info.GetFilename() == "data/hdf5/u8be.h5"
+    assert info.GetInfo() is None
+
+    with pytest.raises(Exception, match="invalid block coordinates. Should be all 0"):
+        var.GetRawBlockInfo([0, 1])
+
+
+###############################################################################
+# Test GetRawBlockInfo() on a little-endian file
+
+
+def test_hdf5_multidim_getrawblockinfo_little_endian():
+
+    ds = gdal.OpenEx("data/hdf5/float32_little_endian.h5", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray("test")
+    info = var.GetRawBlockInfo([0, 0])
+    assert info.GetInfo() == ["ENDIANNESS=LITTLE"]
+
+
+###############################################################################
+# Test GetRawBlockInfo() on a big-endian file
+
+
+def test_hdf5_multidim_getrawblockinfo_big_endian():
+
+    ds = gdal.OpenEx("data/hdf5/float32_big_endian.h5", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray("test")
+    info = var.GetRawBlockInfo([0, 0])
+    assert info.GetInfo() == ["ENDIANNESS=BIG"]
 
 
 ###############################################################################

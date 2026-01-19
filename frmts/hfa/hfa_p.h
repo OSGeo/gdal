@@ -68,7 +68,7 @@ struct hfainfo
 
     HFAAccess eAccess;
 
-    GUInt32 nEndOfFile;
+    vsi_l_offset nEndOfFile;
     GUInt32 nRootPos;
     GUInt32 nDictionaryPos;
 
@@ -96,7 +96,7 @@ struct hfainfo
 
 typedef struct hfainfo HFAInfo_t;
 
-GUInt32 HFAAllocateSpace(HFAInfo_t *, GUInt32);
+vsi_l_offset HFAAllocateSpace(HFAInfo_t *, GUInt32);
 CPLErr HFAParseBandInfo(HFAInfo_t *);
 HFAInfo_t *HFAGetDependent(HFAInfo_t *, const char *);
 HFAInfo_t *HFACreateDependent(HFAInfo_t *psBase);

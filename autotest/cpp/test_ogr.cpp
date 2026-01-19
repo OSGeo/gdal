@@ -2239,81 +2239,81 @@ TEST_F(test_ogr, OGR_L_GetArrowStream)
     auto poLayer = poDS->CreateLayer("test");
     {
         OGRFieldDefn oFieldDefn("str", OFTString);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("bool", OFTInteger);
         oFieldDefn.SetSubType(OFSTBoolean);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("int16", OFTInteger);
         oFieldDefn.SetSubType(OFSTInt16);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("int32", OFTInteger);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("int64", OFTInteger64);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("float32", OFTReal);
         oFieldDefn.SetSubType(OFSTFloat32);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("float64", OFTReal);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("date", OFTDate);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("time", OFTTime);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("datetime", OFTDateTime);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("binary", OFTBinary);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("strlist", OFTStringList);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("boollist", OFTIntegerList);
         oFieldDefn.SetSubType(OFSTBoolean);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("int16list", OFTIntegerList);
         oFieldDefn.SetSubType(OFSTInt16);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("int32list", OFTIntegerList);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("int64list", OFTInteger64List);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("float32list", OFTRealList);
         oFieldDefn.SetSubType(OFSTFloat32);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     {
         OGRFieldDefn oFieldDefn("float64list", OFTRealList);
-        poLayer->CreateField(&oFieldDefn);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     }
     auto poFDefn = poLayer->GetLayerDefn();
     struct ArrowArrayStream stream;
@@ -4633,7 +4633,7 @@ TEST_F(test_ogr, GetArrowStream_DateTime_As_String)
             "", 0, 0, 0, GDT_Unknown, nullptr));
     auto poLayer = poDS->CreateLayer("test", nullptr, wkbNone);
     OGRFieldDefn oFieldDefn("dt", OFTDateTime);
-    poLayer->CreateField(&oFieldDefn);
+    EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
     struct ArrowArrayStream stream;
     CPLStringList aosOptions;
     aosOptions.SetNameValue("INCLUDE_FID", "NO");

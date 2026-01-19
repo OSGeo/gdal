@@ -93,7 +93,7 @@ In this case the interface implementation uses an internally created unmanaged a
         CPLErr retval;
         IntPtr ptr = Marshal.AllocHGlobal(buf_xSize * buf_ySize * Marshal.SizeOf(buffer[0]));
         try {
-            retval = ReadRaster(xOff, yOff, xSize, ySize, ptr, buf_xSize, buf_ySize, DataType.GDT_Byte, pixelSpace, lineSpace);
+            retval = ReadRaster(xOff, yOff, xSize, ySize, ptr, buf_xSize, buf_ySize, DataType.GDT_UInt8, pixelSpace, lineSpace);
             Marshal.Copy(ptr, buffer, 0, buf_xSize * buf_ySize);
         } finally {
             Marshal.FreeHGlobal(ptr);
@@ -117,7 +117,7 @@ Raster data can be read into the C# bitmap directly using the following approach
     {
         int stride = bitmapData.Stride;
         IntPtr buf = bitmapData.Scan0;
-        band.ReadRaster(0, 0, width, height, buf, width, height, DataType.GDT_Byte, 1, stride);
+        band.ReadRaster(0, 0, width, height, buf, width, height, DataType.GDT_UInt8, 1, stride);
     }
     finally
     {
@@ -181,7 +181,7 @@ When reading images with indexed color representations, the programmer might hav
             int stride = bitmapData.Stride;
             IntPtr buf = bitmapData.Scan0;
 
-            band.ReadRaster(0, 0, width, height, buf, width, height, DataType.GDT_Byte, 1, stride);
+            band.ReadRaster(0, 0, width, height, buf, width, height, DataType.GDT_UInt8, 1, stride);
             }
             finally
             {
@@ -209,7 +209,7 @@ When reading grayscale images, the programmer should create a sufficient palette
             int stride = bitmapData.Stride;
             IntPtr buf = bitmapData.Scan0;
 
-            band.ReadRaster(0, 0, width, height, buf, width, height, DataType.GDT_Byte, 1, stride);
+            band.ReadRaster(0, 0, width, height, buf, width, height, DataType.GDT_UInt8, 1, stride);
         }
         finally
         {

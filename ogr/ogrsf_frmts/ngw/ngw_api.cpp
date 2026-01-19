@@ -568,11 +568,11 @@ std::string GetResmetaSuffix(CPLJSONObject::Type eType)
     }
 }
 
-void FillResmeta(const CPLJSONObject &oRoot, char **papszMetadata)
+void FillResmeta(const CPLJSONObject &oRoot, CSLConstList papszMetadata)
 {
     CPLJSONObject oResMeta("resmeta", oRoot);
     CPLJSONObject oResMetaItems("items", oResMeta);
-    CPLStringList oaMetadata(papszMetadata, FALSE);
+    CPLStringList oaMetadata(papszMetadata);
     for (int i = 0; i < oaMetadata.size(); ++i)
     {
         std::string osItem = oaMetadata[i];
@@ -607,7 +607,8 @@ void FillResmeta(const CPLJSONObject &oRoot, char **papszMetadata)
 }
 
 bool FlushMetadata(const std::string &osUrl, const std::string &osResourceId,
-                   char **papszMetadata, const CPLStringList &aosHTTPOptions)
+                   CSLConstList papszMetadata,
+                   const CPLStringList &aosHTTPOptions)
 {
     if (nullptr == papszMetadata)
     {

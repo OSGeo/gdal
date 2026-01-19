@@ -56,8 +56,6 @@ public class gdal
     * @param options currently unused
     *
     * @return updated argument list array.
-    *
-    * @since Java bindings 1.7.0
     */
 public class gdal:public static String[] GeneralCmdLineProcessor(String[] args, int options)
 
@@ -67,8 +65,6 @@ public class gdal:public static String[] GeneralCmdLineProcessor(String[] args, 
     * Same as below with options == 0
     *
     * @see #GeneralCmdLineProcessor(String[] args, int options)
-    *
-    * @since Java bindings 1.7.0
     */
 public class gdal:public static String[] GeneralCmdLineProcessor(String[] args)
 
@@ -91,8 +87,6 @@ public class gdal:public static java.util.Vector GeneralCmdLineProcessor(java.ut
     * @return updated argument list as a new Vector of strings
     *
     * @see #GeneralCmdLineProcessor(String[] args, int options)
-    *
-    * @since Java bindings 1.7.0
     */
 public class gdal:public static java.util.Vector GeneralCmdLineProcessor(java.util.Vector args)
 
@@ -133,8 +127,6 @@ public class gdal:public static int PushErrorHandler(String callbackName)
  *
  * This pushes a new error handler on the thread-local error handler
  * stack.  This handler will be used until removed with gdal.PopErrorHandler().
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int PushErrorHandler()
 
@@ -145,8 +137,6 @@ public class gdal:public static int PushErrorHandler()
  *
  * Note; if a local handler is already installed with PushErrorHandler(), the global error
  * handler will not be used until the last local handler is uninstalled with PopErrorHandler().
-  *
- * @since Java bindings 1.10.0
  *
  * @param callbackName handler function name : "CPLQuietErrorHandler", "CPLDefaultErrorHandler", "CPLLoggingErrorHandler"
  */
@@ -159,8 +149,6 @@ public class gdal:public static int SetErrorHandler(String callbackName)
  *
  * Note; if a local handler is already installed with PushErrorHandler(), the global error
  * handler will not be used until the last local handler is uninstalled with PopErrorHandler().
-  *
- * @since Java bindings 1.10.0
  */
 public class gdal:public static int SetErrorHandler()
 
@@ -214,8 +202,6 @@ public class gdal:public static void ErrorReset()
  * Apply escaping to string to preserve special characters.
  *
  * @see #EscapeString(String str, int scheme)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static String EscapeString(byte[] byteArray, int scheme)
 
@@ -231,8 +217,6 @@ public class gdal:public static String EscapeString(byte[] byteArray, int scheme
  *
  * @param fileName filename (should begin with "/vsimem/")
  * @param byteArray data buffer to put in the file
- *
- * @since Java bindings 1.7.0
  *
  * @see #Unlink(String fileName)
  */
@@ -267,8 +251,6 @@ public class gdal:public static byte[] GetMemFileBuffer(String fileName)
  *
  * @param fileName the path of the file to be deleted.
  * @return 0 on success or -1 on an error.
- *
- * @since Java bindings 1.7.0
  *
  * @see #FileFromMemBuffer(String fileName, byte[] byteArray)
  */
@@ -312,8 +294,6 @@ public class gdal:public static int Unlink(String fileName)
  * @param scheme the encoding scheme to use.
  *
  * @return an escaped string
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static String EscapeString(String str, int scheme)
 
@@ -396,8 +376,6 @@ public class gdal:public static String GetConfigOption(String key, String defaul
   * Same as below with defaultValue == null
   *
   * @see #GetConfigOption(String key, String defaultValue)
-  *
-  * @since Java bindings 1.7.0
   */
 public class gdal:public static String GetConfigOption(String key)
 
@@ -422,8 +400,6 @@ public class gdal:public static String GetConfigOption(String key)
  * @return 1 on success or 0 if there aren't enough points to prepare a
  * geotransform, the pointers are ill-determined or if bApproxOK is 0
  * and the fit is poor.
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int GCPsToGeoTransform(GCP[] gcpArray, double[] outGeoTransform, int bApproxOK)
 
@@ -433,8 +409,6 @@ public class gdal:public static int GCPsToGeoTransform(GCP[] gcpArray, double[] 
  * Same as below with bApproxOK == 0
  *
  * @see #GCPsToGeoTransform(GCP[] gcpArray, double[] outGeoTransform, int bApproxOK)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int GCPsToGeoTransform(GCP[] gcpArray, double[] outGeoTransform)
 
@@ -468,8 +442,6 @@ public class gdal:public static int GCPsToGeoTransform(GCP[] gcpArray, double[] 
  * @param callback for reporting algorithm progress. May be null
  *
  * @return returns gdalconst.CE_None on success or gdalconst.CE_Failure if an error occurs.
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int ComputeMedianCutPCT(Band red, Band green, Band blue, int num_colors, ColorTable colors, ProgressCallback callback)
 
@@ -480,8 +452,6 @@ public class gdal:public static int ComputeMedianCutPCT(Band red, Band green, Ba
  * Same as below with callback == null
  *
  * @see #ComputeMedianCutPCT(Band red, Band green, Band blue, int num_colors, ColorTable colors, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int ComputeMedianCutPCT(Band red, Band green, Band blue, int num_colors, ColorTable colors)
 
@@ -509,8 +479,6 @@ public class gdal:public static int ComputeMedianCutPCT(Band red, Band green, Ba
  * @param callback for reporting algorithm progress. May be null
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure if an error occurs.
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int DitherRGB2PCT(Band red, Band green, Band blue, Band target, ColorTable colors, ProgressCallback callback)
 
@@ -519,8 +487,6 @@ public class gdal:public static int DitherRGB2PCT(Band red, Band green, Band blu
  * <p>
  * Same as below with callback == null
  * @see #DitherRGB2PCT(Band red, Band green, Band blue, Band target, ColorTable colors, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int DitherRGB2PCT(Band red, Band green, Band blue, Band target, ColorTable colors)
 
@@ -553,8 +519,6 @@ public class gdal:public static int DitherRGB2PCT(Band red, Band green, Band blu
  * @param callback for reporting progress or null
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure if something goes wrong.
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
 
@@ -566,8 +530,6 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * @see #ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure if something goes wrong.
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError)
 
@@ -577,8 +539,6 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * Same as below with maxError == 0.0 and callback == null.
  *
  * @see #ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit)
 
@@ -588,8 +548,6 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * Same as below with warpMemoryLimit == 0.0, maxError == 0.0 and callback == null.
  *
  * @see #ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg)
 
@@ -599,8 +557,6 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * Same as below with resampleAlg == gdalconst.GRA_NearestNeighbour, warpMemoryLimit == 0.0, maxError == 0.0 and callback == null.
  *
  * @see #ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt)
 
@@ -610,8 +566,6 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * Same as below with dst_wkt == null, resampleAlg == gdalconst.GRA_NearestNeighbour, warpMemoryLimit == 0.0, maxError == 0.0 and callback == null.
  *
  * @see #ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt)
 
@@ -621,8 +575,6 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * Same as below with src_wkt == null, dst_wkt == null, resampleAlg == gdalconst.GRA_NearestNeighbour, warpMemoryLimit == 0.0, maxError == 0.0 and callback == null.
  *
  * @see #ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds)
 
@@ -664,8 +616,6 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * @param callback for reporting progress or null
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure if something goes wrong.
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int ComputeProximity(Band srcBand, Band proximityBand, java.util.Vector options, ProgressCallback callback)
 
@@ -675,9 +625,6 @@ public class gdal:public static int ComputeProximity(Band srcBand, Band proximit
  * Same as below with callback = null
  *
  * @see #ComputeProximity(Band srcBand, Band proximityBand, java.util.Vector options, ProgressCallback callback)
- *
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int ComputeProximity(Band srcBand, Band proximityBand, java.util.Vector options)
 
@@ -687,9 +634,6 @@ public class gdal:public static int ComputeProximity(Band srcBand, Band proximit
  * Same as below with options == null and callback == null
  *
  * @see #ComputeProximity(Band srcBand, Band proximityBand, java.util.Vector options, ProgressCallback callback)
- *
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int ComputeProximity(Band srcBand, Band proximityBand)
 
@@ -728,8 +672,6 @@ public class gdal:public static int ComputeProximity(Band srcBand, Band proximit
  * @param callback for reporting progress or null
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on error.
- *
- * @since Java bindings 1.7.0
  */
 
 public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer, double[] burn_values, java.util.Vector options, ProgressCallback callback)
@@ -740,8 +682,6 @@ public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNu
  * Same as below with callback == null
  *
  * @see #RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer, double[] burn_values, java.util.Vector options, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer, double[] burn_values, java.util.Vector options)
 
@@ -752,8 +692,6 @@ public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNu
  * Same as below with options == null and callback == null
  *
  * @see #RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer, double[] burn_values, java.util.Vector options, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer, double[] burn_values)
 
@@ -764,8 +702,6 @@ public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNu
  * Same as below with burn_values == null, options == null and callback == null
  *
  * @see #RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer, double[] burn_values, java.util.Vector options, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer)
 
@@ -815,8 +751,6 @@ public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNu
  * @param callback for reporting progress or null
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on a failure.
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int Polygonize(Band srcBand, Band maskBand, org.gdal.ogr.Layer outLayer, int iPixValField, java.util.Vector options, ProgressCallback callback)
 
@@ -826,8 +760,6 @@ public class gdal:public static int Polygonize(Band srcBand, Band maskBand, org.
  * Same as below with callback == null
  *
  * @see #Polygonize(Band srcBand, Band maskBand, org.gdal.ogr.Layer outLayer, int iPixValField, java.util.Vector options, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int Polygonize(Band srcBand, Band maskBand, org.gdal.ogr.Layer outLayer, int iPixValField, java.util.Vector options)
 
@@ -837,8 +769,6 @@ public class gdal:public static int Polygonize(Band srcBand, Band maskBand, org.
  * Same as below with options == null and callback == null
  *
  * @see #Polygonize(Band srcBand, Band maskBand, org.gdal.ogr.Layer outLayer, int iPixValField, java.util.Vector options, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int Polygonize(Band srcBand, Band maskBand, org.gdal.ogr.Layer outLayer, int iPixValField)
 
@@ -871,8 +801,6 @@ public class gdal:public static int Polygonize(Band srcBand, Band maskBand, org.
  * @param callback for reporting progress or null
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on a failure.
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations, java.util.Vector options, ProgressCallback callback)
 
@@ -882,8 +810,6 @@ public class gdal:public static int FillNodata(Band targetBand, Band maskBand, d
  * Same as below with callback == null
  *
  * @see #FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations, java.util.Vector options, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations, java.util.Vector options)
 
@@ -893,8 +819,6 @@ public class gdal:public static int FillNodata(Band targetBand, Band maskBand, d
  * Same as below with options == null and callback == null
  *
  * @see #FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations, java.util.Vector options, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations)
 
@@ -940,8 +864,6 @@ public class gdal:public static int FillNodata(Band targetBand, Band maskBand, d
  * @param callback for reporting progress or null
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on a failure.
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness, java.util.Vector options, ProgressCallback callback)
 
@@ -951,8 +873,6 @@ public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Ban
  * Same as below with callback == null
  *
  * @see #SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness, java.util.Vector options, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness, java.util.Vector options)
 
@@ -962,8 +882,6 @@ public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Ban
  * Same as below with options == null and callback == null
  *
  * @see #SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness, java.util.Vector options, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness)
 
@@ -973,8 +891,6 @@ public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Ban
  * Same as below with connectedness == 4, options == null and callback == null
  *
  * @see #SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness, java.util.Vector options, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold)
 
@@ -1000,8 +916,6 @@ public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Ban
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on a failure.
  *
  * @see Dataset#BuildOverviews(java.lang.String resampling, int[] overviewlist, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
 
@@ -1011,8 +925,6 @@ public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] ove
  * Same as below with callback == null
  *
  * @see #RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling)
 
@@ -1022,8 +934,6 @@ public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] ove
  * Same as below with resampling == "AVERAGE" and callback == null
  *
  * @see #RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] overviewBands)
 
@@ -1033,8 +943,6 @@ public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] ove
  * Same as below for a unique overview band
  *
  * @see #RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int RegenerateOverview(Band srcBand, Band overviewBand, String resampling, ProgressCallback callback)
 
@@ -1044,8 +952,6 @@ public class gdal:public static int RegenerateOverview(Band srcBand, Band overvi
  * Same as below for a unique overview band and callback == null
  *
  * @see #RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int RegenerateOverview(Band srcBand, Band overviewBand, String resampling)
 
@@ -1056,7 +962,6 @@ public class gdal:public static int RegenerateOverview(Band srcBand, Band overvi
  *
  * @see #RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int RegenerateOverview(Band srcBand, Band overviewBand)
 
@@ -1108,7 +1013,6 @@ public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, Stri
  *
  * @see #AutoCreateWarpedVRT(Dataset src_ds, String src_wkt, String dst_wkt, int eResampleAlg, double maxError)
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, String src_wkt, String dst_wkt, int eResampleAlg)
 
@@ -1119,7 +1023,6 @@ public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, Stri
  *
  * @see #AutoCreateWarpedVRT(Dataset src_ds, String src_wkt, String dst_wkt, int eResampleAlg, double maxError)
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, String src_wkt, String dst_wkt)
 
@@ -1130,7 +1033,6 @@ public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, Stri
  *
  * @see #AutoCreateWarpedVRT(Dataset src_ds, String src_wkt, String dst_wkt, int eResampleAlg, double maxError)
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, String src_wkt)
 
@@ -1141,7 +1043,6 @@ public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, Stri
  *
  * @see #AutoCreateWarpedVRT(Dataset src_ds, String src_wkt, String dst_wkt, int eResampleAlg, double maxError)
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds)
 
@@ -1151,7 +1052,7 @@ public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds)
  * Available request values:
  * <ul>
  * <li> "VERSION_NUM": Returns GDAL_VERSION_NUM formatted as a string.  i.e. "1170"
- *      Note: starting with GDAL 1.10, this string will be longer than 4 characters.
+ *      This string will be longer than 4 characters.
  * <li> "RELEASE_DATE": Returns GDAL_RELEASE_DATE formatted as a string.
  * i.e. "20020416".
  * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. i.e. "1.1.7"
@@ -1170,8 +1071,6 @@ public class gdal:public static String VersionInfo(String request)
  * Get runtime version information.
  *
  * @return a string containing GDAL_VERSION_NUM formatted as a string.  i.e. "1170"
- *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static String VersionInfo()
 
@@ -1362,7 +1261,6 @@ public class gdal:public static Dataset Open(String name, int eAccess)
  *
  * @see #Open(String name, int eAccess)
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static Dataset Open(String name)
 
@@ -1397,7 +1295,6 @@ public class gdal:public static Dataset OpenShared(String name, int eAccess)
  *
  * @see #OpenShared(String name, int eAccess)
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static Dataset OpenShared(String name)
 
@@ -1437,7 +1334,6 @@ public class gdal:public static Driver IdentifyDriver(String name, java.util.Vec
  *
  * @see #IdentifyDriver(String name, java.util.Vector fileList)
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static Driver IdentifyDriver(String name)
 
@@ -1459,7 +1355,6 @@ public class gdal:public static Driver IdentifyDriver(String name)
  *
  * @return parsed tree or null on error.
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static XMLNode ParseXMLString(String xmlString)
 
@@ -1474,7 +1369,6 @@ public class gdal:public static XMLNode ParseXMLString(String xmlString)
  *
  * @return the document on success or null on failure.
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static String SerializeXMLTree(XMLNode xmlnode)
 
@@ -1494,7 +1388,6 @@ public class gdal:public static String SerializeXMLTree(XMLNode xmlnode)
  * @param pdfGeoX 	allocated array of 1 double where geo_x (easting/longitude) location is placed.
  * @param pdfGeoY 	allocated array of 1 double where geo_y (northing/latitude) location is placed.
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static void ApplyGeoTransform(double[] padfGeoTransform, double dfPixel, double dfLine, double[] pdfGeoX, double[] pdfGeoY)
 
@@ -1509,7 +1402,6 @@ public class gdal:public static void ApplyGeoTransform(double[] padfGeoTransform
  *
  * @return 1 on success or 0 if the equation is uninvertable.
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static int InvGeoTransform(double[] gt_in, double[] gt_out)
 
@@ -1523,7 +1415,6 @@ public class gdal:public static int InvGeoTransform(double[] gt_in, double[] gt_
  *
  * @return an array of six doubles with the inverted geotransform on success or null if the equation is uninvertable.
  *
- * @since Java bindings 1.7.0
  */
 public class gdal:public static double[] InvGeoTransform(double[] gt_in)
 
@@ -1546,7 +1437,6 @@ public class gdal:public static double[] InvGeoTransform(double[] gt_in)
  *
  * @return 0 on success or -1 on an error.
  *
- * @since Java bindings 1.8.0
  */
 public class gdal:public static int Mkdir(String path, int mode)
 
@@ -1567,7 +1457,6 @@ public class gdal:public static int Mkdir(String path, int mode)
  *
  * @return 0 on success or -1 on an error.
  *
- * @since Java bindings 1.8.0
  */
 
 public class gdal:public static int Rename( String oldpath, String newpath )
@@ -1587,7 +1476,6 @@ public class gdal:public static int Rename( String oldpath, String newpath )
  *
  * @return 0 on success or -1 on an error.
  *
- * @since Java bindings 1.8.0
  */
 
 public class gdal:public static int Rmdir(String path)
@@ -1606,7 +1494,6 @@ public class gdal:public static int Rmdir(String path)
  * @return The list of entries in the directory, or null if the directory
  * doesn't exist.
  *
- * @since Java bindings 1.7.0
  */
 
 public class gdal:public static java.util.Vector ReadDir(String path)
@@ -1740,7 +1627,6 @@ public class Dataset:public int AddBand(int datatype, java.util.Vector options)
  *
  * @see #AddBand(int datatype, java.util.Vector options)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int AddBand(int datatype)
 
@@ -1751,7 +1637,6 @@ public class Dataset:public int AddBand(int datatype)
  *
  * @see #AddBand(int datatype, java.util.Vector options)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int AddBand()
 
@@ -1779,7 +1664,6 @@ public class Dataset:public int AddBand()
  *
  * @see gdal#RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int BuildOverviews(String resampling, int[] overviewlist, ProgressCallback callback)
 
@@ -1799,7 +1683,6 @@ public class Dataset:public int BuildOverviews(String resampling, int[] overview
  *
  * @see #BuildOverviews(String resampling, int[] overviewlist, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int BuildOverviews(int[] overviewlist)
 
@@ -1810,7 +1693,6 @@ public class Dataset:public int BuildOverviews(int[] overviewlist)
  *
  * @see #BuildOverviews(String resampling, int[] overviewlist, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int BuildOverviews(int[] overviewlist, ProgressCallback callback)
 
@@ -1824,8 +1706,6 @@ public class Dataset:public int BuildOverviews(int[] overviewlist, ProgressCallb
  * as many bands as the original image (or just one for GMF_PER_DATASET).
  * The mask images will be deflate compressed tiled images with the same
  * block size as the original image if possible.
- *
- * @since GDAL 1.5.0
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on an error.
  *
@@ -1967,7 +1847,6 @@ public class Dataset:public void GetGeoTransform(double[] geoTransformArray)
  *
  * @see #GetGeoTransform(double[] geoTransformArray)
  *
- * @since Java bindings 1.7.0
  *
  * @see gdal#ApplyGeoTransform(double[] padfGeoTransform, double dfPixel, double dfLine, double[] pdfGeoX, double[] pdfGeoY)
  * @see gdal#InvGeoTransform(double[] gt_in)
@@ -2034,7 +1913,6 @@ public class Dataset:public void GetGCPs(java.util.Vector gcpVector)
  *
  * @return a vector of GCP objects
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public java.util.Vector GetGCPs()
 
@@ -2059,7 +1937,6 @@ public class Dataset:public java.util.Vector GetGCPs()
  * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure (including if action is
  * not supported for this format).
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int SetGCPs(GCP[] gcpArray, String GCPProjection)
 
@@ -2075,7 +1952,6 @@ public class Dataset:public int getRasterXSize()
  *
  * @return the width in pixels of raster bands in this Dataset.
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int GetRasterXSize()
 
@@ -2091,7 +1967,6 @@ public class Dataset:public int getRasterYSize()
  *
  * @return the height in pixels of raster bands in this Dataset.
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int GetRasterYSize()
 
@@ -2107,7 +1982,6 @@ public class Dataset:public int getRasterCount()
  *
  * @return the number of raster bands.
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int GetRasterCount()
 
@@ -2180,7 +2054,6 @@ public class Dataset:public int GetRasterCount()
  *
  * @return gdalconst.CE_Failure if the access fails, otherwise gdalconst.CE_None.
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -2194,7 +2067,6 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list)
 
@@ -2263,7 +2135,6 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  *
  * @return gdalconst.CE_Failure if the access fails, otherwise gdalconst.CE_None.
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -2277,7 +2148,6 @@ public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ys
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list)
 
@@ -2286,7 +2156,6 @@ public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ys
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -2300,7 +2169,6 @@ public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ys
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list)
 
@@ -2309,7 +2177,6 @@ public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ys
  * <p>
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -2323,7 +2190,6 @@ public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ys
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list)
 
@@ -2332,7 +2198,6 @@ public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ys
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -2346,7 +2211,6 @@ public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ys
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list)
 
@@ -2355,7 +2219,6 @@ public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ys
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -2369,7 +2232,6 @@ public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ys
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list)
 
@@ -2441,7 +2303,6 @@ public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ys
  *
  * @return gdalconst.CE_Failure if the access fails, otherwise gdalconst.CE_None.
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -2456,7 +2317,6 @@ public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize
  *
  * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list)
 
@@ -2524,7 +2384,6 @@ public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize
  *
  * @return gdalconst.CE_Failure if the access fails, otherwise gdalconst.CE_None.
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -2539,7 +2398,6 @@ public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int y
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list)
 
@@ -2551,7 +2409,6 @@ public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int y
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -2566,7 +2423,6 @@ public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int y
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list)
 
@@ -2578,7 +2434,6 @@ public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int y
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -2593,7 +2448,6 @@ public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int y
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list)
 
@@ -2605,7 +2459,6 @@ public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int y
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -2620,7 +2473,6 @@ public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int y
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list)
 
@@ -2632,7 +2484,6 @@ public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int y
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -2647,7 +2498,6 @@ public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int y
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list)
 
@@ -2730,7 +2580,6 @@ public class Band:public int Checksum(int xoff, int yoff, int xsize, int ysize)
  * Real and Imaginary components of complex bands influence the result.
  *
  * @return Checksum value.
- * @since Java bindings 1.7.0
  */
 public class Band:public int Checksum()
 
@@ -2749,7 +2598,6 @@ public class Band:public void ComputeBandStats(double[] meanAndStdDevArray, int 
  * Same as below with samplestep == 1
  *
  * @see #ComputeBandStats(double[] meanAndStdDevArray, int samplestep)
- * @since Java bindings 1.7.0
  */
 public class Band:public void ComputeBandStats(double[] meanAndStdDevArray)
 
@@ -2776,7 +2624,6 @@ public class Band:public void ComputeRasterMinMax(double[] minMaxArray, int appr
  * Same as below with approx_ok == 0
  *
  * @see #ComputeRasterMinMax(double[] minMaxArray, int approx_ok)
- * @since Java bindings 1.7.0
  */
 public class Band:public void ComputeRasterMinMax(double[] minMaxArray)
 
@@ -2808,7 +2655,6 @@ public class Band:public void ComputeRasterMinMax(double[] minMaxArray)
  * @return gdalconst.CE_None on success, or gdalconst.CE_Failure if an error occurs or processing
  * is terminated by the user.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
 
@@ -2819,7 +2665,6 @@ public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, 
  *
  * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev)
 
@@ -2832,7 +2677,6 @@ public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, 
  *
  * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max)
 
@@ -2845,7 +2689,6 @@ public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, 
  *
  * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ComputeStatistics(boolean approx_ok)
 
@@ -2859,8 +2702,6 @@ public class Band:public int ComputeStatistics(boolean approx_ok)
  * as many bands as the original image (or just one for GMF_PER_DATASET).
  * The mask images will be deflate compressed tiled images with the same
  * block size as the original image if possible.
- *
- * @since GDAL 1.5.0
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on an error.
  *
@@ -2894,7 +2735,6 @@ public class Band:public int Fill(double real_fill, double imag_fill)
  *
  * @see #Fill(double real_fill, double imag_fill)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int Fill(double real_fill)
 
@@ -2916,7 +2756,6 @@ public class Band:public void FlushCache()
  *
  * @return band number (1+) or 0 if the band number isn't known.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetBand()
 
@@ -2946,7 +2785,6 @@ public class Band:public void GetBlockSize(int[] pnBlockXSize, int[] pnBlockYSiz
  * @return the X block size
  * @see #GetBlockSize(int[] pnBlockXSize, int[] pnBlockYSize)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetBlockXSize()
 
@@ -2955,7 +2793,6 @@ public class Band:public int GetBlockXSize()
  * @return the Y block size
  * @see #GetBlockSize(int[] pnBlockXSize, int[] pnBlockYSize)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetBlockYSize()
 
@@ -2967,7 +2804,6 @@ public class Band:public int GetBlockYSize()
  *
  * @return color interpretation value for band.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetColorInterpretation()
 
@@ -3025,7 +2861,6 @@ public class Band:public int getDataType()
  * @return gdalconst.CE_None on success, gdalconst.CE_Failure if something goes wrong, or
  * gdalconst.CE_Warning if no default histogram is available.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret, boolean force, ProgressCallback callback)
 
@@ -3036,7 +2871,6 @@ public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_
  *
  * @see #GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret, boolean force, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret, boolean force)
 
@@ -3047,7 +2881,6 @@ public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_
  *
  * @see #GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret, boolean force, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret)
 
@@ -3094,7 +2927,6 @@ public class Band:public RasterAttributeTable GetDefaultRAT()
  *
  * @return gdalconst.CE_None on success, or gdalconst.CE_Failure if something goes wrong.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok, ProgressCallback callback)
 
@@ -3105,7 +2937,6 @@ public class Band:public int GetHistogram(double min, double max, int[] histogra
  *
  * @see #GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok)
 
@@ -3116,7 +2947,6 @@ public class Band:public int GetHistogram(double min, double max, int[] histogra
  *
  * @see #GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetHistogram(double min, double max, int[] histogram)
 
@@ -3127,7 +2957,6 @@ public class Band:public int GetHistogram(double min, double max, int[] histogra
  *
  * @see #GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetHistogram(int[] histogram)
 
@@ -3140,7 +2969,7 @@ public class Band:public int GetHistogram(int[] histogram)
  * <li>If a corresponding .msk file exists it will be used for the mask band.</li>
  * <li>If the dataset has a NODATA_VALUES metadata item, an instance of the
  *     new GDALNoDataValuesMaskBand class will be returned.
- *     GetMaskFlags() will return GMF_NODATA | GMF_PER_DATASET. @since GDAL 1.6.0</li>
+ *     GetMaskFlags() will return GMF_NODATA | GMF_PER_DATASET.</li>
  * <li>If the band has a nodata value set, an instance of the new
  *     GDALNodataMaskRasterBand class will be returned.
  *     GetMaskFlags() will return GMF_NODATA.</li>
@@ -3157,8 +2986,6 @@ public class Band:public int GetHistogram(int[] histogram)
  * an all 255 mask with the flags indicating GMF_ALL_VALID.
  *
  * @return a valid mask band.
- *
- * @since GDAL 1.5.0
  *
  * @see <a href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15 - No data bit mask</a>
  *
@@ -3186,7 +3013,7 @@ public class Band:public Band GetMaskBand()
  * <li>If a corresponding .msk file exists it will be used for the mask band.</li>
  * <li>If the dataset has a NODATA_VALUES metadata item, an instance of the
  *     new GDALNoDataValuesMaskBand class will be returned.
- *     GetMaskFlags() will return GMF_NODATA | GMF_PER_DATASET. @since GDAL 1.6.0</li>
+ *     GetMaskFlags() will return GMF_NODATA | GMF_PER_DATASET.</li>
  * <li>If the band has a nodata value set, an instance of the new
  *     GDALNodataMaskRasterBand class will be returned.
  *     GetMaskFlags() will return GMF_NODATA.</li>
@@ -3198,8 +3025,6 @@ public class Band:public Band GetMaskBand()
  *     class will be returned that has 255 values for all pixels.
  *     The null flags will return GMF_ALL_VALID.</li>
  * </ul>
- *
- * @since GDAL 1.5.0
  *
  * @return a valid mask band.
  *
@@ -3298,8 +3123,6 @@ public class Band:public int GetOverviewCount()
  * first entry in the list is for raster values of zero, and so on.
  *
  * @return vector of names, or null if none.
- *
- * @since GDAL 1.9.0
  */
 public class Band:public java.util.Vector GetCategoryNames()
 
@@ -3341,7 +3164,6 @@ public class Band:public ColorTable GetRasterColorTable()
  * A value such as gdalconst.GDT_Byte, gdalconst.GDT_Int16, ...
  * @return the data type of the band.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetRasterDataType()
 
@@ -3381,7 +3203,6 @@ public class Band:public int GetRasterDataType()
  * @return gdalconst.CE_None on success, gdalconst.CE_Warning if no values returned,
  * gdalconst.CE_Failure if an error occurs.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetStatistics(boolean approx_ok, boolean force, double[] min, double[] max, double[] mean, double[] stddev)
 
@@ -3403,7 +3224,6 @@ public class Band:public int GetStatistics(int approx_ok, int force, double[] mi
  *
  * @return unit name string.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public String GetUnitType()
 
@@ -3419,7 +3239,6 @@ public class Band:public int getXSize()
  *
  * @return the width in pixels of this band.
  *
- * @since Java bindings 1.7.0
  */
 
 public class Band:public int GetXSize()
@@ -3436,7 +3255,6 @@ public class Band:public int getYSize()
  *
  * @return the height in pixels of this band.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int GetYSize()
 
@@ -3452,7 +3270,6 @@ public class Band:public int GetYSize()
  * @return true if arbitrary overviews available (efficiently), otherwise
  * false.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public boolean HasArbitraryOverviews()
 
@@ -3521,7 +3338,6 @@ public class Band:public boolean HasArbitraryOverviews()
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
 
@@ -3543,7 +3359,6 @@ public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, in
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, java.nio.ByteBuffer nioBuffer)
 
@@ -3554,7 +3369,6 @@ public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, in
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, java.nio.ByteBuffer nioBuffer)
 
@@ -3567,7 +3381,6 @@ public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, in
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, java.nio.ByteBuffer nioBuffer)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize)
 
@@ -3580,7 +3393,6 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_type)
 
@@ -3593,7 +3405,6 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type)
 
@@ -3659,7 +3470,6 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
 
@@ -3672,7 +3482,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array)
 
@@ -3683,7 +3492,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, byte[] array)
 
@@ -3694,7 +3502,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, byte[] array)
 
@@ -3707,7 +3514,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
 
@@ -3720,7 +3526,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array)
 
@@ -3731,7 +3536,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, short[] array)
 
@@ -3742,7 +3546,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, short[] array)
 
@@ -3754,7 +3557,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  * <p>
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
 
@@ -3767,7 +3569,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array)
 
@@ -3778,7 +3579,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, int[] array)
 
@@ -3789,7 +3589,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int[] array)
 
@@ -3801,7 +3600,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  * <p>
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
 
@@ -3814,7 +3612,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array)
 
@@ -3825,7 +3622,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, float[] array)
 
@@ -3836,7 +3632,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, float[] array)
 
@@ -3848,7 +3643,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
 
@@ -3861,7 +3655,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array)
 
@@ -3872,7 +3665,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, double[] array)
 
@@ -3883,7 +3675,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, double[] array)
 
@@ -3954,7 +3745,6 @@ public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
 
@@ -3976,7 +3766,6 @@ public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, i
  *
  * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, java.nio.ByteBuffer nioBuffer)
 
@@ -3987,7 +3776,6 @@ public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, i
  *
  * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_type, java.nio.ByteBuffer nioBuffer)
 
@@ -3998,7 +3786,6 @@ public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, i
  *
  * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, java.nio.ByteBuffer nioBuffer)
 
@@ -4065,7 +3852,6 @@ public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, i
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
 
@@ -4078,7 +3864,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array)
 
@@ -4089,7 +3874,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, byte[] array)
 
@@ -4100,7 +3884,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, byte[] array)
 
@@ -4110,7 +3893,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  * <p>
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
 
@@ -4123,7 +3905,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array)
 
@@ -4134,7 +3915,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, short[] array)
 
@@ -4145,7 +3925,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, short[] array)
 
@@ -4155,7 +3934,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  * <p>
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
 
@@ -4168,7 +3946,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array)
 
@@ -4179,7 +3956,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, int[] array)
 
@@ -4190,7 +3966,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int[] array)
 
@@ -4200,7 +3975,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
 
@@ -4213,7 +3987,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array)
 
@@ -4224,7 +3997,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, float[] array)
 
@@ -4235,7 +4007,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, float[] array)
 
@@ -4245,7 +4016,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  * <p>
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
 
@@ -4258,7 +4028,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array)
 
@@ -4269,7 +4038,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, double[] array)
 
@@ -4280,7 +4048,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, double[] array)
 
@@ -4304,7 +4071,6 @@ public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysiz
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on an error.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int ReadBlock_Direct(int nXBlockOff, int nYBlockOff, java.nio.ByteBuffer nioBuffer)
 
@@ -4327,7 +4093,6 @@ public class Band:public int ReadBlock_Direct(int nXBlockOff, int nYBlockOff, ja
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on an error.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int WriteBlock_Direct(int nXBlockOff, int nYBlockOff, java.nio.ByteBuffer nioBuffer)
 
@@ -4338,7 +4103,6 @@ public class Band:public int WriteBlock_Direct(int nXBlockOff, int nYBlockOff, j
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure if method is unsupported by format.
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int SetColorInterpretation(int eColorInterp)
 
@@ -4378,7 +4142,6 @@ public class Band:public int SetRasterColorTable(ColorTable colorTable)
 /**
  * Set default histogram
  *
- * @since Java bindings 1.7.0
  */
 public class Band:public int SetDefaultHistogram(double min, double max, int[] histogram)
 
@@ -4419,7 +4182,6 @@ public class Band:public int SetNoDataValue(double nodataValue)
  *
  * @return gdalconst.CE_None or success or gdalconst.CE_Failure on failure.
  *
- * @since Java bindings 1.8.0
  */
 public class Band:public int SetOffset(double newoffset)
 
@@ -4433,7 +4195,6 @@ public class Band:public int SetOffset(double newoffset)
  *
  * @return gdalconst.CE_None or success or gdalconst.CE_Failure on failure.
  *
- * @since Java bindings 1.8.0
  */
 public class Band:public int SetScale(double newscale)
 
@@ -4449,7 +4210,6 @@ public class Band:public int SetScale(double newscale)
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure if not succuessful, or
  * unsupported.
  *
- * @since Java bindings 1.8.0
  */
 public class Band:public int SetUnitType(String newunittype)
 
@@ -4465,8 +4225,6 @@ public class Band:public int SetUnitType(String newunittype)
  * @return gdalconst.CE_None on success, or gdalconst.CE_Failure on failure.  If unsupported
  * by the driver, CE_Failure is returned by no error message will have
  * been emitted.
- *
- * @since GDAL 1.9.0
  */
 public class Band:public int SetCategoryNames(java.util.Vector names)
 
@@ -4606,7 +4364,6 @@ public class RasterAttributeTable:public int GetColumnCount()
  *
  * @return true if linear binning information exists or false if there is none.
  *
- * @since Java bindings 1.7.0
  */
 public class RasterAttributeTable:public boolean GetLinearBinning(double[] pdfRow0Min, double[] pdfBinSize)
 
@@ -4712,7 +4469,6 @@ public class RasterAttributeTable:public String GetValueAsString(int iRow, int i
  *
  * @return CE_None on success or CE_Failure on failure.
  *
- * @since Java bindings 1.7.0
  */
 public class RasterAttributeTable:public int SetLinearBinning(double dfRow0Min, double dfBinSize)
 
@@ -4809,7 +4565,6 @@ public class org.gdal.gdal.Driver:public void delete()
  *
  * @return null on failure, or a Dataset object
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
 
@@ -4829,7 +4584,6 @@ public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, 
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, String[] options)
 
@@ -4840,7 +4594,6 @@ public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, 
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType)
 
@@ -4851,7 +4604,6 @@ public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, 
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands)
 
@@ -4862,7 +4614,6 @@ public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, 
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize)
 
@@ -4903,7 +4654,6 @@ public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, 
  *
  * @return the newly created dataset (may be read-only access).
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
 
@@ -4923,7 +4673,6 @@ public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, Vector options)
 
@@ -4934,7 +4683,6 @@ public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict)
 
@@ -4945,7 +4693,6 @@ public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds)
 
@@ -4965,7 +4712,6 @@ public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, String[] options)
 
@@ -5066,7 +4812,6 @@ public class org.gdal.gdal.Driver:public String getHelpTopic()
   * This class will not do anything by itself, but it can be subclassed, like <a href="TermProgressCallback.html">TermProgressCallback</a> class.
   * to do more useful things.
   *
-  * @since Java bindings 1.7.0
   */
 public class ProgressCallback
 
@@ -5084,7 +4829,6 @@ public class ProgressCallback
   *
   * @return 0 if you want to interrupt the processing, any value different from 0 to go on
   *
-  * @since Java bindings 1.7.0
   */
 public class ProgressCallback:public int run(double dfComplete, String message)
 
@@ -5110,7 +4854,6 @@ public class ProgressCallback:public int run(double dfComplete, String message)
   * driver.CreateCopy("dest.tif", src_ds, 0, null, new TermProgressCallback());
   * </pre>
   *
-  * @since Java bindings 1.7.0
   */
 public class TermProgressCallback
 
@@ -5173,7 +4916,6 @@ public class MajorObject:public java.util.Hashtable GetMetadata_Dict(String doma
  *
  * @return null or a hash table with metadata
  *
- * @since Java bindings 1.7.0
  */
 public class MajorObject:public java.util.Hashtable GetMetadata_Dict()
 
@@ -5197,7 +4939,6 @@ public class MajorObject:public java.util.Vector GetMetadata_List(String domain)
  *
  * @return null or a vector of strings
  *
- * @since Java bindings 1.7.0
  */
 public class MajorObject:public java.util.Vector GetMetadata_List()
 
@@ -5226,7 +4967,6 @@ public class MajorObject:public int SetMetadata(java.util.Hashtable metadata, St
  * metadata has been accepted, but is likely not maintained persistently
  * by the underlying object between sessions.
  *
- * @since Java bindings 1.7.0
  */
 
 public class MajorObject:public int SetMetadata(java.util.Hashtable metadata)
@@ -5256,7 +4996,6 @@ public class MajorObject:public int SetMetadata(String metadataString, String do
  * metadata has been accepted, but is likely not maintained persistently
  * by the underlying object between sessions.
  *
- * @since Java bindings 1.7.0
  */
 
 public class MajorObject:public int SetMetadata(String metadataString)
@@ -5273,7 +5012,6 @@ public class MajorObject:public int SetMetadata(String metadataString)
  * metadata has been accepted, but is likely not maintained persistently
  * by the underlying object between sessions.
  *
- * @since Java bindings 1.7.0
  */
 
 public class MajorObject:public int SetMetadata(java.util.Vector metadata, String domain)
@@ -5288,7 +5026,6 @@ public class MajorObject:public int SetMetadata(java.util.Vector metadata, Strin
  * metadata has been accepted, but is likely not maintained persistently
  * by the underlying object between sessions.
  *
- * @since Java bindings 1.7.0
  */
 
 public class MajorObject:public int SetMetadata(java.util.Vector metadata)
@@ -5313,7 +5050,6 @@ public class MajorObject:public String GetMetadataItem( String name, String doma
  *
  * @return null on failure to find the key, or the value string on success.
  *
- * @since Java bindings 1.7.0
  */
 
 public class MajorObject:public String GetMetadataItem( String name )
@@ -5341,7 +5077,6 @@ public class MajorObject:public int SetMetadataItem( String name, String value, 
  *
  * @return gdalconst.CE_None on success, or an error code on failure.
  *
- * @since Java bindings 1.7.0
  */
 
 public class MajorObject:public int SetMetadataItem( String name, String value )
@@ -5442,7 +5177,6 @@ public class Transformer:public int TransformPoint(double[] argout, int bDstToSr
   * @param y input y value
   * @return 1 on success, 0 otherwise
   *
-  * @since Java bindings 1.7.0
   */
 public class Transformer:public int TransformPoint(double[] argout, int bDstToSrc, double x, double y)
 
@@ -5459,7 +5193,6 @@ public class Transformer:public int TransformPoint(double[] argout, int bDstToSr
   *
   * @return 1 on success, 0 otherwise
   *
-  * @since Java bindings 1.7.0
   */
 public class Transformer:public int TransformPoints(int bDstToSrc, double[][] arrayOfCoords, int[] panSuccess)
 
@@ -5987,7 +5720,6 @@ public class org.gdal.ogr.Driver:public DataSource CreateDataSource(String name,
  *
  * @see #CreateDataSource(String name, java.util.Vector options)
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.ogr.Driver:public DataSource CreateDataSource(String name)
 
@@ -6014,7 +5746,6 @@ public class org.gdal.ogr.Driver:public DataSource CopyDataSource(DataSource src
  *
  * @see #CreateDataSource(String name, java.util.Vector options)
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.ogr.Driver:public DataSource CopyDataSource(DataSource src_ds, String name)
 
@@ -6040,7 +5771,6 @@ public class org.gdal.ogr.Driver:public DataSource Open(String name, int update)
  *
  * @see #Open(String name, int update)
  *
- * @since Java bindings 1.7.0
  */
 public class org.gdal.ogr.Driver:public DataSource Open(String name)
 
@@ -6110,15 +5840,11 @@ public class org.gdal.ogr.Driver:public String GetName()
   If the driver is already registered (based on handle comparison)
   then the driver isn't registered.  New drivers are added at the end of
   the list of registered drivers.
-
-  @since GDAL 1.8.0
 */
 public class org.gdal.ogr.Driver:public void Register()
 
 /**
   Remove the  driver from the list of registered drivers.
-
-  @since GDAL 1.8.0
 */
 public class org.gdal.ogr.Driver:public void Deregister()
 
@@ -6176,7 +5902,6 @@ public class DataSource:public Layer CopyLayer(Layer src_layer, String new_name,
  *
  * @see #CopyLayer(Layer src_layer, String new_name, java.util.Vector options)
  *
- * @since Java bindings 1.7.0
  */
 public class DataSource:public Layer CopyLayer(Layer src_layer, String new_name)
 
@@ -6229,7 +5954,6 @@ public class DataSource:public Layer CreateLayer(String name, SpatialReference s
  *
  * @see #CreateLayer(String name, SpatialReference srs, int geom_type, java.util.Vector options)
  *
- * @since Java bindings 1.7.0
  */
 public class DataSource:public Layer CreateLayer(String name, SpatialReference srs, int geom_type)
 
@@ -6240,7 +5964,6 @@ public class DataSource:public Layer CreateLayer(String name, SpatialReference s
  *
  * @see #CreateLayer(String name, SpatialReference srs, int geom_type, java.util.Vector options)
  *
- * @since Java bindings 1.7.0
  */
 public class DataSource:public Layer CreateLayer(String name, SpatialReference srs)
 
@@ -6251,7 +5974,6 @@ public class DataSource:public Layer CreateLayer(String name, SpatialReference s
  *
  * @see #CreateLayer(String name, SpatialReference srs, int geom_type, java.util.Vector options)
  *
- * @since Java bindings 1.7.0
  */
 public class DataSource:public Layer CreateLayer(String name)
 
@@ -6298,7 +6020,6 @@ public class DataSource:public Layer ExecuteSQL(String statement, Geometry spati
  *
  * @see #ExecuteSQL(String statement, Geometry spatialFilter, String dialect)
  *
- * @since Java bindings 1.7.0
  */
 public class DataSource:public Layer ExecuteSQL(String statement, Geometry spatialFilter)
 
@@ -6309,7 +6030,6 @@ public class DataSource:public Layer ExecuteSQL(String statement, Geometry spati
  *
  * @see #ExecuteSQL(String statement, Geometry spatialFilter, String dialect)
  *
- * @since Java bindings 1.7.0
  */
 public class DataSource:public Layer ExecuteSQL(String statement)
 
@@ -6393,7 +6113,6 @@ public class DataSource:public Layer GetLayerByIndex(int index)
 
  @return the layer, or null if index is out of range or an error occurs.
 
- @since Java bindings 1.7.0
 */
 public class DataSource:public Layer GetLayer(int index)
 
@@ -6419,7 +6138,6 @@ public class DataSource:public Layer GetLayerByName(String layer_name)
 
  @return the layer, or null if index is out of range or an error occurs.
 
- @since Java bindings 1.7.0
 */
 public class DataSource:public Layer GetLayer(String layer_name)
 
@@ -6562,8 +6280,6 @@ backing file/database should be updated accordingly.
 @param iField index of the field to delete.
 
 @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
-
-@since OGR 1.9.0
 */
 public class Layer:public int DeleteField( int iField )
 
@@ -6593,8 +6309,6 @@ backing file/database should be updated accordingly.
 is a permutation of [0, GetLayerDefn().GetFieldCount()-1].
 
 @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
-
-@since OGR 1.9.0
 */
 public class Layer:public int ReorderFields( int[] panMap )
 
@@ -6627,8 +6341,6 @@ backing file/database should be updated accordingly.
 @param iNewFieldPos new position of the field to move. Must be in the range [0,GetFieldCount()-1].
 
 @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
-
-@since OGR 1.9.0
 */
 public class Layer:public int ReorderField( int iOldFieldPos, int iNewFieldPos )
 
@@ -6656,8 +6368,6 @@ to indicate which of the name and/or type and/or width and precision fields from
 definition must be taken into account.
 
 @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
-
-@since OGR 1.9.0
 */
 public class Layer:public int AlterFieldDefn( int iField, FieldDefn newFieldDefn, int nFlags )
 
@@ -6706,7 +6416,6 @@ public class Layer:public int GetExtent(double[] extent, int force)
 
  @return an allocated array of 4 doubles in which the extent value or null in case of failure
 
- @since Java bindings 1.7.0
 */
 public class Layer:public double[] GetExtent(boolean force)
 
@@ -6717,7 +6426,6 @@ public class Layer:public double[] GetExtent(boolean force)
   *
   * @see #GetExtent(boolean force)
   *
-  * @since Java bindings 1.7.0
   */
 public class Layer:public double[] GetExtent()
 
@@ -6789,7 +6497,6 @@ public class Layer:public long GetFeatureCount(int force)
   *
   * @see #GetFeatureCount(int force)
   *
-  * @since Java bindings 1.7.0
   */
 public class Layer:public long GetFeatureCount()
 
@@ -6799,7 +6506,6 @@ public class Layer:public long GetFeatureCount()
   * Note: not all drivers seem to update properly this count.
   * @return total number of features read.
   *
-  * @since Java bindings 1.7.0
   */
 public class Layer:public long GetFeaturesRead()
 
@@ -6837,8 +6543,6 @@ public class Layer:public String GetGeometryColumn()
 
  @param fieldNames a vector of field names. If null is passed, the ignored list is cleared.
  @return ogr.OGRERR_NONE if all field names have been resolved (even if the driver does not support this method)
-
- @since OGR 1.8.0
 */
 public class Layer:public int SetIgnoredFields(java.util.Vector fieldNames)
 
@@ -6885,8 +6589,6 @@ public class Layer:public byte GetNameAsByteArray()
  * definition initialization.
  *
  * @return the geometry name
- *
- * @since OGR 1.8.0
  */
 public class Layer:public int GetGeomType()
 
@@ -7228,8 +6930,6 @@ public class Layer:public boolean TestCapability(String cap)
  * @param callback a callback function for reporting progress or null.
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
- *
- * @since OGR 1.10
  */
 public class Layer:public int Intersection( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7289,8 +6989,6 @@ public class Layer:public int Intersection( Layer pLayerMethod, Layer pLayerResu
  * @param callback a callback function for reporting progress or null.
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
- *
- * @since OGR 1.10
  */
 public class Layer:public int Union( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7349,8 +7047,6 @@ public class Layer:public int Union( Layer pLayerMethod, Layer pLayerResult)
  * @param callback a callback function for reporting progress or null.
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
- *
- * @since OGR 1.10
  */
 public class Layer:public int SymDifference( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7407,8 +7103,6 @@ public class Layer:public int SymDifference( Layer pLayerMethod, Layer pLayerRes
  * @param callback a callback function for reporting progress or null.
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
- *
- * @since OGR 1.10
  */
 public class Layer:public int Identity( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7468,8 +7162,6 @@ public class Layer:public int Identity( Layer pLayerMethod, Layer pLayerResult)
  * @param callback a callback function for reporting progress or null.
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
- *
- * @since OGR 1.10
  */
 public class Layer:public int Update( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7521,8 +7213,6 @@ public class Layer:public int Update( Layer pLayerMethod, Layer pLayerResult)
  * @param callback a callback function for reporting progress or null.
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
- *
- * @since OGR 1.10
  */
 public class Layer:public int Clip( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7574,8 +7264,6 @@ public class Layer:public int Clip( Layer pLayerMethod, Layer pLayerResult)
  * @param callback a callback function for reporting progress or null.
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
- *
- * @since OGR 1.10
  */
 public class Layer:public int Erase( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7718,7 +7406,6 @@ public class Feature:public double GetFieldAsDouble(String name)
  *
  * @return the field value. The returned value may be null.
  *
- * @since Java bindings 1.7.0
  */
 public class Feature:public double[] GetFieldAsDoubleList(int ifield)
 
@@ -7757,7 +7444,6 @@ public class Feature:public int GetFieldAsInteger(String name)
  *
  * @return the field value. The returned value may be null.
  *
- * @since Java bindings 1.7.0
  */
 public class Feature:public int[] GetFieldAsIntegerList(int ifield)
 
@@ -7826,7 +7512,6 @@ public class Feature:public byte[] GetFieldAsStringAsByteArray(String name)
  *
  * @return the field value. The returned value may be null.
  *
- * @since Java bindings 1.7.0
  */
 public class Feature:public String[] GetFieldAsStringList(int ifield)
 
@@ -8094,7 +7779,6 @@ public class Feature:public void SetFieldIntegerList(int ifield, int[] values)
  * @param ifield the field to set, from 0 to GetFieldCount()-1.
  * @param values the values to assign (vector of strings).
  *
- * @since Java bindings 1.7.0
  */
 public class Feature:public void SetFieldStringList(int ifield, java.util.Vector values)
 
@@ -8128,7 +7812,6 @@ public class Feature:public int SetFrom(Feature srcFeature, int forgiving)
  *
  * @see #SetFrom(Feature srcFeature, int forgiving)
  *
- * @since Java bindings 1.7.0
  */
 public class Feature:public int SetFrom(Feature srcFeature)
 
@@ -8157,8 +7840,6 @@ public class Feature:public int SetFrom(Feature srcFeature)
  *
  * @return 0 if the operation succeeds, even if some values are
  * not transferred, otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
- *
- * @since OGR 1.8.0
  *
  * @see #SetFrom(org.gdal.ogr.Feature srcFeature, int forgiving)
  */
@@ -8246,7 +7927,6 @@ public class Geometry
  *
  * @param eGeometryType the type code of the geometry class to be instantiated.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public Geometry(int eGeometryType)
 
@@ -8350,7 +8030,6 @@ public class Geometry:public void AddPoint(double x, double y, double z)
  * @param x coordinate of point to add.
  * @param y coordinate of point to add.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public void AddPoint(double x, double y)
 
@@ -8404,7 +8083,6 @@ public class Geometry:public Geometry Buffer(double distance, int quadsecs)
  *
  * @see #Buffer(double distance, int quadsecs)
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public Geometry Buffer(double distance)
 
@@ -8489,7 +8167,6 @@ public class Geometry:public Geometry ConvexHull()
  *
  * @return a geometry on success, or null on error.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public static Geometry CreateFromGML(String gml)
 
@@ -8500,7 +8177,6 @@ public class Geometry:public static Geometry CreateFromGML(String gml)
  *
  * @return a geometry on success, or null on error.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public static Geometry CreateFromJson(String json)
 
@@ -8512,7 +8188,6 @@ public class Geometry:public static Geometry CreateFromJson(String json)
  *
  * @return a geometry on success, or null on error.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public static Geometry CreateFromWkb(byte[] wkb)
 
@@ -8525,7 +8200,6 @@ public class Geometry:public static Geometry CreateFromWkb(byte[] wkb)
  *
  * @return a geometry on success, or null on error.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public static Geometry CreateFromWkt(String wkt)
 
@@ -8634,17 +8308,15 @@ public class Geometry:public String ExportToGML()
  * The GML geometry is expressed directly in terms of GML basic data
  * types assuming the this is available in the gml namespace.
  *
- * The supported options in OGR 1.8.0 are :
+ * The supported options are:
  * <ul>
- * <li>FORMAT=GML3. Otherwise it will default to GML 2.1.2 output.</li>
+ * <li>FORMAT=GML2/GML3/GML3.2</li>
  * <li>GML3_LINESTRING_ELEMENT=curve. (Only valid for FORMAT=GML3) To use gml:Curve element for linestrings. Otherwise gml:LineString will be used .</li>
  * <li>GML3_LONGSRS=YES/NO. (Only valid for FORMAT=GML3) Default to YES. If YES, SRS with EPSG authority will be written with the "urn:ogc:def:crs:EPSG::" prefix. In the case, if the SRS is a geographic SRS without explicit AXIS order, but that the same SRS authority code imported with ImportFromEPSGA() should be treated as lat/long, then the function will take care of coordinate order swapping. If set to NO, SRS with EPSG authority will be written with the "EPSG:" prefix, even if they are in lat/long order.</li>
  * </ul>
  *
  * @param options a list of strings.
  * @return A GML fragment or null in case of error.
- *
- * @since OGR 1.8.0
  */
 public class Geometry:public String ExportToGML(java.util.Vector options)
 
@@ -8662,7 +8334,6 @@ public class Geometry:public String ExportToKML(String altitude_mode)
  *
  * @return A KML fragment or null in case of error.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public String ExportToKML()
 
@@ -8679,8 +8350,6 @@ public class Geometry:public String ExportToJson()
  * @param options a list of strings. For now, only COORDINATE_PRECISION=int_number
  *                where int_number is the maximum number of figures after decimal separator to write in coordinates.
  * @return A GeoJSON fragment or null in case of error.
- *
- * @since OGR 1.9.0
  */
 public class Geometry:public String ExportToJson(java.util.Vector options)
 
@@ -8695,7 +8364,6 @@ public class Geometry:public String ExportToJson(java.util.Vector options)
  *
  * @return the wkb content
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public byte[] ExportToWkb(int byte_order)
 
@@ -8720,7 +8388,6 @@ public class Geometry:public int ExportToWkb(byte[] wkbArray, int byte_order)
  *
  * @return the wkb content
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public byte[] ExportToWkb()
 
@@ -8742,7 +8409,6 @@ public class Geometry:public int ExportToWkt(String[] argout)
  *
  * @return the WKT string
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public String ExportToWkt()
 
@@ -8761,8 +8427,6 @@ public class Geometry:public void FlattenTo2D()
  * Undefined for all other geometry types (returns zero).
  *
  * @return the area or 0.0 for unsupported geometry types.
- *
- * @since OGR 1.8.0
  */
 public class Geometry:public double Area()
 
@@ -8786,8 +8450,6 @@ public class Geometry:public double GetArea()
  * If OGR is built without the GEOS library, this method will always fail.
  *
  * @return a newly allocated geometry now owned by the caller, or null on failure.
- *
- * @since OGR 1.8.0
  */
 public class Geometry:public Geometry Boundary()
 
@@ -8833,8 +8495,6 @@ public class Geometry:public void GetEnvelope(double[] argout)
  * Computes and returns the 3D bounding envelope for this geometry.
  * <p>
  * @param argout an allocated array of 6 doubles into which to place the result
- *
- * @since OGR 1.9.0
  */
 public class Geometry:public void GetEnvelope3D(double[] argout)
 
@@ -8906,7 +8566,6 @@ public class Geometry:public void GetPoint(int iPoint, double[] argout)
  * @param iPoint the vertex to fetch, from 0 to GetNumPoints()-1, zero for a point.
  * @return an allocated array of 3 doubles to contain the x, y, z coordinates.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public double[] GetPoint(int iPoint)
 
@@ -8924,7 +8583,6 @@ public class Geometry:public void GetPoint_2D(int iPoint, double[] argout)
  * @param iPoint the vertex to fetch, from 0 to GetNumPoints()-1, zero for a point.
  * @return an allocated array of 2 doubles to contain the x, y coordinates.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public double[] GetPoint_2D(int iPoint)
 
@@ -8952,8 +8610,6 @@ public class Geometry:public int GetPointCount()
  * coordinates per tuple will be 3.
  *
  * @return the coordinates
- *
- * @since OGR 1.9.0
  */
 public class Geometry:public double[][] GetPoints(int nCoordinateDimension)
 
@@ -8963,8 +8619,6 @@ public class Geometry:public double[][] GetPoints(int nCoordinateDimension)
  * Same as below with nCoordinateDimension == 0
  *
  * @return the coordinates
- *
- * @since OGR 1.9.0
  *
  * @see #GetPoints(int)
  */
@@ -9009,7 +8663,6 @@ public class Geometry:public double GetZ(int ipoint)
  *
  * @return the X coordinate of this point.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public double GetX()
 
@@ -9018,7 +8671,6 @@ public class Geometry:public double GetX()
  *
  * @return the Y coordinate of this point.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public double GetY()
 
@@ -9027,7 +8679,6 @@ public class Geometry:public double GetY()
  *
  * @return the Z coordinate of this point.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public double GetZ()
 
@@ -9054,8 +8705,6 @@ public class Geometry:public boolean Intersect(Geometry other)
  * @param other the other geometry to test against.
  *
  * @return true if the geometries intersect, otherwise false.
- *
- * @since OGR 1.8.0
  */
 public class Geometry:public boolean Intersects(Geometry other)
 
@@ -9156,7 +8805,6 @@ public class Geometry:public boolean Overlaps(Geometry other)
  *
  * @param max_length the maximum distance between 2 points after segmentization
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public void Segmentize(double max_length)
 
@@ -9213,7 +8861,6 @@ public class Geometry:public void SetPoint(int ipoint, double x, double y, doubl
  * @param x input X coordinate to assign.
  * @param y input Y coordinate to assign.
  *
- * @since Java bindings 1.7.0
  */
 public class Geometry:public void SetPoint(int ipoint, double x, double y)
 
@@ -9228,8 +8875,6 @@ public class Geometry:public void SetPoint(int ipoint, double x, double y)
  * @param dTolerance the distance tolerance for the simplification.
  *
  * @return the simplified geometry or null if an error occurs.
- *
- * @since OGR 1.8.0
  */
 public class Geometry:public Geometry Simplify(double dTolerance)
 
@@ -9244,8 +8889,6 @@ public class Geometry:public Geometry Simplify(double dTolerance)
  * @param dTolerance the distance tolerance for the simplification.
  *
  * @return the simplified geometry or null if an error occurs.
- *
- * @since OGR 1.9.0
  */
 public class Geometry:public Geometry SimplifyPreserveTopology(double dTolerance)
 
@@ -9264,8 +8907,6 @@ public class Geometry:public Geometry SimplifyPreserveTopology(double dTolerance
  *
  * @return a new geometry representing the symmetric difference or null if the
  * difference is empty or an error occurs.
- *
- * @since OGR 1.8.0
  */
 public class Geometry:public Geometry SymDifference(Geometry other)
 
@@ -9365,8 +9006,6 @@ public class Geometry:public Geometry Union(Geometry other)
  * issuing a CPLE_NotSupported error.
  *
  * @return a new geometry representing the union or null if an error occurs.
- *
- * @since OGR 1.8.0
  */
 public class Geometry:public Geometry UnionCascaded()
 
@@ -9401,7 +9040,6 @@ public class Geometry:public int WkbSize()
 /**
  * Returns the length of the geometry
  * @return length of the geometry
- * @since Java bindings 1.8.0
  */
 public class Geometry:public double Length()
 
@@ -9443,7 +9081,6 @@ public class FeatureDefn:public FeatureDefn()
  * @param name the name to be assigned to this layer/class.  It does not
  * need to be unique. and may be null.
  *
- * @since Java bindings 1.7.0
  */
 public class FeatureDefn:public FeatureDefn(String name)
 
@@ -9510,8 +9147,6 @@ public class FeatureDefn:public int GetFieldIndex(String name)
  * Determine whether the geometry can be omitted when fetching features.
  *
  * @return ignore state (1 if ignored, 0 otherwise)
- *
- * @since OGR 1.8.0
  */
 public class FeatureDefn:public int IsGeometryIgnored()
 
@@ -9519,8 +9154,6 @@ public class FeatureDefn:public int IsGeometryIgnored()
  * Set whether the geometry can be omitted when fetching features.
  *
  * @param bIgnore ignore state (1 to ignore, 0 otherwise)
- *
- * @since OGR 1.8.0
  */
 public class FeatureDefn:public void SetGeometryIgnored(int bIgnore)
 
@@ -9528,8 +9161,6 @@ public class FeatureDefn:public void SetGeometryIgnored(int bIgnore)
  * Determine whether the style can be omitted when fetching features.
  *
  * @return ignore state (1 if ignored, 0 otherwise)
- *
- * @since OGR 1.8.0
  */
 public class FeatureDefn:public int IsStyleIgnored()
 
@@ -9537,8 +9168,6 @@ public class FeatureDefn:public int IsStyleIgnored()
  * Set whether the style can be omitted when fetching features.
  *
  * @param bIgnore ignore state (1 to ignore, 0 otherwise)
- *
- * @since OGR 1.8.0
  */
 public class FeatureDefn:public void SetStyleIgnored(int bIgnore)
 
@@ -9591,7 +9220,6 @@ public class FieldDefn
  * <p>
  * The new field will be named "unnamed" and of type OFTString
  *
- * @since Java bindings 1.7.0
  */
 public class FieldDefn:public FieldDefn()
 
@@ -9601,7 +9229,6 @@ public class FieldDefn:public FieldDefn()
  * The new field will be of type OFTString
  * @param name the name of the new field.
  *
- * @since Java bindings 1.7.0
  */
 public class FieldDefn:public FieldDefn(String name)
 
@@ -9726,8 +9353,6 @@ public class FieldDefn:public void SetWidth(int width)
  * Return whether this field should be omitted when fetching features.
  *
  * @return ignore state (1 if ignored, 0 otherwise)
- *
- * @since OGR 1.8.0
  */
 public class FieldDefn:public int IsIgnored()
 
@@ -9735,8 +9360,6 @@ public class FieldDefn:public int IsIgnored()
  * Set whether this field should be omitted when fetching features.
  *
  * @param bIgnored ignore state (1 to ignore, 0 otherwise)
- *
- * @since OGR 1.8.0
  */
 public class FieldDefn:public void SetIgnored(int bIgnored)
 
@@ -9758,7 +9381,6 @@ public class ogr
  * back to that original state if DontUseExceptions() was called in-between.
  * This will only apply to the org.gdal.ogr.* package.
  *
- * @since Java bindings 1.7.0
  */
 public class ogr:public static void UseExceptions()
 
@@ -9772,7 +9394,6 @@ public class ogr:public static void UseExceptions()
  * (ogr.OGRERR_* codes)
  * This will only apply to the org.gdal.ogr.* package.
  *
- * @since Java bindings 1.7.0
  */
 public class ogr:public static void DontUseExceptions()
 
@@ -9794,7 +9415,6 @@ public class ogr:public static void DontUseExceptions()
  *
  * @return LineString geometry representing an approximation of the arc.
  *
- * @since Java bindings 1.7.0
  */
 public class ogr:public static Geometry ApproximateArcAngles(double dfCenterX, double dfCenterY, double dfZ, double dfPrimaryRadius, double dfSecondaryRadius, double dfRotation, double dfStartAngle, double dfEndAngle, double dfMaxAngleStepSizeDegrees)
 
@@ -9805,7 +9425,6 @@ public class ogr:public static Geometry ApproximateArcAngles(double dfCenterX, d
  *
  * @see #BuildPolygonFromEdges(Geometry lineCollection, int bBestEffort, int bAutoClose, double dfTolerance)
  *
- * @since Java bindings 1.7.0
 */
 public class ogr:public static Geometry BuildPolygonFromEdges(Geometry hLineCollection, int bBestEffort)
 
@@ -9816,7 +9435,6 @@ public class ogr:public static Geometry BuildPolygonFromEdges(Geometry hLineColl
  *
  * @see #BuildPolygonFromEdges(Geometry lineCollection, int bBestEffort, int bAutoClose, double dfTolerance)
  *
- * @since Java bindings 1.7.0
 */
 public class ogr:public static Geometry BuildPolygonFromEdges(Geometry hLineCollection, int bBestEffort, int bAutoClose)
 
@@ -9856,7 +9474,6 @@ public class ogr:public static Geometry CreateGeometryFromJson(String json)
  * @param wkb the wkb content
  * @return the new geometry
  *
- * @since Java bindings 1.7.0
  */
 public class ogr:public static Geometry CreateGeometryFromWkb(byte[] wkb)
 
@@ -9875,7 +9492,6 @@ public class ogr:public static Geometry CreateGeometryFromWkb(byte[] wkb, Spatia
  * @param wkt the wkt content
  * @return the new geometry
  *
- * @since Java bindings 1.7.0
  */
 public class ogr:public static Geometry CreateGeometryFromWkt(String wkt)
 
@@ -9920,7 +9536,6 @@ public class ogr:public static Geometry CreateGeometryFromWkt(String wkt, Spatia
     *
     * @return updated argument list array.
     *
-    * @since Java bindings 1.7.0
     */
 public class ogr:public static String[] GeneralCmdLineProcessor(String[] args, int options)
 
@@ -9931,7 +9546,6 @@ public class ogr:public static String[] GeneralCmdLineProcessor(String[] args, i
     *
     * @see #GeneralCmdLineProcessor(String[] args, int options)
     *
-    * @since Java bindings 1.7.0
     */
 public class ogr:public static String[] GeneralCmdLineProcessor(String[] args)
 
@@ -9944,7 +9558,6 @@ public class ogr:public static String[] GeneralCmdLineProcessor(String[] args)
     *
     * @see #GeneralCmdLineProcessor(String[] args, int options)
     *
-    * @since Java bindings 1.7.0
     */
 public class ogr:public static java.util.Vector GeneralCmdLineProcessor(java.util.Vector args, int options)
 
@@ -9957,7 +9570,6 @@ public class ogr:public static java.util.Vector GeneralCmdLineProcessor(java.uti
     *
     * @see #GeneralCmdLineProcessor(String[] args, int options)
     *
-    * @since Java bindings 1.7.0
     */
 public class ogr:public static java.util.Vector GeneralCmdLineProcessor(java.util.Vector args)
 
@@ -9968,7 +9580,6 @@ public class ogr:public static java.util.Vector GeneralCmdLineProcessor(java.uti
  *
  * @return human readable string, or null on failure.
  *
- * @since Java bindings 1.7.0
  */
 public class ogr:public static String GeometryTypeToName(int eType)
 
@@ -10004,7 +9615,6 @@ public class ogr:public static int GetDriverCount()
  *
  * @return field type name
  *
- * @since Java bindings 1.7.0
  */
 public class ogr:public static String GetFieldTypeName(int type)
 
@@ -10029,7 +9639,6 @@ public class ogr:public static int GetOpenDSCount()
   *
   * @see #Open(String filename, int update)
   *
-  * @since Java bindings 1.7.0
   */
 public class ogr:public static DataSource Open(String filename)
 
@@ -10040,7 +9649,6 @@ public class ogr:public static DataSource Open(String filename)
   *
   * @see #Open(String filename, int update)
   *
-  * @since Java bindings 1.7.0
   */
 public class ogr:public static DataSource Open(String filename, boolean update)
 
@@ -10094,7 +9702,6 @@ public class ogr:public static DataSource Open(String filename, int update)
   *
   * @see #Open(String filename, int update)
   *
-  * @since Java bindings 1.7.0
   */
 public class ogr:public static DataSource OpenShared(String filename)
 
@@ -10181,7 +9788,6 @@ public class ogr:public static int SetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_
  *
  * @param geom the input geometry
  * @return new geometry.
- * @since Java bindings 1.8.0
  */
 public class ogr:public static Geometry ForceToPolygon(Geometry geom)
 
@@ -10195,7 +9801,6 @@ public class ogr:public static Geometry ForceToPolygon(Geometry geom)
  *
  * @param geom the input geometry
  * @return new geometry.
- * @since Java bindings 1.8.0
  */
 public class ogr:public static Geometry ForceToMultiPolygon(Geometry geom)
 
@@ -10209,7 +9814,6 @@ public class ogr:public static Geometry ForceToMultiPolygon(Geometry geom)
  *
  * @param geom the input geometry
  * @return new geometry.
- * @since Java bindings 1.8.0
  */
 public class ogr:public static Geometry ForceToMultiPoint(Geometry geom)
 
@@ -10228,7 +9832,6 @@ public class ogr:public static Geometry ForceToMultiPoint(Geometry geom)
  *
  * @param geom the input geometry
  * @return new geometry.
- * @since Java bindings 1.8.0
  */
 public class ogr:public static Geometry ForceToMultiLineString(Geometry geom)
 
@@ -10319,7 +9922,6 @@ public class SpatialReference:public SpatialReference(String wkt)
  *
  * @see #SpatialReference(String wkt)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public SpatialReference()
 
@@ -10382,7 +9984,6 @@ public class SpatialReference:public int CopyGeogCSFrom(SpatialReference src_srs
  *
  * @return the coordinate system in Mapinfo style CoordSys format.
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToMICoordSys()
 
@@ -10422,7 +10023,6 @@ public class SpatialReference:public int ExportToPCI(String[] proj, String[] uni
  *
  * @see #ExportToPrettyWkt(String[] argout, int simplify)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToPrettyWkt()
 
@@ -10433,7 +10033,6 @@ public class SpatialReference:public String ExportToPrettyWkt()
  *
  * @see #ExportToPrettyWkt(String[] argout, int simplify)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToPrettyWkt(int simplify)
 
@@ -10444,7 +10043,6 @@ public class SpatialReference:public String ExportToPrettyWkt(int simplify)
  *
  * @see #ExportToPrettyWkt(String[] argout, int simplify)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ExportToPrettyWkt(String[] argout)
 
@@ -10465,7 +10063,6 @@ public class SpatialReference:public int ExportToPrettyWkt(String[] argout, int 
  *
  * @see #ExportToProj4(String[] argout)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToProj4()
 
@@ -10510,7 +10107,6 @@ public class SpatialReference:public int ExportToUSGS(int[] projsys, int[] zone,
  *
  * @see #ExportToWkt(String[] argout)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToWkt()
 
@@ -10528,7 +10124,6 @@ public class SpatialReference:public int ExportToWkt(String[] argout)
  *
  * @see #ExportToXML(String[] argout, String dialect)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToXML()
 
@@ -10537,7 +10132,6 @@ public class SpatialReference:public String ExportToXML()
  *
  * @see #ExportToXML(String[] argout, String dialect)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToXML(String dialect)
 
@@ -10546,7 +10140,6 @@ public class SpatialReference:public String ExportToXML(String dialect)
  *
  * @see #ExportToXML(String[] argout, String dialect)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ExportToXML(String[] argout)
 
@@ -10635,7 +10228,6 @@ public class SpatialReference:public String GetAngularUnitsName()
  *
  * @return the requested value, or null if it fails for any reason.
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String GetAttrValue(String name)
 
@@ -10700,7 +10292,6 @@ public class SpatialReference:public String GetAuthorityName(String target_key)
  * @param iAxis axis index (starting with 0)
  *
  * @return axis name, or null on failure.
- * @since GDAL 2.1
  */
 public class SpatialReference:public String GetAxisName(String target_key, int iAxis)
 
@@ -10719,7 +10310,6 @@ public class SpatialReference:public String GetAxisName(String target_key, int i
  * @return axis orientation (org.gdal.osr.osr.OAO_Other, org.gdal.osr.osr.OAO_North,
  *         org.gdal.osr.osr.OAO_South, org.gdal.osr.osr.OAO_East,
  *         org.gdal.osr.osr.OAO_West, org.gdal.osr.osr.OAO_Up, org.gdal.osr.osr.OAO_Down), or org.gdal.osr.osr.OAO_Other on failure.
- * @since GDAL 2.1
  */
 public class SpatialReference:public int GetAxisOrientation(String target_key, int iAxis)
 
@@ -10753,7 +10343,6 @@ public class SpatialReference:public String GetLinearUnitsName()
  *
  * @see #GetNormProjParm(String name, double default_val)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public double GetNormProjParm(String name)
 
@@ -10780,7 +10369,6 @@ public class SpatialReference:public double GetNormProjParm(String name, double 
  *
  * @see #GetProjParm(String name, double default_val)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public double GetProjParm(String name)
 
@@ -10804,7 +10392,6 @@ public class SpatialReference:public double GetProjParm(String name, double defa
  *
  * @return an array of doubles into which up to 7 coefficients are placed.
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public double[] GetTOWGS84()
 
@@ -10889,7 +10476,6 @@ public class SpatialReference:public int ImportFromMICoordSys(String coord_sys)
  *
  * @see #ImportFromPCI(String proj, String units, double[] prjParams)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ImportFromPCI(String proj)
 
@@ -10900,7 +10486,6 @@ public class SpatialReference:public int ImportFromPCI(String proj)
  *
  * @see #ImportFromPCI(String proj, String units, double[] prjParams)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ImportFromPCI(String proj, String units)
 
@@ -11011,7 +10596,6 @@ public class SpatialReference:public int ImportFromUrl(String url)
  *
  * @see #ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams, int iDatum)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ImportFromUSGS(int iProjSys)
 
@@ -11022,7 +10606,6 @@ public class SpatialReference:public int ImportFromUSGS(int iProjSys)
  *
  * @see #ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams, int iDatum)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone)
 
@@ -11033,7 +10616,6 @@ public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone)
  *
  * @see #ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams, int iDatum)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams)
 
@@ -11288,8 +10870,6 @@ public class SpatialReference:public int ImportFromXML(String xmlString)
  * Check if coordinate system is compound.
  *
  * @return 1 if this is rooted with a COMPD_CS node.
- *
- * @since GDAL 1.9.0
  */
 public class SpatialReference:public int IsCompound()
 
@@ -11298,8 +10878,6 @@ public class SpatialReference:public int IsCompound()
  *
  * @return 1 if this contains a GEOCCS node indicating a it is a
  * geocentric coordinate system.
- *
- * @since GDAL 1.9.0
  */
 public class SpatialReference:public int IsGeocentric()
 
@@ -11359,8 +10937,6 @@ public class SpatialReference:public int IsSameVertCS(SpatialReference other)
  *
  * @return 1 if this contains a VERT_CS node indicating a it is a
  * vertical coordinate system.
- *
- * @since OGR 1.8.0
  */
 public class SpatialReference:public int IsVertical()
 
@@ -11480,8 +11056,6 @@ public class SpatialReference:public int SetFromUserInput(String definition)
  * Same as below with name == null
  *
  * @see #SetGeocCS(String name)
- *
- * @since OGR 1.9.0
  */
 public class SpatialReference:public int SetGeocCS()
 
@@ -11496,8 +11070,6 @@ public class SpatialReference:public int SetGeocCS()
  * @param name the user visible name to assign. Not used as a key. May be null
  *
  * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
- *
- * @since OGR 1.9.0
  */
 public class SpatialReference:public int SetGeocCS(String name)
 
@@ -11508,7 +11080,6 @@ public class SpatialReference:public int SetGeocCS(String name)
  *
  * @see #SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits, double dfConvertToRadians)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening)
 
@@ -11519,7 +11090,6 @@ public class SpatialReference:public int SetGeogCS(String pszGeogName, String ps
  *
  * @see #SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits, double dfConvertToRadians)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName)
 
@@ -11530,7 +11100,6 @@ public class SpatialReference:public int SetGeogCS(String pszGeogName, String ps
  *
  * @see #SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits, double dfConvertToRadians)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset)
 
@@ -11541,7 +11110,6 @@ public class SpatialReference:public int SetGeogCS(String pszGeogName, String ps
  *
  * @see #SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszUnits, double dfConvertToRadians)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits)
 
@@ -11709,7 +11277,6 @@ public class SpatialReference:public int SetProjParm(String name, double val)
  *
  * @see #SetStatePlane(int zone, int is_nad83, String unitsname, double units)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetStatePlane(int zone)
 
@@ -11720,7 +11287,6 @@ public class SpatialReference:public int SetStatePlane(int zone)
  *
  * @see #SetStatePlane(int zone, int is_nad83, String unitsname, double units)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetStatePlane(int zone, int is_nad83)
 
@@ -11731,7 +11297,6 @@ public class SpatialReference:public int SetStatePlane(int zone, int is_nad83)
  *
  * @see #SetStatePlane(int zone, int is_nad83, String unitsname, double units)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetStatePlane(int zone, int is_nad83, String unitsname)
 
@@ -11776,8 +11341,6 @@ public class SpatialReference:public int SetStatePlane(int zone, int is_nad83, S
  * be found in ogr_srs_api.h.
  *
  * @return OGRERR_NONE on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
- *
- * @since OGR 1.9.0
  */
 
 public class SpatialReference:public int SetTargetLinearUnits(String target, String name, double to_meters)
@@ -11789,7 +11352,6 @@ public class SpatialReference:public int SetTargetLinearUnits(String target, Str
  *
  * @see #SetTOWGS84(double dfDX, double dfDY, double dfDZ, double dfEX, double dfEY, double dfEZ, double dfPPM)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetTOWGS84(double p1, double p2, double p3)
 
@@ -11823,7 +11385,6 @@ public class SpatialReference:public int SetTOWGS84(double dfDX, double dfDY, do
  *
  * @see #SetUTM(int zone, int north)
  *
- * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetUTM(int zone)
 
@@ -11850,7 +11411,6 @@ public class SpatialReference:public int SetUTM(int zone, int north)
  * @return the UTM zone. As a positive value for the northern hemisphere
  * and as a negative value for the southern hemisphere.
  *
- * @since Java bindings 1.8.0
  */
 public class SpatialReference:public int GetUTMZone()
 
@@ -11870,8 +11430,6 @@ public class SpatialReference:public int GetUTMZone()
  * @param VertDatumType the OGC vertical datum type, usually 2005.
  *
  * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
- *
- * @since OGR 1.9.0
  */
 public class SpatialReference:public int SetVertCS(String VertCSName, String VertDatumName, int VertDatumType)
 
@@ -11974,18 +11532,10 @@ public class CoordinateTransformation
  * Caution: the coordinate transformation object returned can be in a non
  * working state if no coordinate transformation can be established between
  * src and dst, and calling other methods on it can result in the process
- * termination. If using GDAL 1.10 or above, it is recommended to use the
+ * termination. It is recommended to use the
  * <a href="#CreateCoordinateTransformation(org.gdal.osr.SpatialReference,%20org.gdal.osr.SpatialReference)">
  * CreateCoordinateTransformation(org.gdal.osr.SpatialReference, org.gdal.osr.SpatialReference)</a> method instead.
- * <p>
- * For GDAL 1.9.X or below, you might use the following snippet :
- * <pre>
- * gdal.PushErrorHandler( "CPLQuietErrorHandler" );
- * hTransform = new CoordinateTransformation(src, dst);
- * gdal.PopErrorHandler();
- * if (gdal.GetLastErrorMsg().indexOf("Unable to load PROJ.4 library") != -1)
- *    hTransform = null;
- * </pre>
+ * </p>
  *
  * @param src source spatial reference system.
  * @param dst target spatial reference system.
@@ -12000,7 +11550,6 @@ public class CoordinateTransformation:public CoordinateTransformation(SpatialRef
  * @param src source spatial reference system.
  * @param dst target spatial reference system.
  * @return a new CoordinateTransformation object, or null in case of failure
- * @since GDAL 1.10
  */
 public class CoordinateTransformation:public static CoordinateTransformation CreateCoordinateTransformation(SpatialReference src, SpatialReference dst)
 
@@ -12020,7 +11569,6 @@ public class CoordinateTransformation:public void TransformPoint(double[] inout)
  * @param x input x value
  * @param y input y value
  *
- * @since Java bindings 1.7.0
  */
 public class CoordinateTransformation:public void TransformPoint(double[] argout, double x, double y)
 
@@ -12041,7 +11589,6 @@ public class CoordinateTransformation:public void TransformPoint(double[] argout
  * @param y input y value
  * @return the transformed coordinates
  *
- * @since Java bindings 1.7.0
  */
 public class CoordinateTransformation:public double[] TransformPoint(double x, double y)
 
@@ -12052,7 +11599,6 @@ public class CoordinateTransformation:public double[] TransformPoint(double x, d
  * @param y input y value
  * @return the transformed coordinates
  *
- * @since Java bindings 1.7.0
  */
 public class CoordinateTransformation:public double[] TransformPoint(double x, double y, double z)
 
@@ -12197,7 +11743,6 @@ public class osr
  * back to that original state if DontUseExceptions() was called in-between.
  * This will only apply to the org.gdal.osr.* package.
  *
- * @since Java bindings 1.7.0
  */
 public class osr:public static void UseExceptions()
 
@@ -12211,7 +11756,6 @@ public class osr:public static void UseExceptions()
  * (ogr.OGRERR_* codes)
  * This will only apply to the org.gdal.osr.* package.
  *
- * @since Java bindings 1.7.0
  */
 public class osr:public static void DontUseExceptions()
 
@@ -12245,7 +11789,6 @@ public class osr:public static String GetWellKnownGeogCSAsWKT(String definition)
  * @param src source spatial reference system.
  * @param dst target spatial reference system.
  * @return a new CoordinateTransformation object, or null in case of failure
- * @since GDAL 1.10
  * @see <a href="CoordinateTransformation.html#CreateCoordinateTransformation(org.gdal.osr.SpatialReference,%20org.gdal.osr.SpatialReference)">
  * CoordinateTransformation.CreateCoordinateTransformation(org.gdal.osr.SpatialReference, org.gdal.osr.SpatialReference</a>
  */
@@ -12259,7 +11802,6 @@ public interface ogrConstants:public final static int wkb25Bit
 /**
  * Bit mask to indicate that a geometry type is of 2.5D kind.
  *
- * @since Java bindings 1.7.0
  */
 public interface ogrConstants:public final static int wkb25DBit
 

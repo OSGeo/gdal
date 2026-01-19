@@ -181,7 +181,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /* -------------------------------------------------------------------- */
 /*      Allocate the SRITModel.                                         */
 /* -------------------------------------------------------------------- */
-    std::unique_ptr<SRITInfo_t> SRITModel( new SRITInfo_t());
+    auto SRITModel = std::make_unique<SRITInfo_t>();
 
     SRITModel->GCPMeanHtFlag = 0;
     SRITModel->nDownSample = 1;

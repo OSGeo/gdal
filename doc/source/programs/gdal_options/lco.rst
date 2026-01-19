@@ -1,4 +1,4 @@
-.. option:: --layer-creation-option <NAME>=<VALUE>
+.. option:: --lco, --layer-creation-option <NAME>=<VALUE>
 
     Many formats have one or more optional layer creation options that can be
     used to control particulars about the layer created. For instance,

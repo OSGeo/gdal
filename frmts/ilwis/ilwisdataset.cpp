@@ -346,7 +346,7 @@ static GDALDataType ILWIS2GDALType(ilwisStoreType stStoreType)
     {
         case stByte:
         {
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
             break;
         }
         case stInt:
@@ -384,7 +384,7 @@ static std::string GDALType2ILWIS(GDALDataType type)
     std::string sStoreType = "";
     switch (type)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
         {
             sStoreType = "Byte";
             break;
@@ -891,7 +891,7 @@ GDALDataset *ILWISDataset::Create(const char *pszFilename, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Verify input options.                                           */
     /* -------------------------------------------------------------------- */
-    if (eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_Int32 &&
+    if (eType != GDT_UInt8 && eType != GDT_Int16 && eType != GDT_Int32 &&
         eType != GDT_Float32 && eType != GDT_Float64 && eType != GDT_UInt16 &&
         eType != GDT_UInt32)
     {
@@ -1338,7 +1338,7 @@ ILWISRasterBand::ILWISRasterBand(ILWISDataset *poDSIn, int nBandIn,
     if (poDSIn->bNewDataset)
     {
         // Called from Create():
-        // eDataType is defaulted to GDT_Byte by GDALRasterBand::GDALRasterBand
+        // eDataType is defaulted to GDT_UInt8 by GDALRasterBand::GDALRasterBand
         // Here we set it to match the value of sStoreType (that was set in
         // ILWISDataset::Create) Unfortunately we can't take advantage of the
         // ILWIS "ValueRange" object that would use the most compact storeType
@@ -1356,7 +1356,7 @@ ILWISRasterBand::ILWISRasterBand(ILWISDataset *poDSIn, int nBandIn,
     switch (psInfo.stStoreType)
     {
         case stByte:
-            nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_Byte);
+            nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_UInt8);
             break;
         case stInt:
             nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_Int16);
@@ -1422,7 +1422,7 @@ void ILWISRasterBand::ReadValueDomainProperties(const std::string &pszFileName)
             rStep - (int)rStep == 0.0)  // Integer values
         {
             if (rMin >= 0 && rMax <= UCHAR_MAX)
-                eDataType = GDT_Byte;
+                eDataType = GDT_UInt8;
             else if (rMin >= SHRT_MIN && rMax <= SHRT_MAX)
                 eDataType = GDT_Int16;
             else if (rMin >= 0 && rMax <= USHRT_MAX)
@@ -1505,7 +1505,7 @@ CPLErr ILWISRasterBand::GetILWISInfo(const std::string &pszFileName)
              EQUAL(osBaseName.c_str(), "hortonratio") ||
              EQUAL(osBaseName.c_str(), "yesno"))
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
         if (EQUAL(osBaseName.c_str(), "image") ||
             EQUAL(osBaseName.c_str(), "colorcmp"))
             psInfo.stDomain = std::move(osBaseName);
@@ -1681,7 +1681,7 @@ void ILWISRasterBand::SetValue(void *pImage, int i, double rV)
 {
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             ((GByte *)pImage)[i] = (GByte)rV;
             break;
         case GDT_UInt16:
@@ -1712,7 +1712,7 @@ double ILWISRasterBand::GetValue(void *pImage, int i)
     double rV = 0;  // Does GDAL have an official nodata value?
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             rV = ((GByte *)pImage)[i];
             break;
         case GDT_UInt16:

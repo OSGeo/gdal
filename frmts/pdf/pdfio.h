@@ -55,8 +55,9 @@ class VSIPDFFileStream final : public BaseStream
     int getUnfilteredChar() override;
     int lookChar() override;
 
-#if POPPLER_MAJOR_VERSION > 25 ||                                              \
-    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+#if POPPLER_MAJOR_VERSION > 25
+    bool rewind() override;
+#elif POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2
     bool reset() override;
 #else
     void reset() override;
@@ -64,16 +65,18 @@ class VSIPDFFileStream final : public BaseStream
 
     static void resetNoCheckReturnValue(Stream *str)
     {
-#if POPPLER_MAJOR_VERSION > 25 ||                                              \
-    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+#if POPPLER_MAJOR_VERSION > 25
+        CPL_IGNORE_RET_VAL(str->rewind());
+#elif POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2
         CPL_IGNORE_RET_VAL(str->reset());
 #else
         str->reset();
 #endif
     }
 
-#if POPPLER_MAJOR_VERSION > 25 ||                                              \
-    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 3)
+#if POPPLER_MAJOR_VERSION > 25
+    bool unfilteredRewind() override;
+#elif POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2
     bool unfilteredReset() override;
 #else
     void unfilteredReset() override;

@@ -190,7 +190,7 @@ bool OGRDXFDataSource::Open(const char *pszFilename, VSILFILE *fpIn,
     /* -------------------------------------------------------------------- */
     else /* if( EQUAL(szLineBuf,"HEADER") ) */
     {
-        if (!ReadHeaderSection())
+        if (!ReadHeaderSection(papszOptionsIn))
             return false;
         if (ReadValue(szLineBuf) < 0)
         {
@@ -826,7 +826,7 @@ bool OGRDXFDataSource::LookupDimStyle(
 /*                         ReadHeaderSection()                          */
 /************************************************************************/
 
-bool OGRDXFDataSource::ReadHeaderSection()
+bool OGRDXFDataSource::ReadHeaderSection(CSLConstList papszOpenOptionsIn)
 
 {
     char szLineBuf[257];
@@ -917,7 +917,9 @@ bool OGRDXFDataSource::ReadHeaderSection()
         osEncoding = CPL_ENC_ISO8859_1;
     }
 
-    const char *pszEncoding = CPLGetConfigOption("DXF_ENCODING", nullptr);
+    const char *pszEncoding =
+        CSLFetchNameValueDef(papszOpenOptionsIn, "ENCODING",
+                             CPLGetConfigOption("DXF_ENCODING", nullptr));
     if (pszEncoding != nullptr)
         osEncoding = pszEncoding;
 

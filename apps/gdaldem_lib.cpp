@@ -109,10 +109,15 @@
 #define HAVE_16_SSE_REG
 #include "emmintrin.h"
 #include "gdalsse_priv.h"
+#elif defined(USE_NEON_OPTIMIZATIONS)
+#define HAVE_16_SSE_REG
+#define USE_SSE2
+#include "include_sse2neon.h"
+#include "gdalsse_priv.h"
 #endif
 
-static const double kdfDegreesToRadians = M_PI / 180.0;
-static const double kdfRadiansToDegrees = 180.0 / M_PI;
+constexpr float kfDegToRad = static_cast<float>(M_PI / 180.0);
+constexpr float kfRadToDeg = static_cast<float>(180.0 / M_PI);
 
 typedef enum
 {
@@ -361,12 +366,12 @@ static CPLErr GDALGeneric3x3Processing(
         if (bSrcHasNoData)
         {
             GDALDataType eSrcDT = GDALGetRasterDataType(hSrcBand);
-            CPLAssert(eSrcDT == GDT_Byte || eSrcDT == GDT_UInt16 ||
+            CPLAssert(eSrcDT == GDT_UInt8 || eSrcDT == GDT_UInt16 ||
                       eSrcDT == GDT_Int16);
-            const int nMinVal = (eSrcDT == GDT_Byte)     ? 0
+            const int nMinVal = (eSrcDT == GDT_UInt8)    ? 0
                                 : (eSrcDT == GDT_UInt16) ? 0
                                                          : -32768;
-            const int nMaxVal = (eSrcDT == GDT_Byte)     ? 255
+            const int nMaxVal = (eSrcDT == GDT_UInt8)    ? 255
                                 : (eSrcDT == GDT_UInt16) ? 65535
                                                          : 32767;
 
@@ -770,32 +775,32 @@ static CPLErr GDALGeneric3x3Processing(
 
 template <class T, GradientAlg alg> struct Gradient
 {
-    static void inline calc(const T *afWin, double inv_ewres, double inv_nsres,
-                            double &x, double &y);
+    static void inline calc(const T *afWin, float inv_ewres, float inv_nsres,
+                            float &x, float &y);
 };
 
 template <class T> struct Gradient<T, GradientAlg::HORN>
 {
-    static void calc(const T *afWin, double inv_ewres, double inv_nsres,
-                     double &x, double &y)
+    static void calc(const T *afWin, float inv_ewres, float inv_nsres, float &x,
+                     float &y)
     {
-        x = double((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
-                   (afWin[2] + afWin[5] + afWin[5] + afWin[8])) *
+        x = float((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
+                  (afWin[2] + afWin[5] + afWin[5] + afWin[8])) *
             inv_ewres;
 
-        y = double((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
-                   (afWin[0] + afWin[1] + afWin[1] + afWin[2])) *
+        y = float((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+                  (afWin[0] + afWin[1] + afWin[1] + afWin[2])) *
             inv_nsres;
     }
 };
 
 template <class T> struct Gradient<T, GradientAlg::ZEVENBERGEN_THORNE>
 {
-    static void calc(const T *afWin, double inv_ewres, double inv_nsres,
-                     double &x, double &y)
+    static void calc(const T *afWin, float inv_ewres, float inv_nsres, float &x,
+                     float &y)
     {
-        x = double(afWin[3] - afWin[5]) * inv_ewres;
-        y = double(afWin[7] - afWin[1]) * inv_nsres;
+        x = float(afWin[3] - afWin[5]) * inv_ewres;
+        y = float(afWin[7] - afWin[1]) * inv_nsres;
     }
 };
 
@@ -805,22 +810,22 @@ template <class T> struct Gradient<T, GradientAlg::ZEVENBERGEN_THORNE>
 
 struct GDALHillshadeAlgData final : public AlgorithmParameters
 {
-    double inv_nsres_yscale = 0;
-    double inv_ewres_xscale = 0;
-    double sin_altRadians = 0;
-    double cos_alt_mul_z = 0;
-    double azRadians = 0;
-    double cos_az_mul_cos_alt_mul_z = 0;
-    double sin_az_mul_cos_alt_mul_z = 0;
-    double square_z = 0;
-    double sin_altRadians_mul_254 = 0;
-    double cos_az_mul_cos_alt_mul_z_mul_254 = 0;
-    double sin_az_mul_cos_alt_mul_z_mul_254 = 0;
+    float inv_nsres_yscale = 0;
+    float inv_ewres_xscale = 0;
+    float sin_altRadians = 0;
+    float cos_alt_mul_z = 0;
+    float azRadians = 0;
+    float cos_az_mul_cos_alt_mul_z = 0;
+    float sin_az_mul_cos_alt_mul_z = 0;
+    float square_z = 0;
+    float sin_altRadians_mul_254 = 0;
+    float cos_az_mul_cos_alt_mul_z_mul_254 = 0;
+    float sin_az_mul_cos_alt_mul_z_mul_254 = 0;
 
-    double square_z_mul_square_inv_res = 0;
-    double cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res = 0;
-    double sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res = 0;
-    double z_factor = 0;
+    float square_z_mul_square_inv_res = 0;
+    float cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res = 0;
+    float sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res = 0;
+    float z_factor = 0;
 
     std::unique_ptr<AlgorithmParameters>
     CreateScaledParameters(double dfXRatio, double dfYRatio) override;
@@ -830,12 +835,14 @@ std::unique_ptr<AlgorithmParameters>
 GDALHillshadeAlgData::CreateScaledParameters(double dfXRatio, double dfYRatio)
 {
     auto newData = std::make_unique<GDALHillshadeAlgData>(*this);
-    newData->inv_ewres_xscale /= dfXRatio;
-    newData->inv_nsres_yscale /= dfYRatio;
+    const float fXRatio = static_cast<float>(dfXRatio);
+    const float fYRatio = static_cast<float>(dfYRatio);
+    newData->inv_ewres_xscale /= fXRatio;
+    newData->inv_nsres_yscale /= fYRatio;
 
-    newData->square_z_mul_square_inv_res /= dfXRatio * dfXRatio;
-    newData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res /= dfXRatio;
-    newData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res /= dfXRatio;
+    newData->square_z_mul_square_inv_res /= fXRatio * fXRatio;
+    newData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res /= fXRatio;
+    newData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res /= fXRatio;
 
     return newData;
 }
@@ -892,31 +899,30 @@ so we get a final formula with just one transcendental function
 */
 
 #ifdef HAVE_SSE2
-inline double ApproxADivByInvSqrtB(double a, double b)
+inline float ApproxADivByInvSqrtB(float a, float b)
 {
-    __m128d regB = _mm_load_sd(&b);
-    __m128d regB_half = _mm_mul_sd(regB, _mm_set1_pd(0.5));
+    __m128 regB = _mm_load_ss(&b);
+    __m128 regB_half = _mm_mul_ss(regB, _mm_set1_ps(0.5f));
     // Compute rough approximation of 1 / sqrt(b) with _mm_rsqrt_ss
-    regB =
-        _mm_cvtss_sd(regB, _mm_rsqrt_ss(_mm_cvtsd_ss(_mm_setzero_ps(), regB)));
+    regB = _mm_rsqrt_ss(regB);
     // And perform one step of Newton-Raphson approximation to improve it
     // approx_inv_sqrt_x = approx_inv_sqrt_x*(1.5 -
     //                            0.5*x*approx_inv_sqrt_x*approx_inv_sqrt_x);
-    regB = _mm_mul_sd(
-        regB, _mm_sub_sd(_mm_set1_pd(1.5),
-                         _mm_mul_sd(regB_half, _mm_mul_sd(regB, regB))));
-    double dOut;
-    _mm_store_sd(&dOut, regB);
-    return a * dOut;
+    regB = _mm_mul_ss(
+        regB, _mm_sub_ss(_mm_set1_ps(1.5f),
+                         _mm_mul_ss(regB_half, _mm_mul_ss(regB, regB))));
+    float fOut;
+    _mm_store_ss(&fOut, regB);
+    return a * fOut;
 }
 #else
-inline double ApproxADivByInvSqrtB(double a, double b)
+inline float ApproxADivByInvSqrtB(float a, float b)
 {
-    return a / sqrt(b);
+    return a / std::sqrt(b);
 }
 #endif
 
-static double NormalizeAngle(double angle, double normalizer)
+static float NormalizeAngle(float angle, float normalizer)
 {
     angle = std::fmod(angle, normalizer);
     if (angle < 0)
@@ -925,13 +931,13 @@ static double NormalizeAngle(double angle, double normalizer)
     return angle;
 }
 
-static double DifferenceBetweenAngles(double angle1, double angle2,
-                                      double normalizer)
+static float DifferenceBetweenAngles(float angle1, float angle2,
+                                     float normalizer)
 {
-    double diff =
+    float diff =
         NormalizeAngle(angle1, normalizer) - NormalizeAngle(angle2, normalizer);
     diff = std::abs(diff);
-    if (diff > normalizer / 2)
+    if (diff > normalizer * 0.5f)
         diff = normalizer - diff;
     return diff;
 }
@@ -943,59 +949,66 @@ static float GDALHillshadeIgorAlg(const T *afWin, float /*fDstNoDataValue*/,
     const GDALHillshadeAlgData *psData =
         static_cast<const GDALHillshadeAlgData *>(pData);
 
-    double slopeDegrees;
+    float slopeDegrees;
     if (alg == GradientAlg::HORN)
     {
-        const double dx = double((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
-                                 (afWin[2] + afWin[5] + afWin[5] + afWin[8])) *
-                          psData->inv_ewres_xscale;
+        const auto dx =
+            static_cast<float>((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
+                               (afWin[2] + afWin[5] + afWin[5] + afWin[8])) *
+            psData->inv_ewres_xscale;
 
-        const double dy = double((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
-                                 (afWin[0] + afWin[1] + afWin[1] + afWin[2])) *
-                          psData->inv_nsres_yscale;
+        const auto dy =
+            static_cast<float>((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+                               (afWin[0] + afWin[1] + afWin[1] + afWin[2])) *
+            psData->inv_nsres_yscale;
 
-        const double key = (dx * dx + dy * dy);
-        slopeDegrees = atan(sqrt(key) * psData->z_factor) * kdfRadiansToDegrees;
+        const auto key = (dx * dx + dy * dy);
+        slopeDegrees =
+            std::atan(std::sqrt(key) * psData->z_factor) * kfRadToDeg;
     }
     else  // ZEVENBERGEN_THORNE
     {
-        const double dx =
-            double(afWin[3] - afWin[5]) * psData->inv_ewres_xscale;
-        const double dy =
-            double(afWin[7] - afWin[1]) * psData->inv_nsres_yscale;
-        const double key = dx * dx + dy * dy;
+        const auto dx =
+            static_cast<float>(afWin[3] - afWin[5]) * psData->inv_ewres_xscale;
+        const auto dy =
+            static_cast<float>(afWin[7] - afWin[1]) * psData->inv_nsres_yscale;
+        const auto key = dx * dx + dy * dy;
 
-        slopeDegrees = atan(sqrt(key) * psData->z_factor) * kdfRadiansToDegrees;
+        slopeDegrees =
+            std::atan(std::sqrt(key) * psData->z_factor) * kfRadToDeg;
     }
 
-    double aspect;
+    float aspect;
     if (alg == GradientAlg::HORN)
     {
-        const double dx = double((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
-                                 (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
+        const auto dx =
+            static_cast<float>((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
+                               (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
 
-        const double dy2 = double((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
-                                  (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
+        const auto dy2 =
+            static_cast<float>((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+                               (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
 
-        aspect = atan2(dy2, -dx);
+        aspect = std::atan2(dy2, -dx);
     }
     else  // ZEVENBERGEN_THORNE
     {
-        const double dx = double(afWin[5] - afWin[3]);
-        const double dy = double(afWin[7] - afWin[1]);
-        aspect = atan2(dy, -dx);
+        const auto dx = static_cast<float>(afWin[5] - afWin[3]);
+        const auto dy = static_cast<float>(afWin[7] - afWin[1]);
+        aspect = std::atan2(dy, -dx);
     }
 
-    double slopeStrength = slopeDegrees / 90;
+    const auto slopeStrength = slopeDegrees * (1.0f / 90.0f);
 
-    double aspectDiff = DifferenceBetweenAngles(
-        aspect, M_PI * 3 / 2 - psData->azRadians, M_PI * 2);
+    constexpr float PIf = static_cast<float>(M_PI);
+    const auto aspectDiff = DifferenceBetweenAngles(
+        aspect, PIf * (3.0f / 2.0f) - psData->azRadians, PIf * 2.0f);
 
-    double aspectStrength = 1 - aspectDiff / M_PI;
+    const auto aspectStrength = 1.0f - aspectDiff * (1.0f / PIf);
 
-    double shadowness = 1.0 - slopeStrength * aspectStrength;
+    const auto shadowness = 1.0f - slopeStrength * aspectStrength;
 
-    return static_cast<float>(255.0 * shadowness);
+    return 255.0f * shadowness;
 }
 
 template <class T, GradientAlg alg>
@@ -1006,22 +1019,22 @@ static float GDALHillshadeAlg(const T *afWin, float /*fDstNoDataValue*/,
         static_cast<const GDALHillshadeAlgData *>(pData);
 
     // First Slope ...
-    double x, y;
+    float x, y;
     Gradient<T, alg>::calc(afWin, psData->inv_ewres_xscale,
                            psData->inv_nsres_yscale, x, y);
 
-    const double xx_plus_yy = x * x + y * y;
+    const auto xx_plus_yy = x * x + y * y;
 
     // ... then the shade value
-    const double cang_mul_254 =
+    const auto cang_mul_254 =
         ApproxADivByInvSqrtB(psData->sin_altRadians_mul_254 -
                                  (y * psData->cos_az_mul_cos_alt_mul_z_mul_254 -
                                   x * psData->sin_az_mul_cos_alt_mul_z_mul_254),
-                             1 + psData->square_z * xx_plus_yy);
+                             1.0f + psData->square_z * xx_plus_yy);
 
-    const double cang = cang_mul_254 <= 0.0 ? 1.0 : 1.0 + cang_mul_254;
+    const auto cang = cang_mul_254 <= 0.0f ? 1.0f : 1.0f + cang_mul_254;
 
-    return static_cast<float>(cang);
+    return cang;
 }
 
 template <class T>
@@ -1050,63 +1063,63 @@ static float GDALHillshadeAlg_same_res(const T *afWin,
     accY += one_minus_seven;
     accX += six_minus_two;
     accY -= six_minus_two;
-    const double x = double(accX);
-    const double y = double(accY);
+    const auto x = static_cast<float>(accX);
+    const auto y = static_cast<float>(accY);
 
-    const double xx_plus_yy = x * x + y * y;
+    const auto xx_plus_yy = x * x + y * y;
 
     // ... then the shade value
-    const double cang_mul_254 = ApproxADivByInvSqrtB(
+    const auto cang_mul_254 = ApproxADivByInvSqrtB(
         psData->sin_altRadians_mul_254 +
             (x * psData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res +
              y * psData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res),
-        1 + psData->square_z_mul_square_inv_res * xx_plus_yy);
+        1.0f + psData->square_z_mul_square_inv_res * xx_plus_yy);
 
-    const double cang = cang_mul_254 <= 0.0 ? 1.0 : 1.0 + cang_mul_254;
+    const auto cang = cang_mul_254 <= 0.0f ? 1.0f : 1.0f + cang_mul_254;
 
-    return static_cast<float>(cang);
+    return cang;
 }
 
-#ifdef HAVE_16_SSE_REG
-
-template <class T, class REG_T>
+#if defined(HAVE_16_SSE_REG)
+template <class T, class REG_T, class REG_FLOAT>
 static int GDALHillshadeAlg_same_res_multisample(
     const T *pafFirstLine, const T *pafSecondLine, const T *pafThirdLine,
     int nXSize, const AlgorithmParameters *pData, float *pafOutputBuf)
 {
-    // Only valid for T == int
     const GDALHillshadeAlgData *psData =
         static_cast<const GDALHillshadeAlgData *>(pData);
-    const auto reg_fact_x = XMMReg4Double::Set1(
-        psData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res);
-    const auto reg_fact_y = XMMReg4Double::Set1(
-        psData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res);
+    const auto reg_fact_x =
+        REG_FLOAT::Set1(psData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res);
+    const auto reg_fact_y =
+        REG_FLOAT::Set1(psData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res);
     const auto reg_constant_num =
-        XMMReg4Double::Set1(psData->sin_altRadians_mul_254);
+        REG_FLOAT::Set1(psData->sin_altRadians_mul_254);
     const auto reg_constant_denom =
-        XMMReg4Double::Set1(psData->square_z_mul_square_inv_res);
-    const auto reg_half = XMMReg4Double::Set1(0.5);
+        REG_FLOAT::Set1(psData->square_z_mul_square_inv_res);
+    const auto reg_half = REG_FLOAT::Set1(0.5f);
     const auto reg_one = reg_half + reg_half;
-    const auto reg_one_float = XMMReg4Float::Set1(1.0f);
+    const auto reg_one_float = REG_FLOAT::Set1(1.0f);
 
     int j = 1;  // Used after for.
-    for (; j < nXSize - 4; j += 4)
+    constexpr int N_VAL_PER_REG =
+        static_cast<int>(sizeof(REG_FLOAT) / sizeof(float));
+    for (; j < nXSize - N_VAL_PER_REG; j += N_VAL_PER_REG)
     {
         const T *firstLine = pafFirstLine + j - 1;
         const T *secondLine = pafSecondLine + j - 1;
         const T *thirdLine = pafThirdLine + j - 1;
 
-        const auto firstLine0 = REG_T::Load4Val(firstLine);
-        const auto firstLine1 = REG_T::Load4Val(firstLine + 1);
-        const auto firstLine2 = REG_T::Load4Val(firstLine + 2);
-        const auto thirdLine0 = REG_T::Load4Val(thirdLine);
-        const auto thirdLine1 = REG_T::Load4Val(thirdLine + 1);
-        const auto thirdLine2 = REG_T::Load4Val(thirdLine + 2);
+        const auto firstLine0 = REG_T::LoadAllVal(firstLine);
+        const auto firstLine1 = REG_T::LoadAllVal(firstLine + 1);
+        const auto firstLine2 = REG_T::LoadAllVal(firstLine + 2);
+        const auto thirdLine0 = REG_T::LoadAllVal(thirdLine);
+        const auto thirdLine1 = REG_T::LoadAllVal(thirdLine + 1);
+        const auto thirdLine2 = REG_T::LoadAllVal(thirdLine + 2);
         auto accX = firstLine0 - thirdLine2;
         const auto six_minus_two = thirdLine0 - firstLine2;
         auto accY = accX;
         const auto three_minus_five =
-            REG_T::Load4Val(secondLine) - REG_T::Load4Val(secondLine + 2);
+            REG_T::LoadAllVal(secondLine) - REG_T::LoadAllVal(secondLine + 2);
         const auto one_minus_seven = firstLine1 - thirdLine1;
         accX += three_minus_five;
         accY += one_minus_seven;
@@ -1115,8 +1128,8 @@ static int GDALHillshadeAlg_same_res_multisample(
         accX += six_minus_two;
         accY -= six_minus_two;
 
-        const auto reg_x = accX.cast_to_double();
-        const auto reg_y = accY.cast_to_double();
+        const auto reg_x = accX.cast_to_float();
+        const auto reg_y = accY.cast_to_float();
         const auto reg_xx_plus_yy = reg_x * reg_x + reg_y * reg_y;
         const auto reg_numerator =
             reg_constant_num + reg_fact_x * reg_x + reg_fact_y * reg_y;
@@ -1125,15 +1138,13 @@ static int GDALHillshadeAlg_same_res_multisample(
         const auto num_div_sqrt_denom =
             reg_numerator * reg_denominator.approx_inv_sqrt(reg_one, reg_half);
 
-        auto res = num_div_sqrt_denom.cast_to_float();
-        res = XMMReg4Float::Max(reg_one_float, res + reg_one_float);
-        res.Store4Val(pafOutputBuf + j);
+        auto res =
+            REG_FLOAT::Max(reg_one_float, num_div_sqrt_denom + reg_one_float);
+        res.StoreAllVal(pafOutputBuf + j);
     }
     return j;
 }
 #endif
-
-static const double INV_SQUARE_OF_HALF_PI = 1.0 / ((M_PI * M_PI) / 4);
 
 template <class T, GradientAlg alg>
 static float GDALHillshadeCombinedAlg(const T *afWin, float /*fDstNoDataValue*/,
@@ -1143,25 +1154,27 @@ static float GDALHillshadeCombinedAlg(const T *afWin, float /*fDstNoDataValue*/,
         static_cast<const GDALHillshadeAlgData *>(pData);
 
     // First Slope ...
-    double x, y;
+    float x, y;
     Gradient<T, alg>::calc(afWin, psData->inv_ewres_xscale,
                            psData->inv_nsres_yscale, x, y);
 
-    const double xx_plus_yy = x * x + y * y;
+    const auto xx_plus_yy = x * x + y * y;
 
-    const double slope = xx_plus_yy * psData->square_z;
+    const auto slope = xx_plus_yy * psData->square_z;
 
     // ... then the shade value
-    double cang = acos(ApproxADivByInvSqrtB(
+    auto cang = std::acos(ApproxADivByInvSqrtB(
         psData->sin_altRadians - (y * psData->cos_az_mul_cos_alt_mul_z -
                                   x * psData->sin_az_mul_cos_alt_mul_z),
-        1 + slope));
+        1.0f + slope));
 
     // combined shading
-    cang = 1 - cang * atan(sqrt(slope)) * INV_SQUARE_OF_HALF_PI;
+    constexpr float INV_SQUARE_OF_HALF_PI =
+        static_cast<float>(1.0 / ((M_PI * M_PI) / 4));
 
-    const float fcang =
-        cang <= 0.0 ? 1.0f : static_cast<float>(1.0 + (254.0 * cang));
+    cang = 1.0f - cang * std::atan(std::sqrt(slope)) * INV_SQUARE_OF_HALF_PI;
+
+    const float fcang = cang <= 0.0f ? 1.0f : 1.0f + 254.0f * cang;
 
     return fcang;
 }
@@ -1172,23 +1185,27 @@ GDALCreateHillshadeData(const double *adfGeoTransform, double z, double xscale,
 {
     auto pData = std::make_unique<GDALHillshadeAlgData>();
 
-    pData->inv_nsres_yscale = 1.0 / (adfGeoTransform[5] * yscale);
-    pData->inv_ewres_xscale = 1.0 / (adfGeoTransform[1] * xscale);
-    pData->sin_altRadians = sin(alt * kdfDegreesToRadians);
-    pData->azRadians = az * kdfDegreesToRadians;
-    pData->z_factor = z / (eAlg == GradientAlg::ZEVENBERGEN_THORNE ? 2 : 8);
-    pData->cos_alt_mul_z = cos(alt * kdfDegreesToRadians) * pData->z_factor;
+    pData->inv_nsres_yscale =
+        static_cast<float>(1.0 / (adfGeoTransform[5] * yscale));
+    pData->inv_ewres_xscale =
+        static_cast<float>(1.0 / (adfGeoTransform[1] * xscale));
+    pData->sin_altRadians = std::sin(static_cast<float>(alt) * kfDegToRad);
+    pData->azRadians = static_cast<float>(az) * kfDegToRad;
+    pData->z_factor = static_cast<float>(
+        z / (eAlg == GradientAlg::ZEVENBERGEN_THORNE ? 2 : 8));
+    pData->cos_alt_mul_z =
+        std::cos(static_cast<float>(alt) * kfDegToRad) * pData->z_factor;
     pData->cos_az_mul_cos_alt_mul_z =
-        cos(pData->azRadians) * pData->cos_alt_mul_z;
+        std::cos(pData->azRadians) * pData->cos_alt_mul_z;
     pData->sin_az_mul_cos_alt_mul_z =
-        sin(pData->azRadians) * pData->cos_alt_mul_z;
+        std::sin(pData->azRadians) * pData->cos_alt_mul_z;
     pData->square_z = pData->z_factor * pData->z_factor;
 
-    pData->sin_altRadians_mul_254 = 254.0 * pData->sin_altRadians;
+    pData->sin_altRadians_mul_254 = 254.0f * pData->sin_altRadians;
     pData->cos_az_mul_cos_alt_mul_z_mul_254 =
-        254.0 * pData->cos_az_mul_cos_alt_mul_z;
+        254.0f * pData->cos_az_mul_cos_alt_mul_z;
     pData->sin_az_mul_cos_alt_mul_z_mul_254 =
-        254.0 * pData->sin_az_mul_cos_alt_mul_z;
+        254.0f * pData->sin_az_mul_cos_alt_mul_z;
 
     if (adfGeoTransform[1] == -adfGeoTransform[5] && xscale == yscale)
     {
@@ -1209,14 +1226,14 @@ GDALCreateHillshadeData(const double *adfGeoTransform, double z, double xscale,
 
 struct GDALHillshadeMultiDirectionalAlgData final : public AlgorithmParameters
 {
-    double inv_nsres_yscale = 0;
-    double inv_ewres_xscale = 0;
-    double square_z = 0;
-    double sin_altRadians_mul_127 = 0;
-    double sin_altRadians_mul_254 = 0;
+    float inv_nsres_yscale = 0;
+    float inv_ewres_xscale = 0;
+    float square_z = 0;
+    float sin_altRadians_mul_127 = 0;
+    float sin_altRadians_mul_254 = 0;
 
-    double cos_alt_mul_z_mul_127 = 0;
-    double cos225_az_mul_cos_alt_mul_z_mul_127 = 0;
+    float cos_alt_mul_z_mul_127 = 0;
+    float cos225_az_mul_cos_alt_mul_z_mul_127 = 0;
 
     std::unique_ptr<AlgorithmParameters>
     CreateScaledParameters(double dfXRatio, double dfYRatio) override;
@@ -1228,8 +1245,8 @@ GDALHillshadeMultiDirectionalAlgData::CreateScaledParameters(double dfXRatio,
 {
     auto newData =
         std::make_unique<GDALHillshadeMultiDirectionalAlgData>(*this);
-    newData->inv_ewres_xscale /= dfXRatio;
-    newData->inv_nsres_yscale /= dfYRatio;
+    newData->inv_ewres_xscale /= static_cast<float>(dfXRatio);
+    newData->inv_nsres_yscale /= static_cast<float>(dfYRatio);
     return newData;
 }
 
@@ -1242,7 +1259,7 @@ static float GDALHillshadeMultiDirectionalAlg(const T *afWin,
         static_cast<const GDALHillshadeMultiDirectionalAlgData *>(pData);
 
     // First Slope ...
-    double x, y;
+    float x, y;
     Gradient<T, alg>::calc(afWin, psData->inv_ewres_xscale,
                            psData->inv_nsres_yscale, x, y);
 
@@ -1256,42 +1273,40 @@ static float GDALHillshadeMultiDirectionalAlg(const T *afWin,
     //                    W315 * hillshade(az=315) +
     //                    W360 * hillshade(az=360))
 
-    const double xx = x * x;
-    const double yy = y * y;
-    const double xx_plus_yy = xx + yy;
-    if (xx_plus_yy == 0.0)
-        return static_cast<float>(1.0 + psData->sin_altRadians_mul_254);
+    const auto xx = x * x;
+    const auto yy = y * y;
+    const auto xx_plus_yy = xx + yy;
+    if (xx_plus_yy == 0.0f)
+        return 1.0f + psData->sin_altRadians_mul_254;
 
     // ... then the shade value from different azimuth
-    double val225_mul_127 =
-        psData->sin_altRadians_mul_127 +
-        (x - y) * psData->cos225_az_mul_cos_alt_mul_z_mul_127;
-    val225_mul_127 = (val225_mul_127 <= 0.0) ? 0.0 : val225_mul_127;
-    double val270_mul_127 =
+    auto val225_mul_127 = psData->sin_altRadians_mul_127 +
+                          (x - y) * psData->cos225_az_mul_cos_alt_mul_z_mul_127;
+    val225_mul_127 = (val225_mul_127 <= 0.0f) ? 0.0f : val225_mul_127;
+    auto val270_mul_127 =
         psData->sin_altRadians_mul_127 - x * psData->cos_alt_mul_z_mul_127;
-    val270_mul_127 = (val270_mul_127 <= 0.0) ? 0.0 : val270_mul_127;
-    double val315_mul_127 =
-        psData->sin_altRadians_mul_127 +
-        (x + y) * psData->cos225_az_mul_cos_alt_mul_z_mul_127;
-    val315_mul_127 = (val315_mul_127 <= 0.0) ? 0.0 : val315_mul_127;
-    double val360_mul_127 =
+    val270_mul_127 = (val270_mul_127 <= 0.0f) ? 0.0f : val270_mul_127;
+    auto val315_mul_127 = psData->sin_altRadians_mul_127 +
+                          (x + y) * psData->cos225_az_mul_cos_alt_mul_z_mul_127;
+    val315_mul_127 = (val315_mul_127 <= 0.0f) ? 0.0f : val315_mul_127;
+    auto val360_mul_127 =
         psData->sin_altRadians_mul_127 - y * psData->cos_alt_mul_z_mul_127;
-    val360_mul_127 = (val360_mul_127 <= 0.0) ? 0.0 : val360_mul_127;
+    val360_mul_127 = (val360_mul_127 <= 0.0f) ? 0.0f : val360_mul_127;
 
     // ... then the weighted shading
-    const double weight_225 = 0.5 * xx_plus_yy - x * y;
-    const double weight_270 = xx;
-    const double weight_315 = xx_plus_yy - weight_225;
-    const double weight_360 = yy;
-    const double cang_mul_127 = ApproxADivByInvSqrtB(
+    const auto weight_225 = 0.5f * xx_plus_yy - x * y;
+    const auto weight_270 = xx;
+    const auto weight_315 = xx_plus_yy - weight_225;
+    const auto weight_360 = yy;
+    const auto cang_mul_127 = ApproxADivByInvSqrtB(
         (weight_225 * val225_mul_127 + weight_270 * val270_mul_127 +
          weight_315 * val315_mul_127 + weight_360 * val360_mul_127) /
             xx_plus_yy,
-        1 + psData->square_z * xx_plus_yy);
+        1.0f + psData->square_z * xx_plus_yy);
 
-    const double cang = 1.0 + cang_mul_127;
+    const auto cang = 1.0f + cang_mul_127;
 
-    return static_cast<float>(cang);
+    return cang;
 }
 
 static std::unique_ptr<AlgorithmParameters>
@@ -1301,18 +1316,23 @@ GDALCreateHillshadeMultiDirectionalData(const double *adfGeoTransform, double z,
 {
     auto pData = std::make_unique<GDALHillshadeMultiDirectionalAlgData>();
 
-    pData->inv_nsres_yscale = 1.0 / (adfGeoTransform[5] * yscale);
-    pData->inv_ewres_xscale = 1.0 / (adfGeoTransform[1] * xscale);
-    const double z_factor =
-        z / (eAlg == GradientAlg::ZEVENBERGEN_THORNE ? 2 : 8);
-    const double cos_alt_mul_z = cos(alt * kdfDegreesToRadians) * z_factor;
+    pData->inv_nsres_yscale =
+        static_cast<float>(1.0 / (adfGeoTransform[5] * yscale));
+    pData->inv_ewres_xscale =
+        static_cast<float>(1.0 / (adfGeoTransform[1] * xscale));
+    const float z_factor = static_cast<float>(
+        z / (eAlg == GradientAlg::ZEVENBERGEN_THORNE ? 2 : 8));
+    const float cos_alt_mul_z =
+        std::cos(static_cast<float>(alt) * kfDegToRad) * z_factor;
     pData->square_z = z_factor * z_factor;
 
-    pData->sin_altRadians_mul_127 = 127.0 * sin(alt * kdfDegreesToRadians);
-    pData->sin_altRadians_mul_254 = 254.0 * sin(alt * kdfDegreesToRadians);
-    pData->cos_alt_mul_z_mul_127 = 127.0 * cos_alt_mul_z;
+    pData->sin_altRadians_mul_127 =
+        127.0f * std::sin(static_cast<float>(alt) * kfDegToRad);
+    pData->sin_altRadians_mul_254 =
+        254.0f * std::sin(static_cast<float>(alt) * kfDegToRad);
+    pData->cos_alt_mul_z_mul_127 = 127.0f * cos_alt_mul_z;
     pData->cos225_az_mul_cos_alt_mul_z_mul_127 =
-        127.0 * cos(225 * kdfDegreesToRadians) * cos_alt_mul_z;
+        127.0f * std::cos(225.0f * kfDegToRad) * cos_alt_mul_z;
 
     return pData;
 }
@@ -1323,8 +1343,8 @@ GDALCreateHillshadeMultiDirectionalData(const double *adfGeoTransform, double z,
 
 struct GDALSlopeAlgData final : public AlgorithmParameters
 {
-    double nsres_yscale = 0;
-    double ewres_xscale = 0;
+    float inv_nsres_yscale = 0;
+    float inv_ewres_xscale = 0;
     int slopeFormat = 0;
 
     std::unique_ptr<AlgorithmParameters>
@@ -1335,8 +1355,8 @@ std::unique_ptr<AlgorithmParameters>
 GDALSlopeAlgData::CreateScaledParameters(double dfXRatio, double dfYRatio)
 {
     auto newData = std::make_unique<GDALSlopeAlgData>(*this);
-    newData->ewres_xscale *= dfXRatio;
-    newData->nsres_yscale *= dfYRatio;
+    newData->inv_nsres_yscale /= static_cast<float>(dfXRatio);
+    newData->inv_ewres_xscale /= static_cast<float>(dfYRatio);
     return newData;
 }
 
@@ -1347,20 +1367,22 @@ static float GDALSlopeHornAlg(const T *afWin, float /*fDstNoDataValue*/,
     const GDALSlopeAlgData *psData =
         static_cast<const GDALSlopeAlgData *>(pData);
 
-    const double dx = double((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
-                             (afWin[2] + afWin[5] + afWin[5] + afWin[8])) /
-                      psData->ewres_xscale;
+    const auto dx =
+        static_cast<float>((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
+                           (afWin[2] + afWin[5] + afWin[5] + afWin[8])) *
+        psData->inv_ewres_xscale;
 
-    const double dy = double((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
-                             (afWin[0] + afWin[1] + afWin[1] + afWin[2])) /
-                      psData->nsres_yscale;
+    const auto dy =
+        static_cast<float>((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+                           (afWin[0] + afWin[1] + afWin[1] + afWin[2])) *
+        psData->inv_nsres_yscale;
 
-    const double key = (dx * dx + dy * dy);
+    const auto key = dx * dx + dy * dy;
 
     if (psData->slopeFormat == 1)
-        return static_cast<float>(atan(sqrt(key) / 8) * kdfRadiansToDegrees);
+        return std::atan(std::sqrt(key) * (1.0f / 8.0f)) * kfRadToDeg;
 
-    return static_cast<float>(100 * (sqrt(key) / 8));
+    return (100.0f / 8.0f) * std::sqrt(key);
 }
 
 template <class T>
@@ -1371,14 +1393,16 @@ static float GDALSlopeZevenbergenThorneAlg(const T *afWin,
     const GDALSlopeAlgData *psData =
         static_cast<const GDALSlopeAlgData *>(pData);
 
-    const double dx = double(afWin[3] - afWin[5]) / psData->ewres_xscale;
-    const double dy = double(afWin[7] - afWin[1]) / psData->nsres_yscale;
-    const double key = dx * dx + dy * dy;
+    const auto dx =
+        static_cast<float>(afWin[3] - afWin[5]) * psData->inv_ewres_xscale;
+    const auto dy =
+        static_cast<float>(afWin[7] - afWin[1]) * psData->inv_nsres_yscale;
+    const auto key = dx * dx + dy * dy;
 
     if (psData->slopeFormat == 1)
-        return static_cast<float>(atan(sqrt(key) / 2) * kdfRadiansToDegrees);
+        return std::atan(std::sqrt(key) * 0.5f) * kfRadToDeg;
 
-    return static_cast<float>(100 * (sqrt(key) / 2));
+    return (100.0f / 2.0f) * std::sqrt(key);
 }
 
 static std::unique_ptr<AlgorithmParameters>
@@ -1386,8 +1410,10 @@ GDALCreateSlopeData(double *adfGeoTransform, double xscale, double yscale,
                     int slopeFormat)
 {
     auto pData = std::make_unique<GDALSlopeAlgData>();
-    pData->nsres_yscale = adfGeoTransform[5] * yscale;
-    pData->ewres_xscale = adfGeoTransform[1] * xscale;
+    pData->inv_nsres_yscale =
+        1.0f / static_cast<float>(adfGeoTransform[5] * yscale);
+    pData->inv_ewres_xscale =
+        1.0f / static_cast<float>(adfGeoTransform[1] * xscale);
     pData->slopeFormat = slopeFormat;
     return pData;
 }
@@ -1417,13 +1443,15 @@ static float GDALAspectAlg(const T *afWin, float fDstNoDataValue,
     const GDALAspectAlgData *psData =
         static_cast<const GDALAspectAlgData *>(pData);
 
-    const double dx = double((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
-                             (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
+    const auto dx =
+        static_cast<float>((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
+                           (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
 
-    const double dy = double((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
-                             (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
+    const auto dy =
+        static_cast<float>((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+                           (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
 
-    float aspect = static_cast<float>(atan2(dy, -dx) / kdfDegreesToRadians);
+    auto aspect = std::atan2(dy, -dx) * kfRadToDeg;
 
     if (dx == 0 && dy == 0)
     {
@@ -1457,9 +1485,9 @@ static float GDALAspectZevenbergenThorneAlg(const T *afWin,
     const GDALAspectAlgData *psData =
         static_cast<const GDALAspectAlgData *>(pData);
 
-    const double dx = double(afWin[5] - afWin[3]);
-    const double dy = double(afWin[7] - afWin[1]);
-    float aspect = static_cast<float>(atan2(dy, -dx) / kdfDegreesToRadians);
+    const auto dx = static_cast<float>(afWin[5] - afWin[3]);
+    const auto dy = static_cast<float>(afWin[7] - afWin[1]);
+    float aspect = std::atan2(dy, -dx) * kfRadToDeg;
     if (dx == 0 && dy == 0)
     {
         /* Flat area */
@@ -1808,10 +1836,10 @@ static GByte *GDALColorReliefPrecompute(
     *pnIndexOffset = nIndexOffset;
     const int nXSize = GDALGetRasterBandXSize(hSrcBand);
     const int nYSize = GDALGetRasterBandYSize(hSrcBand);
-    if (eDT == GDT_Byte || ((eDT == GDT_Int16 || eDT == GDT_UInt16) &&
-                            static_cast<GIntBig>(nXSize) * nYSize > 65536))
+    if (eDT == GDT_UInt8 || ((eDT == GDT_Int16 || eDT == GDT_UInt16) &&
+                             static_cast<GIntBig>(nXSize) * nYSize > 65536))
     {
-        const int iMax = (eDT == GDT_Byte) ? 256 : 65536;
+        const int iMax = (eDT == GDT_UInt8) ? 256 : 65536;
         pabyPrecomputed = static_cast<GByte *>(VSI_MALLOC2_VERBOSE(4, iMax));
         if (pabyPrecomputed)
         {
@@ -1866,7 +1894,8 @@ class GDALColorReliefDataset final : public GDALDataset
 
     bool InitOK() const
     {
-        return pafSourceBuf != nullptr || panSourceBuf != nullptr;
+        return !asColorAssociation.empty() &&
+               (pafSourceBuf != nullptr || panSourceBuf != nullptr);
     }
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
@@ -1947,7 +1976,7 @@ GDALColorReliefRasterBand::GDALColorReliefRasterBand(
 {
     poDS = poDSIn;
     nBand = nBandIn;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
     GDALGetBlockSize(poDSIn->hSrcBand, &nBlockXSize, &nBlockYSize);
 }
 
@@ -2045,7 +2074,7 @@ GDALColorRelief(GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand1,
 
     /* -------------------------------------------------------------------- */
     /*      Precompute the map from values to RGBA quadruplets              */
-    /*      for GDT_Byte, GDT_Int16 or GDT_UInt16                           */
+    /*      for GDT_UInt8, GDT_Int16 or GDT_UInt16                           */
     /* -------------------------------------------------------------------- */
     int nIndexOffset = 0;
     std::unique_ptr<GByte, VSIFreeReleaser> pabyPrecomputed(
@@ -2137,21 +2166,21 @@ GDALColorRelief(GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand1,
          * Write Line to Raster
          */
         eErr = GDALRasterIO(hDstBand1, GF_Write, 0, i, nXSize, 1, pabyDestBuf1,
-                            nXSize, 1, GDT_Byte, 0, 0);
+                            nXSize, 1, GDT_UInt8, 0, 0);
         if (eErr == CE_None)
         {
             eErr = GDALRasterIO(hDstBand2, GF_Write, 0, i, nXSize, 1,
-                                pabyDestBuf2, nXSize, 1, GDT_Byte, 0, 0);
+                                pabyDestBuf2, nXSize, 1, GDT_UInt8, 0, 0);
         }
         if (eErr == CE_None)
         {
             eErr = GDALRasterIO(hDstBand3, GF_Write, 0, i, nXSize, 1,
-                                pabyDestBuf3, nXSize, 1, GDT_Byte, 0, 0);
+                                pabyDestBuf3, nXSize, 1, GDT_UInt8, 0, 0);
         }
         if (eErr == CE_None && hDstBand4)
         {
             eErr = GDALRasterIO(hDstBand4, GF_Write, 0, i, nXSize, 1,
-                                pabyDestBuf4, nXSize, 1, GDT_Byte, 0, 0);
+                                pabyDestBuf4, nXSize, 1, GDT_UInt8, 0, 0);
         }
 
         if (eErr == CE_None &&
@@ -2527,7 +2556,7 @@ GDALGeneric3x3Dataset<T>::GDALGeneric3x3Dataset(
       bDstHasNoData(bDstHasNoDataIn), dfDstNoDataValue(dfDstNoDataValueIn),
       bComputeAtEdges(bComputeAtEdgesIn), bTakeReference(bTakeReferenceIn)
 {
-    CPLAssert(eDstDataType == GDT_Byte || eDstDataType == GDT_Float32);
+    CPLAssert(eDstDataType == GDT_UInt8 || eDstDataType == GDT_Float32);
 
     if (bTakeReference)
         GDALReferenceDataset(hSrcDS);
@@ -2543,7 +2572,7 @@ GDALGeneric3x3Dataset<T>::GDALGeneric3x3Dataset(
         static_cast<T *>(VSI_MALLOC2_VERBOSE(sizeof(T), nRasterXSize));
     apafSourceBuf[2] =
         static_cast<T *>(VSI_MALLOC2_VERBOSE(sizeof(T), nRasterXSize));
-    if (pfnAlg_multisample && eDstDataType == GDT_Byte)
+    if (pfnAlg_multisample && eDstDataType == GDT_UInt8)
     {
         pafOutputBuf.reset(static_cast<float *>(
             VSI_MALLOC2_VERBOSE(sizeof(float), nRasterXSize)));
@@ -2615,12 +2644,12 @@ GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(
         if (bSrcHasNoData)
         {
             GDALDataType eSrcDT = GDALGetRasterDataType(poDSIn->hSrcBand);
-            CPLAssert(eSrcDT == GDT_Byte || eSrcDT == GDT_UInt16 ||
+            CPLAssert(eSrcDT == GDT_UInt8 || eSrcDT == GDT_UInt16 ||
                       eSrcDT == GDT_Int16);
-            const int nMinVal = (eSrcDT == GDT_Byte)     ? 0
+            const int nMinVal = (eSrcDT == GDT_UInt8)    ? 0
                                 : (eSrcDT == GDT_UInt16) ? 0
                                                          : -32768;
-            const int nMaxVal = (eSrcDT == GDT_Byte)     ? 255
+            const int nMaxVal = (eSrcDT == GDT_UInt8)    ? 255
                                 : (eSrcDT == GDT_UInt16) ? 65535
                                                          : 32767;
 
@@ -2647,7 +2676,7 @@ template <class T>
 void GDALGeneric3x3RasterBand<T>::InitWithNoData(void *pImage)
 {
     auto poGDS = cpl::down_cast<GDALGeneric3x3Dataset<T> *>(poDS);
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         for (int j = 0; j < nBlockXSize; j++)
             static_cast<GByte *>(pImage)[j] =
@@ -2740,7 +2769,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                     static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
                     poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
-                if (eDataType == GDT_Byte)
+                if (eDataType == GDT_UInt8)
                     static_cast<GByte *>(pImage)[j] =
                         static_cast<GByte>(fVal + 0.5f);
                 else
@@ -2795,7 +2824,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                     static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
                     poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
-                if (eDataType == GDT_Byte)
+                if (eDataType == GDT_UInt8)
                     static_cast<GByte *>(pImage)[j] =
                         static_cast<GByte>(fVal + 0.5f);
                 else
@@ -2876,7 +2905,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                 afWin, static_cast<float>(poGDS->dfDstNoDataValue),
                 poGDS->pfnAlg, poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
-            if (eDataType == GDT_Byte)
+            if (eDataType == GDT_UInt8)
                 static_cast<GByte *>(pImage)[j] =
                     static_cast<GByte>(fVal + 0.5f);
             else
@@ -2906,14 +2935,14 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
             static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
             poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
             static_cast<GByte *>(pImage)[j] = static_cast<GByte>(fVal + 0.5f);
         else
             static_cast<float *>(pImage)[j] = fVal;
     }
     else
     {
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
         {
             static_cast<GByte *>(pImage)[0] =
                 static_cast<GByte>(poGDS->dfDstNoDataValue);
@@ -2947,7 +2976,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
         {
             GDALCopyWords64(poGDS->pafOutputBuf.get() + 1, GDT_Float32,
                             static_cast<int>(sizeof(float)),
-                            static_cast<GByte *>(pImage) + 1, GDT_Byte, 1,
+                            static_cast<GByte *>(pImage) + 1, GDT_UInt8, 1,
                             j - 1);
         }
     }
@@ -2966,7 +2995,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
             static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
             poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
             static_cast<GByte *>(pImage)[j] = static_cast<GByte>(fVal + 0.5f);
         else
             static_cast<float *>(pImage)[j] = fVal;
@@ -3906,13 +3935,20 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                 {
                     pfnAlgFloat = GDALHillshadeAlg_same_res<float>;
                     pfnAlgInt32 = GDALHillshadeAlg_same_res<GInt32>;
-#ifdef HAVE_16_SSE_REG
+#if defined(HAVE_16_SSE_REG) && defined(__AVX2__)
                     pfnAlgFloat_multisample =
-                        GDALHillshadeAlg_same_res_multisample<float,
-                                                              XMMReg4Float>;
+                        GDALHillshadeAlg_same_res_multisample<
+                            float, XMMReg8Float, XMMReg8Float>;
                     pfnAlgInt32_multisample =
-                        GDALHillshadeAlg_same_res_multisample<GInt32,
-                                                              XMMReg4Int>;
+                        GDALHillshadeAlg_same_res_multisample<
+                            GInt32, XMMReg8Int, XMMReg8Float>;
+#elif defined(HAVE_16_SSE_REG)
+                    pfnAlgFloat_multisample =
+                        GDALHillshadeAlg_same_res_multisample<
+                            float, XMMReg4Float, XMMReg4Float>;
+                    pfnAlgInt32_multisample =
+                        GDALHillshadeAlg_same_res_multisample<
+                            GInt32, XMMReg4Int, XMMReg4Float>;
 #endif
                 }
                 else
@@ -3995,7 +4031,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 
     const GDALDataType eDstDataType =
         (eUtilityMode == HILL_SHADE || eUtilityMode == COLOR_RELIEF)
-            ? GDT_Byte
+            ? GDT_UInt8
             : GDT_Float32;
 
     if (EQUAL(osFormat, "VRT"))
@@ -4098,7 +4134,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         }
         else
         {
-            if (eSrcDT == GDT_Byte || eSrcDT == GDT_Int16 ||
+            if (eSrcDT == GDT_UInt8 || eSrcDT == GDT_Int16 ||
                 eSrcDT == GDT_UInt16)
             {
                 auto poDS = std::make_unique<GDALGeneric3x3Dataset<GInt32>>(
@@ -4175,7 +4211,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         if (bDstHasNoData)
             GDALSetRasterNoDataValue(hDstBand, dfDstNoDataValue);
 
-        if (eSrcDT == GDT_Byte || eSrcDT == GDT_Int16 || eSrcDT == GDT_UInt16)
+        if (eSrcDT == GDT_UInt8 || eSrcDT == GDT_Int16 || eSrcDT == GDT_UInt16)
         {
             GDALGeneric3x3Processing<GInt32>(
                 hSrcBand, hDstBand, pfnAlgInt32, pfnAlgInt32_multisample,

@@ -162,6 +162,7 @@ backward compatibility. They are being addressed over time, but until they are a
 Examples
 --------
 
+* "gdal" CLI algorithms are accessible from Python, see :ref:`gdal_cli_from_python` for details and examples.
 * An assortment of other samples are available in the `Python github samples directory <https://github.com/OSGeo/gdal/tree/master/swig/python/gdal-utils/osgeo_utils/samples>`__
   with some description in the :ref:`python_samples`.
 * Several `GDAL utilities <https://github.com/OSGeo/gdal/tree/master/swig/python/gdal-utils/osgeo_utils/>`__

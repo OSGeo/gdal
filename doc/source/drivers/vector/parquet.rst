@@ -53,6 +53,17 @@ The following open options are supported:
      The string is typically formatted as CODE:AUTH (e.g "EPSG:4326"), or can
      be a PROJ.4 or WKT CRS string.
 
+- .. oo:: LISTS_AS_STRING_JSON
+     :choices: YES, NO
+     :default: NO
+     :since: 3.12.1
+
+     Whether lists of strings/integers/reals should be reported as String(JSON)
+     fields rather than String/Integer[64]/RealList.
+     Useful when null values in such lists must be exactly mapped as such,
+     instead of being omitted (for lists of strings), or set to 0 (for list of
+     boolean, integer or real).
+
 Creation issues
 ---------------
 
@@ -152,6 +163,13 @@ The following layer creation options are supported:
      and :lco:`WRITE_COVERING_BBOX` is set or let to its default ``AUTO`` value,
      no covering bounding box columns is written.
 
+- .. lco:: COVERING_BBOX_NAME
+     :choices: <string>
+     :since: 3.13
+
+     Name of the bounding box of geometries Only used if :lco:`WRITE_COVERING_BBOX` is set.
+     If not set, it defaults to the geometry column name, suffixed with ``_bbox``.
+
 - .. lco:: USE_PARQUET_GEO_TYPES
      :choices: YES, NO, ONLY
      :default: NO
@@ -205,6 +223,21 @@ The following layer creation options are supported:
      fallbacks to the generic implementation, which does not support advanced
      Arrow types (lists, maps, etc.).
 
+- .. lco:: TIMESTAMP_WITH_OFFSET
+     :choices: AUTO, YES, NO
+     :default: AUTO
+     :since: 3.13
+
+     Whether OGR datetime fields should be written as Arrow timestamp with offset fields, following the
+     `Timestamp With Offset extension <https://github.com/apache/arrow/blob/main/docs/source/format/CanonicalExtensions.rst#timestamp-with-offset>`__ specification.
+     Such fields store both the datetime as a timestamp expressed in the UTC timezone and the
+     offset to UTC of the timezone in which the datetime is defined.
+     In AUTO mode, they are used as soon as a DateTime field reports a mixed
+     time zone flag (i.e. :cpp:func:`OGRFieldDefn::GetTZFlag` returns ``OGR_TZFLAG_MIXED_TZ``).
+     As few drivers are able to automatically set this flag, it may be useful
+     to override the flag by setting this option to YES. Setting it to NO forces the use
+     of a DateTime field with the UTC timezone.
+
 SQL support
 -----------
 
@@ -243,6 +276,25 @@ maximum number of available CPUs returned by :cpp:func:`CPLGetNumCPUs()` if
 it is lower by 4). This number can be configured with the configuration option
 :config:`GDAL_NUM_THREADS`, which can be set to an integer value or
 ``ALL_CPUS``.
+
+Update support
+--------------
+
+.. versionadded:: 3.12.0
+
+The driver supports adding, updating, removing features and fields. Note that
+this is accomplished by rewriting the whole file during :cpp:func:`GDALDataset::FlushCache`
+or when closing the dataset, and keeping into memory all modifications between
+two flushes.
+
+If the file to be updated has been created by GDAL >= 3.12, the creation options
+to create the original file will be re-applied when creating the updated file.
+Stability of feature ids is only guaranteed if the original file has been
+created with an explicit ``FID`` creation option.
+
+If the file to be updated has been created outside of GDAL, the original
+non-scalar/nested field types will not always be preserved, but a JSON
+representation may be used instead.
 
 Validation script
 -----------------

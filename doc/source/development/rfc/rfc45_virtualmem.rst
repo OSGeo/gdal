@@ -1053,7 +1053,7 @@ execution after a segmentation fault.
 Porting to other POSIX operating systems such as MacOSX should be doable
 with moderate effort. Windows has API that offer similar capabilities as
 POSIX API with VirtualAlloc(), VirtualProtect() and
-SetUnhandledExceptionFilter(), although the porting would undoubtly
+SetUnhandledExceptionFilter(), although the porting would undoubtedly
 require more effort.
 
 The existence of `libsigsegv <http://www.gnu.org/software/libsigsegv>`__

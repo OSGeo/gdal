@@ -193,7 +193,7 @@ Drivers Affected
    gcore/gdaljp2metadata.cpp).
 -  WCS (based on interpretation of urns).
 -  WMS (maybe? actually, I suspect we don't actually get the coordinate
-   system from the capabalities)
+   system from the capabilities)
 -  OGR GML (maybe? only GML3 affected?)
 -  BSB, SAR_CEOS, ENVISAT, HDF4, JDEM, L1B, LAN, SRTMHGT: Like
    SetWellKnownGeogCS() these all include lat/long AXIS specifications

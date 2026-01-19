@@ -3031,3 +3031,61 @@ def test_ogr_mem_extent():
             0.01796630538796444,
         )
     )
+
+
+###############################################################################
+
+# Test support for https://github.com/apache/arrow/blob/main/docs/source/format/CanonicalExtensions.rst#timestamp-with-offset
+
+
+def test_ogr_mem_timestamp_with_offset_arrow_api(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
+    fld_defn.SetTZFlag(ogr.TZFLAG_MIXED_TZ)
+    src_lyr.CreateField(fld_defn)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["id"] = 1
+    f["dt"] = "2025-12-20T12:34:56+0345"
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["id"] = 2
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["id"] = 3
+    f["dt"] = "2025-12-20T12:34:56-0745"
+    src_lyr.CreateFeature(f)
+
+    # Test without timezone
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["id"] = 4
+    f["dt"] = "2025-12-20T22:30:56"
+    src_lyr.CreateFeature(f)
+
+    with gdal.config_option("OGR2OGR_USE_ARROW_API", "YES"):
+        ds = gdal.VectorTranslate("", src_ds, format="MEM")
+
+    lyr = ds.GetLayer(0)
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(1)
+    assert fld_defn.GetType() == ogr.OFTDateTime
+
+    f = lyr.GetNextFeature()
+    assert f["id"] == 1
+    assert f["dt"] == "2025/12/20 12:34:56+0345"
+
+    f = lyr.GetNextFeature()
+    assert f["id"] == 2
+    assert f["dt"] is None
+
+    f = lyr.GetNextFeature()
+    assert f["id"] == 3
+    assert f["dt"] == "2025/12/20 12:34:56-0745"
+
+    f = lyr.GetNextFeature()
+    assert f["id"] == 4
+    assert f["dt"] == "2025/12/20 22:30:56"

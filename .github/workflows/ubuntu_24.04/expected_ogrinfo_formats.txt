@@ -73,7 +73,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   MVT -vector- (rw+v): Mapbox Vector Tiles (*.mvt, *.mvt.gz, *.pbf)
   NGW -raster,vector- (rw+s): NextGIS Web
   MapML -vector- (rw+v): MapML
-  Parquet -vector- (rw+v): (Geo)Parquet (*.parquet)
+  Parquet -vector- (rw+uv): (Geo)Parquet (*.parquet)
   Arrow -vector- (rw+v): (Geo)Arrow IPC File Format / Stream (*.arrow, *.feather, *.arrows, *.ipc)
   GTFS -vector- (rov): General Transit Feed Specification (*.zip)
   PMTiles -vector- (rw+v): ProtoMap Tiles (*.pmtiles)

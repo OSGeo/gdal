@@ -170,7 +170,7 @@ NWT_GRDRasterBand::NWT_GRDRasterBand(NWT_GRDDataset *poDSIn, int nBandIn,
         bHaveOffsetScale = FALSE;
         dfOffset = 0;
         dfScale = 1.0;
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
     }
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;

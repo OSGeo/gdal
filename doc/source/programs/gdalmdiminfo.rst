@@ -24,6 +24,10 @@ Description
 multidimensional raster dataset as JSON output. It follows the
 following JSON schema :source_file:`apps/data/gdalmdiminfo_output.schema.json`.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_mdim_info`.
+
 The following command line parameters can appear in any order
 
 .. program:: gdalmdiminfo

@@ -22,6 +22,7 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <vector>
 #include <utility>
 
@@ -43,6 +44,7 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
     std::mutex m_oMutex{};
     std::vector<std::pair<std::string, std::weak_ptr<OGRArrowRandomAccessFile>>>
         m_oSetFiles{};
+    std::set<std::string> m_oSetFilesAskedToOpen{};
 
   public:
     VSIArrowFileSystem(const std::string &osEnvVarPrefix,
@@ -245,6 +247,7 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
 
         std::string osPath(path);
         osPath += m_osQueryParameters;
+        m_oSetFilesAskedToOpen.insert(osPath);
         CPLDebugOnly(m_osEnvVarPrefix.c_str(), "Opening %s", osPath.c_str());
         auto fp = VSIVirtualHandleUniquePtr(VSIFOpenL(osPath.c_str(), "rb"));
         if (fp == nullptr)
@@ -275,6 +278,18 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
                          & /* metadata */) override
     {
         return arrow::Status::IOError("OpenAppendStream() unimplemented");
+    }
+
+    // For debugging
+    const std::set<std::string> &GetSetFilesAskedToOpen() const
+    {
+        return m_oSetFilesAskedToOpen;
+    }
+
+    // For debugging
+    void ResetSetFilesAskedToOpen()
+    {
+        m_oSetFilesAskedToOpen.clear();
     }
 };
 

@@ -1,4 +1,4 @@
-.. option:: --if <format>
+.. option:: --if, --input-format <format>
 
     Format/driver name to be attempted to open the input file(s). It is generally
     not necessary to specify it, but it can be used to skip automatic driver

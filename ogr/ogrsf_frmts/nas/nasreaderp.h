@@ -90,7 +90,7 @@ class NASHandler final : public DefaultHandler
 
     void setDocumentLocator(const Locator *locator) override;
 
-    CPLString GetAttributes(const Attributes *attr);
+    static CPLString GetAttributes(const Attributes *attr);
 };
 
 /************************************************************************/

@@ -70,6 +70,18 @@ int JP2OPJLikeRasterBand<CODEC, BASE>::HasArbitraryOverviews()
 }
 
 /************************************************************************/
+/*                  MayMultiBlockReadingBeMultiThreaded()               */
+/************************************************************************/
+
+template <typename CODEC, typename BASE>
+bool JP2OPJLikeRasterBand<CODEC, BASE>::MayMultiBlockReadingBeMultiThreaded()
+    const
+{
+    auto poGDS = cpl::down_cast<JP2OPJLikeDataset<CODEC, BASE> *>(poDS);
+    return poGDS->GetNumThreads() > 1;
+}
+
+/************************************************************************/
 /*                      ~JP2OPJLikeRasterBand()                         */
 /************************************************************************/
 
@@ -800,7 +812,7 @@ JP2OPJLikeDataset<CODEC, BASE>::~JP2OPJLikeDataset()
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
-CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close()
+CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -1177,7 +1189,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::SetGCPs(int nGCPCountIn,
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
-CPLErr JP2OPJLikeDataset<CODEC, BASE>::SetMetadata(char **papszMetadata,
+CPLErr JP2OPJLikeDataset<CODEC, BASE>::SetMetadata(CSLConstList papszMetadata,
                                                    const char *pszDomain)
 {
     if (eAccess == GA_Update)
@@ -1207,7 +1219,8 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::SetMetadataItem(const char *pszName,
         this->bRewrite = TRUE;
         if (pszDomain == nullptr || EQUAL(pszDomain, ""))
         {
-            m_papszMainMD = CSLSetNameValue(GetMetadata(), pszName, pszValue);
+            GetMetadata();  // update m_papszMainMD
+            m_papszMainMD = CSLSetNameValue(m_papszMainMD, pszName, pszValue);
         }
         return GDALDataset::SetMetadataItem(pszName, pszValue, pszDomain);
     }
@@ -1316,7 +1329,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
                                   &nTileH, &numResolutions))
         return nullptr;
 
-    GDALDataType eDataType = GDT_Byte;
+    GDALDataType eDataType = GDT_UInt8;
     if (localctx.psImage->comps[0].prec > 16)
     {
         if (localctx.psImage->comps[0].sgnd)
@@ -1334,7 +1347,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
 
     int bIs420 =
         (localctx.psImage->color_space != CODEC::cvtenum(JP2_CLRSPC_SRGB) &&
-         eDataType == GDT_Byte &&
+         eDataType == GDT_UInt8 &&
          (localctx.psImage->numcomps == 3 || localctx.psImage->numcomps == 4) &&
          localctx.psImage->comps[1].w == localctx.psImage->comps[0].w / 2 &&
          localctx.psImage->comps[1].h == localctx.psImage->comps[0].h / 2 &&
@@ -2014,7 +2027,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
 
     GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
-    if (eDataType != GDT_Byte && eDataType != GDT_Int16 &&
+    if (eDataType != GDT_UInt8 && eDataType != GDT_Int16 &&
         eDataType != GDT_UInt16 && eDataType != GDT_Int32 &&
         eDataType != GDT_UInt32)
     {
@@ -2218,7 +2231,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     int bYCBCR420 = FALSE;
     if (pszYCBCR420 && CPLTestBool(pszYCBCR420))
     {
-        if ((nBands == 3 || nBands == 4) && eDataType == GDT_Byte &&
+        if ((nBands == 3 || nBands == 4) && eDataType == GDT_UInt8 &&
             nRedBandIndex == 0 && nGreenBandIndex == 1 && nBlueBandIndex == 2)
         {
             if (((nXSize % 2) == 0 && (nYSize % 2) == 0 &&

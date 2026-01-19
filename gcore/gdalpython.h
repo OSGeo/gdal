@@ -108,58 +108,12 @@ struct PyMethodDef
     const char *help;
 };
 
-extern PyObject *(*PyModule_Create2)(struct PyModuleDef *, int);
+extern PyObject *(*PyCFunction_New)(const PyMethodDef *ml, PyObject *self);
+extern int (*PyModule_AddObject)(PyObject *mod, const char *name,
+                                 PyObject *value);
 
-#define PYTHON_API_VERSION 1013
-
-/* Flag passed to newmethodobject */
 #define METH_VARARGS 0x0001
 #define METH_KEYWORDS 0x0002
-
-#define _PyObject_HEAD_EXTRA
-
-struct _object
-{
-    _PyObject_HEAD_EXTRA Py_ssize_t ob_refcnt;
-    void /*struct _typeobject*/ *ob_type;
-};
-
-#define PyObject_HEAD PyObject ob_base;
-
-#define _PyObject_EXTRA_INIT
-
-#define PyObject_HEAD_INIT(type) {_PyObject_EXTRA_INIT 1, type},
-
-#define PyModuleDef_HEAD_INIT                                                  \
-    {                                                                          \
-        PyObject_HEAD_INIT(nullptr) nullptr, /* m_init */                      \
-            0,                               /* m_index */                     \
-            nullptr,                         /* m_copy */                      \
-    }
-
-typedef struct PyModuleDef_Base
-{
-    PyObject_HEAD PyObject *(*m_init)(void);
-    Py_ssize_t m_index;
-    PyObject *m_copy;
-} PyModuleDef_Base;
-
-typedef void *traverseproc;
-typedef void *inquiry;
-typedef void *freefunc;
-
-typedef struct PyModuleDef
-{
-    PyModuleDef_Base m_base;
-    const char *m_name;
-    const char *m_doc;
-    Py_ssize_t m_size;
-    const PyMethodDef *m_methods;
-    struct PyModuleDef_Slot *m_slots;
-    traverseproc m_traverse;
-    inquiry m_clear;
-    freefunc m_free;
-} PyModuleDef;
 
 #define Py_file_input 257
 

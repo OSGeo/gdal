@@ -177,8 +177,7 @@ The following layer creation options are supported:
       :choices: 2, 3
 
       This may be set to 2 or 3 to force the dimension of the
-      created layer. Prior to GDAL 2.2, 3 is used by default. Starting with
-      GDAL 2.2, the dimension of the layer geometry type is used by
+      created layer. The dimension of the layer geometry type is used by
       default.
 
 -  .. lco:: SPATIAL_INDEX
@@ -187,8 +186,7 @@ The following layer creation options are supported:
       This may be set to NO to disable creation of a
       spatial index when a layer load is complete. By default an index is
       created if any of the layer features have valid geometries. The
-      default is "YES". Note: option was called INDEX in releases before
-      GDAL 2
+      default is "YES".
 
 -  .. lco:: INDEX_PARAMETERS
 

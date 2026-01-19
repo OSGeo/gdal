@@ -417,7 +417,7 @@ Backward Compatibility
 In most cases the backward compatibility of the OGR library will be
 retained. However the special fields will potentially conflict with
 regard fields with the given names. When accessing the field values the
-special fields will take pecedence over the other fields with the same
+special fields will take precedence over the other fields with the same
 names.
 
 When using OGRFeature::GetFieldAsString the returned value will be

@@ -11,6 +11,9 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
+import string
+
 import gdaltest
 import pytest
 
@@ -31,6 +34,8 @@ def circles():
     lyr = ds.CreateLayer(
         "circles", osr.SpatialReference(epsg=32145), geom_type=ogr.wkbPolygon
     )
+    lyr.CreateField(ogr.FieldDefn("a", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("b", ogr.OFTReal))
 
     geoms = []
 
@@ -46,9 +51,11 @@ def circles():
     g.AddPoint(15, 5)
     geoms.append(g.Buffer(5.1))
 
-    for geom in geoms:
+    for i, geom in enumerate(geoms):
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometry(geom)
+        f["a"] = "V" + string.ascii_lowercase[i]
+        f["b"] = i + 0.2
         lyr.CreateFeature(f)
 
     return ds
@@ -72,6 +79,11 @@ def test_gdalalg_vector_clean_coverage(alg, circles):
 
     areas = [f.GetGeometryRef().GetArea() for f in dst_lyr]
     assert areas == pytest.approx([77.85, 132.67, 80.82], abs=0.01)
+
+    for src_feature, dst_feature in zip(src_lyr, dst_lyr):
+        src_attrs = json.loads(src_feature.ExportToJson())["properties"]
+        dst_attrs = json.loads(dst_feature.ExportToJson())["properties"]
+        assert src_attrs == dst_attrs
 
     assert alg.Finalize()
 

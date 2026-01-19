@@ -638,10 +638,15 @@ size_t json_c_object_sizeof(void)
 	return sizeof(struct json_object);
 }
 
+static void ignore_return_bool_value(json_bool b)
+{
+    (void)b;
+}
+
 struct json_object *json_object_object_get(const struct json_object *jso, const char *key)
 {
 	struct json_object *result = NULL;
-	json_object_object_get_ex(jso, key, &result);
+	ignore_return_bool_value(json_object_object_get_ex(jso, key, &result));
 	return result;
 }
 

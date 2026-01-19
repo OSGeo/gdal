@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import array
 import math
 import struct
 
@@ -209,13 +210,13 @@ def test_vrtmultidim_subgroup_and_cross_references():
     <Group name="/">
         <Dimension name="X" size="20" indexingVariable="X"/>
         <Dimension name="Y" size="30" indexingVariable="/Y"/>
-        <Array name="X">
-            <DataType>Float32</DataType>
-            <DimensionRef ref="/X"/>
-        </Array>
         <Array name="Y">
             <DataType>Float32</DataType>
             <DimensionRef ref="Y"/>
+        </Array>
+        <Array name="X">
+            <DataType>Float32</DataType>
+            <DimensionRef ref="/X"/>
         </Array>
         <Group name="subgroup">
             <Dimension name="X" size="2" indexingVariable="X"/>
@@ -261,7 +262,7 @@ def test_vrtmultidim_subgroup_and_cross_references():
     assert indexing_var.GetDimensionCount() == 1
     assert indexing_var.GetDimensions()[0].GetSize() == 3
 
-    assert rg.GetMDArrayNames() == ["X", "Y"]
+    assert rg.GetMDArrayNames() == ["Y", "X"]
     X = rg.OpenMDArray("X")
     assert X
     assert X.GetDataType().GetNumericDataType() == gdal.GDT_Float32
@@ -1315,7 +1316,9 @@ def test_vrtmultidim_createmultidimensional():
             "attr_too_big", [4000 * 1000 * 1000], gdal.ExtendedDataType.CreateString()
         )
 
-    ar = rg.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32))
+    ar = rg.CreateMDArray(
+        "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32), ["BLOCKSIZE=2"]
+    )
     assert ar[0]
     with gdal.quiet_errors():
         assert not rg.CreateMDArray(
@@ -1357,6 +1360,7 @@ def test_vrtmultidim_createmultidimensional():
     <Array name="ar">
       <DataType>Float32</DataType>
       <DimensionRef ref="dim" />
+      <BlockSize>2</BlockSize>
       <Attribute name="attr">
         <DataType>String</DataType>
       </Attribute>
@@ -1367,6 +1371,11 @@ def test_vrtmultidim_createmultidimensional():
 """
     )
     _validate(got_data)
+
+    with gdal.OpenEx(tmpfile, gdal.OF_MULTIDIM_RASTER) as ds:
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("ar")
+        assert ar.GetBlockSize() == [2]
 
     gdal.Unlink(tmpfile)
 
@@ -1929,3 +1938,149 @@ def test_vrtmultidim_arraysource_getmask_error_wrong_option():
       </VRTRasterBand>
     </VRTDataset>"""
         )
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "source_slab,dest_slab,view_expr,expected",
+    [
+        ("", "", "[::1,:]", [0, 1, 2, 3, 4, 5]),
+        ("", "", "[::-1,:]", [4, 5, 2, 3, 0, 1]),
+        ('<SourceSlab offset="1,0" />', "", "[:,:]", [2, 3, 4, 5, 0, 0]),
+        ('<SourceSlab offset="1,0" />', "", "[::-1,:]", [4, 5, 2, 3, 0, 0]),
+        ("", '<DestSlab offset="1,0" />', "[:,:]", [0, 0, 0, 1, 2, 3]),
+        ("", '<DestSlab offset="1,0" />', "[::-1,:]", [2, 3, 0, 1, 0, 0]),
+        (
+            '<SourceSlab offset="1,0" />',
+            '<DestSlab offset="1,0" />',
+            "[:,:]",
+            [0, 0, 2, 3, 4, 5],
+        ),
+        (
+            '<SourceSlab offset="1,0" />',
+            '<DestSlab offset="1,0" />',
+            "[::-1,:]",
+            [4, 5, 2, 3, 0, 0],
+        ),
+    ],
+)
+def test_vrtmultidim_arraysource_view(
+    tmp_vsimem, source_slab, dest_slab, view_expr, expected
+):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", 2, 3) as ds:
+        ds.GetRasterBand(1).WriteRaster(
+            0, 0, 2, 3, array.array("B", [0, 1, 2, 3, 4, 5])
+        )
+
+    ds = gdal.Open(
+        f"""<VRTDataset rasterXSize="2" rasterYSize="3">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ArraySource>
+      <DerivedArray>
+        <Array name="data">
+          <DataType>Byte</DataType>
+          <Dimension name="y" size="3"/>
+          <Dimension name="x" size="2"/>
+          <Source>
+            <SourceFilename relativeToVRT="0">{tmp_vsimem}/src.tif</SourceFilename>
+            <SourceBand>1</SourceBand>
+            {source_slab}
+            {dest_slab}
+          </Source>
+        </Array>
+        <Step>
+          <View expr="{view_expr}"/>
+        </Step>
+      </DerivedArray>
+    </ArraySource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+
+    assert array.array("B", ds.GetRasterBand(1).ReadRaster()) == array.array(
+        "B", expected
+    )
+
+
+@pytest.mark.require_driver("HDF5")
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_GetRawBlockInfo_single_source(tmp_vsimem):
+
+    if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
+        pytest.skip("libhdf5 < 1.10.5")
+
+    gdal.Run(
+        "mdim convert", input="data/hdf5/deflate.h5", output=tmp_vsimem / "out.vrt"
+    )
+    with gdal.OpenEx(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+        array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
+
+        info = array.GetRawBlockInfo([0, 0])
+        assert info.GetFilename() == "data/hdf5/deflate.h5"
+        assert info.GetOffset() == 13908
+        assert info.GetSize() == 10
+        assert info.GetInfo() == ["COMPRESSION=DEFLATE", "FILTER=SHUFFLE"]
+        assert info.GetInlineData() is None
+
+        info = array.GetRawBlockInfo([19, 9])
+        assert info.GetFilename() == "data/hdf5/deflate.h5"
+        assert info.GetOffset() == 15898
+        assert info.GetSize() == 10
+        assert info.GetInfo() == ["COMPRESSION=DEFLATE", "FILTER=SHUFFLE"]
+        assert info.GetInlineData() is None
+
+        with pytest.raises(Exception, match="invalid block coordinate"):
+            array.GetRawBlockInfo([20, 0])
+
+
+@pytest.mark.require_driver("netCDF")
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_GetRawBlockInfo_unblocked(tmp_vsimem):
+
+    gdal.Run("mdim convert", input="data/netcdf/byte.nc", output=tmp_vsimem / "out.vrt")
+    with gdal.OpenEx(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+        array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
+
+        with pytest.raises(Exception, match="block size for dimension 0 is unknown"):
+            array.GetRawBlockInfo([0, 0])
+
+
+@pytest.mark.require_driver("netCDF")
+@pytest.mark.require_driver("HDF5")
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_GetRawBlockInfo_two_sources(tmp_path):
+
+    if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
+        pytest.skip("libhdf5 < 1.10.5")
+
+    gdal.Run(
+        "raster clip",
+        input="data/byte.tif",
+        output=tmp_path / "out_top.nc",
+        window=[0, 0, 20, 10],
+        creation_option={"FORMAT": "NC4", "COMPRESS": "DEFLATE"},
+    )
+    gdal.Run(
+        "raster clip",
+        input="data/byte.tif",
+        output=tmp_path / "out_bottom.nc",
+        window=[0, 10, 20, 10],
+        creation_option={"FORMAT": "NC4", "COMPRESS": "DEFLATE"},
+    )
+    gdal.Run(
+        "mdim mosaic",
+        input=[tmp_path / "out_top.nc", tmp_path / "out_bottom.nc"],
+        output=tmp_path / "out.vrt",
+    )
+
+    with gdal.OpenEx(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+        array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
+
+        for y in range(10):
+            info = array.GetRawBlockInfo([y, 0])
+            assert "out_bottom.nc" in info.GetFilename()
+
+        for y in range(10, 20):
+            info = array.GetRawBlockInfo([y, 0])
+            assert "out_top.nc" in info.GetFilename()

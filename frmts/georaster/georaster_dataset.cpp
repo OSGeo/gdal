@@ -762,12 +762,12 @@ boolean GeoRasterDataset::JPEG_CopyDirect(const char *pszJPGFilename,
 
         void *pBuffer = (GByte *)VSIMalloc(sizeof(GByte) * nCache);
 
-        VSIFSeekL(fpInput, 0L, SEEK_END);
+        VSIFSeekL(fpInput, 0, SEEK_END);
 
         size_t nCount = 0;
         const size_t nDataLength = VSIFTellL(fpInput);
 
-        VSIFSeekL(fpInput, 0L, SEEK_SET);
+        VSIFSeekL(fpInput, 0, SEEK_SET);
 
         GUIntBig nCurOff = 0;
 
@@ -1169,7 +1169,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
     {
         /* JPEG-F can only compress byte data type
          */
-        if (eType != GDT_Byte)
+        if (eType != GDT_UInt8)
         {
             CPLError(
                 CE_Failure, CPLE_IllegalArg,
@@ -1542,7 +1542,7 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
     //      Copy RPC
     // --------------------------------------------------------------------
 
-    char **papszRPCMetadata = GDALGetMetadata(poSrcDS, "RPC");
+    CSLConstList papszRPCMetadata = GDALGetMetadata(poSrcDS, "RPC");
 
     if (papszRPCMetadata != nullptr)
     {
@@ -2557,7 +2557,7 @@ char **GeoRasterDataset::GetMetadataDomainList()
 //                                                                GetMetadata()
 //  ---------------------------------------------------------------------------
 
-char **GeoRasterDataset::GetMetadata(const char *pszDomain)
+CSLConstList GeoRasterDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
         return papszSubdatasets;

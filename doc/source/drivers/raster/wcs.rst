@@ -40,8 +40,7 @@ and show zero bands. At that point, the user must use options to further
 instruct the driver how to deal with extra dimensions and data fields.
 
 The WCS driver supports WCS versions 1.0.0, 1.1.0, 1.1.1, 1.1.2, and
-2.0.1 at basic level (version 0.7 is not supported and support for
-version 2.0.1 is available starting at GDAL 2.3). Any return format that
+2.0.1 at basic level. Any return format that
 is a single file, and is in a format supported by GDAL should work. The
 driver will prefer a format with "tiff" in the name, otherwise it will
 fallback to the first offered format. However, the user may set the
@@ -74,7 +73,7 @@ is meant to be modified by using options.
 -  **PreferredFormat**: The format to use for GetCoverage calls. If not
    set, selected by the driver. (WCS versions 1.0 and 1.1)
 -  **Interpolation**: The interpolation method used when scaling. Should
-   be one of the server supported values. (GDAL 2.3)
+   be one of the server supported values.
 -  **BlockXSize**: The block width to use for block cached remote
    access.
 -  **BlockYSize**: The block height to use for block cached remote

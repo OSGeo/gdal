@@ -813,7 +813,7 @@ class OGRDXFDataSource final : public GDALDataset
                                        const GByte **pabyBuffer);
 
     // Header variables.
-    bool ReadHeaderSection();
+    bool ReadHeaderSection(CSLConstList papszOpenOptionsIn);
     const char *GetVariable(const char *pszName,
                             const char *pszDefault = nullptr);
 

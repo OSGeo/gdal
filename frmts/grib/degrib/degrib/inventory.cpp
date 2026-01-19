@@ -384,7 +384,7 @@ static int GRIB2SectJump (VSILFILE *fp,
    }
    /* Since fseek does not give an error if we jump outside the file, we test
     * it by using fgetc / ungetc. */
-   VSIFSeekL(fp, *secLen - 5, SEEK_CUR);
+   VSIFSeekL(fp, static_cast<vsi_l_offset>(*secLen - 5), SEEK_CUR);
    if (VSIFReadL (&sectNum, sizeof (char), 1, fp) != 1) {
       errSprintf ("ERROR: Ran out of file in Section %d\n", *sect);
       return -1;
@@ -1075,7 +1075,7 @@ int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
 #else
 #ifdef DEBUG
             /* find out how big the file is. */
-            VSIFSeekL (fp, 0L, SEEK_END);
+            VSIFSeekL (fp, 0, SEEK_END);
             fileLen = VSIFTellL(fp);
             CPLDebug("GRIB", CPL_FRMT_GUIB " trailing byte(s) found after message #%d", fileLen - offset, msgNum);
 #else
@@ -1343,7 +1343,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
             free (msg);
 #ifdef DEBUG
             /* find out how big the file is. */
-            VSIFSeekL(fp, 0L, SEEK_END);
+            VSIFSeekL(fp, 0, SEEK_END);
             fileLen = VSIFTellL(fp);
             /* fseek (fp, 0L, SEEK_SET); */
             printf ("There were " CPL_FRMT_GUIB " trailing bytes in the file.\n",

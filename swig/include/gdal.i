@@ -129,17 +129,18 @@ typedef int GDALRIOResampleAlg;
 %rename (DataType) GDALDataType;
 typedef enum {
     GDT_Unknown = 0,
-    /*! Eight bit unsigned integer */           GDT_Byte = 1,
-    /*! Eight bit signed integer */             GDT_Int8 = 14,
-    /*! Sixteen bit unsigned integer */         GDT_UInt16 = 2,
-    /*! Sixteen bit signed integer */           GDT_Int16 = 3,
-    /*! Thirty two bit unsigned integer */      GDT_UInt32 = 4,
-    /*! Thirty two bit signed integer */        GDT_Int32 = 5,
-    /*! 64 bit unsigned integer */              GDT_UInt64 = 12,
-    /*! 64 bit signed integer */                GDT_Int64 = 13,
-    /*! Sixteen bit floating point */           GDT_Float16 = 15,
-    /*! Thirty two bit floating point */        GDT_Float32 = 6,
-    /*! Sixty four bit floating point */        GDT_Float64 = 7,
+    /*! 8-bit unsigned integer */               GDT_Byte = 1,
+    /*! 8-bit unsigned integer */               GDT_UInt8 = 1,
+    /*! 8-bit signed integer */                 GDT_Int8 = 14,
+    /*! 16-bit unsigned integer */              GDT_UInt16 = 2,
+    /*! 16-bit signed integer */                GDT_Int16 = 3,
+    /*! 32-bit unsigned integer */              GDT_UInt32 = 4,
+    /*! 32-bit signed integer */                GDT_Int32 = 5,
+    /*! 64-bit unsigned integer */              GDT_UInt64 = 12,
+    /*! 64-bit signed integer */                GDT_Int64 = 13,
+    /*! 16-bit floating point */                GDT_Float16 = 15,
+    /*! 32-bit floating point */                GDT_Float32 = 6,
+    /*! 64-bit floating point */                GDT_Float64 = 7,
     /*! Complex Int16 */                        GDT_CInt16 = 8,
     /*! Complex Int32 */                        GDT_CInt32 = 9,
     /*! Complex Float16 */                      GDT_CFloat16 = 16,
@@ -2397,5 +2398,8 @@ GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
 ogr.DataSource = Dataset
 ogr.Driver = Driver
 %}
+
+%include "generate_gdal_alg_methods.i"
+
 #endif
 

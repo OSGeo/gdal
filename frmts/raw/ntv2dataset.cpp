@@ -97,7 +97,7 @@ class NTv2Dataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(NTv2Dataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     NTv2Dataset();
@@ -144,7 +144,7 @@ NTv2Dataset::~NTv2Dataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr NTv2Dataset::Close()
+CPLErr NTv2Dataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

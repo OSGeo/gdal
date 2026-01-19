@@ -192,7 +192,7 @@ char **GIFAbstractDataset::GetMetadataDomainList()
 /*                           GetMetadata()                              */
 /************************************************************************/
 
-char **GIFAbstractDataset::GetMetadata(const char *pszDomain)
+CSLConstList GIFAbstractDataset::GetMetadata(const char *pszDomain)
 {
     if (fp == nullptr)
         return nullptr;
@@ -390,7 +390,7 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(GIFAbstractDataset *poDSIn,
     poDS = poDSIn;
     nBand = nBandIn;
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;

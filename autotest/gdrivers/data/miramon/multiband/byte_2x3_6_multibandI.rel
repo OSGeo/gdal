@@ -21,8 +21,8 @@ codeSpace=
 DatasetTitle=byte_2x3_6_categs
 
 [OVERVIEW:ASPECTES_TECNICS]
-columns=2
-rows=3
+columns=200
+rows=300
 
 [SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
 HorizontalSystemIdentifier=UTM-31N-ETRS89
@@ -57,7 +57,7 @@ OrganisationName=Students and educational institutions
 [QUALITY:LINEAGE:PROCESS1]
 nOrganismes=1
 history=ASCIIIMG.exe 0 T:\byte_2x3_6_categs.txt T:\byte_2x3_6_categs.img 2 3 0 byte none none
-purpose=Opció que interpreta la capçalera del format ESRI ASCII per fer la transformació.
+purpose=OpciÃ³ que interpreta la capÃ§alera del format ESRI ASCII per fer la transformaciÃ³.
 date=20250407 17554803+0200
 NomFitxer=C:\MiraMon\ASCIIIMG.exe
 
@@ -159,7 +159,9 @@ processes=1
 
 [ATTRIBUTE_DATA:G1]
 NomFitxer=byte_2x3_6_categs.img
-descriptor=Al·leluia 1
+columns=2
+rows=3
+descriptor=AlÂ·leluia 1
 NODATA=
 min=0
 max=5
@@ -171,7 +173,9 @@ NomFitxer=byte_2x3_6_categs.rel
 
 [ATTRIBUTE_DATA:byte_2x3_0_to_4_categs_NoData_255]
 NomFitxer=byte_2x3_0_to_4_categs_NoData_255.img
-descriptor=Al·leluia 1
+columns=2
+rows=3
+descriptor=AlÂ·leluia 1
 min=0
 max=4
 IndexsJoinTaula=G1_BYTE_2X3_0_TO_4_CATEGS_NODATA_255_DBF
@@ -182,7 +186,9 @@ NomFitxer=byte_2x3_0_to_4_categs_NoData_255.rel
 
 [ATTRIBUTE_DATA:byte_2x3_1_to_5_categs_NoData_0]
 NomFitxer=byte_2x3_1_to_5_categs_NoData_0.img
-descriptor=Al·leluia 1
+columns=2
+rows=3
+descriptor=AlÂ·leluia 1
 NODATA=0
 min=1
 max=5
@@ -235,7 +241,7 @@ Tooltips_Const=1
 LlegSimb_Vers=4
 LlegSimb_SubVers=5
 Color_VisibleALleg=1
-Color_TitolLlegenda=Al·leluia 1
+Color_TitolLlegenda=AlÂ·leluia 1
 Color_CategAMostrar=N
 Color_N_ClassesLleg=6
 Color_InvertOrdPresentColorLleg=0

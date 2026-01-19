@@ -330,7 +330,8 @@ static void cpl_uffd_fault_handler(void *ptr)
                 bytes_needed = ctx->page_size;
 
             // Copy data into page
-            if (VSIFSeekL(file, offset, SEEK_SET) != 0 ||
+            if (VSIFSeekL(file, static_cast<vsi_l_offset>(offset), SEEK_SET) !=
+                    0 ||
                 VSIFReadL(ctx->page_ptr, bytes_needed, 1, file) != 1)
             {
                 CPLError(CE_Failure, CPLE_FileIO,

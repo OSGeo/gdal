@@ -106,13 +106,13 @@ def test_vrt_read_3(tmp_vsimem, tmp_path):
     gdal.CopyFile("data/test_mosaic2.vrt", tmp_vsimem / "test_mosaic2.vrt")
 
     output_dst = driver_tif.Create(
-        tmp_vsimem / "test_mosaic1.tif", 100, 100, 3, gdal.GDT_Byte
+        tmp_vsimem / "test_mosaic1.tif", 100, 100, 3, gdal.GDT_UInt8
     )
     output_dst.GetRasterBand(1).Fill(255)
     output_dst = None
 
     output_dst = driver_tif.Create(
-        tmp_vsimem / "test_mosaic2.tif", 100, 100, 3, gdal.GDT_Byte
+        tmp_vsimem / "test_mosaic2.tif", 100, 100, 3, gdal.GDT_UInt8
     )
     output_dst.GetRasterBand(1).Fill(127)
     output_dst = None
@@ -1274,7 +1274,7 @@ dy           1
     )
 
     ds = gdal.Translate(
-        "", tmp_vsimem / "in.asc", outputType=gdal.GDT_Byte, format="VRT"
+        "", tmp_vsimem / "in.asc", outputType=gdal.GDT_UInt8, format="VRT"
     )
 
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 2, 2, buf_type=gdal.GDT_Float32)
@@ -2446,7 +2446,7 @@ def test_vrt_read_compute_statistics_mosaic_optimization_single_source(tmp_vsime
 
 @pytest.mark.parametrize("obj_type", ["ds", "band"])
 @pytest.mark.parametrize(
-    "struct_type,gdal_type ", [("B", gdal.GDT_Byte), ("i", gdal.GDT_Int32)]
+    "struct_type,gdal_type ", [("B", gdal.GDT_UInt8), ("i", gdal.GDT_Int32)]
 )
 def test_vrt_read_complex_source_use_band_data_type_constraint(
     obj_type, struct_type, gdal_type
@@ -2495,12 +2495,12 @@ def test_vrt_read_top_and_bottom_strips_average():
 @pytest.mark.parametrize(
     "input_datatype,vrt_type,nodata,vrt_nodata,request_type",
     [
-        (gdal.GDT_Byte, "Byte", 0, 255, gdal.GDT_Byte),
-        (gdal.GDT_Byte, "Byte", 254, 255, gdal.GDT_Byte),
-        (gdal.GDT_Byte, "Int8", 254, 255, gdal.GDT_Byte),
-        (gdal.GDT_Byte, "Byte", 254, 127, gdal.GDT_Int8),
-        (gdal.GDT_Byte, "UInt16", 254, 255, gdal.GDT_Byte),
-        (gdal.GDT_Byte, "Byte", 254, 255, gdal.GDT_UInt16),
+        (gdal.GDT_UInt8, "Byte", 0, 255, gdal.GDT_UInt8),
+        (gdal.GDT_UInt8, "Byte", 254, 255, gdal.GDT_UInt8),
+        (gdal.GDT_UInt8, "Int8", 254, 255, gdal.GDT_UInt8),
+        (gdal.GDT_UInt8, "Byte", 254, 127, gdal.GDT_Int8),
+        (gdal.GDT_UInt8, "UInt16", 254, 255, gdal.GDT_UInt8),
+        (gdal.GDT_UInt8, "Byte", 254, 255, gdal.GDT_UInt16),
         (gdal.GDT_Int8, "Int8", 0, 127, gdal.GDT_Int8),
         (gdal.GDT_Int8, "Int16", 0, 127, gdal.GDT_Int8),
         (gdal.GDT_UInt16, "UInt16", 0, 65535, gdal.GDT_UInt16),
@@ -2524,7 +2524,7 @@ def test_vrt_read_complex_source_nodata(
 ):
     def get_array_type(dt):
         m = {
-            gdal.GDT_Byte: "B",
+            gdal.GDT_UInt8: "B",
             gdal.GDT_Int8: "b",
             gdal.GDT_UInt16: "H",
             gdal.GDT_Int16: "h",
@@ -2640,10 +2640,10 @@ def test_vrt_read_complex_source_nodata(
 ###############################################################################
 
 
-@pytest.mark.parametrize("data_type", [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_Int16])
+@pytest.mark.parametrize("data_type", [gdal.GDT_UInt8, gdal.GDT_UInt16, gdal.GDT_Int16])
 def test_vrt_read_complex_source_nodata_out_of_range(tmp_vsimem, data_type):
 
-    if data_type == gdal.GDT_Byte:
+    if data_type == gdal.GDT_UInt8:
         array_type = "B"
     elif data_type == gdal.GDT_UInt16:
         array_type = "H"
@@ -3024,3 +3024,90 @@ def test_vrt_read_CheckCompatibleForDatasetIO():
     assert (
         another_vrt.GetMetadataItem("CheckCompatibleForDatasetIO()", "__DEBUG__") == "1"
     )
+
+
+###############################################################################
+# Fixes https://github.com/OSGeo/gdal/issues/13464
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_read_multithreaded_non_integer_coordinates_nearest(tmp_vsimem):
+
+    gdal.Translate(
+        tmp_vsimem / "test.tif",
+        "data/byte.tif",
+        creationOptions={"BLOCKYSIZE": "1", "COMPRESS": "DEFLATE"},
+    )
+    gdal.Translate(
+        tmp_vsimem / "test.vrt", tmp_vsimem / "test.tif", srcWin=[0.5, 0.5, 10, 10]
+    )
+
+    with gdal.Open(tmp_vsimem / "test.vrt") as ds:
+        expected = ds.GetRasterBand(1).ReadRaster()
+
+    with gdal.config_option("GDAL_NUM_THREADS", "2"):
+        with gdal.Open(tmp_vsimem / "test.vrt") as ds:
+            assert ds.GetRasterBand(1).ReadRaster() == expected
+
+
+###############################################################################
+# Fixes https://github.com/OSGeo/gdal/issues/13464
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_read_multithreaded_non_integer_coordinates_nearest_two_sources(tmp_vsimem):
+
+    gdal.Translate(
+        tmp_vsimem / "test1.tif",
+        "data/byte.tif",
+        srcWin=[0, 0, 10, 20],
+        width=502,
+        height=1002,
+        creationOptions={"BLOCKYSIZE": "1", "COMPRESS": "DEFLATE"},
+    )
+    gdal.Translate(
+        tmp_vsimem / "test2.tif",
+        "data/byte.tif",
+        srcWin=[10, 0, 10, 20],
+        width=502,
+        height=1002,
+        creationOptions={"BLOCKYSIZE": "1", "COMPRESS": "DEFLATE"},
+    )
+
+    ds = gdal.Open("data/byte.tif")
+    gt = ds.GetGeoTransform()
+    extent = [
+        gt[0],
+        gt[3] + ds.RasterYSize * gt[5],
+        gt[0] + ds.RasterXSize * gt[1],
+        gt[3],
+    ]
+    ds = None
+
+    ds = gdal.Open(tmp_vsimem / "test1.tif")
+    gt = ds.GetGeoTransform()
+    res_big = gt[1]
+    ds = None
+
+    gdal.BuildVRT(
+        tmp_vsimem / "test.vrt",
+        [tmp_vsimem / "test1.tif", tmp_vsimem / "test2.tif"],
+        outputBounds=[
+            extent[0] + res_big / 2,
+            extent[1] + res_big / 2,
+            extent[2] - res_big / 2,
+            extent[3] - res_big / 2,
+        ],
+    )
+
+    with gdal.Open(tmp_vsimem / "test.vrt") as ds:
+        expected = ds.GetRasterBand(1).ReadRaster()
+
+    with gdal.config_option("GDAL_NUM_THREADS", "2"):
+        with gdal.Open(tmp_vsimem / "test.vrt") as ds:
+            assert ds.GetRasterBand(1).ReadRaster() == expected
+
+            assert (
+                ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__")
+                == "0"
+            )

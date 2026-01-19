@@ -810,7 +810,7 @@ int PLMosaicDataset::OpenMosaic()
     GDALDataType eDT = GDT_Unknown;
     const char *pszDataType = json_object_get_string(poDataType);
     if (EQUAL(pszDataType, "byte"))
-        eDT = GDT_Byte;
+        eDT = GDT_UInt8;
     else if (EQUAL(pszDataType, "uint16"))
         eDT = GDT_UInt16;
     else if (EQUAL(pszDataType, "int16"))
@@ -823,10 +823,10 @@ int PLMosaicDataset::OpenMosaic()
         return FALSE;
     }
 
-    if (eDT == GDT_Byte && !bQuadDownload)
+    if (eDT == GDT_UInt8 && !bQuadDownload)
         bUseTMSForMain = true;
 
-    if (bUseTMSForMain && eDT != GDT_Byte)
+    if (bUseTMSForMain && eDT != GDT_UInt8)
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
@@ -907,7 +907,7 @@ int PLMosaicDataset::OpenMosaic()
     osQuadsURL += osId + "/quads/";
 
     // Use WMS/TMS driver for overviews (only for byte)
-    if (eDT == GDT_Byte && EQUAL(pszSRS, "EPSG:3857") &&
+    if (eDT == GDT_UInt8 && EQUAL(pszSRS, "EPSG:3857") &&
         poLinksTiles != nullptr &&
         json_object_get_type(poLinksTiles) == json_type_string)
     {
@@ -978,7 +978,7 @@ int PLMosaicDataset::OpenMosaic()
                     VRTDatasetH hVRTDS = VRTCreate(nOvrXSize, nOvrYSize);
                     for (int iBand = 1; iBand <= 4; iBand++)
                     {
-                        VRTAddBand(hVRTDS, GDT_Byte, nullptr);
+                        VRTAddBand(hVRTDS, GDT_UInt8, nullptr);
                     }
 
                     int nSrcXOff, nSrcYOff, nDstXOff, nDstYOff;

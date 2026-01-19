@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 //! @cond Doxygen_Suppress
 
@@ -76,6 +77,11 @@ GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()
         .SetDefault(m_resampling)
         .SetChoices("nearest", "bilinear", "cubic", "cubicspline")
         .SetHiddenChoices("near");
+
+    AddArg(
+        "promote-pixel-value-to-z", 0,
+        _("Whether to set the pixel value as Z component of GeoJSON geometry"),
+        &m_promotePixelValueToZ);
 
     AddValidationAction(
         [this]
@@ -382,6 +388,7 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 
         CPLJSONArray oBands;
 
+        double zValue = std::numeric_limits<double>::quiet_NaN();
         for (int nBand : m_band)
         {
             CPLJSONObject oBand;
@@ -442,6 +449,8 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
                 {
                     const double dfUnscaledVal =
                         adfPixel[0] * dfScale + dfOffset;
+                    if (m_band.size() == 1 && m_promotePixelValueToZ)
+                        zValue = dfUnscaledVal;
                     if (m_format == "csv")
                     {
                         line += CPLSPrintf(",%.17g", adfPixel[0]);
@@ -548,6 +557,8 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
                 CPLJSONArray oCoordinates;
                 oCoordinates.Add(x);
                 oCoordinates.Add(y);
+                if (!std::isnan(zValue))
+                    oCoordinates.Add(zValue);
                 oGeometry.Add("coordinates", oCoordinates);
             }
             else

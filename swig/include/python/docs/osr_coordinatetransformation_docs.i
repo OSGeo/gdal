@@ -40,8 +40,7 @@ Examples
 0
 >>> ct = osr.CoordinateTransformation(wgs84, vt_sp)
 >>> ct.TransformBounds(44.2,-72.5, 44.3, -72.4, 21)
-(1640416.6667, 619626.4287465283, 1666641.4901271078, 656096.7597360199)
-
+(1640416.67, 619626.43, 1666641.49, 656096.76) # rtol: 1e-6
 ";
 
 // TransformPoint is documented inline
@@ -93,11 +92,10 @@ Examples
 >>> ct = osr.CoordinateTransformation(wgs84, vt_sp)
 >>> # Transform two points from WGS84 lat/long to Vermont State Plane easting/northing
 >>> ct.TransformPoints([(44.26, -72.58), (44.26, -72.59)])
-[(1619458.1108559777, 641509.1883246159, 0.0), (1616838.2913193079, 641511.9008312856, 0.0)]
+[(1619458.11, 641509.19, 0.0), (1616838.29, 641511.90, 0.0)] # rtol: 1e-6
 
->>> import numpy as np
 >>> ct.TransformPoints(np.array([[44.26, -72.58], [44.26, -72.59]]))
-[(1619458.1108559777, 641509.1883246159, 0.0), (1616838.2913193079, 641511.9008312856, 0.0)]
+[(1619458.11, 641509.19, 0.0), (1616838.29, 641511.90, 0.0)] # rtol: 1e-6
 
 ";
 

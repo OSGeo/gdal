@@ -497,15 +497,31 @@ bool ZarrV2Group::InitFromZGroup(const CPLJSONObject &obj)
         }
 
         const auto vars = nczarrGroup["vars"].ToArray();
+
+        // This is to protect against corruped/hostile datasets
+        std::set<std::string> alreadyExploredArray;
+        int nCountInvalid = 0;
+
         // open first indexing variables
         for (const auto &var : vars)
         {
             const auto osVarName = var.ToString();
             if (IsValidName(osVarName) &&
-                m_oMapDimensions.find(osVarName) != m_oMapDimensions.end() &&
-                !cpl::contains(m_oSetArrayNames, osVarName))
+                cpl::contains(m_oMapDimensions, osVarName) &&
+                !cpl::contains(m_oSetArrayNames, osVarName) &&
+                !cpl::contains(alreadyExploredArray, osVarName))
             {
-                OpenMDArray(osVarName);
+                alreadyExploredArray.insert(osVarName);
+                if (!OpenMDArray(osVarName))
+                {
+                    if (++nCountInvalid > 100)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Too many invalid arrays in NCZarr 'vars' "
+                                 "array. Giving up");
+                        return false;
+                    }
+                }
             }
         }
 
@@ -514,8 +530,9 @@ bool ZarrV2Group::InitFromZGroup(const CPLJSONObject &obj)
         {
             const auto osVarName = var.ToString();
             if (IsValidName(osVarName) &&
-                m_oMapDimensions.find(osVarName) == m_oMapDimensions.end() &&
-                !cpl::contains(m_oSetArrayNames, osVarName))
+                !cpl::contains(m_oMapDimensions, osVarName) &&
+                !cpl::contains(m_oSetArrayNames, osVarName) &&
+                !cpl::contains(alreadyExploredArray, osVarName))
             {
                 m_oSetArrayNames.insert(osVarName);
                 m_aosArrays.emplace_back(osVarName);
@@ -698,7 +715,7 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
             bool bUnsupported = false;
             switch (eDT)
             {
-                case GDT_Byte:
+                case GDT_UInt8:
                 {
                     elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
                     dtype.Set(dummy, "|u1");
@@ -1033,7 +1050,7 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
             {
                 case GDT_Unknown:
                     break;
-                case GDT_Byte:
+                case GDT_UInt8:
                     oFilter.Add("dtype", "u1");
                     break;
                 case GDT_Int8:

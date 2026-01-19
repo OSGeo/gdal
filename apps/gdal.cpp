@@ -143,6 +143,8 @@ MAIN_START(argc, argv)
     // Register GDAL drivers
     GDALAllRegister();
 
+    alg->SetCalledFromCommandLine();
+
     if (bIsCompletion)
     {
         const bool bLastWordIsComplete =
@@ -218,8 +220,6 @@ MAIN_START(argc, argv)
         args.push_back(strcmp(argv[i], pszFormatReplaced) == 0 ? "--format"
                                                                : argv[i]);
     CSLDestroy(argv);
-
-    alg->SetCalledFromCommandLine();
 
     if (!alg->ParseCommandLineArguments(args))
     {

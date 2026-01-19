@@ -47,6 +47,10 @@ It works only with raster formats that support update access to existing dataset
 
     gdal_edit is a Python utility, and is only available if GDAL Python bindings are available.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_edit`.
+
 .. include:: options/help_and_help_general.rst
 
 .. option:: -ro
@@ -100,19 +104,13 @@ It works only with raster formats that support update access to existing dataset
 
     Remove RPC information.
 
-    .. versionadded:: 2.4
-
 .. option:: -unsetstats
 
     Remove band statistics information.
 
-    .. versionadded:: 2.0
-
 .. option:: -stats
 
     Calculate and store band statistics.
-
-    .. versionadded:: 2.0
 
 .. option:: -setstats <min> <max> <mean> <stddev>
 
@@ -121,13 +119,9 @@ It works only with raster formats that support update access to existing dataset
     the real statistics are calculated from the file and the ones set
     to None are used from the real statistics.
 
-    .. versionadded:: 2.4
-
 .. option:: -approx_stats
 
     Calculate and store approximate band statistics.
-
-    .. versionadded:: 2.0
 
 .. option:: -a_nodata <value>
 
@@ -136,8 +130,6 @@ It works only with raster formats that support update access to existing dataset
 .. option:: -unsetnodata
 
     Remove existing nodata values.
-
-    .. versionadded:: 2.1
 
 .. option:: -scale <value>
 
@@ -153,8 +145,6 @@ It works only with raster formats that support update access to existing dataset
 
     .. note:: These values can be applied using -unscale during a :program:`gdal_translate` run.
 
-    .. versionadded:: 2.2
-
 .. option:: -offset <value>
 
     Assign a specified offset value to output bands.
@@ -163,8 +153,6 @@ It works only with raster formats that support update access to existing dataset
     the number of offset values must match the number of bands.
     If no offset is needed, it recommended to set the value to 0.
     For more see scale.
-
-    .. versionadded:: 2.2
 
 .. option:: -units <value>
 
@@ -177,8 +165,6 @@ It works only with raster formats that support update access to existing dataset
     Change the color interpretation of band X (where X is a valid band
     number, starting at 1).
 
-    .. versionadded:: 2.3
-
 .. option:: -gcp pixel <line> <easting> <northing> [<elevation>]
 
     Add the indicated ground control point to the dataset.
@@ -189,8 +175,6 @@ It works only with raster formats that support update access to existing dataset
     Remove existing metadata (in the default metadata domain).
     Can be combined with :option:`-mo`.
 
-    .. versionadded:: 2.0
-
 .. option:: -mo <META-TAG>=<VALUE>
 
     Passes a metadata key and value to set on the output dataset if possible.
@@ -200,8 +184,6 @@ It works only with raster formats that support update access to existing dataset
 .. option:: -oo <NAME>=<VALUE>
 
     Open option (format specific).
-
-    .. versionadded:: 2.0
 
 The :option:`-a_ullr`, :option:`-a_ulurll`, :option:`-tr` and :option:`-unsetgt` options are exclusive.
 

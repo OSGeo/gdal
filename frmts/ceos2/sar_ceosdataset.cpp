@@ -19,6 +19,7 @@
 #include "ogr_srs_api.h"
 
 #include <algorithm>
+#include <cinttypes>
 
 static GInt16 CastToGInt16(float val)
 {
@@ -144,7 +145,7 @@ class SAR_CEOSDataset final : public GDALPamDataset
     const GDAL_GCP *GetGCPs() override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain) override;
+    CSLConstList GetMetadata(const char *pszDomain) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     char **GetFileList(void) override;
@@ -226,10 +227,11 @@ CPLErr SAR_CEOSRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 
     struct CeosSARImageDesc *ImageDesc = &(poGDS->sVolume.ImageDesc);
 
-    int offset;
+    int offsetStart = 0;
     CalcCeosSARImageFilePosition(&(poGDS->sVolume), nBand, nBlockYOff + 1,
-                                 nullptr, &offset);
+                                 nullptr, &offsetStart);
 
+    vsi_l_offset offset = offsetStart;
     offset += ImageDesc->ImageDataStart;
 
     /* -------------------------------------------------------------------- */
@@ -361,9 +363,10 @@ CPLErr CCPRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     struct CeosSARImageDesc *ImageDesc = &(poGDS->sVolume.ImageDesc);
 
-    int offset = ImageDesc->FileDescriptorLength +
-                 ImageDesc->BytesPerRecord * nBlockYOff +
-                 ImageDesc->ImageDataStart;
+    const vsi_l_offset offset =
+        ImageDesc->FileDescriptorLength +
+        static_cast<vsi_l_offset>(ImageDesc->BytesPerRecord) * nBlockYOff +
+        ImageDesc->ImageDataStart;
 
     /* -------------------------------------------------------------------- */
     /*      Load all the pixel data associated with this scanline.          */
@@ -377,9 +380,11 @@ CPLErr CCPRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
             nBytesToRead)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Error reading %d bytes of CEOS record data at offset %d.\n"
+                 "Error reading %d bytes of CEOS record data at offset %" PRIu64
+                 ".\n"
                  "Reading file %s failed.",
-                 nBytesToRead, offset, poGDS->GetDescription());
+                 nBytesToRead, static_cast<uint64_t>(offset),
+                 poGDS->GetDescription());
         CPLFree(pabyRecord);
         return CE_Failure;
     }
@@ -502,9 +507,10 @@ CPLErr PALSARRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 
     struct CeosSARImageDesc *ImageDesc = &(poGDS->sVolume.ImageDesc);
 
-    int offset = ImageDesc->FileDescriptorLength +
-                 ImageDesc->BytesPerRecord * nBlockYOff +
-                 ImageDesc->ImageDataStart;
+    const vsi_l_offset offset =
+        ImageDesc->FileDescriptorLength +
+        static_cast<vsi_l_offset>(ImageDesc->BytesPerRecord) * nBlockYOff +
+        ImageDesc->ImageDataStart;
 
     /* -------------------------------------------------------------------- */
     /*      Load all the pixel data associated with this scanline.          */
@@ -518,9 +524,11 @@ CPLErr PALSARRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
             nBytesToRead)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Error reading %d bytes of CEOS record data at offset %d.\n"
+                 "Error reading %d bytes of CEOS record data at offset %" PRIu64
+                 ".\n"
                  "Reading file %s failed.",
-                 nBytesToRead, offset, poGDS->GetDescription());
+                 nBytesToRead, static_cast<uint64_t>(offset),
+                 poGDS->GetDescription());
         CPLFree(pabyRecord);
         return CE_Failure;
     }
@@ -762,7 +770,7 @@ char **SAR_CEOSDataset::GetMetadataDomainList()
 /*      are not available.                                              */
 /************************************************************************/
 
-char **SAR_CEOSDataset::GetMetadata(const char *pszDomain)
+CSLConstList SAR_CEOSDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain == nullptr || !STARTS_WITH_CI(pszDomain, "ceos-"))
@@ -1712,7 +1720,8 @@ void SAR_CEOSDataset::ScanForGCPs()
                                      &nFileOffset);
 
         GInt32 anRecord[192 / 4];
-        if (VSIFSeekL(fpImage, nFileOffset, SEEK_SET) != 0 ||
+        if (VSIFSeekL(fpImage, static_cast<vsi_l_offset>(nFileOffset),
+                      SEEK_SET) != 0 ||
             VSIFReadL(anRecord, 1, 192, fpImage) != 192)
             break;
 
@@ -1962,7 +1971,7 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         case CEOS_TYP_CHAR:
         case CEOS_TYP_UCHAR:
-            eType = GDT_Byte;
+            eType = GDT_UInt8;
             break;
 
         case CEOS_TYP_SHORT:
@@ -2169,7 +2178,7 @@ static int ProcessData(VSILFILE *fp, int fileid, CeosSARVolume_t *sar,
 {
     unsigned char temp_buffer[CEOS_HEADER_LENGTH];
     unsigned char *temp_body = nullptr;
-    int start = 0;
+    vsi_l_offset start = 0;
     int CurrentBodyLength = 0;
     int CurrentType = 0;
     int CurrentSequence = 0;

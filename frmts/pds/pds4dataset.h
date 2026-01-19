@@ -376,7 +376,7 @@ class PDS4Dataset final : public RawDataset
                    int nYSize, int nBands, GDALDataType eType,
                    const char *const *papszOptions);
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     CPL_DISALLOW_COPY_ASSIGN(PDS4Dataset)
 
@@ -391,7 +391,8 @@ class PDS4Dataset final : public RawDataset
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     char **GetFileList() override;
-    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList papszMD,
+                       const char *pszDomain = "") override;
 
     int GetLayerCount() const override
     {

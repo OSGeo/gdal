@@ -930,7 +930,7 @@ void OGRNGWDataset::FillMetadata(const CPLJSONObject &oRootObject)
 /*
  * FlushMetadata()
  */
-bool OGRNGWDataset::FlushMetadata(char **papszMetadata)
+bool OGRNGWDataset::FlushMetadata(CSLConstList papszMetadata)
 {
     if (!bMetadataDerty)
     {
@@ -950,7 +950,8 @@ bool OGRNGWDataset::FlushMetadata(char **papszMetadata)
 /*
  * SetMetadata()
  */
-CPLErr OGRNGWDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr OGRNGWDataset::SetMetadata(CSLConstList papszMetadata,
+                                  const char *pszDomain)
 {
     FetchPermissions();
     if (!stPermissions.bMetadataCanWrite)

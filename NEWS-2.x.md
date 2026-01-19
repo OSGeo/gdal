@@ -4058,4 +4058,4 @@ Python bindings:
 
 # GDAL 1.x
 
-Consult [NEWS-1.x.md](NEW-1.x.md)
+Consult [NEWS-1.x.md](NEWS-1.x.md)

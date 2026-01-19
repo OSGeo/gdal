@@ -2018,7 +2018,7 @@ void OGRPGDumpLayer::SetOverrideColumnTypes(const char *pszOverrideColumnTypes)
 /*                              SetMetadata()                           */
 /************************************************************************/
 
-CPLErr OGRPGDumpLayer::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr OGRPGDumpLayer::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 {
     OGRLayer::SetMetadata(papszMD, pszDomain);
     if (!m_osForcedDescription.empty() &&

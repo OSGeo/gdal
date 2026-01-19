@@ -48,7 +48,7 @@ def test_numpy_rw_multidim_readasarray_writearray():
     dim0 = rg.CreateDimension("dim0", None, None, 2)
     dim1 = rg.CreateDimension("dim1", None, None, 3)
     myarray = rg.CreateMDArray(
-        "myarray", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "myarray", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     assert myarray
     ar = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.uint8)
@@ -126,7 +126,7 @@ def test_numpy_rw_multidim_readasarray_writearray_negative_strides():
     dim0 = rg.CreateDimension("dim0", None, None, 2)
     dim1 = rg.CreateDimension("dim1", None, None, 3)
     myarray = rg.CreateMDArray(
-        "myarray", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        "myarray", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     assert myarray
     ar = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.uint8)
@@ -238,7 +238,7 @@ def test_numpy_rw_multidim_compound_datatype():
 @pytest.mark.parametrize(
     "datatype",
     [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
         gdal.GDT_Int32,

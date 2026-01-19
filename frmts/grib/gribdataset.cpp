@@ -419,7 +419,8 @@ void GRIBRasterBand::FindPDSTemplateGRIB2()
                          iSubMessage);
                 return;
             }
-            if (VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0)
+            if (VSIFSeekL(poGDS->fp, static_cast<vsi_l_offset>(nSectSize - 5),
+                          SEEK_CUR) != 0)
             {
                 CPLDebug("GRIB",
                          "Cannot read past section for iSubMessage = %d",
@@ -459,7 +460,8 @@ void GRIBRasterBand::FindPDSTemplateGRIB2()
                      nCurSection);
             return;
         }
-        if (VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0 ||
+        if (VSIFSeekL(poGDS->fp, static_cast<vsi_l_offset>(nSectSize - 5),
+                      SEEK_CUR) != 0 ||
             VSIFReadL(abyHead, 5, 1, poGDS->fp) != 1)
         {
             CPLDebug("GRIB", "Cannot read section %d", nCurSection);
@@ -630,7 +632,8 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
         CPL_MSBPTR32(&nSectSize);
 
         if (nSectSize < 5 ||
-            VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0 ||
+            VSIFSeekL(poGDS->fp, static_cast<vsi_l_offset>(nSectSize - 5),
+                      SEEK_CUR) != 0 ||
             VSIFReadL(abyHead, 5, 1, poGDS->fp) != 1)
             break;
     }
@@ -755,7 +758,8 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
         }
         else if (nSectSize > 5)
         {
-            VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR);
+            VSIFSeekL(poGDS->fp, static_cast<vsi_l_offset>(nSectSize - 5),
+                      SEEK_CUR);
         }
     }
 
@@ -913,7 +917,7 @@ static bool IsGdalinfoInteractive()
 /************************************************************************/
 /*                             GetMetaData()                            */
 /************************************************************************/
-char **GRIBRasterBand::GetMetadata(const char *pszDomain)
+CSLConstList GRIBRasterBand::GetMetadata(const char *pszDomain)
 {
     FindMetaData();
     if ((pszDomain == nullptr || pszDomain[0] == 0) && m_nGribVersion == 2 &&
@@ -2341,17 +2345,17 @@ GDALDataset *GRIBDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
         // does not return the offset to the real start of the message
         GByte abyHeader[1024 + 1];
         VSIFSeekL(poShared->m_fp, psInv->start, SEEK_SET);
-        size_t nRead =
-            VSIFReadL(abyHeader, 1, sizeof(abyHeader) - 1, poShared->m_fp);
+        const int nRead = static_cast<int>(
+            VSIFReadL(abyHeader, 1, sizeof(abyHeader) - 1, poShared->m_fp));
         abyHeader[nRead] = 0;
         // Find the real offset of the fist message
-        const char *pasHeader = reinterpret_cast<char *>(abyHeader);
+        const char *pszHeader = reinterpret_cast<char *>(abyHeader);
         int nOffsetFirstMessage = 0;
-        for (int j = 0; j < poOpenInfo->nHeaderBytes - 3; j++)
+        for (int j = 0; j + 4 <= nRead; j++)
         {
-            if (STARTS_WITH_CI(pasHeader + j, "GRIB")
+            if (STARTS_WITH_CI(pszHeader + j, "GRIB")
 #ifdef ENABLE_TDLP
-                || STARTS_WITH_CI(pasHeader + j, "TDLP")
+                || STARTS_WITH_CI(pszHeader + j, "TDLP")
 #endif
             )
             {
@@ -2887,7 +2891,7 @@ class GDALGRIBDriver final : public GDALDriver
   public:
     GDALGRIBDriver() = default;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override;
 };
@@ -2994,7 +2998,7 @@ void GDALGRIBDriver::InitializeMetadata()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **GDALGRIBDriver::GetMetadata(const char *pszDomain)
+CSLConstList GDALGRIBDriver::GetMetadata(const char *pszDomain)
 {
     std::lock_guard oLock(m_oMutex);
     if (pszDomain == nullptr || EQUAL(pszDomain, ""))

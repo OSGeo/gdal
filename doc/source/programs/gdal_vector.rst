@@ -23,7 +23,6 @@ Available sub-commands
 - :ref:`gdal_vector_clip`
 - :ref:`gdal_vector_concat`
 - :ref:`gdal_vector_convert`
-- :ref:`gdal_vector_change_field_type`
 - :ref:`gdal_vector_edit`
 - :ref:`gdal_vector_filter`
 - :ref:`gdal_vector_index`
@@ -34,13 +33,16 @@ Available sub-commands
 - :ref:`gdal_vector_rasterize`
 - :ref:`gdal_vector_reproject`
 - :ref:`gdal_vector_select`
+- :ref:`gdal_vector_set_field_type`
+- :ref:`gdal_vector_set_geom_type`
 - :ref:`gdal_vector_sql`
+- :ref:`gdal_vector_update`
 
 Examples
 --------
 
 .. example::
-   :title: Getting information on the file :file:`poly.gpkg` (with JSON output)
+   :title: Getting information on the file :file:`poly.gpkg` (with text output)
 
    .. code-block:: console
 

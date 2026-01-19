@@ -142,7 +142,7 @@ class OGRDGNV8DataSource final : public GDALDataset
     CPLErr FlushCache(bool bAtClosing) override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 

@@ -597,7 +597,7 @@ GDALRasterBand *PCIDSK2Band::GetOverview(int iOverview)
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr PCIDSK2Band::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr PCIDSK2Band::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 
 {
     /* -------------------------------------------------------------------- */
@@ -741,7 +741,7 @@ const char *PCIDSK2Band::GetMetadataItem(const char *pszName,
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **PCIDSK2Band::GetMetadata(const char *pszDomain)
+CSLConstList PCIDSK2Band::GetMetadata(const char *pszDomain)
 
 {
     /* -------------------------------------------------------------------- */
@@ -1035,7 +1035,7 @@ CPLErr PCIDSK2Dataset::FlushCache(bool bAtClosing)
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr PCIDSK2Dataset::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr PCIDSK2Dataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 
 {
     /* -------------------------------------------------------------------- */
@@ -1177,7 +1177,7 @@ const char *PCIDSK2Dataset::GetMetadataItem(const char *pszName,
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **PCIDSK2Dataset::GetMetadata(const char *pszDomain)
+CSLConstList PCIDSK2Dataset::GetMetadata(const char *pszDomain)
 
 {
     /* -------------------------------------------------------------------- */
@@ -1668,7 +1668,7 @@ GDALDataType PCIDSK2Dataset::PCIDSKTypeToGDAL(eChanType eType)
     switch (eType)
     {
         case CHN_8U:
-            return GDT_Byte;
+            return GDT_UInt8;
 
         case CHN_16U:
             return GDT_UInt16;
@@ -1680,7 +1680,7 @@ GDALDataType PCIDSK2Dataset::PCIDSKTypeToGDAL(eChanType eType)
             return GDT_Float32;
 
         case CHN_BIT:
-            return GDT_Byte;
+            return GDT_UInt8;
 
         case CHN_C16U:
             return GDT_CInt16;

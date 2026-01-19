@@ -42,6 +42,11 @@ class GDALVectorSimplifyCoverageAlgorithm
         bool preserveBoundary = false;
     };
 
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 

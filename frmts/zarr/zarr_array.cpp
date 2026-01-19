@@ -15,6 +15,7 @@
 
 #include "cpl_float.h"
 #include "cpl_multiproc.h"
+#include "cpl_vsi_virtual.h"
 
 #include "netcdf_cf_constants.h"  // for CF_UNITS, etc
 
@@ -326,12 +327,10 @@ bool ZarrArray::FillBlockSize(
         size_t nBlockSize = oDataType.GetSize();
         for (size_t i = 0; i < nDims; ++i)
         {
-            anBlockSize[i] = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
-            if (anBlockSize[i] == 0)
+            const auto v = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
+            if (v > 0)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Values in BLOCKSIZE should be > 0");
-                return false;
+                anBlockSize[i] = v;
             }
             if (anBlockSize[i] >
                 std::numeric_limits<size_t>::max() / nBlockSize)
@@ -646,8 +645,15 @@ void ZarrArray::BlockTranspose(const ZarrByteVectorQuickResize &abySrc,
     };
 
     std::vector<Stack> stack(nDims);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     stack.emplace_back(
         Stack());  // to make gcc 9.3 -O2 -Wnull-dereference happy
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
     if (bDecode)
     {
@@ -1214,7 +1220,7 @@ lbl_next_depth:
             {
                 bNoDataIsZero = true;
                 GByte zero = 0;
-                GDALCopyWords(&zero, GDT_Byte, 0, &abyTargetNoData[0],
+                GDALCopyWords(&zero, GDT_UInt8, 0, &abyTargetNoData[0],
                               bufferDataType.GetNumericDataType(), 0, 1);
             }
         }
@@ -2046,7 +2052,7 @@ ZarrArray::OpenTilePresenceCache(bool bCanCreate) const
     const std::string osTilePresenceArrayName(MassageName(GetFullName()) +
                                               "_tile_presence");
     auto poTilePresenceArray = poRGCache->OpenMDArray(osTilePresenceArrayName);
-    const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+    const auto eByteDT = GDALExtendedDataType::Create(GDT_UInt8);
     if (poTilePresenceArray)
     {
         bool ok = true;
@@ -2149,27 +2155,10 @@ bool ZarrArray::CacheTilePresence()
 
     const std::string osDirectoryName = GetDataDirectory();
 
-    struct DirCloser
-    {
-        DirCloser(const DirCloser &) = delete;
-        DirCloser &operator=(const DirCloser &) = delete;
-
-        VSIDIR *m_psDir;
-
-        explicit DirCloser(VSIDIR *psDir) : m_psDir(psDir)
-        {
-        }
-
-        ~DirCloser()
-        {
-            VSICloseDir(m_psDir);
-        }
-    };
-
-    auto psDir = VSIOpenDir(osDirectoryName.c_str(), -1, nullptr);
+    auto psDir = std::unique_ptr<VSIDIR, decltype(&VSICloseDir)>(
+        VSIOpenDir(osDirectoryName.c_str(), -1, nullptr), VSICloseDir);
     if (!psDir)
         return false;
-    DirCloser dirCloser(psDir);
 
     auto poTilePresenceArray = OpenTilePresenceCache(true);
     if (!poTilePresenceArray)
@@ -2190,7 +2179,7 @@ bool ZarrArray::CacheTilePresence()
     const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
     const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
     const auto &apoDimsCache = poTilePresenceArray->GetDimensions();
-    const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+    const auto eByteDT = GDALExtendedDataType::Create(GDT_UInt8);
 
     CPLDebug(ZARR_DEBUG_KEY,
              "CacheTilePresence(): Iterating over %s to find which tiles are "
@@ -2199,7 +2188,7 @@ bool ZarrArray::CacheTilePresence()
     uint64_t nCounter = 0;
     const char chSrcFilenameDirSeparator =
         VSIGetDirectorySeparator(osDirectoryName.c_str())[0];
-    while (const VSIDIREntry *psEntry = VSIGetNextDirEntry(psDir))
+    while (const VSIDIREntry *psEntry = VSIGetNextDirEntry(psDir.get()))
     {
         if (!VSI_ISDIR(psEntry->nMode))
         {
@@ -2782,6 +2771,40 @@ void ZarrArray::ParseSpecialAttributes(
         }
     }
 
+    // For EOPF Sentinel Zarr Samples Service datasets, read attributes from
+    // the STAC Proj extension attributes to get the CRS.
+    if (!poSRS)
+    {
+        const auto oProjEPSG = oAttributes["proj:epsg"];
+        if (oProjEPSG.GetType() == CPLJSONObject::Type::Integer)
+        {
+            poSRS = std::make_shared<OGRSpatialReference>();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            if (poSRS->importFromEPSG(oProjEPSG.ToInteger()) != OGRERR_NONE)
+            {
+                poSRS.reset();
+            }
+        }
+        else
+        {
+            const auto oProjWKT2 = oAttributes["proj:wkt2"];
+            if (oProjWKT2.GetType() == CPLJSONObject::Type::String)
+            {
+                poSRS = std::make_shared<OGRSpatialReference>();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (poSRS->importFromWkt(oProjWKT2.ToString().c_str()) !=
+                    OGRERR_NONE)
+                {
+                    poSRS.reset();
+                }
+            }
+        }
+
+        // There is also a "proj:transform" attribute, but we don't need to
+        // use it since the x and y dimensions are already associated with a
+        // 1-dimensional array with the values.
+    }
+
     if (poSRS)
     {
         int iDimX = 0;
@@ -2875,4 +2898,139 @@ bool ZarrArray::SetStatistics(bool bApproxStats, double dfMin, double dfMax,
     }
     return GDALPamMDArray::SetStatistics(bApproxStats, dfMin, dfMax, dfMean,
                                          dfStdDev, nValidCount, papszOptions);
+}
+
+/************************************************************************/
+/*                ZarrArray::IsTileMissingFromCacheInfo()               */
+/************************************************************************/
+
+bool ZarrArray::IsTileMissingFromCacheInfo(const std::string &osFilename,
+                                           const uint64_t *tileIndices) const
+{
+    CPL_IGNORE_RET_VAL(osFilename);
+    auto poTilePresenceArray = OpenTilePresenceCache(false);
+    if (poTilePresenceArray)
+    {
+        std::vector<GUInt64> anTileIdx(m_aoDims.size());
+        const std::vector<size_t> anCount(m_aoDims.size(), 1);
+        const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
+        const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
+        const auto eByteDT = GDALExtendedDataType::Create(GDT_UInt8);
+        for (size_t i = 0; i < m_aoDims.size(); ++i)
+        {
+            anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
+        }
+        GByte byValue = 0;
+        if (poTilePresenceArray->Read(anTileIdx.data(), anCount.data(),
+                                      anArrayStep.data(), anBufferStride.data(),
+                                      eByteDT, &byValue) &&
+            byValue == 0)
+        {
+            CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
+                         osFilename.c_str());
+            return true;
+        }
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                     ZarrArray::GetRawBlockInfo()                     */
+/************************************************************************/
+
+bool ZarrArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
+                                GDALMDArrayRawBlockInfo &info) const
+{
+    info.clear();
+    for (size_t i = 0; i < m_anBlockSize.size(); ++i)
+    {
+        const auto nBlockSize = m_anBlockSize[i];
+        const auto nBlockCount =
+            cpl::div_round_up(m_aoDims[i]->GetSize(), nBlockSize);
+        if (panBlockCoordinates[i] >= nBlockCount)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetRawBlockInfo() failed: array %s: "
+                     "invalid block coordinate (%u) for dimension %u",
+                     GetName().c_str(),
+                     static_cast<unsigned>(panBlockCoordinates[i]),
+                     static_cast<unsigned>(i));
+            return false;
+        }
+    }
+
+    std::string osFilename = BuildTileFilename(panBlockCoordinates);
+
+    // For network file systems, get the streaming version of the filename,
+    // as we don't need arbitrary seeking in the file
+    osFilename = VSIFileManager::GetHandler(osFilename.c_str())
+                     ->GetStreamingFilename(osFilename);
+    {
+        std::lock_guard<std::mutex> oLock(m_oMutex);
+        if (IsTileMissingFromCacheInfo(osFilename, panBlockCoordinates))
+            return true;
+    }
+
+    VSILFILE *fp = nullptr;
+    // This is the number of files returned in a S3 directory listing operation
+    const char *const apszOpenOptions[] = {"IGNORE_FILENAME_RESTRICTIONS=YES",
+                                           nullptr};
+    const auto nErrorBefore = CPLGetErrorCounter();
+    {
+        // Avoid issuing ReadDir() when a lot of files are expected
+        CPLConfigOptionSetter optionSetter("GDAL_DISABLE_READDIR_ON_OPEN",
+                                           "YES", true);
+        fp = VSIFOpenEx2L(osFilename.c_str(), "rb", 0, apszOpenOptions);
+    }
+    if (fp == nullptr)
+    {
+        if (nErrorBefore != CPLGetErrorCounter())
+        {
+            return false;
+        }
+        else
+        {
+            // Missing files are OK and indicate nodata_value
+            return true;
+        }
+    }
+    VSIFSeekL(fp, 0, SEEK_END);
+    const auto nFileSize = VSIFTellL(fp);
+    VSIFCloseL(fp);
+
+    // For Kerchunk files, get information on the actual location
+    const CPLStringList aosMetadata(
+        VSIGetFileMetadata(osFilename.c_str(), "CHUNK_INFO", nullptr));
+    if (!aosMetadata.empty())
+    {
+        const char *pszFilename = aosMetadata.FetchNameValue("FILENAME");
+        if (pszFilename)
+            info.pszFilename = CPLStrdup(pszFilename);
+        info.nOffset = std::strtoull(
+            aosMetadata.FetchNameValueDef("OFFSET", "0"), nullptr, 10);
+        info.nSize = std::strtoull(aosMetadata.FetchNameValueDef("SIZE", "0"),
+                                   nullptr, 10);
+        const char *pszBase64 = aosMetadata.FetchNameValue("BASE64");
+        if (pszBase64)
+        {
+            const size_t nSizeBase64 = strlen(pszBase64) + 1;
+            info.pabyInlineData = static_cast<GByte *>(CPLMalloc(nSizeBase64));
+            memcpy(info.pabyInlineData, pszBase64, nSizeBase64);
+            const int nDecodedSize =
+                CPLBase64DecodeInPlace(info.pabyInlineData);
+            CPLAssert(static_cast<size_t>(nDecodedSize) ==
+                      static_cast<size_t>(info.nSize));
+            CPL_IGNORE_RET_VAL(nDecodedSize);
+        }
+    }
+    else
+    {
+        info.pszFilename = CPLStrdup(osFilename.c_str());
+        info.nOffset = 0;
+        info.nSize = nFileSize;
+    }
+
+    info.papszInfo = CSLDuplicate(GetRawBlockInfoInfo().List());
+
+    return true;
 }

@@ -1199,12 +1199,12 @@ retry:
  See :ref:`/vsiwebhdfs/ documentation <vsiwebhdfs>`
  \endverbatim
 
- @since GDAL 2.4
  */
 void VSIInstallWebHdfsHandler(void)
 {
     VSIFileManager::InstallHandler(
-        "/vsiwebhdfs/", new cpl::VSIWebHDFSFSHandler("/vsiwebhdfs/"));
+        "/vsiwebhdfs/",
+        std::make_shared<cpl::VSIWebHDFSFSHandler>("/vsiwebhdfs/"));
 }
 
 #endif /* HAVE_CURL */

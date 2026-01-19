@@ -102,7 +102,7 @@ Georeferencing information can come from different sources : internal
 information is fetched in following order (first listed is the highest
 priority): PAM, GeoJP2, GMLJP2, WORLDFILE.
 
-Starting with GDAL 2.2, the allowed sources and their priority order can
+The allowed sources and their priority order can
 be changed with the :config:`GDAL_GEOREF_SOURCES` configuration option (or
 :oo:`GEOREF_SOURCES` open option) whose value is a comma-separated list of the
 following keywords : PAM, GEOJP2, GMLJP2, INTERNAL (shortcut for
@@ -237,7 +237,7 @@ better understand their meaning.
 -  **Corder**: Progression order. Defaults to "PRCL".
 -  **Cprecincts**: Precincts settings. Defaults to
    "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}".
--  **ORGgen_plt**: Whether to generate PLT markers (Paquet Length). Defaults to "yes".
+-  **ORGgen_plt**: Whether to generate PLT markers (Packet Length). Defaults to "yes".
 -  **ORGgen_tlm**: Whether to generate TLM markers (Tile Length). Kakadu SDK defaults used.
 -  **ORGtparts**: Kakadu SDK defaults used.
 -  **Cmodes**: Kakadu SDK defaults used.

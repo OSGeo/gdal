@@ -276,13 +276,14 @@ class netCDFRasterBand final : public GDALPamRasterBand
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IWriteBlock(int, int, void *) override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
-    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
+    CPLErr SetMetadata(CSLConstList papszMD,
+                       const char *pszDomain = "") override;
 };
 
 /************************************************************************/
@@ -399,9 +400,9 @@ netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
     else
     {
         if (nc_datatype == NC_BYTE)
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
         else if (nc_datatype == NC_CHAR)
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
         else if (nc_datatype == NC_SHORT)
             eDataType = GDT_Int16;
         else if (nc_datatype == NC_INT)
@@ -411,7 +412,7 @@ netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
         else if (nc_datatype == NC_DOUBLE)
             eDataType = GDT_Float64;
         else if (nc_datatype == NC_UBYTE)
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
         else if (nc_datatype == NC_USHORT)
             eDataType = GDT_UInt16;
         else if (nc_datatype == NC_UINT)
@@ -922,7 +923,7 @@ netCDFRasterBand::netCDFRasterBand(
 
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             nc_datatype = NC_BYTE;
             // NC_UBYTE (unsigned byte) is only available for NC4.
             if (poNCDFDS->eFormat == NCDF_FORMAT_NC4)
@@ -1055,7 +1056,7 @@ netCDFRasterBand::netCDFRasterBand(
     }
 
     // For Byte data add signed/unsigned info.
-    if (eDataType == GDT_Byte || eDataType == GDT_Int8)
+    if (eDataType == GDT_UInt8 || eDataType == GDT_Int8)
     {
         if (bDefineVar)
         {
@@ -1121,7 +1122,7 @@ netCDFRasterBand::~netCDFRasterBand()
 /*                          GetMetadata()                               */
 /************************************************************************/
 
-char **netCDFRasterBand::GetMetadata(const char *pszDomain)
+CSLConstList netCDFRasterBand::GetMetadata(const char *pszDomain)
 {
     if (!m_bCreateMetadataFromOtherVarsDone)
         CreateMetadataFromOtherVars();
@@ -1185,7 +1186,8 @@ CPLErr netCDFRasterBand::SetMetadataItem(const char *pszName,
 /*                          SetMetadata()                               */
 /************************************************************************/
 
-CPLErr netCDFRasterBand::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr netCDFRasterBand::SetMetadata(CSLConstList papszMD,
+                                     const char *pszDomain)
 {
     if (GetAccess() == GA_Update &&
         (pszDomain == nullptr || pszDomain[0] == '\0'))
@@ -1470,7 +1472,7 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
         cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
         int status;
-        if (eDataType == GDT_Byte)
+        if (eDataType == GDT_UInt8)
         {
             if (bSignedData)
             {
@@ -2355,7 +2357,7 @@ bool netCDFRasterBand::FetchNetcdfChunk(size_t xstart, size_t ystart,
 
     // Read data according to type.
     int status;
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         if (bSignedData)
         {
@@ -2723,7 +2725,7 @@ CPLErr netCDFRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     // Copy data according to type.
     int status = 0;
-    if (eDataType == GDT_Byte)
+    if (eDataType == GDT_UInt8)
     {
         if (bSignedData)
             status = nc_put_vara_schar(cdfid, nZId, start, edge,
@@ -2858,7 +2860,7 @@ netCDFDataset::~netCDFDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr netCDFDataset::Close()
+CPLErr netCDFDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -2976,7 +2978,7 @@ char **netCDFDataset::GetMetadataDomainList()
 /************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
-char **netCDFDataset::GetMetadata(const char *pszDomain)
+CSLConstList netCDFDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
         return papszSubDatasets;
@@ -3031,7 +3033,7 @@ CPLErr netCDFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
 /*                          SetMetadata()                               */
 /************************************************************************/
 
-CPLErr netCDFDataset::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr netCDFDataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 {
     if (GetAccess() == GA_Update &&
         (pszDomain == nullptr || pszDomain[0] == '\0'))
@@ -9484,7 +9486,7 @@ GDALDataset *netCDFDataset::Create(const char *pszFilename, int nXSize,
     // TODO should this only be done in Create()
     poDS->bSignedData = true;
     const char *pszValue = CSLFetchNameValueDef(papszOptions, "PIXELTYPE", "");
-    if (eType == GDT_Byte && !EQUAL(pszValue, "SIGNEDBYTE"))
+    if (eType == GDT_UInt8 && !EQUAL(pszValue, "SIGNEDBYTE"))
         poDS->bSignedData = false;
 
     // Add Conventions, GDAL info and history.
@@ -9771,7 +9773,7 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     // Copy GeoTransform and Projection.
 
     // Copy geolocation info.
-    char **papszGeolocationInfo = poSrcDS->GetMetadata("GEOLOCATION");
+    CSLConstList papszGeolocationInfo = poSrcDS->GetMetadata("GEOLOCATION");
     if (papszGeolocationInfo != nullptr)
         poDS->GDALPamDataset::SetMetadata(papszGeolocationInfo, "GEOLOCATION");
 
@@ -9942,7 +9944,7 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         GDALRasterBand *poDstBand = poDS->GetRasterBand(iBand);
 
         // Copy band data.
-        if (eDT == GDT_Byte)
+        if (eDT == GDT_UInt8)
         {
             CPLDebug("GDAL_netCDF", "GByte Band#%d", iBand);
             eErr = NCDFCopyBand<GByte>(poSrcBand, poDstBand, nXSize, nYSize,
@@ -10283,7 +10285,7 @@ class GDALnetCDFDriver final : public GDALDriver
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override;
 
-    char **GetMetadata(const char *pszDomain) override
+    CSLConstList GetMetadata(const char *pszDomain) override
     {
         std::lock_guard oLock(m_oMutex);
         InitializeDCAPVirtualIO();

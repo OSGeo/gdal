@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_CREATE_INCLUDED
 #define GDALALG_RASTER_CREATE_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_raster_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,26 +21,29 @@
 /*                     GDALRasterCreateAlgorithm                        */
 /************************************************************************/
 
-class GDALRasterCreateAlgorithm final : public GDALAlgorithm
+class GDALRasterCreateAlgorithm : public GDALRasterPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "create";
     static constexpr const char *DESCRIPTION = "Create a new raster dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_create.html";
 
-    GDALRasterCreateAlgorithm();
+    explicit GDALRasterCreateAlgorithm(bool standaloneStep = false) noexcept;
+
+    bool CanBeMiddleStep() const override
+    {
+        return true;
+    }
+
+    bool CanBeFirstStep() const override
+    {
+        return true;
+    }
 
   private:
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    std::string m_outputFormat{};
-    GDALArgDatasetValue m_inputDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    bool m_overwrite = false;
-    bool m_append = false;
     std::vector<int> m_size{};
     int m_bandCount = 1;
     std::string m_type = "Byte";
@@ -51,6 +54,22 @@ class GDALRasterCreateAlgorithm final : public GDALAlgorithm
     std::vector<double> m_burnValues{};
     bool m_copyOverviews = false;
     bool m_copyMetadata = false;
+};
+
+/************************************************************************/
+/*                  GDALRasterCreateAlgorithmStandalone                 */
+/************************************************************************/
+
+class GDALRasterCreateAlgorithmStandalone final
+    : public GDALRasterCreateAlgorithm
+{
+  public:
+    GDALRasterCreateAlgorithmStandalone()
+        : GDALRasterCreateAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALRasterCreateAlgorithmStandalone() override;
 };
 
 //! @endcond

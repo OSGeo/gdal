@@ -218,14 +218,14 @@ static CPLErr GDALMultiFilter(GDALRasterBandH hTargetBand,
         {
             eErr = GDALRasterIO(hTargetMaskBand, GF_Read, 0, nNewLine, nXSize,
                                 1, pabyTMaskBuf + nXSize * iBufOffset, nXSize,
-                                1, GDT_Byte, 0, 0);
+                                1, GDT_UInt8, 0, 0);
 
             if (eErr != CE_None)
                 break;
 
             eErr = GDALRasterIO(hFiltMaskBand, GF_Read, 0, nNewLine, nXSize, 1,
                                 pabyFMaskBuf + nXSize * iBufOffset, nXSize, 1,
-                                GDT_Byte, 0, 0);
+                                GDT_UInt8, 0, 0);
 
             if (eErr != CE_None)
                 break;
@@ -378,7 +378,7 @@ inline void QUAD_CHECK(double &dfQuadDist, float &fQuadValue, int target_x,
  * @param papszOptions additional name=value options in a string list.
  * <ul>
  * <li>TEMP_FILE_DRIVER=gdal_driver_name. For example MEM.</li>
- * <li>NODATA=value (starting with GDAL 2.4).
+ * <li>NODATA=value
  * Source pixels at that value will be ignored by the interpolator. Warning:
  * currently this will not be honored by smoothing passes.</li>
  * <li>INTERPOLATION=INV_DIST/NEAREST (GDAL >= 3.9). By default, pixels are
@@ -477,7 +477,7 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
         // when we fill pixels during the initial pass.
         const CPLString osMaskTmpFile = osTmpFile + "fill_mask_work.tif";
         poTmpMaskDS.reset(GDALDataset::FromHandle(
-            GDALCreate(hDriver, osMaskTmpFile, nXSize, nYSize, 1, GDT_Byte,
+            GDALCreate(hDriver, osMaskTmpFile, nXSize, nYSize, 1, GDT_UInt8,
                        aosWorkFileOptions.List())));
         if (poTmpMaskDS == nullptr)
         {
@@ -572,7 +572,7 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
     const CPLString osFiltMaskTmpFile = osTmpFile + "fill_filtmask_work.tif";
 
     auto poFiltMaskDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-        GDALCreate(hDriver, osFiltMaskTmpFile, nXSize, nYSize, 1, GDT_Byte,
+        GDALCreate(hDriver, osFiltMaskTmpFile, nXSize, nYSize, 1, GDT_UInt8,
                    aosWorkFileOptions.List())));
 
     if (poFiltMaskDS == nullptr)
@@ -637,7 +637,7 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
         /* --------------------------------------------------------------------
          */
         eErr = GDALRasterIO(hMaskBand, GF_Read, 0, iY, nXSize, 1, pabyMask,
-                            nXSize, 1, GDT_Byte, 0, 0);
+                            nXSize, 1, GDT_UInt8, 0, 0);
 
         if (eErr != CE_None)
             break;
@@ -722,7 +722,7 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
     for (int iY = nYSize - 1; iY >= 0 && eErr == CE_None; iY--)
     {
         eErr = GDALRasterIO(hMaskBand, GF_Read, 0, iY, nXSize, 1, pabyMask,
-                            nXSize, 1, GDT_Byte, 0, 0);
+                            nXSize, 1, GDT_UInt8, 0, 0);
 
         if (eErr != CE_None)
             break;
@@ -930,14 +930,14 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
             // Update (copy of) mask band when it has been provided by the
             // user
             eErr = GDALRasterIO(hMaskBand, GF_Write, 0, iY, nXSize, 1, pabyMask,
-                                nXSize, 1, GDT_Byte, 0, 0);
+                                nXSize, 1, GDT_UInt8, 0, 0);
 
             if (eErr != CE_None)
                 break;
         }
 
         eErr = GDALRasterIO(hFiltMaskBand, GF_Write, 0, iY, nXSize, 1,
-                            pabyFiltMask, nXSize, 1, GDT_Byte, 0, 0);
+                            pabyFiltMask, nXSize, 1, GDT_UInt8, 0, 0);
 
         if (eErr != CE_None)
             break;

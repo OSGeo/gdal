@@ -315,11 +315,11 @@ bool VSIOSSHandle::CanRestartOnError(const char *pszErrorMsg,
  See :ref:`/vsioss/ documentation <vsioss>`
  \endverbatim
 
- @since GDAL 2.3
  */
 void VSIInstallOSSFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsioss/", new cpl::VSIOSSFSHandler);
+    VSIFileManager::InstallHandler("/vsioss/",
+                                   std::make_shared<cpl::VSIOSSFSHandler>());
 }
 
 #endif /* HAVE_CURL */

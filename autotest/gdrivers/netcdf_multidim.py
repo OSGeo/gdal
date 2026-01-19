@@ -74,7 +74,7 @@ def test_netcdf_multidim_single_group():
     assert dims[1].GetSize() == 20
     assert not dims[1].GetIndexingVariable()
     assert var.GetDataType().GetClass() == gdal.GEDTC_NUMERIC
-    assert var.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+    assert var.GetDataType().GetNumericDataType() == gdal.GDT_UInt8
     assert var.GetAttribute("long_name")
     assert len(var.GetNoDataValueAsRaw()) == 1
     assert var.GetNoDataValueAsDouble() == 0.0
@@ -180,11 +180,11 @@ def test_netcdf_multidim_var_alldatatypes():
     assert rg
 
     expected_vars = [
-        ("char_var", gdal.GDT_Byte, (ord("x"), ord("y"))),
-        ("ubyte_var", gdal.GDT_Byte, (255, 254)),
+        ("char_var", gdal.GDT_UInt8, (ord("x"), ord("y"))),
+        ("ubyte_var", gdal.GDT_UInt8, (255, 254)),
         ("byte_var", gdal.GDT_Int8, (-128, -127)),
         ("byte_unsigned_false_var", gdal.GDT_Int8, (-128, -127)),
-        ("byte_unsigned_true_var", gdal.GDT_Byte, (128, 129)),
+        ("byte_unsigned_true_var", gdal.GDT_UInt8, (128, 129)),
         ("ushort_var", gdal.GDT_UInt16, (65534, 65533)),
         ("short_var", gdal.GDT_Int16, (-32768, -32767)),
         ("uint_var", gdal.GDT_UInt32, (4294967294, 4294967293)),
@@ -207,7 +207,7 @@ def test_netcdf_multidim_var_alldatatypes():
         assert var
         assert var.GetDataType().GetClass() == gdal.GEDTC_NUMERIC
         assert var.GetDataType().GetNumericDataType() == dt, var_name
-        if dt == gdal.GDT_Byte:
+        if dt == gdal.GDT_UInt8:
             assert struct.unpack("B" * len(val), var.Read()) == val
         if dt == gdal.GDT_Int8:
             assert struct.unpack("b" * len(val), var.Read()) == val
@@ -577,7 +577,8 @@ def test_netcdf_multidim_attr_alldatatypes():
     assert map_attrs["attr_two_doubles"].ReadAsDouble() == 1.25125
 
     assert (
-        map_attrs["attr_enum_ubyte"].GetDataType().GetNumericDataType() == gdal.GDT_Byte
+        map_attrs["attr_enum_ubyte"].GetDataType().GetNumericDataType()
+        == gdal.GDT_UInt8
     )
     assert map_attrs["attr_enum_ubyte"].Read() == 1
 
@@ -946,7 +947,7 @@ def test_netcdf_multidim_create_nc4():
         dims_from_non_netcdf(rg)
 
         for dt in (
-            gdal.GDT_Byte,
+            gdal.GDT_UInt8,
             gdal.GDT_Int8,
             gdal.GDT_Int16,
             gdal.GDT_UInt16,
@@ -1974,7 +1975,7 @@ def test_netcdf_multidim_get_mask():
         dim1 = rg.CreateDimension(
             "dim1", "unspecified type", "unspecified direction", 3
         )
-        bytedt = gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        bytedt = gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         ar = rg.CreateMDArray("myarray", [dim0, dim1], bytedt)
         ar.SetNoDataValueDouble(6)
         data = struct.pack("B" * 6, 1, 2, 3, 4, 5, 6)
@@ -2324,8 +2325,8 @@ def test_netcdf_multidim_open_char_2d_zero_dim():
 @pytest.mark.parametrize(
     "datatype,request_datatype",
     [
-        (gdal.GDT_Byte, gdal.GDT_Byte),
-        (gdal.GDT_Byte, gdal.GDT_UInt16),  # different data type
+        (gdal.GDT_UInt8, gdal.GDT_UInt8),
+        (gdal.GDT_UInt8, gdal.GDT_UInt16),  # different data type
         (gdal.GDT_UInt16, gdal.GDT_UInt16),
         (gdal.GDT_UInt16, gdal.GDT_UInt32),  # different data type
         (gdal.GDT_UInt32, gdal.GDT_UInt32),
@@ -2342,7 +2343,7 @@ def test_netcdf_multidim_read_transposed_optimized_last_2dims(
 ):
 
     map_gdal_datatype_to_array_letter = {
-        gdal.GDT_Byte: "B",
+        gdal.GDT_UInt8: "B",
         gdal.GDT_UInt16: "H",
         gdal.GDT_UInt32: "I",
         gdal.GDT_Float64: "d",
@@ -2416,7 +2417,7 @@ def test_netcdf_multidim_read_transposed_optimized_last_2dims(
 @pytest.mark.parametrize(
     "datatype,request_datatype",
     [
-        (gdal.GDT_Byte, gdal.GDT_Byte),
+        (gdal.GDT_UInt8, gdal.GDT_UInt8),
         (gdal.GDT_UInt16, gdal.GDT_UInt16),
         (gdal.GDT_UInt32, gdal.GDT_UInt32),
         (gdal.GDT_Float64, gdal.GDT_Float64),
@@ -2427,7 +2428,7 @@ def test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims(
 ):
 
     map_gdal_datatype_to_array_letter = {
-        gdal.GDT_Byte: "B",
+        gdal.GDT_UInt8: "B",
         gdal.GDT_UInt16: "H",
         gdal.GDT_UInt32: "I",
         gdal.GDT_Float64: "d",
@@ -2495,7 +2496,7 @@ def test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims(
 @pytest.mark.parametrize(
     "datatype,request_datatype",
     [
-        (gdal.GDT_Byte, gdal.GDT_Byte),
+        (gdal.GDT_UInt8, gdal.GDT_UInt8),
         (gdal.GDT_UInt16, gdal.GDT_UInt16),
         (gdal.GDT_UInt32, gdal.GDT_UInt32),
         (gdal.GDT_Float64, gdal.GDT_Float64),
@@ -2504,7 +2505,7 @@ def test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims(
 def test_netcdf_multidim_read_transposed_3d_general_case(datatype, request_datatype):
 
     map_gdal_datatype_to_array_letter = {
-        gdal.GDT_Byte: "B",
+        gdal.GDT_UInt8: "B",
         gdal.GDT_UInt16: "H",
         gdal.GDT_UInt32: "I",
         gdal.GDT_Float64: "d",
@@ -2583,7 +2584,7 @@ def test_netcdf_multidim_read_transposed_bigger_file():
         var = rg.CreateMDArray(
             "var",
             dims,
-            gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+            gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
             ["COMPRESS=DEFLATE", "BLOCKSIZE=1024,1024"],
         )
         data = b"\0" * (y_size * x_size)
@@ -2730,7 +2731,7 @@ def test_netcdf_read_missing_value_of_different_type_not_in_range():
     def create():
         ds = gdal.GetDriverByName("netCDF").CreateMultiDimensional(filename)
         rg = ds.GetRootGroup()
-        ar = rg.CreateMDArray("test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        ar = rg.CreateMDArray("test", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
         attr = ar.CreateAttribute(
             "missing_value", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
         )
@@ -2743,7 +2744,7 @@ def test_netcdf_read_missing_value_of_different_type_not_in_range():
         )
         rg = ds.GetRootGroup()
         var = rg.OpenMDArray("test")
-        assert var.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+        assert var.GetDataType().GetNumericDataType() == gdal.GDT_UInt8
         assert (
             var.GetAttribute("missing_value").GetDataType().GetNumericDataType()
             == gdal.GDT_Float64
@@ -2771,9 +2772,9 @@ def test_netcdf_multidim_update_missing_value():
     def create():
         ds = drv.CreateMultiDimensional(filename)
         rg = ds.GetRootGroup()
-        var = rg.CreateMDArray("var", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        var = rg.CreateMDArray("var", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
         attr = var.CreateAttribute(
-            "missing_value", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "missing_value", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         attr.Write(1)
 
@@ -2812,13 +2813,13 @@ def test_netcdf_multidim_update_missing_value_and_FillValue():
     def create():
         ds = drv.CreateMultiDimensional(filename)
         rg = ds.GetRootGroup()
-        var = rg.CreateMDArray("var", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        var = rg.CreateMDArray("var", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
         attr = var.CreateAttribute(
-            "missing_value", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "missing_value", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         attr.Write(1)
         attr = var.CreateAttribute(
-            "_FillValue", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "_FillValue", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         attr.Write(1)
 
@@ -3153,28 +3154,28 @@ def test_netcdf_multidim_rename_group():
         rg = ds.GetRootGroup()
         group = rg.CreateGroup("group")
         group_attr = group.CreateAttribute(
-            "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         rg.CreateGroup("other_group")
         dim = group.CreateDimension(
             "dim0", "unspecified type", "unspecified direction", 2
         )
         ar = group.CreateMDArray(
-            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         attr = ar.CreateAttribute(
-            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
 
         subgroup = group.CreateGroup("subgroup")
         subgroup_attr = subgroup.CreateAttribute(
-            "subgroup_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "subgroup_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         subgroup_ar = subgroup.CreateMDArray(
-            "subgroup_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "subgroup_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         subgroup_ar_attr = subgroup_ar.CreateAttribute(
-            "subgroup_ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "subgroup_ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
 
         # Cannot rename root group
@@ -3259,13 +3260,13 @@ def test_netcdf_multidim_rename_array():
         subg = rg.CreateGroup("group")
         dim = rg.CreateDimension("dim", None, None, 2)
         ar = subg.CreateMDArray(
-            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         subg.CreateMDArray(
-            "other_array", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "other_array", [dim], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
         attr = ar.CreateAttribute(
-            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
         )
 
         # Empty name
@@ -3330,7 +3331,7 @@ def test_netcdf_multidim_rename_attribute():
             "subg_other_attr", [], gdal.ExtendedDataType.CreateString()
         )
         assert subg_other_attr.Write("foo") == gdal.CE_None
-        ar = subg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        ar = subg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
         attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
         assert attr.Write("foo") == gdal.CE_None
         other_attr = ar.CreateAttribute(
@@ -3484,7 +3485,7 @@ def test_netcdf_multidim_delete_attribute():
         )
         assert subg_other_attr.Write("foo") == gdal.CE_None
 
-        ar = subg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        ar = subg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
         attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
         assert attr.Write("foo") == gdal.CE_None
         other_attr = ar.CreateAttribute(
@@ -4210,7 +4211,7 @@ def test_netcdf_multidim_enumeration():
     types = rg.GetDataTypes()
     assert (len(types)) == 1
     assert types[0].GetName() == "my_enum"
-    assert types[0].GetNumericDataType() == gdal.GDT_Byte
+    assert types[0].GetNumericDataType() == gdal.GDT_UInt8
     rat = types[0].GetRAT()
     assert rat
     assert rat.GetRowCount() == 3
@@ -4247,3 +4248,62 @@ def test_netcdf_multidim_enumeration():
         "structural_info": {"NC_FORMAT": "NETCDF4"},
     }
     gdaltest.validate_json(j, "gdalmdiminfo_output.schema.json")
+
+
+###############################################################################
+# Test GetRawBlockInfo()
+
+
+@pytest.mark.require_driver("HDF5")
+@gdaltest.enable_exceptions()
+def test_netcdf_multidim_getrawblockinfo():
+
+    if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
+        pytest.skip("libhdf5 < 1.10.5")
+
+    ds = gdal.OpenEx(
+        "data/hdf5/deflate.h5", gdal.OF_MULTIDIM_RASTER, allowed_drivers=["netCDF"]
+    )
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray("Band1")
+    block_size = var.GetBlockSize()
+    assert block_size == [1, 2]
+    y_size = var.GetDimensions()[0].GetSize()
+    x_size = var.GetDimensions()[1].GetSize()
+
+    info = var.GetRawBlockInfo([0, 0])
+    assert info.GetOffset() == 13908
+    assert info.GetSize() == 10
+    assert info.GetFilename() == "data/hdf5/deflate.h5"
+    assert info.GetInfo() == ["COMPRESSION=DEFLATE", "FILTER=SHUFFLE"]
+
+    import zlib
+
+    for y in range(y_size // block_size[0]):
+        for x in range(x_size // block_size[1]):
+            info = var.GetRawBlockInfo([y, x])
+            with open(info.GetFilename(), "rb") as f:
+                f.seek(info.GetOffset(), 0)
+                data = f.read(info.GetSize())
+                data = zlib.decompress(data)
+                assert data == var.Read(
+                    array_start_idx=[y * block_size[0], x * block_size[1]],
+                    count=var.GetBlockSize(),
+                ), (y, x)
+
+    with pytest.raises(
+        Exception, match="Invalid number of values in block_coordinates argument"
+    ):
+        var.GetRawBlockInfo([])
+
+    assert var.GetRawBlockInfo([0, x_size // block_size[1] - 1]) is not None
+    with pytest.raises(
+        Exception, match=r"invalid block coordinate \(10\) for dimension 1"
+    ):
+        var.GetRawBlockInfo([0, x_size // block_size[1]])
+
+    assert var.GetRawBlockInfo([y_size // block_size[0] - 1, 0]) is not None
+    with pytest.raises(
+        Exception, match=r"invalid block coordinate \(20\) for dimension 0"
+    ):
+        var.GetRawBlockInfo([y_size // block_size[0], 0])

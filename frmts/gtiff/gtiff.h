@@ -53,7 +53,7 @@ bool GTIFFUpdatePhotometric(const char *pszPhotometric,
                             const char *pszInterleave, int nBands,
                             uint16_t &nPhotometric, uint16_t &nPlanarConfig);
 
-void GTiffDatasetWriteRPCTag(TIFF *hTIFF, char **papszRPCMD);
+void GTiffDatasetWriteRPCTag(TIFF *hTIFF, CSLConstList papszRPCMD);
 char **GTiffDatasetReadRPCTag(TIFF *hTIFF);
 
 void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,

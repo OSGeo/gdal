@@ -63,7 +63,7 @@ def test_ehdr_3():
 def test_ehdr_4():
 
     drv = gdal.GetDriverByName("EHdr")
-    ds = drv.Create("tmp/test_4.bil", 200, 100, 1, gdal.GDT_Byte)
+    ds = drv.Create("tmp/test_4.bil", 200, 100, 1, gdal.GDT_UInt8)
 
     raw_data = b"".join(struct.pack("h", v) for v in range(200))
 
@@ -390,3 +390,15 @@ def test_ehdr_approx_stats_flag():
     ds = None
 
     gdal.GetDriverByName("EHDR").Delete(tmpfile)
+
+
+###############################################################################
+
+
+def test_ehdr_read_truncated():
+
+    ds = gdal.Open("data/ehdr/truncated.bin")
+    with pytest.raises(Exception, match="Failed to read block at offset"):
+        ds.GetRasterBand(1).Checksum()
+    with pytest.raises(Exception, match="Failed to read block at offset"):
+        ds.GetRasterBand(1).ReadRaster()

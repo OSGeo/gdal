@@ -28,6 +28,10 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
     The algorithm as implemented currently will only output meaningful results
     if the georeferencing is in a projected coordinate reference system.
 
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_viewshed`
+
 .. program:: gdal_viewshed
 
 .. include:: options/help_and_help_general.rst

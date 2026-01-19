@@ -250,8 +250,9 @@ int VSIPDFFileStream::lookChar()
 /*                                reset()                               */
 /************************************************************************/
 
-#if POPPLER_MAJOR_VERSION > 25 ||                                              \
-    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+#if POPPLER_MAJOR_VERSION > 25
+bool VSIPDFFileStream::rewind()
+#elif POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2
 bool VSIPDFFileStream::reset()
 #else
 void VSIPDFFileStream::reset()
@@ -272,8 +273,12 @@ void VSIPDFFileStream::reset()
 /*                         unfilteredReset()                            */
 /************************************************************************/
 
-#if POPPLER_MAJOR_VERSION > 25 ||                                              \
-    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 3)
+#if POPPLER_MAJOR_VERSION > 25
+bool VSIPDFFileStream::unfilteredRewind()
+{
+    return rewind();
+}
+#elif POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 3
 bool VSIPDFFileStream::unfilteredReset()
 {
     return reset();

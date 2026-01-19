@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
+
 import pytest
 
 from osgeo import gdal
@@ -126,6 +128,28 @@ def test_gdalalg_info_i_do_not_exist_format():
     info["format"] = "text"
     with pytest.raises(Exception, match="/i/do_not/exist"):
         info.Run()
+
+
+def test_gdalalg_info_command_line():
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(f"{gdal_path} info ../gcore/data/byte.tif")
+    assert out.startswith("Driver: GTiff/GeoTIFF")
+
+    out = gdaltest.runexternal(f"{gdal_path} info --of json ../gcore/data/byte.tif")
+    assert json.loads(out)["driverShortName"] == "GTiff"
+
+    out = gdaltest.runexternal(f"{gdal_path} info ../ogr/data/poly.shp")
+    assert out.startswith("INFO: Open of")
+
+    out = gdaltest.runexternal(f"{gdal_path} info --of json ../ogr/data/poly.shp")
+    assert json.loads(out)["driverShortName"] == "ESRI Shapefile"
 
 
 def test_gdalalg_info_help():

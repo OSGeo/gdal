@@ -124,7 +124,8 @@ static char *HFAGetDictionary(HFAHandle hHFA)
     char *pszDictionary = static_cast<char *>(CPLMalloc(nDictMax));
     int nDictSize = 0;
 
-    if (VSIFSeekL(hHFA->fp, hHFA->nDictionaryPos, SEEK_SET) < 0)
+    if (VSIFSeekL(hHFA->fp, static_cast<vsi_l_offset>(hHFA->nDictionaryPos),
+                  SEEK_SET) < 0)
     {
         pszDictionary[nDictSize] = '\0';
         return pszDictionary;
@@ -212,7 +213,7 @@ HFAHandle HFAOpen(const char *pszFilename, const char *pszAccess)
     HFAStandard(4, &nHeaderPos);
 
     // Read the header.
-    bRet &= VSIFSeekL(fp, nHeaderPos, SEEK_SET) >= 0;
+    bRet &= VSIFSeekL(fp, static_cast<vsi_l_offset>(nHeaderPos), SEEK_SET) >= 0;
 
     bRet &= VSIFReadL(&(psInfo->nVersion), sizeof(GInt32), 1, fp) > 0;
     HFAStandard(4, &(psInfo->nVersion));
@@ -1914,11 +1915,9 @@ HFAHandle HFACreateLL(const char *pszFilename)
 /*      failure.                                                        */
 /************************************************************************/
 
-GUInt32 HFAAllocateSpace(HFAInfo_t *psInfo, GUInt32 nBytes)
+vsi_l_offset HFAAllocateSpace(HFAInfo_t *psInfo, GUInt32 nBytes)
 
 {
-    // TODO(schwehr): Check if this will wrap over 2GB limit.
-
     psInfo->nEndOfFile += nBytes;
     return psInfo->nEndOfFile - nBytes;
 }
@@ -1975,13 +1974,15 @@ CPLErr HFAFlush(HFAHandle hHFA)
         GUInt32 nOffset = hHFA->poRoot->GetFilePos();
         hHFA->nRootPos = nOffset;
         HFAStandard(4, &nOffset);
-        bRet &= VSIFSeekL(hHFA->fp, nHeaderPos + 8, SEEK_SET) >= 0;
+        bRet &= VSIFSeekL(hHFA->fp, static_cast<vsi_l_offset>(nHeaderPos) + 8,
+                          SEEK_SET) >= 0;
         bRet &= VSIFWriteL(&nOffset, 4, 1, hHFA->fp) > 0;
 
         nOffset = nNewDictionaryPos;
         hHFA->nDictionaryPos = nNewDictionaryPos;
         HFAStandard(4, &nOffset);
-        bRet &= VSIFSeekL(hHFA->fp, nHeaderPos + 14, SEEK_SET) >= 0;
+        bRet &= VSIFSeekL(hHFA->fp, static_cast<vsi_l_offset>(nHeaderPos) + 14,
+                          SEEK_SET) >= 0;
         bRet &= VSIFWriteL(&nOffset, 4, 1, hHFA->fp) > 0;
     }
 
@@ -2096,7 +2097,10 @@ int HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
             }
             else
             {
-                nValue = HFAAllocateSpace(psInfo, nBytesPerBlock);
+                const auto nValue64 = HFAAllocateSpace(psInfo, nBytesPerBlock);
+                if (nValue64 > UINT32_MAX)
+                    return FALSE;
+                nValue = static_cast<GUInt32>(nValue64);
             }
             HFAStandard(4, &nValue);
             memcpy(pabyData + nOffset + 2, &nValue, 4);
@@ -2214,11 +2218,13 @@ int HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
         HFAEntry::New(psInfo, "Ehfa_Layer", "Ehfa_Layer", poEimg_Layer);
     poEhfa_Layer->MakeData();
     poEhfa_Layer->SetPosition();
-    const GUInt32 nLDict =
+    const auto nLDict =
         HFAAllocateSpace(psInfo, static_cast<GUInt32>(strlen(szLDict) + 1));
+    if (nLDict > static_cast<unsigned>(INT_MAX))
+        return FALSE;
 
     poEhfa_Layer->SetStringField("type", "raster");
-    poEhfa_Layer->SetIntField("dictionaryPtr", nLDict);
+    poEhfa_Layer->SetIntField("dictionaryPtr", static_cast<int>(nLDict));
 
     bool bRet = VSIFSeekL(psInfo->fp, nLDict, SEEK_SET) >= 0;
     bRet &= VSIFWriteL((void *)szLDict, strlen(szLDict) + 1, 1, psInfo->fp) > 0;
@@ -2472,7 +2478,8 @@ char **HFAGetMetadata(HFAHandle hHFA, int nBand)
                 continue;
             }
 
-            if (VSIFSeekL(hHFA->fp, columnDataPtr, SEEK_SET) != 0)
+            if (VSIFSeekL(hHFA->fp, static_cast<vsi_l_offset>(columnDataPtr),
+                          SEEK_SET) != 0)
             {
                 CPLFree(pszMDValue);
                 continue;
@@ -2567,22 +2574,26 @@ static CPLErr HFASetGDALMetadata(HFAHandle hHFA, int nBand, char **papszMD)
             poEdsc_Column =
                 HFAEntry::New(hHFA, pszKey, "Edsc_Column", poEdsc_Table);
 
+        CPLFree(pszKey);
+
         poEdsc_Column->SetIntField("numRows", 1);
         poEdsc_Column->SetStringField("dataType", "string");
         poEdsc_Column->SetIntField("maxNumChars",
                                    static_cast<GUInt32>(strlen(pszValue) + 1));
 
         // Write the data out.
-        const int nOffset =
+        const auto nOffset =
             HFAAllocateSpace(hHFA, static_cast<GUInt32>(strlen(pszValue) + 1));
+        if (nOffset > static_cast<unsigned>(INT_MAX))
+        {
+            return CE_Failure;
+        }
 
-        poEdsc_Column->SetIntField("columnDataPtr", nOffset);
+        poEdsc_Column->SetIntField("columnDataPtr", static_cast<int>(nOffset));
 
         bRet &= VSIFSeekL(hHFA->fp, nOffset, SEEK_SET) >= 0;
         bRet &=
             VSIFWriteL((void *)pszValue, strlen(pszValue) + 1, 1, hHFA->fp) > 0;
-
-        CPLFree(pszKey);
     }
 
     return bRet ? CE_None : CE_Failure;
@@ -2592,7 +2603,7 @@ static CPLErr HFASetGDALMetadata(HFAHandle hHFA, int nBand, char **papszMD)
 /*                           HFASetMetadata()                           */
 /************************************************************************/
 
-CPLErr HFASetMetadata(HFAHandle hHFA, int nBand, char **papszMD)
+CPLErr HFASetMetadata(HFAHandle hHFA, int nBand, CSLConstList papszMD)
 
 {
     char **papszGDALMD = nullptr;
@@ -2765,7 +2776,12 @@ CPLErr HFASetMetadata(HFAHandle hHFA, int nBand, char **papszMD)
 
             poHisto->SetIntField("numRows", nNumBins);
             // Allocate space for the bin values.
-            GUInt32 nOffset = HFAAllocateSpace(hHFA, nNumBins * 8);
+            const auto nOffset64 = HFAAllocateSpace(hHFA, nNumBins * 8);
+            if (nOffset64 >= static_cast<unsigned>(INT_MAX))
+            {
+                return CE_Failure;
+            }
+            const int nOffset = static_cast<int>(nOffset64);
             poHisto->SetIntField("columnDataPtr", nOffset);
             poHisto->SetStringField("dataType", "real");
             poHisto->SetIntField("maxNumChars", 0);
@@ -2778,7 +2794,9 @@ CPLErr HFASetMetadata(HFAHandle hHFA, int nBand, char **papszMD)
                 {
                     *pszEnd = 0;
                     bRet &=
-                        VSIFSeekL(hHFA->fp, nOffset + 8 * nBin, SEEK_SET) >= 0;
+                        VSIFSeekL(hHFA->fp,
+                                  nOffset + 8 * static_cast<vsi_l_offset>(nBin),
+                                  SEEK_SET) >= 0;
                     double nValue = CPLAtof(pszWork);
                     HFAStandard(8, &nValue);
 

@@ -30,5 +30,5 @@ def test_nsidcbin_1(filename="data/nsidcbin/nt_20220409_f18_nrt_s.bin"):
     ds = gdal.Open(filename)
     band = ds.GetRasterBand(1)
     assert band.XSize == 316
-    assert band.DataType == gdal.GDT_Byte
+    assert band.DataType == gdal.GDT_UInt8
     assert int.from_bytes(band.ReadRaster(60, 44, 1, 1), "little") == 27

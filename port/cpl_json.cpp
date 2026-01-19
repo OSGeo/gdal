@@ -109,7 +109,6 @@ CPLJSONDocument &CPLJSONDocument::operator=(CPLJSONDocument &&other)
  * @return         true on success. If error occurred it can be received using
  * CPLGetLastErrorMsg method.
  *
- * @since GDAL 2.3
  */
 bool CPLJSONDocument::Save(const std::string &osPath) const
 {
@@ -134,7 +133,6 @@ bool CPLJSONDocument::Save(const std::string &osPath) const
  * Return the json document as a serialized string.
  * @return         serialized document.
  *
- * @since GDAL 2.3
  */
 std::string CPLJSONDocument::SaveAsString() const
 {
@@ -157,7 +155,6 @@ const CPLJSONObject CPLJSONDocument::GetRoot() const
  * Get json document root object
  * @return CPLJSONObject class instance
  *
- * @since GDAL 2.3
  */
 CPLJSONObject CPLJSONDocument::GetRoot()
 {
@@ -195,7 +192,6 @@ void CPLJSONDocument::SetRoot(const CPLJSONObject &oRoot)
  * @return         true on success. If error occurred it can be received using
  * CPLGetLastErrorMsg method.
  *
- * @since GDAL 2.3
  */
 bool CPLJSONDocument::Load(const std::string &osPath)
 {
@@ -227,7 +223,6 @@ bool CPLJSONDocument::Load(const std::string &osPath)
  * @return          true on success. If error occurred it can be received using
  * CPLGetLastErrorMsg method.
  *
- * @since GDAL 2.3
  */
 bool CPLJSONDocument::LoadMemory(const GByte *pabyData, int nLength)
 {
@@ -275,7 +270,6 @@ bool CPLJSONDocument::LoadMemory(const GByte *pabyData, int nLength)
  * @return          true on success. If error occurred it can be received using
  * CPLGetLastErrorMsg method.
  *
- * @since GDAL 2.3
  */
 bool CPLJSONDocument::LoadMemory(const std::string &osStr)
 {
@@ -294,7 +288,6 @@ bool CPLJSONDocument::LoadMemory(const std::string &osStr)
  * @return              true on success. If error occurred it can be received
  * using CPLGetLastErrorMsg method.
  *
- * @since GDAL 2.3
  */
 bool CPLJSONDocument::LoadChunks(const std::string &osPath, size_t nChunkSize,
                                  GDALProgressFunc pfnProgress,
@@ -411,7 +404,6 @@ static size_t CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
  * @return              true on success. If error occurred it can be received
  * using CPLGetLastErrorMsg method.
  *
- * @since GDAL 2.3
  */
 
 #ifdef HAVE_CURL
@@ -624,7 +616,6 @@ CPLJSONObject &CPLJSONObject::operator=(CPLJSONArray &&other)
  * @param osName Key name.
  * @param osValue String value.
  *
- * @since GDAL 2.3
  */
 void CPLJSONObject::Add(const std::string &osName, const std::string &osValue)
 {
@@ -646,7 +637,6 @@ void CPLJSONObject::Add(const std::string &osName, const std::string &osValue)
  * @param osName Key name.
  * @param pszValue String value.
  *
- * @since GDAL 2.3
  */
 void CPLJSONObject::Add(const std::string &osName, const char *pszValue)
 {
@@ -680,7 +670,6 @@ CPL_C_END
  * @param osName  Key name.
  * @param dfValue Double value.
  *
- * @since GDAL 2.3
  */
 void CPLJSONObject::Add(const std::string &osName, double dfValue)
 {
@@ -703,7 +692,6 @@ void CPLJSONObject::Add(const std::string &osName, double dfValue)
  * @param osName  Key name.
  * @param nValue Integer value.
  *
- * @since GDAL 2.3
  */
 void CPLJSONObject::Add(const std::string &osName, int nValue)
 {
@@ -725,7 +713,6 @@ void CPLJSONObject::Add(const std::string &osName, int nValue)
  * @param osName  Key name.
  * @param nValue Long value.
  *
- * @since GDAL 2.3
  */
 void CPLJSONObject::Add(const std::string &osName, GInt64 nValue)
 {
@@ -770,7 +757,6 @@ void CPLJSONObject::Add(const std::string &osName, uint64_t nValue)
  * @param osName  Key name.
  * @param oValue   Array value.
  *
- * @since GDAL 2.3
  */
 void CPLJSONObject::Add(const std::string &osName, const CPLJSONArray &oValue)
 {
@@ -792,7 +778,6 @@ void CPLJSONObject::Add(const std::string &osName, const CPLJSONArray &oValue)
  * @param osName  Key name.
  * @param oValue   Json object value.
  *
- * @since GDAL 2.3
  */
 void CPLJSONObject::Add(const std::string &osName, const CPLJSONObject &oValue)
 {
@@ -842,7 +827,6 @@ void CPLJSONObject::AddNoSplitName(const std::string &osName,
  * @param osName  Key name.
  * @param bValue   Boolean value.
  *
- * @since GDAL 2.3
  */
 void CPLJSONObject::Add(const std::string &osName, bool bValue)
 {
@@ -863,7 +847,6 @@ void CPLJSONObject::Add(const std::string &osName, bool bValue)
  * Add new key - null pair to json object.
  * @param osName  Key name.
  *
- * @since GDAL 2.3
  */
 void CPLJSONObject::AddNull(const std::string &osName)
 {
@@ -883,7 +866,6 @@ void CPLJSONObject::AddNull(const std::string &osName)
  * Change value by key.
  * @param osName  Key name.
  *
- * @since GDAL 2.3
  */
 void CPLJSONObject::SetNull(const std::string &osName)
 {
@@ -896,7 +878,6 @@ void CPLJSONObject::SetNull(const std::string &osName)
  * @param  osName Key name.
  * @return         Json array object.
  *
- * @since GDAL 2.3
  */
 CPLJSONArray CPLJSONObject::GetArray(const std::string &osName) const
 {
@@ -922,7 +903,6 @@ CPLJSONArray CPLJSONObject::GetArray(const std::string &osName) const
  * @param  osName Key name.
  * @return         Json object.
  *
- * @since GDAL 2.3
  */
 CPLJSONObject CPLJSONObject::GetObj(const std::string &osName) const
 {
@@ -945,7 +925,6 @@ CPLJSONObject CPLJSONObject::GetObj(const std::string &osName) const
  * @param  osName Key name.
  * @return         Json object.
  *
- * @since GDAL 2.3
  */
 CPLJSONObject CPLJSONObject::operator[](const std::string &osName) const
 {
@@ -973,7 +952,6 @@ CPLJSONObject CPLJSONObject::operator[](const std::string &osName)
  * Delete json object by key.
  * @param  osName Key name.
  *
- * @since GDAL 2.3
  */
 void CPLJSONObject::Delete(const std::string &osName)
 {
@@ -1010,7 +988,6 @@ void CPLJSONObject::DeleteNoSplitName(const std::string &osName)
  * @param  osDefault Default value.
  * @return            String value.
  *
- * @since GDAL 2.3
  */
 std::string CPLJSONObject::GetString(const std::string &osName,
                                      const std::string &osDefault) const
@@ -1026,7 +1003,6 @@ std::string CPLJSONObject::GetString(const std::string &osName,
  * @param  osDefault Default value.
  * @return            String value.
  *
- * @since GDAL 2.3
  */
 std::string CPLJSONObject::ToString(const std::string &osDefault) const
 {
@@ -1051,7 +1027,6 @@ std::string CPLJSONObject::ToString(const std::string &osDefault) const
  * @param  dfDefault  Default value.
  * @return            Double value.
  *
- * @since GDAL 2.3
  */
 double CPLJSONObject::GetDouble(const std::string &osName,
                                 double dfDefault) const
@@ -1067,7 +1042,6 @@ double CPLJSONObject::GetDouble(const std::string &osName,
  * @param  dfDefault  Default value.
  * @return            Double value.
  *
- * @since GDAL 2.3
  */
 double CPLJSONObject::ToDouble(double dfDefault) const
 {
@@ -1085,7 +1059,6 @@ double CPLJSONObject::ToDouble(double dfDefault) const
  * @param  nDefault   Default value.
  * @return            Integer value.
  *
- * @since GDAL 2.3
  */
 int CPLJSONObject::GetInteger(const std::string &osName, int nDefault) const
 {
@@ -1100,7 +1073,6 @@ int CPLJSONObject::GetInteger(const std::string &osName, int nDefault) const
  * @param  nDefault   Default value.
  * @return            Integer value.
  *
- * @since GDAL 2.3
  */
 int CPLJSONObject::ToInteger(int nDefault) const
 {
@@ -1118,7 +1090,6 @@ int CPLJSONObject::ToInteger(int nDefault) const
  * @param  nDefault   Default value.
  * @return            Long value.
  *
- * @since GDAL 2.3
  */
 GInt64 CPLJSONObject::GetLong(const std::string &osName, GInt64 nDefault) const
 {
@@ -1133,7 +1104,6 @@ GInt64 CPLJSONObject::GetLong(const std::string &osName, GInt64 nDefault) const
  * @param  nDefault   Default value.
  * @return            Long value.
  *
- * @since GDAL 2.3
  */
 GInt64 CPLJSONObject::ToLong(GInt64 nDefault) const
 {
@@ -1152,7 +1122,6 @@ GInt64 CPLJSONObject::ToLong(GInt64 nDefault) const
  * @param  bDefault   Default value.
  * @return            Boolean value.
  *
- * @since GDAL 2.3
  */
 bool CPLJSONObject::GetBool(const std::string &osName, bool bDefault) const
 {
@@ -1170,7 +1139,6 @@ bool CPLJSONObject::GetBool(const std::string &osName, bool bDefault) const
  *
  * @return Array of CPLJSONObject class instance.
  *
- * @since GDAL 2.3
  */
 std::vector<CPLJSONObject> CPLJSONObject::GetChildren() const
 {
@@ -1201,7 +1169,6 @@ std::vector<CPLJSONObject> CPLJSONObject::GetChildren() const
  * @param  bDefault   Default value.
  * @return            Boolean value.
  *
- * @since GDAL 2.3
  */
 bool CPLJSONObject::ToBool(bool bDefault) const
 {
@@ -1217,7 +1184,6 @@ bool CPLJSONObject::ToBool(bool bDefault) const
  * Get value.
  * @return            Array
  *
- * @since GDAL 2.3
  */
 CPLJSONArray CPLJSONObject::ToArray() const
 {
@@ -1232,7 +1198,6 @@ CPLJSONArray CPLJSONObject::ToArray() const
  * @param  eFormat Format type,
  * @return         A string in JSON format.
  *
- * @since GDAL 2.3
  */
 std::string CPLJSONObject::Format(PrettyFormat eFormat) const
 {
@@ -1322,7 +1287,6 @@ CPLJSONObject CPLJSONObject::GetObjectByPath(const std::string &osPath,
  * Get json object type.
  * @return Json object type.
  *
- * @since GDAL 2.3
  */
 CPLJSONObject::Type CPLJSONObject::GetType() const
 {
@@ -1365,7 +1329,6 @@ CPLJSONObject::Type CPLJSONObject::GetType() const
  * Check if json object valid.
  * @return true if json object valid.
  *
- * @since GDAL 2.3
  */
 bool CPLJSONObject::IsValid() const
 {
@@ -1376,7 +1339,6 @@ bool CPLJSONObject::IsValid() const
  * Decrement reference counter and make pointer NULL.
  * A json object will become invalid.
  *
- * @since GDAL 2.3
  */
 void CPLJSONObject::Deinit()
 {
@@ -1419,7 +1381,6 @@ CPLJSONArray::CPLJSONArray(const CPLJSONObject &other) : CPLJSONObject(other)
  * Get array size.
  * @return Array size.
  *
- * @since GDAL 2.3
  */
 int CPLJSONArray::Size() const
 {
@@ -1444,7 +1405,6 @@ void CPLJSONArray::AddNull()
  * Add json object to array.
  * @param oValue Json array.
  *
- * @since GDAL 2.3
  */
 void CPLJSONArray::Add(const CPLJSONObject &oValue)
 {
@@ -1458,7 +1418,6 @@ void CPLJSONArray::Add(const CPLJSONObject &oValue)
  * Add value to array
  * @param osValue Value to add.
  *
- * @since GDAL 2.3
  */
 void CPLJSONArray::Add(const std::string &osValue)
 {
@@ -1471,7 +1430,6 @@ void CPLJSONArray::Add(const std::string &osValue)
  * Add value to array
  * @param pszValue Value to add.
  *
- * @since GDAL 2.3
  */
 void CPLJSONArray::Add(const char *pszValue)
 {
@@ -1486,7 +1444,6 @@ void CPLJSONArray::Add(const char *pszValue)
  * Add value to array
  * @param dfValue Value to add.
  *
- * @since GDAL 2.3
  */
 void CPLJSONArray::Add(double dfValue)
 {
@@ -1499,7 +1456,6 @@ void CPLJSONArray::Add(double dfValue)
  * Add value to array
  * @param nValue Value to add.
  *
- * @since GDAL 2.3
  */
 void CPLJSONArray::Add(int nValue)
 {
@@ -1512,7 +1468,6 @@ void CPLJSONArray::Add(int nValue)
  * Add value to array
  * @param nValue Value to add.
  *
- * @since GDAL 2.3
  */
 void CPLJSONArray::Add(GInt64 nValue)
 {
@@ -1540,7 +1495,6 @@ void CPLJSONArray::Add(uint64_t nValue)
  * Add value to array
  * @param bValue Value to add.
  *
- * @since GDAL 2.3
  */
 void CPLJSONArray::Add(bool bValue)
 {
@@ -1554,7 +1508,6 @@ void CPLJSONArray::Add(bool bValue)
  * @param  nIndex Item index.
  * @return        Json object.
  *
- * @since GDAL 2.3
  */
 CPLJSONObject CPLJSONArray::operator[](int nIndex)
 {
@@ -1568,7 +1521,6 @@ CPLJSONObject CPLJSONArray::operator[](int nIndex)
  * @param  nIndex Item index.
  * @return        Json object.
  *
- * @since GDAL 2.3
  */
 const CPLJSONObject CPLJSONArray::operator[](int nIndex) const
 {

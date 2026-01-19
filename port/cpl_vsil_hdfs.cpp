@@ -461,7 +461,6 @@ int VSIHdfsFilesystemHandler::Rename(const char *, const char *)
 /**
  * \brief Install /vsihdfs/ file system handler (requires JVM and HDFS support)
  *
- * @since GDAL 2.4.0
  */
 void VSIInstallHdfsHandler()
 {
@@ -478,7 +477,6 @@ void VSIInstallHdfsHandler()
 /**
  * \brief Install /vsihdfs/ file system handler (non-functional stub)
  *
- * @since GDAL 2.4.0
  */
 void VSIInstallHdfsHandler(void)
 {

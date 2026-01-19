@@ -14,6 +14,8 @@
 #include "cpl_string.h"
 #include "ogr_pds.h"
 
+#include <limits>
+
 using namespace OGRPDS;
 
 /************************************************************************/
@@ -121,7 +123,7 @@ bool OGRPDSDataSource::LoadTable(const char *pszFilename, int nRecordSize,
                                  CPLString osTableID)
 {
     CPLString osTableFilename;
-    int nStartBytes = 0;
+    vsi_l_offset nStartBytes = 0;
 
     CPLString osTableLink = "^";
     osTableLink += osTableID;
@@ -131,16 +133,18 @@ bool OGRPDSDataSource::LoadTable(const char *pszFilename, int nRecordSize,
     {
         osTableFilename = GetKeywordSub(osTableLink, 1, "");
         CPLString osStartRecord = GetKeywordSub(osTableLink, 2, "");
-        nStartBytes = atoi(osStartRecord.c_str());
-        if (nStartBytes <= 0 ||
-            ((nRecordSize > 0 && nStartBytes > INT_MAX / nRecordSize)))
+        nStartBytes = std::strtoull(osStartRecord.c_str(), nullptr, 10);
+        if (nStartBytes == 0 ||
+            (nRecordSize > 0 &&
+             nStartBytes > std::numeric_limits<vsi_l_offset>::max() /
+                               static_cast<size_t>(nRecordSize)))
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Invalid StartBytes value");
             return false;
         }
         nStartBytes--;
         nStartBytes *= nRecordSize;
-        if (osTableFilename.empty() || osStartRecord.empty() || nStartBytes < 0)
+        if (osTableFilename.empty() || osStartRecord.empty())
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Cannot parse %s line",
                      osTableLink.c_str());
@@ -165,8 +169,8 @@ bool OGRPDSDataSource::LoadTable(const char *pszFilename, int nRecordSize,
         if (!osTableFilename.empty() && osTableFilename[0] >= '0' &&
             osTableFilename[0] <= '9')
         {
-            nStartBytes = atoi(osTableFilename.c_str());
-            if (nStartBytes <= 1)
+            nStartBytes = std::strtoull(osTableFilename.c_str(), nullptr, 10);
+            if (nStartBytes == 0)
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Cannot parse %s line",
                          osTableFilename.c_str());
@@ -175,7 +179,9 @@ bool OGRPDSDataSource::LoadTable(const char *pszFilename, int nRecordSize,
             nStartBytes = nStartBytes - 1;
             if (strstr(osTableFilename.c_str(), "<BYTES>") == nullptr)
             {
-                if (nRecordSize > 0 && nStartBytes > INT_MAX / nRecordSize)
+                if (nRecordSize > 0 &&
+                    nStartBytes > std::numeric_limits<vsi_l_offset>::max() /
+                                      static_cast<size_t>(nRecordSize))
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Too big StartBytes value");

@@ -14,5 +14,5 @@ etc.). Only people with the github handles from the [Project Steering Committee]
 (or people that they would explicitly allow) are allowed to ask you privately for
 such dangerous reproducers if that was needed.
 
-Note also that we have [listed a number of potential security issues](https://trac.osgeo.org/gdal/wiki/SecurityIssues)
-depending on how you use GDAL (caution: the linked page is somewhat outdated)
+Note also that we have [listed a number of potential security issues](https://gdal.org/en/stable/user/security.html)
+depending on how you use GDAL

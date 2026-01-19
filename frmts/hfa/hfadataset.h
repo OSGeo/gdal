@@ -93,7 +93,7 @@ class HFADataset final : public GDALPamDataset
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
 
-    CPLErr SetMetadata(char **, const char * = "") override;
+    CPLErr SetMetadata(CSLConstList, const char * = "") override;
     CPLErr SetMetadataItem(const char *, const char *,
                            const char * = "") override;
 
@@ -159,7 +159,7 @@ class HFARasterBand final : public GDALPamRasterBand
     double GetNoDataValue(int *pbSuccess = nullptr) override;
     CPLErr SetNoDataValue(double dfValue) override;
 
-    CPLErr SetMetadata(char **, const char * = "") override;
+    CPLErr SetMetadata(CSLConstList, const char * = "") override;
     CPLErr SetMetadataItem(const char *, const char *,
                            const char * = "") override;
     virtual CPLErr BuildOverviews(const char *, int, const int *,
@@ -198,6 +198,7 @@ class HFARasterAttributeTable final : public GDALRasterAttributeTable
 
     std::vector<HFAAttributeField> aoFields;
     int nRows;
+    mutable std::vector<GByte> m_abyWKB{};
 
     bool bLinearBinning;
     double dfRow0Min;
@@ -250,18 +251,32 @@ class HFARasterAttributeTable final : public GDALRasterAttributeTable
     const char *GetValueAsString(int iRow, int iField) const override;
     int GetValueAsInt(int iRow, int iField) const override;
     double GetValueAsDouble(int iRow, int iField) const override;
+    bool GetValueAsBoolean(int iRow, int iField) const override;
+    GDALRATDateTime GetValueAsDateTime(int iRow, int iField) const override;
+    const GByte *GetValueAsWKBGeometry(int iRow, int iField,
+                                       size_t &nWKBSize) const override;
 
-    virtual CPLErr SetValue(int iRow, int iField,
-                            const char *pszValue) override;
+    CPLErr SetValue(int iRow, int iField, const char *pszValue) override;
     CPLErr SetValue(int iRow, int iField, double dfValue) override;
     CPLErr SetValue(int iRow, int iField, int nValue) override;
+    CPLErr SetValue(int iRow, int iField, bool bValue) override;
+    CPLErr SetValue(int iRow, int iField,
+                    const GDALRATDateTime &sDateTime) override;
+    CPLErr SetValue(int iRow, int iField, const void *pabyWKB,
+                    size_t nWKBSize) override;
 
-    virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
-                            int iLength, double *pdfData) override;
-    virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
-                            int iLength, int *pnData) override;
-    virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
-                            int iLength, char **papszStrList) override;
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    double *pdfData) override;
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    int *pnData) override;
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    char **papszStrList) override;
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    bool *pbData) override;
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    GDALRATDateTime *psDateTime) override;
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    GByte **ppabyWKB, size_t *pnWKBSize) override;
 
     int ChangesAreWrittenToFile() override;
     void SetRowCount(int iCount) override;

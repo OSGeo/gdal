@@ -144,6 +144,8 @@ if (WIN32)
   target_sources(cpl PRIVATE cpl_vsil_win32.cpp)
 else ()
   target_sources(cpl PRIVATE cpl_vsil_unix_stdio_64.cpp)
+  # to make sure that the _FILE_OFFSET_BITS=64 define is set before inclusion of system headers
+  set_property(SOURCE cpl_vsil_unix_stdio_64.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
   if ("${CMAKE_SYSTEM}" MATCHES "Linux")
       check_include_file("linux/fs.h" HAVE_LINUX_FS_H)
       if (NOT HAVE_LINUX_FS_H)

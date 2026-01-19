@@ -38,4 +38,4 @@ Examples
 
    .. code-block:: console
 
-       $ gdal vsi list -lR --of=text /vsis3/bucket
+       $ gdal vsi list -lR /vsis3/bucket

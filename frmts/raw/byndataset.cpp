@@ -119,7 +119,7 @@ BYNDataset::~BYNDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr BYNDataset::Close()
+CPLErr BYNDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

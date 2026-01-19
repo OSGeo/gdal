@@ -770,8 +770,8 @@ class VSICryptFileHandle final : public VSIVirtualHandle
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;
-    size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
-    size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    size_t Read(void *pBuffer, size_t nBytes) override;
+    size_t Write(const void *pBuffer, size_t nBytes) override;
     int Eof() override;
     int Error() override;
     void ClearErr() override;
@@ -1061,9 +1061,9 @@ vsi_l_offset VSICryptFileHandle::Tell()
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSICryptFileHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
+size_t VSICryptFileHandle::Read(void *pBuffer, size_t const nBytes)
 {
-    size_t nToRead = nSize * nMemb;
+    size_t nToRead = nBytes;
     GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
 
 #ifdef VERBOSE_VSICRYPT
@@ -1137,10 +1137,10 @@ size_t VSICryptFileHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
         nWBSize = poHeader->nSectorSize;
     }
 
-    int nRet = static_cast<int>((nSize * nMemb - nToRead) / nSize);
+    size_t nRet = nBytes - nToRead;
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "Read ret = %d (nMemb = %d)", nRet,
-             static_cast<int>(nMemb));
+    CPLDebug("VSICRYPT", "Read ret = %d (nBytes = %d)", static_cast<int>(nRet),
+             static_cast<int>(nBytes));
 #endif
     return nRet;
 }
@@ -1149,10 +1149,9 @@ size_t VSICryptFileHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
 /*                                Write()                               */
 /************************************************************************/
 
-size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nSize,
-                                 size_t nMemb)
+size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nBytes)
 {
-    size_t nToWrite = nSize * nMemb;
+    size_t nToWrite = nBytes;
     const GByte *pabyBuffer = static_cast<const GByte *>(pBuffer);
 
 #ifdef VERBOSE_VSICRYPT
@@ -1297,10 +1296,10 @@ size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nSize,
         }
     }
 
-    int nRet = static_cast<int>((nSize * nMemb - nToWrite) / nSize);
+    size_t nRet = nBytes - nToWrite;
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "Write ret = %d (nMemb = %d)", nRet,
-             static_cast<int>(nMemb));
+    CPLDebug("VSICRYPT", "Write ret = %d (nBytes = %d)", static_cast<int>(nRet),
+             static_cast<int>(nBytes));
 #endif
     return nRet;
 }
@@ -2054,13 +2053,12 @@ static GDALDataset *VSICryptOpen(GDALOpenInfo *poOpenInfo)
  * VSISetCryptKey() to set the key might make it a bit more complicated to spy
  * the key.  But, as said initially, this is in no way a perfect protection.
  *
- * @since GDAL 2.1.0
  */
 void VSIInstallCryptFileHandler(void)
 
 {
-    VSIFileManager::InstallHandler(VSICRYPT_PREFIX,
-                                   new VSICryptFilesystemHandler);
+    VSIFileManager::InstallHandler(
+        VSICRYPT_PREFIX, std::make_shared<VSICryptFilesystemHandler>());
 
 #ifdef VSICRYPT_DRIVER
     if (GDALGetDriverByName("VSICRYPT") != nullptr)
@@ -2115,8 +2113,8 @@ VSIVirtualHandleUniquePtr VSIDummyCryptFilesystemHandler::Open(
 
 void VSIInstallCryptFileHandler(void)
 {
-    VSIFileManager::InstallHandler(VSICRYPT_PREFIX,
-                                   new VSIDummyCryptFilesystemHandler);
+    VSIFileManager::InstallHandler(
+        VSICRYPT_PREFIX, std::make_shared<VSIDummyCryptFilesystemHandler>());
 }
 
 void VSISetCryptKey(const GByte * /* pabyKey */, int /* nKeySize */)
@@ -2126,7 +2124,7 @@ void VSISetCryptKey(const GByte * /* pabyKey */, int /* nKeySize */)
 
 #endif  // HAVE_CRYPTOPP
 
-// Below is only useful if using as a plugin over GDAL >= 2.0.
+// Below is only useful if using as a plugin.
 #ifdef VSICRYPT_AUTOLOAD
 
 CPL_C_START

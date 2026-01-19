@@ -16,7 +16,7 @@ Synopsis
 .. code-block::
 
     gdal_polygonize [--help] [--help-general]
-                       [-8] [-o <name>=<value>]... [-nomask] 
+                       [-8] [-o <name>=<value>]... [-nomask]
                        [-mask <filename>] <raster_file> [-b <band>]
                        [-q] [-f <ogr_format>] [-lco <name>=<value>]...
                        [-overwrite] <out_file> [<layer>] [<fieldname>]
@@ -37,6 +37,11 @@ details on the algorithm.
 .. note::
 
     gdal_polygonize is a Python utility, and is only available if GDAL Python bindings are available.
+
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_raster_polygonize`.
+
 
 .. program:: gdal_polygonize
 
@@ -64,15 +69,14 @@ details on the algorithm.
 .. option:: -b <band>
 
     The band on <raster_file> to build
-    the polygons from. Starting with GDAL 2.2, the value can also be set to "mask",
+    the polygons from. The value can also be set to "mask",
     to indicate that the mask band of the first band must be used (or
     "mask,band_number" for the mask of a specified band)
 
 .. option:: -f <ogr_format>
 
-    Select the output format. Starting with
-    GDAL 2.3, if not specified, the format is guessed from the extension (previously
-    was GML). Use the short format name
+    Select the output format. If not specified, the format is guessed from the
+    extension. Use the short format name
 
 .. option:: -o <NAME>=<VALUE>
 

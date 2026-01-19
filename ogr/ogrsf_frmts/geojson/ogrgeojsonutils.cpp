@@ -394,7 +394,7 @@ IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL, const GByte *pabyHeader,
             bFirstIter = false;
             if (fpL)
             {
-                VSIFSeekL(fpL, nRead, SEEK_SET);
+                VSIFSeekL(fpL, static_cast<vsi_l_offset>(nRead), SEEK_SET);
             }
         }
         else

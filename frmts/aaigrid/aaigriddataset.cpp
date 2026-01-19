@@ -1178,7 +1178,8 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
         }
         (pabyChunk.get())[nChunkSize] = '\0';
 
-        if (VSIFSeekL(poDS->fp, nStartOfData, SEEK_SET) < 0)
+        if (VSIFSeekL(poDS->fp, static_cast<vsi_l_offset>(nStartOfData),
+                      SEEK_SET) < 0)
         {
             return nullptr;
         }
@@ -1402,7 +1403,7 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
 
     // Handle nodata (optionally).
     GDALRasterBand *poBand = poSrcDS->GetRasterBand(1);
-    const bool bReadAsInt = poBand->GetRasterDataType() == GDT_Byte ||
+    const bool bReadAsInt = poBand->GetRasterDataType() == GDT_UInt8 ||
                             poBand->GetRasterDataType() == GDT_Int16 ||
                             poBand->GetRasterDataType() == GDT_UInt16 ||
                             poBand->GetRasterDataType() == GDT_Int32;

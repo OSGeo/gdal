@@ -75,7 +75,7 @@ class GDALOverviewDataset final : public GDALDataset
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
 
@@ -452,16 +452,16 @@ void GDALOverviewDataset::Rescale(char **&papszMD, const char *pszItem,
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **GDALOverviewDataset::GetMetadata(const char *pszDomain)
+CSLConstList GDALOverviewDataset::GetMetadata(const char *pszDomain)
 {
     if (poOvrDS != nullptr)
     {
-        char **papszMD = poOvrDS->GetMetadata(pszDomain);
+        CSLConstList papszMD = poOvrDS->GetMetadata(pszDomain);
         if (papszMD != nullptr)
             return papszMD;
     }
 
-    char **papszMD = poMainDS->GetMetadata(pszDomain);
+    CSLConstList papszMD = poMainDS->GetMetadata(pszDomain);
 
     // We may need to rescale some values from the RPC metadata domain.
     if (pszDomain != nullptr && EQUAL(pszDomain, MD_DOMAIN_RPC) &&
@@ -534,7 +534,7 @@ const char *GDALOverviewDataset::GetMetadataItem(const char *pszName,
     if (pszDomain != nullptr &&
         (EQUAL(pszDomain, "RPC") || EQUAL(pszDomain, "GEOLOCATION")))
     {
-        char **papszMD = GetMetadata(pszDomain);
+        CSLConstList papszMD = GetMetadata(pszDomain);
         return CSLFetchNameValue(papszMD, pszName);
     }
 

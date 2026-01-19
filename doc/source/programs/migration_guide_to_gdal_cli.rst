@@ -19,7 +19,7 @@ Raster commands
 
     ==>
 
-    gdal raster info --format=text my.tif
+    gdal raster info my.tif
 
 
 * Converting a georeferenced netCDF file to cloud-optimized GeoTIFF
@@ -192,7 +192,7 @@ Vector commands
 
     ==>
 
-    gdal vector info --format=text my.gpkg
+    gdal vector info my.gpkg
 
 
 * Converting a shapefile to a GeoPackage
@@ -280,3 +280,40 @@ Vector commands
     ==>
 
     gdal vector sql --update my.gpkg --sql "DELETE FROM countries WHERE pop > 1e6"
+
+Python commands
+---------------
+
+The following commands were previously provided as individual :ref:`Python scripts <python_samples>`, but are now accessible through the unified "gdal" command-line interface.
+
+* Listing the contents of a remote :ref:`vector.pmtiles` dataset, using :ref:`gdal_vsi_list`.
+
+.. code-block::
+
+    python gdal_ls.py -lr "/vsipmtiles//vsicurl/https://protomaps.github.io/PMTiles/protomaps(vector)ODbL_firenze.pmtiles"
+
+    ==>
+
+    gdal vsi list -lR "/vsipmtiles//vsicurl/https://protomaps.github.io/PMTiles/protomaps(vector)ODbL_firenze.pmtiles"
+
+* Listing the contents of a vsis3 dataset.
+
+.. code-block::
+
+    export AWS_NO_SIGN_REQUEST="YES"
+    gdal_ls.py "/vsis3/overturemaps-us-west-2/release/2025-10-22.0/theme=buildings/type=building"
+
+    ==>
+
+    export AWS_NO_SIGN_REQUEST="YES"
+    gdal vsi list "/vsis3/overturemaps-us-west-2/release/2025-10-22.0/theme=buildings/type=building"
+
+* Extracting all remote content into a local directory, using :ref:`gdal_vsi_copy`.
+
+.. code-block::
+
+    gdal_cp.py "/vsipmtiles//vsicurl/https://protomaps.github.io/PMTiles/protomaps(vector)ODbL_firenze.pmtiles/metadata.json" /vsistdout/ | jq
+
+    ==>
+
+    gdal vsi copy -r "/vsipmtiles//vsicurl/https://protomaps.github.io/PMTiles/protomaps(vector)ODbL_firenze.pmtiles" out_pmtiles

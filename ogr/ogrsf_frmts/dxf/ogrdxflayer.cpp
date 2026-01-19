@@ -2816,8 +2816,7 @@ OGRDXFLayer::SimplifyBlockGeometry(OGRGeometryCollection *poCollection)
 
     OGRwkbGeometryType eType =
         wkbFlatten(poCollection->getGeometryRef(0)->getGeometryType());
-    int i;
-    for (i = 1; i < poCollection->getNumGeometries(); i++)
+    for (int i = 1; i < poCollection->getNumGeometries(); i++)
     {
         if (wkbFlatten(poCollection->getGeometryRef(i)->getGeometryType()) !=
             eType)
@@ -2844,27 +2843,21 @@ OGRDXFLayer::SimplifyBlockGeometry(OGRGeometryCollection *poCollection)
     }
     else if (eType == wkbPolygon)
     {
-        std::vector<OGRGeometry *> aosPolygons;
-        while (poCollection->getNumGeometries() > 0)
+        std::vector<std::unique_ptr<OGRGeometry>> apoPolygons;
+        const int nSubGeoms = poCollection->getNumGeometries();
+        for (int i = nSubGeoms - 1; i >= 0; --i)
         {
-            OGRGeometry *poGeom = poCollection->getGeometryRef(0);
-            poCollection->removeGeometry(0, FALSE);
-            if (!aosPolygons.empty() && aosPolygons[0]->Equals(poGeom))
+            auto poGeom = poCollection->stealGeometry(i);
+            // This test avoids a performance issue as in
+            // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=8067
+            if (apoPolygons.empty() || !apoPolygons[0]->Equals(poGeom.get()))
             {
-                // Avoids a performance issue as in
-                // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=8067
-                delete poGeom;
-            }
-            else
-            {
-                aosPolygons.push_back(poGeom);
+                apoPolygons.push_back(std::move(poGeom));
             }
         }
+        std::reverse(apoPolygons.begin(), apoPolygons.end());
         delete poCollection;
-        int bIsValidGeometry;
-        return OGRGeometryFactory::organizePolygons(&aosPolygons[0],
-                                                    (int)aosPolygons.size(),
-                                                    &bIsValidGeometry, nullptr);
+        return OGRGeometryFactory::organizePolygons(apoPolygons).release();
     }
 
     return poCollection;

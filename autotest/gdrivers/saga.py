@@ -124,7 +124,7 @@ def test_saga_5():
 def test_saga_6():
 
     gdal_types = [
-        gdal.GDT_Byte,
+        gdal.GDT_UInt8,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
         gdal.GDT_Int32,

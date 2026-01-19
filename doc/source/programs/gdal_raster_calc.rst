@@ -37,22 +37,17 @@ Starting with GDAL 3.12, it is also possible to use a :ref:`VRT C++ pixel functi
 The inputs should have the same spatial reference system and should cover the same spatial extent but are not required to have the same
 spatial resolution. The spatial extent check can be disabled with :option:`--no-check-extent`,
 in which case the inputs must have the same dimensions. The spatial reference system check can be
-disabled with :option:`--no-check-srs`.
+disabled with :option:`--no-check-crs`.
 
 Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeline`.
 
-The following options are available:
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. option:: -i [<name>=]<input>
-
-    Select an input dataset to be processed. If more than one input dataset is provided,
-    each dataset must be prefixed with a name to which it will will be referenced in :option:`--calc`.
+Program-Specific Options
+------------------------
 
 .. option:: --calc
 
@@ -89,6 +84,23 @@ The following options are available:
     Arguments to functions are passed within parentheses, like ``sum(k=1)``,
     ``min(propagateNoData=true)`` or ``interpolate_linear(t0=1,dt=1,t=10)``.
 
+    Built-in variables
+    ^^^^^^^^^^^^^^^^^^
+
+    The following built-in variables are available in expressions:
+
+    - ``_CENTER_X_``: X coordinate of the pixel center, expressed in the dataset CRS
+    - ``_CENTER_Y_``: Y coordinate of the pixel center, expressed in the dataset CRS
+    - ``NODATA``: The output `NoData` value, if any.
+
+    These variables are useful for calculations that depend on spatial position,
+    such as latitude-based corrections, solar angle approximations, or zonal masks.
+
+    See :example:`raster-calc-center-y` for a usage example.
+ 
+    Note: To work with longitude/latitude values, the input dataset must be in a
+    geographic coordinate reference system (for example, EPSG:4326).
+
 .. option:: --dialect muparser|builtin
 
     .. versionadded:: 3.12
@@ -112,12 +124,17 @@ The following options are available:
     And ``--flatten --dialect=builtin --calc mean`` will compute a single band
     with the average of all 4 input bands.
 
+.. option:: -i [<name>=]<input>
+
+    Select an input dataset to be processed. If more than one input dataset is provided,
+    each dataset must be prefixed with a name to which it will will be referenced in :option:`--calc`.
+
 .. option:: --no-check-extent
 
     Do not verify that the input rasters have the same spatial extent. The input rasters will instead be required to
     have the same dimensions. The geotransform of the first input will be assigned to the output.
 
-.. option:: --no-check-srs
+.. option:: --no-check-crs
 
     Do not check the spatial reference systems of the inputs for consistency. All inputs will be assumed to have the
     spatial reference system of the first input, and this spatial reference system will be used for the output.
@@ -136,10 +153,24 @@ The following options are available:
 
     If set, a NoData value in any input dataset used an in expression will cause the output value to be NoData.
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+Standard Options
+----------------
 
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+.. collapse:: Details
+
+    .. include:: gdal_options/append_raster.rst
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/ot.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------
@@ -184,3 +215,23 @@ Examples
    .. code-block:: bash
 
        gdal raster calc -i A=input1.tif -i B=input2.tif -o result.tif --flatten --calc=mean --dialect=builtin
+
+
+.. example::
+   :title: Generate a masked aspect layer where the slope angle is greater than 2 degrees, using nested pipelines (since GDAL 3.12.1)
+
+   .. code-block:: bash
+
+       gdal raster calc -i "SLOPE=[ read dem.tif ! slope ]" -i "ASPECT=[ read dem.tif ! aspect ]" -o result.tif --calc "(SLOPE >= 2) ? ASPECT : -9999" --nodata -9999
+
+
+.. example::
+   :title: Latitude-based calculation using ``_CENTER_Y_``
+   :id: raster-calc-center-y
+
+   .. code-block:: bash
+
+       gdal raster calc -i A=input.tif \
+           --calc="sin(_CENTER_Y_ * 0.0174533)" \
+           -o output.tif
+

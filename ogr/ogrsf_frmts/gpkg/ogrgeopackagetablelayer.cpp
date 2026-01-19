@@ -4056,6 +4056,16 @@ GIntBig OGRGeoPackageTableLayer::GetTotalFeatureCount()
             {
                 m_nTotalFeatureCount =
                     std::max<GIntBig>(0, CPLAtoGIntBig(pszFeatureCount));
+                // According to https://sqlite.org/limits.html
+                // "A 281 terabytes database can hold no more than approximately 2e+13 rows"
+                // We do that check to avoid returning values close to INT64_MAX
+                if (m_nTotalFeatureCount >
+                    static_cast<GIntBig>(30) * 1000 * 1000 * 1000 * 1000)
+                {
+                    CPLDebug("GPKG", "Invalid value in feature_count field of "
+                                     "gpkg_ogr_contents");
+                    m_nTotalFeatureCount = -1;
+                }
             }
         }
     }
@@ -6100,7 +6110,7 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **OGRGeoPackageTableLayer::GetMetadata(const char *pszDomain)
+CSLConstList OGRGeoPackageTableLayer::GetMetadata(const char *pszDomain)
 
 {
     if (!m_bFeatureDefnCompleted)
@@ -6278,7 +6288,7 @@ char **OGRGeoPackageTableLayer::GetMetadataDomainList()
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr OGRGeoPackageTableLayer::SetMetadata(char **papszMetadata,
+CPLErr OGRGeoPackageTableLayer::SetMetadata(CSLConstList papszMetadata,
                                             const char *pszDomain)
 {
     GetMetadata(); /* force loading from storage if needed */

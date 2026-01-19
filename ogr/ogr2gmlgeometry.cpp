@@ -40,16 +40,10 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
+#include "gmlutils.h"
 
 constexpr int SRSDIM_LOC_GEOMETRY = 1 << 0;
 constexpr int SRSDIM_LOC_POSLIST = 1 << 1;
-
-enum GMLSRSNameFormat
-{
-    SRSNAME_SHORT,
-    SRSNAME_OGC_URN,
-    SRSNAME_OGC_URL
-};
 
 /************************************************************************/
 /*                        MakeGMLCoordinate()                           */
@@ -534,8 +528,8 @@ static void AppendGML3CoordinateList(const OGRSimpleCurve *poLine,
 static bool OGR2GML3GeometryAppend(
     const OGRGeometry *poGeometry, const OGRSpatialReference *poParentSRS,
     char **ppszText, size_t *pnLength, size_t *pnMaxLength, bool bIsSubGeometry,
-    GMLSRSNameFormat eSRSNameFormat, bool bCoordSwap, bool bLineStringAsCurve,
-    const char *pszGMLId, int nSRSDimensionLocFlags,
+    OGRGMLSRSNameFormat eSRSNameFormat, bool bCoordSwap,
+    bool bLineStringAsCurve, const char *pszGMLId, int nSRSDimensionLocFlags,
     bool bForceLineStringAsLinearRing, const char *pszNamespaceDecl,
     const char *pszOverriddenElementName, const OGRWktOptions &coordOpts)
 
@@ -1205,7 +1199,7 @@ char *OGR_G_ExportToGML(OGRGeometryH hGeometry)
  *
  * The supported options are :
  * <ul>
- * <li> FORMAT=GML2/GML3/GML32 (GML2 or GML32 added in GDAL 2.1).
+ * <li> FORMAT=GML2/GML3/GML32
  *      If not set, it will default to GML 2.1.2 output.
  * </li>
  * <li> GML3_LINESTRING_ELEMENT=curve. (Only valid for FORMAT=GML3)
@@ -1222,8 +1216,8 @@ char *OGR_G_ExportToGML(OGRGeometryH hGeometry)
  *      If set to NO, SRS with EPSG authority will be written with the "EPSG:"
  *      prefix, even if they are in lat/long order.
  * </li>
- * <li> SRSNAME_FORMAT=SHORT/OGC_URN/OGC_URL (Only valid for FORMAT=GML3, added
- *      in GDAL 2.2). Defaults to OGC_URN.  If SHORT, then srsName will be in
+ * <li> SRSNAME_FORMAT=SHORT/OGC_URN/OGC_URL (Only valid for FORMAT=GML3).
+ *      Defaults to OGC_URN.  If SHORT, then srsName will be in
  *      the form AUTHORITY_NAME:AUTHORITY_CODE. If OGC_URN, then srsName will be
  *      in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE. If OGC_URL,
  *      then srsName will be in the form
@@ -1237,7 +1231,7 @@ char *OGR_G_ExportToGML(OGRGeometryH hGeometry)
  *      Required for GML 3.2 compatibility.
  * </li>
  * <li> SRSDIMENSION_LOC=POSLIST/GEOMETRY/GEOMETRY,POSLIST. (Only valid for
- *      FORMAT=GML3/GML32, GDAL >= 2.0) Default to POSLIST.
+ *      FORMAT=GML3/GML32) Default to POSLIST.
  *      For 2.5D geometries, define the location where to attach the
  *      srsDimension attribute.
  *      There are diverging implementations. Some put in on the
@@ -1268,7 +1262,6 @@ char *OGR_G_ExportToGML(OGRGeometryH hGeometry)
  * @param papszOptions NULL-terminated list of options.
  * @return A GML fragment or NULL in case of error.
  *
- * @since OGR 1.8.0
  */
 
 char *OGR_G_ExportToGMLEx(OGRGeometryH hGeometry, char **papszOptions)
@@ -1322,7 +1315,7 @@ char *OGR_G_ExportToGMLEx(OGRGeometryH hGeometry, char **papszOptions)
             CSLFetchNameValue(papszOptions, "GML3_LONGSRS");
         const char *pszSRSNameFormat =
             CSLFetchNameValue(papszOptions, "SRSNAME_FORMAT");
-        GMLSRSNameFormat eSRSNameFormat = SRSNAME_OGC_URN;
+        OGRGMLSRSNameFormat eSRSNameFormat = SRSNAME_OGC_URN;
         if (pszSRSNameFormat)
         {
             if (pszLongSRS)

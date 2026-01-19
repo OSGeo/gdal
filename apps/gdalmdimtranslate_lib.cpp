@@ -1276,8 +1276,31 @@ static bool TranslateArray(
     {
         outputType = GDALExtendedDataType(tmpArray->GetDataType());
     }
-    auto dstArray =
-        poDstGroup->CreateVRTMDArray(dstArrayName, dstArrayDims, outputType);
+
+    CPLStringList aosArrayCO;
+    if (!bResampled && anTransposedAxis.empty() && viewExpr.empty() &&
+        psOptions->aosSubset.empty() && psOptions->aosScaleFactor.empty() &&
+        srcArray->GetDimensionCount() == dstArrayDims.size())
+    {
+        const auto anBlockSize = srcArray->GetBlockSize();
+        std::string osBlockSize;
+        for (auto v : anBlockSize)
+        {
+            if (v == 0)
+            {
+                osBlockSize.clear();
+                break;
+            }
+            if (!osBlockSize.empty())
+                osBlockSize += ',';
+            osBlockSize += std::to_string(v);
+        }
+        if (!osBlockSize.empty())
+            aosArrayCO.SetNameValue("BLOCKSIZE", osBlockSize.c_str());
+    }
+
+    auto dstArray = poDstGroup->CreateVRTMDArray(dstArrayName, dstArrayDims,
+                                                 outputType, aosArrayCO.List());
     if (!dstArray)
         return false;
 
@@ -1903,7 +1926,8 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             }
         }
         poDriver = GDALDriver::FromHandle(GDALGetDriverByName(osFormat));
-        char **papszDriverMD = poDriver ? poDriver->GetMetadata() : nullptr;
+        CSLConstList papszDriverMD =
+            poDriver ? poDriver->GetMetadata() : nullptr;
         if (poDriver == nullptr ||
             (!CPLTestBool(CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER,
                                                "FALSE")) &&

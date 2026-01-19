@@ -47,11 +47,19 @@ def ogr_wfs_init():
         pytest.skip("cannot read GML files")
 
     vsimem_hidden_before = gdal.ReadDirRecursive("/vsimem/.#!HIDDEN!#.")
+    if vsimem_hidden_before is None:
+        vsimem_hidden_before = []
 
     with gdal.config_option("CPL_CURL_ENABLE_VSIMEM", "YES"):
         yield
 
-    assert gdal.ReadDirRecursive("/vsimem/.#!HIDDEN!#.") == vsimem_hidden_before
+    vsimem_hidden_after = gdal.ReadDirRecursive("/vsimem/.#!HIDDEN!#.")
+    if vsimem_hidden_after is None:
+        vsimem_hidden_after = []
+    # For some weird reason, since https://github.com/OSGeo/gdal/pull/13562,
+    # the Alpine CI configuration returns ['16'] after, instead ['16', '910']
+    # before
+    assert len(vsimem_hidden_after) <= len(vsimem_hidden_before)
 
 
 @pytest.fixture(
@@ -5427,3 +5435,40 @@ def test_ogr_wfs_does_not_understand_schema():
     ):
         f = lyr.GetNextFeature()
         assert f
+
+
+###############################################################################
+
+
+def test_ogr_wfs_vsimem_fake_epsg_404000(
+    wfs110_onelayer_describefeaturetype,
+):
+    with gdaltest.tempfile(
+        "/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities",
+        """<WFS_Capabilities version="1.1.0">
+    <FeatureTypeList>
+        <FeatureType>
+            <Name>my_layer</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::404000</DefaultSRS>
+            <OtherCRS>urn:ogc:def:crs:EPSG::28992</OtherCRS>
+            <OtherCRS>urn:ogc:def:crs:EPSG::404000</OtherCRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-170.0 -80.0</ows:LowerCorner>
+                <ows:UpperCorner>170.0 80.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+    </FeatureTypeList>
+</WFS_Capabilities>
+""",
+    ):
+        got_error = [False]
+
+        def my_error_handler(err_type, err_no, msg):
+            if err_type == gdal.CE_Failure:
+                got_error[0] = True
+
+        with gdaltest.error_handler(my_error_handler):
+            ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
+        assert not got_error[0]
+        lyr = ds.GetLayer(0)
+        assert lyr.GetSpatialRef() is None

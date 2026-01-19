@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_raster_polygonize.h"
+#include "gdalalg_vector_write.h"
 
 #include "cpl_conv.h"
 #include "gdal_priv.h"
@@ -33,6 +34,8 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm(
           NAME, DESCRIPTION, HELP_URL,
           ConstructorOptions()
               .SetStandaloneStep(standaloneStep)
+              .SetAddUpsertArgument(false)
+              .SetAddSkipErrorsArgument(false)
               .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
     m_outputLayerName = "polygonize";
@@ -40,23 +43,8 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm(
     AddProgressArg();
     if (standaloneStep)
     {
-        AddOutputFormatArg(&m_format).AddMetadataItem(
-            GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
-        AddOpenOptionsArg(&m_openOptions);
-        AddInputFormatsArg(&m_inputFormats)
-            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-        AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
-        AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
-            .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
-        AddCreationOptionsArg(&m_creationOptions);
-        AddLayerCreationOptionsArg(&m_layerCreationOptions);
-        AddOverwriteArg(&m_overwrite);
-        AddUpdateArg(&m_update);
-        AddOverwriteLayerArg(&m_overwriteLayer);
-        AddAppendLayerArg(&m_appendLayer);
-        AddOutputLayerNameArg(&m_outputLayerName)
-            .SetDefault(m_outputLayerName)
-            .AddAlias("nln");
+        AddRasterInputArgs(false, false);
+        AddVectorOutputArgs(false, false);
     }
 
     // gdal_polygonize specific options
@@ -68,6 +56,16 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm(
     AddArg("connect-diagonal-pixels", 'c',
            _("Consider diagonal pixels as connected"), &m_connectDiagonalPixels)
         .SetDefault(m_connectDiagonalPixels);
+
+    AddArg("commit-interval", 0, _("Commit interval"), &m_commitInterval)
+        .SetHidden();
+}
+
+bool GDALRasterPolygonizeAlgorithm::CanHandleNextStep(
+    GDALPipelineStepAlgorithm *poNextStep) const
+{
+    return poNextStep->GetName() == GDALVectorWriteAlgorithm::NAME &&
+           poNextStep->GetOutputFormat() != "stream";
 }
 
 /************************************************************************/
@@ -92,76 +90,87 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
 
-    GDALDataset *poDstDS = m_outputDataset.GetDatasetRef();
+    auto poWriteStep = ctxt.m_poNextUsableStep ? ctxt.m_poNextUsableStep : this;
+
+    GDALDataset *poDstDS = poWriteStep->GetOutputDataset().GetDatasetRef();
     std::unique_ptr<GDALDataset> poRetDS;
-    std::string outputFilename = m_outputDataset.GetName();
+    std::string outputFilename = poWriteStep->GetOutputDataset().GetName();
+    GDALDriver *poDstDriver = nullptr;
+    bool bTemporaryFile = false;
     if (!poDstDS)
     {
-        if (m_standaloneStep)
+        auto poDriverManager = GetGDALDriverManager();
+        std::string format = poWriteStep->GetOutputFormat();
+        if (m_standaloneStep || (ctxt.m_poNextUsableStep && format.empty()))
         {
-            if (m_format.empty())
+            if (format.empty())
             {
                 const auto aosFormats =
                     CPLStringList(GDALGetOutputDriversForDatasetName(
-                        m_outputDataset.GetName().c_str(), GDAL_OF_VECTOR,
+                        outputFilename.c_str(), GDAL_OF_VECTOR,
                         /* bSingleMatch = */ true,
                         /* bWarn = */ true));
                 if (aosFormats.size() != 1)
                 {
                     ReportError(CE_Failure, CPLE_AppDefined,
                                 "Cannot guess driver for %s",
-                                m_outputDataset.GetName().c_str());
+                                outputFilename.c_str());
                     return false;
                 }
-                m_format = aosFormats[0];
+                format = aosFormats[0];
             }
         }
-        else
+        else if (!ctxt.m_poNextUsableStep)
         {
-            if (GetGDALDriverManager()->GetDriverByName("GPKG"))
+            poDstDriver = poDriverManager->GetDriverByName("GPKG");
+            if (poDstDriver)
             {
+                bTemporaryFile = true;
                 outputFilename =
                     CPLGenerateTempFilenameSafe("_polygonize") + ".gpkg";
-                m_format = "GPKG";
+                format = "GPKG";
             }
             else
-                m_format = "MEM";
+                format = "MEM";
         }
 
-        auto poDriver =
-            GetGDALDriverManager()->GetDriverByName(m_format.c_str());
-        if (!poDriver)
+        if (!poDstDriver)
+            poDstDriver = poDriverManager->GetDriverByName(format.c_str());
+        if (!poDstDriver)
         {
-            // shouldn't happen given checks done in GDALAlgorithm
             ReportError(CE_Failure, CPLE_AppDefined, "Cannot find driver %s",
-                        m_format.c_str());
+                        format.c_str());
             return false;
         }
 
-        poRetDS.reset(
-            poDriver->Create(outputFilename.c_str(), 0, 0, 0, GDT_Unknown,
-                             CPLStringList(m_creationOptions).List()));
+        poRetDS.reset(poDstDriver->Create(
+            outputFilename.c_str(), 0, 0, 0, GDT_Unknown,
+            CPLStringList(poWriteStep->GetCreationOptions()).List()));
         if (!poRetDS)
             return false;
 
-        if (!m_standaloneStep && !outputFilename.empty())
+        if (bTemporaryFile)
             poRetDS->MarkSuppressOnClose();
 
         poDstDS = poRetDS.get();
     }
+    else
+    {
+        poDstDriver = poDstDS->GetDriver();
+    }
 
-    auto poDstDriver = poDstDS->GetDriver();
+    std::string outputLayerName = poWriteStep->GetOutputLayerName();
     if (poDstDriver && EQUAL(poDstDriver->GetDescription(), "ESRI Shapefile") &&
         EQUAL(CPLGetExtensionSafe(poDstDS->GetDescription()).c_str(), "shp") &&
         poDstDS->GetLayerCount() <= 1)
     {
-        m_outputLayerName = CPLGetBasenameSafe(poDstDS->GetDescription());
+        outputLayerName = CPLGetBasenameSafe(poDstDS->GetDescription());
     }
 
-    auto poDstLayer = poDstDS->GetLayerByName(m_outputLayerName.c_str());
+    auto poDstLayer = poDstDS->GetLayerByName(outputLayerName.c_str());
     if (poDstLayer)
     {
-        if (m_overwriteLayer)
+        if (poWriteStep->GetOverwriteLayer())
         {
             int iLayer = -1;
             const int nLayerCount = poDstDS->GetLayerCount();
@@ -177,27 +186,27 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 {
                     ReportError(CE_Failure, CPLE_AppDefined,
                                 "Cannot delete layer '%s'",
-                                m_outputLayerName.c_str());
+                                outputLayerName.c_str());
                     return false;
                 }
             }
             poDstLayer = nullptr;
         }
-        else if (!m_appendLayer)
+        else if (!poWriteStep->GetAppendLayer())
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Layer '%s' already exists. Specify the "
                         "--%s option to overwrite it, or --%s "
                         "to append to it.",
-                        m_outputLayerName.c_str(),
-                        GDAL_ARG_NAME_OVERWRITE_LAYER, GDAL_ARG_NAME_APPEND);
+                        outputLayerName.c_str(), GDAL_ARG_NAME_OVERWRITE_LAYER,
+                        GDAL_ARG_NAME_APPEND);
             return false;
         }
     }
-    else if (m_appendLayer || m_overwriteLayer)
+    else if (poWriteStep->GetAppendLayer() || poWriteStep->GetOverwriteLayer())
     {
         ReportError(CE_Failure, CPLE_AppDefined, "Cannot find layer '%s'",
-                    m_outputLayerName.c_str());
+                    outputLayerName.c_str());
         return false;
     }
 
@@ -207,12 +216,12 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     if (!poDstLayer)
     {
         poDstLayer = poDstDS->CreateLayer(
-            m_outputLayerName.c_str(), poSrcDS->GetSpatialRef(), wkbPolygon,
-            CPLStringList(m_layerCreationOptions).List());
+            outputLayerName.c_str(), poSrcDS->GetSpatialRef(), wkbPolygon,
+            CPLStringList(poWriteStep->GetLayerCreationOptions()).List());
         if (!poDstLayer)
         {
             ReportError(CE_Failure, CPLE_AppDefined, "Cannot create layer '%s'",
-                        m_outputLayerName.c_str());
+                        outputLayerName.c_str());
             return false;
         }
 
@@ -225,7 +234,7 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Cannot create field '%s' in layer '%s'",
-                        m_attributeName.c_str(), m_outputLayerName.c_str());
+                        m_attributeName.c_str(), outputLayerName.c_str());
             return false;
         }
     }
@@ -236,7 +245,7 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     {
         ReportError(CE_Failure, CPLE_AppDefined,
                     "Cannot find field '%s' in layer '%s'",
-                    m_attributeName.c_str(), m_outputLayerName.c_str());
+                    m_attributeName.c_str(), outputLayerName.c_str());
         return false;
     }
 
@@ -244,6 +253,11 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     if (m_connectDiagonalPixels)
     {
         aosPolygonizeOptions.SetNameValue("8CONNECTED", "8");
+    }
+    if (m_commitInterval)
+    {
+        aosPolygonizeOptions.SetNameValue("COMMIT_INTERVAL",
+                                          CPLSPrintf("%d", m_commitInterval));
     }
 
     bool ret;
@@ -267,7 +281,7 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     if (ret && poRetDS)
     {
-        if (!m_standaloneStep && !outputFilename.empty())
+        if (bTemporaryFile)
         {
             ret = poRetDS->FlushCache() == CE_None;
             VSIUnlink(outputFilename.c_str());

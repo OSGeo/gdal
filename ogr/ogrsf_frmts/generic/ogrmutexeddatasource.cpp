@@ -196,13 +196,13 @@ OGRErr OGRMutexedDataSource::RollbackTransaction()
     return m_poBaseDataSource->RollbackTransaction();
 }
 
-char **OGRMutexedDataSource::GetMetadata(const char *pszDomain)
+CSLConstList OGRMutexedDataSource::GetMetadata(const char *pszDomain)
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
     return m_poBaseDataSource->GetMetadata(pszDomain);
 }
 
-CPLErr OGRMutexedDataSource::SetMetadata(char **papszMetadata,
+CPLErr OGRMutexedDataSource::SetMetadata(CSLConstList papszMetadata,
                                          const char *pszDomain)
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);

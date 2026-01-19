@@ -2608,14 +2608,14 @@
         <!-- TODO: lots of missing rpf_component and no logic yet in nitfimage to deal with them -->
 
         <rpf_component id="CoverageSectionSubheader">
-            <field name="NORTHWEST_LONGITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
             <field name="NORTHWEST_LATITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
-            <field name="SOUTHWEST_LONGITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
+            <field name="NORTHWEST_LONGITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
             <field name="SOUTHWEST_LATITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
-            <field name="NORTHEAST_LONGITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
+            <field name="SOUTHWEST_LONGITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
             <field name="NORTHEAST_LATITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
-            <field name="SOUTHEAST_LONGITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
+            <field name="NORTHEAST_LONGITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
             <field name="SOUTHEAST_LATITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
+            <field name="SOUTHEAST_LONGITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
             <field name="NORTH_SOUTH_VERTICAL_RESOLUTION" length="8" type="IEEE754_Float64_BigEndian"/>
             <field name="EAST_WEST_HORIZONTAL_RESOLUTION" length="8" type="IEEE754_Float64_BigEndian"/>
             <field name="LATITUDE_VERTICAL_INTERVAL" length="8" type="IEEE754_Float64_BigEndian"/>

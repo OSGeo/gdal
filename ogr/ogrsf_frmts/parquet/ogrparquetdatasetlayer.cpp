@@ -724,6 +724,21 @@ void OGRParquetDatasetLayer::BuildScanner()
 
         if (expression.is_valid())
         {
+            PARQUET_ASSIGN_OR_THROW(expression,
+                                    expression.Bind(*m_poDataset->schema()));
+
+#ifdef DEBUG
+            arrow::dataset::FragmentIterator fragment_it;
+            PARQUET_ASSIGN_OR_THROW(fragment_it,
+                                    m_poDataset->GetFragments(expression));
+            for (const auto &maybe_fragment : fragment_it)
+            {
+                auto fragment = maybe_fragment.ValueOrDie();
+                CPLDebug("PARQUET", "Scanner planning to read '%s'",
+                         fragment->ToString().c_str());
+            }
+#endif
+
             PARQUET_THROW_NOT_OK(scannerBuilder->Filter(expression));
         }
 
@@ -797,10 +812,6 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
             poNode->field_index < m_poFeatureDefn->GetFieldCount())
         {
             std::vector<arrow::FieldRef> fieldRefs;
-#ifdef SUPPORTS_INDICES_IN_FIELD_REF
-            for (int idx : m_anMapFieldIndexToArrowColumn[poNode->field_index])
-                fieldRefs.emplace_back(idx);
-#else
             std::shared_ptr<arrow::Field> field;
             for (int idx : m_anMapFieldIndexToArrowColumn[poNode->field_index])
             {
@@ -818,7 +829,7 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
                 }
                 fieldRefs.emplace_back(field->name());
             }
-#endif
+
             auto expr = cp::field_ref(arrow::FieldRef(std::move(fieldRefs)));
 
             // Comparing a boolean column to 0 or 1 fails without explicit cast
@@ -848,6 +859,8 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
         switch (poNode->field_type)
         {
             case SWQ_INTEGER:
+                return cp::literal(static_cast<int32_t>(poNode->int_value));
+
             case SWQ_INTEGER64:
                 return cp::literal(static_cast<int64_t>(poNode->int_value));
 

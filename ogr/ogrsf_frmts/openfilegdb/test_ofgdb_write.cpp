@@ -24,37 +24,37 @@ int main()
     const int nTablxOffsetSize = 4;
     oTable.Create("test_ofgdb.gdbtable", nTablxOffsetSize, eTableGeomType,
                   bGeomTypeHasZ, bGeomTypeHasM);
-    oTable.CreateField(std::unique_ptr<FileGDBField>(new FileGDBField(
+    oTable.CreateField(std::make_unique<FileGDBField>(
         "OBJECTID", "OBJECTID", FGFT_OBJECTID,
         /* nullable = */ false,
         /* required = */ true,
-        /* editable = */ false, 0, FileGDBField::UNSET_FIELD)));
+        /* editable = */ false, 0, FileGDBField::UNSET_FIELD));
 
-    oTable.CreateField(std::unique_ptr<FileGDBField>(
-        new FileGDBField("int16", "", FGFT_INT16, true, false, true, 0,
-                         FileGDBField::UNSET_FIELD)));
-    oTable.CreateField(std::unique_ptr<FileGDBField>(
-        new FileGDBField("int32", "", FGFT_INT32, true, false, true, 0,
-                         FileGDBField::UNSET_FIELD)));
-    oTable.CreateField(std::unique_ptr<FileGDBField>(
-        new FileGDBField("float32", "", FGFT_FLOAT32, true, false, true, 0,
-                         FileGDBField::UNSET_FIELD)));
-    oTable.CreateField(std::unique_ptr<FileGDBField>(
-        new FileGDBField("float64", "", FGFT_FLOAT64, true, false, true, 0,
-                         FileGDBField::UNSET_FIELD)));
-    oTable.CreateField(std::unique_ptr<FileGDBField>(
-        new FileGDBField("str", "", FGFT_STRING, true, false, true, 0,
-                         FileGDBField::UNSET_FIELD)));
-    oTable.CreateField(std::unique_ptr<FileGDBField>(
-        new FileGDBField("datetime", "", FGFT_DATETIME, true, false, true, 0,
-                         FileGDBField::UNSET_FIELD)));
-    oTable.CreateField(std::unique_ptr<FileGDBField>(
-        new FileGDBField("binary", "", FGFT_BINARY, true, false, true, 0,
-                         FileGDBField::UNSET_FIELD)));
+    oTable.CreateField(
+        std::make_unique<FileGDBField>("int16", "", FGFT_INT16, true, false,
+                                       true, 0, FileGDBField::UNSET_FIELD));
+    oTable.CreateField(
+        std::make_unique<FileGDBField>("int32", "", FGFT_INT32, true, false,
+                                       true, 0, FileGDBField::UNSET_FIELD));
+    oTable.CreateField(
+        std::make_unique<FileGDBField>("float32", "", FGFT_FLOAT32, true, false,
+                                       true, 0, FileGDBField::UNSET_FIELD));
+    oTable.CreateField(
+        std::make_unique<FileGDBField>("float64", "", FGFT_FLOAT64, true, false,
+                                       true, 0, FileGDBField::UNSET_FIELD));
+    oTable.CreateField(
+        std::make_unique<FileGDBField>("str", "", FGFT_STRING, true, false,
+                                       true, 0, FileGDBField::UNSET_FIELD));
+    oTable.CreateField(std::make_unique<FileGDBField>(
+        "datetime", "", FGFT_DATETIME, true, false, true, 0,
+        FileGDBField::UNSET_FIELD));
+    oTable.CreateField(
+        std::make_unique<FileGDBField>("binary", "", FGFT_BINARY, true, false,
+                                       true, 0, FileGDBField::UNSET_FIELD));
 
-    auto poGeomField = std::unique_ptr<FileGDBGeomField>(new FileGDBGeomField(
+    auto poGeomField = std::make_unique<FileGDBGeomField>(
         "SHAPE", "", true, "{B286C06B-0879-11D2-AACA-00C04FA33C20}", -400, -400,
-        1000000000, 0.000000008983153, {0}));
+        1000000000, 0.000000008983153, std::vector<double>{0.0});
     poGeomField->SetZOriginScaleTolerance(0, 1, 0.001);
     poGeomField->SetMOriginScaleTolerance(0, 1, 0.001);
 
@@ -82,8 +82,8 @@ int main()
     oTable.CreateFeature(fields, &p);
 
     OGRMultiPoint mp;
-    mp.addGeometryDirectly(new OGRPoint(1, 2, 3, 4));
-    mp.addGeometryDirectly(new OGRPoint(5, 0, 6, 7));
+    mp.addGeometry(std::make_unique<OGRPoint>(1, 2, 3, 4));
+    mp.addGeometry(std::make_unique<OGRPoint>(5, 0, 6, 7));
     oTable.CreateFeature(fields, &mp);
 
     OGRLineString ls;

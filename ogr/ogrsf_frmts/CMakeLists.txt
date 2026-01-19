@@ -42,14 +42,7 @@ ogr_optional_driver(vrt "VRT - Virtual Format")
 # Caution: if modifying AVC declaration here, also modify it in gdal.cmake
 ogr_optional_driver(avc AVC)
 
-if (NOT(DEFINED OGR_ENABLE_DRIVER_GML AND NOT OGR_ENABLE_DRIVER_GML AND
-        ((NOT GDAL_USE_CURL) OR
-         (DEFINED OGR_ENABLE_DRIVER_WFS AND NOT OGR_ENABLE_DRIVER_WFS AND
-          DEFINED OGR_ENABLE_DRIVER_OAPIF AND NOT OGR_ENABLE_DRIVER_OAPIF AND
-          DEFINED OGR_ENABLE_DRIVER_CSW AND NOT OGR_ENABLE_DRIVER_CSW))))
-    # Only build gmlutils if we have GML, WFS, OAPIF or CSW
-    add_subdirectory(gmlutils)
-endif()
+add_subdirectory(gmlutils)
 
 if (GDAL_ENABLE_PLUGINS_NO_DEPS AND NOT DEFINED OGR_ENABLE_DRIVER_GML_PLUGIN)
     option(OGR_ENABLE_DRIVER_GML_PLUGIN "Set ON to build GML driver as a plugin" OFF)

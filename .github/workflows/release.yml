@@ -1,0 +1,293 @@
+name: Perform Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PROJ_VERSION: "9.7.0"
+
+jobs:
+  safety_checks:
+    runs-on: ubuntu-latest
+    outputs:
+        RC: ${{ steps.unpack_tag.outputs.RC }}
+        BETA: ${{ steps.unpack_tag.outputs.BETA }}
+        VERSION: ${{ steps.unpack_tag.outputs.VERSION }}
+        VERSION_WITH_RC: ${{ steps.unpack_tag.outputs.VERSION_WITH_RC }}
+        COMPRESSED_VERSION: ${{ steps.unpack_tag.outputs.COMPRESSED_VERSION }}
+        PRE_RELEASE: ${{ STEPS.unpack_tag.outputs.PRE_RELEASE }}
+    steps:
+      - name: ensure repo owner
+        run: |
+          if [[ ${{ github.repository_owner}} != 'OSGeo' ]]; then
+            exit 1
+          fi
+      - name: extract tag info
+        id: unpack_tag
+        run: |
+          export TAG=${{ github.ref_name }}
+          export RC=$(python3 -c "print('' if 'rc' not in '$TAG'.lower() else ''.join('$TAG'.lower().rpartition('rc')[1:]).lower())")
+          export BETA=$(python3 -c "print('' if 'beta' not in '$TAG'.lower() else ''.join('$TAG'.lower().rpartition('beta')[1:]).lower())")
+          export VERSION=$(python3 -c "print('$TAG'.lower().lstrip('v').partition('rc')[0])")
+          export VERSION_WITH_RC="${VERSION}${RC}"
+          export COMPRESSED_VERSION=$(echo "$VERSION" | tr -d .)
+
+          echo "RC=$RC" >> $GITHUB_OUTPUT
+          echo "BETA=$BETA" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "COMPRESSED_VERSION=$COMPRESSED_VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION_WITH_RC=$VERSION_WITH_RC" >> $GITHUB_OUTPUT
+
+          if [ -z "$RC" ] && [ -z "$BETA" ]; then
+            export PRE_RELEASE="false"
+          else
+            export PRE_RELEASE="true"
+          fi
+          echo "PRE_RELEASE=$PRE_RELEASE" >> $GITHUB_OUTPUT
+  mkgdaldist:
+    runs-on: ubuntu-latest
+    needs: safety_checks
+    environment: pypi
+    env:
+      RC: ${{ needs.safety_checks.outputs.RC }}
+      VERSION: ${{ needs.safety_checks.outputs.VERSION }}
+      COMPRESSED_VERSION: ${{ needs.safety_checks.outputs.COMPRESSED_VERSION }}
+      PRE_RELEASE: ${{ needs.safety_checks.outputs.PRE_RELEASE }}
+    permissions:
+      id-token: write
+      attestations: write
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - name: Setup environment
+        shell: bash -l {0}
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y \
+              g++ \
+              cmake \
+              doxygen \
+              enchant-2 \
+              python3 \
+              python3-dev \
+              python3-pip \
+              python3-venv \
+              libproj-dev \
+              swig \
+              libsqlite3-dev \
+              gnupg2 \
+              openjdk-17-jdk-headless \
+              ant
+            python3 -m venv create doc_env
+            . doc_env/bin/activate
+            python3 -m pip install -r doc/requirements.txt
+            python3 -m pip install setuptools
+            python3 -m pip install pytest
+            echo PATH=$PATH >> $GITHUB_ENV
+      - name: Configure GPG Key
+        run: |
+          echo -n "$GPG_SIGNING_KEY" | gpg2 --import
+        env:
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+      - name: Install Doc Dependencies
+        shell: bash
+        run: |
+          sudo apt-get install -y dvipng latexmk texlive-latex-base \
+          texlive-latex-extra git latex-cjk-all texlive-lang-all tex-gyre
+
+      - name: Run mkgdaldist
+        shell: bash -l {0}
+        id: mkgdaldist
+        run: |
+          if test "$RC" != ""; then
+            ./mkgdaldist.sh $VERSION -tag ${{ github.ref_name }} -rc $RC
+          else
+            ./mkgdaldist.sh $VERSION -tag ${{ github.ref_name }}
+          fi
+      - name: Upload tar.gz
+        id: upload_tar_gz
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
+          path: |
+            gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
+      - name: Upload tar.xz
+        id: upload_tar_xz
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
+          path: |
+            gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
+      - name: Upload zip
+        id: upload_zip
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
+          path: |
+            gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
+      - uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8 # v3.1.0
+        with:
+          subject-name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
+          subject-digest: sha256:${{ steps.upload_tar_gz.outputs.artifact-digest }}
+      - uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8 # v3.1.0
+        with:
+          subject-name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
+          subject-digest: sha256:${{ steps.upload_tar_xz.outputs.artifact-digest }}
+      - uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8 # v3.1.0
+        with:
+          subject-name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
+          subject-digest: sha256:${{ steps.upload_zip.outputs.artifact-digest }}
+      - name: make minimum build for python packages
+        run: |
+          mkdir -p python_pkgs
+          mkdir -p dist
+          cd python_pkgs
+          cmake .. -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF -DOGR_BUILD_OPTIONAL_DRIVERS=OFF
+          cmake --build . --config Debug -j$(nproc)
+      - name: make gdal-utils bdist_wheel
+        run: |
+          rm -rf dist/*
+          cd python_pkgs/swig/python/gdal-utils
+          python3 setup.py bdist_wheel
+          cp dist/* ${{ github.workspace }}/dist
+      - name: Upload bdist_wheel
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: gdal-utils whl
+          path: |
+            dist/*
+      - name: Publish gdal-utils bdist_wheel to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        if: startsWith(github.ref, 'refs/tags/') && env.PRE_RELEASE != 'true'
+        with:
+          attestations: true
+      - name: make gdal sdist
+        run: |
+          rm -rf dist/*
+          cd python_pkgs/swig/python
+          python3 setup.py sdist
+          cp dist/* ${{ github.workspace }}/dist
+      - name: Upload sdist
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: gdal sdist
+          path: |
+            dist/*
+      - name: Publish gdal sdist to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        if: startsWith(github.ref, 'refs/tags/') && env.PRE_RELEASE != 'true'
+        with:
+          attestations: true
+      - uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
+        if: startsWith(github.ref, 'refs/tags/')
+        name: Publish release as draft
+        with:
+          make_latest: false
+          fail_on_unmatched_files: true
+          prerelease: true
+          generate_release_notes: false
+          draft: true
+          files: |
+            gdal${{ env.COMPRESSED_VERSION }}${{ env.RC }}.zip
+            gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
+            gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
+            gdalautotest-${{ env.VERSION }}${{ env.RC }}.zip
+            gdal*doc.zip
+            *.md5
+            *.sig
+  docker_builds:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [safety_checks, mkgdaldist]
+    env:
+      VERSION: ${{ needs.safety_checks.outputs.VERSION }}
+      VERSION_WITH_RC: ${{ needs.safety_checks.outputs.VERSION_WITH_RC }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ["arm64", "amd64"]
+        base: ["alpine-small", "alpine-normal", "ubuntu-small", "ubuntu-full"]
+    name: ${{ matrix.base }}-${{ matrix.platform }}
+    runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    permissions:
+      attestations: write
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - name: Set up Docker
+        uses: docker/setup-docker-action@e61617a16c407a86262fb923c35a616ddbe070b3 # v4.6.0
+        with:
+          daemon-config: |
+            {
+              "debug": false,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract container metadata
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: |
+            ghcr.io/osgeo/gdal
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+      - name: Build
+        shell: bash -l {0}
+        id: build
+        env:
+          BUILDKIT_PROGRESS: plain
+        run: |
+          cd docker/${{ matrix.base }}
+          ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --push --gdal ${{ github.ref_name }} --tag ${{ env.VERSION }} --release --proj ${{ env.PROJ_VERSION }}
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-${VERSION_WITH_RC}-${{ matrix.platform }} gdalinfo --formats
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-${VERSION_WITH_RC}-${{ matrix.platform }} ogrinfo --formats
+  create-docker-manifest:
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      packages: write
+      attestations: write
+      id-token: write
+    runs-on: ubuntu-latest
+    needs: [docker_builds, safety_checks]
+    env:
+      VERSION_WITH_RC: ${{ needs.safety_checks.outputs.VERSION_WITH_RC }}
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: ["ubuntu-full", "ubuntu-small", "alpine-small", "alpine-normal"]
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create and push multi-platform manifest
+        run: |
+          docker buildx imagetools create \
+          -t ghcr.io/osgeo/gdal:${{ matrix.tag }}-${VERSION_WITH_RC} \
+          ghcr.io/osgeo/gdal:${{ matrix.tag }}-${VERSION_WITH_RC}-amd64 \
+          ghcr.io/osgeo/gdal:${{ matrix.tag }}-${VERSION_WITH_RC}-arm64

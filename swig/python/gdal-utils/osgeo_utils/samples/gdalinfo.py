@@ -37,11 +37,6 @@ def EQUAL(a, b):
 
 
 def main(argv=None):
-    version_num = int(gdal.VersionInfo("VERSION_NUM"))
-    if version_num < 1800:  # because of GetGeoTransform(can_return_null)
-        print("ERROR: Python bindings of GDAL 1.8.0 or later required")
-        return 1
-
     bComputeMinMax = False
     bShowGCPs = True
     bShowMetadata = True

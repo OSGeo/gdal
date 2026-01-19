@@ -546,7 +546,7 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
     int             i;
     int nPos = nStartBlock;
 
-    std::unique_ptr<EphemerisSeg_t> l_segment(new EphemerisSeg_t());
+   auto l_segment = std::make_unique<EphemerisSeg_t>();
 
 /* -------------------------------------------------------------------- */
 /*      Process first block.                                            */

@@ -62,10 +62,7 @@ and are introduced here.
     The list of all format codes can be listed with the :option:`--formats` switch.
     Only formats list as ``(rw)`` (read-write) can be written.
 
-    .. versionadded:: 2.3
-
-        If not specified, the format is guessed from the extension.
-        Previously, it was generally GTiff for raster, or ESRI Shapefile for vector.
+    If not specified, the format is guessed from the extension.
 
 .. include:: options/co.rst
 

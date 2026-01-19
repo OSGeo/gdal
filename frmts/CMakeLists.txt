@@ -148,6 +148,7 @@ gdal_optional_format(pdf "Geospatial PDF") # write only if none of GDAL_USE_POPP
                                            # is set
 gdal_optional_format(rcm "Radarsat Constellation Mission")
 gdal_optional_format(gdalg "GDAL Streamed Algorithm Format")
+gdal_optional_format(e57 "E57")
 
 # formats with external library dependency
 gdal_dependent_format(png "PNG image format" "GDAL_USE_PNG OR GDAL_USE_PNG_INTERNAL")

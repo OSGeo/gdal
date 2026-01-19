@@ -1123,7 +1123,7 @@ short CPLODBCStatement::GetColNullable(int iCol)
  *
  * @param iCol the zero based column index.
  *
- * @return NULL if the default value is not dpecified
+ * @return NULL if the default value is not specified
  * or the internal copy of the default value.
  */
 

@@ -217,10 +217,10 @@ void GDALJP2Metadata::CollectGMLData(GDALJP2Box *poGMLData)
 
             while (strlen(oSubChildBox.GetType()) > 0)
             {
-                if (EQUAL(oSubChildBox.GetType(), "lbl "))
+                if (EQUAL(oSubChildBox.GetType(), "lbl ") && !pszLabel)
                     pszLabel =
                         reinterpret_cast<char *>(oSubChildBox.ReadBoxData());
-                else if (EQUAL(oSubChildBox.GetType(), "xml "))
+                else if (EQUAL(oSubChildBox.GetType(), "xml ") && !pszXML)
                 {
                     pszXML =
                         reinterpret_cast<char *>(oSubChildBox.ReadBoxData());
@@ -1186,7 +1186,7 @@ void GDALJP2Metadata::SetGeoTransform(const GDALGeoTransform &gt)
 /*                             SetRPCMD()                               */
 /************************************************************************/
 
-void GDALJP2Metadata::SetRPCMD(char **papszRPCMDIn)
+void GDALJP2Metadata::SetRPCMD(CSLConstList papszRPCMDIn)
 
 {
     CSLDestroy(papszRPCMD);
@@ -3253,31 +3253,35 @@ GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(GDALDataset *poSrcDS,
                                                   int bMainMDDomainOnly)
 {
     GDALMultiDomainMetadata oLocalMDMD;
-    char **papszSrcMD = CSLDuplicate(poSrcDS->GetMetadata());
-    /* Remove useless metadata */
-    papszSrcMD = CSLSetNameValue(papszSrcMD, GDALMD_AREA_OR_POINT, nullptr);
-    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_RESOLUTIONUNIT", nullptr);
-    papszSrcMD = CSLSetNameValue(papszSrcMD,
-                                 "TIFFTAG_XREpsMasterXMLNodeSOLUTION", nullptr);
-    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_YRESOLUTION", nullptr);
-    papszSrcMD =
-        CSLSetNameValue(papszSrcMD, "Corder", nullptr); /* from JP2KAK */
-    if (poSrcDS->GetDriver() != nullptr &&
-        EQUAL(poSrcDS->GetDriver()->GetDescription(), "JP2ECW"))
-    {
-        papszSrcMD =
-            CSLSetNameValue(papszSrcMD, "COMPRESSION_RATE_TARGET", nullptr);
-        papszSrcMD = CSLSetNameValue(papszSrcMD, "COLORSPACE", nullptr);
-        papszSrcMD = CSLSetNameValue(papszSrcMD, "VERSION", nullptr);
-    }
-
     bool bHasMD = false;
-    if (papszSrcMD && *papszSrcMD)
     {
-        bHasMD = true;
-        oLocalMDMD.SetMetadata(papszSrcMD);
+        char **papszSrcMD = CSLDuplicate(poSrcDS->GetMetadata());
+        /* Remove useless metadata */
+        papszSrcMD = CSLSetNameValue(papszSrcMD, GDALMD_AREA_OR_POINT, nullptr);
+        papszSrcMD =
+            CSLSetNameValue(papszSrcMD, "TIFFTAG_RESOLUTIONUNIT", nullptr);
+        papszSrcMD = CSLSetNameValue(
+            papszSrcMD, "TIFFTAG_XREpsMasterXMLNodeSOLUTION", nullptr);
+        papszSrcMD =
+            CSLSetNameValue(papszSrcMD, "TIFFTAG_YRESOLUTION", nullptr);
+        papszSrcMD =
+            CSLSetNameValue(papszSrcMD, "Corder", nullptr); /* from JP2KAK */
+        if (poSrcDS->GetDriver() != nullptr &&
+            EQUAL(poSrcDS->GetDriver()->GetDescription(), "JP2ECW"))
+        {
+            papszSrcMD =
+                CSLSetNameValue(papszSrcMD, "COMPRESSION_RATE_TARGET", nullptr);
+            papszSrcMD = CSLSetNameValue(papszSrcMD, "COLORSPACE", nullptr);
+            papszSrcMD = CSLSetNameValue(papszSrcMD, "VERSION", nullptr);
+        }
+
+        if (papszSrcMD && *papszSrcMD)
+        {
+            bHasMD = true;
+            oLocalMDMD.SetMetadata(papszSrcMD);
+        }
+        CSLDestroy(papszSrcMD);
     }
-    CSLDestroy(papszSrcMD);
 
     if (!bMainMDDomainOnly)
     {
@@ -3294,7 +3298,8 @@ GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(GDALDataset *poSrcDS,
                 !EQUAL(*papszMDListIter, "xml:XMP") &&
                 !EQUAL(*papszMDListIter, "xml:IPR"))
             {
-                papszSrcMD = poSrcDS->GetMetadata(*papszMDListIter);
+                CSLConstList papszSrcMD =
+                    poSrcDS->GetMetadata(*papszMDListIter);
                 if (papszSrcMD && *papszSrcMD)
                 {
                     bHasMD = true;
@@ -3333,7 +3338,7 @@ GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(GDALDataset *poSrcDS,
 
     GDALJP2Box *poBox = new GDALJP2Box();
     poBox->SetType("xml ");
-    poBox->SetWritableData(static_cast<int>(strlen(pszXML) + 1),
+    poBox->SetWritableData(static_cast<int>(strlen(pszXML)),
                            reinterpret_cast<const GByte *>(pszXML));
     CPLFree(pszXML);
 
@@ -3356,13 +3361,13 @@ GDALJP2Box **GDALJP2Metadata::CreateXMLBoxes(GDALDataset *poSrcDS, int *pnBoxes)
         /* as a standalone JP2 XML box */
         if (STARTS_WITH_CI(*papszMDListIter, "xml:BOX_"))
         {
-            char **papszSrcMD = poSrcDS->GetMetadata(*papszMDListIter);
+            CSLConstList papszSrcMD = poSrcDS->GetMetadata(*papszMDListIter);
             if (papszSrcMD && *papszSrcMD)
             {
                 GDALJP2Box *poBox = new GDALJP2Box();
                 poBox->SetType("xml ");
                 poBox->SetWritableData(
-                    static_cast<int>(strlen(*papszSrcMD) + 1),
+                    static_cast<int>(strlen(*papszSrcMD)),
                     reinterpret_cast<const GByte *>(*papszSrcMD));
                 papoBoxes = static_cast<GDALJP2Box **>(CPLRealloc(
                     papoBoxes, sizeof(GDALJP2Box *) * (*pnBoxes + 1)));
@@ -3380,12 +3385,12 @@ GDALJP2Box **GDALJP2Metadata::CreateXMLBoxes(GDALDataset *poSrcDS, int *pnBoxes)
 
 GDALJP2Box *GDALJP2Metadata::CreateXMPBox(GDALDataset *poSrcDS)
 {
-    char **papszSrcMD = poSrcDS->GetMetadata("xml:XMP");
+    CSLConstList papszSrcMD = poSrcDS->GetMetadata("xml:XMP");
     GDALJP2Box *poBox = nullptr;
     if (papszSrcMD && *papszSrcMD)
     {
         poBox = GDALJP2Box::CreateUUIDBox(
-            xmp_uuid, static_cast<int>(strlen(*papszSrcMD) + 1),
+            xmp_uuid, static_cast<int>(strlen(*papszSrcMD)),
             reinterpret_cast<const GByte *>(*papszSrcMD));
     }
     return poBox;
@@ -3397,13 +3402,13 @@ GDALJP2Box *GDALJP2Metadata::CreateXMPBox(GDALDataset *poSrcDS)
 
 GDALJP2Box *GDALJP2Metadata::CreateIPRBox(GDALDataset *poSrcDS)
 {
-    char **papszSrcMD = poSrcDS->GetMetadata("xml:IPR");
+    CSLConstList papszSrcMD = poSrcDS->GetMetadata("xml:IPR");
     GDALJP2Box *poBox = nullptr;
     if (papszSrcMD && *papszSrcMD)
     {
         poBox = new GDALJP2Box();
         poBox->SetType("jp2i");
-        poBox->SetWritableData(static_cast<int>(strlen(*papszSrcMD) + 1),
+        poBox->SetWritableData(static_cast<int>(strlen(*papszSrcMD)),
                                reinterpret_cast<const GByte *>(*papszSrcMD));
     }
     return poBox;

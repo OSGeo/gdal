@@ -118,8 +118,7 @@ TEST_F(test_ms_square, only_zero)
     // Square with only 0, level = 0.1
     Square square(ValuedPoint(0, 1, 0), ValuedPoint(1, 1, 0),
                   ValuedPoint(0, 0, 0), ValuedPoint(1, 0, 0));
-    Square::Segments segments(
-        square.segments(.1, -std::numeric_limits<double>::infinity()));
+    Square::Segments segments(square.segments(.1));
     //
     //   0                    0
     //    +------------------+
@@ -152,8 +151,7 @@ TEST_F(test_ms_square, only_one)
     //    |                  |
     //    +------------------+
     //   1                    1
-    Square::Segments segments(
-        square.segments(.1, -std::numeric_limits<double>::infinity()));
+    Square::Segments segments(square.segments(.1));
     EXPECT_EQ(segments.size(), size_t(0));
 }
 
@@ -174,8 +172,7 @@ TEST_F(test_ms_square, only_zero_level_1)
     //    |                  |
     //    +------------------+
     //   1                    1
-    Square::Segments segments(
-        square.segments(1.0, -std::numeric_limits<double>::infinity()));
+    Square::Segments segments(square.segments(1.0));
     EXPECT_EQ(segments.size(), size_t(0));
 }
 
@@ -196,8 +193,7 @@ TEST_F(test_ms_square, one_segment)
     //    | \                |
     //    +---o--------------+
     //   1                    0
-    Square::Segments segments(
-        square.segments(.1, -std::numeric_limits<double>::infinity()));
+    Square::Segments segments(square.segments(.1));
     EXPECT_EQ(segments.size(), size_t(1));
     EXPECT_TRUE(segments[0].first == Point(.9, 1));
     EXPECT_TRUE(segments[0].second == Point(0, .1));
@@ -222,13 +218,11 @@ TEST_F(test_ms_square, fudge_test_1)
     //   1                    1
     //  (0,0)
     {
-        Square::Segments segments(
-            square.segments(0.0, -std::numeric_limits<double>::infinity()));
+        Square::Segments segments(square.segments(0.0));
         EXPECT_EQ(segments.size(), size_t(0));
     }
     {
-        Square::Segments segments(
-            square.segments(1.0, -std::numeric_limits<double>::infinity()));
+        Square::Segments segments(square.segments(1.0));
         EXPECT_EQ(segments.size(), size_t(1));
         EXPECT_NEAR(segments[0].first.x, 0.0, 0.001);
         EXPECT_NEAR(segments[0].first.y, 0.0, 0.001);
@@ -256,8 +250,7 @@ TEST_F(test_ms_square, fudge_test_2)
     //   0                    0
     // (0,0)
     {
-        Square::Segments segments(
-            square.segments(1.0, -std::numeric_limits<double>::infinity()));
+        Square::Segments segments(square.segments(1.0));
         EXPECT_EQ(segments.size(), 1U);
         EXPECT_NEAR(segments[0].first.x, 0.0, 0.001);
         EXPECT_NEAR(segments[0].first.y, 1.0, 0.001);
@@ -265,8 +258,7 @@ TEST_F(test_ms_square, fudge_test_2)
         EXPECT_NEAR(segments[0].second.y, 1.0, 0.001);
     }
     {
-        Square::Segments segments(
-            square.segments(0.0, -std::numeric_limits<double>::infinity()));
+        Square::Segments segments(square.segments(0.0));
         EXPECT_EQ(segments.size(), 0U);
     }
 }
@@ -322,10 +314,8 @@ TEST_F(test_ms_square, nan)
     EXPECT_EQ(ul.lowerRight.y, ll.upperRight.y);
     EXPECT_EQ(ul.lowerRight.value, ll.upperRight.value);
 
-    const Square::Segments segments_up(
-        ul.segments(225, -std::numeric_limits<double>::infinity()));
-    const Square::Segments segments_down(
-        ll.segments(225, -std::numeric_limits<double>::infinity()));
+    const Square::Segments segments_up(ul.segments(225));
+    const Square::Segments segments_down(ll.segments(225));
 
     // segments on 225
     //
@@ -382,10 +372,8 @@ TEST_F(test_ms_square, border_test_1)
     //    +--------+---------+
     // 272.87   272.90000 272.93
 
-    Square::Segments segments_l(
-        ll.segments(272.9, -std::numeric_limits<double>::infinity()));
-    Square::Segments segments_r(
-        lr.segments(272.9, -std::numeric_limits<double>::infinity()));
+    Square::Segments segments_l(ll.segments(272.9));
+    Square::Segments segments_r(lr.segments(272.9));
 
     // the level falls exactly on corners
     // thanks to the fudge, each corner should be shifted away a bit

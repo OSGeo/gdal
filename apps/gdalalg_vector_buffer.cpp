@@ -72,8 +72,18 @@ class GDALVectorBufferAlgorithmLayer final
     GDALVectorBufferAlgorithmLayer(
         OGRLayer &oSrcLayer, const GDALVectorBufferAlgorithm::Options &opts)
         : GDALVectorGeomOneToOneAlgorithmLayer<GDALVectorBufferAlgorithm>(
-              oSrcLayer, opts)
+              oSrcLayer, opts),
+          m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
     {
+        m_poFeatureDefn->Reference();
+        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
+        {
+            if (IsSelectedGeomField(i))
+            {
+                m_poFeatureDefn->GetGeomFieldDefn(i)->SetType(wkbMultiPolygon);
+            }
+        }
+
         m_aosBufferOptions.SetNameValue("ENDCAP_STYLE",
                                         opts.m_endCapStyle.c_str());
         m_aosBufferOptions.SetNameValue("JOIN_STYLE", opts.m_joinStyle.c_str());
@@ -85,6 +95,16 @@ class GDALVectorBufferAlgorithmLayer final
                                         m_opts.m_side != "both" ? "YES" : "NO");
     }
 
+    ~GDALVectorBufferAlgorithmLayer() override
+    {
+        m_poFeatureDefn->Release();
+    }
+
+    const OGRFeatureDefn *GetLayerDefn() const override
+    {
+        return m_poFeatureDefn;
+    }
+
   protected:
     using GDALVectorGeomOneToOneAlgorithmLayer::TranslateFeature;
 
@@ -93,6 +113,9 @@ class GDALVectorBufferAlgorithmLayer final
 
   private:
     CPLStringList m_aosBufferOptions{};
+    OGRFeatureDefn *const m_poFeatureDefn;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorBufferAlgorithmLayer)
 };
 
 /************************************************************************/
@@ -102,7 +125,7 @@ class GDALVectorBufferAlgorithmLayer final
 std::unique_ptr<OGRFeature> GDALVectorBufferAlgorithmLayer::TranslateFeature(
     std::unique_ptr<OGRFeature> poSrcFeature) const
 {
-    const int nGeomFieldCount = poSrcFeature->GetGeomFieldCount();
+    const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
     for (int i = 0; i < nGeomFieldCount; ++i)
     {
         if (IsSelectedGeomField(i))
@@ -114,15 +137,22 @@ std::unique_ptr<OGRFeature> GDALVectorBufferAlgorithmLayer::TranslateFeature(
                                               m_aosBufferOptions.List()));
                 if (poGeom)
                 {
-                    poGeom->assignSpatialReference(m_srcLayer.GetLayerDefn()
-                                                       ->GetGeomFieldDefn(i)
-                                                       ->GetSpatialRef());
-                    poSrcFeature->SetGeomField(i, std::move(poGeom));
+                    const auto poGeomFieldDefn =
+                        m_poFeatureDefn->GetGeomFieldDefn(i);
+                    poGeom.reset(OGRGeometryFactory::forceTo(
+                        poGeom.release(), poGeomFieldDefn->GetType()));
+                    if (poGeom)
+                    {
+                        poGeom->assignSpatialReference(
+                            poGeomFieldDefn->GetSpatialRef());
+                        poSrcFeature->SetGeomField(i, std::move(poGeom));
+                    }
                 }
             }
         }
     }
 
+    poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
     return poSrcFeature;
 }
 

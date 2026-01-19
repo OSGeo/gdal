@@ -35,7 +35,7 @@ class NDFDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(NDFDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     NDFDataset();
@@ -77,7 +77,7 @@ NDFDataset::~NDFDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr NDFDataset::Close()
+CPLErr NDFDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -302,7 +302,7 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->papszExtraFiles = CSLAddString(poDS->papszExtraFiles, osFilename);
 
         auto poBand = RawRasterBand::Create(
-            poDS.get(), iBand + 1, fpRaw, 0, 1, poDS->nRasterXSize, GDT_Byte,
+            poDS.get(), iBand + 1, fpRaw, 0, 1, poDS->nRasterXSize, GDT_UInt8,
             RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
             RawRasterBand::OwnFP::YES);
         if (!poBand)

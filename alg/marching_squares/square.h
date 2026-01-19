@@ -188,9 +188,9 @@ struct Square
     //
     //     ^
     //  -  |  +
-    Segments segments(double level, double minLevel) const
+    Segments segments(double level) const
     {
-        switch (marchingCase(level, minLevel))
+        switch (marchingCase(level))
         {
             case (ALL_LOW):
                 // debug("ALL_LOW");
@@ -200,64 +200,52 @@ struct Square
                 return Segments();
             case (UPPER_LEFT):
                 // debug("UPPER_LEFT");
-                return Segments(
-                    Segment(interpolate(UPPER_BORDER, level, minLevel),
-                            interpolate(LEFT_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(UPPER_BORDER, level),
+                                        interpolate(LEFT_BORDER, level)));
             case (LOWER_LEFT):
                 // debug("LOWER_LEFT");
-                return Segments(
-                    Segment(interpolate(LEFT_BORDER, level, minLevel),
-                            interpolate(LOWER_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(LEFT_BORDER, level),
+                                        interpolate(LOWER_BORDER, level)));
             case (LOWER_RIGHT):
                 // debug("LOWER_RIGHT");
-                return Segments(
-                    Segment(interpolate(LOWER_BORDER, level, minLevel),
-                            interpolate(RIGHT_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(LOWER_BORDER, level),
+                                        interpolate(RIGHT_BORDER, level)));
             case (UPPER_RIGHT):
                 // debug("UPPER_RIGHT");
-                return Segments(
-                    Segment(interpolate(RIGHT_BORDER, level, minLevel),
-                            interpolate(UPPER_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(RIGHT_BORDER, level),
+                                        interpolate(UPPER_BORDER, level)));
             case (UPPER_LEFT | LOWER_LEFT):
                 // debug("UPPER_LEFT | LOWER_LEFT");
-                return Segments(
-                    Segment(interpolate(UPPER_BORDER, level, minLevel),
-                            interpolate(LOWER_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(UPPER_BORDER, level),
+                                        interpolate(LOWER_BORDER, level)));
             case (LOWER_LEFT | LOWER_RIGHT):
                 // debug("LOWER_LEFT | LOWER_RIGHT");
-                return Segments(
-                    Segment(interpolate(LEFT_BORDER, level, minLevel),
-                            interpolate(RIGHT_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(LEFT_BORDER, level),
+                                        interpolate(RIGHT_BORDER, level)));
             case (LOWER_RIGHT | UPPER_RIGHT):
                 // debug("LOWER_RIGHT | UPPER_RIGHT");
-                return Segments(
-                    Segment(interpolate(LOWER_BORDER, level, minLevel),
-                            interpolate(UPPER_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(LOWER_BORDER, level),
+                                        interpolate(UPPER_BORDER, level)));
             case (UPPER_RIGHT | UPPER_LEFT):
                 // debug("UPPER_RIGHT | UPPER_LEFT");
-                return Segments(
-                    Segment(interpolate(RIGHT_BORDER, level, minLevel),
-                            interpolate(LEFT_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(RIGHT_BORDER, level),
+                                        interpolate(LEFT_BORDER, level)));
             case (ALL_HIGH & ~UPPER_LEFT):
                 // debug("ALL_HIGH & ~UPPER_LEFT");
-                return Segments(
-                    Segment(interpolate(LEFT_BORDER, level, minLevel),
-                            interpolate(UPPER_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(LEFT_BORDER, level),
+                                        interpolate(UPPER_BORDER, level)));
             case (ALL_HIGH & ~LOWER_LEFT):
                 // debug("ALL_HIGH & ~LOWER_LEFT");
-                return Segments(
-                    Segment(interpolate(LOWER_BORDER, level, minLevel),
-                            interpolate(LEFT_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(LOWER_BORDER, level),
+                                        interpolate(LEFT_BORDER, level)));
             case (ALL_HIGH & ~LOWER_RIGHT):
                 // debug("ALL_HIGH & ~LOWER_RIGHT");
-                return Segments(
-                    Segment(interpolate(RIGHT_BORDER, level, minLevel),
-                            interpolate(LOWER_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(RIGHT_BORDER, level),
+                                        interpolate(LOWER_BORDER, level)));
             case (ALL_HIGH & ~UPPER_RIGHT):
                 // debug("ALL_HIGH & ~UPPER_RIGHT");
-                return Segments(
-                    Segment(interpolate(UPPER_BORDER, level, minLevel),
-                            interpolate(RIGHT_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(UPPER_BORDER, level),
+                                        interpolate(RIGHT_BORDER, level)));
             case (SADDLE_NE):
             case (SADDLE_NW):
                 // From the two possible saddle configurations, we always return
@@ -272,11 +260,10 @@ struct Square
                 // Arbitrarily choosing one of the two possible configurations
                 // is not really that worse than deciding based on the center
                 // point.
-                return Segments(
-                    Segment(interpolate(LEFT_BORDER, level, minLevel),
-                            interpolate(LOWER_BORDER, level, minLevel)),
-                    Segment(interpolate(RIGHT_BORDER, level, minLevel),
-                            interpolate(UPPER_BORDER, level, minLevel)));
+                return Segments(Segment(interpolate(LEFT_BORDER, level),
+                                        interpolate(LOWER_BORDER, level)),
+                                Segment(interpolate(RIGHT_BORDER, level),
+                                        interpolate(UPPER_BORDER, level)));
         }
         assert(false);
         return Segments();
@@ -333,8 +320,7 @@ struct Square
                     const int levelIdx = (*it).first;
                     const double level = (*it).second;
 
-                    const Point nextPoint(
-                        interpolate(border, level, levelGenerator.minLevel()));
+                    const Point nextPoint(interpolate(border, level));
                     if (reverse)
                         writer.addBorderSegment(levelIdx, nextPoint, lastPoint);
                     else
@@ -360,8 +346,7 @@ struct Square
             const int levelIdx = (*it).first;
             const double level = (*it).second;
 
-            const Segments segments_ =
-                segments(level, levelGenerator.minLevel());
+            const Segments segments_ = segments(level);
 
             for (std::size_t i = 0; i < segments_.size(); i++)
             {
@@ -447,20 +432,17 @@ struct Square
                        : .5 * (upperLeft.value + upperRight.value)));
     }
 
-    uint8_t marchingCase(double level, double minLevel) const
+    uint8_t marchingCase(double level) const
     {
-        return (level < fudge(upperLeft.value, minLevel, level) ? UPPER_LEFT
-                                                                : ALL_LOW) |
-               (level < fudge(lowerLeft.value, minLevel, level) ? LOWER_LEFT
-                                                                : ALL_LOW) |
-               (level < fudge(lowerRight.value, minLevel, level) ? LOWER_RIGHT
-                                                                 : ALL_LOW) |
-               (level < fudge(upperRight.value, minLevel, level) ? UPPER_RIGHT
-                                                                 : ALL_LOW);
+        return (level < fudge(upperLeft.value, level) ? UPPER_LEFT : ALL_LOW) |
+               (level < fudge(lowerLeft.value, level) ? LOWER_LEFT : ALL_LOW) |
+               (level < fudge(lowerRight.value, level) ? LOWER_RIGHT
+                                                       : ALL_LOW) |
+               (level < fudge(upperRight.value, level) ? UPPER_RIGHT : ALL_LOW);
     }
 
     static double interpolate_(double level, double x1, double x2, double y1,
-                               double y2, bool need_split, double minLevel)
+                               double y2, bool need_split)
     {
         if (need_split)
         {
@@ -474,8 +456,8 @@ struct Square
             // the end
             const double xm = .5 * (x1 + x2);
             const double ym = .5 * (y1 + y2);
-            const double fy1 = fudge(y1, minLevel, level);
-            const double fym = fudge(ym, minLevel, level);
+            const double fy1 = fudge(y1, level);
+            const double fym = fudge(ym, level);
             if ((fy1 < level && level < fym) || (fy1 > level && level > fym))
             {
                 x2 = xm;
@@ -487,12 +469,12 @@ struct Square
                 y1 = ym;
             }
         }
-        const double fy1 = fudge(y1, minLevel, level);
-        const double ratio = (level - fy1) / (fudge(y2, minLevel, level) - fy1);
+        const double fy1 = fudge(y1, level);
+        const double ratio = (level - fy1) / (fudge(y2, level) - fy1);
         return x1 * (1. - ratio) + x2 * ratio;
     }
 
-    Point interpolate(uint8_t border, double level, double minLevel) const
+    Point interpolate(uint8_t border, double level) const
     {
         switch (border)
         {
@@ -500,21 +482,21 @@ struct Square
                 return Point(upperLeft.x,
                              interpolate_(level, lowerLeft.y, upperLeft.y,
                                           lowerLeft.value, upperLeft.value,
-                                          !split, minLevel));
+                                          !split));
             case LOWER_BORDER:
                 return Point(interpolate_(level, lowerLeft.x, lowerRight.x,
                                           lowerLeft.value, lowerRight.value,
-                                          !split, minLevel),
+                                          !split),
                              lowerLeft.y);
             case RIGHT_BORDER:
                 return Point(upperRight.x,
                              interpolate_(level, lowerRight.y, upperRight.y,
                                           lowerRight.value, upperRight.value,
-                                          !split, minLevel));
+                                          !split));
             case UPPER_BORDER:
                 return Point(interpolate_(level, upperLeft.x, upperRight.x,
                                           upperLeft.value, upperRight.value,
-                                          !split, minLevel),
+                                          !split),
                              upperLeft.y);
         }
         assert(false);

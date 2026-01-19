@@ -104,11 +104,28 @@ OGRErr OGRLayerDecorator::ISetFeature(OGRFeature *poFeature)
     return m_poDecoratedLayer->SetFeature(poFeature);
 }
 
+OGRErr
+OGRLayerDecorator::ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature)
+{
+    if (!m_poDecoratedLayer)
+        return OGRERR_FAILURE;
+    return m_poDecoratedLayer->SetFeature(std::move(poFeature));
+}
+
 OGRErr OGRLayerDecorator::ICreateFeature(OGRFeature *poFeature)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;
     return m_poDecoratedLayer->CreateFeature(poFeature);
+}
+
+OGRErr
+OGRLayerDecorator::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
+                                         GIntBig *pnFID)
+{
+    if (!m_poDecoratedLayer)
+        return OGRERR_FAILURE;
+    return m_poDecoratedLayer->CreateFeature(std::move(poFeature), pnFID);
 }
 
 OGRErr OGRLayerDecorator::IUpsertFeature(OGRFeature *poFeature)
@@ -315,14 +332,14 @@ OGRErr OGRLayerDecorator::SetIgnoredFields(CSLConstList papszFields)
     return m_poDecoratedLayer->SetIgnoredFields(papszFields);
 }
 
-char **OGRLayerDecorator::GetMetadata(const char *pszDomain)
+CSLConstList OGRLayerDecorator::GetMetadata(const char *pszDomain)
 {
     if (!m_poDecoratedLayer)
         return nullptr;
     return m_poDecoratedLayer->GetMetadata(pszDomain);
 }
 
-CPLErr OGRLayerDecorator::SetMetadata(char **papszMetadata,
+CPLErr OGRLayerDecorator::SetMetadata(CSLConstList papszMetadata,
                                       const char *pszDomain)
 {
     if (!m_poDecoratedLayer)

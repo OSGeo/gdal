@@ -16,6 +16,8 @@
 #ifndef META_H
 #define META_H
 
+#include "cpl_vsi.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -25,10 +27,6 @@ extern "C" {
 #include "type.h"
 #ifdef MEMWATCH
   #include "memwatch.h"
-#endif
-
-#ifdef __cplusplus
-#include "cpl_vsi.h"
 #endif
 
 #ifndef GRIB2BIT_ENUM
@@ -638,7 +636,7 @@ int MetaPrint (grib_MetaData *meta, char **ans, sChar decimal, sChar f_unit);
 sInt4 sbit_2Comp_fourByte(sInt4 data);
 
 sChar sbit_2Comp_oneByte(sChar data);
- 
+
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */

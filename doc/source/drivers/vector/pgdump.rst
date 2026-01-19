@@ -124,10 +124,9 @@ The following layer creation options are supported:
       :default: GIST
 
       YES/NO for earlier versions and backward compatibility: Set to GIST
-      (GDAL >=2.4, or YES for earlier versions) by default. Creates a
-      spatial index (GiST) on the geometry column to speed up queries (Has
-      effect only when PostGIS is available). Set to NONE (GDAL >= 2.4, or
-      FALSE for earlier versions) to disable. BRIN is only available with
+      by default. Creates a spatial index (GiST) on the geometry column to speed
+      up queries (Has effect only when PostGIS is available).
+      Set to NONE to disable. BRIN is only available with
       PostgreSQL >= 9.4 and PostGIS >= 2.3. SPGIST is only available with
       PostgreSQL >= 11 and PostGIS >= 2.5
 

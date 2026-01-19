@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <string>
 
 #include "cpl_conv.h"
@@ -633,7 +634,16 @@ bool GMLFeatureClass::InitializeFromXML(CPLXMLNode *psRoot)
     {
         const char *pszValue = CPLGetXMLValue(psDSI, "FeatureCount", nullptr);
         if (pszValue != nullptr)
-            SetFeatureCount(CPLAtoGIntBig(pszValue));
+        {
+            const auto nValue = CPLAtoGIntBig(pszValue);
+            // size of "<fMember><x/></fMember>"
+            constexpr int MIN_SIZE_FEATURE = 23;
+            if (nValue >= 0 &&
+                nValue < std::numeric_limits<int64_t>::max() / MIN_SIZE_FEATURE)
+            {
+                SetFeatureCount(nValue);
+            }
+        }
 
         // Eventually we should support XML subtrees.
         pszValue = CPLGetXMLValue(psDSI, "ExtraInfo", nullptr);

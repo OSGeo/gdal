@@ -154,7 +154,7 @@ int PDFWritableVectorDataset::GetLayerCount() const
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr PDFWritableVectorDataset::Close()
+CPLErr PDFWritableVectorDataset::Close(GDALProgressFunc, void *)
 {
     return PDFWritableVectorDataset::FlushCache(true);
 }
@@ -340,7 +340,7 @@ CPLErr PDFWritableVectorDataset::FlushCache(bool /* bAtClosing*/)
     GDALPDFWriter oWriter(fp);
 
     GDALDataset *poSrcDS =
-        MEMDataset::Create("MEM:::", nWidth, nHeight, 0, GDT_Byte, nullptr);
+        MEMDataset::Create("MEM:::", nWidth, nHeight, 0, GDT_UInt8, nullptr);
 
     poSrcDS->SetGeoTransform(gt);
 

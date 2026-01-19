@@ -510,7 +510,7 @@ def test_transformer_9():
 
     # (long,lat)=(125.64828521533849 39.869345204440144) -> (Easting,Northing)=(213324.662167036 4418634.47813677) in EPSG:32652
     ds_dem = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/dem.tif", 100, 100, 1, gdal.GDT_Byte
+        "/vsimem/dem.tif", 100, 100, 1, gdal.GDT_UInt8
     )
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -580,7 +580,7 @@ def test_transformer_10():
 
     # Create a fake DEM
     ds_dem = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/dem.tif", 100, 100, 1, gdal.GDT_Byte
+        "/vsimem/dem.tif", 100, 100, 1, gdal.GDT_UInt8
     )
     ds_dem.SetGeoTransform(
         [

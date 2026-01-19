@@ -61,7 +61,7 @@ def test_gdal_sieve_1(script_path, tmp_path):
     test_tif = str(tmp_path / "sieve_1.tif")
 
     drv = gdal.GetDriverByName("GTiff")
-    dst_ds = drv.Create(test_tif, 5, 7, 1, gdal.GDT_Byte)
+    dst_ds = drv.Create(test_tif, 5, 7, 1, gdal.GDT_UInt8)
     dst_ds = None
 
     _, err = test_py_scripts.run_py_script(

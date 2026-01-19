@@ -44,22 +44,23 @@ namespace gdal
 /*! @cond Doxygen_Suppress */
 struct vector_access_check final : public exprtk::vector_access_runtime_check
 {
-    bool handle_runtime_violation(violation_context &context) override
-    {
-        auto nElements = (static_cast<std::uint8_t *>(context.end_ptr) -
-                          static_cast<std::uint8_t *>(context.base_ptr)) /
-                         context.type_size;
-        auto nIndexAccessed = (static_cast<std::uint8_t *>(context.access_ptr) -
-                               static_cast<std::uint8_t *>(context.base_ptr)) /
-                              context.type_size;
-
-        std::ostringstream oss;
-        oss << "Attempted to access index " << nIndexAccessed
-            << " in a vector of " << nElements
-            << " elements when evaluating VRT expression.";
-        throw std::runtime_error(oss.str());
-    }
+    bool handle_runtime_violation(violation_context &context) override;
 };
+
+bool vector_access_check::handle_runtime_violation(violation_context &context)
+{
+    auto nElements = (static_cast<std::uint8_t *>(context.end_ptr) -
+                      static_cast<std::uint8_t *>(context.base_ptr)) /
+                     context.type_size;
+    auto nIndexAccessed = (static_cast<std::uint8_t *>(context.access_ptr) -
+                           static_cast<std::uint8_t *>(context.base_ptr)) /
+                          context.type_size;
+
+    std::ostringstream oss;
+    oss << "Attempted to access index " << nIndexAccessed << " in a vector of "
+        << nElements << " elements when evaluating VRT expression.";
+    throw std::runtime_error(oss.str());
+}
 
 struct loop_timeout_check final : public exprtk::loop_runtime_check
 {
@@ -95,36 +96,39 @@ struct loop_timeout_check final : public exprtk::loop_runtime_check
         return true;
     }
 
-    void handle_runtime_violation(const violation_context &) override
-    {
-        std::ostringstream oss;
+    void handle_runtime_violation(const violation_context &) override;
 
-        // current version of exprtk does not report the correct
-        // violation in case of timeout, so we track the error category
-        // ourselves
-        if (timeout)
-        {
-            oss << "Expression evaluation time exceeded maximum of "
-                << static_cast<double>(max_duration.count() / 1e6)
-                << " seconds. You can increase this threshold by setting the "
-                << "GDAL_EXPRTK_TIMEOUT_SECONDS configuration "
-                << "option.";
-        }
-        else
-        {
-            oss << "Exceeded maximum of " << max_loop_iterations
-                << " loop iterations.";
-        }
-
-        throw std::runtime_error(oss.str());
-    }
-
+  private:
     static constexpr size_t max_iters_per_check = 10000;
     size_t iterations = 0;
     time_point_t timeout_t{};
     std::chrono::microseconds max_duration{};
     bool timeout{false};
 };
+
+void loop_timeout_check::handle_runtime_violation(const violation_context &)
+{
+    std::ostringstream oss;
+
+    // current version of exprtk does not report the correct
+    // violation in case of timeout, so we track the error category
+    // ourselves
+    if (timeout)
+    {
+        oss << "Expression evaluation time exceeded maximum of "
+            << static_cast<double>(max_duration.count() / 1e6)
+            << " seconds. You can increase this threshold by setting the "
+            << "GDAL_EXPRTK_TIMEOUT_SECONDS configuration "
+            << "option.";
+    }
+    else
+    {
+        oss << "Exceeded maximum of " << max_loop_iterations
+            << " loop iterations.";
+    }
+
+    throw std::runtime_error(oss.str());
+}
 
 class ExprtkExpression::Impl
 {

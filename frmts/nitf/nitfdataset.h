@@ -90,7 +90,7 @@ class NITFDataset final : public GDALPamDataset
     bool InitializeTREMetadata(bool bValidate);
     void InitializeImageStructureMetadata();
 
-    GIntBig *panJPEGBlockOffset = nullptr;
+    vsi_l_offset *panJPEGBlockOffset = nullptr;
     GByte *pabyJPEGBlock = nullptr;
     int nQLevel = 0;
 
@@ -135,7 +135,7 @@ class NITFDataset final : public GDALPamDataset
     NITFDataset();
     ~NITFDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize, GDALDataType eDT,
@@ -161,7 +161,7 @@ class NITFDataset final : public GDALPamDataset
     char **GetFileList() override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
     CPLErr FlushCache(bool bAtClosing) override;
@@ -252,7 +252,7 @@ class NITFProxyPamRasterBand CPL_NON_FINAL : public GDALPamRasterBand
   public:
     ~NITFProxyPamRasterBand() override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     /*virtual CPLErr      SetMetadata( char ** papszMetadata,
                                     const char * pszDomain = ""  );*/
     virtual const char *GetMetadataItem(const char *pszName,

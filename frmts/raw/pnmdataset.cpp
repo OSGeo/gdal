@@ -34,7 +34,7 @@ class PNMDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(PNMDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     PNMDataset() = default;
@@ -44,6 +44,7 @@ class PNMDataset final : public RawDataset
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
+    static GDALDataset *OpenInternal(GDALOpenInfo *, bool bInCreation);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
                                char **papszOptions);
@@ -63,7 +64,7 @@ PNMDataset::~PNMDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr PNMDataset::Close()
+CPLErr PNMDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -134,6 +135,17 @@ int PNMDataset::Identify(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 GDALDataset *PNMDataset::Open(GDALOpenInfo *poOpenInfo)
+
+{
+    return OpenInternal(poOpenInfo, false);
+}
+
+/************************************************************************/
+/*                            OpenInternal()                            */
+/************************************************************************/
+
+GDALDataset *PNMDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
+                                      bool bInCreation)
 
 {
     /* -------------------------------------------------------------------- */
@@ -220,7 +232,7 @@ GDALDataset *PNMDataset::Open(GDALOpenInfo *poOpenInfo)
 
     GDALDataType eDataType = GDT_Unknown;
     if (nMaxValue < 256)
-        eDataType = GDT_Byte;
+        eDataType = GDT_UInt8;
     else
         eDataType = GDT_UInt16;
 
@@ -258,6 +270,7 @@ GDALDataset *PNMDataset::Open(GDALOpenInfo *poOpenInfo)
                 RawRasterBand::OwnFP::NO);
             if (!poBand)
                 return nullptr;
+            poBand->SetTruncatedFileAllowed(bInCreation);
             poBand->SetColorInterpretation(
                 static_cast<GDALColorInterp>(GCI_RedBand + i));
             poDS->SetBand(i + 1, std::move(poBand));
@@ -296,7 +309,7 @@ GDALDataset *PNMDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Verify input options.                                           */
     /* -------------------------------------------------------------------- */
-    if (eType != GDT_Byte && eType != GDT_UInt16)
+    if (eType != GDT_UInt8 && eType != GDT_UInt16)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create PNM dataset with an illegal "
@@ -353,14 +366,14 @@ GDALDataset *PNMDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     if (pszMaxValue)
     {
         nMaxValue = atoi(pszMaxValue);
-        if (eType == GDT_Byte && (nMaxValue > 255 || nMaxValue < 0))
+        if (eType == GDT_UInt8 && (nMaxValue > 255 || nMaxValue < 0))
             nMaxValue = 255;
         else if (nMaxValue > 65535 || nMaxValue < 0)
             nMaxValue = 65535;
     }
     else
     {
-        if (eType == GDT_Byte)
+        if (eType == GDT_UInt8)
             nMaxValue = 255;
         else
             nMaxValue = 65535;
@@ -383,7 +396,7 @@ GDALDataset *PNMDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
-    return Open(&oOpenInfo);
+    return OpenInternal(&oOpenInfo, true);
 }
 
 /************************************************************************/

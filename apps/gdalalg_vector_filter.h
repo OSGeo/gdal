@@ -31,12 +31,18 @@ class GDALVectorFilterAlgorithm /* non final */
 
     explicit GDALVectorFilterAlgorithm(bool standaloneStep = false);
 
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return !m_updateExtent;
+    }
+
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_activeLayer{};
     std::vector<double> m_bbox{};
     std::string m_where{};
+    bool m_updateExtent = false;
 };
 
 /************************************************************************/

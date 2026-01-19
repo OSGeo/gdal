@@ -22,6 +22,7 @@ Available sub-commands
 
 - :ref:`gdal_mdim_info`
 - :ref:`gdal_mdim_convert`
+- :ref:`gdal_mdim_mosaic`
 
 Examples
 --------

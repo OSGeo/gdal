@@ -53,7 +53,7 @@ SQL/MM Part 3
 
 .. image:: ../../../images/rfc64/classOGRGeometry_RFC64.png
 
-Some prelimenary work had already been done prior to this proposal, such
+Some preliminary work had already been done prior to this proposal, such
 as including the necessary WKB codes in <ogr_core.h>.
 
 Additionally, the `SFCGAL <http://www.sfcgal.org/>`__ library is a new

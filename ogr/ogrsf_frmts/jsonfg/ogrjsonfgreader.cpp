@@ -518,16 +518,24 @@ void OGRJSONFGReader::FinalizeBuildContext(LayerDefnBuildContext &oBuildContext,
         {
             // No coordRefSys member found anywhere ? Fallback to WGS 84
             poSRSLayer = poSRSWGS84.get();
+            oBuildContext.bLayerCRSIsWGS84 = true;
         }
-
-        if (poSRSLayer && poSRSLayer->IsSame(poSRSWGS84.get()))
+        else if (poSRSLayer && poSRSLayer->IsSame(poSRSWGS84.get()))
         {
             oBuildContext.bLayerCRSIsWGS84 = true;
         }
         else if (poSRSLayer)
         {
             const char *pszAuthName = poSRSLayer->GetAuthorityName(nullptr);
-            if (!(pszAuthName && STARTS_WITH(pszAuthName, "IAU")))
+            const char *pszAuthCode = poSRSLayer->GetAuthorityCode(nullptr);
+            if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "OGC") &&
+                EQUAL(pszAuthCode, "CRS84"))
+            {
+                // Normalize reported CRS to EPSG:4326
+                poSRSLayer = poSRSWGS84.get();
+                oBuildContext.bLayerCRSIsWGS84 = true;
+            }
+            else if (!(pszAuthName && STARTS_WITH(pszAuthName, "IAU")))
             {
                 oBuildContext.poCTWGS84ToLayerCRS.reset(
                     OGRCreateCoordinateTransformation(poSRSWGS84.get(),

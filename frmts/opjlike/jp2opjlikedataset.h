@@ -125,7 +125,7 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
   protected:
     int CloseDependentDatasets() override;
     VSILFILE *GetFileHandle() override;
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     JP2OPJLikeDataset();
@@ -146,7 +146,7 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
     CPLErr SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                    const OGRSpatialReference *poSRS) override;
 
-    CPLErr SetMetadata(char **papszMetadata,
+    CPLErr SetMetadata(CSLConstList papszMetadata,
                        const char *pszDomain = "") override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "") override;
@@ -220,6 +220,8 @@ class JP2OPJLikeRasterBand final : public GDALPamRasterBand
     GDALRasterBand *GetOverview(int iOvrLevel) override;
 
     int HasArbitraryOverviews() override;
+
+    bool MayMultiBlockReadingBeMultiThreaded() const override;
 };
 
 #ifdef unused

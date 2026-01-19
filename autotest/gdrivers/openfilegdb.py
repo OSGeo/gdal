@@ -50,8 +50,8 @@ def test_openfilegb_raster_subdatasets():
 @pytest.mark.parametrize(
     "name,datatype,checksum",
     [
-        ("byte_lz77", gdal.GDT_Byte, 4672),
-        ("byte_lzw", gdal.GDT_Byte, 4672),  # no compression actually
+        ("byte_lz77", gdal.GDT_UInt8, 4672),
+        ("byte_lzw", gdal.GDT_UInt8, 4672),  # no compression actually
         ("uint16_lz77", gdal.GDT_UInt16, 4672),
         ("uint16_lzw", gdal.GDT_UInt16, 4672),  # no compression actually
         ("int16_lz77", gdal.GDT_Int16, 4672),

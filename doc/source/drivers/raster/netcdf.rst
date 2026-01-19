@@ -639,7 +639,7 @@ Configuration Options
 VSI Virtual File System API support
 -----------------------------------
 
-Since GDAL 2.4, and with Linux kernel >=4.3 and libnetcdf >=4.5, read
+With Linux kernel >=4.3 and libnetcdf >=4.5, read
 operations on /vsi file systems are supported using the userfaultfd Linux system
 call. If running from a container, that system call may be unavailable by default.
 For example with Docker, ``--security-opt seccomp=unconfined`` might be needed.
@@ -777,5 +777,4 @@ See Also:
    convention <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.5/build/cf-conventions.html>`__
 -  `NetCDF compiled
    libraries <http://www.unidata.ucar.edu/downloads/netcdf/index.jsp>`__
--  `NetCDF
-   Documentation <http://www.unidata.ucar.edu/software/netcdf/docs/>`__
+-  `NetCDF Documentation <https://www.unidata.ucar.edu/software/netcdf>`__

@@ -30,6 +30,7 @@ add_library(
   gdalwarper.cpp
   gdalwarpkernel.cpp
   gdalwarpoperation.cpp
+  hilbert.cpp
   llrasterize.cpp
   los.cpp
   polygonize.cpp
@@ -43,6 +44,7 @@ add_library(
   viewshed/util.cpp
   viewshed/viewshed.cpp
   viewshed/viewshed_executor.cpp
+  zonal.cpp
   gdalgenericinverse.cpp
   gdal_interpolateatpoint.cpp
 )

@@ -44,7 +44,7 @@ GTiffRasterBand::GTiffRasterBand(GTiffDataset *poDSIn, int nBandIn)
         if (nSampleFormat == SAMPLEFORMAT_INT)
             eDataType = GDT_Int8;
         else
-            eDataType = GDT_Byte;
+            eDataType = GDT_UInt8;
     }
     else if (nBitsPerSample <= 16)
     {
@@ -218,6 +218,17 @@ GTiffRasterBand::~GTiffRasterBand()
 }
 
 /************************************************************************/
+/*                  MayMultiBlockReadingBeMultiThreaded()               */
+/************************************************************************/
+
+bool GTiffRasterBand::MayMultiBlockReadingBeMultiThreaded() const
+{
+    return m_poGDS->m_nDisableMultiThreadedRead == 0 &&
+           m_poGDS->m_poThreadPool != nullptr &&
+           m_poGDS->IsMultiThreadedReadCompatible();
+}
+
+/************************************************************************/
 /*                            IRasterIO()                               */
 /************************************************************************/
 
@@ -237,13 +248,15 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (nBufXSize < nXSize && nBufYSize < nYSize)
     {
         int bTried = FALSE;
+        std::unique_ptr<GTiffDataset::JPEGOverviewVisibilitySetter> setter;
         if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
-            ++m_poGDS->m_nJPEGOverviewVisibilityCounter;
+        {
+            setter = m_poGDS->MakeJPEGOverviewVisible();
+            CPL_IGNORE_RET_VAL(setter);
+        }
         const CPLErr eErr = TryOverviewRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
             eBufType, nPixelSpace, nLineSpace, psExtraArg, &bTried);
-        if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
-            --m_poGDS->m_nJPEGOverviewVisibilityCounter;
         if (bTried)
             return eErr;
     }
@@ -469,13 +482,15 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         return CE_None;
     }
 
+    std::unique_ptr<GTiffDataset::JPEGOverviewVisibilitySetter> setter;
     if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
-        ++m_poGDS->m_nJPEGOverviewVisibilityCounter;
+    {
+        setter = m_poGDS->MakeJPEGOverviewVisible();
+        CPL_IGNORE_RET_VAL(setter);
+    }
     const CPLErr eErr = GDALPamRasterBand::IRasterIO(
         eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
         eBufType, nPixelSpace, nLineSpace, psExtraArg);
-    if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
-        --m_poGDS->m_nJPEGOverviewVisibilityCounter;
 
     m_poGDS->m_bLoadingOtherBands = false;
 

@@ -223,3 +223,38 @@ def test_gdalalg_raster_update_cannot_update_overviews():
 
     with pytest.raises(Exception), gdaltest.error_raises(gdal.CE_Warning):
         gdal.Run("gdal", "raster", "update", input=src_ds, output=out_ds)
+
+
+def test_gdalalg_raster_update_pipeline_intermediate_step(tmp_vsimem):
+
+    out_ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "tmp.tif", 3, 3)
+    out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    out_ds.Close()
+
+    src_ds = gdal.GetDriverByName("MEM").Create("src", 1, 1)
+    src_ds.SetGeoTransform([1, 1, 0, -1, 0, -1])
+    src_ds.GetRasterBand(1).Fill(1)
+
+    with gdal.alg.raster.pipeline(
+        input=src_ds, pipeline=f"read ! update {tmp_vsimem}/tmp.tif ! info --stats"
+    ) as alg:
+        j = alg.Output()
+        assert j["bands"][0]["maximum"] == 1
+
+
+def test_gdalalg_raster_update_pipeline_last_step():
+
+    out_ds = gdal.GetDriverByName("MEM").Create("out", 3, 3)
+    out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+
+    src_ds = gdal.GetDriverByName("MEM").Create("src", 1, 1)
+    src_ds.SetGeoTransform([1, 1, 0, -1, 0, -1])
+    src_ds.GetRasterBand(1).Fill(1)
+
+    assert gdal.alg.raster.pipeline(
+        input=src_ds, output=out_ds, pipeline="read ! update"
+    )
+
+    np.testing.assert_array_equal(
+        out_ds.ReadAsArray(), np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
+    )

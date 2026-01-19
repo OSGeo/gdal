@@ -29,14 +29,14 @@ maximize output image visual quality.
 
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
 
-.. include:: gdal_options/co.rst
 
-.. include:: gdal_options/overwrite.rst
+Program-Specific Options
+------------------------
 
 .. option:: --color-count <COLOR-COUNT>
 
@@ -50,11 +50,17 @@ Standard options
     The <FILENAME> must be either a raster file in a GDAL supported format with a palette
     or a color file in a supported format (.txt, QGIS .qml, QGIS .qlr).
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
 
-.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
+Standard Options
+----------------
 
+.. collapse:: Details
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

@@ -76,7 +76,7 @@ class SRPDataset final : public GDALPamDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
     char **GetFileList() override;
 
@@ -118,7 +118,7 @@ SRPRasterBand::SRPRasterBand(SRPDataset *poDSIn, int nBandIn)
     poDS = poDSIn;
     nBand = nBandIn;
 
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 
     nBlockXSize = 128;
     nBlockYSize = 128;
@@ -903,7 +903,7 @@ void SRPDataset::AddSubDataset(const char *pszGENFileName,
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **SRPDataset::GetMetadata(const char *pszDomain)
+CSLConstList SRPDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))

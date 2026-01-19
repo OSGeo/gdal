@@ -126,11 +126,6 @@ OGRPoint *OGRPoint::createXYM(double x, double y, double m)
 
 /**
  * \brief Copy constructor.
- *
- * Note: before GDAL 2.1, only the default implementation of the constructor
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRPoint::OGRPoint(const OGRPoint &) = default;
@@ -141,11 +136,6 @@ OGRPoint::OGRPoint(const OGRPoint &) = default;
 
 /**
  * \brief Assignment operator.
- *
- * Note: before GDAL 2.1, only the default implementation of the operator
- * existed, which could be unsafe to use.
- *
- * @since GDAL 2.1
  */
 
 OGRPoint &OGRPoint::operator=(const OGRPoint &other)

@@ -18,7 +18,7 @@
 
 #include "keaband.h"
 
-class KEARasterAttributeTable final : public GDALDefaultRasterAttributeTable
+class KEARasterAttributeTable final : public GDALRasterAttributeTable
 {
   private:
     kealib::KEAAttributeTable *m_poKEATable;
@@ -26,6 +26,7 @@ class KEARasterAttributeTable final : public GDALDefaultRasterAttributeTable
     CPLString osWorkingResult;
     KEARasterBand *m_poBand;
     CPLMutex *m_hMutex;
+    mutable std::vector<GByte> m_abyCachedWKB{};
 
   public:
     KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable,
@@ -47,18 +48,32 @@ class KEARasterAttributeTable final : public GDALDefaultRasterAttributeTable
     const char *GetValueAsString(int iRow, int iField) const override;
     int GetValueAsInt(int iRow, int iField) const override;
     double GetValueAsDouble(int iRow, int iField) const override;
+    bool GetValueAsBoolean(int iRow, int iField) const override;
+    GDALRATDateTime GetValueAsDateTime(int iRow, int iField) const override;
+    const GByte *GetValueAsWKBGeometry(int iRow, int iField,
+                                       size_t &nWKBSize) const override;
 
-    virtual CPLErr SetValue(int iRow, int iField,
-                            const char *pszValue) override;
+    CPLErr SetValue(int iRow, int iField, const char *pszValue) override;
     CPLErr SetValue(int iRow, int iField, double dfValue) override;
     CPLErr SetValue(int iRow, int iField, int nValue) override;
+    CPLErr SetValue(int iRow, int iField, bool nValue) override;
+    CPLErr SetValue(int iRow, int iField,
+                    const GDALRATDateTime &sDateTime) override;
+    CPLErr SetValue(int iRow, int iField, const void *pabyWKB,
+                    size_t nWKBSize) override;
 
-    virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
-                            int iLength, double *pdfData) override;
-    virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
-                            int iLength, int *pnData) override;
-    virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
-                            int iLength, char **papszStrList) override;
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    double *pdfData) override;
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    int *pnData) override;
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    bool *pbData) override;
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    char **papszStrList) override;
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    GDALRATDateTime *pasDateTime) override;
+    CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength,
+                    GByte **ppabyWKB, size_t *pnWKBSize) override;
 
     int ChangesAreWrittenToFile() override;
     void SetRowCount(int iCount) override;
@@ -75,6 +90,7 @@ class KEARasterAttributeTable final : public GDALDefaultRasterAttributeTable
 
     GDALRATTableType GetTableType() const override;
     CPLErr SetTableType(const GDALRATTableType eInTableType) override;
+    void RemoveStatistics() override;
 };
 
 #endif  // KEARAT_H

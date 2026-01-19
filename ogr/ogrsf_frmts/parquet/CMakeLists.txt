@@ -21,6 +21,7 @@ add_gdal_driver(TARGET ogr_Parquet
                 CORE_SOURCES
                         ogrparquetdrivercore.cpp
                 PLUGIN_CAPABLE
+                SKIP_GDAL_PRIV_HEADER  # because we may need to use C++20
                 NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET ogr_Parquet)

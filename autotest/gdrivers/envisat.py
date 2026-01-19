@@ -270,7 +270,7 @@ class TestEnvisatMERIS(EnvisatTestBase):
             assert flags_band, "No flag band in MERIS Level 1 product."
 
             band = ds.GetRasterBand(flags_band)
-            assert band.DataType == gdal.GDT_Byte, (
+            assert band.DataType == gdal.GDT_UInt8, (
                 "Incorrect data type of the flag band in " "MERIS Level 1 product."
             )
 

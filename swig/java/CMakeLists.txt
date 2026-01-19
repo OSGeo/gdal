@@ -131,12 +131,13 @@ endif ()
 file(GLOB SOURCE_APPS "${CMAKE_CURRENT_SOURCE_DIR}/apps/*.java")
 set(JAR_OUTPUT gdal.jar)
 
-set(GDAL_VERSION_JAR ${CMAKE_CURRENT_BINARY_DIR}/build/maven/gdal-${GDAL_VERSION}.jar)
-set(GDAL_VERSION_SOURCES_JAR ${CMAKE_CURRENT_BINARY_DIR}/build/maven/gdal-${GDAL_VERSION}-sources.jar)
-set(GDAL_VERSION_POM ${CMAKE_CURRENT_BINARY_DIR}/build/maven/gdal-${GDAL_VERSION}.pom)
+set(MAVEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/build/maven/org/gdal/gdal/${GDAL_VERSION})
+set(GDAL_VERSION_JAR ${MAVEN_DIR}/gdal-${GDAL_VERSION}.jar)
+set(GDAL_VERSION_SOURCES_JAR ${MAVEN_DIR}/gdal-${GDAL_VERSION}-sources.jar)
+set(GDAL_VERSION_POM ${MAVEN_DIR}/gdal-${GDAL_VERSION}.pom)
 set(MAVEN_ARTIFACTS ${GDAL_VERSION_JAR} ${GDAL_VERSION_SOURCES_JAR} ${GDAL_VERSION_POM})
 if (GDAL_JAVA_GENERATE_JAVADOC)
-  set(GDAL_VERSION_JAVADOC_JAR ${CMAKE_CURRENT_BINARY_DIR}/build/maven/gdal-${GDAL_VERSION}-javadoc.jar)
+  set(GDAL_VERSION_JAVADOC_JAR ${MAVEN_DIR}/gdal-${GDAL_VERSION}-javadoc.jar)
   list(APPEND MAVEN_ARTIFACTS ${GDAL_VERSION_JAVADOC_JAR})
 endif ()
 
@@ -230,6 +231,7 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
   add_test(NAME java_OSRTransform COMMAND ${JAVA_RUN} OSRTransform)
   add_test(NAME java_gdalmajorobject COMMAND ${JAVA_RUN} gdalmajorobject)
   add_test(NAME java_GDALTestIO COMMAND ${JAVA_RUN} GDALTestIO)
+  add_test(NAME java_GDALTestVSI COMMAND ${JAVA_RUN} GDALTestVSI)
   add_test(NAME java_GDALTestMultiDim COMMAND ${JAVA_RUN} GDALTestMultiDim)
   add_test(NAME java_GDALContour COMMAND ${JAVA_RUN} GDALContour -i 1 tmp_test/byte.tif tmp_test/contour.shp)
   add_test(NAME java_testgetpoints COMMAND ${JAVA_RUN} testgetpoints)
@@ -251,6 +253,7 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
           java_OSRTransform
           java_gdalmajorobject
           java_GDALTestIO
+          java_GDALTestVSI
           java_GDALTestMultiDim
           java_GDALContour
           java_testgetpoints

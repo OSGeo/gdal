@@ -269,8 +269,8 @@ int GDALCADDataset::Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
             char **papszDomainList = poRasterDS->GetMetadataDomainList();
             while (papszDomainList)
             {
-                char **papszMetadata = GetMetadata(*papszDomainList);
-                char **papszRasterMetadata =
+                CSLConstList papszMetadata = GetMetadata(*papszDomainList);
+                CSLConstList papszRasterMetadata =
                     poRasterDS->GetMetadata(*papszDomainList);
                 if (nullptr == papszMetadata)
                     SetMetadata(papszRasterMetadata, *papszDomainList);

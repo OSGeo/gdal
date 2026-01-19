@@ -30,7 +30,7 @@ Requirements
 
 `ESRI File Geodatabase API <https://github.com/Esri/file-geodatabase-api>`__
 
-Curve in geometries are supported on reading with GDAL >= 2.2.
+Curve in geometries are supported on reading.
 
 SQL support
 -----------

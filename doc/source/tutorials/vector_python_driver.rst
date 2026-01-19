@@ -39,7 +39,7 @@ Driver location
 ---------------
 
 Driver filenames must start with `gdal_` or `ogr_` and have the `.py` extension.
-They will be searched in the following directies:
+They will be searched in the following directories:
 
 * the directory pointed by the ``GDAL_PYTHON_DRIVER_PATH`` configuration option
   (there may be several paths separated by `:` on Unix or `;` on Windows)

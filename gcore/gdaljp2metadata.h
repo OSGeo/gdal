@@ -40,7 +40,7 @@ class CPL_DLL GDALJP2Box
 
     GByte abyUUID[16]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    GByte *pabyData = nullptr;
+    std::vector<GByte> abyData{};
 
     bool m_bAllowGetFileSize = true;
 
@@ -55,7 +55,7 @@ class CPL_DLL GDALJP2Box
         m_bAllowGetFileSize = b;
     }
 
-    int SetOffset(GIntBig nNewOffset);
+    int SetOffset(vsi_l_offset nNewOffset);
     int ReadBox();
 
     int ReadFirst();
@@ -112,7 +112,7 @@ class CPL_DLL GDALJP2Box
 
     const GByte *GetWritableData() const
     {
-        return pabyData;
+        return abyData.data();
     }
 
     GByte *GetWritableBoxData() const;
@@ -206,7 +206,7 @@ class CPL_DLL GDALJP2Metadata
     void SetSpatialRef(const OGRSpatialReference *poSRS);
     void SetGeoTransform(const GDALGeoTransform &gt);
     void SetGCPs(int, const GDAL_GCP *);
-    void SetRPCMD(char **papszRPCMDIn);
+    void SetRPCMD(CSLConstList papszRPCMDIn);
 
     GDALJP2Box *CreateJP2GeoTIFF();
     GDALJP2Box *CreateGMLJP2(int nXSize, int nYSize);

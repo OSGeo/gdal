@@ -32,12 +32,12 @@ be used here as there.
 NBITS:: The actual number of bits used for this band, or the bands of
 this dataset. Normally only present when the number of bits is
 non-standard for the datatype, such as when a 1 bit TIFF is represented
-through GDAL as GDT_Byte.
+through GDAL as GDT_UInt8.
 
 INTERLEAVE:: This only applies on datasets, and the value should be one
 of PIXEL, LINE or BAND. It can be used as a data access hint.
 
-PIXELTYPE:: This may appear on a GDT_Byte band (or the corresponding
+PIXELTYPE:: This may appear on a GDT_UInt8 band (or the corresponding
 dataset) and have the value SIGNEDBYTE to indicate the unsigned byte
 values between 128 and 255 should be interpreted as being values between
 -128 and -1 for applications that recognise the SIGNEDBYTE type.
@@ -50,7 +50,7 @@ values between 128 and 255 should be interpreted as being values between
 Compatibility Issues
 --------------------
 
-This RFC has two changes from existing practise that may cause
+This RFC has two changes from existing practice that may cause
 compatibility issues:
 
 1. Traditionally the NBITS metadata appeared in the default metadata

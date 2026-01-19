@@ -6,8 +6,6 @@ CALS -- CALS Type 1
 
 .. shortname:: CALS
 
-.. versionadded:: 2.1
-
 .. built_in_by_default::
 
 CALS Type 1 rasters are untiled black and white rasters made of a

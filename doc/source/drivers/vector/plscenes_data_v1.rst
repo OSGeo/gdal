@@ -3,8 +3,6 @@
 PLScenes (Planet Labs Scenes), Data V1 API
 ==========================================
 
-.. versionadded:: 2.2
-
 The driver supports read-only operations to list scenes and their
 metadata as a vector layer per item-types: "PSOrthoTile", "REOrthoTile",
 "PSScene3Band", "PSScene4Band", "REScene", "Landsat8L1G",

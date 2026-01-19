@@ -726,7 +726,6 @@ class CPL_DLL OGRSpatialReference
     static OGRSpatialReference *GetWGS84SRS();
 
     /** Convert a OGRSpatialReference* to a OGRSpatialReferenceH.
-     * @since GDAL 2.3
      */
     static inline OGRSpatialReferenceH ToHandle(OGRSpatialReference *poSRS)
     {
@@ -734,7 +733,6 @@ class CPL_DLL OGRSpatialReference
     }
 
     /** Convert a OGRSpatialReferenceH to a OGRSpatialReference*.
-     * @since GDAL 2.3
      */
     static inline OGRSpatialReference *FromHandle(OGRSpatialReferenceH hSRS)
     {
@@ -935,7 +933,6 @@ class CPL_DLL OGRCoordinateTransformation
 
     /** Convert a OGRCoordinateTransformation* to a
      * OGRCoordinateTransformationH.
-     * @since GDAL 2.3
      */
     static inline OGRCoordinateTransformationH
     ToHandle(OGRCoordinateTransformation *poCT)
@@ -945,7 +942,6 @@ class CPL_DLL OGRCoordinateTransformation
 
     /** Convert a OGRCoordinateTransformationH to a
      * OGRCoordinateTransformation*.
-     * @since GDAL 2.3
      */
     static inline OGRCoordinateTransformation *
     FromHandle(OGRCoordinateTransformationH hCT)

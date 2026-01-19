@@ -70,7 +70,7 @@ static size_t pread_VSIL(void *user_data, void *buff, size_t count,
                          off_t offset)
 {
     VSILFILE *fp = reinterpret_cast<VSILFILE *>(user_data);
-    VSIFSeekL(fp, offset, SEEK_SET);
+    VSIFSeekL(fp, static_cast<vsi_l_offset>(offset), SEEK_SET);
     return VSIFReadL(buff, 1, count, fp);
 }
 

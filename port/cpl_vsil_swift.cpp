@@ -735,12 +735,11 @@ bool VSISwiftHandle::Authenticate(const char *pszFilename)
  See :ref:`/vsiswift/ documentation <vsiswift>`
  \endverbatim
 
- @since GDAL 2.3
  */
 void VSIInstallSwiftFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsiswift/",
-                                   new cpl::VSISwiftFSHandler("/vsiswift/"));
+    VSIFileManager::InstallHandler(
+        "/vsiswift/", std::make_shared<cpl::VSISwiftFSHandler>("/vsiswift/"));
 }
 
 #endif /* HAVE_CURL */

@@ -48,7 +48,7 @@ The behavior of the shapefile driver is a bit particular, in that, its
 SetFeature() implementation accepts to recreate a feature that had been
 deleted (and its CreateFeature() implementation ignores any set FID on
 the passed feature to append a new feature). So
-OGRERR_NON_EXISTING_FEATURE will effictively been returned only if the
+OGRERR_NON_EXISTING_FEATURE will effectively been returned only if the
 FID is negative or greater or equal to the maximum feature count.
 
 SWIG bindings (Python / Java / C# / Perl) changes

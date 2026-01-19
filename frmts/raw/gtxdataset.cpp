@@ -60,7 +60,7 @@ class GTXDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(GTXDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     GTXDataset()
@@ -165,7 +165,7 @@ GTXDataset::~GTXDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr GTXDataset::Close()
+CPLErr GTXDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)

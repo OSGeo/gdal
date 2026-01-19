@@ -400,7 +400,7 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
 
     int TestCapability(const char *) const override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 
@@ -722,7 +722,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     bool OpenOrCreateDB(int flags, bool bRegisterOGR2SQLiteExtensions);
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     void PostInitSpatialite();
 
@@ -772,7 +772,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     OGRErr CommitTransaction() override;
     OGRErr RollbackTransaction() override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;

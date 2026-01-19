@@ -180,7 +180,7 @@ Additional Notes
    rename/delete operations on open files. Things could easily be left
    in an inconsistent state.
 -  Datasets without associated files in the file system will return an
-   empty file list. This essentially identifies them as "unmanagable".
+   empty file list. This essentially identifies them as "unmanageable".
 
 Implementation Plan
 -------------------

@@ -445,7 +445,7 @@ def test_vsioss_3(server):
         response = """<?xml version="1.0" encoding="UTF-8"?>
             <ListBucketResult>
                 <Prefix>a_dir/</Prefix>
-                <NextMarker>bla</NextMarker>
+                <NextContinuationToken>bla</NextContinuationToken>
                 <Contents>
                     <Key>a_dir/resource3.bin</Key>
                     <LastModified>1970-01-01T00:00:01.000Z</LastModified>
@@ -458,7 +458,9 @@ def test_vsioss_3(server):
         request.wfile.write(response.encode("ascii"))
 
     handler.add(
-        "GET", "/oss_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F", custom_method=method
+        "GET",
+        "/oss_fake_bucket2/?delimiter=%2F&list-type=2&prefix=a_dir%2F",
+        custom_method=method,
     )
 
     def method(request):
@@ -484,7 +486,7 @@ def test_vsioss_3(server):
 
     handler.add(
         "GET",
-        "/oss_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F",
+        "/oss_fake_bucket2/?continuation-token=bla&delimiter=%2F&list-type=2&prefix=a_dir%2F",
         custom_method=method,
     )
 
@@ -564,7 +566,7 @@ def test_vsioss_3(server):
             if config_option_value is None:
                 handler.add(
                     "GET",
-                    "/oss_non_cached/?delimiter=%2F",
+                    "/oss_non_cached/?delimiter=%2F&list-type=2",
                     200,
                     {"Content-type": "application/xml"},
                     """<?xml version="1.0" encoding="UTF-8"?>
@@ -803,7 +805,7 @@ def test_vsioss_5(server):
     )
     handler.add(
         "GET",
-        "/oss_delete_bucket/?delimiter=%2F&max-keys=100&prefix=delete_file%2F",
+        "/oss_delete_bucket/?delimiter=%2F&list-type=2&max-keys=100&prefix=delete_file%2F",
         404,
         {"Connection": "close"},
         "foo",
@@ -1130,7 +1132,7 @@ def test_vsioss_7(server):
     handler.add("GET", "/oss_bucket_test_mkdir/dir/", 404, {"Connection": "close"})
     handler.add(
         "GET",
-        "/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir%2F",
+        "/oss_bucket_test_mkdir/?delimiter=%2F&list-type=2&max-keys=100&prefix=dir%2F",
         404,
         {"Connection": "close"},
     )
@@ -1157,7 +1159,7 @@ def test_vsioss_7(server):
     handler.add("GET", "/oss_bucket_test_mkdir/dir/", 404)
     handler.add(
         "GET",
-        "/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir%2F",
+        "/oss_bucket_test_mkdir/?delimiter=%2F&list-type=2&max-keys=100&prefix=dir%2F",
         404,
         {"Connection": "close"},
     )
@@ -1170,7 +1172,7 @@ def test_vsioss_7(server):
     handler.add("GET", "/oss_bucket_test_mkdir/dir_nonempty/", 416)
     handler.add(
         "GET",
-        "/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir_nonempty%2F",
+        "/oss_bucket_test_mkdir/?delimiter=%2F&list-type=2&max-keys=100&prefix=dir_nonempty%2F",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -1198,7 +1200,7 @@ def test_vsioss_8(server):
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/vsioss_8/?delimiter=%2F",
+        "/vsioss_8/?delimiter=%2F&list-type=2",
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>

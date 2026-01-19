@@ -23,8 +23,13 @@ raster band(s) of a raster image.  Vectors are read from OGR supported vector
 formats. If the output raster already exists, the affected pixels are updated
 in-place.
 
-Note that on the fly reprojection of vector data to the coordinate system of the
-raster data is only supported since GDAL 2.1.0.
+On the fly reprojection of vector data to the coordinate system of the
+raster data is supported.
+
+.. tip:: Equivalent in new "gdal" command line interface:
+
+    See :ref:`gdal_vector_rasterize`.
+
 
 .. program:: gdal_rasterize
 
@@ -114,8 +119,6 @@ raster data is only supported since GDAL 2.1.0.
     the native SQL of an RDBMS by passing OGRSQL. The
     "SQLITE" dialect can also be used with any datasource.
 
-    .. versionadded:: 2.1
-
 .. include:: options/of.rst
 
 .. option:: -a_nodata <value>
@@ -144,8 +147,6 @@ raster data is only supported since GDAL 2.1.0.
     used when converting geometries coordinates to target raster pixel space. For
     example this can be used to specify RPC related transformer options.
 
-    .. versionadded:: 2.3
-
 .. include:: options/co.rst
 
 .. option:: -te <xmin> <ymin> <xmax> <ymax>
@@ -170,6 +171,8 @@ raster data is only supported since GDAL 2.1.0.
 
     Set output file size in pixels and lines. Note that :option:`-ts` cannot be used with
     :option:`-tr`
+    If one of the two values is set to 0, it will be computed from the other value in order to
+    preserve the aspect ratio.
 
 .. option:: -ot <type>
 
@@ -185,8 +188,6 @@ raster data is only supported since GDAL 2.1.0.
     optimizes CPU use, provided that the output image is tiled.
     Auto mode (the default) will choose the
     algorithm based on input and output properties.
-
-    .. versionadded:: 2.3
 
 .. option:: -oo <NAME>=<VALUE>
 
@@ -219,8 +220,6 @@ C API
 -----
 
 This utility is also callable from C with :cpp:func:`GDALRasterize`.
-
-.. versionadded:: 2.1
 
 Examples
 --------

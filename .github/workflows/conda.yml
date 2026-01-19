@@ -27,25 +27,25 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
-        # macos-13: Intel
+        # macos-15-intel: Intel
         # macos-14: arm64
-        platform: ['ubuntu-latest','windows-latest','macos-13','macos-14']
+        platform: ['ubuntu-latest','windows-latest','macos-15-intel','macos-14','ubuntu-24.04-arm']
 
     env:
       GHA_CI_PLATFORM: ${{ matrix.platform }}
       CACHE_NUMBER: 0
 
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
     - name: Support longpaths
       run: git config --system core.longpaths true
       if: matrix.platform == 'windows-latest'
 
     - name: Cache Conda Environment
-      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ~/conda_pkgs_dir
         key: ${{ runner.os }}-${{ steps.get-date.outputs.today }}-conda-${{ env.CACHE_NUMBER }}
@@ -74,7 +74,7 @@ jobs:
           source ../ci/travis/conda/compile.sh
       working-directory: ./gdal-feedstock
 
-    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: ${{ matrix.platform }}-conda-package
         path: ./gdal-feedstock/packages/

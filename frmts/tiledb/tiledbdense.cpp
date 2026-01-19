@@ -110,7 +110,7 @@ static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
 {
     switch (eType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             poQuery->set_data_buffer(
                 osAttrName, reinterpret_cast<unsigned char *>(pImage), nSize);
             break;
@@ -196,7 +196,7 @@ TileDBRasterBand::TileDBRasterBand(TileDBRasterDataset *poDSIn, int nBandIn,
                     eDataType = GDT_Int8;
                     break;
                 case TILEDB_UINT8:
-                    eDataType = GDT_Byte;
+                    eDataType = GDT_UInt8;
                     break;
                 case TILEDB_INT16:
                     eDataType =
@@ -491,7 +491,7 @@ double TileDBRasterBand::GetNoDataValue(int *pbHasNoData)
         {
             switch (eDataType)
             {
-                case GDT_Byte:
+                case GDT_UInt8:
                     dfNoData = *static_cast<const uint8_t *>(value);
                     break;
                 case GDT_Int8:
@@ -584,7 +584,7 @@ CPLErr TileDBRasterBand::SetNoDataValue(double dfNoData)
     bool bIsValid = false;
     switch (eDataType)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             bIsValid = IsValidNoData<uint8_t>(dfNoData);
             break;
         case GDT_Int8:
@@ -859,7 +859,7 @@ CPLErr TileDBRasterDataset::AddDimensions(tiledb::Domain &domain,
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr TileDBRasterDataset::Close()
+CPLErr TileDBRasterDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -1280,7 +1280,7 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(CSLConstList /*papszSiblingFiles*/,
 /*                             GetMetadata()                            */
 /************************************************************************/
 
-char **TileDBRasterDataset::GetMetadata(const char *pszDomain)
+CSLConstList TileDBRasterDataset::GetMetadata(const char *pszDomain)
 
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
@@ -1459,7 +1459,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
     tiledb::ArraySchema schema = poDS->m_array->schema();
 
-    char **papszStructMeta = poDS->GetMetadata("IMAGE_STRUCTURE");
+    CSLConstList papszStructMeta = poDS->GetMetadata("IMAGE_STRUCTURE");
     const char *pszXSize = CSLFetchNameValue(papszStructMeta, "X_SIZE");
     if (pszXSize)
     {
@@ -1716,7 +1716,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         }
         else
         {
-            char **papszMeta = poDS->GetMetadata("SUBDATASETS");
+            CSLConstList papszMeta = poDS->GetMetadata("SUBDATASETS");
             if (papszMeta != nullptr)
             {
                 if ((CSLCount(papszMeta) / 2) == 1)
@@ -1829,7 +1829,7 @@ CPLErr TileDBRasterDataset::CreateAttribute(GDALDataType eType,
 
             switch (eType)
             {
-                case GDT_Byte:
+                case GDT_UInt8:
                 {
                     m_schema->add_attribute(::CreateAttribute<unsigned char>(
                         *m_ctx, osName, *m_filterList, bHasFillValue,
@@ -2664,7 +2664,7 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    char **papszSrcSubDatasets = poSrcDS->GetMetadata("SUBDATASETS");
+    CSLConstList papszSrcSubDatasets = poSrcDS->GetMetadata("SUBDATASETS");
 
     if (papszSrcSubDatasets == nullptr)
     {

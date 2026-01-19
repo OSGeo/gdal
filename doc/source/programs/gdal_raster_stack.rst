@@ -35,22 +35,59 @@ on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
 
 Stating with GDAL 3.12, this command can also be used as the first step of :ref:`gdal_raster_pipeline`.
 
-Options
-+++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-The following options are available:
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/of_raster_create_copy.rst
 
-.. include:: gdal_options/co.rst
+Program-Specific Options
+------------------------
 
-.. include:: gdal_options/overwrite.rst
+.. option:: --absolute-path
 
-.. option:: -b <band>
+    .. versionadded:: 3.12.0
+
+    When writing a VRT file, enables writing the absolute path of the input datasets. By default, input
+    filenames are written in a relative way with respect to the VRT filename (when possible).
+
+.. option:: -b, --band <band>
 
     Select an input <band> to be processed. Bands are numbered from 1.
     If input bands not set all bands will be added to the output.
     Multiple :option:`-b` switches may be used to select a set of input bands.
+
+.. option:: --bbox <xmin>,<ymin>,<xmax>,<ymax>
+
+    Set georeferenced extents of output file. The values must be expressed in georeferenced units.
+    If not specified, the extent of the output is the minimum bounding box of the set of source rasters.
+    Pixels within the extent of the output but not covered by a source raster will be read as valid
+    pixels with a value of zero unless a NODATA value is specified using :option:`--dst-nodata`
+    or an alpha mask band is added with :option:`--add-alpha`.
+
+.. option:: --dst-nodata <value>[,<value>]...
+
+    Set nodata values at the output band level (different values can be supplied for each band).  If more
+    than one value is supplied, all values should be quoted to keep them together
+    as a single operating system argument. If the option is not specified,
+    intrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
+    is written in the ``NoDataValue`` element of each ``VRTRasterBand element``. Use a value of
+    `None` to ignore intrinsic nodata settings on the source datasets.
+
+.. option:: --hide-nodata
+
+    Even if any band contains nodata value, giving this option makes the output band
+    not report the NoData. Useful when you want to control the background color of
+    the dataset. By using along with the :option:`--add-alpha` option, you can prepare a
+    dataset which doesn't report nodata value but is transparent in areas with no
+    data.
+
+.. option:: --src-nodata <value>[,<value>]...
+
+    Set nodata values for input bands (different values can be supplied for each band).
+    If the option is not specified, the intrinsic nodata settings on the source datasets
+    will be used (if they exist). The value set by this option is written in the NODATA element
+    of each ``ComplexSource`` element.
 
 .. option:: --resolution {<xres,yres>|same|highest|lowest|average}
 
@@ -70,22 +107,6 @@ The following options are available:
     <xres>,<yres>. The values must be expressed in georeferenced units.
     Both must be positive values.
 
-
-.. option:: --absolute-path
-
-    .. versionadded:: 3.12.0
-
-    When writing a VRT file, enables writing the absolute path of the input datasets. By default, input
-    filenames are written in a relative way with respect to the VRT filename (when possible).
-
-.. option:: --bbox <xmin>,<ymin>,<xmax>,<ymax>
-
-    Set georeferenced extents of output file. The values must be expressed in georeferenced units.
-    If not specified, the extent of the output is the minimum bounding box of the set of source rasters.
-    Pixels within the extent of the output but not covered by a source raster will be read as valid
-    pixels with a value of zero unless a NODATA value is specified using :option:`--dst-nodata`
-    or an alpha mask band is added with :option:`--add-alpha`.
-
 .. option:: --target-aligned-pixels
 
     (target aligned pixels) align
@@ -93,34 +114,23 @@ The following options are available:
     such that the aligned extent includes the minimum extent.
     Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
 
-.. option:: --src-nodata <value>[,<value>]...
 
-    Set nodata values for input bands (different values can be supplied for each band).
-    If the option is not specified, the intrinsic nodata settings on the source datasets
-    will be used (if they exist). The value set by this option is written in the NODATA element
-    of each ``ComplexSource`` element.
+Standard Options
+----------------
 
-.. option:: --dst-nodata <value>[,<value>]...
+.. collapse:: Details
 
-    Set nodata values at the output band level (different values can be supplied for each band).  If more
-    than one value is supplied, all values should be quoted to keep them together
-    as a single operating system argument. If the option is not specified,
-    intrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
-    is written in the ``NoDataValue`` element of each ``VRTRasterBand element``. Use a value of
-    `None` to ignore intrinsic nodata settings on the source datasets.
+    .. include:: gdal_options/append_raster.rst
 
-.. option:: --hide-nodata
+    .. include:: gdal_options/co.rst
 
-    Even if any band contains nodata value, giving this option makes the output band
-    not report the NoData. Useful when you want to control the background color of
-    the dataset. By using along with the :option:`--add-alpha` option, you can prepare a
-    dataset which doesn't report nodata value but is transparent in areas with no
-    data.
+    .. include:: gdal_options/if.rst
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+    .. include:: gdal_options/oo.rst
 
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

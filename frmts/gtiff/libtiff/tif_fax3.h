@@ -267,7 +267,7 @@ static const char *StateNames[] = {
     {                                                                          \
         if (pa >= thisrun + sp->nruns)                                         \
         {                                                                      \
-            TIFFErrorExtR(tif, module, "Buffer overflow at line %u of %s %u",  \
+            TIFFErrorExtR(tif, module, "Buffer overflow at line %d of %s %u",  \
                           sp->line, isTiled(tif) ? "tile" : "strip",           \
                           isTiled(tif) ? tif->tif_curtile                      \
                                        : tif->tif_curstrip);                   \
@@ -444,7 +444,7 @@ static const char *StateNames[] = {
                 if (pb + 1 >= sp->refruns + sp->nruns)                         \
                 {                                                              \
                     TIFFErrorExtR(                                             \
-                        tif, module, "Buffer overflow at line %u of %s %u",    \
+                        tif, module, "Buffer overflow at line %d of %s %u",    \
                         sp->line, isTiled(tif) ? "tile" : "strip",             \
                         isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);  \
                     return (-1);                                               \
@@ -465,7 +465,7 @@ static const char *StateNames[] = {
             if (pa >= thisrun + sp->nruns)                                     \
             {                                                                  \
                 TIFFErrorExtR(                                                 \
-                    tif, module, "Buffer overflow at line %u of %s %u",        \
+                    tif, module, "Buffer overflow at line %d of %s %u",        \
                     sp->line, isTiled(tif) ? "tile" : "strip",                 \
                     isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);      \
                 return (-1);                                                   \
@@ -478,7 +478,7 @@ static const char *StateNames[] = {
                     if (pb + 1 >= sp->refruns + sp->nruns)                     \
                     {                                                          \
                         TIFFErrorExtR(tif, module,                             \
-                                      "Buffer overflow at line %u of %s %u",   \
+                                      "Buffer overflow at line %d of %s %u",   \
                                       sp->line,                                \
                                       isTiled(tif) ? "tile" : "strip",         \
                                       isTiled(tif) ? tif->tif_curtile          \
@@ -577,7 +577,7 @@ static const char *StateNames[] = {
                     if (pb >= sp->refruns + sp->nruns)                         \
                     {                                                          \
                         TIFFErrorExtR(tif, module,                             \
-                                      "Buffer overflow at line %u of %s %u",   \
+                                      "Buffer overflow at line %d of %s %u",   \
                                       sp->line,                                \
                                       isTiled(tif) ? "tile" : "strip",         \
                                       isTiled(tif) ? tif->tif_curtile          \
@@ -592,7 +592,7 @@ static const char *StateNames[] = {
                     if (pb >= sp->refruns + sp->nruns)                         \
                     {                                                          \
                         TIFFErrorExtR(tif, module,                             \
-                                      "Buffer overflow at line %u of %s %u",   \
+                                      "Buffer overflow at line %d of %s %u",   \
                                       sp->line,                                \
                                       isTiled(tif) ? "tile" : "strip",         \
                                       isTiled(tif) ? tif->tif_curtile          \

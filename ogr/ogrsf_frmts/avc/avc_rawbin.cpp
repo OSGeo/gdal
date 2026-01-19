@@ -390,7 +390,8 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
         psFile->nCurPos = 0;
         psFile->nCurSize = 0;
         psFile->nOffset = psFile->nOffset + nTarget;
-        if (VSIFSeekL(psFile->fp, psFile->nOffset, SEEK_SET) < 0)
+        if (VSIFSeekL(psFile->fp, static_cast<vsi_l_offset>(psFile->nOffset),
+                      SEEK_SET) < 0)
             return;
     }
 }

@@ -20,6 +20,7 @@
 #include "gmlutils.h"
 
 #include <memory>
+#include <set>
 #include <vector>
 
 class OGRGMLDataSource;
@@ -39,9 +40,10 @@ class OGRGMLLayer final : public OGRLayer
 {
     OGRFeatureDefn *poFeatureDefn;
 
-    GIntBig iNextGMLId;
-    bool bInvalidFIDFound;
-    char *pszFIDPrefix;
+    GIntBig m_iNextGMLId = 0;
+    bool m_bInvalidFIDFound = false;
+    char *m_pszFIDPrefix = nullptr;
+    std::set<GIntBig> m_oSetFIDs{};
 
     bool bWriter;
 
@@ -49,7 +51,8 @@ class OGRGMLLayer final : public OGRLayer
 
     GMLFeatureClass *poFClass;
 
-    void *hCacheSRS;
+    std::unique_ptr<OGRGML_SRSCache, decltype(&OGRGML_SRSCache_Destroy)>
+        m_srsCache{OGRGML_SRSCache_Create(), OGRGML_SRSCache_Destroy};
 
     bool bUseOldFIDFormat;
 
@@ -174,7 +177,7 @@ class OGRGMLDataSource final : public GDALDataset
     ~OGRGMLDataSource() override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
     bool Create(const char *pszFile, char **papszOptions);
 
     int GetLayerCount() const override

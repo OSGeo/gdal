@@ -71,7 +71,7 @@ class RCMDataset final : public GDALPamDataset
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     char **GetMetadataDomainList() override;
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     char **GetFileList(void) override;
 
     static GDALDataset *Open(GDALOpenInfo *);

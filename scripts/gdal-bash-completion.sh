@@ -101,7 +101,7 @@ _gdal()
 # nosort requires bash 4.4
 complete -o nosort -o default -F _gdal gdal 2>/dev/null || complete -o default -F _gdal gdal
 
-_gdal2tiles.py()
+_gdal2tiles()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -118,8 +118,9 @@ _gdal2tiles.py()
   esac
   return 0
 }
-complete -o default -F _gdal2tiles.py gdal2tiles.py
-_gdal2xyz.py()
+complete -o default -F _gdal2tiles gdal2tiles.py
+complete -o default -F _gdal2tiles gdal2tiles
+_gdal2xyz()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -148,7 +149,8 @@ _gdal2xyz.py()
   esac
   return 0
 }
-complete -o default -F _gdal2xyz.py gdal2xyz.py
+complete -o default -F _gdal2xyz gdal2xyz.py
+complete -o default -F _gdal2xyz gdal2xyz
 _gdaladdo()
 {
   COMPREPLY=()
@@ -209,7 +211,7 @@ _gdalbuildvrt()
   return 0
 }
 complete -o default -F _gdalbuildvrt gdalbuildvrt
-_gdal_calc.py()
+_gdal_calc()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -246,8 +248,9 @@ _gdal_calc.py()
   esac
   return 0
 }
-complete -o default -F _gdal_calc.py gdal_calc.py
-_gdalcompare.py()
+complete -o default -F _gdal_calc gdal_calc.py
+complete -o default -F _gdal_calc gdal_calc
+_gdalcompare()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -276,7 +279,8 @@ _gdalcompare.py()
   esac
   return 0
 }
-complete -o default -F _gdalcompare.py gdalcompare.py
+complete -o default -F _gdalcompare gdalcompare.py
+complete -o default -F _gdalcompare gdalcompare
 _gdal-config()
 {
   COMPREPLY=()
@@ -363,7 +367,7 @@ _gdaldem()
   return 0
 }
 complete -o default -F _gdaldem gdaldem
-_gdal_edit.py()
+_gdal_edit()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -392,7 +396,8 @@ _gdal_edit.py()
   esac
   return 0
 }
-complete -o default -F _gdal_edit.py gdal_edit.py
+complete -o default -F _gdal_edit gdal_edit.py
+complete -o default -F _gdal_edit gdal_edit
 _gdalenhance()
 {
   COMPREPLY=()
@@ -439,7 +444,7 @@ _gdalenhance()
   return 0
 }
 complete -o default -F _gdalenhance gdalenhance
-_gdal_fillnodata.py()
+_gdal_fillnodata()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -476,7 +481,8 @@ _gdal_fillnodata.py()
   esac
   return 0
 }
-complete -o default -F _gdal_fillnodata.py gdal_fillnodata.py
+complete -o default -F _gdal_fillnodata gdal_fillnodata.py
+complete -o default -F _gdal_fillnodata gdal_fillnodata
 _gdal_grid()
 {
   COMPREPLY=()
@@ -613,7 +619,7 @@ _gdalmanage()
   return 0
 }
 complete -o default -F _gdalmanage gdalmanage
-_gdal_merge.py()
+_gdal_merge()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -658,8 +664,9 @@ _gdal_merge.py()
   esac
   return 0
 }
-complete -o default -F _gdal_merge.py gdal_merge.py
-_gdalmove.py()
+complete -o default -F _gdal_merge gdal_merge.py
+complete -o default -F _gdal_merge gdal_merge
+_gdalmove()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -688,8 +695,9 @@ _gdalmove.py()
   esac
   return 0
 }
-complete -o default -F _gdalmove.py gdalmove.py
-_gdal_polygonize.py()
+complete -o default -F _gdalmove gdalmove.py
+complete -o default -F _gdalmove gdalmove
+_gdal_polygonize()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -726,8 +734,9 @@ _gdal_polygonize.py()
   esac
   return 0
 }
-complete -o default -F _gdal_polygonize.py gdal_polygonize.py
-_gdal_proximity.py()
+complete -o default -F _gdal_polygonize gdal_polygonize.py
+complete -o default -F _gdal_polygonize gdal_polygonize
+_gdal_proximity()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -772,7 +781,8 @@ _gdal_proximity.py()
   esac
   return 0
 }
-complete -o default -F _gdal_proximity.py gdal_proximity.py
+complete -o default -F _gdal_proximity gdal_proximity.py
+complete -o default -F _gdal_proximity gdal_proximity
 _gdal_rasterize()
 {
   COMPREPLY=()
@@ -819,7 +829,7 @@ _gdal_rasterize()
   return 0
 }
 complete -o default -F _gdal_rasterize gdal_rasterize
-_gdal_retile.py()
+_gdal_retile()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -864,8 +874,9 @@ _gdal_retile.py()
   esac
   return 0
 }
-complete -o default -F _gdal_retile.py gdal_retile.py
-_gdal_sieve.py()
+complete -o default -F _gdal_retile gdal_retile.py
+complete -o default -F _gdal_retile gdal_retile
+_gdal_sieve()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -902,7 +913,8 @@ _gdal_sieve.py()
   esac
   return 0
 }
-complete -o default -F _gdal_sieve.py gdal_sieve.py
+complete -o default -F _gdal_sieve gdal_sieve.py
+complete -o default -F _gdal_sieve gdal_sieve
 _gdalsrsinfo()
 {
   COMPREPLY=()
@@ -1325,7 +1337,7 @@ _ogrtindex()
   return 0
 }
 complete -o default -F _ogrtindex ogrtindex
-_ogrmerge.py()
+_ogrmerge()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -1354,8 +1366,9 @@ _ogrmerge.py()
   esac
   return 0
 }
-complete -o default -F _ogrmerge.py ogrmerge.py
-_ogr_layer_algebra.py()
+complete -o default -F _ogrmerge ogrmerge.py
+complete -o default -F _ogrmerge ogrmerge
+_ogr_layer_algebra()
 {
   COMPREPLY=()
   cur="${COMP_WORDS[$COMP_CWORD]}"
@@ -1384,4 +1397,5 @@ _ogr_layer_algebra.py()
   esac
   return 0
 }
-complete -o default -F _ogr_layer_algebra.py ogr_layer_algebra.py
+complete -o default -F _ogr_layer_algebra ogr_layer_algebra.py
+complete -o default -F _ogr_layer_algebra ogr_layer_algebra

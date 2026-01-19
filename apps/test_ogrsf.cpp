@@ -906,7 +906,7 @@ static int TestCreateLayer(GDALDriver *poDriver, OGRwkbGeometryType eGeomType)
         {
             OGRFieldDefn oFieldStr("str", OFTString);
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            LOG_ACTION(poLayer2->CreateField(&oFieldStr));
+            CPL_IGNORE_RET_VAL(LOG_ACTION(poLayer2->CreateField(&oFieldStr)));
             CPLPopErrorHandler();
 
             poFeature = new OGRFeature(poLayer2->GetLayerDefn());

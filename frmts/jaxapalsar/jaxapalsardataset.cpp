@@ -329,8 +329,9 @@ CPLErr PALSARJaxaRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
         nNumBytes = 2;
     }
 
-    int nOffset =
-        IMAGE_OPT_DESC_LENGTH + ((nBlockYOff - 1) * nRecordSize) +
+    const vsi_l_offset nOffset =
+        IMAGE_OPT_DESC_LENGTH +
+        (static_cast<vsi_l_offset>(nBlockYOff - 1) * nRecordSize) +
         (nFileType == level_11 ? SIG_DAT_REC_OFFSET : PROC_DAT_REC_OFFSET);
 
     VSIFSeekL(fp, nOffset, SEEK_SET);

@@ -231,7 +231,8 @@ static toff_t _tiffSeekProc(thandle_t th, toff_t off, int whence)
             return static_cast<toff_t>(psGTH->psShared->nFileLength);
         }
 
-        if (VSIFSeekL(psGTH->psShared->fpL, off, whence) != 0)
+        if (VSIFSeekL(psGTH->psShared->fpL, static_cast<vsi_l_offset>(off),
+                      whence) != 0)
         {
             TIFFErrorExt(th, "_tiffSeekProc", "%s", VSIStrerror(errno));
             return static_cast<toff_t>(-1);
@@ -245,7 +246,8 @@ static toff_t _tiffSeekProc(thandle_t th, toff_t off, int whence)
     psGTH->psShared->bAtEndOfFile = false;
     psGTH->psShared->nFileLength = 0;
 
-    if (VSIFSeekL(psGTH->psShared->fpL, off, whence) == 0)
+    if (VSIFSeekL(psGTH->psShared->fpL, static_cast<vsi_l_offset>(off),
+                  whence) == 0)
     {
         return static_cast<toff_t>(VSIFTellL(psGTH->psShared->fpL));
     }

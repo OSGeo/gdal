@@ -10,18 +10,19 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
+#include "gdalalg_pipeline.h"
 #include "cpl_error.h"
-#include "gdalalg_abstract_pipeline.h"
 #include "gdal_priv.h"
 
 #include "gdalalg_raster_read.h"
 #include "gdalalg_raster_mosaic.h"
 #include "gdalalg_raster_stack.h"
 #include "gdalalg_raster_write.h"
+#include "gdalalg_raster_zonal_stats.h"
 
 #include "gdalalg_vector_read.h"
-#include "gdalalg_vector_concat.h"
-#include "gdalalg_vector_sql.h"
 #include "gdalalg_vector_write.h"
 
 #include "gdalalg_raster_as_features.h"
@@ -37,8 +38,6 @@
 
 #include <algorithm>
 #include <cassert>
-
-//! @cond Doxygen_Suppress
 
 #ifndef _
 #define _(x) (x)
@@ -66,6 +65,10 @@ void GDALPipelineStepAlgorithm::AddRasterHiddenInputDatasetArg()
     // GDALAlgorithm must be able to retrieve the input dataset
     AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER,
                        /* positionalAndRequired = */ false)
+        .SetMinCount(1)
+        .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
+        .SetAutoOpenDataset(m_constructorOptions.autoOpenInputDatasets)
+        .SetMetaVar(m_constructorOptions.inputDatasetMetaVar)
         .SetHidden();
 }
 
@@ -85,12 +88,12 @@ void GDALPipelineStepAlgorithm::AddRasterInputArgs(
         .SetHiddenForCLI(hiddenForCLI);
     AddOpenOptionsArg(&m_openOptions).SetHiddenForCLI(hiddenForCLI);
     auto &arg =
-        AddInputDatasetArg(&m_inputDataset,
-                           openForMixedRasterVector
-                               ? (GDAL_OF_RASTER | GDAL_OF_VECTOR)
-                               : GDAL_OF_RASTER,
-                           /* positionalAndRequired = */ !hiddenForCLI,
-                           m_constructorOptions.inputDatasetHelpMsg.c_str())
+        AddInputDatasetArg(
+            &m_inputDataset,
+            openForMixedRasterVector ? (GDAL_OF_RASTER | GDAL_OF_VECTOR)
+                                     : GDAL_OF_RASTER,
+            m_constructorOptions.inputDatasetRequired && !hiddenForCLI,
+            m_constructorOptions.inputDatasetHelpMsg.c_str())
             .SetMinCount(1)
             .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
             .SetAutoOpenDataset(m_constructorOptions.autoOpenInputDatasets)
@@ -181,39 +184,42 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
         outputDatasetArg.SetPositional();
     if (!hiddenForCLI && m_constructorOptions.outputDatasetRequired)
         outputDatasetArg.SetRequired();
-    if (!m_constructorOptions.outputDatasetMutualExclusionGroup.empty())
-    {
-        outputDatasetArg.SetMutualExclusionGroup(
-            m_constructorOptions.outputDatasetMutualExclusionGroup);
-    }
+
     AddCreationOptionsArg(&m_creationOptions).SetHiddenForCLI(hiddenForCLI);
     AddLayerCreationOptionsArg(&m_layerCreationOptions)
         .SetHiddenForCLI(hiddenForCLI);
     AddOverwriteArg(&m_overwrite).SetHiddenForCLI(hiddenForCLI);
-    auto &updateArg = AddUpdateArg(&m_update).SetHiddenForCLI(hiddenForCLI);
-    if (!m_constructorOptions.updateMutualExclusionGroup.empty())
+    GDALInConstructionAlgorithmArg *updateArg = nullptr;
+    if (m_constructorOptions.addUpdateArgument)
     {
-        updateArg.SetMutualExclusionGroup(
-            m_constructorOptions.updateMutualExclusionGroup);
+        updateArg = &AddUpdateArg(&m_update).SetHiddenForCLI(hiddenForCLI);
     }
-    AddOverwriteLayerArg(&m_overwriteLayer).SetHiddenForCLI(hiddenForCLI);
+    if (m_constructorOptions.addOverwriteLayerArgument)
+    {
+        AddOverwriteLayerArg(&m_overwriteLayer).SetHiddenForCLI(hiddenForCLI);
+    }
     constexpr const char *MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT =
         "append-upsert";
-    AddAppendLayerArg(&m_appendLayer)
-        .SetHiddenForCLI(hiddenForCLI)
-        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT);
-    AddArg("upsert", 0, _("Upsert features (implies 'append')"), &m_upsert)
-        .SetHiddenForCLI(hiddenForCLI)
-        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT)
-        .AddAction(
-            [&updateArg, this]()
-            {
-                if (m_upsert)
-                    updateArg.Set(true);
-            })
-        .SetCategory(GAAC_ADVANCED);
-    if (GetName() != GDALVectorSQLAlgorithm::NAME &&
-        GetName() != GDALVectorConcatAlgorithm::NAME)
+    if (m_constructorOptions.addAppendLayerArgument)
+    {
+        AddAppendLayerArg(&m_appendLayer)
+            .SetHiddenForCLI(hiddenForCLI)
+            .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT);
+    }
+    if (m_constructorOptions.addUpsertArgument)
+    {
+        AddArg("upsert", 0, _("Upsert features (implies 'append')"), &m_upsert)
+            .SetHiddenForCLI(hiddenForCLI)
+            .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT)
+            .AddAction(
+                [updateArg, this]()
+                {
+                    if (m_upsert && updateArg)
+                        updateArg->Set(true);
+                })
+            .SetCategory(GAAC_ADVANCED);
+    }
+    if (m_constructorOptions.addOutputLayerNameArgument)
     {
         AddArg(GDAL_ARG_NAME_OUTPUT_LAYER,
                shortNameOutputLayerAllowed ? 'l' : 0, _("Output layer name"),
@@ -221,9 +227,12 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
             .AddHiddenAlias("nln")  // For ogr2ogr nostalgic people
             .SetHiddenForCLI(hiddenForCLI);
     }
-    AddArg("skip-errors", 0, _("Skip errors when writing features"),
-           &m_skipErrors)
-        .AddHiddenAlias("skip-failures");  // For ogr2ogr nostalgic people
+    if (m_constructorOptions.addSkipErrorsArgument)
+    {
+        AddArg("skip-errors", 0, _("Skip errors when writing features"),
+               &m_skipErrors)
+            .AddHiddenAlias("skip-failures");  // For ogr2ogr nostalgic people
+    }
 }
 
 /************************************************************************/
@@ -449,95 +458,7 @@ bool GDALPipelineStepAlgorithm::Finalize()
     return ret;
 }
 
-/************************************************************************/
-/*                      GDALAlgorithmStepRegistry                       */
-/************************************************************************/
-
-class GDALAlgorithmStepRegistry final : public GDALRasterAlgorithmStepRegistry,
-                                        public GDALVectorAlgorithmStepRegistry
-{
-  public:
-    GDALAlgorithmStepRegistry() = default;
-    ~GDALAlgorithmStepRegistry() override;
-
-    /** Register the algorithm of type MyAlgorithm.
-     */
-    template <class MyAlgorithm>
-    bool Register(const std::string &name = std::string())
-    {
-        static_assert(std::is_base_of_v<GDALPipelineStepAlgorithm, MyAlgorithm>,
-                      "Algorithm is not a GDALPipelineStepAlgorithm");
-
-        AlgInfo info;
-        info.m_name = name.empty() ? MyAlgorithm::NAME : name;
-        info.m_aliases = MyAlgorithm::GetAliasesStatic();
-        info.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
-        { return std::make_unique<MyAlgorithm>(); };
-        return GDALAlgorithmRegistry::Register(info);
-    }
-};
-
 GDALAlgorithmStepRegistry::~GDALAlgorithmStepRegistry() = default;
-
-/************************************************************************/
-/*                       GDALPipelineAlgorithm                          */
-/************************************************************************/
-
-class GDALPipelineAlgorithm final : public GDALAbstractPipelineAlgorithm
-
-{
-  public:
-    static constexpr const char *NAME = "pipeline";
-    static constexpr const char *DESCRIPTION =
-        "Process a dataset applying several steps.";
-    static constexpr const char *HELP_URL = "/programs/gdal_pipeline.html";
-
-    static std::vector<std::string> GetAliasesStatic()
-    {
-        return {
-#ifdef GDAL_PIPELINE_PROJ_NOSTALGIA
-            GDALAlgorithmRegistry::HIDDEN_ALIAS_SEPARATOR,
-            "+pipeline",
-            "+gdal=pipeline",
-#endif
-        };
-    }
-
-    GDALPipelineAlgorithm();
-
-    int GetInputType() const override
-    {
-        return GDAL_OF_RASTER | GDAL_OF_VECTOR;
-    }
-
-    int GetOutputType() const override
-    {
-        return GDAL_OF_RASTER | GDAL_OF_VECTOR;
-    }
-
-  protected:
-    GDALAlgorithmStepRegistry m_stepRegistry{};
-
-    GDALAlgorithmRegistry &GetStepRegistry() override
-    {
-        return m_stepRegistry;
-    }
-
-    const GDALAlgorithmRegistry &GetStepRegistry() const override
-    {
-        return m_stepRegistry;
-    }
-
-    std::string GetUsageForCLI(bool shortUsage,
-                               const UsageOptions &usageOptions) const override;
-
-  private:
-    std::unique_ptr<GDALAbstractPipelineAlgorithm>
-    CreateNestedPipeline() const override
-    {
-        return std::make_unique<GDALPipelineAlgorithm>();
-    }
-};
 
 /************************************************************************/
 /*                       GDALPipelineAlgorithm                          */
@@ -574,9 +495,11 @@ GDALPipelineAlgorithm::GDALPipelineAlgorithm()
 
     GDALRasterPipelineAlgorithm::RegisterAlgorithms(m_stepRegistry, true);
     GDALVectorPipelineAlgorithm::RegisterAlgorithms(m_stepRegistry, true);
+    m_stepRegistry.Register<GDALRasterAsFeaturesAlgorithm>();
     m_stepRegistry.Register<GDALRasterContourAlgorithm>();
     m_stepRegistry.Register<GDALRasterFootprintAlgorithm>();
     m_stepRegistry.Register<GDALRasterPolygonizeAlgorithm>();
+    m_stepRegistry.Register<GDALRasterZonalStatsAlgorithm>();
     m_stepRegistry.Register<GDALVectorGridAlgorithm>();
     m_stepRegistry.Register<GDALVectorRasterizeAlgorithm>();
 }
@@ -595,7 +518,6 @@ GDALPipelineAlgorithm::GetUsageForCLI(bool shortUsage,
     if (!m_helpDocCategory.empty() && m_helpDocCategory != "main")
     {
         auto alg = GetStepAlg(m_helpDocCategory);
-        std::string ret;
         if (alg)
         {
             alg->SetCallPath({CPLString(m_helpDocCategory)
@@ -621,7 +543,7 @@ GDALPipelineAlgorithm::GetUsageForCLI(bool shortUsage,
         return ret;
 
     ret +=
-        "\n<PIPELINE> is of the form: read|calc|concat|mosaic|stack "
+        "\n<PIPELINE> is of the form: read|calc|concat|create|mosaic|stack "
         "[READ-OPTIONS] "
         "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write!info!tile [WRITE-OPTIONS]\n";
 
@@ -714,7 +636,5 @@ GDALPipelineAlgorithm::GetUsageForCLI(bool shortUsage,
 
     return ret;
 }
-
-GDAL_STATIC_REGISTER_ALG(GDALPipelineAlgorithm);
 
 //! @endcond

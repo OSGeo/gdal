@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
+
 import gdaltest
 import pytest
 
@@ -56,6 +58,12 @@ def test_gdalalg_vector_simplify_coverage(alg):
     assert dst_lyr.GetSpatialRef().IsSame(src_lyr.GetSpatialRef())
 
     assert count_points(dst_lyr) < count_points(src_lyr)
+
+    for src_feature, dst_feature in zip(src_lyr, dst_lyr):
+        src_attrs = json.loads(src_feature.ExportToJson())["properties"]
+        dst_attrs = json.loads(dst_feature.ExportToJson())["properties"]
+
+        assert src_attrs == dst_attrs
 
     assert alg.Finalize()
 

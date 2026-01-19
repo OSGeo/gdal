@@ -22,7 +22,7 @@ from osgeo import gdal
 @pytest.mark.parametrize(
     "dt,struct_type,v",
     [
-        (gdal.GDT_Byte, "B", 255),
+        (gdal.GDT_UInt8, "B", 255),
         (gdal.GDT_Int8, "b", 127),
         (gdal.GDT_Int16, "h", 32767),
         (gdal.GDT_UInt16, "H", 65535),

@@ -27,14 +27,18 @@ from a DEM.
 
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
-Standard options
-++++++++++++++++
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
-.. include:: gdal_options/co.rst
 
-.. include:: gdal_options/overwrite.rst
+Program-Specific Options
+------------------------
+
+.. option:: --add-alpha
+
+    Adds an alpha mask band to the output.
 
 .. option:: -b, --band <BAND>
 
@@ -96,10 +100,6 @@ Standard options
         20.001  blue
         30      blue
 
-.. option:: --add-alpha
-
-    Adds an alpha mask band to the output.
-
 .. option:: --color-selection interpolate|exact|nearest
 
     How to compute output colors from input values:
@@ -119,10 +119,16 @@ Standard options
         This option is only taken into account when :option:`--color-map`
         is specified.
 
-.. GDALG output (on-the-fly / streamed dataset)
-.. --------------------------------------------
+Standard Options
+----------------
 
-.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+.. collapse:: Details
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
 
 Examples
 --------

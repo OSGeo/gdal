@@ -23,6 +23,7 @@
 #include "core/cpcidskfile.h"
 #include "channel/cexternalchannel.h"
 #include "core/clinksegment.h"
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <cstdio>
@@ -230,57 +231,38 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
         return ThrowPCIDSKException(0, "Failed to allocate temporary block buffer." );
     }
     uint8 *temp_buffer = &temp_buffer_vec[0];
-    int txoff, tyoff, txsize, tysize;
-    int dst_blockx, dst_blocky;
 
-    dst_blockx = block_index % blocks_per_row;
-    dst_blocky = block_index / blocks_per_row;
+    const int dst_blockx = block_index % blocks_per_row;
+    const int dst_blocky = block_index / blocks_per_row;
 
     // what is the region of our desired data on the destination file?
 
-    txoff = dst_blockx * block_width + exoff + xoff;
-    tyoff = dst_blocky * block_height + eyoff + yoff;
-    txsize = xsize;
-    tysize = ysize;
+    const int txoff = dst_blockx * block_width + exoff + xoff;
+    const int tyoff = dst_blocky * block_height + eyoff + yoff;
+    const int txsize = xsize;
+    const int tysize = ysize;
 
 /* -------------------------------------------------------------------- */
 /*      read external block for top left corner of target block.        */
 /* -------------------------------------------------------------------- */
-    int ablock_x, ablock_y, i_line;
-    int axoff, ayoff, axsize, aysize;
     int block1_xsize=0, block1_ysize=0;
-    int ttxoff, ttyoff, ttxsize, ttysize;
+    {
+    const int ttxoff = txoff;
+    const int ttyoff = tyoff;
+    const int ttxsize = txsize;
+    const int ttysize = tysize;
 
-    ttxoff = txoff;
-    ttyoff = tyoff;
-    ttxsize = txsize;
-    ttysize = tysize;
+    const int ablock_x = ttxoff / src_block_width;
+    const int ablock_y = ttyoff / src_block_height;
 
-    ablock_x = ttxoff / src_block_width;
-    ablock_y = ttyoff / src_block_height;
+    const int axoff = ttxoff - ablock_x * src_block_width;
+    const int ayoff = ttyoff - ablock_y * src_block_height;
 
-    axoff = ttxoff - ablock_x * src_block_width;
-    ayoff = ttyoff - ablock_y * src_block_height;
+    const int axsize = std::min(src_block_width - axoff, ttxsize);
+    const int aysize = std::min(src_block_height - ayoff, ttysize);
 
-    if( axoff + ttxsize > src_block_width )
-        axsize = src_block_width - axoff;
-    else
-        axsize = ttxsize;
-
-    if( ayoff + ttysize > src_block_height )
-        aysize = src_block_height - ayoff;
-    else
-        aysize = ttysize;
-
-    if( axsize > 0 )
-        block1_xsize = axsize;
-    else
-        block1_xsize = 0;
-
-    if( aysize > 0 )
-        block1_ysize = aysize;
-    else
-        block1_ysize = 0;
+    block1_xsize = std::max(0, axsize);
+    block1_ysize = std::max(0, aysize);
 
     if( axsize > 0 && aysize > 0 )
     {
@@ -294,37 +276,32 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
         db->ReadBlock( echannel, ablock_x + ablock_y * src_blocks_per_row,
                        temp_buffer, axoff, ayoff, axsize, aysize );
 
-        for( i_line = 0; i_line < aysize; i_line++ )
+        for( int i_line = 0; i_line < aysize; i_line++ )
         {
             memcpy( ((uint8*) buffer) + i_line * xsize * pixel_size,
                     temp_buffer + i_line * axsize * pixel_size,
                     static_cast<size_t>(axsize) * pixel_size );
         }
     }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      read external block for top right corner of target block.       */
 /* -------------------------------------------------------------------- */
-    ttxoff = txoff + block1_xsize;
-    ttyoff = tyoff;
-    ttxsize = txsize - block1_xsize;
-    ttysize = tysize;
+    {
+    const int ttxoff = txoff + block1_xsize;
+    const int ttyoff = tyoff;
+    const int ttxsize = txsize - block1_xsize;
+    const int ttysize = tysize;
 
-    ablock_x = ttxoff / src_block_width;
-    ablock_y = ttyoff / src_block_height;
+    const int ablock_x = ttxoff / src_block_width;
+    const int ablock_y = ttyoff / src_block_height;
 
-    axoff = ttxoff - ablock_x * src_block_width;
-    ayoff = ttyoff - ablock_y * src_block_height;
+    const int axoff = ttxoff - ablock_x * src_block_width;
+    const int ayoff = ttyoff - ablock_y * src_block_height;
 
-    if( axoff + ttxsize > src_block_width )
-        axsize = src_block_width - axoff;
-    else
-        axsize = ttxsize;
-
-    if( ayoff + ttysize > src_block_height )
-        aysize = src_block_height - ayoff;
-    else
-        aysize = ttysize;
+    const int axsize = std::min(src_block_width - axoff, ttxsize);
+    const int aysize = std::min(src_block_height - ayoff, ttysize);
 
     if( axsize > 0 && aysize > 0 )
     {
@@ -332,7 +309,7 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
         db->ReadBlock( echannel, ablock_x + ablock_y * src_blocks_per_row,
                        temp_buffer, axoff, ayoff, axsize, aysize );
 
-        for( i_line = 0; i_line < aysize; i_line++ )
+        for( int i_line = 0; i_line < aysize; i_line++ )
         {
             memcpy( ((uint8*) buffer)
                     + (block1_xsize + i_line * xsize) * pixel_size,
@@ -340,30 +317,25 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
                     static_cast<size_t>(axsize) * pixel_size );
         }
     }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      read external block for bottom left corner of target block.     */
 /* -------------------------------------------------------------------- */
-    ttxoff = txoff;
-    ttyoff = tyoff + block1_ysize;
-    ttxsize = txsize;
-    ttysize = tysize - block1_ysize;
+    {
+    const int ttxoff = txoff;
+    const int ttyoff = tyoff + block1_ysize;
+    const int ttxsize = txsize;
+    const int ttysize = tysize - block1_ysize;
 
-    ablock_x = ttxoff / src_block_width;
-    ablock_y = ttyoff / src_block_height;
+    const int ablock_x = ttxoff / src_block_width;
+    const int ablock_y = ttyoff / src_block_height;
 
-    axoff = ttxoff - ablock_x * src_block_width;
-    ayoff = ttyoff - ablock_y * src_block_height;
+    const int axoff = ttxoff - ablock_x * src_block_width;
+    const int ayoff = ttyoff - ablock_y * src_block_height;
 
-    if( axoff + ttxsize > src_block_width )
-        axsize = src_block_width - axoff;
-    else
-        axsize = ttxsize;
-
-    if( ayoff + ttysize > src_block_height )
-        aysize = src_block_height - ayoff;
-    else
-        aysize = ttysize;
+    const int axsize = std::min(src_block_width - axoff, ttxsize);
+    const int aysize = std::min(src_block_height - ayoff, ttysize);
 
     if( axsize > 0 && aysize > 0 )
     {
@@ -371,7 +343,7 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
         db->ReadBlock( echannel, ablock_x + ablock_y * src_blocks_per_row,
                        temp_buffer, axoff, ayoff, axsize, aysize );
 
-        for( i_line = 0; i_line < aysize; i_line++ )
+        for( int i_line = 0; i_line < aysize; i_line++ )
         {
             memcpy( ((uint8*) buffer)
                     + (i_line + block1_ysize) * xsize * pixel_size,
@@ -379,30 +351,25 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
                     static_cast<size_t>(axsize) * pixel_size );
         }
     }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      read external block for bottom left corner of target block.     */
 /* -------------------------------------------------------------------- */
-    ttxoff = txoff + block1_xsize;
-    ttyoff = tyoff + block1_ysize;
-    ttxsize = txsize - block1_xsize;
-    ttysize = tysize - block1_ysize;
+    {
+    const int ttxoff = txoff + block1_xsize;
+    const int ttyoff = tyoff + block1_ysize;
+    const int ttxsize = txsize - block1_xsize;
+    const int ttysize = tysize - block1_ysize;
 
-    ablock_x = ttxoff / src_block_width;
-    ablock_y = ttyoff / src_block_height;
+    const int ablock_x = ttxoff / src_block_width;
+    const int ablock_y = ttyoff / src_block_height;
 
-    axoff = ttxoff - ablock_x * src_block_width;
-    ayoff = ttyoff - ablock_y * src_block_height;
+    const int axoff = ttxoff - ablock_x * src_block_width;
+    const int ayoff = ttyoff - ablock_y * src_block_height;
 
-    if( axoff + ttxsize > src_block_width )
-        axsize = src_block_width - axoff;
-    else
-        axsize = ttxsize;
-
-    if( ayoff + ttysize > src_block_height )
-        aysize = src_block_height - ayoff;
-    else
-        aysize = ttysize;
+    const int axsize = std::min(src_block_width - axoff, ttxsize);
+    const int aysize = std::min(src_block_height - ayoff, ttysize);
 
     if( axsize > 0 && aysize > 0 )
     {
@@ -410,13 +377,14 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
         db->ReadBlock( echannel, ablock_x + ablock_y * src_blocks_per_row,
                        temp_buffer, axoff, ayoff, axsize, aysize );
 
-        for( i_line = 0; i_line < aysize; i_line++ )
+        for( int i_line = 0; i_line < aysize; i_line++ )
         {
             memcpy( ((uint8*) buffer)
                     + (block1_xsize + (i_line + block1_ysize) * xsize) * pixel_size,
                     temp_buffer + i_line * axsize * pixel_size,
                     static_cast<size_t>(axsize) * pixel_size );
         }
+    }
     }
 
     return 1;

@@ -1062,7 +1062,7 @@ bool GDALEEDAIDataset::ComputeQueryStrategy()
             m_osPixelEncoding = "PNG";
             for (int i = 1; i <= nBands; i++)
             {
-                if (GetRasterBand(i)->GetRasterDataType() != GDT_Byte)
+                if (GetRasterBand(i)->GetRasterDataType() != GDT_UInt8)
                 {
                     m_osPixelEncoding = "GEO_TIFF";
                 }
@@ -1079,7 +1079,7 @@ bool GDALEEDAIDataset::ComputeQueryStrategy()
         }
         for (int i = 1; i <= nBands; i++)
         {
-            if (GetRasterBand(i)->GetRasterDataType() != GDT_Byte)
+            if (GetRasterBand(i)->GetRasterDataType() != GDT_UInt8)
             {
                 CPLError(
                     CE_Failure, CPLE_NotSupported,

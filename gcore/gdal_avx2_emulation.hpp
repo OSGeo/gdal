@@ -12,11 +12,18 @@
 #ifndef GDAL_AVX2_EMULATION_H_INCLUDED
 #define GDAL_AVX2_EMULATION_H_INCLUDED
 
+#if defined(USE_NEON_OPTIMIZATIONS)
+#include "include_sse2neon.h"
+#else
 #include <emmintrin.h>
 
 #ifdef __SSE4_1__
 #include <smmintrin.h>
+#endif
 
+#endif
+
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
 #define GDALmm_min_epu16 _mm_min_epu16
 #define GDALmm_max_epu16 _mm_max_epu16
 #define GDALmm_mullo_epi32 _mm_mullo_epi32
@@ -82,7 +89,7 @@ static inline __m128i GDALmm_cvtepu32_epi64(__m128i x)
     return _mm_unpacklo_epi32(x, _mm_setzero_si128());
 }
 
-#endif  // __SSE4_1__
+#endif  // defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
 
 #ifdef __AVX2__
 

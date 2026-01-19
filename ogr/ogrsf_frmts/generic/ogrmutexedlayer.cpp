@@ -255,13 +255,14 @@ OGRErr OGRMutexedLayer::SetIgnoredFields(CSLConstList papszFields)
     return OGRLayerDecorator::SetIgnoredFields(papszFields);
 }
 
-char **OGRMutexedLayer::GetMetadata(const char *pszDomain)
+CSLConstList OGRMutexedLayer::GetMetadata(const char *pszDomain)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetMetadata(pszDomain);
 }
 
-CPLErr OGRMutexedLayer::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr OGRMutexedLayer::SetMetadata(CSLConstList papszMetadata,
+                                    const char *pszDomain)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SetMetadata(papszMetadata, pszDomain);

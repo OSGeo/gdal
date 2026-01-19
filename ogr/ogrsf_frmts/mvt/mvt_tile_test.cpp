@@ -32,8 +32,7 @@ int main()
 
     {
         MVTTile oTile;
-        MVTTileLayer *poLayer = new MVTTileLayer();
-        oTile.addLayer(std::shared_ptr<MVTTileLayer>(poLayer));
+        oTile.addLayer(std::make_shared<MVTTileLayer>());
         CPLAssert(oTile.getSize() == 1 /* layer key */ + 1 /* layer size*/ +
                                          1 /* name key */ +
                                          1 /* version size */ +
@@ -43,13 +42,13 @@ int main()
 
     {
         MVTTile oTile;
-        MVTTileLayer *poLayer = new MVTTileLayer();
-        oTile.addLayer(std::shared_ptr<MVTTileLayer>(poLayer));
-        MVTTileLayerFeature *poFeature = new MVTTileLayerFeature();
+        auto poLayer = std::make_shared<MVTTileLayer>();
+        oTile.addLayer(poLayer);
+        auto poFeature = std::make_shared<MVTTileLayerFeature>();
         poLayer->setVersion(2);
         poLayer->setName(std::string("my_layer"));
         poLayer->setExtent(4096);
-        poLayer->addFeature(std::shared_ptr<MVTTileLayerFeature>(poFeature));
+        poLayer->addFeature(poFeature);
         poLayer->addKey(std::string("key0"));
         {
             MVTTileLayerValue oValue;
@@ -151,13 +150,12 @@ int main()
         poFeature->addGeometry(0);
         poFeature->addGeometry(0);
 
-        poLayer->addFeature(
-            std::shared_ptr<MVTTileLayerFeature>(new MVTTileLayerFeature()));
+        poLayer->addFeature(std::make_shared<MVTTileLayerFeature>());
 
-        oTile.addLayer(std::shared_ptr<MVTTileLayer>(new MVTTileLayer()));
+        oTile.addLayer(std::make_shared<MVTTileLayer>());
 
-        poLayer = new MVTTileLayer();
-        oTile.addLayer(std::shared_ptr<MVTTileLayer>(poLayer));
+        poLayer = std::make_shared<MVTTileLayer>();
+        oTile.addLayer(poLayer);
         poLayer->addValue(MVTTileLayerValue());
 
         size_t nSize = oTile.getSize();

@@ -320,4 +320,6 @@ template class GDALRasterPolygonEnumeratorT<std::int64_t, IntEqualityTest>;
 
 template class GDALRasterPolygonEnumeratorT<float, FloatEqualityTest>;
 
+template class GDALRasterPolygonEnumeratorT<double, DoubleEqualityTest>;
+
 /*! @endcond */

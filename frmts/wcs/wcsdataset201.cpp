@@ -514,7 +514,7 @@ bool WCSDataset201::GridOffsets(CPLXMLNode *grid, const std::string &subtype,
 
 std::string WCSDataset201::GetSubdataset(const std::string &coverage)
 {
-    char **metadata = GDALPamDataset::GetMetadata("SUBDATASETS");
+    CSLConstList metadata = GDALPamDataset::GetMetadata("SUBDATASETS");
     std::string subdataset;
     if (metadata != nullptr)
     {
@@ -560,7 +560,7 @@ bool WCSDataset201::SetFormat(CPLXMLNode *coverage)
     /*      falling back to the first supported format.  Should we          */
     /*      consider preferring the nativeFormat if available?              */
 
-    char **metadata = GDALPamDataset::GetMetadata(nullptr);
+    CSLConstList metadata = GDALPamDataset::GetMetadata(nullptr);
     const char *value =
         CSLFetchNameValue(metadata, "WCS_GLOBAL#formatSupported");
     if (value == nullptr)

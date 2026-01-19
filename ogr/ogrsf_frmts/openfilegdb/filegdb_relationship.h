@@ -87,8 +87,8 @@ ParseXMLRelationshipDef(const std::string &domainDef)
         return nullptr;
     }
 
-    std::unique_ptr<GDALRelationship> poRelationship(new GDALRelationship(
-        pszName, pszOriginTableName, pszDestinationTableName, eCardinality));
+    auto poRelationship = std::make_unique<GDALRelationship>(
+        pszName, pszOriginTableName, pszDestinationTableName, eCardinality);
 
     if (eCardinality == GRC_MANY_TO_MANY)
     {

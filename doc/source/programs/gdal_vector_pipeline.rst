@@ -55,13 +55,6 @@ Details for options can be found in :ref:`gdal_vector_buffer`.
 
 Details for options can be found in :ref:`gdal_vector_concat`.
 
-* change-field-type
-
-.. program-output:: gdal vector pipeline --help-doc=change-field-type
-
-Details for options can be found in :ref:`gdal_vector_change_field_type`.
-
-
 * clip
 
 .. program-output:: gdal vector pipeline --help-doc=clip
@@ -85,6 +78,10 @@ Details for options can be found in :ref:`gdal_vector_explode_collections`.
 .. program-output:: gdal vector pipeline --help-doc=filter
 
 Details for options can be found in :ref:`gdal_vector_filter`.
+
+* limit
+
+.. program-output:: gdal vector pipeline --help-doc=limit
 
 * make-valid
 
@@ -116,6 +113,12 @@ Details for options can be found in :ref:`gdal_vector_segmentize`.
 
 Details for options can be found in :ref:`gdal_vector_select`.
 
+* set-field-type
+
+.. program-output:: gdal vector pipeline --help-doc=set-field-type
+
+Details for options can be found in :ref:`gdal_vector_set_field_type`.
+
 * set-geom-type
 
 .. program-output:: gdal vector pipeline --help-doc=set-geom-type
@@ -139,6 +142,12 @@ Details for options can be found in :ref:`gdal_vector_simplify_coverage`.
 .. program-output:: gdal vector pipeline --help-doc=sql
 
 Details for options can be found in :ref:`gdal_vector_sql`.
+
+* update
+
+.. program-output:: gdal vector pipeline --help-doc=update
+
+Details for options can be found in :ref:`gdal_vector_update`.
 
 * swap-xy
 

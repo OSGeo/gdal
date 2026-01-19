@@ -319,6 +319,52 @@ int ods_formulalex(YYSTYPE *ppNode, ods_formula_parse_context *context)
         return nReturn;
     }
 
+    else if (pszInput[0] == '=' && pszInput[1] == '<')
+    {
+        context->pszNext = pszInput + 2;
+        return ODST_LE;
+    }
+    else if (pszInput[0] == '=' && pszInput[1] == '>')
+    {
+        context->pszNext = pszInput + 2;
+        return ODST_GE;
+    }
+    else if (pszInput[0] == '=')
+    {
+        context->pszNext = pszInput + 1;
+        return ODST_EQ;
+    }
+    else if (pszInput[0] == '!' && pszInput[1] == '=')
+    {
+        context->pszNext = pszInput + 2;
+        return ODST_NE;
+    }
+    else if (pszInput[0] == '<' && pszInput[1] == '>')
+    {
+        context->pszNext = pszInput + 2;
+        return ODST_NE;
+    }
+    else if (pszInput[0] == '<' && pszInput[1] == '=')
+    {
+        context->pszNext = pszInput + 2;
+        return ODST_LE;
+    }
+    else if (pszInput[0] == '<')
+    {
+        context->pszNext = pszInput + 1;
+        return ODST_LT;
+    }
+    else if (pszInput[0] == '>' && pszInput[1] == '=')
+    {
+        context->pszNext = pszInput + 2;
+        return ODST_GE;
+    }
+    else if (pszInput[0] == '>')
+    {
+        context->pszNext = pszInput + 1;
+        return ODST_GT;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Handle special tokens.                                          */
     /* -------------------------------------------------------------------- */

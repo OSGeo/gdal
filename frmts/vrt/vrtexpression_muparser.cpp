@@ -24,6 +24,11 @@ namespace gdal
 
 /*! @cond Doxygen_Suppress */
 
+static mu::value_type fmod(mu::value_type x, mu::value_type y)
+{
+    return std::fmod(x, y);
+}
+
 static mu::value_type isnan(mu::value_type x)
 {
     return std::isnan(x);
@@ -175,6 +180,7 @@ class MuParserExpression::Impl
         try
         {
             m_oParser.DefineFun(_T("isnan"), isnan);
+            m_oParser.DefineFun(_T("fmod"), fmod);
 
             // Check to see if a NODATA variable has been defined and, if so,
             // bind it to the isnodata() function

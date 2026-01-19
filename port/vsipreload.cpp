@@ -315,7 +315,7 @@ static int VSIFSeekLHelper(VSILFILE *fpVSIL, off64_t off, int whence)
         return VSIFSeekL(fpVSIL, VSIFTellL(fpVSIL) + off, SEEK_SET);
     }
 
-    return VSIFSeekL(fpVSIL, off, whence);
+    return VSIFSeekL(fpVSIL, static_cast<vsi_l_offset>(off), whence);
 }
 
 /************************************************************************/

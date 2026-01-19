@@ -36,6 +36,7 @@
 // GDALDataType
 %constant GDT_Unknown   = GDT_Unknown;
 %constant GDT_Byte      = GDT_Byte;
+%constant GDT_UInt8     = GDT_UInt8;
 %constant GDT_Int8      = GDT_Int8;
 %constant GDT_UInt16    = GDT_UInt16;
 %constant GDT_Int16     = GDT_Int16;
@@ -465,6 +466,9 @@
 %constant GFT_Integer             = GFT_Integer;
 %constant GFT_Real                = GFT_Real;
 %constant GFT_String              = GFT_String;
+%constant GFT_Boolean             = GFT_Boolean;
+%constant GFT_DateTime            = GFT_DateTime;
+%constant GFT_WKBGeometry         = GFT_WKBGeometry;
 
 // GDALRATFieldUsage
 %constant GFU_Generic             = GFU_Generic;

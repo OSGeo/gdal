@@ -32,7 +32,7 @@ files, or PAM (Persistent Auxiliary metadata) .aux.xml sidecar files. By
 default, information is fetched in following order (first listed is the
 highest priority): PAM, GeoJP2, GMLJP2, WORLDFILE.
 
-Starting with GDAL 2.2, the allowed sources and their priority order can
+The allowed sources and their priority order can
 be changed with the :config:`GDAL_GEOREF_SOURCES` configuration option (or
 :oo:`GEOREF_SOURCES` open option) whose value is a comma-separated list of the
 following keywords : PAM, GEOJP2, GMLJP2, INTERNAL (shortcut for

@@ -45,7 +45,7 @@ class PAuxDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(PAuxDataset)
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
   public:
     PAuxDataset();
@@ -246,7 +246,7 @@ PAuxDataset::~PAuxDataset()
 /*                              Close()                                 */
 /************************************************************************/
 
-CPLErr PAuxDataset::Close()
+CPLErr PAuxDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -655,7 +655,7 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
         else if (EQUAL(aosTokensBand[0], "32R"))
             eType = GDT_Float32;
         else
-            eType = GDT_Byte;
+            eType = GDT_UInt8;
 
         bool bNative = true;
         if (CSLCount(aosTokensBand) > 4)

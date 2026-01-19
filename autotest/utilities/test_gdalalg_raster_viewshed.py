@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -29,6 +30,16 @@ def viewshed_input(tmp_path):
     ds.GetRasterBand(1).DeleteNoDataValue()
     ds.Close()
 
+    return fname
+
+
+@pytest.fixture()
+def viewshed_sd_input(tmp_path):
+    fname = str(tmp_path / "test_gdal_viewshed_sd_in.tif")
+
+    ds = gdal.Warp(fname, "../gdrivers/data/n43d-sd.tif", dstSRS="EPSG:32617")
+    ds.GetRasterBand(1).DeleteNoDataValue()
+    ds.Close()
     return fname
 
 
@@ -261,3 +272,48 @@ def test_gdalalg_raster_mode_ground(viewshed_input):
     assert alg.Run()
     ds = alg["output"].GetDataset()
     assert ds.GetRasterBand(1).Checksum() == 8381
+
+
+def test_gdalalg_raster_sd(viewshed_input, viewshed_sd_input):
+
+    # Some test configurations don't support numpy. This will skip those
+    # configurations.
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    alg = get_alg()
+    alg["input"] = viewshed_input
+    alg["sd-filename"] = viewshed_sd_input
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg["position"] = [621528, 4817617, 100]
+    alg["mode"] = "normal"
+    alg["maybe-visible-value"] = 3
+    assert alg.Run()
+    ds = alg["output"].GetDataset()
+    array = ds.ReadAsArray()
+    values, counts = np.unique(array, return_counts=True)
+    assert len(values) == 3
+    assert values[0] == 0
+    assert values[1] == 3
+    assert values[2] == 255
+    assert counts[0] == 5815
+    assert counts[1] == 2020
+    assert counts[2] == 6585
+    assert ds.GetRasterBand(1).Checksum() == 20755
+
+
+def test_gdalalg_raster_wrong_sd(viewshed_input):
+
+    alg = get_alg()
+    alg["input"] = viewshed_input
+    alg["sd-filename"] = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg["position"] = [621528, 4817617, 100]
+    alg["mode"] = "normal"
+    alg["maybe-visible-value"] = 3
+    with pytest.raises(
+        Exception, match="The standard deviation dataset must have one raster band"
+    ):
+        alg.Run()

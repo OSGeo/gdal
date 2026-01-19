@@ -1354,7 +1354,7 @@ static GDALDriver *GetOutputDriver(OGRLineRefOptions &sOptions)
         for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
         {
             GDALDriver *poIter = poDM->GetDriver(iDriver);
-            char **papszDriverMD = poIter->GetMetadata();
+            CSLConstList papszDriverMD = poIter->GetMetadata();
             if (CPLTestBool(CSLFetchNameValueDef(papszDriverMD,
                                                  GDAL_DCAP_VECTOR, "FALSE")) &&
                 CPLTestBool(CSLFetchNameValueDef(papszDriverMD,

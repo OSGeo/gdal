@@ -423,7 +423,7 @@ char **OGRPGTableLayer::GetMetadataDomainList()
 /*                              GetMetadata()                           */
 /************************************************************************/
 
-char **OGRPGTableLayer::GetMetadata(const char *pszDomain)
+CSLConstList OGRPGTableLayer::GetMetadata(const char *pszDomain)
 {
     LoadMetadata();
 
@@ -476,7 +476,7 @@ const char *OGRPGTableLayer::GetMetadataItem(const char *pszName,
 /*                              SetMetadata()                           */
 /************************************************************************/
 
-CPLErr OGRPGTableLayer::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr OGRPGTableLayer::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 {
     LoadMetadata();
 
@@ -2123,7 +2123,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
                      "that's perhaps the reason for the failure. "
                      "If so, this can happen if you reuse the same feature "
                      "object for sequential insertions. "
-                     "Indeed, since GDAL 1.8.0, the FID of an inserted feature "
+                     "The FID of an inserted feature "
                      "is got from the server, so it is not a good idea"
                      "to reuse it afterwards... All in all, try unsetting the "
                      "FID with SetFID(-1) before calling CreateFeature()");
@@ -3878,7 +3878,7 @@ OGRErr OGRPGTableLayer::RunDeferredCreationIfNecessary()
         }
     }
 
-    char **papszMD = OGRLayer::GetMetadata();
+    CSLConstList papszMD = OGRLayer::GetMetadata();
     if (papszMD != nullptr)
         SetMetadata(papszMD);
 

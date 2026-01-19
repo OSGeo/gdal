@@ -49,7 +49,15 @@ GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm(bool standaloneStep)
 
     SetAutoCompleteFunctionForFilename(referenceDatasetArg, GDAL_OF_RASTER);
 
-    AddRasterInputArgs(false, !standaloneStep);
+    if (standaloneStep)
+    {
+        AddRasterInputArgs(/* openForMixedRasterVector = */ false,
+                           /* hiddenForCLI = */ false);
+    }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
 
     AddArg("skip-all-optional", 0, _("Skip all optional comparisons"),
            &m_skipAllOptional);
@@ -560,7 +568,7 @@ void GDALRasterCompareAlgorithm::DatasetComparison(
                               poInputDS->GetRasterBand(1)->GetRasterDataType());
         switch (eReqDT)
         {
-            case GDT_Byte:
+            case GDT_UInt8:
                 DatasetPixelComparison<uint8_t, uint8_t, false>(
                     aosReport, poRefDS, poInputDS, eReqDT, pfnProgress,
                     pProgressData);
@@ -720,7 +728,7 @@ static void ComparePixels(std::vector<std::string> &aosReport,
                                           poInputBand->GetRasterDataType());
     switch (eReqDT)
     {
-        case GDT_Byte:
+        case GDT_UInt8:
             ComparePixels<uint8_t, uint8_t, false>(aosReport, bandId, poRefBand,
                                                    poInputBand, eReqDT,
                                                    pfnProgress, pProgressData);

@@ -60,7 +60,7 @@ class CPL_DLL NASAKeywordHandler
         m_bStripSurroundingQuotes = bStripSurroundingQuotes;
     }
 
-    bool Ingest(VSILFILE *fp, int nOffset);
+    bool Ingest(VSILFILE *fp, vsi_l_offset nOffset);
     bool Parse(const char *pszStr);
 
     const char *GetKeyword(const char *pszPath, const char *pszDefault);

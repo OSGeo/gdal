@@ -41,7 +41,6 @@
  * disabled. The reliability of snapshotting relies on if the dataset correctly
  * implements GetFileList() (for multi-file datasources)
  *
- * @since GDAL 2.0
  */
 
 #if defined(DEBUG) || defined(GDAL_DEBUG)

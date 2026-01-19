@@ -58,48 +58,18 @@ calculated.
 
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
-Standard options
-++++++++++++++++
+Program-Specific Options
+------------------------
 
-.. include:: gdal_options/of_raster_create_copy.rst
+.. option:: --add-alpha
 
-.. include:: gdal_options/co.rst
-
-.. include:: gdal_options/overwrite.rst
-
-.. option:: -s, --src-crs <SRC-CRS>
-
-    Set source spatial reference. If not specified the SRS found in the input
-    dataset will be used.
-
-    .. include:: options/srs_def_gdalwarp.rst
-
-.. option:: -d, --dst-crs <SRC-CRS>
-
-    Set source spatial reference. If not specified the SRS found in the input
-    dataset will be used.
-
-    .. include:: options/srs_def_gdalwarp.rst
-
-.. include:: gdal_options/warp_resampling.rst
-
-.. option:: --resolution <xres>,<yres>
-
-    Set output file resolution (in target georeferenced units).
-
-    If not specified (or not deduced from -te and -ts), gdalwarp will, in the
-    general case, generate an output raster with xres=yres.
-
-    If neither :option:`--resolution` nor :option:`--size` are specified,
-    that no reprojection is involved (including taking into account geolocation arrays
-    or RPC), the resolution of the source file(s) will be preserved (in previous
-    version, an output raster with xres=yres was always generated).
-
-.. option:: --size <width>,<height>
-
-    Set output file size in pixels and lines. If width or height is set to 0,
-    the other dimension will be guessed from the computed resolution. Note that
-    :option:`--size` cannot be used with :option:`--resolution`
+    Create an output alpha band to identify nodata (unset/transparent) pixels.
+    Value 0 is used for fully transparent pixels. The maximum value for the alpha
+    band, for fully opaque pixels, depends on the data type and the presence of
+    the NBITS band metadata item. If it is present, the maximum value is 2^NBITS-1.
+    Otherwise, if NBITS is not set and the alpha band is of type UInt16
+    (resp. Int16), 65535 (resp. 32767) is used. Otherwise, 255 is used. The
+    maximum value can also be overridden with ``--wo DST_ALPHA_MAX=<value>``.
 
 .. option:: --bbox <xmin>,<ymin>,<xmax>,<ymax>
 
@@ -116,14 +86,30 @@ Standard options
     dataset. :option:`--bbox-crs` is a convenience e.g. when knowing the output coordinates in a
     geodetic long/lat SRS, but still wanting a result in a projected coordinate system.
 
-.. option:: --target-aligned-pixels
+.. option:: -d, --dst-crs <SRC-CRS>
 
-    Align the coordinates of the extent of the output
-    file to the values of the :option:`--resolution`, such that the aligned extent
-    includes the minimum extent (edges lines/columns that are detected as
-    blank, before actual warping, will be removed).
-    Alignment means that xmin / resx, ymin / resy,
-    xmax / resx and ymax / resy are integer values.
+    Set source spatial reference. If not specified the SRS found in the input
+    dataset will be used.
+
+    .. include:: options/srs_def_gdalwarp.rst
+
+.. option:: --dst-nodata <DSTNODATA>
+
+    Set nodata values for output bands (different values can be supplied for each band).
+    If more than one value is supplied all values should be quoted to keep them together
+    as a single operating system argument.  New files will be initialized to this
+    value and if possible the nodata value will be recorded in the output
+    file. Use a value of ``None`` to ensure that nodata is not defined.
+    If this argument is not used then nodata values will be copied from the source dataset.
+    Note that a number of output formats, including GeoTIFF, do not support
+    different per-band nodata values, but a single one for all bands.
+
+.. option:: --et, --error-threshold <ERROR-THRESHOLD>
+
+    Error threshold for transformation approximation, expressed as a number of
+    source pixels. Defaults to 0.125 pixels unless the ``RPC_DEM`` transformer
+    option is specified, in which case an exact transformer, i.e.
+    ``--error-threshold=0``, will be used.
 
 .. option:: -j, --num-threads <value>
 
@@ -132,8 +118,35 @@ Standard options
     Number of jobs to run at once.
     Default: number of CPUs detected.
 
-Advanced options
-++++++++++++++++
+.. include:: gdal_options/warp_resampling.rst
+
+.. option:: --resolution <xres>,<yres>
+
+    Set output file resolution (in target georeferenced units).
+
+    If not specified (or not deduced from :option:`--size`), the program will, in the
+    general case, generate an output raster with xres=yres.
+
+    If neither :option:`--resolution` nor :option:`--size` are specified,
+    that no reprojection is involved (including taking into account geolocation arrays
+    or RPC), the resolution of the source file(s) will be preserved (in previous
+    version, an output raster with xres=yres was always generated).
+
+    Mutually exclusive with :option:`--size`.
+
+.. option:: --size <width>,<height>
+
+    Set output file size in pixels and lines. If width or height is set to 0,
+    the other dimension will be guessed from the computed resolution.
+
+    Mutually exclusive with :option:`--resolution`.
+
+.. option:: -s, --src-crs <SRC-CRS>
+
+    Set source spatial reference. If not specified the SRS found in the input
+    dataset will be used.
+
+    .. include:: options/srs_def_gdalwarp.rst
 
 .. option:: --src-nodata <SRCNODATA>
 
@@ -152,45 +165,45 @@ Advanced options
     they will be taken into account, with ``UNIFIED_SRC_NODATA`` at ``PARTIAL``
     by default.
 
-.. option:: --dst-nodata <DSTNODATA>
+.. option:: --target-aligned-pixels
 
-    Set nodata values for output bands (different values can be supplied for each band).
-    If more than one value is supplied all values should be quoted to keep them together
-    as a single operating system argument.  New files will be initialized to this
-    value and if possible the nodata value will be recorded in the output
-    file. Use a value of ``None`` to ensure that nodata is not defined.
-    If this argument is not used then nodata values will be copied from the source dataset.
-    Note that a number of output formats, including GeoTIFF, do not support
-    different per-band nodata values, but a single one for all bands.
+    Align the coordinates of the extent of the output
+    file to the values of the :option:`--resolution`, such that the aligned extent
+    includes the minimum extent (edges lines/columns that are detected as
+    blank, before actual warping, will be removed).
+    Alignment means that xmin / resx, ymin / resy,
+    xmax / resx and ymax / resy are integer values.
 
-.. option:: --addalpha
-
-    Create an output alpha band to identify nodata (unset/transparent) pixels.
-    Value 0 is used for fully transparent pixels. The maximum value for the alpha
-    band, for fully opaque pixels, depends on the data type and the presence of
-    the NBITS band metadata item. If it is present, the maximum value is 2^NBITS-1.
-    Otherwise, if NBITS is not set and the alpha band is of type UInt16
-    (resp. Int16), 65535 (resp. 32767) is used. Otherwise, 255 is used. The
-    maximum value can also be overridden with ``--wo DST_ALPHA_MAX=<value>``.
-
-.. option:: --wo, --warp-option <NAME>=<VALUE>
-
-    Set a warp option.  The :cpp:member:`GDALWarpOptions::papszWarpOptions` docs show all options.
-    Multiple options may be listed.
-
-.. option:: --to <NAME>=<VALUE>
+.. option:: --to, --transform-option <NAME>=<VALUE>
 
     Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
     See :cpp:func:`GDALCreateRPCTransformerV2()` for RPC specific options.
 
     To match the gdalwarp -rpc option, use --to METHOD=RPC
 
-.. option:: --et, --error-threshold <ERROR-THRESHOLD>
+.. option:: --wo, --warp-option <NAME>=<VALUE>
 
-    Error threshold for transformation approximation, expressed as a number of
-    source pixels. Defaults to 0.125 pixels unless the ``RPC_DEM`` transformer
-    option is specified, in which case an exact transformer, i.e.
-    ``--error-threshold=0``, will be used.
+    Set a warp option.  The :cpp:member:`GDALWarpOptions::papszWarpOptions` docs show all options.
+    Multiple options may be listed.
+
+
+Standard Options
+----------------
+
+.. collapse:: Details
+
+    .. include:: gdal_options/append_raster.rst
+
+    .. include:: gdal_options/co.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_raster_create_copy.rst
+
+    .. include:: gdal_options/overwrite.rst
+
 
 Nodata / source validity mask handling
 --------------------------------------
@@ -226,9 +239,9 @@ Approximate transformation
 
 By default :program:`gdal raster reproject` uses a linear approximator for the
 transformations with a permitted error of 0.125 pixels in the source dataset.
-The approximator precisely transforms three points per output scanline (the
-start, middle, and end) from a row and column in the output dataset to a
-row and column in the source dataset.
+For each processing chunk, the approximator precisely transforms three points
+per output scanline (the start, middle, and end) from a row and column in the
+output dataset to a row and column in the source dataset.
 It then compares a linear approximation of the center point coordinates to the
 precisely transformed value.
 If the sum of the horizontal and vertical errors is less than the error
@@ -239,9 +252,58 @@ If the error exceeds the threshold, the scanline is split into two sections and
 the approximator is recursively applied to each section until the error is less
 than the threshold or all points have been exactly computed.
 
+Note that a processing chunk does not necessarily correspond to a whole destination
+scanline. If the output dataset is tiled, its shape will typically be one or
+several tiles. The ``OPTIMIZE_SIZE`` warping option can also influence the shape
+of the processing chunk. Consequently, for a single (non-zero) value of the error threshold,
+the linear approximation might result in slightly different values in coordinate
+transformation, but all of them within the permitted error.
+
 The error threshold (in source dataset pixels) can be controlled with the
 :option:`--error-threshold` switch. If you want to compare a true pixel-by-pixel reprojection
 use ``--error-threshold=0`` which disables this approximator entirely.
+
+
+Frequently Asked Questions
+--------------------------
+
+Q1. Why does the quality of the output looks so bad (no anti-aliasing)?
+
+A1. Did you specify a resampling method, with :option:`--resampling`, other than
+    the default nearest neighbour?
+
+
+Q2. Why do I get slightly different results whether the output dataset is tiled or not?
+
+A2. This is related to the fact that an approximate coordinate transformation is
+    used by default to speed-up computation. If you want to maximize the chances
+    to get the same results whether the output is tiled or not, set:option:`--error-threshold` to zero.
+    Note, however, that this will only work for relatively small images; other factors
+    can still result in different result. See following question (Q3).
+
+
+Q3. Why do I observe artifacts, that look like resolution changes and are aligned
+    with rectangular areas of the output raster, when warping sufficiently large
+    rasters, particularly in areas where the reprojection involves significant
+    deformation and only with non-nearest resampling ?
+
+A3. The warping engine operates on rectangular areas of the output
+    dataset (generally aligned with tile boundaries for a compressed tile dataset).
+
+    When reprojection happens, one source pixel does not generally correspond
+    to a single output pixel. The resampling method used must properly take that
+    into account and computes a ratio between the number of source and target pixels
+    in the horizontal/X and vertical/Y directions. Those ratios are computed per
+    warping chunk. This maximizes the local quality of the warping but has the
+    downside of creating visual discontinuities between warping chunks.
+
+    If you favor a seamless result, you may manually specify the
+    XSCALE and YSCALE warping options with :option:`--wo`.
+    The XSCALE (resp. YSCALE) value is the ratio expressing the resampling factor,
+    i.e. the number of destination pixels per source pixel, along the
+    horizontal (resp. vertical) axis. It equals to one for no resampling, is
+    below one for downsampling, and above one for upsampling.
+
 
 .. GDALG output (on-the-fly / streamed dataset)
 .. --------------------------------------------

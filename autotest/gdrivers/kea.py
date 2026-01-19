@@ -1,8 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id $
-#
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test KEA driver
 # Author:   Even Rouault, <even dot rouault at spatialys dot com>
@@ -13,10 +11,12 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import datetime
+
 import gdaltest
 import pytest
 
-from osgeo import gdal, osr
+from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("KEA")
 
@@ -155,7 +155,7 @@ def test_kea_4(tmp_path):
         assert ret != 0
 
     with gdal.quiet_errors():
-        ret = ds.AddBand(gdal.GDT_Byte)
+        ret = ds.AddBand(gdal.GDT_UInt8)
     assert ret != 0
 
     with gdal.quiet_errors():
@@ -380,11 +380,11 @@ def test_kea_9(tmp_path):
 @pytest.mark.parametrize(
     "dt,nd,expected_nd",
     [
-        (gdal.GDT_Byte, 0, 0),
-        (gdal.GDT_Byte, 1.1, 1.0),
-        (gdal.GDT_Byte, 255, 255),
-        (gdal.GDT_Byte, -1, None),
-        (gdal.GDT_Byte, 256, None),
+        (gdal.GDT_UInt8, 0, 0),
+        (gdal.GDT_UInt8, 1.1, 1.0),
+        (gdal.GDT_UInt8, 255, 255),
+        (gdal.GDT_UInt8, -1, None),
+        (gdal.GDT_UInt8, 256, None),
         (gdal.GDT_UInt16, 0, 0),
         (gdal.GDT_UInt16, 65535, 65535),
         (gdal.GDT_UInt16, -1, None),
@@ -439,17 +439,17 @@ def test_kea_10(tmp_path, dt, nd, expected_nd):
 
 def test_kea_11(tmp_path):
 
-    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_UInt8)
     ds = None
 
     ds = gdal.Open(tmp_path / "out.kea", gdal.GA_Update)
-    assert ds.AddBand(gdal.GDT_Byte) == 0
+    assert ds.AddBand(gdal.GDT_UInt8) == 0
     assert ds.AddBand(gdal.GDT_Int16, options=["DEFLATE=9"]) == 0
     ds = None
 
     ds = gdal.Open(tmp_path / "out.kea")
     assert ds.RasterCount == 3
-    assert ds.GetRasterBand(2).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(2).DataType == gdal.GDT_UInt8
     assert ds.GetRasterBand(3).DataType == gdal.GDT_Int16
     ds = None
 
@@ -458,9 +458,9 @@ def test_kea_11(tmp_path):
 # Test RAT
 
 
-def test_kea_12(tmp_path):
+def test_kea_rat(tmp_path):
 
-    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_UInt8)
     assert ds.GetRasterBand(1).GetDefaultRAT().GetColumnCount() == 0
     assert ds.GetRasterBand(1).SetDefaultRAT(None) != 0
     rat = ds.GetRasterBand(1).GetDefaultRAT()
@@ -473,10 +473,16 @@ def test_kea_12(tmp_path):
     rat.CreateColumn("col_integer_green", gdal.GFT_Integer, gdal.GFU_Green)
     rat.CreateColumn("col_integer_blue", gdal.GFT_Integer, gdal.GFU_Blue)
     rat.CreateColumn("col_integer_alpha", gdal.GFT_Integer, gdal.GFU_Alpha)
+    rat.CreateColumn("col_bool", gdal.GFT_Boolean, gdal.GFU_Generic)
+    rat.CreateColumn("col_datetime", gdal.GFT_DateTime, gdal.GFU_Generic)
+    rat.CreateColumn("col_wkbgeneric", gdal.GFT_WKBGeometry, gdal.GFU_Generic)
     rat.SetRowCount(1)
 
     rat.SetValueAsString(0, 0, "1.23")
     rat.SetValueAsInt(0, 0, 1)
+    rat.SetValueAsBoolean(0, 0, False)
+    rat.SetValueAsDateTime(0, 0, datetime.datetime.fromtimestamp(0))
+    rat.SetValueAsWKBGeometry(0, 0, b"")
     rat.SetValueAsDouble(0, 0, 1.23)
 
     rat.SetValueAsInt(0, 2, 0)
@@ -486,6 +492,41 @@ def test_kea_12(tmp_path):
     rat.SetValueAsString(0, 3, "123")
     rat.SetValueAsDouble(0, 3, 123)
     rat.SetValueAsInt(0, 3, 123)
+
+    rat.SetValueAsString(0, 7, "true")
+    rat.SetValueAsDouble(0, 7, 0)
+    rat.SetValueAsInt(0, 7, 1)
+    rat.SetValueAsDateTime(0, 7, datetime.datetime.fromtimestamp(0))
+    rat.SetValueAsWKBGeometry(0, 7, b"")
+    rat.SetValueAsBoolean(0, 7, True)
+
+    rat.SetValueAsString(0, 8, "true")
+    rat.SetValueAsDouble(0, 8, 0)
+    rat.SetValueAsInt(0, 8, 1)
+    rat.SetValueAsWKBGeometry(0, 8, b"")
+    rat.SetValueAsBoolean(0, 8, True)
+    dt = datetime.datetime(
+        2025,
+        10,
+        11,
+        12,
+        34,
+        56,
+        500000,
+        tzinfo=datetime.timezone(datetime.timedelta(seconds=4500)),
+    )
+    rat.SetValueAsDateTime(0, 8, dt)
+
+    g = ogr.Geometry(ogr.wkbPoint)
+    g.SetPoint_2D(0, 1, 2)
+    wkb = g.ExportToWkb()
+
+    rat.SetValueAsString(0, 9, "true")
+    rat.SetValueAsDouble(0, 9, 0)
+    rat.SetValueAsInt(0, 9, 1)
+    rat.SetValueAsDateTime(0, 9, datetime.datetime.fromtimestamp(0))
+    rat.SetValueAsBoolean(0, 9, True)
+    rat.SetValueAsWKBGeometry(0, 9, wkb)
 
     cloned_rat = rat.Clone()
     assert ds.GetRasterBand(1).SetDefaultRAT(rat) == 0
@@ -509,7 +550,10 @@ def test_kea_12(tmp_path):
     assert rat.GetRowCount() == cloned_rat.GetRowCount()
     for i in range(rat.GetColumnCount()):
         assert rat.GetNameOfCol(i) == cloned_rat.GetNameOfCol(i)
-        assert rat.GetTypeOfCol(i) == cloned_rat.GetTypeOfCol(i)
+        if rat.GetTypeOfCol(i) not in (gdal.GFT_DateTime, gdal.GFT_WKBGeometry):
+            assert rat.GetTypeOfCol(i) == cloned_rat.GetTypeOfCol(i), rat.GetNameOfCol(
+                i
+            )
         assert rat.GetUsageOfCol(i) == cloned_rat.GetUsageOfCol(i)
 
     with gdal.quiet_errors():
@@ -528,6 +572,12 @@ def test_kea_12(tmp_path):
             rat.GetValueAsInt(-1, 0)
         with pytest.raises(Exception):
             rat.GetValueAsString(-1, 0)
+        with pytest.raises(Exception):
+            rat.GetValueAsBoolean(-1, 0)
+        with pytest.raises(Exception):
+            rat.GetValueAsDateTime(-1, 0)
+        with pytest.raises(Exception):
+            rat.GetValueAsWKBGeometry(-1, 0)
 
         with pytest.raises(Exception):
             rat.GetValueAsDouble(rat.GetColumnCount(), 0)
@@ -535,6 +585,12 @@ def test_kea_12(tmp_path):
             rat.GetValueAsInt(rat.GetColumnCount(), 0)
         with pytest.raises(Exception):
             rat.GetValueAsString(rat.GetColumnCount(), 0)
+        with pytest.raises(Exception):
+            rat.GetValueAsBoolean(rat.GetColumnCount(), 0)
+        with pytest.raises(Exception):
+            rat.GetValueAsDateTime(rat.GetColumnCount(), 0)
+        with pytest.raises(Exception):
+            rat.GetValueAsWKBGeometry(rat.GetColumnCount(), 0)
 
         with pytest.raises(Exception):
             rat.GetValueAsDouble(0, -1)
@@ -542,10 +598,19 @@ def test_kea_12(tmp_path):
             rat.GetValueAsInt(0, -1)
         with pytest.raises(Exception):
             rat.GetValueAsString(0, -1)
+        with pytest.raises(Exception):
+            rat.GetValueAsBoolean(0, -1)
+        with pytest.raises(Exception):
+            rat.GetValueAsDateTime(0, -1)
+        with pytest.raises(Exception):
+            rat.GetValueAsWKBGeometry(0, -1)
 
         rat.GetValueAsDouble(0, rat.GetRowCount())
         rat.GetValueAsInt(0, rat.GetRowCount())
         rat.GetValueAsString(0, rat.GetRowCount())
+        rat.GetValueAsBoolean(0, rat.GetRowCount())
+        rat.GetValueAsDateTime(0, rat.GetRowCount())
+        rat.GetValueAsWKBGeometry(0, rat.GetRowCount())
 
     assert rat.GetValueAsDouble(0, 0) == 1.23
     assert rat.GetValueAsInt(0, 0) == 1
@@ -558,6 +623,10 @@ def test_kea_12(tmp_path):
     assert rat.GetValueAsString(0, 2) == "foo"
     assert rat.GetValueAsInt(0, 2) == 0
     assert rat.GetValueAsDouble(0, 2) == 0
+
+    assert rat.GetValueAsBoolean(0, 7)
+    assert rat.GetValueAsDateTime(0, 8) == dt
+    assert rat.GetValueAsWKBGeometry(0, 9) == wkb
 
     ds = None
     out2_ds = None
@@ -594,7 +663,7 @@ def test_kea_13(tmp_path):
 
 def test_kea_14(tmp_path):
 
-    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_UInt8)
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALL_VALID
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 3
     ds.GetRasterBand(1).CreateMaskBand(0)

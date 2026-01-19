@@ -941,6 +941,42 @@ inline void GDALCopy4Words(const float *pValueIn, GByte *const pValueOut)
     GDALCopyXMMToInt32(xmm_i, pValueOut);
 }
 
+static inline __m128 GDALIfThenElse(__m128 mask, __m128 thenVal, __m128 elseVal)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_ps(elseVal, thenVal, mask);
+#else
+    return _mm_or_ps(_mm_and_ps(mask, thenVal), _mm_andnot_ps(mask, elseVal));
+#endif
+}
+
+template <>
+inline void GDALCopy4Words(const float *pValueIn, GInt8 *const pValueOut)
+{
+    __m128 xmm = _mm_loadu_ps(pValueIn);
+
+    const __m128 xmm_min = _mm_set1_ps(-128);
+    const __m128 xmm_max = _mm_set1_ps(127);
+    xmm = _mm_min_ps(_mm_max_ps(xmm, xmm_min), xmm_max);
+
+    const __m128 p0d5 = _mm_set1_ps(0.5f);
+    const __m128 m0d5 = _mm_set1_ps(-0.5f);
+    const __m128 mask = _mm_cmpge_ps(xmm, p0d5);
+    // f >= 0.5f ? f + 0.5f : f - 0.5f
+    xmm = _mm_add_ps(xmm, GDALIfThenElse(mask, p0d5, m0d5));
+
+    __m128i xmm_i = _mm_cvttps_epi32(xmm);
+
+#if defined(__SSSE3__) || defined(USE_NEON_OPTIMIZATIONS)
+    xmm_i = _mm_shuffle_epi8(
+        xmm_i, _mm_cvtsi32_si128(0 | (4 << 8) | (8 << 16) | (12 << 24)));
+#else
+    xmm_i = _mm_packs_epi32(xmm_i, xmm_i);  // Pack int32 to int16
+    xmm_i = _mm_packs_epi16(xmm_i, xmm_i);  // Pack int16 to int8
+#endif
+    GDALCopyXMMToInt32(xmm_i, pValueOut);
+}
+
 template <>
 inline void GDALCopy4Words(const float *pValueIn, GInt16 *const pValueOut)
 {
@@ -954,8 +990,7 @@ inline void GDALCopy4Words(const float *pValueIn, GInt16 *const pValueOut)
     const __m128 m0d5 = _mm_set1_ps(-0.5f);
     const __m128 mask = _mm_cmpge_ps(xmm, p0d5);
     // f >= 0.5f ? f + 0.5f : f - 0.5f
-    xmm = _mm_add_ps(
-        xmm, _mm_or_ps(_mm_and_ps(mask, p0d5), _mm_andnot_ps(mask, m0d5)));
+    xmm = _mm_add_ps(xmm, GDALIfThenElse(mask, p0d5, m0d5));
 
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
 
@@ -986,6 +1021,123 @@ inline void GDALCopy4Words(const float *pValueIn, GUInt16 *const pValueOut)
 #endif
     GDALCopyXMMToInt64(xmm_i, pValueOut);
 }
+
+static inline __m128i GDALIfThenElse(__m128i mask, __m128i thenVal,
+                                     __m128i elseVal)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_epi8(elseVal, thenVal, mask);
+#else
+    return _mm_or_si128(_mm_and_si128(mask, thenVal),
+                        _mm_andnot_si128(mask, elseVal));
+#endif
+}
+
+template <>
+inline void GDALCopy4Words(const float *pValueIn, GInt32 *const pValueOut)
+{
+    __m128 xmm = _mm_loadu_ps(pValueIn);
+    const __m128 xmm_ori = xmm;
+
+    const __m128 p0d5 = _mm_set1_ps(0.5f);
+    const __m128 m0d5 = _mm_set1_ps(-0.5f);
+    const __m128 mask = _mm_cmpge_ps(xmm, p0d5);
+    // f >= 0.5f ? f + 0.5f : f - 0.5f
+    xmm = _mm_add_ps(xmm, GDALIfThenElse(mask, p0d5, m0d5));
+
+    __m128i xmm_i = _mm_cvttps_epi32(xmm);
+
+    const __m128 xmm_min = _mm_set1_ps(-2147483648.0f);
+    const __m128 xmm_max = _mm_set1_ps(2147483648.0f);
+    const __m128i xmm_i_min = _mm_set1_epi32(INT_MIN);
+    const __m128i xmm_i_max = _mm_set1_epi32(INT_MAX);
+    xmm_i = GDALIfThenElse(_mm_castps_si128(_mm_cmpge_ps(xmm_ori, xmm_max)),
+                           xmm_i_max, xmm_i);
+    xmm_i = GDALIfThenElse(_mm_castps_si128(_mm_cmple_ps(xmm_ori, xmm_min)),
+                           xmm_i_min, xmm_i);
+
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(pValueOut), xmm_i);
+}
+
+// ARM64 has an efficient instruction for Float32 -> Float16
+#if !(defined(HAVE__FLOAT16) &&                                                \
+      (defined(__aarch64__) && defined(_M_ARM64))) &&                          \
+    !(defined(__AVX2__) && defined(__F16C__))
+
+inline __m128i GDALFourFloat32ToFloat16(__m128i xmm)
+{
+    // Ported from https://github.com/simd-everywhere/simde/blob/51743e7920b6e867678cb50e9c62effe28f70b33/simde/simde-f16.h#L176
+    // to SSE2 in a branch-less way
+
+    // clang-format off
+
+    /* This code is CC0, based heavily on code by Fabian Giesen. */
+    const __m128i f32u_infinity = _mm_set1_epi32(255 << 23);
+    const __m128i f16u_max = _mm_set1_epi32((127 + 16) << 23);
+    const __m128i denorm_magic = _mm_set1_epi32(((127 - 15) + (23 - 10) + 1) << 23);
+
+    const auto sign = _mm_and_si128(xmm, _mm_set1_epi32(INT_MIN));
+    xmm = _mm_xor_si128(xmm, sign);
+    xmm = GDALIfThenElse(
+        _mm_cmpgt_epi32(xmm, f16u_max),
+        /* result is Inf or NaN (all exponent bits set) */
+        GDALIfThenElse(
+            _mm_cmpgt_epi32(xmm, f32u_infinity),
+                /* NaN->qNaN and Inf->Inf */
+               _mm_set1_epi32(0x7e00),
+               _mm_set1_epi32(0x7c00)),
+        /* (De)normalized number or zero */
+        GDALIfThenElse(
+            _mm_cmplt_epi32(xmm, _mm_set1_epi32(113 << 23)),
+             /* use a magic value to align our 10 mantissa bits at the bottom of
+              * the float. as long as FP addition is round-to-nearest-even this
+              * just works. */
+            _mm_sub_epi32(
+               _mm_castps_si128(_mm_add_ps(_mm_castsi128_ps(xmm),
+                                           _mm_castsi128_ps(denorm_magic))),
+               /* and one integer subtract of the bias later,
+                * we have our final float! */
+               denorm_magic
+            ),
+            _mm_srli_epi32(
+                _mm_add_epi32(
+                   /* update exponent, rounding bias part 1 */
+                   // (unsigned)-0x37fff001 = ((unsigned)(15-127) << 23) + 0xfff
+                  _mm_add_epi32(xmm, _mm_set1_epi32(-0x37fff001)),
+                   /* rounding bias part 2, using mant_odd */
+                  _mm_and_si128(_mm_srli_epi32(xmm, 13), _mm_set1_epi32(1))),
+                13
+            )
+        )
+    );
+    xmm = _mm_or_si128(xmm, _mm_srli_epi32(sign, 16));
+
+    // clang-format on
+    return xmm;
+}
+
+template <>
+inline void GDALCopy8Words(const float *pValueIn, GFloat16 *const pValueOut)
+{
+    __m128i xmm_lo =
+        GDALFourFloat32ToFloat16(_mm_castps_si128(_mm_loadu_ps(pValueIn)));
+    __m128i xmm_hi =
+        GDALFourFloat32ToFloat16(_mm_castps_si128(_mm_loadu_ps(pValueIn + 4)));
+
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    auto xmm = _mm_packus_epi32(xmm_lo, xmm_hi);  // Pack int32 to uint16
+#else
+    // Translate to int16 range because _mm_packus_epi32 is SSE4.1 only
+    xmm_lo = _mm_add_epi32(xmm_lo, _mm_set1_epi32(-32768));
+    xmm_hi = _mm_add_epi32(xmm_hi, _mm_set1_epi32(-32768));
+    auto xmm = _mm_packs_epi32(xmm_lo, xmm_hi);  // Pack int32 to int16
+    // Translate back to uint16 range (actually -32768==32768 in int16)
+    xmm = _mm_add_epi16(xmm, _mm_set1_epi16(-32768));
+#endif
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(pValueOut), xmm);
+}
+
+#endif
 
 template <>
 inline void GDALCopy4Words(const double *pValueIn, float *const pValueOut)
@@ -1066,18 +1218,9 @@ inline void GDALCopy4Words(const double *pValueIn, GFloat16 *const pValueOut)
     GDALCopy4Words(pValueIn, tmp);
     GDALCopy4Words(tmp, pValueOut);
 }
-#else  // !__F16C__
 
-static inline __m128i GDALIfThenElse(__m128i mask, __m128i thenVal,
-                                     __m128i elseVal)
-{
-#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-    return _mm_blendv_epi8(elseVal, thenVal, mask);
-#else
-    return _mm_or_si128(_mm_and_si128(mask, thenVal),
-                        _mm_andnot_si128(mask, elseVal));
-#endif
-}
+// ARM64 has an efficient instruction for Float16 -> Float32/Float64
+#elif !(defined(HAVE__FLOAT16) && (defined(__aarch64__) && defined(_M_ARM64)))
 
 // Convert 4 float16 values to 4 float 32 values
 // xmm must contain 4 float16 values stored in 32 bit each (with upper 16 bits at zero)
@@ -1279,6 +1422,19 @@ inline void GDALCopy8Words(const float *pValueIn, GUInt16 *const pValueOut)
     xmm_i = _mm_add_epi16(xmm_i, _mm_set1_epi16(-32768));
 #endif
     _mm_storeu_si128(reinterpret_cast<__m128i *>(pValueOut), xmm_i);
+}
+#endif
+
+// ARM64 has an efficient instruction for Float64 -> Float16
+#if !(defined(HAVE__FLOAT16) &&                                                \
+      (defined(__aarch64__) && defined(_M_ARM64))) &&                          \
+    !(defined(__AVX2__) && defined(__F16C__))
+template <>
+inline void GDALCopy8Words(const double *pValueIn, GFloat16 *const pValueOut)
+{
+    float fVal[8];
+    GDALCopy8Words(pValueIn, fVal);
+    GDALCopy8Words(fVal, pValueOut);
 }
 #endif
 

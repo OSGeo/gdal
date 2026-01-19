@@ -27,7 +27,7 @@ constexpr double NaN = std::numeric_limits<double>::quiet_NaN();
 #define debug(format, ...) CPLDebug("MarchingSquare", format, ##__VA_ARGS__)
 
 // Perturb a value if it is too close to a level value
-inline double fudge(double value, double minLevel, double level)
+inline double fudge(double value, double level)
 {
     // FIXME
     // This is too "hard coded". The perturbation to apply really depend on
@@ -38,12 +38,7 @@ inline double fudge(double value, double minLevel, double level)
     // Ideally we should probably use snap rounding to ensure no contour lines
     // are within a user-provided minimum distance.
 
-    const double absTol = 1e-6;
-    // Do not fudge the level that would correspond to the absolute minimum
-    // level of the raster, so it gets included.
-    // Cf scenario of https://github.com/OSGeo/gdal/issues/10167
-    if (level == minLevel)
-        return value;
+    constexpr double absTol = 1e-6;
     return std::abs(level - value) < absTol ? value + absTol : value;
 }
 

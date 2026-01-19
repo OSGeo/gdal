@@ -106,15 +106,18 @@ GDALMdimConvertAlgorithm::GDALMdimConvertAlgorithm()
     AddArg("group", 0,
            _("Select a single group instead of converting the whole dataset."),
            &m_groups)
-        .SetMetaVar("<GROUP-SPEC>");
+        .SetMetaVar("<GROUP-SPEC>")
+        .SetPackedValuesAllowed(false);
 
     AddArg("subset", 0, _("Select a subset of the data."), &m_subsets)
-        .SetMetaVar("<SUBSET-SPEC>");
+        .SetMetaVar("<SUBSET-SPEC>")
+        .SetPackedValuesAllowed(false);
 
     AddArg("scale-axes", 0,
            _("Applies a integral scale factor to one or several dimensions"),
            &m_scaleAxes)
-        .SetMetaVar("<SCALEAXES-SPEC>");
+        .SetMetaVar("<SCALEAXES-SPEC>")
+        .SetPackedValuesAllowed(false);
 
     AddArg("strict", 0, _("Turn warnings into failures."), &m_strict);
 }

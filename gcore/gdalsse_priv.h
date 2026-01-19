@@ -106,6 +106,11 @@ class XMMReg4Float
         return reg;
     }
 
+    static inline XMMReg4Float LoadAllVal(const float *ptr)
+    {
+        return Load4Val(ptr);
+    }
+
     static inline XMMReg4Float Load4Val(const float *ptr)
     {
         XMMReg4Float reg;
@@ -409,7 +414,36 @@ class XMMReg4Float
 
     inline XMMReg4Int truncate_to_int() const;
 
+    inline XMMReg4Float cast_to_float() const
+    {
+        return *this;
+    }
+
     inline XMMReg4Double cast_to_double() const;
+
+    inline XMMReg4Float approx_inv_sqrt(const XMMReg4Float &one,
+                                        const XMMReg4Float &half) const
+    {
+        __m128 reg = xmm;
+        __m128 reg_half = _mm_mul_ps(reg, half.xmm);
+        // Compute rough approximation of 1 / sqrt(b) with _mm_rsqrt_ps
+        reg = _mm_rsqrt_ps(reg);
+        // And perform one step of Newton-Raphson approximation to improve it
+        // approx_inv_sqrt_x = approx_inv_sqrt_x*(1.5 -
+        //                            0.5*x*approx_inv_sqrt_x*approx_inv_sqrt_x);
+        const __m128 one_and_a_half = _mm_add_ps(one.xmm, half.xmm);
+        reg = _mm_mul_ps(
+            reg, _mm_sub_ps(one_and_a_half,
+                            _mm_mul_ps(reg_half, _mm_mul_ps(reg, reg))));
+        XMMReg4Float ret;
+        ret.xmm = reg;
+        return ret;
+    }
+
+    inline void StoreAllVal(float *ptr) const
+    {
+        Store4Val(ptr);
+    }
 
     inline void Store4Val(float *ptr) const
     {
@@ -443,6 +477,12 @@ class XMMReg4Int
     {
     }
 
+    inline XMMReg4Int &operator=(const XMMReg4Int &other)
+    {
+        xmm = other.xmm;
+        return *this;
+    }
+
     static inline XMMReg4Int Zero()
     {
         XMMReg4Int reg;
@@ -455,6 +495,11 @@ class XMMReg4Int
         XMMReg4Int reg;
         reg.xmm = _mm_set1_epi32(i);
         return reg;
+    }
+
+    static inline XMMReg4Int LoadAllVal(const int *ptr)
+    {
+        return Load4Val(ptr);
     }
 
     static inline XMMReg4Int Load4Val(const int *ptr)
@@ -515,7 +560,7 @@ class XMMReg4Int
 
     XMMReg4Double cast_to_double() const;
 
-    XMMReg4Float to_float() const
+    XMMReg4Float cast_to_float() const
     {
         XMMReg4Float ret;
         ret.xmm = _mm_cvtepi32_ps(xmm);
@@ -1733,6 +1778,273 @@ inline XMMReg4Double XMMReg4Int::cast_to_double() const
     ret.ymm = _mm256_cvtepi32_pd(xmm);
     return ret;
 }
+
+class XMMReg8Float
+{
+  public:
+    __m256 ymm;
+
+    XMMReg8Float()
+#if !defined(_MSC_VER)
+        : ymm(_mm256_undefined_ps())
+#endif
+    {
+    }
+
+    XMMReg8Float(const XMMReg8Float &other) : ymm(other.ymm)
+    {
+    }
+
+    static inline XMMReg8Float Set1(float f)
+    {
+        XMMReg8Float reg;
+        reg.ymm = _mm256_set1_ps(f);
+        return reg;
+    }
+
+    static inline XMMReg8Float LoadAllVal(const float *ptr)
+    {
+        return Load8Val(ptr);
+    }
+
+    static inline XMMReg8Float Load8Val(const float *ptr)
+    {
+        XMMReg8Float reg;
+        reg.nsLoad8Val(ptr);
+        return reg;
+    }
+
+    static inline XMMReg8Float Load8Val(const int *ptr)
+    {
+        XMMReg8Float reg;
+        reg.nsLoad8Val(ptr);
+        return reg;
+    }
+
+    static inline XMMReg8Float Max(const XMMReg8Float &expr1,
+                                   const XMMReg8Float &expr2)
+    {
+        XMMReg8Float reg;
+        reg.ymm = _mm256_max_ps(expr1.ymm, expr2.ymm);
+        return reg;
+    }
+
+    inline void nsLoad8Val(const float *ptr)
+    {
+        ymm = _mm256_loadu_ps(ptr);
+    }
+
+    inline void nsLoad8Val(const int *ptr)
+    {
+        const __m256i ymm_i =
+            _mm256_loadu_si256(reinterpret_cast<const __m256i *>(ptr));
+        ymm = _mm256_cvtepi32_ps(ymm_i);
+    }
+
+    inline XMMReg8Float &operator=(const XMMReg8Float &other)
+    {
+        ymm = other.ymm;
+        return *this;
+    }
+
+    inline XMMReg8Float &operator+=(const XMMReg8Float &other)
+    {
+        ymm = _mm256_add_ps(ymm, other.ymm);
+        return *this;
+    }
+
+    inline XMMReg8Float &operator-=(const XMMReg8Float &other)
+    {
+        ymm = _mm256_sub_ps(ymm, other.ymm);
+        return *this;
+    }
+
+    inline XMMReg8Float &operator*=(const XMMReg8Float &other)
+    {
+        ymm = _mm256_mul_ps(ymm, other.ymm);
+        return *this;
+    }
+
+    inline XMMReg8Float operator+(const XMMReg8Float &other) const
+    {
+        XMMReg8Float ret;
+        ret.ymm = _mm256_add_ps(ymm, other.ymm);
+        return ret;
+    }
+
+    inline XMMReg8Float operator-(const XMMReg8Float &other) const
+    {
+        XMMReg8Float ret;
+        ret.ymm = _mm256_sub_ps(ymm, other.ymm);
+        return ret;
+    }
+
+    inline XMMReg8Float operator*(const XMMReg8Float &other) const
+    {
+        XMMReg8Float ret;
+        ret.ymm = _mm256_mul_ps(ymm, other.ymm);
+        return ret;
+    }
+
+    inline XMMReg8Float operator/(const XMMReg8Float &other) const
+    {
+        XMMReg8Float ret;
+        ret.ymm = _mm256_div_ps(ymm, other.ymm);
+        return ret;
+    }
+
+    inline XMMReg8Float inverse() const
+    {
+        XMMReg8Float ret;
+        ret.ymm = _mm256_div_ps(_mm256_set1_ps(1.0f), ymm);
+        return ret;
+    }
+
+    inline XMMReg8Float approx_inv_sqrt(const XMMReg8Float &one,
+                                        const XMMReg8Float &half) const
+    {
+        __m256 reg = ymm;
+        __m256 reg_half = _mm256_mul_ps(reg, half.ymm);
+        // Compute rough approximation of 1 / sqrt(b) with _mm256_rsqrt_ps
+        reg = _mm256_rsqrt_ps(reg);
+        // And perform one step of Newton-Raphson approximation to improve it
+        // approx_inv_sqrt_x = approx_inv_sqrt_x*(1.5 -
+        //                            0.5*x*approx_inv_sqrt_x*approx_inv_sqrt_x);
+        const __m256 one_and_a_half = _mm256_add_ps(one.ymm, half.ymm);
+        reg = _mm256_mul_ps(
+            reg,
+            _mm256_sub_ps(one_and_a_half,
+                          _mm256_mul_ps(reg_half, _mm256_mul_ps(reg, reg))));
+        XMMReg8Float ret;
+        ret.ymm = reg;
+        return ret;
+    }
+
+    inline void StoreAllVal(float *ptr) const
+    {
+        Store8Val(ptr);
+    }
+
+    inline void Store8Val(float *ptr) const
+    {
+        _mm256_storeu_ps(ptr, ymm);
+    }
+
+    XMMReg8Float cast_to_float() const
+    {
+        return *this;
+    }
+};
+
+#if defined(__AVX2__)
+
+class XMMReg8Int
+{
+  public:
+    __m256i ymm;
+
+    XMMReg8Int()
+#if !defined(_MSC_VER)
+        : ymm(_mm256_undefined_si256())
+#endif
+    {
+    }
+
+    XMMReg8Int(const XMMReg8Int &other) : ymm(other.ymm)
+    {
+    }
+
+    inline XMMReg8Int &operator=(const XMMReg8Int &other)
+    {
+        ymm = other.ymm;
+        return *this;
+    }
+
+    static inline XMMReg8Int Zero()
+    {
+        XMMReg8Int reg;
+        reg.ymm = _mm256_setzero_si256();
+        return reg;
+    }
+
+    static inline XMMReg8Int Set1(int i)
+    {
+        XMMReg8Int reg;
+        reg.ymm = _mm256_set1_epi32(i);
+        return reg;
+    }
+
+    static inline XMMReg8Int LoadAllVal(const int *ptr)
+    {
+        return Load8Val(ptr);
+    }
+
+    static inline XMMReg8Int Load8Val(const int *ptr)
+    {
+        XMMReg8Int reg;
+        reg.nsLoad8Val(ptr);
+        return reg;
+    }
+
+    inline void nsLoad8Val(const int *ptr)
+    {
+        ymm = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(ptr));
+    }
+
+    static inline XMMReg8Int Equals(const XMMReg8Int &expr1,
+                                    const XMMReg8Int &expr2)
+    {
+        XMMReg8Int reg;
+        reg.ymm = _mm256_cmpeq_epi32(expr1.ymm, expr2.ymm);
+        return reg;
+    }
+
+    static inline XMMReg8Int Ternary(const XMMReg8Int &cond,
+                                     const XMMReg8Int &true_expr,
+                                     const XMMReg8Int &false_expr)
+    {
+        XMMReg8Int reg;
+        reg.ymm =
+            _mm256_or_si256(_mm256_and_si256(cond.ymm, true_expr.ymm),
+                            _mm256_andnot_si256(cond.ymm, false_expr.ymm));
+        return reg;
+    }
+
+    inline XMMReg8Int &operator+=(const XMMReg8Int &other)
+    {
+        ymm = _mm256_add_epi32(ymm, other.ymm);
+        return *this;
+    }
+
+    inline XMMReg8Int &operator-=(const XMMReg8Int &other)
+    {
+        ymm = _mm256_sub_epi32(ymm, other.ymm);
+        return *this;
+    }
+
+    inline XMMReg8Int operator+(const XMMReg8Int &other) const
+    {
+        XMMReg8Int ret;
+        ret.ymm = _mm256_add_epi32(ymm, other.ymm);
+        return ret;
+    }
+
+    inline XMMReg8Int operator-(const XMMReg8Int &other) const
+    {
+        XMMReg8Int ret;
+        ret.ymm = _mm256_sub_epi32(ymm, other.ymm);
+        return ret;
+    }
+
+    XMMReg8Float cast_to_float() const
+    {
+        XMMReg8Float ret;
+        ret.ymm = _mm256_cvtepi32_ps(ymm);
+        return ret;
+    }
+};
+
+#endif
 
 #else
 

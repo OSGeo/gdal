@@ -140,7 +140,7 @@ DDSRasterBand::DDSRasterBand(DDSDataset *poDSIn, int nBandIn)
     nBand = nBandIn;
     nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = cDXTBlockSize;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 }
 
 /************************************************************************/
@@ -366,7 +366,7 @@ DDSRasterBandAllDecoded::DDSRasterBandAllDecoded(DDSDatasetAllDecoded *poDSIn,
     nBand = nBandIn;
     nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = 1;
-    eDataType = GDT_Byte;
+    eDataType = GDT_UInt8;
 }
 
 /************************************************************************/
@@ -470,7 +470,7 @@ GDALDataset *DDSDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
+    if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt8)
     {
         CPLError(
             (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
@@ -644,7 +644,7 @@ GDALDataset *DDSDataset::CreateCopy(const char *pszFilename,
 
         eErr =
             poSrcDS->RasterIO(GF_Read, 0, iLine * cDXTBlockSize, nXSize, size_y,
-                              pabyScanlines, nXSize, size_y, GDT_Byte, nBands,
+                              pabyScanlines, nXSize, size_y, GDT_UInt8, nBands,
                               nullptr, nBands, nBands * nXSize, 1, nullptr);
 
         if (eErr != CE_None)

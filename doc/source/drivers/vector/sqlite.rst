@@ -17,7 +17,7 @@ database can be checked from the SQLITE debug info value "OGR style
 SQLite DB found/ SpatiaLite DB found/SpatiaLite v4 DB found" obtained by
 running ``ogrinfo db.sqlite --debug on``
 
-Starting with GDAL 2.2, the SQLite driver can also read databases with
+The SQLite driver can also read databases with
 :ref:`RasterLite2 raster coverages <raster.rasterlite2>`.
 
 The SQLite database is essentially typeless, but the SQLite driver will
@@ -25,7 +25,7 @@ attempt to classify attributes field as text, integer or floating point
 based on the contents of the first record in a table. Datetime field types
 are also handled.
 
-Starting with GDAL 2.2, the "JSonStringList", "JSonIntegerList",
+The "JSonStringList", "JSonIntegerList",
 "JSonInteger64List" and "JSonRealList" SQLite declaration types are used
 to map the corresponding OGR StringList, IntegerList, Integer64List and
 RealList types. The field values are then encoded as JSON arrays, with

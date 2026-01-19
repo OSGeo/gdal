@@ -91,7 +91,7 @@ int TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset, int nSize)
     /*----------------------------------------------------------------
      * Read from the file
      *---------------------------------------------------------------*/
-    if (VSIFSeekL(fpSrc, nOffset, SEEK_SET) != 0 ||
+    if (VSIFSeekL(fpSrc, static_cast<vsi_l_offset>(nOffset), SEEK_SET) != 0 ||
         (m_nSizeUsed = static_cast<int>(
              VSIFReadL(pabyBuf, sizeof(GByte), nSize, fpSrc))) == 0 ||
         (m_bHardBlockSize && m_nSizeUsed != nSize))
@@ -148,7 +148,8 @@ int TABRawBinBlock::CommitToFile()
     /*----------------------------------------------------------------
      * Move the output file pointer to the right position...
      *---------------------------------------------------------------*/
-    if (VSIFSeekL(m_fp, m_nFileOffset, SEEK_SET) != 0)
+    if (VSIFSeekL(m_fp, static_cast<vsi_l_offset>(m_nFileOffset), SEEK_SET) !=
+        0)
     {
         /*------------------------------------------------------------
          * Moving pointer failed... we may need to pad with zeros if
@@ -156,7 +157,7 @@ int TABRawBinBlock::CommitToFile()
          *-----------------------------------------------------------*/
         int nCurPos = static_cast<int>(VSIFTellL(m_fp));
 
-        if (nCurPos < m_nFileOffset && VSIFSeekL(m_fp, 0L, SEEK_END) == 0 &&
+        if (nCurPos < m_nFileOffset && VSIFSeekL(m_fp, 0, SEEK_END) == 0 &&
             (nCurPos = static_cast<int>(VSIFTellL(m_fp))) < m_nFileOffset)
         {
             const GByte cZero = 0;
@@ -347,7 +348,7 @@ int TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
 
     if (m_fp != nullptr && m_nFileSize < 0 && m_eAccess == TABReadWrite)
     {
-        int nCurPos = static_cast<int>(VSIFTellL(m_fp));
+        const auto nCurPos = VSIFTellL(m_fp);
         VSIFSeekL(fpSrc, 0, SEEK_END);
         m_nFileSize = static_cast<int>(VSIFTellL(m_fp));
         VSIFSeekL(fpSrc, nCurPos, SEEK_SET);
@@ -1048,7 +1049,7 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
     /*----------------------------------------------------------------
      * Read from the file
      *---------------------------------------------------------------*/
-    if (VSIFSeekL(fpSrc, nOffset, SEEK_SET) != 0 ||
+    if (VSIFSeekL(fpSrc, static_cast<vsi_l_offset>(nOffset), SEEK_SET) != 0 ||
         VSIFReadL(pabyBuf, sizeof(GByte), nSize, fpSrc) !=
             static_cast<unsigned int>(nSize))
     {

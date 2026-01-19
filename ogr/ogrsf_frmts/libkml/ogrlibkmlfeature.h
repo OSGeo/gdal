@@ -28,15 +28,16 @@ kmldom::FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS,
  Function to read a kml placemark into a ogr feature.
 ******************************************************************************/
 
-OGRFeature *kml2feat(kmldom::PlacemarkPtr poKmlPlacemark,
-                     OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
-                     OGRFeatureDefn *poOgrFeatDefn,
-                     OGRSpatialReference *poOgrSRS);
+OGRFeature *
+kml2feat(kmldom::PlacemarkPtr poKmlPlacemark, OGRLIBKMLDataSource *poOgrDS,
+         OGRLIBKMLLayer *poOgrLayer, OGRFeatureDefn *poOgrFeatDefn,
+         OGRSpatialReference *poOgrSRS,
+         const std::map<std::string, int> &mapSimpleFieldNameToOgrFieldIx);
 
-OGRFeature *kmlgroundoverlay2feat(kmldom::GroundOverlayPtr poKmlOverlay,
-                                  OGRLIBKMLDataSource *poOgrDS,
-                                  OGRLIBKMLLayer *poOgrLayer,
-                                  OGRFeatureDefn *poOgrFeatDefn,
-                                  OGRSpatialReference *poOgrSRS);
+OGRFeature *kmlgroundoverlay2feat(
+    kmldom::GroundOverlayPtr poKmlOverlay, OGRLIBKMLDataSource *poOgrDS,
+    OGRLIBKMLLayer *poOgrLayer, OGRFeatureDefn *poOgrFeatDefn,
+    OGRSpatialReference *poOgrSRS,
+    const std::map<std::string, int> &mapSimpleFieldNameToOgrFieldIx);
 
 #endif /*  OGR_LIBKML_FEATURE_H */

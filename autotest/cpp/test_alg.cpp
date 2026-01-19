@@ -11,12 +11,15 @@
  ****************************************************************************/
 
 #include <array>
+#include <cmath>
+#include <limits>
 
 #include "gdal_unit_test.h"
 
 #include "cpl_conv.h"
 
 #include "gdal_alg.h"
+#include "gdal_alg_priv.h"
 #include "gdalwarper.h"
 #include "gdal_priv.h"
 
@@ -504,6 +507,48 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
                                          nullptr, nullptr, nullptr));
     EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 89, 115, 460, 75, 115, 460,
                                          nullptr, nullptr, nullptr));
+}
+
+TEST_F(test_alg, GDALFloatAlmostEquals)
+{
+    float f = 1.23f;
+    EXPECT_TRUE(GDALFloatAlmostEquals(f, f));
+    EXPECT_TRUE(GDALFloatAlmostEquals(-f, -f));
+    EXPECT_FALSE(GDALFloatAlmostEquals(f, -f));
+    EXPECT_FALSE(GDALFloatAlmostEquals(f, 0.0f));
+    float f2 = std::nextafter(f, std::numeric_limits<float>::max());
+    EXPECT_TRUE(GDALFloatAlmostEquals(f, f2, 1));
+    EXPECT_TRUE(GDALFloatAlmostEquals(f2, f, 1));
+    EXPECT_TRUE(GDALFloatAlmostEquals(-f, -f2, 1));
+    EXPECT_TRUE(GDALFloatAlmostEquals(-f2, -f, 1));
+    float f3 = std::nextafter(f2, std::numeric_limits<float>::max());
+    EXPECT_FALSE(GDALFloatAlmostEquals(f, f3, 1));
+    EXPECT_FALSE(GDALFloatAlmostEquals(f3, f, 1));
+
+    EXPECT_TRUE(GDALFloatAlmostEquals(
+        std::nextafter(0.0f, std::numeric_limits<float>::max()),
+        std::nextafter(0.0f, -std::numeric_limits<float>::max())));
+}
+
+TEST_F(test_alg, GDALDoubleAlmostEquals)
+{
+    double f = 1.23;
+    EXPECT_TRUE(GDALDoubleAlmostEquals(f, f));
+    EXPECT_TRUE(GDALDoubleAlmostEquals(-f, -f));
+    EXPECT_FALSE(GDALDoubleAlmostEquals(f, -f));
+    EXPECT_FALSE(GDALDoubleAlmostEquals(f, 0));
+    double f2 = std::nextafter(f, std::numeric_limits<double>::max());
+    EXPECT_TRUE(GDALDoubleAlmostEquals(f, f2, 1));
+    EXPECT_TRUE(GDALDoubleAlmostEquals(f2, f, 1));
+    EXPECT_TRUE(GDALDoubleAlmostEquals(-f, -f2, 1));
+    EXPECT_TRUE(GDALDoubleAlmostEquals(-f2, -f, 1));
+    double f3 = std::nextafter(f2, std::numeric_limits<double>::max());
+    EXPECT_FALSE(GDALDoubleAlmostEquals(f, f3, 1));
+    EXPECT_FALSE(GDALDoubleAlmostEquals(f3, f, 1));
+
+    EXPECT_TRUE(GDALDoubleAlmostEquals(
+        std::nextafter(0, std::numeric_limits<double>::max()),
+        std::nextafter(0, -std::numeric_limits<double>::max())));
 }
 
 }  // namespace

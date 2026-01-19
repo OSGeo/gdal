@@ -45,6 +45,7 @@ class GDALRasterPixelInfoAlgorithm final : public GDALAlgorithm
     std::vector<double> m_pos{};
     std::string m_posCrs{};
     std::string m_resampling = "nearest";
+    bool m_promotePixelValueToZ = false;
 
     void PrintLine(const std::string &str);
 };

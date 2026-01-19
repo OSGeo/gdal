@@ -127,25 +127,22 @@ struct Bundle
         index.resize(BSZ * BSZ);
         if (3 != u32lat(header) || 5 != u32lat(header + 12) ||
             40 != u32lat(header + 32) || 0 != u32lat(header + 36) ||
-            (!isTpkx &&
-             BSZ * BSZ != u32lat(header + 4)) || /* skip this check for tpkx */
             BSZ * BSZ * 8 != u32lat(header + 60) ||
             index.size() != fh->Read(index.data(), 8, index.size()))
         {
             fh.reset();
         }
 
-#if !CPL_IS_LSB
-        for (auto &v : index)
-            CPL_LSBPTR64(&v);
-        return;
-#endif
+        if constexpr (!CPL_IS_LSB)
+        {
+            for (auto &v : index)
+                CPL_LSBPTR64(&v);
+        }
     }
 
     std::vector<GUInt64> index{};
     VSIVirtualHandleUniquePtr fh{};
     bool isV2 = false;
-    bool isTpkx = false;
     CPLString name{};
     const size_t BSZ = 128;
 };
@@ -180,8 +177,9 @@ class ECDataset final : public GDALDataset
     Bundle &GetBundle(const char *fname);
 
   private:
-    CPLErr Initialize(CPLXMLNode *CacheInfo);
-    CPLErr InitializeFromJSON(const CPLJSONObject &oRoot);
+    CPLErr Initialize(CPLXMLNode *CacheInfo, bool ignoreOversizedLods);
+    CPLErr InitializeFromJSON(const CPLJSONObject &oRoot,
+                              bool ignoreOversizedLods);
     CPLString compression{};
     std::vector<double> resolutions{};
     int m_nMinLOD = 0;
@@ -237,7 +235,7 @@ ECDataset::ECDataset() : isV2(true), BSZ(128), TSZ(256)
 {
 }
 
-CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
+CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo, bool ignoreOversizedLods)
 {
     CPLErr error = CE_None;
     try
@@ -258,6 +256,19 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
         if (TSZ < 0 || TSZ > 8192)
             throw CPLString("Unsupported TileCols value");
 
+        double minx = CPLAtof(CPLGetXMLValue(TCI, "TileOrigin.X", "-180"));
+        double maxy = CPLAtof(CPLGetXMLValue(TCI, "TileOrigin.Y", "90"));
+        // Assume symmetric coverage, check custom end
+        double maxx = -minx;
+        double miny = -maxy;
+        const char *pszmaxx = CPLGetXMLValue(TCI, "TileEnd.X", nullptr);
+        const char *pszminy = CPLGetXMLValue(TCI, "TileEnd.Y", nullptr);
+        if (pszmaxx && pszminy)
+        {
+            maxx = CPLAtof(pszmaxx);
+            miny = CPLAtof(pszminy);
+        }
+
         CPLXMLNode *LODInfo = CPLGetXMLNode(TCI, "LODInfos.LODInfo");
         double res = 0;
         while (LODInfo)
@@ -265,9 +276,38 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
             res = CPLAtof(CPLGetXMLValue(LODInfo, "Resolution", "0"));
             if (!(res > 0))
                 throw CPLString("Can't parse resolution for LOD");
-            resolutions.push_back(res);
+
+            double dxsz = (maxx - minx) / res;
+            double dysz = (maxy - miny) / res;
+            // Allow size just above INT32_MAX to handle FP rounding. Actual size is later clamped to INT32_MAX
+            double maxRasterSize = static_cast<double>(INT32_MAX) + 2;
+            if (dxsz < 1 || dxsz > maxRasterSize || dysz < 1 ||
+                dysz > maxRasterSize)
+            {
+                if (ignoreOversizedLods)
+                {
+                    CPLDebug(
+                        "ESRIC",
+                        "Skipping resolution %.10f: raster size exceeds the "
+                        "GDAL limit",
+                        res);
+                }
+                else
+                {
+                    throw CPLString(
+                        "Too many levels, resulting raster size exceeds "
+                        "the GDAL limit. Open with IGNORE_OVERSIZED_LODS=YES "
+                        "to ignore this");
+                }
+            }
+            else
+            {
+                resolutions.push_back(res);
+            }
+
             LODInfo = LODInfo->psNext;
         }
+
         sort(resolutions.begin(), resolutions.end());
         if (resolutions.empty())
             throw CPLString("Can't parse LODInfos");
@@ -281,30 +321,16 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
         // resolution is the smallest figure
         res = resolutions[0];
         m_gt = GDALGeoTransform();
-        m_gt[0] = CPLAtof(CPLGetXMLValue(TCI, "TileOrigin.X", "-180"));
-        m_gt[3] = CPLAtof(CPLGetXMLValue(TCI, "TileOrigin.Y", "90"));
+        m_gt[0] = minx;
+        m_gt[3] = maxy;
         m_gt[1] = res;
         m_gt[5] = -res;
 
-        // Assume symmetric coverage, check custom end
-        double maxx = -m_gt[0];
-        double miny = -m_gt[3];
-        const char *pszmaxx = CPLGetXMLValue(TCI, "TileEnd.X", nullptr);
-        const char *pszminy = CPLGetXMLValue(TCI, "TileEnd.Y", nullptr);
-        if (pszmaxx && pszminy)
-        {
-            maxx = CPLAtof(pszmaxx);
-            miny = CPLAtof(pszminy);
-        }
+        double dxsz = (maxx - minx) / res;
+        double dysz = (maxy - miny) / res;
 
-        double dxsz = (maxx - m_gt[0]) / res;
-        double dysz = (m_gt[3] - miny) / res;
-        if (dxsz < 1 || dxsz > INT32_MAX || dysz < 1 || dysz > INT32_MAX)
-            throw CPLString("Too many levels, resulting raster size exceeds "
-                            "the GDAL limit");
-
-        nRasterXSize = int(dxsz);
-        nRasterYSize = int(dysz);
+        nRasterXSize = int(std::min(dxsz, double(INT32_MAX)));
+        nRasterYSize = int(std::min(dysz, double(INT32_MAX)));
 
         SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
         compression =
@@ -380,7 +406,8 @@ CreateSRS(const CPLJSONObject &oSRSRoot)
     return poSRS;
 }
 
-CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
+CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot,
+                                     bool ignoreOversizedLods)
 {
     CPLErr error = CE_None;
     try
@@ -398,6 +425,12 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         if (TSZ < 0 || TSZ > 8192)
             throw CPLString("Unsupported tileInfo/rows value");
 
+        double minx = oRoot.GetDouble("tileInfo/origin/x");
+        double maxy = oRoot.GetDouble("tileInfo/origin/y");
+        // Assume symmetric coverage
+        double maxx = -minx;
+        double miny = -maxy;
+
         const auto oLODs = oRoot.GetArray("tileInfo/lods");
         double res = 0;
         // we need to skip levels that don't have bundle files
@@ -407,14 +440,39 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         const int maxLOD = std::min(oRoot.GetInteger("maxLOD"), 31);
         for (const auto &oLOD : oLODs)
         {
+            const int level = oLOD.GetInteger("level");
+            if (level < m_nMinLOD || level > maxLOD)
+                continue;
+
             res = oLOD.GetDouble("resolution");
             if (!(res > 0))
                 throw CPLString("Can't parse resolution for LOD");
-            const int level = oLOD.GetInteger("level");
-            if (level >= m_nMinLOD && level <= maxLOD)
+
+            double dxsz = (maxx - minx) / res;
+            double dysz = (maxy - miny) / res;
+            // Allow size just above INT32_MAX to handle FP rounding. Actual size is later clamped to INT32_MAX
+            double maxRasterSize = static_cast<double>(INT32_MAX) + 2;
+            if (dxsz < 1 || dxsz > maxRasterSize || dysz < 1 ||
+                dysz > maxRasterSize)
             {
-                resolutions.push_back(res);
+                if (ignoreOversizedLods)
+                {
+                    CPLDebug("ESRIC",
+                             "Skipping LOD with resolution %.10f: raster size "
+                             "exceeds the GDAL limit",
+                             res);
+                    continue;
+                }
+                else
+                {
+                    throw CPLString(
+                        "Too many levels, resulting raster size exceeds "
+                        "the GDAL limit. Open with IGNORE_OVERSIZED_LODS=YES "
+                        "to ignore this");
+                }
             }
+
+            resolutions.push_back(res);
         }
         sort(resolutions.begin(), resolutions.end());
         if (resolutions.empty())
@@ -432,23 +490,16 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         // resolution is the smallest figure
         res = resolutions[0];
         m_gt = GDALGeoTransform();
-        m_gt[0] = oRoot.GetDouble("tileInfo/origin/x");
-        m_gt[3] = oRoot.GetDouble("tileInfo/origin/y");
+        m_gt[0] = minx;
+        m_gt[3] = maxy;
         m_gt[1] = res;
         m_gt[5] = -res;
 
-        // Assume symmetric coverage
-        double maxx = -m_gt[0];
-        double miny = -m_gt[3];
+        double dxsz = (maxx - minx) / res;
+        double dysz = (maxy - miny) / res;
 
-        double dxsz = (maxx - m_gt[0]) / res;
-        double dysz = (m_gt[3] - miny) / res;
-        if (dxsz < 1 || dxsz > INT32_MAX || dysz < 1 || dysz > INT32_MAX)
-            throw CPLString("Too many levels, resulting raster size exceeds "
-                            "the GDAL limit");
-
-        nRasterXSize = int(dxsz);
-        nRasterYSize = int(dysz);
+        nRasterXSize = int(std::min(dxsz, double(INT32_MAX)));
+        nRasterYSize = int(std::min(dysz, double(INT32_MAX)));
 
         SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
         compression = oRoot.GetString("tileImageInfo/format");
@@ -515,11 +566,6 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         }
         // Keep 4 bundle files open
         bundles.resize(4);
-        // Set the tile package flag in the bundles
-        for (auto &bundle : bundles)
-        {
-            bundle.isTpkx = true;
-        }
     }
     catch (CPLString &err)
     {
@@ -606,6 +652,8 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo)
 GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
                              const char *pszDescription)
 {
+    bool ignoreOversizedLods = CSLFetchBoolean(poOpenInfo->papszOpenOptions,
+                                               "IGNORE_OVERSIZED_LODS", FALSE);
     if (IdentifyXML(poOpenInfo))
     {
         CPLXMLNode *config = CPLParseXMLFile(poOpenInfo->pszFilename);
@@ -622,7 +670,7 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
         }
         auto ds = new ECDataset();
         ds->dname = CPLGetDirnameSafe(poOpenInfo->pszFilename) + "/_alllayers";
-        CPLErr error = ds->Initialize(CacheInfo);
+        CPLErr error = ds->Initialize(CacheInfo, ignoreOversizedLods);
         CPLDestroyXMLNode(config);
         if (CE_None != error)
         {
@@ -674,7 +722,7 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
         ds->dname.Printf("%s/%s",
                          CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(),
                          tileBundlesPath.c_str());
-        CPLErr error = ds->InitializeFromJSON(oRoot);
+        CPLErr error = ds->InitializeFromJSON(oRoot, ignoreOversizedLods);
         if (CE_None != error)
         {
             return nullptr;
@@ -923,8 +971,8 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     {
         // Expand color indexed to RGB(A)
         errcode = GDALDatasetRasterIO(
-            inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_Byte, 1,
-            usebands, parent->nBands, parent->nBands * TSZ, 1);
+            inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_UInt8,
+            1, usebands, parent->nBands, parent->nBands * TSZ, 1);
         if (CE_None == errcode)
         {
             GByte abyCT[4 * 256];
@@ -981,7 +1029,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     else
     {
         errcode = GDALDatasetRasterIO(
-            inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_Byte,
+            inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_UInt8,
             bandcount, usebands, parent->nBands, parent->nBands * TSZ, 1);
     }
     GDALClose(inds);
@@ -1001,16 +1049,16 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
             poBlock = band->GetLockedBlockRef(nBlockXOff, nBlockYOff, 1);
             if (poBlock != nullptr)
             {
-                GDALCopyWords(buffer.data() + iBand - 1, GDT_Byte,
-                              parent->nBands, poBlock->GetDataRef(), GDT_Byte,
+                GDALCopyWords(buffer.data() + iBand - 1, GDT_UInt8,
+                              parent->nBands, poBlock->GetDataRef(), GDT_UInt8,
                               1, TSZ * TSZ);
                 poBlock->DropLock();
             }
         }
         else
         {
-            GDALCopyWords(buffer.data() + iBand - 1, GDT_Byte, parent->nBands,
-                          pData, GDT_Byte, 1, TSZ * TSZ);
+            GDALCopyWords(buffer.data() + iBand - 1, GDT_UInt8, parent->nBands,
+                          pData, GDT_UInt8, 1, TSZ * TSZ);
         }
     }
 
@@ -1042,6 +1090,11 @@ void CPL_DLL GDALRegister_ESRIC()
         "    <Value>FULL_EXTENT</Value>"
         "    <Value>INITIAL_EXTENT</Value>"
         "    <Value>TILING_SCHEME</Value>"
+        "  </Option>"
+        "  <Option name='IGNORE_OVERSIZED_LODS' type='boolean' "
+        "description='Whether to silently ignore LODs that exceed the "
+        "maximum size supported by GDAL (INT32_MAX)' "
+        "default='NO'>"
         "  </Option>"
         "</OpenOptionList>");
     poDriver->pfnIdentify = ESRIC::Identify;

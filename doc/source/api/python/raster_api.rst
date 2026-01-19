@@ -72,7 +72,7 @@ Band Algebra
 .. autofunction:: osgeo.gdal.abs
 
 .. autofunction:: osgeo.gdal.log
-   
+
 .. autofunction:: osgeo.gdal.log10
 
 .. autofunction:: osgeo.gdal.logical_and
@@ -119,3 +119,9 @@ Other
     :members:
     :undoc-members:
     :exclude-members: thisown
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+   RasterCount

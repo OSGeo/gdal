@@ -135,19 +135,19 @@ OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
     /* -------------------------------------------------------------------- */
     OGRErr eErr;
 
-    OGRGeometry *poFinalGeom = (OGRGeometry *)OGRBuildPolygonFromEdges(
-        (OGRGeometryH)&oGC, TRUE, TRUE, dfTolerance, &eErr);
+    auto poFinalGeom = std::unique_ptr<OGRGeometry>(
+        OGRGeometry::FromHandle(OGRBuildPolygonFromEdges(
+            OGRGeometry::ToHandle(&oGC), TRUE, TRUE, dfTolerance, &eErr)));
     if (eErr != OGRERR_NONE)
     {
-        delete poFinalGeom;
-        OGRMultiLineString *poMLS = new OGRMultiLineString();
+        auto poMLS = std::make_unique<OGRMultiLineString>();
         for (int i = 0; i < oGC.getNumGeometries(); i++)
             poMLS->addGeometry(oGC.getGeometryRef(i));
-        poFinalGeom = poMLS;
+        poFinalGeom = std::move(poMLS);
     }
 
-    poFeature->ApplyOCSTransformer(poFinalGeom);
-    poFeature->SetGeometryDirectly(poFinalGeom);
+    poFeature->ApplyOCSTransformer(poFinalGeom.get());
+    poFeature->SetGeometry(std::move(poFinalGeom));
 
     PrepareBrushStyle(poFeature);
 

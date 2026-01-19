@@ -36,7 +36,7 @@ GDALDataType KEA_to_GDAL_Type(kealib::KEADataType ekeaType)
             egdalType = GDT_Int8;
             break;
         case kealib::kea_8uint:
-            egdalType = GDT_Byte;
+            egdalType = GDT_UInt8;
             break;
         case kealib::kea_16int:
             egdalType = GDT_Int16;
@@ -78,7 +78,7 @@ kealib::KEADataType GDAL_to_KEA_Type(GDALDataType egdalType)
         case GDT_Int8:
             ekeaType = kealib::kea_8int;
             break;
-        case GDT_Byte:
+        case GDT_UInt8:
             ekeaType = kealib::kea_8uint;
             break;
         case GDT_Int16:
@@ -718,7 +718,7 @@ const char *KEADataset::GetMetadataItem(const char *pszName,
 }
 
 // get the whole metadata as CSLStringList - note may be thread safety issues
-char **KEADataset::GetMetadata(const char *pszDomain)
+CSLConstList KEADataset::GetMetadata(const char *pszDomain)
 {
     // only deal with 'default' domain - no geolocation etc
     if ((pszDomain != nullptr) && (*pszDomain != '\0'))
@@ -728,7 +728,8 @@ char **KEADataset::GetMetadata(const char *pszDomain)
 }
 
 // set the whole metadata as a CSLStringList
-CPLErr KEADataset::SetMetadata(char **papszMetadata, const char *pszDomain)
+CPLErr KEADataset::SetMetadata(CSLConstList papszMetadata,
+                               const char *pszDomain)
 {
     CPLMutexHolderD(&m_hMutex);
     // only deal with 'default' domain - no geolocation etc

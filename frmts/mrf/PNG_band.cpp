@@ -180,7 +180,7 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
             if (poDS->RasterIO(
                     GF_Read, 0, 0, poDS->GetRasterXSize(),
                     poDS->GetRasterYSize(), dst.buffer, poDS->GetRasterXSize(),
-                    poDS->GetRasterYSize(), GDT_Byte, poDS->GetRasterCount(),
+                    poDS->GetRasterYSize(), GDT_UInt8, poDS->GetRasterCount(),
                     nullptr, poDS->GetRasterCount(), 0, 1, nullptr) == CE_None)
             {
                 png_destroy_read_struct(&pngp, &infop, nullptr);
@@ -334,7 +334,7 @@ CPLErr PNG_Codec::CompressPNG(buf_mgr &dst, const buf_mgr &src)
     png_write_info(pngp, infop);
 
 #if defined(CPL_LSB)
-    if (img.dt != GDT_Byte)
+    if (img.dt != GDT_UInt8)
         png_set_swap(pngp);
 #endif
 
@@ -431,7 +431,8 @@ CPLErr PNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 PNG_Band::PNG_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
     : MRFRasterBand(pDS, image, b, level), codec(image)
 {  // Check error conditions
-    if (image.dt != GDT_Byte && image.dt != GDT_Int16 && image.dt != GDT_UInt16)
+    if (image.dt != GDT_UInt8 && image.dt != GDT_Int16 &&
+        image.dt != GDT_UInt16)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Data type not supported by MRF PNG");

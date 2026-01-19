@@ -3,8 +3,6 @@
 NGW -- NextGIS Web
 ==================
 
-.. versionadded:: 2.4
-
 .. shortname:: NGW
 
 .. build_dependencies:: libcurl
@@ -60,9 +58,9 @@ styles (QGIS qml or MapServer xml).
 WMS layers from external WMS service have no styles.
 WMS Service is usual WMS protocol implementation.
 
-NGW driver supports raster, vector, QML raster, QML vector styles, web map, 
+NGW driver supports raster, vector, QML raster, QML vector styles, web map,
 base map layer, WMS layers and raster layer as COG.
-You can get raster data as tiles or image or COG (only tiles and COG are 
+You can get raster data as tiles or image or COG (only tiles and COG are
 supported now).
 
 The driver supports read and copy from existing source dataset
@@ -120,7 +118,7 @@ The following configuration options are available:
 
 -  .. config:: NGW_CONNECTTIMEOUT
 
-      Maximum delay for the connection to be established before being aborted in 
+      Maximum delay for the connection to be established before being aborted in
       seconds.
 
 -  .. config:: NGW_TIMEOUT
@@ -178,17 +176,17 @@ The following open options are available:
 
 -  .. oo:: CONNECTTIMEOUT
 
-      Maximum delay for the connection to be established before being aborted in 
+      Maximum delay for the connection to be established before being aborted in
       seconds.
 
 -  .. oo:: TIMEOUT
 
-      Maximum delay for the whole request to complete before being aborted in 
+      Maximum delay for the whole request to complete before being aborted in
       seconds.
 
 -  .. oo:: MAX_RETRY
 
-      Maximum number of retry attempts if a 429, 502, 503 or 504 HTTP error 
+      Maximum number of retry attempts if a 429, 502, 503 or 504 HTTP error
       occurs.
 
 -  .. oo:: RETRY_DELAY
@@ -246,7 +244,7 @@ read-only metadata items *creation_date*, *resource_type* and
 Examples
 --------
 
-Read datasource contensts (1730 is resource group identifier):
+Read datasource contents (1730 is resource group identifier):
 
 ::
 

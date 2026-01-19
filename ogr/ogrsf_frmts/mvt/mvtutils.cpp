@@ -61,6 +61,27 @@ void OGRMVTInitFields(OGRFeatureDefn *poFeatureDefn,
                             {
                                 oFieldDefn.SetType(OFTInteger64);
                             }
+                            if (oFieldDefn.GetType() != OFTReal)
+                            {
+                                const auto oValues =
+                                    oAttributesFromTileStats[i].GetObj(
+                                        "values");
+                                if (oValues.GetType() ==
+                                    CPLJSONObject::Type::Array)
+                                {
+                                    const auto oValuesArray = oValues.ToArray();
+                                    for (int iVal = 0;
+                                         iVal < oValuesArray.Size(); ++iVal)
+                                    {
+                                        if (oValuesArray[iVal].GetType() ==
+                                            CPLJSONObject::Type::Double)
+                                        {
+                                            oFieldDefn.SetType(OFTReal);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
                             break;
                         }
                     }

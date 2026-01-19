@@ -761,11 +761,11 @@ def test_vrtwarp_autocreatewarpedvrt_int16_nodata_32767():
 
 def test_vrtwarp_autocreatewarpedvrt_invalid_nodata():
 
-    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_UInt8)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     ds.GetRasterBand(1).SetNoDataValue(-9999)
     vrt_ds = gdal.AutoCreateWarpedVRT(ds)
-    assert vrt_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert vrt_ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
 
 
 ###############################################################################
@@ -773,7 +773,7 @@ def test_vrtwarp_autocreatewarpedvrt_invalid_nodata():
 
 def test_vrtwarp_add_band_gdt_unknown():
 
-    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_UInt8)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     vrt_ds = gdal.AutoCreateWarpedVRT(ds)
     with pytest.raises(Exception, match="Illegal GDT_Unknown/GDT_TypeCount argument"):
@@ -786,7 +786,7 @@ def test_vrtwarp_add_band_gdt_unknown():
 @gdaltest.enable_exceptions()
 def test_vrtwarp_write_to_band():
 
-    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_UInt8)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     ds.GetRasterBand(1).SetNoDataValue(-9999)
     vrt_ds = gdal.AutoCreateWarpedVRT(ds)

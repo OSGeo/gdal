@@ -10,7 +10,8 @@ Create a copy of the RAT.
 
 Returns
 -------
-GDALRasterAttributeTable
+RasterAttributeTable
+    A Python proxy of a :cpp:class:`GDALRasterAttributeTable`
 
 ";
 
@@ -33,7 +34,7 @@ eUsage : int
 
 Returns
 -------
-int:
+int
    :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
 
 ";
@@ -66,11 +67,12 @@ int
 
 Examples
 --------
->>> ds = gdal.Open('clc2018_v2020_20u1.tif')
+>>> ds = gdal.Open('testrat.tif')
+>>> rat = ds.GetRasterBand(1).GetDefaultRAT()
 >>> rat.GetColOfUsage(gdal.GFU_Name)
+2
+>>> rat.GetColOfUsage(gdal.GFU_RedMin)
 -1
->>> rat.GetColOfUsage(gdal.GFU_Generic)
-1
 
 ";
 
@@ -87,10 +89,10 @@ int
 
 Examples
 --------
->>> with gdal.Open('clc2018_v2020_20u1.tif') as ds:
+>>> with gdal.Open('testrat.tif') as ds:
 ...     ds.GetRasterBand(1).GetDefaultRAT().GetColumnCount()
 ... 
-7
+9
 
 ";
 
@@ -127,10 +129,10 @@ str
 
 Examples
 --------
->>> ds = gdal.Open('clc2018_v2020_20u1.tif')
+>>> ds = gdal.Open('testrat.tif')
 >>> rat = ds.GetRasterBand(1).GetDefaultRAT()
 >>> [rat.GetNameOfCol(i) for i in range(rat.GetColumnCount())]
-['Value', 'Count', 'LABEL3', 'Red', 'Green', 'Blue', 'CODE_18']
+['VALUE', 'COUNT', 'CLASS', 'Red', 'Green', 'Blue', 'OtherInt', 'OtherReal', 'OtherStr']
 
 ";
 
@@ -147,10 +149,10 @@ int
 
 Examples
 --------
->>> with gdal.Open('clc2018_v2020_20u1.tif') as ds:
+>>> with gdal.Open('testrat.tif') as ds:
 ...     ds.GetRasterBand(1).GetDefaultRAT().GetRowCount()
 ... 
-45
+2
 
 ";
 
@@ -173,12 +175,11 @@ int
 
 Examples
 --------
->>> ds = gdal.Open('clc2018_v2020_20u1.tif')
+>>> ds = gdal.Open('testrat.tif')
 >>> rat = ds.GetRasterBand(1).GetDefaultRAT()
->>> rat.GetValueAsString(rat.GetRowOfValue(33), 2)
-'Burnt areas'
+>>> rat.GetValueAsString(rat.GetRowOfValue(2), 2)
+'my class2'
 >>> rat.GetValueAsString(rat.GetRowOfValue(802), 2)
-ERROR 1: iRow (-1) out of range.
 ''
 
 See Also
@@ -218,7 +219,7 @@ int
 
 Examples
 --------
->>> ds = gdal.Open('clc2018_v2020_20u1.tif')
+>>> ds = gdal.Open('testrat.tif')
 >>> rat = ds.GetRasterBand(1).GetDefaultRAT()
 >>> rat.GetTypeOfCol(2) == gdal.GFT_String
 True
@@ -243,12 +244,12 @@ int
 
 Examples
 --------
->>> ds = gdal.Open('clc2018_v2020_20u1.tif')
+>>> ds = gdal.Open('testrat.tif')
 >>> rat = ds.GetRasterBand(1).GetDefaultRAT()
 >>> [rat.GetUsageOfCol(i) for i in range(rat.GetColumnCount())]
-[5, 0, 0, 6, 7, 8, 0]
+[5, 1, 2, 6, 7, 8, 0, 0, 0]
 >>> [rat.GetUsageOfCol(i) == gdal.GFU_Red for i in range(rat.GetColumnCount())]
-[False, False, False, True, False, False, False]
+[False, False, False, True, False, False, False, False, False]
 
 ";
 
@@ -308,10 +309,10 @@ list
 
 Examples
 --------
->>> ds = gdal.Open('clc2018_v2020_20u1.tif')
+>>> ds = gdal.Open('testrat.tif')
 >>> rat = ds.GetRasterBand(1).GetDefaultRAT()
->>> rat.ReadValuesIOAsDouble(1, 5, 3)
-[352020.0, 820443.0, 125373.0]
+>>> rat.ReadValuesIOAsDouble(3, 0, 2)
+[26.0, 26.0]
 
 See Also
 --------
@@ -338,10 +339,10 @@ list
 
 Examples
 --------
->>> ds = gdal.Open('clc2018_v2020_20u1.tif')
+>>> ds = gdal.Open('testrat.tif')
 >>> rat = ds.GetRasterBand(1).GetDefaultRAT()
->>> rat.ReadValuesIOAsInteger(1, 5, 3)
-[352020, 820443, 125373]
+>>> rat.ReadValuesIOAsInteger(3, 0, 2)
+[26, 26]
 
 See Also
 --------
@@ -368,10 +369,10 @@ list
 
 Examples
 --------
->>> ds = gdal.Open('clc2018_v2020_20u1.tif')
+>>> ds = gdal.Open('testrat.tif')
 >>> rat = ds.GetRasterBand(1).GetDefaultRAT()
->>> rat.ReadValuesIOAsString(2, 5, 3)
-['Airports', 'Mineral extraction sites', 'Dump sites']
+>>> rat.ReadValuesIOAsString(2, 0, 2)
+['my class', 'my class2']
 
 See Also
 --------

@@ -163,7 +163,7 @@ To avoid including the ``--config AWS_NO_SIGN_REQUEST=YES`` option in every comm
         gdal vsi list "/vsis3/overturemaps-us-west-2/release/"
 
 The :ref:`gdal_vsi` commands were introduced in GDAL 3.11. Before that, a helper Python script included with the GDAL installation was used to
-list the contents of an S3 bucket - and remains available if needed.
+list the contents of an S3 bucket - and remains available until GDAL 3.12.
 To run the ``gdal_ls.py`` script, navigate to the ``samples`` directory, set the ``AWS_NO_SIGN_REQUEST`` environment variable,
 and execute the script using Python:
 

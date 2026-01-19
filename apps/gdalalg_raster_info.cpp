@@ -37,7 +37,15 @@ GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool standaloneStep,
               .SetInputDatasetHelpMsg(_("Input raster dataset"))
               .SetInputDatasetAlias("dataset"))
 {
-    AddRasterInputArgs(openForMixedRasterVector, !standaloneStep);
+    if (standaloneStep)
+    {
+        AddRasterInputArgs(openForMixedRasterVector,
+                           /* hiddenForCLI = */ false);
+    }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
 
     AddOutputFormatArg(&m_format).SetChoices("json", "text");
     AddArg("min-max", 0, _("Compute minimum and maximum value"), &m_minMax)
@@ -139,7 +147,7 @@ bool GDALRasterInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     if (m_subDS > 0)
     {
-        char **papszSubdatasets = GDALGetMetadata(hDS, "SUBDATASETS");
+        CSLConstList papszSubdatasets = GDALGetMetadata(hDS, "SUBDATASETS");
         const int nSubdatasets = CSLCount(papszSubdatasets) / 2;
         if (m_subDS > nSubdatasets)
         {

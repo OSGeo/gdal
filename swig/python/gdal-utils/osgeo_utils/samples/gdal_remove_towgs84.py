@@ -89,14 +89,9 @@ def main(argv=sys.argv):
         assert ds.SetProjection(wkt) == 0
         if not quiet:
             print("%s patched to remove TOWGS84[] clause" % filename)
-            if ds.GetDriver().ShortName == "GTiff" and version_major < 3:
-                print(
-                    "Note: Running gdalinfo on the patched file with GDAL < 3 will still show the TOWGS84[] clause, but it will not be seen by GDAL >= 3"
-                )
     else:
         if not quiet:
             print("%s does not need patching" % filename)
-
     return 0
 
 

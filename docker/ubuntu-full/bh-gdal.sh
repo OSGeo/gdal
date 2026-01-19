@@ -41,6 +41,7 @@ curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.t
     export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 -g"
     # -Wno-psabi avoid 'note: parameter passing for argument of type 'std::pair<double, double>' when C++17 is enabled changed to match C++14 in GCC 10.1' on arm64
     export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g -Wno-psabi"
+    export LDFLAGS="-Wl,-rpath=${PROJ_INSTALL_PREFIX}/lib"
 
     mkdir build
     cd build
@@ -82,8 +83,8 @@ curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.t
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DGDAL_FIND_PACKAGE_PROJ_MODE=MODULE \
         -DBUILD_TESTING=OFF \
-        -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX-/usr/local}/include" \
-        -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX-/usr/local}/lib/libinternalproj.so" \
+        -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX}/include" \
+        -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so" \
         -DGDAL_ENABLE_PLUGINS=ON \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DBUILD_PYTHON_BINDINGS=ON \

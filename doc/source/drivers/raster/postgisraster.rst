@@ -59,7 +59,7 @@ unnecessary fields (like password, in some cases).
       more than one row. This mode is intended for reading tiled rasters
       from database.
 
--  **outdb_resolution** - (GDAL >= 2.3.1) option to specify how
+-  **outdb_resolution** - Option to specify how
    out-database rasters should be resolved. Default is server_side.
 
    -  **server_side**: The outDB raster will be fetched by the

@@ -15,6 +15,8 @@
 
 //! @cond Doxygen_Suppress
 
+#include "cpl_json.h"
+
 #include "gdalalgorithm.h"
 #include "gdal_priv.h"
 
@@ -80,6 +82,16 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         return m_outputDataset;
     }
 
+    const std::string &GetOutputString() const
+    {
+        return m_output;
+    }
+
+    const std::string &GetOutputLayerName() const
+    {
+        return m_outputLayerName;
+    }
+
     const std::string &GetOutputFormat() const
     {
         return m_format;
@@ -88,6 +100,21 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     const std::vector<std::string> &GetCreationOptions() const
     {
         return m_creationOptions;
+    }
+
+    const std::vector<std::string> &GetLayerCreationOptions() const
+    {
+        return m_layerCreationOptions;
+    }
+
+    bool GetOverwriteLayer() const
+    {
+        return m_overwriteLayer;
+    }
+
+    bool GetAppendLayer() const
+    {
+        return m_appendLayer;
     }
 
     virtual int GetInputType() const = 0;
@@ -112,15 +139,20 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         bool standaloneStep = false;
         bool addDefaultArguments = true;
         bool autoOpenInputDatasets = true;
+        bool inputDatasetRequired = true;
         bool outputDatasetRequired = true;
-        bool addInputLayerNameArgument = true;  // only for vector input
+        bool addInputLayerNameArgument = true;   // only for vector input
+        bool addUpdateArgument = true;           // only for vector output
+        bool addAppendLayerArgument = true;      // only for vector output
+        bool addOverwriteLayerArgument = true;   // only for vector output
+        bool addUpsertArgument = true;           // only for vector output
+        bool addSkipErrorsArgument = true;       // only for vector output
+        bool addOutputLayerNameArgument = true;  // only for vector output
         int inputDatasetMaxCount = 1;
         std::string inputDatasetHelpMsg{};
         std::string inputDatasetAlias{};
         std::string inputDatasetMetaVar = "INPUT";
         std::string outputDatasetHelpMsg{};
-        std::string updateMutualExclusionGroup{};
-        std::string outputDatasetMutualExclusionGroup{};
         std::string outputFormatCreateCapability = GDAL_DCAP_CREATECOPY;
 
         inline ConstructorOptions &SetStandaloneStep(bool b)
@@ -138,6 +170,12 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         inline ConstructorOptions &SetAddInputLayerNameArgument(bool b)
         {
             addInputLayerNameArgument = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetInputDatasetRequired(bool b)
+        {
+            inputDatasetRequired = b;
             return *this;
         }
 
@@ -184,23 +222,45 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         }
 
         inline ConstructorOptions &
-        SetUpdateMutualExclusionGroup(const std::string &s)
-        {
-            updateMutualExclusionGroup = s;
-            return *this;
-        }
-
-        inline ConstructorOptions &
-        SetOutputDatasetMutualExclusionGroup(const std::string &s)
-        {
-            outputDatasetMutualExclusionGroup = s;
-            return *this;
-        }
-
-        inline ConstructorOptions &
         SetOutputFormatCreateCapability(const std::string &capability)
         {
             outputFormatCreateCapability = capability;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetAddAppendLayerArgument(bool b)
+        {
+            addAppendLayerArgument = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetAddOverwriteLayerArgument(bool b)
+        {
+            addOverwriteLayerArgument = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetAddUpdateArgument(bool b)
+        {
+            addUpdateArgument = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetAddUpsertArgument(bool b)
+        {
+            addUpsertArgument = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetAddSkipErrorsArgument(bool b)
+        {
+            addSkipErrorsArgument = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetAddOutputLayerNameArgument(bool b)
+        {
+            addOutputLayerNameArgument = b;
             return *this;
         }
     };
@@ -249,6 +309,18 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     virtual bool CanHandleNextStep(GDALPipelineStepAlgorithm *) const
     {
         return false;
+    }
+
+    virtual bool OutputDatasetAllowedBeforeRunningStep() const
+    {
+        return false;
+    }
+
+    virtual CPLJSONObject Get_OGR_SCHEMA_OpenOption_Layer() const
+    {
+        CPLJSONObject obj;
+        obj.Deinit();
+        return obj;
     }
 
     virtual bool RunStep(GDALPipelineStepRunContext &ctxt) = 0;
@@ -316,15 +388,30 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
 
     std::string GetUsageAsJSON() const override;
 
+    bool
+    ParseCommandLineArguments(const std::vector<std::string> &args) override;
+
+    bool HasSteps() const
+    {
+        return !m_steps.empty();
+    }
+
     static constexpr const char *OPEN_NESTED_PIPELINE = "[";
     static constexpr const char *CLOSE_NESTED_PIPELINE = "]";
 
+    static constexpr const char *RASTER_SUFFIX = "-raster";
+    static constexpr const char *VECTOR_SUFFIX = "-vector";
+
   protected:
+    friend class GDALTeeStepAlgorithmAbstract;
+
     GDALAbstractPipelineAlgorithm(
         const std::string &name, const std::string &description,
         const std::string &helpURL,
-        const typename GDALPipelineStepAlgorithm::ConstructorOptions &options)
-        : GDALPipelineStepAlgorithm(name, description, helpURL, options)
+        const GDALPipelineStepAlgorithm::ConstructorOptions &options)
+        : GDALPipelineStepAlgorithm(
+              name, description, helpURL,
+              ConstructorOptions(options).SetAutoOpenInputDatasets(false))
     {
     }
 
@@ -337,22 +424,31 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
     std::unique_ptr<GDALPipelineStepAlgorithm>
     GetStepAlg(const std::string &name) const;
 
-    bool
-    ParseCommandLineArguments(const std::vector<std::string> &args) override;
+    bool HasOutputString() const override;
 
     static bool IsReadSpecificArgument(const char *pszArgName);
     static bool IsWriteSpecificArgument(const char *pszArgName);
 
-    static constexpr const char *RASTER_SUFFIX = "-raster";
-    static constexpr const char *VECTOR_SUFFIX = "-vector";
-
   private:
+    friend class GDALPipelineAlgorithm;
+    friend class GDALRasterPipelineAlgorithm;
+    friend class GDALVectorPipelineAlgorithm;
+
     std::vector<std::unique_ptr<GDALPipelineStepAlgorithm>> m_steps{};
 
     std::unique_ptr<GDALPipelineStepAlgorithm> m_stepOnWhichHelpIsRequested{};
 
+    bool m_bInnerPipeline = false;
     bool m_bExpectReadStep = true;
-    bool m_bExpectWriteStep = true;
+
+    enum class StepConstraint
+    {
+        MUST_BE,
+        CAN_BE,
+        CAN_NOT_BE
+    };
+
+    StepConstraint m_eLastStepAsWrite = StepConstraint::CAN_BE;
 
     std::vector<std::unique_ptr<GDALAbstractPipelineAlgorithm>>
         m_apoNestedPipelines{};

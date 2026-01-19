@@ -325,7 +325,7 @@ CPLErr GS7BGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
     if (VSIFSeekL(poGDS->fp,
                   GS7BGDataset::nHEADER_SIZE +
-                      sizeof(double) * nRasterXSize *
+                      static_cast<vsi_l_offset>(sizeof(double)) * nRasterXSize *
                           (nRasterYSize - nBlockYOff - 1),
                   SEEK_SET) != 0)
     {
@@ -598,7 +598,8 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
 
         if (nTag != nGRID_TAG)
         {
-            if (VSIFSeekL(poDS->fp, nSize, SEEK_CUR) != 0)
+            if (VSIFSeekL(poDS->fp, static_cast<vsi_l_offset>(nSize),
+                          SEEK_CUR) != 0)
             {
                 delete poDS;
                 CPLError(CE_Failure, CPLE_FileIO,
@@ -1058,7 +1059,7 @@ GDALDataset *GS7BGDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    if (eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16 &&
+    if (eType != GDT_UInt8 && eType != GDT_Float32 && eType != GDT_UInt16 &&
         eType != GDT_Int16 && eType != GDT_Float64)
     {
         CPLError(

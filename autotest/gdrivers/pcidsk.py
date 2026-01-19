@@ -88,7 +88,7 @@ def test_pcidsk_5(tmp_path):
     # Create testing file.
 
     pcidsk_ds = gdal.GetDriverByName("PCIDSK").Create(
-        testfile, 400, 600, 1, gdal.GDT_Byte
+        testfile, 400, 600, 1, gdal.GDT_UInt8
     )
 
     # Write out some metadata to the default and non-default domain and

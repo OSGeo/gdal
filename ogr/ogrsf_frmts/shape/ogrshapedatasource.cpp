@@ -112,10 +112,10 @@ OGRShapeDataSource::~OGRShapeDataSource()
 }
 
 /************************************************************************/
-/*                       OGRShapeDataSource::Close()                    */
+/*                       OGRShapeDataSource::Close()                   */
 /************************************************************************/
 
-CPLErr OGRShapeDataSource::Close()
+CPLErr OGRShapeDataSource::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
@@ -1255,7 +1255,8 @@ OGRLayer *OGRShapeDataSource::ExecuteSQL(const char *pszStatement,
 const char *const *OGRShapeDataSource::GetExtensionsForDeletion()
 {
     static const char *const apszExtensions[] = {
-        "shp",  "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind", "qix", "cpg",
+        "shp",  "shx", "dbf", "sbn", "sbx",     "prj",
+        "idm",  "ind", "qix", "cpg", "shp.xml",
         "qpj",  // QGIS projection file
         nullptr};
     return apszExtensions;

@@ -76,8 +76,8 @@ class CPL_DLL GDALMajorObject
 
     virtual char **GetMetadataDomainList();
 
-    virtual char **GetMetadata(const char *pszDomain = "");
-    virtual CPLErr SetMetadata(char **papszMetadata,
+    virtual CSLConstList GetMetadata(const char *pszDomain = "");
+    virtual CPLErr SetMetadata(CSLConstList papszMetadata,
                                const char *pszDomain = "");
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "");
@@ -85,7 +85,6 @@ class CPL_DLL GDALMajorObject
                                    const char *pszDomain = "");
 
     /** Convert a GDALMajorObject* to a GDALMajorObjectH.
-     * @since GDAL 2.3
      */
     static inline GDALMajorObjectH ToHandle(GDALMajorObject *poMajorObject)
     {
@@ -93,7 +92,6 @@ class CPL_DLL GDALMajorObject
     }
 
     /** Convert a GDALMajorObjectH to a GDALMajorObject*.
-     * @since GDAL 2.3
      */
     static inline GDALMajorObject *FromHandle(GDALMajorObjectH hMajorObject)
     {

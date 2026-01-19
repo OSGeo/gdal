@@ -28,7 +28,9 @@ struct Options
 {
     viewshed::Options opts;
     std::string osSrcFilename;
+    std::string osSdFilename;
     int nBandIn{1};
+    // Currently no option for SD band number -- always 1.
     bool bQuiet;
 };
 
@@ -160,6 +162,13 @@ Options parseArgs(GDALArgumentParser &argParser, const CPLStringList &aosArgv)
         .nargs(1)
         .help(_("Spacing between observer cells when using cumulative mode."));
 
+    argParser.add_argument("-sd")
+        .store_into(localOpts.osSdFilename)
+        .metavar("<value>")
+        .nargs(1)
+        .help(_("Name of file whose first band represents the standard "
+                "deviation of the raster."));
+
     argParser.add_quiet_argument(&localOpts.bQuiet);
 
     argParser.add_argument("src_filename")
@@ -221,7 +230,7 @@ void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
 
     if (opts.outputMode == viewshed::OutputMode::Cumulative)
     {
-        for (const char *opt : {"-ox", "-oy", "-vv", "-iv", "-md"})
+        for (const char *opt : {"-ox", "-oy", "-vv", "-iv", "-md", "-sd"})
             if (argParser.is_used(opt))
             {
                 std::string err = "Option " + std::string(opt) +
@@ -247,6 +256,81 @@ void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
     if (opts.outputMode == viewshed::OutputMode::Normal &&
         opts.nodataVal > std::numeric_limits<uint8_t>::max())
         opts.nodataVal = 0;
+}
+
+bool run(gdal::Options &localOpts, bool adjustCurveCoeff)
+{
+    viewshed::Options &opts = localOpts.opts;
+
+    /* -------------------------------------------------------------------- */
+    /*      Open source raster file.                                        */
+    /* -------------------------------------------------------------------- */
+    std::unique_ptr<GDALDataset> srcDs(GDALDataset::Open(
+        localOpts.osSrcFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_READONLY));
+    if (!srcDs)
+        exit(2);
+
+    GDALRasterBand *hBand = srcDs->GetRasterBand(localOpts.nBandIn);
+    if (hBand == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Band %d does not exist on dataset.", localOpts.nBandIn);
+        exit(2);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Open source SD raster file.                                     */
+    /* -------------------------------------------------------------------- */
+    std::unique_ptr<GDALDataset> sdDs;
+    GDALRasterBand *hSdBand = nullptr;
+
+    if (localOpts.osSdFilename.size())
+    {
+        sdDs.reset(GDALDataset::Open(localOpts.osSdFilename.c_str(),
+                                     GDAL_OF_RASTER | GDAL_OF_READONLY));
+        if (!sdDs)
+            exit(2);
+
+        hSdBand = sdDs->GetRasterBand(1);
+        if (hSdBand == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "SD band (1) does not exist on SD dataset.");
+            exit(2);
+        }
+    }
+
+    if (adjustCurveCoeff)
+        opts.curveCoeff = viewshed::adjustCurveCoeff(
+            opts.curveCoeff, GDALDataset::ToHandle(srcDs.get()));
+
+    /* -------------------------------------------------------------------- */
+    /*      Invoke.                                                         */
+    /* -------------------------------------------------------------------- */
+
+    bool bSuccess;
+    if (opts.outputMode == viewshed::OutputMode::Cumulative)
+    {
+        viewshed::Cumulative oViewshed(opts);
+        bSuccess = oViewshed.run(localOpts.osSrcFilename,
+                                 localOpts.bQuiet ? GDALDummyProgress
+                                                  : GDALTermProgress);
+    }
+    else
+    {
+        viewshed::Viewshed oViewshed(opts);
+
+        if (hSdBand)
+            bSuccess = oViewshed.run(hBand, hSdBand,
+                                     localOpts.bQuiet ? GDALDummyProgress
+                                                      : GDALTermProgress);
+        else
+            bSuccess = oViewshed.run(
+                hBand, localOpts.bQuiet ? GDALDummyProgress : GDALTermProgress);
+        std::unique_ptr<GDALDataset> dstDs = oViewshed.output();
+        bSuccess = bSuccess && (dstDs->Close() == CE_None);
+    }
+    return bSuccess;
 }
 
 }  // unnamed namespace
@@ -279,54 +363,10 @@ MAIN_START(argc, argv)
                            "https://gdal.org/programs/gdal_viewshed.html"));
 
     Options localOpts = parseArgs(argParser, aosArgv);
-    viewshed::Options &opts = localOpts.opts;
 
     validateArgs(localOpts, argParser);
 
-    /* -------------------------------------------------------------------- */
-    /*      Open source raster file.                                        */
-    /* -------------------------------------------------------------------- */
-    GDALDatasetH hSrcDS =
-        GDALOpen(localOpts.osSrcFilename.c_str(), GA_ReadOnly);
-    if (hSrcDS == nullptr)
-        exit(2);
-
-    GDALRasterBandH hBand = GDALGetRasterBand(hSrcDS, localOpts.nBandIn);
-    if (hBand == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Band %d does not exist on dataset.", localOpts.nBandIn);
-        exit(2);
-    }
-
-    if (!argParser.is_used("-cc"))
-        opts.curveCoeff =
-            gdal::viewshed::adjustCurveCoeff(opts.curveCoeff, hSrcDS);
-
-    /* -------------------------------------------------------------------- */
-    /*      Invoke.                                                         */
-    /* -------------------------------------------------------------------- */
-
-    GDALDatasetH hDstDS;
-
-    bool bSuccess;
-    if (opts.outputMode == viewshed::OutputMode::Cumulative)
-    {
-        viewshed::Cumulative oViewshed(opts);
-        bSuccess = oViewshed.run(localOpts.osSrcFilename,
-                                 localOpts.bQuiet ? GDALDummyProgress
-                                                  : GDALTermProgress);
-    }
-    else
-    {
-        viewshed::Viewshed oViewshed(opts);
-        bSuccess = oViewshed.run(hBand, localOpts.bQuiet ? GDALDummyProgress
-                                                         : GDALTermProgress);
-        hDstDS = GDALDataset::FromHandle(oViewshed.output().release());
-        GDALClose(hSrcDS);
-        if (GDALClose(hDstDS) != CE_None)
-            bSuccess = false;
-    }
+    bool bSuccess = run(localOpts, !argParser.is_used("-cc"));
 
     GDALDestroyDriverManager();
     OGRCleanupAll();

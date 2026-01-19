@@ -16,6 +16,7 @@
 #include "cpl_vsil_curl_class.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <map>
 
 #include "cpl_aws.h"
@@ -338,8 +339,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;
-    size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
-    size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    size_t Read(void *pBuffer, size_t nBytes) override;
+    size_t Write(const void *pBuffer, size_t nBytes) override;
     void ClearErr() override;
     int Error() override;
     int Eof() override;
@@ -749,7 +750,7 @@ bool VSICurlStreamingHandle::Exists(const char *pszFilename,
         }
 
         char chFirstByte = '\0';
-        int bExists = (Read(&chFirstByte, 1, 1) == 1);
+        int bExists = (Read(&chFirstByte, 1) == 1);
 
         FileProp cachedFileProp;
         m_poFS->GetCachedFileProp(m_pszURL, cachedFileProp);
@@ -790,7 +791,7 @@ size_t VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count,
         FileProp cachedFileProp;
         m_poFS->GetCachedFileProp(m_pszURL, cachedFileProp);
         cachedFileProp.fileSize = fileSize = nCandidateFileSize;
-        bHasCandidateFileSize = TRUE;
+        bHasComputedFileSize = TRUE;
         cachedFileProp.bHasComputedFileSize = bHasComputedFileSize;
         m_poFS->SetCachedFileProp(m_pszURL, cachedFileProp);
         if (ENABLE_DEBUG)
@@ -1182,10 +1183,9 @@ void VSICurlStreamingHandle::PutRingBufferInCache()
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
-                                    size_t const nMemb)
+size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nBytes)
 {
-    const size_t nBufferRequestSize = nSize * nMemb;
+    const size_t nBufferRequestSize = nBytes;
     const vsi_l_offset curOffsetOri = curOffset;
     const vsi_l_offset nRingBufferFileOffsetOri = nRingBufferFileOffset;
     if (nBufferRequestSize == 0)
@@ -1206,7 +1206,10 @@ retry:
 
     if (bHasComputedFileSizeLocal && curOffset >= fileSizeLocal)
     {
-        CPLDebug("VSICURL", "Read attempt beyond end of file");
+        CPLDebug("VSICURL",
+                 "Read attempt beyond end of file (%" PRIu64 " >= %" PRIu64 ")",
+                 static_cast<uint64_t>(curOffset),
+                 static_cast<uint64_t>(fileSizeLocal));
         bEOF = true;
     }
     if (bEOF)
@@ -1365,8 +1368,8 @@ retry:
         CPLDebug("VSICURL", "Read(%d) = %d",
                  static_cast<int>(nBufferRequestSize),
                  static_cast<int>(nBufferRequestSize - nRemaining));
-    size_t nRet = (nBufferRequestSize - nRemaining) / nSize;
-    if (nRet < nMemb)
+    size_t nRet = nBufferRequestSize - nRemaining;
+    if (nRet < nBytes)
         bEOF = true;
 
     // Give a chance to specialized filesystem to deal with errors to redirect
@@ -1382,7 +1385,7 @@ retry:
         size_t nErrorBufferSize = std::min(nErrorBufferMaxSize, nRead);
         memcpy(pabyErrorBuffer.get(), pBuffer, nErrorBufferSize);
         if (nRead < nErrorBufferMaxSize)
-            nErrorBufferSize += Read(pabyErrorBuffer.get() + nRead, 1,
+            nErrorBufferSize += Read(pabyErrorBuffer.get() + nRead,
                                      nErrorBufferMaxSize - nRead);
         (pabyErrorBuffer.get())[nErrorBufferSize] = 0;
         StopDownload();
@@ -1475,7 +1478,7 @@ void VSICurlStreamingHandle::AddRegion(vsi_l_offset nFileOffsetStart,
 /************************************************************************/
 
 size_t VSICurlStreamingHandle::Write(const void * /* pBuffer */,
-                                     size_t /* nSize */, size_t /* nMemb */)
+                                     size_t /* nBytes */)
 {
     return 0;
 }
@@ -2104,12 +2107,12 @@ VSISwiftStreamingFSHandler::CreateFileHandle(const char *pszFilename,
  See :ref:`/vsicurl_streaming/ documentation <vsicurl_streaming>`
  \endverbatim
 
- @since GDAL 1.10
  */
 void VSIInstallCurlStreamingFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsicurl_streaming/",
-                                   new cpl::VSICurlStreamingFSHandler);
+    VSIFileManager::InstallHandler(
+        "/vsicurl_streaming/",
+        std::make_shared<cpl::VSICurlStreamingFSHandler>());
 }
 
 /************************************************************************/
@@ -2124,12 +2127,11 @@ void VSIInstallCurlStreamingFileHandler(void)
  See :ref:`/vsis3_streaming/ documentation <vsis3_streaming>`
  \endverbatim
 
- @since GDAL 2.1
  */
 void VSIInstallS3StreamingFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsis3_streaming/",
-                                   new cpl::VSIS3StreamingFSHandler);
+    VSIFileManager::InstallHandler(
+        "/vsis3_streaming/", std::make_shared<cpl::VSIS3StreamingFSHandler>());
 }
 
 /************************************************************************/
@@ -2144,13 +2146,12 @@ void VSIInstallS3StreamingFileHandler(void)
  See :ref:`/vsigs_streaming/ documentation <vsigs_streaming>`
  \endverbatim
 
- @since GDAL 2.2
  */
 
 void VSIInstallGSStreamingFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsigs_streaming/",
-                                   new cpl::VSIGSStreamingFSHandler);
+    VSIFileManager::InstallHandler(
+        "/vsigs_streaming/", std::make_shared<cpl::VSIGSStreamingFSHandler>());
 }
 
 /************************************************************************/
@@ -2165,13 +2166,13 @@ void VSIInstallGSStreamingFileHandler(void)
  See :ref:`/vsiaz_streaming/ documentation <vsiaz_streaming>`
  \endverbatim
 
- @since GDAL 2.3
  */
 
 void VSIInstallAzureStreamingFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsiaz_streaming/",
-                                   new cpl::VSIAzureStreamingFSHandler);
+    VSIFileManager::InstallHandler(
+        "/vsiaz_streaming/",
+        std::make_shared<cpl::VSIAzureStreamingFSHandler>());
 }
 
 /************************************************************************/
@@ -2186,13 +2187,13 @@ void VSIInstallAzureStreamingFileHandler(void)
  See :ref:`/vsioss_streaming/ documentation <vsioss_streaming>`
  \endverbatim
 
- @since GDAL 2.3
  */
 
 void VSIInstallOSSStreamingFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsioss_streaming/",
-                                   new cpl::VSIOSSStreamingFSHandler);
+    VSIFileManager::InstallHandler(
+        "/vsioss_streaming/",
+        std::make_shared<cpl::VSIOSSStreamingFSHandler>());
 }
 
 /************************************************************************/
@@ -2207,13 +2208,13 @@ void VSIInstallOSSStreamingFileHandler(void)
  See :ref:`/vsiswift_streaming/ documentation <vsiswift_streaming>`
  \endverbatim
 
- @since GDAL 2.3
  */
 
 void VSIInstallSwiftStreamingFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsiswift_streaming/",
-                                   new cpl::VSISwiftStreamingFSHandler);
+    VSIFileManager::InstallHandler(
+        "/vsiswift_streaming/",
+        std::make_shared<cpl::VSISwiftStreamingFSHandler>());
 }
 
 //! @cond Doxygen_Suppress
@@ -2227,16 +2228,15 @@ void VSICurlStreamingClearCache(void)
     // FIXME ? Currently we have different filesystem instances for
     // vsicurl/, /vsis3/, /vsigs/ . So each one has its own cache of regions.
     // File properties cache are now shared
-    char **papszPrefix = VSIFileManager::GetPrefixes();
-    for (size_t i = 0; papszPrefix && papszPrefix[i]; ++i)
+    const CPLStringList aosPrefixes(VSIFileManager::GetPrefixes());
+    for (const char *pszPrefix : aosPrefixes)
     {
         auto poFSHandler = dynamic_cast<cpl::VSICurlStreamingFSHandler *>(
-            VSIFileManager::GetHandler(papszPrefix[i]));
+            VSIFileManager::GetHandler(pszPrefix));
 
         if (poFSHandler)
             poFSHandler->ClearCache();
     }
-    CSLDestroy(papszPrefix);
 }
 
 //! @endcond

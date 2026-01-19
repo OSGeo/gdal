@@ -128,7 +128,7 @@ class PNGDataset final : public GDALPamDataset
     PNGDataset();
     ~PNGDataset() override;
 
-    CPLErr Close() override;
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
@@ -144,7 +144,7 @@ class PNGDataset final : public GDALPamDataset
 
     char **GetMetadataDomainList() override;
 
-    char **GetMetadata(const char *pszDomain = "") override;
+    CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *
     GetMetadataItem(const char *pszName,
                     const char *pszDomain = nullptr) override;

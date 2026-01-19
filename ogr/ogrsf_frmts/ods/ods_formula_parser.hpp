@@ -67,7 +67,13 @@ extern int ods_formuladebug;
     ODST_OR = 268,                 /* ODST_OR  */
     ODST_AND = 269,                /* ODST_AND  */
     ODST_IF = 270,                 /* ODST_IF  */
-    ODST_UMINUS = 271              /* ODST_UMINUS  */
+    ODST_EQ = 271,                 /* ODST_EQ  */
+    ODST_NE = 272,                 /* ODST_NE  */
+    ODST_LT = 273,                 /* ODST_LT  */
+    ODST_LE = 274,                 /* ODST_LE  */
+    ODST_GT = 275,                 /* ODST_GT  */
+    ODST_GE = 276,                 /* ODST_GE  */
+    ODST_UMINUS = 277              /* ODST_UMINUS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif

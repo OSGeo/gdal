@@ -269,7 +269,7 @@ Martin wrote back that he was uncertain on the correct signage and that
 the Adam had programmed the Cadcorp implementation empirically,
 according to what seemed to work for the test data available.
 
-I am prepared to adhere to the Cadorp sign usage (as per EPSG 9607) if
+I am prepared to adhere to the Cadcorp sign usage (as per EPSG 9607) if
 this can be clarified in the specification.
 
 Current state of OGR implementation
@@ -285,7 +285,7 @@ the appropriate conversion (negating the sign of the rotation terms).
 Longitudes Relative to PRIMEM?
 ------------------------------
 
-Another related question is whether longtiudinal projection parameters
+Another related question is whether longitudinal projection parameters
 (ie. central meridian) are relative to the GEOGCS prime meridian or
 relative to greenwich. While the simplest approach is to treat all
 longitudes as relative to Greenwich, I somehow convinced myself at one

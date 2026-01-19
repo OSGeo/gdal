@@ -377,13 +377,25 @@ int GDALDitherRGB2PCTInternal(GDALRasterBandH hRed, GDALRasterBandH hGreen,
  */
 #define MAX_ULPS 10
 
-GBool GDALFloatEquals(float A, float B);
+bool CPL_DLL GDALFloatAlmostEquals(float A, float B,
+                                   unsigned maxUlps = MAX_ULPS);
 
 struct FloatEqualityTest
 {
     bool operator()(float a, float b)
     {
-        return GDALFloatEquals(a, b) == TRUE;
+        return GDALFloatAlmostEquals(a, b);
+    }
+};
+
+bool CPL_DLL GDALDoubleAlmostEquals(double A, double B,
+                                    unsigned maxUlps = MAX_ULPS);
+
+struct DoubleEqualityTest
+{
+    bool operator()(double a, double b)
+    {
+        return GDALDoubleAlmostEquals(a, b);
     }
 };
 

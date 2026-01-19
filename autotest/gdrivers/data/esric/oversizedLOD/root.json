@@ -1,0 +1,352 @@
+{
+    "tileImageInfo": {
+        "format": "PNG",
+        "compressionQuality": 0,
+        "bandCount": 1,
+        "lercError": 0
+    },
+    "name": "Usa",
+    "version": 1.0,
+    "serviceDescription": "",
+    "tileBundlesPath": "./tile",
+    "spatialReference": {
+        "wkid": 102100,
+        "latestWkid": 3857,
+        "xyTolerance": 0.001,
+        "zTolerance": 0.001,
+        "mTolerance": 0.001,
+        "falseX": -20037700,
+        "falseY": -30241100,
+        "xyUnits": 10000,
+        "falseZ": -100000,
+        "zUnits": 10000,
+        "falseM": -100000,
+        "mUnits": 10000
+    },
+    "units": "esriMeters",
+    "minLOD": 0,
+    "maxLOD": 24,
+    "minScale": 591657527.591555,
+    "maxScale": 9027.977411,
+    "resampling": true,
+    "tileInfo": {
+        "rows": 256,
+        "cols": 256,
+        "dpi": 96,
+        "origin": {
+            "x": -20037508.342787001,
+            "y": 20037508.342787001
+        },
+        "spatialReference": {
+            "wkid": 102100,
+            "latestWkid": 3857,
+            "xyTolerance": 0.001,
+            "zTolerance": 0.001,
+            "mTolerance": 0.001,
+            "falseX": -20037700,
+            "falseY": -30241100,
+            "xyUnits": 148923141.92838538,
+            "falseZ": -100000,
+            "zUnits": 10000,
+            "falseM": -100000,
+            "mUnits": 10000
+        },
+        "lods": [
+            {
+                "level": 0,
+                "resolution": 156543.033928,
+                "scale": 591657527.591555
+            },
+            {
+                "level": 1,
+                "resolution": 78271.51696399989,
+                "scale": 295828763.79577702
+            },
+            {
+                "level": 2,
+                "resolution": 39135.7584820001,
+                "scale": 147914381.89788899
+            },
+            {
+                "level": 3,
+                "resolution": 19567.8792409999,
+                "scale": 73957190.948944002
+            },
+            {
+                "level": 4,
+                "resolution": 9783.939620499959,
+                "scale": 36978595.474472001
+            },
+            {
+                "level": 5,
+                "resolution": 4891.96981024998,
+                "scale": 18489297.737236001
+            },
+            {
+                "level": 6,
+                "resolution": 2445.98490512499,
+                "scale": 9244648.868618
+            },
+            {
+                "level": 7,
+                "resolution": 1222.99245256249,
+                "scale": 4622324.434309
+            },
+            {
+                "level": 8,
+                "resolution": 611.49622628138,
+                "scale": 2311162.217155
+            },
+            {
+                "level": 9,
+                "resolution": 305.748113140558,
+                "scale": 1155581.108577
+            },
+            {
+                "level": 10,
+                "resolution": 152.874056570411,
+                "scale": 577790.554289
+            },
+            {
+                "level": 11,
+                "resolution": 76.4370282850732,
+                "scale": 288895.277144
+            },
+            {
+                "level": 12,
+                "resolution": 38.2185141425366,
+                "scale": 144447.638572
+            },
+            {
+                "level": 13,
+                "resolution": 19.1092570712683,
+                "scale": 72223.819286
+            },
+            {
+                "level": 14,
+                "resolution": 9.55462853563415,
+                "scale": 36111.909643
+            },
+            {
+                "level": 15,
+                "resolution": 4.77731426794937,
+                "scale": 18055.954822
+            },
+            {
+                "level": 16,
+                "resolution": 2.38865713397468,
+                "scale": 9027.977411
+            },
+            {
+                "level": 17,
+                "resolution": 1.19432856685505,
+                "scale": 4513.988705
+            },
+            {
+                "level": 18,
+                "resolution": 0.597164283559817,
+                "scale": 2256.994353
+            },
+            {
+                "level": 19,
+                "resolution": 0.298582141647617,
+                "scale": 1128.497176
+            },
+            {
+                "level": 20,
+                "resolution": 0.149291070823808325,
+                "scale": 564.248588
+            },
+            {
+                "level": 21,
+                "resolution": 0.074645535411904163,
+                "scale": 282.124294
+            },
+            {
+                "level": 22,
+                "resolution": 0.037322767705952081,
+                "scale": 141.062147
+            },
+            {
+                "level": 23,
+                "resolution": 0.018661383852976041,
+                "scale": 70.5310735
+            },
+            {
+                "level": 24,
+                "resolution": 0.00933069192648802,
+                "scale": 35.26553675
+            }
+        ]
+    },
+    "exportTilesAllowed": false,
+    "storageInfo": {
+        "storageFormat": "esriMapCacheStorageModeCompactV2",
+        "packetSize": 128
+    },
+    "layers": [
+        {
+            "id": 0,
+            "name": "wind",
+            "parentLayerId": -1,
+            "defaultVisibility": false,
+            "subLayerIds": null,
+            "minScale": 295828763.79577702,
+            "maxScale": 9027.977411,
+            "type": "Feature Layer",
+            "geometryType": "esriGeometryPoint",
+            "legend": [
+                {
+                    "label": "",
+                    "imageData": "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAjElEQVQ4je3SbQrDIAyA4bfQey2eLPZkZjfbD1OUYWu67c/YBIkR8hA/Vj481j/4vWD2aD5fBgUoXa4e0xE8A4u4qi5sNRZguQrK3pJ0G/fWWqZdRRyUp00dKUEQqEfULrfhMgZmQA24UTvd3gQBkkEZVKajghlo1NcU2nXms4LoxzYmH/oqGB4/CD4AEWMbT1k5BxcAAAAASUVORK5CYII=",
+                    "contentType": "image/png",
+                    "height": 20,
+                    "width": 20
+                }
+            ]
+        },
+        {
+            "id": 1,
+            "name": "ushigh",
+            "parentLayerId": -1,
+            "defaultVisibility": false,
+            "subLayerIds": null,
+            "minScale": 295828763.79577702,
+            "maxScale": 9027.977411,
+            "type": "Feature Layer",
+            "geometryType": "esriGeometryPolyline",
+            "legend": [
+                {
+                    "label": "",
+                    "imageData": "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAQElEQVQ4jWNhoDJgGTVw1EDKDHSg0KwDKAauXxuznxLTAoOXMKIYSC0ANzAweIkjVQ1kgIYBNQ2kChg1cCQYCABhZwda992qZgAAAABJRU5ErkJggg==",
+                    "contentType": "image/png",
+                    "height": 20,
+                    "width": 20
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "name": "counties",
+            "parentLayerId": -1,
+            "defaultVisibility": true,
+            "subLayerIds": null,
+            "minScale": 295828763.79577702,
+            "maxScale": 9027.977411,
+            "type": "Feature Layer",
+            "geometryType": "esriGeometryPolygon",
+            "legend": [
+                {
+                    "label": "",
+                    "imageData": "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAARklEQVQ4je3MMRHAMAwDwOrOSAKuo7UWQlYTNBVlyVAAHvUAPjLzBbCeAZI6AKyq+iZCkjsmoj+HDh06dHhDSU1yT2SS+gDqqROxDLGYbQAAAABJRU5ErkJggg==",
+                    "contentType": "image/png",
+                    "height": 20,
+                    "width": 20
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "name": "states",
+            "parentLayerId": -1,
+            "defaultVisibility": true,
+            "subLayerIds": null,
+            "minScale": 591657527.591555,
+            "maxScale": 36111.909643,
+            "type": "Feature Layer",
+            "geometryType": "esriGeometryPolygon",
+            "legend": [
+                {
+                    "label": "\u2264108208",
+                    "imageData": "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAASklEQVQ4jWOJ7u1t+cXF7cBABcD27esBll9c3A6HYuOtqWGg3eKFDCzUMAgZjBo4auCogaMGjhoINZDt29cDdosXUsUwtm9fDwAADkgRuHqmZZ0AAAAASUVORK5CYII=",
+                    "contentType": "image/png",
+                    "height": 20,
+                    "width": 20,
+                    "values": [
+                        108208.09734545523
+                    ]
+                },
+                {
+                    "label": "\u2264248092",
+                    "imageData": "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAARklEQVQ4jWPJKettYWDmdmCgBvj79QALAzO3ww+xBGtqmMfxagEDCzUMQgajBo4aOGrgqIGjBsIM/Pv1AMerBdQx7e/XAwCQqA/Di08inQAAAABJRU5ErkJggg==",
+                    "contentType": "image/png",
+                    "height": 20,
+                    "width": 20,
+                    "values": [
+                        248092.25714217819
+                    ]
+                },
+                {
+                    "label": "\u2264591962",
+                    "imageData": "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAASUlEQVQ4jWPJiu5t+feLy4GBCoCJ7dsBln+/uBzeH4m1poaBgjaLGVioYRAyGDVw1MBRA0cNHDUQaiAT27cDgjaLqWIYE9u3AwDY6BAQRC9aaAAAAABJRU5ErkJggg==",
+                    "contentType": "image/png",
+                    "height": 20,
+                    "width": 20,
+                    "values": [
+                        591961.663298358
+                    ]
+                },
+                {
+                    "label": "\u22641437277",
+                    "imageData": "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAASklEQVQ4jWNpiO5tYf3F5cBABfCb7dsBFtZfXA4mh+OsqWHgGdtFDCzUMAgZjBo4auCogaMGjhoINfA327cDZ2wXUcWw32zfDgAAmmYR2vMDZmwAAAAASUVORK5CYII=",
+                    "contentType": "image/png",
+                    "height": 20,
+                    "width": 20,
+                    "values": [
+                        1437276.59146489785
+                    ]
+                },
+                {
+                    "label": "\u22643515267",
+                    "imageData": "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAASklEQVQ4jWPpj+9t4fnJ5cBABfCF/dsBFp6fXA4pZ+OsqWHgHONFDCzUMAgZjBo4auCogaMGjhoINfAL+7cDc4wXUcWwL+zfDgAANX8Rrfl4ur4AAAAASUVORK5CYII=",
+                    "contentType": "image/png",
+                    "height": 20,
+                    "width": 20,
+                    "values": [
+                        3515267
+                    ]
+                }
+            ]
+        }
+    ],
+    "initialExtent": {
+        "xmin": -19839092.300098713,
+        "ymin": 2146082.18921885872,
+        "xmax": -7454985.1505245157,
+        "ymax": 11542624.896685526,
+        "spatialReference": {
+            "wkid": 102100,
+            "latestWkid": 3857,
+            "xyTolerance": 0.001,
+            "zTolerance": 0.001,
+            "mTolerance": 0.001,
+            "falseX": -20037700,
+            "falseY": -30241100,
+            "xyUnits": 10000,
+            "falseZ": -100000,
+            "zUnits": 10000,
+            "falseM": -100000,
+            "mUnits": 10000
+        }
+    },
+    "fullExtent": {
+        "xmin": -20037508.342787001,
+        "ymin": 20037508.342787001,
+        "xmax": -20037508.342787001,
+        "ymax": 20037508.342787001,
+        "spatialReference": {
+            "wkid": 102100,
+            "latestWkid": 3857,
+            "xyTolerance": 0.001,
+            "zTolerance": 0.001,
+            "mTolerance": 0.001,
+            "falseX": -20037700,
+            "falseY": -30241100,
+            "xyUnits": 10000,
+            "falseZ": -100000,
+            "zUnits": 10000,
+            "falseM": -100000,
+            "mUnits": 10000
+        }
+    }
+}

@@ -633,7 +633,7 @@ int JPIPKAKDataset::Initialize(const char *pszDatasetName, int bReinitializing)
             eDT = GDT_UInt16;
         }
         else
-            eDT = GDT_Byte;
+            eDT = GDT_UInt8;
 
         if ((poCodestream->get_bit_depth(0) % 8) != 0 &&
             poCodestream->get_bit_depth(0) < 16)
@@ -1299,6 +1299,8 @@ GDALAsyncReader *JPIPKAKDataset::BeginAsyncReader(
                                          ario->nPixelSpace * nBandCount);
         if (ario->pBuf == nullptr)
         {
+            delete[] ario->panBandMap;
+            ario->panBandMap = nullptr;
             delete ario;
             return nullptr;
         }

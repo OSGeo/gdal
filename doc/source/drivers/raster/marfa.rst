@@ -6,8 +6,6 @@ MRF -- Meta Raster Format
 
 .. shortname:: MRF
 
-.. versionadded:: 2.1
-
 .. built_in_by_default::
 
 Access to a indexed heap of regular tiles (blocks). Controlled by an xml

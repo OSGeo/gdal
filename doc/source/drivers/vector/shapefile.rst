@@ -39,7 +39,7 @@ or a GEOMETRYCOLLECTION of TIN representation for fans and meshes.
 
 If a .prj files in old Arc/Info style or new ESRI OGC WKT style is
 present, it will be read and used to associate a projection with
-features. Starting with GDAL 2.3, a match will be attempted with the
+features. A match will be attempted with the
 EPSG databases to identify the SRS of the .prj with an entry in the
 catalog.
 
@@ -52,6 +52,9 @@ possible to define the configuration option
 a full analysis based on topological relationships of the parts of the
 polygons so that the resulting polygons are correctly defined in the
 OGC Simple Feature convention.
+
+Starting with GDAL 3.13, ``.shp.xml`` side-car files are used to set field
+names potentially longer than 10 characters, and field aliases.
 
 Driver capabilities
 -------------------
@@ -217,8 +220,8 @@ if a feature geometry has been modified with SetFeature() and resulted
 in a change of the size the binary encoding of the geometry in the .shp
 file.
 
-Starting with GDAL 2.2, REPACK is also done automatically at file
-closing, or at FlushCache()/SyncToDisk() time, since shapefiles with
+REPACK is also done automatically at file closing, or at
+FlushCache()/SyncToDisk() time, since shapefiles with
 holes can cause interoperability issues with other software.
 
 Field sizes
@@ -354,8 +357,7 @@ The following layer creation options are supported:
       MULTIPOINT for 2D; POINTZ, ARCZ, POLYGONZ, MULTIPOINTZ or MULTIPATCH
       for 3D; POINTM, ARCM, POLYGONM or MULTIPOINTM for measured
       geometries; and POINTZM, ARCZM, POLYGONZM or MULTIPOINTZM for 3D
-      measured geometries. The measure support was added in GDAL 2.1.
-      MULTIPATCH files are supported since GDAL 2.2.
+      measured geometries.
 
 -  .. lco:: ENCODING
 
