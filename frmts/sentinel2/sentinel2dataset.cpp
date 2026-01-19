@@ -769,7 +769,7 @@ static bool SENTINEL2GetGranuleInfo(
         psRoot = CPLParseXMLFile(osGranuleMTDPath);
     if (psRoot == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot XML parse %s",
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse XML file '%s'",
                  osGranuleMTDPath.c_str());
         return false;
     }
@@ -1430,7 +1430,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1BUserProduct(GDALOpenInfo *poOpenInfo)
     CPLXMLNode *psRoot = CPLParseXMLFile(poOpenInfo->pszFilename);
     if (psRoot == nullptr)
     {
-        CPLDebug("SENTINEL2", "Cannot XML parse %s", poOpenInfo->pszFilename);
+        CPLDebug("SENTINEL2", "Cannot parse XML file '%s'",
+                 poOpenInfo->pszFilename);
         return nullptr;
     }
 
@@ -1907,7 +1908,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule(const char *pszFilename,
     CPLXMLNode *psRoot = CPLParseXMLFile(pszFilename);
     if (psRoot == nullptr)
     {
-        CPLDebug("SENTINEL2", "Cannot XML parse %s", pszFilename);
+        CPLDebug("SENTINEL2", "Cannot parse XML file '%s'", pszFilename);
         return nullptr;
     }
 
@@ -2408,7 +2409,7 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
     CPLXMLNode *psRoot = CPLParseXMLFile(pszMainXMLFilename);
     if (psRoot == nullptr)
     {
-        CPLDebug("SENTINEL2", "Cannot XML parse %s", pszMainXMLFilename);
+        CPLDebug("SENTINEL2", "Cannot parse XML file '%s'", pszMainXMLFilename);
         return nullptr;
     }
 
@@ -2479,7 +2480,7 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
     CPLXMLTreeCloser poXML(CPLParseXMLFile(osXMLDatastrip.c_str()));
     if (!poXML)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot XML parse %s",
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse XML file '%s'",
                  osXMLDatastrip.c_str());
         return nullptr;
     }
@@ -2946,7 +2947,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A(const char *pszFilename,
     CPLXMLNode *psRoot = CPLParseXMLFile(pszFilename);
     if (psRoot == nullptr)
     {
-        CPLDebug("SENTINEL2", "Cannot XML parse %s", pszFilename);
+        CPLDebug("SENTINEL2", "Cannot parse XML file '%s'", pszFilename);
         return nullptr;
     }
 
@@ -3250,7 +3251,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1CTile(const char *pszFilename,
     CPLXMLNode *psRoot = CPLParseXMLFile(pszFilename);
     if (psRoot == nullptr)
     {
-        CPLDebug("SENTINEL2", "Cannot XML parse %s", pszFilename);
+        CPLDebug("SENTINEL2", "Cannot parse XML file '%s'", pszFilename);
         return nullptr;
     }
 
@@ -3564,7 +3565,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset(GDALOpenInfo *poOpenInfo,
     CPLXMLNode *psRoot = CPLParseXMLFile(osFilename);
     if (psRoot == nullptr)
     {
-        CPLDebug("SENTINEL2", "Cannot XML parse %s", osFilename.c_str());
+        CPLDebug("SENTINEL2", "Cannot parse XML file '%s'", osFilename.c_str());
         return nullptr;
     }
 
