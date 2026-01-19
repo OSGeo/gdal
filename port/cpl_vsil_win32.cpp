@@ -124,8 +124,8 @@ class VSIWin32Handle final : public VSIVirtualHandle
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;
-    size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
-    size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    size_t Read(void *pBuffer, size_t nBytes) override;
+    size_t Write(const void *pBuffer, size_t nBytes) override;
     void ClearErr() override;
     int Eof() override;
     int Error() override;
@@ -466,12 +466,12 @@ int VSIWin32Handle::Flush()
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSIWin32Handle::Read(void *pBuffer, size_t nSize, size_t nCount)
+size_t VSIWin32Handle::Read(void *pBuffer, size_t nBytes)
 
 {
     GByte *const pabyBuffer = static_cast<GByte *>(pBuffer);
     size_t nTotalRead = 0;
-    size_t nRemaining = nSize * nCount;
+    size_t nRemaining = nBytes;
     while (nRemaining > 0)
     {
         DWORD dwSizeRead = 0;
@@ -494,45 +494,40 @@ size_t VSIWin32Handle::Read(void *pBuffer, size_t nSize, size_t nCount)
         }
     }
 
-    size_t nResult = 0;
-    if (nSize)
-    {
-        nResult = nTotalRead / nSize;
-        if (nResult != nCount)
-            bEOF = true;
-    }
+    if (nTotalRead != nBytes)
+        bEOF = true;
 
-    return nResult;
+    return nTotalRead;
 }
 
 /************************************************************************/
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIWin32Handle::Write(const void *pBuffer, size_t nSize, size_t nCount)
+size_t VSIWin32Handle::Write(const void *pBuffer, size_t nBytes)
 
 {
     DWORD dwSizeWritten = 0;
     size_t nResult = 0;
+    if (nBytes == 0)
+        return 0;
 
-    if (nSize > 0 && nCount > UINT32_MAX / nSize)
+    if (nBytes > UINT32_MAX)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Too many bytes to write at once");
         return 0;
     }
 
-    if (!WriteFile(hFile, pBuffer, static_cast<DWORD>(nSize * nCount),
-                   &dwSizeWritten, nullptr))
+    if (!WriteFile(hFile, pBuffer, static_cast<DWORD>(nBytes), &dwSizeWritten,
+                   nullptr))
     {
         nResult = 0;
         errno = ErrnoFromGetLastError();
         CPLDebug("CPL", "VSIWin32Handle::Write() failed with errno=%d (%s)",
                  errno, strerror(errno));
     }
-    else if (nSize == 0)
-        nResult = 0;
     else
-        nResult = dwSizeWritten / nSize;
+        nResult = dwSizeWritten;
 
     return nResult;
 }

@@ -119,8 +119,8 @@ class VSIStdinHandle final : public VSIVirtualHandle
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;
-    size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
-    size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    size_t Read(void *pBuffer, size_t nBytes) override;
+    size_t Write(const void *pBuffer, size_t nBytes) override;
     void ClearErr() override;
     int Error() override;
     int Eof() override;
@@ -279,12 +279,11 @@ vsi_l_offset VSIStdinHandle::Tell()
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSIStdinHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
+size_t VSIStdinHandle::Read(void *pBuffer, size_t nBytesToRead)
 
 {
     VSIStdinInit();
 
-    const size_t nBytesToRead = nSize * nCount;
     if (nBytesToRead == 0)
         return 0;
 
@@ -312,7 +311,7 @@ size_t VSIStdinHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
             memcpy(pBuffer, gpabyBuffer + static_cast<size_t>(m_nCurOff),
                    nBytesToRead);
             m_nCurOff += nBytesToRead;
-            return nCount;
+            return nBytesToRead;
         }
 
         memcpy(pBuffer, gpabyBuffer + static_cast<size_t>(m_nCurOff),
@@ -325,21 +324,20 @@ size_t VSIStdinHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
         m_bEOF = gbHasSoughtToEnd;
         m_bError = gbHasErrored;
 
-        return (nRead + nAlreadyCached) / nSize;
+        return nRead + nAlreadyCached;
     }
 
     const size_t nRead = ReadAndCache(pBuffer, nBytesToRead);
     m_bEOF = gbHasSoughtToEnd;
     m_bError = gbHasErrored;
-    return nRead / nSize;
+    return nRead;
 }
 
 /************************************************************************/
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIStdinHandle::Write(const void * /* pBuffer */, size_t /* nSize */,
-                             size_t /* nCount */)
+size_t VSIStdinHandle::Write(const void * /* pBuffer */, size_t /* nBytes */)
 {
     CPLError(CE_Failure, CPLE_NotSupported, "Write() unsupported on /vsistdin");
     return 0;
