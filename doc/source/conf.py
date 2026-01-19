@@ -1449,6 +1449,12 @@ latex_documents = [
 latex_toplevel_sectioning = "chapter"
 
 latex_logo = "../images/gdalicon_big.png"
+# Disable module and domain indices in PDF output.
+# Python API documentation is not included in the PDF, so keeping them
+# results in a dummy and confusing "Python Module Index" section.
+latex_use_modindex = False
+latex_domain_indices = False
+
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
