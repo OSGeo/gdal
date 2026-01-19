@@ -55,7 +55,7 @@
 </Query_Options>
 <Product_Organisation>
                 <Granule_List>
-                    <Granules datastripIdentifier="S2B_OPER_MSI_L1B_DS_MTI__20151231T235959_S20151231T235959_N01.03" granuleIdentifier="S2B_OPER_MSI_L1B_N01.03" imageFormat="JPEG2000">
+                    <Granules datastripIdentifier="S2B_OPER_MSI_L1B_DS_MTI__20151231T235959_S20151231T235959_N01.03" granuleIdentifier="S2B_OPER_MSI_L1B_1_N01.03" imageFormat="JPEG2000">
                         <IMAGE_ID>S2B_OPER_MSI_L1B_B01</IMAGE_ID>
                         <IMAGE_ID>S2B_OPER_MSI_L1B_B06</IMAGE_ID>
                         <IMAGE_ID>S2B_OPER_MSI_L1B_B10</IMAGE_ID>
