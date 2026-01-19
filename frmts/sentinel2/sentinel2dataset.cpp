@@ -2399,6 +2399,36 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
+    // Open main XML file
+    // Products accessible to expert users through CDSE (Copernicus Data Space Ecosystem)
+    // might not contain all granules referenced in the datastrip. Take that
+    // into account by checking granules effectively declared in the top level
+    // XML file  to avoid rejecting them. The geolocation VRT is referenced
+    // with respect to the first expected granule.
+    CPLXMLNode *psRoot = CPLParseXMLFile(pszMainXMLFilename);
+    if (psRoot == nullptr)
+    {
+        CPLDebug("SENTINEL2", "Cannot XML parse %s", pszMainXMLFilename);
+        return nullptr;
+    }
+
+    SENTINEL2_CPLXMLNodeHolder oXMLHolder(psRoot);
+    CPLStripXMLNamespace(psRoot, nullptr, TRUE);
+    std::vector<CPLString> aosGranuleList;
+    if (!SENTINEL2GetGranuleList(psRoot, SENTINEL2_L1B, pszMainXMLFilename,
+                                 aosGranuleList))
+    {
+        CPLDebug("SENTINEL2", "Failed to get granule list");
+        return nullptr;
+    }
+    std::set<std::string> aoSetGranuleId;
+    for (const auto &aosGranulePath : aosGranuleList)
+    {
+        std::string osGranuleId =
+            CPLGetFilename(CPLGetDirnameSafe(aosGranulePath.c_str()).c_str());
+        aoSetGranuleId.insert(std::move(osGranuleId));
+    }
+
     // Find in which datastrip we are
     const std::string osDatastrip(
         CPLString(pszGeolocVRT, nLen - strlen("_Dxx_Byy"))
@@ -2517,6 +2547,8 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
               { return sDescA.nPosition < sDescB.nPosition; });
     const int nGranuleCount = static_cast<int>(asGranules.size());
     constexpr int ROWS_PER_10M_GRANULE = 2304;
+    int nIdxFirstExpectedGranule = -1;
+    int nIdxLastExpectedGranule = -1;
     for (int i = 0; i < nGranuleCount; ++i)
     {
         if (asGranules[i].nPosition != 1 + i * ROWS_PER_10M_GRANULE)
@@ -2528,7 +2560,21 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
                 1 + i * ROWS_PER_10M_GRANULE);
             return nullptr;
         }
+        if (cpl::contains(aoSetGranuleId, asGranules[i].pszGranuleId))
+        {
+            if (nIdxFirstExpectedGranule < 0)
+                nIdxFirstExpectedGranule = i;
+            nIdxLastExpectedGranule = i;
+        }
     }
+
+    if (nIdxFirstExpectedGranule < 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "No matching expected granule!");
+        return nullptr;
+    }
+    const int nExpectedGranuleCount =
+        nIdxLastExpectedGranule - nIdxFirstExpectedGranule + 1;
 
     const std::string osBandName = std::string("B").append(
         osBandId == "8A"
@@ -2551,7 +2597,7 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
                                 : nResolution == RES_20M ? 1276
                                                          : 425;
     auto poDS = std::make_unique<SENTINEL2Dataset>(
-        nColsPerGranule, nRowsPerGranule * nGranuleCount);
+        nColsPerGranule, nRowsPerGranule * nExpectedGranuleCount);
 
     constexpr GDALDataType eDT = GDT_UInt16;
     auto poBand = new VRTSourcedRasterBand(
@@ -2567,7 +2613,7 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
             .append("GRANULE");
     int nValMax = 0;
     int nBits = 0;
-    for (int i = 0; i < nGranuleCount; ++i)
+    for (int i = nIdxFirstExpectedGranule; i <= nIdxLastExpectedGranule; ++i)
     {
         const auto &sGranule = asGranules[i];
         const std::string osTile(
@@ -2618,9 +2664,10 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
 
-        poBand->AddSimpleSource(osTile.c_str(), 1, 0, 0, nColsPerGranule,
-                                nRowsPerGranule, 0, i * nRowsPerGranule,
-                                nColsPerGranule, nRowsPerGranule);
+        poBand->AddSimpleSource(
+            osTile.c_str(), 1, 0, 0, nColsPerGranule, nRowsPerGranule, 0,
+            (i - nIdxFirstExpectedGranule) * nRowsPerGranule, nColsPerGranule,
+            nRowsPerGranule);
     }
 
     if ((nBits % 8) != 0)
