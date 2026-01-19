@@ -1142,6 +1142,68 @@ def test_stats_float32_check_bugfix_13543(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPT
 ###############################################################################
 
 
+@pytest.mark.parametrize(
+    "dt,struct_fmt",
+    [
+        (gdal.GDT_UInt8, "B"),
+        (gdal.GDT_Int8, "b"),
+        (gdal.GDT_UInt16, "H"),
+        (gdal.GDT_Int16, "h"),
+        (gdal.GDT_UInt32, "I"),
+        (gdal.GDT_Int32, "i"),
+        (gdal.GDT_UInt64, "Q"),
+        (gdal.GDT_Int64, "q"),
+        (gdal.GDT_Float16, "e"),
+        (gdal.GDT_Float32, "f"),
+        (gdal.GDT_Float64, "d"),
+    ],
+)
+@pytest.mark.parametrize("GDAL_NUM_THREADS", [None, "ALL_CPUS"])
+def test_stats_with_nodata(tmp_vsimem, dt, struct_fmt, GDAL_NUM_THREADS):
+
+    with gdal.config_option("GDAL_NUM_THREADS", GDAL_NUM_THREADS):
+        src_ds = gdal.GetDriverByName("GTiff").Create(
+            tmp_vsimem / "tmp.tif", 3, 2, 1, dt
+        )
+        src_ds.GetRasterBand(1).SetNoDataValue(100)
+
+        src_ds.GetRasterBand(1).WriteRaster(
+            0, 0, 3, 2, struct.pack(struct_fmt * 3, 4, 100, 2) * 2
+        )
+        got_stats = src_ds.GetRasterBand(1).ComputeStatistics(False)
+        expected_stats = [2.0, 4.0, 3.0, 1.0]
+        assert got_stats == expected_stats
+
+        src_ds.GetRasterBand(1).WriteRaster(
+            0, 0, 3, 2, struct.pack(struct_fmt * 3, 4, 3, 2) * 2
+        )
+        got_stats = src_ds.GetRasterBand(1).ComputeStatistics(False)
+        expected_stats = [2.0, 4.0, 3.0, 0.816496580927726]
+        assert got_stats == pytest.approx(expected_stats)
+
+        if dt in (gdal.GDT_Float16, gdal.GDT_Float32, gdal.GDT_Float64):
+            src_ds.GetRasterBand(1).WriteRaster(
+                0, 0, 3, 2, struct.pack(struct_fmt * 3, 4, float("nan"), 2) * 2
+            )
+            got_stats = src_ds.GetRasterBand(1).ComputeStatistics(False)
+            expected_stats = [2.0, 4.0, 3.0, 1.0]
+            assert got_stats == expected_stats
+
+            # without nodata, but with nan
+            src_ds = gdal.GetDriverByName("GTiff").Create(
+                tmp_vsimem / "tmp.tif", 3, 2, 1, dt
+            )
+            src_ds.GetRasterBand(1).WriteRaster(
+                0, 0, 3, 2, struct.pack(struct_fmt * 3, 4, float("nan"), 2) * 2
+            )
+            got_stats = src_ds.GetRasterBand(1).ComputeStatistics(False)
+            expected_stats = [2.0, 4.0, 3.0, 1.0]
+            assert got_stats == expected_stats
+
+
+###############################################################################
+
+
 @pytest.mark.parametrize("GDAL_STATS_USE_FLOAT64_OPTIM", [None, "NO"])
 def test_stats_float64_nan(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPTIM):
 

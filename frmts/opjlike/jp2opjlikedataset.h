@@ -220,6 +220,8 @@ class JP2OPJLikeRasterBand final : public GDALPamRasterBand
     GDALRasterBand *GetOverview(int iOvrLevel) override;
 
     int HasArbitraryOverviews() override;
+
+    bool MayMultiBlockReadingBeMultiThreaded() const override;
 };
 
 #ifdef unused
