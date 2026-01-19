@@ -9,7 +9,7 @@
       <Detector_List>
         <Detector detectorId="01">
           <Granule_List>
-            <Granule granuleId="S2B_OPER_MSI_L1B_1_N01.03">
+            <Granule granuleId="not_included_in_this_product">
               <POSITION>1</POSITION>
             </Granule>
             <Granule granuleId="S2B_OPER_MSI_L1B_1_N01.03">
@@ -23,6 +23,12 @@
             </Granule>
             <Granule granuleId="S2B_OPER_MSI_L1B_1_N01.03">
               <POSITION>9217</POSITION>
+            </Granule>
+            <Granule granuleId="S2B_OPER_MSI_L1B_1_N01.03">
+              <POSITION>11521</POSITION>
+            </Granule>
+            <Granule granuleId="not_included_in_this_product">
+              <POSITION>13825</POSITION>
             </Granule>
           </Granule_List>
         </Detector>
