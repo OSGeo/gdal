@@ -3265,6 +3265,60 @@ struct MedianKernel
     }
 };
 
+struct QuantileKernel
+{
+    static constexpr const char *pszName = "quantile";
+
+    mutable std::vector<double> values{};
+    double q = 0.5;
+
+    void Reset()
+    {
+        values.clear();
+        // q intentionally preserved (set via ProcessArguments)
+    }
+
+    CPLErr ProcessArguments(CSLConstList papszArgs)
+    {
+        const char *pszQ = CSLFetchNameValue(papszArgs, "q");
+        if (pszQ)
+        {
+            const double dq = CPLAtof(pszQ);
+            if (dq < 0.0 || dq > 1.0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "quantile: q must be between 0 and 1");
+                return CE_Failure;
+            }
+            q = dq;
+        }
+        return CE_None;
+    }
+
+    void ProcessPixel(double dfVal)
+    {
+        if (!std::isnan(dfVal))
+            values.push_back(dfVal);
+    }
+
+    bool HasValue() const
+    {
+        return !values.empty();
+    }
+
+    double GetValue() const
+    {
+        if (values.empty())
+            return std::numeric_limits<double>::quiet_NaN();
+
+        std::vector<double> tmp = values;
+        const size_t n = tmp.size();
+        const size_t idx = static_cast<size_t>(q * (n - 1));
+        std::nth_element(tmp.begin(), tmp.begin() + idx, tmp.end());
+        return tmp[idx];
+    }
+};
+
 struct ModeKernel
 {
     static constexpr const char *pszName = "mode";
@@ -3330,6 +3384,14 @@ static const char pszBasicPixelFuncMetadata[] =
     "should be NoData as as soon as one source is NoData' type='boolean' "
     "default='false' />"
     "</PixelFunctionArgumentsList>";
+
+static const char pszQuantilePixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument name='q' type='float' description='Quantile in [0,1]' default='0.5' />"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "   <Argument name='propagateNoData' type='boolean' default='false' />"
+    "</PixelFunctionArgumentsList>";
+
 
 #if defined(USE_SSE2) && !defined(USE_NEON_OPTIMIZATIONS)
 inline __m128i packus_epi32(__m128i low, __m128i high)
@@ -4074,6 +4136,8 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszBasicPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("median", BasicPixelFunc<MedianKernel>,
                                         pszBasicPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("quantile", BasicPixelFunc<QuantileKernel>,
+                                    pszQuantilePixelFuncMetadata);                                        
     GDALAddDerivedBandPixelFuncWithArgs("mode", BasicPixelFunc<ModeKernel>,
                                         pszBasicPixelFuncMetadata);
     return CE_None;
