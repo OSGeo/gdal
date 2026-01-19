@@ -452,6 +452,15 @@ profile information cannot be used.
 All these metadata tags can be overridden and/or used as creation
 options.
 
+json:ISIS3 Metadata
+-------------------
+
+.. versionadded:: 3.13
+
+It is possible to use :cpp:func:`GDALDataset::GetMetadataItem` to request one
+particular key in the ``json:ISIS3`` metadata domain among all the top-level
+keys that would be returned by ``GDALDataset::GetMetadata("json:ISIS3")``.
+
 Nodata value
 ------------
 

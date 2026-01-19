@@ -9203,6 +9203,12 @@ CPLErr GTiffDataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
         return CE_Failure;
     }
 
+    if (pszDomain && EQUAL(pszDomain, "json:ISIS3"))
+    {
+        m_oISIS3Metadata.Deinit();
+        m_oMapISIS3MetadataItems.clear();
+    }
+
     CPLErr eErr = CE_None;
     if (eAccess == GA_Update)
     {
@@ -9284,6 +9290,14 @@ CPLErr GTiffDataset::SetMetadataItem(const char *pszName, const char *pszValue,
         ReportError(
             CE_Failure, CPLE_NotSupported,
             "Cannot modify metadata at that point in a streamed output file");
+        return CE_Failure;
+    }
+
+    if (pszDomain && EQUAL(pszDomain, "json:ISIS3"))
+    {
+        ReportError(CE_Failure, CPLE_NotSupported,
+                    "Updating part of json:ISIS3 is not supported. "
+                    "Use SetMetadata() instead");
         return CE_Failure;
     }
 

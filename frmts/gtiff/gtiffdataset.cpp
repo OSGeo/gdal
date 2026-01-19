@@ -114,6 +114,7 @@ GTiffDataset::GTiffDataset()
         m_eVirtualMemIOUsage = VirtualMemIOEnum::YES;
 
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oISIS3Metadata.Deinit();
 }
 
 /************************************************************************/
