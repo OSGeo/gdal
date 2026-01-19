@@ -123,7 +123,7 @@ VRTSourcedRasterBand::~VRTSourcedRasterBand()
 
 bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
-    int nBufXSize, int nBufYSize, GDALRasterIOExtraArg *psExtraArg) const
+    int nBufXSize, int nBufYSize, const GDALRasterIOExtraArg *psExtraArg) const
 {
     const auto IsNonNearestInvolved = [this, psExtraArg]
     {
@@ -131,12 +131,12 @@ bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
         {
             return true;
         }
-        for (auto &poSource : m_papoSources)
+        for (const auto &poSource : m_papoSources)
         {
             if (poSource->GetType() == VRTComplexSource::GetTypeStatic())
             {
-                auto *const poComplexSource =
-                    static_cast<VRTComplexSource *>(poSource.get());
+                const auto *const poComplexSource =
+                    static_cast<const VRTComplexSource *>(poSource.get());
                 const auto &osSourceResampling =
                     poComplexSource->GetResampling();
                 if (!osSourceResampling.empty() &&
@@ -465,6 +465,10 @@ bool VRTSourcedRasterBand::MayMultiBlockReadingBeMultiThreaded() const
 {
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    sExtraArg.dfXOff = 0;
+    sExtraArg.dfYOff = 0;
+    sExtraArg.dfXSize = nRasterXSize;
+    sExtraArg.dfYSize = nRasterYSize;
     int nContributingSources = 0;
     auto l_poDS = dynamic_cast<VRTDataset *>(poDS);
     return l_poDS &&

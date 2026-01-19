@@ -1063,7 +1063,8 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
 
     bool CanIRasterIOBeForwardedToEachSource(
         GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
-        int nBufXSize, int nBufYSize, GDALRasterIOExtraArg *psExtraArg) const;
+        int nBufXSize, int nBufYSize,
+        const GDALRasterIOExtraArg *psExtraArg) const;
 
     bool CanMultiThreadRasterIO(double dfXOff, double dfYOff, double dfXSize,
                                 double dfYSize,
