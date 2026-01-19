@@ -4276,6 +4276,22 @@ def test_ogr_parquet_writing_arrow_json_extension(tmp_vsimem):
 
 
 ###############################################################################
+
+
+@pytest.mark.parametrize("check_with_geoarrow_pyarrow", [False, True])
+@gdaltest.enable_exceptions()
+def test_ogr_parquet_read_geoarrow_without_geoparquet(check_with_geoarrow_pyarrow):
+
+    if check_with_geoarrow_pyarrow:
+        pytest.importorskip("geoarrow.pyarrow")
+
+    ds = ogr.Open("data/parquet/poly_geoarrow_polygon_not_geoparquet.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeometryColumn() == "geometry"
+    assert lyr.GetGeomType() == ogr.wkbPolygon
+
+
+###############################################################################
 # Test ignored fields with arrow::dataset and bounding box column
 
 
