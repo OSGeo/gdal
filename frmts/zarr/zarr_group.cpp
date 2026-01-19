@@ -225,7 +225,7 @@ ZarrGroupBase::GetDimensions(CSLConstList) const
     if (!CheckValidAndErrorOutIfNot())
         return {};
 
-    if (!m_bReadFromZMetadata && !m_bDimensionsInstantiated)
+    if (!m_bReadFromConsolidatedMetadata && !m_bDimensionsInstantiated)
     {
         m_bDimensionsInstantiated = true;
         // We need to instantiate arrays to discover dimensions

@@ -1058,12 +1058,13 @@ void ZarrDriver::InitMetadata()
             auto psCreateZMetadata =
                 CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
             CPLAddXMLAttributeAndValue(psCreateZMetadata, "name",
+                                       "CREATE_CONSOLIDATED_METADATA");
+            CPLAddXMLAttributeAndValue(psCreateZMetadata, "alias",
                                        "CREATE_ZMETADATA");
             CPLAddXMLAttributeAndValue(psCreateZMetadata, "type", "boolean");
             CPLAddXMLAttributeAndValue(
                 psCreateZMetadata, "description",
-                "Whether to create consolidated metadata into .zmetadata (Zarr "
-                "V2 only)");
+                "Whether to create consolidated metadata");
             CPLAddXMLAttributeAndValue(psCreateZMetadata, "default", "YES");
 
             auto psSingleArrayNode =
@@ -1125,6 +1126,16 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
     std::shared_ptr<ZarrGroupBase> poRG;
     auto poSharedResource =
         ZarrSharedResource::Create(pszFilename, /*bUpdatable=*/true);
+    const bool bCreateZMetadata = CPLTestBool(CSLFetchNameValueDef(
+        papszOptions, "CREATE_CONSOLIDATED_METADATA",
+        CSLFetchNameValueDef(papszOptions, "CREATE_ZMETADATA", "YES")));
+    if (bCreateZMetadata)
+    {
+        poSharedResource->EnableConsolidatedMetadata(
+            EQUAL(pszFormat, "ZARR_V3")
+                ? ZarrSharedResource::ConsolidatedMetadataKind::INTERNAL
+                : ZarrSharedResource::ConsolidatedMetadataKind::EXTERNAL);
+    }
     if (EQUAL(pszFormat, "ZARR_V3"))
     {
         poRG = ZarrV3Group::CreateOnDisk(poSharedResource, std::string(), "/",
@@ -1132,12 +1143,6 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
     }
     else
     {
-        const bool bCreateZMetadata = CPLTestBool(
-            CSLFetchNameValueDef(papszOptions, "CREATE_ZMETADATA", "YES"));
-        if (bCreateZMetadata)
-        {
-            poSharedResource->EnableZMetadata();
-        }
         poRG = ZarrV2Group::CreateOnDisk(poSharedResource, std::string(), "/",
                                          pszFilename);
     }
@@ -1213,6 +1218,16 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
             CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2");
         auto poSharedResource =
             ZarrSharedResource::Create(pszName, /*bUpdatable=*/true);
+        const bool bCreateZMetadata = CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "CREATE_CONSOLIDATED_METADATA",
+            CSLFetchNameValueDef(papszOptions, "CREATE_ZMETADATA", "YES")));
+        if (bCreateZMetadata)
+        {
+            poSharedResource->EnableConsolidatedMetadata(
+                EQUAL(pszFormat, "ZARR_V3")
+                    ? ZarrSharedResource::ConsolidatedMetadataKind::INTERNAL
+                    : ZarrSharedResource::ConsolidatedMetadataKind::EXTERNAL);
+        }
         if (EQUAL(pszFormat, "ZARR_V3"))
         {
             poRG = ZarrV3Group::CreateOnDisk(poSharedResource, std::string(),
@@ -1220,12 +1235,6 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
         }
         else
         {
-            const bool bCreateZMetadata = CPLTestBool(
-                CSLFetchNameValueDef(papszOptions, "CREATE_ZMETADATA", "YES"));
-            if (bCreateZMetadata)
-            {
-                poSharedResource->EnableZMetadata();
-            }
             poRG = ZarrV2Group::CreateOnDisk(poSharedResource, std::string(),
                                              "/", pszName);
         }

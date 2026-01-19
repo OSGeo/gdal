@@ -238,11 +238,24 @@ class ZarrAttributeGroup
 class ZarrSharedResource
     : public std::enable_shared_from_this<ZarrSharedResource>
 {
+  public:
+    enum class ConsolidatedMetadataKind
+    {
+        NONE,
+        EXTERNAL,  // Zarr V2 .zmetadata
+        INTERNAL,  // Zarr V3 consolidated_metadata
+    };
+
+  private:
     bool m_bUpdatable = false;
     std::string m_osRootDirectoryName{};
-    bool m_bZMetadataEnabled = false;
-    CPLJSONObject m_oObj{};  // For .zmetadata
-    bool m_bZMetadataModified = false;
+
+    ConsolidatedMetadataKind m_eConsolidatedMetadataKind =
+        ConsolidatedMetadataKind::NONE;
+    CPLJSONObject m_oObjConsolidatedMetadata{};
+    CPLJSONObject m_oRootAttributes{};
+    bool m_bConsolidatedMetadataModified = false;
+
     std::shared_ptr<GDALPamMultiDim> m_poPAM{};
     CPLStringList m_aosOpenOptions{};
     std::weak_ptr<ZarrGroupBase> m_poWeakRootGroup{};
@@ -252,6 +265,7 @@ class ZarrSharedResource
                                 bool bUpdatable);
 
     std::shared_ptr<ZarrGroupBase> OpenRootGroup();
+    void InitConsolidatedMetadataIfNeeded();
 
   public:
     static std::shared_ptr<ZarrSharedResource>
@@ -264,9 +278,19 @@ class ZarrSharedResource
         return m_bUpdatable;
     }
 
-    void EnableZMetadata()
+    const CPLJSONObject &GetConsolidatedMetadataObj() const
     {
-        m_bZMetadataEnabled = true;
+        return m_oObjConsolidatedMetadata;
+    }
+
+    bool IsConsolidatedMetadataEnabled() const
+    {
+        return m_eConsolidatedMetadataKind != ConsolidatedMetadataKind::NONE;
+    }
+
+    void EnableConsolidatedMetadata(ConsolidatedMetadataKind kind)
+    {
+        m_eConsolidatedMetadataKind = kind;
     }
 
     void SetZMetadataItem(const std::string &osFilename,
@@ -373,7 +397,7 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     mutable std::vector<std::string> m_aosArrays{};
     mutable ZarrAttributeGroup m_oAttrGroup;
     mutable bool m_bAttributesLoaded = false;
-    bool m_bReadFromZMetadata = false;
+    bool m_bReadFromConsolidatedMetadata = false;
     mutable bool m_bDimensionsInstantiated = false;
     bool m_bUpdatable = false;
     bool m_bDimSizeInUpdate = false;
@@ -558,7 +582,8 @@ class ZarrV2Group final : public ZarrGroupBase
         const GDALExtendedDataType &oDataType,
         CSLConstList papszOptions = nullptr) override;
 
-    void InitFromZMetadata(const CPLJSONObject &oRoot);
+    void InitFromConsolidatedMetadata(const CPLJSONObject &oRoot);
+
     bool InitFromZGroup(const CPLJSONObject &oRoot);
 };
 
@@ -568,12 +593,17 @@ class ZarrV2Group final : public ZarrGroupBase
 
 class ZarrV3Group final : public ZarrGroupBase
 {
+    bool m_bFileHasBeenWritten = false;
+
     void ExploreDirectory() const override;
     void LoadAttributes() const override;
 
     ZarrV3Group(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                 const std::string &osParentName, const std::string &osName,
                 const std::string &osDirectoryName);
+
+    std::shared_ptr<ZarrV3Group>
+    GetOrCreateSubGroup(const std::string &osSubGroupFullname);
 
     bool Close() override;
 
@@ -616,6 +646,10 @@ class ZarrV3Group final : public ZarrGroupBase
     {
         m_bDirectoryExplored = true;
     }
+
+    void
+    InitFromConsolidatedMetadata(const CPLJSONObject &oConsolidatedMetadata,
+                                 const CPLJSONObject &oRootAttributes);
 };
 
 /************************************************************************/
