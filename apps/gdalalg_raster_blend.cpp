@@ -15,6 +15,7 @@
 
 #include "cpl_conv.h"
 #include "gdal_priv.h"
+#include "gdal_utils.h"
 
 #include <algorithm>
 #include <array>
@@ -36,8 +37,154 @@
 #define _(x) (x)
 #endif
 
-constexpr const char *SRC_OVER = "src-over";
-constexpr const char *HSV_VALUE = "hsv-value";
+/************************************************************************/
+/*                        CompositionModes                              */
+/************************************************************************/
+std::map<CompositionMode, std::string> CompositionModes()
+{
+    return {
+        {CompositionMode::SRC_OVER, "src-over"},
+        {CompositionMode::HSV_VALUE, "hsv-value"},
+        {CompositionMode::MULTIPLY, "multiply"},
+        {CompositionMode::SCREEN, "screen"},
+        {CompositionMode::OVERLAY, "overlay"},
+        {CompositionMode::HARD_LIGHT, "hard-light"},
+        {CompositionMode::DARKEN, "darken"},
+        {CompositionMode::LIGHTEN, "lighten"},
+        {CompositionMode::COLOR_BURN, "color-burn"},
+        {CompositionMode::COLOR_DODGE, "color-dodge"},
+    };
+}
+
+/**************************************************************************/
+/*                    CompositionModeToString()                           */
+/**************************************************************************/
+
+std::string CompositionModeToString(CompositionMode mode)
+{
+    const auto &modes = CompositionModes();
+    const auto &iter = modes.find(mode);
+    if (iter != modes.end())
+    {
+        return iter->second;
+    }
+    CPLError(CE_Failure, CPLE_IllegalArg,
+             "Invalid composition mode value: %d, returning 'src-over'",
+             static_cast<int>(mode));
+    return "src-over";
+}
+
+/************************************************************************/
+/*               CompositionModesIdentifiers()                          */
+/************************************************************************/
+
+std::vector<std::string> CompositionModesIdentifiers()
+{
+    const auto &modes = CompositionModes();
+    std::vector<std::string> identifiers;
+    for (const auto &pair : modes)
+    {
+        identifiers.push_back(pair.second);
+    }
+    return identifiers;
+}
+
+/************************************************************************/
+/*               CompositionModeFromString()                            */
+/************************************************************************/
+
+CompositionMode CompositionModeFromString(const std::string &str)
+{
+    const auto &modes = CompositionModes();
+    auto iter =
+        std::find_if(modes.begin(), modes.end(),
+                     [&str](const auto &pair) { return pair.second == str; });
+    if (iter != modes.end())
+    {
+        return iter->first;
+    }
+    CPLError(CE_Failure, CPLE_IllegalArg,
+             "Invalid composition identifier: %s, returning SRC_OVER",
+             str.c_str());
+    return CompositionMode::SRC_OVER;
+}
+
+/************************************************************************/
+/*              MinBandCountForCompositionMode()                        */
+/************************************************************************/
+
+//! Returns the minimum number of bands required for the given composition mode
+int MinBandCountForCompositionMode(CompositionMode mode)
+{
+    switch (mode)
+    {
+        case CompositionMode::HSV_VALUE:
+            return 3;
+        case CompositionMode::SRC_OVER:
+        case CompositionMode::MULTIPLY:
+        case CompositionMode::SCREEN:
+        case CompositionMode::OVERLAY:
+        case CompositionMode::HARD_LIGHT:
+        case CompositionMode::DARKEN:
+        case CompositionMode::LIGHTEN:
+        case CompositionMode::COLOR_BURN:
+        case CompositionMode::COLOR_DODGE:
+            return 1;
+    }
+    // unreachable...
+    return 1;
+}
+
+/************************************************************************/
+/*              MaxBandCountForCompositionMode()                        */
+/************************************************************************/
+
+/**
+ *  Returns the maximum number of bands allowed for the given composition mode
+ */
+int MaxBandCountForCompositionMode(CompositionMode mode)
+{
+    switch (mode)
+    {
+        case CompositionMode::SRC_OVER:
+        case CompositionMode::HSV_VALUE:
+        case CompositionMode::MULTIPLY:
+        case CompositionMode::SCREEN:
+        case CompositionMode::OVERLAY:
+        case CompositionMode::HARD_LIGHT:
+        case CompositionMode::DARKEN:
+        case CompositionMode::LIGHTEN:
+        case CompositionMode::COLOR_BURN:
+        case CompositionMode::COLOR_DODGE:
+            return 4;
+    }
+    // unreachable...
+    return 4;
+}
+
+/************************************************************************/
+/*  BandCountIsCompatibleWithCompositionMode()                          */
+/***********************************************************************/
+
+//! Checks whether the number of bands is compatible with the given composition mode
+bool BandCountIsCompatibleWithCompositionMode(int bandCount,
+                                              CompositionMode mode)
+{
+    const int minBands = MinBandCountForCompositionMode(mode);
+    const int maxBands = MaxBandCountForCompositionMode(mode);
+    return minBands <= bandCount && bandCount <= maxBands;
+}
+
+/*************************************************************************/
+/*        ComputeCompositeAlpha()                                        */
+/*************************************************************************/
+
+GByte ComputeCompositeAlpha(GByte sourceAlpha, GByte overlayAlpha)
+{
+    // Da'  = Sa + Da - Sa.Da
+    return static_cast<GByte>(sourceAlpha + overlayAlpha -
+                              (sourceAlpha * overlayAlpha + 255) / 256);
+}
 
 /************************************************************************/
 /*       GDALRasterBlendAlgorithm::GDALRasterBlendAlgorithm()           */
@@ -77,9 +224,15 @@ GDALRasterBlendAlgorithm::GDALRasterBlendAlgorithm(bool standaloneStep)
         AddOverlayDatasetArg();
     }
 
-    AddArg("operator", 0, _("Composition operator"), &m_operator)
-        .SetChoices(SRC_OVER, HSV_VALUE)
-        .SetDefault(SRC_OVER);
+    const std::vector<std::string> compositionModeChoices{
+        CompositionModesIdentifiers()};
+    AddArg("operator", 0, _("Composition operator"), &m_operatorIdentifier)
+        .SetChoices(compositionModeChoices)
+        .SetDefault(CompositionModeToString(CompositionMode::SRC_OVER))
+        .AddAction(
+            [this]()
+            { m_operator = CompositionModeFromString(m_operatorIdentifier); });
+
     AddArg("opacity", 0,
            _("Opacity percentage to apply to the overlay dataset (0=fully "
              "transparent, 100=full use of overlay opacity)"),
@@ -102,7 +255,7 @@ class BlendDataset final : public GDALDataset
 {
   public:
     BlendDataset(GDALDataset &oColorDS, GDALDataset &oOverlayDS,
-                 const std::string &sOperator, int nOpacity255Scale);
+                 const CompositionMode eOperator, int nOpacity255Scale);
     ~BlendDataset() override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
@@ -131,7 +284,7 @@ class BlendDataset final : public GDALDataset
     friend class BlendBand;
     GDALDataset &m_oColorDS;
     GDALDataset &m_oOverlayDS;
-    const std::string m_operator;
+    const CompositionMode m_operator;
     const int m_opacity255Scale;
     std::vector<std::unique_ptr<BlendDataset>> m_apoOverviews{};
     int m_nCachedXOff = 0;
@@ -463,8 +616,9 @@ class BlendBand final : public GDALRasterBand
 /************************************************************************/
 
 BlendDataset::BlendDataset(GDALDataset &oColorDS, GDALDataset &oOverlayDS,
-                           const std::string &sOperator, int nOpacity255Scale)
-    : m_oColorDS(oColorDS), m_oOverlayDS(oOverlayDS), m_operator(sOperator),
+                           const CompositionMode eOperator,
+                           int nOpacity255Scale)
+    : m_oColorDS(oColorDS), m_oOverlayDS(oOverlayDS), m_operator(eOperator),
       m_opacity255Scale(nOpacity255Scale)
 {
     m_oColorDS.Reference();
@@ -639,6 +793,635 @@ constexpr auto gTabInvDstA = []()
 
     return arr;
 }();
+
+/************************************************************************/
+/*                         BlendMultiply_Generic                        */
+/************************************************************************/
+
+static void BlendMultiply_Generic(
+    const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
+    const GByte *CPL_RESTRICT pabyB, const GByte *CPL_RESTRICT pabyA,
+    const GByte *CPL_RESTRICT pabyOverlayR,
+    const GByte *CPL_RESTRICT pabyOverlayG,
+    const GByte *CPL_RESTRICT pabyOverlayB,
+    const GByte *CPL_RESTRICT pabyOverlayA, GByte *CPL_RESTRICT pabyDst,
+    [[maybe_unused]] GSpacing nPixelSpace, GSpacing nBandSpace, size_t i,
+    size_t N, GByte nOpacity)
+{
+
+    // Generic formulas from Mapserver
+    // Dca' = Sca.Dca + Sca.(1 - Da) + Dca.(1 - Sa)
+    // Da'  = Sa + Da - Sa.Da
+
+    // TODO: optimize for the various cases (with/without alpha, grayscale/RGB)
+    // TODO: optimize mathematically to avoid redundant computations
+
+    // Determine the number of output bands
+    const int nInputBands{1 + (pabyG ? 2 : 0) + (pabyA ? 1 : 0)};
+    const int nOverlayBands{1 + (pabyOverlayG ? 2 : 0) +
+                            (pabyOverlayA ? 1 : 0)};
+    const int nOutputBands = std::max(nInputBands, nOverlayBands);
+
+    for (; i < N; ++i)
+    {
+
+        // The opacity is pre-multiplied to the overlay alpha band only
+        const GByte nOverlayA =
+            pabyOverlayA
+                ? static_cast<GByte>((pabyOverlayA[i] * nOpacity + 255) / 256)
+                : static_cast<GByte>((255 * nOpacity + 255) / 256);
+
+        const GByte nA = pabyA ? pabyA[i] : 255;
+
+        const GByte nFinalAlpha = ComputeCompositeAlpha(nA, nOverlayA);
+
+        // For grayscale images, use R band for the value
+        const GByte nR{pabyR[i]};
+        const GByte nG{pabyG ? pabyG[i] : nR};
+        const GByte nB{pabyB ? pabyB[i] : nR};
+
+        const GByte nOverlayR{pabyOverlayR[i]};
+        const GByte nOverlayG{pabyOverlayG ? pabyOverlayG[i] : nOverlayR};
+        const GByte nOverlayB{pabyOverlayB ? pabyOverlayB[i] : nOverlayR};
+
+        // Result
+        const GByte nDstR =
+            static_cast<GByte>((nR * nOverlayR + 255) / 256 +
+                               (nR * (255 - nOverlayA) + 255) / 256 +
+                               (nOverlayR * (255 - nA) + 255) / 256);
+        pabyDst[i] = nDstR;
+
+        // Grayscale with alpha
+        if (nOutputBands == 2)
+        {
+            pabyDst[i + nBandSpace] = nFinalAlpha;
+        }
+        else
+        {
+            // RBG and RGBA
+            if (nOutputBands >= 3)
+            {
+                const GByte nDstG{
+                    static_cast<GByte>((nG * nOverlayG + 255) / 256 +
+                                       (nG * (255 - nOverlayA) + 255) / 256 +
+                                       (nOverlayG * (255 - nA) + 255) / 256)};
+                const GByte nDstB{
+                    static_cast<GByte>((nB * nOverlayB + 255) / 256 +
+                                       (nB * (255 - nOverlayA) + 255) / 256 +
+                                       (nOverlayB * (255 - nA) + 255) / 256)};
+                pabyDst[i + nBandSpace] = nDstG;
+                pabyDst[i + 2 * nBandSpace] = nDstB;
+            }
+
+            // RGBA
+            if (nOutputBands == 4)
+            {
+                pabyDst[i + 3 * nBandSpace] = nFinalAlpha;
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                         BlendScreen_Generic                          */
+/************************************************************************/
+
+static void BlendScreen_Generic(
+    const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
+    const GByte *CPL_RESTRICT pabyB, const GByte *CPL_RESTRICT pabyA,
+    const GByte *CPL_RESTRICT pabyOverlayR,
+    const GByte *CPL_RESTRICT pabyOverlayG,
+    const GByte *CPL_RESTRICT pabyOverlayB,
+    const GByte *CPL_RESTRICT pabyOverlayA, GByte *CPL_RESTRICT pabyDst,
+    [[maybe_unused]] GSpacing nPixelSpace, GSpacing nBandSpace, size_t i,
+    size_t N, GByte nOpacity)
+{
+
+    // Generic formulas from Mapserver
+    // Dca' = Sca + Dca - Sca.Dca
+    // Da'  = Sa + Da - Sa.Da
+
+    // TODO: optimize for the various cases (with/without alpha, grayscale/RGB)
+    // TODO: optimize mathematically to avoid redundant computations
+
+    // Determine the number of output bands
+    const int nInputBands{1 + (pabyG ? 2 : 0) + (pabyA ? 1 : 0)};
+    const int nOverlayBands{1 + (pabyOverlayG ? 2 : 0) +
+                            (pabyOverlayA ? 1 : 0)};
+    const int nOutputBands = std::max(nInputBands, nOverlayBands);
+
+    for (; i < N; ++i)
+    {
+
+        // The opacity is pre-multiplied to the overlay alpha band only
+        const GByte nOverlayA =
+            pabyOverlayA
+                ? static_cast<GByte>((pabyOverlayA[i] * nOpacity + 255) / 256)
+                : static_cast<GByte>((255 * nOpacity + 255) / 256);
+
+        const GByte nA = pabyA ? pabyA[i] : 255;
+        const GByte nFinalAlpha = ComputeCompositeAlpha(nA, nOverlayA);
+
+        // For grayscale images, use R band for the value
+        const GByte nR{pabyR[i]};
+        const GByte nG{pabyG ? pabyG[i] : nR};
+        const GByte nB{pabyB ? pabyB[i] : nR};
+        const GByte nOverlayR{pabyOverlayR[i]};
+        const GByte nOverlayG{pabyOverlayG ? pabyOverlayG[i] : nOverlayR};
+        const GByte nOverlayB{pabyOverlayB ? pabyOverlayB[i] : nOverlayR};
+        // Result
+        const GByte nDstR =
+            static_cast<GByte>(nR + nOverlayR - (nR * nOverlayR + 255) / 256);
+        pabyDst[i] = nDstR;
+        // Grayscale with alpha
+        if (nOutputBands == 2)
+        {
+            pabyDst[i + nBandSpace] = nFinalAlpha;
+        }
+        else
+        {
+            // RBG and RGBA
+            if (nOutputBands >= 3)
+            {
+                const GByte nDstG{static_cast<GByte>(
+                    nG + nOverlayG - (nG * nOverlayG + 255) / 256)};
+                const GByte nDstB{static_cast<GByte>(
+                    nB + nOverlayB - (nB * nOverlayB + 255) / 256)};
+                pabyDst[i + nBandSpace] = nDstG;
+                pabyDst[i + 2 * nBandSpace] = nDstB;
+            }
+
+            // RGBA
+            if (nOutputBands == 4)
+            {
+                pabyDst[i + 3 * nBandSpace] = nFinalAlpha;
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                         BlendOverlay_Generic                         */
+/************************************************************************/
+
+static void BlendOverlay_Generic(
+    const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
+    const GByte *CPL_RESTRICT pabyB, const GByte *CPL_RESTRICT pabyA,
+    const GByte *CPL_RESTRICT pabyOverlayR,
+    const GByte *CPL_RESTRICT pabyOverlayG,
+    const GByte *CPL_RESTRICT pabyOverlayB,
+    const GByte *CPL_RESTRICT pabyOverlayA, GByte *CPL_RESTRICT pabyDst,
+    [[maybe_unused]] GSpacing nPixelSpace, GSpacing nBandSpace, size_t i,
+    size_t N, GByte nOpacity)
+{
+
+    // Generic formulas from Mapserver
+    // Where "D" is destination, "S" is source (overlay)
+    // if 2.Dca < Da
+    //   Dca' = 2.Sca.Dca + Sca.(1 - Da) + Dca.(1 - Sa)
+    // otherwise
+    //   Dca' = Sa.Da - 2.(Da - Dca).(Sa - Sca) + Sca.(1 - Da) + Dca.(1 - Sa)
+    //
+    // Da'  = Sa + Da - Sa.Da
+
+    // TODO: optimize for the various cases (with/without alpha, grayscale/RGB)
+    // TODO: optimize mathematically to avoid redundant computations
+
+    // Determine the number of output bands
+    const int nInputBands{1 + (pabyG ? 2 : 0) + (pabyA ? 1 : 0)};
+    const int nOverlayBands{1 + (pabyOverlayG ? 2 : 0) +
+                            (pabyOverlayA ? 1 : 0)};
+    const int nOutputBands = std::max(nInputBands, nOverlayBands);
+
+    for (; i < N; ++i)
+    {
+
+        // The opacity is pre-multiplied to the overlay alpha band only
+        const GByte nOverlayA =
+            pabyOverlayA
+                ? static_cast<GByte>((pabyOverlayA[i] * nOpacity + 255) / 256)
+                : static_cast<GByte>((255 * nOpacity + 255) / 256);
+
+        const GByte nA = pabyA ? pabyA[i] : 255;
+        const GByte nFinalAlpha = ComputeCompositeAlpha(nA, nOverlayA);
+
+        // For grayscale images, use R band for the value
+        const GByte nR{pabyR[i]};
+        const GByte nG{pabyG ? pabyG[i] : nR};
+        const GByte nB{pabyB ? pabyB[i] : nR};
+        const GByte nOverlayR{pabyOverlayR[i]};
+        const GByte nOverlayG{pabyOverlayG ? pabyOverlayG[i] : nOverlayR};
+        const GByte nOverlayB{pabyOverlayB ? pabyOverlayB[i] : nOverlayR};
+        // Result
+        GByte nDstR = 0;
+        if (2 * nR < nA)
+        {
+            nDstR = static_cast<GByte>((2 * nOverlayR * nR + 255) / 256 +
+                                       (nR * (255 - nOverlayA) + 255) / 256 +
+                                       (nOverlayR * (255 - nA) + 255) / 256);
+        }
+        else
+        {
+            nDstR = static_cast<GByte>(
+                nOverlayA * nA - 2 * (nA - nR) * (nOverlayA - nOverlayR) / 256 +
+                (nR * (255 - nOverlayA) + 255) / 256 +
+                (nOverlayR * (255 - nA) + 255) / 256);
+        }
+        pabyDst[i] = nDstR;
+
+        // Grayscale with alpha
+        if (nOutputBands == 2)
+        {
+            pabyDst[i + nBandSpace] = nFinalAlpha;
+        }
+        else
+        {
+            // RBG and RGBA
+            if (nOutputBands >= 3)
+            {
+                GByte nDstG = 0;
+                if (2 * nG < nA)
+                {
+                    nDstG = static_cast<GByte>(
+                        (2 * nOverlayG * nG + 255) / 256 +
+                        (nG * (255 - nOverlayA) + 255) / 256 +
+                        (nOverlayG * (255 - nA) + 255) / 256);
+                }
+                else
+                {
+                    nDstG = static_cast<GByte>(
+                        nOverlayA * nA -
+                        2 * (nA - nG) * (nOverlayA - nOverlayG) / 256 +
+                        (nG * (255 - nOverlayA) + 255) / 256 +
+                        (nOverlayG * (255 - nA) + 255) / 256);
+                }
+
+                GByte nDstB = 0;
+                if (2 * nB < nA)
+                {
+                    nDstB = static_cast<GByte>(
+                        (2 * nOverlayB * nB + 255) / 256 +
+                        (nB * (255 - nOverlayA) + 255) / 256 +
+                        (nOverlayB * (255 - nA) + 255) / 256);
+                }
+                else
+                {
+                    nDstB = static_cast<GByte>(
+                        nOverlayA * nA -
+                        2 * (nA - nB) * (nOverlayA - nOverlayB) / 256 +
+                        (nB * (255 - nOverlayA) + 255) / 256 +
+                        (nOverlayB * (255 - nA) + 255) / 256);
+                }
+
+                pabyDst[i + nBandSpace] = nDstG;
+                pabyDst[i + 2 * nBandSpace] = nDstB;
+            }
+
+            // RGBA
+            if (nOutputBands == 4)
+            {
+                pabyDst[i + 3 * nBandSpace] = nFinalAlpha;
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                         BlendHardLight_Generic                       */
+/************************************************************************/
+
+static void BlendHardLight_Generic(
+    const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
+    const GByte *CPL_RESTRICT pabyB, const GByte *CPL_RESTRICT pabyA,
+    const GByte *CPL_RESTRICT pabyOverlayR,
+    const GByte *CPL_RESTRICT pabyOverlayG,
+    const GByte *CPL_RESTRICT pabyOverlayB,
+    const GByte *CPL_RESTRICT pabyOverlayA, GByte *CPL_RESTRICT pabyDst,
+    [[maybe_unused]] GSpacing nPixelSpace, GSpacing nBandSpace, size_t i,
+    size_t N, GByte nOpacity)
+{
+    // Hard Light is Overlay with roles of source and overlay swapped
+    BlendOverlay_Generic(pabyOverlayR, pabyOverlayG, pabyOverlayB, pabyOverlayA,
+                         pabyR, pabyG, pabyB, pabyA, pabyDst, nPixelSpace,
+                         nBandSpace, i, N, nOpacity);
+}
+
+/*************************************************************************/
+/*                         BlendDarken_Generic                           */
+/*************************************************************************/
+
+static void BlendDarken_Generic(
+    const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
+    const GByte *CPL_RESTRICT pabyB, const GByte *CPL_RESTRICT pabyA,
+    const GByte *CPL_RESTRICT pabyOverlayR,
+    const GByte *CPL_RESTRICT pabyOverlayG,
+    const GByte *CPL_RESTRICT pabyOverlayB,
+    const GByte *CPL_RESTRICT pabyOverlayA, GByte *CPL_RESTRICT pabyDst,
+    [[maybe_unused]] GSpacing nPixelSpace, GSpacing nBandSpace, size_t i,
+    size_t N, GByte nOpacity)
+{
+    // Generic formulas from Mapserver
+    // Dca' = min(Sca.Da, Dca.Sa) + Sca.(1 - Da) + Dca.(1 - Sa)
+    // Da'  = Sa + Da - Sa.Da
+
+    // TODO: optimize for the various cases (with/without alpha, grayscale/RGB)
+    // TODO: optimize mathematically to avoid redundant computations
+
+    // Determine the number of output bands
+    const int nInputBands{1 + (pabyG ? 2 : 0) + (pabyA ? 1 : 0)};
+    const int nOverlayBands{1 + (pabyOverlayG ? 2 : 0) +
+                            (pabyOverlayA ? 1 : 0)};
+    const int nOutputBands = std::max(nInputBands, nOverlayBands);
+
+    for (; i < N; ++i)
+    {
+
+        // The opacity is pre-multiplied to the overlay alpha band only
+        const GByte nOverlayA =
+            pabyOverlayA
+                ? static_cast<GByte>((pabyOverlayA[i] * nOpacity + 255) / 256)
+                : static_cast<GByte>((255 * nOpacity + 255) / 256);
+
+        const GByte nA = pabyA ? pabyA[i] : 255;
+        const GByte nFinalAlpha = ComputeCompositeAlpha(nA, nOverlayA);
+
+        // For grayscale images, use R band for the value
+        const GByte nR{pabyR[i]};
+        const GByte nG{pabyG ? pabyG[i] : nR};
+        const GByte nB{pabyB ? pabyB[i] : nR};
+        const GByte nOverlayR{pabyOverlayR[i]};
+        const GByte nOverlayG{pabyOverlayG ? pabyOverlayG[i] : nOverlayR};
+        const GByte nOverlayB{pabyOverlayB ? pabyOverlayB[i] : nOverlayR};
+        // Result
+        const GByte nDstR =
+            static_cast<GByte>(std::min((nOverlayR * nA + 255) / 256,
+                                        (nR * nOverlayA + 255) / 256) +
+                               (nR * (255 - nOverlayA) + 255) / 256 +
+                               (nOverlayR * (255 - nA) + 255) / 256);
+        pabyDst[i] = nDstR;
+        // Grayscale with alpha
+        if (nOutputBands == 2)
+        {
+            pabyDst[i + nBandSpace] = nFinalAlpha;
+        }
+        else
+        {
+            // RBG and RGBA
+            if (nOutputBands >= 3)
+            {
+                const GByte nDstG{
+                    static_cast<GByte>(std::min((nOverlayG * nA + 255) / 256,
+                                                (nG * nOverlayA + 255) / 256) +
+                                       (nG * (255 - nOverlayA) + 255) / 256 +
+                                       (nOverlayG * (255 - nA) + 255) / 256)};
+                const GByte nDstB{
+                    static_cast<GByte>(std::min((nOverlayB * nA + 255) / 256,
+                                                (nB * nOverlayA + 255) / 256) +
+                                       (nB * (255 - nOverlayA) + 255) / 256 +
+                                       (nOverlayB * (255 - nA) + 255) / 256)};
+                pabyDst[i + nBandSpace] = nDstG;
+                pabyDst[i + 2 * nBandSpace] = nDstB;
+            }
+
+            // RGBA
+            if (nOutputBands == 4)
+            {
+                pabyDst[i + 3 * nBandSpace] = nFinalAlpha;
+            }
+        }
+    }
+}
+
+/*************************************************************************/
+/*                         BlendLighten_Generic                          */
+/*************************************************************************/
+
+static void BlendLighten_Generic(
+    const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
+    const GByte *CPL_RESTRICT pabyB, const GByte *CPL_RESTRICT pabyA,
+    const GByte *CPL_RESTRICT pabyOverlayR,
+    const GByte *CPL_RESTRICT pabyOverlayG,
+    const GByte *CPL_RESTRICT pabyOverlayB,
+    const GByte *CPL_RESTRICT pabyOverlayA, GByte *CPL_RESTRICT pabyDst,
+    [[maybe_unused]] GSpacing nPixelSpace, GSpacing nBandSpace, size_t i,
+    size_t N, GByte nOpacity)
+{
+
+    // Generic formulas from Mapserver
+    // Dca' = max(Sca.Da, Dca.Sa) + Sca.(1 - Da) + Dca.(1 - Sa)
+    // Da'  = Sa + Da - Sa.Da
+
+    // TODO: optimize for the various cases (with/without alpha, grayscale/RGB)
+    // TODO: optimize mathematically to avoid redundant computations
+
+    // Determine the number of output bands
+    const int nInputBands{1 + (pabyG ? 2 : 0) + (pabyA ? 1 : 0)};
+    const int nOverlayBands{1 + (pabyOverlayG ? 2 : 0) +
+                            (pabyOverlayA ? 1 : 0)};
+    const int nOutputBands = std::max(nInputBands, nOverlayBands);
+
+    for (; i < N; ++i)
+    {
+
+        // The opacity is pre-multiplied to the overlay alpha band only
+        const GByte nOverlayA =
+            pabyOverlayA
+                ? static_cast<GByte>((pabyOverlayA[i] * nOpacity + 255) / 256)
+                : static_cast<GByte>((255 * nOpacity + 255) / 256);
+
+        const GByte nA = pabyA ? pabyA[i] : 255;
+        const GByte nFinalAlpha = ComputeCompositeAlpha(nA, nOverlayA);
+
+        // For grayscale images, use R band for the value
+        const GByte nR{pabyR[i]};
+        const GByte nG{pabyG ? pabyG[i] : nR};
+        const GByte nB{pabyB ? pabyB[i] : nR};
+        const GByte nOverlayR{pabyOverlayR[i]};
+        const GByte nOverlayG{pabyOverlayG ? pabyOverlayG[i] : nOverlayR};
+        const GByte nOverlayB{pabyOverlayB ? pabyOverlayB[i] : nOverlayR};
+        // Result
+        const GByte nDstR =
+            static_cast<GByte>(std::max((nOverlayR * nA + 255) / 256,
+                                        (nR * nOverlayA + 255) / 256) +
+                               (nR * (255 - nOverlayA) + 255) / 256 +
+                               (nOverlayR * (255 - nA) + 255) / 256);
+        pabyDst[i] = nDstR;
+        // Grayscale with alpha
+        if (nOutputBands == 2)
+        {
+            pabyDst[i + nBandSpace] = nFinalAlpha;
+        }
+        else
+        {
+            // RBG and RGBA
+            if (nOutputBands >= 3)
+            {
+                const GByte nDstG{
+                    static_cast<GByte>(std::max((nOverlayG * nA + 255) / 256,
+                                                (nG * nOverlayA + 255) / 256) +
+                                       (nG * (255 - nOverlayA) + 255) / 256 +
+                                       (nOverlayG * (255 - nA) + 255) / 256)};
+                const GByte nDstB{
+                    static_cast<GByte>(std::max((nOverlayB * nA + 255) / 256,
+                                                (nB * nOverlayA + 255) / 256) +
+                                       (nB * (255 - nOverlayA) + 255) / 256 +
+                                       (nOverlayB * (255 - nA) + 255) / 256)};
+                pabyDst[i + nBandSpace] = nDstG;
+                pabyDst[i + 2 * nBandSpace] = nDstB;
+            }
+
+            // RGBA
+            if (nOutputBands == 4)
+            {
+                pabyDst[i + 3 * nBandSpace] = nFinalAlpha;
+            }
+        }
+    }
+}
+
+/*************************************************************************/
+/*                         BlendColorDodge_Generic                       */
+/*************************************************************************/
+
+static void BlendColorDodge_Generic(
+    const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
+    const GByte *CPL_RESTRICT pabyB, const GByte *CPL_RESTRICT pabyA,
+    const GByte *CPL_RESTRICT pabyOverlayR,
+    const GByte *CPL_RESTRICT pabyOverlayG,
+    const GByte *CPL_RESTRICT pabyOverlayB,
+    const GByte *CPL_RESTRICT pabyOverlayA, GByte *CPL_RESTRICT pabyDst,
+    [[maybe_unused]] GSpacing nPixelSpace, GSpacing nBandSpace, size_t i,
+    size_t N, GByte nOpacity)
+{
+
+    // Generic formulas from Mapserver
+    // if Sca.Da + Dca.Sa >= Sa.Da
+    //   Dca' = Sa.Da + Sca.(1 - Da) + Dca.(1 - Sa)
+    // otherwise
+    //   Dca' = Dca.Sa/(1-Sca/Sa) + Sca.(1 - Da) + Dca.(1 - Sa)
+    //
+    // Da'  = Sa + Da - Sa.Da
+
+    // TODO: optimize for the various cases (with/without alpha, grayscale/RGB)
+    // TODO: optimize mathematically to avoid redundant computations
+
+    // Determine the number of output bands
+    const int nInputBands{1 + (pabyG ? 2 : 0) + (pabyA ? 1 : 0)};
+    const int nOverlayBands{1 + (pabyOverlayG ? 2 : 0) +
+                            (pabyOverlayA ? 1 : 0)};
+    const int nOutputBands = std::max(nInputBands, nOverlayBands);
+
+    for (; i < N; ++i)
+    {
+
+        // The opacity is pre-multiplied to the overlay alpha band only
+        const GByte nOverlayA =
+            pabyOverlayA
+                ? static_cast<GByte>((pabyOverlayA[i] * nOpacity + 255) / 256)
+                : static_cast<GByte>((255 * nOpacity + 255) / 256);
+
+        const GByte nA = pabyA ? pabyA[i] : 255;
+        const GByte nFinalAlpha = ComputeCompositeAlpha(nA, nOverlayA);
+
+        // For grayscale images, use R band for the value
+        const GByte nR{pabyR[i]};
+        const GByte nG{pabyG ? pabyG[i] : nR};
+        const GByte nB{pabyB ? pabyB[i] : nR};
+        const GByte nOverlayR{pabyOverlayR[i]};
+        const GByte nOverlayG{pabyOverlayG ? pabyOverlayG[i] : nOverlayR};
+        const GByte nOverlayB{pabyOverlayB ? pabyOverlayB[i] : nOverlayR};
+        // Result
+        GByte nDstR = 0;
+        if (nOverlayR * nA + nR * nOverlayA >= nOverlayA * nA)
+        {
+            nDstR = static_cast<GByte>(nOverlayA * nA +
+                                       (nR * (255 - nOverlayA) + 255) / 256 +
+                                       (nOverlayR * (255 - nA) + 255) / 256);
+        }
+        else
+        {
+            nDstR =
+                static_cast<GByte>((nR * nOverlayA * 255) /
+                                       (255 * nOverlayA - nOverlayR * nA + 1) +
+                                   (nR * (255 - nOverlayA) + 255) / 256 +
+                                   (nOverlayR * (255 - nA) + 255) / 256);
+        }
+        pabyDst[i] = nDstR;
+        // Grayscale with alpha
+        if (nOutputBands == 2)
+        {
+            pabyDst[i + nBandSpace] = nFinalAlpha;
+        }
+        else
+        {
+            // RBG and RGBA
+            if (nOutputBands >= 3)
+            {
+                GByte nDstG = 0;
+                if (nOverlayG * nA + nG * nOverlayA >= nOverlayA * nA)
+                {
+                    nDstG = static_cast<GByte>(
+                        nOverlayA * nA + (nG * (255 - nOverlayA) + 255) / 256 +
+                        (nOverlayG * (255 - nA) + 255) / 256);
+                }
+                else
+                {
+                    nDstG = static_cast<GByte>(
+                        (nG * nOverlayA * 255) /
+                            (255 * nOverlayA - nOverlayG * nA + 1) +
+                        (nG * (255 - nOverlayA) + 255) / 256 +
+                        (nOverlayG * (255 - nA) + 255) / 256);
+                }
+
+                GByte nDstB = 0;
+                if (nOverlayB * nA + nB * nOverlayA >= nOverlayA * nA)
+                {
+                    nDstB = static_cast<GByte>(
+                        nOverlayA * nA + (nB * (255 - nOverlayA) + 255) / 256 +
+                        (nOverlayB * (255 - nA) + 255) / 256);
+                }
+                else
+                {
+                    nDstB = static_cast<GByte>(
+                        (nB * nOverlayA * 255) /
+                            (255 * nOverlayA - nOverlayB * nA + 1) +
+                        (nB * (255 - nOverlayA) + 255) / 256 +
+                        (nOverlayB * (255 - nA) + 255) / 256);
+                }
+
+                pabyDst[i + nBandSpace] = nDstG;
+                pabyDst[i + 2 * nBandSpace] = nDstB;
+            }
+
+            // RGBA
+            if (nOutputBands == 4)
+            {
+                pabyDst[i + 3 * nBandSpace] = nFinalAlpha;
+            }
+        }
+    }
+}
+
+/*************************************************************************/
+/*                         BlendColorBurn_Generic                        */
+/*************************************************************************/
+
+static void BlendColorBurn_Generic(
+    const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
+    const GByte *CPL_RESTRICT pabyB, const GByte *CPL_RESTRICT pabyA,
+    const GByte *CPL_RESTRICT pabyOverlayR,
+    const GByte *CPL_RESTRICT pabyOverlayG,
+    const GByte *CPL_RESTRICT pabyOverlayB,
+    const GByte *CPL_RESTRICT pabyOverlayA, GByte *CPL_RESTRICT pabyDst,
+    [[maybe_unused]] GSpacing nPixelSpace, GSpacing nBandSpace, size_t i,
+    size_t N, GByte nOpacity)
+{
+    // Color Burn is the opposite of Color Dodge with roles of source and
+    // overlay swapped
+    BlendColorDodge_Generic(pabyOverlayR, pabyOverlayG, pabyOverlayB,
+                            pabyOverlayA, pabyR, pabyG, pabyB, pabyA, pabyDst,
+                            nPixelSpace, nBandSpace, i, N, nOpacity);
+}
 
 /************************************************************************/
 /*                         BlendSrcOverRGBA_SSE2()                      */
@@ -865,8 +1648,12 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     GByte *const CPL_RESTRICT pabyDst = static_cast<GByte *>(pData);
     const int nColorCount = m_oColorDS.GetRasterCount();
     const int nOverlayCount = m_oOverlayDS.GetRasterCount();
+
+    /************************************************************************/
+    /* HSV_VALUE                                                            */
+    /*************************************************************************/
     if (nOverlayCount == 1 && m_opacity255Scale == 255 &&
-        m_operator == HSV_VALUE && eRWFlag == GF_Read &&
+        m_operator == CompositionMode::HSV_VALUE && eRWFlag == GF_Read &&
         eBufType == GDT_UInt8 && nBandCount == nBands &&
         IsAllBands(nBands, panBandMap) &&
         AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
@@ -920,9 +1707,14 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
         return CE_None;
     }
-    else if (nOverlayCount == 4 && nColorCount == 4 && m_operator == SRC_OVER &&
-             eRWFlag == GF_Read && eBufType == GDT_UInt8 &&
-             nBandCount == nBands && IsAllBands(nBands, panBandMap) &&
+
+    /************************************************************************/
+    /* SRC_OVER                                                             */
+    /************************************************************************/
+    else if (nOverlayCount == 4 && nColorCount == 4 &&
+             m_operator == CompositionMode::SRC_OVER && eRWFlag == GF_Read &&
+             eBufType == GDT_UInt8 && nBandCount == nBands &&
+             IsAllBands(nBands, panBandMap) &&
              AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize, nBufXSize,
                                  nBufYSize, psExtraArg))
     {
@@ -984,6 +1776,164 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
         return CE_None;
     }
+
+    /************************************************************************/
+    /* OTHER OPERATORS                                                      */
+    /************************************************************************/
+
+    else if ((m_operator == CompositionMode::MULTIPLY ||
+              m_operator == CompositionMode::OVERLAY ||
+              m_operator == CompositionMode::SCREEN ||
+              m_operator == CompositionMode::HARD_LIGHT ||
+              m_operator == CompositionMode::DARKEN ||
+              m_operator == CompositionMode::LIGHTEN ||
+              m_operator == CompositionMode::COLOR_BURN ||
+              m_operator == CompositionMode::COLOR_DODGE) &&
+             eRWFlag == GF_Read && eBufType == GDT_UInt8 &&
+             nBandCount == nBands && IsAllBands(nBands, panBandMap) &&
+             AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize, nBufXSize,
+                                 nBufYSize, psExtraArg))
+    {
+        // We should have optimized paths for 1, 2, 3 and 4 bands on input and overlay
+        // permutations but let's keep it simple for now.
+        const GByte nOpacity = static_cast<GByte>(m_opacity255Scale);
+        const size_t nPixelCount = static_cast<size_t>(nBufXSize) * nBufYSize;
+        const GByte *CPL_RESTRICT pabyR = m_abyBuffer.data();
+        GByte *CPL_RESTRICT pabyG = nullptr;
+        GByte *CPL_RESTRICT pabyB = nullptr;
+        GByte *CPL_RESTRICT pabyA = nullptr;
+        switch (nColorCount)
+        {
+            case 2:
+                pabyA = m_abyBuffer.data() + nPixelCount;
+                break;
+            case 3:
+                pabyG = m_abyBuffer.data() + nPixelCount;
+                pabyB = m_abyBuffer.data() + nPixelCount * 2;
+                break;
+            case 4:
+                pabyG = m_abyBuffer.data() + nPixelCount;
+                pabyB = m_abyBuffer.data() + nPixelCount * 2;
+                pabyA = m_abyBuffer.data() + nPixelCount * 3;
+                break;
+        }
+
+        const GByte *CPL_RESTRICT pabyOverlayR =
+            m_abyBuffer.data() + nPixelCount * nColorCount;
+        GByte *CPL_RESTRICT pabyOverlayG = nullptr;
+        GByte *CPL_RESTRICT pabyOverlayB = nullptr;
+        GByte *CPL_RESTRICT pabyOverlayA = nullptr;
+        switch (nOverlayCount)
+        {
+            case 2:
+                pabyOverlayA =
+                    m_abyBuffer.data() + nPixelCount * (nColorCount + 1);
+                break;
+            case 3:
+                pabyOverlayG =
+                    m_abyBuffer.data() + nPixelCount * (nColorCount + 1);
+                pabyOverlayB =
+                    m_abyBuffer.data() + nPixelCount * (nColorCount + 2);
+                break;
+            case 4:
+                pabyOverlayG =
+                    m_abyBuffer.data() + nPixelCount * (nColorCount + 1);
+                pabyOverlayB =
+                    m_abyBuffer.data() + nPixelCount * (nColorCount + 2);
+                pabyOverlayA =
+                    m_abyBuffer.data() + nPixelCount * (nColorCount + 3);
+                break;
+        }
+
+        size_t nSrcIdx = 0;
+        for (int j = 0; j < nBufYSize; ++j)
+        {
+            auto nDstOffset = j * nLineSpace;
+            int i = 0;
+
+            const GByte *CPL_RESTRICT pabyOverlayG_current =
+                pabyOverlayG ? pabyOverlayG + nSrcIdx : nullptr;
+            const GByte *CPL_RESTRICT pabyOverlayB_current =
+                pabyOverlayB ? pabyOverlayB + nSrcIdx : nullptr;
+            const GByte *CPL_RESTRICT pabyOverlayA_current =
+                pabyOverlayA ? pabyOverlayA + nSrcIdx : nullptr;
+
+            const GByte *CPL_RESTRICT pabyG_current =
+                pabyG ? pabyG + nSrcIdx : nullptr;
+            const GByte *CPL_RESTRICT pabyB_current =
+                pabyB ? pabyB + nSrcIdx : nullptr;
+            const GByte *CPL_RESTRICT pabyA_current =
+                pabyA ? pabyA + nSrcIdx : nullptr;
+
+            if (m_operator == CompositionMode::SCREEN)
+                BlendScreen_Generic(
+                    pabyR + nSrcIdx, pabyG_current, pabyB_current,
+                    pabyA_current, pabyOverlayR + nSrcIdx, pabyOverlayG_current,
+                    pabyOverlayB_current, pabyOverlayA_current,
+                    pabyDst + nDstOffset, nPixelSpace, nBandSpace, i, nBufXSize,
+                    nOpacity);
+            else if (m_operator == CompositionMode::MULTIPLY)
+                BlendMultiply_Generic(
+                    pabyR + nSrcIdx, pabyG_current, pabyB_current,
+                    pabyA_current, pabyOverlayR + nSrcIdx, pabyOverlayG_current,
+                    pabyOverlayB_current, pabyOverlayA_current,
+                    pabyDst + nDstOffset, nPixelSpace, nBandSpace, i, nBufXSize,
+                    nOpacity);
+            else if (m_operator == CompositionMode::HARD_LIGHT)
+                BlendHardLight_Generic(
+                    pabyR + nSrcIdx, pabyG_current, pabyB_current,
+                    pabyA_current, pabyOverlayR + nSrcIdx, pabyOverlayG_current,
+                    pabyOverlayB_current, pabyOverlayA_current,
+                    pabyDst + nDstOffset, nPixelSpace, nBandSpace, i, nBufXSize,
+                    nOpacity);
+            else if (m_operator == CompositionMode::OVERLAY)
+                BlendOverlay_Generic(
+                    pabyR + nSrcIdx, pabyG_current, pabyB_current,
+                    pabyA_current, pabyOverlayR + nSrcIdx, pabyOverlayG_current,
+                    pabyOverlayB_current, pabyOverlayA_current,
+                    pabyDst + nDstOffset, nPixelSpace, nBandSpace, i, nBufXSize,
+                    nOpacity);
+            else if (m_operator == CompositionMode::DARKEN)
+                BlendDarken_Generic(
+                    pabyR + nSrcIdx, pabyG_current, pabyB_current,
+                    pabyA_current, pabyOverlayR + nSrcIdx, pabyOverlayG_current,
+                    pabyOverlayB_current, pabyOverlayA_current,
+                    pabyDst + nDstOffset, nPixelSpace, nBandSpace, i, nBufXSize,
+                    nOpacity);
+            else if (m_operator == CompositionMode::LIGHTEN)
+                BlendLighten_Generic(
+                    pabyR + nSrcIdx, pabyG_current, pabyB_current,
+                    pabyA_current, pabyOverlayR + nSrcIdx, pabyOverlayG_current,
+                    pabyOverlayB_current, pabyOverlayA_current,
+                    pabyDst + nDstOffset, nPixelSpace, nBandSpace, i, nBufXSize,
+                    nOpacity);
+            else if (m_operator == CompositionMode::COLOR_BURN)
+                BlendColorBurn_Generic(
+                    pabyR + nSrcIdx, pabyG_current, pabyB_current,
+                    pabyA_current, pabyOverlayR + nSrcIdx, pabyOverlayG_current,
+                    pabyOverlayB_current, pabyOverlayA_current,
+                    pabyDst + nDstOffset, nPixelSpace, nBandSpace, i, nBufXSize,
+                    nOpacity);
+            else if (m_operator == CompositionMode::COLOR_DODGE)
+                BlendColorDodge_Generic(
+                    pabyR + nSrcIdx, pabyG_current, pabyB_current,
+                    pabyA_current, pabyOverlayR + nSrcIdx, pabyOverlayG_current,
+                    pabyOverlayB_current, pabyOverlayA_current,
+                    pabyDst + nDstOffset, nPixelSpace, nBandSpace, i, nBufXSize,
+                    nOpacity);
+            else
+            {
+                CPLAssert(false);
+            }
+
+            nSrcIdx += nBufXSize - i;
+        }
+        return CE_None;
+    }
+
+    /************************************************************************/
+    /* ERRORS                                                               */
+    /************************************************************************/
     else if (m_ioError)
     {
         return CE_Failure;
@@ -1046,7 +1996,7 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     const size_t nPixelCount = static_cast<size_t>(nBufXSize) * nBufYSize;
     const int nColorCount = m_oBlendDataset.m_oColorDS.GetRasterCount();
     const int nOverlayCount = m_oBlendDataset.m_oOverlayDS.GetRasterCount();
-    if (nBand == 4 && m_oBlendDataset.m_operator == HSV_VALUE)
+    if (nBand == 4 && m_oBlendDataset.m_operator == CompositionMode::HSV_VALUE)
     {
         if (nColorCount == 3)
         {
@@ -1069,8 +2019,8 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
     }
     else if (nOverlayCount == 3 && nColorCount == 3 &&
-             m_oBlendDataset.m_operator == SRC_OVER && eRWFlag == GF_Read &&
-             eBufType == GDT_UInt8 &&
+             m_oBlendDataset.m_operator == CompositionMode::SRC_OVER &&
+             eRWFlag == GF_Read && eBufType == GDT_UInt8 &&
              m_oBlendDataset.AcquireSourcePixels(nXOff, nYOff, nXSize, nYSize,
                                                  nBufXSize, nBufYSize,
                                                  psExtraArg))
@@ -1114,7 +2064,139 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                                  psExtraArg))
     {
         GByte *pabyDst = static_cast<GByte *>(pData);
-        if (m_oBlendDataset.m_operator == SRC_OVER)
+
+        if (m_oBlendDataset.m_operator == CompositionMode::MULTIPLY ||
+            m_oBlendDataset.m_operator == CompositionMode::SCREEN ||
+            m_oBlendDataset.m_operator == CompositionMode::HARD_LIGHT ||
+            m_oBlendDataset.m_operator == CompositionMode::OVERLAY ||
+            m_oBlendDataset.m_operator == CompositionMode::DARKEN ||
+            m_oBlendDataset.m_operator == CompositionMode::LIGHTEN ||
+            m_oBlendDataset.m_operator == CompositionMode::COLOR_BURN ||
+            m_oBlendDataset.m_operator == CompositionMode::COLOR_DODGE)
+        {
+            CPLAssert(nBand <= 4);
+            const GByte *pabyR = m_oBlendDataset.m_abyBuffer.data();
+            const GByte *pabyG =
+                nColorCount >= 3
+                    ? m_oBlendDataset.m_abyBuffer.data() + nPixelCount
+                    : nullptr;
+            const GByte *pabyB =
+                nColorCount >= 3
+                    ? m_oBlendDataset.m_abyBuffer.data() + nPixelCount * 2
+                    : nullptr;
+
+            GByte *pabyA = nullptr;
+
+            if (nColorCount == 2)
+            {
+                pabyA = m_oBlendDataset.m_abyBuffer.data() + nPixelCount;
+            }
+            else if (nColorCount == 4)
+            {
+                pabyA = m_oBlendDataset.m_abyBuffer.data() + nPixelCount * 3;
+            }
+
+            // Retrieve single band value as R
+            const GByte *pabyOverlayR =
+                m_oBlendDataset.m_abyBuffer.data() + nPixelCount * nColorCount;
+
+            const GByte *pabyOverlayG =
+                nOverlayCount >= 3 ? m_oBlendDataset.m_abyBuffer.data() +
+                                         nPixelCount * (nColorCount + 1)
+                                   : nullptr;
+            const GByte *pabyOverlayB =
+                nOverlayCount >= 3 ? m_oBlendDataset.m_abyBuffer.data() +
+                                         nPixelCount * (nColorCount + 2)
+                                   : nullptr;
+            const GByte *pabyOverlayA =
+                (nOverlayCount == 2 || nOverlayCount == 4)
+                    ? m_oBlendDataset.m_abyBuffer.data() +
+                          nPixelCount * (nColorCount + nOverlayCount - 1)
+                    : nullptr;
+
+            size_t nSrcIdx = 0;
+            for (int j = 0; j < nBufYSize; ++j)
+            {
+                auto nDstOffset = j * nLineSpace;
+                for (int i = 0; i < nBufXSize;
+                     ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
+                {
+                    // TODO: This need to be optimized for requesting a single band
+                    std::vector<GByte> byteBuffer;
+                    byteBuffer.resize(std::max(nColorCount, nOverlayCount));
+                    if (m_oBlendDataset.m_operator == CompositionMode::SCREEN)
+                        BlendScreen_Generic(
+                            pabyR, pabyG, pabyB, pabyA, pabyOverlayR,
+                            pabyOverlayG, pabyOverlayB, pabyOverlayA,
+                            byteBuffer.data(), nPixelSpace, 1, nSrcIdx, 1,
+                            static_cast<GByte>(
+                                m_oBlendDataset.m_opacity255Scale));
+                    else if (m_oBlendDataset.m_operator ==
+                             CompositionMode::HARD_LIGHT)
+                        BlendHardLight_Generic(
+                            pabyR, pabyG, pabyB, pabyA, pabyOverlayR,
+                            pabyOverlayG, pabyOverlayB, pabyOverlayA,
+                            byteBuffer.data(), nPixelSpace, 1, nSrcIdx, 1,
+                            static_cast<GByte>(
+                                m_oBlendDataset.m_opacity255Scale));
+                    else if (m_oBlendDataset.m_operator ==
+                             CompositionMode::OVERLAY)
+                        BlendOverlay_Generic(
+                            pabyR, pabyG, pabyB, pabyA, pabyOverlayR,
+                            pabyOverlayG, pabyOverlayB, pabyOverlayA,
+                            byteBuffer.data(), nPixelSpace, 1, nSrcIdx, 1,
+                            static_cast<GByte>(
+                                m_oBlendDataset.m_opacity255Scale));
+                    else if (m_oBlendDataset.m_operator ==
+                             CompositionMode::MULTIPLY)
+                        BlendMultiply_Generic(
+                            pabyR, pabyG, pabyB, pabyA, pabyOverlayR,
+                            pabyOverlayG, pabyOverlayB, pabyOverlayA,
+                            byteBuffer.data(), nPixelSpace, 1, nSrcIdx, 1,
+                            static_cast<GByte>(
+                                m_oBlendDataset.m_opacity255Scale));
+                    else if (m_oBlendDataset.m_operator ==
+                             CompositionMode::DARKEN)
+                        BlendDarken_Generic(
+                            pabyR, pabyG, pabyB, pabyA, pabyOverlayR,
+                            pabyOverlayG, pabyOverlayB, pabyOverlayA,
+                            byteBuffer.data(), nPixelSpace, 1, nSrcIdx, 1,
+                            static_cast<GByte>(
+                                m_oBlendDataset.m_opacity255Scale));
+                    else if (m_oBlendDataset.m_operator ==
+                             CompositionMode::LIGHTEN)
+                        BlendLighten_Generic(
+                            pabyR, pabyG, pabyB, pabyA, pabyOverlayR,
+                            pabyOverlayG, pabyOverlayB, pabyOverlayA,
+                            byteBuffer.data(), nPixelSpace, 1, nSrcIdx, 1,
+                            static_cast<GByte>(
+                                m_oBlendDataset.m_opacity255Scale));
+                    else if (m_oBlendDataset.m_operator ==
+                             CompositionMode::COLOR_BURN)
+                        BlendColorBurn_Generic(
+                            pabyR, pabyG, pabyB, pabyA, pabyOverlayR,
+                            pabyOverlayG, pabyOverlayB, pabyOverlayA,
+                            byteBuffer.data(), nPixelSpace, 1, nSrcIdx, 1,
+                            static_cast<GByte>(
+                                m_oBlendDataset.m_opacity255Scale));
+                    else if (m_oBlendDataset.m_operator ==
+                             CompositionMode::COLOR_DODGE)
+                        BlendColorDodge_Generic(
+                            pabyR, pabyG, pabyB, pabyA, pabyOverlayR,
+                            pabyOverlayG, pabyOverlayB, pabyOverlayA,
+                            byteBuffer.data(), nPixelSpace, 1, nSrcIdx, 1,
+                            static_cast<GByte>(
+                                m_oBlendDataset.m_opacity255Scale));
+                    else
+                    {
+                        CPLAssert(false);
+                    }
+
+                    pabyDst[nDstOffset] = byteBuffer[nBand - 1];
+                }
+            }
+        }
+        else if (m_oBlendDataset.m_operator == CompositionMode::SRC_OVER)
         {
             const auto RGBToGrayScale = [](int R, int G, int B)
             {
@@ -1216,7 +2298,7 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 m_oBlendDataset.m_abyBuffer.data() + nPixelCount;
             const GByte *pabyB =
                 m_oBlendDataset.m_abyBuffer.data() + nPixelCount * 2;
-            CPLAssert(m_oBlendDataset.m_operator == HSV_VALUE);
+            CPLAssert(m_oBlendDataset.m_operator == CompositionMode::HSV_VALUE);
             size_t nSrcIdx = 0;
             const GByte *pabyValue =
                 m_oBlendDataset.m_abyBuffer.data() + nPixelCount * nColorCount;
@@ -1263,7 +2345,7 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
         else
         {
-            CPLAssert(m_oBlendDataset.m_operator == HSV_VALUE);
+            CPLAssert(m_oBlendDataset.m_operator == CompositionMode::HSV_VALUE);
             CPLAssert(nBand <= 3);
             const GByte *pabyR = m_oBlendDataset.m_abyBuffer.data();
             const GByte *pabyG =
@@ -1406,12 +2488,54 @@ bool GDALRasterBlendAlgorithm::ValidateGlobal()
             return false;
         }
 
-        if (m_operator == HSV_VALUE && poSrcDS->GetRasterCount() != 3 &&
-            poSrcDS->GetRasterCount() != 4)
+        if (!BandCountIsCompatibleWithCompositionMode(poSrcDS->GetRasterCount(),
+                                                      m_operator))
         {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Operator %s requires a 3-band or 4-band input dataset",
-                        HSV_VALUE);
+            const int minRequiredBands{
+                MinBandCountForCompositionMode(m_operator)};
+            const int maxRequiredBands{
+                MaxBandCountForCompositionMode(m_operator)};
+            if (minRequiredBands != maxRequiredBands)
+                ReportError(CE_Failure, CPLE_IllegalArg,
+                            "Input dataset has %d band(s), but operator %s "
+                            "requires between %d and %d bands",
+                            poSrcDS->GetRasterCount(),
+                            CompositionModeToString(m_operator).c_str(),
+                            minRequiredBands, maxRequiredBands);
+            else
+                ReportError(CE_Failure, CPLE_IllegalArg,
+                            "Input dataset has %d band(s), but operator %s "
+                            "requires %d bands",
+                            poSrcDS->GetRasterCount(),
+                            CompositionModeToString(m_operator).c_str(),
+                            minRequiredBands);
+            return false;
+        }
+    }
+
+    // Check that for LIGHTEN and DARKEN, the source dataset and destination dataset
+    // have the same number of color bands (do not consider alpha)
+    if (poSrcDS && poOverlayDS &&
+        (m_operator == CompositionMode::LIGHTEN ||
+         m_operator == CompositionMode::DARKEN))
+    {
+        const int nSrcColorBands =
+            (poSrcDS->GetRasterCount() == 2 || poSrcDS->GetRasterCount() == 4)
+                ? poSrcDS->GetRasterCount() - 1
+                : poSrcDS->GetRasterCount();
+        const int nOverlayColorBands = (poOverlayDS->GetRasterCount() == 2 ||
+                                        poOverlayDS->GetRasterCount() == 4)
+                                           ? poOverlayDS->GetRasterCount() - 1
+                                           : poOverlayDS->GetRasterCount();
+        if (nSrcColorBands != nOverlayColorBands)
+        {
+            ReportError(
+                CE_Failure, CPLE_IllegalArg,
+                "For LIGHTEN and DARKEN operators, the source dataset "
+                "and overlay dataset must have the same number of "
+                "bands (without considering alpha). They have %d and %d "
+                "bands respectively",
+                nSrcColorBands, nOverlayColorBands);
             return false;
         }
     }
@@ -1423,7 +2547,7 @@ bool GDALRasterBlendAlgorithm::ValidateGlobal()
 /*                   GDALRasterBlendAlgorithm::RunStep()                */
 /************************************************************************/
 
-bool GDALRasterBlendAlgorithm::RunStep(GDALPipelineStepRunContext &)
+bool GDALRasterBlendAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
@@ -1431,11 +2555,75 @@ bool GDALRasterBlendAlgorithm::RunStep(GDALPipelineStepRunContext &)
     auto poOverlayDS = m_overlayDataset.GetDatasetRef();
     CPLAssert(poOverlayDS);
 
+    // If any of the dataset single band has a color table implicitly convert it to RGBA by calling
+    // GDALTranslate with -expand RGBA
+    auto convertToRGBAifNeeded =
+        [&ctxt](GDALDataset *&poDS, std::unique_ptr<GDALDataset> &ds) -> bool
+    {
+        if (poDS->GetRasterCount() == 1 &&
+            poDS->GetRasterBand(1)->GetColorTable() != nullptr)
+        {
+            CPLStringList aosOptions;
+            aosOptions.AddString("-of");
+            aosOptions.AddString("VRT");
+            aosOptions.AddString("-expand");
+            aosOptions.AddString("RGBA");
+            GDALTranslateOptions *translateOptions =
+                GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+
+            if (ctxt.m_poNextUsableStep)
+            {
+                GDALTranslateOptionsSetProgress(
+                    translateOptions, ctxt.m_pfnProgress, ctxt.m_pProgressData);
+            }
+            ds.reset(GDALDataset::FromHandle(GDALTranslate(
+                "", GDALDataset::ToHandle(poDS), translateOptions, nullptr)));
+
+            GDALTranslateOptionsFree(translateOptions);
+
+            if (ds != nullptr)
+            {
+                poDS = ds.get();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    if (!convertToRGBAifNeeded(poSrcDS, m_poTmpSrcDS))
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Conversion of source dataset color table to RGBA failed");
+        return false;
+    }
+
+    if (!convertToRGBAifNeeded(poOverlayDS, m_poTmpOverlayDS))
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Conversion of overlay dataset color table to RGBA failed");
+        return false;
+    }
+
     if (!ValidateGlobal())
         return false;
 
     const int nOpacity255Scale =
         (m_opacity * 255 + OPACITY_INPUT_RANGE / 2) / OPACITY_INPUT_RANGE;
+
+    // Many algorithms are commutative regarding the two inputs but BlendDataset assume
+    // RGB(A) is in the source (and not in the overlay).
+    if ((m_operator == CompositionMode::MULTIPLY ||
+         m_operator == CompositionMode::SCREEN ||
+         m_operator == CompositionMode::HARD_LIGHT ||
+         m_operator == CompositionMode::OVERLAY) &&
+        (poSrcDS->GetRasterCount() < poOverlayDS->GetRasterCount()))
+    {
+        std::swap(poSrcDS, poOverlayDS);
+    }
 
     m_outputDataset.Set(std::make_unique<BlendDataset>(
         *poSrcDS, *poOverlayDS, m_operator, nOpacity255Scale));
