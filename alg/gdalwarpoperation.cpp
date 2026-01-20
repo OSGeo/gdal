@@ -2767,7 +2767,8 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
     {
         if (bAll)
         {
-            if (nDstYSize > knIntMax / (nDstXSize + 1) - 1)
+            if (nDstXSize > knIntMax - 1 ||
+                nDstYSize > knIntMax / (nDstXSize + 1) - 1)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too many steps");
                 return false;
@@ -2790,7 +2791,7 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
     {
         if (bAll)
         {
-            if (nDstXSize > (knIntMax - 2 * nDstYSize) / 2)
+            if (nDstXSize > knIntMax / 2 - nDstYSize)
             {
                 // Extremely unlikely !
                 CPLError(CE_Failure, CPLE_AppDefined, "Too many steps");
@@ -2821,7 +2822,7 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
         return false;
     }
     double *padfY = padfX + nSampleMax;
-    double *padfZ = padfX + nSampleMax * 2;
+    double *padfZ = padfX + static_cast<size_t>(nSampleMax) * 2;
 
     /* -------------------------------------------------------------------- */
     /*      Setup sample points on a grid pattern throughout the area.      */
