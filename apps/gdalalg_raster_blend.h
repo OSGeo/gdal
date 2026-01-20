@@ -52,7 +52,7 @@ CompositionMode CompositionModeFromString(const std::string &str);
 int MinBandCountForCompositionMode(CompositionMode mode);
 
 /**
- *  Returns the maximum umber of bands allowed for the given composition mode
+ *  Returns the maximum number of bands allowed for the given composition mode
  *  (-1 means no limit)
  */
 int MaxBandCountForCompositionMode(CompositionMode mode);
