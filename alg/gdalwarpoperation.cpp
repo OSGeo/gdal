@@ -2010,24 +2010,31 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.dfSrcXExtraSize = dfSrcXExtraSize;
     oWK.dfSrcYExtraSize = dfSrcYExtraSize;
 
-    GInt64 nAlloc64 =
-        nWordSize *
-        (static_cast<GInt64>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS) *
-        psOptions->nBandCount;
-#if SIZEOF_VOIDP == 4
-    if (nAlloc64 != static_cast<GInt64>(static_cast<size_t>(nAlloc64)))
+    // Check for overflows in computation of nAlloc
+    if (nSrcYSize > 0 &&
+        ((static_cast<size_t>(nSrcXSize) >
+          (std::numeric_limits<size_t>::max() - WARP_EXTRA_ELTS) / nSrcYSize) ||
+         static_cast<size_t>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS) >
+            std::numeric_limits<size_t>::max() /
+                (nWordSize * psOptions->nBandCount))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Integer overflow : nSrcXSize=%d, nSrcYSize=%d", nSrcXSize,
-                 nSrcYSize);
+                 "WarpRegionToBuffer(): Integer overflow : nWordSize(=%d) * "
+                 "(nSrcXSize(=%d) * nSrcYSize(=%d) + WARP_EXTRA_ELTS(=%d)) * "
+                 "nBandCount(=%d)",
+                 nWordSize, nSrcXSize, nSrcYSize, WARP_EXTRA_ELTS,
+                 psOptions->nBandCount);
         return CE_Failure;
     }
-#endif
+
+    const size_t nAlloc =
+        nWordSize *
+        (static_cast<size_t>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS) *
+        psOptions->nBandCount;
 
     oWK.papabySrcImage = static_cast<GByte **>(
         CPLCalloc(sizeof(GByte *), psOptions->nBandCount));
-    oWK.papabySrcImage[0] =
-        static_cast<GByte *>(VSI_MALLOC_VERBOSE(static_cast<size_t>(nAlloc64)));
+    oWK.papabySrcImage[0] = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nAlloc));
 
     CPLErr eErr =
         nSrcXSize != 0 && nSrcYSize != 0 && oWK.papabySrcImage[0] == nullptr
