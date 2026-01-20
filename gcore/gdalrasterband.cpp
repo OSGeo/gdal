@@ -27,6 +27,7 @@
 #include <limits>
 #include <memory>
 #include <new>
+#include <numeric>  // std::lcm
 #include <type_traits>
 
 #include "cpl_conv.h"
@@ -10682,17 +10683,43 @@ GDALRasterBand::WindowIterator &GDALRasterBand::WindowIterator::operator++()
 
 GDALRasterBand::WindowIteratorWrapper::WindowIteratorWrapper(
     const GDALRasterBand &band, size_t maxSize)
-    : m_nRasterXSize(band.GetXSize()), m_nRasterYSize(band.GetYSize()),
-      m_nBlockXSize(-1), m_nBlockYSize(-1)
+    : WindowIteratorWrapper(band.GetXSize(), band.GetYSize(), band.nBlockXSize,
+                            band.nBlockYSize, maxSize)
+{
+}
+
+GDALRasterBand::WindowIteratorWrapper::WindowIteratorWrapper(
+    const GDALRasterBand &band1, const GDALRasterBand &band2, size_t maxSize)
+    : WindowIteratorWrapper(std::min(band1.GetXSize(), band2.GetXSize()),
+                            std::min(band1.GetYSize(), band2.GetYSize()),
+                            std::lcm(band1.nBlockXSize, band2.nBlockXSize),
+                            std::lcm(band1.nBlockYSize, band2.nBlockYSize),
+                            maxSize)
+{
+    if (band1.GetXSize() != band2.GetXSize() ||
+        band1.GetYSize() != band2.GetYSize())
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "WindowIteratorWrapper called on bands of different "
+                 "dimensions. Selecting smallest one");
+    }
+}
+
+GDALRasterBand::WindowIteratorWrapper::WindowIteratorWrapper(int nRasterXSize,
+                                                             int nRasterYSize,
+                                                             int nBlockXSize,
+                                                             int nBlockYSize,
+                                                             size_t maxSize)
+    : m_nRasterXSize(nRasterXSize), m_nRasterYSize(nRasterYSize),
+      m_nBlockXSize(nBlockXSize), m_nBlockYSize(nBlockYSize)
 {
 #ifdef CSA_BUILD
     assert(this);
 #endif
-    int nXSize, nYSize;
+    int nXSize = std::min(m_nRasterXSize, m_nBlockXSize);
+    int nYSize = std::min(m_nRasterYSize, m_nBlockYSize);
 
-    CPLErrorStateBackuper state(CPLQuietErrorHandler);
-    band.GetBlockSize(&nXSize, &nYSize);
-    if (nXSize < 1 || nYSize < 0)
+    if (nXSize < 1 || nYSize < 1)
     {
         // If invalid block size is reported, assume scanlines
         nXSize = m_nRasterXSize;
@@ -10729,8 +10756,8 @@ GDALRasterBand::WindowIteratorWrapper::WindowIteratorWrapper(
     {
         if (m_nBlockXSize > std::numeric_limits<int>::max() / m_nBlockYSize)
         {
-            nXSize = m_nRasterXSize;
-            nYSize = 1;
+            m_nBlockXSize = m_nRasterXSize;
+            m_nBlockYSize = 1;
         }
     }
 }

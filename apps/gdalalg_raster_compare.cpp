@@ -20,6 +20,16 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
+#include <type_traits>
+
+#if defined(__x86_64__) || defined(_M_X64)
+#define USE_SSE2
+#include <emmintrin.h>
+#elif defined(USE_NEON_OPTIMIZATIONS)
+#define USE_SSE2
+#include "include_sse2neon.h"
+#endif
 
 //! @cond Doxygen_Suppress
 
@@ -289,6 +299,11 @@ void GDALRasterCompareAlgorithm::GeoTransformComparison(
     }
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC push_options
+#pragma GCC optimize("O3")
+#endif
+
 /************************************************************************/
 /*                                 Diff()                               */
 /************************************************************************/
@@ -307,8 +322,7 @@ static void CompareVectors(size_t nValCount, const T *refValues,
                            const T *inputValues, uint64_t &countDiffPixels,
                            Tdiff &maxDiffValue)
 {
-    constexpr bool bIsFloatingPoint =
-        std::is_same_v<T, float> || std::is_same_v<T, double>;
+    constexpr bool bIsFloatingPoint = std::is_floating_point_v<T>;
     if constexpr (bIsComplex)
     {
         for (size_t i = 0; i < nValCount; ++i)
@@ -342,11 +356,90 @@ static void CompareVectors(size_t nValCount, const T *refValues,
     else
     {
         static_assert(sizeof(Tdiff) == sizeof(T));
-        for (size_t i = 0; i < nValCount; ++i)
+        size_t i = 0;
+#ifdef USE_SSE2
+        if constexpr (std::is_same_v<T, float>)
         {
-            if constexpr (bIsFloatingPoint)
+            static_assert(std::is_same_v<T, Tdiff>);
+
+            auto vMaxDiff = _mm_setzero_ps();
+
+            // Mask for absolute value (clears the sign bit)
+            const auto absMask = _mm_castsi128_ps(
+                _mm_set1_epi32(std::numeric_limits<int32_t>::max()));
+
+            constexpr size_t VALS_PER_REG = sizeof(vMaxDiff) / sizeof(T);
+            while (i + VALS_PER_REG <= nValCount)
             {
-                static_assert(std::is_same_v<T, Tdiff>);
+                auto vCountDiff = _mm_setzero_si128();
+
+                // We can do a maximum of std::numeric_limits<uint32_t>::max()
+                // accumulations into vCountDiff
+                const size_t nInnerLimit = [i, nValCount](size_t valsPerReg)
+                {
+                    if constexpr (sizeof(size_t) > sizeof(uint32_t))
+                    {
+                        return std::min(
+                            nValCount - valsPerReg,
+                            i + std::numeric_limits<uint32_t>::max() *
+                                    valsPerReg);
+                    }
+                    else
+                    {
+                        return nValCount - valsPerReg;
+                    }
+                }(VALS_PER_REG);
+
+                for (; i <= nInnerLimit; i += VALS_PER_REG)
+                {
+                    const auto a = _mm_loadu_ps(refValues + i);
+                    const auto b = _mm_loadu_ps(inputValues + i);
+
+                    // Compute absolute value of difference
+                    const auto absDiff = _mm_and_ps(_mm_sub_ps(a, b), absMask);
+
+                    // Update vMaxDiff
+                    const auto aIsNan = _mm_cmpunord_ps(a, a);
+                    const auto bIsNan = _mm_cmpunord_ps(b, b);
+                    const auto valNotEqual = _mm_andnot_ps(
+                        _mm_or_ps(aIsNan, bIsNan), _mm_cmpneq_ps(a, b));
+                    vMaxDiff =
+                        _mm_max_ps(vMaxDiff, _mm_and_ps(absDiff, valNotEqual));
+
+                    // Update vCountDiff
+                    const auto nanMisMatch = _mm_xor_ps(aIsNan, bIsNan);
+                    // if nanMisMatch OR (both values not NaN and a != b)
+                    const auto maskIsDiff = _mm_or_ps(nanMisMatch, valNotEqual);
+                    const auto shiftedMaskDiff =
+                        _mm_srli_epi32(_mm_castps_si128(maskIsDiff), 31);
+                    vCountDiff = _mm_add_epi32(vCountDiff, shiftedMaskDiff);
+                }
+
+                // Horizontal add into countDiffPixels
+                uint32_t anCountDiff[VALS_PER_REG];
+                _mm_storeu_si128(reinterpret_cast<__m128i *>(anCountDiff),
+                                 vCountDiff);
+                for (size_t j = 0; j < VALS_PER_REG; ++j)
+                {
+                    countDiffPixels += anCountDiff[j];
+                }
+            }
+
+            // Horizontal max into maxDiffValue
+            float afMaxDiffValue[VALS_PER_REG];
+            _mm_storeu_ps(afMaxDiffValue, vMaxDiff);
+            for (size_t j = 0; j < VALS_PER_REG; ++j)
+            {
+                CPLAssert(!std::isnan(afMaxDiffValue[j]));
+                maxDiffValue = std::max(maxDiffValue, afMaxDiffValue[j]);
+            }
+        }
+#endif
+        if constexpr (bIsFloatingPoint)
+        {
+            static_assert(std::is_same_v<T, Tdiff>);
+            for (; i < nValCount; ++i)
+            {
                 if (std::isnan(refValues[i]))
                 {
                     if (!std::isnan(inputValues[i]))
@@ -364,18 +457,56 @@ static void CompareVectors(size_t nValCount, const T *refValues,
                 {
                     continue;
                 }
-            }
 
-            const Tdiff diff = refValues[i] >= inputValues[i]
-                                   ? Diff(static_cast<Tdiff>(refValues[i]),
-                                          static_cast<Tdiff>(inputValues[i]))
-                                   : Diff(static_cast<Tdiff>(inputValues[i]),
-                                          static_cast<Tdiff>(refValues[i]));
-            if (diff > 0)
+                const Tdiff diff =
+                    refValues[i] >= inputValues[i]
+                        ? Diff(static_cast<Tdiff>(refValues[i]),
+                               static_cast<Tdiff>(inputValues[i]))
+                        : Diff(static_cast<Tdiff>(inputValues[i]),
+                               static_cast<Tdiff>(refValues[i]));
+                if (diff > 0)
+                {
+                    ++countDiffPixels;
+                    if (diff > maxDiffValue)
+                        maxDiffValue = diff;
+                }
+            }
+        }
+        else
+        {
+            static_assert(std::is_unsigned_v<Tdiff>);
+            while (i < nValCount)
             {
-                ++countDiffPixels;
-                if (diff > maxDiffValue)
-                    maxDiffValue = diff;
+                // Autovectorizer friendly inner loop (GCC, clang, ICX),
+                // by making sure it increases countDiffLocal on the same size
+                // as Tdiff.
+
+                Tdiff countDiffLocal = 0;
+                const size_t innerLimit = [i, nValCount]()
+                {
+                    if constexpr (sizeof(Tdiff) < sizeof(size_t))
+                    {
+                        return std::min(nValCount - 1,
+                                        i + std::numeric_limits<Tdiff>::max());
+                    }
+                    else
+                    {
+                        (void)i;
+                        return nValCount - 1;
+                    }
+                }();
+                for (; i <= innerLimit; ++i)
+                {
+                    const Tdiff diff =
+                        refValues[i] >= inputValues[i]
+                            ? Diff(static_cast<Tdiff>(refValues[i]),
+                                   static_cast<Tdiff>(inputValues[i]))
+                            : Diff(static_cast<Tdiff>(inputValues[i]),
+                                   static_cast<Tdiff>(refValues[i]));
+                    countDiffLocal += (diff > 0);
+                    maxDiffValue = std::max(maxDiffValue, diff);
+                }
+                countDiffPixels += countDiffLocal;
             }
         }
     }
@@ -408,12 +539,33 @@ static void DatasetPixelComparison(std::vector<std::string> &aosReport,
     std::vector<Tdiff> maxDiffValue(nBands, 0);
     std::vector<uint64_t> countDiffPixels(nBands, 0);
 
-    for (const auto &window : poRefDS->GetRasterBand(1)->IterateWindows())
+    size_t nMaxSize = 0;
+    const GIntBig nUsableRAM = CPLGetUsablePhysicalRAM() / 10;
+    if (nUsableRAM > 0)
+        nMaxSize = static_cast<size_t>(nUsableRAM);
+
+    for (const auto &window : GDALRasterBand::WindowIteratorWrapper(
+             *(poRefDS->GetRasterBand(1)), *(poInputDS->GetRasterBand(1)),
+             nMaxSize))
     {
         const size_t nValCount =
             static_cast<size_t>(window.nXSize) * window.nYSize;
-        refValues.resize(nValCount * nValPerPixel * nBands);
-        inputValues.resize(nValCount * nValPerPixel * nBands);
+        const size_t nArraySize = nValCount * nValPerPixel * nBands;
+        try
+        {
+            if (refValues.size() < nArraySize)
+            {
+                refValues.resize(nArraySize);
+                inputValues.resize(nArraySize);
+            }
+        }
+        catch (const std::exception &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating temporary arrays");
+            aosReport.push_back("Out of memory allocating temporary arrays");
+            return;
+        }
 
         if (poRefDS->RasterIO(GF_Read, window.nXOff, window.nYOff,
                               window.nXSize, window.nYSize, refValues.data(),
@@ -669,12 +821,32 @@ static void ComparePixels(std::vector<std::string> &aosReport,
 
     constexpr int nValPerPixel = bIsComplex ? 2 : 1;
 
-    for (const auto &window : poRefBand->IterateWindows())
+    size_t nMaxSize = 0;
+    const GIntBig nUsableRAM = CPLGetUsablePhysicalRAM() / 10;
+    if (nUsableRAM > 0)
+        nMaxSize = static_cast<size_t>(nUsableRAM);
+
+    for (const auto &window : GDALRasterBand::WindowIteratorWrapper(
+             *poRefBand, *poInputBand, nMaxSize))
     {
         const size_t nValCount =
             static_cast<size_t>(window.nXSize) * window.nYSize;
-        refValues.resize(nValCount * nValPerPixel);
-        inputValues.resize(nValCount * nValPerPixel);
+        const size_t nArraySize = nValCount * nValPerPixel;
+        try
+        {
+            if (refValues.size() < nArraySize)
+            {
+                refValues.resize(nArraySize);
+                inputValues.resize(nArraySize);
+            }
+        }
+        catch (const std::exception &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating temporary arrays");
+            aosReport.push_back("Out of memory allocating temporary arrays");
+            return;
+        }
 
         if (poRefBand->RasterIO(GF_Read, window.nXOff, window.nYOff,
                                 window.nXSize, window.nYSize, refValues.data(),
@@ -710,8 +882,23 @@ static void ComparePixels(std::vector<std::string> &aosReport,
     {
         aosReport.push_back(
             bandId + ": pixels differing: " + std::to_string(countDiffPixels));
-        aosReport.push_back(bandId + ": maximum pixel value difference: " +
-                            std::to_string(maxDiffValue));
+
+        std::string reportMessage(bandId);
+        reportMessage += ": maximum pixel value difference: ";
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            if (std::isinf(maxDiffValue))
+                reportMessage += "inf";
+            else if (std::isnan(maxDiffValue))
+                reportMessage += "nan";
+            else
+                reportMessage += std::to_string(maxDiffValue);
+        }
+        else
+        {
+            reportMessage += std::to_string(maxDiffValue);
+        }
+        aosReport.push_back(reportMessage);
     }
 }
 
@@ -805,6 +992,10 @@ static void ComparePixels(std::vector<std::string> &aosReport,
             break;
     }
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC pop_options
+#endif
 
 /************************************************************************/
 /*              GDALRasterCompareAlgorithm::BandComparison()            */
