@@ -6943,9 +6943,10 @@ static void ComputeBlockStatisticsFloat32(
             int iX = 0;
             if (dfBlockValidCount == 0)
             {
-                for (; iX < nXCheck; iX++)
+                while (iX < nXCheck)
                 {
                     const float fValue = pafSrcData[iOffset + iX];
+                    ++iX;
                     if constexpr (HAS_NAN)
                     {
                         if (std::isnan(fValue))
@@ -6960,7 +6961,6 @@ static void ComputeBlockStatisticsFloat32(
                     fMax = std::max(fMax, fValue);
                     dfBlockValidCount = 1;
                     dfBlockMean = static_cast<double>(fValue);
-                    iX++;
                     break;
                 }
             }

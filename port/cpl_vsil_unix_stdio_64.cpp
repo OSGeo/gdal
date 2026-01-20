@@ -795,7 +795,8 @@ int VSIUnixStdioHandle::Eof()
 
 int VSIUnixStdioHandle::Truncate(vsi_l_offset nNewSize)
 {
-    Flush();
+    if (Flush() != 0)
+        return -1;
     return VSI_FTRUNCATE64(fd, nNewSize);
 }
 
