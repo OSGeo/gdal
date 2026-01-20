@@ -2014,9 +2014,9 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     if (nSrcYSize > 0 &&
         ((static_cast<size_t>(nSrcXSize) >
           (std::numeric_limits<size_t>::max() - WARP_EXTRA_ELTS) / nSrcYSize) ||
-         static_cast<size_t>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS) >
-            std::numeric_limits<size_t>::max() /
-                (nWordSize * psOptions->nBandCount))
+         (static_cast<size_t>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS >
+          std::numeric_limits<size_t>::max() /
+              (nWordSize * psOptions->nBandCount))))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "WarpRegionToBuffer(): Integer overflow : nWordSize(=%d) * "
