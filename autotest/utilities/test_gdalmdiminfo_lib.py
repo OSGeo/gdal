@@ -307,3 +307,23 @@ def test_gdalmdiminfo_lib_null_string():
         "name": "/",
         "attributes": {"null_string": None},
     }
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("Zarr")
+def test_gdalmdiminfo_lib_overviews():
+
+    ds = gdal.OpenEx(
+        "../gdrivers/data/zarr/v3/simple_multiscales/zarr.json", gdal.OF_MULTIDIM_RASTER
+    )
+
+    ret = gdal.MultiDimInfo(ds)
+
+    assert ret["groups"]["level0"]["arrays"]["ar"]["overviews"] == [
+        "/level1/ar",
+        "/level2/ar",
+    ]
+
+    gdaltest.validate_json(ret, "gdalmdiminfo_output.schema.json")
