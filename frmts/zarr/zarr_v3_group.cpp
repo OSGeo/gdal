@@ -924,9 +924,9 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         }
     }
 
-    auto poArray = ZarrV3Array::Create(
-        m_poSharedResource, GetFullName(), osName, aoDimensions, oDataType,
-        aoDtypeElts, anOuterBlockSize, anInnerBlockSize);
+    auto poArray = ZarrV3Array::Create(m_poSharedResource, Self(), osName,
+                                       aoDimensions, oDataType, aoDtypeElts,
+                                       anOuterBlockSize, anInnerBlockSize);
 
     if (!poArray)
         return nullptr;

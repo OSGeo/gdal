@@ -198,18 +198,20 @@ ComputeInnerBlockSizeBytes(const std::vector<DtypeElt> &aoDtypeElts,
 
 ZarrArray::ZarrArray(
     const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-    const std::string &osParentName, const std::string &osName,
+    const std::shared_ptr<ZarrGroupBase> &poParent, const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
     const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
     const std::vector<GUInt64> &anOuterBlockSize,
     const std::vector<GUInt64> &anInnerBlockSize)
     :
 #if !defined(COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT)
-      GDALAbstractMDArray(osParentName, osName),
+      GDALAbstractMDArray(poParent->GetFullName(), osName),
 #endif
-      GDALPamMDArray(osParentName, osName, poSharedResource->GetPAM()),
-      m_poSharedResource(poSharedResource), m_aoDims(aoDims), m_oType(oType),
-      m_aoDtypeElts(aoDtypeElts), m_anOuterBlockSize(anOuterBlockSize),
+      GDALPamMDArray(poParent->GetFullName(), osName,
+                     poSharedResource->GetPAM()),
+      m_poSharedResource(poSharedResource), m_poParent(poParent),
+      m_aoDims(aoDims), m_oType(oType), m_aoDtypeElts(aoDtypeElts),
+      m_anOuterBlockSize(anOuterBlockSize),
       m_anInnerBlockSize(anInnerBlockSize),
       m_anCountInnerBlockInOuter(ComputeCountInnerBlockInOuter(
           m_anInnerBlockSize, m_anOuterBlockSize)),
@@ -3013,4 +3015,27 @@ bool ZarrArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
     info.papszInfo = CSLDuplicate(GetRawBlockInfoInfo().List());
 
     return true;
+}
+
+/************************************************************************/
+/*                     ZarrArray::GetParentGroup()                      */
+/************************************************************************/
+
+std::shared_ptr<ZarrGroupBase> ZarrArray::GetParentGroup() const
+{
+    std::shared_ptr<ZarrGroupBase> poGroup = m_poParent.lock();
+    if (!poGroup)
+    {
+        if (auto poRootGroup = m_poSharedResource->GetRootGroup())
+        {
+            const auto nPos = m_osFullName.rfind('/');
+            if (nPos != 0 && nPos != std::string::npos)
+            {
+                poGroup = std::dynamic_pointer_cast<ZarrGroupBase>(
+                    poRootGroup->OpenGroupFromFullname(
+                        m_osFullName.substr(0, nPos)));
+            }
+        }
+    }
+    return poGroup;
 }

@@ -1133,9 +1133,9 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
     const char *pszDimSeparator =
         CSLFetchNameValueDef(papszOptions, "DIM_SEPARATOR", ".");
 
-    auto poArray = ZarrV2Array::Create(m_poSharedResource, GetFullName(),
-                                       osName, aoDimensions, oDataType,
-                                       aoDtypeElts, anBlockSize, bFortranOrder);
+    auto poArray =
+        ZarrV2Array::Create(m_poSharedResource, Self(), osName, aoDimensions,
+                            oDataType, aoDtypeElts, anBlockSize, bFortranOrder);
 
     if (!poArray)
         return nullptr;

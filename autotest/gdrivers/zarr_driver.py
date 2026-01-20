@@ -170,6 +170,8 @@ def test_zarr_basic(
     assert ar.GetOffset() is None
     assert ar.GetScale() is None
     assert ar.GetUnit() == ""
+    assert ar.GetOverviewCount() == 0
+    assert ar.GetOverview(0) is None
 
     # Check reading one single value
     assert ar[1, 2].Read(
@@ -6653,3 +6655,267 @@ def test_zarr_read_nested_sharding():
     assert ar.GetBlockSize() == [2, 4]
 
     assert list(struct.unpack("H" * (5 * 10), ar.Read())) == [i for i in range(50)]
+
+
+###############################################################################
+# Test reading a dataset with the "multiscales" convention
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "data/zarr/v3/simple_multiscales/zarr.json",
+        "data/zarr/v3/simple_multiscales_ref_array/zarr.json",
+        "data/zarr/v3/simple_multiscales_spatial/zarr.json",
+    ],
+)
+def test_zarr_read_simple_multiscales(filename):
+
+    with gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER) as ds:
+        rg = ds.GetRootGroup()
+
+        level0 = rg.OpenGroup("level0")
+        ar0 = level0.OpenMDArray("ar")
+        assert ar0.GetOverviewCount() == 2
+        assert ar0.GetOverview(-1) is None
+        assert ar0.GetOverview(2) is None
+        assert ar0.GetOverview(0).GetFullName() == "/level1/ar"
+        assert ar0.GetOverview(1).GetFullName() == "/level2/ar"
+
+        level1 = rg.OpenGroup("level1")
+        ar1 = level1.OpenMDArray("ar")
+        assert ar1.GetOverviewCount() == 1
+        assert ar1.GetOverview(0).GetFullName() == "/level2/ar"
+
+        level2 = rg.OpenGroup("level2")
+        ar2 = level2.OpenMDArray("ar")
+        assert ar2.GetOverviewCount() == 0
+
+        unrelated = level0.OpenMDArray("unrelated")
+        assert unrelated.GetOverviewCount() == 0
+
+        y = level0.OpenMDArray("y")
+        if "_ref_array" not in filename:
+            assert y.GetOverviewCount() == 1
+            assert y.GetOverview(0).GetFullName() == "/level1/y"
+        else:
+            assert y.GetOverviewCount() == 0
+
+    # Without calling GetOverviewCount()
+    with gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER) as ds:
+        rg = ds.GetRootGroup()
+        level0 = rg.OpenGroup("level0")
+        ar0 = level0.OpenMDArray("ar")
+        assert ar0.GetOverview(-1) is None
+        assert ar0.GetOverview(2) is None
+        assert ar0.GetOverview(0).GetFullName() == "/level1/ar"
+        assert ar0.GetOverview(1).GetFullName() == "/level2/ar"
+
+    filename_with_zarr_json = filename.replace("/zarr.json", "")
+    with gdal.Open(f'ZARR:"{filename_with_zarr_json}":/level0/ar') as ds:
+        band = ds.GetRasterBand(1)
+        assert band.GetOverviewCount() == 2
+        assert band.GetOverview(-1) is None
+        assert band.GetOverview(2) is None
+
+        assert band.GetOverview(0).YSize == 100
+        assert band.GetOverview(0).XSize == 50
+
+        assert band.GetOverview(1).YSize == 50
+        assert band.GetOverview(1).XSize == 25
+
+
+###############################################################################
+# Test reading a dataset with errors in the "multiscales" convention
+
+
+def mutate_multiscale_missing_layout(j):
+    del j["attributes"]["multiscales"]["layout"]
+
+
+def mutate_multiscale_missing_asset(j):
+    j["attributes"]["multiscales"]["layout"] = [{}]
+
+
+def mutate_multiscale_assert_not_existing(j):
+    j["attributes"]["multiscales"]["layout"] = [{"asset": "non_existing"}]
+
+
+def mutate_multiscale_asset_not_same_dim_count(j):
+    j["consolidated_metadata"]["metadata"]["level1/ar"]["shape"] = [100]
+    j["consolidated_metadata"]["metadata"]["level1/ar"]["chunk_grid"]["configuration"][
+        "chunk_shape"
+    ] = [100]
+    j["consolidated_metadata"]["metadata"]["level1/ar"]["dimension_names"] = ["y"]
+
+
+def mutate_multiscale_asset_not_same_type(j):
+    j["consolidated_metadata"]["metadata"]["level1/ar"]["data_type"] = "uint8"
+    j["consolidated_metadata"]["metadata"]["level1/ar"]["fill_value"] = 0
+
+
+def mutate_multiscale_derived_from_non_existing(j):
+    j["attributes"]["multiscales"]["layout"][1]["derived_from"] = "non_existing"
+
+
+def mutate_multiscale_derived_from_not_same_dim_count(j):
+    j["attributes"]["multiscales"]["layout"][1]["derived_from"] = "level0/y"
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "mutate_func,expected_error_msg",
+    [
+        (mutate_multiscale_missing_layout, "layout not found in multiscales"),
+        (mutate_multiscale_missing_asset, "multiscales.layout[].asset not found"),
+        (
+            mutate_multiscale_assert_not_existing,
+            "multiscales.layout[].asset=non_existing ignored, because it is not a valid group or array name",
+        ),
+        (
+            mutate_multiscale_asset_not_same_dim_count,
+            "multiscales.layout[].asset=level1 (/level1/ar) ignored, because it  has not the same dimension count as ar (/level0/ar)",
+        ),
+        (
+            mutate_multiscale_asset_not_same_type,
+            "multiscales.layout[].asset=level1 (/level1/ar) ignored, because it has not the same data type as ar (/level0/ar)",
+        ),
+        (
+            mutate_multiscale_derived_from_non_existing,
+            "multiscales.layout[].asset=level1 refers to derived_from=non_existing which does not exist",
+        ),
+        (
+            mutate_multiscale_derived_from_not_same_dim_count,
+            "multiscales.layout[].asset=level1 refers to derived_from=level0/y that does not have the expected number of dimensions. Ignoring that asset",
+        ),
+    ],
+)
+def test_zarr_read_simple_multiscales_error(
+    tmp_vsimem, mutate_func, expected_error_msg
+):
+
+    with gdal.VSIFile("data/zarr/v3/simple_multiscales/zarr.json", "rb") as f:
+        j = json.loads(f.read())
+
+    mutate_func(j)
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "zarr.json", json.dumps(j))
+
+    with gdal.OpenEx(tmp_vsimem / "zarr.json", gdal.OF_MULTIDIM_RASTER) as ds:
+        rg = ds.GetRootGroup()
+        level0 = rg.OpenGroup("level0")
+        ar0 = level0.OpenMDArray("ar")
+        with gdaltest.error_raised(gdal.CE_Warning, match=expected_error_msg):
+            ar0.GetOverviewCount()
+
+
+###############################################################################
+# Test reading a dataset with errors in the "multiscales" convention
+
+
+def mutate_multiscale_transform_scale_not_expected_number_of_vals(j):
+    j["attributes"]["multiscales"]["layout"][1]["transform"]["scale"] = [2]
+
+
+def mutate_multiscale_transform_scale_unexpected_vals(j):
+    j["attributes"]["multiscales"]["layout"][1]["transform"]["scale"] = [1.5, 1.5]
+
+
+def mutate_multiscale_transform_translation_not_expected_number_of_vals(j):
+    j["attributes"]["multiscales"]["layout"][1]["transform"]["translation"] = [0]
+
+
+def mutate_multiscale_transform_translation_unexpected_vals(j):
+    j["attributes"]["multiscales"]["layout"][1]["transform"]["translation"] = [0, 0.5]
+
+
+def mutate_multiscale_spatial_shape_not_array(j):
+    j["attributes"]["multiscales"]["layout"][1]["spatial:shape"] = None
+
+
+def mutate_multiscale_spatial_shape_not_expected_number_of_vals(j):
+    j["attributes"]["multiscales"]["layout"][1]["spatial:shape"] = [100]
+
+
+def mutate_multiscale_spatial_shape_not_expected_val(j):
+    j["attributes"]["multiscales"]["layout"][1]["spatial:shape"] = [100, 49]
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "mutate_func,expected_error_msg",
+    [
+        (
+            mutate_multiscale_transform_scale_not_expected_number_of_vals,
+            "multiscales.layout[].asset=level1 has a transform.scale array with an unexpected number of values. Ignoring the asset",
+        ),
+        (
+            mutate_multiscale_transform_scale_unexpected_vals,
+            "multiscales.layout[].asset=level1 has a transform.scale[1]=1.500000 value whereas 2.000000 was expected. Assuming that later value as the scale.",
+        ),
+        (
+            mutate_multiscale_transform_translation_not_expected_number_of_vals,
+            "multiscales.layout[].asset=level1 has a transform.translation array with an unexpected number of values. Ignoring the asset",
+        ),
+        (
+            mutate_multiscale_transform_translation_unexpected_vals,
+            "multiscales.layout[].asset=level1 has a transform.translation[1]=0.500000 value. Ignoring that offset.",
+        ),
+        (
+            mutate_multiscale_spatial_shape_not_array,
+            "multiscales.layout[].asset=level1 ignored, because its spatial:shape property is not an array",
+        ),
+        (
+            mutate_multiscale_spatial_shape_not_expected_number_of_vals,
+            "multiscales.layout[].asset=level1 ignored, because its spatial:shape property has not the expected number of values",
+        ),
+        (
+            mutate_multiscale_spatial_shape_not_expected_val,
+            "multiscales.layout[].asset=level1 ignored, because its spatial:shape[1] value is 49 whereas 50 was expected.",
+        ),
+    ],
+)
+def test_zarr_read_simple_multiscales_spatial_error(
+    tmp_vsimem, mutate_func, expected_error_msg
+):
+
+    with gdal.VSIFile("data/zarr/v3/simple_multiscales_spatial/zarr.json", "rb") as f:
+        j = json.loads(f.read())
+
+    mutate_func(j)
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "zarr.json", json.dumps(j))
+
+    with gdal.OpenEx(tmp_vsimem / "zarr.json", gdal.OF_MULTIDIM_RASTER) as ds:
+        rg = ds.GetRootGroup()
+        level0 = rg.OpenGroup("level0")
+        ar0 = level0.OpenMDArray("ar")
+        with gdaltest.error_raised(gdal.CE_Warning, match=expected_error_msg):
+            ar0.GetOverviewCount()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_multiscales_cannot_get_root_group(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "zarr.json",
+        gdal.VSIFile("data/zarr/v3/simple_multiscales_spatial/zarr.json", "rb").read(),
+    )
+
+    def get_array():
+        with gdal.OpenEx(tmp_vsimem / "zarr.json", gdal.OF_MULTIDIM_RASTER) as ds:
+            rg = ds.GetRootGroup()
+            level0 = rg.OpenGroup("level0")
+            ar0 = level0.OpenMDArray("ar")
+            return ar0
+
+    ar = get_array()
+    gdal.Unlink(tmp_vsimem / "zarr.json")
+    with gdaltest.error_raised(
+        gdal.CE_Warning, match="LoadOverviews(): cannot access root group"
+    ):
+        assert ar.GetOverviewCount() == 0

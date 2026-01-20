@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_enumerate.h"
 #include "cpl_float.h"
 #include "cpl_vsi_virtual.h"
 #include "gdal_thread_pool.h"
@@ -18,6 +19,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cinttypes>
 #include <cmath>
 #include <cstdlib>
 #include <limits>
@@ -30,14 +32,14 @@
 
 ZarrV3Array::ZarrV3Array(
     const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-    const std::string &osParentName, const std::string &osName,
+    const std::shared_ptr<ZarrGroupBase> &poParent, const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
     const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
     const std::vector<GUInt64> &anOuterBlockSize,
     const std::vector<GUInt64> &anInnerBlockSize)
-    : GDALAbstractMDArray(osParentName, osName),
-      ZarrArray(poSharedResource, osParentName, osName, aoDims, oType,
-                aoDtypeElts, anOuterBlockSize, anInnerBlockSize)
+    : GDALAbstractMDArray(poParent->GetFullName(), osName),
+      ZarrArray(poSharedResource, poParent, osName, aoDims, oType, aoDtypeElts,
+                anOuterBlockSize, anInnerBlockSize)
 {
 }
 
@@ -45,17 +47,16 @@ ZarrV3Array::ZarrV3Array(
 /*                         ZarrV3Array::Create()                        */
 /************************************************************************/
 
-std::shared_ptr<ZarrV3Array>
-ZarrV3Array::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-                    const std::string &osParentName, const std::string &osName,
-                    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
-                    const GDALExtendedDataType &oType,
-                    const std::vector<DtypeElt> &aoDtypeElts,
-                    const std::vector<GUInt64> &anOuterBlockSize,
-                    const std::vector<GUInt64> &anInnerBlockSize)
+std::shared_ptr<ZarrV3Array> ZarrV3Array::Create(
+    const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+    const std::shared_ptr<ZarrGroupBase> &poParent, const std::string &osName,
+    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+    const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
+    const std::vector<GUInt64> &anOuterBlockSize,
+    const std::vector<GUInt64> &anInnerBlockSize)
 {
     auto arr = std::shared_ptr<ZarrV3Array>(
-        new ZarrV3Array(poSharedResource, osParentName, osName, aoDims, oType,
+        new ZarrV3Array(poSharedResource, poParent, osName, aoDims, oType,
                         aoDtypeElts, anOuterBlockSize, anInnerBlockSize));
     if (arr->m_nTotalInnerChunkCount == 0)
         return nullptr;
@@ -1613,8 +1614,8 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         }
     }
 
-    auto poArray = ZarrV3Array::Create(m_poSharedResource, GetFullName(),
-                                       osArrayName, aoDims, oType, aoDtypeElts,
+    auto poArray = ZarrV3Array::Create(m_poSharedResource, Self(), osArrayName,
+                                       aoDims, oType, aoDtypeElts,
                                        anOuterBlockSize, anInnerBlockSize);
     if (!poArray)
         return nullptr;
@@ -1797,4 +1798,423 @@ void ZarrV3Array::SetCodecs(const CPLJSONArray &oJSONCodecs,
 {
     m_oJSONCodecs = oJSONCodecs;
     m_poCodecs = std::move(poCodecs);
+}
+
+/************************************************************************/
+/*                      ZarrV3Array::LoadOverviews()                    */
+/************************************************************************/
+
+void ZarrV3Array::LoadOverviews() const
+{
+    if (m_bOverviewsLoaded)
+        return;
+    m_bOverviewsLoaded = true;
+
+    // Cf https://github.com/zarr-conventions/multiscales
+    // and https://github.com/zarr-conventions/spatial
+
+    const auto poRG = GetRootGroup();
+    if (!poRG)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "LoadOverviews(): cannot access root group");
+        return;
+    }
+
+    auto poGroup = GetParentGroup();
+    if (!poGroup)
+    {
+        CPLDebugOnly(ZARR_DEBUG_KEY,
+                     "LoadOverviews(): cannot access parent group");
+        return;
+    }
+
+    // Look for "zarr_conventions" and "multiscales" attributes in our
+    // immediate parent, or in our grandparent if not found.
+    auto poAttrZarrConventions = poGroup->GetAttribute("zarr_conventions");
+    auto poAttrMultiscales = poGroup->GetAttribute("multiscales");
+    if (!poAttrZarrConventions || !poAttrMultiscales)
+    {
+        poGroup = poGroup->GetParentGroup();
+        if (poGroup)
+        {
+            poAttrZarrConventions = poGroup->GetAttribute("zarr_conventions");
+            poAttrMultiscales = poGroup->GetAttribute("multiscales");
+        }
+        if (!poAttrZarrConventions || !poAttrMultiscales)
+        {
+            return;
+        }
+    }
+
+    const char *pszZarrConventions = poAttrZarrConventions->ReadAsString();
+    const char *pszMultiscales = poAttrMultiscales->ReadAsString();
+    if (!pszZarrConventions || !pszMultiscales)
+        return;
+
+    CPLJSONDocument oDoc;
+    if (!oDoc.LoadMemory(pszZarrConventions))
+        return;
+    const auto oZarrConventions = oDoc.GetRoot();
+
+    if (!oDoc.LoadMemory(pszMultiscales))
+        return;
+    const auto oMultiscales = oDoc.GetRoot();
+
+    if (!oZarrConventions.IsValid() ||
+        oZarrConventions.GetType() != CPLJSONObject::Type::Array ||
+        !oMultiscales.IsValid() ||
+        oMultiscales.GetType() != CPLJSONObject::Type::Object)
+    {
+        return;
+    }
+
+    const auto oZarrConventionsArray = oZarrConventions.ToArray();
+    const auto hasMultiscalesUUIDLambda = [](const CPLJSONObject &obj)
+    {
+        constexpr const char *MULTISCALES_UUID =
+            "d35379db-88df-4056-af3a-620245f8e347";
+        return obj.GetString("uuid") == MULTISCALES_UUID;
+    };
+    const bool bFoundMultiScalesUUID =
+        std::find_if(oZarrConventionsArray.begin(), oZarrConventionsArray.end(),
+                     hasMultiscalesUUIDLambda) != oZarrConventionsArray.end();
+    if (!bFoundMultiScalesUUID)
+        return;
+
+    const auto hasSpatialUUIDLambda = [](const CPLJSONObject &obj)
+    {
+        constexpr const char *SPATIAL_UUID =
+            "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4";
+        return obj.GetString("uuid") == SPATIAL_UUID;
+    };
+    const bool bFoundSpatialUUID =
+        std::find_if(oZarrConventionsArray.begin(), oZarrConventionsArray.end(),
+                     hasSpatialUUIDLambda) != oZarrConventionsArray.end();
+
+    const auto oLayout = oMultiscales["layout"];
+    if (!oLayout.IsValid() && oLayout.GetType() != CPLJSONObject::Type::Array)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "layout not found in multiscales");
+        return;
+    }
+
+    // is pixel-is-area ?
+    auto poSpatialRegistration = poGroup->GetAttribute("spatial:registration");
+    const char *pszSpatialRegistration =
+        poSpatialRegistration ? poSpatialRegistration->ReadAsString() : nullptr;
+    const bool bHasExplicitPixelSpatialRegistration =
+        bFoundSpatialUUID && pszSpatialRegistration &&
+        strcmp(pszSpatialRegistration, "pixel") == 0;
+
+    std::vector<std::string> aosSpatialDimensions;
+    std::set<std::string> oSetSpatialDimensionNames;
+    auto poSpatialDimensions = poGroup->GetAttribute("spatial:dimensions");
+    if (bFoundSpatialUUID && poSpatialDimensions)
+    {
+        aosSpatialDimensions = poSpatialDimensions->ReadAsStringArray();
+        for (const auto &osDimName : aosSpatialDimensions)
+        {
+            oSetSpatialDimensionNames.insert(osDimName);
+        }
+    }
+
+    for (const auto &oLayoutItem : oLayout.ToArray())
+    {
+        const std::string osAsset = oLayoutItem.GetString("asset");
+        if (osAsset.empty())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "multiscales.layout[].asset not found");
+            continue;
+        }
+
+        // Resolve "asset" to a MDArray
+        std::shared_ptr<GDALGroup> poAssetGroup;
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            poAssetGroup = poRG->OpenGroupFromFullname('/' + osAsset);
+        }
+        std::shared_ptr<GDALMDArray> poAssetArray;
+        if (poAssetGroup)
+        {
+            poAssetArray = poAssetGroup->OpenMDArray(GetName());
+        }
+        else if (osAsset.find('/') == std::string::npos)
+        {
+            poAssetArray = poRG->OpenMDArray(osAsset);
+            if (!poAssetArray)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "multiscales.layout[].asset=%s ignored, because it is "
+                         "not a valid group or array name",
+                         osAsset.c_str());
+                continue;
+            }
+        }
+        else
+        {
+            poAssetArray = poRG->OpenMDArrayFromFullname('/' + osAsset);
+            if (poAssetArray && poAssetArray->GetName() != GetName())
+            {
+                continue;
+            }
+        }
+        if (!poAssetArray)
+        {
+            continue;
+        }
+        if (poAssetArray->GetDimensionCount() != GetDimensionCount())
+        {
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "multiscales.layout[].asset=%s (%s) ignored, because it  has "
+                "not the same dimension count as %s (%s)",
+                osAsset.c_str(), poAssetArray->GetFullName().c_str(),
+                GetName().c_str(), GetFullName().c_str());
+            continue;
+        }
+        if (poAssetArray->GetDataType() != GetDataType())
+        {
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "multiscales.layout[].asset=%s (%s) ignored, because it has "
+                "not the same data type as %s (%s)",
+                osAsset.c_str(), poAssetArray->GetFullName().c_str(),
+                GetName().c_str(), GetFullName().c_str());
+            continue;
+        }
+
+        bool bAssetIsDownsampledOfThis = false;
+        for (size_t iDim = 0; iDim < GetDimensionCount(); ++iDim)
+        {
+            if (poAssetArray->GetDimensions()[iDim]->GetSize() <
+                GetDimensions()[iDim]->GetSize())
+            {
+                bAssetIsDownsampledOfThis = true;
+                break;
+            }
+        }
+        if (!bAssetIsDownsampledOfThis)
+        {
+            // not an error
+            continue;
+        }
+
+        // Inspect dimensions of the asset
+        std::map<std::string, size_t> oMapAssetDimNameToIdx;
+        const auto &apoAssetDims = poAssetArray->GetDimensions();
+        size_t nCountSpatialDimsFoundInAsset = 0;
+        for (const auto &[idx, poDim] : cpl::enumerate(apoAssetDims))
+        {
+            oMapAssetDimNameToIdx[poDim->GetName()] = idx;
+            if (cpl::contains(oSetSpatialDimensionNames, poDim->GetName()))
+                ++nCountSpatialDimsFoundInAsset;
+        }
+        const bool bAssetHasAllSpatialDims =
+            (nCountSpatialDimsFoundInAsset == aosSpatialDimensions.size());
+
+        // Consistency checks on "derived_from" and "transform"
+        const auto oDerivedFrom = oLayoutItem["derived_from"];
+        const auto oTransform = oLayoutItem["transform"];
+        if (oDerivedFrom.IsValid() && oTransform.IsValid() &&
+            oDerivedFrom.GetType() == CPLJSONObject::Type::String &&
+            oTransform.GetType() == CPLJSONObject::Type::Object)
+        {
+            const std::string osDerivedFrom = oDerivedFrom.ToString();
+            // Resolve "derived_from" to a MDArray
+            std::shared_ptr<GDALGroup> poDerivedFromGroup;
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                poDerivedFromGroup =
+                    poRG->OpenGroupFromFullname('/' + osDerivedFrom);
+            }
+            std::shared_ptr<GDALMDArray> poDerivedFromArray;
+            if (poDerivedFromGroup)
+            {
+                poDerivedFromArray = poDerivedFromGroup->OpenMDArray(GetName());
+            }
+            else if (osDerivedFrom.find('/') == std::string::npos)
+            {
+                poDerivedFromArray = poRG->OpenMDArray(osDerivedFrom);
+                if (!poDerivedFromArray)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "multiscales.layout[].asset=%s refers to "
+                             "derived_from=%s which does not exist",
+                             osAsset.c_str(), osDerivedFrom.c_str());
+                    poDerivedFromArray.reset();
+                }
+            }
+            else
+            {
+                poDerivedFromArray =
+                    poRG->OpenMDArrayFromFullname('/' + osDerivedFrom);
+            }
+            if (poDerivedFromArray && bAssetHasAllSpatialDims)
+            {
+                if (poDerivedFromArray->GetDimensionCount() !=
+                    GetDimensionCount())
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "multiscales.layout[].asset=%s refers to "
+                             "derived_from=%s that does not have the expected "
+                             "number of dimensions. Ignoring that asset",
+                             osAsset.c_str(), osDerivedFrom.c_str());
+                    continue;
+                }
+
+                const auto oScale = oTransform["scale"];
+                if (oScale.GetType() == CPLJSONObject::Type::Array &&
+                    bHasExplicitPixelSpatialRegistration)
+                {
+                    const auto oScaleArray = oScale.ToArray();
+                    if (oScaleArray.size() != GetDimensionCount())
+                    {
+
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "multiscales.layout[].asset=%s has a "
+                                 "transform.scale array with an unexpected "
+                                 "number of values. Ignoring the asset",
+                                 osAsset.c_str());
+                        continue;
+                    }
+
+                    for (size_t iDim = 0; iDim < GetDimensionCount(); ++iDim)
+                    {
+                        const double dfScale = oScaleArray[iDim].ToDouble();
+                        const double dfExpectedScale =
+                            static_cast<double>(
+                                poDerivedFromArray->GetDimensions()[iDim]
+                                    ->GetSize()) /
+                            static_cast<double>(
+                                poAssetArray->GetDimensions()[iDim]->GetSize());
+                        constexpr double EPSILON = 1e-3;
+                        if (std::fabs(dfScale - dfExpectedScale) >
+                            EPSILON * dfExpectedScale)
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "multiscales.layout[].asset=%s has a "
+                                     "transform.scale[%d]=%f value whereas %f "
+                                     "was expected. "
+                                     "Assuming that later value as the scale.",
+                                     osAsset.c_str(), static_cast<int>(iDim),
+                                     dfScale, dfExpectedScale);
+                        }
+                    }
+                }
+
+                const auto oTranslation = oTransform["translation"];
+                if (oTranslation.GetType() == CPLJSONObject::Type::Array &&
+                    bHasExplicitPixelSpatialRegistration)
+                {
+                    const auto oTranslationArray = oTranslation.ToArray();
+                    if (oTranslationArray.size() != GetDimensionCount())
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "multiscales.layout[].asset=%s has a "
+                                 "transform.translation array with an "
+                                 "unexpected number of values. "
+                                 "Ignoring the asset",
+                                 osAsset.c_str());
+                        continue;
+                    }
+
+                    for (size_t iDim = 0; iDim < GetDimensionCount(); ++iDim)
+                    {
+                        const double dfOffset =
+                            oTranslationArray[iDim].ToDouble();
+                        if (dfOffset != 0)
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "multiscales.layout[].asset=%s has a "
+                                     "transform.translation[%d]=%f value. "
+                                     "Ignoring that offset.",
+                                     osAsset.c_str(), static_cast<int>(iDim),
+                                     dfOffset);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (bFoundSpatialUUID && bAssetHasAllSpatialDims)
+        {
+            const auto oSpatialShape = oLayoutItem["spatial:shape"];
+            if (oSpatialShape.IsValid())
+            {
+                if (oSpatialShape.GetType() != CPLJSONObject::Type::Array)
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "multiscales.layout[].asset=%s ignored, because its "
+                        "spatial:shape property is not an array",
+                        osAsset.c_str());
+                    continue;
+                }
+                const auto oSpatialShapeArray = oSpatialShape.ToArray();
+                if (oSpatialShapeArray.size() != aosSpatialDimensions.size())
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "multiscales.layout[].asset=%s ignored, because its "
+                        "spatial:shape property has not the expected number "
+                        "of values",
+                        osAsset.c_str());
+                    continue;
+                }
+
+                bool bSkip = false;
+                for (const auto &[idx, oShapeVal] :
+                     cpl::enumerate(oSpatialShapeArray))
+                {
+                    const auto oIter =
+                        oMapAssetDimNameToIdx.find(aosSpatialDimensions[idx]);
+                    if (oIter != oMapAssetDimNameToIdx.end())
+                    {
+                        const auto poDim = apoAssetDims[oIter->second];
+                        if (poDim->GetSize() !=
+                            static_cast<uint64_t>(oShapeVal.ToLong()))
+                        {
+                            bSkip = true;
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "multiscales.layout[].asset=%s ignored, "
+                                     "because its "
+                                     "spatial:shape[%d] value is %" PRIu64
+                                     " whereas %" PRIu64 " was expected.",
+                                     osAsset.c_str(), static_cast<int>(idx),
+                                     static_cast<uint64_t>(oShapeVal.ToLong()),
+                                     static_cast<uint64_t>(poDim->GetSize()));
+                        }
+                    }
+                }
+                if (bSkip)
+                    continue;
+            }
+        }
+
+        m_apoOverviews.push_back(std::move(poAssetArray));
+    }
+}
+
+/************************************************************************/
+/*                    ZarrV3Array::GetOverviewCount()                   */
+/************************************************************************/
+
+int ZarrV3Array::GetOverviewCount() const
+{
+    LoadOverviews();
+    return static_cast<int>(m_apoOverviews.size());
+}
+
+/************************************************************************/
+/*                      ZarrV3Array::GetOverview()                      */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> ZarrV3Array::GetOverview(int idx) const
+{
+    if (idx < 0 || idx >= GetOverviewCount())
+        return nullptr;
+    return m_apoOverviews[idx];
 }

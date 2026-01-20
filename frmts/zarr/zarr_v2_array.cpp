@@ -31,13 +31,13 @@
 
 ZarrV2Array::ZarrV2Array(
     const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-    const std::string &osParentName, const std::string &osName,
+    const std::shared_ptr<ZarrGroupBase> &poParent, const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
     const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
     const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
-    : GDALAbstractMDArray(osParentName, osName),
-      ZarrArray(poSharedResource, osParentName, osName, aoDims, oType,
-                aoDtypeElts, anBlockSize, anBlockSize),
+    : GDALAbstractMDArray(poParent->GetFullName(), osName),
+      ZarrArray(poSharedResource, poParent, osName, aoDims, oType, aoDtypeElts,
+                anBlockSize, anBlockSize),
       m_bFortranOrder(bFortranOrder)
 {
     m_oCompressorJSon.Deinit();
@@ -47,16 +47,15 @@ ZarrV2Array::ZarrV2Array(
 /*                         ZarrV2Array::Create()                        */
 /************************************************************************/
 
-std::shared_ptr<ZarrV2Array>
-ZarrV2Array::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-                    const std::string &osParentName, const std::string &osName,
-                    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
-                    const GDALExtendedDataType &oType,
-                    const std::vector<DtypeElt> &aoDtypeElts,
-                    const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
+std::shared_ptr<ZarrV2Array> ZarrV2Array::Create(
+    const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+    const std::shared_ptr<ZarrGroupBase> &poParent, const std::string &osName,
+    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+    const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
+    const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
 {
     auto arr = std::shared_ptr<ZarrV2Array>(
-        new ZarrV2Array(poSharedResource, osParentName, osName, aoDims, oType,
+        new ZarrV2Array(poSharedResource, poParent, osName, aoDims, oType,
                         aoDtypeElts, anBlockSize, bFortranOrder));
     if (arr->m_nTotalInnerChunkCount == 0)
         return nullptr;
@@ -2046,9 +2045,9 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         return nullptr;
     }
 
-    auto poArray = ZarrV2Array::Create(m_poSharedResource, GetFullName(),
-                                       osArrayName, aoDims, oType, aoDtypeElts,
-                                       anBlockSize, bFortranOrder);
+    auto poArray =
+        ZarrV2Array::Create(m_poSharedResource, Self(), osArrayName, aoDims,
+                            oType, aoDtypeElts, anBlockSize, bFortranOrder);
     if (!poArray)
         return nullptr;
     poArray->SetCompressorJson(oCompressor);

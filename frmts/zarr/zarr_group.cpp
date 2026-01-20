@@ -576,3 +576,30 @@ void ZarrGroupBase::NotifyChildrenOfRenaming()
     for (const auto &oIter : m_oMapDimensions)
         oIter.second->ParentRenamed(m_osFullName);
 }
+
+/************************************************************************/
+/*                   ZarrGroupBase::GetParentGroup()                    */
+/************************************************************************/
+
+std::shared_ptr<ZarrGroupBase> ZarrGroupBase::GetParentGroup() const
+{
+    std::shared_ptr<ZarrGroupBase> poGroup = m_poParent.lock();
+    if (!poGroup)
+    {
+        if (auto poRootGroup = m_poSharedResource->GetRootGroup())
+        {
+            const auto nPos = m_osFullName.rfind('/');
+            if (nPos == 0)
+            {
+                poGroup = poRootGroup;
+            }
+            else if (nPos != std::string::npos)
+            {
+                poGroup = std::dynamic_pointer_cast<ZarrGroupBase>(
+                    poRootGroup->OpenGroupFromFullname(
+                        m_osFullName.substr(0, nPos)));
+            }
+        }
+    }
+    return poGroup;
+}

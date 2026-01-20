@@ -1380,7 +1380,8 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
         {
             auto poSlicedArray = poDS->m_poSingleArray->GetView(
                 CPLSPrintf(bBandInterleave ? "[%d,::,::]" : "[::,::,%d]", i));
-            poDS->SetBand(i + 1, new ZarrRasterBand(poSlicedArray));
+            poDS->SetBand(i + 1,
+                          std::make_unique<ZarrRasterBand>(poSlicedArray));
         }
     }
     else
@@ -1399,7 +1400,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
                 CleanupCreatedFiles();
                 return nullptr;
             }
-            poDS->SetBand(i + 1, new ZarrRasterBand(poArray));
+            poDS->SetBand(i + 1, std::make_unique<ZarrRasterBand>(poArray));
         }
     }
 
