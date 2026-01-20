@@ -10926,6 +10926,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
     std::shared_ptr<GDALMDArray> m_varX{};
     std::shared_ptr<GDALMDArray> m_varY{};
     std::string m_osFilename{};
+    mutable std::vector<std::shared_ptr<GDALMDArray>> m_apoOverviews{};
 
     bool ReadWrite(GDALRWFlag eRWFlag, const GUInt64 *arrayStartIdx,
                    const size_t *count, const GInt64 *arrayStep,
@@ -11168,6 +11169,30 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
             CPLFree(pszKey);
         }
         return res;
+    }
+
+    int GetOverviewCount() const override
+    {
+        return m_poBand->GetOverviewCount();
+    }
+
+    std::shared_ptr<GDALMDArray> GetOverview(int idx) const override
+    {
+        const int nOverviews = GetOverviewCount();
+        if (idx < 0 || idx >= nOverviews)
+            return nullptr;
+        m_apoOverviews.resize(nOverviews);
+        if (!m_apoOverviews[idx])
+        {
+            if (auto poOvrBand = m_poBand->GetOverview(idx))
+            {
+                if (auto poOvrDS = poOvrBand->GetDataset())
+                {
+                    m_apoOverviews[idx] = Create(poOvrDS, poOvrBand);
+                }
+            }
+        }
+        return m_apoOverviews[idx];
     }
 };
 

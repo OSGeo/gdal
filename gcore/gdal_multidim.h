@@ -1104,6 +1104,10 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     virtual bool GetRawBlockInfo(const uint64_t *panBlockCoordinates,
                                  GDALMDArrayRawBlockInfo &info) const;
 
+    virtual int GetOverviewCount() const;
+
+    virtual std::shared_ptr<GDALMDArray> GetOverview(int idx) const;
+
     //! @cond Doxygen_Suppress
     static constexpr GUInt64 COPY_COST = 1000;
 
