@@ -20,9 +20,11 @@
 #include "memmultidim.h"
 
 #include <array>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <numeric>
 #include <set>
 
 #define ZARR_DEBUG_KEY "ZARR"
@@ -35,11 +37,23 @@ const CPLCompressor *ZarrGetQuantizeDecompressor();
 const CPLCompressor *ZarrGetTIFFDecompressor();
 const CPLCompressor *ZarrGetFixedScaleOffsetDecompressor();
 
-class ZarrGroupBase;
+/************************************************************************/
+/*                           MultiplyElements()                         */
+/************************************************************************/
+
+/** Return the product of elements in the vector
+ */
+template <class T> inline T MultiplyElements(const std::vector<T> &vector)
+{
+    return std::reduce(vector.begin(), vector.end(), T{1},
+                       std::multiplies<T>{});
+}
 
 /************************************************************************/
 /*                            ZarrDataset                               */
 /************************************************************************/
+
+class ZarrGroupBase;
 
 class ZarrDataset final : public GDALDataset
 {
@@ -717,6 +731,55 @@ class ZarrByteVectorQuickResize
         m_nSize = nNewSize;
     }
 
+    inline void clear()
+    {
+        m_nSize = 0;
+    }
+
+    inline std::vector<GByte>::iterator begin()
+    {
+        return m_oVec.begin();
+    }
+
+    inline std::vector<GByte>::const_iterator begin() const
+    {
+        return m_oVec.begin();
+    }
+
+    inline std::vector<GByte>::iterator end()
+    {
+        return m_oVec.begin() + m_nSize;
+    }
+
+    inline std::vector<GByte>::const_iterator end() const
+    {
+        return m_oVec.begin() + m_nSize;
+    }
+
+    template <class InputIt>
+    inline std::vector<GByte>::iterator
+    insert(std::vector<GByte>::const_iterator pos, InputIt first, InputIt last)
+    {
+        const size_t nCount = std::distance(first, last);
+        const auto &oVec = m_oVec;
+        const size_t nStart = std::distance(oVec.begin(), pos);
+        if (nStart == m_nSize && nStart + nCount <= m_oVec.size())
+        {
+            // Insert at end of user-visible vector, but fully inside the
+            // container vector. We can just copy
+            std::copy(first, last, m_oVec.begin() + nStart);
+            m_nSize += nCount;
+            return m_oVec.begin() + nStart;
+        }
+        else
+        {
+            // Generic case
+            auto ret = m_oVec.insert(pos, first, last);
+            m_nSize += nCount;
+            return ret;
+        }
+    }
+
     inline bool empty() const
     {
         return m_nSize == 0;
@@ -765,22 +828,54 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     std::shared_ptr<ZarrSharedResource> m_poSharedResource;
     const std::vector<std::shared_ptr<GDALDimension>> m_aoDims;
     const GDALExtendedDataType m_oType;
+
+    //! Array (several in case of compound data type) of native Zarr data types
     const std::vector<DtypeElt> m_aoDtypeElts;
-    const std::vector<GUInt64> m_anBlockSize;
+
+    /** m_anOuterBlockSize is the chunk_size at the Zarr array level, which
+     * determines the files/objects
+     */
+    const std::vector<GUInt64> m_anOuterBlockSize;
+
+    /** m_anInnerBlockSize is the inner most block size of sharding, which
+     * is the one exposed to the user with GetBlockSize()
+     * When no sharding is involved m_anOuterBlockSize == m_anInnerBlockSize
+     * Note that m_anOuterBlockSize might be equal to m_anInnerBlockSize, even
+     * when sharding is involved, and it is actually a common use case.
+     */
+    const std::vector<GUInt64> m_anInnerBlockSize;
+
+    /** m_anCountInnerBlockInOuter[i] = m_anOuterBlockSize[i] / m_anInnerBlockSize[i]
+     * That is the number of inner blocks in one outer block
+     */
+    const std::vector<GUInt64> m_anCountInnerBlockInOuter;
+
+    //! Total number of inner chunks in the array
+    const uint64_t m_nTotalInnerChunkCount;
+
+    //! Size in bytes of a inner chunk using the Zarr native data type
+    const size_t m_nInnerBlockSizeBytes;
+
+    mutable ZarrAttributeGroup m_oAttrGroup;
+
+    const bool m_bUseOptimizedCodePaths;
+
     CPLStringList m_aosStructuralInfo{};
     CPLJSONObject m_dtype{};
     GByte *m_pabyNoData = nullptr;
     std::string m_osDimSeparator{"."};
     std::string m_osFilename{};
-    size_t m_nTileSize = 0;
-    mutable ZarrByteVectorQuickResize m_abyRawTileData{};
-    mutable ZarrByteVectorQuickResize m_abyDecodedTileData{};
-    mutable std::vector<uint64_t> m_anCachedTiledIndices{};
-    mutable bool m_bCachedTiledValid = false;
-    mutable bool m_bCachedTiledEmpty = false;
-    mutable bool m_bDirtyTile = false;
-    bool m_bUseOptimizedCodePaths = true;
-    mutable ZarrAttributeGroup m_oAttrGroup;
+    mutable ZarrByteVectorQuickResize m_abyRawBlockData{};
+    mutable ZarrByteVectorQuickResize m_abyDecodedBlockData{};
+
+    /** Inner block index of the cached block
+     * i.e. m_anCachedBlockIndices[i] < cpl::round_up(m_aoDims[i]->GetSize, m_anInnerBlockSize[i])
+     */
+    mutable std::vector<uint64_t> m_anCachedBlockIndices{};
+
+    mutable bool m_bCachedBlockValid = false;
+    mutable bool m_bCachedBlockEmpty = false;
+    mutable bool m_bDirtyBlock = false;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
     mutable bool m_bAllocateWorkingBuffersDone = false;
     mutable bool m_bWorkingBuffersOK = false;
@@ -797,50 +892,47 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     bool m_bHasScale = false;
     bool m_bScaleModified = false;
     std::weak_ptr<ZarrGroupBase> m_poGroupWeak{};
-    uint64_t m_nTotalTileCount = 0;
-    mutable bool m_bHasTriedCacheTilePresenceArray = false;
-    mutable std::shared_ptr<GDALMDArray> m_poCacheTilePresenceArray{};
+    mutable bool m_bHasTriedBlockCachePresenceArray = false;
+    mutable std::shared_ptr<GDALMDArray> m_poBlockCachePresenceArray{};
     mutable std::mutex m_oMutex{};
 
-    struct CachedTile
+    struct CachedBlock
     {
         ZarrByteVectorQuickResize abyDecoded{};
     };
 
-    mutable std::map<uint64_t, CachedTile> m_oMapTileIndexToCachedTile{};
+    mutable std::map<std::vector<uint64_t>, CachedBlock> m_oChunkCache{};
 
     static uint64_t
-    ComputeTileCount(const std::string &osName,
-                     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
-                     const std::vector<GUInt64> &anBlockSize);
+    ComputeBlockCount(const std::string &osName,
+                      const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+                      const std::vector<GUInt64> &anBlockSize);
 
     ZarrArray(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
               const std::string &osParentName, const std::string &osName,
               const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
               const GDALExtendedDataType &oType,
               const std::vector<DtypeElt> &aoDtypeElts,
-              const std::vector<GUInt64> &anBlockSize);
+              const std::vector<GUInt64> &anOuterBlockSize,
+              const std::vector<GUInt64> &anInnerBlockSize);
 
-    virtual bool LoadTileData(const uint64_t *tileIndices,
-                              bool &bMissingTileOut) const = 0;
-
-    void BlockTranspose(const ZarrByteVectorQuickResize &abySrc,
-                        ZarrByteVectorQuickResize &abyDst, bool bDecode) const;
+    virtual bool LoadBlockData(const uint64_t *blockIndices,
+                               bool &bMissingBlockOut) const = 0;
 
     virtual bool AllocateWorkingBuffers() const = 0;
 
     void SerializeNumericNoData(CPLJSONObject &oRoot) const;
 
-    void DeallocateDecodedTileData();
+    void DeallocateDecodedBlockData();
 
     virtual std::string GetDataDirectory() const = 0;
 
     virtual CPLStringList
-    GetTileIndicesFromFilename(const char *pszFilename) const = 0;
+    GetChunkIndicesFromFilename(const char *pszFilename) const = 0;
 
-    virtual bool FlushDirtyTile() const = 0;
+    virtual bool FlushDirtyBlock() const = 0;
 
-    std::shared_ptr<GDALMDArray> OpenTilePresenceCache(bool bCanCreate) const;
+    std::shared_ptr<GDALMDArray> OpenBlockPresenceCache(bool bCanCreate) const;
 
     void NotifyChildrenOfRenaming() override;
 
@@ -863,26 +955,26 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
-    bool IsEmptyTile(const ZarrByteVectorQuickResize &abyTile) const;
+    bool IsEmptyBlock(const ZarrByteVectorQuickResize &abyBlock) const;
 
     bool IAdviseReadCommon(const GUInt64 *arrayStartIdx, const size_t *count,
                            CSLConstList papszOptions,
                            std::vector<uint64_t> &anIndicesCur,
                            int &nThreadsMax,
-                           std::vector<uint64_t> &anReqTilesIndices,
-                           size_t &nReqTiles) const;
+                           std::vector<uint64_t> &anReqBlocksIndices,
+                           size_t &nReqBlocks) const;
 
     CPLJSONObject SerializeSpecialAttributes();
 
     virtual std::string
-    BuildTileFilename(const uint64_t *tileIndices) const = 0;
+    BuildChunkFilename(const uint64_t *blockIndices) const = 0;
 
     bool SetStatistics(bool bApproxStats, double dfMin, double dfMax,
                        double dfMean, double dfStdDev, GUInt64 nValidCount,
                        CSLConstList papszOptions) override;
 
-    bool IsTileMissingFromCacheInfo(const std::string &osFilename,
-                                    const uint64_t *tileIndices) const;
+    bool IsBlockMissingFromCacheInfo(const std::string &osFilename,
+                                     const uint64_t *blockIndices) const;
 
     virtual CPLStringList GetRawBlockInfoInfo() const = 0;
 
@@ -921,7 +1013,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 
     std::vector<GUInt64> GetBlockSize() const override
     {
-        return m_anBlockSize;
+        return m_anInnerBlockSize;
     }
 
     CSLConstList GetStructuralInfo() const override
@@ -1065,7 +1157,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     bool GetRawBlockInfo(const uint64_t *panBlockCoordinates,
                          GDALMDArrayRawBlockInfo &info) const override;
 
-    bool CacheTilePresence();
+    bool BlockCachePresence();
 
     void SetStructuralInfo(const char *pszKey, const char *pszValue)
     {
@@ -1093,30 +1185,34 @@ class ZarrV2Array final : public ZarrArray
     CPLJSONArray m_oFiltersArray{};  // ZarrV2 specific
     bool m_bFortranOrder = false;
     mutable ZarrByteVectorQuickResize
-        m_abyTmpRawTileData{};  // used for Fortran order
+        m_abyTmpRawBlockData{};  // used for Fortran order
 
     ZarrV2Array(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                 const std::string &osParentName, const std::string &osName,
                 const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
                 const GDALExtendedDataType &oType,
                 const std::vector<DtypeElt> &aoDtypeElts,
-                const std::vector<GUInt64> &anBlockSize, bool bFortranOrder);
+                const std::vector<GUInt64> &anOuterBlockSize,
+                bool bFortranOrder);
 
     bool Serialize();
 
-    bool LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
-                      const CPLCompressor *psDecompressor,
-                      ZarrByteVectorQuickResize &abyRawTileData,
-                      ZarrByteVectorQuickResize &abyTmpRawTileData,
-                      ZarrByteVectorQuickResize &abyDecodedTileData,
-                      bool &bMissingTileOut) const;
+    bool LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
+                       const CPLCompressor *psDecompressor,
+                       ZarrByteVectorQuickResize &abyRawBlockData,
+                       ZarrByteVectorQuickResize &abyTmpRawBlockData,
+                       ZarrByteVectorQuickResize &abyDecodedBlockData,
+                       bool &bMissingBlockOut) const;
 
     bool NeedDecodedBuffer() const;
 
-    bool
-    AllocateWorkingBuffers(ZarrByteVectorQuickResize &abyRawTileData,
-                           ZarrByteVectorQuickResize &abyTmpRawTileData,
-                           ZarrByteVectorQuickResize &abyDecodedTileData) const;
+    bool AllocateWorkingBuffers(
+        ZarrByteVectorQuickResize &abyRawBlockData,
+        ZarrByteVectorQuickResize &abyTmpRawBlockData,
+        ZarrByteVectorQuickResize &abyDecodedBlockData) const;
+
+    void BlockTranspose(const ZarrByteVectorQuickResize &abySrc,
+                        ZarrByteVectorQuickResize &abyDst, bool bDecode) const;
 
     // Disable copy constructor and assignment operator
     ZarrV2Array(const ZarrV2Array &) = delete;
@@ -1152,16 +1248,16 @@ class ZarrV2Array final : public ZarrArray
     std::string GetDataDirectory() const override;
 
     CPLStringList
-    GetTileIndicesFromFilename(const char *pszFilename) const override;
+    GetChunkIndicesFromFilename(const char *pszFilename) const override;
 
-    bool FlushDirtyTile() const override;
+    bool FlushDirtyBlock() const override;
 
-    std::string BuildTileFilename(const uint64_t *tileIndices) const override;
+    std::string BuildChunkFilename(const uint64_t *blockIndices) const override;
 
     bool AllocateWorkingBuffers() const override;
 
-    bool LoadTileData(const uint64_t *tileIndices,
-                      bool &bMissingTileOut) const override;
+    bool LoadBlockData(const uint64_t *blockIndices,
+                       bool &bMissingBlockOut) const override;
 
     bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override;
@@ -1170,329 +1266,10 @@ class ZarrV2Array final : public ZarrArray
 };
 
 /************************************************************************/
-/*                        ZarrArrayMetadata                             */
-/************************************************************************/
-
-struct ZarrArrayMetadata
-{
-    DtypeElt oElt{};
-    std::vector<size_t> anBlockSizes{};
-
-    size_t GetEltCount() const
-    {
-        size_t n = 1;
-        for (auto i : anBlockSizes)
-            n *= i;
-        return n;
-    }
-};
-
-/************************************************************************/
-/*                            ZarrV3Codec                               */
-/************************************************************************/
-
-class ZarrV3Codec CPL_NON_FINAL
-{
-  protected:
-    const std::string m_osName;
-    CPLJSONObject m_oConfiguration{};
-    ZarrArrayMetadata m_oInputArrayMetadata{};
-
-    ZarrV3Codec(const std::string &osName);
-
-  public:
-    virtual ~ZarrV3Codec();
-
-    enum class IOType
-    {
-        BYTES,
-        ARRAY
-    };
-
-    virtual IOType GetInputType() const = 0;
-    virtual IOType GetOutputType() const = 0;
-
-    virtual bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata) = 0;
-
-    virtual std::unique_ptr<ZarrV3Codec> Clone() const = 0;
-
-    virtual bool IsNoOp() const
-    {
-        return false;
-    }
-
-    virtual bool Encode(const ZarrByteVectorQuickResize &abySrc,
-                        ZarrByteVectorQuickResize &abyDst) const = 0;
-    virtual bool Decode(const ZarrByteVectorQuickResize &abySrc,
-                        ZarrByteVectorQuickResize &abyDst) const = 0;
-
-    const std::string &GetName() const
-    {
-        return m_osName;
-    }
-
-    const CPLJSONObject &GetConfiguration() const
-    {
-        return m_oConfiguration;
-    }
-};
-
-/************************************************************************/
-/*                      ZarrV3CodecAbstractCompressor                   */
-/************************************************************************/
-
-class ZarrV3CodecAbstractCompressor CPL_NON_FINAL : public ZarrV3Codec
-{
-  protected:
-    CPLStringList m_aosCompressorOptions{};
-    const CPLCompressor *m_pDecompressor = nullptr;
-    const CPLCompressor *m_pCompressor = nullptr;
-
-    explicit ZarrV3CodecAbstractCompressor(const std::string &osName);
-
-    ZarrV3CodecAbstractCompressor(const ZarrV3CodecAbstractCompressor &) =
-        delete;
-    ZarrV3CodecAbstractCompressor &
-    operator=(const ZarrV3CodecAbstractCompressor &) = delete;
-
-  public:
-    IOType GetInputType() const override
-    {
-        return IOType::BYTES;
-    }
-
-    IOType GetOutputType() const override
-    {
-        return IOType::BYTES;
-    }
-
-    bool Encode(const ZarrByteVectorQuickResize &abySrc,
-                ZarrByteVectorQuickResize &abyDst) const override;
-    bool Decode(const ZarrByteVectorQuickResize &abySrc,
-                ZarrByteVectorQuickResize &abyDst) const override;
-};
-
-/************************************************************************/
-/*                           ZarrV3CodecGZip                            */
-/************************************************************************/
-
-// Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/gzip/v1.0.html
-class ZarrV3CodecGZip final : public ZarrV3CodecAbstractCompressor
-{
-  public:
-    static constexpr const char *NAME = "gzip";
-
-    ZarrV3CodecGZip();
-
-    static CPLJSONObject GetConfiguration(int nLevel);
-
-    bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata) override;
-
-    std::unique_ptr<ZarrV3Codec> Clone() const override;
-};
-
-/************************************************************************/
-/*                          ZarrV3CodecBlosc                            */
-/************************************************************************/
-
-// Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/blosc/v1.0.html
-class ZarrV3CodecBlosc final : public ZarrV3CodecAbstractCompressor
-{
-  public:
-    static constexpr const char *NAME = "blosc";
-
-    ZarrV3CodecBlosc();
-
-    static CPLJSONObject GetConfiguration(const char *cname, int clevel,
-                                          const char *shuffle, int typesize,
-                                          int blocksize);
-
-    bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata) override;
-
-    std::unique_ptr<ZarrV3Codec> Clone() const override;
-};
-
-/************************************************************************/
-/*                          ZarrV3CodecZstd                             */
-/************************************************************************/
-
-// Implements https://github.com/zarr-developers/zarr-specs/pull/256
-class ZarrV3CodecZstd final : public ZarrV3CodecAbstractCompressor
-{
-  public:
-    static constexpr const char *NAME = "zstd";
-
-    ZarrV3CodecZstd();
-
-    static CPLJSONObject GetConfiguration(int level, bool checksum);
-
-    bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata) override;
-
-    std::unique_ptr<ZarrV3Codec> Clone() const override;
-};
-
-/************************************************************************/
-/*                           ZarrV3CodecBytes                           */
-/************************************************************************/
-
-// Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/bytes/v1.0.html
-class ZarrV3CodecBytes final : public ZarrV3Codec
-{
-    bool m_bLittle = true;
-
-  public:
-    static constexpr const char *NAME = "bytes";
-
-    ZarrV3CodecBytes();
-
-    IOType GetInputType() const override
-    {
-        return IOType::ARRAY;
-    }
-
-    IOType GetOutputType() const override
-    {
-        return IOType::BYTES;
-    }
-
-    static CPLJSONObject GetConfiguration(bool bLittle);
-
-    bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata) override;
-
-    bool IsLittle() const
-    {
-        return m_bLittle;
-    }
-
-    bool IsNoOp() const override
-    {
-        if constexpr (CPL_IS_LSB)
-            return m_oInputArrayMetadata.oElt.nativeSize == 1 || m_bLittle;
-        else
-            return m_oInputArrayMetadata.oElt.nativeSize == 1 || !m_bLittle;
-    }
-
-    std::unique_ptr<ZarrV3Codec> Clone() const override;
-
-    bool Encode(const ZarrByteVectorQuickResize &abySrc,
-                ZarrByteVectorQuickResize &abyDst) const override;
-    bool Decode(const ZarrByteVectorQuickResize &abySrc,
-                ZarrByteVectorQuickResize &abyDst) const override;
-};
-
-/************************************************************************/
-/*                         ZarrV3CodecTranspose                         */
-/************************************************************************/
-
-// Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/transpose/v1.0.html
-class ZarrV3CodecTranspose final : public ZarrV3Codec
-{
-    // m_anOrder is such that dest_shape[i] = source_shape[m_anOrder[i]]
-    // where source_shape[] is the size of the array before the Encode() operation
-    // and dest_shape[] its size after.
-    // m_anOrder[] describes a bijection of [0,N-1] to [0,N-1]
-    std::vector<int> m_anOrder{};
-
-    // m_anReverseOrder is such that m_anReverseOrder[m_anOrder[i]] = i
-    std::vector<int> m_anReverseOrder{};
-
-    bool Transpose(const ZarrByteVectorQuickResize &abySrc,
-                   ZarrByteVectorQuickResize &abyDst,
-                   bool bEncodeDirection) const;
-
-  public:
-    static constexpr const char *NAME = "transpose";
-
-    ZarrV3CodecTranspose();
-
-    IOType GetInputType() const override
-    {
-        return IOType::ARRAY;
-    }
-
-    IOType GetOutputType() const override
-    {
-        return IOType::ARRAY;
-    }
-
-    static CPLJSONObject GetConfiguration(const std::vector<int> &anOrder);
-
-    bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata) override;
-
-    const std::vector<int> &GetOrder() const
-    {
-        return m_anOrder;
-    }
-
-    bool IsNoOp() const override;
-
-    std::unique_ptr<ZarrV3Codec> Clone() const override;
-
-    bool Encode(const ZarrByteVectorQuickResize &abySrc,
-                ZarrByteVectorQuickResize &abyDst) const override;
-    bool Decode(const ZarrByteVectorQuickResize &abySrc,
-                ZarrByteVectorQuickResize &abyDst) const override;
-};
-
-/************************************************************************/
-/*                          ZarrV3CodecSequence                         */
-/************************************************************************/
-
-class ZarrV3CodecSequence
-{
-    const ZarrArrayMetadata m_oInputArrayMetadata;
-    std::vector<std::unique_ptr<ZarrV3Codec>> m_apoCodecs{};
-    CPLJSONObject m_oCodecArray{};
-    ZarrByteVectorQuickResize m_abyTmp{};
-
-    bool AllocateBuffer(ZarrByteVectorQuickResize &abyBuffer);
-
-  public:
-    explicit ZarrV3CodecSequence(const ZarrArrayMetadata &oInputArrayMetadata)
-        : m_oInputArrayMetadata(oInputArrayMetadata)
-    {
-    }
-
-    // This method is not thread safe due to cloning a JSON object
-    std::unique_ptr<ZarrV3CodecSequence> Clone() const;
-
-    bool InitFromJson(const CPLJSONObject &oCodecs);
-
-    const CPLJSONObject &GetJSon() const
-    {
-        return m_oCodecArray;
-    }
-
-    const std::vector<std::unique_ptr<ZarrV3Codec>> &GetCodecs() const
-    {
-        return m_apoCodecs;
-    }
-
-    bool Encode(ZarrByteVectorQuickResize &abyBuffer);
-    bool Decode(ZarrByteVectorQuickResize &abyBuffer);
-};
-
-/************************************************************************/
 /*                           ZarrV3Array                                */
 /************************************************************************/
+
+class ZarrV3CodecSequence;
 
 class ZarrV3Array final : public ZarrArray
 {
@@ -1505,21 +1282,27 @@ class ZarrV3Array final : public ZarrArray
                 const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
                 const GDALExtendedDataType &oType,
                 const std::vector<DtypeElt> &aoDtypeElts,
-                const std::vector<GUInt64> &anBlockSize);
+                const std::vector<GUInt64> &anOuterBlockSize,
+                const std::vector<GUInt64> &anInnerBlockSize);
 
     bool Serialize(const CPLJSONObject &oAttrs);
 
     bool NeedDecodedBuffer() const;
 
-    bool
-    AllocateWorkingBuffers(ZarrByteVectorQuickResize &abyRawTileData,
-                           ZarrByteVectorQuickResize &abyDecodedTileData) const;
+    bool AllocateWorkingBuffers(
+        ZarrByteVectorQuickResize &abyRawBlockData,
+        ZarrByteVectorQuickResize &abyDecodedBlockData) const;
 
-    bool LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
-                      ZarrV3CodecSequence *poCodecs,
-                      ZarrByteVectorQuickResize &abyRawTileData,
-                      ZarrByteVectorQuickResize &abyDecodedTileData,
-                      bool &bMissingTileOut) const;
+    bool LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
+                       ZarrV3CodecSequence *poCodecs,
+                       ZarrByteVectorQuickResize &abyRawBlockData,
+                       ZarrByteVectorQuickResize &abyDecodedBlockData,
+                       bool &bMissingBlockOut) const;
+
+    bool IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
+                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+                const GDALExtendedDataType &bufferDataType,
+                const void *pSrcBuffer) override;
 
   public:
     ~ZarrV3Array() override;
@@ -1530,7 +1313,8 @@ class ZarrV3Array final : public ZarrArray
            const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
            const GDALExtendedDataType &oType,
            const std::vector<DtypeElt> &aoDtypeElts,
-           const std::vector<GUInt64> &anBlockSize);
+           const std::vector<GUInt64> &anOuterBlockSize,
+           const std::vector<GUInt64> &anInnerBlockSize);
 
     void SetIsV2ChunkKeyEncoding(bool b)
     {
@@ -1538,28 +1322,30 @@ class ZarrV3Array final : public ZarrArray
     }
 
     void SetCodecs(const CPLJSONArray &oJSONCodecs,
-                   std::unique_ptr<ZarrV3CodecSequence> &&poCodecs)
-    {
-        m_oJSONCodecs = oJSONCodecs;
-        m_poCodecs = std::move(poCodecs);
-    }
+                   std::unique_ptr<ZarrV3CodecSequence> &&poCodecs);
 
     bool Flush() override;
+
+    static std::unique_ptr<ZarrV3CodecSequence>
+    SetupCodecs(const CPLJSONArray &oCodecs,
+                const std::vector<GUInt64> &anOuterBlockSize,
+                std::vector<GUInt64> &anInnerBlockSize, DtypeElt &zarrDataType,
+                const std::vector<GByte> &abyNoData);
 
   protected:
     std::string GetDataDirectory() const override;
 
     CPLStringList
-    GetTileIndicesFromFilename(const char *pszFilename) const override;
+    GetChunkIndicesFromFilename(const char *pszFilename) const override;
 
     bool AllocateWorkingBuffers() const override;
 
-    bool FlushDirtyTile() const override;
+    bool FlushDirtyBlock() const override;
 
-    std::string BuildTileFilename(const uint64_t *tileIndices) const override;
+    std::string BuildChunkFilename(const uint64_t *blockIndices) const override;
 
-    bool LoadTileData(const uint64_t *tileIndices,
-                      bool &bMissingTileOut) const override;
+    bool LoadBlockData(const uint64_t *blockIndices,
+                       bool &bMissingBlockOut) const override;
 
     bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override;

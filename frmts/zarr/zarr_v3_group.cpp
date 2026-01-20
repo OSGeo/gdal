@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "zarr.h"
+#include "zarr_v3_codec.h"
 
 #include <algorithm>
 #include <cassert>
@@ -562,8 +563,8 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         return nullptr;
     }
 
-    std::vector<GUInt64> anBlockSize;
-    if (!ZarrArray::FillBlockSize(aoDimensions, oDataType, anBlockSize,
+    std::vector<GUInt64> anOuterBlockSize;
+    if (!ZarrArray::FillBlockSize(aoDimensions, oDataType, anOuterBlockSize,
                                   papszOptions))
         return nullptr;
 
@@ -702,24 +703,22 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         return nullptr;
     }
 
+    std::vector<GUInt64> anInnerBlockSize = anOuterBlockSize;
     if (oCodecs.Size() > 0)
     {
-        // Byte swapping will be done by the codec chain
-        aoDtypeElts.back().needByteSwapping = false;
-
-        ZarrArrayMetadata oInputArrayMetadata;
-        for (auto &nSize : anBlockSize)
-            oInputArrayMetadata.anBlockSizes.push_back(
-                static_cast<size_t>(nSize));
-        oInputArrayMetadata.oElt = aoDtypeElts.back();
-        poCodecs = std::make_unique<ZarrV3CodecSequence>(oInputArrayMetadata);
-        if (!poCodecs->InitFromJson(oCodecs))
+        std::vector<GByte> abyNoData;
+        poCodecs = ZarrV3Array::SetupCodecs(oCodecs, anOuterBlockSize,
+                                            anInnerBlockSize,
+                                            aoDtypeElts.back(), abyNoData);
+        if (!poCodecs)
+        {
             return nullptr;
+        }
     }
 
-    auto poArray =
-        ZarrV3Array::Create(m_poSharedResource, GetFullName(), osName,
-                            aoDimensions, oDataType, aoDtypeElts, anBlockSize);
+    auto poArray = ZarrV3Array::Create(
+        m_poSharedResource, GetFullName(), osName, aoDimensions, oDataType,
+        aoDtypeElts, anOuterBlockSize, anInnerBlockSize);
 
     if (!poArray)
         return nullptr;

@@ -61,6 +61,8 @@ repos:
                 frmts/pcraster/libcsf/|
                 frmts/png/libpng/|
                 frmts/gif/giflib/|
+                frmts/zarr/crc32c.h|
+                frmts/zarr/crc32c.cpp|
                 frmts/zlib/|
                 frmts/pcidsk/sdk|
                 frmts/grib/degrib/degrib|
