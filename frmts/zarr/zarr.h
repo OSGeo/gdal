@@ -23,6 +23,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <numeric>
 #include <set>
 
 #define ZARR_DEBUG_KEY "ZARR"
@@ -35,11 +36,23 @@ const CPLCompressor *ZarrGetQuantizeDecompressor();
 const CPLCompressor *ZarrGetTIFFDecompressor();
 const CPLCompressor *ZarrGetFixedScaleOffsetDecompressor();
 
-class ZarrGroupBase;
+/************************************************************************/
+/*                           MultiplyElements()                         */
+/************************************************************************/
+
+/** Return the product of elements in the vector
+ */
+template <class T> inline T MultiplyElements(const std::vector<T> &vector)
+{
+    return std::reduce(vector.begin(), vector.end(), T{1},
+                       std::multiplies<T>{});
+}
 
 /************************************************************************/
 /*                            ZarrDataset                               */
 /************************************************************************/
+
+class ZarrGroupBase;
 
 class ZarrDataset final : public GDALDataset
 {
@@ -1170,329 +1183,10 @@ class ZarrV2Array final : public ZarrArray
 };
 
 /************************************************************************/
-/*                        ZarrArrayMetadata                             */
-/************************************************************************/
-
-struct ZarrArrayMetadata
-{
-    DtypeElt oElt{};
-    std::vector<size_t> anBlockSizes{};
-
-    size_t GetEltCount() const
-    {
-        size_t n = 1;
-        for (auto i : anBlockSizes)
-            n *= i;
-        return n;
-    }
-};
-
-/************************************************************************/
-/*                            ZarrV3Codec                               */
-/************************************************************************/
-
-class ZarrV3Codec CPL_NON_FINAL
-{
-  protected:
-    const std::string m_osName;
-    CPLJSONObject m_oConfiguration{};
-    ZarrArrayMetadata m_oInputArrayMetadata{};
-
-    ZarrV3Codec(const std::string &osName);
-
-  public:
-    virtual ~ZarrV3Codec();
-
-    enum class IOType
-    {
-        BYTES,
-        ARRAY
-    };
-
-    virtual IOType GetInputType() const = 0;
-    virtual IOType GetOutputType() const = 0;
-
-    virtual bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata) = 0;
-
-    virtual std::unique_ptr<ZarrV3Codec> Clone() const = 0;
-
-    virtual bool IsNoOp() const
-    {
-        return false;
-    }
-
-    virtual bool Encode(const ZarrByteVectorQuickResize &abySrc,
-                        ZarrByteVectorQuickResize &abyDst) const = 0;
-    virtual bool Decode(const ZarrByteVectorQuickResize &abySrc,
-                        ZarrByteVectorQuickResize &abyDst) const = 0;
-
-    const std::string &GetName() const
-    {
-        return m_osName;
-    }
-
-    const CPLJSONObject &GetConfiguration() const
-    {
-        return m_oConfiguration;
-    }
-};
-
-/************************************************************************/
-/*                      ZarrV3CodecAbstractCompressor                   */
-/************************************************************************/
-
-class ZarrV3CodecAbstractCompressor CPL_NON_FINAL : public ZarrV3Codec
-{
-  protected:
-    CPLStringList m_aosCompressorOptions{};
-    const CPLCompressor *m_pDecompressor = nullptr;
-    const CPLCompressor *m_pCompressor = nullptr;
-
-    explicit ZarrV3CodecAbstractCompressor(const std::string &osName);
-
-    ZarrV3CodecAbstractCompressor(const ZarrV3CodecAbstractCompressor &) =
-        delete;
-    ZarrV3CodecAbstractCompressor &
-    operator=(const ZarrV3CodecAbstractCompressor &) = delete;
-
-  public:
-    IOType GetInputType() const override
-    {
-        return IOType::BYTES;
-    }
-
-    IOType GetOutputType() const override
-    {
-        return IOType::BYTES;
-    }
-
-    bool Encode(const ZarrByteVectorQuickResize &abySrc,
-                ZarrByteVectorQuickResize &abyDst) const override;
-    bool Decode(const ZarrByteVectorQuickResize &abySrc,
-                ZarrByteVectorQuickResize &abyDst) const override;
-};
-
-/************************************************************************/
-/*                           ZarrV3CodecGZip                            */
-/************************************************************************/
-
-// Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/gzip/v1.0.html
-class ZarrV3CodecGZip final : public ZarrV3CodecAbstractCompressor
-{
-  public:
-    static constexpr const char *NAME = "gzip";
-
-    ZarrV3CodecGZip();
-
-    static CPLJSONObject GetConfiguration(int nLevel);
-
-    bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata) override;
-
-    std::unique_ptr<ZarrV3Codec> Clone() const override;
-};
-
-/************************************************************************/
-/*                          ZarrV3CodecBlosc                            */
-/************************************************************************/
-
-// Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/blosc/v1.0.html
-class ZarrV3CodecBlosc final : public ZarrV3CodecAbstractCompressor
-{
-  public:
-    static constexpr const char *NAME = "blosc";
-
-    ZarrV3CodecBlosc();
-
-    static CPLJSONObject GetConfiguration(const char *cname, int clevel,
-                                          const char *shuffle, int typesize,
-                                          int blocksize);
-
-    bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata) override;
-
-    std::unique_ptr<ZarrV3Codec> Clone() const override;
-};
-
-/************************************************************************/
-/*                          ZarrV3CodecZstd                             */
-/************************************************************************/
-
-// Implements https://github.com/zarr-developers/zarr-specs/pull/256
-class ZarrV3CodecZstd final : public ZarrV3CodecAbstractCompressor
-{
-  public:
-    static constexpr const char *NAME = "zstd";
-
-    ZarrV3CodecZstd();
-
-    static CPLJSONObject GetConfiguration(int level, bool checksum);
-
-    bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata) override;
-
-    std::unique_ptr<ZarrV3Codec> Clone() const override;
-};
-
-/************************************************************************/
-/*                           ZarrV3CodecBytes                           */
-/************************************************************************/
-
-// Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/bytes/v1.0.html
-class ZarrV3CodecBytes final : public ZarrV3Codec
-{
-    bool m_bLittle = true;
-
-  public:
-    static constexpr const char *NAME = "bytes";
-
-    ZarrV3CodecBytes();
-
-    IOType GetInputType() const override
-    {
-        return IOType::ARRAY;
-    }
-
-    IOType GetOutputType() const override
-    {
-        return IOType::BYTES;
-    }
-
-    static CPLJSONObject GetConfiguration(bool bLittle);
-
-    bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata) override;
-
-    bool IsLittle() const
-    {
-        return m_bLittle;
-    }
-
-    bool IsNoOp() const override
-    {
-        if constexpr (CPL_IS_LSB)
-            return m_oInputArrayMetadata.oElt.nativeSize == 1 || m_bLittle;
-        else
-            return m_oInputArrayMetadata.oElt.nativeSize == 1 || !m_bLittle;
-    }
-
-    std::unique_ptr<ZarrV3Codec> Clone() const override;
-
-    bool Encode(const ZarrByteVectorQuickResize &abySrc,
-                ZarrByteVectorQuickResize &abyDst) const override;
-    bool Decode(const ZarrByteVectorQuickResize &abySrc,
-                ZarrByteVectorQuickResize &abyDst) const override;
-};
-
-/************************************************************************/
-/*                         ZarrV3CodecTranspose                         */
-/************************************************************************/
-
-// Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/transpose/v1.0.html
-class ZarrV3CodecTranspose final : public ZarrV3Codec
-{
-    // m_anOrder is such that dest_shape[i] = source_shape[m_anOrder[i]]
-    // where source_shape[] is the size of the array before the Encode() operation
-    // and dest_shape[] its size after.
-    // m_anOrder[] describes a bijection of [0,N-1] to [0,N-1]
-    std::vector<int> m_anOrder{};
-
-    // m_anReverseOrder is such that m_anReverseOrder[m_anOrder[i]] = i
-    std::vector<int> m_anReverseOrder{};
-
-    bool Transpose(const ZarrByteVectorQuickResize &abySrc,
-                   ZarrByteVectorQuickResize &abyDst,
-                   bool bEncodeDirection) const;
-
-  public:
-    static constexpr const char *NAME = "transpose";
-
-    ZarrV3CodecTranspose();
-
-    IOType GetInputType() const override
-    {
-        return IOType::ARRAY;
-    }
-
-    IOType GetOutputType() const override
-    {
-        return IOType::ARRAY;
-    }
-
-    static CPLJSONObject GetConfiguration(const std::vector<int> &anOrder);
-
-    bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata) override;
-
-    const std::vector<int> &GetOrder() const
-    {
-        return m_anOrder;
-    }
-
-    bool IsNoOp() const override;
-
-    std::unique_ptr<ZarrV3Codec> Clone() const override;
-
-    bool Encode(const ZarrByteVectorQuickResize &abySrc,
-                ZarrByteVectorQuickResize &abyDst) const override;
-    bool Decode(const ZarrByteVectorQuickResize &abySrc,
-                ZarrByteVectorQuickResize &abyDst) const override;
-};
-
-/************************************************************************/
-/*                          ZarrV3CodecSequence                         */
-/************************************************************************/
-
-class ZarrV3CodecSequence
-{
-    const ZarrArrayMetadata m_oInputArrayMetadata;
-    std::vector<std::unique_ptr<ZarrV3Codec>> m_apoCodecs{};
-    CPLJSONObject m_oCodecArray{};
-    ZarrByteVectorQuickResize m_abyTmp{};
-
-    bool AllocateBuffer(ZarrByteVectorQuickResize &abyBuffer);
-
-  public:
-    explicit ZarrV3CodecSequence(const ZarrArrayMetadata &oInputArrayMetadata)
-        : m_oInputArrayMetadata(oInputArrayMetadata)
-    {
-    }
-
-    // This method is not thread safe due to cloning a JSON object
-    std::unique_ptr<ZarrV3CodecSequence> Clone() const;
-
-    bool InitFromJson(const CPLJSONObject &oCodecs);
-
-    const CPLJSONObject &GetJSon() const
-    {
-        return m_oCodecArray;
-    }
-
-    const std::vector<std::unique_ptr<ZarrV3Codec>> &GetCodecs() const
-    {
-        return m_apoCodecs;
-    }
-
-    bool Encode(ZarrByteVectorQuickResize &abyBuffer);
-    bool Decode(ZarrByteVectorQuickResize &abyBuffer);
-};
-
-/************************************************************************/
 /*                           ZarrV3Array                                */
 /************************************************************************/
+
+class ZarrV3CodecSequence;
 
 class ZarrV3Array final : public ZarrArray
 {
@@ -1538,11 +1232,7 @@ class ZarrV3Array final : public ZarrArray
     }
 
     void SetCodecs(const CPLJSONArray &oJSONCodecs,
-                   std::unique_ptr<ZarrV3CodecSequence> &&poCodecs)
-    {
-        m_oJSONCodecs = oJSONCodecs;
-        m_poCodecs = std::move(poCodecs);
-    }
+                   std::unique_ptr<ZarrV3CodecSequence> &&poCodecs);
 
     bool Flush() override;
 

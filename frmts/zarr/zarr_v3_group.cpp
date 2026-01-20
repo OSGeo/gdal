@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "zarr.h"
+#include "zarr_v3_codec.h"
 
 #include <algorithm>
 #include <cassert>

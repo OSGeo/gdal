@@ -14,6 +14,7 @@
 #include "cpl_vsi_virtual.h"
 #include "gdal_thread_pool.h"
 #include "zarr.h"
+#include "zarr_v3_codec.h"
 
 #include <algorithm>
 #include <cassert>
@@ -1678,4 +1679,15 @@ CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
         }
     }
     return aosInfo;
+}
+
+/************************************************************************/
+/*                        ZarrV3Array::SetCodecs()                      */
+/************************************************************************/
+
+void ZarrV3Array::SetCodecs(const CPLJSONArray &oJSONCodecs,
+                            std::unique_ptr<ZarrV3CodecSequence> &&poCodecs)
+{
+    m_oJSONCodecs = oJSONCodecs;
+    m_poCodecs = std::move(poCodecs);
 }
