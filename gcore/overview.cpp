@@ -4559,6 +4559,8 @@ static CPLErr GDALRegenerateCascadingOverviews(
     /* -------------------------------------------------------------------- */
     double dfPixelsProcessed = 0.0;
 
+    CPLStringList aosOptions(papszOptions);
+    aosOptions.SetNameValue("CASCADING", "YES");
     for (int i = 0; i < nOverviews; ++i)
     {
         GDALRasterBand *poBaseBand = poSrcBand;
@@ -4577,7 +4579,7 @@ static CPLErr GDALRegenerateCascadingOverviews(
             poBaseBand, 1,
             reinterpret_cast<GDALRasterBandH *>(papoOvrBands) + i,
             pszResampling, GDALScaledProgress, pScaledProgressData,
-            papszOptions);
+            aosOptions.List());
         GDALDestroyScaledProgress(pScaledProgressData);
 
         if (eErr != CE_None)
@@ -4896,6 +4898,26 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         }
     }
 
+    int nHasNoData = 0;
+    const double dfNoDataValue = poSrcBand->GetNoDataValue(&nHasNoData);
+    const bool bHasNoData = CPL_TO_BOOL(nHasNoData);
+    const bool bPropagateNoData =
+        CPLTestBool(CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO"));
+
+    if (poSrcBand->GetBand() == 1 && bUseNoDataMask &&
+        CSLFetchNameValue(papszOptions, "CASCADING") == nullptr)
+    {
+        std::string osDetailMessage;
+        if (poSrcBand->HasConflictingMaskSources(&osDetailMessage, false))
+        {
+            CPLError(
+                CE_Warning, CPLE_AppDefined, "%s%s", osDetailMessage.c_str(),
+                bHasNoData
+                    ? "Only the nodata value will be taken into account."
+                    : "Only the first listed one will be taken into account.");
+        }
+    }
+
     /* -------------------------------------------------------------------- */
     /*      If we are operating on multiple overviews, and using            */
     /*      averaging, lets do them in cascading order to reduce the        */
@@ -5026,12 +5048,6 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             nChunkSize = UpdateChunkHeightAndGetChunkSize();
         }
     }
-
-    int nHasNoData = 0;
-    const double dfNoDataValue = poSrcBand->GetNoDataValue(&nHasNoData);
-    const bool bHasNoData = CPL_TO_BOOL(nHasNoData);
-    const bool bPropagateNoData =
-        CPLTestBool(CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO"));
 
     // Structure describing a resampling job
     struct OvrJob
@@ -5683,6 +5699,17 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             papoSrcBands[iBand]->GetNoDataValue(&nHasNoData);
         abHasNoData[iBand] = CPL_TO_BOOL(nHasNoData);
     }
+
+    std::string osDetailMessage;
+    if (bUseNoDataMask &&
+        papoSrcBands[0]->HasConflictingMaskSources(&osDetailMessage, false))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "%s%s", osDetailMessage.c_str(),
+                 abHasNoData[0]
+                     ? "Only the nodata value will be taken into account."
+                     : "Only the first listed one will be taken into account.");
+    }
+
     const bool bPropagateNoData =
         CPLTestBool(CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO"));
 

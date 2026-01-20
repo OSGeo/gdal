@@ -71,3 +71,9 @@ GDALRasterWindow class
 .. doxygenclass:: GDALRasterWindow
    :project: api
    :members:
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    posDetailMessage
