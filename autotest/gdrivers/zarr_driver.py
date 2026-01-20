@@ -1633,18 +1633,19 @@ def test_zarr_read_BLOSC_COMPRESSORS():
     assert "lz4" in gdal.GetDriverByName("Zarr").GetMetadataItem("BLOSC_COMPRESSORS")
 
 
-@pytest.mark.parametrize(
-    "format,create_z_metadata",
-    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
-)
-def test_zarr_create_group(tmp_path, format, create_z_metadata):
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+@pytest.mark.parametrize("create_consolidated_metadata", ["YES", "NO"])
+def test_zarr_create_group(tmp_path, format, create_consolidated_metadata):
 
     filename = tmp_path / "test.zarr"
 
     def create():
         ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
             filename,
-            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+            options=[
+                "FORMAT=" + format,
+                "CREATE_CONSOLIDATED_METADATA=" + create_consolidated_metadata,
+            ],
         )
         assert ds is not None
         rg = ds.GetRootGroup()
@@ -1748,13 +1749,33 @@ def test_zarr_create_group(tmp_path, format, create_z_metadata):
 
     create()
 
-    if create_z_metadata == "YES":
-        f = gdal.VSIFOpenL(f"{filename}/.zmetadata", "rb")
-        assert f
-        data = gdal.VSIFReadL(1, 10000, f)
-        gdal.VSIFCloseL(f)
+    if create_consolidated_metadata == "YES":
+        with gdal.VSIFile(
+            filename / ".zmetadata" if format == "ZARR_V2" else filename / "zarr.json",
+            "rb",
+        ) as f:
+            data = f.read()
         j = json.loads(data)
-        assert "foo/.zgroup" in j["metadata"]
+        if format == "ZARR_V2":
+            assert "foo/.zgroup" in j["metadata"]
+            assert ".zattrs" in j["metadata"]
+            assert j["metadata"][".zattrs"]["int_attr"] == 12345678
+        else:
+            assert j["consolidated_metadata"] == {
+                "kind": "inline",
+                "must_understand": False,
+                "metadata": {
+                    "foo": {"zarr_format": 3, "node_type": "group", "attributes": {}}
+                },
+            }
+    else:
+        if format == "ZARR_V2":
+            assert gdal.VSIStatL(filename / ".zmetadata") is None
+        else:
+            with gdal.VSIFile(filename / "zarr.json", "rb") as f:
+                data = f.read()
+            j = json.loads(data)
+            assert "consolidated_metadata" not in j
 
     def update():
         ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
@@ -1781,100 +1802,113 @@ def test_zarr_create_group(tmp_path, format, create_z_metadata):
 
     update()
 
-    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
-    assert ds
-    rg = ds.GetRootGroup()
-    assert rg
+    def check():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
 
-    attr = rg.GetAttribute("str_attr")
-    assert attr
-    assert attr.Read() == "my_string_modified"
+        attr = rg.GetAttribute("str_attr")
+        assert attr
+        assert attr.Read() == "my_string_modified"
 
-    attr = rg.GetAttribute("json_attr")
-    assert attr
-    assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
-    assert attr.Read() == {"foo": "bar"}
+        attr = rg.GetAttribute("json_attr")
+        assert attr
+        assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
+        assert attr.Read() == {"foo": "bar"}
 
-    attr = rg.GetAttribute("str_array_attr")
-    assert attr
-    assert attr.Read() == ["first_string", "second_string"]
+        attr = rg.GetAttribute("str_array_attr")
+        assert attr
+        assert attr.Read() == ["first_string", "second_string"]
 
-    attr = rg.GetAttribute("int_attr")
-    assert attr
-    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
-    assert attr.ReadAsInt() == 12345678
-    assert attr.ReadAsInt64() == 12345678
-    assert attr.ReadAsDouble() == 12345678
+        attr = rg.GetAttribute("int_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
+        assert attr.ReadAsInt() == 12345678
+        assert attr.ReadAsInt64() == 12345678
+        assert attr.ReadAsDouble() == 12345678
 
-    attr = rg.GetAttribute("uint_attr")
-    assert attr
-    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-    assert attr.ReadAsInt64() == 4000000000
-    assert attr.ReadAsDouble() == 4000000000
+        attr = rg.GetAttribute("uint_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64() == 4000000000
+        assert attr.ReadAsDouble() == 4000000000
 
-    attr = rg.GetAttribute("int64_attr")
-    assert attr
-    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-    assert attr.ReadAsInt64() == 12345678901234
-    assert attr.ReadAsDouble() == 12345678901234
+        attr = rg.GetAttribute("int64_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64() == 12345678901234
+        assert attr.ReadAsDouble() == 12345678901234
 
-    attr = rg.GetAttribute("uint64_attr")
-    assert attr
-    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-    assert attr.ReadAsInt64() == 9000000000000000000
-    assert attr.ReadAsDouble() == 9000000000000000000
+        attr = rg.GetAttribute("uint64_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64() == 9000000000000000000
+        assert attr.ReadAsDouble() == 9000000000000000000
 
-    attr = rg.GetAttribute("int_array_attr")
-    assert attr
-    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
-    assert attr.ReadAsIntArray() == (12345678, -12345678)
-    assert attr.ReadAsInt64Array() == (12345678, -12345678)
-    assert attr.ReadAsDoubleArray() == (12345678, -12345678)
+        attr = rg.GetAttribute("int_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
+        assert attr.ReadAsIntArray() == (12345678, -12345678)
+        assert attr.ReadAsInt64Array() == (12345678, -12345678)
+        assert attr.ReadAsDoubleArray() == (12345678, -12345678)
 
-    attr = rg.GetAttribute("uint_array_attr")
-    assert attr
-    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-    assert attr.ReadAsInt64Array() == (12345678, 4000000000)
-    assert attr.ReadAsDoubleArray() == (12345678, 4000000000)
+        attr = rg.GetAttribute("uint_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64Array() == (12345678, 4000000000)
+        assert attr.ReadAsDoubleArray() == (12345678, 4000000000)
 
-    attr = rg.GetAttribute("int64_array_attr")
-    assert attr
-    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-    assert attr.ReadAsInt64Array() == (12345678091234, -12345678091234)
-    assert attr.ReadAsDoubleArray() == (12345678091234, -12345678091234)
+        attr = rg.GetAttribute("int64_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64Array() == (12345678091234, -12345678091234)
+        assert attr.ReadAsDoubleArray() == (12345678091234, -12345678091234)
 
-    attr = rg.GetAttribute("uint64_array_attr")
-    assert attr
-    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-    assert attr.ReadAsInt64Array() == (12345678091234, 9000000000000000000)
-    assert attr.ReadAsDoubleArray() == (12345678091234, 9000000000000000000)
+        attr = rg.GetAttribute("uint64_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64Array() == (12345678091234, 9000000000000000000)
+        assert attr.ReadAsDoubleArray() == (12345678091234, 9000000000000000000)
 
-    attr = rg.GetAttribute("double_attr")
-    assert attr
-    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
-    assert attr.ReadAsDouble() == 12345678.5
+        attr = rg.GetAttribute("double_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+        assert attr.ReadAsDouble() == 12345678.5
 
-    attr = rg.GetAttribute("double_array_attr")
-    assert attr
-    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
-    assert attr.Read() == (12345678.5, -12345678.5)
+        attr = rg.GetAttribute("double_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+        assert attr.Read() == (12345678.5, -12345678.5)
 
-    assert set(rg.GetGroupNames()) == set(["foo", "bar"])
-    with gdal.quiet_errors():
-        assert rg.CreateGroup("not_opened_in_update_mode") is None
-        assert (
-            rg.CreateAttribute(
-                "not_opened_in_update_mode",
-                [],
-                gdal.ExtendedDataType.CreateString(),
+        assert set(rg.GetGroupNames()) == set(["foo", "bar"])
+        with gdal.quiet_errors():
+            assert rg.CreateGroup("not_opened_in_update_mode") is None
+            assert (
+                rg.CreateAttribute(
+                    "not_opened_in_update_mode",
+                    [],
+                    gdal.ExtendedDataType.CreateString(),
+                )
+                is None
             )
-            is None
-        )
-    subgroup = rg.OpenGroup("foo")
-    assert subgroup
-    subsubgroup = subgroup.OpenGroup("baz")
-    assert subsubgroup
-    ds = None
+        subgroup = rg.OpenGroup("foo")
+        assert subgroup
+        subsubgroup = subgroup.OpenGroup("baz")
+        assert subsubgroup
+        ds = None
+
+    check()
+
+    # With consolidated metadata, check that we don't try to access subfiles
+    if create_consolidated_metadata == "YES":
+        if format == "ZARR_V2":
+            gdal.Unlink(filename / "foo" / ".zarray")
+            gdal.Unlink(filename / ".zattrs")
+        else:
+            gdal.Unlink(filename / "foo" / "zarr.json")
+
+        check()
 
 
 @pytest.mark.parametrize(

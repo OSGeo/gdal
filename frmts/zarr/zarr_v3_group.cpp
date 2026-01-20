@@ -48,6 +48,9 @@ std::shared_ptr<ZarrArray> ZarrV3Group::OpenZarrArray(const std::string &osName,
     if (oIter != m_oMapMDArrays.end())
         return oIter->second;
 
+    if (m_bReadFromConsolidatedMetadata)
+        return nullptr;
+
     const std::string osSubDir =
         CPLFormFilenameSafe(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     const std::string osZarrayFilename =
@@ -199,7 +202,9 @@ bool ZarrV3Group::Close()
 {
     bool bRet = ZarrGroupBase::Close();
 
-    if (m_bValid && m_oAttrGroup.IsModified())
+    if (m_bValid && (m_oAttrGroup.IsModified() ||
+                     (m_bUpdatable && !m_bFileHasBeenWritten &&
+                      m_poSharedResource->IsConsolidatedMetadataEnabled())))
     {
         CPLJSONDocument oDoc;
         auto oRoot = oDoc.GetRoot();
@@ -208,10 +213,194 @@ bool ZarrV3Group::Close()
         oRoot.Add("attributes", m_oAttrGroup.Serialize());
         const std::string osZarrJsonFilename = CPLFormFilenameSafe(
             m_osDirectoryName.c_str(), "zarr.json", nullptr);
-        bRet = oDoc.Save(osZarrJsonFilename) && bRet;
+        if (!m_bFileHasBeenWritten)
+        {
+            oRoot.Add("consolidated_metadata",
+                      m_poSharedResource->GetConsolidatedMetadataObj());
+            bRet = oDoc.Save(osZarrJsonFilename) && bRet;
+        }
+        else
+        {
+            bRet = oDoc.Save(osZarrJsonFilename) && bRet;
+            if (bRet)
+                m_poSharedResource->SetZMetadataItem(osZarrJsonFilename, oRoot);
+        }
+        m_bFileHasBeenWritten = bRet;
     }
 
     return bRet;
+}
+
+/************************************************************************/
+/*                   ZarrV3Group::GetOrCreateSubGroup()                 */
+/************************************************************************/
+
+std::shared_ptr<ZarrV3Group>
+ZarrV3Group::GetOrCreateSubGroup(const std::string &osSubGroupFullname)
+{
+    auto poSubGroup = std::dynamic_pointer_cast<ZarrV3Group>(
+        OpenGroupFromFullname(osSubGroupFullname));
+    if (poSubGroup)
+    {
+        return poSubGroup;
+    }
+
+    const auto nLastSlashPos = osSubGroupFullname.rfind('/');
+    auto poBelongingGroup =
+        (nLastSlashPos == 0)
+            ? this
+            : GetOrCreateSubGroup(osSubGroupFullname.substr(0, nLastSlashPos))
+                  .get();
+
+    poSubGroup = ZarrV3Group::Create(
+        m_poSharedResource, poBelongingGroup->GetFullName(),
+        osSubGroupFullname.substr(nLastSlashPos + 1), m_osDirectoryName);
+    poSubGroup->m_poParent = std::dynamic_pointer_cast<ZarrGroupBase>(
+        poBelongingGroup->m_pSelf.lock());
+    poSubGroup->SetDirectoryName(
+        CPLFormFilenameSafe(poBelongingGroup->m_osDirectoryName.c_str(),
+                            poSubGroup->GetName().c_str(), nullptr));
+    poSubGroup->m_bDirectoryExplored = true;
+    poSubGroup->m_bAttributesLoaded = true;
+    poSubGroup->m_bReadFromConsolidatedMetadata = true;
+    poSubGroup->m_bFileHasBeenWritten = true;
+    poSubGroup->SetUpdatable(m_bUpdatable);
+
+    poBelongingGroup->m_oMapGroups[poSubGroup->GetName()] = poSubGroup;
+    poBelongingGroup->m_oSetGroupNames.insert(poSubGroup->GetName());
+    poBelongingGroup->m_aosGroups.emplace_back(poSubGroup->GetName());
+    return poSubGroup;
+}
+
+/************************************************************************/
+/*                ZarrV3Group::InitFromConsolidatedMetadata()           */
+/************************************************************************/
+
+void ZarrV3Group::InitFromConsolidatedMetadata(
+    const CPLJSONObject &oConsolidatedMetadata,
+    const CPLJSONObject &oRootAttributes)
+{
+    const auto metadata = oConsolidatedMetadata["metadata"];
+    if (metadata.GetType() != CPLJSONObject::Type::Object)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "consolidated_metadata lacks 'metadata' object");
+        return;
+    }
+    m_bDirectoryExplored = true;
+    m_bAttributesLoaded = true;
+    m_bReadFromConsolidatedMetadata = true;
+
+    if (oRootAttributes.IsValid())
+    {
+        m_oAttrGroup.Init(oRootAttributes, m_bUpdatable);
+    }
+
+    const auto children = metadata.GetChildren();
+    std::map<std::string, const CPLJSONObject *> oMapArrays;
+
+    // First pass to create groups and collect arrays
+    for (const auto &child : children)
+    {
+        const std::string osName(child.GetName());
+        if (std::count(osName.begin(), osName.end(), '/') > 32)
+        {
+            // Avoid too deep recursion in GetOrCreateSubGroup()
+            continue;
+        }
+
+        const std::string osNodeType = child.GetString("node_type");
+        if (osNodeType == "group")
+        {
+            auto poGroup = GetOrCreateSubGroup("/" + osName);
+            auto oAttributes = child["attributes"];
+            if (oAttributes.IsValid())
+            {
+                poGroup->m_oAttrGroup.Init(oAttributes, m_bUpdatable);
+            }
+        }
+        else if (osNodeType == "array")
+        {
+            oMapArrays[osName] = &child;
+        }
+    }
+
+    const auto CreateArray =
+        [this](const std::string &osArrayFullname, const CPLJSONObject &oArray)
+    {
+        const auto nLastSlashPos = osArrayFullname.rfind('/');
+        auto poBelongingGroup =
+            (nLastSlashPos == std::string::npos)
+                ? this
+                : GetOrCreateSubGroup("/" +
+                                      osArrayFullname.substr(0, nLastSlashPos))
+                      .get();
+        const auto osArrayName =
+            nLastSlashPos == std::string::npos
+                ? osArrayFullname
+                : osArrayFullname.substr(nLastSlashPos + 1);
+        const std::string osZarrayFilename = CPLFormFilenameSafe(
+            CPLFormFilenameSafe(poBelongingGroup->m_osDirectoryName.c_str(),
+                                osArrayName.c_str(), nullptr)
+                .c_str(),
+            "zarr.json", nullptr);
+        poBelongingGroup->LoadArray(osArrayName, osZarrayFilename, oArray);
+    };
+
+    struct ArrayDesc
+    {
+        std::string osArrayFullname{};
+        const CPLJSONObject *poArray = nullptr;
+    };
+
+    std::vector<ArrayDesc> aoRegularArrays;
+
+    // Second pass to read attributes and create arrays that are indexing
+    // variable
+    for (const auto &child : children)
+    {
+        const std::string osName(child.GetName());
+        const std::string osNodeType = child.GetString("node_type");
+        if (osNodeType == "array")
+        {
+            auto oIter = oMapArrays.find(osName);
+            if (oIter != oMapArrays.end())
+            {
+                const auto nLastSlashPos = osName.rfind('/');
+                const std::string osArrayName =
+                    (nLastSlashPos == std::string::npos)
+                        ? osName
+                        : osName.substr(nLastSlashPos + 1);
+                const auto arrayDimensions = child["dimension_names"].ToArray();
+                if (arrayDimensions.IsValid() && arrayDimensions.Size() == 1 &&
+                    arrayDimensions[0].ToString() == osArrayName)
+                {
+                    CreateArray(osName, child);
+                    oMapArrays.erase(oIter);
+                }
+                else
+                {
+                    ArrayDesc desc;
+                    desc.osArrayFullname = std::move(osName);
+                    desc.poArray = oIter->second;
+                    aoRegularArrays.emplace_back(std::move(desc));
+                }
+            }
+        }
+    }
+
+    // Third pass to create non-indexing arrays with attributes
+    for (const auto &desc : aoRegularArrays)
+    {
+        CreateArray(desc.osArrayFullname, *(desc.poArray));
+        oMapArrays.erase(desc.osArrayFullname);
+    }
+
+    // Fourth pass to create arrays without attributes
+    for (const auto &kv : oMapArrays)
+    {
+        CreateArray(kv.first, *(kv.second));
+    }
 }
 
 /************************************************************************/
@@ -227,6 +416,9 @@ ZarrV3Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
     auto oIter = m_oMapGroups.find(osName);
     if (oIter != m_oMapGroups.end())
         return oIter->second;
+
+    if (m_bReadFromConsolidatedMetadata)
+        return nullptr;
 
     const std::string osSubDir =
         CPLFormFilenameSafe(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
@@ -256,6 +448,7 @@ ZarrV3Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
             }
             auto poSubGroup = ZarrV3Group::Create(
                 m_poSharedResource, GetFullName(), osName, osSubDir);
+            poSubGroup->m_bFileHasBeenWritten = true;
             poSubGroup->m_poParent =
                 std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
             poSubGroup->SetUpdatable(m_bUpdatable);
@@ -275,6 +468,7 @@ ZarrV3Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
                  "may be removed in a future version");
         auto poSubGroup = ZarrV3Group::Create(m_poSharedResource, GetFullName(),
                                               osName, osSubDir);
+        poSubGroup->m_bFileHasBeenWritten = true;
         poSubGroup->m_poParent =
             std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
         poSubGroup->SetUpdatable(m_bUpdatable);
@@ -312,24 +506,38 @@ std::shared_ptr<ZarrV3Group> ZarrV3Group::CreateOnDisk(
 
     const std::string osZarrJsonFilename(
         CPLFormFilenameSafe(osDirectoryName.c_str(), "zarr.json", nullptr));
-    VSILFILE *fp = VSIFOpenL(osZarrJsonFilename.c_str(), "wb");
-    if (!fp)
+    VSILFILE *fp = nullptr;
+    if (!(poSharedResource->IsConsolidatedMetadataEnabled() &&
+          cpl::starts_with(osZarrJsonFilename, "/vsizip/") &&
+          osParentFullName.empty() && osName == "/"))
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Cannot create file %s.",
-                 osZarrJsonFilename.c_str());
-        return nullptr;
+        fp = VSIFOpenL(osZarrJsonFilename.c_str(), "wb");
+        if (!fp)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot create file %s.",
+                     osZarrJsonFilename.c_str());
+            return nullptr;
+        }
+        VSIFPrintfL(fp, "{\n"
+                        "    \"zarr_format\": 3,\n"
+                        "    \"node_type\": \"group\",\n"
+                        "    \"attributes\": {}\n"
+                        "}\n");
+        VSIFCloseL(fp);
     }
-    VSIFPrintfL(fp, "{\n"
-                    "    \"zarr_format\": 3,\n"
-                    "    \"node_type\": \"group\",\n"
-                    "    \"attributes\": {}\n"
-                    "}\n");
-    VSIFCloseL(fp);
 
     auto poGroup = ZarrV3Group::Create(poSharedResource, osParentFullName,
                                        osName, osDirectoryName);
     poGroup->SetUpdatable(true);
     poGroup->m_bDirectoryExplored = true;
+    poGroup->m_bFileHasBeenWritten = fp != nullptr;
+
+    CPLJSONObject oObj;
+    oObj.Add("zarr_format", 3);
+    oObj.Add("node_type", "group");
+    oObj.Add("attributes", CPLJSONObject());
+    poSharedResource->SetZMetadataItem(osZarrJsonFilename, oObj);
+
     return poGroup;
 }
 

@@ -244,7 +244,10 @@ bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
 
     // TODO: codecs
 
-    return oDoc.Save(m_osFilename);
+    const bool bRet = oDoc.Save(m_osFilename);
+    if (bRet)
+        m_poSharedResource->SetZMetadataItem(m_osFilename, oRoot);
+    return bRet;
 }
 
 /************************************************************************/

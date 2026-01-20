@@ -139,7 +139,7 @@ std::shared_ptr<ZarrArray> ZarrV2Group::OpenZarrArray(const std::string &osName,
     if (oIter != m_oMapMDArrays.end())
         return oIter->second;
 
-    if (!m_bReadFromZMetadata && !m_osDirectoryName.empty())
+    if (!m_bReadFromConsolidatedMetadata && !m_osDirectoryName.empty())
     {
         const std::string osSubDir = CPLFormFilenameSafe(
             m_osDirectoryName.c_str(), osName.c_str(), nullptr);
@@ -161,7 +161,7 @@ std::shared_ptr<ZarrArray> ZarrV2Group::OpenZarrArray(const std::string &osName,
 }
 
 /************************************************************************/
-/*                              OpenZarrGroup()                             */
+/*                              OpenZarrGroup()                         */
 /************************************************************************/
 
 std::shared_ptr<ZarrGroupBase>
@@ -174,7 +174,7 @@ ZarrV2Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
     if (oIter != m_oMapGroups.end())
         return oIter->second;
 
-    if (!m_bReadFromZMetadata && !m_osDirectoryName.empty())
+    if (!m_bReadFromConsolidatedMetadata && !m_osDirectoryName.empty())
     {
         const std::string osSubDir = CPLFormFilenameSafe(
             m_osDirectoryName.c_str(), osName.c_str(), nullptr);
@@ -258,7 +258,7 @@ ZarrV2Group::GetOrCreateSubGroup(const std::string &osSubGroupFullname)
                             poSubGroup->GetName().c_str(), nullptr));
     poSubGroup->m_bDirectoryExplored = true;
     poSubGroup->m_bAttributesLoaded = true;
-    poSubGroup->m_bReadFromZMetadata = true;
+    poSubGroup->m_bReadFromConsolidatedMetadata = true;
     poSubGroup->SetUpdatable(m_bUpdatable);
 
     poBelongingGroup->m_oMapGroups[poSubGroup->GetName()] = poSubGroup;
@@ -268,14 +268,14 @@ ZarrV2Group::GetOrCreateSubGroup(const std::string &osSubGroupFullname)
 }
 
 /************************************************************************/
-/*                   ZarrV2Group::InitFromZMetadata()                   */
+/*                ZarrV2Group::InitFromConsolidatedMetadata()           */
 /************************************************************************/
 
-void ZarrV2Group::InitFromZMetadata(const CPLJSONObject &obj)
+void ZarrV2Group::InitFromConsolidatedMetadata(const CPLJSONObject &obj)
 {
     m_bDirectoryExplored = true;
     m_bAttributesLoaded = true;
-    m_bReadFromZMetadata = true;
+    m_bReadFromConsolidatedMetadata = true;
 
     const auto metadata = obj["metadata"];
     if (metadata.GetType() != CPLJSONObject::Type::Object)
