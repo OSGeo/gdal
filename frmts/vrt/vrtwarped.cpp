@@ -1788,12 +1788,10 @@ CPLErr VRTWarpedDataset::ProcessBlock(int iBlockX, int iBlockY)
     if (m_poWarper == nullptr)
         return CE_Failure;
 
-    int nReqXSize = m_nBlockXSize;
-    if (iBlockX * m_nBlockXSize + nReqXSize > nRasterXSize)
-        nReqXSize = nRasterXSize - iBlockX * m_nBlockXSize;
-    int nReqYSize = m_nBlockYSize;
-    if (iBlockY * m_nBlockYSize + nReqYSize > nRasterYSize)
-        nReqYSize = nRasterYSize - iBlockY * m_nBlockYSize;
+    const int nReqXOff = iBlockX * m_nBlockXSize;
+    const int nReqYOff = iBlockY * m_nBlockYSize;
+    const int nReqXSize = std::min(m_nBlockXSize, nRasterXSize - nReqXOff);
+    const int nReqYSize = std::min(m_nBlockYSize, nRasterYSize - nReqYOff);
 
     GByte *pabyDstBuffer = static_cast<GByte *>(
         m_poWarper->CreateDestinationBuffer(nReqXSize, nReqYSize));
@@ -1808,9 +1806,9 @@ CPLErr VRTWarpedDataset::ProcessBlock(int iBlockX, int iBlockY)
     /* -------------------------------------------------------------------- */
 
     const GDALWarpOptions *psWO = m_poWarper->GetOptions();
-    const CPLErr eErr = m_poWarper->WarpRegionToBuffer(
-        iBlockX * m_nBlockXSize, iBlockY * m_nBlockYSize, nReqXSize, nReqYSize,
-        pabyDstBuffer, psWO->eWorkingDataType);
+    const CPLErr eErr =
+        m_poWarper->WarpRegionToBuffer(nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                                       pabyDstBuffer, psWO->eWorkingDataType);
 
     if (eErr != CE_None)
     {
