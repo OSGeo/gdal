@@ -587,9 +587,9 @@ Approximate transformation
 
 By default :program:`gdalwarp` uses a linear approximator for the
 transformations with a permitted error of 0.125 pixels in the source dataset.
-The approximator precisely transforms three points per output scanline (the
-start, middle, and end) from a row and column in the output dataset to a
-row and column in the source dataset.
+For each processing chunk, the approximator precisely transforms three points
+per output scanline (the start, middle, and end) from a row and column in the
+output dataset to a row and column in the source dataset.
 It then compares a linear approximation of the center point coordinates to the
 precisely transformed value.
 If the sum of the horizontal and vertical errors is less than the error
@@ -599,6 +599,14 @@ end point.
 If the error exceeds the threshold, the scanline is split into two sections and
 the approximator is recursively applied to each section until the error is less
 than the threshold or all points have been exactly computed.
+
+Note that a processing chunk does not necessarily correspond to a whole destination
+scanline. If the output dataset is tiled, its shape will typically be one or
+several tiles. The ``OPTIMIZE_SIZE`` warping option and the value of the :option:`-wm`
+option can also influence the shape of the processing chunk. Consequently, for
+a single (non-zero) value of the error threshold,
+the linear approximation might result in slightly different values in coordinate
+transformation, but all of them within the permitted error.
 
 The error threshold (in source dataset pixels) can be controlled with the gdalwarp
 :option:`-et` switch. If you want to compare a true pixel-by-pixel reprojection
@@ -725,6 +733,47 @@ real warping operation.
 
    gdalwarp -of VRT infile tempfile.vrt ...options...
    gdal_translate tempfile.vrt outfile.tif -co compress=lzw ...etc.
+
+
+Frequently Asked Questions
+--------------------------
+
+Q1. Why does the quality of the output looks so bad (no anti-aliasing)?
+
+A1. Did you specify a resampling method, with :option:`-r`, other than the
+    default nearest neighbour?
+
+
+Q2. Why do I get slightly different results whether the output dataset is tiled or not?
+
+A2. This is related to the fact that an approximate coordinate transformation is
+    used by default to speed-up computation. If you want to get the same results
+    whether the output is tiled or not, set :option:`-et` to zero.
+    Note, however, that this will only work for relatively small images; other factors
+    can still result in different result. See following question (Q3).
+
+
+Q3. Why do I observe artifacts, that look like resolution changes and are aligned
+    with rectangular areas of the output raster, when warping sufficiently large
+    rasters, particularly in areas where the reprojection involves significant
+    deformation and only with non-nearest resampling ?
+
+A3. The warping engine operates on rectangular areas of the output
+    dataset (generally aligned with tile boundaries for a compressed tile dataset).
+
+    During reprojection, a single source pixel does not generally correspond to a
+    single output pixel. The resampling method must therefore properly account for this
+    and compute a ratio between the number of source and target pixels in the
+    horizontal (X) and vertical (Y) directions. These ratios are computed per warping
+    chunk. This maximizes the local quality of the warping but has the downside of
+    creating visual discontinuities between warping chunks.
+
+    If you favor a seamless result, you may manually specify the
+    XSCALE and YSCALE warping options with :option:`-wo`.
+    The XSCALE (resp. YSCALE) value is the ratio expressing the resampling factor,
+    i.e. the number of destination pixels per source pixel, along the
+    horizontal (resp. vertical) axis. It equals to one for no resampling, is
+    below one for downsampling, and above one for upsampling.
 
 
 Examples
