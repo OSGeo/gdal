@@ -237,7 +237,17 @@
           "type": "string"
         },
         "indexing_variable": {
-          "type": "string"
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/array"
+              }
+            }
+          ]
         }
       },
       "additionalProperties": false
