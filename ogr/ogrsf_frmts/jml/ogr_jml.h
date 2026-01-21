@@ -58,7 +58,16 @@ class OGRJMLLayer final : public OGRLayer
     VSILFILE *fp;
     bool bHasReadSchema;
 
-    XML_Parser oParser;
+    struct XMLParserDeleter
+    {
+        void operator()(XML_Parser parser)
+        {
+            if (parser)
+                XML_ParserFree(parser);
+        }
+    };
+
+    std::unique_ptr<XML_ParserStruct, XMLParserDeleter> poParser{};
 
     int currentDepth;
     bool bStopParsing;
