@@ -210,11 +210,11 @@ an output-generating step like ``info``, ``tile`` or ``write``
 
         $ gdal pipeline read n43.tif ! \
                         color-map --color-map color_file.txt ! \
-                        color-merge --grayscale \
+                        blend --operator=hsv-value --overlay \
                             [ read n43.tif ! hillshade -z 30 ] ! \
                         write out.tif --overwrite
 
-In the above example, the value of the ``grayscale`` argument of the ``color-merge``
+In the above example, the value of the ``overlay`` argument of the ``blend``
 step is set as the output of the nested pipeline ``read n43.tif ! hillshade -z 30``.
 
 .. _gdal_output_nested_pipeline:
@@ -256,7 +256,7 @@ with one of them being an output nested pipeline inside an input nested pipeline
         $ gdal pipeline read n43.tif ! \
                         color-map --color-map color_file.txt ! \
                         tee [ write colored.tif --overwrite ] ! \
-                        color-merge --grayscale \
+                        blend --operator=hsv-value --overlay \
                             [ read n43.tif ! hillshade -z 30  ! tee [ write hillshade.tif --overwrite ] ] ! \
                         write colored-hillshade.tif --overwrite
 
