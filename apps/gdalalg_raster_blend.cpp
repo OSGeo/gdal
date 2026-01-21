@@ -2578,8 +2578,10 @@ bool GDALRasterBlendAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     // If any of the dataset single band has a color table implicitly convert it to RGBA by calling
     // GDALTranslate with -expand RGBA
-    auto convertToRGBAifNeeded = [](GDALDataset *&poDS,
-                                    GDALDatasetUniquePtr &ds) -> bool
+    auto convertToRGBAifNeeded =
+        [](GDALDataset *&poDS,
+           std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser> &ds)
+        -> bool
     {
         if (poDS->GetRasterCount() == 1 &&
             poDS->GetRasterBand(1)->GetColorTable() != nullptr)

@@ -85,8 +85,9 @@ class GDALRasterBlendAlgorithm /* non final*/
     std::string m_operatorIdentifier{};
     static constexpr int OPACITY_INPUT_RANGE = 100;
     int m_opacity = OPACITY_INPUT_RANGE;
-    GDALDatasetUniquePtr m_poTmpSrcDS{};
-    GDALDatasetUniquePtr m_poTmpOverlayDS{};
+    std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser> m_poTmpSrcDS{};
+    std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>
+        m_poTmpOverlayDS{};
 };
 
 /************************************************************************/
