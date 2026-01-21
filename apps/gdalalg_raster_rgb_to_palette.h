@@ -38,6 +38,9 @@ class GDALRasterRGBToPaletteAlgorithm /* non final */
 
     int m_colorCount = 256;
     std::string m_colorMap{};
+    int m_dstNoData = -1;
+    bool m_noDither = false;
+    int m_bitDepth = 5;
 };
 
 /************************************************************************/
