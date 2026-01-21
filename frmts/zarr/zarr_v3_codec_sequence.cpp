@@ -154,7 +154,8 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
                 CE_Warning, CPLE_AppDefined,
                 "Sharding codec found, but not in last position. Consequently "
                 "partial shard decoding will not be possible");
-            oInputArrayMetadata.anBlockSizes = anBlockSizesBeforeSharding;
+            oInputArrayMetadata.anBlockSizes =
+                std::move(anBlockSizesBeforeSharding);
         }
     }
 

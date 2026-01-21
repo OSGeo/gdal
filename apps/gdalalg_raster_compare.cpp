@@ -898,7 +898,7 @@ static void ComparePixels(std::vector<std::string> &aosReport,
         {
             reportMessage += std::to_string(maxDiffValue);
         }
-        aosReport.push_back(reportMessage);
+        aosReport.push_back(std::move(reportMessage));
     }
 }
 

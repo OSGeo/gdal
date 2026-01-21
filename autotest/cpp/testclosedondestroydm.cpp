@@ -20,6 +20,9 @@
 
 #include "gtest_include.h"
 
+// Excluded from Coverity Scan since it intentionally leaks datasets
+#ifndef __COVERITY__
+
 namespace
 {
 
@@ -315,3 +318,5 @@ TEST(testclosedondestroydm, test)
 }
 
 }  // namespace
+
+#endif  // __COVERITY__

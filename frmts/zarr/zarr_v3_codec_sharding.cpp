@@ -119,6 +119,7 @@ bool ZarrV3CodecShardingIndexed::InitFromConfiguration(
         // on size_t
         if constexpr (sizeof(size_t) < sizeof(uint64_t))
         {
+            // coverity[result_independent_of_operands]
             CPLAssert(nVal <= std::numeric_limits<size_t>::max());
         }
         m_anInnerBlockSize.push_back(static_cast<size_t>(nVal));
@@ -611,6 +612,7 @@ bool ZarrV3CodecShardingIndexed::DecodePartial(
 
     if constexpr (sizeof(size_t) < sizeof(uint64_t))
     {
+        // coverity[result_independent_of_operands]
         if (loc.nSize > std::numeric_limits<size_t>::max())
         {
             CPLError(

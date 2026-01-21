@@ -378,8 +378,8 @@ const std::string *OGRPMTilesDataset::Read(const CPLCompressor *psDecompressor,
         return nullptr;
     }
     m_osBuffer.resize(static_cast<size_t>(nSize));
-    m_poFile->Seek(nOffset, SEEK_SET);
-    if (m_poFile->Read(&m_osBuffer[0], m_osBuffer.size(), 1) != 1)
+    if (m_poFile->Seek(nOffset, SEEK_SET) != 0 ||
+        m_poFile->Read(&m_osBuffer[0], m_osBuffer.size(), 1) != 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read %s of length %u at offset " CPL_FRMT_GUIB,
