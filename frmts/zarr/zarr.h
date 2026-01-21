@@ -274,6 +274,7 @@ class ZarrSharedResource
     CPLStringList m_aosOpenOptions{};
     std::weak_ptr<ZarrGroupBase> m_poWeakRootGroup{};
     std::set<std::string> m_oSetArrayInLoading{};
+    std::map<std::string, std::shared_ptr<GDALMDArray>> m_oCacheIndexingVar{};
 
     explicit ZarrSharedResource(const std::string &osRootDirectoryName,
                                 bool bUpdatable);
@@ -333,15 +334,7 @@ class ZarrSharedResource
     void
     UpdateDimensionSize(const std::shared_ptr<GDALDimension> &poUpdatedDim);
 
-    std::shared_ptr<ZarrGroupBase> GetRootGroup()
-    {
-        auto poRootGroup = m_poWeakRootGroup.lock();
-        if (poRootGroup)
-            return poRootGroup;
-        poRootGroup = OpenRootGroup();
-        m_poWeakRootGroup = poRootGroup;
-        return poRootGroup;
-    }
+    std::shared_ptr<ZarrGroupBase> GetRootGroup();
 
     void SetRootGroup(const std::shared_ptr<ZarrGroupBase> &poRootGroup)
     {
@@ -376,6 +369,12 @@ class ZarrSharedResource
             return m_bOK;
         }
     };
+
+    void RegisterIndexingVariable(const std::string &osDimName,
+                                  const std::shared_ptr<GDALMDArray> &poVar)
+    {
+        m_oCacheIndexingVar[osDimName] = poVar;
+    }
 };
 
 /************************************************************************/
@@ -545,6 +544,11 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     std::shared_ptr<ZarrGroupBase> Self() const
     {
         return std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
+    }
+
+    const ZarrAttributeGroup &GetAttributeGroup() const
+    {
+        return m_oAttrGroup;
     }
 };
 
@@ -1132,13 +1136,8 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
         m_osDimSeparator = osDimSeparator;
     }
 
-    void ParseSpecialAttributes(const std::shared_ptr<GDALGroup> &poGroup,
-                                CPLJSONObject &oAttributes);
-
-    void SetAttributes(const CPLJSONObject &attrs)
-    {
-        m_oAttrGroup.Init(attrs, m_bUpdatable);
-    }
+    void SetAttributes(const std::shared_ptr<ZarrGroupBase> &poGroup,
+                       CPLJSONObject &oAttributes);
 
     void SetSRS(const std::shared_ptr<OGRSpatialReference> &srs)
     {

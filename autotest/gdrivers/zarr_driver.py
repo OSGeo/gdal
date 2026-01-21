@@ -6919,3 +6919,55 @@ def test_zarr_read_multiscales_cannot_get_root_group(tmp_vsimem):
         gdal.CE_Warning, match="LoadOverviews(): cannot access root group"
     ):
         assert ar.GetOverviewCount() == 0
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_spatial_proj_at_array_level():
+
+    ds = gdal.Open("data/zarr/v3/spatial_proj_at_array_level.zarr")
+    assert ds.GetGeoTransform() == (450000, 10, 0, 5000000, 0, -10)
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+    assert ds.GetMetadata() == {"AREA_OR_POINT": "Area"}
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_spatial_proj_at_parent_level():
+
+    ds = gdal.Open("data/zarr/v3/spatial_proj_at_parent_level.zarr")
+    assert ds.GetGeoTransform() == (450000, 10, 0, 5000000, 0, -10)
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+    assert ds.GetMetadata() == {"AREA_OR_POINT": "Area"}
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_spatial_proj_convention_at_root_level():
+
+    ds = gdal.Open("data/zarr/v3/spatial_proj_convention_at_root_level.zarr")
+    assert ds.GetGeoTransform() == (450000, 10, 0, 5000000, 0, -10)
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+    assert ds.GetMetadata() == {"AREA_OR_POINT": "Area"}
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_spatial_geotransform():
+
+    ds = gdal.Open("data/zarr/v3/spatial_geotransform.zarr")
+    assert ds.GetGeoTransform() == (450000, 10, 0.1, 5000000, 0.15, -10)
+    assert ds.GetSpatialRef() is None
+    assert ds.GetMetadata() == {"AREA_OR_POINT": "Area"}

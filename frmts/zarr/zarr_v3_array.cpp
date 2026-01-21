@@ -1627,8 +1627,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     {
         poArray->RegisterNoDataValue(abyNoData.data());
     }
-    poArray->ParseSpecialAttributes(m_pSelf.lock(), oAttributes);
-    poArray->SetAttributes(oAttributes);
+    poArray->SetAttributes(Self(), oAttributes);
     poArray->SetDtype(oDtype);
     if (oCodecs.Size() > 0 &&
         oCodecs[oCodecs.Size() - 1].GetString("name") != "bytes")

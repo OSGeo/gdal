@@ -2093,8 +2093,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         }
     }
 
-    poArray->ParseSpecialAttributes(m_pSelf.lock(), oAttributes);
-    poArray->SetAttributes(oAttributes);
+    poArray->SetAttributes(Self(), oAttributes);
     poArray->SetDtype(oDtype);
     RegisterArray(poArray);
 

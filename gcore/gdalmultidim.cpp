@@ -10044,7 +10044,30 @@ std::unique_ptr<GDALDatasetFromArray> GDALDatasetFromArray::Create(
     const auto attrs(array->GetAttributes());
     for (const auto &attr : attrs)
     {
-        if (attr->GetName() != "COLOR_INTERPRETATION")
+        if (attr->GetName() == "spatial:registration")
+        {
+            // From https://github.com/zarr-conventions/spatial
+            const char *pszValue = attr->ReadAsString();
+            if (pszValue && strcmp(pszValue, "pixel") == 0)
+                poDS->m_oMDD.SetMetadataItem(GDALMD_AREA_OR_POINT,
+                                             GDALMD_AOP_AREA);
+            else if (pszValue && strcmp(pszValue, "node") == 0)
+                poDS->m_oMDD.SetMetadataItem(GDALMD_AREA_OR_POINT,
+                                             GDALMD_AOP_POINT);
+            else if (pszValue)
+                poDS->m_oMDD.SetMetadataItem(attr->GetName().c_str(), pszValue);
+        }
+        else if (attr->GetName() == "gdal:geotransform")
+        {
+            // From Zarr driver
+            const auto doubleArray = attr->ReadAsDoubleArray();
+            if (doubleArray.size() == 6)
+            {
+                poDS->m_bHasGT = true;
+                poDS->m_gt = GDALGeoTransform(doubleArray.data());
+            }
+        }
+        else if (attr->GetName() != "COLOR_INTERPRETATION")
         {
             auto stringArray = attr->ReadAsStringArray();
             std::string val;
@@ -14680,6 +14703,14 @@ bool GDALMDArrayRegularlySpaced::IRead(
                                         bufferDataType);
         pabyDstBuffer += bufferStride[0] * bufferDataType.GetSize();
     }
+    return true;
+}
+
+bool GDALMDArrayRegularlySpaced::IsRegularlySpaced(double &dfStart,
+                                                   double &dfIncrement) const
+{
+    dfStart = m_dfStart + m_dfOffsetInIncrement * m_dfIncrement;
+    dfIncrement = m_dfIncrement;
     return true;
 }
 

@@ -1080,7 +1080,7 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     bool AdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
                     CSLConstList papszOptions = nullptr) const;
 
-    bool IsRegularlySpaced(double &dfStart, double &dfIncrement) const;
+    virtual bool IsRegularlySpaced(double &dfStart, double &dfIncrement) const;
 
     bool GuessGeoTransform(size_t nDimX, size_t nDimY, bool bPixelIsPoint,
                            GDALGeoTransform &gt) const;
@@ -1213,6 +1213,8 @@ class CPL_DLL GDALMDArrayRegularlySpaced final : public GDALMDArray
         GetAttributes(CSLConstList) const override;
 
     void AddAttribute(const std::shared_ptr<GDALAttribute> &poAttr);
+
+    bool IsRegularlySpaced(double &dfStart, double &dfIncrement) const override;
 };
 
 //! @endcond
