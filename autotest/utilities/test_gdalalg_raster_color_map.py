@@ -138,3 +138,14 @@ def test_gdalalg_raster_empty_color_map(tmp_vsimem, output_format):
     alg["output-format"] = output_format
     with pytest.raises(Exception, match="No color association found"):
         alg.Run()
+
+
+def test_gdalalg_raster_color_map_in_pipeline(tmp_vsimem):
+    """Test fix for https://github.com/OSGeo/gdal/issues/13740"""
+
+    with gdal.alg.raster.pipeline(
+        input="../gcore/data/byte.tif",
+        pipeline="read ! clip --bbox 440720.000,3750120.000,441920.000,3751320.000 ! color-map   --color-map data/color_file.txt ! clip --bbox 440720.000,3750120.000,441920.000,3751320.000 ! write",
+        output_format="MEM",
+    ) as alg:
+        assert alg.Output().GetRasterBand(1).Checksum() == 4688
