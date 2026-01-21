@@ -1738,6 +1738,9 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
     void SetPowerScaling(double dfExponent, double dfSrcMin, double dfSrcMax,
                          double dfDstMin, double dfDstMax, bool bClip = true);
     void SetColorTableComponent(int nComponent);
+
+    void SetLUT(const std::vector<double> &adfLUTInputs,
+                const std::vector<double> &adfLUTOutputs);
 };
 
 /************************************************************************/
