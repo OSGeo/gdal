@@ -850,14 +850,35 @@ def generic_raster_blend_4bands_over_4bands(
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
-        (100, (0, 0, 0, 255), (0, 0, 0, 255), (0, 0, 0, 255)),
-        (100, (255, 255, 255, 255), (1, 2, 3, 255), (1, 2, 3, 255)),
-        (100, (128, 128, 128, 255), (10, 20, 30, 255), (5, 10, 15, 255)),
-        # Test with alpha != 255
-        (100, (10, 20, 30, 255), (255, 255, 255, 128), (15, 30, 45, 255)),
-        # Test with opacity != 100
-        (50, (10, 20, 30, 255), (255, 255, 255, 255), (15, 30, 45, 255)),
-        (50, (128, 128, 128, 255), (10, 20, 30, 255), (69, 74, 79, 255)),
+        (100, (128, 128, 128, 128), (128, 128, 128, 128), (106, 106, 106, 192)),
+        (100, (100, 100, 100, 100), (100, 100, 100, 100), (90, 90, 90, 160)),
+        # Classic Multiply: Red (255,0,0) * Green (0,255,0) = Black (0,0,0)
+        # Both opaque.
+        (100, (255, 0, 0, 255), (0, 255, 0, 255), (0, 0, 0, 255)),
+        # Identity Case: Pure White source (255) on any background
+        # Background is preserved exactly.
+        (100, (120, 150, 180, 255), (255, 255, 255, 255), (120, 150, 180, 255)),
+        # Semi-Transparent Neutral: White source with 50% alpha
+        # Should result in no change to the background.
+        (100, (100, 150, 200, 255), (255, 255, 255, 128), (100, 150, 200, 255)),
+        # Tinting: Light Gray background tinted by semi-transparent Blue source
+        # (200,200,200) backdrop * (0,0,255) source at 128 alpha
+        (100, (200, 200, 200, 255), (0, 0, 255, 128), (100, 100, 200, 255)),
+        # Deep Darkening: Mid-gray backdrop (128) * Dark-gray source (64)
+        # Both opaque; results in 128 * 64 / 255 = 32
+        (100, (128, 128, 128, 255), (64, 64, 64, 255), (32, 32, 32, 255)),
+        # Partial Overlap: Semi-transparent Blue on Semi-transparent Red
+        # Alpha increases to ~191; color shifts toward dark purple/black
+        (100, (255, 0, 0, 128), (0, 0, 255, 128), (85, 0, 85, 192)),
+        # Background Clipping: Multiply over a fully transparent background
+        # Since background alpha is 0, the source color is returned as-is.
+        (100, (0, 0, 0, 0), (150, 75, 200, 255), (150, 75, 200, 255)),
+        # Low Opacity Interaction: Opaque white backdrop with very low alpha black source
+        # Simulates a faint shadow or darkening effect.
+        (100, (255, 255, 255, 255), (0, 0, 0, 25), (230, 230, 230, 255)),
+        # Mid-tone Overlap: Opaque 50% grays
+        # Resulting color: 128 * 128 / 255 = 64
+        (100, (128, 128, 128, 255), (128, 128, 128, 255), (64, 64, 64, 255)),
     ],
 )
 def test_gdalalg_raster_blend_multiply_4bands_over_4bands(
@@ -876,49 +897,6 @@ def test_gdalalg_raster_blend_multiply_4bands_over_4bands(
     r, g, b, a = rgba
     overlay_r, overlay_g, overlay_b, overlay_a = overlay_rgba
     expected_r, expected_g, expected_b, expected_a = expected_rgba
-
-    if False:  # Set to True to print intermediate values for debugging
-
-        print("\rgba:", rgba)
-        print("overlay_rgba:", overlay_rgba)
-        print("expected_rgba:", expected_rgba)
-        print("opacity:", opacity)
-
-        if not swap_inputs:
-            overlay_a = overlay_a * opacity / 100
-            print("overlay_a:", overlay_a)
-        else:
-            a = a * opacity / 100
-            print("a:", a)
-
-        # Implement the formula for multiply blend mode
-        # Dca' = Sca.Dca + Sca.(1 - Da) + Dca.(1 - Sa)
-        # Da'  = Sa + Da - Sa.Da
-        final_alpha = 255 * (a / 255 + overlay_a / 255 - a / 255 * overlay_a / 255)
-        print("final_alpha:", int(final_alpha))
-        final_r = 255 * (
-            r / 255 * overlay_r / 255
-            + r / 255 * (1 - overlay_a / 255)
-            + overlay_r / 255 * (1 - a / 255)
-        )
-        print("final_r:", int(final_r))
-        final_g = 255 * (
-            g / 255 * overlay_g / 255
-            + g / 255 * (1 - overlay_a / 255)
-            + overlay_g / 255 * (1 - a / 255)
-        )
-        print("final_g:", int(final_g))
-        final_b = 255 * (
-            b / 255 * overlay_b / 255
-            + b / 255 * (1 - overlay_a / 255)
-            + overlay_b / 255 * (1 - a / 255)
-        )
-        print("final_b:", int(final_b))
-
-        assert round(final_r) == expected_r
-        assert round(final_g) == expected_g
-        assert round(final_b) == expected_b
-        assert round(final_alpha) == expected_a
 
     generic_raster_blend_4bands_over_4bands(
         "multiply",
@@ -1152,10 +1130,16 @@ def test_gdalalg_raster_blend_multiply_1band_paletted_over_1band(
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
-        (100, (128, 128, 128, 255), (10, 20, 30, 255), (133, 138, 143, 255)),
-        (100, (120, 100, 80, 255), (100, 150, 200, 255), (173, 191, 217, 255)),
-        (100, (120, 100, 80, 255), (0, 0, 0, 255), (120, 100, 80, 255)),
-        (100, (120, 100, 80, 255), (255, 255, 255, 255), (255, 255, 255, 255)),
+        # 1. Inputs (100, 100, 100, 100)
+        (100, (100, 100, 100, 100), (100, 100, 100, 100), (116, 116, 116, 160)),
+        # 2. Inputs (128, 128, 128, 128)
+        (100, (128, 128, 128, 128), (128, 128, 128, 128), (148, 148, 148, 192)),
+        # 3. Opaque Mid-grays (Screen results in lighter color)
+        (100, (128, 128, 128, 255), (128, 128, 128, 255), (192, 192, 192, 255)),
+        # 4. Screen with Black (Identity: no change)
+        (100, (150, 150, 150, 255), (0, 0, 0, 255), (150, 150, 150, 255)),
+        # 5. Screen with White (Result is always white)
+        (100, (150, 150, 150, 255), (255, 255, 255, 255), (255, 255, 255, 255)),
     ],
 )
 def test_gdalalg_raster_blend_screen_4bands_over_4bands(
@@ -1169,12 +1153,27 @@ def test_gdalalg_raster_blend_screen_4bands_over_4bands(
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
-        (100, (0, 0, 0, 255), (255, 128, 0, 255), (0, 0, 0, 255)),
-        (100, (255, 255, 255, 255), (128, 0, 255, 255), (255, 255, 255, 255)),
-        (100, (128, 128, 128, 255), (200, 100, 50, 255), (201, 102, 52, 255)),
-        (100, (200, 100, 50, 255), (128, 128, 128, 255), (201, 100, 50, 255)),
-        (100, (64, 64, 64, 255), (100, 100, 100, 255), (50, 50, 50, 255)),
-        (100, (192, 192, 192, 255), (200, 200, 200, 255), (228, 228, 228, 255)),
+        # 1. Mid-tone case (100, 100, 100, 100)
+        # Calculation uses the first branch (Multiply-like) because 2*Dca < Da.
+        (100, (100, 100, 100, 100), (100, 100, 100, 100), (102, 102, 102, 160)),
+        # 2. Mid-tone case (128, 128, 128, 128)
+        # At exactly 128, the branches meet; the result is the neutral midpoint.
+        (100, (128, 128, 128, 128), (128, 128, 128, 128), (127, 127, 127, 192)),
+        # 3. Dark source on light opaque background
+        # 2*Dca (400) > Da (255) -> Uses second branch. Result is darker than background.
+        (100, (200, 200, 200, 255), (50, 50, 50, 255), (165, 165, 165, 255)),
+        # 4. Light source on dark opaque background
+        # 2*Dca (100) < Da (255) -> Uses first branch. Result is lighter than background.
+        (100, (50, 50, 50, 255), (200, 200, 200, 255), (80, 80, 80, 255)),
+        # 5. Full Transparency: Empty Background
+        # Background alpha is 0, so the source color is returned unchanged.
+        (100, (0, 0, 0, 0), (150, 100, 50, 255), (150, 100, 50, 255)),
+        # 6. Full Transparency: Empty Source
+        # Source alpha is 0, so the background color remains unchanged.
+        (100, (150, 100, 50, 255), (0, 0, 0, 0), (150, 100, 50, 255)),
+        # 7. Semi-transparent Overlap: (200, 200, 200, 128) on (100, 100, 100, 128)
+        # Background is dark (2*Dca < Da), branch 1 used. Resulting alpha ~191.
+        (100, (100, 100, 100, 128), (200, 200, 200, 128), (152, 152, 152, 192)),
     ],
 )
 def test_gdalalg_raster_blend_overlay_4bands_over_4bands(
@@ -1193,7 +1192,7 @@ def test_gdalalg_raster_blend_overlay_4bands_over_4bands(
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
-        (100, (10, 20, 30, 255), (128, 128, 128, 255), (12, 22, 32, 255)),
+        (100, (10, 20, 30, 255), (128, 128, 128, 255), (11, 21, 31, 255)),
         (100, (128, 128, 128, 255), (10, 20, 30, 255), (10, 20, 30, 255)),
     ],
 )
@@ -1210,9 +1209,28 @@ def test_gdalalg_raster_blend_hard_light_4bands_over_4bands(
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
-        (100, (128, 128, 128, 255), (10, 20, 30, 255), (128, 128, 128, 255)),
-        (100, (10, 20, 30, 255), (128, 128, 128, 255), (128, 128, 128, 255)),
-        (100, (10, 200, 30, 128), (128, 50, 128, 128), (133, 225, 143, 192)),
+        # 1. Mid-tone case (100, 128) on (200, 128)
+        # B: (100, 100, 100, 128), S: (200, 200, 200, 128)
+        # The max function picks the brighter source contribution.
+        (100, (100, 100, 100, 128), (200, 200, 200, 128), (166, 166, 166, 192)),
+        # 2. Balanced Mid-tones (128, 128, 128, 128) on (128, 128, 128, 128)
+        # Both are identical, so max does not change the relative intensity.
+        (100, (128, 128, 128, 128), (128, 128, 128, 128), (127, 127, 127, 192)),
+        # 3. Opaque Comparison: Source is brighter (S=200, B=50)
+        # Result is simply the brighter opaque color.
+        (100, (50, 50, 50, 255), (200, 200, 200, 255), (200, 200, 200, 255)),
+        # 4. Opaque Comparison: Background is brighter (S=50, B=200)
+        # Result is simply the brighter opaque color.
+        (100, (200, 200, 200, 255), (50, 50, 50, 255), (200, 200, 200, 255)),
+        # 5. High Contrast Translucent: Red (255,0,0,128) on Blue (0,0,255,128)
+        # Max picks the available color for each channel.
+        (100, (0, 0, 255, 128), (255, 0, 0, 128), (170, 0, 170, 192)),
+        # 6. Background Clipping: Background alpha 0
+        # Result must be the source color.
+        (100, (0, 0, 0, 0), (100, 150, 200, 255), (100, 150, 200, 255)),
+        # 7. Source Clipping: Source alpha 0
+        # Result must be the background color.
+        (100, (100, 150, 200, 255), (0, 0, 0, 0), (100, 150, 200, 255)),
     ],
 )
 def test_gdalalg_raster_blend_lighten_4bands_over_4bands(
@@ -1228,9 +1246,29 @@ def test_gdalalg_raster_blend_lighten_4bands_over_4bands(
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
-        (100, (128, 128, 128, 255), (10, 20, 30, 255), (10, 20, 30, 255)),
-        (100, (10, 20, 30, 255), (128, 128, 128, 255), (10, 20, 30, 255)),
-        (100, (200, 50, 200, 128), (128, 200, 128, 128), (228, 150, 228, 192)),
+        # 1. Mid-tone case (100, 100, 100, 100)
+        # Both colors are identical; the min function returns the original relative intensity.
+        (100, (100, 100, 100, 100), (100, 100, 100, 100), (105, 105, 105, 160)),
+        # 2. Mid-tone case (128, 128, 128, 128)
+        (100, (128, 128, 128, 128), (128, 128, 128, 128), (127, 127, 127, 192)),
+        # 3. Darker Source (S=50, B=200, both opaque)
+        # Darken selects the minimum channel value: 50.
+        (100, (200, 200, 200, 255), (50, 50, 50, 255), (50, 50, 50, 255)),
+        # 4. Darker Background (S=200, B=50, both opaque)
+        # Darken selects the minimum channel value: 50.
+        (100, (50, 50, 50, 255), (200, 200, 200, 255), (50, 50, 50, 255)),
+        # 5. Semi-transparent Overlap: Red (255,0,0,128) and Blue (0,0,255,128)
+        # The min function on R and B channels results in a dark purple/gray.
+        (100, (255, 0, 0, 128), (0, 0, 255, 128), (85, 0, 85, 192)),
+        # 6. Empty Background (Alpha 0)
+        # Result must be the source color.
+        (100, (0, 0, 0, 0), (100, 150, 200, 255), (100, 150, 200, 255)),
+        # 7. Empty Source (Alpha 0)
+        # Result must be the background color.
+        (100, (100, 150, 200, 255), (0, 0, 0, 0), (100, 150, 200, 255)),
+        # 8. Diverse Transparency: (150, 150, 150, 200) on (100, 100, 100, 50)
+        # Mixed alphas pull the result towards the darker background.
+        (100, (100, 100, 100, 50), (150, 150, 150, 200), (140, 140, 140, 210)),
     ],
 )
 def test_gdalalg_raster_blend_darken_4bands_over_4bands(
@@ -1279,8 +1317,8 @@ def test_gdalalg_raster_blend_darken_lighten_invalid_input(
     "opacity,val_alpha,overlay_val_alpha,expected_val_alpha",
     [
         (100, (100, 255), (200, 255), (200, 255)),
-        (100, (100, 255), (200, 128), (250, 255)),
-        (100, (100, 128), (200, 128), (250, 192)),
+        (100, (100, 255), (200, 128), (150, 255)),
+        (100, (100, 128), (200, 128), (166, 192)),
     ],
 )
 def test_gdalalg_raster_blend_lighten_2bands_over_2bands(
@@ -1302,7 +1340,7 @@ def test_gdalalg_raster_blend_lighten_2bands_over_2bands(
     [
         (100, (100, 255), (200, 255), (100, 255)),
         (100, (100, 255), (200, 128), (100, 255)),
-        (100, (100, 128), (200, 128), (200, 192)),
+        (100, (100, 128), (200, 128), (132, 192)),
     ],
 )
 def test_gdalalg_raster_blend_darken_2bands_over_2bands(
@@ -1322,9 +1360,30 @@ def test_gdalalg_raster_blend_darken_2bands_over_2bands(
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
-        (100, (128, 128, 128, 255), (10, 20, 30, 255), (133, 138, 145, 255)),
-        (100, (10, 20, 30, 255), (128, 128, 128, 255), (20, 40, 60, 255)),
-        (100, (200, 50, 200, 128), (128, 200, 128, 128), (164, 125, 164, 192)),
+        # 1. Low-mid Case: (100, 100, 100, 100) on (100, 100, 100, 100)
+        # Condition: 0.1206 < 0.1538 (Branch 2 is used).
+        # The source is not bright enough to saturate the dodge, resulting in a moderate lighten.
+        (100, (100, 100, 100, 100), (100, 100, 100, 100), (121, 121, 121, 160)),
+        # 2. Mid-point Case: (128, 128, 128, 128) on (128, 128, 128, 128)
+        # Condition: 0.2529 >= 0.2519 (Branch 1 is used).
+        # Hits the saturation point where the result becomes the maximum alpha union color.
+        (100, (128, 128, 128, 128), (128, 128, 128, 128), (170, 170, 170, 192)),
+        # 3. Opaque Identity: Black source (0, 0, 0, 255) on gray background
+        # In Dodge, black is the neutral color. Background remains unchanged.
+        (100, (150, 150, 150, 255), (0, 0, 0, 255), (150, 150, 150, 255)),
+        # 4. Opaque Saturated: White source (255, 255, 255, 255) on gray background
+        # Any color dodged with white results in pure white.
+        (100, (150, 150, 150, 255), (255, 255, 255, 255), (255, 255, 255, 255)),
+        # 5. Tinted Highlight: Semi-transparent Blue on Opaque Gray
+        # (0, 0, 255, 128) on (100, 100, 100, 255)
+        # The Blue channel saturates (Branch 1), while R and G stay in Branch 2.
+        (100, (100, 100, 100, 255), (0, 0, 255, 128), (100, 100, 178, 255)),
+        # 6. Background Clipping: Dodge over fully transparent background
+        # If the background alpha is 0, the source color is returned as-is.
+        (100, (0, 0, 0, 0), (100, 200, 50, 255), (100, 200, 50, 255)),
+        # 7. Source Clipping: Fully transparent source
+        # If the source alpha is 0, the background remains unchanged.
+        (100, (100, 150, 200, 255), (0, 0, 0, 0), (100, 150, 200, 255)),
     ],
 )
 def test_gdalalg_raster_blend_color_dodge_4bands_over_4bands(
@@ -1340,9 +1399,30 @@ def test_gdalalg_raster_blend_color_dodge_4bands_over_4bands(
 @pytest.mark.parametrize(
     "opacity,rgba,overlay_rgba,expected_rgba",
     [
-        (100, (128, 128, 128, 255), (10, 20, 30, 255), (20, 40, 60, 255)),
-        (100, (10, 20, 30, 255), (128, 128, 128, 255), (133, 138, 145, 255)),
-        (100, (200, 50, 200, 128), (128, 200, 128, 128), (164, 125, 164, 192)),
+        # 1. Mid-tone case (100, 100, 100, 100)
+        # Condition: 0.1206 <= 0.1537 is True. Branch 1 is used.
+        # High darkening effect due to the low alpha overlap.
+        (100, (100, 100, 100, 100), (100, 100, 100, 100), (79, 79, 79, 160)),
+        # 2. Mid-tone case (128, 128, 128, 128)
+        # Condition: 0.2529 <= 0.2519 is False. Branch 2 is used.
+        # Results in a slightly lighter value than the 100-case due to the branch switch.
+        (100, (128, 128, 128, 128), (128, 128, 128, 128), (85, 85, 85, 192)),
+        # 3. Opaque Identity: White source on gray background
+        # White (Sca=Sa) always results in the second branch simplifying to Dca.
+        (100, (150, 150, 150, 255), (255, 255, 255, 255), (150, 150, 150, 255)),
+        # 4. Opaque Maximum Burn: Black source on gray background
+        # Black (Sca=0) triggers Branch 1. Result is 0 (Black).
+        (100, (150, 150, 150, 255), (0, 0, 0, 255), (0, 0, 0, 255)),
+        # 5. Partial Transparency Overlap
+        # (200, 200, 200, 128) on (100, 100, 100, 128).
+        # Light source on dark background, Branch 2 used.
+        (100, (100, 100, 100, 128), (200, 200, 200, 128), (114, 114, 114, 192)),
+        # 6. Empty Background: Source color is preserved
+        (100, (0, 0, 0, 0), (100, 150, 200, 255), (100, 150, 200, 255)),
+        # 7. Empty Source: Background color is preserved
+        (100, (100, 150, 200, 255), (0, 0, 0, 0), (100, 150, 200, 255)),
+        # 8. Opaque Mid-tone Burn
+        (100, (102, 153, 204, 255), (0, 0, 0, 255), (0, 0, 0, 255)),
     ],
 )
 def test_gdalalg_raster_blend_color_burn_4bands_over_4bands(

@@ -213,6 +213,60 @@ static inline void ProcessAlphaChannels(size_t i,
 }
 
 /************************************************************************/
+/*                      MulScale255()                                   */
+/************************************************************************/
+
+/** Multiply 2 bytes considering them as ratios with 255 = 100%, and return their product unscaled to [0, 255], by ceiling */
+inline GByte MulScale255(GByte a, GByte b)
+{
+    return static_cast<GByte>((a * b + 255) / 256);
+}
+
+/************************************************************************/
+/*                      DivScale255()                                   */
+/************************************************************************/
+
+/** Divide 2 bytes considering them as ratios with 255 = 100%, and return their quotient unscaled to [0, 255], by flooring */
+inline GByte DivScale255(GByte a, GByte b)
+{
+    if (a == 0)
+        return 0;
+    else if (b == 0)
+        return 255;
+    else
+        return static_cast<GByte>((a * 255) / b);
+}
+
+/*************************************************************************/
+/*        PremultiplyChannels                                            */
+/*************************************************************************/
+
+//! Premultiply RGB channels by alpha (A)
+static inline void PremultiplyChannels(size_t i,
+                                       const GByte *CPL_RESTRICT pabyR,
+                                       const GByte *CPL_RESTRICT pabyG,
+                                       const GByte *CPL_RESTRICT pabyB,
+                                       GByte &outR, GByte &outG, GByte &outB,
+                                       const GByte &A)
+
+{
+    if (A == 255)
+    {
+        outR = pabyR ? pabyR[i] : 255;
+        outG = pabyG ? pabyG[i] : outR;  // in case only R is present
+        outB = pabyB ? pabyB[i] : outR;  // in case only R is present
+    }
+    else
+    {
+        outR = pabyR ? MulScale255(pabyR[i], A) : A;
+        outG = pabyG ? MulScale255(pabyG[i], A)
+                     : outR;  // in case only R is present
+        outB = pabyB ? MulScale255(pabyB[i], A)
+                     : outR;  // in case only R is present
+    }
+}
+
+/************************************************************************/
 /*         GDALRasterBlendAlgorithm::GDALRasterBlendAlgorithm()         */
 /************************************************************************/
 
@@ -849,27 +903,26 @@ static void BlendMultiply_Generic(
     for (; i < N; ++i)
     {
 
-        GByte nOverlayA;
-        GByte nA;
+        GByte nOverlayR, nOverlayG, nOverlayB, nOverlayA;
+        GByte nR, nG, nB, nA;
         GByte nFinalAlpha;
         ProcessAlphaChannels(i, pabyA, pabyOverlayA, nOpacity, bSwappedOpacity,
                              nA, nOverlayA, nFinalAlpha);
-
-        // For grayscale images, use R band for the value
-        const GByte nR{pabyR[i]};
-        const GByte nG{pabyG ? pabyG[i] : nR};
-        const GByte nB{pabyB ? pabyB[i] : nR};
-
-        const GByte nOverlayR{pabyOverlayR[i]};
-        const GByte nOverlayG{pabyOverlayG ? pabyOverlayG[i] : nOverlayR};
-        const GByte nOverlayB{pabyOverlayB ? pabyOverlayB[i] : nOverlayR};
+        PremultiplyChannels(i, pabyR, pabyG, pabyB, nR, nG, nB, nA);
+        PremultiplyChannels(i, pabyOverlayR, pabyOverlayG, pabyOverlayB,
+                            nOverlayR, nOverlayG, nOverlayB, nOverlayA);
 
         // Result
-        const GByte nDstR =
-            static_cast<GByte>((nR * nOverlayR + 255) / 256 +
-                               (nR * (255 - nOverlayA) + 255) / 256 +
-                               (nOverlayR * (255 - nA) + 255) / 256);
-        pabyDst[nDstOffset] = nDstR;
+        auto processComponent = [&nFinalAlpha](GByte C, GByte A, GByte OverlayC,
+                                               GByte OverlayA) -> GByte
+        {
+            return DivScale255((MulScale255(C, OverlayC) +
+                                MulScale255(C, 255 - OverlayA) +
+                                MulScale255(OverlayC, 255 - A)),
+                               nFinalAlpha);
+        };
+
+        pabyDst[nDstOffset] = processComponent(nR, nA, nOverlayR, nOverlayA);
 
         // Grayscale with alpha
         if (nOutputBands == 2)
@@ -881,16 +934,10 @@ static void BlendMultiply_Generic(
             // RBG and RGBA
             if (nOutputBands >= 3)
             {
-                const GByte nDstG{
-                    static_cast<GByte>((nG * nOverlayG + 255) / 256 +
-                                       (nG * (255 - nOverlayA) + 255) / 256 +
-                                       (nOverlayG * (255 - nA) + 255) / 256)};
-                const GByte nDstB{
-                    static_cast<GByte>((nB * nOverlayB + 255) / 256 +
-                                       (nB * (255 - nOverlayA) + 255) / 256 +
-                                       (nOverlayB * (255 - nA) + 255) / 256)};
-                pabyDst[nDstOffset + nBandSpace] = nDstG;
-                pabyDst[nDstOffset + 2 * nBandSpace] = nDstB;
+                pabyDst[nDstOffset + nBandSpace] =
+                    processComponent(nG, nA, nOverlayG, nOverlayA);
+                pabyDst[nDstOffset + 2 * nBandSpace] =
+                    processComponent(nB, nA, nOverlayB, nOverlayA);
             }
 
             // RGBA
@@ -930,23 +977,25 @@ static void BlendScreen_Generic(
     for (; i < N; ++i)
     {
 
-        GByte nOverlayA;
-        GByte nA;
+        GByte nOverlayR, nOverlayG, nOverlayB, nOverlayA;
+        GByte nR, nG, nB, nA;
         GByte nFinalAlpha;
         ProcessAlphaChannels(i, pabyA, pabyOverlayA, nOpacity, bSwappedOpacity,
                              nA, nOverlayA, nFinalAlpha);
+        PremultiplyChannels(i, pabyR, pabyG, pabyB, nR, nG, nB, nA);
+        PremultiplyChannels(i, pabyOverlayR, pabyOverlayG, pabyOverlayB,
+                            nOverlayR, nOverlayG, nOverlayB, nOverlayA);
 
-        // For grayscale images, use R band for the value
-        const GByte nR{pabyR[i]};
-        const GByte nG{pabyG ? pabyG[i] : nR};
-        const GByte nB{pabyB ? pabyB[i] : nR};
-        const GByte nOverlayR{pabyOverlayR[i]};
-        const GByte nOverlayG{pabyOverlayG ? pabyOverlayG[i] : nOverlayR};
-        const GByte nOverlayB{pabyOverlayB ? pabyOverlayB[i] : nOverlayR};
         // Result
-        const GByte nDstR =
-            static_cast<GByte>(nR + nOverlayR - (nR * nOverlayR + 255) / 256);
-        pabyDst[nDstOffset] = nDstR;
+
+        auto processComponent = [&nFinalAlpha](GByte C, GByte OverlayC) -> GByte
+        {
+            return static_cast<GByte>(DivScale255(
+                C + OverlayC - MulScale255(C, OverlayC), nFinalAlpha));
+        };
+
+        pabyDst[nDstOffset] = processComponent(nR, nOverlayR);
+
         // Grayscale with alpha
         if (nOutputBands == 2)
         {
@@ -957,12 +1006,10 @@ static void BlendScreen_Generic(
             // RBG and RGBA
             if (nOutputBands >= 3)
             {
-                const GByte nDstG{static_cast<GByte>(
-                    nG + nOverlayG - (nG * nOverlayG + 255) / 256)};
-                const GByte nDstB{static_cast<GByte>(
-                    nB + nOverlayB - (nB * nOverlayB + 255) / 256)};
-                pabyDst[nDstOffset + nBandSpace] = nDstG;
-                pabyDst[nDstOffset + 2 * nBandSpace] = nDstB;
+                pabyDst[nDstOffset + nBandSpace] =
+                    processComponent(nG, nOverlayG);
+                pabyDst[nDstOffset + 2 * nBandSpace] =
+                    processComponent(nB, nOverlayB);
             }
 
             // RGBA
@@ -1007,39 +1054,49 @@ static void BlendOverlay_Generic(
     for (; i < N; ++i)
     {
 
-        GByte nOverlayA;
-        GByte nA;
+        GByte nOverlayR, nOverlayG, nOverlayB, nOverlayA;
+        GByte nR, nG, nB, nA;
         GByte nFinalAlpha;
         ProcessAlphaChannels(i, pabyA, pabyOverlayA, nOpacity, bSwappedOpacity,
                              nA, nOverlayA, nFinalAlpha);
-
-        // For grayscale images, use R band for the value
-        const GByte nR{pabyR[i]};
-        const GByte nG{pabyG ? pabyG[i] : nR};
-        const GByte nB{pabyB ? pabyB[i] : nR};
-        const GByte nOverlayR{pabyOverlayR[i]};
-        const GByte nOverlayG{pabyOverlayG ? pabyOverlayG[i] : nOverlayR};
-        const GByte nOverlayB{pabyOverlayB ? pabyOverlayB[i] : nOverlayR};
-        // Result
+        PremultiplyChannels(i, pabyR, pabyG, pabyB, nR, nG, nB, nA);
+        PremultiplyChannels(i, pabyOverlayR, pabyOverlayG, pabyOverlayB,
+                            nOverlayR, nOverlayG, nOverlayB, nOverlayA);
 
         // Sa.Da
-        const GByte nAlphaMul{static_cast<GByte>((nOverlayA * nA + 255) / 256)};
-        GByte nDstR = 0;
+        const GByte nAlphaMul{MulScale255(nOverlayA, nA)};
+
+        auto processComponent_lessThan = [&nFinalAlpha](GByte C, GByte A,
+                                                        GByte OverlayC,
+                                                        GByte OverlayA) -> GByte
+        {
+            return static_cast<GByte>(DivScale255(
+                2 * MulScale255(C, OverlayC) + MulScale255(C, 255 - OverlayA) +
+                    MulScale255(OverlayC, 255 - A),
+                nFinalAlpha));
+        };
+
+        auto processComponent_greaterEqual =
+            [&nFinalAlpha, &nAlphaMul](GByte C, GByte A, GByte OverlayC,
+                                       GByte OverlayA) -> GByte
+        {
+            return static_cast<GByte>(DivScale255(
+                nAlphaMul - 2 * MulScale255(A - C, OverlayA - OverlayC) +
+                    MulScale255(C, 255 - OverlayA) +
+                    MulScale255(OverlayC, 255 - A),
+                nFinalAlpha));
+        };
+
         if (2 * nR < nA)
         {
-            nDstR = static_cast<GByte>((2 * nOverlayR * nR + 255) / 256 +
-                                       (nR * (255 - nOverlayA) + 255) / 256 +
-                                       (nOverlayR * (255 - nA) + 255) / 256);
+            pabyDst[nDstOffset] =
+                processComponent_lessThan(nR, nA, nOverlayR, nOverlayA);
         }
         else
         {
-            nDstR = static_cast<GByte>(
-                nAlphaMul - 2 * (nA - nR) * (nOverlayA - nOverlayR) / 256 +
-                (nR * (255 - nOverlayA) + 255) / 256 +
-                (nOverlayR * (255 - nA) + 255) / 256);
+            pabyDst[nDstOffset] =
+                processComponent_greaterEqual(nR, nA, nOverlayR, nOverlayA);
         }
-
-        pabyDst[nDstOffset] = nDstR;
 
         // Grayscale with alpha
         if (nOutputBands == 2)
@@ -1051,42 +1108,30 @@ static void BlendOverlay_Generic(
             // RBG and RGBA
             if (nOutputBands >= 3)
             {
-                GByte nDstG = 0;
+
                 if (2 * nG < nA)
                 {
-                    nDstG = static_cast<GByte>(
-                        (2 * nOverlayG * nG + 255) / 256 +
-                        (nG * (255 - nOverlayA) + 255) / 256 +
-                        (nOverlayG * (255 - nA) + 255) / 256);
+                    pabyDst[nDstOffset + nBandSpace] =
+                        processComponent_lessThan(nG, nA, nOverlayG, nOverlayA);
                 }
                 else
                 {
-                    nDstG = static_cast<GByte>(
-                        nAlphaMul -
-                        2 * (nA - nG) * (nOverlayA - nOverlayG) / 256 +
-                        (nG * (255 - nOverlayA) + 255) / 256 +
-                        (nOverlayG * (255 - nA) + 255) / 256);
+                    pabyDst[nDstOffset + nBandSpace] =
+                        processComponent_greaterEqual(nG, nA, nOverlayG,
+                                                      nOverlayA);
                 }
 
-                GByte nDstB = 0;
                 if (2 * nB < nA)
                 {
-                    nDstB = static_cast<GByte>(
-                        (2 * nOverlayB * nB + 255) / 256 +
-                        (nB * (255 - nOverlayA) + 255) / 256 +
-                        (nOverlayB * (255 - nA) + 255) / 256);
+                    pabyDst[nDstOffset + 2 * nBandSpace] =
+                        processComponent_lessThan(nB, nA, nOverlayB, nOverlayA);
                 }
                 else
                 {
-                    nDstB = static_cast<GByte>(
-                        nAlphaMul -
-                        2 * (nA - nB) * (nOverlayA - nOverlayB) / 256 +
-                        (nB * (255 - nOverlayA) + 255) / 256 +
-                        (nOverlayB * (255 - nA) + 255) / 256);
+                    pabyDst[nDstOffset + 2 * nBandSpace] =
+                        processComponent_greaterEqual(nB, nA, nOverlayB,
+                                                      nOverlayA);
                 }
-
-                pabyDst[nDstOffset + nBandSpace] = nDstG;
-                pabyDst[nDstOffset + 2 * nBandSpace] = nDstB;
             }
 
             // RGBA
@@ -1146,26 +1191,29 @@ static void BlendDarken_Generic(
     for (; i < N; ++i)
     {
 
-        GByte nOverlayA;
-        GByte nA;
+        GByte nOverlayR, nOverlayG, nOverlayB, nOverlayA;
+        GByte nR, nG, nB, nA;
         GByte nFinalAlpha;
         ProcessAlphaChannels(i, pabyA, pabyOverlayA, nOpacity, bSwappedOpacity,
                              nA, nOverlayA, nFinalAlpha);
+        PremultiplyChannels(i, pabyR, pabyG, pabyB, nR, nG, nB, nA);
+        PremultiplyChannels(i, pabyOverlayR, pabyOverlayG, pabyOverlayB,
+                            nOverlayR, nOverlayG, nOverlayB, nOverlayA);
 
-        // For grayscale images, use R band for the value
-        const GByte nR{pabyR[i]};
-        const GByte nG{pabyG ? pabyG[i] : nR};
-        const GByte nB{pabyB ? pabyB[i] : nR};
-        const GByte nOverlayR{pabyOverlayR[i]};
-        const GByte nOverlayG{pabyOverlayG ? pabyOverlayG[i] : nOverlayR};
-        const GByte nOverlayB{pabyOverlayB ? pabyOverlayB[i] : nOverlayR};
         // Result
-        const GByte nDstR =
-            static_cast<GByte>(std::min((nOverlayR * nA + 255) / 256,
-                                        (nR * nOverlayA + 255) / 256) +
-                               (nR * (255 - nOverlayA) + 255) / 256 +
-                               (nOverlayR * (255 - nA) + 255) / 256);
-        pabyDst[nDstOffset] = nDstR;
+
+        auto processComponent = [&nFinalAlpha](GByte C, GByte A, GByte OverlayC,
+                                               GByte OverlayA) -> GByte
+        {
+            return static_cast<GByte>(DivScale255(
+                std::min(MulScale255(OverlayC, A), MulScale255(C, OverlayA)) +
+                    MulScale255(C, 255 - OverlayA) +
+                    MulScale255(OverlayC, 255 - A),
+                nFinalAlpha));
+        };
+
+        pabyDst[nDstOffset] = processComponent(nR, nA, nOverlayR, nOverlayA);
+
         // Grayscale with alpha
         if (nOutputBands == 2)
         {
@@ -1176,18 +1224,10 @@ static void BlendDarken_Generic(
             // RBG and RGBA
             if (nOutputBands >= 3)
             {
-                const GByte nDstG{
-                    static_cast<GByte>(std::min((nOverlayG * nA + 255) / 256,
-                                                (nG * nOverlayA + 255) / 256) +
-                                       (nG * (255 - nOverlayA) + 255) / 256 +
-                                       (nOverlayG * (255 - nA) + 255) / 256)};
-                const GByte nDstB{
-                    static_cast<GByte>(std::min((nOverlayB * nA + 255) / 256,
-                                                (nB * nOverlayA + 255) / 256) +
-                                       (nB * (255 - nOverlayA) + 255) / 256 +
-                                       (nOverlayB * (255 - nA) + 255) / 256)};
-                pabyDst[nDstOffset + nBandSpace] = nDstG;
-                pabyDst[nDstOffset + 2 * nBandSpace] = nDstB;
+                pabyDst[nDstOffset + nBandSpace] =
+                    processComponent(nG, nA, nOverlayG, nOverlayA);
+                pabyDst[nDstOffset + 2 * nBandSpace] =
+                    processComponent(nB, nA, nOverlayB, nOverlayA);
             }
 
             // RGBA
@@ -1227,27 +1267,29 @@ static void BlendLighten_Generic(
     for (; i < N; ++i)
     {
 
-        GByte nOverlayA;
-        GByte nA;
+        GByte nOverlayR, nOverlayG, nOverlayB, nOverlayA;
+        GByte nR, nG, nB, nA;
         GByte nFinalAlpha;
         ProcessAlphaChannels(i, pabyA, pabyOverlayA, nOpacity, bSwappedOpacity,
                              nA, nOverlayA, nFinalAlpha);
+        PremultiplyChannels(i, pabyR, pabyG, pabyB, nR, nG, nB, nA);
+        PremultiplyChannels(i, pabyOverlayR, pabyOverlayG, pabyOverlayB,
+                            nOverlayR, nOverlayG, nOverlayB, nOverlayA);
 
-        // For grayscale images, use R band for the value
-        const GByte nR{pabyR[i]};
-        const GByte nG{pabyG ? pabyG[i] : nR};
-        const GByte nB{pabyB ? pabyB[i] : nR};
-        const GByte nOverlayR{pabyOverlayR[i]};
-        const GByte nOverlayG{pabyOverlayG ? pabyOverlayG[i] : nOverlayR};
-        const GByte nOverlayB{pabyOverlayB ? pabyOverlayB[i] : nOverlayR};
         // Result
-        const GByte nDstR =
-            static_cast<GByte>(std::max((nOverlayR * nA + 255) / 256,
-                                        (nR * nOverlayA + 255) / 256) +
-                               (nR * (255 - nOverlayA) + 255) / 256 +
-                               (nOverlayR * (255 - nA) + 255) / 256);
 
-        pabyDst[nDstOffset] = nDstR;
+        auto processComponent = [&nFinalAlpha](GByte C, GByte A, GByte OverlayC,
+                                               GByte OverlayA) -> GByte
+        {
+            return static_cast<GByte>(DivScale255(
+                std::max(MulScale255(OverlayC, A), MulScale255(C, OverlayA)) +
+                    MulScale255(C, 255 - OverlayA) +
+                    MulScale255(OverlayC, 255 - A),
+                nFinalAlpha));
+        };
+
+        pabyDst[nDstOffset] = processComponent(nR, nA, nOverlayR, nOverlayA);
+
         // Grayscale with alpha
         if (nOutputBands == 2)
         {
@@ -1258,18 +1300,10 @@ static void BlendLighten_Generic(
             // RBG and RGBA
             if (nOutputBands >= 3)
             {
-                const GByte nDstG{
-                    static_cast<GByte>(std::max((nOverlayG * nA + 255) / 256,
-                                                (nG * nOverlayA + 255) / 256) +
-                                       (nG * (255 - nOverlayA) + 255) / 256 +
-                                       (nOverlayG * (255 - nA) + 255) / 256)};
-                const GByte nDstB{
-                    static_cast<GByte>(std::max((nOverlayB * nA + 255) / 256,
-                                                (nB * nOverlayA + 255) / 256) +
-                                       (nB * (255 - nOverlayA) + 255) / 256 +
-                                       (nOverlayB * (255 - nA) + 255) / 256)};
-                pabyDst[nDstOffset + nBandSpace] = nDstG;
-                pabyDst[nDstOffset + 2 * nBandSpace] = nDstB;
+                pabyDst[nDstOffset + nBandSpace] =
+                    processComponent(nG, nA, nOverlayG, nOverlayA);
+                pabyDst[nDstOffset + 2 * nBandSpace] =
+                    processComponent(nB, nA, nOverlayB, nOverlayA);
             }
 
             // RGBA
@@ -1313,37 +1347,60 @@ static void BlendColorDodge_Generic(
     for (; i < N; ++i)
     {
 
-        GByte nOverlayA;
-        GByte nA;
+        GByte nOverlayR, nOverlayG, nOverlayB, nOverlayA;
+        GByte nR, nG, nB, nA;
         GByte nFinalAlpha;
         ProcessAlphaChannels(i, pabyA, pabyOverlayA, nOpacity, bSwappedOpacity,
                              nA, nOverlayA, nFinalAlpha);
+        PremultiplyChannels(i, pabyR, pabyG, pabyB, nR, nG, nB, nA);
+        PremultiplyChannels(i, pabyOverlayR, pabyOverlayG, pabyOverlayB,
+                            nOverlayR, nOverlayG, nOverlayB, nOverlayA);
 
-        // For grayscale images, use R band for the value
-        const GByte nR{pabyR[i]};
-        const GByte nG{pabyG ? pabyG[i] : nR};
-        const GByte nB{pabyB ? pabyB[i] : nR};
-        const GByte nOverlayR{pabyOverlayR[i]};
-        const GByte nOverlayG{pabyOverlayG ? pabyOverlayG[i] : nOverlayR};
-        const GByte nOverlayB{pabyOverlayB ? pabyOverlayB[i] : nOverlayR};
         // Result
-        GByte nDstR = 0;
-        if (nOverlayR * nA + nR * nOverlayA >= nOverlayA * nA)
+
+        const GByte alphaMul255{MulScale255(nOverlayA, nA)};
+
+        // Dca' = Sa.Da + Sca.(1 - Da) + Dca.(1 - Sa)
+        auto processComponent_greaterEqual =
+            [&nFinalAlpha, &alphaMul255](GByte C, GByte A, GByte OverlayC,
+                                         GByte OverlayA) -> GByte
         {
-            nDstR = static_cast<GByte>(nOverlayA * nA +
-                                       (nR * (255 - nOverlayA) + 255) / 256 +
-                                       (nOverlayR * (255 - nA) + 255) / 256);
+            return static_cast<GByte>(
+                DivScale255(alphaMul255 + MulScale255(C, 255 - OverlayA) +
+                                MulScale255(OverlayC, 255 - A),
+                            nFinalAlpha));
+        };
+
+        // Dca.Sa/(1-Sca/Sa) + Sca.(1 - Da) + Dca.(1 - Sa)
+        auto processComponent_lessThan =
+            [&nFinalAlpha, &alphaMul255](GByte C, GByte A, GByte OverlayC,
+                                         GByte OverlayA) -> GByte
+        {
+            return static_cast<GByte>(
+                DivScale255(DivScale255(MulScale255(C, OverlayA),
+                                        255 - DivScale255(OverlayC, OverlayA)) +
+                                MulScale255(C, 255 - OverlayA) +
+                                MulScale255(OverlayC, 255 - A),
+                            nFinalAlpha));
+        };
+
+        auto branchingCondition = [&alphaMul255](GByte C, GByte A,
+                                                 GByte OverlayC,
+                                                 GByte OverlayA) -> bool {
+            return MulScale255(OverlayC, A) + MulScale255(C, OverlayA) >=
+                   alphaMul255;
+        };
+
+        if (branchingCondition(nR, nA, nOverlayR, nOverlayA))
+        {
+            pabyDst[nDstOffset] =
+                processComponent_greaterEqual(nR, nA, nOverlayR, nOverlayA);
         }
         else
         {
-            nDstR =
-                static_cast<GByte>((nR * nOverlayA * 255) /
-                                       (255 * nOverlayA - nOverlayR * nA + 1) +
-                                   (nR * (255 - nOverlayA) + 255) / 256 +
-                                   (nOverlayR * (255 - nA) + 255) / 256);
+            pabyDst[nDstOffset] =
+                processComponent_lessThan(nR, nA, nOverlayR, nOverlayA);
         }
-
-        pabyDst[nDstOffset] = nDstR;
 
         // Grayscale with alpha
         if (nOutputBands == 2)
@@ -1355,40 +1412,29 @@ static void BlendColorDodge_Generic(
             // RBG and RGBA
             if (nOutputBands >= 3)
             {
-                GByte nDstG = 0;
-                if (nOverlayG * nA + nG * nOverlayA >= nOverlayA * nA)
+                if (branchingCondition(nG, nA, nOverlayG, nOverlayA))
                 {
-                    nDstG = static_cast<GByte>(
-                        nOverlayA * nA + (nG * (255 - nOverlayA) + 255) / 256 +
-                        (nOverlayG * (255 - nA) + 255) / 256);
+                    pabyDst[nDstOffset + nBandSpace] =
+                        processComponent_greaterEqual(nG, nA, nOverlayG,
+                                                      nOverlayA);
                 }
                 else
                 {
-                    nDstG = static_cast<GByte>(
-                        (nG * nOverlayA * 255) /
-                            (255 * nOverlayA - nOverlayG * nA + 1) +
-                        (nG * (255 - nOverlayA) + 255) / 256 +
-                        (nOverlayG * (255 - nA) + 255) / 256);
+                    pabyDst[nDstOffset + nBandSpace] =
+                        processComponent_lessThan(nG, nA, nOverlayG, nOverlayA);
                 }
 
-                GByte nDstB = 0;
-                if (nOverlayB * nA + nB * nOverlayA >= nOverlayA * nA)
+                if (branchingCondition(nB, nA, nOverlayB, nOverlayA))
                 {
-                    nDstB = static_cast<GByte>(
-                        nOverlayA * nA + (nB * (255 - nOverlayA) + 255) / 256 +
-                        (nOverlayB * (255 - nA) + 255) / 256);
+                    pabyDst[nDstOffset + 2 * nBandSpace] =
+                        processComponent_greaterEqual(nB, nA, nOverlayB,
+                                                      nOverlayA);
                 }
                 else
                 {
-                    nDstB = static_cast<GByte>(
-                        (nB * nOverlayA * 255) /
-                            (255 * nOverlayA - nOverlayB * nA + 1) +
-                        (nB * (255 - nOverlayA) + 255) / 256 +
-                        (nOverlayB * (255 - nA) + 255) / 256);
+                    pabyDst[nDstOffset + 2 * nBandSpace] =
+                        processComponent_lessThan(nB, nA, nOverlayB, nOverlayA);
                 }
-
-                pabyDst[nDstOffset + nBandSpace] = nDstG;
-                pabyDst[nDstOffset + 2 * nBandSpace] = nDstB;
             }
 
             // RGBA
@@ -1415,12 +1461,120 @@ static void BlendColorBurn_Generic(
     GSpacing nPixelSpace, GSpacing nBandSpace, size_t i, size_t N,
     GByte nOpacity, int nOutputBands, bool bSwappedOpacity)
 {
-    // Color Burn is the opposite of Color Dodge with roles of source and
-    // overlay swapped
-    BlendColorDodge_Generic(pabyOverlayR, pabyOverlayG, pabyOverlayB,
-                            pabyOverlayA, pabyR, pabyG, pabyB, pabyA, pabyDst,
-                            nPixelSpace, nBandSpace, i, N, nOpacity,
-                            nOutputBands, !bSwappedOpacity);
+
+    // if Sca.Da + Dca.Sa <= Sa.Da
+    //   Dca' = Sca.(1 - Da) + Dca.(1 - Sa)
+    // otherwise
+    //   Dca' = Sa.(Sca.Da + Dca.Sa - Sa.Da)/Sca + Sca.(1 - Da) + Dca.(1 - Sa)
+    // Da'  = Sa + Da - Sa.Da
+
+    // TODO: optimize for the various cases (with/without alpha, grayscale/RGB)
+    // TODO: optimize mathematically to avoid redundant computations
+
+    GSpacing nDstOffset = 0;
+
+    for (; i < N; ++i)
+    {
+
+        GByte nOverlayR, nOverlayG, nOverlayB, nOverlayA;
+        GByte nR, nG, nB, nA;
+        GByte nFinalAlpha;
+        ProcessAlphaChannels(i, pabyA, pabyOverlayA, nOpacity, bSwappedOpacity,
+                             nA, nOverlayA, nFinalAlpha);
+        PremultiplyChannels(i, pabyR, pabyG, pabyB, nR, nG, nB, nA);
+        PremultiplyChannels(i, pabyOverlayR, pabyOverlayG, pabyOverlayB,
+                            nOverlayR, nOverlayG, nOverlayB, nOverlayA);
+
+        // Result
+
+        const GByte alphaMul255{MulScale255(nOverlayA, nA)};
+
+        auto processComponent_lessEqual =
+            [&nFinalAlpha](GByte C, GByte A, GByte OverlayC,
+                           GByte OverlayA) -> GByte
+        {
+            return static_cast<GByte>(DivScale255(
+                MulScale255(C, 255 - OverlayA) + MulScale255(OverlayC, 255 - A),
+                nFinalAlpha));
+        };
+
+        // The simplified formula below was tested and verified with the floating point equivalent [0..1] normalized version
+        auto processComponent_greater =
+            [&nFinalAlpha, &alphaMul255](GByte C, GByte A, GByte OverlayC,
+                                         GByte OverlayA) -> GByte
+        {
+            const GByte C_unpremultiplied = DivScale255(C, A);
+            const GByte Overlay_C_unpremultiplied =
+                DivScale255(OverlayC, OverlayA);
+            return static_cast<GByte>(DivScale255(
+                MulScale255(alphaMul255, (C_unpremultiplied +
+                                          Overlay_C_unpremultiplied - 255)) +
+                    MulScale255(C, 255 - OverlayA) +
+                    MulScale255(OverlayC, 255 - A),
+                nFinalAlpha));
+        };
+
+        auto branchingCondition = [&alphaMul255](GByte C, GByte A,
+                                                 GByte OverlayC,
+                                                 GByte OverlayA) -> bool {
+            return MulScale255(OverlayC, A) + MulScale255(C, OverlayA) <=
+                   alphaMul255;
+        };
+
+        if (branchingCondition(nR, nA, nOverlayR, nOverlayA))
+        {
+            pabyDst[nDstOffset] =
+                processComponent_lessEqual(nR, nA, nOverlayR, nOverlayA);
+        }
+        else
+        {
+            pabyDst[nDstOffset] =
+                processComponent_greater(nR, nA, nOverlayR, nOverlayA);
+        }
+
+        // Grayscale with alpha
+        if (nOutputBands == 2)
+        {
+            pabyDst[nDstOffset + nBandSpace] = nFinalAlpha;
+        }
+        else
+        {
+            // RBG and RGBA
+            if (nOutputBands >= 3)
+            {
+                if (branchingCondition(nG, nA, nOverlayG, nOverlayA))
+                {
+                    pabyDst[nDstOffset + nBandSpace] =
+                        processComponent_lessEqual(nG, nA, nOverlayG,
+                                                   nOverlayA);
+                }
+                else
+                {
+                    pabyDst[nDstOffset + nBandSpace] =
+                        processComponent_greater(nG, nA, nOverlayG, nOverlayA);
+                }
+
+                if (branchingCondition(nB, nA, nOverlayB, nOverlayA))
+                {
+                    pabyDst[nDstOffset + 2 * nBandSpace] =
+                        processComponent_lessEqual(nB, nA, nOverlayB,
+                                                   nOverlayA);
+                }
+                else
+                {
+                    pabyDst[nDstOffset + 2 * nBandSpace] =
+                        processComponent_greater(nB, nA, nOverlayB, nOverlayA);
+                }
+            }
+
+            // RGBA
+            if (nOutputBands == 4)
+            {
+                pabyDst[nDstOffset + 3 * nBandSpace] = nFinalAlpha;
+            }
+        }
+        nDstOffset += nPixelSpace;
+    }
 }
 
 /************************************************************************/

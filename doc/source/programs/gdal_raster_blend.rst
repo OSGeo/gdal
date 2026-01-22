@@ -93,7 +93,9 @@ Details of blending operations
 ------------------------------
 
 In the description of the blending operations, all values are normalized to [0,1] range
-and the following notations are used:
+and each channel value is premultiplied with the alpha channel value.
+
+The following notations are used:
 
 - :math:`overlay_{C}` is the value of one of the red, green or blue
   component of the overlay dataset,
@@ -102,6 +104,12 @@ and the following notations are used:
 - :math:`input_{A}` is the value of the alpha component of the input dataset
 - :math:`output_{C}` is the resulting component of the output dataset,
 - :math:`opacity` is the value of :option:`--opacity`
+
+.. note::
+
+    For efficiency, the implementation uses integer arithmetic on
+    [0,255] range rather than floating point arithmetic on [0,1] range.
+    This can explain minor differences with the formulas described below.
 
 For all operator (unless otherwise specified) the alpha channel is computed as:
 
@@ -264,75 +272,57 @@ Examples
 --------
 
 .. example::
-   :title: Alpha blending of two datasets using 75% opacity for the overlay dataset.
+    :title: Alpha blending of two datasets using 75% opacity for the overlay dataset.
 
-   .. code-block:: bash
+    .. code-block:: bash
 
         $ gdal raster blend --opacity 75 source.tif overlay.tif out.tif
 
 
 .. example::
-   :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``hsv-value`` blending operator.
+    :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``hsv-value`` blending operator.
 
-   .. image:: ../../data/hillshade.jpg
+    .. image:: ../../data/hillshade.jpg
        :alt:   Hillshade rendering of a DEM
 
-   .. image:: ../../data/hypsometric.jpg
+    .. image:: ../../data/hypsometric.jpg
        :alt:   Hypsometric rendering of a DEM
 
-   .. code-block:: bash
+    .. code-block:: bash
 
         $ gdal raster blend --overlay=hillshade.tif --operator=hsv-value \
                             hypsometric.tif hypsometric_combined_with_hillshade.tif
 
-   .. image:: ../../images/programs/gdal_raster_blend/hsv-value.jpg
+    .. image:: ../../images/programs/gdal_raster_blend/hsv-value.jpg
        :alt:   Colorized hillshade
 
 
 .. example::
     :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``multiply`` blending operator.
 
-   .. image:: ../../data/hillshade.jpg
-       :alt:   Hillshade rendering of a DEM
-
-   .. image:: ../../data/hypsometric.jpg
-       :alt:   Hypsometric rendering of a DEM
-
-   .. code-block:: bash
+    .. code-block:: bash
 
         $ gdal raster blend --overlay=hillshade.tif --operator=multiply \
                             hypsometric.tif hypsometric_combined_with_hillshade.tif
 
-  .. image:: ../../images/programs/gdal_raster_blend/multiply.jpg
-       :alt:   Colorized hillshade
+    .. image:: ../../images/programs/gdal_raster_blend/multiply.jpg
+        :alt:   Colorized hillshade
 
 
 .. example::
     :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``screen`` blending operator.
 
-   .. image:: ../../data/hillshade.jpg
-       :alt:   Hillshade rendering of a DEM
-
-   .. image:: ../../data/hypsometric.jpg
-       :alt:   Hypsometric rendering of a DEM
-
-   .. code-block:: bash
+    .. code-block:: bash
 
         $ gdal raster blend --overlay=hillshade.tif --operator=screen \
                             hypsometric.tif hypsometric_combined_with_hillshade.tif
 
-  .. image:: ../../images/programs/gdal_raster_blend/screen.jpg
+    .. image:: ../../images/programs/gdal_raster_blend/screen.jpg
        :alt:   Colorized hillshade
 
 
 .. example::
     :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``overlay`` blending operator.
-
-    .. image:: ../../data/hillshade.jpg
-         :alt:   Hillshade rendering of a DEM
-
-    .. image:: ../../data/hypsometric.jpg
-        :alt:   Hypsometric rendering of a DEM
 
     .. code-block:: bash
 
@@ -346,12 +336,6 @@ Examples
 .. example::
     :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``hard-light`` blending operator.
 
-    .. image:: ../../data/hillshade.jpg
-         :alt:   Hillshade rendering of a DEM
-
-    .. image:: ../../data/hypsometric.jpg
-        :alt:   Hypsometric rendering of a DEM
-
     .. code-block:: bash
 
         $ gdal raster blend --overlay=hillshade.tif --operator=hard-light \
@@ -363,12 +347,6 @@ Examples
 
 .. example::
     :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``darken`` blending operator.
-
-    .. image:: ../../data/hillshade.jpg
-         :alt:   Hillshade rendering of a DEM
-
-    .. image:: ../../data/hypsometric.jpg
-        :alt:   Hypsometric rendering of a DEM
 
     .. code-block:: bash
 
@@ -382,12 +360,6 @@ Examples
 .. example::
     :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``lighten`` blending operator.
 
-    .. image:: ../../data/hillshade.jpg
-         :alt:   Hillshade rendering of a DEM
-
-    .. image:: ../../data/hypsometric.jpg
-        :alt:   Hypsometric rendering of a DEM
-
     .. code-block:: bash
 
         $ gdal raster blend --overlay=hillshade.tif --operator=lighten \
@@ -396,14 +368,9 @@ Examples
     .. image:: ../../images/programs/gdal_raster_blend/lighten_3band.jpg
         :alt:   Colorized hillshade
 
+
 .. example::
     :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``color-dodge`` blending operator.
-
-    .. image:: ../../data/hillshade.jpg
-         :alt:   Hillshade rendering of a DEM
-
-    .. image:: ../../data/hypsometric.jpg
-        :alt:   Hypsometric rendering of a DEM
 
     .. code-block:: bash
 
@@ -416,12 +383,6 @@ Examples
 
 .. example::
     :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``color-burn`` blending operator.
-
-    .. image:: ../../data/hillshade.jpg
-         :alt:   Hillshade rendering of a DEM
-
-    .. image:: ../../data/hypsometric.jpg
-        :alt:   Hypsometric rendering of a DEM
 
     .. code-block:: bash
 
