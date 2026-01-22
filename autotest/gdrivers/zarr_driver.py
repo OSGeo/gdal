@@ -6971,3 +6971,247 @@ def test_zarr_read_spatial_geotransform():
     assert ds.GetGeoTransform() == (450000, 10, 0.1, 5000000, 0.15, -10)
     assert ds.GetSpatialRef() is None
     assert ds.GetMetadata() == {"AREA_OR_POINT": "Area"}
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_write_spatial_geotransform(tmp_vsimem):
+
+    src_ds = gdal.Open("data/byte.tif")
+    gdal.GetDriverByName("Zarr").CreateCopy(
+        tmp_vsimem / "out.zarr",
+        src_ds,
+        options={"FORMAT": "ZARR_V3", "GEOREFERENCING_CONVENTION": "SPATIAL_PROJ"},
+    )
+
+    with gdal.VSIFile(tmp_vsimem / "out.zarr" / "zarr.json", "rb") as f:
+        j = json.loads(f.read())
+
+    assert j == {
+        "zarr_format": 3,
+        "node_type": "group",
+        "attributes": {},
+        "consolidated_metadata": {
+            "kind": "inline",
+            "must_understand": False,
+            "metadata": {
+                "X": {
+                    "zarr_format": 3,
+                    "node_type": "array",
+                    "shape": [20],
+                    "data_type": "float64",
+                    "chunk_grid": {
+                        "name": "regular",
+                        "configuration": {"chunk_shape": [20]},
+                    },
+                    "chunk_key_encoding": {
+                        "name": "default",
+                        "configuration": {"separator": "/"},
+                    },
+                    "fill_value": "NaN",
+                    "codecs": [
+                        {"name": "bytes", "configuration": {"endian": "little"}}
+                    ],
+                    "attributes": {},
+                    "dimension_names": ["X"],
+                },
+                "Y": {
+                    "zarr_format": 3,
+                    "node_type": "array",
+                    "shape": [20],
+                    "data_type": "float64",
+                    "chunk_grid": {
+                        "name": "regular",
+                        "configuration": {"chunk_shape": [20]},
+                    },
+                    "chunk_key_encoding": {
+                        "name": "default",
+                        "configuration": {"separator": "/"},
+                    },
+                    "fill_value": "NaN",
+                    "codecs": [
+                        {"name": "bytes", "configuration": {"endian": "little"}}
+                    ],
+                    "attributes": {},
+                    "dimension_names": ["Y"],
+                },
+                "out": {
+                    "zarr_format": 3,
+                    "node_type": "array",
+                    "shape": [20, 20],
+                    "data_type": "uint8",
+                    "chunk_grid": {
+                        "name": "regular",
+                        "configuration": {"chunk_shape": [20, 20]},
+                    },
+                    "chunk_key_encoding": {
+                        "name": "default",
+                        "configuration": {"separator": "/"},
+                    },
+                    "fill_value": None,
+                    "codecs": [
+                        {"name": "bytes", "configuration": {"endian": "little"}}
+                    ],
+                    "attributes": {
+                        "COLOR_INTERPRETATION": "Gray",
+                        "proj:code": "EPSG:26711",
+                        "spatial:bbox": [
+                            440720.0,
+                            3750120.0,
+                            441920.0,
+                            3751320.0,
+                        ],
+                        "spatial:transform_type": "affine",
+                        "spatial:transform": [
+                            60.0,
+                            0.0,
+                            440720.0,
+                            0.0,
+                            -60.0,
+                            3751320.0,
+                        ],
+                        "spatial:registration": "pixel",
+                        "spatial:dimensions": ["Y", "X"],
+                        "zarr_conventions": [
+                            {
+                                "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
+                                "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+                                "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
+                                "name": "proj:",
+                                "description": "Coordinate reference system information for geospatial data",
+                            },
+                            {
+                                "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+                                "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+                                "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
+                                "name": "spatial:",
+                                "description": "Spatial coordinate information",
+                            },
+                        ],
+                    },
+                    "dimension_names": ["Y", "X"],
+                },
+            },
+        },
+    }
+
+    # Remove CF-like X and Y coordinate variables, to be sure we read from
+    # spatial:transform
+    gdal.RmdirRecursive(tmp_vsimem / "out.zarr" / "X")
+    gdal.RmdirRecursive(tmp_vsimem / "out.zarr" / "Y")
+
+    ds = gdal.Open(tmp_vsimem / "out.zarr")
+    assert ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
+    assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_write_spatial_geotransform_no_epsg_code_rotated_gt_and_pixel_center(
+    tmp_vsimem,
+):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 3)
+    src_ds.SetGeoTransform([1, 2, 3, 4, 5, 6])
+    src_ds.SetSpatialRef(
+        osr.SpatialReference("+proj=longlat +ellps=GRS80 +towgs84=0,0,0")
+    )
+    src_ds.SetMetadataItem("AREA_OR_POINT", "Point")
+
+    gdal.GetDriverByName("Zarr").CreateCopy(
+        tmp_vsimem / "out.zarr",
+        src_ds,
+        options={"FORMAT": "ZARR_V3", "GEOREFERENCING_CONVENTION": "SPATIAL_PROJ"},
+    )
+
+    with gdal.VSIFile(tmp_vsimem / "out.zarr" / "zarr.json", "rb") as f:
+        j = json.loads(f.read())
+
+    assert j["consolidated_metadata"]["metadata"]["out"]["attributes"][
+        "proj:wkt2"
+    ].startswith("BOUNDCRS")
+    assert (
+        j["consolidated_metadata"]["metadata"]["out"]["attributes"]["proj:projjson"][
+            "type"
+        ]
+        == "BoundCRS"
+    )
+
+    # Set those 2 elements to dummy value for comparison, as their content might be PROJ dependent
+    j["consolidated_metadata"]["metadata"]["out"]["attributes"][
+        "proj:wkt2"
+    ] = "redacted"
+    j["consolidated_metadata"]["metadata"]["out"]["attributes"][
+        "proj:projjson"
+    ] = "redacted"
+
+    assert j == {
+        "zarr_format": 3,
+        "node_type": "group",
+        "attributes": {},
+        "consolidated_metadata": {
+            "kind": "inline",
+            "must_understand": False,
+            "metadata": {
+                "out": {
+                    "zarr_format": 3,
+                    "node_type": "array",
+                    "shape": [3, 2],
+                    "data_type": "uint8",
+                    "chunk_grid": {
+                        "name": "regular",
+                        "configuration": {"chunk_shape": [3, 2]},
+                    },
+                    "chunk_key_encoding": {
+                        "name": "default",
+                        "configuration": {"separator": "/"},
+                    },
+                    "fill_value": None,
+                    "codecs": [
+                        {"name": "bytes", "configuration": {"endian": "little"}}
+                    ],
+                    "attributes": {
+                        "proj:wkt2": "redacted",
+                        "proj:projjson": "redacted",
+                        "spatial:bbox": [3.5, 9.5, 11.5, 26.5],
+                        "spatial:transform_type": "affine",
+                        "spatial:transform": [2.0, 3.0, 3.5, 5.0, 6.0, 9.5],
+                        "spatial:dimensions": ["Y", "X"],
+                        "spatial:registration": "node",
+                        "zarr_conventions": [
+                            {
+                                "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
+                                "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+                                "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
+                                "name": "proj:",
+                                "description": "Coordinate reference system information for geospatial data",
+                            },
+                            {
+                                "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+                                "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+                                "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
+                                "name": "spatial:",
+                                "description": "Spatial coordinate information",
+                            },
+                        ],
+                    },
+                    "dimension_names": ["Y", "X"],
+                },
+            },
+        },
+    }
+
+    ds = gdal.Open(tmp_vsimem / "out.zarr")
+    assert ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
+    assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
+    assert ds.GetMetadataItem("AREA_OR_POINT") == src_ds.GetMetadataItem(
+        "AREA_OR_POINT"
+    )
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()

@@ -1150,6 +1150,7 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
     if (oCompressor.IsValid())
         poArray->SetCompressorJson(oCompressor);
     poArray->SetFilters(oFilters);
+    poArray->SetCreationOptions(papszOptions);
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
     if (!cpl::starts_with(osZarrayFilename, "/vsi") && !poArray->Flush())

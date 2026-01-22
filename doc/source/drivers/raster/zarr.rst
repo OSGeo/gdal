@@ -13,19 +13,10 @@ Zarr
 
 Zarr is a format for the storage of chunked, compressed, N-dimensional arrays.
 This format is supported for read and write access, and using the traditional
-2D raster API or the newer multidimensional API
+2D raster API or the multidimensional API
 
-The driver supports the Zarr V2 specification, and has experimental support
-for the in-progress Zarr V3 specification. It also supports Kerchunk reference
+The driver supports the Zarr V2 an V3 specifications. It also supports Kerchunk reference
 files since GDAL 3.11.
-
-.. warning::
-
-    The current implementation of Zarr V3 before GDAL 3.8 is incompatible with
-    the latest evolutions of the Zarr V3 specification.
-    GDAL 3.8 is compatible with the Zarr V3 specification at date 2023-May-7,
-    and is not interoperable with Zarr V3 datasets produced by earlier GDAL
-    versions.
 
 Local and cloud storage (see :ref:`virtual_file_systems`) are supported in read and write.
 
@@ -196,15 +187,27 @@ The driver support the
 `NCZarr v2 <https://www.unidata.ucar.edu/software/netcdf/documentation/NUG/nczarr_head.html>`__
 extensions of storing the dimension names of an array (read-only)
 
-SRS encoding
-------------
+Georeferencing encoding (CRS and geotransformation matrix)
+----------------------------------------------------------
 
 The Zarr specification has no provision for spatial reference system encoding.
-GDAL uses a ``_CRS`` attribute that is a dictionary that may contain one or
+Several conventions
+
+GDAL convention
++++++++++++++++
+
+Before GDAL 3.13, the only convention supported both in reading and writing was
+the ``GDAL`` one, using a ``_CRS`` attribute. The geotransformation matrix, when
+no rotation terms is present, is encoded as ``X`` and ``Y`` one-dimensional
+coordinate arrays.
+
+The ``_CRS`` attribute is a dictionary that may contain one or
 several of the following keys: ``url`` (using a OGC CRS URL), ``wkt`` (WKT:2019
 used by default on writing, WKT1 also supported on reading.), ``projjson``.
 On reading, it will use ``url`` by default, if not found will fallback to ``wkt``
 and then ``projjson``.
+
+Example:
 
 .. code-block:: json
 
@@ -333,6 +336,70 @@ and then ``projjson``.
       }
     }
 
+
+SPATIAL_PROJ convention
++++++++++++++++++++++++
+
+.. versionadded:: 3.13
+
+Since GDAL 3.13, the Zarr `spatial <https://github.com/zarr-conventions/spatial>`__
+and `geo-proj <https://github.com/zarr-conventions/geo-proj>`__ conventions
+are supported in reading, and in writing when the ``GEOREFERENCING_CONVENTION``
+creation option is set to ``SPATIAL_PROJ``. X and Y coordinate arrays are
+written only if the geotransformation matrix has no rotation terms.
+
+Example:
+
+.. code-block:: json
+
+    {
+        "attributes": {
+            "proj:code": "EPSG:26711",
+            "spatial:bbox": [
+                440720.0,
+                3750120.0,
+                441920.0,
+                3751320.0,
+            ],
+            "spatial:transform_type": "affine",
+            "spatial:transform": [
+                60.0,
+                0.0,
+                440720.0,
+                0.0,
+                -60.0,
+                3751320.0,
+            ],
+            "spatial:registration": "pixel",
+            "spatial:dimensions": ["Y", "X"],
+            "zarr_conventions": [
+                {
+                    "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
+                    "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+                    "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
+                    "name": "proj:",
+                    "description": "Coordinate reference system information for geospatial data",
+                },
+                {
+                    "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+                    "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+                    "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
+                    "name": "spatial:",
+                    "description": "Spatial coordinate information",
+                },
+            ]
+        }
+    }
+
+
+netCDF CF conventions
++++++++++++++++++++++
+
+.. versionadded:: 3.9
+
+The driver supports reading a CRS using the `CF conventions <https://cfconventions.org/>`__.
+
+
 Particularities of the classic raster API
 -----------------------------------------
 
@@ -448,6 +515,18 @@ Creation options
 The following options are creation options of the classic raster API, or
 array-level creation options for the multidimensional API (must be prefixed
 with ``ARRAY:`` using :program:`gdalmdimtranslate`):
+
+-  .. co:: GEOREFERENCING_CONVENTION
+      :choices: GDAL, SPATIAL_PROJ
+      :default: GDAL
+
+      Which convention is used to write georeferencing information: geotransformation
+      and CRS.
+
+      The ``GDAL`` convention uses a ``_CRS`` attribute described above. The
+      ``SPATIAL_PROJ`` convention, added both in read and write support in GDAL 3.13,
+      uses the Zarr `spatial <https://github.com/zarr-conventions/spatial>`__
+      and `geo-proj <https://github.com/zarr-conventions/geo-proj>`__ conventions.
 
 -  .. co:: COMPRESS
       :choices: NONE, BLOSC, ZLIB, GZIP, LZMA, ZSTD, LZ4

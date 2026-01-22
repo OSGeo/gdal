@@ -253,14 +253,20 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
 
     auto oAttrs = m_oAttrGroup.Serialize();
 
-    if (m_poSRS)
+    const bool bUseSpatialProjConventions =
+        EQUAL(m_aosCreationOptions.FetchNameValueDef(
+                  "GEOREFERENCING_CONVENTION", "GDAL"),
+              "SPATIAL_PROJ");
+
+    const auto ExportToWkt2AndPROJJSON = [this](CPLJSONObject &oContainer,
+                                                const char *pszWKT2AttrName,
+                                                const char *pszPROJJSONAttrName)
     {
-        CPLJSONObject oCRS;
         const char *const apszOptions[] = {"FORMAT=WKT2_2019", nullptr};
         char *pszWKT = nullptr;
         if (m_poSRS->exportToWkt(&pszWKT, apszOptions) == OGRERR_NONE)
         {
-            oCRS.Add("wkt", pszWKT);
+            oContainer.Set(pszWKT2AttrName, pszWKT);
         }
         CPLFree(pszWKT);
 
@@ -273,11 +279,212 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
                 CPLJSONDocument oDocProjJSON;
                 if (oDocProjJSON.LoadMemory(std::string(projjson)))
                 {
-                    oCRS.Add("projjson", oDocProjJSON.GetRoot());
+                    oContainer.Set(pszPROJJSONAttrName, oDocProjJSON.GetRoot());
                 }
             }
             CPLFree(projjson);
         }
+    };
+
+    CPLJSONArray oZarrConventionsArray;
+    if (bUseSpatialProjConventions)
+    {
+        if (m_poSRS)
+        {
+            CPLJSONObject oConventionProj;
+            oConventionProj.Set(
+                "schema_url",
+                "https://raw.githubusercontent.com/zarr-experimental/geo-proj/"
+                "refs/tags/v1/schema.json");
+            oConventionProj.Set("spec_url",
+                                "https://github.com/zarr-experimental/geo-proj/"
+                                "blob/v1/README.md");
+            oConventionProj.Set("uuid", "f17cb550-5864-4468-aeb7-f3180cfb622f");
+            oConventionProj.Set("name", "proj:");  // ending colon intended
+            oConventionProj.Set(
+                "description",
+                "Coordinate reference system information for geospatial data");
+
+            oZarrConventionsArray.Add(oConventionProj);
+
+            const char *pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
+            const char *pszAuthorityCode = m_poSRS->GetAuthorityCode(nullptr);
+            if (pszAuthorityName && pszAuthorityCode)
+            {
+                oAttrs.Set("proj:code", CPLSPrintf("%s:%s", pszAuthorityName,
+                                                   pszAuthorityCode));
+            }
+            else
+            {
+                ExportToWkt2AndPROJJSON(oAttrs, "proj:wkt2", "proj:projjson");
+            }
+        }
+
+        if (GetDimensionCount() >= 2)
+        {
+            bool bAddSpatialProjConvention = false;
+
+            double dfXOff = std::numeric_limits<double>::quiet_NaN();
+            double dfXRes = std::numeric_limits<double>::quiet_NaN();
+            double dfYOff = std::numeric_limits<double>::quiet_NaN();
+            double dfYRes = std::numeric_limits<double>::quiet_NaN();
+            std::string osDimXName;
+            std::string osDimYName;
+            std::string osDimZName;
+            double dfWidth = 0, dfHeight = 0;
+            for (const auto &poDim : GetDimensions())
+            {
+                if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_X)
+                {
+                    osDimXName = poDim->GetName();
+                    dfWidth = static_cast<double>(poDim->GetSize());
+                    auto poVar = poDim->GetIndexingVariable();
+                    if (poVar && poVar->IsRegularlySpaced(dfXOff, dfXRes))
+                    {
+                        dfXOff -= dfXRes / 2;
+                    }
+                }
+                else if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_Y)
+                {
+                    osDimYName = poDim->GetName();
+                    dfHeight = static_cast<double>(poDim->GetSize());
+                    auto poVar = poDim->GetIndexingVariable();
+                    if (poVar && poVar->IsRegularlySpaced(dfYOff, dfYRes))
+                    {
+                        dfYOff -= dfYRes / 2;
+                    }
+                }
+                else if (poDim->GetType() == GDAL_DIM_TYPE_VERTICAL)
+                {
+                    osDimZName = poDim->GetName();
+                }
+            }
+
+            GDALGeoTransform gt;
+            if (!osDimXName.empty() && !osDimYName.empty())
+            {
+                const auto oGDALGeoTransform = oAttrs["gdal:geotransform"];
+                const bool bHasGDALGeoTransform =
+                    (oGDALGeoTransform.GetType() ==
+                         CPLJSONObject::Type::Array &&
+                     oGDALGeoTransform.ToArray().size() == 6);
+                if (bHasGDALGeoTransform)
+                {
+                    const auto oGDALGeoTransformArray =
+                        oGDALGeoTransform.ToArray();
+                    for (int i = 0; i < 6; ++i)
+                    {
+                        gt[i] = oGDALGeoTransformArray[i].ToDouble();
+                    }
+                    bAddSpatialProjConvention = true;
+                }
+                else if (!std::isnan(dfXOff) && !std::isnan(dfXRes) &&
+                         !std::isnan(dfYOff) && !std::isnan(dfYRes))
+                {
+                    gt[0] = dfXOff;
+                    gt[1] = dfXRes;
+                    gt[2] = 0;  // xrot
+                    gt[3] = dfYOff;
+                    gt[4] = 0;  // yrot
+                    gt[5] = dfYRes;
+                    bAddSpatialProjConvention = true;
+                }
+            }
+
+            if (bAddSpatialProjConvention)
+            {
+                const auto osGDALMD_AREA_OR_POINT =
+                    oAttrs.GetString(GDALMD_AREA_OR_POINT);
+                if (osGDALMD_AREA_OR_POINT == GDALMD_AOP_AREA)
+                {
+                    oAttrs.Add("spatial:registration", "pixel");
+                    oAttrs.Delete(GDALMD_AREA_OR_POINT);
+                }
+                else if (osGDALMD_AREA_OR_POINT == GDALMD_AOP_POINT)
+                {
+                    oAttrs.Add("spatial:registration", "node");
+                    oAttrs.Delete(GDALMD_AREA_OR_POINT);
+
+                    // Going from GDAL's corner convention to pixel center
+                    gt[0] += 0.5 * gt[1] + 0.5 * gt[2];
+                    gt[3] += 0.5 * gt[4] + 0.5 * gt[5];
+                    dfWidth -= 1.0;
+                    dfHeight -= 1.0;
+                }
+
+                CPLJSONArray oAttrSpatialTransform;
+                oAttrSpatialTransform.Add(gt[1]);  // xres
+                oAttrSpatialTransform.Add(gt[2]);  // xrot
+                oAttrSpatialTransform.Add(gt[0]);  // xoff
+                oAttrSpatialTransform.Add(gt[4]);  // yrot
+                oAttrSpatialTransform.Add(gt[5]);  // yres
+                oAttrSpatialTransform.Add(gt[3]);  // yoff
+
+                oAttrs.Add("spatial:transform_type", "affine");
+                oAttrs.Add("spatial:transform", oAttrSpatialTransform);
+                oAttrs.Delete("gdal:geotransform");
+
+                double dfX0, dfY0;
+                double dfX1, dfY1;
+                double dfX2, dfY2;
+                double dfX3, dfY3;
+                gt.Apply(0, 0, &dfX0, &dfY0);
+                gt.Apply(dfWidth, 0, &dfX1, &dfY1);
+                gt.Apply(0, dfHeight, &dfX2, &dfY2);
+                gt.Apply(dfWidth, dfHeight, &dfX3, &dfY3);
+                const double dfXMin =
+                    std::min(std::min(dfX0, dfX1), std::min(dfX2, dfX3));
+                const double dfYMin =
+                    std::min(std::min(dfY0, dfY1), std::min(dfY2, dfY3));
+                const double dfXMax =
+                    std::max(std::max(dfX0, dfX1), std::max(dfX2, dfX3));
+                const double dfYMax =
+                    std::max(std::max(dfY0, dfY1), std::max(dfY2, dfY3));
+
+                CPLJSONArray oAttrSpatialBBOX;
+                oAttrSpatialBBOX.Add(dfXMin);
+                oAttrSpatialBBOX.Add(dfYMin);
+                oAttrSpatialBBOX.Add(dfXMax);
+                oAttrSpatialBBOX.Add(dfYMax);
+                oAttrs.Add("spatial:bbox", oAttrSpatialBBOX);
+
+                CPLJSONArray aoSpatialDimensions;
+                if (!osDimZName.empty())
+                    aoSpatialDimensions.Add(osDimZName);
+                aoSpatialDimensions.Add(osDimYName);
+                aoSpatialDimensions.Add(osDimXName);
+                oAttrs.Add("spatial:dimensions", aoSpatialDimensions);
+
+                CPLJSONObject oConventionSpatial;
+                oConventionSpatial.Set(
+                    "schema_url",
+                    "https://raw.githubusercontent.com/zarr-conventions/"
+                    "spatial/refs/tags/v1/schema.json");
+                oConventionSpatial.Set("spec_url",
+                                       "https://github.com/zarr-conventions/"
+                                       "spatial/blob/v1/README.md");
+                oConventionSpatial.Set("uuid",
+                                       "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4");
+                oConventionSpatial.Set("name",
+                                       "spatial:");  // ending colon intended
+                oConventionSpatial.Set("description",
+                                       "Spatial coordinate information");
+
+                oZarrConventionsArray.Add(oConventionSpatial);
+            }
+        }
+
+        if (oZarrConventionsArray.size() > 0)
+        {
+            oAttrs.Add("zarr_conventions", oZarrConventionsArray);
+        }
+    }
+    else if (m_poSRS)
+    {
+        // GDAL convention
+
+        CPLJSONObject oCRS;
+        ExportToWkt2AndPROJJSON(oCRS, "wkt", "projjson");
 
         const char *pszAuthorityCode = m_poSRS->GetAuthorityCode(nullptr);
         const char *pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
@@ -2839,8 +3046,17 @@ static void ParseSpatialConventions(
 
     const auto poAttrSpatialRegistration =
         poAttrGroup->GetAttribute("spatial:registration");
+    bool bIsNodeRegistration = false;
     if (!poAttrSpatialRegistration)
         oAttributes.Set("spatial:registration", "pixel");  // default value
+    else
+    {
+        const char *pszSpatialRegistration =
+            poAttrSpatialRegistration->ReadAsString();
+        if (pszSpatialRegistration &&
+            strcmp(pszSpatialRegistration, "node") == 0)
+            bIsNodeRegistration = true;
+    }
 
     const auto poAttrSpatialTransform =
         poAttrGroup->GetAttribute("spatial:transform");
@@ -2854,8 +3070,7 @@ static void ParseSpatialConventions(
         (!pszAttrSpatialTransformType ||
          strcmp(pszAttrSpatialTransformType, "affine") == 0))
     {
-        const auto adfSpatialTransform =
-            poAttrSpatialTransform->ReadAsDoubleArray();
+        auto adfSpatialTransform = poAttrSpatialTransform->ReadAsDoubleArray();
         if (adfSpatialTransform.size() == 6)
         {
             oAttributes.Delete("spatial:transform");
@@ -2865,6 +3080,15 @@ static void ParseSpatialConventions(
             // attributes
             if (adfSpatialTransform[1] != 0 || adfSpatialTransform[3] != 0)
             {
+                if (bIsNodeRegistration)
+                {
+                    // From pixel center convention to GDAL's corner convention
+                    adfSpatialTransform[2] -= 0.5 * adfSpatialTransform[0] +
+                                              0.5 * adfSpatialTransform[1];
+                    adfSpatialTransform[5] -= 0.5 * adfSpatialTransform[3] +
+                                              0.5 * adfSpatialTransform[4];
+                }
+
                 CPLJSONArray oGeoTransform;
                 // Reorder coefficients to GDAL convention
                 for (int idx : {2, 0, 1, 5, 3, 4})

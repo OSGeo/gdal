@@ -63,6 +63,7 @@ class ZarrDataset final : public GDALDataset
     CPLStringList m_aosSubdatasets{};
     GDALGeoTransform m_gt{};
     bool m_bHasGT = false;
+    bool m_bSpatialProjConvention = false;
     std::shared_ptr<GDALDimension> m_poDimX{};
     std::shared_ptr<GDALDimension> m_poDimY{};
     std::shared_ptr<GDALMDArray> m_poSingleArray{};
@@ -945,6 +946,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     mutable bool m_bHasTriedBlockCachePresenceArray = false;
     mutable std::shared_ptr<GDALMDArray> m_poBlockCachePresenceArray{};
     mutable std::mutex m_oMutex{};
+    CPLStringList m_aosCreationOptions{};
 
     struct CachedBlock
     {
@@ -1212,6 +1214,11 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     void SetStructuralInfo(const char *pszKey, const char *pszValue)
     {
         m_aosStructuralInfo.SetNameValue(pszKey, pszValue);
+    }
+
+    void SetCreationOptions(CSLConstList papszOptions)
+    {
+        m_aosCreationOptions = papszOptions;
     }
 
     static void DecodeSourceElt(const std::vector<DtypeElt> &elts,

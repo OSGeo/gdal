@@ -161,8 +161,7 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
         "   </Option>"
         "   <Option name='CREATE_CONSOLIDATED_METADATA' "
         "alias='CREATE_ZMETADATA' type='boolean' "
-        "description='Whether to create consolidated metadata into .zmetadata "
-        "(Zarr V2 only)' default='YES'/>"
+        "description='Whether to create consolidated metadata' default='YES'/>"
         "</MultiDimDatasetCreationOptionList>");
 
     poDriver->pfnIdentify = ZARRDriverIdentify;
