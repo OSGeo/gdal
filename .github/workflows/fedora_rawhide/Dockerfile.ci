@@ -1,4 +1,4 @@
-FROM fedora:rawhide@sha256:af660adb8de42682b494c7d102860c155466ba61cd850a8420e1ffad1764b1b7
+FROM fedora:rawhide@sha256:64de49837325632232088e59c20518565a9d657095f9f3c2fa6033a42fb1412b
 
 RUN dnf upgrade -y
 RUN dnf install -y --setopt=install_weak_deps=False proj-devel
