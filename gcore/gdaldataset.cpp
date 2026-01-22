@@ -4019,6 +4019,8 @@ static GDALDataset *GetSharedDS(const char *pszFilename,
  * @param papszAllowedDrivers NULL to consider all candidate drivers, or a NULL
  * terminated list of strings with the driver short names that must be
  * considered.
+ * Starting with GDAL 3.13, a string starting with the dash (-) character
+ * followed by the driver short name can be used to exclude a driver.
  *
  * @param papszOpenOptions NULL, or a NULL terminated list of strings with open
  * options passed to candidate drivers. An option exists for all drivers,
@@ -4150,6 +4152,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
  * @param papszAllowedDrivers NULL to consider all candidate drivers, or a NULL
  * terminated list of strings with the driver short names that must be
  * considered.
+ * Starting with GDAL 3.13, a string starting with the dash (-) character
+ * followed by the driver short name can be used to exclude a driver.
  *
  * @param papszOpenOptions NULL, or a NULL terminated list of strings with open
  * options passed to candidate drivers. An option exists for all drivers,
@@ -4264,11 +4268,33 @@ retry:
         GDALDriver *poDriver =
             iPass == 1 ? poDM->GetDriver(iDriver, /*bIncludeHidden=*/true)
                        : apoSecondPassDrivers[iDriver];
-        if (papszAllowedDrivers != nullptr &&
-            CSLFindString(papszAllowedDrivers,
-                          GDALGetDriverShortName(poDriver)) == -1)
+        const char *pszDriverName = GDALGetDriverShortName(poDriver);
+        if (pszDriverName && papszAllowedDrivers)
         {
-            continue;
+            bool bDriverMatchedPositively = false;
+            bool bDriverMatchedNegatively = false;
+            bool bOnlyExcludedDrivers = true;
+            for (const char *pszAllowedDriver :
+                 cpl::Iterate(papszAllowedDrivers))
+            {
+                if (pszAllowedDriver[0] != '-')
+                    bOnlyExcludedDrivers = false;
+                if (EQUAL(pszAllowedDriver, pszDriverName))
+                {
+                    bDriverMatchedPositively = true;
+                }
+                else if (pszAllowedDriver[0] == '-' &&
+                         EQUAL(pszAllowedDriver + 1, pszDriverName))
+                {
+                    bDriverMatchedNegatively = true;
+                    break;
+                }
+            }
+            if ((!bDriverMatchedPositively && !bOnlyExcludedDrivers) ||
+                bDriverMatchedNegatively)
+            {
+                continue;
+            }
         }
 
         if (poDriver->GetMetadataItem(GDAL_DCAP_OPEN) == nullptr)
