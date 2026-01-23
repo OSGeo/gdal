@@ -8,7 +8,8 @@ TopoJSON driver
 .. built_in_by_default::
 
 The driver can read the `TopoJSON
-format <https://github.com/topojson/topojson-specification/blob/master/README.md>`__
+format <https://github.com/topojson/topojson-specification/blob/master/README.md>`__.
+The driver does not support writing TopoJSON datasets.
 
 Driver capabilities
 -------------------
@@ -35,6 +36,21 @@ with GDAL 3.10, specifying the ``-if TopoJSON`` option to command line utilities
 accepting it, or ``TopoJSON`` as the only value of the ``papszAllowedDrivers`` of
 :cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
 URL/filename/text.
+
+Examples
+--------
+
+Read a TopoJSON file with multiple layers.
+
+::
+
+   gdal vector info "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json"
+
+Write a single layer from a TopoJSON file to GeoJSON file.
+
+::
+
+    gdal vector convert "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json" counties-albers-10m.geojson --layer counties
 
 See Also
 --------
