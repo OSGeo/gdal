@@ -117,9 +117,9 @@ Examples
 
       .. code-tab:: bash
 
-        gdal vector pipeline !
-            ! read "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json" --layer counties !
-            ! check-coverage !
+        gdal vector pipeline \
+            ! read "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json" --layer counties \
+            ! check-coverage \
             ! info --features
 
       .. code-tab:: powershell
