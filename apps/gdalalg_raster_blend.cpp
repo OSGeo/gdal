@@ -234,7 +234,9 @@ inline GByte DivScale255(GByte a, GByte b)
     else if (b == 0)
         return 255;
     else
-        return static_cast<GByte>((a * 255) / b);
+        const int nRes = (a * 255) / b;
+        CPLAssert(nRes <= 255);
+        return static_cast<GByte>(nRes);
 }
 
 /*************************************************************************/
@@ -243,9 +245,9 @@ inline GByte DivScale255(GByte a, GByte b)
 
 //! Premultiply RGB channels by alpha (A)
 static inline void PremultiplyChannels(size_t i,
-                                       const GByte *CPL_RESTRICT pabyR,
-                                       const GByte *CPL_RESTRICT pabyG,
-                                       const GByte *CPL_RESTRICT pabyB,
+                                       const GByte *pabyR,
+                                       const GByte *pabyG,
+                                       const GByte *pabyB,
                                        GByte &outR, GByte &outG, GByte &outB,
                                        const GByte &A)
 
@@ -990,8 +992,8 @@ static void BlendScreen_Generic(
 
         auto processComponent = [&nFinalAlpha](GByte C, GByte OverlayC) -> GByte
         {
-            return static_cast<GByte>(DivScale255(
-                C + OverlayC - MulScale255(C, OverlayC), nFinalAlpha));
+            return DivScale255(
+                C + OverlayC - MulScale255(C, OverlayC), nFinalAlpha);
         };
 
         pabyDst[nDstOffset] = processComponent(nR, nOverlayR);
@@ -1070,21 +1072,21 @@ static void BlendOverlay_Generic(
                                                         GByte OverlayC,
                                                         GByte OverlayA) -> GByte
         {
-            return static_cast<GByte>(DivScale255(
+            return DivScale255(
                 2 * MulScale255(C, OverlayC) + MulScale255(C, 255 - OverlayA) +
                     MulScale255(OverlayC, 255 - A),
-                nFinalAlpha));
+                nFinalAlpha);
         };
 
         auto processComponent_greaterEqual =
             [&nFinalAlpha, &nAlphaMul](GByte C, GByte A, GByte OverlayC,
                                        GByte OverlayA) -> GByte
         {
-            return static_cast<GByte>(DivScale255(
+            return DivScale255(
                 nAlphaMul - 2 * MulScale255(A - C, OverlayA - OverlayC) +
                     MulScale255(C, 255 - OverlayA) +
                     MulScale255(OverlayC, 255 - A),
-                nFinalAlpha));
+                nFinalAlpha);
         };
 
         if (2 * nR < nA)
@@ -1205,11 +1207,11 @@ static void BlendDarken_Generic(
         auto processComponent = [&nFinalAlpha](GByte C, GByte A, GByte OverlayC,
                                                GByte OverlayA) -> GByte
         {
-            return static_cast<GByte>(DivScale255(
+            return DivScale255(
                 std::min(MulScale255(OverlayC, A), MulScale255(C, OverlayA)) +
                     MulScale255(C, 255 - OverlayA) +
                     MulScale255(OverlayC, 255 - A),
-                nFinalAlpha));
+                nFinalAlpha);
         };
 
         pabyDst[nDstOffset] = processComponent(nR, nA, nOverlayR, nOverlayA);
@@ -1281,11 +1283,11 @@ static void BlendLighten_Generic(
         auto processComponent = [&nFinalAlpha](GByte C, GByte A, GByte OverlayC,
                                                GByte OverlayA) -> GByte
         {
-            return static_cast<GByte>(DivScale255(
+            return DivScale255(
                 std::max(MulScale255(OverlayC, A), MulScale255(C, OverlayA)) +
                     MulScale255(C, 255 - OverlayA) +
                     MulScale255(OverlayC, 255 - A),
-                nFinalAlpha));
+                nFinalAlpha);
         };
 
         pabyDst[nDstOffset] = processComponent(nR, nA, nOverlayR, nOverlayA);
@@ -1365,10 +1367,10 @@ static void BlendColorDodge_Generic(
             [&nFinalAlpha, &alphaMul255](GByte C, GByte A, GByte OverlayC,
                                          GByte OverlayA) -> GByte
         {
-            return static_cast<GByte>(
+            return
                 DivScale255(alphaMul255 + MulScale255(C, 255 - OverlayA) +
                                 MulScale255(OverlayC, 255 - A),
-                            nFinalAlpha));
+                            nFinalAlpha);
         };
 
         // Dca.Sa/(1-Sca/Sa) + Sca.(1 - Da) + Dca.(1 - Sa)
@@ -1376,12 +1378,12 @@ static void BlendColorDodge_Generic(
             [&nFinalAlpha, &alphaMul255](GByte C, GByte A, GByte OverlayC,
                                          GByte OverlayA) -> GByte
         {
-            return static_cast<GByte>(
+            return
                 DivScale255(DivScale255(MulScale255(C, OverlayA),
                                         255 - DivScale255(OverlayC, OverlayA)) +
                                 MulScale255(C, 255 - OverlayA) +
                                 MulScale255(OverlayC, 255 - A),
-                            nFinalAlpha));
+                            nFinalAlpha);
         };
 
         auto branchingCondition = [&alphaMul255](GByte C, GByte A,
@@ -1493,9 +1495,9 @@ static void BlendColorBurn_Generic(
             [&nFinalAlpha](GByte C, GByte A, GByte OverlayC,
                            GByte OverlayA) -> GByte
         {
-            return static_cast<GByte>(DivScale255(
+            return DivScale255(
                 MulScale255(C, 255 - OverlayA) + MulScale255(OverlayC, 255 - A),
-                nFinalAlpha));
+                nFinalAlpha);
         };
 
         // The simplified formula below was tested and verified with the floating point equivalent [0..1] normalized version
@@ -1506,12 +1508,12 @@ static void BlendColorBurn_Generic(
             const GByte C_unpremultiplied = DivScale255(C, A);
             const GByte Overlay_C_unpremultiplied =
                 DivScale255(OverlayC, OverlayA);
-            return static_cast<GByte>(DivScale255(
+            return DivScale255(
                 MulScale255(alphaMul255, (C_unpremultiplied +
                                           Overlay_C_unpremultiplied - 255)) +
                     MulScale255(C, 255 - OverlayA) +
                     MulScale255(OverlayC, 255 - A),
-                nFinalAlpha));
+                nFinalAlpha);
         };
 
         auto branchingCondition = [&alphaMul255](GByte C, GByte A,
