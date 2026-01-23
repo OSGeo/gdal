@@ -3138,6 +3138,222 @@ static void ParseSpatialConventions(
 }
 
 /************************************************************************/
+/*                 DetectSRSFromEOPFSampleServiceMetadata()             */
+/************************************************************************/
+
+/* This function is derived from ExtractCoordinateMetadata() of
+ * https://github.com/EOPF-Sample-Service/GDAL-ZARR-EOPF/blob/main/src/eopf_metadata.cpp
+ * released under the MIT license and
+ * Copyright (c) 2024 Yuvraj Adagale and contributors
+ *
+ * Note: it does not handle defaulting to EPSG:4326 as it is not clear to me
+ * (E. Rouault) why this would be needed, at least for Sentinel2 L1C or L2
+ * products
+ */
+static void DetectSRSFromEOPFSampleServiceMetadata(
+    const std::string &osRootDirectoryName,
+    const std::shared_ptr<ZarrGroupBase> &poGroup,
+    std::shared_ptr<OGRSpatialReference> &poSRS)
+{
+    const CPLJSONObject obj = poGroup->GetAttributeGroup().Serialize();
+
+    // -----------------------------------
+    // STEP 1: Extract spatial reference information
+    // -----------------------------------
+
+    // Find EPSG code directly or in STAC properties
+    int nEPSGCode = 0;
+    const CPLJSONObject &stacDiscovery = obj.GetObj("stac_discovery");
+    if (stacDiscovery.IsValid())
+    {
+        const CPLJSONObject &properties = stacDiscovery.GetObj("properties");
+        if (properties.IsValid())
+        {
+            // Try to get proj:epsg as a number first, then as a string
+            nEPSGCode = properties.GetInteger("proj:epsg", 0);
+            if (nEPSGCode <= 0)
+            {
+                nEPSGCode =
+                    std::atoi(properties.GetString("proj:epsg", "").c_str());
+            }
+            if (nEPSGCode > 0)
+            {
+                CPLDebugOnly(ZARR_DEBUG_KEY,
+                             "Found proj:epsg in STAC properties: %d",
+                             nEPSGCode);
+            }
+        }
+    }
+
+    // If not found in STAC, try top level
+    if (nEPSGCode <= 0)
+    {
+        nEPSGCode = obj.GetInteger("proj:epsg", obj.GetInteger("epsg", 0));
+        if (nEPSGCode <= 0)
+        {
+            nEPSGCode = std::atoi(
+                obj.GetString("proj:epsg", obj.GetString("epsg", "")).c_str());
+        }
+        if (nEPSGCode > 0)
+        {
+            CPLDebugOnly(ZARR_DEBUG_KEY, "Found proj:epsg at top level: %d",
+                         nEPSGCode);
+        }
+    }
+
+    // If still not found, simple search in common locations
+    if (nEPSGCode <= 0)
+    {
+        for (const auto &child : obj.GetChildren())
+        {
+            if (child.GetType() == CPLJSONObject::Type::Object)
+            {
+                nEPSGCode =
+                    child.GetInteger("proj:epsg", child.GetInteger("epsg", 0));
+                if (nEPSGCode <= 0)
+                {
+                    nEPSGCode = std::atoi(
+                        child
+                            .GetString("proj:epsg", child.GetString("epsg", ""))
+                            .c_str());
+                }
+                if (nEPSGCode > 0)
+                {
+                    CPLDebugOnly(ZARR_DEBUG_KEY,
+                                 "Found proj:epsg in child %s: %d",
+                                 child.GetName().c_str(), nEPSGCode);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Enhanced search for STAC discovery metadata with better structure parsing
+    if (nEPSGCode <= 0 && stacDiscovery.IsValid())
+    {
+        // Try to get the full STAC item
+        const CPLJSONObject &geometry = stacDiscovery.GetObj("geometry");
+
+        if (geometry.IsValid())
+        {
+            const CPLJSONObject &geomCrs = geometry.GetObj("crs");
+            if (geomCrs.IsValid())
+            {
+                const CPLJSONObject &geomProps = geomCrs.GetObj("properties");
+                if (geomProps.IsValid())
+                {
+                    const int nGeomEpsg = geomProps.GetInteger("code", 0);
+                    if (nGeomEpsg != 0)
+                    {
+                        nEPSGCode = nGeomEpsg;
+                        CPLDebugOnly(ZARR_DEBUG_KEY,
+                                     "Found CRS code in STAC geometry: %d",
+                                     nEPSGCode);
+                    }
+                }
+            }
+        }
+    }
+
+    // Try to infer CRS from Sentinel-2 tile naming convention
+    if (nEPSGCode <= 0)
+    {
+        // Look for Sentinel-2 tile ID pattern in dataset name or metadata
+        std::string tileName;
+
+        // First, try to extract from dataset name if it contains T##XXX pattern
+        std::string dsNameStr(CPLGetFilename(osRootDirectoryName.c_str()));
+        const size_t tilePos = dsNameStr.find("_T");
+        if (tilePos != std::string::npos && tilePos + 6 < dsNameStr.length())
+        {
+            tileName = dsNameStr.substr(tilePos + 1, 6);  // Extract T##XXX
+            CPLDebugOnly(ZARR_DEBUG_KEY,
+                         "Extracted tile name from dataset name: %s",
+                         tileName.c_str());
+        }
+
+        // Also check in STAC discovery metadata
+        if (tileName.empty() && stacDiscovery.IsValid())
+        {
+            const CPLJSONObject &properties =
+                stacDiscovery.GetObj("properties");
+            if (properties.IsValid())
+            {
+                tileName = properties.GetString(
+                    "s2:mgrs_tile",
+                    properties.GetString("mgrs_tile",
+                                         properties.GetString("tile_id", "")));
+                if (!tileName.empty())
+                {
+                    CPLDebug("EOPFZARR",
+                             "Found tile name in STAC properties: %s",
+                             tileName.c_str());
+                }
+            }
+        }
+
+        // Parse tile name to get EPSG code (T##XXX -> UTM Zone ## North/South)
+        if (!tileName.empty() && tileName.length() >= 3 && tileName[0] == 'T')
+        {
+            // Extract zone number (characters 1-2)
+            const std::string zoneStr = tileName.substr(1, 2);
+            const int zone = std::atoi(zoneStr.c_str());
+
+            if (zone >= 1 && zone <= 60)
+            {
+                // Determine hemisphere from the third character
+                const char hemisphere =
+                    tileName.length() > 3 ? tileName[3] : 'N';
+
+                // For Sentinel-2, assume Northern hemisphere unless explicitly Southern
+                // Most Sentinel-2 data is Northern hemisphere
+                // Cf https://en.wikipedia.org/wiki/Military_Grid_Reference_System#Grid_zone_designation
+                const bool isNorth = (hemisphere >= 'N' && hemisphere <= 'X');
+
+                nEPSGCode = isNorth ? (32600 + zone) : (32700 + zone);
+                CPLDebugOnly(ZARR_DEBUG_KEY,
+                             "Inferred EPSG %d from Sentinel-2 tile %s (zone "
+                             "%d, %s hemisphere)",
+                             nEPSGCode, tileName.c_str(), zone,
+                             isNorth ? "North" : "South");
+            }
+        }
+    }
+
+    if (nEPSGCode > 0)
+    {
+        poSRS = std::make_shared<OGRSpatialReference>();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poSRS->importFromEPSG(nEPSGCode) == OGRERR_NONE)
+        {
+            return;
+        }
+        poSRS.reset();
+    }
+
+    // Look for WKT
+    std::string wkt = obj.GetString("spatial_ref", "");
+    if (wkt.empty() && stacDiscovery.IsValid())
+    {
+        const CPLJSONObject &properties = stacDiscovery.GetObj("properties");
+        if (properties.IsValid())
+        {
+            wkt = properties.GetString("spatial_ref", "");
+        }
+    }
+    if (!wkt.empty())
+    {
+        poSRS = std::make_shared<OGRSpatialReference>();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poSRS->importFromWkt(wkt.c_str()) == OGRERR_NONE)
+        {
+            return;
+        }
+        poSRS.reset();
+    }
+}
+
+/************************************************************************/
 /*                            SetAttributes()                           */
 /************************************************************************/
 
@@ -3317,6 +3533,12 @@ void ZarrArray::SetAttributes(const std::shared_ptr<ZarrGroupBase> &poGroup,
             // use it since the x and y dimensions are already associated with a
             // 1-dimensional array with the values.
         }
+    }
+
+    if (!poSRS && poRootGroup && oAttributes.GetObj("_eopf_attrs").IsValid())
+    {
+        DetectSRSFromEOPFSampleServiceMetadata(
+            m_poSharedResource->GetRootDirectoryName(), poRootGroup, poSRS);
     }
 
     if (poSRS && !bAxisAssigned)

@@ -322,6 +322,11 @@ class ZarrSharedResource
         return m_poPAM;
     }
 
+    const std::string &GetRootDirectoryName() const
+    {
+        return m_osRootDirectoryName;
+    }
+
     const CPLStringList &GetOpenOptions() const
     {
         return m_aosOpenOptions;

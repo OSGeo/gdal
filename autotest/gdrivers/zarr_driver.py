@@ -7215,3 +7215,198 @@ def test_zarr_write_spatial_geotransform_no_epsg_code_rotated_gt_and_pixel_cente
         "AREA_OR_POINT"
     )
     assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+
+###############################################################################
+#
+
+eopf_sample_service_zarray = {
+    "zarr_format": 2,
+    "shape": [1, 1],
+    "chunks": [1, 1],
+    "dtype": "<u2",
+    "fill_value": 0,
+    "filters": None,
+    "compressor": None,
+    "order": "C",
+}
+eopf_sample_service_zattrs = {"_eopf_attrs": {}}
+
+eopf_sample_service_zgroup = {"zarr_format": 2}
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "filename,j",
+    [
+        (
+            "test.zarr",
+            {
+                "metadata": {
+                    ".zattrs": {"stac_discovery": {"properties": {"proj:epsg": 32632}}},
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+        (
+            "test.zarr",
+            {
+                "metadata": {
+                    ".zattrs": {
+                        "stac_discovery": {"properties": {"proj:epsg": "32632"}}
+                    },
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+        (
+            "test.zarr",
+            {
+                "metadata": {
+                    ".zattrs": {"proj:epsg": 32632},
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+        (
+            "test.zarr",
+            {
+                "metadata": {
+                    ".zattrs": {"proj:epsg": "32632"},
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+        (
+            "test.zarr",
+            {
+                "metadata": {
+                    ".zattrs": {"some_child": {"proj:epsg": 32632}},
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+        (
+            "test.zarr",
+            {
+                "metadata": {
+                    ".zattrs": {"some_child": {"proj:epsg": "32632"}},
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+        (
+            "test.zarr",
+            {
+                "metadata": {
+                    ".zattrs": {
+                        "stac_discovery": {
+                            "geometry": {"crs": {"properties": {"code": 32632}}}
+                        }
+                    },
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+        (
+            "foo_T32VLK_bla.zarr",
+            {
+                "metadata": {
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+        (
+            "test.zarr",
+            {
+                "metadata": {
+                    ".zattrs": {
+                        "stac_discovery": {"properties": {"s2:mgrs_tile": "T32VLK"}}
+                    },
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+        (
+            "test.zarr",
+            {
+                "metadata": {
+                    ".zattrs": {
+                        "stac_discovery": {"properties": {"mgrs_tile": "T32VLK"}}
+                    },
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+        (
+            "test.zarr",
+            {
+                "metadata": {
+                    ".zattrs": {
+                        "stac_discovery": {"properties": {"tile_id": "T32VLK"}}
+                    },
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+        (
+            "test.zarr",
+            {
+                "metadata": {
+                    ".zattrs": {
+                        "spatial_ref": 'PROJCS["WGS 84 / UTM zone 32N",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",9],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","32632"]]'
+                    },
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+        (
+            "test.zarr",
+            {
+                "metadata": {
+                    ".zattrs": {
+                        "stac_discovery": {
+                            "properties": {
+                                "spatial_ref": 'PROJCS["WGS 84 / UTM zone 32N",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",9],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","32632"]]'
+                            }
+                        }
+                    },
+                    ".zgroup": eopf_sample_service_zgroup,
+                    "myar/.zarray": eopf_sample_service_zarray,
+                    "myar/.zattrs": eopf_sample_service_zattrs,
+                }
+            },
+        ),
+    ],
+)
+def test_zarr_read_srs_eopf_sample_service(tmp_vsimem, filename, j):
+
+    gdal.FileFromMemBuffer(tmp_vsimem / filename / ".zmetadata", json.dumps(j))
+    gdal.FileFromMemBuffer(tmp_vsimem / filename / ".zgroup", '{"zarr_format": 2}')
+
+    ds = gdal.Open(tmp_vsimem / filename)
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "32632"
