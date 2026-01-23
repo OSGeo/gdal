@@ -259,7 +259,7 @@ def test_grib_grib2_read_template_4_32():
     assert cs == 48230, "Could not open file"
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == pytest.approx(
         (-9.765, 2.415), 1e-3
-    )  # Reasonable range for Celcius
+    )  # Reasonable range for Celsius
     md = ds.GetRasterBand(1).GetMetadata()
     expected_md = {
         "GRIB_REF_TIME": "1508479200",
