@@ -51,6 +51,12 @@ Standard options
    Specify the name of the geometry field to test, for layers having multiple geometry fields. By default the first
    geometry field will be used.
 
+.. option:: --include-field
+
+   .. versionadded:: 3.12.1
+
+   Optional field(s) to copy from the input features to the output.
+
 .. option:: --include-valid
 
    Include features for valid/simple geometries in the output, maintaining 1:1 correspondence between input and output features.
